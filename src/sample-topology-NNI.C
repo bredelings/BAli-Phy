@@ -137,20 +137,21 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, i
 //                       what the acceptance probability should be.
 
 
-void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b) 
+void two_way_topology_slice_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
-  if (P.T->directed_branch(b).is_leaf_branch()) return;
+  Parameters& PP = *P.as<Parameters>();
+  if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1) return;
+  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1) return;
 
-  Tree T0 = *P.T;
+  Tree T0 = *PP.T;
 
-  vector<int> nodes = A5::get_nodes_random(*P.T, b);
+  vector<int> nodes = A5::get_nodes_random(*PP.T, b);
 
-  P.select_root(b);
+  PP.select_root(b);
   // P.likelihood();  Why does this not make a difference in speed?
 
-  vector<Parameters> p(2,P);
+  vector<Parameters> p(2,PP);
 
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
@@ -161,10 +162,10 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[1].T, *P.TC))
+  if (not extends(*p[1].T, *PP.TC))
     return;
 
-  double L = P.T->directed_branch(b).length();
+  double L = PP.T->directed_branch(b).length();
 
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
   //  double Pr1 = log(p[0].probability());
@@ -177,16 +178,16 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
   logp.push_back(&logp1);
   logp.push_back(&logp2);
 
-  double w = P.branch_mean();
+  double w = PP.branch_mean();
 
   //  std::pair<int,double> choice = two_way_slice_sample(L,logp1,logp2,w,-1,true,0,false,0);
   std::pair<int,double> choice = slice_sample_multi(L,logp,w,-1);
 
   int C = choice.first;
   if (choice.first == 0)
-    P = p[0];
+    PP = p[0];
   else
-    P = p[1];
+    PP = p[1];
 
   MCMC::Result result(3);
 
@@ -196,32 +197,33 @@ void two_way_topology_slice_sample(Parameters& P, MoveStats& Stats, int b)
     result.totals[1] = L;
   else
     result.counts[1] = 0;
-  result.totals[2] = std::abs(P.T->directed_branch(b).length() - L);
+  result.totals[2] = std::abs(PP.T->directed_branch(b).length() - L);
 
   //  if (C == 1) std::cerr<<"slice-diff = "<<Pr2 - Pr1<<"\n";
 
   NNI_inc(Stats,"NNI (2-way,slice)", result, T0, b);
 }
 
-void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
+void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
-  if (P.T->directed_branch(b).is_leaf_branch()) return;
+  Parameters& PP = *P.as<Parameters>();
+  if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1) return;
+  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1) return;
 
-  double slice_fraction = loadvalue(P.keys,"NNI_slice_fraction",-0.25);
+  double slice_fraction = loadvalue(PP.keys,"NNI_slice_fraction",-0.25);
 
-  if (not P.variable_alignment() and uniform() < slice_fraction) {
+  if (not PP.variable_alignment() and uniform() < slice_fraction) {
     two_way_topology_slice_sample(P,Stats,b);
     return;
   }
 
-  vector<int> nodes = A5::get_nodes_random(*P.T, b);
+  vector<int> nodes = A5::get_nodes_random(*PP.T, b);
 
-  P.select_root(b);
-  // P.likelihood();  Why does this not make a difference in speed?
+  PP.select_root(b);
+  // PP.likelihood();  Why does this not make a difference in speed?
 
-  vector<Parameters> p(2,P);
+  vector<Parameters> p(2,PP);
 
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
@@ -232,7 +234,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[1].T, *P.TC))
+  if (not extends(*p[1].T, *PP.TC))
     return;
 
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
@@ -248,7 +250,7 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   int C = two_way_topology_sample(p,rho,b);
 
   if (C != -1) {
-    P = p[C];
+    PP = p[C];
   }
 
   //  if (C == 1) std::cerr<<"MH-diff = "<<Pr2 - Pr1<<"\n";
@@ -265,18 +267,19 @@ void two_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   NNI_inc(Stats,"NNI (2-way)", result,*p[0].T,b);
 }
 
-void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b) 
+void two_way_NNI_SPR_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
-  if (P.T->directed_branch(b).is_leaf_branch()) return;
+  Parameters& PP = *P.as<Parameters>();
+  if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1) return;
+  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1) return;
 
-  vector<int> nodes = A5::get_nodes_random(*P.T, b);
+  vector<int> nodes = A5::get_nodes_random(*PP.T, b);
 
-  P.select_root(b);
-  // P.likelihood();  Why does this not make a difference in speed?
+  PP.select_root(b);
+  // PP.likelihood();  Why does this not make a difference in speed?
 
-  vector<Parameters> p(2,P);
+  vector<Parameters> p(2,PP);
 
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
   int b2 = p[1].T->directed_branch(nodes[5],nodes[2]);
@@ -287,7 +290,7 @@ void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b)
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[1].T, *P.TC))
+  if (not extends(*p[1].T, *PP.TC))
     return;
 
   double LA = p[0].T->branch(nodes[4],nodes[0]).length();
@@ -304,7 +307,7 @@ void two_way_NNI_SPR_sample(Parameters& P, MoveStats& Stats, int b)
   int C = two_way_topology_sample(p,rho,b);
 
   if (C != -1) {
-    P = p[C];
+    PP = p[C];
   }
 
 
@@ -336,18 +339,19 @@ vector<int> NNI_branches(const Tree& T, int b)
   return branches2;
 }
 
-void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b) 
+void two_way_NNI_and_branches_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
-  if (P.T->directed_branch(b).is_leaf_branch()) return;
+  Parameters& PP = *P.as<Parameters>();
+  if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1) return;
+  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1) return;
 
-  vector<int> nodes = A5::get_nodes_random(*P.T,b);
+  vector<int> nodes = A5::get_nodes_random(*PP.T,b);
 
-  P.select_root(b);
-  // P.likelihood();  Why does this not make a difference in speed?
+  PP.select_root(b);
+  // PP.likelihood();  Why does this not make a difference in speed?
 
-  vector<Parameters> p(2,P);
+  vector<Parameters> p(2,PP);
 
   //---------------- Do the NNI operation -------------------//
   int b1 = p[1].T->directed_branch(nodes[4],nodes[1]);
@@ -359,7 +363,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[1].T, *P.TC))
+  if (not extends(*p[1].T, *PP.TC))
     return;
 
   //------------- Propose new branch lengths ----------------//
@@ -385,7 +389,7 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
   int C = two_way_topology_sample(p,rho,b);
 
   if (C != -1) {
-    P = p[C];
+    PP = p[C];
   }
 
   MCMC::Result result(2);
@@ -400,11 +404,12 @@ void two_way_NNI_and_branches_sample(Parameters& P, MoveStats& Stats, int b)
   NNI_inc(Stats,"NNI (2-way) + branches", result, *p[0].T, b);
 }
 
-void two_way_NNI_sample(Parameters& P, MoveStats& Stats, int b) 
+void two_way_NNI_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
-  if (P.T->directed_branch(b).is_leaf_branch()) return;
+  Parameters& PP = *P.as<Parameters>();
+  if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1) return;
+  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1) return;
 
   double U = uniform();
   if (U < 0.33333333) {
@@ -432,25 +437,26 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho
 }
 
 
-void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b) 
+void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
-  if (P.T->directed_branch(b).is_leaf_branch()) return;
+  Parameters& PP = *P.as<Parameters>();
+  if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (P.variable_alignment()) return;
+  if (PP.variable_alignment()) return;
 
-  Tree T0 = *P.T;
+  Tree T0 = *PP.T;
 
-  vector<int> nodes = A5::get_nodes_random(*P.T,b);
+  vector<int> nodes = A5::get_nodes_random(*PP.T,b);
 
   //------ Generate Topologies and alter caches ------///
-  P.select_root(b);
-  // P.likelihood();  Why does this not make a difference in speed?
+  PP.select_root(b);
+  // PP.likelihood();  Why does this not make a difference in speed?
   
-  vector<Parameters> p(3,P);
+  vector<Parameters> p(3,PP);
 
-  int b1 = P.T->directed_branch(nodes[4],nodes[1]);
-  int b2 = P.T->directed_branch(nodes[5],nodes[2]);
-  int b3 = P.T->directed_branch(nodes[5],nodes[3]);
+  int b1 = PP.T->directed_branch(nodes[4],nodes[1]);
+  int b2 = PP.T->directed_branch(nodes[5],nodes[2]);
+  int b3 = PP.T->directed_branch(nodes[5],nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T,b1,b2);
@@ -458,7 +464,7 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
 
-  if (not extends(*p[1].T, *P.TC))
+  if (not extends(*p[1].T, *PP.TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
@@ -467,12 +473,12 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[2].T, *P.TC))
+  if (not extends(*p[2].T, *PP.TC))
     return;
 
   const vector<efloat_t> rho(3,1);
 
-  double L = P.T->directed_branch(b).length();
+  double L = PP.T->directed_branch(b).length();
 
 #ifndef NDEBUG
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
@@ -496,12 +502,12 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
   logp.push_back(&logp2);
   logp.push_back(&logp3);
 
-  double w = P.branch_mean();
+  double w = PP.branch_mean();
 
   std::pair<int,double> choice = slice_sample_multi(L,logp,w,-1);
 
   int C = choice.first;
-  P = p[C];
+  PP = p[C];
 
   MCMC::Result result(4);
 
@@ -511,7 +517,7 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
     result.totals[1] = L;
   else
     result.counts[1] = 0;
-  result.totals[2] = std::abs(P.T->directed_branch(b).length() - L);
+  result.totals[2] = std::abs(PP.T->directed_branch(b).length() - L);
   result.totals[3] = logp1.count + logp2.count + logp3.count;
 
   //  if (C == 1) std::cerr<<"slice-diff3 = "<<Pr2 - Pr1<<"\n";
@@ -521,31 +527,32 @@ void three_way_topology_sample_slice(Parameters& P, MoveStats& Stats, int b)
   NNI_inc(Stats,"NNI (3-way,slice)", result, T0, b);
 }
 
-void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b) 
+void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
-  if (P.T->directed_branch(b).is_leaf_branch()) return;
+  Parameters& PP = *P.as<Parameters>();
+  if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
+  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1)
     return;
 
-  double slice_fraction = loadvalue(P.keys,"NNI_slice_fraction",-0.25);
+  double slice_fraction = loadvalue(PP.keys,"NNI_slice_fraction",-0.25);
 
-  if (not P.variable_alignment() and uniform() < slice_fraction) {
+  if (not PP.variable_alignment() and uniform() < slice_fraction) {
     three_way_topology_sample_slice(P,Stats,b);
     return;
   }
 
-  vector<int> nodes = A5::get_nodes_random(*P.T,b);
+  vector<int> nodes = A5::get_nodes_random(*PP.T,b);
 
   //------ Generate Topologies and alter caches ------///
-  P.select_root(b);
-  // P.likelihood();  Why does this not make a difference in speed?
+  PP.select_root(b);
+  // PP.likelihood();  Why does this not make a difference in speed?
 
-  vector<Parameters> p(3,P);
+  vector<Parameters> p(3,PP);
 
-  int b1 = P.T->directed_branch(nodes[4],nodes[1]);
-  int b2 = P.T->directed_branch(nodes[5],nodes[2]);
-  int b3 = P.T->directed_branch(nodes[5],nodes[3]);
+  int b1 = PP.T->directed_branch(nodes[4],nodes[1]);
+  int b2 = PP.T->directed_branch(nodes[5],nodes[2]);
+  int b3 = PP.T->directed_branch(nodes[5],nodes[3]);
 
   // Internal node states may be inconsistent after this: p[1].alignment_prior() undefined!
   exchange_subtrees(*p[1].T,b1,b2);
@@ -553,7 +560,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
 
-  if (not extends(*p[1].T, *P.TC))
+  if (not extends(*p[1].T, *PP.TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
@@ -562,7 +569,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[2].T, *P.TC))
+  if (not extends(*p[2].T, *PP.TC))
     return;
 
   const vector<efloat_t> rho(3,1);
@@ -571,7 +578,7 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   int C = three_way_topology_sample(p,rho,b);
 
   if (C != -1) {
-    P = p[C];
+    PP = p[C];
   }    
 
   MCMC::Result result(2);
@@ -586,19 +593,20 @@ void three_way_topology_sample(Parameters& P, MoveStats& Stats, int b)
   NNI_inc(Stats,"NNI (3-way)", result, *p[0].T, b);
 }
 
-void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, int b) 
+void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
-  if (P.T->directed_branch(b).is_leaf_branch()) return;
+  Parameters& PP = *P.as<Parameters>();
+  if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (P.variable_alignment() and P.branch_HMM_type[b] == 1)
+  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1)
     return;
 
-  vector<int> two_way_nodes = A5::get_nodes_random(*P.T, b);
+  vector<int> two_way_nodes = A5::get_nodes_random(*PP.T, b);
 
   //--------- Generate the Different Topologies -------//
   // We ALWAYS resample the connection between two_way_nodes [0] and [4].
 
-  vector<Parameters> p(3,P);
+  vector<Parameters> p(3,PP);
   int b1 = p[0].T->directed_branch(two_way_nodes[4],two_way_nodes[1]);
   int b2 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[2]);
   int b3 = p[0].T->directed_branch(two_way_nodes[5],two_way_nodes[3]);
@@ -609,7 +617,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
   
-  if (not extends(*p[1].T, *P.TC))
+  if (not extends(*p[1].T, *PP.TC))
     return;
 
   // Internal node states may be inconsistent after this: p[2].alignment_prior() undefined!
@@ -618,7 +626,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
 
-  if (not extends(*p[2].T, *P.TC))
+  if (not extends(*p[2].T, *PP.TC))
     return;
 
   vector< vector< int> > nodes;
@@ -630,7 +638,7 @@ void three_way_topology_and_alignment_sample(Parameters& P, MoveStats& Stats, in
   int C = sample_tri_multi(p,nodes,rho,true,true);
 
   if (C != -1) {
-    P = p[C];
+    PP = p[C];
   }
 
   MCMC::Result result(2);

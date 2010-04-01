@@ -460,26 +460,27 @@ int choose_subtree_branch_uniform2(const Tree& T)
 }
 
 
-void sample_SPR_flat(Parameters& P,MoveStats& Stats) 
+void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
 {
-  int n = n_SPR_moves(P);
+  Parameters& PP = *P.as<Parameters>();
+  int n = n_SPR_moves(PP);
 
-  double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
+  double p = loadvalue(P->keys,"SPR_slice_fraction",-0.25);
 
   for(int i=0;i<n;i++) 
   {
-    int b1 = choose_subtree_branch_uniform(*P.T);
+    int b1 = choose_subtree_branch_uniform(*PP.T);
 
-    int b2 = choose_SPR_target(*P.T,b1);
+    int b2 = choose_SPR_target(*PP.T,b1);
 
-    double L_effective = effective_length(*P.T, b1);
+    double L_effective = effective_length(*PP.T, b1);
 
-    if (not P.variable_alignment() and uniform() < p) {
-      MCMC::Result result = sample_SPR(P,b1,b2,true);
+    if (not PP.variable_alignment() and uniform() < p) {
+      MCMC::Result result = sample_SPR(PP,b1,b2,true);
       SPR_inc(Stats,result,"SPR (flat/slice)",L_effective);
     }
     else  {
-      MCMC::Result result = sample_SPR(P,b1,b2);
+      MCMC::Result result = sample_SPR(PP,b1,b2);
       SPR_inc(Stats,result,"SPR (flat)",L_effective);
     }
   }
@@ -753,28 +754,29 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   return ((C != 0) and moved);
 }
 
-void sample_SPR_all(Parameters& P,MoveStats& Stats) 
+void sample_SPR_all(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
 {
-  int n = n_SPR_moves(P);
+  Parameters& PP = *P.as<Parameters>();
+  int n = n_SPR_moves(PP);
 
   // double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
 
   for(int i=0;i<n;i++) 
   {
     // Choose a directed branch to prune and regraft -- pointing away from the pruned subtree.
-    int b1 = choose_subtree_branch_uniform2(*P.T);
+    int b1 = choose_subtree_branch_uniform2(*PP.T);
 
-    sample_SPR_search_one(P, Stats, b1);
+    sample_SPR_search_one(PP, Stats, b1);
   }
 }
 
-void sample_SPR_search_all(Parameters& P,MoveStats& Stats) 
+void sample_SPR_search_all(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
 {
-  int B = P.T->n_branches();
+  int B = P.as<Parameters>()->T->n_branches();
 
   for(int b=0;b<2*B;b++) {
     slice_sample_branch_length(P,Stats,b);
-    bool changed = sample_SPR_search_one(P,Stats,b);
+    bool changed = sample_SPR_search_one(*P.as<Parameters>(),Stats,b);
     if (not changed) three_way_topology_sample(P,Stats,b);
     slice_sample_branch_length(P,Stats,b);
   }
@@ -879,25 +881,26 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
   b2 = T.branch(path[C2],path[C3]);
 }
 
-void sample_SPR_nodes(Parameters& P,MoveStats& Stats) 
+void sample_SPR_nodes(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
 {
-  int n = n_SPR_moves(P);
+  Parameters& PP = *P.as<Parameters>();
+  int n = n_SPR_moves(PP);
 
-  double p = loadvalue(P.keys,"SPR_slice_fraction",-0.25);
+  double p = loadvalue(P->keys,"SPR_slice_fraction",-0.25);
 
   for(int i=0;i<n;i++) {
 
     int b1=-1, b2=-1;
-    choose_subtree_branch_nodes(*P.T, b1, b2);
+    choose_subtree_branch_nodes(*PP.T, b1, b2);
 
-    double L_effective = effective_length(*P.T, b1);
+    double L_effective = effective_length(*PP.T, b1);
 
-    if (not P.variable_alignment() and uniform()< p) {
-      MCMC::Result result = sample_SPR(P,b1,b2,true);
+    if (not PP.variable_alignment() and uniform()< p) {
+      MCMC::Result result = sample_SPR(*P.as<Parameters>(),b1,b2,true);
       SPR_inc(Stats,result,"SPR (path/slice)", L_effective);
     }
     else {
-      MCMC::Result result = sample_SPR(P,b1,b2);
+      MCMC::Result result = sample_SPR(*P.as<Parameters>(),b1,b2);
       SPR_inc(Stats,result,"SPR (path)", L_effective);
     }
   }

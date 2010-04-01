@@ -177,14 +177,14 @@ namespace MCMC {
       moves[i]->disable(s);
   }
 
-  void MoveGroup::iterate(Parameters& P,MoveStats& Stats) {
+  void MoveGroup::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) {
     reset(1.0);
     for(int i=0;i<order.size();i++)
       iterate(P,Stats,i);
   }
 
 
-  void MoveGroup::iterate(Parameters& P,MoveStats& Stats,int i) {
+  void MoveGroup::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i) {
     assert(i < order.size());
 
     default_timer_stack.push_timer(name);
@@ -300,7 +300,7 @@ namespace MCMC {
     return l + poisson(lambda);
   }
 
-  void SingleMove::iterate(Parameters& P,MoveStats& Stats,int) 
+  void SingleMove::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int) 
   {
     default_timer_stack.push_timer(name);
 
@@ -319,7 +319,7 @@ namespace MCMC {
     return l + poisson(lambda);
   }
 
-  void MH_Move::iterate(Parameters& P,MoveStats& Stats,int) 
+  void MH_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int) 
   {
     default_timer_stack.push_timer(name);
 
@@ -329,9 +329,9 @@ namespace MCMC {
 
     iterations++;
 
-    Parameters P2 = P;
+    owned_ptr<Probability_Model> P2 = P;
 
-    double ratio = (*proposal)(P2);
+    double ratio = (*proposal)(*P2);
 
     int n = 1;
     Proposal2* p2 = dynamic_cast<Proposal2*>(&(*proposal));
@@ -343,22 +343,22 @@ namespace MCMC {
     Result result(n);
 
 #ifndef NDEBUG
-    show_parameters(std::cerr,P);
-    std::cerr<<P.probability()<<" = "<<P.likelihood()<<" + "<<P.prior();
-    std::cerr<<endl<<endl;
+    show_parameters(std::cerr,*P);
+    std::cerr<<P->probability()<<" = "<<P->likelihood()<<" + "<<P->prior()<<endl;
+    std::cerr<<endl;
 
-    show_parameters(std::cerr,P2);
-    std::cerr<<P2.probability()<<" = "<<P2.likelihood()<<" + "<<P2.prior();
+    show_parameters(std::cerr,*P2);
+    std::cerr<<P2->probability()<<" = "<<P2->likelihood()<<" + "<<P2->prior();
     std::cerr<<endl<<endl;
 #endif
 
-    if (accept_MH(P,P2,ratio)) {
+    if (accept_MH(*P,*P2,ratio)) {
       result.totals[0] = 1;
       if (n == 2) {
 	if (n_indices == 1) {
 	  int i = p2->get_indices()[0];
-	  double v1 = P.parameter(i);
-	  double v2 = P2.parameter(i);
+	  double v1 = P->parameter(i);
+	  double v2 = P2->parameter(i);
 	  //      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
 	  result.totals[1] = std::abs(v2-v1);
 	}
@@ -368,8 +368,8 @@ namespace MCMC {
 	  for(int i=0;i<n_indices;i++) 
 	  {
 	    int j = p2->get_indices()[i];
-	    double v1 = P.parameter(j);
-	    double v2 = P2.parameter(j);
+	    double v1 = P->parameter(j);
+	    double v2 = P2->parameter(j);
 	    total += std::abs(log(v1/v2));
 	  }
 	  result.totals[1] = total;
@@ -382,7 +382,7 @@ namespace MCMC {
     default_timer_stack.pop_timer();
   }
 
-  double Slice_Move::sample(Parameters& P, slice_function& slice_levels, double v1)
+  double Slice_Move::sample(Probability_Model& P, slice_function& slice_levels, double v1)
   {
     default_timer_stack.push_timer(name);
 
@@ -486,17 +486,17 @@ namespace MCMC {
      total_movement(0)
   {}
 
-  void Parameter_Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
+  void Parameter_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
-    if (P.fixed(index)) return;
+    if (P->fixed(index)) return;
 
-    double v1 = P.parameter(index);
+    double v1 = P->parameter(index);
 
-    parameter_slice_function logp(P,index,transform,inverse);
+    parameter_slice_function logp(*P,index,transform,inverse);
     if (lower_bound) logp.set_lower_bound(lower);
     if (upper_bound) logp.set_upper_bound(upper);
 
-    double v2 = sample(P,logp,v1);
+    double v2 = sample(*P,logp,v1);
 
     //---------- Record Statistics - -------------//
     Result result(2);
@@ -534,19 +534,19 @@ namespace MCMC {
      lower_bound(lb),lower(l),upper_bound(ub),upper(u)
   {}
 
-  void Dirichlet_Slice_Move::iterate(Parameters& P,MoveStats& Stats,int)
+  void Dirichlet_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
     for(int i=0;i<indices.size();i++)
-      if (P.fixed(indices[i])) return;
+      if (P->fixed(indices[i])) return;
 
-    double v1 = P.parameter(indices[n]);
-    constant_sum_slice_function slice_levels_function(P,indices,n);
+    double v1 = P->parameter(indices[n]);
+    constant_sum_slice_function slice_levels_function(*P,indices,n);
 
-    double v2 = sample(P,slice_levels_function,v1);
+    double v2 = sample(*P,slice_levels_function,v1);
 
     //---------- Record Statistics - -------------//
     Result result(2);
-    vector<double> x = P.parameters(indices);
+    vector<double> x = P->parameters(indices);
     double total = sum(x);
     double factor = (total - v2)/(total-v1);
     result.totals[0] = std::abs(log(v2/v1)) + (indices.size()-1)*(std::abs(log(factor)));
@@ -559,16 +559,17 @@ namespace MCMC {
     :Slice_Move(s,0.2/indices_.size()),indices(indices_),n(n_)
   { }
 
-  void Scale_Means_Only_Slice_Move::iterate(Parameters& P, MoveStats& Stats,int)
+  void Scale_Means_Only_Slice_Move::iterate(owned_ptr<Probability_Model>& P, MoveStats& Stats,int)
   {
+    Parameters& PP = *P.as<Parameters>();
     // If any of the branch means are fixed, then bail
-    for(int i=0;i<P.n_branch_means();i++)
-      if (P.fixed(i)) return;
+    for(int i=0;i<PP.n_branch_means();i++)
+      if (PP.fixed(i)) return;
 
     double v1 = 0;
-    scale_means_only_slice_function slice_levels_function(P);
+    scale_means_only_slice_function slice_levels_function(PP);
 
-    double v2 = sample(P,slice_levels_function, v1);
+    double v2 = sample(PP,slice_levels_function, v1);
 
     //---------- Record Statistics --------------//
     Result result(2);
@@ -609,12 +610,12 @@ int MoveArg::reset(double l)
   return order.size();
 }
 
-void MoveArg::iterate(Parameters& P,MoveStats& Stats) {
+void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) {
   for(int i=0;i<order.size();i++)
     iterate(P,Stats,i);
 }
 
-void MoveArg::iterate(Parameters& P,MoveStats& Stats,int i) 
+void MoveArg::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int i) 
 {
   default_timer_stack.push_timer(name);
   (*this)(P,Stats,order[i]);
@@ -701,7 +702,7 @@ int MoveEach::choose(int arg) const {
   return i;
 }
 
-void MoveEach::operator()(Parameters& P,MoveStats& Stats,int arg) {
+void MoveEach::operator()(owned_ptr<Probability_Model>& P,MoveStats& Stats,int arg) {
   iterations += 1.0/args.size();
   int m = choose(arg);
   MoveArg* temp = dynamic_cast<MoveArg*>(&*moves[m]);
@@ -719,7 +720,7 @@ void MoveEach::show_enabled(ostream& o,int depth) const {
     moves[i]->show_enabled(o,depth+1);
 }
 
-void MoveArgSingle::operator()(Parameters& P,MoveStats& Stats,int arg) 
+void MoveArgSingle::operator()(owned_ptr<Probability_Model>& P,MoveStats& Stats,int arg) 
 {
   default_timer_stack.push_timer(name);
 #ifndef NDEBUG
@@ -1002,16 +1003,13 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M)
   return indices;
 }
 
-void Sampler::go(Parameters& P,int subsample,const int max_iter,
-		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map,
-		 vector<ostream*>& files)
+void mcmc_init(Parameters& P, ostream& s_out, ostream& s_parameters)
 {
-  P.recalc_all();
-
   const SequenceTree& T = *P.T;
 
   // Check that the Alignments and Tree are properly linked
-  for(int i=0;i<P.n_data_partitions();i++) {
+  for(int i=0;i<P.n_data_partitions();i++) 
+  {
     if (P[i].has_IModel())
       assert(P[i].A->n_sequences() == T.n_nodes() and P[i].variable_alignment()); 
     else
@@ -1020,14 +1018,6 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     for(int j=0;j<T.n_leaves();j++)
       assert(T.seq(j) == P[i].A->seq(j).name);    
   }
-
-  
-  //--------- Determine some values for this chain -----------//
-  if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
-
-  efloat_t MAP_score = 0;
-
-  /// string tag = string("sample (")+convertToString(subsample)+")";
 
   s_out<<"\n\n\n";
 
@@ -1080,9 +1070,125 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   }
   s_parameters<<"\t|T|"<<endl;
 
+}
+
+void mcmc_log(int iterations, int subsample, Parameters& P, 
+	      ostream& s_out, ostream& s_parameters, ostream& s_trees, ostream& s_map,vector<ostream*>& files,
+	      efloat_t& MAP_score,
+	      const vector< vector< vector<int> > >& un_identifiable_indices,
+	      const valarray<double>& weights)
+{
+  efloat_t prior = P.prior();
+  efloat_t likelihood = P.likelihood();
+  efloat_t Pr = prior * likelihood;
+
+  // Log the alignments every 10th sample - they take a lot of space!
+  bool show_alignment = (iterations%(10*subsample) == 0);
+
+  // Don't print alignments into console log file:
+  //  - Its hard to separate alignments from different partitions.
+  print_stats(s_out,s_trees,P,false);
+
+  // Print the alignments here instead
+  if (show_alignment) {
+    for(int i=0;i<P.n_data_partitions();i++)
+    {
+      (*files[5+i])<<"iterations = "<<iterations<<"\n\n";
+      if (not iterations or P[i].variable_alignment())
+	(*files[5+i])<<standardize(*P[i].A, *P.T)<<"\n";
+    }
+  }
+
+  // Write parameter values to parameter log file
+  s_parameters<<iterations<<"\t";
+  s_parameters<<prior<<"\t";
+  for(int i=0;i<P.n_data_partitions();i++)
+    if (P[i].variable_alignment()) s_parameters<<P[i].prior_alignment()<<"\t";
+  s_parameters<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
+
+  // Sort parameter values to resolve identifiability and then output them.
+  vector<double> values = P.parameters();
+  for(int i=0;i<un_identifiable_indices.size();i++) 
+    values = make_identifiable(values,un_identifiable_indices[i]);
+  s_parameters<<join(values,'\t');
+
+  unsigned total_length=0;
+  unsigned total_indels=0;
+  unsigned total_indel_lengths=0;
+  unsigned total_substs=0;
+  for(int i=0;i<P.n_data_partitions();i++)
+  {
+    if (P[i].variable_alignment()) {
+      unsigned x1 = P[i].A->length();
+      total_length += x1;
+
+      unsigned x2 = n_indels(*P[i].A, *P[i].T);
+      total_indels += x2;
+
+      unsigned x3 = total_length_indels(*P[i].A, *P[i].T);
+      total_indel_lengths += x3;
+      s_parameters<<"\t"<<x1;
+      s_parameters<<"\t"<<n_indels(*P[i].A, *P[i].T);
+      s_parameters<<"\t"<<x3;
+    }
+    unsigned x4 = n_mutations(*P[i].A, *P[i].T);
+    total_substs += x4;
+
+    s_parameters<<"\t"<<x4;
+    if (const Triplets* Tr = dynamic_cast<const Triplets*>(&P[i].get_alphabet()))
+      s_parameters<<"\t"<<n_mutations(*P[i].A, *P[i].T ,nucleotide_cost_matrix(*Tr));
+    if (const Codons* C = dynamic_cast<const Codons*>(&P[i].get_alphabet()))
+      s_parameters<<"\t"<<n_mutations(*P[i].A, *P[i].T, amino_acid_cost_matrix(*C));
+  }
+  if (P.n_data_partitions() > 1) {
+    if (P.variable_alignment()) {
+      s_parameters<<"\t"<<total_length;
+      s_parameters<<"\t"<<total_indels;
+      s_parameters<<"\t"<<total_indel_lengths;
+    }
+    s_parameters<<"\t"<<total_substs;
+  }
+  double mu_scale=0;
+  for(int i=0;i<P.n_data_partitions();i++)
+    mu_scale += P[i].branch_mean()*weights[i];
+  s_parameters<<"\t"<<mu_scale*length(*P.T)<<endl;
+
+    //---------------------- estimate MAP ----------------------//
+    if (Pr > MAP_score) {
+      MAP_score = Pr;
+      s_map<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
+      print_stats(s_map,s_map,P);
+    }
+
+}
+
+void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter,
+		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map,
+		 vector<ostream*>& files)
+{
+  P->recalc_all();
+  efloat_t MAP_score = 0;
+  valarray<double> weights(P.as<Parameters>()->n_data_partitions());
+
+  {
+    Parameters& PP = *P.as<Parameters>();
+
+    const SequenceTree& T = *PP.T;
+
+    mcmc_init(PP,s_out,s_parameters);
+
+    //--------- Determine some values for this chain -----------//
+    if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
+
+    // Compute the relative number of letters in each partition.
+    for(int i=0;i<weights.size();i++)
+      weights[i] = max(sequence_lengths(*PP[i].A, PP.T->n_leaves()));
+    weights /= weights.sum();
+  }
+
   /// Find parameters to fix for the first 5 iterations
   vector<string> restore_names;
-  if (not defined(P.keys,"free-imodel")) {
+  if (not defined(P->keys,"free-imodel")) {
     restore_names.push_back("lambda");
     restore_names.push_back("delta");
     restore_names.push_back("epsilon");
@@ -1090,34 +1196,29 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
   vector<int> restore;
   for(int i=0;i<restore_names.size();i++) 
   {
-    int index = find_parameter(P,restore_names[i]);
+    int index = find_parameter(*P,restore_names[i]);
     if (index != -1) {
       restore.push_back(index);
-      P.fixed(index,true);
+      P->fixed(index,true);
     }
   }
 
-  // Compute the relative number of letters in each partition.
-  valarray<double> weights(P.n_data_partitions());
-  for(int i=0;i<weights.size();i++)
-    weights[i] = max(sequence_lengths(*P[i].A, P.T->n_leaves()));
-  weights /= weights.sum();
+  vector< vector< vector<int> > > un_identifiable_indices = get_un_identifiable_indices(*P);
 
-
-  vector< vector< vector<int> > > un_identifiable_indices = get_un_identifiable_indices(P);
-      
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max_iter; iterations++) 
   {
     // Free temporarily fixed parameters at iteration 5
     if (iterations == 5)
       for(int i=0;i<restore.size();i++)
-	P.fixed(restore[i],false);
+	P->fixed(restore[i],false);
+
+    Parameters& PP = *P.as<Parameters>();
 
     // Change the temperature according to the pattern suggested
-    if (iterations < P.beta_series.size())
-      for(int i=0;i < P.n_data_partitions();i++)
-	P.beta[0] = P[i].beta[0] = P.beta_series[iterations];
+    if (iterations < PP.beta_series.size())
+      for(int i=0;i < PP.n_data_partitions();i++)
+	PP.beta[0] = PP[i].beta[0] = PP.beta_series[iterations];
 
     // Start learning step sizes at iteration 5
     if (iterations == 5)
@@ -1131,83 +1232,8 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
     s_out<<"iterations = "<<iterations<<"\n";
     clog<<"iterations = "<<iterations<<"\n";
 
-    efloat_t prior = P.prior();
-    efloat_t likelihood = P.likelihood();
-    efloat_t Pr = prior * likelihood;
-
-    if (iterations%subsample == 0) 
-    {
-      // Log the alignments every 10th sample - they take a lot of space!
-      bool show_alignment = (iterations%(10*subsample) == 0);
-
-      // Don't print alignments into console log file:
-      //  - Its hard to separate alignments from different partitions.
-      print_stats(s_out,s_trees,P,false);
-
-      // Print the alignments here instead
-      if (show_alignment) {
-	for(int i=0;i<P.n_data_partitions();i++)
-	{
-	  (*files[5+i])<<"iterations = "<<iterations<<"\n\n";
-	  if (not iterations or P[i].variable_alignment())
-	    (*files[5+i])<<standardize(*P[i].A, *P.T)<<"\n";
-	}
-      }
-
-      // Write parameter values to parameter log file
-      s_parameters<<iterations<<"\t";
-      s_parameters<<prior<<"\t";
-      for(int i=0;i<P.n_data_partitions();i++)
-	if (P[i].variable_alignment()) s_parameters<<P[i].prior_alignment()<<"\t";
-      s_parameters<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
-
-      // Sort parameter values to resolve identifiability and then output them.
-      vector<double> values = P.parameters();
-      for(int i=0;i<un_identifiable_indices.size();i++) 
-	values = make_identifiable(values,un_identifiable_indices[i]);
-      s_parameters<<join(values,'\t');
-
-      unsigned total_length=0;
-      unsigned total_indels=0;
-      unsigned total_indel_lengths=0;
-      unsigned total_substs=0;
-      for(int i=0;i<P.n_data_partitions();i++)
-      {
-	if (P[i].variable_alignment()) {
-	  unsigned x1 = P[i].A->length();
-	  total_length += x1;
-
-	  unsigned x2 = n_indels(*P[i].A, *P[i].T);
-	  total_indels += x2;
-
-	  unsigned x3 = total_length_indels(*P[i].A, *P[i].T);
-	  total_indel_lengths += x3;
-	  s_parameters<<"\t"<<x1;
-	  s_parameters<<"\t"<<n_indels(*P[i].A, *P[i].T);
-	  s_parameters<<"\t"<<x3;
-	}
-	unsigned x4 = n_mutations(*P[i].A, *P[i].T);
-	total_substs += x4;
-
-	s_parameters<<"\t"<<x4;
-	if (const Triplets* Tr = dynamic_cast<const Triplets*>(&P[i].get_alphabet()))
-	  s_parameters<<"\t"<<n_mutations(*P[i].A, *P[i].T ,nucleotide_cost_matrix(*Tr));
-	if (const Codons* C = dynamic_cast<const Codons*>(&P[i].get_alphabet()))
-	  s_parameters<<"\t"<<n_mutations(*P[i].A, *P[i].T, amino_acid_cost_matrix(*C));
-      }
-      if (P.n_data_partitions() > 1) {
-	if (P.variable_alignment()) {
-	  s_parameters<<"\t"<<total_length;
-	  s_parameters<<"\t"<<total_indels;
-	  s_parameters<<"\t"<<total_indel_lengths;
-	}
-	s_parameters<<"\t"<<total_substs;
-      }
-      double mu_scale=0;
-      for(int i=0;i<P.n_data_partitions();i++)
-	mu_scale += P[i].branch_mean()*weights[i];
-      s_parameters<<"\t"<<mu_scale*length(*P.T)<<endl;
-    }
+    if (iterations%subsample == 0)
+      mcmc_log(iterations,subsample,*P.as<Parameters>(),s_out,s_parameters,s_trees,s_map,files,MAP_score,un_identifiable_indices,weights);
 
     if (iterations%20 == 0 or iterations < 20) {
       std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
@@ -1216,13 +1242,6 @@ void Sampler::go(Parameters& P,int subsample,const int max_iter,
       std::cout<<endl;
       std::cout<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
       std::cout<<default_timer_stack.report()<<endl;
-    }
-
-    //---------------------- estimate MAP ----------------------//
-    if (Pr > MAP_score) {
-      MAP_score = Pr;
-      s_map<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
-      print_stats(s_map,s_map,P);
     }
 
     //------------------- move to new position -----------------//

@@ -1176,8 +1176,9 @@ int main(int argc,char* argv[])
       clog.flush() ; clog.rdbuf(s_err.rdbuf());
 
       //------ Redirect output to files -------//
+      owned_ptr<Probability_Model> Ptr(P);
 
-      do_pre_burnin(args,P,s_out,out_both);
+      do_pre_burnin(args,Ptr,s_out,out_both);
       
       out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
       out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
@@ -1192,7 +1193,7 @@ int main(int argc,char* argv[])
 
 
       //-------- Start the MCMC  -----------//
-      do_sampling(args,P,max_iterations,files);
+      do_sampling(args,Ptr ,max_iterations,files);
 
       // Close all the streams, and write a notification that we finished all the iterations.
       // close_files(files);

@@ -198,11 +198,12 @@ void add_dirichlet_slice_moves(Probability_Model& P, const string& name,
   M.add(weight,M2);
 }
 
-MCMC::MoveAll get_scale_MH_moves(Parameters& P)
+MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
 {
   MCMC::MoveAll MH_moves("parameters:scale:MH");
-  for(int i=0;i<P.n_branch_means();i++)
-    add_MH_move(P, log_scaled(between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
+  for(int i=0;i<P.as<Parameters>()->n_branch_means();i++)
+    add_MH_move(*P, log_scaled(between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),
+		"mu_scale_sigma",     0.6,  MH_moves);
   return MH_moves;
 }
 
@@ -612,7 +613,8 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   return parameter_moves;
 }
 
-void do_pre_burnin(const variables_map& args, Parameters& P,ostream& out_log,ostream& out_both)
+void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
+		   ostream& out_log,ostream& out_both)
 {
   using namespace MCMC;
 
@@ -623,20 +625,21 @@ void do_pre_burnin(const variables_map& args, Parameters& P,ostream& out_log,ost
   double t1 = total_cpu_time();
   out_both<<"Beginning pre-burnin: "<<n_pre_burnin<<" iterations."<<endl;
 
-  if (P.variable_alignment() and not args.count("tree"))
-    P.variable_alignment(false);
+  Parameters& PP = *P.as<Parameters>();
+  if (P.as<Parameters>()->variable_alignment() and not args.count("tree"))
+    P.as<Parameters>()->variable_alignment(false);
 
   MoveStats Stats;
   // 1. First choose the scale of the tree
   {
     MoveAll pre_burnin("pre-burnin");
 
-    pre_burnin.add(3,get_scale_slice_moves(P));
+    pre_burnin.add(3,get_scale_slice_moves(*P.as<Parameters>()));
     for(int i=0;i<3;i++) {
-      out_both<<" Tree size #"<<i+1<<"   likelihood = "<<P.likelihood();
-      for(int j=0;j<P.n_branch_means();j++)
-	out_both<<"     mu"<<j+1<<" = "<<P.branch_mean(j)<<endl;
-      show_parameters(out_log,P);
+      out_both<<" Tree size #"<<i+1<<"   likelihood = "<<P->likelihood();
+      for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
+	out_both<<"     mu"<<j+1<<" = "<<P.as<Parameters>()->branch_mean(j)<<endl;
+      show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
     }
   }
@@ -646,7 +649,7 @@ void do_pre_burnin(const variables_map& args, Parameters& P,ostream& out_log,ost
   if (not args.count("tree"))
   {
     MoveAll pre_burnin("pre-burnin");
-    pre_burnin.add(4,get_scale_slice_moves(P));
+    pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
 				      "scale_means_only","mean"));
     pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths,
@@ -654,10 +657,10 @@ void do_pre_burnin(const variables_map& args, Parameters& P,ostream& out_log,ost
     pre_burnin.add(1,SingleMove(sample_SPR_search_all,"SPR_search_all",
 				"tree:topology:lengths"));
     for(int i=0;i<n_pre_burnin;i++) {
-      out_both<<" SPR #"<<i+1<<"   likelihood = "<<P.likelihood();
-      for(int j=0;j<P.n_branch_means();j++)
-	out_both<<"     mu"<<j+1<<" = "<<P.branch_mean(j)<<endl;
-      show_parameters(out_log,P);
+      out_both<<" SPR #"<<i+1<<"   likelihood = "<<P->likelihood();
+      for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
+	out_both<<"     mu"<<j+1<<" = "<<P.as<Parameters>()->branch_mean(j)<<endl;
+      show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
     }
   }
@@ -668,41 +671,41 @@ void do_pre_burnin(const variables_map& args, Parameters& P,ostream& out_log,ost
   {
     MoveAll pre_burnin("pre-burnin");
 
-    pre_burnin.add(4,get_scale_slice_moves(P));
+    pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
 				      "scale_means_only","mean"));
     pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,
 				"NNI_and_lengths","topology:lengths"));
-    int n_pre_burnin2 = n_pre_burnin + (int)log(P.T->n_leaves());
+    int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->T->n_leaves());
     for(int i=0;i<n_pre_burnin2;i++) {
-      out_both<<" NNI #"<<i+1<<"   likelihood = "<<P.likelihood();
-      for(int j=0;j<P.n_branch_means();j++)
-	out_both<<"     mu"<<j+1<<" = "<<P.branch_mean(j)<<endl;
-      show_parameters(out_log,P);
+      out_both<<" NNI #"<<i+1<<"   likelihood = "<<P->likelihood();
+      for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
+	out_both<<"     mu"<<j+1<<" = "<<P.as<Parameters>()->branch_mean(j)<<endl;
+      show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
     }
   }
   out_both<<endl;
 
   // Set all alignments that COULD be variable back to being variable.
-  P.variable_alignment(true);
+  P.as<Parameters>()->variable_alignment(true);
 
   // 4. Then do a further tree search - NNI - w/ the actual model
   if (not args.count("tree"))
   {
     MoveAll pre_burnin("pre-burnin");
 
-    pre_burnin.add(4,get_scale_slice_moves(P));
+    pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
 				      "scale_means_only2","mean"));
     pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,
 				"NNI_and_lengths2","topology:lengths"));
-    int n_pre_burnin2 = n_pre_burnin + (int)log(P.T->n_leaves());
+    int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->T->n_leaves());
     for(int i=0;i<n_pre_burnin2;i++) {
-      out_both<<" NNI/A #"<<i+1<<"   likelihood = "<<P.likelihood()<<"   Pr = "<<P.probability();
-      for(int j=0;j<P.n_branch_means();j++)
-	out_both<<"    mu"<<j+1<<" = "<<P.branch_mean(j)<<endl;
-      show_parameters(out_log,P);
+      out_both<<" NNI/A #"<<i+1<<"   likelihood = "<<P->likelihood()<<"   Pr = "<<P->probability();
+      for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
+	out_both<<"    mu"<<j+1<<" = "<<P.as<Parameters>()->branch_mean(j)<<endl;
+      show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
     }
   }
@@ -721,27 +724,32 @@ void do_pre_burnin(const variables_map& args, Parameters& P,ostream& out_log,ost
 /// \param max_iterations  The number of iterations to run (unless interrupted).
 /// \param files           Files to log output into
 ///
-void do_sampling(const variables_map& args,Parameters& P,long int max_iterations,
+void do_sampling(const variables_map& args,
+		 owned_ptr<Probability_Model>& P,
+		 long int max_iterations,
 		 vector<ostream*>& files)
 {
   using namespace MCMC;
 
-  bool has_imodel = P.variable_alignment();
+  Parameters& PP = *P.as<Parameters>();
 
-  if (has_imodel)
-    for(int i=0;i<P.n_data_partitions();i++)
-      check_internal_nodes_connected(*P[i].A,*P[i].T);
+  bool has_imodel = PP.variable_alignment();
+
+  if (has_imodel) {
+    for(int i=0;i<PP.n_data_partitions();i++)
+      check_internal_nodes_connected(*PP[i].A,*PP[i].T);
+  }
 
   //----------------------- alignment -------------------------//
-  MoveAll alignment_moves = get_alignment_moves(P);
+  MoveAll alignment_moves = get_alignment_moves(PP);
 
   //------------------------- tree ----------------------------//
-  MoveAll tree_moves = get_tree_moves(P);
+  MoveAll tree_moves = get_tree_moves(PP);
 
   //-------------- parameters (parameters_moves) --------------//
-  MoveAll MH_but_no_slice_moves = get_parameter_MH_but_no_slice_moves(P);
-  MoveAll slice_moves = get_parameter_slice_moves(P);
-  MoveAll MH_moves = get_parameter_MH_moves(P);
+  MoveAll MH_but_no_slice_moves = get_parameter_MH_but_no_slice_moves(PP);
+  MoveAll slice_moves = get_parameter_slice_moves(PP);
+  MoveAll MH_moves = get_parameter_MH_moves(PP);
 
   //------------------ Construct the sampler  -----------------//
   int subsample = args["subsample"].as<int>();
@@ -756,14 +764,14 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   // - It does call the likelihood function, doesn't it?
   // FIXME -   However, it is probably not so important to resample most parameters in a way that is interleaved with stuff... (?)
   // FIXME -   Certainly, we aren't going to be interleaved with branches, anyway!
-  sampler.add(5 + log(P.T->n_branches()), MH_but_no_slice_moves);
-  if (P.keys["enable_MH_sampling"] > 0.5)
-    sampler.add(5 + log(P.T->n_branches()),MH_moves);
+  sampler.add(5 + log(PP.T->n_branches()), MH_but_no_slice_moves);
+  if (P->keys["enable_MH_sampling"] > 0.5)
+    sampler.add(5 + log(PP.T->n_branches()),MH_moves);
   else
     sampler.add(1,MH_moves);
   // Question: how are these moves intermixed with the other ones?
 
-  if (P.keys["disable_slice_sampling"] < 0.5)
+  if (P->keys["disable_slice_sampling"] < 0.5)
     sampler.add(1,slice_moves);
 
   //------------------- Enable and Disable moves ---------------------------//
@@ -791,16 +799,16 @@ void do_sampling(const variables_map& args,Parameters& P,long int max_iterations
   s_out<<"\n";
 
   int total_c = 0;
-  for(int i=0;i<P.n_data_partitions();i++)
-    total_c += P[i].alignment_constraint.size1();
+  for(int i=0;i<PP.n_data_partitions();i++)
+    total_c += PP[i].alignment_constraint.size1();
 
   if (total_c > 0)
     std::cerr<<"Using "<<total_c<<" constraints.\n";
 
   //FIXME - report which partition constraints are satisfied in.
 
-  for(int i=0;i<P.n_data_partitions();i++) {
-    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint,*P[i].A);
+  for(int i=0;i<PP.n_data_partitions();i++) {
+    dynamic_bitset<> s2 = constraint_satisfied(PP[i].alignment_constraint,*PP[i].A);
     dynamic_bitset<> s1(s2.size());
     report_constraints(s1,s2);
   } 
