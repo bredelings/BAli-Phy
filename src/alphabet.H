@@ -290,7 +290,7 @@ public:
 /// An alphabet of triplets of nucleotides
 class Triplets: public alphabet {
 protected:
-  OwnedPointer<Nucleotides> N;
+  owned_ptr<Nucleotides> N;
 
   /// (codon,position) -> nucleotide
   std::vector<std::vector<int> > sub_nuc_table;
@@ -414,8 +414,8 @@ public:
 /// A Triplets alphabet with a mapping to an AminoAcids alphabet
 class Codons: public Triplets {
 protected:
-  OwnedPointer<AminoAcids> A;
-  OwnedPointer<Genetic_Code> G;
+  owned_ptr<AminoAcids> A;
+  owned_ptr<Genetic_Code> G;
   std::vector<int> translation_table;
 
   void setup_table();

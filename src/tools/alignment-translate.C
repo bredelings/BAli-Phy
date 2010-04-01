@@ -111,7 +111,7 @@ int main(int argc,char* argv[])
     alphabets.push_back(shared_ptr<const alphabet>(new RNA));
     A1.load(alphabets, sequences);
 
-    OwnedPointer<Nucleotides> N(dynamic_cast<Nucleotides*>(A1.get_alphabet().clone()));
+    owned_ptr<Nucleotides> N(dynamic_cast<const Nucleotides&>(A1.get_alphabet()));
     assert(N);
 
     //------------------ Reverse Complement? -------------------//

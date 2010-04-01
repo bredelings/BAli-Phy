@@ -147,7 +147,7 @@ namespace MCMC {
   {
   protected:
     /// This list of moves
-    std::vector<OwnedPointer<Move> > moves;
+    std::vector<owned_ptr<Move> > moves;
 
     /// This weight of each move
     std::vector<double> lambda;
@@ -243,7 +243,7 @@ namespace MCMC {
 
   /// A Move which runs a specific moves each round
   class MH_Move: public Move {
-    OwnedPointer<Proposal> proposal;
+    owned_ptr<Proposal> proposal;
   public:
     MH_Move* clone() const {return new MH_Move(*this);}
 

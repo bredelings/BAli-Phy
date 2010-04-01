@@ -105,26 +105,26 @@ void load_bali_phy_rc(boost::program_options::variables_map&,
 namespace substitution { class MultiModel; }
 
 /// Return a substitution::Model specified by args
-OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
+owned_ptr<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
 						  const alphabet& a,const std::valarray<double>& default_frequencies);
 
 /// Return a substitution::Model specified by name
-OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
+owned_ptr<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
 						  const std::string&,
 						  const alignment& A);
 
 /// Return a substitution::Model specified by args
-OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
+owned_ptr<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
 						  const alignment& A);
 
 /// Return a substitution::Model specified by name
-OwnedPointer<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
+owned_ptr<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
 						  const std::string&,
 						  const std::vector<alignment>& A);
 
 //--------------------------- Indel stuff --------------------------//
 class IndelModel;
-OwnedPointer<IndelModel> get_imodel(std::string);
+owned_ptr<IndelModel> get_imodel(std::string);
 
 template <typename T>
 class shared_items

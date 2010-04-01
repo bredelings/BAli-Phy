@@ -170,7 +170,7 @@ namespace substitution {
     return density;
   }
 
-  MultipleDistribution::MultipleDistribution(const std::vector<OwnedPointer<Distribution> >& models) 
+  MultipleDistribution::MultipleDistribution(const std::vector<owned_ptr<Distribution> >& models) 
   {
     // Set the rates and fractions
     for(int i=0;i<n_dists();i++) {

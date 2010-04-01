@@ -1413,7 +1413,7 @@ namespace substitution {
       if (std::abs(fm.sum() - 1.0) > 1.0e-5) cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<fm.sum()<<endl;
 
       // get a new copy of the sub-model and set the frequencies
-      sub_parameter_models[m] = &SubModel();
+      sub_parameter_models[m] = SubModel();
       sub_parameter_models[m]->frequencies(fm);
     }
   }
@@ -1644,7 +1644,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   MultiParameterModel::MultiParameterModel(const MultiModel& M,int p,int n) 
     :ReversibleWrapperOver<MultiModel>(M),
-     sub_parameter_models(vector<OwnedPointer<MultiModel> >(n,M)),
+     sub_parameter_models(vector<owned_ptr<MultiModel> >(n,M)),
      fraction(n),
      p_change(p),
      p_values(n)
@@ -2199,7 +2199,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return name;
   }
 
-  MixtureModel::MixtureModel(const std::vector<OwnedPointer<MultiModel> >& models)
+  MixtureModel::MixtureModel(const std::vector<owned_ptr<MultiModel> >& models)
   {
     for(int i=0;i<models.size();i++) {
       string pname = string("Mixture::p") + convertToString(i+1);

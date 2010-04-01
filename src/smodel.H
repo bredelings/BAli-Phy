@@ -591,7 +591,7 @@ namespace substitution {
   class IndependentNucleotideFrequencyModel: public TripletFrequencyModel,
 					 public SuperModelOver<SimpleFrequencyModel>
   {
-    OwnedPointer<SimpleFrequencyModel> triplets;
+    owned_ptr<SimpleFrequencyModel> triplets;
 
     void recalc(const std::vector<int>&);
 
@@ -633,7 +633,7 @@ namespace substitution {
 			       public SuperModelOver<SimpleFrequencyModel>
   {
   protected:
-    OwnedPointer<SimpleFrequencyModel> codons;
+    owned_ptr<SimpleFrequencyModel> codons;
 
     void recalc(const std::vector<int>&);
 
@@ -758,10 +758,10 @@ namespace substitution {
   {
   protected:
     /// The exchange model
-    OwnedPointer<AlphabetExchangeModel> S;
+    owned_ptr<AlphabetExchangeModel> S;
 
     /// The frequency model
-    OwnedPointer<ReversibleFrequencyModel> R;
+    owned_ptr<ReversibleFrequencyModel> R;
 
     void recalc(const std::vector<int>&);
 
@@ -927,7 +927,7 @@ namespace substitution {
   {
   protected:
     /// Components of the mixture - Reversible Markov models express as S+R
-    std::vector<OwnedPointer<SimpleReversibleMarkovModel> > sub_parameter_models;
+    std::vector<owned_ptr<SimpleReversibleMarkovModel> > sub_parameter_models;
 
     /// Fraction of the sites with each parameter value (weights on the mixture components)
     std::vector<double> fraction;
@@ -970,7 +970,7 @@ namespace substitution {
   {
   protected:
     /// Components of the mixture - Reversible Markov models express as S+R
-    std::vector<OwnedPointer<F81_Model> > sub_parameter_models;
+    std::vector<owned_ptr<F81_Model> > sub_parameter_models;
 
     /// Fraction of the sites with each parameter value (weights on the mixture components)
     std::vector<double> fraction;
@@ -1035,7 +1035,7 @@ namespace substitution {
   {
   protected:
     /// MultiModels w/ different values of the parameter set
-    std::vector<OwnedPointer<MultiModel> > sub_parameter_models;
+    std::vector<owned_ptr<MultiModel> > sub_parameter_models;
     /// Fraction of the sites with each parameter value
     std::vector<double> fraction;
 
@@ -1139,7 +1139,7 @@ namespace substitution {
     static const double inv_frac_mean;
     static const double max_inv_rate;
 
-    OwnedPointer<SimpleReversibleMarkovModel> INV;
+    owned_ptr<SimpleReversibleMarkovModel> INV;
 
   public:
     virtual WithINV* clone() const {return new WithINV(*this);}
@@ -1288,7 +1288,7 @@ namespace substitution {
       return SubModels(0).Alphabet();
     }
 
-    MixtureModel(const std::vector<OwnedPointer<MultiModel> >& models);
+    MixtureModel(const std::vector<owned_ptr<MultiModel> >& models);
   };
 
   
@@ -1296,8 +1296,8 @@ namespace substitution {
 			      public SuperModel
   {
   protected:
-    OwnedPointer<MultiModel> M;
-    OwnedPointer<ExchangeModel> S;
+    owned_ptr<MultiModel> M;
+    owned_ptr<ExchangeModel> S;
 
     valarray<double> pi;
 

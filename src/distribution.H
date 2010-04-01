@@ -58,7 +58,7 @@ namespace probability {
   class DistributionWrapper: public probability::Distribution
   {
   protected:
-    OwnedPointer<T> D;
+    owned_ptr<T> D;
   public:
     DistributionWrapper<T>* clone() const {return new DistributionWrapper<T>(*this);}
 
@@ -77,7 +77,7 @@ namespace probability {
     std::string name() const {return D->name();}
 
     DistributionWrapper()
-      :D(new T)
+      :D(claim(new T))
     {}
 
     ~DistributionWrapper() {}

@@ -74,7 +74,7 @@ public:
 class less_than: public Proposal_Fn
 {
   double max;
-  OwnedPointer<Proposal_Fn> proposal;
+  owned_ptr<Proposal_Fn> proposal;
 public:
   less_than* clone() const {return new less_than(*this);}
   double operator()(std::vector<double>& x,const std::vector<double>& p) const;
@@ -84,7 +84,7 @@ public:
 class more_than: public Proposal_Fn
 {
   double min;
-  OwnedPointer<Proposal_Fn> proposal;
+  owned_ptr<Proposal_Fn> proposal;
 public:
   more_than* clone() const {return new more_than(*this);}
   double operator()(std::vector<double>& x,const std::vector<double>& p) const;
@@ -95,7 +95,7 @@ class between: public Proposal_Fn
 {
   double min;
   double max;
-  OwnedPointer<Proposal_Fn> proposal;
+  owned_ptr<Proposal_Fn> proposal;
 public:
   between* clone() const {return new between(*this);}
   double operator()(std::vector<double>& x,const std::vector<double>& p) const;
@@ -104,7 +104,7 @@ public:
 
 class log_scaled: public Proposal_Fn
 {
-  OwnedPointer<Proposal_Fn> proposal;
+  owned_ptr<Proposal_Fn> proposal;
 public:
   log_scaled* clone() const {return new log_scaled(*this);}
   double operator()(std::vector<double>& x,const std::vector<double>& p) const;
@@ -113,7 +113,7 @@ public:
 
 class LOD_scaled: public Proposal_Fn
 {
-  OwnedPointer<Proposal_Fn> proposal;
+  owned_ptr<Proposal_Fn> proposal;
 public:
   LOD_scaled* clone() const {return new LOD_scaled(*this);}
   double operator()(std::vector<double>& x,const std::vector<double>& p) const;
@@ -122,7 +122,7 @@ public:
 
 class sorted: public Proposal_Fn
 {
-  OwnedPointer<Proposal_Fn> proposal;
+  owned_ptr<Proposal_Fn> proposal;
 public:
   sorted* clone() const {return new sorted(*this);}
   double operator()(std::vector<double>& x,const std::vector<double>& p) const;
@@ -131,7 +131,7 @@ public:
 
 class Proposal2: public Proposal
 {
-  OwnedPointer<Proposal_Fn> proposal;
+  owned_ptr<Proposal_Fn> proposal;
   std::vector<int> indices;
   std::vector<std::string> pnames;
 

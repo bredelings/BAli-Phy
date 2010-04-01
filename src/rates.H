@@ -102,14 +102,14 @@ namespace substitution {
 
     double moment(int m) const;
 
-    MultipleDistribution(const std::vector<OwnedPointer<Distribution> >&);
+    MultipleDistribution(const std::vector<owned_ptr<Distribution> >&);
 
     ~MultipleDistribution() {}
   };
 
 
   inline substitution::MultipleDistribution operator+(const Distribution& D1,const Distribution& D2) {
-    std::vector<OwnedPointer<Distribution> > temp;
+    std::vector<owned_ptr<Distribution> > temp;
     temp.push_back(D1);
     temp.push_back(D2);
     return substitution::MultipleDistribution(temp);

@@ -236,7 +236,7 @@ class SuperModelOver: virtual public SuperModel {
   
 protected:
   /// The sub-models this model is build upon
-  std::vector< OwnedPointer<SubModel_t> > sub_models;
+  std::vector< owned_ptr<SubModel_t> > sub_models;
 
   void insert_submodel(const std::string& name, const SubModel_t& M)
   {

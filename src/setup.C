@@ -714,11 +714,11 @@ SequenceTree load_constraint_tree(const string& filename,const vector<string>& n
   return constraint;
 }
 
-/// Return an OwnedPointer (possibly NULL) to an IndelModel or type \a name.
-OwnedPointer<IndelModel> get_imodel(string name) 
+/// Return an owned_ptr (possibly NULL) to an IndelModel or type \a name.
+owned_ptr<IndelModel> get_imodel(string name) 
 {
   //-------------Choose an indel model--------------//
-  OwnedPointer<IndelModel> imodel;
+  owned_ptr<IndelModel> imodel;
 
   // Default
   if (name == "") 

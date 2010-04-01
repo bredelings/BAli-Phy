@@ -234,7 +234,7 @@ public:
 
 /// ColorMap which makes the bg color fade almost to white if uncertain
 class whiten_colors: public ColorMap {
-  OwnedPointer<ColorMap> sub_map;
+  owned_ptr<ColorMap> sub_map;
   double min_fg;
   double min_bg;
 public:
@@ -257,7 +257,7 @@ public:
 
 /// ColorMap which switches the foreground and background colors
 class switch_fg_bg: public ColorMap {
-  OwnedPointer<ColorMap> sub_map;
+  owned_ptr<ColorMap> sub_map;
 public:
   switch_fg_bg* clone() const {return new switch_fg_bg(*this);}
 
@@ -277,7 +277,7 @@ public:
 
 /// ColorMap which sets the foreground color for best contrast
 class contrast: public ColorMap {
-  OwnedPointer<ColorMap> sub_map;
+  owned_ptr<ColorMap> sub_map;
 public:
   contrast* clone() const {return new contrast(*this);}
 
@@ -300,7 +300,7 @@ public:
 
 class ColorScheme: public Cloneable {
   Scale scale;
-  OwnedPointer<ColorMap> color_map;
+  owned_ptr<ColorMap> color_map;
 public:
   virtual ColorScheme* clone() const {return new ColorScheme(*this);}
 
@@ -486,18 +486,18 @@ Scale get_scale(const variables_map& args) {
   return scale;
 }
 
-OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps_different)
+owned_ptr<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps_different)
 {
-  OwnedPointer<ColorMap> color_map;
+  owned_ptr<ColorMap> color_map;
   string arg;
   if (match(string_stack,"plain",arg))
-    color_map = OwnedPointer<ColorMap>(new Plain_ColorMap);
+    color_map = claim(new Plain_ColorMap);
   else if (match(string_stack,"bw",arg))
-    color_map = OwnedPointer<ColorMap>(new BW_ColorMap);
+    color_map = claim(new BW_ColorMap);
   else if (match(string_stack,"RedBlue",arg))
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(0.7,1,gaps_different));
+    color_map = claim(new Rainbow_ColorMap(0.7,1,gaps_different));
   else if (match(string_stack,"BlueRed",arg))
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(1,0.7,gaps_different));
+    color_map = claim(new Rainbow_ColorMap(1,0.7,gaps_different));
   else if (match(string_stack,"Rainbow",arg)) 
   {
     double start = 0.666;
@@ -510,14 +510,14 @@ OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps
       end = v[1];
     }
 
-    color_map = OwnedPointer<ColorMap>(new Rainbow_ColorMap(start,end,gaps_different));
+    color_map = claim(new Rainbow_ColorMap(start,end,gaps_different));
   }
   else if (match(string_stack,"AA",arg))
-    color_map = OwnedPointer<ColorMap>(new AA_colors);
+    color_map = claim(new AA_colors);
   else if (match(string_stack,"DNA",arg))
-    color_map = OwnedPointer<ColorMap>(new DNA_colors);
+    color_map = claim(new DNA_colors);
   else if (match(string_stack,"RNA",arg))
-    color_map = OwnedPointer<ColorMap>(new DNA_colors);
+    color_map = claim(new DNA_colors);
   else
     throw myexception()<<"Unrecognized base color scheme '"<<string_stack.back()<<"'";
 
@@ -525,7 +525,7 @@ OwnedPointer<ColorMap> get_base_color_map(vector<string>& string_stack,bool gaps
 }
 
 
-OwnedPointer<ColorMap> get_color_map(const variables_map& args,bool gaps_different) 
+owned_ptr<ColorMap> get_color_map(const variables_map& args,bool gaps_different) 
 {
   // get the string stack
   vector<string> string_stack;
@@ -540,7 +540,7 @@ OwnedPointer<ColorMap> get_color_map(const variables_map& args,bool gaps_differe
   if (string_stack.empty())
     throw myexception()<<"Color scheme not specified. (but how?)";
   
-  OwnedPointer<ColorMap> color_map = get_base_color_map(string_stack,gaps_different);
+  owned_ptr<ColorMap> color_map = get_base_color_map(string_stack,gaps_different);
 
   string arg;
   while(string_stack.size()) {
@@ -567,13 +567,13 @@ OwnedPointer<ColorMap> get_color_map(const variables_map& args,bool gaps_differe
   return color_map;
 }
 
-OwnedPointer<ColorScheme> get_color_scheme(const variables_map& args) 
+owned_ptr<ColorScheme> get_color_scheme(const variables_map& args) 
 {
   bool gaps_different = false;
   if (args.count("gaps-different") and args["gaps-different"].as<string>() == "yes")
     gaps_different = true;
 
-  OwnedPointer<ColorMap> color_map = get_color_map(args,gaps_different);
+  owned_ptr<ColorMap> color_map = get_color_map(args,gaps_different);
   assert(color_map);
 
   Scale scale = get_scale(args);
@@ -666,7 +666,7 @@ int main(int argc,char* argv[])
     alignment A = load_A(args,false);
 
     //---- Find mapping from colorfile to alignment sequence order -----//
-    OwnedPointer<ColorScheme> color_scheme = get_color_scheme(args);
+    owned_ptr<ColorScheme> color_scheme = get_color_scheme(args);
 
     //---------- Read alignment uncertainty, if available --------------//
     ublas::matrix<double> colors(A.length(),A.n_sequences()+1);

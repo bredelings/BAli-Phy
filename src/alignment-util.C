@@ -1241,7 +1241,7 @@ alignment complement(const alignment& A)
 {
   const alphabet& a = A.get_alphabet();
 
-  OwnedPointer<Nucleotides> N(dynamic_cast<Nucleotides*>(a.clone()));
+  owned_ptr<Nucleotides> N(dynamic_cast<const Nucleotides&>(a));
 
   if (not N)
     throw myexception()<<"Sequences have alphabet "<<a.name<<" -- reverse complement not allowed";
@@ -1260,7 +1260,7 @@ alignment reverse_complement(const alignment& A)
 {
   const alphabet& a = A.get_alphabet();
 
-  OwnedPointer<Nucleotides> N(dynamic_cast<Nucleotides*>(a.clone()));
+  owned_ptr<Nucleotides> N(dynamic_cast<const Nucleotides&>(a));
 
   if (not N)
     throw myexception()<<"Sequences have alphabet "<<a.name<<" -- reverse complement not allowed";

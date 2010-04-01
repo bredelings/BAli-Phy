@@ -91,7 +91,7 @@ class likelihood: public function
 protected:
   alignment A;
   SequenceTree T;
-  OwnedPointer<substitution::MultiModel> smodel;
+  owned_ptr<substitution::MultiModel> smodel;
   mutable Likelihood_Cache LC;
   vector<int> parameters;
 public:
@@ -483,7 +483,7 @@ int main(int argc,char* argv[])
     cout<<"%similarity = \n";
     print_lower(cout,T.get_sequences(),S)<<"\n";
 
-    OwnedPointer<substitution::MultiModel> smodel_in = get_smodel(args,A);
+    owned_ptr<substitution::MultiModel> smodel_in = get_smodel(args,A);
     set_parameters(*smodel_in,args);
     cout<<"Using substitution model: "<<smodel_in->name()<<endl;
     smodel_in->set_rate(1);
@@ -501,7 +501,7 @@ int main(int argc,char* argv[])
     analyze_rates(A,T,*smodel_in);
 
     //------- Estimate branch lengths -------------//
-    OwnedPointer<substitution::MultiModel> smodel_est = smodel_in;
+    owned_ptr<substitution::MultiModel> smodel_est = smodel_in;
     SequenceTree T2 = T;
 
     if (args.count("search")) {

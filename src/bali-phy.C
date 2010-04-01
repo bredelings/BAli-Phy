@@ -744,7 +744,7 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
     for(int j=0;j<smodel_names_mapping.n_partitions_for_item(i);j++)
       alignments.push_back(A[smodel_names_mapping.partitions_for_item[i][j]]);
 
-    OwnedPointer<substitution::MultiModel> full_smodel = get_smodel(args,
+    owned_ptr<substitution::MultiModel> full_smodel = get_smodel(args,
 								    smodel_names_mapping.unique(i),
 								    alignments);
     polymorphic_cow_ptr<substitution::MultiModel> temp (*full_smodel);
@@ -759,7 +759,7 @@ get_imodels(const shared_items<string>& imodel_names_mapping)
   vector<polymorphic_cow_ptr<IndelModel> > imodels;
   for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
   {
-    OwnedPointer<IndelModel> full_imodel = get_imodel(imodel_names_mapping.unique(i));
+    owned_ptr<IndelModel> full_imodel = get_imodel(imodel_names_mapping.unique(i));
 
     polymorphic_cow_ptr<IndelModel> temp (*full_imodel);
     imodels.push_back(temp);
