@@ -29,10 +29,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <string>
 #include <valarray>
-#include <map>
 #include "alphabet.H"
 #include "mytypes.H"
 #include "sequencetree.H"
+#include "probability-model.H"
 #include "smodel.H"
 #include "imodel.H"
 #include "alignment.H"
@@ -45,26 +45,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "cached_value.H"
 
 //------------------------------- parameter-containing class --------------------------//
-
-
-// We could derive from ::Model in order to avoid conflicts with its name() function when we define that.
-class Probability_Model: virtual public Model
-{
-public:
-  /// An object for key-value pairs.
-  std::map<std::string,double> keys;
-
-  virtual Probability_Model* clone() const =0;
-
-  // The prior, likelihood, and probability
-  //  (We inherit 'this->prior()' from class Model)
-  virtual efloat_t probability() const {return prior() * likelihood();}
-  virtual efloat_t likelihood() const {return 1.0;}
-
-  virtual efloat_t heated_prior() const {return prior();}
-  virtual efloat_t heated_likelihood() const {return likelihood();}
-  virtual efloat_t heated_probability() const {return heated_prior() * heated_likelihood();}
-};
 
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
