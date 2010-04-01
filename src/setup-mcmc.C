@@ -53,7 +53,7 @@ using std::ostream;
 /// \param M       The group of moves to which to add the newly-created sub-move
 /// \param weight  How often to run this move.
 ///
-void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, 
+void add_MH_move(Probability_Model& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, 
 		 MCMC::MoveAll& M,double weight=1)
 {
   if (name.size() and name[name.size()-1] == '*')
@@ -95,7 +95,7 @@ void add_MH_move(Parameters& P,const Proposal_Fn& p, const string& name, const s
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
-void add_slice_moves(Parameters& P, const string& name, 
+void add_slice_moves(Probability_Model& P, const string& name, 
 		     const string& pname, double W,
 		     bool lower_bound, double lower,
 		     bool upper_bound, double upper,
@@ -134,7 +134,7 @@ void add_slice_moves(Parameters& P, const string& name,
 /// \param f2            The inverse of f1.
 /// \param weight        How often to run this move.
 ///
-void add_slice_moves(Parameters& P, const string& name, 
+void add_slice_moves(Probability_Model& P, const string& name, 
 		     const string& pname, double W,
 		     bool lower_bound, double lower,
 		     bool upper_bound, double upper,
@@ -171,7 +171,7 @@ void add_slice_moves(Parameters& P, const string& name,
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
-void add_dirichlet_slice_moves(Parameters& P, const string& name, 
+void add_dirichlet_slice_moves(Probability_Model& P, const string& name, 
 			       MCMC::MoveAll& M,
 			       double weight = 1
 			       )
