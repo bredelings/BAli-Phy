@@ -169,6 +169,9 @@ int data_partition::seqlength(int n) const
 
 void data_partition::note_sequence_length_changed(int n)
 {
+  if (not variable_alignment())
+    throw myexception()<<"Alignment variation is OFF: how can the sequence length change?";
+
   cached_sequence_lengths[n].invalidate();
 }
 
@@ -577,19 +580,22 @@ void Parameters::subA_index_allow_invalid_branches(bool b)
 void Parameters::note_alignment_changed_on_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->note_alignment_changed_on_branch(b);
+    if (data_partitions[i]->variable_alignment())
+      data_partitions[i]->note_alignment_changed_on_branch(b);
 }
 
 void Parameters::note_alignment_changed()
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->note_alignment_changed();
+    if (data_partitions[i]->variable_alignment())
+      data_partitions[i]->note_alignment_changed();
 }
 
 void Parameters::note_sequence_length_changed(int n)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->note_sequence_length_changed(n);
+    if (data_partitions[i]->variable_alignment())
+      data_partitions[i]->note_sequence_length_changed(n);
 }
 
 void Parameters::recalc(const vector<int>& indices)
