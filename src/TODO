@@ -3,12 +3,12 @@
 Mostly: Documentation, Reporting/Summarization
 Also: Constraints, Speed
 FIX: Make SPR recompute the attachment probability when the alignment changes.
-FIX: Remove 'invariant'
 BUG: Is the NNI+A thing really TWICE as slow on 18S?
 BUG: How can the no-sequence version of bglobin.fasta be SLOW (with codon models?)
 - spending a fair bit of time in recalc_smodel( )
 - spending all its time exponentiating branch lengths?
 ISSUE: How can we handle correlation of lambda & invariant?
+ - Remove 'invariant'?
 
 Search: Can we force it to evaluate a sum over alignments for at least a few other trees if the
       current branch comes out best?
