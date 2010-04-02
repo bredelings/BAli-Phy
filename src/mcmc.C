@@ -983,21 +983,29 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M)
 {
   vector< vector< vector<int> > > indices;
 
-  vector< vector<int> > DP;
+  int n_smodels = dynamic_cast<const Parameters&>(M).n_smodels();
 
-  if (parameters_with_extension(M, "DP::rate*").size()  )
+  for(int i=0;i<n_smodels+1;i++) 
   {
-    DP.push_back( parameters_with_extension(M, "DP::rate*") );
-    DP.push_back( parameters_with_extension(M, "DP::f*") );
-    indices.push_back( DP );
-  }
+    string prefix = "^";
+    if (i>0)
+      prefix = string("S")+convertToString(i) + "::";
 
-  vector< vector<int> > M3;
-  if (parameters_with_extension(M, "M3::omega*").size() )
-  {
-    M3.push_back( parameters_with_extension(M, "M3::omega*") );
-    M3.push_back( parameters_with_extension(M, "M3::f*") );
-    indices.push_back( M3 );
+    vector< vector<int> > DP;
+    if (parameters_with_extension(M, prefix + "DP::rate*").size()  )
+    {
+      DP.push_back( parameters_with_extension(M, prefix + "DP::rate*") );
+      DP.push_back( parameters_with_extension(M, prefix + "DP::f*") );
+      indices.push_back( DP );
+    }
+
+    vector< vector<int> > M3;
+    if (parameters_with_extension(M, prefix + "M3::omega*").size() )
+    {
+      M3.push_back( parameters_with_extension(M, prefix + "M3::omega*") );
+      M3.push_back( parameters_with_extension(M, prefix + "M3::f*") );
+      indices.push_back( M3 );
+    }
   }
 
   return indices;
