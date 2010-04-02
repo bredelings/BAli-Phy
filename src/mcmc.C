@@ -1264,7 +1264,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     // This move doesn't respect up/down at the moment
     //exchange_random_pairs(iterations,P,*this);
 
-    exchange_adjacent_pairs(iterations,P,*this);
+    exchange_adjacent_pairs(iterations,*P.as<Parameters>(),*this);
 #endif
   }
 
