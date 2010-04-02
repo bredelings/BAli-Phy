@@ -1197,6 +1197,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   /// Find parameters to fix for the first 5 iterations
   vector<string> restore_names;
   if (not defined(P->keys,"free-imodel")) {
+    restore_names.push_back("invariant");
     restore_names.push_back("lambda");
     restore_names.push_back("delta");
     restore_names.push_back("epsilon");
