@@ -275,15 +275,12 @@ efloat_t data_partition::prior_alignment() const
 	cached_alignment_counts_for_branch[b] = get_path_counts(AA,target,source);
       }
 #ifndef NDEBUG
-      else
-      {
-	int target = TT.branch(b).target();
-	int source  = TT.branch(b).source();
-	ublas::matrix<int> counts = get_path_counts(AA,target,source);
-	for(int i=0;i<counts.size1();i++)
-	  for(int j=0;j<counts.size2();j++)
-	    assert(cached_alignment_counts_for_branch[b].value()(i,j) == counts(i,j));
-      }
+      int target = TT.branch(b).target();
+      int source  = TT.branch(b).source();
+      ublas::matrix<int> counts = get_path_counts(AA,target,source);
+      for(int i=0;i<counts.size1();i++)
+	for(int j=0;j<counts.size2();j++)
+	  assert(cached_alignment_counts_for_branch[b].value()(i,j) == counts(i,j));
 #endif
     }
 
@@ -296,7 +293,10 @@ efloat_t data_partition::prior_alignment() const
 #ifndef NDEBUG      
       int target = TT.branch(b).target();
       int source  = TT.branch(b).source();
-      assert(std::abs(log(cached_alignment_prior_for_branch[b]) - log(prior_branch(AA, branch_HMMs[b], target, source))) < 1.0e-10);
+      efloat_t p1 = cached_alignment_prior_for_branch[b];
+      efloat_t p2 = prior_branch(AA, branch_HMMs[b], target, source);
+      double error = log(p1) - log(p2);
+      assert(not different(cached_alignment_prior_for_branch[b], prior_branch(AA, branch_HMMs[b], target, source)));
 #endif
     }
 
@@ -308,7 +308,7 @@ efloat_t data_partition::prior_alignment() const
   }
 
   
-  assert(std::abs(log(cached_alignment_prior) - log(::prior_HMM(*this))) < 1.0e-10);
+  assert(not different(cached_alignment_prior, ::prior_HMM(*this)));
 
   return cached_alignment_prior;
 }

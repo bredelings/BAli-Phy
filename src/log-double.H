@@ -175,9 +175,21 @@ inline bool operator!=(log_double_t x,double y) {
 
 #undef decl_double
 
-inline log_double_t pow(log_double_t x,double p) {
+inline log_double_t pow(log_double_t x,double p) 
+{
   x.log() *= p;
   return x;
+}
+
+inline bool different(log_double_t x,log_double_t y,double tol=1.0e-9)
+{
+  double diff = log(x) - log(y);
+
+  if (std::abs(diff)<tol) return false;
+
+  if (x == y) return false;
+
+  return true;
 }
 
 template<class T> T exp(double);
@@ -195,6 +207,5 @@ template<> inline log_double_t pow<log_double_t>(double x,double p) {
   y.log() = p * ::log(x);
   return y;
 }
-
 
 #endif
