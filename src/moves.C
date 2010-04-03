@@ -356,7 +356,7 @@ void walk_tree_sample_NNI(owned_ptr<Probability_Model>& P, MoveStats& Stats)
   for(int i=0;i<branches.size();i++) 
   {
     int b = branches[i];
-    if (myrandomf() < 0.5)
+    if (myrandomf() < 0.95)
       three_way_topology_sample(P,Stats,b);
     else
       two_way_NNI_sample(P,Stats,b);
