@@ -452,7 +452,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 
   //FIXME - doesn't yet deal with gaps=star
   if (has_imodel)
-    NNI_move.add(0.025,MoveArgSingle("three_way_NNI_and_A","alignment:alignment_branch:nodes:topology",
+    NNI_move.add(0.001,MoveArgSingle("three_way_NNI_and_A","alignment:alignment_branch:nodes:topology",
 				   three_way_topology_and_alignment_sample,
 				     internal_branches)
 		 ,false
