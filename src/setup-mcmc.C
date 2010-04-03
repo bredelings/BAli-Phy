@@ -466,8 +466,8 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
   }
   else {
     SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat","topology:lengths"));
-    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths"));
-    SPR_move.add(10,SingleMove(sample_SPR_all,"SPR_and_A_all","topology:lengths"));
+    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_nodes","topology:lengths"));
+    SPR_move.add(10,SingleMove(sample_SPR_all,"SPR_all","topology:lengths"));
   }
 
   topology_move.add(1,NNI_move,false);
