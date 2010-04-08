@@ -888,7 +888,8 @@ if ($#var_names != -1) {
 my $tne_string = `pickout -n Ne < Results/partitions.bs`;
 my @tne_array = split(/\n/,$tne_string);
 @tne_array = sort {$a <=> $b} @tne_array;
-my $min_tNe = $tne_array[0];
+#my $min_tNe = $tne_array[0];
+my $min_tNe = `pickout -n 'min Ne' < Results/partitions.bs`;
 
 my @sne = sort {$a <=> $b} values(%Ne);
 my $min_Ne = $sne[0];
