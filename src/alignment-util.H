@@ -154,6 +154,20 @@ double fraction_homologous(const alignment& A,int s1,int s2);
 
 unsigned n_homologous(const alignment& A,int s1,int s2);
 
+unsigned n_letters(const alignment& A, int c, bool);
+
+boost::dynamic_bitset<> letter_informative_sites(const alignment& A);
+unsigned n_letter_informative_sites(const alignment& A);
+
+boost::dynamic_bitset<> letter_variable_sites(const alignment& A);
+unsigned n_letter_variable_sites(const alignment& A);
+
+boost::dynamic_bitset<> gap_informative_sites(const alignment& A);
+unsigned n_gap_informative_sites(const alignment& A);
+
+boost::dynamic_bitset<> gap_variable_sites(const alignment& A);
+unsigned n_gap_variable_sites(const alignment& A);
+
 std::vector<unsigned> sequence_lengths(const alignment& A);
 
 std::vector<unsigned> sequence_lengths(const alignment& A,unsigned n);

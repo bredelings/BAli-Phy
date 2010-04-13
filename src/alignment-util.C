@@ -1155,6 +1155,181 @@ unsigned n_homologous(const alignment& A,int s1,int s2)
   return same;;
 }
 
+void count_gaps(const alignment& A, int c, valarray<int>& counts)
+{
+  const alphabet& a = A.get_alphabet();
+  assert(counts.size() == 2);
+
+  counts = 0;
+  for(int i=0;i<A.n_sequences();i++) 
+  {
+    int l = A(c,i);
+    if (a.is_feature(l))
+      counts[0]++;
+    else if (l == alphabet::gap)
+      counts[1]++;
+  }
+}
+
+
+void count_letters(const alignment& A, int c, valarray<int>& counts)
+{
+  const alphabet& a = A.get_alphabet();
+  assert(counts.size() == a.size());
+
+  counts = 0;
+  for(int i=0;i<A.n_sequences();i++) 
+  {
+    int l = A(c,i);
+    if (a.is_letter(l))
+      counts[l]++;
+  }
+}
+
+int n_letters_with_count_at_least(const valarray<int>& count,int level) 
+{
+  int n = 0;
+  for(int l=0;l<count.size();l++)
+    if (count[l] >= level) n++;
+  return n;
+}
+
+bool informative_counts(const valarray<int>& counts)
+{
+  return (n_letters_with_count_at_least(counts,2) >= 2);
+}
+
+bool variable_counts(const valarray<int>& counts)
+{
+  return (n_letters_with_count_at_least(counts,1) >= 2);
+}
+
+// This function ignores information in ambiguous letters
+dynamic_bitset<> letter_informative_sites(const alignment& A)
+{
+  const alphabet& a = A.get_alphabet();
+
+  valarray<int> counts(0, a.size());
+
+  dynamic_bitset<> columns(A.length());
+  for(int c=0; c<A.length(); c++)
+  {
+    count_letters(A,c,counts);
+    if (informative_counts(counts))
+      columns[c] = true;
+  }
+  return columns;
+}
+
+// This function ignores information in ambiguous letters
+unsigned n_letter_informative_sites(const alignment& A)
+{
+  const alphabet& a = A.get_alphabet();
+
+  valarray<int> counts(0, a.size());
+
+  unsigned n=0;
+  for(int c=0; c<A.length(); c++)
+  {
+    count_letters(A,c,counts);
+    if (informative_counts(counts))
+      n++;
+  }
+  return n;
+}
+
+// This function ignores information in ambiguous letters
+dynamic_bitset<> letter_variable_sites(const alignment& A)
+{
+  const alphabet& a = A.get_alphabet();
+
+  valarray<int> counts(0, a.size());
+
+  dynamic_bitset<> columns(A.length());
+  for(int c=0; c<A.length(); c++)
+  {
+    count_letters(A,c,counts);
+    if (variable_counts(counts))
+      columns[c] = true;
+  }
+  return columns;
+}
+
+// This function ignores information in ambiguous letters
+unsigned n_letter_variable_sites(const alignment& A)
+{
+  const alphabet& a = A.get_alphabet();
+
+  valarray<int> counts(0, a.size());
+
+  unsigned n=0;
+  for(int c=0; c<A.length(); c++)
+  {
+    count_letters(A,c,counts);
+    if (variable_counts(counts))
+      n++;
+  }
+  return n;
+}
+
+dynamic_bitset<> gap_informative_sites(const alignment& A)
+{
+  valarray<int> counts(0, 2);
+
+  dynamic_bitset<> columns(A.length());
+  for(int c=0; c<A.length(); c++)
+  {
+    count_gaps(A,c,counts);
+    if (informative_counts(counts))
+      columns[c] = true;
+  }
+  return columns;
+}
+
+unsigned n_gap_informative_sites(const alignment& A)
+{
+  valarray<int> counts(0, 2);
+
+  unsigned n=0;
+  for(int c=0; c<A.length(); c++)
+  {
+    count_gaps(A,c,counts);
+    if (informative_counts(counts))
+      n++;
+  }
+  return n;
+}
+
+
+dynamic_bitset<> gap_variable_sites(const alignment& A)
+{
+  valarray<int> counts(0, 2);
+
+  dynamic_bitset<> columns(A.length());
+  for(int c=0; c<A.length(); c++)
+  {
+    count_gaps(A,c,counts);
+    if (variable_counts(counts))
+      columns[c] = true;
+  }
+  return columns;
+}
+
+unsigned n_gap_variable_sites(const alignment& A)
+{
+  valarray<int> counts(0, 2);
+
+  unsigned n=0;
+  for(int c=0; c<A.length(); c++)
+  {
+    count_gaps(A,c,counts);
+    if (variable_counts(counts))
+      n++;
+  }
+  return n;
+}
+
+
 vector<unsigned> sequence_lengths(const alignment& A,unsigned n)
 {
   vector<unsigned> lengths(n);
