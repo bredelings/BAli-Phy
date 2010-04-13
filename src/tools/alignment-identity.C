@@ -48,11 +48,10 @@ void do_setup(const variables_map& args,vector<alignment>& alignments)
   unsigned skip = args["skip"].as<unsigned>();
 
   // --------------------- try ---------------------- //
-  if (log_verbose)
-  std::cerr<<"alignment-identity: Loading alignments...";
+  if (log_verbose) std::cerr<<"alignment-identity: Loading alignments...";
   list<alignment> As = load_alignments(std::cin,load_alphabets(args),skip,maxalignments);
   alignments.insert(alignments.begin(),As.begin(),As.end());
-  std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
+  if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (not alignments.size())
     throw myexception()<<"Alignment sample is empty.";
 }
@@ -231,6 +230,13 @@ double ave_aligned_fraction(const vector< ublas::matrix<int> >& Ms,
   return double(total)/(max1.size()+max2.size())/Ms.size();
 }
 
+/*
+ * Goal: Rewrite to output statistics in a tracer-readable form.
+ * Problem: Sometimes this would lead to N*N output variables... we just output the minimum.
+ * Current Solution: output the minimum average
+ * Alternative: output the average minimum
+ */ 
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -291,6 +297,71 @@ int main(int argc,char* argv[])
     
     //--------- matrix of alignabilities ----------//
     // get fraction of residues aligned at some level
+    if (args.count("analysis") and args["analysis"].as<string>() == "statistics")
+    {
+      vector<string> h;
+      h.push_back("L");
+	
+      h.push_back("letter_var");
+      h.push_back("letter_invar");
+      h.push_back("letter_inform");
+      h.push_back("letter_uninform");
+
+      h.push_back("gap_var");
+      h.push_back("gap_invar");
+      h.push_back("gap_inform");
+      h.push_back("gap_uninform");
+      
+      h.push_back("both_var");
+      h.push_back("both_invar");
+      h.push_back("both_inform");
+      h.push_back("both_uninform");
+
+      cout<<join(h,'\t')<<endl;
+
+      typedef list<alignment>::iterator iterator_t;
+      for(int i=0; i<alignments.size(); i++)
+      {
+	const alignment& AA = alignments[i];
+	int L = AA.length();
+
+	int letter_var = n_letter_variable_sites(AA);
+	int letter_invar = L - letter_var;
+	int letter_inform = n_letter_informative_sites(AA);
+	int letter_uninform = L - letter_inform;
+
+	int gap_var = n_gap_variable_sites(AA);
+	int gap_invar = L - gap_var;
+	int gap_inform = n_gap_informative_sites(AA);
+	int gap_uninform = L - gap_inform;
+
+	int both_var = (letter_variable_sites(AA) | gap_variable_sites(AA)).count();
+	int both_invar = L - both_var;
+	int both_inform = (letter_informative_sites(AA) | gap_informative_sites(AA)).count();
+	int both_uninform = L - both_inform;
+
+	vector<int> v;
+
+	v.push_back(L);
+	
+	v.push_back(letter_var);
+	v.push_back(letter_invar);
+	v.push_back(letter_inform);
+	v.push_back(letter_uninform);
+
+	v.push_back(gap_var);
+	v.push_back(gap_invar);
+	v.push_back(gap_inform);
+	v.push_back(gap_uninform);
+
+	v.push_back(both_var);
+	v.push_back(both_invar);
+	v.push_back(both_inform);
+	v.push_back(both_uninform);
+	cout<<join(v,'\t')<<endl;
+      }
+      exit(0);
+    }
     if (args.count("analysis") and 
 	(args["analysis"].as<string>() == "matrix" or args["analysis"].as<string>() == "nmatrix")) 
     {
