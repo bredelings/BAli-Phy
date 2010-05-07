@@ -591,6 +591,12 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
     // Perform the SPR operation
     int BM2 = SPR(*p[1].T, p[1].T->directed_branch(b1).reverse(), b2);
     assert(BM2 == BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
+
+    double LA = L[i]*uniform();
+    double LB = L[i] - LA;
+    p[1].T->directed_branch(b2).set_length(LA);
+    p[1].T->directed_branch(BM).set_length(LB);
+
     p[1].tree_propagate();
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
@@ -601,16 +607,14 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
     // We want caches for each directed branch not in the PRUNED subtree to be accurate
     //   for the situation that the PRUNED subtree is not behind them.
 
-    // It would be nice to keep the old exp(tB) as well...
-    double LA = L[i]*uniform();
-    double LB = L[i] - LA;
 
     // We want to suppress the bidirectional effect here...
-    p[1].setlength_no_invalidate_LC(b2,LA);                            // Recompute the transition matrix
-    p[1].LC_invalidate_one_branch(b2);                                 //  ... mark for recomputing.
-    p[1].LC_invalidate_one_branch(p[1].T->directed_branch(b2).reverse());   //  ... mark for recomputing.
+    // It would be nice to keep the old exp(tB).
+    p[1].setlength_no_invalidate_LC(b2,p[1].T->directed_branch(b2).length()); // Recompute the transition matrix
+    p[1].LC_invalidate_one_branch(b2);                                        //  ... mark for recomputing.
+    p[1].LC_invalidate_one_branch(p[1].T->directed_branch(b2).reverse());     //  ... mark for recomputing.
 
-    p[1].setlength_no_invalidate_LC(BM,LB);
+    p[1].setlength_no_invalidate_LC(BM,p[1].T->directed_branch(BM).length());
     p[1].LC_invalidate_one_branch(BM);
     p[1].LC_invalidate_one_branch(p[1].T->directed_branch(BM).reverse());
 
