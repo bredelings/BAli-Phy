@@ -648,6 +648,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   P.heated_likelihood();
   vector<Parameters> p(2,P);
 
+  spr_attachment_points locations;
+
   // One of the two branches (B1) that it points to will be considered the current attachment branch
   // The other branch (BM) will move around to wherever we are currently attaching b1.
   vector<const_branchview> branches;
@@ -673,6 +675,10 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // convert the const_branchview's to int names
   vector<int> branch_names = directed_names(branches);
+
+  // compute attachment locations for non-current branches
+  for(int i=1;i<branch_names.size();i++)
+    locations[get_spr_branch(*p[1].T, branch_names[i])] = uniform();
 
   /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 
@@ -709,13 +715,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // Temporarily stop checking subA indices of branches that point away from the cache root
   p[1].subA_index_allow_invalid_branches(true);
 
-  spr_attachment_points locations;
-  for(int i=1;i<branch_names.size();i++)
-  {
-    locations[get_spr_branch(trees[0], branch_names[i])] = uniform();
-    //    std::cout<<locations[get_spr_branch(trees[0], branch_names[i])]<<std::endl;
-  }
-
   // Compute the probability of each attachment point
   // After this point, the LC root will now be the same node: the attachment point.
   for(int i=1;i<branch_names.size();i++) 
@@ -734,6 +733,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
     assert(std::abs(p[1].T->branch(B1).length() - L0) < 1.0e-9);
     p[1].setlength_no_invalidate_LC(B1,L0);   // The likelihood caches (and subA indices) should be correct for
     //  the situation we are setting up here -- no need to invalidate.
+    //  (FIXME - do we need to recompute this EVERY time, or just the first time?)
 
     // We want caches for each directed branch not in the PRUNED subtree to be accurate
     //   for the situation that the PRUNED subtree is not behind them.
