@@ -724,32 +724,9 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
     // target branch - pointing away from b1
     int b2 = branch_names[i];
-    spr_branch B2 = get_spr_branch(*p[1].T, b2);
 
-    if (0)
-    {
-      // Perform the SPR operation
-      int BM2 = SPR(*p[1].T, p[1].T->directed_branch(b1).reverse(), b2);
-      assert(BM2 == BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
-
-      double U = locations[get_spr_branch(trees[0], branch_names[i])];
-      int b_closest = p[1].T->directed_branch(B2.node1, root_node);
-      if (b_closest == b2)
-	; //all is well
-      else if (b_closest == BM or b_closest == p[1].T->directed_branch(BM).reverse())
-	U = 1.0-U;
-      else {
-	throw myexception()<<"complain!";
-      }
-      double LA = L[i]*U;
-      double LB = L[i] - LA;
-      p[1].T->directed_branch(b2).set_length(LA);
-      p[1].T->directed_branch(BM).set_length(LB);
-    }
-    else {
-      int BM2 = SPR_at_location(*p[1].T, b1, b2, locations);
-      assert(BM2 == BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
-    }
+    int BM2 = SPR_at_location(*p[1].T, b1, b2, locations);
+    assert(BM2 == BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
     p[1].tree_propagate();
 
