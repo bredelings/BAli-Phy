@@ -610,6 +610,43 @@ int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_p
   return BM;
 }
 
+spr_attachment_points get_spr_attachment_points(const Tree& T, int b1)
+{
+  spr_attachment_points locations;
+
+  // One of the two branches (B1) that it points to will be considered the current attachment branch
+  // The other branch (BM) will move around to wherever we are currently attaching b1.
+  vector<const_branchview> branches;
+  append(T.directed_branch(b1).branches_after(),branches);
+  assert(branches.size() == 2);
+  int B1 = std::min(branches[0].undirected_name(), branches[1].undirected_name());
+  int BM = std::max(branches[0].undirected_name(), branches[1].undirected_name());
+  spr_branch B0(branches[0].target(), branches[1].target());
+  double L0a = branches[0].length();
+  double L0b = branches[1].length();
+  locations[B0] = L0a/(L0a+L0b);
+
+  /*----------- get the list of possible attachment points, with [0] being the current one.------- */
+  // FIXME - With tree constraints, or with a variable alignment and alignment constraints,
+  //          we really should eliminate branches that we couldn't attach to, here.
+  branches = branches_after(T,b1);
+
+  branches.erase(branches.begin()); // branches_after(b1) includes b1 -- which we do not want.
+
+  // remove the moving branch name (BM) from the list of attachment branches
+  for(int i=branches.size()-1;i>=0;i--)
+    if (branches[i].undirected_name() == BM)
+      branches.erase(branches.begin()+i);
+
+  // convert the const_branchview's to int names
+  //  vector<int> branch_names = directed_names(branches);
+
+  // compute attachment locations for non-current branches
+  for(int i=1;i<branches.size();i++)
+    locations[get_spr_branch(T, branches[i])] = uniform();
+
+  return locations;
+}
 
 /**
  * Sample from a number of SPR attachment points - one per branch.
@@ -646,9 +683,10 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // Compute and cache conditional likelihoods up to the (likelihood) root node.
   P.heated_likelihood();
-  vector<Parameters> p(2,P);
 
-  spr_attachment_points locations;
+  spr_attachment_points locations = get_spr_attachment_points(*P.T, b1);
+
+  vector<Parameters> p(2,P);
 
   // One of the two branches (B1) that it points to will be considered the current attachment branch
   // The other branch (BM) will move around to wherever we are currently attaching b1.
@@ -675,10 +713,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // convert the const_branchview's to int names
   vector<int> branch_names = directed_names(branches);
-
-  // compute attachment locations for non-current branches
-  for(int i=1;i<branch_names.size();i++)
-    locations[get_spr_branch(*p[1].T, branch_names[i])] = uniform();
 
   /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 
