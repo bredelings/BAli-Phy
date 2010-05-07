@@ -594,7 +594,7 @@ int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_p
   assert(T.is_connected(n0, B_unbroken_target.node2));
   int b1 = T.directed_branch(B_unbroken_target.node1, n0);
   int b2 = T.directed_branch(n0, B_unbroken_target.node2);
-  assert(b1 == BM or b2 == BM);
+  assert(T.directed_branch(b1).undirected_name() == BM or T.directed_branch(b2).undirected_name() == BM);
 
   // Set the lengths of the two branches
   double L1 = L*U;
