@@ -42,6 +42,7 @@ using MCMC::MoveStats;
 using boost::dynamic_bitset;
 using std::vector;
 using std::string;
+using std::map;
 
 int random_int_from_double(double x)
 {
@@ -486,11 +487,134 @@ void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   }
 }
 
+// 1. Moveable branch: If we do anything with the new tree, then BM might not end up being the movable branch.
+// + (This exposes the BM thing as a hack to do things not implemented in the SPR interface.)
+// +  This is primarily a problem if we represent the answers in terms of branch names.
+//
+// 2. Shall we identify branches by the pair of nodes at either end?
+// + Yes.  (At least we shall START OUT in that direction.)
+// + This makes the RESULTS independent of the branch names.
+//
+// 3. Note, though, that the cached conditional likelihoods depend on the branch names, not the node 
+// + However, hopefully we can deal with that INTERNALLY to the likelihood calculation routine.
+// + Also, the "movable branch" thing should also be internal to the likelihood calculation routine.
+//
+// 4. We will calculate the new attachment probabilities using the NEW tree.
+// + CHECK that (for the fixed-alignment case) the probabilities are the same if calculated from
+///  the new tree.
+
+/// A sortable branch object
+struct spr_branch
+{
+  int node1;
+  int node2;
+
+  bool same_orientation(const spr_branch& b2) const
+  {
+    if (node1 == b2.node1 and node2 == b2.node2) return true;
+    return false;
+  }
+
+  bool opposite_orientation(const spr_branch& b2) const
+  {
+    if (node1 == b2.node2 and node2 == b2.node1) return true;
+    return false;
+  }
+
+  bool operator==(const spr_branch& b2) const
+  {
+    if (same_orientation(b2)) return true;
+    if (opposite_orientation(b2)) return true;
+    return false;
+  }
+
+  bool operator<(const spr_branch& b2) const
+  {
+    int b1n1 = std::min(node1,node2);
+    int b1n2 = std::max(node1,node2);
+
+    int b2n1 = std::min(b2.node1, b2.node2);
+    int b2n2 = std::max(b2.node1, b2.node2);
+
+    if (b1n1 < b2n1) return true;
+    if (b1n1 > b2n1) return false;
+    if (b1n2 < b2n2) return true;
+    if (b1n2 > b2n2) return false;
+
+    return false;
+  }
+
+  spr_branch()
+    :node1(-1),node2(-1)
+  {}
+
+  spr_branch(int n1, int n2)
+    :node1(n1),node2(n2)
+  {}
+};
+
+spr_branch get_spr_branch(const Tree& T, int b)
+{
+  int n1 = T.directed_branch(b).source();
+  int n2 = T.directed_branch(b).target();
+  return spr_branch(n1,n2);
+}
+
+struct spr_attachment_points: public map<spr_branch,double>
+{
+};
+
+/// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
+///  and choose the point on the branch specified in \a locations.
+int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_points& locations)
+{
+  double total_length_before = length(T);
+
+  // unbroken target branch
+  double L = T.directed_branch(b_target).length();
+  map<spr_branch, double>::const_iterator record = locations.find(get_spr_branch(T,b_target));
+  if (record == locations.end())
+  {
+    std::cerr<<"Branch not found in spr location object!\n"<<std::endl;
+    std::abort();
+  }
+  spr_branch B_unbroken_target = record->first;
+  // U is the fraction of the way from B_unbroken_target.node1 
+  // toward B_unbroken_target.node2 to place the new node.
+  double U = record->second; 
+  
+  // node joining the subtree to the rest of the tree
+  int n0 = T.directed_branch(b_subtree).target();
+
+  // Perform the SPR operation (specified by a branch TOWARD the pruned subtree)
+  int BM = SPR(T, T.directed_branch(b_subtree).reverse(), b_target);
+
+  // Find the names of the branches
+  assert(T.is_connected(B_unbroken_target.node1, n0));
+  assert(T.is_connected(n0, B_unbroken_target.node2));
+  int b1 = T.directed_branch(B_unbroken_target.node1, n0);
+  int b2 = T.directed_branch(n0, B_unbroken_target.node2);
+  assert(b1 == BM or b2 == BM);
+
+  // Set the lengths of the two branches
+  double L1 = L*U;
+  double L2 = L - L1;
+
+  T.directed_branch(b1).set_length(L1);
+  T.directed_branch(b2).set_length(L2);
+
+  double total_length_after = length(T);
+  assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
+
+  // Return the branch name that moved to the new attachment location.
+  return BM;
+}
+
 
 /**
  * Sample from a number of SPR attachment points - one per branch.
  * 
- * The tricky idea here is that we want caches (likelihood, subA index) for each directed branch
+ * The tricky idea here is that we want cached (likelihood, subA index) for each directed branch
  * not in the PRUNED subtree to be accurate for the situation that the PRUNED subtree is not
  * behind them.
 
@@ -498,10 +622,16 @@ void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats)
  * the root are valid... branches that do not point toward the root are not used, but may
  * be used when we attach somewhere else.
  *
- * FIXME - how can we keep the information for upwards-pointing branches cached, and then restore it
+ * FIXME - How can we keep the information for upwards-pointing branches cached, and then restore it
  *         after we un-regraft from an attachment branch and move on to the next one? (30% speedup)
- *
+ *         
+ *         It would seem that most other people have (the possibility of) two caches per branch (or node)
+ *         and toggle them if an MH move is rejected.  I should add that capability to the caching object.
+ *         Then I could use it here.
  */
+
+/* Don't delete!  Call the NEW code from here, and assert that the results are identical.
+ */ 
 bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1) 
 {
   const int bins = 6;
@@ -579,23 +709,47 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // Temporarily stop checking subA indices of branches that point away from the cache root
   p[1].subA_index_allow_invalid_branches(true);
 
+  spr_attachment_points locations;
+  for(int i=1;i<branch_names.size();i++)
+  {
+    locations[get_spr_branch(trees[0], branch_names[i])] = uniform();
+    //    std::cout<<locations[get_spr_branch(trees[0], branch_names[i])]<<std::endl;
+  }
+
   // Compute the probability of each attachment point
-  // The LC root should always be After this point, the LC root will now be the same: the attachment point.
+  // After this point, the LC root will now be the same node: the attachment point.
   for(int i=1;i<branch_names.size();i++) 
   {
     *p[1].T = trees[0];
 
     // target branch - pointing away from b1
     int b2 = branch_names[i];
+    spr_branch B2 = get_spr_branch(*p[1].T, b2);
 
-    // Perform the SPR operation
-    int BM2 = SPR(*p[1].T, p[1].T->directed_branch(b1).reverse(), b2);
-    assert(BM2 == BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
+    if (0)
+    {
+      // Perform the SPR operation
+      int BM2 = SPR(*p[1].T, p[1].T->directed_branch(b1).reverse(), b2);
+      assert(BM2 == BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
-    double LA = L[i]*uniform();
-    double LB = L[i] - LA;
-    p[1].T->directed_branch(b2).set_length(LA);
-    p[1].T->directed_branch(BM).set_length(LB);
+      double U = locations[get_spr_branch(trees[0], branch_names[i])];
+      int b_closest = p[1].T->directed_branch(B2.node1, root_node);
+      if (b_closest == b2)
+	; //all is well
+      else if (b_closest == BM or b_closest == p[1].T->directed_branch(BM).reverse())
+	U = 1.0-U;
+      else {
+	throw myexception()<<"complain!";
+      }
+      double LA = L[i]*U;
+      double LB = L[i] - LA;
+      p[1].T->directed_branch(b2).set_length(LA);
+      p[1].T->directed_branch(BM).set_length(LB);
+    }
+    else {
+      int BM2 = SPR_at_location(*p[1].T, b1, b2, locations);
+      assert(BM2 == BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
+    }
 
     p[1].tree_propagate();
 
