@@ -733,7 +733,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // Actually store the trees, instead of recreating them after picking one.
   vector<SequenceTree> trees(branches.size());
-  trees[0] = *p[1].T;
+  SequenceTree T0 = *p[1].T;
+  trees[0] = T0;
 
   /*----------- Begin invalidating caches and subA-indices to reflect the pruned state -------------*/
 
@@ -753,7 +754,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // After this point, the LC root will now be the same node: the attachment point.
   for(int i=1;i<branch_names.size();i++) 
   {
-    *p[1].T = trees[0];
+    *p[1].T = T0;
 
     // target branch - pointing away from b1
     int b2 = branch_names[i];
@@ -785,7 +786,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
     // Record the tree and compute the likelihood
     trees[i] = *p[1].T;
-    assert(std::abs(length(trees[i]) - length(trees[0])) < 1.0e-9);
+    assert(std::abs(length(*p[1].T) - length(T0)) < 1.0e-9);
+    assert(std::abs(length(trees[i]) - length(T0)) < 1.0e-9);
     Pr[i] = p[1].heated_likelihood() * p[1].prior_no_alignment();
 #ifndef NDEBUG
     LLL[i] = p[1].heated_likelihood();
@@ -867,7 +869,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   p[1].subA_index_allow_invalid_branches(false);
 
 #ifndef NDEBUG    
-  assert(std::abs(length(*p[1].T) - length(trees[0])) < 1.0e-9);
+  assert(std::abs(length(*p[1].T) - length(T0)) < 1.0e-9);
   efloat_t L_1 = p[1].likelihood();
   assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
 #endif
@@ -916,7 +918,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   else
     moved = true;
 
-  MCMC::Result result = SPR_stats(trees[0], trees[C], moved, bins, b1);
+  MCMC::Result result = SPR_stats(T0, *P.T, moved, bins, b1);
   double L_effective = effective_length(*P.T, b1);
   SPR_inc(Stats, result, "SPR (all)", L_effective);
 
