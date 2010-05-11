@@ -565,6 +565,9 @@ struct spr_attachment_points: public map<spr_branch,double>
 };
 
 struct spr_attachment_probabilities: public map<spr_branch,efloat_t>
+{
+};
+
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
 ///  and choose the point on the branch specified in \a locations.
 int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_points& locations)
@@ -572,6 +575,7 @@ int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_p
   double total_length_before = length(T);
 
   // unbroken target branch
+  /// \todo Correctly handle moving to the same topology -- but allow branch lengths to change.
   double L = T.directed_branch(b_target).length();
   map<spr_branch, double>::const_iterator record = locations.find(get_spr_branch(T,b_target));
   if (record == locations.end())
@@ -611,8 +615,11 @@ int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_p
   return BM;
 }
 
+/// Get a list of attachment branches, and a location for attachment on each branch
 spr_attachment_points get_spr_attachment_points(const Tree& T, int b1)
 {
+  /// \todo This function duplicates a fair bit of code... can we factor this out somehow?
+
   spr_attachment_points locations;
 
   // One of the two branches (B1) that it points to will be considered the current attachment branch
@@ -697,7 +704,11 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   assert(branches.size() == 2);
   int B1 = std::min(branches[0].undirected_name(), branches[1].undirected_name());
   int BM = std::max(branches[0].undirected_name(), branches[1].undirected_name());
-  double L0 = p[1].T->branch(B1).length() + p[1].T->branch(BM).length();
+  spr_branch B0(branches[0].target(), branches[1].target());
+  double L0a = branches[0].length();
+  double L0b = branches[1].length();
+
+  double L0 = L0a + L0b;
 
   /*----------- get the list of possible attachment points, with [0] being the current one.------- */
   // FIXME - With tree constraints, or with a variable alignment and alignment constraints,
@@ -711,6 +722,9 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
     if (branches[i].undirected_name() == BM)
       branches.erase(branches.begin()+i);
 
+  // Hmm... it would seem from all the later for(int i=1;i<....) that 0 is a special case.
+  // Removing *both* B1 *and* BM would simplify at least this section, somewhat...
+
   if (branches.size() == 1) return false;
 
   // convert the const_branchview's to int names
@@ -721,6 +735,9 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // The probability of attaching to each branch, w/o the alignment probability
   vector<efloat_t> Pr(branches.size(), 0);
   Pr[0] = P.heated_likelihood() * P.prior_no_alignment();
+
+  spr_attachment_probabilities Pr2;
+  Pr2[B0] = Pr[0];
 
 #ifndef NDEBUG
   vector<efloat_t> LLL(branches.size(), 0);
@@ -735,7 +752,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // Actually store the trees, instead of recreating them after picking one.
   vector<SequenceTree> trees(branches.size());
-  SequenceTree T0 = *p[1].T;
+  const SequenceTree T0 = *p[1].T;
   trees[0] = T0;
 
   /*----------- Begin invalidating caches and subA-indices to reflect the pruned state -------------*/
@@ -756,14 +773,14 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // After this point, the LC root will now be the same node: the attachment point.
   for(int i=1;i<branch_names.size();i++) 
   {
-    *p[1].T = T0;
-
-    // target branch - pointing away from b1
+    // Define target branch b2 - pointing away from b1
     int b2 = branch_names[i];
+    spr_branch B2 = get_spr_branch(T0, b2);
 
+    // ** 1. SPR ** : alter the tree.
+    *p[1].T = T0;
     int BM2 = SPR_at_location(*p[1].T, b1, b2, locations);
     assert(BM2 == BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
-
     p[1].tree_propagate();
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
@@ -801,9 +818,8 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
     // **3. RECORD** the tree and likelihood
     trees[i] = *p[1].T;
-    assert(std::abs(length(*p[1].T) - length(T0)) < 1.0e-9);
-    assert(std::abs(length(trees[i]) - length(T0)) < 1.0e-9);
     Pr[i] = p[1].heated_likelihood() * p[1].prior_no_alignment();
+    Pr2[B2] = Pr[i];
 #ifndef NDEBUG
     LLL[i] = p[1].heated_likelihood();
     assert(std::abs(log(LLL[i]) - log(p[1].heated_likelihood())) < 1.0e-9);
