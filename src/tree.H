@@ -56,7 +56,7 @@ public:
   static BranchNode* create_node_on_branch(BranchNode* b,int new_branchname);
 
   /// Remove a node 'n' with exactly two neighbors, merging its two adjacent branches
-  static int  remove_node_from_branch(BranchNode* n1);
+  static int  remove_node_from_branch(BranchNode* n1, int branch_to_move = -1);
 
   /// Merge the node rings into a single node ring.
   static void merge_nodes(BranchNode* n1,BranchNode* n2);
@@ -333,7 +333,7 @@ public:
 };
 
 /// Prune subtree 'b1' and regraft into branch 'b2'
-int SPR(Tree& T,int b1,int b2);
+int SPR(Tree& T,int b1,int b2, int branch_to_move = -1);
 /// Swap the branches b1 and b2, along with the subtrees they point to.
 void exchange_subtrees(Tree&,int b1,int b2);
 

@@ -183,7 +183,8 @@ BranchNode* TreeView::create_node_on_branch(BranchNode* b1, int  new_branchname)
 //
 
 /// Merge sub-branches, adding their lengths, and reporting which branch name didn't survive.
-int TreeView::remove_node_from_branch(BranchNode* n1) 
+/// If branch_to_move is not -1, then we force this name to be the one that did not survive.
+int TreeView::remove_node_from_branch(BranchNode* n1, int branch_to_move) 
 {
   BranchNode* n2 = n1->next;
   assert(n2->next == n1);
@@ -196,12 +197,25 @@ int TreeView::remove_node_from_branch(BranchNode* n1)
 
   // Preserve the name of the branch with the smaller name (to avoid renaming leaf branches!)
   // (The name of the b1<--->n1 branch gets preserved)
-  if (b1_name > b2_name)
+
+  bool swap_branches = false;
+  if (branch_to_move != -1)
+  {
+    if (b1->branch == branch_to_move or b1->out->branch == branch_to_move)
+      swap_branches = true;
+  }
+  else if (b1_name > b2_name)
+    swap_branches = true;
+
+  if (swap_branches)
   {
     std::swap(n1,n2);
     std::swap(b1,b2);
     std::swap(b1_name, b2_name);
   }
+
+  if (branch_to_move != -1)
+      assert(b2->branch == branch_to_move or b2->out->branch == branch_to_move);
 
   //---------- get delta - and check it ------------//
 #ifndef NDEBUG
@@ -727,6 +741,7 @@ void remove_sub_branches(Tree& T)
   };
 }
 
+/// Note that names are recalculated from scratch here.
 void Tree::remove_node_from_branch(int node) 
 {
   BranchNode* n = nodes_[node];
@@ -739,11 +754,17 @@ void Tree::remove_node_from_branch(int node)
 }
 
 /// SPR: move the subtree b1 into branch b2
-/*
- * How do the branch and node names change?
- * 
- */
-int SPR(Tree& T, int br1,int br2) 
+///
+/// When two branches are merged into one as the pruned subtree is removed,
+/// one branch name remains in place, and one is moved.  If branch_to_move is
+/// -1, then the branch with the higher undirected name is the one that moves.
+/// If branch_to_move is not -1 (default) then it specifies the one to move.
+///
+/// The direction of the branches that do not move remains unchanged, but
+/// for the attachment branch, it may be pointing either towards or away
+/// from the attachment point.
+///
+int SPR(Tree& T, int br1,int br2, int branch_to_move) 
 {
   BranchNode* b1 = (BranchNode*)T.directed_branch(br1);
   BranchNode* b2 = (BranchNode*)T.directed_branch(br2);
@@ -757,7 +778,7 @@ int SPR(Tree& T, int br1,int br2)
 
   //------------ Prune the subtree -----------------//
   BranchNode* newbranch = TreeView::unlink_subtree(b1)->out;
-  int dead_branch = TreeView::remove_node_from_branch(newbranch->out);
+  int dead_branch = TreeView::remove_node_from_branch(newbranch->out, branch_to_move);
   assert(dead_branch >= T.n_leafbranches());
   
   //----------- Regraft the subtree ---------------//
@@ -1329,6 +1350,7 @@ void RootedTree::check_structure() const {
 }
 
 
+/// Note that names are recalculated from scratch here.
 void RootedTree::remove_node_from_branch(int node) 
 {
   if (root_->node == node)
