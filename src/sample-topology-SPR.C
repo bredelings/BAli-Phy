@@ -564,6 +564,7 @@ struct spr_attachment_points: public map<spr_branch,double>
 {
 };
 
+struct spr_attachment_probabilities: public map<spr_branch,efloat_t>
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
 ///  and choose the point on the branch specified in \a locations.
 int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_points& locations)
@@ -624,6 +625,7 @@ spr_attachment_points get_spr_attachment_points(const Tree& T, int b1)
   spr_branch B0(branches[0].target(), branches[1].target());
   double L0a = branches[0].length();
   double L0b = branches[1].length();
+
   locations[B0] = L0a/(L0a+L0b);
 
   /*----------- get the list of possible attachment points, with [0] being the current one.------- */
@@ -770,12 +772,25 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
     //  the situation we are setting up here -- no need to invalidate.
     //  (FIXME - do we need to recompute this EVERY time, or just the first time?)
 
-    // We want caches for each directed branch not in the PRUNED subtree to be accurate
+    // We want caches for each directed branch that is not in the PRUNED subtree to be accurate
     //   for the situation that the PRUNED subtree is not behind them.
 
 
-    // We want to suppress the bidirectional effect here...
-    // It would be nice to keep the old exp(tB).
+    // ** 2. INVALIDATE ** the branch that we just landed on and altered
+
+    /// \todo Do I really need to invalidate BOTH directions of b2?  Or, do I just not know WHICH direction to invalidate?
+    /// You'd think I'd just need to invalidate the direction pointing TOWARD the root.
+
+    /// \todo Can I temporarily associate the branch with a NEW token, or copy the info to a new location?
+    ///  Then I could swap back the token, after I was done, and not lose work.
+    /// If I assume that no more than two version of every branch are ever active, then the interface
+    ///  would be more restrictive.
+    /// If I allow a more general token-based interface, then the more restrictive "flip" version could be implemented
+    ///  on top of it, but I would perhaps have to generalize the interface in substitution-cache so as not to
+    ///  assume that all tokens represent a branch.
+
+    // We want to suppress the bidirectional propagation of invalidation for all branches after this branch.
+    // It would be nice to save the old exp(tB) and switch back to it later.
     p[1].setlength_no_invalidate_LC(b2,p[1].T->directed_branch(b2).length()); // Recompute the transition matrix
     p[1].LC_invalidate_one_branch(b2);                                        //  ... mark for recomputing.
     p[1].LC_invalidate_one_branch(p[1].T->directed_branch(b2).reverse());     //  ... mark for recomputing.
@@ -784,7 +799,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
     p[1].LC_invalidate_one_branch(BM);
     p[1].LC_invalidate_one_branch(p[1].T->directed_branch(BM).reverse());
 
-    // Record the tree and compute the likelihood
+    // **3. RECORD** the tree and likelihood
     trees[i] = *p[1].T;
     assert(std::abs(length(*p[1].T) - length(T0)) < 1.0e-9);
     assert(std::abs(length(trees[i]) - length(T0)) < 1.0e-9);
@@ -794,12 +809,12 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
     assert(std::abs(log(LLL[i]) - log(p[1].heated_likelihood())) < 1.0e-9);
 #endif
 
-    // invalidate the DIRECTED branch that we just landed on and altered
+    // **4. INVALIDATE** the DIRECTED branch that we just landed on and altered
     p[1].setlength_no_invalidate_LC(b2,L[i]);                               // Put back the old transition matrix
     p[1].LC_invalidate_one_branch(b2);                                      // ... mark likelihood caches for recomputing.
     p[1].LC_invalidate_one_branch(p[1].T->directed_branch(b2).reverse());   // ... mark likelihood caches for recomputing.
 
-    // this is bidirectional
+    // this is bidirectional, but does not propagate
     p[1].invalidate_subA_index_one_branch(BM);
   }
 
@@ -858,7 +873,10 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // Step N: Invalidate subA indices and also likelihood caches that are no longer valid.
 
   // Note that bi-directional invalidation of BM invalidates b1^t and similarly directed branches in the pruned subtree.
+  // (BM is an undirected name, so all effects in the loop below MUST be bi-directional.)
   vector<int> btemp; btemp.push_back(B1) ; btemp.push_back(BM) ; btemp.push_back(branch_names[C]);
+  // (These effects go out from the old location (the merged branch B1)
+  //  and the new location (the split branches BM and branch_names[C]) )
   for(int i=0;i<btemp.size();i++) {
     int bi = btemp[i];
     p[1].setlength(bi, p[1].T->directed_branch(bi).length());   // bidirectional effect
@@ -878,7 +896,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   //           (This should always succeed, if the alignment is fixed.)
 
   // BUG! - We can't calculate the reverse proposal probabilities until we select the new alignment!
-  // Speedup: We shoul realign at at least one other attachment location, if P.variable_alignment()
+  // Mixing: We should realign at at least one other attachment location, if P.variable_alignment()
 
   bool moved = false;
   // If the tree hasn't changed, we don't have to do anything.
