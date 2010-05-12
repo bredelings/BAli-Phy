@@ -615,6 +615,71 @@ int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_p
   return BM;
 }
 
+struct spr_info
+{
+public:
+  const Tree T;
+  int b_parent;
+  vector<const_branchview> child_branches;
+  int B1;
+  int BM;
+  spr_branch B0;
+  vector<const_branchview> attachment_branches;
+
+  spr_branch get_spr_branch(int b) const
+  {
+    if (not T.subtree_contains_branch(b_parent,b))
+      throw myexception()<<"spr_info::get_spr_branch( ): Subtree does not contain branch "<<b;
+
+    int n0 = T.directed_branch(b_parent).target();
+    if (T.directed_branch(b).target() == n0 or T.directed_branch(b).source() == n0)
+      return B0;
+
+    return ::get_spr_branch(T,b);
+  }
+
+  spr_info(const Tree& T_, int b, int branch_to_move = -1);
+};
+
+spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
+  :T(T_),b_parent(b),B1(-1),BM(-1)
+{
+  append(T.directed_branch(b_parent).branches_after(), child_branches);
+  assert(child_branches.size() == 2);
+  B1 = child_branches[0].undirected_name();
+  BM = child_branches[1].undirected_name();
+
+  if (branch_to_move == -1) {
+    if (BM < B1) std::swap(B1,BM);
+  }
+  else {
+    if (branch_to_move != BM)
+      std::swap(B1,BM);
+    assert(branch_to_move == BM);
+  }
+  B1 = std::min(child_branches[0].undirected_name(), child_branches[1].undirected_name());
+  BM = std::max(child_branches[0].undirected_name(), child_branches[1].undirected_name());
+  B0 = spr_branch(child_branches[0].target(), child_branches[1].target());
+  double L0a = child_branches[0].length();
+  double L0b = child_branches[1].length();
+
+  /*----------- get the list of possible attachment points, with [0] being the current one.------- */
+  // FIXME - With tree constraints, or with a variable alignment and alignment constraints,
+  //          we really should eliminate branches that we couldn't attach to, here.
+  attachment_branches = branches_after(T,b_parent);
+
+  attachment_branches.erase(attachment_branches.begin()); // branches_after(b_parent) includes b1 -- which we do not want.
+
+  // remove the moving branch name (BM) from the list of attachment branches
+  for(int i=attachment_branches.size()-1;i>=0;i--)
+    if (attachment_branches[i].undirected_name() == BM)
+      attachment_branches.erase(attachment_branches.begin()+i);
+
+  // convert the const_branchview's to int names
+  //  vector<int> branch_names = directed_names(branches);
+  
+}
+
 /// Get a list of attachment branches, and a location for attachment on each branch
 spr_attachment_points get_spr_attachment_points(const Tree& T, int b1)
 {
