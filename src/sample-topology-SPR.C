@@ -677,7 +677,7 @@ public:
     if (s == B0)
       return 0;
     const_branchview b = T.directed_branch(s.node1, s.node2);
-    assert(b);
+    assert(b.valid());
     return branch_to_index(b);
   }
 
