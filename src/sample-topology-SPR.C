@@ -946,35 +946,10 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // convert the const_branchview's to int names
   vector<int> branch_names = directed_names(branches);
 
-  Parameters P_temp = P;
-  spr_attachment_probabilities Pr3 = SPR_search_attachment_points(P_temp, b1, locations, I.BM);
+  spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], b1, locations, I.BM);
 
-  vector<efloat_t> Pr4 = I.convert_to_vector(Pr3);
-  vector<efloat_t> LLL = I.convert_to_vector(Pr3.LLL);
-
-#ifdef ASDF
-  for(map<spr_branch,efloat_t>::iterator i = Pr3.begin();i != Pr3.end(); i++)
-  {
-    cerr << i->first <<": "<< i->second <<endl;
-  }
-
-  for(int i=0;i<branch_names.size();i++) 
-  {
-    std::cerr<<"i = "<<i<<std::endl;
-    spr_branch B = I.get_spr_branch(branch_names[i]);
-
-    assert(std::abs(Pr[i].log() - Pr4[i].log()) < 1.0e-9);
-
-    if (not std::abs(Pr[i].log() - Pr3[B].log()) < 1.0e-9)
-    {
-      cerr << Pr[i].log() << endl;
-      cerr << Pr3[B].log() << endl;
-      cerr << "B = " << B << endl;
-      std::abort();
-    }
-  }
-#endif
-  vector<efloat_t> Pr = Pr4;
+  vector<efloat_t> Pr = I.convert_to_vector(PrB);
+  vector<efloat_t> LLL = I.convert_to_vector(PrB.LLL);
 
   // Step N-2: CHOOSE an attachment point
 
@@ -1024,7 +999,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   //  *(p[1].T) = trees[C]; 
   
-  p[1] = P_temp;
   *(p[1].T) = T0; 
   if (C != 0)
     SPR_at_location(*p[1].T, b1, branch_names[C], locations);
