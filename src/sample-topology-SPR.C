@@ -796,16 +796,11 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
   /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 
   // The probability of attaching to each branch, w/o the alignment probability
-  vector<efloat_t> Pr(I.n_attachment_branches(), 0);
-  Pr[0] = P.heated_likelihood() * P.prior_no_alignment();
-
-  spr_attachment_probabilities Pr2;
-  Pr2[I.B0] = Pr[0];
+  spr_attachment_probabilities Pr;
+  Pr[I.B0] = P.heated_likelihood() * P.prior_no_alignment();
 
 #ifndef NDEBUG
-  vector<efloat_t> LLL(branches.size(), 0);
-  LLL[0] = P.heated_likelihood();
-  Pr2.LLL[I.B0] = LLL[0];
+  Pr.LLL[I.B0] = P.heated_likelihood();
 #endif
 
   /*----------- Begin invalidating caches and subA-indices to reflect the pruned state -------------*/
@@ -870,12 +865,10 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     P.LC_invalidate_one_branch(P.T->directed_branch(I.BM).reverse());
 
     // **3. RECORD** the tree and likelihood
-    Pr[i] = P.heated_likelihood() * P.prior_no_alignment();
-    Pr2[B2] = Pr[i];
+    Pr[B2] = P.heated_likelihood() * P.prior_no_alignment();
 #ifndef NDEBUG
-    LLL[i] = P.heated_likelihood();
-    Pr2.LLL[B2] = LLL[i];
-    assert(std::abs(log(LLL[i]) - log(P.heated_likelihood())) < 1.0e-9);
+    Pr.LLL[B2] = P.heated_likelihood();
+    assert(std::abs(log(Pr.LLL[B2]) - log(P.heated_likelihood())) < 1.0e-9);
 #endif
 
     // **4. INVALIDATE** the DIRECTED branch that we just landed on and altered
@@ -886,7 +879,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     // this is bidirectional, but does not propagate
     P.invalidate_subA_index_one_branch(I.BM);
   }
-  return Pr2;
+  return Pr;
 }
 
 /**
@@ -929,12 +922,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   const SequenceTree T0 = *P.T;
   vector<Parameters> p(2,P);
-
-  /* MOVEABLE BRANCH */
-  //   One of the two branches (B1) that it (b1) points to will be considered the current attachment branch,
-  //    the other branch (BM) will move around to wherever we are currently attaching b1.
-  //   This is kind of a limitation of the current SPR routine, which chooses to move the 
-  //    branch with the larger name, and leave the other one in place.
 
   spr_info I(T0, b1);
   const vector<const_branchview>& branches = I.attachment_branches;
@@ -997,8 +984,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // Step N-1: ATTACH to that point
 
-  //  *(p[1].T) = trees[C]; 
-  
   *(p[1].T) = T0; 
   if (C != 0)
     SPR_at_location(*p[1].T, b1, branch_names[C], locations);
