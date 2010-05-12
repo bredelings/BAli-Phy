@@ -577,6 +577,7 @@ struct spr_attachment_points: public map<spr_branch,double>
 
 struct spr_attachment_probabilities: public map<spr_branch,efloat_t>
 {
+  map<spr_branch,efloat_t> LLL;
 };
 
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
@@ -785,7 +786,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 
   spr_info I(T0, b1, branch_to_move);
   const vector<const_branchview>& branches = I.attachment_branches;
-  double L0 = I.child_branches[0].length() + I.child_branches[1].length();
+  vector<double> L = I.attachment_branch_lengths();
 
   if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
 
@@ -804,10 +805,8 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 #ifndef NDEBUG
   vector<efloat_t> LLL(branches.size(), 0);
   LLL[0] = P.heated_likelihood();
+  Pr2.LLL[I.B0] = LLL[0];
 #endif
-
-  // Compute total lengths for each of the possible attachment branches
-  vector<double> L = I.attachment_branch_lengths();
 
   /*----------- Begin invalidating caches and subA-indices to reflect the pruned state -------------*/
 
@@ -838,8 +837,8 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     P.tree_propagate();
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
-    assert(std::abs(P.T->branch(I.B1).length() - L0) < 1.0e-9);
-    P.setlength_no_invalidate_LC(I.B1,L0);   // The likelihood caches (and subA indices) should be correct for
+    assert(std::abs(P.T->branch(I.B1).length() - L[0]) < 1.0e-9);
+    P.setlength_no_invalidate_LC(I.B1,L[0]);   // The likelihood caches (and subA indices) should be correct for
     //  the situation we are setting up here -- no need to invalidate.
     //  (FIXME - do we need to recompute this EVERY time, or just the first time?)
 
@@ -875,6 +874,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     Pr2[B2] = Pr[i];
 #ifndef NDEBUG
     LLL[i] = P.heated_likelihood();
+    Pr2.LLL[B2] = LLL[i];
     assert(std::abs(log(LLL[i]) - log(P.heated_likelihood())) < 1.0e-9);
 #endif
 
@@ -938,110 +938,21 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   spr_info I(T0, b1);
   const vector<const_branchview>& branches = I.attachment_branches;
-  double L0 = I.child_branches[0].length() + I.child_branches[1].length();
+  // Compute total lengths for each of the possible attachment branches
+  vector<double> L = I.attachment_branch_lengths();
 
   if (I.n_attachment_branches() == 1) return false;
 
   // convert the const_branchview's to int names
   vector<int> branch_names = directed_names(branches);
 
-  /*----------------------- Initialize likelihood for each attachment point ----------------------- */
-
-  // The probability of attaching to each branch, w/o the alignment probability
-  vector<efloat_t> Pr(I.n_attachment_branches(), 0);
-  Pr[0] = P.heated_likelihood() * P.prior_no_alignment();
-
-#ifndef NDEBUG
-  vector<efloat_t> LLL(I.n_attachment_branches(), 0);
-  LLL[0] = P.heated_likelihood();
-#endif
-
-  // Compute total lengths for each of the possible attachment branches
-  vector<double> L = I.attachment_branch_lengths();
-
-  /*----------- Begin invalidating caches and subA-indices to reflect the pruned state -------------*/
-
-  // At this point, caches for branches pointing to B1 and BM are accurate -- but everything after them
-  //  still assumes we haven't pruned and is therefore inaccurate.
-
-  p[1].LC_invalidate_branch(I.B1);          // invalidate caches       for B1, B1^t and ALL BRANCHES AFTER THEM.
-  p[1].invalidate_subA_index_branch(I.B1);  // invalidate subA-indices for B1, B1^t and ALL BRANCHES AFTER THEM.
-
-  p[1].LC_invalidate_branch(I.BM);          // invalidate caches       for BM, BM^t and ALL BRANCHES AFTER THEM.
-  p[1].invalidate_subA_index_branch(I.BM);  // invalidate subA-indices for BM, BM^t and ALL BRANCHES AFTER THEM.
-
-  // Temporarily stop checking subA indices of branches that point away from the cache root
-  p[1].subA_index_allow_invalid_branches(true);
-
-  // Compute the probability of each attachment point
-  // After this point, the LC root will now be the same node: the attachment point.
-  for(int i=1;i<branch_names.size();i++) 
-  {
-    // Define target branch b2 - pointing away from b1
-    int b2 = branch_names[i];
-    spr_branch B2 = I.get_spr_branch(b2);
-
-    // ** 1. SPR ** : alter the tree.
-    *p[1].T = T0;
-    int BM2 = SPR_at_location(*p[1].T, b1, b2, locations, I.BM);
-    assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
-    p[1].tree_propagate();
-
-    // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
-    assert(std::abs(p[1].T->branch(I.B1).length() - L0) < 1.0e-9);
-    p[1].setlength_no_invalidate_LC(I.B1,L0);   // The likelihood caches (and subA indices) should be correct for
-    //  the situation we are setting up here -- no need to invalidate.
-    //  (FIXME - do we need to recompute this EVERY time, or just the first time?)
-
-    // We want caches for each directed branch that is not in the PRUNED subtree to be accurate
-    //   for the situation that the PRUNED subtree is not behind them.
-
-
-    // ** 2. INVALIDATE ** the branch that we just landed on and altered
-
-    /// \todo Do I really need to invalidate BOTH directions of b2?  Or, do I just not know WHICH direction to invalidate?
-    /// You'd think I'd just need to invalidate the direction pointing TOWARD the root.
-
-    /// \todo Can I temporarily associate the branch with a NEW token, or copy the info to a new location?
-    ///  Then I could swap back the token, after I was done, and not lose work.
-    /// If I assume that no more than two version of every branch are ever active, then the interface
-    ///  would be more restrictive.
-    /// If I allow a more general token-based interface, then the more restrictive "flip" version could be implemented
-    ///  on top of it, but I would perhaps have to generalize the interface in substitution-cache so as not to
-    ///  assume that all tokens represent a branch.
-
-    // We want to suppress the bidirectional propagation of invalidation for all branches after this branch.
-    // It would be nice to save the old exp(tB) and switch back to it later.
-    p[1].setlength_no_invalidate_LC(b2,p[1].T->directed_branch(b2).length()); // Recompute the transition matrix
-    p[1].LC_invalidate_one_branch(b2);                                        //  ... mark for recomputing.
-    p[1].LC_invalidate_one_branch(p[1].T->directed_branch(b2).reverse());     //  ... mark for recomputing.
-
-    p[1].setlength_no_invalidate_LC(I.BM,p[1].T->directed_branch(I.BM).length());
-    p[1].LC_invalidate_one_branch(I.BM);
-    p[1].LC_invalidate_one_branch(p[1].T->directed_branch(I.BM).reverse());
-
-    // **3. RECORD** the tree and likelihood
-    Pr[i] = p[1].heated_likelihood() * p[1].prior_no_alignment();
-#ifndef NDEBUG
-    LLL[i] = p[1].heated_likelihood();
-    assert(std::abs(log(LLL[i]) - log(p[1].heated_likelihood())) < 1.0e-9);
-#endif
-
-    // **4. INVALIDATE** the DIRECTED branch that we just landed on and altered
-    p[1].setlength_no_invalidate_LC(b2,L[i]);                               // Put back the old transition matrix
-    p[1].LC_invalidate_one_branch(b2);                                      // ... mark likelihood caches for recomputing.
-    p[1].LC_invalidate_one_branch(p[1].T->directed_branch(b2).reverse());   // ... mark likelihood caches for recomputing.
-
-    // this is bidirectional, but does not propagate
-    p[1].invalidate_subA_index_one_branch(I.BM);
-  }
-
   Parameters P_temp = P;
   spr_attachment_probabilities Pr3 = SPR_search_attachment_points(P_temp, b1, locations, I.BM);
 
   vector<efloat_t> Pr4 = I.convert_to_vector(Pr3);
+  vector<efloat_t> LLL = I.convert_to_vector(Pr3.LLL);
 
-#ifndef NDEBUG
+#ifdef ASDF
   for(map<spr_branch,efloat_t>::iterator i = Pr3.begin();i != Pr3.end(); i++)
   {
     cerr << i->first <<": "<< i->second <<endl;
@@ -1063,7 +974,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
     }
   }
 #endif
-  Pr = Pr4;
+  vector<efloat_t> Pr = Pr4;
 
   // Step N-2: CHOOSE an attachment point
 
@@ -1140,7 +1051,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   }
   p[1].subA_index_allow_invalid_branches(false);
 
-#ifndef NDEBUG    
+#ifndef NDEBUG
   assert(std::abs(length(*p[1].T) - length(T0)) < 1.0e-9);
   efloat_t L_1 = p[1].likelihood();
   assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
