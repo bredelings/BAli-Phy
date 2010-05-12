@@ -1014,6 +1014,16 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   assert(std::abs(length(*p[1].T) - length(T0)) < 1.0e-9);
   efloat_t L_1 = p[1].likelihood();
   assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
+
+  {
+    Parameters P_temp = p[1];
+    spr_attachment_probabilities PrB2 = SPR_search_attachment_points(P_temp, b1, locations, I.BM);
+    vector<efloat_t> Pr2 = I.convert_to_vector(PrB2);
+
+    for(int i=0;i<Pr.size();i++) {
+      assert(std::abs(Pr[i].log() - Pr2[i].log()) < 1.0e-9);
+    }
+  }
 #endif
 
   // Step N+1: Use the chosen tree as a proposal, allowing us to sample the alignment.
