@@ -425,9 +425,10 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 #endif
 
   //---------------- Adjust for length of n4 and n5 changing --------------------//
+  // See Appendix A of Redelings & Suchard (2007) for an explanation.
 
-  // if we reject the move, then don't do anything
   efloat_t C2 = A3::correction(p[C],nodes[C]);
+  // If we reject the proposed move, then don't do anything.
   if (myrandomf() > double(C1/C2))
     return -1;
 
