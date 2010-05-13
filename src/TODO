@@ -2,7 +2,6 @@
 ------------
 Mostly: Documentation, Reporting/Summarization
 Also: Constraints, Speed
-FIX: Make SPR recompute the attachment probability when the alignment changes.
 BUG: Is the NNI+A thing really TWICE as slow on 18S?
 BUG: How can the no-sequence version of bglobin.fasta be SLOW (with codon models?)
 - spending a fair bit of time in recalc_smodel( )
@@ -25,6 +24,9 @@ ADD a 'Covarion' model from an exchange matrix and with n levels of invariance.
 Cleanups:
  * Rename s/lambda/weight/ in mcmc.{H,C}
  * Make MoveOne do sampling W/O replacement!
+ * Lazily recalculate the branch transition matrices.
+   - How does the cache object know which SModel to use?
+   - If it holds a pointer to it, do we need to update the pointer when we copy the Parameters object?
 
 SPEED: Resampling the following parameters shouldn't require peeling along the tree:
  * DP::f[], C10/C20::f[], M3::f[]
