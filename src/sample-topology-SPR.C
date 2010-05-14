@@ -1055,9 +1055,9 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   if (C != 0)
   {
     vector<efloat_t> rho(2,1);
-    rho[0] = Pr[C]; // Pr(proposing 0->C) = Pr(C)
-    rho[1] = Pr[0]; // Pr(proposing C->0) = Pr(0)
-    
+    rho[0] = L[0]*choose_MH_P(0,C,PrL); // Pr(proposing 0->C)
+    rho[1] = L[C]*choose_MH_P(C,0,PrL); // Pr(proposing C->0)
+
     int n1 = P.T->directed_branch(b1).target();
     int n2 = P.T->directed_branch(b1).source();
 
