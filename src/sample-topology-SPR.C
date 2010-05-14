@@ -899,6 +899,44 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
   return Pr;
 }
 
+ /*
+  *  1. Factoring in branch lengths?
+  *
+  *  pi(x) = the desired equilibrium probability.
+  *  rho(x,S) = the probability of x proposing the set S to be sampled from.
+  *  alpha(x,S,y) = the probability of accepting/choosing y from S when S is proposed by x.
+  *  L[x] = the length of attachment branch x.
+  *
+  *  pi(x) * rho(x,S) * alpha(x,S,y) = pi(y) * rho(y,S) * alpha(y,S,x) 
+  *  rho(x,S) = prod over branches[b] (1/L[b]) * L[x]
+  *           = C * L[x]
+  *  pi(x) * C * L[x] * alpha(x,S,y) = pi(y) * C * L[y] * alpha(y,S,x) 
+  *  alpha(x,S,y) / alpha(y,S,x) = (pi(y)*L[y])/(pi(x)*L[x])
+  *
+  *  2. Therefore, the probability of choosing+accepting y should be proportional to Pr[y] * L[y].
+  *  In the simplest incarnation, this is Gibbs sampling, and is independent of x.
+  * 
+  *  3. However, we can also use choose_MH(0,Pr), where Pr[i] = likelihood[i]*prior[i]*L[i]
+  *  since this proposal/acceptance function also has the property that
+  *
+  *       choose_MH_P(i,j,Pr)/choose_MH_P(j,i,Pr) = Pr[j]/Pr[i].
+  *
+  *  4. Now, if we make this whole procedure into a proposal, the ratio for this 
+  *     proposal density is
+  *
+  *       rho(x,S) * alpha(x,S,y)   (C * L[x]) * (D * pi(y) * L[y] )    pi(y)   1/pi(x)
+  *       ----------------------- = -------------------------------- = ----- = -------
+  *       rho(y,S) * alpha(y,S,x)   (C * L[y]) * (D * pi(x) * L[x] )    pi(x)   1/pi(y)
+  *
+  *  While the result is independent of the lengths L (which we want), the procedure for
+  *  achieving this result need not be independent of the lengths.
+  *
+  *  We must also remember that the variable rho[i] is the proposal density for proposing the set
+  *  S2 = {x,y} and so is proportional to rho(x,S) * alpha(x,S,y) = pi(y).  We could also use 1/pi(x)
+  *  and get the same ratio.
+  *
+  */
+
 /**
  * Sample from a number of SPR attachment points - one per branch.
  * 
@@ -918,8 +956,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
  *         Then I could use it here.
  */
 
-/* Don't delete!  Call the NEW code from here, and assert that the results are identical.
- */ 
 bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1) 
 {
   const int bins = 6;
@@ -957,43 +993,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // Step N-2: CHOOSE an attachment point
 
-  /*
-   *  1. Factoring in branch lengths?
-   *
-   *  pi(x) = the desired equilibrium probability.
-   *  rho(x,S) = the probability of x proposing the set S to be sampled from.
-   *  alpha(x,S,y) = the probability of accepting/choosing y from S when S is proposed by x.
-   *  L[x] = the length of attachment branch x.
-   *
-   *  pi(x) * rho(x,S) * alpha(x,S,y) = pi(y) * rho(y,S) * alpha(y,S,x) 
-   *  rho(x,S) = prod over branches[b] (1/L[b]) * L[x]
-   *           = C * L[x]
-   *  pi(x) * C * L[x] * alpha(x,S,y) = pi(y) * C * L[y] * alpha(y,S,x) 
-   *  alpha(x,S,y) / alpha(y,S,x) = (pi(y)*L[y])/(pi(x)*L[x])
-   *
-   *  2. Therefore, the probability of choosing+accepting y should be proportional to Pr[y] * L[y].
-   *  In the simplest incarnation, this is Gibbs sampling, and is independent of x.
-   * 
-   *  3. However, we can also use choose_MH(0,Pr), where Pr[i] = likelihood[i]*prior[i]*L[i]
-   *  since this proposal/acceptance function also has the property that
-   *
-   *       choose_MH_P(i,j,Pr)/choose_MH_P(j,i,Pr) = Pr[j]/Pr[i].
-   *
-   *  4. Now, if we make this whole procedure into a proposal, the ratio for this 
-   *     proposal density is
-   *
-   *       rho(x,S) * alpha(x,S,y)   (C * L[x]) * (D * pi(y) * L[y] )    pi(y)   1/pi(x)
-   *       ----------------------- = -------------------------------- = ----- = -------
-   *       rho(y,S) * alpha(y,S,x)   (C * L[y]) * (D * pi(x) * L[x] )    pi(x)   1/pi(y)
-   *
-   *  While the result is independent of the lengths L (which we want), the procedure for
-   *  achieving this result need not be independent of the lengths.
-   *
-   *  We must also remember that the variable rho[i] is the proposal density for proposing the set
-   *  S2 = {x,y} and so is proportional to rho(x,S) * alpha(x,S,y) = pi(y).  We could also use 1/pi(x)
-   *  and get the same ratio.
-   *
-   */
   vector<efloat_t> PrL = Pr;
   for(int i=0;i<PrL.size();i++)
     PrL[i] *= L[i];
@@ -1042,15 +1041,17 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   }
 #endif
 
+  //IDEA: Assume that we are ALWAYS resampling some of the partitions, with 0 being a special case.
+  //IDEA: Then, after this is working, check that we do not need to compute the reverse proposal probabilities
+  //       if all alignments are fixed.
   // Step N+1: Use the chosen tree as a proposal, allowing us to sample the alignment.
   //           (This should always succeed, if the alignment is fixed.)
 
-  // BUG! - We can't calculate the reverse proposal probabilities until we select the new alignment!
-  // Mixing: We should realign at at least one other attachment location, if P.variable_alignment()
+  /// \todo Mixing: We should realign at least one other attachment location, if P.variable_alignment()
 
   bool moved = false;
-  // If the tree hasn't changed, we don't have to do anything.
-  // So, don't resample the alignment, when we have one.
+
+  // Actually preform the SPR move.
   if (C != 0)
   {
     vector<efloat_t> rho(2,1);
@@ -1061,6 +1062,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
     int n2 = P.T->directed_branch(b1).source();
 
     // Even when p[0] == p[1], we could still choose C2==0 because of the different node orders in topology_sample_SPR( ).
+    // (This just computes nodes and calls sample_tri_multi( )
     int C2 = topology_sample_SPR(p, rho, n1, n2);
 
     if (C2 != -1) 
@@ -1074,9 +1076,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 	report_constraints(s1,s2);
       }
       P = p[C2];
-	
-      // If the new topology conflicts with the constraints, then it should have P=0
-      // and therefore not be chosen.  So the following SHOULD be safe!
     }
 
     // If the alignment is not variable, then we should always accept on this second move.
