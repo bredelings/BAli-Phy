@@ -233,12 +233,18 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   return Matrices;
 }
 
-
-int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
-		     const vector<efloat_t>& rho_, bool do_OS,bool do_OP) 
+sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p,const vector< vector<int> >& nodes_,
+			       bool do_OS,bool do_OP)
+  :
+#ifndef NDEBUG
+  P0(p[0]),
+#endif
+  nodes(nodes_),
+  Matrices(p.size()),
+  OS(p.size()),
+  OP(p.size()),
+  Pr(p.size())
 {
-  vector<vector<int> > nodes = nodes_;
-  vector<efloat_t> rho = rho_;
   assert(p.size() == nodes.size());
 
   //------------ Check the alignment branch constraints ------------//
@@ -249,16 +255,12 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     branches.push_back(p[i].T->branch(nodes[i][0],nodes[i][3]));
 
     if (any_branches_constrained(branches, *p[i].T, *p[i].TC, p[i].AC))
-      return -1;
+      return;// -1;
   }
 
   //----------- Generate the different states and Matrices ---------//
-  efloat_t C1 = A3::correction(p[0],nodes[0]);
-#ifndef NDEBUG_DP
-  const Parameters P0 = p[0];
-#endif
+  C1 = A3::correction(p[0],nodes[0]);
 
-  vector<vector<boost::shared_ptr<DPmatrixConstrained> > > Matrices(p.size());
   for(int i=0;i<p.size();i++) 
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {
@@ -270,9 +272,6 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   }
 
   //-------- Calculate corrections to path probabilities ---------//
-
-  vector< vector<efloat_t> > OS(p.size());
-  vector< vector<efloat_t> > OP(p.size());
 
   for(int i=0; i<p.size(); i++) 
   {
@@ -294,11 +293,9 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
   }
 
   //---------------- Calculate choice probabilities --------------//
-  vector<efloat_t> Pr(p.size());
-
   for(int i=0;i<Pr.size();i++) 
   {
-    Pr[i] = rho[i] * p[i].prior_no_alignment();
+    Pr[i] = p[i].prior_no_alignment();
 
     // sum of substitution and alignment probability over all paths
     for(int j=0;j<p[i].n_data_partitions();j++)
@@ -310,9 +307,24 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
       else
 	Pr[i] *= p[i][j].heated_likelihood();
   }
+  assert(Pr[0] > 0.0);
+}
+
+void sample_tri_multi_calculation::set_proposal_probabilities(const vector<efloat_t>& r)
+{
+  rho.resize(Pr.size());
+  for(int i=0;i<Pr.size();i++) 
+  {
+    rho[i] = r[i];
+    Pr[i] *= rho[i];
+  }
 
   assert(Pr[0] > 0.0);
+}
 
+int sample_tri_multi_calculation::choose(vector<Parameters>& p)
+{
+  assert(p.size() == nodes.size());
   int C = choose_MH(0,Pr);
 
   assert(Pr[C] > 0.0);
@@ -433,6 +445,19 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     return -1;
 
   return C;
+}
+
+// Consider making into object! That would make it easier to mix
+// and match parts of the routine, while saving state.
+
+int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
+		     const vector<efloat_t>& rho, bool do_OS,bool do_OP) 
+{
+  sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP);
+
+  tri.set_proposal_probabilities(rho);
+
+  return tri.choose(p);
 }
 
 

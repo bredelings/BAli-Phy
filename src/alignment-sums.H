@@ -32,6 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp-engine.H"
 #include "alignment.H"
 #include "parameters.H"
+#include "dp-matrix.H"
 #include <boost/dynamic_bitset.hpp>
 
 /// Define type for a function which return the distributions for each column and rate give SOME leaves
@@ -65,6 +66,26 @@ int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<i
 		     const std::vector<efloat_t>& rho, bool do_OS,bool do_OP);
 
 
+struct sample_tri_multi_calculation
+{
+#ifndef NDEBUG
+  const Parameters P0;
+#endif
+  std::vector<std::vector<int> > nodes;
+  std::vector<efloat_t> rho;
+  std::vector<std::vector<boost::shared_ptr<DPmatrixConstrained> > > Matrices;
+  std::vector< std::vector<efloat_t> > OS;
+  std::vector< std::vector<efloat_t> > OP;
+  std::vector<efloat_t> Pr;
+  efloat_t C1;
+
+  sample_tri_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
+			       bool do_OS,bool do_OP);
+
+  void set_proposal_probabilities(const std::vector<efloat_t>&);
+
+  int choose(std::vector<Parameters>& p);
+};
 
 //------------------- Checking Routines ------------------------//
 
