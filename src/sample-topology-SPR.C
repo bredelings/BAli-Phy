@@ -492,40 +492,27 @@ void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   }
 }
 
-// 1. Moveable branch: If we do anything with the new tree, then BM might not end up being the movable branch.
-// + (This exposes the BM thing as a hack to do things not implemented in the SPR interface.)
-// +  This is primarily a problem if we represent the answers in terms of branch names.
-//
-// 2. Shall we identify branches by the pair of nodes at either end?
-// + Yes.  (At least we shall START OUT in that direction.)
-// + This makes the RESULTS independent of the branch names.
-//
-// 3. Note, though, that the cached conditional likelihoods depend on the branch names, not the node 
-// + However, hopefully we can deal with that INTERNALLY to the likelihood calculation routine.
-// + Also, the "movable branch" thing should also be internal to the likelihood calculation routine.
-//
-// 4. We will calculate the new attachment probabilities using the NEW tree.
-// + CHECK that (for the fixed-alignment case) the probabilities are the same if calculated from
-///  the new tree.
-
-/// A sortable branch object
+/// A (sortable) branch indentified by the pair of nodes at either end.
 struct spr_branch
 {
   int node1;
   int node2;
 
+  /// Check if the other branch is the same and has the same orientation
   bool same_orientation(const spr_branch& b2) const
   {
     if (node1 == b2.node1 and node2 == b2.node2) return true;
     return false;
   }
 
+  /// Check if the other branch is the same but has the opposite orientation
   bool opposite_orientation(const spr_branch& b2) const
   {
     if (node1 == b2.node2 and node2 == b2.node1) return true;
     return false;
   }
 
+  /// Check if the other branch is the same regardless of orientation
   bool operator==(const spr_branch& b2) const
   {
     if (same_orientation(b2)) return true;
@@ -533,6 +520,7 @@ struct spr_branch
     return false;
   }
 
+  /// Order branches (for sorting)
   bool operator<(const spr_branch& b2) const
   {
     int b1n1 = std::min(node1,node2);
@@ -558,6 +546,7 @@ struct spr_branch
   {}
 };
 
+/// Express branch \a b of tree \a T in terms of the nodes at either end
 spr_branch get_spr_branch(const Tree& T, int b)
 {
   int n1 = T.directed_branch(b).source();
@@ -571,10 +560,12 @@ std::ostream& operator<<(std::ostream& o, const spr_branch& b)
   return o;
 }
 
+/// Represent positions along branches as a fraction in [0,1) from node1 to node2
 struct spr_attachment_points: public map<spr_branch,double>
 {
 };
 
+/// Represent the probability of attaching to a branch
 struct spr_attachment_probabilities: public map<spr_branch,efloat_t>
 {
   map<spr_branch,efloat_t> LLL;
@@ -627,21 +618,38 @@ int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_p
   return BM;
 }
 
+/// A struct to compute and store information about attachment points their branch names
 struct spr_info
 {
 public:
+  /// The tree on with we are considering SPR moves
   const Tree T;
+
+  /// The branch pointing AWAY from the subtree to prune
   int b_parent;
+
+  /// The two branches that make up the current attachment branch
   vector<const_branchview> child_branches;
+
+  /// The name of the first child branch -- which will remain here
   int B1;
+
+  /// The name of the second child branch -- which will move to wherever we regraft
   int BM;
+
+  /// The current attachment branch, specified in terms of its endpoint nodes
   spr_branch B0;
+
+  /// A list of attachment branches, where the current branch is B1 at index 0
   vector<const_branchview> attachment_branches;
 
+  /// A mapping of directed branches to their index in attachment_branches
   vector<int> branch_to_index_;
 
+  /// The number of places we could regraft, including the current site
   unsigned n_attachment_branches() const {return attachment_branches.size();}
 
+  /// The length of each attachment branch, indexed in the same way as attachment_branches
   vector<double> attachment_branch_lengths() const
   {
     vector<double> L(n_attachment_branches());
@@ -652,6 +660,7 @@ public:
     return L;
   }
   
+  /// Express a branch \a in attachment_branches in terms of its endpoint nodes
   spr_branch get_spr_branch(int b) const
   {
     if (not T.subtree_contains_branch(b_parent,b))
@@ -664,6 +673,7 @@ public:
     return ::get_spr_branch(T,b);
   }
 
+  /// Convert a branch \a b to its index in attachment_branches
   int branch_to_index(int b) const
   {
     assert(0 <=b and b <= 2*T.n_branches());
@@ -672,6 +682,7 @@ public:
     return index;
   }
 
+  /// Convert abranch \a s to its index in attachment_branches
   int spr_branch_to_index(const spr_branch& s) const
   {
     if (s == B0)
@@ -681,6 +692,7 @@ public:
     return branch_to_index(b);
   }
 
+  /// Express properties of branches as vectors indexed by their position in attachment_branches
   template<typename T>
   vector<T> convert_to_vector(const map<spr_branch,T>& M) const
   {
@@ -720,7 +732,7 @@ spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
   B0 = spr_branch(child_branches[0].target(), child_branches[1].target());
 
   /*----------- get the list of possible attachment points, with [0] being the current one.------- */
-  // FIXME - With tree constraints, or with a variable alignment and alignment constraints,
+  // \todo - With tree constraints, or with a variable alignment and alignment constraints,
   //          we really should eliminate branches that we couldn't attach to, here.
   attachment_branches = branches_after(T,b_parent);
 
@@ -765,6 +777,11 @@ spr_attachment_points get_spr_attachment_points(const Tree& T, int b1, int branc
   return locations;
 }
 
+/// Compute the probability of pruning b1^t and regraftion at \a locations
+///
+/// After this routine, likelihood caches and subalignment indices for branches in the
+/// non-pruned subtree should reflect the situation where the subtree has been pruned.
+///
 spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1, const spr_attachment_points& locations, int branch_to_move = -1)
 {
   // The attachment node for the pruned subtree.
@@ -834,8 +851,8 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
     assert(std::abs(P.T->branch(I.B1).length() - L[0]) < 1.0e-9);
     P.setlength_no_invalidate_LC(I.B1,L[0]);   // The likelihood caches (and subA indices) should be correct for
-    //  the situation we are setting up here -- no need to invalidate.
-    //  (FIXME - do we need to recompute this EVERY time, or just the first time?)
+                                               //  the situation we are setting up here -- no need to invalidate.
+    /// \todo  - do we need to recompute this EVERY time, or just the first time?
 
     // We want caches for each directed branch that is not in the PRUNED subtree to be accurate
     //   for the situation that the PRUNED subtree is not behind them.
@@ -856,13 +873,13 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 
     // We want to suppress the bidirectional propagation of invalidation for all branches after this branch.
     // It would be nice to save the old exp(tB) and switch back to it later.
-    P.setlength_no_invalidate_LC(b2,P.T->directed_branch(b2).length()); // Recompute the transition matrix
-    P.LC_invalidate_one_branch(b2);                                        //  ... mark for recomputing.
-    P.LC_invalidate_one_branch(P.T->directed_branch(b2).reverse());     //  ... mark for recomputing.
+    P.setlength_no_invalidate_LC(b2,P.T->directed_branch(b2).length());     // Recompute the transition matrix
+    P.LC_invalidate_one_branch(b2);                                         //  ... mark likelihood caches for recomputing.
+    P.LC_invalidate_one_branch(P.T->directed_branch(b2).reverse());         //  ... mark likelihood caches for recomputing.
 
-    P.setlength_no_invalidate_LC(I.BM,P.T->directed_branch(I.BM).length());
-    P.LC_invalidate_one_branch(I.BM);
-    P.LC_invalidate_one_branch(P.T->directed_branch(I.BM).reverse());
+    P.setlength_no_invalidate_LC(I.BM,P.T->directed_branch(I.BM).length()); // Recompute the transition matrix
+    P.LC_invalidate_one_branch(I.BM);                                       //  ... mark likelihood caches for recomputing.
+    P.LC_invalidate_one_branch(P.T->directed_branch(I.BM).reverse());       //  ... mark likelihood caches for recomputing.
 
     // **3. RECORD** the tree and likelihood
     Pr[B2] = P.heated_likelihood() * P.prior_no_alignment();
@@ -874,7 +891,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     // **4. INVALIDATE** the DIRECTED branch that we just landed on and altered
     P.setlength_no_invalidate_LC(b2,L[i]);                               // Put back the old transition matrix
     P.LC_invalidate_one_branch(b2);                                      // ... mark likelihood caches for recomputing.
-    P.LC_invalidate_one_branch(P.T->directed_branch(b2).reverse());   // ... mark likelihood caches for recomputing.
+    P.LC_invalidate_one_branch(P.T->directed_branch(b2).reverse());      // ... mark likelihood caches for recomputing.
 
     // this is bidirectional, but does not propagate
     P.invalidate_subA_index_one_branch(I.BM);
@@ -987,12 +1004,11 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   *(p[1].T) = T0; 
   if (C != 0)
     SPR_at_location(*p[1].T, b1, branch_names[C], locations);
+  p[1].tree_propagate();
 
   // enforce tree constraints
   if (not extends(*p[1].T, *P.TC))
     return false;
-
-  p[1].tree_propagate();
 
   // Step N: INVALIDATE subA indices and also likelihood caches that are no longer valid.
 
