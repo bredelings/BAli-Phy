@@ -1,4 +1,3 @@
-#undef NDEBUG
 /*
    Copyright (C) 2004-2009 Benjamin Redelings
 
@@ -1042,7 +1041,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   bool moved = false;
 
-  // Actually preform the SPR move.
+  // Actually perform the SPR move.
   if (C != 0)
   {
     int n1 = P.T->directed_branch(b1).target();
@@ -1061,7 +1060,11 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
       nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
       sample_tri_multi_calculation tri(p, nodes, true, true);
       
-      vector<efloat_t> Pr2;
+      vector<efloat_t> Pr2 = Pr;
+      vector<efloat_t> PrL2 = PrL;
+#ifdef NDEBUG
+      if (P.variable_alignment())
+#endif
       {
 	Parameters P_temp = p[1];
 	spr_attachment_probabilities PrB2 = SPR_search_attachment_points(P_temp, b1, locations, I.BM);
@@ -1070,14 +1073,15 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 	if (not P.variable_alignment())
 	  for(int i=0;i<Pr.size();i++)
 	    assert(std::abs(Pr[i].log() - Pr2[i].log()) < 1.0e-9);
+
+	PrL2 = Pr2;
+	for(int i=0;i<PrL2.size();i++)
+	  PrL2[i] *= L[i];
       }
-      vector<efloat_t> PrL2 = Pr2;
-      for(int i=0;i<PrL2.size();i++)
-	PrL2[i] *= L[i];
 
       vector<efloat_t> rho(2,1);
-      rho[0] = L[0]*choose_MH_P(0,C,PrL); // Pr(proposing 0->C)
-      rho[1] = L[C]*choose_MH_P(C,0,PrL2); // Pr(proposing C->0)
+      rho[0] = L[0]*choose_MH_P(0, C, PrL ); // Pr(proposing 0->C)
+      rho[1] = L[C]*choose_MH_P(C, 0, PrL2); // Pr(proposing C->0)
 
       tri.set_proposal_probabilities(rho);
       C2 = tri.choose(p);
