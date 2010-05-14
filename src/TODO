@@ -6,10 +6,8 @@ BUG: Is the NNI+A thing really TWICE as slow on 18S?
 BUG: How can the no-sequence version of bglobin.fasta be SLOW (with codon models?)
 - spending a fair bit of time in recalc_smodel( )
 - spending all its time exponentiating branch lengths?
-ISSUE: How can we handle correlation of lambda & invariant?
- - Remove 'invariant'?
 
-Search: Can we force it to evaluate a sum over alignments for at least a few other trees if the
+Search: SHOULD we force it to evaluate a sum over alignments for at least a few other trees if the
       current branch comes out best?
 
 examples: add more?
@@ -31,6 +29,7 @@ Cleanups:
 SPEED: Resampling the following parameters shouldn't require peeling along the tree:
  * DP::f[], C10/C20::f[], M3::f[]
  * Only changing the rates in each category should require re-peeling.
+ * It should ALSO not require recalculating transition matrices! (which is WHY re-peeling is not necessary.)
 
 *Report* Make trees-consensus write out a list of partitions directly, so we don't need perl?
 
@@ -1125,6 +1124,8 @@ I. fix: gamma+frequency+INV
 [DONE] Fix choose_MH( ) to be good enough that adding more options is always an improvement.
 
 [DONE] Automatic step-size adjustment for Slice Sampling.
+
+[DONE] Make SPR correctly handle multiple attachment site and also resample the alignment.
 
 *IDEAS*
 
