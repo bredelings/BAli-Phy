@@ -1030,21 +1030,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   efloat_t L_1 = p[1].likelihood();
   assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
 
-  vector<efloat_t> Pr2;
-  {
-    Parameters P_temp = p[1];
-    spr_attachment_probabilities PrB2 = SPR_search_attachment_points(P_temp, b1, locations, I.BM);
-    Pr2 = I.convert_to_vector(PrB2);
-
-    for(int i=0;i<Pr.size();i++) {
-      assert(std::abs(Pr[i].log() - Pr2[i].log()) < 1.0e-9);
-    }
-  }
 #endif
-
-  vector<efloat_t> PrL2 = Pr2;
-  for(int i=0;i<PrL2.size();i++)
-    PrL2[i] *= L[i];
 
   //IDEA: Assume that we are ALWAYS resampling some of the partitions, with 0 being a special case.
   //IDEA: Then, after this is working, check that we do not need to compute the reverse proposal probabilities
@@ -1059,10 +1045,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   // Actually preform the SPR move.
   if (C != 0)
   {
-    vector<efloat_t> rho(2,1);
-    rho[0] = L[0]*choose_MH_P(0,C,PrL); // Pr(proposing 0->C)
-    rho[1] = L[C]*choose_MH_P(C,0,PrL2); // Pr(proposing C->0)
-
     int n1 = P.T->directed_branch(b1).target();
     int n2 = P.T->directed_branch(b1).source();
 
@@ -1078,6 +1060,25 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
       nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);     // Using two random orders can lead to different total
       nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
       sample_tri_multi_calculation tri(p, nodes, true, true);
+      
+      vector<efloat_t> Pr2;
+      {
+	Parameters P_temp = p[1];
+	spr_attachment_probabilities PrB2 = SPR_search_attachment_points(P_temp, b1, locations, I.BM);
+	Pr2 = I.convert_to_vector(PrB2);
+	
+	if (not P.variable_alignment())
+	  for(int i=0;i<Pr.size();i++)
+	    assert(std::abs(Pr[i].log() - Pr2[i].log()) < 1.0e-9);
+      }
+      vector<efloat_t> PrL2 = Pr2;
+      for(int i=0;i<PrL2.size();i++)
+	PrL2[i] *= L[i];
+
+      vector<efloat_t> rho(2,1);
+      rho[0] = L[0]*choose_MH_P(0,C,PrL); // Pr(proposing 0->C)
+      rho[1] = L[C]*choose_MH_P(C,0,PrL2); // Pr(proposing C->0)
+
       tri.set_proposal_probabilities(rho);
       C2 = tri.choose(p);
     }
