@@ -1068,7 +1068,19 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
     // Even when p[0] == p[1], we could still choose C2==0 because of the different node orders in topology_sample_SPR( ).
     // (This just computes nodes and calls sample_tri_multi( )
-    int C2 = topology_sample_SPR(p, rho, n1, n2);
+    int C2 = -1;
+    {
+      assert(p.size() == 2);
+      assert(p[0].variable_alignment() == p[1].variable_alignment());
+
+      //----------- Generate the Different node lists ---------//
+      vector< vector<int> > nodes(2);
+      nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);     // Using two random orders can lead to different total
+      nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
+      sample_tri_multi_calculation tri(p, nodes, true, true);
+      tri.set_proposal_probabilities(rho);
+      C2 = tri.choose(p);
+    }
 
     if (C2 != -1) 
     {
