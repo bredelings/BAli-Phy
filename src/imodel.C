@@ -245,7 +245,7 @@ SimpleIndelModel::SimpleIndelModel()
   :QE(Q1.size1(),Q1.size2())
 {
   add_parameter("delta",  -5);
-  add_parameter("epsilon",-0.5);
+  add_parameter("epsilon",-0.25);
   add_parameter("tau",    log(0.001));
 
   recalc_all();
@@ -363,11 +363,11 @@ NewIndelModel::NewIndelModel(bool b)
   :time_dependant(b)
 {
   add_parameter("lambda",   -4);
-  add_parameter("epsilon",  -0.5);
-  add_parameter("invariant",0.1);
+  add_parameter("epsilon",  -0.25);
+  add_parameter("invariant",0.05);
   add_parameter("lambda::prior_median", -4);
   add_parameter("lambda::prior_stddev", 1);
-  add_parameter("epsilon::prior_length", 5);
+  add_parameter("epsilon::prior_length", 10);
 }
 
 
@@ -536,10 +536,10 @@ TKF2::TKF2(bool b)
   :time_dependant(b)
 {
   add_parameter("lambda",-5);
-  add_parameter("epsilon",-0.5);
+  add_parameter("epsilon",-0.25);
   add_parameter("mean_length",100);
   add_parameter("lambda::prior_median", -5);
   add_parameter("lambda::prior_stddev", 1.5);
-  add_parameter("epsilon::prior_length", 5);
+  add_parameter("epsilon::prior_length", 10);
   add_parameter("mean_length::prior_mean", 1.5);
 }
