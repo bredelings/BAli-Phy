@@ -148,7 +148,7 @@ efloat_t prior_branch_from_counts(const ublas::matrix<int>& counts,const indel::
       efloat_t Qij = Q(i,j);
       // FIXME - if we propose really bad indel parameters, we can get log(Q_ij) where Qij == 0
       if (counts(i,j))
-	P *= pow<efloat_t>(Qij,counts(i,j));
+	P *= pow(Qij,counts(i,j));
     }
   
   // Account for ?-E end probability
