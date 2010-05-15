@@ -200,12 +200,14 @@ template<> inline log_double_t exp<log_double_t>(double x) {
   return y;
 }
 
-template<class T> T pow(double,double);
-
-template<> inline log_double_t pow<log_double_t>(double x,double p) {
-  log_double_t y;
-  y.log() = p * ::log(x);
-  return y;
-}
+// Don't do pow<log_double_t>(x,y): do pow(log_double_t(x),y), instead.
+//
+// template<class T> T pow(double,double);
+// 
+// template<> inline log_double_t pow<log_double_t>(double x,double p) {
+//   log_double_t y;
+//   y.log() = p * ::log(x);
+//   return y;
+// }
 
 #endif

@@ -60,7 +60,7 @@ log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n)
 
   log_double_t Pr = 1;
   for(int i=0;i<p.size();i++) 
-    Pr *= pow<log_double_t>(p[i],n[i]-1.0);
+    Pr *= pow(log_double_t(p[i]),n[i]-1.0);
 
   // This term is constant in p
   Pr.log() += log_gamma(n.sum());
@@ -123,7 +123,7 @@ log_double_t cauchy_pdf(double x, double l, double s)
   double C = (x-l)/s;
   C = M_PI*s*(1.0+C*C);
   log_double_t C2 = C;
-  return pow<log_double_t>(C,-1.0);
+  return pow(C2,-1.0);
 }
 
 log_double_t beta_pdf(double p,double a, double b) 
