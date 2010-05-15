@@ -119,7 +119,7 @@ efloat_t DParray::Pr_sum_all_paths() const {
   for(int state1=0;state1<nstates();state1++)
     total += (*this)(I,state1) * GQ(state1,endstate());
 
-  return pow<efloat_t>(2.0,scale(I)) * total;
+  return pow(efloat_t(2.0),scale(I)) * total;
 }
 
 /// Here we set the SEQUENCE length 'l'.  This gives rise to a
@@ -343,7 +343,7 @@ efloat_t DParrayConstrained::Pr_sum_all_paths() const
     total += (*this)(I,state1) * GQ(state1,endstate());
   }
 
-  return pow<efloat_t>(2.0,scale(I)) * total;
+  return pow(efloat_t(2.0),scale(I)) * total;
 }
 
 void DParrayConstrained::set_length(int l)

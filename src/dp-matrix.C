@@ -173,7 +173,7 @@ void DPmatrix::compute_Pr_sum_all_paths()
   for(int state1=0;state1<nstates();state1++)
     total += (*this)(I,J,state1)*GQ(state1,endstate());
 
-  Pr_total = pow<efloat_t>(2.0,scale(I,J)) * total;
+  Pr_total = pow(efloat_t(2.0),scale(I,J)) * total;
   assert(not isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 }
 
@@ -660,7 +660,7 @@ void DPmatrixConstrained::compute_Pr_sum_all_paths()
     total += (*this)(I,J,S1)*GQ(S1,endstate());
   }
 
-  Pr_total = pow<efloat_t>(2.0,scale(I,J)) * total;
+  Pr_total = pow(efloat_t(2.0),scale(I,J)) * total;
   assert(not isnan(log(Pr_total)) and isfinite(log(Pr_total)));
 }
 

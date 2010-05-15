@@ -454,7 +454,7 @@ efloat_t TKF1::lengthp(int l) const
 
   double sigma = mean_length/(1.0 + mean_length);
 
-  return (1.0-sigma)*pow<efloat_t>(sigma,l);
+  return (1.0-sigma)*pow(efloat_t(sigma),l);
 }
 
 TKF1::TKF1(bool b)
@@ -521,7 +521,7 @@ efloat_t TKF2::lengthp(int l) const
 
   double sigma = mean_length/(1.0 + mean_length);
 
-  return (1.0-sigma)*pow<efloat_t>(sigma,l);
+  return (1.0-sigma)*pow(efloat_t(sigma),l);
 }
 
 TKF2::TKF2(bool b)
