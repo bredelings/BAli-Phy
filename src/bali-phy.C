@@ -959,8 +959,8 @@ int main(int argc,char* argv[])
   try {
 
 #if defined(HAVE_FEENABLEEXCEPT) && !defined(NDEBUG)
-    //    feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
-    feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+    feenableexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
+    //    feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
 #if defined(HAVE_CLEAREXCEPT) && defined(NDEBUG)
     feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
