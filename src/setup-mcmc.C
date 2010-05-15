@@ -248,8 +248,6 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, between(-40,0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
   add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
 
-  add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, MH_moves, 10);
-
   return MH_moves;
 }
 
