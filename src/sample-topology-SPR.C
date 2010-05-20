@@ -692,13 +692,13 @@ public:
   }
 
   /// Express properties of branches as vectors indexed by their position in attachment_branches
-  template<typename T>
-  vector<T> convert_to_vector(const map<spr_branch,T>& M) const
+  template<typename U>
+  vector<U> convert_to_vector(const map<spr_branch,U>& M) const
   {
     assert(M.size() == n_attachment_branches());
-    vector<T> v(n_attachment_branches());
+    vector<U> v(n_attachment_branches());
 
-    for(typename map<spr_branch,T>::const_iterator i=M.begin();i != M.end(); i++)
+    for(typename map<spr_branch,U>::const_iterator i=M.begin();i != M.end(); i++)
     {
       int index = spr_branch_to_index(i->first);
       v[index] = i->second;
