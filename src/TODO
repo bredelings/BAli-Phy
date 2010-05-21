@@ -6,6 +6,15 @@ BUG: Is the NNI+A thing really TWICE as slow on 18S?
 BUG: How can the no-sequence version of bglobin.fasta be SLOW (with codon models?)
 - spending a fair bit of time in recalc_smodel( )
 - spending all its time exponentiating branch lengths?
+AUDIT: setup-mcmc.C
+FINISH: C20 resample aa frequencies.
+IMPLEMENT: automatic step size detection for MH based on BEAST?
+COMPARE with 2.0.2 on some single-partition data sets 
+ - EF-Tu-45? Globins-few.fasta? 5S-48? HIV? Enolase?
+ - burnin
+ - 
+GENERATE: some examples.
+---
 
 Search: SHOULD we force it to evaluate a sum over alignments for at least a few other trees if the
       current branch comes out best?
