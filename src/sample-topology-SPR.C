@@ -898,6 +898,81 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
   return Pr;
 }
 
+/// This just computes nodes and calls sample_tri_multi
+bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
+					const vector<efloat_t>& Pr,
+					const vector<efloat_t>& PrL,
+					const spr_info& I, int C,
+					const spr_attachment_points& locations
+					)
+{
+  int b1 = I.b_parent;
+  int n1 = P.T->directed_branch(b1).target();
+  int n2 = P.T->directed_branch(b1).source();
+
+  assert(p.size() == 2);
+  assert(p[0].variable_alignment() == p[1].variable_alignment());
+
+  vector<double> L = I.attachment_branch_lengths();
+
+  //----------------- Generate the Different node lists ---------------//
+  vector< vector<int> > nodes(2);
+  nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);     // Using two random orders can lead to different total
+  nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
+  sample_tri_multi_calculation tri(p, nodes, true, true);
+      
+  //--------- Compute PrL2: reverse proposal probabilities ---------//
+
+  vector<efloat_t> PrL2 = PrL;
+#ifdef NDEBUG
+  if (P.variable_alignment())
+#endif
+  {
+    Parameters P_temp = p[1];
+    spr_attachment_probabilities PrB2 = SPR_search_attachment_points(P_temp, b1, locations, I.BM);
+    vector<efloat_t> Pr2 = I.convert_to_vector(PrB2);
+    
+    if (not P.variable_alignment())
+      for(int i=0;i<Pr.size();i++)
+	assert(std::abs(Pr[i].log() - Pr2[i].log()) < 1.0e-9);
+    
+    PrL2 = Pr2;
+    for(int i=0;i<PrL2.size();i++)
+      PrL2[i] *= L[i];
+  }
+
+  //----------------- Specify proposal probabilities -----------------//
+  vector<efloat_t> rho(2,1);
+  rho[0] = L[0]*choose_MH_P(0, C, PrL ); // Pr(proposing 0->C)
+  rho[1] = L[C]*choose_MH_P(C, 0, PrL2); // Pr(proposing C->0)
+  
+  tri.set_proposal_probabilities(rho);
+
+  //------------- Accept or reject the proposed topology -------------//
+  int C2 = tri.choose(p);
+
+  // If the alignment is not variable, then we should always accept on this second move.
+  //
+  // If the alignment is variable, then we might still choose C2==0 because of the
+  // different node orders in sample_tri( ).
+  if (not P.variable_alignment()) 
+    assert(C2 == 1);
+
+  // If the move violates alignment constraints the we can't accept it.
+  if (C2 == -1) return false;
+
+  //---------------------- Update P based on choice ------------------//
+  for(int i=0;i<P.n_data_partitions();i++) {
+    dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+    dynamic_bitset<> s2 = constraint_satisfied(p[C2][i].alignment_constraint, *p[C2][i].A);
+    
+    report_constraints(s1,s2);
+  }
+  P = p[C2];
+  
+  return (C2 == 1);
+}
+
  /*
   *  1. Factoring in branch lengths?
   *
@@ -1031,87 +1106,22 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
 #endif
 
-  //IDEA: Assume that we are ALWAYS resampling some of the partitions, with 0 being a special case.
-  //IDEA: Then, after this is working, check that we do not need to compute the reverse proposal probabilities
-  //       if all alignments are fixed.
   // Step N+1: Use the chosen tree as a proposal, allowing us to sample the alignment.
   //           (This should always succeed, if the alignment is fixed.)
 
-  /// \todo Mixing: We should realign at least one other attachment location, if P.variable_alignment()
+  // Do we accept the tree proposed above?
+  bool accepted = true;
 
-  bool moved = false;
+  // Only resample the alignment if we are proposing a different topology.
+  /// \todo Mixing: Should we realign at least one other attachment location, if P.variable_alignment()?
+  if (C > 0)
+    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, PrL, I, C, locations);
 
-  // Actually perform the SPR move.
-  if (C != 0)
-  {
-    int n1 = P.T->directed_branch(b1).target();
-    int n2 = P.T->directed_branch(b1).source();
-
-    // Even when p[0] == p[1], we could still choose C2==0 because of the different node orders in topology_sample_SPR( ).
-    // (This just computes nodes and calls sample_tri_multi( )
-    int C2 = -1;
-    {
-      assert(p.size() == 2);
-      assert(p[0].variable_alignment() == p[1].variable_alignment());
-
-      //----------- Generate the Different node lists ---------//
-      vector< vector<int> > nodes(2);
-      nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);     // Using two random orders can lead to different total
-      nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
-      sample_tri_multi_calculation tri(p, nodes, true, true);
-      
-      vector<efloat_t> Pr2 = Pr;
-      vector<efloat_t> PrL2 = PrL;
-#ifdef NDEBUG
-      if (P.variable_alignment())
-#endif
-      {
-	Parameters P_temp = p[1];
-	spr_attachment_probabilities PrB2 = SPR_search_attachment_points(P_temp, b1, locations, I.BM);
-	Pr2 = I.convert_to_vector(PrB2);
-	
-	if (not P.variable_alignment())
-	  for(int i=0;i<Pr.size();i++)
-	    assert(std::abs(Pr[i].log() - Pr2[i].log()) < 1.0e-9);
-
-	PrL2 = Pr2;
-	for(int i=0;i<PrL2.size();i++)
-	  PrL2[i] *= L[i];
-      }
-
-      vector<efloat_t> rho(2,1);
-      rho[0] = L[0]*choose_MH_P(0, C, PrL ); // Pr(proposing 0->C)
-      rho[1] = L[C]*choose_MH_P(C, 0, PrL2); // Pr(proposing C->0)
-
-      tri.set_proposal_probabilities(rho);
-      C2 = tri.choose(p);
-    }
-
-    if (C2 != -1) 
-    {
-      if (C2 > 0) moved = true;
-	  
-      for(int i=0;i<P.n_data_partitions();i++) {
-	dynamic_bitset<> s1 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
-	dynamic_bitset<> s2 = constraint_satisfied(p[C2][i].alignment_constraint, *p[C2][i].A);
-	  
-	report_constraints(s1,s2);
-      }
-      P = p[C2];
-    }
-
-    // If the alignment is not variable, then we should always accept on this second move.
-    if (not P.variable_alignment())
-      assert(C2 == 1);
-  }
-  else
-    moved = true;
-
-  MCMC::Result result = SPR_stats(T0, *p[1].T, moved, bins, b1);
+  MCMC::Result result = SPR_stats(T0, *p[1].T, accepted, bins, b1);
   double L_effective = effective_length(*P.T, b1);
   SPR_inc(Stats, result, "SPR (all)", L_effective);
 
-  return ((C != 0) and moved);
+  return ((C != 0) and accepted);
 }
 
 void sample_SPR_all(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
