@@ -1107,7 +1107,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   else
     moved = true;
 
-  MCMC::Result result = SPR_stats(T0, *P.T, moved, bins, b1);
+  MCMC::Result result = SPR_stats(T0, *p[1].T, moved, bins, b1);
   double L_effective = effective_length(*P.T, b1);
   SPR_inc(Stats, result, "SPR (all)", L_effective);
 
