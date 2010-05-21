@@ -27,8 +27,12 @@ Cleanups:
    - If it holds a pointer to it, do we need to update the pointer when we copy the Parameters object?
 
 SPEED: Resampling the following parameters shouldn't require peeling along the tree:
- * DP::f[], C10/C20::f[], M3::f[]
- * Only changing the rates in each category should require re-peeling.
+ * Changing the rates in each category should require re-peeling.
+   - (log-normal and gamma)
+ * Changing the frequencies of submodels with different rates, actually changes the rates.
+   - (DP::f[] and M3::f[])
+ * Reallocations frequencies between submodels with the SAME rates should NOT require re-peeling.
+   - (C10, C20)
  * It should ALSO not require recalculating transition matrices! (which is WHY re-peeling is not necessary.)
 
 *Report* Make trees-consensus write out a list of partitions directly, so we don't need perl?
@@ -123,13 +127,20 @@ Replace T.directed_branch( ) with T.branch( ). [step 2]
 
 --
 2.2.0:
-SPEED: Implement a bandwidth around the current path
+Alignment Constraints #1: Implement a bandwidth around the current path
  - 2x penalty, because we need to look at the reverse proposal :-(
  - How do we handle multiple partitions?
  - How do we handle rejection based on sequence length?
    + Latex up this kind of thing!
 
+Alignment Constraints #2:
+ - Fix the alignment of some subset of the sequences, regardless of
+   where they live on the tree.  This would allow us to alignment a
+   "query" sequence to a "template" alignment.
+ - Actually, this will prevent SPR from working...
+
 DOC: Change FIXME to Doxygen \todo
+
 
 --
 P29. See genome-wide transducer paper.  Can I impose similar constraints?
@@ -143,10 +154,8 @@ P16. Generate better mixing diagnostics (RNe1 and RCI1 aren't really working....
 
 P7. ECR2 moves (for fixed-A, and for variable-A, with P4).
 P9. MCMC / MPI - Construct a heated alignment prior.
-P25. Why isn't 3-way NNI isn't better than 2-way NNI?
 
 P8. Branch priors - make into a sub-model and allow a mixture-of-two-{Exponential, Gamma}.
-P10. C20 CAT model
 P12. Speed up likelihood calculations when there are lots of gaps?
 P15. Make matcaches (1) [b][m] instead of [m][b] and (2) be able to invalidate individual branches.     
 
