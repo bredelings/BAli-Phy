@@ -801,13 +801,13 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
   //    branch with the larger name, and leave the other one in place.
 
   spr_info I(T0, b1, branch_to_move);
-  const vector<const_branchview>& branches = I.attachment_branches;
-  vector<double> L = I.attachment_branch_lengths();
 
   if (I.n_attachment_branches() == 1) return spr_attachment_probabilities();
 
+  vector<double> L = I.attachment_branch_lengths();
+
   // convert the const_branchview's to int names
-  vector<int> branch_names = directed_names(branches);
+  vector<int> branch_names = directed_names(I.attachment_branches);
 
   /*----------------------- Initialize likelihood for each attachment point ----------------------- */
 
@@ -1051,14 +1051,14 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   vector<Parameters> p(2,P);
 
   spr_info I(T0, b1);
-  const vector<const_branchview>& branches = I.attachment_branches;
+
   // Compute total lengths for each of the possible attachment branches
   vector<double> L = I.attachment_branch_lengths();
 
   if (I.n_attachment_branches() == 1) return false;
 
   // convert the const_branchview's to int names
-  vector<int> branch_names = directed_names(branches);
+  vector<int> branch_names = directed_names(I.attachment_branches);
 
   spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], b1, locations, I.BM);
 
