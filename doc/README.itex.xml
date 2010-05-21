@@ -19,24 +19,25 @@
   <sect1 id="pre-requisites">
     <title>Pre-requisites</title>
 
-    <para><application>BAli-Phy</application> is developed
-      primarily for on Linux, but also runs on Windows and Mac OS X.
+    <para><application>BAli-Phy</application> is a Unix command
+      line program that is developed primarily on
+      Linux.  <application>BAli-Phy</application> also runs on
+      Windows and Mac OS X, but it is not a GUI program and so you
+      must run it in a terminal.
+    </para>
+
+    <para>
       We typically run <application>BAli-Phy</application> on Core2
       processors  with 8Gb of RAM. </para>
     
-    <para><application>BAli-Phy</application> is a command-line
-      application, not a graphical application.  The Windows and
-      Macintosh version assume that you understand some
-      UNIX commands, or at least are not intimidated by them.
-    </para>
-
     <sect2>
       <title>Linux and UNIX</title>
 
       <para>On Linux, you should be able to install and
 	run <application>BAli-Phy</application> without any
-	modification.  For other UNIX systems, you may need to
-	compile <application>BAli-Phy</application> before running it.</para>
+	modification.  For other UNIX operating systems, you may need
+	to compile <application>BAli-Phy</application> before running
+	it.</para> 
     </sect2>
 
     <sect2>
@@ -58,15 +59,14 @@
   <sect1 id="compilation">
     <title>Compiling <application>BAli-Phy</application></title>
 
-    <para>Most users will not need to
-      compile <application>BAli-Phy</application>, because they can
-      use the precompiled
+    <para>Most users will not need to compile <application>BAli-Phy</application>
+      and can skip this section, because they can use the precompiled 
       executables from the official website for Linux, Mac, and
       Windows.  However, compiling <application>BAli-Phy</application>
       is intended to be a relatively painless process.
     </para>
 
-    <para>Mote that in case you are compiling "live" source
+    <para>Note that in case you are compiling "live" source
       code that you checked out using GIT (and you probably
       aren't) then you need to follow the directions in <xref
 							   linkend="gitsource"/> before you start compiling.
@@ -92,10 +92,11 @@
 	      </para>
 	    </note>
 	  </listitem>
-	  <listitem><para>
+
+	  <!--listitem><para>
 	      <ulink url="http://www.gnu.org/software/make">
 		GNU make</ulink> version 3.80 (or higher).
-	  </para></listitem>
+	  </para></listitem-->
 	  <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>) version 1.8 (or higher).</para></listitem>
 	  <listitem><para> The Cairo graphics library
 	      (<ulink url="http://www.cairographics.org/">Cairo</ulink>)
@@ -201,7 +202,8 @@
 	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure CHIP=<replaceable>cpu</replaceable></screen>
 	  You can set CHIP to any of <userinput>pentium3</userinput>,
 	  <userinput>pentium4</userinput>,
-	  <userinput>nocona</userinput>, <userinput>G3</userinput>,
+	  <userinput>nocona</userinput>, <userinput>core2</userinput>,
+	  <userinput>G3</userinput>,
 	  <userinput>G4</userinput>, or <userinput>G5</userinput>.  (On recent versions of GCC, you can set <userinput>CHIP=native</userinput> to auto-detect the type of CPU you have.  However, be aware that the resulting executables may not run on a different computer.)
 	</para>
       </sect3>
@@ -221,8 +223,8 @@
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.4 CHIP=pentium4</screen>
-          This example uses <command>g++-4.4</command> to build a
+	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.5 CHIP=pentium4</screen>
+          This example uses <command>g++-4.5</command> to build a
 	  pentium4-optimized version of <command>bali-phy</command> with
 	  static linkage.
 	</para>
@@ -742,9 +744,6 @@ traditional = traditional
 	attempt to guess which format is being used.
       </para>
 
-      <para>
-	Note that blank lines are now allowed in FastA files in version 2.0.1 and later.
-      </para>
     </sect2>
 
     <sect2>
@@ -770,30 +769,41 @@ traditional = traditional
 	<title>Too many taxa?</title>
 
 	<para><application>BAli-Phy</application> is quite CPU
-	  intensive, and so we recommend using 12 or fewer taxa in order
+	  intensive, and so we recommend using 50 or fewer taxa in order
 	  to limit the time required to accumulate enough MCMC samples.
-	  We note that many phylogenetic hypotheses can be reduced to
-	  hypotheses concerning only four taxa.  We recommend initially
-	  removing as many taxa as possible from your data set.  You can
-	  then add taxa back into the data set after you have determined
-	  how much this will increase the duration of the run.</para>
+	  We recommend initially pruning as many taxa as possible
+	  from your data set, then adding some back if the MCMC is not
+	  too slow.</para> 
 
       </sect3>
 
       <sect3>
 	<title>Sequences too long?</title>
 
-	<para>Aligning sequences takes $O(L^2)$ time and RAM, where 
-	  $L$ represents the sequence length.  Thus, doubling the length
-	  of the input sequences increases RAM requirements and run
-	  time by a factor of 4.  Therefore sequence lengths beyond
-	  750 letters may prove impractical due to limited RAM or the
-	  speed of the calculation.   For protein sequences,
-	  we recommend coding the sequences in terms of amino acids or
-	  codons, rather than nucleotides.</para>
+	<para>Aligning just a pair of sequences takes $O(L^2)$ time
+	  and memory, where $L$ represents the sequence length.  Therefore
+	  sequences longer than (say) 1000 letters become increasingly
+	  impractical.  However, you might try to see how long you can make your
+	  sequences before you run out of memory, or the program
+	  becomes too slow.</para>
 
-	<para>However, you might try to see how long you can make your
-	  sequences before the attempt becomes impractical.</para>
+	<para>For multi-gene analyses, two separate genes
+	  (i.e. data partitions) of 500 letters will be twice as fast
+	  to align as one gene of 1000 letters. So, it may be possible
+	  to analyze several genes as long as each gene individually
+	  is not too long.</para> 
+
+	<para>You can speed up alignment for long genes by specifying
+	  alignment constraints (See <xref linkend="align-constraint1"/>).
+	  Ideally, 10 evenly spaced constraints should reduce the cost of
+	  re-aligning a sequence by a factor of 10.
+	</para>
+
+	<para>Also, note that you can sometimes speed up the analysis
+	  of protein sequences by coding them as amino acids or codons, rather 
+	  than nucleotides. This is because it decreases the sequence
+	  length.
+	</para> 
       </sect3>
 
     </sect2>
@@ -915,8 +925,9 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 
       <sect3>
 	<title>Create an Au (Alignment Uncertainty) plot (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title>
-<screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignment-gild C1.P<replaceable>p</replaceable>.max  &gt; P<replaceable>p</replaceable>-max.AU
-<prompt>%</prompt> alignment-draw P<replaceable>p</replaceable>-max.fasta --AU P<replaceable>p</replaceable>-max.AU > P<replaceable>p</replaceable>-max-AU.html</screen>
+To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, choose a tree estimate <replaceable>tree</replaceable>:
+<screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignment-gild <replaceable>alignment</replaceable>.fasta <replaceable>tree</replaceable>  &gt; <replaceable>alignment</replaceable>-AU.prob
+<prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta --AU <replaceable>alignment</replaceable>-AU.prob > <replaceable>alignment</replaceable>-AU.html</screen>
       </sect3>
 
 
@@ -1234,9 +1245,9 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       <para>The current models are RS05, RS07-no-T, and RS07.  The default is RS07.</para>
     </sect2>
 
-    <sect2>
+    <sect2 id="align-constraint1">
       <title>Alignment constraints</title>
-      <para>To pin columns of the alignment, specify alignment
+      <para>To fix specific columns of the alignment, you may specify alignment
 	constraints in a file as follows: </para>
 
       <orderedlist inheritnum="ignore" continuation="restarts">
@@ -1558,9 +1569,9 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       <application>MrBayes</application>, <application>BEAST</application> or
       <application>BAli-Phy</application>, one of the key questions is
       how many iterations are required to give a good estimate.
-      Unfortunately, this question is complicated and depends upon
-      both the problem and the specific data set that is being
-      examined.  As a result, <application>BAli-Phy</application>
+      Unfortunately, the answer to this question is complicated and
+      depends upon both the problem and the specific data set that is
+      being examined.  As a result, <application>BAli-Phy</application>
       relies on the user to determine when enough samples have been
       obtained - and to terminate the program when this happens. 
     </para>
@@ -1592,13 +1603,17 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	  What is convergence, and how can you check if a Markov chain
 	  has "converged"?  We first note that "convergence" refers to
 	  the tendency of a Markov chain to converge to the desired
-	  distribution (its equilibrium distribution).  The Markov chain starts at a
-	  specific tree and alignment, which may not be representative
+	  distribution (its equilibrium distribution).  Each run of a
+	  Markov chain starts at a specific tree and alignment, which may not be representative
 	  of the equilibrium distribution, and so convergence
 	  represents the process of "forgetting" the starting value.
 	  If we represent the i-th iteration of the Markov chain as
 	  X[i], then we desire rapid convergence of the distribution
-	  of X[i] to the equilibrium distribution.
+	  of X[i] to the equilibrium distribution.  However, note that
+	  convergence is a property of the Markov chain itself, and
+	  not of individual runs of the Markov chain.  The
+	  distribution of X[i] can be estimated by running the chain
+	  many times.
 	</para>
 
       </sect3>
