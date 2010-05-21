@@ -8,5 +8,7 @@ BMC Evolutionary Biology 2006, 6:35 doi:10.1186/1471-2148-6-35
 
 Notes:
 
-The sequences in 37.fasta are from the accessions listed as additional 
+* The sequences in 37.fasta are from the accessions listed as additional 
 sequences from Genbank.
+
+* This might be ITS1+5.8S+ITS2, in which case, I should *partition* it and analyze it.
