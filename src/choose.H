@@ -46,6 +46,8 @@ int choose_scratch(const std::vector<F>& P, std::vector<F>& sum)
       return i;
 
   std::cerr<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
+  for(int i=0;i<P.size();i++)
+    std::cerr<<"log(P["<<i<<"]) = "<<log(P[i])<<std::endl;
   std::abort();
 }
 
@@ -125,6 +127,8 @@ inline int choose_MH(int i, const std::vector<F>& P)
   }
 
   std::cerr<<" sum = "<<sum<<"   i = "<<i<<std::endl;
+  for(int i=0;i<P.size();i++)
+    std::cerr<<"log(P["<<i<<"]) = "<<log(P[i])<<std::endl;
   std::cerr<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
   std::abort();
 }
@@ -178,6 +182,8 @@ inline F choose_MH_P(int i, int j,const std::vector<F>& P)
   }
 
   std::cerr<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
+  for(int i=0;i<P.size();i++)
+    std::cerr<<"log(P["<<i<<"]) = "<<log(P[i])<<std::endl;
   std::abort();
 }
 #endif
