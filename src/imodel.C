@@ -232,20 +232,14 @@ efloat_t NewIndelModel::prior() const
   // Calculate prior on lambda_O
   double rate = parameter(0);
 
-  Pr *= laplace_pdf(rate,parameter(3), parameter(4));
+  Pr *= laplace_pdf(rate,parameter(2), parameter(3));
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double log_epsilon = parameter(1);
   double E_length = log_epsilon - logdiff(0,log_epsilon);
-  double E_length_mean = parameter(5);
+  double E_length_mean = parameter(4);
 
   Pr *= exp_exponential_pdf(E_length,E_length_mean);
-
-  // Calculate prior on invariant fraction
-  if (not fixed(2)) {
-    double i = parameter(2);
-    Pr *= beta_pdf(i,1,25);
-  }
 
   return Pr;
 }
@@ -259,13 +253,12 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
 
   double rate    = exp(parameter(0));
   double e = exp(parameter(1));
-  double i = parameter(2);
 
   // (1-e) * delta / (1-delta) = P(indel)
   // But move the (1-e) into the RATE to make things work
   double mu = rate*t/(1.0-e);
   double P_indel = 1.0 - exp(-mu);
-  double A = P_indel*(1.0-i);
+  double A = P_indel;
   double delta = A/(1+A);
 
   if (t < -0.5)
@@ -338,7 +331,6 @@ NewIndelModel::NewIndelModel(bool b)
 {
   add_parameter("lambda",   -4);
   add_parameter("epsilon",  -0.25);
-  add_parameter("invariant",0.05);
   add_parameter("lambda::prior_median", -4);
   add_parameter("lambda::prior_stddev", 1);
   add_parameter("epsilon::prior_length", 10);
