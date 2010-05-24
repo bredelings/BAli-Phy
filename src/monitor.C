@@ -55,7 +55,7 @@ void print_stats(std::ostream& o,std::ostream& trees,
   efloat_t Pr_likelihood = P.basic_likelihood(A,P);
   efloat_t Pr = Pr_prior * Pr_likelihood;
 
-  o<<"    prior = "<<Pr_prior<<"    likelihood = "<<Pr_likelihood<<"    logp = "<<Pr
+  o<<"    prior = "<<Pr_prior<<"    prior_A = "<<prior_HMM(A,P)<<"    likelihood = "<<Pr_likelihood<<"    logp = "<<Pr
    <<"    beta = " <<P.beta[0]  <<"\n";
 
   if (print_alignment)

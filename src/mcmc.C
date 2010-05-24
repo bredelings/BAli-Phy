@@ -494,7 +494,9 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
   }
   
   s_parameters<<"iter\t";
-  s_parameters<<"prior\tlikelihood\tlogp\tbeta\t";
+  s_parameters<<"prior\t";
+  s_parameters<<"prior_A\t";
+  s_parameters<<"likelihood\tlogp\tbeta\t";
   s_parameters<<P.header();
   if (P.has_IModel()) {
     s_parameters<<"\t|A|\t#indels\t|indels|";
@@ -544,7 +546,9 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
       print_stats(s_out,s_trees,A,P,show_alignment);
 
       s_parameters<<iterations<<"\t";
-      s_parameters<<prior<<"\t"<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
+      s_parameters<<prior<<"\t";
+      s_parameters<<prior_HMM(A,P)<<"\t";
+      s_parameters<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
       s_parameters<<P.state();
       if (P.has_IModel()) {
 	s_parameters<<"\t"<<A.length();
