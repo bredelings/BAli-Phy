@@ -918,7 +918,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
   //----------------- Generate the Different node lists ---------------//
   vector< vector<int> > nodes(2);
   nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);     // Using two random orders can lead to different total
-  nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
+  nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[0] and p[1] when p[0] == p[1].
   sample_tri_multi_calculation tri(p, nodes, true, true);
       
   //--------- Compute PrL2: reverse proposal probabilities ---------//
