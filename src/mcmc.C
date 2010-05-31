@@ -1126,10 +1126,11 @@ void mcmc_log(int iterations, int subsample, Parameters& P,
   unsigned total_substs=0;
   for(int i=0;i<P.n_data_partitions();i++)
   {
-    if (P[i].variable_alignment()) {
-      unsigned x1 = P[i].A->length();
-      total_length += x1;
+    unsigned x1 = P[i].A->length();
+    total_length += x1;
 
+    if (P[i].variable_alignment()) 
+    {
       unsigned x2 = n_indels(*P[i].A, *P[i].T);
       total_indels += x2;
 
