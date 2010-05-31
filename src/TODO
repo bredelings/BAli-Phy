@@ -2,6 +2,7 @@
 ------------
 Mostly: Documentation, Reporting/Summarization
 Also: Constraints, Speed
+FINISH: Reporting for analyzing multiple runs.
 BUG: Is the NNI+A thing really TWICE as slow on 18S?
 BUG: How can the no-sequence version of bglobin.fasta be SLOW (with codon models?)
 - spending a fair bit of time in recalc_smodel( )
