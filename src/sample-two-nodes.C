@@ -39,6 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution-index.H"
 #include <boost/numeric/ublas/io.hpp>
 #include "dp-array.H"
+#include "timer_stack.H"
 
 // for prior(p[i])
 #include "likelihood.H"
@@ -72,6 +73,7 @@ using namespace A5;
 void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
 			   DParrayConstrained*& Matrices)
 {
+  default_timer_stack.push_timer("alignment::DP1/5-way");
   const Tree& T = *P.T;
   alignment& A = *P.A;
   alignment old = A;
@@ -248,6 +250,7 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
   assert(path_new   == path);
   assert(valid(A));
 #endif
+  default_timer_stack.pop_timer();
 }
 
 static vector<vector<DParrayConstrained*> > cached_dparrays;

@@ -32,6 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "likelihood.H"    // for prior()
 #include <boost/shared_ptr.hpp>
 #include "dp-matrix.H"
+#include "timer_stack.H"
 
 //Assumptions:
 //  a) we assume that the internal node is the parent sequence in each of the sub-alignments
@@ -47,6 +48,7 @@ using namespace A3;
 
 boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P,const vector<int>& nodes)
 {
+  default_timer_stack.push_timer("alignment::DP2/3-way");
   const Tree& T = *P.T;
   alignment& A = *P.A;
 
@@ -185,7 +187,10 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   }
 
   if (Matrices->Pr_sum_all_paths() <= 0.0) 
+  {
+    default_timer_stack.pop_timer();
     return Matrices;
+  }
 
   vector<int> path_g = Matrices->sample_path();
 
@@ -230,6 +235,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   int b = T.branch(nodes[0],nodes[1]);
   P.LC.invalidate_branch_alignment(T, b);
 
+  default_timer_stack.pop_timer();
   return Matrices;
 }
 

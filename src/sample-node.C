@@ -39,6 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution-index.H"
 #include <boost/shared_ptr.hpp>
 #include "dp-array.H"
+#include "timer_stack.H"
 
 //TODO - 1. calculate the probability of 
 //  a) the path we came in with
@@ -62,6 +63,7 @@ using namespace A3;
 
 boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
 {
+  default_timer_stack.push_timer("alignment::DP1/3-way");
   const Tree& T = *P.T;
 
   assert(P.variable_alignment());
@@ -202,6 +204,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 
 #endif
 
+  default_timer_stack.pop_timer();
   return Matrices;
 }
 
