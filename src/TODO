@@ -142,6 +142,12 @@ Replace T.directed_branch( ) with T.branch( ). [step 2]
 --
 2.2.0:
 
+Handle letters outside of our alphabet more gracefully.
+ - Allow ANYTHING if the alphabet is specified.
+ - Allow ANYTHING if the frequencies aren't off by too much.
+ - Only refuse to run if we have weird letters AND the frequencies
+   are off by too much.
+
 Alignment Constraints #1: Implement a bandwidth around the current path
  - 2x penalty, because we need to look at the reverse proposal :-(
  - How do we handle multiple partitions?
