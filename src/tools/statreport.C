@@ -393,7 +393,7 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   double RCF = 1;
   if (tables.size() > 1) {
     RNe = tau/sum_tau*tables.size();
-    cout<<"   PSRF-Ne = "<<RNe;
+    //cout<<"   PSRF-Ne = "<<RNe;
     if (integers)
       RCI = std::max(0.0,total_CI-1)/sum_CI;
     else
@@ -573,7 +573,7 @@ int main(int argc,char* argv[])
     cout<<" min burnin <= "<<burnin_value(worst_burnin.value,tables.back().n_rows())<<"    ("<<field_names[worst_burnin.index]<<")"<<endl;
     if (tables.size() > 1) {
       cout<<" PSRF-80%CI <= "<<worst_RCI.value<<"    ("<<field_names[worst_RCI.index]<<")"<<endl;
-      cout<<" PSRF-Ne <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
+      //cout<<" PSRF-Ne <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
       cout<<" PSRF-RCF <= "<<worst_RCF.value<<"    ("<<field_names[worst_RCF.index]<<")"<<endl;
     }
     if (increasing_names.size())
