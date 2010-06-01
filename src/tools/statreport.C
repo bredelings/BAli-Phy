@@ -113,6 +113,18 @@ bool monotonic_decreasing(const vector<double>& values)
   return true;
 }
 
+bool is_integers(const vector<double>& values)
+{
+  for(int i=0;i<values.size();i++)
+  {
+    double x = values[i];
+    double temp = 0;
+    double frac = modf(x,&temp);
+    if (std::abs(frac) > 1.0e-9) return false;
+  }
+  return true;
+}
+
 struct var_stats
 {
   double Ne;
@@ -266,9 +278,10 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
     return V;
   }
 
+  bool integers = is_integers(total);
   // Print out mean and standard deviation
   if (args.count("mean")) {
-    if (tables.size() > 1) 
+    if (tables.size() > 1)
       for(int i=0;i<tables.size();i++) {
 	const vector<double>& values = tables[i].column(index);
 	if (show_individual) {
@@ -371,7 +384,9 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
     worst_burnin.value = burnin[0][index];
   else
     individual_size_worst = tables[worst_burnin.index].column(index).size();
-  cout<<"   burnin = "<<burnin_value(worst_burnin.value,individual_size_worst)<<endl;
+  cout<<"   burnin = "<<burnin_value(worst_burnin.value,individual_size_worst);
+  if (integers) cout<<"   [integer] ";
+  cout<<endl;
 
   // Print out Potential Scale Reduction Factors (PSRFs)
   double RNe = 1;
@@ -379,8 +394,11 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   double RCF = 1;
   if (tables.size() > 1) {
     RNe = tau/sum_tau*tables.size();
-    cout<<"   PSRF-Ne = "<<RNe;
-    RCI = total_CI/sum_CI;
+    //cout<<"   PSRF-Ne = "<<RNe;
+    if (integers)
+      RCI = std::max(0.0,total_CI-1)/sum_CI;
+    else
+      RCI = total_CI/sum_CI;
     cout<<"       PSRF-80%CI = "<<RCI;
     RCF = sum_fraction_contained; //compare_level;
     cout<<"       PSRF-RCF = "<<RCF<<endl;
@@ -556,7 +574,7 @@ int main(int argc,char* argv[])
     cout<<" min burnin <= "<<burnin_value(worst_burnin.value,tables.back().n_rows())<<"    ("<<field_names[worst_burnin.index]<<")"<<endl;
     if (tables.size() > 1) {
       cout<<" PSRF-80%CI <= "<<worst_RCI.value<<"    ("<<field_names[worst_RCI.index]<<")"<<endl;
-      cout<<" PSRF-Ne <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
+      //cout<<" PSRF-Ne <= "<<worst_RNe.value<<"    ("<<field_names[worst_RNe.index]<<")"<<endl;
       cout<<" PSRF-RCF <= "<<worst_RCF.value<<"    ("<<field_names[worst_RCF.index]<<")"<<endl;
     }
     if (increasing_names.size())

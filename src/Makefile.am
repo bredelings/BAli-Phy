@@ -41,7 +41,8 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            tools/findroot.H tools/parsimony.H distribution.H tools/mctree.H \
            version.H cow-ptr.H tools/index-matrix.H cached_value.H \
 	   tools/consensus-tree.H tools/partition.H slice-sampling.H \
-	   timer_stack.H setup-mcmc.H probability-model.H owned-ptr.H
+	   timer_stack.H setup-mcmc.H probability-model.H owned-ptr.H \
+	   bounds.H
 
 LDFLAGS = @ldflags@
 

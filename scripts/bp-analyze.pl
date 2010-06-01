@@ -89,7 +89,7 @@ my $speed=1;
 
 my $command = get_header_attribute($out_files[0],"command");
 my $directory = get_header_attribute($out_files[0],"directory");
-my $subdir    = get_header_attribute($out_files[0], "subdirectory");
+my @subdirs    = get_header_attributes("subdirectory",@out_files);
 
 my $betas = get_cmdline_attribute("beta");
 my @beta = (1);
@@ -582,14 +582,15 @@ if ("$parameters_file")
 	    $CI_low{$var} = $3;
 	    $CI_high{$var} = $4;
 	    $line = <REPORT>;
-	    
-	    $line =~ /t @ (.+)\s+Ne = ([^ ]+)\s+burnin = ([^ ].+)/;
+
+	    $line =~ /t @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)/;
 	    $ACT{$var} = $1;
 	    $Ne{$var} = $2;
 	    $Burnin{$var} = $3;
 	}
 	elsif ($line =~ /\s+(.+) = (.+)/) {
-	    $median{$1} = $2;
+	    my $var = $1;
+	    $median{$var} = $2;
 	}
     }
 
@@ -707,7 +708,7 @@ print INDEX '<p id="topbar">
     [<a href="#analysis">Analysis</a>]
     [<a href="#alignment">Alignment</a>]
     [<a href="#topology">Phylogeny</a>]
-    [<a href="#topology-mixing">Phylogeny:Mixing</a>]
+    [<a href="#mixing">Mixing</a>]
     [<a href="#parameters">Parameters</a>]
    </span>
 </p>
@@ -719,7 +720,10 @@ print INDEX '<object class="floating_picture" data="c50-tree.svg" type="image/sv
 #print INDEX "<p>Samples were created by the following command line:</p>";
 print INDEX "<p><b>command line:</b> $command</p>\n";
 print INDEX "<p><b>directory:</b> $directory</p>\n";
-print INDEX "<p><b>subdirectory:</b> $subdir</p>\n" if (defined($subdir));
+foreach my $subdir (@subdirs)
+{
+    print INDEX "<p><b>subdirectory:</b> $subdir</p>\n";
+}
 
 
 print INDEX "<h2 style=\"clear:both\"><a name=\"data\">Data &amp; Model</a></h2>\n";
@@ -746,16 +750,25 @@ for(my $p=0;$p<=$#partitions;$p++)
 print INDEX "</table>\n";
 
 print INDEX "<h2><a name=\"analysis\">Analysis</a></h2>\n";
-print INDEX '<table style="width:100%;"><tr>'."\n";
-print INDEX "<td>burn-in = $burnin samples</td>\n";
-print INDEX "<td>after burnin = $after_burnin samples</td>\n";
-print INDEX "<td>sub-sample = $subsample</td>\n" if ($subsample != 1);
-print INDEX "</tr><tr>\n";
-print INDEX "<td>$marginal_prob</td>\n";
-print INDEX "</tr><tr>\n";
-print INDEX "<td>Complete sample: $n_topologies topologies</td>\n";
-print INDEX "<td>95% Bayesian credible interval: $n_topologies_95 topologies</td>\n";
-print INDEX "</tr></table>\n";
+print INDEX '<table style="width:100%;">'."\n";
+
+print INDEX "<tr>\n";
+print INDEX "  <td>burn-in = $burnin samples</td>\n";
+print INDEX "  <td>after burnin = $after_burnin samples</td>\n";
+print INDEX "  <td>sub-sample = $subsample</td>\n" if ($subsample != 1);
+print INDEX "</tr>\n";
+
+print INDEX "<tr>\n";
+print INDEX "  <td>$marginal_prob</td>\n";
+print INDEX "</tr>\n";
+
+print INDEX "<tr>\n";
+print INDEX "  <td>Complete sample: $n_topologies topologies</td>\n";
+print INDEX "  <td>95% Bayesian credible interval: $n_topologies_95 topologies</td>\n";
+print INDEX "</tr>\n";
+
+print INDEX "</table>\n";
+
 
 print INDEX "<h2><a name=\"topology\">Phylogeny Distribution</a></h2>\n";
 
@@ -868,7 +881,7 @@ print INDEX '<img src="partitions.SRQ.png" class="r_floating_picture" alt="SRQ p
 #print INDEX '<embed class="r_floating_picture" src="c50.SRQ.svg" type="image/svg+xml" height="200" />';
 #print INDEX '<embed class="r_floating_picture" src="partitions.SRQ.svg" type="image/svg+xml" height="200" />';
 print INDEX '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for supprt of 50% consensus tree."/>';
-print INDEX "<h2><a name=\"topology-mixing\">Mixing: Topologies</a></h2>\n";
+print INDEX "<h2><a name=\"mixing\">Mixing</a></h2>\n";
 
 print INDEX "<ol>\n";
 print INDEX "<li><a href=\"partitions.bs\">Partition uncertainty</a></li>\n";
@@ -877,6 +890,22 @@ for my $srq (@SRQ) {
 }
 print INDEX "</ol>\n";
 
+my $burnin_before = get_value_from_file('Results/Report','min burnin <=');
+$burnin_before = "Not Converged!" if ($burnin_before eq "Not");
+print INDEX "<p><i>burn-in (scalar)</i> = $burnin_before</p>\n" if defined ($burnin_before);
+
+print INDEX "<p><i>min Ne (scalar)</i> = ".get_value_from_file('Results/Report','Ne  >=')."</p\n";
+print INDEX "<p><i>min Ne (partition)</i> = ".get_value_from_file('Results/partitions.bs','min Ne =')."</p>\n";
+
+my $asdsf = get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =');
+my $msdsf = get_value_from_file('Results/partitions.bs','MSDSF =');
+print INDEX "<p><i>ASDSF</i> = $asdsf</p>\n" if defined ($asdsf);
+print INDEX "<p><i>MSDSF</i> = $msdsf</p>\n" if defined ($msdsf);
+
+my $psrf_80 = get_value_from_file('Results/Report','PSRF-80%CI <=');
+my $psrf_rcf = get_value_from_file('Results/Report','PSRF-RCF <=');
+print INDEX "<p><i>PSRF-80%CI</i> = $psrf_80</p>\n" if defined ($asdsf);
+print INDEX "<p><i>PSRF-RCF</i> = $psrf_rcf</p>\n" if defined ($msdsf);
 
 if ($#var_names != -1) {
     print INDEX "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
@@ -893,8 +922,14 @@ my $min_tNe = `pickout -n 'min Ne' < Results/partitions.bs`;
 
 my @sne = sort {$a <=> $b} values(%Ne);
 my $min_Ne = $sne[0];
-print "\nNOTE: min_Ne (scalar)    = $min_Ne\n" if defined($min_Ne);
+print "\n";
+print "NOTE: burnin (scalar) <= $burnin_before\n" if defined($burnin_before);
+print "NOTE: min_Ne (scalar)    = $min_Ne\n" if defined($min_Ne);
 print "NOTE: min_Ne (partition) = $min_tNe\n" if defined($min_tNe);
+print "NOTE: ASDSF = $asdsf\n" if defined($asdsf);
+print "NOTE: MSDSF = $msdsf\n" if defined($msdsf);
+print "NOTE: PSRF-80%CI = $psrf_80\n" if defined($psrf_80);
+print "NOTE: PSRF-RCF = $psrf_rcf\n" if defined($psrf_rcf);
 
 for(my $i=1;$i <= $#var_names; $i++) 
 {
@@ -904,7 +939,9 @@ for(my $i=1;$i <= $#var_names; $i++)
     next if (($var eq "time") && ($personality eq "phylobayes"));
     next if (($var eq "#treegen") && ($personality eq "phylobayes"));
 
-    print INDEX "<tr>\n";
+    my $style = "";
+    $style = 'style="font-style:italic"' if (!defined($CI_low{$var}));
+    print INDEX "<tr $style>\n";
     print INDEX "<td>$var</td>\n";
     print INDEX "<td>$median{$var}</td>\n";
     if (defined($CI_low{$var})) {
@@ -1335,6 +1372,61 @@ sub get_header_attribute
     close FILE;
 
     return $value;
+}
+
+sub get_value_from_file
+{
+    my $filename = shift;
+    my $attribute = shift;
+
+    my $value;
+
+    local *FILE;
+
+    open FILE, $filename or die "Can't open $filename!";
+
+    my @partitions = ();
+
+    while (my $line = <FILE>) 
+    {
+	if ($line =~ /$attribute ([^ ]*)($| )/) {
+	    $value = $1;
+	    last;
+	}
+    }
+    close FILE;
+
+    return $value;
+}
+
+sub get_header_attributes
+{
+    return ("unknown") if ($personality !~ "bali-phy.*");
+    my $attribute = shift;
+    my @filenames = @_;
+    my @values;
+
+    foreach my $filename (@filenames)
+    {
+
+	local *FILE;
+
+	open FILE, $filename or die "Can't open $filename!";
+
+	my @partitions = ();
+
+	while (my $line = <FILE>) 
+	{
+	    if ($line =~ /$attribute: (.*)$/) {
+		push @values, $1;
+		last;
+	    }
+	    last if ($line =~ /^iterations = 0/);
+	}
+	close FILE;
+    }
+
+    return @values;
 }
 
 #Empirical(/home/bredelings/local/share/bali-phy/Data//wag.dat) 

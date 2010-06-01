@@ -3,6 +3,9 @@
 Mostly: Documentation, Reporting/Summarization
 Also: Constraints, Speed
 FINISH: Reporting for analyzing multiple runs.
+ - STOP reporting PSRF-Ne.
+ - START reporting tree convergence statistics.
+ - START reporting the deviance measure that is reported by Lartillot.
 BUG: Is the NNI+A thing really TWICE as slow on 18S?
 BUG: How can the no-sequence version of bglobin.fasta be SLOW (with codon models?)
 - spending a fair bit of time in recalc_smodel( )
@@ -1154,6 +1157,8 @@ I. fix: gamma+frequency+INV
 [DONE] Automatic step-size adjustment for Slice Sampling.
 
 [DONE] Make SPR correctly handle multiple attachment site and also resample the alignment.
+
+[DONE] Decrement total CI estimates up by one to make PSRF-80% usable for integers.
 
 *IDEAS*
 
