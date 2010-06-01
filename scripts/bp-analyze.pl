@@ -589,7 +589,8 @@ if ("$parameters_file")
 	    $Burnin{$var} = $3;
 	}
 	elsif ($line =~ /\s+(.+) = (.+)/) {
-	    $median{$1} = $2;
+	    my $var = $1;
+	    $median{$var} = $2;
 	}
     }
 
@@ -889,13 +890,21 @@ for my $srq (@SRQ) {
 }
 print INDEX "</ol>\n";
 
-print INDEX "<p><b>min Ne (scalar)</b> = ".get_value_from_file('Results/Report','Ne  >=')."</p\n";
-print INDEX "<p><b>min Ne (partition)</b> = ".get_value_from_file('Results/partitions.bs','min Ne =')."</p>\n";
+my $burnin_before = get_value_from_file('Results/Report','min burnin <=');
+print INDEX "<p><i>burn-in (scalar)</i> = $burnin_before iterations</p>\n" if defined ($burnin_before);
+
+print INDEX "<p><i>min Ne (scalar)</i> = ".get_value_from_file('Results/Report','Ne  >=')."</p\n";
+print INDEX "<p><i>min Ne (partition)</i> = ".get_value_from_file('Results/partitions.bs','min Ne =')."</p>\n";
+
 my $asdsf = get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =');
 my $msdsf = get_value_from_file('Results/partitions.bs','MSDSF =');
-print INDEX "<p><b>ASDSF</b> = $asdsf</p>\n" if defined ($asdsf);
-print INDEX "<p><b>MSDSF</b> = $msdsf</p>\n" if defined ($msdsf);
+print INDEX "<p><i>ASDSF</i> = $asdsf</p>\n" if defined ($asdsf);
+print INDEX "<p><i>MSDSF</i> = $msdsf</p>\n" if defined ($msdsf);
 
+my $psrf_80 = get_value_from_file('Results/Report','PSRF-80%CI <=');
+my $psrf_rcf = get_value_from_file('Results/Report','PSRF-RCF <=');
+print INDEX "<p><i>PSRF-80%CI</i> = $psrf_80</p>\n" if defined ($asdsf);
+print INDEX "<p><i>PSRF-RCF</i> = $psrf_rcf</p>\n" if defined ($msdsf);
 
 if ($#var_names != -1) {
     print INDEX "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
@@ -912,10 +921,14 @@ my $min_tNe = `pickout -n 'min Ne' < Results/partitions.bs`;
 
 my @sne = sort {$a <=> $b} values(%Ne);
 my $min_Ne = $sne[0];
-print "\nNOTE: min_Ne (scalar)    = $min_Ne\n" if defined($min_Ne);
+print "\n";
+print "NOTE: burnin (scalar) <= $burnin_before\n" if defined($psrf_rcf);
+print "NOTE: min_Ne (scalar)    = $min_Ne\n" if defined($min_Ne);
 print "NOTE: min_Ne (partition) = $min_tNe\n" if defined($min_tNe);
 print "NOTE: ASDSF = $asdsf\n" if defined($asdsf);
 print "NOTE: MSDSF = $msdsf\n" if defined($msdsf);
+print "NOTE: PSRF-80%CI = $psrf_80\n" if defined($psrf_80);
+print "NOTE: PSRF-RCF = $psrf_rcf\n" if defined($psrf_rcf);
 
 for(my $i=1;$i <= $#var_names; $i++) 
 {
@@ -925,7 +938,9 @@ for(my $i=1;$i <= $#var_names; $i++)
     next if (($var eq "time") && ($personality eq "phylobayes"));
     next if (($var eq "#treegen") && ($personality eq "phylobayes"));
 
-    print INDEX "<tr>\n";
+    my $style = "";
+    $style = 'style="font-style:italic"' if (!defined($CI_low{$var}));
+    print INDEX "<tr $style>\n";
     print INDEX "<td>$var</td>\n";
     print INDEX "<td>$median{$var}</td>\n";
     if (defined($CI_low{$var})) {
