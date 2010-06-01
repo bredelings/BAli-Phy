@@ -582,8 +582,8 @@ if ("$parameters_file")
 	    $CI_low{$var} = $3;
 	    $CI_high{$var} = $4;
 	    $line = <REPORT>;
-	    
-	    $line =~ /t @ (.+)\s+Ne = ([^ ]+)\s+burnin = ([^ ].+)/;
+
+	    $line =~ /t @ (.+)\s+Ne = ([^ ]+)\s+burnin = (Not Converged!|[^ ]+)/;
 	    $ACT{$var} = $1;
 	    $Ne{$var} = $2;
 	    $Burnin{$var} = $3;
@@ -891,7 +891,8 @@ for my $srq (@SRQ) {
 print INDEX "</ol>\n";
 
 my $burnin_before = get_value_from_file('Results/Report','min burnin <=');
-print INDEX "<p><i>burn-in (scalar)</i> = $burnin_before iterations</p>\n" if defined ($burnin_before);
+$burnin_before = "Not Converged!" if ($burnin_before eq "Not");
+print INDEX "<p><i>burn-in (scalar)</i> = $burnin_before</p>\n" if defined ($burnin_before);
 
 print INDEX "<p><i>min Ne (scalar)</i> = ".get_value_from_file('Results/Report','Ne  >=')."</p\n";
 print INDEX "<p><i>min Ne (partition)</i> = ".get_value_from_file('Results/partitions.bs','min Ne =')."</p>\n";
@@ -922,7 +923,7 @@ my $min_tNe = `pickout -n 'min Ne' < Results/partitions.bs`;
 my @sne = sort {$a <=> $b} values(%Ne);
 my $min_Ne = $sne[0];
 print "\n";
-print "NOTE: burnin (scalar) <= $burnin_before\n" if defined($psrf_rcf);
+print "NOTE: burnin (scalar) <= $burnin_before\n" if defined($burnin_before);
 print "NOTE: min_Ne (scalar)    = $min_Ne\n" if defined($min_Ne);
 print "NOTE: min_Ne (partition) = $min_tNe\n" if defined($min_tNe);
 print "NOTE: ASDSF = $asdsf\n" if defined($asdsf);
