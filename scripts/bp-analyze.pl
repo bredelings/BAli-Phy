@@ -945,7 +945,7 @@ for(my $i=1;$i <= $#var_names; $i++)
     print INDEX "<td>$var</td>\n";
     print INDEX "<td>$median{$var}</td>\n";
     if (defined($CI_low{$var})) {
-	print INDEX "<td>($CI_low{$var},$CI_high{$var})</td>\n";
+	print INDEX "<td>($CI_low{$var}, $CI_high{$var})</td>\n";
 	my $style = "";
 	$style = ' style="color:red"' if ($Ne{$var} <= $min_Ne);
 	print INDEX "<td $style>$ACT{$var}</td>\n";
