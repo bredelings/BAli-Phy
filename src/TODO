@@ -3,7 +3,6 @@
 Mostly: Documentation, Reporting/Summarization
 Also: Constraints, Speed
 FINISH: Reporting for analyzing multiple runs.
- - STOP reporting PSRF-Ne.
  - START reporting tree convergence statistics.
  - START reporting the deviance measure that is reported by Lartillot.
 BUG: Is the NNI+A thing really TWICE as slow on 18S?
