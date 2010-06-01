@@ -39,6 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "parameters.H"
 #include "rng.H"
 #include "proposals.H"
+#include "bounds.H"
 // how to have different models, with different moves
 // and possibly moves between models?
 
@@ -300,12 +301,6 @@ namespace MCMC {
   {
     int index;
 
-    bool lower_bound;
-    double lower;
-
-    bool upper_bound;
-    double upper;
-
   public:
     Parameter_Slice_Move* clone() const {return new Parameter_Slice_Move(*this);}
 
@@ -313,27 +308,26 @@ namespace MCMC {
 
     void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
 
-    Parameter_Slice_Move(const std::string& s,int i,
-	       bool lb,double l,bool ub,double u,double W_);
+    Parameter_Slice_Move(const std::string& s,int i, double W_);
 
     Parameter_Slice_Move(const std::string& s, const std::string& v,int i,
-	       bool lb,double l,bool ub,double u,double W_);
+			 double W_);
 
     Parameter_Slice_Move(const std::string& s,int i,
-	       bool lb,double l,bool ub,double u,double (*W_)(const Probability_Model&));
+			 double (*W_)(const Probability_Model&));
 
     Parameter_Slice_Move(const std::string& s, const std::string& v,int i,
-	       bool lb,double l,bool ub,double u,double (*W_)(const Probability_Model&));
+			 double (*W_)(const Probability_Model&));
 
     Parameter_Slice_Move(const std::string& s,int i,
-	       bool lb,double l,bool ub,double u,double W_,
-	       double(*f1)(double),
-	       double(*f2)(double));
+			 double W_,
+			 double(*f1)(double),
+			 double(*f2)(double));
 
     Parameter_Slice_Move(const std::string& s, const std::string& v,int i,
-	       bool lb,double l,bool ub,double u,double W_,
-	       double(*f1)(double),
-	       double(*f2)(double));
+			 double W_,
+			 double(*f1)(double),
+			 double(*f2)(double));
   };
 
   class Dirichlet_Slice_Move: public Slice_Move

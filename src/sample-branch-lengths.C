@@ -413,7 +413,7 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   // FIXME - techincally, we could recompute likelihoods in just THOSE partitions :P
   //       - also, I suppose, if they are fixed, then there is no mixing problem.
   for(int i=0;i<PP->n_branch_means();i++)
-    if (P->fixed(i))
+    if (P->is_fixed(i))
       return;
 
   MCMC::Result result(2);

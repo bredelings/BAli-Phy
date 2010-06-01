@@ -734,7 +734,10 @@ owned_ptr<IndelModel> get_imodel(string name)
     imodel = NewIndelModel(true);
   else
     throw myexception()<<"Unrecognized indel model '"<<name<<"'";
-  
+
+  std::cerr<<"imodel = ";
+  show_parameters(std::cerr,*imodel);
+
   return imodel;
 }
 

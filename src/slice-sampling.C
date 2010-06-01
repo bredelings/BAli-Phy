@@ -38,27 +38,10 @@ double slice_function::current_value() const
   std::abort();
 }
 
-void slice_function::set_lower_bound(double x)
-{
-  has_lower_bound = true;
-  lower_bound = x;
-}
-
-void slice_function::set_upper_bound(double x)
-{
-  has_upper_bound = true;
-  upper_bound = x;
-}
-
-slice_function::slice_function() 
-  :has_lower_bound(false),lower_bound(0),
-   has_upper_bound(false),upper_bound(0)
-{ }
-
 double parameter_slice_function::operator()(double x)
 {
   count++;
-  P.parameter(n,inverse(x));
+  P.set_parameter_value(n,inverse(x));
   return log(P.probability());
 }
 
@@ -70,11 +53,12 @@ double parameter_slice_function::operator()()
 
 double parameter_slice_function::current_value() const
 {
-  return P.parameter(n);
+  return P.get_parameter_value(n);
 }
 
 parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_)
-  :count(0),P(P_),n(n_),
+  :slice_function(P_.get_bounds(n_)),
+   count(0),P(P_),n(n_),
    transform(slice_sampling::identity),
    inverse(slice_sampling::identity)
 { }
@@ -82,7 +66,8 @@ parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_)
 parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_,
 						   double(*f1)(double),
 						   double(*f2)(double))
-  :count(0),P(P_),n(n_),transform(f1),inverse(f2)
+  :slice_function(P_.get_bounds(n_)),
+   count(0),P(P_),n(n_),transform(f1),inverse(f2)
 { }
 
 double branch_length_slice_function::operator()(double l)
@@ -227,7 +212,7 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
 
 double constant_sum_slice_function::operator()(double t)
 {
-  vector<double> x = P.parameters(indices);
+  vector<double> x = P.get_parameter_values(indices);
 
   double total = sum(x);
 
@@ -241,7 +226,7 @@ double constant_sum_slice_function::operator()(double t)
 
   assert(std::abs(::sum(x) - total) < 1.0e-9);
 
-  P.parameters(indices,x);
+  P.set_parameter_values(indices,x);
   return operator()();
 }
 
@@ -250,7 +235,7 @@ double constant_sum_slice_function::operator()()
 {
   count++;
 
-  vector<double> x = P.parameters(indices);
+  vector<double> x = P.get_parameter_values(indices);
 
   double total = sum(x);
 
@@ -264,7 +249,7 @@ double constant_sum_slice_function::operator()()
 
 double constant_sum_slice_function::current_value() const
 {
-  return P.parameter(indices[n]);
+  return P.get_parameter_value(indices[n]);
 }
 
 
@@ -274,7 +259,7 @@ constant_sum_slice_function::constant_sum_slice_function(Probability_Model& P_, 
    n(n_),
    P(P_)
 { 
-  vector<double> x = P.parameters(indices);
+  vector<double> x = P.get_parameter_values(indices);
   double total = sum(x);
 
   set_lower_bound(0);

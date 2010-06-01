@@ -167,15 +167,15 @@ namespace probability {
 
   Uniform::Uniform() 
   {
-    add_parameter("start", 0.0);
-    add_parameter("end", 1.0);
+    add_parameter(Parameter("start", 0.0));
+    add_parameter(Parameter("end", 1.0));
   }
 
   Uniform::Uniform(double s, double e) 
   {
     assert(s<e);
-    add_parameter("start", s);
-    add_parameter("end", e);
+    add_parameter(Parameter("start", s));
+    add_parameter(Parameter("end", e));
   }
 
   Uniform::~Uniform() {}
@@ -264,13 +264,13 @@ namespace probability {
 
 
   Gamma::Gamma() {
-    add_parameter("alpha", 1.0);
-    add_parameter("beta", 1.0);
+    add_parameter(Parameter("alpha", 1.0, lower_bound(0.0)));
+    add_parameter(Parameter("beta", 1.0, lower_bound(0.0)));
   }
 
   Gamma::Gamma(double a, double b) {
-    add_parameter("alpha", a);
-    add_parameter("beta", b);
+    add_parameter(Parameter("alpha", a, lower_bound(0.0)));
+    add_parameter(Parameter("beta", b, lower_bound(0.0)));
   }
 
   Gamma::~Gamma() {}
@@ -353,13 +353,13 @@ namespace probability {
 
 
   Beta::Beta() {
-    add_parameter("alpha", 1.0);
-    add_parameter("beta", 1.0);
+    add_parameter(Parameter("alpha", 1.0, lower_bound(0.0)));
+    add_parameter(Parameter("beta", 1.0, lower_bound(0.0)));
   }
 
   Beta::Beta(double a, double b) {
-    add_parameter("alpha", a);
-    add_parameter("beta", b);
+    add_parameter(Parameter("alpha", a, lower_bound(0.0)));
+    add_parameter(Parameter("beta", b, lower_bound(0.0)));
   }
 
   Beta::~Beta() {}
@@ -419,13 +419,13 @@ namespace probability {
   }
 
   LogNormal::LogNormal() {
-    add_parameter("lmu", 0.0);
-    add_parameter("lsigma", 1.0);
+    add_parameter(Parameter("lmu", 0.0, lower_bound(0.0)));
+    add_parameter(Parameter("lsigma", 1.0, lower_bound(0.0)));
   }
 
   LogNormal::LogNormal(double lmu, double lsigma) {
-    add_parameter("lmu", lmu);
-    add_parameter("lsigma", lsigma);
+    add_parameter(Parameter("lmu", lmu, lower_bound(0.0)));
+    add_parameter(Parameter("lsigma", lsigma, lower_bound(0.0)));
   }
 
   LogNormal::~LogNormal() {}
@@ -482,13 +482,13 @@ namespace probability {
   }
 
   Normal::Normal() {
-    add_parameter("mu", 0.0);
-    add_parameter("sigma", 1.0);
+    add_parameter(Parameter("mu", 0.0, lower_bound(0.0)));
+    add_parameter(Parameter("sigma", 1.0, lower_bound(0.0)));
   }
 
   Normal::Normal(double mu, double sigma) {
-    add_parameter("mu", mu);
-    add_parameter("sigma", sigma);
+    add_parameter(Parameter("mu", mu, lower_bound(0.0)));
+    add_parameter(Parameter("sigma", sigma, lower_bound(0.0)));
   }
 
   Normal::~Normal() {}
@@ -534,11 +534,11 @@ namespace probability {
   }
 
   Exponential::Exponential() {
-    add_parameter("mu", 1.0);
+    add_parameter(Parameter("mu", 1.0, lower_bound(0.0)));
   }
 
   Exponential::Exponential(double mu) {
-    add_parameter("mu", mu);
+    add_parameter(Parameter("mu", mu, lower_bound(0.0)));
   }
 
   Exponential::~Exponential() {}
@@ -569,14 +569,14 @@ namespace probability {
 
   Cauchy::Cauchy() 
   {
-    add_parameter("m", 0);
-    add_parameter("s", 1);
+    add_parameter(Parameter("m", 0, lower_bound(0.0)));
+    add_parameter(Parameter("s", 1, lower_bound(0.0)));
   }
 
   Cauchy::Cauchy(double m_, double s_)
   {
-    add_parameter("m", m_);
-    add_parameter("s", s_);
+    add_parameter(Parameter("m", m_, lower_bound(0.0)));
+    add_parameter(Parameter("s", s_, lower_bound(0.0)));
   }
 
   Cauchy::~Cauchy() {}

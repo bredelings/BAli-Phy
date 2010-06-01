@@ -357,8 +357,8 @@ namespace MCMC {
       if (n == 2) {
 	if (n_indices == 1) {
 	  int i = p2->get_indices()[0];
-	  double v1 = P->parameter(i);
-	  double v2 = P2->parameter(i);
+	  double v1 = P->get_parameter_value(i);
+	  double v2 = P2->get_parameter_value(i);
 	  //      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
 	  result.totals[1] = std::abs(v2-v1);
 	}
@@ -368,8 +368,8 @@ namespace MCMC {
 	  for(int i=0;i<n_indices;i++) 
 	  {
 	    int j = p2->get_indices()[i];
-	    double v1 = P->parameter(j);
-	    double v2 = P2->parameter(j);
+	    double v1 = P->get_parameter_value(j);
+	    double v2 = P2->get_parameter_value(j);
 	    total += std::abs(log(v1/v2));
 	  }
 	  result.totals[1] = total;
@@ -488,13 +488,11 @@ namespace MCMC {
 
   void Parameter_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
-    if (P->fixed(index)) return;
+    if (P->is_fixed(index)) return;
 
-    double v1 = P->parameter(index);
+    double v1 = P->get_parameter_value(index);
 
     parameter_slice_function logp(*P,index,transform,inverse);
-    if (lower_bound) logp.set_lower_bound(lower);
-    if (upper_bound) logp.set_upper_bound(upper);
 
     double v2 = sample(*P,logp,v1);
 
@@ -507,46 +505,42 @@ namespace MCMC {
   }
 
   Parameter_Slice_Move::Parameter_Slice_Move(const string& s,int i,
-					     bool lb,double l,bool ub,double u,double W_)
-    :Slice_Move(s,W_),index(i),
-     lower_bound(lb),lower(l),upper_bound(ub),upper(u)
+					     double W_)
+    :Slice_Move(s,W_),index(i)
   {}
 
   Parameter_Slice_Move::Parameter_Slice_Move(const string& s, const string& v,int i,
-					     bool lb,double l,bool ub,double u,double W_)
-    :Slice_Move(s,v,W_),index(i),
-     lower_bound(lb),lower(l),upper_bound(ub),upper(u)
+					     double W_)
+    :Slice_Move(s,v,W_),index(i)
   {}
 
   Parameter_Slice_Move::Parameter_Slice_Move(const string& s,int i,
-					     bool lb,double l,bool ub,double u,double W_,
+					     double W_,
 					     double(*f1)(double),
 					     double(*f2)(double))
-    :Slice_Move(s,"",W_,f1,f2),index(i),
-     lower_bound(lb),lower(l),upper_bound(ub),upper(u)
+    :Slice_Move(s,"",W_,f1,f2),index(i)
   {}
 
   Parameter_Slice_Move::Parameter_Slice_Move(const string& s, const string& v,int i,
-					     bool lb,double l,bool ub,double u,double W_,
+					     double W_,
 					     double(*f1)(double),
 					     double(*f2)(double))
-    :Slice_Move(s,v,W_,f1,f2),index(i),
-     lower_bound(lb),lower(l),upper_bound(ub),upper(u)
+    :Slice_Move(s,v,W_,f1,f2),index(i)
   {}
 
   void Dirichlet_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
     for(int i=0;i<indices.size();i++)
-      if (P->fixed(indices[i])) return;
+      if (P->is_fixed(indices[i])) return;
 
-    double v1 = P->parameter(indices[n]);
+    double v1 = P->get_parameter_value(indices[n]);
     constant_sum_slice_function slice_levels_function(*P,indices,n);
 
     double v2 = sample(*P,slice_levels_function,v1);
 
     //---------- Record Statistics - -------------//
     Result result(2);
-    vector<double> x = P->parameters(indices);
+    vector<double> x = P->get_parameter_values(indices);
     double total = sum(x);
     double factor = (total - v2)/(total-v1);
     result.totals[0] = std::abs(log(v2/v1)) + (indices.size()-1)*(std::abs(log(factor)));
@@ -564,7 +558,7 @@ namespace MCMC {
     Parameters& PP = *P.as<Parameters>();
     // If any of the branch means are fixed, then bail
     for(int i=0;i<PP.n_branch_means();i++)
-      if (PP.fixed(i)) return;
+      if (PP.is_fixed(i)) return;
 
     double v1 = 0;
     scale_means_only_slice_function slice_levels_function(PP);
@@ -1115,7 +1109,7 @@ void mcmc_log(int iterations, int subsample, Parameters& P,
   s_parameters<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
 
   // Sort parameter values to resolve identifiability and then output them.
-  vector<double> values = P.parameters();
+  vector<double> values = P.get_parameter_values();
   for(int i=0;i<un_identifiable_indices.size();i++) 
     values = make_identifiable(values,un_identifiable_indices[i]);
   s_parameters<<join(values,'\t');
@@ -1208,7 +1202,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     int index = find_parameter(*P,restore_names[i]);
     if (index != -1) {
       restore.push_back(index);
-      P->fixed(index,true);
+      P->set_fixed(index,true);
     }
   }
 
@@ -1220,7 +1214,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     // Free temporarily fixed parameters at iteration 5
     if (iterations == 5)
       for(int i=0;i<restore.size();i++)
-	P->fixed(restore[i],false);
+	P->set_fixed(restore[i],false);
 
     Parameters& PP = *P.as<Parameters>();
 

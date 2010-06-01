@@ -15,6 +15,10 @@ COMPARE with 2.0.2 on some single-partition data sets
  - burnin
  - 
 GENERATE: some examples.
+HACK: Improve initial convergence.
+ * Add optional upper and lower bounds on parameters.
+ * Use these bounds in construction slice or MH moves.
+ * Set upper bounds on mu to 0.5 during per-burnin.
 ---
 
 Search: SHOULD we force it to evaluate a sum over alignments for at least a few other trees if the
@@ -137,6 +141,7 @@ Replace T.directed_branch( ) with T.branch( ). [step 2]
 
 --
 2.2.0:
+
 Alignment Constraints #1: Implement a bandwidth around the current path
  - 2x penalty, because we need to look at the reverse proposal :-(
  - How do we handle multiple partitions?
@@ -150,8 +155,6 @@ Alignment Constraints #2:
  - Actually, this will prevent SPR from working...
 
 DOC: Change FIXME to Doxygen \todo
-
-
 --
 P29. See genome-wide transducer paper.  Can I impose similar constraints?
  * How do they record/store their bandwidths on the DP matrix?

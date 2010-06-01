@@ -610,7 +610,7 @@ void Parameters::recalc(const vector<int>& indices)
       int s = indices[i];
       assert(0 <= s and s < n_scales);
 
-      double mu = parameter(s);
+      double mu = get_parameter_value(s);
 
       for(int j=0;j<scale_for_partition.size();j++)
 	if (scale_for_partition[j] == s)
@@ -719,7 +719,7 @@ double Parameters::branch_mean(int i) const
 {
   assert(0 <= i and i < n_branch_means());
 
-  return parameter(i);
+  return get_parameter_value(i);
 }
 
 
@@ -727,7 +727,7 @@ void Parameters::branch_mean_tricky(int i,double x)
 {
   assert(0 <= i and i < n_branch_means());
 
-  parameters_[i] = x;
+  parameters_[i].value = x;
   
   for(int j=0;j<scale_for_partition.size();j++)
     if (scale_for_partition[j] == i)
@@ -758,7 +758,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   constants.push_back(-1);
 
   for(int i=0;i<n_scales;i++)
-    add_super_parameter("mu"+convertToString(i+1),1.0);
+    add_super_parameter(Parameter("mu"+convertToString(i+1), 1.0, lower_bound(0.0)));
 
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
@@ -838,7 +838,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   constants.push_back(-1);
 
   for(int i=0;i<n_scales;i++)
-    add_super_parameter("mu"+convertToString(i+1),1.0);
+    add_super_parameter(Parameter("mu"+convertToString(i+1), 1.0, lower_bound(0.0)));
 
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())

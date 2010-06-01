@@ -264,8 +264,8 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     SimpleFrequencyModel F(a,frequencies);
 
-    for(int i=0;i<F.parameters().size();i++)
-      F.fixed(i,true);
+    for(int i=0;i<F.n_parameters();i++)
+      F.set_fixed(i,true);
 
     model_stack.back() = ReversibleMarkovSuperModel(*EM,F);
   }

@@ -89,13 +89,13 @@ namespace substitution {
     /// Fraction of sub-distribution i
     double fraction(int i) const {
       assert(0 <= i and i < n_dists());
-      return parameter(i);
+      return get_parameter_value(i);
     }
 
     /// Fraction of sub-distribution i
     double& fraction(int i) {
       assert(0 <= i and i < n_dists());
-      return parameters_[i];
+      return parameters_[i].value; /// ???
     }
 
     std::string name() const;

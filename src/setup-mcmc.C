@@ -34,6 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 #include "alignment-constraint.H"
 #include "timer_stack.H"
+#include "bounds.H"
 
 using boost::program_options::variables_map;
 using boost::dynamic_bitset;
@@ -73,7 +74,7 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& p, const string& name, 
   else {
     vector<int> indices = parameters_with_extension(P,name);
     for(int i=0;i<indices.size();i++) 
-      if (not P.fixed(indices[i])) {
+      if (not P.is_fixed(indices[i])) {
 	set_if_undef(P.keys, pname, sigma);
 	Proposal2 move_mu(p, P.parameter_name(indices[i]), vector<string>(1,pname), P);
 	M.add(weight, MCMC::MH_Move(move_mu,string("MH_sample_")+P.parameter_name(indices[i])));
@@ -88,24 +89,19 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& p, const string& name, 
 /// \param name          The name of the parameter to create a move for.
 /// \param pname         The name of the slice window width for this move.
 /// \param W             The default window size, if not specified in P.keys
-/// \param lower_bound   Is there a lower bound on the range of the parameter.
-/// \param lower         The lower bound.
-/// \param upper_bound   Is there a upper bound on the range of the parameter.
-/// \param uppper        The upper bound.
+/// \param b             Upper and lower bounds (if any)
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
 void add_slice_moves(Probability_Model& P, const string& name, 
 		     const string& pname, double W,
-		     bool lower_bound, double lower,
-		     bool upper_bound, double upper,
 		     MCMC::MoveAll& M,
 		     double weight = 1)
 {
   vector<int> indices = parameters_with_extension(P,name);
   for(int i=0;i<indices.size();i++) 
   {
-    if (P.fixed(indices[i])) continue;
+    if (P.is_fixed(indices[i])) continue;
 
     // Use W as default window size of "pname" is not set.
     set_if_undef(P.keys, pname, W);
@@ -113,8 +109,7 @@ void add_slice_moves(Probability_Model& P, const string& name,
 
     M.add(weight, 
 	  MCMC::Parameter_Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
-			   indices[i],
-			   lower_bound,lower,upper_bound,upper,W)
+				     indices[i],W)
 	  );
   }
 }
@@ -125,10 +120,6 @@ void add_slice_moves(Probability_Model& P, const string& name,
 /// \param name          The name of the parameter to create a move for
 /// \param pname         The name of the slice window width for this move
 /// \param W             The default window size, if not specified in P.keys
-/// \param lower_bound   Is there a lower bound on the range of the parameter?
-/// \param lower         The lower bound.
-/// \param upper_bound   Is there a upper bound on the range of the parameter?
-/// \param uppper        The upper bound.
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param f1            The function from the parameter's scale to the transformed scale.
 /// \param f2            The inverse of f1.
@@ -136,8 +127,6 @@ void add_slice_moves(Probability_Model& P, const string& name,
 ///
 void add_slice_moves(Probability_Model& P, const string& name, 
 		     const string& pname, double W,
-		     bool lower_bound, double lower,
-		     bool upper_bound, double upper,
 		     MCMC::MoveAll& M,
 		     double(&f1)(double),
 		     double(&f2)(double),
@@ -147,7 +136,7 @@ void add_slice_moves(Probability_Model& P, const string& name,
   vector<int> indices = parameters_with_extension(P,name);
   for(int i=0;i<indices.size();i++) 
   {
-    if (P.fixed(indices[i])) continue;
+    if (P.is_fixed(indices[i])) continue;
 
     // Use W as default window size of "pname" is not set.
     set_if_undef(P.keys, pname, W);
@@ -155,8 +144,8 @@ void add_slice_moves(Probability_Model& P, const string& name,
 
     M.add(weight, 
 	  MCMC::Parameter_Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
-			   indices[i],
-			   lower_bound,lower,upper_bound,upper,W,f1,f2)
+				     indices[i],
+				     W,f1,f2)
 	  );
   }
 }
@@ -255,7 +244,7 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 {
   MCMC::MoveAll slice_moves("parameters:scale:MH");
   for(int i=0;i<P.n_branch_means();i++)
-    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, slice_moves);
   return slice_moves;
 }
 
@@ -268,31 +257,31 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   MCMC::MoveAll slice_moves("parameters:slice");
 
   // scale parameters
-  add_slice_moves(P, "mu",      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+  add_slice_moves(P, "mu",      "mu_slice_window",    0.3, slice_moves);
   for(int i=0;i<P.n_branch_means();i++)
-    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, true,0,false,0,slice_moves);
+    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, slice_moves);
 
   // smodel parameters
-  add_slice_moves(P, "HKY::kappa",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
-  add_slice_moves(P, "rho",      "rho_slice_window",    0.2, true,0,false,0,slice_moves);
-  add_slice_moves(P, "TN::kappa(pur)",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
-  add_slice_moves(P, "TN::kappa(pyr)",      "kappa_slice_window",    0.3, true,0,false,0,slice_moves);
-  add_slice_moves(P, "M0::omega",      "omega_slice_window",    0.3, true,0,false,0,slice_moves);
-  add_slice_moves(P, "M2::omega",      "omega_slice_window",    0.3, true,0,false,0,slice_moves);
-  add_slice_moves(P, "INV::p",         "INV::p_slice_window", 0.1, true,0,true,1,slice_moves);
-  add_slice_moves(P, "f",      "f_slice_window",    0.1, true,0,true,1,slice_moves);
-  add_slice_moves(P, "g",      "g_slice_window",    0.1, true,0,true,1,slice_moves);
-  add_slice_moves(P, "h",      "h_slice_window",    0.1, true,0,true,1,slice_moves);
-  add_slice_moves(P, "beta::mu",      "beta::mu_slice_window",    0.1, true,0,false,0,slice_moves);
-  add_slice_moves(P, "gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
-  add_slice_moves(P, "beta::sigma/mu",      "beta::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
-  add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, true,0,false,0,slice_moves);
+  add_slice_moves(P, "HKY::kappa",      "kappa_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "rho",      "rho_slice_window",    0.2, slice_moves);
+  add_slice_moves(P, "TN::kappa(pur)",      "kappa_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "TN::kappa(pyr)",      "kappa_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "M0::omega",      "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "M2::omega",      "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "INV::p",         "INV::p_slice_window", 0.1, slice_moves);
+  add_slice_moves(P, "f",      "f_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "g",      "g_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "h",      "h_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "beta::mu",      "beta::mu_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, slice_moves);
+  add_slice_moves(P, "beta::sigma/mu",      "beta::sigma_slice_window",    1.0, slice_moves);
+  add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, slice_moves);
 
   // imodel parameters
-  add_slice_moves(P, "delta",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves, 10);
-  add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves, 10);
+  add_slice_moves(P, "delta",      "lambda_slice_window",    1.0, slice_moves, 10);
+  add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, slice_moves, 10);
   add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
-		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon, 10);
+		  slice_moves,transform_epsilon,inverse_epsilon, 10);
 
   for(int s=0;s<=P.n_smodels();s++) 
   {
@@ -332,7 +321,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     if (not has_parameter(P,name))
       break;
     
-    add_slice_moves(P,name, "M3::omega_slice_window", 1.0, true, 0, false, 0, slice_moves);
+    add_slice_moves(P,name, "M3::omega_slice_window", 1.0, slice_moves);
   }
 
   slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));

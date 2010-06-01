@@ -133,11 +133,11 @@ double branch_likelihood::operator()(const optimize::Vector& v) const
   }
 
   //---------------- Set parameters -------------------//
-  vector<double> p = smodel->parameters();
+  vector<double> p = smodel->get_parameter_values();
   for(int i=0;i<parameters.size();i++) 
     p[parameters[i]] = v[T.n_branches()+i];
 
-  smodel->parameters(p);
+  smodel->set_parameter_values(p);
   smodel->set_rate(1);
 
 
@@ -172,11 +172,11 @@ double log_branch_likelihood::operator()(const optimize::Vector& v) const
     T2.branch(i).set_length(exp(v[i]));
 
   //---------------- Set parameters -------------------//
-  vector<double> p = smodel->parameters();
+  vector<double> p = smodel->get_parameter_values();
   for(int i=0;i<parameters.size();i++) 
     p[parameters[i]] = v[T.n_branches()+i];
 
-  smodel->parameters(p);
+  smodel->set_parameter_values(p);
   smodel->set_rate(1);
 
 
@@ -370,7 +370,7 @@ void set_parameters(Model& M, const variables_map& args)
 
     int p=-1;
     if (p=find_parameter(M,name),p!=-1)
-      M.parameter(p,value);
+      M.set_parameter_value(p,value);
   }
 }
 
@@ -388,7 +388,7 @@ void estimate_tree(const alignment& A,
   for(int b=0;b<T.n_branches();b++)
     start[b] = log(T.branch(b).length());
   for(int i=0;i<parameters.size();i++)
-    start[i+T.n_branches()] = smodel.parameters()[parameters[i]];
+    start[i+T.n_branches()] = smodel.get_parameter_value( parameters[i] );
 
   //    optimize::Vector end = search_gradient(start,score);
   //    optimize::Vector end = search_basis(start,score);
@@ -397,10 +397,10 @@ void estimate_tree(const alignment& A,
   for(int b=0;b<T.n_branches();b++)
     T.branch(b).set_length(exp(end[b]));
 
-  vector<double> p = smodel.parameters();
+  vector<double> p = smodel.get_parameter_values();
   for(int i=0;i<parameters.size();i++)
     p[parameters[i]] = end[i+T.n_branches()];
-  smodel.parameters(p);
+  smodel.set_parameter_values(p);
   smodel.set_rate(1);
 }
 
@@ -508,8 +508,8 @@ int main(int argc,char* argv[])
 
       vector<int> parameters;
       if (args["search"].as<string>() == "smodel")
-	for(int i=0;i<smodel_est->parameters().size();i++)
-	  if (not smodel_est->fixed(i))
+	for(int i=0;i<smodel_est->n_parameters();i++)
+	  if (not smodel_est->is_fixed(i))
 	    parameters.push_back(i);
       
       estimate_tree(A,T2,*smodel_est,parameters);

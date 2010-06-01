@@ -158,9 +158,9 @@ IndelModel::~IndelModel() {}
 indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
   using namespace states;
 
-  double delta   = exp(parameter(0));
-  double e       = exp(parameter(1));
-  double t       = exp(parameter(2));
+  double delta   = exp(get_parameter_value(0));
+  double e       = exp(get_parameter_value(1));
+  double t       = exp(get_parameter_value(2));
 
   if (delta > 0.5)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
@@ -223,14 +223,14 @@ efloat_t SimpleIndelModel::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda_O
-  double lambda_O = parameter(0);
+  double lambda_O = get_parameter_value(0);
   double pdel =  lambda_O-logdiff(0,lambda_O);
   double rate =  log(-logdiff(0,pdel)) - log(D);
 
   Pr *= laplace_pdf(rate,-5, 0.5);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double lambda_E = parameter(1);
+  double lambda_E = get_parameter_value(1);
   double E_length = lambda_E - logdiff(0,lambda_E);
   double E_length_mean = 5.0;
 
@@ -244,9 +244,9 @@ string SimpleIndelModel::name() const {return "RS05";}
 SimpleIndelModel::SimpleIndelModel()
   :QE(Q1.size1(),Q1.size2())
 {
-  add_parameter("delta",  -5);
-  add_parameter("epsilon",-0.25);
-  add_parameter("tau",    log(0.001));
+  add_parameter(Parameter("delta",  -5, upper_bound(0.0)));
+  add_parameter(Parameter("epsilon",-0.25)); // no upper bound on transformed scale
+  add_parameter(Parameter("tau",    log(0.001), upper_bound(0.0)));
 
   recalc_all();
 }
@@ -256,14 +256,14 @@ efloat_t NewIndelModel::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda_O
-  double rate = parameter(0);
+  double rate = get_parameter_value(0);
 
-  Pr *= laplace_pdf(rate,parameter(2), parameter(3));
+  Pr *= laplace_pdf(rate,get_parameter_value(2), get_parameter_value(3));
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double log_epsilon = parameter(1);
+  double log_epsilon = get_parameter_value(1);
   double E_length = log_epsilon - logdiff(0,log_epsilon);
-  double E_length_mean = parameter(4);
+  double E_length_mean = get_parameter_value(4);
 
   Pr *= exp_exponential_pdf(E_length,E_length_mean);
 
@@ -277,8 +277,8 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   if (not time_dependant)
     t = 1;
 
-  double rate    = exp(parameter(0));
-  double e = exp(parameter(1));
+  double rate    = exp(get_parameter_value(0));
+  double e = exp(get_parameter_value(1));
 
   // (1-e) * delta / (1-delta) = P(indel)
   // But move the (1-e) into the RATE to make things work
@@ -343,7 +343,7 @@ string NewIndelModel::name() const
 
 efloat_t NewIndelModel::lengthp(int l) const 
 {
-  double e = exp(parameter(1));
+  double e = exp(get_parameter_value(1));
   if (l < 0)
     return 0;
   else if (l==0)
@@ -355,11 +355,11 @@ efloat_t NewIndelModel::lengthp(int l) const
 NewIndelModel::NewIndelModel(bool b)
   :time_dependant(b)
 {
-  add_parameter("lambda",   -4);
-  add_parameter("epsilon",  -0.25);
-  add_parameter("lambda::prior_median", -4);
-  add_parameter("lambda::prior_stddev", 1);
-  add_parameter("epsilon::prior_length", 10);
+  add_parameter(Parameter("lambda",   -4));
+  add_parameter(Parameter("epsilon",  -0.25)); // no upper bound on transformed scale
+  add_parameter(Parameter("lambda::prior_median", -4));
+  add_parameter(Parameter("lambda::prior_stddev", 1));
+  add_parameter(Parameter("epsilon::prior_length", 10));
 }
 
 
@@ -368,10 +368,10 @@ efloat_t TKF1::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda
-  Pr *= laplace_pdf(parameter(0),parameter(2), parameter(3));
+  Pr *= laplace_pdf(get_parameter_value(0),get_parameter_value(2), get_parameter_value(3));
 
   // Calculate prior on mean sequence length
-  Pr *= exponential_pdf(parameter(1), parameter(4));
+  Pr *= exponential_pdf(get_parameter_value(1), get_parameter_value(4));
 
   return Pr;
 }
@@ -433,8 +433,8 @@ indel::PairHMM TKF1::get_branch_HMM(double t) const
   if (not time_dependant)
     t = 1;
 
-  double lambda = exp(parameter(0));
-  double mean_length = parameter(1);
+  double lambda = exp(get_parameter_value(0));
+  double mean_length = get_parameter_value(1);
   double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
   double mu = lambda/sigma;                       // s = lambda/mu
 
@@ -450,7 +450,7 @@ string TKF1::name() const
 
 efloat_t TKF1::lengthp(int l) const 
 {
-  double mean_length = parameter(1);
+  double mean_length = get_parameter_value(1);
 
   double sigma = mean_length/(1.0 + mean_length);
 
@@ -460,11 +460,11 @@ efloat_t TKF1::lengthp(int l) const
 TKF1::TKF1(bool b)
   :time_dependant(b)
 {
-  add_parameter("lambda",-5);
-  add_parameter("mean_length",100);
-  add_parameter("lambda::prior_median", -5);
-  add_parameter("lambda::prior_stddev", 1.5);
-  add_parameter("mean_length::prior_mean", 1.5);
+  add_parameter(Parameter("lambda",-5));
+  add_parameter(Parameter("mean_length",100));
+  add_parameter(Parameter("lambda::prior_median", -5));
+  add_parameter(Parameter("lambda::prior_stddev", 1.5));
+  add_parameter(Parameter("mean_length::prior_mean", 1.5));
 }
 
 
@@ -473,17 +473,17 @@ efloat_t TKF2::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda
-  Pr *= laplace_pdf(parameter(0),parameter(3), parameter(4));
+  Pr *= laplace_pdf(get_parameter_value(0),get_parameter_value(3), get_parameter_value(4));
 
   // Calculate prior on epsilon
-  double lambda_E = parameter(1);
+  double lambda_E = get_parameter_value(1);
   double E_length = lambda_E - logdiff(0,lambda_E);
-  double E_length_mean = parameter(5);
+  double E_length_mean = get_parameter_value(5);
 
   Pr *= exp_exponential_pdf(E_length,E_length_mean);
 
   // Calculate prior on mean sequence length
-  Pr *= exponential_pdf(parameter(2), parameter(6));
+  Pr *= exponential_pdf(get_parameter_value(2), get_parameter_value(6));
 
   return Pr;
 }
@@ -495,9 +495,9 @@ indel::PairHMM TKF2::get_branch_HMM(double t) const
   if (not time_dependant)
     t = 1;
 
-  double lambda = exp(parameter(0));
-  double e = exp(parameter(1));
-  double mean_length = parameter(2);
+  double lambda = exp(get_parameter_value(0));
+  double e = exp(get_parameter_value(1));
+  double mean_length = get_parameter_value(2);
   double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
   double mu = lambda/sigma;                       // s = lambda/mu
 
@@ -517,7 +517,7 @@ efloat_t TKF2::lengthp(int l) const
 {
   // FIXME -  this is wrong
   std::abort();
-  double mean_length = parameter(1);
+  double mean_length = get_parameter_value(1);
 
   double sigma = mean_length/(1.0 + mean_length);
 
@@ -527,11 +527,11 @@ efloat_t TKF2::lengthp(int l) const
 TKF2::TKF2(bool b)
   :time_dependant(b)
 {
-  add_parameter("lambda",-5);
-  add_parameter("epsilon",-0.25);
-  add_parameter("mean_length",100);
-  add_parameter("lambda::prior_median", -5);
-  add_parameter("lambda::prior_stddev", 1.5);
-  add_parameter("epsilon::prior_length", 10);
-  add_parameter("mean_length::prior_mean", 1.5);
+  add_parameter(Parameter("lambda",-5));
+  add_parameter(Parameter("epsilon",-0.25, upper_bound(0.0)));
+  add_parameter(Parameter("mean_length",100));
+  add_parameter(Parameter("lambda::prior_median", -5));
+  add_parameter(Parameter("lambda::prior_stddev", 1.5));
+  add_parameter(Parameter("epsilon::prior_length", 10));
+  add_parameter(Parameter("mean_length::prior_mean", 1.5));
 }

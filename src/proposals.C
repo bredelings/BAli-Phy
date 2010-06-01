@@ -401,12 +401,11 @@ sorted::sorted(const Proposal_Fn& P)
 
 double Proposal2::operator()(Probability_Model& P) const
 {
-  vector<double> parameters = P.parameters();
-  vector<bool> fixed = P.fixed();
+  vector<double> parameters = P.get_parameter_values();
 
   // Quit if this move alters a 'fixed' parameter
   for(int i=0;i<indices.size();i++)
-    if (fixed[indices[i]])
+    if (P.is_fixed(indices[i]))
       return 1.0;
 
   // Load parameter values from names
@@ -415,9 +414,9 @@ double Proposal2::operator()(Probability_Model& P) const
     p[i] = loadvalue(P.keys, pnames[i]);
 
   // read, alter, and write parameter values
-  vector<double> x = P.parameters(indices);
+  vector<double> x = P.get_parameter_values(indices);
   double ratio = (*proposal)(x,p);
-  P.parameters(indices,x);
+  P.set_parameter_values(indices,x);
 
   return ratio;
 }
@@ -443,7 +442,7 @@ Proposal2::Proposal2(const Proposal_Fn& p,const vector<std::string>& s, const st
     int index = find_parameter(P,s[i]);
     if (index == -1)
       throw myexception()<<"Model has no parameter called '"<<s[i]<<"' - can't create proposal for it.";
-    if (not P.fixed(index))
+    if (not P.is_fixed(index))
       indices.push_back(index);
   }
   if (not indices.size())

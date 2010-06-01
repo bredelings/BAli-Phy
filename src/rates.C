@@ -41,7 +41,7 @@ namespace substitution {
     vector<double> p(2);
     p[0] = 0;
     p[1] = 2;
-    D->parameters(p);
+    D->set_parameter_values(p);
   }
 
   Uniform::Uniform() {}
@@ -49,24 +49,24 @@ namespace substitution {
   //--------------- GammaRateDistribution -----------------//
   
   efloat_t Gamma::prior() const {
-    double g_sigma = parameters_[0];
+    double g_sigma = get_parameter_value(0);
     double log_g_sigma = log(g_sigma);
     return laplace_pdf(log_g_sigma,-3,1.0);
   }
 
   void Gamma::recalc(const vector<int>&)
   {
-    double s = minmax(parameters_[0], 1.0e-5, 3.0);
+    double s = minmax(get_parameter_value(0), 1.0e-5, 3.0);
 
     vector<double> p(2);
     p[0] = 1.0/(s*s);
     p[1] = 1.0/p[0];
 
-    D->parameters(p);
+    D->set_parameter_values(p);
   }
 
   Gamma::Gamma() {
-    add_parameter("gamma::sigma/mu", 0.1);
+    add_parameter(Parameter("gamma::sigma/mu", 0.1, lower_bound(0.0)));
   }
 
   //--------------- Beta RateDistribution -----------------//
@@ -80,7 +80,7 @@ namespace substitution {
     double a = p[0] = (1 - m - m*s*s)/(s*s);
     double b = p[1] = a * (1-m)/m;
 
-    D->parameters(p);
+    D->set_parameter_values(p);
   }
 
   efloat_t Beta::prior() const 
@@ -100,8 +100,8 @@ namespace substitution {
 
   Beta::Beta()
   {
-    add_parameter("beta::mu", 0.5);
-    add_parameter("beta::sigma/mu", 0.1);
+    add_parameter(Parameter("beta::mu", 0.5, lower_bound(0.0)));
+    add_parameter(Parameter("beta::sigma/mu", 0.1, lower_bound(0.0)));
   }
 
   //-------------- LogNormal Distribution ----------------//
@@ -112,14 +112,14 @@ namespace substitution {
   //          Var X = (exp(lsigma^2)-1  => log(Var X + 1) = lsigma^2
 
   efloat_t LogNormal::prior() const {
-    double g_sigma = parameters_[0];
+    double g_sigma = get_parameter_value(0);
     double log_g_sigma = log(g_sigma);
     return laplace_pdf(log_g_sigma,-3,1.0);
   }
 
   void LogNormal::recalc(const vector<int>&)
   {
-    double s = minmax(parameters_[0], 1.0e-5, 1.0e5);
+    double s = minmax(get_parameter_value(0), 1.0e-5, 1.0e5);
 
     double Var = s*s;
     double lVar = log1p(Var);
@@ -131,12 +131,12 @@ namespace substitution {
     // don't go crazy
     p[1] = std::max(ls,1.0e-5);
 
-    D->parameters(p);
+    D->set_parameter_values(p);
   }
 
   LogNormal::LogNormal() 
   {
-    add_parameter("log-normal::sigma/mu", 0.1);
+    add_parameter(Parameter("log-normal::sigma/mu", 0.1, lower_bound(0.0)));
   }
     
 
@@ -175,7 +175,7 @@ namespace substitution {
     // Set the rates and fractions
     for(int i=0;i<n_dists();i++) {
       string pname = string("multi:p")+convertToString(i+1);
-      add_parameter(pname, 1.0/n_dists() );
+      add_parameter(Parameter(pname, 1.0/n_dists(), interval<double>(0,1)));
     }
 
     for(int i=0;i<models.size();i++)

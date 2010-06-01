@@ -33,6 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "clone.H"
 #include "mytypes.H"
+#include "bounds.H"
 
 // FIXME - the way to have a model class with members as submodels is to
 //   1. hard-code the SubModels(m) function to return the models you want,
@@ -41,6 +42,19 @@ along with BAli-Phy; see the file COPYING.  If not see
 //   3. we COULD have an upwards-pointing chain as well...
 
 std::string parameter_name(const std::string& prefix,int i,int n);
+
+struct Parameter
+{
+  std::string name;
+  double value;
+  Bounds<double> bounds;
+  bool fixed;
+
+  Parameter(const std::string&, double);
+  Parameter(const std::string&, double, bool);
+  Parameter(const std::string&, double, const Bounds<double>&, bool=false);
+};
+
 
 /// \brief An object that depends on a number of parameters, and updates itself when they change.
 ///
@@ -59,18 +73,14 @@ class Model: public Cloneable
 {
 protected:
   /// Parameter values
-  std::vector<double> parameters_;
-  /// Parameter names
-  std::vector<std::string> parameter_names_;
-  /// Is this parameter fixed?
-  std::vector<bool> fixed_;
+  std::vector< Parameter > parameters_;
 
-  virtual void add_parameter(const std::string&,double);
+  virtual void add_parameter(const Parameter&);
   
   /// \brief Recalculate internal data based on changing one parameter
   ///
-  /// \param p The parmeter that changed.
-  void recalc_one(int p);
+  /// \param i The parameter that changed.
+  void recalc_one(int i);
 
   /// \brief Recalculate internal data based on current parameters
   ///
@@ -87,35 +97,44 @@ public:
   /// the prior for the model, on the same scale as 'fiddle()'
   virtual efloat_t prior() const {return 1.0;}
 
-  bool fixed(int i) const                {return fixed_[i];}
-  virtual void fixed(int i,bool f)       {fixed_[i] = f;}
+  /// Names of the parameters
+  const std::string& parameter_name(int i) const {return parameters_[i].name;}
 
-  const std::vector<bool>& fixed() const {return fixed_;}
-  virtual void fixed(const std::vector<bool>& f) { assert(fixed_.size() == f.size()); fixed_ = f; }
+  bool is_fixed(int i) const                {return parameters_[i].fixed;}
+  virtual void set_fixed(int i,bool f)      {parameters_[i].fixed = f;}
+
+  const Bounds<double>& get_bounds(int i) const {return parameters_[i].bounds;}
+  virtual void set_bounds(int i,const Bounds<double>& b) {parameters_[i].bounds = b;}
+
+  /// Get A model parameter value
+  double get_parameter_value(int i) const {return parameters_[i].value;}
+  /// Get SOME model parameter values
+  std::vector<double> get_parameter_values(const std::vector<int>&) const;
+  /// Get ALL model parameter values
+  std::vector<double> get_parameter_values() const;
+
+  /// Set A model parameter value
+  virtual void set_parameter_value(int p,double value);
+  /// Set SOME of the model parameter values
+  virtual void set_parameter_values(const std::vector<int>& indices,const std::vector<double>& p);
+  /// Set SOME of the model parameter values
+  virtual void set_parameter_values(const std::vector<int>& indices,std::vector<double>::const_iterator& p);
+  /// Set ALL model parameter values
+  virtual void set_parameter_values(const std::vector<double>& p);
 
   /// Get A model parameter
-  virtual double parameter(int p) const {return parameters_[p];}
-  /// Get SOME model parameters
-  virtual std::vector<double> parameters(const std::vector<int>&) const;
+  const Parameter& get_parameter(int i) const {return parameters_[i];}
   /// Get ALL model parameters
-  virtual const std::vector<double>& parameters() const {return parameters_;}
-
-  /// Set A model parameter
-  virtual void parameter(int p,double value);
-  /// Set SOME of the model parameters
-  virtual void parameters(const std::vector<int>& indices,const std::vector<double>& p);
-  /// Set SOME of the model parameters
-  virtual void parameters(const std::vector<int>& indices,std::vector<double>::const_iterator& p);
+  const std::vector<Parameter>& get_parameters() const {return parameters_;}
+  /// Set A model parameter value
+  virtual void set_parameter(int p,const Parameter& P);
   /// Set ALL model parameters
-  virtual void parameters(const std::vector<double>& p);
+  virtual void set_parameters(const std::vector<Parameter>& P);
 
   unsigned n_parameters() const {return parameters_.size();}
 
   /// The model's name
   virtual std::string name() const =0;
-
-  /// Names of the parameters
-  const std::string& parameter_name(int i) const {return parameter_names_[i];}
 
   std::string header() const;
 
@@ -156,8 +175,9 @@ protected:
 
   int n_super_parameters() const;
 
-  void add_parameter(const std::string&,double);
-  void add_super_parameter(const std::string&,double);
+  void add_parameter(const Parameter&);
+  void add_super_parameter(const Parameter&);
+
   virtual void add_submodel(const std::string&,const Model&);
 
   /// The prior for the parameters of the upper model
@@ -169,9 +189,11 @@ protected:
   /// Propagate changes to child model parameters down to child Model objects.
   void write();
   /// Store ONE parameter down into submodels
-  void write(int i,double p);
+  void write_one(int i, const Parameter& P);
+  /// Store ONE parameter value down into submodels
+  void write_value(int i,double p);
   /// Store SOME parameters down into submodels
-  void write(const std::vector<int>&,std::vector<double>::const_iterator&);
+  void write_values(const std::vector<int>&,std::vector<double>::const_iterator&);
 
   void prefix_names();
 
@@ -181,26 +203,21 @@ public:
   
   efloat_t prior() const;
   
-  bool fixed(int i) const {return Model::fixed(i);}
-  virtual void fixed(int i,bool f) {Model::fixed(i,f); write();}
-  virtual void fixed(const std::vector<bool>& f) {Model::fixed(f); write();}
-  std::vector<bool> fixed() const {return Model::fixed();}
-
-  /// Get A model parameter
-  double parameter(int p) const {return Model::parameter(p); }
-  /// Get SOME model parameters
-  virtual std::vector<double> parameters(const std::vector<int>& indices) const {return Model::parameters(indices);}
-  /// Get ALL model parameters
-  const std::vector<double>& parameters() const {return Model::parameters();}
+  virtual void set_fixed(int i,bool f) {Model::set_fixed(i,f); write();}
 
   /// Set A model parameter
-  void parameter(int p,double value);
+  void set_parameter_value(int p,double value);
   /// Set SOME of the model parameters
-  void parameters(const std::vector<int>& indices,const std::vector<double>& p);
+  void set_parameter_values(const std::vector<int>& indices,const std::vector<double>& p);
   /// Set SOME of the model parameters
-  void parameters(const std::vector<int>& indices,std::vector<double>::const_iterator& p);
+  void set_parameter_values(const std::vector<int>& indices,std::vector<double>::const_iterator& p);
   /// Set ALL model parameters
-  void parameters(const std::vector<double>& p);
+  void set_parameter_values(const std::vector<double>& p);
+
+  /// Set A model parameter
+  void set_parameter(int i, const Parameter& P);
+  /// Set ALL model parameters
+  void set_parameters(const std::vector<Parameter>& P);
 
   /// Access a child Model as type T
   template<typename T>

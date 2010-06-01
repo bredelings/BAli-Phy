@@ -27,6 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define SLICE_SAMPLING_H
 
 #include "parameters.H"
+#include "bounds.H"
 
 namespace slice_sampling {
   /// This function returns the value \a x that was passed in.
@@ -34,7 +35,7 @@ namespace slice_sampling {
 }
 
 /// A function interface object for use in slice sampling
-struct slice_function 
+struct slice_function: public Bounds<double>
 {
   /// Compute the value of the function evaluated at x 
   virtual double operator()(double x)=0;
@@ -45,30 +46,8 @@ struct slice_function
   /// Return the current value of x
   virtual double current_value() const;
 
-  /// is there a lower bound on the range?
-  bool has_lower_bound;
-  /// the value of the lower bound, if any
-  double lower_bound;
-
-  /// is there an upper bound on the range?
-  bool has_upper_bound;
-  /// the value of the upper bound, if any
-  double upper_bound;
-
-  /// check if a value is below the lower bound on the range
-  bool below_lower_bound(double x) const { return (has_lower_bound and x<lower_bound); }
-  /// check if a value is above the upper bound on the range
-  bool above_upper_bound(double x) const { return (has_upper_bound and x>upper_bound); }
-  /// check if a value is in the range or not
-  bool in_range(double x) const  { return (not below_lower_bound(x) and not above_upper_bound(x));}
-
-  /// set the lower bound on the range
-  void set_lower_bound(double);
-
-  /// set the upper bound on the range
-  void set_upper_bound(double);
-
-  slice_function();
+  slice_function() {}
+  slice_function(const Bounds<double>& b):Bounds<double>(b) {}
 };
 
 double slice_sample(double x0, slice_function& g, double w, int m);

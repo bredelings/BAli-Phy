@@ -137,7 +137,7 @@ namespace substitution {
   SimpleExchangeModel::SimpleExchangeModel(unsigned n)
     :ExchangeModel(n)
   {
-    add_parameter("rho",exp(-4));
+    add_parameter(Parameter("rho",exp(-4),lower_bound(0.0)));
     recalc_all();
   }
 
@@ -199,7 +199,7 @@ namespace substitution {
 
     // set the frequency parameters
     for(int i=0;i<n_letters();i++)
-      parameters_[i+1] = pi2[i];
+      parameters_[i+1].value = pi2[i];
 
     // recompute everything
     recalc_all();
@@ -208,7 +208,7 @@ namespace substitution {
   void SimpleFrequencyModel::recalc(const vector<int>&)
   {
     // compute frequencies
-    pi = get_varray(parameters_,1,n_letters());
+    pi = get_varray(get_parameter_values(),1,n_letters());
     pi /= pi.sum();
     
     // compute transition rates
@@ -231,12 +231,12 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    return dirichlet_pdf(parameters_, 1, n_letters(), 1.0);
+    return dirichlet_pdf(get_parameter_values(), 1, n_letters(), 1.0);
   }
 
   string SimpleFrequencyModel::name() const 
   {
-    if (fixed_[0] and parameters_[0] == 1.0)
+    if (is_fixed(0) and get_parameter_value(0) == 1.0)
       return "F";
     else
       return "gwF";
@@ -247,12 +247,12 @@ namespace substitution {
      ModelWithAlphabet<alphabet>(a)
   {
     // Start with *f = 1
-    add_parameter("f",1.0);
-    fixed_[0] = true;
+    add_parameter(Parameter("f",1.0,interval<double>(0, 1)));
+    parameters_[0].fixed = true;
 
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(pname, 1.0/n_letters());
+      add_parameter(Parameter(pname, 1.0/n_letters(), interval<double>(0,1)));
     }
 
     // initialize everything
@@ -266,15 +266,15 @@ namespace substitution {
     if (pi.size() != a.size())
       throw myexception()<<"Constructing a frequency model on alphabet '"<<a.name<<"' but got frequencies of "<<pi.size()<<" letters instead of the expected "<<a.size();
 
+    add_parameter(Parameter("f", 1.0, interval<double>(0,1)));
     // Start with *f = 1
-    add_parameter("f",1.0);
-    fixed_[0] = true;
+    // set_fixed(0,true);
 
     valarray<double> f = pi;
     f /= f.sum();
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(pname, f[i]);
+      add_parameter(Parameter(pname, f[i], interval<double>(0,1)));
     }
 
     // initialize everything
@@ -311,13 +311,13 @@ namespace substitution {
     //------------------ compute triplet frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
 
-    vector<double> sub_parameters = SubModels(0).parameters();
+    vector<double> sub_parameters = SubModels(0).get_parameter_values();
 
     vector<double> triplet_parameters(n_letters()+1);
     triplet_parameters[0] = sub_parameters[0];
     set_varray(triplet_parameters,1,pi);
 
-    triplets->parameters(triplet_parameters);
+    triplets->set_parameter_values(triplet_parameters);
 
     for(int i=0;i<n_letters();i++)
       for(int j=0;j<n_letters();j++)
@@ -341,7 +341,7 @@ namespace substitution {
 
   void TripletsFrequencyModel::recalc(const vector<int>&)
   {
-    valarray<double> nu = get_varray(parameters_, 1, n_letters());
+    valarray<double> nu = get_varray(get_parameter_values(), 1, n_letters());
 
     //------------- compute frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
@@ -352,7 +352,7 @@ namespace substitution {
 
 
     //------------ compute transition rates -------------//
-    double g = parameters_[0];
+    double g = get_parameter_value(0);
 
     valarray<double> nu_g(n_letters());
     for(int i=0;i<n_letters();i++)
@@ -379,7 +379,7 @@ namespace substitution {
 
   efloat_t TripletsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(parameters_,1,n_letters(),4.0);
+    return dirichlet_pdf(get_parameter_values(),1,n_letters(),4.0);
   }
 
   string TripletsFrequencyModel::name() const 
@@ -390,11 +390,11 @@ namespace substitution {
   TripletsFrequencyModel::TripletsFrequencyModel(const Triplets& T)
     : TripletFrequencyModel(T)
   {
-    add_super_parameter("g", 1);
+    add_super_parameter(Parameter("g", 1, interval<double>(0,1) ));
 
     for(int i=0;i<n_letters();i++) {
       string pname = string("v") + Alphabet().letter(i);
-      add_super_parameter(pname, 1.0/n_letters());
+      add_super_parameter(Parameter(pname, 1.0/n_letters(), interval<double>(0,1) ));
     }
 
     insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
@@ -427,10 +427,10 @@ namespace substitution {
     }
 
     vector<double> codon_parameters(n_letters()+1);
-    codon_parameters[0] = SubModels(0).parameter(0);
+    codon_parameters[0] = SubModels(0).get_parameter_value(0);
     set_varray(codon_parameters,1,pi);
 
-    codons->parameters(codon_parameters);
+    codons->set_parameter_values(codon_parameters);
 
     for(int i=0;i<n_letters();i++)
       for(int j=0;j<n_letters();j++)
@@ -459,10 +459,10 @@ namespace substitution {
 
   void CodonsFrequencyModel::recalc(const vector<int>&)
   {
-    double c = parameters_[0];
+    double c = get_parameter_value(0);
 
     //------------- compute frequencies ------------------//
-    valarray<double> aa_pi = get_varray(parameters_, 2, aa_size());
+    valarray<double> aa_pi = get_varray(get_parameter_values(), 2, aa_size());
 
     // get codon frequencies of sub-alphabet
     valarray<double> sub_pi = SubModels(0).frequencies();
@@ -489,7 +489,7 @@ namespace substitution {
 
 
     //------------ compute transition rates -------------//
-    double h = parameters_[1];
+    double h = get_parameter_value(1);
 
     valarray<double> factor_h(n_letters());
     for(int i=0;i<n_letters();i++)
@@ -507,7 +507,7 @@ namespace substitution {
 
   efloat_t CodonsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(parameters_, 2, aa_size(), 2.0);
+    return dirichlet_pdf(get_parameter_values(), 2, aa_size(), 2.0);
   }
 
   string CodonsFrequencyModel::name() const 
@@ -518,12 +518,12 @@ namespace substitution {
   CodonsFrequencyModel::CodonsFrequencyModel(const Codons& C)
     : CodonFrequencyModel(C)
   {
-    add_super_parameter("c", 0.5);
-    add_super_parameter("h", 0.5);
+    add_super_parameter(Parameter("c", 0.5, interval<double>(0,1)));
+    add_super_parameter(Parameter("h", 0.5, interval<double>(0,1)));
 
     for(int i=0;i<C.getAminoAcids().size();i++) {
       string pname = string("b_") + Alphabet().getAminoAcids().letter(i);
-      add_super_parameter(pname, 1.0/C.getAminoAcids().size());
+      add_super_parameter(Parameter(pname, 1.0/C.getAminoAcids().size(), interval<double>(0,1)));
     }
 
     insert_submodel("1",TripletsFrequencyModel(C));
@@ -537,7 +537,7 @@ namespace substitution {
   void CodonsFrequencyModel2::recalc(const vector<int>&)
   {
     //------------- compute frequencies ------------------//
-    valarray<double> aa_pref_ = get_varray(parameters_, 1, aa_size());
+    valarray<double> aa_pref_ = get_varray(get_parameter_values(), 1, aa_size());
 
     valarray<double> aa_pref(n_letters());
     for(int i=0;i<n_letters();i++)
@@ -555,7 +555,7 @@ namespace substitution {
 
 
     //------------ compute transition rates -------------//
-    double h = parameters_[0];
+    double h = get_parameter_value(0);
 
     valarray<double> aa_pref_h(n_letters());
     for(int i=0;i<n_letters();i++)
@@ -573,7 +573,7 @@ namespace substitution {
 
   efloat_t CodonsFrequencyModel2::super_prior() const 
   {
-    return dirichlet_pdf(parameters_, 1, aa_size(), 2.0);
+    return dirichlet_pdf(get_parameter_values(), 1, aa_size(), 2.0);
   }
 
   string CodonsFrequencyModel2::name() const 
@@ -584,11 +584,11 @@ namespace substitution {
   CodonsFrequencyModel2::CodonsFrequencyModel2(const Codons& C)
     : CodonFrequencyModel(C)
   {
-    add_super_parameter("h", 0.5);
+    add_super_parameter(Parameter("h", 0.5, interval<double>(0,1)));
 
     for(int i=0;i<C.getAminoAcids().size();i++) {
       string pname = string("b_") + Alphabet().getAminoAcids().letter(i);
-      add_super_parameter(pname, 1.0/C.getAminoAcids().size());
+      add_super_parameter(Parameter(pname, 1.0/C.getAminoAcids().size(), interval<double>(0,1)));
     }
 
     insert_submodel("1",TripletsFrequencyModel(C));
@@ -733,7 +733,7 @@ namespace substitution {
     const int N = n_states();
     assert(N == n_letters());
 
-    pi = get_varray(parameters_,0,N);
+    pi = get_varray(get_parameter_values(),0,N);
     pi /= pi.sum();
 
     for(int i=0;i<N;i++)
@@ -787,7 +787,7 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    return dirichlet_pdf(parameters_, 0, n_letters(), 1.0);
+    return dirichlet_pdf(get_parameter_values(), 0, n_letters(), 1.0);
   }
 
   string F81_Model::name() const
@@ -800,7 +800,7 @@ namespace substitution {
   {
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(pname, 1.0/n_letters());
+      add_parameter(Parameter(pname, 1.0/n_letters(), interval<double>(0,1)));
     }
 
     recalc_all();
@@ -813,7 +813,7 @@ namespace substitution {
 
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(pname, f[i]);
+      add_parameter(Parameter(pname, f[i], interval<double>(0,1)));
     }
 
     recalc_all();
@@ -884,7 +884,7 @@ namespace substitution {
   INV_Model::INV_Model(const alphabet& a)
     :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   {
-    add_parameter("INV::f",1);
+    add_parameter(Parameter("INV::f", 1, interval<double>(0,1)));
 
     // Calculate S matrix
     for(int i=0;i<S.size1();i++)
@@ -1085,7 +1085,7 @@ namespace substitution {
   HKY::HKY(const Nucleotides& N)
     : NucleotideExchangeModel(N)
   { 
-    add_parameter("HKY::kappa", 2);
+    add_parameter(Parameter("HKY::kappa", 2, lower_bound(0.0)));
     recalc_all();
   }
 
@@ -1122,8 +1122,8 @@ namespace substitution {
   TN::TN(const Nucleotides& N)
     : NucleotideExchangeModel(N)
   { 
-    add_parameter("TN::kappa(pur)",2);
-    add_parameter("TN::kappa(pyr)",2);
+    add_parameter(Parameter("TN::kappa(pur)",2, lower_bound(0.0)));
+    add_parameter(Parameter("TN::kappa(pyr)",2, lower_bound(0.0)));
     recalc_all();
   }
 
@@ -1152,7 +1152,7 @@ namespace substitution {
 
     n *= 4;
 
-    return dirichlet_pdf(parameters_, n);
+    return dirichlet_pdf(get_parameter_values(), n);
   }
 
   void GTR::recalc(const vector<int>&) 
@@ -1161,30 +1161,30 @@ namespace substitution {
 
     double total = 0;
     for(int i=0;i<6;i++)
-      total += parameters_[i];
+      total += get_parameter_value(i);
 
     for(int i=0;i<6;i++)
-      parameters_[i] /= total;
+      parameters_[i].value /= total;
 
-    S(0,1) = parameters_[0]; // AG
-    S(0,2) = parameters_[1]; // AT
-    S(0,3) = parameters_[2]; // AC
+    S(0,1) = get_parameter_value(0); // AG
+    S(0,2) = get_parameter_value(1); // AT
+    S(0,3) = get_parameter_value(2); // AC
 
-    S(1,2) = parameters_[3]; // GT
-    S(1,3) = parameters_[4]; // GC
+    S(1,2) = get_parameter_value(3); // GT
+    S(1,3) = get_parameter_value(4); // GC
 
-    S(2,3) = parameters_[5]; // TC
+    S(2,3) = get_parameter_value(5); // TC
   }
 
   GTR::GTR(const Nucleotides& N)
       : NucleotideExchangeModel(N)
     { 
-      add_parameter("GTR::AG", 2.0/8);
-      add_parameter("GTR::AT", 1.0/8);
-      add_parameter("GTR::AC", 1.0/8);
-      add_parameter("GTR::GT", 1.0/8);
-      add_parameter("GTR::GC", 1.0/8);
-      add_parameter("GTR::TC", 2.0/8);
+      add_parameter(Parameter("GTR::AG", 2.0/8, interval<double>(0,1)));
+      add_parameter(Parameter("GTR::AT", 1.0/8, interval<double>(0,1)));
+      add_parameter(Parameter("GTR::AC", 1.0/8, interval<double>(0,1)));
+      add_parameter(Parameter("GTR::GT", 1.0/8, interval<double>(0,1)));
+      add_parameter(Parameter("GTR::GC", 1.0/8, interval<double>(0,1)));
+      add_parameter(Parameter("GTR::TC", 2.0/8, interval<double>(0,1)));
 
       recalc_all();
     }
@@ -1246,12 +1246,12 @@ namespace substitution {
 
   /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
   double M0::omega() const {
-    return parameter(0);
+    return get_parameter_value(0);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
   void M0::omega(double w) {
-    parameter(0,w);
+    set_parameter_value(0,w);
   }
 
   void M0::recalc(const vector<int>&)
@@ -1303,7 +1303,7 @@ namespace substitution {
   M0::M0(const Codons& C,const NucleotideExchangeModel& N)
     :CodonAlphabetExchangeModel(C)
   { 
-    add_super_parameter("M0::omega", 1.0);
+    add_super_parameter(Parameter("M0::omega", 1.0, lower_bound(0.0)));
     insert_submodel("1",N);
     recalc_all();
   }
@@ -1441,7 +1441,7 @@ namespace substitution {
       {
 	string index = convertToString(m+1);
 	string pname = string("a") + letter + index;
-	add_super_parameter(pname, 1.0/n);
+	add_super_parameter(Parameter(pname, 1.0/n, interval<double>(0,1)));
       }
     }
 
@@ -1629,7 +1629,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   void MultiParameterModel::recalc_submodel_instances()
   {
     // recalc sub-models
-    vector<double> params = SubModel().parameters();
+    vector<double> params = SubModel().get_parameter_values();
     for(int b=0;b<fraction.size();b++) {
       sub_parameter_models[b] = &SubModel();
 
@@ -1637,7 +1637,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 	sub_parameter_models[b]->set_rate(p_values[b]);
       else {
 	params[p_change] = p_values[b];
-	sub_parameter_models[b]->parameters(params);
+	sub_parameter_models[b]->set_parameter_values(params);
       }
     }
   }
@@ -1654,10 +1654,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       if (p_change == -1)
 	p_values[m] = M.rate();
       else
-	p_values[m] = M.parameters()[p_change];
+	p_values[m] = M.get_parameter_value(p_change);
 
     if (p_change != -1)
-      SubModel().fixed(p_change,true);
+      SubModel().set_fixed(p_change,true);
   }
 
   //--------------- Dirichlet-based Model----------------//
@@ -1668,11 +1668,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // Prior on the fractions
     double n_f = 1.0 + p_values.size()/2.0;
-    Pr *= dirichlet_pdf(parameters_,0              ,p_values.size(),n_f);
+    Pr *= dirichlet_pdf(get_parameter_values(),0              ,p_values.size(),n_f);
 
     // Prior on the rates
     double n_r = 2.0; // + p_values.size()/2.0;
-    Pr *= dirichlet_pdf(parameters_,p_values.size(),p_values.size(),n_r);
+    Pr *= dirichlet_pdf(get_parameter_values(),p_values.size(),p_values.size(),n_r);
 
     return Pr;
   }
@@ -1700,8 +1700,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // write parameter values to fraction / p_values
     for(int i=0;i<p_values.size();i++)
     {
-      fraction[i] = parameters_[i];
-      p_values[i] = parameters_[i+p_values.size()];
+      fraction[i] = get_parameter_value(i);
+      p_values[i] = get_parameter_value(i+p_values.size());
     }
     
     // We need to do this when either P_values changes, or the SUBMODEL changes
@@ -1723,14 +1723,14 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // bin frequencies
     for(int i=0;i<n;i++) {
       string pname = "DP::f" + convertToString(i+1);
-      add_super_parameter(pname, 1.0/n);
+      add_super_parameter(Parameter(pname, 1.0/n, interval<double>(0,1)));
     }
 
     // bin values
     string p_name = "DP::rate";
     if (p >= 0) p_name = string("DP::") + M.parameter_name(p);
     for(int i=0;i<n;i++)
-      add_super_parameter(p_name+convertToString(i+1), 1.0);
+      add_super_parameter(Parameter(p_name+convertToString(i+1), 1.0, interval<double>(0,n)));
 
     read();
     recalc_all();
@@ -1825,7 +1825,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   efloat_t WithINV::super_prior() const {
-    double p = parameter(0);
+    double p = get_parameter_value(0);
 
     return beta_pdf(p, 1, 2);
   }
@@ -1846,7 +1846,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   vector<double> WithINV::distribution() const {
-    double p = parameter(0);
+    double p = get_parameter_value(0);
 
     vector<double> dist = SubModel().distribution();
     for(int i=0;i<dist.size();i++)
@@ -1860,7 +1860,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     :ReversibleWrapperOver<MultiModel>(M),
      INV(SimpleReversibleMarkovModel(INV_Model(M.Alphabet())))
   {
-    add_super_parameter("INV::p", 0.01);
+    add_super_parameter(Parameter("INV::p", 0.01, interval<double>(0,1)));
 
     read();
     recalc_all();
@@ -1895,7 +1895,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   void WithINV2::recalc(const vector<int>&) 
   {
-    double p = parameter(0);
+    double p = get_parameter_value(0);
 
     freq = (1-p)*VAR().frequencies() + p*INV().frequencies();
   }
@@ -1907,7 +1907,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   efloat_t WithINV2::super_prior() const 
   {
-    double p = parameter(0);
+    double p = get_parameter_value(0);
 
     return beta_pdf(p, 1, 2);
   }
@@ -1928,7 +1928,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   vector<double> WithINV2::distribution() const {
-    double p = parameter(0);
+    double p = get_parameter_value(0);
 
     vector<double> dist = VAR().distribution();
     for(int i=0;i<dist.size();i++)
@@ -1949,7 +1949,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   WithINV2::WithINV2(const MultiModel& M)
     :freq(M.frequencies())
   {
-    add_super_parameter("INV::p", 0.01);
+    add_super_parameter(Parameter("INV::p", 0.01, interval<double>(0,1)));
     insert_submodel("VAR", M);
     insert_submodel("INV", SimpleReversibleMarkovModel(INV_Model(M.Alphabet())));
 
@@ -1962,13 +1962,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //-------------------- M2 --------------------//
   void M2::recalc(const vector<int>&) 
   {
-    fraction[0] = parameter(0);
-    fraction[1] = parameter(1);
-    fraction[2] = parameter(2);
+    fraction[0] = get_parameter_value(0);
+    fraction[1] = get_parameter_value(1);
+    fraction[2] = get_parameter_value(2);
 
     p_values[0] = 0;
     p_values[1] = 1;
-    p_values[2] = parameter(3);
+    p_values[2] = get_parameter_value(3);
 
     recalc_submodel_instances();
   }
@@ -1980,10 +1980,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     n[0] = 1;
     n[1] = 98;
     n[2] = 1;
-    efloat_t P = dirichlet_pdf(parameters_, 0, 3, n);
+    efloat_t P = dirichlet_pdf(get_parameter_values(), 0, 3, n);
 
     // prior on omega
-    double omega = parameter(3);
+    double omega = get_parameter_value(3);
     P *= exponential_pdf(log(omega),0.05)/omega;
     return P;
   }
@@ -1995,10 +1995,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   M2::M2(const M0& M1,const ReversibleFrequencyModel& R) 
     :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,3)
   {
-    add_super_parameter("M2::f[AA INV]",   1.0/3);
-    add_super_parameter("M2::f[Neutral]",  1.0/3);
-    add_super_parameter("M2::f[Selected]", 1.0 - parameters_[0] - parameters_[1]);
-    add_super_parameter("M2::omega", 1.0);
+    add_super_parameter(Parameter("M2::f[AA INV]",   1.0/3, interval<double>(0,1)));
+    add_super_parameter(Parameter("M2::f[Neutral]",  1.0/3, interval<double>(0,1)));
+    add_super_parameter(Parameter("M2::f[Selected]", 1.0 - get_parameter_value(0) - get_parameter_value(1), interval<double>(0,1)));
+    add_super_parameter(Parameter("M2::omega", 1.0, lower_bound(0.0)));
 
     read();
     recalc_all();
@@ -2018,12 +2018,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //M3
 
   double M3::omega(int i) const {
-    return parameter(fraction.size() + i);
+    return get_parameter_value(fraction.size() + i);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
   void M3::omega(int i,double w) {
-    parameter(fraction.size()+i,w);
+    set_parameter_value(fraction.size()+i,w);
   }
 
   // NOTE: we only enforce order in the LOGGING of the omegas
@@ -2031,10 +2031,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   void M3::recalc(const vector<int>&) 
   {
     for(int i=0;i<fraction.size();i++)
-      fraction[i] = parameter(i);
+      fraction[i] = get_parameter_value(i);
 
     for(int i=0;i<fraction.size();i++)
-      p_values[i] = parameter(fraction.size()+i);
+      p_values[i] = get_parameter_value(fraction.size()+i);
 
     recalc_submodel_instances();
   }
@@ -2069,7 +2069,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     if (n <= 1) return P;
 
     // prior on frequencies
-    P *= dirichlet_pdf(parameters_, 0, n, 4.0);
+    P *= dirichlet_pdf(get_parameter_values(), 0, n, 4.0);
 
     // prior on omegas
     double f = 0.05/n;
@@ -2092,13 +2092,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // p
     for(int i=0;i<n;i++) {
       string pname = "M3::f" + convertToString(i+1);
-      add_super_parameter(pname, 1.0/n);
+      add_super_parameter(Parameter(pname, 1.0/n, interval<double>(0,1)));
     }
 
     // omega
     for(int i=0;i<n;i++) {
       string pname = "M3::omega" + convertToString(i+1);
-      add_super_parameter(pname, 1.0);
+      add_super_parameter(Parameter(pname, 1.0, lower_bound(0.0)));
     }
 
     read();
@@ -2128,15 +2128,15 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     pi = 0;
     int sm_total = n_submodels();
     for(int sm=0;sm<sm_total;sm++)
-      pi += parameter(sm)*SubModels(sm).frequencies();
+      pi += get_parameter_value(sm)*SubModels(sm).frequencies();
   }
 
   efloat_t MixtureModel::super_prior() const 
   {
-    valarray<double> p = get_varray(parameters_,0,n_submodels());
-    valarray<double> q = get_varray(parameters_,n_submodels(),n_submodels());
+    valarray<double> p = get_varray(get_parameter_values(),0,n_submodels());
+    valarray<double> q = get_varray(get_parameter_values(),n_submodels(),n_submodels());
 
-    return dirichlet_pdf(parameters_, 0, n_submodels(), 10.0*q);
+    return dirichlet_pdf(get_parameter_values(), 0, n_submodels(), 10.0*q);
   }
 
   const MultiModel::Base_Model_t& MixtureModel::base_model(int m) const 
@@ -2178,7 +2178,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     vector<double> dist(n_base_models());
 
     for(int sm=0,m=0; sm<sm_total; sm++) {
-      double f = parameter(sm);
+      double f = get_parameter_value(sm);
       for(int i=0;i<SubModels(sm).n_base_models();i++)
 	dist[m++] = f*SubModels(0).distribution()[i];
     }
@@ -2203,13 +2203,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     for(int i=0;i<models.size();i++) {
       string pname = string("Mixture::p") + convertToString(i+1);
-      add_super_parameter(pname, 1.0/models.size());
+      add_super_parameter(Parameter(pname, 1.0/models.size(), interval<double>(0,1)));
       insert_submodel(string("M")+convertToString(i+1),*models[i]);
     }
 
     for(int i=0;i<models.size();i++) {
       string pname = string("Mixture::prior") + convertToString(i+1);
-      add_super_parameter(pname, 1.0/models.size());
+      add_super_parameter(Parameter(pname, 1.0/models.size()));
     }
 
     pi.resize(Alphabet().size());

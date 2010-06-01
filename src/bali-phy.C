@@ -336,7 +336,7 @@ void set_parameters(Parameters& P, const variables_map& args)
   for(int i=0;i<fix.size();i++) {
     int p=-1;
     if (p=find_parameter(P,fix[i]),p!=-1)
-      P.fixed(p,true);
+      P.set_fixed(p,true);
     else
       throw myexception()<<"Can't find parameter '"<<fix[i]<<"' to fix.";
   }
@@ -345,13 +345,13 @@ void set_parameters(Parameters& P, const variables_map& args)
   for(int i=0;i<unfix.size();i++) {
     int p=-1;
     if (p=find_parameter(P,unfix[i]),p!=-1)
-      P.fixed(p,false);
+      P.set_fixed(p,false);
     else
       throw myexception()<<"Can't find parameter '"<<unfix[i]<<"' to unfix.";
   }
 
   // set parameters
-  vector<double> parameters = P.parameters();
+  vector<double> parameters = P.get_parameter_values();
   for(int i=0;i<doset.size();i++) {
     //parse
     vector<string> parse = split(doset[i],'=');
@@ -367,7 +367,7 @@ void set_parameters(Parameters& P, const variables_map& args)
     else
       P.keys[name] = value;
   }
-  P.parameters(parameters);
+  P.set_parameter_values(parameters);
 }
 
 /// Close the files.
