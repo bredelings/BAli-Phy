@@ -308,6 +308,21 @@ void var_stats::calculate(double pseudocount, double confidence)
   Ne = N/tau;
 }
 
+void write_LODs(const string& filename, vector< vector< var_stats> >& VS)
+{
+  std::ofstream file(filename.c_str());
+
+  int n_partitions = VS[0].size();
+  for(int p=0; p<n_partitions; p++)
+  {
+    vector<double> LOD;
+    for(int d=0;d<VS.size();d++)
+      LOD.push_back( log10(VS[d][p].O) );
+    file<<join(LOD,'\t')<<endl;
+  }
+  file.close();
+}
+
 bool report_sample(std::ostream& o,
 		   bool bootstrapped,
 		   const tree_sample_collection& tree_dists,
@@ -495,6 +510,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   reporting.add_options()
     ("separation",value<double>()->default_value(0),"Only report trees/partitions if they differ by this many LODs")
     ("confidence",value<double>()->default_value(0.95,"0.95"),"Width of confidence intervals")
+    ("LOD-table",value<string>(),"Write the partitions LOD10's to a file.")
     ;
     
   options_description all("All options");
@@ -878,6 +894,9 @@ int main(int argc,char* argv[])
 
       cout<<endl<<endl;
     }
+
+    if (args.count("LOD-table"))
+      write_LODs(args["LOD-table"].as<string>(), VS[0]);
 
     for(int d=0;d<tree_dists.n_dists();d++) {
       if (tree_dists.n_samples(d) >= 2) {

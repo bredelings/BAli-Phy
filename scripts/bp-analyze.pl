@@ -59,6 +59,13 @@ if (! is_in_path("gnuplot")) {
     $have_gnuplot = 0;
 }
 
+my $have_R = 1;
+
+if (! is_in_path("R")) {
+    print "Program 'R' not found.  Some mixing graphs will not be generated.\n\n";
+    $have_gnuplot = 0;
+}
+
 my $personality="";
 my $out_file;
 my $trees_file;
@@ -308,9 +315,16 @@ if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
 
 if (!more_recent_than("Results/partitions.bs",$trees_file)) {
     my $trees_arg = join(':',@tree_files);
-    `trees-bootstrap $max_arg $trees_arg $skip $subsample_string --pred Results/partitions.pred > Results/partitions.bs`;
+    `trees-bootstrap $max_arg $trees_arg $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table > Results/partitions.bs`;
 }
 print "done.\n";
+
+if (!more_recent_than("Results/convergence-PP.pdf",$trees_file))
+{
+    my $script = find_in_path("compare-runs.R");
+    die "can't find script!" if (!defined($script));
+    Rexec($script,"Results/LOD-table Results/convergence-PP.pdf");
+}
 
 # 11. c-levels.plot - FIXME!
 
@@ -907,6 +921,8 @@ my $psrf_rcf = get_value_from_file('Results/Report','PSRF-RCF <=');
 print INDEX "<p><i>PSRF-80%CI</i> = $psrf_80</p>\n" if defined ($asdsf);
 print INDEX "<p><i>PSRF-RCF</i> = $psrf_rcf</p>\n" if defined ($msdsf);
 
+print INDEX '<p><a href="convergence-PP.pdf">Variation in split frequency estimates</a></p>'."\n";
+
 if ($#var_names != -1) {
     print INDEX "<h2 class=\"clear\"><a name=\"parameters\">Scalar variables</a></h2>\n";
 
@@ -971,6 +987,17 @@ print INDEX "</table>\n";
 
 print INDEX "  </body>\n";
 print INDEX "</html>\n";
+
+sub Rexec
+{
+    return if (!$have_R);
+
+    my $script = shift;
+
+    my $args = shift;
+
+    `R --slave --vanilla --args $args < $script`;
+}
 
 sub parse_command_line
 {
@@ -1249,21 +1276,27 @@ sub compute_consensus_alignments
     }
 }
 
+sub find_in_path
+{
+    my $file = shift;
+    my $home = $ENV{'HOME'};
+
+    my @dirs = split(':',$ENV{'PATH'});
+    
+    for my $dir (@dirs) {
+	$dir =~ s/^~/$home/;
+	if (-x "$dir/$file" ) {
+	    return "$dir/$file";
+	}
+    }
+
+    return undef;
+}
+
 sub is_in_path
 {
-  my $file = shift;
-  my $home = $ENV{'HOME'};
-
-  my @dirs = split(':',$ENV{'PATH'});
-
-  for my $dir (@dirs) {
-      $dir =~ s/^~/$home/;
-      if (-x "$dir/$file" ) {
-	  return 1;
-      }
-  }
-
-  return 0;
+    return 1 if (defined(find_in_path(@_)));
+    return 0;
 }
 
 sub do_init
