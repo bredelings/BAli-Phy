@@ -315,7 +315,7 @@ if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
 
 if (!more_recent_than("Results/partitions.bs",$trees_file)) {
     my $trees_arg = join(':',@tree_files);
-    `trees-bootstrap $max_arg $trees_arg $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table > Results/partitions.bs`;
+    `trees-bootstrap $max_arg $trees_arg $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table --pseudocount 1 > Results/partitions.bs`;
 }
 print "done.\n";
 
