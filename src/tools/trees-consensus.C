@@ -487,7 +487,8 @@ void write_support_level_graph(variables_map& args, const vector<pair<Partition,
 /// \param args Command-line arguments
 /// \param all_partitions The count for each partition
 /// \param N The total number of sampled trees
-void write_extended_support_level_graph(variables_map& args, const vector<pair<Partition,unsigned> >& all_partitions, unsigned N)
+void write_extended_support_level_graph(variables_map& args, const vector<pair<Partition,unsigned> >& all_partitions, 
+					tree_sample& tree_dist, unsigned N)
 {
   if (!args.count("extended-support-levels")) return;
   const string filename = args["extended-support-levels"].as<string>();
@@ -503,14 +504,15 @@ void write_extended_support_level_graph(variables_map& args, const vector<pair<P
     double fraction = double(levels[j])/N;
     double LOD = log10(odds(levels[j],N,1));
     
-    const vector<Partition> sub = get_Ml_partitions(all_partitions,levels[j]);
-    const vector<Partition> full = select(sub,&Partition::full);
+    vector<Partition> sub = get_Ml_partitions(all_partitions,levels[j]);
+    add_leaf_partitions(tree_dist.names(), sub);
 
-    const vector<Partition> moveable = get_moveable_tree(sub);
+    // const vector<Partition> full = select(sub,&Partition::full);
+
     //  vector<Partition> full_hull = Ml_min_Hull(full_skeleton,sub);
     //  vector<Partition> sub_hull = Ml_min_Hull(skeleton,sub);
 
-    file<<LOD<<"\t"<<count(moveable,informative)<<"\t"<<fraction<<"\n";
+    file<<LOD<<"\t"<<count(get_moveable_tree(sub),informative)<<"\t"<<fraction<<"\n";
   }
   file.close();
 }
@@ -698,8 +700,8 @@ vector<double> get_mctree_mean_lengths(MC_tree& Q,
   for(int i=0;i<Q.branch_order.size();i++) 
   {
     int b = Q.branch_order[i];
-    int n1 = Q.mapping[b];
-    int n2 = Q.mapping[Q.reverse(b)];
+    //    int n1 = Q.mapping[b];
+    //    int n2 = Q.mapping[Q.reverse(b)];
 
     Partition P = Q.partitions[b];
     dynamic_bitset<> mask = P.mask();
@@ -863,6 +865,8 @@ void write_extended_consensus_trees_with_lengths(const tree_sample& tree_dist,
     ostream& output = *( (file)?file:&cout );
 
     vector<Partition> all  = get_Ml_partitions(all_partitions,consensus_levels[k].first ,N);
+    add_leaf_partitions(tree_dist.names(), all);
+
     vector<Partition> sub;
     vector<Partition> full;
     for(int i=0;i<all.size();i++)
@@ -1041,7 +1045,6 @@ int main(int argc,char* argv[])
     vector<string> topologies;
 
     const int L  = tree_dist.names().size();
-    const int B = L-3;
 
     // # of trees read in
     cout<<"# n_trees = "<<tree_dist.size();
@@ -1137,7 +1140,7 @@ int main(int argc,char* argv[])
 
     //----------- display M[l] consensus levels ----------//
     write_support_level_graph(args, all_partitions, N);
-    write_extended_support_level_graph(args, all_partitions, N);
+    write_extended_support_level_graph(args, all_partitions, tree_dist, N);
 
     //----------- display M[l] consensus trees ----------//
     std::cout.precision(4);

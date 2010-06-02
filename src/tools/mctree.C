@@ -137,19 +137,8 @@ MC_tree::MC_tree(const vector<Partition>& p)
 
   names_ = p[0].names;
 
-  // remove uninformative branches
-  for(int i=0;i<partitions.size();)
-    if (not informative(partitions[i]))
-      partitions.erase(partitions.begin()+i);
-    else
-      i++;
-
-  // adds leaf branches
-  for(int i=0;i<n_leaves();i++) {
-    dynamic_bitset<> m(n_leaves()); m.flip();
-    m[i] = false;
-    partitions.insert(partitions.begin()+i,Partition(names(),m));
-  }
+  // Remove uninformative branches, then add leaf branches in front
+  add_leaf_partitions(names(), partitions);
 
   N = partitions.size();
   reverse_.resize(2*N,-1);
@@ -675,8 +664,8 @@ vector<Partition> get_moveable_tree(vector<Partition> partitions)
   for(int i=partitions.size()-1;i>=0;i--) 
   {
     bool found = false;
-    for(int j=i-1;j>=0 and not found;j--)
-      if (implies(partitions[j],partitions[i]))
+    for(int j=partitions.size()-1;j>=0 and not found;j--)
+      if (j != i and implies(partitions[j],partitions[i]))
 	found = true;
 
     if (found)
