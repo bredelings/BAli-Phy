@@ -1156,8 +1156,8 @@ sub determine_input_files
 
 	foreach my $directory (@directories)
 	{
-	    my @treelists = glob("$first_dir/*.treelist");
-	    my @traces = glob("$first_dir/*.trace");
+	    my @treelists = glob("$directory/*.treelist");
+	    my @traces = glob("$directory/*.trace");
 
 	    push @tree_files, check_file_exists("$treelists[0]");
 	    push @parameter_files, check_file_exists("$traces[0]");
