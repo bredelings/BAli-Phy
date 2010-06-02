@@ -212,15 +212,13 @@ namespace substitution {
     return total;
   }
 
-  efloat_t calc_root_probability(const alignment& A,const Tree& T,Likelihood_Cache& cache,
+  efloat_t calc_root_probability(const alignment&,const Tree& T,Likelihood_Cache& cache,
 			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
     default_timer_stack.push_timer("substitution::calc_root");
 
     assert(index.size2() == rb.size());
-
-    // const alphabet& a = A.get_alphabet();
 
     const int root = cache.root;
 

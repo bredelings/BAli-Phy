@@ -251,8 +251,8 @@ accum_branch_lengths::accum_branch_lengths(const MC_tree& T)
   for(int i=0;i<Q.branch_order.size();i++) 
   {
     int b = Q.branch_order[i];
-    int n1 = Q.mapping[b];
-    int n2 = Q.mapping[Q.reverse(b)];
+    //    int n1 = Q.mapping[b];
+    //    int n2 = Q.mapping[Q.reverse(b)];
 
     Partition P = Q.partitions[b];
     dynamic_bitset<> mask = P.mask();

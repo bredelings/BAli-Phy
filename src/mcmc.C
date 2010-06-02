@@ -429,7 +429,7 @@ namespace MCMC {
     total_movement = 0;
   }
 
-  void Slice_Move::stop_learning(int n)
+  void Slice_Move::stop_learning(int)
   {
     n_learning_iterations = 0;
   }
@@ -734,7 +734,7 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
 }
 
 #ifdef HAVE_MPI
-  void exchange_random_pairs(int iterations, Parameters& P, MCMC::MoveStats& Stats)
+  void exchange_random_pairs(int iterations, Parameters& P, MCMC::MoveStats& /*Stats*/)
 {
   mpi::communicator world;
   world.barrier();
@@ -838,7 +838,7 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
   }
 }
 
-void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Stats)
+void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats& Stats)
 {
   mpi::communicator world;
   world.barrier();
@@ -850,7 +850,7 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
   
   double beta = P.beta[0];
   double l    = log(P.likelihood());
-  double oldbeta = beta;
+  //  double oldbeta = beta;
   vector<double> betas;
   vector<double> L;
   vector<int> updowns;
@@ -897,7 +897,7 @@ void exchange_adjacent_pairs(int iterations, Parameters& P, MCMC::MoveStats& Sta
     }
 
     // estimate average regeneration times for beta high->low->high
-    MCMC:Result regeneration(n_procs,0);
+    MCMC::Result regeneration(n_procs,0);
 
     if (updowns[order[0]] == 0)
       regeneration.counts[order[0]]++;
