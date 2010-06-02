@@ -1153,11 +1153,18 @@ sub determine_input_files
     elsif ($personality eq "phylobayes")
     {
 	print "Summarizing output files from phylobayes:\n";
-	my @treelists = glob("$first_dir/*.treelist");
-	$trees_file = check_file_exists($treelists[0]);
-	my $prefix = $trees_file;
-	$prefix =~ s/.treelist//;
-	$parameters_file = check_file_exists("$prefix.trace");
+
+	foreach my $directory (@directories)
+	{
+	    my @treelists = glob("$first_dir/*.treelist");
+	    my @traces = glob("$first_dir/*.trace");
+
+	    push @tree_files, check_file_exists("$treelists[0]");
+	    push @parameter_files, check_file_exists("$traces[0]");
+	}
+
+	$trees_file = $tree_files[0];
+	$parameters_file = $parameter_files[0];
     }
     elsif ($personality eq "beast")
     {
