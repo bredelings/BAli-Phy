@@ -26,6 +26,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef BOUNDS_H
 #define BOUNDS_H
 
+#include <iostream>
+
 template <typename T>
 struct Bounds
 {
@@ -74,7 +76,7 @@ void Bounds<T>::set_upper_bound(T x)
 
 template <typename T>
 Bounds<T>::Bounds()
-  :has_lower_bound(false),has_upper_bound(false)
+  :has_lower_bound(false),lower_bound(0),has_upper_bound(false),upper_bound(0)
 { }
 
 template <typename T>
@@ -103,5 +105,59 @@ template <typename T>
 Bounds<T> interval(T u, T l)
 {
   return Bounds<T>(u,l);
+}
+
+template <typename T>
+Bounds<T> operator&&(Bounds<T> b1, const Bounds<T>& b2)
+{
+  if (b2.has_lower_bound)
+  {
+    if (b1.has_lower_bound)
+      b1.set_lower_bound(std::max(b1.lower_bound, b2.lower_bound));
+    else
+      b1.set_lower_bound(b2.lower_bound);
+  }
+
+  if (b2.has_upper_bound)
+  {
+    if (b1.has_upper_bound)
+      b1.set_upper_bound(std::min(b1.upper_bound, b2.upper_bound));
+    else
+      b1.set_upper_bound(b2.upper_bound);
+  }
+
+  return b1;
+}
+
+template <typename T>
+Bounds<T> operator||(Bounds<T> b1, const Bounds<T>& b2)
+{
+  if (b1.has_lower_bound and b2.has_lower_bound)
+    b1.lower_bound = std::min(b1.lower_bound, b2.lower_bound);
+ else
+    b1.has_lower_bound = false;
+
+
+  if (b1.has_upper_bound and b2.has_upper_bound)
+    b1.upper_bound = std::max(b1.upper_bound, b2.upper_bound);
+ else
+    b1.has_upper_bound = false;
+}
+
+template <typename T>
+std::ostream& operator<<(std::ostream& o, const Bounds<T>& b)
+{
+  o<<"[";
+  if (b.has_lower_bound)
+    o<<b.lower_bound;
+  else
+    o<<"Inf";
+  o<<", ";
+  if (b.has_upper_bound)
+    o<<b.upper_bound;
+  else
+    o<<"Inf";
+  o<<"]";
+  return o;
 }
 #endif
