@@ -211,7 +211,9 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
 { 
   Bounds<double>& b = *this;
 
+#ifndef NDEBUG
   std::clog<<"Bounds on t are "<<b<<std::endl;
+#endif
 
   for(int i=0; i<P.n_branch_means(); i++)
   {
@@ -230,7 +232,10 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
 
     b = b and b2;
   }
+
+#ifndef NDEBUG
   std::clog<<"Bounds on t are now "<<b<<std::endl<<std::endl;
+#endif
 }
 
 double constant_sum_slice_function::operator()(double t)
