@@ -723,6 +723,13 @@ double Parameters::branch_mean(int i) const
 }
 
 
+void Parameters::branch_mean(int i, double x)
+{
+  assert(0 <= i and i < n_branch_means());
+
+  set_parameter_value(i,x);
+}
+
 void Parameters::branch_mean_tricky(int i,double x)
 {
   assert(0 <= i and i < n_branch_means());

@@ -292,6 +292,8 @@ public:
 
   double branch_mean(int i) const;
 
+  void branch_mean(int i,double); 
+
   void branch_mean_tricky(int i,double); 
 
   Parameters* clone() const {return new Parameters(*this);}
