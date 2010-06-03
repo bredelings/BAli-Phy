@@ -208,7 +208,30 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
   :count(0),
    initial_sum_of_means(sum_of_means(P_)),
    P(P_)
-{ }
+{ 
+  Bounds<double>& b = *this;
+
+  std::clog<<"Bounds on t are "<<b<<std::endl;
+
+  for(int i=0; i<P.n_branch_means(); i++)
+  {
+    Bounds<double> b2 = P.get_bounds(i);
+
+    if (b2.has_lower_bound and b2.lower_bound > 0)
+    {
+      b2.has_lower_bound = true;
+      b2.lower_bound = log(b2.lower_bound) - log(P.branch_mean(i));
+    }
+    else
+      b2.has_lower_bound = false;
+
+    if (b2.has_upper_bound)
+      b2.upper_bound = log(b2.upper_bound) - log(P.branch_mean(i));
+
+    b = b and b2;
+  }
+  std::clog<<"Bounds on t are now "<<b<<std::endl<<std::endl;
+}
 
 double constant_sum_slice_function::operator()(double t)
 {
@@ -332,6 +355,8 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
 double slice_sample(double x0, slice_function& g,double w, int m)
 {
   double gx0 = g();
+
+  assert(g.in_range(x0));
 
   assert(std::abs(gx0 - g(x0)) < 1.0e-9);
 
