@@ -765,7 +765,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   constants.push_back(-1);
 
   for(int i=0;i<n_scales;i++)
-    add_super_parameter(Parameter("mu"+convertToString(i+1), 1.0, lower_bound(0.0)));
+    add_super_parameter(Parameter("mu"+convertToString(i+1), 0.25, lower_bound(0)));
 
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
