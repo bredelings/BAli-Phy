@@ -420,7 +420,30 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
 
   //------------ Propose scaling ratio ------------//
   const double sigma = loadvalue(P->keys,"log_branch_mean_sigma",0.6);
-  double scale = exp( gaussian(0,sigma) );
+
+  Bounds<double> b;
+  for(int i=0; i<PP->n_branch_means(); i++)
+  {
+    Bounds<double> b2 = PP->get_bounds(i);
+    double mu = PP->branch_mean(i);
+
+    if (b2.has_lower_bound and b2.lower_bound > 0)
+    {
+      b2.has_lower_bound = true;
+      b2.lower_bound = log(b2.lower_bound) - log(mu);
+    }
+    else
+      b2.has_lower_bound = false;
+
+    if (b2.has_upper_bound)
+      b2.upper_bound = log(b2.upper_bound) - log(mu);
+
+    b = b and b2;
+  }
+
+  double scale = gaussian(0,sigma);
+  scale = wrap(scale, b);
+  scale = exp(scale);
 
   //-------- Change branch lengths and mean -------//
   owned_ptr<Parameters> P2 = PP;
