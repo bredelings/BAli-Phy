@@ -160,7 +160,7 @@ std::ostream& operator<<(std::ostream& o, const Bounds<T>& b)
   if (b.has_lower_bound)
     o<<b.lower_bound;
   else
-    o<<"Inf";
+    o<<"-Inf";
   o<<", ";
   if (b.has_upper_bound)
     o<<b.upper_bound;
