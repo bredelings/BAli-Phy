@@ -612,7 +612,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
   double t1 = total_cpu_time();
   out_both<<"Beginning pre-burnin: "<<n_pre_burnin<<" iterations."<<endl;
 
-  Parameters& PP = *P.as<Parameters>();
   if (P.as<Parameters>()->variable_alignment() and not args.count("tree"))
     P.as<Parameters>()->variable_alignment(false);
 

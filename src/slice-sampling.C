@@ -419,7 +419,7 @@ inline static void inc(double& x, double w, const slice_function& g, bool& hit_u
 
 // Assumes uni-modal
 std::pair<double,double> find_slice_boundaries_search(double& x0,slice_function& g,double logy,
-						      double w,int m)
+						      double w,int /*m*/)
 {
   // the initial point should be within the bounds, if the exist
   assert(not g.below_lower_bound(x0));

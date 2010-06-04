@@ -562,7 +562,7 @@ namespace probability {
     return m() + gsl_cdf_cauchy_Pinv(p, s());
   }
 
-  double Cauchy::moment(int n) const
+  double Cauchy::moment(int) const
   {
     std::abort();
   }
