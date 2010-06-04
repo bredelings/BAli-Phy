@@ -204,6 +204,7 @@ public:
   efloat_t prior() const;
   
   virtual void set_fixed(int i,bool f) {Model::set_fixed(i,f); write();}
+  virtual void set_bounds(int i,const Bounds<double>& b) {Model::set_bounds(i,b); write();}
 
   /// Set A model parameter
   void set_parameter_value(int p,double value);
