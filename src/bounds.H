@@ -111,7 +111,7 @@ Bounds<T> upper_bound(T u)
 }
 
 template <typename T>
-Bounds<T> interval(T u, T l)
+Bounds<T> between(T u, T l)
 {
   return Bounds<T>(u,l);
 }

@@ -321,7 +321,7 @@ more_than::more_than(double m, const Proposal_Fn& P)
    proposal(P)
 { }
 
-double between::operator()(std::vector<double>& x,const std::vector<double>& p) const
+double Between::operator()(std::vector<double>& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++)
@@ -329,7 +329,7 @@ double between::operator()(std::vector<double>& x,const std::vector<double>& p) 
   return ratio;
 }
 
-between::between(double m1, double m2, const Proposal_Fn& P)
+Between::Between(double m1, double m2, const Proposal_Fn& P)
   :min(m1), max(m2),
    proposal(P)
 { }

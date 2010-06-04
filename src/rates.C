@@ -175,7 +175,7 @@ namespace substitution {
     // Set the rates and fractions
     for(int i=0;i<n_dists();i++) {
       string pname = string("multi:p")+convertToString(i+1);
-      add_parameter(Parameter(pname, 1.0/n_dists(), interval<double>(0,1)));
+      add_parameter(Parameter(pname, 1.0/n_dists(), between(0, 1)));
     }
 
     for(int i=0;i<models.size();i++)

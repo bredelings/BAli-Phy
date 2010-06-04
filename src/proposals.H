@@ -91,15 +91,15 @@ public:
   more_than(double m,const Proposal_Fn& P);
 };
 
-class between: public Proposal_Fn
+class Between: public Proposal_Fn
 {
   double min;
   double max;
   owned_ptr<Proposal_Fn> proposal;
 public:
-  between* clone() const {return new between(*this);}
+  Between* clone() const {return new Between(*this);}
   double operator()(std::vector<double>& x,const std::vector<double>& p) const;
-  between(double m1,double m2,const Proposal_Fn& P);
+  Between(double m1,double m2,const Proposal_Fn& P);
 };
 
 class log_scaled: public Proposal_Fn
