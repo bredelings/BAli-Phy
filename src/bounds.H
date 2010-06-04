@@ -54,6 +54,14 @@ struct Bounds
   /// set the upper bound on the range
   void set_upper_bound(T);
 
+  template <typename U>
+  Bounds(const Bounds<U>& b)
+    :has_lower_bound(b.has_lower_bound),
+    lower_bound(b.lower_bound),
+    has_upper_bound(b.has_upper_bound),
+    upper_bound(b.has_upper_bound)
+  { }
+
   Bounds();
   Bounds(T,T);
   Bounds(bool,T,bool,T);
