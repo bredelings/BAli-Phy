@@ -27,6 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define BOUNDS_H
 
 #include <iostream>
+#include <util.H>
 
 template <typename T>
 struct Bounds
@@ -167,5 +168,18 @@ std::ostream& operator<<(std::ostream& o, const Bounds<T>& b)
     o<<"Inf";
   o<<"]";
   return o;
+}
+
+template <typename T>
+inline T wrap(T x, const Bounds<T>& b)
+{
+  if (b.has_lower_bound and b.has_upper_bound)
+    return wrap<T>(x, b.lower_bound, b.upper_bound);
+  else if (b.has_lower_bound)
+    return reflect_more_than(x, b.lower_bound);
+  else if (b.has_upper_bound)
+    return reflect_less_than(x, b.lower_bound);
+  else
+    return x;
 }
 #endif
