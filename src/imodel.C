@@ -244,9 +244,9 @@ string SimpleIndelModel::name() const {return "RS05";}
 SimpleIndelModel::SimpleIndelModel()
   :QE(Q1.size1(),Q1.size2())
 {
-  add_parameter(Parameter("delta",  -5, upper_bound(0.0)));
+  add_parameter(Parameter("delta",  -5, upper_bound(0)));
   add_parameter(Parameter("epsilon",-0.25)); // no upper bound on transformed scale
-  add_parameter(Parameter("tau",    log(0.001), upper_bound(0.0)));
+  add_parameter(Parameter("tau",    log(0.001), upper_bound(0)));
 
   recalc_all();
 }
@@ -528,7 +528,7 @@ TKF2::TKF2(bool b)
   :time_dependant(b)
 {
   add_parameter(Parameter("lambda",-5));
-  add_parameter(Parameter("epsilon",-0.25, upper_bound(0.0)));
+  add_parameter(Parameter("epsilon",-0.25, upper_bound(0)));
   add_parameter(Parameter("mean_length",100));
   add_parameter(Parameter("lambda::prior_median", -5));
   add_parameter(Parameter("lambda::prior_stddev", 1.5));
