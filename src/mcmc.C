@@ -1202,6 +1202,8 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   efloat_t MAP_score = 0;
   valarray<double> weights(P.as<Parameters>()->n_data_partitions());
 
+  int alignment_burnin_iterations = (int)loadvalue(P->keys,"alignment-burnin",10.0);
+
   {
     Parameters& PP = *P.as<Parameters>();
 
@@ -1216,12 +1218,21 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     for(int i=0;i<weights.size();i++)
       weights[i] = max(sequence_lengths(*PP[i].A, PP.T->n_leaves()));
     weights /= weights.sum();
+
+    if (alignment_burnin_iterations > 0)
+    {
+      PP.branch_length_max = 2.0;
+
+      for(int i=0; i<PP.T->n_branches(); i++)
+	if (PP.T->branch(i).length() > PP.branch_length_max)
+	  PP.setlength(i, PP.branch_length_max);
+    }  
   }
 
   /// Find parameters to fix for the first 5 iterations
   vector<std::pair<int, Bounds<double> > > restore_bounds;
-  int alignment_burnin = (int)loadvalue(P->keys,"alignment-burnin",10.0);
-  if (not defined(P->keys,"free-imodel"))
+
+  if (alignment_burnin_iterations > 0)
   {
     restore_bounds.push_back( change_bound(P, "lambda",  ::upper_bound(-4.0)  ) );
     restore_bounds.push_back( change_bound(P, "delta",   ::upper_bound(-5.0)  ) );
@@ -1234,16 +1245,18 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max_iter; iterations++) 
   {
+    Parameters& PP = *P.as<Parameters>();
+
     // Free temporarily fixed parameters at iteration 5
-    if (iterations >= alignment_burnin and restore_bounds.size())
+    if (iterations == alignment_burnin_iterations)
     {
       for(int i=0;i<restore_bounds.size();i++)
 	if (restore_bounds[i].first != -1)
 	  P->set_bounds(restore_bounds[i].first, restore_bounds[i].second);
       restore_bounds.clear();
+      
+      PP.branch_length_max = -1;
     }
-
-    Parameters& PP = *P.as<Parameters>();
 
     // Change the temperature according to the pattern suggested
     if (iterations < PP.beta_series.size())
