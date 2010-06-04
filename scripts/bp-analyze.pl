@@ -315,7 +315,7 @@ if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
 
 if (!more_recent_than("Results/partitions.bs",$trees_file)) {
     my $trees_arg = join(':',@tree_files);
-    `trees-bootstrap $max_arg $trees_arg $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table > Results/partitions.bs`;
+    `trees-bootstrap $max_arg $trees_arg $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table --pseudocount 1 > Results/partitions.bs`;
 }
 print "done.\n";
 
@@ -1156,8 +1156,8 @@ sub determine_input_files
 
 	foreach my $directory (@directories)
 	{
-	    my @treelists = glob("$first_dir/*.treelist");
-	    my @traces = glob("$first_dir/*.trace");
+	    my @treelists = glob("$directory/*.treelist");
+	    my @traces = glob("$directory/*.trace");
 
 	    push @tree_files, check_file_exists("$treelists[0]");
 	    push @parameter_files, check_file_exists("$traces[0]");
