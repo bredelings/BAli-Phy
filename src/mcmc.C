@@ -352,7 +352,19 @@ namespace MCMC {
     std::cerr<<endl<<endl;
 #endif
 
-    if (accept_MH(*P,*P2,ratio)) {
+    // Check that we have not strayed outside the bounds.
+    bool in_range = true;
+    for(int i=0;i<P->n_parameters();i++)
+    {
+      Bounds<double> range = P->get_bounds(i);
+      if (not range.in_range(P->get_parameter_value(i)))
+	throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value(i)<<" is NOT in range "<<range;
+      if (not range.in_range(P2->get_parameter_value(i)))
+	in_range = false;
+    }
+
+    // Accept or Reject
+    if (in_range and accept_MH(*P,*P2,ratio)) {
       result.totals[0] = 1;
       if (n == 2) {
 	if (n_indices == 1) {
@@ -1165,6 +1177,23 @@ void mcmc_log(int iterations, int subsample, Parameters& P,
 
 }
 
+std::pair<int, Bounds<double> > change_bound(owned_ptr<Probability_Model>& P, 
+					     const string& name, const Bounds<double>& new_bounds)
+{
+  int index = find_parameter(*P, name);
+  if (index == -1)
+    return std::pair<int, Bounds<double> >(-1, new_bounds);
+
+  Bounds<double> orig_bounds = P->get_bounds(index);
+  P->set_bounds(index, orig_bounds and new_bounds);
+  Bounds<double> total_bounds = P->get_bounds(index);
+  P->set_parameter_value(index, wrap(P->get_parameter_value(index), total_bounds));
+#ifndef NDEBUG
+  clog<<"bounds: "<<name<<" = "<<P->get_parameter_value(index)<<"  in  "<<P->get_bounds(index)<<endl;
+#endif
+  return std::pair<int,Bounds<double> >(index,orig_bounds);
+}
+
 void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter,
 		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map,
 		 vector<ostream*>& files)
@@ -1190,20 +1219,14 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   }
 
   /// Find parameters to fix for the first 5 iterations
-  vector<string> restore_names;
-  if (not defined(P->keys,"free-imodel")) {
-    restore_names.push_back("lambda");
-    restore_names.push_back("delta");
-    restore_names.push_back("epsilon");
-  }
-  vector<int> restore;
-  for(int i=0;i<restore_names.size();i++) 
+  vector<std::pair<int, Bounds<double> > > restore_bounds;
+  int alignment_burnin = (int)loadvalue(P->keys,"alignment-burnin",10.0);
+  if (not defined(P->keys,"free-imodel"))
   {
-    int index = find_parameter(*P,restore_names[i]);
-    if (index != -1) {
-      restore.push_back(index);
-      P->set_fixed(index,true);
-    }
+    restore_bounds.push_back( change_bound(P, "lambda",  ::upper_bound(-4.0)  ) );
+    restore_bounds.push_back( change_bound(P, "delta",   ::upper_bound(-5.0)  ) );
+    restore_bounds.push_back( change_bound(P, "epsilon", ::upper_bound(-0.25) ) );
+    restore_bounds.push_back( change_bound(P, "mu1",     ::upper_bound(0.5)   ) );
   }
 
   vector< vector< vector<int> > > un_identifiable_indices = get_un_identifiable_indices(*P);
@@ -1212,9 +1235,13 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   for(int iterations=0; iterations < max_iter; iterations++) 
   {
     // Free temporarily fixed parameters at iteration 5
-    if (iterations == 5)
-      for(int i=0;i<restore.size();i++)
-	P->set_fixed(restore[i],false);
+    if (iterations >= alignment_burnin and restore_bounds.size())
+    {
+      for(int i=0;i<restore_bounds.size();i++)
+	if (restore_bounds[i].first != -1)
+	  P->set_bounds(restore_bounds[i].first, restore_bounds[i].second);
+      restore_bounds.clear();
+    }
 
     Parameters& PP = *P.as<Parameters>();
 
