@@ -68,7 +68,13 @@ parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_,
 						   double(*f2)(double))
   :slice_function(P_.get_bounds(n_)),
    count(0),P(P_),n(n_),transform(f1),inverse(f2)
-{ }
+{
+  if (has_lower_bound)
+    lower_bound = transform(lower_bound);
+  if (has_upper_bound)
+    upper_bound = transform(upper_bound);
+}
+
 
 double branch_length_slice_function::operator()(double l)
 {
@@ -297,6 +303,8 @@ constant_sum_slice_function::constant_sum_slice_function(Probability_Model& P_, 
 std::pair<double,double> 
 find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, double w,int m)
 {
+  assert(g.in_range(x0));
+
   double u = uniform()*w;
   double L = x0 - u;
   double R = x0 + (w-u);
@@ -331,6 +339,8 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
   if (g.below_lower_bound(L)) L = g.lower_bound;
   if (g.above_upper_bound(R)) R = g.upper_bound;
 
+  assert(L < R);
+
   return std::pair<double,double>(L,R);
 }
 
@@ -340,7 +350,9 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
 double search_interval(double x0,double& L, double& R, slice_function& g,double logy)
 {
   //  assert(g(x0) > g(L) and g(x0) > g(R));
-  assert(g(x0) > logy);
+  assert(g(x0) >= logy);
+  assert(L < R);
+  assert(L <= x0 and x0 <= R);
 
   while(1)
   {
@@ -359,9 +371,9 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
 
 double slice_sample(double x0, slice_function& g,double w, int m)
 {
-  double gx0 = g();
-
   assert(g.in_range(x0));
+
+  double gx0 = g();
 
   assert(std::abs(gx0 - g(x0)) < 1.0e-9);
 
