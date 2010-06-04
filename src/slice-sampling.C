@@ -354,7 +354,7 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
   assert(L < R);
   assert(L <= x0 and x0 <= R);
 
-  while(1)
+  for(int i=0;i<200;i++)
   {
     double x1 = L + uniform()*(R-L);
 
@@ -367,6 +367,8 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
     else
       L = x1;
   }
+  std::cerr<<"Warning!  Is size of the interval really ZERO?"<<std::endl;
+  return x0;
 }
 
 double slice_sample(double x0, slice_function& g,double w, int m)
