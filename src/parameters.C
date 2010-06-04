@@ -388,6 +388,13 @@ efloat_t Parameters::prior_no_alignment() const
   // prior on the topology and branch lengths
   Pr *= ::prior(*this, *T, 1.0);
 
+  if (branch_length_max > 0)
+    for(int i=0; i<T->n_branches(); i++)
+    {
+      if (T->branch(i).length() > branch_length_max)
+	return 0;
+    }
+
   // prior on mu[i], the mean branch length for scale i
   for(int i=0;i<n_branch_means();i++) {
     //  return pow(efloat_t(branch_mean()),-1.0);
@@ -760,7 +767,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0),
    updown(-1),
-   features(0) 
+   features(0),
+   branch_length_max(-1)
 {
   constants.push_back(-1);
 
@@ -840,7 +848,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0),
    updown(-1),
-   features(0)
+   features(0),
+   branch_length_max(-1)
 {
   constants.push_back(-1);
 
