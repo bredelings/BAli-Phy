@@ -43,6 +43,8 @@ public:
   /// Access the data for the i-th column
   const std::vector<double>& column(int i) const {return data_[i];}
 
+  int find_column_index(const std::string& s) const;
+
   /// Add a row of data
   void add_row(const std::vector<double>& row);
 

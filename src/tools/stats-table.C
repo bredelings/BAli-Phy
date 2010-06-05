@@ -70,6 +70,11 @@ void write_header(std::ostream& o, const vector<string>& headers)
   }
 }
 
+int stats_table::find_column_index(const string& s) const
+{
+  return find_index(names_, s);
+}
+
 void stats_table::add_row(const vector<double>& row)
 {
   assert(row.size() == n_columns());
