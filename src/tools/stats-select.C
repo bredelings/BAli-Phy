@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "stats-table.H"
 
 #include <boost/program_options.hpp>
+#include "owned-ptr.H"
 
 using namespace std;
 
@@ -76,106 +77,174 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+template <typename T>
+struct table_row_function
+{
+  virtual table_row_function* clone() const =0;
+
+  virtual T operator()(const stats_table&, int row) const =0;
+
+  string name;
+
+  table_row_function(const string& s)
+    :name(s)
+  {}
+};
+
+struct select_column_function: public table_row_function<double>
+{
+  int index;
+
+  select_column_function* clone() const {return new select_column_function(*this);}
+
+  double operator()(const stats_table& t, int row) const
+  {
+    return t.column(index)[row];
+  }
+
+  select_column_function(const stats_table& t, const string& name)
+    :table_row_function(name), index(t.find_column_index(name))
+  {
+    if (index == -1)
+      throw myexception()<<"Can't find column '"<<name<<" in table.";
+  }
+};
+
+struct sum_of_fields: public table_row_function<double>
+{
+  vector<int> indices;
+
+  sum_of_fields* clone() const {return new sum_of_fields(*this);}
+
+  double operator()(const stats_table&,int row) const;
+
+  sum_of_fields(const stats_table&, const string&);
+};
+
+double sum_of_fields::operator()(const stats_table& t,int row) const
+{
+  double sum = 0;
+  for(int i=0;i<indices.size();i++)
+    sum += t.column(indices[i])[row];
+  return sum;
+}
+
+sum_of_fields::sum_of_fields(const stats_table& t, const string& name)
+  :table_row_function(name)
+{
+  vector<string> names = split(name,'+');
+
+  for(int i=0; i < names.size(); i++)
+  {
+    int index = t.find_column_index(names[i]);
+    
+    if (index == -1)
+      throw myexception()<<"Can't find column '"<<name<<" in table.";
+
+    indices.push_back(index);
+  }
+}
+
+struct key_value_condition: public table_row_function<bool>
+{
+  int key_index;
+  double value;
+
+  key_value_condition* clone() const {return new key_value_condition(*this);}
+
+  bool operator()(const stats_table&,int row) const;
+
+  key_value_condition(const stats_table&, const string&);
+};
+
+bool key_value_condition::operator()(const stats_table& t,int row) const
+{
+  return (t.column(key_index)[row] == value);
+}
+
+key_value_condition::key_value_condition(const stats_table& t, const string& condition)
+  :table_row_function(condition)
+{
+  vector<string> parse = split(condition,'=');
+  if (parse.size() != 2)
+    throw myexception()<<"I can't understand the condition '"<<condition<<"' as a key=value pair.";
+      
+  key_index = t.find_column_index(parse[0]);
+  if (key_index == -1)
+    throw myexception()<<"Can't find column '"<<parse[0]<<"' in table.";
+
+  value = convertTo<double>(parse[1]);
+}
+
 int main(int argc,char* argv[]) 
 { 
   try {
     //----------- Parse command line  -----------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    //------------ Parse column names ----------//
-    vector<string> headers = read_header(std::cin);
+    //---------------- Read Data ----------------//
+    stats_table table(std::cin,0,1,-1);
 
-    //------------ Parse column mask ----------//
-    vector<int> column_index;
-    if (not args.count("columns"))
-      column_index = iota<int>(headers.size());
+    //------------ Parse column names ----------//
+    vector< owned_ptr<table_row_function<double> > > column_functions;
+
+    if (not args.count("columns") or args.count("remove"))
+    {
+      vector<string> remove;
+      if (args.count("remove"))
+	remove = args["columns"].as<vector<string> >();
+
+      for(int i=0;i<table.n_columns();i++)
+      {
+	const string& name = table.names()[i];
+	if (not includes(remove,name))
+	  column_functions.push_back(select_column_function(table, name));
+      }
+    }
     else 
     {
-      vector<string> columns = args["columns"].as<vector<string> >();
+      vector<string> column_names = args["columns"].as<vector<string> >();
     
-      for(int i=0;i<columns.size();i++)
-      {
-	int loc = find_index(headers,columns[i]);
-	if (loc == -1)
-	  throw myexception()<<"Can't find column '"<<columns[i]<<" in table.";
-	column_index.push_back(loc);
-      }
+      for(int i=0;i<column_names.size();i++)
+	column_functions.push_back(sum_of_fields(table,column_names[i]));
     }
 
     //----------- Parse conditions ------------//
-    vector<string> conditions(headers.size());
+    vector< owned_ptr<table_row_function<bool> > > conditions;
 
-    vector<string> selections;
     if (args.count("select"))
-      selections = args["select"].as<vector<string> >();
+    {
+      vector<string> selections = args["select"].as<vector<string> >();
 
-    for(int i=0;i<selections.size();i++) {
-      vector<string> parse = split(selections[i],'=');
-      if (parse.size() != 2)
-	throw myexception()<<"I can't understand the condition '"<<selections[i]<<"' as a key=value pair.";
-      
-      int loc = find_index(headers,parse[0]);
-      if (loc == -1)
-	throw myexception()<<"Can't find column '"<<parse[0]<<"' in table.";
-
-      conditions[loc] = parse[1];
+      for(int i=0;i<selections.size();i++) 
+	conditions.push_back(key_value_condition(table, selections[i]));
     }
     
-    
-    //------------ Invert column mask -----------//
-
-    if (args.count("remove")) {
-      vector<int> others;
-      for(int i=0;i<headers.size();i++)
-	if (not includes(column_index,i))
-	  others.push_back(i);
-      column_index = others;
-    }
-
     //------------ Print  column names ----------//
     if (not args.count("no-header"))
-      for(int i=0;i<column_index.size();i++) 
-      {
-	cout<<headers[column_index[i]];
-	
-	if (i == column_index.size()-1)
-	  cout<<"\n";
-	else
-	  cout<<"\t";
-      }
-
-    //------------ Read Data ---------------//
-    vector< vector<double> > data(headers.size());
-    
-    vector<string> v;
-
-    int line_number=0;
-    string line;
-    while(getline(cin,line)) 
     {
-      line_number++;
+      vector<string> headers;
+      for(int i=0;i<column_functions.size();i++)
+	headers.push_back(column_functions[i]->name);
 
-      v = split(line,'\t');
+      write_header(std::cout, headers);
+    }
 
-      if (v.size() != headers.size())
-	throw myexception()<<"Found "<<v.size()<<"/"<<headers.size()<<" values on line "<<line_number<<".";
-
-      // check if conditions on values are met
+    //------------ Write new table ---------------//
+    for(int r=0; r<table.n_rows(); r++)
+    {
+      // skip rows that we are not selecting
       bool ok = true;
-      for(int i=0;i<conditions.size() and ok;i++)
-	if (conditions[i].size())
-	  ok = (v[i] == conditions[i]);
+      for(int i=0; i<conditions.size() and ok; i++)
+	if (not (*conditions[i])(table,r))
+	  ok = false;
       if (not ok) continue;
 
-      for(int i=0;i<column_index.size();i++) 
-      {
-	cout<<v[column_index[i]];
+      vector<double> values;
+      for(int i=0; i<column_functions.size(); i++)
+	values.push_back((*column_functions[i])(table,r));
 
-	if (i == column_index.size()-1)
-	  cout<<"\n";
-	else
-	  cout<<"\t";
-      }
+      std::cout<<join(values,"\t")<<"\n";
     }
   }
   catch (std::exception& e) {
