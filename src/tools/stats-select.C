@@ -52,6 +52,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("no-header","Suppress the line of column names.")
     ("select,s",value<vector<string> >()->composing(),"Select on key=value pairs")
     ("remove,r","Remove selected columns, instead of keeping them.")
+    ("add,a","Remove selected columns, instead of keeping them.")
     ;
 
   options_description all("All options");
@@ -204,7 +205,14 @@ int main(int argc,char* argv[])
     else 
     {
       vector<string> column_names = args["columns"].as<vector<string> >();
-    
+
+      if (args.count("add"))
+	for(int i=0;i<table.n_columns();i++)
+	{
+	  const string& name = table.names()[i];
+	  column_functions.push_back(select_column_function(table, name));
+	}
+
       for(int i=0;i<column_names.size();i++)
 	column_functions.push_back(sum_of_fields(table,column_names[i]));
     }
