@@ -103,7 +103,7 @@ struct select_column_function: public table_row_function<double>
   }
 
   select_column_function(const stats_table& t, const string& name)
-    :table_row_function(name), index(t.find_column_index(name))
+    :table_row_function<double>(name), index(t.find_column_index(name))
   {
     if (index == -1)
       throw myexception()<<"Can't find column '"<<name<<" in table.";
@@ -130,7 +130,7 @@ double sum_of_fields::operator()(const stats_table& t,int row) const
 }
 
 sum_of_fields::sum_of_fields(const stats_table& t, const string& name)
-  :table_row_function(name)
+  :table_row_function<double>(name)
 {
   vector<string> names = split(name,'+');
 
@@ -163,7 +163,7 @@ bool key_value_condition::operator()(const stats_table& t,int row) const
 }
 
 key_value_condition::key_value_condition(const stats_table& t, const string& condition)
-  :table_row_function(condition)
+  :table_row_function<bool>(condition)
 {
   vector<string> parse = split(condition,'=');
   if (parse.size() != 2)
