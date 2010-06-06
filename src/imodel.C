@@ -155,12 +155,16 @@ efloat_t SimpleIndelModel::lengthp(int l) const
 IndelModel::~IndelModel() {}
 
 
-indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const {
+indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const 
+{
   using namespace states;
 
   double delta   = exp(get_parameter_value(0));
   double e       = exp(get_parameter_value(1));
   double t       = exp(get_parameter_value(2));
+
+  if (in_training)
+    delta = std::min(delta, 0.005);
 
   if (delta > 0.5)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
@@ -241,6 +245,11 @@ efloat_t SimpleIndelModel::prior() const
 
 string SimpleIndelModel::name() const {return "RS05";}
 
+void SimpleIndelModel::set_training(bool b)
+{
+  in_training = b;
+}
+
 SimpleIndelModel::SimpleIndelModel()
   :QE(Q1.size1(),Q1.size2())
 {
@@ -285,6 +294,8 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   double mu = rate*t/(1.0-e);
   double P_indel = 1.0 - exp(-mu);
   double A = P_indel;
+  if (in_training)
+    A = std::min(A, 0.005);
   double delta = A/(1+A);
 
   if (t < -0.5)
@@ -330,6 +341,11 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   Q.start_pi(E)  = 0;
 
   return Q;
+}
+
+void NewIndelModel::set_training(bool b)
+{
+  in_training = b;
 }
 
 string NewIndelModel::name() const 
