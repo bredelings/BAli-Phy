@@ -1,3 +1,4 @@
+#undef NDEBUG
 /*
    Copyright (C) 2004-2010 Benjamin Redelings
 
@@ -1221,11 +1222,15 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 
     if (alignment_burnin_iterations > 0)
     {
-      PP.branch_length_max = 2.0;
+      //      PP.branch_length_max = 2.0;
+      //
+      //      for(int i=0; i<PP.T->n_branches(); i++)
+      //	if (PP.T->branch(i).length() > PP.branch_length_max)
+      //	  PP.setlength(i, PP.branch_length_max);
 
-      for(int i=0; i<PP.T->n_branches(); i++)
-	if (PP.T->branch(i).length() > PP.branch_length_max)
-	  PP.setlength(i, PP.branch_length_max);
+      for(int i=0;i<PP.n_imodels();i++)
+	PP.IModel(i).set_training(true);
+      PP.recalc_imodels();
     }  
   }
 
@@ -1255,6 +1260,10 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 	  P->set_bounds(restore_bounds[i].first, restore_bounds[i].second);
       restore_bounds.clear();
       
+      for(int i=0;i<PP.n_imodels();i++)
+	PP.IModel(i).set_training(false);
+      PP.recalc_imodels();
+
       PP.branch_length_max = -1;
     }
 
