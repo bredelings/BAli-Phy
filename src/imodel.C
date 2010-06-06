@@ -258,7 +258,7 @@ string SimpleIndelModel::name() const {return "RS05";}
 SimpleIndelModel::SimpleIndelModel()
   :QE(Q1.size1(),Q1.size2())
 {
-  add_parameter(Parameter("delta",  -5, upper_bound(0)));
+  add_parameter(Parameter("delta",  -5, upper_bound(-log(2))));
   add_parameter(Parameter("epsilon",-0.25)); // no upper bound on transformed scale
   add_parameter(Parameter("tau",    log(0.001), upper_bound(0)));
 
