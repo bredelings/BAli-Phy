@@ -1114,8 +1114,16 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // Only resample the alignment if we are proposing a different topology.
   /// \todo Mixing: Should we realign at least one other attachment location, if P.variable_alignment()?
-  if (C > 0)
-    accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, PrL, I, C, locations);
+  try
+  {
+    if (C > 0)
+      accepted = SPR_accept_or_reject_proposed_tree(P, p, Pr, PrL, I, C, locations);
+  }
+  catch (std::bad_alloc&) {
+    std::cerr<<"Allocation failed in sample_try_multi (in SPR_search_one)!  Proceeding."<<std::endl;
+    return false;
+  }
+
 
   MCMC::Result result = SPR_stats(T0, *p[1].T, accepted, bins, b1);
   double L_effective = effective_length(*P.T, b1);

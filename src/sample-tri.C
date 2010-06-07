@@ -459,11 +459,17 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p)
 int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 		     const vector<efloat_t>& rho, bool do_OS,bool do_OP) 
 {
-  sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP);
+  try {
+    sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP);
 
-  tri.set_proposal_probabilities(rho);
+    tri.set_proposal_probabilities(rho);
 
-  return tri.choose(p);
+    return tri.choose(p);
+  }
+  catch (std::bad_alloc&) {
+    std::cerr<<"Allocation failed in sample_tri_multi!  Proceeding."<<std::endl;
+    return -1;
+  }
 }
 
 
