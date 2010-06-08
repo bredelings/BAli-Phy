@@ -26,11 +26,19 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree.H"
 #include "smodel.H"
 
+struct Likelihood_Cache_Branch: public std::vector< Matrix >
+{
+  efloat_t other_subst;
+  Likelihood_Cache_Branch(int C,int M, int S)
+    :std::vector<Matrix>(C,Matrix(M,S)),
+     other_subst(1) 
+  {}
+};
+
 
 /// A class to manage storage and sharing of cached conditional likelihoods.
-class Multi_Likelihood_Cache: public std::vector< std::vector< Matrix > >
+class Multi_Likelihood_Cache: public std::vector< Likelihood_Cache_Branch >
 {
-
 protected:
   int C; // the (maximum) number of columns available per branch
   int M; // number of models

@@ -69,7 +69,7 @@ void Multi_Likelihood_Cache::allocate(int s) {
   unused_locations.reserve(new_size);
 
   for(int i=0;i<s;i++) {
-    push_back(vector<Matrix>(C,Matrix(M,S)));
+    push_back(Likelihood_Cache_Branch(C,M,S));
     n_uses.push_back(0);
     up_to_date_.push_back(false);
     unused_locations.push_back(old_size+i);
