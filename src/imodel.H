@@ -26,6 +26,7 @@ namespace indel {
 /// A generic insertion/deletion model
 class IndelModel: public Model 
 {
+  bool in_training;
 public: 
 
   virtual IndelModel* clone() const =0;
@@ -36,9 +37,9 @@ public:
   /// Alignment distribution for a branch of time t
   virtual indel::PairHMM get_branch_HMM(double t) const=0;
 
-  virtual void set_training(bool) {};
+  virtual void set_training(bool);
 
-  virtual bool is_training() const {return false;}
+  virtual bool is_training() const;
 
   virtual ~IndelModel();
 };
@@ -53,7 +54,6 @@ protected:
   /// The transition matrix with G1 state removed
   Matrix QE;
 
-  bool in_training;
 public:
   efloat_t prior() const;
 
@@ -65,10 +65,6 @@ public:
 
   std::string name() const;
 
-  void set_training(bool);
-
-  bool is_training() const {return in_training;}
-
   SimpleIndelModel();
 };
 
@@ -77,7 +73,6 @@ class NewIndelModel: public IndelModel
 {
   bool time_dependant;
 
-  bool in_training;
 public:
   efloat_t prior() const;
 
@@ -88,10 +83,6 @@ public:
   indel::PairHMM get_branch_HMM(double t) const;
 
   std::string name() const;
-
-  void set_training(bool);
-
-  bool is_training() const {return in_training;}
 
   explicit NewIndelModel(bool);
 };

@@ -31,6 +31,19 @@ namespace indel
   }
 }
 
+void IndelModel::set_training(bool b)
+{
+  in_training = b;
+}
+
+bool IndelModel::is_training() const
+{
+  return in_training;
+}
+
+IndelModel::~IndelModel() {}
+
+
 string i_parameter_name(int i,int n) {
   if (i>=n)
     throw myexception()<<"substitution model: refered to parameter "<<i<<" but there are only "<<n<<" parameters.";
@@ -126,9 +139,6 @@ efloat_t SimpleIndelModel::lengthp(int l) const
   return P;
 }
 
-IndelModel::~IndelModel() {}
-
-
 indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const 
 {
   using namespace states;
@@ -137,8 +147,8 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const
   double e       = exp(parameter(1));
   double t       = exp(parameter(2));
 
-  if (in_training)
-    delta = std::min(delta, 0.005);
+  if (is_training())
+    delta = std::min(delta,0.01);
 
   if (delta > 0.5)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
@@ -219,11 +229,6 @@ efloat_t SimpleIndelModel::prior() const
 
 string SimpleIndelModel::name() const {return "RS05";}
 
-void SimpleIndelModel::set_training(bool b)
-{
-  in_training = b;
-}
-
 SimpleIndelModel::SimpleIndelModel()
   :QE(Q1.size1(),Q1.size2())
 {
@@ -260,16 +265,21 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   if (not time_dependant)
     t = 1;
 
+  if (is_training())
+    t = 0.25;
+    
   double rate    = exp(parameter(0));
   double e = exp(parameter(1));
+
 
   // (1-e) * delta / (1-delta) = P(indel)
   // But move the (1-e) into the RATE to make things work
   double mu = rate*t/(1.0-e);
   double P_indel = 1.0 - exp(-mu);
   double A = P_indel;
-  if (in_training)
-    A = std::min(A, 0.005);
+  if (is_training())
+    A = std::min(A,0.01);
+
   double delta = A/(1+A);
 
   if (t < -0.5)
@@ -315,11 +325,6 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   Q.start_pi(E)  = 0;
 
   return Q;
-}
-
-void NewIndelModel::set_training(bool b)
-{
-  in_training = b;
 }
 
 string NewIndelModel::name() const 
