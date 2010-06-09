@@ -459,6 +459,9 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
 		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map)
 {
   P.recalc_all();
+
+  int alignment_burnin_iterations = (int)loadvalue(P.keys,"alignment-burnin",10.0);
+
   const SequenceTree& T = P.T;
 
   // make sure that the Alignment and Tree are linked
@@ -508,26 +511,42 @@ void Sampler::go(alignment& A,Parameters& P,int subsample,const int max,
     s_parameters<<"\t#substs(aa)";
   s_parameters<<"\t|T|"<<endl;
 
-  vector<string> restore_names;
-  restore_names.push_back("lambda");
-  restore_names.push_back("delta");
-  restore_names.push_back("epsilon");
   vector<int> restore;
-  for(int i=0;i<restore_names.size();i++) 
+  if (alignment_burnin_iterations > 0)
   {
-    int index = find_parameter(P,restore_names[i]);
-    if (index != -1) {
-      restore.push_back(index);
-      P.fixed(index,true);
+    vector<string> restore_names;
+    restore_names.push_back("lambda");
+    restore_names.push_back("delta");
+    restore_names.push_back("epsilon");
+    for(int i=0;i<restore_names.size();i++) 
+    {
+      int index = find_parameter(P,restore_names[i]);
+      if (index != -1) {
+	restore.push_back(index);
+	P.fixed(index,true);
+      }
+    }
+    if (P.has_IModel())
+    {
+      P.IModel().set_training(true);
+      P.recalc_imodel();
     }
   }
       
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max; iterations++) {
 
-    if (iterations == 5)
+    if (iterations == alignment_burnin_iterations)
+    {
       for(int i=0;i<restore.size();i++)
-      P.fixed(restore[i],false);
+	P.fixed(restore[i],false);
+
+      if (P.has_IModel())
+      {
+	P.IModel().set_training(false);
+	P.recalc_imodel();
+      }
+    }
 
     if (iterations < P.beta_series.size())
       P.beta[0] = P.beta_series[iterations];
