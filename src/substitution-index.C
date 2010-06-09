@@ -30,6 +30,61 @@ using std::vector;
 
 using boost::dynamic_bitset;
 
+/* 
+ * June 2010 - Rewriting substitution index.
+ *
+ * 1. Goal: Keep BOTH substitution index methods.
+ *
+ * 2. Implement each method as a separate class.
+ *
+ * 3. Separate the substitution index from the alignment, and
+ *     connect it to the likelihood cache.
+ *
+ * 4. Allow the likelihood cache for each partition to
+ *    know which of the two types of substitution indexing
+ *     it is doing.
+ *
+ * 5. How must the likelihood calculation change to reflect
+ *    the different subA indices?
+ * 
+ * 6. How are we going to keep the NOTE length in sync
+ *    with the alignment length?
+ *    - any resampling of the alignment means that the
+ *      subA-indices must be recalculated.
+ *    - however, some projections still will not change...
+ *      but their associations with COLUMNS will change.
+ *    - ... lazily? Pieces invalidated when length
+ *      changes?
+ *    
+ * 7. How shall we deal with large insertions of ++++ that
+ *    have no leaf characters behind them?
+ *
+ * So... where are the NOTES used?
+ *    - 
+bali-phy.C:      add_leaf_seq_note(*P[i].A, T.n_leaves());
+bali-phy.C:      add_subA_index_note(*P[i].A, T.n_branches());
+
+alignment.C:  for(int i=0;i<notes.size();i++)
+alignment.C:    notes[i].resize(l+1,notes[i].size2());
+ *
+ * subA_update_index_single(int branch )
+ *  + keep any alignment column where the node at the source of
+ *    this branch, or either of its child branches, is present.
+ *  + record a -1 for each column/branch where the node at the source
+ *    of the column/branch is absent.
+ *  + otherwise, record present character's into the sequence at
+ *    that node.
+ *
+ * Likelihood:
+ *  + If we have a -1 at the branch,
+ *    - We should have a index >=0 in at most one child subA index.
+ *    - We therefore apply frequencies, and add to other_subst.
+ *  + If we have a +1 at the branch, we progagate any children
+ *    and store at this index.
+ */
+
+
+
 /* The algorithms in this file provide each column in a sub-alignment
  * with a name that persists through alignment and tree changes that
  * do not make the column non-identifiable.  The name is a column
@@ -65,6 +120,7 @@ using boost::dynamic_bitset;
 
 namespace substitution {
 
+  /// Are there characters present in column c of the alignment A at any of the nodes?
   static inline bool any_present(const alignment& A,int c, const vector<int>& nodes) {
     for(int i=0;i<nodes.size();i++)
       if (not A.gap(c,nodes[i])) 
@@ -72,6 +128,7 @@ namespace substitution {
     return false;
   }
 
+  /// Select rows for branches \a branches, removing columns with all entries == -1
   ublas::matrix<int> subA_index(const vector<int>& branches, const alignment& A,const Tree& T)
   {
     // the alignment of sub alignments
@@ -97,6 +154,7 @@ namespace substitution {
     return subA;
   }
 
+  /// Compute subA index for branches point to \a node.
   ublas::matrix<int> subA_index(int node,const alignment& A,const Tree& T) 
   {
     // compute node branches
@@ -107,6 +165,7 @@ namespace substitution {
     return subA_index(b,A,T);
   }
 
+  /// Remove columns from the subA index where the last row has a -1
   ublas::matrix<int> subA_select(const ublas::matrix<int>& subA1) {
     const int I = subA1.size2()-1;
 
@@ -128,6 +187,7 @@ namespace substitution {
     return subA2;
   }
 
+  /// Select rows for branches \a b, and toss columns where the last branch has entry -1
   ublas::matrix<int> subA_index_select(const vector<int>& b,const alignment& A,const Tree& T) 
   {
     // the alignment of sub alignments
@@ -138,6 +198,7 @@ namespace substitution {
   }
 
 
+  /// Select rows for branches \a b, and toss columns unless at least one character in \a nodes is present.
   ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
 				    const vector<int>& nodes) 
   {
@@ -161,6 +222,7 @@ namespace substitution {
   }
 
 
+  /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
   ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
 				    const vector<int>& nodes, const vector<int>& seq) 
   {
@@ -191,6 +253,7 @@ namespace substitution {
   }
 
 
+  /// Select rows for branches \a b, but exclude columns in which nodes \a nodes are present.
   ublas::matrix<int> subA_index_none(const vector<int>& b,const alignment& A,const Tree& T,
 				     const vector<int>& nodes) 
   {
