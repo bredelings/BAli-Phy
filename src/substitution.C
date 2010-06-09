@@ -223,7 +223,7 @@ namespace substitution {
     const int root = cache.root;
 
     if (T[root].is_leaf_node())
-      throw myexception()<<"Trying to accumulate conditional likelihoods at a root node is not allowed.";
+      throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
     assert(rb.size() == 3);
 
     // scratch matrix 
