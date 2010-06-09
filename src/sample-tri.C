@@ -228,7 +228,13 @@ int sample_tri_multi(vector<alignment>& a,vector<Parameters>& p,const vector< ve
   vector<RefPtr<DPmatrixConstrained> > Matrices;
   for(int i=0;i<p.size();i++) 
   {
-    Matrices.push_back( tri_sample_alignment_base(a[i],p[i],nodes[i]) );
+    try {
+      Matrices.push_back( tri_sample_alignment_base(a[i],p[i],nodes[i]) );
+    }
+    catch (std::bad_alloc&) {
+      std::cerr<<"Allocation failed in sample_tri_multi!  Proceeding."<<std::endl;
+      return -1;
+    }
 
     p[i].LC.set_length(a[i].length());
     int b = p[i].T.branch(nodes[i][0],nodes[i][1]);

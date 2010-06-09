@@ -112,10 +112,16 @@ void sample_tri_branch_type_one(alignment& A, Parameters& P, MoveStats& Stats,in
 }
 
 
-void sample_alignments_one(alignment& A, Parameters& P, MoveStats&,int b) {
+void sample_alignments_one(alignment& A, Parameters& P, MoveStats&,int b) 
+{
   assert(P.has_IModel()); 
 
-  sample_alignment(A,P,b);
+  try {
+    sample_alignment(A,P,b);
+  }
+  catch (std::bad_alloc&) {
+    std::cerr<<"Allocation failed in sample_alignment!  Proceeding."<<std::endl;
+  }
 }
 
 void sample_node_move(alignment& A, Parameters& P, MoveStats&,int node) {
