@@ -147,8 +147,7 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const
   double e       = exp(parameter(1));
   double t       = exp(parameter(2));
 
-  if (is_training())
-    delta = std::min(delta,0.01);
+  if (is_training()) delta = std::min(delta,0.005);
 
   if (delta > 0.5)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
@@ -265,9 +264,6 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   if (not time_dependant)
     t = 1;
 
-  if (is_training())
-    t = 0.25;
-    
   double rate    = exp(parameter(0));
   double e = exp(parameter(1));
 
@@ -277,8 +273,8 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   double mu = rate*t/(1.0-e);
   double P_indel = 1.0 - exp(-mu);
   double A = P_indel;
-  if (is_training())
-    A = std::min(A,0.01);
+
+  if (is_training()) A = std::min(A,0.005);
 
   double delta = A/(1+A);
 
