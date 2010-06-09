@@ -51,6 +51,9 @@ void check_internal_nodes_connected(const alignment& A,const Tree& T,const std::
 /// Are all un-ignored characters in column 'present' connected on T?
 bool all_characters_connected(const Tree& T,std::valarray<bool> present,const std::vector<int>& ignore);
 
+/// Force internal node states are consistent by connecting leaf characters
+void connect_leaf_characters(alignment& A,const Tree& T);
+
 void check_leaf_sequences(const alignment& A,int n_leaves);
 
 void check_letters_OK(const alignment& A);
