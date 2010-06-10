@@ -271,7 +271,7 @@ namespace substitution {
 
   /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
   ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
-				    const vector<int>& nodes, const vector<int>& seq) 
+				    const vector<int>& IF_DEBUG(nodes), const vector<int>& seq) 
   {
     vector<int> b2 = b;
     b2.push_back(-1);
