@@ -366,9 +366,9 @@ namespace substitution {
       assert(mi > 0);
       p_col = element_prod_sum(F,*m[0]);
       if (mi > 1)
-	p_col = element_prod_sum(F,*m[1]);
+	p_col *= element_prod_sum(F,*m[1]);
       if (mi > 2)
-	p_col = element_prod_sum(F,*m[2]);
+	p_col *= element_prod_sum(F,*m[2]);
 
 #ifndef NDEBUG
       //-------------- Set letter & model prior probabilities  ---------------//
