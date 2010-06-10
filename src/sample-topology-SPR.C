@@ -507,13 +507,7 @@ efloat_t likelihood_unaligned_root(const Parameters& P)
 
 efloat_t heated_likelihood_unaligned_root(const Parameters& P)
 {
-  efloat_t Pr = 1;
-  for(int i=0;i<P.n_data_partitions();i++)
-    if (P[i].variable_alignment())
-      Pr *= pow(substitution::Pr_unaligned_root(P[i]), P[i].beta[0]);
-    else
-      Pr *= P[i].heated_likelihood();
-  return Pr;
+  return pow(likelihood_unaligned_root(P), P.beta[0]);
 }
 
 /// A (sortable) branch indentified by the pair of nodes at either end.
