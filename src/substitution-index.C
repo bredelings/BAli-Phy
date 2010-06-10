@@ -128,6 +128,32 @@ namespace substitution {
     return false;
   }
 
+
+  int n_non_null_entries(const ublas::matrix<int>& m)
+  {
+    int total = 0;
+    for(int i=0;i<m.size1();i++)
+      for(int j=0;j<m.size2();j++)
+	if (m(i,j) != -1)
+	  total++;
+    return total;
+  }
+
+  int n_non_empty_columns(const ublas::matrix<int>& m)
+  {
+    int total = 0;
+    for(int i=0;i<m.size1();i++)
+    {
+      bool empty = true;
+      for(int j=0;j<m.size2() and empty;j++)
+	if (m(i,j) != -1)
+	  empty = false;
+      if (not empty)
+	total++;
+    }
+    return total;
+  }
+
   /// Select rows for branches \a branches, removing columns with all entries == -1
   ublas::matrix<int> subA_index(const vector<int>& branches, const alignment& A,const Tree& T)
   {
@@ -220,7 +246,6 @@ namespace substitution {
     // return processed indices
     return subA_select(subA);
   }
-
 
   // Idea is that columns which are (+,+,+) in terms of having leaves, but (+,+,-) in terms of having
   // present characters should get separated into (+,+,-) and (-,-,+), and we should use calc_root( )

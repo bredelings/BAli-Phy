@@ -28,6 +28,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 namespace substitution {
 
+  /// Count the number of entries in a subA index that are not null
+  int n_non_null_entries(const ublas::matrix<int>&);
+
+  /// Count the number of columns in a subA index that are not empty.
+  int n_non_empty_columns(const ublas::matrix<int>&);
+
   /// align sub-alignments corresponding to branches in b
   ublas::matrix<int> subA_index(const std::vector<int>& b,const alignment& A,const Tree& T);
 
