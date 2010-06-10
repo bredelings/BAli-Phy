@@ -1156,23 +1156,35 @@ namespace substitution {
     for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
       rb.push_back(*i);
 
-    efloat_t Pr = 1;
+    ublas::matrix<int> index_aligned   = subA_index_aligned(rb,A,T,true);
+    ublas::matrix<int> index_unaligned = subA_index_aligned(rb,A,T,false);
 
     // Combine the likelihoods from present nodes
-    {
-      // get the relationships with the sub-alignments
-      ublas::matrix<int> index = subA_index_aligned(rb,A,T,true);
+    efloat_t Pr = calc_root_probability(A,T,LC,MModel,rb,index_aligned);
+    // Combine the likelihoods from absent nodes
+    Pr *= calc_root_probability_unaligned(A,T,LC,MModel,rb,index_unaligned);
+    
+#ifndef NDEBUG
+    int n1 = n_non_null_entries(index_aligned);
+    int l1 = n_non_empty_columns(index_aligned);
 
-      // get the probability
-      Pr = calc_root_probability(A,T,LC,MModel,rb,index);
-    }
-    {
-      // get the relationships with the sub-alignments
-      ublas::matrix<int> index = subA_index_aligned(rb,A,T,false);
+    int n2 = n_non_null_entries(index_unaligned);
+    int l2 = n_non_empty_columns(index_unaligned);
 
-      // get the probability
-      Pr = calc_root_probability_unaligned(A,T,LC,MModel,rb,index);
-    }
+    ublas::matrix<int> index = subA_index(rb,A,T);
+    int n3 = n_non_null_entries(index);
+    int l3 = n_non_empty_columns(index);
+
+    int unaligned  = l1 + l2 - l3;
+
+    assert(unaligned >= 0);
+    std::cerr<<"     unaligned = "<<unaligned<<std::endl;
+    assert(n1 + n2 == n3);
+    //    std::cerr<<"     n1 = "<<n1<<"    n2 = "<<n2<<std::endl;
+
+    // \todo - can we assert that Pr_unaligned( ) is the same as Pr( )
+    // if unaligned == 0?  Or, will this cause side-effects?
+#endif
 
     // We should be able to assert that each index for each branch ends up
     // in exactly ONE of the 'index' objects above.
