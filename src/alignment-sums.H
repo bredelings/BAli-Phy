@@ -68,7 +68,7 @@ int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<i
 
 struct sample_tri_multi_calculation
 {
-#ifndef NDEBUG
+#ifndef NDEBUG_DP
   const Parameters P0;
 #endif
   std::vector<std::vector<int> > nodes;
