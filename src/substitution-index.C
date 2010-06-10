@@ -236,36 +236,22 @@ namespace substitution {
     for(int i=0;i<b.size();i++)
       nodes.push_back(T.directed_branch(b[i]).source());
 
-    vector<int> b2 = b;
-    b2.push_back(-1);
-
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index(b2,A,T);
+    ublas::matrix<int> subA = subA_index(b,A,T);
 
     // select and order the columns we want to keep
-    const int I = b.size();
-    int l=0;
     for(int c=0;c<subA.size1();c++)
     {
-      bool keep = false;
       for(int i=0;i<nodes.size();i++)
       {
 	// zero out entries if the character is absent (if present==true) or present (if present==false)
 	if ((not A.character(c,nodes[i])) xor (not present))
 	  subA(c, i) = alphabet::gap;
-
-	// remember if the resulting column has any non-null (i.e. not alphabet::gap) entries.
-	if (subA(c,i) != alphabet::gap)
-	  keep = true;
       }
-      if (keep)
-	subA(c,I) = l++;
-      else
-	subA(c,I) = alphabet::gap;
     }
 
     // return processed indices
-    return subA_select(subA);
+    return subA;
   }
 
 
