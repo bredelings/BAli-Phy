@@ -347,7 +347,7 @@ namespace substitution {
     efloat_t total = 1;
     for(int i=0;i<index.size1();i++)
     {
-      double p_col = 0;
+      double p_col = 1;
 
       int i0 = index(i,0);
       int i1 = index(i,1);
@@ -363,8 +363,8 @@ namespace substitution {
       if (i2 != -1)
 	m[mi++] = &((*branch_cache[2])[i2]);
 
-      assert(mi > 0);
-      p_col = element_prod_sum(F,*m[0]);
+      if (mi > 0)
+	p_col = element_prod_sum(F,*m[0]);
       if (mi > 1)
 	p_col *= element_prod_sum(F,*m[1]);
       if (mi > 2)
