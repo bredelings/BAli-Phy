@@ -250,9 +250,12 @@ namespace substitution {
       bool keep = false;
       for(int i=0;i<nodes.size();i++)
       {
-	if ((not A.character(c,i)) xor (not present))
-	  subA(c, nodes[i]) = alphabet::gap;
-	else if (subA(c,i) != alphabet::gap)
+	// zero out entries if the character is absent (if present==true) or present (if present==false)
+	if ((not A.character(c,nodes[i])) xor (not present))
+	  subA(c, i) = alphabet::gap;
+
+	// remember if the resulting column has any non-null (i.e. not alphabet::gap) entries.
+	if (subA(c,i) != alphabet::gap)
 	  keep = true;
       }
       if (keep)
