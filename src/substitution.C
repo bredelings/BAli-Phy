@@ -1078,7 +1078,7 @@ namespace substitution {
     return (std::abs(x-y) < std::min(x,y)*1.0e-9);
   }
 
-  void compare_caches(const alignment& A1, const alignment& A2, const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, int b)
+  void compare_caches(const alignment& A1, const alignment& IF_DEBUG(A2), const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, int b)
   {
     int L = subA_length(A1,b);
     assert(L == subA_length(A2,b));
