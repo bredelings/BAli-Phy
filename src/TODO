@@ -9,6 +9,11 @@ BUG: Is the NNI+A thing really TWICE as slow on 18S?
 BUG: How can the no-sequence version of bglobin.fasta be SLOW (with codon models?)
 - spending a fair bit of time in recalc_smodel( )
 - spending all its time exponentiating branch lengths?
+BUG: Remove the sum(F) from calc_root( )
+ - should speed up likelihoods on gappy alignments.
+REMOVE: NNI+A burnin.
+ - we don't want to depend on anything about lambda or branch lengths
+   at this stage.
 AUDIT: setup-mcmc.C
 FINISH: C20 resample aa frequencies.
 IMPLEMENT: automatic step size detection for MH based on BEAST?
