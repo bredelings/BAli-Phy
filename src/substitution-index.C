@@ -222,6 +222,50 @@ namespace substitution {
   }
 
 
+  // Idea is that columns which are (+,+,+) in terms of having leaves, but (+,+,-) in terms of having
+  // present characters should get separated into (+,+,-) and (-,-,+), and we should use calc_root( )
+  // on the first one, and a new calc_root_unaligned( ) on the second one.
+
+  // So, for example if they are (+,+,+) in terms of having leaves, and (-,-,-) in terms of having 
+  // present characters, should end up as (-,-,-) for calc_root( ) and (+,+,+) for calc_root_unaligned( ).
+
+  /// Select rows for branches \a b, and toss ENTRIES where the character at the base of the branch is absent
+  ublas::matrix<int> subA_index_aligned(const vector<int>& b,const alignment& A,const Tree& T, bool present)
+  {
+    vector<int> nodes;
+    for(int i=0;i<b.size();i++)
+      nodes.push_back(T.directed_branch(b[i]).source());
+
+    vector<int> b2 = b;
+    b2.push_back(-1);
+
+    // the alignment of sub alignments
+    ublas::matrix<int> subA = subA_index(b2,A,T);
+
+    // select and order the columns we want to keep
+    const int I = b.size();
+    int l=0;
+    for(int c=0;c<subA.size1();c++)
+    {
+      bool keep = false;
+      for(int i=0;i<nodes.size();i++)
+      {
+	if ((not A.character(c,i)) xor (not present))
+	  subA(c, nodes[i]) = alphabet::gap;
+	else if (subA(c,i) != alphabet::gap)
+	  keep = true;
+      }
+      if (keep)
+	subA(c,I) = l++;
+      else
+	subA(c,I) = alphabet::gap;
+    }
+
+    // return processed indices
+    return subA_select(subA);
+  }
+
+
   /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
   ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
 				    const vector<int>& nodes, const vector<int>& seq) 

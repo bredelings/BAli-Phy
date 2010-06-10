@@ -84,6 +84,9 @@ namespace substitution {
   // Full likelihood - all columns, all rates (star tree)
   efloat_t Pr_star(const data_partition&);
 
+  // Full likelihood - if some seemingly aligned sequences at the root have + -> - -> +
+  efloat_t Pr_unaligned_root(const data_partition&);
+
   // Full likelihood - if everything is unaligned....
   efloat_t Pr_unaligned(const data_partition&);
 

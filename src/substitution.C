@@ -311,6 +311,102 @@ namespace substitution {
     return total;
   }
 
+  efloat_t calc_root_probability_unaligned(const alignment&,const Tree& T,Likelihood_Cache& cache,
+			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
+  {
+    total_calc_root_prob++;
+    default_timer_stack.push_timer("substitution::calc_root_unaligned");
+
+    assert(index.size2() == rb.size());
+
+    const int root = cache.root;
+
+    if (T[root].is_leaf_node())
+      throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
+    assert(rb.size() == 3);
+
+    // scratch matrix 
+    Matrix & S = cache.scratch(0);
+    const int n_models = S.size1();
+    const int n_states = S.size2();
+
+    // cache matrix F(m,s) of p(m)*freq(m,l)
+    Matrix F(n_models,n_states);
+    for(int m=0;m<n_models;m++) {
+      double p = MModel.distribution()[m];
+      const valarray<double>& f = MModel.base_model(m).frequencies();
+      for(int s=0;s<n_states;s++) 
+	F(m,s) = f[s]*p;
+    }
+
+    // look up the cache rows now, once, instead of for each column
+    vector< vector<Matrix>* > branch_cache;
+    for(int i=0;i<rb.size();i++)
+      branch_cache.push_back(&cache[rb[i]]);
+    
+    efloat_t total = 1;
+    for(int i=0;i<index.size1();i++)
+    {
+      double p_col = 0;
+
+      int i0 = index(i,0);
+      int i1 = index(i,1);
+      int i2 = index(i,2);
+
+      Matrix* m[3];
+      int mi=0;
+
+      if (i0 != -1)
+	m[mi++] = &((*branch_cache[0])[i0]);
+      if (i1 != -1)
+	m[mi++] = &((*branch_cache[1])[i1]);
+      if (i2 != -1)
+	m[mi++] = &((*branch_cache[2])[i2]);
+
+      assert(mi > 0);
+      p_col = element_prod_sum(F,*m[0]);
+      if (mi > 1)
+	p_col = element_prod_sum(F,*m[1]);
+      if (mi > 2)
+	p_col = element_prod_sum(F,*m[2]);
+
+#ifndef NDEBUG
+      //-------------- Set letter & model prior probabilities  ---------------//
+      element_assign(S,F);
+
+      //-------------- Propagate and collect information at 'root' -----------//
+      for(int j=0;j<rb.size();j++) {
+	int i0 = index(i,j);
+	if (i0 != alphabet::gap)
+	  element_prod_modify(S,(*branch_cache[j])[i0]);
+      }
+
+      //------------ Check that individual models are not crazy -------------//
+      for(int m=0;m<n_models;m++) {
+	double p_model=0;
+	for(int s=0;s<n_states;s++)
+	  p_model += S(m,s);
+	// A specific model (e.g. the INV model) could be impossible
+	assert(0 <= p_model and p_model <= 1.00000000001);
+      }
+
+      double p_col2 = element_sum(S);
+
+      assert((p_col - p_col2)/std::max(p_col,p_col2) < 1.0e-9);
+#endif
+
+      // SOME model must be possible
+      assert(0 <= p_col and p_col <= 1.00000000001);
+
+      // This does a log( ) operation.
+      total *= p_col;
+      //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+    }
+
+    default_timer_stack.pop_timer();
+    return total;
+  }
+
   efloat_t calc_root_probability(const data_partition& P,const vector<int>& rb,
 			       const ublas::matrix<int>& index) 
   {
@@ -1023,6 +1119,76 @@ namespace substitution {
 	  compare_caches(A1,A2,LC1,LC2,db);
     }
 
+  }
+
+  efloat_t Pr_unaligned_root(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
+			     const MultiModel& MModel)
+  {
+    total_likelihood++;
+    default_timer_stack.push_timer("substitution");
+    default_timer_stack.push_timer("substitution::likelihood_unaligned");
+
+#ifndef DEBUG_CACHING
+    if (LC.cv_up_to_date()) {
+#ifndef NDEBUG
+      std::clog<<"Pr: Using cached value "<<log(LC.cached_value)<<"\n";
+#endif
+      default_timer_stack.pop_timer();
+      default_timer_stack.pop_timer();
+      return LC.cached_value;
+    }
+#endif
+
+#ifndef NDEBUG
+    subA_index_check_footprint(A, T);
+    subA_index_check_regenerate(A, T, LC.root);
+#endif
+
+    IF_DEBUG(int n_br =) calculate_caches(A,MC,T,LC,MModel);
+#ifndef NDEBUG
+    std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
+#endif
+
+    // compute root branches
+    vector<int> rb;
+    for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
+      rb.push_back(*i);
+
+    efloat_t Pr = 1;
+
+    // Combine the likelihoods from present nodes
+    {
+      // get the relationships with the sub-alignments
+      ublas::matrix<int> index = subA_index_aligned(rb,A,T,true);
+
+      // get the probability
+      Pr = calc_root_probability(A,T,LC,MModel,rb,index);
+    }
+    {
+      // get the relationships with the sub-alignments
+      ublas::matrix<int> index = subA_index_aligned(rb,A,T,false);
+
+      // get the probability
+      Pr = calc_root_probability_unaligned(A,T,LC,MModel,rb,index);
+    }
+
+    // We should be able to assert that each index for each branch ends up
+    // in exactly ONE of the 'index' objects above.
+
+    LC.cached_value = Pr;
+    LC.cv_up_to_date() = true;
+
+    default_timer_stack.pop_timer();
+    default_timer_stack.pop_timer();
+    return Pr;
+  }
+
+  efloat_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
+    return Pr_unaligned_root(*P.A, P.MC, *P.T, LC, P.SModel());
+  }
+
+  efloat_t Pr_unaligned_root(const data_partition& P) {
+    return Pr_unaligned_root(P, P.LC);
   }
 
   efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& LC,

@@ -1,3 +1,4 @@
+#undef NDEBUG
 /*
    Copyright (C) 2004-2009 Benjamin Redelings
 
@@ -491,6 +492,30 @@ void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   }
 }
 
+#include "substitution.H"
+
+efloat_t likelihood_unaligned_root(const Parameters& P)
+{
+  efloat_t Pr = 1;
+  for(int i=0;i<P.n_data_partitions();i++)
+    if (P[i].variable_alignment())
+      Pr *= substitution::Pr_unaligned_root(P[i]);
+    else
+      Pr *= P[i].likelihood();
+  return Pr;
+}
+
+efloat_t heated_likelihood_unaligned_root(const Parameters& P)
+{
+  efloat_t Pr = 1;
+  for(int i=0;i<P.n_data_partitions();i++)
+    if (P[i].variable_alignment())
+      Pr *= pow(substitution::Pr_unaligned_root(P[i]), P[i].beta[0]);
+    else
+      Pr *= P[i].heated_likelihood();
+  return Pr;
+}
+
 /// A (sortable) branch indentified by the pair of nodes at either end.
 struct spr_branch
 {
@@ -817,6 +842,11 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 
 #ifndef NDEBUG
   Pr.LLL[I.B0] = P.heated_likelihood();
+
+  efloat_t PR1 = P.heated_likelihood();
+  efloat_t PR2 = heated_likelihood_unaligned_root(P);
+    
+  assert(std::abs(PR1.log() - PR2.log()) < 1.0e-8);
 #endif
 
   /*----------- Begin invalidating caches and subA-indices to reflect the pruned state -------------*/
