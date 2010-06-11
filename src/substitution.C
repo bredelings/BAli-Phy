@@ -248,7 +248,7 @@ namespace substitution {
     efloat_t total = 1;
     for(int i=0;i<index.size1();i++)
     {
-      double p_col = 0;
+      double p_col = 1;
 
       int i0 = index(i,0);
       int i1 = index(i,1);
@@ -270,9 +270,6 @@ namespace substitution {
 	p_col = element_prod_sum(F, *m[0], *m[1]);
       else if (mi==1)
 	p_col = element_prod_sum(F, *m[0]);
-      else {
-	p_col = element_sum(F);
-      }
 
 #ifndef NDEBUG
       //-------------- Set letter & model prior probabilities  ---------------//
