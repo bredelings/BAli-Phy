@@ -1,23 +1,16 @@
 2.1.0
 ------------
 Mostly: Documentation, Reporting/Summarization
-Also: Constraints, Speed
 FINISH: Reporting for analyzing multiple runs.
  - START reporting tree convergence statistics.
  - START reporting the deviance measure that is reported by Lartillot.
-BUG: Is the NNI+A thing really TWICE as slow on 18S?
-BUG: How can the no-sequence version of bglobin.fasta be SLOW (with codon models?)
-- spending a fair bit of time in recalc_smodel( )
-- spending all its time exponentiating branch lengths?
 AUDIT: setup-mcmc.C
 FINISH: C20 resample aa frequencies.
 IMPLEMENT: automatic step size detection for MH based on BEAST?
 COMPARE with 2.0.2 on some single-partition data sets 
  - EF-Tu-45? Globins-few.fasta? 5S-48? HIV? Enolase?
- - burnin
-Improve SPR_and_A_all based on what MUST be unaligned
- - Look at get_column_likelihoods( ) and other_subst( ) in substitution.C
 GENERATE: some examples.
+
 Determining Memory Size
  * use <sys/sysinfo.h> on Linux to determine memory size.
    * http://stackoverflow.com/questions/349889/how-do-you-determine-the-amount-of-linux-system-ram-in-c
