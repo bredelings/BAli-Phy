@@ -507,7 +507,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2) {
 #endif
 
     dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
-    report_constraints(s1[i],s2);
+    report_constraints(s1[i],s2,i);
   }
 }
 

@@ -781,10 +781,11 @@ void do_sampling(const variables_map& args,
 
   //FIXME - report which partition constraints are satisfied in.
 
-  for(int i=0;i<PP.n_data_partitions();i++) {
+  for(int i=0;i<PP.n_data_partitions();i++) 
+  {
     dynamic_bitset<> s2 = constraint_satisfied(PP[i].alignment_constraint,*PP[i].A);
     dynamic_bitset<> s1(s2.size());
-    report_constraints(s1,s2);
+    report_constraints(s1,s2,i);
   } 
 
   // before we do this, just run 20 iterations of a sampler that keeps the alignment fixed
