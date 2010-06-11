@@ -1,3 +1,4 @@
+#undef NDEBUG
 /*
    Copyright (C) 2004-2005,2007,2009-2010 Benjamin Redelings
 
@@ -1121,6 +1122,16 @@ namespace substitution {
 
   }
 
+  ///
+  /// This routine unaligns sub-columns that do not have a '+' at the base of the
+  /// branch pointing to the substitution root.  (The sequence at the root node is
+  /// ignored).  This routine allows us to estimate the likelihood an SPR move would
+  /// have after all the necessary columns are unaligned to prevent + -> - -> +.
+  ///
+  /// This routine is called Pr_unaligned_root( ) because it assumed that unaligned can
+  /// only happen at the substitution root.  This is actually true when called from
+  /// the SPR_all routines, but may not make sense otherwise.
+  ///
   efloat_t Pr_unaligned_root(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
 			     const MultiModel& MModel)
   {
