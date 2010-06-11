@@ -37,6 +37,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-sums.H"
 #include "alignment-constraint.H"
 #include "substitution-index.H"
+#include "substitution.H"
 
 using MCMC::MoveStats;
 
@@ -491,8 +492,6 @@ void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats)
     }
   }
 }
-
-#include "substitution.H"
 
 efloat_t likelihood_unaligned_root(const Parameters& P)
 {
