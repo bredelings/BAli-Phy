@@ -496,8 +496,11 @@ void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats)
 efloat_t likelihood_unaligned_root(const Parameters& P)
 {
   efloat_t Pr = 1;
+
+  bool old = (P.keys.find("no_unaligned_root") != P.keys.end());
+
   for(int i=0;i<P.n_data_partitions();i++)
-    if (P[i].variable_alignment())
+    if (P[i].variable_alignment() and not old)
       Pr *= substitution::Pr_unaligned_root(P[i]);
     else
       Pr *= P[i].likelihood();
