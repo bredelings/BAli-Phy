@@ -128,6 +128,32 @@ namespace substitution {
     return false;
   }
 
+
+  int n_non_null_entries(const ublas::matrix<int>& m)
+  {
+    int total = 0;
+    for(int i=0;i<m.size1();i++)
+      for(int j=0;j<m.size2();j++)
+	if (m(i,j) != -1)
+	  total++;
+    return total;
+  }
+
+  int n_non_empty_columns(const ublas::matrix<int>& m)
+  {
+    int total = 0;
+    for(int i=0;i<m.size1();i++)
+    {
+      bool empty = true;
+      for(int j=0;j<m.size2() and empty;j++)
+	if (m(i,j) != -1)
+	  empty = false;
+      if (not empty)
+	total++;
+    }
+    return total;
+  }
+
   /// Select rows for branches \a branches, removing columns with all entries == -1
   ublas::matrix<int> subA_index(const vector<int>& branches, const alignment& A,const Tree& T)
   {
@@ -221,10 +247,42 @@ namespace substitution {
     return subA_select(subA);
   }
 
+  // Idea is that columns which are (+,+,+) in terms of having leaves, but (+,+,-) in terms of having
+  // present characters should get separated into (+,+,-) and (-,-,+), and we should use calc_root( )
+  // on the first one, and a new calc_root_unaligned( ) on the second one.
+
+  // So, for example if they are (+,+,+) in terms of having leaves, and (-,-,-) in terms of having 
+  // present characters, should end up as (-,-,-) for calc_root( ) and (+,+,+) for calc_root_unaligned( ).
+
+  /// Select rows for branches \a b, and toss ENTRIES where the character at the base of the branch is absent
+  ublas::matrix<int> subA_index_aligned(const vector<int>& b,const alignment& A,const Tree& T, bool present)
+  {
+    vector<int> nodes;
+    for(int i=0;i<b.size();i++)
+      nodes.push_back(T.directed_branch(b[i]).source());
+
+    // the alignment of sub alignments
+    ublas::matrix<int> subA = subA_index(b,A,T);
+
+    // select and order the columns we want to keep
+    for(int c=0;c<subA.size1();c++)
+    {
+      for(int i=0;i<nodes.size();i++)
+      {
+	// zero out entries if the character is absent (if present==true) or present (if present==false)
+	if ((not A.character(c,nodes[i])) xor (not present))
+	  subA(c, i) = alphabet::gap;
+      }
+    }
+
+    // return processed indices
+    return subA;
+  }
+
 
   /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
   ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
-				    const vector<int>& nodes, const vector<int>& seq) 
+				    const vector<int>& IF_DEBUG(nodes), const vector<int>& seq) 
   {
     vector<int> b2 = b;
     b2.push_back(-1);
