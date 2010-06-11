@@ -1128,19 +1128,6 @@ namespace substitution {
     default_timer_stack.push_timer("substitution");
     default_timer_stack.push_timer("substitution::likelihood_unaligned");
 
-    /*
-#ifndef DEBUG_CACHING
-    if (LC.cv_up_to_date()) {
-#ifndef NDEBUG
-      std::clog<<"Pr: Using cached value "<<log(LC.cached_value)<<"\n";
-#endif
-      default_timer_stack.pop_timer();
-      default_timer_stack.pop_timer();
-      return LC.cached_value;
-    }
-#endif
-    */
-
 #ifndef NDEBUG
     subA_index_check_footprint(A, T);
     subA_index_check_regenerate(A, T, LC.root);
@@ -1189,10 +1176,6 @@ namespace substitution {
     // We should be able to assert that each index for each branch ends up
     // in exactly ONE of the 'index' objects above.
 
-    /*
-    LC.cached_value = Pr;
-    LC.cv_up_to_date() = true;
-    */
     default_timer_stack.pop_timer();
     default_timer_stack.pop_timer();
     return Pr;
