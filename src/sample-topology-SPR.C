@@ -1,4 +1,3 @@
-#undef NDEBUG
 /*
    Copyright (C) 2004-2009 Benjamin Redelings
 
