@@ -772,14 +772,9 @@ void do_sampling(const variables_map& args,
   sampler.show_enabled(s_out);
   s_out<<"\n";
 
-  int total_c = 0;
+  //-------------------- Report alignment alignments -----------------------//
   for(int i=0;i<PP.n_data_partitions();i++)
-    total_c += PP[i].alignment_constraint.size1();
-
-  if (total_c > 0)
-    std::cerr<<"Using "<<total_c<<" constraints.\n";
-
-  //FIXME - report which partition constraints are satisfied in.
+    std::cout<<"Partition "<<i+1<<": using "<<PP[i].alignment_constraint.size1()<<" constraints.\n";
 
   for(int i=0;i<PP.n_data_partitions();i++) 
   {
