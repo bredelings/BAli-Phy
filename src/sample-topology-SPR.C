@@ -907,10 +907,12 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     P.LC_invalidate_one_branch(P.T->directed_branch(I.BM).reverse());       //  ... mark likelihood caches for recomputing.
 
     // **3. RECORD** the tree and likelihood
-    Pr[B2] = P.heated_likelihood() * P.prior_no_alignment();
+    Pr[B2] = heated_likelihood_unaligned_root(P) * P.prior_no_alignment();
 #ifndef NDEBUG
-    Pr.LLL[B2] = P.heated_likelihood();
-    assert(std::abs(log(Pr.LLL[B2]) - log(P.heated_likelihood())) < 1.0e-9);
+    efloat_t PR2 = heated_likelihood_unaligned_root(P);
+    Pr.LLL[B2] = PR2;
+    efloat_t PR1 = P.heated_likelihood();
+    //    cerr<<"  PR1 = "<<PR1.log()<<"  PR2 = "<<PR2.log()<<"   diff = "<<PR2.log() - PR1.log()<<endl;
 #endif
 
     // **4. INVALIDATE** the DIRECTED branch that we just landed on and altered
@@ -1126,10 +1128,10 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   p[1].subA_index_allow_invalid_branches(false);
 
 #ifndef NDEBUG
-  assert(std::abs(length(*p[1].T) - length(T0)) < 1.0e-9);
-  efloat_t L_1 = p[1].likelihood();
+  // The likelihood for attaching at a particular place should not
+  // depend on the initial attachment point.
+  efloat_t L_1 = heated_likelihood_unaligned_root(p[1]);
   assert(std::abs(L_1.log() - LLL[C].log()) < 1.0e-9);
-
 #endif
 
   // Step N+1: Use the chosen tree as a proposal, allowing us to sample the alignment.
