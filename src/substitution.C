@@ -1172,8 +1172,11 @@ namespace substitution {
     assert(n1 + n2 == n3);
     //    std::cerr<<"     n1 = "<<n1<<"    n2 = "<<n2<<std::endl;
 
-    // \todo - can we assert that Pr_unaligned( ) is the same as Pr( )
-    // if unaligned == 0?  Or, will this cause side-effects?
+    if (unaligned == 0) 
+    {
+      efloat_t Pr2 = calc_root_probability(A,T,LC,MModel,rb,index);
+      assert(std::abs(Pr.log() - Pr2.log()) < 1.0e-9);
+    }
 #endif
 
     default_timer_stack.pop_timer();
