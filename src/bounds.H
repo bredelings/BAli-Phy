@@ -60,7 +60,7 @@ struct Bounds
     :has_lower_bound(b.has_lower_bound),
     lower_bound(b.lower_bound),
     has_upper_bound(b.has_upper_bound),
-    upper_bound(b.has_upper_bound)
+    upper_bound(b.upper_bound)
   { }
 
   Bounds();
