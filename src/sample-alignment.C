@@ -150,8 +150,6 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
 #ifndef NDEBUG_DP
   assert(valid(*P.A));
-  dynamic_bitset<> s2 = constraint_satisfied(P.alignment_constraint, *P.A);
-  report_constraints(s1,s2);
 
   vector<int> path_new = get_path(*P.A, node1, node2);
   path.push_back(3);
@@ -167,6 +165,16 @@ void sample_alignment(Parameters& P,int b)
 
   if (any_branches_constrained(vector<int>(1,b), *P.T, *P.TC, P.AC))
     return;
+
+  vector<dynamic_bitset<> > s1(P.n_data_partitions());
+  for(int i=0;i<P.n_data_partitions();i++) 
+  {
+    s1[i].resize(P[i].alignment_constraint.size1());
+    s1[i] = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+#ifndef NDEBUG
+    check_alignment(*P[i].A, *P[i].T, "tri_sample_alignment:in");
+#endif
+  }
 
 #if !defined(NDEBUG_DP) || !defined(NDEBUG)
   const Parameters P0 = P;
@@ -280,5 +288,14 @@ void sample_alignment(Parameters& P,int b)
 
 #endif
 
+  for(int i=0;i<P.n_data_partitions();i++) 
+  {
+#ifndef NDEBUG
+    check_alignment(*P[i].A, *P[i].T,"tri_sample_alignment:out");
+#endif
+
+    dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
+    report_constraints(s1[i],s2,i);
+  }
 }
 
