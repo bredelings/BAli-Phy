@@ -1166,15 +1166,15 @@ namespace substitution {
 
     assert(unaligned >= 0);
     std::cerr<<"     unaligned = "<<unaligned<<std::endl;
+
+    // Each index for each branch should end up in exactly ONE of
+    // index_aligned or index_unaligned.
     assert(n1 + n2 == n3);
     //    std::cerr<<"     n1 = "<<n1<<"    n2 = "<<n2<<std::endl;
 
     // \todo - can we assert that Pr_unaligned( ) is the same as Pr( )
     // if unaligned == 0?  Or, will this cause side-effects?
 #endif
-
-    // We should be able to assert that each index for each branch ends up
-    // in exactly ONE of the 'index' objects above.
 
     default_timer_stack.pop_timer();
     default_timer_stack.pop_timer();
