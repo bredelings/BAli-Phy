@@ -297,14 +297,14 @@ void report_constraints(const dynamic_bitset<>& s1, const dynamic_bitset<>& s2, 
     if (s1[i] and not s2[i])
       throw myexception()<<"Partition "<<p<<": constraint "<<i<<" went from satisfied -> unsatisfied!";
     if (s2[i] and not s1[i])
-      std::cerr<<"Partition "<<p<<": constraint "<<i<<" satisfied."<<std::endl;
+      std::cout<<"Partition "<<p<<": constraint "<<i<<" satisfied."<<std::endl;
   }
 
   if (sum(s1) != sum(s2)) {
-    std::cerr<<"Partition "<<p<<": "<<sum(s2)<<"/"<<s2.size()<<" constraints satisfied.\n";
+    std::cout<<"Partition "<<p<<": "<<sum(s2)<<"/"<<s2.size()<<" constraints satisfied.\n";
 
     if (sum(s2) == s2.size())
-      std::cerr<<"Partition "<<p<<": All constraints satisfied!"<<std::endl;
+      std::cout<<"Partition "<<p<<": All constraints satisfied!"<<std::endl;
   }
 }
 
