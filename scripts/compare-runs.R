@@ -29,7 +29,7 @@ par(mfrow=c(2,1))
 
 #-------------- Plot 1 -------------------
 
-plot(avePP,xlab="Split",ylab="PP",type="n")
+plot(avePP,xlab="Split",ylab="PP",type="n",ylim=c(0,1))
 
 # plot results from another analysis for comparison
 # lines(avePP_other,col=hsv(0.63,0.4,1),lwd=2)
