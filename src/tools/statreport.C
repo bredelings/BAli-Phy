@@ -395,10 +395,13 @@ var_stats show_stats(variables_map& args, const vector<stats_table>& tables,int 
   if (tables.size() > 1) {
     RNe = tau/sum_tau*tables.size();
     //cout<<"   PSRF-Ne = "<<RNe;
-    if (integers)
-      RCI = std::max(0.0,total_CI-1)/sum_CI;
-    else
-      RCI = total_CI/sum_CI;
+    if (sum_CI > 0)
+    {
+      if (integers)
+	RCI = std::max(0.0,total_CI-1)/sum_CI;
+      else
+	RCI = total_CI/sum_CI;
+    }
     cout<<"       PSRF-80%CI = "<<RCI;
     RCF = sum_fraction_contained; //compare_level;
     cout<<"       PSRF-RCF = "<<RCF<<endl;
