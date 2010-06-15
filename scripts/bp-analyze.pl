@@ -68,7 +68,7 @@ if (! is_in_path("R")) {
 
 my $personality="";
 my $n_chains=1;
-my @directories;
+my @subdirectories;
 my @out_files;
 my @tree_files;
 my @parameter_files;
@@ -92,20 +92,20 @@ my $min_Ne;
 
 &determine_input_files();
 
-my $command = get_header_attribute($out_files[0],"command");
-my $directory = get_header_attribute($out_files[0],"directory");
+my @commands = get_header_attributes("command",@out_files);
+my @directories = get_header_attributes("directory",@out_files);
 my @subdirs    = get_header_attributes("subdirectory",@out_files);
 
 my $betas = get_cmdline_attribute("beta");
 my @beta = (1);
 @beta = split(/,/, $betas) if (defined($betas));
 
-my $first_dir = $directories[0];
+my $first_dir = $subdirectories[0];
 my @partitions = @{ get_partitions() };
 my $n_partitions = 1+$#partitions;
 if ($personality =~ "bali-phy-2.1.*") {
     if ($n_chains == 1) {
-	foreach my $directory (@directories)
+	foreach my $directory (@subdirectories)
 	{
 	    my @samples = ();
 	    for(my $p=1;$p<=$n_partitions;$p++) {
@@ -762,11 +762,11 @@ sub print_index_html
 print $index "<h1>$title</h1>\n";
 print $index '<object class="floating_picture" data="c50-tree.svg" type="image/svg+xml" height="200pt" width="200pt"></object>';
 #print $index "<p>Samples were created by the following command line:</p>";
-print $index "<p><b>command line:</b> $command</p>\n";
-print $index "<p><b>directory:</b> $directory</p>\n";
-foreach my $subdir (@subdirs)
+for(my $i=0; $i<= $#subdirs; $i++)
 {
-    print $index "<p><b>subdirectory:</b> $subdir</p>\n";
+    print $index "<p><b>directory:</b> $directories[$i]<br/>\n";
+    print $index "<b>subdirectory:</b> $subdirs[$i]<br/>\n";
+    print $index "<b>command line:</b> $commands[$i]</p>\n";
 }
 
 print $index &print_data_and_model();
@@ -888,10 +888,10 @@ sub parse_command_line
 	}
 	else
 	{
-	    push @directories, $arg;
+	    push @subdirectories, $arg;
 	}
     }
-    push @directories,"." if ($#directories == -1);
+    push @subdirectories,"." if ($#subdirectories == -1);
 }
 
 
@@ -901,7 +901,7 @@ sub determine_personality
     # quit if personality is already determined
     return if ($personality ne "");
 
-    my $first_dir = $directories[0];
+    my $first_dir = $subdirectories[0];
     
     if (-e "$first_dir/C1.out")
     {
@@ -943,11 +943,11 @@ sub check_file_exists
 
 sub determine_input_files
 {
-    my $first_dir = $directories[0];
+    my $first_dir = $subdirectories[0];
 
     if ($personality eq "bali-phy-2.1")
     {
-	foreach my $directory (@directories)
+	foreach my $directory (@subdirectories)
 	{
 	    push @out_files, check_file_exists("$directory/C1.out");
 	    push @tree_files, check_file_exists("$directory/C1.trees");
@@ -965,7 +965,7 @@ sub determine_input_files
     }
     elsif ($personality eq "bali-phy-2.0")
     {
-	foreach my $directory (@directories)
+	foreach my $directory (@subdirectories)
 	{
 	    push @out_files, check_file_exists("$directory/1.out");
 	    push @tree_files, check_file_exists("$directory/1.trees");
@@ -979,7 +979,7 @@ sub determine_input_files
     {
 	print "Summarizing output files from phylobayes:\n";
 
-	foreach my $directory (@directories)
+	foreach my $directory (@subdirectories)
 	{
 	    my @treelists = glob("$directory/*.treelist");
 
@@ -1351,7 +1351,7 @@ sub compute_marginal_likelihood
 	if (!more_recent_than_all_of("Results/Pmarg",[@parameter_files])) {
 	    my $likelihood = "likelihood";
 	    $likelihood = "loglik" if ($personality eq "phylobayes");
-	    `stats-select $likelihood --no-header < @parameter_files | tail -n+$burnin | model_P > Results/Pmarg`;
+	    `stats-select $likelihood --no-header < $parameter_files[0] | tail -n+$burnin | model_P > Results/Pmarg`;
 	}
 	print "done.\n";
 	$marginal_prob = `cat Results/Pmarg`;
