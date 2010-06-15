@@ -397,6 +397,9 @@ sub html_header
 	border: none; /* only needed for Netscape 4.x */
         width: 100%;
 }
+
+        object.svg-image {display: none}
+
 #topbar #menu {
 	font-size: 90%;
 	display: table-cell;
@@ -414,7 +417,10 @@ sub html_header
       h1 {font-size: 150%;}
       h2 {font-size: 130%; margin-bottom: 0.2em;}
       h3 {font-size: 110%; margin-top: 0.3em ; margin-bottom: 0.2em}
-
+/* Firefox only 
+      img.svg-image { { display: none }
+      object.svg-image { { display: inline }
+End Firefox only */
       ul {margin-top: 0.4em;}
 
       *[title] {cursor:help;}
@@ -514,12 +520,61 @@ $section .= "</table>\n";
     return $section;
 }
 
+sub html_svg_object
+{
+    my $url = shift;
+    my $width = shift;
+    my $height = shift;
+    my $classes = shift;
+    my $extra = shift;
+
+    $classes = [] if (!defined($classes));
+    push @$classes,"svg-image";
+    my $class = join(' ',@$classes);
+
+    my $svg = "<object data=\"$url\" type=\"image/svg+xml\" class=\"$class\"";
+
+    $svg = "$svg width=\"$width\"" if (defined($width));
+    $svg = "$svg height=\"$height\"" if (defined($height));
+    $svg = "$svg $extra" if (defined($extra));
+    $svg = "$svg ></object>";
+
+    return $svg;
+}
+
+sub html_svg_img
+{
+    my $url = shift;
+    my $width = shift;
+    my $height = shift;
+    my $classes = shift;
+    my $extra = shift;
+
+    $classes = [] if (!defined($classes));
+    push @$classes,"svg-image";
+    my $class = join(' ',@$classes);
+
+    my $svg = "<img src=\"$url\" class=\"$class\"";
+
+    $svg = "$svg width=\"$width\"" if (defined($width));
+    $svg = "$svg height=\"$height\"" if (defined($height));
+    $svg = "$svg $extra" if (defined($extra));
+    $svg = "$svg />";
+
+    return $svg;
+}
+
+sub html_svg
+{
+    return html_svg_object(@_).html_svg_img(@_);
+}
+
 sub section_phylogeny_distribution
 {
     my $section = "";
     $section .= "<h2><a name=\"topology\">Phylogeny Distribution</a></h2>\n";
 
-    $section .= '<object class="r_floating_picture" data="c-levels.svg" type="image/svg+xml" width="400pt" height="300pt"></object>';
+    $section .= html_svg("c-levels.svg","400pt","300pt",["r_floating_picture"]);
 
     $section .= '<table>'."\n";
     $section .= "<tr><td>Partition support: <a href=\"consensus\">Summary</a></td></tr>\n";
@@ -760,7 +815,7 @@ sub print_index_html
     print $index &topbar();
 
 print $index "<h1>$title</h1>\n";
-print $index '<object class="floating_picture" data="c50-tree.svg" type="image/svg+xml" height="200pt" width="200pt"></object>';
+print $index html_svg("c50-tree.svg","200pt","",["floating_picture"]);
 #print $index "<p>Samples were created by the following command line:</p>";
 for(my $i=0; $i<= $#subdirs; $i++)
 {
