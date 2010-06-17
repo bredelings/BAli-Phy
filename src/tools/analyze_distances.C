@@ -144,7 +144,7 @@ double branch_likelihood::operator()(const optimize::Vector& v) const
   //----- Setup cached CL's + Transition matrices -----//
   LC.invalidate_all();
   MatCache MC(T2,*smodel);
-  subA_index_t I(A.length()+1, T2.n_branches()*2);
+  subA_index_leaf I(A.length()+1, T2.n_branches()*2);
 
   return log(substitution::Pr(A,I,MC,T2,LC,*smodel) * smodel->prior() * prior_exponential(T2,0.2));
 }
@@ -184,7 +184,7 @@ double log_branch_likelihood::operator()(const optimize::Vector& v) const
   //----- Setup cached CL's + Transition matrices -----//
   LC.invalidate_all();
   MatCache MC(T2,*smodel);
-  subA_index_t I(A.length()+1, T2.n_branches()*2);
+  subA_index_leaf I(A.length()+1, T2.n_branches()*2);
 
   return log(substitution::Pr(A,I,MC,T2,LC,*smodel) * smodel->prior() * prior_exponential(T2,0.2));
 }
@@ -318,7 +318,7 @@ void analyze_rates(const alignment& A,const SequenceTree& T,
 
   Likelihood_Cache LC(T,smodel,A.length());
 
-  subA_index_t I(A.length()+1, T.n_branches()*2);
+  subA_index_leaf I(A.length()+1, T.n_branches()*2);
 
   Matrix rate_probs = get_rate_probabilities(A,I,MC,T,LC,smodel);
 

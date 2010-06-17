@@ -65,7 +65,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 struct subA_index_t: public ublas::matrix<int>
 {
 protected:
-  void update_one_branch(const alignment& A,const Tree& T,int b);
+  virtual void update_one_branch(const alignment& A,const Tree& T,int b)=0;
 
   /* This is for SPR all, where we only need branches pointing towards the
      root to be valid, but we don't want to discard the other ones, because
@@ -73,6 +73,8 @@ protected:
    */
   bool allow_invalid_branches_;
 public:
+  virtual subA_index_t* clone() const=0;
+  
   subA_index_t(int s1, int s2);
 
   bool branch_index_valid(int b) const {
@@ -126,8 +128,21 @@ public:
   bool may_have_invalid_branches() const;
   void allow_invalid_branches(bool allowed);
 
-  void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const;
+  virtual void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const=0;
   void check_footprint(const alignment& A1,const Tree& T) const;
+};
+
+struct subA_index_leaf: public subA_index_t
+{
+protected:
+  void update_one_branch(const alignment& A,const Tree& T,int b);
+
+public:
+  subA_index_t* clone() const {return new subA_index_leaf(*this);}
+
+  void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const;
+
+  subA_index_leaf(int s1, int s2);
 };
 
 void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T);

@@ -170,38 +170,38 @@ int data_partition::seqlength(int n) const
 void data_partition::invalidate_subA_index_branch(int b)
 {
   // propagates outward in both directions
-  subA.invalidate_branch(*T,b);
+  subA->invalidate_branch(*T,b);
 }
 
 void data_partition::invalidate_subA_index_one_branch(int b)
 {
   int b2 = T->directed_branch(b).reverse();
-  subA.invalidate_one_branch(b);
-  subA.invalidate_one_branch(b2);
+  subA->invalidate_one_branch(b);
+  subA->invalidate_one_branch(b2);
 }
 
 void data_partition::invalidate_subA_index_all()
 {
-  subA.invalidate_all_branches();
+  subA->invalidate_all_branches();
 }
 
 void data_partition::subA_index_allow_invalid_branches(bool b)
 {
 #ifndef NDEBUG
-  if (subA.may_have_invalid_branches())
+  if (subA->may_have_invalid_branches())
   {
-    subA.check_footprint(*A, *T);
-    check_regenerate(subA, *A, *T);
+    subA->check_footprint(*A, *T);
+    check_regenerate(*subA, *A, *T);
   }  
 #endif
 
-  subA.allow_invalid_branches(b);
+  subA->allow_invalid_branches(b);
 
 #ifndef NDEBUG
-  if (not subA.may_have_invalid_branches())
+  if (not subA->may_have_invalid_branches())
   {
-    subA.check_footprint(*A, *T);
-    check_regenerate(subA, *A, *T);
+    subA->check_footprint(*A, *T);
+    check_regenerate(*subA, *A, *T);
   }  
 #endif
 }
@@ -390,11 +390,15 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    T(t),
    MC(t,SM),
    LC(t,SModel()),
-   subA(a.length()+1, t.n_branches()*2),
    branch_HMMs(t.n_branches()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
+  if (variable_alignment())
+    subA = new subA_index_leaf(a.length()+1, t.n_branches()*2);
+  else
+    subA = new subA_index_leaf(a.length()+1, t.n_branches()*2);
+
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
@@ -417,11 +421,15 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    T(t),
    MC(t,SM),
    LC(t,SModel()),
-   subA(a.length()+1, t.n_branches()*2),
    branch_HMMs(t.n_branches()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
+  if (variable_alignment())
+    subA = new subA_index_leaf(a.length()+1, t.n_branches()*2);
+  else
+    subA = new subA_index_leaf(a.length()+1, t.n_branches()*2);
+
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 

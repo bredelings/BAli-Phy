@@ -103,7 +103,7 @@ public:
   mutable Likelihood_Cache LC;
 
   /// sub-alignment indices;
-  mutable subA_index_t subA;
+  mutable owned_ptr<subA_index_t> subA;
 
   /// cached branch HMMs
   //FIXME - WHy not a cached_value< >?

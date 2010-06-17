@@ -402,7 +402,7 @@ int rank(const Tree& T,int b) {
 }
 
 
-void subA_index_t::update_one_branch(const alignment& A,const Tree& T,int b) 
+void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b) 
 {
   ublas::matrix<int>& I = *this;
 
@@ -568,10 +568,10 @@ void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T)
   vector<int> branch_names = iota<int>(T.n_branches()*2);
 
   // compare against calculation from scratch
-  subA_index_t I2 = I1;
-  I2.recompute_all_branches(A, T);
+  owned_ptr<subA_index_t> I2 = I1;
+  I2->recompute_all_branches(A, T);
 
-  check_consistent(I1, I2);
+  check_consistent(I1, *I2);
 }
 
 void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T,int root) 
@@ -582,10 +582,10 @@ void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T,i
     branch_names = directed_names(branches_toward_node(T,root));
 
   // compare against calculation from scratch
-  subA_index_t I2 = I1;
-  I2.recompute_all_branches(A, T);
+  owned_ptr<subA_index_t> I2 = I1;
+  I2->recompute_all_branches(A, T);
 
-  check_consistent(I1, I2, branch_names);
+  check_consistent(I1, *I2, branch_names);
 }
 
 
@@ -593,7 +593,7 @@ void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T,i
 //  * check that the index includes each column for which there are leaf characters behind the branch ...
 //  * ... and no others. 
 // That is, if a column includes only gaps behind the branch, then it should not be in the branch's index.
- void subA_index_t::check_footprint_for_branch(const alignment& A, const Tree& T, int b) const
+ void subA_index_leaf::check_footprint_for_branch(const alignment& A, const Tree& T, int b) const
 {
   // Don't check here if we're temporarily messing with things, and allowing a funny state.
   if (not branch_index_valid(b)) return;
@@ -640,4 +640,9 @@ subA_index_t::subA_index_t(int s1, int s2)
    allow_invalid_branches_(false)
 {
   invalidate_all_branches();
+}
+
+subA_index_leaf::subA_index_leaf(int s1, int s2)
+  :subA_index_t(s1,s2)
+{
 }

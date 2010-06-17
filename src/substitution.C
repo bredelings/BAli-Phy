@@ -859,7 +859,7 @@ namespace substitution {
   }
 
   int calculate_caches(const data_partition& P) {
-    return calculate_caches(*P.A, P.subA, P.MC, *P.T, P.LC, P.SModel());
+    return calculate_caches(*P.A, *P.subA, P.MC, *P.T, P.LC, P.SModel());
   }
 
   Matrix get_rate_probabilities(const alignment& A,subA_index_t& I, const MatCache& MC,const Tree& T,
@@ -962,7 +962,7 @@ namespace substitution {
     const alignment& A = *P.A;
     const Tree& T = *P.T;
     Likelihood_Cache& LC = P.LC;
-    subA_index_t& I = P.subA;
+    subA_index_t& I = *P.subA;
 
 #ifndef NDEBUG
     I.check_footprint(A, T);
@@ -1035,7 +1035,7 @@ namespace substitution {
     const alignment& A = *P.A;
     const Tree& T = *P.T;
     Likelihood_Cache& LC = P.LC;
-    subA_index_t& I = P.subA;
+    subA_index_t& I = *P.subA;
 
     default_timer_stack.push_timer("substitution");
     default_timer_stack.push_timer("substitution::other_subst");
@@ -1194,7 +1194,7 @@ namespace substitution {
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr_unaligned_root(*P.A, P.subA, P.MC, *P.T, LC, P.SModel());
+    return Pr_unaligned_root(*P.A, *P.subA, P.MC, *P.T, LC, P.SModel());
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P) {
@@ -1249,7 +1249,7 @@ namespace substitution {
   }
 
   efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr(*P.A, P.subA, P.MC, *P.T, LC, P.SModel());
+    return Pr(*P.A, *P.subA, P.MC, *P.T, LC, P.SModel());
   }
 
   efloat_t Pr(const data_partition& P) {
@@ -1265,7 +1265,7 @@ namespace substitution {
 
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
-      compare_caches(P.subA, P2.subA, P.LC, P2.LC, *P.T);
+      compare_caches(*P.subA, *P2.subA, P.LC, P2.LC, *P.T);
       std::abort();
     }
 #endif
