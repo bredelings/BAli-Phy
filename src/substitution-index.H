@@ -145,6 +145,19 @@ public:
   subA_index_leaf(int s1, int s2);
 };
 
+struct subA_index_internal: public subA_index_t
+{
+protected:
+  void update_one_branch(const alignment& A,const Tree& T,int b);
+
+public:
+  subA_index_t* clone() const {return new subA_index_internal(*this);}
+
+  void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const;
+
+  subA_index_internal(int s1, int s2);
+};
+
 void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T);
 void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T,int root);
 

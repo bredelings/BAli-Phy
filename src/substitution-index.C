@@ -402,88 +402,6 @@ int rank(const Tree& T,int b) {
 }
 
 
-void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b) 
-{
-  ublas::matrix<int>& I = *this;
-
-  // lazy resizing
-  if (size1() != A.length() + 1)
-  {
-    for(int i=0;i<size2();i++)
-      assert(not branch_index_valid(i));
-    resize(A.length()+1, size2());
-  }
-
-  // notes for leaf sequences
-  if (b < T.n_leaves()) {
-    int l=0;
-    for(int c=0;c<A.length();c++) {
-      if (A.gap(c,b))
-	I(c+1,b) = alphabet::gap;
-      else
-	I(c+1,b) = l++;
-    }
-    assert(l == leaf_seq_length(A,b));
-    I(0,b) = l;
-  }
-  else {
-    // get 2 branches leading into this one
-    vector<const_branchview> prev;
-    append(T.directed_branch(b).branches_before(),prev);
-    assert(prev.size() == 2);
-
-    // sort branches by rank
-    if (rank(T,prev[0]) > rank(T,prev[1]))
-      std::swap(prev[0],prev[1]);
-
-    // get mappings of previous subA indices into alignment
-    vector<vector<int> > mappings;
-    for(int i=0;i<prev.size();i++) {
-      assert(branch_index_valid(prev[i]));
-      mappings.push_back(vector<int>(branch_index_length(prev[i]),-1));
-    }
-
-    int l=0;
-    for(int c=0;c<A.length();c++) {
-      bool present = false;
-      for(int i=0;i<mappings.size();i++) {
-	int index = I(c+1,prev[i]);
-	assert(index < (int)mappings[i].size());
-
-	if (index != -1) {
-	  mappings[i][index] = c;
-	  present = true;
-	}
-      }
-      if (present) {
-	l++;
-	I(c+1,b) = -2;
-      }
-      else
-	I(c+1,b) = -1;
-    }
-
-    // create subA index for this branch
-    I(0,b) = l;
-    l = 0;
-    for(int i=0;i<mappings.size();i++) {
-      for(int j=0;j<mappings[i].size();j++) {
-	int c = mappings[i][j];
-
-	// all the subA columns should map to an existing, unique columns of A
-	assert(c != -1);
-
-	// subA for b should be present here
-	assert(I(c+1,b) != -1);
-
-	if (I(c+1,b) == -2)
-	  I(c+1,b) = l++;
-      }
-    }
-    assert(l == I(0,b));
-  }
-}
-
 void subA_index_t::update_branch(const alignment& A,const Tree& T,int b) 
 {
 #ifndef NDEBUG  
@@ -589,11 +507,115 @@ void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T,i
 }
 
 
+// Check that for each branch that is marked as having an up-to-date index,
+// we include each column in the index for which there are leaf characters that are behind the branch.
+// (We need to propagate conditional likelihoods up to the root, then.)
+// Also check that, we do not include in the index any columns for which there are only gaps behind
+// the  branch.
+
+void subA_index_t::check_footprint(const alignment& A,const Tree& T) const
+{
+  if (may_have_invalid_branches())
+    return;
+
+  for(int b=0;b<T.n_branches()*2;b++)
+    check_footprint_for_branch(A,T,b);
+}
+
+subA_index_t::subA_index_t(int s1, int s2)
+  :ublas::matrix<int>(s1,s2),
+   allow_invalid_branches_(false)
+{
+  invalidate_all_branches();
+}
+
+void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b) 
+{
+  ublas::matrix<int>& I = *this;
+
+  // lazy resizing
+  if (size1() != A.length() + 1)
+  {
+    for(int i=0;i<size2();i++)
+      assert(not branch_index_valid(i));
+    resize(A.length()+1, size2());
+  }
+
+  // notes for leaf sequences
+  if (b < T.n_leaves()) {
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+      if (A.gap(c,b))
+	I(c+1,b) = alphabet::gap;
+      else
+	I(c+1,b) = l++;
+    }
+    assert(l == leaf_seq_length(A,b));
+    I(0,b) = l;
+  }
+  else {
+    // get 2 branches leading into this one
+    vector<const_branchview> prev;
+    append(T.directed_branch(b).branches_before(),prev);
+    assert(prev.size() == 2);
+
+    // sort branches by rank
+    if (rank(T,prev[0]) > rank(T,prev[1]))
+      std::swap(prev[0],prev[1]);
+
+    // get mappings of previous subA indices into alignment
+    vector<vector<int> > mappings;
+    for(int i=0;i<prev.size();i++) {
+      assert(branch_index_valid(prev[i]));
+      mappings.push_back(vector<int>(branch_index_length(prev[i]),-1));
+    }
+
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+      bool present = false;
+      for(int i=0;i<mappings.size();i++) {
+	int index = I(c+1,prev[i]);
+	assert(index < (int)mappings[i].size());
+
+	if (index != -1) {
+	  mappings[i][index] = c;
+	  present = true;
+	}
+      }
+      if (present) {
+	l++;
+	I(c+1,b) = -2;
+      }
+      else
+	I(c+1,b) = -1;
+    }
+
+    // create subA index for this branch
+    I(0,b) = l;
+    l = 0;
+    for(int i=0;i<mappings.size();i++) {
+      for(int j=0;j<mappings[i].size();j++) {
+	int c = mappings[i][j];
+
+	// all the subA columns should map to an existing, unique columns of A
+	assert(c != -1);
+
+	// subA for b should be present here
+	assert(I(c+1,b) != -1);
+
+	if (I(c+1,b) == -2)
+	  I(c+1,b) = l++;
+      }
+    }
+    assert(l == I(0,b));
+  }
+}
+
 // If branch 'b' is markes as having an up-to-date index, then
 //  * check that the index includes each column for which there are leaf characters behind the branch ...
 //  * ... and no others. 
 // That is, if a column includes only gaps behind the branch, then it should not be in the branch's index.
- void subA_index_leaf::check_footprint_for_branch(const alignment& A, const Tree& T, int b) const
+void subA_index_leaf::check_footprint_for_branch(const alignment& A, const Tree& T, int b) const
 {
   // Don't check here if we're temporarily messing with things, and allowing a funny state.
   if (not branch_index_valid(b)) return;
@@ -620,29 +642,68 @@ void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T,i
   }
 }
 
-// Check that for each branch that is marked as having an up-to-date index,
-// we include each column in the index for which there are leaf characters that are behind the branch.
-// (We need to propagate conditional likelihoods up to the root, then.)
-// Also check that, we do not include in the index any columns for which there are only gaps behind
-// the  branch.
-
-void subA_index_t::check_footprint(const alignment& A,const Tree& T) const
-{
-  if (may_have_invalid_branches())
-    return;
-
-  for(int b=0;b<T.n_branches()*2;b++)
-    check_footprint_for_branch(A,T,b);
-}
-
-subA_index_t::subA_index_t(int s1, int s2)
-  :ublas::matrix<int>(s1,s2),
-   allow_invalid_branches_(false)
-{
-  invalidate_all_branches();
-}
-
 subA_index_leaf::subA_index_leaf(int s1, int s2)
+  :subA_index_t(s1,s2)
+{
+}
+
+
+void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int b) 
+{
+  ublas::matrix<int>& I = *this;
+
+  // lazy resizing
+  if (size1() != A.length() + 1)
+  {
+    for(int i=0;i<size2();i++)
+      assert(not branch_index_valid(i));
+    resize(A.length()+1, size2());
+  }
+
+  //
+  int node = T.directed_branch(b).source();
+  if (b < T.n_leaves()) 
+  {
+    int l=0;
+    for(int c=0;c<A.length();c++) {
+      if (A.character(c,node))
+	I(c+1,b) = l++;
+      if (A.gap(c,b))
+	I(c+1,b) = alphabet::gap;
+    }
+    assert(l == A.seqlength(node));
+    I(0,b) = l;
+  }
+}
+
+void subA_index_internal::check_footprint_for_branch(const alignment& A, const Tree& T, int b) const
+{
+  assert(A.n_sequences() == T.n_nodes());
+
+  // Don't check here if we're temporarily messing with things, and allowing a funny state.
+  if (not branch_index_valid(b)) return;
+
+#ifndef NDEBUG
+  const ublas::matrix<int>& I = *this;
+#endif
+
+  int node = T.directed_branch(b).source();
+
+  for(int c=0;c<A.length();c++) 
+  {
+    // Determine if there is an internal node character present at the base of this branch
+    bool internal_node_present = A.character(c,node);
+
+    // If so, then this column should have a non-null (null==-1) index for this branch.
+    if (internal_node_present)
+      assert(I(c+1,b) != -1);
+    // Otherwise, this column should how have an index for this branch.
+    else
+      assert(I(c+1,b) == -1);
+  }
+}
+
+subA_index_internal::subA_index_internal(int s1, int s2)
   :subA_index_t(s1,s2)
 {
 }
