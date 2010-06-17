@@ -1099,12 +1099,6 @@ int main(int argc,char* argv[])
     setup_partition_weights(args,P);
 
     //----- Initialize Likelihood caches and character index caches -----//
-    for(int i=0;i<P.n_data_partitions();i++) {
-      P[i].LC.set_length(P[i].A->length());
-
-      add_leaf_seq_note(*P[i].A, T.n_leaves());
-      add_subA_index_note(*P[i].A, T.n_branches());
-    }
 
     // Why do we need to do this, again?
     P.recalc_all();

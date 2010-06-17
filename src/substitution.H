@@ -33,6 +33,7 @@ class MatCache;
 class Parameters;
 #include "parameters.H"
 #include "substitution-cache.H"
+#include "substitution-index.H"
 
 /// A namespace for functions related to calculating the substitution likelihood.
 namespace substitution {
@@ -69,7 +70,7 @@ namespace substitution {
   get_column_likelihoods(const data_partition&, const std::vector<int>& b,
 			 const std::vector<int>& req, const std::vector<int>& seq,int delta=0);
 
-  Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
+  Matrix get_rate_probabilities(const alignment& A,subA_index_t& I, const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
 				const MultiModel& MModel);
 
   /// Full likelihood - all columns, all rates
@@ -77,8 +78,8 @@ namespace substitution {
 
   efloat_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
-  efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
-	    const MultiModel& MModel);
+  efloat_t Pr(const alignment& A, subA_index_t& I, const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
+	      const MultiModel& MModel);
   efloat_t Pr(const data_partition&,Likelihood_Cache& LC);
 
   // Full likelihood - all columns, all rates (star tree)

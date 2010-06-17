@@ -167,6 +167,23 @@ int data_partition::seqlength(int n) const
   return cached_sequence_lengths[n];
 }
 
+void data_partition::invalidate_subA_index_branch(int b)
+{
+  ::invalidate_subA_index_branch(subA,*T,b);
+}
+
+void data_partition::invalidate_subA_index_one_branch(int b)
+{
+  int b2 = T->directed_branch(b).reverse();
+  ::invalidate_subA_index_one(subA,b);
+  ::invalidate_subA_index_one(subA,b2);
+}
+
+void data_partition::invalidate_subA_index_all()
+{
+  ::invalidate_subA_index_all(subA);
+}
+
 void data_partition::note_sequence_length_changed(int n)
 {
   if (not variable_alignment())
@@ -194,6 +211,9 @@ void data_partition::note_alignment_changed_on_branch(int b)
     note_sequence_length_changed(target);
   if (source >= TT.n_leaves())
     note_sequence_length_changed(source);
+
+  // if the alignment changes AT ALL, then the mapping from subA columns to alignment columns is broken
+  invalidate_subA_index_all();
 }
 
 void data_partition::note_alignment_changed()
@@ -348,12 +368,19 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    T(t),
    MC(t,SM),
    LC(t,SModel()),
+   subA(a.length()+1, t.n_branches()*2),
    branch_HMMs(t.n_branches()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
+  invalidate_subA_index_all();
+
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
+
+  LC.set_length(A->length());
+
+  add_leaf_seq_note(*A, T->n_leaves());
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
@@ -370,12 +397,19 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    T(t),
    MC(t,SM),
    LC(t,SModel()),
+   subA(a.length()+1, t.n_branches()*2),
    branch_HMMs(t.n_branches()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
+  invalidate_subA_index_all();
+
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
+
+  LC.set_length(A->length());
+
+  add_leaf_seq_note(*A, T->n_leaves());
 }
 
 //-----------------------------------------------------------------------------//
@@ -542,22 +576,19 @@ void Parameters::LC_invalidate_one_branch(int b)
 void Parameters::invalidate_subA_index_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    ::invalidate_subA_index_branch(*data_partitions[i]->A,*data_partitions[i]->T,b);
+    data_partitions[i]->invalidate_subA_index_branch(b);
 }
 
 void Parameters::invalidate_subA_index_one_branch(int b)
 {
-  int b2 = T->directed_branch(b).reverse();
-  for(int i=0;i<n_data_partitions();i++) {
-    ::invalidate_subA_index_one(*data_partitions[i]->A,b);
-    ::invalidate_subA_index_one(*data_partitions[i]->A,b2);
-  }
+  for(int i=0;i<n_data_partitions();i++)
+    data_partitions[i]->invalidate_subA_index_one_branch(b);
 }
 
 void Parameters::invalidate_subA_index_all()
 {
   for(int i=0;i<n_data_partitions();i++)
-    ::invalidate_subA_index_all(*data_partitions[i]->A);
+    data_partitions[i]->invalidate_subA_index_all();
 }
 
 void Parameters::subA_index_allow_invalid_branches(bool b)
@@ -566,8 +597,8 @@ void Parameters::subA_index_allow_invalid_branches(bool b)
   if (subA_index_may_have_invalid_branches())
   {
     for(int i=0;i<n_data_partitions();i++) {
-      subA_index_check_footprint(*data_partitions[i]->A, *T);
-      subA_index_check_regenerate(*data_partitions[i]->A, *T);
+      subA_index_check_footprint(data_partitions[i]->subA, *data_partitions[i]->A, *T);
+      subA_index_check_regenerate(data_partitions[i]->subA, *data_partitions[i]->A, *T);
     }
   }
 #endif
@@ -577,8 +608,8 @@ void Parameters::subA_index_allow_invalid_branches(bool b)
   if (not subA_index_may_have_invalid_branches())
   {
     for(int i=0;i<n_data_partitions();i++) {
-      subA_index_check_footprint(*data_partitions[i]->A, *T);
-      subA_index_check_regenerate(*data_partitions[i]->A, *T);
+      subA_index_check_footprint(data_partitions[i]->subA, *data_partitions[i]->A, *T);
+      subA_index_check_regenerate(data_partitions[i]->subA, *data_partitions[i]->A, *T);
     }
   }
 #endif

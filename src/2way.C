@@ -123,8 +123,6 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
   //  std::cerr<<"new = "<<A<<endl;  
   assert(valid(A));
 
-  invalidate_subA_index_all(A);
-
   return A;
 }
 

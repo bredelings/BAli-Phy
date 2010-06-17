@@ -155,7 +155,32 @@ namespace substitution {
   }
 
   /// Select rows for branches \a branches, removing columns with all entries == -1
-  ublas::matrix<int> subA_index(const vector<int>& branches, const alignment& A,const Tree& T)
+  ublas::matrix<int> subA_index(const subA_index_t& I, const vector<int>& branches)
+  {
+    // the alignment of sub alignments
+    const int L = I.size1() - 1;
+    ublas::matrix<int> subA(L, branches.size());
+
+    // copy sub-A indices for each branch
+    for(int j=0;j<branches.size();j++) 
+    {
+      if (branches[j] == -1)
+	for(int c=0;c<L;c++)
+	  subA(c,j) = -1;
+      else 
+      {
+	assert(subA_index_valid(I,branches[j]));
+
+	for(int c=0;c<L;c++)
+	  subA(c,j) = I(c+1,branches[j]);
+      }
+    }
+
+    return subA;
+  }
+
+  /// Select rows for branches \a branches, removing columns with all entries == -1
+  ublas::matrix<int> subA_index(subA_index_t& I, const vector<int>& branches, const alignment& A,const Tree& T)
   {
     // the alignment of sub alignments
     ublas::matrix<int> subA(A.length(),branches.size());
@@ -168,12 +193,12 @@ namespace substitution {
 	  subA(c,j) = -1;
       else 
       {
-	IF_DEBUG( subA_index_check_footprint_for_branch(A,T,branches[j]) );
+	IF_DEBUG( subA_index_check_footprint_for_branch(I,A,T,branches[j]) );
 
-	if (not subA_index_valid(A,branches[j]))
-	  update_subA_index_branch(A,T,branches[j]);
+	if (not subA_index_valid(I,branches[j]))
+	  update_subA_index_branch(I,A,T,branches[j]);
 	for(int c=0;c<A.length();c++)
-	  subA(c,j) = A.note(1,c+1,branches[j]);
+	  subA(c,j) = I(c+1,branches[j]);
       }
     }
 
@@ -181,17 +206,17 @@ namespace substitution {
   }
 
   /// Compute subA index for branches point to \a node.
-  ublas::matrix<int> subA_index(int node,const alignment& A,const Tree& T) 
+  ublas::matrix<int> subA_index(subA_index_t& I, int node,const alignment& A,const Tree& T) 
   {
     // compute node branches
     vector<int> b;
     for(const_in_edges_iterator i = T[node].branches_in();i;i++)
       b.push_back(*i);
 
-    return subA_index(b,A,T);
+    return subA_index(I,b,A,T);
   }
 
-  /// Remove columns from the subA index where the last row has a -1
+  /// Sort columns according to value in last row, removing columns with -1 in last row
   ublas::matrix<int> subA_select(const ublas::matrix<int>& subA1) {
     const int I = subA1.size2()-1;
 
@@ -214,10 +239,21 @@ namespace substitution {
   }
 
   /// Select rows for branches \a b, and toss columns where the last branch has entry -1
-  ublas::matrix<int> subA_index_select(const vector<int>& b,const alignment& A,const Tree& T) 
+  ublas::matrix<int> subA_index_select(const subA_index_t& I, const vector<int>& b) 
   {
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index(b,A,T);
+    ublas::matrix<int> subA = subA_index(I,b);
+
+    // return processed indices
+    return subA_select(subA);
+  }
+
+
+  /// Select rows for branches \a b, and toss columns where the last branch has entry -1
+  ublas::matrix<int> subA_index_select(subA_index_t& I, const vector<int>& b,const alignment& A,const Tree& T) 
+  {
+    // the alignment of sub alignments
+    ublas::matrix<int> subA = subA_index(I,b,A,T);
 
     // return processed indices
     return subA_select(subA);
@@ -225,23 +261,23 @@ namespace substitution {
 
 
   /// Select rows for branches \a b, and toss columns unless at least one character in \a nodes is present.
-  ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
+  ublas::matrix<int> subA_index_any(subA_index_t& I, const vector<int>& b,const alignment& A,const Tree& T,
 				    const vector<int>& nodes) 
   {
     vector<int> b2 = b;
     b2.push_back(-1);
 
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index(b2,A,T);
+    ublas::matrix<int> subA = subA_index(I,b2,A,T);
 
     // select and order the columns we want to keep
-    const int I = b.size();
+    const int B = b.size();
     int l=0;
     for(int c=0;c<subA.size1();c++)
       if (any_present(A,c,nodes))
-	subA(c,I) = l++;
+	subA(c,B) = l++;
       else
-	subA(c,I) = alphabet::gap;
+	subA(c,B) = alphabet::gap;
 
     // return processed indices
     return subA_select(subA);
@@ -255,14 +291,14 @@ namespace substitution {
   // present characters, should end up as (-,-,-) for calc_root( ) and (+,+,+) for calc_root_unaligned( ).
 
   /// Select rows for branches \a b, and toss ENTRIES where the character at the base of the branch is absent
-  ublas::matrix<int> subA_index_aligned(const vector<int>& b,const alignment& A,const Tree& T, bool present)
+  ublas::matrix<int> subA_index_aligned(subA_index_t& I, const vector<int>& b,const alignment& A,const Tree& T, bool present)
   {
     vector<int> nodes;
     for(int i=0;i<b.size();i++)
       nodes.push_back(T.directed_branch(b[i]).source());
 
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index(b,A,T);
+    ublas::matrix<int> subA = subA_index(I,b,A,T);
 
     // select and order the columns we want to keep
     for(int c=0;c<subA.size1();c++)
@@ -281,30 +317,30 @@ namespace substitution {
 
 
   /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
-  ublas::matrix<int> subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
+  ublas::matrix<int> subA_index_any(subA_index_t& I, const vector<int>& b,const alignment& A,const Tree& T,
 				    const vector<int>& IF_DEBUG(nodes), const vector<int>& seq) 
   {
     vector<int> b2 = b;
     b2.push_back(-1);
 
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index(b2,A,T);
+    ublas::matrix<int> subA = subA_index(I,b2,A,T);
 
     // select and order the columns we want to keep
-    const int I = b.size();
+    const int B = b.size();
     for(int c=0;c<subA.size1();c++) 
-      subA(c,I) = alphabet::gap;
+      subA(c,B) = alphabet::gap;
 
     for(int i=0;i<seq.size();i++) 
-      subA(seq[i],I) = i;
+      subA(seq[i],B) = i;
 
 #ifndef NDEBUG
     // check reqs...
     for(int c=0;c<subA.size1();c++)
       if (any_present(A,c,nodes))
-	assert(subA(c,I)!=alphabet::gap);
+	assert(subA(c,B)!=alphabet::gap);
       else
-	assert(subA(c,I)==alphabet::gap);
+	assert(subA(c,B)==alphabet::gap);
 #endif
 
     return subA_select(subA);
@@ -312,29 +348,29 @@ namespace substitution {
 
 
   /// Select rows for branches \a b, but exclude columns in which nodes \a nodes are present.
-  ublas::matrix<int> subA_index_none(const vector<int>& b,const alignment& A,const Tree& T,
+  ublas::matrix<int> subA_index_none(subA_index_t& I, const vector<int>& b,const alignment& A,const Tree& T,
 				     const vector<int>& nodes) 
   {
     vector<int> b2 = b;
     b2.push_back(-1);
 
     // the alignment of sub alignments
-    ublas::matrix<int> subA = subA_index(b2,A,T);
+    ublas::matrix<int> subA = subA_index(I,b2,A,T);
 
     // select and order the columns we want to keep
-    const int I = b.size();
+    const int B = b.size();
     int l=0;
     for(int c=0;c<subA.size1();c++)
       if (any_present(A,c,nodes))
-	subA(c,I) = alphabet::gap;
+	subA(c,B) = alphabet::gap;
       else
-	subA(c,I) = l++;
+	subA(c,B) = l++;
 
     // return processed indices
     return subA_select(subA);
   }
 
-  std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I) 
+  std::ostream& print_subA(std::ostream& o,const subA_index_t& I)
   {
     o<<"["<<I.size1()<<","<<I.size2()<<"]\n";
     for(int j=0;j<I.size2();j++) 
@@ -348,7 +384,7 @@ namespace substitution {
     return o;
   }
 
-  bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2) {
+  bool subA_identical(const subA_index_t& I1,const subA_index_t& I2) {
     bool error = false;
     if (I1.size1() != I2.size1()) error=true;
     if (I1.size2() != I2.size2()) error=true;
@@ -361,12 +397,13 @@ namespace substitution {
     return not error;
   }
 
-  void check_subA(const alignment& A1,const alignment& A2,const Tree& T) 
+  // Check that all valid sub-alignments are identical?
+  void check_subA(const subA_index_t& I1_, const alignment& A1,const subA_index_t& I2_, const alignment& A2,const Tree& T) 
   {
     for(int b=T.n_leaves();b<2*T.n_branches();b++) 
     {
-      if (not subA_index_valid(A1,b)) continue;
-      if (not subA_index_valid(A2,b)) continue;
+      if (not subA_index_valid(I1_,b)) continue;
+      if (not subA_index_valid(I2_,b)) continue;
 
       // compute branches-in
       vector<int> branches;
@@ -377,8 +414,8 @@ namespace substitution {
       vector<int> b2 = branches;
       b2.push_back(b);
 	
-      ublas::matrix<int> I1 = substitution::subA_index_select(b2,A1,T);
-      ublas::matrix<int> I2 = substitution::subA_index_select(b2,A2,T);
+      ublas::matrix<int> I1 = substitution::subA_index_select(I1_,b2);
+      ublas::matrix<int> I2 = substitution::subA_index_select(I2_,b2);
 
       if (not subA_identical(I1,I2)) 
       {
@@ -402,8 +439,8 @@ namespace substitution {
 	std::cerr<<A2<<std::endl;
 
 	// recompute subAs so we can enter w/ debugger
-	I1 = substitution::subA_index_select(b2,A1,T);
-	I2 = substitution::subA_index_select(b2,A2,T);
+	I1 = substitution::subA_index_select(I1_,b2);
+	I2 = substitution::subA_index_select(I2_,b2);
 
 	std::abort();
       }
@@ -452,41 +489,30 @@ int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M)
   return index;
 }
 
-void invalidate_subA_index_one(const alignment& A,int b) {
-  A.note(1,0,b) = -1;
+void invalidate_subA_index_one(subA_index_t& I, int b) {
+  I(0,b) = -1;
 }
 
-void invalidate_subA_index_all(const alignment& A) 
+void invalidate_subA_index_all(subA_index_t& I) 
 {
-  for(int i=0;i<A.note(1).size2();i++)
-    invalidate_subA_index_one(A,i);
+  for(int i=0;i<I.size2();i++)
+    invalidate_subA_index_one(I,i);
 }
 
-void invalidate_subA_index_directed_branch(const alignment& A,const Tree& T,int b) {
+void invalidate_subA_index_directed_branch(subA_index_t& I, const Tree& T,int b) {
   vector<const_branchview> branches = branches_after(T,b);
 
   for(int i=0;i<branches.size();i++)
-    invalidate_subA_index_one(A,branches[i]);
+    invalidate_subA_index_one(I,branches[i]);
 }
 
 
-void invalidate_subA_index_branch(const alignment& A,const Tree& T,int b) {
-  invalidate_subA_index_directed_branch(A,T,b);
-  invalidate_subA_index_directed_branch(A,T,T.directed_branch(b).reverse());
+void invalidate_subA_index_branch(subA_index_t& I,const Tree& T,int b) {
+  invalidate_subA_index_directed_branch(I,T,b);
+  invalidate_subA_index_directed_branch(I,T,T.directed_branch(b).reverse());
 }
 
 
-
-/// create a note with leaf sequences ...
-int add_subA_index_note(const alignment& A,int b) 
-
-{
-  int index = A.add_note(2*b);
-
-  invalidate_subA_index_all(A);
-
-  return index;
-}
 
 /// return index of lowest-numbered node behind b
 int rank(const Tree& T,int b) {
@@ -499,18 +525,27 @@ int rank(const Tree& T,int b) {
 }
 
 
-void update_subA_index_single(const alignment& A,const Tree& T,int b) {
+void update_subA_index_single(subA_index_t& I, const alignment& A,const Tree& T,int b) 
+{
+  // lazy resizing
+  if (I.size1() != A.length() + 1)
+  {
+    for(int i=0;i<I.size2();i++)
+      assert(not subA_index_valid(I,i));
+    I.resize(A.length()+1, I.size2());
+  }
+
   // notes for leaf sequences
   if (b < T.n_leaves()) {
     int l=0;
     for(int c=0;c<A.length();c++) {
       if (A.gap(c,b))
-	A.note(1,c+1,b) = alphabet::gap;
+	I(c+1,b) = alphabet::gap;
       else
-	A.note(1,c+1,b) = l++;
+	I(c+1,b) = l++;
     }
     assert(l == leaf_seq_length(A,b));
-    A.note(1,0,b) = l;
+    I(0,b) = l;
   }
   else {
     // get 2 branches leading into this one
@@ -525,15 +560,15 @@ void update_subA_index_single(const alignment& A,const Tree& T,int b) {
     // get mappings of previous subA indices into alignment
     vector<vector<int> > mappings;
     for(int i=0;i<prev.size();i++) {
-      assert(subA_index_valid(A,prev[i]));
-      mappings.push_back(vector<int>(subA_length(A,prev[i]),-1));
+      assert(subA_index_valid(I,prev[i]));
+      mappings.push_back(vector<int>(subA_length(I,prev[i]),-1));
     }
 
     int l=0;
     for(int c=0;c<A.length();c++) {
       bool present = false;
       for(int i=0;i<mappings.size();i++) {
-	int index = A.note(1,c+1,prev[i]);
+	int index = I(c+1,prev[i]);
 	assert(index < (int)mappings[i].size());
 
 	if (index != -1) {
@@ -543,14 +578,14 @@ void update_subA_index_single(const alignment& A,const Tree& T,int b) {
       }
       if (present) {
 	l++;
-	A.note(1,c+1,b) = -2;
+	I(c+1,b) = -2;
       }
       else
-	A.note(1,c+1,b) = -1;
+	I(c+1,b) = -1;
     }
 
     // create subA index for this branch
-    A.note(1,0,b) = l;
+    I(0,b) = l;
     l = 0;
     for(int i=0;i<mappings.size();i++) {
       for(int j=0;j<mappings[i].size();j++) {
@@ -560,20 +595,20 @@ void update_subA_index_single(const alignment& A,const Tree& T,int b) {
 	assert(c != -1);
 
 	// subA for b should be present here
-	assert(A.note(1,c+1,b) != -1);
+	assert(I(c+1,b) != -1);
 
-	if (A.note(1,c+1,b) == -2)
-	  A.note(1,c+1,b) = l++;
+	if (I(c+1,b) == -2)
+	  I(c+1,b) = l++;
       }
     }
-    assert(l == A.note(1,0,b));
+    assert(l == I(0,b));
   }
 }
 
-void update_subA_index_branch(const alignment& A,const Tree& T,int b) 
+void update_subA_index_branch(subA_index_t& I,const alignment& A,const Tree& T,int b) 
 {
 #ifndef NDEBUG  
-  subA_index_check_footprint(A,T);
+  subA_index_check_footprint(I,A,T);
 #endif
 
   // get ordered list of branches to process before this one
@@ -582,7 +617,7 @@ void update_subA_index_branch(const alignment& A,const Tree& T,int b)
   
   for(int i=0;i<branches.size();i++) {
     const const_branchview& db = branches[i];
-    if (not subA_index_valid(A,db))
+    if (not subA_index_valid(I,db))
       append(db.branches_before(),branches);
   }
   
@@ -590,29 +625,29 @@ void update_subA_index_branch(const alignment& A,const Tree& T,int b)
 
   // update the branches in order 
   for(int i=0;i<branches.size();i++)
-    update_subA_index_single(A,T,branches[i]);
+    update_subA_index_single(I,A,T,branches[i]);
 
 #ifndef NDEBUG  
-  subA_index_check_footprint(A,T);
+  subA_index_check_footprint(I,A,T);
 
   // FIXME - we should check the branches that point to the root, but we
   // don't know the root, so just disable the checking here.
   // FIXME - this could actually be very expensive to check every branch,
   //         probably it would be O(b^2)
   if (not subA_index_may_have_invalid_branches())
-    subA_index_check_regenerate(A,T);
+    subA_index_check_regenerate(I,A,T);
 #endif
 }
 
-void recompute_subA_notes(const alignment& A,const Tree& T) 
+void recompute_subA_notes(subA_index_t& I,const alignment& A,const Tree& T) 
 {
-  invalidate_subA_index_all(A);
+  invalidate_subA_index_all(I);
   vector<const_branchview> branches = branches_from_leaves(T);
 
   for(int i=0;i<branches.size();i++) {
     const const_branchview& b = branches[i];
 
-    update_subA_index_single(A,T,b);
+    update_subA_index_single(I,A,T,b);
   }
 }
 
@@ -628,25 +663,25 @@ void subA_index_allow_invalid_branches(bool allowed)
   allow_invalid_branches_ = allowed;
 }
 
-void subA_index_check_regenerate(const alignment& A1,const Tree& T) 
+void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T) 
 {
   vector<int> branch_names = iota<int>(T.n_branches()*2);
 
   // compare against calculation from scratch
-  alignment A2 = A1;
-  recompute_subA_notes(A2,T);
+  subA_index_t I2 = I1;
+  recompute_subA_notes(I2, A, T);
 
   for(int i=0;i<branch_names.size();i++) {
     int b = branch_names[i];
-    if (subA_index_valid(A1,b)) {
-      assert(subA_length(A1,b) == subA_length(A2,b));
-      for(int c=0;c<A1.length();c++)
-	assert(A1.note(1,c+1,b) == A1.note(1,c+1,b));
+    if (subA_index_valid(I1, b)) {
+      assert(subA_length(I1,b) == subA_length(I2,b));
+      for(int c=0;c<A.length();c++)
+	assert(I1(c+1,b) == I2(c+1,b));
     }
   }
 }
 
-void subA_index_check_regenerate(const alignment& A1,const Tree& T,int root) 
+void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T,int root) 
 {
   vector<int> branch_names = iota<int>(T.n_branches()*2);
 
@@ -654,15 +689,15 @@ void subA_index_check_regenerate(const alignment& A1,const Tree& T,int root)
     branch_names = directed_names(branches_toward_node(T,root));
 
   // compare against calculation from scratch
-  alignment A2 = A1;
-  recompute_subA_notes(A2,T);
+  subA_index_t I2 = I1;
+  recompute_subA_notes(I2, A, T);
 
   for(int i=0;i<branch_names.size();i++) {
     int b = branch_names[i];
-    if (subA_index_valid(A1,b)) {
-      assert(subA_length(A1,b) == subA_length(A2,b));
-      for(int c=0;c<A1.length();c++)
-	assert(A1.note(1,c+1,b) == A1.note(1,c+1,b));
+    if (subA_index_valid(I1,b)) {
+      assert(subA_length(I1,b) == subA_length(I2,b));
+      for(int c=0;c<A.length();c++)
+	assert(I1(c+1,b) == I2(c+1,b));
     }
   }
 }
@@ -672,10 +707,10 @@ void subA_index_check_regenerate(const alignment& A1,const Tree& T,int root)
 //  * check that the index includes each column for which there are leaf characters behind the branch ...
 //  * ... and no others. 
 // That is, if a column includes only gaps behind the branch, then it should not be in the branch's index.
-void subA_index_check_footprint_for_branch(const alignment& A, const Tree& T, int b)
+void subA_index_check_footprint_for_branch(const subA_index_t& I, const alignment& A, const Tree& T, int b)
 {
   // Don't check here if we're temporarily messing with things, and allowing a funny state.
-  if (not subA_index_valid(A,b)) return;
+  if (not subA_index_valid(I,b)) return;
 
   for(int c=0;c<A.length();c++) 
   {
@@ -688,10 +723,10 @@ void subA_index_check_footprint_for_branch(const alignment& A, const Tree& T, in
     
     // If so, then this column should have a non-null (null==-1) index for this branch.
     if (leaf_present)
-      assert(A.note(1,c+1,b) != -1);
+      assert(I(c+1,b) != -1);
     // Otherwise, this column should how have an index for this branch.
     else
-      assert(A.note(1,c+1,b) == -1);
+      assert(I(c+1,b) == -1);
   }
 }
 
@@ -701,13 +736,13 @@ void subA_index_check_footprint_for_branch(const alignment& A, const Tree& T, in
 // Also check that, we do not include in the index any columns for which there are only gaps behind
 // the  branch.
 
-void subA_index_check_footprint(const alignment& A,const Tree& T) 
+void subA_index_check_footprint(const subA_index_t& I, const alignment& A,const Tree& T) 
 {
   if (subA_index_may_have_invalid_branches())
     return;
 
   for(int b=0;b<T.n_branches()*2;b++)
-    subA_index_check_footprint_for_branch(A,T,b);
+    subA_index_check_footprint_for_branch(I,A,T,b);
 }
 
 alignment blank_copy(const alignment& A1,int length) 
@@ -726,11 +761,6 @@ alignment blank_copy(const alignment& A1,int length)
 
   if (A1.notes.size() >= 1)
     add_leaf_seq_note(A2,A1.note(0));
-
-  if (A1.notes.size() >= 2) {
-    A2.add_note(A1.note(1).size2());
-    invalidate_subA_index_all(A2);
-  }
 
   return A2;
 }

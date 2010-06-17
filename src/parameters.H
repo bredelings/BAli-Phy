@@ -39,6 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "matcache.H"
 #include "clone.H"
 #include "substitution-cache.H"
+#include "substitution-index.H"
 
 #include "tools/partition.H"
 #include "cow-ptr.H"
@@ -101,6 +102,9 @@ public:
   /// Cached Conditional Likelihoods
   mutable Likelihood_Cache LC;
 
+  /// sub-alignment indices;
+  mutable subA_index_t subA;
+
   /// cached branch HMMs
   //FIXME - WHy not a cached_value< >?
   //REASON: Dynamic Programming uses this and assumes its always up-to-date.
@@ -135,6 +139,13 @@ public:
   void setlength_no_invalidate_LC(int b, double l);
 
   int seqlength(int n) const;
+
+  // invalidate subA indices on b and b* and all DIRECTED branches after them
+  void invalidate_subA_index_branch(int b);
+  // invalidate subA indices on b and b*
+  void invalidate_subA_index_one_branch(int b);
+  // invalidate subA indices for all branches
+  void invalidate_subA_index_all();
 
   void note_alignment_changed_on_branch(int b);
 

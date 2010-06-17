@@ -529,8 +529,6 @@ namespace A5 {
     //    std::cerr<<"\n";
     assert(valid(A));
 
-    invalidate_subA_index_all(A);
-
     return A;
   }
 

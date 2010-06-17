@@ -212,7 +212,7 @@ namespace substitution {
     return total;
   }
 
-  efloat_t calc_root_probability(const alignment&,const Tree& T,Likelihood_Cache& cache,
+  efloat_t calc_root_probability(const alignment&, const Tree& T,Likelihood_Cache& cache,
 			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
@@ -444,7 +444,7 @@ namespace substitution {
   }
 
 
-  void peel_leaf_branch(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+  void peel_leaf_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 			const MatCache& transition_P,const MultiModel& MModel)
   {
     total_peel_leaf_branches++;
@@ -462,13 +462,12 @@ namespace substitution {
     //    const int n_letters = a.n_letters();
     assert(MModel.n_states() == n_states);
 
-    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
-    if (not subA_index_valid(A,b0))
-      update_subA_index_branch(A,T,b0);
+    if (not subA_index_valid(I,b0))
+      update_subA_index_branch(I,A,T,b0);
 
     //    const vector<unsigned>& smap = MModel.state_letters();
 
-    for(int i=0;i<subA_length(A,b0);i++)
+    for(int i=0;i<subA_length(I,b0);i++)
     {
       Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
@@ -506,7 +505,7 @@ namespace substitution {
     }
   }
 
-  void peel_leaf_branch_F81(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+  void peel_leaf_branch_F81(int b0, subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 			    const MultiModel& MModel)
   {
     total_peel_leaf_branches++;
@@ -527,8 +526,8 @@ namespace substitution {
     assert(MModel.n_states() == n_states);
 
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
-    if (not subA_index_valid(A,b0))
-      update_subA_index_branch(A,T,b0);
+    if (not subA_index_valid(I,b0))
+      update_subA_index_branch(I,A,T,b0);
 
     //    const vector<unsigned>& smap = MModel.state_letters();
 
@@ -546,7 +545,7 @@ namespace substitution {
     Matrix& F = cache.scratch(1);
     FrequencyMatrix(F,MModel); // F(m,l2)
 
-    for(int i=0;i<subA_length(A,b0);i++)
+    for(int i=0;i<subA_length(I,b0);i++)
     {
       Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
@@ -581,7 +580,7 @@ namespace substitution {
     default_timer_stack.pop_timer();
   }
 
-  void peel_leaf_branch_modulated(int b0,Likelihood_Cache& cache, const alignment& A, 
+  void peel_leaf_branch_modulated(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, 
 				  const Tree& T, 
 				  const MatCache& transition_P,const MultiModel& MModel)
   {
@@ -601,13 +600,12 @@ namespace substitution {
     //    const int N = n_states/n_letters;
     assert(MModel.n_states() == n_states);
 
-    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
-    if (not subA_index_valid(A,b0))
-      update_subA_index_branch(A,T,b0);
+    if (not subA_index_valid(I,b0))
+      update_subA_index_branch(I,A,T,b0);
 
     const vector<unsigned>& smap = MModel.state_letters();
 
-    for(int i=0;i<subA_length(A,b0);i++)
+    for(int i=0;i<subA_length(I,b0);i++)
     {
       Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
@@ -633,7 +631,7 @@ namespace substitution {
   }
 
 
-  void peel_internal_branch(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+  void peel_internal_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 			    const MatCache& transition_P,const MultiModel& IF_DEBUG(MModel))
   {
     total_peel_internal_branches++;
@@ -646,10 +644,10 @@ namespace substitution {
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
     b.push_back(b0);
-    ublas::matrix<int> index = subA_index_select(b,A,T);
+    ublas::matrix<int> index = subA_index_select(I,b,A,T);
     b.pop_back();
-    assert(index.size1() == subA_length(A,b0));
-    assert(subA_index_valid(A,b0));
+    assert(index.size1() == subA_length(I,b0));
+    assert(subA_index_valid(I,b0));
 
     // The number of directed branches is twice the number of undirected branches
     const int B        = T.n_branches();
@@ -667,7 +665,7 @@ namespace substitution {
     branch_cache.push_back(&cache[b0]);
     
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
-    for(int i=0;i<subA_length(A,b0);i++) 
+    for(int i=0;i<subA_length(I,b0);i++) 
     {
       // compute the source distribution from 2 branch distributions
       int i0 = index(i,0);
@@ -702,7 +700,7 @@ namespace substitution {
     default_timer_stack.pop_timer();
   }
 
-  void peel_internal_branch_F81(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+  void peel_internal_branch_F81(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 				const MultiModel& MModel)
   {
     //    std::cerr<<"got here! (internal)"<<endl;
@@ -716,10 +714,10 @@ namespace substitution {
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
     b.push_back(b0);
-    ublas::matrix<int> index = subA_index_select(b,A,T);
+    ublas::matrix<int> index = subA_index_select(I,b,A,T);
     b.pop_back();
-    assert(index.size1() == subA_length(A,b0));
-    assert(subA_index_valid(A,b0));
+    assert(index.size1() == subA_length(I,b0));
+    assert(subA_index_valid(I,b0));
 
     // The number of directed branches is twice the number of undirected branches
     //    const int B        = T.n_branches();
@@ -751,7 +749,7 @@ namespace substitution {
     FrequencyMatrix(F,MModel); // F(m,l2)
 
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
-    for(int i=0;i<subA_length(A,b0);i++) 
+    for(int i=0;i<subA_length(I,b0);i++) 
     {
       // compute the source distribution from 2 branch distributions
       int i0 = index(i,0);
@@ -790,7 +788,7 @@ namespace substitution {
 
 
 
-  void peel_branch(int b0,Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+  void peel_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 		   const MatCache& transition_P, const MultiModel& MModel)
   {
     total_peel_branches++;
@@ -804,18 +802,18 @@ namespace substitution {
       int n_letters = A.get_alphabet().n_letters();
       if (n_states == n_letters) {
 	if (dynamic_cast<const F81_Model*>(&MModel.base_model(0)))
-	  peel_leaf_branch_F81(b0, cache, A, T, MModel);
+	  peel_leaf_branch_F81(b0, I, cache, A, T, MModel);
 	else
-	  peel_leaf_branch(b0, cache, A, T, transition_P, MModel);
+	  peel_leaf_branch(b0, I, cache, A, T, transition_P, MModel);
       }
       else
-	peel_leaf_branch_modulated(b0, cache, A, T, transition_P, MModel);
+	peel_leaf_branch_modulated(b0, I, cache, A, T, transition_P, MModel);
     }
     else if (bb == 2) {
       if (dynamic_cast<const F81_Model*>(&MModel.base_model(0)))
-	peel_internal_branch_F81(b0, cache, A, T, MModel);
+	peel_internal_branch_F81(b0, I, cache, A, T, MModel);
       else
-	peel_internal_branch(b0, cache, A, T, transition_P, MModel);
+	peel_internal_branch(b0, I, cache, A, T, transition_P, MModel);
     }
     else
       std::abort();
@@ -848,23 +846,23 @@ namespace substitution {
   }
 
   static 
-  int calculate_caches(const alignment& A, const MatCache& MC, const Tree& T,Likelihood_Cache& cache,
+  int calculate_caches(const alignment& A, subA_index_t& I, const MatCache& MC, const Tree& T,Likelihood_Cache& cache,
 		       const MultiModel& MModel) {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches(T, cache);
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
-      peel_branch(ops[i],cache,A,T,MC,MModel);
+      peel_branch(ops[i],I,cache,A,T,MC,MModel);
 
     return ops.size();
   }
 
   int calculate_caches(const data_partition& P) {
-    return calculate_caches(*P.A, P.MC, *P.T, P.LC, P.SModel());
+    return calculate_caches(*P.A, P.subA, P.MC, *P.T, P.LC, P.SModel());
   }
 
-  Matrix get_rate_probabilities(const alignment& A,const MatCache& MC,const Tree& T,
+  Matrix get_rate_probabilities(const alignment& A,subA_index_t& I, const MatCache& MC,const Tree& T,
 				Likelihood_Cache& cache,const MultiModel& MModel)
   {
     const alphabet& a = A.get_alphabet();
@@ -872,7 +870,7 @@ namespace substitution {
     const int root = cache.root;
     
     // make sure that we are up-to-date
-    calculate_caches(A,MC,T,cache,MModel);
+    calculate_caches(A,I,MC,T,cache,MModel);
 
     // declare a matrix to store our results in
     Matrix probs(A.length(),MModel.n_base_models());
@@ -888,7 +886,7 @@ namespace substitution {
       rb.push_back(*i);
 
     // get the index
-    ublas::matrix<int> index = subA_index(root,A,T);
+    ublas::matrix<int> index = subA_index(I,root,A,T);
 
     // scratch matrix 
     Matrix & S = cache.scratch(0);
@@ -964,10 +962,11 @@ namespace substitution {
     const alignment& A = *P.A;
     const Tree& T = *P.T;
     Likelihood_Cache& LC = P.LC;
+    subA_index_t& I = P.subA;
 
 #ifndef NDEBUG
-    subA_index_check_footprint(A,T);
-    subA_index_check_regenerate(A,T);
+    subA_index_check_footprint(I, A, T);
+    subA_index_check_regenerate(I, A, T);
 #endif
 
     //------ Check that all branches point to a 'root' node -----------//
@@ -977,7 +976,7 @@ namespace substitution {
       assert(T.directed_branch(b[i]).target() == root);
     LC.root = root;
 
-    ublas::matrix<int> index = subA_index_any(b,A,T,req,seq);
+    ublas::matrix<int> index = subA_index_any(I,b,A,T,req,seq);
 
     IF_DEBUG(int n_br =) calculate_caches(P);
 #ifndef NDEBUG
@@ -1036,6 +1035,7 @@ namespace substitution {
     const alignment& A = *P.A;
     const Tree& T = *P.T;
     Likelihood_Cache& LC = P.LC;
+    subA_index_t& I = P.subA;
 
     default_timer_stack.push_timer("substitution");
     default_timer_stack.push_timer("substitution::other_subst");
@@ -1051,12 +1051,12 @@ namespace substitution {
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index1 = subA_index_none(rb,A,T,nodes);
+    ublas::matrix<int> index1 = subA_index_none(I,rb,A,T,nodes);
     efloat_t Pr1 = calc_root_probability(P,rb,index1);
 
 #ifndef NDEBUG
-    ublas::matrix<int> index2 = subA_index_any(rb,A,T,nodes);
-    ublas::matrix<int> index  = subA_index(rb,A,T);
+    ublas::matrix<int> index2 = subA_index_any(I,rb,A,T,nodes);
+    ublas::matrix<int> index  = subA_index(I,rb,A,T);
 
     efloat_t Pr2 = calc_root_probability(P,rb,index2);
     efloat_t Pr  = calc_root_probability(P,rb,index);
@@ -1075,10 +1075,11 @@ namespace substitution {
     return (std::abs(x-y) < std::min(x,y)*1.0e-9);
   }
 
-  void compare_caches(const alignment& A1, const alignment& IF_DEBUG(A2), const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, int b)
+  void compare_caches(const subA_index_t& I1, const subA_index_t& IF_DEBUG(I2),
+		      const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, int b)
   {
-    int L = subA_length(A1,b);
-    assert(L == subA_length(A2,b));
+    int L = subA_length(I1,b);
+    assert(L == subA_length(I2,b));
 
     const int n_models  = LC1.n_models();
     const int n_states  = LC1.n_states();
@@ -1099,7 +1100,8 @@ namespace substitution {
       std::cerr<<"branch "<<b<<": caches are NOT equal"<<std::endl;
   }
 
-  void compare_caches(const alignment& A1, const alignment& A2, const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, const Tree& T)
+  void compare_caches(const subA_index_t& I1, const subA_index_t& I2,
+		      const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, const Tree& T)
   {
     assert(LC1.root == LC2.root);
     
@@ -1113,7 +1115,7 @@ namespace substitution {
 	append(db.branches_before(),branches);
 
 	if (LC1.up_to_date(db) and LC2.up_to_date(db))
-	  compare_caches(A1,A2,LC1,LC2,db);
+	  compare_caches(I1,I2,LC1,LC2,db);
     }
 
   }
@@ -1128,7 +1130,7 @@ namespace substitution {
   /// only happen at the substitution root.  This is actually true when called from
   /// the SPR_all routines, but may not make sense otherwise.
   ///
-  efloat_t Pr_unaligned_root(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
+  efloat_t Pr_unaligned_root(const alignment& A,subA_index_t& I, const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
 			     const MultiModel& MModel)
   {
     total_likelihood++;
@@ -1136,11 +1138,11 @@ namespace substitution {
     default_timer_stack.push_timer("substitution::likelihood_unaligned");
 
 #ifndef NDEBUG
-    subA_index_check_footprint(A, T);
-    subA_index_check_regenerate(A, T, LC.root);
+    subA_index_check_footprint(I, A, T);
+    subA_index_check_regenerate(I, A, T, LC.root);
 #endif
 
-    IF_DEBUG(int n_br =) calculate_caches(A,MC,T,LC,MModel);
+    IF_DEBUG(int n_br =) calculate_caches(A,I,MC,T,LC,MModel);
 #ifndef NDEBUG
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1150,8 +1152,8 @@ namespace substitution {
     for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
       rb.push_back(*i);
 
-    ublas::matrix<int> index_aligned   = subA_index_aligned(rb,A,T,true);
-    ublas::matrix<int> index_unaligned = subA_index_aligned(rb,A,T,false);
+    ublas::matrix<int> index_aligned   = subA_index_aligned(I, rb,A,T,true);
+    ublas::matrix<int> index_unaligned = subA_index_aligned(I, rb,A,T,false);
 
     // Combine the likelihoods from present nodes
     efloat_t Pr = calc_root_probability(A,T,LC,MModel,rb,index_aligned);
@@ -1165,7 +1167,7 @@ namespace substitution {
     int n2 = n_non_null_entries(index_unaligned);
     int l2 = n_non_empty_columns(index_unaligned);
 
-    ublas::matrix<int> index = subA_index(rb,A,T);
+    ublas::matrix<int> index = subA_index(I, rb,A,T);
     int n3 = n_non_null_entries(index);
     int l3 = n_non_empty_columns(index);
 
@@ -1192,14 +1194,14 @@ namespace substitution {
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr_unaligned_root(*P.A, P.MC, *P.T, LC, P.SModel());
+    return Pr_unaligned_root(*P.A, P.subA, P.MC, *P.T, LC, P.SModel());
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P) {
     return Pr_unaligned_root(P, P.LC);
   }
 
-  efloat_t Pr(const alignment& A,const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
+  efloat_t Pr(const alignment& A,subA_index_t& I, const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
 	    const MultiModel& MModel)
   {
     total_likelihood++;
@@ -1218,11 +1220,11 @@ namespace substitution {
 #endif
 
 #ifndef NDEBUG
-    subA_index_check_footprint(A, T);
-    subA_index_check_regenerate(A, T, LC.root);
+    subA_index_check_footprint(I, A, T);
+    subA_index_check_regenerate(I, A, T, LC.root);
 #endif
 
-    IF_DEBUG(int n_br =) calculate_caches(A,MC,T,LC,MModel);
+    IF_DEBUG(int n_br =) calculate_caches(A,I,MC,T,LC,MModel);
 #ifndef NDEBUG
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1233,7 +1235,7 @@ namespace substitution {
       rb.push_back(*i);
 
     // get the relationships with the sub-alignments
-    ublas::matrix<int> index = subA_index(rb,A,T);
+    ublas::matrix<int> index = subA_index(I,rb,A,T);
 
     // get the probability
     efloat_t Pr = calc_root_probability(A,T,LC,MModel,rb,index);
@@ -1247,7 +1249,7 @@ namespace substitution {
   }
 
   efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr(*P.A, P.MC, *P.T, LC, P.SModel());
+    return Pr(*P.A, P.subA, P.MC, *P.T, LC, P.SModel());
   }
 
   efloat_t Pr(const data_partition& P) {
@@ -1256,14 +1258,14 @@ namespace substitution {
 #ifdef DEBUG_CACHING
     data_partition P2 = P;
     P2.LC.invalidate_all();
-    invalidate_subA_index_all(*P2.A);
+    invalidate_subA_index_all(P2.subA);
     for(int i=0;i<P2.T->n_branches();i++)
       P2.setlength(i,P2.T->branch(i).length());
     efloat_t result2 = Pr(P2, P2.LC);
 
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
-      compare_caches(*P.A, *P2.A, P.LC, P2.LC, *P.T);
+      compare_caches(P.subA, P2.subA, P.LC, P2.LC, *P.T);
       std::abort();
     }
 #endif

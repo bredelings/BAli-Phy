@@ -26,6 +26,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment.H"
 #include "tree.H"
 
+typedef ublas::matrix<int> subA_index_t;
+
 namespace substitution {
 
   /// Count the number of entries in a subA index that are not null
@@ -35,33 +37,33 @@ namespace substitution {
   int n_non_empty_columns(const ublas::matrix<int>&);
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> subA_index(const std::vector<int>& b,const alignment& A,const Tree& T);
+  ublas::matrix<int> subA_index(subA_index_t& I, const std::vector<int>& b,const alignment& A,const Tree& T);
 
   /// align sub-alignments corresponding to branches in b, but only keep entries corresponding to present/absent characters
-  ublas::matrix<int> subA_index_aligned(const std::vector<int>& b,const alignment& A,const Tree& T, bool present);
+  ublas::matrix<int> subA_index_aligned(subA_index_t& I, const std::vector<int>& b,const alignment& A,const Tree& T, bool present);
 
   /// align sub-alignments corresponding to branches pointing to node
-  ublas::matrix<int> subA_index(int node,const alignment& A,const Tree& T); 
+  ublas::matrix<int> subA_index(subA_index_t& I, int node,const alignment& A,const Tree& T); 
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> subA_index_select(const std::vector<int>& b,const alignment& A,const Tree& T);
+  ublas::matrix<int> subA_index_select(subA_index_t& I, const std::vector<int>& b,const alignment& A,const Tree& T);
 
   /// align sub-alignments corresponding to branches in b, and select columns with a node in \a nodes
-  ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A,const Tree& T,const std::vector<int>& nodes);
+  ublas::matrix<int> subA_index_any(subA_index_t& I, const std::vector<int>& b,const alignment& A,const Tree& T,const std::vector<int>& nodes);
 
   /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
-  ublas::matrix<int> subA_index_any(const std::vector<int>& b,const alignment& A, const Tree& T,
+  ublas::matrix<int> subA_index_any(subA_index_t& I, const std::vector<int>& b,const alignment& A, const Tree& T,
 				    const std::vector<int>& nodes, const std::vector<int>& seq);
 
   /// align sub-alignments corresponding to branches in b, and reject columns with a node in \a nodes
-  ublas::matrix<int> subA_index_none(const std::vector<int>& b,const alignment& A, const Tree& T,
+  ublas::matrix<int> subA_index_none(subA_index_t& I, const std::vector<int>& b,const alignment& A, const Tree& T,
 				     const std::vector<int>& nodes);
 
-  bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2);
+  bool subA_identical(const subA_index_t& I1,const subA_index_t& I2);
 
-  std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I);
+  std::ostream& print_subA(std::ostream& o,const subA_index_t& I);
 
-  void check_subA(const alignment& A1,const alignment& A2,const Tree& T);
+  void check_subA(const subA_index_t& I1, const alignment& A1,const subA_index_t& I2, const alignment& A2,const Tree& T);
 }
 
 inline int leaf_seq_length(const alignment& A,int i) {
@@ -72,29 +74,27 @@ inline int leaf_seq_length(const alignment& A,int i) {
 int add_leaf_seq_note(alignment& A,int n);
 int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M);
 
-int add_subA_index_note(const alignment& A,int b);
-
-inline bool subA_index_valid(const alignment& A,int b) {
-  return A.note(1,0,b) != -1;
+inline bool subA_index_valid(const subA_index_t& I,int b) {
+  return I(0,b) != -1;
 }
 
-inline int subA_length(const alignment& A,int b) {
-  assert(0 <= b and b < A.note(1).size2());
-  assert(subA_index_valid(A,b));
-  return A.note(1,0,b);
+inline int subA_length(const subA_index_t& I,int b) {
+  assert(0 <= b and b < I.size2());
+  assert(subA_index_valid(I,b));
+  return I(0,b);
 }
 
-void invalidate_subA_index_all(const alignment& A);
-void invalidate_subA_index_one(const alignment& A,int b);
-void invalidate_subA_index_branch(const alignment& A,const Tree& T,int b);
-void update_subA_index_branch(const alignment& A,const Tree& T,int b);
+void invalidate_subA_index_all(subA_index_t& I);
+void invalidate_subA_index_one(subA_index_t& I,int b);
+void invalidate_subA_index_branch(subA_index_t& I, const Tree& T,int b);
+void update_subA_index_branch(subA_index_t& I, const alignment& A,const Tree& T,int b);
 
-void recompute_subA_notes(const alignment& A,const Tree& T);
+void recompute_subA_notes(subA_index_t& I, const alignment& A,const Tree& T);
 
-void subA_index_check_regenerate(const alignment& A1,const Tree& T);
-void subA_index_check_regenerate(const alignment& A1,const Tree& T,int root);
-void subA_index_check_footprint_for_branch(const alignment& A1,const Tree& T,int b);
-void subA_index_check_footprint(const alignment& A1,const Tree& T);
+void subA_index_check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T);
+void subA_index_check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T,int root);
+void subA_index_check_footprint_for_branch(const subA_index_t& I, const alignment& A1,const Tree& T,int b);
+void subA_index_check_footprint(const subA_index_t& I, const alignment& A1,const Tree& T);
 
 // Not thread-safe: move to alignment(s) themselves (remember multiple partitions)
 int subA_index_may_have_invalid_branches();
