@@ -30,7 +30,12 @@ struct subA_index_t: public ublas::matrix<int>
 {
 protected:
   void update_one_branch(const alignment& A,const Tree& T,int b);
-  
+
+  /* This is for SPR all, where we only need branches pointing towards the
+     root to be valid, but we don't want to discard the other ones, because
+     they will be valid for a different root/SPR-attachment-point.
+   */
+  bool allow_invalid_branches_;
 public:
   subA_index_t(int s1, int s2);
 
@@ -52,6 +57,9 @@ public:
 
   void update_branch(const alignment& A,const Tree& T,int b);
   void recompute_all_branches(const alignment& A, const Tree& T);
+
+  bool may_have_invalid_branches() const;
+  void allow_invalid_branches(bool allowed);
 };
 
 namespace substitution {
@@ -102,10 +110,6 @@ void subA_index_check_regenerate(const subA_index_t& I, const alignment& A1,cons
 void subA_index_check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T,int root);
 void subA_index_check_footprint_for_branch(const subA_index_t& I, const alignment& A1,const Tree& T,int b);
 void subA_index_check_footprint(const subA_index_t& I, const alignment& A1,const Tree& T);
-
-// Not thread-safe: move to alignment(s) themselves (remember multiple partitions)
-int subA_index_may_have_invalid_branches();
-void subA_index_allow_invalid_branches(bool);
 
 alignment blank_copy(const alignment&,int length=0);
 #endif

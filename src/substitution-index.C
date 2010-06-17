@@ -640,7 +640,7 @@ void subA_index_t::update_branch(const alignment& A,const Tree& T,int b)
   // don't know the root, so just disable the checking here.
   // FIXME - this could actually be very expensive to check every branch,
   //         probably it would be O(b^2)
-  if (not subA_index_may_have_invalid_branches())
+  if (not may_have_invalid_branches())
     subA_index_check_regenerate(*this,A,T);
 #endif
 }
@@ -655,14 +655,12 @@ void subA_index_t::recompute_all_branches(const alignment& A,const Tree& T)
     update_one_branch(A,T, branches[i]);
 }
 
-bool allow_invalid_branches_ = false;
-
-int subA_index_may_have_invalid_branches()
+bool subA_index_t::may_have_invalid_branches() const
 {
   return allow_invalid_branches_;
 }
 
-void subA_index_allow_invalid_branches(bool allowed)
+void subA_index_t::allow_invalid_branches(bool allowed)
 {
   allow_invalid_branches_ = allowed;
 }
@@ -689,7 +687,7 @@ void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,cons
 {
   vector<int> branch_names = iota<int>(T.n_branches()*2);
 
-  if (subA_index_may_have_invalid_branches())
+  if (I1.may_have_invalid_branches())
     branch_names = directed_names(branches_toward_node(T,root));
 
   // compare against calculation from scratch
@@ -742,7 +740,7 @@ void subA_index_check_footprint_for_branch(const subA_index_t& I, const alignmen
 
 void subA_index_check_footprint(const subA_index_t& I, const alignment& A,const Tree& T) 
 {
-  if (subA_index_may_have_invalid_branches())
+  if (I.may_have_invalid_branches())
     return;
 
   for(int b=0;b<T.n_branches()*2;b++)
@@ -770,7 +768,8 @@ alignment blank_copy(const alignment& A1,int length)
 }
 
 subA_index_t::subA_index_t(int s1, int s2)
-  :ublas::matrix<int>(s1,s2)
+  :ublas::matrix<int>(s1,s2),
+   allow_invalid_branches_(false)
 {
   invalidate_all_branches();
 }

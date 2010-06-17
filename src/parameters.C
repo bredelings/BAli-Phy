@@ -591,24 +591,24 @@ void Parameters::invalidate_subA_index_all()
 void Parameters::subA_index_allow_invalid_branches(bool b)
 {
 #ifndef NDEBUG
-  if (subA_index_may_have_invalid_branches())
-  {
-    for(int i=0;i<n_data_partitions();i++) {
+  for(int i=0;i<n_data_partitions();i++)
+    if (data_partitions[i]->subA.may_have_invalid_branches())
+    {
       subA_index_check_footprint(data_partitions[i]->subA, *data_partitions[i]->A, *T);
       subA_index_check_regenerate(data_partitions[i]->subA, *data_partitions[i]->A, *T);
     }
-  }
+
 #endif
-  ::subA_index_allow_invalid_branches(b);
+  for(int i=0;i<n_data_partitions();i++)
+    data_partitions[i]->subA.allow_invalid_branches(b);
 
 #ifndef NDEBUG
-  if (not subA_index_may_have_invalid_branches())
-  {
-    for(int i=0;i<n_data_partitions();i++) {
+  for(int i=0;i<n_data_partitions();i++)
+    if (not data_partitions[i]->subA.may_have_invalid_branches())
+    {
       subA_index_check_footprint(data_partitions[i]->subA, *data_partitions[i]->A, *T);
       subA_index_check_regenerate(data_partitions[i]->subA, *data_partitions[i]->A, *T);
     }
-  }
 #endif
 }
 
