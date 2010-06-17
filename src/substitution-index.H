@@ -26,6 +26,42 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment.H"
 #include "tree.H"
 
+/* The algorithms in this file provide each column in a sub-alignment
+ * with a name that persists through alignment and tree changes that
+ * do not make the column non-identifiable.  The name is a column
+ * number, so that naming columns corresponds to ordering the columns
+ * in the sub-alignment.   We need persistent names in order to cache
+ * conditional likelihoods at columns in the sub-alignment,
+ * specifically in order to cache across internal-node resampling.
+ */
+
+/* Naming Scheme #1
+ *
+ * Our naming scheme for sub-alignment columns satisfies two
+ * important properties: 
+ * a) ordering depends only on pairwise alignments behind b and the
+ *    topology of the subtree behind b
+ * b) ordering depends only on the pairwise alignments PROJECTED TO
+ *    THE LEAF SEQUENCES and does not change when the alignment of
+ *    leaf sequences is unchanged. 
+ *
+ * a -> Each sub-alignment corresponds to a directed branch b on the
+ * tree, and contains the leaf sequences BEHIND b. If alignments on
+ * branches behind b do not change, then the sub-alignment b should
+ * not change either.  This isn't automatic because the columns of the
+ * sub-alignment may not be fully ordered.  Note that changing the
+ * topology behind b would necessitate invalidating the cached
+ * conditional likelihoods anyway, so we lose nothing by not
+ * preserving column numbers in that case.
+ * 
+ * b-> This gives the useful property that re-sampling internal nodes
+ * does not invalidate any of the names.  However, this implies that
+ * the ordering of columns in a sub-alignment can conflict with
+ * ordering in the full alignment, or with the order of sub-alignments
+ * which include this sub-alignment. 
+ */
+
+
 struct subA_index_t: public ublas::matrix<int>
 {
 protected:
@@ -107,14 +143,4 @@ int n_non_empty_columns(const ublas::matrix<int>&);
 std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I);
 
 void check_subA(const subA_index_t& I1, const alignment& A1,const subA_index_t& I2, const alignment& A2,const Tree& T);
-
-inline int leaf_seq_length(const alignment& A,int i) {
-  assert(i < A.note(0).size2());
-  return A.note(0,0,i);
-}
-
-int add_leaf_seq_note(alignment& A,int n);
-int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M);
-
-alignment blank_copy(const alignment&,int length=0);
 #endif

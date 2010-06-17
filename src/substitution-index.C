@@ -30,94 +30,6 @@ using std::vector;
 
 using boost::dynamic_bitset;
 
-/* 
- * June 2010 - Rewriting substitution index.
- *
- * 1. Goal: Keep BOTH substitution index methods.
- *
- * 2. Implement each method as a separate class.
- *
- * 3. Separate the substitution index from the alignment, and
- *     connect it to the likelihood cache.
- *
- * 4. Allow the likelihood cache for each partition to
- *    know which of the two types of substitution indexing
- *     it is doing.
- *
- * 5. How must the likelihood calculation change to reflect
- *    the different subA indices?
- * 
- * 6. How are we going to keep the NOTE length in sync
- *    with the alignment length?
- *    - any resampling of the alignment means that the
- *      subA-indices must be recalculated.
- *    - however, some projections still will not change...
- *      but their associations with COLUMNS will change.
- *    - ... lazily? Pieces invalidated when length
- *      changes?
- *    
- * 7. How shall we deal with large insertions of ++++ that
- *    have no leaf characters behind them?
- *
- * So... where are the NOTES used?
- *    - 
-bali-phy.C:      add_leaf_seq_note(*P[i].A, T.n_leaves());
-bali-phy.C:      add_subA_index_note(*P[i].A, T.n_branches());
-
-alignment.C:  for(int i=0;i<notes.size();i++)
-alignment.C:    notes[i].resize(l+1,notes[i].size2());
- *
- * subA_update_index_single(int branch )
- *  + keep any alignment column where the node at the source of
- *    this branch, or either of its child branches, is present.
- *  + record a -1 for each column/branch where the node at the source
- *    of the column/branch is absent.
- *  + otherwise, record present character's into the sequence at
- *    that node.
- *
- * Likelihood:
- *  + If we have a -1 at the branch,
- *    - We should have a index >=0 in at most one child subA index.
- *    - We therefore apply frequencies, and add to other_subst.
- *  + If we have a +1 at the branch, we progagate any children
- *    and store at this index.
- */
-
-
-
-/* The algorithms in this file provide each column in a sub-alignment
- * with a name that persists through alignment and tree changes that
- * do not make the column non-identifiable.  The name is a column
- * number, so that naming columns corresponds to ordering the columns
- * in the sub-alignment.   We need persistent names in order to cache
- * conditional likelihoods at columns in the sub-alignment,
- * specifically in order to cache across internal-node resampling.
- *
- * Our naming scheme for sub-alignment columns satisfies two
- * important properties: 
- * a) ordering depends only on pairwise alignments behind b and the
- *    topology of the subtree behind b
- * b) ordering depends only on the pairwise alignments PROJECTED TO
- *    THE LEAF SEQUENCES and does not change when the alignment of
- *    leaf sequences is unchanged. 
- *
- * a -> Each sub-alignment corresponds to a directed branch b on the
- * tree, and contains the leaf sequences BEHIND b. If alignments on
- * branches behind b do not change, then the sub-alignment b should
- * not change either.  This isn't automatic because the columns of the
- * sub-alignment may not be fully ordered.  Note that changing the
- * topology behind b would necessitate invalidating the cached
- * conditional likelihoods anyway, so we lose nothing by not
- * preserving column numbers in that case.
- * 
- * b-> This gives the useful property that re-sampling internal nodes
- * does not invalidate any of the names.  However, this implies that
- * the ordering of columns in a sub-alignment can conflict with
- * ordering in the full alignment, or with the order of sub-alignments
- * which include this sub-alignment. 
- */
-
-
 
 /// Are there characters present in column c of the alignment A at any of the nodes?
 static inline bool any_present(const alignment& A,int c, const vector<int>& nodes) {
@@ -450,47 +362,6 @@ void check_subA(const subA_index_t& I1_, const alignment& A1,const subA_index_t&
   }
 }
 
-/// create a note with leaf sequences ...
-int add_leaf_seq_note(alignment& A,int n) 
-{
-  assert(n <= A.n_sequences());
-
-  int index = A.add_note(n);
-
-  for(int i=0;i<n;i++) {
-    int l=0;
-    for(int c=0;c<A.length();c++)
-      if (not A.gap(c,i)) {
-	A.note(index,l+1,i) = A(c,i);
-	l++;
-      }
-    A.note(index,0,i) = l;
-    assert(l == A.seqlength(i));
-  }
-
-  return index;
-}
-
-/// create a note with leaf sequences ...
-int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M) 
-{
-  int n = M.size2();
-
-  assert(n < A.n_sequences());
-
-  int index = A.add_note(n);
-
-  for(int i=0;i<n;i++) {
-    const int l = M(0,i);
-    assert(l == A.seq(i).size()/A.get_alphabet().width());
-    for(int j=0;j<l;j++)
-      A.note(index,j+1,i) = M(j+1,i);
-    A.note(index,0,i) = l;
-  }
-
-  return index;
-}
-
 void subA_index_t::invalidate_one_branch(int b) 
 {
   operator()(0,b) = -1;
@@ -762,26 +633,6 @@ void subA_index_t::check_footprint(const alignment& A,const Tree& T) const
 
   for(int b=0;b<T.n_branches()*2;b++)
     check_footprint_for_branch(A,T,b);
-}
-
-alignment blank_copy(const alignment& A1,int length) 
-{
-  alignment A2;
-
-  // make an array w/ the same alphabet & sequences
-  A2.a = A1.a;
-  A2.sequences = A1.sequences;
-
-  // make a blank array
-  A2.array.resize(length, A1.array.size2());
-
-  // make blank notes
-  A2.notes.reserve(A1.notes.size());
-
-  if (A1.notes.size() >= 1)
-    add_leaf_seq_note(A2,A1.note(0));
-
-  return A2;
 }
 
 subA_index_t::subA_index_t(int s1, int s2)
