@@ -462,12 +462,12 @@ namespace substitution {
     //    const int n_letters = a.n_letters();
     assert(MModel.n_states() == n_states);
 
-    if (not subA_index_valid(I,b0))
+    if (not I.branch_index_valid(b0))
       update_subA_index_branch(I,A,T,b0);
 
     //    const vector<unsigned>& smap = MModel.state_letters();
 
-    for(int i=0;i<subA_length(I,b0);i++)
+    for(int i=0;i<I.branch_index_length(b0);i++)
     {
       Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
@@ -526,7 +526,7 @@ namespace substitution {
     assert(MModel.n_states() == n_states);
 
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
-    if (not subA_index_valid(I,b0))
+    if (not I.branch_index_valid(b0))
       update_subA_index_branch(I,A,T,b0);
 
     //    const vector<unsigned>& smap = MModel.state_letters();
@@ -545,7 +545,7 @@ namespace substitution {
     Matrix& F = cache.scratch(1);
     FrequencyMatrix(F,MModel); // F(m,l2)
 
-    for(int i=0;i<subA_length(I,b0);i++)
+    for(int i=0;i<I.branch_index_length(b0);i++)
     {
       Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
@@ -600,12 +600,12 @@ namespace substitution {
     //    const int N = n_states/n_letters;
     assert(MModel.n_states() == n_states);
 
-    if (not subA_index_valid(I,b0))
+    if (not I.branch_index_valid(b0))
       update_subA_index_branch(I,A,T,b0);
 
     const vector<unsigned>& smap = MModel.state_letters();
 
-    for(int i=0;i<subA_length(I,b0);i++)
+    for(int i=0;i<I.branch_index_length(b0);i++)
     {
       Matrix& R = cache(i,b0);
       // compute the distribution at the parent node
@@ -646,8 +646,8 @@ namespace substitution {
     b.push_back(b0);
     ublas::matrix<int> index = subA_index_select(I,b,A,T);
     b.pop_back();
-    assert(index.size1() == subA_length(I,b0));
-    assert(subA_index_valid(I,b0));
+    assert(index.size1() == I.branch_index_length(b0));
+    assert(I.branch_index_valid(b0));
 
     // The number of directed branches is twice the number of undirected branches
     const int B        = T.n_branches();
@@ -665,7 +665,7 @@ namespace substitution {
     branch_cache.push_back(&cache[b0]);
     
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
-    for(int i=0;i<subA_length(I,b0);i++) 
+    for(int i=0;i<I.branch_index_length(b0);i++) 
     {
       // compute the source distribution from 2 branch distributions
       int i0 = index(i,0);
@@ -716,8 +716,8 @@ namespace substitution {
     b.push_back(b0);
     ublas::matrix<int> index = subA_index_select(I,b,A,T);
     b.pop_back();
-    assert(index.size1() == subA_length(I,b0));
-    assert(subA_index_valid(I,b0));
+    assert(index.size1() == I.branch_index_length(b0));
+    assert(I.branch_index_valid(b0));
 
     // The number of directed branches is twice the number of undirected branches
     //    const int B        = T.n_branches();
@@ -749,7 +749,7 @@ namespace substitution {
     FrequencyMatrix(F,MModel); // F(m,l2)
 
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
-    for(int i=0;i<subA_length(I,b0);i++) 
+    for(int i=0;i<I.branch_index_length(b0);i++) 
     {
       // compute the source distribution from 2 branch distributions
       int i0 = index(i,0);
@@ -1078,8 +1078,8 @@ namespace substitution {
   void compare_caches(const subA_index_t& I1, const subA_index_t& IF_DEBUG(I2),
 		      const Likelihood_Cache& LC1, const Likelihood_Cache& LC2, int b)
   {
-    int L = subA_length(I1,b);
-    assert(L == subA_length(I2,b));
+    int L = I1.branch_index_length(b);
+    assert(L == I2.branch_index_length(b));
 
     const int n_models  = LC1.n_models();
     const int n_states  = LC1.n_states();

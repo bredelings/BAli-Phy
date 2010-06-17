@@ -26,7 +26,23 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment.H"
 #include "tree.H"
 
-typedef ublas::matrix<int> subA_index_t;
+struct subA_index_t: public ublas::matrix<int>
+{
+  subA_index_t(int s1, int s2);
+
+  bool branch_index_valid(int b) const {
+    return operator()(0,b) != -1;
+  }
+
+  int branch_index_length(int b) const 
+  {
+    assert(0 <= b and b < size2());
+    assert(branch_index_valid(b));
+    return operator()(0,b);
+  }
+
+
+};
 
 namespace substitution {
 
@@ -59,9 +75,7 @@ namespace substitution {
   ublas::matrix<int> subA_index_none(subA_index_t& I, const std::vector<int>& b,const alignment& A, const Tree& T,
 				     const std::vector<int>& nodes);
 
-  bool subA_identical(const subA_index_t& I1,const subA_index_t& I2);
-
-  std::ostream& print_subA(std::ostream& o,const subA_index_t& I);
+  std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I);
 
   void check_subA(const subA_index_t& I1, const alignment& A1,const subA_index_t& I2, const alignment& A2,const Tree& T);
 }
@@ -73,16 +87,6 @@ inline int leaf_seq_length(const alignment& A,int i) {
 
 int add_leaf_seq_note(alignment& A,int n);
 int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M);
-
-inline bool subA_index_valid(const subA_index_t& I,int b) {
-  return I(0,b) != -1;
-}
-
-inline int subA_length(const subA_index_t& I,int b) {
-  assert(0 <= b and b < I.size2());
-  assert(subA_index_valid(I,b));
-  return I(0,b);
-}
 
 void invalidate_subA_index_all(subA_index_t& I);
 void invalidate_subA_index_one(subA_index_t& I,int b);

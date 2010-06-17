@@ -169,7 +169,7 @@ namespace substitution {
 	  subA(c,j) = -1;
       else 
       {
-	assert(subA_index_valid(I,branches[j]));
+	assert(I.branch_index_valid(branches[j]));
 
 	for(int c=0;c<L;c++)
 	  subA(c,j) = I(c+1,branches[j]);
@@ -195,7 +195,7 @@ namespace substitution {
       {
 	IF_DEBUG( subA_index_check_footprint_for_branch(I,A,T,branches[j]) );
 
-	if (not subA_index_valid(I,branches[j]))
+	if (not I.branch_index_valid(branches[j]))
 	  update_subA_index_branch(I,A,T,branches[j]);
 	for(int c=0;c<A.length();c++)
 	  subA(c,j) = I(c+1,branches[j]);
@@ -370,7 +370,7 @@ namespace substitution {
     return subA_select(subA);
   }
 
-  std::ostream& print_subA(std::ostream& o,const subA_index_t& I)
+  std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I)
   {
     o<<"["<<I.size1()<<","<<I.size2()<<"]\n";
     for(int j=0;j<I.size2();j++) 
@@ -384,7 +384,7 @@ namespace substitution {
     return o;
   }
 
-  bool subA_identical(const subA_index_t& I1,const subA_index_t& I2) {
+  bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2) {
     bool error = false;
     if (I1.size1() != I2.size1()) error=true;
     if (I1.size2() != I2.size2()) error=true;
@@ -402,8 +402,8 @@ namespace substitution {
   {
     for(int b=T.n_leaves();b<2*T.n_branches();b++) 
     {
-      if (not subA_index_valid(I1_,b)) continue;
-      if (not subA_index_valid(I2_,b)) continue;
+      if (not I1_.branch_index_valid(b)) continue;
+      if (not I2_.branch_index_valid(b)) continue;
 
       // compute branches-in
       vector<int> branches;
@@ -531,7 +531,7 @@ void update_subA_index_single(subA_index_t& I, const alignment& A,const Tree& T,
   if (I.size1() != A.length() + 1)
   {
     for(int i=0;i<I.size2();i++)
-      assert(not subA_index_valid(I,i));
+      assert(not I.branch_index_valid(i));
     I.resize(A.length()+1, I.size2());
   }
 
@@ -560,8 +560,8 @@ void update_subA_index_single(subA_index_t& I, const alignment& A,const Tree& T,
     // get mappings of previous subA indices into alignment
     vector<vector<int> > mappings;
     for(int i=0;i<prev.size();i++) {
-      assert(subA_index_valid(I,prev[i]));
-      mappings.push_back(vector<int>(subA_length(I,prev[i]),-1));
+      assert(I.branch_index_valid(prev[i]));
+      mappings.push_back(vector<int>(I.branch_index_length(prev[i]),-1));
     }
 
     int l=0;
@@ -617,7 +617,7 @@ void update_subA_index_branch(subA_index_t& I,const alignment& A,const Tree& T,i
   
   for(int i=0;i<branches.size();i++) {
     const const_branchview& db = branches[i];
-    if (not subA_index_valid(I,db))
+    if (not I.branch_index_valid(db))
       append(db.branches_before(),branches);
   }
   
@@ -673,8 +673,8 @@ void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,cons
 
   for(int i=0;i<branch_names.size();i++) {
     int b = branch_names[i];
-    if (subA_index_valid(I1, b)) {
-      assert(subA_length(I1,b) == subA_length(I2,b));
+    if (I1.branch_index_valid(b)) {
+      assert(I1.branch_index_length(b) == I2.branch_index_length(b));
       for(int c=0;c<A.length();c++)
 	assert(I1(c+1,b) == I2(c+1,b));
     }
@@ -694,8 +694,8 @@ void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,cons
 
   for(int i=0;i<branch_names.size();i++) {
     int b = branch_names[i];
-    if (subA_index_valid(I1,b)) {
-      assert(subA_length(I1,b) == subA_length(I2,b));
+    if (I1.branch_index_valid(b)) {
+      assert(I1.branch_index_length(b) == I2.branch_index_length(b));
       for(int c=0;c<A.length();c++)
 	assert(I1(c+1,b) == I2(c+1,b));
     }
@@ -710,7 +710,7 @@ void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,cons
 void subA_index_check_footprint_for_branch(const subA_index_t& I, const alignment& A, const Tree& T, int b)
 {
   // Don't check here if we're temporarily messing with things, and allowing a funny state.
-  if (not subA_index_valid(I,b)) return;
+  if (not I.branch_index_valid(b)) return;
 
   for(int c=0;c<A.length();c++) 
   {
@@ -763,4 +763,9 @@ alignment blank_copy(const alignment& A1,int length)
     add_leaf_seq_note(A2,A1.note(0));
 
   return A2;
+}
+
+subA_index_t::subA_index_t(int s1, int s2)
+  :ublas::matrix<int>(s1,s2)
+{
 }
