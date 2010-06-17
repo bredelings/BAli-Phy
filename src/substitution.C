@@ -965,8 +965,8 @@ namespace substitution {
     subA_index_t& I = P.subA;
 
 #ifndef NDEBUG
-    subA_index_check_footprint(I, A, T);
-    subA_index_check_regenerate(I, A, T);
+    I.check_footprint(A, T);
+    check_regenerate(I, A, T);
 #endif
 
     //------ Check that all branches point to a 'root' node -----------//
@@ -1138,8 +1138,8 @@ namespace substitution {
     default_timer_stack.push_timer("substitution::likelihood_unaligned");
 
 #ifndef NDEBUG
-    subA_index_check_footprint(I, A, T);
-    subA_index_check_regenerate(I, A, T, LC.root);
+    I.check_footprint(A, T);
+    check_regenerate(I, A, T, LC.root);
 #endif
 
     IF_DEBUG(int n_br =) calculate_caches(A,I,MC,T,LC,MModel);
@@ -1220,8 +1220,8 @@ namespace substitution {
 #endif
 
 #ifndef NDEBUG
-    subA_index_check_footprint(I, A, T);
-    subA_index_check_regenerate(I, A, T, LC.root);
+    I.check_footprint(A, T);
+    check_regenerate(I, A, T, LC.root);
 #endif
 
     IF_DEBUG(int n_br =) calculate_caches(A,I,MC,T,LC,MModel);

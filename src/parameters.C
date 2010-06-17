@@ -185,6 +185,27 @@ void data_partition::invalidate_subA_index_all()
   subA.invalidate_all_branches();
 }
 
+void data_partition::subA_index_allow_invalid_branches(bool b)
+{
+#ifndef NDEBUG
+  if (subA.may_have_invalid_branches())
+  {
+    subA.check_footprint(*A, *T);
+    check_regenerate(subA, *A, *T);
+  }  
+#endif
+
+  subA.allow_invalid_branches(b);
+
+#ifndef NDEBUG
+  if (not subA.may_have_invalid_branches())
+  {
+    subA.check_footprint(*A, *T);
+    check_regenerate(subA, *A, *T);
+  }  
+#endif
+}
+
 void data_partition::note_sequence_length_changed(int n)
 {
   if (not variable_alignment())
@@ -590,26 +611,8 @@ void Parameters::invalidate_subA_index_all()
 
 void Parameters::subA_index_allow_invalid_branches(bool b)
 {
-#ifndef NDEBUG
   for(int i=0;i<n_data_partitions();i++)
-    if (data_partitions[i]->subA.may_have_invalid_branches())
-    {
-      subA_index_check_footprint(data_partitions[i]->subA, *data_partitions[i]->A, *T);
-      subA_index_check_regenerate(data_partitions[i]->subA, *data_partitions[i]->A, *T);
-    }
-
-#endif
-  for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->subA.allow_invalid_branches(b);
-
-#ifndef NDEBUG
-  for(int i=0;i<n_data_partitions();i++)
-    if (not data_partitions[i]->subA.may_have_invalid_branches())
-    {
-      subA_index_check_footprint(data_partitions[i]->subA, *data_partitions[i]->A, *T);
-      subA_index_check_regenerate(data_partitions[i]->subA, *data_partitions[i]->A, *T);
-    }
-#endif
+    data_partitions[i]->subA_index_allow_invalid_branches(b);
 }
 
 void Parameters::note_alignment_changed_on_branch(int b)

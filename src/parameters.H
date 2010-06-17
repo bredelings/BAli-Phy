@@ -147,6 +147,8 @@ public:
   // invalidate subA indices for all branches
   void invalidate_subA_index_all();
 
+  void subA_index_allow_invalid_branches(bool);
+
   void note_alignment_changed_on_branch(int b);
 
   void note_alignment_changed();

@@ -60,7 +60,13 @@ public:
 
   bool may_have_invalid_branches() const;
   void allow_invalid_branches(bool allowed);
+
+  void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const;
+  void check_footprint(const alignment& A1,const Tree& T) const;
 };
+
+void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T);
+void check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T,int root);
 
 namespace substitution {
 
@@ -105,11 +111,6 @@ inline int leaf_seq_length(const alignment& A,int i) {
 
 int add_leaf_seq_note(alignment& A,int n);
 int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M);
-
-void subA_index_check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T);
-void subA_index_check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T,int root);
-void subA_index_check_footprint_for_branch(const subA_index_t& I, const alignment& A1,const Tree& T,int b);
-void subA_index_check_footprint(const subA_index_t& I, const alignment& A1,const Tree& T);
 
 alignment blank_copy(const alignment&,int length=0);
 #endif

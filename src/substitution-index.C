@@ -193,7 +193,7 @@ namespace substitution {
 	  subA(c,j) = -1;
       else 
       {
-	IF_DEBUG( subA_index_check_footprint_for_branch(I,A,T,branches[j]) );
+	IF_DEBUG( I.check_footprint_for_branch(A,T,branches[j]) );
 
 	if (not I.branch_index_valid(branches[j]))
 	  I.update_branch(A,T,branches[j]);
@@ -614,7 +614,7 @@ void subA_index_t::update_one_branch(const alignment& A,const Tree& T,int b)
 void subA_index_t::update_branch(const alignment& A,const Tree& T,int b) 
 {
 #ifndef NDEBUG  
-  subA_index_check_footprint(*this,A,T);
+  check_footprint(A,T);
 #endif
 
   // get ordered list of branches to process before this one
@@ -634,14 +634,14 @@ void subA_index_t::update_branch(const alignment& A,const Tree& T,int b)
     update_one_branch(A,T,branches[i]);
 
 #ifndef NDEBUG  
-  subA_index_check_footprint(*this,A,T);
+  check_footprint(A,T);
 
   // FIXME - we should check the branches that point to the root, but we
   // don't know the root, so just disable the checking here.
   // FIXME - this could actually be very expensive to check every branch,
   //         probably it would be O(b^2)
   if (not may_have_invalid_branches())
-    subA_index_check_regenerate(*this,A,T);
+    check_regenerate(*this,A,T);
 #endif
 }
 
@@ -665,7 +665,32 @@ void subA_index_t::allow_invalid_branches(bool allowed)
   allow_invalid_branches_ = allowed;
 }
 
-void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T) 
+void check_consistent(const subA_index_t& I1, const subA_index_t& I2, const vector<int>& branch_names)
+{
+  assert(I1.size2() == I2.size2());
+
+  for(int i=0;i<branch_names.size();i++) 
+  {
+    int b = branch_names[i];
+    if (I1.branch_index_valid(b)) 
+    {
+      // These lengths need be valid only if there is at least one valid branch
+      assert(I1.size1() == I2.size1());
+
+      const int L = I1.branch_index_length(b);
+      assert(L == I2.branch_index_length(b));
+      for(int c=0;c<L;c++)
+	assert(I1(c+1,b) == I2(c+1,b));
+    }
+  }
+}
+
+void check_consistent(const subA_index_t& I1, const subA_index_t& I2)
+{
+  check_consistent(I1, I2, iota<int>(I1.size2()));
+}
+
+void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T) 
 {
   vector<int> branch_names = iota<int>(T.n_branches()*2);
 
@@ -673,17 +698,10 @@ void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,cons
   subA_index_t I2 = I1;
   I2.recompute_all_branches(A, T);
 
-  for(int i=0;i<branch_names.size();i++) {
-    int b = branch_names[i];
-    if (I1.branch_index_valid(b)) {
-      assert(I1.branch_index_length(b) == I2.branch_index_length(b));
-      for(int c=0;c<A.length();c++)
-	assert(I1(c+1,b) == I2(c+1,b));
-    }
-  }
+  check_consistent(I1, I2);
 }
 
-void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T,int root) 
+void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T,int root) 
 {
   vector<int> branch_names = iota<int>(T.n_branches()*2);
 
@@ -694,14 +712,7 @@ void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,cons
   subA_index_t I2 = I1;
   I2.recompute_all_branches(A, T);
 
-  for(int i=0;i<branch_names.size();i++) {
-    int b = branch_names[i];
-    if (I1.branch_index_valid(b)) {
-      assert(I1.branch_index_length(b) == I2.branch_index_length(b));
-      for(int c=0;c<A.length();c++)
-	assert(I1(c+1,b) == I2(c+1,b));
-    }
-  }
+  check_consistent(I1, I2, branch_names);
 }
 
 
@@ -709,10 +720,12 @@ void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,cons
 //  * check that the index includes each column for which there are leaf characters behind the branch ...
 //  * ... and no others. 
 // That is, if a column includes only gaps behind the branch, then it should not be in the branch's index.
-void subA_index_check_footprint_for_branch(const subA_index_t& I, const alignment& A, const Tree& T, int b)
+ void subA_index_t::check_footprint_for_branch(const alignment& A, const Tree& T, int b) const
 {
   // Don't check here if we're temporarily messing with things, and allowing a funny state.
-  if (not I.branch_index_valid(b)) return;
+  if (not branch_index_valid(b)) return;
+
+  const ublas::matrix<int>& I = *this;
 
   for(int c=0;c<A.length();c++) 
   {
@@ -738,13 +751,13 @@ void subA_index_check_footprint_for_branch(const subA_index_t& I, const alignmen
 // Also check that, we do not include in the index any columns for which there are only gaps behind
 // the  branch.
 
-void subA_index_check_footprint(const subA_index_t& I, const alignment& A,const Tree& T) 
+void subA_index_t::check_footprint(const alignment& A,const Tree& T) const
 {
-  if (I.may_have_invalid_branches())
+  if (may_have_invalid_branches())
     return;
 
   for(int b=0;b<T.n_branches()*2;b++)
-    subA_index_check_footprint_for_branch(I,A,T,b);
+    check_footprint_for_branch(A,T,b);
 }
 
 alignment blank_copy(const alignment& A1,int length) 
