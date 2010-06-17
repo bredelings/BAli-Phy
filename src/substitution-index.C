@@ -196,7 +196,7 @@ namespace substitution {
 	IF_DEBUG( subA_index_check_footprint_for_branch(I,A,T,branches[j]) );
 
 	if (not I.branch_index_valid(branches[j]))
-	  update_subA_index_branch(I,A,T,branches[j]);
+	  I.update_branch(A,T,branches[j]);
 	for(int c=0;c<A.length();c++)
 	  subA(c,j) = I(c+1,branches[j]);
       }
@@ -489,27 +489,31 @@ int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M)
   return index;
 }
 
-void invalidate_subA_index_one(subA_index_t& I, int b) {
-  I(0,b) = -1;
-}
-
-void invalidate_subA_index_all(subA_index_t& I) 
+void subA_index_t::invalidate_one_branch(int b) 
 {
-  for(int i=0;i<I.size2();i++)
-    invalidate_subA_index_one(I,i);
+  operator()(0,b) = -1;
 }
 
-void invalidate_subA_index_directed_branch(subA_index_t& I, const Tree& T,int b) {
+void subA_index_t::invalidate_all_branches()
+{
+  for(int i=0;i<size2();i++)
+    invalidate_one_branch(i);
+}
+
+
+void subA_index_t::invalidate_directed_branch(const Tree& T,int b) 
+{
   vector<const_branchview> branches = branches_after(T,b);
 
   for(int i=0;i<branches.size();i++)
-    invalidate_subA_index_one(I,branches[i]);
+    invalidate_one_branch(branches[i]);
 }
 
 
-void invalidate_subA_index_branch(subA_index_t& I,const Tree& T,int b) {
-  invalidate_subA_index_directed_branch(I,T,b);
-  invalidate_subA_index_directed_branch(I,T,T.directed_branch(b).reverse());
+void subA_index_t::invalidate_branch(const Tree& T,int b) 
+{
+  invalidate_directed_branch(T, b);
+  invalidate_directed_branch(T, T.directed_branch(b).reverse());
 }
 
 
@@ -525,14 +529,16 @@ int rank(const Tree& T,int b) {
 }
 
 
-void update_subA_index_single(subA_index_t& I, const alignment& A,const Tree& T,int b) 
+void subA_index_t::update_one_branch(const alignment& A,const Tree& T,int b) 
 {
+  ublas::matrix<int>& I = *this;
+
   // lazy resizing
-  if (I.size1() != A.length() + 1)
+  if (size1() != A.length() + 1)
   {
-    for(int i=0;i<I.size2();i++)
-      assert(not I.branch_index_valid(i));
-    I.resize(A.length()+1, I.size2());
+    for(int i=0;i<size2();i++)
+      assert(not branch_index_valid(i));
+    resize(A.length()+1, size2());
   }
 
   // notes for leaf sequences
@@ -560,8 +566,8 @@ void update_subA_index_single(subA_index_t& I, const alignment& A,const Tree& T,
     // get mappings of previous subA indices into alignment
     vector<vector<int> > mappings;
     for(int i=0;i<prev.size();i++) {
-      assert(I.branch_index_valid(prev[i]));
-      mappings.push_back(vector<int>(I.branch_index_length(prev[i]),-1));
+      assert(branch_index_valid(prev[i]));
+      mappings.push_back(vector<int>(branch_index_length(prev[i]),-1));
     }
 
     int l=0;
@@ -605,10 +611,10 @@ void update_subA_index_single(subA_index_t& I, const alignment& A,const Tree& T,
   }
 }
 
-void update_subA_index_branch(subA_index_t& I,const alignment& A,const Tree& T,int b) 
+void subA_index_t::update_branch(const alignment& A,const Tree& T,int b) 
 {
 #ifndef NDEBUG  
-  subA_index_check_footprint(I,A,T);
+  subA_index_check_footprint(*this,A,T);
 #endif
 
   // get ordered list of branches to process before this one
@@ -617,7 +623,7 @@ void update_subA_index_branch(subA_index_t& I,const alignment& A,const Tree& T,i
   
   for(int i=0;i<branches.size();i++) {
     const const_branchview& db = branches[i];
-    if (not I.branch_index_valid(db))
+    if (not branch_index_valid(db))
       append(db.branches_before(),branches);
   }
   
@@ -625,30 +631,28 @@ void update_subA_index_branch(subA_index_t& I,const alignment& A,const Tree& T,i
 
   // update the branches in order 
   for(int i=0;i<branches.size();i++)
-    update_subA_index_single(I,A,T,branches[i]);
+    update_one_branch(A,T,branches[i]);
 
 #ifndef NDEBUG  
-  subA_index_check_footprint(I,A,T);
+  subA_index_check_footprint(*this,A,T);
 
   // FIXME - we should check the branches that point to the root, but we
   // don't know the root, so just disable the checking here.
   // FIXME - this could actually be very expensive to check every branch,
   //         probably it would be O(b^2)
   if (not subA_index_may_have_invalid_branches())
-    subA_index_check_regenerate(I,A,T);
+    subA_index_check_regenerate(*this,A,T);
 #endif
 }
 
-void recompute_subA_notes(subA_index_t& I,const alignment& A,const Tree& T) 
+void subA_index_t::recompute_all_branches(const alignment& A,const Tree& T) 
 {
-  invalidate_subA_index_all(I);
+  invalidate_all_branches();
+
   vector<const_branchview> branches = branches_from_leaves(T);
 
-  for(int i=0;i<branches.size();i++) {
-    const const_branchview& b = branches[i];
-
-    update_subA_index_single(I,A,T,b);
-  }
+  for(int i=0;i<branches.size();i++) 
+    update_one_branch(A,T, branches[i]);
 }
 
 bool allow_invalid_branches_ = false;
@@ -669,7 +673,7 @@ void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,cons
 
   // compare against calculation from scratch
   subA_index_t I2 = I1;
-  recompute_subA_notes(I2, A, T);
+  I2.recompute_all_branches(A, T);
 
   for(int i=0;i<branch_names.size();i++) {
     int b = branch_names[i];
@@ -690,7 +694,7 @@ void subA_index_check_regenerate(const subA_index_t& I1, const alignment& A,cons
 
   // compare against calculation from scratch
   subA_index_t I2 = I1;
-  recompute_subA_notes(I2, A, T);
+  I2.recompute_all_branches(A, T);
 
   for(int i=0;i<branch_names.size();i++) {
     int b = branch_names[i];
@@ -768,4 +772,5 @@ alignment blank_copy(const alignment& A1,int length)
 subA_index_t::subA_index_t(int s1, int s2)
   :ublas::matrix<int>(s1,s2)
 {
+  invalidate_all_branches();
 }

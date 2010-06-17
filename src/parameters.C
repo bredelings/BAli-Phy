@@ -169,19 +169,20 @@ int data_partition::seqlength(int n) const
 
 void data_partition::invalidate_subA_index_branch(int b)
 {
-  ::invalidate_subA_index_branch(subA,*T,b);
+  // propagates outward in both directions
+  subA.invalidate_branch(*T,b);
 }
 
 void data_partition::invalidate_subA_index_one_branch(int b)
 {
   int b2 = T->directed_branch(b).reverse();
-  ::invalidate_subA_index_one(subA,b);
-  ::invalidate_subA_index_one(subA,b2);
+  subA.invalidate_one_branch(b);
+  subA.invalidate_one_branch(b2);
 }
 
 void data_partition::invalidate_subA_index_all()
 {
-  ::invalidate_subA_index_all(subA);
+  subA.invalidate_all_branches();
 }
 
 void data_partition::note_sequence_length_changed(int n)
@@ -373,8 +374,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
-  invalidate_subA_index_all();
-
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
@@ -402,8 +401,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
-  invalidate_subA_index_all();
-
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 

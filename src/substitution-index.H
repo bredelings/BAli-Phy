@@ -28,6 +28,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 struct subA_index_t: public ublas::matrix<int>
 {
+protected:
+  void update_one_branch(const alignment& A,const Tree& T,int b);
+  
+public:
   subA_index_t(int s1, int s2);
 
   bool branch_index_valid(int b) const {
@@ -41,7 +45,13 @@ struct subA_index_t: public ublas::matrix<int>
     return operator()(0,b);
   }
 
+  void invalidate_one_branch(int b);
+  void invalidate_all_branches();
+  void invalidate_directed_branch(const Tree& T,int b);
+  void invalidate_branch(const Tree& T,int b);
 
+  void update_branch(const alignment& A,const Tree& T,int b);
+  void recompute_all_branches(const alignment& A, const Tree& T);
 };
 
 namespace substitution {
@@ -87,13 +97,6 @@ inline int leaf_seq_length(const alignment& A,int i) {
 
 int add_leaf_seq_note(alignment& A,int n);
 int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M);
-
-void invalidate_subA_index_all(subA_index_t& I);
-void invalidate_subA_index_one(subA_index_t& I,int b);
-void invalidate_subA_index_branch(subA_index_t& I, const Tree& T,int b);
-void update_subA_index_branch(subA_index_t& I, const alignment& A,const Tree& T,int b);
-
-void recompute_subA_notes(subA_index_t& I, const alignment& A,const Tree& T);
 
 void subA_index_check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T);
 void subA_index_check_regenerate(const subA_index_t& I, const alignment& A1,const Tree& T,int root);

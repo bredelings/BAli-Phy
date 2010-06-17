@@ -463,7 +463,7 @@ namespace substitution {
     assert(MModel.n_states() == n_states);
 
     if (not I.branch_index_valid(b0))
-      update_subA_index_branch(I,A,T,b0);
+      I.update_branch(A,T,b0);
 
     //    const vector<unsigned>& smap = MModel.state_letters();
 
@@ -527,7 +527,7 @@ namespace substitution {
 
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
     if (not I.branch_index_valid(b0))
-      update_subA_index_branch(I,A,T,b0);
+      I.update_branch(A,T,b0);
 
     //    const vector<unsigned>& smap = MModel.state_letters();
 
@@ -601,7 +601,7 @@ namespace substitution {
     assert(MModel.n_states() == n_states);
 
     if (not I.branch_index_valid(b0))
-      update_subA_index_branch(I,A,T,b0);
+      I.update_branch(A,T,b0);
 
     const vector<unsigned>& smap = MModel.state_letters();
 
