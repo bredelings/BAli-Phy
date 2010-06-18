@@ -370,31 +370,6 @@ namespace substitution {
       if (mi > 2)
 	p_col *= element_prod_sum(F,*m[2]);
 
-#ifndef NDEBUG
-      //-------------- Set letter & model prior probabilities  ---------------//
-      element_assign(S,F);
-
-      //-------------- Propagate and collect information at 'root' -----------//
-      for(int j=0;j<rb.size();j++) {
-	int i0 = index(i,j);
-	if (i0 != alphabet::gap)
-	  element_prod_modify(S,(*branch_cache[j])[i0]);
-      }
-
-      //------------ Check that individual models are not crazy -------------//
-      for(int m=0;m<n_models;m++) {
-	double p_model=0;
-	for(int s=0;s<n_states;s++)
-	  p_model += S(m,s);
-	// A specific model (e.g. the INV model) could be impossible
-	assert(0 <= p_model and p_model <= 1.00000000001);
-      }
-
-      double p_col2 = element_sum(S);
-
-      assert((p_col - p_col2)/std::max(p_col,p_col2) < 1.0e-9);
-#endif
-
       // SOME model must be possible
       assert(0 <= p_col and p_col <= 1.00000000001);
 
