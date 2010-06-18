@@ -212,6 +212,20 @@ namespace substitution {
     return total;
   }
 
+  void WeightedFrequencyMatrix(Matrix& F, const MultiModel& MModel) 
+  {
+    // cache matrix of frequencies
+    const int n_models = F.size1();
+    const int n_states = F.size2();
+
+    for(int m=0;m<n_models;m++) {
+      double p = MModel.distribution()[m];
+      const valarray<double>& f = MModel.base_model(m).frequencies();
+      for(int s=0;s<n_states;s++) 
+	F(m,s) = f[s]*p;
+    }
+  }
+
   efloat_t calc_root_probability(const alignment&, const Tree& T,Likelihood_Cache& cache,
 			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
@@ -233,12 +247,7 @@ namespace substitution {
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
-    for(int m=0;m<n_models;m++) {
-      double p = MModel.distribution()[m];
-      const valarray<double>& f = MModel.base_model(m).frequencies();
-      for(int s=0;s<n_states;s++) 
-	F(m,s) = f[s]*p;
-    }
+    WeightedFrequencyMatrix(F, MModel);
 
     // look up the cache rows now, once, instead of for each column
     vector< vector<Matrix>* > branch_cache;
@@ -332,12 +341,7 @@ namespace substitution {
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
-    for(int m=0;m<n_models;m++) {
-      double p = MModel.distribution()[m];
-      const valarray<double>& f = MModel.base_model(m).frequencies();
-      for(int s=0;s<n_states;s++) 
-	F(m,s) = f[s]*p;
-    }
+    WeightedFrequencyMatrix(F, MModel);
 
     // look up the cache rows now, once, instead of for each column
     vector< vector<Matrix>* > branch_cache;
@@ -923,12 +927,7 @@ namespace substitution {
 
     // cache matrix of frequencies
     Matrix F(n_models,n_states);
-    for(int m=0;m<n_models;m++) {
-      double p = MModel.distribution()[m];
-      const valarray<double>& f = MModel.base_model(m).frequencies();
-      for(int s=0;s<n_states;s++) 
-	F(m,s) = f[s]*p;
-    }
+    WeightedFrequencyMatrix(F, MModel);
 
     const vector<unsigned>& smap = MModel.state_letters();
 
