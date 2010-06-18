@@ -185,13 +185,13 @@ public:
   void validate_branch(int b) {cache->validate_branch(token,b);}
 
   /// Cached conditional likelihoods for branch b
-  const std::vector<Matrix>& operator[](int b) const {
+  const Likelihood_Cache_Branch& operator[](int b) const {
     int loc = cache->location(token,b);
     return (*cache)[loc];
   }
 
   /// Cached conditional likelihoods for branch b
-  std::vector<Matrix>& operator[](int b) {
+  Likelihood_Cache_Branch& operator[](int b) {
     int loc = cache->location(token,b);
     return (*cache)[loc];
   }
