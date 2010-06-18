@@ -644,8 +644,10 @@ namespace substitution {
 	C = &(*branch_cache[0])[i0];
       else if (i1 != alphabet::gap)
 	C = &(*branch_cache[1])[i1];
-      else
-	std::abort(); // columns like this should not be in the index
+
+      //      else
+      //	std::abort(); // columns like this should not be in the index
+      // Columns like this would not be in subA_index_leaf, but might be in subA_index_internal
 
       // propagate from the source distribution
       Matrix& R = (*branch_cache[2])[i];            //name the result matrix
