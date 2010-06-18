@@ -621,6 +621,20 @@ namespace substitution {
     default_timer_stack.pop_timer();
   }
 
+  void collect_internal_branch(const vector<int>& b, ublas::matrix<int>& index, Likelihood_Cache& cache,
+			       const MultiModel& MModel)
+  {
+    // look up the cache rows now, once, instead of for each column
+    vector< vector<Matrix>* > branch_cache;
+    for(int i=0;i<b.size();i++)
+      branch_cache.push_back(&cache[b[i]]);
+
+    ///    Hmm... See calc_root_probability_unaligned( )...
+    
+    efloat_t other_subst = 1;
+    cache[b[2]].other_subst = cache[b[0]].other_subst * cache[b[1]].other_subst * other_subst;
+  }
+
   void peel_internal_branch(const vector<int>& b,ublas::matrix<int>& index, Likelihood_Cache& cache,
 			    const vector<Matrix>& transition_P,const MultiModel& IF_DEBUG(MModel))
   {
@@ -703,12 +717,18 @@ namespace substitution {
       b.push_back(*i);
     b.push_back(b0);
 
+    /*---------------------- Do the propagation part --------------------------*/
     // get the relationships with the sub-alignments for the (two) branches behind b0
-    ublas::matrix<int> index = I.get_subA_index_select(b,A,T);
-    assert(index.size1() == I.branch_index_length(b0));
+    ublas::matrix<int> index_propagate = I.get_subA_index_select(b,A,T);
+    assert(index_propagate.size1() == I.branch_index_length(b0));
     assert(I.branch_index_valid(b0));
 
-    peel_internal_branch(b, index, cache, transition_P, MModel);
+    peel_internal_branch(b, index_propagate, cache, transition_P, MModel);
+
+    /*---------------------- Do the propagation part --------------------------*/
+    ublas::matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
+
+    collect_internal_branch(b, index_collect, cache, MModel);
 
     default_timer_stack.pop_timer();
   }
