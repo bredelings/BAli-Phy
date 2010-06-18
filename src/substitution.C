@@ -470,6 +470,9 @@ namespace substitution {
       else
 	element_assign(R,1);
     }
+
+    cache[b0].other_subst = 1;
+
     default_timer_stack.pop_timer();
   }
 
@@ -555,6 +558,9 @@ namespace substitution {
       else
 	element_assign(R,1);
     }
+
+    cache[b0].other_subst = 1;
+
     default_timer_stack.pop_timer();
   }
 
@@ -602,6 +608,9 @@ namespace substitution {
       else
 	element_assign(R,1);
     }
+
+    cache[b0].other_subst = 1;
+
     default_timer_stack.pop_timer();
   }
 
