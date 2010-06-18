@@ -116,7 +116,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
 
   // empirical frequencies
   if (not args.count("frequencies"))
-    frequencies = A.get_alphabet().get_frequencies_from_counts(counts,A.n_sequences()/2);
+    frequencies = A.get_alphabet().get_frequencies_from_counts(counts,chop_internal(A).n_sequences());
 
   // uniform frequencies
   else if (args["frequencies"].as<string>() == "uniform")
@@ -128,7 +128,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
 
     if (not T) throw myexception()<<"You can only specify nucleotide frequencies on Triplet or Codon alphabets.";
     valarray<double> N_counts = get_nucleotide_counts_from_codon_counts(*T,counts);
-    valarray<double> fN = T->getNucleotides().get_frequencies_from_counts(N_counts,A.n_sequences()/2);
+    valarray<double> fN = T->getNucleotides().get_frequencies_from_counts(N_counts,chop_internal(A).n_sequences());
 
     frequencies = get_codon_frequencies_from_independent_nucleotide_frequencies(*T,fN);
   }
