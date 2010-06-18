@@ -1285,7 +1285,7 @@ namespace substitution {
 #ifdef DEBUG_CACHING
     data_partition P2 = P;
     P2.LC.invalidate_all();
-    invalidate_subA_index_all(P2.subA);
+    P2.invalidate_subA_index_all();
     for(int i=0;i<P2.T->n_branches();i++)
       P2.setlength(i,P2.T->branch(i).length());
     efloat_t result2 = Pr(P2, P2.LC);
