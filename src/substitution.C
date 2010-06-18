@@ -630,8 +630,7 @@ namespace substitution {
     default_timer_stack.pop_timer();
   }
 
-
-  void peel_internal_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+  void peel_internal_branch(int b0,subA_index_leaf& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 			    const MatCache& transition_P,const MultiModel& IF_DEBUG(MModel))
   {
     total_peel_internal_branches++;
@@ -645,7 +644,6 @@ namespace substitution {
     // get the relationships with the sub-alignments for the (two) branches behind b0
     b.push_back(b0);
     ublas::matrix<int> index = I.get_subA_index_select(b,A,T);
-    b.pop_back();
     assert(index.size1() == I.branch_index_length(b0));
     assert(I.branch_index_valid(b0));
 
@@ -662,7 +660,6 @@ namespace substitution {
     vector< vector<Matrix>* > branch_cache;
     for(int i=0;i<b.size();i++)
       branch_cache.push_back(&cache[b[i]]);
-    branch_cache.push_back(&cache[b0]);
     
     //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
     for(int i=0;i<I.branch_index_length(b0);i++) 
@@ -699,6 +696,85 @@ namespace substitution {
     }
     default_timer_stack.pop_timer();
   }
+
+  void peel_internal_branch(int b0,subA_index_internal& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+			    const MatCache& transition_P,const MultiModel& IF_DEBUG(MModel))
+  {
+    total_peel_internal_branches++;
+    default_timer_stack.push_timer("substitution::peel_internal_branch");
+
+    // find the names of the (two) branches behind b0
+    vector<int> b;
+    for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
+      b.push_back(*i);
+    b.push_back(b0);
+
+    // get the relationships with the sub-alignments for the (two) branches behind b0
+    ublas::matrix<int> index = I.get_subA_index_select(b,A,T);
+    assert(index.size1() == I.branch_index_length(b0));
+    assert(I.branch_index_valid(b0));
+
+    // The number of directed branches is twice the number of undirected branches
+    const int B        = T.n_branches();
+
+    // scratch matrix
+    Matrix& S = cache.scratch(0);
+    const int n_models = S.size1();
+    const int n_states = S.size2();
+    assert(MModel.n_states() == n_states);
+
+    // look up the cache rows now, once, instead of for each column
+    vector< vector<Matrix>* > branch_cache;
+    for(int i=0;i<b.size();i++)
+      branch_cache.push_back(&cache[b[i]]);
+    
+    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
+    for(int i=0;i<I.branch_index_length(b0);i++) 
+    {
+      // compute the source distribution from 2 branch distributions
+      int i0 = index(i,0);
+      int i1 = index(i,1);
+
+      const Matrix* C = &S;
+      if (i0 != alphabet::gap and i1 != alphabet::gap)
+	element_prod_assign(S, (*branch_cache[0])[i0], (*branch_cache[1])[i1]);
+      else if (i0 != alphabet::gap)
+	C = &(*branch_cache[0])[i0];
+      else if (i1 != alphabet::gap)
+	C = &(*branch_cache[1])[i1];
+      else
+	std::abort(); // columns like this should not be in the index
+
+      // propagate from the source distribution
+      Matrix& R = (*branch_cache[2])[i];            //name the result matrix
+      for(int m=0;m<n_models;m++) {
+	
+	// FIXME!!! - switch order of MatCache to be MC[b][m]
+	const Matrix& Q = transition_P[m][b0%B];
+	
+	// compute the distribution at the target (parent) node - multiple letters
+	for(int s1=0;s1<n_states;s1++) {
+	  double temp=0;
+	  for(int s2=0;s2<n_states;s2++)
+	    temp += Q(s1,s2)*(*C)(m,s2);
+	  R(m,s1) = temp;
+	}
+      }
+    }
+    default_timer_stack.pop_timer();
+  }
+
+  void peel_internal_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+			    const MatCache& transition_P,const MultiModel& MModel)
+  {
+    if (dynamic_cast<subA_index_leaf*>(&I))
+      peel_internal_branch(b0,dynamic_cast<subA_index_leaf&>(I),cache,A,T,transition_P,MModel);
+    else if (dynamic_cast<subA_index_internal*>(&I))
+      peel_internal_branch(b0,dynamic_cast<subA_index_internal&>(I),cache,A,T,transition_P,MModel);
+    else
+      throw myexception()<<"subA_index_t is of unrecognized type!";
+  }
+
 
   void peel_internal_branch_F81(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 				const MultiModel& MModel)
