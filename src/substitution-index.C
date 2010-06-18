@@ -686,20 +686,18 @@ void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int
     resize(A.length()+1, size2());
   }
 
-  //
+  // Actually update the index
   int node = T.directed_branch(b).source();
-  if (b < T.n_leaves()) 
-  {
-    int l=0;
-    for(int c=0;c<A.length();c++) {
-      if (A.character(c,node))
-	I(c+1,b) = l++;
-      if (A.gap(c,b))
-	I(c+1,b) = alphabet::gap;
-    }
-    assert(l == A.seqlength(node));
-    I(0,b) = l;
+
+  int l=0;
+  for(int c=0;c<A.length();c++) {
+    if (A.character(c,node))
+      I(c+1,b) = l++;
+    else
+      I(c+1,b) = alphabet::gap;
   }
+  assert(l == A.seqlength(node));
+  I(0,b) = l;
 }
 
 void subA_index_internal::check_footprint_for_branch(const alignment& A, const Tree& T, int b) const
