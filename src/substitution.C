@@ -403,6 +403,9 @@ namespace substitution {
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
 
+    for(int i=0;i<rb.size();i++)
+      total *= cache[rb[i]].other_subst;
+
     default_timer_stack.pop_timer();
     return total;
   }
