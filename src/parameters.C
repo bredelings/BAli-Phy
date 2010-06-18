@@ -51,6 +51,11 @@ void data_partition::variable_alignment(bool b)
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
+    subA = subA_index_leaf(A->length()+1, T->n_branches()*2);
+
+    // We just changed the subA index type
+    LC.invalidate_all();
+
     if (A->n_sequences() == T->n_nodes())
       if (not check_leaf_characters_minimally_connected(*A,*T))
 	throw myexception()<<"Failing to turn off alignment variability: non-default internal node states";
@@ -58,6 +63,8 @@ void data_partition::variable_alignment(bool b)
   // turning ON alignment variation
   else 
   {
+    subA = subA_index_internal(A->length()+1, T->n_branches()*2);
+
     assert(has_IModel() and A->n_sequences() == T->n_nodes());
     minimally_connect_leaf_characters(*A,*T);
     note_alignment_changed();
@@ -66,6 +73,7 @@ void data_partition::variable_alignment(bool b)
     recalc_imodel();
 
     // Minimally connecting leaf characters may remove empty columns, in theory.
+    // And we just changed the subA index type
     LC.invalidate_all();
   }
 }
