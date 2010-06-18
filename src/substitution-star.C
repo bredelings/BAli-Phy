@@ -38,14 +38,14 @@ using std::vector;
 namespace substitution {
 
   double Pr_star(const vector<int>& column,const Tree& T,const ReversibleModel& SModel,
-		 const vector<Matrix>& transition_P) {
+		 const MatCache& transition_P,int m) {
     const alphabet& a = SModel.Alphabet();
 
     double p=0;
     for(int lroot=0;lroot<a.size();lroot++) {
       double temp=SModel.frequencies()[lroot];
       for(int b=0;b<T.n_leaves();b++) {
-	const Matrix& Q = transition_P[b];
+	const Matrix& Q = transition_P[b][m];
 
 	int lleaf = column[b];
 	if (a.is_letter(lleaf))
@@ -78,7 +78,8 @@ namespace substitution {
 	  total += MModel.distribution()[m] * Pr_star(residues,
 						      T,
 						      MModel.base_model(m),
-						      MC.transition_P(m)
+						      MC,
+						      m
 						      );
 
       // we don't get too close to zero, normally

@@ -27,25 +27,38 @@ void MatCache::setlength(int b,double l,Tree& T,const substitution::MultiModel& 
   assert(b >= 0 and b < T.n_branches());
   T.branch(b).set_length(l);
   for(int m=0;m<SModel.n_base_models();m++)
-    transition_P_[m][b] = SModel.transition_p(l,m);
+    transition_P_[b][m] = SModel.transition_p(l,m);
 }
-  
+
 void MatCache::recalc(const Tree& T,const substitution::MultiModel& SModel) {
   for(int b=0;b<T.n_branches();b++)
     for(int m=0;m<SModel.n_base_models();m++)
-      transition_P_[m][b] = SModel.transition_p(T.branch(b).length(),m);
+      transition_P_[b][m] = SModel.transition_p(T.branch(b).length(),m);
 }
 
-MatCache::MatCache(const Tree& T,const substitution::MultiModel& SM) 
-  :transition_P_(vector< vector <Matrix> >(SM.n_base_models(),
-					   vector<Matrix>(T.n_branches(),
-							  Matrix(SM.Alphabet().size(),
-								 SM.Alphabet().size()
-								 )
-							  ) 
-					   ) 
-		 )
-  { 
-    recalc(T,SM);
-  }
+int MatCache::n_branches() const
+{
+  return n_branches_;
+}
 
+int MatCache::n_models() const
+{
+  return n_models_;
+}
+
+int MatCache::n_states() const
+{
+  return n_states_;
+}
+
+MatCache::MatCache(const Tree& T,const substitution::MultiModel& SM)
+  :n_branches_(T.n_branches()),
+   n_models_(SM.n_base_models()),
+   n_states_(SM.state_letters().size()),
+   transition_P_(n_branches_, vector<Matrix>(n_models_,
+					     Matrix(n_states_, n_states_)
+					     ) 
+		 )
+{ 
+  recalc(T,SM);
+}

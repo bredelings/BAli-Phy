@@ -111,7 +111,7 @@ vector< Matrix > distributions_star(const data_partition& P,
 	if (not group[n]) continue;
 
 	int letter = A(seq[column],n);
-	const Matrix& Q = P.MC.transition_P(m,n);
+	const Matrix& Q = P.MC.transition_P(n,m);
 
 	// Pr(root=l) includes Pr(l->letter)
 	if (a.is_letter(letter))

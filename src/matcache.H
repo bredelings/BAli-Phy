@@ -28,31 +28,42 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// Substitution Model w/ cache
 class MatCache {
 
+  int n_branches_;
+
+  int n_models_;
+
+  int n_states_;
+
   std::vector< std::vector<Matrix> > transition_P_;
 
 public:
+
+  int n_models() const;
+
+  int n_branches() const;
+
+  int n_states() const;
 
   /// Show all the matrices
   const std::vector< std::vector< Matrix > >& transition_P() const { return transition_P_; }
 
   /// For a given rate, Show all the matrices for each branch
-  const std::vector< Matrix > & transition_P(int r) const { return transition_P_[r]; }
+  const std::vector< Matrix > & transition_P(int b) const { return transition_P_[b]; }
 
   /// For a given rate, Show all the matrices for each branch
-  const std::vector< Matrix > & operator[](int r) const { return transition_P_[r]; }
+  const std::vector< Matrix > & operator[](int b) const { return transition_P_[b]; }
 
   /// For a given rate, and branch, show the matrix
-  const Matrix& transition_P(int r,int b) const 
+  const Matrix& transition_P(int b,int r) const 
   {
 #ifndef NDEBUG
     // is this to make it work when we just have a pair?
     // Then we can't hack out the second branch...
     // Hmm.. could we make one node the root?
-    int nbranches = transition_P_[0].size();
-    assert(b < nbranches);
-    if (b == nbranches) b--;
+    assert(b < n_branches());
+    if (b == n_branches()) b--;
 #endif
-    return transition_P_[r][b];
+    return transition_P_[b][r];
   }
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
