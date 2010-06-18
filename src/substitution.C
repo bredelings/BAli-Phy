@@ -328,16 +328,13 @@ namespace substitution {
 
     assert(index.size2() == rb.size());
 
-    const int root = cache.root;
-
-    if (T[root].is_leaf_node())
+    if (T[cache.root].is_leaf_node())
       throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
     assert(rb.size() == 3);
 
     // scratch matrix 
-    Matrix & S = cache.scratch(0);
-    const int n_models = S.size1();
-    const int n_states = S.size2();
+    const int n_models = cache.n_models();
+    const int n_states = cache.n_states();
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
