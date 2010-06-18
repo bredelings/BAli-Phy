@@ -1158,10 +1158,17 @@ namespace substitution {
 	for(int s1=0;s1<n_states;s1++)
 	  equal = equal and check_equal(M1(m,s1), M2(m,s1));
     }
+
     if (equal)
-      ; //std::cerr<<"branch "<<b<<": caches are equal"<<endl;
+      ; //std::cerr<<"branch "<<b<<": cached conditional likelihoods are equal"<<endl;
     else
-      std::cerr<<"branch "<<b<<": caches are NOT equal"<<std::endl;
+      std::cerr<<"branch "<<b<<": cached conditional likelihoods are NOT equal"<<std::endl;
+
+    bool other_subst_equal = (std::abs(LC1[b].other_subst.log() - LC2[b].other_subst.log()) < 1.0e-9);
+    if (other_subst_equal)
+      ; //std::cerr<<"branch "<<b<<": other_subst valies are equal"<<endl;
+    else
+      std::cerr<<"branch "<<b<<": other_subst values are NOT equal"<<std::endl;
   }
 
   void compare_caches(const subA_index_t& I1, const subA_index_t& I2,
