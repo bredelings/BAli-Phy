@@ -692,7 +692,7 @@ namespace substitution {
   }
 
   void peel_internal_branch(int b0,subA_index_internal& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
-			    const vector<Matrix>& transition_P,const MultiModel& IF_DEBUG(MModel))
+			    const vector<Matrix>& transition_P,const MultiModel& MModel)
   {
     total_peel_internal_branches++;
     default_timer_stack.push_timer("substitution::peel_internal_branch");
