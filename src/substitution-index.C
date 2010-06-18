@@ -175,6 +175,32 @@ ublas::matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b,cons
 }
 
 
+/// Select rows for branches \a b, and toss columns where the last branch has entry -1
+ublas::matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b,const alignment& A,const Tree& T) 
+{
+  // the alignment of sub alignments
+  ublas::matrix<int> subA = get_subA_index(b,A,T);
+
+  const int B = b.size()-1;
+  int l=0;
+  for(int c=0;c<subA.size1();c++)
+  {
+    bool child_present = false;
+    for(int i=0;i<b.size()-1 and not child_present;i++)
+      if (subA(c,i) != alphabet::gap)
+	child_present = true;
+
+    if (child_present and subA(c,B) == alphabet::gap)
+      subA(c,B) = l++;
+    else
+      subA(c,B) = alphabet::gap;
+  }
+
+  // return processed indices
+  return subA_select(subA);
+}
+
+
 /// Select rows for branches \a b, and toss columns unless at least one character in \a nodes is present.
 ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
 						    const vector<int>& nodes) 

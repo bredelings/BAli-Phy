@@ -103,6 +103,9 @@ public:
   /// align sub-alignments corresponding to branches in b
   ublas::matrix<int> get_subA_index_select(const std::vector<int>& b,const alignment& A,const Tree& T);
 
+  /// select sub-alignments columns in branches (b-b.back()) that are aligned to nothing in b.back()
+  ublas::matrix<int> get_subA_index_vanishing(const std::vector<int>& b,const alignment& A,const Tree& T);
+
   /// align sub-alignments corresponding to branches in b
   ublas::matrix<int> get_subA_index_select(const std::vector<int>& b) const;
 
