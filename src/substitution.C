@@ -321,7 +321,7 @@ namespace substitution {
   }
 
   efloat_t calc_root_probability_unaligned(const alignment&,const Tree& T,Likelihood_Cache& cache,
-			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
+					   const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
     default_timer_stack.push_timer("substitution::calc_root_unaligned");
