@@ -31,6 +31,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define IF_DEBUG(x) x
 #endif
 
+#define DEBUG_CACHING
+
 // recalculate a likelihood immediate afterwards, and see if we get the same answer...
 // perhaps move the collection root node one branch away?
 // then we have to do re-validation...
@@ -606,15 +608,51 @@ namespace substitution {
   void collect_internal_branch(const vector<int>& b, ublas::matrix<int>& index, Likelihood_Cache& cache,
 			       const MultiModel& MModel)
   {
-    // look up the cache rows now, once, instead of for each column
-    vector< vector<Matrix>* > branch_cache;
-    for(int i=0;i<b.size();i++)
-      branch_cache.push_back(&cache[b[i]]);
+    assert(b.size() == 3);
+    assert(index.size2() == 2);
 
-    ///    Hmm... See calc_root_probability_unaligned( )...
+    // scratch matrix 
+    const int n_models = cache.n_models();
+    const int n_states = cache.n_states();
+
+    // cache matrix F(m,s) of p(m)*freq(m,l)
+    Matrix F(n_models,n_states);
+    WeightedFrequencyMatrix(F, MModel);
+
+    // look up the cache rows now, once, instead of for each column
+    vector<Matrix>* branch_cache[2];
+    for(int i=0;i<2;i++)
+      branch_cache[i] = &cache[b[i]];
     
-    efloat_t other_subst = 1;
-    cache[b[2]].other_subst = cache[b[0]].other_subst * cache[b[1]].other_subst * other_subst;
+    efloat_t total = 1;
+    for(int i=0;i<index.size1();i++)
+    {
+      double p_col = 1;
+
+      int i0 = index(i,0);
+      int i1 = index(i,1);
+
+      if (i0 != alphabet::gap) 
+      {
+	assert(i1 == alphabet::gap);
+	p_col = element_prod_sum(F, (*branch_cache[0])[i0] );
+      }
+      else if (i1 != alphabet::gap)
+      {
+	assert(i0 == alphabet::gap);
+	p_col = element_prod_sum(F, (*branch_cache[1])[i1] );
+      }
+      else
+	std::abort();
+
+      // SOME model must be possible
+      assert(0 <= p_col and p_col <= 1.00000000001);
+
+      // This does a log( ) operation.
+      total *= p_col;
+      //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+    }
+    cache[b[2]].other_subst = cache[b[0]].other_subst * cache[b[1]].other_subst * total;
   }
 
   void peel_internal_branch(const vector<int>& b,ublas::matrix<int>& index, Likelihood_Cache& cache,
