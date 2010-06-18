@@ -395,9 +395,9 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    beta(2, 1.0)
 {
   if (variable_alignment())
-    subA = new subA_index_internal(a.length()+1, t.n_branches()*2);
+    subA = subA_index_internal(a.length()+1, t.n_branches()*2);
   else
-    subA = new subA_index_leaf(a.length()+1, t.n_branches()*2);
+    subA = subA_index_leaf(a.length()+1, t.n_branches()*2);
 
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
@@ -426,9 +426,9 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    beta(2, 1.0)
 {
   if (variable_alignment())
-    subA = new subA_index_internal(a.length()+1, t.n_branches()*2);
+    subA = subA_index_internal(a.length()+1, t.n_branches()*2);
   else
-    subA = new subA_index_leaf(a.length()+1, t.n_branches()*2);
+    subA = subA_index_leaf(a.length()+1, t.n_branches()*2);
 
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
