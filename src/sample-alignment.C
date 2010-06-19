@@ -209,7 +209,6 @@ void sample_alignment(Parameters& P,int b)
   nodes.push_back(node2);
 
   p.push_back(P0);
-  nodes.push_back( nodes[0] );
   Matrices.push_back(Matrices[0]);
 
   vector< vector< efloat_t > > OS(p.size());
