@@ -242,8 +242,18 @@ void data_partition::note_alignment_changed_on_branch(int b)
   if (source >= TT.n_leaves())
     note_sequence_length_changed(source);
 
-  // if the alignment changes AT ALL, then the mapping from subA columns to alignment columns is broken
+  // If the alignment changes AT ALL, then the mapping from subA columns to alignment columns is broken.
+  // Therefore we always mark it as out-of-date and needing to be recomputed.
   invalidate_subA_index_all();
+
+  // However, LC depends only on the alignment of subA indices from different branches.
+  // 
+  // If the projected leaf alignment remains unchanged, then the subA columns
+  // projected to the leaves remain unchanged.  If we only index these columns, then the
+  // get_subA_index( ) will not change if we are using subA_index_leaf.
+  //
+  if (subA.as<subA_index_internal>())
+    LC.invalidate_branch_alignment(*T,b);
 }
 
 void data_partition::note_alignment_changed()
