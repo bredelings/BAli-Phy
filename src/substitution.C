@@ -733,6 +733,8 @@ namespace substitution {
 
     peel_internal_branch(b, index, cache, transition_P, MModel);
 
+    cache[b0].other_subst = 1;
+
     default_timer_stack.pop_timer();
   }
 
