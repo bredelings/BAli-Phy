@@ -402,7 +402,7 @@ void subA_index_t::invalidate_all_branches()
 
 void subA_index_t::invalidate_directed_branch(const Tree& T,int b) 
 {
-  vector<const_branchview> branches = branches_after(T,b);
+  vector<const_branchview> branches = branches_after_inclusive(T,b);
 
   for(int i=0;i<branches.size();i++)
     invalidate_one_branch(branches[i]);

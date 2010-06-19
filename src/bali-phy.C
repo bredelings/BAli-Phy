@@ -626,7 +626,7 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 			 <<"' not found in topology constraint tree.";
     
     // mark branch and child branches as constrained
-    vector<const_branchview> b2 = branches_after(TC,found); 
+    vector<const_branchview> b2 = branches_after_inclusive(TC,found); 
     for(int j=0;j<b2.size();j++) {
       if (b2[j].target().degree() > 3)
 	throw myexception()<<"Alignment constraint: clade '"

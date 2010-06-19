@@ -746,8 +746,8 @@ bool tree_layout::edges_cross() const
 
 bool tree_layout::subtree_edges_cross(int b1, int b2) const
 {
-  vector<const_branchview> branches1 = branches_after(T, b1);
-  vector<const_branchview> branches2 = branches_after(T, b2);
+  vector<const_branchview> branches1 = branches_after_inclusive(T, b1);
+  vector<const_branchview> branches2 = branches_after_inclusive(T, b2);
 
   for(int i=0;i<branches1.size();i++)
     for(int j=0;j<branches2.size();j++)
@@ -957,7 +957,7 @@ void tree_layout::rotate_subtree(int b,double alpha)
   double xc = node_positions[T.directed_branch(b).source()].x;
   double yc = node_positions[T.directed_branch(b).source()].y;
 
-  vector<const_branchview> branches = branches_after(T, b);
+  vector<const_branchview> branches = branches_after_inclusive(T, b);
   for(int i=0;i < branches.size();i++)
   {
     point_position& pp = node_positions[branches[i].target()];
@@ -1194,7 +1194,7 @@ circular_range get_angles(const tree_layout& L,int b,int n)
   double A = get_angle(L,b);
   circular_range R(A,A);
 
-  vector<const_branchview> branches = branches_after(L.T,b);
+  vector<const_branchview> branches = branches_after_inclusive(L.T,b);
   // skip branch b - only consider its children
   // .. because of the difficulty of handling line segments from the origin
   //    (This seems to work... for now.)

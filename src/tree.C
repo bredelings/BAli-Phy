@@ -572,7 +572,7 @@ void get_branches_after(vector<const_branchview>& branch_list) {
     append(branch_list[i].branches_after(),branch_list);
 }
 
-vector<const_branchview> branches_before(const Tree& T,int b) {
+vector<const_branchview> branches_before_inclusive(const Tree& T,int b) {
   vector<const_branchview> branch_list;
   branch_list.reserve(T.n_branches());
 
@@ -583,7 +583,7 @@ vector<const_branchview> branches_before(const Tree& T,int b) {
 }
 
 
-vector<const_branchview> branches_after(const Tree& T,int b) {
+vector<const_branchview> branches_after_inclusive(const Tree& T,int b) {
   vector<const_branchview> branch_list;
   branch_list.reserve(T.n_branches());
 

@@ -220,7 +220,7 @@ void Likelihood_Cache::invalidate_all() {
 }
 
 void Likelihood_Cache::invalidate_directed_branch(const Tree& T,int b) {
-  vector<const_branchview> branch_list = branches_after(T,b);
+  vector<const_branchview> branch_list = branches_after_inclusive(T,b);
   for(int i=0;i<branch_list.size();i++)
     cache->invalidate_one_branch(token,branch_list[i]);
 }
@@ -241,10 +241,10 @@ void Likelihood_Cache::invalidate_branch(const Tree& T,int b) {
 }
 
 void Likelihood_Cache::invalidate_branch_alignment(const Tree& T,int b) {
-  vector<const_branchview> branch_list = branches_after(T,b);
+  vector<const_branchview> branch_list = branches_after_inclusive(T,b);
   for(int i=1;i<branch_list.size();i++)
     cache->invalidate_one_branch(token,branch_list[i]);
-  branch_list = branches_after(T,T.directed_branch(b).reverse());
+  branch_list = branches_after_inclusive(T,T.directed_branch(b).reverse());
   for(int i=1;i<branch_list.size();i++)
     cache->invalidate_one_branch(token,branch_list[i]);
 }
