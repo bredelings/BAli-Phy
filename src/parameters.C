@@ -40,6 +40,8 @@ using std::string;
 using std::cerr;
 using std::endl;
 
+bool use_internal_index = false;
+
 void data_partition::variable_alignment(bool b)
 {
   variable_alignment_ = b;
@@ -63,7 +65,10 @@ void data_partition::variable_alignment(bool b)
   // turning ON alignment variation
   else 
   {
-    subA = subA_index_internal(A->length()+1, T->n_branches()*2);
+    if (use_internal_index)
+      subA = subA_index_internal(A->length()+1, T->n_branches()*2);
+    else
+      subA = subA_index_leaf(A->length()+1, T->n_branches()*2);
 
     assert(has_IModel() and A->n_sequences() == T->n_nodes());
     minimally_connect_leaf_characters(*A,*T);
@@ -412,7 +417,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
-  if (variable_alignment())
+  if (variable_alignment() and use_internal_index)
     subA = subA_index_internal(a.length()+1, t.n_branches()*2);
   else
     subA = subA_index_leaf(a.length()+1, t.n_branches()*2);
@@ -443,7 +448,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
-  if (variable_alignment())
+  if (variable_alignment() and use_internal_index)
     subA = subA_index_internal(a.length()+1, t.n_branches()*2);
   else
     subA = subA_index_leaf(a.length()+1, t.n_branches()*2);
