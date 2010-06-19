@@ -428,8 +428,11 @@ void get_branches_after(std::vector<const_branchview>& branch_list);
 /// list of all branches before b, with children before parents
 std::vector<const_branchview> branches_before_inclusive(const Tree& T,int b);
 
-/// list of all branches after b, with children after parents
+/// list of all b and all branches after b, with children after parents
 std::vector<const_branchview> branches_after_inclusive(const Tree& T,int b);
+
+/// list of all branches after b, with children after parents
+std::vector<const_branchview> branches_after(const Tree& T,int b);
 
 /// list of all branches after n, with n as root and children after parents
 std::vector<const_branchview> branches_from_node(const Tree& T,int n);

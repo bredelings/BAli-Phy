@@ -753,9 +753,7 @@ spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
   /*----------- get the list of possible attachment points, with [0] being the current one.------- */
   // \todo - With tree constraints, or with a variable alignment and alignment constraints,
   //          we really should eliminate branches that we couldn't attach to, here.
-  attachment_branches = branches_after_inclusive(T,b_parent);
-
-  attachment_branches.erase(attachment_branches.begin()); // branches_after(b_parent) includes b1 -- which we do not want.
+  attachment_branches = branches_after(T,b_parent);
 
   // remove the moving branch name (BM) from the list of attachment branches
   for(int i=attachment_branches.size()-1;i>=0;i--)

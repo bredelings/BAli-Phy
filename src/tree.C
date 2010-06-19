@@ -593,6 +593,15 @@ vector<const_branchview> branches_after_inclusive(const Tree& T,int b) {
   return branch_list;
 }
 
+vector<const_branchview> branches_after(const Tree& T,int b) 
+{
+  vector<const_branchview> branch_list = branches_after_inclusive(T,b);
+
+  branch_list.erase(branch_list.begin());
+
+  return branch_list;
+}
+
 vector<const_branchview> branches_from_node(const Tree& T,int n) {
 
   vector<const_branchview> branch_list;
