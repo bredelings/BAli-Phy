@@ -757,7 +757,6 @@ namespace substitution {
       Matrix& R = (*branch_cache[2])[i];            //name the result matrix
       for(int m=0;m<n_models;m++) {
 	
-	// FIXME!!! - switch order of MatCache to be MC[b][m]
 	const Matrix& Q = transition_P[m];
 	
 	// compute the distribution at the target (parent) node - multiple letters
