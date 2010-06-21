@@ -315,13 +315,18 @@ std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I)
 {
   o<<"["<<I.size1()<<","<<I.size2()<<"]\n";
   for(int j=0;j<I.size2();j++) 
-    for(int i=0;i<I.size1();i++) {
-      o<<I(i,j);
-      if (i<I.size1()-1)
-	o<<"  ";
-      else
-	o<<std::endl;
+  {
+    o<<"["<<j<<"]:   ";
+
+    for(int i=0;i<I.size1();i++) 
+    {
+	o<<I(i,j);
+	if (i<I.size1()-1)
+	  o<<"  ";
+	else
+	  o<<std::endl;
     }
+  }
   return o;
 }
 
