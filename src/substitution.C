@@ -1593,6 +1593,20 @@ namespace substitution {
     }
 #endif
 
+#ifdef DEBUG_INTERNAL_INDEX
+    efloat_t result3 = Pr_from_scratch_leaf(P);
+
+    if (P.variable_alignment())
+    {
+      efloat_t result4 = Pr_from_scratch_internal(P);
+
+      compare_branch_totals(subA3,subA4,LC3,LC4, *P.T, *P.A, P.SModel());
+      assert(std::abs(log(result3) - log(result4)) < 1.0e-9);
+    }
+
+    assert(std::abs(log(result) - log(result3)) < 1.0e-9);
+#endif
+
     return result;
   }
 }
