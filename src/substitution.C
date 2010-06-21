@@ -1162,6 +1162,7 @@ namespace substitution {
     return L;
   }
 
+  /// Find the leaf branches of a connected subtree of nodes \a nodes instead of tree \a T
   vector<int> get_leaf_branches_from_subtree_nodes(const Tree& T, const vector<int>& nodes)
   {
     vector<int> branch_list;
