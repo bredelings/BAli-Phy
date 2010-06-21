@@ -677,6 +677,9 @@ namespace substitution {
     vector< vector<Matrix>* > branch_cache;
     for(int i=0;i<b.size();i++)
       branch_cache.push_back(&cache[b[i]]);
+
+    Matrix ones(n_models, n_states);
+    element_assign(ones, 1);
     
     for(int i=0;i<index.size1();i++) 
     {
@@ -691,6 +694,8 @@ namespace substitution {
 	C = &(*branch_cache[0])[i0];
       else if (i1 != alphabet::gap)
 	C = &(*branch_cache[1])[i1];
+      else
+	C = &ones;
 
       //      else
       //	std::abort(); // columns like this should not be in the index
