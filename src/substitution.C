@@ -1547,6 +1547,32 @@ namespace substitution {
     return Pr(*P.A, *P.subA, P.MC, *P.T, LC, P.SModel());
   }
 
+  efloat_t Pr_from_scratch_leaf(data_partition P)
+  {
+    subA_index_leaf subA(P.A->length()+1, P.T->n_branches()*2);
+
+    Likelihood_Cache LC(*P.T, P.SModel());
+    LC.set_length(P.A->length());
+    LC.root = P.LC.root;
+
+    return Pr(*P.A, subA, P.MC, *P.T, LC, P.SModel());
+  }
+
+  efloat_t Pr_from_scratch_internal(data_partition P)
+  {
+    assert(P.variable_alignment());
+
+    subA_index_internal subA(P.A->length()+1, P.T->n_branches()*2);
+
+    Likelihood_Cache LC(*P.T, P.SModel());
+    LC.set_length(P.A->length());
+    LC.root = P.LC.root;
+
+    check_internal_nodes_connected(*P.A,*P.T,vector<int>(1,LC.root));
+
+    return Pr(*P.A, subA, P.MC, *P.T, LC, P.SModel());
+  }
+
   efloat_t Pr(const data_partition& P) {
     efloat_t result = Pr(P, P.LC);
 
