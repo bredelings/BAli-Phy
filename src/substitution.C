@@ -24,6 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include <vector>
 #include "timer_stack.H"
+#include "alignment-util.H"
 
 #ifdef NDEBUG
 #define IF_DEBUG(x)
