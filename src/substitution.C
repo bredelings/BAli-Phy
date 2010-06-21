@@ -1349,6 +1349,68 @@ namespace substitution {
 
   }
 
+  efloat_t branch_total(int b0, const subA_index_t& I, const Likelihood_Cache& cache, const MultiModel& MModel)
+  {
+    // scratch matrix 
+    const int n_models = cache.n_models();
+    const int n_states = cache.n_states();
+
+    // cache matrix F(m,s) of p(m)*freq(m,l)
+    Matrix F(n_models,n_states);
+    WeightedFrequencyMatrix(F, MModel);
+
+    ublas::matrix<int> index = I.get_subA_index(vector<int>(1,b0));
+
+    efloat_t total = 1;
+    for(int i=0;i<index.size1();i++)
+    {
+      double p_col = 1;
+
+      int i0 = index(i,0);
+
+      if (i0 != -1)
+	p_col = element_prod_sum(F,cache[b0][i0]);
+
+      // SOME model must be possible
+      assert(0 <= p_col and p_col <= 1.00000000001);
+
+      // This does a log( ) operation.
+      total *= p_col;
+      //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+    }
+
+    total *= cache[b0].other_subst;
+
+    return total;
+  }
+
+  void compare_branch_totals(subA_index_t& I1, subA_index_t& I2,
+			     Likelihood_Cache& LC1, Likelihood_Cache& LC2, const Tree& T,
+			     const alignment& A, const MultiModel& MModel)
+  {
+    assert(LC1.root == LC2.root);
+    
+    //---------- determine the operations to perform ----------------//
+    vector<const_branchview> branches = branches_toward_node(T,LC1.root);
+
+    //-------------- Compute the branch likelihoods -----------------//
+    for(int i=0;i<branches.size();i++)
+    {
+      int b = branches[i];
+
+      assert(LC1.up_to_date(b));
+      assert(LC2.up_to_date(b));
+
+      efloat_t branch_total1 = branch_total(b,I1,LC1,MModel);
+      efloat_t other_subst1 = get_other_subst_behind_branch(b, A, T, I1, LC1, MModel);
+
+      efloat_t branch_total2 = branch_total(b,I2,LC2,MModel);
+      efloat_t other_subst2 = get_other_subst_behind_branch(b, A, T, I2, LC2, MModel);
+
+      assert(std::abs(log(branch_total1) - log(branch_total2)) < 1.0e-9);
+    }
+  }
+
   ///
   /// This routine unaligns sub-columns that do not have a '+' at the base of the
   /// branch pointing to the substitution root.  (The sequence at the root node is
