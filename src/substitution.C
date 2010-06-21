@@ -436,17 +436,20 @@ namespace substitution {
 
     const alphabet& a = A.get_alphabet();
 
+    if (not I.branch_index_valid(b0))
+      I.update_branch(A,T,b0);
+
+    //    const vector<unsigned>& smap = MModel.state_letters();
+
+    // This needs to be before accessing scratch
+    cache.set_length(I.branch_index_length(b0));
+
     // scratch matrix
     Matrix& S = cache.scratch(0);
     const int n_models  = S.size1();
     const int n_states  = S.size2();
     //    const int n_letters = a.n_letters();
     assert(MModel.n_states() == n_states);
-
-    if (not I.branch_index_valid(b0))
-      I.update_branch(A,T,b0);
-
-    //    const vector<unsigned>& smap = MModel.state_letters();
 
     for(int i=0;i<I.branch_index_length(b0);i++)
     {
@@ -495,7 +498,12 @@ namespace substitution {
     total_peel_leaf_branches++;
     default_timer_stack.push_timer("substitution::peel_leaf_branch");
 
-    //    std::cerr<<"got here! (leaf)"<<endl;
+    if (not I.branch_index_valid(b0))
+      I.update_branch(A,T,b0);
+
+    // This needs to be before accessing scratch
+    cache.set_length(I.branch_index_length(b0)); 
+    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
 
     const alphabet& a = A.get_alphabet();
 
@@ -505,10 +513,6 @@ namespace substitution {
     const int n_states  = S.size2();
     //    const int n_letters = a.n_letters();
     assert(MModel.n_states() == n_states);
-
-    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
-    if (not I.branch_index_valid(b0))
-      I.update_branch(A,T,b0);
 
     //    const vector<unsigned>& smap = MModel.state_letters();
 
@@ -570,6 +574,9 @@ namespace substitution {
   {
     total_peel_leaf_branches++;
     default_timer_stack.push_timer("substitution::peel_leaf_branch");
+
+    // This needs to be before accessing scratch
+    cache.set_length(I.branch_index_length(b0));
 
     const alphabet& a = A.get_alphabet();
 
@@ -719,6 +726,9 @@ namespace substitution {
   void peel_internal_branch(const vector<int>& b,ublas::matrix<int>& index, Likelihood_Cache& cache,
 			    const vector<Matrix>& transition_P,const MultiModel& IF_DEBUG(MModel))
   {
+    // This needs to be before accessing scratch
+    cache.set_length(index.size1());
+
     // scratch matrix
     Matrix& S = cache.scratch(0);
     const int n_models = S.size1();
@@ -853,6 +863,10 @@ namespace substitution {
     assert(index.size1() == I.branch_index_length(b0));
     assert(I.branch_index_valid(b0));
 
+    // This needs to be before accessing scratch
+    cache.set_length(I.branch_index_length(b0)); // 
+    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
+
     // The number of directed branches is twice the number of undirected branches
     //    const int B        = T.n_branches();
 
@@ -882,7 +896,6 @@ namespace substitution {
     Matrix& F = cache.scratch(1);
     FrequencyMatrix(F,MModel); // F(m,l2)
 
-    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
     for(int i=0;i<I.branch_index_length(b0);i++) 
     {
       // compute the source distribution from 2 branch distributions
@@ -1553,7 +1566,6 @@ namespace substitution {
     subA_index_leaf subA(P.A->length()+1, P.T->n_branches()*2);
 
     Likelihood_Cache LC(*P.T, P.SModel());
-    LC.set_length(P.A->length());
     LC.root = P.LC.root;
 
     return Pr(*P.A, subA, P.MC, *P.T, LC, P.SModel());
@@ -1566,7 +1578,6 @@ namespace substitution {
     subA_index_internal subA(P.A->length()+1, P.T->n_branches()*2);
 
     Likelihood_Cache LC(*P.T, P.SModel());
-    LC.set_length(P.A->length());
     LC.root = P.LC.root;
 
     check_internal_nodes_connected(*P.A,*P.T,vector<int>(1,LC.root));

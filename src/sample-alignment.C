@@ -144,7 +144,6 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   path.erase(path.begin()+path.size()-1);
 
   *P.A = construct(old,path,node1,node2,T,seq1,seq2);
-  P.LC.set_length(P.A->length());
   P.LC.invalidate_branch_alignment(T,b);
   P.note_alignment_changed_on_branch(b);
 

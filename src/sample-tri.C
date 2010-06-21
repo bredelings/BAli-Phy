@@ -231,7 +231,6 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   Matrices->clear();
 #endif
 
-  P.LC.set_length(A.length());
   int b = T.branch(nodes[0],nodes[1]);
   P.LC.invalidate_branch_alignment(T, b);
 

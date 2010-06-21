@@ -425,8 +425,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
-  LC.set_length(A->length());
-
   add_leaf_seq_note(*A, T->n_leaves());
 }
 
@@ -455,8 +453,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
 
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
-
-  LC.set_length(A->length());
 
   add_leaf_seq_note(*A, T->n_leaves());
 }

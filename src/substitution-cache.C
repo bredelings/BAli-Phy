@@ -119,7 +119,7 @@ void Multi_Likelihood_Cache::set_length(int t,int l) {
     assert((*this)[i].size() >= l);
   }
 
-  length[t] = l;
+  length[t] = std::max(length[t],l);
 }
 
 int Multi_Likelihood_Cache::find_free_token() const {
@@ -266,6 +266,8 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) {
 
   root = LC.root;
 
+  set_length(2); // To allocate scratch
+
   return *this;
 }
 
@@ -277,6 +279,8 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
    root(LC.root)
 {
   cache->copy_token(token,LC.token);
+
+  set_length(2); // To allocate scratch
 }
 
 Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModel& M,int C)
@@ -287,6 +291,8 @@ Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModel
    root(T.n_nodes()-1)
 {
   cache->init_token(token);
+
+  set_length(2); // To allocate scratch
 }
 
 Likelihood_Cache::~Likelihood_Cache() {
