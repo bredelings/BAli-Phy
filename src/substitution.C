@@ -1200,10 +1200,18 @@ namespace substitution {
     return branch_list;
   }
 
+  /// This routine requires that nodes denotes a connected subtree.
+  /// 
+  /// So, technically, we don't need to peel these columns all the way
+  ///  up to the root even in the subA_index_leaf case...
+  ///
+  /// Instead we could simply apply equilibrium frequencies to them right
+  /// at the leaf branches of the subtree.
+  ///
   efloat_t other_subst(const data_partition& P, const vector<int>& nodes) 
   {
     const alignment& A = *P.A;
-    const Tree& T = *P.T;
+    const SequenceTree& T = *P.T;
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
 
@@ -1220,24 +1228,61 @@ namespace substitution {
     for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
       rb.push_back(*i);
 
-    // get the relationships with the sub-alignments
-    ublas::matrix<int> index1 = I.get_subA_index_none(rb,A,T,nodes);
-    efloat_t Pr1 = calc_root_probability(P,rb,index1);
+    const MultiModel& MModel= P.SModel();
+    vector<int> leaf_branch_list = get_leaf_branches_from_subtree_nodes(T,nodes);
+
+    efloat_t Pr3 = 1;
+    for(int i=0;i<leaf_branch_list.size();i++)
+      Pr3 *= get_other_subst_behind_branch(leaf_branch_list[i],A,T,I,LC,MModel);
 
 #ifndef NDEBUG
-    ublas::matrix<int> index2 = I.get_subA_index_any(rb,A,T,nodes);
-    ublas::matrix<int> index  = I.get_subA_index(rb,A,T);
+    //    std::cerr<<"other_subst: there are "<<leaf_branch_list.size()<<" subtree leaf branches."<<std::endl;
+    //    std::cerr<<"other_subst: there are "<<nodes.size()<<" subtree nodes."<<std::endl;
+    //    std::cerr<<A<<std::endl;
+    //    std::cerr<<T<<std::endl;
 
-    efloat_t Pr2 = calc_root_probability(P,rb,index2);
-    efloat_t Pr  = calc_root_probability(P,rb,index);
+    // What would index1 MEAN for subA_index_internal?
+    // - It combines columns that are + at a node next to the root
+    //   unless that column contains character in 'nodes'.
+    //
+    // - For subA_index_leaf, all leaf sub-columns are + everywhere, so it
+    //   just means counts columns that don't contain a character in 'nodes'
+    //
+    // - For subA_index_internal, if would count sub-columns that contain
+    //   a character next to the root, unless it also contains a character 
+    //   'nodes'.  But it would also include other_subst for columns that
+    //   might have a character in 'nodes', as long as they had been
+    //   collected as other subst on branches before the ones leading to
+    //   the root.
+    //  
+    //   Therefore, this doesn't make any sense for subA_index_internal,
+    //   because of they way it handles other_subst.  Instead, we need
+    //   include other subst only on branches that are not inside
+    //   the subtree indicated by 'nodes'.  But that is already the
+    //   complete calculation of other_subst, which does not really relate
+    //   to this one.
 
-    assert(std::abs(log(Pr1 * Pr2) - log(Pr) ) < 1.0e-9);
+    // get the relationships with the sub-alignments
+    if (P.subA.as<subA_index_leaf>())
+    {
+      ublas::matrix<int> index1 = I.get_subA_index_none(rb,A,T,nodes);
+      efloat_t Pr1 = calc_root_probability(P,rb,index1);
+      assert(std::abs(log(Pr1) - log(Pr3) ) < 1.0e-9);
+
+      ublas::matrix<int> index2 = I.get_subA_index_any(rb,A,T,nodes);
+      ublas::matrix<int> index  = I.get_subA_index(rb,A,T);
+
+      efloat_t Pr2 = calc_root_probability(P,rb,index2);
+      efloat_t Pr  = calc_root_probability(P,rb,index);
+
+      assert(std::abs(log(Pr1 * Pr2) - log(Pr) ) < 1.0e-9);
+    }
 #endif
 
     default_timer_stack.pop_timer();
     default_timer_stack.pop_timer();
 
-    return Pr1;
+    return Pr3;
   }
 
   bool check_equal(double x, double y)
