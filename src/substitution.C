@@ -1257,7 +1257,7 @@ namespace substitution {
   /// ignored).  This routine allows us to estimate the likelihood an SPR move would
   /// have after all the necessary columns are unaligned to prevent + -> - -> +.
   ///
-  /// This routine is called Pr_unaligned_root( ) because it assumed that unaligned can
+  /// This routine is called Pr_unaligned_root( ) because it assumes that unaligned can
   /// only happen at the substitution root.  This is actually true when called from
   /// the SPR_all routines, but may not make sense otherwise.
   ///
