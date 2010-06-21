@@ -620,6 +620,9 @@ namespace substitution {
     assert(b.size() == 3);
     assert(index.size2() == 2);
 
+    // Both leaf branches must have valid caches
+    assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
+
     // scratch matrix 
     const int n_models = cache.n_models();
     const int n_states = cache.n_states();
