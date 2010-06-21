@@ -1110,6 +1110,44 @@ namespace substitution {
     return L;
   }
 
+  vector<int> get_leaf_branches_from_subtree_nodes(const Tree& T, const vector<int>& nodes)
+  {
+    vector<int> branch_list;
+    for(int i=0;i<nodes.size();i++)
+    {
+      const int n = nodes[i];
+      vector<const_branchview> node_branches;
+      append(T[n].branches_out(), node_branches);
+
+      if (node_branches.size() == 1) {
+	branch_list.push_back(node_branches[0]);
+	continue;
+      }
+
+      assert(node_branches.size() == 3);
+      int count = 0;
+      int which = -1;
+      for(int j=0;j<node_branches.size();j++)
+      {
+	int target = node_branches[j].target();
+	if (includes(nodes, target))
+	{
+	  which = j;
+	  count++;
+	}
+      }
+      
+      if (count == 1)
+	branch_list.push_back(node_branches[which]);
+      else
+	assert(count == 3);
+    }
+    assert(branch_list.size() == 2 or branch_list.size() == 3 or branch_list.size() == 4);
+    assert(nodes.size() == 2 or nodes.size() == 4 or nodes.size() == 6);
+
+    return branch_list;
+  }
+
   efloat_t other_subst(const data_partition& P, const vector<int>& nodes) 
   {
     const alignment& A = *P.A;
