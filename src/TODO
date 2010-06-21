@@ -152,6 +152,31 @@ Replace T.directed_branch( ) with T.branch( ). [step 2]
 2.2.0:
 
 Make resizing LC's more automatic/automagic.
+ * So, scanning all the sequence lengths shouldn't be THAT bad...
+ * We have cached sequence lengths in the data_partition object
+   - But do we have access to this object when we change the lengths?
+   - Perhaps not if we do LC.set_length( ) lazily.
+ * If we were to do this lazily, where would have to find all USES and update
+   before each one.
+   - branches are marked valid only in *peel_branch( )*, 
+   - which is called only by calculate_caches( ).
+   - 
+ * If we are monotonically increasing, then we only need to check that the current
+   length is enough.
+ * Probably we can get away with monotonically increasing most of the time,
+   and infrequently decreasing to the minimum needed value.
+   - So, after we compute a likelihood, we can consider the maximum length needed
+     and *SHRINK* to that!
+ * However, we actually cannot shrink the cache... we can just tell
+   the Multi_Likelihood_Cache that ONE of its objects has length L....
+
+Make LC able to get shorter.
+
+Reduce the number of active tokens from 5 to 3.
+ * We shouldn't need 5 separate branch caches, I should think...
+ * How many active branches at a time do we need?
+   - Not 10 * B...
+   - I would think about 2 * B...
 
 Handle letters outside of our alphabet more gracefully.
  - Allow ANYTHING if the alphabet is specified.
