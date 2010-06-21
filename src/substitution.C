@@ -661,8 +661,14 @@ namespace substitution {
 	assert(i0 == alphabet::gap);
 	p_col = element_prod_sum(F, (*branch_cache[1])[i1] );
       }
-      else
-	std::abort();
+
+      // Situation: i0 ==-1 and i1 == -1
+      // This situation should never come from subA_index_vanishing( ) (e.g. if subA_index_internal)
+      // These kinds of columns ARE generated in subA_index_none ( ) (e.g. if subA_index_leaf)
+      //
+      // Perhaps we should screen them out in subA_index_none( ) and do 
+      //   std::abort() 
+      // in this case.
 
       // SOME model must be possible
       assert(0 <= p_col and p_col <= 1.00000000001);
@@ -674,6 +680,40 @@ namespace substitution {
     return cache[b[0]].other_subst * cache[b[1]].other_subst * total;
   }
 
+  /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
+  efloat_t get_other_subst_behind_branch(int b0, const alignment& A, const Tree& T, subA_index_t& I, Likelihood_Cache& cache,
+					 const MultiModel& MModel)
+  {
+    // This only makes sense if we have presence/absence information to sequences at internal nodes
+    assert(A.n_sequences() == T.n_nodes());
+
+    // There are no branches behind a leaf branch
+    if (T.directed_branch(b0).source().is_leaf_node()) return 1;
+
+    // find the names of the (two) branches behind b0
+    vector<int> b;
+    for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
+      b.push_back(*i);
+
+    if (dynamic_cast<subA_index_leaf*>(&I))
+    {
+      // Get an alignment of subA indices on branches b[0] and b[1] where b0.source is not present
+      int node = T.directed_branch(b0).source();
+
+      ublas::matrix<int> index_vanishing = I.get_subA_index_none(b,A,T, vector<int>(1,node));
+
+      b.push_back(b0);
+      return collect_vanishing_internal(b, index_vanishing, cache, MModel);
+    }
+    else if (dynamic_cast<subA_index_internal*>(&I))
+    {
+      b.push_back(b0);
+      ublas::matrix<int> index_vanishing = I.get_subA_index_vanishing(b,A,T);
+
+      return collect_vanishing_internal(b, index_vanishing, cache, MModel);
+    }
+    else
+      std::abort();
   }
 
   void peel_internal_branch(const vector<int>& b,ublas::matrix<int>& index, Likelihood_Cache& cache,
