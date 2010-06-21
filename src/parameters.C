@@ -40,7 +40,7 @@ using std::string;
 using std::cerr;
 using std::endl;
 
-bool use_internal_index = false;
+bool use_internal_index = true;
 
 void data_partition::variable_alignment(bool b)
 {

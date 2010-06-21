@@ -201,6 +201,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("t-constraint",value<string>(),"File with m.f. tree representing topology and branch-length constraints.")
     ("a-constraint",value<string>(),"File with groups of leaf taxa whose alignment is constrained.")
     ("verbose","Print extra output in case of error.")
+    ("subA-index",value<string>()->default_value("internal"),"What kind of subA index to use?")
     ;
 
   // named options
@@ -972,6 +973,9 @@ int main(int argc,char* argv[])
 
     //---------- Parse command line  ---------//
     variables_map args = parse_cmd_line(argc,argv);
+
+    if (args["subA-index"].as<string>() == "leaf")
+      use_internal_index = false;
 
     //------ Capture copy of 'cerr' output in 'err_cache' ------//
     if (not args.count("show-only")) {

@@ -47,6 +47,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 //------------------------------- parameter-containing class --------------------------//
 
+extern bool use_internal_index;
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
 struct data_partition: public Probability_Model
