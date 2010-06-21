@@ -1442,13 +1442,18 @@ namespace substitution {
     for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
       rb.push_back(*i);
 
-    ublas::matrix<int> index_aligned   = I.get_subA_index_aligned(rb,A,T,true);
-    ublas::matrix<int> index_unaligned = I.get_subA_index_aligned(rb,A,T,false);
-
     // Combine the likelihoods from present nodes
+    ublas::matrix<int> index_aligned   = I.get_subA_index_aligned(rb,A,T,true);
     efloat_t Pr = calc_root_probability(A,T,LC,MModel,rb,index_aligned);
-    // Combine the likelihoods from absent nodes
-    Pr *= calc_root_probability_unaligned(A,T,LC,MModel,rb,index_unaligned);
+
+    // FIXME - The problem is that this includes other_subst TWICE
+    // Probably we need to factor other_subst collection out of calc_root_probability.
+    ublas::matrix<int> index_unaligned = I.get_subA_index_aligned(rb,A,T,false);
+    if (dynamic_cast<subA_index_leaf*>(&I))
+    {
+      // Combine the likelihoods from absent nodes
+      Pr *= calc_root_probability_unaligned(A,T,LC,MModel,rb,index_unaligned);
+    }
     
 #ifndef NDEBUG
     int n1 = n_non_null_entries(index_aligned);
