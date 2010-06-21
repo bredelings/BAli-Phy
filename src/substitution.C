@@ -1406,6 +1406,7 @@ namespace substitution {
       efloat_t branch_total2 = branch_total(b,I2,LC2,MModel);
       efloat_t other_subst2 = get_other_subst_behind_branch(b, A, T, I2, LC2, MModel);
 
+      assert(std::abs(log(other_subst1) - log(other_subst2)) < 1.0e-9);
       assert(std::abs(log(branch_total1) - log(branch_total2)) < 1.0e-9);
     }
   }
