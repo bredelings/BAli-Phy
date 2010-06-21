@@ -32,7 +32,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define IF_DEBUG(x) x
 #endif
 
-#define DEBUG_CACHING
 
 // recalculate a likelihood immediate afterwards, and see if we get the same answer...
 // perhaps move the collection root node one branch away?
