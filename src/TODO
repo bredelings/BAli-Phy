@@ -151,6 +151,8 @@ Replace T.directed_branch( ) with T.branch( ). [step 2]
 --
 2.2.0:
 
+Make resizing LC's more automatic/automagic.
+
 Handle letters outside of our alphabet more gracefully.
  - Allow ANYTHING if the alphabet is specified.
  - Allow ANYTHING if the frequencies aren't off by too much.
