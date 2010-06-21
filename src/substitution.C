@@ -614,8 +614,15 @@ namespace substitution {
     default_timer_stack.pop_timer();
   }
 
-  void collect_internal_branch(const vector<int>& b, ublas::matrix<int>& index, Likelihood_Cache& cache,
-			       const MultiModel& MModel)
+  /// Apply frequencies and collect probability for subA columns that go away on b.back()
+  /// Question: can this routine handle both 
+  /// (i) "going away" in terms of subA indices==-1 on b.back()
+  ///    AND
+  /// (ii) "going away" in terms of the node not being present at b.back().source()?
+  ///
+  /// Answer: Yes, because which columns "go away" is computed and then passed in via \a index.
+  efloat_t collect_vanishing_internal(const vector<int>& b, ublas::matrix<int>& index, Likelihood_Cache& cache,
+				      const MultiModel& MModel)
   {
     assert(b.size() == 3);
     assert(index.size2() == 2);
@@ -664,7 +671,9 @@ namespace substitution {
       total *= p_col;
       //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
     }
-    cache[b[2]].other_subst = cache[b[0]].other_subst * cache[b[1]].other_subst * total;
+    return cache[b[0]].other_subst * cache[b[1]].other_subst * total;
+  }
+
   }
 
   void peel_internal_branch(const vector<int>& b,ublas::matrix<int>& index, Likelihood_Cache& cache,
@@ -769,7 +778,7 @@ namespace substitution {
     /*---------------------- Do the propagation part --------------------------*/
     ublas::matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
 
-    collect_internal_branch(b, index_collect, cache, MModel);
+    cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MModel);
 
     default_timer_stack.pop_timer();
   }
