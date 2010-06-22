@@ -36,7 +36,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description all("Allowed options");
   all.add_options()
     ("help", "produce help message")
-    ("factor",value<unsigned>()->default_value(1),"Factor by which to subsample.")
+    ("factor",value<double>()->default_value(1.0),"Factor by which to subsample.")
     ("skip",value<unsigned>()->default_value(0),"Throw out some lines at the beginning.")
     ("max",value<unsigned>(),"Maximum number of samples to keep")
     ("header","This file has a header - don't throw it out.")
@@ -78,7 +78,7 @@ int main(int argc,char* argv[])
     }
 
     int skip = args["skip"].as<unsigned>();
-    int subsample = args["factor"].as<unsigned>();
+    double subsample = args["factor"].as<double>();
     int max = -1;
     if (args.count("max"))
       max = args["max"].as<unsigned>();
@@ -93,7 +93,7 @@ int main(int argc,char* argv[])
       else if (max > 0 and count >= max)
 	break;
       else {
-	if (lines%subsample == 0) {
+	if (int(lines/subsample) > (count-1)) {
 	  cout<<line<<endl;
 	  count++;
 	}
