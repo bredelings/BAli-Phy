@@ -828,7 +828,6 @@ namespace substitution {
     // get the relationships with the sub-alignments for the (two) branches behind b0
     b.push_back(b0);
     ublas::matrix<int> index = I.get_subA_index_select(b,A,T);
-    b.pop_back();
     assert(index.size1() == I.branch_index_length(b0));
     assert(I.branch_index_valid(b0));
 
@@ -849,7 +848,6 @@ namespace substitution {
     vector< vector<Matrix>* > branch_cache;
     for(int i=0;i<b.size();i++)
       branch_cache.push_back(&cache[b[i]]);
-    branch_cache.push_back(&cache[b0]);
     
     vector<const F81_Model*> SubModels(n_models);
     for(int m=0;m<n_models;m++) {
@@ -865,6 +863,9 @@ namespace substitution {
     Matrix& F = cache.scratch(1);
     FrequencyMatrix(F,MModel); // F(m,l2)
 
+    Matrix ones(n_models, n_states);
+    element_assign(ones, 1);
+    
     for(int i=0;i<I.branch_index_length(b0);i++) 
     {
       // compute the source distribution from 2 branch distributions
@@ -879,7 +880,7 @@ namespace substitution {
       else if (i1 != alphabet::gap)
 	C = &(*branch_cache[1])[i1];
       else
-	std::abort(); // columns like this should not be in the index
+	C = &ones;
 
       // propagate from the source distribution
       Matrix& R = (*branch_cache[2])[i];            //name the result matrix
@@ -899,6 +900,18 @@ namespace substitution {
 	  R(m,s1) = temp*(*C)(m,s1) + sum;
       }
     }
+
+    /*-------------------- Do the other_subst collection part -------------b-------*/
+    if (dynamic_cast<subA_index_internal*>(&I))
+    {
+      ublas::matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
+      cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MModel);
+    }
+    else if (dynamic_cast<subA_index_leaf*>(&I))
+      cache[b0].other_subst = 1;
+    else
+      throw myexception()<<"subA_index_t is of unrecognized type!";
+
     default_timer_stack.pop_timer();
   }
 
