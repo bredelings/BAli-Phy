@@ -780,7 +780,7 @@ namespace substitution {
     }
   }
 
-  void peel_internal_branch(int b0,subA_index_leaf& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
+  void peel_internal_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 			    const vector<Matrix>& transition_P,const MultiModel& MModel)
   {
     total_peel_internal_branches++;
@@ -799,50 +799,19 @@ namespace substitution {
 
     peel_internal_branch(b, index, cache, transition_P, MModel);
 
-    cache[b0].other_subst = 1;
-
-    default_timer_stack.pop_timer();
-  }
-
-  void peel_internal_branch(int b0,subA_index_internal& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
-			    const vector<Matrix>& transition_P,const MultiModel& MModel)
-  {
-    total_peel_internal_branches++;
-    default_timer_stack.push_timer("substitution::peel_internal_branch");
-
-    // find the names of the (two) branches behind b0
-    vector<int> b;
-    for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
-      b.push_back(*i);
-    b.push_back(b0);
-
-    /*---------------------- Do the propagation part --------------------------*/
-    // get the relationships with the sub-alignments for the (two) branches behind b0
-    ublas::matrix<int> index_propagate = I.get_subA_index_select(b,A,T);
-    assert(index_propagate.size1() == I.branch_index_length(b0));
-    assert(I.branch_index_valid(b0));
-
-    peel_internal_branch(b, index_propagate, cache, transition_P, MModel);
-
-    /*---------------------- Do the propagation part --------------------------*/
-    ublas::matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
-
-    cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MModel);
-
-    default_timer_stack.pop_timer();
-  }
-
-  void peel_internal_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
-			    const vector<Matrix>& transition_P,const MultiModel& MModel)
-  {
-    if (dynamic_cast<subA_index_leaf*>(&I))
-      peel_internal_branch(b0,dynamic_cast<subA_index_leaf&>(I),cache,A,T,transition_P,MModel);
-    else if (dynamic_cast<subA_index_internal*>(&I))
-      peel_internal_branch(b0,dynamic_cast<subA_index_internal&>(I),cache,A,T,transition_P,MModel);
+    /*-------------------- Do the other_subst collection part -------------b-------*/
+    if (dynamic_cast<subA_index_internal*>(&I))
+    {
+      ublas::matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
+      cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MModel);
+    }
+    else if (dynamic_cast<subA_index_leaf*>(&I))
+      cache[b0].other_subst = 1;
     else
       throw myexception()<<"subA_index_t is of unrecognized type!";
-  }
 
+    default_timer_stack.pop_timer();
+  }
 
   void peel_internal_branch_F81(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
 				const MultiModel& MModel)
