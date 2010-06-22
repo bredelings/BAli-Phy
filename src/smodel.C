@@ -1451,6 +1451,25 @@ namespace substitution {
 
   //---------------------- CAT_FixedFrequencyModel -----------------------//
 
+  efloat_t CAT_FixedFrequencyModel::prior() const
+  {
+    valarray<double> f(fraction.size());
+    for(int i=0;i<f.size();i++)
+      f[i] = prior_fraction[i];
+
+    valarray<double> x(fraction.size());
+    for(int i=0;i<x.size();i++)
+      x[i] = fraction[i];
+
+    return ::dirichlet_pdf(x,safe_count(f*10.0));
+  }
+
+  void CAT_FixedFrequencyModel::recalc(const std::vector<int>&)
+  {
+    for(int i=0;i<fraction.size();i++)
+      fraction[i] = get_parameter_value(i);
+  }
+
   const MultiModel::Base_Model_t& CAT_FixedFrequencyModel::base_model(int i) const {
     return *sub_parameter_models[i];
   }
@@ -1483,7 +1502,7 @@ namespace substitution {
 
     //------- 3: category weights --------//
     getline_handle_dos(file,line);
-    fraction = split<double>(line,' ');
+    fraction = prior_fraction = split<double>(line,' ');
     if (fraction.size() != n_cat) 
       throw myexception()<<"In reading CAT-Fixed model '"<<name_<<"' expected weights for "<<n_cat<<" categories, but got "<<fraction.size();
 
@@ -1515,6 +1534,15 @@ namespace substitution {
       sub_parameter_models.push_back(F81_Model(a,f_ordered));
       sub_parameter_models.back()->set_rate(1);
     }
+
+    //------- 6: Create the parameters for fiddling --------//
+    for(int i=0;i<n_cat;i++)
+    {
+      string name = "f"+convertToString(i+1);
+      add_parameter(Parameter(name,prior_fraction[i],between(0,1)));
+    }
+
+    recalc_all();
   }
 
   void CAT_FixedFrequencyModel::load_file(const string& filename)

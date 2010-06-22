@@ -972,11 +972,15 @@ namespace substitution {
     /// Components of the mixture - Reversible Markov models express as S+R
     std::vector<owned_ptr<F81_Model> > sub_parameter_models;
 
+    /// Fraction of the sites with each parameter value, according to model estimate
+    std::vector<double> prior_fraction;
+
     /// Fraction of the sites with each parameter value (weights on the mixture components)
     std::vector<double> fraction;
 
     string name_;
 
+    void recalc(const std::vector<int>&);
   public:
     /// Load the site frequencies from \a file
     void load_file(std::istream& file);
@@ -990,6 +994,8 @@ namespace substitution {
 
     /// The number of models
     int n_base_models() const {return fraction.size();}
+
+    efloat_t prior() const;
 
     /// Access the base models
     const Base_Model_t& base_model(int m) const;
