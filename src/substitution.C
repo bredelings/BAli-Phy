@@ -1254,8 +1254,12 @@ namespace substitution {
   efloat_t other_subst_behind_branch(int b0, const alignment& A, const Tree& T, subA_index_t& I, Likelihood_Cache& LC,
 					 const MatCache& MC, const MultiModel& MModel)
   {
+    if (LC.up_to_date(b0) and dynamic_cast<subA_index_internal*>(&I))
+      return LC[b0].other_subst;
+
     for(const_in_edges_iterator j = T.directed_branch(b0).branches_before();j;j++)
       calculate_caches_for_branch(*j, A, I, MC, T, LC, MModel);
+
     return get_other_subst_behind_branch(b0, A, T, I, LC, MModel);
   }
 
