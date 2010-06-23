@@ -1213,7 +1213,9 @@ namespace substitution {
     default_timer_stack.push_timer("substitution");
     default_timer_stack.push_timer("substitution::other_subst");
 
-    assert(includes(nodes,LC.root));
+    // FIXME - this makes sure that calculate_caches( ) does the right thing.
+    if (not includes(nodes, LC.root))
+      LC.root = nodes[0];
 
     IF_DEBUG(int n_br =) calculate_caches(P);
 #ifndef NDEBUG
