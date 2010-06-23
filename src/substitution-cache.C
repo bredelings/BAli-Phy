@@ -48,14 +48,18 @@ int Multi_Likelihood_Cache::get_unused_location() {
   return loc;
 }
 
-void Multi_Likelihood_Cache::release_location(int loc) {
+void Multi_Likelihood_Cache::release_location(int loc) 
+{
+  assert(loc != -1);
+
   n_uses[loc]--;
   if (not n_uses[loc])
     unused_locations.push_back(loc);
 }
 
 /// Allocate space for s new 'branches'
-void Multi_Likelihood_Cache::allocate(int s) {
+void Multi_Likelihood_Cache::allocate(int s) 
+{
   int old_size = size();
   int new_size = old_size + s;
   if (log_verbose) {
@@ -76,19 +80,24 @@ void Multi_Likelihood_Cache::allocate(int s) {
   }
 }
 
-void Multi_Likelihood_Cache::validate_branch(int token, int b) {
-  up_to_date_[mapping[token][b]] = true;
+void Multi_Likelihood_Cache::allocate_location(int t, int b)
+{
+  if (not location_allocated(t,b))
+    mapping[t][b] = get_unused_location();
 }
 
-void Multi_Likelihood_Cache::invalidate_one_branch(int token, int b) {
 
+void Multi_Likelihood_Cache::validate_branch(int t, int b) {
+  assert(location_allocated(t,b));
+  up_to_date_[location(t,b)] = true;
+}
+
+void Multi_Likelihood_Cache::invalidate_one_branch(int token, int b) 
+{
   int loc = mapping[token][b];
-  if (n_uses[loc] > 1) {
+  if (location_allocated(token,b))
     release_location(loc);
-    mapping[token][b] = get_unused_location();
-  }
-  else
-    up_to_date_[loc] = false;
+  mapping[token][b] = -1;
 
   cv_up_to_date_[token] = false;
 }
@@ -176,9 +185,11 @@ int Multi_Likelihood_Cache::claim_token(int l,int B) {
   return token;
 }
 
-void Multi_Likelihood_Cache::init_token(int token) {
+void Multi_Likelihood_Cache::init_token(int token) 
+{
+  /// Out branches initially don't point to any backing store
   for(int b=0;b<mapping[token].size();b++)
-    mapping[token][b] = get_unused_location();
+    mapping[token][b] = -1;
 
   cv_up_to_date_[token] = false;
 }
@@ -200,13 +211,15 @@ void Multi_Likelihood_Cache::copy_token(int token1, int token2)
 
   // mark each slot/location used by token 1 as having another user
   for(int b=0;b<mapping[token1].size();b++)
-    n_uses[mapping[token1][b]]++;
+    if (mapping[token1][b] != -1)
+      n_uses[mapping[token1][b]]++;
 }
 
 void Multi_Likelihood_Cache::release_token(int token) {
   //  std::cerr<<"release_token: "<<countt(active)<<"/"<<active.size()<<" -> ";
   for(int b=0;b<mapping[token].size();b++)
-    release_location( mapping[token][b] );
+    if (location_allocated(token,b))
+      release_location( location(token,b) );
 
   active[token] = false;
   //  std::cerr<<"-> "<<countt(active)<<"/"<<active.size()<<std::endl;

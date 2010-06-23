@@ -451,7 +451,9 @@ namespace substitution {
 
     //    const vector<unsigned>& smap = MModel.state_letters();
 
-    // This needs to be before accessing scratch
+    // Do this before accessing matrices or other_subst
+    cache.prepare_branch(b0);
+
     cache.set_length(I.branch_index_length(b0));
 
     // scratch matrix
@@ -511,7 +513,9 @@ namespace substitution {
     if (not I.branch_index_valid(b0))
       I.update_branch(A,T,b0);
 
-    // This needs to be before accessing scratch
+    // Do this before accessing matrices or other_subst
+    cache.prepare_branch(b0);
+
     cache.set_length(I.branch_index_length(b0)); 
 
     const alphabet& a = A.get_alphabet();
@@ -584,7 +588,9 @@ namespace substitution {
     total_peel_leaf_branches++;
     default_timer_stack.push_timer("substitution::peel_leaf_branch");
 
-    // This needs to be before accessing scratch
+    // Do this before accessing matrices or other_subst
+    cache.prepare_branch(b0);
+
     cache.set_length(I.branch_index_length(b0));
 
     const alphabet& a = A.get_alphabet();
@@ -739,6 +745,9 @@ namespace substitution {
 
     assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
 
+    // Do this before accessing matrices or other_subst
+    cache.prepare_branch(b[2]);
+
     cache.set_length(index.size1());
 
     // scratch matrix
@@ -846,6 +855,9 @@ namespace substitution {
     assert(b.size() == 3);
 
     assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
+
+    // Do this before accessing matrices or other_subst
+    cache.prepare_branch(b[2]);
 
     cache.set_length(I.branch_index_length(b0)); // 
 

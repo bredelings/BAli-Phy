@@ -90,12 +90,19 @@ public:
   /// Can token t re-use its previously computed likelihood?
   int& cv_up_to_date(int t)       {return cv_up_to_date_[t];}
 
+  /// Reserve backing store for t/b, and point t/b to it.
+  void allocate_location(int t, int b);
+
   /// Where do we store caches for token t, branch b?
-  int location(int t,int b) const {return mapping[t][b];}
+  int location(int t,int b) const {assert(mapping[t][b] != -1); return mapping[t][b];}
+
+  /// Has branch b for token t been allocated a location yet?
+  int location_allocated(int t, int b) const {return mapping[t][b] != -1;}
 
   /// Are cached conditional likelihoods for token t/branch b, up to date?
-  bool up_to_date(int token,int branch) const {
-    return up_to_date_[ mapping[token][branch] ];
+  bool up_to_date(int t,int b) const 
+  {
+    return location_allocated(t,b) and up_to_date_[ location(t,b) ];
   }
 
   /// Mark cached conditional likelihoods for token t/branch b up to date.
@@ -136,7 +143,7 @@ public:
 class Likelihood_Cache {
   boost::shared_ptr<Multi_Likelihood_Cache> cache;
 
-  /// The number of directed branches + 1
+  /// The number of directed branches
   int B;
 
   /// The slot in 'cache' that we use.
@@ -193,22 +200,29 @@ public:
   bool up_to_date(int b) const {return cache->up_to_date(token,b);}
   /// Mark cached conditional likelihoods for branch b up to date.
   void validate_branch(int b) {cache->validate_branch(token,b);}
+  /// Is there is backing store for us to work with?
+  bool branch_available(int b) const {return cache->location_allocated(token,b);}
+  /// Ensure there is backing store for us to work with
+  void prepare_branch(int b) const {cache->allocate_location(token,b);}
 
   /// Cached conditional likelihoods for branch b
   const Likelihood_Cache_Branch& operator[](int b) const {
     int loc = cache->location(token,b);
+    assert(loc != -1);
     return (*cache)[loc];
   }
 
   /// Cached conditional likelihoods for branch b
   Likelihood_Cache_Branch& operator[](int b) {
     int loc = cache->location(token,b);
+    assert(loc != -1);
     return (*cache)[loc];
   }
 
   /// Cached conditional likelihoods for index i, branch b
   const Matrix& operator()(int i,int b) const {
     int loc = cache->location(token,b);
+    assert(loc != -1);
     assert(0 <= i and i < get_length());
     return (*cache)[loc][i];
   }
@@ -216,6 +230,7 @@ public:
   /// Cached conditional likelihoods for index i, branch b
   Matrix& operator()(int i,int b) {
     int loc = cache->location(token,b);
+    assert(loc != -1);
     assert(0 <= i and i < get_length());
     return (*cache)[loc][i];
   }
