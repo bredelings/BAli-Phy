@@ -97,7 +97,7 @@ public:
   /// The size of the alphabet
   int n_states() const {return S;}
 
-  /// Mark cached conditional likelihoods for token t/branch b invalid.
+  /// Mark cached conditional likelihoods for token t/branch b invalid, and unshare.
   void invalidate_one_branch(int token,int branch);
   /// Mark cached conditional likelihoods for all branches of token t invalid.
   void invalidate_all(int token);

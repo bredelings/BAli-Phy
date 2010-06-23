@@ -184,15 +184,21 @@ void Multi_Likelihood_Cache::init_token(int token) {
 }
 
 // initialize token1 mappings from the mappings of token2
-void Multi_Likelihood_Cache::copy_token(int token1, int token2) {
+void Multi_Likelihood_Cache::copy_token(int token1, int token2) 
+{
   assert(mapping[token1].size() == mapping[token2].size());
 
-  mapping[token1] = mapping[token2];
-
+  // is the complete likelihood up to date?
   cv_up_to_date_[token1] = cv_up_to_date_[token2];
 
+  // copy the length from token2, and reserve space
+  length[token1] = 0;
   set_length(token1,length[token2]);
 
+  // token one now uses the same slots/locations as token2
+  mapping[token1] = mapping[token2];
+
+  // mark each slot/location used by token 1 as having another user
   for(int b=0;b<mapping[token1].size();b++)
     n_uses[mapping[token1][b]]++;
 }
