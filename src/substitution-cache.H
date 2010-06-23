@@ -142,6 +142,9 @@ class Likelihood_Cache {
   /// The slot in 'cache' that we use.
   int token;
 
+  /// Some matrices pre-allocated for scratch space
+  std::vector<Matrix> scratch_matrices;
+
 public:
   /// Previously computed likelihood.
   efloat_t cached_value;
@@ -156,8 +159,6 @@ public:
 
   /// Number of columns of our alignment
   int length() const {return cache->get_length(token);}
-  /// The scratch branch slot
-  int scratch() const {return B-1;}
   /// The number of undirected branches;
   int n_branches() const {return B/2;}
   /// The number of CTMC models in our mixture.
@@ -220,17 +221,15 @@ public:
   }
 
   /// Scratch matrix i
-  const Matrix& scratch(int i) const {
-    int loc = cache->location(token,B-1);
-    assert(0 <= i and i < get_length());
-    return (*cache)[loc][i];
+  const Matrix& scratch(int i) const 
+  {
+    return scratch_matrices[i];
   }
 
   /// Scratch matrix i
-  Matrix& scratch(int i) {
-    int loc = cache->location(token,B-1);
-    assert(0 <= i and i < get_length());
-    return (*cache)[loc][i];
+  Matrix& scratch(int i) 
+  {
+    return scratch_matrices[i];
   }
 
   /// Construct a duplicate view to the same conditional likelihood caches

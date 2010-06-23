@@ -270,9 +270,9 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) {
   token = cache->claim_token(LC.length(),B);
   cache->copy_token(token,LC.token);
 
-  root = LC.root;
+  scratch_matrices = LC.scratch_matrices;
 
-  set_length(2); // To allocate scratch
+  root = LC.root;
 
   return *this;
 }
@@ -281,24 +281,22 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
   :cache(LC.cache),
    B(LC.B),
    token(cache->claim_token(LC.length(),B)),
+   scratch_matrices(LC.scratch_matrices),
    cached_value(LC.cached_value),
    root(LC.root)
 {
   cache->copy_token(token,LC.token);
-
-  set_length(2); // To allocate scratch
 }
 
 Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModel& M,int C)
   :cache(new Multi_Likelihood_Cache(M)),
-   B(T.n_branches()*2+1),
+   B(T.n_branches()*2),
    token(cache->claim_token(C,B)),
+   scratch_matrices(10,Matrix(cache->n_models(),cache->n_states())),
    cached_value(0),
    root(T.n_nodes()-1)
 {
   cache->init_token(token);
-
-  set_length(2); // To allocate scratch
 }
 
 Likelihood_Cache::~Likelihood_Cache() {
