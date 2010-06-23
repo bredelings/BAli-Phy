@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree.H"
 #include "smodel.H"
 
+/// An object to store cached conditional likelihoods for a single branch
 struct Likelihood_Cache_Branch: public std::vector< Matrix >
 {
   efloat_t other_subst;
@@ -36,7 +37,15 @@ struct Likelihood_Cache_Branch: public std::vector< Matrix >
 };
 
 
-/// A class to manage storage and sharing of cached conditional likelihoods.
+/// \brief A class to manage storage and sharing of cached conditional likelihoods.
+///
+/// The Multi_Likelihood_Cache maintains a number of "locations", each
+/// of which store cached conditional likelihoods for one branch.  Different
+/// Likelihood_Cache objects each have a unique token, which maps each
+/// of their branches to a "location" that indicates a Likelihood_Cache_Branch.
+/// Different Likelihood_Cache objects may share the same Likelihood_Cache_Branch
+/// if the cached likelihoods on that branch are the same for both objects.
+///
 class Multi_Likelihood_Cache: public std::vector< Likelihood_Cache_Branch >
 {
 protected:
