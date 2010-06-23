@@ -291,7 +291,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     if (s==P.n_smodels()) prefix = "^";
 
     add_dirichlet_slice_moves(P, prefix + "pi*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "f*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "CAT::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "GTR::*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "DP::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "DP::rate*", slice_moves, 3);
