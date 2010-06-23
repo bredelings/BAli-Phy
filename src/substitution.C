@@ -978,20 +978,18 @@ namespace substitution {
 
 
   /// Compute an ordered list of branches to process
-  inline peeling_info get_branches(const Tree& T, const Likelihood_Cache& LC) 
+  inline peeling_info get_branches(const Tree& T, const Likelihood_Cache& LC, vector<const_branchview> branches) 
   {
     //------- Get ordered list of not up_to_date branches ----------///
     peeling_info peeling_operations(T);
 
-    vector<const_branchview> branches; branches.reserve(T.n_branches());
-    append(T[LC.root].branches_in(),branches);
-
-    for(int i=0;i<branches.size();i++) {
-	const const_branchview& db = branches[i];
-	if (not LC.up_to_date(db)) {
-	  append(db.branches_before(),branches);
-	  peeling_operations.push_back(db);
-	}
+    for(int i=0;i<branches.size();i++) 
+    {
+      const_branchview db = branches[i];
+      if (not LC.up_to_date(db)) {
+	append(db.branches_before(),branches);
+	peeling_operations.push_back(db);
+      }
     }
 
     std::reverse(peeling_operations.begin(),peeling_operations.end());
@@ -999,11 +997,28 @@ namespace substitution {
     return peeling_operations;
   }
 
+  /// Compute an ordered list of branches to process to validate branch b
+  inline peeling_info get_branches_for_branch(int b, const Tree& T, const Likelihood_Cache& LC) 
+  {
+    vector<const_branchview> branches(1,T.directed_branch(b)); branches.reserve(T.n_branches());
+
+    return get_branches(T,LC,branches);
+  }
+
+  /// Compute an ordered list of branches to process
+  inline peeling_info get_branches_for_node(int n, const Tree& T, const Likelihood_Cache& LC) 
+  {
+    vector<const_branchview> branches; branches.reserve(T.n_branches());
+    append(T[n].branches_in(),branches);
+
+    return get_branches(T, LC, branches);
+  }
+
   static 
-  int calculate_caches(const alignment& A, subA_index_t& I, const MatCache& MC, const Tree& T,Likelihood_Cache& cache,
+  int calculate_caches_for_node(int n, const alignment& A, subA_index_t& I, const MatCache& MC, const Tree& T,Likelihood_Cache& cache,
 		       const MultiModel& MModel) {
     //---------- determine the operations to perform ----------------//
-    peeling_info ops = get_branches(T, cache);
+    peeling_info ops = get_branches_for_node(n, T, cache);
 
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
@@ -1012,8 +1027,25 @@ namespace substitution {
     return ops.size();
   }
 
-  int calculate_caches(const data_partition& P) {
-    return calculate_caches(*P.A, *P.subA, P.MC, *P.T, P.LC, P.SModel());
+  int calculate_caches_for_node(int n, const data_partition& P) {
+    return calculate_caches_for_node(n, *P.A, *P.subA, P.MC, *P.T, P.LC, P.SModel());
+  }
+
+  static 
+  int calculate_caches_for_branch(int b, const alignment& A, subA_index_t& I, const MatCache& MC, const Tree& T,Likelihood_Cache& cache,
+		       const MultiModel& MModel) {
+    //---------- determine the operations to perform ----------------//
+    peeling_info ops = get_branches_for_branch(b, T, cache);
+
+    //-------------- Compute the branch likelihoods -----------------//
+    for(int i=0;i<ops.size();i++)
+      peel_branch(ops[i],I,cache,A,T,MC,MModel);
+
+    return ops.size();
+  }
+
+  int calculate_caches_for_branch(int b, const data_partition& P) {
+    return calculate_caches_for_node(b, *P.A, *P.subA, P.MC, *P.T, P.LC, P.SModel());
   }
 
   Matrix get_rate_probabilities(const alignment& A,subA_index_t& I, const MatCache& MC,const Tree& T,
@@ -1024,7 +1056,7 @@ namespace substitution {
     const int root = cache.root;
     
     // make sure that we are up-to-date
-    calculate_caches(A,I,MC,T,cache,MModel);
+    calculate_caches_for_node(cache.root, A,I,MC,T,cache,MModel);
 
     // declare a matrix to store our results in
     Matrix probs(A.length(),MModel.n_base_models());
@@ -1127,7 +1159,7 @@ namespace substitution {
 
     ublas::matrix<int> index = I.get_subA_index_any(b,A,T,req,seq);
 
-    IF_DEBUG(int n_br =) calculate_caches(P);
+    IF_DEBUG(int n_br =) calculate_caches_for_node(LC.root, P);
 #ifndef NDEBUG
     std::clog<<"get_column_likelihoods: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1218,6 +1250,15 @@ namespace substitution {
     return branch_list;
   }
 
+  /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
+  efloat_t other_subst_behind_branch(int b0, const alignment& A, const Tree& T, subA_index_t& I, Likelihood_Cache& LC,
+					 const MatCache& MC, const MultiModel& MModel)
+  {
+    for(const_in_edges_iterator j = T.directed_branch(b0).branches_before();j;j++)
+      calculate_caches_for_branch(*j, A, I, MC, T, LC, MModel);
+    return get_other_subst_behind_branch(b0, A, T, I, LC, MModel);
+  }
+
   /// This routine requires that nodes denotes a connected subtree.
   /// 
   /// So, technically, we don't need to peel these columns all the way
@@ -1230,20 +1271,12 @@ namespace substitution {
   {
     const alignment& A = *P.A;
     const SequenceTree& T = *P.T;
+    const MatCache& MC = P.MC;
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
 
     default_timer_stack.push_timer("substitution");
     default_timer_stack.push_timer("substitution::other_subst");
-
-    // FIXME - this makes sure that calculate_caches( ) does the right thing.
-    if (not includes(nodes, LC.root))
-      LC.root = nodes[0];
-
-    IF_DEBUG(int n_br =) calculate_caches(P);
-#ifndef NDEBUG
-    std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
-#endif
 
     // compute root branches
     vector<int> rb;
@@ -1255,9 +1288,12 @@ namespace substitution {
 
     efloat_t Pr3 = 1;
     for(int i=0;i<leaf_branch_list.size();i++)
-      Pr3 *= get_other_subst_behind_branch(leaf_branch_list[i],A,T,I,LC,MModel);
+      Pr3 *= other_subst_behind_branch(leaf_branch_list[i], A, T, I, LC, MC, MModel);
 
 #ifndef NDEBUG
+    IF_DEBUG(int n_br =) calculate_caches_for_node(LC.root, P);
+    std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
+
     //    std::cerr<<"other_subst: there are "<<leaf_branch_list.size()<<" subtree leaf branches."<<std::endl;
     //    std::cerr<<"other_subst: there are "<<nodes.size()<<" subtree nodes."<<std::endl;
     //    std::cerr<<A<<std::endl;
@@ -1455,7 +1491,7 @@ namespace substitution {
     check_regenerate(I, A, T, LC.root);
 #endif
 
-    IF_DEBUG(int n_br =) calculate_caches(A,I,MC,T,LC,MModel);
+    IF_DEBUG(int n_br =) calculate_caches_for_node(LC.root, A,I,MC,T,LC,MModel);
 #ifndef NDEBUG
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1542,7 +1578,7 @@ namespace substitution {
     check_regenerate(I, A, T, LC.root);
 #endif
 
-    IF_DEBUG(int n_br =) calculate_caches(A,I,MC,T,LC,MModel);
+    IF_DEBUG(int n_br =) calculate_caches_for_node(LC.root, A,I,MC,T,LC,MModel);
 #ifndef NDEBUG
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
