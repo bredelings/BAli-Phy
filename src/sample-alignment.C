@@ -161,9 +161,10 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
 void sample_alignment(Parameters& P,int b)
 {
-
   if (any_branches_constrained(vector<int>(1,b), *P.T, *P.TC, P.AC))
     return;
+
+  P.select_root(b);
 
   vector<dynamic_bitset<> > s1(P.n_data_partitions());
   for(int i=0;i<P.n_data_partitions();i++) 

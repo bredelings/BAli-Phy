@@ -1213,6 +1213,8 @@ namespace substitution {
     default_timer_stack.push_timer("substitution");
     default_timer_stack.push_timer("substitution::other_subst");
 
+    assert(includes(nodes,LC.root));
+
     IF_DEBUG(int n_br =) calculate_caches(P);
 #ifndef NDEBUG
     std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
