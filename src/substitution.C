@@ -236,7 +236,12 @@ namespace substitution {
 
     assert(index.size2() == rb.size());
 
+    for(int i=0;i<rb.size();i++)
+      assert(cache.up_to_date(rb[i]));
+
     const int root = cache.root;
+
+    assert(T.directed_branch(rb[0]).target().name() == root);
 
     if (T[root].is_leaf_node())
       throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
@@ -330,9 +335,14 @@ namespace substitution {
 
     assert(index.size2() == rb.size());
 
+    for(int i=0;i<rb.size();i++)
+      assert(cache.up_to_date(rb[i]));
+
     if (T[cache.root].is_leaf_node())
       throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
     assert(rb.size() == 3);
+
+    assert(T.directed_branch(rb[0]).target().name() == cache.root);
 
     // scratch matrix 
     const int n_models = cache.n_models();
@@ -503,7 +513,6 @@ namespace substitution {
 
     // This needs to be before accessing scratch
     cache.set_length(I.branch_index_length(b0)); 
-    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
 
     const alphabet& a = A.get_alphabet();
 
@@ -726,7 +735,10 @@ namespace substitution {
   void peel_internal_branch(const vector<int>& b,ublas::matrix<int>& index, Likelihood_Cache& cache,
 			    const vector<Matrix>& transition_P,const MultiModel& IF_DEBUG(MModel))
   {
-    // This needs to be before accessing scratch
+    assert(b.size() == 3);
+
+    assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
+
     cache.set_length(index.size1());
 
     // scratch matrix
@@ -824,19 +836,18 @@ namespace substitution {
     vector<int> b;
     for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
       b.push_back(*i);
+    b.push_back(b0);
 
     // get the relationships with the sub-alignments for the (two) branches behind b0
-    b.push_back(b0);
     ublas::matrix<int> index = I.get_subA_index_select(b,A,T);
     assert(index.size1() == I.branch_index_length(b0));
     assert(I.branch_index_valid(b0));
 
-    // This needs to be before accessing scratch
-    cache.set_length(I.branch_index_length(b0)); // 
-    //    std::clog<<"length of subA for branch "<<b0<<" is "<<length<<"\n";
+    assert(b.size() == 3);
 
-    // The number of directed branches is twice the number of undirected branches
-    //    const int B        = T.n_branches();
+    assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
+
+    cache.set_length(I.branch_index_length(b0)); // 
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
