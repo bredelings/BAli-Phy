@@ -473,7 +473,9 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 
 
-void tri_sample_alignment(Parameters& P,int node1,int node2) {
+void tri_sample_alignment(Parameters& P,int node1,int node2) 
+{
+  P.set_root(node1);
 
   vector<dynamic_bitset<> > s1(P.n_data_partitions());
   for(int i=0;i<P.n_data_partitions();i++) 
