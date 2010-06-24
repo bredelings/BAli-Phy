@@ -1070,7 +1070,7 @@ namespace substitution {
     // scratch matrix 
     Matrix & S = cache.scratch(0);
     const int n_models = cache.n_models();
-    const int n_states    = cache.n_states();
+    const int n_states = cache.n_states();
 
     // cache matrix of frequencies
     Matrix F(n_models,n_states);
@@ -1351,8 +1351,8 @@ namespace substitution {
     int L = I1.branch_index_length(b);
     assert(L == I2.branch_index_length(b));
 
-    const int n_models  = LC1.n_models();
-    const int n_states  = LC1.n_states();
+    const int n_models = LC1.n_models();
+    const int n_states = LC1.n_states();
 
     bool equal = true;
     for(int i=0;i<L;i++) 
