@@ -618,6 +618,12 @@ void Parameters::LC_invalidate_one_branch(int b)
     data_partitions[i]->LC.invalidate_one_branch(b);
 }
 
+void Parameters::LC_invalidate_all()
+{
+  for(int i=0;i<n_data_partitions();i++)
+    data_partitions[i]->LC.invalidate_all();
+}
+
 void Parameters::invalidate_subA_index_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)

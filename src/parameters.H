@@ -287,6 +287,9 @@ public:
   // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
   void LC_invalidate_one_branch(int b);
 
+  // invalidate likelihoood caches on b and b* and all DIRECTED branches after them
+  void LC_invalidate_all();
+
   // invalidate subA indices on b and b* and all DIRECTED branches after them
   void invalidate_subA_index_branch(int b);
   // invalidate subA indices on b and b*
