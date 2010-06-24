@@ -920,6 +920,11 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     // this is bidirectional, but does not propagate
     P.invalidate_subA_index_one_branch(I.BM);
   }
+
+  // We had better not let this get changed!
+  for(int i=0;i<P.n_data_partitions();i++)
+    assert(P[i].LC.root == root_node);
+
   return Pr;
 }
 
