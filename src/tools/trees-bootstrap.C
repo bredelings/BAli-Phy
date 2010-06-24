@@ -348,7 +348,10 @@ bool report_sample(std::ostream& o,
   //---------- Basic statistics -------------//
   for(int g=0; g<tree_dists.n_dists(); g++) 
     for(int d=0; d<D[g] ;d++) {
-      VS[g][d][p].calculate(pseudocount, confidence);
+      int pseudo = pseudocount;
+      if (any_mixing and d == D[g]-1)
+	pseudo *= (D[g]-1);
+      VS[g][d][p].calculate(pseudo, confidence);
     }
 
   bool different = (dx <= 0) or tree_dists.n_dists()==1;
