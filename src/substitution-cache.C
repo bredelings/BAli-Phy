@@ -24,7 +24,8 @@ using std::vector;
 
 #define CONSERVE_MEM 1
 
-int Multi_Likelihood_Cache::get_unused_location() {
+int Multi_Likelihood_Cache::get_unused_location() 
+{
 #ifdef CONSERVE_MEM
   if (not unused_locations.size()) {
     double s = size();
@@ -63,8 +64,8 @@ void Multi_Likelihood_Cache::allocate(int s)
   int old_size = size();
   int new_size = old_size + s;
   if (log_verbose) {
-    std::clog<<"Allocating "<<old_size<<" -> "<<new_size<<" branches ("<<s<<")\n";
-    std::clog<<"  Each branch has "<<C<<" columns.\n";
+    std::cerr<<"Allocating "<<old_size<<" -> "<<new_size<<" branches ("<<s<<")\n";
+    std::cerr<<"  Each branch has "<<C<<" columns.\n";
   }
 
   reserve(new_size);
