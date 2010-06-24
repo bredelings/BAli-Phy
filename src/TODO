@@ -151,8 +151,10 @@ Replace T.directed_branch( ) with T.branch( ). [step 2]
 --
 2.2.0:
 
-Make resizing LC's more automatic/automagic.
- * Separate set_length( ) and 'reserve'
+ * Separate set_length( ) and 'reserve' for likelihood caches.
+ * Remove P_temp in sample_alignment( )
+ * why are there 5 tokens?
+ * how many branches do these 5 tokens use?
 
 Make LC able to get shorter.
 
