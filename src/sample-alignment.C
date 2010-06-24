@@ -80,10 +80,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, *P.A);
 
   const Tree& T = *P.T;
-  //FIXME - partitions
-  data_partition P0 = P;  // We COULD make this conditional... perhaps we should
-  //FIXME - partitions
-  alignment& old = *P0.A;
+  alignment& A = *P.A;
 
   const Matrix frequency = substitution::frequency_matrix(P.SModel());
 
@@ -97,14 +94,14 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   vector<int> seq2;
   vector<int> seq12;
 
-  for(int column=0;column<old.length();column++)
+  for(int column=0;column<A.length();column++)
   {
-    if (not old.gap(column,node1))
+    if (not A.gap(column,node1))
       seq1.push_back(column);
-    if (not old.gap(column,node2))
+    if (not A.gap(column,node2))
       seq2.push_back(column);
 
-    if (not old.gap(column,node1) or old.gap(column,node2))
+    if (not A.gap(column,node1) or A.gap(column,node2))
       seq12.push_back(column);
   }
 
@@ -120,8 +117,8 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   if (not P.smodel_full_tree)
     distributions = distributions_star;
 
-  vector< Matrix > dists1 = distributions(P0,seq1,b,true);
-  vector< Matrix > dists2 = distributions(P0,seq2,b,false);
+  vector< Matrix > dists1 = distributions(P,seq1,b,true);
+  vector< Matrix > dists2 = distributions(P,seq2,b,false);
 
   vector<int> state_emit(4,0);
   state_emit[0] |= (1<<1)|(1<<0);
@@ -136,14 +133,14 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 	      );
 
   //------------------ Compute the DP matrix ---------------------//
-  vector<int> path_old = get_path(old,node1,node2);
-  vector<vector<int> > pins = get_pins(P.alignment_constraint,old,group1,~group1,seq1,seq2,seq12);
+  vector<int> path_old = get_path(A,node1,node2);
+  vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,~group1,seq1,seq2,seq12);
 
   vector<int> path = Matrices->forward(pins);
 
   path.erase(path.begin()+path.size()-1);
 
-  *P.A = construct(old,path,node1,node2,T,seq1,seq2);
+  *P.A = construct(A,path,node1,node2,T,seq1,seq2);
   P.LC.invalidate_branch_alignment(T,b);
   P.note_alignment_changed_on_branch(b);
 
