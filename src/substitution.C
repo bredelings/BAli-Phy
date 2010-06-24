@@ -249,8 +249,8 @@ namespace substitution {
 
     // scratch matrix 
     Matrix & S = cache.scratch(0);
-    const int n_models = S.size1();
-    const int n_states = S.size2();
+    const int n_models = cache.n_models();
+    const int n_states = cache.n_states();
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
@@ -344,7 +344,6 @@ namespace substitution {
 
     assert(T.directed_branch(rb[0]).target().name() == cache.root);
 
-    // scratch matrix 
     const int n_models = cache.n_models();
     const int n_states = cache.n_states();
 
@@ -456,11 +455,9 @@ namespace substitution {
 
     cache.set_length(I.branch_index_length(b0));
 
-    // scratch matrix
-    Matrix& S = cache.scratch(0);
-    const int n_models  = S.size1();
-    const int n_states  = S.size2();
-    //    const int n_letters = a.n_letters();
+    const int n_models  = cache.n_models();
+    const int n_states  = cache.n_states();
+
     assert(MModel.n_states() == n_states);
 
     for(int i=0;i<I.branch_index_length(b0);i++)
@@ -520,11 +517,9 @@ namespace substitution {
 
     const alphabet& a = A.get_alphabet();
 
-    // scratch matrix
-    Matrix& S = cache.scratch(0);
-    const int n_models  = S.size1();
-    const int n_states  = S.size2();
-    //    const int n_letters = a.n_letters();
+    const int n_models  = cache.n_models();
+    const int n_states  = cache.n_states();
+
     assert(MModel.n_states() == n_states);
 
     //    const vector<unsigned>& smap = MModel.state_letters();
@@ -595,12 +590,10 @@ namespace substitution {
 
     const alphabet& a = A.get_alphabet();
 
-    // scratch matrix
-    Matrix& S = cache.scratch(0);
-    const int n_models  = S.size1();
-    const int n_states  = S.size2();
+    const int n_models  = cache.n_models();
+    const int n_states  = cache.n_states();
     const int n_letters = a.n_letters();
-    //    const int N = n_states/n_letters;
+
     assert(MModel.n_states() == n_states);
 
     if (not I.branch_index_valid(b0))
@@ -752,8 +745,8 @@ namespace substitution {
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
-    const int n_models = S.size1();
-    const int n_states = S.size2();
+    const int n_models = cache.n_models();
+    const int n_states = cache.n_states();
     assert(MModel.n_states() == n_states);
 
     // look up the cache rows now, once, instead of for each column
@@ -863,8 +856,8 @@ namespace substitution {
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
-    const int n_models = S.size1();
-    const int n_states = S.size2();
+    const int n_models = cache.n_models();
+    const int n_states = cache.n_states();
     assert(MModel.n_states() == n_states);
 
     // look up the cache rows now, once, instead of for each column
@@ -1076,8 +1069,8 @@ namespace substitution {
 
     // scratch matrix 
     Matrix & S = cache.scratch(0);
-    const int n_models = S.size1();
-    const int n_states    = S.size2();
+    const int n_models = cache.n_models();
+    const int n_states    = cache.n_states();
 
     // cache matrix of frequencies
     Matrix F(n_models,n_states);
@@ -1168,8 +1161,8 @@ namespace substitution {
     L.reserve(A.length()+2);
 
     Matrix& S = LC.scratch(0);
-    const int n_models = S.size1();
-    const int n_states = S.size2();
+    const int n_models = LC.n_models();
+    const int n_states = LC.n_states();
 
     //Add the padding matrices
     {
