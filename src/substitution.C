@@ -186,34 +186,6 @@ namespace substitution {
     peeling_info(const Tree&T) { reserve(T.n_branches()); }
   };
 
-  /// compute log(probability) from conditional likelihoods (S) and equilibrium frequencies as in MModel
-  efloat_t Pr(const Matrix& S,const MultiModel& MModel) 
-  {
-    const int n_models = MModel.n_base_models();
-    const int n_states = MModel.n_states();
-    const vector<double>& d = MModel.distribution();
-
-    double total = 0;
-    for(int m=0;m<n_models;m++) 
-    {
-      const valarray<double>& f = MModel.base_model(m).frequencies();
-
-      double p = 0;
-      for(int s=0;s<n_states;s++)
-	p += S(m,s) * f[s];
-
-      total += p * d[m];
-
-      // A specific model (e.g. the INV model) could be impossible
-      assert(0 <= p and p <= 1.00000000001);
-    }
-
-    // SOME model must be possible
-    assert(0 <= total and total <= 1.00000000001);
-
-    return total;
-  }
-
   void WeightedFrequencyMatrix(Matrix& F, const MultiModel& MModel) 
   {
     // cache matrix of frequencies
@@ -1035,10 +1007,6 @@ namespace substitution {
       peel_branch(ops[i],I,cache,A,T,MC,MModel);
 
     return ops.size();
-  }
-
-  int calculate_caches_for_branch(int b, const data_partition& P) {
-    return calculate_caches_for_node(b, *P.A, *P.subA, P.MC, *P.T, P.LC, P.SModel());
   }
 
   Matrix get_rate_probabilities(const alignment& A,subA_index_t& I, const MatCache& MC,const Tree& T,
