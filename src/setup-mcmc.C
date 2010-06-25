@@ -450,7 +450,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
   if (has_imodel) {
     SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat","topology:lengths:nodes:alignment:alignment_branch"));
     SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths:nodes:alignment:alignment_branch"));
-    SPR_move.add(10,SingleMove(sample_SPR_all,"SPR_and_A_all","topology:lengths:nodes:alignment:alignment_branch"));
+    SPR_move.add(5,SingleMove(sample_SPR_all,"SPR_and_A_all","topology:lengths:nodes:alignment:alignment_branch"));
   }
   else {
     SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat","topology:lengths"));
