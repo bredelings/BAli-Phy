@@ -1,15 +1,107 @@
 2.1.0
 ------------
-Mostly: Documentation, Reporting/Summarization
 FINISH: Reporting for analyzing multiple runs.
  - START reporting tree convergence statistics.
  - START reporting the deviance measure that is reported by Lartillot.
-AUDIT: setup-mcmc.C
-FINISH: C20 resample aa frequencies.
 IMPLEMENT: automatic step size detection for MH based on BEAST?
 COMPARE with 2.0.2 on some single-partition data sets 
  - EF-Tu-45? Globins-few.fasta? 5S-48? HIV? Enolase?
 GENERATE: some examples.
+DOC: Better describe how to obtain mixing diagnostics.
+REPORT: Include at least one tree-mixing measure.
+
+Search: SHOULD we force it to evaluate a sum over alignments for at least a few other trees if the
+      current branch comes out best?
+
+Examine prior rate dispersal for DP[2], DP[4], DP[6], DP[8] with no data.
+ - Make it tighter a priori, so that posterior dispersal actually means something...
+
+Examples: add more?  Microbotryum?
+
+TEST: What will decrease the burnin time for Globins-few.fasta?
+ - Will NNI+A decrease the time?
+ - Will removing SPR decrease the time?
+ - Will doing more SPR-flat+A decrease the time?
+
+*Report* Make trees-consensus write out a list of partitions directly, so we don't need perl?
+
+*Documentation*
+ - Describe how to use new mixing diagnostics.
+   + Describe PSRF-80%CI, PSRF-RCF, trees-distance compare, trees-distances converged.
+   + Describe trees-view2.
+   + Describe the SDSF plot.
+   + Describe Ne for numerical parameters, Ne for splits.
+ - Make programs more self-documenting.
+   + Make statreport describe PSRF-80%CI and PSRF-RCF.
+ - Question: Can I fix the tree?
+ - Question: Can I fix the topology?
+ - Describe post-processing in more detail.
+
+*Report* - Improve the SDSF plot.
+ - Should we output ALL groups in --LOD-table, perhaps by including column headers?
+ - How should we report the vertical range beyond min->max?
+ - How can we make an SVG or PNG of this plot?
+
+*Timing*
+ - Make a cheap NNI move that doesn't change branch lengths.
+   + Changing branch lengths is more expensive for codon models.
+ - What is the affect of NNI_AND_A on 18S burnin?
+ - Allow altering frequency of various moves.
+ - Decrease default frequency of proposals for substitution moves.
+   + Increase dirichlet priors from 1.0 -> 2.0?
+ - Are SPR_and_A_flat( ) and SPR_and_A_path( ) really taking twice as much CPU time as SPR_and_A_all( )?
+   + Might this relate to SPR_and_A_all( ) ignoring cherries?
+   + Or, perhaps it is because SPR_and_A_all doesn't resample the alignment
+     when the proposed tree is not different from the current one.
+     - Probably it SHOULD resample the alignment... but only once, not twice.
+     - Probably we should FORCE it to propose a different tree.
+ - Run nodes_master more often.... for long sequences?  When substitution is slow?
+ - Why am I getting +-1.0e-15 errors in some times?
+ - Why does SPR_and_A_nodes sometimes register 0 CPU time despite having 100 calls?
+
+Automatically adjusting step widths for MH?
+
+--
+2.2.0:
+
+ * Separate set_length( ) and 'reserve' for likelihood caches.
+ * Remove P_temp in sample_alignment( )
+ * why are there 5 tokens?
+ * how many branches do these 5 tokens use?
+
+Make LC able to get shorter.
+
+Reduce the number of active tokens from 5 to 3.
+ * We shouldn't need 5 separate branch caches, I should think...
+ * How many active branches at a time do we need?
+   - Not 10 * B...
+   - I would think about 2 * B...
+
+Examine effect of forcing SPR-all+A to check at least one other alignment...
+
+Handle letters outside of our alphabet more gracefully.
+ - Allow ANYTHING if the alphabet is specified.
+ - Allow ANYTHING if the frequencies aren't off by too much.
+ - Only refuse to run if we have weird letters AND the frequencies
+   are off by too much.
+
+Alignment Constraints #1: Implement a bandwidth around the current path
+ - 2x penalty, because we need to look at the reverse proposal :-(
+ - How do we handle multiple partitions?
+ - How do we handle rejection based on sequence length?
+   + Latex up this kind of thing!
+
+Alignment Constraints #2:
+ - Fix the alignment of some subset of the sequences, regardless of
+   where they live on the tree.  This would allow us to alignment a
+   "query" sequence to a "template" alignment.
+ - Actually, this will prevent SPR from working...
+
+DOC: Change FIXME to Doxygen \todo
+
+FINISH: C20 resample aa frequencies.
+ - Why does the C20 model give lower likelihoods?
+ - And, longer alignments?
 
 Determining Memory Size
  * use <sys/sysinfo.h> on Linux to determine memory size.
@@ -28,20 +120,6 @@ Bail on some routines if we ask for too much RAM?
 Move "alignment-burnin" to setup-mcmc.C
    * We could do more NNI+A, for example...
 
----
-
-Search: SHOULD we force it to evaluate a sum over alignments for at least a few other trees if the
-      current branch comes out best?
-
-examples: add more?
-
-TEST: What will decrease the burnin time for Globins-few.fasta?
- - Will NNI+A decrease the time?
- - Will removing SPR decrease the time?
-
-ADD a 'Covarion' model from an exchange matrix and with n levels of invariance.
-- How to allow column-to-column variation in rho?
-
 Cleanups:
  * Rename s/lambda/weight/ in mcmc.{H,C}
  * Make MoveOne do sampling W/O replacement!
@@ -58,21 +136,19 @@ SPEED: Resampling the following parameters shouldn't require peeling along the t
    - (C10, C20)
  * It should ALSO not require recalculating transition matrices! (which is WHY re-peeling is not necessary.)
 
-*Report* Make trees-consensus write out a list of partitions directly, so we don't need perl?
+*Report* - Alignment Mixing
+ - I can generate a mixing graph by comparing column probabilities for different alignments...
+ - I can also generate ESS values per column.
+ - This is only going to be meaningful when the column support is not too small or too large.
+ - I can generate more plots, if R is installed.
+   * Generate the mixing diagnostics chart.  If one chain only, take 2,3,4 quarters.
+   * Make trees-bootstrap write out the LOD's for each group to a tab-delimited file,
+     if asked.
+
+ADD a 'Covarion' model from an exchange matrix and with n levels of invariance.
+- How to allow column-to-column variation in rho?
 
 *Report* Speedup: implement --output=svg,pdf in draw-tree.
-
-*Documentation*
- - Make programs more self-documenting.
- - Question: Can I fix the topology?
- - Question: Can I fix the tree?
- - Describe post-processing in more detail.
- - Doxygen 'front matter' page:  
-    + Describe 'Model' overview and specific classes and functions.
- - Doxygen: document 'Parameters'    
- - Allow `bali-phy --help=topic'.  Allow --help=advanced to report the invisible advance options.
-
-*Report* Report a 95% confidence interval of splits?
 
 Alignment-indices [constraints]: intelligently find the previous/next column.
  - Actually, do something more intelligent based on pairwise things, like FSA does...
@@ -83,47 +159,15 @@ Make moves report meaningful names for their various statistics.
  - Make NNI report how many branches peeled on average,
  - Make SPR report how many branches peeled on average divided T.n_branches()
 
-*Report* - Make the SDSF plot.
- - Report LOD1 LOD2 LOD3 LOD-GROUPED sorted by increasing LOD score.
- - Outputing LOD-GROUPED allows the user to be ignorant of the sample sizes of each part...
-   + although actually perhaps we should require the parts to be the same... other wise we aren't sampling from the same dist.
- - Construct the range plot.... how?  Report the stddev how?
- - Can we report 3 separate measurements for each run, somehow?
- - Well, first just report min->max
+Output internal node sequences, along with trees that have NAMED internal nodes.
 
-*Report* - Handle two-directory case better: make outfile into list.
- * Alignment-max and alignment-consensus should also take multiple input files.
+*Documentation*
+ - Doxygen 'front matter' page:  
+    + Describe 'Model' overview and specific classes and functions.
+ - Doxygen: document 'Parameters'    
+ - Allow `bali-phy --help=topic'.  Allow --help=advanced to report the invisible advance options.
 
-*Report* - Alignment Mixing
- - I can generate a mixing graph by comparing column probabilities for different alignments...
- - I can also generate ESS values per column.
- - This is only going to be meaningful when the column support is not too small or too large.
- - I can generate more plots, if R is installed.
-   * Generate the mixing diagnostics chart.  If one chain only, take 2,3,4 quarters.
-   * Make trees-bootstrap write out the LOD's for each group to a tab-delimited file,
-     if asked.
-
-*Timing*
- - Make a cheap NNI move that doesn't change branch lengths.
-   + Changing branch lengths is more expensive for codon models.
- - What is the affect of NNI_AND_A on 18S burnin?
- - Allow altering frequency of various moves.
- - Decrease default frequency of proposals for substitution moves.
-   + Increase dirichlet priors from 1.0 -> 2.0?
- - Are SPR_and_A_flat( ) and SPR_and_A_path( ) really taking twice as much CPU time as SPR_and_A_all( )?
-   + Might this relate to SPR_and_A_all( ) ignoring cherries?
-   + Or, perhaps it is because SPR_and_A_all doesn't resample the alignment
-     when the proposed tree is not different from the current one.
-     - Probably it SHOULD resample the alignment... but only once, not twice.
-     - Probably we should FORCE it to propose a different tree.
- - Run nodes_master more often.... for long sequences?  When substitution is slow?
- - Why am I getting +-1.0e-15 errors in some times?
- - Why does SPR_and_A_nodes sometimes register 0 CPU time despite having 100 calls?
- - Just doing a simple NNI is actually a lot faster than doing walk_tree_sample_branch_lengths( )
-   + How does this depend on whether there is an alignment present?
-   + Should I do more NNIs?
-
-Automatically adjusting step widths for MH?
+*Report* Report a 95% confidence interval of splits?
 
 Branch priors - make into a sub-model, allow a mixture-of-two-{Exponential, Gamma}.
 
@@ -148,41 +192,7 @@ Replace T.directed_branch( ) with T.branch( ). [step 2]
      + we therefore give half the length to each one.
    - when does each branch in a compatible tree imply just one reduced split?
 
---
-2.2.0:
 
- * Separate set_length( ) and 'reserve' for likelihood caches.
- * Remove P_temp in sample_alignment( )
- * why are there 5 tokens?
- * how many branches do these 5 tokens use?
-
-Make LC able to get shorter.
-
-Reduce the number of active tokens from 5 to 3.
- * We shouldn't need 5 separate branch caches, I should think...
- * How many active branches at a time do we need?
-   - Not 10 * B...
-   - I would think about 2 * B...
-
-Handle letters outside of our alphabet more gracefully.
- - Allow ANYTHING if the alphabet is specified.
- - Allow ANYTHING if the frequencies aren't off by too much.
- - Only refuse to run if we have weird letters AND the frequencies
-   are off by too much.
-
-Alignment Constraints #1: Implement a bandwidth around the current path
- - 2x penalty, because we need to look at the reverse proposal :-(
- - How do we handle multiple partitions?
- - How do we handle rejection based on sequence length?
-   + Latex up this kind of thing!
-
-Alignment Constraints #2:
- - Fix the alignment of some subset of the sequences, regardless of
-   where they live on the tree.  This would allow us to alignment a
-   "query" sequence to a "template" alignment.
- - Actually, this will prevent SPR from working...
-
-DOC: Change FIXME to Doxygen \todo
 --
 P29. See genome-wide transducer paper.  Can I impose similar constraints?
  * How do they record/store their bandwidths on the DP matrix?
@@ -197,7 +207,6 @@ P7. ECR2 moves (for fixed-A, and for variable-A, with P4).
 P9. MCMC / MPI - Construct a heated alignment prior.
 
 P8. Branch priors - make into a sub-model and allow a mixture-of-two-{Exponential, Gamma}.
-P12. Speed up likelihood calculations when there are lots of gaps?
 P15. Make matcaches (1) [b][m] instead of [m][b] and (2) be able to invalidate individual branches.     
 
 P1. Search SPR w/ multiple attachment sites.
@@ -270,40 +279,7 @@ P3. [Speed up burn-in]
    - This would only help if the current state was REALLY bad, but that could actually happen during burnin.
    - This is a data-driven proposal... which can be good.
 
- * Do, in order:
-Step 1
- * scale parameters
- * branch lengths
- * substitution model parameters
- * indel model parameters (?)
-
-Step 2
- * search the topology as well using only the likelihood
-
-Step 3
- * search the topology using minimal interpolated internal node states.
-
-Step 4
- * internal node states (two_way)
-
-Step 5 
- * alignment
-
-Do we want to freeze the tree while we do our initial alignment updates?
-
-Goals:
- - Allow quick estimation
- - Remove the initial constraint on indel parameters changing...
-   ... Yet still avoid temporary unalignment.
- - If the right alignment is provide, then never get worse.
- - Improve burnin on Roshan's many-taxon test case.
-
 Ideas:
-- Do an initial MCMC with alternative parameters
-  + Where do we send output for this MCMC?
-- Do an initial tree search.  Does this decrease temporary unalignment?
-  + Branch lengths?
-  + Topology?
 - Do an initial POY-style optimization.  How much faster can this be?
 - Issue: we can just try to estimate alignments, BUT
   + How do we score gap penalties?
@@ -319,21 +295,6 @@ P5. [Post-processing:]
 
   + When printing SRQ plots, indicate the LOD range (or its abs?).
   + Make trees-bootstrap less RAM-intensive: don't cache so many things.
-  + We actually need to compute:
-    * Bootstrap sample of LOD
-    * Bootstrap sample of PP
-
-P11. [Summarize multiple chains]
-  + Modify statreport to take multiple (identical) files for estimation of
-    means, ACT, etc.
-  + Make bp-analyze handle multiple INPUT directories!
-
-P17. [Speed up trees-distances]
- + We should be able to ignore splits for leaf branches.
- + Does "topology-record" succeed in ignoring these splits?  Can we try that?
- + What if we wanted topology_record to record average branch lengths?  Can we do that?
- + We could sort the branches of the tree by bit-order, to make it easy to find which ones match.
-   - This should substantially reduce the N^2 cost.
 
 P6. What different tasks do I want?  How can I make a generic tree processor?
  + Find the PP>X consensus tree
@@ -351,8 +312,6 @@ Questions: Do I have to re-analyze the combined file?
            Can I share memory && information between different 
 
 Can I get away w/o manually scripting intermediate variables?
-That is, if I do --consensus-tree=0.5>a --consensus-topology=0.5>b, can I re-use
-  the information about topology?
 
 consensus ->
  * x[i].topology      topology(x[i]) -> Newick
@@ -1184,6 +1143,8 @@ I. fix: gamma+frequency+INV
 [DONE] Set bounds on mu to [0, 0.5] during per-burnin.
 
 [DONE] Improve initial convergence: decouple branch lengths and indel probabilities during initial burnin.
+
+[DONE] Decrease memory use when there are lots of gaps, avoid peeling characters to nodes where they are -.
 
 *IDEAS*
 
