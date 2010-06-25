@@ -1567,20 +1567,182 @@ To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, cho
     <para>
       When using Markov chain Monte Carlo (MCMC) programs like
       <application>MrBayes</application>, <application>BEAST</application> or
-      <application>BAli-Phy</application>, one of the key questions is
-      how many iterations are required to give a good estimate.
-      Unfortunately, the answer to this question is complicated and
-      depends upon both the problem and the specific data set that is
-      being examined.  As a result, <application>BAli-Phy</application>
-      relies on the user to determine when enough samples have been
-      obtained - and to terminate the program when this happens. 
+      <application>BAli-Phy</application>, it is hard to determine in
+      advance how many iterations are required to give a good
+      estimate. The answer depends on the specific data set that is
+      being examined. As a result, <application>BAli-Phy</application>
+      relies on the user to analyze the data in a running chain
+      periodically in order to determine when enough samples have been
+      obtained.  This section describes a number of techniques to
+      diagnose when more samples must be taken.
     </para>
 
+    <sect2>
+      <title>Definition of Convergence</title>
+
+      <para>Convergence refers to the the tendency of a Markov chain to
+	to "forget" its starting value and become typical of its
+	equilibrium distribution. Note that convergence is a property
+	of the Markov chain itself, not of individual runs of the
+	Markov chain.  Ideally a number of individual runs should be
+	examined in order to determine how many initial iterations to
+	discard as "burnin".
+      </para>
+    </sect2>
+    
+    <sect2>
+      <title>Definition of Mixing</title>
+      <para>
+	In MCMC, each sample is not fully independent of previous
+	samples.  In fact, even after a Markov chain has convergence,
+	it can get "stuck" in one part of the parameter space for a
+	long time, before jumping to an equally important part.  When
+	this happens, each sample contributes very little new
+	information and we need to obtain many more samples to obtain
+	good precision on our estimates.  In such a case, we say
+	that the chain isn't "mixing" well. 
+      </para>
+    </sect2>
+
+    
+    <sect2>
+      <title>Diagnostics: Variation in split frequencies across runs</title>
+      <sect3>
+	<title>ASDSF and MSDSF</title>
+<para>
+To calculate the ASDSF and MSDSF run:
+<screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees &gt; partitions.bs</screen>	
+For each split, the SDSF value is just the standard deviation across
+runs of the Posterior Probabilities for that split.  By average the
+resulting SDSF values across splits, we may obtain the ASDSF value
+(Huelsenbeck and Ronquist 2001).  This is commonly considered
+acceptable if it is &lt; 0.01.
+</para>
+
+<para>However, it is also useful to consider the maximum of the SDSF
+  values (MSDSF).  This represents the range of variation in PP across
+  the runs for the split with the most variation.
+</para>
+      </sect3>
+      <sect3>
+	<title>Split frequency comparison plot</title>
+	<para>To generate the split frequency comparison plot, you must have R installed.  Locate the script <filename>compare-runs.R</filename>.  Then run:
+<screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees --LOD-table=LOD-table &gt; partitions.bs 
+<prompt>%</prompt> R --slave --vanilla --args LOD-table compare-SF.pdf &lt; compare-runs.R</screen>
+	  Following <ulink url="http://dx.doi.org/10.1080/10635150600812544">Beiko et al (2006)</ulink>, this displays the variation in
+	  estimates of split frequencies across runs.  Splits are
+	  arranged on the x-axis in increase over of 
+	  Posterior Probability (PP), which is obtained by averaging over
+	  runs.  We then plot a vertical bar from the minimum PP to the
+	  maximum PP.
+	</para>
+	</sect3>
+    </sect2>
+
+
+    <sect2>
+      <title>Diagnostics: Potential Scale Reduction Factors (PSRF)</title>
+<para>
+Potential Scale Redution Factors check that different runs have
+similar posterior distributions.  Only numerical variables may have a
+PSRF. To calculate the PSRF for each
+numerical parameter, you may run: 
+
+<screen><prompt>%</prompt> statreport C1.p C2.p ... C<replaceable>n</replaceable>.p &gt; Report </screen>
+The PSRF is a ratio of the width of the pooled distribution to the
+average width of each distribution, and should ideally be 1.  The PSRF
+is customarily considered to be small enough if it is less than 1.01.
+</para>
+
+<para>
+We compare the PSRF based on the length of 80% credible intervals
+(Brooks and Gelman 1998) and report the result as PSRF-80%CI.  For
+integer-valued parameters, we avoid excessively large PSRF values by
+subtracting 1 from the width of the pooled CI.
+</para>
+
+<para>
+We also report a new PSRF that is more sensitive for integer
+distributions.  For each individual distribution, we find the 80%
+credible interval.  We divide the probability of that interval (which
+may be more tha 80%) by the probability of the same interval under the
+pooled distribution.  The average of this measure over all
+distributions gives us a PSRF that we report as PSRF-RCF.
+</para>
+
+<para>This convergence diagnostic gives a criterion for
+detecting when a parameter value has stabilized at different
+values in several independent runs, indicating a lack of
+convergence. This situation might occur if different runs of
+the Markov chain were trapped in different modes and failed to
+adequately mix between modes.</para>
+    </sect2>
+
+    <sect2>
+      <title>Diagnostics: Effective sample sizes (ESS)</title>
+      <sect3>
+	<title>ESS for numerical values</title>
+      <para>To calculate the split ESS values, run:
+<screen><prompt>%</prompt> statreport C1.p C2.p ... C<replaceable>n</replaceable>.p &gt; Report </screen>
+      We calculate effective sample sizes based on integrated
+      autocorrelation times.  This method has the nice property that
+      simply doubling every sample does not increase the ESS.
+      </para>
+
+      <para>The
+      program <ulink url="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</ulink>
+      also computes ESS values.</para>
+      </sect3>
+
+      <sect3>
+	<title>ESS for split frequencies</title>
+      <para>To calculate the split ESS values, run:
+<screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees &gt; partitions.bs</screen>
+      To compute the ESS for a split, we consider the presence of absence
+      of a split in each iteration as a series of binary values.  We
+      compute the integrated autocorrelation time for this binary
+      sequence, which leads to an ESS.  This approach is similar to
+      dividing the iterations into blocks and computing the ESS on the
+      PP estimates in the blocks.  It is also similar to estimating
+      the variance reduction under a block bootstrap.
+      </para>
+    </sect3>
+</sect2>
+
     <para>
-      In general, we recommend that you analyze the data from a
-      running chain periodically and repeatedly in order to determine
-      when to stop it.
+      Many of these measures require that you run the MCMC a number of
+      different times.  In the text that follows, we refer to the
+      different parameter files
+      as <filename>C1.p</filename>, <filename>C2.p</filename>, 
+      ..., <filename>C<replaceable>n</replaceable>.p</filename> and the
+      different tree samples as <filename>C1.trees</filename>, <filename>C2.trees</filename>,
+      ..., <filename>C<replaceable>n</replaceable>.trees</filename>.
+      Substitute the actual names of the files.
     </para>
+
+    <sect2>
+      <title>Diagnostics: Stabilization</title>
+      <sect3>
+	<title>Stabilization of numerical values</title>
+<para>To obtain estimates of the stabilization time for each
+numerical  parameter, you may run:
+<screen><prompt>%</prompt> statreport C1.p > Report </screen>
+Each series of values is counted as having stabilized after
+the series crosses its upper and then lower 95% confidence bounds
+twice (if the initial value is below the median) or crosses its lower
+and then upper confidence bounds twice (if the initial value is above
+the median). The confidence bounds are those based on its
+equilibrium distribution as calculated from the last third of the
+values in the sequence.</para>
+      </sect3>
+
+      <sect3>
+	<title>Stabilization of tree topology</title>
+	<para>In addition to examining convergence diagnostics for continuous
+	parameters, it is important to examine convergence diagnostics
+	for the topology as well (<ulink url="http://dx.doi.org/10.1080/10635150600812544">Beiko et al 2006</ulink>).  </para>
+   </sect3>
+    </sect2>
 
     <para>
       To inspect the Markov chain generated by
@@ -1593,98 +1755,6 @@ To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, cho
       the full analysis is necessary as well (<xref linkend="analysis"/>).
     </para>
 
-    <sect2>
-      <title>Convergence</title>
-
-      <sect3>
-	<title>Definition</title>
-
-	<para>
-	  What is convergence, and how can you check if a Markov chain
-	  has "converged"?  We first note that "convergence" refers to
-	  the tendency of a Markov chain to converge to the desired
-	  distribution (its equilibrium distribution).  Each run of a
-	  Markov chain starts at a specific tree and alignment, which may not be representative
-	  of the equilibrium distribution, and so convergence
-	  represents the process of "forgetting" the starting value.
-	  If we represent the i-th iteration of the Markov chain as
-	  X[i], then we desire rapid convergence of the distribution
-	  of X[i] to the equilibrium distribution.  However, note that
-	  convergence is a property of the Markov chain itself, and
-	  not of individual runs of the Markov chain.  The
-	  distribution of X[i] can be estimated by running the chain
-	  many times.
-	</para>
-
-      </sect3>
-
-      <sect3>
-	<title>Burn-in</title>
-	<para>
-	  In practice, most MCMC analyses designate some number of
-	  samples at the beginning of each chain as "burn-in".  These
-	  samples are discarded because they represent the initial
-	  starting point, but not the equilibrium distribution.
-	</para>
-
-	<para>
-	  Determining the number of samples to discard as burn-in is
-	  usually rather ad-hoc.  MCMC practitioners often run the
-	  chain for a "long" time, and then visually inspect the
-	  samples, perhaps using <ulink url="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</ulink>. After some number of iterations, the 
-	  samples become "typical" of later values, and that number
-	  is chosen as the burn-in.  Unfortunately, it is always
-	  possible that if you run the Markov chain even longer, then
-	  the values will change again.  Therefore, this method is not
-	  strong evidence that a chain converges before a given burn-in time.
-	</para>
-      </sect3>
-
-      <sect3>
-	<title>Testing Convergence</title>
-	<para>
-	  A better (but not perfect) test of convergence is to run
-	  several independent chains starting from many different
-	  places.  It is possible that each Markov chain will get
-	  stuck in local optima near its own starting value, but that
-	  the movement between the different local optima will be
-	  exceedingly slow.  However, if the posterior distributions
-	  from each Markov chain seem to be the same, then that gives some
-	  evidence that the MCMC procedure is truly converging to a
-	  global equilibrium.
-	</para>
-      </sect3>
-    </sect2>
-
-    <sect2>
-      <title>Mixing</title>
-      <sect3>
-	<title>Definition</title>
-	<para>
-	  In MCMC, each sample is not fully independent of previous
-	  samples.  In fact, a Markov chain can get "stuck" in one part
-	  of the parameter space for a long time, before jumping to an
-	  equally important part.  When this happens, we say that the
-	  chain isn't "mixing" well.
-	</para>
-      </sect3>
-
-      <sect3>
-	<title>Measures: how good is the mixing?</title>
-	<para>
-	  For continuous parameters, one common measure is the
-	  effective sample size (ESS).  Given a collection of
-	  <emphasis>dependent</emphasis> samples from a Markov chain,
-	  the effective sample size is the equivalent number of
-	  <emphasis>independent</emphasis> samples.  However, there
-	  are many ways one could measure "equivalence".  The usual
-	  way is to compare samples based on the variance of the sum
-	  of the values.
-	</para>
-      </sect3>
-    </sect2>
-
-    
   </sect1>
 
   <sect1 id="tuning_the_markov_chain">
