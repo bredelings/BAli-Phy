@@ -26,11 +26,6 @@ TEST: What will decrease the burnin time for Globins-few.fasta?
 *Report* Make trees-consensus write out a list of partitions directly, so we don't need perl?
 
 *Documentation*
- - Describe how to use new mixing diagnostics.
-   + Describe PSRF-80%CI, PSRF-RCF, trees-distance compare, trees-distances converged.
-   + Describe trees-view2.
-   + Describe the SDSF plot.
-   + Describe Ne for numerical parameters, Ne for splits.
  - Make programs more self-documenting.
    + Make statreport describe PSRF-80%CI and PSRF-RCF.
  - Question: Can I fix the tree?
