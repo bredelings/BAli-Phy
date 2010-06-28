@@ -142,7 +142,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 
   // Actually create the Matrices & Chain
   boost::shared_ptr<DParrayConstrained> 
-    Matrices( new DParrayConstrained(seq123.size(),state_emit,start_P,Q, P.beta[0])
+    Matrices( new DParrayConstrained(seq123.size(),state_emit,start_P,Q, 0)
 	      );
 
   // Determine which states are allowed to match (c2)

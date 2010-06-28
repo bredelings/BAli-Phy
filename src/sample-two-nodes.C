@@ -160,7 +160,7 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
 
     Matrices = new DParrayConstrained(seqall.size(), state_emit_1D, 
 				      start_P, Q, 
-				      P.beta[0]);
+				      0);
   }
   else 
   {

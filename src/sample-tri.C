@@ -136,7 +136,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
   // Actually create the Matrices & Chain
   boost::shared_ptr<DPmatrixConstrained> 
-    Matrices(new DPmatrixConstrained(get_state_emit(), start_P, Q, P.beta[0],
+    Matrices(new DPmatrixConstrained(get_state_emit(), start_P, Q, 0,
 				     P.SModel().distribution(), dists1, dists23, frequency)
 	     );
 
