@@ -59,20 +59,17 @@ Automatically adjusting step widths for MH?
 --
 2.2.0:
 
+Make LC able to get shorter.
+ * Allow temporarily storing, and then re-associating, a Likelihood_Cache_Branch.
  * Separate set_length( ) and 'reserve' for likelihood caches.
  * Remove P_temp in sample_alignment( )
- * why are there 5 tokens?
- * how many branches do these 5 tokens use?
+ * Why are there 5 tokens?
+ * How many branches do these 5 tokens use?
 
-Make LC able to get shorter.
+Number of tokens may be misleading, since we create temporaries.
+ * Currently, we need 2*B branches w/o SPR_and_A_all, and 4*B with.
 
-Reduce the number of active tokens from 5 to 3.
- * We shouldn't need 5 separate branch caches, I should think...
- * How many active branches at a time do we need?
-   - Not 10 * B...
-   - I would think about 2 * B...
-
-Examine effect of forcing SPR-all+A to check at least one other alignment...
+Examine effect ON BURNIN of forcing SPR-all+A to check at least one other alignment...
 
 Handle letters outside of our alphabet more gracefully.
  - Allow ANYTHING if the alphabet is specified.
