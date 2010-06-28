@@ -1063,7 +1063,7 @@ void mcmc_init(Parameters& P, ostream& s_out, ostream& s_parameters)
   s_parameters<<"prior\t";
   for(int i=0;i<P.n_data_partitions();i++)
     if (P[i].variable_alignment()) s_parameters<<"prior_A"<<i+1<<"\t";
-  s_parameters<<"likelihood\tlogp\tbeta\t";
+  s_parameters<<"likelihood\tlogp\t";
   s_parameters<<P.header();
   for(int i=0;i<P.n_data_partitions();i++) {
     if (P[i].variable_alignment()) {
@@ -1118,7 +1118,7 @@ void mcmc_log(int iterations, int subsample, Parameters& P,
   s_parameters<<prior<<"\t";
   for(int i=0;i<P.n_data_partitions();i++)
     if (P[i].variable_alignment()) s_parameters<<P[i].prior_alignment()<<"\t";
-  s_parameters<<likelihood<<"\t"<<Pr<<"\t"<<P.beta[0]<<"\t";
+  s_parameters<<likelihood<<"\t"<<Pr<<"\t";
 
   // Sort parameter values to resolve identifiability and then output them.
   vector<double> values = P.get_parameter_values();
