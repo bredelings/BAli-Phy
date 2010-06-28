@@ -679,8 +679,12 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
     string beta_s = args["beta"].as<string>();
     vector<double> beta = split<double>(beta_s,',');
 
+    P.all_betas = beta;
+
     if (proc_id > beta.size())
       throw myexception()<<"not enough temperatures given";
+
+    P.beta_index = proc_id;
 
     P.set_beta(beta[proc_id]);
 

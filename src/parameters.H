@@ -235,6 +235,9 @@ public:
 
   std::vector<double> beta_series;
 
+  std::vector<double> all_betas;
+  int beta_index;
+
   /// Did we most recently hit beta==1 (1) or beta=0 (0)
   int updown;
 

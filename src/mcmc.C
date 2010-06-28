@@ -855,60 +855,72 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
   int n_procs = world.size();
 
   if (n_procs < 2) return;
-  
-  double beta = P.get_beta();
-  double l    = log(P.likelihood());
+  if (not P.all_betas.size()) return;
+
+  // Determine the probability of this chain at each temperature
+  efloat_t Pr1 = P.heated_probability();
+  vector<double> Pr;
+  for(int i=0;i<P.all_betas.size();i++)
+  {
+    P.set_beta(P.all_betas[i]);
+    Pr.push_back(log(P.heated_probability()));
+  }
+  P.set_beta(P.all_betas[P.beta_index]);
+  efloat_t Pr2 = P.heated_probability();
+
+  assert(std::abs(log(Pr1)-log(Pr2)) < 1.0e-9);
+
+
   //  double oldbeta = beta;
-  vector<double> betas;
-  vector<double> L;
+  vector< vector<double> > Pr_all;
+
+  // maps from chain -> position
+  vector< int > chain_to_beta;
+
+  // Has each chain recently been at the high beta (1) or the low beta (0)
   vector<int> updowns;
 
-  // Collect the Betas and log-Likelihoods in chain 0 (master)
-  gather(world, beta, betas, 0);
-  gather(world, l   , L    , 0);
+  // Collect the Betas and probabilities in chain 0 (master)
+  gather(world, Pr, Pr_all, 0);
+  gather(world, P.beta_index, chain_to_beta, 0);
   gather(world, P.updown, updowns, 0);
 
+  // maps from beta index to chain index
+  vector<int> beta_to_chain = invert(chain_to_beta);
 
   if (proc_id == 0)
   {
     //----- Compute an order of chains in decreasing order of beta -----//
-    vector<int> order = iota<int>(n_procs);
-    
-    sort(order.begin(), order.end(), sequence_order<double>(betas));
-    std::reverse(order.begin(), order.end());
-    
     MCMC::Result exchange(n_procs-1,0);
+
     for(int i=0;i<3;i++)
     {
       //----- Propose pairs of adjacent-temperature chains  ----//
       for(int j=0;j<n_procs-1;j++)
       {
-	double b1 = betas[order[j]];
-	double b2 = betas[order[j+1]];
-	assert(b2 <= b1);
+	int chain1 = beta_to_chain[j];
+	int chain2 = beta_to_chain[j+1];
 
-	double L1 = L[order[j]];
-	double L2 = L[order[j+1]];
+	// Compute the log probabilities for the two terms in the current order
+	double log_Pr1 = Pr_all[chain1][j] + Pr_all[chain2][j+1];
+	// Compute the log probabilities for the two terms in the proposed order
+	double log_Pr2 = Pr_all[chain2][j] + Pr_all[chain1][j+1];
 
-	//---- We swap both betas and order to preserve the decreasing betas ----//
-
+	// Swap the chain in beta positions j and j+1 if we accept the proposal
 	exchange.counts[j]++;
-	if (uniform() < exp( (b2-b1)*(L1-L2) ) )
+	if (uniform() < exp(log_Pr2 - log_Pr1) )
 	{
-	  std::swap(betas[order[j]],betas[order[j+1]]);
-	  std::swap(order[j],order[j+1]);
+	  std::swap(beta_to_chain[j],beta_to_chain[j+1]);
 	  exchange.totals[j]++;
 	}
-	
-	
       }
     }
 
     // estimate average regeneration times for beta high->low->high
     MCMC::Result regeneration(n_procs,0);
 
-    if (updowns[order[0]] == 0)
-      regeneration.counts[order[0]]++;
+    if (updowns[beta_to_chain[0]] == 0)
+      regeneration.counts[beta_to_chain[0]]++;
 
     for(int i=0;i<n_procs;i++)
       regeneration.totals[i]++;
@@ -917,15 +929,17 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
     // fraction of visitors that most recently visited highest Beta
     MCMC::Result f_recent_high(n_procs, 0); 
 
-    updowns[order[0]] = 1;
-    updowns[order.back()] = 0;
+    // the lowest chain has hit the lower bound more recently than the higher bound
+    updowns[beta_to_chain[0]] = 1;
+    // the highest chain has hit the upper bound more recently than the higher bound
+    updowns[beta_to_chain.back()] = 0;
 
     for(int j=0;j<n_procs;j++)
-      if (updowns[order[j]] == 1) {
+      if (updowns[beta_to_chain[j]] == 1) {
 	f_recent_high.counts[j] = 1;
 	f_recent_high.totals[j] = 1;
       }
-      else if (updowns[order[j]] == 0)
+      else if (updowns[beta_to_chain[j]] == 0)
 	f_recent_high.counts[j] = 1;
 
 	
@@ -935,13 +949,18 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
     Stats.inc("MC^3::Beta_regeneration_times",regeneration);
   }
 
+  // recompute the chain_to_beta mapping
+  vector<int> chain_to_beta2 = invert(beta_to_chain);
+
   // Broadcast the new betas for each chain
-  scatter(world, betas, beta, 0);
+  int old_index = P.beta_index;
+  scatter(world, chain_to_beta2, P.beta_index, 0);
   scatter(world, updowns, P.updown, 0);
 
-  // cerr<<"Proc["<<proc_id<<"] changing from "<<oldbeta<<" -> "<<beta<<endl;
+  if (log_verbose)
+    cerr<<"Proc["<<proc_id<<"] changing from "<<old_index<<" -> "<<P.beta_index<<endl;
 
-  P.set_beta(beta);
+  P.set_beta(P.all_betas[P.beta_index]);
 }
 #endif
 
