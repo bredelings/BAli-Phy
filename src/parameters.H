@@ -118,6 +118,9 @@ public:
   /// Temperatures -    0:likelihood     1:prior?
   std::vector<double> beta;
 
+  void set_beta(double b);
+  double get_beta() const;
+
   // get the alphabet for partition i
   const alphabet& get_alphabet() const {return A->get_alphabet();}
 
@@ -216,6 +219,9 @@ public:
 
   int get_imodel_index_for_partition(int i) const {return imodel_for_partition[i];}
 
+  void set_beta(double b);
+  double get_beta() const;
+
   /// The Tree - mean branch lengths = 1
   cow_ptr<SequenceTree> T;
 
@@ -227,7 +233,6 @@ public:
 
   std::vector<int> branch_HMM_type;
 
-  std::vector<double> beta;
   std::vector<double> beta_series;
 
   /// Did we most recently hit beta==1 (1) or beta=0 (0)

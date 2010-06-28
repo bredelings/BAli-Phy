@@ -162,8 +162,8 @@ void check_match_P(const data_partition& P, efloat_t OS, efloat_t OP, const vect
   vector<int> path_g = Matrices.generalize(path);
 
   //--- Compare path emission probability VS likelihood
-  efloat_t qs = Matrices.path_Q_subst(path_g) * pow(OS,P.beta[0]);
-  efloat_t ls = pow(P.likelihood(), P.beta[0]);
+  efloat_t qs = Matrices.path_Q_subst(path_g) * pow(OS,P.get_beta());
+  efloat_t ls = pow(P.likelihood(), P.get_beta());
   
   //--- Compare the path probability (Q) and collapsed/generalized path probability (GQ)
   efloat_t qpGQ = Matrices.path_GQ_path(path_g) *  Matrices.generalize_P(path);

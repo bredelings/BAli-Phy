@@ -82,7 +82,7 @@ void print_stats(std::ostream& o,std::ostream& trees,
     o<<"   prior_A"<<i+1<<" = "<<P[i].prior_alignment();
 
   o<<"    likelihood = "<<Pr_likelihood<<"    logp = "<<Pr
-   <<"    beta = " <<P.beta[0]  <<"\n";
+   <<"    beta = " <<P.get_beta()  <<"\n";
 
   if (print_alignment)
     for(int i=0;i<P.n_data_partitions();i++)

@@ -682,12 +682,11 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
     if (proc_id > beta.size())
       throw myexception()<<"not enough temperatures given";
 
-    for(int i=0;i<P.n_data_partitions();i++)
-      P.beta[0] = P[i].beta[0] = beta[proc_id];
-    
+    P.set_beta(beta[proc_id]);
+
     P.beta_series.push_back(beta[proc_id]);
   }
-  
+
   if (args.count("dbeta")) {
     vector<string> deltas = split(args["dbeta"].as<string>(),',');
     for(int i=0;i<deltas.size();i++) {

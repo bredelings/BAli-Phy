@@ -42,6 +42,17 @@ using std::endl;
 
 bool use_internal_index = true;
 
+void data_partition::set_beta(double b)
+{
+  beta[0] = b;
+  recalc_imodel();
+}
+
+double data_partition::get_beta() const
+{
+  return beta[0];
+}
+
 void data_partition::variable_alignment(bool b)
 {
   variable_alignment_ = b;
@@ -95,6 +106,51 @@ IndelModel& data_partition::IModel()
   std::abort();
 }
 
+indel::PairHMM heat(indel::PairHMM H, double beta)
+{
+  if (beta != 1) return H;
+
+  if (beta == 0)
+  {
+    for(int i=0;i<H.size1();i++)
+    {
+      double total1 = 0;
+      double total2 = 0;
+      for(int j=0;j<H.size2();j++)
+      {
+	total1 += H(i,j);
+	if (H(i,j) > 0) 
+	  H(i,j) = 1;
+	else
+	  H(i,j) = 0;
+	total2 += H(i,j);
+      }
+      assert(std::abs(1.0 - total1) < 1.0e-9);
+      for(int j=0;j<H.size2();j++)
+	H(i,j) /= total2;
+    }
+  }
+  else if (beta < 1)
+  {
+    for(int i=0;i<H.size1();i++)
+    {
+      double total1 = 0;
+      double total2 = 0;
+      for(int j=0;j<H.size2();j++)
+      {
+	total1 += H(i,j);
+	H(i,j) = pow(H(i,j), beta);
+	total2 += H(i,j);
+      }
+      assert(std::abs(1.0 - total1) < 1.0e-9);
+      for(int j=0;j<H.size2();j++)
+	H(i,j) /= total2;
+    }
+  }
+
+  return H;
+}
+
 void data_partition::recalc_imodel() 
 {
   if (not variable_alignment()) return;
@@ -113,7 +169,7 @@ void data_partition::recalc_imodel()
     if (branch_HMM_type[b] == 1)
       branch_HMMs[b] = IModel_->get_branch_HMM(-1);
     else
-      branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());
+      branch_HMMs[b] = heat(IModel_->get_branch_HMM(t*branch_mean()), get_beta());
   }
 }
 
@@ -395,7 +451,7 @@ efloat_t data_partition::likelihood() const
 
 efloat_t data_partition::heated_likelihood() const 
 {
-  return pow(likelihood(),beta[0]);
+  return pow(likelihood(),get_beta());
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
@@ -459,6 +515,15 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
 
 //-----------------------------------------------------------------------------//
 
+void Parameters::set_beta(double b)
+{
+  set_parameter_value(0,b);
+}
+
+double Parameters::get_beta() const
+{
+  return get_parameter_value(0);
+}
 
 efloat_t Parameters::prior_no_alignment() const 
 {
@@ -677,15 +742,25 @@ void Parameters::recalc(const vector<int>& indices)
   {
     int m = model_of_index[indices[i]];
 
-    if (m == -1) {
+    if (m == -1) 
+    {
       int s = indices[i];
-      assert(0 <= s and s < n_scales);
 
-      double mu = get_parameter_value(s);
+      if (s == 0) // beta
+	for(int j=0;j<n_data_partitions();j++)
+	  data_partitions[j]->set_beta(get_beta());
+      else        // mu1 ... mu<n>
+      {
+	double mu = get_parameter_value(s);
 
-      for(int j=0;j<scale_for_partition.size();j++)
-	if (scale_for_partition[j] == s)
-	  data_partitions[j]->branch_mean(mu);
+	s--;
+
+	assert(0 <= s and s < n_scales);
+
+	for(int j=0;j<scale_for_partition.size();j++)
+	  if (scale_for_partition[j] == s)
+	    data_partitions[j]->branch_mean(mu);
+      }
     }
     else
       submodel_changed[m] = true;
@@ -790,7 +865,7 @@ double Parameters::branch_mean(int i) const
 {
   assert(0 <= i and i < n_branch_means());
 
-  return get_parameter_value(i);
+  return get_parameter_value(1+i);
 }
 
 
@@ -798,14 +873,14 @@ void Parameters::branch_mean(int i, double x)
 {
   assert(0 <= i and i < n_branch_means());
 
-  set_parameter_value(i,x);
+  set_parameter_value(1+i,x);
 }
 
 void Parameters::branch_mean_tricky(int i,double x)
 {
   assert(0 <= i and i < n_branch_means());
 
-  parameters_[i].value = x;
+  parameters_[1+i].value = x;
   
   for(int j=0;j<scale_for_partition.size();j++)
     if (scale_for_partition[j] == i)
@@ -829,12 +904,13 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    T(t),
    TC(star_tree(t.get_sequences())),
    branch_HMM_type(t.n_branches(),0),
-   beta(2, 1.0),
    updown(-1),
    features(0),
    branch_length_max(-1)
 {
   constants.push_back(-1);
+
+  add_super_parameter(Parameter("Heat::beta", 1.0, between(0,1)));
 
   for(int i=0;i<n_scales;i++)
     add_super_parameter(Parameter("mu"+convertToString(i+1), 0.25, lower_bound(0)));
@@ -910,12 +986,13 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    T(t),
    TC(star_tree(t.get_sequences())),
    branch_HMM_type(t.n_branches(),0),
-   beta(2, 1.0),
    updown(-1),
    features(0),
    branch_length_max(-1)
 {
   constants.push_back(-1);
+
+  add_super_parameter(Parameter("Heat::beta", 1.0, between(0,1)));
 
   for(int i=0;i<n_scales;i++)
     add_super_parameter(Parameter("mu"+convertToString(i+1), 1.0, lower_bound(0.0)));

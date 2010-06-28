@@ -792,7 +792,7 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
   {
     double L1 = log(P.likelihood());
 
-    double b1 = P.beta[0];
+    double b1 = P.get_beta();
     
     if (proc_id > partner) {
       cerr<<"Proc "<<proc_id<<": sending beta = "<<b1<<endl;
@@ -811,9 +811,7 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
       if (exchange == 1) {
 	world.recv(partner, mpi::any_tag, b1);
 	cerr<<"Proc "<<proc_id<<": new beta = "<<b1<<endl;
-	P.beta[0] = b1;
-	for(int i=0;i<P.n_data_partitions();i++)
-	  P[i].beta[0] = b1;
+	P.set_beta(b1);
       }
     }
     else {
@@ -842,9 +840,7 @@ std::ostream& operator<<(std::ostream& o,const Matrix& M) {
       {
 	world.send(partner, 0, b1); // MPI::COMM_WORLD.Send   (&b1, 1, MPI::DOUBLE,  partner, 0);
 	
-	P.beta[0] = b2;
-	for(int i=0;i<P.n_data_partitions();i++)
-	  P[i].beta[0] = b2;
+	P.set_beta(b2);
       }
     }
   }
@@ -860,7 +856,7 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
 
   if (n_procs < 2) return;
   
-  double beta = P.beta[0];
+  double beta = P.get_beta();
   double l    = log(P.likelihood());
   //  double oldbeta = beta;
   vector<double> betas;
@@ -945,9 +941,7 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
 
   // cerr<<"Proc["<<proc_id<<"] changing from "<<oldbeta<<" -> "<<beta<<endl;
 
-  P.beta[0] = beta;
-  for(int i=0;i<P.n_data_partitions();i++)
-    P[i].beta[0] = beta;
+  P.set_beta(beta);
 }
 #endif
 
@@ -1268,8 +1262,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 
     // Change the temperature according to the pattern suggested
     if (iterations < PP.beta_series.size())
-      for(int i=0;i < PP.n_data_partitions();i++)
-	PP.beta[0] = PP[i].beta[0] = PP.beta_series[iterations];
+      PP.set_beta( PP.beta_series[iterations] );
 
     // Start learning step sizes at iteration 5
     if (iterations == 5)
