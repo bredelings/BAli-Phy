@@ -42,13 +42,13 @@ double parameter_slice_function::operator()(double x)
 {
   count++;
   P.set_parameter_value(n,inverse(x));
-  return log(P.probability());
+  return log(P.heated_probability());
 }
 
 double parameter_slice_function::operator()()
 {
   count++;
-  return log(P.probability());
+  return log(P.heated_probability());
 }
 
 double parameter_slice_function::current_value() const
@@ -80,13 +80,13 @@ double branch_length_slice_function::operator()(double l)
 {
   count++;
   P.setlength(b,l);
-  return log(P.probability());
+  return log(P.heated_probability());
 }
 
 double branch_length_slice_function::operator()()
 {
   count++;
-  return log(P.probability());
+  return log(P.heated_probability());
 }
 
 double branch_length_slice_function::current_value() const
@@ -102,7 +102,7 @@ branch_length_slice_function::branch_length_slice_function(Parameters& P_,int b_
 
 double slide_node_slice_function::operator()() {
   count++;
-  return log(P.probability());
+  return log(P.heated_probability());
 }
 
 double slide_node_slice_function::operator()(double x) 
@@ -201,7 +201,7 @@ double scale_means_only_slice_function::operator()()
   const int n = P.n_branch_means();
 
   // return pi * (\sum_i \mu_i)^(n-B)
-  return log(P.probability()) + log(sum_of_means(P))*(n-B);
+  return log(P.heated_probability()) + log(sum_of_means(P))*(n-B);
 }
 
 double scale_means_only_slice_function::current_value() const
@@ -278,7 +278,7 @@ double constant_sum_slice_function::operator()()
   const int N = indices.size();
 
   // return pi * (1-x)^(N-1)
-  return log(P.probability()) + (N-1)*log(total-t);
+  return log(P.heated_probability()) + (N-1)*log(total-t);
 }
 
 double constant_sum_slice_function::current_value() const

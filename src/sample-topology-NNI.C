@@ -482,9 +482,9 @@ void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats&
 
 #ifndef NDEBUG
   //  We cannot evaluate Pr2 here unless -t: internal node states could be inconsistent!
-  efloat_t Pr1 = p[0].probability();
-  efloat_t Pr2 = p[1].probability();
-  efloat_t Pr3 = p[2].probability();
+  efloat_t Pr1 = p[0].heated_probability();
+  efloat_t Pr2 = p[1].heated_probability();
+  efloat_t Pr3 = p[2].heated_probability();
 #endif
 
   branch_length_slice_function logp1(p[0],b);
