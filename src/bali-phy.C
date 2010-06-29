@@ -672,12 +672,45 @@ void sanitize_branch_lengths(SequenceTree& T)
   }
 }
 
+vector<double> get_geometric_heating_levels(const string& s)
+{
+  vector<double> levels;
+
+  vector<string> parse = split(s,'/');
+
+  if (parse.size() != 2) return levels;
+
+  try
+  {
+    int n_levels = convertTo<int>(parse[1]);
+    levels.resize(n_levels);
+    
+    parse = split(parse[0],'-');
+    levels[0] = convertTo<double>(parse[0]);
+    levels.back() = convertTo<double>(parse[1]);
+    double factor = pow(levels.back()/levels[0], 1.0/(n_levels-1));
+    
+    for(int i=1;i<levels.size()-1;i++)
+      levels[i] = levels[i-1]*factor;
+    
+    return levels;
+  }
+  catch (...)
+  {
+    throw myexception()<<"I don't understand beta level string '"<<s<<"'";
+  }
+}
+
+
 void setup_heating(int proc_id, const variables_map& args, Parameters& P) 
 {
   if (args.count("beta")) 
   {
     string beta_s = args["beta"].as<string>();
-    vector<double> beta = split<double>(beta_s,',');
+
+    vector<double> beta = get_geometric_heating_levels(beta_s);
+    if (not beta.size())
+      vector<double> beta = split<double>(beta_s,',');
 
     P.all_betas = beta;
 
