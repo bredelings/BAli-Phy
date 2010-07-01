@@ -413,7 +413,7 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   // FIXME - techincally, we could recompute likelihoods in just THOSE partitions :P
   //       - also, I suppose, if they are fixed, then there is no mixing problem.
   for(int i=0;i<PP->n_branch_means();i++)
-    if (P->is_fixed(1+i))
+    if (PP->branch_mean(i).fixed)
       return;
 
   MCMC::Result result(2);
@@ -424,8 +424,8 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   Bounds<double> b;
   for(int i=0; i<PP->n_branch_means(); i++)
   {
-    Bounds<double> b2 = PP->get_bounds(1+i);
-    double mu = PP->branch_mean(i);
+    Bounds<double> b2 = PP->branch_mean(i).bounds;
+    double mu = PP->branch_mean(i).value;
 
     if (b2.has_lower_bound and b2.lower_bound > 0)
     {
@@ -463,7 +463,7 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   P2->tree_propagate();
 
   for(int i=0;i<PP->n_branch_means();i++) 
-    P2->branch_mean_tricky(i,P2->branch_mean(i)*scale);
+    P2->branch_mean_tricky(i,P2->branch_mean(i).value*scale);
   
 #ifndef NDEBUG
   owned_ptr<Parameters> P3 = P2;

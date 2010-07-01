@@ -153,7 +153,7 @@ double sum_of_means(const Parameters& P)
 {
   double sum = 0;
   for(int i=0;i<P.n_branch_means();i++) 
-    sum += P.branch_mean(i);
+    sum += P.branch_mean(i).value;
   return sum;
 }
 
@@ -169,7 +169,7 @@ double set_sum_of_means_tricky(Parameters& P, double t)
   double sum = sum_of_means(P);
   double scale = t/sum;
   for(int i=0;i<P.n_branch_means();i++) 
-    P.branch_mean_tricky(i,P.branch_mean(i)*scale);
+    P.branch_mean_tricky(i,P.branch_mean(i).value*scale);
 
   return scale;
 }
@@ -223,18 +223,18 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
 
   for(int i=0; i<P.n_branch_means(); i++)
   {
-    Bounds<double> b2 = P.get_bounds(1+i);
+    Bounds<double> b2 = P.branch_mean(i).bounds;
 
     if (b2.has_lower_bound and b2.lower_bound > 0)
     {
       b2.has_lower_bound = true;
-      b2.lower_bound = log(b2.lower_bound) - log(P.branch_mean(i));
+      b2.lower_bound = log(b2.lower_bound) - log(P.branch_mean(i).value);
     }
     else
       b2.has_lower_bound = false;
 
     if (b2.has_upper_bound)
-      b2.upper_bound = log(b2.upper_bound) - log(P.branch_mean(i));
+      b2.upper_bound = log(b2.upper_bound) - log(P.branch_mean(i).value);
 
     b = b and b2;
   }

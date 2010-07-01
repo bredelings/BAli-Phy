@@ -317,7 +317,7 @@ public:
 
   double branch_mean() const;
 
-  double branch_mean(int i) const;
+  const Parameter& branch_mean(int i) const;
 
   void branch_mean(int i,double); 
 

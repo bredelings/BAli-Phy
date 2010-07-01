@@ -542,7 +542,7 @@ efloat_t Parameters::prior_no_alignment() const
   // prior on mu[i], the mean branch length for scale i
   for(int i=0;i<n_branch_means();i++) {
     //  return pow(efloat_t(branch_mean()),-1.0);
-    Pr *= gamma_pdf(branch_mean(i), 0.5, 2.0);
+    Pr *= gamma_pdf(branch_mean(i).value, 0.5, 2.0);
   }
     
   // prior on the substitution model
@@ -861,11 +861,11 @@ int Parameters::n_branch_means() const
   return n_scales;
 }
 
-double Parameters::branch_mean(int i) const 
+const Parameter& Parameters::branch_mean(int i) const 
 {
   assert(0 <= i and i < n_branch_means());
 
-  return get_parameter_value(1+i);
+  return get_parameter(1+i);
 }
 
 

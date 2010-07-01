@@ -625,7 +625,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     for(int i=0;i<3;i++) {
       out_both<<" Tree size #"<<i+1<<"   likelihood = "<<P->likelihood();
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
-	out_both<<"     mu"<<j+1<<" = "<<P.as<Parameters>()->branch_mean(j)<<endl;
+	out_both<<"     mu"<<j+1<<" = "<<P.as<Parameters>()->branch_mean(j).value<<endl;
       show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
     }
@@ -646,7 +646,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     for(int i=0;i<n_pre_burnin;i++) {
       out_both<<" SPR #"<<i+1<<"   likelihood = "<<P->likelihood();
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
-	out_both<<"     mu"<<j+1<<" = "<<P.as<Parameters>()->branch_mean(j)<<endl;
+	out_both<<"     mu"<<j+1<<" = "<<P.as<Parameters>()->branch_mean(j).value<<endl;
       show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
     }
@@ -667,7 +667,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     for(int i=0;i<n_pre_burnin2;i++) {
       out_both<<" NNI #"<<i+1<<"   likelihood = "<<P->likelihood();
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
-	out_both<<"     mu"<<j+1<<" = "<<P.as<Parameters>()->branch_mean(j)<<endl;
+	out_both<<"     mu"<<j+1<<" = "<<P.as<Parameters>()->branch_mean(j).value<<endl;
       show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
     }
@@ -685,7 +685,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 
   for(int i=0; i<P.as<Parameters>()->n_branch_means(); i++)
   {
-    if (P.as<Parameters>()->branch_mean(i) > 0.5)
+    if (P.as<Parameters>()->branch_mean(i).value > 0.5)
       P.as<Parameters>()->branch_mean(i,0.5);
   }
 
