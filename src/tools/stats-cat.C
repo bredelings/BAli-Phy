@@ -26,7 +26,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description visible("All options");
   visible.add_options()
-    ("help,h", "Produce help message.");
+    ("help,h", "Produce help message.")
+    ("skip,s",value<int>(),"Number of initial lines to skip.");
 
   options_description all("All options");
   all.add(invisible).add(visible);
@@ -60,6 +61,10 @@ int main(int argc,char* argv[])
 
     vector<string> filenames = args["filenames"].as< vector<string> >();
 
+    int skip = 0;
+    if (args.count("skip"))
+      skip = args["skip"].as<int>();
+
     if (not args.count("filenames"))
       throw myexception()<<"No filenames specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
@@ -88,7 +93,8 @@ int main(int argc,char* argv[])
     {
       string line;
       for(int line_number=0;getline_handle_dos(*files[i],line);line_number++)
-	std::cout<<line<<"\n";
+	if (line_number >= skip)
+	  std::cout<<line<<"\n";
       files[i]->close();
     }
   }
