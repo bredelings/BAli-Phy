@@ -513,7 +513,7 @@ int main(int argc,char* argv[])
       check_supplied_filenames(2,files);
 
       tree_sample trees1(files[0],skip,subsample,max);
-      tree_sample trees2(files[1],skip,subsample,max);
+      tree_sample trees2(files[1],0,0,-1);
 
       for(int i=0;i<trees1.size();i++)
 	cout<<distance(trees1[i],trees2,metric_fn)<<"\n";
@@ -529,7 +529,7 @@ int main(int argc,char* argv[])
       check_supplied_filenames(2,files);
       
       tree_sample trees1(files[0],skip,subsample,max);
-      tree_sample trees2(files[1],skip,subsample,max);
+      tree_sample trees2(files[1],0,0,-1);
       
       ublas::matrix<double> D2 = distances(trees2,metric_fn);
       valarray<double> distances(0.0, trees2.size());
