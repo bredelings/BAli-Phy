@@ -71,7 +71,8 @@ TOOLS = model_P statreport alignment-gild \
 	analyze_distances alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
 	partitions-supported trees-pair-distances analyze-rates \
-	path-graph alignment-find-conserved alignment-max alignments-diff
+	path-graph alignment-find-conserved alignment-max alignments-diff \
+	stats-cat
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -117,6 +118,10 @@ stats_merge_SOURCES = tools/stats-merge.C util.C
 #-------------------------- statreport --------------------------
 
 stats_select_SOURCES = tools/stats-select.C util.C tools/stats-table.C
+
+#-------------------------- statreport --------------------------
+
+stats_cat_SOURCES = tools/stats-cat.C tools/stats-table.C
 
 #-------------------------- statreport --------------------------
 
