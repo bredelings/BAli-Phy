@@ -481,7 +481,10 @@ int main(int argc,char* argv[])
 
     filenames = args["filenames"].as< vector<string> >();
     for(int i=0;i<filenames.size();i++) {
-      tables.push_back(stats_table(filenames[i],0,subsample,max));
+      if (filenames[i] == "-")
+	tables.push_back(stats_table(std::cin,0,subsample,max));
+      else
+	tables.push_back(stats_table(filenames[i],0,subsample,max));
       if (not tables.back().n_rows())
 	throw myexception()<<"File '"<<filenames[i]<<"' has no samples left after removal of burn-in!";
     }

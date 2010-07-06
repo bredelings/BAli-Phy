@@ -121,7 +121,7 @@ stats_select_SOURCES = tools/stats-select.C util.C tools/stats-table.C
 
 #-------------------------- statreport --------------------------
 
-stats_cat_SOURCES = tools/stats-cat.C tools/stats-table.C
+stats_cat_SOURCES = tools/stats-cat.C util.C tools/stats-table.C
 
 #-------------------------- statreport --------------------------
 
