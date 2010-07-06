@@ -89,6 +89,12 @@ Alignment Constraints #2:
    "query" sequence to a "template" alignment.
  - Actually, this will prevent SPR from working...
 
+Preliminary implentation of #openmp
+
+Specify WHAT FRACTION OF TIME to spend on each move.
+
+Jointly sample A/epsilon A/lambda.  3-way/2D?  Yeah.  But also, 5-way, 3way, etc.
+
 DOC: Change FIXME to Doxygen \todo
 
 FINISH: C20 resample aa frequencies.

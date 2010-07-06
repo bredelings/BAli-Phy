@@ -45,7 +45,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description invisible("Invisible options");
   invisible.add_options()
-    ("filenames", value<vector<string> >()->composing(),"Filenames to analyze (empty for STDIN)")
+    ("filenames", value<vector<string> >()->composing(),"Filenames to analyze ('-' for STDIN')")
     ;
 
   options_description visible("All options");
