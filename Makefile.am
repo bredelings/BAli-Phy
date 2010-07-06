@@ -9,7 +9,7 @@ SUBDIRS = $(MAYBE_BOOST) src/
 bin_SCRIPTS = scripts/bali-phy-sge scripts/pairwise-alignment-distances scripts/fixedpt-alignment-distances scripts/plot-path-graph.R scripts/bp-analyze.pl scripts/git_version.sh scripts/compare-runs.R
 
 docdir = $(datadir)/doc/@PACKAGE@
-doc_DATA = scripts/GNUmakefile doc/README.xhtml doc/docbook.css # doc/README.pdf
+doc_DATA = doc/README.xhtml doc/docbook.css doc/README.pdf
 
 # This is the stuff that formly was distributed as being in the Data/ dir.
 # The 'nobase' means that if its starts as dir/file, then it is distributed as dir/file.
