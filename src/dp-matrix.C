@@ -454,7 +454,6 @@ void DPmatrixEmit::prepare_cell(int i,int j)
     total = pow(total,B);
 
   s12_sub(i,j) = total;
-  //      s12_sub(i,j) = pow(s12_sub(i,j),1.0/T);
 }
 
 DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
