@@ -885,6 +885,8 @@ traditional = traditional
     <sect2>
       <title>Summarizing the output</title>
 
+      <para>This section is primarily oriented to extracting estimates from output files.  See <xref linkend="mixing_and_convergence"/> for methods of determine effective sample sizes, and for checking mixing and convergence.</para>
+
       <sect3>
 	<title>Finding the consensus tree (<filename>C1.trees</filename>)</title>
 	<para>
@@ -897,7 +899,9 @@ The program <ulink url="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</uli
 	<title>Checking topology convergence (<filename>C1.trees</filename>)</title>
 <para>
 <screen><prompt>%</prompt> trees-bootstrap <replaceable>dir1</replaceable>/C1.trees <replaceable>dir2</replaceable>/C1.trees</screen>	
-This command computes the effective sample size for the posterior probability of each split.  It also computes the Average Standard Deviation of Split Frequencies (ASDSF) between two or more independent runs.
+This command computes the effective sample size for the posterior probability of each split.  It also computes the Average Standard Deviation of Split Frequencies (ASDSF) between two or more independent runs.</para>
+
+<para>See <xref linkend="mixing_and_convergence"/> for more information.
 </para>  
       </sect3>
 
@@ -925,9 +929,9 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 
       <sect3>
 	<title>Create an Au (Alignment Uncertainty) plot (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title>
-To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, choose a tree estimate <replaceable>tree</replaceable>:
+<para>To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, choose a tree estimate <replaceable>tree</replaceable>:
 <screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignment-gild <replaceable>alignment</replaceable>.fasta <replaceable>tree</replaceable>  &gt; <replaceable>alignment</replaceable>-AU.prob
-<prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta --AU <replaceable>alignment</replaceable>-AU.prob > <replaceable>alignment</replaceable>-AU.html</screen>
+<prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta --AU <replaceable>alignment</replaceable>-AU.prob > <replaceable>alignment</replaceable>-AU.html</screen></para>
       </sect3>
 
 
@@ -1085,7 +1089,7 @@ To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, cho
       <sect3>
 	<title>Basic CTMC models</title>
 	<para>The basic CTMC models are EQU, HKY, TN, GTR, HKYx3,
-	  TNx3, GTRx3,  Empirical, and M0.  Each of these models is a
+	  TNx3, GTRx3,  JTT, WAG, LG, and M0.  Each of these models is a
 	  way of specifying the exchangeability matrix $S_{ij}$.</para>
       </sect3>
 
@@ -1095,7 +1099,7 @@ To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, cho
 	  default model for the alphabet is used.  For DNA or RNA, the
 	  default model is HKY.  For Triplets, the default is HKYx3. For
           Codons, the default model is M0.  For Amino-Acids, the
-	  default model is Empirical[WAG]. 
+	  default model is LG. 
 	</para>
       </sect3>
 
@@ -1165,8 +1169,32 @@ To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, cho
 
 	      <row>
 		<entry>
-		  <para><userinput>Empirical[WAG]</userinput></para>
+		  <para><userinput>JTT</userinput></para>
+		  <para>Jones, Taylor, Thornton (1992)</para>
+		</entry>
+		<entry>Amino-Acids</entry>
+		<entry>
+		  <para>none.</para>
+		</entry>
+		<entry></entry>
+	      </row>
+
+	      <row>
+		<entry>
+		  <para><userinput>WAG</userinput></para>
 		  <para>Whelan and Goldman (2001)</para>
+		</entry>
+		<entry>Amino-Acids</entry>
+		<entry>
+		  <para>none.</para>
+		</entry>
+		<entry></entry>
+	      </row>
+
+	      <row>
+		<entry>
+		  <para><userinput>LG</userinput></para>
+		  <para>Le and Gascuel (2008)</para>
 		</entry>
 		<entry>Amino-Acids</entry>
 		<entry>
@@ -1551,7 +1579,7 @@ To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, cho
       <para>Example: --smodel EQU --alphabet Triplets</para>
       <para>Example: --smodel HKY</para>
       <para>Example: --smodel TN+pi=constant</para>
-      <para>Example: --smodel Empirical[WAG]+log-normal+INV</para>
+      <para>Example: --smodel WAG+log-normal+INV</para>
       <para>Example: --smodel M0 --alphabet Codons</para>
       <para>Example: --smodel M0+pi=nucleotides --alphabet Codons</para>
       <para>Example: --smodel M2 --alphabet Codons</para>
@@ -1576,6 +1604,8 @@ To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, cho
       obtained.  This section describes a number of techniques to
       diagnose when more samples must be taken.
     </para>
+
+    <para>Some of the better diagnostics for lack of convergence rely on running at least 4 independent copies of the Markov chain (preferably 10) from different random starting points and see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be this same, this doesn't <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</para>
 
     <sect2>
       <title>Definition of Convergence</title>
@@ -1737,21 +1767,37 @@ values in the sequence.</para>
       </sect3>
 
       <sect3>
-	<title>Stabilization of tree topology</title>
+	<title>Stabilization of tree topologies and tree distances</title>
 	<para>In addition to examining convergence diagnostics for continuous
 	parameters, it is important to examine convergence diagnostics
 	for the topology as well
 	(<ulink url="http://dx.doi.org/10.1080/10635150600812544">Beiko
-	et al 2006</ulink>).  
-<screen><prompt>%</prompt> trees-distances compare C1.trees C2.trees</screen>
-<screen><prompt>%</prompt> trees-distances converged C1.trees C2.trees</screen>
-<screen><prompt>%</prompt> trees-distances convergence C1.trees C2.trees</screen>
-	</para>
+	et al 2006</ulink>).  In theory, we recommend the web tool <ulink url="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</ulink> (Wilgenbush et al, 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  So, you must convert the tree samples files to NEXUS before you upload them to AWTY, if you wish to get correct results.</para>
+
+<para>It is also be possible to assess stabilization of tree topologies using tools distributed with <application>bali-phy</application> by using commands like the following.  Here, sub-sampling and burnin does not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend to contain at least 500 trees; you might do this by sub-sampling using the <application>BAli-Phy</application> tool <command>sub-sample</command>.</para>
+
+<orderedlist>
+<listitem><para>To report the average distances within and between two tree samples:
+<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --sub-sample=<replaceable>factor</replaceable> compare <filename>C1.trees</filename> <filename>C2.trees</filename></screen>
+</para></listitem>
+
+<listitem><para>To compute the distance from each tree in C1.trees to all trees equilibrium.trees, as a time series:
+<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --sub-sample=<replaceable>factor</replaceable> convergence <filename>C1.trees</filename> <filename>equilibrium.trees</filename></screen>
+</para></listitem>
+
+<listitem><para>To assess when the above time series stabilizes:
+<screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --sub-sample=<replaceable>factor</replaceable> converged <filename>C1.trees</filename> <filename>equilibrium.trees</filename></screen>
+The stabilization criterion is the same one described above for numerical values.
+</para></listitem>
+</orderedlist>
+
+<para>Note that the running time is the product of the number of trees in the two files.  Therefore, comparing two complete tree samples without sub-sampling will take too long.</para>
+
    </sect3>
 	
     </sect2>
 
-    <sect2>
+    <!-- sect2>
       <title>Diagnostics: Visual Inspection</title>
       <sect3>
 	<title>Numerical Parameters</title>
@@ -1769,7 +1815,7 @@ values in the sequence.</para>
 	<screen><prompt>%</prompt> trees-view2 C1.trees C2.trees</screen>
       </para>
     </sect3>
-  </sect2>
+  </sect2 -->
   </sect1>
 
   <sect1 id="tuning_the_markov_chain">
@@ -2009,9 +2055,23 @@ values in the sequence.</para>
 
       <qandaset>
 	<qandaentry>
-	  <question><para>Can I fix the alignment?</para></question>
+	  <question><para>Can I fix the alignment and ignore indel information, like MrBayes and other MCMC programs?</para></question>
 	  <answer>
 	    <para>Yes.  Add <userinput>-t</userinput> or <userinput>--traditional</userinput> on the command line.</para>
+	  </answer>
+	</qandaentry>
+
+	<qandaentry>
+	  <question><para>Can I fix the tree topology, while allowing the alignment to vary?</para></question>
+	  <answer>
+	    <para>Yes.  Add <userinput>--disable=topology --pre-burnin=0 --tree=<replaceable>treefile</replaceable></userinput> on the command line.</para>
+	  </answer>
+	</qandaentry>
+
+	<qandaentry>
+	  <question><para>Can I fix the tree topology AND branch lengths, while allowing the alignment to vary?</para></question>
+	  <answer>
+	    <para>Yes.  Add <userinput>--disable=tree --pre-burnin=0 --tree=<replaceable>treefile</replaceable></userinput> on the command line.</para>
 	  </answer>
 	</qandaentry>
       </qandaset>
@@ -2057,13 +2117,7 @@ values in the sequence.</para>
 	<qandaentry>
 	  <question><para>How can you tell when the chain has converged?</para></question>
 	  <answer>
-	    <para>It depends on the data set.  To test convergence, run at
-	      least 4 independent chains (preferably 10) from different
-	      random starting points and see if the posterior
-	      distributions for each chain are the same. 
-	    </para>
-
-	    <para>Unfortunately, when the distributions all seem to be this same, this doesn't <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing. </para>
+	    <para>See section <xref linkend="mixing_and_convergence"/>.</para>
 	  </answer>
 	</qandaentry>
 
@@ -2084,14 +2138,14 @@ values in the sequence.</para>
 
       <qandaset>
 	<qandaentry>
-	  <question><para>Where can I find the clade support?</para></question>
+	  <question><para>How do I compute the clade support?</para></question>
 	  <answer>
 	    <para>Actually, BAli-Phy uses unrooted trees, so it only estimates bi-partition support.  A bi-partition is a division of taxa into two groups, but it does not specify which group contains the root. </para>
 	  </answer>
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>Where can I find the partition support?</para></question>
+	  <question><para>How do I compute the split/bi-partition support?</para></question>
 	  <answer>
 	    <para>After you analyze the output (<xref
 						   linkend="analysis"/>), the partition support is indicated in
