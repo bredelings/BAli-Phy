@@ -10,6 +10,8 @@ GENERATE: some examples.
 DOC: Better describe how to obtain mixing diagnostics.
 REPORT: Include at least one tree-mixing measure.
 
+Add a tree-distance convergence plot.
+
 Search: SHOULD we force it to evaluate a sum over alignments for at least a few other trees if the
       current branch comes out best?
 
