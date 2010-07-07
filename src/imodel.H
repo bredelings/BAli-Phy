@@ -66,6 +66,8 @@ public:
 
   virtual bool is_training() const;
 
+  IndelModel();
+
   virtual ~IndelModel();
 };
 

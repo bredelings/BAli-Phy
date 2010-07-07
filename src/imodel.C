@@ -67,6 +67,10 @@ bool IndelModel::is_training() const
   return in_training;
 }
 
+IndelModel::IndelModel()
+  :in_training(false)
+{ }
+
 IndelModel::~IndelModel() {}
 
 
