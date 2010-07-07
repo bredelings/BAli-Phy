@@ -573,16 +573,20 @@ namespace MCMC {
       if (PP.is_fixed(i)) return;
 
     double v1 = 0;
-    scale_means_only_slice_function slice_levels_function(PP);
+    try
+    {
+      scale_means_only_slice_function slice_levels_function(PP);
 
-    double v2 = sample(PP,slice_levels_function, v1);
+      double v2 = sample(PP,slice_levels_function, v1);
 
-    //---------- Record Statistics --------------//
-    Result result(2);
-    result.totals[0] = std::abs(v2);
-    result.totals[1] = slice_levels_function.count;
+      //---------- Record Statistics --------------//
+      Result result(2);
+      result.totals[0] = std::abs(v2);
+      result.totals[1] = slice_levels_function.count;
 
-    Stats.inc(name,result);
+      Stats.inc(name,result);
+    }
+    catch (...) {}
   }
 
   Scale_Means_Only_Slice_Move::Scale_Means_Only_Slice_Move(const string& s, double W_)
