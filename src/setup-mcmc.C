@@ -602,6 +602,22 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   return parameter_moves;
 }
 
+void enable_disable_transition_kernels(MCMC::MoveAll& sampler, const variables_map& args)
+{
+  vector<string> disable;
+  vector<string> enable;
+  if (args.count("disable"))
+    disable = split(args["disable"].as<string>(),',');
+  if (args.count("enable"))
+    enable = split(args["enable"].as<string>(),',');
+  
+  for(int i=0;i<disable.size();i++)
+    sampler.disable(disable[i]);
+  
+  for(int i=0;i<enable.size();i++)
+    sampler.enable(enable[i]);
+}
+
 void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 		   ostream& out_log,ostream& out_both)
 {
@@ -644,6 +660,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 				"walk_tree_sample_branch_lengths","tree:lengths"));
     pre_burnin.add(1,SingleMove(sample_SPR_search_all,"SPR_search_all",
 				"tree:topology:lengths"));
+
+    // enable and disable moves
+    enable_disable_transition_kernels(pre_burnin,args);
+
     for(int i=0;i<n_pre_burnin;i++) {
       out_both<<" SPR #"<<i+1<<"   likelihood = "<<P->likelihood();
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
@@ -663,7 +683,11 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
 				      "scale_means_only","mean"));
     pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,
-				"NNI_and_lengths","topology:lengths"));
+				"NNI_and_lengths","tree:topology:lengths"));
+
+    // enable and disable moves
+    enable_disable_transition_kernels(pre_burnin,args);
+
     int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->T->n_leaves());
     for(int i=0;i<n_pre_burnin2;i++) {
       out_both<<" NNI #"<<i+1<<"   likelihood = "<<P->likelihood();
@@ -751,18 +775,7 @@ void do_sampling(const variables_map& args,
     sampler.add(1,slice_moves);
 
   //------------------- Enable and Disable moves ---------------------------//
-  vector<string> disable;
-  vector<string> enable;
-  if (args.count("disable"))
-    disable = split(args["disable"].as<string>(),',');
-  if (args.count("enable"))
-    enable = split(args["enable"].as<string>(),',');
-  
-  for(int i=0;i<disable.size();i++)
-    sampler.disable(disable[i]);
-  
-  for(int i=0;i<enable.size();i++)
-    sampler.enable(enable[i]);
+  enable_disable_transition_kernels(sampler,args);
 
   //------------------ Report status before starting MCMC -------------------//
   
