@@ -636,8 +636,13 @@ traditional = traditional
 
       <variablelist>
 	<varlistentry>
-	  <term><option>--iterations <replaceable>number=100000</replaceable></option></term>
+	  <term><option>-i, --iterations <replaceable>number=100000</replaceable></option></term>
 	  <listitem><para>Specify the number of iterations to run.</para></listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><option>--pre-burnin <replaceable>iterations=3</replaceable></option></term>
+	  <listitem><para>Iterations to refine initial tree.</para></listitem>
 	</varlistentry>
 
 	<varlistentry>
@@ -799,9 +804,9 @@ traditional = traditional
 	  sequences before you run out of memory, or the program
 	  becomes too slow.</para>
 
-	<para>For multi-gene analyses, two separate genes
-	  (i.e. data partitions) of 500 letters will be twice as fast
-	  to align as one gene of 1000 letters. So, it may be possible
+	<para>For multi-gene analyses, two separate data partitions
+	  (i.e. genes) of 500 letters will be twice as fast
+	  to align as one data partition of 1000 letters. So, it may be possible
 	  to analyze several genes as long as each gene individually
 	  is not too long.</para> 
 
@@ -842,7 +847,7 @@ traditional = traditional
 
     <sect2>
       <title>Output files</title>
-      <para><application>BAli-Phy</application> produces the following output
+      <para><application>BAli-Phy</application> writes the following output
 	files inside the directory that it creates:</para>
       
       <variablelist>
@@ -920,8 +925,13 @@ This command computes the effective sample size for the posterior probability of
       <sect3>
 	<title>Summarizing numerical parameters (<filename>C1.p</filename>)</title>
 <para>
+This command gives a median and confidence interval, ESS, and a stabilization time:
 <screen><prompt>%</prompt> statreport C1.p > Report </screen>	
-The program <ulink url="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</ulink> allows you to view the same summaries graphically.
+This command compares multiple runs to give PSRF and joint ESS values as well:
+<screen><prompt>%</prompt> statreport C1.p C2.p > Report </screen>	
+The program <ulink url="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</ulink> allows you to view the same summaries graphically.</para>
+
+<para>See <xref linkend="mixing_and_convergence"/> for more information.
 </para>
       </sect3>
 
@@ -956,7 +966,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
     <para>
       You may also run the analysis PERL script
       <command>bp-analyze.pl</command> inside the output directory in
-      order to summary the output files.  The script will create a WWW
+      order to summary the output files.  The script will create an HTML
       page <filename>Results/index.html</filename> that summarizes the
       posterior distribution.
     </para>
@@ -1004,14 +1014,14 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 
 	<varlistentry><term>P<replaceable>p</replaceable>-max.fasta</term><listitem>
 	    <para>An estimate of the alignment for partition
-	    <replaceable>p</replaceable> using posterior decoding.</para>
+	    <replaceable>p</replaceable> using maximum posterior decoding.</para>
 	</listitem></varlistentry>
 
 	<varlistentry><term>MAP-AU.html</term><listitem><para>An AU plot of the MAP alignment (AA/DNA color-cheme).
 	</para></listitem></varlistentry>
 	
 	<varlistentry><term>P<replaceable>p</replaceable>-max-AU.html</term><listitem>
-	    <para>An AU plot of the posterior decoding alignment for partition
+	    <para>An AU plot of the maximum posterior decoding alignment for partition
 	    <replaceable>p</replaceable>  (AA/DNA color-cheme).</para>
 	</listitem></varlistentry>
 
@@ -1061,13 +1071,13 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	<title><filename>Mixing/partitions.bs</filename>: partition mixing</title>
 	<para>
 	  This file reports the quality of estimates of support for each
-	  partition,in terms of the auto-correlation time (ACT),
-	  effective sample size (Ne), and a 95% confidence interval for
-	  posterior probability (PP) and log-10 odds (LOD).  It also
-	  reports the number of samples that support (1) or do not
-	  support (0) the partition, as well as the number of regenerations.
+	  partition in terms of the posterior probability (PP) and
+	  log-10 odds (LOD).  It also reports the auto-correlation time (ACT),
+	  the effective sample size (Ne), the number of samples
+	  that support (1) or do not support (0) the partition, and
+	  the number of regenerations. 
 
-	  Only partitions with PP>0.5 are shown by default.
+	  Only partitions with PP > 0.1 are shown by default.
 	</para>
       </sect3>
 
@@ -1217,6 +1227,22 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 
 	      <row>
 		<entry>
+		  <para><userinput>Empirical[<replaceable>file</replaceable>]</userinput></para>
+		</entry>
+		<entry>Amino-Acids</entry>
+		<entry>
+		  <para>none.</para>
+		</entry>
+		<entry>
+		  <para>A user-specified empirical exchangeability matrix may be used.</para>
+		  <para>The lower-triangular part of the symmetric
+		  matrix is given, followed by the estimated
+		  equilibrium frequencies.</para>
+		</entry>
+	      </row>
+
+	      <row>
+		<entry>
 		  <para><userinput>HKYx3</userinput></para>
 		  <para><userinput>TNx3</userinput></para>
 		  <para><userinput>GTRx3</userinput></para>
@@ -1242,7 +1268,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 		<entry>Codons</entry>
 		<entry>
 		  <para>$\kappa$: the ts/tv ratio.</para>
-		  <para>$\omega$: the dn/ds ratio.</para>
+		  <para>$\omega$: the dN/dS ratio.</para>
 		</entry>
 		<entry>
 		  <para>$S_{\alpha\beta} = 0$ for changes of more than one nucleotide.</para>
@@ -1408,7 +1434,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       Advanced substitution models in <application>BAli-Phy</application>
       are constructed as mixtures of the basic CTMC models (see <xref
 								   linkend="subst_basic"/>) that run at different rates (e.g. $\Gamma_4+INV$)
-      or parameters (e.g. an M2 codon model).
+      or have different parameters (e.g. an M2 codon model).
     </para>
 
     <sect2>
@@ -1421,7 +1447,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 
 	<note>
 	  <para>
-	    If you are using the C-shell command line shell (<command>csh</command>), then it will try to interpret each argument as an array reference, giving the error message "bali-phy: Not found."  To avoid this you may need to insert backslashes before the left square brackes, like this: <userinput>Model&#92;[arg]+Model&#92;[arg]+...+Model&#92;[arg]</userinput>.
+	    If you are using the C-shell command line shell (<command>csh</command> or <command>tcsh</command>), then it will try to interpret each argument as an array reference, giving the error message "bali-phy: Not found."  To avoid this you may need to insert backslashes before the left square brackes, like this: <userinput>Model&#92;[arg]+Model&#92;[arg]+...+Model&#92;[arg]</userinput>.
 	  </para>
 	</note>
 
@@ -1536,6 +1562,12 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       <table frame="none" rowsep="1">
 	<title>Extended Model Descriptions</title>
 	<tgroup cols='4'>
+	  <thead><row>
+	      <entry>Model</entry>
+	      <entry>Alphabet</entry>
+	      <entry>Parameters</entry>
+	      <entry>Description</entry>
+	  </row></thead>
 	  <tbody>
 	    <row>
 	      <entry>
@@ -1674,7 +1706,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       diagnose when more samples must be taken.
     </para>
 
-    <para>Some of the better diagnostics for lack of convergence rely on running at least 4 independent copies of the Markov chain (preferably 10) from different random starting points and see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be this same, this doesn't <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</para>
+    <para>Some of the better diagnostics for lack of convergence rely on running at least 4 independent copies of the Markov chain (preferably 10) from different random starting points to see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be this same, this doesn't <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</para>
 
     <sect2>
       <title>Definition of Convergence</title>
@@ -1703,6 +1735,20 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       </para>
     </sect2>
 
+    <sect2>
+      <title>Diagnostics and multiple independent chains</title>
+    <para>
+      Many of the following diagnostic measures require that you run the MCMC a number of
+      different times.  In the text that follows, we refer to the
+      different parameter files
+      as <filename>C1.p</filename>, <filename>C2.p</filename>, 
+      ..., <filename>C<replaceable>n</replaceable>.p</filename> and the
+      different tree samples as <filename>C1.trees</filename>, <filename>C2.trees</filename>,
+      ..., <filename>C<replaceable>n</replaceable>.trees</filename>.
+      Substitute the actual names of the files.
+    </para>
+    </sect2>
+
     
     <sect2>
       <title>Diagnostics: Variation in split frequencies across runs</title>
@@ -1712,7 +1758,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 To calculate the ASDSF and MSDSF run:
 <screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees &gt; partitions.bs</screen>	
 For each split, the SDSF value is just the standard deviation across
-runs of the Posterior Probabilities for that split.  By average the
+runs of the Posterior Probabilities for that split.  By averaging the
 resulting SDSF values across splits, we may obtain the ASDSF value
 (Huelsenbeck and Ronquist 2001).  This is commonly considered
 acceptable if it is &lt; 0.01.
@@ -1724,8 +1770,8 @@ acceptable if it is &lt; 0.01.
 </para>
       </sect3>
       <sect3>
-	<title>Split frequency comparison plot</title>
-	<para>To generate the split frequency comparison plot, you must have R installed.  Locate the script <filename>compare-runs.R</filename>.  Then run:
+	<title>Split-frequency comparison plot</title>
+	<para>To generate the split-frequency comparison plot, you must have R installed.  Locate the script <filename>compare-runs.R</filename>.  Then run:
 <screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees --LOD-table=LOD-table &gt; partitions.bs 
 <prompt>%</prompt> R --slave --vanilla --args LOD-table compare-SF.pdf &lt; compare-runs.R</screen>
 	  Following <ulink url="http://dx.doi.org/10.1080/10635150600812544">Beiko et al (2006)</ulink>, this displays the variation in
@@ -1808,17 +1854,6 @@ adequately mix between modes.</para>
     </sect3>
 </sect2>
 
-    <para>
-      Many of these measures require that you run the MCMC a number of
-      different times.  In the text that follows, we refer to the
-      different parameter files
-      as <filename>C1.p</filename>, <filename>C2.p</filename>, 
-      ..., <filename>C<replaceable>n</replaceable>.p</filename> and the
-      different tree samples as <filename>C1.trees</filename>, <filename>C2.trees</filename>,
-      ..., <filename>C<replaceable>n</replaceable>.trees</filename>.
-      Substitute the actual names of the files.
-    </para>
-
     <sect2>
       <title>Diagnostics: Stabilization</title>
       <sect3>
@@ -1841,7 +1876,7 @@ values in the sequence.</para>
 	parameters, it is important to examine convergence diagnostics
 	for the topology as well
 	(<ulink url="http://dx.doi.org/10.1080/10635150600812544">Beiko
-	et al 2006</ulink>).  In theory, we recommend the web tool <ulink url="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</ulink> (Wilgenbush et al, 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  So, you must convert the tree samples files to NEXUS before you upload them to AWTY, if you wish to get correct results.</para>
+	et al 2006</ulink>).  In theory, we recommend the web tool <ulink url="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</ulink> (Wilgenbush et al, 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  Therefore, if you wish to use AWTY, you must convert the tree samples files to NEXUS before you upload them to AWTY in order to get correct results.</para>
 
 <para>It is also be possible to assess stabilization of tree topologies using tools distributed with <application>bali-phy</application> by using commands like the following.  Here, sub-sampling and burnin does not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend to contain at least 500 trees; you might do this by sub-sampling using the <application>BAli-Phy</application> tool <command>sub-sample</command>.</para>
 
@@ -1891,8 +1926,8 @@ The stabilization criterion is the same one described above for numerical values
     <title>Tuning the Markov Chain</title>
 
     <para>The Markov chain should be largely self-tuning, since all
-    numerical parameters are now sampled using slice samplers.  However,
-    the following parameters affect the size of Metropolis-Hastings
+    numerical parameters are now sampled using self-tuning slice samplers.  However,
+    the following parameters still affect the size of Metropolis-Hastings
     proposals.  You can modify them using the command line syntax "<userinput>--set <replaceable>parameter</replaceable>=<replaceable>value</replaceable></userinput>".</para>
 
     <sect2>
@@ -2126,21 +2161,28 @@ The stabilization criterion is the same one described above for numerical values
 	<qandaentry>
 	  <question><para>Can I fix the alignment and ignore indel information, like MrBayes and other MCMC programs?</para></question>
 	  <answer>
-	    <para>Yes.  Add <userinput>-t</userinput> or <userinput>--traditional</userinput> on the command line.</para>
+	    <para>Yes.  Add <userinput>-t</userinput> or <userinput>--traditional</userinput> on the command line.  This has the same effect as <userinput>--imodel none</userinput>.</para>
 	  </answer>
 	</qandaentry>
 
 	<qandaentry>
 	  <question><para>Can I fix the tree topology, while allowing the alignment to vary?</para></question>
 	  <answer>
-	    <para>Yes.  Add <userinput>--disable=topology --pre-burnin=0 --tree=<replaceable>treefile</replaceable></userinput> on the command line.</para>
+	    <para>Yes.  Add <userinput>--disable=topology --tree=<replaceable>treefile</replaceable></userinput> on the command line.</para>
 	  </answer>
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>Can I fix the tree topology AND branch lengths, while allowing the alignment to vary?</para></question>
+	  <question><para>Can I fix the tree topology and <emphasis>relative</emphasis> branch lengths, while allowing the alignment to vary?</para></question>
 	  <answer>
-	    <para>Yes.  Add <userinput>--disable=tree --pre-burnin=0 --tree=<replaceable>treefile</replaceable></userinput> on the command line.</para>
+	    <para>Yes.  Add <userinput>--disable=tree --tree=<replaceable>treefile</replaceable></userinput> on the command line.</para>
+	  </answer>
+	</qandaentry>
+
+	<qandaentry>
+	  <question><para>Can I fix the tree topology and <emphasis>absolute</emphasis> branch lengths <emphasis>in all data partitions</emphasis>, while allowing the alignment to vary?</para></question>
+	  <answer>
+	    <para>Yes.  Add <userinput>--disable=tree --tree=<replaceable>treefile</replaceable> --fix=mu1 ... --fix-mu<replaceable>n</replaceable></userinput> on the command line.</para>
 	  </answer>
 	</qandaentry>
       </qandaset>
@@ -2148,7 +2190,7 @@ The stabilization criterion is the same one described above for numerical values
     </sect2>
 
     <sect2>
-      <title>Figuring out run-time errors</title>
+      <title>Run-time error messages</title>
       
       <qandaset>
 	<qandaentry>
@@ -2184,7 +2226,7 @@ The stabilization criterion is the same one described above for numerical values
 	</qandaentry>
 
 	<qandaentry>
-	  <question><para>How can you tell when the chain has converged?</para></question>
+	  <question><para>How can I tell when the chain has converged?</para></question>
 	  <answer>
 	    <para>See section <xref linkend="mixing_and_convergence"/>.</para>
 	  </answer>
@@ -2232,7 +2274,7 @@ The stabilization criterion is the same one described above for numerical values
 	  <answer><para>
  	    <screen><prompt>%</prompt>alignment-cat <replaceable>filename1.fasta</replaceable> <replaceable>filename2.fasta</replaceable> &gt; result.fasta</screen>
 	      The alignments must have the same sequence names, but
-	      not necessarily in the same order.
+	      the names need not be in the same order.
 	    </para>
 	  </answer>
 	</qandaentry>
