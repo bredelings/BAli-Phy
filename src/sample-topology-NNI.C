@@ -150,9 +150,9 @@ void two_way_topology_slice_sample(owned_ptr<Probability_Model>& P, MoveStats& S
   Parameters& PP = *P.as<Parameters>();
   if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  Tree T0 = *PP.T;
-  int b_undirected = T0.directed_branch(b).undirected_name();
   if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
+
+  Tree T0 = *PP.T;
 
   vector<int> nodes = A5::get_nodes_random(*PP.T, b);
 
