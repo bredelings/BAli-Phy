@@ -48,6 +48,7 @@ struct slice_function: public Bounds<double>
 
   slice_function() {}
   slice_function(const Bounds<double>& b):Bounds<double>(b) {}
+  virtual ~slice_function() {}
 };
 
 double slice_sample(double x0, slice_function& g, double w, int m);
