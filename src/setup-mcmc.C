@@ -496,7 +496,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
     tree_moves.add(4,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI","topology:lengths"));
 
   if (has_imodel)
-    tree_moves.add(0.5,SingleMove(walk_tree_sample_NNI_and_A,"walk_tree_NNI_and_A","topology:lengths"));
+    tree_moves.add(0.5,SingleMove(walk_tree_sample_NNI_and_A,"walk_tree_NNI_and_A","topology:lengths:nodes:alignment:alignment_branch"));
 
   return tree_moves;
 }
