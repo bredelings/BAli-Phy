@@ -639,6 +639,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     MoveAll pre_burnin("pre-burnin");
 
     pre_burnin.add(3,get_scale_slice_moves(*P.as<Parameters>()));
+
+    // enable and disable moves
+    enable_disable_transition_kernels(pre_burnin,args);
+
     for(int i=0;i<3;i++) {
       out_both<<" Tree size #"<<i+1<<"   likelihood = "<<P->likelihood();
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
@@ -650,7 +654,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
   out_both<<endl;
 
   // 2. Then do an initial tree search - SPR - ignore indel information
-  if (not args.count("tree"))
   {
     MoveAll pre_burnin("pre-burnin");
     pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
@@ -675,7 +678,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
   out_both<<endl;
 
     // 3. Then do a further tree search - NNI - w/ the actual model
-  if (not args.count("tree"))
   {
     MoveAll pre_burnin("pre-burnin");
 
