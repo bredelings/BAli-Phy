@@ -964,14 +964,25 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
     <title>Summarizing the output - scripted</title>
     
     <para>
-      You may also run the analysis PERL script
-      <command>bp-analyze.pl</command> inside the output directory in
-      order to summary the output files.  The script will create an HTML
+      Instead of manually running each of the steps to analyze the
+      output files, you may instead run the PERL script
+      <command>bp-analyze.pl</command> to execute these commands.  You
+      may run it inside the output directory, like this:
+<screen><prompt>%</prompt> bp-analyze.pl --burnin=<replaceable>iterations</replaceable></screen>
+      The script will create an HTML
       page <filename>Results/index.html</filename> that summarizes the
       posterior distribution.
     </para>
+    <para>
+      You may also run it with one or more output directories as
+      arguments, like this:
+<screen><prompt>%</prompt> bp-analyze.pl --burnin=<replaceable>iterations</replaceable> <replaceable>directory</replaceable>-1/ <replaceable>directory</replaceable>-2/</screen>
+      In this case, output from multiple runs will be used to assess convergence and mixing, as well as to increase the precision of the estimates.
+    </para>
 
-    <para>The <filename>Results/</filename> directory will also contain
+    <sect3>
+      <title>Meaning of generated files</title>
+    <para>The <filename>Results/</filename> directory will contain
     the following useful files:</para>
 
       <variablelist>
@@ -1066,7 +1077,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	  '<replaceable>file</replaceable>' with lines</userinput>" in
 	<application>gnuplot</application>.</para>
 
-
+    </sect3>
       <sect3>
 	<title><filename>Mixing/partitions.bs</filename>: partition mixing</title>
 	<para>
