@@ -74,7 +74,7 @@ string default_markov_model(const alphabet& a)
   else if (dynamic_cast<const Codons*>(&a))
     return "M0";
   else if (dynamic_cast<const Triplets*>(&a))
-    return "HKYx3";
+    return "TNx3";
   else
     return "";
 }
