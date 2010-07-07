@@ -52,8 +52,11 @@ public:
   Generic_Proposal(generic_proposal gp):proposal(gp) {}
 };
 
+// This type of proposal can't check if arguments are fixed, and therefore must assume that they are
+// all variable.  Therefore, it can't have any fixed arguments.
 typedef double (*proposal_fn)(std::vector<double>& x,const std::vector<double>& p);
 
+// This wrapper class therefore cannot have any fixed arguments.
 class Proposal_Fn
 {
   proposal_fn proposal;

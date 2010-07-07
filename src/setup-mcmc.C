@@ -69,7 +69,8 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& p, const string& name, 
     set_if_undef(P.keys, pname, sigma);
     Proposal2 move_mu(p, names, vector<string>(1,pname), P);
 
-    M.add(weight, MCMC::MH_Move(move_mu,string("MH_sample_")+name));
+    if (move_mu.get_indices().size() > 0)
+      M.add(weight, MCMC::MH_Move(move_mu,string("MH_sample_")+name));
   }
   else {
     vector<int> indices = parameters_with_extension(P,name);

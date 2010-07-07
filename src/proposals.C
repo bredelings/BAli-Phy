@@ -403,6 +403,9 @@ double Proposal2::operator()(Probability_Model& P) const
 {
   vector<double> parameters = P.get_parameter_values();
 
+  if (not indices.size())
+    throw myexception()<<"Proposal2::operator() - No parameters to alter! (all parameters fixed?)";
+
   // Quit if this move alters a 'fixed' parameter
   for(int i=0;i<indices.size();i++)
     if (P.is_fixed(indices[i]))
@@ -429,7 +432,8 @@ Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vecto
   int index = find_parameter(P,s);
   if (index == -1)
     throw myexception()<<"Model has no parameter called '"<<s<<"' - can't create proposal for it.";
-  indices.push_back(index);
+  if (not P.is_fixed(index))
+    indices.push_back(index);
 }
 
 
@@ -445,7 +449,5 @@ Proposal2::Proposal2(const Proposal_Fn& p,const vector<std::string>& s, const st
     if (not P.is_fixed(index))
       indices.push_back(index);
   }
-  if (not indices.size())
-    throw myexception()<<"Parameters are all fixed - bad proposal!";
 }
 
