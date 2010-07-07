@@ -26,10 +26,13 @@
       must run it in a terminal.
     </para>
 
+    <para>You may need a 64-bit executable and a 64-bit
+      OS version of your OS to be run large data sets.</para>
+    
     <para>
       We typically run <application>BAli-Phy</application> on Core2
-      processors  with 8Gb of RAM. </para>
-    
+      processors  with 8Gb of RAM.</para>
+
     <sect2>
       <title>Linux and UNIX</title>
 
@@ -66,7 +69,7 @@
       is intended to be a relatively painless process.
     </para>
 
-    <para>Note that in case you are compiling "live" source
+    <para>If you are compiling "live" source
       code that you checked out using GIT (and you probably
       aren't) then you need to follow the directions in <xref
 							   linkend="gitsource"/> before you start compiling.
@@ -108,6 +111,7 @@
 	  <!-- listitem><para> The BOOST C++ Library (<ulink
 							 url="http://www.boost.org">BOOST</ulink>) version 1.32 (or higher).</para></listitem -->
 	</itemizedlist>
+	See also <xref linkend="software_req"/>.
       </para>
       
 
@@ -148,7 +152,7 @@
 	<title>Installing to a location besides	<filename>/usr/local/</filename></title>
 	<para>The configure script chooses to install
 	  <command>bali-phy</command> in the directory
-	  <filename>/usr/local/</filename> by default. We can install
+	  <filename>/usr/local/</filename> by default. You can install
 	  executables to another directory <replaceable>dir</replaceable>
 	  by passing
 	  <userinput>--prefix=<replaceable>dir</replaceable></userinput>.
@@ -204,7 +208,12 @@
 	  <userinput>pentium4</userinput>,
 	  <userinput>nocona</userinput>, <userinput>core2</userinput>,
 	  <userinput>G3</userinput>,
-	  <userinput>G4</userinput>, or <userinput>G5</userinput>.  (On recent versions of GCC, you can set <userinput>CHIP=native</userinput> to auto-detect the type of CPU you have.  However, be aware that the resulting executables may not run on a different computer.)
+	  <userinput>G4</userinput>, or <userinput>G5</userinput>.
+	  (On recent versions of GCC, you can
+	  set <userinput>CHIP=native</userinput> to auto-detect the
+	  type of CPU you have.)  This may produce faster executables,
+	  but at the cost of producing executables that may not run on
+	  a different kind of chip.
 	</para>
       </sect3>
 
@@ -300,7 +309,8 @@
 	using <ulink url="http://www.macports.org">MacPorts</ulink>.
 	On Windows, you can install PERL and gnuplot using
 	the <ulink url="http://www.cygwin.com">Cygwin</ulink>
-	installer. On Linux, use your distribution's package manager.
+	installer. On Linux, simply use your distribution's package
+	manager. 
       </para>
 
       <para>We additionally recommend the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.html">seaview</ulink> to graphically view sequence alignments, and the program <ulink url="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</ulink> to graphically view phylogenies.</para>
@@ -311,7 +321,7 @@
       <para>To install pre-compiled executables, simply extract the
 	compressed archive in the directory of your choice.  If you have
 	root access you might extract in
-	<filename>/usr/local</filename>; if not, you might make a
+	<filename>/usr/local</filename>. If not, you might make a
 	directory <filename>~/local</filename> in your home directory
 	and extract there.
       </para>
@@ -393,11 +403,13 @@
     <sect2>
       <title>Command line options</title>
 
-      <para>You can specify more a more complex substitution model as follows:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel WAG+gamma+INV</screen>
-	You may specify an indel model of <userinput>none</userinput> to fix the alignment and ignore information in shared insertions or deletions.
-  	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --imodel none</screen>
-	If you desire to use a codon model, you must specify the alphabet:
+      <para>You can specify a more complex substitution model as follows (See <xref linkend="subst_basic"/>):
+
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel WAG+gamma+INV</screen> </para>
+      <para>You may specify an indel model of <userinput>none</userinput>
+	to fix the alignment to its initial value, and ignore information in shared insertions or deletions.
+  	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --imodel none</screen></para>
+      <para>If you desire to use a codon model, you must specify the alphabet:
 	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</screen>
       </para>
     </sect2>
@@ -407,14 +419,14 @@
       <para>You may analyze multiple genes by putting each one it its own data partition:
 	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable></screen>
 	You should put the data from the first gene in <replaceable>sequence-file1</replaceable> and the second gene
-	in <replaceable>sequence-file2</replaceable>.  In this scenario, both genes share the same tree, but their alignment varies independently.  Furthermore, the branch lengths for each gene are scaled by an independent factor.  By default, each partition will have its own default alphabet, substitution model, insertion/deletion model, and tree length.    
+	in <replaceable>sequence-file2</replaceable>.  In this scenario, both genes share the same tree, but their alignments vary independently.  Furthermore, the branch lengths for each gene are scaled by an independent factor.  By default, each partition will have its own default alphabet, substitution model, insertion/deletion model, and tree length.    
       </para>
 
       <para>You can select partition-specific values for 5 options: <userinput>--smodel</userinput>, <userinput>--imodel</userinput>, <userinput>--alphabet</userinput>, <userinput>--same-scale</userinput>, and <userinput>--align-constraint</userinput>.  For example, to specify different substitution models but the same alphabet:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --alphabet 1,2:DNA</screen>
 You can fix the alignment and ignore insertion/deletion information in one partition, while allowing the alignment to vary and using insertion/deletion information in another partition:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 1:RS07 --imodel 2:none</screen>
-You can also specify that two partitions share a single copy of a single substitution model or indel model.  This reduces the number of parameters and pools information between the partitions:
+You can also specify that two partitions share a single copy of a single substitution model or indel model.  This reduces the number of parameters and also pools information between the partitions:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1,2:TN --imodel 1,2:RS07</screen>
 However, if you do not specify the partition numbers, then each partition will recieve an independent copy of the model, and will not share parameter values:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel TN --imodel RS07</screen>
@@ -433,13 +445,12 @@ Finally, you may specify the option <userinput>--traditional</userinput>, or its
 	if you are going to run the same analysis many times, or if
 	the number of options is large. Furthermore, the option file
 	may contain comments and blank lines.  Option files are a good
-	way, and is a good way to record what options you used in an
-	analysis. 
+	to record what options you used in an analysis, and why.
       </para>
 
 	<para>
-	  An option file is specified with the command line option "<userinput>--config
-	    <replaceable>file</replaceable></userinput>". If values
+	  An option file is specified with the command line option <userinput>--config
+	    <replaceable>file</replaceable></userinput> or <userinput>-c<replaceable>file</replaceable></userinput>. If values
 	    for an option are given both on the the command line and
 	    in an option file, then the command line value overrides
 	    the value in the option file. 
@@ -471,7 +482,7 @@ smodel = log-normal+INV
 #fix the alignment and do not model indels
 traditional = traditional
 	  </programlisting>
-          The first option, <userinput>align</userinput> is the name of
+          The first option, <userinput>align</userinput>, is the name of
 	  the sequence file, which has no name on the command line.
 	  Lines that begin with # are comments, and blank lines are
 	  ignored.  The option <userinput>--traditional</userinput> uses
@@ -509,8 +520,9 @@ traditional = traditional
     <para>Also note that <command>bali-phy</command>
       does <emphasis>not</emphasis> run until it
       is "finished", but continues to gather samples until the user
-      stops it.  Thus, it is useful to continually examine the output
-      files while the program is running.
+      determines that enough samples have been gathered, and stops it.
+      Thus, it is useful to continually examine the output files while
+      the program is running. 
     </para>
 
     <example>
@@ -539,7 +551,7 @@ traditional = traditional
 	estimated from the input sequences.
       </para> 
 
-      <screen> <prompt>%</prompt> bali-phy <replaceable>somewhere</replaceable>/examples/5S-rRNA/5d.fasta --smodel pi=constant --traditional</screen>
+      <screen> <prompt>%</prompt> bali-phy <replaceable>somewhere</replaceable>/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</screen>
 
     </example>
   </sect2>
@@ -1097,7 +1109,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	<title>Default substitution models</title>
 	<para>If the substitution model is not specified, then the
 	  default model for the alphabet is used.  For DNA or RNA, the
-	  default model is HKY.  For Triplets, the default is HKYx3. For
+	  default model is TN.  For Triplets, the default is TNx3. For
           Codons, the default model is M0.  For Amino-Acids, the
 	  default model is LG. 
 	</para>
@@ -1269,8 +1281,65 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
     </sect2>
 
     <sect2>
-      <title>Indel models</title>
-      <para>The current models are RS05, RS07-no-T, and RS07.  The default is RS07.</para>
+      <title>Insertion/deletion models</title>
+      <para>The current models are RS05, RS07, and <userinput>none</userinput>.  The default is RS07.  Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments $\Pr(A|T,\tau,\Lambda)$ is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</para>
+
+<table frame="none" rowsep="1">
+	  <title>Substitution Models</title>
+	  <tgroup cols='3'>
+	    <colspec colnum="1" colname="col1" colwidth="1*"/>
+	    <colspec colnum="2" colname="col2" colwidth="1*"/>
+	    <colspec colnum="3" colname="col3" colwidth="1*"/>
+	    <thead><row>
+		<entry>Model</entry>
+		<entry>Parameters</entry>
+		<entry>Description</entry>
+	    </row></thead>
+	    <tbody>	    
+	      <row>
+		<entry>
+		  <para><userinput>RS05</userinput></para>
+		  <para>Redelings and Suchard (2005)</para>
+		</entry>
+		<entry>
+		  <para>$\delta$: the gap-opening probability</para>
+		  <para>$\epsilon$: the gap-extension probability</para>
+		</entry>
+		<entry>
+		  <para>Gap lengths are geometrically distributed with extension probability $\epsilon$.</para>
+		  <para>This indel model is independent of the branch length connecting the ancestor and descent sequences.</para>
+		</entry>
+	      </row>
+	      
+	      <row>
+		<entry>
+		  <para><userinput>RS07</userinput></para>
+		  <para>Redelings and Suchard (2007)</para>
+		</entry>
+		<entry>
+		  <para>$\lambda$: the insertion and deletion rate</para>
+		  <para>$\epsilon$: the gap-extension probability</para>
+		</entry>
+		<entry>
+		  <para>Gap lengths are geometrically distributed with extension probability $\epsilon$.</para>
+		  <para>This probability of an indel event depends on the branch length in this model.</para>
+		</entry>
+	      </row>
+	      
+	      <row>
+		<entry>
+		  <para><userinput>none</userinput></para>
+		</entry>
+		<entry></entry>
+		<entry>	Indicates the lack of a model.</entry>
+	      </row>
+	      
+	    </tbody>
+	  </tgroup>
+	</table>
+	    
+
+      <para>Specifying an indel model of <userinput>none</userinput> for a given partition results in fixing the alignment for that partition to its initial value, and ignoring information in shared insertions or deletions.</para>
     </sect2>
 
     <sect2 id="align-constraint1">
@@ -1402,7 +1471,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	  <tbody>
 	    <row>
 	      <entry>
-		<para><userinput>pi</userinput></para>
+		<para><userinput>F</userinput></para>
 		<para>Simple frequency model</para>
 	      </entry>
 	      <entry>any</entry>
@@ -1414,7 +1483,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	    </row>
 	    <row>
 	      <entry>
-		<para><userinput>pi=nucleotides</userinput></para>
+		<para><userinput>F=nucleotides</userinput></para>
 		<para>Independent nucleotide frequency model</para>
 	      </entry>
 	      <entry>Triplets</entry>
@@ -1441,7 +1510,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	    </row -->
 	    <row>
 	      <entry>
-		<para><userinput>pi=amino-acids</userinput></para>
+		<para><userinput>F=amino-acids</userinput></para>
 		<para>Amino-acid based codon frequencies. (no codon bias)</para>
 	      </entry>
 	      <entry>Codons</entry>
@@ -1578,10 +1647,10 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       <title>Examples</title>
       <para>Example: --smodel EQU --alphabet Triplets</para>
       <para>Example: --smodel HKY</para>
-      <para>Example: --smodel TN+pi=constant</para>
+      <para>Example: --smodel TN+F=constant</para>
       <para>Example: --smodel WAG+log-normal+INV</para>
       <para>Example: --smodel M0 --alphabet Codons</para>
-      <para>Example: --smodel M0+pi=nucleotides --alphabet Codons</para>
+      <para>Example: --smodel M0+F=nucleotides --alphabet Codons</para>
       <para>Example: --smodel M2 --alphabet Codons</para>
       <para>Example: --smodel M0[TN]+M2 --alphabet Codons</para>
     </sect2>
