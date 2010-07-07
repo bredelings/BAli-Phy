@@ -95,6 +95,8 @@ Preliminary implentation of #openmp
 
 Specify WHAT FRACTION OF TIME to spend on each move.
 
+Make a real interface for fixing the alignment, topology, frequencies, branch lengths, etc.
+
 Jointly sample A/epsilon A/lambda.  3-way/2D?  Yeah.  But also, 5-way, 3way, etc.
 
 DOC: Change FIXME to Doxygen \todo
