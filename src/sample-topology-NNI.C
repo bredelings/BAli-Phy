@@ -136,15 +136,23 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, i
 //                       topologies but allow branch lengths to vary, in order to find out
 //                       what the acceptance probability should be.
 
+// check the HMM type for a DIRECTED branch without going off the end of the array
+int HMM_type_for_branch(const Parameters& P, int b)
+{
+  const Tree& T = *P.T;
+  b = T.directed_branch(b).undirected_name();
+  assert(0 <= b and b < P.branch_HMM_type.size());
+  return P.branch_HMM_type[b];
+}
 
 void two_way_topology_slice_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b) 
 {
   Parameters& PP = *P.as<Parameters>();
   if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1) return;
-
   Tree T0 = *PP.T;
+  int b_undirected = T0.directed_branch(b).undirected_name();
+  if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
   vector<int> nodes = A5::get_nodes_random(*PP.T, b);
 
@@ -209,7 +217,7 @@ void two_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, 
   Parameters& PP = *P.as<Parameters>();
   if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1) return;
+  if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
   double slice_fraction = loadvalue(PP.keys,"NNI_slice_fraction",-0.25);
 
@@ -272,7 +280,7 @@ void two_way_NNI_SPR_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, i
   Parameters& PP = *P.as<Parameters>();
   if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1) return;
+  if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
   vector<int> nodes = A5::get_nodes_random(*PP.T, b);
 
@@ -344,7 +352,7 @@ void two_way_NNI_and_branches_sample(owned_ptr<Probability_Model>& P, MoveStats&
   Parameters& PP = *P.as<Parameters>();
   if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1) return;
+  if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
   vector<int> nodes = A5::get_nodes_random(*PP.T,b);
 
@@ -409,7 +417,7 @@ void two_way_NNI_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats, int b
   Parameters& PP = *P.as<Parameters>();
   if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1) return;
+  if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1) return;
 
   double U = uniform();
   if (U < 0.33333333) {
@@ -532,7 +540,7 @@ void three_way_topology_sample(owned_ptr<Probability_Model>& P, MoveStats& Stats
   Parameters& PP = *P.as<Parameters>();
   if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1)
+  if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1)
     return;
 
   double slice_fraction = loadvalue(PP.keys,"NNI_slice_fraction",-0.25);
@@ -598,7 +606,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, Mo
   Parameters& PP = *P.as<Parameters>();
   if (PP.T->directed_branch(b).is_leaf_branch()) return;
 
-  if (PP.variable_alignment() and PP.branch_HMM_type[b] == 1)
+  if (PP.variable_alignment() and HMM_type_for_branch(PP,b) == 1)
     return;
 
   vector<int> two_way_nodes = A5::get_nodes_random(*PP.T, b);
