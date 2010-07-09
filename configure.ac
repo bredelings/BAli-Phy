@@ -403,6 +403,7 @@ AC_SUBST(ldflags)
 
 # Write our compilation flags to config.h so that we can report them with the version info.
 AC_DEFINE_UNQUOTED([CONFIG_FLAGS],["$CXXFLAGS"] , ["CXXFLAGS that we used to compile."])
+AC_DEFINE_UNQUOTED([_ARCH_],["$host"] , ["Host architecture."])
 
 AC_OUTPUT([
   Makefile 
