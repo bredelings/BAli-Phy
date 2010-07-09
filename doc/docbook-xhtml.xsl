@@ -5,7 +5,8 @@
                 exclude-result-prefixes="doc mml"
                 version='1.0'>
 
-<xsl:import href="/usr/share/xml/docbook/stylesheet/nwalsh/xhtml/docbook.xsl"/>
+<!-- xsl:import href="/usr/share/xml/docbook/stylesheet/nwalsh/xhtml/docbook.xsl"/ -->
+<xsl:import href="/usr/share/xml/docbook/stylesheet/docbook-xsl-ns/xhtml/docbook.xsl"/>
 
 <!-- MathML support can be so easy ;-) ... -->
 <xsl:template match="mml:math">

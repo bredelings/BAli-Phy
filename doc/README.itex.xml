@@ -1,23 +1,36 @@
-<?xml version="1.0"?>
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook MathML Module V1.0//EN"
-          "file:/usr/share/xml/docbook/custom/mathml/1.0/dbmathml.dtd">
-<!-- !DOCTYPE article PUBLIC "-//OASIS//DTD DocBook MathML Module V1.0//EN"
-     "http://www.oasis-open.org/docbook/xml/mathml/1.0/dbmathml.dtd" -->
-<!-- DOCTYPE article PUBLIC "-//OASIS//DTD DocBook MathML Module V1.0//EN"
-     "http://www.docbook.org/xml/mathml/1.0/dbmathml.dtd" -->
-<!-- DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-     "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [] -->
-<article lang="en">
-  <articleinfo>
-    <title><application>BAli-Phy</application> User's Guide v2.1.0</title>
-    <author>
-      <firstname>Benjamin</firstname>
-      <surname>Redelings</surname>
-    </author>
-  </articleinfo>
 
-  <sect1 id="pre-requisites">
-    <title>Pre-requisites</title>
+<!-- Converted by db4-upgrade version 1.0 -->
+
+<!DOCTYPE book [
+<!ENTITY % sgml.features "IGNORE">
+<!ENTITY % xml.features "INCLUDE">
+
+<!ENTITY % dbcent 
+	 PUBLIC "-//OASIS//ENTITIES DocBook Character Entities V4.5//EN"
+	 "/usr/share/xml/docbook/schema/dtd/4.5/dbcentx.mod">
+%dbcent;
+
+<!ENTITY % xhtml-lat1
+         PUBLIC "-//W3C//ENTITIES Latin 1 for XHTML//EN"
+         "http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent" >
+%xhtml-lat1;
+
+<!ENTITY % ent-mmlalias
+      PUBLIC "-//W3C//ENTITIES Aiases for MathML 2.0//EN"
+             "/usr/share/xml/schema/w3c/mathml/dtd/mmlalias.ent" >
+%ent-mmlalias;
+]>
+
+<article xmlns="http://docbook.org/ns/docbook" version="5.0" 
+         xmlns:mml="http://www.w3.org/1998/Math/MathML"
+	 xml:lang="en">
+  <info><title><application>BAli-Phy</application> User's Guide v2.1.0</title>
+    
+    <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
+  </info>
+
+  <section xml:id="pre-requisites"><info><title>Pre-requisites</title></info>
+    
 
     <para><application>BAli-Phy</application> is a Unix command
       line program that is developed primarily on
@@ -33,34 +46,33 @@
       We typically run <application>BAli-Phy</application> on Core2
       processors  with 8Gb of RAM.</para>
 
-    <sect2>
-      <title>Linux and UNIX</title>
+    <section><info><title>Linux and UNIX</title></info>
+      
 
       <para>On Linux, you should be able to install and
 	run <application>BAli-Phy</application> without any
 	modification.  For other UNIX operating systems, you may need
 	to compile <application>BAli-Phy</application> before running
 	it.</para> 
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Windows</title>
+    <section><info><title>Windows</title></info>
+      
 
-      <para>On Windows you must first install <ulink
-						 url="http://www.cygwin.com">cygwin</ulink>.  Cygwin is a
+      <para>On Windows you must first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com">cygwin</link>.  Cygwin is a
 	Unix/Linux command-line environment for Windows.  You can access the
 	Cygwin command line (not the normal windows command line)
 	through the Start menu.</para> 
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Mac OS X</title>
+    <section><info><title>Mac OS X</title></info>
+      
       <para>We recommend Mac OS X version 10.4 (or higher).</para>
-    </sect2>
-  </sect1>
+    </section>
+  </section>
 
-  <sect1 id="compilation">
-    <title>Compiling <application>BAli-Phy</application></title>
+  <section xml:id="compilation"><info><title>Compiling <application>BAli-Phy</application></title></info>
+    
 
     <para>Most users will not need to compile <application>BAli-Phy</application>
       and can skip this section, because they can use the precompiled 
@@ -71,23 +83,22 @@
 
     <para>If you are compiling "live" source
       code that you checked out using GIT (and you probably
-      aren't) then you need to follow the directions in <xref
-							   linkend="gitsource"/> before you start compiling.
+      aren't) then you need to follow the directions in <xref linkend="gitsource"/> before you start compiling.
     </para>
 
-    <sect2>
-      <title>Software requirements</title>
+    <section><info><title>Software requirements</title></info>
+      
 
       <para>The following software packages are required for
 	compiling BAli-Phy.
 	
 	<itemizedlist>
-	  <listitem><para> The GNU C++ Compiler (<ulink url="http://gcc.gnu.org">GCC</ulink>)
+	  <listitem><para> The GNU C++ Compiler (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org">GCC</link>)
 	      version 3.4 (or higher).
 	    </para> 
 	    
-	    <note>
-	      <title>Mac OS X issues:</title>
+	    <note><info><title>Mac OS X issues:</title></info>
+	      
 	      
 	      <para>Apple's XCode software works, but only if you
 		use OS X 10.4 (Tiger) or higher, and install XCode
@@ -100,9 +111,9 @@
 	      <ulink url="http://www.gnu.org/software/make">
 		GNU make</ulink> version 3.80 (or higher).
 	  </para></listitem-->
-	  <listitem><para> The GNU Scientific Library (<ulink url="http://sources.redhat.com/gsl/">GSL</ulink>) version 1.8 (or higher).</para></listitem>
+	  <listitem><para> The GNU Scientific Library (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://sources.redhat.com/gsl/">GSL</link>) version 1.8 (or higher).</para></listitem>
 	  <listitem><para> The Cairo graphics library
-	      (<ulink url="http://www.cairographics.org/">Cairo</ulink>)
+	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link>)
 	      version 1.6 (or higher).  (Cairo is not strictly
 	    necessary, but is a requirement for building the
 	    tool <application>draw-tree</application> that is used to
@@ -115,10 +126,10 @@
       </para>
       
 
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Quick Start</title>
+    <section><info><title>Quick Start</title></info>
+      
       <para>In order to compile the program on UNIX, first
 	extract the source code archive, using a graphical archive
 	manager, or the command-line tool <command>tar</command>:
@@ -143,13 +154,13 @@
 	following sections on supplying arguments to the
 	<command>configure</command> script.
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Options to <command>configure</command></title>
+    <section><info><title>Options to <command>configure</command></title></info>
+      
 
-      <sect3 id="install-prefix">
-	<title>Installing to a location besides	<filename>/usr/local/</filename></title>
+      <section xml:id="install-prefix"><info><title>Installing to a location besides	<filename>/usr/local/</filename></title></info>
+	
 	<para>The configure script chooses to install
 	  <command>bali-phy</command> in the directory
 	  <filename>/usr/local/</filename> by default. You can install
@@ -160,15 +171,15 @@
 	  <application>BAli-Phy</application> under
 	  <filename>~/local</filename>, you can enter:
 
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure --prefix=&#36;HOME/local</screen>
+	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure --prefix=&#37;HOME/local</screen>
           This is recommended if you do not have permission to install
 	  to <filename>/usr/local/</filename>.
 	</para>
 
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Specifying where to find libraries and header files (e.g. GSL)</title>
+      <section><info><title>Specifying where to find libraries and header files (e.g. GSL)</title></info>
+	
 	<para>You can instruct the compiler to look for include files
 	  in directory <replaceable>dir</replaceable> by passing
 	  <userinput>--with-extra-includes=<replaceable>dir</replaceable></userinput> to the <command>configure</command> script.
@@ -182,10 +193,10 @@
 	</para> 
 
 	<para>For example, if your system has GSL installed in <filename>/usr/local/</filename>, then you might need to add "<userinput>--with-extra-includes=/usr/local/include --with-extra-libs=/usr/local/lib</userinput>" to the configure script arguments so that the compiler can find the GSL include files and libraries.</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Selecting a non-default C++ compiler</title>
+      <section><info><title>Selecting a non-default C++ compiler</title></info>
+	
 	
 	<para>The default C++ compiler is <command>g++</command>.  On
 	  some systems, <command>g++</command> invokes GCC version 3.3,
@@ -196,10 +207,10 @@
 	  environment variable as follows:
 	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure CXX=g++-4.2</screen>
 	</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Optimizing for a specific architecture</title>
+      <section><info><title>Optimizing for a specific architecture</title></info>
+	
 	<para>You can specify optimizing for a specific brand of CPU,
 	  by specifying the <userinput>CHIP</userinput> variable to
 	  <command>configure</command>, as follows:
@@ -215,20 +226,20 @@
 	  but at the cost of producing executables that may not run on
 	  a different kind of chip.
 	</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Statically linked executables</title>
+      <section><info><title>Statically linked executables</title></info>
+	
 	<para>Call <command>configure</command> with the flag
 	  <userinput>--enable-static</userinput> to build static
 	  executables.  Static executables will be able to run on other
 	  computers with the with the same type of CPU but slightly
 	  different versions of the operating system. 
 	</para> 
-      </sect3>
+      </section>
       
-      <sect3>
-	<title>Example</title>
+      <section><info><title>Example</title></info>
+	
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
@@ -237,11 +248,11 @@
 	  pentium4-optimized version of <command>bali-phy</command> with
 	  static linkage.
 	</para>
-      </sect3>
-    </sect2>
-    <sect2 id="gitsource">
-      <title>Generating the <filename>configure</filename> script
-	and Makefiles (<application>git</application> only)</title> 
+      </section>
+    </section>
+    <section xml:id="gitsource"><info><title>Generating the <filename>configure</filename> script
+	and Makefiles (<application>git</application> only)</title></info>
+       
       <para>Skip this step unless you are compiling a
 	snapshot of the source code that you checked out using
 	GIT. If you downloaded an official tar.gz archive of the
@@ -259,26 +270,26 @@
 	<userinput>aclocal-1.11</userinput> instead in order to specify which
 	version to use.
       </para>
-    </sect2>
+    </section>
 
 
 
-    <sect2>
-      <title>Installing when compiling from source</title>
+    <section><info><title>Installing when compiling from source</title></info>
+      
       <para>
 	After compiling <application>BAli-Phy</application>, you can
 	simply type <command>make install</command>.  This will copy the
 	compiled executables to the installation directory (See <xref linkend="install-prefix"/>).
       </para>
-    </sect2>
+    </section>
 
-  </sect1>
+  </section>
 
-  <sect1 id="installation">
-    <title>Installation</title>
+  <section xml:id="installation"><info><title>Installation</title></info>
+    
 
-    <sect2 id="software_req">
-      <title>Recommended Additional Software</title>
+    <section xml:id="software_req"><info><title>Recommended Additional Software</title></info>
+      
 
       <para>We recommend that you install some additional software in order
 	to graphically view the simple text files
@@ -287,37 +298,35 @@
 	<itemizedlist>
 	  <listitem><para><application>Tracer</application> - to
 	      analyze MCMC diagnostics 
-	      (<ulink
-		  url="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</ulink>) 
+	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</link>) 
 	  </para></listitem>
 
 	  <listitem><para>PERL - to script an analysis
 	      of <application>BALi-Phy</application> output files</para></listitem>
 
 	  <listitem><para>The plotting program
-	      <application>gnuplot</application> (<ulink
-						     url="http://www.gnuplot.info/">gnuplot</ulink>) - to script an analysis
+	      <application>gnuplot</application> (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.gnuplot.info/">gnuplot</link>) - to script an analysis
 	      of <application>BALi-Phy</application> output files</para></listitem> 
 
 	  <listitem><para>Mozilla or Mozilla/Firefox - to view the math in
-	      the XHTML documentation. (<ulink url="http://www.mozilla.org/products/firefox/">Firefox</ulink>)</para></listitem>
+	      the XHTML documentation. (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.mozilla.org/products/firefox/">Firefox</link>)</para></listitem>
 	</itemizedlist>
       </para>
       
       <para>On Mac OS X, PERL should already be installed, and you should be
 	able to install <application>gnuplot</application>
-	using <ulink url="http://www.macports.org">MacPorts</ulink>.
+	using <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.macports.org">MacPorts</link>.
 	On Windows, you can install PERL and gnuplot using
-	the <ulink url="http://www.cygwin.com">Cygwin</ulink>
+	the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com">Cygwin</link>
 	installer. On Linux, simply use your distribution's package
 	manager. 
       </para>
 
-      <para>We additionally recommend the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.html">seaview</ulink> to graphically view sequence alignments, and the program <ulink url="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</ulink> to graphically view phylogenies.</para>
-    </sect2>
+      <para>We additionally recommend the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">seaview</link> to graphically view sequence alignments, and the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link> to graphically view phylogenies.</para>
+    </section>
 
-    <sect2>
-      <title>Installing precompiled executables</title>
+    <section><info><title>Installing precompiled executables</title></info>
+      
       <para>To install pre-compiled executables, simply extract the
 	compressed archive in the directory of your choice.  If you have
 	root access you might extract in
@@ -330,10 +339,10 @@
 	using the <command>tar</command> command:
 	<screen><prompt>%</prompt> tar -zxf bali-phy-<replaceable>version</replaceable>.tgz</screen>
       </para>
-    </sect2>      
+    </section>      
 
-    <sect2>
-      <title>Setting the PATH</title>
+    <section><info><title>Setting the PATH</title></info>
+      
       <para>
 	If you installed <application>BAli-Phy</application> to the directory
 	<filename>/usr/local/</filename>, then you can run
@@ -353,20 +362,20 @@
 	searched to find program names that you type.  It is stored in a
 	variable called PATH.  You can examine it the current value of
 	this variable by 
-	<screen><prompt>%</prompt> echo &#36;PATH</screen>
+	<screen><prompt>%</prompt> echo &#37;PATH</screen>
 	We will assume that you extracted the bali-phy archive in
 	<filename>/usr/local</filename> and so you want to add
 	<filename>/usr/local/bin</filename> to your PATH.  The commands
 	for doing depend on what "shell" you are using.  Type
-	<userinput>echo &#36;SHELL</userinput> to find out.
+	<userinput>echo &#37;SHELL</userinput> to find out.
       </para>
 
       <para>If your shell is <command>sh</command> or
 	<command>bash</command> then the command looks like this: 
-	<screen><prompt>%</prompt> PATH=/usr/local/bin:&#36;PATH</screen>
+	<screen><prompt>%</prompt> PATH=/usr/local/bin:&#37;PATH</screen>
 	If your shell is <command>csh</command> or
 	<command>tcsh</command>, then the command looks like this:
-	<screen><prompt>%</prompt> setenv PATH /usr/local/bin:&#36;PATH</screen>
+	<screen><prompt>%</prompt> setenv PATH /usr/local/bin:&#37;PATH</screen>
 	Unfortunately, the effects of this will affect only the window you
 	are typing in, and will vanish when you reboot.  You can put these
 	command into the files <filename>.profile</filename> (for the
@@ -376,17 +385,17 @@
 	beyond the scope of this document.
       </para>
 
-    </sect2>
+    </section>
 
-  </sect1>
+  </section>
 
-  <sect1 id="running">
-    <title>Running the program</title>
+  <section xml:id="running"><info><title>Running the program</title></info>
+    
 
     <para>Here are some examples and explanations of how to run <command>bali-phy</command>.  You can get an overview of command line options (see <xref linkend="command_line_options"/>) by running <command> bali-phy --help</command>.</para>
 
-    <sect2>
-      <title>Quick Start</title>
+    <section><info><title>Quick Start</title></info>
+      
       <para>The simplest way to run <command>BAli-Phy</command> is
 	to type all the arguments on the command line:
 
@@ -400,10 +409,10 @@
       <para>In this simple example, <command>bali-phy</command> automatically detects whether <replaceable>sequence-file</replaceable> contains DNA, RNA, or Amino-Acids and uses default values for several command line options.  Thus, if <replaceable>sequence-file</replaceable> contains DNA, then this is equivalent to the more verbose command line
 	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet DNA --smodel TN --imodel RS07 --iterations=100000</screen>  Here the substitution model is Tamura-Nei, the insertion/deletion model is RS07, and the number of iterations is 100,000.  If <replaceable>sequence-file</replaceable> contains amino acids, then the defaults will be:<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --alphabet Amino-Acids --smodel LG --imodel RS07 --iterations=100000</screen> 
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Command line options</title>
+    <section><info><title>Command line options</title></info>
+      
 
       <para>You can specify a more complex substitution model as follows (See <xref linkend="subst_basic"/>):
 
@@ -414,10 +423,10 @@
       <para>If you desire to use a codon model, you must specify the alphabet:
 	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</screen>
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Multiple genes or data partitions</title>
+    <section><info><title>Multiple genes or data partitions</title></info>
+      
       <para>You may analyze multiple genes by putting each one it its own data partition:
 	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable></screen>
 	You should put the data from the first gene in <replaceable>sequence-file1</replaceable> and the second gene
@@ -437,10 +446,10 @@ By default each partition has a separate scale, but you can force groups of part
 Finally, you may specify the option <userinput>--traditional</userinput>, or its short form <userinput>-t</userinput>.  This is the same as <userinput>--imodel none</userinput> and affects all partitions:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR -t</screen>
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Option files (Scripts)</title>
+    <section><info><title>Option files (Scripts)</title></info>
+      
       <para>
 	In addition to using the command line, you may also specify
 	options in a file. Using an option file can be more convenient
@@ -457,8 +466,8 @@ Finally, you may specify the option <userinput>--traditional</userinput>, or its
 	    in an option file, then the command line value overrides
 	    the value in the option file. 
 	</para>
-      <sect3>
-	<title>Syntax</title>
+      <section><info><title>Syntax</title></info>
+	
 
 	<para>Option files use the same option names as the command
 	line.  However, the syntax is different:  each option is given
@@ -468,14 +477,14 @@ Finally, you may specify the option <userinput>--traditional</userinput>, or its
 	  given using the syntax  "<userinput>option =
 	    option</userinput>".  
 	</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Example</title>
+      <section><info><title>Example</title></info>
+	
 	<para>
 	  For example, consider the following
 	  option file:
-	  <programlisting format="linespecific">#select a data set to analyze
+	  <programlisting>#select a data set to analyze
 align = examples/EF-Tu/5d.fasta
 
 #select an substitution model
@@ -493,10 +502,10 @@ traditional = traditional
 	  command line
 	  <screen><prompt>%</prompt>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal+INV --traditional</screen>
 	</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>The configuration file</title>
+      <section><info><title>The configuration file</title></info>
+	
 	<para>
 	  The file <filename>~/.bali-phy</filename> is a special
 	  option file called the <emphasis>configuration
@@ -504,11 +513,11 @@ traditional = traditional
 	  Options given on the command line or an option file 
 	  override values given in <filename>~/.bali-phy</filename>. 
 	</para>
-      </sect3>
-    </sect2>
+      </section>
+    </section>
 
-  <sect2 id="examples">
-    <title>Examples</title>
+  <section xml:id="examples"><info><title>Examples</title></info>
+    
     <para>Here are some examples which demonstrate how to run
       <application>BAli-Phy</application>.  In order to run these
       examples, you must find the <filename>examples/</filename>
@@ -527,15 +536,15 @@ traditional = traditional
       the program is running. 
     </para>
 
-    <example>
-      <title>No frills</title>
+    <example><info><title>No frills</title></info>
+      
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
 	the software.</para>
       <screen> <prompt>%</prompt> bali-phy <replaceable>somewhere</replaceable>/examples/EF-Tu/5d.fasta</screen>
     </example>
 
-    <example>
-      <title>Multiple-Rate Substitution Model</title>
+    <example><info><title>Multiple-Rate Substitution Model</title></info>
+      
       <para>We now modify the previous example by changing the
 	substitution model to allow log-normal-distributed rate variation and
 	invariant sites.  The amount of rate variation and the fraction of
@@ -543,8 +552,8 @@ traditional = traditional
       
       <screen> <prompt>%</prompt> bali-phy <replaceable>somewhere</replaceable>/examples/EF-Tu/5d.fasta --smodel log-normal+INV --randomize-alignment</screen></example>
 
-    <example>
-      <title>Fixed alignment</title>
+    <example><info><title>Fixed alignment</title></info>
+      
       <para>Here we use the 5S rRNA 5-taxon data set provided with
 	the software.  The alignment is fixed and the traditional
 	likelihood model is used, making indels non-informative.  In
@@ -556,14 +565,14 @@ traditional = traditional
       <screen> <prompt>%</prompt> bali-phy <replaceable>somewhere</replaceable>/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</screen>
 
     </example>
-  </sect2>
+  </section>
 
-  <sect2 id="command_line_options">
-    <title>Command-line options: An overview</title>
+  <section xml:id="command_line_options"><info><title>Command-line options: An overview</title></info>
+    
 
     <para>You can get an up-to-date overview of these command line options by running <command> bali-phy --help</command>.</para>
-    <sect3>
-      <title>General options</title>
+    <section><info><title>General options</title></info>
+      
       
       <variablelist>
 
@@ -605,10 +614,10 @@ traditional = traditional
 	</varlistentry>
 
       </variablelist>
-    </sect3>
+    </section>
 
-    <sect3>
-      <title>MCMC options</title>
+    <section><info><title>MCMC options</title></info>
+      
 
       <variablelist>
 	<varlistentry>
@@ -640,11 +649,11 @@ traditional = traditional
 	</listitem></varlistentry>
 
       </variablelist>
-    </sect3>
+    </section>
 
 
-    <sect3>
-      <title>Parameter options</title>
+    <section><info><title>Parameter options</title></info>
+      
       <variablelist>
 	<varlistentry>
 	  <term><option>--randomize-alignment</option></term>
@@ -678,10 +687,10 @@ traditional = traditional
 
       </variablelist>
 
-    </sect3>
+    </section>
 
-    <sect3>
-      <title>Model options</title>
+    <section><info><title>Model options</title></info>
+      
 
       <variablelist>
 	<varlistentry>
@@ -716,16 +725,16 @@ traditional = traditional
 
       </variablelist>
 
-    </sect3>
+    </section>
 
-    </sect2>
-  </sect1>
+    </section>
+  </section>
 
-  <sect1 id="input">
-    <title>Input</title>
+  <section xml:id="input"><info><title>Input</title></info>
+    
 
-    <sect2>
-      <title>Sequence formats</title>
+    <section><info><title>Sequence formats</title></info>
+      
       <para><application>BAli-Phy</application> can read in sequences
 	and alignments in both FastA and PHYLIP formats.  Filenames for
 	FastA files should end in <userinput>.fasta</userinput>,
@@ -737,10 +746,10 @@ traditional = traditional
 	attempt to guess which format is being used.
       </para>
 
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Is my data set too large?</title>
+    <section><info><title>Is my data set too large?</title></info>
+      
 
       <para>Large data sets run more slowly than small data
 	sets. We recommend a conservative starting point with few taxa
@@ -758,8 +767,8 @@ traditional = traditional
 	that you've converged!)
       </para>
 
-      <sect3>
-	<title>Too many taxa?</title>
+      <section><info><title>Too many taxa?</title></info>
+	
 
 	<para><application>BAli-Phy</application> is quite CPU
 	  intensive, and so we recommend using 50 or fewer taxa in order
@@ -768,10 +777,10 @@ traditional = traditional
 	  from your data set, then adding some back if the MCMC is not
 	  too slow.</para> 
 
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Sequences too long?</title>
+      <section><info><title>Sequences too long?</title></info>
+	
 
 	<para>Aligning just a pair of sequences takes $O(L^2)$ time
 	  and memory, where $L$ represents the sequence length.  Therefore
@@ -797,17 +806,17 @@ traditional = traditional
 	  than nucleotides. This is because it decreases the sequence
 	  length.
 	</para> 
-      </sect3>
+      </section>
 
-    </sect2>
+    </section>
 
-  </sect1>
+  </section>
 
-  <sect1 id="output">
-    <title>Output</title>
+  <section xml:id="output"><info><title>Output</title></info>
+    
 
-    <sect2>
-      <title>Output directory</title>
+    <section><info><title>Output directory</title></info>
+      
       <para><application>BAli-Phy</application> creates a new
 	directory to store its output files each time it is run.  By default, the
 	directory name is the name of the sequence file, with a number
@@ -819,10 +828,10 @@ traditional = traditional
       
       <para>You can specify a different name to use instead of the
 	sequence-file name by using the <userinput>--name</userinput> option.</para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Output files</title>
+    <section><info><title>Output files</title></info>
+      
       <para><application>BAli-Phy</application> writes the following output
 	files inside the directory that it creates:</para>
       
@@ -873,71 +882,71 @@ traditional = traditional
       </variablelist>
       
       <para>For the last two files, each line in these files corresponds to one iteration.</para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Summarizing the output</title>
+    <section><info><title>Summarizing the output</title></info>
+      
 
       <para>This section is primarily oriented to extracting estimates from output files.  See <xref linkend="mixing_and_convergence"/> for methods of determine effective sample sizes, and for checking mixing and convergence.</para>
 
-      <sect3>
-	<title>Finding the consensus tree (<filename>C1.trees</filename>)</title>
+      <section><info><title>Finding the consensus tree (<filename>C1.trees</filename>)</title></info>
+	
 	<para>
 <screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> C1.trees --consensus-PP 0.5:c50.PP.tree</screen>	
-The program <ulink url="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</ulink> allows you to view the consensus tree graphically.
+The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link> allows you to view the consensus tree graphically.
 </para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Checking topology convergence (<filename>C1.trees</filename>)</title>
+      <section><info><title>Checking topology convergence (<filename>C1.trees</filename>)</title></info>
+	
 <para>
 <screen><prompt>%</prompt> trees-bootstrap <replaceable>dir1</replaceable>/C1.trees <replaceable>dir2</replaceable>/C1.trees</screen>	
 This command computes the effective sample size for the posterior probability of each split.  It also computes the Average Standard Deviation of Split Frequencies (ASDSF) between two or more independent runs.</para>
 
 <para>See <xref linkend="mixing_and_convergence"/> for more information.
 </para>  
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Summarizing numerical parameters (<filename>C1.p</filename>)</title>
+      <section><info><title>Summarizing numerical parameters (<filename>C1.p</filename>)</title></info>
+	
 <para>
 This command gives a median and confidence interval, ESS, and a stabilization time:
-<screen><prompt>%</prompt> statreport C1.p > Report </screen>	
+<screen><prompt>%</prompt> statreport C1.p &gt; Report </screen>	
 This command compares multiple runs to give PSRF and joint ESS values as well:
-<screen><prompt>%</prompt> statreport C1.p C2.p > Report </screen>	
-The program <ulink url="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</ulink> allows you to view the same summaries graphically.</para>
+<screen><prompt>%</prompt> statreport C1.p C2.p &gt; Report </screen>	
+The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</link> allows you to view the same summaries graphically.</para>
 
 <para>See <xref linkend="mixing_and_convergence"/> for more information.
 </para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Computing an alignment using Posterior Decoding (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title>
+      <section><info><title>Computing an alignment using Posterior Decoding (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title></info>
+	
 <para>
-<screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignments-max > P<replaceable>p</replaceable>-max.fasta</screen>
-You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.html">seaview</ulink> to view the alignment graphically.
+<screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignments-max &gt; P<replaceable>p</replaceable>-max.fasta</screen>
+You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">seaview</link> to view the alignment graphically.
 </para>
-      </sect3>      
+      </section>      
 
-      <sect3>
-	<title>Find the alignment from the maximum a posterior (MAP) point (<filename>C1.MAP</filename>)</title>
-<screen><prompt>%</prompt> alignment-find &lt; C1.MAP > P1-MAP.fasta</screen>
+      <section><info><title>Find the alignment from the maximum a posterior (MAP) point (<filename>C1.MAP</filename>)</title></info>
+	
+<screen><prompt>%</prompt> alignment-find &lt; C1.MAP &gt; P1-MAP.fasta</screen>
 
-      </sect3>      
+      </section>      
 
-      <sect3>
-	<title>Create an Au (Alignment Uncertainty) plot (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title>
+      <section><info><title>Create an Au (Alignment Uncertainty) plot (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title></info>
+	
 <para>To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, choose a tree estimate <replaceable>tree</replaceable>:
 <screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignment-gild <replaceable>alignment</replaceable>.fasta <replaceable>tree</replaceable>  &gt; <replaceable>alignment</replaceable>-AU.prob
-<prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta --AU <replaceable>alignment</replaceable>-AU.prob > <replaceable>alignment</replaceable>-AU.html</screen></para>
-      </sect3>
+<prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta --AU <replaceable>alignment</replaceable>-AU.prob &gt; <replaceable>alignment</replaceable>-AU.html</screen></para>
+      </section>
 
 
-    </sect2>
+    </section>
 
 
-  <sect2 id="analysis">
-    <title>Summarizing the output - scripted</title>
+  <section xml:id="analysis"><info><title>Summarizing the output - scripted</title></info>
+    
     
     <para>
       Instead of manually running each of the steps to analyze the
@@ -956,8 +965,8 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       In this case, output from multiple runs will be used to assess convergence and mixing, as well as to increase the precision of the estimates.
     </para>
 
-    <sect3>
-      <title>Meaning of generated files</title>
+    <section><info><title>Meaning of generated files</title></info>
+      
     <para>The <filename>Results/</filename> directory will contain
     the following useful files:</para>
 
@@ -1053,9 +1062,9 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	  '<replaceable>file</replaceable>' with lines</userinput>" in
 	<application>gnuplot</application>.</para>
 
-    </sect3>
-      <sect3>
-	<title><filename>Mixing/partitions.bs</filename>: partition mixing</title>
+    </section>
+      <section><info><title><filename>Mixing/partitions.bs</filename>: partition mixing</title></info>
+	
 	<para>
 	  This file reports the quality of estimates of support for each
 	  partition in terms of the posterior probability (PP) and
@@ -1064,19 +1073,19 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	  that support (1) or do not support (0) the partition, and
 	  the number of regenerations. 
 
-	  Only partitions with PP > 0.1 are shown by default.
+	  Only partitions with PP &gt; 0.1 are shown by default.
 	</para>
-      </sect3>
+      </section>
 
 
 
-  </sect2>
-  </sect1>
-  <sect1 id="models">
-    <title>Models</title>
+  </section>
+  </section>
+  <section xml:id="models"><info><title>Models</title></info>
+    
 
-    <sect2 id="subst_basic">
-      <title>Substitution models</title>
+    <section xml:id="subst_basic"><info><title>Substitution models</title></info>
+      
 
        <para>Substitution models in
        <application>BAli-Phy</application> are specified using a
@@ -1091,19 +1100,19 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	  </para>
 	</note>
 
-      <sect3>
-	<title>Default substitution models</title>
+      <section><info><title>Default substitution models</title></info>
+	
 	<para>If the substitution model is not specified, then the
 	  default model for the alphabet is used.  For DNA or RNA, the
 	  default model is TN.  For Triplets, the default is TNx3. For
           Codons, the default model is M0.  For Amino-Acids, the
 	  default model is LG. 
 	</para>
-      </sect3>
+      </section>
 
 
-      <sect3>
-	<title>Basic CTMC models</title>
+      <section><info><title>Basic CTMC models</title></info>
+	
 	<para>The basic substitution models in
 	  <application>BAli-Phy</application> are continuous-time Markov
 	  chains (CTMC). 
@@ -1125,9 +1134,9 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	TNx3, GTRx3,  JTT, WAG, LG, and M0.  Each of these models is a
 	way of specifying the exchangeability matrix $S_{ij}$.</para>
 
-	<table frame="none" rowsep="1">
-	  <title>Substitution Models</title>
-	  <tgroup cols='4'>
+	<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
+	  
+	  <tgroup cols="4">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
 	    <colspec colnum="2" colname="col2" colwidth="1*"/>
 	    <colspec colnum="3" colname="col3" colwidth="1*"/>
@@ -1195,7 +1204,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 		<entry>
 		  <para>none.</para>
 		</entry>
-		<entry></entry>
+		<entry/>
 	      </row>
 
 	      <row>
@@ -1207,7 +1216,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 		<entry>
 		  <para>none.</para>
 		</entry>
-		<entry></entry>
+		<entry/>
 	      </row>
 
 	      <row>
@@ -1219,7 +1228,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 		<entry>
 		  <para>none.</para>
 		</entry>
-		<entry></entry>
+		<entry/>
 	      </row>
 
 	      <row>
@@ -1300,10 +1309,10 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	  </tgroup>
 	</table>
 
-      </sect3>
+      </section>
 
-    <sect3 id="subst_freq">
-      <title>Substitution Frequency models</title>
+    <section xml:id="subst_freq"><info><title>Substitution Frequency models</title></info>
+      
       <para>The rate matrix $Q_{ij}$ can be more generally expressed as
 	\[Q_{ij} = S_{ij}\times\frac{\pi_j^f}{\pi_i^{1-f}},\]
         where $f$ ranges from $0$ to $1$.
@@ -1321,9 +1330,9 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	$R$).
       </para>
 
-      <table frame="none" rowsep="1">
-	<title>Frequency Models</title>
-	<tgroup cols='4'>
+      <table frame="none" rowsep="1"><info><title>Frequency Models</title></info>
+	
+	<tgroup cols="4">
 	  <colspec colnum="1" colname="col1" colwidth="1*"/>
 	  <colspec colnum="2" colname="col2" colwidth="1*"/>
 	  <colspec colnum="3" colname="col3" colwidth="1*"/>
@@ -1396,11 +1405,11 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	  </tbody>
 	</tgroup>
       </table>
-    </sect3>
+    </section>
 
 
-    <sect3 id="subst_mixture">
-    <title>Substitution Mixture Models</title>
+    <section xml:id="subst_mixture"><info><title>Substitution Mixture Models</title></info>
+    
     <para>
       Complex substitution models in <application>BAli-Phy</application>
       are constructed as mixtures of reversible CTMC models (see <xref linkend="subst_basic"/>) that run at different rates (e.g. $\Gamma_4+INV$)
@@ -1410,9 +1419,9 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       <para>Model modifiers are gamma, log-normal, INV, M2, M3, and M7.</para>
 
 
-      <table frame="none" rowsep="1">
-	<title>CTMC Mixture Models</title>
-	<tgroup cols='4'>
+      <table frame="none" rowsep="1"><info><title>CTMC Mixture Models</title></info>
+	
+	<tgroup cols="4">
 	  <thead><row>
 	      <entry>Model</entry>
 	      <entry>Alphabet</entry>
@@ -1522,10 +1531,10 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 
 	</tgroup>
       </table>
-    </sect3>
+    </section>
 
-    <sect3>
-      <title>Substitution model examples</title>
+    <section><info><title>Substitution model examples</title></info>
+      
       <para>Example: --smodel WAG+F+log-normal+INV</para>
       <para>Example: --smodel WAG+log-normal+INV (same as above)</para>
       <para>Example: --smodel EQU --alphabet Triplets</para>
@@ -1536,16 +1545,16 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       <para>Example: --smodel M2 --alphabet Codons</para>
       <para>Example: --smodel M0[HKY]+M2 --alphabet Codons (same as above)</para>
       <para>Example: --smodel M0[TN]+M2 --alphabet Codons</para>
-    </sect3>
-  </sect2>
+    </section>
+  </section>
 
-    <sect2>
-      <title>Insertion/deletion models</title>
+    <section><info><title>Insertion/deletion models</title></info>
+      
       <para>The current models are RS05, RS07, and <userinput>none</userinput>.  The default is RS07.  Each of these models is a probability distribution on pairwise alignments.  The probability distribution on multiple sequence alignments $\Pr(A|T,\tau,\Lambda)$ is constructed by factoring the multiple sequence alignment into pairwise alignments along each branch of the tree, as described in Redelings and Suchard (2005).</para>
 
-<table frame="none" rowsep="1">
-	  <title>Substitution Models</title>
-	  <tgroup cols='3'>
+<table frame="none" rowsep="1"><info><title>Substitution Models</title></info>
+	  
+	  <tgroup cols="3">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
 	    <colspec colnum="2" colname="col2" colwidth="1*"/>
 	    <colspec colnum="3" colname="col3" colwidth="1*"/>
@@ -1589,7 +1598,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 		<entry>
 		  <para><userinput>none</userinput></para>
 		</entry>
-		<entry></entry>
+		<entry/>
 		<entry>	Indicates the lack of a model.</entry>
 	      </row>
 	      
@@ -1599,20 +1608,20 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	    
 
       <para>Specifying an indel model of <userinput>none</userinput> for a given partition results in fixing the alignment for that partition to its initial value, and ignoring information in shared insertions or deletions.</para>
-    </sect2>
+    </section>
 
-    <sect2 id="genetic-codes">
-      <title>Genetic Codes</title>
+    <section xml:id="genetic-codes"><info><title>Genetic Codes</title></info>
+      
       <para>When using a codon-based substitution model like <userinput>M0</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
 <para>If the genetic code is not specified, then the standard code is used:
 	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</screen>
 	This example specifies the vertebrate mitochondrial code:
 	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[mt-vert]</screen>
 </para>
-    </sect2>
+    </section>
 
-    <sect2 id="align-constraint1">
-      <title>Alignment constraints</title>
+    <section xml:id="align-constraint1"><info><title>Alignment constraints</title></info>
+      
       <para>To fix specific columns of the alignment, you may specify alignment
 	constraints in a file as follows: </para>
 
@@ -1625,8 +1634,8 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 
       </orderedlist>
 
-      <sect3>
-	<title>Syntax</title>
+      <section><info><title>Syntax</title></info>
+	
 	<para>The first line of the file is a header consisting of an
 	  ordered list of sequence names separated by spaces. Each subsequent line
 	  consists of a space-separated list of sequence positions, with the first position
@@ -1634,12 +1643,12 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	  corresponding to the second leaf sequence, etc. Thus, if there are
 	  <replaceable>n</replaceable> leaf taxa, then each line corresponds to a
 	  space-separated list of <replaceable>n</replaceable> integers.</para>
-      </sect3>
-      <sect3>
-	<title>Examples</title>
+      </section>
+      <section><info><title>Examples</title></info>
+	
 	<para>For example, the file</para>
 
-	<programlisting format="linespecific">A B C
+	<programlisting>A B C
 1 2 2</programlisting>
 
 	<para>implies that position 1 of leaf sequence A is aligned to
@@ -1650,7 +1659,7 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	  denotes a lack of constraint for that sequence. This can be
 	  useful as follows:</para> 
 
-	<programlisting format="linespecific">A B C D
+	<programlisting>A B C D
 2 2 - - 
 - - 2 2
 	</programlisting>
@@ -1658,22 +1667,22 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	<para>The above constraints force alignment between position 2
 	  of sequences A and B, and between position 2 of sequence C and
 	  D.</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Computing the constraints</title>
+      <section><info><title>Computing the constraints</title></info>
+	
 	<para>
 	  The program <command>alignment-indices</command> may be used
 	  to aid in computing a constraint file from an input
 	  alignment.  See <xref linkend="generating_constraint_files"/>.
 	</para>
-      </sect3>
-    </sect2>
+      </section>
+    </section>
 
-  </sect1>
+  </section>
 
-  <sect1 id="mixing_and_convergence">
-    <title>Convergence and Mixing: Is it done yet?</title>
+  <section xml:id="mixing_and_convergence"><info><title>Convergence and Mixing: Is it done yet?</title></info>
+    
 
     <para>
       When using Markov chain Monte Carlo (MCMC) programs like
@@ -1690,8 +1699,8 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 
     <para>Some of the better diagnostics for lack of convergence rely on running at least 4 independent copies of the Markov chain (preferably 10) from different random starting points to see if the sampled posterior distributions for each chain are the same.  Unfortunately, when the distributions all seem to be this same, this doesn't <emphasis>prove</emphasis> that they have all converged to the equilibrium distribution.  However, if the distributions are different then you can reject either convergence or good mixing.</para>
 
-    <sect2>
-      <title>Definition of Convergence</title>
+    <section><info><title>Definition of Convergence</title></info>
+      
 
       <para>Convergence refers to the the tendency of a Markov chain to
 	to "forget" its starting value and become typical of its
@@ -1701,10 +1710,10 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	examined in order to determine how many initial iterations to
 	discard as "burnin".
       </para>
-    </sect2>
+    </section>
     
-    <sect2>
-      <title>Definition of Mixing</title>
+    <section><info><title>Definition of Mixing</title></info>
+      
       <para>
 	In MCMC, each sample is not fully independent of previous
 	samples.  In fact, even after a Markov chain has convergence,
@@ -1715,10 +1724,10 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	good precision on our estimates.  In such a case, we say
 	that the chain isn't "mixing" well. 
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Diagnostics and multiple independent chains</title>
+    <section><info><title>Diagnostics and multiple independent chains</title></info>
+      
     <para>
       Many of the following diagnostic measures require that you run the MCMC a number of
       different times.  In the text that follows, we refer to the
@@ -1729,13 +1738,13 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
       ..., <filename>C<replaceable>n</replaceable>.trees</filename>.
       Substitute the actual names of the files.
     </para>
-    </sect2>
+    </section>
 
     
-    <sect2>
-      <title>Diagnostics: Variation in split frequencies across runs</title>
-      <sect3>
-	<title>ASDSF and MSDSF</title>
+    <section><info><title>Diagnostics: Variation in split frequencies across runs</title></info>
+      
+      <section><info><title>ASDSF and MSDSF</title></info>
+	
 <para>
 To calculate the ASDSF and MSDSF run:
 <screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees &gt; partitions.bs</screen>	
@@ -1750,25 +1759,25 @@ acceptable if it is &lt; 0.01.
   values (MSDSF).  This represents the range of variation in PP across
   the runs for the split with the most variation.
 </para>
-      </sect3>
-      <sect3>
-	<title>Split-frequency comparison plot</title>
+      </section>
+      <section><info><title>Split-frequency comparison plot</title></info>
+	
 	<para>To generate the split-frequency comparison plot, you must have R installed.  Locate the script <filename>compare-runs.R</filename>.  Then run:
 <screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees --LOD-table=LOD-table &gt; partitions.bs 
 <prompt>%</prompt> R --slave --vanilla --args LOD-table compare-SF.pdf &lt; compare-runs.R</screen>
-	  Following <ulink url="http://dx.doi.org/10.1080/10635150600812544">Beiko et al (2006)</ulink>, this displays the variation in
+	  Following <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://dx.doi.org/10.1080/10635150600812544">Beiko et al (2006)</link>, this displays the variation in
 	  estimates of split frequencies across runs.  Splits are
 	  arranged on the x-axis in increase over of 
 	  Posterior Probability (PP), which is obtained by averaging over
 	  runs.  We then plot a vertical bar from the minimum PP to the
 	  maximum PP.
 	</para>
-	</sect3>
-    </sect2>
+	</section>
+    </section>
 
 
-    <sect2>
-      <title>Diagnostics: Potential Scale Reduction Factors (PSRF)</title>
+    <section><info><title>Diagnostics: Potential Scale Reduction Factors (PSRF)</title></info>
+      
 <para>
 Potential Scale Redution Factors check that different runs have
 similar posterior distributions.  Only numerical variables may have a
@@ -1803,12 +1812,12 @@ values in several independent runs, indicating a lack of
 convergence. This situation might occur if different runs of
 the Markov chain were trapped in different modes and failed to
 adequately mix between modes.</para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Diagnostics: Effective sample sizes (ESS)</title>
-      <sect3>
-	<title>ESS for numerical values</title>
+    <section><info><title>Diagnostics: Effective sample sizes (ESS)</title></info>
+      
+      <section><info><title>ESS for numerical values</title></info>
+	
       <para>To calculate the split ESS values, run:
 <screen><prompt>%</prompt> statreport C1.p C2.p ... C<replaceable>n</replaceable>.p &gt; Report </screen>
       We calculate effective sample sizes based on integrated
@@ -1817,12 +1826,12 @@ adequately mix between modes.</para>
       </para>
 
       <para>The
-      program <ulink url="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</ulink>
+      program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://evolve.zoo.ox.ac.uk/software/tracer/">Tracer</link>
       also computes ESS values.</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>ESS for split frequencies</title>
+      <section><info><title>ESS for split frequencies</title></info>
+	
       <para>To calculate the split ESS values, run:
 <screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees &gt; partitions.bs</screen>
       To compute the ESS for a split, we consider the presence of absence
@@ -1833,16 +1842,16 @@ adequately mix between modes.</para>
       PP estimates in the blocks.  It is also similar to estimating
       the variance reduction under a block bootstrap.
       </para>
-    </sect3>
-</sect2>
+    </section>
+</section>
 
-    <sect2>
-      <title>Diagnostics: Stabilization</title>
-      <sect3>
-	<title>Stabilization of numerical values</title>
+    <section><info><title>Diagnostics: Stabilization</title></info>
+      
+      <section><info><title>Stabilization of numerical values</title></info>
+	
 <para>To obtain estimates of the stabilization time for each
 numerical  parameter, you may run:
-<screen><prompt>%</prompt> statreport C1.p > Report </screen>
+<screen><prompt>%</prompt> statreport C1.p &gt; Report </screen>
 Each series of values is counted as having stabilized after
 the series crosses its upper and then lower 95% confidence bounds
 twice (if the initial value is below the median) or crosses its lower
@@ -1850,19 +1859,19 @@ and then upper confidence bounds twice (if the initial value is above
 the median). The confidence bounds are those based on its
 equilibrium distribution as calculated from the last third of the
 values in the sequence.</para>
-      </sect3>
+      </section>
 
-      <sect3>
-	<title>Stabilization of tree topologies and tree distances</title>
+      <section><info><title>Stabilization of tree topologies and tree distances</title></info>
+	
 	<para>In addition to examining convergence diagnostics for continuous
 	parameters, it is important to examine convergence diagnostics
 	for the topology as well
-	(<ulink url="http://dx.doi.org/10.1080/10635150600812544">Beiko
-	et al 2006</ulink>).  In theory, we recommend the web tool <ulink url="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</ulink> (Wilgenbush et al, 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  Therefore, if you wish to use AWTY, you must convert the tree samples files to NEXUS before you upload them to AWTY in order to get correct results.</para>
+	(<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://dx.doi.org/10.1080/10635150600812544">Beiko
+	et al 2006</link>).  In theory, we recommend the web tool <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ceb.csit.fsu.edu/awty/">Are We There Yet (AWTY)</link> (Wilgenbush et al, 2004).  However, AWTY gives incorrect results if you upload plain NEWICK tree samples -- which is what BAli-Phy outputs.  Therefore, if you wish to use AWTY, you must convert the tree samples files to NEXUS before you upload them to AWTY in order to get correct results.</para>
 
 <para>It is also be possible to assess stabilization of tree topologies using tools distributed with <application>bali-phy</application> by using commands like the following.  Here, sub-sampling and burnin does not apply to the equilibrium tree files. Also, note that you need to manually construct the equilibrium samples, which we recommend to contain at least 500 trees; you might do this by sub-sampling using the <application>BAli-Phy</application> tool <command>sub-sample</command>.</para>
 
-<orderedlist>
+<orderedlist inheritnum="ignore" continuation="restarts">
 <listitem><para>To report the average distances within and between two tree samples:
 <screen><prompt>%</prompt> trees-distances --skip=<replaceable>burnin</replaceable> --sub-sample=<replaceable>factor</replaceable> compare <filename>C1.trees</filename> <filename>C2.trees</filename></screen>
 </para></listitem>
@@ -1879,9 +1888,9 @@ The stabilization criterion is the same one described above for numerical values
 
 <para>Note that the running time is the product of the number of trees in the two files.  Therefore, comparing two complete tree samples without sub-sampling will take too long.</para>
 
-   </sect3>
+   </section>
 	
-    </sect2>
+    </section>
 
     <!-- sect2>
       <title>Diagnostics: Visual Inspection</title>
@@ -1902,23 +1911,23 @@ The stabilization criterion is the same one described above for numerical values
       </para>
     </sect3>
   </sect2 -->
-  </sect1>
+  </section>
 
-  <sect1 id="tuning_the_markov_chain">
-    <title>Tuning the Markov Chain</title>
+  <section xml:id="tuning_the_markov_chain"><info><title>Tuning the Markov Chain</title></info>
+    
 
     <para>The Markov chain should be largely self-tuning, since all
     numerical parameters are now sampled using self-tuning slice samplers.  However,
     the following parameters still affect the size of Metropolis-Hastings
     proposals.  You can modify them using the command line syntax "<userinput>--set <replaceable>parameter</replaceable>=<replaceable>value</replaceable></userinput>".</para>
 
-    <sect2>
-      <title>Parameters</title>
+    <section><info><title>Parameters</title></info>
+      
       <para>
 
-	<table frame="none" rowsep="1">
-	  <title>Tunable Parameters</title>
-	  <tgroup cols='4'>
+	<table frame="none" rowsep="1"><info><title>Tunable Parameters</title></info>
+	  
+	  <tgroup cols="4">
 	    <colspec colnum="1" colname="col1" colwidth="1*"/>
 	    <colspec colnum="2" colname="col2" colwidth="1*"/>
 	    <colspec colnum="3" colname="col3" colwidth="1*"/>
@@ -2012,55 +2021,55 @@ The stabilization criterion is the same one described above for numerical values
 	  </tgroup>
 	</table>
       </para>
-    </sect2>
-  </sect1>
+    </section>
+  </section>
 
 
-  <sect1 id="auxiliary_tools">
-    <title>Auxiliary tools</title>
+  <section xml:id="auxiliary_tools"><info><title>Auxiliary tools</title></info>
+    
 
     <para>Most of these tools will describe their options if given the "<userinput>--help</userinput>" argument on the command line.</para>
 
-    <sect2>
-      <title>alignment-find</title>
+    <section><info><title>alignment-find</title></info>
+      
       <para>Usage: alignment-find [OPTIONS] &lt; <replaceable>alignments-file</replaceable></para>
       <para>Find the last (or first) FastA alignment in a file.</para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>alignment-draw</title>
+    <section><info><title>alignment-draw</title></info>
+      
 
       <para>alignment-draw <replaceable>alignment-file</replaceable> [<replaceable>AU-file</replaceable>] [OPTIONS]</para>
       <para>Draw an alignment to HTML, optionally coloring residues by AU.</para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>alignment-thin</title>
+    <section><info><title>alignment-thin</title></info>
+      
       <para>alignment-thin <replaceable>alignment-file</replaceable> <replaceable>tree-file</replaceable> [OPTIONS]</para>
       <para>Remove taxa from an alignment to preserve the most
 	sequence diversity, as measured by the  total length of the tree
 	for the remaining taxa.</para> 
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>alignment-chop-internal</title>
+    <section><info><title>alignment-chop-internal</title></info>
+      
       <para>alignment-chop-internal <replaceable>alignment-file</replaceable> [OPTIONS]</para>
       <para>Remove ancestral sequences from an alignment.  (This
 	probably only works for alignments output by bali-phy.) </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>alignment-info</title>
+    <section><info><title>alignment-info</title></info>
+      
       <para>alignment-info <replaceable>alignment-file</replaceable> <replaceable>tree-file</replaceable> [OPTIONS]</para>
       <para>Display basic information about the alignment, including
 	its length, the number of sequences, columns that are constant
 	or informative, letter frequencies, etc.</para>
       <para>If a tree is supplied, then the unweighted parsimony score
 	is given as well.</para>
-    </sect2>
+    </section>
     
-    <sect2>
-      <title>alignment-indices</title>
+    <section><info><title>alignment-indices</title></info>
+      
       <para>alignment-indices <replaceable>alignment-file</replaceable> [OPTIONS]</para>
       <para>Show the alignment in terms of the index of each character
 	in its sequence.  Each line in this file corresponds to one
@@ -2069,18 +2078,18 @@ The stabilization criterion is the same one described above for numerical values
       <para>Also, you can specify which columns to keep using the
 	--columns option.
       </para>
-    </sect2>
+    </section>
     
-    <sect2>
-      <title>alignment-cat</title>
+    <section><info><title>alignment-cat</title></info>
+      
       <para>alignment-cat <replaceable>file1</replaceable>
 	[<replaceable>file2</replaceable> ...]</para>
       <para>Concatenate several alignments (with the same sequence
 	names) end-to-end.</para>
-    </sect2>
+    </section>
     
-    <sect2>
-      <title>trees-consensus</title>
+    <section><info><title>trees-consensus</title></info>
+      
       <para>Usage: trees-consensus <replaceable>file</replaceable>
 	[OPTIONS] </para>
       <para>This program analyzes the tree sample contained in
@@ -2088,10 +2097,10 @@ The stabilization criterion is the same one described above for numerical values
 	supported taxa partitions (including partial partitions), and the
 	majority consensus topology.
       </para> 
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>trees-bootstrap</title>
+    <section><info><title>trees-bootstrap</title></info>
+      
       <para>Usage: trees-bootstrap <replaceable>file1</replaceable>
 	[<replaceable>file2</replaceable> ... ] --predicates
 	<replaceable>predicate-file</replaceable> [OPTIONS] </para>
@@ -2106,10 +2115,10 @@ The stabilization criterion is the same one described above for numerical values
 	is specified as a list of partitions or (multifurcating) trees, one
 	per line.  Predicates are separated by blank lines.
       </para>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>trees-to-SRQ</title>
+    <section><info><title>trees-to-SRQ</title></info>
+      
 
       <para>Usage: trees-to-SRQ <replaceable>predicate-file</replaceable> [OPTIONS] <replaceable>trees-file</replaceable> </para>
 
@@ -2129,15 +2138,15 @@ The stabilization criterion is the same one described above for numerical values
 	sum plot does not distinguish variation in probabilities near 1.0 well.
       </para>
 
-    </sect2>
+    </section>
 
-  </sect1>
+  </section>
 
-  <sect1 id="FAQ">
-    <title>Frequently Asked Questions (FAQ)</title>
+  <section xml:id="FAQ"><info><title>Frequently Asked Questions (FAQ)</title></info>
+    
 
-    <sect2>
-      <title>Running <command>bali-phy</command>.</title>
+    <section><info><title>Running <command>bali-phy</command>.</title></info>
+      
 
       <qandaset>
 	<qandaentry>
@@ -2169,10 +2178,10 @@ The stabilization criterion is the same one described above for numerical values
 	</qandaentry>
       </qandaset>
 
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Run-time error messages</title>
+    <section><info><title>Run-time error messages</title></info>
+      
       
       <qandaset>
 	<qandaentry>
@@ -2184,10 +2193,10 @@ The stabilization criterion is the same one described above for numerical values
 	  </answer>
 	</qandaentry>
       </qandaset>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Stopping <command>bali-phy</command>.</title>
+    <section><info><title>Stopping <command>bali-phy</command>.</title></info>
+      
 
       <qandaset>
 	<qandaentry>
@@ -2203,7 +2212,7 @@ The stabilization criterion is the same one described above for numerical values
 	  <question><para>So, how can I know when to stop it?</para></question>
 	  <answer>
 	    <para>You can stop when it has both converged and also run for long enough to give
-	      you >1000 effectively independent samples.  </para>
+	      you &gt;1000 effectively independent samples.  </para>
 	  </answer>
 	</qandaentry>
 
@@ -2224,10 +2233,10 @@ The stabilization criterion is the same one described above for numerical values
 	  </answer>
 	</qandaentry>
       </qandaset>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>Interpreting the results.</title>
+    <section><info><title>Interpreting the results.</title></info>
+      
 
       <qandaset>
 	<qandaentry>
@@ -2240,16 +2249,15 @@ The stabilization criterion is the same one described above for numerical values
 	<qandaentry>
 	  <question><para>How do I compute the split/bi-partition support?</para></question>
 	  <answer>
-	    <para>After you analyze the output (<xref
-						   linkend="analysis"/>), the partition support is indicated in
+	    <para>After you analyze the output (<xref linkend="analysis"/>), the partition support is indicated in
 	      <filename>Results/consensus</filename> and in <filename>Results/c50.PP.tree</filename>. </para> 
 	  </answer>
 	</qandaentry>
       </qandaset>
-    </sect2>
+    </section>
 
-    <sect2>
-      <title>How do I...</title>
+    <section><info><title>How do I...</title></info>
+      
       <qandaset>
 	<qandaentry>
 	  <question><para>How do I concatenate alignments?</para></question>
@@ -2272,7 +2280,7 @@ The stabilization criterion is the same one described above for numerical values
 	</qandaentry>
 
 	<qandaentry>
-	  <question id="generating_constraint_files"><para>How do I create an alignment-constraint file
+	  <question xml:id="generating_constraint_files"><para>How do I create an alignment-constraint file
 	      from an alignment?</para></question>
 	  <answer>
 	    <para>To constrain the alignment to match some alignment
@@ -2284,7 +2292,7 @@ The stabilization criterion is the same one described above for numerical values
 	</qandaentry>
 
       </qandaset>
-    </sect2>
-  </sect1>
+    </section>
+  </section>
 
 </article>
