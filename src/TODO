@@ -7,13 +7,19 @@ IMPLEMENT: automatic step size detection for MH based on BEAST?
 COMPARE with 2.0.2 on some single-partition data sets 
  - EF-Tu-45? Globins-few.fasta? 5S-48? HIV? Enolase?
 GENERATE: some examples.
-DOC: Better describe how to obtain mixing diagnostics.
 REPORT: Include at least one tree-mixing measure.
+ + Obtain last 1/3 of dist as equilibrium, sub-sample down to 600 trees
+ + Plot distance to equilibrium, vs time., sub-sampled down to 1000 trees.
+
+Make alignment-max stop storing so many alignments in RAM at once...
+# We could clearly do an incremental algorithm.... IF we knew in advance which
+  alignments we would keep...
 
 Add a tree-distance convergence plot.
 
 Search: SHOULD we force it to evaluate a sum over alignments for at least a few other trees if the
       current branch comes out best?
+      * Use a boost::bitvector<> -> 32 times less RAM?
 
 Examine prior rate dispersal for DP[2], DP[4], DP[6], DP[8] with no data.
  - Make it tighter a priori, so that posterior dispersal actually means something...
@@ -62,14 +68,11 @@ Automatically adjusting step widths for MH?
 2.2.0:
 
 Make LC able to get shorter.
- * Allow temporarily storing, and then re-associating, a Likelihood_Cache_Branch.
  * Separate set_length( ) and 'reserve' for likelihood caches.
- * Remove P_temp in sample_alignment( )
- * Why are there 5 tokens?
- * How many branches do these 5 tokens use?
 
 Number of tokens may be misleading, since we create temporaries.
  * Currently, we need 2*B branches w/o SPR_and_A_all, and 4*B with.
+ * Allow temporarily storing, and then re-associating, a Likelihood_Cache_Branch.
 
 Examine effect ON BURNIN of forcing SPR-all+A to check at least one other alignment...
 
