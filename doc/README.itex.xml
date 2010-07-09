@@ -383,6 +383,8 @@
   <sect1 id="running">
     <title>Running the program</title>
 
+    <para>Here are some examples and explanations of how to run <command>bali-phy</command>.  You can get an overview of command line options (see <xref linkend="command_line_options"/>) by running <command> bali-phy --help</command>.</para>
+
     <sect2>
       <title>Quick Start</title>
       <para>The simplest way to run <command>BAli-Phy</command> is
@@ -422,14 +424,14 @@
 	in <replaceable>sequence-file2</replaceable>.  In this scenario, both genes share the same tree, but their alignments vary independently.  Furthermore, the branch lengths for each gene are scaled by an independent factor.  By default, each partition will have its own default alphabet, substitution model, insertion/deletion model, and tree length.    
       </para>
 
-      <para>You can select partition-specific values for 5 options: <userinput>--smodel</userinput>, <userinput>--imodel</userinput>, <userinput>--alphabet</userinput>, <userinput>--same-scale</userinput>, and <userinput>--align-constraint</userinput>.  For example, to specify different substitution models but the same alphabet:
+      <para>By default, each partition will recieve an independent copy of the model, and will not share parameter values:
+<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel TN --imodel RS07</screen>
+However, you can select partition-specific values for 5 options: <userinput>--smodel</userinput>, <userinput>--imodel</userinput>, <userinput>--alphabet</userinput>, <userinput>--same-scale</userinput>, and <userinput>--align-constraint</userinput>.  For example, to specify different substitution models but the same alphabet:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --alphabet 1,2:DNA</screen>
 You can fix the alignment and ignore insertion/deletion information in one partition, while allowing the alignment to vary and using insertion/deletion information in another partition:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 1:RS07 --imodel 2:none</screen>
 You can also specify that two partitions share a single copy of a single substitution model or indel model.  This reduces the number of parameters and also pools information between the partitions:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1,2:TN --imodel 1,2:RS07</screen>
-However, if you do not specify the partition numbers, then each partition will recieve an independent copy of the model, and will not share parameter values:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel TN --imodel RS07</screen>
 By default each partition has a separate scale, but you can force groups of partitions to share a scale. The name of the groups for the scale are not currently used, but may be used in later versions of the software:
 <screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --same-scale 1,2:groupname</screen>
 Finally, you may specify the option <userinput>--traditional</userinput>, or its short form <userinput>-t</userinput>.  This is the same as <userinput>--imodel none</userinput> and affects all partitions:
@@ -556,37 +558,11 @@ traditional = traditional
     </example>
   </sect2>
 
-  </sect1>
-  
-  <sect1 id="command_line_options">
+  <sect2 id="command_line_options">
     <title>Command-line options: An overview</title>
 
-    <sect2>
-      <title>Usage</title>
-
-      <para>The syntax for <command>bali-phy</command> is:</para>
-
-      <cmdsynopsis>
-	<command>bali-phy</command>
-	<arg choice='req'><replaceable>sequence-file1</replaceable></arg>
-	<arg><replaceable>sequence-file2</replaceable> <replaceable>sequence-file3</replaceable>...</arg>
-	<arg>OPTIONS</arg>
-      </cmdsynopsis>
-
-      <para>The sequence file is the only required argument.  It can
-	be either a FastA (*.fasta) file or a PHYLIP (*.phy) file.  The
-	file must end in one of these two suffixes or
-	<application>BAli-Phy</application> won't know how to read
-	it.</para> 
-
-      <para>The optional arguments are described below.  They can also
-	be found by typing <userinput>bali-phy --help</userinput> on the
-	command line.
-      </para>
-      
-    </sect2>
-
-    <sect2>
+    <para>You can get an up-to-date overview of these command line options by running <command> bali-phy --help</command>.</para>
+    <sect3>
       <title>General options</title>
       
       <variablelist>
@@ -629,9 +605,9 @@ traditional = traditional
 	</varlistentry>
 
       </variablelist>
-    </sect2>
+    </sect3>
 
-    <sect2>
+    <sect3>
       <title>MCMC options</title>
 
       <variablelist>
@@ -664,10 +640,10 @@ traditional = traditional
 	</listitem></varlistentry>
 
       </variablelist>
-    </sect2>
+    </sect3>
 
 
-    <sect2>
+    <sect3>
       <title>Parameter options</title>
       <variablelist>
 	<varlistentry>
@@ -702,9 +678,9 @@ traditional = traditional
 
       </variablelist>
 
-    </sect2>
+    </sect3>
 
-    <sect2>
+    <sect3>
       <title>Model options</title>
 
       <variablelist>
@@ -740,9 +716,9 @@ traditional = traditional
 
       </variablelist>
 
+    </sect3>
+
     </sect2>
-
-
   </sect1>
 
   <sect1 id="input">
@@ -1377,6 +1353,16 @@ You can use the program <ulink url="http://pbil.univ-lyon1.fr/software/seaview.h
 	    
 
       <para>Specifying an indel model of <userinput>none</userinput> for a given partition results in fixing the alignment for that partition to its initial value, and ignoring information in shared insertions or deletions.</para>
+    </sect2>
+
+    <sect2 id="genetic-codes">
+      <title>Genetic Codes</title>
+      <para>When using a codon-based substitution model like <userinput>M0</userinput>, you may select the genetic code by specifying <userinput>--alphabet Codons[<replaceable>genetic-code</replaceable>]</userinput>.  Available genetic codes are <userinput>standard</userinput>, <userinput>mt-vert</userinput>, <userinput>mt-invert</userinput>, <userinput>mt-yeast</userinput>, <userinput>mt-protozoan</userinput>.</para>
+<para>If the genetic code is not specified, then the standard code is used:
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</screen>
+	This example specifies the vertebrate mitochondrial code:
+	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons[mt-vert]</screen>
+</para>
     </sect2>
 
     <sect2 id="align-constraint1">
