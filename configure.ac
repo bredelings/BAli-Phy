@@ -296,16 +296,18 @@ echo "------------------------------------------"
 if test "$use_system_boost" = yes ; then
 echo " * Looking for the system BOOST headers..."
 AC_CHECK_HEADERS([boost/config.hpp],[],[echo "Error: I can't find <boost/config.hpp>."; echo "Please install the BOOST headers, or specify their location using --with-extra-inclues". ; exit 1])
-AC_CHECK_HEADERS([boost/filesystem/operations.hpp],[],[echo "Error: I can't find <boost/filesystem/operations.hpp>."; echo "Please install the BOOST filesystem headers." ; exit 1])
-AC_CHECK_HEADERS([boost/program_options.hpp],[],[echo "Error: I can't find <boost/program_options.hpp>."; echo "Please install the BOOST program options headers." ; exit 1])
-AC_CHECK_HEADERS([boost/graph/graph_traits.hpp],[],[echo "Error: I can't find <boost/graph/graph_traits.hpp>."; echo "Please install the BOOST graph library headers." ; exit 1])
+AC_CHECK_HEADERS([boost/system/error_code.hpp],[],[echo "Error: I can't find <boost/system/error_code.hpp>."; echo "Please install the BOOST.system headers." ; exit 1])
+AC_CHECK_HEADERS([boost/filesystem/operations.hpp],[],[echo "Error: I can't find <boost/filesystem/operations.hpp>."; echo "Please install the BOOST.filesystem headers." ; exit 1])
+AC_CHECK_HEADERS([boost/program_options.hpp],[],[echo "Error: I can't find <boost/program_options.hpp>."; echo "Please install the BOOST.program options headers." ; exit 1])
+AC_CHECK_HEADERS([boost/graph/graph_traits.hpp],[],[echo "Error: I can't find <boost/graph/graph_traits.hpp>."; echo "Please install the BOOST.graph library headers." ; exit 1])
 
 echo " * Looking for the system BOOST libraries... (suffix = '${BOOST_SUFFIX}')"
 AC_CHECK_LIB(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_program_options library! (-lboost_program_options${BOOST_SUFFIX})" ; exit 1])
+AC_CHECK_LIB(boost_system${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_system library! (-lboost_system${BOOST_SUFFIX})" ; exit 1])
 AC_CHECK_LIB(boost_filesystem${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_filesystem library! (-lboost_filesystem${BOOST_SUFFIX})" ; exit 1])
 boost_libs="-lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}";
 
-AC_MSG_CHECKING(include/compile/link for the BOOST program_options library)
+AC_MSG_CHECKING(include/compile/link for the BOOST.program_options library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/program_options.hpp>
   using namespace boost::program_options;
@@ -314,7 +316,17 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_RESULT([yes])],
  [AC_MSG_FAILURE([libboost_program_options failure])])
 
-AC_MSG_CHECKING(include/compile/link for the BOOST filesystem library)
+
+AC_MSG_CHECKING(include/compile/link for the BOOST.system library)
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+  #include <boost/system/system_error.hpp>
+  using namespace boost::system;
+]],
+[[system_error* error;]])],
+ [AC_MSG_RESULT([yes])],
+ [AC_MSG_FAILURE([libboost_system failure])])
+
+AC_MSG_CHECKING(include/compile/link for the BOOST.filesystem library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/filesystem/operations.hpp>
   namespace fs = boost::filesystem;
