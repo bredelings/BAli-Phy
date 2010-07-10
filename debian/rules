@@ -9,4 +9,4 @@ include /usr/share/cdbs/1/class/autotools.mk
 # in which directory to build
 #DEB_BUILDDIR = $(DEB_SRCDIR)/debian/build
 
-DEB_CONFIGURE_EXTRA_FLAGS = --with-system-boost
+DEB_CONFIGURE_EXTRA_FLAGS = --with-system-boost --with-mpi

@@ -1,10 +1,10 @@
 Source: bali-phy
 Section: unknown
 Priority: extra
-Maintainer: Benjamin Redelings <benjamin_redelings@ncsu.edu>
-Build-Depends: cdbs, debhelper (>= 5), autotools-dev, libgsl0-dev, libboost-filesystem-dev, libboost-program-options-dev
+Maintainer: Benjamin Redelings <benjamin.redelings@nescent.org>
+Build-Depends: cdbs, debhelper (>= 5), autotools-dev, libgsl0-dev, libboost-filesystem-dev, libboost-program-options-dev, libboost-dev, libopenmpi-dev
 Standards-Version: 3.7.2
-XS-Vcs-Svn: http://centromere.statgen.ncsu.edu/svn/Project/bali-phy/trunk/
+Vcs-Git: git://github.com/bredelings/BAli-Phy.git
 
 Package: bali-phy
 Architecture: any
