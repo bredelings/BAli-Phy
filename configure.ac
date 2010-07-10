@@ -383,7 +383,7 @@ if test "$use_mpi" != no ; then
    if test "$use_mpi" = "openmpi" ; then
       echo "checking for OpenMPI ..."
       if $MPICXX --showme:version ; then 
-         MPI_CXXFLAGS="$($MPICXX --showme:compile | sed 's/-I/-isystem /g') -fpermissive"
+         MPI_CXXFLAGS="$($MPICXX --showme:compile | sed 's/-I/-isystem /g')"
          echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
          MPI_LDFLAGS=$($MPICXX --showme:link)
          echo "MPI_LDFLAGS=$MPI_LDFLAGS"
