@@ -908,8 +908,8 @@ void show_ending_messages()
 void die_on_signal(int sig)
 {
   // Throwing exceptions from signal handlers is not allowed.  Bummer.
-  cout<<"recieved signal "<<sig<<".  Dying."<<endl;
-  cerr<<"recieved signal "<<sig<<".  Dying."<<endl;
+  cout<<"received signal "<<sig<<".  Dying."<<endl;
+  cerr<<"received signal "<<sig<<".  Dying."<<endl;
 
   show_ending_messages();
 
