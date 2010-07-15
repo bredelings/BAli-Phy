@@ -786,6 +786,18 @@ G. Find a better distance measure for alignment-median?
 
 I. fix: gamma+frequency+INV
 
+---------------------------------- Clock -------------------------------------
+
+Make rooted trees know which branches point
+ (a) towards a node (parent branch)
+ (b) away from a node (child_branches - just branches_after(parent_branch).
+
+Q. So, how do we keep RootedTree's extra info up-to-date if methods from Tree can
+still be called?
+A. Public tree methods cannot disturb this setup.
+
+
+
 ------------------------------------------------------------------------------
 [FIXED] s-parameters aren't accepted/sampled often enough.
 
