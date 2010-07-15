@@ -7,6 +7,6 @@ include /usr/share/cdbs/1/class/autotools.mk
 #DEB_SRCDIR = $(CURDIR)
 
 # in which directory to build
-#DEB_BUILDDIR = $(DEB_SRCDIR)/debian/build
+DEB_BUILDDIR = $(DEB_SRCDIR)/debian/build
 
-DEB_CONFIGURE_EXTRA_FLAGS = --with-system-boost --with-mpi
+DEB_CONFIGURE_EXTRA_FLAGS = --with-system-boost --enable-cairo # --with-mpi

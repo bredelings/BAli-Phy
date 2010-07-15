@@ -1,10 +1,14 @@
 Source: bali-phy
-Section: unknown
+Section: science
 Priority: extra
 Maintainer: Benjamin Redelings <benjamin.redelings@nescent.org>
-Build-Depends: cdbs, debhelper (>= 5), autotools-dev, libgsl0-dev, libboost-filesystem-dev, libboost-program-options-dev, libboost-dev, libopenmpi-dev
+Build-Depends: cdbs, debhelper (>= 5), autotools-dev, libgsl0-dev,
+  libboost-filesystem-dev, libboost-program-options-dev, libboost-dev,
+  libopenmpi-dev
 Standards-Version: 3.7.2
 Vcs-Git: git://github.com/bredelings/BAli-Phy.git
+Vcs-Browser: http://github.com/bredelings/BAli-Phy
+Homepage: http://www.biomath.ucla.edu/msuchard/bali-phy/
 
 Package: bali-phy
 Architecture: any
@@ -15,4 +19,4 @@ Description: Bayesian joint estimation of phylogeny and alignments
  BAli-Phy uses Markov chain Monte Carlo (MCMC) integration to
  approximate posterior probabilities. 
  .
-  Homepage: http://www.biomath.ucla.edu/msuchard/bali-phy/
+
