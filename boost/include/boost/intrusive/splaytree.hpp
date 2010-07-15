@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga  2007
+// (C) Copyright Ion Gaztanaga  2007-2009
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -25,6 +25,8 @@
 #include <boost/intrusive/splay_set_hook.hpp>
 #include <boost/intrusive/detail/tree_node.hpp>
 #include <boost/intrusive/detail/ebo_functor_holder.hpp>
+#include <boost/intrusive/detail/clear_on_destructor_base.hpp>
+#include <boost/intrusive/detail/mpl.hpp>
 #include <boost/intrusive/options.hpp>
 #include <boost/intrusive/splaytree_algorithms.hpp>
 #include <boost/intrusive/link_mode.hpp>
@@ -34,20 +36,6 @@ namespace boost {
 namespace intrusive {
 
 /// @cond
-
-template <class T>
-struct internal_default_splay_set_hook
-{
-   template <class U> static detail::one test(...);
-   template <class U> static detail::two test(typename U::default_splay_set_hook* = 0);
-   static const bool value = sizeof(test<T>(0)) == sizeof(detail::two);
-};
-
-template <class T>
-struct get_default_splay_set_hook
-{
-   typedef typename T::default_splay_set_hook type;
-};
 
 template <class ValueTraits, class Compare, class SizeType, bool ConstantTimeSize>
 struct splaysetopt
@@ -62,13 +50,7 @@ template <class T>
 struct splay_set_defaults
    :  pack_options
       < none
-      , base_hook
-         <  typename detail::eval_if_c
-               < internal_default_splay_set_hook<T>::value
-               , get_default_splay_set_hook<T>
-               , detail::identity<none>
-               >::type
-         >
+      , base_hook<detail::default_splay_set_hook>
       , constant_time_size<true>
       , size_type<std::size_t>
       , compare<std::less<T> >
@@ -90,13 +72,15 @@ struct splay_set_defaults
 //! \c base_hook<>/member_hook<>/value_traits<>,
 //! \c constant_time_size<>, \c size_type<> and
 //! \c compare<>.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 class splaytree_impl
+   :  private detail::clear_on_destructor_base<splaytree_impl<Config> >
 {
+   template<class C> friend class detail::clear_on_destructor_base;
    public:
    typedef typename Config::value_traits                             value_traits;
    /// @cond
@@ -131,7 +115,7 @@ class splaytree_impl
    typedef splaytree_algorithms<node_traits>                         node_algorithms;
 
    static const bool constant_time_size = Config::constant_time_size;
-   static const bool stateful_value_traits = detail::store_cont_ptr_on_it<splaytree_impl>::value;
+   static const bool stateful_value_traits = detail::is_stateful_value_traits<real_value_traits>::value;
 
    /// @cond
    private:
@@ -219,9 +203,11 @@ class splaytree_impl
    //!   
    //! <b>Complexity</b>: Constant.
    //! 
-   //! <b>Throws</b>: Nothing unless the copy constructor of the value_compare object throws. 
-   splaytree_impl( value_compare cmp = value_compare()
-              , const value_traits &v_traits = value_traits()) 
+   //! <b>Throws</b>: If value_traits::node_traits::node
+   //!   constructor throws (this does not happen with predefined Boost.Intrusive hooks)
+   //!   or the copy constructorof the value_compare object throws. Basic guarantee.
+   splaytree_impl( const value_compare &cmp     = value_compare()
+                 , const value_traits &v_traits = value_traits()) 
       :  data_(cmp, v_traits)
    {  
       node_algorithms::init_header(&priv_header());  
@@ -237,11 +223,13 @@ class splaytree_impl
    //! <b>Complexity</b>: Linear in N if [b, e) is already sorted using
    //!   comp and otherwise amortized N * log N, where N is the distance between first and last.
    //! 
-   //! <b>Throws</b>: Nothing unless the copy constructor of the value_compare object throws.
+   //! <b>Throws</b>: If value_traits::node_traits::node
+   //!   constructor throws (this does not happen with predefined Boost.Intrusive hooks)
+   //!   or the copy constructor/operator() of the value_compare object throws. Basic guarantee.
    template<class Iterator>
-   splaytree_impl( bool unique, Iterator b, Iterator e
-              , value_compare cmp = value_compare()
-              , const value_traits &v_traits = value_traits())
+   splaytree_impl ( bool unique, Iterator b, Iterator e
+                  , const value_compare &cmp     = value_compare()
+                  , const value_traits &v_traits = value_traits())
       : data_(cmp, v_traits)
    {
       node_algorithms::init_header(&priv_header());
@@ -261,7 +249,7 @@ class splaytree_impl
    //! 
    //! <b>Throws</b>: Nothing.
    ~splaytree_impl() 
-   {  this->clear(); }
+   {}
 
    //! <b>Effects</b>: Returns an iterator pointing to the beginning of the tree.
    //! 
@@ -417,7 +405,7 @@ class splaytree_impl
    value_compare value_comp() const
    {  return priv_comp();   }
 
-   //! <b>Effects</b>: Returns true is the container is empty.
+   //! <b>Effects</b>: Returns true if the container is empty.
    //! 
    //! <b>Complexity</b>: Constant.
    //! 
@@ -427,7 +415,8 @@ class splaytree_impl
 
    //! <b>Effects</b>: Returns the number of elements stored in the tree.
    //! 
-   //! <b>Complexity</b>: Linear to elements contained in *this.
+   //! <b>Complexity</b>: Linear to elements contained in *this
+   //!   if constant-time size option is disabled. Constant time otherwise.
    //! 
    //! <b>Throws</b>: Nothing.
    size_type size() const
@@ -440,7 +429,7 @@ class splaytree_impl
       }
    }
 
-   //! <b>Effects</b>: Swaps the contents of two multisets.
+   //! <b>Effects</b>: Swaps the contents of two splaytrees.
    //! 
    //! <b>Complexity</b>: Constant.
    //! 
@@ -466,7 +455,7 @@ class splaytree_impl
    //! <b>Complexity</b>: Average complexity for insert element is amortized
    //!   logarithmic.
    //! 
-   //! <b>Throws</b>: Nothing.
+   //! <b>Throws</b>: If the internal value_compare ordering function throws. Strong guarantee.
    //! 
    //! <b>Note</b>: Does not affect the validity of iterators and references.
    //!   No copy-constructors are called.
@@ -492,7 +481,7 @@ class splaytree_impl
    //! <b>Complexity</b>: Amortized logarithmic in general, but it is amortized
    //!   constant time if t is inserted immediately before hint.
    //! 
-   //! <b>Throws</b>: Nothing.
+   //! <b>Throws</b>: If the internal value_compare ordering function throws. Strong guarantee.
    //! 
    //! <b>Note</b>: Does not affect the validity of iterators and references.
    //!   No copy-constructors are called.
@@ -546,7 +535,7 @@ class splaytree_impl
    std::pair<iterator, bool> insert_unique(reference value)
    {
       insert_commit_data commit_data;
-      std::pair<iterator, bool> ret = insert_unique_check(value, commit_data);
+      std::pair<iterator, bool> ret = insert_unique_check(value, priv_comp(), commit_data);
       if(!ret.second)
          return ret;
       return std::pair<iterator, bool> (insert_unique_commit(value, commit_data), true);
@@ -569,7 +558,7 @@ class splaytree_impl
    iterator insert_unique(const_iterator hint, reference value)
    {
       insert_commit_data commit_data;
-      std::pair<iterator, bool> ret = insert_unique_check(hint, value, commit_data);
+      std::pair<iterator, bool> ret = insert_unique_check(hint, value, priv_comp(), commit_data);
       if(!ret.second)
          return ret.first;
       return insert_unique_commit(value, commit_data);
@@ -595,10 +584,36 @@ class splaytree_impl
          this->insert_unique(*b);
    }
 
-   std::pair<iterator, bool> insert_unique_check
-      (const_reference value, insert_commit_data &commit_data)
-   {  return insert_unique_check(value, priv_comp(), commit_data); }
-
+   //! <b>Requires</b>: key_value_comp must be a comparison function that induces 
+   //!   the same strict weak ordering as value_compare. The difference is that
+   //!   key_value_comp compares an arbitrary key with the contained values.
+   //! 
+   //! <b>Effects</b>: Checks if a value can be inserted in the container, using
+   //!   a user provided key instead of the value itself.
+   //!
+   //! <b>Returns</b>: If there is an equivalent value
+   //!   returns a pair containing an iterator to the already present value
+   //!   and false. If the value can be inserted returns true in the returned
+   //!   pair boolean and fills "commit_data" that is meant to be used with
+   //!   the "insert_commit" function.
+   //! 
+   //! <b>Complexity</b>: Average complexity is at most logarithmic.
+   //!
+   //! <b>Throws</b>: If the key_value_comp ordering function throws. Strong guarantee.
+   //! 
+   //! <b>Notes</b>: This function is used to improve performance when constructing
+   //!   a value_type is expensive: if there is an equivalent value
+   //!   the constructed object must be discarded. Many times, the part of the
+   //!   node that is used to impose the order is much cheaper to construct
+   //!   than the value_type and this function offers the possibility to use that 
+   //!   part to check if the insertion will be successful.
+   //!
+   //!   If the check is successful, the user can construct the value_type and use
+   //!   "insert_commit" to insert the object in constant-time. This gives a total
+   //!   logarithmic complexity to the insertion: check(O(log(N)) + commit(O(1)).
+   //!
+   //!   "commit_data" remains valid for a subsequent "insert_commit" only if no more
+   //!   objects are inserted or erased from the container.
    template<class KeyType, class KeyValueCompare>
    std::pair<iterator, bool> insert_unique_check
       (const KeyType &key, KeyValueCompare key_value_comp, insert_commit_data &commit_data)
@@ -611,10 +626,38 @@ class splaytree_impl
       return std::pair<iterator, bool>(iterator(ret.first, this), ret.second);
    }
 
-   std::pair<iterator, bool> insert_unique_check
-      (const_iterator hint, const_reference value, insert_commit_data &commit_data)
-   {  return insert_unique_check(hint, value, priv_comp(), commit_data); }
-
+   //! <b>Requires</b>: key_value_comp must be a comparison function that induces 
+   //!   the same strict weak ordering as value_compare. The difference is that
+   //!   key_value_comp compares an arbitrary key with the contained values.
+   //! 
+   //! <b>Effects</b>: Checks if a value can be inserted in the container, using
+   //!   a user provided key instead of the value itself, using "hint" 
+   //!   as a hint to where it will be inserted.
+   //!
+   //! <b>Returns</b>: If there is an equivalent value
+   //!   returns a pair containing an iterator to the already present value
+   //!   and false. If the value can be inserted returns true in the returned
+   //!   pair boolean and fills "commit_data" that is meant to be used with
+   //!   the "insert_commit" function.
+   //! 
+   //! <b>Complexity</b>: Logarithmic in general, but it's amortized
+   //!   constant time if t is inserted immediately before hint.
+   //!
+   //! <b>Throws</b>: If the key_value_comp ordering function throws. Strong guarantee.
+   //! 
+   //! <b>Notes</b>: This function is used to improve performance when constructing
+   //!   a value_type is expensive: if there is an equivalent value
+   //!   the constructed object must be discarded. Many times, the part of the
+   //!   constructing that is used to impose the order is much cheaper to construct
+   //!   than the value_type and this function offers the possibility to use that key 
+   //!   to check if the insertion will be successful.
+   //!
+   //!   If the check is successful, the user can construct the value_type and use
+   //!   "insert_commit" to insert the object in constant-time. This can give a total
+   //!   constant-time complexity to the insertion: check(O(1)) + commit(O(1)).
+   //!   
+   //!   "commit_data" remains valid for a subsequent "insert_commit" only if no more
+   //!   objects are inserted or erased from the container.
    template<class KeyType, class KeyValueCompare>
    std::pair<iterator, bool> insert_unique_check
       (const_iterator hint, const KeyType &key
@@ -628,6 +671,23 @@ class splaytree_impl
       return std::pair<iterator, bool>(iterator(ret.first, this), ret.second);
    }
 
+   //! <b>Requires</b>: value must be an lvalue of type value_type. commit_data
+   //!   must have been obtained from a previous call to "insert_check".
+   //!   No objects should have been inserted or erased from the container between
+   //!   the "insert_check" that filled "commit_data" and the call to "insert_commit".
+   //! 
+   //! <b>Effects</b>: Inserts the value in the avl_set using the information obtained
+   //!   from the "commit_data" that a previous "insert_check" filled.
+   //!
+   //! <b>Returns</b>: An iterator to the newly inserted object.
+   //! 
+   //! <b>Complexity</b>: Constant time.
+   //!
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Notes</b>: This function has only sense if a "insert_check" has been
+   //!   previously executed to fill "commit_data". No value should be inserted or
+   //!   erased between the "insert_check" and "insert_commit" calls.
    iterator insert_unique_commit(reference value, const insert_commit_data &commit_data)
    {
       node_ptr to_insert(get_real_value_traits().to_node_ptr(value));
@@ -647,9 +707,9 @@ class splaytree_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
-   iterator erase(iterator i)
+   iterator erase(const_iterator i)
    {
-      iterator ret(i);
+      const_iterator ret(i);
       ++ret;
       node_ptr to_erase(i.pointed_node());
       if(safemode_or_autounlink)
@@ -658,7 +718,7 @@ class splaytree_impl
       this->priv_size_traits().decrement();
       if(safemode_or_autounlink)
          node_algorithms::init(to_erase);
-      return ret;
+      return ret.unconst();
    }
 
    //! <b>Effects</b>: Erases the range pointed to by b end e. 
@@ -670,7 +730,7 @@ class splaytree_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
-   iterator erase(iterator b, iterator e)
+   iterator erase(const_iterator b, const_iterator e)
    {  size_type n;   return private_erase(b, e, n);   }
 
    //! <b>Effects</b>: Erases all the elements with the given value.
@@ -698,7 +758,11 @@ class splaytree_impl
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
    template<class KeyType, class KeyValueCompare>
-   size_type erase(const KeyType& key, KeyValueCompare comp)
+   size_type erase(const KeyType& key, KeyValueCompare comp
+                  /// @cond
+                  , typename detail::enable_if_c<!detail::is_convertible<KeyValueCompare, const_iterator>::value >::type * = 0
+                  /// @endcond
+                  )
    {
       std::pair<iterator,iterator> p = this->equal_range(key, comp);
       size_type n;
@@ -718,13 +782,19 @@ class splaytree_impl
    //! <b>Note</b>: Invalidates the iterators 
    //!    to the erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator i, Disposer disposer)
+   iterator erase_and_dispose(const_iterator i, Disposer disposer)
    {
       node_ptr to_erase(i.pointed_node());
       iterator ret(this->erase(i));
       disposer(get_real_value_traits().to_value_ptr(to_erase));
       return ret;
    }
+
+   #if !defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
+   template<class Disposer>
+   iterator erase_and_dispose(iterator i, Disposer disposer)
+   {  return this->erase_and_dispose(const_iterator(i), disposer);   }
+   #endif
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
    //!
@@ -739,7 +809,7 @@ class splaytree_impl
    //! <b>Note</b>: Invalidates the iterators
    //!    to the erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator b, iterator e, Disposer disposer)
+   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer)
    {  size_type n;   return private_erase(b, e, n, disposer);   }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -779,7 +849,11 @@ class splaytree_impl
    //! <b>Note</b>: Invalidates the iterators
    //!    to the erased elements.
    template<class KeyType, class KeyValueCompare, class Disposer>
-   size_type erase_and_dispose(const KeyType& key, KeyValueCompare comp, Disposer disposer)
+   size_type erase_and_dispose(const KeyType& key, KeyValueCompare comp, Disposer disposer
+                  /// @cond
+                  , typename detail::enable_if_c<!detail::is_convertible<KeyValueCompare, const_iterator>::value >::type * = 0
+                  /// @endcond
+                  )
    {
       std::pair<iterator,iterator> p = this->equal_range(key, comp);
       size_type n;
@@ -821,7 +895,6 @@ class splaytree_impl
    {
       node_algorithms::clear_and_dispose(node_ptr(&priv_header())
          , detail::node_disposer<Disposer, splaytree_impl>(disposer, this));
-      node_algorithms::init_header(&priv_header());
       this->priv_size_traits().set_size(0);
    }
 
@@ -1072,29 +1145,34 @@ class splaytree_impl
    }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
+   //!   Cloner should yield to nodes equivalent to the original nodes.
    //!
    //! <b>Effects</b>: Erases all the elements from *this
    //!   calling Disposer::operator()(pointer), clones all the 
    //!   elements from src calling Cloner::operator()(const_reference )
-   //!   and inserts them on *this.
+   //!   and inserts them on *this. Copies the predicate from the source container.
    //!
    //!   If cloner throws, all cloned elements are unlinked and disposed
    //!   calling Disposer::operator()(pointer).
    //!   
    //! <b>Complexity</b>: Linear to erased plus inserted elements.
    //! 
-   //! <b>Throws</b>: If cloner throws.
+   //! <b>Throws</b>: If cloner throws or predicate copy assignment throws. Basic guarantee.
    template <class Cloner, class Disposer>
    void clone_from(const splaytree_impl &src, Cloner cloner, Disposer disposer)
    {
       this->clear_and_dispose(disposer);
       if(!src.empty()){
+         detail::exception_disposer<splaytree_impl, Disposer>
+            rollback(*this, disposer);
          node_algorithms::clone
             (const_node_ptr(&src.priv_header())
             ,node_ptr(&this->priv_header())
             ,detail::node_cloner<Cloner, splaytree_impl>(cloner, this)
             ,detail::node_disposer<Disposer, splaytree_impl>(disposer, this));
          this->priv_size_traits().set_size(src.priv_size_traits().get_size());
+         this->priv_comp() = src.priv_comp();
+         rollback.release();
       }
    }
 
@@ -1308,18 +1386,18 @@ class splaytree_impl
    /// @cond
    private:
    template<class Disposer>
-   iterator private_erase(iterator b, iterator e, size_type &n, Disposer disposer)
+   iterator private_erase(const_iterator b, const_iterator e, size_type &n, Disposer disposer)
    {
       for(n = 0; b != e; ++n)
         this->erase_and_dispose(b++, disposer);
-      return b;
+      return b.unconst();
    }
 
-   iterator private_erase(iterator b, iterator e, size_type &n)
+   iterator private_erase(const_iterator b, const_iterator e, size_type &n)
    {
       for(n = 0; b != e; ++n)
         this->erase(b++);
-      return b;
+      return b.unconst();
    }
    /// @endcond
 
@@ -1339,26 +1417,26 @@ class splaytree_impl
    {  return priv_container_from_end_iterator(it.end_iterator_from_it());   }
 };
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator<
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splaytree_impl<T, Options...> &x, const splaytree_impl<T, Options...> &y)
 #else
 (const splaytree_impl<Config> &x, const splaytree_impl<Config> &y)
 #endif
 {  return std::lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 bool operator==
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splaytree_impl<T, Options...> &x, const splaytree_impl<T, Options...> &y)
 #else
 (const splaytree_impl<Config> &x, const splaytree_impl<Config> &y)
@@ -1390,65 +1468,65 @@ bool operator==
    }
 }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator!=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splaytree_impl<T, Options...> &x, const splaytree_impl<T, Options...> &y)
 #else
 (const splaytree_impl<Config> &x, const splaytree_impl<Config> &y)
 #endif
 {  return !(x == y); }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splaytree_impl<T, Options...> &x, const splaytree_impl<T, Options...> &y)
 #else
 (const splaytree_impl<Config> &x, const splaytree_impl<Config> &y)
 #endif
 {  return y < x;  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator<=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splaytree_impl<T, Options...> &x, const splaytree_impl<T, Options...> &y)
 #else
 (const splaytree_impl<Config> &x, const splaytree_impl<Config> &y)
 #endif
 {  return !(y < x);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const splaytree_impl<T, Options...> &x, const splaytree_impl<T, Options...> &y)
 #else
 (const splaytree_impl<Config> &x, const splaytree_impl<Config> &y)
 #endif
 {  return !(x < y);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline void swap
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (splaytree_impl<T, Options...> &x, splaytree_impl<T, Options...> &y)
 #else
 (splaytree_impl<Config> &x, splaytree_impl<Config> &y)
@@ -1456,15 +1534,23 @@ inline void swap
 {  x.swap(y);  }
 
 /// @cond
+
+#if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class O1 = none, class O2 = none
-                , class O3 = none, class O4 = none
-                , class O5 = none, class O6 = none
-                , class O7 = none
-                >
+                , class O3 = none, class O4 = none>
+#else
+template<class T, class ...Options>
+#endif
 struct make_splaytree_opt
 {
    typedef typename pack_options
-      < splay_set_defaults<T>, O1, O2, O3, O4>::type packed_options;
+      < splay_set_defaults<T>, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+      >::type packed_options;
    typedef typename detail::get_value_traits
       <T, typename packed_options::value_traits>::type value_traits;
 
@@ -1479,7 +1565,7 @@ struct make_splaytree_opt
 
 //! Helper metafunction to define a \c splaytree that yields to the same type when the
 //! same options (either explicitly or implicitly) are used.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED) || defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class ...Options>
 #else
 template<class T, class O1 = none, class O2 = none
@@ -1489,19 +1575,41 @@ struct make_splaytree
 {
    /// @cond
    typedef splaytree_impl
-      < typename make_splaytree_opt<T, O1, O2, O3, O4>::type
+      < typename make_splaytree_opt<T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+         >::type
       > implementation_defined;
    /// @endcond
    typedef implementation_defined type;
 };
 
 #ifndef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class O1, class O2, class O3, class O4>
+#else
+template<class T, class ...Options>
+#endif
 class splaytree
-   :  public make_splaytree<T, O1, O2, O3, O4>::type
+   :  public make_splaytree<T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+      >::type
 {
    typedef typename make_splaytree
-      <T, O1, O2, O3, O4>::type   Base;
+      <T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+      >::type   Base;
 
    public:
    typedef typename Base::value_compare      value_compare;
@@ -1514,14 +1622,14 @@ class splaytree
    BOOST_STATIC_ASSERT((detail::is_same<typename real_value_traits::value_type, T>::value));
 
    splaytree( const value_compare &cmp = value_compare()
-         , const value_traits &v_traits = value_traits())
+            , const value_traits &v_traits = value_traits())
       :  Base(cmp, v_traits)
    {}
 
    template<class Iterator>
    splaytree( bool unique, Iterator b, Iterator e
-         , const value_compare &cmp = value_compare()
-         , const value_traits &v_traits = value_traits())
+            , const value_compare &cmp = value_compare()
+            , const value_traits &v_traits = value_traits())
       :  Base(unique, b, e, cmp, v_traits)
    {}
 

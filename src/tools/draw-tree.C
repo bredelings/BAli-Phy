@@ -2507,6 +2507,7 @@ struct my_square_distance_attractive_force {
 
 graph_layout fruchterman_reingold_layout(graph_layout GL, double width, double height)
 {
+  /*
   const MC_tree& MC = GL.MC;
   Graph g(MC.n_nodes());
 
@@ -2529,7 +2530,8 @@ graph_layout fruchterman_reingold_layout(graph_layout GL, double width, double h
   //------------ Initial random layout ------------//
   minstd_rand gen;
   gen.seed(rng::get_random_seed());
-  random_graph_layout(g, position, -width/2, width/2, -height/2, height/2, gen);
+  rectangle_topology<> R(-width/2, width/2, -height/2, height/2);
+  random_graph_layout(g, position, R);
   cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
 
   //------------ Final force-directed layout ------------//
@@ -2541,16 +2543,18 @@ graph_layout fruchterman_reingold_layout(graph_layout GL, double width, double h
   PositionVec Displacements(num_vertices(g));
   PositionMap displacements(Displacements.begin(), get(vertex_index, g));
 
-  fruchterman_reingold_force_directed_layout(g, position, width, height,
+  fruchterman_reingold_force_directed_layout(g, 
+					     position, 
+					     R,
 					     my_square_distance_attractive_force(),
 					     square_distance_repulsive_force(),
-					     make_grid_force_pairs(width,height,position,g),
+					     make_grid_force_pairs(R,position,g),
 					     linear_cooling<double>(1000),
 					     displacements
 					     );
 
   cerr<<"x = "<<GL.xmin()<<" - "<<GL.xmax()<<"      y = "<<GL.ymin()<<" - "<<GL.ymax()<<endl;
-
+  */
   return GL;
 }
 
@@ -3529,7 +3533,6 @@ int main(int argc,char* argv[])
       draw(filename,output,gp);
       exit(0);
     }
-    
     
     
     // lay out as a graph

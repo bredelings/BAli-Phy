@@ -11,9 +11,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source$
-// $Date: 2005-12-05 12:59:21 -0500 (Mon, 05 Dec 2005) $
-// $Revision: 31919 $
+// $Id: at_impl.hpp 49267 2008-10-11 06:19:02Z agurtovoy $
+// $Date: 2008-10-11 02:19:02 -0400 (Sat, 11 Oct 2008) $
+// $Revision: 49267 $
 
 #include <boost/mpl/at_fwd.hpp>
 #include <boost/mpl/long.hpp>

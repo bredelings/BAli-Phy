@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -15,7 +15,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/detail/workaround.hpp>
 
-#if !defined(BOOST_WINDOWS) || defined(BOOST_DISABLE_WIN32)
+#if !defined(BOOST_INTERPROCESS_WINDOWS)
 #error "This header can only be used in Windows operating systems"
 #endif
 
@@ -51,12 +51,10 @@ class windows_shared_memory
 {
    /// @cond
    //Non-copyable and non-assignable
-   windows_shared_memory(const windows_shared_memory &);
-   windows_shared_memory &operator=(const windows_shared_memory &);
+   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(windows_shared_memory)
    /// @endcond
 
    public:
-
    //!Default constructor.
    //!Represents an empty windows_shared_memory.
    windows_shared_memory();
@@ -81,34 +79,18 @@ class windows_shared_memory
    //!Moves the ownership of "moved"'s shared memory object to *this. 
    //!After the call, "moved" does not represent any shared memory object. 
    //!Does not throw
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   windows_shared_memory
-      (detail::moved_object<windows_shared_memory> moved)
-   {  this->swap(moved.get());   }
-   #else
-   windows_shared_memory(windows_shared_memory &&moved)
+   windows_shared_memory(BOOST_INTERPROCESS_RV_REF(windows_shared_memory) moved)
    {  this->swap(moved);   }
-   #endif
 
    //!Moves the ownership of "moved"'s shared memory to *this.
    //!After the call, "moved" does not represent any shared memory. 
    //!Does not throw
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   windows_shared_memory &operator=
-      (detail::moved_object<windows_shared_memory> moved)
+   windows_shared_memory &operator=(BOOST_INTERPROCESS_RV_REF(windows_shared_memory) moved)
    {  
-      windows_shared_memory tmp(moved);
+      windows_shared_memory tmp(boost::interprocess::move(moved));
       this->swap(tmp);
       return *this;  
    }
-   #else
-   windows_shared_memory &operator=(windows_shared_memory &&moved)
-   {  
-      windows_shared_memory tmp(detail::move_impl(moved));
-      this->swap(tmp);
-      return *this;  
-   }
-   #endif
 
    //!Swaps to shared_memory_objects. Does not throw
    void swap(windows_shared_memory &other);
@@ -236,14 +218,6 @@ inline void windows_shared_memory::priv_close()
       m_handle = 0;
    }
 }
-
-//!Trait class to detect if a type is
-//!movable
-template<>
-struct is_movable<windows_shared_memory>
-{
-   static const bool value = true;
-};
 
 ///@endcond
 

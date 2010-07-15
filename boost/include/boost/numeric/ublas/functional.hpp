@@ -1,6 +1,6 @@
 //
-//  Copyright (c) 2000-2002
-//  Joerg Walter, Mathias Koch
+//  Copyright (c) 2000-2009
+//  Joerg Walter, Mathias Koch, Gunter Winkler
 //
 //  Distributed under the Boost Software License, Version 1.0. (See
 //  accompanying file LICENSE_1_0.txt or copy at
@@ -446,7 +446,7 @@ namespace boost { namespace numeric { namespace ublas {
             size_type size (e ().size ());
             for (size_type i = 0; i < size; ++ i) {
                 real_type u (type_traits<value_type>::norm_2 (e () (i)));
-		if ( real_type () /* zero */ == u ) continue;
+                if ( real_type () /* zero */ == u ) continue;
                 if (scale < u) {
                     real_type v (scale / u);
                     sum_squares = sum_squares * v * v + real_type (1);
@@ -1343,6 +1343,9 @@ namespace boost { namespace numeric { namespace ublas {
         }
     };
 
+    // forward declaration
+    template <class Z, class D> struct basic_column_major;
+
     // This functor defines storage layout and it's properties
     // matrix (i,j) -> storage [i * size_i + j]
     template <class Z, class D>
@@ -1350,6 +1353,7 @@ namespace boost { namespace numeric { namespace ublas {
         typedef Z size_type;
         typedef D difference_type;
         typedef row_major_tag orientation_category;
+        typedef basic_column_major<Z,D> transposed_layout;
 
         static
         BOOST_UBLAS_INLINE
@@ -1527,6 +1531,7 @@ namespace boost { namespace numeric { namespace ublas {
         typedef Z size_type;
         typedef D difference_type;
         typedef column_major_tag orientation_category;
+        typedef basic_row_major<Z,D> transposed_layout;
 
         static
         BOOST_UBLAS_INLINE
@@ -1722,6 +1727,7 @@ namespace boost { namespace numeric { namespace ublas {
         bool other (size_type /* i */, size_type /* j */) {
             return true;
         }
+        // FIXME: this should not be used at all
         static
         BOOST_UBLAS_INLINE
         size_type restrict1 (size_type i, size_type j) {
@@ -1744,9 +1750,88 @@ namespace boost { namespace numeric { namespace ublas {
         }
     };
 
+    namespace detail {
+        template < class L >
+        struct transposed_structure {
+            typedef typename L::size_type size_type;
+
+            template<class LAYOUT>
+            static
+            BOOST_UBLAS_INLINE
+            size_type packed_size (LAYOUT l, size_type size_i, size_type size_j) {
+                return L::packed_size(l, size_j, size_i);
+            }
+
+            static
+            BOOST_UBLAS_INLINE
+            bool zero (size_type i, size_type j) {
+                return L::zero(j, i);
+            }
+            static
+            BOOST_UBLAS_INLINE
+            bool one (size_type i, size_type j) {
+                return L::one(j, i);
+            }
+            static
+            BOOST_UBLAS_INLINE
+            bool other (size_type i, size_type j) {
+                return L::other(j, i);
+            }
+            template<class LAYOUT>
+            static
+            BOOST_UBLAS_INLINE
+            size_type element (LAYOUT l, size_type i, size_type size_i, size_type j, size_type size_j) {
+                return L::element(typename LAYOUT::transposed_layout(), j, size_j, i, size_i);
+            }
+
+            static
+            BOOST_UBLAS_INLINE
+            size_type restrict1 (size_type i, size_type j, size_type size1, size_type size2) {
+                return L::restrict2(j, i, size2, size1);
+            }
+            static
+            BOOST_UBLAS_INLINE
+            size_type restrict2 (size_type i, size_type j, size_type size1, size_type size2) {
+                return L::restrict1(j, i, size2, size1);
+            }
+            static
+            BOOST_UBLAS_INLINE
+            size_type mutable_restrict1 (size_type i, size_type j, size_type size1, size_type size2) {
+                return L::mutable_restrict2(j, i, size2, size1);
+            }
+            static
+            BOOST_UBLAS_INLINE
+            size_type mutable_restrict2 (size_type i, size_type j, size_type size1, size_type size2) {
+                return L::mutable_restrict1(j, i, size2, size1);
+            }
+
+            static
+            BOOST_UBLAS_INLINE
+            size_type global_restrict1 (size_type index1, size_type size1, size_type index2, size_type size2) {
+                return L::global_restrict2(index2, size2, index1, size1);
+            }
+            static
+            BOOST_UBLAS_INLINE
+            size_type global_restrict2 (size_type index1, size_type size1, size_type index2, size_type size2) {
+                return L::global_restrict1(index2, size2, index1, size1);
+            }
+            static
+            BOOST_UBLAS_INLINE
+            size_type global_mutable_restrict1 (size_type index1, size_type size1, size_type index2, size_type size2) {
+                return L::global_mutable_restrict2(index2, size2, index1, size1);
+            }
+            static
+            BOOST_UBLAS_INLINE
+            size_type global_mutable_restrict2 (size_type index1, size_type size1, size_type index2, size_type size2) {
+                return L::global_mutable_restrict1(index2, size2, index1, size1);
+            }
+        };
+    }
+
     template <class Z>
     struct basic_lower {
         typedef Z size_type;
+        typedef lower_tag triangular_type;
 
         template<class L>
         static
@@ -1777,79 +1862,55 @@ namespace boost { namespace numeric { namespace ublas {
             return L::lower_element (i, size_i, j, size_j);
         }
 
+        // return nearest valid index in column j
         static
         BOOST_UBLAS_INLINE
-        size_type restrict1 (size_type i, size_type j) {
-            return (std::max) (i, j);
+        size_type restrict1 (size_type i, size_type j, size_type size1, size_type size2) {
+            return (std::max)(j, (std::min) (size1, i));
         }
+        // return nearest valid index in row i
         static
         BOOST_UBLAS_INLINE
-        size_type restrict2 (size_type i, size_type j) {
-            return (std::min) (i + 1, j);
+        size_type restrict2 (size_type i, size_type j, size_type /* size1 */, size_type /* size2 */) {
+            return (std::max)(size_type(0), (std::min) (i+1, j));
         }
+        // return nearest valid mutable index in column j
         static
         BOOST_UBLAS_INLINE
-        size_type mutable_restrict1 (size_type i, size_type j) {
-            return (std::max) (i, j);
+        size_type mutable_restrict1 (size_type i, size_type j, size_type size1, size_type size2) {
+            return (std::max)(j, (std::min) (size1, i));
         }
+        // return nearest valid mutable index in row i
         static
         BOOST_UBLAS_INLINE
-        size_type mutable_restrict2 (size_type i, size_type j) {
-            return (std::min) (i + 1, j);
-        }
-    };
-    template <class Z>
-    struct basic_upper {
-        typedef Z size_type;
-
-        template<class L>
-        static
-        BOOST_UBLAS_INLINE
-        size_type packed_size (L, size_type size_i, size_type size_j) {
-            return L::triangular_size (size_i, size_j);
+        size_type mutable_restrict2 (size_type i, size_type j, size_type /* size1 */, size_type /* size2 */) {
+            return (std::max)(size_type(0), (std::min) (i+1, j));
         }
 
+        // return an index between the first and (1+last) filled row
         static
         BOOST_UBLAS_INLINE
-        bool zero (size_type i, size_type j) {
-            return j < i;
+        size_type global_restrict1 (size_type index1, size_type size1, size_type index2, size_type size2) {
+            return (std::max)(size_type(0), (std::min)(size1, index1) );
         }
+        // return an index between the first and (1+last) filled column
         static
         BOOST_UBLAS_INLINE
-        bool one (size_type /* i */, size_type /* j */) {
-            return false;
-        }
-        static
-        BOOST_UBLAS_INLINE
-        bool other (size_type i, size_type j) {
-            return j >= i;
-        }
-        template<class L>
-        static
-        BOOST_UBLAS_INLINE
-        size_type element (L, size_type i, size_type size_i, size_type j, size_type size_j) {
-            return L::upper_element (i, size_i, j, size_j);
+        size_type global_restrict2 (size_type index1, size_type size1, size_type index2, size_type size2) {
+            return (std::max)(size_type(0), (std::min)(size2, index2) );
         }
 
+        // return an index between the first and (1+last) filled mutable row
         static
         BOOST_UBLAS_INLINE
-        size_type restrict1 (size_type i, size_type j) {
-            return (std::min) (i, j + 1);
+        size_type global_mutable_restrict1 (size_type index1, size_type size1, size_type index2, size_type size2) {
+            return (std::max)(size_type(0), (std::min)(size1, index1) );
         }
+        // return an index between the first and (1+last) filled mutable column
         static
         BOOST_UBLAS_INLINE
-        size_type restrict2 (size_type i, size_type j) {
-            return (std::max) (i, j);
-        }
-        static
-        BOOST_UBLAS_INLINE
-        size_type mutable_restrict1 (size_type i, size_type j) {
-            return (std::min) (i, j + 1);
-        }
-        static
-        BOOST_UBLAS_INLINE
-        size_type mutable_restrict2 (size_type i, size_type j) {
-            return (std::max) (i, j);
+        size_type global_mutable_restrict2 (size_type index1, size_type size1, size_type index2, size_type size2) {
+            return (std::max)(size_type(0), (std::min)(size2, index2) );
         }
     };
 
@@ -1857,6 +1918,7 @@ namespace boost { namespace numeric { namespace ublas {
     template <class Z>
     struct basic_unit_lower : public basic_lower<Z> {
         typedef Z size_type;
+        typedef unit_lower_tag triangular_type;
 
         template<class L>
         static
@@ -1888,65 +1950,35 @@ namespace boost { namespace numeric { namespace ublas {
 
         static
         BOOST_UBLAS_INLINE
-        size_type mutable_restrict1 (size_type i, size_type j) {
-            return (std::max) ( (std::max<size_type>)(1, i), j);
+        size_type mutable_restrict1 (size_type i, size_type j, size_type size1, size_type size2) {
+            return (std::max)(j+1, (std::min) (size1, i));
         }
         static
         BOOST_UBLAS_INLINE
-        size_type mutable_restrict2 (size_type i, size_type j) {
-            return (std::min) ( (std::max<size_type>)(1, i), j);
+        size_type mutable_restrict2 (size_type i, size_type j, size_type size1, size_type size2) {
+            return (std::max)(size_type(0), (std::min) (i, j));
+        }
+
+        // return an index between the first and (1+last) filled mutable row
+        static
+        BOOST_UBLAS_INLINE
+        size_type global_mutable_restrict1 (size_type index1, size_type size1, size_type index2, size_type size2) {
+            return (std::max)(size_type(1), (std::min)(size1, index1) );
+        }
+        // return an index between the first and (1+last) filled mutable column
+        static
+        BOOST_UBLAS_INLINE
+        size_type global_mutable_restrict2 (size_type index1, size_type size1, size_type index2, size_type size2) {
+            BOOST_UBLAS_CHECK( size2 >= 1 , external_logic() );
+            return (std::max)(size_type(0), (std::min)(size2-1, index2) );
         }
     };
 
-    // the last row only contains a single 1. Thus it is not stored.
+    // the first row only contains no element. Thus it is not stored.
     template <class Z>
-    struct basic_unit_upper : public basic_upper<Z> {
+    struct basic_strict_lower : public basic_unit_lower<Z> {
         typedef Z size_type;
-
-        template<class L>
-        static
-        BOOST_UBLAS_INLINE
-        size_type packed_size (L, size_type size_i, size_type size_j) {
-            // Zero size strict triangles are bad at this point
-            BOOST_UBLAS_CHECK (size_i != 0 && size_j != 0, bad_index ());
-            return L::triangular_size (size_i - 1, size_j - 1);
-        }
-
-        static
-        BOOST_UBLAS_INLINE
-        bool one (size_type i, size_type j) {
-            return j == i;
-        }
-        static
-        BOOST_UBLAS_INLINE
-        bool other (size_type i, size_type j) {
-            return j > i;
-        }
-        template<class L>
-        static
-        BOOST_UBLAS_INLINE
-        size_type element (L, size_type i, size_type size_i, size_type j, size_type size_j) {
-            // Zero size strict triangles are bad at this point
-            BOOST_UBLAS_CHECK (size_i != 0 && size_j != 0 && j != 0, bad_index ());
-            return L::upper_element (i, size_i - 1, j-1, size_j - 1);
-        }
-
-        static
-        BOOST_UBLAS_INLINE
-        size_type mutable_restrict1 (size_type i, size_type j) {
-            return (std::min) (i, (std::max<size_type>)(1, j));
-        }
-        static
-        BOOST_UBLAS_INLINE
-        size_type mutable_restrict2 (size_type i, size_type j) {
-            return (std::max) (i, (std::max<size_type>)(1, j));
-        }
-    };
-
-    // the first row only contains a single 1. Thus it is not stored.
-    template <class Z>
-    struct basic_strict_lower : public basic_lower<Z> {
-        typedef Z size_type;
+        typedef strict_lower_tag triangular_type;
 
         template<class L>
         static
@@ -1983,85 +2015,48 @@ namespace boost { namespace numeric { namespace ublas {
 
         static
         BOOST_UBLAS_INLINE
-        size_type restrict1 (size_type i, size_type j) {
-            return (std::max) ( (std::max<size_type>)(1, i), j);
+        size_type restrict1 (size_type i, size_type j, size_type size1, size_type size2) {
+            return mutable_restrict1(i, j, size1, size2);
         }
         static
         BOOST_UBLAS_INLINE
-        size_type restrict2 (size_type i, size_type j) {
-            return (std::min) ( (std::max<size_type>)(1, i), j);
+        size_type restrict2 (size_type i, size_type j, size_type size1, size_type size2) {
+            return mutable_restrict2(i, j, size1, size2);
         }
+
+        // return an index between the first and (1+last) filled row
         static
         BOOST_UBLAS_INLINE
-        size_type mutable_restrict1 (size_type i, size_type j) {
-            return (std::max) ( (std::max<size_type>)(1, i), j);
+        size_type global_restrict1 (size_type index1, size_type size1, size_type index2, size_type size2) {
+            return global_mutable_restrict1(index1, size1, index2, size2);
         }
+        // return an index between the first and (1+last) filled column
         static
         BOOST_UBLAS_INLINE
-        size_type mutable_restrict2 (size_type i, size_type j) {
-            return (std::min) ( (std::max<size_type>)(1, i), j);
+        size_type global_restrict2 (size_type index1, size_type size1, size_type index2, size_type size2) {
+            return global_mutable_restrict2(index1, size1, index2, size2);
         }
     };
 
-    // the last row only contains a single 1. Thus it is not stored.
+
     template <class Z>
-    struct basic_strict_upper : public basic_upper<Z> {
-        typedef Z size_type;
-
-        template<class L>
-        static
-        BOOST_UBLAS_INLINE
-        size_type packed_size (L, size_type size_i, size_type size_j) {
-            // Zero size strict triangles are bad at this point
-            BOOST_UBLAS_CHECK (size_i != 0 && size_j != 0, bad_index ());
-            return L::triangular_size (size_i - 1, size_j - 1);
-        }
-
-        static
-        BOOST_UBLAS_INLINE
-        bool zero (size_type i, size_type j) {
-            return j <= i;
-        }
-        static
-        BOOST_UBLAS_INLINE
-        bool one (size_type /*i*/, size_type /*j*/) {
-            return false;
-        }
-        static
-        BOOST_UBLAS_INLINE
-        bool other (size_type i, size_type j) {
-            return j > i;
-        }
-        template<class L>
-        static
-        BOOST_UBLAS_INLINE
-        size_type element (L, size_type i, size_type size_i, size_type j, size_type size_j) {
-            // Zero size strict triangles are bad at this point
-            BOOST_UBLAS_CHECK (size_i != 0 && size_j != 0 && j != 0, bad_index ());
-            return L::upper_element (i, size_i - 1, j-1, size_j - 1);
-        }
-
-        static
-        BOOST_UBLAS_INLINE
-        size_type restrict1 (size_type i, size_type j) {
-            return (std::min) (i, (std::max<size_type>)(1, j));
-        }
-        static
-        BOOST_UBLAS_INLINE
-        size_type restrict2 (size_type i, size_type j) {
-            return (std::max) (i, (std::max<size_type>)(1, j));
-        }
-        static
-        BOOST_UBLAS_INLINE
-        size_type mutable_restrict1 (size_type i, size_type j) {
-            return (std::min) (i, (std::max<size_type>)(1, j));
-        }
-        static
-        BOOST_UBLAS_INLINE
-        size_type mutable_restrict2 (size_type i, size_type j) {
-            return (std::max) (i, (std::max<size_type>)(1, j));
-        }
+    struct basic_upper : public detail::transposed_structure<basic_lower<Z> >
+    { 
+        typedef upper_tag triangular_type;
     };
+
+    template <class Z>
+    struct basic_unit_upper : public detail::transposed_structure<basic_unit_lower<Z> >
+    { 
+        typedef unit_upper_tag triangular_type;
+    };
+
+    template <class Z>
+    struct basic_strict_upper : public detail::transposed_structure<basic_strict_lower<Z> >
+    { 
+        typedef strict_upper_tag triangular_type;
+    };
+
 
 }}}
 

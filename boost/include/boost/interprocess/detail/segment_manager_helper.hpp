@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -18,6 +18,8 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
+#include <boost/pointer_to_other.hpp>
+
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
@@ -27,6 +29,8 @@
 #include <string>    //char_traits
 #include <new>       //std::nothrow
 #include <utility>   //std::pair
+#include <cassert>   //assert
+#include <functional>   //unary_function
 #ifndef BOOST_NO_EXCEPTIONS
 #include <exception>
 #endif
@@ -75,7 +79,7 @@ struct block_header
 
    block_header(std::size_t value_bytes
                ,std::size_t value_alignment
-               ,std::size_t allocation_type
+               ,std::size_t alloc_type
                ,std::size_t sizeof_char
                ,std::size_t num_char
                )
@@ -83,7 +87,7 @@ struct block_header
       ,  m_num_char(num_char)
       ,  m_value_alignment(value_alignment)
       ,  m_alloc_type_sizeof_char
-         ( ((unsigned char)allocation_type << 5u) | 
+         ( ((unsigned char)alloc_type << 5u) | 
            ((unsigned char)sizeof_char & 0x1F)   )
    {};
 
@@ -94,7 +98,7 @@ struct block_header
 
    std::size_t total_size() const
    {
-      if(allocation_type() != anonymous_type){
+      if(alloc_type() != anonymous_type){
          return name_offset() + (m_num_char+1)*sizeof_char();
       }
       else{
@@ -114,7 +118,7 @@ struct block_header
            + total_size();
    }
 
-   std::size_t allocation_type() const
+   std::size_t alloc_type() const
    {  return (m_alloc_type_sizeof_char >> 5u)&(unsigned char)0x7;  }
 
    std::size_t sizeof_char() const
@@ -123,8 +127,8 @@ struct block_header
    template<class CharType>
    CharType *name() const
    {  
-      return reinterpret_cast<CharType*>
-      (detail::char_ptr_cast(this) + name_offset());
+      return const_cast<CharType*>(reinterpret_cast<const CharType*>
+         (reinterpret_cast<const char*>(this) + name_offset()));
    }
 
    std::size_t name_length() const
@@ -137,7 +141,7 @@ struct block_header
 
    void *value() const
    {
-      return detail::char_ptr_cast(this) + value_offset();
+      return const_cast<char*>((reinterpret_cast<const char*>(this) + value_offset()));
    }
 
    std::size_t value_offset() const
@@ -169,8 +173,9 @@ struct block_header
    static block_header *block_header_from_value(const void *value, std::size_t sz, std::size_t algn)
    {  
       block_header * hdr = 
-         reinterpret_cast<block_header*>(detail::char_ptr_cast(value) - 
-         get_rounded_size(sizeof(block_header), algn));
+         const_cast<block_header*>
+            (reinterpret_cast<const block_header*>(reinterpret_cast<const char*>(value) - 
+               get_rounded_size(sizeof(block_header), algn)));
       (void)sz;
       //Some sanity checks
       assert(hdr->m_value_alignment == algn);
@@ -182,8 +187,8 @@ struct block_header
    static block_header *from_first_header(Header *header)
    {  
       block_header * hdr = 
-         reinterpret_cast<block_header*>(detail::char_ptr_cast(header) + 
-         get_rounded_size(sizeof(Header), detail::alignment_of<block_header>::value));
+         reinterpret_cast<block_header*>(reinterpret_cast<char*>(header) + 
+            get_rounded_size(sizeof(Header), detail::alignment_of<block_header>::value));
       //Some sanity checks
       return hdr;
    }
@@ -192,7 +197,7 @@ struct block_header
    static Header *to_first_header(block_header *bheader)
    {  
       Header * hdr = 
-         reinterpret_cast<Header*>(detail::char_ptr_cast(bheader) - 
+         reinterpret_cast<Header*>(reinterpret_cast<char*>(bheader) - 
          get_rounded_size(sizeof(Header), detail::alignment_of<block_header>::value));
       //Some sanity checks
       return hdr;
@@ -251,6 +256,7 @@ struct char_if_void<void>
 typedef instance_t<anonymous_type>  anonymous_instance_t;
 typedef instance_t<unique_type>     unique_instance_t;
 
+
 template<class Hook, class CharType>
 struct intrusive_value_type_impl
    :  public Hook
@@ -269,8 +275,9 @@ struct intrusive_value_type_impl
 
    block_header *get_block_header() const
    {
-      return (block_header *)(detail::char_ptr_cast(this) +
-         get_rounded_size(sizeof(*this), BlockHdrAlignment));
+      return const_cast<block_header*>
+         (reinterpret_cast<const block_header *>(reinterpret_cast<const char*>(this) +
+            get_rounded_size(sizeof(*this), BlockHdrAlignment)));
    }
 
    bool operator <(const intrusive_value_type_impl<Hook, CharType> & other) const
@@ -281,7 +288,7 @@ struct intrusive_value_type_impl
 
    static intrusive_value_type_impl *get_intrusive_value_type(block_header *hdr)
    {
-      return (intrusive_value_type_impl *)(detail::char_ptr_cast(hdr) -
+      return reinterpret_cast<intrusive_value_type_impl *>(reinterpret_cast<char*>(hdr) -
          get_rounded_size(sizeof(intrusive_value_type_impl), BlockHdrAlignment));
    }
 
@@ -304,11 +311,11 @@ class char_ptr_holder
    {}
 
    char_ptr_holder(const detail::anonymous_instance_t *) 
-      : m_name((CharType*)0)
+      : m_name(static_cast<CharType*>(0))
    {}
 
    char_ptr_holder(const detail::unique_instance_t *) 
-      : m_name((CharType*)-1)
+      : m_name(reinterpret_cast<CharType*>(-1))
    {}
 
    operator const CharType *()
@@ -323,7 +330,7 @@ class char_ptr_holder
 template<class CharT, class VoidPointer>
 struct index_key
 {
-   typedef typename detail::
+   typedef typename boost::
       pointer_to_other<VoidPointer, const CharT>::type   const_char_ptr_t;
    typedef CharT                                         char_type;
 
@@ -380,7 +387,7 @@ struct index_data
    index_data(void *ptr) : m_ptr(ptr){}
 
    void *value() const
-   {  return (void*)detail::get_pointer(m_ptr);  }
+   {  return static_cast<void*>(detail::get_pointer(m_ptr));  }
 };
 
 template<class MemoryAlgorithm>
@@ -468,6 +475,26 @@ struct segment_manager_iterator_transform
 };
 
 }  //namespace detail {
+
+//These pointers are the ones the user will use to 
+//indicate previous allocation types
+static const detail::anonymous_instance_t   * anonymous_instance = 0;
+static const detail::unique_instance_t      * unique_instance = 0;
+
+namespace detail_really_deep_namespace {
+
+//Otherwise, gcc issues a warning of previously defined
+//anonymous_instance and unique_instance
+struct dummy
+{
+   dummy()
+   {
+      (void)anonymous_instance;
+      (void)unique_instance;
+   }
+};
+
+}  //detail_really_deep_namespace
 
 }} //namespace boost { namespace interprocess
 

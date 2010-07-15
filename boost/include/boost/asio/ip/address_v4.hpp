@@ -2,7 +2,7 @@
 // address_v4.hpp
 // ~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2010 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -18,7 +18,13 @@
 #include <boost/asio/detail/push_options.hpp>
 
 #include <boost/asio/detail/push_options.hpp>
+#include <boost/config.hpp>
+#if !defined(BOOST_NO_IOSTREAM)
+# include <iosfwd>
+#endif // !defined(BOOST_NO_IOSTREAM)
+#include <climits>
 #include <string>
+#include <stdexcept>
 #include <boost/array.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/asio/detail/pop_options.hpp>
@@ -56,6 +62,15 @@ public:
   /// Construct an address from raw bytes.
   explicit address_v4(const bytes_type& bytes)
   {
+#if UCHAR_MAX > 0xFF
+    if (bytes[0] > 0xFF || bytes[1] > 0xFF
+        || bytes[2] > 0xFF || bytes[3] > 0xFF)
+    {
+      std::out_of_range ex("address_v4 from bytes_type");
+      boost::throw_exception(ex);
+    }
+#endif // UCHAR_MAX > 0xFF
+
     using namespace std; // For memcpy.
     memcpy(&addr_.s_addr, bytes.elems, 4);
   }
@@ -63,6 +78,14 @@ public:
   /// Construct an address from a unsigned long in host byte order.
   explicit address_v4(unsigned long addr)
   {
+#if ULONG_MAX > 0xFFFFFFFF
+    if (addr > 0xFFFFFFFF)
+    {
+      std::out_of_range ex("address_v4 from unsigned long");
+      boost::throw_exception(ex);
+    }
+#endif // ULONG_MAX > 0xFFFFFFFF
+
     addr_.s_addr = boost::asio::detail::socket_ops::host_to_network_long(addr);
   }
 
@@ -79,7 +102,7 @@ public:
     return *this;
   }
 
-  /// Get the address in bytes.
+  /// Get the address in bytes, in network byte order.
   bytes_type to_bytes() const
   {
     using namespace std; // For memcpy.
@@ -250,6 +273,8 @@ private:
   boost::asio::detail::in4_addr_type addr_;
 };
 
+#if !defined(BOOST_NO_IOSTREAM)
+
 /// Output an address as a string.
 /**
  * Used to output a human-readable string for a specified address.
@@ -280,6 +305,8 @@ std::basic_ostream<Elem, Traits>& operator<<(
       os << os.widen(*i);
   return os;
 }
+
+#endif // !defined(BOOST_NO_IOSTREAM)
 
 } // namespace ip
 } // namespace asio

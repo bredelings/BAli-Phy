@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -61,17 +61,17 @@ class offset_ptr
    __declspec(noinline) //this workaround is needed for msvc-8.0 and msvc-9.0
    #endif
    void set_offset(const volatile void *ptr)
-   {  set_offset((const void*)ptr); }
+   {  set_offset(const_cast<const void*>(ptr)); }
 
    void set_offset(const void *ptr)
    {
-      const char *p = static_cast<const char*>(const_cast<const void*>(ptr));
+      const char *p = static_cast<const char*>(ptr);
       //offset == 1 && ptr != 0 is not legal for this pointer
       if(!ptr){
          m_offset = 1;
       }
       else{
-         m_offset = p - detail::char_ptr_cast(this);
+         m_offset = p - reinterpret_cast<const char*>(this);
          BOOST_ASSERT(m_offset != 1);
       }
    }
@@ -80,7 +80,7 @@ class offset_ptr
    __declspec(noinline) //this workaround is needed for msvc-8.0 and msvc-9.0
    #endif
    void* get_pointer() const
-   {  return (m_offset == 1) ? 0 : (detail::char_ptr_cast(this) + m_offset); }
+   {  return (m_offset == 1) ? 0 : (const_cast<char*>(reinterpret_cast<const char*>(this)) + m_offset); }
 
    void inc_offset(std::ptrdiff_t bytes)
    {  m_offset += bytes;   }
@@ -149,7 +149,7 @@ class offset_ptr
    //!Obtains raw pointer from offset.
    //!Never throws.
    pointer get()const
-   {  return (pointer)this->get_pointer();   }
+   {  return static_cast<pointer>(this->get_pointer());   }
 
    std::ptrdiff_t get_offset()
    {  return m_offset;  }
@@ -162,7 +162,11 @@ class offset_ptr
    //!Dereferencing operator, if it is a null offset_ptr behavior 
    //!   is undefined. Never throws.
    reference operator* () const           
-   {  return *(this->get());   }
+   {
+      pointer p = this->get();
+      reference r = *p;
+      return r;
+   }
 
    //!Indexing operator.
    //!Never throws.
@@ -425,13 +429,13 @@ struct pointer_plus_bits<boost::interprocess::offset_ptr<T>, NumBits>
    static const std::size_t Mask = ((std::size_t(1) << NumBits)-1)<<1u; 
 
    static pointer get_pointer(const pointer &n)
-   {  return (T*)(std::size_t(n.get()) & ~std::size_t(Mask));  }
+   {  return reinterpret_cast<T*>(std::size_t(n.get()) & ~std::size_t(Mask));  }
 
    static void set_pointer(pointer &n, pointer p)
    {
       std::size_t pint = std::size_t(p.get());
       assert(0 == (std::size_t(pint) & Mask));
-      n = (T*)(pint | (std::size_t(n.get()) & std::size_t(Mask)));
+      n = reinterpret_cast<T*>(pint | (std::size_t(n.get()) & std::size_t(Mask)));
    }
 
    static std::size_t get_bits(const pointer &n)
@@ -440,7 +444,7 @@ struct pointer_plus_bits<boost::interprocess::offset_ptr<T>, NumBits>
    static void set_bits(pointer &n, std::size_t b)
    {
       assert(b < (std::size_t(1) << NumBits));
-      n = (T*)(std::size_t(get_pointer(n).get()) | (b << 1u));
+      n = reinterpret_cast<T*>(std::size_t(get_pointer(n).get()) | (b << 1u));
    }
 };
 

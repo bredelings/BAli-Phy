@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -21,7 +21,7 @@
 #include <boost/detail/no_exceptions_support.hpp>
 #include <boost/interprocess/detail/type_traits.hpp>
 
-#include <boost/interprocess/detail/iterators.hpp>
+#include <boost/interprocess/detail/transform_iterator.hpp>
 
 #include <boost/interprocess/detail/mpl.hpp>
 #include <boost/interprocess/detail/segment_manager_helper.hpp>
@@ -72,8 +72,7 @@ class segment_manager_base
    /// @cond
    
    //Experimental. Don't use
-   typedef typename MemoryAlgorithm::multiallocation_iterator  multiallocation_iterator;
-   typedef typename MemoryAlgorithm::multiallocation_chain     multiallocation_chain;
+   typedef typename MemoryAlgorithm::multiallocation_chain    multiallocation_chain;
 
    /// @endcond
 
@@ -123,38 +122,40 @@ class segment_manager_base
    //Experimental. Dont' use.
    //!Allocates n_elements of
    //!elem_size bytes. Throws bad_alloc on failure.
-   multiallocation_iterator allocate_many(std::size_t elem_bytes, std::size_t num_elements)
+   multiallocation_chain allocate_many(std::size_t elem_bytes, std::size_t num_elements)
    {
-      multiallocation_iterator ret = MemoryAlgorithm::allocate_many(elem_bytes, num_elements);
-      if(!ret) throw bad_alloc();
-      return ret;
+      multiallocation_chain mem(MemoryAlgorithm::allocate_many(elem_bytes, num_elements));
+      if(mem.empty()) throw bad_alloc();
+      return boost::interprocess::move(mem);
    }
 
    //!Allocates n_elements, each one of
    //!element_lenghts[i]*sizeof_element bytes. Throws bad_alloc on failure.
-   multiallocation_iterator allocate_many
+   multiallocation_chain allocate_many
       (const std::size_t *element_lenghts, std::size_t n_elements, std::size_t sizeof_element = 1)
    {
-      multiallocation_iterator ret = MemoryAlgorithm::allocate_many(element_lenghts, n_elements, sizeof_element);
-      if(!ret) throw bad_alloc();
-      return ret;
+      multiallocation_chain mem(MemoryAlgorithm::allocate_many(element_lenghts, n_elements, sizeof_element));
+      if(mem.empty()) throw bad_alloc();
+      return boost::interprocess::move(mem);
    }
 
    //!Allocates n_elements of
    //!elem_size bytes. Returns a default constructed iterator on failure.
-   multiallocation_iterator allocate_many(std::size_t elem_bytes, std::size_t num_elements, std::nothrow_t)
+   multiallocation_chain allocate_many
+      (std::size_t elem_bytes, std::size_t num_elements, std::nothrow_t)
    {  return MemoryAlgorithm::allocate_many(elem_bytes, num_elements); }
 
    //!Allocates n_elements, each one of
    //!element_lenghts[i]*sizeof_element bytes.
    //!Returns a default constructed iterator on failure.
-   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::size_t sizeof_element, std::nothrow_t)
+   multiallocation_chain allocate_many
+      (const std::size_t *elem_sizes, std::size_t n_elements, std::size_t sizeof_element, std::nothrow_t)
    {  return MemoryAlgorithm::allocate_many(elem_sizes, n_elements, sizeof_element); }
 
    //!Deallocates elements pointed by the
    //!multiallocation iterator range.
-   void deallocate_many(multiallocation_iterator it)
-   {  MemoryAlgorithm::deallocate_many(it); }
+   void deallocate_many(multiallocation_chain chain)
+   {  MemoryAlgorithm::deallocate_many(boost::interprocess::move(chain)); }
 
    /// @endcond
 
@@ -185,27 +186,27 @@ class segment_manager_base
 
    template<class T>
    std::pair<T *, bool>
-      allocation_command  (allocation_type command,   std::size_t limit_size,
+      allocation_command  (boost::interprocess::allocation_type command,   std::size_t limit_size,
                            std::size_t preferred_size,std::size_t &received_size,
                            T *reuse_ptr = 0)
    {
       std::pair<T *, bool> ret = MemoryAlgorithm::allocation_command
-         ( command | nothrow_allocation, limit_size, preferred_size, received_size
+         ( command | boost::interprocess::nothrow_allocation, limit_size, preferred_size, received_size
          , reuse_ptr);
-      if(!(command & nothrow_allocation) && !ret.first)
+      if(!(command & boost::interprocess::nothrow_allocation) && !ret.first)
          throw bad_alloc();
       return ret;
    }
 
    std::pair<void *, bool>
-      raw_allocation_command  (allocation_type command,   std::size_t limit_objects,
+      raw_allocation_command  (boost::interprocess::allocation_type command,   std::size_t limit_objects,
                            std::size_t preferred_objects,std::size_t &received_objects,
                            void *reuse_ptr = 0, std::size_t sizeof_object = 1)
    {
       std::pair<void *, bool> ret = MemoryAlgorithm::raw_allocation_command
-         ( command | nothrow_allocation, limit_objects, preferred_objects, received_objects
+         ( command | boost::interprocess::nothrow_allocation, limit_objects, preferred_objects, received_objects
          , reuse_ptr, sizeof_object);
-      if(!(command & nothrow_allocation) && !ret.first)
+      if(!(command & boost::interprocess::nothrow_allocation) && !ret.first)
          throw bad_alloc();
       return ret;
    }
@@ -297,7 +298,7 @@ class segment_manager_base
       //scoped_lock<rmutex> guard(m_header);
       //-------------------------------
 
-      if(ctrl_data->allocation_type() != anonymous_type){
+      if(ctrl_data->alloc_type() != anonymous_type){
          //This is not an anonymous object, the pointer is wrong!
          assert(0);
       }
@@ -305,16 +306,11 @@ class segment_manager_base
       //Call destructors and free memory
       //Build scoped ptr to avoid leaks with destructor exception
       std::size_t destroyed = 0;
-      table.destroy_n((void*)object, ctrl_data->m_value_bytes/table.size, destroyed);
+      table.destroy_n(const_cast<void*>(object), ctrl_data->m_value_bytes/table.size, destroyed);
       this->deallocate(ctrl_data);
    }
    /// @endcond
 };
-
-//These pointers are the ones the user will use to 
-//indicate previous allocation types
-static const detail::anonymous_instance_t   * anonymous_instance = 0;
-static const detail::unique_instance_t      * unique_instance = 0;
 
 //!This object is placed in the beginning of memory segment and
 //!implements the allocation (named or anonymous) of portions
@@ -351,7 +347,6 @@ class segment_manager
    typedef MemoryAlgorithm                memory_algorithm;
    typedef typename Base::void_pointer    void_pointer;
    typedef CharType                       char_type;
-   typedef typename Base::multiallocation_iterator   multiallocation_iterator;
 
    typedef segment_manager_base<MemoryAlgorithm>   segment_manager_base_type;
 
@@ -410,40 +405,38 @@ class segment_manager
    segment_manager(std::size_t size)
       :  Base(size, priv_get_reserved_bytes())
       ,  m_header(static_cast<Base*>(get_this_pointer()))
-   {  (void) anonymous_instance;   (void) unique_instance;   }
+   {
+      (void) anonymous_instance;   (void) unique_instance;
+      assert(static_cast<const void*>(this) == static_cast<const void*>(static_cast<Base*>(this)));
+   }
 
    //!Tries to find a previous named allocation. Returns the address
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
    std::pair<T*, std::size_t> find  (const CharType* name)
-   {  
-      //The name can't be null, no anonymous object can be found by name
-      assert(name != 0);
-      detail::placement_destroy<T> table;
-      std::size_t size;
-      void *ret;
-
-      if(name == reinterpret_cast<const CharType*>(-1)){
-         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, size, is_intrusive_t(), true);
-      }
-      else{
-         ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, size, is_intrusive_t(), true);
-      }
-      return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
-   }
+   {  return this->priv_find_impl<T>(name, true);  }
 
    //!Tries to find a previous unique allocation. Returns the address
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
    std::pair<T*, std::size_t> find (const detail::unique_instance_t* name)
-   {
-      detail::placement_destroy<T> table;
-      std::size_t size;
-      void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t(), true); 
-      return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
-   }
+   {  return this->priv_find_impl<T>(name, true);  }
+
+   //!Tries to find a previous named allocation. Returns the address
+   //!and the object count. On failure the first member of the
+   //!returned pair is 0. This search is not mutex-protected!
+   template <class T>
+   std::pair<T*, std::size_t> find_no_lock  (const CharType* name)
+   {  return this->priv_find_impl<T>(name, false);  }
+
+   //!Tries to find a previous unique allocation. Returns the address
+   //!and the object count. On failure the first member of the
+   //!returned pair is 0. This search is not mutex-protected!
+   template <class T>
+   std::pair<T*, std::size_t> find_no_lock (const detail::unique_instance_t* name)
+   {  return this->priv_find_impl<T>(name, false);  }
 
    //!Returns throwing "construct" proxy
    //!object
@@ -674,6 +667,7 @@ class segment_manager
    typename deleter<T>::type
       get_deleter()
    {   return typename deleter<T>::type(this); }
+
    /// @cond
 
    //!Generic named/anonymous new function. Offers all the possibilities, 
@@ -690,11 +684,12 @@ class segment_manager
          (priv_generic_construct(name, num, try2find, dothrow, table));
    }
 
+   private:
    //!Tries to find a previous named allocation. Returns the address
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
-   std::pair<T*, std::size_t> find_no_lock  (const CharType* name)
+   std::pair<T*, std::size_t> priv_find_impl (const CharType* name, bool lock)
    {  
       //The name can't be null, no anonymous object can be found by name
       assert(name != 0);
@@ -703,10 +698,10 @@ class segment_manager
       void *ret;
 
       if(name == reinterpret_cast<const CharType*>(-1)){
-         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, size, is_intrusive_t(), false);
+         ret = priv_generic_find<char> (typeid(T).name(), m_header.m_unique_index, table, size, is_intrusive_t(), lock);
       }
       else{
-         ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, size, is_intrusive_t(), false);
+         ret = priv_generic_find<CharType> (name, m_header.m_named_index, table, size, is_intrusive_t(), lock);
       }
       return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
    }
@@ -715,15 +710,14 @@ class segment_manager
    //!and the object count. On failure the first member of the
    //!returned pair is 0.
    template <class T>
-   std::pair<T*, std::size_t> find_no_lock (const detail::unique_instance_t* name)
+   std::pair<T*, std::size_t> priv_find__impl (const detail::unique_instance_t* name, bool lock)
    {
       detail::placement_destroy<T> table;
       std::size_t size;
-      void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t(), false); 
+      void *ret = priv_generic_find<char>(name, m_header.m_unique_index, table, size, is_intrusive_t(), lock); 
       return std::pair<T*, std::size_t>(static_cast<T*>(ret), size);
    }
 
-   private:
    void *priv_generic_construct(const CharType *name, 
                          std::size_t num, 
                          bool try2find, 
@@ -755,7 +749,7 @@ class segment_manager
    void priv_destroy_ptr(const void *ptr, detail::in_place_interface &dtor)
    {
       block_header_t *ctrl_data = block_header_t::block_header_from_value(ptr, dtor.size, dtor.alignment);
-      switch(ctrl_data->allocation_type()){
+      switch(ctrl_data->alloc_type()){
          case anonymous_type:
             this->prot_anonymous_destroy(ptr, dtor);
          break;
@@ -781,7 +775,7 @@ class segment_manager
    //!functions. Does not throw
    static const CharType *priv_get_instance_name(block_header_t *ctrl_data)
    {
-      allocation_type type = ctrl_data->allocation_type();
+      boost::interprocess::allocation_type type = ctrl_data->alloc_type();
       if(type != named_type){
          assert((type == anonymous_type && ctrl_data->m_num_char == 0) ||
                 (type == unique_type    && ctrl_data->m_num_char != 0) );
@@ -807,16 +801,15 @@ class segment_manager
    static instance_type priv_get_instance_type(block_header_t *ctrl_data)
    {
       //Get header
-      assert((instance_type)ctrl_data->allocation_type() < max_allocation_type);
-      return (instance_type)ctrl_data->allocation_type();
+      assert((instance_type)ctrl_data->alloc_type() < max_allocation_type);
+      return (instance_type)ctrl_data->alloc_type();
    }
 
    static std::size_t priv_get_reserved_bytes()
    {
       //Get the number of bytes until the end of (*this)
       //beginning in the end of the Base base.
-      return   (detail::char_ptr_cast((segment_manager*)0) + sizeof(segment_manager))   -
-               (detail::char_ptr_cast(static_cast<Base*>((segment_manager*)0)) + sizeof(Base));
+      return sizeof(segment_manager) - sizeof(Base);
    }
 
    template <class CharT>
@@ -996,7 +989,7 @@ class segment_manager
       //If not found, return false
       if(it == index.end()){
          //This name is not present in the index, wrong pointer or name!
-         assert(0);
+         //assert(0);
          return false;
       }
       return this->priv_generic_named_destroy_impl<CharT>(it, index, table);
@@ -1014,7 +1007,7 @@ class segment_manager
       //Get allocation parameters
       block_header_t *ctrl_data = reinterpret_cast<block_header_t*>
                                  (detail::get_pointer(it->second.m_ptr));
-      char *stored_name       = detail::char_ptr_cast(it->first.name());
+      char *stored_name       = static_cast<char*>(static_cast<void*>(const_cast<CharT*>(it->first.name())));
       (void)stored_name;
 
       //Check if the distance between the name pointer and the memory pointer 
@@ -1024,7 +1017,7 @@ class segment_manager
 
       //Sanity check
       assert((ctrl_data->m_value_bytes % table.size) == 0);
-      assert((void*)stored_name == ctrl_data->template name<CharT>());
+      assert(static_cast<void*>(stored_name) == static_cast<void*>(ctrl_data->template name<CharT>()));
       assert(sizeof(CharT) == ctrl_data->sizeof_char());
 
       //Erase node from index
@@ -1113,7 +1106,12 @@ class segment_manager
          if(try2find){
             return it->get_block_header()->value();
          }
-         return 0;
+         if(dothrow){
+            throw interprocess_exception(already_exists_error);
+         }
+         else{
+            return 0;
+         }
       }
 
       //Allocates buffer for name + data, this can throw (it hurts)
@@ -1153,22 +1151,23 @@ class segment_manager
       }
       BOOST_CATCH_END
 
-      //Initialize the node value_eraser to erase inserted node
-      //if something goes wrong
-      value_eraser<index_type> v_eraser(index, it);
-      
       //Avoid constructions if constructor is trivial
       //Build scoped ptr to avoid leaks with constructor exception
       detail::mem_algo_deallocator<segment_manager_base_type> mem
          (buffer_ptr, *static_cast<segment_manager_base_type*>(this));
 
+      //Initialize the node value_eraser to erase inserted node
+      //if something goes wrong. This will be executed *before*
+      //the memory allocation as the intrusive value is built in that
+      //memory
+      value_eraser<index_type> v_eraser(index, it);
+      
       //Construct array, this can throw
       detail::array_construct(ptr, num, table);
 
-      //All constructors successful, we don't want to release memory
-      mem.release();
-      //Release node v_eraser since construction was successful
+      //Release rollbacks since construction was successful
       v_eraser.release();
+      mem.release();
       return ptr;
    }
 
@@ -1216,8 +1215,7 @@ class segment_manager
       //the key (which is a smart pointer) to an equivalent one
       index_ib insert_ret;
       BOOST_TRY{
-         insert_ret = index.insert(value_type(key_type (name, namelen), 
-                                                      mapped_type(0)));
+         insert_ret = index.insert(value_type(key_type (name, namelen), mapped_type(0)));
       }
       //Ignore exceptions
       BOOST_CATCH(...){
@@ -1309,18 +1307,13 @@ class segment_manager
 
    typedef typename MemoryAlgorithm::mutex_family::recursive_mutex_type   rmutex;
 
-   #ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   scoped_lock<rmutex>
-   #else
-   detail::move_return<scoped_lock<rmutex> >
-   #endif
-      priv_get_lock(bool use_lock)
+   scoped_lock<rmutex> priv_get_lock(bool use_lock)
    {
       scoped_lock<rmutex> local(m_header, defer_lock);
       if(use_lock){
          local.lock();
       }
-      return local;
+      return scoped_lock<rmutex>(boost::interprocess::move(local));
    }
 
    //!This struct includes needed data and derives from
@@ -1336,6 +1329,7 @@ class segment_manager
          ,  m_unique_index(restricted_segment_mngr)
       {}
    }  m_header;
+
    /// @endcond
 };
 

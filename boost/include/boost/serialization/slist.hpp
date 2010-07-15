@@ -62,14 +62,14 @@ inline void load(
         return;
     unsigned int v;
     if(3 < ar.get_library_version()){
-        ar >> make_nvp("item_version", v);
+        ar >> boost::serialization::make_nvp("item_version", v);
     }
     boost::serialization::detail::stack_construct<Archive, U> u(ar, v);
     ar >> boost::serialization::make_nvp("item", u.reference());
     t.push_front(u.reference());
     BOOST_DEDUCED_TYPENAME BOOST_STD_EXTENSION_NAMESPACE::slist<U, Allocator>::iterator last;
     last = t.begin();
-    std::size_t c = count;
+    collection_size_type c = count;
     while(--c > 0){
         boost::serialization::detail::stack_construct<Archive, U> 
             u(ar, file_version);

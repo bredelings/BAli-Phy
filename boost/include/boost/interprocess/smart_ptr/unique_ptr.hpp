@@ -88,6 +88,7 @@ class unique_ptr
    /// @endcond
 
    public:
+
    typedef T element_type;
    typedef D deleter_type;
    typedef typename detail::pointer_type<T, D>::type pointer;
@@ -142,7 +143,7 @@ class unique_ptr
    //!
    //!After the construction, u no longer owns a pointer.
    //![ Note: The deleter constructor can be implemented with
-   //!std::detail::forward_impl<D>. -end note ]
+   //!   boost::interprocess::forward<D>. -end note ]
    //!
    //!Postconditions: get() == value u.get() had before the construction.
    //!get_deleter() returns a reference to the internally stored deleter which
@@ -150,15 +151,9 @@ class unique_ptr
    //!deleter() and u.get_deleter() both reference the same lvalue deleter.
    //!
    //!Throws: nothing.
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   unique_ptr(detail::moved_object<unique_ptr> u)
-      : ptr_(u.get().release(), detail::move_impl(u.get().get_deleter()))
+   unique_ptr(BOOST_INTERPROCESS_RV_REF(unique_ptr) u)
+      : ptr_(u.release(), boost::interprocess::forward<D>(u.get_deleter()))
    {}
-   #else
-   unique_ptr(unique_ptr &&u)
-      : ptr_(u.release(), detail::forward_impl<D>(u.get_deleter()))
-   {}
-   #endif
 
    //!Requires: If D is not a reference type, construction of the deleter
    //!D from an rvalue of type E must be well formed
@@ -179,9 +174,8 @@ class unique_ptr
    //!was constructed from u.get_deleter().
    //!
    //!Throws: nothing.
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    template <class U, class E>
-   unique_ptr(detail::moved_object<unique_ptr<U, E> > u,
+   unique_ptr(BOOST_INTERPROCESS_RV_REF_2_TEMPL_ARGS(unique_ptr, U, E) u,
       typename detail::enable_if_c<
             detail::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
             detail::is_convertible<E, D>::value &&
@@ -192,24 +186,8 @@ class unique_ptr
             ,
             nat
             >::type = nat())
-      : ptr_(const_cast<unique_ptr<U,E>&>(u.get()).release(), detail::move_impl(u.get().get_deleter()))
+      : ptr_(const_cast<unique_ptr<U,E>&>(u).release(), boost::interprocess::move<D>(u.get_deleter()))
    {}
-   #else
-   template <class U, class E>
-   unique_ptr(unique_ptr<U, E> && u,
-      typename detail::enable_if_c<
-            detail::is_convertible<typename unique_ptr<U, E>::pointer, pointer>::value &&
-            detail::is_convertible<E, D>::value &&
-            (
-               !detail::is_reference<D>::value ||
-               detail::is_same<D, E>::value
-            )
-            ,
-            nat
-            >::type = nat())
-      : ptr_(const_cast<unique_ptr<U,E>&>(u).release(), detail::forward_impl<D>(u.get_deleter()))
-   {}
-   #endif
 
    //!Effects: If get() == 0 there are no effects. Otherwise get_deleter()(get()).
    //!
@@ -230,21 +208,12 @@ class unique_ptr
    //!Returns: *this.
    //!
    //!Throws: nothing.
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   unique_ptr& operator=(detail::moved_object<unique_ptr> u)
-   {
-      reset(u.get().release());
-      ptr_.second() = detail::move_impl(u.get().get_deleter());
-      return *this;
-   }
-   #else
-   unique_ptr& operator=(unique_ptr && u)
+   unique_ptr& operator=(BOOST_INTERPROCESS_RV_REF(unique_ptr) u)
    {
       reset(u.release());
-      ptr_.second() = detail::move_impl(u.get_deleter());
+      ptr_.second() = boost::interprocess::move(u.get_deleter());
       return *this;
    }
-   #endif
 
    //!Requires: Assignment of the deleter D from an rvalue D must not
    //!throw an exception. U* must be implicitly convertible to T*.
@@ -261,21 +230,12 @@ class unique_ptr
    //!
    //!Throws: nothing.
    template <class U, class E>
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   unique_ptr& operator=(detail::moved_object<unique_ptr<U, E> > mu)
-   {
-      reset(mu.get().release());
-      ptr_.second() = detail::move_impl(mu.get().get_deleter());
-      return *this;
-   }
-   #else
-   unique_ptr& operator=(unique_ptr<U, E> && u)
+   unique_ptr& operator=(BOOST_INTERPROCESS_RV_REF_2_TEMPL_ARGS(unique_ptr, U, E) u)
    {
       reset(u.release());
-      ptr_.second() = detail::move_impl(u.get_deleter());
+      ptr_.second() = boost::interprocess::move(u.get_deleter());
       return *this;
    }
-   #endif
 
    //!Assigns from the literal 0 or NULL.
    //!
@@ -359,27 +319,16 @@ class unique_ptr
    //!Effects: The stored pointers of this and u are exchanged.
    //!   The stored deleters are swapped (unqualified).
    //!Throws: nothing.
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
    void swap(unique_ptr& u)
    {  ptr_.swap(u.ptr_);   }
-
-   void swap(detail::moved_object<unique_ptr> mu)
-   {  ptr_.swap(mu.get().ptr_);  }
-   #else
-   void swap(unique_ptr&&u)
-   {  ptr_.swap(u.ptr_);   }
-   #endif
 
    /// @cond
    private:
    boost::compressed_pair<pointer, D> ptr_;
-
-   //This private constructor avoids moving from non-const lvalues
-   unique_ptr(const unique_ptr&);
+   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(unique_ptr)
    template <class U, class E> unique_ptr(unique_ptr<U, E>&);
    template <class U> unique_ptr(U&, typename detail::unique_ptr_error<U>::type = 0);
    
-   unique_ptr& operator=(unique_ptr&);
    template <class U, class E> unique_ptr& operator=(unique_ptr<U, E>&);
    template <class U> typename detail::unique_ptr_error<U>::type operator=(U&);
    /// @endcond
@@ -570,16 +519,6 @@ template <class T1, class D1, class T2, class D2> inline
 bool operator>=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y)
 {  return x.get() >= y.get(); }
 
-/// @cond
-
-//!This class has move constructor
-template <class T, class D>
-struct is_movable<unique_ptr<T, D> >
-{
-   enum {   value = true };
-};
-/// @endcond
-
 
 //!Returns the type of a unique pointer
 //!of type T with boost::interprocess::deleter deleter
@@ -593,24 +532,15 @@ struct managed_unique_ptr
    > type;
 };
 
-//!Returns an instance of the a unique pointer constructed
+//!Returns an instance of a unique pointer constructed
 //!with boost::interproces::deleter from a pointer
 //!of type T that has been allocated in the passed managed segment
 template<class T, class ManagedMemory>
-#ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-inline typename detail::return_type
-   <typename managed_unique_ptr<T, ManagedMemory>::type
-   >::type 
-#else
-typename managed_unique_ptr<T, ManagedMemory>::type
-#endif
+inline typename managed_unique_ptr<T, ManagedMemory>::type
    make_managed_unique_ptr(T *constructed_object, ManagedMemory &managed_memory)
 {
-   typename managed_unique_ptr<T, ManagedMemory>::type to_return
-   ( constructed_object
-   , managed_memory.template get_deleter<T>()
-   );
-   return to_return;
+   return typename managed_unique_ptr<T, ManagedMemory>::type 
+      (constructed_object, managed_memory.template get_deleter<T>());
 }
 
 }  //namespace interprocess{

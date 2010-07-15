@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -98,7 +98,7 @@ class basic_managed_memory_impl
            segment_manager::char_ptr_holder_t         char_ptr_holder_t;
    //Experimental. Don't use.
 
-   typedef typename segment_manager::multiallocation_iterator    multiallocation_iterator;
+   typedef typename segment_manager::multiallocation_chain  multiallocation_chain;
 
    /// @endcond
 
@@ -225,7 +225,7 @@ class basic_managed_memory_impl
 
    //!Returns the base address of the memory in this process. Never throws.
    void *   get_address   () const
-   {   return (char*)mp_header - Offset; }
+   {   return reinterpret_cast<char*>(mp_header) - Offset; }
 
    //!Returns the size of memory segment. Never throws.
    std::size_t   get_size   () const
@@ -255,21 +255,21 @@ class basic_managed_memory_impl
    //!The address must belong to the memory segment. Never throws.
    handle_t get_handle_from_address   (const void *ptr) const
    {
-      return detail::char_ptr_cast(ptr) - 
-             detail::char_ptr_cast(this->get_address());  
+      return reinterpret_cast<const char*>(ptr) - 
+             reinterpret_cast<const char*>(this->get_address());  
    }
 
    //!Returns true if the address belongs to the managed memory segment
    bool belongs_to_segment (const void *ptr) const
    {  
       return ptr >= this->get_address() && 
-             ptr <  (detail::char_ptr_cast(ptr) + this->get_size());
+             ptr <  (reinterpret_cast<const char*>(this->get_address()) + this->get_size());
    }
 
    //!Transforms previously obtained offset into an absolute address in the 
    //!process space of the current process. Never throws.*/
    void *    get_address_from_handle (handle_t offset) const
-   {  return detail::char_ptr_cast(this->get_address()) + offset; }
+   {  return reinterpret_cast<char*>(this->get_address()) + offset; }
 
    //!Searches for nbytes of free memory in the segment, marks the
    //!memory as used and return the pointer to the memory. If no 
@@ -291,7 +291,7 @@ class basic_managed_memory_impl
 
    template<class T>
    std::pair<T *, bool>
-      allocation_command  (allocation_type command,   std::size_t limit_size,
+      allocation_command  (boost::interprocess::allocation_type command,   std::size_t limit_size,
                            std::size_t preferred_size,std::size_t &received_size,
                            T *reuse_ptr = 0)
    {  
@@ -310,20 +310,24 @@ class basic_managed_memory_impl
    //Experimental. Don't use.
 
    //!Allocates n_elements of elem_size bytes.
-   multiallocation_iterator allocate_many(std::size_t elem_bytes, std::size_t num_elements)
+   multiallocation_chain allocate_many(std::size_t elem_bytes, std::size_t num_elements)
    {  return mp_header->allocate_many(elem_bytes, num_elements); }
 
    //!Allocates n_elements, each one of elem_sizes[i] bytes.
-   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements)
+   multiallocation_chain allocate_many(const std::size_t *elem_sizes, std::size_t n_elements)
    {  return mp_header->allocate_many(elem_sizes, n_elements); }
 
    //!Allocates n_elements of elem_size bytes.
-   multiallocation_iterator allocate_many(std::size_t elem_bytes, std::size_t num_elements, std::nothrow_t nothrow)
+   multiallocation_chain allocate_many(std::size_t elem_bytes, std::size_t num_elements, std::nothrow_t nothrow)
    {  return mp_header->allocate_many(elem_bytes, num_elements, nothrow); }
 
    //!Allocates n_elements, each one of elem_sizes[i] bytes.
-   multiallocation_iterator allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::nothrow_t nothrow)
+   multiallocation_chain allocate_many(const std::size_t *elem_sizes, std::size_t n_elements, std::nothrow_t nothrow)
    {  return mp_header->allocate_many(elem_sizes, n_elements, nothrow); }
+
+   //!Allocates n_elements, each one of elem_sizes[i] bytes.
+   void deallocate_many(multiallocation_chain chain)
+   {  return mp_header->deallocate_many(boost::interprocess::move(chain)); }
 
    /// @endcond
 

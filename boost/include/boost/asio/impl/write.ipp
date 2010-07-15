@@ -2,7 +2,7 @@
 // write.ipp
 // ~~~~~~~~~
 //
-// Copyright (c) 2003-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2010 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,6 +19,7 @@
 
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/completion_condition.hpp>
+#include <boost/asio/detail/base_from_completion_cond.hpp>
 #include <boost/asio/detail/bind_handler.hpp>
 #include <boost/asio/detail/consuming_buffers.hpp>
 #include <boost/asio/detail/handler_alloc_helpers.hpp>
@@ -33,18 +34,20 @@ template <typename SyncWriteStream, typename ConstBufferSequence,
 std::size_t write(SyncWriteStream& s, const ConstBufferSequence& buffers,
     CompletionCondition completion_condition, boost::system::error_code& ec)
 {
+  ec = boost::system::error_code();
   boost::asio::detail::consuming_buffers<
     const_buffer, ConstBufferSequence> tmp(buffers);
   std::size_t total_transferred = 0;
+  tmp.prepare(detail::adapt_completion_condition_result(
+        completion_condition(ec, total_transferred)));
   while (tmp.begin() != tmp.end())
   {
     std::size_t bytes_transferred = s.write_some(tmp, ec);
     tmp.consume(bytes_transferred);
     total_transferred += bytes_transferred;
-    if (completion_condition(ec, total_transferred))
-      return total_transferred;
+    tmp.prepare(detail::adapt_completion_condition_result(
+          completion_condition(ec, total_transferred)));
   }
-  ec = boost::system::error_code();
   return total_transferred;
 }
 
@@ -67,6 +70,8 @@ inline std::size_t write(SyncWriteStream& s, const ConstBufferSequence& buffers,
   boost::asio::detail::throw_error(ec);
   return bytes_transferred;
 }
+
+#if !defined(BOOST_NO_IOSTREAM)
 
 template <typename SyncWriteStream, typename Allocator,
     typename CompletionCondition>
@@ -101,79 +106,195 @@ inline std::size_t write(SyncWriteStream& s,
   return bytes_transferred;
 }
 
+#endif // !defined(BOOST_NO_IOSTREAM)
+
 namespace detail
 {
   template <typename AsyncWriteStream, typename ConstBufferSequence,
       typename CompletionCondition, typename WriteHandler>
-  class write_handler
+  class write_op
+    : detail::base_from_completion_cond<CompletionCondition>
   {
   public:
-    typedef boost::asio::detail::consuming_buffers<
-      const_buffer, ConstBufferSequence> buffers_type;
-
-    write_handler(AsyncWriteStream& stream, const buffers_type& buffers,
+    write_op(AsyncWriteStream& stream, const ConstBufferSequence& buffers,
         CompletionCondition completion_condition, WriteHandler handler)
-      : stream_(stream),
+      : detail::base_from_completion_cond<
+          CompletionCondition>(completion_condition),
+        stream_(stream),
         buffers_(buffers),
         total_transferred_(0),
-        completion_condition_(completion_condition),
-        handler_(handler)
+        handler_(handler),
+        start_(true)
     {
     }
 
     void operator()(const boost::system::error_code& ec,
         std::size_t bytes_transferred)
     {
-      total_transferred_ += bytes_transferred;
-      buffers_.consume(bytes_transferred);
-      if (completion_condition_(ec, total_transferred_)
-          || buffers_.begin() == buffers_.end())
+      switch (start_)
       {
+        case true: start_ = false;
+        buffers_.prepare(this->check(ec, total_transferred_));
+        for (;;)
+        {
+          stream_.async_write_some(buffers_, *this);
+          return; default:
+          total_transferred_ += bytes_transferred;
+          buffers_.consume(bytes_transferred);
+          buffers_.prepare(this->check(ec, total_transferred_));
+          if ((!ec && bytes_transferred == 0)
+              || buffers_.begin() == buffers_.end())
+            break;
+        }
+
         handler_(ec, total_transferred_);
-      }
-      else
-      {
-        stream_.async_write_some(buffers_, *this);
       }
     }
 
   //private:
     AsyncWriteStream& stream_;
-    buffers_type buffers_;
+    boost::asio::detail::consuming_buffers<
+      const_buffer, ConstBufferSequence> buffers_;
     std::size_t total_transferred_;
-    CompletionCondition completion_condition_;
     WriteHandler handler_;
+    bool start_;
+  };
+
+  template <typename AsyncWriteStream,
+      typename CompletionCondition, typename WriteHandler>
+  class write_op<AsyncWriteStream, boost::asio::mutable_buffers_1,
+      CompletionCondition, WriteHandler>
+    : detail::base_from_completion_cond<CompletionCondition>
+  {
+  public:
+    write_op(AsyncWriteStream& stream,
+        const boost::asio::mutable_buffers_1& buffers,
+        CompletionCondition completion_condition,
+        WriteHandler handler)
+      : detail::base_from_completion_cond<
+          CompletionCondition>(completion_condition),
+        stream_(stream),
+        buffer_(buffers),
+        total_transferred_(0),
+        handler_(handler),
+        start_(true)
+    {
+    }
+
+    void operator()(const boost::system::error_code& ec,
+        std::size_t bytes_transferred)
+    {
+      std::size_t n = 0;
+      switch (start_)
+      {
+        case true: start_ = false;
+        n = this->check(ec, total_transferred_);
+        for (;;)
+        {
+          stream_.async_write_some(boost::asio::buffer(
+                buffer_ + total_transferred_, n), *this);
+          return; default:
+          total_transferred_ += bytes_transferred;
+          if ((!ec && bytes_transferred == 0)
+              || (n = this->check(ec, total_transferred_)) == 0
+              || total_transferred_ == boost::asio::buffer_size(buffer_))
+            break;
+        }
+
+        handler_(ec, total_transferred_);
+      }
+    }
+
+  //private:
+    AsyncWriteStream& stream_;
+    boost::asio::mutable_buffer buffer_;
+    std::size_t total_transferred_;
+    WriteHandler handler_;
+    bool start_;
+  };
+
+  template <typename AsyncWriteStream,
+      typename CompletionCondition, typename WriteHandler>
+  class write_op<AsyncWriteStream, boost::asio::const_buffers_1,
+      CompletionCondition, WriteHandler>
+    : detail::base_from_completion_cond<CompletionCondition>
+  {
+  public:
+    write_op(AsyncWriteStream& stream,
+        const boost::asio::const_buffers_1& buffers,
+        CompletionCondition completion_condition,
+        WriteHandler handler)
+      : detail::base_from_completion_cond<
+          CompletionCondition>(completion_condition),
+        stream_(stream),
+        buffer_(buffers),
+        total_transferred_(0),
+        handler_(handler),
+        start_(true)
+    {
+    }
+
+    void operator()(const boost::system::error_code& ec,
+        std::size_t bytes_transferred)
+    {
+      std::size_t n = 0;
+      switch (start_)
+      {
+        case true: start_ = false;
+        n = this->check(ec, total_transferred_);
+        for (;;)
+        {
+          stream_.async_write_some(boost::asio::buffer(
+                buffer_ + total_transferred_, n), *this);
+          return; default:
+          total_transferred_ += bytes_transferred;
+          if ((!ec && bytes_transferred == 0)
+              || (n = this->check(ec, total_transferred_)) == 0
+              || total_transferred_ == boost::asio::buffer_size(buffer_))
+            break;
+        }
+
+        handler_(ec, total_transferred_);
+      }
+    }
+
+  //private:
+    AsyncWriteStream& stream_;
+    boost::asio::const_buffer buffer_;
+    std::size_t total_transferred_;
+    WriteHandler handler_;
+    bool start_;
   };
 
   template <typename AsyncWriteStream, typename ConstBufferSequence,
       typename CompletionCondition, typename WriteHandler>
   inline void* asio_handler_allocate(std::size_t size,
-      write_handler<AsyncWriteStream, ConstBufferSequence,
+      write_op<AsyncWriteStream, ConstBufferSequence,
         CompletionCondition, WriteHandler>* this_handler)
   {
     return boost_asio_handler_alloc_helpers::allocate(
-        size, &this_handler->handler_);
+        size, this_handler->handler_);
   }
 
   template <typename AsyncWriteStream, typename ConstBufferSequence,
       typename CompletionCondition, typename WriteHandler>
   inline void asio_handler_deallocate(void* pointer, std::size_t size,
-      write_handler<AsyncWriteStream, ConstBufferSequence,
+      write_op<AsyncWriteStream, ConstBufferSequence,
         CompletionCondition, WriteHandler>* this_handler)
   {
     boost_asio_handler_alloc_helpers::deallocate(
-        pointer, size, &this_handler->handler_);
+        pointer, size, this_handler->handler_);
   }
 
   template <typename Function, typename AsyncWriteStream,
       typename ConstBufferSequence, typename CompletionCondition,
       typename WriteHandler>
   inline void asio_handler_invoke(const Function& function,
-      write_handler<AsyncWriteStream, ConstBufferSequence,
+      write_op<AsyncWriteStream, ConstBufferSequence,
         CompletionCondition, WriteHandler>* this_handler)
   {
     boost_asio_handler_invoke_helpers::invoke(
-        function, &this_handler->handler_);
+        function, this_handler->handler_);
   }
 } // namespace detail
 
@@ -182,12 +303,10 @@ template <typename AsyncWriteStream, typename ConstBufferSequence,
 inline void async_write(AsyncWriteStream& s, const ConstBufferSequence& buffers,
     CompletionCondition completion_condition, WriteHandler handler)
 {
-  boost::asio::detail::consuming_buffers<
-    const_buffer, ConstBufferSequence> tmp(buffers);
-  s.async_write_some(tmp,
-      detail::write_handler<AsyncWriteStream, ConstBufferSequence,
-        CompletionCondition, WriteHandler>(
-          s, tmp, completion_condition, handler));
+  detail::write_op<AsyncWriteStream, ConstBufferSequence,
+    CompletionCondition, WriteHandler>(
+      s, buffers, completion_condition, handler)(
+        boost::system::error_code(), 0);
 }
 
 template <typename AsyncWriteStream, typename ConstBufferSequence,
@@ -197,6 +316,8 @@ inline void async_write(AsyncWriteStream& s, const ConstBufferSequence& buffers,
 {
   async_write(s, buffers, transfer_all(), handler);
 }
+
+#if !defined(BOOST_NO_IOSTREAM)
 
 namespace detail
 {
@@ -231,7 +352,7 @@ namespace detail
         Allocator, WriteHandler>* this_handler)
   {
     return boost_asio_handler_alloc_helpers::allocate(
-        size, &this_handler->handler_);
+        size, this_handler->handler_);
   }
 
   template <typename AsyncWriteStream, typename Allocator,
@@ -241,7 +362,7 @@ namespace detail
         Allocator, WriteHandler>* this_handler)
   {
     boost_asio_handler_alloc_helpers::deallocate(
-        pointer, size, &this_handler->handler_);
+        pointer, size, this_handler->handler_);
   }
 
   template <typename Function, typename AsyncWriteStream, typename Allocator,
@@ -251,7 +372,7 @@ namespace detail
         Allocator, WriteHandler>* this_handler)
   {
     boost_asio_handler_invoke_helpers::invoke(
-        function, &this_handler->handler_);
+        function, this_handler->handler_);
   }
 } // namespace detail
 
@@ -272,6 +393,8 @@ inline void async_write(AsyncWriteStream& s,
 {
   async_write(s, b, transfer_all(), handler);
 }
+
+#endif // !defined(BOOST_NO_IOSTREAM)
 
 } // namespace asio
 } // namespace boost

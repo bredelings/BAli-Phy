@@ -4,7 +4,7 @@
     
     http://www.boost.org/
 
-    Copyright (c) 2001-2008 Hartmut Kaiser. Distributed under the Boost
+    Copyright (c) 2001-2010 Hartmut Kaiser. Distributed under the Boost
     Software License, Version 1.0. (See accompanying file
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -58,12 +58,11 @@ namespace iteration_context_policies {
         {
         public:
             template <typename PositionT>
-            static 
-            void init_iterators(IterContextT &iter_ctx, 
+            static void init_iterators(IterContextT &iter_ctx, 
                 PositionT const &act_pos, language_support language)
             {
                 typedef typename IterContextT::iterator_type iterator_type;
-                
+
                 // read in the file
                 std::ifstream instream(iter_ctx.filename.c_str());
                 if (!instream.is_open()) {
@@ -72,7 +71,7 @@ namespace iteration_context_policies {
                     return;
                 }
                 instream.unsetf(std::ios::skipws);
-                
+
                 iter_ctx.instring.assign(
                     std::istreambuf_iterator<char>(instream.rdbuf()),
                     std::istreambuf_iterator<char>());
@@ -87,7 +86,7 @@ namespace iteration_context_policies {
             std::string instring;
         };
     };
-    
+
 }   // namespace iteration_context_policies
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -98,20 +97,22 @@ struct base_iteration_context
 public:
     base_iteration_context(ContextT& ctx_,
             BOOST_WAVE_STRINGTYPE const &fname, std::size_t if_block_depth = 0)   
-    :   real_filename(fname), filename(fname), line(1), emitted_lines(1), 
-        if_block_depth(if_block_depth), ctx(ctx_) 
+    :   real_filename(fname), real_relative_filename(fname), filename(fname), 
+        line(1), emitted_lines(0), if_block_depth(if_block_depth), ctx(ctx_) 
     {}
     base_iteration_context(ContextT& ctx_, 
             IteratorT const &first_, IteratorT const &last_, 
             BOOST_WAVE_STRINGTYPE const &fname, std::size_t if_block_depth = 0)
-    :   first(first_), last(last_), real_filename(fname), filename(fname), 
-        line(1), emitted_lines(1), if_block_depth(if_block_depth), ctx(ctx_) 
+    :   first(first_), last(last_), real_filename(fname), 
+        real_relative_filename(fname), filename(fname), 
+        line(1), emitted_lines(0), if_block_depth(if_block_depth), ctx(ctx_) 
     {}
 
 // the actual input stream
     IteratorT first;            // actual input stream position 
     IteratorT last;             // end of input stream
     BOOST_WAVE_STRINGTYPE real_filename;  // real name of the current file
+    BOOST_WAVE_STRINGTYPE real_relative_filename;  // real relative name of the current file
     BOOST_WAVE_STRINGTYPE filename;       // actual processed file
     unsigned int line;                    // line counter of underlying stream
     unsigned int emitted_lines;           // count of emitted newlines
@@ -132,9 +133,9 @@ struct iteration_context
 {
     typedef IteratorT iterator_type;
     typedef typename IteratorT::token_type::position_type position_type;
-    
+
     typedef iteration_context<ContextT, IteratorT, InputPolicyT> self_type;
-    
+
     iteration_context(ContextT& ctx, BOOST_WAVE_STRINGTYPE const &fname, 
             position_type const &act_pos, 
             boost::wave::language_support language_) 

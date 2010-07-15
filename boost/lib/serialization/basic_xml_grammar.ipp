@@ -16,18 +16,27 @@
 #include <algorithm>
 #include <boost/config.hpp> // BOOST_DEDUCED_TYPENAME
 
+#ifdef BOOST_MSVC
+#  pragma warning(push)
+#  pragma warning(disable : 4511 4512)
+#endif
+
 // spirit stuff
 #include <boost/spirit/core/composite/operators.hpp>
 #include <boost/spirit/core/composite/actions.hpp>
 #include <boost/spirit/core/primitives/numerics.hpp>
 
+#ifdef BOOST_MSVC
+#pragma warning(pop)
+#endif
+
 // for head_iterator test
 //#include <boost/bind.hpp> 
 #include <boost/function.hpp>
-#include <boost/pfto.hpp>
+#include <boost/serialization/pfto.hpp>
 
 #include <boost/io/ios_state.hpp>
-#include <boost/throw_exception.hpp>
+#include <boost/serialization/throw_exception.hpp>
 #include <boost/archive/impl/basic_xml_grammar.hpp>
 #include <boost/archive/xml_archive_exception.hpp>
 #include <boost/archive/basic_xml_archive.hpp>
@@ -42,6 +51,11 @@ namespace archive {
 // template code for basic_xml_grammar of both wchar_t and char types
 
 namespace xml { // anonymous
+
+#ifdef BOOST_MSVC
+#  pragma warning(push)
+#  pragma warning(disable : 4511 4512)
+#endif
 
 template<class T>
 struct assign_impl {
@@ -67,6 +81,9 @@ struct assign_impl<std::string> {
             ++b;
         }
     }
+    assign_impl<std::string> & operator=(
+        assign_impl<std::string> & rhs
+    );
     assign_impl(std::string & t_)
         : t(t_)
     {}
@@ -150,6 +167,10 @@ struct append_lit {
     {}
 };
 
+#ifdef BOOST_MSVC
+#pragma warning(pop)
+#endif
+
 } // namespace anonymous
 
 template<class CharType>
@@ -157,9 +178,9 @@ bool basic_xml_grammar<CharType>::my_parse(
     BOOST_DEDUCED_TYPENAME basic_xml_grammar<CharType>::IStream & is,
     const rule_t & rule_,
     CharType delimiter
-){
+) const {
     if(is.fail()){
-        boost::throw_exception(
+        boost::serialization::throw_exception(
             archive_exception(archive_exception::stream_error)
         );
     }
@@ -171,10 +192,12 @@ bool basic_xml_grammar<CharType>::my_parse(
     
     CharType val;
     do{
-        val = is.get();
-        arg += val;
+        BOOST_DEDUCED_TYPENAME basic_xml_grammar<CharType>::IStream::int_type
+            result = is.get();
         if(is.fail())
             return false;
+        val = static_cast<CharType>(result);
+        arg += val;
     }
     while(val != delimiter);
     
@@ -183,41 +206,26 @@ bool basic_xml_grammar<CharType>::my_parse(
     // is terminated.  This will permit the archive to be used for debug
     // and transaction data logging in the standard way.
     
-    parse_info<BOOST_DEDUCED_TYPENAME std::basic_string<CharType>::iterator> result
-        = boost::spirit::parse(arg.begin(), arg.end(), rule_);
+    parse_info<BOOST_DEDUCED_TYPENAME std::basic_string<CharType>::iterator> 
+        result = boost::spirit::parse(arg.begin(), arg.end(), rule_);
     return result.hit;
 }
 
 template<class CharType>
 bool basic_xml_grammar<CharType>::parse_start_tag(
     BOOST_DEDUCED_TYPENAME basic_xml_grammar<CharType>::IStream & is
-) {
-    if(is.fail()){
-        boost::throw_exception(
-            archive_exception(archive_exception::stream_error)
-        );
-    }
+){
     rv.class_name.resize(0);
     return my_parse(is, STag);
 }
 
 template<class CharType>
-bool basic_xml_grammar<CharType>::parse_end_tag(IStream & is) {
-    if(is.fail()){
-        boost::throw_exception(
-            archive_exception(archive_exception::stream_error)
-        );
-    }
+bool basic_xml_grammar<CharType>::parse_end_tag(IStream & is) const {
     return my_parse(is, ETag);
 }
 
 template<class CharType>
-bool basic_xml_grammar<CharType>::parse_string(IStream & is, StringType & s) {
-    if(is.fail()){
-        boost::throw_exception(
-            archive_exception(archive_exception::stream_error)
-        );
-    }
+bool basic_xml_grammar<CharType>::parse_string(IStream & is, StringType & s){
     rv.contents.resize(0);
     bool result = my_parse(is, content, '<');
     // note: unget caused a problem with dinkumware.  replace with
@@ -310,15 +318,18 @@ basic_xml_grammar<CharType>::basic_xml_grammar(){
     ;
 
     ClassIDAttribute = 
-        str_p(CLASS_ID()) >> NameTail
+        str_p(BOOST_ARCHIVE_XML_CLASS_ID()) >> NameTail
         >> Eq 
         >> L'"'
         >> int_p [xml::assign_object(rv.class_id.t)]
         >> L'"'
       ;
 
-    ObjectIDAttribute = 
-        (str_p(OBJECT_ID()) | str_p(OBJECT_REFERENCE()) )
+    ObjectIDAttribute = (
+        str_p(BOOST_ARCHIVE_XML_OBJECT_ID()) 
+        | 
+        str_p(BOOST_ARCHIVE_XML_OBJECT_REFERENCE()) 
+        )
         >> NameTail
         >> Eq 
         >> L'"'
@@ -342,7 +353,7 @@ basic_xml_grammar<CharType>::basic_xml_grammar(){
     ;
     
     ClassNameAttribute = 
-        str_p(CLASS_NAME()) 
+        str_p(BOOST_ARCHIVE_XML_CLASS_NAME()) 
         >> Eq 
         >> L'"'
         >> ClassName
@@ -350,7 +361,7 @@ basic_xml_grammar<CharType>::basic_xml_grammar(){
     ;
 
     TrackingAttribute = 
-        str_p(TRACKING())
+        str_p(BOOST_ARCHIVE_XML_TRACKING())
         >> Eq
         >> L'"'
         >> uint_p [xml::assign_level(rv.tracking_level)]
@@ -358,7 +369,7 @@ basic_xml_grammar<CharType>::basic_xml_grammar(){
     ;
 
     VersionAttribute = 
-        str_p(VERSION())
+        str_p(BOOST_ARCHIVE_XML_VERSION())
         >> Eq
         >> L'"'
         >> uint_p [xml::assign_object(rv.version.t)]
@@ -427,19 +438,19 @@ template<class CharType>
 void basic_xml_grammar<CharType>::init(IStream & is){
     init_chset();
     if(! my_parse(is, XMLDecl))
-        boost::throw_exception(
+        boost::serialization::throw_exception(
             xml_archive_exception(xml_archive_exception::xml_archive_parsing_error)
         );
     if(! my_parse(is, DocTypeDecl))
-        boost::throw_exception(
+        boost::serialization::throw_exception(
             xml_archive_exception(xml_archive_exception::xml_archive_parsing_error)
         );
     if(! my_parse(is, SerializationWrapper))
-        boost::throw_exception(
+        boost::serialization::throw_exception(
             xml_archive_exception(xml_archive_exception::xml_archive_parsing_error)
         );
-    if(! std::equal(rv.class_name.begin(), rv.class_name.end(), ARCHIVE_SIGNATURE()))
-        boost::throw_exception(
+    if(! std::equal(rv.class_name.begin(), rv.class_name.end(), BOOST_ARCHIVE_SIGNATURE()))
+        boost::serialization::throw_exception(
             archive_exception(archive_exception::invalid_signature)
         );
 }
@@ -448,7 +459,7 @@ template<class CharType>
 void basic_xml_grammar<CharType>::windup(IStream & is){
     if(is.fail())
         return;
-    // uh-oh - don't exception from code called by a destructor !
+    // uh-oh - don't throw exception from code called by a destructor !
     // so just ignore any failure.
     my_parse(is, ETag);
 }

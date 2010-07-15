@@ -1,4 +1,4 @@
-//  (C) Copyright Gennadiy Rozental 2005-2007.
+//  (C) Copyright Gennadiy Rozental 2005-2008.
 //  Use, modification, and distribution are subject to the 
 //  Boost Software License, Version 1.0. (See accompanying file 
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -7,7 +7,7 @@
 //
 //  File        : $RCSfile$
 //
-//  Version     : $Revision: 43798 $
+//  Version     : $Revision: 57992 $
 //
 //  Description : defines parser - public interface for CLA parsing and accessing
 // ***************************************************************************
@@ -64,7 +64,7 @@ public:
 private:
     // Data members;
     parser&             m_parser;
-    Modifier const&    m_modifiers;
+    Modifier const&     m_modifiers;
 };
 
 }
@@ -114,10 +114,10 @@ public:
     template<typename T>
     void                get( cstring string_id, boost::optional<T>& res ) const
     {
-        const_argument_ptr arg = (*this)[string_id];
+        const_argument_ptr actual_arg = (*this)[string_id];
 
-        if( arg )
-            res = arg_value<T>( *arg );
+        if( actual_arg )
+            res = arg_value<T>( *actual_arg );
         else
             res.reset();
     }

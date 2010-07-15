@@ -18,12 +18,18 @@
 
 #include <istream>
 
+#include <boost/config.hpp>
 #include <boost/archive/detail/auto_link_archive.hpp>
 #include <boost/archive/basic_text_iprimitive.hpp>
 #include <boost/archive/basic_text_iarchive.hpp>
-#include <boost/config.hpp>
+#include <boost/archive/detail/register_archive.hpp>
 
 #include <boost/archive/detail/abi_prefix.hpp> // must be the last header
+
+#ifdef BOOST_MSVC
+#  pragma warning(push)
+#  pragma warning(disable : 4511 4512)
+#endif
 
 namespace boost { 
 namespace archive {
@@ -83,8 +89,9 @@ class naked_text_iarchive :
     public text_iarchive_impl<naked_text_iarchive>
 {
 public:
-    naked_text_iarchive(std::istream & is, unsigned int flags = 0) :
-        text_iarchive_impl<naked_text_iarchive>(is, flags)
+    naked_text_iarchive(std::istream & is_, unsigned int flags = 0) :
+        // note: added _ to suppress useless gcc warning
+        text_iarchive_impl<naked_text_iarchive>(is_, flags)
     {}
     ~naked_text_iarchive(){}
 };
@@ -92,11 +99,22 @@ public:
 } // namespace archive
 } // namespace boost
 
+#ifdef BOOST_MSVC
+#pragma warning(pop)
+#endif
+
+#include <boost/archive/detail/abi_suffix.hpp> // pops abi_suffix.hpp pragmas
+
 // note special treatment of shared_ptr. This type needs a special
 // structure associated with every archive.  We created a "mix-in"
 // class to provide this functionality.  Since shared_ptr holds a
 // special esteem in the boost library - we included it here by default.
 #include <boost/archive/shared_ptr_helper.hpp>
+
+#ifdef BOOST_MSVC
+#  pragma warning(push)
+#  pragma warning(disable : 4511 4512)
+#endif
 
 namespace boost { 
 namespace archive {
@@ -106,8 +124,9 @@ class text_iarchive :
     public detail::shared_ptr_helper
 {
 public:
-    text_iarchive(std::istream & is, unsigned int flags = 0) :
-        text_iarchive_impl<text_iarchive>(is, flags)
+    text_iarchive(std::istream & is_, unsigned int flags = 0) :
+        // note: added _ to suppress useless gcc warning
+        text_iarchive_impl<text_iarchive>(is_, flags)
     {}
     ~text_iarchive(){}
 };
@@ -118,6 +137,8 @@ public:
 // required by export
 BOOST_SERIALIZATION_REGISTER_ARCHIVE(boost::archive::text_iarchive)
 
-#include <boost/archive/detail/abi_suffix.hpp> // pops abi_suffix.hpp pragmas
+#ifdef BOOST_MSVC
+#pragma warning(pop)
+#endif
 
 #endif // BOOST_ARCHIVE_TEXT_IARCHIVE_HPP

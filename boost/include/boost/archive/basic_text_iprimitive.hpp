@@ -16,11 +16,11 @@
 
 //  See http://www.boost.org for updates, documentation, and revision history.
 
-// archives stored as text - note these ar templated on the basic
+// archives stored as text - note these are templated on the basic
 // stream templates to accommodate wide (and other?) kind of characters
 //
-// note the fact that on libraries without wide characters, ostream is
-// is not a specialization of basic_ostream which in fact is not defined
+// Note the fact that on libraries without wide characters, ostream is
+// not a specialization of basic_ostream which in fact is not defined
 // in such cases.   So we can't use basic_ostream<IStream::char_type> but rather
 // use two template parameters
 
@@ -43,13 +43,14 @@ namespace std{
 #include <boost/archive/dinkumware.hpp>
 #endif
 
-#include <boost/throw_exception.hpp>
 #include <boost/limits.hpp>
 #include <boost/io/ios_state.hpp>
 #include <boost/scoped_ptr.hpp>
 
+#include <boost/serialization/collection_size_type.hpp>
+#include <boost/serialization/throw_exception.hpp>
 #include <boost/archive/archive_exception.hpp>
-
+#include <boost/archive/basic_streambuf_locale_saver.hpp>
 #include <boost/archive/detail/abi_prefix.hpp> // must be the last header
 
 namespace boost {
@@ -71,8 +72,9 @@ public:
 
     #ifndef BOOST_NO_STD_LOCALE
     boost::scoped_ptr<std::locale> archive_locale;
-    io::basic_ios_locale_saver<
-        BOOST_DEDUCED_TYPENAME IStream::char_type, BOOST_DEDUCED_TYPENAME IStream::traits_type
+    basic_streambuf_locale_saver<
+        BOOST_DEDUCED_TYPENAME IStream::char_type, 
+        BOOST_DEDUCED_TYPENAME IStream::traits_type
     > locale_saver;
     #endif
 
@@ -80,13 +82,17 @@ public:
     void load(T & t)
     {
         if(is.fail())
-            boost::throw_exception(archive_exception(archive_exception::stream_error));
+            boost::serialization::throw_exception(
+                archive_exception(archive_exception::stream_error)
+            );
         is >> t;
     }
     void load(unsigned char & t)
     {
         if(is.fail())
-            boost::throw_exception(archive_exception(archive_exception::stream_error));
+            boost::serialization::throw_exception(
+                archive_exception(archive_exception::stream_error)
+            );
         unsigned short int i;
         is >> i;
         t = static_cast<unsigned char>(i);
@@ -94,7 +100,9 @@ public:
     void load(signed char & t)
     {
         if(is.fail())
-            boost::throw_exception(archive_exception(archive_exception::stream_error));
+            boost::serialization::throw_exception(
+                archive_exception(archive_exception::stream_error)
+            );
         signed short int i;
         is >> i;
         t = static_cast<signed char>(i);
@@ -102,7 +110,9 @@ public:
     void load(char & t)
     {
         if(is.fail())
-            boost::throw_exception(archive_exception(archive_exception::stream_error));
+            boost::serialization::throw_exception(
+                archive_exception(archive_exception::stream_error)
+            );
         short int i;
         is >> i;
         t = static_cast<char>(i);
@@ -111,7 +121,9 @@ public:
     void load(wchar_t & t)
     {
         if(is.fail())
-            boost::throw_exception(archive_exception(archive_exception::stream_error));
+            boost::serialization::throw_exception(
+                archive_exception(archive_exception::stream_error)
+            );
         unsigned i;
         is >> i;
         t = static_cast<wchar_t>(i);
@@ -129,6 +141,6 @@ public:
 } // namespace archive
 } // namespace boost
 
-#include <boost/archive/detail/abi_suffix.hpp> // pop pragams
+#include <boost/archive/detail/abi_suffix.hpp> // pop pragmas
 
 #endif // BOOST_ARCHIVE_BASIC_TEXT_IPRIMITIVE_HPP

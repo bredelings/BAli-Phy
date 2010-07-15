@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -17,6 +17,8 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/static_assert.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -24,6 +26,7 @@
 #include <boost/interprocess/detail/managed_open_or_create_impl.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/interprocess/sync/emulation/named_creation_functor.hpp>
+#include <boost/interprocess/sync/named_mutex.hpp>
 #if defined BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
@@ -85,7 +88,7 @@ class named_condition
    //!If there are no waiting threads, notify_all() has no effect.
    void notify_all();
 
-   //!Releases the lock on the interprocess_mutex object associated with lock, blocks 
+   //!Releases the lock on the named_mutex object associated with lock, blocks 
    //!the current thread of execution until readied by a call to 
    //!this->notify_one() or this->notify_all(), and then reacquires the lock.
    template <typename L>
@@ -96,7 +99,7 @@ class named_condition
    template <typename L, typename Pr>
    void wait(L& lock, Pr pred);
 
-   //!Releases the lock on the interprocess_mutex object associated with lock, blocks 
+   //!Releases the lock on the named_mutex object associated with lock, blocks 
    //!the current thread of execution until readied by a call to 
    //!this->notify_one() or this->notify_all(), or until time abs_time is reached, 
    //!and then reacquires the lock.
@@ -148,7 +151,10 @@ class named_condition
 
    template <class Lock>
    void do_wait(Lock& lock)
-   {  
+   {
+      //named_condition only works with named_mutex
+      BOOST_STATIC_ASSERT((detail::is_convertible<typename Lock::mutex_type&, named_mutex&>::value == true));
+      
       //lock internal before unlocking external to avoid race with a notifier
       scoped_lock<interprocess_mutex>     internal_lock(*this->mutex());
       lock_inverter<Lock> inverted_lock(lock);
@@ -163,6 +169,8 @@ class named_condition
    template <class Lock>
    bool do_timed_wait(Lock& lock, const boost::posix_time::ptime &abs_time)
    {
+      //named_condition only works with named_mutex
+      BOOST_STATIC_ASSERT((detail::is_convertible<typename Lock::mutex_type&, named_mutex&>::value == true));
       //lock internal before unlocking external to avoid race with a notifier  
       scoped_lock<interprocess_mutex>     internal_lock(*this->mutex(), abs_time);  
       if(!internal_lock) return false;
@@ -259,6 +267,10 @@ template <typename L>
 inline bool named_condition::timed_wait
    (L& lock, const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->wait(lock);
+      return true;
+   }
    if (!lock)
       throw lock_exception();
    return this->do_timed_wait(lock, abs_time);
@@ -268,6 +280,10 @@ template <typename L, typename Pr>
 inline bool named_condition::timed_wait
    (L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->wait(lock, pred);
+      return true;
+   }
    if (!lock)
       throw lock_exception();
 
@@ -309,6 +325,10 @@ template <typename L>
 inline bool named_condition::timed_wait
    (L& lock, const boost::posix_time::ptime &abs_time)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->wait(lock);
+      return true;
+   }
    if (!lock)
       throw lock_exception();
    return this->condition()->do_timed_wait(abs_time, *lock.mutex()->mutex());
@@ -318,6 +338,10 @@ template <typename L, typename Pr>
 inline bool named_condition::timed_wait
    (L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
 {
+   if(abs_time == boost::posix_time::pos_infin){
+      this->wait(lock, pred);
+      return true;
+   }
    if (!lock)
       throw lock_exception();
 

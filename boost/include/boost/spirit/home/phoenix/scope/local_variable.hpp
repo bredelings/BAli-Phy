@@ -8,10 +8,6 @@
 #ifndef PHOENIX_SCOPE_LOCAL_VARIABLE_HPP
 #define PHOENIX_SCOPE_LOCAL_VARIABLE_HPP
 
-#if !defined(PHOENIX_LOCAL_LIMIT)
-# define PHOENIX_LOCAL_LIMIT PHOENIX_LIMIT
-#endif
-
 #include <boost/spirit/home/phoenix/core/limits.hpp>
 #include <boost/spirit/home/phoenix/detail/local_reference.hpp>
 #include <boost/spirit/home/phoenix/scope/detail/local_variable.hpp>
@@ -24,19 +20,19 @@ namespace boost { namespace phoenix
     struct local_variable
     {
         typedef Key key_type;
-        
+
         // This will prevent actor::operator()() from kicking in.
         // Actually, we do not need all actor::operator()s for
         // all arities, but this will suffice. The nullary 
         // actor::operator() is particularly troublesome because 
         // it is always eagerly evaluated by the compiler.
         typedef mpl::true_ no_nullary; 
-        
+
         template <typename Env>
         struct result : detail::apply_local<local_variable<Key>, Env> {};
 
         template <typename Env>
-        typename result<Env>::type const
+        typename result<Env>::type 
         eval(Env const& env) const
         {
             typedef typename result<Env>::type return_type;
@@ -49,6 +45,10 @@ namespace boost { namespace phoenix
                 env
               , index_type());
         }
+
+    private:
+        // silence MSVC warning C4512: assignment operator could not be generated
+        local_variable& operator= (local_variable const&);
     };
 
     namespace local_names

@@ -25,11 +25,16 @@
 
 #include <boost/config.hpp>
 #include <boost/detail/workaround.hpp>
-#include <boost/pfto.hpp>
+#include <boost/serialization/pfto.hpp>
 
 #include <boost/archive/detail/common_iarchive.hpp>
 #include <boost/serialization/collection_size_type.hpp>
 #include <boost/serialization/string.hpp>
+
+#ifdef BOOST_MSVC
+#  pragma warning(push)
+#  pragma warning(disable : 4511 4512)
+#endif
 
 #include <boost/archive/detail/abi_prefix.hpp> // must be the last header
 
@@ -101,11 +106,18 @@ public:
         * this->This() >> x;
         t = (0 != x);
     }
-  void load_override(serialization::collection_size_type & t, int){
-       unsigned int x=0;
-       * this->This() >> x;
-       t = serialization::collection_size_type(x);
-   }
+    void load_override(serialization::collection_size_type & t, int){
+      if (this->get_library_version() < 6) {
+        unsigned int x=0;
+        * this->This() >> x;
+        t = serialization::collection_size_type(x);
+      } 
+      else {
+        std::size_t x=0;
+        * this->This() >> x;
+        t = serialization::collection_size_type(x);
+      }
+    }
 
     BOOST_ARCHIVE_OR_WARCHIVE_DECL(void)
     load_override(class_name_type & t, int);
@@ -119,6 +131,10 @@ public:
 
 } // namespace archive
 } // namespace boost
+
+#ifdef BOOST_MSVC
+#pragma warning(pop)
+#endif
 
 #include <boost/archive/detail/abi_suffix.hpp> // pops abi_suffix.hpp pragmas
 

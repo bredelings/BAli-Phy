@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -15,6 +15,8 @@
 #  pragma once
 #endif
 
+/// @cond
+
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
@@ -26,7 +28,7 @@
 #include <boost/limits.hpp>
 #include <cassert>
 
-#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED
+#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)
    #include <pthread.h>
    #include <errno.h>   
    #include <boost/interprocess/sync/posix/pthread_helpers.hpp>
@@ -37,6 +39,8 @@
    #include <boost/interprocess/detail/os_thread_functions.hpp>
    #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
 #endif
+
+/// @endcond
 
 //!\file
 //!Describes process-shared variables interprocess_condition class
@@ -107,9 +111,12 @@ class interprocess_condition
    template <typename L>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time)
    {
+      if(abs_time == boost::posix_time::pos_infin){
+         this->wait(lock);
+         return true;
+      }
       if (!lock)
             throw lock_exception();
-
       return do_timed_wait(abs_time, *lock.mutex());
    }
 
@@ -119,9 +126,12 @@ class interprocess_condition
    template <typename L, typename Pr>
    bool timed_wait(L& lock, const boost::posix_time::ptime &abs_time, Pr pred)
    {
+      if(abs_time == boost::posix_time::pos_infin){
+         this->wait(lock, pred);
+         return true;
+      }
       if (!lock)
             throw lock_exception();
-
       while (!pred()){
          if (!do_timed_wait(abs_time, *lock.mutex()))
             return pred();
@@ -139,7 +149,7 @@ class interprocess_condition
    #if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
       enum { SLEEP = 0, NOTIFY_ONE, NOTIFY_ALL };
       interprocess_mutex m_enter_mut;
-      interprocess_mutex     m_check_mut;
+      //interprocess_mutex     m_check_mut;
       volatile boost::uint32_t    m_command;
       volatile boost::uint32_t    m_num_waiters;
       bool do_timed_wait(bool tout_enabled, const boost::posix_time::ptime &abs_time, interprocess_mutex &mut);

@@ -29,8 +29,14 @@ namespace std{
 #include <boost/archive/detail/auto_link_archive.hpp>
 #include <boost/archive/basic_text_oprimitive.hpp>
 #include <boost/archive/basic_text_oarchive.hpp>
+#include <boost/archive/detail/register_archive.hpp>
 
 #include <boost/archive/detail/abi_prefix.hpp> // must be the last header
+
+#ifdef BOOST_MSVC
+#  pragma warning(push)
+#  pragma warning(disable : 4511 4512)
+#endif
 
 namespace boost { 
 namespace archive {
@@ -81,9 +87,9 @@ class text_oarchive :
     public text_oarchive_impl<text_oarchive>
 {
 public:
-     
-    text_oarchive(std::ostream & os, unsigned int flags = 0) :
-        text_oarchive_impl<text_oarchive>(os, flags)
+    text_oarchive(std::ostream & os_, unsigned int flags = 0) :
+        // note: added _ to suppress useless gcc warning
+        text_oarchive_impl<text_oarchive>(os_, flags)
     {}
     ~text_oarchive(){}
 };
@@ -95,6 +101,10 @@ typedef text_oarchive naked_text_oarchive;
 
 // required by export
 BOOST_SERIALIZATION_REGISTER_ARCHIVE(boost::archive::text_oarchive)
+
+#ifdef BOOST_MSVC
+#pragma warning(pop)
+#endif
 
 #include <boost/archive/detail/abi_suffix.hpp> // pops abi_suffix.hpp pragmas
 

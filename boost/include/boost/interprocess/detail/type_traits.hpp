@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 // (C) Copyright John Maddock 2000.
-// (C) Copyright Ion Gaztanaga 2005-2008.
+// (C) Copyright Ion Gaztanaga 2005-2009.
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
@@ -120,14 +120,23 @@ struct add_reference<T&>
 template<>
 struct add_reference<void>
 {
-    typedef nat& type;
+    typedef nat &type;
 };
 
 template<>
 struct add_reference<const void>
 {
-    typedef const nat& type;
+    typedef const nat &type;
 };
+
+template <class T>
+struct add_const_reference
+{  typedef const T &type;   };
+
+template <class T>
+struct add_const_reference<T&>
+{  typedef T& type;   };
+
 template <typename T, typename U>
 struct is_same
 {
@@ -146,38 +155,6 @@ struct is_same
 
    static const bool value = sizeof(yes_type) == sizeof(is_same_tester(t,u));
 };
-/*
-template <template<class P> typename T, template<typename P2> typename U>
-struct is_same
-{
-   typedef char yes_type;
-   struct no_type
-   {
-      char padding[8];
-   };
-
-   template <template<class P3> typename V>
-   static yes_type is_same_tester(V<P3>*, V<P3>*);
-   static no_type is_same_tester(...);
-
-   static T<int> *t;
-   static U<int> *u;
-
-   static const bool value = sizeof(yes_type) == sizeof(is_same_tester(t,u));
-};*/
-/*
-template< typename T >
-struct is_pointer_impl
-{
-   static const bool value =
-        (::boost::type_traits::ice_and<
-        ::boost::detail::is_pointer_helper<typename remove_cv<T>::type>::value
-            , ::boost::type_traits::ice_not<
-                ::boost::is_member_pointer<T>::value
-                >::value
-            >::value)
-        );
-};*/
 
 } // namespace detail
 }  //namespace interprocess { 

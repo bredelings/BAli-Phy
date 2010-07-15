@@ -37,8 +37,7 @@ template<class DeviceAbstraction, bool FileBased = true>
 class managed_open_or_create_impl
 {
    //Non-copyable
-   managed_open_or_create_impl(const managed_open_or_create_impl &);
-   managed_open_or_create_impl &operator=(const managed_open_or_create_impl &);
+   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(managed_open_or_create_impl)
 
    enum
    {  
@@ -49,7 +48,6 @@ class managed_open_or_create_impl
    };
 
    public:
-
    static const std::size_t
       ManagedOpenOrCreateUserOffset = 
          detail::ct_rounded_size
@@ -154,33 +152,15 @@ class managed_open_or_create_impl
          , construct_func);
    }
 
-
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   managed_open_or_create_impl(detail::moved_object<managed_open_or_create_impl> moved)
-   {  this->swap(moved.get());   }
-   #else
-   managed_open_or_create_impl(managed_open_or_create_impl &&moved)
+   managed_open_or_create_impl(BOOST_INTERPROCESS_RV_REF(managed_open_or_create_impl) moved)
    {  this->swap(moved);   }
-   #endif
 
-   //!Move assignment. If *this owns a memory mapped region, it will be
-   //!destroyed and it will take ownership of "other"'s memory mapped region.
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   managed_open_or_create_impl &operator=(detail::moved_object<managed_open_or_create_impl> moved)
+   managed_open_or_create_impl &operator=(BOOST_INTERPROCESS_RV_REF(managed_open_or_create_impl) moved)
    {  
-      managed_open_or_create_impl tmp(moved);
+      managed_open_or_create_impl tmp(boost::interprocess::move(moved));
       this->swap(tmp);
       return *this;  
    }
-
-   #else
-   managed_open_or_create_impl &operator=(managed_open_or_create_impl &&moved)
-   {  
-      managed_open_or_create_impl tmp(detail::move_impl(moved));
-      this->swap(tmp);
-      return *this;  
-   }
-   #endif
 
    ~managed_open_or_create_impl()
    {}
@@ -189,13 +169,13 @@ class managed_open_or_create_impl
    {  return m_mapped_region.get_size() - ManagedOpenOrCreateUserOffset; }
 
    void *get_user_address()  const
-   {  return (char*)m_mapped_region.get_address() + ManagedOpenOrCreateUserOffset;  }
+   {  return static_cast<char*>(m_mapped_region.get_address()) + ManagedOpenOrCreateUserOffset;  }
 
    std::size_t get_real_size()  const
    {  return m_mapped_region.get_size(); }
 
    void *get_real_address()  const
-   {  return (char*)m_mapped_region.get_address();  }
+   {  return m_mapped_region.get_address();  }
 
    void swap(managed_open_or_create_impl &other)
    {
@@ -214,40 +194,6 @@ class managed_open_or_create_impl
    {  return m_mapped_region;  }
 
    private:
-
-   //These are templatized to allow explicit instantiations
-   template<bool dummy>
-   static void write_whole_device(DeviceAbstraction &, std::size_t, detail::false_)
-   {} //Empty
-
-   template<bool dummy>
-   static void write_whole_device(DeviceAbstraction &dev, std::size_t size, detail::true_)
-   {
-      file_handle_t hnd = detail::file_handle_from_mapping_handle(dev.get_mapping_handle());
-
-      if(size <= ManagedOpenOrCreateUserOffset){
-         throw interprocess_exception(error_info(system_error_code()));
-      }
-
-      size -= ManagedOpenOrCreateUserOffset;
-
-      if(!detail::set_file_pointer(hnd, ManagedOpenOrCreateUserOffset, file_begin)){
-         throw interprocess_exception(error_info(system_error_code()));
-      }
-
-      //We will write zeros in the file
-      for(std::size_t remaining = size, write_size = 0
-         ;remaining > 0
-         ;remaining -= write_size){
-         const std::size_t DataSize = 512;
-         static char data [DataSize];
-         write_size = DataSize < remaining ? DataSize : remaining;
-         if(!detail::write_file(hnd, data, write_size)){
-            error_info err = system_error_code();
-            throw interprocess_exception(err);
-         }
-      }
-   }
 
    //These are templatized to allow explicit instantiations
    template<bool dummy>
@@ -359,8 +305,7 @@ class managed_open_or_create_impl
 
             if(previous == UninitializedSegment){
                try{
-                  write_whole_device<FileBased>(dev, size, file_like_t());
-                  construct_func((char*)region.get_address() + ManagedOpenOrCreateUserOffset, size - ManagedOpenOrCreateUserOffset, true);
+                  construct_func(static_cast<char*>(region.get_address()) + ManagedOpenOrCreateUserOffset, size - ManagedOpenOrCreateUserOffset, true);
                   //All ok, just move resources to the external mapped region
                   m_mapped_region.swap(region);
                }
@@ -413,7 +358,7 @@ class managed_open_or_create_impl
          if(value != InitializedSegment)
             throw interprocess_exception(error_info(corrupted_error));
 
-         construct_func( (char*)region.get_address() + ManagedOpenOrCreateUserOffset
+         construct_func( static_cast<char*>(region.get_address()) + ManagedOpenOrCreateUserOffset
                         , region.get_size() - ManagedOpenOrCreateUserOffset
                         , false);
          //All ok, just move resources to the external mapped region
@@ -436,20 +381,6 @@ inline void swap(managed_open_or_create_impl<DeviceAbstraction> &x
 {  x.swap(y);  }
 
 }  //namespace detail {
-
-
-///@cond
-
-//!Trait class to detect if a type is
-//!movable
-template<class DeviceAbstraction>
-
-struct is_movable<detail::managed_open_or_create_impl<DeviceAbstraction> >
-{
-   enum {  value = true };
-};
-
-///@endcond
 
 }  //namespace interprocess {
 }  //namespace boost {

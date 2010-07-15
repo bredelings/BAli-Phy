@@ -11,9 +11,9 @@
 //
 // See http://www.boost.org/libs/mpl for documentation.
 
-// $Source$
-// $Date: 2008-03-26 13:13:05 -0400 (Wed, 26 Mar 2008) $
-// $Revision: 43872 $
+// $Id: is_seq.hpp 49267 2008-10-11 06:19:02Z agurtovoy $
+// $Date: 2008-10-11 02:19:02 -0400 (Sat, 11 Oct 2008) $
+// $Revision: 49267 $
 
 #include <boost/preprocessor/seq/size.hpp>
 #include <boost/preprocessor/arithmetic/dec.hpp>

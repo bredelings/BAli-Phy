@@ -17,7 +17,7 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/math/distributions/complement.hpp>
 #include <boost/math/distributions/detail/common_error_handling.hpp>
-#include <cmath>
+#include <boost/config/no_tr1/cmath.hpp>
 
 #include <utility>
 
@@ -140,7 +140,7 @@ RealType quantile_imp(
       return location;
    }
    result = -scale / tan(constants::pi<RealType>() * P);
-   return complement ? location - result : location + result;
+   return complement ? RealType(location - result) : RealType(location + result);
 } // quantile
 
 } // namespace detail

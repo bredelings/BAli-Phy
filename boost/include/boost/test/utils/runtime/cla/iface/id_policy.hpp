@@ -1,4 +1,4 @@
-//  (C) Copyright Gennadiy Rozental 2005-2007.
+//  (C) Copyright Gennadiy Rozental 2005-2008.
 //  Use, modification, and distribution are subject to the
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -7,7 +7,7 @@
 //
 //  File        : $RCSfile$
 //
-//  Version     : $Revision: 43798 $
+//  Version     : $Revision: 57992 $
 //
 //  Description : defines interface for identification_policy
 // ***************************************************************************
@@ -34,6 +34,11 @@ namespace cla {
 // **************             identification_policy            ************** //
 // ************************************************************************** //
 
+#ifdef BOOST_MSVC
+#  pragma warning(push)
+#  pragma warning(disable:4244)
+#endif
+
 class identification_policy {
 public:
     // Public properties
@@ -49,10 +54,15 @@ public:
 
 protected:
     // Constructor
-    explicit        identification_policy( rtti::id_t const& dyn_type )
+    explicit        identification_policy( rtti::id_t dyn_type )
     : p_type_id( dyn_type )
     {}
+    BOOST_TEST_PROTECTED_VIRTUAL ~identification_policy() {}
 };
+
+#ifdef BOOST_MSVC
+#  pragma warning(pop)
+#endif
 
 } // namespace cla
 

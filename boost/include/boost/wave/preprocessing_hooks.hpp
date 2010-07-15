@@ -3,7 +3,7 @@
 
     http://www.boost.org/
 
-    Copyright (c) 2001-2008 Hartmut Kaiser. Distributed under the Boost
+    Copyright (c) 2001-2010 Hartmut Kaiser. Distributed under the Boost
     Software License, Version 1.0. (See accompanying file
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
@@ -238,7 +238,7 @@ struct default_preprocessing_hooks
         std::string const& absname, bool is_system_include) 
     {}
 #endif
-    
+
     ///////////////////////////////////////////////////////////////////////////
     //  
     //  The function 'returning_from_include_file' is called, whenever an
@@ -260,6 +260,80 @@ struct default_preprocessing_hooks
     returning_from_include_file(ContextT const& ctx) 
     {}
 #endif
+
+#if BOOST_WAVE_SUPPORT_PRAGMA_ONCE != 0
+    ///////////////////////////////////////////////////////////////////////////
+    //  
+    //  The function 'detected_include_guard' is called whenever either a 
+    //  include file is about to be added to the list of #pragma once headers.
+    //  That means this header file will not be opened and parsed again even 
+    //  if it is specified in a later #include directive.
+    //  This function is called as the result of a detected include guard 
+    //  scheme. 
+    //
+    //  The implemented heuristics for include guards detects two forms of 
+    //  include guards:
+    // 
+    //       #ifndef INCLUDE_GUARD_MACRO
+    //       #define INCLUDE_GUARD_MACRO
+    //       ...
+    //       #endif
+    // 
+    //   or
+    // 
+    //       if !defined(INCLUDE_GUARD_MACRO)
+    //       #define INCLUDE_GUARD_MACRO
+    //       ...
+    //       #endif
+    // 
+    //  note, that the parenthesis are optional (i.e. !defined INCLUDE_GUARD_MACRO
+    //  will work as well). The code allows for any whitespace, newline and single 
+    //  '#' tokens before the #if/#ifndef and after the final #endif.
+    //
+    //  The parameter 'ctx' is a reference to the context object used for 
+    //  instantiating the preprocessing iterators by the user.
+    //
+    //  The parameter 'filename' contains the file system path of the 
+    //  opened file (this is relative to the directory of the currently 
+    //  processed file or a absolute path depending on the paths given as the
+    //  include search paths).
+    //
+    //  The parameter contains the name of the detected include guard.
+    //
+    ///////////////////////////////////////////////////////////////////////////
+    template <typename ContextT>
+    void
+    detected_include_guard(ContextT const& ctx, std::string const& filename,
+        std::string const& include_guard) 
+    {}
+
+    ///////////////////////////////////////////////////////////////////////////
+    //  
+    //  The function 'detected_pragma_once' is called whenever either a 
+    //  include file is about to be added to the list of #pragma once headers.
+    //  That means this header file will not be opened and parsed again even 
+    //  if it is specified in a later #include directive.
+    //  This function is called as the result of a detected directive
+    //  #pragma once. 
+    //  
+    //  The parameter 'ctx' is a reference to the context object used for 
+    //  instantiating the preprocessing iterators by the user.
+    //
+    //  The parameter pragma_token refers to the token "#pragma" triggering 
+    //  this preprocessing hook.
+    //
+    //  The parameter 'filename' contains the file system path of the 
+    //  opened file (this is relative to the directory of the currently 
+    //  processed file or a absolute path depending on the paths given as the
+    //  include search paths).
+    //
+    ///////////////////////////////////////////////////////////////////////////
+    template <typename ContextT, typename TokenT>
+    void
+    detected_pragma_once(ContextT const& ctx, TokenT const& pragma_token,
+        std::string const& filename) 
+    {}
+#endif 
 
     ///////////////////////////////////////////////////////////////////////////
     //  
@@ -293,6 +367,36 @@ struct default_preprocessing_hooks
     bool 
     interpret_pragma(ContextT const& ctx, ContainerT &pending, 
         typename ContextT::token_type const& option, ContainerT const& values, 
+        typename ContextT::token_type const& act_token)
+    {
+        return false;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    //
+    //  The function 'emit_line_directive' is called whenever a #line directive
+    //  has to be emitted into the generated output.
+    //
+    //  The parameter 'ctx' is a reference to the context object used for 
+    //  instantiating the preprocessing iterators by the user.
+    //
+    //  The parameter 'pending' may be used to push tokens back into the input 
+    //  stream, which are to be used instead of the default output generated
+    //  for the #line directive.
+    //
+    //  The parameter 'act_token' contains the actual #pragma token, which may 
+    //  be used for error output. The line number stored in this token can be
+    //  used as the line number emitted as part of the #line directive.
+    //
+    //  If the return value is 'false', a default #line directive is emitted
+    //  by the library. A return value of 'true' will inhibit any further 
+    //  actions, the tokens contained in 'pending' will be copied verbatim 
+    //  to the output.
+    //
+    ///////////////////////////////////////////////////////////////////////////
+    template <typename ContextT, typename ContainerT>
+    bool 
+    emit_line_directive(ContextT const& ctx, ContainerT &pending, 
         typename ContextT::token_type const& act_token)
     {
         return false;
@@ -368,7 +472,7 @@ struct default_preprocessing_hooks
     undefined_macro(ContextT const& ctx, TokenT const& macro_name)
     {}
 #endif
-    
+
     ///////////////////////////////////////////////////////////////////////////
     //
     //  The function 'found_directive' is called, whenever a preprocessor 
@@ -400,6 +504,34 @@ struct default_preprocessing_hooks
     found_directive(ContextT const& ctx, TokenT const& directive)
     { return false; }   // by default we never skip any directives
 #endif
+
+    ///////////////////////////////////////////////////////////////////////////
+    //
+    //  The function 'found_unknown_directive' is called, whenever an unknown 
+    //  preprocessor directive was encountered.
+    //
+    //  The parameter 'ctx' is a reference to the context object used for 
+    //  instantiating the preprocessing iterators by the user.
+    //
+    //  The parameter 'line' holds the tokens of the entire source line
+    //  containing the unknown directive.
+    //
+    //  The parameter 'pending' may be used to push tokens back into the input 
+    //  stream, which are to be used as the replacement text for the whole 
+    //  line containing the unknown directive.
+    //
+    //  The return value defines, whether the given expression has been 
+    //  properly interpreted by the hook function or not. If this function 
+    //  returns 'false', the library will raise an 'ill_formed_directive' 
+    //  preprocess_exception. Otherwise the tokens pushed back into 'pending'
+    //  are passed on to the user program.
+    //
+    ///////////////////////////////////////////////////////////////////////////
+    template <typename ContextT, typename ContainerT>
+    bool
+    found_unknown_directive(ContextT const& ctx, ContainerT const& line, 
+        ContainerT& pending)
+    { return false; }   // by default we never interpret unknown directives
 
     ///////////////////////////////////////////////////////////////////////////
     //
@@ -441,7 +573,7 @@ struct default_preprocessing_hooks
         bool expression_value)
     { return false; }         // ok to continue, do not re-evaluate expression
 #endif
-    
+
     ///////////////////////////////////////////////////////////////////////////
     //
     //  The function 'skipped_token' is called, whenever a token is about to be
@@ -591,7 +723,7 @@ struct default_preprocessing_hooks
     found_line_directive(ContextT const& ctx, ContainerT const& arguments,
         unsigned int line, std::string const& filename)
     {}
-    
+
     ///////////////////////////////////////////////////////////////////////////
     //
     //  The function 'throw_exception' will be called by the library whenever a

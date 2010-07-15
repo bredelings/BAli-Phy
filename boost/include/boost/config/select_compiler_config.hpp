@@ -31,6 +31,7 @@
 #   define BOOST_CXX_IBMCPP   0
 #   define BOOST_CXX_MSVC     0
 #   define BOOST_CXX_PGI      0
+#   define BOOST_CXX_NVCC     0
 
 
 // locate which compiler we are using and define
@@ -39,6 +40,10 @@
 #if defined(__GCCXML__)
 // GCC-XML emulates other compilers, it has to appear first here!
 #   define BOOST_COMPILER_CONFIG "boost/config/compiler/gcc_xml.hpp"
+
+#elif defined __CUDACC__
+//  NVIDIA CUDA C++ compiler for GPU
+#   define BOOST_COMPILER_CONFIG "boost/config/compiler/nvcc.hpp"
 
 #elif defined __COMO__
 //  Comeau C++
@@ -71,6 +76,10 @@
 #elif defined __ghs
 //  Greenhills C++
 #   define BOOST_COMPILER_CONFIG "boost/config/compiler/greenhills.hpp"
+
+#elif defined __CODEGEARC__
+//  CodeGear - must be checked for before Borland
+#   define BOOST_COMPILER_CONFIG "boost/config/compiler/codegear.hpp"
 
 #elif defined __BORLANDC__
 //  Borland

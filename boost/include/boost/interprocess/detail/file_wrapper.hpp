@@ -24,6 +24,9 @@ namespace detail{
 
 class file_wrapper
 {
+   /// @cond
+   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(file_wrapper)
+   /// @endcond
    public:
 
    //!Default constructor.
@@ -49,34 +52,18 @@ class file_wrapper
    //!Moves the ownership of "moved"'s file to *this. 
    //!After the call, "moved" does not represent any file. 
    //!Does not throw
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   file_wrapper
-      (detail::moved_object<file_wrapper> moved)
-   {  this->swap(moved.get());   }
-   #else
-   file_wrapper(file_wrapper &&moved)
+   file_wrapper(BOOST_INTERPROCESS_RV_REF(file_wrapper) moved)
    {  this->swap(moved);   }
-   #endif
 
    //!Moves the ownership of "moved"'s file to *this.
    //!After the call, "moved" does not represent any file.
    //!Does not throw
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   file_wrapper &operator=
-      (detail::moved_object<file_wrapper> moved)
+   file_wrapper &operator=(BOOST_INTERPROCESS_RV_REF(file_wrapper) moved)
    {  
-      file_wrapper tmp(moved);
+      file_wrapper tmp(boost::interprocess::move(moved));
       this->swap(tmp);
       return *this;  
    }
-   #else
-   file_wrapper &operator=(file_wrapper &&moved)
-   {  
-      file_wrapper tmp(detail::move_impl(moved));
-      this->swap(tmp);
-      return *this;  
-   }
-   #endif
 
    //!Swaps to file_wrappers.
    //!Does not throw

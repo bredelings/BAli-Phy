@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -150,7 +150,13 @@ inline bool named_mutex::try_lock()
 {  return m_sem.try_wait();  }
 
 inline bool named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
-{  return m_sem.timed_wait(abs_time);  }
+{
+   if(abs_time == boost::posix_time::pos_infin){
+      this->lock();
+      return true;
+   }
+   return m_sem.timed_wait(abs_time);
+}
 
 inline bool named_mutex::remove(const char *name)
 {  return detail::named_semaphore_wrapper::remove(name);   }
@@ -203,7 +209,13 @@ inline bool named_mutex::try_lock()
 {  return this->mutex()->try_lock();  }
 
 inline bool named_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
-{  return this->mutex()->timed_lock(abs_time);  }
+{
+   if(abs_time == boost::posix_time::pos_infin){
+      this->lock();
+      return true;
+   }
+   return this->mutex()->timed_lock(abs_time);
+}
 
 inline bool named_mutex::remove(const char *name)
 {  return shared_memory_object::remove(name); }

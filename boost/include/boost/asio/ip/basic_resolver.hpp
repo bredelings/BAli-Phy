@@ -2,7 +2,7 @@
 // basic_resolver.hpp
 // ~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2010 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,6 +19,8 @@
 
 #include <boost/asio/basic_io_object.hpp>
 #include <boost/asio/error.hpp>
+#include <boost/asio/ip/basic_resolver_iterator.hpp>
+#include <boost/asio/ip/basic_resolver_query.hpp>
 #include <boost/asio/ip/resolver_service.hpp>
 #include <boost/asio/detail/throw_error.hpp>
 
@@ -48,10 +50,10 @@ public:
   typedef typename InternetProtocol::endpoint endpoint_type;
 
   /// The query type.
-  typedef typename InternetProtocol::resolver_query query;
+  typedef basic_resolver_query<InternetProtocol> query;
 
   /// The iterator type.
-  typedef typename InternetProtocol::resolver_iterator iterator;
+  typedef basic_resolver_iterator<InternetProtocol> iterator;
 
   /// Constructor.
   /**
@@ -76,7 +78,7 @@ public:
     return this->service.cancel(this->implementation);
   }
 
-  /// Resolve a query to a list of entries.
+  /// Perform forward resolution of a query to a list of entries.
   /**
    * This function is used to resolve a query into a list of endpoint entries.
    *
@@ -100,7 +102,7 @@ public:
     return i;
   }
 
-  /// Resolve a query to a list of entries.
+  /// Perform forward resolution of a query to a list of entries.
   /**
    * This function is used to resolve a query into a list of endpoint entries.
    *
@@ -122,7 +124,7 @@ public:
     return this->service.resolve(this->implementation, q, ec);
   }
 
-  /// Asynchronously resolve a query to a list of entries.
+  /// Asynchronously perform forward resolution of a query to a list of entries.
   /**
    * This function is used to asynchronously resolve a query into a list of
    * endpoint entries.
@@ -154,7 +156,7 @@ public:
     return this->service.async_resolve(this->implementation, q, handler);
   }
 
-  /// Resolve an endpoint to a list of entries.
+  /// Perform reverse resolution of an endpoint to a list of entries.
   /**
    * This function is used to resolve an endpoint into a list of endpoint
    * entries.
@@ -180,7 +182,7 @@ public:
     return i;
   }
 
-  /// Resolve an endpoint to a list of entries.
+  /// Perform reverse resolution of an endpoint to a list of entries.
   /**
    * This function is used to resolve an endpoint into a list of endpoint
    * entries.
@@ -204,7 +206,8 @@ public:
     return this->service.resolve(this->implementation, e, ec);
   }
 
-  /// Asynchronously resolve an endpoint to a list of entries.
+  /// Asynchronously perform reverse resolution of an endpoint to a list of
+  /// entries.
   /**
    * This function is used to asynchronously resolve an endpoint into a list of
    * endpoint entries.

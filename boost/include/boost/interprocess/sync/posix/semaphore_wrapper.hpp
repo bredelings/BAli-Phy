@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -20,9 +20,9 @@
 #include <semaphore.h>
 
 #ifdef SEM_FAILED
-#define BOOST_INTERPROCESS_POSIX_SEM_FAILED SEM_FAILED
+#define BOOST_INTERPROCESS_POSIX_SEM_FAILED (reinterpret_cast<sem_t*>(SEM_FAILED))
 #else
-#define BOOST_INTERPROCESS_POSIX_SEM_FAILED ((sem_t*)(-1))
+#define BOOST_INTERPROCESS_POSIX_SEM_FAILED (reinterpret_cast<sem_t*>(-1))
 #endif
 
 #ifdef BOOST_INTERPROCESS_POSIX_TIMEOUTS
@@ -119,7 +119,7 @@ inline bool semaphore_unlink(const char *semname)
    }
 }
 
-inline void semaphore_init(sem_t *handle, int initialCount)
+inline void semaphore_init(sem_t *handle, unsigned int initialCount)
 {
    int ret = sem_init(handle, 1, initialCount);
    //According to SUSV3 version 2003 edition, the return value of a successful
@@ -243,7 +243,7 @@ class semaphore_wrapper
    semaphore_wrapper &operator= (const semaphore_wrapper &);
 
    public:
-   semaphore_wrapper(int initialCount)
+   semaphore_wrapper(unsigned int initialCount)
    {  semaphore_init(&m_sem, initialCount);  }
 
    ~semaphore_wrapper()

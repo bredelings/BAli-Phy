@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -22,8 +22,11 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
+#include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/interprocess/sync/lock_options.hpp>
 #include <boost/interprocess/exceptions.hpp>
+#include <boost/interprocess/detail/mpl.hpp>
+#include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 
@@ -33,11 +36,6 @@
 namespace boost {
 namespace interprocess {
 
-template<class M>
-class sharable_lock;
-
-template<class M>
-class upgradable_lock;
 
 //!scoped_lock is meant to carry out the tasks for locking, unlocking, try-locking
 //!and timed-locking (recursive or not) for the Mutex. The Mutex need not supply all
@@ -55,11 +53,11 @@ class scoped_lock
    /// @cond
    private:
    typedef scoped_lock<Mutex> this_type;
-   scoped_lock(scoped_lock const&);
-   scoped_lock& operator=  (scoped_lock const&);
+   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(scoped_lock)
    typedef bool this_type::*unspecified_bool_type;
    /// @endcond
    public:
+
    typedef Mutex mutex_type;
 
    //!Effects: Default constructs a scoped_lock.
@@ -80,14 +78,14 @@ class scoped_lock
    //!Postconditions: owns() == false, and mutex() == &m.
    //!Notes: The constructor will not take ownership of the mutex. There is no effect
    //!   required on the referenced mutex.
-   scoped_lock(mutex_type& m, detail::defer_lock_type)
+   scoped_lock(mutex_type& m, defer_lock_type)
       : mp_mutex(&m), m_locked(false)
    {}
 
    //!Postconditions: owns() == true, and mutex() == &m.
    //!Notes: The constructor will suppose that the mutex is already locked. There
    //!   is no effect required on the referenced mutex.
-   scoped_lock(mutex_type& m, detail::accept_ownership_type)
+   scoped_lock(mutex_type& m, accept_ownership_type)
       : mp_mutex(&m), m_locked(true)
    {}
 
@@ -99,7 +97,7 @@ class scoped_lock
    //!   locking depends upon the mutex. If the mutex_type does not support try_lock,
    //!   this constructor will fail at compile time if instantiated, but otherwise
    //!   have no effect.
-   scoped_lock(mutex_type& m, detail::try_to_lock_type)
+   scoped_lock(mutex_type& m, try_to_lock_type)
       : mp_mutex(&m), m_locked(mp_mutex->try_lock())
    {}
 
@@ -122,19 +120,12 @@ class scoped_lock
    //!   to thisscoped_lock with no blocking. If the scop scoped_lock does not
    //!   own the mutex, then neither will this scoped_lock. Only a moved
    //!   scoped_lock's will match this signature. An non-moved scoped_lock
-   //!   can be moved with the expression: "detail::move_impl(lock);". This
+   //!   can be moved with the expression: "boost::interprocess::move(lock);". This
    //!   constructor does not alter the state of the mutex, only potentially
    //!   who owns it.
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   scoped_lock(detail::moved_object<scoped_lock<Mutex> > scop)
-      : mp_mutex(0), m_locked(scop.get().owns())
-   {  mp_mutex = scop.get().release(); }
-   #else
-
-   scoped_lock(scoped_lock &&scop)
+   scoped_lock(BOOST_INTERPROCESS_RV_REF(scoped_lock) scop)
       : mp_mutex(0), m_locked(scop.owns())
    {  mp_mutex = scop.release(); }
-   #endif
 
    //!Effects: If upgr.owns() then calls unlock_upgradable_and_lock() on the
    //!   referenced mutex. upgr.release() is called. 
@@ -145,22 +136,12 @@ class scoped_lock
    //!   unlocking upgr. If upgr is unlocked, then this scoped_lock will be
    //!   unlocked as well. Only a moved upgradable_lock's will match this
    //!   signature. An non-moved upgradable_lock can be moved with
-   //!   the expression: "detail::move_impl(lock);" This constructor may block if
+   //!   the expression: "boost::interprocess::move(lock);" This constructor may block if
    //!   other threads hold a sharable_lock on this mutex (sharable_lock's can
    //!   share ownership with an upgradable_lock).
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   scoped_lock(detail::moved_object<upgradable_lock<Mutex> > upgr)
-      : mp_mutex(0), m_locked(false)
-   {
-      upgradable_lock<mutex_type> &u_lock = upgr.get();
-      if(u_lock.owns()){
-         u_lock.mutex()->unlock_upgradable_and_lock();
-         m_locked = true;
-      }
-      mp_mutex = u_lock.release();
-   }
-   #else
-   scoped_lock(upgradable_lock<Mutex> &&upgr)
+   template<class T>
+   explicit scoped_lock(BOOST_INTERPROCESS_RV_REF(upgradable_lock<T>) upgr
+      , typename detail::enable_if< detail::is_same<T, Mutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr;
@@ -170,7 +151,6 @@ class scoped_lock
       }
       mp_mutex = u_lock.release();
    }
-   #endif
 
    //!Effects: If upgr.owns() then calls try_unlock_upgradable_and_lock() on the
    //!referenced mutex:
@@ -186,25 +166,10 @@ class scoped_lock
    //!   "read lock" to a "write lock". If the "read lock" isn't held in the
    //!   first place, the mutex merely changes type to an unlocked "write lock".
    //!   If the "read lock" is held, then mutex transfer occurs only if it can
-   //!   do so in a non-blocking manner.*/
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   scoped_lock(detail::moved_object<upgradable_lock<Mutex> > upgr
-              ,detail::try_to_lock_type)
-      : mp_mutex(0), m_locked(false)
-   {
-      upgradable_lock<mutex_type> &u_lock = upgr.get();
-      if(u_lock.owns()){
-         if((m_locked = u_lock.mutex()->try_unlock_upgradable_and_lock()) == true){
-            mp_mutex = u_lock.release();
-         }
-      }
-      else{
-         u_lock.release();
-      }
-   }
-   #else
-   scoped_lock(upgradable_lock<Mutex> &&upgr
-              ,detail::try_to_lock_type)
+   //!   do so in a non-blocking manner.
+   template<class T>
+   scoped_lock(BOOST_INTERPROCESS_RV_REF(upgradable_lock<T>) upgr, try_to_lock_type
+         , typename detail::enable_if< detail::is_same<T, Mutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr;
@@ -217,7 +182,6 @@ class scoped_lock
          u_lock.release();
       }
    }
-   #endif
 
    //!Effects: If upgr.owns() then calls timed_unlock_upgradable_and_lock(abs_time)
    //!   on the referenced mutex:
@@ -233,24 +197,9 @@ class scoped_lock
    //!   "write lock". If the "read lock" isn't held in the first place, the mutex
    //!   merely changes type to an unlocked "write lock". If the "read lock" is held,
    //!   then mutex transfer occurs only if it can do so in a non-blocking manner.
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   scoped_lock(detail::moved_object<upgradable_lock<Mutex> > upgr
-              ,boost::posix_time::ptime &abs_time)
-      : mp_mutex(0), m_locked(false)
-   {
-      upgradable_lock<mutex_type> &u_lock = upgr.get();
-      if(u_lock.owns()){
-         if((m_locked = u_lock.mutex()->timed_unlock_upgradable_and_lock(abs_time)) == true){
-            mp_mutex = u_lock.release();
-         }
-      }
-      else{
-         u_lock.release();
-      }
-   }
-   #else
-   scoped_lock(upgradable_lock<Mutex> &&upgr
-              ,boost::posix_time::ptime &abs_time)
+   template<class T>
+   scoped_lock(BOOST_INTERPROCESS_RV_REF(upgradable_lock<T>) upgr, boost::posix_time::ptime &abs_time
+               , typename detail::enable_if< detail::is_same<T, Mutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       upgradable_lock<mutex_type> &u_lock = upgr;
@@ -263,7 +212,6 @@ class scoped_lock
          u_lock.release();
       }
    }
-   #endif
 
    //!Effects: If shar.owns() then calls try_unlock_sharable_and_lock() on the
    //!referenced mutex. 
@@ -280,24 +228,9 @@ class scoped_lock
    //!   first place, the mutex merely changes type to an unlocked "write lock".
    //!   If the "read lock" is held, then mutex transfer occurs only if it can
    //!   do so in a non-blocking manner.
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   scoped_lock(detail::moved_object<sharable_lock<Mutex> > shar
-              ,detail::try_to_lock_type)
-      : mp_mutex(0), m_locked(false)
-   {
-      sharable_lock<mutex_type> &s_lock = shar.get();
-      if(s_lock.owns()){
-         if((m_locked = s_lock.mutex()->try_unlock_sharable_and_lock()) == true){
-            mp_mutex = s_lock.release();
-         }
-      }
-      else{
-         s_lock.release();
-      }
-   }
-   #else
-   scoped_lock(sharable_lock<Mutex> &&shar
-              ,detail::try_to_lock_type)
+   template<class T>
+   scoped_lock(BOOST_INTERPROCESS_RV_REF(sharable_lock<T>) shar, try_to_lock_type
+      , typename detail::enable_if< detail::is_same<T, Mutex> >::type * = 0)
       : mp_mutex(0), m_locked(false)
    {
       sharable_lock<mutex_type> &s_lock = shar;
@@ -310,7 +243,6 @@ class scoped_lock
          s_lock.release();
       }
    }
-   #endif
 
    //!Effects: if (owns()) mp_mutex->unlock().
    //!Notes: The destructor behavior ensures that the mutex lock is not leaked.*/
@@ -326,17 +258,7 @@ class scoped_lock
    //!   the same mutex before the assignment. In this case, this will own the
    //!   mutex after the assignment (and scop will not), but the mutex's lock
    //!   count will be decremented by one.
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   scoped_lock &operator=(detail::moved_object<scoped_lock> scop)
-   {  
-      if(this->owns())
-         this->unlock();
-      m_locked = scop.get().owns();
-      mp_mutex = scop.get().release();
-      return *this;
-   }
-   #else
-   scoped_lock &operator=(scoped_lock &&scop)
+   scoped_lock &operator=(BOOST_INTERPROCESS_RV_REF(scoped_lock) scop)
    {  
       if(this->owns())
          this->unlock();
@@ -344,7 +266,6 @@ class scoped_lock
       mp_mutex = scop.release();
       return *this;
    }
-   #endif
 
    //!Effects: If mutex() == 0 or if already locked, throws a lock_exception()
    //!   exception. Calls lock() on the referenced mutex.
@@ -430,19 +351,11 @@ class scoped_lock
  
    //!Effects: Swaps state with moved lock. 
    //!Throws: Nothing.
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   void swap(detail::moved_object<scoped_lock<mutex_type> > other)
-   {
-      std::swap(mp_mutex, other.get().mp_mutex);
-      std::swap(m_locked, other.get().m_locked);
-   }
-   #else
-   void swap(scoped_lock<mutex_type> &&other)
+   void swap( scoped_lock<mutex_type> &other)
    {
       std::swap(mp_mutex, other.mp_mutex);
       std::swap(m_locked, other.m_locked);
    }
-   #endif
 
    /// @cond
    private:
@@ -450,16 +363,6 @@ class scoped_lock
    bool        m_locked;
    /// @endcond
 };
-
-/// @cond
-
-//!This class is movable
-template <class M>
-struct is_movable<scoped_lock<M> >
-{
-   enum {   value = true };
-};
-/// @endcond
 
 } // namespace interprocess
 } // namespace boost

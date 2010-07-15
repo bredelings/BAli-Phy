@@ -17,24 +17,38 @@
 //  See http://www.boost.org for updates, documentation, and revision history.
 
 #include <boost/config.hpp>
-#include <boost/strong_typedef.hpp>
+#include <boost/cstdint.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/integer_traits.hpp>
+#include <boost/serialization/strong_typedef.hpp>
 
 #include <boost/archive/detail/auto_link_archive.hpp>
 #include <boost/archive/detail/abi_prefix.hpp> // must be the last header
 
+#define BOOST_ARCHIVE_STRONG_TYPEDEF(T, D)        \
+namespace boost {                                 \
+namespace archive {                               \
+BOOST_STRONG_TYPEDEF(T, D)                        \
+} /* archive */                                   \
+template<>                                        \
+class integer_traits<boost::archive::D>  :        \
+    public integer_traits<boost::T>               \
+{};                                               \
+} /* boost */                                     \
+/**/
+
+BOOST_ARCHIVE_STRONG_TYPEDEF(uint_least16_t, version_type)
+BOOST_ARCHIVE_STRONG_TYPEDEF(int_least16_t, class_id_type)
+BOOST_ARCHIVE_STRONG_TYPEDEF(int_least16_t, class_id_optional_type)
+BOOST_ARCHIVE_STRONG_TYPEDEF(int_least16_t, class_id_reference_type)
+BOOST_ARCHIVE_STRONG_TYPEDEF(uint_least32_t, object_id_type)
+BOOST_ARCHIVE_STRONG_TYPEDEF(uint_least32_t, object_reference_type)
+
 namespace boost {
 namespace archive {
 
-BOOST_STRONG_TYPEDEF(unsigned int, version_type)
-BOOST_STRONG_TYPEDEF(int, class_id_type)
-BOOST_STRONG_TYPEDEF(int, class_id_optional_type)
-BOOST_STRONG_TYPEDEF(int, class_id_reference_type)
-BOOST_STRONG_TYPEDEF(unsigned int, object_id_type)
-BOOST_STRONG_TYPEDEF(unsigned int, object_reference_type)
-
 struct tracking_type {
-    typedef bool value_type;
+//    typedef bool value_type;
     bool t;
     explicit tracking_type(const bool t_ = false)
         : t(t_)
@@ -64,7 +78,9 @@ struct tracking_type {
     }
 };
 
-struct class_name_type : private boost::noncopyable {
+struct class_name_type : 
+    private boost::noncopyable 
+{
     char *t;
     operator const char * & () const {
         return const_cast<const char * &>(t);
@@ -93,10 +109,10 @@ enum archive_flags {
 #define NULL_POINTER_TAG class_id_type(-1)
 
 BOOST_ARCHIVE_DECL(const char *)
-ARCHIVE_SIGNATURE();
+BOOST_ARCHIVE_SIGNATURE();
 
-BOOST_ARCHIVE_DECL(unsigned char)
-ARCHIVE_VERSION();
+BOOST_ARCHIVE_DECL(version_type)
+BOOST_ARCHIVE_VERSION();
 
 }// namespace archive
 }// namespace boost

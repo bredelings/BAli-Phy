@@ -20,6 +20,7 @@
 #include <boost/throw_exception.hpp>
 
 #include <cctype>
+#include <fstream>
 
 #if !defined(__GNUC__) || __GNUC__ < 3
 #include <iostream>
@@ -67,10 +68,16 @@ namespace boost { namespace program_options {
             woption result;
             result.string_key = opt.string_key;
             result.position_key = opt.position_key;
+            result.unregistered = opt.unregistered;
             
             std::transform(opt.value.begin(), opt.value.end(),
                            back_inserter(result.value),
-                           bind(from_utf8, _1));
+                           boost::bind(from_utf8, _1));
+
+            std::transform(opt.original_tokens.begin(), 
+                           opt.original_tokens.end(),
+                           back_inserter(result.original_tokens),
+                           boost::bind(from_utf8, _1));
             return result;
         }
     }
@@ -128,6 +135,36 @@ namespace boost { namespace program_options {
                       const options_description& desc,
                       bool allow_unregistered);
 #endif
+
+    template<class charT>
+    basic_parsed_options<charT>
+    parse_config_file(const char* filename, 
+                      const options_description& desc,
+                      bool allow_unregistered)
+    { 
+        // Parser return char strings
+        std::basic_ifstream< charT > strm(filename);
+        if (!strm) 
+        {
+            boost::throw_exception(reading_file(filename));
+        }
+        return parse_config_file(strm, desc, allow_unregistered);
+    }
+
+    template
+    BOOST_PROGRAM_OPTIONS_DECL basic_parsed_options<char>
+    parse_config_file(const char* filename, 
+                      const options_description& desc,
+                      bool allow_unregistered);
+
+#ifndef BOOST_NO_STD_WSTRING
+    template
+    BOOST_PROGRAM_OPTIONS_DECL basic_parsed_options<wchar_t>
+    parse_config_file(const char* filename, 
+                      const options_description& desc,
+                      bool allow_unregistered);
+#endif
+
     
 // This versio, which accepts any options without validation, is disabled,
 // in the hope that nobody will need it and we cant drop it altogether.
@@ -164,7 +201,7 @@ namespace boost { namespace program_options {
         return result;
     }
 
-    namespace {
+    namespace detail {
         class prefix_name_mapper {
         public:
             prefix_name_mapper(const std::string& prefix)
@@ -193,7 +230,7 @@ namespace boost { namespace program_options {
     parse_environment(const options_description& desc, 
                       const std::string& prefix)
     {
-        return parse_environment(desc, prefix_name_mapper(prefix));
+        return parse_environment(desc, detail::prefix_name_mapper(prefix));
     }
 
     BOOST_PROGRAM_OPTIONS_DECL parsed_options

@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -156,7 +156,13 @@ inline bool named_recursive_mutex::try_lock()
 {  return this->mutex()->try_lock();  }
 
 inline bool named_recursive_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
-{  return this->mutex()->timed_lock(abs_time);  }
+{
+   if(abs_time == boost::posix_time::pos_infin){
+      this->lock();
+      return true;
+   }
+   return this->mutex()->timed_lock(abs_time);
+}
 
 inline bool named_recursive_mutex::remove(const char *name)
 {  return shared_memory_object::remove(name); }

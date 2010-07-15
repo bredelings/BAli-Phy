@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -40,4 +40,8 @@
    #pragma warning (disable : 4786) // identifier truncated in debug info
    #pragma warning (disable : 4996) // "function": was declared deprecated
    #pragma warning (disable : 4197) // top-level volatile in cast is ignored
+   #pragma warning (disable : 4541) // 'typeid' used on polymorphic type 'boost::exception'
+                                    //    with /GR-; unpredictable behavior may result
+   #pragma warning (disable : 4673) //  throwing '' the following types will not be considered at the catch site
+   #pragma warning (disable : 4671) //  the copy constructor is inaccessible
 #endif

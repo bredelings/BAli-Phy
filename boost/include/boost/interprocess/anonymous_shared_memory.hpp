@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -19,7 +19,7 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include <cstddef>
 
-#if (!defined(BOOST_WINDOWS)) || defined(BOOST_DISABLE_WIN32)
+#if (!defined(BOOST_INTERPROCESS_WINDOWS))
 #  include <fcntl.h>        //open, O_CREAT, O_*... 
 #  include <sys/mman.h>     //mmap
 #  include <sys/stat.h>     //mode_t, S_IRWXG, S_IRWXO, S_IRWXU,
@@ -42,12 +42,7 @@ namespace detail{
    class raw_mapped_region_creator
    {
       public:
-      static
-         #ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
-         mapped_region
-         #else
-         move_return<mapped_region>
-         #endif
+      static mapped_region
          create_posix_mapped_region(void *address, offset_t offset, std::size_t size)
       {
          mapped_region region;
@@ -67,14 +62,10 @@ namespace detail{
 //!Otherwise the operating system will choose the mapping address.
 //!The function returns a mapped_region holding that segment or throws
 //!interprocess_exception if the function fails.
-static
-#ifdef BOOST_INTERPROCESS_RVALUE_REFERENCE
-mapped_region
-#else
-detail::move_return<mapped_region>
-#endif
+//static mapped_region
+static mapped_region
 anonymous_shared_memory(std::size_t size, void *address = 0)
-#if (!defined(BOOST_WINDOWS)) || defined(BOOST_DISABLE_WIN32)
+#if (!defined(BOOST_INTERPROCESS_WINDOWS))
 {
    int flags;
    int fd = -1;
@@ -93,12 +84,12 @@ anonymous_shared_memory(std::size_t size, void *address = 0)
    #endif
 
 
-   address = mmap( (void*)address
-                    , size
-                    , PROT_READ|PROT_WRITE
-                    , flags
-                    , fd
-                    , 0);
+   address = mmap( address
+                  , size
+                  , PROT_READ|PROT_WRITE
+                  , flags
+                  , fd
+                  , 0);
 
    if(address == MAP_FAILED){
       if(fd != -1)   
@@ -115,8 +106,7 @@ anonymous_shared_memory(std::size_t size, void *address = 0)
 #else
 {
    windows_shared_memory anonymous_mapping(create_only, 0, read_write, size);
-   mapped_region region(anonymous_mapping, read_write, 0, size, address);
-   return region;
+   return mapped_region(anonymous_mapping, read_write, 0, size, address);
 }
 
 #endif

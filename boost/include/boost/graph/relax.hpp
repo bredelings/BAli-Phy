@@ -12,7 +12,7 @@
 #include <functional>
 #include <boost/limits.hpp> // for numeric limits
 #include <boost/graph/graph_traits.hpp>
-#include <boost/property_map.hpp>
+#include <boost/property_map/property_map.hpp>
 
 namespace boost {
 
@@ -24,11 +24,10 @@ namespace boost {
     {
       T operator()(const T& a, const T& b) const {
         using namespace std;
-       T zero(0);
-       T result = a + b;
-       if (result < zero && a >= zero && b >= zero)
-         return (numeric_limits<T>::max)();
-       return result;
+       const T inf = (std::numeric_limits<T>::max)();
+       if (a == inf) return inf;
+       if (b == inf) return inf;
+       return a + b;
       }
     };
     
@@ -49,14 +48,17 @@ namespace boost {
       D d_u = get(d, u), d_v = get(d, v);
       W w_e = get(w, e);
       
+      // The redundant gets in the return statements are to ensure that extra
+      // floating-point precision in x87 registers does not lead to relax()
+      // returning true when the distance did not actually change.
       if ( compare(combine(d_u, w_e), d_v) ) {
         put(d, v, combine(d_u, w_e));
         put(p, v, u);
-        return true;
+        return compare(get(d, v), d_v);
       } else if (is_undirected && compare(combine(d_v, w_e), d_u)) {
         put(d, u, combine(d_v, w_e));
         put(p, u, v);
-        return true;
+        return compare(get(d, u), d_u);
       } else
         return false;
     }

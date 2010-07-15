@@ -3,7 +3,7 @@
 // ~~~~~~~~~~~~~~~~~~
 //
 // Copyright (c) 2005 Voipster / Indrek dot Juhani at voipster dot com
-// Copyright (c) 2005-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2005-2010 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -21,6 +21,7 @@
 #include <boost/asio/detail/push_options.hpp>
 #include <cstddef>
 #include <climits>
+#include <memory>
 #include <boost/config.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/function.hpp>
@@ -30,6 +31,7 @@
 #include <boost/asio/error.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/strand.hpp>
+#include <boost/asio/detail/buffer_sequence_adapter.hpp>
 #include <boost/asio/detail/service_base.hpp>
 #include <boost/asio/ssl/basic_context.hpp>
 #include <boost/asio/ssl/stream_base.hpp>
@@ -100,8 +102,8 @@ private:
     Handler handler_;
     void handler_impl(const boost::system::error_code& error, size_t size)
     {
+      std::auto_ptr<io_handler<Stream, Handler> > this_ptr(this);
       handler_(error, size);
-      delete this;
     }
   };  // class io_handler 
 
@@ -124,8 +126,8 @@ private:
     Handler handler_;
     void handler_impl(const boost::system::error_code& error, size_t)
     {
+      std::auto_ptr<handshake_handler<Stream, Handler> > this_ptr(this);
       handler_(error);
-      delete this;
     }
 
   };  // class handshake_handler
@@ -149,8 +151,8 @@ private:
     Handler handler_;
     void handler_impl(const boost::system::error_code& error, size_t)
     {
+      std::auto_ptr<shutdown_handler<Stream, Handler> > this_ptr(this);
       handler_(error);
-      delete this;
     }
   };  // class shutdown_handler
 
@@ -183,7 +185,7 @@ public:
 
   // Create a new stream implementation.
   template <typename Stream, typename Context_Service>
-  void create(impl_type& impl, Stream& next_layer,
+  void create(impl_type& impl, Stream& /*next_layer*/,
       basic_context<Context_Service>& context)
   {
     impl = new impl_struct;
@@ -198,7 +200,7 @@ public:
 
   // Destroy a stream implementation.
   template <typename Stream>
-  void destroy(impl_type& impl, Stream& next_layer)
+  void destroy(impl_type& impl, Stream& /*next_layer*/)
   {
     if (impl != 0)
     {
@@ -332,13 +334,22 @@ public:
     size_t bytes_transferred = 0;
     try
     {
-      std::size_t buffer_size = boost::asio::buffer_size(*buffers.begin());
+      boost::asio::const_buffer buffer =
+        boost::asio::detail::buffer_sequence_adapter<
+          boost::asio::const_buffer, Const_Buffers>::first(buffers);
+
+      std::size_t buffer_size = boost::asio::buffer_size(buffer);
       if (buffer_size > max_buffer_size)
         buffer_size = max_buffer_size;
+      else if (buffer_size == 0)
+      {
+        ec = boost::system::error_code();
+        return 0;
+      }
 
       boost::function<int (SSL*)> send_func =
-        boost::bind(&::SSL_write, boost::arg<1>(),  
-            boost::asio::buffer_cast<const void*>(*buffers.begin()),
+        boost::bind(boost::type<int>(), &::SSL_write, boost::arg<1>(),  
+            boost::asio::buffer_cast<const void*>(buffer),
             static_cast<int>(buffer_size));
       openssl_operation<Stream> op(
         send_func,
@@ -366,15 +377,25 @@ public:
   {
     typedef io_handler<Stream, Handler> send_handler;
 
-    send_handler* local_handler = new send_handler(handler, get_io_service());
+    boost::asio::const_buffer buffer =
+      boost::asio::detail::buffer_sequence_adapter<
+        boost::asio::const_buffer, Const_Buffers>::first(buffers);
 
-    std::size_t buffer_size = boost::asio::buffer_size(*buffers.begin());
+    std::size_t buffer_size = boost::asio::buffer_size(buffer);
     if (buffer_size > max_buffer_size)
       buffer_size = max_buffer_size;
+    else if (buffer_size == 0)
+    {
+      get_io_service().post(boost::asio::detail::bind_handler(
+            handler, boost::system::error_code(), 0));
+      return;
+    }
+
+    send_handler* local_handler = new send_handler(handler, get_io_service());
 
     boost::function<int (SSL*)> send_func =
-      boost::bind(&::SSL_write, boost::arg<1>(),
-          boost::asio::buffer_cast<const void*>(*buffers.begin()),
+      boost::bind(boost::type<int>(), &::SSL_write, boost::arg<1>(),
+          boost::asio::buffer_cast<const void*>(buffer),
           static_cast<int>(buffer_size));
 
     openssl_operation<Stream>* op = new openssl_operation<Stream>
@@ -406,13 +427,22 @@ public:
     size_t bytes_transferred = 0;
     try
     {
-      std::size_t buffer_size = boost::asio::buffer_size(*buffers.begin());
+      boost::asio::mutable_buffer buffer =
+        boost::asio::detail::buffer_sequence_adapter<
+          boost::asio::mutable_buffer, Mutable_Buffers>::first(buffers);
+
+      std::size_t buffer_size = boost::asio::buffer_size(buffer);
       if (buffer_size > max_buffer_size)
         buffer_size = max_buffer_size;
+      else if (buffer_size == 0)
+      {
+        ec = boost::system::error_code();
+        return 0;
+      }
 
       boost::function<int (SSL*)> recv_func =
-        boost::bind(&::SSL_read, boost::arg<1>(),
-            boost::asio::buffer_cast<void*>(*buffers.begin()),
+        boost::bind(boost::type<int>(), &::SSL_read, boost::arg<1>(),
+            boost::asio::buffer_cast<void*>(buffer),
             static_cast<int>(buffer_size));
       openssl_operation<Stream> op(recv_func,
         next_layer,
@@ -440,15 +470,25 @@ public:
   {
     typedef io_handler<Stream, Handler> recv_handler;
 
-    recv_handler* local_handler = new recv_handler(handler, get_io_service());
+    boost::asio::mutable_buffer buffer =
+      boost::asio::detail::buffer_sequence_adapter<
+        boost::asio::mutable_buffer, Mutable_Buffers>::first(buffers);
 
-    std::size_t buffer_size = boost::asio::buffer_size(*buffers.begin());
+    std::size_t buffer_size = boost::asio::buffer_size(buffer);
     if (buffer_size > max_buffer_size)
       buffer_size = max_buffer_size;
+    else if (buffer_size == 0)
+    {
+      get_io_service().post(boost::asio::detail::bind_handler(
+            handler, boost::system::error_code(), 0));
+      return;
+    }
+
+    recv_handler* local_handler = new recv_handler(handler, get_io_service());
 
     boost::function<int (SSL*)> recv_func =
-      boost::bind(&::SSL_read, boost::arg<1>(),
-          boost::asio::buffer_cast<void*>(*buffers.begin()),
+      boost::bind(boost::type<int>(), &::SSL_read, boost::arg<1>(),
+          boost::asio::buffer_cast<void*>(buffer),
           static_cast<int>(buffer_size));
 
     openssl_operation<Stream>* op = new openssl_operation<Stream>
@@ -474,8 +514,8 @@ public:
 
   // Peek at the incoming data on the stream.
   template <typename Stream, typename Mutable_Buffers>
-  std::size_t peek(impl_type& impl, Stream& next_layer,
-      const Mutable_Buffers& buffers, boost::system::error_code& ec)
+  std::size_t peek(impl_type& /*impl*/, Stream& /*next_layer*/,
+      const Mutable_Buffers& /*buffers*/, boost::system::error_code& ec)
   {
     ec = boost::system::error_code();
     return 0;
@@ -483,7 +523,7 @@ public:
 
   // Determine the amount of data that may be read without blocking.
   template <typename Stream>
-  std::size_t in_avail(impl_type& impl, Stream& next_layer,
+  std::size_t in_avail(impl_type& /*impl*/, Stream& /*next_layer*/,
       boost::system::error_code& ec)
   {
     ec = boost::system::error_code();

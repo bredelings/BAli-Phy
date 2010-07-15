@@ -2,7 +2,7 @@
 // win_iocp_serial_port_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2010 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 // Copyright (c) 2008 Rep Invariant Systems, Inc. (info@repinvariant.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -37,7 +37,6 @@ namespace detail {
 
 // Extend win_iocp_handle_service to provide serial port support.
 class win_iocp_serial_port_service
-  : public boost::asio::detail::service_base<win_iocp_serial_port_service>
 {
 public:
   // The native type of a stream handle.
@@ -47,10 +46,7 @@ public:
   typedef win_iocp_handle_service::implementation_type implementation_type;
 
   win_iocp_serial_port_service(boost::asio::io_service& io_service)
-    : boost::asio::detail::service_base<
-        win_iocp_serial_port_service>(io_service),
-      handle_service_(
-          boost::asio::use_service<win_iocp_handle_service>(io_service))
+    : handle_service_(io_service)
   {
   }
 
@@ -237,7 +233,7 @@ public:
   }
 
   // Send a break sequence to the serial port.
-  boost::system::error_code send_break(implementation_type& impl,
+  boost::system::error_code send_break(implementation_type&,
       boost::system::error_code& ec)
   {
     ec = boost::asio::error::operation_not_supported;
@@ -279,8 +275,8 @@ public:
   }
 
 private:
-  // The handle service used for initiating asynchronous operations.
-  win_iocp_handle_service& handle_service_;
+  // The implementation used for initiating asynchronous operations.
+  win_iocp_handle_service handle_service_;
 };
 
 } // namespace detail

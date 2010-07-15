@@ -42,7 +42,7 @@ namespace archive {
 //This should never ever change. note that is not an std::string
 // string.
 BOOST_ARCHIVE_DECL(const char *) 
-ARCHIVE_SIGNATURE(){
+BOOST_ARCHIVE_SIGNATURE(){
     return "serialization::archive";
 }
 
@@ -57,10 +57,11 @@ ARCHIVE_SIGNATURE(){
 // 5 - Boost 1.36
 //     changed serialization of collections: adding version even for primitive
 //     types caused backwards compatibility breaking change in 1.35
+// 6 - Boost 1.41, serializing collection sizes as std::size_t
 
-BOOST_ARCHIVE_DECL(unsigned char)
-ARCHIVE_VERSION(){
-    return 5;
+BOOST_ARCHIVE_DECL(version_type)
+BOOST_ARCHIVE_VERSION(){
+    return version_type(7);
 }
 
 } // namespace archive

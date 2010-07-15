@@ -1,4 +1,4 @@
-//  (C) Copyright Gennadiy Rozental 2005-2007.
+//  (C) Copyright Gennadiy Rozental 2005-2008.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at 
 //  http://www.boost.org/LICENSE_1_0.txt)
@@ -7,13 +7,17 @@
 //
 //  File        : $RCSfile$
 //
-//  Version     : $Revision: 43798 $
+//  Version     : $Revision: 54633 $
 //
 //  Description : environment subsystem forward declarations
 // ***************************************************************************
 
 #ifndef BOOST_RT_ENV_FWD_HPP_062604GER
 #define BOOST_RT_ENV_FWD_HPP_062604GER
+
+#ifdef UNDER_CE
+#error Windows CE does not support environment variables.
+#endif
 
 // Boost.Runtime.Parameter
 #include <boost/test/utils/runtime/config.hpp>
@@ -23,6 +27,9 @@ namespace boost {
 namespace BOOST_RT_PARAM_NAMESPACE {
 
 namespace environment {
+
+class variable_base;
+variable_base var( cstring var_name );
 
 namespace rt_env_detail {
 
@@ -36,7 +43,6 @@ void            sys_write_var( cstring var_name, format_stream& var_value );
 
 }
 
-class variable_base;
 template <typename T> class variable;
 
 } // namespace environment

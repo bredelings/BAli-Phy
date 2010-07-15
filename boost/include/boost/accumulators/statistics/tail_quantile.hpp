@@ -13,7 +13,7 @@
 #include <functional>
 #include <sstream>
 #include <stdexcept>
-#include <cmath>             // For ceil
+#include <boost/config/no_tr1/cmath.hpp>             // For ceil
 #include <boost/throw_exception.hpp>
 #include <boost/parameter/keyword.hpp>
 #include <boost/mpl/placeholders.hpp>
@@ -122,6 +122,8 @@ namespace tag
 namespace extract
 {
     extractor<tag::quantile> const tail_quantile = {};
+
+    BOOST_ACCUMULATORS_IGNORE_GLOBAL(tail_quantile)
 }
 
 using extract::tail_quantile;

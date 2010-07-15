@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -53,12 +53,12 @@ inline void interprocess_condition::notify(boost::uint32_t command)
    }
 
    //Notify that all threads should execute wait logic
-   while(SLEEP != detail::atomic_cas32((boost::uint32_t*)&m_command, command, SLEEP)){
+   while(SLEEP != detail::atomic_cas32(const_cast<boost::uint32_t*>(&m_command), command, SLEEP)){
       detail::thread_yield();
    }
 /*
    //Wait until the threads are woken
-   while(SLEEP != detail::atomic_cas32((boost::uint32_t*)&m_command, 0)){
+   while(SLEEP != detail::atomic_cas32(const_cast<boost::uint32_t*>(&m_command), 0)){
       detail::thread_yield();
    }
 */
@@ -94,11 +94,11 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
       InternalLock lock;
       if(tout_enabled){
          InternalLock dummy(m_enter_mut, abs_time);
-         lock = detail::move_impl(dummy);
+         lock = boost::interprocess::move(dummy);
       }
       else{
          InternalLock dummy(m_enter_mut);
-         lock = detail::move_impl(dummy);
+         lock = boost::interprocess::move(dummy);
       }
 
       if(!lock)
@@ -107,7 +107,7 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
       //We increment the waiting thread count protected so that it will be
       //always constant when another thread enters the notification logic.
       //The increment marks this thread as "waiting on interprocess_condition"
-      detail::atomic_inc32((boost::uint32_t*)&m_num_waiters);
+      detail::atomic_inc32(const_cast<boost::uint32_t*>(&m_num_waiters));
 
       //We unlock the external interprocess_mutex atomically with the increment
       mut.unlock();
@@ -150,29 +150,35 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
       //If a timeout occurred, the interprocess_mutex will not execute checking logic
       if(tout_enabled && timed_out){
          //Decrement wait count
-         detail::atomic_dec32((boost::uint32_t*)&m_num_waiters);
+         detail::atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
          unlock_enter_mut = true;
          break;
       }
       else{
          //Notification occurred, we will lock the checking interprocess_mutex so that
          //if a notify_one notification occurs, only one thread can exit
-        //---------------------------------------------------------------
+         //---------------------------------------------------------------
+         /*
          InternalLock lock;
          if(tout_enabled){
             InternalLock dummy(m_check_mut, abs_time);
-            lock = detail::move_impl(dummy);
+            lock = boost::interprocess::move(dummy);
          }
          else{
             InternalLock dummy(m_check_mut);
-            lock = detail::move_impl(dummy);
+            lock = boost::interprocess::move(dummy);
          }
-
-         if(!lock)
-            return false;
+         if(!lock){
+            timed_out = true;
+            unlock_enter_mut = true;
+            detail::atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
+            break;
+         }
          //---------------------------------------------------------------
+         */
+         //InternalLock lock(m_check_mut);
          boost::uint32_t result = detail::atomic_cas32
-                        ((boost::uint32_t*)&m_command, SLEEP, NOTIFY_ONE);
+                        (const_cast<boost::uint32_t*>(&m_command), SLEEP, NOTIFY_ONE);
          if(result == SLEEP){
             //Other thread has been notified and since it was a NOTIFY one
             //command, this thread must sleep again
@@ -184,17 +190,17 @@ inline bool interprocess_condition::do_timed_wait(bool tout_enabled,
             //so no other thread will exit.
             //Decrement wait count.
             unlock_enter_mut = true;
-            detail::atomic_dec32((boost::uint32_t*)&m_num_waiters);
+            detail::atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
             break;
          }
          else{
             //If it is a NOTIFY_ALL command, all threads should return 
             //from do_timed_wait function. Decrement wait count. 
-            unlock_enter_mut = 1 == detail::atomic_dec32((boost::uint32_t*)&m_num_waiters);
+            unlock_enter_mut = 1 == detail::atomic_dec32(const_cast<boost::uint32_t*>(&m_num_waiters));
             //Check if this is the last thread of notify_all waiters
             //Only the last thread will release the interprocess_mutex
             if(unlock_enter_mut){
-               detail::atomic_cas32((boost::uint32_t*)&m_command, SLEEP, NOTIFY_ALL);
+               detail::atomic_cas32(const_cast<boost::uint32_t*>(&m_command), SLEEP, NOTIFY_ALL);
             }
             break;
          }

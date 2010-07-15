@@ -7,6 +7,8 @@
 // 21 Ago 2002 (Created) Fernando Cacciola
 // 24 Dec 2007 (Refactored and worked around various compiler bugs) Fernando Cacciola, Niels Dekker
 // 23 May 2008 (Fixed operator= const issue, added initialized_value) Niels Dekker, Fernando Cacciola
+// 21 Ago 2008 (Added swap) Niels Dekker, Fernando Cacciola
+// 20 Feb 2009 (Fixed logical const-ness issues) Niels Dekker, Fernando Cacciola
 //
 #ifndef BOOST_UTILITY_VALUE_INIT_21AGO2002_HPP
 #define BOOST_UTILITY_VALUE_INIT_21AGO2002_HPP
@@ -22,6 +24,7 @@
 #include <boost/static_assert.hpp>
 #include <boost/type_traits/cv_traits.hpp>
 #include <boost/type_traits/alignment_of.hpp>
+#include <boost/swap.hpp>
 #include <cstring>
 #include <new>
 
@@ -88,12 +91,24 @@ class value_initialized
       wrapper_address()->wrapper::~wrapper();
     }
 
-    T& data() const
+    T const & data() const
     {
       return wrapper_address()->data;
     }
 
-    operator T&() const { return this->data(); }
+    T& data()
+    {
+      return wrapper_address()->data;
+    }
+
+    void swap(value_initialized & arg)
+    {
+      ::boost::swap( this->data(), arg.data() );
+    }
+
+    operator T const &() const { return this->data(); }
+
+    operator T&() { return this->data(); }
 
 } ;
 
@@ -108,6 +123,12 @@ template<class T>
 T& get ( value_initialized<T>& x )
 {
   return x.data() ;
+}
+
+template<class T>
+void swap ( value_initialized<T> & lhs, value_initialized<T> & rhs )
+{
+  lhs.swap(rhs) ;
 }
 
 

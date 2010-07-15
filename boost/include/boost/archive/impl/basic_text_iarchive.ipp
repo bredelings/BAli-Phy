@@ -8,7 +8,6 @@
 
 //  See http://www.boost.org for updates, documentation, and revision history.
 #include <string>
-#include <cassert>
 #include <algorithm>
 #include <cstring>
 
@@ -35,7 +34,7 @@ basic_text_iarchive<Archive>::load_override(class_name_type & t, int){
     cn.reserve(BOOST_SERIALIZATION_MAX_KEY_SIZE);
     load_override(cn, 0);
     if(cn.size() > (BOOST_SERIALIZATION_MAX_KEY_SIZE - 1))
-        boost::throw_exception(
+        boost::serialization::throw_exception(
             archive_exception(archive_exception::invalid_class_name)
         );
     std::memcpy(t, cn.data(), cn.size());
@@ -49,8 +48,8 @@ basic_text_iarchive<Archive>::init(void){
     // read signature in an archive version independent manner
     std::string file_signature;
     * this->This() >> file_signature;
-    if(file_signature != ARCHIVE_SIGNATURE())
-        boost::throw_exception(
+    if(file_signature != BOOST_ARCHIVE_SIGNATURE())
+        boost::serialization::throw_exception(
             archive_exception(archive_exception::invalid_signature)
         );
 
@@ -65,12 +64,12 @@ basic_text_iarchive<Archive>::init(void){
     #if ! BOOST_WORKAROUND(BOOST_MSVC, <= 1200)
     detail::
     #endif
-    basic_iarchive::set_library_version(input_library_version.t);
+    basic_iarchive::set_library_version(input_library_version);
     #endif
 
     // extra little .t is to get around borland quirk
-    if(ARCHIVE_VERSION() < input_library_version.t)
-        boost::throw_exception(
+    if(BOOST_ARCHIVE_VERSION() < input_library_version)
+        boost::serialization::throw_exception(
             archive_exception(archive_exception::unsupported_version)
         );
 }

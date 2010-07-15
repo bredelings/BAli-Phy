@@ -2,7 +2,7 @@
 // reactive_serial_port_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2010 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 // Copyright (c) 2008 Rep Invariant Systems, Inc. (info@repinvariant.com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -23,11 +23,10 @@
 #include <string>
 #include <boost/asio/detail/pop_options.hpp>
 
-#if !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
+#include <boost/asio/serial_port_base.hpp>
 
-#include <boost/asio/detail/push_options.hpp>
-#include <termios.h>
-#include <boost/asio/detail/pop_options.hpp>
+#if defined(BOOST_ASIO_HAS_SERIAL_PORT) \
+  && !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
 
 #include <boost/asio/error.hpp>
 #include <boost/asio/io_service.hpp>
@@ -39,31 +38,24 @@ namespace asio {
 namespace detail {
 
 // Extend reactive_descriptor_service to provide serial port support.
-template <typename Reactor>
 class reactive_serial_port_service
-  : public boost::asio::detail::service_base<
-      reactive_serial_port_service<Reactor> >
 {
 public:
-  // The native type of a stream handle.
-  typedef typename reactive_descriptor_service<Reactor>::native_type
-    native_type;
+  // The native type of a serial port.
+  typedef reactive_descriptor_service::native_type native_type;
 
-  // The implementation type of the stream handle.
-  typedef typename reactive_descriptor_service<Reactor>::implementation_type
-    implementation_type;
+  // The implementation type of the serial port.
+  typedef reactive_descriptor_service::implementation_type implementation_type;
 
   reactive_serial_port_service(boost::asio::io_service& io_service)
-    : boost::asio::detail::service_base<
-        reactive_serial_port_service>(io_service),
-      descriptor_service_(boost::asio::use_service<
-          reactive_descriptor_service<Reactor> >(io_service))
+    : descriptor_service_(io_service)
   {
   }
 
   // Destroy all user-defined handler objects owned by the service.
   void shutdown_service()
   {
+    descriptor_service_.shutdown_service();
   }
 
   // Construct a new handle implementation.
@@ -255,15 +247,16 @@ public:
   }
 
 private:
-  // The handle service used for initiating asynchronous operations.
-  reactive_descriptor_service<Reactor>& descriptor_service_;
+  // The implementation used for initiating asynchronous operations.
+  reactive_descriptor_service descriptor_service_;
 };
 
 } // namespace detail
 } // namespace asio
 } // namespace boost
 
-#endif // !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
+#endif // defined(BOOST_ASIO_HAS_SERIAL_PORT)
+       //   && !defined(BOOST_WINDOWS) && !defined(__CYGWIN__)
 
 #include <boost/asio/detail/pop_options.hpp>
 

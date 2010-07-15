@@ -42,10 +42,11 @@
 
 #include <boost/pending/queue.hpp>
 #include <boost/limits.hpp>
-#include <boost/property_map.hpp>
+#include <boost/property_map/property_map.hpp>
 #include <boost/none_t.hpp>
 #include <boost/graph/graph_concepts.hpp>
 #include <boost/graph/named_function_params.hpp>
+#include <boost/graph/lookup_edge.hpp>
 
 namespace boost {
   namespace detail {
@@ -161,7 +162,7 @@ namespace boost {
               }
               edge_descriptor to_sink;
               bool is_there;
-              tie(to_sink, is_there) = edge(current_node, m_sink, m_g);
+              tie(to_sink, is_there) = lookup_edge(current_node, m_sink, m_g);
               if(is_there){
                 tEdgeVal cap_from_source = m_res_cap_map[from_source];
                 tEdgeVal cap_to_sink = m_res_cap_map[to_sink];
@@ -344,7 +345,7 @@ namespace boost {
 
           /**
            * returns the bottleneck of a s->t path (end_of_path is last vertex in source-tree, begin_of_path is first vertex in sink-tree)
-           */		
+           */
           inline tEdgeVal find_bottleneck(edge_descriptor e){
             BOOST_USING_STD_MIN();
             tEdgeVal minimum_cap = m_res_cap_map[e];
@@ -467,7 +468,7 @@ namespace boost {
 
           /**
           * return next active vertex if there is one, otherwise a null_vertex
-          */	
+          */    
           inline vertex_descriptor get_next_active_node(){
             while(true){
               if(m_active_nodes.empty())
@@ -486,7 +487,7 @@ namespace boost {
 
           /**
           * adds v as an active vertex, but only if its not in the list already
-          */		
+          */            
           inline void add_active_node(vertex_descriptor v){
             assert(get_tree(v) != tColorTraits::gray());
             if(m_in_active_list_map[v]){
@@ -545,7 +546,7 @@ namespace boost {
 
           /**
            * sets edge to parent vertex of v; 
-          */		
+          */            
           inline void set_edge_to_parent(vertex_descriptor v, edge_descriptor f_edge_to_parent){
             assert(m_res_cap_map[f_edge_to_parent] > 0);
             m_pre_map[v] = f_edge_to_parent;
@@ -676,7 +677,7 @@ namespace boost {
   /**
    * non-named-parameter version, given everything
    * this is the catch all version
-   */			
+   */                   
   template <class Graph, class CapacityEdgeMap, class ResidualCapacityEdgeMap, class ReverseEdgeMap, 
     class PredecessorMap, class ColorMap, class DistanceMap, class IndexMap>
   typename property_traits<CapacityEdgeMap>::value_type

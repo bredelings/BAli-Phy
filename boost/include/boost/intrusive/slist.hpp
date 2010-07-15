@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //
 // (C) Copyright Olaf Krzikalla 2004-2006.
-// (C) Copyright Ion Gaztanaga  2006-2007
+// (C) Copyright Ion Gaztanaga  2006-2009
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -22,6 +22,7 @@
 #include <boost/intrusive/circular_slist_algorithms.hpp>
 #include <boost/intrusive/linear_slist_algorithms.hpp>
 #include <boost/intrusive/detail/pointer_to_other.hpp>
+#include <boost/intrusive/detail/clear_on_destructor_base.hpp>
 #include <boost/intrusive/link_mode.hpp>
 #include <boost/intrusive/options.hpp>
 #include <boost/intrusive/detail/utilities.hpp>
@@ -35,18 +36,6 @@ namespace boost {
 namespace intrusive {
 
 /// @cond
-
-template <class T>
-struct internal_default_slist_hook
-{
-   template <class U> static detail::one test(...);
-   template <class U> static detail::two test(typename U::default_slist_hook* = 0);
-   static const bool value = sizeof(test<T>(0)) == sizeof(detail::two);
-};
-
-template <class T>
-struct get_default_slist_hook
-{  typedef typename T::default_slist_hook type; };
 
 template <class ValueTraits, class SizeType, bool ConstantTimeSize, bool Linear, bool CacheLast>
 struct slistopt
@@ -75,13 +64,7 @@ template <class T>
 struct slist_defaults
    :  pack_options
       < none
-      , base_hook
-         <  typename detail::eval_if_c
-               < internal_default_slist_hook<T>::value
-               , get_default_slist_hook<T>
-               , detail::identity<none>
-               >::type
-         >
+      , base_hook<detail::default_slist_hook>
       , constant_time_size<true>
       , linear<false>
       , size_type<std::size_t>
@@ -114,13 +97,15 @@ struct slist_defaults
 //! the '*_after' functions, ++end() == begin() and previous(begin()) == end() 
 //! are defined. An new special function "before_begin()" is defined, which returns
 //! an iterator that points one less the beginning of the list: ++before_begin() == begin()
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 class slist_impl
+   :  private detail::clear_on_destructor_base<slist_impl<Config> >
 {
+   template<class C> friend class detail::clear_on_destructor_base;
    //Public typedefs
    public:
    typedef typename Config::value_traits                             value_traits;
@@ -155,7 +140,7 @@ class slist_impl
       >::type                                                        node_algorithms;
 
    static const bool constant_time_size = Config::constant_time_size;
-   static const bool stateful_value_traits = detail::store_cont_ptr_on_it<slist_impl>::value;
+   static const bool stateful_value_traits = detail::is_stateful_value_traits<real_value_traits>::value;
    static const bool linear = Config::linear;
    static const bool cache_last = Config::cache_last;
 
@@ -300,7 +285,7 @@ class slist_impl
       :  data_(v_traits)
    {
       this->set_default_constructed_state();
-      this->insert_after(this->before_begin(), b, e);
+      this->insert_after(this->cbefore_begin(), b, e);
    }
 
    //! <b>Effects</b>: If it's a safe-mode
@@ -313,7 +298,7 @@ class slist_impl
    //! <b>Complexity</b>: Linear to the number of elements in the list, if 
    //!   it's a safe-mode or auto-unlink value. Otherwise constant.
    ~slist_impl()
-   {  this->clear(); }
+   {}
 
    //! <b>Effects</b>: Erases all the elements of the container.
    //! 
@@ -346,7 +331,7 @@ class slist_impl
    template <class Disposer>
    void clear_and_dispose(Disposer disposer)
    {
-      iterator it(this->begin()), itend(this->end());
+      const_iterator it(this->begin()), itend(this->end());
       while(it != itend){
          node_ptr to_erase(it.pointed_node());
          ++it;
@@ -395,7 +380,7 @@ class slist_impl
    void push_back(reference value) 
    {
       BOOST_STATIC_ASSERT((cache_last != 0));
-      this->insert_after(iterator(this->get_last_node(), this), value);
+      this->insert_after(const_iterator(this->get_last_node(), this), value);
    }
 
    //! <b>Effects</b>: Erases the first element of the list.
@@ -554,6 +539,36 @@ class slist_impl
    const_iterator cbefore_begin() const 
    { return this->before_begin(); }
 
+   //! <b>Effects</b>: Returns an iterator to the last element contained in the list.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   //! 
+   //! <b>Note</b>: This function is present only if cached_last<> option is true.
+   iterator last() 
+   { return iterator (this->get_last_node(), this); }
+
+   //! <b>Effects</b>: Returns a const_iterator to the first element contained in the list.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   //! 
+   //! <b>Note</b>: This function is present only if cached_last<> option is true.
+   const_iterator last() const 
+   { return const_iterator (this->get_last_node(), this); }
+
+   //! <b>Effects</b>: Returns a const_iterator to the first element contained in the list.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant.
+   //! 
+   //! <b>Note</b>: This function is present only if cached_last<> option is true.
+   const_iterator clast() const 
+   { return const_iterator(this->get_last_node(), this); }
+
    //! <b>Precondition</b>: end_iterator must be a valid end iterator
    //!   of slist.
    //! 
@@ -613,7 +628,7 @@ class slist_impl
    void swap(slist_impl& other)
    {
       if(cache_last){
-         this->priv_swap_cache_last(other);
+         priv_swap_cache_last(this, &other);
       }
       else{
          this->priv_swap_lists(this->get_root_node(), other.get_root_node(), detail::bool_<linear>());
@@ -650,6 +665,7 @@ class slist_impl
    {  this->priv_shift_forward(n, detail::bool_<linear>()); }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
+   //!   Cloner should yield to nodes equivalent to the original nodes.
    //!
    //! <b>Effects</b>: Erases all the elements from *this
    //!   calling Disposer::operator()(pointer), clones all the 
@@ -668,7 +684,7 @@ class slist_impl
       this->clear_and_dispose(disposer);
       detail::exception_disposer<slist_impl, Disposer>
          rollback(*this, disposer);
-      iterator prev(this->before_begin());
+      const_iterator prev(this->cbefore_begin());
       const_iterator b(src.begin()), e(src.end());
       for(; b != e; ++b){
          prev = this->insert_after(prev, *cloner(*b));
@@ -689,7 +705,7 @@ class slist_impl
    //! <b>Complexity</b>: Constant.
    //! 
    //! <b>Note</b>: Does not affect the validity of iterators and references.
-   iterator insert_after(iterator prev_p, reference value)
+   iterator insert_after(const_iterator prev_p, reference value)
    {
       node_ptr n = get_real_value_traits().to_node_ptr(value);
       if(safemode_or_autounlink)
@@ -716,7 +732,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Does not affect the validity of iterators and references.
    template<class Iterator>
-   void insert_after(iterator prev_p, Iterator first, Iterator last)
+   void insert_after(const_iterator prev_p, Iterator first, Iterator last)
    {
       for (; first != last; ++first)
          prev_p = this->insert_after(prev_p, *first);
@@ -734,7 +750,7 @@ class slist_impl
    //!  Constant-time if cache_last<> is true and p == end().
    //! 
    //! <b>Note</b>: Does not affect the validity of iterators and references.
-   iterator insert(iterator p, reference value)
+   iterator insert(const_iterator p, reference value)
    {  return this->insert_after(this->previous(p), value);  }
 
    //! <b>Requires</b>: Dereferencing iterator must yield 
@@ -752,7 +768,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Does not affect the validity of iterators and references.
    template<class Iterator>
-   void insert(iterator p, Iterator b, Iterator e)
+   void insert(const_iterator p, Iterator b, Iterator e)
    {  return this->insert_after(this->previous(p), b, e);  }
 
    //! <b>Effects</b>: Erases the element after the element pointed by prev of 
@@ -767,7 +783,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references) to the
    //!   erased element.
-   iterator erase_after(iterator prev)
+   iterator erase_after(const_iterator prev)
    {  return this->erase_after_and_dispose(prev, detail::null_disposer());  }
 
    //! <b>Effects</b>: Erases the range (before_first, last) from
@@ -783,7 +799,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references) to the
    //!   erased element.
-   iterator erase_after(iterator before_first, iterator last)
+   iterator erase_after(const_iterator before_first, const_iterator last)
    {
       if(safemode_or_autounlink || constant_time_size){
          return this->erase_after_and_dispose(before_first, last, detail::null_disposer());
@@ -797,7 +813,7 @@ class slist_impl
             }
          }
          node_algorithms::unlink_after(bfp, lp);
-         return last;
+         return last.unconst();
       }
    }
 
@@ -815,9 +831,9 @@ class slist_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references) to the
    //!   erased element.
-   iterator erase_after(iterator before_first, iterator last, difference_type n)
+   iterator erase_after(const_iterator before_first, const_iterator last, difference_type n)
    {
-      BOOST_INTRUSIVE_INVARIANT_ASSERT(std::distance(++iterator(before_first), last) == difference_type(n));
+      BOOST_INTRUSIVE_INVARIANT_ASSERT(std::distance(++const_iterator(before_first), last) == difference_type(n));
       if(safemode_or_autounlink){
          return this->erase_after(before_first, last);
       }
@@ -833,7 +849,7 @@ class slist_impl
          if(constant_time_size){
             this->priv_size_traits().set_size(this->priv_size_traits().get_size() - n);
          }
-         return last;
+         return last.unconst();
       }
    }
 
@@ -849,7 +865,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references) to the
    //!   erased element.
-   iterator erase(iterator i)
+   iterator erase(const_iterator i)
    {  return this->erase_after(this->previous(i));  }
 
    //! <b>Requires</b>: first and last must be valid iterator to elements in *this.
@@ -866,7 +882,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references) to the
    //!   erased elements.
-   iterator erase(iterator first, iterator last)
+   iterator erase(const_iterator first, const_iterator last)
    {  return this->erase_after(this->previous(first), last);  }
 
    //! <b>Effects</b>: Erases the range [first, last) from
@@ -883,7 +899,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references) to the
    //!   erased element.
-   iterator erase(iterator first, iterator last, difference_type n)
+   iterator erase(const_iterator first, const_iterator last, difference_type n)
    {  return this->erase_after(this->previous(first), last, n);  }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -901,9 +917,9 @@ class slist_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators to the erased element.
    template<class Disposer>
-   iterator erase_after_and_dispose(iterator prev, Disposer disposer)
+   iterator erase_after_and_dispose(const_iterator prev, Disposer disposer)
    {
-      iterator it(prev);
+      const_iterator it(prev);
       ++it;
       node_ptr to_erase(it.pointed_node());
       ++it;
@@ -916,16 +932,16 @@ class slist_impl
          node_algorithms::init(to_erase);
       disposer(get_real_value_traits().to_value_ptr(to_erase));
       this->priv_size_traits().decrement();
-      return it;
+      return it.unconst();
    }
 
    /// @cond
 
    template<class Disposer>
-   static iterator s_erase_after_and_dispose(iterator prev, Disposer disposer)
+   static iterator s_erase_after_and_dispose(const_iterator prev, Disposer disposer)
    {
       BOOST_STATIC_ASSERT(((!cache_last)&&(!constant_time_size)&&(!stateful_value_traits)));
-      iterator it(prev);
+      const_iterator it(prev);
       ++it;
       node_ptr to_erase(it.pointed_node());
       ++it;
@@ -934,10 +950,10 @@ class slist_impl
       if(safemode_or_autounlink)
          node_algorithms::init(to_erase);
       disposer(real_value_traits::to_value_ptr(to_erase));
-      return it;
+      return it.unconst();
    }
 
-   static iterator s_erase_after(iterator prev)
+   static iterator s_erase_after(const_iterator prev)
    {  return s_erase_after_and_dispose(prev, detail::null_disposer());  }
 
    /// @endcond
@@ -957,7 +973,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators to the erased element.
    template<class Disposer>
-   iterator erase_after_and_dispose(iterator before_first, iterator last, Disposer disposer)
+   iterator erase_after_and_dispose(const_iterator before_first, const_iterator last, Disposer disposer)
    {
       node_ptr bfp(before_first.pointed_node()), lp(last.pointed_node());
       node_ptr fp(node_traits::get_next(bfp));
@@ -973,7 +989,7 @@ class slist_impl
       if(cache_last && (node_traits::get_next(bfp) == this->get_end_node())){
          this->set_last_node(bfp);
       }
-      return last;
+      return last.unconst();
    }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -992,8 +1008,14 @@ class slist_impl
    //! <b>Note</b>: Invalidates the iterators (but not the references) to the
    //!   erased element.
    template<class Disposer>
-   iterator erase_and_dispose(iterator i, Disposer disposer)
+   iterator erase_and_dispose(const_iterator i, Disposer disposer)
    {  return this->erase_after_and_dispose(this->previous(i), disposer);  }
+
+   #if !defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
+   template<class Disposer>
+   iterator erase_and_dispose(iterator i, Disposer disposer)
+   {  return this->erase_and_dispose(const_iterator(i), disposer);   }
+   #endif
 
    //! <b>Requires</b>: first and last must be valid iterator to elements in *this.
    //!                  Disposer::operator()(pointer) shouldn't throw.
@@ -1013,7 +1035,7 @@ class slist_impl
    //! <b>Note</b>: Invalidates the iterators (but not the references) to the
    //!   erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator first, iterator last, Disposer disposer)
+   iterator erase_and_dispose(const_iterator first, const_iterator last, Disposer disposer)
    {  return this->erase_after_and_dispose(this->previous(first), last, disposer);  }
 
    //! <b>Requires</b>: Dereferencing iterator must yield 
@@ -1035,7 +1057,7 @@ class slist_impl
    void assign(Iterator b, Iterator e)
    {
       this->clear();
-      this->insert_after(this->before_begin(), b, e);
+      this->insert_after(this->cbefore_begin(), b, e);
    }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -1058,7 +1080,7 @@ class slist_impl
    void dispose_and_assign(Disposer disposer, Iterator b, Iterator e)
    {
       this->clear_and_dispose(disposer);
-      this->insert_after(this->before_begin(), b, e, disposer);
+      this->insert_after(this->cbefore_begin(), b, e, disposer);
    }
 
    //! <b>Requires</b>: prev is an iterator to an element or x.end()/x.before_begin() in x.
@@ -1066,21 +1088,32 @@ class slist_impl
    //! <b>Effects</b>: Transfers all the elements of list x to this list, after the
    //! the element pointed by prev. No destructors or copy constructors are called.
    //! 
-   //! <b>Returns</b>: The last element inserted of x or prev if x is empty.
-   //!   This iterator can be used as new "prev" iterator for a new splice_after call.
-   //!   that will splice new values after the previously spliced values.
+   //! <b>Returns</b>: Nothing.
    //! 
    //! <b>Throws</b>: Nothing.
    //!
-   //! <b>Complexity</b>: Linear to the elements contained in x.
-   //!   Constant-time if cache_last<> option is true.
+   //! <b>Complexity</b>: In general, linear to the elements contained in x.
+   //!   Constant-time if cache_last<> option is true and also constant-time if 
+   //!   linear<> option is true "this" is empty and "last" is not used.
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //! list. Iterators of this list and all the references are not invalidated.
-   iterator splice_after(iterator prev, slist_impl &x)
+   //!
+   //! <b>Additional note</b>: If the optional parameter "last" is provided, it will be
+   //!   assigned to the last spliced element or prev if x is empty.
+   //!   This iterator can be used as new "prev" iterator for a new splice_after call.
+   //!   that will splice new values after the previously spliced values.
+   void splice_after(const_iterator prev, slist_impl &x, const_iterator *last = 0)
    {
-      if (!x.empty()){
-         iterator last_x(x.previous(x.end()));  //<- constant time if cache_last is active
+      if(x.empty()){
+         if(last) *last = prev;
+      }
+      else if(linear && this->empty()){
+         this->swap(x);
+         if(last) *last = this->previous(this->cend());
+      }
+      else{
+         const_iterator last_x(x.previous(x.end()));  //<- constant time if cache_last is active
          node_ptr prev_n(prev.pointed_node());
          node_ptr last_x_n(last_x.pointed_node());
          if(cache_last){
@@ -1092,10 +1125,7 @@ class slist_impl
          node_algorithms::transfer_after( prev_n, x.before_begin().pointed_node(), last_x_n);
          this->priv_size_traits().set_size(this->priv_size_traits().get_size() + x.priv_size_traits().get_size());
          x.priv_size_traits().set_size(size_type(0));
-         return last_x;
-      }
-      else{
-         return prev;
+         if(last) *last = last_x;
       }
    }
 
@@ -1112,9 +1142,9 @@ class slist_impl
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //! list. Iterators of this list and all the references are not invalidated.
-   void splice_after(iterator prev_pos, slist_impl &x, iterator prev_ele)
+   void splice_after(const_iterator prev_pos, slist_impl &x, const_iterator prev_ele)
    {
-      iterator elem = prev_ele;
+      const_iterator elem = prev_ele;
       this->splice_after(prev_pos, x, prev_ele, ++elem, 1);
    }
 
@@ -1133,7 +1163,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //!   list. Iterators of this list and all the references are not invalidated.
-   void splice_after(iterator prev_pos, slist_impl &x, iterator before_first, iterator before_last)
+   void splice_after(const_iterator prev_pos, slist_impl &x, const_iterator before_first, const_iterator before_last)
    {
       if(constant_time_size)
          this->splice_after(prev_pos, x, before_first, before_last, std::distance(before_first, before_last));
@@ -1156,7 +1186,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //!   list. Iterators of this list and all the references are not invalidated.
-   void splice_after(iterator prev_pos, slist_impl &x, iterator before_first, iterator before_last, difference_type n)
+   void splice_after(const_iterator prev_pos, slist_impl &x, const_iterator before_first, const_iterator before_last, difference_type n)
    {
       if(n){
          BOOST_INTRUSIVE_INVARIANT_ASSERT(std::distance(before_first, before_last) == n);
@@ -1174,10 +1204,7 @@ class slist_impl
    //! <b>Effects</b>: Transfers all the elements of list x to this list, before the
    //! the element pointed by it. No destructors or copy constructors are called.
    //! 
-   //! <b>Returns</b>: The last element inserted of x or the previous element
-   //!   of it if x is empty.
-   //!   This iterator can be used as new "prev" iterator for a new splice call.
-   //!   that will splice new values after the previously spliced values.
+   //! <b>Returns</b>: Nothing.
    //! 
    //! <b>Throws</b>: Nothing.
    //!
@@ -1188,8 +1215,13 @@ class slist_impl
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //! list. Iterators of this list and all the references are not invalidated.
-   iterator splice(iterator it, slist_impl &x)
-   {  return this->splice_after(this->previous(it), x);   }
+   //!
+   //! <b>Additional note</b>: If the optional parameter "last" is provided, it will be
+   //!   assigned to the last spliced element or prev if x is empty.
+   //!   This iterator can be used as new "prev" iterator for a new splice_after call.
+   //!   that will splice new values after the previously spliced values.
+   void splice(const_iterator it, slist_impl &x, iterator *last = 0)
+   {  this->splice_after(this->previous(it), x, last);   }
 
    //! <b>Requires</b>: it p must be a valid iterator of *this.
    //!   elem must point to an element contained in list
@@ -1205,7 +1237,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //! list. Iterators of this list and all the references are not invalidated.
-   void splice(iterator pos, slist_impl &x, iterator elem)
+   void splice(const_iterator pos, slist_impl &x, const_iterator elem)
    {  return this->splice_after(this->previous(pos), x, x.previous(elem));  }
 
    //! <b>Requires</b>: pos must be a dereferenceable iterator in *this
@@ -1225,7 +1257,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //!   list. Iterators of this list and all the references are not invalidated.
-   void splice(iterator pos, slist_impl &x, iterator first, iterator last)
+   void splice(const_iterator pos, slist_impl &x, const_iterator first, const_iterator last)
    {  return this->splice_after(this->previous(pos), x, x.previous(first), x.previous(last));  }
 
    //! <b>Requires</b>: pos must be a dereferenceable iterator in *this
@@ -1244,7 +1276,7 @@ class slist_impl
    //! 
    //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
    //!   list. Iterators of this list and all the references are not invalidated.
-   void splice(iterator pos, slist_impl &x, iterator first, iterator last, difference_type n)
+   void splice(const_iterator pos, slist_impl &x, const_iterator first, const_iterator last, difference_type n)
    {  return this->splice_after(this->previous(pos), x, x.previous(first), x.previous(last), n);  }
 
    //! <b>Effects</b>: This function sorts the list *this according to std::less<value_type>. 
@@ -1262,49 +1294,45 @@ class slist_impl
    void sort(Predicate p)
    {
       if (node_traits::get_next(node_traits::get_next(this->get_root_node()))
-               != this->get_root_node()) {
+         != this->get_root_node()) {
          slist_impl carry;
          slist_impl counter[64];
          int fill = 0;
-         iterator last_inserted;
+         const_iterator last_inserted;
          while(!this->empty()){
-            last_inserted = this->begin();
-            carry.splice_after(carry.before_begin(), *this, this->before_begin());
+            last_inserted = this->cbegin();
+            carry.splice_after(carry.cbefore_begin(), *this, this->cbefore_begin());
             int i = 0;
             while(i < fill && !counter[i].empty()) {
-               last_inserted = carry.merge(counter[i++], p);
+               carry.swap(counter[i]);
+               carry.merge(counter[i++], p, &last_inserted);
             }
             BOOST_INTRUSIVE_INVARIANT_ASSERT(counter[i].empty());
+            const_iterator last_element(carry.previous(last_inserted, carry.end()));
 
-            node_ptr p = node_algorithms::get_previous_node
-               (last_inserted.pointed_node(), carry.end().pointed_node());
-            iterator last_element(p, this);
             if(constant_time_size){
-               counter[i].splice_after( counter[i].before_begin(), carry
-                                      , carry.before_begin(), last_element
-                                      , carry.size());
+               counter[i].splice_after( counter[i].cbefore_begin(), carry
+                                    , carry.cbefore_begin(), last_element
+                                    , carry.size());
             }
             else{
-               counter[i].splice_after( counter[i].before_begin(), carry
-                                      , carry.before_begin(), last_element);
+               counter[i].splice_after( counter[i].cbefore_begin(), carry
+                                    , carry.cbefore_begin(), last_element);
             }
             if(i == fill)
                ++fill;
          }
 
          for (int i = 1; i < fill; ++i)
-            last_inserted = counter[i].merge(counter[i-1], p);
-         BOOST_INTRUSIVE_INVARIANT_ASSERT(this->empty());
-
-         node_ptr p = node_algorithms::get_previous_node
-            (last_inserted.pointed_node(), counter[--fill].end().pointed_node());
-         iterator last_element(p, this);
+            counter[i].merge(counter[i-1], p, &last_inserted);
+         --fill;
+         const_iterator last_element(counter[fill].previous(last_inserted, counter[fill].end()));
          if(constant_time_size){
-            this->splice_after( before_begin(), counter[fill], counter[fill].before_begin()
+            this->splice_after( cbefore_begin(), counter[fill], counter[fill].cbefore_begin()
                               , last_element, counter[fill].size());
          }
          else{
-            this->splice_after( before_begin(), counter[fill], counter[fill].before_begin()
+            this->splice_after( cbefore_begin(), counter[fill], counter[fill].cbefore_begin()
                               , last_element);
          }
       }
@@ -1337,7 +1365,7 @@ class slist_impl
    //!   in order into *this. The merge is stable; that is, if an element from *this is 
    //!   equivalent to one from x, then the element from *this will precede the one from x. 
    //! 
-   //! <b>Returns</b>: An iterator to the last transferred value, end() is x is empty.
+   //! <b>Returns</b>: Nothing.
    //! 
    //! <b>Throws</b>: If the predicate throws. Basic guarantee.
    //! 
@@ -1345,29 +1373,34 @@ class slist_impl
    //!   size() + x.size() - 1 comparisons.
    //! 
    //! <b>Note</b>: Iterators and references are not invalidated.
+   //! 
+   //! <b>Additional note</b>: If optional "last" argument is passed, it is assigned
+   //! to an iterator to the last transferred value or end() is x is empty.
    template<class Predicate>
-   iterator merge(slist_impl& x, Predicate p) 
+   void merge(slist_impl& x, Predicate p, const_iterator *last = 0) 
    {
-      iterator a(before_begin()), e(end()), ax(x.before_begin()), ex(x.end());
-      iterator last_inserted(e);
-      iterator a_next;
-      while(++(a_next = a) != e && !x.empty()) {
-         iterator ix(ax);
-         iterator cx;
-         size_type n(0);
-         while(++(cx = ix) != ex && p(*cx, *a_next)){
-            ++ix; ++n;
+      const_iterator e(this->cend()), ex(x.cend()), bb(this->cbefore_begin()),
+                     bb_next;
+      if(last) *last = e.unconst();
+      while(!x.empty()){
+         const_iterator ibx_next(x.cbefore_begin()), ibx(ibx_next++);
+         while (++(bb_next = bb) != e && !p(*ibx_next, *bb_next)){
+            bb = bb_next;
          }
-         if(ax != ix){
-            this->splice_after(a, x, ax, ix, n);
-            last_inserted = ix;
+         if(bb_next == e){
+            //Now transfer the rest to the end of the container
+            this->splice_after(bb, x, last);
+            break;
          }
-         a = a_next;
-      }  
-      if (!x.empty()){
-         last_inserted = this->splice_after(a, x);
+         else{
+            size_type n(0);
+            do{
+               ibx = ibx_next; ++n;
+            } while(++(ibx_next = ibx) != ex && p(*ibx_next, *bb_next));
+            this->splice_after(bb, x, x.before_begin(), ibx, n);
+            if(last) *last = ibx;
+         }
       }
-      return last_inserted;
    }
 
    //! <b>Effects</b>: This function removes all of x's elements and inserts them
@@ -1455,7 +1488,7 @@ class slist_impl
    template<class Pred, class Disposer>
    void remove_and_dispose_if(Pred pred, Disposer disposer)
    {
-      iterator bcur(this->before_begin()), cur(this->begin()), e(this->end());
+      const_iterator bcur(this->before_begin()), cur(this->begin()), e(this->end());
       
       while(cur != e){
          if (pred(*cur)){
@@ -1528,10 +1561,10 @@ class slist_impl
    template<class BinaryPredicate, class Disposer>
    void unique_and_dispose(BinaryPredicate pred, Disposer disposer)
    {
-      iterator end_n(this->end());
-      iterator bcur(this->begin());
+      const_iterator end_n(this->cend());
+      const_iterator bcur(this->cbegin());
       if(bcur != end_n){
-         iterator cur(bcur);
+         const_iterator cur(bcur);
          ++cur;
          while(cur != end_n) {
             if (pred(*bcur, *cur)){
@@ -1623,14 +1656,7 @@ class slist_impl
    //! <b>Complexity</b>: Linear to the number of elements before i.
    //!   Constant if cache_last<> is true and i == end().
    iterator previous(iterator i)
-   {
-      if(cache_last && (i.pointed_node() == this->get_end_node())){
-         return iterator(this->get_last_node(), this);
-      }
-      return iterator
-         (node_algorithms::get_previous_node
-            (this->before_begin().pointed_node(), i.pointed_node()), this);
-   }
+   {  return this->previous(this->cbefore_begin(), i); }
 
    //! <b>Returns</b>: The const_iterator to the element before i in the list. 
    //!   Returns the end-const_iterator, if either i is the begin-const_iterator or 
@@ -1641,13 +1667,86 @@ class slist_impl
    //! <b>Complexity</b>: Linear to the number of elements before i. 
    //!   Constant if cache_last<> is true and i == end().
    const_iterator previous(const_iterator i) const
+   {  return this->previous(this->cbefore_begin(), i); }
+
+   //! <b>Returns</b>: The iterator to the element before i in the list,
+   //!   starting the search on element after prev_from.
+   //!   Returns the end-iterator, if either i is the begin-iterator or the 
+   //!   list is empty. 
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Linear to the number of elements before i.
+   //!   Constant if cache_last<> is true and i == end().
+   iterator previous(const_iterator prev_from, iterator i)
+   {  return this->previous(prev_from, const_iterator(i)).unconst(); }
+
+   //! <b>Returns</b>: The const_iterator to the element before i in the list,
+   //!   starting the search on element after prev_from.
+   //!   Returns the end-const_iterator, if either i is the begin-const_iterator or 
+   //!   the list is empty. 
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Linear to the number of elements before i. 
+   //!   Constant if cache_last<> is true and i == end().
+   const_iterator previous(const_iterator prev_from, const_iterator i) const
    {
       if(cache_last && (i.pointed_node() == this->get_end_node())){
-         return iterator(uncast(this->get_last_node()), this);
+         return const_iterator(uncast(this->get_last_node()), this);
       }
       return const_iterator
          (node_algorithms::get_previous_node
-            (this->before_begin().pointed_node(), i.pointed_node()), this);
+            (prev_from.pointed_node(), i.pointed_node()), this);
+   }
+
+   //! <b>Requires</b>: prev_pos must be a dereferenceable iterator in *this or be
+   //!   before_begin(), and before_first and before_last belong to x and
+   //!   ++before_first != x.end() && before_last != x.end(). 
+   //! 
+   //! <b>Effects</b>: Transfers the range (before_first, before_last] to this
+   //!   list, after the element pointed by prev_pos.
+   //!   No destructors or copy constructors are called.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Linear to the number of elements transferred
+   //!   if constant_time_size is true. Constant-time otherwise.
+   //! 
+   //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
+   //!   list. Iterators of this list and all the references are not invalidated.
+   void incorporate_after(const_iterator prev_from, node_ptr first, node_ptr before_last)
+   {
+      if(constant_time_size)
+         this->incorporate_after(prev_from, first, before_last, std::distance(first, before_last)+1);
+      else
+         this->priv_incorporate_after
+            (prev_from.pointed_node(), first, before_last);
+   }
+
+   //! <b>Requires</b>: prev_pos must be a dereferenceable iterator in *this or be
+   //!   before_begin(), and before_first and before_last belong to x and
+   //!   ++before_first != x.end() && before_last != x.end() and
+   //!   n == std::distance(first, before_last) + 1.
+   //! 
+   //! <b>Effects</b>: Transfers the range (before_first, before_last] from list x to this
+   //!   list, after the element pointed by p. No destructors or copy constructors are called.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Complexity</b>: Constant time.
+   //! 
+   //! <b>Note</b>: Iterators of values obtained from list x now point to elements of this
+   //!   list. Iterators of this list and all the references are not invalidated.
+   void incorporate_after(const_iterator prev_pos, node_ptr first, node_ptr before_last, difference_type n)
+   {
+      if(n){
+         BOOST_INTRUSIVE_INVARIANT_ASSERT(std::distance(iterator(first, this), iterator(before_last, this))+1 == n);
+         this->priv_incorporate_after(prev_pos.pointed_node(), first, before_last);
+         if(constant_time_size){
+            this->priv_size_traits().set_size(this->priv_size_traits().get_size() + n);
+         }
+      }
    }
 
    private:
@@ -1665,6 +1764,16 @@ class slist_impl
          }
          node_algorithms::transfer_after(prev_pos_n, before_first_n, before_last_n);
       }
+   }
+
+   void priv_incorporate_after(node_ptr prev_pos_n, node_ptr first_n, node_ptr before_last_n)
+   {
+      if(cache_last){
+         if(node_traits::get_next(prev_pos_n) == this->get_end_node()){
+            this->set_last_node(before_last_n);
+         }
+      }
+      node_algorithms::incorporate_after(prev_pos_n, first_n, before_last_n);
    }
 
    void priv_reverse(detail::bool_<false>)
@@ -1719,22 +1828,40 @@ class slist_impl
       }
    }
 
-   void priv_swap_cache_last(slist_impl &other)
+   static void priv_swap_cache_last(slist_impl *this_impl, slist_impl *other_impl)
    {
-      node_ptr other_last(other.get_last_node());
-      node_ptr this_last(this->get_last_node());
-      node_ptr other_bfirst(other.get_root_node());
-      node_ptr this_bfirst(this->get_root_node());
-      node_algorithms::transfer_after(this_bfirst, other_bfirst, other_last);
-      node_algorithms::transfer_after(other_bfirst, other_last != other_bfirst? other_last : this_bfirst, this_last);
-      node_ptr tmp(this->get_last_node());
-      this->set_last_node(other.get_last_node());
-      other.set_last_node(tmp);
-      if(this->get_last_node() == other_bfirst){
-         this->set_last_node(this_bfirst);
+      bool other_was_empty = false;
+      if(this_impl->empty()){
+         //Check if both are empty or 
+         if(other_impl->empty())
+            return;
+         //If this is empty swap pointers
+         slist_impl *tmp = this_impl;
+         this_impl  = other_impl;
+         other_impl = tmp;
+         other_was_empty = true;
       }
-      if(other.get_last_node() == this_bfirst){
-         other.set_last_node(other_bfirst);
+      else{
+         other_was_empty = other_impl->empty();
+      }
+
+      //Precondition: this is not empty
+      node_ptr other_old_last(other_impl->get_last_node());
+      node_ptr other_bfirst(other_impl->get_root_node());
+      node_ptr this_bfirst(this_impl->get_root_node());
+      node_ptr this_old_last(this_impl->get_last_node());
+
+      //Move all nodes from this to other's beginning
+      node_algorithms::transfer_after(other_bfirst, this_bfirst, this_old_last);
+      other_impl->set_last_node(this_old_last);
+
+      if(other_was_empty){
+         this_impl->set_last_node(this_bfirst);
+      }
+      else{
+         //Move trailing nodes from other to this
+         node_algorithms::transfer_after(this_bfirst, this_old_last, other_old_last);
+         this_impl->set_last_node(other_old_last);
       }
    }
 
@@ -1760,26 +1887,26 @@ class slist_impl
    }
 };
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator<
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const slist_impl<T, Options...> &x, const slist_impl<T, Options...> &y)
 #else
 (const slist_impl<Config> &x, const slist_impl<Config> &y)
 #endif
 {  return std::lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 bool operator==
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const slist_impl<T, Options...> &x, const slist_impl<T, Options...> &y)
 #else
 (const slist_impl<Config> &x, const slist_impl<Config> &y)
@@ -1812,65 +1939,65 @@ bool operator==
    }
 }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator!=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const slist_impl<T, Options...> &x, const slist_impl<T, Options...> &y)
 #else
 (const slist_impl<Config> &x, const slist_impl<Config> &y)
 #endif
 {  return !(x == y); }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const slist_impl<T, Options...> &x, const slist_impl<T, Options...> &y)
 #else
 (const slist_impl<Config> &x, const slist_impl<Config> &y)
 #endif
 {  return y < x;  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator<=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const slist_impl<T, Options...> &x, const slist_impl<T, Options...> &y)
 #else
 (const slist_impl<Config> &x, const slist_impl<Config> &y)
 #endif
 {  return !(y < x);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const slist_impl<T, Options...> &x, const slist_impl<T, Options...> &y)
 #else
 (const slist_impl<Config> &x, const slist_impl<Config> &y)
 #endif
 {  return !(x < y);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline void swap
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (slist_impl<T, Options...> &x, slist_impl<T, Options...> &y)
 #else
 (slist_impl<Config> &x, slist_impl<Config> &y)
@@ -1879,7 +2006,7 @@ inline void swap
 
 //! Helper metafunction to define a \c slist that yields to the same type when the
 //! same options (either explicitly or implicitly) are used.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED) || defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class ...Options>
 #else
 template<class T, class O1 = none, class O2 = none, class O3 = none, class O4 = none, class O5 = none>
@@ -1888,7 +2015,13 @@ struct make_slist
 {
    /// @cond
    typedef typename pack_options
-      < slist_defaults<T>, O1, O2, O3, O4, O5>::type packed_options;
+      < slist_defaults<T>, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4, O5
+         #else
+         Options...
+         #endif
+      >::type packed_options;
    typedef typename detail::get_value_traits
       <T, typename packed_options::value_traits>::type value_traits;
    typedef slist_impl
@@ -1907,12 +2040,29 @@ struct make_slist
 
 
 #ifndef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+
+#if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class O1, class O2, class O3, class O4, class O5>
+#else
+template<class T, class ...Options>
+#endif
 class slist
-   :  public make_slist<T, O1, O2, O3, O4, O5>::type
+   :  public make_slist<T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4, O5
+         #else
+         Options...
+         #endif
+      >::type
 {
    typedef typename make_slist
-      <T, O1, O2, O3, O4, O5>::type   Base;
+      <T, 
+      #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+      O1, O2, O3, O4, O5
+      #else
+      Options...
+      #endif
+      >::type   Base;
    typedef typename Base::real_value_traits  real_value_traits;
    //Assert if passed value traits are compatible with the type
    BOOST_STATIC_ASSERT((detail::is_same<typename real_value_traits::value_type, T>::value));

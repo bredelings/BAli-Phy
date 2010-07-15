@@ -1,6 +1,7 @@
 noinst_LIBRARIES = libboost_serialization.a
 
-libboost_serialization_a_SOURCES =  basic_archive.cpp \
+libboost_serialization_a_SOURCES =  archive_exception.cpp \
+    basic_archive.cpp \
     basic_iarchive.cpp \
     basic_iserializer.cpp \
     basic_oarchive.cpp \
@@ -18,11 +19,12 @@ libboost_serialization_a_SOURCES =  basic_archive.cpp \
     extended_type_info_no_rtti.cpp \
     polymorphic_iarchive.cpp \
     polymorphic_oarchive.cpp \
+    shared_ptr_helper.cpp \
     stl_port.cpp \
     text_iarchive.cpp \
     text_oarchive.cpp \
     void_cast.cpp \
     xml_grammar.cpp \
     xml_iarchive.cpp \
-    xml_oarchive.cpp 
-
+    xml_oarchive.cpp \
+    xml_archive_exception.cpp

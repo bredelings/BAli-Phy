@@ -160,7 +160,7 @@ class tree_algorithms
    //! 
    //! <b>Throws</b>: Nothing.
    static bool unique(const_node_ptr node)
-   { return NodeTraits::get_parent(node) == 0; }
+   { return !NodeTraits::get_parent(node); }
 
    static node_ptr get_header(const_node_ptr node)
    {
@@ -460,7 +460,8 @@ class tree_algorithms
    static node_ptr prev_node(node_ptr p)
    {
       if(is_header(p)){
-         return maximum(NodeTraits::get_parent(p));
+         return NodeTraits::get_right(p);
+         //return maximum(NodeTraits::get_parent(p));
       }
       else if(NodeTraits::get_left(p)){
          return maximum(NodeTraits::get_left(p));
@@ -721,37 +722,19 @@ class tree_algorithms
 
    static bool is_header(const_node_ptr p)
    {
-/*
-      node_ptr p_parent = NodeTraits::get_parent(p);
-      if(!p_parent)
+      node_ptr p_left (NodeTraits::get_left(p));
+      node_ptr p_right(NodeTraits::get_right(p));
+      if(!NodeTraits::get_parent(p) || //Header condition when empty tree
+         (p_left && p_right &&         //Header always has leftmost and rightmost
+            (p_left == p_right ||      //Header condition when only node
+               (NodeTraits::get_parent(p_left)  != p ||
+                NodeTraits::get_parent(p_right) != p ))
+               //When tree size > 1 headers can't be leftmost's
+               //and rightmost's parent 
+          )){
          return true;
-      if(!NodeTraits::get_parent(p_parent) != p)
-         return false;
-      if(NodeTraits::get_left(p) != 0){
-         if(NodeTraits::get_parent(NodeTraits::get_left(p)) != p){
-            is_header = true;
-         }
-         if(NodeTraits::get_parent(p) == NodeTraits::get_left(p)){
-            is_header = true;
-         }
       }
-*/
-      
-      bool is_header = false;
-      if(NodeTraits::get_parent(p) == p){
-         is_header = true;
-      }
-      else if(NodeTraits::get_parent(NodeTraits::get_parent(p)) == p){
-         if(NodeTraits::get_left(p) != 0){
-            if(NodeTraits::get_parent(NodeTraits::get_left(p)) != p){
-               is_header = true;
-            }
-            if(NodeTraits::get_parent(p) == NodeTraits::get_left(p)){
-               is_header = true;
-            }
-         }
-      }
-      return is_header;
+      return false;
    }
 
    //! <b>Requires</b>: "header" must be the header node of a tree.
@@ -910,10 +893,32 @@ class tree_algorithms
    //!   erased between the "insert_check" and "insert_commit" calls.
    static void insert_unique_commit
       (node_ptr header, node_ptr new_value, const insert_commit_data &commit_data)
+   {  return insert_commit(header, new_value, commit_data); }
+
+   static void insert_commit
+      (node_ptr header, node_ptr new_node, const insert_commit_data &commit_data)
    {
       //Check if commit_data has not been initialized by a insert_unique_check call.
       BOOST_INTRUSIVE_INVARIANT_ASSERT(commit_data.node != 0);
-      link(header, new_value, commit_data.node, commit_data.link_left);
+      node_ptr parent_node(commit_data.node);
+      if(parent_node == header){
+         NodeTraits::set_parent(header, new_node);
+         NodeTraits::set_right(header, new_node);
+         NodeTraits::set_left(header, new_node);
+      }
+      else if(commit_data.link_left){
+         NodeTraits::set_left(parent_node, new_node);
+         if(parent_node == NodeTraits::get_left(header))
+             NodeTraits::set_left(header, new_node);
+      }
+      else{
+         NodeTraits::set_right(parent_node, new_node);
+         if(parent_node == NodeTraits::get_right(header))
+             NodeTraits::set_right(header, new_node);
+      }
+      NodeTraits::set_parent(new_node, parent_node);
+      NodeTraits::set_right(new_node, node_ptr(0));
+      NodeTraits::set_left(new_node, node_ptr(0));
    }
 
    //! <b>Requires</b>: "header" must be the header node of a tree.
@@ -995,9 +1000,9 @@ class tree_algorithms
    {
       //hint must be bigger than the key
       if(hint == header || comp(key, hint)){
-         node_ptr prev = hint;
-         //The previous value should be less than the key
-         if(prev == NodeTraits::get_left(header) || comp((prev = prev_node(hint)), key)){
+         node_ptr prev(hint);
+         //Previous value should be less than the key
+         if(hint == begin_node(header)|| comp((prev = prev_node(hint)), key)){
             commit_data.link_left = unique(header) || !NodeTraits::get_left(hint);
             commit_data.node      = commit_data.link_left ? hint : prev;
             if(pdepth){
@@ -1005,50 +1010,136 @@ class tree_algorithms
             }
             return std::pair<node_ptr, bool>(node_ptr(), true);
          }
-         else{
-            return insert_unique_check(header, key, comp, commit_data, pdepth);
-         }
       }
-      //The hint was wrong, use hintless insert
-      else{
-         return insert_unique_check(header, key, comp, commit_data, pdepth);
-      }
+      //Hint was wrong, use hintless insertion
+      return insert_unique_check(header, key, comp, commit_data, pdepth);
    }
 
-   //! <b>Requires</b>: "header" must be the header node of a tree.
-   //!   NodePtrCompare is a function object that induces a strict weak
-   //!   ordering compatible with the strict weak ordering used to create the
-   //!   the tree. NodePtrCompare compares two node_ptrs. "hint" is node from
-   //!   the "header"'s tree.
-   //!   
-   //! <b>Effects</b>: Inserts new_node into the tree, using "hint" as a hint to
-   //!   where it will be inserted. If "hint" is the upper_bound
-   //!   the insertion takes constant time (two comparisons in the worst case).
-   //!
-   //! <b>Complexity</b>: Logarithmic in general, but it is amortized
-   //!   constant time if new_node is inserted immediately before "hint".
-   //! 
-   //! <b>Throws</b>: If "comp" throws.
    template<class NodePtrCompare>
-   static node_ptr insert_equal
-      (node_ptr header, node_ptr hint, node_ptr new_node, NodePtrCompare comp, std::size_t *pdepth = 0)
+   static void insert_equal_check
+      ( node_ptr header, node_ptr hint, node_ptr new_node, NodePtrCompare comp
+      , insert_commit_data &commit_data, std::size_t *pdepth = 0)
    {
       if(hint == header || !comp(hint, new_node)){
          node_ptr prev(hint);
          if(hint == NodeTraits::get_left(header) || 
             !comp(new_node, (prev = prev_node(hint)))){
             bool link_left = unique(header) || !NodeTraits::get_left(hint);
-            link(header, new_node, link_left ? hint : prev, link_left);
-            if(pdepth)  *pdepth = depth(new_node) + 1;
-            return new_node;
+            commit_data.link_left = link_left;
+            commit_data.node = link_left ? hint : prev;
+            if(pdepth){
+               *pdepth = commit_data.node == header ? 0 : depth(commit_data.node) + 1;
+            }
          }
          else{
-            return insert_equal_upper_bound(header, new_node, comp, pdepth);
+            insert_equal_upper_bound_check(header, new_node, comp, commit_data, pdepth);
          }
       }
       else{
-         return insert_equal_lower_bound(header, new_node, comp, pdepth);
+         insert_equal_lower_bound_check(header, new_node, comp, commit_data, pdepth);
       }
+   }
+
+   template<class NodePtrCompare>
+   static void insert_equal_upper_bound_check
+      (node_ptr h, node_ptr new_node, NodePtrCompare comp, insert_commit_data & commit_data, std::size_t *pdepth = 0)
+   {  insert_equal_check_impl(true, h, new_node, comp, commit_data, pdepth);  }
+
+   template<class NodePtrCompare>
+   static void insert_equal_lower_bound_check
+      (node_ptr h, node_ptr new_node, NodePtrCompare comp, insert_commit_data & commit_data, std::size_t *pdepth = 0)
+   {  insert_equal_check_impl(false, h, new_node, comp, commit_data, pdepth);  }
+
+   template<class NodePtrCompare>
+   static node_ptr insert_equal
+      (node_ptr h, node_ptr hint, node_ptr new_node, NodePtrCompare comp, std::size_t *pdepth = 0)
+   {
+      insert_commit_data commit_data;
+      insert_equal_check(h, hint, new_node, comp, commit_data, pdepth);
+      insert_commit(h, new_node, commit_data);
+      return new_node;
+   }
+
+   template<class NodePtrCompare>
+   static node_ptr insert_equal_upper_bound
+      (node_ptr h, node_ptr new_node, NodePtrCompare comp, std::size_t *pdepth = 0)
+   {
+      insert_commit_data commit_data;
+      insert_equal_upper_bound_check(h, new_node, comp, commit_data, pdepth);
+      insert_commit(h, new_node, commit_data);
+      return new_node;
+   }
+
+   template<class NodePtrCompare>
+   static node_ptr insert_equal_lower_bound
+      (node_ptr h, node_ptr new_node, NodePtrCompare comp, std::size_t *pdepth = 0)
+   {
+      insert_commit_data commit_data;
+      insert_equal_lower_bound_check(h, new_node, comp, commit_data, pdepth);
+      insert_commit(h, new_node, commit_data);
+      return new_node;
+   }
+
+   static node_ptr insert_before
+      (node_ptr header, node_ptr pos, node_ptr new_node, std::size_t *pdepth = 0)
+   {
+      insert_commit_data commit_data;
+      insert_before_check(header, pos, commit_data, pdepth);
+      insert_commit(header, new_node, commit_data);
+      return new_node;
+   }
+
+   static void insert_before_check
+      ( node_ptr header, node_ptr pos
+      , insert_commit_data &commit_data, std::size_t *pdepth = 0)
+   {
+      node_ptr prev(pos);
+      if(pos != NodeTraits::get_left(header))
+         prev = prev_node(pos);
+      bool link_left = unique(header) || !NodeTraits::get_left(pos);
+      commit_data.link_left = link_left;
+      commit_data.node = link_left ? pos : prev;
+      if(pdepth){
+         *pdepth = commit_data.node == header ? 0 : depth(commit_data.node) + 1;
+      }
+   }
+
+   static void push_back
+      (node_ptr header, node_ptr new_node, std::size_t *pdepth = 0)
+   {
+      insert_commit_data commit_data;
+      push_back_check(header, commit_data, pdepth);
+      insert_commit(header, new_node, commit_data);
+   }
+
+   static void push_back_check
+      (node_ptr header, insert_commit_data &commit_data, std::size_t *pdepth = 0)
+   {
+      node_ptr prev(NodeTraits::get_right(header));
+      if(pdepth){
+         *pdepth = prev == header ? 0 : depth(prev) + 1;
+      }
+      commit_data.link_left = false;
+      commit_data.node = prev;
+   }
+
+   static void push_front
+      (node_ptr header, node_ptr new_node, std::size_t *pdepth = 0)
+   {
+      insert_commit_data commit_data;
+      push_front_check(header, commit_data, pdepth);
+      insert_commit(header, new_node, commit_data);
+   }
+
+   static void push_front_check
+      (node_ptr header, insert_commit_data &commit_data, std::size_t *pdepth = 0)
+   {
+      node_ptr pos(NodeTraits::get_left(header));
+      if(pdepth){
+         *pdepth = pos == header ? 0 : depth(pos) + 1;
+      }
+      commit_data.link_left = true;
+      commit_data.node = pos;
    }
 
    //! <b>Requires</b>: p can't be a header node.
@@ -1069,48 +1160,6 @@ class tree_algorithms
          p = p_parent;
       }
       return depth;
-   }
-
-   template<class NodePtrCompare>
-   static node_ptr insert_equal_upper_bound
-      (node_ptr h, node_ptr new_node, NodePtrCompare comp, std::size_t *pdepth = 0)
-   {
-      std::size_t depth = 0;
-      node_ptr y(h);
-      node_ptr x(NodeTraits::get_parent(y));
-
-      while(x){
-         ++depth;
-         y = x;
-         x = comp(new_node, x) ? 
-               NodeTraits::get_left(x) : NodeTraits::get_right(x);
-      }
-
-      bool link_left = (y == h) || comp(new_node, y);
-      link(h, new_node, y, link_left);
-      if(pdepth)  *pdepth = depth;
-      return new_node;
-   }
-
-   template<class NodePtrCompare>
-   static node_ptr insert_equal_lower_bound
-      (node_ptr h, node_ptr new_node, NodePtrCompare comp, std::size_t *pdepth = 0)
-   {
-      std::size_t depth = 0;
-      node_ptr y(h);
-      node_ptr x(NodeTraits::get_parent(y));
-
-      while(x){
-         ++depth;
-         y = x;
-         x = !comp(x, new_node) ? 
-               NodeTraits::get_left(x) : NodeTraits::get_right(x);
-      }
-
-      bool link_left = (y == h) || !comp(y, new_node);
-      link(h, new_node, y, link_left);
-      if(pdepth)  *pdepth = depth;
-      return new_node;
    }
 
    //! <b>Requires</b>: "cloner" must be a function
@@ -1261,97 +1310,81 @@ class tree_algorithms
    //! <b>Complexity</b>: Constant.
    //! 
    //! <b>Throws</b>: Nothing.
-   static bool is_right_child (node_ptr p)
+   static bool is_right_child(node_ptr p)
    {  return NodeTraits::get_right(NodeTraits::get_parent(p)) == p;  }
 
-   static void replace_own (node_ptr own, node_ptr x, node_ptr header)
+   //Fix header and own's parent data when replacing x with own, providing own's old data with parent
+   static void replace_own_impl(node_ptr own, node_ptr x, node_ptr header, node_ptr own_parent, bool own_was_left)
    {
       if(NodeTraits::get_parent(header) == own)
          NodeTraits::set_parent(header, x);
-      else if(is_left_child(own))
-         NodeTraits::set_left(NodeTraits::get_parent(own), x);
+      else if(own_was_left)
+         NodeTraits::set_left(own_parent, x);
       else
-         NodeTraits::set_right(NodeTraits::get_parent(own), x);
+         NodeTraits::set_right(own_parent, x);
    }
 
-   static void rotate_left(node_ptr p, node_ptr header)
+   //Fix header and own's parent data when replacing x with own, supposing own
+   //links with its parent are still ok
+   static void replace_own(node_ptr own, node_ptr x, node_ptr header)
    {
-      node_ptr x = NodeTraits::get_right(p);
-      NodeTraits::set_right(p, NodeTraits::get_left(x));
-      if(NodeTraits::get_left(x) != 0)
-         NodeTraits::set_parent(NodeTraits::get_left(x), p);
-      NodeTraits::set_parent(x, NodeTraits::get_parent(p));
-      replace_own (p, x, header);
+      node_ptr own_parent(NodeTraits::get_parent(own));
+      bool own_is_left(NodeTraits::get_left(own_parent) == own);
+      replace_own_impl(own, x, header, own_parent, own_is_left);
+   }
+
+   // rotate parent p to left (no header and p's parent fixup)
+   static node_ptr rotate_left(node_ptr p)
+   {
+      node_ptr x(NodeTraits::get_right(p));
+      node_ptr x_left(NodeTraits::get_left(x));
+      NodeTraits::set_right(p, x_left);
+      if(x_left){
+         NodeTraits::set_parent(x_left, p);
+      }
       NodeTraits::set_left(x, p);
       NodeTraits::set_parent(p, x);
+      return x;
    }
 
-   static void rotate_right(node_ptr p, node_ptr header)
+   // rotate parent p to left (with header and p's parent fixup)
+   static void rotate_left(node_ptr p, node_ptr header)
+   {
+      bool     p_was_left(is_left_child(p));
+      node_ptr p_old_parent(NodeTraits::get_parent(p));
+      node_ptr x(rotate_left(p));
+      NodeTraits::set_parent(x, p_old_parent);
+      replace_own_impl(p, x, header, p_old_parent, p_was_left);
+   }
+
+   // rotate parent p to right (no header and p's parent fixup)
+   static node_ptr rotate_right(node_ptr p)
    {
       node_ptr x(NodeTraits::get_left(p));
       node_ptr x_right(NodeTraits::get_right(x));
       NodeTraits::set_left(p, x_right);
-      if(x_right)
+      if(x_right){
          NodeTraits::set_parent(x_right, p);
-      NodeTraits::set_parent(x, NodeTraits::get_parent(p));
-      replace_own (p, x, header);
+      }
       NodeTraits::set_right(x, p);
       NodeTraits::set_parent(p, x);
-   }
-
-   // rotate node t with left child            | complexity : constant        | exception : nothrow
-   static node_ptr rotate_left(node_ptr t)
-   {
-      node_ptr x = NodeTraits::get_right(t);
-      NodeTraits::set_right(t, NodeTraits::get_left(x));
-
-      if( NodeTraits::get_right(t) != 0 ){
-         NodeTraits::set_parent(NodeTraits::get_right(t), t );
-      }
-      NodeTraits::set_left(x, t);
-      NodeTraits::set_parent(t, x);
       return x;
    }
 
-   // rotate node t with right child            | complexity : constant        | exception : nothrow
-   static node_ptr rotate_right(node_ptr t)
+   // rotate parent p to right (with header and p's parent fixup)
+   static void rotate_right(node_ptr p, node_ptr header)
    {
-      node_ptr x = NodeTraits::get_left(t);
-      NodeTraits::set_left(t, NodeTraits::get_right(x));
-      if( NodeTraits::get_left(t) != 0 ){
-         NodeTraits::set_parent(NodeTraits::get_left(t), t);
-      }
-      NodeTraits::set_right(x, t);
-      NodeTraits::set_parent(t, x);
-      return x;
-   }
-
-   static void link(node_ptr header, node_ptr z, node_ptr par, bool left)
-   {
-      if(par == header){
-         NodeTraits::set_parent(header, z);
-         NodeTraits::set_right(header, z);
-         NodeTraits::set_left(header, z);
-      }
-      else if(left){
-         NodeTraits::set_left(par, z);
-         if(par == NodeTraits::get_left(header))
-             NodeTraits::set_left(header, z);
-      }
-      else{
-         NodeTraits::set_right(par, z);
-         if(par == NodeTraits::get_right(header))
-             NodeTraits::set_right(header, z);
-      }
-      NodeTraits::set_parent(z, par);
-      NodeTraits::set_right(z, node_ptr(0));
-      NodeTraits::set_left(z, node_ptr(0));
+      bool     p_was_left(is_left_child(p));
+      node_ptr p_old_parent(NodeTraits::get_parent(p));
+      node_ptr x(rotate_right(p));
+      NodeTraits::set_parent(x, p_old_parent);
+      replace_own_impl(p, x, header, p_old_parent, p_was_left);
    }
 
    static void erase(node_ptr header, node_ptr z)
    {
       data_for_rebalance ignored;
-      erase(header, z, nop_erase_fixup(), ignored);
+      erase_impl(header, z, ignored);
    }
 
    struct data_for_rebalance
@@ -1391,14 +1424,14 @@ class tree_algorithms
       //Taken from:
       //"Tree rebalancing in optimal time and space"
       //Quentin F. Stout and Bette L. Warren
-      std::size_t len;
+      std::size_t len = 0;
       subtree_to_vine(NodeTraits::get_parent(header), &len);
       vine_to_subtree(NodeTraits::get_parent(header), len);
    }
 
    static node_ptr rebalance_subtree(node_ptr old_root)
    {
-      std::size_t len;
+      std::size_t len = 0;
       node_ptr new_root = subtree_to_vine(old_root, &len);
       return vine_to_subtree(new_root, len);
    }
@@ -1557,6 +1590,39 @@ class tree_algorithms
    }
 
    private:
+   template<class NodePtrCompare>
+   static void insert_equal_check_impl
+      (bool upper, node_ptr h, node_ptr new_node, NodePtrCompare comp, insert_commit_data & commit_data, std::size_t *pdepth = 0)
+   {
+      std::size_t depth = 0;
+      node_ptr y(h);
+      node_ptr x(NodeTraits::get_parent(y));
+      bool link_left;
+
+      if(upper){
+         while(x){
+            ++depth;
+            y = x;
+            x = comp(new_node, x) ? 
+                  NodeTraits::get_left(x) : NodeTraits::get_right(x);
+         }
+         link_left = (y == h) || comp(new_node, y);
+      }
+      else{
+         while(x){
+            ++depth;
+            y = x;
+            x = !comp(x, new_node) ? 
+                  NodeTraits::get_left(x) : NodeTraits::get_right(x);
+         }
+         link_left = (y == h) || !comp(y, new_node);
+      }
+
+      commit_data.link_left = link_left;
+      commit_data.node = y;
+      if(pdepth)  *pdepth = depth;
+   }
+
    static void erase_impl(node_ptr header, node_ptr z, data_for_rebalance &info)
    {
       node_ptr y(z);
@@ -1599,12 +1665,12 @@ class tree_algorithms
             NodeTraits::set_parent(x, x_parent);
          tree_algorithms::replace_own (z, x, header);
          if(NodeTraits::get_left(header) == z){
-            NodeTraits::set_left(header, NodeTraits::get_right(z) == 0 ?        // z->get_left() must be null also
+            NodeTraits::set_left(header, !NodeTraits::get_right(z) ?        // z->get_left() must be null also
                NodeTraits::get_parent(z) :  // makes leftmost == header if z == root
                tree_algorithms::minimum (x));
          }
          if(NodeTraits::get_right(header) == z){
-            NodeTraits::set_right(header, NodeTraits::get_left(z) == 0 ?        // z->get_right() must be null also
+            NodeTraits::set_right(header, !NodeTraits::get_left(z) ?        // z->get_right() must be null also
                               NodeTraits::get_parent(z) :  // makes rightmost == header if z == root
                               tree_algorithms::maximum(x));
          }

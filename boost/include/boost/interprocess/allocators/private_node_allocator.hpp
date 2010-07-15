@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -18,10 +18,13 @@
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
+#include <boost/pointer_to_other.hpp>
+
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/assert.hpp>
 #include <boost/utility/addressof.hpp>
 #include <boost/interprocess/allocators/detail/node_pool.hpp>
+#include <boost/interprocess/containers/container/detail/multiallocation_chain.hpp>
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/detail/utilities.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
@@ -72,9 +75,9 @@ class private_node_allocator_base
    /// @endcond
 
    public:
-   typedef typename detail::
+   typedef typename boost::
       pointer_to_other<void_pointer, T>::type            pointer;
-   typedef typename detail::
+   typedef typename boost::
       pointer_to_other<void_pointer, const T>::type      const_pointer;
    typedef T                                             value_type;
    typedef typename detail::add_reference
@@ -83,14 +86,10 @@ class private_node_allocator_base
                      <const value_type>::type            const_reference;
    typedef std::size_t                                   size_type;
    typedef std::ptrdiff_t                                difference_type;
-   typedef detail::version_type
+   typedef boost::interprocess::version_type
       <private_node_allocator_base, Version>              version;
-   typedef transform_iterator
-      < typename SegmentManager::
-         multiallocation_iterator
-      , detail::cast_functor <T> >              multiallocation_iterator;
-   typedef typename SegmentManager::
-      multiallocation_chain                     multiallocation_chain;
+   typedef boost::container::containers_detail::transform_multiallocation_chain
+      <typename SegmentManager::multiallocation_chain, T>multiallocation_chain;
 
    //!Obtains node_allocator from other node_allocator
    template<class T2>
@@ -240,7 +239,7 @@ class private_node_allocator
    typedef detail::private_node_allocator_base
          < 2, T, SegmentManager, NodesPerBlock> base_t;
    public:
-   typedef detail::version_type<private_node_allocator, 2>   version;
+   typedef boost::interprocess::version_type<private_node_allocator, 2>   version;
 
    template<class T2>
    struct rebind
@@ -364,7 +363,7 @@ class private_node_allocator
    size_type size(const pointer &p) const;
 
    std::pair<pointer, bool>
-      allocation_command(allocation_type command,
+      allocation_command(boost::interprocess::allocation_type command,
                          size_type limit_size, 
                          size_type preferred_size,
                          size_type &received_size, const pointer &reuse = 0);
@@ -375,12 +374,12 @@ class private_node_allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
-   multiallocation_iterator allocate_many(size_type elem_size, std::size_t num_elements);
+   multiallocation_chain allocate_many(size_type elem_size, std::size_t num_elements);
 
    //!Allocates n_elements elements, each one of size elem_sizes[i]in a
    //!contiguous block
    //!of memory. The elements must be deallocated
-   multiallocation_iterator allocate_many(const size_type *elem_sizes, size_type n_elements);
+   multiallocation_chain allocate_many(const size_type *elem_sizes, size_type n_elements);
 
    //!Allocates many elements of size elem_size in a contiguous block
    //!of memory. The minimum number to be allocated is min_elements,
@@ -388,7 +387,7 @@ class private_node_allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. The elements must be deallocated
    //!with deallocate(...)
-   void deallocate_many(multiallocation_iterator it);
+   void deallocate_many(multiallocation_chain chain);
 
    //!Allocates just one object. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
@@ -401,7 +400,7 @@ class private_node_allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
-   multiallocation_iterator allocate_individual(std::size_t num_elements);
+   multiallocation_chain allocate_individual(std::size_t num_elements);
 
    //!Deallocates memory previously allocated with allocate_one().
    //!You should never use deallocate_one to deallocate memory allocated
@@ -414,7 +413,7 @@ class private_node_allocator
    //!preferred_elements. The number of actually allocated elements is
    //!will be assigned to received_size. Memory allocated with this function
    //!must be deallocated only with deallocate_one().
-   void deallocate_individual(multiallocation_iterator it);
+   void deallocate_individual(multiallocation_chain chain);
    #endif
 };
 

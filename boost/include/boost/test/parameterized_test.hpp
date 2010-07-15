@@ -1,4 +1,4 @@
-//  (C) Copyright Gennadiy Rozental 2001-2007.
+//  (C) Copyright Gennadiy Rozental 2001-2008.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at 
 //  http://www.boost.org/LICENSE_1_0.txt)
@@ -7,7 +7,7 @@
 //
 //  File        : $RCSfile$
 //
-//  Version     : $Revision: 41369 $
+//  Version     : $Revision: 54633 $
 //
 //  Description : generators and helper macros for parameterized tests
 // ***************************************************************************
@@ -82,7 +82,7 @@ public:
     , m_par_end( par_end )
     {}
 
-    test_unit* next() const
+    virtual test_unit* next() const
     {
         if( m_par_begin == m_par_end )
             return (test_unit*)0;

@@ -1,7 +1,7 @@
 // fp_traits.hpp
 
-#ifndef BOOST_MATH_FP_TRAITS_HPP
-#define BOOST_MATH_FP_TRAITS_HPP
+#ifndef BOOST_SPIRIT_MATH_FP_TRAITS_HPP
+#define BOOST_SPIRIT_MATH_FP_TRAITS_HPP
 
 // Copyright (c) 2006 Johan Rade
 
@@ -11,6 +11,10 @@
 
 #if defined(__vms) && defined(__DECCXX) && !__IEEE_FLOAT
 #   error The VAX floating point mode on VMS is not supported.
+#endif
+
+#if defined(_MSC_VER)
+#pragma once
 #endif
 
 #include <cstring>
@@ -24,6 +28,7 @@
 //------------------------------------------------------------------------------
 
 namespace boost {
+namespace spirit {
 namespace math {
 namespace detail {
 
@@ -571,6 +576,7 @@ template<class T> struct fp_traits
 
 }   // namespace detail
 }   // namespace math
+}   // namespace spirit
 }   // namespace boost
 
 #endif

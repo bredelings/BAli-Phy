@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -8,8 +8,8 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifndef BOOST_INTERPROCESS_MAPPED_FILE_HPP
-#define BOOST_INTERPROCESS_MAPPED_FILE_HPP
+#ifndef BOOST_INTERPROCESS_FILE_MAPPING_HPP
+#define BOOST_INTERPROCESS_FILE_MAPPING_HPP
 
 #include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
@@ -21,14 +21,11 @@
 #include <boost/interprocess/detail/os_file_functions.hpp>
 #include <boost/interprocess/detail/move.hpp>
 #include <string>    //std::string
-#include <cstdio>    //std::remove
-#include <string>
 
 //!\file
 //!Describes file_mapping and mapped region classes
 
 namespace boost {
-
 namespace interprocess {
 
 //!A class that wraps a file-mapping that can be used to
@@ -36,9 +33,7 @@ namespace interprocess {
 class file_mapping
 {
    /// @cond
-   //Non-copyable and non-assignable
-   file_mapping(const file_mapping &);
-   file_mapping &operator=(const file_mapping &);
+   BOOST_INTERPROCESS_MOVABLE_BUT_NOT_COPYABLE(file_mapping)
    /// @endcond
 
    public:
@@ -52,38 +47,22 @@ class file_mapping
    //!modes. Throws interprocess_exception on error.
    file_mapping(const char *filename, mode_t mode);
 
-   //!Moves the ownership of "moved"'s shared memory object to *this. 
-   //!After the call, "moved" does not represent any shared memory object. 
+   //!Moves the ownership of "moved"'s file mapping object to *this. 
+   //!After the call, "moved" does not represent any file mapping object. 
    //!Does not throw
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   file_mapping(detail::moved_object<file_mapping> moved)
-      :  m_handle(file_handle_t(detail::invalid_file()))
-   {  this->swap(moved.get());   }
-   #else
-   file_mapping(file_mapping &&moved)
+   file_mapping(BOOST_INTERPROCESS_RV_REF(file_mapping) moved)
       :  m_handle(file_handle_t(detail::invalid_file()))
    {  this->swap(moved);   }
-   #endif
 
-   //!Moves the ownership of "moved"'s shared memory to *this.
-   //!After the call, "moved" does not represent any shared memory. 
+   //!Moves the ownership of "moved"'s file mapping to *this.
+   //!After the call, "moved" does not represent any file mapping. 
    //!Does not throw
-   #ifndef BOOST_INTERPROCESS_RVALUE_REFERENCE
-   file_mapping &operator=
-      (detail::moved_object<file_mapping> moved)
-   {  
-      file_mapping tmp(moved);
+   file_mapping &operator=(BOOST_INTERPROCESS_RV_REF(file_mapping) moved)
+   {
+      file_mapping tmp(boost::interprocess::move(moved));
       this->swap(tmp);
       return *this;  
    }
-   #else
-   file_mapping &operator=(file_mapping &&moved)
-   {  
-      file_mapping tmp(detail::move_impl(moved));
-      this->swap(tmp);
-      return *this;  
-   }
-   #endif
 
    //!Swaps to file_mappings.
    //!Does not throw.
@@ -104,6 +83,12 @@ class file_mapping
    //!Returns the name of the file
    //!used in the constructor.
    const char *get_name() const;
+
+   //!Removes the file named "filename" even if it's been memory mapped.
+   //!Returns true on success.
+   //!The function might fail in some operating systems if the file is
+   //!being used other processes and no deletion permission was shared.
+   static bool remove(const char *filename);
 
    /// @cond
    private:
@@ -160,6 +145,9 @@ inline file_mapping::file_mapping
    m_mode = mode;
 }
 
+inline bool file_mapping::remove(const char *filename)
+{  return detail::delete_file(filename);  }
+
 ///@cond
 
 inline void file_mapping::priv_close()
@@ -170,19 +158,10 @@ inline void file_mapping::priv_close()
    }
 }
 
-
-//!Trait class to detect if a type is
-//!movable
-template<>
-struct is_movable<file_mapping>
-{
-   enum {  value = true };
-};
-
 ///@endcond
 
-//!A class that stores the name of a a file
-//!and call std::remove(name) in its destructor
+//!A class that stores the name of a file
+//!and tries to remove it in its destructor
 //!Useful to remove temporary files in the presence
 //!of exceptions
 class remove_file_on_destroy
@@ -194,7 +173,7 @@ class remove_file_on_destroy
    {}
 
    ~remove_file_on_destroy()
-   {  std::remove(m_name);  }
+   {  detail::delete_file(m_name);  }
 };
 
 }  //namespace interprocess {
@@ -202,4 +181,4 @@ class remove_file_on_destroy
 
 #include <boost/interprocess/detail/config_end.hpp>
 
-#endif   //BOOST_INTERPROCESS_MAPPED_FILE_HPP
+#endif   //BOOST_INTERPROCESS_FILE_MAPPING_HPP

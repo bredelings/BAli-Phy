@@ -1,4 +1,4 @@
-//  (C) Copyright Gennadiy Rozental 2005-2007.
+//  (C) Copyright Gennadiy Rozental 2005-2008.
 //  Use, modification, and distribution are subject to the 
 //  Boost Software License, Version 1.0. (See accompanying file 
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -7,7 +7,7 @@
 //
 //  File        : $RCSfile$
 //
-//  Version     : $Revision: 43798 $
+//  Version     : $Revision: 54633 $
 //
 //  Description : defines model of parameter with single char name
 // ***************************************************************************
@@ -47,7 +47,7 @@ public:
     {
         basic_naming_policy::accept_modifier( m );
 
-        BOOST_RT_PARAM_VALIDATE_LOGIC( m_name.size() <= 1, "Invalid parameter name "  << m_name );
+        BOOST_RT_PARAM_VALIDATE_LOGIC( p_name->size() <= 1, "Invalid parameter name "  << p_name );
     }
 };
 

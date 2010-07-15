@@ -2,7 +2,7 @@
 // read_until.ipp
 // ~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2010 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,9 +19,9 @@
 
 #include <boost/asio/detail/push_options.hpp>
 #include <algorithm>
-#include <limits>
 #include <string>
 #include <utility>
+#include <boost/limits.hpp>
 #include <boost/asio/detail/pop_options.hpp>
 
 #include <boost/asio/buffer.hpp>
@@ -278,19 +278,16 @@ std::size_t read_until(SyncReadStream& s,
 
     // Look for a match.
     std::pair<iterator, bool> result = match_condition(start, end);
-    if (result.first != end)
+    if (result.second)
     {
-      if (result.second)
-      {
-        // Full match. We're done.
-        ec = boost::system::error_code();
-        return result.first - begin;
-      }
-      else
-      {
-        // Partial match. Next search needs to start from beginning of match.
-        next_search_start = result.first - begin;
-      }
+      // Full match. We're done.
+      ec = boost::system::error_code();
+      return result.first - begin;
+    }
+    else if (result.first != end)
+    {
+      // Partial match. Next search needs to start from beginning of match.
+      next_search_start = result.first - begin;
     }
     else
     {
@@ -407,7 +404,7 @@ namespace detail
         Allocator, ReadHandler>* this_handler)
   {
     return boost_asio_handler_alloc_helpers::allocate(
-        size, &this_handler->handler_);
+        size, this_handler->handler_);
   }
 
   template <typename AsyncReadStream, typename Allocator, typename ReadHandler>
@@ -416,7 +413,7 @@ namespace detail
         Allocator, ReadHandler>* this_handler)
   {
     boost_asio_handler_alloc_helpers::deallocate(
-        pointer, size, &this_handler->handler_);
+        pointer, size, this_handler->handler_);
   }
 
   template <typename Function, typename AsyncReadStream, typename Allocator,
@@ -426,7 +423,7 @@ namespace detail
         Allocator, ReadHandler>* this_handler)
   {
     boost_asio_handler_invoke_helpers::invoke(
-        function, &this_handler->handler_);
+        function, this_handler->handler_);
   }
 } // namespace detail
 
@@ -449,7 +446,7 @@ void async_read_until(AsyncReadStream& s,
     // Found a match. We're done.
     boost::system::error_code ec;
     std::size_t bytes = iter - begin + 1;
-    s.io_service().post(detail::bind_handler(handler, ec, bytes));
+    s.get_io_service().post(detail::bind_handler(handler, ec, bytes));
     return;
   }
 
@@ -457,7 +454,7 @@ void async_read_until(AsyncReadStream& s,
   if (b.size() == b.max_size())
   {
     boost::system::error_code ec(error::not_found);
-    s.io_service().post(detail::bind_handler(handler, ec, 0));
+    s.get_io_service().post(detail::bind_handler(handler, ec, 0));
     return;
   }
 
@@ -538,8 +535,8 @@ namespace detail
       if (streambuf_.size() == streambuf_.max_size())
       {
         std::size_t bytes = 0;
-        boost::system::error_code ec(error::not_found);
-        handler_(ec, bytes);
+        boost::system::error_code ec2(error::not_found);
+        handler_(ec2, bytes);
         return;
       }
 
@@ -563,7 +560,7 @@ namespace detail
         Allocator, ReadHandler>* this_handler)
   {
     return boost_asio_handler_alloc_helpers::allocate(
-        size, &this_handler->handler_);
+        size, this_handler->handler_);
   }
 
   template <typename AsyncReadStream, typename Allocator, typename ReadHandler>
@@ -572,7 +569,7 @@ namespace detail
         Allocator, ReadHandler>* this_handler)
   {
     boost_asio_handler_alloc_helpers::deallocate(
-        pointer, size, &this_handler->handler_);
+        pointer, size, this_handler->handler_);
   }
 
   template <typename Function, typename AsyncReadStream,
@@ -582,7 +579,7 @@ namespace detail
         Allocator, ReadHandler>* this_handler)
   {
     boost_asio_handler_invoke_helpers::invoke(
-        function, &this_handler->handler_);
+        function, this_handler->handler_);
   }
 } // namespace detail
 
@@ -610,7 +607,7 @@ void async_read_until(AsyncReadStream& s,
       // Full match. We're done.
       boost::system::error_code ec;
       std::size_t bytes = result.first - begin + delim.length();
-      s.io_service().post(detail::bind_handler(handler, ec, bytes));
+      s.get_io_service().post(detail::bind_handler(handler, ec, bytes));
       return;
     }
     else
@@ -629,7 +626,7 @@ void async_read_until(AsyncReadStream& s,
   if (b.size() == b.max_size())
   {
     boost::system::error_code ec(error::not_found);
-    s.io_service().post(detail::bind_handler(handler, ec, 0));
+    s.get_io_service().post(detail::bind_handler(handler, ec, 0));
     return;
   }
 
@@ -736,7 +733,7 @@ namespace detail
         Allocator, ReadHandler>* this_handler)
   {
     return boost_asio_handler_alloc_helpers::allocate(
-        size, &this_handler->handler_);
+        size, this_handler->handler_);
   }
 
   template <typename AsyncReadStream, typename Allocator, typename ReadHandler>
@@ -745,7 +742,7 @@ namespace detail
         Allocator, ReadHandler>* this_handler)
   {
     boost_asio_handler_alloc_helpers::deallocate(
-        pointer, size, &this_handler->handler_);
+        pointer, size, this_handler->handler_);
   }
 
   template <typename Function, typename AsyncReadStream, typename Allocator,
@@ -755,7 +752,7 @@ namespace detail
         Allocator, ReadHandler>* this_handler)
   {
     boost_asio_handler_invoke_helpers::invoke(
-        function, &this_handler->handler_);
+        function, this_handler->handler_);
   }
 } // namespace detail
 
@@ -783,7 +780,7 @@ void async_read_until(AsyncReadStream& s,
       // Full match. We're done.
       boost::system::error_code ec;
       std::size_t bytes = match_results[0].second - begin;
-      s.io_service().post(detail::bind_handler(handler, ec, bytes));
+      s.get_io_service().post(detail::bind_handler(handler, ec, bytes));
       return;
     }
     else
@@ -802,7 +799,7 @@ void async_read_until(AsyncReadStream& s,
   if (b.size() == b.max_size())
   {
     boost::system::error_code ec(error::not_found);
-    s.io_service().post(detail::bind_handler(handler, ec, 0));
+    s.get_io_service().post(detail::bind_handler(handler, ec, 0));
     return;
   }
 
@@ -858,20 +855,17 @@ namespace detail
 
       // Look for a match.
       std::pair<iterator, bool> result = match_condition_(start, end);
-      if (result.first != end)
+      if (result.second)
       {
-        if (result.second)
-        {
-          // Full match. We're done.
-          std::size_t bytes = result.first - begin;
-          handler_(ec, bytes);
-          return;
-        }
-        else
-        {
-          // Partial match. Next search needs to start from beginning of match.
-          next_search_start_ = result.first - begin;
-        }
+        // Full match. We're done.
+        std::size_t bytes = result.first - begin;
+        handler_(ec, bytes);
+        return;
+      }
+      else if (result.first != end)
+      {
+        // Partial match. Next search needs to start from beginning of match.
+        next_search_start_ = result.first - begin;
       }
       else
       {
@@ -909,7 +903,7 @@ namespace detail
         Allocator, MatchCondition, ReadHandler>* this_handler)
   {
     return boost_asio_handler_alloc_helpers::allocate(
-        size, &this_handler->handler_);
+        size, this_handler->handler_);
   }
 
   template <typename AsyncReadStream, typename Allocator,
@@ -919,7 +913,7 @@ namespace detail
         Allocator, MatchCondition, ReadHandler>* this_handler)
   {
     boost_asio_handler_alloc_helpers::deallocate(
-        pointer, size, &this_handler->handler_);
+        pointer, size, this_handler->handler_);
   }
 
   template <typename Function, typename AsyncReadStream, typename Allocator,
@@ -929,7 +923,7 @@ namespace detail
         Allocator, MatchCondition, ReadHandler>* this_handler)
   {
     boost_asio_handler_invoke_helpers::invoke(
-        function, &this_handler->handler_);
+        function, this_handler->handler_);
   }
 } // namespace detail
 
@@ -951,21 +945,18 @@ void async_read_until(AsyncReadStream& s,
   // Look for a match.
   std::size_t next_search_start;
   std::pair<iterator, bool> result = match_condition(begin, end);
-  if (result.first != end)
+  if (result.second)
   {
-    if (result.second)
-    {
-      // Full match. We're done.
-      boost::system::error_code ec;
-      std::size_t bytes = result.first - begin;
-      s.io_service().post(detail::bind_handler(handler, ec, bytes));
-      return;
-    }
-    else
-    {
-      // Partial match. Next search needs to start from beginning of match.
-      next_search_start = result.first - begin;
-    }
+    // Full match. We're done.
+    boost::system::error_code ec;
+    std::size_t bytes = result.first - begin;
+    s.get_io_service().post(detail::bind_handler(handler, ec, bytes));
+    return;
+  }
+  else if (result.first != end)
+  {
+    // Partial match. Next search needs to start from beginning of match.
+    next_search_start = result.first - begin;
   }
   else
   {
@@ -977,7 +968,7 @@ void async_read_until(AsyncReadStream& s,
   if (b.size() == b.max_size())
   {
     boost::system::error_code ec(error::not_found);
-    s.io_service().post(detail::bind_handler(handler, ec, 0));
+    s.get_io_service().post(detail::bind_handler(handler, ec, 0));
     return;
   }
 

@@ -15,7 +15,7 @@
 #include <deque>
 #include <algorithm>                     // for std::sort and std::stable_sort
 #include <utility>                       // for std::pair
-#include <boost/property_map.hpp>
+#include <boost/property_map/property_map.hpp>
 #include <boost/utility.hpp>             // for boost::tie
 #include <boost/graph/graph_traits.hpp>  
 #include <boost/graph/visitors.hpp>
@@ -67,7 +67,7 @@ namespace boost
 
 
   template <typename Graph, typename MateMap, typename VertexIndexMap>
-  bool is_a_matching(const Graph& g, MateMap mate, VertexIndexMap vm)
+  bool is_a_matching(const Graph& g, MateMap mate, VertexIndexMap)
   {
     typedef typename graph_traits<Graph>::vertex_descriptor
       vertex_descriptor_t;
@@ -106,13 +106,13 @@ namespace boost
             typename VertexIndexMap = dummy_property_map>
   struct no_augmenting_path_finder
   {
-    no_augmenting_path_finder(const Graph& g, MateMap mate, VertexIndexMap vm)
+    no_augmenting_path_finder(const Graph&, MateMap, VertexIndexMap)
     { }
 
     inline bool augment_matching() { return false; }
 
     template <typename PropertyMap>
-    void get_current_matching(PropertyMap p) {}
+    void get_current_matching(PropertyMap) {}
   };
 
 
@@ -266,7 +266,7 @@ namespace boost
           pred[w_prime] = v;
         }
         
-		//w_prime == v_prime can happen below if we get an edge that has been
+        //w_prime == v_prime can happen below if we get an edge that has been
         //shrunk into a blossom
         else if (vertex_state[w_prime] == graph::detail::V_EVEN && w_prime != v_prime) 
         {                                                             
@@ -673,16 +673,16 @@ namespace boost
       }
       
       template <class Vertex, class Graph>
-      void start_vertex(Vertex v, Graph&) 
+      void start_vertex(Vertex, Graph&) 
       {
         m_parity = false; 
       }
       
       template <class Vertex, class Graph>
-      void discover_vertex(Vertex u, Graph&) 
+      void discover_vertex(Vertex, Graph&) 
       {
         m_parity = !m_parity;
-		m_parity ? ++m_count : --m_count;
+        m_parity ? ++m_count : --m_count;
       }
       
     protected:
@@ -703,7 +703,7 @@ namespace boost
   struct no_matching_verifier
   {
     inline static bool 
-    verify_matching(const Graph& g, MateMap mate, VertexIndexMap vm) 
+    verify_matching(const Graph&, MateMap, VertexIndexMap) 
     { return true;}
   };
   
@@ -736,12 +736,12 @@ namespace boost
       //excludes vertices labeled "graph::detail::V_ODD"
       non_odd_vertex() : vertex_state(0) { }
   
-	  non_odd_vertex(VertexStateMap* arg_vertex_state) 
+      non_odd_vertex(VertexStateMap* arg_vertex_state) 
         : vertex_state(arg_vertex_state) { }
 
-	  template <typename Vertex>
+      template <typename Vertex>
       bool operator()(const Vertex& v) const 
-	  {
+      {
         BOOST_ASSERT(vertex_state);
         return get(*vertex_state, v) != graph::detail::V_ODD;
       }

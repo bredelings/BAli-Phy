@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2007
+// (C) Copyright Ion Gaztanaga 2007-2009
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -15,6 +15,7 @@
 #include <boost/intrusive/detail/config_begin.hpp>
 #include <boost/intrusive/intrusive_fwd.hpp>
 #include <boost/intrusive/sgtree.hpp>
+#include <boost/intrusive/detail/mpl.hpp>
 #include <iterator>
 
 namespace boost {
@@ -31,7 +32,7 @@ namespace intrusive {
 //! \c base_hook<>/member_hook<>/value_traits<>,
 //! \c constant_time_size<>, \c size_type<> and
 //! \c compare<>.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
@@ -296,7 +297,7 @@ class sg_set_impl
    value_compare value_comp() const
    { return tree_.value_comp(); }
 
-   //! <b>Effects</b>: Returns true is the container is empty.
+   //! <b>Effects</b>: Returns true if the container is empty.
    //! 
    //! <b>Complexity</b>: Constant.
    //! 
@@ -323,18 +324,19 @@ class sg_set_impl
    { tree_.swap(other.tree_); }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
+   //!   Cloner should yield to nodes equivalent to the original nodes.
    //!
    //! <b>Effects</b>: Erases all the elements from *this
    //!   calling Disposer::operator()(pointer), clones all the 
    //!   elements from src calling Cloner::operator()(const_reference )
-   //!   and inserts them on *this.
+   //!   and inserts them on *this. Copies the predicate from the source container.
    //!
    //!   If cloner throws, all cloned elements are unlinked and disposed
    //!   calling Disposer::operator()(pointer).
    //!   
    //! <b>Complexity</b>: Linear to erased plus inserted elements.
    //! 
-   //! <b>Throws</b>: If cloner throws.
+   //! <b>Throws</b>: If cloner throws or predicate copy assignment throws. Basic guarantee.
    template <class Cloner, class Disposer>
    void clone_from(const sg_set_impl &src, Cloner cloner, Disposer disposer)
    {  tree_.clone_from(src.tree_, cloner, disposer);  }
@@ -379,7 +381,7 @@ class sg_set_impl
 
    //! <b>Requires</b>: key_value_comp must be a comparison function that induces 
    //!   the same strict weak ordering as value_compare. The difference is that
-   //!   key_value_comp compares an ascapegoatitrary key with the contained values.
+   //!   key_value_comp compares an arbitrary key with the contained values.
    //! 
    //! <b>Effects</b>: Checks if a value can be inserted in the sg_set, using
    //!   a user provided key instead of the value itself.
@@ -414,7 +416,7 @@ class sg_set_impl
 
    //! <b>Requires</b>: key_value_comp must be a comparison function that induces 
    //!   the same strict weak ordering as value_compare. The difference is that
-   //!   key_value_comp compares an ascapegoatitrary key with the contained values.
+   //!   key_value_comp compares an arbitrary key with the contained values.
    //! 
    //! <b>Effects</b>: Checks if a value can be inserted in the sg_set, using
    //!   a user provided key instead of the value itself, using "hint" 
@@ -487,6 +489,60 @@ class sg_set_impl
    void insert(Iterator b, Iterator e)
    {  tree_.insert_unique(b, e);  }
 
+   //! <b>Requires</b>: value must be an lvalue, "pos" must be
+   //!   a valid iterator (or end) and must be the succesor of value
+   //!   once inserted according to the predicate. "value" must not be equal to any
+   //!   inserted key according to the predicate.
+   //!
+   //! <b>Effects</b>: Inserts x into the tree before "pos".
+   //! 
+   //! <b>Complexity</b>: Constant time.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Note</b>: This function does not check preconditions so if "pos" is not
+   //! the successor of "value" or "value" is not unique tree ordering and uniqueness
+   //! invariants will be broken respectively.
+   //! This is a low-level function to be used only for performance reasons
+   //! by advanced users.
+   iterator insert_before(const_iterator pos, reference value)
+   {  return tree_.insert_before(pos, value);  }
+
+   //! <b>Requires</b>: value must be an lvalue, and it must be greater than
+   //!   any inserted key according to the predicate.
+   //!
+   //! <b>Effects</b>: Inserts x into the tree in the last position.
+   //! 
+   //! <b>Complexity</b>: Constant time.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Note</b>: This function does not check preconditions so if value is
+   //!   less than or equal to the greatest inserted key tree ordering invariant will be broken.
+   //!   This function is slightly more efficient than using "insert_before".
+   //!   This is a low-level function to be used only for performance reasons
+   //!   by advanced users.
+   void push_back(reference value)
+   {  tree_.push_back(value);  }
+
+   //! <b>Requires</b>: value must be an lvalue, and it must be less
+   //!   than any inserted key according to the predicate.
+   //!
+   //! <b>Effects</b>: Inserts x into the tree in the first position.
+   //! 
+   //! <b>Complexity</b>: Constant time.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Note</b>: This function does not check preconditions so if value is
+   //!   greater than or equal to the the mimum inserted key tree ordering or uniqueness
+   //!   invariants will be broken.
+   //!   This function is slightly more efficient than using "insert_before".
+   //!   This is a low-level function to be used only for performance reasons
+   //!   by advanced users.
+   void push_front(reference value)
+   {  tree_.push_front(value);  }
+
    //! <b>Effects</b>: Erases the element pointed to by pos. 
    //! 
    //! <b>Complexity</b>: Average complexity is constant time.
@@ -497,7 +553,7 @@ class sg_set_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
-   iterator erase(iterator i)
+   iterator erase(const_iterator i)
    {  return tree_.erase(i);  }
 
    //! <b>Effects</b>: Erases the range pointed to by b end e. 
@@ -511,7 +567,7 @@ class sg_set_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
-   iterator erase(iterator b, iterator e)
+   iterator erase(const_iterator b, const_iterator e)
    {  return tree_.erase(b, e);  }
 
    //! <b>Effects</b>: Erases all the elements with the given value.
@@ -539,7 +595,11 @@ class sg_set_impl
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
    template<class KeyType, class KeyValueCompare>
-   size_type erase(const KeyType& key, KeyValueCompare comp)
+   size_type erase(const KeyType& key, KeyValueCompare comp
+                  /// @cond
+                  , typename detail::enable_if_c<!detail::is_convertible<KeyValueCompare, const_iterator>::value >::type * = 0
+                  /// @endcond
+                  )
    {  return tree_.erase(key, comp);  }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -556,8 +616,14 @@ class sg_set_impl
    //! <b>Note</b>: Invalidates the iterators 
    //!    to the erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator i, Disposer disposer)
+   iterator erase_and_dispose(const_iterator i, Disposer disposer)
    {  return tree_.erase_and_dispose(i, disposer);  }
+
+   #if !defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
+   template<class Disposer>
+   iterator erase_and_dispose(iterator i, Disposer disposer)
+   {  return this->erase_and_dispose(const_iterator(i), disposer);   }
+   #endif
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
    //!
@@ -574,7 +640,7 @@ class sg_set_impl
    //! <b>Note</b>: Invalidates the iterators
    //!    to the erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator b, iterator e, Disposer disposer)
+   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer)
    {  return tree_.erase_and_dispose(b, e, disposer);  }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -609,7 +675,11 @@ class sg_set_impl
    //! <b>Note</b>: Invalidates the iterators
    //!    to the erased elements.
    template<class KeyType, class KeyValueCompare, class Disposer>
-   size_type erase_and_dispose(const KeyType& key, KeyValueCompare comp, Disposer disposer)
+   size_type erase_and_dispose(const KeyType& key, KeyValueCompare comp, Disposer disposer
+                  /// @cond
+                  , typename detail::enable_if_c<!detail::is_convertible<KeyValueCompare, const_iterator>::value >::type * = 0
+                  /// @endcond
+                  )
    {  return tree_.erase_and_dispose(key, comp, disposer);  }
 
    //! <b>Effects</b>: Erases all the elements of the container.
@@ -1035,65 +1105,65 @@ class sg_set_impl
    /// @endcond
 };
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator!=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const sg_set_impl<T, Options...> &x, const sg_set_impl<T, Options...> &y)
 #else
 (const sg_set_impl<Config> &x, const sg_set_impl<Config> &y)
 #endif
 {  return !(x == y); }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const sg_set_impl<T, Options...> &x, const sg_set_impl<T, Options...> &y)
 #else
 (const sg_set_impl<Config> &x, const sg_set_impl<Config> &y)
 #endif
 {  return y < x;  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator<=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const sg_set_impl<T, Options...> &x, const sg_set_impl<T, Options...> &y)
 #else
 (const sg_set_impl<Config> &x, const sg_set_impl<Config> &y)
 #endif
 {  return !(y < x);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const sg_set_impl<T, Options...> &x, const sg_set_impl<T, Options...> &y)
 #else
 (const sg_set_impl<Config> &x, const sg_set_impl<Config> &y)
 #endif
 {  return !(x < y);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline void swap
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (sg_set_impl<T, Options...> &x, sg_set_impl<T, Options...> &y)
 #else
 (sg_set_impl<Config> &x, sg_set_impl<Config> &y)
@@ -1102,7 +1172,7 @@ inline void swap
 
 //! Helper metafunction to define a \c sg_set that yields to the same type when the
 //! same options (either explicitly or implicitly) are used.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED) || defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class ...Options>
 #else
 template<class T, class O1 = none, class O2 = none
@@ -1112,19 +1182,42 @@ struct make_sg_set
 {
    /// @cond
    typedef sg_set_impl
-      < typename make_sgtree_opt<T, O1, O2, O3, O4>::type
+      < typename make_sgtree_opt<T, 
+      #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+      O1, O2, O3, O4
+      #else
+      Options...
+      #endif
+      >::type
       > implementation_defined;
    /// @endcond
    typedef implementation_defined type;
 };
 
 #ifndef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+
+#if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class O1, class O2, class O3, class O4>
+#else
+template<class T, class ...Options>
+#endif
 class sg_set
-   :  public make_sg_set<T, O1, O2, O3, O4>::type
+   :  public make_sg_set<T, 
+      #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+      O1, O2, O3, O4
+      #else
+      Options...
+      #endif
+      >::type
 {
    typedef typename make_sg_set
-      <T, O1, O2, O3, O4>::type   Base;
+      <T, 
+      #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+      O1, O2, O3, O4
+      #else
+      Options...
+      #endif
+      >::type   Base;
 
    public:
    typedef typename Base::value_compare      value_compare;
@@ -1173,7 +1266,7 @@ class sg_set
 //! \c base_hook<>/member_hook<>/value_traits<>,
 //! \c constant_time_size<>, \c size_type<> and
 //! \c compare<>.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
@@ -1434,7 +1527,7 @@ class sg_multiset_impl
    value_compare value_comp() const
    { return tree_.value_comp(); }
 
-   //! <b>Effects</b>: Returns true is the container is empty.
+   //! <b>Effects</b>: Returns true if the container is empty.
    //! 
    //! <b>Complexity</b>: Constant.
    //! 
@@ -1461,18 +1554,19 @@ class sg_multiset_impl
    { tree_.swap(other.tree_); }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
+   //!   Cloner should yield to nodes equivalent to the original nodes.
    //!
    //! <b>Effects</b>: Erases all the elements from *this
    //!   calling Disposer::operator()(pointer), clones all the 
    //!   elements from src calling Cloner::operator()(const_reference )
-   //!   and inserts them on *this.
+   //!   and inserts them on *this. Copies the predicate from the source container.
    //!
    //!   If cloner throws, all cloned elements are unlinked and disposed
    //!   calling Disposer::operator()(pointer).
    //!   
    //! <b>Complexity</b>: Linear to erased plus inserted elements.
    //! 
-   //! <b>Throws</b>: If cloner throws. Basic guarantee.
+   //! <b>Throws</b>: If cloner throws or predicate copy assignment throws. Basic guarantee.
    template <class Cloner, class Disposer>
    void clone_from(const sg_multiset_impl &src, Cloner cloner, Disposer disposer)
    {  tree_.clone_from(src.tree_, cloner, disposer);  }
@@ -1532,6 +1626,57 @@ class sg_multiset_impl
    void insert(Iterator b, Iterator e)
    {  tree_.insert_equal(b, e);  }
 
+   //! <b>Requires</b>: value must be an lvalue, "pos" must be
+   //!   a valid iterator (or end) and must be the succesor of value
+   //!   once inserted according to the predicate
+   //!
+   //! <b>Effects</b>: Inserts x into the tree before "pos".
+   //! 
+   //! <b>Complexity</b>: Constant time.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Note</b>: This function does not check preconditions so if "pos" is not
+   //! the successor of "value" tree ordering invariant will be broken.
+   //! This is a low-level function to be used only for performance reasons
+   //! by advanced users.
+   iterator insert_before(const_iterator pos, reference value)
+   {  return tree_.insert_before(pos, value);  }
+
+   //! <b>Requires</b>: value must be an lvalue, and it must be no less
+   //!   than the greatest inserted key
+   //!
+   //! <b>Effects</b>: Inserts x into the tree in the last position.
+   //! 
+   //! <b>Complexity</b>: Constant time.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Note</b>: This function does not check preconditions so if value is
+   //!   less than the greatest inserted key tree ordering invariant will be broken.
+   //!   This function is slightly more efficient than using "insert_before".
+   //!   This is a low-level function to be used only for performance reasons
+   //!   by advanced users.
+   void push_back(reference value)
+   {  tree_.push_back(value);  }
+
+   //! <b>Requires</b>: value must be an lvalue, and it must be no greater
+   //!   than the minimum inserted key
+   //!
+   //! <b>Effects</b>: Inserts x into the tree in the first position.
+   //! 
+   //! <b>Complexity</b>: Constant time.
+   //! 
+   //! <b>Throws</b>: Nothing.
+   //! 
+   //! <b>Note</b>: This function does not check preconditions so if value is
+   //!   greater than the minimum inserted key tree ordering invariant will be broken.
+   //!   This function is slightly more efficient than using "insert_before".
+   //!   This is a low-level function to be used only for performance reasons
+   //!   by advanced users.
+   void push_front(reference value)
+   {  tree_.push_front(value);  }
+
    //! <b>Effects</b>: Erases the element pointed to by pos. 
    //! 
    //! <b>Complexity</b>: Average complexity is constant time. 
@@ -1542,7 +1687,7 @@ class sg_multiset_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
-   iterator erase(iterator i)
+   iterator erase(const_iterator i)
    {  return tree_.erase(i);  }
 
    //! <b>Effects</b>: Erases the range pointed to by b end e. 
@@ -1556,7 +1701,7 @@ class sg_multiset_impl
    //! 
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
-   iterator erase(iterator b, iterator e)
+   iterator erase(const_iterator b, const_iterator e)
    {  return tree_.erase(b, e);  }
 
    //! <b>Effects</b>: Erases all the elements with the given value.
@@ -1584,7 +1729,11 @@ class sg_multiset_impl
    //! <b>Note</b>: Invalidates the iterators (but not the references)
    //!    to the erased elements. No destructors are called.
    template<class KeyType, class KeyValueCompare>
-   size_type erase(const KeyType& key, KeyValueCompare comp)
+   size_type erase(const KeyType& key, KeyValueCompare comp
+                  /// @cond
+                  , typename detail::enable_if_c<!detail::is_convertible<KeyValueCompare, const_iterator>::value >::type * = 0
+                  /// @endcond
+                  )
    {  return tree_.erase(key, comp);  }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -1601,8 +1750,14 @@ class sg_multiset_impl
    //! <b>Note</b>: Invalidates the iterators 
    //!    to the erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator i, Disposer disposer)
+   iterator erase_and_dispose(const_iterator i, Disposer disposer)
    {  return tree_.erase_and_dispose(i, disposer);  }
+
+   #if !defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
+   template<class Disposer>
+   iterator erase_and_dispose(iterator i, Disposer disposer)
+   {  return this->erase_and_dispose(const_iterator(i), disposer);   }
+   #endif
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
    //!
@@ -1619,7 +1774,7 @@ class sg_multiset_impl
    //! <b>Note</b>: Invalidates the iterators
    //!    to the erased elements.
    template<class Disposer>
-   iterator erase_and_dispose(iterator b, iterator e, Disposer disposer)
+   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer)
    {  return tree_.erase_and_dispose(b, e, disposer);  }
 
    //! <b>Requires</b>: Disposer::operator()(pointer) shouldn't throw.
@@ -1654,7 +1809,11 @@ class sg_multiset_impl
    //! <b>Note</b>: Invalidates the iterators
    //!    to the erased elements.
    template<class KeyType, class KeyValueCompare, class Disposer>
-   size_type erase_and_dispose(const KeyType& key, KeyValueCompare comp, Disposer disposer)
+   size_type erase_and_dispose(const KeyType& key, KeyValueCompare comp, Disposer disposer
+                  /// @cond
+                  , typename detail::enable_if_c<!detail::is_convertible<KeyValueCompare, const_iterator>::value >::type * = 0
+                  /// @endcond
+                  )
    {  return tree_.erase_and_dispose(key, comp, disposer);  }
 
    //! <b>Effects</b>: Erases all the elements of the container.
@@ -2080,65 +2239,65 @@ class sg_multiset_impl
    /// @endcond
 };
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator!=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const sg_multiset_impl<T, Options...> &x, const sg_multiset_impl<T, Options...> &y)
 #else
 (const sg_multiset_impl<Config> &x, const sg_multiset_impl<Config> &y)
 #endif
 {  return !(x == y); }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const sg_multiset_impl<T, Options...> &x, const sg_multiset_impl<T, Options...> &y)
 #else
 (const sg_multiset_impl<Config> &x, const sg_multiset_impl<Config> &y)
 #endif
 {  return y < x;  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator<=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const sg_multiset_impl<T, Options...> &x, const sg_multiset_impl<T, Options...> &y)
 #else
 (const sg_multiset_impl<Config> &x, const sg_multiset_impl<Config> &y)
 #endif
 {  return !(y < x);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline bool operator>=
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (const sg_multiset_impl<T, Options...> &x, const sg_multiset_impl<T, Options...> &y)
 #else
 (const sg_multiset_impl<Config> &x, const sg_multiset_impl<Config> &y)
 #endif
 {  return !(x < y);  }
 
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
 template<class Config>
 #endif
 inline void swap
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 (sg_multiset_impl<T, Options...> &x, sg_multiset_impl<T, Options...> &y)
 #else
 (sg_multiset_impl<Config> &x, sg_multiset_impl<Config> &y)
@@ -2147,7 +2306,7 @@ inline void swap
 
 //! Helper metafunction to define a \c sg_multiset that yields to the same type when the
 //! same options (either explicitly or implicitly) are used.
-#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+#if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED) || defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class ...Options>
 #else
 template<class T, class O1 = none, class O2 = none
@@ -2157,19 +2316,42 @@ struct make_sg_multiset
 {
    /// @cond
    typedef sg_multiset_impl
-      < typename make_sgtree_opt<T, O1, O2, O3, O4>::type
+      < typename make_sgtree_opt<T, 
+         #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+         O1, O2, O3, O4
+         #else
+         Options...
+         #endif
+         >::type
       > implementation_defined;
    /// @endcond
    typedef implementation_defined type;
 };
 
 #ifndef BOOST_INTRUSIVE_DOXYGEN_INVOKED
+
+#if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
 template<class T, class O1, class O2, class O3, class O4>
+#else
+template<class T, class ...Options>
+#endif
 class sg_multiset
-   :  public make_sg_multiset<T, O1, O2, O3, O4>::type
+   :  public make_sg_multiset<T, 
+      #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+      O1, O2, O3, O4
+      #else
+      Options...
+      #endif
+      >::type
 {
    typedef typename make_sg_multiset
-      <T, O1, O2, O3, O4>::type   Base;
+      <T, 
+      #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
+      O1, O2, O3, O4
+      #else
+      Options...
+      #endif
+      >::type   Base;
 
    public:
    typedef typename Base::value_compare      value_compare;

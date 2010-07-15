@@ -1,6 +1,6 @@
 /////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga  2007
+// (C) Copyright Ion Gaztanaga  2007-2009
 //
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
@@ -15,7 +15,8 @@
 #include <boost/intrusive/detail/config_begin.hpp>
 #include <cstddef>
 
-#if defined(BOOST_MSVC) || (defined (BOOST_WINDOWS) && defined(BOOST_INTEL))
+#if defined(BOOST_MSVC) || ((defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && defined(BOOST_INTEL))
+
 #define BOOST_INTRUSIVE_MSVC_COMPLIANT_PTR_TO_MEMBER
 #include <boost/cstdint.hpp>
 #endif

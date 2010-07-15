@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2008. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -27,6 +27,8 @@
 #ifndef BOOST_INTERPROCESS_RECURSIVE_MUTEX_HPP
 #define BOOST_INTERPROCESS_RECURSIVE_MUTEX_HPP
 
+/// @cond
+
 #if (defined _MSC_VER) && (_MSC_VER >= 1200)
 #  pragma once
 #endif
@@ -36,7 +38,8 @@
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <cassert>
 
-#if defined BOOST_INTERPROCESS_POSIX_PROCESS_SHARED && defined BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES
+#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && \
+   (defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && defined (BOOST_INTERPROCESS_POSIX_RECURSIVE_MUTEXES))
    #include <pthread.h>
    #include <errno.h>   
    #include <boost/interprocess/sync/posix/pthread_helpers.hpp>
@@ -48,6 +51,8 @@
    #include <boost/interprocess/sync/interprocess_mutex.hpp>
    #define BOOST_INTERPROCESS_USE_GENERIC_EMULATION
 #endif
+
+/// @endcond
 
 //!\file
 //!Describes interprocess_recursive_mutex and shared_recursive_try_mutex classes
@@ -103,12 +108,12 @@ class interprocess_recursive_mutex
    /// @cond
    private:
    #if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
-   interprocess_mutex      m_mutex;
-   unsigned int            m_nLockCount;
-   detail::OS_thread_id_t  m_nOwner;
+   interprocess_mutex                  m_mutex;
+   unsigned int                        m_nLockCount;
+   volatile detail::OS_systemwide_thread_id_t   m_nOwner;
    #else    //#if defined (BOOST_INTERPROCESS_USE_GENERIC_EMULATION)
    pthread_mutex_t m_mut;
-   #endif   //#if (defined BOOST_WINDOWS) && !(defined BOOST_DISABLE_WIN32)
+   #endif   //#if (defined BOOST_INTERPROCESS_WINDOWS)
    /// @endcond
 };
 

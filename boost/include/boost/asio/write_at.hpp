@@ -2,7 +2,7 @@
 // write_at.hpp
 // ~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2010 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -47,7 +47,7 @@ namespace asio {
  *
  * @li An error occurred.
  *
- * This operation is implemented in terms of one or more calls to the device's
+ * This operation is implemented in terms of zero or more calls to the device's
  * write_some_at function.
  *
  * @param d The device to which the data is to be written. The type must support
@@ -88,9 +88,9 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d,
  * @li All of the data in the supplied buffers has been written. That is, the
  * bytes transferred is equal to the sum of the buffer sizes.
  *
- * @li The completion_condition function object returns true.
+ * @li The completion_condition function object returns 0.
  *
- * This operation is implemented in terms of one or more calls to the device's
+ * This operation is implemented in terms of zero or more calls to the device's
  * write_some_at function.
  *
  * @param d The device to which the data is to be written. The type must support
@@ -105,16 +105,16 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d,
  * @param completion_condition The function object to be called to determine
  * whether the write operation is complete. The signature of the function object
  * must be:
- * @code bool completion_condition(
+ * @code std::size_t completion_condition(
  *   // Result of latest write_some_at operation.
  *   const boost::system::error_code& error,
  *
  *   // Number of bytes transferred so far.
  *   std::size_t bytes_transferred
  * ); @endcode
- * A return value of true indicates that the write operation is complete. False
- * indicates that further calls to the device's write_some_at function are
- * required.
+ * A return value of 0 indicates that the write operation is complete. A
+ * non-zero return value indicates the maximum number of bytes to be written on
+ * the next call to the device's write_some_at function.
  *
  * @returns The number of bytes transferred.
  *
@@ -143,9 +143,9 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d,
  * @li All of the data in the supplied buffers has been written. That is, the
  * bytes transferred is equal to the sum of the buffer sizes.
  *
- * @li The completion_condition function object returns true.
+ * @li The completion_condition function object returns 0.
  *
- * This operation is implemented in terms of one or more calls to the device's
+ * This operation is implemented in terms of zero or more calls to the device's
  * write_some_at function.
  *
  * @param d The device to which the data is to be written. The type must support
@@ -160,16 +160,16 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d,
  * @param completion_condition The function object to be called to determine
  * whether the write operation is complete. The signature of the function object
  * must be:
- * @code bool completion_condition(
+ * @code std::size_t completion_condition(
  *   // Result of latest write_some_at operation.
  *   const boost::system::error_code& error,
  *
  *   // Number of bytes transferred so far.
  *   std::size_t bytes_transferred
  * ); @endcode
- * A return value of true indicates that the write operation is complete. False
- * indicates that further calls to the device's write_some_at function are
- * required.
+ * A return value of 0 indicates that the write operation is complete. A
+ * non-zero return value indicates the maximum number of bytes to be written on
+ * the next call to the device's write_some_at function.
  *
  * @param ec Set to indicate what error occurred, if any.
  *
@@ -182,6 +182,8 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d,
     boost::uint64_t offset, const ConstBufferSequence& buffers,
     CompletionCondition completion_condition, boost::system::error_code& ec);
 
+#if !defined(BOOST_NO_IOSTREAM)
+
 /// Write all of the supplied data at the specified offset before returning.
 /**
  * This function is used to write a certain number of bytes of data to a random
@@ -192,7 +194,7 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d,
  *
  * @li An error occurred.
  *
- * This operation is implemented in terms of one or more calls to the device's
+ * This operation is implemented in terms of zero or more calls to the device's
  * write_some_at function.
  *
  * @param d The device to which the data is to be written. The type must support
@@ -223,9 +225,9 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d,
  *
  * @li All of the data in the supplied basic_streambuf has been written.
  *
- * @li The completion_condition function object returns true.
+ * @li The completion_condition function object returns 0.
  *
- * This operation is implemented in terms of one or more calls to the device's
+ * This operation is implemented in terms of zero or more calls to the device's
  * write_some_at function.
  *
  * @param d The device to which the data is to be written. The type must support
@@ -238,16 +240,16 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d,
  * @param completion_condition The function object to be called to determine
  * whether the write operation is complete. The signature of the function object
  * must be:
- * @code bool completion_condition(
+ * @code std::size_t completion_condition(
  *   // Result of latest write_some_at operation.
  *   const boost::system::error_code& error,
  *
  *   // Number of bytes transferred so far.
  *   std::size_t bytes_transferred
  * ); @endcode
- * A return value of true indicates that the write operation is complete. False
- * indicates that further calls to the device's write_some_at function are
- * required.
+ * A return value of 0 indicates that the write operation is complete. A
+ * non-zero return value indicates the maximum number of bytes to be written on
+ * the next call to the device's write_some_at function.
  *
  * @returns The number of bytes transferred.
  *
@@ -266,9 +268,9 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d, boost::uint64_t offset,
  *
  * @li All of the data in the supplied basic_streambuf has been written.
  *
- * @li The completion_condition function object returns true.
+ * @li The completion_condition function object returns 0.
  *
- * This operation is implemented in terms of one or more calls to the device's
+ * This operation is implemented in terms of zero or more calls to the device's
  * write_some_at function.
  *
  * @param d The device to which the data is to be written. The type must support
@@ -281,16 +283,16 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d, boost::uint64_t offset,
  * @param completion_condition The function object to be called to determine
  * whether the write operation is complete. The signature of the function object
  * must be:
- * @code bool completion_condition(
+ * @code std::size_t completion_condition(
  *   // Result of latest write_some_at operation.
  *   const boost::system::error_code& error,
  *
  *   // Number of bytes transferred so far.
  *   std::size_t bytes_transferred
  * ); @endcode
- * A return value of true indicates that the write operation is complete. False
- * indicates that further calls to the device's write_some_at function are
- * required.
+ * A return value of 0 indicates that the write operation is complete. A
+ * non-zero return value indicates the maximum number of bytes to be written on
+ * the next call to the device's write_some_at function.
  *
  * @param ec Set to indicate what error occurred, if any.
  *
@@ -302,6 +304,8 @@ template <typename SyncRandomAccessWriteDevice, typename Allocator,
 std::size_t write_at(SyncRandomAccessWriteDevice& d, boost::uint64_t offset,
     basic_streambuf<Allocator>& b, CompletionCondition completion_condition,
     boost::system::error_code& ec);
+
+#endif // !defined(BOOST_NO_IOSTREAM)
 
 /*@}*/
 /**
@@ -325,7 +329,7 @@ std::size_t write_at(SyncRandomAccessWriteDevice& d, boost::uint64_t offset,
  *
  * @li An error occurred.
  *
- * This operation is implemented in terms of one or more calls to the device's
+ * This operation is implemented in terms of zero or more calls to the device's
  * async_write_some_at function.
  *
  * @param d The device to which the data is to be written. The type must support
@@ -379,9 +383,9 @@ void async_write_at(AsyncRandomAccessWriteDevice& d, boost::uint64_t offset,
  * @li All of the data in the supplied buffers has been written. That is, the
  * bytes transferred is equal to the sum of the buffer sizes.
  *
- * @li The completion_condition function object returns true.
+ * @li The completion_condition function object returns 0.
  *
- * This operation is implemented in terms of one or more calls to the device's
+ * This operation is implemented in terms of zero or more calls to the device's
  * async_write_some_at function.
  *
  * @param d The device to which the data is to be written. The type must support
@@ -397,16 +401,16 @@ void async_write_at(AsyncRandomAccessWriteDevice& d, boost::uint64_t offset,
  * @param completion_condition The function object to be called to determine
  * whether the write operation is complete. The signature of the function object
  * must be:
- * @code bool completion_condition(
- *   // Result of latest write_some_at operation.
+ * @code std::size_t completion_condition(
+ *   // Result of latest async_write_some_at operation.
  *   const boost::system::error_code& error,
  *
  *   // Number of bytes transferred so far.
  *   std::size_t bytes_transferred
  * ); @endcode
- * A return value of true indicates that the write operation is complete. False
- * indicates that further calls to the device's async_write_some_at function are
- * required.
+ * A return value of 0 indicates that the write operation is complete. A
+ * non-zero return value indicates the maximum number of bytes to be written on
+ * the next call to the device's async_write_some_at function.
  *
  * @param handler The handler to be called when the write operation completes.
  * Copies will be made of the handler as required. The function signature of the
@@ -440,6 +444,8 @@ void async_write_at(AsyncRandomAccessWriteDevice& d,
     boost::uint64_t offset, const ConstBufferSequence& buffers,
     CompletionCondition completion_condition, WriteHandler handler);
 
+#if !defined(BOOST_NO_IOSTREAM)
+
 /// Start an asynchronous operation to write all of the supplied data at the
 /// specified offset.
 /**
@@ -452,7 +458,7 @@ void async_write_at(AsyncRandomAccessWriteDevice& d,
  *
  * @li An error occurred.
  *
- * This operation is implemented in terms of one or more calls to the device's
+ * This operation is implemented in terms of zero or more calls to the device's
  * async_write_some_at function.
  *
  * @param d The device to which the data is to be written. The type must support
@@ -495,9 +501,9 @@ void async_write_at(AsyncRandomAccessWriteDevice& d, boost::uint64_t offset,
  *
  * @li All of the data in the supplied basic_streambuf has been written.
  *
- * @li The completion_condition function object returns true.
+ * @li The completion_condition function object returns 0.
  *
- * This operation is implemented in terms of one or more calls to the device's
+ * This operation is implemented in terms of zero or more calls to the device's
  * async_write_some_at function.
  *
  * @param d The device to which the data is to be written. The type must support
@@ -512,16 +518,16 @@ void async_write_at(AsyncRandomAccessWriteDevice& d, boost::uint64_t offset,
  * @param completion_condition The function object to be called to determine
  * whether the write operation is complete. The signature of the function object
  * must be:
- * @code bool completion_condition(
+ * @code std::size_t completion_condition(
  *   // Result of latest async_write_some_at operation.
  *   const boost::system::error_code& error,
  *
  *   // Number of bytes transferred so far.
  *   std::size_t bytes_transferred
  * ); @endcode
- * A return value of true indicates that the write operation is complete. False
- * indicates that further calls to the device's async_write_some_at function are
- * required.
+ * A return value of 0 indicates that the write operation is complete. A
+ * non-zero return value indicates the maximum number of bytes to be written on
+ * the next call to the device's async_write_some_at function.
  *
  * @param handler The handler to be called when the write operation completes.
  * Copies will be made of the handler as required. The function signature of the
@@ -544,6 +550,8 @@ template <typename AsyncRandomAccessWriteDevice, typename Allocator,
 void async_write_at(AsyncRandomAccessWriteDevice& d, boost::uint64_t offset,
     basic_streambuf<Allocator>& b, CompletionCondition completion_condition,
     WriteHandler handler);
+
+#endif // !defined(BOOST_NO_IOSTREAM)
 
 /*@}*/
 
