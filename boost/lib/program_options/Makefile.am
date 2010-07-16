@@ -1,5 +1,7 @@
 noinst_LIBRARIES = libboost_program_options.a
 
+INCLUDES = -I$(top_srcdir)/boost/
+
 libboost_program_options_a_SOURCES = cmdline.cpp \
 config_file.cpp \
 options_description.cpp \
