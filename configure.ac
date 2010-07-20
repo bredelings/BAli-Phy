@@ -311,6 +311,10 @@ if test "$use_mpi" != no ; then
    if test "$use_mpi" = "openmpi" ; then
       echo "checking for OpenMPI ..."
       if $MPICXX --showme:version ; then 
+         MPI_INCDIRS="$($MPICXX --showme:incdirs)"
+	 for incdir in $MPI_INCDIRS ; do
+	     MPI_CPPFLAGS="$MPI_CPPFLAGS -isystem $incdir"
+	 done
          MPI_CXXFLAGS="$($MPICXX --showme:compile | sed 's/-I/-isystem /g')"
          echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
          MPI_LDFLAGS=$($MPICXX --showme:link)
@@ -337,6 +341,7 @@ if test "$use_mpi" != no ; then
    AC_SUBST(MPI_CXXFLAGS)   
    AC_SUBST(MPI_LDFLAGS)   
    CXXFLAGS="$CXXFLAGS $MPI_CXXFLAGS"
+   CPPFLAGS="$CPPFLAGS $MPI_CPPFLAGS"
 fi
 
 #---------------------- Check for BOOST ------------------#
