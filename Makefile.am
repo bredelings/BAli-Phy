@@ -1,20 +1,26 @@
+# Help aclocal find the pkg.m4 file in the m4/ directory
 ACLOCAL_AMFLAGS = -I m4
 
+# Should we build our own copy of some BOOST libraries?
 if NO_SYSTEM_BOOST
   MAYBE_BOOST = boost/
 endif
 
+# Build in these subdirectories
 SUBDIRS = $(MAYBE_BOOST) src/ 
 
-bin_SCRIPTS = scripts/bali-phy-sge scripts/pairwise-alignment-distances scripts/fixedpt-alignment-distances scripts/plot-path-graph.R scripts/bp-analyze.pl scripts/git_version.sh scripts/compare-runs.R
+# Install these scripts in bin/
+bin_SCRIPTS = scripts/bali-phy-sge scripts/bp-analyze.pl scripts/compare-runs.R
+
+# Used to build, but not distributed
+noinst_SCRIPTS = scripts/git_version.sh
+
+# Distributed in the doc/ directory
+nobase_doc_SCRIPTS = scripts/plot-path-graph.R \
+		scripts/fixedpt-alignment-distances scripts/pairwise-alignment-distances
 
 docdir = $(datadir)/doc/@PACKAGE@
 doc_DATA = doc/README.html doc/README.xhtml doc/docbook.css doc/README.pdf
-
-# This is the stuff that formly was distributed as being in the Data/ dir.
-# The 'nobase' means that if its starts as dir/file, then it is distributed as dir/file.
-#stuffdir = $(datadir)/@PACKAGE@/
-#nobase_stuff_DATA = Data/file1 Data/file2
 
 examplesdir = $(datadir)/@PACKAGE@/
 nobase_examples_DATA = examples/EF-Tu/5d.fasta examples/EF-Tu/12d.fasta examples/EF-Tu/48b.fasta \
@@ -34,9 +40,8 @@ EXTRA_HEADERS = @top_srcdir@/include/tnt/tnt_array1d.h \
                 @top_srcdir@/include/tnt/tnt_math_utils.h \
                 @top_srcdir@/include/tnt/jama_eig.h
 
-EXTRA_DIST = $(doc_DATA) $(EXTRA_HEADERS) $(bin_SCRIPTS) $(nobase_stuff_DATA) \
-             $(nobase_examples_DATA) doc/Doxyfile 
+EXTRA_DIST = $(doc_DATA) $(EXTRA_HEADERS) $(bin_SCRIPTS) $(noinst_SCRIPTS) \
+             $(nobase_stuff_DATA) $(nobase_examples_DATA) doc/Doxyfile 
 
 dist-hook:
-	rm -rf `find $(distdir) -name .svn`
 	rm -rf `find $(distdir) -name TODO`
