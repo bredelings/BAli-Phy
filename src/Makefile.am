@@ -50,7 +50,8 @@ INCLUDES = -I@top_srcdir@/include
 
 if GCC
 
-CXXFLAGS += -pedantic @MPI_CXXFLAGS@ ${CAIRO_CFLAGS}
+#CXXFLAGS += -pedantic @MPI_CXXFLAGS@ ${CAIRO_CFLAGS}
+CXXFLAGS += -pedantic ${CAIRO_CFLAGS}
 CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing
 
 endif

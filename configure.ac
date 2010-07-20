@@ -291,6 +291,54 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
  [AC_MSG_FAILURE([GSL failure])])
 
 
+#------------------- Check for OpenMPI or MPICH ------------------#
+echo "------------------------------------------"
+
+if test "$use_mpi" != no ; then
+   echo " * Looking for the MPI headers and libraries..."
+   if test "$use_mpi" = yes ; then
+      if $MPICXX --showme:version >/dev/null 2>/dev/null; then 
+      	 echo "Choosing OpenMPI to provide MPI interface."
+      	 use_mpi=openmpi
+      elif $MPICXX -show > /dev/null ; then
+      	 echo "Choosing MPICH to provide MPI interface."
+         use_mpi=mpich
+      else
+         echo "I can't guess which MPI implementation you are using!"
+      fi
+   fi
+
+   if test "$use_mpi" = "openmpi" ; then
+      echo "checking for OpenMPI ..."
+      if $MPICXX --showme:version ; then 
+         MPI_CXXFLAGS="$($MPICXX --showme:compile | sed 's/-I/-isystem /g')"
+         echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
+         MPI_LDFLAGS=$($MPICXX --showme:link)
+         echo "MPI_LDFLAGS=$MPI_LDFLAGS"
+      else
+	 echo "MPI c++ wrapper '$MPICXX' does not work : failure.";
+         exit 1;
+      fi 
+
+   elif test "$use_mpi" = mpich ; then
+      echo "checking for mpich..."
+
+      if $MPICXX -show >/dev/null ; then 
+      	 MPI_CXXFLAGS="$($MPICXX -compile-info -CC= | sed 's/-c//') -fpermissive"
+	 echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
+	 [ MPI_LDFLAGS=$($MPICXX -link-info -CC= | sed 's/-D[^-\]* //g') ]
+      	 echo "MPI_LDFLAGS=$MPI_LDFLAGS"
+      else
+	 echo "MPI c++ wrapper '$MPICXX' does not work : failure.";
+         exit 1;
+      fi 
+   fi
+   AC_DEFINE([HAVE_MPI],[] ,[You have a working OpenMPI implementation.])
+   AC_SUBST(MPI_CXXFLAGS)   
+   AC_SUBST(MPI_LDFLAGS)   
+   CXXFLAGS="$CXXFLAGS $MPI_CXXFLAGS"
+fi
+
 #---------------------- Check for BOOST ------------------#
 echo "------------------------------------------"
 if test "$use_system_boost" = yes ; then
@@ -310,6 +358,11 @@ echo " * Looking for the system BOOST libraries... (suffix = '${BOOST_SUFFIX}')"
 AC_CHECK_LIB(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_program_options library! (-lboost_program_options${BOOST_SUFFIX})" ; exit 1])
 AC_CHECK_LIB(boost_system${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_system library! (-lboost_system${BOOST_SUFFIX})" ; exit 1])
 AC_CHECK_LIB(boost_filesystem${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_filesystem library! (-lboost_filesystem${BOOST_SUFFIX})" ; exit 1])
+if test "$use_mpi" != no ; then
+   AC_CHECK_LIB(boost_serialization${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_serialization library! (-lboost_serialization${BOOST_SUFFIX})" ; exit 1])
+   AC_CHECK_LIB(boost_mpi${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_serialization library! (-lboost_mpi${BOOST_SUFFIX})" ; exit 1])
+fi
+
 boost_libs="-lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}";
 
 AC_MSG_CHECKING(include/compile/link for the BOOST.program_options library)
@@ -368,52 +421,6 @@ if test -n "$cairo" && test "$cairo" != "no"; then
    AC_SUBST(CAIRO_LIBS)
 fi
 AC_SUBST(cairo_progs)
-
-#------------------- Check for OpenMPI or MPICH ------------------#
-
-if test "$use_mpi" != no ; then
-
-   if test "$use_mpi" = yes ; then
-      if $MPICXX --showme:version >/dev/null 2>/dev/null; then 
-      	 echo "Choosing OpenMPI to provide MPI interface."
-      	 use_mpi=openmpi
-      elif $MPICXX -show > /dev/null ; then
-      	 echo "Choosing MPICH to provide MPI interface."
-         use_mpi=mpich
-      else
-         echo "I can't guess which MPI implementation you are using!"
-      fi
-   fi
-
-   if test "$use_mpi" = "openmpi" ; then
-      echo "checking for OpenMPI ..."
-      if $MPICXX --showme:version ; then 
-         MPI_CXXFLAGS="$($MPICXX --showme:compile | sed 's/-I/-isystem /g')"
-         echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
-         MPI_LDFLAGS=$($MPICXX --showme:link)
-         echo "MPI_LDFLAGS=$MPI_LDFLAGS"
-      else
-	 echo "MPI c++ wrapper '$MPICXX' does not work : failure.";
-         exit 1;
-      fi 
-
-   elif test "$use_mpi" = mpich ; then
-      echo "checking for mpich..."
-
-      if $MPICXX -show >/dev/null ; then 
-      	 MPI_CXXFLAGS="$($MPICXX -compile-info -CC= | sed 's/-c//') -fpermissive"
-	 echo "MPI_CXXFLAGS=$MPI_CXXFLAGS"
-	 [ MPI_LDFLAGS=$($MPICXX -link-info -CC= | sed 's/-D[^-\]* //g') ]
-      	 echo "MPI_LDFLAGS=$MPI_LDFLAGS"
-      else
-	 echo "MPI c++ wrapper '$MPICXX' does not work : failure.";
-         exit 1;
-      fi 
-   fi
-   AC_DEFINE([HAVE_MPI],[] ,[You have a working OpenMPI implementation.])
-   AC_SUBST(MPI_CXXFLAGS)   
-   AC_SUBST(MPI_LDFLAGS)   
-fi
 
 ldflags=$LDFLAGS
 AC_SUBST(ldflags)
