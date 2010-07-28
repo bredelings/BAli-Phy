@@ -1767,7 +1767,7 @@ acceptable if it is &lt; 0.01.
 <prompt>%</prompt> R --slave --vanilla --args LOD-table compare-SF.pdf &lt; compare-runs.R</screen>
 	  Following <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://dx.doi.org/10.1080/10635150600812544">Beiko et al (2006)</link>, this displays the variation in
 	  estimates of split frequencies across runs.  Splits are
-	  arranged on the x-axis in increase over of 
+	  arranged on the x-axis in increasing order of 
 	  Posterior Probability (PP), which is obtained by averaging over
 	  runs.  We then plot a vertical bar from the minimum PP to the
 	  maximum PP.
@@ -1801,7 +1801,7 @@ subtracting 1 from the width of the pooled CI.
 We also report a new PSRF that is more sensitive for integer
 distributions.  For each individual distribution, we find the 80%
 credible interval.  We divide the probability of that interval (which
-may be more tha 80%) by the probability of the same interval under the
+may be more than 80%) by the probability of the same interval under the
 pooled distribution.  The average of this measure over all
 distributions gives us a PSRF that we report as PSRF-RCF.
 </para>
@@ -1834,7 +1834,7 @@ adequately mix between modes.</para>
 	
       <para>To calculate the split ESS values, run:
 <screen><prompt>%</prompt> trees-bootstrap C1.trees C2.trees ... C<replaceable>n</replaceable>.trees &gt; partitions.bs</screen>
-      To compute the ESS for a split, we consider the presence of absence
+      To compute the ESS for a split, we consider the presence or absence
       of a split in each iteration as a series of binary values.  We
       compute the integrated autocorrelation time for this binary
       sequence, which leads to an ESS.  This approach is similar to
