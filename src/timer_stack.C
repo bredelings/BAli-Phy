@@ -78,12 +78,12 @@ string duration(time_t T)
 
   string s = convertToString(total) + " seconds";
 
-  if (not minutes) return s;
+  if (not minutes and not hours and not days) return s;
 
   s = convertToString(minutes) + "m " +
       convertToString(seconds) + "s  (" + s + ")";
 
-  if (not hours) return s;
+  if (not hours and not days) return s;
 
   s = convertToString(hours) + "h " + s;
 
