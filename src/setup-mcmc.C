@@ -249,6 +249,14 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, Between(-40,0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
   add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
 
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda_s",      "lambda_shift_sigma",    0.35, MH_moves);
+  add_MH_move(P, less_than(0,shift_cauchy), "lambda_f",      "lambda_shift_sigma",    0.35, MH_moves);
+  add_MH_move(P, shift_epsilon,               "r",     "epsilon_shift_sigma",   0.15, MH_moves);
+  add_MH_move(P, shift_epsilon,               "r_s",     "epsilon_shift_sigma",   0.15, MH_moves);
+  add_MH_move(P, shift_epsilon,               "r_f",     "epsilon_shift_sigma",   0.15, MH_moves);
+  add_MH_move(P, between(0,1,shift_cauchy), "switch",   "invariant_shift_sigma", 0.15, MH_moves);
+  add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, MH_moves);
+
   return MH_moves;
 }
 
@@ -344,6 +352,17 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
 
+  add_slice_moves(P, "lambda_s",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
+  add_slice_moves(P, "lambda_f",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
+
+  add_slice_moves(P, "r",     "epsilon_slice_window",   1.0,
+		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
+  add_slice_moves(P, "r_s",     "epsilon_slice_window",   1.0,
+		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
+  add_slice_moves(P, "r_f",     "epsilon_slice_window",   1.0,
+		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
+  add_slice_moves(P, "switch",      "switch_slice_window",    1.0, true,0,true,1.0,slice_moves);
+
   return slice_moves;
 }
 
@@ -436,7 +455,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
   MoveEach NNI_move("NNI");
   MoveOne SPR_move("SPR");
 
-  bool has_imodel = P.variable_alignment();
+  bool has_imodel = (P.n_imodels() > 0);
 
   if (has_imodel)
     NNI_move.add(1,MoveArgSingle("three_way_NNI","alignment:nodes:topology",
@@ -795,6 +814,8 @@ void do_sampling(const variables_map& args,
 
   Parameters& PP = *P.as<Parameters>();
 
+  bool has_timodel = (P.n_timodels() > 0);
+
   bool has_imodel = PP.variable_alignment();
 
   if (has_imodel) {
@@ -823,6 +844,12 @@ void do_sampling(const variables_map& args,
     sampler.add_logger(loggers[i]);
   if (has_imodel)
     sampler.add(1,alignment_moves);
+  else if (has_timodel)
+  {
+    //sampler.add(1, SingleMove(sample_alignment_rates, "alignment_rates") );
+    sampler.add(2, SingleMove(sample_alignment_rates_flip_column, "alignment_flip_column") );
+  }
+    
   sampler.add(2,tree_moves);
 
   // FIXME - We certainly don't want to do MH_sample_mu[i] O(branches) times
