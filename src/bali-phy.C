@@ -161,6 +161,7 @@ namespace mpi = boost::mpi;
 #include "io.H"
 #include "tools/parsimony.H"
 #include "2way.H"
+#include "sample.H"
 
 namespace fs = boost::filesystem;
 
