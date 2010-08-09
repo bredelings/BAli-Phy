@@ -6,6 +6,10 @@
 
 /* This is WRONG  - don't use */
 
+using std::vector;
+using std::string;
+using std::endl;
+
 int accept_multiple_try_MH(efloat_t p1, const vector<efloat_t>& p2,efloat_t rho)
 {
   const int n = p2.size();
