@@ -814,7 +814,7 @@ void do_sampling(const variables_map& args,
 
   Parameters& PP = *P.as<Parameters>();
 
-  bool has_timodel = (P.n_timodels() > 0);
+  bool has_timodel = (PP.n_timodels() > 0);
 
   bool has_imodel = PP.variable_alignment();
 
