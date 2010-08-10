@@ -98,7 +98,7 @@ void change_3_branch_lengths(owned_ptr<Probability_Model>& P, MCMC::MoveStats& S
 
 
 
-void sample_alignment_rates(Parameters&, MCMC::MoveStats&);
-void sample_alignment_rates_flip_column(Parameters&, MCMC::MoveStats&);
+void sample_alignment_rates(owned_ptr<Probability_Model>&, MCMC::MoveStats&);
+void sample_alignment_rates_flip_column(owned_ptr<Probability_Model>&, MCMC::MoveStats&);
 
 #endif

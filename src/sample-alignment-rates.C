@@ -365,8 +365,10 @@ int get_prev_column(const alignment& A,const Tree& T, int b, int c)
 }
 
 
-void sample_alignment_rates(Parameters& P, MCMC::MoveStats& Stats)
+void sample_alignment_rates(owned_ptr<Probability_Model>& P_, MCMC::MoveStats& Stats)
 {
+  Parameters& P = *P_.as<Parameters>();
+
   // handle the first partition ONLY
   const alignment& A = *P[0].A;
   const SequenceTree& T = *P.T;
@@ -665,8 +667,10 @@ vector<int> get_cluster(const column_adjacency_graph& G, double p, const alignme
    For each column, process 
    * each 
    */
-void sample_alignment_rates_flip_column(Parameters& P, MCMC::MoveStats& Stats)
+void sample_alignment_rates_flip_column(owned_ptr<Probability_Model>& P_, MCMC::MoveStats& Stats)
 {
+  Parameters& P = *P_.as<Parameters>();
+
   int root = P.T->n_nodes()-1;
 
   for(int p=0;p<P.n_data_partitions();p++) 
