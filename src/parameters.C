@@ -635,7 +635,7 @@ efloat_t transition_pr_from_counts(const ublas::matrix<int>& counts, const ublas
     for(int s2=0;s2<counts.size2();s2++)
       if (counts(s1,s2)) {
 	efloat_t M12 = M(s1,s2);
-	Pr *= pow<efloat_t>(M12,counts(s1,s2));
+	Pr *= pow(efloat_t(M12),counts(s1,s2));
       }
 
   return Pr;
