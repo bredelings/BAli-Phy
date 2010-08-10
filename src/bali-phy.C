@@ -1323,6 +1323,10 @@ int main(int argc,char* argv[])
       rate_labels = read_rate_labels(args["rate-labels"].as<string>());
 
     //----- Initialize Likelihood caches and character index caches -----//
+
+    //----- Initialize F/S rate labels ----//
+    for(int i=0;i<P.n_data_partitions();i++)
+    {
       add_column_type_note(*P[i].A);
 
       if (rate_labels.size()) {
@@ -1335,6 +1339,7 @@ int main(int argc,char* argv[])
       else
 	for(int c=0;c<P[i].A->length();c++)
 	  P[i].A->note(2)(c,0) = (c/5)%2;
+    }
 
     // Why do we need to do this, again?
     P.recalc_all();
@@ -1424,17 +1429,17 @@ int main(int argc,char* argv[])
       cout<<"If->If  = "<<log(PTM(IfF,IfF))<<endl;
       cout<<endl;
 
-      double lambda_s = TIM.parameter(0);
-      double lambda_f = TIM.parameter(1);
-      double r        = TIM.parameter(2);
+      double lambda_s = TIM.get_parameter_value(0);
+      double lambda_f = TIM.get_parameter_value(1);
+      double r        = TIM.get_parameter_value(2);
 
       NewIndelModel RS07_S(true);
-      RS07_S.parameter(0,lambda_s);
-      RS07_S.parameter(1,r);
+      RS07_S.set_parameter_value(0,lambda_s);
+      RS07_S.set_parameter_value(1,r);
 
       NewIndelModel RS07_F(true);
-      RS07_F.parameter(0,lambda_f);
-      RS07_F.parameter(1,r);
+      RS07_F.set_parameter_value(0,lambda_f);
+      RS07_F.set_parameter_value(1,r);
 
       indel::PairHMM HMM_S = RS07_S.get_branch_HMM(1);
       indel::PairHMM HMM_F = RS07_F.get_branch_HMM(1);
@@ -1458,7 +1463,8 @@ int main(int argc,char* argv[])
 
       // FIXME!
       MCMC::MoveStats St;
-      sample_alignment_rates(P,St);
+      owned_ptr<Probability_Model> Ptr(P);
+      sample_alignment_rates(Ptr,St);
 
       // FIXME ! How do we print the tree to stdout?
       print_stats(cout,P);
