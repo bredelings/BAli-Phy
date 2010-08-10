@@ -754,11 +754,11 @@ void sample_alignment_rates_flip_column(owned_ptr<Probability_Model>& P_, MCMC::
       {
 	bool s = (uniform()<0.5);
 	if (s) {
-	  P2.parameter(LS_index,P.parameter(LS_index)+gaussian(0,1.0));
+	  P2.set_parameter_value(LS_index, P.get_parameter_value(LS_index)+gaussian(0,1.0));
 	  name += "-LS";
 	}
 	else {
-	  P2.parameter(LF_index,P.parameter(LF_index)+gaussian(0,0.25));
+	  P2.set_parameter_value(LF_index,P.get_parameter_value(LF_index)+gaussian(0,0.25));
 	  name += "-LF";
 	}
       }
@@ -771,8 +771,8 @@ void sample_alignment_rates_flip_column(owned_ptr<Probability_Model>& P_, MCMC::
 	result.totals[0] = 1;              // number of successful moves
 	result.totals[1] = cluster.size(); // number of columns flipped
 	result.totals[3] = cluster.size(); // number of columns flipped
-	result.totals[4] = std::abs(P2.parameter(LS_index)-P.parameter(LS_index));
-	result.totals[5] = std::abs(P2.parameter(LF_index)-P.parameter(LF_index));
+	result.totals[4] = std::abs(P2.get_parameter_value(LS_index)-P.get_parameter_value(LS_index));
+	result.totals[5] = std::abs(P2.get_parameter_value(LF_index)-P.get_parameter_value(LF_index));
 	P=P2;
       }
       else {
