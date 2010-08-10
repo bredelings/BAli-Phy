@@ -254,8 +254,8 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, shift_epsilon,               "r",     "epsilon_shift_sigma",   0.15, MH_moves);
   add_MH_move(P, shift_epsilon,               "r_s",     "epsilon_shift_sigma",   0.15, MH_moves);
   add_MH_move(P, shift_epsilon,               "r_f",     "epsilon_shift_sigma",   0.15, MH_moves);
-  add_MH_move(P, between(0,1,shift_cauchy), "switch",   "invariant_shift_sigma", 0.15, MH_moves);
-  add_MH_move(P, between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy), "switch",   "invariant_shift_sigma", 0.15, MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy), "invariant",   "invariant_shift_sigma", 0.15, MH_moves);
 
   return MH_moves;
 }
@@ -352,16 +352,16 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
 
-  add_slice_moves(P, "lambda_s",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
-  add_slice_moves(P, "lambda_f",      "lambda_slice_window",    1.0, false,0,false,0,slice_moves);
+  add_slice_moves(P, "lambda_s",      "lambda_slice_window",    1.0, slice_moves);
+  add_slice_moves(P, "lambda_f",      "lambda_slice_window",    1.0, slice_moves);
 
   add_slice_moves(P, "r",     "epsilon_slice_window",   1.0,
-		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
+		  slice_moves,transform_epsilon,inverse_epsilon);
   add_slice_moves(P, "r_s",     "epsilon_slice_window",   1.0,
-		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
+		  slice_moves,transform_epsilon,inverse_epsilon);
   add_slice_moves(P, "r_f",     "epsilon_slice_window",   1.0,
-		  false,0,false,0,slice_moves,transform_epsilon,inverse_epsilon);
-  add_slice_moves(P, "switch",      "switch_slice_window",    1.0, true,0,true,1.0,slice_moves);
+		  slice_moves,transform_epsilon,inverse_epsilon);
+  add_slice_moves(P, "switch",      "switch_slice_window",    1.0, slice_moves);
 
   return slice_moves;
 }
