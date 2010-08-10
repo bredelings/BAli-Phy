@@ -612,8 +612,8 @@ void cluster_proposal_probs(const column_adjacency_graph& G, double p, const ali
 
   //  std::cerr<<"    spin = "<<current_spin<<"   n_same = "<<n_same<<"  n_diff = "<<n_diff<<endl;
   efloat_t R = (1-p);
-  rho_12 = pow<efloat_t>(R,n_same);
-  rho_21 = pow<efloat_t>(R,n_diff);
+  rho_12 = pow(R,n_same);
+  rho_21 = pow(R,n_diff);
 }
 
 
