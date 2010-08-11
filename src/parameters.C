@@ -1386,7 +1386,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    T(t),
    TC(star_tree(t.get_sequences())),
    branch_HMM_type(t.n_branches(),0),
-   beta(2, 1.0),
    updown(-1),
    features(0)
 {
