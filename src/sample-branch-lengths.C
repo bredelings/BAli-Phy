@@ -469,7 +469,7 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
 #ifndef NDEBUG
   owned_ptr<Parameters> P3 = P2;
   P3->recalc_imodels();
-  P3.recalc_timodels();
+  P3->recalc_timodels();
   P3->recalc_smodels();
   efloat_t L1 = PP->likelihood();
   efloat_t L2 = P3->likelihood();
