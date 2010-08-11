@@ -817,19 +817,29 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_transducer_counts_for_branch(t.n_branches(),ublas::matrix<int>(TIM.get_branch_Transducer(1).n_states(),
 									 TIM.get_branch_Transducer(1).n_states())),
    cached_sequence_lengths(a.n_sequences()),
+   branch_mean_(1.0),
+   variable_alignment_(true),
    smodel_full_tree(true),
    A(a),
    T(t),
    MC(t,SM),
    LC(t,SModel()),
    branch_HMMs(t.n_branches()),
+   branch_PTMs(t.n_branches(),TIModel_->get_branch_Transducer(1)),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
+  if (variable_alignment() and use_internal_index)
+    subA = subA_index_internal(a.length()+1, t.n_branches()*2);
+  else
+    subA = subA_index_leaf(a.length()+1, t.n_branches()*2);
+
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
   for(int b=0;b<cached_transducer_counts_for_branch.size();b++)
     cached_transducer_counts_for_branch[b].invalidate();
+
+  add_leaf_seq_note(*A, T->n_leaves());
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
@@ -1390,6 +1400,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    features(0)
 {
   constants.push_back(-1);
+
+  add_super_parameter(Parameter("Heat::beta", 1.0, between(0,1)));
 
   for(int i=0;i<n_scales;i++)
     add_super_parameter(Parameter("mu"+convertToString(i+1), 0.25, lower_bound(0)));
