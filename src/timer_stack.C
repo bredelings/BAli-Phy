@@ -65,29 +65,32 @@ time_point_t total_cpu_time()
 string duration(time_t T)
 {
   time_t total = T;
+  string s = convertToString(total) + " seconds";
+
   unsigned long seconds = T%60;
   T = (T - seconds)/60;
+
+  // return if 0 minutes
+  if (not T) return s;
 
   unsigned long minutes = T%60;
   T  = (T - minutes)/60;
 
-  unsigned long hours = T%24;
-  T  = (T - hours)/24;
-
-  unsigned long days = T;
-
-  string s = convertToString(total) + " seconds";
-
-  if (not minutes and not hours and not days) return s;
-
   s = convertToString(minutes) + "m " +
       convertToString(seconds) + "s  (" + s + ")";
 
-  if (not hours and not days) return s;
+  // return if 0 hours
+  if (not T) return s;
+
+  unsigned long hours = T%24;
+  T  = (T - hours)/24;
 
   s = convertToString(hours) + "h " + s;
 
-  if (not days) return s;
+  // return if 0 days
+  if (not T) return s;
+
+  unsigned long days = T;
 
   s = convertToString(days) + "days " + s;
 
