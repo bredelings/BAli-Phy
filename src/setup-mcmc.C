@@ -842,15 +842,16 @@ void do_sampling(const variables_map& args,
 
   for(int i=0;i<loggers.size();i++)
     sampler.add_logger(loggers[i]);
-  if (has_imodel)
-    sampler.add(1,alignment_moves);
-  else if (has_timodel)
+  if (has_timodel)
   {
-    //sampler.add(1, SingleMove(sample_alignment_rates, "alignment_rates") );
-    sampler.add(2, SingleMove(sample_alignment_rates_flip_column, "alignment_flip_column") );
+    sampler.add(1, SingleMove(sample_alignment_rates, "alignment_rates") );
+    sampler.add(1, SingleMove(sample_alignment_rates_flip_column, "alignment_flip_column") );
   }
-    
-  sampler.add(2,tree_moves);
+  else if (has_imodel)
+    sampler.add(1,alignment_moves);    
+
+  if (not has_timodel)
+    sampler.add(2,tree_moves);
 
   // FIXME - We certainly don't want to do MH_sample_mu[i] O(branches) times
   // - It does call the likelihood function, doesn't it?
