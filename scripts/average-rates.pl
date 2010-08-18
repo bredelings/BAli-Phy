@@ -16,7 +16,7 @@ if (defined($ARGV[0]) && ($ARGV[0] =~ /--skip=(.+)/))
 my $total = 0;
 my @counts;
 my $subtotal = 0;
-while (my $line = <>) 
+while (my $line = <>)
 {
     if ($total == 0) {
 	for(my $i=0;$i<length($line);$i++) {
@@ -38,6 +38,12 @@ while (my $line = <>)
 }
 
 for(my $i=0;$i<$#counts;$i++) {
-    print "$i ",$counts[$i]/$subtotal,"\n";
+    my $Pr_fast =  $counts[$i]/$subtotal;
+    print "$i ",$Pr_fast,"\n";
+
+    my $consensus = "S";
+    $consensus = "F" if ($Pr_fast > 0.5);
+    print STDERR $consensus;
 }
+print STDERR "\n";
 print STDERR "SUBTOTAL = $subtotal\n";
