@@ -59,10 +59,21 @@
     <section><info><title>Windows</title></info>
       
 
-      <para>On Windows you must first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com">cygwin</link>.  Cygwin is a
-	Unix/Linux command-line environment for Windows.  You can access the
+      <para>On Windows, it is highly recommended that you first
+	install <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	xlink:href="http://www.cygwin.com">Cygwin</link>.
+	Cygwin is a Unix/Linux command-line environment for Windows.  You can access the
 	Cygwin command line (not the normal windows command line)
 	through the Start menu.</para> 
+
+      <para>Installing Cygwin should not be strictly necessary to
+	run the <command>bali-phy</command> program, but it may be necessary
+	for running the scripts that analyze the output.  Furthermore,
+	we recommend installing the binary executables from the Cygwin
+	prompt, in order to make the files easily accessible from
+	inside Cygwin.
+      </para>
+
     </section>
 
     <section><info><title>Mac OS X</title></info>
@@ -111,7 +122,7 @@
 	      <ulink url="http://www.gnu.org/software/make">
 		GNU make</ulink> version 3.80 (or higher).
 	  </para></listitem-->
-	  <listitem><para> The GNU Scientific Library (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://sources.redhat.com/gsl/">GSL</link>) version 1.8 (or higher).</para></listitem>
+	  <listitem><para> The GNU Scientific Library (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.gnu.org/software/gsl/">GSL</link>) version 1.8 (or higher).</para></listitem>
 	  <listitem><para> The Cairo graphics library
 	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cairographics.org/">Cairo</link>)
 	      version 1.6 (or higher).  (Cairo is not strictly
@@ -296,6 +307,10 @@
 	that <application>BALi-Phy</application> outputs:
 
 	<itemizedlist>
+	  <listitem><para>Cygwin (on windows) - to give you a UNIX prompt 
+	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com">Tracer</link>) 
+	  </para></listitem>
+
 	  <listitem><para><application>Tracer</application> - to
 	      analyze MCMC diagnostics 
 	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</link>) 
@@ -326,19 +341,29 @@
     </section>
 
     <section><info><title>Installing precompiled executables</title></info>
-      
-      <para>To install pre-compiled executables, simply extract the
-	compressed archive in the directory of your choice.  If you have
-	root access you might extract in
-	<filename>/usr/local</filename>. If not, you might make a
-	directory <filename>~/local</filename> in your home directory
-	and extract there.
-      </para>
 
-      <para>You can extract the compressed archive on the command line
-	using the <command>tar</command> command:
+      <para>You can extract the compressed archive on the Unix (or
+	Cygwin) command line using the <command>tar</command> command:
 	<screen><prompt>%</prompt> tar -zxf bali-phy-<replaceable>version</replaceable>.tgz</screen>
       </para>
+
+      <para>On Windows, we recommend that you first install Cygwin, and then extract
+      the compressed archive from the Cygwin
+      prompt (e.g. instead of simply installing to <filename>Program
+      Files/</filename>.)  While it is not strictly necessary to
+      run <command>bali-phy</command> from inside Cygwin, this will
+      make it easier to analyze the output files.  Also, the manual
+      assumes that you are using a Unix-type console, like Cygwin.
+      </para>
+      
+      <para>From the Unix (or Cygwin) prompt, you might choose to
+	extract the compressed archive in the
+	directory <filename>/usr/local</filename> if you have root access.
+	If you do not have root access, you could make a
+	directory <filename>~/local</filename> in your home directory
+	and then extract the files there.
+      </para>
+
     </section>      
 
     <section><info><title>Setting the PATH</title></info>
@@ -393,6 +418,12 @@
     
 
     <para>Here are some examples and explanations of how to run <command>bali-phy</command>.  You can get an overview of command line options (see <xref linkend="command_line_options"/>) by running <command> bali-phy --help</command>.</para>
+<para>We recommend running multiple chains in parallel for each command, because 
+<orderedlist>
+  <listitem>You can combine the samples, leading to faster run times.</listitem>
+  <listitem>You can compare the runs to determine if the chains have converged.</listitem>
+</orderedlist>
+</para>
 
     <section><info><title>Quick Start</title></info>
       
@@ -1689,7 +1720,7 @@ You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:h
       <application>MrBayes</application>, <application>BEAST</application> or
       <application>BAli-Phy</application>, it is hard to determine in
       advance how many iterations are required to give a good
-      estimate. The answer depends on the specific data set that is
+      estimate. The number depends on the specific data set that is
       being examined. As a result, <application>BAli-Phy</application>
       relies on the user to analyze the data in a running chain
       periodically in order to determine when enough samples have been
