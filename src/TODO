@@ -26,7 +26,14 @@ Examine prior rate dispersal for DP[2], DP[4], DP[6], DP[8] with no data.
 
 Examples: add more?  Microbotryum?
 
+*Burnin*
+- perhaps burnin would benefit from some 'wider' moves
+  + SPR+slice sample branch length.
+  + Double-augmenation -- proposing trees with a different alignment.
+    (SPR-Gibbs-Sampling.lyx)
+
 TEST: What will decrease the burnin time for Globins-few.fasta?
+ - Variance will be high, so we need to do at least 5 runs for each data set, preferably 10.
  - Will NNI+A decrease the time?
  - Will removing SPR decrease the time?
  - Will doing more SPR-flat+A decrease the time?
@@ -36,9 +43,6 @@ TEST: What will decrease the burnin time for Globins-few.fasta?
 *Documentation*
  - Make programs more self-documenting.
    + Make statreport describe PSRF-80%CI and PSRF-RCF.
- - Question: Can I fix the tree?
- - Question: Can I fix the topology?
- - Describe post-processing in more detail.
 
 *Report* - Improve the SDSF plot.
  - Should we output ALL groups in --LOD-table, perhaps by including column headers?
@@ -199,6 +203,8 @@ Replace T.directed_branch( ) with T.branch( ). [step 2]
 
 
 --
+P1. SPR: intelligently select subtree, as well as attachment point?
+
 P29. See genome-wide transducer paper.  Can I impose similar constraints?
  * How do they record/store their bandwidths on the DP matrix?
 
@@ -213,9 +219,6 @@ P9. MCMC / MPI - Construct a heated alignment prior.
 
 P8. Branch priors - make into a sub-model and allow a mixture-of-two-{Exponential, Gamma}.
 P15. Make matcaches (1) [b][m] instead of [m][b] and (2) be able to invalidate individual branches.     
-
-P1. Search SPR w/ multiple attachment sites.
-P3. Improve initial alignment / tree search procedure (for burn-in)
 
 P17. Improve alphabet handling for speed, flexibility, and features.
 P18. Allow alphabets to handle unknown letters in some way... detect alphabet based on fraction of atgcu
@@ -257,14 +260,6 @@ P38. Can I eliminate MCMC::Move.iterate(P,Stats,int) for moves that do not need 
 
 
 
-P1. Implement the multi-branch SPR search
- * Choose subtree to prune based on the effective-branch length?
- * Improve accuracy, simplicity of "effective-branch" length?
-   - Check if the length of neighboring branches has an effect...
- * Finish testing.
-   - Check profiler results.
-   - Compare Lutzoni-Fungi results with old version. (seems good, so far).
-
 P17. Improve alphabet handling for speed, flexibility, and features.
      - [!]Speed up mapping of letters to integers.
 
@@ -279,17 +274,6 @@ P16. Generate better mixing diagnostics
      - Report SDSF for each split.
      - Report what lartillot is reporting, also.
 
-P3. [Speed up burn-in]
- * Include a minimum-distance-based proposal?  How?
-   - This would only help if the current state was REALLY bad, but that could actually happen during burnin.
-   - This is a data-driven proposal... which can be good.
-
-Ideas:
-- Do an initial POY-style optimization.  How much faster can this be?
-- Issue: we can just try to estimate alignments, BUT
-  + How do we score gap penalties?
-  + There is A/T interaction.
-
 P10. Make CAT models faster.
  - Can this be virtualized?  How much speed do we lose by computing exp(Qt)*v using a virtual call?
  - Can I avoid recalculating exp_a_t so often?
@@ -301,79 +285,7 @@ P5. [Post-processing:]
   + When printing SRQ plots, indicate the LOD range (or its abs?).
   + Make trees-bootstrap less RAM-intensive: don't cache so many things.
 
-P6. What different tasks do I want?  How can I make a generic tree processor?
- + Find the PP>X consensus tree
- + Find the PP>X splits
- + Find the PP>X partial splits
- + Annotate branches of a Query tree with their lengths from a tree sample
- + Annotate branches of a Query tree with their PP/BF   from a tree sample
-
-Defaults:If no ">X" part, then >-
-        :If no "[i]" part, then "[0]"
-
-Idea: level[i]>file@format
-
-Questions: Do I have to re-analyze the combined file?
-           Can I share memory && information between different 
-
-Can I get away w/o manually scripting intermediate variables?
-
-consensus ->
- * x[i].topology      topology(x[i]) -> Newick
-   + --consensus-topology=0.5[i]>file
-   + --write=consensus(0.5,i,lengths=no,format=newick)>file
- * x[i].PP.topology   topology[PP](x[i]) -> Newick
-   + --consensus-topology-PP=0.5[i]>file
- * x[i].mtree         
-   + --consensus-mctree=0.5[i]>file
- * x[i].ltree
-   + --consensus-tree-with-nodes=0.5[i]>file
- * x[i].tree          topology[lengths](x[i]) -> newick
-   + --consensus-tree=0.5[i]>file
- * x[i].PP.tree       topology[lengths](x[i]) -> newick
-   + --consensus-tree-PP=0.5[i]>file
- * MAP.topology       topology(MAP)           -> newick
-   + --MAP-topology=>file
- * MAP.tree           topology[PP,lengths](MAP) -> newick
-   + --MAP-tree=file
- * partitions (supported partitions)
-   + partitions=0.5[i]>file
- * partitions.pred
-   + partitions=0.5[i]>file@pred
- * partitions.bs
-   + --mixing-report=file
- * c-levels.plot
-   + --support-levels=file
- * partitions.SRQ
- * c50.SRQ
- * {c50,partitions}.SRQ.png
- * # of topologies in 95% interval
- ? # of SPLIT in 95% "interval"
-
- * c-levels.svg
- * x[i]-mctree.svg
- * x[i]-mctree.pdf
- * x[i]-tree.pdf      topology[lengths](x[i]) -> newick
- * x[i]-tree.svg
-
-mixing ->
- * compute the mixing of a given predicate OR tree
- * compute ASDSF of distributions
- --asdsf=file@report
- --msdsf=file@report
- * write out the RANGE of support for each partition, sorted by the average support.
- --support-range=file
-
--? I need a "verbose" mode that gives feedback for progress.
--? How do I handle dependencies?
-
-Also, the easiest time to calculate branch lengths would be when we
-are looking up the branches in the first place. Do we really want to
-have a "calculate branch lengths" and a "don't calculate branch
-lengths" option on estimating partition support? 
-
-
-Why does INV+Modulated+gamma[4]+INV crash?
+P?. Why does INV+Modulated+gamma[4]+INV crash?
     - Because you can't add models with different alphabet sizes ATM.
 
 P8. [Branch priors]
@@ -386,11 +298,6 @@ P8. [Branch priors]
 
 P16. [Improving Mixing Diagnostics / Improve Distribution-Comparison Diagnostics]
 1. AWTY is right: some of these diagnostics are going to be plots.
-
-2. Generalize statreport to
- (a) Take multiple input files.
- (b) Write out Global estimates
- (c) Write out Mixing diagnostics
 
 3. Generalize trees-bootstrap to
  (a) Write out Global estimates
@@ -796,7 +703,11 @@ Q. So, how do we keep RootedTree's extra info up-to-date if methods from Tree ca
 still be called?
 A. Public tree methods cannot disturb this setup.
 
-
+Goals for generality
+ 1. allow sampling from relaxed-clock && the transducer model && the RNA model, as well as T+A
+ 2. allow submodels to share parameters
+ 3. separate prior from 'model'
+ 4. ability to construct samplers from a generic language description. (least important)
 
 ------------------------------------------------------------------------------
 [FIXED] s-parameters aren't accepted/sampled often enough.
