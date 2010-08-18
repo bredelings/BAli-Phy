@@ -817,6 +817,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_transducer_counts_for_branch(t.n_branches(),ublas::matrix<int>(TIM.get_branch_Transducer(1).n_states(),
 									 TIM.get_branch_Transducer(1).n_states())),
    cached_sequence_lengths(a.n_sequences()),
+   cached_branch_HMMs(t.n_branches()),
    branch_mean_(1.0),
    variable_alignment_(true),
    smodel_full_tree(true),
@@ -824,7 +825,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    T(t),
    MC(t,SM),
    LC(t,SModel()),
-   branch_HMMs(t.n_branches()),
    branch_PTMs(t.n_branches(),TIModel_->get_branch_Transducer(1)),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
