@@ -176,6 +176,8 @@ B n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree&
 
 template int n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const ublas::matrix<int>& cost);
 
+template int n_mutations(const alignment& A, const SequenceTree& T,const ublas::matrix<int>& cost);
+
 template double n_mutations(const alphabet& a, const vector<int>& letters, const SequenceTree& T,const ublas::matrix<double>& cost);
 
 
