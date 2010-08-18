@@ -38,48 +38,6 @@ using std::vector;
 using std::string;
 using namespace A2;
 
-namespace indel 
-{
-  PairHMM::PairHMM()
-    : Matrix(5,5),
-      start_pi_(5,0) 
-  {
-    for(int i=0;i<size1();i++)
-      for(int j=0;j<size2();j++)
-	(*this)(i,j) = 0;
-  }
-
-  double PairHMM::start(int s) const {
-    double total = 0;
-    for(int i=0;i<n_states();i++)
-      total += start_pi(i)*(*this)(i,s);
-    return total;
-  }
-}
-
-void IndelModel::set_training(bool b)
-{
-  in_training = b;
-}
-
-bool IndelModel::is_training() const
-{
-  return in_training;
-}
-
-IndelModel::IndelModel()
-  :in_training(false)
-{ }
-
-IndelModel::~IndelModel() {}
-
-
-string i_parameter_name(int i,int n) {
-  if (i>=n)
-    throw myexception()<<"substitution model: refered to parameter "<<i<<" but there are only "<<n<<" parameters.";
-  return string("pI") + convertToString(i);
-}
-
 void remove_one_state(Matrix& Q,int S) {
   assert(Q.size1() == Q.size2());
 
@@ -100,6 +58,257 @@ void remove_one_state(Matrix& Q,int S) {
   for(int j=0;j<Q.size2();j++) 
     Q(S,j) /= temp;
 
+}
+
+namespace indel 
+{
+  PairHMM::PairHMM()
+    : Matrix(5,5),
+      start_pi_(5,0) 
+  {
+    for(int i=0;i<size1();i++)
+      for(int j=0;j<size2();j++)
+	(*this)(i,j) = 0;
+  }
+
+  double PairHMM::start(int s) const {
+    double total = 0;
+    for(int i=0;i<n_states();i++)
+      total += start_pi(i)*(*this)(i,s);
+    return total;
+  }
+
+  //------------------------------------------------------------------------//
+
+  bool PairTransducer::is_match(int i)  const {return e1[i]>=0 and e2[i]>=0;}
+  bool PairTransducer::is_insert(int i) const {return e1[i]< 0 and e2[i]>=0;}
+  bool PairTransducer::is_delete(int i) const {return e1[i]>=0 and e2[i]< 0;}
+  bool PairTransducer::is_silent(int i) const {return e1[i]< 0 and e2[i]< 0;}
+  bool PairTransducer::is_start(int i)  const {return i == start_;}
+  bool PairTransducer::is_end(int i)    const {return i == end_;}
+
+  // find a set of non-silent states (along with start and end) to use instead
+  void PairTransducer::remove_silent()
+  {
+    // construct the new set of states, and mark the (single) start and (single) end
+    int new_start = -1;
+    int new_end = -1;
+    vector<int> keep;
+    for(int i=0;i<n_states();i++)
+      if (is_start(i) or is_end(i) or not is_silent(i)) {
+	if (is_start(i))
+	  new_start = keep.size();
+	if (is_end(i))
+	  new_end = keep.size();
+	keep.push_back(i);
+      }
+      else
+	remove_one_state(*this,i);
+
+    // This only works because we already REMOVED the other states
+    Matrix Q(keep.size(),keep.size());
+    for(int i=0;i<Q.size1();i++)
+      for(int j=0;j<Q.size2();j++)
+	Q(i,j) = (*this)(keep[i],keep[j]);
+    
+    // only keep the emission information for states we are going to keep
+    e1 = apply_indices(e1,keep);
+    e2 = apply_indices(e2,keep);
+
+    // swap in the new start and end
+    start_ = new_start;
+    end_ = new_end;
+
+    // swap in the new transition probs
+    this->swap(Q);
+
+    for(int i=0;i<n_states();i++)
+      assert(is_start(i) or is_end(i) or not is_silent(i));
+  }
+
+  void PairTransducer::check_states() 
+  {
+    Matrix& Q = *this;
+
+    // store a copy of our transition probabilities to restore at the end
+    Matrix temp = Q;
+
+    vector<int> from;
+
+    // Collect states that emit in Seq1 and remove others
+    for(int i=0;i<n_states();i++) 
+    {
+      if (is_end(i))
+	continue;
+      else if (is_start(i) or e1[i] >= 0)
+	from.push_back(i);
+      else
+	remove_one_state(*this,i);
+    }
+
+    // Collect all sets of states which have transition probability of 1.0
+    vector< vector<int> > to;
+    for(int l=0;l<n_letters();l++) {
+      to.push_back(vector<int>());
+      for(int i=0;i<n_states();i++)
+	if (e1[i] == l)
+	  to.back().push_back(i);
+    }
+    to.push_back(vector<int>(1,end_state()));
+
+    // Check transitions from each reading state j to each letter i
+    for(int i=0;i<to.size();i++)
+      for(int j=0;j<from.size();j++)
+      {
+	double total = 0;
+	for(int k=0;k<to[i].size();k++)
+	  total += Q(from[j],to[i][k]);
+
+	if (std::abs(total - 1.0) > 1.0e-9) {
+	  std::cerr<<"Transition from state "<<j<<" to letter "<<i<<" was "<<total<<", not 1.0!"<<std::endl;
+	  abort();
+	}
+	  
+      }
+
+    // restore the saved copy of our transition probabilities
+    Q = temp;
+  }
+
+  PairTransducer::PairTransducer(int s,int e,const vector<int>& v1, const vector<int>& v2)
+    :Matrix(v1.size(),v1.size()),e1(v1),e2(v2),start_(s),end_(e)
+  {
+    assert(e1.size() == n_states());
+    assert(e2.size() == n_states());
+
+    n_letters_ = 1+std::max(max(v1),max(v2));
+
+    // set all entries in the transition matrix to zero.
+    clear();
+  }
+}
+
+void IndelModel::set_training(bool b)
+{
+  in_training = b;
+}
+
+bool IndelModel::is_training() const
+{
+  return in_training;
+}
+
+IndelModel::IndelModel()
+  :in_training(false)
+{ }
+
+IndelModel::~IndelModel() {}
+
+
+// Get a bitmask of the list of possible next letters emitted in sequence 1 after state @s0
+// The mask is indexed by letter1, letter2, ... , E
+vector<int> get_possible_next_letters(int s0, const indel::PairTransducer& PTM)
+{
+  vector<int> visited(PTM.n_states(),0);
+
+  vector<int> next;
+  next.push_back(s0);
+
+  vector<int> possible(PTM.n_letters()+1,0);
+
+  while (next.size())
+  {
+    // states to consider next time around
+    vector<int> next2;
+
+    // For each next (unvisited) letter s1
+    for(int i=0;i<next.size();i++)
+    {
+      int s1 = next[i];
+
+      if (visited[s1]) continue;
+
+      visited[s1] = 1;
+
+      // For each unvisited neighbor s2 of s1
+      for(int s2=0;s2<PTM.n_states();s2++)
+      {
+	if (PTM(s1,s2) > 0) 
+	{
+	  // If it emits a letter in sequence1, then that letter is possible;
+	  if (PTM.emits_1(s2) != -1) {
+	    possible[PTM.emits_1(s2)] = 1;
+	    visited[s2] = 1;
+	  }
+          // If it is the end state, then the end state is possible
+	  else if (s2 == PTM.end_state()) {
+	    possible.back() = 1;
+	    visited[s2] = 1;
+	  }
+          // If is silent in sequence 1 and not the end state, the consider
+          // that state's neighbors.
+	  else if (not visited[s2])
+	    next2.push_back(s2);
+	}
+      }
+    }
+
+    next = next2;
+  }
+
+  return possible;
+}
+
+transducer_state_info::transducer_state_info(const indel::PairTransducer& PTM)
+  :M(PTM.n_letters()+1,PTM.n_letters()+1),
+   D(PTM.n_letters()+1,PTM.n_letters()+1),
+   I(PTM.n_letters()+1,PTM.n_letters()+1)
+{
+  // Find possible next letters
+  vector< vector<int> > possible;
+  for(int i=0;i<PTM.n_states();i++)
+    possible.push_back(get_possible_next_letters(i,PTM));
+
+  // Find unique states S[i,j] of type Si that next emit j in sequence 1
+  const int o = PTM.n_letters()+1;
+
+  for(int i=0;i<o;i++)
+    for(int j=0;j<o;j++)
+      M(i,j) = D(i,j) = I(i,j) = -1;
+
+  for(int i=0;i<PTM.n_states();i++)
+  {
+    int t1 = PTM.emits_1(i);
+    if (t1 == -1)
+      t1 = PTM.emits_2(i);
+    if (t1 == -1)
+      continue;
+
+    for(int t2=0;t2<PTM.n_letters()+1;t2++) 
+      if (possible[i][t2]) {
+
+	if (PTM.is_match(i)) {
+	  assert(M(t1,t2) == -1);
+	  M(t1,t2) = i;
+	}
+	if (PTM.is_delete(i)) {
+	  assert(D(t1,t2) == -1);
+	  D(t1,t2) = i;
+	}
+	if (PTM.is_insert(i)) {
+	  assert(I(t1,t2) == -1);
+	  I(t1,t2) = i;
+	}
+      }
+  }
+
+
+}
+
+string i_parameter_name(int i,int n) {
+  if (i>=n)
+    throw myexception()<<"substitution model: refered to parameter "<<i<<" but there are only "<<n<<" parameters.";
+  return string("pI") + convertToString(i);
 }
 
 /// Only continue from S1 if we don't go to S2
@@ -554,4 +763,452 @@ TKF2::TKF2(bool b)
   add_parameter(Parameter("lambda::prior_stddev", 1.5));
   add_parameter(Parameter("epsilon::prior_length", 10));
   add_parameter(Parameter("mean_length::prior_mean", 1.5));
+}
+
+TransducerIndelModel::~TransducerIndelModel() {}
+
+efloat_t TKF1_Transducer::prior() const 
+{
+  efloat_t Pr = 1;
+
+  // Calculate prior on lambda
+  Pr *= laplace_pdf(get_parameter_value(0),get_parameter_value(2), get_parameter_value(3));
+
+  // Calculate prior on mean sequence length
+  Pr *= exponential_pdf(get_parameter_value(1), get_parameter_value(4));
+
+  return Pr;
+}
+
+// States: S, letters, E
+Matrix TKF1_Transducer::root_chain() const
+{
+  double lambda = exp(get_parameter_value(0));
+  double mean_length = get_parameter_value(1);
+  double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
+  double mu = lambda/sigma;                       // s = lambda/mu
+
+  Matrix M(3,3);
+
+  for(int i=0;i<M.size1();i++)
+    for(int j=0;j<M.size2();j++)
+      M(i,j) = 0;
+
+  M(0,1) = lambda/mu;
+  M(0,2) = 1 - M(0,1);
+
+  M(1,1) = lambda/mu;
+  M(1,2) = 1 - M(1,1);
+
+  return M;
+}
+
+// lambda is the insertion rate.
+// mu     is the deletion  rate.
+indel::PairTransducer get_TKF1_Transducer(double t,double lambda, double mu)
+{
+  const int S = 0;
+  const int M = 1;
+  const int D = 2;
+  const int I = 3;
+  const int E = 4;
+  const int W = 6;
+
+  vector<int> e1(7);
+  e1[S] = -1;
+  e1[M] =  0;
+  e1[D] =  0;
+  e1[I] = -1;
+  e1[E] = -1;
+  e1[5] = -1;
+  e1[W] = -1;
+
+  vector<int> e2(7);
+  e2[S] = -1;
+  e2[M] =  0;
+  e2[D] = -1;
+  e2[I] =  0;
+  e2[E] = -1;
+  e2[5] = -1;
+  e2[W] = -1;
+
+  indel::PairTransducer Q(0,4,e1,e2);
+
+  double U = exp(-mu*t);
+  double B = (1.0 - exp((lambda-mu)*t))/(mu - lambda*exp((lambda - mu)*t));
+
+  Q(S ,5 ) = 1;
+
+  Q(M, 5)  = 1.0;
+
+  Q(D, W)  = mu*B/(1.0 - U);
+  Q(D, I)  = 1.0 - Q(D,W);
+
+  Q(I, I)  = lambda*B;
+  Q(I, W)  = 1.0 - Q(I,I);
+
+  Q(5, I ) = lambda * B;
+  Q(5, W ) = 1.0 - Q(5,I);
+
+  Q(W, M ) = U;
+  Q(W, D ) = 1.0 - U;
+  Q(W, E ) = 1.0;
+
+
+  Q.remove_silent();
+
+#ifndef NDEBUG
+  Q.check_states();
+#endif
+
+  return Q;
+  
+}
+
+indel::PairTransducer TKF1_Transducer::get_branch_Transducer(double t) const 
+{
+  if (not time_dependent)
+    t = 1;
+
+  double lambda = exp(get_parameter_value(0));
+  double mean_length = get_parameter_value(1);
+  double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
+  double mu = lambda/sigma;                       // s = lambda/mu
+
+  assert(lambda < mu);
+
+  return get_TKF1_Transducer(t,lambda,mu);
+}
+
+string TKF1_Transducer::name() const 
+{
+  return "TKF1_Transducer";
+}
+
+TKF1_Transducer::TKF1_Transducer(bool b)
+  :time_dependent(b)
+{
+  add_parameter(Parameter("lambda",-5, upper_bound(0)));
+  add_parameter(Parameter("mean_length",100));
+  add_parameter(Parameter("lambda::prior_median", -5));
+  add_parameter(Parameter("lambda::prior_stddev", 1.5));
+  add_parameter(Parameter("mean_length::prior_mean", 1.5));
+}
+
+
+// States: S, letters, E
+Matrix FS_Transducer::root_chain() const
+{
+  double tau      = get_parameter_value(5);
+  double mean_s   = get_parameter_value(3);
+  double mean_f   = get_parameter_value(4);
+
+  double e_s = mean_s/(1+mean_s);
+  double e_f = mean_f/(1+mean_f);
+
+  Matrix M(4,4);
+
+  for(int i=0;i<M.size1();i++)
+    for(int j=0;j<M.size2();j++)
+      M(i,j) = 0;
+
+  M(0,1) = mean_s/(mean_s+mean_f);
+  M(0,2) = mean_f/(mean_s+mean_f);
+
+  M(1,1) = e_s/(1 - tau*tau*(1-e_s)*(1-e_f) );
+  M(1,2) = tau*(1-e_s)*e_f/(1 - tau*tau*(1-e_s)*(1-e_f) );
+  M(1,3) = 1 - M(1,1) - M(1,2);
+
+  M(2,1) = tau*(1-e_f)*e_s/(1 - tau*tau*(1-e_f)*(1-e_s) );
+  M(2,2) = e_f/(1 - tau*tau*(1-e_f)*(1-e_s) );
+  M(2,3) = 1 - M(2,1) - M(2,2);
+
+  return M;
+}
+
+efloat_t FS_Transducer::prior() const 
+{
+  efloat_t Pr = 1;
+
+  // Calculate prior on indel rate
+  double lambda_s = get_parameter_value(0);
+  double lambda_f = get_parameter_value(1);
+
+  if (lambda_f < lambda_s) return 0;
+
+  Pr *= laplace_pdf(lambda_s, get_parameter_value(6), get_parameter_value(8));
+  Pr *= laplace_pdf(lambda_f, get_parameter_value(7), get_parameter_value(8));
+
+  // Calculate prior on indel length
+  double E_length_mean = get_parameter_value(9);
+  double log_r = get_parameter_value(2);
+  double E_length_r = log_r - logdiff(0,log_r);
+
+  Pr *= exp_exponential_pdf(E_length_r,E_length_mean);
+
+  // uniform prior on switch
+
+  return Pr;
+}
+
+
+// Currently, multiple insertions in a row are not allowed, 
+// even though multiple deletions are.  This is because I
+// would have to figure out a way not to keep track of the LEFT
+// end of the insertion also.
+// 
+// -- Um... couldn't we just have the (1-r) simply go to Rij where 
+//    i is the type of residue we last inserted?
+
+// Insertions into FF, FS and SF are delta_f, insertions into SS are delta_s
+
+// Deletions delete only one type (no mixed-type deletions) and are 
+//  independent of their left and right neighbors.
+// (Currently, we model deletions as occuring at the first letter
+//  or the deletion.  The deletion may continue until the first time
+//  it either choose to terminate OR sees a letter of another type.
+//  Thus, the rate of deletions depends on how close other types are.)
+
+indel::PairTransducer get_FS_Transducer(double t,double delta_s,double delta_f, double r, double Rsf, double Rfs)
+{
+  double Rss = 1.0-Rsf;
+  double Rff = 1.0-Rfs;
+
+  const int S = 0;    // 0
+
+  const int Ms  = 1;  // 1
+  const int Ds  = 2;  // 2
+  const int IsS = 3;  // 3
+  const int IsF = 4;  // 4
+  const int Ws  = 5;
+  const int WsD = 6;
+  const int TsS = 7;
+  const int TsF = 8;
+  const int E   = 9;  // 5
+
+  const int Mf  = 10; // 6
+  const int Df  = 11; // 7
+  const int IfF = 12; // 8
+  const int IfS = 13; // 9
+  const int Wf  = 14;
+  const int WfD = 15;
+  const int TfF = 16;
+  const int TfS = 17;
+
+  const int TsE = 18;
+  const int IsE = 19; // 10
+  const int TfE = 20;
+  const int IfE = 21; // 11
+
+  // Rij means that, having emitted an @i, we will now go on to emit a @j
+  const int RSS = 22;
+  const int RSF = 23;
+  const int RSE = 24;
+  const int RFS = 25;
+  const int RFF = 26;
+  const int RFE = 27;
+
+
+  vector<int> e1(28, -1);
+  vector<int> e2(28, -1);
+
+  // matches
+  e1[Ms]  =  e2[Ms]  =  0;
+  e1[Mf]  =  e2[Mf]  =  1;
+
+  // deletes
+  e1[Ds]  =  0;
+  e1[Df]  =  1;
+
+  // inserts - conditional on the next letter in the input sequence
+  e2[IsS] =  0;
+  e2[IsF] =  0;
+  e2[IsE] =  0;
+
+  e2[IfS] =  1;
+  e2[IfF] =  1;
+  e2[IfE] =  1;
+
+  indel::PairTransducer Q(S,E,e1,e2);
+
+ // This is not F/S symmetric: it treats start like an F
+
+  Q(S,RFS)    = 1;
+  Q(S,RFF)    = 1;
+  Q(S,RFE)    = 1;
+
+  /*************************************************/
+
+  // Except for the link-outs (below) these probs should all sum to 1
+
+  Q(Ws,Ms)    = (1-2*delta_s)/(1-delta_s);
+  Q(Ws,Ds)    = 1 - Q(Ws,Ms);
+
+  Q(Ms,RSS)   = 1;
+
+  Q(Ds,RSS)   = 1 - r;
+  Q(Ds,WsD)   = r;
+
+  Q(WsD,Ds)   = 1;
+
+  Q(RSS,Ws)   = 1-delta_s;
+  Q(RSS,TsS)  = delta_s;      // Pr(Insertion between two SS)
+
+  // given that the last column was an S, and the next letter in seq1 is an S, do we insert S or F?
+  Q(TsS,IsS)  = Rss*Rss/(Rss*Rss+Rsf*Rfs);
+  Q(TsS,IfS)  = Rsf*Rfs/(Rss*Rss+Rsf*Rfs);
+
+  // given that the last column was an S, and the next letter in seq1 is an S, do we insert S or F?
+  Q(TfS,IsS)  = Rfs*Rss/(Rfs*Rss+Rff*Rfs);
+  Q(TfS,IfS)  = Rff*Rfs/(Rfs*Rss+Rff*Rfs);
+  
+  Q(IsS,TsS)  = r;            // go back and insert another letter .. of undecided type.
+  Q(IsS,Ws)   = 1 - r;        // we are done inserting
+
+  Q(IfS,TfS)  = r;
+  Q(IfS,Ws)   = 1 - r;
+
+  
+  //  This is different than coming from the START state
+  //  because we are conditioning on the previous state being an S.
+  Q(Ms,RSF)   = Q(Ds,RSF) = 1;    // Link to path out of S into F
+  Q(Ms,RSE)   = Q(Ds,RSE) = 1;    // Link to path out of S into E
+
+  Q(RSF,TsF)  = delta_f;
+  Q(RSF,Wf)   = 1-delta_f;
+
+  Q(RSE,TsE)  = delta_f;
+  Q(RSE,E)    = 1-delta_f;
+
+  /*************************************************/
+
+  // Except for the link-outs (below) these probs should all sum to 1
+
+  Q(Wf,Mf)    = (1-2*delta_f)/(1-delta_f);
+  Q(Wf,Df)    = 1 - Q(Wf,Mf);
+
+  Q(Mf,RFF)   = 1;
+
+  Q(Df,RFF)   = 1 - r;
+  Q(Df,WfD)   = r;
+
+  Q(WfD,Df)   = 1;
+
+  Q(RFF,Wf)   = 1-delta_f;
+  Q(RFF,TfF)  = delta_f;      // Pr(Insertion between two SS)
+
+  // given that the last column was an S, and the next letter in seq1 is an F, do we insert S or F?
+  Q(TsF,IsF)  = Rss*Rsf/(Rss*Rsf+Rsf*Rff);
+  Q(TsF,IfF)  = Rsf*Rff/(Rss*Rsf+Rsf*Rff);
+
+  // given that the last column was an S, and the next letter in seq1 is an F, do we insert S or F?
+  Q(TfF,IsF)  = Rfs*Rsf/(Rfs*Rsf+Rff*Rff);
+  Q(TfF,IfF)  = Rff*Rff/(Rfs*Rsf+Rff*Rff);
+  
+  Q(IsF,TsF)  = r;            // go back and insert another letter .. of undecided type.
+  Q(IsF,Wf)   = 1 - r;        // we are done inserting
+
+  Q(IfF,TfF)  = r;
+  Q(IfF,Wf)   = 1 - r;
+
+  
+  //  This is different than coming from the START state
+  //  because we are conditioning on the previous state being an S.
+  Q(Mf,RFS)   = Q(Df,RFS) = 1;    // Link to path out of F into S
+  Q(Mf,RFE)   = Q(Df,RFE) = 1;    // Link to path out of F into E
+
+  Q(RFS,TfS)  = delta_f;
+  Q(RFS,Ws)   = 1-delta_f;
+
+  Q(RFE,TfE)  = delta_f;
+  Q(RFE,E)    = 1-delta_f;
+
+  /*************************************************/
+
+  // given that the last column was an S, and the next letter in seq1 is an E (F), do we insert S or F?
+  Q(TsE,IsE)  = Rss*Rsf/(Rss*Rsf+Rsf*Rff);
+  Q(TsE,IfE)  = Rsf*Rff/(Rss*Rsf+Rsf*Rff);
+
+  // given that the last column was an S, and the next letter in seq1 is an E (F), do we insert S or F?
+  Q(TfE,IsE)  = Rfs*Rsf/(Rfs*Rsf+Rff*Rff);
+  Q(TfE,IfE)  = Rff*Rff/(Rfs*Rsf+Rff*Rff);
+  
+  Q(IsE,TsE)  = r;            // go back and insert another letter .. of undecided type.
+  Q(IsE,E)    = 1 - r;        // we are done inserting
+
+  Q(IfE,TfE)  = r;
+  Q(IfE,E)    = 1 - r;
+
+
+  Q.remove_silent();
+
+#ifndef NDEBUG
+  Q.check_states();
+#endif
+
+  return Q;
+}
+
+indel::PairTransducer FS_Transducer::get_branch_Transducer(double t) const 
+{
+  if (not time_dependent)
+    t = 1;
+
+  double lambda_s      = exp(get_parameter_value(0));
+  double lambda_f      = exp(get_parameter_value(1));
+  double r             = exp(get_parameter_value(2));
+  double mean_length_s = get_parameter_value(3);
+  double mean_length_f = get_parameter_value(4);
+  double tau           = get_parameter_value(5);
+
+  double sigma_s = mean_length_s/(1.0 + mean_length_s); // E L = s/(1-s)
+  double mu_s = lambda_s/sigma_s;                       // s = lambda/mu
+
+  double sigma_f = mean_length_f/(1.0 + mean_length_f); // E L = s/(1-s)
+  double mu_f = lambda_f/sigma_f;                       // s = lambda/mu
+
+  assert(lambda_s < mu_s);
+  assert(lambda_f < mu_f);
+
+  double A_s = lambda_s*t;
+  double B_s = 1.0 - exp(-A_s);
+  double delta_s = B_s/(1+B_s);
+
+  double A_f = lambda_f*t;
+  double B_f = 1.0 - exp(-A_f);
+  double delta_f = B_f/(1+B_f);
+
+  double Rsf = -1;
+  double Rfs = -1;
+  {
+    Matrix R = root_chain();
+    int start = 0;
+    int S     = 1;
+    int F     = 2;
+    int end   = 3;
+    Rsf = R(S,F)/(1-R(S,end));
+    Rfs = R(F,S)/(1-R(F,end));
+  }
+
+  return get_FS_Transducer(t, delta_s, delta_f, r, Rsf, Rfs);
+}
+
+string FS_Transducer::name() const 
+{
+  return "FS_Transducer";
+}
+
+FS_Transducer::FS_Transducer(bool b)
+  :time_dependent(b)
+{
+  add_parameter(Parameter("lambda_s", -5, upper_bound(0)));                  // 0
+  add_parameter(Parameter("lambda_f", -3, upper_bound(0)));                  // 1
+  add_parameter(Parameter("r", -0.3, upper_bound(0)));                       // 2
+  add_parameter(Parameter("mean_length_s", 20, lower_bound(0)));             // 3
+  add_parameter(Parameter("mean_length_f", 20, lower_bound(0)));             // 4
+  add_parameter(Parameter("switch", 0.1, between(0,1)));                   // 5
+  add_parameter(Parameter("lambda::prior_median_s", -5));    // 6
+  add_parameter(Parameter("lambda::prior_median_f", -3));    // 7
+  add_parameter(Parameter("lambda::prior_stddev", 1.5));     // 8
+  add_parameter(Parameter("mean_length::prior_mean", 1.5));  // 9
 }
