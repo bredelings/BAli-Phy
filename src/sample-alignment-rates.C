@@ -576,7 +576,7 @@ column_adjacency_graph get_adjacency_graph(const alignment& A, const Tree& T, in
 void cluster_proposal_probs(const column_adjacency_graph& G, double p, const alignment& A, 
 			    const vector<int>& cluster, efloat_t rho_12,efloat_t rho_21)
 {
-  ublas::matrix<int>& type_note = A.note(2);
+  ublas::matrix<int>& type_note = A.note(1);
   int current_spin = type_note(cluster[0],0);
 
   // mark nodes that are part of the cluster, to avoid searching every time.
@@ -630,7 +630,7 @@ efloat_t cluster_proposal_ratio(const column_adjacency_graph& G, double p, const
 // to consider edges only once... only consider edges to a non-visted node?
 vector<int> get_cluster(const column_adjacency_graph& G, double p, const alignment& A, int c)
 {
-  ublas::matrix<int>& type_note = A.note(2);
+  ublas::matrix<int>& type_note = A.note(1);
   int current_spin = type_note(c,0);
 
   vector<int> part_of_cluster(G.size(),0);
@@ -684,7 +684,7 @@ void sample_alignment_rates_flip_column(owned_ptr<Probability_Model>& P_, MCMC::
 
       Parameters P2 = P;
       alignment& A2 = *P2[p].A;
-      ublas::matrix<int>& type_note = A2.note(2);
+      ublas::matrix<int>& type_note = A2.note(1);
       type_note(c,0) = 1-type_note(c,0);
       P2[p].note_column_label_changed();
       
@@ -726,7 +726,7 @@ void sample_alignment_rates_flip_column(owned_ptr<Probability_Model>& P_, MCMC::
 
       Parameters P2 = P;
       alignment& A2 = *P2[p].A;
-      ublas::matrix<int>& type_note = A2.note(2);
+      ublas::matrix<int>& type_note = A2.note(1);
 
       // Average size will be 1+2/(1-r)   
       double p = 0.8;

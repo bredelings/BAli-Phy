@@ -441,7 +441,7 @@ vector<vector<int> > get_type_sequences(const alignment& A, const TransducerInde
 {
   vector<vector<int> > sequences(A.n_sequences());
 
-  const ublas::matrix<int>& type_note = A.note(2);
+  const ublas::matrix<int>& type_note = A.note(1);
   
   for(int i=0;i<sequences.size();i++)
   {
@@ -460,7 +460,7 @@ vector<int> get_type_sequence(const alignment& A,int n,const TransducerIndelMode
 {
   vector<int> sequence;
 
-  const ublas::matrix<int>& type_note = A.note(2);
+  const ublas::matrix<int>& type_note = A.note(1);
   
   sequence.reserve(A.length()+2);
 
@@ -483,7 +483,7 @@ ublas::matrix<int> get_root_transition_counts(const alignment& A,int n,const Tra
   ublas::matrix<int> counts(T.n_letters()+2,T.n_letters()+2);
   counts.clear();
 
-  const ublas::matrix<int>& type_note = A.note(2);
+  const ublas::matrix<int>& type_note = A.note(1);
   
   const int START = 0;
   const int END = T.n_letters()+1;
@@ -517,7 +517,7 @@ vector<int> get_FS_state_path(const alignment& A,int n1, int n2, const indel::Pa
   const ublas::matrix<int>& D = SS->D;
   const ublas::matrix<int>& I = SS->I;
 
-  const ublas::matrix<int>& type_note = A.note(2);
+  const ublas::matrix<int>& type_note = A.note(1);
 
   /******* Construct the type-of-next-residue-in-sequence-n1 array for sequence n1  ************/
   vector<int> next_type(A.length(),-1);
@@ -577,7 +577,7 @@ ublas::matrix<int> get_FS_counts(const alignment& A,int n1, int n2, const indel:
   const ublas::matrix<int>& D = SS->D;
   const ublas::matrix<int>& I = SS->I;
 
-  const ublas::matrix<int>& type_note = A.note(2);
+  const ublas::matrix<int>& type_note = A.note(1);
 
   /******* Construct the type-of-next-residue-in-sequence-n1 array for sequence n1  ************/
   vector<int> next_type(A.length(),-1);

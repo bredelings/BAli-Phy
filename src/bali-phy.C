@@ -1334,11 +1334,11 @@ int main(int argc,char* argv[])
 	  throw myexception()<<"Got "<<rate_labels.size()<<" labels, but the alignment has "<<P[i].A->length()<<" columns";
 
 	for(int c=0;c<P[i].A->length();c++)
-	  P[i].A->note(2)(c,0) = rate_labels[c];
+	  P[i].A->note(1)(c,0) = rate_labels[c];
       }
       else
 	for(int c=0;c<P[i].A->length();c++)
-	  P[i].A->note(2)(c,0) = (c/5)%2;
+	  P[i].A->note(1)(c,0) = (c/5)%2;
     }
 
     // Why do we need to do this, again?
