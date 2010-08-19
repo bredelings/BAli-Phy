@@ -218,3 +218,24 @@ efloat_t prior_HMM(const data_partition& P)
 {
   return prior_HMM_nogiven(P) * prior_HMM_rootless_scale(P);
 }
+
+
+
+
+efloat_t transition_pr_from_counts(const ublas::matrix<int>& counts, const ublas::matrix<double>& M)
+{
+  assert(counts.size1() == M.size1());
+  assert(counts.size1() == M.size2());
+
+  efloat_t Pr = 1;
+
+  for(int s1=0;s1<counts.size1();s1++)
+    for(int s2=0;s2<counts.size2();s2++)
+      if (counts(s1,s2)) {
+	efloat_t M12 = M(s1,s2);
+	Pr *= pow(efloat_t(M12),counts(s1,s2));
+      }
+
+  return Pr;
+}
+

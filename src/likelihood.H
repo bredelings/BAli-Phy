@@ -43,4 +43,6 @@ efloat_t prior_gamma(const SequenceTree& T,double branch_mean);
 
 // Tree prior: branch lengths & topology
 efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean);
+
+efloat_t transition_pr_from_counts(const ublas::matrix<int>& counts, const ublas::matrix<double>& M);
 #endif
