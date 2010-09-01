@@ -274,9 +274,17 @@ namespace statistics {
 
       rho[k] = total/(N-k);
 
-      if (rho[k] < limit and k>3) {
-	rho.resize(k);
-	break;
+      if (rho[k] < limit) {
+	if (rho[k] < 0)
+	{
+	  rho.resize(k-1);
+	  break;
+	}
+	else if (k > 3)
+	{
+	  rho.resize(k);
+	  break;
+	}
       }
     }
 
