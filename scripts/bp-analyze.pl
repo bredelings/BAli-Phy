@@ -935,7 +935,11 @@ sub parse_command_line
 	}
 	elsif ($arg =~ /--treefile=(.+)/) {
 	    $personality = "treefile";
-	    @tree_files = (check_file_exists($1));
+	    @tree_files = split(/,/,$1);
+	    foreach my $tree_file (@tree_files)
+	    {
+		check_file_exists($tree_file)
+	    }
 	}    
 	elsif ($arg =~ /^-.*/) {
 	    print "Error: I don't recognize option '$arg'\n";
