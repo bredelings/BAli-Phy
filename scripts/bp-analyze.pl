@@ -82,6 +82,7 @@ my $muscle = 0;
 my $probcons = 0;
 my $sub_partitions=0;
 my $do_consensus_alignments=0;
+my $do_trace_plots=1;
 my $prune;
 my $speed=1;
 my $min_Ne;
@@ -866,7 +867,7 @@ for(my $i=1;$i <= $#var_names; $i++)
 	$style = "";
 	$style = ' style="color:red"' if ($Burnin{$var} eq "Not Converged!");
 	print $index "<td $style>$Burnin{$var}</td>\n";
-	print $index "<td><a href=\"$i.trace.png\">Trace</a></td>\n";
+	print $index "<td><a href=\"$i.trace.png\">Trace</a></td>\n" if ($do_trace_plots);
     }
     else {
 	print $index "<td></td>";
@@ -932,6 +933,12 @@ sub parse_command_line
 	}
 	elsif ($arg =~ /--mc-tree/) {
 	    $sub_partitions=1;
+	}
+	elsif ($arg =~ /--no-trace-plots/) {
+	    $do_trace_plots=0;
+	}
+	elsif ($arg =~ /--alignment-consensus/) {
+	    $do_consensus_alignments=1;
 	}
 	elsif ($arg =~ /--treefile=(.+)/) {
 	    $personality = "treefile";
@@ -1455,6 +1462,8 @@ sub generate_trace_plots
 		$median{$var} = $2;
 	    }
 	}
+
+	return if (!$do_trace_plots);
 	
 	my $Nmax = 5000;
 	
