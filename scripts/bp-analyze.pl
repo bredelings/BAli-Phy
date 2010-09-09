@@ -284,8 +284,32 @@ if (-z "Results/consensus" || ! more_recent_than_all_of("Results/consensus",[@tr
     my $levels_arg = "--support-levels=Results/c-levels.plot";
     $levels_arg = "$levels_arg --extended-support-levels=Results/extended-c-levels.plot" if ($sub_partitions);
     `trees-consensus @tree_files $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.tree > Results/consensus`;
+
 }
 print "done.\n";
+
+
+print "\nComputing mean branch lengths ... ";
+    for my $cvalue (@tree_consensus_values)
+    {
+	my $value = $cvalue*100;
+	
+	my $tree = "c$value";
+
+	# No node lengths???
+	my $filename1 = "Results/$tree.tree";
+	my $filename2 = "Results/$tree.mtree";
+	
+        # Generate trees w/ node lengths.
+	if (! more_recent_than("Results/$tree.ltree",$tree_files[0])) 
+	{
+	    $prune_arg2 = "--prune $prune" if (defined($prune));
+	    `tree-mean-lengths Results/$tree.tree --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg2 < $tree_files[0] > Results/$tree.ltree`;
+ 	}
+    }
+print "done.\n";
+
+
 
 # 2. Draw trees
 
@@ -1094,26 +1118,19 @@ sub draw_trees
 	if ($speed < 2)
 	{
 	    if (-e $filename2 && ! more_recent_than("Results/$tree-mctree.svg",$filename2)) {
-		`draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --output=svg --draw-clouds=only` if ($have_draw_tree);
+		`draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --output=svg --draw-clouds=only`;
 	    }
 	    if (-e $filename2 && ! more_recent_than("Results/$tree-mctree.pdf",$filename2)) {
-		`draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --draw-clouds=only` if ($have_draw_tree);
+		`draw-tree Results/$tree.mlengths --out=Results/$tree-mctree --draw-clouds=only`;
 	    }
 	}
 	
-#    Generate trees w/ node lengths.
-	if (! more_recent_than("Results/$tree.ltree",$tree_files[0])) {
-	    $prune_arg2 = "--prune $prune" if (defined($prune));
-	    `tree-mean-lengths Results/$tree.tree --safe --show-node-lengths $max_arg $skip $subsample_string $prune_arg2 < $tree_files[0] > Results/$tree.ltree`;
- 	}
-
-
 	if (! more_recent_than("Results/$tree-tree.pdf",$filename1)) {
-	    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight --no-shade` if ($have_draw_tree);
+	    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight --no-shade`;
 	}
 	
 	if (! more_recent_than("Results/$tree-tree.svg",$filename1)) {
-	    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg --no-shade` if ($have_draw_tree);
+	    `cd Results ; draw-tree $tree.ltree --layout=equal-daylight --output=svg --no-shade`;
 	}
 	
 	print "$tree ";
