@@ -366,13 +366,15 @@ void walk_tree_sample_NNI(owned_ptr<Probability_Model>& P, MoveStats& Stats)
 
 void walk_tree_sample_NNI_and_A(owned_ptr<Probability_Model>& P, MoveStats& Stats) 
 {
+  double NNI_A_fraction = loadvalue(P->keys,"NNI+A_fraction",0.01);
+
   Parameters& PP = *P.as<Parameters>();
   vector<int> branches = walk_tree_path(*PP.T, PP[0].LC.root);
 
   for(int i=0;i<branches.size();i++) 
   {
     int b = branches[i];
-    if (myrandomf() < 0.01)
+    if (myrandomf() < NNI_A_fraction)
       three_way_topology_and_alignment_sample(P,Stats,b);
     else
       if (myrandomf() < 0.95)
