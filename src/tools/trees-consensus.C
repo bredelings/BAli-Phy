@@ -390,33 +390,37 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description input("Input options");
   input.add_options()
-    ("help,h", "produce help message")
-    ("skip,s",value<string>()->default_value("10%"),"number of trees to skip")
-    ("max,m",value<int>(),"maximum number of trees to read")
-    ("sub-sample,x",value<int>()->default_value(1),"factor by which to sub-sample")
+    ("help,h", "Produce help message.")
+    ("skip,s",value<string>()->default_value("10%"),"Number of trees to skip.")
+    ("max,m",value<int>(),"Maximum number of trees to read.")
+    ("sub-sample,x",value<int>()->default_value(1),"Factor by which to sub-sample.")
+    ("ignore", value<string>(),"Comma-separated list of taxa to ignore.")
     ;
   
   options_description reporting("Reporting options");
   reporting.add_options()
-    ("ignore", value<string>(),"comma-separated list of taxa to ignore in partitions")
-    ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file")
-    ("map-tree",value<string>(),"Write out the map tree to the specified file")
-    ("min-support",value<double>()->default_value(0.25),"Only examine partitions w/ PP more than this\n")
-    ("consensus-PP",value<string>(),"Report consensus trees with Posterior Probabilities at these comma-separated levels in [0.5, 1.0]")
-    ("consensus",value<string>(),"Report consensus trees at these comma-separated levels in [0.5, 1.0]")
-    ("extended-consensus-L",value<string>(),"Report extended consensus trees at these comma-separated levels in [0.5, 1.0] with lengths.")
-    ("extended-consensus",value<string>(),"Report extended consensus trees at these comma-separated levels in [0.5, 1.0]")
-    ("sub-partitions","look for partitions of taxa subsets")
-    ("support-levels",value<string>(),"Filename to report #branches versus LOD")
-    ("extended-support-levels",value<string>(),"Filename to report #sub-branches versus LOD")
-    ("depth",value<int>()->default_value(1),"depth at which to look for partitions of taxa subsets")
-    ("rooting",value<double>()->default_value(0.9,"0.9"),"depth at which to look for partitions of taxa subsets")
-    ("odds-ratio",value<double>()->default_value(1.5),"Report sub-partitions if removing taxa improves the odds by at least this ratio.")
+    ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file.")
+    ("map-tree",value<string>(),"Write out the map tree to file <arg>.")
+    ("min-support",value<double>()->default_value(0.25),"Minimum threshhold PP for splits.")
+    ("consensus-PP",value<string>(),"Write out consensus trees+PP.")
+    ("consensus",value<string>(),"Write out consensus trees.")
+    ("extended-consensus-L",value<string>(),"Write out extended consensus trees + lengths.")
+    ("extended-consensus",value<string>(),"Write out extended consensus trees.")
+    ("support-levels",value<string>(),"Write #branches versus LOD to file <arg>.")
+    ("extended-support-levels",value<string>(),"Write #sub-branches versus LOD to file <arg>.")
+    ("odds-ratio",value<double>()->default_value(1.5),"Report partial-splits only if removing taxa improves the odds by at least this ratio.")
     ("verbose,v","Output more log messages on stderr.")
     ;
     
+  options_description search("Search options");
+  search.add_options()
+    ("sub-partitions","Search for partial splits.")
+    ("depth",value<int>()->default_value(1),"Depth at which to look for partial splits.")
+    ("rooting",value<double>()->default_value(0.9,"0.9"),"Threshhold in search for partial splits.")
+    ;
+
   options_description visible("All options");
-  visible.add(input).add(reporting);
+  visible.add(input).add(reporting).add(search);
 
   options_description all("All options");
   all.add(visible).add(invisible);
@@ -433,8 +437,13 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (args.count("help")) {
     cout<<"Usage: trees-consensus <file> [OPTIONS]\n";
-    cout<<"Compute consensus trees and partitions.\n\n";
-    cout<<visible<<"\n";
+    cout<<"Find consensus trees and supported splits.\n\n";
+    cout<<input<<"\n";
+    cout<<reporting<<"\n";
+    cout<<search<<"\n";
+    cout<<"Arguments for consensus trees are level1:filename1,level2:filename2,...\n\
+  o each level should be in the range [0.5, 1.0]\n\
+  o use the filename \"-\" to write to the terminal. (Default)\n";
     exit(0);
   }
 
