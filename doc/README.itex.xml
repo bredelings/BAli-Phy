@@ -954,7 +954,7 @@ The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://
       <section><info><title>Computing an alignment using Posterior Decoding (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title></info>
 	
 <para>
-<screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignments-max &gt; P<replaceable>p</replaceable>-max.fasta</screen>
+<screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> C1.P<replaceable>p</replaceable>.fastas | alignment-max &gt; P<replaceable>p</replaceable>-max.fasta</screen>
 You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">seaview</link> to view the alignment graphically.
 </para>
       </section>      
