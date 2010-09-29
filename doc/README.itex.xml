@@ -923,8 +923,10 @@ traditional = traditional
       <section><info><title>Finding the consensus tree (<filename>C1.trees</filename>)</title></info>
 	
 	<para>
-<screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> C1.trees --consensus-PP 0.5:c50.PP.tree</screen>	
-The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link> allows you to view the consensus tree graphically.
+To compute the majority consensus tree do:
+<screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> C1.trees --consensus-PP 0.5:<filename>c50.PP.tree</filename></screen>	
+Here the <userinput>0.5</userinput> indicates the PP threshold -- it specifies a consensus tree containing only splits with probability $0.5$ or higher.  The option <userinput>:<filename>c50.PP.tree</filename></userinput> indicates the output file to store the tree.  Leaving off the ":<replaceable>filename</replaceable>" or specifying ":-" sends the output to the terminal. You can supply multiple levels and filenames separated by commas.</para>
+<para>The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link> allows you to view the consensus tree graphically.
 </para>
       </section>
 
