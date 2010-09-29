@@ -401,7 +401,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   reporting.add_options()
     ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file.")
     ("map-tree",value<string>(),"Write out the map tree to file <arg>.")
-    ("min-support",value<double>()->default_value(0.25),"Minimum threshhold PP for splits.")
+    ("min-support",value<double>()->default_value(0.25),"Minimum threshold PP for splits.")
     ("consensus-PP",value<string>(),"Write out consensus trees+PP.")
     ("consensus",value<string>(),"Write out consensus trees.")
     ("extended-consensus-L",value<string>(),"Write out extended consensus trees + lengths.")
@@ -441,9 +441,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<input<<"\n";
     cout<<reporting<<"\n";
     cout<<search<<"\n";
-    cout<<"Arguments for consensus trees are level1:filename1,level2:filename2,...\n\
-  o each level should be in the range [0.5, 1.0]\n\
-  o use the filename \"-\" to write to the terminal. (Default)\n";
+    cout<<"Arguments for consensus trees are level1:filename1[,level2:filename2,...]\n\
+  o each level is a minimum PP and should be in the range [0.5, 1.0].\n\
+  o drop \"filename\" or specify \":-\" to write to the terminal.\n";
     exit(0);
   }
 
