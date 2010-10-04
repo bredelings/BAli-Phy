@@ -423,8 +423,6 @@ sub html_header
         width: 100%;
 }
 
-        object.svg-image {display: none}
-
 #topbar #menu {
 	font-size: 90%;
 	display: table-cell;
@@ -442,10 +440,7 @@ sub html_header
       h1 {font-size: 150%;}
       h2 {font-size: 130%; margin-bottom: 0.2em;}
       h3 {font-size: 110%; margin-top: 0.3em ; margin-bottom: 0.2em}
-/* Firefox only 
-      img.svg-image { { display: none }
-      object.svg-image { { display: inline }
-End Firefox only */
+
       ul {margin-top: 0.4em;}
 
       *[title] {cursor:help;}
@@ -591,7 +586,7 @@ sub html_svg_img
 
 sub html_svg
 {
-    return html_svg_object(@_).html_svg_img(@_);
+    return html_svg_img(@_);
 }
 
 sub section_phylogeny_distribution
