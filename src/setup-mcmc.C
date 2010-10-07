@@ -222,10 +222,10 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
 	                                        "M2::omega",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, Between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "beta::mu",         "beta::mu_shift_sigma", 0.03, MH_moves);
   add_MH_move(P, Between(0,1,shift_cauchy),   "f",              "f_shift_sigma",      0.1,  MH_moves);
   add_MH_move(P, Between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  MH_moves);
   add_MH_move(P, Between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "beta::mu",       "beta::mu_scale_sigma",     0.2,  MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);

@@ -100,7 +100,7 @@ namespace substitution {
 
   Beta::Beta()
   {
-    add_parameter(Parameter("beta::mu", 0.5, lower_bound(0)));
+    add_parameter(Parameter("beta::mu", 0.5, between(0, 1)));
     add_parameter(Parameter("beta::sigma/mu", 0.1, lower_bound(0)));
   }
 
