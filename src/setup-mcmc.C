@@ -210,7 +210,6 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 {
   MCMC::MoveAll MH_moves("parameters:MH");
 
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "mu",             "mu_scale_sigma",     0.6,  MH_moves);
   for(int i=0;i<P.n_branch_means();i++)
     add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
 
