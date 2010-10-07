@@ -69,8 +69,10 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& p, const string& name, 
     set_if_undef(P.keys, pname, sigma);
     Proposal2 move_mu(p, names, vector<string>(1,pname), P);
 
-    if (move_mu.get_indices().size() > 0)
-      M.add(weight, MCMC::MH_Move(move_mu,string("MH_sample_")+name));
+    if (move_mu.get_indices().size() > 0) {
+      string move_name = string("MH_sample_")+name;
+      M.add(weight, MCMC::MH_Move(move_mu, move_name));
+    }
   }
   else {
     vector<int> indices = parameters_with_extension(P,name);
@@ -78,7 +80,8 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& p, const string& name, 
       if (not P.is_fixed(indices[i])) {
 	set_if_undef(P.keys, pname, sigma);
 	Proposal2 move_mu(p, P.parameter_name(indices[i]), vector<string>(1,pname), P);
-	M.add(weight, MCMC::MH_Move(move_mu,string("MH_sample_")+P.parameter_name(indices[i])));
+	string move_name = string("MH_sample_")+P.parameter_name(indices[i]);
+	M.add(weight, MCMC::MH_Move(move_mu, move_name));
       }
   }
 }
