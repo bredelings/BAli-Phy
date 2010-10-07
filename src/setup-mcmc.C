@@ -226,7 +226,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, Between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  MH_moves);
   add_MH_move(P, Between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "beta::sigma/mu", "beta::sigma_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "beta::Var/mu", "beta::Var_scale_sigma",  0.25, MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);
   MH_moves.add(4,MCMC::SingleMove(scale_means_only,
 				   "scale_means_only","mean")
@@ -272,7 +272,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "f",      "f_slice_window",    0.1, slice_moves);
   add_slice_moves(P, "g",      "g_slice_window",    0.1, slice_moves);
   add_slice_moves(P, "h",      "h_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "beta::mu",      "beta::mu_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "beta::Var/mu",      "beta::mu_slice_window",    0.1, slice_moves);
   add_slice_moves(P, "gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, slice_moves);
   add_slice_moves(P, "beta::sigma/mu",      "beta::sigma_slice_window",    1.0, slice_moves);
   add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, slice_moves);

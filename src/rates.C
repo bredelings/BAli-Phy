@@ -71,37 +71,60 @@ namespace substitution {
 
   //--------------- Beta RateDistribution -----------------//
 
+  // mu    = E(X)
+  // gamma = Var(X)/[ mu * (1-mu)] = 1/(1 + a + b)  \in (0,1]
+  //
+  // N = a + b = 1/gamma - 1
+
+  const double alpha_beta_min = 0.5;
+
   void Beta::recalc(const vector<int>& indices)
   {
-    double m = mean();
-    double s = sqrt(variance());
+    double mu = get_parameter_value(0);      // E(x)
+    double gamma = get_parameter_value(1);   // Var(x)/E(x)
 
+    double N = 1.0/gamma - 1.0;
+
+    double a = N * mu;
+    double b = N * (1.0 - mu);
+
+    if (mu < 0 or mu > 1) std::abort();
+    if (gamma < 0 or gamma > 1) std::abort();
+    
     vector<double> p(2);
-    double a = p[0] = (1 - m - m*s*s)/(s*s);
-    double b = p[1] = a * (1-m)/m;
+    p[0] = std::max(a, alpha_beta_min);
+    p[1] = std::max(b, alpha_beta_min);
 
     D->set_parameter_values(p);
   }
 
   efloat_t Beta::prior() const 
   {
+    double mu = get_parameter_value(0);      // E(x)
+    double gamma = get_parameter_value(1);   // Var(x)/E(x)
+
+    double N = 1.0/gamma - 1.0;
+
+    double a = N * mu;
+    double b = N * (1.0 - mu);
+
+    if (a <= alpha_beta_min or b <= alpha_beta_min) 
+      return 0.0;
+
     if (D->alpha()<1.0 or D->beta()<1.0)
       return 0.0;
 
-    double m = mean();
-    double s = sqrt(variance());
+    efloat_t Pr = 1;
+    Pr *= beta_pdf(mu, 10, 1);   
+    Pr *= exponential_pdf(gamma, 0.1);
 
-    efloat_t P = 1;
-    P *= beta_pdf(m,10,1);
-    P *= laplace_pdf(s,-4,0.5);
-
-    return P;
+    return Pr;
   }
 
   Beta::Beta()
   {
     add_parameter(Parameter("beta::mu", 0.5, between(0, 1)));
-    add_parameter(Parameter("beta::sigma/mu", 0.1, lower_bound(0)));
+    add_parameter(Parameter("beta::Var/mu", 0.1, between(0,1)));
   }
 
   //-------------- LogNormal Distribution ----------------//
