@@ -886,12 +886,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     /// You'd think I'd just need to invalidate the direction pointing TOWARD the root.
 
     /// \todo Can I temporarily associate the branch with a NEW token, or copy the info to a new location?
-    ///  Then I could swap back the token, after I was done, and not lose work.
-    /// If I assume that no more than two version of every branch are ever active, then the interface
-    ///  would be more restrictive.
-    /// If I allow a more general token-based interface, then the more restrictive "flip" version could be implemented
-    ///  on top of it, but I would perhaps have to generalize the interface in substitution-cache so as not to
-    ///  assume that all tokens represent a branch.
 
     // We want to suppress the bidirectional propagation of invalidation for all branches after this branch.
     // It would be nice to save the old exp(tB) and switch back to it later.
