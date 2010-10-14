@@ -924,8 +924,19 @@ traditional = traditional
 	
 	<para>
 To compute the majority consensus tree do:
-<screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> C1.trees --consensus-PP 0.5:<filename>c50.PP.tree</filename></screen>	
+<screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> C1.trees --consensus-PP=0.5:<filename>c50.PP.tree</filename></screen>	
 Here the <userinput>0.5</userinput> indicates the PP threshold -- it specifies a consensus tree containing only splits with probability $0.5$ or higher.  The option <userinput>:<filename>c50.PP.tree</filename></userinput> indicates the output file to store the tree.  Leaving off the ":<replaceable>filename</replaceable>" or specifying ":-" sends the output to the terminal. You can supply multiple levels and filenames separated by commas.</para>
+<para>The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link> allows you to view the consensus tree graphically.
+</para>
+      </section>
+
+      <section><info><title>Finding the M.A.P. topology (<filename>C1.trees</filename>)</title></info>
+	
+	<para>
+To compute the <emphasis>maximum a posteriori</emphasis> tree topology do:
+<screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> C1.trees --map-tree=<filename>MAP.tree</filename></screen>	
+The MAP topology may be used instead of a consensus tree when a fully resolved (e.g. bifurcating) tree is required.  However, when the topology has many tips, each topology may be sampled only once, leading to low quality estimates of the MAP topology.
+</para>
 <para>The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link> allows you to view the consensus tree graphically.
 </para>
       </section>
@@ -969,9 +980,11 @@ You can use the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:h
 
       <section><info><title>Create an Au (Alignment Uncertainty) plot (<filename>C1.P<replaceable>p</replaceable>.fastas</filename>)</title></info>
 	
-<para>To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, choose a tree estimate <replaceable>tree</replaceable>:
+<para>To annotate a specific alignment <replaceable>alignment</replaceable>.fasta, choose a fully resolved tree estimate <replaceable>tree</replaceable>:
 <screen><prompt>%</prompt> cut-range --skip=<replaceable>burn-in</replaceable> &lt; C1.P<replaceable>p</replaceable>.fastas | alignment-gild <replaceable>alignment</replaceable>.fasta <replaceable>tree</replaceable>  &gt; <replaceable>alignment</replaceable>-AU.prob
-<prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta --AU <replaceable>alignment</replaceable>-AU.prob &gt; <replaceable>alignment</replaceable>-AU.html</screen></para>
+<prompt>%</prompt> alignment-draw <replaceable>alignment</replaceable>.fasta --AU <replaceable>alignment</replaceable>-AU.prob &gt; <replaceable>alignment</replaceable>-AU.html</screen>
+The majority consensus tree is usually not fully resolved, so we recommend using the MAP topology instead.
+</para>
       </section>
 
 
