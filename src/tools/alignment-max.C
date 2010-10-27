@@ -201,7 +201,6 @@ int main(int argc,char* argv[])
 
     //------------ Load alignment and tree ----------//
     vector<alignment> alignments;
-    vector<ublas::matrix<int> > Ms;
 
     do_setup(args,alignments);
     for(int i=0;i<alignments.size();i++)
@@ -220,9 +219,6 @@ int main(int argc,char* argv[])
       L[i] = alignments[0].seqlength(i);
     
     //--------- Construct alignment indexes ---------//
-    for(int i=0;i<alignments.size();i++)
-      Ms.push_back(M(alignments[i]));
-
     // map emitted columns -> x
     typedef map<emitted_column,int,emitted_column_order> emitted_column_map;
     emitted_column_map emitted_columns;
@@ -243,7 +239,7 @@ int main(int argc,char* argv[])
     Vertex E = add_vertex(g); // add the end node
     emitted_to_bare.push_back(-1);
 
-    for(int i=0;i<Ms.size();i++)
+    for(int i=0;i<alignments.size();i++)
     {
       // prev = S
       vector<int> emitted(N,-1);
@@ -252,9 +248,11 @@ int main(int argc,char* argv[])
 
       int x_current = get(vertex_index,g, S);
 
-      for(int c=0;c<Ms[i].size1();c++)
+      ublas::matrix<int> m = M(alignments[i]);
+
+      for(int c=0;c<m.size1();c++)
       {
-	C.column = get_column(Ms[i],c);
+	C.column = get_column(m,c);
 	if (not n_letters(C.column))
 	  continue;
 
@@ -398,7 +396,7 @@ int main(int argc,char* argv[])
 
       int i = c->second;
 
-      score[i] = double(counts[i])/Ms.size();
+      score[i] = double(counts[i])/alignments.size();
       if (type == 1)
 	score[i] *= n;
       else if (type == 2)
@@ -508,7 +506,7 @@ int main(int argc,char* argv[])
       for(int i=1;i<path.size()-1;i++)
       {
 	int c = counts[emitted_to_bare[path[i]]];
-	outfile<<double(c)/Ms.size()<<endl;
+	outfile<<double(c)/alignments.size()<<endl;
       }      
       outfile.close();
     }
