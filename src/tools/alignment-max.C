@@ -540,6 +540,7 @@ int main(int argc,char* argv[])
     }
 
     alignment amax = get_alignment(M,alignments[0]);
+    amax = get_ordered_alignment(amax);
 
     //-------------------- Write output -------------------------//
     string out = args["out"].as<string>();
@@ -555,15 +556,24 @@ int main(int argc,char* argv[])
       outfile.close();
     }
 
-    if (args.count("out-probabilities")) {
+    if (args.count("out-probabilities")) 
+    {
       string outp = args["out-probabilities"].as<string>();
       ofstream outfile(outp.c_str());
+
       if (not outfile)
 	throw myexception()<<"Can't open '"<<outfile<<"' to write column probabilities!";
-      for(int i=1;i<path.size()-1;i++)
+
+      ublas::matrix<int> m = ::M(amax);
+      
+      for(int c=0; c<amax.length(); c++)
       {
-	int c = counts[emitted_to_bare[path[i]]];
-	outfile<<double(c)/alignments.size()<<endl;
+	vector<int> column = get_column(m, c);
+	column_map::iterator y_record = columns.find(column);
+	assert(y_record != columns.end());
+	int y_index = y_record->second;
+	int count = counts[y_index];
+	outfile<<double(count)/alignments.size()<<endl;
       }      
       outfile.close();
     }
