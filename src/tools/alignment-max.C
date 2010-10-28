@@ -160,6 +160,26 @@ vector<int> emitted_before(const emitted_column& c)
   return emitted;
 }
 
+bool get_emitted_column(emitted_column& C,const ublas::matrix<int>& m, int c)
+{
+  // the "emitted" value carries over from the previous iteration.
+  C.column = get_column(m,c);
+
+  // skip empty columns
+  if (not n_letters(C.column))
+    return false;
+  
+  // Update the "emitted" value of C
+  // Check that sequential columns don't jump by more than one emitted character
+  for(int i=0;i<C.size();i++)
+    if (C.character(i)) {
+      assert(C.column[i] == C.emitted[i]);
+      C.emitted[i] = C.column[i]+1;
+    }
+
+  return true;
+}
+
 
 /// Gives -1:0:1 if the relationship of @c1 and @c2 is <:=:>
 int get_column_order(const vector<int>& c1, const vector<int>& c2)
@@ -341,19 +361,7 @@ int main(int argc,char* argv[])
       for(int c=0;c<m.size1();c++)
       {
 	// the "emitted" value carries over from the previous iteration.
-	C.column = get_column(m,c);
-
-	// skip empty columns
-	if (not n_letters(C.column))
-	  continue;
-
-	// Update the "emitted" value of C
-	// Check that sequential columns don't jump by more than one emitted character
-	for(int i=0;i<C.size();i++)
-	  if (C.character(i)) {
-	    assert(C.column[i] == C.emitted[i]);
-	    C.emitted[i] = C.column[i]+1;
-	  }
+	if (not get_emitted_column(C,m,c)) continue;
 
 	// Look up the column, creating a new index if necessary
 	emitted_column_map::iterator x_record = emitted_columns.find(C);
