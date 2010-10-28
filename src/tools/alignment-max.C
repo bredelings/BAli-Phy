@@ -206,6 +206,65 @@ struct emitted_column_order
   }
 };
 
+typedef map<emitted_column,int,emitted_column_order> emitted_column_map;
+
+void check_edges_go_forwards_only(Graph& g, const vector<emitted_column_map::iterator>& ec_from_x)
+{
+  emitted_column_order eco;
+
+  graph_traits<Graph>::vertex_iterator vi, vi_end;
+  for (tie(vi, vi_end) = ::vertices(g); vi != vi_end; ++vi) 
+  {
+    int index1 = get(vertex_index,g,*vi);
+    graph_traits<Graph>::out_edge_iterator ei, eend;
+    for(tie(ei,eend) = out_edges(*vi,g); ei != eend; ++ei)
+    { 
+      int index2 = get(vertex_index,g,target(*ei,g));
+      
+      if (index1 >= ec_from_x.size() or index1 < 0)
+	throw myexception()<<"Out of bounds...";
+      if (index2 >= ec_from_x.size() or index2 < 0)
+	throw myexception()<<"Out of bounds...";
+      emitted_column_map::iterator ec1 = ec_from_x[index1];
+      emitted_column_map::iterator ec2 = ec_from_x[index2];
+      
+      // skip the Start and End states
+      if (index1 == 0 or index2 == 1) continue;
+      
+      // check that the columns all have the same size
+      if (ec1->first.size() != ec2->first.size() and log_verbose >=2) {
+	cerr<<"alignment-max: index1 = "<<index1<<endl;
+	cerr<<"alignment-max: index2 = "<<index2<<endl;
+	cerr<<"alignment-max: ec1->first.size() = "<<ec1->first.size()<<endl;
+	cerr<<"alignment-max: ec2->first.size() = "<<ec2->first.size()<<endl;
+      }
+      
+      // check that if ec1 -> ec2, then also ec1 < ec2
+      if (not eco(ec1->first,ec2->first) and log_verbose >=2)
+      {
+	cerr<<"alignment-max: ";
+	for(int i=0;i<ec1->first.size();i++)
+	  cerr<<ec1->first.emitted[i]<<" ";
+	cerr<<endl;
+	cerr<<"alignment-max: ";
+	for(int i=0;i<ec1->first.size();i++)
+	  cerr<<ec1->first.column[i]<<" ";
+	cerr<<endl;
+	cerr<<endl;
+	cerr<<"alignment-max: ";
+	for(int i=0;i<ec2->first.size();i++)
+	  cerr<<ec2->first.emitted[i]<<" ";
+	cerr<<endl;
+	cerr<<"alignment-max: ";
+	for(int i=0;i<ec2->first.size();i++)
+	  cerr<<ec2->first.column[i]<<" ";
+	cerr<<endl;
+      } 
+      
+    }
+  }
+}
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -233,7 +292,6 @@ int main(int argc,char* argv[])
     
     //--------- Construct alignment indexes ---------//
     // map emitted columns -> x
-    typedef map<emitted_column,int,emitted_column_order> emitted_column_map;
     emitted_column_map emitted_columns;
 
     // map bare columns    -> y
@@ -368,9 +426,8 @@ int main(int argc,char* argv[])
 	++counts[emitted_to_bare[x_current]];
       }
     }
-    emitted_column_order eco;
 
-
+    //----------------- construct a map from index -> &(EC,index) ---------------//
     const int n_vertices = emitted_to_bare.size();
     vector<emitted_column_map::iterator> ec_from_x(n_vertices,emitted_columns.end());
     foreach(ec,emitted_columns)
@@ -379,57 +436,8 @@ int main(int argc,char* argv[])
     }
 
     if (log_verbose) cerr<<"\nalignment-max: checking edges...\n";
-    {
-      graph_traits<Graph>::vertex_iterator vi, vi_end;
-      for (tie(vi, vi_end) = ::vertices(g); vi != vi_end; ++vi) 
-	{
-	  int index1 = get(vertex_index,g,*vi);
-	  graph_traits<Graph>::out_edge_iterator ei, eend;
-	  for(tie(ei,eend) = out_edges(*vi,g); ei != eend; ++ei)
-	    { 
-	      int index2 = get(vertex_index,g,target(*ei,g));
+      check_edges_go_forwards_only(g, ec_from_x);
 
-	      if (index1 >= ec_from_x.size() or index1 < 0)
-		throw myexception()<<"trouble...";
-	      if (index2 >= ec_from_x.size() or index2 < 0)
-		throw myexception()<<"trouble...";
-	      emitted_column_map::iterator ec1 = ec_from_x[index1];
-	      emitted_column_map::iterator ec2 = ec_from_x[index2];
-
-	      if (index1 == 0 or index2 == 1) continue;
-
-	      if (ec1->first.size() != ec2->first.size() and log_verbose >=2) {
-		cerr<<"alignment-max: index1 = "<<index1<<endl;
-		cerr<<"alignment-max: index2 = "<<index2<<endl;
-		cerr<<"alignment-max: ec1->first.size() = "<<ec1->first.size()<<endl;
-		cerr<<"alignment-max: ec2->first.size() = "<<ec2->first.size()<<endl;
-	      }
-		
-
-	      if (not eco(ec1->first,ec2->first) and log_verbose >=2)
-	      {
-		cerr<<"alignment-max: ";
-		for(int i=0;i<ec1->first.size();i++)
-		  cerr<<ec1->first.emitted[i]<<" ";
-		cerr<<endl;
-		cerr<<"alignment-max: ";
-		for(int i=0;i<ec1->first.size();i++)
-		  cerr<<ec1->first.column[i]<<" ";
-		cerr<<endl;
-		cerr<<endl;
-		cerr<<"alignment-max: ";
-		for(int i=0;i<ec2->first.size();i++)
-		  cerr<<ec2->first.emitted[i]<<" ";
-		cerr<<endl;
-		cerr<<"alignment-max: ";
-		for(int i=0;i<ec2->first.size();i++)
-		  cerr<<ec2->first.column[i]<<" ";
-		  cerr<<endl;
-	      } 
-
-	    }
-	}
-    }
     if (log_verbose) cerr<<"alignment-max: done."<<endl;
 
     //---------- Construct score ------------------//
