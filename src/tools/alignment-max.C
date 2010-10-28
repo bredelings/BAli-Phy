@@ -136,6 +136,8 @@ struct emitted_column
   /// How many sequences are there?
   unsigned size() const {return emitted.size();}
 
+  bool character(int i) const {return column[i] >= 0;}
+
   emitted_column(const vector<int>& e,const vector<int>& c)
     :emitted(e),column(c)
   { 
@@ -143,9 +145,20 @@ struct emitted_column
   }
 
   emitted_column(int n)
-    :emitted(n,-1),column(n,-1)
+    :emitted(n,0),column(n,-1)
   {}
 };
+
+/// How many characters must be emitted by any column that comes immediately before c ?
+vector<int> emitted_before(const emitted_column& c)
+{
+  vector<int> emitted = c.emitted;
+  for(int i=0;i<c.size();i++)
+    if (c.character(i))
+      emitted[i]--;
+
+  return emitted;
+}
 
 
 /// Gives -1:0:1 if the relationship of @c1 and @c2 is <:=:>
@@ -233,82 +246,126 @@ int main(int argc,char* argv[])
     // how many times did we see each bare column?
     vector<int> counts;
 
+    // map bare columns    -> emitted
+    typedef map< vector<int>, vector<int>, column_order> emitted_map;
+    emitted_map before;
+    emitted_map after;
+
     Graph g;
-    Vertex S = add_vertex(g); // add the start node
+
+    Vertex vertex_start = add_vertex(g); // add the start node
     emitted_to_bare.push_back(-1);
-    Vertex E = add_vertex(g); // add the end node
+    int x_start = get(vertex_index, g, vertex_start);
+    vector<int> nothing_emitted(N,0);
+    // after x_start, nothing has been emitted
+    after[nothing_emitted].push_back(x_start);
+
+    Vertex vertex_end = add_vertex(g); // add the end node
     emitted_to_bare.push_back(-1);
+    int x_end = get(vertex_index, g, vertex_end);
+    vector<int> everything_emitted = L;
+    before[everything_emitted].push_back(x_end);
+
+    // Make sure the before[] and after[] maps are valid for vertex indices for S and E.
 
     for(int i=0;i<alignments.size();i++)
     {
       // prev = S
-      vector<int> emitted(N,-1);
+      vector<int> emitted(N,0);
 
       emitted_column C(N);
 
-      int x_current = get(vertex_index,g, S);
+      // initially use the S=start column as the previous column
+      int x_current = x_start;
 
       ublas::matrix<int> m = M(alignments[i]);
 
       for(int c=0;c<m.size1();c++)
       {
+	// the "emitted" value carries over from the previous iteration.
 	C.column = get_column(m,c);
+
+	// skip empty columns
 	if (not n_letters(C.column))
 	  continue;
 
-	// Check that sequential columns don't jump
+	// Update the "emitted" value of C
+	// Check that sequential columns don't jump by more than one emitted character
 	for(int i=0;i<C.size();i++)
-	  if (C.column[i] >= 0) {
-	    assert(C.column[i] == C.emitted[i]+1);
-	    C.emitted[i] = C.column[i];
+	  if (C.character(i)) {
+	    assert(C.column[i] == C.emitted[i]);
+	    C.emitted[i] = C.column[i]+1;
 	  }
 
 	// Look up the column, creating a new index if necessary
 	emitted_column_map::iterator x_record = emitted_columns.find(C);
 
+	// if this emitted column has not been seen before
 	if (x_record == emitted_columns.end()) 
 	{
 	  Vertex v = add_vertex(g);
 	  int vi = get(vertex_index,g,v);
 	  assert(vi == emitted_columns.size()+2);
+
+	  // Add the mapping from C -> vi to the emitted_column map
 	  emitted_columns.insert(emitted_column_map::value_type(C,vi));
 	  x_record = emitted_columns.find(C);
 	  assert(x_record != emitted_columns.end());
 
+	  // if this bare column has not been seen before
 	  column_map::iterator y_record = columns.find(C.column);
 	  if (y_record == columns.end()) 
 	  {
+	    // Add the mapping from C.column -> columns.size() to the bare column map
 	    columns.insert(column_map::value_type(C.column, columns.size()));
 	    y_record = columns.find(C.column);
 	    assert(y_record != columns.end());
 
+	    // This new bare column has no counts
 	    counts.push_back(0);
 	    assert(counts.size() == columns.size());
 	  }
 
+	  // map the emitted_column index (emitted.size()) to the bare column index (y_record->second)
 	  emitted_to_bare.push_back(y_record->second);
 	  assert(emitted_to_bare.size()-1 == vi);
 
 	  assert(emitted_columns.size()+2 == emitted_to_bare.size());
+
+	  // If this emitted column is new, then add edges to it.
+	  vector<int> e_before = emitted_before(C);
+	  vector<int> e_after = C.emitted;
+	  before[e_before].push_back(vi);
+	  after[e_after].push_back(vi);
+
+	  // Find the vertex index for the current column
+	  x_current = x_record->second;
+
+	  // Add edges to this vertex
+	  const vector<int>& prev_vertex_indices = after[e_before];
+	  assert(prev_vertex_indices.size());
+	  foreach(x_prev,prev_vertex_indices)
+	  {
+	    Vertex v1 = vertex(*x_prev, g);
+	    Vertex v2 = vertex(x_current, g);
+	    ::add_edge(v1, v2, g);
+	  }
+
+	  // Add edges from this vertex
+	  const vector<int>& next_vertex_indices = before[e_after];
+	  //  assert(next_vertex_indices.size());
+	  foreach(x_next, next_vertex_indices)
+	  {
+	    Vertex v1 = vertex(x_current, g);
+	    Vertex v2 = vertex(*x_next, g);
+	    ::add_edge(v1, v2, g);
+	  }
 	}
 
-	int x_prev = x_current;
 	x_current = x_record->second;
 
 	// Increment column count
 	++counts[emitted_to_bare[x_current]];
-
-	// Record edge prev->current
-	{
-	  Vertex v1 = vertex(x_prev, g);
-	  Vertex v2 = vertex(x_current, g);
-	  ::add_edge(v1,v2,g);
-	}
-      }
-      // add edge to end
-      {
-	Vertex v = vertex(x_current,g);
-	add_edge(v,E,g);
       }
     }
     emitted_column_order eco;
