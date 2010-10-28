@@ -230,6 +230,35 @@ typedef map<emitted_column,int, emitted_column_order> emitted_column_map;
 typedef map< vector<int>, int, column_order> column_map;
 typedef map< vector<int>, vector<int>, column_order> emitted_map;
 
+struct MPD
+{
+  Graph g;
+  // map emitted columns -> x
+  emitted_column_map emitted_columns;
+
+  // map bare columns    -> y
+  column_map columns;
+
+  // map x -> y
+  vector<int> emitted_to_bare;
+
+  // how many times did we see each bare column?
+  vector<int> counts;
+
+  // emitted before column -> {x1...xn}
+  emitted_map before;
+
+  // emitted after column -> {x1...xn}
+  emitted_map after;
+
+  // x -> &(ec,x)
+  vector<int> ec_from_x;
+
+  void add_emitted_column(const emitted_column& C);
+
+  void add_alignment(const alignment& A);
+};
+
 void check_edges_go_forwards_only(Graph& g, const vector<emitted_column_map::iterator>& ec_from_x)
 {
   emitted_column_order eco;
@@ -329,15 +358,7 @@ create_new_emitted_column(const emitted_column& C,
 }
 
 void
-add_emitted_column(const emitted_column& C,
-		   Graph& g, 
-		   emitted_column_map& emitted_columns,
-		   column_map& columns,
-		   vector<int>& emitted_to_bare,
-		   vector<int>& counts,
-		   emitted_map& before,
-		   emitted_map& after
-		   )
+MPD::add_emitted_column(const emitted_column& C)
 {
   int x_current = -1;
 
@@ -386,6 +407,23 @@ add_emitted_column(const emitted_column& C,
   ++counts[emitted_to_bare[x_current]];
 }
 
+void MPD::add_alignment(const alignment& A)
+{
+  const int N = A.n_sequences();
+
+  emitted_column C(N);
+
+  ublas::matrix<int> m = M(A);
+
+  for(int c=0; c<m.size1(); c++)
+  {
+    // the "emitted" value carries over from the previous iteration.
+    if (not get_emitted_column(C, m, c)) continue;
+    
+    add_emitted_column(C);
+  }
+}
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -413,70 +451,36 @@ int main(int argc,char* argv[])
       L[i] = alignments[0].seqlength(i);
     
     //--------- Construct alignment indexes ---------//
-    // map emitted columns -> x
-    emitted_column_map emitted_columns;
+    MPD mpd;
 
-    // map bare columns    -> y
-    column_map columns;
-
-    // map x -> y
-    vector<int> emitted_to_bare;
-
-    // how many times did we see each bare column?
-    vector<int> counts;
-
-    // map bare columns    -> emitted
-    emitted_map before;
-    emitted_map after;
-
-    Graph g;
-
-    Vertex vertex_start = add_vertex(g); // add the start node
-    emitted_to_bare.push_back(-1);
-    int x_start = get(vertex_index, g, vertex_start);
+    Vertex vertex_start = add_vertex(mpd.g); // add the start node
+    mpd.emitted_to_bare.push_back(-1);
+    int x_start = get(vertex_index, mpd.g, vertex_start);
     vector<int> nothing_emitted(N,0);
     // after x_start, nothing has been emitted
-    after[nothing_emitted].push_back(x_start);
+    mpd.after[nothing_emitted].push_back(x_start);
 
-    Vertex vertex_end = add_vertex(g); // add the end node
-    emitted_to_bare.push_back(-1);
-    int x_end = get(vertex_index, g, vertex_end);
+    Vertex vertex_end = add_vertex(mpd.g); // add the end node
+    mpd.emitted_to_bare.push_back(-1);
+    int x_end = get(vertex_index, mpd.g, vertex_end);
     vector<int> everything_emitted = L;
-    before[everything_emitted].push_back(x_end);
+    mpd.before[everything_emitted].push_back(x_end);
 
     // Make sure the before[] and after[] maps are valid for vertex indices for S and E.
 
     for(int i=0;i<alignments.size();i++)
-    {
-      // prev = S
-      vector<int> emitted(N,0);
-
-      emitted_column C(N);
-
-      // initially use the S=start column as the previous column
-      int x_current = x_start;
-
-      ublas::matrix<int> m = M(alignments[i]);
-
-      for(int c=0;c<m.size1();c++)
-      {
-	// the "emitted" value carries over from the previous iteration.
-	if (not get_emitted_column(C,m,c)) continue;
-
-	add_emitted_column(C, g, emitted_columns, columns, emitted_to_bare, counts, before, after);
-      }
-    }
+      mpd.add_alignment( alignments[i] );
 
     //----------------- construct a map from index -> &(EC,index) ---------------//
-    const int n_vertices = emitted_to_bare.size();
-    vector<emitted_column_map::iterator> ec_from_x(n_vertices,emitted_columns.end());
-    foreach(ec,emitted_columns)
+    const int n_vertices = mpd.emitted_to_bare.size();
+    vector<emitted_column_map::iterator> ec_from_x(n_vertices,mpd.emitted_columns.end());
+    foreach(ec, mpd.emitted_columns)
     {
       ec_from_x[ec->second] = ec;
     }
 
     if (log_verbose) cerr<<"\nalignment-max: checking edges...\n";
-      check_edges_go_forwards_only(g, ec_from_x);
+      check_edges_go_forwards_only(mpd.g, ec_from_x);
 
     if (log_verbose) cerr<<"alignment-max: done."<<endl;
 
@@ -493,15 +497,15 @@ int main(int argc,char* argv[])
     else
       throw myexception()<<"I don't recognize analysis type '"<<analysis<<"'.";
 
-    vector<double> score(counts.size());
-    foreach(c,columns)
+    vector<double> score(mpd.counts.size());
+    foreach(c,mpd.columns)
     {
       int n = n_letters(c->first);
       assert(n > 0);
 
       int i = c->second;
 
-      score[i] = double(counts[i])/alignments.size();
+      score[i] = double(mpd.counts[i])/alignments.size();
       if (type == 1)
 	score[i] *= n;
       else if (type == 2)
@@ -512,12 +516,12 @@ int main(int argc,char* argv[])
     //----------------- Forward Sums -------------------//
 
     vector<Vertex> sorted_vertices;
-    topological_sort(g, std::back_inserter(sorted_vertices));
+    topological_sort(mpd.g, std::back_inserter(sorted_vertices));
     std::reverse(sorted_vertices.begin(), sorted_vertices.end());
 
     vector<int> sorted_indices(sorted_vertices.size());
     for(int i=0;i<sorted_indices.size();i++)
-      sorted_indices[i] = get(vertex_index,g,sorted_vertices[i]);
+      sorted_indices[i] = get(vertex_index,mpd.g,sorted_vertices[i]);
     assert(sorted_indices[0] == 0);
     assert(sorted_indices.back() == 1);
 
@@ -532,15 +536,15 @@ int main(int argc,char* argv[])
       int v2i = sorted_indices[i];
       assert(not visited[v2i]);
 
-      int v2 = vertex(v2i, g);
+      int v2 = vertex(v2i, mpd.g);
 
       double best = 0;
       int argmax = -1;
       graph_traits<Graph>::in_edge_iterator e, end;
-      for(tie(e,end) = in_edges(v2,g); e != end; ++e)
+      for(tie(e,end) = in_edges(v2,mpd.g); e != end; ++e)
       { 
-	Vertex v1 = source(*e,g);
-	int v1i = get(vertex_index,g,v1);
+	Vertex v1 = source(*e,mpd.g);
+	int v1i = get(vertex_index,mpd.g,v1);
 	assert(visited[v1i]);
 
 	if (argmax == -1) {
@@ -558,8 +562,8 @@ int main(int argc,char* argv[])
       from[v2i] = argmax;
       
       forward[v2i] = best;
-      if (emitted_to_bare[v2i] != -1)
-	forward[v2i] += score[emitted_to_bare[v2i]];
+      if (mpd.emitted_to_bare[v2i] != -1)
+	forward[v2i] += score[mpd.emitted_to_bare[v2i]];
       
       visited[v2i] = 1;
     }
@@ -617,10 +621,10 @@ int main(int argc,char* argv[])
       for(int c=0; c<amax.length(); c++)
       {
 	vector<int> column = get_column(m, c);
-	column_map::iterator y_record = columns.find(column);
-	assert(y_record != columns.end());
+	column_map::iterator y_record = mpd.columns.find(column);
+	assert(y_record != mpd.columns.end());
 	int y_index = y_record->second;
-	int count = counts[y_index];
+	int count = mpd.counts[y_index];
 	outfile<<double(count)/alignments.size()<<endl;
       }      
       outfile.close();
