@@ -257,9 +257,11 @@ struct MPD
   emitted_map after;
 
   // x -> &(ec,x)
-  vector<int> ec_from_x;
+  vector<emitted_column_map::iterator> ec_from_x;
 
   vector<int> L;
+
+  emitted_column_map::iterator create_new_emitted_column(const emitted_column& C);
 
   void add_emitted_column(const emitted_column& C);
 
@@ -351,13 +353,7 @@ void check_edges_go_forwards_only(Graph& g, const vector<emitted_column_map::ite
 }
 
 emitted_column_map::iterator 
-create_new_emitted_column(const emitted_column& C,
-			  Graph& g, 
-			  emitted_column_map& emitted_columns,
-			  column_map& columns,
-			  vector<int>& emitted_to_bare,
-			  vector<int>& counts
-			  )
+MPD::create_new_emitted_column(const emitted_column& C)
 {
   Vertex v = add_vertex(g);
   int vi = get(vertex_index,g,v);
@@ -402,7 +398,7 @@ MPD::add_emitted_column(const emitted_column& C)
   // if this emitted column has not been seen before
   if (x_record == emitted_columns.end()) 
   {
-    x_record = create_new_emitted_column(C, g, emitted_columns, columns, emitted_to_bare, counts);
+    x_record = create_new_emitted_column(C);
     int vi = x_record->second;
     
     // If this emitted column is new, then add edges to it.
@@ -496,14 +492,14 @@ int main(int argc,char* argv[])
 
     //----------------- construct a map from index -> &(EC,index) ---------------//
     const int n_vertices = mpd.emitted_to_bare.size();
-    vector<emitted_column_map::iterator> ec_from_x(n_vertices,mpd.emitted_columns.end());
+    mpd.ec_from_x = vector<emitted_column_map::iterator>(n_vertices,mpd.emitted_columns.end());
     foreach(ec, mpd.emitted_columns)
     {
-      ec_from_x[ec->second] = ec;
+      mpd.ec_from_x[ec->second] = ec;
     }
 
     if (log_verbose) cerr<<"\nalignment-max: checking edges...\n";
-      check_edges_go_forwards_only(mpd.g, ec_from_x);
+      check_edges_go_forwards_only(mpd.g, mpd.ec_from_x);
 
     if (log_verbose) cerr<<"alignment-max: done."<<endl;
 
@@ -609,7 +605,7 @@ int main(int argc,char* argv[])
 
     for(int i=0;i<M.size1();i++) {
       int S = path[i+1];
-      emitted_column_map::iterator ec = ec_from_x[S];
+      emitted_column_map::iterator ec = mpd.ec_from_x[S];
       for(int j=0;j<mpd.L.size();j++)
 	M(i,j) = (ec->first).column[j];
     }
