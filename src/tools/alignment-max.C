@@ -232,7 +232,12 @@ typedef map< vector<int>, vector<int>, column_order> emitted_map;
 
 struct MPD
 {
+  const int N;
+
   Graph g;
+  Vertex vertex_start;
+  Vertex vertex_end;
+
   // map emitted columns -> x
   emitted_column_map emitted_columns;
 
@@ -254,10 +259,39 @@ struct MPD
   // x -> &(ec,x)
   vector<int> ec_from_x;
 
+  vector<int> L;
+
   void add_emitted_column(const emitted_column& C);
 
   void add_alignment(const alignment& A);
+
+  MPD(const alignment&);
 };
+
+
+MPD::MPD(const alignment& A)
+  :N( A.n_sequences() ), L( N )
+{
+  //------------ Determine sequence lengths ----------//
+  for(int i=0;i<L.size();i++)
+    L[i] = A.seqlength(i);
+    
+  vertex_start = add_vertex(g); // add the start node
+  emitted_to_bare.push_back(-1); // the start node doesn't correspond to a column
+  int x_start = get(vertex_index, g, vertex_start);
+
+  vector<int> nothing_emitted(N,0);
+  // after x_start, nothing has been emitted
+  after[nothing_emitted].push_back(x_start);
+
+  vertex_end = add_vertex(g); // add the end node
+  emitted_to_bare.push_back(-1); // the start node doesn't correspond to a column
+  int x_end = get(vertex_index, g, vertex_end);
+
+  vector<int> everything_emitted = L;
+  // before x_end, everything has been emitted
+  before[everything_emitted].push_back(x_end);
+}
 
 void check_edges_go_forwards_only(Graph& g, const vector<emitted_column_map::iterator>& ec_from_x)
 {
@@ -407,9 +441,23 @@ MPD::add_emitted_column(const emitted_column& C)
   ++counts[emitted_to_bare[x_current]];
 }
 
+void check_sequence_lengths(const vector<int>& L, const alignment& A)
+{
+  if (A.n_sequences() != L.size())
+    throw myexception()<<"Expecting "<<L.size()<<" sequences, but alignment sample has "<<A.n_sequences();
+
+  for(int i=0;i<L.size();i++)
+  {
+    int L2 = A.seqlength(i);
+    if (L[i] != L2)
+	throw myexception()<<"Sequence "<<i+1<<": expecting length "<<L[i]<<
+	  " but alignment sample has length "<<L2<<".";
+  }
+}
+
 void MPD::add_alignment(const alignment& A)
 {
-  const int N = A.n_sequences();
+  check_sequence_lengths(L, A);
 
   emitted_column C(N);
 
@@ -440,33 +488,8 @@ int main(int argc,char* argv[])
     if (not alignments.size())
       throw myexception()<<"Didn't read any alignments!";      
 
-    //------------ Determine sequence lengths ----------//
-    int N = alignments[0].n_sequences();
-    if (alignments.size() > 1) {
-      assert(alignments[1].n_sequences() == N);
-      assert(alignments[1].seqlength(N-1) == alignments[0].seqlength(N-1));
-    }
-    vector<int> L(N);
-    for(int i=0;i<L.size();i++)
-      L[i] = alignments[0].seqlength(i);
-    
     //--------- Construct alignment indexes ---------//
-    MPD mpd;
-
-    Vertex vertex_start = add_vertex(mpd.g); // add the start node
-    mpd.emitted_to_bare.push_back(-1);
-    int x_start = get(vertex_index, mpd.g, vertex_start);
-    vector<int> nothing_emitted(N,0);
-    // after x_start, nothing has been emitted
-    mpd.after[nothing_emitted].push_back(x_start);
-
-    Vertex vertex_end = add_vertex(mpd.g); // add the end node
-    mpd.emitted_to_bare.push_back(-1);
-    int x_end = get(vertex_index, mpd.g, vertex_end);
-    vector<int> everything_emitted = L;
-    mpd.before[everything_emitted].push_back(x_end);
-
-    // Make sure the before[] and after[] maps are valid for vertex indices for S and E.
+    MPD mpd( alignments[0] );
 
     for(int i=0;i<alignments.size();i++)
       mpd.add_alignment( alignments[i] );
@@ -582,12 +605,12 @@ int main(int argc,char* argv[])
     std::reverse(path.begin(),path.end());
 
     //---------------- Create alignment matrix -------------------//
-    ublas::matrix<int> M(path.size()-2,N);
+    ublas::matrix<int> M(path.size()-2, mpd.L.size());
 
     for(int i=0;i<M.size1();i++) {
       int S = path[i+1];
       emitted_column_map::iterator ec = ec_from_x[S];
-      for(int j=0;j<N;j++)
+      for(int j=0;j<mpd.L.size();j++)
 	M(i,j) = (ec->first).column[j];
     }
 
