@@ -367,7 +367,8 @@
     </section>      
 
     <section><info><title>Setting the PATH</title></info>
-      
+
+      <section><title>I have a path?</title>
       <para>
 	If you installed <application>BAli-Phy</application> to the directory
 	<filename>/usr/local/</filename>, then you can run
@@ -376,40 +377,59 @@
 	<userinput>bali-phy</userinput> and let the computer find the
 	executable for you.  This can be achieved by putting the directory
 	that contains the <filename>bali-phy</filename> executables into
-	your "path".  (The directory that contains the executables will be
-	<filename>/usr/local/bin</filename> if you extracted the bali-phy
-	archive to the directory <filename>/usr/local</filename>, but will
-	be somewhere else if you extracted the bali-phy archive somewhere else.)
-      </para>
-
-      <para>
-	The "path" is a colon-separated list of directories that is
+	your "path".  	The "path" is a colon-separated list of directories that is
 	searched to find program names that you type.  It is stored in a
-	variable called PATH.  You can examine it the current value of
-	this variable by 
+	variable called PATH.  
+	</para>
+      <para>
+	Setting your PATH is also a pre-requisite for running
+	the <command>bp-analyze.pl</command> script to summarize your runs.
+      </para>
+      </section>
+
+      <section><title>Examining your PATH</title>
+      <para>
+	You can examine the current value of
+	this variable by typing:
 	<screen><prompt>%</prompt> echo &#36;PATH</screen>
 	We will assume that you extracted the bali-phy archive in
 	<filename>/usr/local</filename> and so you want to add
-	<filename>/usr/local/bin</filename> to your PATH.  The commands
-	for doing depend on what "shell" you are using.  Type
-	<userinput>echo &#36;SHELL</userinput> to find out.
+	<filename>/usr/local/bin</filename> to your PATH.  (If you
+	installed to another directory,
+	replace <filename>/usr/local/</filename> with that directory.)
       </para>
+      </section>
 
-      <para>If your shell is <command>sh</command> or
+      <section><title>Adding BAli-Phy to your PATH</title>
+      <para>The commands
+	for doing this depend on what "shell" you are using.  Type
+	<userinput>echo &#36;SHELL</userinput> to find out. If your
+	shell is <command>sh</command> or 
 	<command>bash</command> then the command looks like this: 
 	<screen><prompt>%</prompt> PATH=/usr/local/bin:&#36;PATH</screen>
 	If your shell is <command>csh</command> or
 	<command>tcsh</command>, then the command looks like this:
 	<screen><prompt>%</prompt> setenv PATH /usr/local/bin:&#36;PATH</screen>
-	Unfortunately, the effects of this will affect only the window you
-	are typing in, and will vanish when you reboot.  You can put these
-	command into the files <filename>.profile</filename> (for the
-	Bourne shell <command>sh</command>), 
-	<filename>.bash_profile</filename> (for BASH), or
-	<filename>.login</filename> (for tcsh).  However, those details are
-	beyond the scope of this document.
       </para>
+      </section>
 
+      <section><title>Making the change stick</title>
+	<para>
+	  Unfortunately, the effects of this will affect only the window you
+	  are typing in, and will vanish when you reboot.  To make the
+	  effect permanent, you can copy this line into a configuration
+	  file using a text editor.  To file the right configuration
+	  file, look in your &#36;HOME directory
+	  for <filename>.profile</filename> (for the Bourne shell <command>sh</command>), 
+	  <filename>.bash_profile</filename> (for BASH), or
+	  <filename>.login</filename> (for tcsh).  You may have to
+	  create the file if it is not present.
+	</para>
+	<para>If you do not know which directory is your home
+	directory, you can find its full name by typing:
+	<screen><prompt>%</prompt> echo &#36;HOME</screen>
+	</para>
+      </section>
     </section>
 
   </section>
