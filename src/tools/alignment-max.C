@@ -234,32 +234,36 @@ struct MPD
 {
   const int N;
 
+  vector<int> L;
+
+  alignment A0;
+
+  int n_samples;
+
   Graph g;
   Vertex vertex_start;
   Vertex vertex_end;
 
-  // map emitted columns -> x
+  /// map emitted columns -> x
   emitted_column_map emitted_columns;
 
-  // map bare columns    -> y
+  /// map bare columns    -> y
   column_map columns;
 
-  // map x -> y
+  /// map x -> y
   vector<int> emitted_to_bare;
 
-  // how many times did we see each bare column?
+  /// how many times did we see each bare column?
   vector<int> counts;
 
-  // emitted before column -> {x1...xn}
+  /// emitted before column -> {x1...xn}
   emitted_map before;
 
-  // emitted after column -> {x1...xn}
+  /// emitted after column -> {x1...xn}
   emitted_map after;
 
-  // x -> &(ec,x)
+  /// map x -> &(C,x).  This is only valid after calling get_best_path( ), and before add_alignment( )
   vector<emitted_column_map::iterator> ec_from_x;
-
-  vector<int> L;
 
   void check_edges_go_forwards_only() const;
 
@@ -269,16 +273,22 @@ struct MPD
 
   void add_alignment(const alignment& A);
 
-  vector<int> get_best_path(const vector<double>& score) const;
+  vector<double> get_score(int) const;
+
+  vector<int> get_best_path(const vector<double>& score);
+  
+  alignment get_best_alignment(int);
   
   int n_vertices() const {return emitted_to_bare.size();}
+
+  vector<double> get_column_probabilities(const alignment&) const;
 
   MPD(const alignment&);
 };
 
 
 MPD::MPD(const alignment& A)
-  :N( A.n_sequences() ), L( N )
+  :N( A.n_sequences() ), L( N ), A0(A), n_samples( 0 )
 {
   //------------ Determine sequence lengths ----------//
   for(int i=0;i<L.size();i++)
@@ -472,11 +482,45 @@ void MPD::add_alignment(const alignment& A)
     
     add_emitted_column(C);
   }
+
+  n_samples++;
+}
+
+vector<double> MPD::get_score(int type) const
+{
+  vector<double> score(counts.size());
+
+  foreach(c, columns)
+  {
+    int n = n_letters(c->first);
+    assert(n > 0);
+    
+    int i = c->second;
+    
+    score[i] = double(counts[i])/n_samples;
+    if (type == 1)
+      score[i] *= n;
+    else if (type == 2)
+      score[i] = log(score[i]);
+  }
+
+  return score;
 }
 
 vector<int>
-MPD::get_best_path(const vector<double>& score) const
+MPD::get_best_path(const vector<double>& score)
 {
+  //----------------- construct a map from index -> &(EC,index) ---------------//
+  ec_from_x = vector<emitted_column_map::iterator>(n_vertices(), emitted_columns.end());
+  foreach(ec, emitted_columns)
+    ec_from_x[ec->second] = ec;
+  
+  if (log_verbose) {
+    cerr<<"\nalignment-max: checking edges...\n";
+    check_edges_go_forwards_only();
+    cerr<<"alignment-max: done."<<endl;
+  }
+
   //----------------- Forward Sums -------------------//
   vector<Vertex> sorted_vertices;
   topological_sort(g, std::back_inserter(sorted_vertices));
@@ -547,11 +591,66 @@ MPD::get_best_path(const vector<double>& score) const
   return path;
 }
 
+alignment MPD::get_best_alignment(int type)
+{
+  vector<double> score = get_score(type);
+  
+  //----------------- Forward Sums -------------------//
+  
+  vector<int> path = get_best_path(score);
+  
+  //---------------- Create alignment matrix -------------------//
+  ublas::matrix<int> M(path.size()-2, L.size());
+  
+  for(int i=0;i<M.size1();i++) {
+    int S = path[i+1];
+    emitted_column_map::iterator ec = ec_from_x[S];
+    for(int j=0;j<L.size();j++)
+      M(i,j) = (ec->first).column[j];
+  }
+  
+  alignment amax = get_alignment(M, A0);
+  return amax;
+}
+
+vector<double> MPD::get_column_probabilities(const alignment& A) const
+{
+  vector<double> column_pr(A.length(), 0);
+      
+  ublas::matrix<int> m = ::M(A);
+
+  for(int c=0; c<A.length(); c++)
+  {
+    vector<int> column = get_column(m, c);
+    column_map::const_iterator y_record = columns.find(column);
+
+    if (y_record != columns.end())
+    {
+      int y_index = y_record->second;
+      int count = counts[y_index];
+      column_pr[c] = double(count)/n_samples;
+    }
+  }
+
+  return column_pr;
+}
+
 int main(int argc,char* argv[]) 
 { 
   try {
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
+
+    int type = -1;
+    string analysis = args["analysis"].as<string>();
+    if (analysis == "sum")
+      type = 0;
+    else if (analysis == "wsum")
+      type = 1;
+    else if (analysis == "multiply")
+      type = 2;
+    else
+      throw myexception()<<"I don't recognize analysis type '"<<analysis<<"'.";
 
     //------------ Load alignment and tree ----------//
     vector<alignment> alignments;
@@ -569,66 +668,10 @@ int main(int argc,char* argv[])
     for(int i=0;i<alignments.size();i++)
       mpd.add_alignment( alignments[i] );
 
-    //----------------- construct a map from index -> &(EC,index) ---------------//
-    const int n_vertices = mpd.emitted_to_bare.size();
-    mpd.ec_from_x = vector<emitted_column_map::iterator>(n_vertices,mpd.emitted_columns.end());
-    foreach(ec, mpd.emitted_columns)
-    {
-      mpd.ec_from_x[ec->second] = ec;
-    }
-
-    if (log_verbose) {
-      cerr<<"\nalignment-max: checking edges...\n";
-      mpd.check_edges_go_forwards_only();
-      cerr<<"alignment-max: done."<<endl;
-    }
-
-    //---------- Construct score ------------------//
-
-    int type = -1;
-    string analysis = args["analysis"].as<string>();
-    if (analysis == "sum")
-      type = 0;
-    else if (analysis == "wsum")
-      type = 1;
-    else if (analysis == "multiply")
-      type = 2;
-    else
-      throw myexception()<<"I don't recognize analysis type '"<<analysis<<"'.";
-
-    vector<double> score(mpd.counts.size());
-    foreach(c,mpd.columns)
-    {
-      int n = n_letters(c->first);
-      assert(n > 0);
-
-      int i = c->second;
-
-      score[i] = double(mpd.counts[i])/alignments.size();
-      if (type == 1)
-	score[i] *= n;
-      else if (type == 2)
-	score[i] = log(score[i]);
-    }
-
-    //----------------- Forward Sums -------------------//
-
-    vector<int> path = mpd.get_best_path(score);
-
-    //---------------- Create alignment matrix -------------------//
-    ublas::matrix<int> M(path.size()-2, mpd.L.size());
-
-    for(int i=0;i<M.size1();i++) {
-      int S = path[i+1];
-      emitted_column_map::iterator ec = mpd.ec_from_x[S];
-      for(int j=0;j<mpd.L.size();j++)
-	M(i,j) = (ec->first).column[j];
-    }
-
-    alignment amax = get_alignment(M,alignments[0]);
+    alignment amax = mpd.get_best_alignment( type );
     amax = get_ordered_alignment(amax);
 
-    //-------------------- Write output -------------------------//
+    //------------------ Write best alignment -------------------//
     string out = args["out"].as<string>();
 
     if (out == "-")
@@ -642,25 +685,20 @@ int main(int argc,char* argv[])
       outfile.close();
     }
 
+    //------------------ Write column probabilites -------------------//
     if (args.count("out-probabilities")) 
     {
+      vector<double> column_probabilities = mpd.get_column_probabilities( amax );
+
       string outp = args["out-probabilities"].as<string>();
       ofstream outfile(outp.c_str());
 
       if (not outfile)
 	throw myexception()<<"Can't open '"<<outfile<<"' to write column probabilities!";
 
-      ublas::matrix<int> m = ::M(amax);
-      
-      for(int c=0; c<amax.length(); c++)
-      {
-	vector<int> column = get_column(m, c);
-	column_map::iterator y_record = mpd.columns.find(column);
-	assert(y_record != mpd.columns.end());
-	int y_index = y_record->second;
-	int count = mpd.counts[y_index];
-	outfile<<double(count)/alignments.size()<<endl;
-      }      
+      for(int c=0; c < column_probabilities.size(); c++)
+	outfile<<column_probabilities[c]<<endl;
+
       outfile.close();
     }
   }
