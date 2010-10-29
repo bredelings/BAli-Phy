@@ -185,7 +185,7 @@ bool get_emitted_column(emitted_column& C,const ublas::matrix<int>& m, int c)
 int get_column_order(const vector<int>& c1, const vector<int>& c2)
 {
   if (c1.size() != c2.size()) {
-    throw myexception()<<"vector sizes are different!";
+    throw myexception()<<"comparing 2 columns: different sizes!";
     assert(c1.size() == c2.size());
   }
 
@@ -453,23 +453,9 @@ MPD::add_emitted_column(const emitted_column& C)
   ++counts[emitted_to_bare[x_current]];
 }
 
-void check_sequence_lengths(const vector<int>& L, const alignment& A)
-{
-  if (A.n_sequences() != L.size())
-    throw myexception()<<"Expecting "<<L.size()<<" sequences, but alignment sample has "<<A.n_sequences();
-
-  for(int i=0;i<L.size();i++)
-  {
-    int L2 = A.seqlength(i);
-    if (L[i] != L2)
-	throw myexception()<<"Sequence "<<i+1<<": expecting length "<<L[i]<<
-	  " but alignment sample has length "<<L2<<".";
-  }
-}
-
 void MPD::add_alignment(const alignment& A)
 {
-  check_sequence_lengths(L, A);
+  check_same_sequence_lengths(L, A);
 
   emitted_column C(N);
 

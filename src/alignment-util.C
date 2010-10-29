@@ -869,6 +869,8 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 
     if (n1 != n2) { 
       // inverse of the mapping n2->n1
+      if (n2.size() < n1.size())
+	throw myexception()<<"Read in alignment with too few sequences!";
       vector<int> new_order = compute_mapping(n1,n2);
       A = reorder_sequences(A,new_order);
     }
@@ -1451,3 +1453,19 @@ alignment reverse_complement(const alignment& A)
 
   return A2;
 }
+
+// FIXME - should perhaps also check names?
+// use this function in alignment-gild, alignment-compare, alignment-diff, etc.
+void check_same_sequence_lengths(const vector<int>& L, const alignment& A)
+{
+  if (A.n_sequences() != L.size())
+    throw myexception()<<"Expected alignment has "<<L.size()<<", but this one has "<<A.n_sequences();
+
+  for(int i=0;i<L.size();i++)
+  {
+    int L2 = A.seqlength(i);
+    if (L[i] != L2)
+      throw myexception()<<"Sequence "<<i+1<<": length "<<L2<<" differs from expected length "<<L[i];
+  }
+}
+
