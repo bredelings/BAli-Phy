@@ -182,7 +182,7 @@
 	  <application>BAli-Phy</application> under
 	  <filename>~/local</filename>, you can enter:
 
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure --prefix=&#37;HOME/local</screen>
+	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure --prefix=&#36;HOME/local</screen>
           This is recommended if you do not have permission to install
 	  to <filename>/usr/local/</filename>.
 	</para>
@@ -387,20 +387,20 @@
 	searched to find program names that you type.  It is stored in a
 	variable called PATH.  You can examine it the current value of
 	this variable by 
-	<screen><prompt>%</prompt> echo &#37;PATH</screen>
+	<screen><prompt>%</prompt> echo &#36;PATH</screen>
 	We will assume that you extracted the bali-phy archive in
 	<filename>/usr/local</filename> and so you want to add
 	<filename>/usr/local/bin</filename> to your PATH.  The commands
 	for doing depend on what "shell" you are using.  Type
-	<userinput>echo &#37;SHELL</userinput> to find out.
+	<userinput>echo &#36;SHELL</userinput> to find out.
       </para>
 
       <para>If your shell is <command>sh</command> or
 	<command>bash</command> then the command looks like this: 
-	<screen><prompt>%</prompt> PATH=/usr/local/bin:&#37;PATH</screen>
+	<screen><prompt>%</prompt> PATH=/usr/local/bin:&#36;PATH</screen>
 	If your shell is <command>csh</command> or
 	<command>tcsh</command>, then the command looks like this:
-	<screen><prompt>%</prompt> setenv PATH /usr/local/bin:&#37;PATH</screen>
+	<screen><prompt>%</prompt> setenv PATH /usr/local/bin:&#36;PATH</screen>
 	Unfortunately, the effects of this will affect only the window you
 	are typing in, and will vanish when you reboot.  You can put these
 	command into the files <filename>.profile</filename> (for the
