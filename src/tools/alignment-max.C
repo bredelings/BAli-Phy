@@ -261,11 +261,17 @@ struct MPD
 
   vector<int> L;
 
+  void check_edges_go_forwards_only() const;
+
   emitted_column_map::iterator create_new_emitted_column(const emitted_column& C);
 
   void add_emitted_column(const emitted_column& C);
 
   void add_alignment(const alignment& A);
+
+  vector<int> get_best_path(const vector<double>& score);
+  
+  int n_vertices() const {return emitted_to_bare.size();}
 
   MPD(const alignment&);
 };
@@ -295,7 +301,7 @@ MPD::MPD(const alignment& A)
   before[everything_emitted].push_back(x_end);
 }
 
-void check_edges_go_forwards_only(Graph& g, const vector<emitted_column_map::iterator>& ec_from_x)
+void MPD::check_edges_go_forwards_only() const
 {
   emitted_column_order eco;
 
@@ -468,6 +474,79 @@ void MPD::add_alignment(const alignment& A)
   }
 }
 
+vector<int>
+MPD::get_best_path(const vector<double>& score)
+{
+  //----------------- Forward Sums -------------------//
+  vector<Vertex> sorted_vertices;
+  topological_sort(g, std::back_inserter(sorted_vertices));
+  std::reverse(sorted_vertices.begin(), sorted_vertices.end());
+
+  vector<int> sorted_indices(sorted_vertices.size());
+  for(int i=0;i<sorted_indices.size();i++)
+    sorted_indices[i] = get(vertex_index,g,sorted_vertices[i]);
+  assert(sorted_indices[0] == 0);
+  assert(sorted_indices.back() == 1);
+
+  vector<double> forward(n_vertices(), -1);
+  vector<int> visited(n_vertices(), 0);
+  vector<int> from(n_vertices(), -1);
+  forward[0] = 0;
+  visited[0] = 1;
+
+  for(int i=1;i<n_vertices();i++)
+  {
+    int v2i = sorted_indices[i];
+    assert(not visited[v2i]);
+
+    int v2 = vertex(v2i, g);
+
+    double best = 0;
+    int argmax = -1;
+    graph_traits<Graph>::in_edge_iterator e, end;
+    for(tie(e,end) = in_edges(v2,g); e != end; ++e)
+    { 
+      Vertex v1 = source(*e,g);
+      int v1i = get(vertex_index,g,v1);
+      assert(visited[v1i]);
+
+      if (argmax == -1) {
+	best = forward[v1i];
+	argmax = v1i;
+      }
+      else {
+	if (forward[v1i] > best) {
+	  argmax = v1i;
+	  best = forward[v1i];
+	}
+      }
+    }
+    assert(argmax != -1);
+    from[v2i] = argmax;
+      
+    forward[v2i] = best;
+    if (emitted_to_bare[v2i] != -1)
+      forward[v2i] += score[emitted_to_bare[v2i]];
+      
+    visited[v2i] = 1;
+  }
+
+  assert(visited[1]);
+
+  if (log_verbose) cerr<<"alignment-max: Best score is: "<<forward[1]<<endl;
+
+  //----------------- Backward Path Selection -------------------//
+  vector<int> path(1,1); // start with just the end state
+
+  while(path.back() != 0) {
+    int S = from[path.back()];
+    path.push_back(S);
+  }
+  std::reverse(path.begin(),path.end());
+
+  return path;
+}
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -498,10 +577,11 @@ int main(int argc,char* argv[])
       mpd.ec_from_x[ec->second] = ec;
     }
 
-    if (log_verbose) cerr<<"\nalignment-max: checking edges...\n";
-      check_edges_go_forwards_only(mpd.g, mpd.ec_from_x);
-
-    if (log_verbose) cerr<<"alignment-max: done."<<endl;
+    if (log_verbose) {
+      cerr<<"\nalignment-max: checking edges...\n";
+      mpd.check_edges_go_forwards_only();
+      cerr<<"alignment-max: done."<<endl;
+    }
 
     //---------- Construct score ------------------//
 
@@ -531,74 +611,9 @@ int main(int argc,char* argv[])
 	score[i] = log(score[i]);
     }
 
-
     //----------------- Forward Sums -------------------//
 
-    vector<Vertex> sorted_vertices;
-    topological_sort(mpd.g, std::back_inserter(sorted_vertices));
-    std::reverse(sorted_vertices.begin(), sorted_vertices.end());
-
-    vector<int> sorted_indices(sorted_vertices.size());
-    for(int i=0;i<sorted_indices.size();i++)
-      sorted_indices[i] = get(vertex_index,mpd.g,sorted_vertices[i]);
-    assert(sorted_indices[0] == 0);
-    assert(sorted_indices.back() == 1);
-
-    vector<double> forward(n_vertices, -1);
-    vector<int> visited(n_vertices, 0);
-    vector<int> from(n_vertices, -1);
-    forward[0] = 0;
-    visited[0] = 1;
-
-    for(int i=1;i<n_vertices;i++)
-    {
-      int v2i = sorted_indices[i];
-      assert(not visited[v2i]);
-
-      int v2 = vertex(v2i, mpd.g);
-
-      double best = 0;
-      int argmax = -1;
-      graph_traits<Graph>::in_edge_iterator e, end;
-      for(tie(e,end) = in_edges(v2,mpd.g); e != end; ++e)
-      { 
-	Vertex v1 = source(*e,mpd.g);
-	int v1i = get(vertex_index,mpd.g,v1);
-	assert(visited[v1i]);
-
-	if (argmax == -1) {
-	  best = forward[v1i];
-	  argmax = v1i;
-	}
-	else {
-	  if (forward[v1i] > best) {
-	    argmax = v1i;
-	    best = forward[v1i];
-	  }
-	}
-      }
-      assert(argmax != -1);
-      from[v2i] = argmax;
-      
-      forward[v2i] = best;
-      if (mpd.emitted_to_bare[v2i] != -1)
-	forward[v2i] += score[mpd.emitted_to_bare[v2i]];
-      
-      visited[v2i] = 1;
-    }
-
-    assert(visited[1]);
-
-    if (log_verbose) cerr<<"alignment-max: Best score is: "<<forward[1]<<endl;
-
-    //----------------- Backward Path Selection -------------------//
-    vector<int> path(1,1); // start with just the end state
-
-    while(path.back() != 0) {
-      int S = from[path.back()];
-      path.push_back(S);
-    }
-    std::reverse(path.begin(),path.end());
+    vector<int> path = mpd.get_best_path(score);
 
     //---------------- Create alignment matrix -------------------//
     ublas::matrix<int> M(path.size()-2, mpd.L.size());
