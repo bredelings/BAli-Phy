@@ -74,14 +74,14 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help", "produce help message")
+    ("help,h", "produce help message")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-    ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
-    ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+    ("skip,s",value<unsigned>()->default_value(0),"number of tree samples to skip")
+    ("max-alignments,m",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("analysis",value<string>()->default_value("wsum"),"sum, wsum, multiply")
-    ("out",value<string>()->default_value("-"),"Output file (defaults to stdout)")
-    ("out-probabilities",value<string>(),"Output file for column probabilities, if specified")
-    ("verbose","Output more log messages on stderr.")
+    ("out,o",value<string>()->default_value("-"),"Output file (defaults to stdout)")
+    ("out-probabilities,p",value<string>(),"Output file for column probabilities, if specified")
+    ("verbose,v","Output more log messages on stderr.")
     ;
 
   variables_map args;     
