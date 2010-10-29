@@ -269,7 +269,7 @@ struct MPD
 
   void add_alignment(const alignment& A);
 
-  vector<int> get_best_path(const vector<double>& score);
+  vector<int> get_best_path(const vector<double>& score) const;
   
   int n_vertices() const {return emitted_to_bare.size();}
 
@@ -475,7 +475,7 @@ void MPD::add_alignment(const alignment& A)
 }
 
 vector<int>
-MPD::get_best_path(const vector<double>& score)
+MPD::get_best_path(const vector<double>& score) const
 {
   //----------------- Forward Sums -------------------//
   vector<Vertex> sorted_vertices;
