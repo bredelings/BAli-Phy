@@ -814,7 +814,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     // CHECK if an alignment begins here
     if (ifile.peek() != '>') {
       string line;
-      getline_handle_dos(ifile,line);
+      portable_getline(ifile,line);
       continue;
     }
 
@@ -836,7 +836,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     if (do_skip) {
       string line;
       do {
-	getline_handle_dos(ifile,line);
+	portable_getline(ifile,line);
       } while (line.size());
       continue;
     }
@@ -950,7 +950,7 @@ vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const 
     // CHECK if an alignment begins here
     if (ifile.peek() != '>') {
       string line;
-      getline_handle_dos(ifile,line);
+      portable_getline(ifile,line);
       continue;
     }
     
@@ -1005,7 +1005,7 @@ alignment find_first_alignment(std::istream& ifile, const vector<shared_ptr<cons
     // CHECK if an alignment begins here
     if (ifile.peek() != '>') {
       string line;
-      getline_handle_dos(ifile,line);
+      portable_getline(ifile,line);
       continue;
     }
     
@@ -1044,7 +1044,7 @@ alignment find_last_alignment(std::istream& ifile, const vector<shared_ptr<const
     // CHECK if an alignment begins here
     if (ifile.peek() != '>') {
       string line;
-      getline_handle_dos(ifile,line);
+      portable_getline(ifile,line);
       continue;
     }
     

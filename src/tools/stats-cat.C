@@ -92,7 +92,7 @@ int main(int argc,char* argv[])
     for(int i=0;i<files.size();i++)
     {
       string line;
-      for(int line_number=0;getline_handle_dos(*files[i],line);line_number++)
+      for(int line_number=0;portable_getline(*files[i],line);line_number++)
 	if (line_number >= skip)
 	  std::cout<<line<<"\n";
       files[i]->close();

@@ -60,7 +60,7 @@ ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree
 
     // Map columns to species
     string line;
-    getline_handle_dos(constraint_file,line);
+    portable_getline(constraint_file,line);
     vector<string> names = split(clean(line),' ');
     vector<int> mapping;
     try {
@@ -93,7 +93,7 @@ ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree
 
     // We start on line 1
     int line_no=0;
-    while(getline_handle_dos(constraint_file,line)) 
+    while(portable_getline(constraint_file,line)) 
     {
       line_no++;
 

@@ -569,7 +569,7 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
   // read file
   string line;
   vector<vector<string> > name_groups;
-  while(getline_handle_dos(file,line)) {
+  while(portable_getline(file,line)) {
     vector<string> names = split(line,' ');
     for(int i=names.size()-1;i>=0;i--)
       if (names[i].size() == 0)
@@ -751,9 +751,9 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
 
     ifstream partitions(filename.c_str());
     string line;
-    while(getline_handle_dos(partitions,line)) {
+    while(portable_getline(partitions,line)) {
       Partition p(P.T->get_sequences(),line);
-      getline_handle_dos(partitions,line);
+      portable_getline(partitions,line);
       double o = convertTo<double>(line);
       
       cerr<<p<<"      P = "<<o<<endl;

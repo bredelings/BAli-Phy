@@ -95,7 +95,7 @@ namespace trees_format
   bool Newick::next_tree_(Tree& T,int& r)
   {
     if (not line.size())
-      while (getline_handle_dos(*file,line) and not line.size());
+      while (portable_getline(*file,line) and not line.size());
     if (not line.size()) return false;
     try {
       r = T.parse_with_names(line,leaf_names);
@@ -118,7 +118,7 @@ namespace trees_format
       n--;
     }
     for(int i=0;i<n and *file;i++)
-      getline_handle_dos(*file,line);
+      portable_getline(*file,line);
     line.clear();
     return not done();
   }
@@ -131,7 +131,7 @@ namespace trees_format
   void Newick::initialize()
   {
     SequenceTree T;
-    getline_handle_dos(*file,line);
+    portable_getline(*file,line);
     T.parse(line);
     leaf_names = T.get_sequences();
     std::sort(leaf_names.begin(),leaf_names.end());
@@ -161,7 +161,7 @@ namespace trees_format
       n--;
     }
     for(int i=0;i<n and *file;i++)
-      getline_handle_dos(*file,line,';');
+      getline(*file,line,';');
     line.clear();
     return not done();
   }
@@ -175,7 +175,7 @@ namespace trees_format
   {
     static const string eol = "\n\r";
 
-    istream& is = getline_handle_dos(file,s,';');
+    istream& is = getline(file,s,';');
     s = strip(s,eol);
     return is;
   }
@@ -332,7 +332,7 @@ namespace trees_format
   void NEXUS::initialize()
   {
     // Check #NEXUS
-    getline_handle_dos(*file,line);
+    portable_getline(*file,line);
     if (line != "#NEXUS")
       throw myexception()<<"NEXUS trees reader: File does not begin with '#NEXUS' and may not be a NEXUS file.";
   

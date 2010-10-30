@@ -1494,20 +1494,20 @@ namespace substitution {
     string line;
 
     //------- 1: Model name --------------//
-    getline_handle_dos(file,name_);
+    portable_getline(file,name_);
 
     //------- 2: # of categories ---------//
-    getline_handle_dos(file,line);
+    portable_getline(file,line);
     const int n_cat = convertTo<int>(line);
 
     //------- 3: category weights --------//
-    getline_handle_dos(file,line);
+    portable_getline(file,line);
     fraction = prior_fraction = split<double>(line,' ');
     if (fraction.size() != n_cat) 
       throw myexception()<<"In reading CAT-Fixed model '"<<name_<<"' expected weights for "<<n_cat<<" categories, but got "<<fraction.size();
 
     //------- 4: alphabet order ---------//
-    getline_handle_dos(file,line);
+    portable_getline(file,line);
     vector<int> letter(a.size(),-1);
     vector<string> unordered_letters = split(line,' ');
     if (unordered_letters.size() != a.size())
@@ -1520,7 +1520,7 @@ namespace substitution {
     //------- 5-end: frequencies of the actual classes ----//
     for(int i=0;i<n_cat;i++)
     {
-      getline_handle_dos(file,line);
+      portable_getline(file,line);
 
       if (file.bad())
 	throw myexception()<<"Failed to read frequencies for category "<<i+1;

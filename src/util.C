@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "util.H"
 
+
 using std::vector;
 using std::string;
 
@@ -47,16 +48,37 @@ int n_elements(const vector<bool>& v) {
 }
 
 
-/// \brief Read a line from a file with their UNIX or DOS line endings.
+/// \brief Read a line from a file with their UNIX or DOS or Mac line endings.
 ///
 /// \param file The input stream
 /// \param s The line that was read.
 /// 
-std::istream& getline_handle_dos(std::istream& file,std::string& s, char c)
+std::istream& portable_getline(std::istream& file,std::string& s)
 {
-  getline(file,s,c);
-  while(s.size() and (s[s.size()-1] == char(13) or s[s.size()-1] == char(10)))
-    s.erase(s.size()-1,1);
+  const char CR = 13;
+  const char LF = 10;
+
+  s.clear();
+
+  int c;
+  while (file.good())
+  {
+    c = file.get();
+
+    // we just read an EOF
+    if (file.eof()) break;
+
+    // we just read an EOL
+    if (c == CR or c == LF) break;
+
+    s.append(1,c);
+  }
+
+  if (!file.good()) return file;
+
+  // If the EOL character is a CR, then also skip any following LF
+  if (c == CR and file.peek() == LF)
+    file.ignore();
 
   return file;
 }
@@ -263,7 +285,7 @@ void scan_lines(std::istream& file,int skip,int subsample, int max,
 {
   int n_lines=0;
   string line;
-  for(int line_number=0;getline_handle_dos(file,line);line_number++) 
+  for(int line_number=0;portable_getline(file,line);line_number++) 
   {
     // don't start if we haven't skipped enough trees
     if (line_number < skip) continue;

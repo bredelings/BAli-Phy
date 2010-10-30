@@ -43,7 +43,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #endif
 
 // this should actually be templatized... <class charT,Alloc,Traits>
-std::istream& getline_handle_dos(std::istream&,std::string&,char c='\n');
+std::istream& portable_getline(std::istream&,std::string&);
 
 template <class T>
 bool can_be_converted_to(const std::string& s, T& t) 
