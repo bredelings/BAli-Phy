@@ -264,7 +264,7 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
   if (has_sub_branches(T))
     remove_sub_branches(T);
 
-  if (internal_sequences and not is_Cayley(T)) {
+  if (internal_sequences and not is_Cayley(T) and T.n_leaves() > 1) {
     assert(has_polytomy(T));
     throw myexception()<<"Cannot link a multifurcating tree to an alignment with internal sequences.";
   }
@@ -325,7 +325,7 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
   if (has_sub_branches(T))
     remove_sub_branches(T);
 
-  if (internal_sequences and not is_Cayley(T)) {
+  if (internal_sequences and not is_Cayley(T) and T.n_leaves() > 1) {
     assert(has_polytomy(T));
     throw myexception()<<"Cannot link a multifurcating tree to an alignment with internal sequences.";
   }
