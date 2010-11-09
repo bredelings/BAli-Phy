@@ -74,10 +74,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
   // named options
   options_description all("Allowed options");
   all.add_options()
-    ("help,h", "produce help message")
+    ("help,h", "Produce help message")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
-    ("skip,s",value<unsigned>()->default_value(0),"number of tree samples to skip")
-    ("max-alignments,m",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+    ("skip,s",value<unsigned>()->default_value(0),"Number of alignment samples to skip")
+    ("max-alignments,m",value<int>()->default_value(1000),"Maximum number of alignments to analyze")
     ("analysis",value<string>()->default_value("wsum"),"sum, wsum, multiply")
     ("out,o",value<string>()->default_value("-"),"Output file (defaults to stdout)")
     ("out-probabilities,p",value<string>(),"Output file for column probabilities, if specified")
