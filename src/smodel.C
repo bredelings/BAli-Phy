@@ -27,9 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>
 #include "logsum.H"
-#include "likelihood.H"
 #include "probability.H"
-#include "proposals.H"
 
 using std::vector;
 using std::valarray;
