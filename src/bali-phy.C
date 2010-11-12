@@ -710,12 +710,12 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 
     vector<double> beta = get_geometric_heating_levels(beta_s);
     if (not beta.size())
-      vector<double> beta = split<double>(beta_s,',');
+      beta = split<double>(beta_s,',');
 
     P.all_betas = beta;
 
-    if (proc_id > beta.size())
-      throw myexception()<<"not enough temperatures given";
+    if (proc_id >= beta.size())
+      throw myexception()<<"not enough temperatures given: only got "<<beta.size()<<", wanted at least "<<proc_id+1;
 
     P.beta_index = proc_id;
 
