@@ -110,42 +110,29 @@ indel::PairHMM heat(indel::PairHMM H, double beta)
 {
   if (beta != 1) return H;
 
-  if (beta == 0)
+  for(int i=0;i<H.size1();i++)
   {
-    for(int i=0;i<H.size1();i++)
+    double total1 = 0;
+    double total2 = 0;
+    for(int j=0;j<H.size2();j++)
     {
-      double total1 = 0;
-      double total2 = 0;
-      for(int j=0;j<H.size2();j++)
-      {
-	total1 += H(i,j);
+      total1 += H(i,j);
+
+      if (beta == 0)
+	H(i,j) = pow(H(i,j), beta);
+
+      else {
 	if (H(i,j) > 0) 
 	  H(i,j) = 1;
 	else
 	  H(i,j) = 0;
-	total2 += H(i,j);
       }
-      assert(std::abs(1.0 - total1) < 1.0e-9);
-      for(int j=0;j<H.size2();j++)
-	H(i,j) /= total2;
+
+      total2 += H(i,j);
     }
-  }
-  else if (beta < 1)
-  {
-    for(int i=0;i<H.size1();i++)
-    {
-      double total1 = 0;
-      double total2 = 0;
-      for(int j=0;j<H.size2();j++)
-      {
-	total1 += H(i,j);
-	H(i,j) = pow(H(i,j), beta);
-	total2 += H(i,j);
-      }
-      assert(std::abs(1.0 - total1) < 1.0e-9);
-      for(int j=0;j<H.size2();j++)
-	H(i,j) /= total2;
-    }
+    assert(std::abs(1.0 - total1) < 1.0e-9);
+    for(int j=0;j<H.size2();j++)
+      H(i,j) /= total2;
   }
 
   return H;
