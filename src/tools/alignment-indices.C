@@ -162,6 +162,8 @@ int main(int argc,char* argv[])
     //------- Try to load alignment --------//
     alignment A = load_A(args);
 
+    vector<unsigned> L = sequence_lengths(A);
+
     ublas::matrix<int> MA = M(A);
     ublas::matrix<int> MA2 = MA;
 
@@ -241,10 +243,10 @@ int main(int argc,char* argv[])
     //------- Write the columns ------//
     for(int c=0;c<MA.size1();c++) 
     {
-      if (invariant or columns)
+      if (invariant != -1 or columns)
 	if (not safe2[c]) continue;
 
-      if (invariant  and n_characters_in_column(MA2,c) < min_constraints) continue;
+      if (invariant != -1 and n_characters_in_column(MA2,c) < min_constraints) continue;
 
       // write the indices
       for(int i=0;i<MA2.size2();i++) {
@@ -273,6 +275,8 @@ int main(int argc,char* argv[])
       }
       cout<<std::endl;
     }
+    for(int i=0;i<MA2.size2();i++)
+      largest_block[i] = std::max<int>(largest_block[i], L[i]-last_constrained[i]-1);
 
     if (invariant != -1)
     {
