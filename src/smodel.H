@@ -495,8 +495,6 @@ namespace substitution {
   public:
     efloat_t super_prior() const;
 
-    efloat_t prior() const;
-
     M0* clone() const {return new M0(*this);}
 
     /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
@@ -1035,7 +1033,7 @@ namespace substitution {
     C20_CAT_FixedFrequencyModel();
   };
 
-  /// A substitution model based on running Reversible Models with the same equilibrium at different rates
+  /// A mixture of variants of model M with parameter p set to n_bin different values
   class MultiParameterModel: public MultiModel, 
 			     public ReversibleWrapperOver<MultiModel> 
   {
@@ -1067,6 +1065,7 @@ namespace substitution {
     /// Get the equilibrium frequencies
     const valarray<double>& frequencies() const;
 
+    /// Construct a mixture of variants of model M with parameter p set to n_bin different values
     MultiParameterModel(const MultiModel& M,int p,int n_bins);
 
     ~MultiParameterModel() {}

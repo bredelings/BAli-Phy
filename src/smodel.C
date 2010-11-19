@@ -246,7 +246,7 @@ namespace substitution {
   {
     // Start with *f = 1
     add_parameter(Parameter("f",1.0,between(0, 1)));
-    parameters_[0].fixed = true;
+    //    parameters_[0].fixed = true;
 
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
@@ -1286,12 +1286,14 @@ namespace substitution {
     }
   }
 
-  efloat_t M0::super_prior() const {
-    return laplace_pdf(log(omega()), 0, 0.1)/omega();
-  }
+  efloat_t M0::super_prior() const 
+  {
+    efloat_t Pr = 1;
 
-  efloat_t M0::prior() const {
-    return SuperModelOver<NucleotideExchangeModel>::prior();
+    if (not is_fixed(0))
+      laplace_pdf(log(omega()), 0, 0.1)/omega();
+
+    return Pr;
   }
 
   string M0::name() const {
