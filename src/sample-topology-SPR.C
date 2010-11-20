@@ -833,7 +833,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
   spr_attachment_probabilities Pr;
   Pr[I.B0] = P.heated_likelihood() * P.prior_no_alignment();
 
-#ifndef NDEBUG
+#ifdef DEBUG_SPR_ALL
   Pr.LLL[I.B0] = P.heated_likelihood();
 
   efloat_t PR1 = P.heated_likelihood();
@@ -899,7 +899,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 
     // **3. RECORD** the tree and likelihood
     Pr[B2] = heated_likelihood_unaligned_root(P) * P.prior_no_alignment();
-#ifndef NDEBUG
+#ifdef DEBUG_SPR_ALL
     efloat_t PR2 = heated_likelihood_unaligned_root(P);
     Pr.LLL[B2] = PR2;
     efloat_t PR1 = P.heated_likelihood();
@@ -948,7 +948,7 @@ bool SPR_accept_or_reject_proposed_tree(Parameters& P, vector<Parameters>& p,
   //--------- Compute PrL2: reverse proposal probabilities ---------//
 
   vector<efloat_t> PrL2 = PrL;
-#ifdef NDEBUG
+#ifndef DEBUG_SPR_ALL
   if (P.variable_alignment())
 #endif
   {
@@ -1087,7 +1087,9 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   spr_attachment_probabilities PrB = SPR_search_attachment_points(p[1], b1, locations, I.BM);
 
   vector<efloat_t> Pr = I.convert_to_vector(PrB);
+#ifdef DEBUG_SPR_ALL
   vector<efloat_t> LLL = I.convert_to_vector(PrB.LLL);
+#endif
 
   // Step N-2: CHOOSE an attachment point
 
@@ -1123,7 +1125,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   }
   p[1].subA_index_allow_invalid_branches(false);
 
-#ifndef NDEBUG
+#ifdef DEBUG_SPR_ALL
   // The likelihood for attaching at a particular place should not
   // depend on the initial attachment point.
   efloat_t L_1 = heated_likelihood_unaligned_root(p[1]);
