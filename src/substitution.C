@@ -32,6 +32,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define IF_DEBUG(x) x
 #endif
 
+#ifndef DEBUG_SUBSTITUTION
+#define IF_DEBUG_S(x)
+#else
+#define IF_DEBUG_S(x) x
+#endif
 
 // recalculate a likelihood immediate afterwards, and see if we get the same answer...
 // perhaps move the collection root node one branch away?
@@ -259,7 +264,7 @@ namespace substitution {
       else if (mi==1)
 	p_col = element_prod_sum(F, *m[0]);
 
-#ifndef NDEBUG
+#ifndef DEBUG_SUBSTITUTIOn
       //-------------- Set letter & model prior probabilities  ---------------//
       element_assign(S,F);
 
@@ -1106,7 +1111,7 @@ namespace substitution {
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
 
-#ifndef NDEBUG
+#ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
     check_regenerate(I, A, T);
 #endif
@@ -1120,8 +1125,9 @@ namespace substitution {
 
     ublas::matrix<int> index = I.get_subA_index_any(b,A,T,req,seq);
 
-    IF_DEBUG(int n_br =) calculate_caches_for_node(LC.root, P);
-#ifndef NDEBUG
+    IF_DEBUG_S(int n_br = ) calculate_caches_for_node(LC.root, P);
+
+#ifdef DEBUG_SUBSTITUTION
     std::clog<<"get_column_likelihoods: Peeled on "<<n_br<<" branches.\n";
 #endif
 
@@ -1255,10 +1261,11 @@ namespace substitution {
     for(int i=0;i<leaf_branch_list.size();i++)
       Pr3 *= other_subst_behind_branch(leaf_branch_list[i], A, T, I, LC, MC, MModel);
 
-#ifndef NDEBUG
-    IF_DEBUG(int n_br =) calculate_caches_for_node(LC.root, P);
+#ifdef DEBUG_SUBSTITUTION
+    int n_br = calculate_caches_for_node(LC.root, P);
     std::clog<<"other_subst: Peeled on "<<n_br<<" branches.\n";
-
+#endif
+#ifdef DEBUG_INDEXING
     //    std::cerr<<"other_subst: there are "<<leaf_branch_list.size()<<" subtree leaf branches."<<std::endl;
     //    std::cerr<<"other_subst: there are "<<nodes.size()<<" subtree nodes."<<std::endl;
     //    std::cerr<<A<<std::endl;
@@ -1451,13 +1458,14 @@ namespace substitution {
     default_timer_stack.push_timer("substitution");
     default_timer_stack.push_timer("substitution::likelihood_unaligned");
 
-#ifndef NDEBUG
+#ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
     check_regenerate(I, A, T, LC.root);
 #endif
 
-    IF_DEBUG(int n_br =) calculate_caches_for_node(LC.root, A,I,MC,T,LC,MModel);
-#ifndef NDEBUG
+    IF_DEBUG_S(int n_br = ) calculate_caches_for_node(LC.root, A,I,MC,T,LC,MModel);
+
+#ifdef DEBUG_SUBSTITUTION
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
 
@@ -1479,7 +1487,7 @@ namespace substitution {
       Pr *= calc_root_probability_unaligned(A,T,LC,MModel,rb,index_unaligned);
     }
     
-#ifndef NDEBUG
+#ifdef DEBUG_INDEXING
     int n1 = n_non_null_entries(index_aligned);
     int l1 = n_non_empty_columns(index_aligned);
 
@@ -1529,7 +1537,7 @@ namespace substitution {
 
 #ifndef DEBUG_CACHING
     if (LC.cv_up_to_date()) {
-#ifndef NDEBUG
+#ifdef DEBUG_CACHING
       std::clog<<"Pr: Using cached value "<<log(LC.cached_value)<<"\n";
 #endif
       default_timer_stack.pop_timer();
@@ -1538,13 +1546,13 @@ namespace substitution {
     }
 #endif
 
-#ifndef NDEBUG
+#ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
     check_regenerate(I, A, T, LC.root);
 #endif
 
-    IF_DEBUG(int n_br =) calculate_caches_for_node(LC.root, A,I,MC,T,LC,MModel);
-#ifndef NDEBUG
+    IF_DEBUG_S(int n_br =) calculate_caches_for_node(LC.root, A,I,MC,T,LC,MModel);
+#ifdef DEBUG_SUBSTITUTION
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
 
@@ -1613,7 +1621,7 @@ namespace substitution {
     }
 #endif
 
-#ifdef DEBUG_INTERNAL_INDEX
+#ifdef DEBUG_INDEXING
     efloat_t result3 = Pr_from_scratch_leaf(P);
 
     if (P.variable_alignment())

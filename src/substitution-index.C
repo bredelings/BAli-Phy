@@ -26,6 +26,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define IF_DEBUG(x) x
 #endif
 
+#ifdef NDEBUG_INDEXING
+#define IF_DEBUG_I(x)
+#else
+#define IF_DEBUG_I(x) x
+#endif
+
 using std::vector;
 
 using boost::dynamic_bitset;
@@ -108,7 +114,7 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, con
 	subA(c,j) = -1;
     else 
     {
-      IF_DEBUG( check_footprint_for_branch(A,T,branches[j]) );
+      IF_DEBUG_I( check_footprint_for_branch(A,T,branches[j]) );
 
       if (not branch_index_valid(branches[j]))
 	update_branch(A,T,branches[j]);
@@ -259,7 +265,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_aligned(const vector<int>& b,con
 
 /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
 ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
-						    const vector<int>& IF_DEBUG(nodes), const vector<int>& seq) 
+						    const vector<int>& IF_DEBUG_I(nodes), const vector<int>& seq) 
 {
   vector<int> b2 = b;
   b2.push_back(-1);
@@ -275,7 +281,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const a
   for(int i=0;i<seq.size();i++) 
     subA(seq[i],B) = i;
 
-#ifndef NDEBUG
+#ifdef DEBUG_INDEXING
   // check reqs...
   for(int c=0;c<subA.size1();c++)
     if (any_present(A,c,nodes))
@@ -435,7 +441,7 @@ int rank(const Tree& T,int b) {
 
 void subA_index_t::update_branch(const alignment& A,const Tree& T,int b) 
 {
-#ifndef NDEBUG  
+#ifdef DEBUG_INDEXING
   check_footprint(A,T);
 #endif
 
@@ -455,7 +461,7 @@ void subA_index_t::update_branch(const alignment& A,const Tree& T,int b)
   for(int i=0;i<branches.size();i++)
     update_one_branch(A,T,branches[i]);
 
-#ifndef NDEBUG  
+#ifdef DEBUG_INDEXING
   check_footprint(A,T);
 
   // FIXME - we should check the branches that point to the root, but we
