@@ -112,8 +112,12 @@ namespace substitution {
     :S(n,n)
   {}
 
-  efloat_t SimpleExchangeModel::prior() const {
-    return laplace_pdf(log(rho()), -3, 1)/rho();
+  efloat_t SimpleExchangeModel::prior() const 
+  {
+    if (is_fixed(0))
+      return 1;
+    else
+      return laplace_pdf(log(rho()), -3, 1)/rho();
   }
 
   void SimpleExchangeModel::recalc(const vector<int>&)
@@ -1063,7 +1067,10 @@ namespace substitution {
 
   efloat_t HKY::prior() const 
   {
-    return laplace_pdf(log(kappa()), log(2), 0.25)/kappa();
+    if (is_fixed(0))
+      return 1;
+    else
+      return laplace_pdf(log(kappa()), log(2), 0.25)/kappa();
   }
 
   void HKY::recalc(const vector<int>&) {
@@ -1096,8 +1103,10 @@ namespace substitution {
   efloat_t TN::prior() const 
   {
     efloat_t P = 1;
-    P *= laplace_pdf(log(kappa1()), log(2), 0.25)/kappa1();
-    P *= laplace_pdf(log(kappa2()), log(2), 0.25)/kappa2();
+    if (not is_fixed(0))
+      P *= laplace_pdf(log(kappa1()), log(2), 0.25)/kappa1();
+    if (not is_fixed(1))
+      P *= laplace_pdf(log(kappa2()), log(2), 0.25)/kappa2();
     return P;
   }
 
@@ -1288,12 +1297,10 @@ namespace substitution {
 
   efloat_t M0::super_prior() const 
   {
-    efloat_t Pr = 1;
-
-    if (not is_fixed(0))
-      laplace_pdf(log(omega()), 0, 0.1)/omega();
-
-    return Pr;
+    if (is_fixed(0))
+      return 1;
+    else
+      return laplace_pdf(log(omega()), 0, 0.1)/omega();
   }
 
   string M0::name() const {
@@ -1855,7 +1862,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   efloat_t WithINV::super_prior() const {
     double p = get_parameter_value(0);
 
-    return beta_pdf(p, 1, 2);
+    if (is_fixed(0))
+      return 1;
+    else
+      return beta_pdf(p, 1, 2);
   }
 
     /// Access the base models
@@ -1937,7 +1947,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     double p = get_parameter_value(0);
 
-    return beta_pdf(p, 1, 2);
+    if (is_fixed(0))
+      return 1;
+    else
+      return beta_pdf(p, 1, 2);
   }
 
     /// Access the base models
@@ -2012,7 +2025,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // prior on omega
     double omega = get_parameter_value(3);
-    P *= exponential_pdf(log(omega),0.05)/omega;
+    if (not is_fixed(3))
+      P *= exponential_pdf(log(omega),0.05)/omega;
     return P;
   }
 
