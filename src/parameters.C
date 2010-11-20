@@ -108,7 +108,7 @@ IndelModel& data_partition::IModel()
 
 indel::PairHMM heat(indel::PairHMM H, double beta)
 {
-  if (beta != 1) return H;
+  if (beta == 1) return H;
 
   for(int i=0;i<H.size1();i++)
   {
@@ -118,11 +118,10 @@ indel::PairHMM heat(indel::PairHMM H, double beta)
     {
       total1 += H(i,j);
 
-      if (beta == 0)
+      if (beta != 0)
 	H(i,j) = pow(H(i,j), beta);
-
       else {
-	if (H(i,j) > 0) 
+	if (H(i,j) > 0)
 	  H(i,j) = 1;
 	else
 	  H(i,j) = 0;
