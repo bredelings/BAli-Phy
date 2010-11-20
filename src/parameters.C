@@ -137,26 +137,29 @@ indel::PairHMM heat(indel::PairHMM H, double beta)
   return H;
 }
 
-void data_partition::recalc_imodel() 
+void data_partition::recalc_imodel_for_branch(int b)
 {
   if (not variable_alignment()) return;
 
+  b = T->directed_branch(b).undirected_name();
+
+  // use the length, unless we are unaligned
+  double t = T->branch(b).length();
+  
+  // compute and cache the branch HMM
+  if (branch_HMM_type[b] == 1)
+    branch_HMMs[b] = IModel_->get_branch_HMM(-1);
+  else
+    branch_HMMs[b] = heat(IModel_->get_branch_HMM(t*branch_mean()), get_beta());
+
   cached_alignment_prior.invalidate();
+  cached_alignment_prior_for_branch[b].invalidate();
+}
 
-  for(int b=0;b<cached_alignment_prior_for_branch.size();b++)
-    cached_alignment_prior_for_branch[b].invalidate();
-
+void data_partition::recalc_imodel() 
+{
   for(int b=0;b<branch_HMMs.size();b++) 
-  {
-    // use the length, unless we are unaligned
-    double t = T->branch(b).length();
-    
-    // compute and cache the branch HMM
-    if (branch_HMM_type[b] == 1)
-      branch_HMMs[b] = IModel_->get_branch_HMM(-1);
-    else
-      branch_HMMs[b] = heat(IModel_->get_branch_HMM(t*branch_mean()), get_beta());
-  }
+    recalc_imodel_for_branch(b);
 }
 
 /// \brief Recalculate cached values relating to the substitution model.
@@ -190,19 +193,8 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
 
   MC.setlength(b,l,*T,*SModel_); 
 
-  if (variable_alignment())
-  {
-    // use the length, unless we are unaligned
-    double t = T->branch(b).length();
+  recalc_imodel_for_branch(b);
 
-    if (branch_HMM_type[b] == 1)
-      branch_HMMs[b] = IModel_->get_branch_HMM(-1);
-    else
-      branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());
-
-    cached_alignment_prior.invalidate();
-    cached_alignment_prior_for_branch[b].invalidate();
-  }
   default_timer_stack.pop_timer();
 }
 
