@@ -689,9 +689,14 @@ int main(int argc,char* argv[])
       throw myexception()<<"Tree files not specified!";
 
     vector<string> files = args["files"].as< vector<string> >();
-    vector< vector<string> > filenames(files.size());
-    for(int i=0;i<files.size();i++) 
-      filenames[i] = split(files[i],':');
+    vector< vector<string> > filenames(1);
+    for(int i=0; i < files.size(); i++)
+    {
+      if (files[i] != "::")
+	filenames.back().push_back(files[i]);
+      else
+	filenames.push_back(vector<string>());
+    }
 
     tree_sample_collection tree_dists(filenames,skip,subsample,max);
 

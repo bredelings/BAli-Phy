@@ -31,6 +31,8 @@
 
 use strict;
 
+use warnings;
+
 use Carp;
 
 use POSIX;
@@ -362,7 +364,7 @@ while(my $line = <CONSENSUS>) {
 	last;
     }
 }
-
+close CONSENSUS;
 
 # 14. Traceplots for scalar variables
 
@@ -1148,13 +1150,12 @@ sub mixing_diagnostics
     if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
 	`perl -e 'while(<>) {s/\$/\\n/;print;}' < Results/partitions > Results/partitions.pred`;
     }
-    
+
     if (!more_recent_than_all_of("Results/partitions.bs",[@tree_files])) {
-	my $trees_arg = join(':',@tree_files);
-	`trees-bootstrap $max_arg $trees_arg $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table --pseudocount 1 > Results/partitions.bs`;
+	`trees-bootstrap $max_arg @tree_files $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table --pseudocount 1 > Results/partitions.bs`;
     }
     print "done.\n";
-    
+
     if (!more_recent_than_all_of("Results/convergence-PP.pdf",[@tree_files]) and $#tree_files > 0)
     {
 	my $script = find_in_path("compare-runs.R");
