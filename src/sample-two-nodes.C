@@ -217,6 +217,12 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
   //  Matrices.prune(); broken!
   Matrices->forward();
 
+  if (Matrices->Pr_sum_all_paths() <= 0.0) 
+  {
+    default_timer_stack.pop_timer();
+    return; // Matrices;
+  }
+
   //------------- Sample a path from the matrix -------------------//
 
   vector<int> path_g = Matrices->sample_path();
@@ -299,6 +305,8 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
       {
 	sample_two_nodes_base(p[i][j],nodes[i],cached_dparrays[i][j]);
 	Matrices[i].push_back(cached_dparrays[i][j]);
+	if (Matrices[i].back()->Pr_sum_all_paths() <= 0.0)
+	  std::cerr<<"sample-two-nodes: choice "<<i<<" has 0 probability!"<<std::endl;
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][4]);
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
