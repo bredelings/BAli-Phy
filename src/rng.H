@@ -28,16 +28,16 @@ along with BAli-Phy; see the file COPYING.  If not see
 unsigned long myrand_init();
 unsigned long myrand_init(unsigned long);
  
-// returns a value in [0,1)
+
 unsigned long uniform_unsigned_long();
 
 // synonym for 'uniform'
 double myrandomf();
 
-// returns a value in [0,1)
+// returns a value in (0,1)
 double uniform();
 
-// return the log of a variable that is uniform on [0,1)
+// return the log of a variable that is uniform on (0,1)
 double log_unif();
 
 // return a normal random variate
@@ -86,7 +86,7 @@ namespace rng {
 
     unsigned long get() { return gsl_rng_get(generator) ;}
 
-    double uniform() { return gsl_rng_uniform(generator); }
+    double uniform() { return gsl_rng_uniform_pos(generator); }
     
     double uniform_int(unsigned long int n) { return gsl_rng_uniform_int(generator,n); }
 
