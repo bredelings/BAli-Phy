@@ -106,37 +106,6 @@ IndelModel& data_partition::IModel()
   std::abort();
 }
 
-indel::PairHMM heat(indel::PairHMM H, double beta)
-{
-  if (beta == 1) return H;
-
-  for(int i=0;i<H.size1();i++)
-  {
-    double total1 = 0;
-    double total2 = 0;
-    for(int j=0;j<H.size2();j++)
-    {
-      total1 += H(i,j);
-
-      if (beta != 0)
-	H(i,j) = pow(H(i,j), beta);
-      else {
-	if (H(i,j) > 0)
-	  H(i,j) = 1;
-	else
-	  H(i,j) = 0;
-      }
-
-      total2 += H(i,j);
-    }
-    assert(std::abs(1.0 - total1) < 1.0e-9);
-    for(int j=0;j<H.size2();j++)
-      H(i,j) /= total2;
-  }
-
-  return H;
-}
-
 void data_partition::recalc_imodel_for_branch(int b)
 {
   if (not variable_alignment()) return;
@@ -149,8 +118,10 @@ void data_partition::recalc_imodel_for_branch(int b)
   // compute and cache the branch HMM
   if (branch_HMM_type[b] == 1)
     branch_HMMs[b] = IModel_->get_branch_HMM(-1);
-  else
-    branch_HMMs[b] = heat(IModel_->get_branch_HMM(t*branch_mean()), get_beta());
+  else {
+    IModel_->set_heat( get_beta() );
+    branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());;
+  }
 
   cached_alignment_prior.invalidate();
   cached_alignment_prior_for_branch[b].invalidate();

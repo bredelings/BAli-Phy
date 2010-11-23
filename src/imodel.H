@@ -105,6 +105,7 @@ struct transducer_state_info
 class IndelModel: public Model 
 {
   bool in_training;
+  double heat;
 public: 
 
   virtual IndelModel* clone() const =0;
@@ -118,6 +119,10 @@ public:
   virtual void set_training(bool);
 
   virtual bool is_training() const;
+
+  virtual void set_heat(double);
+
+  virtual double get_heat() const;
 
   IndelModel();
 

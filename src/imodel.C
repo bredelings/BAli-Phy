@@ -198,8 +198,19 @@ bool IndelModel::is_training() const
   return in_training;
 }
 
+double IndelModel::get_heat() const
+{
+  return heat;
+}
+
+void IndelModel::set_heat(double h)
+{
+  assert(0<= h and h <= 1);
+  heat = h;
+}
+
 IndelModel::IndelModel()
-  :in_training(false)
+  :in_training(false), heat(1)
 { }
 
 IndelModel::~IndelModel() {}
@@ -388,6 +399,15 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const
 
   if (is_training()) delta = std::min(delta,0.005);
 
+  if (t < -0.5)
+    delta = 0.5;
+  else
+  {
+    double f = 0.1; //unaligned fraction
+    delta = pow(delta, get_heat()) * pow(f/(1+f),1-get_heat());
+    e = 1.0 - pow(1.0 - e, get_heat());
+  }
+
   if (delta > 0.5)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
 
@@ -518,6 +538,12 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
 
   if (t < -0.5)
     delta = 0.5;
+  else
+  {
+    double f = 0.1; //unaligned fraction
+    delta = pow(delta, get_heat()) * pow(f/(1+f),1-get_heat());
+    e = 1.0 - pow(1.0 - e, get_heat());
+  }
 
   if (1 - 2*delta <0)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
