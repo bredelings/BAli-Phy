@@ -209,7 +209,7 @@ double dirichlet_proposal(std::vector<double>& x,const std::vector<double>& p)
   double N = p[0];
 
   if (N <= 0)
-    throw myexception()<<"dirichlet_proposal: parameter N <= 0!";
+    throw myexception()<<"dirichlet_proposal: parameter N <= 0! (N = "<<N<<", x.size() == "<<x.size()<<")";
 
   double s = sum(x);
 
