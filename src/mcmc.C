@@ -194,7 +194,17 @@ namespace MCMC {
     clog<<"   submove = "<<moves[order[i]]->name<<endl;
 #endif
 
-    moves[order[i]]->iterate(P,Stats,suborder[i]);
+    try {
+      moves[order[i]]->iterate(P,Stats,suborder[i]);
+    }
+    catch (myexception& e)
+    {
+      std::ostringstream o;
+      o<<" move = "<<name<<"\n";
+      o<<"   submove = "<<moves[order[i]]->name<<"\n";
+      e.prepend(o.str());
+      throw e;
+    }
     default_timer_stack.pop_timer();
   }
 
@@ -309,7 +319,17 @@ namespace MCMC {
 #endif
 
     iterations++;
-    (*m)(P,Stats);
+    try {
+      (*m)(P,Stats);
+    }
+    catch (myexception& e)
+    {
+      std::ostringstream o;
+      o<<" [single] move = "<<name<<"\n";
+      e.prepend(o.str());
+      throw e;
+    }
+    
     default_timer_stack.pop_timer();
   }
 
@@ -331,7 +351,18 @@ namespace MCMC {
 
     owned_ptr<Probability_Model> P2 = P;
 
-    double ratio = (*proposal)(*P2);
+    double ratio = 1;
+    try {
+      ratio = (*proposal)(*P2);
+    }
+    catch (myexception& e)
+    {
+      std::ostringstream o;
+      o<<" [MH] move = "<<name<<"  (during proposal)\n";
+      e.prepend(o.str());
+      throw e;
+    }
+    
 
     int n = 1;
     Proposal2* p2 = dynamic_cast<Proposal2*>(&(*proposal));
@@ -738,7 +769,16 @@ void MoveArgSingle::operator()(owned_ptr<Probability_Model>& P,MoveStats& Stats,
 #endif
 
   iterations++;
-  (*m)(P,Stats,args[arg]);
+  try {
+    (*m)(P,Stats,args[arg]);
+  }
+  catch (myexception& e)
+  {
+    std::ostringstream o;
+    o<<" [single] move = "<<name<<"\n";
+    e.prepend(o.str());
+    throw e;
+  }
   default_timer_stack.pop_timer();
 }
     
