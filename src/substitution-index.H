@@ -133,6 +133,8 @@ public:
 
   virtual void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const=0;
   void check_footprint(const alignment& A1,const Tree& T) const;
+
+  virtual ~subA_index_t() {}
 };
 
 struct subA_index_leaf: public subA_index_t
