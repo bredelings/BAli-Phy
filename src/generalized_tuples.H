@@ -273,11 +273,11 @@ public:
   std::string expression() const;
 
   template <typename T>
-  const T& get_value_as(int i) const {return dynamic_cast<const T&>(*values[i]);}
+  const T& get_value_as(int i) const {return dynamic_cast<const Value<T>&>(*values[i]).value;}
 
   // we might want to modify the value of an intermediate node in doing calculations
   template <typename T>
-  T& get_value_as(int i)       {mark_out_of_date(i);return dynamic_cast<      T&>(*values[i]);}
+  T& get_value_as(int i)       {mark_out_of_date(i);return dynamic_cast< Value<T>&>(*values[i]).value;}
 
   // we might want to modify the value of an intermediate node in doing calculations
   template <typename T>

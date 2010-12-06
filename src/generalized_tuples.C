@@ -273,6 +273,8 @@ void MultiplyValue::update(const Values& V, const std::vector<int>& mapping)
 //   * 
 // - Would it be possible to define a new node (e.g. both Value and the FormulaNode) at once?
 // - Is there an elegant way of handling constants?
+// - If I have to dynamically case ValueBase to Value<T> then, I have to know T (the stored type)
+//   not just that it can be converted to some type Y.
 
 // Could I make a template function that take a c++ function (or function object)
 // and makes a Value node and/or a 
@@ -303,15 +305,13 @@ int main(int argc,char* argv[])
   cout<<"V1 = \n"<<V1.expression()<<endl;
 
   // set the value of the single state node
-  V1.get_value_as< Value<double> >(0).value = 2;
-  // mark the state node as being up-to-date
-  // (So, should state nodes ALWAYS be up-to-date?)
+  V1.get_value_as<double>(0) = 2;
+  // state nodes need to be marked up-to-date, and are then assumed to stay that way.
+  // FIXME - their should be a general method for marking only StateNodes & InputNodes up-to-date
   V1.mark_up_to_date(0);
 
   // set the value of the single state node
-  V1.get_value_as< Value<double> >(1).value = 3;
-  // mark the state node as being up-to-date
-  // (So, should state nodes ALWAYS be up-to-date?)
+  V1.get_value_as<double>(1) = 3;
   V1.mark_up_to_date(1);
 
   cout<<"V1 = \n"<<V1.expression()<<endl;
@@ -323,11 +323,10 @@ int main(int argc,char* argv[])
   cout<<"V1 = \n"<<V1.expression()<<endl;
 
   Values V2 = V1;
+
   cout<<"V2 = \n"<<V2.expression()<<endl;
 
-  // If I made ValueBase contain a boost::any, then could I just write V2.get_value<double>(0) = 3; ?
-  // I might need to keep a V2.get_value_node(0) to access the Value object containing the boost::any, though.
-  V2.get_value_as< Value<double> >(0).value = 3;
+  V2.get_value_as<double>(0) = 3;
   
   cout<<"V2 = \n"<<V2.expression()<<endl;
   V2.calculate_value(3);
