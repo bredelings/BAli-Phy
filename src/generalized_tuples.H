@@ -134,7 +134,7 @@ public:
   }
 
   /// Notify this value that certain of its inputs are out-of-date
-  virtual message_list_t notify_inputs_out_of_date(const Values&, const out_of_date_message_t&, int)
+  virtual message_list_t notify_input_out_of_date(const Values&, const out_of_date_message_t&, int)
   {
     return mark_self_out_of_date();
   }
@@ -174,7 +174,7 @@ struct StateValue: public Value<T>
 
   // A state value ignores all messages: it can't be out of date!
   // FIXME: Should we abort, though?
-  bool ignored(const out_of_date_message_t&) {return true;}
+  bool ignored(const out_of_date_message_t&) const {return true;}
 
   // A state value ignores all messages: it can't be out of date!
   // FIXME: Should we abort, though?
@@ -245,8 +245,9 @@ class Values
   polymorphic_cow_ptr<const Formula> F;
 
   std::vector<message_list_t> unprocessed_messages;
+
 protected:
-  void process_messages(); // user  should NEVER need to call this manually...
+  void process_messages(); // user should NEVER need to call this manually...
 
 public:  
   Values* clone() const {return new Values(*this);}
@@ -259,9 +260,13 @@ public:
   bool completely_up_to_date(int i) const {return get_value(i).completely_up_to_date();}
   bool completely_out_of_date(int i) const {return get_value(i).completely_out_of_date();}
 
-  void invalidate_entry(int i);
+  void record_changes_no_deliver(int x, message_list_t&);
 
-  void invalidate_entry(int i, const out_of_date_message_t&);
+  void notify_x_of_change_in_y(int x, int y, const out_of_date_message_t&);
+
+  void mark_out_of_date(int i);
+
+  void mark_up_to_date(int i) {get_value(i).mark_up_to_date();}
 
   void calculate_value(int i);
 
@@ -272,7 +277,7 @@ public:
 
   // we might want to modify the value of an intermediate node in doing calculations
   template <typename T>
-  T& get_value_as(int i)       {invalidate_entry(i);return dynamic_cast<      T&>(*values[i]);}
+  T& get_value_as(int i)       {mark_out_of_date(i);return dynamic_cast<      T&>(*values[i]);}
 
   // we might want to modify the value of an intermediate node in doing calculations
   template <typename T>

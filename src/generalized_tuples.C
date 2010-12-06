@@ -56,18 +56,32 @@ int Formula::add_entry(const string& name, const FormulaNode& Node, const std::v
 //   + and thus the number 
 // - a method for computing a Value for each node
 
-void Values::invalidate_entry(int i)
+void Values::record_changes_no_deliver(int x, message_list_t& x_changes)
 {
-  if (completely_out_of_date(i))
-    return;
+  // If x has changed completely, then just record a single "everything has changed" message.
+  if (completely_out_of_date(x))
+  {
+    owned_ptr<out_of_date_message_t> mp = claim(new out_of_date_message_t);
+    unprocessed_messages[x].clear();
+    unprocessed_messages[x].push_back(mp);
+  }
+  else
+  // Collect the changes from this message.
+    unprocessed_messages[x].splice(unprocessed_messages[x].end(), x_changes);
+}
 
-  values[i]->mark_self_out_of_date();
+void Values::notify_x_of_change_in_y(int x, int y, const out_of_date_message_t& m)
+{
+  // if x is already of date, don't bother sending any more message about how its inputs have changed
+  if (completely_out_of_date(x)) return;
 
-  unprocessed_messages[i].clear();
-  owned_ptr<out_of_date_message_t> mp = claim(new out_of_date_message_t);
-  unprocessed_messages[i].push_back(mp);
+  // Don't unshare x by calling notify_inputs_out_of_date( ) unless x will change!
+  if (values[x]->ignored(m)) return;
 
-  process_messages();
+  // Notify x of the changes, and find out how x has changed.
+  message_list_t x_changes = values[x]->notify_input_out_of_date(*this, m, y);
+
+  record_changes_no_deliver(x, x_changes);
 }
 
 void Values::process_messages()
@@ -98,27 +112,24 @@ void Values::process_messages()
       for(message_list_t::const_iterator m = index1_all_changes.begin(); 
 	  m != index1_all_changes.end() and not completely_out_of_date(index2); m++)
       {
-	// Don't unshare the object by calling notify_inputs_out_of_date( ) unless it will change!
-	if (values[index2]->ignored(*(*m))) continue;
-
-	// Notify the index2 object of the changes, and find out how that object has changed.
-	message_list_t index2_changes = values[index2]->notify_inputs_out_of_date(*this, *(*m), index1);
-
-	// Collect the changes from this message.
-	index2_all_changes.splice(index2_all_changes.end(), index2_changes);
+	notify_x_of_change_in_y(index2, index1, *(*m));
       }
-
-      if (completely_out_of_date(index2)) 
-      {
-	/// index2 is completely out of date now, but wasn't before.  Replace w/ just one message.
-	owned_ptr<out_of_date_message_t> mp = claim(new out_of_date_message_t);
-	unprocessed_messages[index2].clear();
-	unprocessed_messages[index2].push_back(mp);
-      }
-      else
-	unprocessed_messages[index2].splice(unprocessed_messages[index2].end(), index2_all_changes);
     }
   }
+}
+
+void Values::mark_out_of_date(int i)
+{
+  if (completely_out_of_date(i))
+    return;
+
+  values[i]->mark_self_out_of_date();
+
+  unprocessed_messages[i].clear();
+  owned_ptr<out_of_date_message_t> mp = claim(new out_of_date_message_t);
+  unprocessed_messages[i].push_back(mp);
+
+  process_messages();
 }
 
 void Values::calculate_value(int index2)
@@ -142,7 +153,7 @@ void Values::calculate_value(int index2)
     for(int i=0;i<input_indices.size();i++)
     {
       int j = input_indices[i];
-      if (not values[j]->completely_up_to_date())
+      if (not completely_up_to_date(j))
       {
 	indices_to_validate.push_back(j);
 	inputs_ok = false;
@@ -289,27 +300,27 @@ int main(int argc,char* argv[])
 
   Values V1(F);
 
-  cout<<V1.expression()<<endl;
+  cout<<"V1 = \n"<<V1.expression()<<endl;
 
   // set the value of the single state node
   V1.get_value_as< Value<double> >(0).value = 2;
   // mark the state node as being up-to-date
   // (So, should state nodes ALWAYS be up-to-date?)
-  V1.get_value(0).mark_up_to_date();
+  V1.mark_up_to_date(0);
 
   // set the value of the single state node
   V1.get_value_as< Value<double> >(1).value = 3;
   // mark the state node as being up-to-date
   // (So, should state nodes ALWAYS be up-to-date?)
-  V1.get_value(1).mark_up_to_date();
+  V1.mark_up_to_date(1);
 
-  cout<<V1.expression()<<endl;
+  cout<<"V1 = \n"<<V1.expression()<<endl;
   
   // Try to compute "Z"
   // What if the base values are not up-to-date?
   V1.calculate_value(3);
 
-  cout<<V1.expression()<<endl;
+  cout<<"V1 = \n"<<V1.expression()<<endl;
 
   Values V2 = V1;
   cout<<"V2 = \n"<<V2.expression()<<endl;
@@ -347,4 +358,14 @@ int main(int argc,char* argv[])
  * 6. I need a modify_no_invalidate accessor for the values!
  * 
  * 7. The user should be able to manage invalidation and caching entirely on their own, if they want to!
+ *
+ * 8. Add one formula as an entry in another.  This will be useful for submodels.
+ */
+
+/*
+ * The user should NOT be able to
+ *
+ * 1. Access the ValueBase or  Value<T> objects directly, unless...
+ *    (a) this is needed for saving & restoring.
+ *
  */
