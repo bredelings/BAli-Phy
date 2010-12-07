@@ -82,6 +82,8 @@ public:
   /// Describe this expression
   virtual std::string expression(const std::vector<std::string>& argument_names) const=0;
 
+  FormulaNode() {}
+  FormulaNode(int i);
   virtual ~FormulaNode() {}
 };
 
@@ -238,6 +240,31 @@ public:
 };
 
 
+class FunctionValue: public Value<double>
+{
+  double (*function)(double, double);
+public:
+  FunctionValue* clone() const {return new FunctionValue(*this);}
+  int n_inputs() const {return 2;}
+  void update(const Values& V, const std::vector<int>& mapping);
+  FunctionValue(double (*f)(double,double));
+};
+
+class FunctionNode: public FormulaNode
+{
+  std::string name;
+  double (*function)(double, double);
+public:
+  FunctionNode* clone() const {return new FunctionNode(*this);}
+
+  FunctionValue* create_new_value() const {return new FunctionValue(function);}
+
+  std::string expression(const std::vector<std::string>&) const;
+
+  FunctionNode(const std::string& s, double (*f)(double,double));
+};
+
+
 class Values
 {
   std::vector<polymorphic_cow_ptr<ValueBase> > values;
@@ -247,7 +274,7 @@ class Values
   std::vector<message_list_t> unprocessed_messages;
 
 protected:
-  void process_messages(); // user should NEVER need to call this manually...
+  void process_messages();
 
 public:  
   Values* clone() const {return new Values(*this);}
@@ -285,4 +312,46 @@ public:
 
   Values(const Formula&);
 };
+
+enum node_t {constant=0, input=1, state=2, computed=3};
+
+struct ParameterBase
+{
+  static int total;
+
+  std::string name;
+  int id;
+  node_t type;
+  polymorphic_cow_ptr<FormulaNode> formula_node;
+  std::vector<cow_ptr<ParameterBase> > inputs;
+
+  ParameterBase* clone() {return new ParameterBase(*this);}
+
+  ParameterBase();
+  ParameterBase(const std::string&);
+  ParameterBase(const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i);
+  ParameterBase(const std::string&, const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i);
+};
+
+
+template<typename T>
+struct Parameter
+{
+  typedef T type;
+  cow_ptr<ParameterBase> node;
+  Parameter()
+    :node(new ParameterBase(StateNode<T>(), std::vector<cow_ptr<ParameterBase> >() ) )
+  { }
+  Parameter(const std::string& s)
+    :node(new ParameterBase(s, StateNode<T>(), std::vector<cow_ptr<ParameterBase> >() ) )
+  { }
+  Parameter(const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i)
+    :node(new ParameterBase(fn,i))
+  { }
+  Parameter(const std::string& s, const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i)
+    :node(new ParameterBase(s,fn,i))
+  { }
+};
+
+Parameter<double> operator*(const Parameter<double>& p1, const Parameter<double>& p2);
 #endif

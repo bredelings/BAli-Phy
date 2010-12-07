@@ -1,8 +1,56 @@
 #include "generalized_tuples.H"
 #include "util.H"
 #include <iostream>
+#include <cmath>
 using namespace std;
 
+int ParameterBase::total=0;
+
+ParameterBase::ParameterBase()
+  :id(ParameterBase::total++),
+   type(state)
+{
+}
+
+ParameterBase::ParameterBase(const string& s)
+  :name(s),
+   id(ParameterBase::total++),
+   type(state)
+{
+}
+
+ParameterBase::ParameterBase(const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i)
+  :id(ParameterBase::total++),
+   type(state),
+   formula_node(fn),
+   inputs(i)
+{
+}
+
+ParameterBase::ParameterBase(const string& s, const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i)
+  :name(s),
+   id(ParameterBase::total++),
+   type(state),
+   formula_node(fn),
+   inputs(i)
+{
+}
+
+Parameter<double> operator*(Parameter<double>& p1,Parameter<double>& p2)
+{
+  std::vector<cow_ptr<ParameterBase> > pp;
+  pp.push_back(p1.node);
+  pp.push_back(p2.node);
+  return Parameter<double>(MultiplyNode(2), pp);
+}
+
+Parameter<double> apply(double (f)(double, double), Parameter<double>& p1,Parameter<double>& p2)
+{
+  std::vector<cow_ptr<ParameterBase> > pp;
+  pp.push_back(p1.node);
+  pp.push_back(p2.node);
+  return Parameter<double>(MultiplyNode(2), pp);
+}
 
 string Formula::expression_for_entry(int i) const
 {
@@ -49,6 +97,12 @@ int Formula::add_entry(const string& name, const FormulaNode& Node, const std::v
   }
 
   return k;
+}
+
+FormulaNode::FormulaNode(int n)
+{
+  for(int j=0;j<n;j++)
+    input_names_.push_back(std::string("$")+convertToString(j+1));
 }
 
 // An entry (Node) in the ComputedTuple specifies
@@ -208,10 +262,9 @@ std::string MultiplyNode::expression(const vector<string>& args) const
 }
 
 MultiplyNode::MultiplyNode(int i)
-  :n(i)
+  :FormulaNode(i),
+   n(i)
 {
-  for(int j=0;j<n;j++)
-    input_names_.push_back(std::string("$")+convertToString(j+1));
 };
 
 void MultiplyValue::update(const Values& V, const std::vector<int>& mapping)
@@ -229,6 +282,37 @@ void MultiplyValue::update(const Values& V, const std::vector<int>& mapping)
   up_to_date = true;
 }
 
+std::string FunctionNode::expression(const vector<string>& args) const
+{
+  assert(args.size() == n_inputs());
+
+  return name + "("+join(args,',')+")";
+}
+
+FunctionNode::FunctionNode(const string& s, double (*f)(double,double))
+  :FormulaNode(2),
+   name(s),
+   function(f)
+{ }
+
+void FunctionValue::update(const Values& V, const std::vector<int>& mapping)
+{
+  assert(mapping.size()==2);
+  value = 1;
+  for(int i=0;i<mapping.size();i++)
+  {
+    int j = mapping[i];
+    if (not V.completely_up_to_date(j)) return;
+
+    const Value<double>& v = dynamic_cast< const Value<double>& >(V.get_value(j));
+    value *= v.value;
+  }
+  up_to_date = true;
+}
+
+FunctionValue::FunctionValue(double (*f)(double,double))
+  :function(f)
+{ }
 
 // Some Node's are STATE nodes: that is, these are the inputs to the computed tuple as a function.
 // Only these will (ideally) marked as being updated.
@@ -280,6 +364,15 @@ void MultiplyValue::update(const Values& V, const std::vector<int>& mapping)
 // and makes a Value node and/or a 
 int main(int argc,char* argv[])
 {
+  Parameter<double> X("X");
+  Parameter<double> Y("Y");
+  Parameter<double> Z = X*Y;
+  vector<cow_ptr<ParameterBase> > inputs;
+  inputs.push_back(X.node);
+  inputs.push_back(Z.node);
+  Parameter<double> W("W",FunctionNode("pow",pow),inputs);
+
+
   Formula F;
   // Should I make this return a 'FormulaEntry' that could be used in (say) the expression X*Y
   //   or an extra function Multiply(X,Y,Z)?
@@ -339,13 +432,19 @@ int main(int argc,char* argv[])
 
 /*
  * The user should be able to
- * 1. Do something to an object: it will then be marked out of date, along w/ its descendants.
- * 2. Do something to an object: it will then NOT be marked out of date.
+ * 1. [OK] Do something to an object: it will then be marked out of date, along w/ its descendants.
+ *
+ * 2. [OK] Do something to an object: it will then NOT be marked out of date.
  *     The user will send a specific message about what has (and, by implication, has not) changed.
- *    For example, in calculating SPR 
+ *     For example, we might wish to do change x and y, but x*y is NOT going to be
+ *      out of date.
+ *     So... we might wish to supress signals from x to specific downstream targets z.
+ *
  * 3. Save an old value of an object (e.g. conditional likelihood).
  *    Restore the old value, and assert that the object is now up-to-date.
  *    (How about restoring downstream effects?  Typically we handle this by copying the ENTIRE OBJECT.)
+ *    Perhaps we could set an entry value to equal an entry value in another object,
+ *     thus RE-SHARING that StateValue... and possibly all RE-SHARING all the downstream effects as well!
  * 
  * 4. Dynamically change what depends on what.
  *    For example, when computing likelihoods, the model actually changes!
