@@ -13,6 +13,9 @@ class FormulaNode;
 class Values;
 class ValueBase;
 
+class ParameterBase;
+template <typename T> class Parameter;
+
 /// A Formula for a generic tuple, where some values are computed from others
 class Formula
 {
@@ -59,7 +62,14 @@ public:
 
   /// Make an additional entry called name and of type Node, computed from indices inputs
   int add_entry(const std::string& name, const FormulaNode& Node,const std::vector<int>& inputs);
+
+  int add_entry(const ParameterBase&);
+
+  template <typename T>
+  int add_entry(const Parameter<T>& P) {return add_entry(*P.node);}
 };
+
+enum node_type_t {constant=0, input=1, state=2, computed=3};
 
 /// An entry for a specific index in a Formula
 class FormulaNode
@@ -67,6 +77,8 @@ class FormulaNode
 protected:
   /// Each input is marked as having a name for the purpose of computing values of this formula node
   std::vector<std::string> input_names_;
+
+  node_type_t intent;
 public:
   virtual FormulaNode* clone() const =0;
 
@@ -81,6 +93,14 @@ public:
 
   /// Describe this expression
   virtual std::string expression(const std::vector<std::string>& argument_names) const=0;
+
+  bool is_constant_node() const {return intent == constant;}
+
+  bool is_state_node() const {return intent == state;}
+
+  bool is_input_node() const {return intent == input;}
+
+  bool is_computed_node() const {return intent == computed;}
 
   FormulaNode() {}
   FormulaNode(int i);
@@ -274,13 +294,13 @@ class Values
   std::vector<message_list_t> unprocessed_messages;
 
 protected:
+  const ValueBase& get_value(int i) const {return *values[i];}
+        ValueBase& get_value(int i)       {return *values[i];}
+
   void process_messages();
 
 public:  
   Values* clone() const {return new Values(*this);}
-
-  const ValueBase& get_value(int i) const {return *values[i];}
-        ValueBase& get_value(int i)       {return *values[i];}
 
   int size() const {return values.size();}
 
@@ -313,15 +333,13 @@ public:
   Values(const Formula&);
 };
 
-enum node_t {constant=0, input=1, state=2, computed=3};
-
 struct ParameterBase
 {
   static int total;
 
   std::string name;
   int id;
-  node_t type;
+  node_type_t type;
   polymorphic_cow_ptr<FormulaNode> formula_node;
   std::vector<cow_ptr<ParameterBase> > inputs;
 

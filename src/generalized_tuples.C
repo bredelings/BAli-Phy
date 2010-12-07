@@ -99,6 +99,16 @@ int Formula::add_entry(const string& name, const FormulaNode& Node, const std::v
   return k;
 }
 
+// Question: when do we *implicitly* add objects?
+// A1: only when they are temporaries.
+//     ... But that would mean IMPLICITLY adding UNNAMED objects!
+// A2: only when they are neither State nodes nor Input nodes.
+int Formula::add_entry(const ParameterBase& P)
+{
+  std::abort();
+  // Add this formula, then put formulae that are not found on a stack, and add them.
+}
+
 FormulaNode::FormulaNode(int n)
 {
   for(int j=0;j<n;j++)
@@ -276,8 +286,7 @@ void MultiplyValue::update(const Values& V, const std::vector<int>& mapping)
     int j = mapping[i];
     if (not V.completely_up_to_date(j)) return;
 
-    const Value<double>& v = dynamic_cast< const Value<double>& >(V.get_value(j));
-    value *= v.value;
+    value *= V.get_value_as<double>(j);
   }
   up_to_date = true;
 }
@@ -297,16 +306,11 @@ FunctionNode::FunctionNode(const string& s, double (*f)(double,double))
 
 void FunctionValue::update(const Values& V, const std::vector<int>& mapping)
 {
-  assert(mapping.size()==2);
-  value = 1;
-  for(int i=0;i<mapping.size();i++)
-  {
-    int j = mapping[i];
-    if (not V.completely_up_to_date(j)) return;
+  double arg1 = V.get_value_as<double>(mapping[0]);
+  double arg2 = V.get_value_as<double>(mapping[1]);
 
-    const Value<double>& v = dynamic_cast< const Value<double>& >(V.get_value(j));
-    value *= v.value;
-  }
+  value = function(arg1, arg2);
+
   up_to_date = true;
 }
 
