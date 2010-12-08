@@ -69,6 +69,9 @@ public:
   int add_entry(const Parameter<T>& P) {return add_entry(*P.node);}
 };
 
+//FIXME -- but a constant node actually needs a VALUE, right?
+//         And that value is part of the FORMULA, right?
+
 enum node_type_t {constant=0, input=1, state=2, computed=3};
 
 /// An entry for a specific index in a Formula
@@ -115,11 +118,35 @@ public:
 
 typedef std::list<owned_ptr<out_of_date_message_t> > message_list_t;
 
+class Object {
+public:
+  virtual Object* clone() const =0;
+  virtual ~Object() {}
+};
+
+template<typename T>
+class POD: public Object 
+{
+  T t;
+public:
+  POD<T>* clone() const {return new POD<T>(*this);}
+  operator T() const {return t;}
+  operator T&() {return t;}
+  POD() {}
+  POD(T t2):t(t2) {}
+};
+
+typedef POD<double> Double;
+typedef POD<int> Int;
+typedef POD<unsigned> Unsigned;
+
 /// A generic Value for each FormulaNode that will be either (i) a state or (ii) computed from other Values
 class ValueBase
 {
 protected:
   bool up_to_date;
+
+  owned_ptr<Object> data;
 public:
   virtual ValueBase* clone() const=0;
 
@@ -166,7 +193,26 @@ public:
 
   virtual std::string expression() const=0;
 
-  ValueBase():up_to_date(false) {}
+  template <typename T>
+  const T& get_value_as() const {return *data.as<const T>();}
+
+  template <typename T>
+        T& get_value_as()       {return *data.as<      T>();}
+
+  bool has_value() const {return data;}
+
+  template<typename T>
+  void set_value(const T& t) {data = t;}
+
+  ValueBase()
+    :up_to_date(false)
+  {}
+
+  template <typename T>
+  ValueBase(const T& t)
+    :up_to_date(false),
+     data(t)
+  { }
 
   virtual ~ValueBase() {}
 };
@@ -175,13 +221,17 @@ template <typename T>
 struct Value: public ValueBase
 {
   Value<T>* clone() const=0;
-  T value;
+
   std::string expression() const
   {
-    return convertToString(value);
+    if (has_value())
+      return convertToString(get_value_as<T>());
+    else
+      return "[undefined]";
   }
-  Value() {}
-  Value(const T& t):value(t) {}
+  // Value() {}  FIXME: this shouldn't crash...
+  Value():ValueBase( T() ) {}
+  Value(const T& t):ValueBase(t) {}
 };
 
 /*------------------- StateValue / StateNode -----------------*/
@@ -202,8 +252,11 @@ struct StateValue: public Value<T>
   // FIXME: Should we abort, though?
   message_list_t mark_self_out_of_date() {return message_list_t();}
 
+  const T& get_value() const {return ValueBase::get_value_as<T>();}
+        T& get_value()       {return ValueBase::get_value_as<T>();}
+
   StateValue() {}
-  StateValue(const T& t):Value<T>(t) {Value<T>::up_to_date = true;}
+  StateValue(const T& t):ValueBase(t) {ValueBase::up_to_date = true;}
 };
 
 template <typename T>
@@ -223,6 +276,12 @@ struct InputValue: public Value<T>
   InputValue<T>* clone() const {return new InputValue<T>(*this);}
   int n_inputs() const {return 0;}
   void update(const Values&, const std::vector<int>&) { std::abort(); };
+
+  const T& get_value() const {return ValueBase::get_value_as<T>();}
+        T& get_value()       {return ValueBase::get_value_as<T>();}
+
+  InputValue() {}
+  InputValue(const T& t):ValueBase(t) {}
 };
 
 template <typename T>
@@ -236,7 +295,7 @@ public:
 
 /*------------------- MultiplyValue / MultiplyNode -----------------*/
 
-class MultiplyValue: public Value<double>
+class MultiplyValue: public Value<Double>
 {
   int n;
 public:
@@ -260,7 +319,7 @@ public:
 };
 
 
-class FunctionValue: public Value<double>
+class FunctionValue: public Value<Double>
 {
   double (*function)(double, double);
 public:
@@ -320,11 +379,11 @@ public:
   std::string expression() const;
 
   template <typename T>
-  const T& get_value_as(int i) const {return dynamic_cast<const Value<T>&>(*values[i]).value;}
+  const T& get_value_as(int i) const {return values[i]->get_value_as<T>();}
 
   // we might want to modify the value of an intermediate node in doing calculations
   template <typename T>
-  T& get_value_as(int i)       {mark_out_of_date(i);return dynamic_cast< Value<T>&>(*values[i]).value;}
+  T& get_value_as(int i)       {mark_out_of_date(i);return values[i]->get_value_as<T>();}
 
   // we might want to modify the value of an intermediate node in doing calculations
   template <typename T>
@@ -371,5 +430,5 @@ struct Parameter
   { }
 };
 
-Parameter<double> operator*(const Parameter<double>& p1, const Parameter<double>& p2);
+Parameter<Double> operator*(const Parameter<Double>& p1, const Parameter<Double>& p2);
 #endif

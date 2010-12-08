@@ -36,20 +36,20 @@ ParameterBase::ParameterBase(const string& s, const FormulaNode& fn, const std::
 {
 }
 
-Parameter<double> operator*(Parameter<double>& p1,Parameter<double>& p2)
+Parameter<Double> operator*(Parameter<Double>& p1,Parameter<Double>& p2)
 {
   std::vector<cow_ptr<ParameterBase> > pp;
   pp.push_back(p1.node);
   pp.push_back(p2.node);
-  return Parameter<double>(MultiplyNode(2), pp);
+  return Parameter<Double>(MultiplyNode(2), pp);
 }
 
-Parameter<double> apply(double (f)(double, double), Parameter<double>& p1,Parameter<double>& p2)
+Parameter<Double> apply(double (f)(double, double), Parameter<Double>& p1,Parameter<Double>& p2)
 {
   std::vector<cow_ptr<ParameterBase> > pp;
   pp.push_back(p1.node);
   pp.push_back(p2.node);
-  return Parameter<double>(MultiplyNode(2), pp);
+  return Parameter<Double>(MultiplyNode(2), pp);
 }
 
 string Formula::expression_for_entry(int i) const
@@ -280,14 +280,17 @@ MultiplyNode::MultiplyNode(int i)
 void MultiplyValue::update(const Values& V, const std::vector<int>& mapping)
 {
   assert(mapping.size()==n);
-  value = 1;
+  double value = 1;
   for(int i=0;i<mapping.size();i++)
   {
     int j = mapping[i];
     if (not V.completely_up_to_date(j)) return;
 
-    value *= V.get_value_as<double>(j);
+    value *= V.get_value_as<Double>(j);
   }
+
+  data = Double(value);
+
   up_to_date = true;
 }
 
@@ -306,10 +309,12 @@ FunctionNode::FunctionNode(const string& s, double (*f)(double,double))
 
 void FunctionValue::update(const Values& V, const std::vector<int>& mapping)
 {
-  double arg1 = V.get_value_as<double>(mapping[0]);
-  double arg2 = V.get_value_as<double>(mapping[1]);
+  double arg1 = V.get_value_as<Double>(mapping[0]);
+  double arg2 = V.get_value_as<Double>(mapping[1]);
 
-  value = function(arg1, arg2);
+  double value = function(arg1, arg2);
+
+  data = Double(value);
 
   up_to_date = true;
 }
@@ -368,13 +373,13 @@ FunctionValue::FunctionValue(double (*f)(double,double))
 // and makes a Value node and/or a 
 int main(int argc,char* argv[])
 {
-  Parameter<double> X("X");
-  Parameter<double> Y("Y");
-  Parameter<double> Z = X*Y;
+  Parameter<Double> X("X");
+  Parameter<Double> Y("Y");
+  Parameter<Double> Z = X*Y;
   vector<cow_ptr<ParameterBase> > inputs;
   inputs.push_back(X.node);
   inputs.push_back(Z.node);
-  Parameter<double> W("W",FunctionNode("pow",pow),inputs);
+  Parameter<Double> W("W",FunctionNode("pow",pow),inputs);
 
 
   Formula F;
@@ -382,8 +387,8 @@ int main(int argc,char* argv[])
   //   or an extra function Multiply(X,Y,Z)?
   // Hmm... How would I handle Multiply(Plus(X,2),Pow(Y,3))?
   //   This kind of expression 
-  F.add_entry("X",StateNode<double>());
-  F.add_entry("Y",InputNode<double>());
+  F.add_entry("X",StateNode<Double>());
+  F.add_entry("Y",InputNode<Double>());
   {
     std::vector<int> inputs(2);
     inputs[0] = 0; // X
@@ -402,13 +407,13 @@ int main(int argc,char* argv[])
   cout<<"V1 = \n"<<V1.expression()<<endl;
 
   // set the value of the single state node
-  V1.get_value_as<double>(0) = 2;
+  V1.get_value_as<Double>(0) = 2;
   // state nodes need to be marked up-to-date, and are then assumed to stay that way.
   // FIXME - their should be a general method for marking only StateNodes & InputNodes up-to-date
   V1.mark_up_to_date(0);
 
   // set the value of the single state node
-  V1.get_value_as<double>(1) = 3;
+  V1.get_value_as<Double>(1) = 3;
   V1.mark_up_to_date(1);
 
   cout<<"V1 = \n"<<V1.expression()<<endl;
@@ -423,7 +428,7 @@ int main(int argc,char* argv[])
 
   cout<<"V2 = \n"<<V2.expression()<<endl;
 
-  V2.get_value_as<double>(0) = 3;
+  V2.get_value_as<Double>(0) = 3;
   
   cout<<"V2 = \n"<<V2.expression()<<endl;
   V2.calculate_value(3);
