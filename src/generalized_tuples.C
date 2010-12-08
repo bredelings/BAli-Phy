@@ -115,6 +115,26 @@ FormulaNode::FormulaNode(int n)
     input_names_.push_back(std::string("$")+convertToString(j+1));
 }
 
+bool Formula::is_input_entry(int i) const
+{
+  return Nodes[i]->is_input_node();
+}
+
+bool Formula::is_state_entry(int i) const
+{
+  return Nodes[i]->is_input_node();
+}
+
+bool Formula::is_constant_entry(int i) const
+{
+  return Nodes[i]->is_input_node();
+}
+
+bool Formula::is_computed_entry(int i) const
+{
+  return Nodes[i]->is_input_node();
+}
+
 // An entry (Node) in the ComputedTuple specifies
 // - the name (string) of each input.
 //   + and thus the number 
@@ -250,6 +270,26 @@ string Values::expression() const
       o<<" ["<<F->expression_for_entry(i)<<"]\n";
   }
   return o.str();
+}
+
+bool Values::is_input_entry(int i) const
+{
+  return F->is_input_entry(i);
+}
+
+bool Values::is_state_entry(int i) const
+{
+  return F->is_state_entry(i);
+}
+
+bool Values::is_constant_entry(int i) const
+{
+  return F->is_constant_entry(i);
+}
+
+bool Values::is_computed_entry(int i) const
+{
+  return F->is_computed_entry(i);
 }
 
 Values::Values(const Formula& f)

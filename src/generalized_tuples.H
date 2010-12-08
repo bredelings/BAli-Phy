@@ -57,6 +57,14 @@ public:
   const FormulaNode& get_entry(int i) const {return *Nodes[i];}
         FormulaNode& get_entry(int i)       {return *Nodes[i];}
 
+  bool is_input_entry(int i) const;
+
+  bool is_state_entry(int i) const;
+
+  bool is_constant_entry(int i) const;
+
+  bool is_computed_entry(int i) const;
+
   /// Make an additional entry called name and of type Node, with no inputs.
   int add_entry(const std::string& name, const FormulaNode& Node);
 
@@ -97,12 +105,16 @@ public:
   /// Describe this expression
   virtual std::string expression(const std::vector<std::string>& argument_names) const=0;
 
+  /// Is this node a constant node?
   bool is_constant_node() const {return intent == constant;}
 
+  /// Is this node a state node?
   bool is_state_node() const {return intent == state;}
 
+  /// Is this node an input node?
   bool is_input_node() const {return intent == input;}
 
+  /// Is this node a computed node?
   bool is_computed_node() const {return intent == computed;}
 
   FormulaNode() {}
@@ -377,6 +389,14 @@ public:
   void calculate_value(int i);
 
   std::string expression() const;
+
+  bool is_input_entry(int i) const;
+
+  bool is_state_entry(int i) const;
+
+  bool is_constant_entry(int i) const;
+
+  bool is_computed_entry(int i) const;
 
   template <typename T>
   const T& get_value_as(int i) const {return values[i]->get_value_as<T>();}
