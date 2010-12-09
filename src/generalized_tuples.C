@@ -28,6 +28,16 @@ Parameter<Double> operator*(Parameter<Double>& p1,Parameter<Double>& p2)
   return Expression<Double>(MultiplyValue(2), pp);
 }
 
+template <typename T, typename U>
+Parameter<T> Convert(const Parameter<U>& P)
+{
+  std::vector<polymorphic_cow_ptr<ParameterBase> > pp;
+  pp.push_back(P.node);
+  Expression<T>(MultiplyValue(2), pp);
+  return Expression<T>(ConversionValue<T,U>(),pp);
+}
+
+
 Parameter<Double> apply(const string& name,double (f)(double, double), Parameter<Double>& p1,Parameter<Double>& p2)
 {
   std::vector<polymorphic_cow_ptr<ParameterBase> > pp;
@@ -513,9 +523,13 @@ int main(int argc,char* argv[])
   Parameter<Double> W = X*Z;
   Parameter<Double> U = apply("pow",pow,X,Z);
 
+  State<Int> I("I",F);
+  Parameter<Double> I2 = Convert<Double,Int>(I);
+
   F->add_entry("Z",Z);
   F->add_entry("W",W);
   F->add_entry("U",U);
+  F->add_entry("I2",I2);
 
   Values V1(*F);
 
@@ -530,6 +544,9 @@ int main(int argc,char* argv[])
   // set the value of the single state node
   V1.get_value_as<Double>(1) = 3;
   V1.mark_up_to_date(1);
+
+  V1.get_value_as<Int>(2) = 3;
+  V1.mark_up_to_date(2);
 
   cout<<"V1 = \n"<<V1.expression()<<endl;
   
@@ -550,6 +567,7 @@ int main(int argc,char* argv[])
   V2.calculate_value(3);
   cout<<"V2 = \n"<<V2.expression()<<endl;
   V2.calculate_value(4);
+  V2.calculate_value(6);
   cout<<"V2 = \n"<<V2.expression()<<endl;
   cout<<"V1 = \n"<<V1.expression()<<endl;
 

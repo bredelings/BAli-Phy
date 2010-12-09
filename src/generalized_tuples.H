@@ -527,4 +527,24 @@ int Formula::add_entry(const std::string& name, const Parameter<T>& P)
   return add_entry(name, ptr);
 }
 Parameter<Double> operator*(const Parameter<Double>& p1, const Parameter<Double>& p2);
+
+/*------------------------------------------------------------------*/
+template <typename T, typename U>
+struct ConversionValue: public Value<T>
+{
+  ConversionValue<T,U>* clone() const {return new ConversionValue<T,U>(*this);}
+
+  int n_inputs() const {return 1;}
+
+  void update(const Values& V, const std::vector<int>& mapping)
+  {
+    U args1 = V.get_value_as<U>(mapping[0]);
+    T t = args1;
+    ValueBase::data = t;
+    ValueBase::up_to_date=true;
+  }
+
+  std::string formula_expression(const std::vector<std::string>& args) const {return std::string("conversion(")+args[0]+")";}
+};
+
 #endif
