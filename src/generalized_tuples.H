@@ -164,10 +164,10 @@ public:
   /// What type of node is this?
   node_type_t node_type() const {return intent;}  /// Will this class ignore a message m
 
-  virtual bool ignored(const out_of_date_message_t& m, int slot) const { return ignoring_messages; }
+  virtual bool ignored(const out_of_date_message_t& /*m*/, int /*slot*/) const { return ignoring_messages; }
 
   /// FIXME: how does the delivery of messages related to their being ignored?
-  /// If we queue messages and the mark this node as recieving messages, then they won't be ignored at the
+  /// If we queue messages and then mark this node as recieving messages, then they won't be ignored at the
   /// time they are recieved.
   /// Therefore, if we start ignoring messages, we need to first flush the queue to recieve un-ignored messages
   /// Also, if we stop ignoring messages, we need to first flush the queue to not (later) recieve ignored messages.
@@ -191,7 +191,7 @@ public:
   }
 
   /// Notify this value that certain of its inputs are out-of-date
-  virtual message_list_t notify_input_out_of_date(const Values&, const out_of_date_message_t&, int slot)
+  virtual message_list_t notify_input_out_of_date(const Values&, const out_of_date_message_t&, int /*slot*/)
   {
     return mark_self_out_of_date();
   }
@@ -486,11 +486,6 @@ template<typename T>
 struct Expression: public Parameter<T>
 {
   Expression(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
-  {
-    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(V,i));
-  }
-
-  Expression(const std::string& s, const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
   {
     Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(V,i));
   }

@@ -399,7 +399,7 @@ int main(int argc,char* argv[])
   vector<polymorphic_cow_ptr<ParameterBase> > inputs;
   inputs.push_back(X.node);
   inputs.push_back(Z.node);
-  Expression<Double> W("W",FunctionValue("pow",pow),inputs);
+  Expression<Double> W(FunctionValue("pow",pow),inputs);
 
   // So... what would I make a FreeParameter into a BOundParameter after it was created?
 
