@@ -36,6 +36,19 @@ Parameter<Double> apply(const string& name,double (f)(double, double), Parameter
   return Expression<Double>(FunctionValue(name,f), pp);
 }
 
+bool Formula::entry_has_name(int i) const
+{
+  return Node_names[i].size();
+}
+
+string Formula::entry_name(int i) const
+{
+  if (entry_has_name(i))
+    return Node_names[i];
+  else
+    return string("[")+convertToString(i)+"]";
+}
+
 node_type_t Formula::node_type(int i) const
 {
   return Nodes[i]->node_type();
@@ -44,6 +57,30 @@ node_type_t Formula::node_type(int i) const
 polymorphic_cow_ptr<ValueBase> Formula::get_new_entry_value(int i) const
 {
   return polymorphic_cow_ptr<ValueBase>(Nodes[i]->clone());
+}
+
+int Formula::get_id_for_index(int index) const
+{
+  return ids[index];
+}
+
+int Formula::get_index_for_id(int i) const
+{
+  for(int index=0;index<size();index++)
+    if (ids[index] == i)
+      return index;
+  return -1;
+}
+
+int Formula::get_index_for_name(const string& name) const
+{
+  if (not name.size())
+    throw myexception()<<"You can't search for any entry via an empty name!";
+
+  for(int index=0;index<size();index++)
+    if (entry_name(index) == name)
+      return index;
+  return -1;
 }
 
 string Formula::expression_for_entry(int i) const
@@ -63,16 +100,27 @@ int Formula::add_entry(const string& name, const ValueBase& V)
   return add_entry(name,V,empty);
 }
 
+int Formula::add_entry(const string& name, const ValueBase& V,int id)
+{
+  std::vector<int> empty;
+  return add_entry(name,V,empty,id);
+}
+
 int Formula::add_entry(const string& name, const ValueBase& V, const std::vector<int>& inputs)
 {
-  for(int i=0;i<size();i++)
-    if (entry_name(i) == name)
-      throw myexception()<<"Command add node with name '"<<name<<"': a node with that name already exists.";
+  return add_entry(name,V,inputs,-1);
+}
+
+int Formula::add_entry(const string& name, const ValueBase& V, const std::vector<int>& inputs,int id)
+{
+  if (name.size() and get_index_for_name(name) != -1)
+    throw myexception()<<"Command add node with name '"<<name<<"': a node with that name already exists.";
 
   Nodes.push_back(polymorphic_cow_ptr<ValueBase>(V));
   Node_names.push_back(name);
   Node_inputs.push_back(inputs);
   Nodes_affected.push_back(vector<affected_index_t>());
+  ids.push_back(id);
 
   // get index of new entry
   int k = size()-1;
@@ -94,6 +142,69 @@ int Formula::add_entry(const string& name, const ValueBase& V, const std::vector
   }
 
   return k;
+}
+
+int Formula::add_entry(const std::string& name, const ValueBase& V, const polymorphic_cow_ptr<BoundParameterBase>& P)
+{
+  return add_entry(name,V,P->id);
+}
+
+int Formula::add_entry(const std::string& name, const polymorphic_cow_ptr<FreeParameterBase>& P)
+{
+  if (name.size() and get_index_for_name(name) != -1)
+    throw myexception()<<"Command add node with name '"<<name<<"': a node with that name already exists.";
+
+  if (get_index_for_id(P->id) != -1)
+    throw myexception()<<"Cannot add entry '"<<name<<"' with id="<<P->id<<": that id is already present.";
+
+  vector<polymorphic_cow_ptr<FreeParameterBase> > entries_to_add;
+  entries_to_add.push_back(P);
+
+  while(not entries_to_add.empty())
+  {
+    polymorphic_cow_ptr<FreeParameterBase> P2 = entries_to_add.back();
+    int id = get_index_for_id(P2->id);
+
+    // work finished if we are already added: nothing to do.  Just remove from stack of remaining work.
+    if (id != -1) {
+      entries_to_add.pop_back();
+      continue;
+    }
+
+    // Find the indices for the inputs, and add them to the work stack if they are not found
+    bool ok = true;
+    vector<int> input_indices;
+    for(int i=0;i<P2->inputs.size() and ok;i++)
+    {
+      int index = get_index_for_id(P2->inputs[i]->id);
+      input_indices.push_back(index);
+
+      if (index == -1)
+      {
+	// we cannot add the current entry
+	ok = false;
+
+	polymorphic_cow_ptr<FreeParameterBase> free = dynamic_pointer_cast<FreeParameterBase>(P2->inputs[i]);
+	if (not free)
+	  std::abort();
+
+	// we must put this input to the current entry on the work stack
+	entries_to_add.push_back(free);
+      }
+    }
+
+    if (ok) {
+      if (entries_to_add.size() == 1)
+	add_entry(name, *(P2->exemplar), input_indices, P2->id);
+      else
+	add_entry("", *(P2->exemplar), input_indices, P2->id);
+      entries_to_add.pop_back();
+    }
+  }
+
+  int index = get_index_for_id(P->id);
+  assert(index != -1);
+  return index;
 }
 
 bool Formula::is_input_entry(int i) const
@@ -247,7 +358,10 @@ string Values::expression() const
   ostringstream o;
   for(int i=0;i<size();i++)
   {
-    o<<F->entry_name(i)<<" = "<<values[i]->result_expression()<<"   ";
+    o<<F->entry_name(i);
+    if (F->entry_has_name(i))
+      o<<" ["<<i<<"]";
+    o<<" = "<<values[i]->result_expression()<<"   ";
     if (completely_up_to_date(i))
       o<<"[*]";
     else if (completely_out_of_date(i))
@@ -256,6 +370,7 @@ string Values::expression() const
       o<<"[*!]";
     if (not values[i].unique())
       o<<"  shared";
+    o<<"  id = "<<F->get_id_for_index(i);
     o<<"\n";
     if (F->n_inputs(i))
       o<<" ["<<F->expression_for_entry(i)<<"]\n";
@@ -395,36 +510,12 @@ int main(int argc,char* argv[])
   State<Double> X("X",F);
   Input<Double> Y("Y",F);
   Parameter<Double> Z = X*Y;
+  Parameter<Double> W = X*Z;
+  Parameter<Double> U = apply("pow",pow,X,Z);
 
-  vector<polymorphic_cow_ptr<ParameterBase> > inputs;
-  inputs.push_back(X.node);
-  inputs.push_back(Z.node);
-  Expression<Double> W(FunctionValue("pow",pow),inputs);
-
-  // So... what would I make a FreeParameter into a BOundParameter after it was created?
-
-  // Should I make this return a 'FormulaEntry' that could be used in (say) the expression X*Y
-  //   or an extra function Multiply(X,Y,Z)?
-  // Hmm... How would I handle Multiply(Plus(X,2),Pow(Y,3))?
-  //   This kind of expression 
-   {
-    std::vector<int> inputs(2);
-    inputs[0] = 0; // X
-    inputs[1] = 1; // Y
-    F->add_entry("Z",MultiplyValue(2),inputs);
-  }
-  {
-    std::vector<int> inputs(2);
-    inputs[0] = 0; // X
-    inputs[1] = 2; // Y
-    F->add_entry("W",MultiplyValue(2),inputs);
-  }
-  {
-    std::vector<int> inputs(2);
-    inputs[0] = 0; // X
-    inputs[1] = 1; // Y
-    F->add_entry("U",FunctionValue("pow",pow),inputs);
-  }
+  F->add_entry("Z",Z);
+  F->add_entry("W",W);
+  F->add_entry("U",U);
 
   Values V1(*F);
 
@@ -579,9 +670,9 @@ int main(int argc,char* argv[])
  *     And as a formula, we could have k be an input node, whereas pi would be 
  *     locally a state node, and globally, a reference to pi in the larger tuple g.
  *
- * Q3. The real question, then is how Values of f relate to values of g.
+ * Q3. The real question, then, is how Values of f relate to values of g.
  *     
- *     Suppose that instead of HKY(k,pi) we had HKY(k+(x+y),pi), and x and y are in g
+ * A3. Suppose that instead of HKY(k,pi) we had HKY(k+(x+y),pi), and x and y are in g
  *     but x+y is not.  It would make sense to say that f depends on x+y, and make an x+y
  *     entry in g.
  *
@@ -591,5 +682,10 @@ int main(int argc,char* argv[])
  *     The k+(x+y) value isn't in g at all, since it depends on k.
  *
  *     How do we represent values of f?  How about values of f(2)?
+ *     - Well, first we note that, just like all of the other entries of g, f has values.
+ *     - 
+ *
+ *     Hmm... now, actually, if we APPLY a lambda function to a value that we can compute, then
+ *     the result STOPS being a lambda function!
  *
  */

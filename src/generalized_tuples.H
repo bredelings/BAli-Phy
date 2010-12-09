@@ -39,6 +39,10 @@ class Formula
 
   /// The nodes that are directly affected by changing each node.
   std::vector< std::vector< affected_index_t > > Nodes_affected;
+
+  /// What is the global id for the ParameterBase object that this computation represents.
+  std::vector< int > ids;
+
 public:
   Formula* clone() const {return new Formula(*this);}
 
@@ -50,6 +54,15 @@ public:
 
   /// Get the j-th input index for entry i
   int input_index(int i,int j) const {return Node_inputs[i][j];}
+
+  /// Get the id for an object
+  int get_id_for_index(int) const;
+
+  /// Look up an object by id
+  int get_index_for_id(int) const;
+
+  /// Look up an object by id
+  int get_index_for_name(const std::string&) const;
 
   // What type is entry i?
   node_type_t node_type(int i) const;
@@ -63,8 +76,11 @@ public:
   /// Get a (string) expression for the ith entry
   std::string expression_for_entry(int i) const;
 
+  /// Does the i-th entry have a non-empty name?
+  bool entry_has_name(int i) const;
+
   /// The name of the i-th entry
-  std::string entry_name(int i) const {return Node_names[i];}
+  std::string entry_name(int i) const;
 
   polymorphic_cow_ptr<ValueBase> get_new_entry_value(int i) const;
 
@@ -79,10 +95,18 @@ public:
   /// Make an additional entry called name and of type Node, with no inputs.
   int add_entry(const std::string& name, const ValueBase& Node);
 
+  /// Make an additional entry called name and of type Node, with no inputs.
+  int add_entry(const std::string& name, const ValueBase& Node, int id);
+
   /// Make an additional entry called name and of type Node, computed from indices inputs
   int add_entry(const std::string& name, const ValueBase& Node,const std::vector<int>& inputs);
 
-  int add_entry(const std::string& name, const ParameterBase& P);
+  /// Make an additional entry called name and of type Node, computed from indices inputs
+  int add_entry(const std::string& name, const ValueBase& Node,const std::vector<int>& inputs, int id);
+
+  int add_entry(const std::string& name, const ValueBase& V, const polymorphic_cow_ptr<BoundParameterBase>& P);
+
+  int add_entry(const std::string& name, const polymorphic_cow_ptr<FreeParameterBase>& P);
 
   template <typename T>
   int add_entry(const std::string& name, const Parameter<T>& P);
@@ -395,7 +419,8 @@ struct ParameterBase
   static int total;
   int id;
 
-  // boost::shared_ptr<Formula> F;
+  boost::shared_ptr<Formula> F;
+
   // Is this parameter associated with a formula?
   // (Also, do we want to be able to see if two nodes are associated with the SAME formula?
   //  That might cause problems when forumlae that are on the stack go out of scope.
@@ -413,33 +438,26 @@ struct ParameterBase
 
 struct BoundParameterBase: public ParameterBase
 {
-  boost::shared_ptr<Formula> F;
   int index;
 
   BoundParameterBase* clone() const {return new BoundParameterBase(*this);}
 
   node_type_t node_type() const {return F->node_type(index);}
   std::string name() const {return F->entry_name(index);}
-  BoundParameterBase(boost::shared_ptr<Formula> f, int i)
-    :F(f),index(i)
-  { }
+  BoundParameterBase(boost::shared_ptr<Formula> f) { F = f ;}
+
+  BoundParameterBase(boost::shared_ptr<Formula> f, int i):index(i) { F = f ;}
 };
 
 struct FreeParameterBase: public ParameterBase
 {
   FreeParameterBase* clone() const {return new FreeParameterBase(*this);}
 
-  // boost::shared_ptr<Formula> F;
-  // Is this parameter associated with a formula?
-  // (Also, do we want to be able to see if two nodes are associated with the SAME formula?
-  //  That might cause problems when forumlae that are on the stack go out of scope.
-  //  Also, if we are using smart pointers, they will duplicate the stack object and refer to the duplicate!)
-  // (We want to used shared_ptr<> because we want changes made outside the parameter object to be reflected in
-  //  the parameter object).
-
   node_type_t node_type() const {return computed;}
 
+  /// The function / result object
   polymorphic_cow_ptr<ValueBase> exemplar;
+
   std::vector<polymorphic_cow_ptr<ParameterBase> > inputs;
 
   FreeParameterBase* clone() {return new FreeParameterBase(*this);}
@@ -465,8 +483,10 @@ struct State: public Parameter<T>
 {
   State(const std::string& s, boost::shared_ptr<Formula>& F)
   {
-    int index = F->add_entry(s,StateValue<T>());
-    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new BoundParameterBase(F,index));
+    polymorphic_cow_ptr<BoundParameterBase> b(new BoundParameterBase(F));
+    int index = F->add_entry(s,StateValue<T>() ,b);
+    b->index = index;
+    Parameter<T>::node = b;
   }
 };
 
@@ -476,8 +496,10 @@ struct Input: public Parameter<T>
 {
   Input(const std::string& s, boost::shared_ptr<Formula>& F)
   {
-    int index = F->add_entry(s,InputValue<T>());
-    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new BoundParameterBase(F,index));
+    polymorphic_cow_ptr<BoundParameterBase> b(new BoundParameterBase(F));
+    int index = F->add_entry(s,InputValue<T>() ,b);
+    b->index = index;
+    Parameter<T>::node = b;
   }
 };
 
@@ -497,17 +519,9 @@ struct Expression: public Parameter<T>
 
 template <typename T>
 int Formula::add_entry(const std::string& name, const Parameter<T>& P)
-  {
-    // This doesn't work yet
-    std::abort();
-    polymorphic_cow_ptr<FreeParameterBase> free = P.node;
-    polymorphic_cow_ptr<BoundParameterBase> bound = P.node;
-    std::vector<int> inputs;
-    if (free) {
-      return add_entry(name, *(free->exemplar),inputs);
-    }
-    else
-      std::abort();
-  }
+{
+  polymorphic_cow_ptr<FreeParameterBase> ptr = dynamic_pointer_cast<FreeParameterBase>(P.node);
+  return add_entry(name, ptr);
+}
 Parameter<Double> operator*(const Parameter<Double>& p1, const Parameter<Double>& p2);
 #endif
