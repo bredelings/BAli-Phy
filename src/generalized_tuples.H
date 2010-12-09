@@ -136,9 +136,12 @@ class POD: public Object
 public:
   POD<T>* clone() const {return new POD<T>(*this);}
   operator T() const {return t;}
-  operator T&() {return t;}
+
   POD() {}
-  POD(T t2):t(t2) {}
+  POD(const T& t2):t(t2) {}
+
+  template <typename U>
+  POD(const U& u):t(u) {}
 };
 
 typedef POD<double> Double;
