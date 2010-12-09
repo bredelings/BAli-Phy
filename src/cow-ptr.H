@@ -46,8 +46,7 @@ public:
     : data(r.data) {}
   template <class Y> cow_ptr& operator=(const cow_ptr<Y>& r)
   {
-    if (this != &r)
-      data = r.data;
+    data = r.data;
     return *this;
   }
 #endif
