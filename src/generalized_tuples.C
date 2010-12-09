@@ -425,6 +425,12 @@ int main(int argc,char* argv[])
     inputs[1] = 2; // Y
     F->add_entry("W",MultiplyValue(2),inputs);
   }
+  {
+    std::vector<int> inputs(2);
+    inputs[0] = 0; // X
+    inputs[1] = 1; // Y
+    F->add_entry("U",FunctionValue("pow",pow),inputs);
+  }
 
   Values V1(*F);
 
@@ -445,6 +451,7 @@ int main(int argc,char* argv[])
   // Try to compute "Z"
   // What if the base values are not up-to-date?
   V1.calculate_value(3);
+  V1.calculate_value(4);
 
   cout<<"V1 = \n"<<V1.expression()<<endl;
 
@@ -456,6 +463,8 @@ int main(int argc,char* argv[])
   
   cout<<"V2 = \n"<<V2.expression()<<endl;
   V2.calculate_value(3);
+  cout<<"V2 = \n"<<V2.expression()<<endl;
+  V2.calculate_value(4);
   cout<<"V2 = \n"<<V2.expression()<<endl;
   cout<<"V1 = \n"<<V1.expression()<<endl;
 
