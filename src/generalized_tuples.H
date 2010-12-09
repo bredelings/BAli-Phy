@@ -19,6 +19,12 @@ template <typename T> class Parameter;
 
 enum node_type_t {constant=0, input=1, state=2, computed=3, undeclared=4};
 
+struct affected_index_t {
+  int index;
+  int slot;
+  affected_index_t(int i, int s):index(i),slot(s) {}
+};
+
 /// A Formula for a generic tuple, where some values are computed from others
 class Formula
 {
@@ -32,7 +38,7 @@ class Formula
   std::vector< std::vector<int> > Node_inputs;
 
   /// The nodes that are directly affected by changing each node.
-  std::vector< std::vector<int> > Node_outputs;
+  std::vector< std::vector< affected_index_t > > Nodes_affected;
 public:
   Formula* clone() const {return new Formula(*this);}
 
@@ -52,7 +58,7 @@ public:
   const std::vector<int>& input_indices(int i) const {return Node_inputs[i];}
 
   /// Get the indices of the entries affected by changing the i-th entry.
-  const std::vector<int>& output_indices(int i) const {return Node_outputs[i];}
+  const std::vector<affected_index_t>& affected_indices(int i) const {return Nodes_affected[i];}
 
   /// Get a (string) expression for the ith entry
   std::string expression_for_entry(int i) const;
@@ -158,7 +164,7 @@ public:
   /// What type of node is this?
   node_type_t node_type() const {return intent;}  /// Will this class ignore a message m
 
-  virtual bool ignored(const out_of_date_message_t& m) const { return ignoring_messages; }
+  virtual bool ignored(const out_of_date_message_t& m, int slot) const { return ignoring_messages; }
 
   /// FIXME: how does the delivery of messages related to their being ignored?
   /// If we queue messages and the mark this node as recieving messages, then they won't be ignored at the
@@ -185,7 +191,7 @@ public:
   }
 
   /// Notify this value that certain of its inputs are out-of-date
-  virtual message_list_t notify_input_out_of_date(const Values&, const out_of_date_message_t&, int)
+  virtual message_list_t notify_input_out_of_date(const Values&, const out_of_date_message_t&, int slot)
   {
     return mark_self_out_of_date();
   }
@@ -249,15 +255,15 @@ template <typename T>
 struct StateValue: public Value<T>
 {
   StateValue<T>* clone() const {return new StateValue<T>(*this);}
+
   int n_inputs() const {return 0;}
+
   void update(const Values&, const std::vector<int>&) { std::abort(); };
 
-  // A state value ignores all messages: it can't be out of date!
-  // FIXME: Should we abort, though?
-  bool ignored(const out_of_date_message_t&) const {return true;}
+  // Abort: we don't have any slots!
+  bool ignored(const out_of_date_message_t&,int) const { std::abort();}
 
-  // A state value ignores all messages: it can't be out of date!
-  // FIXME: Should we abort, though?
+  // Abort: States cannot be out of date!
   message_list_t mark_self_out_of_date() {return message_list_t();}
 
   std::string formula_expression(const std::vector<std::string>&) const {return "[State]";}
@@ -276,8 +282,13 @@ template <typename T>
 struct InputValue: public Value<T>
 {
   InputValue<T>* clone() const {return new InputValue<T>(*this);}
+
   int n_inputs() const {return 0;}
+
   void update(const Values&, const std::vector<int>&) { std::abort(); };
+
+  // Abort: we don't have any slots!
+  bool ignored(const out_of_date_message_t&,int) const { std::abort();}
 
   std::string formula_expression(const std::vector<std::string>&) const {return "[Input]";}
 
@@ -321,6 +332,8 @@ public:
   FunctionValue(const std::string& s, double (*f)(double,double));
 };
 
+// The user should never see the object with undelivered messages, I think.
+
 class Values
 {
   std::vector<polymorphic_cow_ptr<ValueBase> > values;
@@ -335,6 +348,10 @@ protected:
 
   void process_messages();
 
+  void record_changes_no_deliver(int x, message_list_t&);
+
+  void notify_x_of_change_in_slot_y(int x, int y, const out_of_date_message_t&);
+
 public:  
   Values* clone() const {return new Values(*this);}
 
@@ -342,10 +359,6 @@ public:
 
   bool completely_up_to_date(int i) const {return get_value(i).completely_up_to_date();}
   bool completely_out_of_date(int i) const {return get_value(i).completely_out_of_date();}
-
-  void record_changes_no_deliver(int x, message_list_t&);
-
-  void notify_x_of_change_in_y(int x, int y, const out_of_date_message_t&);
 
   void mark_out_of_date(int i);
 

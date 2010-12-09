@@ -72,7 +72,7 @@ int Formula::add_entry(const string& name, const ValueBase& V, const std::vector
   Nodes.push_back(polymorphic_cow_ptr<ValueBase>(V));
   Node_names.push_back(name);
   Node_inputs.push_back(inputs);
-  Node_outputs.push_back(vector<int>());
+  Nodes_affected.push_back(vector<affected_index_t>());
 
   // get index of new entry
   int k = size()-1;
@@ -90,8 +90,7 @@ int Formula::add_entry(const string& name, const ValueBase& V, const std::vector
   for(int i=0;i<inputs.size();i++)
   {
     int j = inputs[i];
-    if (not includes(Node_outputs[j],k))
-      Node_outputs[j].push_back(k);
+    Nodes_affected[j].push_back(affected_index_t(k,i));
   }
 
   return k;
@@ -117,11 +116,6 @@ bool Formula::is_computed_entry(int i) const
   return Nodes[i]->is_input_node();
 }
 
-// An entry (Node) in the ComputedTuple specifies
-// - the name (string) of each input.
-//   + and thus the number 
-// - a method for computing a Value for each node
-
 vector<string> ValueBase::input_names() const 
 {
   vector<string> names;
@@ -145,7 +139,7 @@ void Values::record_changes_no_deliver(int x, message_list_t& x_changes)
     unprocessed_messages[x].splice(unprocessed_messages[x].end(), x_changes);
 }
 
-void Values::notify_x_of_change_in_y(int x, int y, const out_of_date_message_t& m)
+void Values::notify_x_of_change_in_slot_y(int x, int slot, const out_of_date_message_t& m)
 {
   // if x is already of date, don't bother sending any more message about how its inputs have changed
   if (completely_out_of_date(x)) return;
@@ -157,11 +151,11 @@ void Values::notify_x_of_change_in_y(int x, int y, const out_of_date_message_t& 
     const std::vector<polymorphic_cow_ptr<ValueBase> >& const_values = values;
 
     // Quit before generating a non-const reference to values[x] if values[x] will not change value.
-    if (const_values[x]->ignored(m)) return;
+    if (const_values[x]->ignored(m,slot)) return;
   }
 
   // Notify x of the changes, and find out how x has changed.
-  message_list_t x_changes = values[x]->notify_input_out_of_date(*this, m, y);
+  message_list_t x_changes = values[x]->notify_input_out_of_date(*this, m, slot);
 
   record_changes_no_deliver(x, x_changes);
 }
@@ -171,29 +165,29 @@ void Values::process_messages()
   // For each index1 ...
   for(int index1=0; index1<size(); index1++)
   {
-    const vector<int>& Node_outputs = F->output_indices(index1);
+    const vector<affected_index_t>& Nodes_affected = F->affected_indices(index1);
 
     // ... with unprocessed messages...
     if (unprocessed_messages[index1].empty()) continue;
 
     // ... consider each index2 that is directly downstream ...
-    for(int j=0;j<Node_outputs.size();j++)
+    for(int j=0;j<Nodes_affected.size();j++)
     {
-      int index2 = Node_outputs[j];
+      affected_index_t index2 = Nodes_affected[j];
 
-      assert(index2 > index1);
+      assert(index2.index > index1);
 
       // ... and isn't already out of date.
-      if (completely_out_of_date(index2)) continue;
+      if (completely_out_of_date(index2.index)) continue;
       
       message_list_t& index1_all_changes = unprocessed_messages[index1];
 
       message_list_t index2_all_changes; // or at least all changes resulting from from index1
 
       for(message_list_t::const_iterator m = index1_all_changes.begin(); 
-	  m != index1_all_changes.end() and not completely_out_of_date(index2); m++)
+	  m != index1_all_changes.end() and not completely_out_of_date(index2.index); m++)
       {
-	notify_x_of_change_in_y(index2, index1, *(*m));
+	notify_x_of_change_in_slot_y(index2.index, index2.slot, *(*m));
       }
     }
   }
