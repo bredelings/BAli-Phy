@@ -14,6 +14,8 @@ class Values;
 class ValueBase;
 
 class ParameterBase;
+class FreeParameterBase;
+class BoundParameterBase;
 template <typename T> class Parameter;
 
 /// A Formula for a generic tuple, where some values are computed from others
@@ -71,10 +73,10 @@ public:
   /// Make an additional entry called name and of type Node, computed from indices inputs
   int add_entry(const std::string& name, const FormulaNode& Node,const std::vector<int>& inputs);
 
-  int add_entry(const ParameterBase&);
+  int add_entry(const std::string& name, const ParameterBase& P);
 
   template <typename T>
-  int add_entry(const Parameter<T>& P) {return add_entry(*P.node);}
+  int add_entry(const std::string& name, const Parameter<T>& P);
 };
 
 //FIXME -- but a constant node actually needs a VALUE, right?
@@ -116,6 +118,8 @@ public:
 
   /// Is this node a computed node?
   bool is_computed_node() const {return intent == computed;}
+
+  node_type_t node_type() const {return intent;}
 
   FormulaNode() {}
   FormulaNode(int i);
@@ -407,7 +411,7 @@ public:
 
   // we might want to modify the value of an intermediate node in doing calculations
   template <typename T>
-          T& get_value_no_invalidate_as(int i)  {return dynamic_cast<      T&>(*values[i]);}
+          T& get_value_no_invalidate_as(int i)  {return values[i]->get_value_as<T>();}
 
   Values(const Formula&);
 };
@@ -415,40 +419,126 @@ public:
 struct ParameterBase
 {
   static int total;
-
-  std::string name;
   int id;
-  node_type_t type;
-  polymorphic_cow_ptr<FormulaNode> formula_node;
-  std::vector<cow_ptr<ParameterBase> > inputs;
 
-  ParameterBase* clone() {return new ParameterBase(*this);}
+  // boost::shared_ptr<Formula> F;
+  // Is this parameter associated with a formula?
+  // (Also, do we want to be able to see if two nodes are associated with the SAME formula?
+  //  That might cause problems when forumlae that are on the stack go out of scope.
+  //  Also, if we are using smart pointers, they will duplicate the stack object and refer to the duplicate!)
+  // (We want to used shared_ptr<> because we want changes made outside the parameter object to be reflected in
+  //  the parameter object).
+
+  virtual node_type_t node_type() const=0;
+
+  virtual ParameterBase* clone() const =0;
 
   ParameterBase();
-  ParameterBase(const std::string&);
-  ParameterBase(const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i);
-  ParameterBase(const std::string&, const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i);
+  virtual ~ParameterBase() {}
+};
+
+struct BoundParameterBase: public ParameterBase
+{
+  boost::shared_ptr<Formula> F;
+  int index;
+
+  BoundParameterBase* clone() const {return new BoundParameterBase(*this);}
+
+  node_type_t node_type() const {return F->get_entry(index).node_type();}
+  std::string name() const {return F->entry_name(index);}
+  BoundParameterBase(boost::shared_ptr<Formula> f, int i)
+    :F(f),index(i)
+  { }
+};
+
+struct FreeParameterBase: public ParameterBase
+{
+  FreeParameterBase* clone() const {return new FreeParameterBase(*this);}
+
+  // boost::shared_ptr<Formula> F;
+  // Is this parameter associated with a formula?
+  // (Also, do we want to be able to see if two nodes are associated with the SAME formula?
+  //  That might cause problems when forumlae that are on the stack go out of scope.
+  //  Also, if we are using smart pointers, they will duplicate the stack object and refer to the duplicate!)
+  // (We want to used shared_ptr<> because we want changes made outside the parameter object to be reflected in
+  //  the parameter object).
+
+  node_type_t node_type() const {return computed;}
+
+  polymorphic_cow_ptr<FormulaNode> formula_node;
+  std::vector<polymorphic_cow_ptr<ParameterBase> > inputs;
+
+  FreeParameterBase* clone() {return new FreeParameterBase(*this);}
+
+  FreeParameterBase();
+  FreeParameterBase(const FormulaNode& fn, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i);
 };
 
 
+/// This is the general type
 template<typename T>
 struct Parameter
 {
   typedef T type;
-  cow_ptr<ParameterBase> node;
-  Parameter()
-    :node(new ParameterBase(StateNode<T>(), std::vector<cow_ptr<ParameterBase> >() ) )
-  { }
-  Parameter(const std::string& s)
-    :node(new ParameterBase(s, StateNode<T>(), std::vector<cow_ptr<ParameterBase> >() ) )
-  { }
-  Parameter(const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i)
-    :node(new ParameterBase(fn,i))
-  { }
-  Parameter(const std::string& s, const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i)
-    :node(new ParameterBase(s,fn,i))
-  { }
+  polymorphic_cow_ptr<ParameterBase> node;
+
+  Parameter() { }
 };
 
+/// This is the wrapper for a state node
+template<typename T>
+struct State: public Parameter<T>
+{
+  State(const std::string& s, boost::shared_ptr<Formula>& F)
+  {
+    int index = F->add_entry(s,StateNode<T>());
+    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new BoundParameterBase(F,index));
+  }
+};
+
+/// This is the wrapper for a state node
+template<typename T>
+struct Input: public Parameter<T>
+{
+  Input(const std::string& s, boost::shared_ptr<Formula>& F)
+  {
+    int index = F->add_entry(s,InputNode<T>());
+    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new BoundParameterBase(F,index));
+  }
+};
+
+/// This is the wrapper for a computed node
+template<typename T>
+struct Expression: public Parameter<T>
+{
+  Expression(const FormulaNode& fn, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
+  {
+    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(fn,i));
+  }
+
+  Expression(const std::string& s, const FormulaNode& fn, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
+  {
+    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(fn,i));
+  }
+};
+
+// Question: when do we *implicitly* add objects?
+// A1: we should add (copies) of all intermediate nodes.
+// A2: this should not change the actually expressions, though.
+
+template <typename T>
+int Formula::add_entry(const std::string& name, const Parameter<T>& P)
+  {
+    // This doesn't work yet
+    std::abort();
+    polymorphic_cow_ptr<FreeParameterBase> free = P.node;
+    polymorphic_cow_ptr<BoundParameterBase> bound = P.node;
+    std::vector<int> inputs;
+    if (free) {
+      return add_entry(name, *(free->formula_node),inputs);
+    }
+    else
+      std::abort();
+  }
 Parameter<Double> operator*(const Parameter<Double>& p1, const Parameter<Double>& p2);
 #endif

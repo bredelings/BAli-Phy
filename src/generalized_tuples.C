@@ -7,49 +7,33 @@ using namespace std;
 int ParameterBase::total=0;
 
 ParameterBase::ParameterBase()
-  :id(ParameterBase::total++),
-   type(state)
+  :id(ParameterBase::total++)
 {
 }
 
-ParameterBase::ParameterBase(const string& s)
-  :name(s),
-   id(ParameterBase::total++),
-   type(state)
-{
-}
+FreeParameterBase::FreeParameterBase()
+{ }
 
-ParameterBase::ParameterBase(const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i)
-  :id(ParameterBase::total++),
-   type(state),
-   formula_node(fn),
-   inputs(i)
-{
-}
-
-ParameterBase::ParameterBase(const string& s, const FormulaNode& fn, const std::vector<cow_ptr<ParameterBase> >& i)
-  :name(s),
-   id(ParameterBase::total++),
-   type(state),
-   formula_node(fn),
+FreeParameterBase::FreeParameterBase(const FormulaNode& fn, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
+  :formula_node(fn),
    inputs(i)
 {
 }
 
 Parameter<Double> operator*(Parameter<Double>& p1,Parameter<Double>& p2)
 {
-  std::vector<cow_ptr<ParameterBase> > pp;
+  std::vector<polymorphic_cow_ptr<ParameterBase> > pp;
   pp.push_back(p1.node);
   pp.push_back(p2.node);
-  return Parameter<Double>(MultiplyNode(2), pp);
+  return Expression<Double>(MultiplyNode(2), pp);
 }
 
 Parameter<Double> apply(double (f)(double, double), Parameter<Double>& p1,Parameter<Double>& p2)
 {
-  std::vector<cow_ptr<ParameterBase> > pp;
+  std::vector<polymorphic_cow_ptr<ParameterBase> > pp;
   pp.push_back(p1.node);
   pp.push_back(p2.node);
-  return Parameter<Double>(MultiplyNode(2), pp);
+  return Expression<Double>(MultiplyNode(2), pp);
 }
 
 string Formula::expression_for_entry(int i) const
@@ -71,6 +55,10 @@ int Formula::add_entry(const string& name, const FormulaNode& Node)
 
 int Formula::add_entry(const string& name, const FormulaNode& Node, const std::vector<int>& inputs)
 {
+  for(int i=0;i<size();i++)
+    if (entry_name(i) == name)
+      throw myexception()<<"Command add node with name '"<<name<<"': a node with that name already exists.";
+
   Nodes.push_back(polymorphic_cow_ptr<FormulaNode>(Node));
   Node_names.push_back(name);
   Node_inputs.push_back(inputs);
@@ -97,16 +85,6 @@ int Formula::add_entry(const string& name, const FormulaNode& Node, const std::v
   }
 
   return k;
-}
-
-// Question: when do we *implicitly* add objects?
-// A1: only when they are temporaries.
-//     ... But that would mean IMPLICITLY adding UNNAMED objects!
-// A2: only when they are neither State nodes nor Input nodes.
-int Formula::add_entry(const ParameterBase& P)
-{
-  std::abort();
-  // Add this formula, then put formulae that are not found on a stack, and add them.
 }
 
 FormulaNode::FormulaNode(int n)
@@ -413,36 +391,37 @@ FunctionValue::FunctionValue(double (*f)(double,double))
 // and makes a Value node and/or a 
 int main(int argc,char* argv[])
 {
-  Parameter<Double> X("X");
-  Parameter<Double> Y("Y");
+  boost::shared_ptr<Formula> F(new Formula);
+
+  State<Double> X("X",F);
+  State<Double> Y("Y",F);
   Parameter<Double> Z = X*Y;
-  vector<cow_ptr<ParameterBase> > inputs;
+
+  vector<polymorphic_cow_ptr<ParameterBase> > inputs;
   inputs.push_back(X.node);
   inputs.push_back(Z.node);
-  Parameter<Double> W("W",FunctionNode("pow",pow),inputs);
+  Expression<Double> W("W",FunctionNode("pow",pow),inputs);
 
+  // So... what would I make a FreeParameter into a BOundParameter after it was created?
 
-  Formula F;
   // Should I make this return a 'FormulaEntry' that could be used in (say) the expression X*Y
   //   or an extra function Multiply(X,Y,Z)?
   // Hmm... How would I handle Multiply(Plus(X,2),Pow(Y,3))?
   //   This kind of expression 
-  F.add_entry("X",StateNode<Double>());
-  F.add_entry("Y",InputNode<Double>());
-  {
+   {
     std::vector<int> inputs(2);
     inputs[0] = 0; // X
     inputs[1] = 1; // Y
-    F.add_entry("Z",MultiplyNode(2),inputs);
+    F->add_entry("Z",MultiplyNode(2),inputs);
   }
   {
     std::vector<int> inputs(2);
     inputs[0] = 0; // X
     inputs[1] = 2; // Y
-    F.add_entry("W",MultiplyNode(2),inputs);
+    F->add_entry("W",MultiplyNode(2),inputs);
   }
 
-  Values V1(F);
+  Values V1(*F);
 
   cout<<"V1 = \n"<<V1.expression()<<endl;
 
@@ -478,6 +457,31 @@ int main(int argc,char* argv[])
   return 0;
 }
 
+
+/* The user should be able to
+ *
+ * Create State and Input objects that exist in a specific formula.
+ *
+ * Create Expression objects that do NOT exist in a specific formula.
+ *
+ * (All of these objects should have unique global IDs.)
+ *
+ * Add an expression object to a formula, and get a new object for the bound version.
+ *
+ * Determine if a formula contains a version of an expression
+ *
+ * Add an expression object to a formula, but ONLY if the formula does not already contain that expression!
+ * 
+ */
+
+// Do we really want unbound expressions?
+// These should be able to express things like X[f1] * Y[f2].
+// 
+// On the other hand, having unbound expressions should prevent wasting indices on objects that
+// we end up not using.
+//
+// Now, it would seem that each object has exactly one Formula that it can live in, given that all of its
+// state nodes && input nodes must be in the same formula.
 
 /*
  * The user should be able to
@@ -515,4 +519,35 @@ int main(int argc,char* argv[])
  * 1. Access the ValueBase or  Value<T> objects directly, unless...
  *    (a) this is needed for saving & restoring.
  *
+ */
+
+/* Re: not duplicating functionality between an XNode and an XValue
+  So, if I use the functionnode entirely as a placeholder, then I would only have to define one object per
+  function.
+
+  How would I handle computed nodes?
+  - the computed value object would hold any necessary state: it would not need to be duplicated in the formulanode.
+  - 
+
+  But, how would I handle the create_new_object type?
+  Well, I could make each functionnode actually keep around 1 object of the appropriate type: then it would
+   hold all of its own state that way.
+
+
+
+ This would allow the Constant node an obvious way to hold a constant.  It would allow a MultiplyNode a way of
+  determining the number of inputs that it should have.
+
+  But, how would it handle statenodes 
+ */
+
+
+/* Re: parameter<T> objects, and free-floating expressions.
+ *
+ * For parameter nodes, I note that storing the relationships between expressions using pointers and a graph 
+ * would not really cause problems with unsharing, since we aren't sharing, here.
+ *
+ * However, eventually there must be an assignment of finalized indices to any free-floating expressions.
+ * Therefore, let us say that statenodes and input nodes must be firmly rooted in a formula - therefore,
+ * they all have finalized indices, and must be internal associated with a specific formula expression.
  */
