@@ -20,7 +20,7 @@ FreeParameterBase::FreeParameterBase(const ValueBase& V, const std::vector<polym
 {
 }
 
-Parameter<Double> operator*(Parameter<Double>& p1,Parameter<Double>& p2)
+Parameter<Double> operator*(const Parameter<Double>& p1,const Parameter<Double>& p2)
 {
   std::vector<polymorphic_cow_ptr<ParameterBase> > pp;
   pp.push_back(p1.node);
@@ -28,6 +28,7 @@ Parameter<Double> operator*(Parameter<Double>& p1,Parameter<Double>& p2)
   return Expression<Double>(MultiplyValue(2), pp);
 }
 
+// Do we need this anymore?
 template <typename T, typename U>
 Parameter<T> Convert(const Parameter<U>& P)
 {
@@ -38,7 +39,7 @@ Parameter<T> Convert(const Parameter<U>& P)
 }
 
 
-Parameter<Double> apply(const string& name,double (f)(double, double), Parameter<Double>& p1,Parameter<Double>& p2)
+Parameter<Double> apply(const string& name,double (f)(double, double), const Parameter<Double>& p1,const Parameter<Double>& p2)
 {
   std::vector<polymorphic_cow_ptr<ParameterBase> > pp;
   pp.push_back(p1.node);
@@ -517,16 +518,17 @@ int main(int argc,char* argv[])
 {
   boost::shared_ptr<Formula> F(new Formula);
 
-  State<Double> X("X",F);
+  State<Int> X("X",F);
   Input<Double> Y("Y",F);
+  State<Int> I("I",F);
   Parameter<Double> Z = X*Y;
-  Parameter<Double> W = X*Z;
+  Parameter<Double> W = X*I;
   Parameter<Double> U = apply("pow",pow,X,Z);
 
-  State<Int> I("I",F);
-  Parameter<Double> I2 = Convert<Double,Int>(I);
+  //  Parameter<Double> I2 = Convert<Double,Int>(I);
+  Parameter<Double> I2(I);
 
-  F->add_entry("Z",Z);
+  F->add_entry("Z",X*Y);
   F->add_entry("W",W);
   F->add_entry("U",U);
   F->add_entry("I2",I2);
@@ -536,7 +538,7 @@ int main(int argc,char* argv[])
   cout<<"V1 = \n"<<V1.expression()<<endl;
 
   // set the value of the single state node
-  V1.get_value_as<Double>(0) = 2;
+  V1.get_value_as<Int>(0) = 2;
   // state nodes need to be marked up-to-date, and are then assumed to stay that way.
   // FIXME - their should be a general method for marking only StateNodes & InputNodes up-to-date
   V1.mark_up_to_date(0);
@@ -561,7 +563,7 @@ int main(int argc,char* argv[])
 
   cout<<"V2 = \n"<<V2.expression()<<endl;
 
-  V2.get_value_as<Double>(0) = 3;
+  V2.get_value_as<Int>(0) = 3;
   
   cout<<"V2 = \n"<<V2.expression()<<endl;
   V2.calculate_value(3);

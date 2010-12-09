@@ -231,10 +231,29 @@ public:
   virtual std::string formula_expression(const std::vector<std::string>&) const=0;
 
   template <typename T>
-  const T& get_value_as() const {return *data.as<const T>();}
+  bool value_is_a() const 
+  {
+    const T* ptr = data.as<const T>();
+    return ptr;
+  }
 
   template <typename T>
-        T& get_value_as()       {return *data.as<      T>();}
+  const T& get_value_as() const 
+  {
+    const T* ptr = data.as<const T>();
+    if (!ptr)
+      std::abort();
+    return *ptr;
+  }
+
+  template <typename T>
+        T& get_value_as()
+  {
+    T* ptr = data.as<T>();
+    if (!ptr)
+      std::abort();
+    return *ptr;
+  }
 
   bool has_value() const {return data;}
 
@@ -469,6 +488,7 @@ struct FreeParameterBase: public ParameterBase
   FreeParameterBase(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i);
 };
 
+template <typename T,typename U> struct ConversionValue;
 
 /// This is the general type
 template<typename T>
@@ -478,6 +498,9 @@ struct Parameter
   polymorphic_cow_ptr<ParameterBase> node;
 
   Parameter() { }
+
+  template <typename U>
+  Parameter(const Parameter<U>& P);
 };
 
 /// This is the wrapper for a state node
@@ -546,5 +569,14 @@ struct ConversionValue: public Value<T>
 
   std::string formula_expression(const std::vector<std::string>& args) const {return std::string("conversion(")+args[0]+")";}
 };
+
+template <typename T>
+template <typename U>
+Parameter<T>::Parameter(const Parameter<U>& P)
+{
+  std::vector<polymorphic_cow_ptr<ParameterBase> > inputs;
+  inputs.push_back(P.node);
+  node = polymorphic_cow_ptr<FreeParameterBase>(new FreeParameterBase(ConversionValue<T,U>(),inputs));
+}
 
 #endif
