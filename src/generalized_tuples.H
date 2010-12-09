@@ -9,7 +9,6 @@
 #include "owned-ptr.H"
 
 class Formula;
-class FormulaNode;
 class Values;
 class ValueBase;
 
@@ -18,11 +17,13 @@ class FreeParameterBase;
 class BoundParameterBase;
 template <typename T> class Parameter;
 
+enum node_type_t {constant=0, input=1, state=2, computed=3, undeclared=4};
+
 /// A Formula for a generic tuple, where some values are computed from others
 class Formula
 {
   /// The ordered list of entries, some of which have others as "inputs".
-  std::vector<polymorphic_cow_ptr<FormulaNode> > Nodes;
+  std::vector<polymorphic_cow_ptr<ValueBase> > Nodes;
 
   /// The name of each Node
   std::vector<std::string> Node_names;
@@ -44,6 +45,9 @@ public:
   /// Get the j-th input index for entry i
   int input_index(int i,int j) const {return Node_inputs[i][j];}
 
+  // What type is entry i?
+  node_type_t node_type(int i) const;
+
   /// Get the indices of the inputs for the i-th entry.
   const std::vector<int>& input_indices(int i) const {return Node_inputs[i];}
 
@@ -56,8 +60,7 @@ public:
   /// The name of the i-th entry
   std::string entry_name(int i) const {return Node_names[i];}
 
-  const FormulaNode& get_entry(int i) const {return *Nodes[i];}
-        FormulaNode& get_entry(int i)       {return *Nodes[i];}
+  polymorphic_cow_ptr<ValueBase> get_new_entry_value(int i) const;
 
   bool is_input_entry(int i) const;
 
@@ -68,10 +71,10 @@ public:
   bool is_computed_entry(int i) const;
 
   /// Make an additional entry called name and of type Node, with no inputs.
-  int add_entry(const std::string& name, const FormulaNode& Node);
+  int add_entry(const std::string& name, const ValueBase& Node);
 
   /// Make an additional entry called name and of type Node, computed from indices inputs
-  int add_entry(const std::string& name, const FormulaNode& Node,const std::vector<int>& inputs);
+  int add_entry(const std::string& name, const ValueBase& Node,const std::vector<int>& inputs);
 
   int add_entry(const std::string& name, const ParameterBase& P);
 
@@ -81,50 +84,6 @@ public:
 
 //FIXME -- but a constant node actually needs a VALUE, right?
 //         And that value is part of the FORMULA, right?
-
-enum node_type_t {constant=0, input=1, state=2, computed=3};
-
-/// An entry for a specific index in a Formula
-class FormulaNode
-{
-protected:
-  /// Each input is marked as having a name for the purpose of computing values of this formula node
-  std::vector<std::string> input_names_;
-
-  node_type_t intent;
-public:
-  virtual FormulaNode* clone() const =0;
-
-  /// What are the names of the arguments for this FormulaNode?
-  const std::vector<std::string>& input_names() const {return input_names_;}
-
-  /// How many inputs does a FormulaNode of this type take?
-  int n_inputs() const {return input_names_.size();}
-
-  /// Get a new Value object of this type
-  virtual ValueBase* create_new_value() const=0;
-
-  /// Describe this expression
-  virtual std::string expression(const std::vector<std::string>& argument_names) const=0;
-
-  /// Is this node a constant node?
-  bool is_constant_node() const {return intent == constant;}
-
-  /// Is this node a state node?
-  bool is_state_node() const {return intent == state;}
-
-  /// Is this node an input node?
-  bool is_input_node() const {return intent == input;}
-
-  /// Is this node a computed node?
-  bool is_computed_node() const {return intent == computed;}
-
-  node_type_t node_type() const {return intent;}
-
-  FormulaNode() {}
-  FormulaNode(int i);
-  virtual ~FormulaNode() {}
-};
 
 /// A base class for structs that carry information about which parts of multi-part Values are out of date
 class out_of_date_message_t {
@@ -156,13 +115,17 @@ typedef POD<double> Double;
 typedef POD<int> Int;
 typedef POD<unsigned> Unsigned;
 
-/// A generic Value for each FormulaNode that will be either (i) a state or (ii) computed from other Values
+/// A generic Value for each entry that will be either constant, input, state, and computed
 class ValueBase
 {
 protected:
   bool up_to_date;
 
   owned_ptr<Object> data;
+
+  node_type_t intent;
+
+  bool ignoring_messages;
 public:
   virtual ValueBase* clone() const=0;
 
@@ -178,8 +141,24 @@ public:
   /// How many inputs does this function node take?
   virtual int n_inputs() const = 0;
 
-  /// Will this class ignore a message m
-  virtual bool ignored(const out_of_date_message_t& m) const { return false; }
+  virtual std::vector<std::string> input_names() const;
+
+  /// Is this node a constant node?
+  bool is_constant_node() const {return intent == constant;}
+
+  /// Is this node a state node?
+  bool is_state_node() const {return intent == state;}
+
+  /// Is this node an input node?
+  bool is_input_node() const {return intent == input;}
+
+  /// Is this node a computed node?
+  bool is_computed_node() const {return intent == computed;}
+
+  /// What type of node is this?
+  node_type_t node_type() const {return intent;}  /// Will this class ignore a message m
+
+  virtual bool ignored(const out_of_date_message_t& m) const { return ignoring_messages; }
 
   /// Mark this value as being out-of-date
   virtual message_list_t mark_self_out_of_date()
@@ -207,7 +186,9 @@ public:
   /// Recompute the value
   virtual void update(const Values&,const std::vector<int>&)=0;
 
-  virtual std::string expression() const=0;
+  virtual std::string result_expression() const=0;
+
+  virtual std::string formula_expression(const std::vector<std::string>&) const=0;
 
   template <typename T>
   const T& get_value_as() const {return *data.as<const T>();}
@@ -221,13 +202,17 @@ public:
   void set_value(const T& t) {data = t;}
 
   ValueBase()
-    :up_to_date(false)
+    :up_to_date(false),
+     intent(undeclared),
+     ignoring_messages(false)
   {}
 
   template <typename T>
   ValueBase(const T& t)
     :up_to_date(false),
-     data(t)
+     data(t),
+     intent(undeclared),
+     ignoring_messages(false)
   { }
 
   virtual ~ValueBase() {}
@@ -238,7 +223,7 @@ struct Value: public ValueBase
 {
   Value<T>* clone() const=0;
 
-  std::string expression() const
+  std::string result_expression() const
   {
     if (has_value())
       return convertToString(get_value_as<T>());
@@ -268,6 +253,8 @@ struct StateValue: public Value<T>
   // FIXME: Should we abort, though?
   message_list_t mark_self_out_of_date() {return message_list_t();}
 
+  std::string formula_expression(const std::vector<std::string>&) const {return "[State]";}
+
   const T& get_value() const {return ValueBase::get_value_as<T>();}
         T& get_value()       {return ValueBase::get_value_as<T>();}
 
@@ -275,14 +262,6 @@ struct StateValue: public Value<T>
   StateValue(const T& t):ValueBase(t) {ValueBase::up_to_date = true;}
 };
 
-template <typename T>
-class StateNode: public FormulaNode
-{
-  StateNode<T>* clone() const {return new StateNode<T>(*this);}
-public:
-  StateValue<T>* create_new_value() const {return new StateValue<T>;}
-  std::string expression(const std::vector<std::string>&) const { std::abort(); }
-};
 
 /*------------------- InputValue / InputNode -----------------*/
 
@@ -293,20 +272,13 @@ struct InputValue: public Value<T>
   int n_inputs() const {return 0;}
   void update(const Values&, const std::vector<int>&) { std::abort(); };
 
+  std::string formula_expression(const std::vector<std::string>&) const {return "[Input]";}
+
   const T& get_value() const {return ValueBase::get_value_as<T>();}
         T& get_value()       {return ValueBase::get_value_as<T>();}
 
   InputValue() {}
   InputValue(const T& t):ValueBase(t) {}
-};
-
-template <typename T>
-class InputNode: public FormulaNode
-{
-  InputNode<T>* clone() const {return new InputNode<T>(*this);}
-public:
-  InputValue<T>* create_new_value() const {return new InputValue<T>;}
-  std::string expression(const std::vector<std::string>&) const { std::abort(); }
 };
 
 /*------------------- MultiplyValue / MultiplyNode -----------------*/
@@ -316,49 +288,31 @@ class MultiplyValue: public Value<Double>
   int n;
 public:
   MultiplyValue* clone() const {return new MultiplyValue(*this);}
+
   int n_inputs() const {return n;}
+
+  std::string formula_expression(const std::vector<std::string>& args) const;
+
   void update(const Values& V, const std::vector<int>& mapping);
+
   MultiplyValue(int i):n(i) {}
 };
 
-class MultiplyNode: public FormulaNode
-{
-  int n;
-public:
-  MultiplyNode* clone() const {return new MultiplyNode(*this);}
-
-  MultiplyValue* create_new_value() const {return new MultiplyValue(n);}
-
-  std::string expression(const std::vector<std::string>&) const;
-
-  MultiplyNode(int i);
-};
-
-
 class FunctionValue: public Value<Double>
-{
-  double (*function)(double, double);
-public:
-  FunctionValue* clone() const {return new FunctionValue(*this);}
-  int n_inputs() const {return 2;}
-  void update(const Values& V, const std::vector<int>& mapping);
-  FunctionValue(double (*f)(double,double));
-};
-
-class FunctionNode: public FormulaNode
 {
   std::string name;
   double (*function)(double, double);
 public:
-  FunctionNode* clone() const {return new FunctionNode(*this);}
+  FunctionValue* clone() const {return new FunctionValue(*this);}
 
-  FunctionValue* create_new_value() const {return new FunctionValue(function);}
+  int n_inputs() const {return 2;}
 
-  std::string expression(const std::vector<std::string>&) const;
+  std::string formula_expression(const std::vector<std::string>&) const;
 
-  FunctionNode(const std::string& s, double (*f)(double,double));
+  void update(const Values& V, const std::vector<int>& mapping);
+
+  FunctionValue(const std::string& s, double (*f)(double,double));
 };
-
 
 class Values
 {
@@ -444,7 +398,7 @@ struct BoundParameterBase: public ParameterBase
 
   BoundParameterBase* clone() const {return new BoundParameterBase(*this);}
 
-  node_type_t node_type() const {return F->get_entry(index).node_type();}
+  node_type_t node_type() const {return F->node_type(index);}
   std::string name() const {return F->entry_name(index);}
   BoundParameterBase(boost::shared_ptr<Formula> f, int i)
     :F(f),index(i)
@@ -465,13 +419,13 @@ struct FreeParameterBase: public ParameterBase
 
   node_type_t node_type() const {return computed;}
 
-  polymorphic_cow_ptr<FormulaNode> formula_node;
+  polymorphic_cow_ptr<ValueBase> exemplar;
   std::vector<polymorphic_cow_ptr<ParameterBase> > inputs;
 
   FreeParameterBase* clone() {return new FreeParameterBase(*this);}
 
   FreeParameterBase();
-  FreeParameterBase(const FormulaNode& fn, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i);
+  FreeParameterBase(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i);
 };
 
 
@@ -491,7 +445,7 @@ struct State: public Parameter<T>
 {
   State(const std::string& s, boost::shared_ptr<Formula>& F)
   {
-    int index = F->add_entry(s,StateNode<T>());
+    int index = F->add_entry(s,StateValue<T>());
     Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new BoundParameterBase(F,index));
   }
 };
@@ -502,7 +456,7 @@ struct Input: public Parameter<T>
 {
   Input(const std::string& s, boost::shared_ptr<Formula>& F)
   {
-    int index = F->add_entry(s,InputNode<T>());
+    int index = F->add_entry(s,InputValue<T>());
     Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new BoundParameterBase(F,index));
   }
 };
@@ -511,14 +465,14 @@ struct Input: public Parameter<T>
 template<typename T>
 struct Expression: public Parameter<T>
 {
-  Expression(const FormulaNode& fn, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
+  Expression(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
   {
-    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(fn,i));
+    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(V,i));
   }
 
-  Expression(const std::string& s, const FormulaNode& fn, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
+  Expression(const std::string& s, const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
   {
-    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(fn,i));
+    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(V,i));
   }
 };
 
@@ -535,7 +489,7 @@ int Formula::add_entry(const std::string& name, const Parameter<T>& P)
     polymorphic_cow_ptr<BoundParameterBase> bound = P.node;
     std::vector<int> inputs;
     if (free) {
-      return add_entry(name, *(free->formula_node),inputs);
+      return add_entry(name, *(free->exemplar),inputs);
     }
     else
       std::abort();

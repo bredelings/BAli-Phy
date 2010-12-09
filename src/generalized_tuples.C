@@ -14,8 +14,8 @@ ParameterBase::ParameterBase()
 FreeParameterBase::FreeParameterBase()
 { }
 
-FreeParameterBase::FreeParameterBase(const FormulaNode& fn, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
-  :formula_node(fn),
+FreeParameterBase::FreeParameterBase(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
+  :exemplar(V),
    inputs(i)
 {
 }
@@ -25,15 +25,25 @@ Parameter<Double> operator*(Parameter<Double>& p1,Parameter<Double>& p2)
   std::vector<polymorphic_cow_ptr<ParameterBase> > pp;
   pp.push_back(p1.node);
   pp.push_back(p2.node);
-  return Expression<Double>(MultiplyNode(2), pp);
+  return Expression<Double>(MultiplyValue(2), pp);
 }
 
-Parameter<Double> apply(double (f)(double, double), Parameter<Double>& p1,Parameter<Double>& p2)
+Parameter<Double> apply(const string& name,double (f)(double, double), Parameter<Double>& p1,Parameter<Double>& p2)
 {
   std::vector<polymorphic_cow_ptr<ParameterBase> > pp;
   pp.push_back(p1.node);
   pp.push_back(p2.node);
-  return Expression<Double>(MultiplyNode(2), pp);
+  return Expression<Double>(FunctionValue(name,f), pp);
+}
+
+node_type_t Formula::node_type(int i) const
+{
+  return Nodes[i]->node_type();
+}
+
+polymorphic_cow_ptr<ValueBase> Formula::get_new_entry_value(int i) const
+{
+  return polymorphic_cow_ptr<ValueBase>(Nodes[i]->clone());
 }
 
 string Formula::expression_for_entry(int i) const
@@ -44,22 +54,22 @@ string Formula::expression_for_entry(int i) const
   for(int j=0;j<n_inputs(i);j++)
     input_names.push_back(entry_name(input_index(i,j)));
 
-  return Nodes[i]->expression(input_names);
+  return Nodes[i]->formula_expression(input_names);
 }
 
-int Formula::add_entry(const string& name, const FormulaNode& Node)
+int Formula::add_entry(const string& name, const ValueBase& V)
 {
   std::vector<int> empty;
-  return add_entry(name,Node,empty);
+  return add_entry(name,V,empty);
 }
 
-int Formula::add_entry(const string& name, const FormulaNode& Node, const std::vector<int>& inputs)
+int Formula::add_entry(const string& name, const ValueBase& V, const std::vector<int>& inputs)
 {
   for(int i=0;i<size();i++)
     if (entry_name(i) == name)
       throw myexception()<<"Command add node with name '"<<name<<"': a node with that name already exists.";
 
-  Nodes.push_back(polymorphic_cow_ptr<FormulaNode>(Node));
+  Nodes.push_back(polymorphic_cow_ptr<ValueBase>(V));
   Node_names.push_back(name);
   Node_inputs.push_back(inputs);
   Node_outputs.push_back(vector<int>());
@@ -87,12 +97,6 @@ int Formula::add_entry(const string& name, const FormulaNode& Node, const std::v
   return k;
 }
 
-FormulaNode::FormulaNode(int n)
-{
-  for(int j=0;j<n;j++)
-    input_names_.push_back(std::string("$")+convertToString(j+1));
-}
-
 bool Formula::is_input_entry(int i) const
 {
   return Nodes[i]->is_input_node();
@@ -118,6 +122,15 @@ bool Formula::is_computed_entry(int i) const
 //   + and thus the number 
 // - a method for computing a Value for each node
 
+vector<string> ValueBase::input_names() const 
+{
+  vector<string> names;
+  for(int i=0;i<n_inputs();i++) {
+    names.push_back(string("$")+convertToString(i+1));
+  }
+  return names;
+}
+
 void Values::record_changes_no_deliver(int x, message_list_t& x_changes)
 {
   // If x has changed completely, then just record a single "everything has changed" message.
@@ -138,7 +151,14 @@ void Values::notify_x_of_change_in_y(int x, int y, const out_of_date_message_t& 
   if (completely_out_of_date(x)) return;
 
   // Don't unshare x by calling notify_inputs_out_of_date( ) unless x will change!
-  if (values[x]->ignored(m)) return;
+  {
+    // If we don't cast 'values' to a constant, then values[x] will call the non-const operator[]
+    // and unshare values[x], which defeats the whole purpose of checking 'ignored'
+    const std::vector<polymorphic_cow_ptr<ValueBase> >& const_values = values;
+
+    // Quit before generating a non-const reference to values[x] if values[x] will not change value.
+    if (const_values[x]->ignored(m)) return;
+  }
 
   // Notify x of the changes, and find out how x has changed.
   message_list_t x_changes = values[x]->notify_input_out_of_date(*this, m, y);
@@ -170,7 +190,6 @@ void Values::process_messages()
 
       message_list_t index2_all_changes; // or at least all changes resulting from from index1
 
-      // Consider each message from index1
       for(message_list_t::const_iterator m = index1_all_changes.begin(); 
 	  m != index1_all_changes.end() and not completely_out_of_date(index2); m++)
       {
@@ -234,7 +253,7 @@ string Values::expression() const
   ostringstream o;
   for(int i=0;i<size();i++)
   {
-    o<<F->entry_name(i)<<" = "<<values[i]->expression()<<"   ";
+    o<<F->entry_name(i)<<" = "<<values[i]->result_expression()<<"   ";
     if (completely_up_to_date(i))
       o<<"[*]";
     else if (completely_out_of_date(i))
@@ -276,24 +295,15 @@ Values::Values(const Formula& f)
    unprocessed_messages(f.size())
 {
   for(int i=0;i<F->size();i++)
-  {
-    ValueBase* V = F->get_entry(i).create_new_value();
-    values[i] = polymorphic_cow_ptr<ValueBase>(V);
-  }
+    values[i] = F->get_new_entry_value(i);
 }
 
-std::string MultiplyNode::expression(const vector<string>& args) const
+string MultiplyValue::formula_expression(const vector<string>& args) const
 {
   assert(args.size() == n_inputs());
 
   return join(args,'*');
 }
-
-MultiplyNode::MultiplyNode(int i)
-  :FormulaNode(i),
-   n(i)
-{
-};
 
 void MultiplyValue::update(const Values& V, const std::vector<int>& mapping)
 {
@@ -312,18 +322,12 @@ void MultiplyValue::update(const Values& V, const std::vector<int>& mapping)
   up_to_date = true;
 }
 
-std::string FunctionNode::expression(const vector<string>& args) const
+string FunctionValue::formula_expression(const vector<string>& args) const
 {
   assert(args.size() == n_inputs());
 
   return name + "("+join(args,',')+")";
 }
-
-FunctionNode::FunctionNode(const string& s, double (*f)(double,double))
-  :FormulaNode(2),
-   name(s),
-   function(f)
-{ }
 
 void FunctionValue::update(const Values& V, const std::vector<int>& mapping)
 {
@@ -337,8 +341,9 @@ void FunctionValue::update(const Values& V, const std::vector<int>& mapping)
   up_to_date = true;
 }
 
-FunctionValue::FunctionValue(double (*f)(double,double))
-  :function(f)
+FunctionValue::FunctionValue(const string& s, double (*f)(double,double))
+  :name(s),
+   function(f)
 { }
 
 // Some Node's are STATE nodes: that is, these are the inputs to the computed tuple as a function.
@@ -394,13 +399,13 @@ int main(int argc,char* argv[])
   boost::shared_ptr<Formula> F(new Formula);
 
   State<Double> X("X",F);
-  State<Double> Y("Y",F);
+  Input<Double> Y("Y",F);
   Parameter<Double> Z = X*Y;
 
   vector<polymorphic_cow_ptr<ParameterBase> > inputs;
   inputs.push_back(X.node);
   inputs.push_back(Z.node);
-  Expression<Double> W("W",FunctionNode("pow",pow),inputs);
+  Expression<Double> W("W",FunctionValue("pow",pow),inputs);
 
   // So... what would I make a FreeParameter into a BOundParameter after it was created?
 
@@ -412,13 +417,13 @@ int main(int argc,char* argv[])
     std::vector<int> inputs(2);
     inputs[0] = 0; // X
     inputs[1] = 1; // Y
-    F->add_entry("Z",MultiplyNode(2),inputs);
+    F->add_entry("Z",MultiplyValue(2),inputs);
   }
   {
     std::vector<int> inputs(2);
     inputs[0] = 0; // X
     inputs[1] = 2; // Y
-    F->add_entry("W",MultiplyNode(2),inputs);
+    F->add_entry("W",MultiplyValue(2),inputs);
   }
 
   Values V1(*F);
