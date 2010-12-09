@@ -160,6 +160,13 @@ public:
 
   virtual bool ignored(const out_of_date_message_t& m) const { return ignoring_messages; }
 
+  /// FIXME: how does the delivery of messages related to their being ignored?
+  /// If we queue messages and the mark this node as recieving messages, then they won't be ignored at the
+  /// time they are recieved.
+  /// Therefore, if we start ignoring messages, we need to first flush the queue to recieve un-ignored messages
+  /// Also, if we stop ignoring messages, we need to first flush the queue to not (later) recieve ignored messages.
+  /// So, this must be handle partly from the Values class.
+
   /// Mark this value as being out-of-date
   virtual message_list_t mark_self_out_of_date()
   {
