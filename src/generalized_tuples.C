@@ -559,3 +559,37 @@ int main(int argc,char* argv[])
  * Therefore, let us say that statenodes and input nodes must be firmly rooted in a formula - therefore,
  * they all have finalized indices, and must be internal associated with a specific formula expression.
  */
+
+
+/* Re: lambda functions
+ * 
+ * Supposing I have a tuple
+ *
+ * g=(pi, v=(v[1],...,v[n]), f= (lambda k) HKY(k,pi), models=f(v))
+ *
+ * Q1. Now, suppose I change v[1] only.  Is it possible to recompute f(v[1]) only?
+ * A1. Sure, actually, this wouldn't be very hard.  No matter what f is, if only v1
+ *     changes, then only f(v1) needs to be invalidated.
+ *     Now, this could be implemented either 
+ *     (i) by making f(v1),f(v2),.etc separate objects
+ *     (ii) by making v1 pass a message "only element 1 has changed".
+ *
+ * Q2. What kind of object is f?  
+ * A2. Well, presumably a lambda k is ALSO a formula.  It needs to be an Object too.
+ *     And as a formula, we could have k be an input node, whereas pi would be 
+ *     locally a state node, and globally, a reference to pi in the larger tuple g.
+ *
+ * Q3. The real question, then is how Values of f relate to values of g.
+ *     
+ *     Suppose that instead of HKY(k,pi) we had HKY(k+(x+y),pi), and x and y are in g
+ *     but x+y is not.  It would make sense to say that f depends on x+y, and make an x+y
+ *     entry in g.
+ *
+ *     Now, how do we *represent* values of f, as well as results of applying f to (say) 2, n
+ *     along with their cached intermedate results like (in this case) k+(x+y)?
+ *
+ *     The k+(x+y) value isn't in g at all, since it depends on k.
+ *
+ *     How do we represent values of f?  How about values of f(2)?
+ *
+ */
