@@ -17,7 +17,7 @@ class FreeParameterBase;
 class BoundParameterBase;
 template <typename T> class Parameter;
 
-enum node_type_t {constant=0, input=1, state=2, computed=3, undeclared=4};
+enum node_type_t {constant=0, input=1, state=2, computed=3, lambda=4, undeclared=5};
 
 struct affected_index_t {
   int index;
@@ -289,7 +289,7 @@ struct Value: public ValueBase
     else
       return "[undefined]";
   }
-  // Value() {}  FIXME: this shouldn't crash...
+  // Value() {}  FIXME: this shouldn't crash...  how to handle unset values?
   Value():ValueBase( T() ) {}
   Value(const T& t):ValueBase(t) {}
 };
@@ -439,16 +439,12 @@ public:
 struct ParameterBase
 {
   static int total;
+
+  // A unique identifier for an expression - whether free or bound
   int id;
 
+  // The formula that this expression references - whether free or bound
   boost::shared_ptr<Formula> F;
-
-  // Is this parameter associated with a formula?
-  // (Also, do we want to be able to see if two nodes are associated with the SAME formula?
-  //  That might cause problems when forumlae that are on the stack go out of scope.
-  //  Also, if we are using smart pointers, they will duplicate the stack object and refer to the duplicate!)
-  // (We want to used shared_ptr<> because we want changes made outside the parameter object to be reflected in
-  //  the parameter object).
 
   virtual node_type_t node_type() const=0;
 
@@ -488,8 +484,6 @@ struct FreeParameterBase: public ParameterBase
   FreeParameterBase(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i);
 };
 
-template <typename T,typename U> struct ConversionValue;
-
 /// This is the general type
 template<typename T>
 struct Parameter
@@ -498,6 +492,8 @@ struct Parameter
   polymorphic_cow_ptr<ParameterBase> node;
 
   Parameter() { }
+
+  Parameter(const Parameter<T>& P):node(P.node) { }
 
   template <typename U>
   Parameter(const Parameter<U>& P);
@@ -570,6 +566,18 @@ struct ConversionValue: public Value<T>
   std::string formula_expression(const std::vector<std::string>& args) const {return std::string("conversion(")+args[0]+")";}
 };
 
+// try to allow downcasting from Derived to Base
+// template <typename T>
+// template <typename U>
+// Parameter<T>::Parameter(const Parameter<U>& P)
+// {
+//   node = P.node;
+// }
+//
+// See boost::enable_if ??  
+// Problem is probably that two alternative implementions need to be mutually exclusive - order doesn't matter.
+
+/// Do I really want to do this?  This might allow SILENT casting from double -> int, as well as int -> double
 template <typename T>
 template <typename U>
 Parameter<T>::Parameter(const Parameter<U>& P)

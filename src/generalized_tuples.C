@@ -519,6 +519,10 @@ int main(int argc,char* argv[])
   boost::shared_ptr<Formula> F(new Formula);
 
   State<Int> X("X",F);
+
+  // What should this mean?
+  // Parameter<int> X2 = X;
+
   Input<Double> Y("Y",F);
   State<Int> I("I",F);
   Parameter<Double> Z = X*Y;
@@ -640,31 +644,12 @@ int main(int argc,char* argv[])
  *
  */
 
-/* Re: not duplicating functionality between an XNode and an XValue
-  So, if I use the functionnode entirely as a placeholder, then I would only have to define one object per
-  function.
 
-  How would I handle computed nodes?
-  - the computed value object would hold any necessary state: it would not need to be duplicated in the formulanode.
-  - 
-
-  But, how would I handle the create_new_object type?
-  Well, I could make each functionnode actually keep around 1 object of the appropriate type: then it would
-   hold all of its own state that way.
-
-
-
- This would allow the Constant node an obvious way to hold a constant.  It would allow a MultiplyNode a way of
-  determining the number of inputs that it should have.
-
-  But, how would it handle statenodes 
- */
-
-
-/* Re: parameter<T> objects, and free-floating expressions.
+/* Re: Parameter<T> objects, and free-floating expressions.
  *
  * For parameter nodes, I note that storing the relationships between expressions using pointers and a graph 
- * would not really cause problems with unsharing, since we aren't sharing, here.
+ * would not really cause problems with unsharing, since nothing is shared at the expression level. Sharing
+ * is restricted to the values level.
  *
  * However, eventually there must be an assignment of finalized indices to any free-floating expressions.
  * Therefore, let us say that statenodes and input nodes must be firmly rooted in a formula - therefore,
@@ -674,38 +659,27 @@ int main(int argc,char* argv[])
 
 /* Re: lambda functions
  * 
- * Supposing I have a tuple
+ * Supposing I have a tuple g:
  *
- * g=(pi, v=(v[1],...,v[n]), f= (lambda k) HKY(k,pi), models=f(v))
+ *   f= (lambda k) HKY(k,pi)
+ *   g=(pi, v=(v[1],...,v[n]), , models=f(v))
  *
- * Q1. Now, suppose I change v[1] only.  Is it possible to recompute f(v[1]) only?
- * A1. Sure, actually, this wouldn't be very hard.  No matter what f is, if only v1
- *     changes, then only f(v1) needs to be invalidated.
- *     Now, this could be implemented either 
- *     (i) by making f(v1),f(v2),.etc separate objects
- *     (ii) by making v1 pass a message "only element 1 has changed".
+ * Then f does not have to be part of the tuple.  It can remain as a free expression.
+ * Only when applying f to (say) v do we get a non-lambda expression.
  *
- * Q2. What kind of object is f?  
- * A2. Well, presumably a lambda k is ALSO a formula.  It needs to be an Object too.
- *     And as a formula, we could have k be an input node, whereas pi would be 
- *     locally a state node, and globally, a reference to pi in the larger tuple g.
+ * To implement this, we just define another free node that is a lambda node.  So, say
  *
- * Q3. The real question, then, is how Values of f relate to values of g.
- *     
- * A3. Suppose that instead of HKY(k,pi) we had HKY(k+(x+y),pi), and x and y are in g
- *     but x+y is not.  It would make sense to say that f depends on x+y, and make an x+y
- *     entry in g.
+ *   k = Lambda<double>();
+ *   HKY(k,pi)
+ * 
+ * Then HKY is a lambda expression.  To unlambda the expression, we may need to walk the
+ * entire expression tree, though.  If we are replacing some lambda node k with a non-lambda
+ * node m, then every node upstream of the lambda gets replace with a comparable non-lambda node.
+ * (This is just like unsharing entries in a Values tree.)
  *
- *     Now, how do we *represent* values of f, as well as results of applying f to (say) 2, n
- *     along with their cached intermedate results like (in this case) k+(x+y)?
+ */
+
+/* Re: Accessing value entries using BoundParameter<T> {index; (?)Formula?}
  *
- *     The k+(x+y) value isn't in g at all, since it depends on k.
- *
- *     How do we represent values of f?  How about values of f(2)?
- *     - Well, first we note that, just like all of the other entries of g, f has values.
- *     - 
- *
- *     Hmm... now, actually, if we APPLY a lambda function to a value that we can compute, then
- *     the result STOPS being a lambda function!
- *
+ * I want for Bound and Free expression to be able to bind Parameter<T>
  */
