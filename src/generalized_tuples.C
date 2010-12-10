@@ -488,7 +488,7 @@ FunctionValue::FunctionValue(const string& s, double (*f)(double,double))
 // Q4: Would it be possible to make a TEMPLATE FUNCTION to check the arguments?
 // A4: I would think so: check_arguments<double,double,alignment&>(args)....
 //
-// Q5: Would it be possible to do this automatically?
+// Q5: Would it be possible to do so automatically?
 //
 // Q6: How do I deal with variable number of arguments?
 // A6a: Well, you could take a 'vector' which is (of course) of variable length...
@@ -502,13 +502,19 @@ FunctionValue::FunctionValue(const string& s, double (*f)(double,double))
 
 // Issues
 // - How do we handle conversion operators?
+//   + Can we handle e.g. binding Parameter<DNA> to parameter<alphabet> automatically?
+//   + Can we allow automatic conversion from Int to Double, but require explicit conversion from Double to Int?
+//
 // - Should I make all nodes take the form: Value<T>?
 //   - Then it would not be hard to access 
+//
 // - What is the *conceptual* interface -- independent of the implementation of
 //   * modifying individual objects (unsharing)
 //   * 
-// - Would it be possible to define a new node (e.g. both Value and the FormulaNode) at once?
+//
 // - Is there an elegant way of handling constants?
+//   + The use SHOULD be able to manually create ValueBase objects, and submit them with add_entry.
+//
 // - If I have to dynamically case ValueBase to Value<T> then, I have to know T (the stored type)
 //   not just that it can be converted to some type Y.
 
@@ -581,30 +587,22 @@ int main(int argc,char* argv[])
 }
 
 
-/* The user should be able to
+/* 
+ * The user should be able to
  *
- * Create State and Input objects that exist in a specific formula.
+ *  Create State and Input objects that exist in a specific formula.
  *
- * Create Expression objects that do NOT exist in a specific formula.
+ *  Create Expression objects that do NOT exist in a specific formula.
  *
- * (All of these objects should have unique global IDs.)
+ *   (All of these objects should have unique global IDs.)
  *
- * Add an expression object to a formula, and get a new object for the bound version.
+ *  Add an expression object to a formula, and get a new object for the bound version.
  *
- * Determine if a formula contains a version of an expression
+ *  Determine if a formula contains a version of an expression.
  *
- * Add an expression object to a formula, but ONLY if the formula does not already contain that expression!
+ *  Add an expression object to a formula, but ONLY if the formula does not already contain that expression!
  * 
  */
-
-// Do we really want unbound expressions?
-// These should be able to express things like X[f1] * Y[f2].
-// 
-// On the other hand, having unbound expressions should prevent wasting indices on objects that
-// we end up not using.
-//
-// Now, it would seem that each object has exactly one Formula that it can live in, given that all of its
-// state nodes && input nodes must be in the same formula.
 
 /*
  * The user should be able to
@@ -629,9 +627,10 @@ int main(int argc,char* argv[])
  *    Example 1: I could have a Tree that is a function of (a) a topology and (b) a branch-length vector.
  *    Example 2: I could use the Computed Tuple framework to implement cached 
  *
- * 6. I need a modify_no_invalidate accessor for the values!
+ * 6. I need to be able to mark certain nodes as (temporarily) ignoring change events.
+ *    I can use this to handle cases where X*Y does not change even though X and Y change, for example,
  * 
- * 7. The user should be able to manage invalidation and caching entirely on their own, if they want to!
+ * 7. The user should be able to manage invalidation and caching entirely on their own, if they want to.
  *
  * 8. Add one formula as an entry in another.  This will be useful for submodels.
  */
