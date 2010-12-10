@@ -534,14 +534,21 @@ int main(int argc,char* argv[])
   Parameter<Double> Z = X*Y;
   Parameter<Double> W = X*I;
   Parameter<Double> U = apply("pow",pow,X,Z);
+  Parameter<Double> A = Constant<Double>(2);
 
-  //  Parameter<Double> I2 = Convert<Double,Int>(I);
+  // Why don't these work?
+  // const Parameter<Double>& A6 = 2.0;
+  // Parameter<Double> A3 = 2.0;
+
+  Parameter<Double> A2 ( 2 );
+
   Parameter<Double> I2(I);
 
   F->add_entry("Z",X*Y);
   F->add_entry("W",W);
   F->add_entry("U",U);
   F->add_entry("I2",I2);
+  F->add_entry("U*2",U*A);
 
   Values V1(*F);
 
@@ -580,6 +587,7 @@ int main(int argc,char* argv[])
   cout<<"V2 = \n"<<V2.expression()<<endl;
   V2.calculate_value(4);
   V2.calculate_value(6);
+  V2.calculate_value(14);
   cout<<"V2 = \n"<<V2.expression()<<endl;
   cout<<"V1 = \n"<<V1.expression()<<endl;
 

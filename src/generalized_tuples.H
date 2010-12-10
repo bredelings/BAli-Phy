@@ -7,6 +7,8 @@
 #include "cow-ptr.H"
 #include "util.H"
 #include "owned-ptr.H"
+#include <boost/type_traits.hpp>
+#include <boost/utility/enable_if.hpp>
 
 class Formula;
 class Values;
@@ -135,13 +137,22 @@ class POD: public Object
   T t;
 public:
   POD<T>* clone() const {return new POD<T>(*this);}
+
   operator T() const {return t;}
+
+  //  template <typename U>
+  //  operator POD<U>() const {return t;}
+
+  POD<T>& operator=(const POD<T>& p2) {t = p2.t; return *this;}
+
+  POD<T>& operator=(const T& t2) {t = t2; return *this;}
 
   POD() {}
   POD(const T& t2):t(t2) {}
 
+  // Doesn't seem to do ANYTHING?  Why not?
   template <typename U>
-  POD(const U& u):t(u) {}
+  POD(const boost::enable_if_c<boost::is_convertible<U,T>::type,U>& u):t(u) { }
 };
 
 typedef POD<double> Double;
@@ -318,7 +329,7 @@ struct StateValue: public Value<T>
         T& get_value()       {return ValueBase::get_value_as<T>();}
 
   StateValue() {}
-  StateValue(const T& t):ValueBase(t) {ValueBase::up_to_date = true;}
+  StateValue(const T& t):Value<T>(t) {ValueBase::up_to_date = true;}
 };
 
 
@@ -342,7 +353,29 @@ struct InputValue: public Value<T>
         T& get_value()       {return ValueBase::get_value_as<T>();}
 
   InputValue() {}
-  InputValue(const T& t):ValueBase(t) {}
+  InputValue(const T& t):Value<T>(t) {}
+};
+
+/*------------------- InputValue / InputNode -----------------*/
+
+template <typename T>
+struct ConstantValue: public Value<T>
+{
+  ConstantValue<T>* clone() const {return new ConstantValue<T>(*this);}
+
+  int n_inputs() const {return 0;}
+
+  void update(const Values&, const std::vector<int>&) { std::abort(); };
+
+  // Abort: we don't have any slots!
+  bool ignored(const out_of_date_message_t&,int) const { std::abort();}
+
+  std::string formula_expression(const std::vector<std::string>&) const {return "[Constant]";}
+
+  const T& get_value() const {return ValueBase::get_value_as<T>();}
+        T& get_value()       {std::abort();}
+
+  ConstantValue(const T& t):Value<T>(t) {ValueBase::up_to_date=true;}
 };
 
 /*------------------- MultiplyValue / MultiplyNode -----------------*/
@@ -484,6 +517,8 @@ struct FreeParameterBase: public ParameterBase
   FreeParameterBase(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i);
 };
 
+template <typename T> struct Constant;
+
 /// This is the general type
 template<typename T>
 struct Parameter
@@ -493,10 +528,26 @@ struct Parameter
 
   Parameter() { }
 
+  // Copy exactly -- no conversion
   Parameter(const Parameter<T>& P):node(P.node) { }
 
+  // Generate a conversion
   template <typename U>
   Parameter(const Parameter<U>& P);
+
+  // Generate a constant?
+  Parameter(const T& t)
+  {
+    *this = Constant<T>(t);
+  }
+
+  // Why doesn't this do anything?
+  template <typename U>
+  Parameter(const typename boost::enable_if_c< boost::is_convertible<U,T>::value,U>::type& u)
+  {
+    T t = u;
+    *this = Constant<T>(t);
+  }
 };
 
 /// This is the wrapper for a state node
@@ -525,13 +576,30 @@ struct Input: public Parameter<T>
   }
 };
 
+/// This is the wrapper for a state node
+template<typename T>
+struct Constant: public Parameter<T>
+{
+  Constant(const T& t)
+  {
+    std::vector<polymorphic_cow_ptr<ParameterBase> > inputs;
+    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(ConstantValue<T>(t),inputs));
+  }
+  template <typename U>
+  Constant(const U& u)
+  {
+    std::vector<polymorphic_cow_ptr<ParameterBase> > inputs;
+    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(ConstantValue<T>(u),inputs));
+  }
+};
+
 /// This is the wrapper for a computed node
 template<typename T>
 struct Expression: public Parameter<T>
 {
-  Expression(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
+  Expression(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& inputs)
   {
-    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(V,i));
+    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(V,inputs));
   }
 };
 
@@ -558,12 +626,15 @@ struct ConversionValue: public Value<T>
   void update(const Values& V, const std::vector<int>& mapping)
   {
     U args1 = V.get_value_as<U>(mapping[0]);
-    T t = args1;
+    T t ( args1 );
     ValueBase::data = t;
     ValueBase::up_to_date=true;
   }
 
-  std::string formula_expression(const std::vector<std::string>& args) const {return std::string("conversion(")+args[0]+")";}
+  std::string formula_expression(const std::vector<std::string>& args) const 
+  {
+    return std::string("conversion(")+args[0]+")";
+  }
 };
 
 // try to allow downcasting from Derived to Base
