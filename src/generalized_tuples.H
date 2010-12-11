@@ -10,40 +10,35 @@
 #include <boost/type_traits.hpp>
 #include <boost/utility/enable_if.hpp>
 
+#include "values.H"
+
+
 class Formula;
 class Values;
 class ValueBase;
 
 class ParameterBase;
 class FreeParameterBase;
-class BoundParameterBase;
 template <typename T> class Parameter;
 
-enum node_type_t {constant=0, input=1, state=2, computed=3, lambda=4, undeclared=5};
-
-struct affected_index_t {
+template <typename T>
+struct entry_tag
+{
   int index;
-  int slot;
-  affected_index_t(int i, int s):index(i),slot(s) {}
+  entry_tag(int i):index(i) {}
 };
 
 /// A Formula for a generic tuple, where some values are computed from others
 class Formula
 {
   /// The ordered list of entries, some of which have others as "inputs".
-  std::vector<polymorphic_cow_ptr<ValueBase> > Nodes;
-
-  /// The name of each Node
-  std::vector<std::string> Node_names;
+  std::vector<polymorphic_cow_ptr<ParameterBase> > Nodes;
 
   /// The ordered indices of the Nodes that are input for each computed Node
   std::vector< std::vector<int> > Node_inputs;
 
   /// The nodes that are directly affected by changing each node.
   std::vector< std::vector< affected_index_t > > Nodes_affected;
-
-  /// What is the global id for the ParameterBase object that this computation represents.
-  std::vector< int > ids;
 
 public:
   Formula* clone() const {return new Formula(*this);}
@@ -64,7 +59,7 @@ public:
   int get_index_for_id(int) const;
 
   /// Look up an object by id
-  int get_index_for_name(const std::string&) const;
+  int get_index_for_term_name(const std::string&) const;
 
   // What type is entry i?
   node_type_t node_type(int i) const;
@@ -78,564 +73,31 @@ public:
   /// Get a (string) expression for the ith entry
   std::string expression_for_entry(int i) const;
 
-  /// Does the i-th entry have a non-empty name?
-  bool entry_has_name(int i) const;
-
-  /// The name of the i-th entry
-  std::string entry_name(int i) const;
-
   polymorphic_cow_ptr<ValueBase> get_new_entry_value(int i) const;
 
-  bool is_input_entry(int i) const;
+  bool is_term(int i) const;
 
-  bool is_state_entry(int i) const;
+  bool is_constant(int i) const;
 
-  bool is_constant_entry(int i) const;
+  bool is_computed(int i) const;
 
-  bool is_computed_entry(int i) const;
+  int add_entry(const polymorphic_cow_ptr<ParameterBase>& P, const std::vector<int>&);
 
-  /// Make an additional entry called name and of type Node, with no inputs.
-  int add_entry(const std::string& name, const ValueBase& Node);
-
-  /// Make an additional entry called name and of type Node, with no inputs.
-  int add_entry(const std::string& name, const ValueBase& Node, int id);
-
-  /// Make an additional entry called name and of type Node, computed from indices inputs
-  int add_entry(const std::string& name, const ValueBase& Node,const std::vector<int>& inputs);
-
-  /// Make an additional entry called name and of type Node, computed from indices inputs
-  int add_entry(const std::string& name, const ValueBase& Node,const std::vector<int>& inputs, int id);
-
-  int add_entry(const std::string& name, const ValueBase& V, const polymorphic_cow_ptr<BoundParameterBase>& P);
-
-  int add_entry(const std::string& name, const polymorphic_cow_ptr<FreeParameterBase>& P);
+  int add_entry(const polymorphic_cow_ptr<ParameterBase>& P);
 
   template <typename T>
-  int add_entry(const std::string& name, const Parameter<T>& P);
-};
-
-//FIXME -- but a constant node actually needs a VALUE, right?
-//         And that value is part of the FORMULA, right?
-
-/// A base class for structs that carry information about which parts of multi-part Values are out of date
-class out_of_date_message_t {
-public:
-  virtual out_of_date_message_t* clone() const {return new out_of_date_message_t(*this);}
-};
-
-typedef std::list<owned_ptr<out_of_date_message_t> > message_list_t;
-
-class Object {
-public:
-  virtual Object* clone() const =0;
-  virtual ~Object() {}
-};
-
-template<typename T>
-class POD: public Object 
-{
-  T t;
-public:
-  POD<T>* clone() const {return new POD<T>(*this);}
-
-  operator T() const {return t;}
-
-  //  template <typename U>
-  //  operator POD<U>() const {return t;}
-
-  POD<T>& operator=(const POD<T>& p2) {t = p2.t; return *this;}
-
-  POD<T>& operator=(const T& t2) {t = t2; return *this;}
-
-  POD() {}
-  POD(const T& t2):t(t2) {}
-
-  // Doesn't seem to do ANYTHING?  Why not?
-  template <typename U>
-  POD(const boost::enable_if_c<boost::is_convertible<U,T>::type,U>& u):t(u) { }
-};
-
-typedef POD<double> Double;
-typedef POD<int> Int;
-typedef POD<unsigned> Unsigned;
-
-/// A generic Value for each entry that will be either constant, input, state, and computed
-class ValueBase
-{
-protected:
-  bool up_to_date;
-
-  owned_ptr<Object> data;
-
-  node_type_t intent;
-
-  bool ignoring_messages;
-public:
-  virtual ValueBase* clone() const=0;
-
-  /// Is the cached value able to be used?
-  virtual bool completely_up_to_date() const {return up_to_date;}
-
-  /// Is it true that no information is cached?
-  virtual bool completely_out_of_date() const {return not up_to_date;}
-
-  /// Mark this value as being already computed
-  virtual void mark_up_to_date() {up_to_date=true;}
-
-  /// How many inputs does this function node take?
-  virtual int n_inputs() const = 0;
-
-  virtual std::vector<std::string> input_names() const;
-
-  /// Is this node a constant node?
-  bool is_constant_node() const {return intent == constant;}
-
-  /// Is this node a state node?
-  bool is_state_node() const {return intent == state;}
-
-  /// Is this node an input node?
-  bool is_input_node() const {return intent == input;}
-
-  /// Is this node a computed node?
-  bool is_computed_node() const {return intent == computed;}
-
-  /// What type of node is this?
-  node_type_t node_type() const {return intent;}  /// Will this class ignore a message m
-
-  virtual bool ignored(const out_of_date_message_t& /*m*/, int /*slot*/) const { return ignoring_messages; }
-
-  /// FIXME: how does the delivery of messages related to their being ignored?
-  /// If we queue messages and then mark this node as recieving messages, then they won't be ignored at the
-  /// time they are recieved.
-  /// Therefore, if we start ignoring messages, we need to first flush the queue to recieve un-ignored messages
-  /// Also, if we stop ignoring messages, we need to first flush the queue to not (later) recieve ignored messages.
-  /// So, this must be handle partly from the Values class.
-
-  /// Mark this value as being out-of-date
-  virtual message_list_t mark_self_out_of_date()
+  int add_entry(const Parameter<T>& P)
   {
-    if (not completely_up_to_date())
-    {
-      up_to_date = false;
-
-      owned_ptr<out_of_date_message_t> message = claim(new out_of_date_message_t);
-      return message_list_t(1,message);
-    }
-    else
-    {
-      up_to_date = false;
-      return message_list_t();
-    }
+    return add_entry(P.node);
   }
-
-  /// Notify this value that certain of its inputs are out-of-date
-  virtual message_list_t notify_input_out_of_date(const Values&, const out_of_date_message_t&, int /*slot*/)
-  {
-    return mark_self_out_of_date();
-  }
-
-  /// Recompute the value
-  virtual void update(const Values&,const std::vector<int>&)=0;
-
-  virtual std::string result_expression() const=0;
-
-  virtual std::string formula_expression(const std::vector<std::string>&) const=0;
-
-  template <typename T>
-  bool value_is_a() const 
-  {
-    const T* ptr = data.as<const T>();
-    return ptr;
-  }
-
-  template <typename T>
-  const T& get_value_as() const 
-  {
-    const T* ptr = data.as<const T>();
-    if (!ptr)
-      std::abort();
-    return *ptr;
-  }
-
-  template <typename T>
-        T& get_value_as()
-  {
-    T* ptr = data.as<T>();
-    if (!ptr)
-      std::abort();
-    return *ptr;
-  }
-
-  bool has_value() const {return data;}
-
-  template<typename T>
-  void set_value(const T& t) {data = t;}
-
-  ValueBase()
-    :up_to_date(false),
-     intent(undeclared),
-     ignoring_messages(false)
-  {}
-
-  template <typename T>
-  ValueBase(const T& t)
-    :up_to_date(false),
-     data(t),
-     intent(undeclared),
-     ignoring_messages(false)
-  { }
-
-  virtual ~ValueBase() {}
-};
-
-template <typename T>
-struct Value: public ValueBase
-{
-  Value<T>* clone() const=0;
-
-  std::string result_expression() const
-  {
-    if (has_value())
-      return convertToString(get_value_as<T>());
-    else
-      return "[undefined]";
-  }
-  // Value() {}  FIXME: this shouldn't crash...  how to handle unset values?
-  Value():ValueBase( T() ) {}
-  Value(const T& t):ValueBase(t) {}
-};
-
-/*------------------- StateValue / StateNode -----------------*/
-// A state node cannot be out of date: it holds the state!
-
-template <typename T>
-struct StateValue: public Value<T>
-{
-  StateValue<T>* clone() const {return new StateValue<T>(*this);}
-
-  int n_inputs() const {return 0;}
-
-  void update(const Values&, const std::vector<int>&) { std::abort(); };
-
-  // Abort: we don't have any slots!
-  bool ignored(const out_of_date_message_t&,int) const { std::abort();}
-
-  // Abort: States cannot be out of date!
-  message_list_t mark_self_out_of_date() {return message_list_t();}
-
-  std::string formula_expression(const std::vector<std::string>&) const {return "[State]";}
-
-  const T& get_value() const {return ValueBase::get_value_as<T>();}
-        T& get_value()       {return ValueBase::get_value_as<T>();}
-
-  StateValue() {}
-  StateValue(const T& t):Value<T>(t) {ValueBase::up_to_date = true;}
-};
-
-
-/*------------------- InputValue / InputNode -----------------*/
-
-template <typename T>
-struct InputValue: public Value<T>
-{
-  InputValue<T>* clone() const {return new InputValue<T>(*this);}
-
-  int n_inputs() const {return 0;}
-
-  void update(const Values&, const std::vector<int>&) { std::abort(); };
-
-  // Abort: we don't have any slots!
-  bool ignored(const out_of_date_message_t&,int) const { std::abort();}
-
-  std::string formula_expression(const std::vector<std::string>&) const {return "[Input]";}
-
-  const T& get_value() const {return ValueBase::get_value_as<T>();}
-        T& get_value()       {return ValueBase::get_value_as<T>();}
-
-  InputValue() {}
-  InputValue(const T& t):Value<T>(t) {}
-};
-
-/*------------------- InputValue / InputNode -----------------*/
-
-template <typename T>
-struct ConstantValue: public Value<T>
-{
-  ConstantValue<T>* clone() const {return new ConstantValue<T>(*this);}
-
-  int n_inputs() const {return 0;}
-
-  void update(const Values&, const std::vector<int>&) { std::abort(); };
-
-  // Abort: we don't have any slots!
-  bool ignored(const out_of_date_message_t&,int) const { std::abort();}
-
-  std::string formula_expression(const std::vector<std::string>&) const {return "[Constant]";}
-
-  const T& get_value() const {return ValueBase::get_value_as<T>();}
-        T& get_value()       {std::abort();}
-
-  ConstantValue(const T& t):Value<T>(t) {ValueBase::up_to_date=true;}
-};
-
-/*------------------- MultiplyValue / MultiplyNode -----------------*/
-
-class MultiplyValue: public Value<Double>
-{
-  int n;
-public:
-  MultiplyValue* clone() const {return new MultiplyValue(*this);}
-
-  int n_inputs() const {return n;}
-
-  std::string formula_expression(const std::vector<std::string>& args) const;
-
-  void update(const Values& V, const std::vector<int>& mapping);
-
-  MultiplyValue(int i):n(i) {}
-};
-
-class FunctionValue: public Value<Double>
-{
-  std::string name;
-  double (*function)(double, double);
-public:
-  FunctionValue* clone() const {return new FunctionValue(*this);}
-
-  int n_inputs() const {return 2;}
-
-  std::string formula_expression(const std::vector<std::string>&) const;
-
-  void update(const Values& V, const std::vector<int>& mapping);
-
-  FunctionValue(const std::string& s, double (*f)(double,double));
-};
-
-// The user should never see the object with undelivered messages, I think.
-
-class Values
-{
-  std::vector<polymorphic_cow_ptr<ValueBase> > values;
-  
-  polymorphic_cow_ptr<const Formula> F;
-
-  std::vector<message_list_t> unprocessed_messages;
-
-protected:
-  const ValueBase& get_value(int i) const {return *values[i];}
-        ValueBase& get_value(int i)       {return *values[i];}
-
-  void process_messages();
-
-  void record_changes_no_deliver(int x, message_list_t&);
-
-  void notify_x_of_change_in_slot_y(int x, int y, const out_of_date_message_t&);
-
-public:  
-  Values* clone() const {return new Values(*this);}
-
-  int size() const {return values.size();}
-
-  bool completely_up_to_date(int i) const {return get_value(i).completely_up_to_date();}
-  bool completely_out_of_date(int i) const {return get_value(i).completely_out_of_date();}
-
-  void mark_out_of_date(int i);
-
-  void mark_up_to_date(int i) {get_value(i).mark_up_to_date();}
-
-  void calculate_value(int i);
-
-  std::string expression() const;
-
-  bool is_input_entry(int i) const;
-
-  bool is_state_entry(int i) const;
-
-  bool is_constant_entry(int i) const;
-
-  bool is_computed_entry(int i) const;
-
-  template <typename T>
-  const T& get_value_as(int i) const {return values[i]->get_value_as<T>();}
-
-  // we might want to modify the value of an intermediate node in doing calculations
-  template <typename T>
-  T& get_value_as(int i)       {mark_out_of_date(i);return values[i]->get_value_as<T>();}
-
-  // we might want to modify the value of an intermediate node in doing calculations
-  template <typename T>
-          T& get_value_no_invalidate_as(int i)  {return values[i]->get_value_as<T>();}
-
-  Values(const Formula&);
-};
-
-struct ParameterBase
-{
-  static int total;
-
-  // A unique identifier for an expression - whether free or bound
-  int id;
-
-  // The formula that this expression references - whether free or bound
-  boost::shared_ptr<Formula> F;
-
-  virtual node_type_t node_type() const=0;
-
-  virtual ParameterBase* clone() const =0;
-
-  ParameterBase();
-  virtual ~ParameterBase() {}
-};
-
-struct BoundParameterBase: public ParameterBase
-{
-  int index;
-
-  BoundParameterBase* clone() const {return new BoundParameterBase(*this);}
-
-  node_type_t node_type() const {return F->node_type(index);}
-  std::string name() const {return F->entry_name(index);}
-  BoundParameterBase(boost::shared_ptr<Formula> f) { F = f ;}
-
-  BoundParameterBase(boost::shared_ptr<Formula> f, int i):index(i) { F = f ;}
-};
-
-struct FreeParameterBase: public ParameterBase
-{
-  FreeParameterBase* clone() const {return new FreeParameterBase(*this);}
-
-  node_type_t node_type() const {return computed;}
-
-  /// The function / result object
-  polymorphic_cow_ptr<ValueBase> exemplar;
-
-  std::vector<polymorphic_cow_ptr<ParameterBase> > inputs;
-
-  FreeParameterBase* clone() {return new FreeParameterBase(*this);}
-
-  FreeParameterBase();
-  FreeParameterBase(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i);
 };
 
 template <typename T> struct Constant;
-
-/// This is the general type
-template<typename T>
-struct Parameter
-{
-  typedef T type;
-  polymorphic_cow_ptr<ParameterBase> node;
-
-  Parameter() { }
-
-  // Copy exactly -- no conversion
-  Parameter(const Parameter<T>& P):node(P.node) { }
-
-  // Generate a conversion
-  template <typename U>
-  Parameter(const Parameter<U>& P);
-
-  // Generate a constant?
-  Parameter(const T& t)
-  {
-    *this = Constant<T>(t);
-  }
-
-  // Why doesn't this do anything?
-  template <typename U>
-  Parameter(const typename boost::enable_if_c< boost::is_convertible<U,T>::value,U>::type& u)
-  {
-    T t = u;
-    *this = Constant<T>(t);
-  }
-};
-
-/// This is the wrapper for a state node
-template<typename T>
-struct State: public Parameter<T>
-{
-  State(const std::string& s, boost::shared_ptr<Formula>& F)
-  {
-    polymorphic_cow_ptr<BoundParameterBase> b(new BoundParameterBase(F));
-    int index = F->add_entry(s,StateValue<T>() ,b);
-    b->index = index;
-    Parameter<T>::node = b;
-  }
-};
-
-/// This is the wrapper for a state node
-template<typename T>
-struct Input: public Parameter<T>
-{
-  Input(const std::string& s, boost::shared_ptr<Formula>& F)
-  {
-    polymorphic_cow_ptr<BoundParameterBase> b(new BoundParameterBase(F));
-    int index = F->add_entry(s,InputValue<T>() ,b);
-    b->index = index;
-    Parameter<T>::node = b;
-  }
-};
-
-/// This is the wrapper for a state node
-template<typename T>
-struct Constant: public Parameter<T>
-{
-  Constant(const T& t)
-  {
-    std::vector<polymorphic_cow_ptr<ParameterBase> > inputs;
-    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(ConstantValue<T>(t),inputs));
-  }
-  template <typename U>
-  Constant(const U& u)
-  {
-    std::vector<polymorphic_cow_ptr<ParameterBase> > inputs;
-    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(ConstantValue<T>(u),inputs));
-  }
-};
-
-/// This is the wrapper for a computed node
-template<typename T>
-struct Expression: public Parameter<T>
-{
-  Expression(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& inputs)
-  {
-    Parameter<T>::node = polymorphic_cow_ptr<ParameterBase>(new FreeParameterBase(V,inputs));
-  }
-};
 
 // Question: when do we *implicitly* add objects?
 // A1: we should add (copies) of all intermediate nodes.
 // A2: this should not change the actually expressions, though.
 
-template <typename T>
-int Formula::add_entry(const std::string& name, const Parameter<T>& P)
-{
-  polymorphic_cow_ptr<FreeParameterBase> ptr = dynamic_pointer_cast<FreeParameterBase>(P.node);
-  return add_entry(name, ptr);
-}
-Parameter<Double> operator*(const Parameter<Double>& p1, const Parameter<Double>& p2);
-
-/*------------------------------------------------------------------*/
-template <typename T, typename U>
-struct ConversionValue: public Value<T>
-{
-  ConversionValue<T,U>* clone() const {return new ConversionValue<T,U>(*this);}
-
-  int n_inputs() const {return 1;}
-
-  void update(const Values& V, const std::vector<int>& mapping)
-  {
-    U args1 = V.get_value_as<U>(mapping[0]);
-    T t ( args1 );
-    ValueBase::data = t;
-    ValueBase::up_to_date=true;
-  }
-
-  std::string formula_expression(const std::vector<std::string>& args) const 
-  {
-    return std::string("conversion(")+args[0]+")";
-  }
-};
 
 // try to allow downcasting from Derived to Base
 // template <typename T>
@@ -656,6 +118,20 @@ Parameter<T>::Parameter(const Parameter<U>& P)
   std::vector<polymorphic_cow_ptr<ParameterBase> > inputs;
   inputs.push_back(P.node);
   node = polymorphic_cow_ptr<FreeParameterBase>(new FreeParameterBase(ConversionValue<T,U>(),inputs));
+}
+
+template <typename T>
+const T& Values::operator[](const Parameter<T>& P) const 
+{
+  int index = F->get_index_for_id(P.node->id);
+  return get_value_as<T>(index);
+}
+
+template <typename T>
+T& Values::operator[](const Parameter<T>& P)
+{
+  int index = F->get_index_for_id(P.node->id);
+  return get_value_as<T>(index);
 }
 
 #endif

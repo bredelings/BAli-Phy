@@ -4,22 +4,6 @@
 #include <cmath>
 using namespace std;
 
-int ParameterBase::total=0;
-
-ParameterBase::ParameterBase()
-  :id(ParameterBase::total++)
-{
-}
-
-FreeParameterBase::FreeParameterBase()
-{ }
-
-FreeParameterBase::FreeParameterBase(const ValueBase& V, const std::vector<polymorphic_cow_ptr<ParameterBase> >& i)
-  :exemplar(V),
-   inputs(i)
-{
-}
-
 Parameter<Double> operator*(const Parameter<Double>& p1,const Parameter<Double>& p2)
 {
   std::vector<polymorphic_cow_ptr<ParameterBase> > pp;
@@ -47,19 +31,6 @@ Parameter<Double> apply(const string& name,double (f)(double, double), const Par
   return Expression<Double>(FunctionValue(name,f), pp);
 }
 
-bool Formula::entry_has_name(int i) const
-{
-  return Node_names[i].size();
-}
-
-string Formula::entry_name(int i) const
-{
-  if (entry_has_name(i))
-    return Node_names[i];
-  else
-    return string("[")+convertToString(i)+"]";
-}
-
 node_type_t Formula::node_type(int i) const
 {
   return Nodes[i]->node_type();
@@ -67,71 +38,51 @@ node_type_t Formula::node_type(int i) const
 
 polymorphic_cow_ptr<ValueBase> Formula::get_new_entry_value(int i) const
 {
-  return polymorphic_cow_ptr<ValueBase>(Nodes[i]->clone());
+  return Nodes[i]->exemplar;
 }
 
 int Formula::get_id_for_index(int index) const
 {
-  return ids[index];
+  return Nodes[index]->id;
 }
 
 int Formula::get_index_for_id(int i) const
 {
   for(int index=0;index<size();index++)
-    if (ids[index] == i)
+    if (get_id_for_index(index) == i)
       return index;
   return -1;
 }
 
-int Formula::get_index_for_name(const string& name) const
+int Formula::get_index_for_term_name(const string& name) const
 {
   if (not name.size())
-    throw myexception()<<"You can't search for any entry via an empty name!";
+    throw myexception()<<"You can't search for a term via an empty name!";
 
   for(int index=0;index<size();index++)
-    if (entry_name(index) == name)
+    if (is_term(index) and expression_for_entry(index) == name)
       return index;
   return -1;
 }
 
 string Formula::expression_for_entry(int i) const
 {
-  if (not n_inputs(i)) return "";
-
-  vector<string> input_names;
-  for(int j=0;j<n_inputs(i);j++)
-    input_names.push_back(entry_name(input_index(i,j)));
-
-  return Nodes[i]->formula_expression(input_names);
+  return Nodes[i]->expression();
 }
 
-int Formula::add_entry(const string& name, const ValueBase& V)
+int Formula::add_entry(const polymorphic_cow_ptr<ParameterBase>& P, const std::vector<int>& inputs)
 {
-  std::vector<int> empty;
-  return add_entry(name,V,empty);
-}
+  string name = P->expression();
 
-int Formula::add_entry(const string& name, const ValueBase& V,int id)
-{
-  std::vector<int> empty;
-  return add_entry(name,V,empty,id);
-}
+  if (get_index_for_id(P->id) != -1)
+    throw myexception()<<"* Cannot add entry '"<<name<<"' with id="<<P->id<<": that id is already present.";
 
-int Formula::add_entry(const string& name, const ValueBase& V, const std::vector<int>& inputs)
-{
-  return add_entry(name,V,inputs,-1);
-}
+  if (P->is_term() and get_index_for_term_name(name) != -1)
+    throw myexception()<<"* Cannot add node with name '"<<name<<"': a node with that name already exists.";
 
-int Formula::add_entry(const string& name, const ValueBase& V, const std::vector<int>& inputs,int id)
-{
-  if (name.size() and get_index_for_name(name) != -1)
-    throw myexception()<<"Command add node with name '"<<name<<"': a node with that name already exists.";
-
-  Nodes.push_back(polymorphic_cow_ptr<ValueBase>(V));
-  Node_names.push_back(name);
+  Nodes.push_back(P);
   Node_inputs.push_back(inputs);
   Nodes_affected.push_back(vector<affected_index_t>());
-  ids.push_back(id);
 
   // get index of new entry
   int k = size()-1;
@@ -155,25 +106,22 @@ int Formula::add_entry(const string& name, const ValueBase& V, const std::vector
   return k;
 }
 
-int Formula::add_entry(const std::string& name, const ValueBase& V, const polymorphic_cow_ptr<BoundParameterBase>& P)
+int Formula::add_entry(const polymorphic_cow_ptr<ParameterBase>& P)
 {
-  return add_entry(name,V,P->id);
-}
+  string name = P->expression();
 
-int Formula::add_entry(const std::string& name, const polymorphic_cow_ptr<FreeParameterBase>& P)
-{
-  if (name.size() and get_index_for_name(name) != -1)
-    throw myexception()<<"Command add node with name '"<<name<<"': a node with that name already exists.";
+  if (P->is_term() and get_index_for_term_name(P->expression()) != -1)
+    throw myexception()<<"Command add term with name '"<<name<<"': a term with that name already exists.";
 
   if (get_index_for_id(P->id) != -1)
     throw myexception()<<"Cannot add entry '"<<name<<"' with id="<<P->id<<": that id is already present.";
 
-  vector<polymorphic_cow_ptr<FreeParameterBase> > entries_to_add;
+  vector<polymorphic_cow_ptr<ParameterBase> > entries_to_add;
   entries_to_add.push_back(P);
 
   while(not entries_to_add.empty())
   {
-    polymorphic_cow_ptr<FreeParameterBase> P2 = entries_to_add.back();
+    polymorphic_cow_ptr<ParameterBase> P2 = entries_to_add.back();
     int id = get_index_for_id(P2->id);
 
     // work finished if we are already added: nothing to do.  Just remove from stack of remaining work.
@@ -182,33 +130,34 @@ int Formula::add_entry(const std::string& name, const polymorphic_cow_ptr<FreePa
       continue;
     }
 
-    // Find the indices for the inputs, and add them to the work stack if they are not found
-    bool ok = true;
+    bool no_missing_children = true;
+
     vector<int> input_indices;
-    for(int i=0;i<P2->inputs.size() and ok;i++)
+
+    if (polymorphic_cow_ptr<FreeParameterBase> F = dynamic_pointer_cast<FreeParameterBase>(P2))
     {
-      int index = get_index_for_id(P2->inputs[i]->id);
-      input_indices.push_back(index);
-
-      if (index == -1)
+      // Find the indices for the inputs, and add them to the work stack if they are not found
+      for(int i=0;i<F->inputs.size() and no_missing_children;i++)
       {
-	// we cannot add the current entry
-	ok = false;
+	int index = get_index_for_id(F->inputs[i]->id);
+	input_indices.push_back(index);
 
-	polymorphic_cow_ptr<FreeParameterBase> free = dynamic_pointer_cast<FreeParameterBase>(P2->inputs[i]);
-	if (not free)
-	  std::abort();
+	if (index == -1)
+	{
+	  // we cannot add the current entry
+	  no_missing_children = false;
 
-	// we must put this input to the current entry on the work stack
-	entries_to_add.push_back(free);
+	  // we must put this input to the current entry on the work stack
+	  entries_to_add.push_back(F->inputs[i]);
+	}
       }
+
     }
 
-    if (ok) {
-      if (entries_to_add.size() == 1)
-	add_entry(name, *(P2->exemplar), input_indices, P2->id);
-      else
-	add_entry("", *(P2->exemplar), input_indices, P2->id);
+    if (no_missing_children) {
+      if (P2->is_term() and entries_to_add.size() != 1)
+	throw myexception()<<"Trying to add entry '"<<name<<"' which depend on missing term '"<<P2->expression()<<"'";
+      add_entry(P2, input_indices);
       entries_to_add.pop_back();
     }
   }
@@ -218,253 +167,21 @@ int Formula::add_entry(const std::string& name, const polymorphic_cow_ptr<FreePa
   return index;
 }
 
-bool Formula::is_input_entry(int i) const
+bool Formula::is_term(int i) const
 {
-  return Nodes[i]->is_input_node();
+  return Nodes[i]->is_term();
 }
 
-bool Formula::is_state_entry(int i) const
+bool Formula::is_constant(int i) const
 {
-  return Nodes[i]->is_input_node();
+  return Nodes[i]->is_constant();
 }
 
-bool Formula::is_constant_entry(int i) const
+bool Formula::is_computed(int i) const
 {
-  return Nodes[i]->is_input_node();
+  return Nodes[i]->is_computed();
 }
 
-bool Formula::is_computed_entry(int i) const
-{
-  return Nodes[i]->is_input_node();
-}
-
-vector<string> ValueBase::input_names() const 
-{
-  vector<string> names;
-  for(int i=0;i<n_inputs();i++) {
-    names.push_back(string("$")+convertToString(i+1));
-  }
-  return names;
-}
-
-void Values::record_changes_no_deliver(int x, message_list_t& x_changes)
-{
-  // If x has changed completely, then just record a single "everything has changed" message.
-  if (completely_out_of_date(x))
-  {
-    owned_ptr<out_of_date_message_t> mp = claim(new out_of_date_message_t);
-    unprocessed_messages[x].clear();
-    unprocessed_messages[x].push_back(mp);
-  }
-  else
-  // Collect the changes from this message.
-    unprocessed_messages[x].splice(unprocessed_messages[x].end(), x_changes);
-}
-
-void Values::notify_x_of_change_in_slot_y(int x, int slot, const out_of_date_message_t& m)
-{
-  // if x is already of date, don't bother sending any more message about how its inputs have changed
-  if (completely_out_of_date(x)) return;
-
-  // Don't unshare x by calling notify_inputs_out_of_date( ) unless x will change!
-  {
-    // If we don't cast 'values' to a constant, then values[x] will call the non-const operator[]
-    // and unshare values[x], which defeats the whole purpose of checking 'ignored'
-    const std::vector<polymorphic_cow_ptr<ValueBase> >& const_values = values;
-
-    // Quit before generating a non-const reference to values[x] if values[x] will not change value.
-    if (const_values[x]->ignored(m,slot)) return;
-  }
-
-  // Notify x of the changes, and find out how x has changed.
-  message_list_t x_changes = values[x]->notify_input_out_of_date(*this, m, slot);
-
-  record_changes_no_deliver(x, x_changes);
-}
-
-void Values::process_messages()
-{
-  // For each index1 ...
-  for(int index1=0; index1<size(); index1++)
-  {
-    const vector<affected_index_t>& Nodes_affected = F->affected_indices(index1);
-
-    // ... with unprocessed messages...
-    if (unprocessed_messages[index1].empty()) continue;
-
-    // ... consider each index2 that is directly downstream ...
-    for(int j=0;j<Nodes_affected.size();j++)
-    {
-      affected_index_t index2 = Nodes_affected[j];
-
-      assert(index2.index > index1);
-
-      // ... and isn't already out of date.
-      if (completely_out_of_date(index2.index)) continue;
-      
-      message_list_t& index1_all_changes = unprocessed_messages[index1];
-
-      message_list_t index2_all_changes; // or at least all changes resulting from from index1
-
-      for(message_list_t::const_iterator m = index1_all_changes.begin(); 
-	  m != index1_all_changes.end() and not completely_out_of_date(index2.index); m++)
-      {
-	notify_x_of_change_in_slot_y(index2.index, index2.slot, *(*m));
-      }
-    }
-  }
-}
-
-void Values::mark_out_of_date(int i)
-{
-  if (completely_out_of_date(i))
-    return;
-
-  values[i]->mark_self_out_of_date();
-
-  unprocessed_messages[i].clear();
-  owned_ptr<out_of_date_message_t> mp = claim(new out_of_date_message_t);
-  unprocessed_messages[i].push_back(mp);
-
-  process_messages();
-}
-
-void Values::calculate_value(int index2)
-{
-  vector<int> indices_to_validate(1,index2);
-
-  while(not indices_to_validate.empty())
-  {
-    int index1 = indices_to_validate.back();
-
-    if (completely_up_to_date(index1)) {
-      indices_to_validate.pop_back();
-      continue;
-    }
-
-    const vector<int>& input_indices = F->input_indices(index1);
-    if (input_indices.empty())
-      throw myexception()<<"State expression "<<F->entry_name(index1)<<" ["<<index1<<"] not up-to-date during computation of "<<F->entry_name(index2)<<" ["<<index2<<"]!";
-
-    bool inputs_ok = true;
-    for(int i=0;i<input_indices.size();i++)
-    {
-      int j = input_indices[i];
-      if (not completely_up_to_date(j))
-      {
-	indices_to_validate.push_back(j);
-	inputs_ok = false;
-      }
-    }
-
-    if (inputs_ok) {
-      values[index1]->update(*this,input_indices);
-      indices_to_validate.pop_back();
-    }
-  }
-}
-
-string Values::expression() const
-{
-  ostringstream o;
-  for(int i=0;i<size();i++)
-  {
-    o<<F->entry_name(i);
-    if (F->entry_has_name(i))
-      o<<" ["<<i<<"]";
-    o<<" = "<<values[i]->result_expression()<<"   ";
-    if (completely_up_to_date(i))
-      o<<"[*]";
-    else if (completely_out_of_date(i))
-      o<<"[!]";
-    else
-      o<<"[*!]";
-    if (not values[i].unique())
-      o<<"  shared";
-    o<<"  id = "<<F->get_id_for_index(i);
-    o<<"\n";
-    if (F->n_inputs(i))
-      o<<" ["<<F->expression_for_entry(i)<<"]\n";
-  }
-  return o.str();
-}
-
-bool Values::is_input_entry(int i) const
-{
-  return F->is_input_entry(i);
-}
-
-bool Values::is_state_entry(int i) const
-{
-  return F->is_state_entry(i);
-}
-
-bool Values::is_constant_entry(int i) const
-{
-  return F->is_constant_entry(i);
-}
-
-bool Values::is_computed_entry(int i) const
-{
-  return F->is_computed_entry(i);
-}
-
-Values::Values(const Formula& f)
-  :values(f.size()),
-   F(f),
-   unprocessed_messages(f.size())
-{
-  for(int i=0;i<F->size();i++)
-    values[i] = F->get_new_entry_value(i);
-}
-
-string MultiplyValue::formula_expression(const vector<string>& args) const
-{
-  assert(args.size() == n_inputs());
-
-  return join(args,'*');
-}
-
-void MultiplyValue::update(const Values& V, const std::vector<int>& mapping)
-{
-  assert(mapping.size()==n);
-  double value = 1;
-  for(int i=0;i<mapping.size();i++)
-  {
-    int j = mapping[i];
-    if (not V.completely_up_to_date(j)) return;
-
-    value *= V.get_value_as<Double>(j);
-  }
-
-  data = Double(value);
-
-  up_to_date = true;
-}
-
-string FunctionValue::formula_expression(const vector<string>& args) const
-{
-  assert(args.size() == n_inputs());
-
-  return name + "("+join(args,',')+")";
-}
-
-void FunctionValue::update(const Values& V, const std::vector<int>& mapping)
-{
-  double arg1 = V.get_value_as<Double>(mapping[0]);
-  double arg2 = V.get_value_as<Double>(mapping[1]);
-
-  double value = function(arg1, arg2);
-
-  data = Double(value);
-
-  up_to_date = true;
-}
-
-FunctionValue::FunctionValue(const string& s, double (*f)(double,double))
-  :name(s),
-   function(f)
-{ }
 
 // Some Node's are STATE nodes: that is, these are the inputs to the computed tuple as a function.
 // Only these will (ideally) marked as being updated.
@@ -524,13 +241,13 @@ int main(int argc,char* argv[])
 {
   boost::shared_ptr<Formula> F(new Formula);
 
-  State<Int> X("X",F);
+  Term<Int> X("X");
 
   // What should this mean?
   // Parameter<int> X2 = X;
 
-  Input<Double> Y("Y",F);
-  State<Int> I("I",F);
+  Term<Double> Y("Y");
+  Term<Int> I("I");
   Parameter<Double> Z = X*Y;
   Parameter<Double> W = X*I;
   Parameter<Double> U = apply("pow",pow,X,Z);
@@ -544,27 +261,30 @@ int main(int argc,char* argv[])
 
   Parameter<Double> I2(I);
 
-  F->add_entry("Z",X*Y);
-  F->add_entry("W",W);
-  F->add_entry("U",U);
-  F->add_entry("I2",I2);
-  F->add_entry("U*2",U*A);
+  F->add_entry(X);
+  F->add_entry(Y);
+  F->add_entry(I);
+  F->add_entry(X*Y);
+  F->add_entry(W);
+  F->add_entry(U);
+  F->add_entry(I2);
+  F->add_entry(U*A);
 
   Values V1(*F);
 
   cout<<"V1 = \n"<<V1.expression()<<endl;
 
   // set the value of the single state node
-  V1.get_value_as<Int>(0) = 2;
+  V1[ X ] = 2;
   // state nodes need to be marked up-to-date, and are then assumed to stay that way.
   // FIXME - their should be a general method for marking only StateNodes & InputNodes up-to-date
   V1.mark_up_to_date(0);
 
   // set the value of the single state node
-  V1.get_value_as<Double>(1) = 3;
+  V1[ Y ]  = 3;
   V1.mark_up_to_date(1);
 
-  V1.get_value_as<Int>(2) = 3;
+  V1[ I ] = 3;
   V1.mark_up_to_date(2);
 
   cout<<"V1 = \n"<<V1.expression()<<endl;
@@ -580,7 +300,7 @@ int main(int argc,char* argv[])
 
   cout<<"V2 = \n"<<V2.expression()<<endl;
 
-  V2.get_value_as<Int>(0) = 3;
+  V2[ X ] = 3;
   
   cout<<"V2 = \n"<<V2.expression()<<endl;
   V2.calculate_value(3);

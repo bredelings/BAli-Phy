@@ -313,7 +313,7 @@ path_graph_SOURCES = tools/path-graph.C alignment.C alphabet.C sequence.C util.C
 	sequence-format.C alignment-util.C tree.C
 
 #---------------------------------------------------------------
-generalized_tuples_SOURCES = generalized_tuples.C util.C
+generalized_tuples_SOURCES = generalized_tuples.C value.C values.C expression.C util.C
 
 #---------------------------------------------------------------
 
