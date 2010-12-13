@@ -261,9 +261,11 @@ int main(int argc,char* argv[])
 
   Parameter<Double> I2(I);
 
+  /// FIXME - make this 'add_term' ?
   F->add_entry(X);
   F->add_entry(Y);
   F->add_entry(I);
+
   F->add_entry(X*Y);
   F->add_entry(W);
   F->add_entry(U);
@@ -278,21 +280,21 @@ int main(int argc,char* argv[])
   V1[ X ] = 2;
   // state nodes need to be marked up-to-date, and are then assumed to stay that way.
   // FIXME - their should be a general method for marking only StateNodes & InputNodes up-to-date
-  V1.mark_up_to_date(0);
+  V1.mark_up_to_date( V1.get_index(X) );
 
   // set the value of the single state node
   V1[ Y ]  = 3;
-  V1.mark_up_to_date(1);
+  V1.mark_up_to_date( V1.get_index(Y) );
 
   V1[ I ] = 3;
-  V1.mark_up_to_date(2);
+  V1.mark_up_to_date( V1.get_index( I ) );
 
   cout<<"V1 = \n"<<V1.expression()<<endl;
   
   // Try to compute "Z"
   // What if the base values are not up-to-date?
-  V1.calculate_value(3);
-  V1.calculate_value(4);
+  V1.calculate_value( V1.get_index( I ));
+  V1.calculate_value( V1.get_index(I2 ));
 
   cout<<"V1 = \n"<<V1.expression()<<endl;
 

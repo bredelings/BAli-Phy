@@ -3,6 +3,11 @@
 
 using namespace std;
 
+int Values::get_index_for_id(int id) const
+{
+  return F->get_index_for_id(id);
+}
+
 void Values::record_changes_no_deliver(int x, message_list_t& x_changes)
 {
   // If x has changed completely, then just record a single "everything has changed" message.

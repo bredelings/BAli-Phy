@@ -120,18 +120,4 @@ Parameter<T>::Parameter(const Parameter<U>& P)
   node = polymorphic_cow_ptr<FreeParameterBase>(new FreeParameterBase(ConversionValue<T,U>(),inputs));
 }
 
-template <typename T>
-const T& Values::operator[](const Parameter<T>& P) const 
-{
-  int index = F->get_index_for_id(P.node->id);
-  return get_value_as<T>(index);
-}
-
-template <typename T>
-T& Values::operator[](const Parameter<T>& P)
-{
-  int index = F->get_index_for_id(P.node->id);
-  return get_value_as<T>(index);
-}
-
 #endif

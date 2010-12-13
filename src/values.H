@@ -42,6 +42,14 @@ public:
 
   int size() const {return values.size();}
 
+  int get_index_for_id(int id) const;
+
+  template <typename T>
+  int get_index(const Parameter<T>& P) const
+  {
+    return get_index_for_id(P.node->id);
+  }
+
   bool completely_up_to_date(int i) const {return get_value(i).completely_up_to_date();}
   bool completely_out_of_date(int i) const {return get_value(i).completely_out_of_date();}
 
@@ -74,10 +82,18 @@ public:
   void set_value(int index, const T& t) {values[index]->set_value(t);}
 
   template <typename T>
-  const T& operator[](const Parameter<T>& P) const;
+  const T& operator[](const Parameter<T>& P) const
+  {
+    int index = get_index_for_id(P.node->id);
+    return get_value_as<T>(index);
+  }
 
   template <typename T>
-        T& operator[](const Parameter<T>& P);
+        T& operator[](const Parameter<T>& P)
+  {
+    int index = get_index_for_id(P.node->id);
+    return get_value_as<T>(index);
+  }
 
   Values(const Formula&);
 };
