@@ -1232,6 +1232,23 @@ namespace substitution {
     M2(const M0& M1,const ReversibleFrequencyModel& R);
   };
 
+  /// M2a model has three omega parameters.
+  /// In M2 model, omega_1 = 0. In M2a model,
+  /// omega_1 < 1.
+  class M2a: public MultiParameterModel
+  {
+    void recalc(const std::vector<int>&);
+
+  public:
+    
+    efloat_t super_prior() const;
+
+    M2a* clone() const {return new M2a(*this);}
+
+    string name() const;
+
+    M2a(const M0& M1,const ReversibleFrequencyModel& R);
+  };
 
   class M3: public MultiParameterModel 
   {
@@ -1338,6 +1355,55 @@ namespace substitution {
 
     ModulatedMarkovModel(const MultiModel& M, const ExchangeModel& S);
   };
+
+  /// In M8b model, omega1 ~ Beta with proportion p1.
+  /// omega2 = 1 with p2.
+  /// omega3 > 1 with p3.
+  ///class M8b: public MultiParameterModel {
+  ///public:
+  ///
+  ///  M8b(const M0& M1,const ReversibleFrequencyModel& R, int n);
+  ///};
+  ///public ReversibleMarkovModel,
+  /// MultiParameterModel::p_change - 
+  /// 3? Two from Beta, omega3. omega2 is fixed.
+  /// 2? omega1, and omega3. omega2 is fixed.
+  /// We need bin numbers for Beta.
+  /// MultiParameterModel (MultiModel object, p = 2, n = 3)
+  /// 
+  /// NOTE that we need to instantiate M8b somewhere else
+  /// when the program starts.
+  class M8b: public MultiParameterModel
+  {
+  protected:
+    owned_ptr<Beta> S;
+
+    int nbin;
+    valarray<double> pi;
+
+    void recalc(const std::vector<int>&);
+
+    /* These methods are already defined for us in SuperModelOver<::Model>
+    const ::Model& SubModels(int i) const;
+          ::Model& SubModels(int i) */
+
+  public:
+    virtual M8b* clone() const {return new M8b(*this);}
+
+    efloat_t super_prior() const;
+
+    // This is already defined as SubmodelAs<MultiModel>(0).frequencies() in ReversibleWrapperOver<MultiModel>
+    // const valarray<double>& frequencies() const {return pi;}
+
+    string name() const;
+
+    // This is already defined as SubmodelAs<MultiModel>(0).frequencies() in ReversibleWrapperOver<MultiModel>
+    // const alphabet& Alphabet() const {return M->Alphabet();}
+
+    M8b(const M0& M, const ReversibleFrequencyModel& R, const int n_binBeta);
+  };
+
+
 }
 #endif
 
