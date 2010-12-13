@@ -2125,9 +2125,9 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     // Prior on f[*]
     valarray<double> q(3);
-    q[0] = 10; // Most likely conserved
-    q[1] = 2;  // Less likely neutral
-    q[2] = 1;  // Unlikely conserved
+    q[0] = 10; // Conserved
+    q[1] = 10; // Neutral
+    q[2] = 1;  // Positive selection
     
     efloat_t Pr = dirichlet_pdf(get_parameter_values(), 0, 3, q);
 
