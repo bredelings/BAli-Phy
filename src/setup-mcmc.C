@@ -573,6 +573,8 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     if (s==0) P.keys["M8b::f_dirichlet_N"] *= 10;
     add_MH_move(P, dirichlet_proposal,   prefix + "M8b::f*", "M8b::f_dirichlet_N",     1,  parameter_moves);
 
+    add_MH_move(P, bit_flip,   prefix + "M8b::omega3_non_zero", "M8b::f_dirichlet_N",     1,  parameter_moves);
+
     set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
     if (s==0) P.keys["multi::p_dirichlet_N"] *= 10;
     add_MH_move(P, dirichlet_proposal,   prefix + "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);

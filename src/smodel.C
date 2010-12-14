@@ -2190,6 +2190,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     add_super_parameter(Parameter("M8b::omega2", 1.0, true /* fixed */));
     add_super_parameter(Parameter("M8b::omega3", 2.0, lower_bound(1)));
 
+    add_super_parameter(Parameter("M8b::omega3_non_zero", 1.0));
+
     read();
     recalc_all();
   }
@@ -2198,33 +2200,43 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     UniformDiscretization d(nbin, *S);
 
-    /// This must be the fraction of
-    /// three p values.
-    /// I used add_super_parameter to add
-    /// this parameter. How can I access it?
+    // Get the discrete distribution on the 3 categories
+    valarray<double> ff(3);
+    ff[0] = get_parameter_value(0); // f[Purifying]
+    ff[1] = get_parameter_value(1); // f[Neutral]
+    ff[2] = get_parameter_value(2); // f[Positive]
 
-    /// add_super_parameter(Parameter("M8b::f[Purifying]",   1.0/3, between(0, 1)));
-    double f_purifying = get_parameter_value(0);
+    // This will be either 0.0 or 1.0
+    double omega3_non_zero = get_parameter_value(5);
+
+    // If its 1.0, then act like ff[2] = 0
+    // This allows us to decrease the dimension of the model, w/o removing
+    //   a dimension from the MCMC state.  So, reversible-jump is avoided.
+    if (omega3_non_zero < 0.5) 
+    {
+      ff[2] = 0;
+      ff /= ff.sum();
+    }
 
     /// Consider 3-binned Beta.
     /// We need 5 pairs of P-Values and fractions.
     /// The first 3 pairs are set by the discretized
     /// Beta distribution. There remain two pairs. 
-    /// We added three fraction
+
     for (int i = 0; i < p_values.size(); i++)
     {
       if (i < nbin)
       {
-        fraction[i] = d.f[i] * f_purifying;
+        fraction[i] = d.f[i] * ff[0];
         p_values[i] = d.r[i];
       }
       else
       {
-        fraction[i] = get_parameter_value(i - nbin + 1);
+        fraction[i] = ff[i - nbin + 1];
         p_values[i] = get_parameter_value(i - nbin + 1 + 2);
       }
     }
- 
+
     /// We need to do this when either P_values changes, 
     /// or the SUBMODEL changes
     /// MultiParameterModel::recalc_submodel_instances ()
