@@ -201,6 +201,23 @@ double shift_epsilon(vector<double>& x, const vector<double>& p)
 }
 
 
+double bit_flip(vector<double>& x, const vector<double>& p)
+{
+  if (x.size() != 1) 
+    throw myexception()<<"shift_epsilon: expected one dimension, got "<<x.size()<<".";
+  //  if (p.size() != 1) 
+  //    throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
+
+  double& B = x[0];
+  B = 1.0 - B;
+
+  if (B < 0.5) B = 0;
+  if (B > 0.5) B = 1;
+
+  return 1;
+}
+
+
 double dirichlet_proposal(std::vector<double>& x,const std::vector<double>& p)
 {
   if (p.size() != 1) 
