@@ -2131,10 +2131,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     
     efloat_t Pr = dirichlet_pdf(get_parameter_values(), 0, 3, q);
 
-    // Prior on the 1 free omega parameter
-    double omega = get_parameter_value(4);
-    if (omega < 1) return 0;
-    Pr *= gamma_pdf(omega, 0.5, 2.0); // mean = a*b = 1, shape = a = 0.5
+    // prior on omega3: log(omega3) = Exponential(0.05), so omega3 \in [1,\infty]
+    if (not is_fixed(4))
+    {
+      double omega3 = get_parameter_value(4);
+      Pr *= exponential_pdf(log(omega3),0.05)/omega3;
+    }
+
     return Pr;
   }
 
