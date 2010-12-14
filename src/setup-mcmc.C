@@ -281,6 +281,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "M2::omega",      "omega_slice_window",    0.3, slice_moves);
   add_slice_moves(P, "M2a::omega1",     "omega_slice_window",    0.3, slice_moves);
   add_slice_moves(P, "M2a::omega3",     "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "M8b::omega3",     "omega_slice_window",    0.3, slice_moves);
   add_slice_moves(P, "INV::p",         "INV::p_slice_window", 0.1, slice_moves);
   add_slice_moves(P, "f",      "f_slice_window",    0.1, slice_moves);
   add_slice_moves(P, "g",      "g_slice_window",    0.1, slice_moves);
@@ -560,9 +561,17 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     if (s==0) P.keys["M2::f_dirichlet_N"] *= 10;
     add_MH_move(P, dirichlet_proposal,  prefix +  "M2::f*", "M2::f_dirichlet_N",     1,  parameter_moves);
 
+    set_if_undef(P.keys,"M2a::f_dirichlet_N",1.0);
+    if (s==0) P.keys["M2a::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "M2a::f*", "M2a::f_dirichlet_N",     1,  parameter_moves);
+
     set_if_undef(P.keys,"M3::f_dirichlet_N",1.0);
     if (s==0) P.keys["M3::f_dirichlet_N"] *= 10;
     add_MH_move(P, dirichlet_proposal,   prefix + "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"M8b::f_dirichlet_N",1.0);
+    if (s==0) P.keys["M8b::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "M8b::f*", "M8b::f_dirichlet_N",     1,  parameter_moves);
 
     set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
     if (s==0) P.keys["multi::p_dirichlet_N"] *= 10;
