@@ -2081,18 +2081,18 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     efloat_t Pr = dirichlet_pdf(get_parameter_values(), 0, 3, n);
 
     // prior on omega1: log(omega1) = -Exponential(0.05), so omega1 \in [0,1]
-    double omega1 = get_parameter_value(3);
-    if (omega1 > 1) return 0;
     
-    if (not is_fixed(3))
+    if (not is_fixed(3)) {
+      double omega1 = get_parameter_value(3);
       Pr *= exponential_pdf(-log(omega1),0.05)/omega1;
+    }
 
     // prior on omega3: log(omega3) = Exponential(0.05), so omega3 \in [1,\infty]
-    double omega3 = get_parameter_value(4);
-    if (omega3 > 1) return 0;
-    
     if (not is_fixed(4))
+    {
+      double omega3 = get_parameter_value(4);
       Pr *= exponential_pdf(log(omega3),0.05)/omega3;
+    }
 
     return Pr;
   }
