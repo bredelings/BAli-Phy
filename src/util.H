@@ -42,9 +42,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define foreach(a,b) for(typeof((b).begin()) a=(b).begin();a != (b).end();a++)
 #endif
 
-// this should actually be templatized... <class charT,Alloc,Traits>
-std::istream& portable_getline(std::istream&,std::string&);
-
 template <class T>
 bool can_be_converted_to(const std::string& s, T& t) 
 { 
@@ -497,21 +494,6 @@ std::vector<T> write(std::vector<T>& v,const std::vector<int>& indices,const std
   return values;
 }
 
-template <class T>
-struct accumulator
-{
-  virtual void operator()(const T&)=0;
-  virtual void finalize() {}
-  virtual ~accumulator() {}
-};
-
-template <class T>
-struct vector_accumulator: accumulator<T>,
-			   public std::vector<T>
-{
-  void operator()(const T& t){push_back(t);}
-};
-
 template <typename T>
 struct index_value
 {
@@ -540,11 +522,6 @@ struct index_value
 void parse_simple_range(const std::string& range,int L,int& begin,int& end);
 void parse_modulo_range(const std::string& range,int L,int& begin,int& end,int& step);
 std::vector<int> parse_multi_range(const std::string& range,int L);
-
-void scan_lines(std::istream& file,int skip,int subsample, int max, 
-		accumulator<std::string>& op);
-
-std::vector<std::string> load_lines(std::istream& file,int skip,int subsample, int max);
 
 std::string get_basename(std::string filename);
 

@@ -19,6 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <fstream>
 #include "tree-dist.H"
+#include "io.H"
 
 using std::vector;
 using std::valarray;

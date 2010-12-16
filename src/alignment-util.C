@@ -27,6 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution-index.H"
 #include "util.H"
 #include "setup.H"
+#include "io.H"
 
 using std::string;
 using std::vector;

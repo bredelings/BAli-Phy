@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
  */
 
 #include "util.H"
-
+#include "io.H"
 
 using std::vector;
 using std::string;
@@ -45,42 +45,6 @@ int n_elements(const vector<bool>& v) {
   for(int i=0;i<v.size() ;i++)  
     if (v[i]) count++;
   return count;
-}
-
-
-/// \brief Read a line from a file with their UNIX or DOS or Mac line endings.
-///
-/// \param file The input stream
-/// \param s The line that was read.
-/// 
-std::istream& portable_getline(std::istream& file,std::string& s)
-{
-  const char CR = 13;
-  const char LF = 10;
-
-  s.clear();
-
-  int c;
-  while (file.good())
-  {
-    c = file.get();
-
-    // we just read an EOF
-    if (file.eof()) break;
-
-    // we just read an EOL
-    if (c == CR or c == LF) break;
-
-    s.append(1,c);
-  }
-
-  if (!file.good()) return file;
-
-  // If the EOL character is a CR, then also skip any following LF
-  if (c == CR and file.peek() == LF)
-    file.ignore();
-
-  return file;
 }
 
 
@@ -278,64 +242,6 @@ bool get_word(string& word, int& i, const string& s,
   word = s.substr(start,i-start);
 
   return true;
-}
-
-void scan_lines(std::istream& file,int skip,int subsample, int max, 
-		accumulator<string>& op)
-{
-  int n_lines=0;
-  string line;
-  for(int line_number=0;portable_getline(file,line);line_number++) 
-  {
-    // don't start if we haven't skipped enough trees
-    if (line_number < skip) continue;
-
-    // skip trees unless they are a multiple of 'subsample'
-    if ((line_number-skip) % subsample != 0) continue;
-
-    // quit if we've read in 'max' trees
-    if (max >= 0 and n_lines == max) break;
-
-    // should this be protected by a try { } catch(...) {} block?
-    op(line);
-    n_lines++;
-  }
-}
-
-vector<string> load_lines(std::istream& file,int skip,int subsample, int max)
-{
-  vector_accumulator<string> lines;
-
-  scan_lines(file,skip,subsample,max,lines);
-
-  return lines;
-}
-
-/// \brief Get the basename of a filename (i.e. remove parent directories.)
-///
-/// \param filename The filename.
-///
-std::string get_basename(std::string filename)
-{
-  // remove the pathname 
-  while(filename.find('/') != -1) 
-    filename = filename.substr(filename.find('/')+1);
-
-  return filename;
-}
-
-/// \brief Remove the extension from a filename
-///
-/// \param filename The filename.
-///
-std::string remove_extension(std::string filename)
-{
-  // remove the extension
-  int dot = filename.rfind('.');
-  string name = filename;
-  if (dot != -1)
-    name = filename.substr(0,dot);
-  return name;
 }
 
 /// \brief Parse a range of the form <begin>-<end> which should be a subset of [1,L]

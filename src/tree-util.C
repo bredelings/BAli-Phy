@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "tree-util.H"
 #include "myexception.H"
+#include "io.H"
 
 using boost::program_options::variables_map;
 using std::map;

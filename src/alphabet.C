@@ -21,6 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cassert>
 #include <fstream>
 #include "util.H"
+#include "io.H"
 
 using namespace std;
 using boost::shared_ptr;

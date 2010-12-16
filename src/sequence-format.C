@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include "sequence-format.H"
 #include "util.H"
+#include "io.H"
 
 using namespace std;
 

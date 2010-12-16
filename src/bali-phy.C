@@ -157,6 +157,7 @@ namespace mpi = boost::mpi;
 #include "tree-util.H" //extends
 #include "version.H"
 #include "setup-mcmc.H"
+#include "io.H"
 
 namespace fs = boost::filesystem;
 

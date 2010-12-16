@@ -4,7 +4,7 @@
 #include <boost/program_options.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include "util.H"
+#include "io.H"
 #include "stats-table.H"
 #include "myexception.H"
 #include "owned-ptr.H"

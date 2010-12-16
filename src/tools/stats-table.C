@@ -22,6 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "stats-table.H"
 #include "util.H"
 #include "myexception.H"
+#include "io.H"
 
 using namespace std;
 
