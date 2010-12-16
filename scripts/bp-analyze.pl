@@ -530,14 +530,16 @@ sub section_analysis
 {
     my $section = "";
 $section .= "<h2><a name=\"analysis\">Analysis</a></h2>\n";
-$section .= '<table style="width:100%;">'."\n";
+$section .= '<table style="width:100%">'."\n";
 
 $section .= "<tr>\n";
 $section .= "  <td>burn-in = $burnin samples</td>\n";
 $section .= "  <td>sub-sample = $subsample</td>\n" if ($subsample != 1);
+$section .= "  <td>$marginal_prob</td>\n";
 $section .= "</tr>\n";
 $section .= "</table>\n";
 
+$section .= '<table style="width:100%">'."\n";
 $section .= "<tr>\n";
 $section .= "  <td>Complete sample: $n_topologies topologies</td>\n";
 $section .= "  <td>95% Bayesian credible interval: $n_topologies_95 topologies</td>\n";
@@ -545,13 +547,14 @@ $section .= "</tr>\n";
 
 $section .= "</table>\n";
 
-$section .= '<table style="width:100%;">'."\n";
+$section .= '<table class="backlit">'."\n";
+$section .= "<tr><th>chain #</th><th>Iterations (after burnin)</th></tr>\n";
     for(my $i=0;$i<=$n_chains;$i++)
     {
 $section .= "<tr>\n";
+$section .= "  <td>".($i+1)."</td>\n";
 my $after_burnin = $n_iterations[$i] - $burnin;
-$section .= "  <td>after burnin = $after_burnin samples</td>\n";
-$section .= "  <td>$marginal_prob</td>\n";
+$section .= "  <td>$after_burnin samples</td>\n";
 $section .= "</tr>\n";
     }
 $section .= "</table>\n";
