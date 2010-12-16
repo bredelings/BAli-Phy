@@ -41,6 +41,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
+#include "io.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -59,9 +60,7 @@ void load_alignments(vector<alignment>& alignments,
   if (log_verbose)
     std::cerr<<"alignment-compare: Loading alignment sample"<<what<<"...";
 
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Can't load alignment sample"<<what<<" from file '"<<filename<<"'";
+  checked_ifstream file(filename, "alignment sample file");
 
   list<alignment> As = load_alignments(file, alphabets, 0, maxalignments);
 

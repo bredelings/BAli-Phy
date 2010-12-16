@@ -1,6 +1,12 @@
 #include "io.H"
 
+#include <boost/filesystem/operations.hpp>
+#include "myexception.H"
+
 using namespace std;
+
+namespace fs = boost::filesystem;
+
 
 /// \brief Read a line from a file with their UNIX or DOS or Mac line endings.
 ///
@@ -94,5 +100,31 @@ string remove_extension(string filename)
   if (dot != -1)
     name = filename.substr(0,dot);
   return name;
+}
+
+void checked_ifstream::check(const string& description)
+{
+  if (not good()) {
+    close();
+    myexception e;
+    e<<"Trying to open "<<description<<" '"<<filename<<"'";
+    if (not fs::exists(filename))
+      e<<": file does not exist.";
+    else
+      e<<": file exists, but can't be opened.";
+    throw e;
+  }
+}
+
+checked_ifstream::checked_ifstream(const string& s)
+  :ifstream(s.c_str()),filename(s)
+{
+  check("file");
+}
+
+checked_ifstream::checked_ifstream(const string& s, const string& description)
+  :ifstream(s.c_str()),filename(s)
+{
+  check(description);
 }
 

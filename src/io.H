@@ -2,6 +2,7 @@
 #define IO_H
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -31,5 +32,14 @@ std::vector<std::string> load_lines(std::istream& file,int skip,int subsample, i
 std::string get_basename(std::string filename);
 
 std::string remove_extension(std::string filename);
+
+class checked_ifstream: public std::ifstream
+{
+  std::string filename;
+  void check(const std::string&);
+public:
+  checked_ifstream(const std::string&);
+  checked_ifstream(const std::string&,const std::string&);
+};
 
 #endif

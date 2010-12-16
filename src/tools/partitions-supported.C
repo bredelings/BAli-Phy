@@ -151,9 +151,7 @@ tree_sample load_tree_file(const variables_map& args, const string& filename)
     return tree_sample(cin,skip,subsample,max);
   }
 
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Couldn't open file '"<<filename<<"'";
+  checked_ifstream file(filename,"tree samples file");
   
   cerr<<"partitions-supported: Loading trees from '"<<filename<<"'...\n";
   return tree_sample(file,skip,subsample,max);

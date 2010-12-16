@@ -114,7 +114,7 @@ statreport_SOURCES = tools/statreport.C tools/statistics.C util.C tools/stats-ta
 
 #-------------------------- statreport --------------------------
 
-stats_merge_SOURCES = tools/stats-merge.C util.C
+stats_merge_SOURCES = tools/stats-merge.C util.C io.C
 
 #-------------------------- statreport --------------------------
 

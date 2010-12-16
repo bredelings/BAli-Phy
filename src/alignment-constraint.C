@@ -24,6 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 #include "tree-util.H"
 #include "util.H"
+#include "io.H"
 
 using std::string;
 using std::ifstream;
@@ -54,9 +55,7 @@ ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree
 
   if (filename.size()) {
     // Load constraint file
-    ifstream constraint_file(filename.c_str());
-    if (not constraint_file)
-	throw myexception()<<"Couldn't open alignment-constraint file \""<<filename<<"\".";
+    checked_ifstream constraint_file(filename,"alignment-constraint file");
 
     // Map columns to species
     string line;

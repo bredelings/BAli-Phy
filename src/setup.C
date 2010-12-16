@@ -39,6 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 #include "tree-util.H"
 #include "substitution-index.H"
+#include "io.H"
 
 using std::ifstream;
 using std::string;
@@ -760,9 +761,7 @@ void load_bali_phy_rc(variables_map& args,const options_description& options)
       if (fs::exists(filename)) {
 	if (log_verbose)
 	  cerr<<"Reading ~/.bali-phy ...";
-	ifstream file(filename.c_str());
-	if (not file)
-	  throw myexception()<<"Can't load config file '"<<filename<<"'";
+	checked_ifstream file(filename, "config file");
       
 	store(parse_config_file(file, options), args);
 	file.close();

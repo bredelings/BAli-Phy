@@ -276,9 +276,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   if (args.count("config")) 
   {
     string filename = args["config"].as<string>();
-    ifstream file(filename.c_str());
-    if (not file)
-      throw myexception()<<"Can't load config file '"<<filename<<"'";
+    checked_ifstream file(filename,"config file");
 
     store(parse_config_file(file, all), args);
     file.close();
@@ -563,9 +561,7 @@ public:
 vector<int> load_alignment_branch_constraints(const string& filename, const SequenceTree& TC)
 {
   // open file
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Can't load alignment-branch constraint file '"<<filename<<"'";
+  checked_ifstream file(filename,"alignment-branch constraint file");
 
   // read file
   string line;
@@ -750,7 +746,7 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
 
     const double n = 0.6;
 
-    ifstream partitions(filename.c_str());
+    checked_ifstream partitions(filename,"partition weights file");
     string line;
     while(portable_getline(partitions,line)) {
       Partition p(P.T->get_sequences(),line);

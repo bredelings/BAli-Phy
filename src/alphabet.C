@@ -640,10 +640,7 @@ void Genetic_Code::setup_table(std::istream& file)
 
 void Genetic_Code::setup_table_from_file(const std::string& filename)
 {
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Couldn't open file '"<<filename<<"'";
-
+  checked_ifstream file(filename,"genetic code file");
   setup_table(file);
 }
 

@@ -74,7 +74,7 @@ int main(int argc,char* argv[])
     vector<boost::shared_ptr<ifstream> > files(filenames.size());
     for(int i=0;i<filenames.size();i++)
     {
-      files[i] = boost::shared_ptr<ifstream>(new ifstream(filenames[i].c_str()));
+      files[i] = boost::shared_ptr<ifstream>(new checked_ifstream(filenames[i],"statistics file"));
 
       if (not *files[i])
 	throw myexception()<<"Can't open file '"<<filenames[i]<<"'";

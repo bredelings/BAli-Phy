@@ -915,10 +915,7 @@ namespace substitution {
   {
     name_ = string("Empirical[") + get_basename(filename) + "]";
 
-    std::ifstream ifile(filename.c_str());
-
-    if (not ifile)
-      throw myexception(string("Couldn't open file '")+filename+"'");
+    checked_ifstream ifile(filename, "empirical rate matrix file");
 
     load_file(ifile);
 
@@ -1555,7 +1552,7 @@ namespace substitution {
 
   void CAT_FixedFrequencyModel::load_file(const string& filename)
   {
-    std::ifstream file(filename.c_str());
+    checked_ifstream file(filename,"CAT fixed frequency model file");
 
     if (not file)
       throw myexception(string("Couldn't open file '")+filename+"'");

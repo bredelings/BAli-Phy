@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "sequence-format.H"
 #include <boost/program_options.hpp>
+#include "io.H"
 
 using namespace sequence_format;
 namespace po = boost::program_options;
@@ -240,9 +241,7 @@ vector<sequence> load_file(istream& file,bool pad)
 
 vector<sequence> load_file(const string& filename,bool pad)
 {
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Can't open file '"<<filename<<"'!";
+  checked_ifstream file(filename,"alignment file");
 
   vector<sequence> s = sequence_format::read_guess(file);
   if (s.size() == 0)
