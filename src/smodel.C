@@ -2210,7 +2210,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // This will be either 0.0 or 1.0
     double omega3_non_zero = get_parameter_value(5);
 
-    // If its 1.0, then act like ff[2] = 0
+    // If its 0.0, then act like ff[2] = 0
     // This allows us to decrease the dimension of the model, w/o removing
     //   a dimension from the MCMC state.  So, reversible-jump is avoided.
     if (omega3_non_zero < 0.5) 
