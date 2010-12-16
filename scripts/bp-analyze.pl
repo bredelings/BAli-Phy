@@ -68,18 +68,24 @@ if (! is_in_path("R")) {
     $have_gnuplot = 0;
 }
 
-my $personality="";
-my $n_chains=1;
-my @subdirectories;
+# These things can be different between runs of the MCMC chain
+my @subdirectories;    # the name of the directories scanned, as given on the cmd line
 my @out_files;
 my @tree_files;
 my @parameter_files;
 my @partition_samples;
-my $MAP_file;
+my @commands;
+my @directories;
+my @subdirs;           # the name of the subdirectories, as computed from the runs
+
+# These things are the same between all MCMC chains
 my $burnin;
-my $max_iter;
+my $MAP_file;
+my $personality="";
+my @partitions;
+
+# These things are option values
 my $subsample = 1;
-my $min_support;
 my $muscle = 0;
 my $probcons = 0;
 my $sub_partitions=0;
@@ -87,6 +93,11 @@ my $do_consensus_alignments=0;
 my $do_trace_plots=1;
 my $prune;
 my $speed=1;
+my $max_iter;    # maximum number of iterations to consider
+
+# These things are ... ??
+my $n_chains=1;
+my $min_support;
 my $min_Ne;
 
 &parse_command_line();
@@ -95,16 +106,16 @@ my $min_Ne;
 
 &determine_input_files();
 
-my @commands = get_header_attributes("command",@out_files);
-my @directories = get_header_attributes("directory",@out_files);
-my @subdirs    = get_header_attributes("subdirectory",@out_files);
+@commands = get_header_attributes("command",@out_files);
+@directories = get_header_attributes("directory",@out_files);
+@subdirs    = get_header_attributes("subdirectory",@out_files);
 
 my $betas = get_cmdline_attribute("beta");
 my @beta = (1);
 @beta = split(/,/, $betas) if (defined($betas));
 
 my $first_dir = $subdirectories[0];
-my @partitions = @{ get_partitions() };
+@partitions = @{ get_partitions() };
 my $n_partitions = 1+$#partitions;
 if ($personality =~ "bali-phy-2.1.*") {
     if ($n_chains == 1) {
@@ -136,7 +147,7 @@ else {
 }
 
 
-my $n_iterations = get_n_iterations();
+my @n_iterations = get_n_iterations();
 my @smodels = @{ get_smodels() };
 my @imodels = @{ get_imodels() };
 
@@ -176,9 +187,7 @@ elsif ($speed == 2) {
     @alignment_consensus_values = ();
 }
 
-
-$burnin = int 0.1*$n_iterations if (!defined($burnin));
-my $after_burnin = $n_iterations - $burnin +1;
+&determine_burnin();
 
 do_init();
 
@@ -525,13 +534,9 @@ $section .= '<table style="width:100%;">'."\n";
 
 $section .= "<tr>\n";
 $section .= "  <td>burn-in = $burnin samples</td>\n";
-$section .= "  <td>after burnin = $after_burnin samples</td>\n";
 $section .= "  <td>sub-sample = $subsample</td>\n" if ($subsample != 1);
 $section .= "</tr>\n";
-
-$section .= "<tr>\n";
-$section .= "  <td>$marginal_prob</td>\n";
-$section .= "</tr>\n";
+$section .= "</table>\n";
 
 $section .= "<tr>\n";
 $section .= "  <td>Complete sample: $n_topologies topologies</td>\n";
@@ -539,6 +544,19 @@ $section .= "  <td>95% Bayesian credible interval: $n_topologies_95 topologies</
 $section .= "</tr>\n";
 
 $section .= "</table>\n";
+
+$section .= '<table style="width:100%;">'."\n";
+    for(my $i=0;$i<=$n_chains;$i++)
+    {
+$section .= "<tr>\n";
+my $after_burnin = $n_iterations[$i] - $burnin;
+$section .= "  <td>after burnin = $after_burnin samples</td>\n";
+$section .= "  <td>$marginal_prob</td>\n";
+$section .= "</tr>\n";
+    }
+$section .= "</table>\n";
+
+
     return $section;
 }
 
@@ -1505,11 +1523,11 @@ sub generate_trace_plots
 	    
 	    my $file2 = $file1.".2";
 	    
-	    my $N = $after_burnin;
+	    my $N = $n_iterations[0] - $burnin;
 	    
 	    $N = 1000 if ($N > 1000);
 	    
-	    my $factor = ceil($after_burnin / $N);
+	    my $factor = ceil(($n_iterations[0] - $burnin) / $N);
 	    
 	    `subsample --skip=$burnin $factor < $file1 > $file2`;
 	
@@ -1578,16 +1596,26 @@ sub rmdir_recursive
     rmdir $dir or print "error - $!";
 }
 
-sub get_partitions
+sub compare_arrays {
+    my ($first, $second) = @_;
+    no warnings;  # silence spurious -w undef complaints
+    return 0 unless @$first == @$second;
+    for (my $i = 0; $i < @$first; $i++) {
+	return 0 if $first->[$i] ne $second->[$i];
+    }
+    return 1;
+}  
+
+sub get_partitions_for_file
 {
+    my $file = shift;
+    die "Which file should I get the partitions for?" if (!defined($file));
+
     if ($personality =~ "bali-phy.*")
     {
-	my $file = shift;
-	$file = $out_files[0] if (!defined($file));
-
 	local *FILE;
 
-	open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+	open FILE, $file or die "Can't open $file!";
 
 	my @partitions = ();
 	
@@ -1609,7 +1637,7 @@ sub get_partitions
     }
     elsif ($personality eq "phylobayes")
     {
-	my $filename = get_value_from_file($out_files[0],"data file :");
+	my $filename = get_value_from_file($file,"data file :");
 	$filename =~ s/$home/~/;
 	return [$filename];
     }
@@ -1617,6 +1645,28 @@ sub get_partitions
     {
 	return [];
     }
+}
+
+sub get_partitions
+{
+    my $partitions;
+    for my $out_file (@out_files)
+    {
+	my $these_partitions = get_partitions_for_file($out_file);
+	if (!defined($partitions))
+	{
+	    $partitions = $these_partitions;
+	}
+	else
+	{
+	    if (!compare_arrays($partitions,$these_partitions))
+	    {
+		print "Error! Input files different for run '$out_file' and '$out_files[0]'!\n";
+		exit(1);
+	    }
+	}
+    }
+    return $partitions;
 }
 
 #FIXME - rewrite to take the cmdline as an argument.
@@ -1883,7 +1933,17 @@ sub get_n_lines
 
 sub get_n_iterations
 {
-    return get_n_lines($tree_files[0])-1;
+    my @n_iterations;
+    for my $tree_file (@tree_files)
+    {
+	my $n = get_n_lines($tree_file)-1;
+	if ($n <= 0) {
+	    print "Error: Tree file '$tree_file' has no samples!\n";
+	    exit(1);
+	}
+	push @n_iterations,$n;
+    }
+    return @n_iterations;
 }
 
 sub more_recent_than
@@ -2027,5 +2087,93 @@ sub get_mcmc_command_line
 	$command = "unknown";
     }
     return $command;
+}
+
+sub min
+{
+    my $array = shift;
+    my $best = $$array[0];
+    for my $element (@$array)
+    {
+	$best = $element if ($element < $best);
+    }
+    return $best;
+}
+
+sub max
+{
+    my $array = shift;
+    my $best = $$array[0];
+    for my $element (@$array)
+    {
+	$best = $element if ($element > $best);
+    }
+    return $best;
+}
+
+sub arg_max
+{
+    my $array = shift;
+    my $best = $$array[0];
+    my $best_i = 0;
+    for(my $i=1;$i<=$#$array;$i++)
+    {
+	if ($$array[$i] > $best)
+	{
+	    $best = $$array[$i];
+	    $best_i = $i;
+	}
+    }
+    return $best_i;
+}
+
+sub arg_min
+{
+    my $array = shift;
+    my $best = $$array[0];
+    my $best_i = 0;
+    for(my $i=1;$i<=$#$array;$i++)
+    {
+	if ($$array[$i] < $best)
+	{
+	    $best = $$array[$i];
+	    $best_i = $i;
+	}
+    }
+    return $best_i;
+}
+
+sub determine_burnin
+{
+    if (defined($burnin))
+    {
+	for(my $i=0;$i<=$#out_files;$i++)
+	{
+	    if ($burnin > $n_iterations[$i]) 
+            {
+		print "Chain #".($i+1)." with file $out_files[$i] has only $n_iterations[$i] iterations.\n";
+		print "Error!  The the burnin (specified as $burnin) cannot be higher than this.\n";
+		exit(1);
+	    }
+	}
+    }
+    return if (defined($burnin));
+
+    my $max_iterations = max(\@n_iterations);
+    my $max_i = arg_max(\@n_iterations);
+
+    my $min_iterations = min(\@n_iterations);
+    my $min_i = arg_min(\@n_iterations);
+
+    if ($max_iterations > 3*$min_iterations)
+    {
+	print "The variation in run length between MCMC chains is too great.\n";
+	print "  Chain #".($max_i+1)." has $max_iterations iterations.\n";
+	print "  Chain #".($min_i+1)." has $min_iterations iterations.\n";
+	print "Not going to guess a burnin: please specify one.\n";
+	exit(1)
+    }
+
+    $burnin = int 0.1*min(\@n_iterations);
 }
 
