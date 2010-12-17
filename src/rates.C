@@ -288,6 +288,10 @@ namespace substitution {
     return S;
   }
   
+  Discretization::Discretization(int N)
+    :r(N),f(N),A(1)
+  { }
+    
   
   Discretization::Discretization(int N,const Distribution& D,double a)
     :p(N),r(N),A(a)
