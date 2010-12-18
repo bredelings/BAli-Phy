@@ -82,7 +82,7 @@ my @subdirs;             # the name of the subdirectories, as computed from the 
 my $burnin;
 my $MAP_file;
 my $personality="";
-my @partitions;
+my @input_file_names;
 
 # These things are option values
 my $subsample = 1;
@@ -104,6 +104,7 @@ my $min_Ne;
 
 &determine_personality();
 
+# determine @out_files, @tree_files, @parameter_files
 &determine_input_files();
 
 @commands = get_header_attributes("command",@out_files);
@@ -113,8 +114,8 @@ my $min_Ne;
 my $betas = get_cmdline_attribute("beta");
 my @beta = (1);
 @beta = split(/,/, $betas) if (defined($betas));
-@partitions = @{ get_partitions() };
-my $n_partitions = 1+$#partitions;
+@input_file_names = @{ get_input_file_names() };
+my $n_partitions = 1+$#input_file_names;
 
 &determine_alignment_files();
 
@@ -303,6 +304,7 @@ my %Burnin = ();
 
 &print_index_html();
 
+#---------------------------------------- end execution ---------------------------
 
 sub get_n_sequences
 {
@@ -401,11 +403,11 @@ sub print_data_and_model
     $section .= "<h2 style=\"clear:both\"><a name=\"data\">Data &amp; Model</a></h2>\n";
     $section .= "<table class=\"backlit\">\n";
     $section .= "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
-    for(my $p=0;$p<=$#partitions;$p++) 
+    for(my $p=0;$p<=$#input_file_names;$p++) 
     {
 	$section .= "<tr>\n";
 	$section .= " <td>".($p+1)."</td>\n";
-	$section .= " <td>$partitions[$p]</td>\n";
+	$section .= " <td>$input_file_names[$p]</td>\n";
 
 	my $features = get_alignment_info("Results/P".($p+1)."-initial.fasta");
 	my $min = $features->{'min_length'};
@@ -1523,7 +1525,7 @@ sub compare_arrays {
     return 1;
 }  
 
-sub get_partitions_for_file
+sub get_input_file_names_for_outfile
 {
     my $file = shift;
     die "Which file should I get the partitions for?" if (!defined($file));
@@ -1534,23 +1536,23 @@ sub get_partitions_for_file
 
 	open FILE, $file or die "Can't open $file!";
 
-	my @partitions = ();
+	my @input_file_names = ();
 	
 	while (my $line = <FILE>) 
 	{
 	    if ($line =~ /data(.+) = (.+)/) {
 		my $filename = $2;
 		$filename =~ s/$home/~/;
-		push @partitions,$filename;
+		push @input_file_names,$filename;
 	    }
 	    if ($line =~ /data = (.+)/) {
 		my $filename = $1;
 		$filename =~ s/$home/~/;
-		push @partitions,$filename;
+		push @input_file_names,$filename;
 	    }
 	    last if ($line =~ /^iterations = 0/);
 	}
-	return [@partitions];
+	return [@input_file_names];
     }
     elsif ($personality eq "phylobayes")
     {
@@ -1588,27 +1590,27 @@ sub show_array_differences
     show_array($spacer,$array2);
 }
 
-sub get_partitions
+sub get_input_file_names
 {
-    my $partitions;
+    my $input_file_names;
     for my $out_file (@out_files)
     {
-	my $these_partitions = get_partitions_for_file($out_file);
-	if (!defined($partitions))
+	my $these_input_file_names = get_input_file_names_for_outfile($out_file);
+	if (!defined($input_file_names))
 	{
-	    $partitions = $these_partitions;
+	    $input_file_names = $these_input_file_names;
 	}
 	else
 	{
-	    if (!compare_arrays($partitions,$these_partitions))
+	    if (!compare_arrays($input_file_names,$these_input_file_names))
 	    {
 		print "\nError! Different MCMC chains have different input files!\n";
-		show_array_differences("    file = ",$out_files[0],$partitions,$out_file,$these_partitions);
+		show_array_differences("    file = ",$out_files[0],$input_file_names,$out_file,$these_input_file_names);
 		exit(1);
 	    }
 	}
     }
-    return $partitions;
+    return $input_file_names;
 }
 
 #FIXME - rewrite to take the cmdline as an argument.
