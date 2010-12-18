@@ -69,14 +69,14 @@ if (! is_in_path("R")) {
 }
 
 # These things can be different between runs of the MCMC chain
-my @subdirectories;    # the name of the directories scanned, as given on the cmd line
+my @subdirectories;      # the name of the directories scanned, as given on the cmd line
 my @out_files;
 my @tree_files;
 my @parameter_files;
-my @partition_samples;
+my @partition_samples;   # $partition_samples[$chain_number][$partition_number]
 my @commands;
 my @directories;
-my @subdirs;           # the name of the subdirectories, as computed from the runs
+my @subdirs;             # the name of the subdirectories, as computed from the runs
 
 # These things are the same between all MCMC chains
 my $burnin;
@@ -113,39 +113,10 @@ my $min_Ne;
 my $betas = get_cmdline_attribute("beta");
 my @beta = (1);
 @beta = split(/,/, $betas) if (defined($betas));
-
-my $first_dir = $subdirectories[0];
 @partitions = @{ get_partitions() };
 my $n_partitions = 1+$#partitions;
-if ($personality =~ "bali-phy-2.1.*") {
-    if ($n_chains == 1) {
-	foreach my $directory (@subdirectories)
-	{
-	    my @samples = ();
-	    for(my $p=1;$p<=$n_partitions;$p++) {
-		push @samples,"$directory/C1.P$p.fastas";
-	    }
-	    push @partition_samples, [@samples];
-	}
-    }
-    else {
-	## FIXME - How do we construct these?
-	my @samples = ();
-	for(my $p=1;$p<=$n_partitions;$p++) {
-	    push @samples,"$first_dir/C1.P$p.fastas";
-	}
-	push @partition_samples, [@samples];
-    }
-}
-else {
-    my @samples = ();
-    for(my $p=1;$p<=$n_partitions;$p++) {
-	push @samples,"$first_dir/1.P$p.fastas" if (-e "$first_dir/1.P$p.fastas");
-    }
-    @samples = ("$first_dir/1.out") if ($#samples == -1);
-    push @partition_samples, [@samples];
-}
 
+&determine_alignment_files();
 
 my @n_iterations = get_n_iterations();
 my @smodels = @{ get_smodels() };
@@ -191,64 +162,7 @@ elsif ($speed == 2) {
 
 do_init();
 
-# 0. Compute T1.p and T1.trees
-
-if ($n_chains > 1) 
-{
-    for(my $i=1;$i<=$n_chains;$i++)
-    {
-	# Construct C1.pt
-	# Construct C1Ti.pt
-	# Construct C1Ti.p
-	# Construct C1Ti.trees
-	next if (! -e "C$i.trees" );
-
-	if (! more_recent_than_all_of("Results/C$i.t",[@tree_files]))
-	{
-	    `echo "tree" > Results/C$i.t`;
-	    `cat C$i.trees >> Results/C$i.t`;
-	}
-	
-	if (! more_recent_than_all_of("Results/C$i.pt",[@tree_files, @parameter_files]))
-	{
-	    `stats-merge C$i.p Results/C$i.t > Results/C$i.pt 2>/dev/null`;
-	}
-
-	if (! more_recent_than("Results/C${i}T1.pt","Results/C$i.pt")) 
-	{
-	    my $use_header = "";
-	    $use_header = "--no-header" if ($i != 1);
-
-	    `subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 $use_header > Results/C${i}T1.pt`;
-	}
-    }
-
-    my $cmd = "cat ";
-    my $rerun=0;
-    for(my $i=1;$i<=$n_chains;$i++) {
-	if (-e "Results/C${i}T1.pt") {
-	    $cmd = "$cmd Results/C${i}T1.pt ";
-	    $rerun=1 if (! more_recent_than("Results/T1.p","Results/C${i}T1.pt"));
-	}
-    }
-    $cmd = "$cmd > Results/T1.pt";
-    `$cmd` if ($rerun);
-
-    if (! more_recent_than("Results/T1.trees","Results/T1.pt")) {
-	`stats-select tree --no-header < Results/T1.pt > Results/T1.trees`;
-    }
-    
-    if (! more_recent_than("Results/T1.p","Results/T1.pt")) {
-	`stats-select -r tree < Results/T1.pt > Results/T1.p`;
-
-#       This messes up the printing of statistics
-#	`stats-select -i -r tree < Results/T1.pt > Results/T1.p`;
-
-    }
-
-    @tree_files = ( "Results/T1.trees" );
-    @parameter_files = ("Results/T1.p");
-}
+&compute_tree_and_parameter_files_for_heated_chains();
 
 # 5. Summarize scalar parameters
 my $max_arg = "";
@@ -1650,6 +1564,30 @@ sub get_partitions_for_file
     }
 }
 
+sub show_array
+{
+    my $spacer = shift;
+    my $array = shift;
+    foreach my $entry (@$array)
+    {
+	print $spacer.$entry."\n";
+    }
+}
+
+sub show_array_differences
+{
+    my $spacer = shift;
+    my $name1 = shift;
+    my $array1 = shift;
+    my $name2 = shift;
+    my $array2 = shift;
+
+    print "  For $name1:\n";
+    show_array($spacer,$array1);
+    print "  For $name2:\n";
+    show_array($spacer,$array2);
+}
+
 sub get_partitions
 {
     my $partitions;
@@ -1664,7 +1602,8 @@ sub get_partitions
 	{
 	    if (!compare_arrays($partitions,$these_partitions))
 	    {
-		print "Error! Input files different for run '$out_file' and '$out_files[0]'!\n";
+		print "\nError! Different MCMC chains have different input files!\n";
+		show_array_differences("    file = ",$out_files[0],$partitions,$out_file,$these_partitions);
 		exit(1);
 	    }
 	}
@@ -1797,13 +1736,15 @@ sub sanitize_smodel
     return $smodel;
 }
 
-sub get_smodels
+sub get_smodels_for_file
 {
+    my $file = shift;
+
     return [] if ($personality !~ "bali-phy.*");
 
     local *FILE;
 
-    open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+    open FILE, $file or die "Can't open $file!";
 
     my @smodels = ();
 
@@ -1822,13 +1763,42 @@ sub get_smodels
     return [@smodels];
 }
 
-sub get_imodels
+sub arrays_all_equal
 {
+    my @arrays = @_;
+    for(my $i=2;$i <= $#arrays ; $i++) {
+	return $i if (!compare_arrays($arrays[$i], $arrays[0]));
+    }
+    return 0;
+}
+
+sub get_smodels
+{
+    my @smodels;
+
+    foreach my $out_file (@out_files)
+    {
+	push @smodels, get_smodels_for_file($out_file);
+    }
+
+    my $different = arrays_all_equal(@smodels);
+
+    return $smodels[0] if (! $different);
+
+    print "\nError! Different MCMC chains have different substitution models!\n";
+    show_array_differences("    subst model = ", $out_files[0], $smodels[0], $out_files[$different], $smodels[$different]);
+    exit(1);
+}
+
+sub get_imodels_for_file
+{
+    my $file = shift;
+
     return [] if ($personality !~ "bali-phy.*");
 
     local *FILE;
 
-    open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+    open FILE, $file or die "Can't open $file!";
 
     my @imodels = ();
 
@@ -1847,6 +1817,24 @@ sub get_imodels
 
     push @imodels, "none" if ($#imodels == -1);
     return [@imodels];
+}
+
+sub get_imodels
+{
+    my @imodels;
+
+    foreach my $out_file (@out_files)
+    {
+	push @imodels, get_imodels_for_file($out_file);
+    }
+
+    my $different = arrays_all_equal(@imodels);
+
+    return $imodels[0] if (! $different);
+
+    print "\nError! Different MCMC chains have different substitution models!\n";
+    show_array_differences("    subst model = ", $out_files[0], $imodels[0], $out_files[$different], $imodels[$different]);
+    exit(1);
 }
 
 sub get_smodel_indices
@@ -2178,5 +2166,111 @@ sub determine_burnin
     }
 
     $burnin = int 0.1*min(\@n_iterations);
+}
+
+sub get_the_only_subdirectory
+{
+    if ($#subdirectories != 0)
+    {
+	print "Error: There is more than one subdirectory, but other subdirectories are being ignored.";
+	exit(1);
+    }
+    return $subdirectories[0];
+}
+
+sub determine_alignment_files
+{
+    if ($personality =~ "bali-phy-2.1.*") {
+	if ($n_chains == 1) {
+	    # In this case, we are constructing a list for each DIRECTORY
+	    foreach my $directory (@subdirectories)
+	    {
+		my @samples = ();
+		for(my $p=1;$p<=$n_partitions;$p++) {
+		    push @samples,"$directory/C1.P$p.fastas";
+		}
+		push @partition_samples, [@samples];
+	    }
+	}
+	else {
+	    # In this case we are constructing the list of files for different temperatures
+
+	    my @samples = ();
+	    my $first_dir = get_the_only_subdirectory();
+	    for(my $p=1;$p<=$n_partitions;$p++) {
+		push @samples,"$first_dir/C1.P$p.fastas";
+	    }
+	    push @partition_samples, [@samples];
+	}
+    }
+    else {
+	my $first_dir = get_the_only_subdirectory();
+	my @samples = ();
+	for(my $p=1;$p<=$n_partitions;$p++) {
+	    push @samples,"$first_dir/1.P$p.fastas" if (-e "$first_dir/1.P$p.fastas");
+	}
+	@samples = ("$first_dir/1.out") if ($#samples == -1);
+	push @partition_samples, [@samples];
+    }
+}
+
+# 0. Compute T1.p and T1.trees
+sub compute_tree_and_parameter_files_for_heated_chains
+{
+    return if ($n_chains == 1);
+
+    for(my $i=1;$i<=$n_chains;$i++)
+    {
+	# Construct C1.pt
+	# Construct C1Ti.pt
+	# Construct C1Ti.p
+	# Construct C1Ti.trees
+	next if (! -e "C$i.trees" );
+	
+	if (! more_recent_than_all_of("Results/C$i.t",[@tree_files]))
+	{
+	    `echo "tree" > Results/C$i.t`;
+	    `cat C$i.trees >> Results/C$i.t`;
+	}
+	
+	if (! more_recent_than_all_of("Results/C$i.pt",[@tree_files, @parameter_files]))
+	{
+	    `stats-merge C$i.p Results/C$i.t > Results/C$i.pt 2>/dev/null`;
+	}
+	
+	if (! more_recent_than("Results/C${i}T1.pt","Results/C$i.pt")) 
+	{
+	    my $use_header = "";
+	    $use_header = "--no-header" if ($i != 1);
+	    
+	    `subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 $use_header > Results/C${i}T1.pt`;
+	}
+    }
+    
+    my $cmd = "cat ";
+    my $rerun=0;
+    for(my $i=1;$i<=$n_chains;$i++) {
+	if (-e "Results/C${i}T1.pt") {
+	    $cmd = "$cmd Results/C${i}T1.pt ";
+	    $rerun=1 if (! more_recent_than("Results/T1.p","Results/C${i}T1.pt"));
+	}
+    }
+    $cmd = "$cmd > Results/T1.pt";
+    `$cmd` if ($rerun);
+    
+    if (! more_recent_than("Results/T1.trees","Results/T1.pt")) {
+	`stats-select tree --no-header < Results/T1.pt > Results/T1.trees`;
+    }
+    
+    if (! more_recent_than("Results/T1.p","Results/T1.pt")) {
+	`stats-select -r tree < Results/T1.pt > Results/T1.p`;
+	
+#       This messes up the printing of statistics
+#	`stats-select -i -r tree < Results/T1.pt > Results/T1.p`;
+	
+    }
+    
+    @tree_files = ( "Results/T1.trees" );
+    @parameter_files = ("Results/T1.p");
 }
 
