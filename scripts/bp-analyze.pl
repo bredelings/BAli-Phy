@@ -161,7 +161,8 @@ elsif ($speed == 2) {
 
 &determine_burnin();
 
-do_init();
+# create a new directory, decide whether or not to reuse existing directory
+&initialize_results_directory();
 
 &compute_tree_and_parameter_files_for_heated_chains();
 
@@ -465,7 +466,7 @@ $section .= "</table>\n";
 
 $section .= '<table class="backlit">'."\n";
 $section .= "<tr><th>chain #</th><th>Iterations (after burnin)</th></tr>\n";
-    for(my $i=0;$i<=$n_chains;$i++)
+    for(my $i=0;$i<=$#out_files;$i++)
     {
 $section .= "<tr>\n";
 $section .= "  <td>".($i+1)."</td>\n";
@@ -1488,10 +1489,116 @@ sub is_in_path
     return 0;
 }
 
-sub do_init
+sub check_input_file_names()
 {
-    mkdir "Results";
-    mkdir "Results/Work";
+    return 0 if (! -e "Results/input_files");
+
+    open FILE,"Results/input_files";
+
+    my @old_input_file_names;
+    while(my $line = <FILE>)
+    {
+	chomp $line;
+	push @old_input_file_names, $line;
+    }
+    close FILE;
+
+    return compare_arrays( [@old_input_file_names], [@input_file_names]);
+}
+
+sub write_input_file_names()
+{
+    open FILE,">Results/input_files";
+
+    print FILE join("\n",@input_file_names);
+
+    close FILE;
+}
+
+sub check_out_file_names()
+{
+    return 0 if (! -e "Results/out_files");
+    open FILE,"Results/out_files";
+
+    my @out_files_old;
+    while(my $line = <FILE>)
+    {
+	chomp $line;
+	push @out_files_old, $line;
+    }
+    close FILE;
+
+    return compare_arrays( [@out_files_old], [@out_files]);
+}
+
+sub write_out_file_names()
+{
+    open FILE,">Results/out_files";
+
+    print FILE join("\n",@out_files);
+
+    close FILE;
+}
+
+sub check_burnin()
+{
+    return 0 if (! -e "Results/burnin");
+    open FILE,"Results/burnin";
+
+    my $line = <FILE>;
+    chomp $line;
+
+    return ($burnin == $line);
+}
+
+sub write_burnin()
+{
+    open FILE,">Results/burnin";
+
+    print FILE "$burnin\n";
+
+    close FILE;
+}
+
+sub get_unused_dir_name
+{
+     for(my $i=1;;$i++)
+    {
+	my $unused_name = "Results.".$i;
+	return $unused_name if (! -e $unused_name);
+    }
+}
+
+sub initialize_results_directory
+{
+    my $reuse = 1;
+
+    # check that this is an analysis of the same MCMC chains as last time
+    $reuse = check_out_file_names() if ($reuse);
+
+    # check that the input alignment files are the same as last time
+    $reuse = check_input_file_names() if ($reuse);
+
+    # check that the input alignment files are the same as last time
+    $reuse = check_burnin() if ($reuse);
+
+    if (!$reuse)
+    {
+	my $new_dir_name = get_unused_dir_name();
+	print "Renaming 'Results/' to '$new_dir_name/'.\n\n" if (-e "Results/");
+	rename "Results/", $new_dir_name;
+    }
+
+    if (! -e "Results")
+    {
+	print "Creating new directory Results/ for summary files.\n";
+	mkdir "Results";
+	mkdir "Results/Work";
+    }
+
+    write_input_file_names();
+    write_out_file_names();
+    write_burnin();
 }
 
 sub do_cleanup
