@@ -149,10 +149,21 @@ AC_ARG_ENABLE([cairo],
 
 
 # Specify extra library paths
-AC_ARG_WITH([mpi], AS_HELP_STRING([--with-mpi],[Compile with OpenMPI]),
+AC_ARG_WITH([mpi], AS_HELP_STRING([--with-mpi],[Compile with MPI]),
   use_mpi="$withval",
   use_mpi="no"
 )
+
+# Specify extra library paths
+AC_ARG_WITH([openmp], AS_HELP_STRING([--with-openmp],[Compile with OpenMP]),
+  use_openmp="$withval",
+  use_openmp="no"
+)
+
+if test "$use_mpi" != no && test "$use_openmp" != no ; then
+   echo "You cannot use both MPI and OpenMP!";
+   exit 1;
+fi
 
 AC_ARG_VAR(MPICXX,
            [What is the mpicxx command for compiling C++ with MPI?])
@@ -165,6 +176,12 @@ fi
 if test "$GXX" = yes ; then
 
   CXXFLAGS="$CXXFLAGS -pipe"
+
+  # --with-openmp
+  if test "$use_openmp" != no ; then
+      CXXFLAGS="$CXXFLAGS -fopenmp"
+      LDFLAGS="$LDFLAGS -fopenmp"
+  fi
 
   # --enable-profile
   if test "$profile" = yes ; then
