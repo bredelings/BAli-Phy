@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include "sequence-format.H"
 #include "util.H"
+#include "io.H"
 
 using namespace std;
 
@@ -64,7 +65,7 @@ namespace sequence_format {
 
     bool done = false;
 
-    while(not done and getline_handle_dos(file,line)) 
+    while(not done and portable_getline(file,line)) 
     {
       // after a blank line, quit reading, or skip
       if (not line.size()) 
@@ -98,7 +99,7 @@ namespace sequence_format {
 	if (c == '>') break;
 
 	// read the next line of letters
-	getline_handle_dos(file,line);
+	portable_getline(file,line);
 
 	// after a blank line, quit reading, or skip
 	if (not line.size()) 
@@ -175,7 +176,7 @@ namespace sequence_format {
       throw myexception()<<"[Error reading PHYLIP alignment] File ends early!";
 
     string line;
-    getline_handle_dos(file,line);
+    portable_getline(file,line);
 
     if (not strip(line," \t").size())
       return false;
@@ -243,7 +244,7 @@ namespace sequence_format {
     string line;
     for(int i=0;i<ntaxa;i++) {
       assert(file);
-      getline_handle_dos(file,line);
+      portable_getline(file,line);
       if (not line.size())
 	throw myexception()<<"[Reading PHYLIP alignment] Read an empty line after "<<i<<" out of "<<ntaxa<<" sequences in this stanza.";
 
@@ -267,7 +268,7 @@ namespace sequence_format {
 
     // parse phylip header
     string line;
-    getline_handle_dos(file,line);
+    portable_getline(file,line);
     int ntaxa = -1;
     int length = -1;
     {
@@ -292,7 +293,7 @@ namespace sequence_format {
 	// If there is not more data, then quit
 	if (not file.good()) break;
 	
-	getline_handle_dos(file,line);
+	portable_getline(file,line);
 	
 	// If there is a line here, and we are still looking for data, it must be empty
 	if (line.size() != 0) 
@@ -377,9 +378,7 @@ namespace sequence_format {
 
   vector<sequence> load_from_file(loader_t loader,const string& filename) 
   {
-    ifstream file(filename.c_str());
-    if (not file)
-      throw myexception()<<"Couldn't open file '"<<filename<<"'";
+    checked_ifstream file(filename,"alignment file");
     vector<sequence> sequences = loader(file);
     file.close();
     return sequences;

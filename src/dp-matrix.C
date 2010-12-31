@@ -39,17 +39,11 @@ using std::isfinite;
 
 void state_matrix::clear() 
 {
-  if (data) 
-  {
-    delete[] data; 
-    data = NULL;
-  }
+  delete[] data; 
+  data = NULL;
   
-  if (scale_)
-  {
-    delete[] scale_; 
-    scale_ = NULL;
-  }
+  delete[] scale_; 
+  scale_ = NULL;
 }
 
 state_matrix::~state_matrix() 
@@ -505,7 +499,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
 }
 
 
-inline void DPmatrixSimple::forward_cell(int i2,int j2) 
+void DPmatrixSimple::forward_cell(int i2,int j2) 
 {
   assert(0 < i2 and i2 < size1());
   assert(0 < j2 and j2 < size2());
@@ -570,6 +564,8 @@ inline void DPmatrixSimple::forward_cell(int i2,int j2)
     scale(i2,j2) -= logs;
   }
 } 
+
+//DPmatrixSimple::~DPmatrixSimple() {}
 
 inline void DPmatrixConstrained::clear_cell(int i2,int j2) 
 {

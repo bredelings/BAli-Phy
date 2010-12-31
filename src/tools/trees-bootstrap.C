@@ -504,7 +504,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   bootstrap.add_options()
     ("bootstrap","Do block bootstrapping to get a CI on the posterior probabilities.")
     ("samples",value<unsigned>()->default_value(10000U),"Number of bootstrap samples.")
-    ("pseudocount",value<unsigned>()->default_value(0U),"Extra 0/1 to add to bootstrap samples.")
+    ("pseudocount",value<unsigned>()->default_value(1U),"Extra 0/1 to add to bootstrap samples.")
     ("blocksize",value<unsigned>(),"Block size to use in block boostrap.")
     ("seed", value<unsigned long>(),"Random seed.")
     ;
@@ -689,9 +689,14 @@ int main(int argc,char* argv[])
       throw myexception()<<"Tree files not specified!";
 
     vector<string> files = args["files"].as< vector<string> >();
-    vector< vector<string> > filenames(files.size());
-    for(int i=0;i<files.size();i++) 
-      filenames[i] = split(files[i],':');
+    vector< vector<string> > filenames(1);
+    for(int i=0; i < files.size(); i++)
+    {
+      if (files[i] != "::")
+	filenames.back().push_back(files[i]);
+      else
+	filenames.push_back(vector<string>());
+    }
 
     tree_sample_collection tree_dists(filenames,skip,subsample,max);
 

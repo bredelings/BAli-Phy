@@ -27,9 +27,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>
 #include "logsum.H"
-#include "likelihood.H"
 #include "probability.H"
-#include "proposals.H"
+#include "io.H"
 
 using std::vector;
 using std::valarray;
@@ -114,8 +113,12 @@ namespace substitution {
     :S(n,n)
   {}
 
-  efloat_t SimpleExchangeModel::prior() const {
-    return laplace_pdf(log(rho()), -3, 1)/rho();
+  efloat_t SimpleExchangeModel::prior() const 
+  {
+    if (is_fixed(0))
+      return 1;
+    else
+      return laplace_pdf(log(rho()), -3, 1)/rho();
   }
 
   void SimpleExchangeModel::recalc(const vector<int>&)
@@ -248,7 +251,7 @@ namespace substitution {
   {
     // Start with *f = 1
     add_parameter(Parameter("f",1.0,between(0, 1)));
-    parameters_[0].fixed = true;
+    //    parameters_[0].fixed = true;
 
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
@@ -912,10 +915,7 @@ namespace substitution {
   {
     name_ = string("Empirical[") + get_basename(filename) + "]";
 
-    std::ifstream ifile(filename.c_str());
-
-    if (not ifile)
-      throw myexception(string("Couldn't open file '")+filename+"'");
+    checked_ifstream ifile(filename, "empirical rate matrix file");
 
     load_file(ifile);
 
@@ -1065,7 +1065,10 @@ namespace substitution {
 
   efloat_t HKY::prior() const 
   {
-    return laplace_pdf(log(kappa()), log(2), 0.25)/kappa();
+    if (is_fixed(0))
+      return 1;
+    else
+      return laplace_pdf(log(kappa()), log(2), 0.25)/kappa();
   }
 
   void HKY::recalc(const vector<int>&) {
@@ -1098,8 +1101,10 @@ namespace substitution {
   efloat_t TN::prior() const 
   {
     efloat_t P = 1;
-    P *= laplace_pdf(log(kappa1()), log(2), 0.25)/kappa1();
-    P *= laplace_pdf(log(kappa2()), log(2), 0.25)/kappa2();
+    if (not is_fixed(0))
+      P *= laplace_pdf(log(kappa1()), log(2), 0.25)/kappa1();
+    if (not is_fixed(1))
+      P *= laplace_pdf(log(kappa2()), log(2), 0.25)/kappa2();
     return P;
   }
 
@@ -1288,12 +1293,12 @@ namespace substitution {
     }
   }
 
-  efloat_t M0::super_prior() const {
-    return laplace_pdf(log(omega()), 0, 0.1)/omega();
-  }
-
-  efloat_t M0::prior() const {
-    return SuperModelOver<NucleotideExchangeModel>::prior();
+  efloat_t M0::super_prior() const 
+  {
+    if (is_fixed(0))
+      return 1;
+    else
+      return laplace_pdf(log(omega()), 0, 0.1)/omega();
   }
 
   string M0::name() const {
@@ -1494,20 +1499,20 @@ namespace substitution {
     string line;
 
     //------- 1: Model name --------------//
-    getline_handle_dos(file,name_);
+    portable_getline(file,name_);
 
     //------- 2: # of categories ---------//
-    getline_handle_dos(file,line);
+    portable_getline(file,line);
     const int n_cat = convertTo<int>(line);
 
     //------- 3: category weights --------//
-    getline_handle_dos(file,line);
+    portable_getline(file,line);
     fraction = prior_fraction = split<double>(line,' ');
     if (fraction.size() != n_cat) 
       throw myexception()<<"In reading CAT-Fixed model '"<<name_<<"' expected weights for "<<n_cat<<" categories, but got "<<fraction.size();
 
     //------- 4: alphabet order ---------//
-    getline_handle_dos(file,line);
+    portable_getline(file,line);
     vector<int> letter(a.size(),-1);
     vector<string> unordered_letters = split(line,' ');
     if (unordered_letters.size() != a.size())
@@ -1520,7 +1525,7 @@ namespace substitution {
     //------- 5-end: frequencies of the actual classes ----//
     for(int i=0;i<n_cat;i++)
     {
-      getline_handle_dos(file,line);
+      portable_getline(file,line);
 
       if (file.bad())
 	throw myexception()<<"Failed to read frequencies for category "<<i+1;
@@ -1547,7 +1552,7 @@ namespace substitution {
 
   void CAT_FixedFrequencyModel::load_file(const string& filename)
   {
-    std::ifstream file(filename.c_str());
+    checked_ifstream file(filename,"CAT fixed frequency model file");
 
     if (not file)
       throw myexception(string("Couldn't open file '")+filename+"'");
@@ -1855,7 +1860,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   efloat_t WithINV::super_prior() const {
     double p = get_parameter_value(0);
 
-    return beta_pdf(p, 1, 2);
+    if (is_fixed(0))
+      return 1;
+    else
+      return beta_pdf(p, 1, 2);
   }
 
     /// Access the base models
@@ -1937,7 +1945,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     double p = get_parameter_value(0);
 
-    return beta_pdf(p, 1, 2);
+    if (is_fixed(0))
+      return 1;
+    else
+      return beta_pdf(p, 1, 2);
   }
 
     /// Access the base models
@@ -2012,7 +2023,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // prior on omega
     double omega = get_parameter_value(3);
-    P *= exponential_pdf(log(omega),0.05)/omega;
+    if (not is_fixed(3))
+      P *= exponential_pdf(log(omega),0.05)/omega;
     return P;
   }
 
@@ -2041,6 +2053,192 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 	return i;
     }
     return -1;
+  }
+
+  //-------------------- M2a -------------------//
+  void M2a::recalc(const vector<int>&) 
+  {
+    fraction[0] = get_parameter_value(0);
+    fraction[1] = get_parameter_value(1);
+    fraction[2] = get_parameter_value(2);
+
+    p_values[0] = get_parameter_value(3);
+    p_values[1] = 1;
+    p_values[2] = get_parameter_value(4);
+
+    recalc_submodel_instances();
+  }
+
+  efloat_t M2a::super_prior() const 
+  {
+    // prior on frequencies
+    valarray<double> n(3);
+    n[0] = 1;
+    n[1] = 98;
+    n[2] = 1;
+    efloat_t Pr = dirichlet_pdf(get_parameter_values(), 0, 3, n);
+
+    // prior on omega1: log(omega1) = -Exponential(0.05), so omega1 \in [0,1]
+    
+    if (not is_fixed(3)) {
+      double omega1 = get_parameter_value(3);
+      Pr *= exponential_pdf(-log(omega1),0.05)/omega1;
+    }
+
+    // prior on omega3: log(omega3) = Exponential(0.05), so omega3 \in [1,\infty]
+    if (not is_fixed(4))
+    {
+      double omega3 = get_parameter_value(4);
+      Pr *= exponential_pdf(log(omega3),0.05)/omega3;
+    }
+
+    return Pr;
+  }
+
+  string M2a::name() const {
+    return SubModels(0).name() + " + M2a";
+  }
+
+  M2a::M2a(const M0& M1,const ReversibleFrequencyModel& R) 
+    :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,3)
+  {
+    add_super_parameter(Parameter("M2a::f[AA INV]",   1.0/3, between(0, 1)));
+    add_super_parameter(Parameter("M2a::f[Neutral]",  1.0/3, between(0, 1)));
+    add_super_parameter(Parameter("M2a::f[Selected]", 1.0 - get_parameter_value(0) - get_parameter_value(1), between(0, 1)));
+    add_super_parameter(Parameter("M2a::omega1", 0.5, between(0,1)));
+    add_super_parameter(Parameter("M2a::omega3", 2.0, lower_bound(1)));
+
+    read();
+    recalc_all();
+  }
+
+  //-------------------- M8b -------------------//
+  string M8b::name() const 
+  {
+    return SubModel().name() + " + " + S->name();
+  }
+
+  /// FIXME: Implement this method.
+  efloat_t M8b::super_prior() const 
+  {
+    // Prior on f[*]
+    valarray<double> q(3);
+    q[0] = 10; // Conserved
+    q[1] = 10; // Neutral
+    q[2] = 1;  // Positive selection
+    
+    efloat_t Pr = dirichlet_pdf(get_parameter_values(), 0, 3, q);
+
+    // prior on omega3: log(omega3) = Exponential(0.05), so omega3 \in [1,\infty]
+    if (not is_fixed(4))
+    {
+      double omega3 = get_parameter_value(4);
+      Pr *= exponential_pdf(log(omega3),0.05)/omega3;
+    }
+
+    return Pr;
+  }
+
+  /// We could setup
+  /// setup-smodel.C
+  /// M8b(*YM, SimpleFrequencyModel(YM->Alphabet()),B,3);
+  /// p1, p2, p3: 3 P Values. 3rd argument of MultiParam...
+  /// is 3.
+  /// p1 and p3 can change: 2nd argument of MultiParam...
+  /// is 2.
+  /// p1 is futher divided into n parts.
+  /// However, I guess that the n parts should be added
+  /// to the number of fractions.
+  /// 2nd argument:? What is 2nd argument?
+  /// 3rd argument is n + 2.
+  ///
+  /// -----------------------------------------------------
+  /// Ben's comment:
+  /// In my code, it is slightly more complicated than 
+  /// using evenly spaced quantile bins.  I initially only 
+  /// discretized gamma and log-normal distributions for 
+  /// modelling rate hetero-geneity.  Now that we are 
+  /// modelling heterogeneity in omega also, we may have 
+  /// to revert to using evenly spaced quantile bins, and 
+  /// remove the more complicated code.  But in any case, the
+  /// current code is still based on quantiles, and the 
+  /// bins are APPROXIMATELY evenly spaced.
+  /// -----------------------------------------------------
+  M8b::M8b(const M0& MM, 
+           const ReversibleFrequencyModel& R,
+           const int n)
+    : MultiParameterModel(
+        UnitModel(ReversibleMarkovSuperModel(MM,R)),
+        0, // M0::omega is going to be parameter 0 of the (MM,R) model
+        n + 2
+      ),
+      S(Beta()),
+      nbin(n)
+  {
+    // We just added the (MM,R) model as a submodel in the constructor
+
+    // Now add the Beta distribution as a submodel also.
+    // Call "insert_" instead of "add_" since we are actually STORING the submodel!
+    insert_submodel("S",*S);
+
+    add_super_parameter(Parameter("M8b::f[Purifying]", 0.6, between(0, 1)));
+    add_super_parameter(Parameter("M8b::f[Neutral]", 0.3, between(0, 1)));
+    add_super_parameter(Parameter("M8b::f[Positive]", 1.0 - get_parameter_value(0) - get_parameter_value(1), between(0, 1)));
+    // there is no omega1 - instead the Purifying values come from the Beta distribution.
+    add_super_parameter(Parameter("M8b::omega2", 1.0, true /* fixed */));
+    add_super_parameter(Parameter("M8b::omega3", 2.0, lower_bound(1)));
+
+    add_super_parameter(Parameter("M8b::omega3_non_zero", 1.0));
+
+    read();
+    recalc_all();
+  }
+
+  void M8b::recalc(const vector<int>&) 
+  {
+    UniformDiscretization d(nbin, *S);
+
+    // Get the discrete distribution on the 3 categories
+    valarray<double> ff(3);
+    ff[0] = get_parameter_value(0); // f[Purifying]
+    ff[1] = get_parameter_value(1); // f[Neutral]
+    ff[2] = get_parameter_value(2); // f[Positive]
+
+    // This will be either 0.0 or 1.0
+    double omega3_non_zero = get_parameter_value(5);
+
+    // If its 0.0, then act like ff[2] = 0
+    // This allows us to decrease the dimension of the model, w/o removing
+    //   a dimension from the MCMC state.  So, reversible-jump is avoided.
+    if (omega3_non_zero < 0.5) 
+    {
+      ff[2] = 0;
+      ff /= ff.sum();
+    }
+
+    /// Consider 3-binned Beta.
+    /// We need 5 pairs of P-Values and fractions.
+    /// The first 3 pairs are set by the discretized
+    /// Beta distribution. There remain two pairs. 
+
+    for (int i = 0; i < p_values.size(); i++)
+    {
+      if (i < nbin)
+      {
+        fraction[i] = d.f[i] * ff[0];
+        p_values[i] = d.r[i];
+      }
+      else
+      {
+        fraction[i] = ff[i - nbin + 1];
+        p_values[i] = get_parameter_value(i - nbin + 1 + 2);
+      }
+    }
+
+    /// We need to do this when either P_values changes, 
+    /// or the SUBMODEL changes
+    /// MultiParameterModel::recalc_submodel_instances ()
+    recalc_submodel_instances();
   }
 
   //M3

@@ -31,6 +31,8 @@
 
 use strict;
 
+use warnings;
+
 use Carp;
 
 use POSIX;
@@ -66,18 +68,24 @@ if (! is_in_path("R")) {
     $have_gnuplot = 0;
 }
 
-my $personality="";
-my $n_chains=1;
-my @subdirectories;
+# These things can be different between runs of the MCMC chain
+my @subdirectories;      # the name of the directories scanned, as given on the cmd line
 my @out_files;
 my @tree_files;
 my @parameter_files;
-my @partition_samples;
-my $MAP_file;
+my @partition_samples;   # $partition_samples[$chain_number][$partition_number]
+my @commands;
+my @directories;
+my @subdirs;             # the name of the subdirectories, as computed from the runs
+
+# These things are the same between all MCMC chains
 my $burnin;
-my $max_iter;
+my $MAP_file;
+my $personality="";
+my @input_file_names;
+
+# These things are option values
 my $subsample = 1;
-my $min_support;
 my $muscle = 0;
 my $probcons = 0;
 my $sub_partitions=0;
@@ -85,56 +93,33 @@ my $do_consensus_alignments=0;
 my $do_trace_plots=1;
 my $prune;
 my $speed=1;
+my $max_iter;    # maximum number of iterations to consider
+
+# These things are ... ??
+my $n_chains=1;
+my $min_support;
 my $min_Ne;
 
 &parse_command_line();
 
 &determine_personality();
 
+# determine @out_files, @tree_files, @parameter_files
 &determine_input_files();
 
-my @commands = get_header_attributes("command",@out_files);
-my @directories = get_header_attributes("directory",@out_files);
-my @subdirs    = get_header_attributes("subdirectory",@out_files);
+@commands = get_header_attributes("command",@out_files);
+@directories = get_header_attributes("directory",@out_files);
+@subdirs    = get_header_attributes("subdirectory",@out_files);
 
 my $betas = get_cmdline_attribute("beta");
 my @beta = (1);
 @beta = split(/,/, $betas) if (defined($betas));
+@input_file_names = @{ get_input_file_names() };
+my $n_partitions = 1+$#input_file_names;
 
-my $first_dir = $subdirectories[0];
-my @partitions = @{ get_partitions() };
-my $n_partitions = 1+$#partitions;
-if ($personality =~ "bali-phy-2.1.*") {
-    if ($n_chains == 1) {
-	foreach my $directory (@subdirectories)
-	{
-	    my @samples = ();
-	    for(my $p=1;$p<=$n_partitions;$p++) {
-		push @samples,"$directory/C1.P$p.fastas";
-	    }
-	    push @partition_samples, [@samples];
-	}
-    }
-    else {
-	## FIXME - How do we construct these?
-	my @samples = ();
-	for(my $p=1;$p<=$n_partitions;$p++) {
-	    push @samples,"$first_dir/C1.P$p.fastas";
-	}
-	push @partition_samples, [@samples];
-    }
-}
-else {
-    my @samples = ();
-    for(my $p=1;$p<=$n_partitions;$p++) {
-	push @samples,"$first_dir/1.P$p.fastas" if (-e "$first_dir/1.P$p.fastas");
-    }
-    @samples = ("$first_dir/1.out") if ($#samples == -1);
-    push @partition_samples, [@samples];
-}
+&determine_alignment_files();
 
-
-my $n_iterations = get_n_iterations();
+my @n_iterations = get_n_iterations();
 my @smodels = @{ get_smodels() };
 my @imodels = @{ get_imodels() };
 
@@ -174,70 +159,12 @@ elsif ($speed == 2) {
     @alignment_consensus_values = ();
 }
 
+&determine_burnin();
 
-$burnin = int 0.1*$n_iterations if (!defined($burnin));
-my $after_burnin = $n_iterations - $burnin +1;
+# create a new directory, decide whether or not to reuse existing directory
+&initialize_results_directory();
 
-do_init();
-
-# 0. Compute T1.p and T1.trees
-
-if ($n_chains > 1) 
-{
-    for(my $i=1;$i<=$n_chains;$i++)
-    {
-	# Construct C1.pt
-	# Construct C1Ti.pt
-	# Construct C1Ti.p
-	# Construct C1Ti.trees
-	next if (! -e "C$i.trees" );
-
-	if (! more_recent_than_all_of("Results/C$i.t",[@tree_files]))
-	{
-	    `echo "tree" > Results/C$i.t`;
-	    `cat C$i.trees >> Results/C$i.t`;
-	}
-	
-	if (! more_recent_than_all_of("Results/C$i.pt",[@tree_files, @parameter_files]))
-	{
-	    `stats-merge C$i.p Results/C$i.t > Results/C$i.pt 2>/dev/null`;
-	}
-
-	if (! more_recent_than("Results/C${i}T1.pt","Results/C$i.pt")) 
-	{
-	    my $use_header = "";
-	    $use_header = "--no-header" if ($i != 1);
-
-	    `subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 $use_header > Results/C${i}T1.pt`;
-	}
-    }
-
-    my $cmd = "cat ";
-    my $rerun=0;
-    for(my $i=1;$i<=$n_chains;$i++) {
-	if (-e "Results/C${i}T1.pt") {
-	    $cmd = "$cmd Results/C${i}T1.pt ";
-	    $rerun=1 if (! more_recent_than("Results/T1.p","Results/C${i}T1.pt"));
-	}
-    }
-    $cmd = "$cmd > Results/T1.pt";
-    `$cmd` if ($rerun);
-
-    if (! more_recent_than("Results/T1.trees","Results/T1.pt")) {
-	`stats-select tree --no-header < Results/T1.pt > Results/T1.trees`;
-    }
-    
-    if (! more_recent_than("Results/T1.p","Results/T1.pt")) {
-	`stats-select -r tree < Results/T1.pt > Results/T1.p`;
-
-#       This messes up the printing of statistics
-#	`stats-select -i -r tree < Results/T1.pt > Results/T1.p`;
-
-    }
-
-    @tree_files = ( "Results/T1.trees" );
-    @parameter_files = ("Results/T1.p");
-}
+&compute_tree_and_parameter_files_for_heated_chains();
 
 # 5. Summarize scalar parameters
 my $max_arg = "";
@@ -362,7 +289,7 @@ while(my $line = <CONSENSUS>) {
 	last;
     }
 }
-
+close CONSENSUS;
 
 # 14. Traceplots for scalar variables
 
@@ -378,6 +305,7 @@ my %Burnin = ();
 
 &print_index_html();
 
+#---------------------------------------- end execution ---------------------------
 
 sub get_n_sequences
 {
@@ -476,11 +404,11 @@ sub print_data_and_model
     $section .= "<h2 style=\"clear:both\"><a name=\"data\">Data &amp; Model</a></h2>\n";
     $section .= "<table class=\"backlit\">\n";
     $section .= "<tr><th>Partition</th><th>Sequences</th><th>Lengths</th><th>Substitution&nbsp;Model</th><th>Indel&nbsp;Model</th></tr>\n";
-    for(my $p=0;$p<=$#partitions;$p++) 
+    for(my $p=0;$p<=$#input_file_names;$p++) 
     {
 	$section .= "<tr>\n";
 	$section .= " <td>".($p+1)."</td>\n";
-	$section .= " <td>$partitions[$p]</td>\n";
+	$section .= " <td>$input_file_names[$p]</td>\n";
 
 	my $features = get_alignment_info("Results/P".($p+1)."-initial.fasta");
 	my $min = $features->{'min_length'};
@@ -519,24 +447,36 @@ sub section_analysis
 {
     my $section = "";
 $section .= "<h2><a name=\"analysis\">Analysis</a></h2>\n";
-$section .= '<table style="width:100%;">'."\n";
+$section .= '<table style="width:100%">'."\n";
 
 $section .= "<tr>\n";
 $section .= "  <td>burn-in = $burnin samples</td>\n";
-$section .= "  <td>after burnin = $after_burnin samples</td>\n";
 $section .= "  <td>sub-sample = $subsample</td>\n" if ($subsample != 1);
-$section .= "</tr>\n";
-
-$section .= "<tr>\n";
 $section .= "  <td>$marginal_prob</td>\n";
 $section .= "</tr>\n";
+$section .= "</table>\n";
 
+$section .= '<table style="width:100%">'."\n";
 $section .= "<tr>\n";
 $section .= "  <td>Complete sample: $n_topologies topologies</td>\n";
 $section .= "  <td>95% Bayesian credible interval: $n_topologies_95 topologies</td>\n";
 $section .= "</tr>\n";
 
 $section .= "</table>\n";
+
+$section .= '<table class="backlit">'."\n";
+$section .= "<tr><th>chain #</th><th>Iterations (after burnin)</th></tr>\n";
+    for(my $i=0;$i<=$#out_files;$i++)
+    {
+$section .= "<tr>\n";
+$section .= "  <td>".($i+1)."</td>\n";
+my $after_burnin = $n_iterations[$i] - $burnin;
+$section .= "  <td>$after_burnin samples</td>\n";
+$section .= "</tr>\n";
+    }
+$section .= "</table>\n";
+
+
     return $section;
 }
 
@@ -1148,13 +1088,12 @@ sub mixing_diagnostics
     if (!more_recent_than("Results/partitions.pred","Results/partitions")) {
 	`perl -e 'while(<>) {s/\$/\\n/;print;}' < Results/partitions > Results/partitions.pred`;
     }
-    
+
     if (!more_recent_than_all_of("Results/partitions.bs",[@tree_files])) {
-	my $trees_arg = join(':',@tree_files);
-	`trees-bootstrap $max_arg $trees_arg $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table --pseudocount 1 > Results/partitions.bs`;
+	`trees-bootstrap $max_arg @tree_files $skip $subsample_string --pred Results/partitions.pred --LOD-table=Results/LOD-table --pseudocount 1 > Results/partitions.bs`;
     }
     print "done.\n";
-    
+
     if (!more_recent_than_all_of("Results/convergence-PP.pdf",[@tree_files]) and $#tree_files > 0)
     {
 	my $script = find_in_path("compare-runs.R");
@@ -1504,11 +1443,11 @@ sub generate_trace_plots
 	    
 	    my $file2 = $file1.".2";
 	    
-	    my $N = $after_burnin;
+	    my $N = $n_iterations[0] - $burnin;
 	    
 	    $N = 1000 if ($N > 1000);
 	    
-	    my $factor = ceil($after_burnin / $N);
+	    my $factor = ceil(($n_iterations[0] - $burnin) / $N);
 	    
 	    `subsample --skip=$burnin $factor < $file1 > $file2`;
 	
@@ -1550,10 +1489,116 @@ sub is_in_path
     return 0;
 }
 
-sub do_init
+sub check_input_file_names()
 {
-    mkdir "Results";
-    mkdir "Results/Work";
+    return 0 if (! -e "Results/input_files");
+
+    open FILE,"Results/input_files";
+
+    my @old_input_file_names;
+    while(my $line = <FILE>)
+    {
+	chomp $line;
+	push @old_input_file_names, $line;
+    }
+    close FILE;
+
+    return compare_arrays( [@old_input_file_names], [@input_file_names]);
+}
+
+sub write_input_file_names()
+{
+    open FILE,">Results/input_files";
+
+    print FILE join("\n",@input_file_names);
+
+    close FILE;
+}
+
+sub check_out_file_names()
+{
+    return 0 if (! -e "Results/out_files");
+    open FILE,"Results/out_files";
+
+    my @out_files_old;
+    while(my $line = <FILE>)
+    {
+	chomp $line;
+	push @out_files_old, $line;
+    }
+    close FILE;
+
+    return compare_arrays( [@out_files_old], [@out_files]);
+}
+
+sub write_out_file_names()
+{
+    open FILE,">Results/out_files";
+
+    print FILE join("\n",@out_files);
+
+    close FILE;
+}
+
+sub check_burnin()
+{
+    return 0 if (! -e "Results/burnin");
+    open FILE,"Results/burnin";
+
+    my $line = <FILE>;
+    chomp $line;
+
+    return ($burnin == $line);
+}
+
+sub write_burnin()
+{
+    open FILE,">Results/burnin";
+
+    print FILE "$burnin\n";
+
+    close FILE;
+}
+
+sub get_unused_dir_name
+{
+     for(my $i=1;;$i++)
+    {
+	my $unused_name = "Results.".$i;
+	return $unused_name if (! -e $unused_name);
+    }
+}
+
+sub initialize_results_directory
+{
+    my $reuse = 1;
+
+    # check that this is an analysis of the same MCMC chains as last time
+    $reuse = check_out_file_names() if ($reuse);
+
+    # check that the input alignment files are the same as last time
+    $reuse = check_input_file_names() if ($reuse);
+
+    # check that the input alignment files are the same as last time
+    $reuse = check_burnin() if ($reuse);
+
+    if (!$reuse)
+    {
+	my $new_dir_name = get_unused_dir_name();
+	print "Renaming 'Results/' to '$new_dir_name/'.\n\n" if (-e "Results/");
+	rename "Results/", $new_dir_name;
+    }
+
+    if (! -e "Results")
+    {
+	print "Creating new directory Results/ for summary files.\n";
+	mkdir "Results";
+	mkdir "Results/Work";
+    }
+
+    write_input_file_names();
+    write_out_file_names();
+    write_burnin();
 }
 
 sub do_cleanup
@@ -1577,38 +1622,48 @@ sub rmdir_recursive
     rmdir $dir or print "error - $!";
 }
 
-sub get_partitions
+sub compare_arrays {
+    my ($first, $second) = @_;
+    no warnings;  # silence spurious -w undef complaints
+    return 0 unless @$first == @$second;
+    for (my $i = 0; $i < @$first; $i++) {
+	return 0 if $first->[$i] ne $second->[$i];
+    }
+    return 1;
+}  
+
+sub get_input_file_names_for_outfile
 {
+    my $file = shift;
+    die "Which file should I get the partitions for?" if (!defined($file));
+
     if ($personality =~ "bali-phy.*")
     {
-	my $file = shift;
-	$file = $out_files[0] if (!defined($file));
-
 	local *FILE;
 
-	open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+	open FILE, $file or die "Can't open $file!";
 
-	my @partitions = ();
+	my @input_file_names = ();
 	
 	while (my $line = <FILE>) 
 	{
 	    if ($line =~ /data(.+) = (.+)/) {
 		my $filename = $2;
 		$filename =~ s/$home/~/;
-		push @partitions,$filename;
+		push @input_file_names,$filename;
 	    }
 	    if ($line =~ /data = (.+)/) {
 		my $filename = $1;
 		$filename =~ s/$home/~/;
-		push @partitions,$filename;
+		push @input_file_names,$filename;
 	    }
 	    last if ($line =~ /^iterations = 0/);
 	}
-	return [@partitions];
+	return [@input_file_names];
     }
     elsif ($personality eq "phylobayes")
     {
-	my $filename = get_value_from_file($out_files[0],"data file :");
+	my $filename = get_value_from_file($file,"data file :");
 	$filename =~ s/$home/~/;
 	return [$filename];
     }
@@ -1616,6 +1671,53 @@ sub get_partitions
     {
 	return [];
     }
+}
+
+sub show_array
+{
+    my $spacer = shift;
+    my $array = shift;
+    foreach my $entry (@$array)
+    {
+	print $spacer.$entry."\n";
+    }
+}
+
+sub show_array_differences
+{
+    my $spacer = shift;
+    my $name1 = shift;
+    my $array1 = shift;
+    my $name2 = shift;
+    my $array2 = shift;
+
+    print "  For $name1:\n";
+    show_array($spacer,$array1);
+    print "  For $name2:\n";
+    show_array($spacer,$array2);
+}
+
+sub get_input_file_names
+{
+    my $input_file_names;
+    for my $out_file (@out_files)
+    {
+	my $these_input_file_names = get_input_file_names_for_outfile($out_file);
+	if (!defined($input_file_names))
+	{
+	    $input_file_names = $these_input_file_names;
+	}
+	else
+	{
+	    if (!compare_arrays($input_file_names,$these_input_file_names))
+	    {
+		print "\nError! Different MCMC chains have different input files!\n";
+		show_array_differences("    file = ",$out_files[0],$input_file_names,$out_file,$these_input_file_names);
+		exit(1);
+	    }
+	}
+    }
+    return $input_file_names;
 }
 
 #FIXME - rewrite to take the cmdline as an argument.
@@ -1743,13 +1845,15 @@ sub sanitize_smodel
     return $smodel;
 }
 
-sub get_smodels
+sub get_smodels_for_file
 {
+    my $file = shift;
+
     return [] if ($personality !~ "bali-phy.*");
 
     local *FILE;
 
-    open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+    open FILE, $file or die "Can't open $file!";
 
     my @smodels = ();
 
@@ -1768,13 +1872,42 @@ sub get_smodels
     return [@smodels];
 }
 
-sub get_imodels
+sub arrays_all_equal
 {
+    my @arrays = @_;
+    for(my $i=2;$i <= $#arrays ; $i++) {
+	return $i if (!compare_arrays($arrays[$i], $arrays[0]));
+    }
+    return 0;
+}
+
+sub get_smodels
+{
+    my @smodels;
+
+    foreach my $out_file (@out_files)
+    {
+	push @smodels, get_smodels_for_file($out_file);
+    }
+
+    my $different = arrays_all_equal(@smodels);
+
+    return $smodels[0] if (! $different);
+
+    print "\nError! Different MCMC chains have different substitution models!\n";
+    show_array_differences("    subst model = ", $out_files[0], $smodels[0], $out_files[$different], $smodels[$different]);
+    exit(1);
+}
+
+sub get_imodels_for_file
+{
+    my $file = shift;
+
     return [] if ($personality !~ "bali-phy.*");
 
     local *FILE;
 
-    open FILE, $out_files[0] or die "Can't open $out_files[0]!";
+    open FILE, $file or die "Can't open $file!";
 
     my @imodels = ();
 
@@ -1793,6 +1926,24 @@ sub get_imodels
 
     push @imodels, "none" if ($#imodels == -1);
     return [@imodels];
+}
+
+sub get_imodels
+{
+    my @imodels;
+
+    foreach my $out_file (@out_files)
+    {
+	push @imodels, get_imodels_for_file($out_file);
+    }
+
+    my $different = arrays_all_equal(@imodels);
+
+    return $imodels[0] if (! $different);
+
+    print "\nError! Different MCMC chains have different substitution models!\n";
+    show_array_differences("    subst model = ", $out_files[0], $imodels[0], $out_files[$different], $imodels[$different]);
+    exit(1);
 }
 
 sub get_smodel_indices
@@ -1882,7 +2033,17 @@ sub get_n_lines
 
 sub get_n_iterations
 {
-    return get_n_lines($tree_files[0])-1;
+    my @n_iterations;
+    for my $tree_file (@tree_files)
+    {
+	my $n = get_n_lines($tree_file)-1;
+	if ($n <= 0) {
+	    print "Error: Tree file '$tree_file' has no samples!\n";
+	    exit(1);
+	}
+	push @n_iterations,$n;
+    }
+    return @n_iterations;
 }
 
 sub more_recent_than
@@ -2026,5 +2187,199 @@ sub get_mcmc_command_line
 	$command = "unknown";
     }
     return $command;
+}
+
+sub min
+{
+    my $array = shift;
+    my $best = $$array[0];
+    for my $element (@$array)
+    {
+	$best = $element if ($element < $best);
+    }
+    return $best;
+}
+
+sub max
+{
+    my $array = shift;
+    my $best = $$array[0];
+    for my $element (@$array)
+    {
+	$best = $element if ($element > $best);
+    }
+    return $best;
+}
+
+sub arg_max
+{
+    my $array = shift;
+    my $best = $$array[0];
+    my $best_i = 0;
+    for(my $i=1;$i<=$#$array;$i++)
+    {
+	if ($$array[$i] > $best)
+	{
+	    $best = $$array[$i];
+	    $best_i = $i;
+	}
+    }
+    return $best_i;
+}
+
+sub arg_min
+{
+    my $array = shift;
+    my $best = $$array[0];
+    my $best_i = 0;
+    for(my $i=1;$i<=$#$array;$i++)
+    {
+	if ($$array[$i] < $best)
+	{
+	    $best = $$array[$i];
+	    $best_i = $i;
+	}
+    }
+    return $best_i;
+}
+
+sub determine_burnin
+{
+    if (defined($burnin))
+    {
+	for(my $i=0;$i<=$#out_files;$i++)
+	{
+	    if ($burnin > $n_iterations[$i]) 
+            {
+		print "Chain #".($i+1)." with file $out_files[$i] has only $n_iterations[$i] iterations.\n";
+		print "Error!  The the burnin (specified as $burnin) cannot be higher than this.\n";
+		exit(1);
+	    }
+	}
+    }
+    return if (defined($burnin));
+
+    my $max_iterations = max(\@n_iterations);
+    my $max_i = arg_max(\@n_iterations);
+
+    my $min_iterations = min(\@n_iterations);
+    my $min_i = arg_min(\@n_iterations);
+
+    if ($max_iterations > 3*$min_iterations)
+    {
+	print "The variation in run length between MCMC chains is too great.\n";
+	print "  Chain #".($max_i+1)." has $max_iterations iterations.\n";
+	print "  Chain #".($min_i+1)." has $min_iterations iterations.\n";
+	print "Not going to guess a burnin: please specify one.\n";
+	exit(1)
+    }
+
+    $burnin = int 0.1*min(\@n_iterations);
+}
+
+sub get_the_only_subdirectory
+{
+    if ($#subdirectories != 0)
+    {
+	print "Error: There is more than one subdirectory, but other subdirectories are being ignored.";
+	exit(1);
+    }
+    return $subdirectories[0];
+}
+
+sub determine_alignment_files
+{
+    if ($personality =~ "bali-phy-2.1.*") {
+	if ($n_chains == 1) {
+	    # In this case, we are constructing a list for each DIRECTORY
+	    foreach my $directory (@subdirectories)
+	    {
+		my @samples = ();
+		for(my $p=1;$p<=$n_partitions;$p++) {
+		    push @samples,"$directory/C1.P$p.fastas";
+		}
+		push @partition_samples, [@samples];
+	    }
+	}
+	else {
+	    # In this case we are constructing the list of files for different temperatures
+
+	    my @samples = ();
+	    my $first_dir = get_the_only_subdirectory();
+	    for(my $p=1;$p<=$n_partitions;$p++) {
+		push @samples,"$first_dir/C1.P$p.fastas";
+	    }
+	    push @partition_samples, [@samples];
+	}
+    }
+    else {
+	my $first_dir = get_the_only_subdirectory();
+	my @samples = ();
+	for(my $p=1;$p<=$n_partitions;$p++) {
+	    push @samples,"$first_dir/1.P$p.fastas" if (-e "$first_dir/1.P$p.fastas");
+	}
+	@samples = ("$first_dir/1.out") if ($#samples == -1);
+	push @partition_samples, [@samples];
+    }
+}
+
+# 0. Compute T1.p and T1.trees
+sub compute_tree_and_parameter_files_for_heated_chains
+{
+    return if ($n_chains == 1);
+
+    for(my $i=1;$i<=$n_chains;$i++)
+    {
+	# Construct C1.pt
+	# Construct C1Ti.pt
+	# Construct C1Ti.p
+	# Construct C1Ti.trees
+	next if (! -e "C$i.trees" );
+	
+	if (! more_recent_than_all_of("Results/C$i.t",[@tree_files]))
+	{
+	    `echo "tree" > Results/C$i.t`;
+	    `cat C$i.trees >> Results/C$i.t`;
+	}
+	
+	if (! more_recent_than_all_of("Results/C$i.pt",[@tree_files, @parameter_files]))
+	{
+	    `stats-merge C$i.p Results/C$i.t > Results/C$i.pt 2>/dev/null`;
+	}
+	
+	if (! more_recent_than("Results/C${i}T1.pt","Results/C$i.pt")) 
+	{
+	    my $use_header = "";
+	    $use_header = "--no-header" if ($i != 1);
+	    
+	    `subsample --header --skip=$burnin < Results/C$i.pt | stats-select -s beta=1 $use_header > Results/C${i}T1.pt`;
+	}
+    }
+    
+    my $cmd = "cat ";
+    my $rerun=0;
+    for(my $i=1;$i<=$n_chains;$i++) {
+	if (-e "Results/C${i}T1.pt") {
+	    $cmd = "$cmd Results/C${i}T1.pt ";
+	    $rerun=1 if (! more_recent_than("Results/T1.p","Results/C${i}T1.pt"));
+	}
+    }
+    $cmd = "$cmd > Results/T1.pt";
+    `$cmd` if ($rerun);
+    
+    if (! more_recent_than("Results/T1.trees","Results/T1.pt")) {
+	`stats-select tree --no-header < Results/T1.pt > Results/T1.trees`;
+    }
+    
+    if (! more_recent_than("Results/T1.p","Results/T1.pt")) {
+	`stats-select -r tree < Results/T1.pt > Results/T1.p`;
+	
+#       This messes up the printing of statistics
+#	`stats-select -i -r tree < Results/T1.pt > Results/T1.p`;
+	
+    }
+    
+    @tree_files = ( "Results/T1.trees" );
+    @parameter_files = ("Results/T1.p");
 }
 

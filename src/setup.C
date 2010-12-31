@@ -39,6 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 #include "tree-util.H"
 #include "substitution-index.H"
+#include "io.H"
 
 using std::ifstream;
 using std::string;
@@ -264,7 +265,7 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
   if (has_sub_branches(T))
     remove_sub_branches(T);
 
-  if (internal_sequences and not is_Cayley(T)) {
+  if (internal_sequences and not is_Cayley(T) and T.n_leaves() > 1) {
     assert(has_polytomy(T));
     throw myexception()<<"Cannot link a multifurcating tree to an alignment with internal sequences.";
   }
@@ -325,7 +326,7 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
   if (has_sub_branches(T))
     remove_sub_branches(T);
 
-  if (internal_sequences and not is_Cayley(T)) {
+  if (internal_sequences and not is_Cayley(T) and T.n_leaves() > 1) {
     assert(has_polytomy(T));
     throw myexception()<<"Cannot link a multifurcating tree to an alignment with internal sequences.";
   }
@@ -760,9 +761,7 @@ void load_bali_phy_rc(variables_map& args,const options_description& options)
       if (fs::exists(filename)) {
 	if (log_verbose)
 	  cerr<<"Reading ~/.bali-phy ...";
-	ifstream file(filename.c_str());
-	if (not file)
-	  throw myexception()<<"Can't load config file '"<<filename<<"'";
+	checked_ifstream file(filename, "config file");
       
 	store(parse_config_file(file, options), args);
 	file.close();

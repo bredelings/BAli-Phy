@@ -33,6 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 
 #include "util.H"
+#include "io.H"
 
 using std::string;
 using std::vector;
@@ -393,10 +394,7 @@ bool p_contains(const vector<vector<Partition> >& partitions, const vector<Parti
 ///
 void load_partitions(const string& filename, vector<vector<Partition> >& partitions) 
 {
-  std::ifstream file(filename.c_str());
-
-  if (not file)
-    throw myexception()<<"Can't open file '"<<filename<<"'";
+  checked_ifstream file(filename, "splits file");
 
   string line;
   while(file) {

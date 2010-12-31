@@ -27,6 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "util.H"
 #include "statistics.H"
+#include "io.H"
 
 #include <boost/program_options.hpp>
 
@@ -102,12 +103,8 @@ int main(int argc,char* argv[])
 
     vector<ifstream*> filestreams(filenames.size(),NULL);
     for(int i=0;i<filenames.size();i++) 
-    {
-      filestreams[i] = new ifstream(filenames[i].c_str());
+      filestreams[i] = new checked_ifstream(filenames[i],"statistics file");
 
-      if (not (*filestreams[i]))
-	throw myexception()<<"Couldn't open file '"<<filenames[i]<<"'";
-    }
 
     //------------- Parse Headers ---------------//
     bool ok = true;

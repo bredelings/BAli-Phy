@@ -1273,6 +1273,11 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
   return root_->node;
 }
 
+Tree::Tree()
+  :caches_valid(false),
+   n_leaves_(0) 
+{}
+
 Tree::Tree(const BranchNode* BN) 
   :caches_valid(false)
 {

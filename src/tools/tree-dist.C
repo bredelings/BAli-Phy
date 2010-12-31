@@ -19,11 +19,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <fstream>
 #include "tree-dist.H"
+#include "io.H"
 
 using std::vector;
 using std::valarray;
 
-using std::ifstream;
 using std::string;
 using std::endl;
 using std::cerr;
@@ -95,7 +95,7 @@ namespace trees_format
   bool Newick::next_tree_(Tree& T,int& r)
   {
     if (not line.size())
-      while (getline_handle_dos(*file,line) and not line.size());
+      while (portable_getline(*file,line) and not line.size());
     if (not line.size()) return false;
     try {
       r = T.parse_with_names(line,leaf_names);
@@ -118,7 +118,7 @@ namespace trees_format
       n--;
     }
     for(int i=0;i<n and *file;i++)
-      getline_handle_dos(*file,line);
+      portable_getline(*file,line);
     line.clear();
     return not done();
   }
@@ -131,7 +131,7 @@ namespace trees_format
   void Newick::initialize()
   {
     SequenceTree T;
-    getline_handle_dos(*file,line);
+    portable_getline(*file,line);
     T.parse(line);
     leaf_names = T.get_sequences();
     std::sort(leaf_names.begin(),leaf_names.end());
@@ -140,7 +140,7 @@ namespace trees_format
   }
 
   Newick::Newick(const std::string& filename)
-    :file(new ifstream(filename.c_str()))
+    :file(new checked_ifstream(filename,"Newick tree file"))
   {
     initialize();
   }
@@ -161,7 +161,7 @@ namespace trees_format
       n--;
     }
     for(int i=0;i<n and *file;i++)
-      getline_handle_dos(*file,line,';');
+      getline(*file,line,';');
     line.clear();
     return not done();
   }
@@ -175,7 +175,7 @@ namespace trees_format
   {
     static const string eol = "\n\r";
 
-    istream& is = getline_handle_dos(file,s,';');
+    istream& is = getline(file,s,';');
     s = strip(s,eol);
     return is;
   }
@@ -332,7 +332,7 @@ namespace trees_format
   void NEXUS::initialize()
   {
     // Check #NEXUS
-    getline_handle_dos(*file,line);
+    portable_getline(*file,line);
     if (line != "#NEXUS")
       throw myexception()<<"NEXUS trees reader: File does not begin with '#NEXUS' and may not be a NEXUS file.";
   
@@ -393,7 +393,7 @@ namespace trees_format
   }
 
   NEXUS::NEXUS(const std::string& filename)
-    :file(new ifstream(filename.c_str())),translate(false)
+    :file(new checked_ifstream(filename,"NEXUS tree file")),translate(false)
   {
     initialize();
   }
@@ -438,7 +438,7 @@ namespace trees_format
 
   Newick_or_NEXUS::Newick_or_NEXUS(const string& filename)
   {
-    std::ifstream file(filename.c_str());
+    checked_ifstream file(filename,"tree file");
 
     if (file.peek() == '#')
       tfr = shared_ptr<reader_t>(new NEXUS(filename));
@@ -776,9 +776,7 @@ int tree_sample::load_file(istream& file,int skip,int subsample,int max,const ve
 
 int tree_sample::load_file(const string& filename,int skip,int subsample,int max,const vector<string>& prune)
 {
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Couldn't open file "<<filename;
+  checked_ifstream file(filename,"tree samples file");
   
   int count = load_file(file,skip,subsample,max,prune);
   file.close();

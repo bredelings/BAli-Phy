@@ -917,6 +917,8 @@ bool skips(const ublas::matrix<int>& M,int c,const vector<int>& index)
   return false;
 }
 
+// There is a better algorithm in Section 7 "The mathematics of 
+// distance-based alignment" in the text S1 supplement of the the FSA paper.
 ublas::matrix<int> get_ordered_matrix(const index_matrix& M)
 {
 #ifndef NDEBUG
@@ -1012,5 +1014,7 @@ alignment get_alignment(const ublas::matrix<int>& M, const alignment& A1)
 
 alignment get_ordered_alignment(const alignment& A)
 {
+  // There is a better algorithm in Section 7 "The mathematics of 
+  // distance-based alignment" in the text S1 supplement of the the FSA paper.
   return get_alignment(get_ordered_matrix(index_matrix(A)),A);
 }

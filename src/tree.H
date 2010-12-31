@@ -323,7 +323,7 @@ public:
   virtual int parse_with_names(const std::string& s, const std::vector<std::string>& names);
 
   /// Create an empty tree
-  Tree():n_leaves_(0) {}
+  Tree();
   /// Create a tree by taking over the tree structure containing BranchNode* n.
   explicit Tree(const BranchNode* n);
   /// Create a new tree that is identical to T but does not share memory with it. 

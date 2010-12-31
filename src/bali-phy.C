@@ -157,6 +157,7 @@ namespace mpi = boost::mpi;
 #include "tree-util.H" //extends
 #include "version.H"
 #include "setup-mcmc.H"
+#include "io.H"
 
 namespace fs = boost::filesystem;
 
@@ -275,9 +276,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   if (args.count("config")) 
   {
     string filename = args["config"].as<string>();
-    ifstream file(filename.c_str());
-    if (not file)
-      throw myexception()<<"Can't load config file '"<<filename<<"'";
+    checked_ifstream file(filename,"config file");
 
     store(parse_config_file(file, all), args);
     file.close();
@@ -562,14 +561,12 @@ public:
 vector<int> load_alignment_branch_constraints(const string& filename, const SequenceTree& TC)
 {
   // open file
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Can't load alignment-branch constraint file '"<<filename<<"'";
+  checked_ifstream file(filename,"alignment-branch constraint file");
 
   // read file
   string line;
   vector<vector<string> > name_groups;
-  while(getline_handle_dos(file,line)) {
+  while(portable_getline(file,line)) {
     vector<string> names = split(line,' ');
     for(int i=names.size()-1;i>=0;i--)
       if (names[i].size() == 0)
@@ -710,12 +707,12 @@ void setup_heating(int proc_id, const variables_map& args, Parameters& P)
 
     vector<double> beta = get_geometric_heating_levels(beta_s);
     if (not beta.size())
-      vector<double> beta = split<double>(beta_s,',');
+      beta = split<double>(beta_s,',');
 
     P.all_betas = beta;
 
-    if (proc_id > beta.size())
-      throw myexception()<<"not enough temperatures given";
+    if (proc_id >= beta.size())
+      throw myexception()<<"not enough temperatures given: only got "<<beta.size()<<", wanted at least "<<proc_id+1;
 
     P.beta_index = proc_id;
 
@@ -749,11 +746,11 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
 
     const double n = 0.6;
 
-    ifstream partitions(filename.c_str());
+    checked_ifstream partitions(filename,"partition weights file");
     string line;
-    while(getline_handle_dos(partitions,line)) {
+    while(portable_getline(partitions,line)) {
       Partition p(P.T->get_sequences(),line);
-      getline_handle_dos(partitions,line);
+      portable_getline(partitions,line);
       double o = convertTo<double>(line);
       
       cerr<<p<<"      P = "<<o<<endl;

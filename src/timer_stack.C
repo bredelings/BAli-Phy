@@ -33,6 +33,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 extern "C" {
 #include <sys/resource.h>
 }
+#else
+#include <time.h>
 #endif
 
 using namespace std;
@@ -47,6 +49,12 @@ double total_time(const timeval& t)
   T += double(t.tv_usec)/1000000;
   return T;
 }
+#else
+double total_time(const clock_t& t)
+{
+  // FIXME - this will unfortunately wrap around every 72 minutes on a 32-bit system!
+  return double(t)/CLOCKS_PER_SEC;
+}
 #endif
 
 time_point_t total_cpu_time()
@@ -58,7 +66,7 @@ time_point_t total_cpu_time()
 
   return total_time(R.ru_utime)+total_time(R.ru_stime);  
 #else
-  return 0;
+  return total_time(clock());
 #endif
 }
 

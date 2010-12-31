@@ -28,6 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "parsimony.H"
 #include "tree-dist.H"
+#include "io.H"
 
 #include <boost/program_options.hpp>
 
@@ -94,7 +95,7 @@ vector<sequence_group> load_groups(const alignment& A,const string& filename)
   vector<string> seq_names = sequence_names(A);
   vector<sequence_group> groups;
 
-  std::ifstream file(filename.c_str());
+  checked_ifstream file(filename);
   string line;
   for(int g=1;getline(file,line);g++)
   {

@@ -90,7 +90,7 @@ int main(int argc,char* argv[]) {
       max = min + args["size"].as<int>();
 
     if (args.count("until"))
-      max = std::min(max,(double)args["until"].as<int>());
+      max = std::max(max,(double)args["until"].as<int>());
     if (is_min and is_max and max < min)
       throw myexception()<<"error: maximum value < minimum value";
 

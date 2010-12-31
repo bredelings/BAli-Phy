@@ -490,6 +490,29 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     model_stack.back() = M2(*YM, SimpleFrequencyModel(YM->Alphabet()));
   }
+  else if (match(string_stack,"M2a",arg)) {
+
+    M0* YM = dynamic_cast<M0*>(model_stack.back().get());
+
+    if (not YM)
+      throw myexception()<<"Trying to construct an M2a model from a '"<<model_stack.back().get()->name()
+			 <<"' model, which is not a M0 model.";
+
+    model_stack.back() = M2a(*YM, SimpleFrequencyModel(YM->Alphabet()));
+  }
+  else if (match(string_stack,"M8b",arg)) {
+    int n=3;
+    if (not arg.empty())
+      n = convertTo<int>(arg);
+
+    M0* YM = dynamic_cast<M0*>(model_stack.back().get());
+
+    if (not YM)
+      throw myexception()<<"Trying to construct an M8b model from a '"<<model_stack.back().get()->name()
+			 <<"' model, which is not a M0 model.";
+
+    model_stack.back() = M8b(*YM, SimpleFrequencyModel(YM->Alphabet()), n);
+  }
   else if (match(string_stack,"M3",arg)) {
     int n=3;
     if (not arg.empty())

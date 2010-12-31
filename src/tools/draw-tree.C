@@ -54,6 +54,7 @@ extern "C" {
 #include "util.H"
 #include "util-random.H"
 #include "rng.H"
+#include "io.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -265,10 +266,7 @@ MC_tree_with_lengths get_MC_tree_with_lengths(const string& filename)
   vector<int> parent_branch_of_mini_branch;
 
   //-------------------- Read lengths from file --------------------//
-  std::ifstream file(filename.c_str());
-
-  if (not file)
-    throw myexception()<<"Can't open file '"<<filename<<"'";
+  checked_ifstream file(filename,"multi-connected tree file");
 
   string line;
 

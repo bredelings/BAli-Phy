@@ -124,6 +124,9 @@ public:
   // get the alphabet for partition i
   const alphabet& get_alphabet() const {return A->get_alphabet();}
 
+  /// Recalculate transition matrix for branch b
+  void recalc_imodel_for_branch(int b);
+
   /// Recalculate all the cached transition matrices
   void recalc_imodel();
   void recalc_smodel();

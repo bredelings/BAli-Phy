@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequencetree.H"
 #include "myexception.H"
 #include "util.H"
+#include "io.H"
 
 using namespace std;
 
@@ -84,9 +85,7 @@ vector<int> SequenceTree::prune_leaves(const vector<int>& remove)
 }
 
 void SequenceTree::read(const string& filename) {
-  ifstream file(filename.c_str());
-  if (not file) 
-    throw myexception()<<"Couldn't open file '"<<filename<<"'";
+  checked_ifstream file(filename, "NEWICK tree file");
   read(file);
   file.close();
 }
@@ -96,7 +95,7 @@ void SequenceTree::read(std::istream& file) {
 
   string total;
   string line;
-  while(getline_handle_dos(file,line))
+  while(portable_getline(file,line))
     total += line;
   parse(total);
 }
@@ -339,7 +338,7 @@ RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTr
 std::istream& operator >>(std::istream& i,SequenceTree& T) 
 {
   string line;
-  while(getline_handle_dos(i,line)) {
+  while(portable_getline(i,line)) {
     if (not line.empty()) {
       T.parse(line);
       return i;

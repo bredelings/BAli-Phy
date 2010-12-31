@@ -22,6 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "stats-table.H"
 #include "util.H"
 #include "myexception.H"
+#include "io.H"
 
 using namespace std;
 
@@ -45,7 +46,7 @@ vector<string> read_header(std::istream& file)
   string line;
   while (file) 
   {
-    getline(file,line);
+    portable_getline(file,line);
 
     // Skip comments lines - but what is a comment line?
     if (line.size() >= 2 and line[0] == '#' and line[1] == ' ')
@@ -97,7 +98,7 @@ void stats_table::load_file(istream& file,int skip,int subsample, int max)
   int n_lines=0;
   string line;
   vector<double> v;
-  for(int line_number=0;getline_handle_dos(file,line);line_number++) 
+  for(int line_number=0;portable_getline(file,line);line_number++) 
   {
     // don't start if we haven't skipped enough trees
     if (line_number < skip) continue;
@@ -150,9 +151,7 @@ stats_table::stats_table(istream& file, int skip, int subsample, int max)
 
 stats_table::stats_table(const string& filename, int skip, int subsample, int max)
 {
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Can't open file '"<<filename<<"'";
+  checked_ifstream file(filename,"statistics file");
 
   load_file(file,skip,subsample,max);
   if (log_verbose) cerr<<filename<<": Read in "<<n_rows()<<" lines.\n";

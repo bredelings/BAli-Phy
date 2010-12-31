@@ -356,6 +356,8 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
   assert(L < R);
   assert(L <= x0 and x0 <= R);
 
+  double L0 = L, R0 = R;
+
   for(int i=0;i<200;i++)
   {
     double x1 = L + uniform()*(R-L);
@@ -370,6 +372,13 @@ double search_interval(double x0,double& L, double& R, slice_function& g,double 
       L = x1;
   }
   std::cerr<<"Warning!  Is size of the interval really ZERO?"<<std::endl;
+  double logy_x0 = g(x0);  
+  std::cerr<<"    L0 = "<<L0<<"   x0 = "<<x0<<"   R0 = "<<R0<<std::endl;
+  std::cerr<<"    L  = "<<L <<"   x = "<<g.current_value()<<"   R  = "<<R<<std::endl;
+  std::cerr<<"    logy  = "<<logy<<"  logy_x0 = "<<logy_x0<<"  logy_current = "<<g()<<std::endl;
+
+  std::abort();
+
   return x0;
 }
 

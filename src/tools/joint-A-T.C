@@ -33,6 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "alignment-util.H"
 #include "tree-util.H"
+#include "io.H"
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -65,13 +66,9 @@ joint_A_T::joint_A_T(const vector<alignment>& A1,const vector<SequenceTree>& T1,
 
 joint_A_T get_joint_A_T(const variables_map& args,bool internal)
 {
-  std::ifstream a_file(args["alignments"].as<string>().c_str());
-  if (not a_file)
-    throw myexception() << "Couldn't open file '" << args["alignments"].as<string>() << "'\n";
+  checked_ifstream a_file(args["alignments"].as<string>(), "alignment samples file");
 
-  std::ifstream t_file(args["trees"].as<string>().c_str());
-  if (not t_file)
-    throw myexception() << "Couldn't open file '" << args["trees"].as<string>() << "'\n";
+  checked_ifstream t_file(args["trees"].as<string>(), "tree samples file");
 
   unsigned subsample = args["subsample"].as<unsigned>();
 

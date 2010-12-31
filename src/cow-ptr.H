@@ -22,6 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <boost/shared_ptr.hpp>
 
+/// A copy-on-write pointer class that stores X objects exactly: NOT objects derived from X
 template <class X> class cow_ptr
 {
 private:
@@ -45,8 +46,7 @@ public:
     : data(r.data) {}
   template <class Y> cow_ptr& operator=(const cow_ptr<Y>& r)
   {
-    if (this != &r)
-      data = r.data;
+    data = r.data;
     return *this;
   }
 #endif
@@ -102,6 +102,12 @@ inline void swap(cow_ptr<X>& p1,cow_ptr<X>& p2)
   p1.swap(p2);
 }
 
+namespace _cow_ptr
+{
+  struct dynamic_cast_tag {};
+}
+
+/// A copy-on-write pointer class that stores X objects (OR objects derived from X) with a .clone() function
 template <class X> class polymorphic_cow_ptr
 {
 private:
@@ -125,8 +131,7 @@ public:
     : data(r.data) {}
   template <class Y> polymorphic_cow_ptr& operator=(const polymorphic_cow_ptr<Y>& r)
   {
-    if (this != &r)
-      data = r.data;
+    data = r.data;
     return *this;
   }
 #endif
@@ -169,6 +174,13 @@ public:
 
   polymorphic_cow_ptr(const polymorphic_cow_ptr& r) throw()             : data(r.data) {}
 
+  template <typename Y> friend class polymorphic_cow_ptr;
+
+  template <typename Y>
+  polymorphic_cow_ptr(const polymorphic_cow_ptr<Y>& r,const _cow_ptr::dynamic_cast_tag&)
+    :data(boost::dynamic_pointer_cast<X>(r.data)) 
+  {}
+
   explicit polymorphic_cow_ptr(X* p = 0) throw()            : data(p) {}
 
   explicit polymorphic_cow_ptr(const X& x)                  : data(x.clone()) {}
@@ -182,5 +194,11 @@ inline void swap(polymorphic_cow_ptr<X>& p1,polymorphic_cow_ptr<X>& p2)
   p1.swap(p2);
 }
 
+template <typename X,typename Y>
+polymorphic_cow_ptr<X> dynamic_pointer_cast(const polymorphic_cow_ptr<Y>& ptr1)
+{
+  polymorphic_cow_ptr<X> ptr2(ptr1, _cow_ptr::dynamic_cast_tag() );
+  return ptr2;
+}
 
 #endif // COW_PTR_H

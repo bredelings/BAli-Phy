@@ -163,5 +163,7 @@ double shift_delta(std::vector<double>& x, const std::vector<double>& p);
 
 double shift_epsilon(std::vector<double>& x, const std::vector<double>& p);
 
+double bit_flip(std::vector<double>& x, const std::vector<double>& p);
+
 
 #endif

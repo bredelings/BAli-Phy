@@ -138,7 +138,7 @@ namespace substitution {
     double scale() const; 
     void scale(double r);
     
-    Discretization(int N):r(N),f(N) { }
+    Discretization(int N);
     
     Discretization(int N,const Distribution& D,double a=2);
   };

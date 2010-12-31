@@ -106,71 +106,31 @@ IndelModel& data_partition::IModel()
   std::abort();
 }
 
-indel::PairHMM heat(indel::PairHMM H, double beta)
+void data_partition::recalc_imodel_for_branch(int b)
 {
-  if (beta != 1) return H;
+  if (not variable_alignment()) return;
 
-  if (beta == 0)
-  {
-    for(int i=0;i<H.size1();i++)
-    {
-      double total1 = 0;
-      double total2 = 0;
-      for(int j=0;j<H.size2();j++)
-      {
-	total1 += H(i,j);
-	if (H(i,j) > 0) 
-	  H(i,j) = 1;
-	else
-	  H(i,j) = 0;
-	total2 += H(i,j);
-      }
-      assert(std::abs(1.0 - total1) < 1.0e-9);
-      for(int j=0;j<H.size2();j++)
-	H(i,j) /= total2;
-    }
-  }
-  else if (beta < 1)
-  {
-    for(int i=0;i<H.size1();i++)
-    {
-      double total1 = 0;
-      double total2 = 0;
-      for(int j=0;j<H.size2();j++)
-      {
-	total1 += H(i,j);
-	H(i,j) = pow(H(i,j), beta);
-	total2 += H(i,j);
-      }
-      assert(std::abs(1.0 - total1) < 1.0e-9);
-      for(int j=0;j<H.size2();j++)
-	H(i,j) /= total2;
-    }
+  b = T->directed_branch(b).undirected_name();
+
+  // use the length, unless we are unaligned
+  double t = T->branch(b).length();
+  
+  // compute and cache the branch HMM
+  if (branch_HMM_type[b] == 1)
+    branch_HMMs[b] = IModel_->get_branch_HMM(-1);
+  else {
+    IModel_->set_heat( get_beta() );
+    branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());;
   }
 
-  return H;
+  cached_alignment_prior.invalidate();
+  cached_alignment_prior_for_branch[b].invalidate();
 }
 
 void data_partition::recalc_imodel() 
 {
-  if (not variable_alignment()) return;
-
-  cached_alignment_prior.invalidate();
-
-  for(int b=0;b<cached_alignment_prior_for_branch.size();b++)
-    cached_alignment_prior_for_branch[b].invalidate();
-
   for(int b=0;b<branch_HMMs.size();b++) 
-  {
-    // use the length, unless we are unaligned
-    double t = T->branch(b).length();
-    
-    // compute and cache the branch HMM
-    if (branch_HMM_type[b] == 1)
-      branch_HMMs[b] = IModel_->get_branch_HMM(-1);
-    else
-      branch_HMMs[b] = heat(IModel_->get_branch_HMM(t*branch_mean()), get_beta());
-  }
+    recalc_imodel_for_branch(b);
 }
 
 /// \brief Recalculate cached values relating to the substitution model.
@@ -204,19 +164,8 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
 
   MC.setlength(b,l,*T,*SModel_); 
 
-  if (variable_alignment())
-  {
-    // use the length, unless we are unaligned
-    double t = T->branch(b).length();
+  recalc_imodel_for_branch(b);
 
-    if (branch_HMM_type[b] == 1)
-      branch_HMMs[b] = IModel_->get_branch_HMM(-1);
-    else
-      branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());
-
-    cached_alignment_prior.invalidate();
-    cached_alignment_prior_for_branch[b].invalidate();
-  }
   default_timer_stack.pop_timer();
 }
 

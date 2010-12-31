@@ -181,4 +181,6 @@ alignment reverse(const alignment& A);
 alignment complement(const alignment& A);
 
 alignment reverse_complement(const alignment& A);
+
+void check_same_sequence_lengths(const std::vector<int>&, const alignment&);
 #endif

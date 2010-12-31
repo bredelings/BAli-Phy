@@ -33,6 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree.H"
 #include "sequencetree.H"
 #include "util.H"
+#include "io.H"
 
 namespace trees_format {
 

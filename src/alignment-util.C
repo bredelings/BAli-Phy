@@ -27,6 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution-index.H"
 #include "util.H"
 #include "setup.H"
+#include "io.H"
 
 using std::string;
 using std::vector;
@@ -814,7 +815,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     // CHECK if an alignment begins here
     if (ifile.peek() != '>') {
       string line;
-      getline_handle_dos(ifile,line);
+      portable_getline(ifile,line);
       continue;
     }
 
@@ -836,7 +837,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     if (do_skip) {
       string line;
       do {
-	getline_handle_dos(ifile,line);
+	portable_getline(ifile,line);
       } while (line.size());
       continue;
     }
@@ -869,6 +870,8 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
 
     if (n1 != n2) { 
       // inverse of the mapping n2->n1
+      if (n2.size() < n1.size())
+	throw myexception()<<"Read in alignment with too few sequences!";
       vector<int> new_order = compute_mapping(n1,n2);
       A = reorder_sequences(A,new_order);
     }
@@ -948,7 +951,7 @@ vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const 
     // CHECK if an alignment begins here
     if (ifile.peek() != '>') {
       string line;
-      getline_handle_dos(ifile,line);
+      portable_getline(ifile,line);
       continue;
     }
     
@@ -1003,7 +1006,7 @@ alignment find_first_alignment(std::istream& ifile, const vector<shared_ptr<cons
     // CHECK if an alignment begins here
     if (ifile.peek() != '>') {
       string line;
-      getline_handle_dos(ifile,line);
+      portable_getline(ifile,line);
       continue;
     }
     
@@ -1042,7 +1045,7 @@ alignment find_last_alignment(std::istream& ifile, const vector<shared_ptr<const
     // CHECK if an alignment begins here
     if (ifile.peek() != '>') {
       string line;
-      getline_handle_dos(ifile,line);
+      portable_getline(ifile,line);
       continue;
     }
     
@@ -1451,3 +1454,19 @@ alignment reverse_complement(const alignment& A)
 
   return A2;
 }
+
+// FIXME - should perhaps also check names?
+// use this function in alignment-gild, alignment-compare, alignment-diff, etc.
+void check_same_sequence_lengths(const vector<int>& L, const alignment& A)
+{
+  if (A.n_sequences() != L.size())
+    throw myexception()<<"Expected alignment has "<<L.size()<<", but this one has "<<A.n_sequences();
+
+  for(int i=0;i<L.size();i++)
+  {
+    int L2 = A.seqlength(i);
+    if (L[i] != L2)
+      throw myexception()<<"Sequence "<<i+1<<": length "<<L2<<" differs from expected length "<<L[i];
+  }
+}
+

@@ -21,6 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cassert>
 #include <fstream>
 #include "util.H"
+#include "io.H"
 
 using namespace std;
 using boost::shared_ptr;
@@ -622,16 +623,16 @@ void Genetic_Code::setup_table(const string& aa)
 void Genetic_Code::setup_table(std::istream& file)
 {
   string aa;
-  getline_handle_dos(file,aa);
+  portable_getline(file,aa);
 
   string n1;
-  getline_handle_dos(file,n1);
+  portable_getline(file,n1);
 
   string n2;
-  getline_handle_dos(file,n2);
+  portable_getline(file,n2);
 
   string n3;
-  getline_handle_dos(file,n3);
+  portable_getline(file,n3);
 
   //---- Create the lookup table ----//
   setup_table(n1,n2,n3,aa);
@@ -639,10 +640,7 @@ void Genetic_Code::setup_table(std::istream& file)
 
 void Genetic_Code::setup_table_from_file(const std::string& filename)
 {
-  ifstream file(filename.c_str());
-  if (not file)
-    throw myexception()<<"Couldn't open file '"<<filename<<"'";
-
+  checked_ifstream file(filename,"genetic code file");
   setup_table(file);
 }
 

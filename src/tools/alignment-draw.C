@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 #include "util.H"
 #include "colors.H"
+#include "io.H"
 
 #include <boost/program_options.hpp>
 
@@ -349,7 +350,7 @@ string latex_rgb(const vector<int>& RGB) {
 
 ublas::matrix<double> read_alignment_certainty(const alignment& A, const string& filename) 
 {
-  ifstream colorfile(filename.c_str());
+  checked_ifstream colorfile(filename,"alignment annotation file");
 
   vector<int> mapping;
   {
