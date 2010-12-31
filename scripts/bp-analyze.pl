@@ -1699,7 +1699,7 @@ sub show_array_differences
 
 sub get_input_file_names
 {
-    my $input_file_names;
+    my $input_file_names = [];
     for my $out_file (@out_files)
     {
 	my $these_input_file_names = get_input_file_names_for_outfile($out_file);
@@ -1883,6 +1883,7 @@ sub arrays_all_equal
 
 sub get_smodels
 {
+    return [] if ($#out_files == -1);
     my @smodels;
 
     foreach my $out_file (@out_files)
@@ -1930,6 +1931,7 @@ sub get_imodels_for_file
 
 sub get_imodels
 {
+    return [] if ($#out_files == -1);
     my @imodels;
 
     foreach my $out_file (@out_files)
