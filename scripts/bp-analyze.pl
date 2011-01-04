@@ -587,7 +587,9 @@ sub section_phylogeny_distribution
 
 sub section_alignment_distribution
 {
-    my $section .= "<h2 class=\"clear\"><a name=\"alignment\">Alignment Distribution</a></h2>\n" if ($n_partitions > 0);
+    return "" if ($n_partitions == 0);
+
+    my $section .= "<h2 class=\"clear\"><a name=\"alignment\">Alignment Distribution</a></h2>\n";
 
     for(my $i=0;$i<$n_partitions;$i++) 
     {
@@ -670,11 +672,15 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     }
     $section .= "</ol>\n";
     
-    my $burnin_before = get_value_from_file('Results/Report','min burnin <=');
-    $burnin_before = "Not Converged!" if ($burnin_before eq "Not");
-    $section .= "<p><i>burn-in (scalar)</i> = $burnin_before</p>\n" if defined ($burnin_before);
+    my $burnin_before;
+    if ($#parameter_files != -1)
+    {
+	$burnin_before = get_value_from_file('Results/Report','min burnin <=');
+	$burnin_before = "Not Converged!" if ($burnin_before eq "Not");
+	$section .= "<p><i>burn-in (scalar)</i> = $burnin_before</p>\n" if defined ($burnin_before);
+	$section .= "<p><i>min Ne (scalar)</i> = ".get_value_from_file('Results/Report','Ne  >=')."</p\n";
+    }
     
-    $section .= "<p><i>min Ne (scalar)</i> = ".get_value_from_file('Results/Report','Ne  >=')."</p\n";
     $section .= "<p><i>min Ne (partition)</i> = ".get_value_from_file('Results/partitions.bs','min Ne =')."</p>\n";
     
     my $asdsf = get_value_from_file('Results/partitions.bs','ASDSF\[min=0.100\] =');
@@ -682,8 +688,13 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     $section .= "<p><i>ASDSF</i> = $asdsf</p>\n" if defined ($asdsf);
     $section .= "<p><i>MSDSF</i> = $msdsf</p>\n" if defined ($msdsf);
     
-    my $psrf_80 = get_value_from_file('Results/Report','PSRF-80%CI <=');
-    my $psrf_rcf = get_value_from_file('Results/Report','PSRF-RCF <=');
+    my $psrf_80;
+    my $psrf_rcf;
+    if ($#parameter_files != -1)
+    {
+        $psrf_80 = get_value_from_file('Results/Report','PSRF-80%CI <=');
+	$psrf_rcf = get_value_from_file('Results/Report','PSRF-RCF <=');
+    }
     $section .= "<p><i>PSRF-80%CI</i> = $psrf_80</p>\n" if defined ($asdsf);
     $section .= "<p><i>PSRF-RCF</i> = $psrf_rcf</p>\n" if defined ($msdsf);
     
@@ -901,11 +912,12 @@ sub parse_command_line
 	}
 	elsif ($arg =~ /--treefile=(.+)/) {
 	    $personality = "treefile";
-	    @tree_files = split(/,/,$1);
-	    foreach my $tree_file (@tree_files)
+	    my @arg_tree_files = split(/,/,$1);
+	    foreach my $tree_file (@arg_tree_files)
 	    {
 		check_file_exists($tree_file)
 	    }
+	    @tree_files = (@tree_files,@arg_tree_files);
 	}    
 	elsif ($arg =~ /^-.*/) {
 	    print "Error: I don't recognize option '$arg'\n";
