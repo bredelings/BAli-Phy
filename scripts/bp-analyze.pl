@@ -1582,7 +1582,7 @@ sub initialize_results_directory
     # check that the input alignment files are the same as last time
     $reuse = check_burnin() if ($reuse);
 
-    if (!$reuse)
+    if (!$reuse && -e "Results")
     {
 	my $new_dir_name = get_unused_dir_name();
 	print "Renaming 'Results/' to '$new_dir_name/'.\n\n" if (-e "Results/");
