@@ -402,6 +402,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("map-trees",value<int>()->default_value(1),"Only report the top <arg> trees per file.")
     ("map-tree",value<string>(),"Write out the map tree to file <arg>.")
     ("min-support",value<double>()->default_value(0.25),"Minimum threshold PP for splits.")
+    ("report",value<string>(),"Write supported partitions to file <arg>.")
     ("consensus-PP",value<string>(),"Write out consensus trees+PP.")
     ("consensus",value<string>(),"Write out consensus trees.")
     ("extended-consensus-L",value<string>(),"Write out extended consensus trees + lengths.")
@@ -602,14 +603,7 @@ void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitse
   {
     const string& filename = consensus_levels[k].second;
 
-    ofstream * file=0;
-    if (filename != "-") {
-      file = new ofstream(filename.c_str());
-      ostream* output = file;
-      if (!*output)
-	throw myexception()<<"Can't open file '"<<filename<<"' for writing.";
-    }
-    ostream& output = *( (file)?file:&cout );
+    ostream_or_ofstream output(cout,"-",filename,"consensus tree file");
 
     container_t partitions = select_splits(c50_partitions, N*consensus_levels[k].first);
 
@@ -638,11 +632,6 @@ void write_consensus_trees(const tree_sample& tree_dist, const map<dynamic_bitse
       output<<consensus.write_with_bootstrap_fraction(PP,show_branch_lengths)<<std::endl;
     else
       output<<consensus.write(show_branch_lengths)<<std::endl;
-
-    if (file) {
-      file->close();
-      delete file;
-    }
   }
 }
 
@@ -662,14 +651,7 @@ void write_extended_consensus_trees(const tree_sample& tree_dist, const vector<p
   {
     const string& filename = consensus_levels[k].second;
 
-    ofstream * file=0;
-    if (filename != "-") {
-      file = new ofstream(filename.c_str());
-      ostream* output = file;
-      if (!*output)
-	throw myexception()<<"Can't open file '"<<filename<<"' for writing.";
-    }
-    ostream& output = *( (file)?file:&cout );
+    ostream_or_ofstream output(cout,"-",filename,"extended consensus tree file");
 
     vector<Partition> all  = get_Ml_partitions(all_partitions,consensus_levels[k].first ,N);
     vector<Partition> sub;
@@ -689,11 +671,6 @@ void write_extended_consensus_trees(const tree_sample& tree_dist, const vector<p
     output<<consensus.write(false)<<std::endl;
     for(int i=0;i<sub.size();i++)
       output<<sub[i]<<endl;
-
-    if (file) {
-      file->close();
-      delete file;
-    }
   }
 }
 
@@ -864,14 +841,7 @@ void write_extended_consensus_trees_with_lengths(const tree_sample& tree_dist,
   {
     const string& filename = consensus_levels[k].second;
 
-    ofstream * file=0;
-    if (filename != "-") {
-      file = new ofstream(filename.c_str());
-      ostream* output = file;
-      if (!*output)
-	throw myexception()<<"Can't open file '"<<filename<<"' for writing.";
-    }
-    ostream& output = *( (file)?file:&cout );
+    ostream_or_ofstream output(cout, "-", filename, "extended consensus tree file with lengths");
 
     vector<Partition> all  = get_Ml_partitions(all_partitions,consensus_levels[k].first ,N);
     add_leaf_partitions(tree_dist.names(), all);
@@ -893,11 +863,6 @@ void write_extended_consensus_trees_with_lengths(const tree_sample& tree_dist,
 
     // Write the tree/mf tree
     output_mctree_with_lengths(output, Q, branch_lengths, node_lengths);
-
-    if (file) {
-      file->close();
-      delete file;
-    }
   }
 }
 
@@ -964,6 +929,14 @@ int main(int argc,char* argv[])
 	and not args.count("extended-consensus")
 	and not args.count("extended-consensus-L"))
       consensus_levels_pp.push_back(pair<double,string>(0.5,"-"));
+
+    ostream_or_ofstream report_file;
+
+    if (args.count("report"))
+    {
+      string filename = args["report"].as<string>();
+      report_file.open(cout,"-",filename,"report file");
+    }
 
     //-------------- Read in tree distributions --------------//
     vector<string> files;
@@ -1056,17 +1029,17 @@ int main(int argc,char* argv[])
     const int L  = tree_dist.names().size();
 
     // # of trees read in
-    cout<<"# n_trees = "<<tree_dist.size();
+    report_file<<"# n_trees = "<<tree_dist.size();
     // # of distinct topologies
-    cout<<"   n_topologies = "<<topology_counts.size();
+    report_file<<"   n_topologies = "<<topology_counts.size();
     // # of leaves
-    cout<<"   n_splits/(Leaves-3) = "<<double(full_partitions.size())/(L-3)<<endl;
+    report_file<<"   n_splits/(Leaves-3) = "<<double(full_partitions.size())/(L-3)<<endl;
     // # of distinct splits
-    cout<<"# n_splits = "<<full_partitions.size();
+    report_file<<"# n_splits = "<<full_partitions.size();
     // # of leaves
-    cout<<"   Leaves = "<<L<<endl;
+    report_file<<"   Leaves = "<<L<<endl;
 
-    cout<<"\nTopology support: \n\n";
+    report_file<<"\nTopology support: \n\n";
     for(int i=0;i < args["map-trees"].as<int>() ;i++) 
     {
       if (i >= order.size()) continue;
@@ -1077,31 +1050,22 @@ int main(int argc,char* argv[])
       double PP = double(n)/N;
       double o = odds(n,N,1);
 
-      cout<<"MAP-"<<i<<" = "<<t<<endl;
-      cout<<"   PP = "<<PP<<"       LOD = "<<log10(o)<<"     (count = "<<n<<")\n";
-      cout<<"\n";
+      report_file<<"MAP-"<<i<<" = "<<t<<endl;
+      report_file<<"   PP = "<<PP<<"       LOD = "<<log10(o)<<"     (count = "<<n<<")\n";
+      report_file<<"\n";
     }
+
     // write out the map tree
-    if (args.count("map-tree")) {
+    if (args.count("map-tree")) 
+    {
       string filename = args["map-tree"].as<string>();
 
-      ofstream * file=0;
-      if (filename != "-") {
-	file = new ofstream(filename.c_str());
-	ostream* output = file;
-	if (!*output)
-	  throw myexception()<<"Can't open file '"<<filename<<"' for writing.";
-      }
-      ostream& output = *( (file)?file:&cout );
+      ostream_or_ofstream output(cout,"-",filename,"MAP tree file");
 
       SequenceTree map_tree = tree_dist.T(which_topology[order[0]]);
       get_branch_lengths(map_tree, full_partitions, N);
-      output<<map_tree<<endl;
 
-      if (file) {
-	file->close();
-	delete file;
-      }
+      output<<map_tree<<endl;
     }
 
     
@@ -1111,15 +1075,15 @@ int main(int argc,char* argv[])
       double PP = double(n)/N;
 
       if (PP >= 0.95) {
-	cout<<"95% credible set contains "<<i+1<<" topologies."<<endl;
+	report_file<<"95% credible set contains "<<i+1<<" topologies."<<endl;
 	break;
       }
     }
-    cout<<"\n\n";
+    report_file<<"\n\n";
 
 
     //------- Print out support for each partition --------//
-    cout<<"Partition support: \n\n";
+    report_file<<"Partition support: \n\n";
 
     vector<pair<Partition,unsigned> > good_partitions = thin(all_partitions, N, report_ratio);
 
@@ -1135,15 +1099,15 @@ int main(int argc,char* argv[])
       double PP = double(n)/N;
       double o = odds(n,N,1);
 
-      cout<<"   PP = "<<PP<<"       LOD = "<<log10(o);
+      report_file<<"   PP = "<<PP<<"       LOD = "<<log10(o);
 
       if (not good_partitions[i].first.full()) {
 	double ratio = odds_ratio(good_partitions,i,N,1);
-	cout<<"       ratio = "<<log10(ratio);
+	report_file<<"       ratio = "<<log10(ratio);
       }
-      cout<<"       pi = "<<good_partitions[i].first<<endl;
+      report_file<<"       pi = "<<good_partitions[i].first<<endl;
 
-      cout<<endl<<endl;
+      report_file<<endl<<endl;
     }
 
 
