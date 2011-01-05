@@ -1,6 +1,3 @@
-
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <!DOCTYPE book [
 <!ENTITY % sgml.features "IGNORE">
 <!ENTITY % xml.features "INCLUDE">
@@ -24,7 +21,7 @@
 <article xmlns="http://docbook.org/ns/docbook" version="5.0" 
          xmlns:mml="http://www.w3.org/1998/Math/MathML"
 	 xml:lang="en">
-  <info><title><application>BAli-Phy</application> User's Guide v2.1.0</title>
+  <info><title><application>BAli-Phy</application> User's Guide v2.1.1</title>
     
     <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
   </info>
@@ -943,10 +940,53 @@ traditional = traditional
       <section><info><title>Finding the consensus tree (<filename>C1.trees</filename>)</title></info>
 	
 	<para>
-To compute the majority consensus tree do:
-<screen><prompt>%</prompt> trees-consensus --skip=<replaceable>burnin</replaceable> C1.trees --consensus-PP=0.5:<filename>c50.PP.tree</filename></screen>	
-Here the <userinput>0.5</userinput> indicates the PP threshold -- it specifies a consensus tree containing only splits with probability $0.5$ or higher.  The option <userinput>:<filename>c50.PP.tree</filename></userinput> indicates the output file to store the tree.  Leaving off the ":<replaceable>filename</replaceable>" or specifying ":-" sends the output to the terminal. You can supply multiple levels and filenames separated by commas.</para>
-<para>The program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link> allows you to view the consensus tree graphically.
+To compute the majority consensus tree, do the following.  (The
+program <link xmlns:xlink="http://www.w3.org/1999/xlink"
+xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link>
+allows you to view the resulting tree file graphically.)
+<screen><prompt>%</prompt> trees-consensus C1.trees &gt; <filename>c50.PP.tree</filename></screen>
+You can (and should) pool results from different MCMC runs by adding
+multiple tree sample files on the command line.  The different MCMC
+runs should have the same input files and parameters.
+<screen><prompt>%</prompt> trees-consensus <replaceable>dir1</replaceable>/C1.trees <replaceable>dir2</replaceable>/C1.trees &gt; <filename>c50.PP.tree</filename></screen>
+By default, the first 10% of tree samples are skipped as burn-in.  You
+can specify the number of samples (e.g. 1000) to skip by adding the
+options <userinput>-s1000</userinput> or
+<userinput>--skip=1000</userinput>.  You may also specify a percentage
+of all samples:
+<screen><prompt>%</prompt> trees-consensus -s20% C1.trees &gt; <filename>c50.PP.tree</filename></screen>
+To discard some samples, keeping (say) every 10th sample, you may add
+the options <userinput>-x10</userinput> or
+<userinput>--sub-sample=10</userinput>.  This can make the program a
+lot faster, at the possible expense of some loss in accuracy.
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 C1.trees &gt; <filename>c50.PP.tree</filename></screen>
+By default, splits are included in the consensus tree if they have a
+PP greater than 0.5.  You can specify a more stringent level
+(e.g. 0.66) by adding the option
+<userinput>--consensus-PP=0.66</userinput> as follows:
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 --consensus-PP=0.66 C1.trees &gt; <filename>c66.PP.tree</filename></screen>
+You may also make the program write directly to the output file
+(e.g. <filename>c66.PP.tree</filename>) by using the more general form
+<userinput>--consensus-PP=0.66:c66.PP.tree</userinput>.  Leaving off 
+the "<userinput>:c66.PP.tree</userinput>" part (as we did above) or specifying
+"<userinput>:-</userinput>" sends the output to the standard output
+(e.g. the terminal, if not redirected). 
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 C1.trees --consensus-PP=0.66:<filename>c66.PP.tree</filename></screen>
+You can supply multiple levels and filenames separated by commas.
+This is faster than running the program multiple times with different
+consensus levels.
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 C1.trees --consensus-PP=0.5:<filename>c50.PP.tree</filename>,0.66:<filename>c66.PP.tree</filename></screen>
+Finally, you may use the option <userinput>--consensus=</userinput>
+instead of the option <userinput>--consensus-PP=</userinput> if you do
+not wish the resulting tree to contain embedded posterior
+probabilities on branches, as well as branch lengths.
+<screen><prompt>%</prompt> trees-consensus -s20% -x10 C1.trees --consensus=0.5:<filename>c50.PP.tree</filename>,0.66:<filename>c66.PP.tree</filename></screen>
+Both the <userinput>--consensus=</userinput> and 
+<userinput>--consensus-PP=</userinput> options may be given simultaneously.
+</para>
+
+<para>
+  See <userinput>trees-consensus --help</userinput> for a complete list of options.
 </para>
       </section>
 
@@ -2210,9 +2250,81 @@ The stabilization criterion is the same one described above for numerical values
 
   <section xml:id="FAQ"><info><title>Frequently Asked Questions (FAQ)</title></info>
     
+    <section><info><title>Input files</title></info>
+      <qandaset>
+	<qandaentry>
+	  <question><para>Does BAli-Phy accept wildcard characters "N" or "X"?  How does it treat them?</para></question>
+	  <answer>
+	    <para>Yes, BAli-Phy accepts the wildcard characters "N"
+	    (for DNA) and "X" (for proteins).  These characters
+	    indicate that there is a letter present (as opposed to a
+	    gap), but that you don't know which one it is. 
+	    </para>
+	  </answer>
+	</qandaentry>
+
+	<qandaentry>
+	  <question><para>Does BAli-Phy accept "?" characters?</para></question>
+	  <answer>
+	    <para>
+	      No.  "?" characters are often used to indicate
+	      <emphasis>either</emphasis> letter presence (e.g. "N",
+	      "X") <emphasis>or</emphasis> absence (e.g. "-").
+	      BAli-phy will insist that you replace each "?" with
+	      either "N"/"X" or "-" to indicate which one you mean. 
+	    </para>
+
+	    <para>(Most programs ignore indels and consider only
+	    substitutions, and "N" and "-" have the same effect on the
+	    likelihood or parsimony score.  However, since BAli-Phy
+	    takes indels into account, these two alternatives are
+	    quite different.)
+	    </para>
+
+	  </answer>
+	</qandaentry>
+
+      <qandaentry>
+	<question><para>Does BAli-Phy accept the characters "R" and "Y", etc.?</para></question>
+	  <answer>
+	    <para>
+	      Yes.  BAli-Phy accepts the characters "Y", "R", "W", and "S" for
+	      DNA, but does not accept the characters "K", "M", "B", "D", "H",
+	      and "V".  BAli-Phy also accepts the characters "B", "Z", and "J"
+	      for amino acids.  These characters indicate partial
+	      knowledge about a letter.  For example, "R" indicates
+	      that a nucleotide is present, and is a puRine ("A" or
+	      "G"). "J" indicates that an amino acid is present and is
+	      either "I" or "L".  
+	    </para>
+
+	    <para>
+	      (Note that sequences sometimes contain such ambiguity
+	      codes because of the DNA that was sequenced contains
+	      <emphasis>both</emphasis> values.  This might occur when
+	      sequencing a heterozygote or when sequencing pooled DNA
+	      from several individuals.  However, the model in
+	      BAli-Phy (and other phylogeny inference programs) is
+	      that only one letter is correct, but we do not know
+	      which one it is.  This is probably not problematic when
+	      dealing with pooled sequences, but should be considered.)
+	    </para>
+	  </answer>
+	</qandaentry>
+
+      <!-- qandaentry>
+	<question><para>Can I specify a stop codon?</para></question>
+	  <answer>
+	  <para>
+	  Well, yes...  but how do the models treat it?
+	  </para>
+	  </answer>
+      </qandaentry -->
+
+      </qandaset>
+    </section>
 
     <section><info><title>Running <command>bali-phy</command>.</title></info>
-      
 
       <qandaset>
 	<qandaentry>
