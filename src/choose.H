@@ -26,6 +26,31 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "myexception.H"
 #include "util.H"
 
+template <typename F>
+class choose_exception: public myexception {
+public:
+  /// What is the current choice?
+  int i;
+
+  /// What are the probabilities of each of the options?
+  std::vector<F> Pr;
+
+  choose_exception(int i, const std::vector<F>& V)
+    :Pr(V)
+  {
+    (*this)<<"No option chosen! (current = "<<i<<")\n";
+    for(int j=0;j<Pr.size();j++) {
+      if (i == j) (*this)<<"*";
+      (*this)<<"Pr["<<j<<"] = "<<Pr[j]<<"\n";
+    }
+    (*this)<<show_stack_trace();
+    //    std::abort();
+  }
+  ~choose_exception() throw() {}
+};
+
+template <> choose_exception<efloat_t>::choose_exception(int i, const std::vector<efloat_t>& V);
+
 /// Select from choice 0 or 1 in proportion to the probabilities given.
 int choose2(efloat_t, efloat_t);
 
@@ -45,10 +70,10 @@ int choose_scratch(const std::vector<F>& P, std::vector<F>& sum)
     if (r < sum[i])
       return i;
 
-  std::cerr<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
-  for(int i=0;i<P.size();i++)
-    std::cerr<<"log(P["<<i<<"]) = "<<log(P[i])<<std::endl;
-  std::abort();
+  choose_exception<F> c(0, P);
+  c.prepend(":\n");
+  c.prepend(__PRETTY_FUNCTION__);
+  throw c;
 }
 
 template <typename F>
@@ -126,11 +151,10 @@ inline int choose_MH(int i, const std::vector<F>& P)
       prod *= (1.0 - accept_k);
   }
 
-  std::cerr<<" sum = "<<sum<<"   i = "<<i<<std::endl;
-  for(int i=0;i<P.size();i++)
-    std::cerr<<"log(P["<<i<<"]) = "<<log(P[i])<<std::endl;
-  std::cerr<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
-  std::abort();
+  choose_exception<F> c(i, P);
+  c.prepend(":\n");
+  c.prepend(__PRETTY_FUNCTION__);
+  throw c;
 }
 
 template <typename F>
@@ -181,10 +205,10 @@ inline F choose_MH_P(int i, int j,const std::vector<F>& P)
       prod *= (1.0 - accept_k);
   }
 
-  std::cerr<<__PRETTY_FUNCTION__<<": no option chosen\n"<<show_stack_trace();
-  for(int i=0;i<P.size();i++)
-    std::cerr<<"log(P["<<i<<"]) = "<<log(P[i])<<std::endl;
-  std::abort();
+  choose_exception<F> c(i, P);
+  c.prepend(": \n");
+  c.prepend(__PRETTY_FUNCTION__);
+  throw c;
 }
 #endif
 

@@ -34,3 +34,15 @@ int choose2(efloat_t x, efloat_t y)
   return choose_scratch(Pr);
 }
 
+template <> choose_exception<efloat_t>::choose_exception(int i, const std::vector<efloat_t>& V)
+  :Pr(V)
+{
+  (*this)<<"No option chosen! (current = "<<i<<")\n";
+  for(int j=0;j<Pr.size();j++) {
+    if (i == j) (*this)<<"*";
+    (*this)<<"log(Pr["<<j<<"]) = "<<Pr[j].log()<<"\n";
+  }
+  (*this)<<show_stack_trace();
+  //    std::abort();
+}
+

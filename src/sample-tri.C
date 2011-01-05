@@ -330,8 +330,17 @@ void sample_tri_multi_calculation::set_proposal_probabilities(const vector<efloa
 int sample_tri_multi_calculation::choose(vector<Parameters>& p)
 {
   assert(p.size() == nodes.size());
-  int C = choose_MH(0,Pr);
+  int C = -1;
 
+  try {
+    C = choose_MH(0,Pr);
+  }
+  catch (choose_exception<efloat_t>& c)
+  {
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+  }
+  
   assert(Pr[C] > 0.0);
 
 #ifndef NDEBUG_DP

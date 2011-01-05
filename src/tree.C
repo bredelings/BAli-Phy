@@ -1102,9 +1102,6 @@ Tree& Tree::operator=(const Tree& T)
 // FIXME - don't we need to destroy the current tree?
 int Tree::parse_and_discover_names(const string& line,vector<string>& names)
 {
-  // destroy old tree structure
-  if (nodes_.size()) TreeView(nodes_[0]).destroy();
-
   vector< vector<BranchNode*> > tree_stack(1);
   names.clear();
 
@@ -1171,6 +1168,10 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& names)
   BranchNode* root_ = TreeView::unlink_subtree(remainder->out);
   TreeView(remainder).destroy();
 
+  // destroy old tree structure
+  if (nodes_.size()) TreeView(nodes_[0]).destroy();
+
+  // switch to new tree structure
   reanalyze(root_);
 
   return root_->node;
@@ -1185,9 +1186,6 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
 {
   if (names.size() == 0 and not allow_numbers)
     throw myexception()<<"Tree::parse_with_names_or_numbers( ): must supply leaf names if integers are not allowed.";
-
-  // destroy old tree structure
-  if (nodes_.size()) TreeView(nodes_[0]).destroy();
 
   vector< vector<BranchNode*> > tree_stack(1);
 
@@ -1268,6 +1266,10 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
   BranchNode* root_ = TreeView::unlink_subtree(remainder->out);
   TreeView(remainder).destroy();
 
+  // destroy old tree structure
+  if (nodes_.size()) TreeView(nodes_[0]).destroy();
+
+  // switch to new tree structure
   reanalyze(root_);
 
   return root_->node;

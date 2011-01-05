@@ -285,7 +285,15 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
   assert(Pr[0] > 0.0);
 
-  int C = choose_MH(0,Pr);
+  int C = -1;
+  try {
+    C = choose_MH(0,Pr);
+  }
+  catch (choose_exception<efloat_t>& c)
+  {
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+  }
 
   assert(Pr[C] > 0.0);
 
