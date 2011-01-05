@@ -303,7 +303,13 @@ vector<int> DPmatrix::sample_path() const
     }
     catch (choose_exception<double>& c)
     {
+      std::cerr<<"(I,J) = ("<<I<<","<<J<<")\n";
+      std::cerr<<"(i,i) = ("<<i<<","<<i<<")\n";
+      for(int state1=0;state1<nstates();state1++)
+	std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
+
       c.prepend(__PRETTY_FUNCTION__);
+
       throw c;
     }
 
@@ -770,6 +776,11 @@ vector<int> DPmatrixConstrained::sample_path() const
     }
     catch (choose_exception<double>& c)
     {
+      std::cerr<<"(I,J) = ("<<I<<","<<J<<")\n";
+      std::cerr<<"(i,i) = ("<<i<<","<<i<<")\n";
+      for(int state1=0;state1<nstates();state1++)
+	std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
+
       c.prepend(__PRETTY_FUNCTION__);
       throw c;
     }

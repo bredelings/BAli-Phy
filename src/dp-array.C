@@ -90,7 +90,8 @@ vector<int> DParray::sample_path() const {
 
   vector<double> transition(nstates());
 
-  while(i >= 0) {
+  while(i >= 0) 
+  {
     path.push_back(state2);
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,state1)*GQ(state1,state2);
@@ -101,6 +102,11 @@ vector<int> DParray::sample_path() const {
     }
     catch (choose_exception<double>& c)
     {
+      std::cerr<<"I = "<<I<<"\n";
+      std::cerr<<"i = "<<i<<"\n";
+      for(int state1=0;state1<nstates();state1++)
+	std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
+
       c.prepend(__PRETTY_FUNCTION__);
       throw c;
     }
@@ -231,6 +237,11 @@ vector<int> DParrayConstrained::sample_path() const {
     }
     catch (choose_exception<double>& c)
     {
+      std::cerr<<"I = "<<I<<"\n";
+      std::cerr<<"i = "<<i<<"\n";
+      for(int state1=0;state1<nstates();state1++)
+	std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
+
       c.prepend(__PRETTY_FUNCTION__);
       throw c;
     }
