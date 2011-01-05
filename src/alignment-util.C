@@ -745,10 +745,10 @@ vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args)
 alignment load_alignment(const string& filename,const vector<shared_ptr<const alphabet> >& alphabets)
 {
   alignment A;
-  if (filename == "-")
-    A.load(alphabets,sequence_format::read_guess,std::cin);
-  else
-    A.load(alphabets,filename);
+
+  istream_or_ifstream file(std::cin, "-", filename, "alignment-file");
+
+  A.load(alphabets, sequence_format::read_guess, file);
   
   int n_empty = remove_empty_columns(A);
   if (n_empty)
