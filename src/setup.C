@@ -764,7 +764,6 @@ void load_bali_phy_rc(variables_map& args,const options_description& options)
 	checked_ifstream file(filename, "config file");
       
 	store(parse_config_file(file, options), args);
-	file.close();
 	notify(args);
 	if (log_verbose)
 	  cerr<<" done."<<endl;

@@ -380,7 +380,6 @@ namespace sequence_format {
   {
     checked_ifstream file(filename,"alignment file");
     vector<sequence> sequences = loader(file);
-    file.close();
     return sequences;
   }
 

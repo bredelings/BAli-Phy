@@ -392,7 +392,6 @@ ublas::matrix<double> read_alignment_certainty(const alignment& A, const string&
       colors(column,mapping[i]) = d;
     }
   }
-  colorfile.close();
 
   return colors;
 }

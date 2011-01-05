@@ -155,6 +155,4 @@ stats_table::stats_table(const string& filename, int skip, int subsample, int ma
 
   load_file(file,skip,subsample,max);
   if (log_verbose) cerr<<filename<<": Read in "<<n_rows()<<" lines.\n";
-
-  file.close();
 }

@@ -279,7 +279,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     checked_ifstream file(filename,"config file");
 
     store(parse_config_file(file, all), args);
-    file.close();
     notify(args);
   }
 

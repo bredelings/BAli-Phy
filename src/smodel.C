@@ -919,7 +919,6 @@ namespace substitution {
 
     load_file(ifile);
 
-    ifile.close();
     // the file has frequencies as well... where would we put them?
   }
 
@@ -1558,8 +1557,6 @@ namespace substitution {
       throw myexception(string("Couldn't open file '")+filename+"'");
 
     load_file(file);
-
-    file.close();
   }
 
   CAT_FixedFrequencyModel::CAT_FixedFrequencyModel(const alphabet& a)

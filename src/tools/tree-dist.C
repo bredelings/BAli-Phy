@@ -444,8 +444,6 @@ namespace trees_format
       tfr = shared_ptr<reader_t>(new NEXUS(filename));
     else
       tfr = shared_ptr<reader_t>(new Newick(filename));
-
-    file.close();
   }
 
   Newick_or_NEXUS::Newick_or_NEXUS(istream& file)
@@ -779,7 +777,6 @@ int tree_sample::load_file(const string& filename,int skip,int subsample,int max
   checked_ifstream file(filename,"tree samples file");
   
   int count = load_file(file,skip,subsample,max,prune);
-  file.close();
   return count;
 }
 

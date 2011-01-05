@@ -87,7 +87,6 @@ vector<int> SequenceTree::prune_leaves(const vector<int>& remove)
 void SequenceTree::read(const string& filename) {
   checked_ifstream file(filename, "NEWICK tree file");
   read(file);
-  file.close();
 }
 
 void SequenceTree::read(std::istream& file) {

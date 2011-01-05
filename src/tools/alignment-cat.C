@@ -254,7 +254,6 @@ vector<sequence> load_file(const string& filename,bool pad)
     if (s[i].size() != s[0].size())
       throw myexception()<<"Alignment file '"<<filename<<"': sequence #"<<i+1<<" '"<<s[i].name<<"' has length "
 			 <<s[i].size()<<" != "<<s[0].size();
-  file.close();
   return s;
 }
 
