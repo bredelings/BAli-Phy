@@ -71,10 +71,10 @@ int main(int argc,char* argv[])
 
     // Check that all files have the same field names
     vector<string> field_names;
-    vector<boost::shared_ptr<ifstream> > files(filenames.size());
+    vector<boost::shared_ptr<istream> > files(filenames.size());
     for(int i=0;i<filenames.size();i++)
     {
-      files[i] = boost::shared_ptr<ifstream>(new checked_ifstream(filenames[i],"statistics file"));
+      files[i] = boost::shared_ptr<istream>(new checked_ifstream(filenames[i],"statistics file"));
 
       if (not *files[i])
 	throw myexception()<<"Can't open file '"<<filenames[i]<<"'";
@@ -95,7 +95,6 @@ int main(int argc,char* argv[])
       for(int line_number=0;portable_getline(*files[i],line);line_number++)
 	if (line_number >= skip)
 	  std::cout<<line<<"\n";
-      files[i]->close();
     }
   }
   catch (std::exception& e) {

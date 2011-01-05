@@ -101,7 +101,7 @@ int main(int argc,char* argv[])
 
     vector<string> filenames = args["filenames"].as<vector<string> >();
 
-    vector<ifstream*> filestreams(filenames.size(),NULL);
+    vector<istream*> filestreams(filenames.size(),NULL);
     for(int i=0;i<filenames.size();i++) 
       filestreams[i] = new checked_ifstream(filenames[i],"statistics file");
 
