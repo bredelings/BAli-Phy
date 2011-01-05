@@ -273,6 +273,8 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const
 
 vector<int> DPmatrix::sample_path() const 
 {
+  assert(Pr_sum_all_paths() > 0.0);
+
   vector<int> path;
 
   const int I = size1()-1;
@@ -295,7 +297,15 @@ vector<int> DPmatrix::sample_path() const
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
 
-    int state1 = choose_scratch(transition);
+    int state1 = -1;
+    try {
+      state1 = choose_scratch(transition);
+    }
+    catch (choose_exception<double>& c)
+    {
+      c.prepend(__PRETTY_FUNCTION__);
+      throw c;
+    }
 
     if (di(state1)) i--;
     if (dj(state1)) j--;
@@ -754,7 +764,15 @@ vector<int> DPmatrixConstrained::sample_path() const
       transition[s1] = (*this)(i,j,S1)*GQ(S1,S2);
     }
 
-    int s1 = choose_scratch(transition);
+    int s1 = -1;
+    try {
+      s1 = choose_scratch(transition);
+    }
+    catch (choose_exception<double>& c)
+    {
+      c.prepend(__PRETTY_FUNCTION__);
+      throw c;
+    }
     int S1 = states(j)[s1];
 
     if (di(S1)) i--;

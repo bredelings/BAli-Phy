@@ -95,7 +95,15 @@ vector<int> DParray::sample_path() const {
     for(int state1=0;state1<nstates();state1++)
       transition[state1] = (*this)(i,state1)*GQ(state1,state2);
 
-    int state1 = choose_scratch(transition);
+    int state1 = -1;
+    try {
+      state1 = choose_scratch(transition);
+    }
+    catch (choose_exception<double>& c)
+    {
+      c.prepend(__PRETTY_FUNCTION__);
+      throw c;
+    }
 
     if (di(state1)) i--;
 
@@ -217,7 +225,15 @@ vector<int> DParrayConstrained::sample_path() const {
       transition[s1] = (*this)(i,state1)*GQ(state1,state2);
     }
 
-    int s1 = choose_scratch(transition);
+    int s1 = -1;
+    try {
+      s1 = choose_scratch(transition);
+    }
+    catch (choose_exception<double>& c)
+    {
+      c.prepend(__PRETTY_FUNCTION__);
+      throw c;
+    }
     int state1 = states(i)[s1];
 
     if (di(state1)) i--;

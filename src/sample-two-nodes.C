@@ -359,7 +359,15 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
 	Pr[i] *= p[i][j].heated_likelihood();
   }
 
-  int C = choose_MH(0,Pr);
+  int C = -1;
+  try {
+    C = choose_MH(0,Pr);
+  }
+  catch (choose_exception<efloat_t>& c)
+  {
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+  }
 
 #ifndef NDEBUG_DP
   std::cerr<<"choice = "<<C<<endl;

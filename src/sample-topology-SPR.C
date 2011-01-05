@@ -88,7 +88,15 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1
   nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);     // Using two random orders can lead to different total
   nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
 
-  return sample_tri_multi(p,nodes,rho,true,true);
+  int C = -1;
+  try {
+    return sample_tri_multi(p,nodes,rho,true,true);
+  }
+  catch (choose_exception<efloat_t>& c)
+  {
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+  }
 }
 
 #include "slice-sampling.H"
@@ -246,9 +254,16 @@ int choose_SPR_target(SequenceTree& T1, int b1_)
     lengths.push_back(L);
   }
 
-  int b2 = branches[ choose(lengths) ];
+  try {
+    int b2 = branches[ choose(lengths) ];
 
-  return b2;
+    return b2;
+  }
+  catch (choose_exception<efloat_t>& c)
+  {
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+  }
 }
 
 void remove_duplicates(vector<int>& v) {
@@ -1096,7 +1111,16 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   vector<efloat_t> PrL = Pr;
   for(int i=0;i<PrL.size();i++)
     PrL[i] *= L[i];
-  int C = choose_MH(0,PrL);
+
+  int C = -1;
+  try {
+    C = choose_MH(0,PrL);
+  }
+  catch (choose_exception<efloat_t>& c)
+  {
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+  }
 
   // Step N-1: ATTACH to that point
 

@@ -109,7 +109,14 @@ int two_way_topology_sample(vector<Parameters>& p,const vector<efloat_t>& rho, i
   nodes[0] = A5::get_nodes_random(*p[0].T, b);
   nodes[1] = A5::get_nodes_random(*p[1].T, b);
 
-  return sample_two_nodes_multi(p,nodes,rho,true,false);
+  try {
+    return sample_two_nodes_multi(p,nodes,rho,true,false);
+  }
+  catch (choose_exception<efloat_t>& c)
+  {
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+  }
 }
 
 
@@ -441,7 +448,14 @@ int three_way_topology_sample(vector<Parameters>& p, const vector<efloat_t>& rho
   nodes[1] = A5::get_nodes_random(*p[1].T, b);
   nodes[2] = A5::get_nodes_random(*p[2].T, b);
 
-  return sample_two_nodes_multi(p,nodes,rho,true,false);
+  try {
+    return sample_two_nodes_multi(p,nodes,rho,true,false);
+  }
+  catch (choose_exception<efloat_t>& c)
+  {
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+  }
 }
 
 
@@ -649,20 +663,28 @@ void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, Mo
 
   const vector<efloat_t> rho(3,1);
 
-  int C = sample_tri_multi(p,nodes,rho,true,true);
+  int C = -1;
+  try {
+    C = sample_tri_multi(p,nodes,rho,true,true);
+  }
+  catch (choose_exception<efloat_t>& c)
+  {
+    c.prepend(__PRETTY_FUNCTION__);
+    throw c;
+  }
 
   if (C != -1) {
     PP = p[C];
   }
-
+    
   MCMC::Result result(2);
-
+    
   result.totals[0] = (C>0)?1:0;
   // This gives us the average length of branches prior to successful swaps
   if (C>0)
     result.totals[1] = p[0].T->directed_branch(b).length();
   else
     result.counts[1] = 0;
-
+  
   NNI_inc(Stats,"NNI (3-way) + A", result, *p[0].T, b);
 }
