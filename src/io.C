@@ -102,29 +102,153 @@ string remove_extension(string filename)
   return name;
 }
 
-void checked_ifstream::check(const string& description)
+void checked_filebuf::report_open_error(const string& filename, ios_base::openmode mode, bool existed_before)
 {
-  if (not good()) {
-    close();
-    myexception e;
-    e<<"Trying to open "<<description<<" '"<<filename<<"'";
+  myexception e;
+  bool exists_now = fs::exists(filename);
+
+  close();
+
+  if ((mode&ios_base::out) and not (mode&ios_base::in))
+    e<<"Failed to write to "<<description<<" '"<<filename<<"'";
+  else if ((mode&ios_base::in) and not (mode&ios_base::out))
+    e<<"Failed to read from "<<description<<" '"<<filename<<"'";
+  else
+    e<<"Failed to open "<<description<<" '"<<filename<<"'";
+
+  if (mode&ios_base::out)
+  {
+    if (existed_before and not (mode|ios_base::trunc))
+      e<<": file exists, refusing to over-write.";
+    if (existed_before and mode|ios_base::trunc)
+      e<<": file exists, do you have permission to overwrite?";
+    else if (not existed_before and exists_now)
+      e<<": file created, but cannot be written to.";
+    else if (not existed_before and not exists_now)
+      e<<": perhaps you don't have permission to create a file here?";
+  }
+  else if (mode&ios_base::in)
+  {
     if (not fs::exists(filename))
       e<<": file does not exist.";
     else
       e<<": file exists, but can't be opened.";
-    throw e;
+  }
+
+  throw e;
+}
+
+checked_filebuf * checked_filebuf::open ( const std::string& filename, std::ios_base::openmode mode )
+{
+  bool already_existed = fs::exists(filename);
+  std::filebuf* buf = std::filebuf::open(filename.c_str(), mode);
+  if (!buf)
+    report_open_error(filename, mode, already_existed);
+
+  return this;
+}
+
+checked_filebuf::checked_filebuf()
+  :description("file")
+{
+}
+
+checked_filebuf::checked_filebuf(const string& s)
+  :description(s)
+{
+}
+
+checked_ifstream::checked_ifstream(const string& filename)
+  :buf("file")
+{
+  this->init(&buf);
+  buf.open(filename, ios_base::in);
+}
+
+checked_ifstream::checked_ifstream(const string& filename, const string& description)
+  :buf(description)
+{
+  this->init(&buf);
+  buf.open(filename, ios_base::in);
+}
+
+void istream_or_ifstream::open(std::istream& is, const std::string& is_name, const std::string& filename, const std::string& description)
+{
+  if (buf)
+    throw myexception()<<"Cannot reopen file!\n";
+
+  if (filename == is_name)
+    this->init(is.rdbuf());
+  else
+  {
+    buf = claim(new checked_filebuf(description));
+    this->init(buf.get());
+    buf->open(filename, ios_base::in);
   }
 }
 
-checked_ifstream::checked_ifstream(const string& s)
-  :ifstream(s.c_str()),filename(s)
+istream_or_ifstream::istream_or_ifstream()
 {
-  check("file");
+  this->init(&buf_null);
 }
 
-checked_ifstream::checked_ifstream(const string& s, const string& description)
-  :ifstream(s.c_str()),filename(s)
+istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is_name, const std::string& filename)
 {
-  check(description);
+  open(is,is_name,filename,"file");
 }
 
+istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is_name, const std::string& filename,
+					 const std::string& description)
+{
+  open(is,is_name,filename,description);
+}
+
+
+checked_ofstream::checked_ofstream(const string& filename)
+  :buf("file")
+{
+  this->init(&buf);
+  buf.open(filename, ios_base::out|ios_base::trunc);
+}
+
+checked_ofstream::checked_ofstream(const string& filename, const string& description)
+  :buf(description)
+{
+  this->init(&buf);
+  buf.open(filename, ios_base::out|ios_base::trunc);
+}
+
+void ostream_or_ofstream::open(std::ostream& os, const std::string& os_name, const std::string& filename, const std::string& description)
+{
+  if (buf)
+    throw myexception()<<"Cannot reopen file!\n";
+
+  if (filename == os_name)
+    this->init(os.rdbuf());
+  else
+  {
+    buf = claim(new checked_filebuf(description));
+    this->init(buf.get());
+    buf->open(filename, ios_base::out|ios_base::trunc);
+  }
+}
+
+ostream_or_ofstream::ostream_or_ofstream()
+{
+  this->init(&buf_null);
+}
+
+ostream_or_ofstream::ostream_or_ofstream(std::ostream& os, const std::string& os_name, const std::string& filename)
+{
+  open(os,os_name,filename,"file");
+}
+
+ostream_or_ofstream::ostream_or_ofstream(std::ostream& os, const std::string& os_name, const std::string& filename,
+					 const std::string& description)
+{
+  open(os,os_name,filename,description);
+}
+
+null_ostream::null_ostream()
+  :ostream(&buf)
+{ }

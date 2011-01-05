@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include "owned-ptr.H"
 
 // this should actually be templatized... <class charT,Alloc,Traits>
 std::istream& portable_getline(std::istream&,std::string&);
@@ -33,13 +34,74 @@ std::string get_basename(std::string filename);
 
 std::string remove_extension(std::string filename);
 
-class checked_ifstream: public std::ifstream
+// hmm... should not inherit from ifstream, cuz cannot override non virtual open( )
+
+/// A stringbuf that write to 2 streambufs
+class nullbuf: public std::streambuf
 {
-  std::string filename;
-  void check(const std::string&);
 public:
-  checked_ifstream(const std::string&);
+  int overflow(int) { return 0; /*return traits_type::not_eof(c) */ }
+};
+
+class checked_filebuf: public std::filebuf
+{
+  std::string description;
+  void report_open_error(const std::string&, std::ios_base::openmode, bool);
+
+public:
+
+  checked_filebuf* open ( const std::string& s, std::ios_base::openmode mode );
+
+  checked_filebuf();
+  explicit checked_filebuf(const std::string&);
+};
+
+class checked_ifstream: public std::istream
+{
+  checked_filebuf buf;
+public:
+  explicit checked_ifstream(const std::string&);
   checked_ifstream(const std::string&,const std::string&);
 };
 
+class istream_or_ifstream: public std::istream
+{
+  owned_ptr<checked_filebuf> buf;
+  nullbuf buf_null;
+public:
+  void open(std::istream&, const std::string&, const std::string&);
+  void open(std::istream&, const std::string&, const std::string&,const std::string&);
+
+  istream_or_ifstream();
+  istream_or_ifstream(std::istream&, const std::string&, const std::string&);
+  istream_or_ifstream(std::istream&, const std::string&, const std::string&, const std::string&);
+};
+
+class checked_ofstream: public std::ostream
+{
+  checked_filebuf buf;
+public:
+  explicit checked_ofstream(const std::string&);
+  checked_ofstream(const std::string&,const std::string&);
+};
+
+class ostream_or_ofstream: public std::ostream
+{
+  owned_ptr<checked_filebuf> buf;
+  nullbuf buf_null;
+public:
+  void open(std::ostream&, const std::string&, const std::string&);
+  void open(std::ostream&, const std::string&, const std::string&,const std::string&);
+
+  ostream_or_ofstream();
+  ostream_or_ofstream(std::ostream&, const std::string&, const std::string&);
+  ostream_or_ofstream(std::ostream&, const std::string&, const std::string&, const std::string&);
+};
+
+class null_ostream: public std::ostream
+{
+  nullbuf buf;
+public:
+  null_ostream();
+};
 #endif
