@@ -37,11 +37,21 @@
     </para>
 
     <para>You may need a 64-bit executable and a 64-bit
-      OS version of your OS to be able to run large data sets.</para>
+      OS version of your OS to be able to analyze large data sets that
+    consume more that 2Gb of RAM.</para>
 
     <para>
       We typically run <application>BAli-Phy</application> on Core2
       processors with 8Gb of RAM.
+    </para>
+
+    <para>
+      Access to a computing cluster is not necessary, but can speed up
+      the analysis.  This is because a cluster allows you to run
+      several <emphasis>independent</emphasis> MCMC chains in parallel and pool the
+      resulting samples.  This approach to parallel computation is
+      sometimes more efficient than MCMCMC-based parallelism involving
+      heated chains.   
     </para>
 
     <section><info><title>Linux and UNIX</title></info>
@@ -816,12 +826,35 @@ traditional = traditional
 	that you've converged!)
       </para>
 
+      <note><info><title>Computing clusters can speed up
+      MCMC analysis</title></info>
+      <para>
+	Running <command>bali-phy</command> on a computing cluster is
+	not necessary, but can speed up the analysis dramatically.
+	This is because a cluster allows you to run several
+	<emphasis>independent</emphasis> MCMC chains in parallel and pool the resulting
+      samples.</para> 
+
+	<para>This approach to parallel
+	computation is sometimes more efficient than MCMCMC-based
+	parallelism involving heated chains.  It is equivalent to
+	running MCMCMC with no temperature difference between
+	chains, with the exception that it allows results from
+	<emphasis>all</emphasis> chains to be used, instead of just
+	results from the single "cold" chain.  Thus, if you run 10
+	independent chains in parallel, then you may gather
+	samples 10 times faster that a single chain.
+      </para>
+      </note>
+
       <section><info><title>Too many taxa?</title></info>
 	
 
 	<para><application>BAli-Phy</application> is quite CPU
 	  intensive, and so we recommend using 50 or fewer taxa in order
-	  to limit the time required to accumulate enough MCMC samples.
+	  to limit the time required to accumulate enough MCMC
+	  samples. (Despite this recommendation, data sets with more 
+	  than 100 taxa have occasionally been known to converge.)
 	  We recommend initially pruning as many taxa as possible
 	  from your data set, then adding some back if the MCMC is not
 	  too slow.</para> 
@@ -1823,12 +1856,12 @@ The majority consensus tree is usually not fully resolved, so we recommend using
       
       <para>
 	In MCMC, each sample is not fully independent of previous
-	samples.  In fact, even after a Markov chain has convergence,
+	samples.  In fact, even after a Markov chain has converged,
 	it can get "stuck" in one part of the parameter space for a
 	long time, before jumping to an equally important part.  When
-	this happens, each sample contributes very little new
-	information and we need to obtain many more samples to obtain
-	good precision on our estimates.  In such a case, we say
+	this happens, each new sample contributes very little new
+	information, and we need to obtain many more samples to get
+	good precision on our parameter estimates.  In such a case, we say 
 	that the chain isn't "mixing" well. 
       </para>
     </section>
@@ -1929,7 +1962,7 @@ adequately mix between modes.</para>
 <screen><prompt>%</prompt> statreport C1.p C2.p ... C<replaceable>n</replaceable>.p &gt; Report </screen>
       We calculate effective sample sizes based on integrated
       autocorrelation times.  This method has the nice property that
-      simply doubling every sample does not increase the ESS.
+      simply duplicating every sample does not increase the ESS.
       </para>
 
       <para>The
@@ -2254,12 +2287,13 @@ The stabilization criterion is the same one described above for numerical values
     <section><info><title>Input files</title></info>
       <qandaset>
 	<qandaentry>
-	  <question><para>Does BAli-Phy accept wildcard characters "N" or "X"?  How does it treat them?</para></question>
+	  <question><para>Does BAli-Phy accept the wildcard characters "N" or "X"?  How does it treat them?</para></question>
 	  <answer>
 	    <para>Yes, BAli-Phy accepts the wildcard characters "N"
 	    (for DNA) and "X" (for proteins).  These characters
-	    indicate that there is a letter present (as opposed to a
-	    gap), but that you don't know which one it is. 
+	    indicate that some letter is present (as opposed to a
+	    gap), but that you don't know <emphasis>which</emphasis>
+	    letter it is.  
 	    </para>
 	  </answer>
 	</qandaentry>
@@ -2276,10 +2310,10 @@ The stabilization criterion is the same one described above for numerical values
 	    </para>
 
 	    <para>(Most programs ignore indels and consider only
-	    substitutions, and "N" and "-" have the same effect on the
-	    likelihood or parsimony score.  However, since BAli-Phy
-	    takes indels into account, these two alternatives are
-	    quite different.)
+	    substitutions, and in that case "N" and "-" have the same
+	    effect on the likelihood or parsimony score.  However,
+	    since BAli-Phy takes indels into account, these two
+	    alternatives are quite different.)
 	    </para>
 
 	  </answer>
@@ -2290,8 +2324,9 @@ The stabilization criterion is the same one described above for numerical values
 	  <answer>
 	    <para>
 	      Yes.  BAli-Phy accepts the characters "Y", "R", "W", and "S" for
-	      DNA, but does not accept the characters "K", "M", "B", "D", "H",
-	      and "V".  BAli-Phy also accepts the characters "B", "Z", and "J"
+	      DNA, RNA, and Codon alphabets.  However, it does not
+	      accept the characters "K", "M", "B", "D", "H",  and "V".
+	      BAli-Phy also accepts the characters "B", "Z", and "J" 
 	      for amino acids.  These characters indicate partial
 	      knowledge about a letter.  For example, "R" indicates
 	      that a nucleotide is present, and is a puRine ("A" or
@@ -2301,7 +2336,7 @@ The stabilization criterion is the same one described above for numerical values
 
 	    <para>
 	      (Note that sequences sometimes contain such ambiguity
-	      codes because of the DNA that was sequenced contains
+	      codes because the DNA that was sequenced contains
 	      <emphasis>both</emphasis> values.  This might occur when
 	      sequencing a heterozygote or when sequencing pooled DNA
 	      from several individuals.  However, the model in
@@ -2388,6 +2423,71 @@ The stabilization criterion is the same one described above for numerical values
 	</qandaentry>
 
 	<qandaentry>
+	  <question><para>How do I stop a <command>bali-phy</command>
+	  run on my personal computer?</para></question>
+	  <answer>
+	    <para>Simply kill the process -- there is no special
+	    command to stop <command>bali-phy</command>. If you are
+	    running it on your personal workstation, then you can use
+	    the command <command>kill</command>.  To do that, you need
+	    to find the PID (process ID) of the running program.  You
+	    can find this by examining the beginning of the file
+	    <filename>C1.out</filename>.  For 
+	    example:
+<screen><prompt>%</prompt> less 5d-1/C1.out
+command: bali-phy 5d.fasta
+start time: Thu Jan  6 02:26:47 2011
+
+VERSION: 2.1.1-alpha  [master commit 94d557df+]  (Jan 05 2011 13:04:11)
+BUILD: Jan  5 2011 14:13:58
+ARCH: x86_64-unknown-linux-gnu
+COMPILER: GCC 4.5.2
+FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -fweb  -march=native  -pipe -O3  -isystem /usr/lib/openmpi/include -isystem /usr/lib/openmpi/include/openmpi -pthread
+directory: /home/bredelings/Devel/bali-phy/Runs
+subdirectory: 5d-1
+hostname: mutant
+<emphasis>PID: 3479</emphasis>
+MPI_RANK: 0
+MPI_SIZE: 1
+
+random seed = 15356341113359626675
+
+...
+</screen>
+Here the PID is 3479.  Therefore you can type:
+<screen><prompt>%</prompt> kill 3479</screen>
+On some operating systems you can also type:
+<screen><prompt>%</prompt> killall bali-phy</screen>
+However, be aware that this will terminate <emphasis>all</emphasis> of
+your <command>bali-phy</command> runs on that computer.
+	    </para>
+	  </answer>
+	</qandaentry>
+
+	<qandaentry>
+	  <question><para>How do I stop a <command>bali-phy</command>
+	  run on a computing cluster?</para></question>
+	  <answer>
+	    <para>Simply terminate the submitted job.  The specific command
+	    to terminate a job will depend on the queue manager that
+	    is installed on your cluster.  Examine the documentation
+	    for your cluster, or ask your cluster support staff how to delete
+	    running jobs on your cluster.
+	    </para>
+
+	    <para>As an example, if the SGE software is used
+	    to submit jobs, then the command <command>qstat</command>
+	    should list your jobs and their job ID numbers (which is
+	    different than the process ID number).  You can then use
+	    the command <command>qdel</command> to delete jobs by ID
+	    number.  The SGE documentation describes how to use these
+	    commands. 
+	    </para>
+	  </answer>
+	</qandaentry>
+
+
+	<qandaentry>
 	  <question><para>So, how can I know when to stop it?</para></question>
 	  <answer>
 	    <para>You can stop when it has both converged and also run for long enough to give
@@ -2441,7 +2541,7 @@ The stabilization criterion is the same one described above for numerical values
 	<qandaentry>
 	  <question><para>How do I concatenate alignments?</para></question>
 	  <answer><para>
- 	    <screen><prompt>%</prompt>alignment-cat <replaceable>filename1.fasta</replaceable> <replaceable>filename2.fasta</replaceable> &gt; result.fasta</screen>
+ 	    <screen><prompt>%</prompt> alignment-cat <replaceable>filename1.fasta</replaceable> <replaceable>filename2.fasta</replaceable> &gt; result.fasta</screen>
 	      The alignments must have the same sequence names, but
 	      the names need not be in the same order.
 	    </para>
@@ -2451,7 +2551,7 @@ The stabilization criterion is the same one described above for numerical values
 	<qandaentry>
 	  <question><para>How do I select columns from an alignment?</para></question>
 	  <answer><para>
-	    <screen><prompt>%</prompt>alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</screen>
+	    <screen><prompt>%</prompt> alignment-cat -c1-10,50-100,600- <replaceable>filename.fasta</replaceable> &gt; result.fasta</screen>
 	    The resulting alignment will contain the selected columns
 	    in the order you specified.
 	  </para>
@@ -2465,7 +2565,7 @@ The stabilization criterion is the same one described above for numerical values
 	    <para>To constrain the alignment to match some alignment
 	      file <replaceable>filename.fasta</replaceable> in columns
 	      100, 200-250, and 300, run:
-	      <screen><prompt>%</prompt>alignment-indices -c100,200-250,300 <replaceable>filename.fasta</replaceable> &gt; filename.constraint</screen>
+	      <screen><prompt>%</prompt> alignment-indices -c100,200-250,300 <replaceable>filename.fasta</replaceable> &gt; filename.constraint</screen>
 	    </para>
 	  </answer>	
 	</qandaentry>
