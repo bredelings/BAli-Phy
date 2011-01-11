@@ -35,9 +35,9 @@ along with BAli-Phy; see the file COPYING.  If not see
  * specifically in order to cache across internal-node resampling.
  */
 
-/* Naming Scheme #1
+/* Naming Scheme #1 (subA_index_leaf)
  *
- * Our naming scheme for sub-alignment columns satisfies two
+ * The first naming scheme for sub-alignment columns satisfies two
  * important properties: 
  * a) ordering depends only on pairwise alignments behind b and the
  *    topology of the subtree behind b
@@ -61,6 +61,49 @@ along with BAli-Phy; see the file COPYING.  If not see
  * which include this sub-alignment. 
  */
 
+/* Naming Scheme #2 (subA_index_internal)
+ *
+ * In this naming scheme, we index a column c behind a directed branch
+ * b whenever the alignment matrix has a non-gap in the cell A(c, b.source()).
+ * Therefore, this naming scheme requires the alignment to contain homology
+ * information for internal node sequences, since the node b.source() will
+ * often be internal.
+ *
+ * In this naming scheme, when we process two branches b1,b2 that point to
+ * a branch b0, it sometimes occurs that a column that is present in the 
+ * indices for b1 and b2 is NOT present in the index for b0.  In this case
+ * we calculate the likelihood for the column when processing branch b0, 
+ * before we get to the root.
+ *
+ * This approach has two main benefits.  First, if saves computation time.
+ * This is because when a column contains only a single character, we do not
+ * need to peel it all the way up to the root.  Instead, after peeling one
+ * branch, we calculate the likelihood and propagate these summed
+ * log-likelihoods up to the root, which is much cheaper.
+ * 
+ * Second, we do not need to allocate memory for a the conditional likelihood
+ * on all the branches up to the root.  This can result in a huge decrease in
+ * memory use when analyzing a large number of taxa, because insertions in
+ * a single sequence now incur a constant memory cost.  Previously, an insertion
+ * in a single sequence would incur a cost of storing 2*B conditional likelihood
+ * matrices if the tree had B branches.  You can visualize this by considering
+ * that in a matrix with many branches, we no longer incur a memory cost for
+ * alignment cells that contain a gap, but only for cells that contain a character.
+ * This, the memory cost of unaligning two sequences is drastically decreased.
+ *
+ * On the downside, this method of indexing requires recalculating the indexes
+ * (and thus the conditional likelihoods) for a branch b if the alignment changes
+ * on any branch behind b.  This is true even if the alignment of leaf sequences
+ * is unchanged.  Therefore, conditional likelihoods must be recalculated after 
+ * performing an NNI move, because a column containing internal node characters
+ * but not leaf characters MAY be added or removed by the alignment resampling.
+ * In theory this could make subA_index_internal slower than subA_index_leaf, but
+ * this cost does not seem to be too high in practice.
+ *
+ * Question: is subA_index_internal affected by the reordering of unordered
+ *  columns in the alignment, like subA_index_leaf is?
+ * 
+ */
 
 struct subA_index_t: public ublas::matrix<int>
 {
