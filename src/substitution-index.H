@@ -47,7 +47,32 @@ along with BAli-Phy; see the file COPYING.  If not see
  * immediately and is added to the total of already evaluated likelihoods
  * behind branch b0.
  *
- * Note that even for the indexing scheme subA_index_leaf (in which all
+ * 1. For both naming schemes, the index for a branch pointing away from
+ * a leaf node is just the index into the sequence at that leaf.  
+ *
+ * 2. The index for branches pointing away from an internal node merges
+ * the indices from the two branches behind it. The way of doing this is
+ * specific to the naming scheme.  See *::update_one_branch( ).
+ *
+ * 3. Currently the indices are stored in a L*B matrix, where B is the
+ * number of DIRECTED branches (e.g. 2*number of undirected branches) and
+ * L is the alignment length. If I(c,b) = i, then the column for LC index i
+ * on branch b is c.  If I(c,b) = -1, then this column is not indexed for 
+ * branch b.
+ * - The current method is wasteful when most of the I(c,b)'s == -1.
+ * - So why do we do it this way?  When do we need the column information?
+ *   + We do not need it in get_column_likelihoods( ): there we are just reordering
+ *     sub-columns.
+ *   + We do it this way only to indicate which subA indices are in the same column.
+ *   + Could we instead use a DAG?
+ *     - Well, we would need to be able to *partially* compute the DAG behind a directed branch b
+ *     - We would also need to be able to generate the DAG for the entire alignment and then
+ *       do a topo-sort in order to print the alignment. 
+ *     - We could then CACHE the column information on the DAG nodes, if we were trying to match a 
+ *       specific linear order.
+ *     - We would then still have to handle ordering the columns in/for get_column_likelihoods( )
+ *
+ * 4. Note that even for the indexing scheme subA_index_leaf (in which all
  * columns correspond to CL index at the root of the tree) the ORDER
  * of these CL indices may differ from the order of columns in the alignment.
  */
