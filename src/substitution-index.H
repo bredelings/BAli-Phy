@@ -33,6 +33,23 @@ along with BAli-Phy; see the file COPYING.  If not see
  * in the sub-alignment.   We need persistent names in order to cache
  * conditional likelihoods at columns in the sub-alignment,
  * specifically in order to cache across internal-node resampling.
+ *
+ * These indices are used when performing the Felsenstein peeling
+ * algorithm for each branch b.  When combining the conditional
+ * likelihoods (CLs) for branches (b1,b2)->b0 to produce the CLs
+ * for branch b0, each alignment column leads to a triplet (i,j,k).
+ * This triplet specifies that CL i for branch b1 should be combined
+ * with CL[j] for branch b2, to produce CL k for branch b0.  The
+ * indices i, j, and k can be -1, indicating that no CL for that branch
+ * corresponds to this column.  If i or j is -1, then there are only
+ * gaps behind that branch.  If k is -1 (which can only occur in
+ * subA_index_internal) then the likelihood for the column is evaluated
+ * immediately and is added to the total of already evaluated likelihoods
+ * behind branch b0.
+ *
+ * Note that even for the indexing scheme subA_index_leaf (in which all
+ * columns correspond to CL index at the root of the tree) the ORDER
+ * of these CL indices may differ from the order of columns in the alignment.
  */
 
 /* Naming Scheme #1 (subA_index_leaf)
