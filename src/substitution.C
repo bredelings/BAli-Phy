@@ -1702,7 +1702,7 @@ namespace substitution {
 	//  (a) this branch (e.g. b) has no index
 	if (I(column+1,b) != alphabet::gap) continue;
 	
-	//  (b) at least one child branch 'child' has an index 'index'.
+	//  (b) at least one prev branch 'branch' has an index 'index'.
 	for(int j=0;j<prev.size();j++)
 	{
 	  int branch = prev[j];
