@@ -82,6 +82,10 @@ namespace substitution {
 	      const MultiModel& MModel);
   efloat_t Pr(const data_partition&,Likelihood_Cache& LC);
 
+  std::vector<std::vector<double> > get_model_likelihoods_by_alignment_column(const data_partition&);
+
+  std::vector<std::vector<double> > get_model_probabilities_by_alignment_column(const data_partition&);
+
   // Full likelihood - all columns, all rates (star tree)
   efloat_t Pr_star(const data_partition&);
 
