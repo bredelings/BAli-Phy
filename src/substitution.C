@@ -1684,6 +1684,8 @@ namespace substitution {
     // 2. Record likelihoods for disappearing columns
     vector<const_branchview> branches = branches_toward_node(T, cache.root);
 
+    IF_DEBUG_S(efloat_t other_subst1 = 1);
+
     for(int i=0;i<branches.size();i++)
     {
       int b = branches[i];
@@ -1709,9 +1711,10 @@ namespace substitution {
 	  int index = I(column+1, branch);
 
 	  if (index == alphabet::gap) continue;
-	
+
 	  element_prod_modify(likelihoods[column],cache(index,branch));
 
+	  IF_DEBUG_S(other_subst1 *= element_sum(likelihoods[column]));
 	  // We should never get here with subA_index_leaf.
 	}
       }
@@ -1736,6 +1739,19 @@ namespace substitution {
 
     // Is there some way of iterating over matrices cache(index,branch) where EITHER
     // this (index,branch) goes away OR this branch.target() == cache.root ?
+#ifdef DEBUG_SUBSTITUTION
+    efloat_t other_subst2 = 1;
+    for(int i=0;i<root_branches.size();i++)
+    {
+      assert(cache.up_to_date(root_branches[i]));
+      efloat_t L1 = cache[root_branches[i]].other_subst;
+      other_subst2 *= L1;
+      efloat_t L2 = other_subst3[root_branches[i]];
+      assert(std::abs(log(L2) - log(L1)) < 1.0e-9);
+    }
+
+    assert(std::abs(log(other_subst1) - log(other_subst2)) < 1.0e-9);
+#endif
 
     return likelihoods;
   }
