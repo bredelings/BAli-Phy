@@ -1575,9 +1575,13 @@ namespace substitution {
     return Pr;
   }
 
+
+
   efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) {
     return Pr(*P.A, *P.subA, P.MC, *P.T, LC, P.SModel());
   }
+
+
 
   efloat_t Pr_from_scratch_leaf(data_partition P)
   {
@@ -1588,6 +1592,8 @@ namespace substitution {
 
     return Pr(*P.A, subA, P.MC, *P.T, LC, P.SModel());
   }
+
+
 
   efloat_t Pr_from_scratch_internal(data_partition P)
   {
@@ -1602,6 +1608,8 @@ namespace substitution {
 
     return Pr(*P.A, subA, P.MC, *P.T, LC, P.SModel());
   }
+
+
 
   efloat_t Pr(const data_partition& P) {
     efloat_t result = Pr(P, P.LC);
