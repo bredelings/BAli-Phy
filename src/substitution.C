@@ -194,8 +194,10 @@ namespace substitution {
   void WeightedFrequencyMatrix(Matrix& F, const MultiModel& MModel) 
   {
     // cache matrix of frequencies
-    const int n_models = F.size1();
-    const int n_states = F.size2();
+    const int n_models = MModel.n_base_models();
+    const int n_states = MModel.n_states();
+
+    F.resize(n_models, n_states);
 
     for(int m=0;m<n_models;m++) {
       double p = MModel.distribution()[m];
