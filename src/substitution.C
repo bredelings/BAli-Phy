@@ -1746,7 +1746,7 @@ namespace substitution {
   {
     vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.A, *P.subA, P.MC, *P.T, P.LC, P.SModel());
 
-#ifndef NDEBUG
+#ifdef DEBUG_SUBSTITUTION
     efloat_t L1 = combine_likelihoods(likelihoods);
     efloat_t L2 = Pr_from_scratch_leaf(P);
     if (P.variable_alignment()) {
@@ -1754,7 +1754,7 @@ namespace substitution {
       assert(std::abs(log(L3) - log(L2)) < 1.0e-9);
     }
 
-    //   assert(std::abs(log(L1) - log(L2)) < 1.0e-9);
+    assert(std::abs(log(L1) - log(L2)) < 1.0e-9);
 #endif
     
     return likelihoods;
