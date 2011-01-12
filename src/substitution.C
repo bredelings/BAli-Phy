@@ -1690,8 +1690,8 @@ namespace substitution {
 
       // Get previous branches
       vector<int> prev;
-      for(const_in_edges_iterator i = branches[i].branches_before();i;i++)
-	prev.push_back(*i);
+      for(const_in_edges_iterator j = branches[i].branches_before();j;j++)
+	prev.push_back(*j);
 
       // Ignore leaf branches, since they columns don't disappear on leaf  branches.
       if (prev.size() == 0) continue;
