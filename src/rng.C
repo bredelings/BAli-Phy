@@ -36,13 +36,18 @@ namespace rng {
     unsigned long s=0;
 
     std::ifstream random("/dev/urandom");
-    for(int i=0;i<sizeof(s);i++) {
-      unsigned char c;
-      random >> c;
-      s <<= 8;
-      s |=  c;
+    if (random.good())
+    {
+      for(int i=0;i<sizeof(s);i++) 
+      {
+	unsigned char c;
+	random >> c;
+	s <<= 8;
+	s |=  c;
+      }
     }
-    random.close();
+    else
+      s = time(NULL);
 
     return s;
   }
