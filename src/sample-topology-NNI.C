@@ -199,6 +199,8 @@ void two_way_topology_slice_sample(owned_ptr<Probability_Model>& P, MoveStats& S
   std::pair<int,double> choice = slice_sample_multi(L,logp,w,-1);
 
   int C = choice.first;
+  if (C == -1) return;
+
   if (choice.first == 0)
     PP = p[0];
   else
@@ -529,7 +531,8 @@ void three_way_topology_sample_slice(owned_ptr<Probability_Model>& P, MoveStats&
   std::pair<int,double> choice = slice_sample_multi(L,logp,w,-1);
 
   int C = choice.first;
-  PP = p[C];
+  if (C != -1)
+    PP = p[C];
 
   MCMC::Result result(4);
 

@@ -411,7 +411,8 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
   if (slice)
   {
     C = topology_sample_SPR_slice_slide_node(p,b1);
-    P = p[C];
+    if (C != -1)
+      P = p[C];
   }
   else {
 
