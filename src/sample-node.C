@@ -175,8 +175,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   }
 
 
-  /*------------------ Compute the DP matrix ---------------------*/
-  // Matrices.prune();  prune is broken!
+  //------------------ Compute the DP matrix ----------------------//
   Matrices->forward();
 
   //------------- Sample a path from the matrix -------------------//
@@ -293,6 +292,9 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
 
   assert(Pr[0] > 0.0);
 
+  // Fail if Pr[0] is 0
+  if (Pr[0] <= 0.0) return -1;
+
   int C = -1;
   try {
     C = choose_MH(0,Pr);
@@ -403,7 +405,6 @@ void sample_node(Parameters& P,int node)
 
   vector< vector<int> > nodes(1);
   nodes[0] = get_nodes_random(T,node);
-
 
   vector<efloat_t> rho(1,1);
 

@@ -306,8 +306,6 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
       {
 	sample_two_nodes_base(p[i][j],nodes[i],cached_dparrays[i][j]);
 	Matrices[i].push_back(cached_dparrays[i][j]);
-	if (Matrices[i].back()->Pr_sum_all_paths() <= 0.0)
-	  std::cerr<<"sample-two-nodes: choice "<<i<<" has 0 probability!"<<std::endl;
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][4]);
 	//    p[i][j].LC.invalidate_node(p[i].T,nodes[i][5]);
 #ifndef NDEBUG
@@ -359,6 +357,9 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
       else
 	Pr[i] *= p[i][j].heated_likelihood();
   }
+
+  // Fail if Pr[0] is 0
+  if (Pr[0] <= 0.0) return -1;
 
   int C = -1;
   try {

@@ -190,6 +190,9 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   if (Matrices->Pr_sum_all_paths() <= 0.0) 
   {
     default_timer_stack.pop_timer();
+#ifndef NDEBUG_DP
+    Matrices->clear();
+#endif
     return Matrices;
   }
 
@@ -331,8 +334,10 @@ void sample_tri_multi_calculation::set_proposal_probabilities(const vector<efloa
 int sample_tri_multi_calculation::choose(vector<Parameters>& p)
 {
   assert(p.size() == nodes.size());
-  int C = -1;
 
+  if (Pr[0] <= 0.0) return -1;
+
+  int C = -1;
   try {
     C = choose_MH(0,Pr);
   }
@@ -342,7 +347,8 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p)
     throw c;
   }
   
-  assert(Pr[C] > 0.0);
+  // \todo What do we do if partition 0 works, but other partitions fail cuz of constraints?
+  assert(C == -1 or Pr[C] > 0.0);
 
 #ifndef NDEBUG_DP
   std::cerr<<"choice = "<<C<<endl;
@@ -470,6 +476,9 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 {
   try {
     sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP);
+
+    // The DP matrix construction didn't work.
+    if (tri.Pr[0] <= 0.0) return -1;
 
     tri.set_proposal_probabilities(rho);
 
