@@ -181,6 +181,14 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 
   //------------- Sample a path from the matrix -------------------//
 
+  // If the DP matrix ended up having probability 0, don't try to sample a path through it!
+  if (Matrices->Pr_sum_all_paths() <= 0.0)
+  {
+    std::cerr<<"sample_node_base( ): All paths have probability 0!"<<std::endl;
+    default_timer_stack.pop_timer();
+    return Matrices;
+  }
+
   vector<int> path_g = Matrices->sample_path();
   vector<int> path = Matrices->ungeneralize(path_g);
 

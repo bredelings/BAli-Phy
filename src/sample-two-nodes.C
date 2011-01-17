@@ -214,11 +214,12 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
 
   //------------------ Compute the DP matrix ---------------------//
 
-  //  Matrices.prune(); broken!
   Matrices->forward();
 
+  // If the DP matrix ended up having probability 0, don't try to sample a path through it!
   if (Matrices->Pr_sum_all_paths() <= 0.0) 
   {
+    std::cerr<<"sample_two_nodes_base( ): All paths have probability 0!"<<std::endl;
     default_timer_stack.pop_timer();
     return; // Matrices;
   }

@@ -126,9 +126,6 @@ public:
   /// Sample a path from the HMM
   std::vector<int> sample_path() const;
 
-  /// Compute the forward probabilities and back sample
-  std::vector<int> forward(const std::vector<std::vector<int> >&);
-
   efloat_t path_P(const std::vector<int>& path) const;
 
   /// Construct a 2D DP matrix from the dimensions, and an HMM

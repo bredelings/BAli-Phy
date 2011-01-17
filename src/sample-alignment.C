@@ -136,7 +136,17 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   vector<int> path_old = get_path(A,node1,node2);
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,~group1,seq1,seq2,seq12);
 
-  vector<int> path = Matrices->forward(pins);
+  Matrices->forward_constrained(pins);
+
+  // If the DP matrix ended up having probability 0, don't try to sample a path through it!
+  if (Matrices->Pr_sum_all_paths() <= 0.0)
+  {
+    std::cerr<<"sample_alignment_base( ): All paths have probability 0!"<<std::endl;
+    default_timer_stack.pop_timer();
+    return Matrices;
+  }
+
+  vector<int> path = Matrices->sample_path();
 
   path.erase(path.begin()+path.size()-1);
 

@@ -186,6 +186,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
       std::cerr<<"Constraints give this choice probability 0"<<std::endl;
   }
 
+  // If the DP matrix ended up having probability 0, don't try to sample a path through it!
   if (Matrices->Pr_sum_all_paths() <= 0.0) 
   {
     default_timer_stack.pop_timer();

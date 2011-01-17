@@ -208,13 +208,6 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins)
   compute_Pr_sum_all_paths();
 }
 
-vector<int> DPmatrix::forward(const vector<vector<int> >& pins) 
-{
-  forward_constrained(pins);
-  return sample_path();
-}
-
-
 efloat_t DPmatrix::path_P(const vector<int>& path) const 
 {
   const int I = size1()-1;
