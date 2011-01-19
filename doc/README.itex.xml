@@ -935,15 +935,14 @@ traditional = traditional
 	<varlistentry>
 	  <term>C1.err</term>
 	  <listitem>
-	    <para>You can ignore this file.</para>
+	    <para>Log file for hopefully irrelevant error messages.</para>
 	  </listitem>
 	</varlistentry>
 	
 	<varlistentry>
 	  <term>C1.MAP</term>
 	  <listitem>
-	    <para>Successive estimates of the MAP point (if you have
-	      only one partition).</para>
+	    <para>Successive estimates of the MAP point.</para>
 	  </listitem>
 	</varlistentry>
 	
@@ -957,13 +956,136 @@ traditional = traditional
 	<varlistentry>
 	  <term>C1.trees</term>
 	  <listitem>
-	    <para>Tree samples</para>
+	    <para>Tree samples: one sample per line, in Newick format.</para>
 	  </listitem>
 	</varlistentry>
 	
       </variablelist>
       
       <para>For the last two files, each line in these files corresponds to one iteration.</para>
+
+      <section><title>Field names in <filename>C1.p</filename></title>
+
+      <para>This section explains the meaning of the various field names in the file <filename>C1.p</filename>.</para>
+
+      <section><title>Computed parameter names</title>
+      <variablelist>
+	<varlistentry>
+	  <term>prior</term>
+	  <listitem>
+	    <para>The log prior probability.  This includes the probability of the alignment, since the alignment is not observed.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>prior_A<replaceable>n</replaceable></term>
+	  <listitem>
+	    <para>The log of the probability $\Pr(A_n|\tau,T,\Lambda)$ of the alignment $A_n$ of the $n$th partition, given the topology $\tau$, the branch lengths $T$, and insertion-deletion process parameters $\Lambda$.  This log probability is the probabilistic equivalent of a gap penalty on the alignment $A_n$ given the scoring parameters $\Lambda$.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>likelihood</term>
+	  <listitem>
+	    <para>The log of the likelihood.  Conditional on the alignment, this is determined entirely by the substitution model, and ignores insertions and deletions.  This is the probabilistic equivalent of the mismatch penalty.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>logp</term>
+	  <listitem>
+	    <para>The log of the probability.  The probability is the product of the prior and the likelihood.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>|A|</term>
+	  <listitem>
+	    <para>The total number of alignment columns across all partitions.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>#indels<replaceable>n</replaceable></term>
+	  <listitem>
+	    <para>The number of indel events in partition <replaceable>n</replaceable>, if we group adjacent indels that occur on the same branch.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>#indels</term>
+	  <listitem>
+	    <para>The total number of indel events across all partitions, if we group adjacent indels that occur on the same branch.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>|indels<replaceable>n</replaceable>|</term>
+	  <listitem>
+	    <para>The length of indel events in partition <replaceable>n</replaceable>, if we group adjacent indels that occur on the same branch.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>|indels|</term>
+	  <listitem>
+	    <para>The total length of indel events across all partitions, if we group adjacent indels that occur on the same branch.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>#substs<replaceable>n</replaceable></term>
+	  <listitem>
+	    <para>The unweighted parsimony score for substitutions in partition <replaceable>n</replaceable>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>#substs</term>
+	  <listitem>
+	    <para>The total unweighted parsimony score for substitutions across all partitions.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>|T|</term>
+	  <listitem>
+	    <para>For a single-partition analysis, the sum of branch lengths.  For a multi-partition analysis, a weighted average of this sum across partitions.</para>
+	  </listitem>
+	</varlistentry>
+
+      </variablelist>
+      </section>
+
+      <section><title>Model parameter names</title>
+
+      <para>The prefixes "S<replaceable>n</replaceable>::" and "I<replaceable>n</replaceable>::" will be dropped if not necessary to disambiguate parameters with the same name in different sub-models.</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term>mu<replaceable>n</replaceable></term>
+	  <listitem>
+	    <para>The average number of substitutions per branch.  The <replaceable>n</replaceable>th scale parameter ordinarily applies to the <replaceable>n</replaceable>th partition, unless multiple partitions are forced to have the same branch lengths using <userinput>--same-scale</userinput>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>S<replaceable>n</replaceable>::<replaceable>name</replaceable></term>
+	  <listitem>
+	    <para>Parameter <replaceable>name</replaceable> in the <replaceable>n</replaceable>th substitution model.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term>I<replaceable>n</replaceable>::<replaceable>name</replaceable></term>
+	  <listitem>
+	    <para>Parameter <replaceable>name</replaceable> in the <replaceable>n</replaceable>th insertion/deletion model.</para>
+	  </listitem>
+	</varlistentry>
+
+      </variablelist>
+      </section>
+      </section>
     </section>
 
     <section><info><title>Summarizing the output</title></info>
