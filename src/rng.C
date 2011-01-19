@@ -195,8 +195,6 @@ tuple Multinomial::operator()(const valarray<double>& p,unsigned long n1) {
   return m;
 }
 
-using std::clog;
-
 valarray<double> RNG::dirichlet(const valarray<double>& n)
 {
   valarray<double> D(n.size());
