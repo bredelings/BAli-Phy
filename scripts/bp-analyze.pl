@@ -1711,7 +1711,7 @@ sub show_array_differences
 
 sub get_input_file_names
 {
-    my $input_file_names = [];
+    my $input_file_names;
     for my $out_file (@out_files)
     {
 	my $these_input_file_names = get_input_file_names_for_outfile($out_file);
