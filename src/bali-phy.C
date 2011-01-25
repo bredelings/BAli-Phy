@@ -135,6 +135,7 @@ namespace mpi = boost::mpi;
 #include <new>
 #include <signal.h>
 
+#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/program_options.hpp>
 #include <boost/filesystem/operations.hpp>
 

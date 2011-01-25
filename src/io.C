@@ -1,5 +1,6 @@
 #include "io.H"
 
+#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem/operations.hpp>
 #include "myexception.H"
 
