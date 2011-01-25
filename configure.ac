@@ -118,7 +118,7 @@ AM_PROG_CC_C_O
 # FIXME: Replace `main' with a function in `-lboost_program_options':
 
 AC_ARG_VAR(BOOST_SUFFIX,
-	   [What suffix do the BOOST libraries have? (e.g. libboost_filesystem-st.so would have suffice '-st')])
+	   [What suffix do the BOOST libraries have? (e.g. libboost_filesystem-st.so would have suffix '-st')])
 
 AC_TYPE_SIZE_T
 
