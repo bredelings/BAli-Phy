@@ -73,7 +73,7 @@ TOOLS = model_P statreport alignment-gild \
 	alignment-compare tree-partitions trees-distances \
 	partitions-supported trees-pair-distances analyze-rates \
 	path-graph alignment-find-conserved alignment-max alignments-diff \
-	stats-cat generalized_tuples
+	stats-cat
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -312,9 +312,6 @@ draw_tree_LDADD = ${CAIRO_LIBS}
 
 path_graph_SOURCES = tools/path-graph.C alignment.C alphabet.C sequence.C util.C \
 	sequence-format.C alignment-util.C tree.C io.C
-
-#---------------------------------------------------------------
-generalized_tuples_SOURCES = generalized_tuples.C value.C values.C expression.C util.C
 
 #---------------------------------------------------------------
 
