@@ -697,7 +697,7 @@ $section .= '<img src="c50.SRQ.png" class="r_floating_picture" alt="SRQ plot for
     }
     $section .= "<p><i>PSRF-80%CI</i> = $psrf_80</p>\n" if defined ($asdsf);
     $section .= "<p><i>PSRF-RCF</i> = $psrf_rcf</p>\n" if defined ($msdsf);
-    
+
     $section .= '<p><a href="convergence-PP.pdf">Variation in split frequency estimates</a></p>'."\n" if (-f "Results/convergence-PP.pdf");
 
 my $tne_string = `pickout -n Ne < Results/partitions.bs`;
@@ -1085,6 +1085,9 @@ sub draw_trees
 	$prune_arg = "--prune $prune" if defined($prune);
 	
     }
+
+    `cd Results ; draw-tree MAP.tree --layout=equal-daylight --no-shade` if (-e 'Results/MAP.tree');
+    `cd Results ; draw-tree MAP.tree --layout=equal-daylight --no-shade --output=svg ` if (-e 'Results/MAP.tree');
 
     print "done.\n";
 }
