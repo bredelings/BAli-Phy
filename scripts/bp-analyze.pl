@@ -1890,7 +1890,7 @@ sub get_smodels_for_file
 sub arrays_all_equal
 {
     my @arrays = @_;
-    for(my $i=2;$i <= $#arrays ; $i++) {
+    for(my $i=1;$i <= $#arrays ; $i++) {
 	return $i if (!compare_arrays($arrays[$i], $arrays[0]));
     }
     return 0;
