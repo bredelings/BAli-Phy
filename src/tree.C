@@ -1166,6 +1166,13 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& names)
 
   BranchNode* remainder = tree_stack.back()[0];
   BranchNode* root_ = TreeView::unlink_subtree(remainder->out);
+
+  // Handle root_ being a leaf
+  if (::is_leaf_node(root_)) {
+    root_->node = names.size();
+    throw myexception()<<"Tree has an unnamed leaf node at the root.  Please remove the useless branch to the root.";
+  }
+
   TreeView(remainder).destroy();
 
   // destroy old tree structure
@@ -1265,6 +1272,12 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
   BranchNode* remainder = tree_stack.back()[0];
   BranchNode* root_ = TreeView::unlink_subtree(remainder->out);
   TreeView(remainder).destroy();
+
+  // Handle root_ being a leaf
+  if (::is_leaf_node(root_)) {
+    root_->node = names.size();
+    throw myexception()<<"Tree has an unnamed leaf node at the root.  Please remove the useless branch to the root.";
+  }
 
   // destroy old tree structure
   if (nodes_.size()) TreeView(nodes_[0]).destroy();
