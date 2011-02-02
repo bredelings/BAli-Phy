@@ -1732,6 +1732,7 @@ sub get_input_file_names
 	    }
 	}
     }
+    $input_file_names = [] if (!defined($input_file_names));
     return $input_file_names;
 }
 
