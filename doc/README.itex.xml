@@ -418,7 +418,7 @@
 	If your shell is <command>csh</command> or
 	<command>tcsh</command>, then the command looks like this:
 	<screen><prompt>%</prompt> setenv PATH /usr/local/bin:&#36;PATH</screen>
-	Note that these commands will only the window you are typing
+	Note that these commands will only affect the window you are typing
 	in, and will vanish when you reboot.   
       </para>
       </section>
