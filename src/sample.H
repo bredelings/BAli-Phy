@@ -41,6 +41,10 @@ void tri_sample_alignment(Parameters& P,int node1,int node2);
 bool tri_sample_alignment_branch(Parameters&,
 				 int node1,int node2,int b,double rho,double length2);
 
+/// Resample the 3-star alignment and branch length, holding the n2/n3 order constant.
+bool tri_sample_alignment_and_parameter(Parameters&,
+					int node1,int node2,int p,double rho,double v2);
+
 /// Resample the 3-star alignment and branch TYPE, holding the n2/n3 order constant.
 bool tri_sample_alignment_branch_model(Parameters&,
 				       int node1,int node2);
@@ -69,6 +73,7 @@ void walk_tree_sample_NNI_and_A(owned_ptr<Probability_Model>&, MCMC::MoveStats&)
 void sample_alignments_one(owned_ptr<Probability_Model>&, MCMC::MoveStats&, int);
 void sample_tri_one(owned_ptr<Probability_Model>&, MCMC::MoveStats&, int);
 void sample_tri_branch_one(owned_ptr<Probability_Model>&, MCMC::MoveStats&, int);
+void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>&, MCMC::MoveStats&, int);
 void sample_tri_branch_type_one(owned_ptr<Probability_Model>&, MCMC::MoveStats&, int);
 
 void sample_node_move(owned_ptr<Probability_Model>&, MCMC::MoveStats&, int);

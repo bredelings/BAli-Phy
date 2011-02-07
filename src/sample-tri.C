@@ -559,6 +559,29 @@ bool tri_sample_alignment_branch(Parameters& P,
   return (C > 0);
 }
 
+bool tri_sample_alignment_and_parameter(Parameters& P,
+					int node1,int node2,int p_index,
+					double rho_,double v2)
+{
+  //----------- Generate the Different Matrices ---------//
+  vector<Parameters> p(2,P);
+  p[1].set_parameter_value(p_index,v2);
+
+  vector< vector<int> > nodes (2, get_nodes_branch_random(*P.T,node1,node2) );
+
+  vector<efloat_t> rho(2);
+  rho[0] = 1;
+  rho[1] = rho_;
+
+  int C = sample_tri_multi(p,nodes,rho,false,false);
+
+  if (C != -1) {
+    P = p[C];
+  }
+
+  return (C > 0);
+}
+
 
 bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
 {

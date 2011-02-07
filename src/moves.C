@@ -111,6 +111,65 @@ void sample_tri_branch_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int
 }
 
 
+void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
+{
+  Parameters* PP = P.as<Parameters>();
+  if (not PP->smodel_full_tree and b>=PP->T->n_leaves())
+    return;
+
+  if ( loadvalue(PP->keys,"parameter_tri",1.0) < 0.5) return;
+
+  MCMC::Result result(2);
+
+  assert(PP->variable_alignment()); 
+
+  const SequenceTree& T = *PP->T;
+
+  int node1 = T.branch(b).target();
+  int node2 = T.branch(b).source();
+
+  if (myrandomf() < 0.5)
+    std::swap(node1,node2);
+
+  if (node1 < T.n_leaves())
+    std::swap(node1,node2);
+    
+  vector<int> indices;
+  double sigma = 0.5;
+  if (uniform() < 0.5)
+  {
+    indices = parameters_with_extension(*PP,"lambda");
+    //    sigma = 0.5;
+  }
+  else
+  {
+    indices = parameters_with_extension(*PP,"epsilon");
+    //    sigma = 0.5;
+  }
+  if (not indices.size()) return;
+  int p = indices[(int)(uniform()*indices.size())];
+  std::string pname = PP->parameter_name(p);
+
+  double v1 = PP->get_parameter_value(p);
+  // is this right for epsilon?  Shouldn't we use shift_epsilon?
+  double v2 = v1 + cauchy(0,sigma);
+
+  Bounds<double> range = P->get_bounds(p);
+
+  if (v2 > 0)
+    v2 = -v2;
+  if (not range.in_range(v2)) return;
+
+
+  if (tri_sample_alignment_and_parameter(*PP,node1,node2,p,1,v2)) {
+    result.totals[0] = 1;
+    result.totals[1] = std::abs(v2 - v1);
+  }
+
+  Stats.inc("sample_"+pname+"_and_alignment_on_branch",result);
+}
+
+
 void sample_tri_branch_type_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
 {
   Parameters* PP = P.as<Parameters>();
@@ -397,7 +456,12 @@ void walk_tree_sample_alignments(owned_ptr<Probability_Model>& P, MoveStats& Sta
     //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
 
     if ((myrandomf() < 0.15) and (PP.T->n_leaves() >2))
-      sample_tri_one(P,Stats,b);
+    {
+      if (uniform() < 0.5)
+	sample_tri_one(P,Stats,b);
+      else
+	sample_parameter_and_alignment_on_branch(P,Stats,b);
+    }
     else
       sample_alignments_one(P,Stats,b);
   }
