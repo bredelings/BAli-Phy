@@ -194,7 +194,7 @@ double shift_epsilon(vector<double>& x, const vector<double>& p)
   double  sigma = p[0];
 
   double E_length = lambda_E - logdiff(0,lambda_E);
-  E_length += gaussian(0,sigma);
+  E_length += cauchy(0,sigma);
   lambda_E = E_length - logsum(0,E_length);
 
   return 1;
