@@ -147,6 +147,11 @@ along with BAli-Phy; see the file COPYING.  If not see
  * 
  */
 
+/*
+ * The get_subA_index( ) functions are used ONLY in substitution.C and substitution-index.C
+ * 
+ */
+
 struct subA_index_t: public ublas::matrix<int>
 {
 protected:
