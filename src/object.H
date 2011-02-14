@@ -4,6 +4,13 @@
 class Object {
 public:
   virtual Object* clone() const =0;
+
+  virtual bool possibly_different_from(const Object& O) const 
+  {
+    if (this == &O) return false;
+    return true;
+  }
+
   virtual ~Object() {}
 };
 
