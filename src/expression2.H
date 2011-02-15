@@ -204,7 +204,7 @@ struct Multiply: public Operation
     if (inputs.size() != 2)
       throw myexception()<<"Multiple::expression - got "<<inputs.size()<<" arguments instead of 2.";
     
-    return inputs[0] + "*" + inputs[1];
+    return inputs[0] + " * " + inputs[1];
   }
 
   Multiply():Operation(2) {}
@@ -252,7 +252,7 @@ struct GreaterThan: public Operation
     if (inputs.size() != 2)
       throw myexception()<<"GreaterThan::expression - got "<<inputs.size()<<" arguments instead of 2.";
     
-    return inputs[0] + ">" + inputs[1];
+    return inputs[0] + " > " + inputs[1];
   }
 
   GreaterThan():Operation(2) {}

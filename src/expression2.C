@@ -376,9 +376,273 @@ string Add::expression(const vector<string>& inputs) const
   if (inputs.size() != 2)
     throw myexception()<<"Add::expression - got "<<inputs.size()<<" arguments instead of 2.";
 
-  return inputs[0] + "+" + inputs[1];
+  return inputs[0] + " + " + inputs[1];
 }
 
+struct term_reference
+{
+  polymorphic_cow_ptr<Formula> F;
+  int index;
+  bool is_state() const {return F->is_state(index);}
+  bool is_constant() const {return F->is_constant(index);}
+  bool is_computed() const {return F->is_computed(index);}
+  std::string print() const {return F->name_for_index(index);}
+
+  term_reference():index(-1) {}
+  term_reference(polymorphic_cow_ptr<Formula> f, int i):F(f),index(i) {}
+};
+
+struct expression: public Object
+{
+  polymorphic_cow_ptr<Formula> F;
+
+  // an expression can be
+  // - a term reference
+  // - a constant (probably one w/o an index so far)
+  // - an op taking expressions as arguments.
+  // - a dummy var
+  // - a lambda-expression binding dummies in its arguments
+
+  expression* clone() const =0;
+
+  virtual int n_args() const {return 0;}
+  
+  virtual int highest_unused_dummy() const {return 0;}
+
+  // return NULL if no change
+  virtual shared_ptr<const expression> substitute(int dummy, shared_ptr<const expression> E) const
+  {
+    return shared_ptr<const expression>();
+  }
+
+  virtual std::string print() const = 0;
+
+  shared_ptr<const expression> operator()(shared_ptr<const expression> E) const;
+
+  shared_ptr<const expression> operator()(const expression& E) const;
+
+  expression() {}
+  virtual ~expression() {}
+};
+
+shared_ptr<const expression> substitute(shared_ptr<const expression> E1, int dummy, shared_ptr<const expression> E2);
+
+// a constant expression
+struct constant_expression: public expression
+{
+  shared_ptr<const Object> value;
+  constant_expression* clone() const {return new constant_expression(*this);}
+
+  std::string print() const {return value->print();}
+  constant_expression(shared_ptr<const Object> v): value(v) {}
+};
+
+// a term reference expression
+struct term_reference_expression: public expression
+{
+  term_reference term;
+  term_reference_expression* clone() const {return new term_reference_expression(*this);}
+  std::string print() const {return term.print();}
+  term_reference_expression(const term_reference& r):term(r) {}
+  term_reference_expression(polymorphic_cow_ptr<Formula> f, int i):term(f,i) {}
+};
+
+// a dummy variable expression
+struct dummy_expression: public expression
+{
+  int index;
+
+  virtual int highest_unused_dummy() const {return index+1;}
+
+  virtual shared_ptr<const expression> substitute(int dummy, shared_ptr<const expression> E) const
+  {
+    if (index == dummy) 
+      return E;
+    else
+      return shared_ptr<const expression>();
+  }
+
+  dummy_expression* clone() const {return new dummy_expression(*this);}
+  std::string print() const {return string("#")+convertToString(index);}
+  dummy_expression(int i):index(i) {}
+};
+
+// a function expression
+struct function_expression: public expression
+{
+  // what is the top-level operation?
+  boost::shared_ptr<const Operation> op;
+
+  // what expressions should be plugged in to each slot in the op?
+  std::vector< shared_ptr<const expression> > args;
+
+  int highest_unused_dummy() const 
+  {
+    int highest = 0;
+    for(int i=0;i<args.size();i++)
+      highest = std::max(highest, args[i]->highest_unused_dummy());
+    return highest;
+  }
+
+  shared_ptr<const expression> substitute(int dummy, shared_ptr<const expression> E) const
+  {
+    std::vector< shared_ptr<const expression> > new_args(args.size());
+    bool change = false;
+    for(int i=0;i<args.size();i++)
+    {
+      new_args[i] = ::substitute(args[i], dummy, E);
+      if (new_args[i] != args[i])
+	change = true;
+    }
+
+    shared_ptr<const expression> result;
+
+    if (change)
+      result = shared_ptr<const expression>(new function_expression(op,new_args));
+
+    return result;
+  }
+
+  function_expression* clone() const {return new function_expression(*this);}
+
+  std::string print() const 
+  {
+    vector<string> arg_names;
+    for(int i=0;i<args.size();i++)
+      arg_names.push_back( args[i]->print() );
+
+    return op->expression(arg_names);
+  }
+
+  function_expression(const Operation& O,const vector< shared_ptr<const expression> >& A)
+    :op(O.clone()),
+     args(A)
+  { }
+
+  function_expression(shared_ptr<const Operation> O,const vector< shared_ptr<const expression> >& A)
+    :op(O->clone()),
+     args(A)
+  { }
+};
+
+struct lambda_expression: public expression
+{
+  dummy_expression dummy_variable;
+  
+  shared_ptr<const expression> quantified_expression;
+  
+  int highest_unused_dummy() const 
+  {
+    return quantified_expression->highest_unused_dummy();
+  }
+  
+  shared_ptr<const expression> substitute(int dummy, shared_ptr<const expression> E) const;
+
+  lambda_expression* clone() const {return new lambda_expression(*this);}
+
+  std::string print() const 
+  {
+    return string("(lambda ") + dummy_variable.print() + ")(" + quantified_expression->print() + ")";
+  }
+
+  lambda_expression(int dummy, shared_ptr<const expression> E)
+    :dummy_variable(dummy),
+     quantified_expression(E)
+  { }
+
+  lambda_expression(const Operation& O)
+    :dummy_variable(0)
+  {
+    int n = O.n_args();
+    assert(n != -1);
+
+    vector< shared_ptr<const expression> > A;
+    for(int i=0;i<n;i++)
+      A.push_back(shared_ptr<const expression>(new dummy_expression(i)));
+
+    shared_ptr<const expression> E(new function_expression(O, A));
+
+    for(int i=n-1;i>0;i--)
+      E = shared_ptr<const expression>(new lambda_expression(i,E));
+
+    quantified_expression = E;
+  }
+};
+
+shared_ptr<const expression> lambda_expression::substitute(int dummy, shared_ptr<const expression> E) const
+{
+  if (dummy_variable.index == dummy)
+    throw myexception()<<"Trying to substitution for dummy "<<dummy<<" in lambda express that quantifies it!";
+
+  shared_ptr<const expression> result = quantified_expression->substitute(dummy,E);
+  
+  if (not result) return result;
+  
+  return shared_ptr<const expression>(new lambda_expression(dummy_variable.index,result));
+}
+
+shared_ptr<const expression> substitute(shared_ptr<const expression> E1, int dummy, shared_ptr<const expression> E2)
+{
+  shared_ptr<const expression> E3 = E1->substitute(dummy,E2);
+  if (E3) 
+    return E3;
+  else
+    return E1;
+}
+
+shared_ptr<const expression> apply(const expression& E,shared_ptr<const expression> arg)
+{
+  const lambda_expression* lambda = dynamic_cast<const lambda_expression*>(&E);
+  if (not lambda)
+    throw myexception()<<"Too many arguments to expression "<<E.print()<<".  (Is this a function at all?)";
+
+  return substitute(lambda->quantified_expression, lambda->dummy_variable.index, arg);
+}
+
+shared_ptr<const expression> apply(const expression& E,const expression& arg)
+{
+  return apply(E,shared_ptr<const expression>(arg.clone()));
+}
+
+shared_ptr<const expression> apply(shared_ptr<const expression> E,
+				   shared_ptr<const expression> arg)
+{
+  return apply(*E,arg);
+}
+
+shared_ptr<const expression> apply(shared_ptr<const expression> E,
+				   const expression& arg)
+{
+  return apply(*E,shared_ptr<const expression>(arg.clone()));
+}
+
+shared_ptr<const expression> apply(shared_ptr<const expression> E,
+				   const vector<shared_ptr<const expression> > args,
+				   int i)
+{
+  shared_ptr<const expression> result1 = apply(E,args[i]);
+
+  if (i<args.size())
+    result1 = apply(result1, args, i+1);
+
+  return result1;
+}
+
+shared_ptr<const expression> apply(shared_ptr<const expression> E,
+				   const vector<shared_ptr<const expression> > args)
+{
+  return apply(E,args,0);
+}
+
+shared_ptr<const expression> expression::operator()(shared_ptr<const expression> arg) const
+{
+  return apply(*this,arg);
+}
+
+shared_ptr<const expression> expression::operator()(const expression& arg) const
+{
+  return apply(*this,arg);
+}
 
 int main()
 {
@@ -480,4 +744,11 @@ int main()
   CTX2.set_value(z,Double(0));
   result = CTX2.evaluate(cond);
   std::cout<<"CTX2 = \n"<<CTX2<<"\n";
+
+  Multiply<Double,Double,Double> m1;
+  shared_ptr<const expression> XX( new term_reference_expression(F,0) );
+  shared_ptr<const expression> M( new lambda_expression(m1));
+  std::cerr<<M->print()<<"\n";
+  std::cerr<<(*M)(XX)->print()<<"\n";
+
 }
