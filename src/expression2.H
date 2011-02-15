@@ -169,9 +169,14 @@ struct OperationArgs
 
 struct Operation: public Object
 {
+  int n_args_;
+  int n_args() const {return n_args_;}
+
   virtual Operation* clone() const=0;
   virtual boost::shared_ptr<const Object> operator()(OperationArgs& Args) const =0;
   virtual std::string expression(const std::vector<std::string>& inputs) const;
+
+  Operation(int n):n_args_(n) { }
 };
 
 
@@ -201,6 +206,8 @@ struct Multiply: public Operation
     
     return inputs[0] + "*" + inputs[1];
   }
+
+  Multiply():Operation(2) {}
 };
 
 struct IfThenElse: public Operation
@@ -219,6 +226,8 @@ struct IfThenElse: public Operation
   }
 
   std::string expression(const std::vector<std::string>& inputs) const;
+
+  IfThenElse():Operation(3) {}
 };
 
 template<typename X, typename Y>
@@ -245,6 +254,8 @@ struct GreaterThan: public Operation
     
     return inputs[0] + ">" + inputs[1];
   }
+
+  GreaterThan():Operation(2) {}
 };
 
 template<typename X, typename Y>
@@ -261,6 +272,8 @@ struct Conversion: public Operation
 
     return boost::shared_ptr<const Y>(new Y(y));
   }
+
+  Conversion():Operation(1) {}
 };
 
 struct Add: public Operation
@@ -282,6 +295,8 @@ struct Add: public Operation
   }
 
   std::string expression(const std::vector<std::string>& inputs) const;
+
+  Add():Operation(2) {}
 };
 
 /*-----------------------------------------------------------------------------*/
