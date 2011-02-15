@@ -200,6 +200,22 @@ struct GreaterThan: public Operation
   }
 };
 
+template<typename X, typename Y>
+struct Conversion: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual IfThenElse* clone() const {return new IfThenElse(*this);}
+
+  shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    shared_ptr<const X> x = Args.evaluate_as<X>(0);
+    Y y = *x;
+
+    return shared_ptr<const Y>(new Y(y));
+  }
+};
+
 struct Add: public Operation
 {
   // The 'context' should include the knowledge of the input slots
