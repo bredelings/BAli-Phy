@@ -151,7 +151,12 @@ struct OperationArgs
   template <typename T>
   boost::shared_ptr<const T> evaluate_as(int slot)
   {
-    return boost::dynamic_pointer_cast<const T>(evaluate(slot));
+    boost::shared_ptr<const Object> o = evaluate(slot);
+    assert(o);
+    boost::shared_ptr<const T> converted =  boost::dynamic_pointer_cast<const T>(o);
+    if (not converted)
+      throw myexception()<<"Cannot convert '"<<typeid(o.get()).name()<<" to "<<typeid(T).name();
+    return converted;
   }
 
 };
