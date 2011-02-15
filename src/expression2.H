@@ -8,11 +8,6 @@
 #include "util.H"
 #include "myexception.H"
 
-using boost::shared_ptr;
-using std::vector;
-using std::string;
-using std::pair;
-
 struct Computation;
 struct Operation;
 
@@ -25,10 +20,10 @@ struct Formula: public Object
     std::vector<std::pair<int,int> > affected_slots;
     std::vector<int> affected_indices;
     std::string name;
-    shared_ptr<const Object> constant_value;
+    boost::shared_ptr<const Object> constant_value;
 
     Term() {}
-    Term(shared_ptr<const Object> O):constant_value(O) { }
+    Term(boost::shared_ptr<const Object> O):constant_value(O) { }
   };
 
   std::vector<Term> terms;
@@ -44,7 +39,7 @@ public:
 
   const std::vector<int>& affected_indices(int index) const {return terms[index].affected_indices;}
 
-  const std::vector<pair<int,int> >& affected_slots(int index) const {return terms[index].affected_slots;}
+  const std::vector<std::pair<int,int> >& affected_slots(int index) const {return terms[index].affected_slots;}
 
   int n_affected_indices(int index) const {return terms[index].affected_indices.size();}
 
@@ -112,8 +107,8 @@ struct Computation: public Object
 {
   Computation* clone() const {return new Computation(*this);}
 
-  vector<shared_ptr<const Object> > used_values;
-  vector<int> slots_used_order;
+  std::vector<boost::shared_ptr<const Object> > used_values;
+  std::vector<int> slots_used_order;
 
   Computation(int n_inputs):used_values(n_inputs) { }
 };
@@ -121,7 +116,7 @@ struct Computation: public Object
 struct OperationArgs
 {
   Context& CTX;
-  shared_ptr<Computation> computation;
+  boost::shared_ptr<Computation> computation;
   int index_of_caller;
 
   OperationArgs(Context& A, int i)
@@ -132,7 +127,7 @@ struct OperationArgs
     computation = boost::shared_ptr<Computation>( new Computation(n_input_slots) );
   }
 
-  shared_ptr<const Object> evaluate(int slot)
+  boost::shared_ptr<const Object> evaluate(int slot)
   {
     int index_to_evaluate = CTX.F->input_indices(index_of_caller)[slot];
     if (not computation->used_values[slot])
@@ -147,7 +142,7 @@ struct OperationArgs
   }
 
   template <typename T>
-  shared_ptr<const T> evaluate_as(int slot)
+  boost::shared_ptr<const T> evaluate_as(int slot)
   {
     return boost::dynamic_pointer_cast<const T>(evaluate(slot));
   }
@@ -157,7 +152,7 @@ struct OperationArgs
 struct Operation: public Object
 {
   virtual Operation* clone() const=0;
-  virtual shared_ptr<const Object> operator()(OperationArgs& Args) const =0;
+  virtual boost::shared_ptr<const Object> operator()(OperationArgs& Args) const =0;
   virtual std::string expression(const std::vector<std::string>& inputs) const;
 };
 
@@ -167,12 +162,12 @@ struct Multiply: public Operation
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Multiply* clone() const {return new Multiply(*this);}
 
-  shared_ptr<const Object> operator()(OperationArgs& Args) const
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    shared_ptr<const Double> y = Args.evaluate_as<Double>(1);
+    boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
+    boost::shared_ptr<const Double> y = Args.evaluate_as<Double>(1);
 
-    shared_ptr<Double> r ( new Double );
+    boost::shared_ptr<Double> r ( new Double );
 
     *r = (*x) * (*y);
 
@@ -188,9 +183,9 @@ struct IfThenElse: public Operation
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual IfThenElse* clone() const {return new IfThenElse(*this);}
 
-  shared_ptr<const Object> operator()(OperationArgs& Args) const
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    shared_ptr<const Bool> condition = Args.evaluate_as<Bool>(0);
+    boost::shared_ptr<const Bool> condition = Args.evaluate_as<Bool>(0);
     if (condition)
       return Args.evaluate(1);
     else
@@ -205,14 +200,14 @@ struct GreaterThan: public Operation
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual IfThenElse* clone() const {return new IfThenElse(*this);}
 
-  shared_ptr<const Object> operator()(OperationArgs& Args) const
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    shared_ptr<const X> x = Args.evaluate_as<X>(0);
-    shared_ptr<const Y> y = Args.evaluate_as<Y>(1);
+    boost::shared_ptr<const X> x = Args.evaluate_as<X>(0);
+    boost::shared_ptr<const Y> y = Args.evaluate_as<Y>(1);
 
     Bool condition = (*x > *y);
 
-    return shared_ptr<const Bool>(new Bool(condition));
+    return boost::shared_ptr<const Bool>(new Bool(condition));
   }
 };
 
@@ -223,12 +218,12 @@ struct Conversion: public Operation
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual IfThenElse* clone() const {return new IfThenElse(*this);}
 
-  shared_ptr<const Object> operator()(OperationArgs& Args) const
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    shared_ptr<const X> x = Args.evaluate_as<X>(0);
+    boost::shared_ptr<const X> x = Args.evaluate_as<X>(0);
     Y y = *x;
 
-    return shared_ptr<const Y>(new Y(y));
+    return boost::shared_ptr<const Y>(new Y(y));
   }
 };
 
@@ -238,12 +233,12 @@ struct Add: public Operation
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Add* clone() const {return new Add(*this);}
 
-  shared_ptr<const Object> operator()(OperationArgs& Args) const
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    shared_ptr<const Double> y = Args.evaluate_as<Double>(1);
+    boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
+    boost::shared_ptr<const Double> y = Args.evaluate_as<Double>(1);
 
-    shared_ptr<Double> r ( new Double );
+    boost::shared_ptr<Double> r ( new Double );
 
     *r = (*x) + (*y);
 
