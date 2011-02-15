@@ -19,7 +19,7 @@ bool Formula::has_inputs(int index) const
 
 bool Formula::is_constant(int index) const
 {
-  return terms[index].constant_value;
+  return terms[index].constant;
 }
 
 bool Context::index_may_affect_index(int index1, int index2) const
@@ -85,6 +85,20 @@ void Formula::add_state_node(const string& name)
   terms.push_back(t);
 }
 
+void Formula::add_state_node(const string& name, const Object& value)
+{
+  Term t;
+  t.name = name;
+  terms.push_back(t);
+}
+
+void Formula::add_state_node(const string& name, shared_ptr<const Object> value)
+{
+  Term t(value);
+  t.name = name;
+  terms.push_back(t);
+}
+
 void Formula::add_constant_node(const string& name, const Object& value)
 {
   add_constant_node(name, shared_ptr<const Object>(value.clone()));
@@ -92,9 +106,9 @@ void Formula::add_constant_node(const string& name, const Object& value)
 
 void Formula::add_constant_node(const string& name, shared_ptr<const Object> value)
 {
-  Term t;
+  Term t(value);
   t.name = name;
-  t.constant_value = value;
+  t.constant = true;
   terms.push_back(t);
 }
 
@@ -192,7 +206,7 @@ void Context::set_value(int index, shared_ptr<const Object> O)
   if (F->has_inputs(index))
     throw myexception()<<"Cannot overwrite computed nodes!";
 
-  if (F->terms[index].constant_value) 
+  if (F->terms[index].constant) 
     throw myexception()<<"Cannot overwrite constant value!";
 
   // Change the value of the leaf node
@@ -258,8 +272,8 @@ Context::Context(const polymorphic_cow_ptr<Formula>& F_)
     if (not F->has_inputs(index))
       values[index]->computed = true;
 
-    if (F->terms[index].constant_value)
-      values[index]->result = shared_ptr<Object>(F->terms[index].constant_value->clone());
+    if (F->terms[index].default_value)
+      values[index]->result = shared_ptr<Object>(F->terms[index].default_value->clone());
   }
 }
 
@@ -267,7 +281,11 @@ ostream& operator<<(ostream& o, const Context& C)
 {
   for(int index=0;index<C.size();index++)
   {
-    o<<index<<" "<<C.F->terms[index].name<<"   ";
+    o<<index<<" "<<C.F->terms[index].name<<" = ";
+    if (C.values[index]->result)
+      o<<C.values[index]->result->print();
+    else
+      o<<"null";
     if (C.F->is_constant(index))
       o<<" [constant]";
     else
@@ -355,7 +373,10 @@ int main()
   std::cout<<"CTX2 = \n"<<CTX2<<"\n";
   std::cout<<"Fiddling X and Y in CTX1...\n";
   CTX1.set_value(0,Double(3));
-  CTX1.set_value(0,Double(2));
+  CTX1.set_value(1,Double(2));
   std::cout<<"CTX1 = \n"<<CTX1<<"\n";
   std::cout<<"CTX2 = \n"<<CTX2<<"\n";
+
+  result = CTX1.evaluate(4);
+  std::cout<<result->print()<<"\n";
 }

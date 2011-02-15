@@ -20,10 +20,11 @@ struct Formula: public Object
     std::vector<std::pair<int,int> > affected_slots;
     std::vector<int> affected_indices;
     std::string name;
-    boost::shared_ptr<const Object> constant_value;
+    boost::shared_ptr<const Object> default_value;
+    bool constant;
 
-    Term() {}
-    Term(boost::shared_ptr<const Object> O):constant_value(O) { }
+    Term():constant(false) {}
+    Term(boost::shared_ptr<const Object> O):default_value(O),constant(false) { }
   };
 
   std::vector<Term> terms;
@@ -58,6 +59,10 @@ public:
   void add_computed_node(const Operation& o, const std::vector<int>& indices);
 
   void add_state_node(const std::string& name);
+
+  void add_state_node(const std::string& name, const Object&);
+
+  void add_state_node(const std::string& name, boost::shared_ptr<const Object> value);
 
   void add_constant_node(const std::string& name, const Object&  value);
 

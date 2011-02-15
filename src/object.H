@@ -11,6 +11,8 @@ public:
     return true;
   }
 
+  virtual std::string print() const {return "[unprintable]";}
+
   virtual ~Object() {}
 };
 
@@ -32,6 +34,8 @@ public:
 
   POD() {}
   POD(const T& t2):t(t2) {}
+
+  std::string print() const {return convertToString(t);}
 
   virtual bool possibly_different_from(const Object& O) const 
   {
