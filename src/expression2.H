@@ -44,6 +44,8 @@ public:
 
   const std::vector<int>& affected_indices(int index) const {return terms[index].affected_indices;}
 
+  const std::vector<pair<int,int> >& affected_slots(int index) const {return terms[index].affected_slots;}
+
   int n_affected_indices(int index) const {return terms[index].affected_indices.size();}
 
   boost::shared_ptr<const Operation> operation(int s) const {return terms[s].op;}

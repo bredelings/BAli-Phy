@@ -50,8 +50,9 @@ void Formula::set_directly_affects_in_slot(int index1, int index2, int slot)
   if (not directly_affects(index1,index2))
     terms[index1].affected_indices.push_back(index2);
 
-  if (not directly_affects_in_slot(index1,index2,slot))
-    terms[index1].affected_slots.push_back(pair<int,int>(index2,slot));
+  pair<int,int> p(index2,slot);
+  if (not includes(terms[index1].affected_slots, p))
+    terms[index1].affected_slots.push_back(p);
 }
 
 void Formula::add_computed_node(const Operation& o, const vector<int>& indices)
@@ -204,23 +205,21 @@ void Context::set_value(int index, shared_ptr<const Object> O)
   vector<int> mask(F->size(),0);
   mask[index] = 1;
 
-  // propagate information
-  vector<int> indices;
-  indices.push_back(index);
-
   for(int i=0;i<NOT_known_value_unchanged.size();i++)
   {
     int index1 = NOT_known_value_unchanged[i];
 
     for(int j=0;j<F->n_affected_indices(index1);j++)
     {
-      int index2 = F->affected_indices(index1)[j];
+      pair<int,int> index_slot2 = F->affected_slots(index1)[j];
+      int index2 = index_slot2.first;
+      int slot2 = index_slot2.second;
 
       // This one already marked NOT known_value_unchanged
       if (mask[index2]) continue;
 
       // If index2 is not known to have identical USED inputs ...
-      if (not values[index2]->computed or index_may_affect_index(index1, index2))
+      if (not values[index2]->computed or values[index2]->computation->used_values[slot2])
       {
 	// ... then it is not known to have identical outputs
 	NOT_known_value_unchanged.push_back(index2);
@@ -359,5 +358,4 @@ int main()
   CTX1.set_value(0,Double(2));
   std::cout<<"CTX1 = \n"<<CTX1<<"\n";
   std::cout<<"CTX2 = \n"<<CTX2<<"\n";
-  
 }
