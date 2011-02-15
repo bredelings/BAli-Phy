@@ -193,7 +193,7 @@ struct IfThenElse: public Operation
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     boost::shared_ptr<const Bool> condition = Args.evaluate_as<Bool>(0);
-    if (condition)
+    if (*condition)
       return Args.evaluate(1);
     else
       return Args.evaluate(2);
