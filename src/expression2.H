@@ -1,5 +1,6 @@
 // Can we get to typed refs? e.g. term_ref<Double> expression_ref<Double>
 // Can we get using operator* and operator+ and int and double constants?
+//   This involves getting Multiple<Double,Double,Double> down to Multiply<Double,Double>
 
 /*---------------------------------------------------------------------*/
 #include <boost/shared_ptr.hpp>
