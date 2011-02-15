@@ -1,3 +1,6 @@
+// Can we get to typed refs? e.g. term_ref<Double> expression_ref<Double>
+// Can we get using operator* and operator+ and int and double constants?
+
 /*---------------------------------------------------------------------*/
 #include <boost/shared_ptr.hpp>
 #include <vector>
