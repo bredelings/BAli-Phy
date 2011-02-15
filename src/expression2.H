@@ -8,8 +8,27 @@
 #include "util.H"
 #include "myexception.H"
 
+struct Formula;
+
+struct term_ref
+{
+  int index;
+  polymorphic_cow_ptr<Formula> F;
+
+  bool is_state() const;
+  bool is_constant() const;
+  bool is_computed() const;
+  std::string print() const;
+
+  operator int() const {return index;}
+  term_ref():index(-1) {}
+  term_ref(int i,polymorphic_cow_ptr<Formula> f):index(i),F(f) {}
+  term_ref(int i,const Formula& f);
+};
+
 struct Computation;
 struct Operation;
+struct expression_ref;
 
 struct Formula: public Object
 {
@@ -29,7 +48,7 @@ struct Formula: public Object
 
   std::vector<Term> terms;
 
-  int add_term(const Term&);
+  term_ref add_term(const Term&);
 
 public:
   Formula* clone() const {return new Formula(*this);}
@@ -64,17 +83,19 @@ public:
 
   void set_directly_affects_in_slot(int index1, int index2, int slot);
 
-  int add_computed_node(const Operation& o, const std::vector<int>& indices);
+  term_ref add_computed_node(const Operation& o, const std::vector<int>& indices);
 
-  int add_state_node(const std::string& name);
+  term_ref add_computed_node(const expression_ref& e);
 
-  int add_state_node(const std::string& name, const Object&);
+  term_ref add_state_node(const std::string& name);
 
-  int add_state_node(const std::string& name, boost::shared_ptr<const Object> value);
+  term_ref add_state_node(const std::string& name, const Object&);
 
-  int add_constant_node(const std::string& name, const Object&  value);
+  term_ref add_state_node(const std::string& name, boost::shared_ptr<const Object> value);
 
-  int add_constant_node(const std::string& name, boost::shared_ptr<const Object> value);
+  term_ref add_constant_node(const std::string& name, const Object&  value);
+
+  term_ref add_constant_node(const std::string& name, boost::shared_ptr<const Object> value);
 };
 
 // Values

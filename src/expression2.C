@@ -6,6 +6,12 @@ using std::string;
 using std::pair;
 using std::ostream;
 
+bool term_ref::is_state() const {return F->is_state(index);}
+bool term_ref::is_constant() const {return F->is_constant(index);}
+bool term_ref::is_computed() const {return F->is_computed(index);}
+string term_ref::print() const {return F->name_for_index(index);}
+term_ref::term_ref(int i,const Formula& f):index(i),F(f.clone()) {}
+
 string Formula::name_for_index(int index) const
 {
   return terms[index].name;
@@ -85,22 +91,30 @@ void Formula::set_directly_affects_in_slot(int index1, int index2, int slot)
     terms[index1].affected_slots.push_back(p);
 }
 
-int Formula::add_term(const Term& t)
+term_ref Formula::add_term(const Term& t)
 {
   int new_index = terms.size();
   terms.push_back(t);
-  return new_index;
+  return term_ref(new_index,*this);
 }
 
-int Formula::add_computed_node(const Operation& o, const vector<int>& indices)
+term_ref Formula::add_computed_node(const Operation& o, const vector<int>& indices)
 {
+  // avoid adding duplicate calculations
+  for(int index=0;index<size();index++)
+  {
+    if (indices == terms[index].input_indices and
+	typeid(o) == typeid(*terms[index].op))
+      return term_ref(index,*this);
+  }
+
   Term t;
   t.op = shared_ptr<Operation>(o.clone());
   t.input_indices = indices;
 
   // FIXME - check that these indices actually exist
 
-  int new_index = add_term(t);
+  term_ref new_index = add_term(t);
 
   for(int slot=0;slot<indices.size();slot++)
   {
@@ -116,38 +130,38 @@ int Formula::add_computed_node(const Operation& o, const vector<int>& indices)
   return new_index;
 }
 
-int Formula::add_state_node(const string& name)
+term_ref Formula::add_state_node(const string& name)
 {
   Term t;
   t.name = name;
   return add_term(t);
 }
 
-int Formula::add_state_node(const string& name, const Object& value)
+term_ref Formula::add_state_node(const string& name, const Object& value)
 {
   Term t;
   t.name = name;
   return add_term(t);
 }
 
-int Formula::add_state_node(const string& name, shared_ptr<const Object> value)
+term_ref Formula::add_state_node(const string& name, shared_ptr<const Object> value)
 {
   Term t(value);
   t.name = name;
   return add_term(t);
 }
 
-int Formula::add_constant_node(const string& name, const Object& value)
+term_ref Formula::add_constant_node(const string& name, const Object& value)
 {
   return add_constant_node(name, shared_ptr<const Object>(value.clone()));
 }
 
-int Formula::add_constant_node(const string& name, shared_ptr<const Object> value)
+term_ref Formula::add_constant_node(const string& name, shared_ptr<const Object> value)
 {
   for(int index=0;index<size();index++)
   {
     if (is_constant(index) and not value->possibly_different_from(*terms[index].default_value))
-      return index;
+      return term_ref(index,*this);
   }
 
   Term t(value);
@@ -379,19 +393,6 @@ string Add::expression(const vector<string>& inputs) const
   return inputs[0] + " + " + inputs[1];
 }
 
-struct term_reference
-{
-  polymorphic_cow_ptr<Formula> F;
-  int index;
-  bool is_state() const {return F->is_state(index);}
-  bool is_constant() const {return F->is_constant(index);}
-  bool is_computed() const {return F->is_computed(index);}
-  std::string print() const {return F->name_for_index(index);}
-
-  term_reference():index(-1) {}
-  term_reference(polymorphic_cow_ptr<Formula> f, int i):F(f),index(i) {}
-};
-
 struct expression: public Object
 {
   polymorphic_cow_ptr<Formula> F;
@@ -417,9 +418,9 @@ struct expression: public Object
 
   virtual std::string print() const = 0;
 
-  shared_ptr<const expression> operator()(shared_ptr<const expression> E) const;
+  shared_ptr<const expression> apply(shared_ptr<const expression> E) const;
 
-  shared_ptr<const expression> operator()(const expression& E) const;
+  shared_ptr<const expression> apply(const expression& E) const;
 
   expression() {}
   virtual ~expression() {}
@@ -434,17 +435,18 @@ struct constant_expression: public expression
   constant_expression* clone() const {return new constant_expression(*this);}
 
   std::string print() const {return value->print();}
+  constant_expression(const Object& o): value(o.clone()) {}
   constant_expression(shared_ptr<const Object> v): value(v) {}
 };
 
 // a term reference expression
-struct term_reference_expression: public expression
+struct term_ref_expression: public expression
 {
-  term_reference term;
-  term_reference_expression* clone() const {return new term_reference_expression(*this);}
+  term_ref term;
+  term_ref_expression* clone() const {return new term_ref_expression(*this);}
   std::string print() const {return term.print();}
-  term_reference_expression(const term_reference& r):term(r) {}
-  term_reference_expression(polymorphic_cow_ptr<Formula> f, int i):term(f,i) {}
+  term_ref_expression(const term_ref& r):term(r) {}
+  term_ref_expression(int i, polymorphic_cow_ptr<Formula> f):term(i,f) {}
 };
 
 // a dummy variable expression
@@ -634,46 +636,95 @@ shared_ptr<const expression> apply(shared_ptr<const expression> E,
   return apply(E,args,0);
 }
 
-shared_ptr<const expression> expression::operator()(shared_ptr<const expression> arg) const
+shared_ptr<const expression> expression::apply(shared_ptr<const expression> arg) const
 {
-  return apply(*this,arg);
+  return ::apply(*this,arg);
 }
 
-shared_ptr<const expression> expression::operator()(const expression& arg) const
+shared_ptr<const expression> expression::apply(const expression& arg) const
 {
-  return apply(*this,arg);
+  return ::apply(*this,arg);
+}
+
+struct expression_ref: public shared_ptr<const expression>
+{
+  expression_ref operator()(const expression_ref& arg) const
+  {
+    return apply(*this,arg);
+  }
+
+  expression_ref(expression* v)
+    :shared_ptr<const expression>(v) 
+  {}
+
+  expression_ref(const shared_ptr<const expression>& v)
+    :shared_ptr<const expression>(v) 
+  {}
+
+  expression_ref(const term_ref& t)
+    :shared_ptr<const expression>(new term_ref_expression(t)) 
+  {}
+
+  expression_ref(const Operation& o)
+    :shared_ptr<const expression>(new lambda_expression(o))
+  {}
+};
+
+template <typename T>
+struct typed_expression_ref: expression_ref
+{
+public:
+  typed_expression_ref(expression* v): expression_ref(v) {}
+  typed_expression_ref(const shared_ptr<const expression>& v): expression_ref(v) {}
+  typed_expression_ref(const term_ref& t): expression_ref(t) {}
+};
+
+term_ref Formula::add_computed_node(const expression_ref& e)
+{
+  shared_ptr<const lambda_expression> lambda = dynamic_pointer_cast<const lambda_expression>(e);
+  if (lambda)
+    throw myexception()<<"Lambda expressions cannot currently be calculated";
+
+  shared_ptr<const constant_expression> constant = dynamic_pointer_cast<const constant_expression>(e);
+  if (constant)
+    return add_constant_node(constant->value->print(), constant->value);
+  
+  shared_ptr<const term_ref_expression> tr = dynamic_pointer_cast<const term_ref_expression>(e);
+  if (tr)
+    return tr->term;
+  
+  shared_ptr<const function_expression> func = dynamic_pointer_cast<const function_expression>(e);
+  if (func)
+  {
+    vector<int> arg_indices;
+    for(int i=0;i<func->args.size();i++)
+      arg_indices.push_back( add_computed_node(func->args[i] ) );
+
+    return add_computed_node(*(func->op), arg_indices);
+  }
+
+  std::abort();
 }
 
 int main()
 {
   Formula f;
   polymorphic_cow_ptr<Formula> F(f);
-  int x = F->add_state_node("X");
-  int y = F->add_state_node("Y");
-  int z = F->add_state_node("Z");
-  int w = F->add_state_node("W");
-  int one = F->add_constant_node("1",Double(1));
+  term_ref x = F->add_state_node("X");
+  term_ref y = F->add_state_node("Y");
+  term_ref z = F->add_state_node("Z");
+  term_ref w = F->add_state_node("W");
+  term_ref one = F->add_constant_node("1",Double(1));
   F->add_constant_node("1",Double(1));
 
-  int x_times_y = -1;
-  {
-    vector<int> indices1;
-    indices1.push_back(x);
-    indices1.push_back(y);
-    
-    x_times_y = F->add_computed_node(Multiply<Double,Double,Double>(),indices1);
-  }
+  expression_ref mul = Multiply<Double,Double,Double>();
+  expression_ref plus = Add();
 
-  int x_times_y_plus_one = -1;
-  {
-    vector<int> indices2;
-    indices2.push_back(x_times_y);
-    indices2.push_back(one);
-    
-    x_times_y_plus_one = F->add_computed_node(Add(),indices2);
-  }
+  term_ref x_times_y = F->add_computed_node( mul(x)(y) );
 
-  int z_gt_1 = -1;
+  term_ref x_times_y_plus_one = F->add_computed_node( plus(x_times_y)(one) );
+
+  term_ref z_gt_1;
   {
     vector<int> indices2;
     indices2.push_back(z);
@@ -682,7 +733,7 @@ int main()
     z_gt_1 = F->add_computed_node(GreaterThan<Double,Double>(),indices2);
   }
 
-  int x_plus_y = -1;
+  term_ref x_plus_y;
   {
     vector<int> indices2;
     indices2.push_back(x);
@@ -691,7 +742,7 @@ int main()
     x_plus_y = F->add_computed_node(Add(),indices2);
   }
 
-  int w_2 = -1;
+  term_ref w_2;
   {
     vector<int> indices2;
     indices2.push_back(w);
@@ -744,11 +795,16 @@ int main()
   CTX2.set_value(z,Double(0));
   result = CTX2.evaluate(cond);
   std::cout<<"CTX2 = \n"<<CTX2<<"\n";
-
+  
+  typed_expression_ref<Double> XXX = x;
+  typed_expression_ref<Double> YYY = y;
+  
   Multiply<Double,Double,Double> m1;
-  shared_ptr<const expression> XX( new term_reference_expression(F,0) );
+  shared_ptr<const expression> XX( new term_ref_expression(0,F) );
   shared_ptr<const expression> M( new lambda_expression(m1));
-  std::cerr<<M->print()<<"\n";
-  std::cerr<<(*M)(XX)->print()<<"\n";
+  expression_ref er = M;
+  std::cerr<<er->print()<<"\n";
+  std::cerr<<er(XX)(XX)->print()<<"\n";
+  std::cerr<<M->apply(XX)->apply(XX)->print()<<"\n";
 
 }
