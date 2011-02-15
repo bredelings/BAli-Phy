@@ -168,6 +168,8 @@ struct Operation: public Object
   virtual std::string expression(const std::vector<std::string>& inputs) const;
 };
 
+
+template <typename X, typename Y, typename Z>
 struct Multiply: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -176,17 +178,23 @@ struct Multiply: public Operation
 
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    boost::shared_ptr<const Double> y = Args.evaluate_as<Double>(1);
+    boost::shared_ptr<const X> x = Args.evaluate_as<X>(0);
+    boost::shared_ptr<const Y> y = Args.evaluate_as<Y>(1);
 
-    boost::shared_ptr<Double> r ( new Double );
+    boost::shared_ptr<Z> r ( new Z );
 
     *r = (*x) * (*y);
 
     return r;
   }
 
-  std::string expression(const std::vector<std::string>& inputs) const;
+  std::string expression(const std::vector<std::string>& inputs) const
+  {
+    if (inputs.size() != 2)
+      throw myexception()<<"Multiple::expression - got "<<inputs.size()<<" arguments instead of 2.";
+    
+    return inputs[0] + "*" + inputs[1];
+  }
 };
 
 struct IfThenElse: public Operation

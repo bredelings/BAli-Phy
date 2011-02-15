@@ -327,14 +327,6 @@ string Operation::expression(const vector<string>& inputs) const
   return function_expression("[unknown]",inputs);
 }
 
-string Multiply::expression(const vector<string>& inputs) const
-{
-  if (inputs.size() != 2)
-    throw myexception()<<"Multiple::expression - got "<<inputs.size()<<" arguments instead of 2.";
-
-  return inputs[0] + "*" + inputs[1];
-}
-
 string IfThenElse::expression(const vector<string>& inputs) const
 {
   if (inputs.size() != 3)
@@ -368,7 +360,7 @@ int main()
     indices1.push_back(x);
     indices1.push_back(y);
     
-    x_times_y = F->add_computed_node(Multiply(),indices1);
+    x_times_y = F->add_computed_node(Multiply<Double,Double,Double>(),indices1);
   }
 
   int x_times_y_plus_one = -1;
@@ -404,7 +396,7 @@ int main()
     indices2.push_back(w);
     indices2.push_back(w);
     
-    w_2 = F->add_computed_node(Multiply(),indices2);
+    w_2 = F->add_computed_node(Multiply<Int,Int,Int>(),indices2);
   }
 
   int cond = -1;
