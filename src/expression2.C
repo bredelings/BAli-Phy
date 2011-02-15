@@ -55,17 +55,23 @@ void Formula::set_directly_affects_in_slot(int index1, int index2, int slot)
     terms[index1].affected_slots.push_back(p);
 }
 
-void Formula::add_computed_node(const Operation& o, const vector<int>& indices)
+int Formula::add_term(const Term& t)
 {
   int new_index = terms.size();
+  terms.push_back(t);
+  return new_index;
+}
 
+int Formula::add_computed_node(const Operation& o, const vector<int>& indices)
+{
   Term t;
   t.op = shared_ptr<Operation>(o.clone());
   t.input_indices = indices;
 
   // FIXME - check that these indices actually exist
 
-  terms.push_back(t);
+  int new_index = add_term(t);
+
   for(int slot=0;slot<indices.size();slot++)
   {
     int input_index = indices[slot];
@@ -76,40 +82,42 @@ void Formula::add_computed_node(const Operation& o, const vector<int>& indices)
   for(int slot=0;slot<indices.size();slot++)
     input_names.push_back(terms[indices[slot]].name);
   terms[new_index].name = o.expression(input_names);
+
+  return new_index;
 }
 
-void Formula::add_state_node(const string& name)
+int Formula::add_state_node(const string& name)
 {
   Term t;
   t.name = name;
-  terms.push_back(t);
+  return add_term(t);
 }
 
-void Formula::add_state_node(const string& name, const Object& value)
+int Formula::add_state_node(const string& name, const Object& value)
 {
   Term t;
   t.name = name;
-  terms.push_back(t);
+  return add_term(t);
 }
 
-void Formula::add_state_node(const string& name, shared_ptr<const Object> value)
+int Formula::add_state_node(const string& name, shared_ptr<const Object> value)
 {
   Term t(value);
   t.name = name;
-  terms.push_back(t);
+  return add_term(t);
 }
 
-void Formula::add_constant_node(const string& name, const Object& value)
+int Formula::add_constant_node(const string& name, const Object& value)
 {
-  add_constant_node(name, shared_ptr<const Object>(value.clone()));
+  return add_constant_node(name, shared_ptr<const Object>(value.clone()));
 }
 
-void Formula::add_constant_node(const string& name, shared_ptr<const Object> value)
+int Formula::add_constant_node(const string& name, shared_ptr<const Object> value)
 {
   Term t(value);
   t.name = name;
   t.constant = true;
-  terms.push_back(t);
+  return add_term(t);
 }
 
 shared_ptr<const Object> Context::evaluate(int index)
@@ -325,6 +333,14 @@ string Multiply::expression(const vector<string>& inputs) const
     throw myexception()<<"Multiple::expression - got "<<inputs.size()<<" arguments instead of 2.";
 
   return inputs[0] + "*" + inputs[1];
+}
+
+string IfThenElse::expression(const vector<string>& inputs) const
+{
+  if (inputs.size() != 3)
+    throw myexception()<<"IfThenElse::expression - got "<<inputs.size()<<" arguments instead of 3.";
+
+  return function_expression("if",inputs);
 }
 
 string Add::expression(const vector<string>& inputs) const

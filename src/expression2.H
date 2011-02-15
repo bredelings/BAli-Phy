@@ -29,6 +29,8 @@ struct Formula: public Object
 
   std::vector<Term> terms;
 
+  int add_term(const Term&);
+
 public:
   Formula* clone() const {return new Formula(*this);}
 
@@ -56,17 +58,17 @@ public:
 
   void set_directly_affects_in_slot(int index1, int index2, int slot);
 
-  void add_computed_node(const Operation& o, const std::vector<int>& indices);
+  int add_computed_node(const Operation& o, const std::vector<int>& indices);
 
-  void add_state_node(const std::string& name);
+  int add_state_node(const std::string& name);
 
-  void add_state_node(const std::string& name, const Object&);
+  int add_state_node(const std::string& name, const Object&);
 
-  void add_state_node(const std::string& name, boost::shared_ptr<const Object> value);
+  int add_state_node(const std::string& name, boost::shared_ptr<const Object> value);
 
-  void add_constant_node(const std::string& name, const Object&  value);
+  int add_constant_node(const std::string& name, const Object&  value);
 
-  void add_constant_node(const std::string& name, boost::shared_ptr<const Object> value);
+  int add_constant_node(const std::string& name, boost::shared_ptr<const Object> value);
 };
 
 // Values
@@ -196,6 +198,8 @@ struct IfThenElse: public Operation
     else
       return Args.evaluate(2);
   }
+
+  std::string expression(const std::vector<std::string>& inputs) const;
 };
 
 template<typename X, typename Y>
@@ -213,6 +217,14 @@ struct GreaterThan: public Operation
     Bool condition = (*x > *y);
 
     return boost::shared_ptr<const Bool>(new Bool(condition));
+  }
+
+  std::string expression(const std::vector<std::string>& inputs) const
+  {
+    if (inputs.size() != 2)
+      throw myexception()<<"GreaterThan::expression - got "<<inputs.size()<<" arguments instead of 2.";
+    
+    return inputs[0] + ">" + inputs[1];
   }
 };
 
