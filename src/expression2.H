@@ -2,6 +2,7 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <string>
+#include <iostream>
 #include "cow-ptr.H"
 #include "object.H"
 #include "util.H"
@@ -24,8 +25,10 @@ struct Formula: public Object
     std::vector<std::pair<int,int> > affected_slots;
     std::vector<int> affected_indices;
     std::string name;
-    bool constant;
-    Term():constant(false) {}
+    shared_ptr<const Object> constant_value;
+
+    Term() {}
+    Term(shared_ptr<const Object> O):constant_value(O) { }
   };
 
   std::vector<Term> terms;
@@ -47,6 +50,8 @@ public:
 
   bool has_inputs(int index) const;
 
+  bool is_constant(int index) const;
+
   bool directly_affects(int index1, int index2) const;
 
   bool directly_affects_in_slot(int index1, int index2, int slot) const;
@@ -56,6 +61,10 @@ public:
   void add_computed_node(const Operation& o, const std::vector<int>& indices);
 
   void add_state_node(const std::string& name);
+
+  void add_constant_node(const std::string& name, const Object&  value);
+
+  void add_constant_node(const std::string& name, boost::shared_ptr<const Object> value);
 };
 
 // Values
@@ -88,11 +97,14 @@ struct Context: public Object
 
   void set_value(int index, const Object& O);
 
+  int size() const {return F->size();}
+
   bool index_may_affect_index(int, int) const;
 
   Context(const polymorphic_cow_ptr<Formula>&);
 };
 
+std::ostream& operator<<(std::ostream&, const Context& C);
 
 struct Computation: public Object
 {
@@ -145,7 +157,6 @@ struct Operation: public Object
   virtual Operation* clone() const=0;
   virtual shared_ptr<const Object> operator()(OperationArgs& Args) const =0;
 };
-
 
 struct Multiply: public Operation
 {

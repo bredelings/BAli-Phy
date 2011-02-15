@@ -1,5 +1,11 @@
 #include "expression2.H"
 
+using boost::shared_ptr;
+using std::vector;
+using std::string;
+using std::pair;
+using std::ostream;
+
 bool Formula::has_inputs(int index) const 
 {
   bool is_internal = (n_input_indices(index) > 0);
@@ -9,6 +15,11 @@ bool Formula::has_inputs(int index) const
     assert(terms[index].op);
 
   return is_internal;
+}
+
+bool Formula::is_constant(int index) const
+{
+  return terms[index].constant_value;
 }
 
 bool Context::index_may_affect_index(int index1, int index2) const
@@ -68,6 +79,19 @@ void Formula::add_state_node(const string& name)
   terms.push_back(t);
 }
 
+void Formula::add_constant_node(const string& name, const Object& value)
+{
+  add_constant_node(name, shared_ptr<const Object>(value.clone()));
+}
+
+void Formula::add_constant_node(const string& name, shared_ptr<const Object> value)
+{
+  Term t;
+  t.name = name;
+  t.constant_value = value;
+  terms.push_back(t);
+}
+
 shared_ptr<const Object> Context::evaluate(int index)
 {
   value& V = *values[index];
@@ -124,6 +148,7 @@ shared_ptr<const Object> Context::evaluate(int index)
     // recursive calls to evaluate happen in here.
     shared_ptr<const Object> new_result = (*O)(Args);
     V.computation = Args.computation;
+    V.computed = true;
 
     // Only replace the result if (a) the value is different or (b) we can't check that.
     if (not V.result or not can_coalesce(new_result, V.result))
@@ -161,7 +186,7 @@ void Context::set_value(int index, shared_ptr<const Object> O)
   if (F->has_inputs(index))
     throw myexception()<<"Cannot overwrite computed nodes!";
 
-  if (F->terms[index].constant and values[index]->result) 
+  if (F->terms[index].constant_value) 
     throw myexception()<<"Cannot overwrite constant value!";
 
   // Change the value of the leaf node
@@ -228,7 +253,26 @@ Context::Context(const polymorphic_cow_ptr<Formula>& F_)
     values[index] = shared_ptr<value>(new value);
     if (not F->has_inputs(index))
       values[index]->computed = true;
+
+    if (F->terms[index].constant_value)
+      values[index]->result = shared_ptr<Object>(F->terms[index].constant_value->clone());
   }
+}
+
+ostream& operator<<(ostream& o, const Context& C)
+{
+  for(int index=0;index<C.size();index++)
+  {
+    o<<index<<" "<<C.F->terms[index].name<<"   ";
+    if (C.F->is_constant(index))
+      o<<" [constant]";
+    if (not C.values[index].unique())
+      o<<" [shared]";
+    if (C.values[index]->computed)
+      o<<" [computed]";
+    o<<"\n";
+  }
+  return o;
 }
 
 int main()
@@ -237,6 +281,7 @@ int main()
   polymorphic_cow_ptr<Formula> F(f);
   F->add_state_node("X");
   F->add_state_node("Y");
+  F->add_constant_node("1",Double(1));
 
   {
     vector<int> indices1;
@@ -248,8 +293,8 @@ int main()
 
   {
     vector<int> indices2;
-    indices2.push_back(0);
-    indices2.push_back(2);
+    indices2.push_back(3);
+    indices2.push_back(1);
     
     F->add_computed_node(Add(),indices2);
   }
@@ -259,7 +304,9 @@ int main()
   CTX.set_value(0,Double(2));
   CTX.set_value(1,Double(3));
 
-  shared_ptr<const Object> result = CTX.evaluate(3);
+  std::cout<<CTX<<"\n";
 
-  
+  shared_ptr<const Object> result = CTX.evaluate(4);
+
+  std::cout<<CTX<<"\n";
 }
