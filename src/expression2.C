@@ -100,17 +100,20 @@ term_ref Formula::add_term(const Term& t)
 
 term_ref Formula::add_computed_node(const Operation& o, const vector<int>& indices)
 {
-  // avoid adding duplicate calculations
-  for(int index=0;index<size();index++)
-  {
-    if (indices == terms[index].input_indices and
-	typeid(o) == typeid(*terms[index].op))
-      return term_ref(index,*this);
-  }
+  // compute the name of node we might add
+  vector<string> input_names;
+  for(int slot=0;slot<indices.size();slot++)
+    input_names.push_back(terms[indices[slot]].name);
 
   Term t;
   t.op = shared_ptr<Operation>(o.clone());
+  t.name = o.expression(input_names);
   t.input_indices = indices;
+
+  // avoid adding duplicate calculations
+  for(int index=0; index<size(); index++)
+    if ((indices == terms[index].input_indices) and (typeid(o) == typeid(*terms[index].op)))
+	return term_ref(index,*this);
 
   // FIXME - check that these indices actually exist
 
@@ -121,11 +124,6 @@ term_ref Formula::add_computed_node(const Operation& o, const vector<int>& indic
     int input_index = indices[slot];
     set_directly_affects_in_slot(input_index,new_index,slot);
   }
-
-  vector<string> input_names;
-  for(int slot=0;slot<indices.size();slot++)
-    input_names.push_back(terms[indices[slot]].name);
-  terms[new_index].name = o.expression(input_names);
 
   return new_index;
 }
@@ -151,9 +149,19 @@ term_ref Formula::add_state_node(const string& name, shared_ptr<const Object> va
   return add_term(t);
 }
 
+term_ref Formula::add_constant_node(const Object& value)
+{
+  return add_constant_node(value.print(), shared_ptr<const Object>(value.clone()));
+}
+
 term_ref Formula::add_constant_node(const string& name, const Object& value)
 {
   return add_constant_node(name, shared_ptr<const Object>(value.clone()));
+}
+
+term_ref Formula::add_constant_node(shared_ptr<const Object> value)
+{
+  return add_constant_node(value->print(), shared_ptr<const Object>(value->clone()));
 }
 
 term_ref Formula::add_constant_node(const string& name, shared_ptr<const Object> value)
@@ -368,7 +376,7 @@ ostream& operator<<(ostream& o, const Context& C)
 string function_expression_(const string& name, const vector<string>& arguments)
 {
   string output = name;
-  output += "(" + join(arguments,',') + ")";
+  output += "(" + join(arguments,", ") + ")";
   return output;
 }
 
@@ -715,51 +723,32 @@ int main()
   term_ref z = F->add_state_node("Z");
   term_ref w = F->add_state_node("W");
   term_ref one = F->add_constant_node("1",Double(1));
-  F->add_constant_node("1",Double(1));
+
+  F->add_constant_node(Double(1));
 
   expression_ref mul = Multiply<Double,Double,Double>();
+  expression_ref muli = Multiply<Int,Int,Int>();
   expression_ref plus = Add();
+  expression_ref gt = GreaterThan<Double,Double>();
+  expression_ref If = IfThenElse();
 
-  term_ref x_times_y = F->add_computed_node( mul(x)(y) );
+  std::cout<<"Demonstrate lambda functions\n";
+  std::cout<<"mul = "<<mul->print()<<"\n";
+  std::cout<<"mul(x) = "<<mul(x)->print()<<"\n";
+  std::cout<<"mul(x)(y) = "<<mul(x)(y)->print()<<"\n\n\n";
 
-  term_ref x_times_y_plus_one = F->add_computed_node( plus(x_times_y)(one) );
+  term_ref x_times_y_plus_one = F->add_computed_node( plus(mul(x)(y))(one) );
 
-  term_ref z_gt_1;
-  {
-    vector<int> indices2;
-    indices2.push_back(z);
-    indices2.push_back(one);
-    
-    z_gt_1 = F->add_computed_node(GreaterThan<Double,Double>(),indices2);
-  }
+  term_ref z_gt_1 = F->add_computed_node(gt(z)(one));
 
-  term_ref x_plus_y;
-  {
-    vector<int> indices2;
-    indices2.push_back(x);
-    indices2.push_back(y);
-    
-    x_plus_y = F->add_computed_node(Add(),indices2);
-  }
+  term_ref x_plus_y = F->add_computed_node(plus(x)(y));
 
-  term_ref w_2;
-  {
-    vector<int> indices2;
-    indices2.push_back(w);
-    indices2.push_back(w);
-    
-    w_2 = F->add_computed_node(Multiply<Int,Int,Int>(),indices2);
-  }
+  term_ref w_2 = F->add_computed_node( muli(w)(w) );
 
-  int cond = -1;
-  {
-    vector<int> indices2;
-    indices2.push_back(z_gt_1);
-    indices2.push_back(x_times_y_plus_one);
-    indices2.push_back(w_2);
-    
-    cond = F->add_computed_node(IfThenElse(),indices2);
-  }
+  term_ref cond = F->add_computed_node( If(z_gt_1)(x_times_y_plus_one)(w_2));
+
+  // this should be a dup and do nothing
+  F->add_computed_node(If( gt(z)(one) ) ( plus( mul(x)(y))(one)) ( muli(w)(w) ) );
 
   Context CTX1(F);
 
@@ -795,16 +784,4 @@ int main()
   CTX2.set_value(z,Double(0));
   result = CTX2.evaluate(cond);
   std::cout<<"CTX2 = \n"<<CTX2<<"\n";
-  
-  typed_expression_ref<Double> XXX = x;
-  typed_expression_ref<Double> YYY = y;
-  
-  Multiply<Double,Double,Double> m1;
-  shared_ptr<const expression> XX( new term_ref_expression(0,F) );
-  shared_ptr<const expression> M( new lambda_expression(m1));
-  expression_ref er = M;
-  std::cerr<<er->print()<<"\n";
-  std::cerr<<er(XX)(XX)->print()<<"\n";
-  std::cerr<<M->apply(XX)->apply(XX)->print()<<"\n";
-
 }

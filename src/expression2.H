@@ -95,7 +95,11 @@ public:
 
   term_ref add_constant_node(const std::string& name, const Object&  value);
 
+  term_ref add_constant_node(const Object&  value);
+
   term_ref add_constant_node(const std::string& name, boost::shared_ptr<const Object> value);
+
+  term_ref add_constant_node(boost::shared_ptr<const Object> value);
 };
 
 // Values
