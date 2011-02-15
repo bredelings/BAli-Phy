@@ -356,30 +356,73 @@ int main()
 {
   Formula f;
   polymorphic_cow_ptr<Formula> F(f);
-  F->add_state_node("X");
-  F->add_state_node("Y");
-  F->add_constant_node("1",Double(1));
+  int x = F->add_state_node("X");
+  int y = F->add_state_node("Y");
+  int z = F->add_state_node("Z");
+  int w = F->add_state_node("W");
+  int one = F->add_constant_node("1",Double(1));
 
+  int x_times_y = -1;
   {
     vector<int> indices1;
-    indices1.push_back(0);
-    indices1.push_back(1);
+    indices1.push_back(x);
+    indices1.push_back(y);
     
-    F->add_computed_node(Multiply(),indices1);
+    x_times_y = F->add_computed_node(Multiply(),indices1);
   }
 
+  int x_times_y_plus_one = -1;
   {
     vector<int> indices2;
-    indices2.push_back(3);
-    indices2.push_back(2);
+    indices2.push_back(x_times_y);
+    indices2.push_back(one);
     
-    F->add_computed_node(Add(),indices2);
+    x_times_y_plus_one = F->add_computed_node(Add(),indices2);
+  }
+
+  int z_gt_1 = -1;
+  {
+    vector<int> indices2;
+    indices2.push_back(z);
+    indices2.push_back(one);
+    
+    z_gt_1 = F->add_computed_node(GreaterThan<Double,Double>(),indices2);
+  }
+
+  int x_plus_y = -1;
+  {
+    vector<int> indices2;
+    indices2.push_back(x);
+    indices2.push_back(y);
+    
+    x_plus_y = F->add_computed_node(Add(),indices2);
+  }
+
+  int w_2 = -1;
+  {
+    vector<int> indices2;
+    indices2.push_back(w);
+    indices2.push_back(w);
+    
+    w_2 = F->add_computed_node(Multiply(),indices2);
+  }
+
+  int cond = -1;
+  {
+    vector<int> indices2;
+    indices2.push_back(z_gt_1);
+    indices2.push_back(x_times_y_plus_one);
+    indices2.push_back(w_2);
+    
+    cond = F->add_computed_node(IfThenElse(),indices2);
   }
 
   Context CTX1(F);
 
-  CTX1.set_value(0,Double(2));
-  CTX1.set_value(1,Double(3));
+  CTX1.set_value(x,Double(2));
+  CTX1.set_value(y,Double(3));
+  CTX1.set_value(z,Double(4));
+  CTX1.set_value(w,Int(5));
 
   std::cout<<"CTX1 = \n"<<CTX1<<"\n";
 
@@ -387,16 +430,25 @@ int main()
 
   std::cout<<"CTX1 = \n"<<CTX1<<"\n";
 
-  shared_ptr<const Object> result = CTX1.evaluate(4);
+  shared_ptr<const Object> result = CTX1.evaluate(x_times_y_plus_one);
+  CTX1.evaluate(cond);
 
   std::cout<<"CTX1 = \n"<<CTX1<<"\n";
   std::cout<<"CTX2 = \n"<<CTX2<<"\n";
   std::cout<<"Fiddling X and Y in CTX1...\n";
-  CTX1.set_value(0,Double(3));
-  CTX1.set_value(1,Double(2));
+  CTX1.set_value(x,Double(3));
+  CTX1.set_value(y,Double(2));
   std::cout<<"CTX1 = \n"<<CTX1<<"\n";
   std::cout<<"CTX2 = \n"<<CTX2<<"\n";
 
-  result = CTX1.evaluate(4);
-  std::cout<<result->print()<<"\n";
+  result = CTX1.evaluate(x_times_y_plus_one);
+
+  std::cout<<"Fiddling W in CTX2...\n";
+  CTX2.set_value(w,Int(-1));
+  std::cout<<"CTX2 = \n"<<CTX2<<"\n";
+
+  std::cout<<"Fiddling Z in CTX2...\n";
+  CTX2.set_value(z,Double(0));
+  result = CTX2.evaluate(cond);
+  std::cout<<"CTX2 = \n"<<CTX2<<"\n";
 }
