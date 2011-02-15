@@ -351,7 +351,7 @@ ostream& operator<<(ostream& o, const Context& C)
   return o;
 }
 
-string function_expression(const string& name, const vector<string>& arguments)
+string function_expression_(const string& name, const vector<string>& arguments)
 {
   string output = name;
   output += "(" + join(arguments,',') + ")";
@@ -360,7 +360,7 @@ string function_expression(const string& name, const vector<string>& arguments)
 
 string Operation::expression(const vector<string>& inputs) const
 {
-  return function_expression("[unknown]",inputs);
+  return function_expression_("[unknown]",inputs);
 }
 
 string IfThenElse::expression(const vector<string>& inputs) const
@@ -368,7 +368,7 @@ string IfThenElse::expression(const vector<string>& inputs) const
   if (inputs.size() != 3)
     throw myexception()<<"IfThenElse::expression - got "<<inputs.size()<<" arguments instead of 3.";
 
-  return function_expression("if",inputs);
+  return function_expression_("if",inputs);
 }
 
 string Add::expression(const vector<string>& inputs) const
