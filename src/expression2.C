@@ -157,6 +157,8 @@ shared_ptr<const Object> Context::evaluate(int index)
       if (v != V.computation->used_values[slot])
 	V.computed = false;
     }
+    if (V.computed)
+      std::cerr<<"revalidating computation "<<F->terms[index].name<<"\n";
   }
 
   // If the result is not yet marked as computed, then we must run the computation
@@ -173,6 +175,8 @@ shared_ptr<const Object> Context::evaluate(int index)
     // Only replace the result if (a) the value is different or (b) we can't check that.
     if (not V.result or not can_coalesce(new_result, V.result))
       V.result = new_result;
+
+    std::cerr<<"recomputing "<<F->terms[index].name<<"\n";
   }
     
   assert(V.result);
