@@ -33,13 +33,37 @@ public:
   POD() {}
   POD(const T& t2):t(t2) {}
 
+  virtual bool possibly_different_from(const Object& O) const 
+  {
+    // The same object
+    if (this == &O) return false;
+
+    // The same value
+    const POD<T>* o = dynamic_cast<const POD<T>*>(&O);
+    if (o and t == o->t) return false;
+
+    // Not the same
+    return true;
+  }
+
   // Doesn't seem to do ANYTHING?  Why not?
   //  template <typename U>
   //  POD(const boost::enable_if_c<boost::is_convertible<U,T>::type,U>& u):t(u) { }
 };
 
+template <typename T>
+bool unshare(boost::shared_ptr<T>& ptr)
+{
+  if (ptr.unique()) return false;
+
+  ptr = boost::shared_ptr<T>(ptr->clone());
+
+  return true;
+}
+
 typedef POD<double> Double;
 typedef POD<int> Int;
 typedef POD<unsigned> Unsigned;
+typedef POD<bool> Bool;
 
 #endif
