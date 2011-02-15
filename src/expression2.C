@@ -6,6 +6,11 @@ using std::string;
 using std::pair;
 using std::ostream;
 
+string Formula::name_for_index(int index) const
+{
+  return terms[index].name;
+}
+
 bool Formula::has_inputs(int index) const 
 {
   bool is_internal = (n_input_indices(index) > 0);

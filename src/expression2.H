@@ -56,6 +56,8 @@ public:
 
   bool is_computed(int index) const;
 
+  std::string name_for_index(int index) const;
+
   bool directly_affects(int index1, int index2) const;
 
   bool directly_affects_in_slot(int index1, int index2, int slot) const;
