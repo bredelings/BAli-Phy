@@ -114,6 +114,12 @@ int Formula::add_constant_node(const string& name, const Object& value)
 
 int Formula::add_constant_node(const string& name, shared_ptr<const Object> value)
 {
+  for(int index=0;index<size();index++)
+  {
+    if (is_constant(index) and not value->possibly_different_from(*terms[index].default_value))
+      return index;
+  }
+
   Term t(value);
   t.name = name;
   t.constant = true;
@@ -353,6 +359,7 @@ int main()
   int z = F->add_state_node("Z");
   int w = F->add_state_node("W");
   int one = F->add_constant_node("1",Double(1));
+  F->add_constant_node("1",Double(1));
 
   int x_times_y = -1;
   {
