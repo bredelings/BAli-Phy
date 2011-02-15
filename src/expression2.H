@@ -52,6 +52,10 @@ public:
 
   bool is_constant(int index) const;
 
+  bool is_state(int index) const;
+
+  bool is_computed(int index) const;
+
   bool directly_affects(int index1, int index2) const;
 
   bool directly_affects_in_slot(int index1, int index2, int slot) const;

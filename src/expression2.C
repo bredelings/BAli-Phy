@@ -19,7 +19,32 @@ bool Formula::has_inputs(int index) const
 
 bool Formula::is_constant(int index) const
 {
-  return terms[index].constant;
+  if (terms[index].constant)
+  {
+    assert(not is_computed(index));
+    return true;
+  }
+  else
+    return false;
+}
+
+bool Formula::is_state(int index) const
+{
+  return (not is_computed(index) and not is_constant(index));
+}
+
+bool Formula::is_computed(int index) const
+{
+  if (has_inputs(index))
+  {
+    assert(terms[index].op);
+    return true;
+  }
+  else
+  {
+    assert(not terms[index].op);
+    return false;
+  }
 }
 
 bool Context::index_may_affect_index(int index1, int index2) const
