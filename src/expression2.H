@@ -10,7 +10,7 @@
 using boost::shared_ptr;
 using std::vector;
 using std::string;
-
+using std::pair;
 
 struct Computation;
 struct Operation;
@@ -21,6 +21,7 @@ struct Formula: public Object
   {
     boost::shared_ptr<Operation> op;
     std::vector<int> input_indices;
+    std::vector<std::pair<int,int> > affected_slots;
     std::vector<int> affected_indices;
     std::string name;
     bool constant;
@@ -34,9 +35,23 @@ public:
 
   int size() const {return terms.size();}
 
-  const std::vector<int>& input_indices(int s) const {return terms[s].input_indices;}
-  int n_input_indices(int s) const {return input_indices(s).size();}
+  const std::vector<int>& input_indices(int index) const {return terms[index].input_indices;}
+
+  int n_input_indices(int index) const {return input_indices(index).size();}
+
+  const std::vector<int>& affected_indices(int index) const {return terms[index].affected_indices;}
+
+  int n_affected_indices(int index) const {return terms[index].affected_indices.size();}
+
   boost::shared_ptr<const Operation> operation(int s) const {return terms[s].op;}
+
+  bool has_inputs(int index) const;
+
+  bool directly_affects(int index1, int index2) const;
+
+  bool directly_affects_in_slot(int index1, int index2, int slot) const;
+
+  void set_directly_affects_in_slot(int index1, int index2, int slot);
 
   void add_computed_node(const Operation& o, const std::vector<int>& indices);
 
@@ -47,9 +62,12 @@ public:
 struct Context: public Object
 {
   // member type
-  struct value
+  struct value: public Object
   {
+    value* clone() const {return new value(*this);}
+
     bool computed;
+
     boost::shared_ptr<const Computation> computation;
     boost::shared_ptr<const Object> result;
 
@@ -59,7 +77,7 @@ struct Context: public Object
   // data members
   polymorphic_cow_ptr<Formula> F;
 
-  std::vector<value> values;
+  std::vector< boost::shared_ptr<value> > values;
 
   // member functions
   Context* clone() const {return new Context(*this);}
@@ -70,7 +88,9 @@ struct Context: public Object
 
   void set_value(int index, const Object& O);
 
-  Context(const polymorphic_cow_ptr<Formula>& F_):F(F_),values(F->size()) { }
+  bool index_may_affect_index(int, int) const;
+
+  Context(const polymorphic_cow_ptr<Formula>&);
 };
 
 
@@ -146,6 +166,40 @@ struct Multiply: public Operation
   }
 };
 
+struct IfThenElse: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual IfThenElse* clone() const {return new IfThenElse(*this);}
+
+  shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    shared_ptr<const Bool> condition = Args.evaluate_as<Bool>(0);
+    if (condition)
+      return Args.evaluate(1);
+    else
+      return Args.evaluate(2);
+  }
+};
+
+template<typename X, typename Y>
+struct GreaterThan: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual IfThenElse* clone() const {return new IfThenElse(*this);}
+
+  shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    shared_ptr<const X> x = Args.evaluate_as<X>(0);
+    shared_ptr<const Y> y = Args.evaluate_as<Y>(1);
+
+    Bool condition = (*x > *y);
+
+    return shared_ptr<const Bool>(new Bool(condition));
+  }
+};
+
 struct Add: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -168,132 +222,3 @@ struct Add: public Operation
 /*-----------------------------------------------------------------------------*/
 
 
-bool can_coalesce(shared_ptr<const Object> O1, shared_ptr<const Object> O2)
-{
-  return not O1->possibly_different_from(*O2);
-}
-
-void Formula::add_computed_node(const Operation& o, const vector<int>& indices)
-{
-  Term t;
-  t.op = shared_ptr<Operation>(o.clone());
-  t.input_indices = indices;
-
-  // FIXME - check that these indices actually exist
-
-  terms.push_back(t);
-  for(int i=0;i<indices.size();i++)
-  {
-    int j = indices[i];
-    if (not includes(terms[j].affected_indices, j))
-      terms[j].affected_indices.push_back(j);
-  }
-}
-
-void Formula::add_state_node(const string& name)
-{
-  Term t;
-  t.name = name;
-  terms.push_back(t);
-}
-
-shared_ptr<const Object> Context::evaluate(int index)
-{
-  value& V = values[index];
-  const vector<int>& input_indices = F->input_indices(index);
-
-  if (V.computation) assert(V.result);
-
-  shared_ptr<const Operation> O = F->terms[index].op;
-
-  if (input_indices.size() == 0)
-  {
-    assert(V.computed);
-    assert(not O);
-    return V.result;
-  }
-
-  assert(O);
-
-  
-  // First try to validate our old computation, if possible
-  if (not V.computed and V.computation)
-  {
-
-    const vector<int>& slots_used = V.computation->slots_used_order;
-
-    // The computation is assumed true, unless any of the slots end up
-    // having different values
-    V.computed = true;
-
-    for(int i=0;V.computed and i < slots_used.size();i++)
-    {
-      int slot = slots_used[i];
-
-      // We must first evaluate each used argument.
-
-      // By evaluating them in the same order in which they were used, we guarantee
-      //  that this evaluation will not be wasted.
-      shared_ptr<const Object> v = evaluate(input_indices[slot]);
-
-      // If the value is not the same as the value used to compute the previous result
-      //   they we have to redo the computation.
-      if (v != V.computation->used_values[slot])
-	V.computed = false;
-    }
-  }
-
-  // If the result is not yet marked as computed, then we must run the computation
-  // to get a new result.
-  if (not V.computed)
-  {
-    OperationArgs Args(*this, index);
-
-    // recursive calls to evaluate happen in here.
-    shared_ptr<const Object> new_result = (*O)(Args);
-    V.computation = Args.computation;
-
-    // Only replace the result if (a) the value is different or (b) we can't check that.
-    if (not V.result or not can_coalesce(new_result, V.result))
-      V.result = new_result;
-  }
-    
-  assert(V.result);
-  return V.result;
-}
-
-
-void Context::set_value(int index, const Object& O)
-{
-  shared_ptr<const Object> O2 ( O.clone() );
-  set_value(index, O2);
-}
-
-void Context::set_value(int index, shared_ptr<const Object> O)
-{
-  if (F->n_input_indices(index) > 0)
-    throw myexception()<<"Cannot overwrite computed nodes!";
-
-  if (F->terms[index].constant and values[index].result) 
-    throw myexception()<<"Cannot overwrite constant value!";
-  values[index].result = O;
-  values[index].computed = true;
-  assert(not values[index].computation);
-
-  vector<int> invalidate = F->terms[index].affected_indices;
-
-  for(int i=0;i<invalidate.size();i++)
-  {
-    int index2 = invalidate[i];
-    if (values[index2].computed)
-    {
-      values[index2].computed = false;
-      
-      // add all of F->terms[index2].affected_indices 
-
-      // FIXME - in this framework, how do two different objects SHARE
-      // a computation??
-      
-    }
-  }
-}
