@@ -156,6 +156,7 @@ struct Operation: public Object
 {
   virtual Operation* clone() const=0;
   virtual shared_ptr<const Object> operator()(OperationArgs& Args) const =0;
+  virtual std::string expression(const std::vector<std::string>& inputs) const;
 };
 
 struct Multiply: public Operation
@@ -175,6 +176,8 @@ struct Multiply: public Operation
 
     return r;
   }
+
+  std::string expression(const std::vector<std::string>& inputs) const;
 };
 
 struct IfThenElse: public Operation
@@ -244,6 +247,8 @@ struct Add: public Operation
 
     return r;
   }
+
+  std::string expression(const std::vector<std::string>& inputs) const;
 };
 
 /*-----------------------------------------------------------------------------*/

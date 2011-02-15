@@ -70,6 +70,11 @@ void Formula::add_computed_node(const Operation& o, const vector<int>& indices)
     int input_index = indices[slot];
     set_directly_affects_in_slot(input_index,new_index,slot);
   }
+
+  vector<string> input_names;
+  for(int slot=0;slot<indices.size();slot++)
+    input_names.push_back(terms[indices[slot]].name);
+  terms[new_index].name = o.expression(input_names);
 }
 
 void Formula::add_state_node(const string& name)
@@ -266,14 +271,49 @@ ostream& operator<<(ostream& o, const Context& C)
     o<<index<<" "<<C.F->terms[index].name<<"   ";
     if (C.F->is_constant(index))
       o<<" [constant]";
+    else
+      o<<"           ";
     if (not C.values[index].unique())
       o<<" [shared]";
+    else
+      o<<"         ";
     if (C.values[index]->computed)
       o<<" [computed]";
+    else
+      o<<"           ";
     o<<"\n";
   }
   return o;
 }
+
+string function_expression(const string& name, const vector<string>& arguments)
+{
+  string output = name;
+  output += "(" + join(arguments,',') + ")";
+  return output;
+}
+
+string Operation::expression(const vector<string>& inputs) const
+{
+  return function_expression("[unknown]",inputs);
+}
+
+string Multiply::expression(const vector<string>& inputs) const
+{
+  if (inputs.size() != 2)
+    throw myexception()<<"Multiple::expression - got "<<inputs.size()<<" arguments instead of 2.";
+
+  return inputs[0] + "*" + inputs[1];
+}
+
+string Add::expression(const vector<string>& inputs) const
+{
+  if (inputs.size() != 2)
+    throw myexception()<<"Add::expression - got "<<inputs.size()<<" arguments instead of 2.";
+
+  return inputs[0] + "+" + inputs[1];
+}
+
 
 int main()
 {
@@ -294,19 +334,30 @@ int main()
   {
     vector<int> indices2;
     indices2.push_back(3);
-    indices2.push_back(1);
+    indices2.push_back(2);
     
     F->add_computed_node(Add(),indices2);
   }
 
-  Context CTX(F);
+  Context CTX1(F);
 
-  CTX.set_value(0,Double(2));
-  CTX.set_value(1,Double(3));
+  CTX1.set_value(0,Double(2));
+  CTX1.set_value(1,Double(3));
 
-  std::cout<<CTX<<"\n";
+  std::cout<<"CTX1 = \n"<<CTX1<<"\n";
 
-  shared_ptr<const Object> result = CTX.evaluate(4);
+  Context CTX2 = CTX1;
 
-  std::cout<<CTX<<"\n";
+  std::cout<<"CTX1 = \n"<<CTX1<<"\n";
+
+  shared_ptr<const Object> result = CTX1.evaluate(4);
+
+  std::cout<<"CTX1 = \n"<<CTX1<<"\n";
+  std::cout<<"CTX2 = \n"<<CTX2<<"\n";
+  std::cout<<"Fiddling X and Y in CTX1...\n";
+  CTX1.set_value(0,Double(3));
+  CTX1.set_value(0,Double(2));
+  std::cout<<"CTX1 = \n"<<CTX1<<"\n";
+  std::cout<<"CTX2 = \n"<<CTX2<<"\n";
+  
 }
