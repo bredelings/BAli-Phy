@@ -1,6 +1,7 @@
 // Can we get to typed refs? e.g. term_ref<Double> expression_ref<Double>
 // Can we get using operator* and operator+ and int and double constants?
 //   This involves getting Multiple<Double,Double,Double> down to Multiply<Double,Double>
+// Can we add more checks for duplicates when adding things, e.g. state nodes.
 
 /*---------------------------------------------------------------------*/
 #include <boost/shared_ptr.hpp>
@@ -209,7 +210,7 @@ struct Operation: public Object
 };
 
 
-template <typename X, typename Y, typename Z>
+template <typename T>
 struct Multiply: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -218,10 +219,10 @@ struct Multiply: public Operation
 
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const X> x = Args.evaluate_as<X>(0);
-    boost::shared_ptr<const Y> y = Args.evaluate_as<Y>(1);
+    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
+    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
 
-    boost::shared_ptr<Z> r ( new Z );
+    boost::shared_ptr<T> r ( new T );
 
     *r = (*x) * (*y);
 
@@ -231,7 +232,7 @@ struct Multiply: public Operation
   std::string expression(const std::vector<std::string>& inputs) const
   {
     if (inputs.size() != 2)
-      throw myexception()<<"Multiple::expression - got "<<inputs.size()<<" arguments instead of 2.";
+      throw myexception()<<"Multiply::expression - got "<<inputs.size()<<" arguments instead of 2.";
     
     return inputs[0] + " * " + inputs[1];
   }
@@ -259,7 +260,7 @@ struct IfThenElse: public Operation
   IfThenElse():Operation(3) {}
 };
 
-template<typename X, typename Y>
+template<typename T>
 struct GreaterThan: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -268,8 +269,8 @@ struct GreaterThan: public Operation
 
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const X> x = Args.evaluate_as<X>(0);
-    boost::shared_ptr<const Y> y = Args.evaluate_as<Y>(1);
+    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
+    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
 
     Bool condition = (*x > *y);
 
@@ -305,6 +306,7 @@ struct Conversion: public Operation
   Conversion():Operation(1) {}
 };
 
+template<typename T>
 struct Add: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -313,17 +315,24 @@ struct Add: public Operation
 
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    boost::shared_ptr<const Double> y = Args.evaluate_as<Double>(1);
+    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
+    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
 
-    boost::shared_ptr<Double> r ( new Double );
+    boost::shared_ptr<T> r ( new T );
 
     *r = (*x) + (*y);
 
     return r;
   }
 
-  std::string expression(const std::vector<std::string>& inputs) const;
+  std::string expression(const std::vector<std::string>& inputs) const
+  {
+    if (inputs.size() != 2)
+      throw myexception()<<"Add::expression - got "<<inputs.size()<<" arguments instead of 2.";
+    
+    return inputs[0] + " + " + inputs[1];
+  }
+
 
   Add():Operation(2) {}
 };

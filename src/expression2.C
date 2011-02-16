@@ -393,14 +393,6 @@ string IfThenElse::expression(const vector<string>& inputs) const
   return function_expression_("if",inputs);
 }
 
-string Add::expression(const vector<string>& inputs) const
-{
-  if (inputs.size() != 2)
-    throw myexception()<<"Add::expression - got "<<inputs.size()<<" arguments instead of 2.";
-
-  return inputs[0] + " + " + inputs[1];
-}
-
 struct expression: public Object
 {
   polymorphic_cow_ptr<Formula> F;
@@ -663,6 +655,18 @@ struct expression_ref: public shared_ptr<const expression>
     return apply(*this,arg);
   }
 
+  expression_ref operator()(const expression_ref& arg1, const expression_ref& arg2) const
+  {
+    return apply(apply(*this,arg1),arg2);
+  }
+
+  expression_ref operator()(const expression_ref& arg1, 
+			    const expression_ref& arg2,
+			    const expression_ref& arg3) const
+  {
+    return apply(apply(apply(*this,arg1),arg2),arg3);
+  }
+
   expression_ref(expression* v)
     :shared_ptr<const expression>(v) 
   {}
@@ -716,6 +720,27 @@ term_ref Formula::add_computed_node(const expression_ref& e)
   std::abort();
 }
 
+template <typename T>
+typed_expression_ref<T> operator*(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+{
+  expression_ref times = Multiply<T>();
+  return times(arg1,arg2);
+}
+
+template <typename T>
+typed_expression_ref<T> operator+(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+{
+  expression_ref plus = Add<T>();
+  return plus(arg1,arg2);
+}
+
+template <typename T>
+typed_expression_ref<T> operator>(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+{
+  expression_ref gt = GreaterThan<T>();
+  return gt(arg1,arg2);
+}
+
 int main()
 {
   Formula f;
@@ -724,20 +749,27 @@ int main()
   term_ref y = F->add_state_node("Y");
   term_ref z = F->add_state_node("Z");
   term_ref w = F->add_state_node("W");
-  term_ref one = F->add_constant_node("1",Double(1));
+  term_ref one = F->add_constant_node(Double(1));
+
+  typed_expression_ref<Double> X = x;
+  typed_expression_ref<Double> Y = y;
+  typed_expression_ref<Int> W = w;
+  typed_expression_ref<Double> Z = z;
+  typed_expression_ref<Double> One = one;
 
   F->add_constant_node(Double(1));
 
-  expression_ref mul = Multiply<Double,Double,Double>();
-  expression_ref muli = Multiply<Int,Int,Int>();
-  expression_ref plus = Add();
-  expression_ref gt = GreaterThan<Double,Double>();
+  expression_ref mul = Multiply<Double>();
+  expression_ref muli = Multiply<Int>();
+  expression_ref plus = Add<Double>();
+  expression_ref gt = GreaterThan<Double>();
   expression_ref If = IfThenElse();
 
   std::cout<<"Demonstrate lambda functions\n";
   std::cout<<"mul = "<<mul->print()<<"\n";
   std::cout<<"mul(x) = "<<mul(x)->print()<<"\n";
-  std::cout<<"mul(x)(y) = "<<mul(x)(y)->print()<<"\n\n\n";
+  std::cout<<"mul(x)(y) = "<<mul(x)(y)->print()<<"\n";
+  std::cout<<"mul(x,y) = "<<mul(x,y)->print()<<"\n\n\n";
 
   term_ref x_times_y_plus_one = F->add_computed_node( plus(mul(x)(y))(one) );
 
@@ -747,10 +779,14 @@ int main()
 
   term_ref w_2 = F->add_computed_node( muli(w)(w) );
 
-  term_ref cond = F->add_computed_node( If(z_gt_1)(x_times_y_plus_one)(w_2));
+  term_ref cond = F->add_computed_node( If(z_gt_1, x_times_y_plus_one, w_2));
 
   // this should be a dup and do nothing
-  F->add_computed_node(If( gt(z)(one) ) ( plus( mul(x)(y))(one)) ( muli(w)(w) ) );
+  F->add_computed_node( If( gt(z)(one) ) ( plus( mul(x)(y))(one) ) ( muli(w)(w) ) );
+  // -- using multiple arguments instead of one at a time.  This works up to 3 arguments
+  F->add_computed_node( If( gt(z, one) , plus( mul(x, y), one) , muli(w,w) ) );
+  // -- using automatic creation of operators based on typed references
+  F->add_computed_node( If( Z > One , X*Y+One , W*W ) );
 
   Context CTX1(F);
 
