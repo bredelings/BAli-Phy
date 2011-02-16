@@ -546,6 +546,8 @@ struct lambda_expression: public expression
     return quantified_expression->highest_unused_dummy();
   }
   
+  // FIXME - If we're substituting a lambda expression we have to rename its dummys to make sure
+  //         there is no overlap.
   shared_ptr<const expression> substitute(int dummy, shared_ptr<const expression> E) const;
 
   lambda_expression* clone() const {return new lambda_expression(*this);}
