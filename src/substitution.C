@@ -1099,12 +1099,91 @@ namespace substitution {
     return probs;
   }
 
+  /// Construct a likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
+  Matrix get_letter_likelihoods(int l, const alphabet& a, const MultiModel& MM)
+  {
+    assert(a.is_feature(l));
 
-  /// Find the probabilities of each letter at the root, given the data at the nodes in 'group'
+    const int n_letters = a.size();
+
+    const int n_models = MM.n_base_models();
+    const int n_states = MM.n_states();
+
+    Matrix R(n_models,n_states);
+
+    if (l == alphabet::not_gap)
+    {
+      element_assign(R,1);
+      return R;
+    }
+
+    element_assign(R,0.0);
+
+    const vector<unsigned>& smap = MM.state_letters();
+
+    if (a.is_letter(l))
+    {
+      for(int m=0;m<n_models;m++)
+	for(int s=0;s<n_states;s++)
+	  if (l == smap[s])
+	    R(m,s) = 1;
+    }
+    else if (a.is_letter_class(l))
+    {
+      for(int l2=0;l2<n_letters;l2++)
+	if (a.matches(l,l2))
+	  for(int m=0;m<n_models;m++)
+	    for(int s=0;s<n_states;s++)
+	      if (l2 == smap[s])
+		R(m,s) = 1;
+    }
+    else
+      std::abort();
+
+    return R;
+  }
+
+  /// Get the likelihood matrix for each letter l of sequence n, where the likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
+  vector<Matrix>
+  get_leaf_seq_likelihoods(const data_partition& P, int n)
+  {
+    const alignment& A = *P.A;
+    int L = A.note(0,0,n);
+
+    const alphabet& a = P.get_alphabet();
+    const int n_letters = a.size();
+
+    const MultiModel& MM = P.SModel();
+    const int n_models = MM.n_base_models();
+    const int n_states = MM.n_states();
+
+    const vector<unsigned>& smap = MM.state_letters();
+
+    // Compute the likelihood matrix just one for each letter (not letter classes)
+    vector<Matrix> letter_likelihoods;
+    for(int l=0;l<n_letters;l++)
+      letter_likelihoods.push_back( get_letter_likelihoods(l, a, MM) );
+
+    // Compute the likelihood matrices for each letter in the sequence
+    vector<Matrix> likelihoods(L, Matrix(n_models,n_states));
+    for(int i=0;i<L;i++)
+    {
+      int letter = A.note(0,i+1,n);
+      if (a.is_letter(letter))
+	likelihoods[i] = letter_likelihoods[letter];
+      else
+	likelihoods[i] = get_letter_likelihoods(letter, a, MM);
+    }
+
+    return likelihoods;
+  }
+
+  /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
   vector<Matrix>
   get_column_likelihoods(const data_partition& P, const vector<int>& b,
 			 const vector<int>& req,const vector<int>& seq,int delta)
   {
+    // FIXME - this now handles only internal sequences.  But see get_leaf_seq_likelihoods( ).
     default_timer_stack.push_timer("substitution");
     default_timer_stack.push_timer("substitution::column_likelihoods");
 
@@ -1114,6 +1193,7 @@ namespace substitution {
     const Tree& T = *P.T;
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
+    const MultiModel& MM = P.SModel();
 
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
@@ -1127,6 +1207,7 @@ namespace substitution {
       assert(T.directed_branch(b[i]).target() == root);
     LC.root = root;
 
+    // select columns with at least one node in 'req', and re-order them according to the permutation 'seq'
     ublas::matrix<int> index = I.get_subA_index_any(b,A,T,req,seq);
 
     IF_DEBUG_S(int n_br = ) calculate_caches_for_node(LC.root, P);
@@ -1139,8 +1220,6 @@ namespace substitution {
     L.reserve(A.length()+2);
 
     Matrix& S = LC.scratch(0);
-    const int n_models = LC.n_models();
-    const int n_states = LC.n_states();
 
     //Add the padding matrices
     {
@@ -1152,28 +1231,20 @@ namespace substitution {
 
     const vector<unsigned>& smap = P.SModel().state_letters();
 
-    for(int i=0;i<index.size1();i++) {
+    // For each column in the index (e.g. for each present character at node 'root')
+    for(int i=0;i<index.size1();i++) 
+    {
+      element_assign(S,1);
 
-      for(int m=0;m<n_models;m++) {
-	for(int s=0;s<n_states;s++) 
-	  S(m,s) = 1;
+      // Note that we could do ZERO products in this loop
+      for(int j=0;j<b.size();j++) 
+      {
+	int i0 = index(i,j);
+	if (i0 == alphabet::gap) continue;
 
-	//-------------- Propagate and collect information at 'root' -----------//
-	for(int j=0;j<b.size();j++) {
-	  int i0 = index(i,j);
-	  if (i0 != alphabet::gap)
-	    for(int s=0;s<n_states;s++) 
-	      S(m,s) *= LC(i0,b[j])(m,s);
-	}
-
-	if (root < T.n_leaves()) {
-	  int rl = A.seq(root)[i];
-	  if (a.is_letter_class(rl))
-	    for(int s=0;s<n_states;s++)
-	      if (not a.matches(smap[s],rl))
-		S(m,s) = 0;
-	}
+	element_prod_modify(S, LC(i0,b[j]) );
       }
+      
       L.push_back(S);
     }
     default_timer_stack.pop_timer();
