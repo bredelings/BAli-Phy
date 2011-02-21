@@ -1,6 +1,8 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+#include <string>
+
 enum maybe_t {maybe = -1, no = 0, yes = 1};
 
 class Object {
