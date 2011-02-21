@@ -5,6 +5,8 @@
 #include <vector>
 #include <string>
 
+#include "object.H"
+
 class OperationArgs;
 
 struct Operation: public Object
@@ -18,5 +20,7 @@ struct Operation: public Object
 
   Operation(int n):n_args_(n) { }
 };
+
+std::string function_expression_(const std::string& name, const std::vector<std::string>& arguments);
 
 #endif

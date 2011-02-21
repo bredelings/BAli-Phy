@@ -5,26 +5,6 @@ using std::vector;
 using std::string;
 using std::ostream;
 
-string function_expression_(const string& name, const vector<string>& arguments)
-{
-  string output = name;
-  output += "(" + join(arguments,", ") + ")";
-  return output;
-}
-
-string Operation::expression(const vector<string>& inputs) const
-{
-  return function_expression_("[unknown]",inputs);
-}
-
-string IfThenElse::expression(const vector<string>& inputs) const
-{
-  if (inputs.size() != 3)
-    throw myexception()<<"IfThenElse::expression - got "<<inputs.size()<<" arguments instead of 3.";
-
-  return function_expression_("if",inputs);
-}
-
 struct expression: public Object
 {
   polymorphic_cow_ptr<Formula> F;
