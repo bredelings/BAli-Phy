@@ -35,6 +35,9 @@ struct Computation;
 struct Operation;
 struct expression_ref;
 
+// Eventually the Formula should be the secondary object, cuz the evaluation tree
+//  may change as the Context changes.
+
 struct Formula: public Object
 {
   struct Term
@@ -52,6 +55,10 @@ struct Formula: public Object
   };
 
   std::vector<Term> terms;
+
+  std::vector<int> state_indices;
+
+  term_ref find_computation(const Operation& o, const std::vector<int>& indices) const;
 
   term_ref add_term(const Term&);
 
@@ -75,6 +82,8 @@ public:
   bool has_inputs(int index) const;
 
   bool is_constant(int index) const;
+
+  int n_state_nodes() const;
 
   bool is_state(int index) const;
 
