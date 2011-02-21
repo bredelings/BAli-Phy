@@ -1,6 +1,7 @@
 #include "expression.H"
 #include "util.H"
 #include "operation.H"
+#include "formula.H"
 
 using boost::shared_ptr;
 using std::vector;

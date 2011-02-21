@@ -1,5 +1,6 @@
 #include "myexception.H"
 
+#include "expression.H"
 #include "formula.H"
 #include "operation.H"
 
@@ -213,5 +214,32 @@ term_ref Formula::add_constant_node(const string& name, shared_ptr<const Object>
   t.name = name;
   t.constant = true;
   return add_term(t);
+}
+
+term_ref Formula::add_computed_node(const expression_ref& e)
+{
+  shared_ptr<const lambda_expression> lambda = dynamic_pointer_cast<const lambda_expression>(e);
+  if (lambda)
+    throw myexception()<<"Lambda expressions cannot currently be calculated";
+
+  shared_ptr<const constant_expression> constant = dynamic_pointer_cast<const constant_expression>(e);
+  if (constant)
+    return add_constant_node(constant->value->print(), constant->value);
+  
+  shared_ptr<const term_ref_expression> tr = dynamic_pointer_cast<const term_ref_expression>(e);
+  if (tr)
+    return tr->term;
+  
+  shared_ptr<const function_expression> func = dynamic_pointer_cast<const function_expression>(e);
+  if (func)
+  {
+    vector<int> arg_indices;
+    for(int i=0;i<func->args.size();i++)
+      arg_indices.push_back( add_computed_node(func->args[i] ) );
+
+    return add_computed_node(*(func->op), arg_indices);
+  }
+
+  std::abort();
 }
 

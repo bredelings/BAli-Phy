@@ -4,7 +4,26 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <string>
-#include "formula.H"
+#include "cow-ptr.H"
+#include "object.H"
+
+class Formula;
+
+struct term_ref
+{
+  int index;
+  polymorphic_cow_ptr<Formula> F;
+
+  bool is_state() const;
+  bool is_constant() const;
+  bool is_computed() const;
+  std::string print() const;
+
+  operator int() const {return index;}
+  term_ref():index(-1) {}
+  term_ref(int i,polymorphic_cow_ptr<Formula> f):index(i),F(f) {}
+  term_ref(int i,const Formula& f);
+};
 
 struct expression: public Object
 {
@@ -75,6 +94,8 @@ struct dummy_expression: public expression
   std::string print() const;
   dummy_expression(int i):index(i) {}
 };
+
+class Operation;
 
 // a function expression
 struct function_expression: public expression
