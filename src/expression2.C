@@ -71,11 +71,6 @@ bool Context::index_may_affect_index(int index1, int index2) const
     return includes(F->input_indices(index2), index1);
 }
 
-bool can_coalesce(shared_ptr<const Object> O1, shared_ptr<const Object> O2)
-{
-  return not O1->possibly_different_from(*O2);
-}
-
 bool Formula::directly_affects(int index1, int index2) const
 {
   return includes(affected_indices(index1), index2);
@@ -150,7 +145,7 @@ term_ref Formula::add_term(const Term& t)
 
       for(int index=0;index<size();index++)
       {
-	if (is_constant(index) and not t.default_value->possibly_different_from(*terms[index].default_value))
+	if (is_constant(index) and t.default_value->equals(*terms[index].default_value))
 	  return term_ref(index,*this);
       }
     }
@@ -285,7 +280,7 @@ shared_ptr<const Object> Context::evaluate(int index)
     V.computed = true;
 
     // Only replace the result if (a) the value is different or (b) we can't check that.
-    if (not V.result or not can_coalesce(new_result, V.result))
+    if (not V.result or new_result->maybe_not_equals(*V.result))
       V.result = new_result;
 
     std::cerr<<"recomputing "<<F->terms[index].name<<"\n";

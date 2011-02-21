@@ -1,14 +1,40 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+enum maybe_t {maybe = -1, no = 0, yes = 1};
+
 class Object {
 public:
   virtual Object* clone() const =0;
 
-  virtual bool possibly_different_from(const Object& O) const 
+  maybe_t compare(const Object& O) const
   {
-    if (this == &O) return false;
-    return true;
+    if (this == &O) 
+      return yes;
+    else
+      return maybe;
+  }
+
+  bool equals(const Object& O) const
+  {
+    return compare(O) == yes;
+  }
+
+  bool not_equals(const Object& O) const
+  {
+    return compare(O) == no;
+  }
+
+  bool maybe_equals(const Object& O) const
+  {
+    maybe_t m = compare(O);
+    return (m == yes or m == maybe);
+  }
+
+  bool maybe_not_equals(const Object& O) const
+  {
+    maybe_t m = compare(O);
+    return (m == no or m == maybe);
   }
 
   virtual std::string print() const {return "[unprintable]";}
@@ -37,17 +63,17 @@ public:
 
   std::string print() const {return convertToString(t);}
 
-  virtual bool possibly_different_from(const Object& O) const 
+  virtual maybe_t compare(const Object& O) const 
   {
     // The same object
-    if (this == &O) return false;
+    if (this == &O) return yes;
 
     // The same value
     const POD<T>* o = dynamic_cast<const POD<T>*>(&O);
-    if (o and t == o->t) return false;
+    if (o and t == o->t) return yes;
 
     // Not the same
-    return true;
+    return no;
   }
 
   // Doesn't seem to do ANYTHING?  Why not?
