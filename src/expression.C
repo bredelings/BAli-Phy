@@ -1,0 +1,152 @@
+#include "expression.H"
+#include "util.H"
+#include "operation.H"
+
+using boost::shared_ptr;
+using std::vector;
+using std::string;
+
+shared_ptr<const expression> dummy_expression::substitute(int dummy, shared_ptr<const expression> E) const
+{
+  if (index == dummy) 
+    return E;
+  else
+    return shared_ptr<const expression>();
+}
+
+string dummy_expression::print() const {
+  return string("#")+convertToString(index);
+}
+
+shared_ptr<const expression> function_expression::substitute(int dummy, shared_ptr<const expression> E) const
+{
+  vector< shared_ptr<const expression> > new_args(args.size());
+  bool change = false;
+  for(int i=0;i<args.size();i++)
+  {
+    new_args[i] = ::substitute(args[i], dummy, E);
+    if (new_args[i] != args[i])
+      change = true;
+  }
+  
+  shared_ptr<const expression> result;
+  
+  if (change)
+    result = shared_ptr<const expression>(new function_expression(op,new_args));
+  
+  return result;
+}
+
+
+string function_expression::print() const 
+{
+  vector<string> arg_names;
+  for(int i=0;i<args.size();i++)
+    arg_names.push_back( args[i]->print() );
+  
+  return op->expression(arg_names);
+}
+
+function_expression::function_expression(const Operation& O,const vector< shared_ptr<const expression> >& A)
+  :op(O.clone()),
+   args(A)
+{ }
+
+function_expression::function_expression(shared_ptr<const Operation> O,const vector< shared_ptr<const expression> >& A)
+  :op(O->clone()),
+   args(A)
+{ }
+
+lambda_expression::lambda_expression(const Operation& O)
+  :dummy_variable(0)
+{
+  int n = O.n_args();
+  assert(n != -1);
+  
+  vector< shared_ptr<const expression> > A;
+  for(int i=0;i<n;i++)
+    A.push_back(shared_ptr<const expression>(new dummy_expression(i)));
+  
+  shared_ptr<const expression> E(new function_expression(O, A));
+  
+  for(int i=n-1;i>0;i--)
+    E = shared_ptr<const expression>(new lambda_expression(i,E));
+  
+  quantified_expression = E;
+}
+
+shared_ptr<const expression> lambda_expression::substitute(int dummy, shared_ptr<const expression> E) const
+{
+  if (dummy_variable.index == dummy)
+    throw myexception()<<"Trying to substitution for dummy "<<dummy<<" in lambda express that quantifies it!";
+
+  shared_ptr<const expression> result = quantified_expression->substitute(dummy,E);
+  
+  if (not result) return result;
+  
+  return shared_ptr<const expression>(new lambda_expression(dummy_variable.index,result));
+}
+
+shared_ptr<const expression> substitute(shared_ptr<const expression> E1, int dummy, shared_ptr<const expression> E2)
+{
+  shared_ptr<const expression> E3 = E1->substitute(dummy,E2);
+  if (E3) 
+    return E3;
+  else
+    return E1;
+}
+
+shared_ptr<const expression> apply(const expression& E,shared_ptr<const expression> arg)
+{
+  const lambda_expression* lambda = dynamic_cast<const lambda_expression*>(&E);
+  if (not lambda)
+    throw myexception()<<"Too many arguments to expression "<<E.print()<<".  (Is this a function at all?)";
+
+  return substitute(lambda->quantified_expression, lambda->dummy_variable.index, arg);
+}
+
+shared_ptr<const expression> apply(const expression& E,const expression& arg)
+{
+  return apply(E,shared_ptr<const expression>(arg.clone()));
+}
+
+shared_ptr<const expression> apply(shared_ptr<const expression> E,
+				   shared_ptr<const expression> arg)
+{
+  return apply(*E,arg);
+}
+
+shared_ptr<const expression> apply(shared_ptr<const expression> E,
+				   const expression& arg)
+{
+  return apply(*E,shared_ptr<const expression>(arg.clone()));
+}
+
+shared_ptr<const expression> apply(shared_ptr<const expression> E,
+				   const vector<shared_ptr<const expression> > args,
+				   int i)
+{
+  shared_ptr<const expression> result1 = apply(E,args[i]);
+
+  if (i<args.size())
+    result1 = apply(result1, args, i+1);
+
+  return result1;
+}
+
+shared_ptr<const expression> apply(shared_ptr<const expression> E,
+				   const vector<shared_ptr<const expression> > args)
+{
+  return apply(E,args,0);
+}
+
+shared_ptr<const expression> expression::apply(shared_ptr<const expression> arg) const
+{
+  return ::apply(*this,arg);
+}
+
+shared_ptr<const expression> expression::apply(const expression& arg) const
+{
+  return ::apply(*this,arg);
+}
+

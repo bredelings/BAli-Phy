@@ -1,5 +1,5 @@
 #ifndef FORMULA_H
-#define FORUMLA_H
+#define FORMULA_H
 
 #include <boost/shared_ptr.hpp>
 #include <vector>
