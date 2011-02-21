@@ -7,6 +7,7 @@
 #include "myexception.H"
 #include "operation.H"
 #include "computation.H"
+#include "expression.H"
 
 template <typename T>
 struct Multiply: public Operation
@@ -134,5 +135,28 @@ struct Add: public Operation
 
   Add():Operation(2) {}
 };
+
+#include "formula.H"
+
+template <typename T>
+typed_expression_ref<T> operator*(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+{
+  expression_ref times = Multiply<T>();
+  return times(arg1,arg2);
+}
+
+template <typename T>
+typed_expression_ref<T> operator+(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+{
+  expression_ref plus = Add<T>();
+  return plus(arg1,arg2);
+}
+
+template <typename T>
+typed_expression_ref<T> operator>(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+{
+  expression_ref gt = GreaterThan<T>();
+  return gt(arg1,arg2);
+}
 
 #endif

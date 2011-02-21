@@ -1,32 +1,20 @@
-#include "expression2.H"
+#include <vector>
+#include <string>
+#include <iostream>
 
-#include "expression.H"
+#include <boost/shared_ptr.hpp>
+#include "util.H"
+
+#include "formula.H"
+#include "context.H"
+#include "computation.H"
+#include "operation.H"
+#include "operations.H"
 
 using boost::shared_ptr;
 using std::vector;
 using std::string;
 using std::ostream;
-
-template <typename T>
-typed_expression_ref<T> operator*(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
-{
-  expression_ref times = Multiply<T>();
-  return times(arg1,arg2);
-}
-
-template <typename T>
-typed_expression_ref<T> operator+(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
-{
-  expression_ref plus = Add<T>();
-  return plus(arg1,arg2);
-}
-
-template <typename T>
-typed_expression_ref<T> operator>(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
-{
-  expression_ref gt = GreaterThan<T>();
-  return gt(arg1,arg2);
-}
 
 int main()
 {
