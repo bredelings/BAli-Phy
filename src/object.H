@@ -2,6 +2,7 @@
 #define OBJECT_H
 
 #include <string>
+#include "util.H"
 
 enum maybe_t {maybe = -1, no = 0, yes = 1};
 
