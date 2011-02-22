@@ -30,7 +30,7 @@ int main()
   typed_expression_ref<Double> Y = y;
   typed_expression_ref<Int> W = w;
   typed_expression_ref<Double> Z = z;
-  typed_expression_ref<Double> One = one;
+  typed_expression_ref<Double> One(1.0);
 
   F->add_constant_node(Double(1));
 
@@ -62,10 +62,12 @@ int main()
   F->add_computed_node( If( gt(z, one) , plus( mul(x, y), one) , muli(w,w) ) );
   // -- using automatic creation of operators based on typed references
   F->add_computed_node( If( Z > One , X*Y+One , W*W ) );
+  // -- can we create constants easily?
+  F->add_computed_node( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
 
   Context CTX1(F);
 
-  CTX1.set_value(x,Double(2));
+  //  CTX1.set_value(x,Double(2));
   CTX1.set_value(y,Double(3));
   CTX1.set_value(z,Double(4));
   CTX1.set_value(w,Int(5));

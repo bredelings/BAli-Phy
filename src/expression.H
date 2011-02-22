@@ -216,6 +216,15 @@ public:
   typed_expression_ref(expression* v): expression_ref(v) {}
   typed_expression_ref(const boost::shared_ptr<const expression>& v): expression_ref(v) {}
   typed_expression_ref(const term_ref& t): expression_ref(t) {}
+
+  template <typename Y>
+  typed_expression_ref(Y y):expression_ref(new constant_expression(POD<Y>(y))) {}
 };
+
+template <typename T>
+typed_expression_ref<T> Constant(const T& t)
+{
+  return typed_expression_ref<T>(new constant_expression(t));
+}
 
 #endif
