@@ -1317,7 +1317,6 @@ void TableLogger::operator()(const owned_ptr<Probability_Model>& P)
       else
 	*log_file<<"\t";
     }
-    return;
   }
 
   for(int i=0;i<n_fields();i++)
