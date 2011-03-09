@@ -40,6 +40,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rng.H"
 #include "proposals.H"
 #include "bounds.H"
+#include "io.H"
+#include <boost/shared_ptr.hpp>
+#include "owned-ptr.H"
+
 // how to have different models, with different moves
 // and possibly moves between models?
 
@@ -437,18 +441,200 @@ namespace MCMC {
     ~MoveArgSingle() {}
   };
 
+  struct Logger
+  {
+    virtual Logger* clone() const =0;
+    virtual void operator()(const owned_ptr<Probability_Model>& P)=0;
+    virtual ~Logger() {}
+  };
+
+  class FileLogger : public Logger
+  {
+  protected:
+    boost::shared_ptr<checked_ofstream> log_file;
+
+  public:
+    FileLogger* clone() const =0;
+    FileLogger(const std::string&);
+  };
+
+  struct LoggerFunction
+  {
+    virtual LoggerFunction* clone() const =0;
+    virtual std::string operator()(const owned_ptr<Probability_Model>& P)=0;
+    virtual ~LoggerFunction() {}
+  };
+
+  class IterationsFunction: public LoggerFunction
+  {
+    long iterations;
+  public:
+    IterationsFunction* clone() const {return new IterationsFunction(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+  };
+
+  class GetParameterFunction: public LoggerFunction
+  {
+    int p;
+  public:
+    GetParameterFunction* clone() const {return new GetParameterFunction(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    GetParameterFunction(int i):p(i) {}
+  };
+
+  struct GetPriorFunction: public LoggerFunction
+  {
+    GetPriorFunction* clone() const {return new GetPriorFunction(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    GetPriorFunction() {}
+  };
+
+  class GetAlignmentPriorFunction: public LoggerFunction
+  {
+    int p;
+  public:
+    GetAlignmentPriorFunction* clone() const {return new GetAlignmentPriorFunction(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    GetAlignmentPriorFunction(int i):p(i) {}
+  };
+
+  struct GetLikelihoodFunction: public LoggerFunction
+  {
+    GetLikelihoodFunction* clone() const {return new GetLikelihoodFunction(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    GetLikelihoodFunction() {}
+  };
+
+  struct GetProbabilityFunction: public LoggerFunction
+  {
+    GetProbabilityFunction* clone() const {return new GetProbabilityFunction(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    GetProbabilityFunction() {}
+  };
+
+  struct Get_Alignment_Length_Function: public LoggerFunction
+  {
+    int p;
+  public:
+    Get_Alignment_Length_Function* clone() const {return new Get_Alignment_Length_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    Get_Alignment_Length_Function(int i):p(i) {}
+  };
+
+  struct Get_Num_Substitutions_Function: public LoggerFunction
+  {
+    int p;
+    ublas::matrix<int> cost_matrix;
+  public:
+    Get_Num_Substitutions_Function* clone() const {return new Get_Num_Substitutions_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    Get_Num_Substitutions_Function(int i, const ublas::matrix<int>& C):p(i), cost_matrix(C) {}
+  };
+
+  struct Get_Num_Indels_Function: public LoggerFunction
+  {
+    int p;
+  public:
+    Get_Num_Indels_Function* clone() const {return new Get_Num_Indels_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    Get_Num_Indels_Function(int i):p(i) {}
+  };
+
+  struct Get_Total_Length_Indels_Function: public LoggerFunction
+  {
+    int p;
+  public:
+    Get_Total_Length_Indels_Function* clone() const {return new Get_Total_Length_Indels_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    Get_Total_Length_Indels_Function(int i):p(i) {}
+  };
+
+  struct Get_Total_Alignment_Length_Function: public LoggerFunction
+  {
+  public:
+    Get_Total_Alignment_Length_Function* clone() const {return new Get_Total_Alignment_Length_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+  };
+
+  struct Get_Total_Num_Substitutions_Function: public LoggerFunction
+  {
+  public:
+    Get_Total_Num_Substitutions_Function* clone() const {return new Get_Total_Num_Substitutions_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+  };
+
+  struct Get_Total_Num_Indels_Function: public LoggerFunction
+  {
+    int p;
+  public:
+    Get_Total_Num_Indels_Function* clone() const {return new Get_Total_Num_Indels_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+  };
+
+  struct Get_Total_Total_Length_Indels_Function: public LoggerFunction
+  {
+    int p;
+  public:
+    Get_Total_Total_Length_Indels_Function* clone() const {return new Get_Total_Total_Length_Indels_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+  };
+
+  struct Get_Tree_Length_Function: public LoggerFunction
+  {
+    Get_Tree_Length_Function* clone() const {return new Get_Tree_Length_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+  };
+
+  struct TreeLogger: public FileLogger
+  {
+    TreeLogger* clone() const {return new TreeLogger(*this);}
+    void operator()(const owned_ptr<Probability_Model>& P);
+    TreeLogger(const std::string&);
+  };
+
+  class AlignmentLogger: public FileLogger
+  {
+    int p;
+  public:
+    AlignmentLogger* clone() const {return new AlignmentLogger(*this);}
+    void operator()(const owned_ptr<Probability_Model>& P);
+    AlignmentLogger(const std::string&,int i);
+  };
+
+  class TableLogger: public FileLogger
+  {
+    long iterations;
+    std::vector<std::string> field_names;
+    std::vector<owned_ptr<LoggerFunction> > functions;
+
+  public:
+    TableLogger* clone() const {return new TableLogger(*this);}
+
+    int n_fields() const {return field_names.size();}
+
+    void operator()(const owned_ptr<Probability_Model>& P);
+
+    void add_field(const std::string& name, const owned_ptr<LoggerFunction>&);
+
+    TableLogger(const std::string& filename);
+  };
 
 
   /// A Sampler: based on a collection of moves to run every iteration
-  class Sampler: public MoveAll, public MoveStats {
-
+  class Sampler: public MoveAll, public MoveStats 
+  {
+    std::vector<owned_ptr<Logger> > loggers;
   public:
     /// Run the sampler for 'max' iterations
     void go(owned_ptr<Probability_Model>& P, int subsample, int max, 
-	    std::ostream&,std::ostream&,std::ostream&,std::ostream&,std::vector<std::ostream*>& files);
+	    std::ostream&,std::ostream&,std::ostream&,std::vector<std::ostream*>& files);
+
+    int n_loggers() const {return loggers.size();}
+
+    void add_logger(const owned_ptr<Logger>&);
 
     Sampler(const std::string& s)
-      :MoveAll(s) {};
+      :MoveAll(s) {}
   };
 
 }

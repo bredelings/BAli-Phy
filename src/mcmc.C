@@ -1074,7 +1074,7 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M)
   return indices;
 }
 
-void mcmc_init(Parameters& P, ostream& s_out, ostream& s_parameters)
+void mcmc_init(Parameters& P, ostream& s_out)
 {
   const SequenceTree& T = *P.T;
 
@@ -1114,40 +1114,14 @@ void mcmc_init(Parameters& P, ostream& s_out, ostream& s_parameters)
 	s_out<<endl<<endl;
       }
   }
-
-  /// Output headers to log file
-  s_parameters<<"iter\t";
-  s_parameters<<"prior\t";
-  for(int i=0;i<P.n_data_partitions();i++)
-    if (P[i].variable_alignment()) s_parameters<<"prior_A"<<i+1<<"\t";
-  s_parameters<<"likelihood\tlogp\t";
-  s_parameters<<P.header();
-  for(int i=0;i<P.n_data_partitions();i++) {
-    if (P[i].variable_alignment()) {
-      s_parameters<<"\t|A"<<i+1<<"|";
-      s_parameters<<"\t#indels"<<i+1;
-      s_parameters<<"\t|indels"<<i+1<<"|";
-    }
-    s_parameters<<"\t#substs"<<i+1;
-    if (dynamic_cast<const Triplets*>(&P[i].get_alphabet()))
-      s_parameters<<"\t#substs(nuc)"<<i+1;
-    if (dynamic_cast<const Codons*>(&P[i].get_alphabet()))
-      s_parameters<<"\t#substs(aa)"<<i+1;
-  }
-  if (P.n_data_partitions() > 1) {
-    if (P.variable_alignment())
-      s_parameters<<"\t|A|\t#indels\t|indels|";
-    s_parameters<<"\t#substs";
-  }
-  s_parameters<<"\t|T|"<<endl;
-
 }
 
 void mcmc_log(int iterations, int subsample, Parameters& P, 
-	      ostream& s_out, ostream& s_parameters, ostream& s_trees, ostream& s_map,vector<ostream*>& files,
+	      ostream& s_out, ostream& s_trees, ostream& s_map,vector<ostream*>& files,
 	      efloat_t& MAP_score,
 	      const vector< vector< vector<int> > >& un_identifiable_indices,
-	      const valarray<double>& weights)
+	      const valarray<double>& weights,
+	      const vector<owned_ptr<Logger> >& loggers)
 {
   efloat_t prior = P.prior();
   efloat_t likelihood = P.likelihood();
@@ -1164,74 +1138,21 @@ void mcmc_log(int iterations, int subsample, Parameters& P,
   if (show_alignment) {
     for(int i=0;i<P.n_data_partitions();i++)
     {
-      (*files[5+i])<<"iterations = "<<iterations<<"\n\n";
+      (*files[4+i])<<"iterations = "<<iterations<<"\n\n";
       if (not iterations or P[i].variable_alignment())
-	(*files[5+i])<<standardize(*P[i].A, *P.T)<<"\n";
+	(*files[4+i])<<standardize(*P[i].A, *P.T)<<"\n";
     }
   }
 
-  // Write parameter values to parameter log file
-  s_parameters<<iterations<<"\t";
-  s_parameters<<prior<<"\t";
-  for(int i=0;i<P.n_data_partitions();i++)
-    if (P[i].variable_alignment()) s_parameters<<P[i].prior_alignment()<<"\t";
-  s_parameters<<likelihood<<"\t"<<Pr<<"\t";
-
-  // Sort parameter values to resolve identifiability and then output them.
-  vector<double> values = P.get_parameter_values();
-  for(int i=0;i<un_identifiable_indices.size();i++) 
-    values = make_identifiable(values,un_identifiable_indices[i]);
-  s_parameters<<join(values,'\t');
-
-  unsigned total_length=0;
-  unsigned total_indels=0;
-  unsigned total_indel_lengths=0;
-  unsigned total_substs=0;
-  for(int i=0;i<P.n_data_partitions();i++)
-  {
-    unsigned x1 = P[i].A->length();
-    total_length += x1;
-
-    if (P[i].variable_alignment()) 
-    {
-      unsigned x2 = n_indels(*P[i].A, *P[i].T);
-      total_indels += x2;
-
-      unsigned x3 = total_length_indels(*P[i].A, *P[i].T);
-      total_indel_lengths += x3;
-      s_parameters<<"\t"<<x1;
-      s_parameters<<"\t"<<n_indels(*P[i].A, *P[i].T);
-      s_parameters<<"\t"<<x3;
-    }
-    unsigned x4 = n_mutations(*P[i].A, *P[i].T);
-    total_substs += x4;
-
-    s_parameters<<"\t"<<x4;
-    if (const Triplets* Tr = dynamic_cast<const Triplets*>(&P[i].get_alphabet()))
-      s_parameters<<"\t"<<n_mutations(*P[i].A, *P[i].T ,nucleotide_cost_matrix(*Tr));
-    if (const Codons* C = dynamic_cast<const Codons*>(&P[i].get_alphabet()))
-      s_parameters<<"\t"<<n_mutations(*P[i].A, *P[i].T, amino_acid_cost_matrix(*C));
+  //---------------------- estimate MAP ----------------------//
+  if (Pr > MAP_score) {
+    MAP_score = Pr;
+    s_map<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
+    print_stats(s_map,s_map,P);
   }
-  if (P.n_data_partitions() > 1) {
-    if (P.variable_alignment()) {
-      s_parameters<<"\t"<<total_length;
-      s_parameters<<"\t"<<total_indels;
-      s_parameters<<"\t"<<total_indel_lengths;
-    }
-    s_parameters<<"\t"<<total_substs;
-  }
-  double mu_scale=0;
-  for(int i=0;i<P.n_data_partitions();i++)
-    mu_scale += P[i].branch_mean()*weights[i];
-  s_parameters<<"\t"<<mu_scale*length(*P.T)<<endl;
 
-    //---------------------- estimate MAP ----------------------//
-    if (Pr > MAP_score) {
-      MAP_score = Pr;
-      s_map<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
-      print_stats(s_map,s_map,P);
-    }
-
+  for(int i=0;i<loggers.size();i++)
+    (*loggers[i])(P);
 }
 
 std::pair<int, Bounds<double> > change_bound(owned_ptr<Probability_Model>& P, 
@@ -1251,8 +1172,13 @@ std::pair<int, Bounds<double> > change_bound(owned_ptr<Probability_Model>& P,
   return std::pair<int,Bounds<double> >(index,orig_bounds);
 }
 
+void Sampler::add_logger(const owned_ptr<Logger>& L)
+{
+  loggers.push_back(L);
+}
+
 void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter,
-		 ostream& s_out,ostream& s_trees, ostream& s_parameters,ostream& s_map,
+		 ostream& s_out,ostream& s_trees, ostream& s_map,
 		 vector<ostream*>& files)
 {
   P->recalc_all();
@@ -1266,7 +1192,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 
     const SequenceTree& T = *PP.T;
 
-    mcmc_init(PP,s_out,s_parameters);
+    mcmc_init(PP,s_out);
 
     //--------- Determine some values for this chain -----------//
     if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
@@ -1340,7 +1266,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     clog<<"iterations = "<<iterations<<"\n";
 
     if (iterations%subsample == 0)
-      mcmc_log(iterations,subsample,*P.as<Parameters>(),s_out,s_parameters,s_trees,s_map,files,MAP_score,un_identifiable_indices,weights);
+      mcmc_log(iterations,subsample,*P.as<Parameters>(),s_out,s_trees,s_map,files,MAP_score,un_identifiable_indices,weights,loggers);
 
     if (iterations%20 == 0 or iterations < 20) {
       std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
@@ -1377,7 +1303,185 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   s_out<<"total samples = "<<max_iter<<endl;
 }
 
+void TableLogger::operator()(const owned_ptr<Probability_Model>& P)
+{
+  iterations++;
 
+  if (iterations==1)
+  {
+    for(int i=0;i<n_fields();i++)
+    {
+      *log_file<<field_names[i];
+      if (i == n_fields()-1)
+	*log_file<<endl;
+      else
+	*log_file<<"\t";
+    }
+    return;
+  }
+
+  for(int i=0;i<n_fields();i++)
+  {
+    string s = (*functions[i])(*P);
+    *log_file<<s;
+    if (i == n_fields()-1)
+      *log_file<<endl;
+    else
+      *log_file<<"\t";
+  }
+
+}
+
+FileLogger::FileLogger(const string& filename)
+  :log_file(new checked_ofstream(filename))
+{ }
+
+void TableLogger::add_field(const string& name, const owned_ptr<LoggerFunction>& f)
+{
+  if (iterations > 0)
+    throw myexception()<<"Cannot add field '"<<name<<"' because iterations > 0 (iterations = "<<iterations<<")";
+  field_names.push_back(name);
+  functions.push_back(f);
+}
+
+TableLogger::TableLogger(const string& name)
+  :FileLogger(name), iterations(0)
+{ }
+
+string IterationsFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  return convertToString(iterations++);
+}
+
+string GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  return convertToString(P->get_parameter_value(p));
+}
+
+string GetPriorFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  return convertToString(log(P->prior()));
+}
+
+string GetAlignmentPriorFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters* PP = P.as<Parameters>();
+  return convertToString(log(PP[p].prior_alignment()));
+}
+
+string GetLikelihoodFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  return convertToString(log(P->likelihood()));
+}
+
+string GetProbabilityFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  return convertToString(log(P->probability()));
+}
+
+string Get_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters& PP = *P.as<Parameters>();
+  return convertToString(PP[p].A->length());
+}
+
+string Get_Num_Substitutions_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters& PP = *P.as<Parameters>();
+  return convertToString(n_mutations(*PP[p].A, *PP[p].T, cost_matrix));
+}
+
+string Get_Num_Indels_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters& PP = *P.as<Parameters>();
+  return convertToString(n_indels(*PP[p].A, *PP[p].T));
+}
+
+string Get_Total_Length_Indels_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters& PP = *P.as<Parameters>();
+  return convertToString(total_length_indels(*PP[p].A, *PP[p].T));
+}
+//
+string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters& PP = *P.as<Parameters>();
+
+  int total = 0;
+  for(int p=0;p<PP.n_data_partitions();p++)
+    total += PP[p].A->length();
+  return convertToString(total);
+}
+
+string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters& PP = *P.as<Parameters>();
+
+  int total = 0;
+  for(int p=0;p<PP.n_data_partitions();p++)
+    total += n_mutations(*PP[p].A, *PP[p].T);
+  return convertToString(total);
+}
+
+string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters& PP = *P.as<Parameters>();
+
+  int total = 0;
+  for(int p=0;p<PP.n_data_partitions();p++)
+    total += n_indels(*PP[p].A, *PP[p].T);
+  return convertToString(total);
+}
+
+string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters& PP = *P.as<Parameters>();
+
+  int total = 0;
+  for(int p=0;p<PP.n_data_partitions();p++)
+    total += total_length_indels(*PP[p].A, *PP[p].T);
+  return convertToString(total);
+}
+
+string Get_Tree_Length_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters& PP = *P.as<Parameters>();
+
+  valarray<double> weights(PP.n_data_partitions());
+  // Compute the relative number of letters in each partition.
+  for(int i=0;i<weights.size();i++)
+    weights[i] = max(sequence_lengths(*PP[i].A, PP.T->n_leaves()));
+  weights /= weights.sum();
+
+  double mu_scale=0;
+  for(int i=0;i<PP.n_data_partitions();i++)
+    mu_scale += PP[i].branch_mean()*weights[i];
+
+  return convertToString(mu_scale);
+}
+
+
+
+void TreeLogger::operator()(const owned_ptr<Probability_Model>& P)
+{
+  Parameters* PP = P.as<Parameters>();
+  (*log_file)<<PP->T->write()<<"\n";
+}
+
+TreeLogger::TreeLogger(const string& s)
+  :FileLogger(s)
+{
+}
+
+void AlignmentLogger::operator()(const owned_ptr<Probability_Model>& P)
+{
+  const Parameters& PP = *P.as<Parameters>();
+  (*log_file)<<standardize(*PP[p].A, *PP.T)<<"\n";
+}
+
+AlignmentLogger::AlignmentLogger(const string& filename, int partition)
+  :FileLogger(filename), p(partition)
+{ }
 
 }
 

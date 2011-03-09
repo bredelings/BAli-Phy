@@ -159,6 +159,7 @@ namespace mpi = boost::mpi;
 #include "version.H"
 #include "setup-mcmc.H"
 #include "io.H"
+#include "tools/parsimony.H"
 
 namespace fs = boost::filesystem;
 
@@ -478,7 +479,6 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
   filenames.push_back("out");
   filenames.push_back("err");
   filenames.push_back("trees");
-  filenames.push_back("p");
   filenames.push_back("MAP");
   for(int i=0;i<n_partitions;i++) {
     string filename = string("P") + convertToString(i+1) + ".fastas";
@@ -522,6 +522,50 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
   //  cerr.precision(10);
 
   return files;
+}
+
+owned_ptr<MCMC::TableLogger> construct_table_logger(const Parameters& P, const string& filename)
+{
+  using namespace MCMC;
+  owned_ptr<TableLogger> TL = TableLogger(filename);
+  
+  TL->add_field("iter", IterationsFunction() );
+  TL->add_field("prior", GetPriorFunction() );
+  for(int i=0;i<P.n_data_partitions();i++)
+    if (P[i].variable_alignment())
+      TL->add_field("prior_A"+convertToString(i+1), GetAlignmentPriorFunction(i) );
+  TL->add_field("likelihood", GetLikelihoodFunction() );
+  TL->add_field("logp", GetProbabilityFunction() );
+  
+  for(int i=0;i<P.n_parameters();i++)
+    TL->add_field(P.parameter_name(i), GetParameterFunction(i) );
+  
+  for(int i=0;i<P.n_data_partitions();i++)
+    {
+      if (P[i].variable_alignment())
+	{
+	  TL->add_field("|A"+convertToString(i+1)+"|", Get_Alignment_Length_Function(i) );
+	  TL->add_field("#indels"+convertToString(i+1), Get_Num_Indels_Function(i) );
+	  TL->add_field("|indels"+convertToString(i+1)+"|", Get_Total_Length_Indels_Function(i) );
+	}
+      const alphabet& a = P[i].get_alphabet();
+      TL->add_field("#substs"+convertToString(i+1), Get_Num_Substitutions_Function(i, unit_cost_matrix(a)) );
+      if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
+	TL->add_field("#substs(nuc)"+convertToString(i+1), Get_Num_Substitutions_Function(i, nucleotide_cost_matrix(*Tr)) );
+      if (const Codons* C = dynamic_cast<const Codons*>(&a))
+	TL->add_field("#substs(aa)"+convertToString(i+1), Get_Num_Substitutions_Function(i, amino_acid_cost_matrix(*C)) );
+    }
+  
+  if (P.variable_alignment()) {
+    TL->add_field("|A|", Get_Total_Alignment_Length_Function() );
+    TL->add_field("#indels", Get_Total_Num_Indels_Function() );
+    TL->add_field("|indels|", Get_Total_Total_Length_Indels_Function() );
+  }
+  TL->add_field("#substs", Get_Total_Num_Substitutions_Function() );
+  
+  TL->add_field("|T|", Get_Tree_Length_Function() );
+
+  return TL;
 }
 
 /// A stringbuf that write to 2 streambufs
@@ -1169,6 +1213,8 @@ int main(int argc,char* argv[])
 
       //---------- Open output files -----------//
       vector<ostream*> files;
+      vector<owned_ptr<MCMC::Logger> > loggers;
+
       string dir_name="";
       if (not args.count("show-only")) {
 #ifdef HAVE_MPI
@@ -1186,6 +1232,7 @@ int main(int argc,char* argv[])
 	dir_name = init_dir(args);
 #endif
 	files = init_files(proc_id, dir_name, argc, argv, A.size());
+	loggers.push_back( construct_table_logger(P, dir_name + "/" + "C" + convertToString(proc_id+1)+"." + "p") );
       }
       else {
 	files.push_back(&cout);
@@ -1210,7 +1257,7 @@ int main(int argc,char* argv[])
       owned_ptr<Probability_Model> Ptr(P);
 
       do_pre_burnin(args,Ptr,s_out,out_both);
-      
+
       out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
       out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
       out_screen<<"   - Future debugging output sent to '"<<dir_name<<"/C1.err'"<<endl;
@@ -1222,9 +1269,8 @@ int main(int argc,char* argv[])
       out_screen<<"  or the BEAST program Tracer (graphical)."<<endl;
       out_screen<<"See the manual for further information."<<endl;
 
-
       //-------- Start the MCMC  -----------//
-      do_sampling(args,Ptr ,max_iterations,files);
+      do_sampling(args,Ptr ,max_iterations,files, loggers);
 
       // Close all the streams, and write a notification that we finished all the iterations.
       // close_files(files);
