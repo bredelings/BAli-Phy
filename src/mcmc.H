@@ -621,22 +621,69 @@ namespace MCMC {
     AlignmentFunction(int i):p(i) {}
   };
 
+  class TableFunction: public LoggerFunction<std::vector<std::string> >
+  {
+  public:
+    virtual TableFunction* clone() const =0;
+    virtual int n_fields() const =0;
+    virtual std::vector<std::string> field_names() const =0;
+  };
+
+  class UnitTableFunction: public TableFunction
+  {
+    std::string field_name;
+    owned_ptr<LoggerFunction<std::string> > F;
+  public:
+    virtual UnitTableFunction* clone() const {return new UnitTableFunction(*this);}
+
+    int n_fields() const;
+    std::vector<std::string> field_names() const;
+
+    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P);
+    UnitTableFunction(const std::string& name, const owned_ptr<LoggerFunction<std::string> >&);
+  };
+
+  class SortedTableFunction: public TableFunction
+  {
+  public:
+    SortedTableFunction* clone() const {return new SortedTableFunction(*this);}
+
+    int n_fields() const;
+    std::vector<std::string> field_names() const;
+
+    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P);
+  };
+
+  class TableGroupFunction: public TableFunction
+  {
+    std::vector<owned_ptr<TableFunction> > functions;
+  public:
+    TableGroupFunction* clone() const {return new TableGroupFunction(*this);}
+
+    int n_fields() const;
+    std::vector<std::string> field_names() const;
+
+    void add_field(const std::string& name, const owned_ptr<LoggerFunction<std::string> >&);
+    void add_fields(const owned_ptr<TableFunction>& f);
+
+    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P);
+  };
+
   class TableLogger: public FileLogger
   {
     long iterations;
-    std::vector<std::string> field_names;
-    std::vector<owned_ptr<LoggerFunction<std::string> > > functions;
+    owned_ptr<TableFunction> TF;
 
   public:
     TableLogger* clone() const {return new TableLogger(*this);}
 
-    int n_fields() const {return field_names.size();}
+    int n_fields() const;
+
+    std::vector<std::string> field_names() const;
 
     void operator()(const owned_ptr<Probability_Model>& P);
 
-    void add_field(const std::string& name, const owned_ptr<LoggerFunction<std::string> >&);
-
-    TableLogger(const std::string& filename);
+    TableLogger(const std::string& filename, const owned_ptr<TableFunction>& tf);
   };
 
   class Mixture_Components_Function: public LoggerFunction<std::string>

@@ -536,10 +536,10 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
 //  s_parameters<<join(values,'\t');
 
 
-owned_ptr<MCMC::TableLogger> construct_table_logger(const Parameters& P, const string& filename)
+owned_ptr<MCMC::TableFunction> construct_table_function(const Parameters& P)
 {
   using namespace MCMC;
-  owned_ptr<TableLogger> TL = TableLogger(filename);
+  owned_ptr<TableGroupFunction> TL = claim(new TableGroupFunction);
   
   TL->add_field("iter", IterationsFunction() );
   TL->add_field("prior", GetPriorFunction() );
@@ -578,6 +578,12 @@ owned_ptr<MCMC::TableLogger> construct_table_logger(const Parameters& P, const s
   TL->add_field("|T|", Get_Tree_Length_Function() );
 
   return TL;
+}
+
+owned_ptr<MCMC::TableLogger> construct_table_logger(const Parameters& P, const string& filename)
+{
+  using namespace MCMC;
+  return TableLogger(filename, construct_table_function(P) );
 }
 
 vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc_id, const string& dir_name)

@@ -1314,32 +1314,70 @@ void StringFunctionList::add_function(const owned_ptr<LoggerFunction<string> >& 
   functions.push_back(F);
 }
 
-void TableLogger::operator()(const owned_ptr<Probability_Model>& P)
+int UnitTableFunction::n_fields() const
 {
-  iterations++;
+  return 1;
+}
 
-  if (iterations==1)
+vector<string> UnitTableFunction::field_names() const
+{
+  return vector<string>(1,field_name);
+}
+
+vector<string> UnitTableFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  string output = (*F)(P);
+  return vector<string>(1,output);
+}
+
+UnitTableFunction::UnitTableFunction(const std::string& name, const owned_ptr<LoggerFunction<std::string> >& f)
+  :field_name(name),F(f)
+{ }
+
+int TableGroupFunction::n_fields() const
+{
+  int total = 0;
+
+  for(int i=0;i<functions.size();i++)
+    total += functions[i]->n_fields();
+
+  return total;
+}
+
+vector<string> TableGroupFunction::field_names() const
+{
+  vector<string> names;
+
+  for(int i=0;i<functions.size();i++)
   {
-    for(int i=0;i<n_fields();i++)
-    {
-      *log_file<<field_names[i];
-      if (i == n_fields()-1)
-	*log_file<<endl;
-      else
-	*log_file<<"\t";
-    }
+    vector<string> names_i = functions[i]->field_names();
+    names.insert(names.end(),names_i.begin(), names_i.end());
   }
 
-  for(int i=0;i<n_fields();i++)
+  return names;
+}
+
+void TableGroupFunction::add_field(const string& name, const owned_ptr<LoggerFunction<string> >& f)
+{
+  functions.push_back(UnitTableFunction(name,f));
+}
+
+void TableGroupFunction::add_fields(const owned_ptr<TableFunction>& f)
+{
+  functions.push_back(f);
+}
+
+vector<string> TableGroupFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  vector<string> values;
+
+  for(int i=0;i<functions.size();i++)
   {
-    string s = (*functions[i])(*P);
-    *log_file<<s;
-    if (i == n_fields()-1)
-      *log_file<<endl;
-    else
-      *log_file<<"\t";
+    vector<string> values_i = (*functions[i])(*P);
+    values.insert(values.end(),values_i.begin(), values_i.end());
   }
 
+  return values;
 }
 
 FileLogger::FileLogger(const string& filename)
@@ -1350,16 +1388,29 @@ FileLogger::FileLogger(const std::ostream& o)
   :log_file(new ostream(o.rdbuf()))
 { }
 
-void TableLogger::add_field(const string& name, const owned_ptr<LoggerFunction<string> >& f)
+int TableLogger::n_fields() const
 {
-  if (iterations > 0)
-    throw myexception()<<"Cannot add field '"<<name<<"' because iterations > 0 (iterations = "<<iterations<<")";
-  field_names.push_back(name);
-  functions.push_back(f);
+  return TF->n_fields();
 }
 
-TableLogger::TableLogger(const string& name)
-  :FileLogger(name), iterations(0)
+vector<string> TableLogger::field_names() const
+{
+  return TF->field_names();
+}
+
+void TableLogger::operator()(const owned_ptr<Probability_Model>& P)
+{
+  if (iterations==0)
+    *log_file<<join(field_names(),'\t')<<endl;
+
+  vector<string> values = (*TF)(P);
+  *log_file<<join(values,'\t')<<endl;
+
+  iterations++;
+}
+
+TableLogger::TableLogger(const string& name, const owned_ptr<TableFunction>& tf)
+  :FileLogger(name), iterations(0), TF(tf)
 { }
 
 string IterationsFunction::operator()(const owned_ptr<Probability_Model>& P)
