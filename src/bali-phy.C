@@ -580,29 +580,27 @@ owned_ptr<MCMC::TableFunction> construct_table_function(const Parameters& P)
   return TL;
 }
 
-owned_ptr<MCMC::TableLogger> construct_table_logger(const Parameters& P, const string& filename)
-{
-  using namespace MCMC;
-  return TableLogger(filename, construct_table_function(P) );
-}
-
 vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc_id, const string& dir_name)
 {
   using namespace MCMC;
-  vector<owned_ptr<MCMC::Logger> > loggers;
+  vector<owned_ptr<Logger> > loggers;
 
   string base = dir_name + "/" + "C" + convertToString(proc_id+1);
-  loggers.push_back( construct_table_logger(P, base +".p") );
+
+  owned_ptr<TableFunction> TF = construct_table_function(P);
+
+  loggers.push_back( TableLogger(base +".p", TF) );
   
   loggers.push_back( FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) );
   
   {
-    ConcatFunction F;
-    F<<"\n"<<TreeFunction()<<"\n\n";
+    ConcatFunction F; 
+    F<<TableViewerFunction(TF)<<"\n";
     for(int i=0;i<P.n_data_partitions();i++)
       if (P[i].variable_alignment())
 	F<<AlignmentFunction(i)<<"\n\n";
-    //    loggers.push_back( FunctionLogger(base + ".MAP2", MAP_Function(F)) );
+    F<<TreeFunction()<<"\n\n";
+    // loggers.push_back( FunctionLogger(base + ".MAP2", MAP_Function(F)) );
   }
   
   for(int i=0;i<P.n_data_partitions();i++)

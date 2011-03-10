@@ -704,6 +704,15 @@ namespace MCMC {
     String_Function(const std::string& s_):s(s_) {}
   };
 
+  class TableViewerFunction: public LoggerFunction<std::string>
+  {
+    owned_ptr<TableFunction> function;
+  public:
+    TableViewerFunction* clone() const {return new TableViewerFunction(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>&);
+    TableViewerFunction(const owned_ptr<TableFunction>&);
+  };
+
   class FunctionLogger: public FileLogger
   {
     owned_ptr<LoggerFunction<std::string> > function;

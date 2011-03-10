@@ -1413,6 +1413,26 @@ TableLogger::TableLogger(const string& name, const owned_ptr<TableFunction>& tf)
   :FileLogger(name), iterations(0), TF(tf)
 { }
 
+string TableViewerFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  vector<string> fields = function->field_names();
+  vector<string> values = (*function)(P);
+  std::stringstream output;
+
+  for(int i=0;i<values.size();i++)
+  {
+    output<<"    ";
+    output<<fields[i]<<" = "<<values[i];
+  }
+  output<<"\n";
+
+  return output.str();
+}
+
+TableViewerFunction::TableViewerFunction(const owned_ptr<TableFunction>& f)
+  :function(f)
+{ }
+
 string IterationsFunction::operator()(const owned_ptr<Probability_Model>& P)
 {
   return convertToString(iterations++);
@@ -1420,7 +1440,10 @@ string IterationsFunction::operator()(const owned_ptr<Probability_Model>& P)
 
 string GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P)
 {
-  return convertToString(P->get_parameter_value(p));
+  string value = convertToString(P->get_parameter_value(p));
+  if (P->is_fixed(p))
+    value += "/*";
+  return value;
 }
 
 string GetPriorFunction::operator()(const owned_ptr<Probability_Model>& P)
