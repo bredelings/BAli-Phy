@@ -1309,7 +1309,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   s_out<<"total samples = "<<max_iter<<endl;
 }
 
-void FunctionList::add_function(const owned_ptr<LoggerFunction>& F)
+void StringFunctionList::add_function(const owned_ptr<LoggerFunction<string> >& F)
 {
   functions.push_back(F);
 }
@@ -1350,7 +1350,7 @@ FileLogger::FileLogger(const std::ostream& o)
   :log_file(new ostream(o.rdbuf()))
 { }
 
-void TableLogger::add_field(const string& name, const owned_ptr<LoggerFunction>& f)
+void TableLogger::add_field(const string& name, const owned_ptr<LoggerFunction<string> >& f)
 {
   if (iterations > 0)
     throw myexception()<<"Cannot add field '"<<name<<"' because iterations > 0 (iterations = "<<iterations<<")";
@@ -1540,7 +1540,7 @@ void FunctionLogger::operator()(const owned_ptr<Probability_Model>& P)
   (*log_file)<<((*function)(*P));
 }
 
-FunctionLogger::FunctionLogger(const std::string& filename, const owned_ptr<LoggerFunction>& L)
+FunctionLogger::FunctionLogger(const std::string& filename, const owned_ptr<LoggerFunction<string> >& L)
   :FileLogger(filename),function(L)
 { }
 
@@ -1554,7 +1554,7 @@ string ConcatFunction::operator()(const owned_ptr<Probability_Model>& P)
   return output;
 }
 
-ConcatFunction& operator<<(ConcatFunction& CF,const owned_ptr<LoggerFunction>& F)
+ConcatFunction& operator<<(ConcatFunction& CF,const owned_ptr<LoggerFunction<string> >& F)
 {
   CF.add_function(F);
   return CF;
@@ -1566,7 +1566,7 @@ ConcatFunction& operator<<(ConcatFunction& CF,const string& s)
   return CF;
 }
 
-ConcatFunction operator<<(const ConcatFunction& CF,const owned_ptr<LoggerFunction>& F)
+ConcatFunction operator<<(const ConcatFunction& CF,const owned_ptr<LoggerFunction<string> >& F)
 {
   ConcatFunction CF2 = CF;
   return CF2<<F;
@@ -1578,14 +1578,14 @@ ConcatFunction operator<<(const ConcatFunction& CF,const string& s)
   return CF2<<s;
 }
 
-ConcatFunction operator<<(const LoggerFunction& F1,const owned_ptr<LoggerFunction>& F2)
+ConcatFunction operator<<(const LoggerFunction<string>& F1,const owned_ptr<LoggerFunction<string> >& F2)
 {
   ConcatFunction CF;
   CF<<F1<<F2;
   return CF;
 }
 
-ConcatFunction operator<<(const LoggerFunction& F,const string& s)
+ConcatFunction operator<<(const LoggerFunction<string>& F,const string& s)
 {
   ConcatFunction CF;
   CF<<F<<s;
