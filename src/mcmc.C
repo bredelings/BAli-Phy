@@ -1120,7 +1120,6 @@ void mcmc_log(int iterations, int subsample, Parameters& P,
 	      ostream& s_out, ostream& s_map,vector<ostream*>& files,
 	      efloat_t& MAP_score,
 	      const vector< vector< vector<int> > >& un_identifiable_indices,
-	      const valarray<double>& weights,
 	      const vector<owned_ptr<Logger> >& loggers)
 {
   efloat_t prior = P.prior();
@@ -1196,7 +1195,6 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 {
   P->recalc_all();
   efloat_t MAP_score = 0;
-  valarray<double> weights(P.as<Parameters>()->n_data_partitions());
 
   int alignment_burnin_iterations = (int)loadvalue(P->keys,"alignment-burnin",10.0);
 
@@ -1209,11 +1207,6 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 
     //--------- Determine some values for this chain -----------//
     if (subsample <= 0) subsample = 2*int(log(T.n_leaves()))+1;
-
-    // Compute the relative number of letters in each partition.
-    for(int i=0;i<weights.size();i++)
-      weights[i] = max(sequence_lengths(*PP[i].A, PP.T->n_leaves()));
-    weights /= weights.sum();
 
     if (alignment_burnin_iterations > 0)
     {
@@ -1279,7 +1272,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     clog<<"iterations = "<<iterations<<"\n";
 
     if (iterations%subsample == 0)
-      mcmc_log(iterations,subsample,*P.as<Parameters>(),s_out,s_map,files,MAP_score,un_identifiable_indices,weights,loggers);
+      mcmc_log(iterations,subsample,*P.as<Parameters>(),s_out,s_map,files,MAP_score,un_identifiable_indices,loggers);
 
     if (iterations%20 == 0 or iterations < 20) {
       std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
