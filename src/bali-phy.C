@@ -478,7 +478,6 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
   vector<string> filenames;
   filenames.push_back("out");
   filenames.push_back("err");
-  filenames.push_back("trees");
   filenames.push_back("MAP");
   for(int i=0;i<n_partitions;i++) {
     string filename = string("P") + convertToString(i+1) + ".fastas";
@@ -524,6 +523,19 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
   return files;
 }
 
+// FIXME - sort the unordered indices!  See (same) FIXME in mcmc.C
+
+// FIXME - separate printers to string from file writers so that we can construct a writer from multiple printers
+
+// FIXME - make identifiable
+//
+//  // Sort parameter values to resolve identifiability and then output them.
+//  vector<double> values = P.get_parameter_values();
+//  for(int i=0;i<un_identifiable_indices.size();i++) 
+//    values = make_identifiable(values,un_identifiable_indices[i]);
+//  s_parameters<<join(values,'\t');
+
+
 owned_ptr<MCMC::TableLogger> construct_table_logger(const Parameters& P, const string& filename)
 {
   using namespace MCMC;
@@ -566,6 +578,32 @@ owned_ptr<MCMC::TableLogger> construct_table_logger(const Parameters& P, const s
   TL->add_field("|T|", Get_Tree_Length_Function() );
 
   return TL;
+}
+
+vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc_id, const string& dir_name)
+{
+  using namespace MCMC;
+  vector<owned_ptr<MCMC::Logger> > loggers;
+
+  string base = dir_name + "/" + "C" + convertToString(proc_id+1);
+  loggers.push_back( construct_table_logger(P, base +".p") );
+  
+  loggers.push_back( FunctionLogger(base + ".trees",TreeFunction()<<"\n" ) );
+  
+  {
+    ConcatFunction F;
+    F<<"\n"<<TreeFunction()<<"\n\n";
+    for(int i=0;i<P.n_data_partitions();i++)
+      if (P[i].variable_alignment())
+	F<<AlignmentFunction(i)<<"\n\n";
+    //    loggers.push_back( FunctionLogger(base + ".MAP2", MAP_Function(F)) );
+  }
+  
+  for(int i=0;i<P.n_data_partitions();i++)
+    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
+				      Mixture_Components_Function(i) ) );
+
+  return loggers;
 }
 
 /// A stringbuf that write to 2 streambufs
@@ -1186,7 +1224,11 @@ int main(int argc,char* argv[])
 
     //---------------Do something------------------//
     if (args.count("show-only"))
-      print_stats(cout,cout,P);
+    {
+      // FIXME ! How do we print the tree to stdout?
+      print_stats(cout,P);
+      // Separate the tree printer from the file writer?
+    }
     else {
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
       raise_cpu_limit(err_both);
@@ -1232,7 +1274,7 @@ int main(int argc,char* argv[])
 	dir_name = init_dir(args);
 #endif
 	files = init_files(proc_id, dir_name, argc, argv, A.size());
-	loggers.push_back( construct_table_logger(P, dir_name + "/" + "C" + convertToString(proc_id+1)+"." + "p") );
+	loggers = construct_loggers(P,proc_id,dir_name);
       }
       else {
 	files.push_back(&cout);

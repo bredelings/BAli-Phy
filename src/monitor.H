@@ -26,7 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "model.H"
 #include "smodel.H"
 
-void print_stats(std::ostream& o,std::ostream& trees,const Parameters& P,bool=true);
+void print_stats(std::ostream& o,const Parameters& P,bool=true);
 
 void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<double>&);
 void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel);

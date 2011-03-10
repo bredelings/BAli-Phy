@@ -811,8 +811,7 @@ void do_sampling(const variables_map& args,
   //------------------ Report status before starting MCMC -------------------//
   
   ostream& s_out = *files[0];
-  ostream& s_trees = *files[2];
-  ostream& s_map = *files[3];
+  ostream& s_map = *files[2];
   
   sampler.show_enabled(s_out);
   s_out<<"\n";
@@ -833,6 +832,6 @@ void do_sampling(const variables_map& args,
   // - well, this should be exactly the -t sampler.
   // - but then how do we copy stuff over?
 
-  sampler.go(P,subsample,max_iterations,s_out,s_trees,s_map,files);
+  sampler.go(P,subsample,max_iterations,s_out,s_map,files);
 }
 

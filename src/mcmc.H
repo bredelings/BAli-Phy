@@ -451,11 +451,12 @@ namespace MCMC {
   class FileLogger : public Logger
   {
   protected:
-    boost::shared_ptr<checked_ofstream> log_file;
+    boost::shared_ptr<std::ostream> log_file;
 
   public:
     FileLogger* clone() const =0;
     FileLogger(const std::string&);
+    FileLogger(const std::ostream&);
   };
 
   struct LoggerFunction
@@ -463,6 +464,14 @@ namespace MCMC {
     virtual LoggerFunction* clone() const =0;
     virtual std::string operator()(const owned_ptr<Probability_Model>& P)=0;
     virtual ~LoggerFunction() {}
+  };
+
+  class FunctionList
+  {
+  protected:
+    std::vector<owned_ptr<LoggerFunction> > functions;
+  public:
+    void add_function(const owned_ptr<LoggerFunction>&);
   };
 
   class IterationsFunction: public LoggerFunction
@@ -585,20 +594,30 @@ namespace MCMC {
     std::string operator()(const owned_ptr<Probability_Model>& P);
   };
 
-  struct TreeLogger: public FileLogger
+  struct TreeFunction: public LoggerFunction
   {
-    TreeLogger* clone() const {return new TreeLogger(*this);}
-    void operator()(const owned_ptr<Probability_Model>& P);
-    TreeLogger(const std::string&);
+    TreeFunction* clone() const {return new TreeFunction(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
   };
 
-  class AlignmentLogger: public FileLogger
+  class MAP_Function: public LoggerFunction
+  {
+    long iterations;
+    efloat_t MAP_score;
+    owned_ptr<LoggerFunction> F;
+  public:
+    MAP_Function* clone() const {return new MAP_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    MAP_Function(const owned_ptr<LoggerFunction>& f):iterations(0), MAP_score(0),F(f) { }
+  };
+
+  class AlignmentFunction: public LoggerFunction
   {
     int p;
   public:
-    AlignmentLogger* clone() const {return new AlignmentLogger(*this);}
-    void operator()(const owned_ptr<Probability_Model>& P);
-    AlignmentLogger(const std::string&,int i);
+    AlignmentFunction* clone() const {return new AlignmentFunction(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    AlignmentFunction(int i):p(i) {}
   };
 
   class TableLogger: public FileLogger
@@ -619,6 +638,54 @@ namespace MCMC {
     TableLogger(const std::string& filename);
   };
 
+  class Mixture_Components_Function: public LoggerFunction
+  {
+    int p;
+  public:
+    Mixture_Components_Function* clone() const {return new Mixture_Components_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    Mixture_Components_Function(int i):p(i) {}
+  };
+
+  class String_Function: public LoggerFunction
+  {
+    std::string s;
+  public:
+    String_Function* clone() const {return new String_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>&) {return s;}
+    String_Function(const std::string& s_):s(s_) {}
+  };
+
+  class FunctionLogger: public FileLogger
+  {
+    owned_ptr<LoggerFunction> function;
+  public:
+    FunctionLogger* clone() const {return new FunctionLogger(*this);}
+    void operator()(const owned_ptr<Probability_Model>& P);
+    FunctionLogger(const std::string& filename, const owned_ptr<LoggerFunction>& L);
+  };
+
+  class ConcatFunction: public LoggerFunction, public FunctionList
+  {
+    std::string separator;
+  public:
+    ConcatFunction* clone() const {return new ConcatFunction(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+    ConcatFunction() {}
+    ConcatFunction(const std::string& s):separator(s) {}
+  };
+
+  ConcatFunction& operator<<(ConcatFunction&,const owned_ptr<LoggerFunction>&);
+
+  ConcatFunction& operator<<(ConcatFunction&,const std::string& s);
+
+  ConcatFunction operator<<(const ConcatFunction&,const owned_ptr<LoggerFunction>&);
+
+  ConcatFunction operator<<(const ConcatFunction&,const std::string& s);
+
+  ConcatFunction operator<<(const LoggerFunction&,const owned_ptr<LoggerFunction>&);
+
+  ConcatFunction operator<<(const LoggerFunction&,const std::string& s);
 
   /// A Sampler: based on a collection of moves to run every iteration
   class Sampler: public MoveAll, public MoveStats 
@@ -627,7 +694,7 @@ namespace MCMC {
   public:
     /// Run the sampler for 'max' iterations
     void go(owned_ptr<Probability_Model>& P, int subsample, int max, 
-	    std::ostream&,std::ostream&,std::ostream&,std::vector<std::ostream*>& files);
+	    std::ostream&,std::ostream&,std::vector<std::ostream*>& files);
 
     int n_loggers() const {return loggers.size();}
 

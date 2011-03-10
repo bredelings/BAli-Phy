@@ -1117,7 +1117,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
 }
 
 void mcmc_log(int iterations, int subsample, Parameters& P, 
-	      ostream& s_out, ostream& s_trees, ostream& s_map,vector<ostream*>& files,
+	      ostream& s_out, ostream& s_map,vector<ostream*>& files,
 	      efloat_t& MAP_score,
 	      const vector< vector< vector<int> > >& un_identifiable_indices,
 	      const valarray<double>& weights,
@@ -1132,15 +1132,15 @@ void mcmc_log(int iterations, int subsample, Parameters& P,
 
   // Don't print alignments into console log file:
   //  - Its hard to separate alignments from different partitions.
-  print_stats(s_out,s_trees,P,false);
+  print_stats(s_out,P,false);
 
   // Print the alignments here instead
   if (show_alignment) {
     for(int i=0;i<P.n_data_partitions();i++)
     {
-      (*files[4+i])<<"iterations = "<<iterations<<"\n\n";
+      (*files[3+i])<<"iterations = "<<iterations<<"\n\n";
       if (not iterations or P[i].variable_alignment())
-	(*files[4+i])<<standardize(*P[i].A, *P.T)<<"\n";
+	(*files[3+i])<<standardize(*P[i].A, *P.T)<<"\n";
     }
   }
 
@@ -1148,7 +1148,10 @@ void mcmc_log(int iterations, int subsample, Parameters& P,
   if (Pr > MAP_score) {
     MAP_score = Pr;
     s_map<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
-    print_stats(s_map,s_map,P);
+    print_stats(s_map,P);
+    // print a tree to the MAP file
+    // here's a place to have loggers be printers that are separable from files...
+    // The MAP printer
   }
 
   for(int i=0;i<loggers.size();i++)
@@ -1177,8 +1180,18 @@ void Sampler::add_logger(const owned_ptr<Logger>& L)
   loggers.push_back(L);
 }
 
+// FIXME - separate printers to string from file writers so that we can construct a writer from multiple printers
+
+// FIXME - make identifiable
+//
+//  // Sort parameter values to resolve identifiability and then output them.
+//  vector<double> values = P.get_parameter_values();
+//  for(int i=0;i<un_identifiable_indices.size();i++) 
+//    values = make_identifiable(values,un_identifiable_indices[i]);
+//  s_parameters<<join(values,'\t');
+
 void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter,
-		 ostream& s_out,ostream& s_trees, ostream& s_map,
+		 ostream& s_out, ostream& s_map,
 		 vector<ostream*>& files)
 {
   P->recalc_all();
@@ -1266,7 +1279,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     clog<<"iterations = "<<iterations<<"\n";
 
     if (iterations%subsample == 0)
-      mcmc_log(iterations,subsample,*P.as<Parameters>(),s_out,s_trees,s_map,files,MAP_score,un_identifiable_indices,weights,loggers);
+      mcmc_log(iterations,subsample,*P.as<Parameters>(),s_out,s_map,files,MAP_score,un_identifiable_indices,weights,loggers);
 
     if (iterations%20 == 0 or iterations < 20) {
       std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
@@ -1303,6 +1316,11 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   s_out<<"total samples = "<<max_iter<<endl;
 }
 
+void FunctionList::add_function(const owned_ptr<LoggerFunction>& F)
+{
+  functions.push_back(F);
+}
+
 void TableLogger::operator()(const owned_ptr<Probability_Model>& P)
 {
   iterations++;
@@ -1333,6 +1351,10 @@ void TableLogger::operator()(const owned_ptr<Probability_Model>& P)
 
 FileLogger::FileLogger(const string& filename)
   :log_file(new checked_ofstream(filename))
+{ }
+
+FileLogger::FileLogger(const std::ostream& o)
+  :log_file(new ostream(o.rdbuf()))
 { }
 
 void TableLogger::add_field(const string& name, const owned_ptr<LoggerFunction>& f)
@@ -1442,45 +1464,141 @@ string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Probab
   return convertToString(total);
 }
 
+double mu_scale(const Parameters& P)
+{
+  SequenceTree T = *P.T;
+  
+  valarray<double> weights(P.n_data_partitions());
+  for(int i=0;i<weights.size();i++)
+    weights[i] = max(sequence_lengths(*P[i].A, P.T->n_leaves()));
+  weights /= weights.sum();
+  
+  double mu_scale=0;
+  for(int i=0;i<P.n_data_partitions();i++)
+    mu_scale += P[i].branch_mean()*weights[i];
+
+  return mu_scale;
+}
+
 string Get_Tree_Length_Function::operator()(const owned_ptr<Probability_Model>& P)
 {
   Parameters& PP = *P.as<Parameters>();
 
-  valarray<double> weights(PP.n_data_partitions());
-  // Compute the relative number of letters in each partition.
-  for(int i=0;i<weights.size();i++)
-    weights[i] = max(sequence_lengths(*PP[i].A, PP.T->n_leaves()));
-  weights /= weights.sum();
-
-  double mu_scale=0;
-  for(int i=0;i<PP.n_data_partitions();i++)
-    mu_scale += PP[i].branch_mean()*weights[i];
-
-  return convertToString(mu_scale);
+  return convertToString(mu_scale(PP));
 }
 
-
-
-void TreeLogger::operator()(const owned_ptr<Probability_Model>& P)
-{
-  Parameters* PP = P.as<Parameters>();
-  (*log_file)<<PP->T->write()<<"\n";
-}
-
-TreeLogger::TreeLogger(const string& s)
-  :FileLogger(s)
-{
-}
-
-void AlignmentLogger::operator()(const owned_ptr<Probability_Model>& P)
+string TreeFunction::operator()(const owned_ptr<Probability_Model>& P)
 {
   const Parameters& PP = *P.as<Parameters>();
-  (*log_file)<<standardize(*PP[p].A, *PP.T)<<"\n";
+
+  SequenceTree T = *PP.T;
+    
+  double scale = mu_scale(PP);
+
+  for(int b=0;b<T.n_branches();b++)
+    T.branch(b).set_length(scale*T.branch(b).length());
+
+  cerr<<"Tree function called: "<<T.write()<<endl;
+  
+  return T.write();
 }
 
-AlignmentLogger::AlignmentLogger(const string& filename, int partition)
-  :FileLogger(filename), p(partition)
+string MAP_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  std::stringstream output;
+
+  efloat_t Pr = P->probability();
+  if (Pr < MAP_score)
+    goto out;
+
+  MAP_score = Pr;
+
+  output<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
+  output<<(*F)(P)<<"\n";
+  
+ out:
+  iterations++;
+  return output.str();
+}
+
+string AlignmentFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  const Parameters& PP = *P.as<Parameters>();
+  std::stringstream output;
+  output<<standardize(*PP[p].A, *PP.T)<<"\n";
+  return output.str();
+}
+
+string Mixture_Components_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  std::ostringstream output;
+  const Parameters& PP = *P.as<Parameters>();
+  vector<vector<double> > model_pr = substitution::get_model_probabilities_by_alignment_column(PP[p]);
+  for(int i=0;i<model_pr.size();i++)
+    output<<join(model_pr[i],' ')<<"\n";
+
+  output<<endl;
+
+  return output.str();
+}
+
+void FunctionLogger::operator()(const owned_ptr<Probability_Model>& P)
+{
+  (*log_file)<<((*function)(*P));
+}
+
+FunctionLogger::FunctionLogger(const std::string& filename, const owned_ptr<LoggerFunction>& L)
+  :FileLogger(filename),function(L)
 { }
+
+string ConcatFunction::operator()(const owned_ptr<Probability_Model>& P)
+{
+  string output;
+
+  for(int i=0;i<functions.size();i++)
+    output += (*functions[i])(*P);
+
+  return output;
+}
+
+ConcatFunction& operator<<(ConcatFunction& CF,const owned_ptr<LoggerFunction>& F)
+{
+  CF.add_function(F);
+  return CF;
+}
+
+ConcatFunction& operator<<(ConcatFunction& CF,const string& s)
+{
+  CF.add_function( String_Function(s));
+  return CF;
+}
+
+ConcatFunction operator<<(const ConcatFunction& CF,const owned_ptr<LoggerFunction>& F)
+{
+  ConcatFunction CF2 = CF;
+  return CF2<<F;
+}
+
+ConcatFunction operator<<(const ConcatFunction& CF,const string& s)
+{
+  ConcatFunction CF2 = CF;
+  return CF2<<s;
+}
+
+ConcatFunction operator<<(const LoggerFunction& F1,const owned_ptr<LoggerFunction>& F2)
+{
+  ConcatFunction CF;
+  CF<<F1<<F2;
+  return CF;
+}
+
+ConcatFunction operator<<(const LoggerFunction& F,const string& s)
+{
+  ConcatFunction CF;
+  CF<<F<<s;
+  return CF;
+}
+
 
 }
 

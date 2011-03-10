@@ -69,9 +69,7 @@ void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
   }
 }
 
-void print_stats(std::ostream& o,std::ostream& trees,
-		 const Parameters& P,
-		 bool print_alignment) 
+void print_stats(std::ostream& o, const Parameters& P, bool print_alignment) 
 {
   efloat_t Pr_prior = P.prior();
   efloat_t Pr_likelihood = P.likelihood();
@@ -87,24 +85,6 @@ void print_stats(std::ostream& o,std::ostream& trees,
   if (print_alignment)
     for(int i=0;i<P.n_data_partitions();i++)
       o<<standardize(*P[i].A, *P.T)<<"\n";
-  
-  {
-    SequenceTree T = *P.T;
-    
-    valarray<double> weights(P.n_data_partitions());
-    for(int i=0;i<weights.size();i++)
-      weights[i] = max(sequence_lengths(*P[i].A, P.T->n_leaves()));
-    weights /= weights.sum();
-
-    double mu_scale=0;
-    for(int i=0;i<P.n_data_partitions();i++)
-      mu_scale += P[i].branch_mean()*weights[i];
-
-    for(int b=0;b<T.n_branches();b++)
-      T.branch(b).set_length(mu_scale*T.branch(b).length());
-    trees<<T<<std::endl;
-    trees.flush();
-  }
   
   o<<"\n";
   show_parameters(o,P);
