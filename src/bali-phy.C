@@ -588,7 +588,7 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc
   string base = dir_name + "/" + "C" + convertToString(proc_id+1);
   loggers.push_back( construct_table_logger(P, base +".p") );
   
-  loggers.push_back( FunctionLogger(base + ".trees",TreeFunction()<<"\n" ) );
+  loggers.push_back( FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) );
   
   {
     ConcatFunction F;
