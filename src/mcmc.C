@@ -1572,7 +1572,7 @@ string TreeFunction::operator()(const owned_ptr<Probability_Model>& P)
 
 string MAP_Function::operator()(const owned_ptr<Probability_Model>& P)
 {
-  std::stringstream output;
+  std::ostringstream output;
 
   efloat_t Pr = P->probability();
   if (Pr < MAP_score)
@@ -1588,13 +1588,25 @@ string MAP_Function::operator()(const owned_ptr<Probability_Model>& P)
   return output.str();
 }
 
+
+
 string AlignmentFunction::operator()(const owned_ptr<Probability_Model>& P)
 {
   const Parameters& PP = *P.as<Parameters>();
-  std::stringstream output;
+  std::ostringstream output;
   output<<standardize(*PP[p].A, *PP.T)<<"\n";
   return output.str();
 }
+
+string Show_SModels_Function::operator()(const owned_ptr<Probability_Model>& P)
+{
+  const Parameters& PP = *P.as<Parameters>();
+  std::ostringstream output;
+  show_smodels(output, PP);
+  output<<"\n";
+  return output.str();
+}
+
 
 string Mixture_Components_Function::operator()(const owned_ptr<Probability_Model>& P)
 {

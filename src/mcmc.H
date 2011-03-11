@@ -686,6 +686,13 @@ namespace MCMC {
     TableLogger(const std::string& filename, const owned_ptr<TableFunction>& tf);
   };
 
+  class Show_SModels_Function: public LoggerFunction<std::string>
+  {
+  public:
+    Show_SModels_Function* clone() const {return new Show_SModels_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P);
+  };
+
   class Mixture_Components_Function: public LoggerFunction<std::string>
   {
     int p;
