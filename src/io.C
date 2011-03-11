@@ -142,7 +142,12 @@ void checked_filebuf::report_open_error(const string& filename, ios_base::openmo
 checked_filebuf * checked_filebuf::open ( const std::string& filename, std::ios_base::openmode mode )
 {
   bool already_existed = fs::exists(filename);
-  std::filebuf* buf = std::filebuf::open(filename.c_str(), mode);
+  std::filebuf* buf = 0;
+
+  // open the file if either we're not going to overwrite it, or we're opening the truncate flag
+  if (!already_existed or not (mode&ios_base::out) or (mode&ios_base::trunc))
+      buf = std::filebuf::open(filename.c_str(), mode);
+
   if (!buf)
     report_open_error(filename, mode, already_existed);
 
@@ -205,18 +210,26 @@ istream_or_ifstream::istream_or_ifstream(std::istream& is, const std::string& is
 }
 
 
-checked_ofstream::checked_ofstream(const string& filename)
+checked_ofstream::checked_ofstream(const string& filename,bool trunc)
   :buf("file")
 {
   this->init(&buf);
-  buf.open(filename, ios_base::out|ios_base::trunc);
+  std::ios_base::openmode flags = ios_base::out;
+  if (trunc)
+    flags |= ios_base::trunc;
+
+  buf.open(filename, flags);
 }
 
-checked_ofstream::checked_ofstream(const string& filename, const string& description)
+checked_ofstream::checked_ofstream(const string& filename, const string& description, bool trunc)
   :buf(description)
 {
   this->init(&buf);
-  buf.open(filename, ios_base::out|ios_base::trunc);
+  std::ios_base::openmode flags = ios_base::out;
+  if (trunc)
+    flags |= ios_base::trunc;
+
+  buf.open(filename, flags);
 }
 
 void ostream_or_ofstream::open(std::ostream& os, const std::string& os_name, const std::string& filename, const std::string& description)

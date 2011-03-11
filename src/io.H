@@ -81,8 +81,8 @@ class checked_ofstream: public std::ostream
 {
   checked_filebuf buf;
 public:
-  explicit checked_ofstream(const std::string&);
-  checked_ofstream(const std::string&,const std::string&);
+  explicit checked_ofstream(const std::string&,bool=true);
+  checked_ofstream(const std::string&,const std::string&,bool=true);
 };
 
 class ostream_or_ofstream: public std::ostream
