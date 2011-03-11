@@ -471,7 +471,7 @@ string init_dir(const variables_map& args)
 
 /// Create output files for thread 'proc_id' in directory 'dirname'
 vector<ostream*> init_files(int proc_id, const string& dirname,
-			    int argc,char* argv[],int n_partitions)
+			    int argc,char* argv[])
 {
   vector<ostream*> files;
 
@@ -531,12 +531,12 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
 //  s_parameters<<join(values,'\t');
 
 
-owned_ptr<MCMC::TableFunction> construct_table_function(const Parameters& P)
+owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameters& P)
 {
   using namespace MCMC;
   owned_ptr<TableGroupFunction> TL = claim(new TableGroupFunction);
   
-  TL->add_field("iter", IterationsFunction() );
+  TL->add_field("iter", ConvertToStringFunction<long>( IterationsFunction() ) );
   TL->add_field("prior", GetPriorFunction() );
   for(int i=0;i<P.n_data_partitions();i++)
     if (P[i].variable_alignment())
@@ -545,7 +545,7 @@ owned_ptr<MCMC::TableFunction> construct_table_function(const Parameters& P)
   TL->add_field("logp", GetProbabilityFunction() );
   
   for(int i=0;i<P.n_parameters();i++)
-    TL->add_field(P.parameter_name(i), GetParameterFunction(i) );
+    TL->add_field(P.parameter_name(i), ConvertToStringFunction<double>( GetParameterFunction(i) ) );
   
   for(int i=0;i<P.n_data_partitions();i++)
     {
@@ -582,7 +582,7 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc
 
   string base = dir_name + "/" + "C" + convertToString(proc_id+1);
 
-  owned_ptr<TableFunction> TF = construct_table_function(P);
+  owned_ptr<TableFunction<string> > TF = construct_table_function(P);
 
   // Write out scalar numerical variables (and functions of them) to C<>.p
   loggers.push_back( TableLogger(base +".p", TF) );
@@ -614,7 +614,7 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc
       string filename = base + ".P" + convertToString(i+1)+".fastas";
 
       ConcatFunction F;
-      F<<"iterations = "<<IterationsFunction()<<"\n\n";
+      F<<"iterations = "<<ConvertToStringFunction<long> ( IterationsFunction() )<<"\n\n";
       F<<AlignmentFunction(i);
 
       loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
@@ -1289,7 +1289,7 @@ int main(int argc,char* argv[])
 #else
 	dir_name = init_dir(args);
 #endif
-	files = init_files(proc_id, dir_name, argc, argv, A.size());
+	files = init_files(proc_id, dir_name, argc, argv);
 	loggers = construct_loggers(P,proc_id,dir_name);
       }
       else {

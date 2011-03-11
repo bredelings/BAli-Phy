@@ -467,27 +467,48 @@ namespace MCMC {
     virtual ~LoggerFunction() {}
   };
 
-  class StringFunctionList
+  template <typename T>
+  class FunctionList
   {
   protected:
-    std::vector<owned_ptr<LoggerFunction<std::string> > > functions;
+    std::vector<owned_ptr<LoggerFunction<T> > > functions;
   public:
-    void add_function(const owned_ptr<LoggerFunction<std::string> >&);
+    void add_function(const owned_ptr<LoggerFunction<T> >&F)
+    {
+      functions.push_back(F);
+    }
   };
 
-  struct IterationsFunction: public LoggerFunction<std::string>
+  struct IterationsFunction: public LoggerFunction<long>
   {
     IterationsFunction* clone() const {return new IterationsFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P,long t);
+    long operator()(const owned_ptr<Probability_Model>&,long t) {return t;}
   };
 
-  class GetParameterFunction: public LoggerFunction<std::string>
+  class GetParameterFunction: public LoggerFunction<double>
   {
     int p;
   public:
     GetParameterFunction* clone() const {return new GetParameterFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P,long t);
+    double operator()(const owned_ptr<Probability_Model>& P,long t);
     GetParameterFunction(int i):p(i) {}
+  };
+
+  template <typename T>
+  class ConvertToStringFunction: public LoggerFunction<std::string>
+  {
+    owned_ptr<LoggerFunction<T> > F;
+  public:
+    ConvertToStringFunction* clone() const {return new ConvertToStringFunction(*this);}
+
+    std::string operator()(const owned_ptr<Probability_Model>& P,long t)
+    {
+      return convertToString<T>((*F)(P,t));
+    }
+
+    ConvertToStringFunction(const owned_ptr<LoggerFunction<T> >& f)
+      :F(f)
+    { }
   };
 
   struct GetPriorFunction: public LoggerFunction<std::string>
@@ -618,7 +639,8 @@ namespace MCMC {
     AlignmentFunction(int i):p(i) {}
   };
 
-  class TableFunction: public LoggerFunction<std::vector<std::string> >
+  template <typename T>
+  class TableFunction: public LoggerFunction<std::vector<T> >
   {
   public:
     virtual TableFunction* clone() const =0;
@@ -626,34 +648,46 @@ namespace MCMC {
     virtual std::vector<std::string> field_names() const =0;
   };
 
-  class UnitTableFunction: public TableFunction
+  template<typename T>
+  class UnitTableFunction: public TableFunction<T>
   {
     std::string field_name;
-    owned_ptr<LoggerFunction<std::string> > F;
+    owned_ptr<LoggerFunction<T> > F;
   public:
-    virtual UnitTableFunction* clone() const {return new UnitTableFunction(*this);}
+    virtual UnitTableFunction<T>* clone() const {return new UnitTableFunction<T>(*this);}
 
-    int n_fields() const;
-    std::vector<std::string> field_names() const;
+    int n_fields() const {return 1;}
+    std::vector<std::string> field_names() const {return std::vector<std::string>(1,field_name);}
 
-    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P, long t);
-    UnitTableFunction(const std::string& name, const owned_ptr<LoggerFunction<std::string> >&);
+    std::vector<T> operator()(const owned_ptr<Probability_Model>& P, long t)
+    {
+      T output = (*F)(P,t);
+      return std::vector<T>(1,output);
+    }
+
+    UnitTableFunction(const std::string& name, const owned_ptr<LoggerFunction<T> >& f)
+      :field_name(name),F(f)
+    { }
   };
 
-  class SortedTableFunction: public TableFunction
+  class SortedTableFunction: public TableFunction<double>
   {
+    owned_ptr<TableFunction<double> > F;
+    std::vector< std::vector< int > > indices;
   public:
     SortedTableFunction* clone() const {return new SortedTableFunction(*this);}
 
     int n_fields() const;
     std::vector<std::string> field_names() const;
 
-    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P, long t);
+    std::vector<double> operator()(const owned_ptr<Probability_Model>& P, long t);
+
+    SortedTableFunction(const owned_ptr<TableFunction<double> >&, const std::vector< std::vector< int> >& );
   };
 
-  class TableGroupFunction: public TableFunction
+  class TableGroupFunction: public TableFunction<std::string>
   {
-    std::vector<owned_ptr<TableFunction> > functions;
+    std::vector<owned_ptr<TableFunction<std::string> > > functions;
   public:
     TableGroupFunction* clone() const {return new TableGroupFunction(*this);}
 
@@ -668,7 +702,7 @@ namespace MCMC {
 
   class TableLogger: public FileLogger
   {
-    owned_ptr<TableFunction> TF;
+    owned_ptr<TableFunction<std::string> > TF;
 
   public:
     TableLogger* clone() const {return new TableLogger(*this);}
@@ -679,7 +713,7 @@ namespace MCMC {
 
     void operator()(const owned_ptr<Probability_Model>& P, long t);
 
-    TableLogger(const std::string& filename, const owned_ptr<TableFunction>& tf);
+    TableLogger(const std::string& filename, const owned_ptr<TableFunction<std::string> >& tf);
   };
 
   class Show_SModels_Function: public LoggerFunction<std::string>
@@ -720,11 +754,11 @@ namespace MCMC {
 
   class TableViewerFunction: public LoggerFunction<std::string>
   {
-    owned_ptr<TableFunction> function;
+    owned_ptr<TableFunction<std::string> > function;
   public:
     TableViewerFunction* clone() const {return new TableViewerFunction(*this);}
     std::string operator()(const owned_ptr<Probability_Model>& P, long t);
-    TableViewerFunction(const owned_ptr<TableFunction>&);
+    TableViewerFunction(const owned_ptr<TableFunction<std::string> >&);
   };
 
   class FunctionLogger: public FileLogger
@@ -736,7 +770,7 @@ namespace MCMC {
     FunctionLogger(const std::string& filename, const owned_ptr<LoggerFunction<std::string> >& L);
   };
 
-  class ConcatFunction: public LoggerFunction<std::string>, public StringFunctionList
+  class ConcatFunction: public LoggerFunction<std::string>, public FunctionList<std::string>
   {
     std::string separator;
   public:

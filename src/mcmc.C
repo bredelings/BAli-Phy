@@ -1270,29 +1270,43 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
   s_out<<"total samples = "<<max_iter<<endl;
 }
 
-void StringFunctionList::add_function(const owned_ptr<LoggerFunction<string> >& F)
+int SortedTableFunction::n_fields() const
 {
-  functions.push_back(F);
+  return F->n_fields();
 }
 
-int UnitTableFunction::n_fields() const
+vector<string> SortedTableFunction::field_names() const
 {
-  return 1;
+  return F->field_names();
 }
 
-vector<string> UnitTableFunction::field_names() const
+vector<double> SortedTableFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
-  return vector<string>(1,field_name);
+  vector<double> v = (*F)(P,t);
+  assert(indices.size());
+  int N = indices[0].size();
+
+  vector<double> v_sub = select(v,indices[0]);
+
+  vector<int> O = iota(N);
+  std::sort(O.begin(),O.end(), sequence_order<double>(v_sub));
+
+  vector<int> O_all = iota<int>(v.size());
+  for(int i=0;i<indices.size();i++) 
+  {
+    assert(indices[i].size() == N);
+    for(int j=0;j<N;j++) {
+      // indices[i][j] -> indices[i][O[j]]
+      O_all[indices[i][j]] = indices[i][O[j]];
+    }
+  }
+  vector<double> v2 = apply_mapping(v,invert(O_all));
+
+  return v2;
 }
 
-vector<string> UnitTableFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
-{
-  string output = (*F)(P,t);
-  return vector<string>(1,output);
-}
-
-UnitTableFunction::UnitTableFunction(const std::string& name, const owned_ptr<LoggerFunction<std::string> >& f)
-  :field_name(name),F(f)
+SortedTableFunction::SortedTableFunction(const owned_ptr<TableFunction<double> >& f, const std::vector< std::vector< int> >& i)
+  :F(f), indices(i)
 { }
 
 int TableGroupFunction::n_fields() const
@@ -1320,10 +1334,10 @@ vector<string> TableGroupFunction::field_names() const
 
 void TableGroupFunction::add_field(const string& name, const owned_ptr<LoggerFunction<string> >& f)
 {
-  functions.push_back(UnitTableFunction(name,f));
+  functions.push_back(UnitTableFunction<string>(name,f));
 }
 
-void TableGroupFunction::add_fields(const owned_ptr<TableFunction>& f)
+void TableGroupFunction::add_fields(const owned_ptr<TableFunction<string> >& f)
 {
   functions.push_back(f);
 }
@@ -1368,7 +1382,7 @@ void TableLogger::operator()(const owned_ptr<Probability_Model>& P, long t)
   *log_file<<join(values,'\t')<<endl;
 }
 
-TableLogger::TableLogger(const string& name, const owned_ptr<TableFunction>& tf)
+TableLogger::TableLogger(const string& name, const owned_ptr<TableFunction<string> >& tf)
   :FileLogger(name), TF(tf)
 { }
 
@@ -1388,21 +1402,13 @@ string TableViewerFunction::operator()(const owned_ptr<Probability_Model>& P, lo
   return output.str();
 }
 
-TableViewerFunction::TableViewerFunction(const owned_ptr<TableFunction>& f)
+TableViewerFunction::TableViewerFunction(const owned_ptr<TableFunction<string> >& f)
   :function(f)
 { }
 
-string IterationsFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
+double GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
-  return convertToString(t);
-}
-
-string GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P, long)
-{
-  string value = convertToString(P->get_parameter_value(p));
-  if (P->is_fixed(p))
-    value += "/*";
-  return value;
+  return P->get_parameter_value(p);
 }
 
 string GetPriorFunction::operator()(const owned_ptr<Probability_Model>& P, long)
