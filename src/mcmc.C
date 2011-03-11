@@ -1009,38 +1009,6 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
 #endif
 
 
-/// \brief Force identifiability by sorting certain parameters according to the order of indices[0]
-///
-/// \param v The values of all parameters.
-/// \param indices The indices of parameter values to reorder.
-///
-/// Parameter values indexed by indices[i] are sorted so that the parameter values indexed
-/// by indices[0] are in increasing order.
-///
-vector<double> make_identifiable(const vector<double>& v,const vector< vector<int> >& indices)
-{
-  assert(indices.size());
-  int N = indices[0].size();
-
-  vector<double> v_sub = select(v,indices[0]);
-
-  vector<int> O = iota(N);
-  std::sort(O.begin(),O.end(), sequence_order<double>(v_sub));
-
-  vector<int> O_all = iota<int>(v.size());
-  for(int i=0;i<indices.size();i++) 
-  {
-    assert(indices[i].size() == N);
-    for(int j=0;j<N;j++) {
-      // indices[i][j] -> indices[i][O[j]]
-      O_all[indices[i][j]] = indices[i][O[j]];
-    }
-  }
-  vector<double> v2 = apply_mapping(v,invert(O_all));
-
-  return v2;
-}
-
 void mcmc_init(Parameters& P, ostream& s_out)
 {
   const SequenceTree& T = *P.T;
@@ -1233,12 +1201,25 @@ int SortedTableFunction::n_fields() const
 
 vector<string> SortedTableFunction::field_names() const
 {
-  return F->field_names();
+  vector<string> names = F->field_names();
+
+  for(int i=0;i<names.size();i++)
+    if (sorted_index[i] != -1)
+      names[i] += "[S" + convertToString(sorted_index[i]+1) + "]";
+
+  return names;
 }
 
-vector<double> SortedTableFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
+/// \brief Force identifiability by sorting certain parameters according to the order of indices[0]
+///
+/// \param v The values of all parameters.
+/// \param indices The indices of parameter values to reorder.
+///
+/// Parameter values indexed by indices[i] are sorted so that the parameter values indexed
+/// by indices[0] are in increasing order.
+///
+vector<double> make_identifiable(const vector<double>& v,const vector< vector<int> >& indices)
 {
-  vector<double> v = (*F)(P,t);
   assert(indices.size());
   int N = indices[0].size();
 
@@ -1261,54 +1242,27 @@ vector<double> SortedTableFunction::operator()(const owned_ptr<Probability_Model
   return v2;
 }
 
-SortedTableFunction::SortedTableFunction(const owned_ptr<TableFunction<double> >& f, const std::vector< std::vector< int> >& i)
-  :F(f), indices(i)
-{ }
-
-int TableGroupFunction::n_fields() const
+vector<double> SortedTableFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
-  int total = 0;
+  vector<double> v = (*F)(P,t);
 
-  for(int i=0;i<functions.size();i++)
-    total += functions[i]->n_fields();
+  for(int i=0;i<indices.size();i++)
+    v = make_identifiable(v, indices[i]);
 
-  return total;
+  return v;
 }
 
-vector<string> TableGroupFunction::field_names() const
-{
-  vector<string> names;
-
-  for(int i=0;i<functions.size();i++)
-  {
-    vector<string> names_i = functions[i]->field_names();
-    names.insert(names.end(),names_i.begin(), names_i.end());
-  }
-
-  return names;
-}
-
-void TableGroupFunction::add_field(const string& name, const owned_ptr<LoggerFunction<string> >& f)
-{
-  functions.push_back(UnitTableFunction<string>(name,f));
-}
-
-void TableGroupFunction::add_fields(const owned_ptr<TableFunction<string> >& f)
-{
-  functions.push_back(f);
-}
-
-vector<string> TableGroupFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
-{
-  vector<string> values;
-
-  for(int i=0;i<functions.size();i++)
-  {
-    vector<string> values_i = (*functions[i])(P,t);
-    values.insert(values.end(),values_i.begin(), values_i.end());
-  }
-
-  return values;
+SortedTableFunction::SortedTableFunction(const owned_ptr<TableFunction<double> >& f, const std::vector< std::vector< std::vector< int> > >& i_)
+  :F(f), indices(i_), sorted_index(f->n_fields(),-1)
+{ 
+  for(int i=0;i<indices.size();i++)
+    for(int j=0;j<indices[i].size();j++)
+      for(int k=0;k<indices[i][j].size();k++)
+      {
+	int index = indices[i][j][k];
+	assert(0 <= index and index < sorted_index.size());
+	sorted_index[index] = i;
+      }
 }
 
 FileLogger::FileLogger(const string& filename)

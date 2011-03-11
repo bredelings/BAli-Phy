@@ -673,7 +673,8 @@ namespace MCMC {
   class SortedTableFunction: public TableFunction<double>
   {
     owned_ptr<TableFunction<double> > F;
-    std::vector< std::vector< int > > indices;
+    std::vector< std::vector< std::vector< int > > > indices;
+    std::vector<int> sorted_index;
   public:
     SortedTableFunction* clone() const {return new SortedTableFunction(*this);}
 
@@ -682,22 +683,86 @@ namespace MCMC {
 
     std::vector<double> operator()(const owned_ptr<Probability_Model>& P, long t);
 
-    SortedTableFunction(const owned_ptr<TableFunction<double> >&, const std::vector< std::vector< int> >& );
+    SortedTableFunction(const owned_ptr<TableFunction<double> >&, const std::vector< std::vector< std::vector< int> > >& );
   };
 
-  class TableGroupFunction: public TableFunction<std::string>
+  template <typename T>
+  class TableGroupFunction: public TableFunction<T>
   {
-    std::vector<owned_ptr<TableFunction<std::string> > > functions;
+    std::vector<owned_ptr<TableFunction<T> > > functions;
   public:
     TableGroupFunction* clone() const {return new TableGroupFunction(*this);}
 
-    int n_fields() const;
-    std::vector<std::string> field_names() const;
+    int n_fields() const
+    {
+      int total = 0;
 
-    void add_field(const std::string& name, const owned_ptr<LoggerFunction<std::string> >&);
-    void add_fields(const owned_ptr<TableFunction>& f);
+      for(int i=0;i<functions.size();i++)
+	total += functions[i]->n_fields();
+      
+      return total;
+    }
 
-    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P, long t);
+    std::vector<std::string> field_names() const
+    {
+      std::vector<std::string> names;
+      
+      for(int i=0;i<functions.size();i++)
+	{
+	  std::vector<std::string> names_i = functions[i]->field_names();
+	  names.insert(names.end(),names_i.begin(), names_i.end());
+	}
+      
+      return names;
+    }
+
+    void add_fields(const owned_ptr<TableFunction<T> >& f)
+    {
+      functions.push_back(f);
+    }
+
+    void add_field(const std::string& name, const owned_ptr<LoggerFunction<T> >& f)
+    {
+      functions.push_back(UnitTableFunction<T>(name,f));
+    }
+
+    std::vector<T> operator()(const owned_ptr<Probability_Model>& P, long t)
+    {
+      std::vector<T> values;
+      
+      for(int i=0;i<functions.size();i++)
+	{
+	  std::vector<T> values_i = (*functions[i])(P,t);
+	  values.insert(values.end(),values_i.begin(), values_i.end());
+	}
+      
+      return values;
+    }
+  };
+
+  template <typename T>
+  class ConvertTableToStringFunction: public TableFunction<std::string>
+  {
+    owned_ptr<TableFunction<T> > F;
+  public:
+    ConvertTableToStringFunction<T>* clone() const {return new ConvertTableToStringFunction<T>(*this);}
+
+    int n_fields() const {return F->n_fields();}
+
+    std::vector<std::string> field_names() const {return F->field_names();}
+
+    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P, long t)
+    {
+      std::vector<T> values = (*F)(P,t);
+
+      std::vector<std::string> output(values.size());
+      for(int i=0;i<values.size();i++)
+	output[i] = convertToString<T>(values[i]);
+
+      return output;
+    }
+
+    ConvertTableToStringFunction(const owned_ptr<TableFunction<T> >& f):F(f) { }
   };
 
   class TableLogger: public FileLogger

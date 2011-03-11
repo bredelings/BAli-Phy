@@ -555,7 +555,7 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M)
 owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameters& P)
 {
   using namespace MCMC;
-  owned_ptr<TableGroupFunction> TL = claim(new TableGroupFunction);
+  owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
   
   TL->add_field("iter", ConvertToStringFunction<long>( IterationsFunction() ) );
   TL->add_field("prior", GetPriorFunction() );
@@ -565,8 +565,18 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
   TL->add_field("likelihood", GetLikelihoodFunction() );
   TL->add_field("logp", GetProbabilityFunction() );
   
-  for(int i=0;i<P.n_parameters();i++)
-    TL->add_field(P.parameter_name(i), ConvertToStringFunction<double>( GetParameterFunction(i) ) );
+  vector< vector< vector<int> > > indices = get_un_identifiable_indices(P);
+
+  {
+    TableGroupFunction<double> T1;
+    for(int i=0;i<P.n_parameters();i++)
+      T1.add_field(P.parameter_name(i), GetParameterFunction(i) );
+
+    SortedTableFunction T2(T1, get_un_identifiable_indices(P));
+
+    TL->add_fields( ConvertTableToStringFunction<double>( T2 ) );
+  }
+
   
   for(int i=0;i<P.n_data_partitions();i++)
     {
