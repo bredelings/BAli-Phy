@@ -1041,39 +1041,6 @@ vector<double> make_identifiable(const vector<double>& v,const vector< vector<in
   return v2;
 }
 
-/// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
-vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M)
-{
-  vector< vector< vector<int> > > indices;
-
-  int n_smodels = dynamic_cast<const Parameters&>(M).n_smodels();
-
-  for(int i=0;i<n_smodels+1;i++) 
-  {
-    string prefix = "^";
-    if (i>0)
-      prefix = string("S")+convertToString(i) + "::";
-
-    vector< vector<int> > DP;
-    if (parameters_with_extension(M, prefix + "DP::rate*").size()  )
-    {
-      DP.push_back( parameters_with_extension(M, prefix + "DP::rate*") );
-      DP.push_back( parameters_with_extension(M, prefix + "DP::f*") );
-      indices.push_back( DP );
-    }
-
-    vector< vector<int> > M3;
-    if (parameters_with_extension(M, prefix + "M3::omega*").size() )
-    {
-      M3.push_back( parameters_with_extension(M, prefix + "M3::omega*") );
-      M3.push_back( parameters_with_extension(M, prefix + "M3::f*") );
-      indices.push_back( M3 );
-    }
-  }
-
-  return indices;
-}
-
 void mcmc_init(Parameters& P, ostream& s_out)
 {
   const SequenceTree& T = *P.T;
@@ -1158,15 +1125,6 @@ void Sampler::add_logger(const owned_ptr<Logger>& L)
   loggers.push_back(L);
 }
 
-// FIXME - separate printers to string from file writers so that we can construct a writer from multiple printers
-
-// FIXME - make identifiable
-//
-//  // Sort parameter values to resolve identifiability and then output them.
-//  vector<double> values = P.get_parameter_values();
-//  for(int i=0;i<un_identifiable_indices.size();i++) 
-//    values = make_identifiable(values,un_identifiable_indices[i]);
-//  s_parameters<<join(values,'\t');
 
 void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter, ostream& s_out)
 {
@@ -1208,8 +1166,6 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     restore_bounds.push_back( change_bound(P, "epsilon", ::upper_bound(-0.25) ) );
     restore_bounds.push_back( change_bound(P, "mu1",     ::upper_bound(0.5)   ) );
   }
-
-  vector< vector< vector<int> > > un_identifiable_indices = get_un_identifiable_indices(*P);
 
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max_iter; iterations++) 

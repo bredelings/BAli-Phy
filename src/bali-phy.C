@@ -518,17 +518,38 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
   return files;
 }
 
-// FIXME - sort the unordered indices!  See (same) FIXME in mcmc.C
+/// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
+vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M)
+{
+  vector< vector< vector<int> > > indices;
 
-// FIXME - separate printers to string from file writers so that we can construct a writer from multiple printers
+  int n_smodels = dynamic_cast<const Parameters&>(M).n_smodels();
 
-// FIXME - make identifiable
-//
-//  // Sort parameter values to resolve identifiability and then output them.
-//  vector<double> values = P.get_parameter_values();
-//  for(int i=0;i<un_identifiable_indices.size();i++) 
-//    values = make_identifiable(values,un_identifiable_indices[i]);
-//  s_parameters<<join(values,'\t');
+  for(int i=0;i<n_smodels+1;i++) 
+  {
+    string prefix = "^";
+    if (i>0)
+      prefix = string("S")+convertToString(i) + "::";
+
+    vector< vector<int> > DP;
+    if (parameters_with_extension(M, prefix + "DP::rate*").size()  )
+    {
+      DP.push_back( parameters_with_extension(M, prefix + "DP::rate*") );
+      DP.push_back( parameters_with_extension(M, prefix + "DP::f*") );
+      indices.push_back( DP );
+    }
+
+    vector< vector<int> > M3;
+    if (parameters_with_extension(M, prefix + "M3::omega*").size() )
+    {
+      M3.push_back( parameters_with_extension(M, prefix + "M3::omega*") );
+      M3.push_back( parameters_with_extension(M, prefix + "M3::f*") );
+      indices.push_back( M3 );
+    }
+  }
+
+  return indices;
+}
 
 
 owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameters& P)
