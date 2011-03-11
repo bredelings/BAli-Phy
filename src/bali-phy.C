@@ -1090,6 +1090,16 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
   out_both<<endl;
 }
 
+void write_initial_alignments(const vector<alignment>& A, int proc_id, string dir_name)
+{
+  string base = dir_name + "/" + "C" + convertToString(proc_id+1);
+  for(int i=0;i<A.size();i++)
+  {
+    checked_ofstream file(base+".P"+convertToString(i+1)+".initial.fasta");
+    file<<A[i]<<endl;
+  }
+}
+
 int main(int argc,char* argv[])
 { 
   int n_procs = 1;
@@ -1322,6 +1332,7 @@ int main(int argc,char* argv[])
 #endif
 	files = init_files(proc_id, dir_name, argc, argv);
 	loggers = construct_loggers(P,proc_id,dir_name);
+	write_initial_alignments(A,proc_id, dir_name);
       }
       else {
 	files.push_back(&cout);

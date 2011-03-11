@@ -1187,11 +1187,11 @@ sub compute_initial_alignments
 	    $alignment_names{$name} = "Initial";
 	    
 	    # These initial alignments should never change!
-	    if (! -s "Results/Work/$name-unordered.fasta") {
-		`alignment-find --first < $partition_samples[0][$i] > Results/Work/$name-unordered.fasta 2>/dev/null`;
-		if ($? && $n_chains==1 && defined($MAP_file)) {
-		    `alignment-find --first < $MAP_file > Results/Work/$name-unordered.fasta`;
-		}
+	    if (! -s "Results/Work/$name-unordered.fasta") 
+	    {
+		my $initial_name = $partition_samples[0][$i];
+		$initial_name =~ s/\.fastas/\.initial\.fasta/;
+		`cp $initial_name Results/Work/$name-unordered.fasta`;
 	    }
 	}
 	print "done.\n";
