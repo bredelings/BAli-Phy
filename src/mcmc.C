@@ -1117,8 +1117,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
 }
 
 void mcmc_log(int iterations, int subsample, Parameters& P, 
-	      ostream& s_out, ostream& s_map,vector<ostream*>& files,
-	      efloat_t& MAP_score,
+	      ostream& s_out, vector<ostream*>& files,
 	      const vector< vector< vector<int> > >& un_identifiable_indices,
 	      const vector<owned_ptr<Logger> >& loggers)
 {
@@ -1137,20 +1136,10 @@ void mcmc_log(int iterations, int subsample, Parameters& P,
   if (show_alignment) {
     for(int i=0;i<P.n_data_partitions();i++)
     {
-      (*files[3+i])<<"iterations = "<<iterations<<"\n\n";
+      (*files[2+i])<<"iterations = "<<iterations<<"\n\n";
       if (not iterations or P[i].variable_alignment())
-	(*files[3+i])<<standardize(*P[i].A, *P.T)<<"\n";
+	(*files[2+i])<<standardize(*P[i].A, *P.T)<<"\n";
     }
-  }
-
-  //---------------------- estimate MAP ----------------------//
-  if (Pr > MAP_score) {
-    MAP_score = Pr;
-    s_map<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
-    print_stats(s_map,P);
-    // print a tree to the MAP file
-    // here's a place to have loggers be printers that are separable from files...
-    // The MAP printer
   }
 
   for(int i=0;i<loggers.size();i++)
@@ -1190,11 +1179,9 @@ void Sampler::add_logger(const owned_ptr<Logger>& L)
 //  s_parameters<<join(values,'\t');
 
 void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter,
-		 ostream& s_out, ostream& s_map,
-		 vector<ostream*>& files)
+		 ostream& s_out, vector<ostream*>& files)
 {
   P->recalc_all();
-  efloat_t MAP_score = 0;
 
   int alignment_burnin_iterations = (int)loadvalue(P->keys,"alignment-burnin",10.0);
 
@@ -1272,7 +1259,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     clog<<"iterations = "<<iterations<<"\n";
 
     if (iterations%subsample == 0)
-      mcmc_log(iterations,subsample,*P.as<Parameters>(),s_out,s_map,files,MAP_score,un_identifiable_indices,loggers);
+      mcmc_log(iterations,subsample,*P.as<Parameters>(),s_out,files,un_identifiable_indices,loggers);
 
     if (iterations%20 == 0 or iterations < 20) {
       std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";

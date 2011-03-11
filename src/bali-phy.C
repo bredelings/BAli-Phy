@@ -478,7 +478,6 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
   vector<string> filenames;
   filenames.push_back("out");
   filenames.push_back("err");
-  filenames.push_back("MAP");
   for(int i=0;i<n_partitions;i++) {
     string filename = string("P") + convertToString(i+1) + ".fastas";
     filenames.push_back(filename);
@@ -596,11 +595,12 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc
   {
     ConcatFunction F; 
     F<<TableViewerFunction(TF)<<"\n";
+    F<<Show_SModels_Function()<<"\n";
     for(int i=0;i<P.n_data_partitions();i++)
       if (P[i].variable_alignment())
 	F<<AlignmentFunction(i)<<"\n\n";
     F<<TreeFunction()<<"\n\n";
-    // loggers.push_back( FunctionLogger(base + ".MAP2", MAP_Function(F)) );
+    loggers.push_back( FunctionLogger(base + ".MAP", MAP_Function(F)) );
   }
   
   for(int i=0;i<P.n_data_partitions();i++)

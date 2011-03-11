@@ -758,7 +758,7 @@ namespace MCMC {
   public:
     /// Run the sampler for 'max' iterations
     void go(owned_ptr<Probability_Model>& P, int subsample, int max, 
-	    std::ostream&,std::ostream&,std::vector<std::ostream*>& files);
+	    std::ostream&,std::vector<std::ostream*>& files);
 
     int n_loggers() const {return loggers.size();}
 
