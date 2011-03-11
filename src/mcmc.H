@@ -444,7 +444,7 @@ namespace MCMC {
   struct Logger
   {
     virtual Logger* clone() const =0;
-    virtual void operator()(const owned_ptr<Probability_Model>& P)=0;
+    virtual void operator()(const owned_ptr<Probability_Model>& P,long t)=0;
     virtual ~Logger() {}
   };
 
@@ -463,7 +463,7 @@ namespace MCMC {
   struct LoggerFunction
   {
     virtual LoggerFunction<T>* clone() const =0;
-    virtual T operator()(const owned_ptr<Probability_Model>& P)=0;
+    virtual T operator()(const owned_ptr<Probability_Model>& P,long t)=0;
     virtual ~LoggerFunction() {}
   };
 
@@ -475,12 +475,10 @@ namespace MCMC {
     void add_function(const owned_ptr<LoggerFunction<std::string> >&);
   };
 
-  class IterationsFunction: public LoggerFunction<std::string>
+  struct IterationsFunction: public LoggerFunction<std::string>
   {
-    long iterations;
-  public:
     IterationsFunction* clone() const {return new IterationsFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P,long t);
   };
 
   class GetParameterFunction: public LoggerFunction<std::string>
@@ -488,14 +486,14 @@ namespace MCMC {
     int p;
   public:
     GetParameterFunction* clone() const {return new GetParameterFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P,long t);
     GetParameterFunction(int i):p(i) {}
   };
 
   struct GetPriorFunction: public LoggerFunction<std::string>
   {
     GetPriorFunction* clone() const {return new GetPriorFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     GetPriorFunction() {}
   };
 
@@ -504,21 +502,21 @@ namespace MCMC {
     int p;
   public:
     GetAlignmentPriorFunction* clone() const {return new GetAlignmentPriorFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     GetAlignmentPriorFunction(int i):p(i) {}
   };
 
   struct GetLikelihoodFunction: public LoggerFunction<std::string>
   {
     GetLikelihoodFunction* clone() const {return new GetLikelihoodFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     GetLikelihoodFunction() {}
   };
 
   struct GetProbabilityFunction: public LoggerFunction<std::string>
   {
     GetProbabilityFunction* clone() const {return new GetProbabilityFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     GetProbabilityFunction() {}
   };
 
@@ -527,7 +525,7 @@ namespace MCMC {
     int p;
   public:
     Get_Alignment_Length_Function* clone() const {return new Get_Alignment_Length_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     Get_Alignment_Length_Function(int i):p(i) {}
   };
 
@@ -537,7 +535,7 @@ namespace MCMC {
     ublas::matrix<int> cost_matrix;
   public:
     Get_Num_Substitutions_Function* clone() const {return new Get_Num_Substitutions_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     Get_Num_Substitutions_Function(int i, const ublas::matrix<int>& C):p(i), cost_matrix(C) {}
   };
 
@@ -546,7 +544,7 @@ namespace MCMC {
     int p;
   public:
     Get_Num_Indels_Function* clone() const {return new Get_Num_Indels_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     Get_Num_Indels_Function(int i):p(i) {}
   };
 
@@ -555,7 +553,7 @@ namespace MCMC {
     int p;
   public:
     Get_Total_Length_Indels_Function* clone() const {return new Get_Total_Length_Indels_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     Get_Total_Length_Indels_Function(int i):p(i) {}
   };
 
@@ -563,14 +561,14 @@ namespace MCMC {
   {
   public:
     Get_Total_Alignment_Length_Function* clone() const {return new Get_Total_Alignment_Length_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
   };
 
   struct Get_Total_Num_Substitutions_Function: public LoggerFunction<std::string>
   {
   public:
     Get_Total_Num_Substitutions_Function* clone() const {return new Get_Total_Num_Substitutions_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
   };
 
   struct Get_Total_Num_Indels_Function: public LoggerFunction<std::string>
@@ -578,7 +576,7 @@ namespace MCMC {
     int p;
   public:
     Get_Total_Num_Indels_Function* clone() const {return new Get_Total_Num_Indels_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
   };
 
   struct Get_Total_Total_Length_Indels_Function: public LoggerFunction<std::string>
@@ -586,30 +584,29 @@ namespace MCMC {
     int p;
   public:
     Get_Total_Total_Length_Indels_Function* clone() const {return new Get_Total_Total_Length_Indels_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
   };
 
   struct Get_Tree_Length_Function: public LoggerFunction<std::string>
   {
     Get_Tree_Length_Function* clone() const {return new Get_Tree_Length_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
   };
 
   struct TreeFunction: public LoggerFunction<std::string>
   {
     TreeFunction* clone() const {return new TreeFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
   };
 
   class MAP_Function: public LoggerFunction<std::string>
   {
-    long iterations;
     efloat_t MAP_score;
     owned_ptr<LoggerFunction<std::string> > F;
   public:
     MAP_Function* clone() const {return new MAP_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
-    MAP_Function(const owned_ptr<LoggerFunction<std::string> >& f):iterations(0), MAP_score(0),F(f) { }
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
+    MAP_Function(const owned_ptr<LoggerFunction<std::string> >& f):MAP_score(0),F(f) { }
   };
 
   class AlignmentFunction: public LoggerFunction<std::string>
@@ -617,7 +614,7 @@ namespace MCMC {
     int p;
   public:
     AlignmentFunction* clone() const {return new AlignmentFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     AlignmentFunction(int i):p(i) {}
   };
 
@@ -639,7 +636,7 @@ namespace MCMC {
     int n_fields() const;
     std::vector<std::string> field_names() const;
 
-    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P);
+    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P, long t);
     UnitTableFunction(const std::string& name, const owned_ptr<LoggerFunction<std::string> >&);
   };
 
@@ -651,7 +648,7 @@ namespace MCMC {
     int n_fields() const;
     std::vector<std::string> field_names() const;
 
-    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P);
+    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P, long t);
   };
 
   class TableGroupFunction: public TableFunction
@@ -666,12 +663,11 @@ namespace MCMC {
     void add_field(const std::string& name, const owned_ptr<LoggerFunction<std::string> >&);
     void add_fields(const owned_ptr<TableFunction>& f);
 
-    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P);
+    std::vector<std::string> operator()(const owned_ptr<Probability_Model>& P, long t);
   };
 
   class TableLogger: public FileLogger
   {
-    long iterations;
     owned_ptr<TableFunction> TF;
 
   public:
@@ -681,7 +677,7 @@ namespace MCMC {
 
     std::vector<std::string> field_names() const;
 
-    void operator()(const owned_ptr<Probability_Model>& P);
+    void operator()(const owned_ptr<Probability_Model>& P, long t);
 
     TableLogger(const std::string& filename, const owned_ptr<TableFunction>& tf);
   };
@@ -690,7 +686,18 @@ namespace MCMC {
   {
   public:
     Show_SModels_Function* clone() const {return new Show_SModels_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
+  };
+
+  class Subsample_Function: public LoggerFunction<std::string>
+  {
+    owned_ptr<LoggerFunction<std::string> > function;
+    int subsample;
+  public:
+    Subsample_Function* clone() const {return new Subsample_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>&, long t);
+    Subsample_Function(const owned_ptr<LoggerFunction<std::string> >& f, int i)
+      :function(f),subsample(i) {}
   };
 
   class Mixture_Components_Function: public LoggerFunction<std::string>
@@ -698,7 +705,7 @@ namespace MCMC {
     int p;
   public:
     Mixture_Components_Function* clone() const {return new Mixture_Components_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     Mixture_Components_Function(int i):p(i) {}
   };
 
@@ -707,7 +714,7 @@ namespace MCMC {
     std::string s;
   public:
     String_Function* clone() const {return new String_Function(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>&) {return s;}
+    std::string operator()(const owned_ptr<Probability_Model>&, long) {return s;}
     String_Function(const std::string& s_):s(s_) {}
   };
 
@@ -716,7 +723,7 @@ namespace MCMC {
     owned_ptr<TableFunction> function;
   public:
     TableViewerFunction* clone() const {return new TableViewerFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>&);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     TableViewerFunction(const owned_ptr<TableFunction>&);
   };
 
@@ -725,7 +732,7 @@ namespace MCMC {
     owned_ptr<LoggerFunction<std::string> > function;
   public:
     FunctionLogger* clone() const {return new FunctionLogger(*this);}
-    void operator()(const owned_ptr<Probability_Model>& P);
+    void operator()(const owned_ptr<Probability_Model>& P, long t);
     FunctionLogger(const std::string& filename, const owned_ptr<LoggerFunction<std::string> >& L);
   };
 
@@ -734,7 +741,7 @@ namespace MCMC {
     std::string separator;
   public:
     ConcatFunction* clone() const {return new ConcatFunction(*this);}
-    std::string operator()(const owned_ptr<Probability_Model>& P);
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
     ConcatFunction() {}
     ConcatFunction(const std::string& s):separator(s) {}
   };
@@ -757,8 +764,7 @@ namespace MCMC {
     std::vector<owned_ptr<Logger> > loggers;
   public:
     /// Run the sampler for 'max' iterations
-    void go(owned_ptr<Probability_Model>& P, int subsample, int max, 
-	    std::ostream&,std::vector<std::ostream*>& files);
+    void go(owned_ptr<Probability_Model>& P, int subsample, int max, std::ostream&);
 
     int n_loggers() const {return loggers.size();}
 

@@ -478,10 +478,6 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
   vector<string> filenames;
   filenames.push_back("out");
   filenames.push_back("err");
-  for(int i=0;i<n_partitions;i++) {
-    string filename = string("P") + convertToString(i+1) + ".fastas";
-    filenames.push_back(filename);
-  }
     
   vector<ofstream*> files2 = open_files(proc_id, dirname+"/",filenames);
   files.clear();
@@ -588,10 +584,13 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc
 
   owned_ptr<TableFunction> TF = construct_table_function(P);
 
+  // Write out scalar numerical variables (and functions of them) to C<>.p
   loggers.push_back( TableLogger(base +".p", TF) );
   
+  // Write out the (scaled) tree each iteration to C<>.trees
   loggers.push_back( FunctionLogger(base + ".trees", TreeFunction()<<"\n" ) );
   
+  // Write out the MAP point to C<>.MAP - later change to a dump format that could be reloaded?
   {
     ConcatFunction F; 
     F<<TableViewerFunction(TF)<<"\n";
@@ -602,11 +601,24 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc
     F<<TreeFunction()<<"\n\n";
     loggers.push_back( FunctionLogger(base + ".MAP", MAP_Function(F)) );
   }
-  
+
+  // Write out the proability that each column is in a particular substitution component to C<>.P<>.CAT
   for(int i=0;i<P.n_data_partitions();i++)
     loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
 				      Mixture_Components_Function(i) ) );
 
+  // Write out the alignments for each (variable) partition to C<>.P<>.fastas
+  for(int i=0;i<P.n_data_partitions();i++)
+    if (P[i].variable_alignment()) 
+    {
+      string filename = base + ".P" + convertToString(i+1)+".fastas";
+
+      ConcatFunction F;
+      F<<"iterations = "<<IterationsFunction()<<"\n\n";
+      F<<AlignmentFunction(i);
+
+      loggers.push_back( FunctionLogger(filename, Subsample_Function(F,10) ) );
+    }
   return loggers;
 }
 
@@ -1266,7 +1278,7 @@ int main(int argc,char* argv[])
 #ifdef HAVE_MPI
 	if (not proc_id) {
 	  dir_name = init_dir(args);
-
+	  
 	  for(int dest=1;dest<n_procs;dest++) 
 	    world.send(dest, 0, dir_name);
 	}
@@ -1316,7 +1328,7 @@ int main(int argc,char* argv[])
       out_screen<<"See the manual for further information."<<endl;
 
       //-------- Start the MCMC  -----------//
-      do_sampling(args,Ptr ,max_iterations,files, loggers);
+      do_sampling(args,Ptr ,max_iterations, *files[0], loggers);
 
       // Close all the streams, and write a notification that we finished all the iterations.
       // close_files(files);

@@ -754,7 +754,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 void do_sampling(const variables_map& args,
 		 owned_ptr<Probability_Model>& P,
 		 long int max_iterations,
-		 vector<ostream*>& files,
+		 ostream& s_out,
 		 const vector<owned_ptr<MCMC::Logger> >& loggers)
 {
   using namespace MCMC;
@@ -810,8 +810,6 @@ void do_sampling(const variables_map& args,
 
   //------------------ Report status before starting MCMC -------------------//
   
-  ostream& s_out = *files[0];
-  
   sampler.show_enabled(s_out);
   s_out<<"\n";
 
@@ -831,5 +829,5 @@ void do_sampling(const variables_map& args,
   // - well, this should be exactly the -t sampler.
   // - but then how do we copy stuff over?
 
-  sampler.go(P,subsample,max_iterations,s_out,files);
+  sampler.go(P,subsample,max_iterations,s_out);
 }

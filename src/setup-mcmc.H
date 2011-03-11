@@ -49,6 +49,6 @@ void do_pre_burnin(const boost::program_options::variables_map& args,
 void do_sampling(const boost::program_options::variables_map& args,
 		 owned_ptr<Probability_Model>& P,
 		 long int max_iterations,
-		 std::vector<std::ostream*>& files,
+		 std::ostream& files,
 		 const std::vector<owned_ptr<MCMC::Logger> >&);
 #endif

@@ -1116,34 +1116,24 @@ void mcmc_init(Parameters& P, ostream& s_out)
   }
 }
 
-void mcmc_log(int iterations, int subsample, Parameters& P, 
-	      ostream& s_out, vector<ostream*>& files,
-	      const vector< vector< vector<int> > >& un_identifiable_indices,
-	      const vector<owned_ptr<Logger> >& loggers)
+void mcmc_log(long iterations, long max_iter, int subsample, Parameters& P, ostream& s_out, 
+	      const MoveStats& S, const vector<owned_ptr<Logger> >& loggers)
 {
-  efloat_t prior = P.prior();
-  efloat_t likelihood = P.likelihood();
-  efloat_t Pr = prior * likelihood;
-
-  // Log the alignments every 10th sample - they take a lot of space!
-  bool show_alignment = (iterations%(10*subsample) == 0);
-
   // Don't print alignments into console log file:
   //  - Its hard to separate alignments from different partitions.
-  print_stats(s_out,P,false);
-
-  // Print the alignments here instead
-  if (show_alignment) {
-    for(int i=0;i<P.n_data_partitions();i++)
-    {
-      (*files[2+i])<<"iterations = "<<iterations<<"\n\n";
-      if (not iterations or P[i].variable_alignment())
-	(*files[2+i])<<standardize(*P[i].A, *P.T)<<"\n";
-    }
-  }
+  if (iterations%subsample == 0)
+    print_stats(s_out,P,false);
 
   for(int i=0;i<loggers.size();i++)
-    (*loggers[i])(P);
+    (*loggers[i])(P,iterations);
+
+  if (iterations%20 == 0 or iterations < 20 or iterations >= max_iter) {
+      std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
+      std::cout<<S<<endl;
+      std::cout<<endl;
+      std::cout<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
+      std::cout<<default_timer_stack.report()<<endl;
+    }
 }
 
 std::pair<int, Bounds<double> > change_bound(owned_ptr<Probability_Model>& P, 
@@ -1178,8 +1168,7 @@ void Sampler::add_logger(const owned_ptr<Logger>& L)
 //    values = make_identifiable(values,un_identifiable_indices[i]);
 //  s_parameters<<join(values,'\t');
 
-void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter,
-		 ostream& s_out, vector<ostream*>& files)
+void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter, ostream& s_out)
 {
   P->recalc_all();
 
@@ -1250,7 +1239,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     if (iterations == 5)
       start_learning(100);
 
-    // Stop learning set sizes at iteration 500
+    // Stop learning step sizes at iteration 500
     if (iterations == 500)
       stop_learning(0);
 
@@ -1258,17 +1247,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     s_out<<"iterations = "<<iterations<<"\n";
     clog<<"iterations = "<<iterations<<"\n";
 
-    if (iterations%subsample == 0)
-      mcmc_log(iterations,subsample,*P.as<Parameters>(),s_out,files,un_identifiable_indices,loggers);
-
-    if (iterations%20 == 0 or iterations < 20) {
-      std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
-      const MoveStats& S = *this;
-      std::cout<<S<<endl;
-      std::cout<<endl;
-      std::cout<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
-      std::cout<<default_timer_stack.report()<<endl;
-    }
+    mcmc_log(iterations, max_iter, subsample, *P.as<Parameters>(), s_out, *this, loggers);
 
     //------------------- move to new position -----------------//
     iterate(P,*this);
@@ -1286,12 +1265,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 #endif
   }
 
-  /// Write a summary after the chain has finished.
-  std::cout<<"Success statistics (and other averages) for MCMC transition kernels:\n\n";
-  std::cout<<*(MoveStats*)this<<endl;
-  std::cout<<endl;
-  std::cout<<"CPU Profiles for various (nested and/or overlapping) tasks:\n\n";
-  std::cout<<default_timer_stack.report()<<endl;
+  mcmc_log(max_iter, max_iter, subsample, *P.as<Parameters>(), s_out, *this, loggers);
 
   s_out<<"total samples = "<<max_iter<<endl;
 }
@@ -1311,9 +1285,9 @@ vector<string> UnitTableFunction::field_names() const
   return vector<string>(1,field_name);
 }
 
-vector<string> UnitTableFunction::operator()(const owned_ptr<Probability_Model>& P)
+vector<string> UnitTableFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
-  string output = (*F)(P);
+  string output = (*F)(P,t);
   return vector<string>(1,output);
 }
 
@@ -1354,13 +1328,13 @@ void TableGroupFunction::add_fields(const owned_ptr<TableFunction>& f)
   functions.push_back(f);
 }
 
-vector<string> TableGroupFunction::operator()(const owned_ptr<Probability_Model>& P)
+vector<string> TableGroupFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
   vector<string> values;
 
   for(int i=0;i<functions.size();i++)
   {
-    vector<string> values_i = (*functions[i])(*P);
+    vector<string> values_i = (*functions[i])(P,t);
     values.insert(values.end(),values_i.begin(), values_i.end());
   }
 
@@ -1368,7 +1342,7 @@ vector<string> TableGroupFunction::operator()(const owned_ptr<Probability_Model>
 }
 
 FileLogger::FileLogger(const string& filename)
-  :log_file(new checked_ofstream(filename))
+  :log_file(new checked_ofstream(filename,false))
 { }
 
 FileLogger::FileLogger(const std::ostream& o)
@@ -1385,25 +1359,23 @@ vector<string> TableLogger::field_names() const
   return TF->field_names();
 }
 
-void TableLogger::operator()(const owned_ptr<Probability_Model>& P)
+void TableLogger::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
-  if (iterations==0)
+  if (t==0)
     *log_file<<join(field_names(),'\t')<<endl;
 
-  vector<string> values = (*TF)(P);
+  vector<string> values = (*TF)(P,t);
   *log_file<<join(values,'\t')<<endl;
-
-  iterations++;
 }
 
 TableLogger::TableLogger(const string& name, const owned_ptr<TableFunction>& tf)
-  :FileLogger(name), iterations(0), TF(tf)
+  :FileLogger(name), TF(tf)
 { }
 
-string TableViewerFunction::operator()(const owned_ptr<Probability_Model>& P)
+string TableViewerFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
   vector<string> fields = function->field_names();
-  vector<string> values = (*function)(P);
+  vector<string> values = (*function)(P,t);
   std::stringstream output;
 
   for(int i=0;i<values.size();i++)
@@ -1420,12 +1392,12 @@ TableViewerFunction::TableViewerFunction(const owned_ptr<TableFunction>& f)
   :function(f)
 { }
 
-string IterationsFunction::operator()(const owned_ptr<Probability_Model>& P)
+string IterationsFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
-  return convertToString(iterations++);
+  return convertToString(t);
 }
 
-string GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P)
+string GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   string value = convertToString(P->get_parameter_value(p));
   if (P->is_fixed(p))
@@ -1433,52 +1405,52 @@ string GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P)
   return value;
 }
 
-string GetPriorFunction::operator()(const owned_ptr<Probability_Model>& P)
+string GetPriorFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   return convertToString(log(P->prior()));
 }
 
-string GetAlignmentPriorFunction::operator()(const owned_ptr<Probability_Model>& P)
+string GetAlignmentPriorFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters* PP = P.as<Parameters>();
   return convertToString(log(PP[p].prior_alignment()));
 }
 
-string GetLikelihoodFunction::operator()(const owned_ptr<Probability_Model>& P)
+string GetLikelihoodFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   return convertToString(log(P->likelihood()));
 }
 
-string GetProbabilityFunction::operator()(const owned_ptr<Probability_Model>& P)
+string GetProbabilityFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   return convertToString(log(P->probability()));
 }
 
-string Get_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Get_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
   return convertToString(PP[p].A->length());
 }
 
-string Get_Num_Substitutions_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Get_Num_Substitutions_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
   return convertToString(n_mutations(*PP[p].A, *PP[p].T, cost_matrix));
 }
 
-string Get_Num_Indels_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Get_Num_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
   return convertToString(n_indels(*PP[p].A, *PP[p].T));
 }
 
-string Get_Total_Length_Indels_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Get_Total_Length_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
   return convertToString(total_length_indels(*PP[p].A, *PP[p].T));
 }
 //
-string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
 
@@ -1488,7 +1460,7 @@ string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Probabili
   return convertToString(total);
 }
 
-string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
 
@@ -1498,7 +1470,7 @@ string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Probabil
   return convertToString(total);
 }
 
-string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
 
@@ -1508,7 +1480,7 @@ string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Probability_Mod
   return convertToString(total);
 }
 
-string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
 
@@ -1534,14 +1506,14 @@ double mu_scale(const Parameters& P)
   return mu_scale;
 }
 
-string Get_Tree_Length_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Get_Tree_Length_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
 
   return convertToString(mu_scale(PP));
 }
 
-string TreeFunction::operator()(const owned_ptr<Probability_Model>& P)
+string TreeFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   const Parameters& PP = *P.as<Parameters>();
 
@@ -1557,7 +1529,7 @@ string TreeFunction::operator()(const owned_ptr<Probability_Model>& P)
   return T.write();
 }
 
-string MAP_Function::operator()(const owned_ptr<Probability_Model>& P)
+string MAP_Function::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
   std::ostringstream output;
 
@@ -1567,17 +1539,16 @@ string MAP_Function::operator()(const owned_ptr<Probability_Model>& P)
 
   MAP_score = Pr;
 
-  output<<"iterations = "<<iterations<<"       MAP = "<<MAP_score<<"\n";
-  output<<(*F)(P)<<"\n";
+  output<<"iterations = "<<t<<"       MAP = "<<MAP_score<<"\n";
+  output<<(*F)(P,t)<<"\n";
   
  out:
-  iterations++;
   return output.str();
 }
 
 
 
-string AlignmentFunction::operator()(const owned_ptr<Probability_Model>& P)
+string AlignmentFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   const Parameters& PP = *P.as<Parameters>();
   std::ostringstream output;
@@ -1585,7 +1556,7 @@ string AlignmentFunction::operator()(const owned_ptr<Probability_Model>& P)
   return output.str();
 }
 
-string Show_SModels_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Show_SModels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   const Parameters& PP = *P.as<Parameters>();
   std::ostringstream output;
@@ -1594,8 +1565,15 @@ string Show_SModels_Function::operator()(const owned_ptr<Probability_Model>& P)
   return output.str();
 }
 
+string Subsample_Function::operator()(const owned_ptr<Probability_Model>& P, long t)
+{
+  if (t%subsample == 0) 
+    return (*function)(P,t);
+  else
+    return "";
+}
 
-string Mixture_Components_Function::operator()(const owned_ptr<Probability_Model>& P)
+string Mixture_Components_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   std::ostringstream output;
   const Parameters& PP = *P.as<Parameters>();
@@ -1608,21 +1586,21 @@ string Mixture_Components_Function::operator()(const owned_ptr<Probability_Model
   return output.str();
 }
 
-void FunctionLogger::operator()(const owned_ptr<Probability_Model>& P)
+void FunctionLogger::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
-  (*log_file)<<((*function)(*P));
+  (*log_file)<<((*function)(P,t));
 }
 
 FunctionLogger::FunctionLogger(const std::string& filename, const owned_ptr<LoggerFunction<string> >& L)
   :FileLogger(filename),function(L)
 { }
 
-string ConcatFunction::operator()(const owned_ptr<Probability_Model>& P)
+string ConcatFunction::operator()(const owned_ptr<Probability_Model>& P, long t)
 {
   string output;
 
   for(int i=0;i<functions.size();i++)
-    output += (*functions[i])(*P);
+    output += (*functions[i])(*P,t);
 
   return output;
 }
