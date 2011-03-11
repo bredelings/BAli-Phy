@@ -1331,6 +1331,8 @@ int main(int argc,char* argv[])
     retval=2;
   }
   catch (std::exception& e) {
+    // If we have some cached messages, they have been to the screen, but not to any file
+    // FIXME: we need access to a file-only stream here.
     if (log_verbose)
       out_both<<out_cache.str(); out_both.flush();
     err_both<<err_cache.str(); err_both.flush();
