@@ -30,6 +30,9 @@ void print_stats(std::ostream& o,const Parameters& P,bool=true);
 
 void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<double>&);
 void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel);
+void show_smodel(std::ostream& o, const substitution::MultiModel& MModel);
+void show_smodels(std::ostream& o, const Parameters& P);
+
 void report_mem();
 
 #endif

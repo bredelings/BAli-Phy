@@ -46,7 +46,6 @@ void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<doub
       o<<"f"<<a.lookup(i)<<" = "<<f[i]<<"\n";
 }
 
-
 void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
   const alphabet& a = MModel.Alphabet();
 
@@ -66,6 +65,28 @@ void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
       }
       o<<"f"<<a.lookup(i)<<" = "<<total<<"\n";
     }
+  }
+}
+
+void show_smodel(std::ostream& o, const substitution::MultiModel& MModel)
+{
+  for(int i=0;i<MModel.n_base_models();i++)
+    o<<"    rate"<<i<<" = "<<MModel.base_model(i).rate();
+  o<<"\n\n";
+  
+  for(int i=0;i<MModel.n_base_models();i++)
+    o<<"    fraction"<<i<<" = "<<MModel.distribution()[i];
+  o<<"\n\n";
+  
+  o<<"frequencies = "<<"\n";
+  show_frequencies(o,MModel);
+}
+
+void show_smodels(std::ostream& o, const Parameters& P)
+{
+  for(int m=0;m<P.n_smodels();m++) {
+    o<<"smodel"<<m+1<<endl;
+    show_smodel(o,P.SModel(m));
   }
 }
 
@@ -90,22 +111,8 @@ void print_stats(std::ostream& o, const Parameters& P, bool print_alignment)
   show_parameters(o,P);
   o.flush();
 
-  for(int m=0;m<P.n_smodels();m++) {
-    o<<"smodel"<<m+1<<endl;
-    for(int i=0;i<P.SModel(m).n_base_models();i++)
-      o<<"    rate"<<i<<" = "<<P.SModel(m).base_model(i).rate();
-    o<<"\n\n";
-
-    for(int i=0;i<P.SModel(m).n_base_models();i++)
-      o<<"    fraction"<<i<<" = "<<P.SModel(m).distribution()[i];
-    o<<"\n\n";
-
-    o<<"frequencies = "<<"\n";
-    show_frequencies(o,P.SModel(m));
-    o<<"\n\n";
-
-    o.flush();
-  }
+  show_smodels(o,P);
+  o.flush();
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
