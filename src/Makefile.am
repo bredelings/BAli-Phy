@@ -96,7 +96,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/partition.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C timer_stack.C \
-	  setup-mcmc.C io.C
+	  setup-mcmc.C io.C logger.C
 
 nodist_bali_phy_SOURCES = git_version.h
 bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@ 
