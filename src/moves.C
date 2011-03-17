@@ -457,7 +457,8 @@ void walk_tree_sample_alignments(owned_ptr<Probability_Model>& P, MoveStats& Sta
 
     if ((myrandomf() < 0.15) and (PP.T->n_leaves() >2))
     {
-      if (uniform() < 0.5)
+      // FIXME: don't call sample_parameter_and_alignment_on_branch( ): something is wrong.
+      if (uniform() < 0.5 or true)
 	sample_tri_one(P,Stats,b);
       else
 	sample_parameter_and_alignment_on_branch(P,Stats,b);
