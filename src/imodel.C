@@ -399,6 +399,10 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const
 
   if (is_training()) delta = std::min(delta,0.005);
 
+  // Return a model with all probabilities zero if e==1.
+  if (e >= 1)
+    return indel::PairHMM();
+
   if (t < -0.5)
     delta = 0.5;
   else
@@ -413,10 +417,10 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const
 
   if (e > 1.0)
     throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<e;
-    
+
   assert(delta >= 0.0 and delta <= 1.0);
-  assert(e > 0.0 and e <= 1.0);
-  
+  assert(e >= 0.0 and e < 1.0);
+
   indel::PairHMM Q;
 
   Q(S ,S ) = 0;
@@ -477,6 +481,8 @@ efloat_t SimpleIndelModel::prior() const
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double lambda_E = get_parameter_value(1);
+  if (lambda_E >= 0) return 0;
+
   double E_length = lambda_E - logdiff(0,lambda_E);
   double E_length_mean = 5.0;
 
@@ -508,6 +514,11 @@ efloat_t NewIndelModel::prior() const
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
   double log_epsilon = get_parameter_value(1);
+
+  // We can't scale time appropriately if e = 1.
+  // Also, the calculation below diverges if e = 1.
+  if (log_epsilon >= 0) return 0;
+
   double E_length = log_epsilon - logdiff(0,log_epsilon);
   double E_length_mean = get_parameter_value(4);
 
@@ -525,6 +536,11 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
 
   double rate    = exp(get_parameter_value(0));
   double e = exp(get_parameter_value(1));
+
+  // Return a model with all probabilities zero if e==1.
+  // Scaling time by 1/(1.0-e) doesn't work if e==1.
+  if (e >= 1)
+    return indel::PairHMM();
 
   // (1-e) * delta / (1-delta) = P(indel)
   // But move the (1-e) into the RATE to make things work
@@ -552,8 +568,8 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
     throw myexception()<<"indel model: we need (epsilon <= 1), but epsilon = "<<e;
     
   assert(delta >= 0 and delta <= 1);
-  assert(e > 0 and e <= 1);
-  
+  assert(e >= 0 and e < 1);
+
   // transition probabilities default to *zero*
   indel::PairHMM Q;
 
