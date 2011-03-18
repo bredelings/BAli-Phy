@@ -994,6 +994,11 @@ namespace substitution {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_node(n, T, cache);
 
+    // FIXME? Currently we require that ALL branches towards this node are up-to-date.
+    // This is used in e.g. get_likelihoods_by_alignment_column( ) but isn't necessary for
+    //  computing likelihoods: if just the branches pointing to the root are up-to-date, then
+    //  we're OK.
+
     //-------------- Compute the branch likelihoods -----------------//
     for(int i=0;i<ops.size();i++)
       peel_branch(ops[i],I,cache,A,T,MC,MModel);
@@ -1764,7 +1769,12 @@ namespace substitution {
       // Get previous branches
       vector<int> prev;
       for(const_in_edges_iterator j = branches[i].branches_before();j;j++)
+      {
+	assert(cache.up_to_date(*j));
+	if (not I.branch_index_valid(*j))
+	  I.update_branch(A,T,*j);
 	prev.push_back(*j);
+      }
 
       // Ignore leaf branches, since they columns don't disappear on leaf  branches.
       if (prev.size() == 0) continue;
@@ -1795,7 +1805,12 @@ namespace substitution {
 
     vector<int> root_branches;
     for(const_in_edges_iterator i = T[cache.root].branches_in();i;i++)
+    {
+      assert(cache.up_to_date(*i));
+      if (not I.branch_index_valid(*i))
+	I.update_branch(A,T,*i);
       root_branches.push_back(*i);
+    }
 
     for(int column=0;column<I.size1()-1;column++)
       for(int j=0;j<root_branches.size();j++)
