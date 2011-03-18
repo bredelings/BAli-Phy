@@ -298,8 +298,6 @@ string TreeFunction::operator()(const owned_ptr<Probability_Model>& P, long)
   for(int b=0;b<T.n_branches();b++)
     T.branch(b).set_length(scale*T.branch(b).length());
 
-  cerr<<"Tree function called: "<<T.write()<<endl;
-  
   return T.write();
 }
 
