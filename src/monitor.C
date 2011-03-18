@@ -103,10 +103,6 @@ void print_stats(std::ostream& o, const Parameters& P, bool print_alignment)
   o<<"    likelihood = "<<Pr_likelihood<<"    logp = "<<Pr
    <<"    beta = " <<P.get_beta()  <<"\n";
 
-  if (print_alignment)
-    for(int i=0;i<P.n_data_partitions();i++)
-      o<<standardize(*P[i].A, *P.T)<<"\n";
-  
   o<<"\n";
   show_parameters(o,P);
   o.flush();

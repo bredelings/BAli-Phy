@@ -1055,7 +1055,8 @@ void mcmc_log(long iterations, long max_iter, int subsample, Parameters& P, ostr
   // Don't print alignments into console log file:
   //  - Its hard to separate alignments from different partitions.
   if (iterations%subsample == 0)
-    print_stats(s_out,P,false);
+    // FIXME - There are now only 2 calls to print_stats left: the other is in bali-phy.C
+    print_stats(s_out, P, iterations%(10*subsample) == 0);
 
   for(int i=0;i<loggers.size();i++)
     (*loggers[i])(P,iterations);
