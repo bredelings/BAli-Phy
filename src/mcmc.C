@@ -1049,6 +1049,9 @@ void mcmc_init(Parameters& P, ostream& s_out)
 void mcmc_log(long iterations, long max_iter, int subsample, Parameters& P, ostream& s_out, 
 	      const MoveStats& S, const vector<owned_ptr<Logger> >& loggers)
 {
+  s_out<<"iterations = "<<iterations<<"\n";
+  clog<<"iterations = "<<iterations<<"\n";
+
   // Don't print alignments into console log file:
   //  - Its hard to separate alignments from different partitions.
   if (iterations%subsample == 0)
@@ -1163,9 +1166,6 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
       stop_learning(0);
 
     //------------------ record statistics ---------------------//
-    s_out<<"iterations = "<<iterations<<"\n";
-    clog<<"iterations = "<<iterations<<"\n";
-
     mcmc_log(iterations, max_iter, subsample, *P.as<Parameters>(), s_out, *this, loggers);
 
     //------------------- move to new position -----------------//
