@@ -40,6 +40,10 @@ public:
 
   virtual Probability_Model* clone() const =0;
 
+  virtual double get_beta() const {return 1.0;}
+
+  virtual void set_beta(double) {std::abort();}
+
   // The prior, likelihood, and probability
   //  (We inherit 'this->prior()' from class Model)
   virtual efloat_t probability() const {return prior() * likelihood();}
