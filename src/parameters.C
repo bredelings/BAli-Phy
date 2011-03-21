@@ -400,7 +400,11 @@ efloat_t data_partition::likelihood() const
 
 efloat_t data_partition::heated_likelihood() const 
 {
-  return pow(likelihood(),get_beta());
+  // Don't waste time calculating likelihood if we're sampling from the prior.
+  if (get_beta() == 0)
+    return 1;
+  else
+    return pow(likelihood(),get_beta());
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
