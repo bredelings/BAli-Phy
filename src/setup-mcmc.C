@@ -35,6 +35,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-constraint.H"
 #include "timer_stack.H"
 #include "bounds.H"
+#include "AIS.H"
 
 using boost::program_options::variables_map;
 using boost::dynamic_bitset;
@@ -824,10 +825,20 @@ void do_sampling(const variables_map& args,
     report_constraints(s1,s2,i);
   } 
 
-  // before we do this, just run 20 iterations of a sampler that keeps the alignment fixed
-  // - first, we need a way to change the tree on a sampler that has internal node sequences?
-  // - well, this should be exactly the -t sampler.
-  // - but then how do we copy stuff over?
-
-  sampler.go(P,subsample,max_iterations,s_out);
+  if (PP.keys["AIS"] > 0.5) 
+  {
+    // before we do this, just run 20 iterations of a sampler that keeps the alignment fixed
+    // - first, we need a way to change the tree on a sampler that has internal node sequences?
+    // - well, this should be exactly the -t sampler.
+    // - but then how do we copy stuff over?
+    AIS_Sampler A(sampler);
+    vector<double> beta(1,1);
+    for(int i=0;i<50;i++)
+      beta.push_back(beta.back()*0.9);
+    beta.push_back(0);
+    
+    A.go(P,std::cerr,beta,10);
+  }
+  else
+    sampler.go(P,subsample,max_iterations,s_out);
 }
