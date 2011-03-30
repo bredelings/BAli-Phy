@@ -789,6 +789,7 @@ namespace substitution {
     // get the relationships with the sub-alignments for the (two) branches behind b0
     ublas::matrix<int> index = I.get_subA_index_select(b,A,T);
     assert(index.size1() == I.branch_index_length(b0));
+    // the call to I.get_subA-index_select ( ) updates the index for branches in b.
     assert(I.branch_index_valid(b0));
 
     /*-------------------- Do the peeling part------------- --------------------*/
@@ -1770,9 +1771,14 @@ namespace substitution {
       vector<int> prev;
       for(const_in_edges_iterator j = branches[i].branches_before();j;j++)
       {
-	assert(cache.up_to_date(*j));
+	// update conditional likelihoods
+	calculate_caches_for_branch(*j, A, I, MC, T, cache, MModel);
+
+	// update substitution indices
 	if (not I.branch_index_valid(*j))
 	  I.update_branch(A,T,*j);
+
+	// record branch
 	prev.push_back(*j);
       }
 
@@ -1806,9 +1812,14 @@ namespace substitution {
     vector<int> root_branches;
     for(const_in_edges_iterator i = T[cache.root].branches_in();i;i++)
     {
-      assert(cache.up_to_date(*i));
+      // update conditional likelihoods
+      calculate_caches_for_branch(*i, A, I, MC, T, cache, MModel);
+
+      // update substitution indices
       if (not I.branch_index_valid(*i))
 	I.update_branch(A,T,*i);
+
+      // record branch
       root_branches.push_back(*i);
     }
 
