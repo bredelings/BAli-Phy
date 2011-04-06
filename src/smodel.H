@@ -76,6 +76,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rates.H"
 #include "model.H"
 #include "eigenvalue.H"
+#include "cached_value.H"
 
 namespace substitution {
 
@@ -698,15 +699,18 @@ namespace substitution {
   class ReversibleMarkovModel: public MarkovModel,
 			       public Independant_Additive_Reversible_Model 
   {
-    EigenValues eigensystem;
+    mutable cached_value<EigenValues> eigensystem;
+    void recalc_eigensystem() const;
 
   protected:
-    void recalc_eigensystem();
+    void invalidate_eigensystem();
 
   public:
     double rate() const;
     void set_rate(double);
     
+    const EigenValues& get_eigensystem() const;
+
     /// Make a copy of this object
     virtual ReversibleMarkovModel* clone() const =0;
 

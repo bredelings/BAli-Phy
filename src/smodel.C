@@ -646,6 +646,21 @@ namespace substitution {
     return scale/Alphabet().width();
   }
 
+  void ReversibleMarkovModel::invalidate_eigensystem() 
+  {
+    eigensystem.invalidate();
+  }
+
+  const EigenValues& ReversibleMarkovModel::get_eigensystem() const
+  {
+    if (not eigensystem.is_valid())
+      recalc_eigensystem();
+
+    assert(eigensystem.is_valid());
+
+    return eigensystem;
+  }
+
   void ReversibleMarkovModel::set_rate(double r)  
   {
     if (r == rate()) return;
@@ -655,8 +670,14 @@ namespace substitution {
 
     double scale = r/rate();
     Q *= scale;
-    for(int i=0;i<eigensystem.Diagonal().size();i++)
-      eigensystem.Diagonal()[i] *= scale ;
+
+    if (eigensystem.is_valid())
+    {
+      EigenValues& E = eigensystem.modify_value();
+
+      for(int i=0;i<E.Diagonal().size();i++)
+	E.Diagonal()[i] *= scale ;
+    }
   }
 
   /*
@@ -667,7 +688,7 @@ namespace substitution {
    *           = pi^-1.2 * exp(S2) * pi^1/2
    */
 
-  void ReversibleMarkovModel::recalc_eigensystem()
+  void ReversibleMarkovModel::recalc_eigensystem() const
   {
     const unsigned n = n_states();
 
@@ -721,7 +742,7 @@ namespace substitution {
     assert(pi.size() == f.size());
     for(int i=0;i<pi.size();i++)
       pi[i] = f[i];
-    return exp(eigensystem,pi,t);
+    return exp(get_eigensystem(), pi,t);
   }
 
   ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)
@@ -837,7 +858,7 @@ namespace substitution {
       Q(i,i) = -sum;
     }
 
-    recalc_eigensystem();
+    invalidate_eigensystem();
   }
 
   string ReversibleMarkovSuperModel::name() const {
@@ -2552,7 +2573,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       Q(i,i) = -sum;
     }
 
-    recalc_eigensystem();
+    invalidate_eigensystem();
   }
 
   ModulatedMarkovModel::ModulatedMarkovModel(const MultiModel& MM, const ExchangeModel& EM)

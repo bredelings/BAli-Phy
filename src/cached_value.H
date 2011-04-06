@@ -31,12 +31,12 @@ public:
   void validate() {valid=true;}
 
   const T& value() const {return value_;}
-        T& value()       {return value_;}
+        T& modify_value()       {return value_;}
 
   cached_value& operator=(const T& t) {value_ = t;valid=true;return *this;}
 
-  operator const T&() const {return value();}
-  operator       T&()       {return value();}
+  operator const T&() const {assert(is_valid()); return value();}
+  //  operator const T&()       {return assert(is_valid()); value();}
 
   cached_value():valid(false) {}
   cached_value(const T& t):value_(t),valid(true) {}
