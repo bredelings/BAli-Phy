@@ -21,11 +21,12 @@ istream& portable_getline(istream& file,string& s)
 
   s.clear();
 
-  int c;
-  while (file.good())
-  {
-    c = file.get();
+  // Make sure that while(getline()) terminates:
+  //  - read at least one char in order to set failbit on an empty file.
+  int c = file.get();
 
+  do
+  {
     // we just read an EOF
     if (file.eof()) break;
 
@@ -33,12 +34,13 @@ istream& portable_getline(istream& file,string& s)
     if (c == CR or c == LF) break;
 
     s.append(1,c);
-  }
 
-  if (!file.good()) return file;
+    c = file.get();
+
+  } while(file);
 
   // If the EOL character is a CR, then also skip any following LF
-  if (c == CR and file.peek() == LF)
+  if (c == CR and file.good() and file.peek() == LF)
     file.ignore();
 
   return file;
