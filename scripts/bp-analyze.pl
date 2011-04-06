@@ -1191,7 +1191,19 @@ sub compute_initial_alignments
 	    {
 		my $initial_name = $partition_samples[0][$i];
 		$initial_name =~ s/\.fastas/\.initial\.fasta/;
-		`cp $initial_name Results/Work/$name-unordered.fasta`;
+
+		# Version > 2.1.1
+		if (-e $initial_name)
+		{
+		    `cp $initial_name Results/Work/$name-unordered.fasta`;
+		}
+		else
+		{
+		    `alignment-find --first < $partition_samples[0][$i] > Results/Work/$name-unordered.fasta 2>/dev/null`;
+		    if ($? && $n_chains==1 && defined($MAP_file)) {
+			`alignment-find --first < $MAP_file > Results/Work/$name-unordered.fasta`;
+		    }
+		}
 	    }
 	}
 	print "done.\n";
