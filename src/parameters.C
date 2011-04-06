@@ -357,7 +357,7 @@ efloat_t data_partition::prior_alignment() const
     for(int b=0;b<TT.n_branches();b++) {
       if (not cached_alignment_prior_for_branch[b].is_valid())
       {
-	ublas::matrix<int>& counts = cached_alignment_counts_for_branch[b];
+	const ublas::matrix<int>& counts = cached_alignment_counts_for_branch[b];
 	cached_alignment_prior_for_branch[b] = prior_branch_from_counts(counts, branch_HMMs[b]);
       }
 #ifndef NDEBUG      
