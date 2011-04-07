@@ -55,7 +55,7 @@ efloat_t other_prior(const data_partition& P,const vector<int>& nodes)
     if (includes(nodes,target) and includes(nodes,source))
       continue;
 
-    p *= prior_branch(*P.A, P.branch_HMMs[b], target, source);
+    p *= prior_branch(*P.A, P.get_branch_HMM(b), target, source);
   }
 
 

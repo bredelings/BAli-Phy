@@ -174,7 +174,7 @@ namespace A3 {
 
   using indel::PairHMM;
 
-  vector<double> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br) {
+  vector<double> get_start_P(const vector<indel::PairHMM>& P) {
     int count = 0;
     double sum = 0;
 
@@ -199,7 +199,7 @@ namespace A3 {
 	if (not bitset(states,12)) continue;
       }
       
-      start_P[S] = P[br[0]].start_pi(s1) * P[br[1]].start_pi(s2) * P[br[2]].start_pi(s3);
+      start_P[S] = P[0].start_pi(s1) * P[1].start_pi(s2) * P[2].start_pi(s3);
       count++;
       sum += start_P[S];
     }    
@@ -304,7 +304,7 @@ namespace A3 {
 
 
 
-  inline double getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br)
+  inline double getQ(int S1,int S2,const vector<indel::PairHMM>& P)
   {
     assert(0 <= S1 and S1 < nstates+1);
     assert(0 <= S2 and S2 < nstates+1);
@@ -326,7 +326,7 @@ namespace A3 {
       int s1 = (states1>>(2*i+4))&3;
       int s2 = (states2>>(2*i+4))&3;
       if (bitset(states2,10+i))     // this sub-alignment is present in this column
-	Pr *= P[br[i]](s1,s2);
+	Pr *= P[i](s1,s2);
       else if (s1 != s2)            // require state info from s1 hidden in s2
 	return 0.0;
     }
@@ -341,13 +341,13 @@ namespace A3 {
     return Pr;
   }
 
-  Matrix createQ(const vector<indel::PairHMM>& P,const vector<int>& branches) 
+  Matrix createQ(const vector<indel::PairHMM>& P) 
   {
     Matrix Q(nstates+1,nstates+1);
 
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
-	Q(i,j) = getQ(i,j,P,branches);
+	Q(i,j) = getQ(i,j,P);
 
     return Q;
   }

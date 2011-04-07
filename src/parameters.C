@@ -106,30 +106,59 @@ IndelModel& data_partition::IModel()
   std::abort();
 }
 
+const indel::PairHMM& data_partition::get_branch_HMM(int b) const
+{
+  assert(variable_alignment());
+
+  b = T->directed_branch(b).undirected_name();
+
+  cached_value<indel::PairHMM>& HMM = cached_branch_HMMs[b];
+
+  if (not HMM.is_valid())
+  {
+    // use the length, unless we are unaligned
+    double t = T->branch(b).length();
+
+    // compute and cache the branch HMM
+    if (branch_HMM_type[b] == 1)
+      HMM = IModel_->get_branch_HMM(-1);
+    else 
+      HMM = IModel_->get_branch_HMM(t*branch_mean());
+  }
+
+  return HMM;
+};
+
+vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) const
+{
+  vector<indel::PairHMM> HMMs(br.size());
+
+  for(int i=0;i<HMMs.size();i++)
+    HMMs[i] = get_branch_HMM(br[i]);
+
+  return HMMs;
+}
+
 void data_partition::recalc_imodel_for_branch(int b)
 {
   if (not variable_alignment()) return;
 
+  // FIXME #1 - this used to go along with computation of the branch_HMMs[].
+  // Is it OK to move it here?
+  //
+  // FIXME #2 - IModel_ should be branch-specific.
+  IModel_->set_heat( get_beta() );
+
   b = T->directed_branch(b).undirected_name();
 
-  // use the length, unless we are unaligned
-  double t = T->branch(b).length();
-  
-  // compute and cache the branch HMM
-  if (branch_HMM_type[b] == 1)
-    branch_HMMs[b] = IModel_->get_branch_HMM(-1);
-  else {
-    IModel_->set_heat( get_beta() );
-    branch_HMMs[b] = IModel_->get_branch_HMM(t*branch_mean());;
-  }
-
+  cached_branch_HMMs[b].invalidate();
   cached_alignment_prior.invalidate();
   cached_alignment_prior_for_branch[b].invalidate();
 }
 
 void data_partition::recalc_imodel() 
 {
-  for(int b=0;b<branch_HMMs.size();b++) 
+  for(int b=0;b<cached_branch_HMMs.size();b++) 
     recalc_imodel_for_branch(b);
 }
 
@@ -358,15 +387,15 @@ efloat_t data_partition::prior_alignment() const
       if (not cached_alignment_prior_for_branch[b].is_valid())
       {
 	const ublas::matrix<int>& counts = cached_alignment_counts_for_branch[b];
-	cached_alignment_prior_for_branch[b] = prior_branch_from_counts(counts, branch_HMMs[b]);
+	cached_alignment_prior_for_branch[b] = prior_branch_from_counts(counts, get_branch_HMM(b));
       }
 #ifndef NDEBUG      
       int target = TT.branch(b).target();
       int source  = TT.branch(b).source();
       efloat_t p1 = cached_alignment_prior_for_branch[b];
-      efloat_t p2 = prior_branch(AA, branch_HMMs[b], target, source);
+      efloat_t p2 = prior_branch(AA, get_branch_HMM(b), target, source);
       //double error = log(p1) - log(p2);
-      assert(not different(cached_alignment_prior_for_branch[b], prior_branch(AA, branch_HMMs[b], target, source)));
+      assert(not different(cached_alignment_prior_for_branch[b], prior_branch(AA, get_branch_HMM(b), target, source)));
 #endif
     }
 
@@ -415,6 +444,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_alignment_prior_for_branch(t.n_branches()),
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
+   cached_branch_HMMs(t.n_branches()),
    branch_mean_(1.0),
    variable_alignment_(true),
    smodel_full_tree(true),
@@ -422,7 +452,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    T(t),
    MC(t,SM),
    LC(t,SModel()),
-   branch_HMMs(t.n_branches()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {
@@ -444,6 +473,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_alignment_prior_for_branch(t.n_branches()),
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
+   cached_branch_HMMs(t.n_branches()),
    branch_mean_(1.0),
    variable_alignment_(false),
    smodel_full_tree(true),
@@ -451,7 +481,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    T(t),
    MC(t,SM),
    LC(t,SModel()),
-   branch_HMMs(t.n_branches()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
 {

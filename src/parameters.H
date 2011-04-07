@@ -72,6 +72,8 @@ struct data_partition: public Probability_Model
 
   mutable std::vector<cached_value<int> > cached_sequence_lengths;
 
+  mutable std::vector<cached_value<indel::PairHMM> > cached_branch_HMMs;
+
   double branch_mean_;
 
   void branch_mean(double);
@@ -107,9 +109,9 @@ public:
   mutable owned_ptr<subA_index_t> subA;
 
   /// cached branch HMMs
-  //FIXME - WHy not a cached_value< >?
-  //REASON: Dynamic Programming uses this and assumes its always up-to-date.
-  std::vector<indel::PairHMM> branch_HMMs;
+  const indel::PairHMM& get_branch_HMM(int b) const;
+  std::vector<indel::PairHMM> get_branch_HMMs(const std::vector<int>&) const;
+
   std::vector<int> branch_HMM_type;
 
   /// Alignment constraint

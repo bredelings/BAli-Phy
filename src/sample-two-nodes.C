@@ -151,12 +151,12 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
   branches[2] = T.branch(nodes[2],nodes[5]);
   branches[3] = T.branch(nodes[3],nodes[5]);
   branches[4] = T.branch(nodes[4],nodes[5]);
-  vector<double> start_P = get_start_P(P.branch_HMMs,branches);
+  vector<double> start_P = get_start_P( P.get_branch_HMMs(branches) );
 
   // Actually create the Matrices & Chain
   if (not Matrices) 
   {
-    const Matrix Q = createQ(P.branch_HMMs,branches,A5::states_list);
+    const Matrix Q = createQ( P.get_branch_HMMs(branches),A5::states_list);
 
     Matrices = new DParrayConstrained(seqall.size(), state_emit_1D, 
 				      start_P, Q, 
@@ -165,7 +165,7 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
   else 
   {
     //A5::updateQ(Matrices->Q,P.branch_HMMs,branches,A5::states_list); // 7%
-    A5::fillQ(Matrices->Q,P.branch_HMMs,branches,A5::states_list); // 16%
+    A5::fillQ(Matrices->Q, P.get_branch_HMMs(branches), A5::states_list); // 16%
     Matrices->update_GQ();         // 12%
     Matrices->start_P = start_P;
     Matrices->set_length(seqall.size());

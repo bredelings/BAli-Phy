@@ -53,7 +53,7 @@ namespace A5 {
   std::vector<int> construct_states();
 
   /// Get the std::vector of start probabilities
-  std::vector<double> get_start_P(const std::vector<indel::PairHMM>& P,const std::vector<int>& br);
+  std::vector<double> get_start_P(const std::vector<indel::PairHMM>& P);
 
   int bits_to_substates(int bits);
 
@@ -61,15 +61,15 @@ namespace A5 {
   int findstate(int state,const std::vector<int>& states);
 
   /// Compute the probability of moving from state #S1 to state #S2
-  double getQ(int S1,int S2,const std::vector<indel::PairHMM>& P,const std::vector<int>& br,
+  double getQ(int S1,int S2,const std::vector<indel::PairHMM>& P,
 		const std::vector<int>& states);
 
   /// Update the full transition matrix
-  void updateQ(Matrix& Q,const std::vector<indel::PairHMM>& P,const std::vector<int>& br,const std::vector<int>& states);
+  void updateQ(Matrix& Q,const std::vector<indel::PairHMM>& P,const std::vector<int>& states);
   /// Full the full transition matrix
-  void fillQ(Matrix& Q,const std::vector<indel::PairHMM>& P,const std::vector<int>& br,const std::vector<int>& states);
+  void fillQ(Matrix& Q,const std::vector<indel::PairHMM>& P,const std::vector<int>& states);
   /// Create the full transition matrix
-  Matrix createQ(const std::vector<indel::PairHMM>& P,const std::vector<int>& br,const std::vector<int>& states);
+  Matrix createQ(const std::vector<indel::PairHMM>& P,const std::vector<int>& states);
 
   /// Construct a new alignment, from alignment 'old' and 5way alignment 'path'
   alignment construct(const alignment& old, const std::vector<int>& path, 

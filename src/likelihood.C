@@ -185,7 +185,7 @@ efloat_t prior_HMM_nogiven(const data_partition& P)
   for(int b=0;b<T.n_branches();b++) {
     int target = T.branch(b).target();
     int source  = T.branch(b).source();
-    Pr *= prior_branch(A, P.branch_HMMs[b], target, source);
+    Pr *= prior_branch(A, P.get_branch_HMM(b), target, source);
   }
   
   return Pr;

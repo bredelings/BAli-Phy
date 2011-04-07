@@ -136,9 +136,8 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   for(int i=1;i<nodes.size();i++)
     branches.push_back(T.branch(nodes[0],nodes[i]) );
 
-  const Matrix Q = createQ(P.branch_HMMs,branches);
-  vector<double> start_P = get_start_P(P.branch_HMMs,branches);
-  
+  const Matrix Q = createQ( P.get_branch_HMMs(branches) );
+  vector<double> start_P = get_start_P( P.get_branch_HMMs(branches) );
 
   // Actually create the Matrices & Chain
   boost::shared_ptr<DParrayConstrained> 

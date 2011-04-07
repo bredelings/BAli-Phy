@@ -67,7 +67,7 @@ namespace A3 {
 
   std::vector<int> get_state_emit();
 
-  std::vector<double> get_start_P(const std::vector<indel::PairHMM>& P,const std::vector<int>& branches);
+  std::vector<double> get_start_P(const std::vector<indel::PairHMM>& P);
 
   int bits_to_states(int bits);
 
@@ -124,9 +124,9 @@ namespace A3 {
       return 1;
   }
 
-  double getQ(int S1,int S2,const std::vector<indel::PairHMM>& P,const std::vector<int>& br);
+  double getQ(int S1,int S2,const std::vector<indel::PairHMM>& P);
 
-  Matrix createQ(const std::vector<indel::PairHMM>& P,const std::vector<int>& br);
+  Matrix createQ(const std::vector<indel::PairHMM>& P);
 
   alignment construct(const alignment& old, const std::vector<int>& path, 
 		      int n0,int n1,int n2,int n3,const Tree& T,

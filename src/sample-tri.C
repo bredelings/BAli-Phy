@@ -131,8 +131,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   for(int i=0;i<3;i++)
     branches[i] = T.branch(nodes[0],nodes[i+1]);
 
-  const Matrix Q = createQ(P.branch_HMMs, branches);
-  vector<double> start_P = get_start_P(P.branch_HMMs,branches);
+  const Matrix Q = createQ( P.get_branch_HMMs(branches) );
+  vector<double> start_P = get_start_P( P.get_branch_HMMs(branches) );
 
   // Actually create the Matrices & Chain
   boost::shared_ptr<DPmatrixConstrained> 

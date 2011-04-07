@@ -284,7 +284,7 @@ namespace A5 {
 
 
   /// Get the vector of start probabilities
-  vector<double> get_start_P(const vector<indel::PairHMM>& P,const vector<int>& br)
+  vector<double> get_start_P(const vector<indel::PairHMM>& P)
   {
     int count = 0;
     double sum = 0.0;
@@ -315,8 +315,8 @@ namespace A5 {
       }
       assert(bits != -1);
       int state = findstate(bits|(substates<<6),states_list);
-      start_P[state] = P[br[0]].start_pi(s1) * P[br[1]].start_pi(s2) * P[br[2]].start_pi(s3) 
-	* P[br[3]].start_pi(s4) * P[br[4]].start_pi(s5);
+      start_P[state] = P[0].start_pi(s1) * P[1].start_pi(s2) * P[2].start_pi(s3) 
+	* P[3].start_pi(s4) * P[4].start_pi(s5);
 
       count++;
       sum += start_P[S];
@@ -331,7 +331,7 @@ namespace A5 {
   }
 
   /// Compute the probability of moving from state #S1 to state #S2
-  double getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  double getQ(int S1,int S2,const vector<indel::PairHMM>& P,const vector<int>& states) 
   {
     int endstate = states.size()-1;
 
@@ -357,7 +357,7 @@ namespace A5 {
       int s1 = (states1>>(2*i))&3;
       int s2 = (states2>>(2*i))&3;
       if (bitset(ap2,i))            // this sub-alignment is present in this column
-	Pr *= P[br[i]](s1,s2);
+	Pr *= P[i](s1,s2);
       else if (s1 != s2)            // require state info from s1 hidden in s2
 	return 0.0;
     }
@@ -373,28 +373,28 @@ namespace A5 {
   }
 
   /// Create the full transition matrix
-  void updateQ(Matrix& Q,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  void updateQ(Matrix& Q,const vector<indel::PairHMM>& P,const vector<int>& states) 
   {
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
 	if (Q(i,j) > 0.0)
-	  Q(i,j) = getQ(i,j,P,br,states);
+	  Q(i,j) = getQ(i,j,P,states);
   }
 
   /// Create the full transition matrix
-  void fillQ(Matrix& Q,const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  void fillQ(Matrix& Q,const vector<indel::PairHMM>& P,const vector<int>& states) 
   {
     for(int i=0;i<Q.size1();i++)
       for(int j=0;j<Q.size2();j++)
-	Q(i,j) = getQ(i,j,P,br,states);
+	Q(i,j) = getQ(i,j,P,states);
   }
 
   /// Create the full transition matrix
-  Matrix createQ(const vector<indel::PairHMM>& P,const vector<int>& br,const vector<int>& states) 
+  Matrix createQ(const vector<indel::PairHMM>& P,const vector<int>& states) 
   {
     Matrix Q(states.size(),states.size());
 
-    fillQ(Q,P,br,states);
+    fillQ(Q,P,states);
 
     return Q;
   }
