@@ -36,7 +36,6 @@ public:
   cached_value& operator=(const T& t) {value_ = t;valid=true;return *this;}
 
   operator const T&() const {assert(is_valid()); return value();}
-  //  operator const T&()       {return assert(is_valid()); value();}
 
   cached_value():valid(false) {}
   cached_value(const T& t):value_(t),valid(true) {}
