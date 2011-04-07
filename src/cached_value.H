@@ -30,12 +30,13 @@ public:
   void invalidate() {valid=false;}
   void validate() {valid=true;}
 
-  const T& value() const {return value_;}
-        T& modify_value()       {return value_;}
+  const T& value()        const {assert(is_valid()); return value_;}
+  const T& access_value() const {                    return value_;}
+        T& modify_value()       {valid = false;      return value_;}
 
   cached_value& operator=(const T& t) {value_ = t;valid=true;return *this;}
 
-  operator const T&() const {assert(is_valid()); return value();}
+  operator const T&() const {return value();}
 
   cached_value():valid(false) {}
   cached_value(const T& t):value_(t),valid(true) {}

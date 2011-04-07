@@ -679,6 +679,9 @@ namespace substitution {
 
       for(int i=0;i<E.Diagonal().size();i++)
 	E.Diagonal()[i] *= scale ;
+
+      // We changed it, but now its up-to-date.
+      eigensystem.validate();
     }
   }
 
