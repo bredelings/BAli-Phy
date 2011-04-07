@@ -186,10 +186,20 @@ bool process_stack_Markov(vector<string>& string_stack,
     model_stack.push_back(M);
   }
   else if (match(string_stack,"C10",arg))
+  {
+    if (a != AminoAcids())
+      throw myexception()<<"C20: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(C10_CAT_FixedFrequencyModel());
+  }
   else if (match(string_stack,"C20",arg))
+  {
+    if (a != AminoAcids())
+      throw myexception()<<"C20: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(C20_CAT_FixedFrequencyModel());
+  }
   else if (match(string_stack,"CAT-Fix",arg)) {
+    if (a != AminoAcids())
+      throw myexception()<<"CAT-Fix: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
     CAT_FixedFrequencyModel M(a);
     M.load_file(arg);
     model_stack.push_back(M);
