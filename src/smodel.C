@@ -649,6 +649,8 @@ namespace substitution {
   void ReversibleMarkovModel::invalidate_eigensystem() 
   {
     eigensystem.invalidate();
+    // UNCOMMENT - to test savings from lazy eigensystem calculation.
+    // recalc_eigensystem();
   }
 
   const EigenValues& ReversibleMarkovModel::get_eigensystem() const
