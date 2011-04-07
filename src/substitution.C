@@ -574,6 +574,8 @@ namespace substitution {
     const int n_states  = cache.n_states();
     const int n_letters = a.n_letters();
 
+    assert(n_states >= n_letters and n_states%n_letters == 0);
+
     assert(MModel.n_states() == n_states);
 
     if (not I.branch_index_valid(b0))
