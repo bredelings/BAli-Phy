@@ -64,14 +64,19 @@ struct data_partition: public Probability_Model
 
   void recalc(const std::vector<int>&);
 
+  /// Cached prior for just the alignment -- accessed through alignment_prior( )
   mutable cached_value<efloat_t> cached_alignment_prior;
 
+  /// Cached prior for the pairwise alignment on each branch.
   mutable std::vector<cached_value<efloat_t> > cached_alignment_prior_for_branch;
 
+  /// Cached transition counts for the pair-HMM on each branch.
   mutable std::vector<cached_value<ublas::matrix<int> > > cached_alignment_counts_for_branch;
 
+  /// Cached sequence lengths -- accessed through seqlength( )
   mutable std::vector<cached_value<int> > cached_sequence_lengths;
 
+  /// Cached HMMs for each branch -- accessed through get_branch_HMM( )
   mutable std::vector<cached_value<indel::PairHMM> > cached_branch_HMMs;
 
   double branch_mean_;
