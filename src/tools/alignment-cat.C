@@ -174,6 +174,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("pad", "Add gaps to make sequence lengths identical")
     ("remove-empty-columns,r","Remove columns with no characters (all gaps).")
     ("missing",value<string>()->default_value("-?"),"What letters are not characters (e.g. gaps)?")
+    ("strip-gaps","Remove all non-character letters from sequences.")
     ;
 
   options_description all("All options");
@@ -330,12 +331,27 @@ int main(int argc,char* argv[])
     if (args.count("columns"))
       S = select(S,args["columns"].as<string>());
     
-    if (args.count("remove-empty-columns")) {
-      string missing = args["missing"].as<string>();
-      vector<char> missing2;
-      for(int i=0;i<missing.size();i++)
-	missing2.push_back(missing[i]);
-      S = remove_empty_columns(S,missing2);
+    // determine which chars are not characters
+    vector<char> missing;
+    {
+      string missing2 = args["missing"].as<string>();
+      for(int i=0;i<missing2.size();i++)
+	missing.push_back(missing2[i]);
+    }
+
+    if (args.count("remove-empty-columns")) 
+      S = remove_empty_columns(S,missing);
+
+    if (args.count("strip-gaps"))
+    {
+      for(int i=0;i<S.size();i++) {
+	sequence& s = S[i];
+	int L=0;
+	for(int c=0;c<S[i].size();c++)
+	  if (not includes(missing,s[c]))
+	    s[L++] = s[c];
+	s.resize(L);
+      }
     }
 
     if (args["output"].as<string>() == "phylip")
