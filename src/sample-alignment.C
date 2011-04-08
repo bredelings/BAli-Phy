@@ -105,13 +105,6 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
       seq12.push_back(column);
   }
 
-  //FIXME - this makes the debug routines crash
-  if (not seq1.size() or not seq2.size()) 
-  {
-    default_timer_stack.pop_timer();
-    return boost::shared_ptr<DPmatrixSimple>(); //NULL;
-  }
-
   /******** Precompute distributions at node2 from the 2 subtrees **********/
   distributions_t_local distributions = distributions_tree;
   if (not P.smodel_full_tree)
