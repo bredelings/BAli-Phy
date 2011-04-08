@@ -25,7 +25,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution.H"
 #include "substitution-cache.H"
 #include "substitution-index.H"
-#include "matcache.H"
 #include "rng.H"
 #include "logsum.H"
 #include "util.H"
@@ -50,39 +49,41 @@ using std::endl;
 
 using namespace optimize;
 
-vector<double> get_post_rate_probs(const Matrix& P) 
+// This is a bit odd, but probably works.
+vector<double> get_post_rate_probs(const vector< vector<double> >& P) 
 {
-  vector<double> f(P.size2());
+  const int n_models = P[0].size();
+  vector<double> f(n_models);
   
   // compute the total probability for each sub-model
-  for(int m=0;m<P.size2();m++)
-    for(int c=0; c<P.size1(); c++) 
-      f[m] += P(c,m);
+  for(int c=0; c<P.size(); c++) 
+    for(int m=0;m<P[c].size();m++)
+      f[m] += P[c][m];
   
   // compute the total probability
   double total=0;
-  for(int m=0;m<P.size2();m++)
+  for(int m=0;m<n_models;m++)
     total += f[m];
 
   // normalize sub-model probabilities
-  for(int m=0;m<P.size2();m++)
+  for(int m=0;m<n_models;m++)
     f[m] /= total;
 
   return f;
 }
 
-double E_rate(const Matrix& P, int c,const substitution::MultiModel& smodel)
+double E_rate(const vector<vector<double> >& P, int c,const substitution::MultiModel& smodel)
 {
   double R=0;
-  for(int m=0;m<P.size2();m++)
-    R += P(c,m)*smodel.base_model(m).rate();
+  for(int m=0;m<smodel.n_base_models();m++)
+    R += P[c][m]*smodel.base_model(m).rate();
   return R;
 }
 
-void show_rate_probs(std::ostream& o, const Matrix& P,
+void show_rate_probs(std::ostream& o, const vector< vector<double> >& P,
 		     const substitution::MultiModel& smodel)
 {
-  for(int c=0; c<P.size1(); c++)
+  for(int c=0; c<P.size(); c++)
     o<<c<<" "<<E_rate(P,c,smodel)<<endl;
 }
 
@@ -92,7 +93,6 @@ protected:
   alignment A;
   SequenceTree T;
   owned_ptr<substitution::MultiModel> smodel;
-  mutable Likelihood_Cache LC;
   vector<int> parameters;
 public:
   likelihood(const alignment& A1,
@@ -102,7 +102,6 @@ public:
     : A(A1),
       T(T1),
       smodel(SM),
-      LC(T,*smodel,A.length()),
       parameters(v)
   { }
 };
@@ -142,11 +141,9 @@ double branch_likelihood::operator()(const optimize::Vector& v) const
 
 
   //----- Setup cached CL's + Transition matrices -----//
-  LC.invalidate_all();
-  MatCache MC(T2,*smodel);
-  subA_index_leaf I(A.length()+1, T2.n_branches()*2);
+  data_partition DP("DP",A,T2,*smodel);
 
-  return log(substitution::Pr(A,I,MC,T2,LC,*smodel) * smodel->prior() * prior_exponential(T2,0.2));
+  return log(DP.likelihood() * smodel->prior() * prior_exponential(T2,0.2));
 }
 
 
@@ -182,11 +179,9 @@ double log_branch_likelihood::operator()(const optimize::Vector& v) const
 
 
   //----- Setup cached CL's + Transition matrices -----//
-  LC.invalidate_all();
-  MatCache MC(T2,*smodel);
-  subA_index_leaf I(A.length()+1, T2.n_branches()*2);
+  data_partition DP("DP",A,T2,*smodel);
 
-  return log(substitution::Pr(A,I,MC,T2,LC,*smodel) * smodel->prior() * prior_exponential(T2,0.2));
+  return log(DP.likelihood() * smodel->prior() * prior_exponential(T2,0.2));
 }
 
 
@@ -314,13 +309,9 @@ void analyze_rates(const alignment& A,const SequenceTree& T,
 {
   if (smodel.n_base_models() == 1) return;
 
-  MatCache MC(T,smodel);
+  data_partition DP("DP",A,T,smodel);
 
-  Likelihood_Cache LC(T,smodel,A.length());
-
-  subA_index_leaf I(A.length()+1, T.n_branches()*2);
-
-  Matrix rate_probs = get_rate_probabilities(A,I,MC,T,LC,smodel);
+  vector< vector<double> > rate_probs = substitution::get_model_probabilities_by_alignment_column(DP);
 
   vector<double> prior_bin_f = smodel.distribution();
   

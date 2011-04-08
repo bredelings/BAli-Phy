@@ -70,9 +70,6 @@ namespace substitution {
   get_column_likelihoods(const data_partition&, const std::vector<int>& b,
 			 const std::vector<int>& req, const std::vector<int>& seq,int delta=0);
 
-  Matrix get_rate_probabilities(const alignment& A,subA_index_t& I, const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
-				const MultiModel& MModel);
-
   /// Full likelihood - all columns, all rates
   efloat_t Pr(const data_partition&);
 
