@@ -179,5 +179,9 @@ alignment complement(const alignment& A);
 
 alignment reverse_complement(const alignment& A);
 
+std::vector<int> alignment_row_letters(const alignment& A, int i);
+
 void check_same_sequence_lengths(const std::vector<int>&, const alignment&);
+
+alignment unalign_all(const alignment& A, int);
 #endif

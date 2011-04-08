@@ -19,6 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "alignment.H"
 #include "rng.H"
+#include "alignment-util.H"
 
 using std::vector;
 
@@ -42,13 +43,10 @@ alignment randomize(const alignment& A,int n) {
 
   // For each row of the alignment
   const int temp = alphabet::gap;
-  for(int i=0;i<n;i++) 
+  for(int i=0;i<n;i++)
   {
     /// Collect the letters of the row
-    vector<int> s;
-    for(int c=0;c<A.length();c++)
-      if (A.character(c,i))
-	s.push_back(A(c,i));
+    vector<int> s = alignment_row_letters(A,i);
 
     /// Randomly insert gaps until the row is filled
     while(s.size() < newlength) {

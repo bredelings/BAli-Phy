@@ -1447,3 +1447,40 @@ void check_same_sequence_lengths(const vector<int>& L, const alignment& A)
   }
 }
 
+vector<int> alignment_row_letters(const alignment& A, int i)
+{
+  vector<int> s;
+  for(int c=0;c<A.length();c++)
+    if (A.character(c,i))
+      s.push_back(A(c,i));
+  return s;
+}
+
+alignment unalign_all(const alignment& A, int n)
+{
+  if (n == -1)
+    n = A.n_sequences();
+
+  // Choose the length of the new alignment
+  int new_length = sum(sequence_lengths(A,n));
+  alignment A2 = blank_copy(A,new_length);
+
+  // Clear the new alignment
+  for(int i=0;i<A2.length();i++)
+    for(int j=0;j<A2.n_sequences();j++)
+      A2(i,j) = alphabet::gap;
+
+  // For each row of the new alignment
+  int start_column=0;
+  for(int i=0;i<n;i++) 
+  {
+    /// Collect the letters of the row
+    vector<int> s = alignment_row_letters(A,i);
+
+    // write them into the correct position, move start_column
+    for(int j=0;j<s.size();j++)
+      A2(start_column++,i) = s[j];
+  }
+ 
+  return A2;
+}
