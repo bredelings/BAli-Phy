@@ -53,19 +53,6 @@ public:
   /// For a given rate, Show all the matrices for each branch
   const std::vector< Matrix > & operator[](int b) const { return transition_P_[b]; }
 
-  /// For a given rate, and branch, show the matrix
-  const Matrix& transition_P(int b,int r) const 
-  {
-#ifndef NDEBUG
-    // is this to make it work when we just have a pair?
-    // Then we can't hack out the second branch...
-    // Hmm.. could we make one node the root?
-    assert(b < n_branches());
-    if (b == n_branches()) b--;
-#endif
-    return transition_P_[b][r];
-  }
-
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l,Tree&,const substitution::MultiModel&);
   
