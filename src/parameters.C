@@ -106,6 +106,11 @@ IndelModel& data_partition::IModel()
   std::abort();
 }
 
+const std::vector<Matrix>& data_partition::transition_P(int b) const
+{
+  return MC.transition_P(b);
+}
+
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 {
   assert(variable_alignment());

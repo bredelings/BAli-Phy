@@ -38,14 +38,14 @@ using std::vector;
 namespace substitution {
 
   double Pr_star(const vector<int>& column,const Tree& T,const ReversibleModel& SModel,
-		 const MatCache& transition_P,int m) {
+		 const Mat_Cache& MC,int m) {
     const alphabet& a = SModel.Alphabet();
 
     double p=0;
     for(int lroot=0;lroot<a.size();lroot++) {
       double temp=SModel.frequencies()[lroot];
       for(int b=0;b<T.n_leaves();b++) {
-	const Matrix& Q = transition_P[b][m];
+	const Matrix& Q = MC.transition_P(b)[m];
 
 	int lleaf = column[b];
 	if (a.is_letter(lleaf))
@@ -62,7 +62,7 @@ namespace substitution {
     return p;
   }
 
-  efloat_t Pr_star(const alignment& A, const Tree& T, const MultiModel& MModel, const MatCache& MC) 
+  efloat_t Pr_star(const alignment& A, const Tree& T, const MultiModel& MModel, const Mat_Cache& MC) 
   {
     efloat_t p = 1;
   
@@ -96,7 +96,7 @@ namespace substitution {
     if (P.T->n_leaves() == 2)
       return Pr(P);
 
-    return Pr_star(*P.A, *P.T, P.SModel(), P.MC);
+    return Pr_star(*P.A, *P.T, P.SModel(), P);
   }
 
   efloat_t Pr_unaligned(const data_partition& P) 

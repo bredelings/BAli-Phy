@@ -50,7 +50,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 extern bool use_internal_index;
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
-struct data_partition: public Probability_Model
+class data_partition: public Probability_Model, public Mat_Cache
 {
   friend class Parameters;
 
@@ -86,6 +86,7 @@ struct data_partition: public Probability_Model
 
   bool variable_alignment_;
 
+  MatCache MC;
 public:
 
   bool smodel_full_tree;
@@ -105,7 +106,7 @@ public:
   cow_ptr<SequenceTree> T;
 
   /// Cached Transition Probabilities
-  MatCache MC;
+  const std::vector<Matrix>& transition_P(int b) const;
   
   /// Cached Conditional Likelihoods
   mutable Likelihood_Cache LC;

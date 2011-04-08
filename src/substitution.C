@@ -19,6 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "substitution.H"
 #include "substitution-index.H"
+#include "matcache.H"
 #include "rng.H"
 #include <cmath>
 #include <valarray>
@@ -918,7 +919,7 @@ namespace substitution {
 
 
   void peel_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
-		   const MatCache& transition_P, const MultiModel& MModel)
+		   const Mat_Cache& MC, const MultiModel& MModel)
   {
     total_peel_branches++;
     default_timer_stack.push_timer("substitution::peel_branch");
@@ -935,16 +936,16 @@ namespace substitution {
 	if (dynamic_cast<const F81_Model*>(&MModel.base_model(0)))
 	  peel_leaf_branch_F81(b0, I, cache, A, T, MModel);
 	else
-	  peel_leaf_branch(b0, I, cache, A, T, transition_P[B0], MModel);
+	  peel_leaf_branch(b0, I, cache, A, T, MC.transition_P(B0), MModel);
       }
       else
-	peel_leaf_branch_modulated(b0, I, cache, A, T, transition_P[B0], MModel);
+	peel_leaf_branch_modulated(b0, I, cache, A, T, MC.transition_P(B0), MModel);
     }
     else if (bb == 2) {
       if (dynamic_cast<const F81_Model*>(&MModel.base_model(0)))
 	peel_internal_branch_F81(b0, I, cache, A, T, MModel);
       else
-	peel_internal_branch(b0, I, cache, A, T, transition_P[B0], MModel);
+	peel_internal_branch(b0, I, cache, A, T, MC.transition_P(B0), MModel);
     }
     else
       std::abort();
@@ -992,7 +993,7 @@ namespace substitution {
   }
 
   static 
-  int calculate_caches_for_node(int n, const alignment& A, subA_index_t& I, const MatCache& MC, const Tree& T,Likelihood_Cache& cache,
+  int calculate_caches_for_node(int n, const alignment& A, subA_index_t& I, const Mat_Cache& MC, const Tree& T,Likelihood_Cache& cache,
 		       const MultiModel& MModel) {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_node(n, T, cache);
@@ -1010,11 +1011,11 @@ namespace substitution {
   }
 
   int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, *P.A, *P.subA, P.MC, *P.T, P.LC, P.SModel());
+    return calculate_caches_for_node(n, *P.A, *P.subA, P, *P.T, P.LC, P.SModel());
   }
 
   static 
-  int calculate_caches_for_branch(int b, const alignment& A, subA_index_t& I, const MatCache& MC, const Tree& T,Likelihood_Cache& cache,
+  int calculate_caches_for_branch(int b, const alignment& A, subA_index_t& I, const Mat_Cache& MC, const Tree& T,Likelihood_Cache& cache,
 		       const MultiModel& MModel) {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_branch(b, T, cache);
@@ -1221,7 +1222,7 @@ namespace substitution {
 
   /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
   efloat_t other_subst_behind_branch(int b0, const alignment& A, const Tree& T, subA_index_t& I, Likelihood_Cache& LC,
-					 const MatCache& MC, const MultiModel& MModel)
+					 const Mat_Cache& MC, const MultiModel& MModel)
   {
     if (LC.up_to_date(b0) and dynamic_cast<subA_index_internal*>(&I))
       return LC[b0].other_subst;
@@ -1244,7 +1245,7 @@ namespace substitution {
   {
     const alignment& A = *P.A;
     const SequenceTree& T = *P.T;
-    const MatCache& MC = P.MC;
+    const Mat_Cache& MC = P;
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
 
@@ -1453,7 +1454,7 @@ namespace substitution {
   /// only happen at the substitution root.  This is actually true when called from
   /// the SPR_all routines, but may not make sense otherwise.
   ///
-  efloat_t Pr_unaligned_root(const alignment& A,subA_index_t& I, const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
+  efloat_t Pr_unaligned_root(const alignment& A,subA_index_t& I, const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC,
 			     const MultiModel& MModel)
   {
     total_likelihood++;
@@ -1523,14 +1524,14 @@ namespace substitution {
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr_unaligned_root(*P.A, *P.subA, P.MC, *P.T, LC, P.SModel());
+    return Pr_unaligned_root(*P.A, *P.subA, P, *P.T, LC, P.SModel());
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P) {
     return Pr_unaligned_root(P, P.LC);
   }
 
-  efloat_t Pr(const alignment& A,subA_index_t& I, const MatCache& MC,const Tree& T,Likelihood_Cache& LC,
+  efloat_t Pr(const alignment& A,subA_index_t& I, const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC,
 	    const MultiModel& MModel)
   {
     total_likelihood++;
@@ -1580,7 +1581,7 @@ namespace substitution {
 
 
   efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr(*P.A, *P.subA, P.MC, *P.T, LC, P.SModel());
+    return Pr(*P.A, *P.subA, P, *P.T, LC, P.SModel());
   }
 
 
@@ -1592,7 +1593,7 @@ namespace substitution {
     Likelihood_Cache LC(*P.T, P.SModel());
     LC.root = P.LC.root;
 
-    return Pr(*P.A, subA, P.MC, *P.T, LC, P.SModel());
+    return Pr(*P.A, subA, P, *P.T, LC, P.SModel());
   }
 
 
@@ -1608,7 +1609,7 @@ namespace substitution {
 
     check_internal_nodes_connected(*P.A,*P.T,vector<int>(1,LC.root));
 
-    return Pr(*P.A, subA, P.MC, *P.T, LC, P.SModel());
+    return Pr(*P.A, subA, P, *P.T, LC, P.SModel());
   }
 
 
@@ -1658,7 +1659,7 @@ namespace substitution {
 
 
   vector<Matrix> 
-  get_likelihoods_by_alignment_column(const alignment& A,subA_index_t& I, const MatCache& MC,
+  get_likelihoods_by_alignment_column(const alignment& A,subA_index_t& I, const Mat_Cache& MC,
 				      const Tree& T,Likelihood_Cache& cache,const MultiModel& MModel)
   {
 #ifdef DEBUG_INDEXING
@@ -1778,7 +1779,7 @@ namespace substitution {
 
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition& P)
   {
-    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.A, *P.subA, P.MC, *P.T, P.LC, P.SModel());
+    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.A, *P.subA, P, *P.T, P.LC, P.SModel());
 
 #ifdef DEBUG_SUBSTITUTION
     efloat_t L1 = combine_likelihoods(likelihoods);

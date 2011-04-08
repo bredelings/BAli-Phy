@@ -28,8 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "alignment.H"
 #include "tree.H"
-class MatCache;
-#include "matcache.H"
+class Mat_Cache;
 class Parameters;
 #include "parameters.H"
 #include "substitution-cache.H"
@@ -75,7 +74,7 @@ namespace substitution {
 
   efloat_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
-  efloat_t Pr(const alignment& A, subA_index_t& I, const MatCache& MC,const Tree& T,::Likelihood_Cache& cache,
+  efloat_t Pr(const alignment& A, subA_index_t& I, const Mat_Cache& MC,const Tree& T,::Likelihood_Cache& cache,
 	      const MultiModel& MModel);
   efloat_t Pr(const data_partition&,Likelihood_Cache& LC);
 
