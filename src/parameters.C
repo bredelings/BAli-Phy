@@ -191,6 +191,7 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
   default_timer_stack.push_timer("setlength_no_invalidate_LC( )");
   b = T->directed_branch(b).undirected_name();
 
+  T->branch(b).set_length(l);
   MC.setlength(b,l,*T,*SModel_); 
 
   recalc_imodel_for_branch(b);
