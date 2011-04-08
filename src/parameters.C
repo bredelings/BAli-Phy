@@ -127,7 +127,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
   }
 
   return HMM;
-};
+}
 
 vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) const
 {
