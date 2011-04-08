@@ -123,8 +123,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
     }
     cached_transition_P[b].validate();
   }
-  cached_transition_P[b].value();
-  return MC.transition_P(b);
+  return cached_transition_P[b];
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
