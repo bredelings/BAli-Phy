@@ -63,8 +63,11 @@ alignment chop_internal(alignment A, bool keep_empty_columns)
   if (not internal_nodes)
     return A;
 
-  while(A.n_sequences() > N)
-    A.del_sequence(N);
+  vector<int> D;
+  for(int i=N;i<A.n_sequences();i++)
+    D.push_back(i);
+
+  A.del_sequences(D);
 
   if (not keep_empty_columns)
     remove_empty_columns(A);
