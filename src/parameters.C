@@ -108,6 +108,22 @@ IndelModel& data_partition::IModel()
 
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
+  b = T->directed_branch(b).undirected_name();
+  assert(b >= 0 and b < T->n_branches());
+
+  if (not cached_transition_P[b].is_valid())
+  {
+    vector< Matrix >& TP = cached_transition_P[b].modify_value();
+    const int n_models = SModel().n_base_models();
+    for(int m=0;m<n_models;m++)
+    {
+      double l = T->branch(b).length();
+      assert(l >= 0);
+      TP[m] = SModel().transition_p(l,m);
+    }
+    cached_transition_P[b].validate();
+  }
+  cached_transition_P[b].value();
   return MC.transition_P(b);
 }
 
@@ -188,6 +204,8 @@ void data_partition::recalc_smodel()
 
   //invalidate the cached transition probabilities in case the model has changed
   MC.recalc(*T,*SModel_);
+  for(int i=0;i<cached_transition_P.size();i++)
+    cached_transition_P[i].invalidate();
   default_timer_stack.pop_timer();
 }
 
@@ -197,7 +215,9 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
   b = T->directed_branch(b).undirected_name();
 
   T->branch(b).set_length(l);
+
   MC.setlength(b,l,*T,*SModel_); 
+  cached_transition_P[b].invalidate();
 
   recalc_imodel_for_branch(b);
 
@@ -451,6 +471,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
+   cached_transition_P(t.n_branches()),
    branch_mean_(1.0),
    variable_alignment_(true),
    smodel_full_tree(true),
@@ -469,6 +490,12 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
+  const int n_models = SModel().n_base_models();
+  const int n_states = SModel().state_letters().size();
+  for(int b=0;b<cached_transition_P.size();b++)
+    cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
+							   Matrix(n_states, n_states));
+
   add_leaf_seq_note(*A, T->n_leaves());
 }
 
@@ -480,6 +507,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
+   cached_transition_P(t.n_branches()),
    branch_mean_(1.0),
    variable_alignment_(false),
    smodel_full_tree(true),
@@ -497,6 +525,12 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
 
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
+
+  const int n_models = SModel().n_base_models();
+  const int n_states = SModel().state_letters().size();
+  for(int b=0;b<cached_transition_P.size();b++)
+    cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
+							   Matrix(n_states, n_states));
 
   add_leaf_seq_note(*A, T->n_leaves());
 }
