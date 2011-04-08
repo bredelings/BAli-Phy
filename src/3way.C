@@ -511,7 +511,7 @@ namespace A3 {
     }
 
     //-------- Re-order unordered columns by AP order ---------//
-    for(int i=0;i<columns.size()-1;) {
+    for(int i=0;i+1<columns.size();) {
       int ap1 = AP[columns[i  ]];
       int ap2 = AP[columns[i+1]];
       if (not (ap1&ap2) and ap1 > ap2) {
