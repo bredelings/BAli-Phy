@@ -88,7 +88,6 @@ class data_partition: public Probability_Model, public Mat_Cache
 
   bool variable_alignment_;
 
-  MatCache MC;
 public:
 
   bool smodel_full_tree;

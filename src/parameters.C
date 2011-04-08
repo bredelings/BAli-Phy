@@ -202,7 +202,6 @@ void data_partition::recalc_smodel()
   LC.invalidate_all();
 
   //invalidate the cached transition probabilities in case the model has changed
-  MC.recalc(*T,*SModel_);
   for(int i=0;i<cached_transition_P.size();i++)
     cached_transition_P[i].invalidate();
   default_timer_stack.pop_timer();
@@ -215,7 +214,6 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
 
   T->branch(b).set_length(l);
 
-  MC.setlength(b,l,*T,*SModel_); 
   cached_transition_P[b].invalidate();
 
   recalc_imodel_for_branch(b);
@@ -476,7 +474,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    smodel_full_tree(true),
    A(a),
    T(t),
-   MC(t,SM),
    LC(t,SModel()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
@@ -512,7 +509,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    smodel_full_tree(true),
    A(a),
    T(t),
-   MC(t,SM),
    LC(t,SModel()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
