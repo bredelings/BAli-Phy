@@ -83,8 +83,12 @@ public:
 
   /// Remove sequence 'i' from the alignment
   void del_sequence(int);
+  /// Remove a bunch of sequences' from the alignment
+  void del_sequences(const std::vector<int>&);
   /// Add sequence 's' to the alignment
   void add_sequence(const sequence& s);
+  /// Add a bunch of sequences to the alignment
+  void add_sequences(const std::vector<sequence>&);
 
   /// Add sequences sequences to the alignment.
   void load(const std::vector<sequence>& sequences);
@@ -165,6 +169,9 @@ public:
   /// Construct an alignment from file filename using alphabet a
   explicit alignment(const alphabet& a,const std::string& filename);
 };
+
+/// Reorder the sequences of \a A according to the permutation @mapping
+alignment reorder_sequences(const alignment& A, const std::vector<int>& mapping);
 
 /// Write alignment A to file file
 std::ostream& operator<<(std::ostream& file,const alignment& A);

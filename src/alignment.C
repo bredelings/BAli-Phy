@@ -140,7 +140,8 @@ alignment& alignment::operator=(const alignment& A) {
   return *this;
 }
 
-void alignment::add_row(const vector<int>& v) {
+void alignment::add_row(const vector<int>& v) 
+{
   int new_length = std::max(length(),(int)v.size());
 
   ::resize(array,new_length,n_sequences()+1,-1);
@@ -169,12 +170,42 @@ void alignment::del_sequence(int ds) {
   array.swap(array2);
 }
 
+void alignment::del_sequences(const vector<int>& ds)
+{
+  vector<int> order = iota<int>(n_sequences());
+
+  remove_elements(order, ds);
+
+  (*this) = reorder_sequences(*this,order);
+}
+
 void alignment::add_sequence(const sequence& s) 
 {
   add_row((*a)(s));
 
   sequences.push_back(s);
   sequences.back().strip_gaps();
+}
+
+void alignment::add_sequences(const vector<sequence>& S)
+{
+  // determine new length
+  int new_length = length();
+  for(int i=0;i<S.size();i++)
+    new_length = std::max(new_length, (int)S[i].size());
+
+  // resize the array
+  int N = n_sequences();
+  ::resize(array,new_length,n_sequences()+S.size(),-1);
+
+  for(int i=0;i<S.size();i++)
+  {
+    sequences.push_back(S[i]);
+    sequences.back().strip_gaps();
+
+    for(int j=0; j<S[i].size(); j++)
+      array(j, N+i) = (*a)[S[i][j]];
+  }
 }
 
 void alignment::load(const vector<sequence>& seqs) 
@@ -476,6 +507,25 @@ alignment blank_copy(const alignment& A1,int length)
 
   if (A1.notes.size() >= 1)
     add_leaf_seq_note(A2,A1.note(0));
+
+  return A2;
+}
+
+alignment reorder_sequences(const alignment& A, const vector<int>& order)
+{
+  unsigned L = A.length();
+
+  alignment A2(A.get_alphabet(), order.size(), L);
+
+  for(int i=0;i<order.size();i++) 
+  {
+    int j = order[i];
+    assert(0 <= j and j < A.n_sequences());
+
+    A2.seq(i) = A.seq(j);
+    for(int c=0;c<L;c++)
+      A2(c,i) = A(c,j);
+  }
 
   return A2;
 }

@@ -80,16 +80,14 @@ alignment add_internal(alignment A,const Tree& T)
 		       <<"- can't add internal sequences";
 
   // Add empty sequences
+  vector<sequence> S;
   for(int i=T.n_leaves();i<T.n_nodes();i++) {
     sequence s;
     s.name = string("A") + convertToString(i);
-    A.add_sequence(s);
+    S.push_back(s);
   }
 
-  // Set them to all gaps
-  for(int column=0;column<A.length();column++)
-    for(int i=T.n_leaves();i<T.n_nodes();i++)
-      A(column,i) = alphabet::gap;
+  A.add_sequences(S);
 
   return A;
 }
@@ -1346,30 +1344,6 @@ vector<unsigned> sequence_lengths(const alignment& A)
   return sequence_lengths(A,A.n_sequences());
 }
 
-
-alignment shuffle_alignment(const alignment& A, const vector<int>& order)
-{
-  unsigned L = A.length();
-
-  alignment A2(A.get_alphabet(), order.size(), L);
-
-  for(int i=0;i<order.size();i++) 
-  {
-    int j = order[i];
-    assert(0 <= j and j < A.n_sequences());
-
-    A2.seq(i) = A.seq(j);
-    for(int c=0;c<L;c++)
-      A2(c,i) = A(c,j);
-  }
-
-  return A2;
-}
-
-alignment reorder_sequences(const alignment& A,const vector<int>& order)
-{
-  return shuffle_alignment(A,order);
-}
 
 alignment select_rows(const alignment& A,const vector<int>& keep)
 {
