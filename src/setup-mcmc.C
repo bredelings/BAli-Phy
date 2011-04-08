@@ -644,6 +644,39 @@ void enable_disable_transition_kernels(MCMC::MoveAll& sampler, const variables_m
     sampler.enable(enable[i]);
 }
 
+/// Find the minimum branch length
+double min_branch_length(SequenceTree& T)
+{
+  double min_branch = T.branch(0).length();
+  for(int i=1;i<T.n_branches();i++)
+    min_branch = std::min(min_branch,T.branch(i).length());
+  return min_branch;
+}
+
+/// Replace negative or zero branch lengths with saner values.
+void set_min_branch_length(Parameters& P, double min_branch)
+{
+  const SequenceTree& T = *P.T;
+
+  for(int b=0;b<T.n_branches();b++) 
+    if (T.branch(b).length() < min_branch)
+      P.setlength(b, min_branch);
+}
+
+void avoid_zero_likelihood(owned_ptr<Probability_Model>& P, ostream& out_log,ostream& out_both)
+{
+  Parameters& PP = *P.as<Parameters>();
+
+  for(int i=0;i<20 and P->likelihood() == 0.0;i++)
+  {
+    double min_branch = min_branch_length(*PP.T);
+    out_log<<"  likelihood = "<<P->likelihood()<<"  min(T[b]) = "<<min_branch<<"\n";
+
+    min_branch = std::max(min_branch, 0.0001);
+    set_min_branch_length(PP, 2.0*min_branch);
+  }
+}
+
 void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 		   ostream& out_log,ostream& out_both)
 {

@@ -1356,7 +1356,9 @@ int main(int argc,char* argv[])
       //------ Redirect output to files -------//
       owned_ptr<Probability_Model> Ptr(P);
 
-      do_pre_burnin(args,Ptr,s_out,out_both);
+      avoid_zero_likelihood(Ptr, s_out, out_both);
+
+      do_pre_burnin(args, Ptr, s_out, out_both);
 
       out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
       out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
