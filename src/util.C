@@ -356,3 +356,19 @@ vector<string> get_arguments(string& s,char begin, char end)
   
   return split(args,',');
 }
+
+void remove_element(vector<int>& v, const  int e)
+{
+  for(int i=0;i<v.size();)
+    if (v[i] == e)
+      v.erase(v.begin() + i);
+    else
+      i++;
+}
+
+void remove_elements(vector<int>& v, const vector<int>& e)
+{
+  for(int i=0;i<e.size();i++)
+    remove_element(v,e[i]);
+}
+
