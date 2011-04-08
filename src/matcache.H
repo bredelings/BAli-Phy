@@ -25,8 +25,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree.H"
 #include "mytypes.H"
 
+struct Mat_Cache
+{
+  virtual const std::vector< Matrix>& transition_P(int b) const=0;
+};
+
 /// Substitution Model w/ cache
-class MatCache {
+class MatCache: public Mat_Cache {
 
   int n_branches_;
 
@@ -43,9 +48,6 @@ public:
   int n_branches() const;
 
   int n_states() const;
-
-  /// Show all the matrices
-  const std::vector< std::vector< Matrix > >& transition_P() const { return transition_P_; }
 
   /// For a given rate, Show all the matrices for each branch
   const std::vector< Matrix > & transition_P(int b) const { return transition_P_[b]; }
