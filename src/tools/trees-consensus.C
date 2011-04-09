@@ -28,6 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <set>
 #include <list>
 
 #include "sequencetree.H"
@@ -405,6 +406,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("report",value<string>(),"Write supported partitions to file <arg>.")
     ("consensus-PP",value<string>(),"Write out consensus trees+PP.")
     ("consensus",value<string>(),"Write out consensus trees.")
+    ("greedy-consensus",value<string>(),"Write out greedy consensus trees.")
     ("extended-consensus-L",value<string>(),"Write out extended consensus trees + lengths.")
     ("extended-consensus",value<string>(),"Write out extended consensus trees.")
     ("support-levels",value<string>(),"Write #branches versus LOD to file <arg>.")
@@ -866,6 +868,81 @@ void write_extended_consensus_trees_with_lengths(const tree_sample& tree_dist,
   }
 }
 
+/// A simple ordering operator to sort pair<Partition,unsigned> by the order of the Partition
+struct count_more2 {
+  bool operator()(const pair<dynamic_bitset<>,count_and_length>& p1,const pair<dynamic_bitset<>,count_and_length>& p2) const {
+    return p1.second.count > p2.second.count;
+  }
+};
+
+bool compatible(const dynamic_bitset<>& p1, const dynamic_bitset<>& p2)
+{
+  assert(p1.size() == p2.size());
+  if (not p1.intersects(p2)) return true;
+  if (not (~p1).intersects(p2)) return true;
+
+  if (not p1.intersects(~p2)) return true;
+  if (not (~p1).intersects(~p2)) return true;
+
+  return false;
+}
+
+bool compatible(const std::vector<dynamic_bitset<> >&P1, const dynamic_bitset<>& p2)
+{
+  for(int i=0;i<P1.size();i++)
+    if (not compatible(P1[i],p2)) return false;
+
+  return true;
+}
+
+void write_greedy_consensus(const tree_sample& tree_dist,
+			    const map<dynamic_bitset<>,count_and_length>& full_partitions,
+			    const string& filename, bool with_PP)
+{
+  unsigned N = tree_dist.size();
+
+  unsigned L = tree_dist.names().size();
+  
+  typedef const map<dynamic_bitset<>,count_and_length> container_t;
+
+  multiset< pair<dynamic_bitset<>,count_and_length>, count_more2 > sorted_splits;
+  foreach(i,full_partitions)
+    sorted_splits.insert(*i);
+
+  vector<dynamic_bitset<> > S;
+  foreach(i, sorted_splits)
+  {
+    if (compatible(S, i->first))
+      S.push_back(i->first);
+
+    if (S.size() >= 2*L-3) break;
+  }
+  
+  // construct the consensus topology
+  SequenceTree consensus = star_tree(tree_dist.names());
+  for(int i=0;i<S.size();i++)
+    if (informative(S[i]))
+      consensus.induce_partition(S[i]);
+
+  // set branch lengths and PP on the consensus tree
+  vector<double> PP;
+  get_branch_lengths_and_PP(consensus, PP, full_partitions, N);
+  
+  bool show_branch_lengths = false;
+  for(int b=0;b<consensus.n_branches();b++)
+    if (consensus.branch(b).length() >= 0)
+      show_branch_lengths = true;
+  
+  ostream_or_ofstream output(cout,"-",filename,"greedy consensus tree file");
+
+  // write out the consensus tree
+  output.unsetf(ios::fixed | ios::showpoint);
+  if (with_PP)
+    output<<consensus.write_with_bootstrap_fraction(PP,show_branch_lengths)<<std::endl;
+  else
+    output<<consensus.write(show_branch_lengths)<<std::endl;
+}
+
 int main(int argc,char* argv[]) 
 { 
   try {
@@ -923,11 +1000,13 @@ int main(int argc,char* argv[])
     vector<pair<double,string> > extended_consensus_levels = get_consensus_levels(ec_levels);
     string ecl_levels = args.count("extended-consensus-L") ? args["extended-consensus-L"].as<string>() : "";
     vector<pair<double,string> > extended_consensus_L_levels = get_consensus_levels(ecl_levels);
+    string greedy_filename = args.count("greedy-consensus") ? args["greedy-consensus"].as<string>() : "";
 
     if (not args.count("consensus") 
 	and not args.count("consensus-PP") 
 	and not args.count("extended-consensus")
-	and not args.count("extended-consensus-L"))
+	and not args.count("extended-consensus-L")
+	and not args.count("greedy-consensus"))
       consensus_levels_pp.push_back(pair<double,string>(0.5,"-"));
 
     ostream_or_ofstream report_file;
@@ -1120,6 +1199,8 @@ int main(int argc,char* argv[])
 
     write_consensus_trees(tree_dist, full_partitions, consensus_levels,false);
     write_consensus_trees(tree_dist, full_partitions, consensus_levels_pp,true);
+    if (args.count("greedy-consensus"))
+      write_greedy_consensus(tree_dist, full_partitions, greedy_filename, true);
     write_extended_consensus_trees(tree_dist, all_partitions, extended_consensus_levels);
     write_extended_consensus_trees_with_lengths(tree_dist, all_partitions, full_partitions, extended_consensus_L_levels);
   }
