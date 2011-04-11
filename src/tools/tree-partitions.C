@@ -42,6 +42,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   input.add_options()
     ("help", "produce help message")
     ("all","show only informative partitions")
+    ("info","Print information about the tree")
     ("tree",value<string>(),"tree file")
     ;
   
@@ -68,6 +69,40 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
+void describe_tree(const SequenceTree& T)
+{
+  cout<<"Nodes = "<<T.n_nodes()
+      <<"   internal = "<<T.n_nodes() - T.n_leaves()
+      <<"   leaves = "<<T.n_leaves()<<"\n";
+  cout<<"Branches = "<<T.n_branches()
+      <<"   internal = "<<T.n_branches() - T.n_leafbranches()
+      <<"   leaf = "<<T.n_leafbranches()<<"\n";
+  cout<<"Labels = "<<T.get_sequences().size()<<"\n";
+  int D2 = 0;
+  int N13 = 0;
+  for(int i=0;i<T.n_nodes();i++)
+  {
+    int d = T[i].degree();
+    if (d == 2)
+      D2++;
+    if (d != 1 and d != 3)
+      N13++;
+  }
+  cout<<"degree 2 nodes = "<<D2<<endl;
+  cout<<"degree 4+ nodes = "<<N13-D2<<endl;
+  cout<<"Simple bifurcating: ";
+  if (N13 == 0 and T.n_branches() == 2*T.n_leaves()-3)
+    cout<<"yes\n";
+  else
+    cout<<"no\n";
+  cout<<"Multifurcating: ";
+  if (N13 > D2)
+    cout<<"yes";
+  else
+    cout<<"no";
+  cout<<endl;
+}
+
 int main(int argc,char* argv[]) 
 { 
   try 
@@ -81,6 +116,12 @@ int main(int argc,char* argv[])
     //-------------- Load Partitions -----------------//
     vector<Partition> partitions;
     int start = 0;
+    if (args.count("info"))
+    {
+      describe_tree(T);
+      exit(1);
+    }
+
     if (not args.count("all"))
       start = T.n_leafbranches();
 
