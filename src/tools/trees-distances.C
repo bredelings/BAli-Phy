@@ -280,17 +280,17 @@ int topology_distance2(const tree_record& t1, const tree_record& t2)
 
 double robinson_foulds_distance2(const tree_record& t1, const tree_record& t2)
 {
-  return topology_distance2(t1,t2) * 0.5;
+  return topology_distance2(t1,t2);
 }
 
 double branch_distance2(const tree_record& t1, const tree_record& t2)
 {
-  return topology_distance2(t1,t2) * 0.5;
+  return topology_distance2(t1,t2);
 }
 
 double internal_branch_distance2(const tree_record& t1, const tree_record& t2)
 {
-  return topology_distance2(t1,t2) * 0.5;
+  return topology_distance2(t1,t2);
 }
 
 int main(int argc,char* argv[]) 
