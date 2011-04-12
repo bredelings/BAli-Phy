@@ -196,22 +196,6 @@ void check_supplied_filenames(int n,vector<string>& files, bool exact=true)
     cerr<<"Warning: ignoring "<<files.size()-n<<" extra filenames."<<endl;
 }
 
-double max(const valarray<double>& v)
-{
-  double m=v[0];
-  for(int i=1;i<v.size();i++)
-    m = std::max(m,v[i]);
-  return m;
-}
-
-double min(const valarray<double>& v)
-{
-  double m=v[0];
-  for(int i=1;i<v.size();i++)
-    m = std::min(m,v[i]);
-  return m;
-}
-
 void report_distances(const valarray<double>& distances,
 		      const string& name,
 		      variables_map& args

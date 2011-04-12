@@ -122,5 +122,22 @@ namespace statistics {
   double autocorrelation_time(const std::vector<double>& x, unsigned max=0);
 
   double probability_x_less_than_y(const std::valarray<double>& x, const std::valarray<double>& y);
+
+  inline double max(const std::valarray<double>& v)
+  {
+    double m=v[0];
+    for(int i=1;i<v.size();i++)
+      m = std::max(m,v[i]);
+    return m;
+  }
+
+  inline double min(const std::valarray<double>& v)
+  {
+    double m=v[0];
+    for(int i=1;i<v.size();i++)
+      m = std::min(m,v[i]);
+    return m;
+  }
+
 }
 #endif
