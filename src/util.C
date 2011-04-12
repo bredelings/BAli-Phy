@@ -372,10 +372,8 @@ void remove_elements(vector<int>& v, const vector<int>& e)
     remove_element(v,e[i]);
 }
 
-void check_supplied_filenames(int n,vector<string>& files, bool exact)
+void check_supplied_filenames(int n,const vector<string>& files, bool exact)
 {
-  if (files.size() == n-1)
-    files.insert(files.begin(),"-");
   if (files.size() == n)
     return;
 

@@ -533,7 +533,7 @@ void remove_element(std::vector<int>& v, const  int e);
 
 void remove_elements(std::vector<int>& v, const std::vector<int>& e);
 
-void check_supplied_filenames(int n, std::vector<std::string>& files, bool exact=true);
+void check_supplied_filenames(int n, const std::vector<std::string>& files, bool exact=true);
 
 extern int log_verbose;
 #endif
