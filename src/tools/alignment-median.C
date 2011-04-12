@@ -32,6 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "alignment-util.H"
 #include "distance-methods.H"
+#include "distance-report.H"
 #include "io.H"
 
 #include <boost/program_options.hpp>
@@ -77,6 +78,10 @@ variables_map parse_cmd_line(int argc,char* argv[])
   analysis.add_options()
     ("metric", value<string>()->default_value("splits"),"type of distance: pairs, splits, splits2")
     ("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, median, diameter")
+    ("CI",value<double>()->default_value(0.95),"Confidence interval size.")
+    ("mean", "Show mean and standard deviation")
+    ("median", "Show median and confidence interval")
+    ("minmax", "Show minumum and maximum distances")
     ;
 
   options_description visible("All options");
@@ -247,10 +252,9 @@ int main(int argc,char* argv[])
       alignment_sample both = A1s;
       both.append(A2s);
 
-      ublas::matrix<double> D1 = distances(A1s,metric_fn);
-      ublas::matrix<double> D2 = distances(A2s,metric_fn);
       ublas::matrix<double> D  = distances(both,metric_fn);
 
+      report_compare(args, D, A1s.size(), A2s.size());
     }
     else if (analysis == "median") 
     {
@@ -306,47 +310,48 @@ int main(int argc,char* argv[])
 
       ublas::matrix<double> D = distances(As, metric_fn);
 
-      cout<<"diameter = "<<diameter(D)<<endl;
+      diameter(D,"1",args);
     }
-    
-    alignment_sample As(args, files[0]);
-
-    ublas::matrix<double> D = distances(As, metric_fn);
-
-    //----------- accumulate distances ------------- //
-    vector<double> ave_distances( As.size() , 0);
-    for(int i=0;i<ave_distances.size();i++)
-      for(int j=0;j<i;j++) {
-	ave_distances[i] += D(i,j);
-	ave_distances[j] += D(i,j);
-      }
-    for(int i=0;i<ave_distances.size();i++)
-      ave_distances[i] /= (D.size1()-1);
-    
-    int argmin = ::argmin(ave_distances);
-
-    // Get a list of alignments in decreasing order of E D(i,A)
-    vector<int> items = iota<int>(As.size());
-    sort(items.begin(),items.end(),sequence_order<double>(ave_distances));
-
-    for(int i=0;i<As.size();i++) 
+    else if (analysis == "compression")
     {
-      int j = items[i];
-      cerr<<"alignment = "<<i<<"   length = "<<As.Ms[j].size1();
-      cerr<<"   E D = "<<ave_distances[j]
-	       <<"   E D1 = "<<ave_distances[argmin];
-      cerr<<endl;
+      alignment_sample As(args, files[0]);
+
+      ublas::matrix<double> D = distances(As, metric_fn);
+
+      //----------- accumulate distances ------------- //
+      vector<double> ave_distances( As.size() , 0);
+      for(int i=0;i<ave_distances.size();i++)
+	for(int j=0;j<i;j++) {
+	  ave_distances[i] += D(i,j);
+	  ave_distances[j] += D(i,j);
+	}
+      for(int i=0;i<ave_distances.size();i++)
+	ave_distances[i] /= (D.size1()-1);
+
+      int argmin = ::argmin(ave_distances);
+
+      // Get a list of alignments in decreasing order of E D(i,A)
+      vector<int> items = iota<int>(As.size());
+      sort(items.begin(),items.end(),sequence_order<double>(ave_distances));
+
+      for(int i=0;i<As.size();i++) 
+	{
+	  int j = items[i];
+	  cerr<<"alignment = "<<i<<"   length = "<<As.Ms[j].size1();
+	  cerr<<"   E D = "<<ave_distances[j]
+	      <<"   E D1 = "<<ave_distances[argmin];
+	  cerr<<endl;
+	}
+
+
+      double total=0;
+      for(int i=1;i<items.size();i++) {
+	for(int j=0;j<i;j++)
+	  total += D(items[i], items[j]);
+	
+	cerr<<"fraction = "<<double(i)/(items.size()-1)<<"     AveD = "<<double(total)/(i*i+i)*2<<endl;
+      }
     }
-
-
-    double total=0;
-    for(int i=1;i<items.size();i++) {
-      for(int j=0;j<i;j++)
-	total += D(items[i], items[j]);
-
-      cerr<<"fraction = "<<double(i)/(items.size()-1)<<"     AveD = "<<double(total)/(i*i+i)*2<<endl;
-    }
-    
   }
   catch (exception& e) {
     cerr<<"alignment-median: Error! "<<e.what()<<endl;

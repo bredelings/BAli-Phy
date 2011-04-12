@@ -142,7 +142,7 @@ alignment_gild_LDADD = ${ATLAS_LIBS}
 #---------------------------------------------------------------
 
 alignment_median_SOURCES = tools/alignment-median.C alignment.C alphabet.C sequence.C util.C \
-	tree.C sequencetree.C sequence-format.C alignment-util.C io.C
+	tree.C sequencetree.C sequence-format.C alignment-util.C io.C tools/distance-report.C tools/statistics.C
 
 #---------------------------------------------------------------
 
@@ -299,7 +299,7 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 
 trees_distances_SOURCES = tools/trees-distances.C tree.C \
 	sequencetree.C tools/tree-dist.C tools/partition.C util.C \
-	tree-util.C tools/statistics.C io.C
+	tree-util.C tools/statistics.C io.C tools/distance-report.C
 
 #---------------------------------------------------------------
 
