@@ -872,7 +872,7 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
     if (n1 != n2) { 
       // inverse of the mapping n2->n1
       if (n2.size() < n1.size())
-	throw myexception()<<"Read in alignment with too few sequences!";
+	throw myexception()<<"Read in alignment with too few sequences! (Got "<<n2.size()<<", expected "<<n1.size()<<")";
       vector<int> new_order = compute_mapping(n1,n2);
       A = reorder_sequences(A,new_order);
     }
