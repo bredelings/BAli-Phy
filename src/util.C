@@ -372,3 +372,16 @@ void remove_elements(vector<int>& v, const vector<int>& e)
     remove_element(v,e[i]);
 }
 
+void check_supplied_filenames(int n,vector<string>& files, bool exact)
+{
+  if (files.size() == n-1)
+    files.insert(files.begin(),"-");
+  if (files.size() == n)
+    return;
+
+  if (files.size() < n)
+    throw myexception()<<"Wanted "<<n<<" filenames, but got only "<<files.size()<<".";
+  if (exact and files.size() > n)
+    cerr<<"Warning: ignoring "<<files.size()-n<<" extra filenames."<<endl;
+}
+

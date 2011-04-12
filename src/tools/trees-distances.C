@@ -183,19 +183,6 @@ double distance(const tree_record& T,
   return D;
 }
 
-void check_supplied_filenames(int n,vector<string>& files, bool exact=true)
-{
-  if (files.size() == n-1)
-    files.insert(files.begin(),"-");
-  if (files.size() == n)
-    return;
-
-  if (files.size() < n)
-    throw myexception()<<"Wanted "<<n<<" filenames, but got only "<<files.size()<<".";
-  if (exact and files.size() > n)
-    cerr<<"Warning: ignoring "<<files.size()-n<<" extra filenames."<<endl;
-}
-
 void report_distances(const valarray<double>& distances,
 		      const string& name,
 		      variables_map& args
