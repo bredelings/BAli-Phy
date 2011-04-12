@@ -32,6 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "alignment-util.H"
 #include "distance-methods.H"
+#include "io.H"
 
 #include <boost/program_options.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
@@ -52,48 +53,57 @@ using po::variables_map;
 
 using namespace std;
 
-void do_setup(const variables_map& args,vector<alignment>& alignments) 
-{
-  //------------ Try to load alignments -----------//
-  int maxalignments = args["max-alignments"].as<int>();
-  unsigned skip = args["skip"].as<unsigned>();
-
-  // --------------------- try ---------------------- //
-  if (log_verbose) cerr<<"alignment-median: Loading alignments...";
-  list<alignment> As = load_alignments(cin,load_alphabets(args),skip,maxalignments);
-  alignments.insert(alignments.begin(),As.begin(),As.end());
-  if (log_verbose) cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
-  if (not alignments.size())
-    throw myexception()<<"Alignment sample is empty.";
-}
-
-
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
   using namespace po;
 
   // named options
-  options_description all("Allowed options");
-  all.add_options()
-    ("help", "Produce help message")
-    ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
-    ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-    ("metric", value<string>()->default_value("splits"),"type of distance: pairs, splits, splits2")
-    ("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, median, diameter")
+  options_description invisible("Invisible options");
+  invisible.add_options()
+    ("files",value<vector<string> >()->composing(),"tree samples to examine")
+    ;
+
+  // named options
+  options_description input("Input options");
+  input.add_options()
+    ("help,h", "Produce help message")
+    ("skip,s",value<unsigned>()->default_value(0),"number of tree samples to skip")
+    ("max,m",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+    ("verbose,v","Output more log messages on stderr.")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ;
 
+  options_description analysis("Analysis options");
+  analysis.add_options()
+    ("metric", value<string>()->default_value("splits"),"type of distance: pairs, splits, splits2")
+    ("analysis", value<string>()->default_value("matrix"), "Analysis: matrix, median, diameter")
+    ;
+
+  options_description visible("All options");
+  visible.add(input).add(analysis);
+
+  options_description all("All options");
+  all.add(invisible).add(input).add(analysis);
+
+  // positional options
+  positional_options_description p;
+  p.add("analysis", 1);
+  p.add("files", -1);
+  
   variables_map args;     
-  store(parse_command_line(argc, argv, all), args);
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
   notify(args);    
 
   if (args.count("help")) {
     cout<<"Usage: alignment-median [OPTIONS] < in-file\n";
     cout<<"Don't use this program.  It doesn't work.\n";
     cout<<"Find the 'median' alignment in a list of alignments.\n\n";
-    cout<<all<<"\n";
+    cout<<visible<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -101,16 +111,16 @@ variables_map parse_cmd_line(int argc,char* argv[])
 typedef long int (*distance_fn)(const ublas::matrix<int>& ,const vector< vector<int> >&,const ublas::matrix<int>& ,const vector< vector<int> >&);
 
 ublas::matrix<double> distances(const vector<ublas::matrix<int> >& Ms,
-				const vector< vector< vector<int> > >& column_indexes,
+				const vector< vector< vector<int> > >& column_indices,
 				distance_fn distance)
 {
-  assert(Ms.size() == column_indexes.size());
+  assert(Ms.size() == column_indices.size());
   ublas::matrix<double> D(Ms.size(),Ms.size());
 
   for(int i=0;i<D.size1();i++) 
     for(int j=0;j<D.size2();j++)
-      D(i,j) = distance(Ms[i],column_indexes[i],
-			Ms[j],column_indexes[j]);
+      D(i,j) = distance(Ms[i],column_indices[i],
+			Ms[j],column_indices[j]);
   return D;
 }
 
@@ -126,6 +136,65 @@ double diameter(const ublas::matrix<double>& D)
   return total/N;
 }
 
+struct alignment_sample
+{
+  vector<alignment> alignments;
+  vector<ublas::matrix<int> > Ms;
+  vector< vector< vector<int> > >  column_indices;
+
+  void load(const variables_map& args, const string& filename);
+
+  void append(const alignment_sample&);
+
+  unsigned size() const {return alignments.size();}
+
+  const alignment& operator[](int i) const {return alignments[i];}
+
+  alignment_sample(const variables_map& args, const string& filename)
+  {
+    load(args,filename);
+
+    if (not alignments.size())
+      throw myexception()<<"Alignment sample is empty.";
+  }
+};
+
+void alignment_sample::append(const alignment_sample& A)
+{
+  alignments.insert(alignments.begin(), A.alignments.begin(), A.alignments.end());
+  Ms.insert(Ms.begin(), A.Ms.begin(), A.Ms.end());
+  column_indices.insert(column_indices.begin(), A.column_indices.begin(), A.column_indices.end());
+}
+
+void alignment_sample::load(const variables_map& args, const string& filename)
+{
+  //------------ Try to load alignments -----------//
+  int maxalignments = args["max"].as<int>();
+  unsigned skip = args["skip"].as<unsigned>();
+
+  if (log_verbose) cerr<<"alignment-median: Loading alignments...";
+
+  istream_or_ifstream input(cin,"-",filename,"alignment file");
+
+  list<alignment> As = load_alignments(input,load_alphabets(args),skip,maxalignments);
+
+  if (log_verbose) cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
+
+  foreach(a,As)
+  {
+    // Chop off internal node sequences, if any
+    *a = chop_internal(*a);
+    Ms.push_back(M(*a));
+    column_indices.push_back( column_lookup(*a) );
+  }
+  alignments.insert(alignments.end(),As.begin(),As.end());
+}
+
+ublas::matrix<double> distances(const alignment_sample& A, distance_fn distance)
+{
+  return distances(A.Ms, A.column_indices, distance);
+}
+
 
 int main(int argc,char* argv[]) 
 { 
@@ -137,41 +206,27 @@ int main(int argc,char* argv[])
 
     string metric = args["metric"].as<string>();
 
-    //------------ Load alignment and tree ----------//
-    vector<alignment> alignments;
-    vector<ublas::matrix<int> > Ms;
-
-    do_setup(args,alignments);
-    for(int i=0;i<alignments.size();i++)
-      alignments[i] = chop_internal(alignments[i]);
-
-    if (alignments.size() > 1) {
-      int n = alignments[0].n_sequences();
-      assert(alignments[1].n_sequences() == n);
-      assert(alignments[1].seqlength(n-1) == alignments[0].seqlength(n-1));
-    }
-
-    //--------- Construct alignment indexes ---------//
-    for(int i=0;i<alignments.size();i++)
-      Ms.push_back(M(alignments[i]));
-
-    vector< vector< vector<int> > >  column_indexes;
-    for(int i = 0;i<alignments.size();i++)
-      column_indexes.push_back( column_lookup(alignments[i]) );
+    //--------------- filenames ---------------//
+    vector<string> files;
+    if (args.count("files"))
+      files = args["files"].as<vector<string> >();
 
     //--------- Determine distance function -------- //
-    distance_fn distance;
+    distance_fn metric_fn;
 
-    distance = splits_distance;
+    metric_fn = splits_distance;
     if (metric == "splits2")
-      distance = splits_distance2;
+      metric_fn = splits_distance2;
     else if (metric == "pairwise")
-      distance = pairs_distance;
+      metric_fn = pairs_distance;
       
     //---------- write out distance matrix --------- //
     if (analysis == "matrix") 
     {
-      ublas::matrix<double> D = distances(Ms,column_indexes,distance);
+      check_supplied_filenames(1,files,false);
+
+      alignment_sample As(args, files[0]);
+      ublas::matrix<double> D = distances(As.Ms, As.column_indices, metric_fn);
 
       for(int i=0;i<D.size1();i++) {
 	vector<double> v(D.size2());
@@ -182,12 +237,31 @@ int main(int argc,char* argv[])
 
       exit(0);
     }
+    else if (analysis == "compare")
+    {
+      check_supplied_filenames(2,files);
+
+      alignment_sample A1s(args, files[0]);
+      alignment_sample A2s(args, files[1]);
+
+      alignment_sample both = A1s;
+      both.append(A2s);
+
+      ublas::matrix<double> D1 = distances(A1s,metric_fn);
+      ublas::matrix<double> D2 = distances(A2s,metric_fn);
+      ublas::matrix<double> D  = distances(both,metric_fn);
+
+    }
     else if (analysis == "median") 
     {
-      ublas::matrix<double> D = distances(Ms,column_indexes,distance);
+      check_supplied_filenames(1,files,false);
+
+      alignment_sample As(args, files[0]);
+
+      ublas::matrix<double> D = distances(As, metric_fn);
 
       //----------- accumulate distances ------------- //
-      vector<double> ave_distances( Ms.size() , 0);
+      vector<double> ave_distances( As.size() , 0);
       for(int i=0;i<ave_distances.size();i++)
 	for(int j=0;j<i;j++) {
 	  ave_distances[i] += D(i,j);
@@ -198,17 +272,17 @@ int main(int argc,char* argv[])
 
       int argmin = ::argmin(ave_distances);
 
-      cout<<alignments[argmin]<<endl;
+      cout<<As[argmin]<<endl;
 
       // Get a list of alignments in decreasing order of E D(i,A)
-      vector<int> items = iota<int>(Ms.size());
+      vector<int> items = iota<int>(As.size());
       sort(items.begin(),items.end(),sequence_order<double>(ave_distances));
 
       cerr<<endl;
-      for(int i=0;i<Ms.size() and i < 5;i++) 
+      for(int i=0;i<As.size() and i < 5;i++) 
       {
 	int j = items[i];
-	cerr<<"alignment = "<<i<<"   length = "<<Ms[j].size1();
+	cerr<<"alignment = "<<i<<"   length = "<<As.Ms[j].size1();
 	cerr<<"   E D = "<<ave_distances[j]<<endl;
       }
 
@@ -226,15 +300,21 @@ int main(int argc,char* argv[])
     }
     else if (analysis == "diameter")
     {
-      ublas::matrix<double> D = distances(Ms,column_indexes,distance);
+      check_supplied_filenames(1,files,false);
+
+      alignment_sample As(args, files[0]);
+
+      ublas::matrix<double> D = distances(As, metric_fn);
 
       cout<<"diameter = "<<diameter(D)<<endl;
     }
     
-    ublas::matrix<double> D = distances(Ms,column_indexes,distance);
+    alignment_sample As(args, files[0]);
+
+    ublas::matrix<double> D = distances(As, metric_fn);
 
     //----------- accumulate distances ------------- //
-    vector<double> ave_distances( Ms.size() , 0);
+    vector<double> ave_distances( As.size() , 0);
     for(int i=0;i<ave_distances.size();i++)
       for(int j=0;j<i;j++) {
 	ave_distances[i] += D(i,j);
@@ -246,13 +326,13 @@ int main(int argc,char* argv[])
     int argmin = ::argmin(ave_distances);
 
     // Get a list of alignments in decreasing order of E D(i,A)
-    vector<int> items = iota<int>(Ms.size());
+    vector<int> items = iota<int>(As.size());
     sort(items.begin(),items.end(),sequence_order<double>(ave_distances));
 
-    for(int i=0;i<Ms.size();i++) 
+    for(int i=0;i<As.size();i++) 
     {
       int j = items[i];
-      cerr<<"alignment = "<<i<<"   length = "<<Ms[j].size1();
+      cerr<<"alignment = "<<i<<"   length = "<<As.Ms[j].size1();
       cerr<<"   E D = "<<ave_distances[j]
 	       <<"   E D1 = "<<ave_distances[argmin];
       cerr<<endl;
