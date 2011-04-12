@@ -210,7 +210,7 @@ if (-z "Results/consensus" || ! more_recent_than_all_of("Results/consensus",[@tr
     my $select_trees_arg = "$max_arg $skip $subsample_string $prune_arg";
     my $levels_arg = "--support-levels=Results/c-levels.plot";
     $levels_arg = "$levels_arg --extended-support-levels=Results/extended-c-levels.plot" if ($sub_partitions);
-    `trees-consensus @tree_files $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.tree --report=Results/consensus`;
+    `trees-consensus @tree_files $select_trees_arg $min_support_arg $sub_string $consensus_arg $levels_arg --map-tree=Results/MAP.tree --greedy-consensus=Results/greedy.tree --report=Results/consensus`;
 
 }
 print "done.\n";
@@ -249,6 +249,9 @@ for my $cvalue (@tree_consensus_values)
 }
 push @trees, "MAP";
 $tree_name{"MAP"} = "MAP";
+
+push @trees, "greedy";
+$tree_name{"greedy"} = "greedy";
 
 &draw_trees();
 
@@ -1085,6 +1088,9 @@ sub draw_trees
 	$prune_arg = "--prune $prune" if defined($prune);
 	
     }
+
+    `cd Results ; draw-tree greedy.tree --layout=equal-daylight --no-shade` if (-e 'Results/greedy.tree');
+    `cd Results ; draw-tree greedy.tree --layout=equal-daylight --no-shade --output=svg ` if (-e 'Results/greedy.tree');
 
     `cd Results ; draw-tree MAP.tree --layout=equal-daylight --no-shade` if (-e 'Results/MAP.tree');
     `cd Results ; draw-tree MAP.tree --layout=equal-daylight --no-shade --output=svg ` if (-e 'Results/MAP.tree');
