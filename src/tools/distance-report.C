@@ -153,13 +153,21 @@ void report_compare(variables_map& args, const ublas::matrix<double>& D, int N1,
   
   //NOTE: D12 != D11 when 1==2 because D12 includes the zero's on the diagonal.
   
+  if (N1 > 1)
   cout<<"    P(D12 > D11) = "<<fair_probability_x_less_than_y(d11,d12)<<endl;
+  if (N2 > 1)
   cout<<"    P(D12 > D22) = "<<fair_probability_x_less_than_y(d22,d12)<<endl;
+  if (N1 > 1 or N2 > 1)
   cout<<endl;
+  if (N1 > 1)
   cout<<"    P(D2(1) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d12_2)<<endl;
+  if (N2 > 1)
   cout<<"    P(D1(2) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d12_1)<<endl;
+  if (N1 > 1 or N2 > 1)
   cout<<endl;
+  if (N1 > 1)
   cout<<"    P(D1(2) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d12_1)<<endl;
+  if (N2 > 1)
   cout<<"    P(D2(1) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d12_2)<<endl;
 }
 
