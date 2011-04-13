@@ -74,6 +74,7 @@ void diameter(const ublas::matrix<double>& D,const string& name,variables_map& a
   string name2 = string("D")+name+"("+name+")";
   report_distances(d11,name1, args);cout<<endl;
   report_distances(d1 ,name2, args);
+  cout<<endl;
 }
 
 double fair_probability_x_less_than_y(const valarray<double>& x,const valarray<double>& y)
@@ -127,10 +128,10 @@ void report_compare(variables_map& args, const ublas::matrix<double>& D, int N1,
   }
   
   cout<<endl;
-  diameter(D1,"1",args);cout<<endl;
+  diameter(D1,"1",args);
+
   cout<<endl;
   diameter(D2,"2",args);cout<<endl;
-  cout<<endl;
 
   valarray<double> d12(0.0, N1*N2);
   valarray<double> d12_1(0.0, N1);
@@ -147,28 +148,32 @@ void report_compare(variables_map& args, const ublas::matrix<double>& D, int N1,
   d12_2 /= N1;
   
   report_distances(d12,"D12  ",args);cout<<endl;
-  report_distances(d12_1 ,"D1(2)",args);cout<<endl;
-  report_distances(d12_2 ,"D2(1)",args);cout<<endl;
-  cout<<endl;
+  if (N2 > 1) {
+    report_distances(d12_1 ,"D1(2)",args);cout<<endl;
+  }
+  if (N1 > 1)
+  {
+    report_distances(d12_2 ,"D2(1)",args);cout<<endl;
+  }
   
   //NOTE: D12 != D11 when 1==2 because D12 includes the zero's on the diagonal.
   
   if (N1 > 1)
-  cout<<"    P(D12 > D11) = "<<fair_probability_x_less_than_y(d11,d12)<<endl;
+    cout<<"    P(D12 > D11) = "<<fair_probability_x_less_than_y(d11,d12)<<endl;
   if (N2 > 1)
-  cout<<"    P(D12 > D22) = "<<fair_probability_x_less_than_y(d22,d12)<<endl;
+    cout<<"    P(D12 > D22) = "<<fair_probability_x_less_than_y(d22,d12)<<endl;
   if (N1 > 1 or N2 > 1)
-  cout<<endl;
+    cout<<endl;
   if (N1 > 1)
-  cout<<"    P(D2(1) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d12_2)<<endl;
+    cout<<"    P(D2(1) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d12_2)<<endl;
   if (N2 > 1)
-  cout<<"    P(D1(2) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d12_1)<<endl;
+    cout<<"    P(D1(2) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d12_1)<<endl;
   if (N1 > 1 or N2 > 1)
-  cout<<endl;
+    cout<<endl;
   if (N1 > 1)
-  cout<<"    P(D1(2) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d12_1)<<endl;
+    cout<<"    P(D1(2) > D1(1)) = "<<fair_probability_x_less_than_y(d1,d12_1)<<endl;
   if (N2 > 1)
-  cout<<"    P(D2(1) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d12_2)<<endl;
+    cout<<"    P(D2(1) > D2(2)) = "<<fair_probability_x_less_than_y(d2,d12_2)<<endl;
 }
 
 
