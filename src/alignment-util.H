@@ -132,6 +132,9 @@ long int splits_distance2(const alignment& A1,const alignment& A2);
 long int splits_distance2(const ublas::matrix<int>& M1,const std::vector<std::vector<int> >& column_indices1,
 			 const ublas::matrix<int>& M2,const std::vector<std::vector<int> >& column_indices2);
 
+std::list<alignment> load_alignments(std::istream& ifile, const std::vector<std::string>& names, const alphabet& a,
+				     int skip, int maxalignments);
+
 std::list<alignment> load_alignments(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets, 
 				     int skip, int maxalignments);
 

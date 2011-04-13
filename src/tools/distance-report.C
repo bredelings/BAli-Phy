@@ -49,6 +49,12 @@ void report_distances(const valarray<double>& distances,
 
 void diameter(const ublas::matrix<double>& D,const string& name,variables_map& args)
 {
+  if (D.size1() == 1)
+  {
+    cout<<"Group "<<name<<" has only 1 item."<<endl;
+    return;
+  }
+
   const unsigned N = D.size1();
 
   int k=0;

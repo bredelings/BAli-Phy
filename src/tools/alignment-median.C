@@ -149,11 +149,13 @@ struct alignment_sample
 
   void load(const variables_map& args, const string& filename);
 
-  void append(const alignment_sample&);
-
   unsigned size() const {return alignments.size();}
 
   const alignment& operator[](int i) const {return alignments[i];}
+
+  vector<string> sequence_names() const {return ::sequence_names(alignments[0]);}
+
+  const alphabet& get_alphabet() const {return alignments[0].get_alphabet();}
 
   alignment_sample(const variables_map& args, const string& filename)
   {
@@ -163,13 +165,6 @@ struct alignment_sample
       throw myexception()<<"Alignment sample is empty.";
   }
 };
-
-void alignment_sample::append(const alignment_sample& A)
-{
-  alignments.insert(alignments.begin(), A.alignments.begin(), A.alignments.end());
-  Ms.insert(Ms.begin(), A.Ms.begin(), A.Ms.end());
-  column_indices.insert(column_indices.begin(), A.column_indices.begin(), A.column_indices.end());
-}
 
 void alignment_sample::load(const variables_map& args, const string& filename)
 {
@@ -181,7 +176,14 @@ void alignment_sample::load(const variables_map& args, const string& filename)
 
   istream_or_ifstream input(cin,"-",filename,"alignment file");
 
-  list<alignment> As = load_alignments(input,load_alphabets(args),skip,maxalignments);
+  list<alignment> As;
+  if (not alignments.size())
+    As = load_alignments(input,load_alphabets(args),skip,maxalignments);
+  else
+  {
+    const alignment& A = alignments[0];
+    As = load_alignments(input, sequence_names(), get_alphabet(), skip,maxalignments);
+  }
 
   if (log_verbose) cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
 
@@ -246,15 +248,14 @@ int main(int argc,char* argv[])
     {
       check_supplied_filenames(2,files);
 
-      alignment_sample A1s(args, files[0]);
-      alignment_sample A2s(args, files[1]);
-
-      alignment_sample both = A1s;
-      both.append(A2s);
+      alignment_sample both(args,files[0]);
+      int N1 = both.size();
+      both.load(args, files[1]);
+      int N2 = both.size() - N1;
 
       ublas::matrix<double> D  = distances(both,metric_fn);
 
-      report_compare(args, D, A1s.size(), A2s.size());
+      report_compare(args, D, N1, N2);
     }
     else if (analysis == "median") 
     {

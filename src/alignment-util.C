@@ -796,7 +796,210 @@ using std::vector;
 using std::string;
 using std::list;
 
-list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets, 
+istream& find_alignment(istream& ifile)
+{
+  string line;
+  while (ifile and ifile.peek() != '>')
+  {
+    if (not portable_getline(ifile,line)) break;
+  }
+
+  return ifile;
+}
+
+istream& skip_alignment(istream& ifile)
+{
+  string line;
+  do {
+    portable_getline(ifile,line);
+  } while (ifile and line.size());
+
+  return ifile;
+}
+
+istream& find_and_skip_alignment(istream& ifile)
+{
+  if (find_alignment(ifile))
+    skip_alignment(ifile);
+  return ifile;
+}
+
+istream& find_and_skip_alignments(istream& ifile, int n)
+{
+  for(int i=0;i<n and ifile;i++)
+    find_and_skip_alignment(ifile);
+  return ifile;
+}
+
+alignment load_next_alignment(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets)
+{
+  string line;
+
+  if (not find_alignment(ifile))
+    throw myexception()<<"Error: no alignment found.\n";
+
+  // READ the alignment
+  try {
+    alignment A;
+    A.load(alphabets, sequence_format::read_fasta, ifile);
+    
+    // strip out empty columns
+    remove_empty_columns(A);
+    
+    // complain if there are no sequences in the alignment
+    if (A.n_sequences() == 0) 
+      throw myexception(string("Alignment didn't contain any sequences!"));
+    
+    return A;
+  }
+  catch (std::exception& e) {
+    throw myexception()<<"Error loading alignment.\n  Exception: "<<e.what()<<"\n";
+  }
+}
+
+alignment load_next_alignment(istream& ifile, shared_ptr<const alphabet> a)
+{
+  vector<shared_ptr<const alphabet> > alphabets;
+  alphabets.push_back(a);
+  return load_next_alignment(ifile,alphabets);
+}
+
+alignment load_next_alignment(istream& ifile, const alphabet& a)
+{
+  shared_ptr<const alphabet> aa ( a.clone() );
+  return load_next_alignment(ifile,aa);
+}
+
+alignment reorder_sequences(const alignment& A, const vector<string>& names)
+{
+  // Check the names and stuff.
+  vector<string> n2 = sequence_names(A);
+
+  if (names == n2) return A;
+
+  alignment A2;
+  try {
+    vector<int> new_order = compute_mapping(names,n2);
+
+    A2 = reorder_sequences(A,new_order);
+  }
+  catch(bad_mapping<string>& e)
+  {
+    e.clear();
+    if (e.size2 < e.size1)
+      e<<"Alignment has too few sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
+
+    if (e.size1 < e.size2)
+      e<<"Alignmnent has too many sequences! (Got "<<A.n_sequences()<<", expected "<<names.size()<<")\n";
+
+    if (e.from == 0)
+      e<<"Alignment is missing sequence \""<<e.missing<<"\".";
+    else
+      e<<"Alignment has extra sequence \""<<e.missing<<"\".";
+    throw e;
+  }
+
+  return A2;
+}
+
+alignment load_next_alignment(istream& ifile, const alphabet& a, const vector<string>& names)
+{
+  shared_ptr<const alphabet> aa ( a.clone() );
+  alignment A = load_next_alignment(ifile,aa);
+  return reorder_sequences(A,names);
+}
+
+int thin_alignments(list<alignment>& alignments)
+{
+  int remaining = 0;
+
+  // Remove every other alignment
+  typedef list<alignment>::iterator iterator_t;
+
+  for(iterator_t loc = alignments.begin();loc!=alignments.end();) 
+  {
+    iterator_t j = loc++; 
+
+    alignments.erase(j);
+
+    if (loc == alignments.end())  break;
+
+    loc++;
+    remaining++;
+  }
+
+  return remaining;
+}
+
+bool thin_alignments(list<alignment>& alignments,int max)
+{
+  int total = alignments.size();
+  if (total <= max)  return false;
+
+  assert(total <= max*2);
+
+  // We have this many extra alignments
+  const int extra = total - max;
+  
+  vector<int> kill(extra);
+  for(int i=0;i<kill.size();i++)
+    kill[i] = int( double(i+0.5)*total/extra);
+  std::reverse(kill.begin(),kill.end());
+  
+  int i=0;
+  typedef list<alignment>::iterator iterator_t;
+  for(iterator_t loc = alignments.begin();loc!=alignments.end();i++) {
+    if (i == kill.back()) {
+      kill.pop_back();
+      iterator_t j = loc++;
+      alignments.erase(j);
+      total--;
+    }
+    else
+      loc++;
+  }
+  assert(kill.empty());
+  return true;
+}
+
+istream& load_more_alignments(list<alignment>& alignments, istream& ifile, const vector<string>& names, 
+			   const alphabet& a, int maxalignments, int subsample=1) 
+{
+  int total = alignments.size();
+
+  while(find_alignment(ifile))
+  {
+    try {
+      // READ the next alignment
+      alignment A = load_next_alignment(ifile,a,names);
+
+      // STORE the alignment
+      alignments.push_back(A);
+      total++;
+    }
+    catch (std::exception& e) {
+      cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
+      cerr<<"  Exception: "<<e.what()<<endl;
+      break;
+    }
+
+    // If there are too many alignments
+    if (total > 2*maxalignments) {
+      // start skipping twice as many alignments
+      subsample *= 2;
+
+      if (log_verbose) cerr<<"Went from "<<total;
+      total = thin_alignments(alignments);
+      if (log_verbose) cerr<<" to "<<total<<" alignments.\n";
+
+    }
+
+    // skip over alignments due to subsampling
+    find_and_skip_alignments(ifile,subsample-1);
+  }
+}
+
+list<alignment> load_alignments(istream& ifile, const vector<string>& names, const alphabet& a,
 				int skip, int maxalignments) 
 {
   list<alignment> alignments;
@@ -805,141 +1008,52 @@ list<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const al
   int subsample = 1;
   int total = 0;
 
-  alignment A;
-  string line;
-  int nth=0;
+  alignment A(a);
 
-  vector<string> n1;
+  find_and_skip_alignments(ifile,skip);
 
-  while(ifile) 
+  load_more_alignments(alignments,ifile,names,a,maxalignments);
+
+  //------------  If we have too many alignments--------------//
+  if (thin_alignments(alignments, maxalignments) and log_verbose)
   {
-    // CHECK if an alignment begins here
-    if (ifile.peek() != '>') {
-      string line;
-      portable_getline(ifile,line);
-      continue;
-    }
-
-    bool do_skip = false;
-
-    if (skip > 0) {
-      do_skip=true;
-      skip--;
-    }
-    else 
-    {
-      // Increment the counter SINCE we saw an alignment
-      nth++;
-
-      if (nth%subsample != 0) do_skip=true;
-    }
-
-    // Skip this alignment IF it isn't the right multiple
-    if (do_skip) {
-      string line;
-      do {
-	portable_getline(ifile,line);
-      } while (line.size());
-      continue;
-    }
-
-    // READ the next alignment
-    try {
-      if (alignments.empty()) {
-	A.load(alphabets,sequence_format::read_fasta,ifile);
-	n1 = sequence_names(A);
-      }
-      else 
-	ifile>>A;
-    }
-    catch (std::exception& e) {
-      cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
-      cerr<<"  Exception: "<<e.what()<<endl;
-      break;
-    }
-
-    // strip out empty columns
-    remove_empty_columns(A);
-
-    // complain if there are no sequences in the alignment
-    if (A.n_sequences() == 0) 
-      throw myexception(string("Alignment didn't contain any sequences!"));
-    
-
-    // Check the names and stuff.
-    vector<string> n2 = sequence_names(A);
-
-    if (n1 != n2) { 
-      // inverse of the mapping n2->n1
-      if (n2.size() < n1.size())
-	throw myexception()<<"Read in alignment with too few sequences! (Got "<<n2.size()<<", expected "<<n1.size()<<")";
-      vector<int> new_order = compute_mapping(n1,n2);
-      A = reorder_sequences(A,new_order);
-    }
-
-    // STORE the alignment if we're not going to subsample it
-    alignments.push_back(A);
-    total++;
-
-    // If there are too many alignments
-    if (total > 2*maxalignments) {
-      // start skipping twice as many alignments
-      subsample *= 2;
-
-      if (log_verbose) cerr<<"Went from "<<total;
-      // Remove every other alignment
-      typedef list<alignment>::iterator iterator_t;
-      for(iterator_t loc = alignments.begin();loc!=alignments.end();) {
-	iterator_t j = loc++;
-
-	alignments.erase(j);
-	total--;
-
-	if (loc == alignments.end()) 
-	  break;
-	else
-	  loc++;
-      }
-	
-      if (log_verbose) cerr<<" to "<<total<<" alignments.\n";
-
-    }
-  }
-
-
-  // If we have too many alignments
-  if (total > maxalignments) {
-    assert(total <= maxalignments*2);
-
-    // We have this many extra alignments
-    const int extra = total - maxalignments;
-
-    // Remove this many alignments from the array
-    if (log_verbose) cerr<<"Went from "<<total;
-
-    vector<int> kill(extra);
-    for(int i=0;i<kill.size();i++)
-      kill[i] = int( double(i+0.5)*total/extra);
-    std::reverse(kill.begin(),kill.end());
-
-    int i=0;
-    typedef list<alignment>::iterator iterator_t;
-    for(iterator_t loc = alignments.begin();loc!=alignments.end();i++) {
-      if (i == kill.back()) {
-	kill.pop_back();
-	iterator_t j = loc++;
-	alignments.erase(j);
-	total--;
-      }
-      else
-	loc++;
-    }
-    assert(kill.empty());
-    if (log_verbose) cerr<<" to "<<alignments.size()<<" alignments.\n";
+    cerr<<"Went from "<<total;
+    cerr<<" to "<<alignments.size()<<" alignments.\n";
   }
 
   return alignments;
 }
+
+std::list<alignment> load_alignments(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets, 
+				     int skip, int maxalignments)
+{
+  list<alignment> alignments;
+  
+  // we are using every 'skip-th' alignment
+  int subsample = 1;
+  int total = 0;
+
+  find_and_skip_alignments(ifile,skip);
+
+  alignment A = load_next_alignment(ifile,alphabets);
+
+  vector<string> names = sequence_names(A);
+
+  alignments.push_back(A);
+
+  load_more_alignments(alignments,ifile,names,A.get_alphabet(),maxalignments);
+
+  //------------  If we have too many alignments--------------//
+  if (thin_alignments(alignments, maxalignments) and log_verbose)
+  {
+    cerr<<"Went from "<<total;
+    cerr<<" to "<<alignments.size()<<" alignments.\n";
+  }
+
+  return alignments;
+}
+
+
 
 vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets) {
   vector<alignment> alignments;

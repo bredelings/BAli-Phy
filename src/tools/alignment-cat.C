@@ -73,7 +73,8 @@ vector<int> get_mapping(const vector<sequence>& S1, const vector<sequence>& S2)
     mapping = compute_mapping(names1,names2);
   }
   catch (const bad_mapping<string>& b) {
-    bad_mapping<string> b2(b.missing,b.from);
+    bad_mapping<string> b2 = b;
+    b2.clear();
     if (b.from == 0)
       b2<<"Couldn't find sequence '"<<b2.missing<<"'.";
     else

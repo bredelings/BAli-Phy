@@ -191,8 +191,9 @@ void remap_T_indices(SequenceTree& T,const vector<string>& names)
   }
   catch(const bad_mapping<string>& b)
   {
-    bad_mapping<string> b2(b.missing,b.from);
-    if (b.from == 0)
+    bad_mapping<string> b2 = b;
+    b2.clear();
+    if (b2.from == 0)
       b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in names.";
     else
       b2<<"Sequence '"<<b2.missing<<"' not found in the tree.";
@@ -218,7 +219,8 @@ void remap_T_indices(SequenceTree& T,const alignment& A)
   }
   catch(const bad_mapping<string>& b)
   {
-    bad_mapping<string> b2(b.missing,b.from);
+    bad_mapping<string> b2 = b;
+    b2.clear();
     if (b.from == 0)
       b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in alignment.";
     else
@@ -243,7 +245,8 @@ void remap_T_indices(SequenceTree& T1,const SequenceTree& T2)
   }
   catch(const bad_mapping<string>& b)
   {
-    bad_mapping<string> b2(b.missing,b.from);
+    bad_mapping<string> b2 = b;
+    b2.clear();
     if (b.from == 0)
       b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in second tree.";
     else
@@ -716,7 +719,8 @@ SequenceTree load_constraint_tree(const string& filename,const vector<string>& n
     remap_T_indices(constraint,names);
   }
   catch(const bad_mapping<string>& b) {
-    bad_mapping<string> b2(b.missing,b.from);
+    bad_mapping<string> b2 = b;
+    b2.clear();
     if (b.from == 0)
       b2<<"Constraint tree leaf sequence '"<<b2.missing<<"' not found in the alignment.";
     else

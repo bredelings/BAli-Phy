@@ -24,8 +24,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <sstream>
 
 class myexception: public std::exception {
+protected:
   std::string why;
 public:
+  void clear() {why.clear();}
+
   virtual const char* what() const throw() {return why.c_str();}
 
   template <typename T> myexception& operator<<(const T&);

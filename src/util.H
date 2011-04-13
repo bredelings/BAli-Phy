@@ -93,18 +93,48 @@ struct bad_mapping: public myexception
 
   int from;
 
-  bad_mapping(const T& t,int f)
-    : missing(t),from(f)
-  { }
+  int size1;
 
-  bad_mapping(const T& t,int f,const std::string& s)
+  int size2;
+
+  void flip() 
+  {
+    from = 1-from;
+    std::swap(size1,size2);
+    gen_message();
+  }
+
+  void gen_message()
+  {
+    why.clear();
+    if (from == 0)
+      (*this)<<"Vector v2 (size="<<size2
+	     <<") does not contain all elements of v1 (size="<<size1<<")!";
+    else if (from == 1)
+      (*this)<<"Vector v1 (size="<<size1
+	     <<") does not contain all elements of v2 (size="<<size2<<")!";
+  }
+
+
+  bad_mapping(const T& t,int f,int s1,int s2)
+    : missing(t),from(f),size1(s1),size2(s2)
+  {
+    gen_message();
+  }
+
+  bad_mapping(const T& t,int f,int s1, int s2, const std::string& s)
     : myexception(s),
       missing(t),
-      from(f)
+      from(f),
+      size1(s2),
+      size2(s2)
   { }
 
   ~bad_mapping() throw() {}
 };
+
+
+// construct mapping[] such that v2[mapping[i]] = v1[i]
 
 template <class T>
 std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& v2) 
@@ -118,8 +148,8 @@ std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& 
 	break;
       }
     }
-    if (target == -1) throw bad_mapping<T>(v1[i],0,"Vector v2 does not contain all elements of v1!");
-
+    if (target == -1) 
+      throw bad_mapping<T>(v1[i],0,v1.size(),v2.size());
     mapping[i] = target;
   }
 
@@ -128,8 +158,8 @@ std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& 
       compute_mapping(v2,v1);
     }
     catch(bad_mapping<T>& b) {
-      bad_mapping<T> b2(b.missing,1,"Vector v1 does not contain all elements of v2!");
-      throw b2;
+      b.flip();
+      throw b;
     }
 
   return mapping;
