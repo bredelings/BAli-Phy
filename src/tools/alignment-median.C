@@ -353,6 +353,8 @@ int main(int argc,char* argv[])
 	cerr<<"fraction = "<<double(i)/(items.size()-1)<<"     AveD = "<<double(total)/(i*i+i)*2<<endl;
       }
     }
+    else
+      throw myexception()<<"Analysis '"<<analysis<<"' not recognized.";
   }
   catch (exception& e) {
     cerr<<"alignment-median: Error! "<<e.what()<<endl;
