@@ -462,7 +462,7 @@ efloat_t data_partition::prior_alignment() const
 	}
 #endif	
 
-	ublas::matrix<int>& counts = cached_transducer_counts_for_branch[b];
+	const ublas::matrix<int>& counts = cached_transducer_counts_for_branch[b];
 
 	cached_alignment_prior_for_branch[b] = transition_pr_from_counts(counts, branch_PTMs[b]);
       }
