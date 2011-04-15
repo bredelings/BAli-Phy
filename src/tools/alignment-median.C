@@ -180,10 +180,7 @@ void alignment_sample::load(const variables_map& args, const string& filename)
   if (not alignments.size())
     As = load_alignments(input,load_alphabets(args),skip,maxalignments);
   else
-  {
-    const alignment& A = alignments[0];
     As = load_alignments(input, sequence_names(), get_alphabet(), skip,maxalignments);
-  }
 
   if (log_verbose) cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
 
