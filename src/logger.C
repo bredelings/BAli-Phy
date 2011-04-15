@@ -264,6 +264,23 @@ string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Probab
   return convertToString(total);
 }
 
+int Get_Num_Column_Category_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+{
+  Parameters& PP = *P.as<Parameters>();
+  if (not PP[p].has_TIModel())
+    throw myexception()<<"Can't report number of fast column in alignment with no TIModel";
+
+  alignment& A = *PP[p].A;
+  ublas::matrix<int>& type_note = A.note(1);
+
+  int count=0;
+  for(int c=0;c<A.length();c++)
+    if (type_note(c,0) == s)
+      count++;
+
+  return count;
+}
+
 double mu_scale(const Parameters& P)
 {
   SequenceTree T = *P.T;

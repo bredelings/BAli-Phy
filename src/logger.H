@@ -213,6 +213,16 @@ namespace MCMC {
     std::string operator()(const owned_ptr<Probability_Model>& P, long t);
   };
 
+  struct Get_Num_Column_Category_Function: public LoggerFunction<int>
+  {
+    int p;
+    int s;
+  public:
+    Get_Num_Column_Category_Function* clone() const {return new Get_Num_Column_Category_Function(*this);}
+    int operator()(const owned_ptr<Probability_Model>& P, long t);
+    Get_Num_Column_Category_Function(int p_, int s_):p(p_),s(s_) { }
+  };
+
   struct Get_Tree_Length_Function: public LoggerFunction<std::string>
   {
     Get_Tree_Length_Function* clone() const {return new Get_Tree_Length_Function(*this);}

@@ -584,18 +584,24 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
   
   for(int i=0;i<P.n_data_partitions();i++)
     {
-      if (P[i].variable_alignment())
-	{
-	  TL->add_field("|A"+convertToString(i+1)+"|", Get_Alignment_Length_Function(i) );
-	  TL->add_field("#indels"+convertToString(i+1), Get_Num_Indels_Function(i) );
-	  TL->add_field("|indels"+convertToString(i+1)+"|", Get_Total_Length_Indels_Function(i) );
-	}
+      string I = convertToString(i+1);
+      if (P[i].variable_alignment() or P[i].has_TIModel())
+      {
+	TL->add_field("|A"+I+"|", Get_Alignment_Length_Function(i) );
+	TL->add_field("#indels"+I, Get_Num_Indels_Function(i) );
+	TL->add_field("|indels"+I+"|", Get_Total_Length_Indels_Function(i) );
+      }
+      if (P[i].has_TIModel())
+      {
+	TL->add_field("#F"+I, ConvertToStringFunction<int>( Get_Num_Column_Category_Function(i,1)) );
+	TL->add_field("#F"+I, ConvertToStringFunction<int>( Get_Num_Column_Category_Function(i,0)) );
+      }
       const alphabet& a = P[i].get_alphabet();
-      TL->add_field("#substs"+convertToString(i+1), Get_Num_Substitutions_Function(i, unit_cost_matrix(a)) );
+      TL->add_field("#substs"+I, Get_Num_Substitutions_Function(i, unit_cost_matrix(a)) );
       if (const Triplets* Tr = dynamic_cast<const Triplets*>(&a))
-	TL->add_field("#substs(nuc)"+convertToString(i+1), Get_Num_Substitutions_Function(i, nucleotide_cost_matrix(*Tr)) );
+	TL->add_field("#substs(nuc)"+I, Get_Num_Substitutions_Function(i, nucleotide_cost_matrix(*Tr)) );
       if (const Codons* C = dynamic_cast<const Codons*>(&a))
-	TL->add_field("#substs(aa)"+convertToString(i+1), Get_Num_Substitutions_Function(i, amino_acid_cost_matrix(*C)) );
+	TL->add_field("#substs(aa)"+I, Get_Num_Substitutions_Function(i, amino_acid_cost_matrix(*C)) );
     }
   
   if (P.variable_alignment()) {
@@ -1020,7 +1026,7 @@ vector<int> read_rate_labels(const string& filename)
     throw myexception()<<"Can't load rate labels file '"<<filename<<"'";
 
   string line;
-  getline_handle_dos(file,line);
+  portable_getline(file,line);
   vector<int> labels(line.size(),-1);
 
   for(int i=0;i<labels.size();i++) {
