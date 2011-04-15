@@ -609,12 +609,12 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
 									 TIM.get_branch_Transducer(1).n_states())),
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
+   cached_transition_P(t.n_branches()),
    branch_mean_(1.0),
    variable_alignment_(true),
    smodel_full_tree(true),
    A(a),
    T(t),
-   MC(t,SM),
    LC(t,SModel()),
    branch_PTMs(t.n_branches(),TIModel_->get_branch_Transducer(1)),
    branch_HMM_type(t.n_branches(),0),
@@ -629,6 +629,12 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
     cached_alignment_counts_for_branch[b].invalidate();
   for(int b=0;b<cached_transducer_counts_for_branch.size();b++)
     cached_transducer_counts_for_branch[b].invalidate();
+
+  const int n_models = SModel().n_base_models();
+  const int n_states = SModel().state_letters().size();
+  for(int b=0;b<cached_transition_P.size();b++)
+    cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
+							   Matrix(n_states, n_states));
 
   add_leaf_seq_note(*A, T->n_leaves());
 }
