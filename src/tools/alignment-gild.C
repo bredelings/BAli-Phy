@@ -332,7 +332,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
-    ("refine", value<string>(),"procedure for refining Least-Squares positivized branch lengths: SSE, Poisson, LeastSquares")
     ;
 
   // positional options
@@ -442,9 +441,6 @@ vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q
 
     vector<double> LS_branch_lengths = FastLeastSquares(ST,D,partition_sets(ST));
     
-    //    if (args.count("refine") and args["refine"].as<string>() == "WLS")
-    //      LS_branch_lengths = LeastSquares(T,D,W,leaf_sets);
-  
     for(int b=0;b<ST.n_branches();b++)
       ST.branch(b).set_length(std::max(0.0, LS_branch_lengths[b]));
 
