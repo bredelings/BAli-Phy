@@ -102,6 +102,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 // So: we can store the imodel_for_branch[] and smodel_for_branch[] in
 // the data_partitions.  Its just a way of storing things.  And then I
 // don't have to write it down into the data_partitions( )
+//
+// So: unless we want different smodels to have different frequency parameters
+// we should probably make a multi-branch model out of a single frequencymodel
+// and multiple exchange models.
 
 
 
