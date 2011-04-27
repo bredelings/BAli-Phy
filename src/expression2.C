@@ -20,6 +20,23 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+/* 1. To do a series of operations on a state node, access the value and mark it uncomputed.
+ * We think of this as obtaining a 'lock' on the value.  Any attempts to obtain the variable's
+ *   value will then throw an exception.
+ * After we are finished modifying the value, we can mark it up-to-date again.
+ * We think of that as unlocking the value.
+ */
+
+/*
+ * 2. A probability model has a collection of variables, and als
+ * (i)  a dependency graph. Which variables does each variable condition on?
+ * (ii) a density function: each random variable should occur in exactly one density.
+ * (iii) a possibly an UNNORMALIZED density.
+ * (iv) a random sample( ): function.
+ *   o How do we do random functions?  I guess we could mark them uncacheable.  See I/O monad in Haskell?
+ */
+
+
 int main()
 {
   Formula f;
