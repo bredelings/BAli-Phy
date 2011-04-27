@@ -10,7 +10,7 @@ class Object {
 public:
   virtual Object* clone() const =0;
 
-  maybe_t compare(const Object& O) const
+  virtual maybe_t compare(const Object& O) const
   {
     if (this == &O) 
       return yes;
