@@ -31,8 +31,14 @@ shared_ptr<const Object> Context::evaluate(int index)
 
   if (input_indices.size() == 0)
   {
-    assert(V.computed);
+    if (not V.computed)
+      throw myexception()<<"Evaluating term "<<F->terms[index].name<<" (index = "<<index<<"): leaf node is not marked up-to-date!";
+    if (not V.result)
+      throw myexception()<<"Evaluating term "<<F->terms[index].name<<" (index = "<<index<<"): leaf node value has not been set!";
+
+    // Since this is a leaf node, it should not have a computation.
     assert(not O);
+
     return V.result;
   }
 
