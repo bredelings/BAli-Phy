@@ -16,6 +16,10 @@ using std::vector;
 using std::string;
 using std::ostream;
 
+using std::cout;
+using std::cerr;
+using std::endl;
+
 int main()
 {
   Formula f;
@@ -40,11 +44,11 @@ int main()
   expression_ref gt = GreaterThan<Double>();
   expression_ref If = IfThenElse();
 
-  std::cout<<"Demonstrate lambda functions\n";
-  std::cout<<"mul = "<<mul->print()<<"\n";
-  std::cout<<"mul(x) = "<<mul(x)->print()<<"\n";
-  std::cout<<"mul(x)(y) = "<<mul(x)(y)->print()<<"\n";
-  std::cout<<"mul(x,y) = "<<mul(x,y)->print()<<"\n\n\n";
+  cout<<"Demonstrate lambda functions\n";
+  cout<<"mul = "<<mul->print()<<"\n";
+  cout<<"mul(x) = "<<mul(x)->print()<<"\n";
+  cout<<"mul(x)(y) = "<<mul(x)(y)->print()<<"\n";
+  cout<<"mul(x,y) = "<<mul(x,y)->print()<<"\n\n\n";
 
   term_ref x_times_y_plus_one = F->add_computed_node( plus(mul(x)(y))(one) );
 
@@ -72,31 +76,31 @@ int main()
   CTX1.set_value(z,Double(4));
   CTX1.set_value(w,Int(5));
 
-  std::cout<<"CTX1 = \n"<<CTX1<<"\n";
+  cout<<"CTX1 = \n"<<CTX1<<"\n";
 
   Context CTX2 = CTX1;
 
-  std::cout<<"CTX1 = \n"<<CTX1<<"\n";
+  cout<<"CTX1 = \n"<<CTX1<<"\n";
 
   shared_ptr<const Object> result = CTX1.evaluate(x_times_y_plus_one);
   CTX1.evaluate(cond);
 
-  std::cout<<"CTX1 = \n"<<CTX1<<"\n";
-  std::cout<<"CTX2 = \n"<<CTX2<<"\n";
-  std::cout<<"Fiddling X and Y in CTX1...\n";
+  cout<<"CTX1 = \n"<<CTX1<<"\n";
+  cout<<"CTX2 = \n"<<CTX2<<"\n";
+  cout<<"Fiddling X and Y in CTX1...\n";
   CTX1.set_value(x,Double(3));
   CTX1.set_value(y,Double(2));
-  std::cout<<"CTX1 = \n"<<CTX1<<"\n";
-  std::cout<<"CTX2 = \n"<<CTX2<<"\n";
+  cout<<"CTX1 = \n"<<CTX1<<"\n";
+  cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   result = CTX1.evaluate(x_times_y_plus_one);
 
-  std::cout<<"Fiddling W in CTX2...\n";
+  cout<<"Fiddling W in CTX2...\n";
   CTX2.set_value(w,Int(-1));
-  std::cout<<"CTX2 = \n"<<CTX2<<"\n";
+  cout<<"CTX2 = \n"<<CTX2<<"\n";
 
-  std::cout<<"Fiddling Z in CTX2...\n";
+  cout<<"Fiddling Z in CTX2...\n";
   CTX2.set_value(z,Double(0));
   result = CTX2.evaluate(cond);
-  std::cout<<"CTX2 = \n"<<CTX2<<"\n";
+  cout<<"CTX2 = \n"<<CTX2<<"\n";
 }
