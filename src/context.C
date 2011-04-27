@@ -62,6 +62,7 @@ shared_ptr<const Object> Context::evaluate(int index)
       // If the value is not the same as the value used to compute the previous result
       //   they we have to redo the computation.
       if (v != V.computation->used_values[slot])
+      //FIXME: Should we use v->maybe_not_equals( ) above?
 	V.computed = false;
     }
     if (V.computed)
@@ -120,20 +121,26 @@ void Context::set_value(int index, shared_ptr<const Object> O)
   if (F->terms[index].constant) 
     throw myexception()<<"Cannot overwrite constant value!";
 
+  // FIXME: improve function by checking first if the new value is different?
+  // If so, then return here.
+
   // Change the value of the leaf node
   unshare(values[index]);
 
   values[index]->result = O;
 
+  // A list of indices that cannot (w/o recomputing) be known to be unchanged
   vector<int> NOT_known_value_unchanged;
   NOT_known_value_unchanged.push_back(index);
   vector<int> mask(F->size(),0);
   mask[index] = 1;
 
+  // For each index1 that cannot (w/o recomputing) be known to be unchanged...
   for(int i=0;i<NOT_known_value_unchanged.size();i++)
   {
     int index1 = NOT_known_value_unchanged[i];
 
+    // ... consider each downstream index2 that has index1 in slot2 of its computation (possibly unused).
     for(int j=0;j<F->n_affected_indices(index1);j++)
     {
       pair<int,int> index_slot2 = F->affected_slots(index1)[j];
@@ -150,9 +157,6 @@ void Context::set_value(int index, shared_ptr<const Object> O)
 	NOT_known_value_unchanged.push_back(index2);
 	mask[index2] = 1;
 
-	// ... and it is not known to have the same computation.
-	// known_same_computation[index2] = F;
-
 	// Since the computation may be different, it can't be shared.
 	unshare(values[index2]);
 
@@ -160,7 +164,7 @@ void Context::set_value(int index, shared_ptr<const Object> O)
 	values[index2]->computed = false;
       }
 
-      // FIXME - recomputation?
+      // FIXME - Could we recompute indices whose value may have changed because the inputs may be different?
 
       // If we recompute index2, and values[index2]->computed was originally true, then we
       // might set values[index2]->computed back to true.

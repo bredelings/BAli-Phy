@@ -43,7 +43,7 @@ struct expression: public Object
   virtual int highest_unused_dummy() const {return 0;}
 
   // return NULL if no change
-  virtual boost::shared_ptr<const expression> substitute(int dummy, boost::shared_ptr<const expression> E) const
+  virtual boost::shared_ptr<const expression> substitute(int, boost::shared_ptr<const expression>) const
   {
     return boost::shared_ptr<const expression>();
   }
