@@ -137,8 +137,12 @@ void Context::set_value(int index, shared_ptr<const Object> O)
 
   // A list of indices that cannot (w/o recomputing) be known to be unchanged
   vector<int> NOT_known_value_unchanged;
-  NOT_known_value_unchanged.push_back(index);
+
+  // A random access version of NOT_known_value_unchanged
   vector<int> mask(F->size(),0);
+
+  // The index that we just altered cannot be known to be unchanged.
+  NOT_known_value_unchanged.push_back(index);
   mask[index] = 1;
 
   // For each index1 that cannot (w/o recomputing) be known to be unchanged...
