@@ -135,6 +135,8 @@ void Context::set_value(int index, shared_ptr<const Object> O)
 
   values[index]->result = O;
 
+  values[index]->computed = true;
+
   // A list of indices that cannot (w/o recomputing) be known to be unchanged
   vector<int> NOT_known_value_unchanged;
 
@@ -199,11 +201,12 @@ Context::Context(const polymorphic_cow_ptr<Formula>& F_)
   for(int index=0;index<values.size();index++)
   {
     values[index] = shared_ptr<value>(new value);
-    if (not F->has_inputs(index))
-      values[index]->computed = true;
 
-    if (F->terms[index].default_value)
+    if (F->terms[index].default_value) {
+      assert(not F->has_inputs(index));
       values[index]->result = shared_ptr<Object>(F->terms[index].default_value->clone());
+      values[index]->computed = true;
+    }
   }
 }
 
