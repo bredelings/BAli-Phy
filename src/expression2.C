@@ -71,7 +71,7 @@ int main()
 
   Context CTX1(F);
 
-  //  CTX1.set_value(x,Double(2));
+  CTX1.set_value(x,Double(2));
   CTX1.set_value(y,Double(3));
   CTX1.set_value(z,Double(4));
   CTX1.set_value(w,Int(5));
