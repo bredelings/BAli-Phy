@@ -67,8 +67,8 @@ struct constant_expression: public expression
   constant_expression* clone() const {return new constant_expression(*this);}
 
   std::string print() const {return value->print();}
-  constant_expression(const Object& o): value(o.clone()) {}
-  constant_expression(boost::shared_ptr<const Object> v): value(v) {}
+  explicit constant_expression(const Object& o): value(o.clone()) {}
+  explicit constant_expression(boost::shared_ptr<const Object> v): value(v) {}
 };
 
 // a term reference expression
@@ -213,12 +213,15 @@ template <typename T>
 struct typed_expression_ref: expression_ref
 {
 public:
+  typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   typed_expression_ref(expression* v): expression_ref(v) {}
   typed_expression_ref(const boost::shared_ptr<const expression>& v): expression_ref(v) {}
   typed_expression_ref(const term_ref& t): expression_ref(t) {}
 
-  template <typename Y>
-  typed_expression_ref(Y y):expression_ref(new constant_expression(POD<Y>(y))) {}
+  explicit typed_expression_ref(const int& i):expression_ref(new constant_expression(Int(i))) {}
+  explicit typed_expression_ref(const Int& i):expression_ref(new constant_expression(i)) {}
+  explicit typed_expression_ref(const double& d):expression_ref(new constant_expression(Double(d))) {}
+  explicit typed_expression_ref(const Double& d):expression_ref(new constant_expression(d)) {}
 };
 
 template <typename T>
