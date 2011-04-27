@@ -19,6 +19,7 @@ boost::shared_ptr<const Object> OperationArgs::evaluate(int slot)
     computation->slots_used_order.push_back(slot);
   }
   
+  // Whatever we evaluated should NOT evaluate to NULL!
   assert( computation->used_values[slot] );
   
   return computation->used_values[slot];
