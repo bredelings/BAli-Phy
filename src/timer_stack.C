@@ -39,6 +39,22 @@ extern "C" {
 
 using namespace std;
 
+/* Issues: cross-platform timing code needs fixing to work on Windows:
+   I think I can use GetProcessTimes or GetThreadTimes, as follows:
+
+   FILETIME creationTime;
+   FILETIME exitTime;
+   FILETIME kernelTime;
+   FILETIME userTime;
+
+   GetThreadTimes
+      (GetCurrentThread (),
+       &creationTime,
+       &exitTime,
+       &kernelTime,
+       &userTime); 
+*/
+
 /// This timer stack is a global variable that is always available.
 timer_stack default_timer_stack;
 
