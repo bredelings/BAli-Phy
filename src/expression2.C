@@ -37,6 +37,51 @@ using std::endl;
  */
 
 
+/*
+ * 3. A probability model is a collection of variables, where each variable has a 
+ *    (i) name
+ *    (ii) integer index
+ *    (iii) a distribution/dependency-structure, if and only if the variable is random.
+ *      - The dependency structure is as x ~ x,y|z,w
+ *      - The distribution specifies what the actual density is.
+ *    A variable that is not random is a parameter, and can be changed by optimization routines,
+ *      but not MCMC routines.
+ *    A variable that is random is "random variable" and can be changed by MCMC routines.
+ *    The distribution 
+ *
+ *    Each distribution has
+ *    (i) a name
+ *    (ii) a density function
+ *    (iii) an un-normalized density function
+ *    (iv) a sampling function.
+ *    Perhaps each distribution should also specify the dimension of each random variable that
+ *    is sampled from it (not parameters), so that we know if it is a density or not.  0 would
+ *    indicate a discrete variable, while 1 and higher would mean that it was continuous.
+ *
+ *    Q: How shall we sample densities like x,y|z,w?
+ *
+ *    ------------
+ *    Issue. There could be multiple factorizations of the same joint distribution.  Thus,
+ *    we could have Pr(x,y) = Pr(x)*Pr(y|x) or Pr(y)*Pr(x|y).
+ * 
+ *    Different parts of the graph could, independently, allow multiple alternate factorizations.
+ *    Then, specifying the relationship between these factorizations should be difficult.
+ *
+ *    Finally, it might be possible to augment, or unaugment, various parts of the model.
+ *    ------------
+ *
+ *    Anyway, this approach allows distribution to be C++ objects.  They are outside the calculation
+ *    framework, so that's OK.  On the other hand, they need to provide calculations that fit inside
+ *    that framework as member functions.  Perhaps the density functions can ALSO provide normal C++
+ *    density functions a member functions, also?
+ *
+ *    Implementation: A probability model is independent of specific values for its variables
+ *    Therefore it is independent from any Context.  However, a probability model should be able
+ *    to create a context.  So, perhaps a probability model allows creating a "probability context".
+ *
+ *    Hmm... mightn't we need to modify the probability model from the context?
+ */
+
 int main()
 {
   Formula f;
