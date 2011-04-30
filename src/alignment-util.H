@@ -184,6 +184,8 @@ alignment reverse_complement(const alignment& A);
 
 std::vector<int> alignment_row_letters(const alignment& A, int i);
 
+std::vector< std::vector<int> > alignment_letters(const alignment& A, int n);
+
 void check_same_sequence_lengths(const std::vector<int>&, const alignment&);
 
 alignment unalign_all(const alignment& A, int);

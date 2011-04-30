@@ -1570,6 +1570,17 @@ vector<int> alignment_row_letters(const alignment& A, int i)
   return s;
 }
 
+vector<vector<int> > alignment_letters(const alignment& A, int N)
+{
+  // Construct the new leaf sequences
+  vector< vector<int> > S;
+
+  for(int i=0;i<N;i++)
+    S.push_back( alignment_row_letters(A,i));
+
+  return S;
+}
+
 alignment unalign_all(const alignment& A, int n)
 {
   if (n == -1)
@@ -1598,3 +1609,4 @@ alignment unalign_all(const alignment& A, int n)
  
   return A2;
 }
+
