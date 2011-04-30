@@ -207,14 +207,6 @@ std::vector<std::string> sequence_names(const alignment& A,int n);
 /// Generate a randomized alignment
 alignment randomize(const alignment&,int n=-1);
 
-inline int leaf_seq_length(const alignment& A,int i) {
-  assert(i < A.note(0).size2());
-  return A.note(0,0,i);
-}
-
-int add_leaf_seq_note(alignment& A,int n);
-int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M);
-
 alignment blank_copy(const alignment&,int length=0);
 #endif
 

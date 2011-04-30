@@ -490,8 +490,6 @@ int main(int argc,char* argv[])
 
 
     //----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
-    add_leaf_seq_note(A,T.n_leaves());
-
     analyze_rates(A,T,*smodel_in);
 
     //------- Estimate branch lengths -------------//

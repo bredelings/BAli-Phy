@@ -450,47 +450,6 @@ vector<string> sequence_names(const alignment& A,int n)
   return names;
 }
 
-/// create a note with leaf sequences ...
-int add_leaf_seq_note(alignment& A,int n) 
-{
-  assert(n <= A.n_sequences());
-
-  int index = A.add_note(n);
-
-  for(int i=0;i<n;i++) {
-    int l=0;
-    for(int c=0;c<A.length();c++)
-      if (not A.gap(c,i)) {
-	A.note(index,l+1,i) = A(c,i);
-	l++;
-      }
-    A.note(index,0,i) = l;
-    assert(l == A.seqlength(i));
-  }
-
-  return index;
-}
-
-/// create a note with leaf sequences ...
-int add_leaf_seq_note(alignment& A,const ublas::matrix<int>& M) 
-{
-  int n = M.size2();
-
-  assert(n < A.n_sequences());
-
-  int index = A.add_note(n);
-
-  for(int i=0;i<n;i++) {
-    const int l = M(0,i);
-    assert(l == A.seq(i).size()/A.get_alphabet().width());
-    for(int j=0;j<l;j++)
-      A.note(index,j+1,i) = M(j+1,i);
-    A.note(index,0,i) = l;
-  }
-
-  return index;
-}
-
 alignment blank_copy(const alignment& A1,int length) 
 {
   alignment A2;
@@ -504,9 +463,6 @@ alignment blank_copy(const alignment& A1,int length)
 
   // make blank notes
   A2.notes.reserve(A1.notes.size());
-
-  if (A1.notes.size() >= 1)
-    add_leaf_seq_note(A2,A1.note(0));
 
   return A2;
 }

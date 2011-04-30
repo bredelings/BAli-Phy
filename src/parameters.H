@@ -163,6 +163,9 @@ public:
 
   data_partition* clone() const {return new data_partition(*this);}
 
+  /// The leaf sequence data of this partition
+  cow_ptr< std::vector< std::vector<int> > > sequences;
+
   /// The alignment data of this partition
   cow_ptr<alignment> A;
 

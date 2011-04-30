@@ -587,7 +587,6 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
       else
 	I(c+1,b) = l++;
     }
-    assert(l == leaf_seq_length(A,b));
     I(0,b) = l;
   }
   else {

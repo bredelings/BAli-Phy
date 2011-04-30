@@ -472,6 +472,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    branch_mean_(1.0),
    variable_alignment_(true),
    smodel_full_tree(true),
+   sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
    T(t),
    LC(t,SModel()),
@@ -491,8 +492,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
   for(int b=0;b<cached_transition_P.size();b++)
     cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
 							   Matrix(n_states, n_states));
-
-  add_leaf_seq_note(*A, T->n_leaves());
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
@@ -507,6 +506,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    branch_mean_(1.0),
    variable_alignment_(false),
    smodel_full_tree(true),
+   sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
    T(t),
    LC(t,SModel()),
@@ -526,8 +526,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
   for(int b=0;b<cached_transition_P.size();b++)
     cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
 							   Matrix(n_states, n_states));
-
-  add_leaf_seq_note(*A, T->n_leaves());
 }
 
 //-----------------------------------------------------------------------------//
