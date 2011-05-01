@@ -152,6 +152,8 @@ class Likelihood_Cache {
   /// Some matrices pre-allocated for scratch space
   std::vector<Matrix> scratch_matrices;
 
+  std::vector<int> lengths;
+
 public:
   /// Previously computed likelihood.
   efloat_t cached_value;
@@ -165,7 +167,7 @@ public:
   int root;
 
   /// Number of columns of our alignment
-  int length() const {return cache->get_length(token);}
+  int allocated_length() const {return cache->get_length(token);}
   /// The number of undirected branches;
   int n_branches() const {return B/2;}
   /// The number of CTMC models in our mixture.
@@ -192,7 +194,9 @@ public:
   void invalidate_node(const Tree&,int n);
 
   /// Set the length to l columns.
-  void set_length(int l);
+  void set_length(int l,int b);
+  /// Get the length columns.
+  int get_length(int b) const {return lengths[b];}
   /// Get the length columns.
   int get_length() const {return cache->get_length(token);}
 

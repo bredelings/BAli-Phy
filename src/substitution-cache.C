@@ -269,19 +269,21 @@ void Likelihood_Cache::invalidate_branch_alignment(const Tree& T,int b) {
     cache->invalidate_one_branch(token,branch_list[i]);
 }
 
-void Likelihood_Cache::set_length(int C) {
+void Likelihood_Cache::set_length(int C,int b) {
   cache->set_length(token,C);
 }
 
 
-Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) {
+Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) 
+{
   B = LC.B;
 
   cached_value = LC.cached_value;
 
   cache->release_token(token);
   cache = LC.cache;
-  token = cache->claim_token(LC.length(),B);
+  lengths = LC.lengths;
+  token = cache->claim_token(LC.allocated_length(),B);
   cache->copy_token(token,LC.token);
 
   scratch_matrices = LC.scratch_matrices;
@@ -294,8 +296,9 @@ Likelihood_Cache& Likelihood_Cache::operator=(const Likelihood_Cache& LC) {
 Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC) 
   :cache(LC.cache),
    B(LC.B),
-   token(cache->claim_token(LC.length(),B)),
+   token(cache->claim_token(LC.allocated_length(),B)),
    scratch_matrices(LC.scratch_matrices),
+   lengths(LC.lengths),
    cached_value(LC.cached_value),
    root(LC.root)
 {

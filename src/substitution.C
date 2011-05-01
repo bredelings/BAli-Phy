@@ -435,7 +435,7 @@ namespace substitution {
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
 
-    cache.set_length(I.branch_index_length(b0));
+    cache.set_length(I.branch_index_length(b0), b0);
 
     const int n_models  = cache.n_models();
     const int n_states  = cache.n_states();
@@ -496,7 +496,7 @@ namespace substitution {
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
 
-    cache.set_length(I.branch_index_length(b0)); 
+    cache.set_length(I.branch_index_length(b0), b0); 
 
     const alphabet& a = A.get_alphabet();
 
@@ -569,7 +569,7 @@ namespace substitution {
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
 
-    cache.set_length(I.branch_index_length(b0));
+    cache.set_length(I.branch_index_length(b0), b0);
 
     const alphabet& a = A.get_alphabet();
 
@@ -726,7 +726,7 @@ namespace substitution {
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b[2]);
 
-    cache.set_length(index.size1());
+    cache.set_length(index.size1(), b[2]);
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
@@ -837,9 +837,9 @@ namespace substitution {
     assert(cache.up_to_date(b[0]) and cache.up_to_date(b[1]));
 
     // Do this before accessing matrices or other_subst
-    cache.prepare_branch(b[2]);
+    cache.prepare_branch(b0);
 
-    cache.set_length(I.branch_index_length(b0)); // 
+    cache.set_length(I.branch_index_length(b0), b0);
 
     // scratch matrix
     Matrix& S = cache.scratch(0);
