@@ -67,6 +67,7 @@ protected:
 
   /// length of each active cache (in columns)
   std::vector<int> length;
+  int iterations_too_long;
 
   /// acquire and return an unused location
   int get_unused_location();
@@ -75,7 +76,7 @@ protected:
   void release_location(int loc);
 
   /// Allocate space for s new 'branches'
-  void allocate(int s);
+  void allocate_branch_slots(int s);
 
   /// Is each location up to date?
   std::vector<int> up_to_date_;
@@ -118,6 +119,10 @@ public:
   /// Mark cached conditional likelihoods for all branches of token t invalid.
   void invalidate_all(int token);
 
+  /// Register that we CURRENTLY don't need more than l columns, and we need at least l
+  void request_length(int l);
+  /// Set the length of token t columns.
+  void set_length(int l);
   /// Set the length of token t to l columns.
   void set_length(int token, int l);
   /// Get the length of token t in columns.

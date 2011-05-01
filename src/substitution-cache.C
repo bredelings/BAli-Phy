@@ -32,7 +32,7 @@ int Multi_Likelihood_Cache::get_unused_location()
     int ns = int(s*1.1)+4;
     int delta = ns - size();
     assert(delta > 0);
-    allocate(delta);
+    allocate_branch_slots(delta);
   }
 #endif
 
@@ -59,7 +59,7 @@ void Multi_Likelihood_Cache::release_location(int loc)
 }
 
 /// Allocate space for s new 'branches'
-void Multi_Likelihood_Cache::allocate(int s) 
+void Multi_Likelihood_Cache::allocate_branch_slots(int s) 
 {
   int old_size = size();
   int new_size = old_size + s;
@@ -109,29 +109,76 @@ void Multi_Likelihood_Cache::invalidate_all(int token) {
 }
 
 // If the length is not the same, this may invalidate the mapping
+void Multi_Likelihood_Cache::request_length(int l)
+{
+  // FIXME - calling of this function is essentially a timer function for garbage collection.
+  if (l < C)
+  {
+    iterations_too_long++;
+
+    if (l < C/2)
+      set_length(C/2);
+    else if (l < C*3/4 and iterations_too_long > 100*n_uses.size() )
+      set_length(C*3/4);
+    else if (l < C*5/6 and iterations_too_long > 200*n_uses.size() )
+      set_length(C*5/6);
+  }
+  else
+    iterations_too_long = 0;
+  
+  // Increase overall length if necessary
+  if (l > C) 
+  {
+    int l2 = 4+(int)(1.1*l);
+    set_length(l2);
+  }
+}
+
+// If the length is not the same, this may invalidate the mapping
+void Multi_Likelihood_Cache::set_length(int l)
+{
+  assert(l >= 0);
+
+  iterations_too_long = 0;
+
+  int C_old = C;
+
+  // Shrink
+  if (l < C)
+  {
+    for(int i=0;i<size();i++)
+      (*this)[i].resize(l);
+  }
+  // Grow
+  else if (l > C)
+  {
+    int delta = l-C;
+    
+    for(int i=0;i<size();i++)
+      for(int j=0;j<delta;j++)
+	(*this)[i].push_back(Matrix(M,S));
+  }
+  C = l;
+
+  // Report if the length changes
+  if (log_verbose and C != C_old)
+    std::clog<<"  MLC now has "<<C<<" columns and "<<size()<<" branches.\n";
+
+  // Check that we are long enough, and know how long we are.
+  for(int i=0;i<size();i++) {
+    assert((*this)[i].size() == C);
+    assert((*this)[i].size() >= l);
+  }
+}
+
+// If the length is not the same, this may invalidate the mapping
 void Multi_Likelihood_Cache::set_length(int t,int l) 
 {
   length[t] = l;
 
   int new_length = max(length);
 
-  // Increase overall length if necessary
-  if (l>C) {
-    int l2 = 4+(int)(1.1*l);
-    int delta = l2-C;
-    C = l2;
-
-    for(int i=0;i<size();i++)
-      for(int j=0;j<delta;j++)
-	(*this)[i].push_back(Matrix(M,S));
-
-    if (log_verbose)
-      std::clog<<"MLC now has "<<C<<" columns and "<<size()<<" branches.\n";
-  }
-  for(int i=0;i<size();i++) {
-    assert((*this)[i].size() == C);
-    assert((*this)[i].size() >= l);
-  }
+  request_length(new_length);
 }
 
 int Multi_Likelihood_Cache::find_free_token() const {
@@ -156,7 +203,7 @@ int Multi_Likelihood_Cache::add_token(int B) {
 
 #ifndef CONSERVE_MEM
   // add space used by the token
-  allocate(B);
+  allocate_branch_slots(B);
 #endif
 
   if (log_verbose)
@@ -232,7 +279,8 @@ void Multi_Likelihood_Cache::release_token(int token) {
 Multi_Likelihood_Cache::Multi_Likelihood_Cache(const substitution::MultiModel& MM)
   :C(0),
    M(MM.n_base_models()),
-   S(MM.n_states())
+   S(MM.n_states()),
+   iterations_too_long(0)
 { }
 
 //------------------------------- Likelihood_Cache------------------------------//
