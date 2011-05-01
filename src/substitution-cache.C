@@ -109,7 +109,11 @@ void Multi_Likelihood_Cache::invalidate_all(int token) {
 }
 
 // If the length is not the same, this may invalidate the mapping
-void Multi_Likelihood_Cache::set_length(int t,int l) {
+void Multi_Likelihood_Cache::set_length(int t,int l) 
+{
+  length[t] = l;
+
+  int new_length = max(length);
 
   // Increase overall length if necessary
   if (l>C) {
@@ -128,8 +132,6 @@ void Multi_Likelihood_Cache::set_length(int t,int l) {
     assert((*this)[i].size() == C);
     assert((*this)[i].size() >= l);
   }
-
-  length[t] = std::max(length[t],l);
 }
 
 int Multi_Likelihood_Cache::find_free_token() const {
@@ -269,8 +271,18 @@ void Likelihood_Cache::invalidate_branch_alignment(const Tree& T,int b) {
     cache->invalidate_one_branch(token,branch_list[i]);
 }
 
-void Likelihood_Cache::set_length(int C,int b) {
-  cache->set_length(token,C);
+void Likelihood_Cache::set_length(int C,int b) 
+{
+  int L = cache->get_length(token);
+
+  lengths[b] = C;
+
+  // Get the new maximum length
+  L = max(lengths);
+
+  // If the length is -1, then we don't know any of the lengths, so don't do anything
+  if (L > -1)
+    cache->set_length(token,L);
 }
 
 
@@ -310,6 +322,7 @@ Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModel
    B(T.n_branches()*2),
    token(cache->claim_token(C,B)),
    scratch_matrices(10,Matrix(cache->n_models(),cache->n_states())),
+   lengths(B,-1),
    cached_value(0),
    root(T.n_nodes()-1)
 {
