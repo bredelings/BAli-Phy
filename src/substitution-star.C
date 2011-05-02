@@ -37,7 +37,7 @@ using std::vector;
 // * 
 namespace substitution {
 
-  double Pr_star(const vector<int>& column,const Tree& T,const ReversibleModel& SModel,
+  double Pr_star(const vector<int>& column,const Tree& T,const ReversibleAdditiveCollection& SModel,
 		 const Mat_Cache& MC,int m) {
     const alphabet& a = SModel.Alphabet();
 

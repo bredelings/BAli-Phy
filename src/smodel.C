@@ -1344,7 +1344,46 @@ namespace substitution {
 
   M0::~M0() {}
 
+  //--------------- MultiBranch Models --------------//
+
+  const alphabet& ReversibleAdditiveCollection::Alphabet() const 
+  {
+    return part(0).Alphabet();
+  }
+
+  const std::vector<unsigned>& ReversibleAdditiveCollection::state_letters() const
+  {
+    return part(0).state_letters();
+  }
+
+  double ReversibleAdditiveCollection::rate() const
+  {
+    return part(0).rate();
+  }
+
+  void ReversibleAdditiveCollection::set_rate(double r)
+  {
+    for(int i=0;i<n_parts();i++)
+      return part(i).set_rate(r);
+  }
+
+  Matrix ReversibleAdditiveCollection::transition_p(double t, int i) const
+  {
+    return part(i).transition_p(t);
+  }
+
+  const valarray<double>& ReversibleAdditiveCollection::frequencies() const
+  {
+    return part(0).frequencies();
+  }
+
   //--------------- MultiRate Models ----------------//
+
+  int MultiModel::n_parts() const
+  {
+    // This should be the same for all base models.
+    return base_model(0).n_parts();
+  }
 
   double MultiModel::rate() const {
     double r=0;
@@ -1362,9 +1401,9 @@ namespace substitution {
 
   // This is per-branch, per-column - doesn't pool info about each branches across columns
   Matrix MultiModel::transition_p(double t) const {
-    Matrix P = distribution()[0] * transition_p(t,0);
+    Matrix P = distribution()[0] * transition_p(t,0,0);
     for(int m=1;m<n_base_models();m++)
-      P += distribution()[m] * transition_p(t,m);
+      P += distribution()[m] * transition_p(t,0,m);
     return P;
   }
 
@@ -1380,9 +1419,18 @@ namespace substitution {
     return string("[") + SubModels(0).name() + "]";
   }
 
+  UnitModel::UnitModel(const ReversibleAdditiveModel& RA)
+  {
+    SimpleReversibleAdditiveCollection<ReversibleAdditiveModel> M(RA);
+    insert_submodel("0",M);
+    read();
+  }
+
   UnitModel::UnitModel(const Base_Model_t& M)
-    :ReversibleWrapperOver<Base_Model_t>(M)
-  { }
+  {
+    insert_submodel("0",M);
+    read();
+  }
 
   //---------------------- MultiFrequencyModel -----------------------//
   efloat_t MultiFrequencyModel::super_prior() const 
@@ -1448,7 +1496,7 @@ namespace substitution {
 
       // get a new copy of the sub-model and set the frequencies
       sub_parameter_models[m] = SubModel();
-      sub_parameter_models[m]->frequencies(fm);
+      sub_parameter_models[m]->SubModel().frequencies(fm);
     }
   }
 
@@ -1565,7 +1613,7 @@ namespace substitution {
       for(int j=0;j<f_ordered.size();j++)
 	f_ordered[letter[j]] = f[j];
 
-      sub_parameter_models.push_back(F81_Model(a,f_ordered));
+      sub_parameter_models.push_back(SimpleReversibleAdditiveCollection<F81_Model>(F81_Model(a,f_ordered)));
       sub_parameter_models.back()->set_rate(1);
     }
 
@@ -1877,7 +1925,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   void WithINV::recalc(const vector<int>&) {
-    INV->frequencies(SubModel().frequencies());
+    INV->SubModel().frequencies(SubModel().frequencies());
   }
 
   string WithINV::name() const {
@@ -1948,12 +1996,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return SubModelAs<MultiModel>(0);
   }
 
-  const SimpleReversibleMarkovModel& WithINV2::INV() const {
-    return SubModelAs<SimpleReversibleMarkovModel>(1);
+  const SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>& WithINV2::INV() const {
+    return SubModelAs<SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> >(1);
   }
 
-  SimpleReversibleMarkovModel& WithINV2::INV() {
-    return SubModelAs<SimpleReversibleMarkovModel>(1);
+  SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>& WithINV2::INV() {
+    return SubModelAs<SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> >(1);
   }
 
   void WithINV2::recalc(const vector<int>&) 

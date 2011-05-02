@@ -61,6 +61,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 
    8. In the future, specifying priors and proposals could hopefully be separated
       from models [or, at least, model structure]
+
+   9. In order to construct models -- like the branch-site model -- with different
+      Q matrices on different branches, we need to be able to generate transition
+      matrix collections of the form transition_P(m,b).  
+
 */
 
 #ifndef SMODEL_H
@@ -846,6 +851,67 @@ namespace substitution {
     }
   };
 
+  /// Class for a collection of models that could be used on different branches of the tree.
+  class ReversibleAdditiveCollection: virtual public Model, virtual public AdditiveModel
+  {
+  public:
+    virtual ReversibleAdditiveCollection* clone() const=0;
+
+    const alphabet& Alphabet() const;
+
+    const std::vector<unsigned>& state_letters() const;
+    
+    /// How many different models do we contain?
+    virtual int n_parts() const =0;
+
+    /// Return the i-th branch model
+    virtual const ReversibleAdditiveModel& part(int i) const =0;
+    /// Return the i-th branch model
+    virtual       ReversibleAdditiveModel& part(int i) =0;
+
+    virtual double rate() const;
+    virtual void set_rate(double);
+
+    /// The transition probability matrix over time t for the i-th branch model
+    virtual Matrix transition_p(double t,int i) const;
+
+    /// Get the equilibrium frequencies.  Currently all branch models must have the same frequencies.
+    virtual const valarray<double>& frequencies() const;
+
+    ReversibleAdditiveCollection() {}
+
+    virtual ~ReversibleAdditiveCollection() {}
+  };
+
+
+  /// A multi-branch model with only 1 part.
+  template<typename T>
+  class SimpleReversibleAdditiveCollection: public ReversibleAdditiveCollection,
+  //					    public ReversibleAdditiveModel,
+					    public SuperModelOver<T>
+  {
+  public:
+    virtual SimpleReversibleAdditiveCollection<T>* clone() const {return new SimpleReversibleAdditiveCollection<T>(*this);}
+
+          T& SubModel()       {return SuperModelOver<T>::SubModels(0); }
+
+    const T& SubModel() const {return SuperModelOver<T>::SubModels(0); }
+
+    const ReversibleAdditiveModel& part(int) const { return SubModel();}
+          ReversibleAdditiveModel& part(int)       { return SubModel();}
+
+    int n_parts() const {return 1;}
+
+    std::string name() const {return SubModel().name();}
+    
+    SimpleReversibleAdditiveCollection(const T& t)
+    {
+      insert_submodel("0",t);
+      SuperModelOver<T>::read();
+    }
+
+    virtual ~SimpleReversibleAdditiveCollection() {}
+  };
 
   //----------------------- MultiModel ---------------------------*/
 
@@ -871,12 +937,15 @@ namespace substitution {
   {
   public:
 
-    typedef ReversibleAdditiveModel Base_Model_t;
+    typedef ReversibleAdditiveCollection Base_Model_t;
     
     MultiModel* clone() const =0;
 
-    /// The number of models
+    /// The number of components
     virtual int n_base_models() const=0;
+
+    /// The number of different branch models per components
+    int n_parts() const;
 
     /// Access the base models
     virtual const Base_Model_t& base_model(int m) const=0;
@@ -894,17 +963,28 @@ namespace substitution {
     Matrix transition_p(double t) const;
 
     /// Get a transition probability matrix for time 't' and model 'm'
-    Matrix transition_p(double t,int m) const {return base_model(m).transition_p(t);}
+    Matrix transition_p(double t,int i, int m) const {return base_model(m).transition_p(t,i);}
+
+    ~MultiModel() {}
   };
 
   Matrix frequency_matrix(const MultiModel&);
  
   /// A MultiRate Model with a single rate
   class UnitModel: public MultiModel,
-		   public ReversibleWrapperOver<MultiModel::Base_Model_t> 
+		   public SuperModelOver< MultiModel::Base_Model_t >
   {
   public:
     UnitModel* clone() const {return new UnitModel(*this);}
+
+    MultiModel::Base_Model_t& SubModel() {return SuperModelOver<Base_Model_t>::SubModels(0); }
+
+    const Base_Model_t& SubModel() const {return SuperModelOver<Base_Model_t>::SubModels(0); }
+
+    const alphabet& Alphabet() const {return SubModel().Alphabet();}
+
+    /// Get the equilibrium frequencies
+    const valarray<double>& frequencies() const { return SubModel().frequencies(); }
 
     /// The number of models
     int n_base_models() const {return 1;}
@@ -916,6 +996,8 @@ namespace substitution {
     std::vector<double> distribution() const {return std::vector<double>(1,1);}
 
     string name() const;
+
+    UnitModel(const ReversibleAdditiveModel& M);
 
     UnitModel(const Base_Model_t& M);
 
@@ -929,7 +1011,7 @@ namespace substitution {
   {
   protected:
     /// Components of the mixture - Reversible Markov models express as S+R
-    std::vector<owned_ptr<SimpleReversibleMarkovModel> > sub_parameter_models;
+    std::vector<owned_ptr<SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> > > sub_parameter_models;
 
     /// Fraction of the sites with each parameter value (weights on the mixture components)
     std::vector<double> fraction;
@@ -972,7 +1054,7 @@ namespace substitution {
   {
   protected:
     /// Components of the mixture - Reversible Markov models express as S+R
-    std::vector<owned_ptr<F81_Model> > sub_parameter_models;
+    std::vector<owned_ptr<SimpleReversibleAdditiveCollection<F81_Model> > > sub_parameter_models;
 
     /// Fraction of the sites with each parameter value, according to model estimate
     std::vector<double> prior_fraction;
@@ -1148,7 +1230,7 @@ namespace substitution {
     static const double inv_frac_mean;
     static const double max_inv_rate;
 
-    owned_ptr<SimpleReversibleMarkovModel> INV;
+    owned_ptr<SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> > INV;
 
   public:
     virtual WithINV* clone() const {return new WithINV(*this);}
@@ -1192,8 +1274,8 @@ namespace substitution {
     const MultiModel& VAR() const;
           MultiModel& VAR();
 
-    const SimpleReversibleMarkovModel& INV() const ;
-          SimpleReversibleMarkovModel& INV();
+    const SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>& INV() const ;
+          SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>& INV();
 
   public:
     virtual WithINV2* clone() const {return new WithINV2(*this);}

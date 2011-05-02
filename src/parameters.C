@@ -119,7 +119,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
     {
       double l = T->branch(b).length();
       assert(l >= 0);
-      TP[m] = SModel().transition_p(l,m);
+      TP[m] = SModel().transition_p(l,0,m);
     }
     cached_transition_P[b].validate();
   }
