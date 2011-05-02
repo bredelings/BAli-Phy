@@ -723,7 +723,7 @@ namespace substitution {
   };
   
   /// A Felsenstein-81 model, in which Q_ij = a*pi[j]
-  class F81_Model: public ReversibleMarkovModel, ModelWithAlphabet<alphabet>
+  class F81_Model: public ReversibleMarkovModel, public ModelWithAlphabet<alphabet>
   {
     double alpha_;
     valarray<double> pi;
