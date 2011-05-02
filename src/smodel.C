@@ -234,7 +234,9 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    return dirichlet_pdf(get_parameter_values(), 1, n_letters(), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values(), 1, n_letters(), 1.0);
+
+    return Pr;
   }
 
   string SimpleFrequencyModel::name() const 
@@ -816,7 +818,9 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    return dirichlet_pdf(get_parameter_values(), 0, n_letters(), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values(), 0, n_letters(), 1.0);
+
+    return Pr;
   }
 
   string F81_Model::name() const
