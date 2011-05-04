@@ -162,7 +162,7 @@ term_ref Formula::add_computed_node(const Operation& o, const vector<int>& indic
 
   Term t;
   t.op = shared_ptr<Operation>(o.clone());
-  t.name = o.expression(input_names);
+  t.name = o.print_expression(input_names);
   t.input_indices = indices;
 
   term_ref new_index = add_term(t);
@@ -230,7 +230,7 @@ term_ref Formula::add_computed_node(const expression_ref& e)
   if (tr)
     return tr->term;
   
-  shared_ptr<const function_expression> func = dynamic_pointer_cast<const function_expression>(e);
+  shared_ptr<const operation_expression> func = dynamic_pointer_cast<const operation_expression>(e);
   if (func)
   {
     vector<int> arg_indices;

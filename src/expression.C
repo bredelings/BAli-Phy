@@ -19,8 +19,20 @@ string dummy_expression::print() const {
   return string("#")+convertToString(index);
 }
 
-shared_ptr<const expression> function_expression::substitute(int dummy, shared_ptr<const expression> E) const
+// operator expression
+
+vector<string> operator_expression::print_arg_expressions() const 
 {
+  vector<string> arg_names;
+  for(int i=0;i<args.size();i++)
+    arg_names.push_back( args[i]->print() );
+  
+  return arg_names;
+}
+
+shared_ptr<const expression> operator_expression::substitute(int dummy, shared_ptr<const expression> E) const
+{
+  // construct the substituted arg list, and see if 
   vector< shared_ptr<const expression> > new_args(args.size());
   bool change = false;
   for(int i=0;i<args.size();i++)
@@ -30,32 +42,44 @@ shared_ptr<const expression> function_expression::substitute(int dummy, shared_p
       change = true;
   }
   
-  shared_ptr<const expression> result;
+  shared_ptr<operator_expression> result;
   
   if (change)
-    result = shared_ptr<const expression>(new function_expression(op,new_args));
+  {
+    result = shared_ptr<operator_expression>( clone() );
+    result->args = new_args;
+  }
   
   return result;
 }
 
-
-string function_expression::print() const 
+int operator_expression::highest_unused_dummy() const
 {
-  vector<string> arg_names;
+  int highest = 0;
   for(int i=0;i<args.size();i++)
-    arg_names.push_back( args[i]->print() );
-  
-  return op->expression(arg_names);
+    highest = std::max(highest, args[i]->highest_unused_dummy());
+  return highest;
 }
 
-function_expression::function_expression(const Operation& O,const vector< shared_ptr<const expression> >& A)
-  :op(O.clone()),
-   args(A)
+string operator_expression::print() const 
+{
+  return get_operator()->print_expression( print_arg_expressions() );
+}
+
+operator_expression::operator_expression(const vector< shared_ptr<const expression> >& A)
+ :args(A)
 { }
 
-function_expression::function_expression(shared_ptr<const Operation> O,const vector< shared_ptr<const expression> >& A)
-  :op(O->clone()),
-   args(A)
+// operation expression
+
+operation_expression::operation_expression(const Operation& O,const vector< shared_ptr<const expression> >& A)
+  :operator_expression(A),
+   op(O.clone())
+{ }
+
+operation_expression::operation_expression(shared_ptr<const Operation> O,const vector< shared_ptr<const expression> >& A)
+  :operator_expression(A),
+   op(O->clone())
 { }
 
 lambda_expression::lambda_expression(const Operation& O)
@@ -68,7 +92,7 @@ lambda_expression::lambda_expression(const Operation& O)
   for(int i=0;i<n;i++)
     A.push_back(shared_ptr<const expression>(new dummy_expression(i)));
   
-  shared_ptr<const expression> E(new function_expression(O, A));
+  shared_ptr<const expression> E(new operation_expression(O, A));
   
   for(int i=n-1;i>0;i--)
     E = shared_ptr<const expression>(new lambda_expression(i,E));

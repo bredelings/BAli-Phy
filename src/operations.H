@@ -28,13 +28,12 @@ struct Multiply: public Operation
     return r;
   }
 
-  std::string expression(const std::vector<std::string>& inputs) const
+  std::string print_expression(const std::vector<std::string>& inputs) const
   {
-    if (inputs.size() != 2)
-      throw myexception()<<"Multiply::expression - got "<<inputs.size()<<" arguments instead of 2.";
-    
-    return inputs[0] + " * " + inputs[1];
+    return print_infix_expression("+",inputs);
   }
+
+  std::string name() const {return "+";}
 
   Multiply():Operation(2) {}
 };
@@ -56,6 +55,8 @@ struct IfThenElse: public Operation
 
   std::string expression(const std::vector<std::string>& inputs) const;
 
+  std::string name() const {return "if";}
+
   IfThenElse():Operation(3) {}
 };
 
@@ -76,13 +77,12 @@ struct GreaterThan: public Operation
     return boost::shared_ptr<const Bool>(new Bool(condition));
   }
 
-  std::string expression(const std::vector<std::string>& inputs) const
+  std::string print_expression(const std::vector<std::string>& inputs) const
   {
-    if (inputs.size() != 2)
-      throw myexception()<<"GreaterThan::expression - got "<<inputs.size()<<" arguments instead of 2.";
-    
-    return inputs[0] + " > " + inputs[1];
+    return print_infix_expression(">",inputs);
   }
+
+  std::string name() const {return ">";}
 
   GreaterThan():Operation(2) {}
 };
@@ -101,6 +101,8 @@ struct Conversion: public Operation
 
     return boost::shared_ptr<const Y>(new Y(y));
   }
+
+  std::string name() const {return "Conversion";}
 
   Conversion():Operation(1) {}
 };
@@ -124,14 +126,12 @@ struct Add: public Operation
     return r;
   }
 
-  std::string expression(const std::vector<std::string>& inputs) const
+  std::string print_expression(const std::vector<std::string>& inputs) const
   {
-    if (inputs.size() != 2)
-      throw myexception()<<"Add::expression - got "<<inputs.size()<<" arguments instead of 2.";
-    
-    return inputs[0] + " + " + inputs[1];
+    return print_infix_expression("+",inputs);
   }
 
+  std::string name() const {return "+";}
 
   Add():Operation(2) {}
 };

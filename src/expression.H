@@ -6,6 +6,7 @@
 #include <string>
 #include "cow-ptr.H"
 #include "object.H"
+#include "operation.H"
 
 class Formula;
 
@@ -95,34 +96,45 @@ struct dummy_expression: public expression
   dummy_expression(int i):index(i) {}
 };
 
-class Operation;
-
-// a function expression
-struct function_expression: public expression
+/// This is an abstract base class for applying an atomic operator to arguments
+struct operator_expression: public expression
 {
-  // what is the top-level operation?
-  boost::shared_ptr<const Operation> op;
-
   // what expressions should be plugged in to each slot in the op?
   std::vector< boost::shared_ptr<const expression> > args;
 
-  int highest_unused_dummy() const 
-  {
-    int highest = 0;
-    for(int i=0;i<args.size();i++)
-      highest = std::max(highest, args[i]->highest_unused_dummy());
-    return highest;
-  }
+  int n_args() const {return args.size();}
+
+  std::vector<std::string> print_arg_expressions() const;
+
+  virtual operator_expression* clone() const=0;
 
   boost::shared_ptr<const expression> substitute(int dummy, boost::shared_ptr<const expression> E) const;
 
-  function_expression* clone() const {return new function_expression(*this);}
+  int highest_unused_dummy() const;
 
-  std::string print() const;
+  // For printing, what is the operator name called?
+  virtual const Operator* get_operator() const=0;
 
-  function_expression(const Operation& O,const std::vector< boost::shared_ptr<const expression> >& A);
+  virtual std::string print() const;
 
-  function_expression(boost::shared_ptr<const Operation> O,const std::vector< boost::shared_ptr<const expression> >& A);
+  operator_expression(const std::vector< boost::shared_ptr<const expression> >& A);
+};
+
+class Operation;
+
+/// An expression with a direct operation
+struct operation_expression: public operator_expression
+{
+  /// The top-level operation?
+  boost::shared_ptr<const Operation> op;
+
+  operation_expression* clone() const {return new operation_expression(*this);}
+
+  const Operation* get_operator() const {return &(*op);}
+
+  operation_expression(const Operation& O,const std::vector< boost::shared_ptr<const expression> >& A);
+
+  operation_expression(boost::shared_ptr<const Operation> O,const std::vector< boost::shared_ptr<const expression> >& A);
 };
 
 struct lambda_expression: public expression
@@ -153,6 +165,28 @@ struct lambda_expression: public expression
   { }
 
   lambda_expression(const Operation& O);
+};
+
+struct Function: public Operator
+{
+  Function* clone() const {return new Function(*this);}
+
+  std::string f_name;
+  boost::shared_ptr<const expression> eval_expression;
+
+  std::string name() const {return f_name;}
+  bool is_data_constructor() const {return not eval_expression;}
+  Function(const std::string&);
+};
+
+/// A data expression is evaluates to itself. (Is this different than a *constructor*)
+struct function_expression: public operator_expression
+{
+  boost::shared_ptr<Function> F;
+
+  const Function* get_operator() const {return &(*F);}
+
+  function_expression* clone() const {return new function_expression(*this);}
 };
 
 boost::shared_ptr<const expression> substitute(boost::shared_ptr<const expression> E1, int dummy, boost::shared_ptr<const expression> E2);
