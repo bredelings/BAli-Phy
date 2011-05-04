@@ -1377,6 +1377,79 @@ namespace substitution {
     return part(0).frequencies();
   }
 
+  //------------ A Branch/Site Model ----------------//
+
+  void BranchSiteCollection::recalc(const std::vector<int>&)
+  {
+    P.resize(S.size());
+    for(int i=0;i<S.size();i++)
+      P[i] = ReversibleMarkovSuperModel(*S[i],*R);
+  }
+
+  int BranchSiteCollection::n_submodels() const
+  {
+    return S.size() + 1;
+  }
+
+  const ::Model& BranchSiteCollection::SubModels(int i) const
+  {
+    if (i<S.size())
+      return *S[i];
+    else if (i==S.size())
+      return *R;
+    else
+      std::abort();
+  }
+  
+       ::Model& BranchSiteCollection::SubModels(int i)
+  {
+    if (i<S.size())
+      return *S[i];
+    else if (i==S.size())
+      return *R;
+    else
+      std::abort();
+  }
+  
+  int BranchSiteCollection::n_parts() const 
+  {
+    return P.size();
+  }
+
+  const ReversibleMarkovSuperModel& BranchSiteCollection::part(int i) const
+  {
+    return *P[i];
+  }
+
+        ReversibleMarkovSuperModel& BranchSiteCollection::part(int i)
+  {
+    return *P[i];
+  }
+
+  string BranchSiteCollection::name() const
+  {
+    vector<string> names;
+    for(int i=0;i<S.size();i++)
+      names.push_back(S[i]->name());
+
+    return "{"+join(names,",") + "}+" + R->name();
+  }
+
+  BranchSiteCollection::BranchSiteCollection(const vector<AlphabetExchangeModel>& S1, const ReversibleFrequencyModel& R1)
+  {
+    for(int i=0;i<S1.size();i++)
+    {
+      string name = convertToString(i+1);
+
+      add_submodel(name, *S[i]);
+    }
+
+    add_submodel("R",*R);
+
+    read();
+    recalc_all();
+  }
+
   //--------------- MultiRate Models ----------------//
 
   int MultiModel::n_parts() const

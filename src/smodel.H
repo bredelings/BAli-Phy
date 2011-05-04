@@ -883,6 +883,37 @@ namespace substitution {
     virtual ~ReversibleAdditiveCollection() {}
   };
 
+  class BranchSiteCollection: public ReversibleAdditiveCollection, public SuperModel
+  {
+    std::vector< owned_ptr<AlphabetExchangeModel> > S;
+
+    owned_ptr<ReversibleFrequencyModel> R;
+
+    std::vector<owned_ptr<ReversibleMarkovSuperModel> > P;
+
+    void recalc(const std::vector<int>&);
+
+    int n_submodels() const;
+
+    const ::Model& SubModels(int) const ;
+
+          ::Model& SubModels(int);
+
+  public:
+    BranchSiteCollection* clone() const {return new BranchSiteCollection(*this);}
+
+    /// How many different models do we contain?
+    int n_parts() const;
+
+    /// Return the i-th branch model
+    const ReversibleMarkovSuperModel& part(int i) const;
+    /// Return the i-th branch model
+          ReversibleMarkovSuperModel& part(int i);
+
+    std::string name() const;
+
+    BranchSiteCollection(const std::vector<AlphabetExchangeModel>& S1, const ReversibleFrequencyModel& R1);
+  };
 
   /// A multi-branch model with only 1 part.
   template<typename T>
