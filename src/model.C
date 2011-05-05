@@ -1,3 +1,4 @@
+#undef NDEBUG
 /*
    Copyright (C) 2004-2006,2009 Benjamin Redelings
 
@@ -151,19 +152,6 @@ string Model::state() const
   return join<double>(get_parameter_values(),'\t');
 }
 
-int SuperModel::n_submodels() const 
-{
-  return first_index_of_model.size();
-}
-
-int SuperModel::n_super_parameters() const 
-{
-  if (n_submodels() == 0)
-    return n_parameters();
-  else
-    return first_index_of_model[0];
-}
-
 int SuperModel::add_parameter(const Parameter& P)
 {
   int m = ((int)first_index_of_model.size())-1;
@@ -176,8 +164,35 @@ int SuperModel::add_parameter(const Parameter& P)
   return index;
 }
 
+int SuperModel::n_submodels() const 
+{
+  return first_index_of_model.size();
+}
+
+bool SuperModel::parameter_is_used_by_model(int index, int m) const
+{
+  if (m == -1)
+    return (index < n_super_parameters());
+  else
+    return (index >= first_index_of_model[m] and 
+	    (m+1 >= n_submodels() or index < first_index_of_model[m+1]));
+}
+
+bool SuperModel::is_super_parameter(int index) const
+{
+  return parameter_is_used_by_model(index,-1);
+}
+
+int SuperModel::n_super_parameters() const 
+{
+  if (n_submodels() == 0)
+    return n_parameters();
+  else
+    return first_index_of_model[0];
+}
+
 // apparent the super-parameters are the first ones
-void SuperModel::add_super_parameter(const Parameter& P)
+int SuperModel::add_super_parameter(const Parameter& P)
 {
   int I = n_super_parameters();
 
@@ -189,6 +204,8 @@ void SuperModel::add_super_parameter(const Parameter& P)
 
   for(int i=0;i<first_index_of_model.size();i++)
     first_index_of_model[i]++;
+
+  return I;
 }
 
 void SuperModel::prefix_names() 

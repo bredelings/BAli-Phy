@@ -175,11 +175,18 @@ protected:
   std::vector<int> first_index_of_model;
   std::vector<int> model_of_index;
 
+  /// Is parameter 'index' used by model m?
+  bool parameter_is_used_by_model(int index, int m) const;
+  /// Is parameter 'index' use by the top level model?
+  bool is_super_parameter(int index) const;
+
+  // How many parameters are used at the top level?
   int n_super_parameters() const;
+  int add_super_parameter(const Parameter&);
 
   int add_parameter(const Parameter&);
-  void add_super_parameter(const Parameter&);
 
+  // Register a submodel, creating separate parameter for each submodel parameter
   int register_submodel(const std::string&);
 
   /// The prior for the parameters of the upper model
