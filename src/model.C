@@ -361,7 +361,7 @@ void SuperModel::read_from_submodel(int m)
   const vector<Parameter>& sub = SubModels(m).get_parameters();
   
   for(int i=0;i<sub.size();i++)
-    parameters_[i+offset] = sub[i];
+    parameters_[i+offset].value = sub[i].value;
 }
 
 void SuperModel::read()
