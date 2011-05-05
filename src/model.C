@@ -268,6 +268,8 @@ void SuperModel::read()
     for(int i=0;i<sub.size();i++)
       parameters_[i+offset] = sub[i];
   }
+
+  check();
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
@@ -397,6 +399,21 @@ void SuperModel::set_parameter_values(const vector<int>& indices,const vector<do
   assert(indices.size() == p.size());
   vector<double>::const_iterator b = p.begin();
   set_parameter_values(indices,b);
+}
+
+void SuperModel::check() const
+{
+  for(int m=0;m<n_submodels(); m++)
+  {
+    // Read the current argument lists for each sub-model
+    vector<Parameter> sub_args = SubModels(m).get_parameters();
+
+    for(int i=0;i<sub_args.size();i++)
+    {
+      int index = first_index_of_model[m] + i;
+      assert(sub_args[i].value == parameters_[index].value);
+    }
+  }
 }
 
 SuperModel::SuperModel()

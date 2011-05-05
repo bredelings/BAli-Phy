@@ -140,6 +140,8 @@ public:
 
   std::string state() const;
 
+  virtual void check() const {}
+
   /// Construct an empty model
   Model() {}
 
@@ -244,6 +246,8 @@ public:
 
   /// How many child models are there?
   int n_submodels() const;
+
+  void check() const;
 
   SuperModel();
 };
