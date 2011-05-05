@@ -265,8 +265,7 @@ protected:
   /// Reference the submodels
   const SubModel_t& SubModels(int i) const {return *sub_models[i];}
   SubModel_t& SubModels(int i) {return *sub_models[i];}
-  int n_submodels() const {return sub_models.size();}
-  
+
 public:
   /// Make a copy of ourselves
   SuperModelOver<SubModel_t>* clone() const =0;
