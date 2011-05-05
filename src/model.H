@@ -186,6 +186,7 @@ protected:
 
   int add_parameter(const Parameter&);
 
+  int register_last_submodel();
   // Register a submodel, creating separate parameter for each submodel parameter
   int register_submodel(const std::string&);
 

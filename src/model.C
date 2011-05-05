@@ -243,16 +243,9 @@ void SuperModel::prefix_names()
   }
 }
 
-
-int SuperModel::register_submodel(const string& prefix)
+int SuperModel::register_last_submodel()
 {
-  int m_index = first_index_of_model.size();
-
-  // store the prefix of this model
-  model_prefix.push_back(prefix+"::");
-
-  // store the first index of this model
-  first_index_of_model.push_back(n_parameters());
+  int m_index = first_index_of_model.size() - 1;
 
   const Model& M = SubModels(m_index);
 
@@ -273,6 +266,19 @@ int SuperModel::register_submodel(const string& prefix)
       }
 
   return m_index;
+}
+
+int SuperModel::register_submodel(const string& prefix)
+{
+  int m_index = first_index_of_model.size();
+
+  // store the prefix of this model
+  model_prefix.push_back(prefix+"::");
+
+  // store the first index of this model
+  first_index_of_model.push_back(n_parameters());
+
+  return register_last_submodel();
 }
 
 void SuperModel::read() 
