@@ -628,9 +628,9 @@ NewIndelModel::NewIndelModel(bool b)
 {
   add_parameter(Parameter("lambda",   -4));
   add_parameter(Parameter("epsilon",  -0.25)); // no upper bound on transformed scale
-  add_parameter(Parameter("lambda::prior_median", -4));
-  add_parameter(Parameter("lambda::prior_stddev", 1));
-  add_parameter(Parameter("epsilon::prior_length", 10));
+  add_parameter(Parameter("lambda:prior_median", -4));
+  add_parameter(Parameter("lambda:prior_stddev", 1));
+  add_parameter(Parameter("epsilon:prior_length", 10));
 }
 
 
@@ -733,9 +733,9 @@ TKF1::TKF1(bool b)
 {
   add_parameter(Parameter("lambda",-5));
   add_parameter(Parameter("mean_length",100));
-  add_parameter(Parameter("lambda::prior_median", -5));
-  add_parameter(Parameter("lambda::prior_stddev", 1.5));
-  add_parameter(Parameter("mean_length::prior_mean", 1.5));
+  add_parameter(Parameter("lambda:prior_median", -5));
+  add_parameter(Parameter("lambda:prior_stddev", 1.5));
+  add_parameter(Parameter("mean_length:prior_mean", 1.5));
 }
 
 
@@ -801,10 +801,10 @@ TKF2::TKF2(bool b)
   add_parameter(Parameter("lambda",-5));
   add_parameter(Parameter("epsilon",-0.25, upper_bound(0)));
   add_parameter(Parameter("mean_length",100));
-  add_parameter(Parameter("lambda::prior_median", -5));
-  add_parameter(Parameter("lambda::prior_stddev", 1.5));
-  add_parameter(Parameter("epsilon::prior_length", 10));
-  add_parameter(Parameter("mean_length::prior_mean", 1.5));
+  add_parameter(Parameter("lambda:prior_median", -5));
+  add_parameter(Parameter("lambda:prior_stddev", 1.5));
+  add_parameter(Parameter("epsilon:prior_length", 10));
+  add_parameter(Parameter("mean_length:prior_mean", 1.5));
 }
 
 TransducerIndelModel::~TransducerIndelModel() {}
@@ -932,9 +932,9 @@ TKF1_Transducer::TKF1_Transducer(bool b)
 {
   add_parameter(Parameter("lambda",-5, upper_bound(0)));
   add_parameter(Parameter("mean_length",100));
-  add_parameter(Parameter("lambda::prior_median", -5));
-  add_parameter(Parameter("lambda::prior_stddev", 1.5));
-  add_parameter(Parameter("mean_length::prior_mean", 1.5));
+  add_parameter(Parameter("lambda:prior_median", -5));
+  add_parameter(Parameter("lambda:prior_stddev", 1.5));
+  add_parameter(Parameter("mean_length:prior_mean", 1.5));
 }
 
 
@@ -1249,8 +1249,8 @@ FS_Transducer::FS_Transducer(bool b)
   add_parameter(Parameter("mean_length_s", 20, lower_bound(0)));             // 3
   add_parameter(Parameter("mean_length_f", 20, lower_bound(0)));             // 4
   add_parameter(Parameter("switch", 0.1, between(0,1)));                   // 5
-  add_parameter(Parameter("lambda::prior_median_s", -5));    // 6
-  add_parameter(Parameter("lambda::prior_median_f", -3));    // 7
-  add_parameter(Parameter("lambda::prior_stddev", 1.5));     // 8
-  add_parameter(Parameter("mean_length::prior_mean", 1.5));  // 9
+  add_parameter(Parameter("lambda:prior_median_s", -5));    // 6
+  add_parameter(Parameter("lambda:prior_median_f", -3));    // 7
+  add_parameter(Parameter("lambda:prior_stddev", 1.5));     // 8
+  add_parameter(Parameter("mean_length:prior_mean", 1.5));  // 9
 }
