@@ -281,20 +281,6 @@ int SuperModel::register_submodel(const string& prefix)
   return register_last_submodel();
 }
 
-void SuperModel::read() 
-{
-  for(int m=0;m<n_submodels();m++) 
-  {
-    unsigned offset = first_index_of_model[m];
-    const vector<Parameter>& sub = SubModels(m).get_parameters();
-
-    for(int i=0;i<sub.size();i++)
-      parameters_[i+offset] = sub[i];
-  }
-
-  check();
-}
-
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
 void SuperModel::write_one(int index, const Parameter& P)
 {
@@ -365,6 +351,23 @@ void SuperModel::write_to_submodel(int m)
     sub[i] = parameters_[i+first_index_of_model[m]];
 
   SubModels(m).set_parameters(sub);
+}
+
+void SuperModel::read_from_submodel(int m) 
+{
+  unsigned offset = first_index_of_model[m];
+  const vector<Parameter>& sub = SubModels(m).get_parameters();
+  
+  for(int i=0;i<sub.size();i++)
+    parameters_[i+offset] = sub[i];
+}
+
+void SuperModel::read()
+{
+  for(int m = 0;m < n_submodels(); m++)
+    read_from_submodel(m);
+
+  check();
 }
 
 efloat_t SuperModel::prior() const {

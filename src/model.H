@@ -193,9 +193,10 @@ protected:
   /// The prior for the parameters of the upper model
   virtual efloat_t super_prior() const {return 1.0;}
   
-  /// Load parameters from sub-models
+  /// Load parameter values from all sub-models.  Values may conflict!
   void read();
-
+  /// Load parameter values from this in sub-model m.  Values may conflict!
+  void read_from_submodel(int);
   /// Propagate changes to child model parameters down to child Model objects.
   void write();
   /// Propagate changes to child model parameters down to child Model objects.
