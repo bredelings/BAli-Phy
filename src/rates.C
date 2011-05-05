@@ -202,7 +202,7 @@ namespace substitution {
     }
 
     for(int i=0;i<models.size();i++)
-      add_submodel(convertToString(i+1),*models[i]);
+      register_submodel(convertToString(i+1));
   }
 
   string MultipleDistribution::name() const {

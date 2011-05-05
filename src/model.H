@@ -178,7 +178,7 @@ protected:
   void add_parameter(const Parameter&);
   void add_super_parameter(const Parameter&);
 
-  virtual void add_submodel(const std::string&,const Model&);
+  int register_submodel(const std::string&);
 
   /// The prior for the parameters of the upper model
   virtual efloat_t super_prior() const {return 1.0;}
@@ -256,10 +256,10 @@ protected:
   /// The sub-models this model is build upon
   std::vector< owned_ptr<SubModel_t> > sub_models;
 
-  void insert_submodel(const std::string& name, const SubModel_t& M)
+  int insert_submodel(const std::string& name, const SubModel_t& M)
   {
     sub_models.push_back(M);
-    add_submodel(name,M);
+    return register_submodel(name);
   }
   
   /// Reference the submodels

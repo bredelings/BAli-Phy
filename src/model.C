@@ -221,13 +221,17 @@ void SuperModel::prefix_names()
 }
 
 
-void SuperModel::add_submodel(const string& prefix,const Model& M)
+int SuperModel::register_submodel(const string& prefix)
 {
+  int m_index = first_index_of_model.size();
+
   // store the prefix of this model
   model_prefix.push_back(prefix+"::");
 
   // store the first index of this model
   first_index_of_model.push_back(n_parameters());
+
+  const Model& M = SubModels(m_index);
 
   // store the parameter name
   for(int i=0;i<M.n_parameters();i++)
@@ -244,6 +248,8 @@ void SuperModel::add_submodel(const string& prefix,const Model& M)
 	if (model_of_index[j] != -1)
 	  parameters_[j].name = model_prefix[model_of_index[j]]+parameter_name(j);
       }
+
+  return m_index;
 }
 
 void SuperModel::read() 

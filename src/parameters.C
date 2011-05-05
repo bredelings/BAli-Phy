@@ -952,13 +952,13 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   // register the substitution models as sub-models
   for(int i=0;i<SModels.size();i++) {
     string name = "S" + convertToString(i+1);
-    add_submodel(name, *SModels[i]);
+    register_submodel(name);
   }
 
   // register the indel models as sub-models
   for(int i=0;i<IModels.size();i++) {
     string name = "I" + convertToString(i+1);
-    add_submodel(name, *IModels[i]);
+    register_submodel(name);
   }
 
   // check that we only map existing smodels to data partitions
@@ -998,7 +998,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     data_partitions.push_back(dp);
 
     // register data partition as sub-model
-    add_submodel(name,*data_partitions[i]);
+    register_submodel(name);
   }
 }
 
@@ -1034,7 +1034,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   // register the substitution models as sub-models
   for(int i=0;i<SModels.size();i++) {
     string name = "S" + convertToString(i+1);
-    add_submodel(name, *SModels[i]);
+    register_submodel(name);
   }
 
   // NO indel model (in this constructor)
@@ -1067,7 +1067,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     data_partitions.push_back(cow_ptr<data_partition>(data_partition(name,A[i],*T,SM)));
 
     // register data partition as sub-model
-    add_submodel(name,*data_partitions[i]);
+    register_submodel(name);
   }
 }
 

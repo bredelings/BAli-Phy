@@ -881,8 +881,8 @@ namespace substitution {
      S(S1),
      R(R1)
   {
-    add_submodel("S",*S);
-    add_submodel("R",*R);
+    register_submodel("S");
+    register_submodel("R");
 
     read();
     recalc_all();
@@ -1441,10 +1441,10 @@ namespace substitution {
     {
       string name = convertToString(i+1);
 
-      add_submodel(name, *S[i]);
+      register_submodel(name);
     }
 
-    add_submodel("R",*R);
+    register_submodel("R");
 
     read();
     recalc_all();
@@ -2737,8 +2737,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       T += N;
     }
 
-    add_submodel("M",*M);
-    add_submodel("S",*S);
+    register_submodel("M");
+    register_submodel("S");
 
     read();
     recalc_all();
