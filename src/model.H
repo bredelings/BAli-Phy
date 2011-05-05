@@ -292,5 +292,11 @@ void show_parameters(std::ostream& o,const Model& M);
 
 bool has_parameter(const Model& M, const std::string& name);
 
+std::vector<std::string> parameter_names(const Model& M);
+
+std::vector<std::string> short_parameter_names(const Model& M);
+
+std::vector<std::string> short_parameter_names(std::vector<std::string> names);
+
 std::vector<int> parameters_with_extension(const Model& M, std::string name);
 #endif

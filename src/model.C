@@ -21,6 +21,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "model.H"
 #include "myexception.H"
 #include "util.H"
+#include <set>
+#include <map>
 
 using std::vector;
 using std::string;
@@ -270,7 +272,7 @@ int SuperModel::register_last_submodel()
 
 int SuperModel::register_submodel(const string& prefix)
 {
-  int m_index = first_index_of_model.size();
+  first_index_of_model.size();
 
   // store the prefix of this model
   model_prefix.push_back(prefix+"::");
@@ -488,6 +490,180 @@ bool match(const string& s1, const string& s2)
   else
     return s1 == s2;
 }
+
+bool operator<(const vector<string>& p1, const vector<string>& p2)
+{
+  // less than
+  if (p1.size() > p2.size()) return true;
+  // greater than
+  if (p1.size() < p2.size()) return false;
+  
+  for(int i=0;i<p1.size();i++)
+  {
+    int cmp = p1[i].compare(p2[i]);
+    // less than
+    if (cmp < 0) return true;
+    // greater than
+    if (cmp > 0) return false;
+  }
+  
+  // equal
+  return false;
+}
+
+typedef std::set< vector<string> > path_set_t;
+
+/// Does this path have the given prefix?
+bool path_has_prefix(const vector<string>& path, const vector<string>& path_prefix)
+{
+  if (path_prefix.size() > path.size()) return false;
+
+  for(int i=0;i<path_prefix.size();i++)
+    if (path[i] != path_prefix[i])
+      return false;
+
+  return true;
+}
+
+/// Are the paths all distinguishable from each other?
+bool overlap(const path_set_t& set1, const path_set_t& set2)
+{
+  if (set1.empty() or set2.empty()) return false;
+
+  path_set_t::const_iterator it1 = set1.begin(), it1End = set1.end();
+  path_set_t::const_iterator it2 = set2.begin(), it2End = set2.end();
+
+  if(*it1 > *set2.rbegin() || *it2 > *set1.rbegin()) return false;
+
+  while(it1 != it1End && it2 != it2End)
+  {
+    if(*it1 < *it2)
+      it1++; 
+    else if (*it1 > *it2)
+      it2++; 
+    else
+      return true;
+  }
+
+  return false;
+}
+
+/// Remove the nodes in paths that are direct children of the path_prefix
+void remove_prefix(vector< vector<string> >& paths, const  vector<string>& path_prefix)
+{
+  std::cerr<<"  Removing prefix "<<join(path_prefix,"::")<<"\n";
+  for(int i=0;i<paths.size();i++)
+  {
+    if (not path_has_prefix(paths[i], path_prefix)) continue;
+
+    std::cerr<<"    Replacing "<<join(paths[i],"::")<<" with ";
+    paths[i].erase(paths[i].begin()+path_prefix.size()-1);
+    std::cerr<<join(paths[i],"::")<<"\n";
+  }
+}
+
+/// Remove (internal) child paths if grandchild paths are not shared with any other child.
+void check_remove_grandchildren(vector< vector<string> >& paths, const vector<string>& path_prefix)
+{
+  std::cerr<<"Considering grandfather "<<join(path_prefix,"::")<<"\n";
+  // construct the child paths and their locations
+  typedef std::map<string, path_set_t> path_map_t;
+  path_map_t grandchild_paths;
+
+  int L = path_prefix.size();
+
+  // find the grandchild paths for each child
+  for(int i=0;i<paths.size();i++)
+    if (path_has_prefix(paths[i], path_prefix))
+    {
+      // We don't consider leaf child paths
+      if (paths[i].size() == path_prefix.size() + 1)
+	continue;
+
+      string child_name = paths[i][L];
+
+      vector<string> grandchild_path = paths[i];
+      grandchild_path.erase(grandchild_path.begin(),grandchild_path.begin()+L+1);
+
+      grandchild_paths[child_name].insert(grandchild_path);
+      assert(grandchild_path.size());
+    }
+
+  // check of the grandchild paths of any child overlap with the grandchild paths of any other child
+  for(path_map_t::const_iterator i = grandchild_paths.begin();i != grandchild_paths.end();i++)
+  {
+    bool unique = true;
+    for(path_map_t::const_iterator j = grandchild_paths.begin();j != grandchild_paths.end();j++)
+    {
+      if (i->first == j->first) continue;
+
+      if (overlap(i->second,j->second)) unique = false;
+    }
+    if (unique) {
+      vector<string> child_prefix = path_prefix;
+      child_prefix.push_back(i->first);
+      remove_prefix(paths, child_prefix);
+    }
+  }
+}
+
+// We can think of this collection of name lists as a tree.
+// - Each name list is a path from the root to a tip.
+// - Each node (except the root) has a string name associated with it.
+// We consider all child nodes of internal node
+//  If the set of grandchild lists under child node C does not overlap with the
+//   grandchild lists under any other child node, then we can remove node C.
+// We should always prefer to remove deeper nodes first.
+//  Thus, leaf nodes should never be removed.
+// We therefore consider all internal nodes of the tree, starting
+//  with the ones furthest from the root, and remove their children
+//  if it is allowable.
+
+vector<string> short_parameter_names(vector<string> names)
+{
+  // for any sequence n[0] n[1] ... n[i-1] n[i] n[i+1] ..... N[L]
+  // If we select all the sequences where where  n[0].... n[i-1] are the same
+  //  Then we can get rid of n[i] if the sequences n[i+1]...N[L] are all different
+
+  // construct the name paths
+  vector< vector<string> > paths;
+  for(int i=0;i<names.size();i++)
+    paths.push_back(split(names[i],"::"));
+
+  for(int i=0;i<paths.size();i++)
+  {
+    vector<string> prefix = paths[i];
+    while(prefix.size())
+    {
+      prefix.pop_back();
+      check_remove_grandchildren(paths, prefix);
+    }
+  }
+  
+  for(int i=0;i<names.size();i++)
+  {
+    std::cerr<<names[i]<<" -> ";
+    names[i] = join(paths[i],"::");
+    std::cerr<<names[i]<<"\n";
+  }
+
+  return names;
+}
+
+vector<string> parameter_names(const Model& M)
+{
+  vector<string> names;
+  for(int i=0;i<M.n_parameters();i++)
+    names.push_back( M.parameter_name(i) );
+
+  return names;
+}
+
+vector<string> short_parameter_names(const Model& M)
+{
+  return short_parameter_names( parameter_names( M ) );
+}
+
 
 bool path_match(const vector<string>& key, const vector<string>& pattern)
 {

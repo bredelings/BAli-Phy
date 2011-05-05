@@ -569,9 +569,11 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
   vector< vector< vector<int> > > indices = get_un_identifiable_indices(P);
 
   {
+    vector<string> parameter_names = short_parameter_names(P);
+
     TableGroupFunction<double> T1;
     for(int i=0;i<P.n_parameters();i++)
-      T1.add_field(P.parameter_name(i), GetParameterFunction(i) );
+      T1.add_field(parameter_names[i], GetParameterFunction(i) );
 
     SortedTableFunction T2(T1, get_un_identifiable_indices(P));
 
