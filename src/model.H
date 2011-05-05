@@ -75,7 +75,7 @@ protected:
   /// Parameter values
   std::vector< Parameter > parameters_;
 
-  virtual void add_parameter(const Parameter&);
+  virtual int add_parameter(const Parameter&);
   
   /// \brief Recalculate internal data based on changing one parameter
   ///
@@ -175,7 +175,7 @@ protected:
 
   int n_super_parameters() const;
 
-  void add_parameter(const Parameter&);
+  int add_parameter(const Parameter&);
   void add_super_parameter(const Parameter&);
 
   int register_submodel(const std::string&);

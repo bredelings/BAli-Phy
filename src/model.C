@@ -60,9 +60,14 @@ void Model::recalc_all()
   recalc(indices);
 }
 
-void Model::add_parameter(const Parameter& p)
+int Model::add_parameter(const Parameter& P)
 {
-  parameters_.push_back(p);
+  for(int i=0;i<n_parameters();i++)
+    if (parameters_[i].name == P.name)
+      throw myexception()<<"A parameter with name '"<<P.name<<"' already exists - cannot add another one.";
+
+  parameters_.push_back(P);
+  return parameters_.size()-1;
 }
 
 std::vector<double> Model::get_parameter_values() const
@@ -159,15 +164,16 @@ int SuperModel::n_super_parameters() const
     return first_index_of_model[0];
 }
 
-void SuperModel::add_parameter(const Parameter& P)
+int SuperModel::add_parameter(const Parameter& P)
 {
   int m = ((int)first_index_of_model.size())-1;
 
   model_of_index.push_back(m);
 
-  Model::add_parameter(P);
+  int index = Model::add_parameter(P);
   short_parameter_names.push_back(P.name);
   assert(parameters_.size() == short_parameter_names.size());
+  return index;
 }
 
 // apparent the super-parameters are the first ones
