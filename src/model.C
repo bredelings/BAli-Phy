@@ -415,8 +415,7 @@ void SuperModel::check() const
 }
 
 SuperModel::SuperModel()
-{
-}
+{ }
 
 int find_parameter(const Model& M,const string& name) {
   for(int i=0;i<M.n_parameters();i++) 
@@ -464,6 +463,31 @@ bool match(const string& s1, const string& s2)
     return s1 == s2;
 }
 
+bool path_match(const vector<string>& key, const vector<string>& pattern)
+{
+  int active_piece = 0;
+
+  // require key[0] to match pattern[0] if key[0] starts w/ ^
+  if (key[0].size() and key[0][0] == '^')
+  { 
+    int L = key[0].size()-1;
+      
+    if (not pattern.size())
+      return false;
+    
+    if (not match(pattern[0], key[0].substr(1,L) ))
+      return false;
+
+    active_piece = 1;
+  }
+
+  // otherwise look for the pieces in sequential order
+  for(int i=0;i<pattern.size() and active_piece < key.size();i++)
+    if (match(pattern[i], key[active_piece]))
+      active_piece++;
+
+  return active_piece == key.size();
+}
 
 /// \brief Find the index of model parameters that match the pattern name
 ///
@@ -472,41 +496,33 @@ bool match(const string& s1, const string& s2)
 ///
 vector<int> parameters_with_extension(const Model& M, string name)
 {
-  bool complete_match = false;
-  if (name.size() and name[0] == '^') {
-    complete_match = true;
-    name = name.substr(1,name.size()-1);
-  }
-
   vector<int> indices;
 
-  const vector<string> path2 = split(name,"::");
+  const vector<string> key = split(name,"::");
 
-  if (not path2.size()) return indices;
+  if (not key.size()) return indices;
+
+  vector<string> skeleton;
 
   for(int i=0;i<M.n_parameters();i++)
   {
-    vector<string> path1 = split(M.parameter_name(i),"::");
+    vector<string> pattern = split(M.parameter_name(i),"::");
 
-    if (not path2[0].size()) 
-      path1.erase(path1.begin());
-    else if (path2.size() > path1.size())
-      continue;
-    else if (not complete_match)
-    {
-      int n = path1.size() - path2.size();
-      path1.erase(path1.begin(),path1.begin() + n);
-    }
+    if (not path_match(key, pattern)) continue;
 
-    if (not match(path1.back(),path2.back())) continue;
+    // check that all matching parameters have the same basename
+    vector<string> this_skeleton = pattern;
+    this_skeleton.pop_back();
 
-    path1.pop_back();
+    if (not indices.size())
+      skeleton = this_skeleton;
+    else if (skeleton != this_skeleton)
+      throw myexception()<<"Key '"<<name<<"' matches both "<<join(skeleton,"::")<<" and "<<join(this_skeleton,"::")<<".";
+    
 
-    vector<string> temp = path2;
-    temp.pop_back();
-
-    if (path1 == temp) indices.push_back(i);
+    indices.push_back(i);
   }
+
   return indices;
 }
 
