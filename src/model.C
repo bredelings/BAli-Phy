@@ -161,8 +161,6 @@ int SuperModel::add_parameter(const Parameter& P)
   model_of_index.push_back(m);
 
   int index = Model::add_parameter(P);
-  short_parameter_names.push_back(P.name);
-  assert(parameters_.size() == short_parameter_names.size());
   return index;
 }
 
@@ -200,8 +198,6 @@ int SuperModel::add_super_parameter(const Parameter& P)
 
   parameters_.insert(parameters_.begin()+I           ,P);
 
-  short_parameter_names.insert(short_parameter_names.begin()+I ,P.name);
-
   model_of_index.insert(model_of_index.begin()+I     ,-1);
 
   for(int i=0;i<first_index_of_model.size();i++)
@@ -210,75 +206,29 @@ int SuperModel::add_super_parameter(const Parameter& P)
   return I;
 }
 
-void SuperModel::prefix_names() 
-{
-  assert(n_parameters() == short_parameter_names.size());
-
-  if (n_submodels() <= 1) return;
-
-  vector<int> add_prefix(n_submodels(),0);
-
-  for(int i=0;i<n_parameters();i++) {
-    for(int j=0;j<i;j++) {
-      if (short_parameter_names[i] == short_parameter_names[j]) 
-      {
-	int m1 = model_of_index[i];
-	int m2 = model_of_index[j];
-
-	if (m1 != -1) add_prefix[m1] = 1;
-	if (m2 != -1) add_prefix[m2] = 1;
-      }
-    }
-  }
-
-  for(int m=0;m<n_submodels();m++) {
-    int n = SubModels(m).n_parameters();
-    int index = first_index_of_model[m];
-
-    string prefix = model_prefix[m];
-
-    for(int i=0;i<n;i++)
-      if (add_prefix[m])
-	parameters_[index+i].name = prefix + short_parameter_names[index+i];
-      else
-	parameters_[index+i].name = short_parameter_names[index+i];
-  }
-}
-
 int SuperModel::register_last_submodel()
 {
   int m_index = first_index_of_model.size() - 1;
-
-  const Model& M = SubModels(m_index);
-
-  // store the parameter name
-  for(int i=0;i<M.n_parameters();i++)
-    add_parameter(M.get_parameter(i));
-
-  prefix_names();
-
-  // check for duplicate names
-  for(int i=first_index_of_model.back();i<n_parameters();i++)
-    for(int j=0;j<first_index_of_model.back();j++)
-      if (parameter_name(i) == parameter_name(j)) {
-	if (model_of_index[i] != -1)
-	  parameters_[i].name = model_prefix[model_of_index[i]]+parameter_name(i);
-	if (model_of_index[j] != -1)
-	  parameters_[j].name = model_prefix[model_of_index[j]]+parameter_name(j);
-      }
 
   return m_index;
 }
 
 int SuperModel::register_submodel(const string& prefix)
 {
-  first_index_of_model.size();
-
-  // store the prefix of this model
-  model_prefix.push_back(prefix+"::");
+  int m_index = first_index_of_model.size();
 
   // store the first index of this model
   first_index_of_model.push_back(n_parameters());
+
+  const Model& M = SubModels(m_index);
+
+  // store the parameter name
+  for(int i=0;i<M.n_parameters();i++)
+  {
+    Parameter P = M.get_parameter(i);
+    P.name = prefix + "::" + P.name;
+    add_parameter(P);
+  }
 
   return register_last_submodel();
 }
