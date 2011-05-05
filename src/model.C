@@ -330,20 +330,18 @@ void SuperModel::write_values(const vector<int>& indices,vector<double>::const_i
 
 void SuperModel::write() 
 {
-  // write parameters into each sub-model
-  int total=n_super_parameters();
+  for(int m=0;m<n_submodels(); m++)
+    write_to_submodel(m);
+}
 
-  for(int m=0;m<n_submodels();m++) 
-  {
-    vector<Parameter> sub = SubModels(m).get_parameters();
+void SuperModel::write_to_submodel(int m) 
+{
+  vector<Parameter> sub = SubModels(m).get_parameters();
 
-    for(int i=0;i<sub.size();i++)
-      sub[i] = parameters_[i+total];
+  for(int i=0;i<sub.size();i++)
+    sub[i] = parameters_[i+first_index_of_model[m]];
 
-    SubModels(m).set_parameters(sub);
-
-    total += sub.size();
-  }
+  SubModels(m).set_parameters(sub);
 }
 
 efloat_t SuperModel::prior() const {
