@@ -1070,21 +1070,34 @@ void mcmc_log(long iterations, long max_iter, int subsample, Parameters& P, ostr
     }
 }
 
-std::pair<int, Bounds<double> > change_bound(owned_ptr<Probability_Model>& P, 
-					     const string& name, const Bounds<double>& new_bounds)
+vector< std::pair<int, Bounds<double> > > change_bound(owned_ptr<Probability_Model>& P, 
+						  const string& name, const Bounds<double>& new_bounds)
 {
-  int index = find_parameter(*P, name);
-  if (index == -1)
-    return std::pair<int, Bounds<double> >(-1, new_bounds);
+  vector<int> indices = parameters_with_extension(*P,name);
 
-  Bounds<double> orig_bounds = P->get_bounds(index);
-  P->set_bounds(index, orig_bounds and new_bounds);
-  Bounds<double> total_bounds = P->get_bounds(index);
-  P->set_parameter_value(index, wrap(P->get_parameter_value(index), total_bounds));
+  vector< std::pair<int, Bounds<double> > > changed_bounds;
+
+  for(int i=0;i<indices.size();i++)
+  {
+    int index = indices[i];
+
+    Bounds<double> orig_bounds = P->get_bounds(index);
+    P->set_bounds(index, orig_bounds and new_bounds);
+    Bounds<double> total_bounds = P->get_bounds(index);
+    P->set_parameter_value(index, wrap(P->get_parameter_value(index), total_bounds));
 #ifndef NDEBUG
-  clog<<"bounds: "<<name<<" = "<<P->get_parameter_value(index)<<"  in  "<<P->get_bounds(index)<<endl;
+    clog<<"bounds: "<<name<<" = "<<P->get_parameter_value(index)<<"  in  "<<P->get_bounds(index)<<endl;
 #endif
-  return std::pair<int,Bounds<double> >(index,orig_bounds);
+    changed_bounds.push_back( std::pair<int,Bounds<double> >(index,orig_bounds) );
+  }
+
+  return changed_bounds;
+}
+
+template <typename T>
+void add_at_end(vector<T>& v1, const vector<T>& v2)
+{
+  v1.insert(v1.end(), v2.begin(), v2.end());
 }
 
 void Sampler::add_logger(const owned_ptr<Logger>& L)
@@ -1128,10 +1141,10 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 
   if (alignment_burnin_iterations > 0)
   {
-    restore_bounds.push_back( change_bound(P, "lambda",  ::upper_bound(-4.0)  ) );
-    restore_bounds.push_back( change_bound(P, "delta",   ::upper_bound(-5.0)  ) );
-    restore_bounds.push_back( change_bound(P, "epsilon", ::upper_bound(-0.25) ) );
-    restore_bounds.push_back( change_bound(P, "mu1",     ::upper_bound(0.5)   ) );
+    add_at_end(restore_bounds, change_bound(P, "I*::lambda",  ::upper_bound(-4.0)  ) );
+    add_at_end(restore_bounds, change_bound(P, "I*::delta",  ::upper_bound(-5.0)  ) );
+    add_at_end(restore_bounds, change_bound(P, "I*::epsilon",  ::upper_bound(-0.25)  ) );
+    add_at_end(restore_bounds, change_bound(P, "^mu*",  ::upper_bound(0.5)  ) );
   }
 
   //---------------- Run the MCMC chain -------------------//
