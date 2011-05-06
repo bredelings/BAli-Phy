@@ -167,9 +167,32 @@ public:
 /// child Models are propagated into parameters in the parent Models
 /// using the read() function.
 ///
+
+struct arg_expression
+{
+  int parent_index;
+  double constant_value;
+  bool is_constant() const {return parent_index == -1;}
+  bool is_term_ref() const {return parent_index != -1;}
+
+  arg_expression():parent_index(-1),constant_value(0) {}
+  arg_expression(int i):parent_index(i),constant_value(0) {}
+};
+
+struct model_slot
+{
+  int model_index;
+  int slot;
+  model_slot():model_index(-1),slot(-1) {}
+  model_slot(int m,int s):model_index(m),slot(s) {}
+};
+
 class SuperModel: virtual public Model 
 {
 protected:
+  std::vector<std::vector<arg_expression> > slot_expressions_for_submodel;
+  std::vector<std::vector<model_slot> > model_slots_for_index;
+
   std::vector<int> first_index_of_model;
   std::vector<int> model_of_index;
 
@@ -184,7 +207,9 @@ protected:
 
   int add_parameter(const Parameter&);
 
-  int register_last_submodel();
+  int register_last_submodel(const std::vector<arg_expression>&);
+  // Register a submodel, creating separate parameter for each submodel parameter
+  int register_submodel(const std::vector<arg_expression>&);
   // Register a submodel, creating separate parameter for each submodel parameter
   int register_submodel(const std::string&);
 

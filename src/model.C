@@ -157,15 +157,16 @@ string Model::state() const
 int SuperModel::add_parameter(const Parameter& P)
 {
   int m = ((int)first_index_of_model.size())-1;
-
   model_of_index.push_back(m);
 
   int index = Model::add_parameter(P);
+  model_slots_for_index.push_back(vector<model_slot>());
   return index;
 }
 
 int SuperModel::n_submodels() const 
 {
+  assert(first_index_of_model.size() == slot_expressions_for_submodel.size());
   return first_index_of_model.size();
 }
 
@@ -203,34 +204,79 @@ int SuperModel::add_super_parameter(const Parameter& P)
   for(int i=0;i<first_index_of_model.size();i++)
     first_index_of_model[i]++;
 
+  // Register the new parameter as being used at the top level, and shift the ones after it
+  model_slots_for_index.insert(model_slots_for_index.begin()+I     ,vector<model_slot>(1,model_slot()) );
+
+  // For each model...
+  for(int m=0;m < n_submodels(); m++)
+  {
+    // ... for each of its arguments ...
+    vector<arg_expression>& slot_expressions = slot_expressions_for_submodel[m];
+    for(int i=0;i < slot_expressions.size(); i++)
+      // ... that takes its value from a top-level variable that is affected ...
+      if (slot_expressions[i].is_term_ref() and slot_expressions[i].parent_index >= I)
+	// ... correct the reference to the parent index.
+	slot_expressions[i].parent_index++;
+  }
+
   return I;
 }
 
-int SuperModel::register_last_submodel()
+int SuperModel::register_last_submodel(const vector<arg_expression>& args)
 {
-  int m_index = first_index_of_model.size() - 1;
+  int m_index = slot_expressions_for_submodel.size()-1;
+
+  // The number of slots should match the number of slots in the model expression
+  assert(SubModels(m_index).n_parameters() == args.size());
+
+  // An argument should not refer to a parent slot that does not exist.
+  for(int i=0;i<args.size();i++)
+    if (args[i].is_term_ref())
+      assert(args[i].parent_index >=0 and args[i].parent_index < n_parameters());
+    
+  // Record for each arg that its used in this submodel
+  for(int slot=0;slot<args.size();slot++)
+    if (args[slot].is_term_ref())
+    {
+      int index = args[slot].parent_index;
+      model_slots_for_index[index].push_back(model_slot(m_index,slot));
+    }
 
   return m_index;
 }
 
+int SuperModel::register_submodel(const vector<arg_expression>& args)
+{
+  // bump the number of submodels
+  slot_expressions_for_submodel.push_back( vector<arg_expression>() );
+  first_index_of_model.push_back(n_parameters());
+
+  return register_last_submodel(args);
+}
+
 int SuperModel::register_submodel(const string& prefix)
 {
-  int m_index = first_index_of_model.size();
-
-  // store the first index of this model
+  // bump the number of submodels
+  slot_expressions_for_submodel.push_back( vector<arg_expression>() );
   first_index_of_model.push_back(n_parameters());
+
+  int m_index = first_index_of_model.size()-1;
+  assert(slot_expressions_for_submodel.size() == first_index_of_model.size());
 
   const Model& M = SubModels(m_index);
 
-  // store the parameter name
+  // Create the top-level parameters, and the list of references to them
+  vector<arg_expression> args;
+
   for(int i=0;i<M.n_parameters();i++)
   {
     Parameter P = M.get_parameter(i);
     P.name = prefix + "::" + P.name;
-    add_parameter(P);
+    int index = add_parameter(P);
+    args.push_back(index);
   }
 
-  return register_last_submodel();
+  return register_last_submodel(args);
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
