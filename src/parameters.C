@@ -766,34 +766,36 @@ void Parameters::recalc(const vector<int>& indices)
 {
   vector<bool> submodel_changed(n_submodels(),false);
 
-  for(int i=0;i<indices.size();i++) 
+  // Check for beta (0) or mu[i] (i+1)
+  for(int i=0;i<indices.size();i++)
   {
-    int m = model_of_index[indices[i]];
+    int index = indices[i];
+    if (not is_super_parameter(index)) continue;
 
-    if (m == -1) 
-    {
-      int s = indices[i];
-
-      if (s == 0) // beta
-	for(int j=0;j<n_data_partitions();j++)
-	  data_partitions[j]->set_beta(get_beta());
-      else        // mu1 ... mu<n>
-      {
-	double mu = get_parameter_value(s);
-
-	s--;
-
-	assert(0 <= s and s < n_scales);
-
-	for(int j=0;j<scale_for_partition.size();j++)
-	  if (scale_for_partition[j] == s)
-	    data_partitions[j]->branch_mean(mu);
-      }
-    }
+    if (index == 0) // beta
+      for(int j=0;j<n_data_partitions();j++)
+	data_partitions[j]->set_beta(get_beta());    
     else
-      submodel_changed[m] = true;
+    {
+      double mu = get_parameter_value(index);
+      
+      int p = index - 1;
+      
+      assert(0 <= p and p < n_scales);
+      
+      for(int j=0;j<scale_for_partition.size();j++)
+	if (scale_for_partition[j] == p)
+	  data_partitions[j]->branch_mean(mu);
+    }
   }
 
+  // Check if any submodels are affected.
+  for(int m=0;m<n_submodels();m++) 
+    for(int i=0;i<indices.size() and not submodel_changed[m];i++)
+      if (parameter_is_used_by_model(indices[i],m))
+	submodel_changed[m] = true;
+
+  // Recalculate smodels or imodels if they changed.
   for(int m=0;m<n_submodels();m++) 
   {
     if (not submodel_changed[m]) continue;
@@ -808,9 +810,6 @@ void Parameters::recalc(const vector<int>& indices)
       recalc_imodel(M);
     else
       M -= n_imodels();
-
-    // no need to call recalc for change in data-partition parameters? 
-    // (just part?::mu, I think, for now)  
   }
 }
 
