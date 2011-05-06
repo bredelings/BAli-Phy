@@ -937,7 +937,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 {
   constants.push_back(-1);
 
-  add_super_parameter(Parameter("Heat::beta", 1.0, between(0,1)));
+  add_super_parameter(Parameter("Heat:beta", 1.0, between(0,1)));
 
   for(int i=0;i<n_scales;i++)
     add_super_parameter(Parameter("mu"+convertToString(i+1), 0.25, lower_bound(0)));
@@ -1019,7 +1019,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 {
   constants.push_back(-1);
 
-  add_super_parameter(Parameter("Heat::beta", 1.0, between(0,1)));
+  add_super_parameter(Parameter("Heat:beta", 1.0, between(0,1)));
 
   for(int i=0;i<n_scales;i++)
     add_super_parameter(Parameter("mu"+convertToString(i+1), 1.0, lower_bound(0.0)));
