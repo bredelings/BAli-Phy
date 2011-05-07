@@ -207,9 +207,6 @@ protected:
   std::vector<std::vector<arg_expression> > slot_expressions_for_submodel;
   std::vector<std::vector<model_slot> > model_slots_for_index;
 
-  std::vector<int> first_index_of_model;
-  std::vector<int> model_of_index;
-
   /// Is parameter 'index' used by model m?
   bool parameter_is_used_by_model(int index, int m) const;
   /// Is parameter 'index' use by the top level model?

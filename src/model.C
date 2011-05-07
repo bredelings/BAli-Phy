@@ -1,4 +1,3 @@
-#undef NDEBUG
 /*
    Copyright (C) 2004-2006,2009 Benjamin Redelings
 
@@ -156,9 +155,6 @@ string Model::state() const
 
 int SuperModel::add_parameter(const Parameter& P)
 {
-  int m = ((int)first_index_of_model.size())-1;
-  model_of_index.push_back(m);
-
   int index = Model::add_parameter(P);
   model_slots_for_index.push_back(vector<model_slot>());
   return index;
@@ -166,7 +162,6 @@ int SuperModel::add_parameter(const Parameter& P)
 
 int SuperModel::n_submodels() const 
 {
-  assert(first_index_of_model.size() == slot_expressions_for_submodel.size());
   return slot_expressions_for_submodel.size();
 }
 
@@ -206,11 +201,6 @@ int SuperModel::add_super_parameter(const Parameter& P)
 
   // Add the new parameter and shift the ones after it
   parameters_.insert(parameters_.begin()+I           ,P);
-
-  model_of_index.insert(model_of_index.begin()+I     ,-1);
-
-  for(int i=0;i<first_index_of_model.size();i++)
-    first_index_of_model[i]++;
 
   // Register the new parameter as being used at the top level, and shift the ones after it
   model_slots_for_index.insert(model_slots_for_index.begin()+I     ,vector<model_slot>(1,model_slot()) );
@@ -260,7 +250,6 @@ int SuperModel::register_submodel(const vector<arg_expression>& args)
 {
   // bump the number of submodels
   slot_expressions_for_submodel.push_back( vector<arg_expression>() );
-  first_index_of_model.push_back(n_parameters());
 
   return register_last_submodel(args);
 }
@@ -269,10 +258,8 @@ int SuperModel::register_submodel(const string& prefix)
 {
   // bump the number of submodels
   slot_expressions_for_submodel.push_back( vector<arg_expression>() );
-  first_index_of_model.push_back(n_parameters());
 
   int m_index = slot_expressions_for_submodel.size()-1;
-  assert(slot_expressions_for_submodel.size() == first_index_of_model.size());
 
   const Model& M = SubModels(m_index);
 
