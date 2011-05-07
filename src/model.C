@@ -172,11 +172,11 @@ int SuperModel::n_submodels() const
 
 bool SuperModel::parameter_is_used_by_model(int index, int m) const
 {
-  if (m == -1)
-    return (index < n_super_parameters());
-  else
-    return (index >= first_index_of_model[m] and 
-	    (m+1 >= n_submodels() or index < first_index_of_model[m+1]));
+  for(int i=0;i<model_slots_for_index[index].size();i++)
+    if (model_slots_for_index[index][i].model_index == m)
+      return true;
+
+  return false;
 }
 
 bool SuperModel::is_super_parameter(int index) const
