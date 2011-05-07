@@ -83,6 +83,8 @@ struct Parameter
 /// - a name (a string) for each parameter
 /// - an attribute (a boolean) that determinies whether each parameter is fixed or variable
 ///
+/// Next: make models out-of-date unless we call model.update();
+///
 class Model: public Cloneable 
 {
 protected:
