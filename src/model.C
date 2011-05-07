@@ -589,21 +589,17 @@ bool overlap(const path_set_t& set1, const path_set_t& set2)
 /// Remove the nodes in paths that are direct children of the path_prefix
 void remove_prefix(vector< vector<string> >& paths, const  vector<string>& path_prefix)
 {
-  std::cerr<<"  Removing prefix "<<join(path_prefix,"::")<<"\n";
   for(int i=0;i<paths.size();i++)
   {
     if (not path_has_prefix(paths[i], path_prefix)) continue;
 
-    std::cerr<<"    Replacing "<<join(paths[i],"::")<<" with ";
     paths[i].erase(paths[i].begin()+path_prefix.size()-1);
-    std::cerr<<join(paths[i],"::")<<"\n";
   }
 }
 
 /// Remove (internal) child paths if grandchild paths are not shared with any other child.
 void check_remove_grandchildren(vector< vector<string> >& paths, const vector<string>& path_prefix)
 {
-  std::cerr<<"Considering grandfather "<<join(path_prefix,"::")<<"\n";
   // construct the child paths and their locations
   typedef std::map<string, path_set_t> path_map_t;
   path_map_t grandchild_paths;
@@ -679,11 +675,7 @@ vector<string> short_parameter_names(vector<string> names)
   }
   
   for(int i=0;i<names.size();i++)
-  {
-    std::cerr<<names[i]<<" -> ";
     names[i] = join(paths[i],"::");
-    std::cerr<<names[i]<<"\n";
-  }
 
   return names;
 }
