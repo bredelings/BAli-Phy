@@ -186,17 +186,25 @@ bool SuperModel::is_super_parameter(int index) const
 
 int SuperModel::n_super_parameters() const 
 {
-  if (n_submodels() == 0)
-    return n_parameters();
-  else
-    return first_index_of_model[0];
+  int n=0;
+  for(int i=0;i<n_parameters();i++)
+    if (is_super_parameter(i))
+      n++;
+
+  return n;
 }
 
 // apparent the super-parameters are the first ones
 int SuperModel::add_super_parameter(const Parameter& P)
 {
-  int I = n_super_parameters();
+  // skip initial super-only parameters
+  int I=0;
+  while(I < n_parameters() and
+	model_slots_for_index[I].size() == 1 and 
+	is_super_parameter(I))
+    I++;
 
+  // Add the new parameter and shift the ones after it
   parameters_.insert(parameters_.begin()+I           ,P);
 
   model_of_index.insert(model_of_index.begin()+I     ,-1);
@@ -286,12 +294,18 @@ void SuperModel::write_one(int index, const Parameter& P)
 
   parameters_[index] = P;
 
-  int m=model_of_index[index];
-  if (m == -1) return;
+  const vector<model_slot>& model_slots = model_slots_for_index[index];
 
-  // push value down into the sub-model
-  int offset = first_index_of_model[m];
-  SubModels(m).set_parameter(index - offset,P);
+  // For each model that uses this top-level index...
+  for(int i=0;i<model_slots.size();i++)
+  {
+    int m = model_slots[i].model_index;
+    int s = model_slots[i].slot;
+
+    //... write it down into a sub-model, if the usage is not from the top-level model.
+    if (m != -1)
+      SubModels(m).set_parameter(s,P);
+  }
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
