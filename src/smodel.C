@@ -404,7 +404,6 @@ namespace substitution {
 
     insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
 
-    check();
     recalc_all();
   }
 
@@ -533,7 +532,6 @@ namespace substitution {
 
     insert_submodel("1",TripletsFrequencyModel(C));
 
-    check();
     recalc_all();
   }
 
@@ -598,7 +596,6 @@ namespace substitution {
 
     insert_submodel("1",TripletsFrequencyModel(C));
 
-    check();
     recalc_all();
   }
 
@@ -884,7 +881,6 @@ namespace substitution {
     register_submodel("S");
     register_submodel("R");
 
-    check();
     recalc_all();
   }
     
@@ -1268,7 +1264,6 @@ namespace substitution {
   { 
     insert_submodel("1",N);
 
-    check();
     recalc_all();
   }
 
@@ -1446,7 +1441,6 @@ namespace substitution {
 
     register_submodel("R");
 
-    check();
     recalc_all();
   }
 
@@ -1496,13 +1490,11 @@ namespace substitution {
   {
     SimpleReversibleAdditiveCollection<ReversibleAdditiveModel> M(RA);
     insert_submodel("0",M);
-    check();
   }
 
   UnitModel::UnitModel(const Base_Model_t& M)
   {
     insert_submodel("0",M);
-    check();
   }
 
   //---------------------- MultiFrequencyModel -----------------------//
@@ -1600,7 +1592,6 @@ namespace substitution {
       }
     }
 
-    check();
     recalc_all();
   }
 

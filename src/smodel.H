@@ -938,7 +938,6 @@ namespace substitution {
     SimpleReversibleAdditiveCollection(const T& t)
     {
       insert_submodel("0",t);
-      SuperModelOver<T>::read();
     }
 
     virtual ~SimpleReversibleAdditiveCollection() {}
