@@ -167,7 +167,7 @@ int SuperModel::add_parameter(const Parameter& P)
 int SuperModel::n_submodels() const 
 {
   assert(first_index_of_model.size() == slot_expressions_for_submodel.size());
-  return first_index_of_model.size();
+  return slot_expressions_for_submodel.size();
 }
 
 bool SuperModel::parameter_is_used_by_model(int index, int m) const
@@ -260,7 +260,7 @@ int SuperModel::register_submodel(const string& prefix)
   slot_expressions_for_submodel.push_back( vector<arg_expression>() );
   first_index_of_model.push_back(n_parameters());
 
-  int m_index = first_index_of_model.size()-1;
+  int m_index = slot_expressions_for_submodel.size()-1;
   assert(slot_expressions_for_submodel.size() == first_index_of_model.size());
 
   const Model& M = SubModels(m_index);
@@ -303,7 +303,7 @@ void SuperModel::write_value(int index, double p)
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
-/// \todo This only write the VALUE I think.
+/// \todo This only write the VALUES I think.
 void SuperModel::write_values(const vector<int>& indices,vector<double>::const_iterator& p)
 {
   for(int i=0;i<indices.size();i++) {

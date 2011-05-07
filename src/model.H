@@ -56,6 +56,20 @@ struct Parameter
 };
 
 
+// Rewrite:
+// - A supermodel is actually a function on a collection of sub-expressions.
+// - Currently models carry their own parameters, but in the future the expressions should
+//   be separate from the state. (see Context.C)
+// - When adding a submodel, we are essentially
+//   (i)  registering a sub-expression to be calculated
+//   (ii) mapping the parameters of the sub-expression onto either
+//     (ii.a) constants
+//     (ii.b) parameters of the *main* expression
+// - Therefore, to add a submodel, and also all of its parameters as separate parameters, I would:
+//   (i)  Go through add get add parameters with group "n", and get the resulting uniquified names.   
+//   (ii) Construct the mapping between submodel parameters and top model parameters or constants.
+//   (iii) Add the submodel with the specified mapping.
+
 /// \brief An object that depends on a number of parameters, and updates itself when they change.
 ///
 /// Model objects
