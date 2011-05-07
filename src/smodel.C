@@ -404,7 +404,7 @@ namespace substitution {
 
     insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -533,7 +533,7 @@ namespace substitution {
 
     insert_submodel("1",TripletsFrequencyModel(C));
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -598,7 +598,7 @@ namespace substitution {
 
     insert_submodel("1",TripletsFrequencyModel(C));
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -884,7 +884,7 @@ namespace substitution {
     register_submodel("S");
     register_submodel("R");
 
-    read();
+    check();
     recalc_all();
   }
     
@@ -1268,7 +1268,7 @@ namespace substitution {
   { 
     insert_submodel("1",N);
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -1446,7 +1446,7 @@ namespace substitution {
 
     register_submodel("R");
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -1496,13 +1496,13 @@ namespace substitution {
   {
     SimpleReversibleAdditiveCollection<ReversibleAdditiveModel> M(RA);
     insert_submodel("0",M);
-    read();
+    check();
   }
 
   UnitModel::UnitModel(const Base_Model_t& M)
   {
     insert_submodel("0",M);
-    read();
+    check();
   }
 
   //---------------------- MultiFrequencyModel -----------------------//
@@ -1600,7 +1600,7 @@ namespace substitution {
       }
     }
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -1913,7 +1913,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     for(int i=0;i<n;i++)
       add_super_parameter(Parameter(p_name+convertToString(i+1), 1.0, between(0,n)));
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -1969,7 +1969,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     insert_submodel("DIST",RD);
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -2046,7 +2046,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     add_super_parameter(Parameter("INV::p", 0.01, between(0, 1)));
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -2140,7 +2140,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     insert_submodel("VAR", M);
     insert_submodel("INV", SimpleReversibleMarkovModel(INV_Model(M.Alphabet())));
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -2188,7 +2188,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     add_super_parameter(Parameter("M2::f[Selected]", 1.0 - get_parameter_value(0) - get_parameter_value(1), between(0, 1)));
     add_super_parameter(Parameter("M2::omega", 1.0, lower_bound(0)));
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -2256,7 +2256,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     add_super_parameter(Parameter("M2a::omega1", 0.5, between(0,1)));
     add_super_parameter(Parameter("M2a::omega3", 2.0, lower_bound(1)));
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -2338,7 +2338,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     add_super_parameter(Parameter("M8b::omega3_non_zero", 1.0));
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -2475,7 +2475,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       add_super_parameter(Parameter(pname, 1.0, lower_bound(0)));
     }
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -2588,7 +2588,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     pi.resize(Alphabet().size());
 
-    read();
+    check();
     recalc_all();
   }
 
@@ -2740,7 +2740,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     register_submodel("M");
     register_submodel("S");
 
-    read();
+    check();
     recalc_all();
   }
   
