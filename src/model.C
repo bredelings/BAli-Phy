@@ -250,6 +250,9 @@ int SuperModel::register_last_submodel(const vector<arg_expression>& args)
       model_slots_for_index[index].push_back(model_slot(m_index,slot));
     }
 
+  // Set the submodel parameters
+  write_to_submodel(m_index);
+
   return m_index;
 }
 
@@ -317,35 +320,44 @@ void SuperModel::write_value(int index, double p)
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
-/// \todo This only write the VALUES I think.
+/// \todo This only writes the VALUES I think.
 void SuperModel::write_values(const vector<int>& indices,vector<double>::const_iterator& p)
 {
-  for(int i=0;i<indices.size();i++) {
-    assert(indices[i] < n_parameters());
-    if (i > 0)
-      assert(indices[i-1] < indices[i]);
-    parameters_[indices[i]].value = *(p+i);
+  vector<vector<int> > model_slots(n_submodels());
+  vector<vector<double> > model_values(n_submodels());
+
+  // Set the parameter values in the top level
+  for(int i=0;i<indices.size();i++)
+  {
+    int index = indices[i];
+    double value = *(p+i);
+
+    // check that all the indices are in range
+    assert(index < n_parameters());
+
+    // set the values
+    parameters_[index].value = value;
+
+    // record the revelant slots and values for each submodel
+    for(int j=0;j<model_slots_for_index[index].size();j++)
+    {
+      int m = model_slots_for_index[index][j].model_index;
+      int s = model_slots_for_index[index][j].slot;
+
+      if (m != -1)
+      {
+	model_slots[m].push_back(s);
+	model_values[m].push_back(value);
+      }
+    }
   }
 
-  int i=0;
-  while(i<indices.size() and model_of_index[indices[i]] == -1)
+  // Write the changes down into submodels AND recalculate them.
+  for(int m=0;m < n_submodels();m++)
   {
-    i++;
-    p++;
-  }
+    if (not model_slots.size()) continue;
 
-  // push values down into sub-models
-  for(;i<indices.size();) 
-  {
-    // find the first model that changes
-    int m= model_of_index[indices[i]];
-    int offset = first_index_of_model[m];
-
-    vector<int> sub_indices;
-    for(;i<indices.size() and model_of_index[indices[i]] == m;i++)
-      sub_indices.push_back(indices[i]-offset);
-
-    SubModels(m).set_parameter_values(sub_indices,p);
+    SubModels(m).set_parameter_values(model_slots[m], model_values[m]);
   }
 }
 
@@ -357,21 +369,43 @@ void SuperModel::write()
 
 void SuperModel::write_to_submodel(int m) 
 {
-  vector<Parameter> sub = SubModels(m).get_parameters();
+  // Read the current argument lists for each sub-model
+  vector<Parameter> sub_args = SubModels(m).get_parameters();
 
-  for(int i=0;i<sub.size();i++)
-    sub[i] = parameters_[i+first_index_of_model[m]];
+  // Determine how these arguments should be computed from top level parameters
+  const vector<arg_expression>& arg_expressions = slot_expressions_for_submodel[m];
 
-  SubModels(m).set_parameters(sub);
+  // Modify the sub_args
+  for(int i=0;i<arg_expressions.size();i++)
+  {
+    if (arg_expressions[i].is_term_ref())
+    {
+      int index = arg_expressions[i].parent_index;
+      sub_args[i].value = parameters_[index].value;
+      sub_args[i].fixed = parameters_[index].fixed;
+      sub_args[i].bounds = parameters_[index].bounds;
+    }
+    else {
+      sub_args[i].value = arg_expressions[i].constant_value;
+      sub_args[i].fixed = true;
+    }
+  }
+
+  SubModels(m).set_parameters(sub_args);
 }
 
-void SuperModel::read_from_submodel(int m) 
+void SuperModel::read_from_submodel(int m)
 {
-  unsigned offset = first_index_of_model[m];
-  const vector<Parameter>& sub = SubModels(m).get_parameters();
-  
-  for(int i=0;i<sub.size();i++)
-    parameters_[i+offset].value = sub[i].value;
+  for(int i=0;i<n_parameters();i++)
+  {
+    for(int j=0;j<model_slots_for_index[i].size();j++)
+    {
+      if (model_slots_for_index[i][j].model_index != m) continue;
+
+      int s = model_slots_for_index[i][j].slot;
+      parameters_[i].value = SubModels(m).get_parameter_value(s);
+    }
+  }
 }
 
 void SuperModel::read()
@@ -444,10 +478,17 @@ void SuperModel::check() const
     // Read the current argument lists for each sub-model
     vector<Parameter> sub_args = SubModels(m).get_parameters();
 
-    for(int i=0;i<sub_args.size();i++)
+    const vector<arg_expression>& arg_expressions = slot_expressions_for_submodel[m];
+
+    for(int i=0;i<arg_expressions.size();i++)
     {
-      int index = first_index_of_model[m] + i;
-      assert(sub_args[i].value == parameters_[index].value);
+      if (arg_expressions[i].is_term_ref())
+      {
+	int index = arg_expressions[i].parent_index;
+	assert(sub_args[i].value == parameters_[index].value);
+      }
+      else
+	assert(sub_args[i].value == arg_expressions[i].constant_value );
     }
   }
 }
