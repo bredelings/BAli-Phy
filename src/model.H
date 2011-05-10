@@ -66,14 +66,25 @@ struct Parameter
 //     (ii.a) constants
 //     (ii.b) parameters of the *main* expression
 // - Therefore, to add a submodel, and also all of its parameters as separate parameters, I would:
-//   (i)  Go through add get add parameters with group "n", and get the resulting uniquified names.   
+//   (i)  Go adding parameters with group "n", and get the resulting uniquified names.   
 //   (ii) Construct the mapping between submodel parameters and top model parameters or constants.
 //   (iii) Add the submodel with the specified mapping.
+//   (iv) This has been done.
+// - We may still need objects to have calculable attributes, like
+//   (i) bounds  [only for numeric objects?]
+//   (ii) being fixed or not fixed.
+//   (iii) type?
+//   (iv) bounds which some objects may not have...
+//   (v) priors... etc.
+//   In short, we need to have other objects which reference variables in two ways
+//   * being ABOUT a variable, or variables (as in priors)
+//   * refering to a function of the variables.
+//   * priors do both, in a sense.
 
 /// \brief An object that depends on a number of parameters, and updates itself when they change.
 ///
 /// Model objects
-///   - depend on some number of parameters (all of type double)
+///   - depend on some number of parameters (currently, all of type double)
 ///   - update themselves when their parameters change.
 ///
 /// Two Model objects cannot (easily) share a parameter, because 

@@ -10,6 +10,32 @@
 
 class Formula;
 
+// Eventually, many things should be 'expressions'.  Expressions must be
+// generic, and therefore probably must use dynamic typing instead of static
+// typing. Expressions can have constants plugged in to dummy variables.  However, C++0x/boost
+// functions can also have that.  Furthermore, boost functions should also
+// be able to be type safe, if they are constructed using templates. So,
+// why don't I just use boost functions?
+// - Well, boost functions do only one thing: calculate.
+// - Probably one could CONSTRUCT a boost function from a 'expression'.
+
+// Note: I want to be able to construct expressions simply.  For example, I want
+// to have an exp(x) expression that does something like exp(Q) = exp_sym(pi(Q),S(Q))
+
+// Note: it would be nice to have expressions be able to return pairs and other objects.
+// That would make it much easier for functions to have single return values, since such
+// a "single" value could contain multiple parts.
+
+// Note: it is probably necessary for the different parts of a structure to be able to be
+// dynamically computed.  A structure is, in some sense, also a function, if structures are
+// s-expressions.
+
+// Question: How does this relate to BEAST input files?
+// - in BEAST, each object is described using a name, which is basically an ID.
+// - expression variables are parameters, and are kept track of using pointers, which
+//   I think is problematic.
+
+
 struct term_ref
 {
   int index;

@@ -208,6 +208,13 @@ std::vector<std::string> sequence_names(const alignment& A,int n);
 alignment randomize(const alignment&,int n=-1);
 
 alignment blank_copy(const alignment&,int length=0);
+
+// TODO - This kind of alignment requires searching every row to find the characters
+//        in that row.
+
+// TODO - I am interested in data structures / algorithms that make it quick and simple
+//        to find all the internal nodes of some tree that connect the present characters 
+//        of some column.
 #endif
 
 
