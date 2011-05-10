@@ -123,7 +123,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   {
     int C = get_branch_subst_category(b);
 
-    double l = T->branch(b).length();
+    double l = T->branch(b).length() * branch_mean() / SModel().rate();
     assert(l >= 0);
 
     vector< Matrix >& TP = cached_transition_P[b].modify_value();
@@ -205,9 +205,6 @@ void data_partition::recalc_imodel()
 void data_partition::recalc_smodel() 
 {
   default_timer_stack.push_timer("recalc_smodel( )");
-  // set the rate to one
-  // FIXME - we COPY the smodel here!
-  SModel_->set_rate(branch_mean());
 
   //invalidate cached conditional likelihoods in case the model has changed
   LC.invalidate_all();
@@ -371,9 +368,6 @@ void data_partition::branch_mean(double mu)
 void data_partition::branch_mean_tricky(double mu)
 {
   branch_mean_ = mu;
-  // scale the substitution rate
-  // FIXME - we COPY the smodel here!
-  SModel_->set_rate(branch_mean());
 }
 
 string data_partition::name() const 
@@ -665,10 +659,6 @@ void Parameters::recalc_smodels()
 
 void Parameters::recalc_smodel(int m) 
 {
-  // set the rate to one
-  SModels[m]->set_rate(1);
-  read();
-
   for(int i=0;i<data_partitions.size();i++) 
   {
     if (smodel_for_partition[i] == m) {
