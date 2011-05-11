@@ -164,6 +164,11 @@ namespace substitution {
     virtual AdditiveModel* clone() const=0;
 
     virtual double rate() const =0;
+
+    // FIXME - here we are treating the model object as a calculated result.
+    //         therefore, we cannot do this to actual submodels.
+    //         Instead, make a copy (which is like the evaluated value of the model function)
+    //           and modify the copy.
     virtual void set_rate(double) =0;
 
     AdditiveModel() {}

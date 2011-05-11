@@ -1353,6 +1353,10 @@ namespace substitution {
 
   double ReversibleAdditiveCollection::rate() const
   {
+    // FIXME... (see below)
+    if (n_parts() > 1) std::abort();
+
+    // Does this really work?
     return part(0).rate();
   }
 
@@ -2620,7 +2624,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     const int n_models = M->n_base_models();
 
-    M->set_rate(1);
+    owned_ptr<MultiModel> M2 = M;
+
+    // Make a copy (treated as a value), and use this.
+    M2->set_rate(1);
 
     const valarray<double>& M_pi = M->frequencies();
     const vector<double>&   M_f  = M->distribution();
@@ -2644,7 +2651,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     T=0;
     for(int m=0; m < n_models; m++) 
     {
-      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m));
+      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M2->base_model(m));
       if (not RM)
 	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model '"<<M->base_model(m).name()<<"'";
 
