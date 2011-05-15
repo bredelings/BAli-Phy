@@ -297,9 +297,6 @@ public:
   /// Remove a node 'n' with exactly two neighbors, merging its two adjacent branches
   virtual void remove_node_from_branch(int n);
 
-  /// remove a subtree
-  virtual nodeview prune_subtree(int b);
-
   /// remove leaves
   virtual std::vector<int> prune_leaves(const std::vector<int>&);
 
@@ -368,9 +365,6 @@ public:
 
   /// Remove a node 'n' with exactly two neighbors, merging two branches
   void remove_node_from_branch(int n);
-
-  /// remove a subtree
-  nodeview prune_subtree(int b);
 
   /// remove leaves
   virtual std::vector<int> prune_leaves(const std::vector<int>&);

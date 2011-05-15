@@ -35,20 +35,6 @@ vector<int> permutation(int n) {
   return p;
 }
 
-Tree remove_root_branch(RootedTree RT) 
-{
-  nodeview r1 = RT.root();
-  assert(r1.degree() == 1);
-  nodeview r2 = *(RT.root().neighbors());
-  RT.reroot(0);
-
-  r2 = RT.prune_subtree(RT.directed_branch(r2,r1));
-  if (not r2.is_leaf_node())
-    RT.remove_node_from_branch(r2);
-
-  return Tree(RT);
-}
-
 BranchNode* random_sub_node(BranchNode* n)
 {
   unsigned d = nodeview(n).degree();

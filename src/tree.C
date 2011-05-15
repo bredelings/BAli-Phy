@@ -346,38 +346,7 @@ void shift_leaves(BranchNode* start,int first,int n) {
   }
 }
 
-/// Remove the subtree with root node n
-nodeview Tree::prune_subtree(int br) {
-  BranchNode* b = branches_[br];
-  
-  prepare_partitions();
-
-  // shift remaining leaf names down so that they remain contiguous
-  for(int i=0;i<n_leaves();i++) {
-
-    // skip leaf nodes to be deleted
-    if (cached_partitions[br][i]) continue;
-
-    // calculate new name 
-    int name = i;
-    for(int j=0;j<=i;j++)
-      if (cached_partitions[br][j]) name--;
-
-    // assign new name
-    name_node(nodes_[i],name);
-  }
-
-  // Remove and destroy subtree @ b
-  BranchNode* node_remainder = TreeView::unlink_subtree(b);
-  TreeView(b).destroy();
-  
-  /// Reconstruct everything from node names
-  reanalyze(node_remainder);
-
-  return node_remainder;
-}
-
-/// Remove the subtree with root node n
+/// Remove the specified leaves and their dangling ancestors
 vector<int> Tree::prune_leaves(const vector<int>& remove) 
 {
   // get pointers to the current leaves
@@ -1386,16 +1355,6 @@ void RootedTree::remove_node_from_branch(int node)
     root_ = nodes_[0];
 
   Tree::remove_node_from_branch(node);
-}
-
-nodeview RootedTree::prune_subtree(int br) {
-  if (partition(br)[root_->node])
-    throw myexception()<<"Can't delete a subtree containing the root node!";
-
-  if (root_ == branches_[br]) 
-    root_ = root_->next;
-
-  return Tree::prune_subtree(br);
 }
 
 vector<int> RootedTree::prune_leaves(const vector<int>& remove) 

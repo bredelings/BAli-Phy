@@ -37,35 +37,9 @@ int SequenceSet::index(const string& s) const {
 
 
 //-------------------------- SequenceTree methods ----------------------------//
-nodeview SequenceTree::prune_subtree(int branch) {
-  // get pointers to current leaves
-  vector<BranchNode*> leaves1(n_leaves());
-  for(int i=0;i<leaves1.size();i++)
-    leaves1[i] = nodes_[i];
-  
-  // remove the subtree
-  nodeview node_remainder = Tree::prune_subtree(branch);
-  
-  // get pointers to NEW leaves
-  vector<BranchNode*> leaves2(n_leaves());
-  for(int i=0;i<leaves2.size();i++)
-    leaves2[i] = nodes_[i];
 
-  // figure out the mapping
-  vector<string> newnames;
-  for(int i=0;i<leaves2.size();i++) {
-    int index = find_index(leaves1,leaves2[i]);
-    if (index == -1)
-      break;
-    else
-      newnames.push_back(sequences[index]);
-  }
-  assert(newnames.size() == leaves2.size());
 
-  // select the new names
-  sequences = newnames;
 
-  return node_remainder;
 }
 
 vector<int> SequenceTree::prune_leaves(const vector<int>& remove) 
