@@ -306,8 +306,10 @@ public:
   /// create a node
   virtual void add_first_node();
 
-  /// add a node, linking to node 'n'
-  nodeview add_node(int n);
+  /// add a degree 0 , linking to node 'n'.  However, the index will not be a leaf index
+  virtual nodeview add_leaf_node(int n);
+
+  void reconnect_branch(int source, int target, int new_target);
 
   /// Create an identical tree that does not share memory with the original
   Tree& operator=(const Tree& T); 

@@ -63,6 +63,9 @@ public:
   /// compute a string representing the tree, w/ or w/o branch lengths
   virtual std::string write_with_bootstrap_fraction(const std::vector<double>& bf, bool print_lengths=true) const;
 
+  /// add a degree 0 , linking to node 'n'.  However, the index will not be a leaf index
+  virtual nodeview add_leaf_node(int n);
+
   /// load this tree from the string \a s
   virtual int parse(const std::string& s);
   virtual int parse_nexus(const std::string& s,const std::vector<std::string>& names);

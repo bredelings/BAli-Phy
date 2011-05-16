@@ -612,13 +612,37 @@ BranchNode* add_leaf_node(BranchNode* n)
 }
 
 
-nodeview Tree::add_node(int node) {
+nodeview Tree::add_leaf_node(int node) 
+{
   assert(0 <= node and node < nodes_.size());
+  int n_branches_old = n_branches();
 
+  // Update the directed branch names
+  for(BN_iterator BN(nodes_[0]);BN;BN++) 
+  {
+    int name = std::min((*BN)->branch, (*BN)->out->branch);
+    if ((*BN)->branch != name)
+      (*BN)->branch++;
+  }
+
+  // Add the new leaf node to the tree
   BranchNode* n_leaf = ::add_leaf_node(nodes_[node]);
-  n_leaf->node = n_leaves_;
+  n_leaf->node = nodes_.size();
+  n_leaf->branch = n_branches_old;
+  n_leaf->out->branch = 2*n_branches_old+1;
 
-  reanalyze(n_leaf);
+  // Update the nodes_ array
+  nodes_.push_back(n_leaf);
+
+  // Update the branches_ array
+  branches_.resize(branches_.size()+2);
+  for(BN_iterator BN(nodes_[0]);BN;BN++) 
+  {
+    branches_[ (*BN)->branch ] = *BN;
+    assert( nodes_[ (*BN)->node ] = *BN);
+  }
+
+  caches_valid = false;
 
   return n_leaf;
 }
@@ -1029,6 +1053,7 @@ void Tree::check_structure() const {
 #endif
 }
 
+/// Insert the partial node n2 after the partial node n1 in the ring containing n1.
 void insert_after(BranchNode* n1,BranchNode* n2)
 {
   n2->node = n1->node;
@@ -1036,7 +1061,7 @@ void insert_after(BranchNode* n1,BranchNode* n2)
   n2->prev = n1;
   n2->next = n1->next;
 
-  n1->next = n2;
+  n2->prev->next = n2;
   n2->next->prev = n2;
 }
 
@@ -1056,18 +1081,24 @@ BranchNode* connect_nodes(BranchNode* n1, BranchNode* n2)
   return c1;
 }
 
-
-BranchNode* split_node(vector<BranchNode*> group1,vector<BranchNode*> group2)
+void Tree::reconnect_branch(int source_index, int target_index, int new_target_index)
 {
-  // groups are already split!
-  if (group1.size() == 1 or group2.size() == 1) return NULL;
+  branchview b = directed_branch(source_index, target_index);
 
-  // separate the two nodes
-  knit_node_together(group1);
-  knit_node_together(group2);
+  if (b.target().degree() < 2)
+    throw myexception()<<"Cannot move branch away from target "<<target_index<<": degree is "<<b.target().degree();
+
+  BranchNode* target = b.target();
   
-  // connect the two nodes
-  return connect_nodes(group1.back(),group2.back());
+  // remove bt from the ring of the old node
+  target->prev->next = target->next;
+  target->next->prev = target->prev;
+
+  BranchNode* new_target = nodes_[new_target_index];
+
+  insert_after(new_target, target);
+
+  assert(target->node == new_target_index);
 }
 
 int Tree::induce_partition(const dynamic_bitset<>& partition) 
@@ -1121,8 +1152,18 @@ int Tree::induce_partition(const dynamic_bitset<>& partition)
       bn = group2[0];
     // split the node and note the name of the newly added branch
     else {
-      bn = split_node(group1,group2);
-      reanalyze(nodes_[0]);
+      nodeview new_node = add_leaf_node(group1[0]->node);
+      int old_index = group1[0]->node;
+      int new_index = new_node;
+
+      for(int i=0;i<group2.size();i++) {
+	reconnect_branch(group2[i]->out->node, group2[i]->node, new_node);
+	assert(group2[i]->node == new_index);
+      }
+      for(int i=0;i<group1.size();i++)
+	assert(group1[i]->node == old_index);
+
+      bn = new_node;
     }
 
     if (not bn)

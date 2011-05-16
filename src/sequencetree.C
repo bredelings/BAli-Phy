@@ -67,6 +67,13 @@ vector<int> SequenceTree::prune_leaves(const vector<int>& remove)
   return mapping;
 }
 
+nodeview SequenceTree::add_leaf_node(int n)
+{
+  nodeview nv = Tree::add_leaf_node(n);
+  labels.push_back("");
+  return nv;
+}
+
 void SequenceTree::read(const string& filename) {
   checked_ifstream file(filename, "NEWICK tree file");
   read(file);
@@ -309,7 +316,7 @@ RootedSequenceTree add_root(SequenceTree T,int b) {
 RootedSequenceTree operator+(const RootedSequenceTree& t1,const RootedSequenceTree& t2) 
 {
   RootedSequenceTree t3(t1,t2);
-  int new_root = t3.add_node(t3.root());
+  int new_root = t3.add_leaf_node(t3.root());
   t3.reroot(new_root);
 
   return t3;
@@ -333,7 +340,9 @@ std::ostream& operator <<(std::ostream& o,const SequenceTree& T) {
 
 SequenceTree star_tree(const vector<string>& names) 
 {
-  return SequenceTree(star_tree(names.size()), names);
+  SequenceTree T(star_tree(names.size()), names);
+  assert(T.n_leaves() == names.size());
+  return T;
 }
 
 int find_partition(const dynamic_bitset<>& p1, const vector< dynamic_bitset<> >& pv) {
