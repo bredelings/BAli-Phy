@@ -63,7 +63,7 @@ ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree
     vector<string> names = split(clean(line),' ');
     vector<int> mapping;
     try {
-      mapping = compute_mapping(names,T.get_sequences());
+      mapping = compute_mapping(names,T.get_leaf_labels());
     }
     catch (myexception& e) 
     {
@@ -71,18 +71,18 @@ ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree
       error <<"Problem loading alignment constraints from file '" <<filename<<"':\n";
 
       // complain about the names;
-      if (names.size() != T.get_sequences().size())
-	error <<"Data set contains "<<T.get_sequences().size()<<" sequences but "
+      if (names.size() != T.n_leaves())
+	error <<"Data set contains "<<T.n_leaves()<<" sequences but "
 	  "alignment-constraint header has "<<names.size()<<" names.\n";
 
       for(int i=0;i<names.size();i++) {
-	if (not includes(T.get_sequences(),names[i]))
+	if (not includes(T.get_leaf_labels(), names[i]))
 	  error<<"'"<<names[i]<<"' found in header but not data set.\n";
       }
 
-      for(int i=0;i<T.get_sequences().size();i++) {
-	if (not includes(names,T.get_sequences()[i]))
-	  error<<"'"<<T.get_sequences()[i]<<"' found in data set but not in header.\n";
+      for(int i=0;i<T.n_leaves();i++) {
+	if (not includes(names,T.label(i)))
+	  error<<"'"<<T.label(i)<<"' found in data set but not in header.\n";
       }
       throw error;
     }

@@ -185,7 +185,7 @@ void remap_T_indices(SequenceTree& T,const vector<string>& names)
 {
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   try {
-    vector<int> mapping = compute_mapping(T.get_sequences(),names);
+    vector<int> mapping = compute_mapping(T.get_leaf_labels(), names);
 
     T.standardize(mapping);
   }
@@ -241,7 +241,7 @@ void remap_T_indices(SequenceTree& T1,const SequenceTree& T2)
 
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   try {
-    remap_T_indices(T1,T2.get_sequences());
+    remap_T_indices(T1, T2.get_leaf_labels());
   }
   catch(const bad_mapping<string>& b)
   {
@@ -309,8 +309,16 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   remap_T_indices(T,A);
 
-  if (internal_sequences)
+  if (internal_sequences) {
     connect_leaf_characters(A,T);
+    for(int i=0;i<T.n_nodes();i++)
+    {
+      if (T[i].is_internal_node())
+	T.label(i) = A.seq(i).name;
+      else
+	assert(T.label(i) == A.seq(i).name);
+    }
+  }
 
   //---- Check to see that internal nodes satisfy constraints ----//
   check_alignment(A,T,internal_sequences);
@@ -366,8 +374,16 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   remap_T_indices(T,A);
 
-  if (internal_sequences)
+  if (internal_sequences) {
     connect_leaf_characters(A,T);
+    for(int i=0;i<T.n_nodes();i++)
+    {
+      if (T[i].is_internal_node())
+	T.label(i) = A.seq(i).name;
+      else
+	assert(T.label(i) == A.seq(i).name);
+    }
+  }
 
   //---- Check to see that internal nodes satisfy constraints ----//
   check_alignment(A,T,internal_sequences);
@@ -584,6 +600,7 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
 
   T = TC;
   RandomTree(T,1.0);
+  T.get_labels().resize(T.n_nodes());
 
   //-------------- Link --------------------------------//
   link(alignments,T,internal_sequences);
@@ -678,6 +695,7 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
 
   T = TC;
   RandomTree(T,1.0);
+  T.get_labels().resize(T.n_nodes());
 
   //------------- Link Alignment and Tree -----------------//
   link(A,T,internal_sequences);

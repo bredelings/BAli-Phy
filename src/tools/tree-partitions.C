@@ -77,7 +77,7 @@ void describe_tree(const SequenceTree& T)
   cout<<"Branches = "<<T.n_branches()
       <<"   internal = "<<T.n_branches() - T.n_leafbranches()
       <<"   leaf = "<<T.n_leafbranches()<<"\n";
-  cout<<"Labels = "<<T.get_sequences().size()<<"\n";
+  cout<<"Labels = "<<T.get_leaf_labels().size()<<"\n";
   int D2 = 0;
   int N13 = 0;
   for(int i=0;i<T.n_nodes();i++)

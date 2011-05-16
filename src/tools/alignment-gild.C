@@ -243,7 +243,7 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
   //  if (alignments.front().n_sequences() != T.n_nodes())
   //    throw myexception()<<"Number of sequences in alignment estimate is NOT equal to number of tree nodes!";
   
-  vector<int> pi = compute_mapping(T.get_sequences(),sequence_names(A));
+  vector<int> pi = compute_mapping(T.get_leaf_labels(), sequence_names(A));
 
   vector<string> names = sequence_names(A);
   
@@ -253,7 +253,7 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
       throw myexception()<<"Alignment estimate has different sequences or sequence order than alignment samples";
     
     if (A.seqlength(pi[i]) != A2.seqlength(i))
-      throw myexception()<<"Sequence '"<<T.seq(i)<<"' has different length in alignment estimate and alignment samples!";
+      throw myexception()<<"Sequence '"<<T.label(i)<<"' has different length in alignment estimate and alignment samples!";
   }
 }
 
@@ -514,7 +514,7 @@ int main(int argc,char* argv[]) {
     if (not is_Cayley(T))
       throw myexception()<<"Multifurcating trees are not handled yet.";
 
-    vector<int> pi = compute_mapping(T.get_sequences(),sequence_names(A));
+    vector<int> pi = compute_mapping(T.get_leaf_labels(), sequence_names(A));
 
     //----------- Find root branch ---------//
     if (args.count("find-root"))
@@ -540,7 +540,7 @@ int main(int argc,char* argv[]) {
 
     //------- Print column names -------//
     for(int i=0;i<T.n_leaves();i++) {
-      cout<<T.seq(i);
+      cout<<T.label(i);
       if (i != T.n_leaves()-1)
 	cout<<" ";
       else

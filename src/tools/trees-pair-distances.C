@@ -103,7 +103,7 @@ void count_pair_distances::operator()(const SequenceTree& T)
 {
   if (not initialized) {
     N = T.n_leaves();
-    names = T.get_sequences();
+    names = T.get_leaf_labels();
     m1.resize(N*(N-1)/2);
     m2.resize(N*(N-1)/2);
     m1 = 0;

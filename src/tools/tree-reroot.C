@@ -172,7 +172,7 @@ int main(int argc,char* argv[])
 	mask[ii] = true;
       }
 
-      Partition P(T.get_sequences(),group1,mask);
+      Partition P(T.get_leaf_labels(),group1,mask);
       cerr<<P<<endl;
       int b = which_branch(T,P);
       if (b == -1) throw myexception()<<"Can't find branch in tree!";

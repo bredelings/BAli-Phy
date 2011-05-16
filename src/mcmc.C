@@ -1011,13 +1011,14 @@ void mcmc_init(Parameters& P, ostream& s_out)
   // Check that the Alignments and Tree are properly linked
   for(int i=0;i<P.n_data_partitions();i++) 
   {
+    const alignment& A = *P[i].A;
     if (P[i].has_IModel())
-      assert(P[i].A->n_sequences() == T.n_nodes() and P[i].variable_alignment()); 
+      assert(A.n_sequences() == T.n_nodes() and P[i].variable_alignment()); 
     else
-      assert(P[i].A->n_sequences() == T.n_leaves() and not P[i].variable_alignment());
+      assert(A.n_sequences() == T.n_leaves() and not P[i].variable_alignment());
 
-    for(int j=0;j<T.n_leaves();j++)
-      assert(T.seq(j) == P[i].A->seq(j).name);    
+    for(int j=0;j<A.n_sequences();j++)
+      assert(T.label(j) == A.seq(j).name);    
   }
 
   s_out<<"\n\n\n";

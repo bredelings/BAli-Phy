@@ -80,14 +80,18 @@ namespace trees_format
   
   bool reader_t::next_tree(SequenceTree& T)
   {
-    T.get_sequences() = leaf_names;
+    T.get_labels().clear();
+    T.get_labels() = leaf_names;
+    T.get_labels().resize( T.n_nodes() );
     
     return next_tree(static_cast<Tree&>(T));
   }
   
   bool reader_t::next_tree(RootedSequenceTree& T)
   {
-    T.get_sequences() = leaf_names;
+    T.get_labels().clear();
+    T.get_labels() = leaf_names;
+    T.get_labels().resize( T.n_nodes() );
     
     return next_tree(static_cast<RootedTree&>(T));
   }
@@ -133,7 +137,7 @@ namespace trees_format
     SequenceTree T;
     portable_getline(*file,line);
     T.parse(line);
-    leaf_names = T.get_sequences();
+    leaf_names = T.get_leaf_labels();
     std::sort(leaf_names.begin(),leaf_names.end());
     
     //FIXME - this loses the first line!
@@ -379,7 +383,7 @@ namespace trees_format
 	  SequenceTree T;
 	  string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos));
 	  T.parse(t);
-	  leaf_names = T.get_sequences();
+	  leaf_names = T.get_leaf_labels();
 	  std::sort(leaf_names.begin(),leaf_names.end());
 	  return;
 	}

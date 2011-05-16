@@ -65,7 +65,7 @@ Partition partition_from_branch(const SequenceTree& T,int b)
   for(int i=0;i<group.size();i++)
     group[i] = with_internal[i];
 
-  return Partition(T.get_sequences(), group);
+  return Partition(T.get_leaf_labels(), group);
 }
 
 

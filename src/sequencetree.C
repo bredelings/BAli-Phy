@@ -29,31 +29,40 @@ using namespace std;
 
 using boost::dynamic_bitset;
 
-int SequenceSet::index(const string& s) const {
-  for(int i=0;i<sequences.size();i++)
-    if (sequences[i] == s) return i;
+//-------------------------- SequenceTree methods ----------------------------//
+
+int SequenceTree::index(const string& l) const 
+{
+  assert(labels.size() == n_nodes());
+  for(int i=0;i<labels.size();i++)
+    if (labels[i] == l) return i;
   return -1;
 }
 
+vector<string> SequenceTree::get_leaf_labels() const
+{
+  vector<string> leaf_labels(n_leaves());
 
-//-------------------------- SequenceTree methods ----------------------------//
+  for(int i=0;i<leaf_labels.size();i++)
+    leaf_labels[i] = labels[i];
 
-
-
+  return leaf_labels;
 }
+
 
 vector<int> SequenceTree::prune_leaves(const vector<int>& remove) 
 {
-  // remove the subtree
+  // remove the leaves
   vector<int> mapping = Tree::prune_leaves(remove);
+  assert(mapping.size() == n_nodes());
 
   // figure out the mapping
   vector<string> newnames(mapping.size());
   for(int i=0;i<mapping.size();i++)
-    newnames[i] = sequences[mapping[i]];
+    newnames[i] = labels[mapping[i]];
 
   // select the new names
-  sequences = newnames;
+  labels = newnames;
 
   return mapping;
 }
@@ -90,12 +99,13 @@ vector<int> SequenceTree::standardize() {
 }
 
 
-vector<int> SequenceTree::standardize(const vector<int>& lnames) {
-  assert(lnames.size() == sequences.size());
+vector<int> SequenceTree::standardize(const vector<int>& lnames) 
+{
+  assert(lnames.size() == n_leaves());
 
-  vector<string> old = sequences;
-  for(int i=0;i<sequences.size();i++)
-    sequences[lnames[i]] = old[i];
+  vector<string> old = labels;
+  for(int i=0;i<n_leaves();i++)
+    labels[lnames[i]] = old[i];
 
   return Tree::standardize(lnames);
 }
@@ -104,63 +114,41 @@ vector<int> SequenceTree::standardize(const vector<int>& lnames) {
 // one object on the stack then we quit
 int SequenceTree::parse(const string& line) 
 {
-  return parse_and_discover_names(line,sequences);
+  return parse_and_discover_names(line,labels);
 }
 
 int SequenceTree::parse_nexus(const string& s,const vector<string>& names) 
 {
-  sequences = names;
-  int r = parse_with_names_or_numbers(s, sequences);
+  labels = names;
+  labels.resize(n_nodes());
+  
+  int r = parse_with_names_or_numbers(s, names);
   return r;
 }
 
-SequenceTree::SequenceTree(const std::string& s) {
+SequenceTree::SequenceTree(const std::string& s) 
+{
   add_first_node();
-  sequences.push_back(s);
+  labels.push_back(s);
+  assert(labels.size() == n_nodes());
 }
 
 SequenceTree::SequenceTree(const Tree& T,const vector<string>& names)
-  :Tree(T),SequenceSet(names)
-{ }
-
-SequenceTree::SequenceTree(const RootedSequenceTree& RT) 
-  :Tree(RT),SequenceSet(RT)
-{ }
-
-//-------------------------- SequenceTree methods ----------------------------//
-nodeview RootedSequenceTree::prune_subtree(int branch) {
-  // get pointers to current leaves
-  vector<BranchNode*> leaves1(n_leaves());
-  for(int i=0;i<leaves1.size();i++)
-    leaves1[i] = nodes_[i];
-  
-  // remove the subtree
-  nodeview node_remainder = RootedTree::prune_subtree(branch);
-  
-  // get pointers to NEW leaves
-  vector<BranchNode*> leaves2(n_leaves());
-  for(int i=0;i<leaves2.size();i++)
-    leaves2[i] = nodes_[i];
-
-  // figure out the mapping
-  vector<string> newnames;
-  for(int i=0;i<leaves2.size();i++) {
-    int index = find_index(leaves1,leaves2[i]);
-    if (index == -1)
-      break;
-    else
-      newnames.push_back(sequences[index]);
-  }
-
-  assert( (newnames.size() == n_leaves()) or 
-	  ((newnames.size() == n_leaves()-1) and (root_->node == n_leaves())) );
-
-  // select the new names
-  sequences = newnames;
-
-  return node_remainder;
+  :Tree(T),labels(names)
+{
+  if (labels.size() == n_leaves())
+    labels.resize(n_nodes());
+  else if (labels.size() != n_nodes())
+    throw myexception()<<"Can't label tree of "<<n_nodes()<<" nodes with "<<names.size()<<" labels!\n";
 }
 
+SequenceTree::SequenceTree(const RootedSequenceTree& RT) 
+  :Tree(RT),labels(RT.get_labels())
+{ 
+  assert(labels.size() == n_nodes());
+}
+
+//-------------------------- SequenceTree methods ----------------------------//
 vector<int> RootedSequenceTree::prune_leaves(const vector<int>& remove) 
 {
   root_ = NULL;
@@ -176,11 +164,9 @@ string write_with_bootstrap_fraction(const vector<string>& names, const_branchvi
 {
   string output;
 
-  // If this is a leaf node, then print the name
-  if (b.target().is_leaf_node())
-    output += names[b.target()];
-  // If this is an internal node, then print the subtrees
-  else {
+  // Print the subtrees
+  if (b.target().is_internal_node())
+  {
     vector<const_branchview> branches = sorted_branches_after(b);
     output = "(";
     for(int i=0;i<branches.size();i++) {
@@ -191,6 +177,9 @@ string write_with_bootstrap_fraction(const vector<string>& names, const_branchvi
     }
     output += ")";
   }
+
+  // Print the name
+  output += names[b.target()];
 
   // print the branch length if requested
   double bfb = bf[b.undirected_name()];
@@ -208,26 +197,36 @@ string write_with_bootstrap_fraction(const vector<string>& names, const_branchvi
 string write_with_bootstrap_fraction(const RootedTree& T, const vector<string>& names, 
 				     const vector<double>& bf, bool print_lengths) 
 {
-  vector<const_branchview> branches = sorted_neighbors(T.root());
+  string output;
 
-  string output = "(";
+  // Print the subtrees
+  vector<const_branchview> branches = sorted_neighbors(T.root());
+  output = "(";
   for(int i=0;i<branches.size();i++) {
     output += write_with_bootstrap_fraction(names,branches[i],bf,print_lengths);
+
     if (i+1 < branches.size())
       output += ',';
   }
-  output += ");";
+  output += ")";
+
+  // Print the name
+  output += names[T.root()];
+
+  // Print the terminator
+  output += ";";
+
   return output;
 }
 
 string RootedSequenceTree::write(bool print_lengths) const 
 {
-  return ::write(*this, get_sequences(), print_lengths);
+  return ::write(*this, get_labels(), print_lengths);
 }
 
 string RootedSequenceTree::write_with_bootstrap_fraction(const vector<double>& bf, bool print_lengths) const 
 {
-  return ::write_with_bootstrap_fraction(*this, get_sequences(), bf, print_lengths);
+  return ::write_with_bootstrap_fraction(*this, get_labels(), bf, print_lengths);
 }
 
 int RootedSequenceTree::parse(const string& s) 
@@ -241,15 +240,24 @@ int RootedSequenceTree::parse(const string& s)
 
 int RootedSequenceTree::parse_nexus(const string& s, const vector<string>& names) 
 {
-  sequences = names;
-  int r = parse_with_names_or_numbers(s, sequences);
+  // Parse the tree with the specified number of names
+  int r = parse_with_names_or_numbers(s, names);
+
+  // Complain if the number of names is odd.
+  if (names.size() != n_leaves())
+    throw myexception()<<"Can't parsed tree of "<<n_leaves()<<" leaves using "<<names.size()<<" labels!\n";
+
+  // Construct the leaf labels
+  labels = names;
+  labels.resize(n_nodes());
+
   return r;
 }
 
 RootedSequenceTree& RootedSequenceTree::operator=(const RootedSequenceTree& T)
 {
   RootedTree::operator=(T);
-  SequenceSet::operator=(T);
+  labels = T.labels;
 
   return *this;
 }
@@ -267,7 +275,7 @@ RootedSequenceTree::RootedSequenceTree(const SequenceTree& T,int r)
 RootedSequenceTree::RootedSequenceTree(const string& s)
 {
   add_first_node();
-  sequences.push_back(s);
+  labels.push_back(s);
 }
 
 RootedSequenceTree::RootedSequenceTree(istream& file) {
@@ -275,23 +283,22 @@ RootedSequenceTree::RootedSequenceTree(istream& file) {
 }
 
 RootedSequenceTree::RootedSequenceTree(const RootedSequenceTree& T1, const RootedSequenceTree& T2)
-  :RootedTree(T1,T2) 
+  :RootedTree(T1,T2)
 {
+  // This preserves only leaf labels.
+
   // We will create new names which will be the same as
   //  T1.order + T2.order
-  for(int i=0;i<T1.get_sequences().size();i++) 
-    sequences.push_back(T1.seq(i));
-  for(int i=0;i<T2.get_sequences().size();i++) 
-    sequences.push_back(T2.seq(i));
-}
+  int l=0;
+  labels.resize(n_nodes());
 
-//FIXME T.seq(i) -> T.leafname(i)
-//FIXME T.get_sequences -> T.leafnames()
-void delete_node(SequenceTree& T,const std::string& name) 
-{
-  int index = find_index(T.get_sequences(),name);
-  nodeview n = T.prune_subtree(T.branch(index).reverse());
-  T.remove_node_from_branch(n);
+  for(int i=0;i<T1.n_leaves();i++) 
+    labels[l++] = T1.label(i);
+
+  for(int i=0;i<T2.n_leaves();i++) 
+    labels[l++] = T2.label(i);
+
+  // Hmmm.. n_leaves() could be odd if there is a root leaf...
 }
 
 RootedSequenceTree add_root(SequenceTree T,int b) {
@@ -492,14 +499,14 @@ vector<int> compute_sorted_mapping(const vector<string>& names)
 //FIXME - return mapping of leaf nodes?  Of all nodes?
 void standardize(SequenceTree& T) 
 {
-  vector<int> mapping = compute_sorted_mapping(T.get_sequences());
+  vector<int> mapping = compute_sorted_mapping(T.get_leaf_labels());
 
   T.standardize(mapping);
 }
 
 void standardize(RootedSequenceTree& T) {
 
-  vector<int> mapping = compute_sorted_mapping(T.get_sequences());
+  vector<int> mapping = compute_sorted_mapping(T.get_leaf_labels());
 
   T.standardize(mapping);
 

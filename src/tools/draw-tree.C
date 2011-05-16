@@ -1568,8 +1568,8 @@ void tree_plotter::operator()(cairo_t* cr)
       
       double a = atan2(y1-y2,x1-x2);
       
-      double W = get_text_length(cr, L.T.seq(l));
-      double H = get_text_height(cr, L.T.seq(l));
+      double W = get_text_length(cr, L.T.label(l));
+      double H = get_text_height(cr, L.T.label(l));
       
       x1 += cos(a)*(line_width+H/8);
       y1 += sin(a)*(line_width+H/2);
@@ -1579,7 +1579,7 @@ void tree_plotter::operator()(cairo_t* cr)
       if (cos(a) < 0) x1 -= W;
       
       cairo_move_to (cr, x1, y1);
-      cairo_show_text (cr, L.T.seq(l).c_str());
+      cairo_show_text (cr, L.T.label(l).c_str());
     }
   else
     for(int l=0;l<L.T.n_leaves();l++)
@@ -1597,10 +1597,10 @@ void tree_plotter::operator()(cairo_t* cr)
 
       double a = atan2(dy,dx);
 
-      double W = get_text_length(cr, L.T.seq(l));
-      double H = get_text_height(cr, L.T.seq(l));
+      double W = get_text_length(cr, L.T.label(l));
+      double H = get_text_height(cr, L.T.label(l));
 
-      //    cout<<L.T.seq(l).c_str()<<"   dx = "<<dx<<"  dy = "<<dy<<"   a = "<<a<<endl;
+      //    cout<<L.T.label(l).c_str()<<"   dx = "<<dx<<"  dy = "<<dy<<"   a = "<<a<<endl;
 
       cairo_save(cr);
       {
@@ -1610,7 +1610,7 @@ void tree_plotter::operator()(cairo_t* cr)
 	if (cos(a)>=0)
 	{
 	  cairo_move_to(cr, H/8, H*0.5);
-	  cairo_show_text (cr, L.T.seq(l).c_str());
+	  cairo_show_text (cr, L.T.label(l).c_str());
 	}
 	else
         {
@@ -1618,7 +1618,7 @@ void tree_plotter::operator()(cairo_t* cr)
 
 	  // cairo_translate(cr, W, 0);
 	  cairo_scale(cr, -1, -1);
-	  cairo_show_text (cr, L.T.seq(l).c_str());
+	  cairo_show_text (cr, L.T.label(l).c_str());
 	}
       }
       cairo_restore(cr);

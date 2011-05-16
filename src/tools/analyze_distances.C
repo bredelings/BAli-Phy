@@ -472,12 +472,12 @@ int main(int argc,char* argv[])
     cout.precision(3);
 
     cout<<"conserved = \n";
-    print_entire(cout,T.get_sequences(),getConserved(A))<<"\n";
+    print_entire(cout,T.get_leaf_labels(),getConserved(A))<<"\n";
 
     Matrix S = getSimilarity(A);
 
     cout<<"%similarity = \n";
-    print_lower(cout,T.get_sequences(),S)<<"\n";
+    print_lower(cout,T.get_leaf_labels(),S)<<"\n";
 
     owned_ptr<substitution::MultiModel> smodel_in = get_smodel(args,A);
     set_parameters(*smodel_in,args);
@@ -521,19 +521,19 @@ int main(int argc,char* argv[])
 
     Matrix D = C(S);
     cout<<"%difference (actual) = \n";
-    print_lower(cout,T.get_sequences(),D)<<"\n";
+    print_lower(cout,T.get_leaf_labels(),D)<<"\n";
     cout<<"%difference (input) = \n";
-    print_lower(cout,T.get_sequences(),C(S1))<<"\n";
+    print_lower(cout,T.get_leaf_labels(),C(S1))<<"\n";
     if (args.count("search")){
       cout<<"%difference (estimated) = \n";
-      print_lower(cout,T.get_sequences(),C(S2))<<"\n\n";
+      print_lower(cout,T.get_leaf_labels(),C(S2))<<"\n\n";
     }
 
     cout<<"tree distances (input) = \n";
-    print_lower(cout,T.get_sequences(),DistanceMatrix(T))<<"\n";
+    print_lower(cout,T.get_leaf_labels(),DistanceMatrix(T))<<"\n";
     if (args.count("search")){
       cout<<"tree distances (estimated) = \n";
-      print_lower(cout,T.get_sequences(),DistanceMatrix(T2))<<"\n\n";
+      print_lower(cout,T.get_leaf_labels(),DistanceMatrix(T2))<<"\n\n";
     }
 
   }

@@ -76,7 +76,7 @@ void run_analysis(const variables_map& args) {
     const alignment& A = J.A[i];
     const SequenceTree& T = J.T[i];
 
-    Partition part = full_partition_from_names(T.get_sequences(),pnames);
+    Partition part = full_partition_from_names(T.get_leaf_labels(),pnames);
 
     bool exists = implies(T,part);
     //cerr << part << "\n";

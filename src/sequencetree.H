@@ -26,34 +26,28 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree.H"
 
 
-/// An (ordered) set of sequences
-class SequenceSet {
+/// A Tree with leaves labelled by sequences
+class SequenceTree: virtual public Tree
+{
 protected:
-  /// implements the ordered set of sequences
-  std::vector<std::string> sequences;
+  /// A label for each node
+  std::vector<std::string> labels;
 
 public:
+  /// get a single label
+        std::string& label(int i)       {return labels[i];}
+  const std::string& label(int i) const {return labels[i];}
 
-  /// get a single sequence
-  std::string& seq(int i) {return sequences[i];}
-  const std::string& seq(int i) const {return sequences[i];}
+  /// get all the labels
+        std::vector<std::string>& get_labels()       {return labels;}
+  const std::vector<std::string>& get_labels() const {return labels;}
 
-  /// get all the sequences
-  std::vector<std::string>& get_sequences() {return sequences;}
-  const std::vector<std::string>& get_sequences() const {return sequences;}
+  /// get the leaf labels
+  std::vector<std::string> get_leaf_labels() const;
 
   /// find the index for a particular sequence
   int index(const std::string&) const;
 
-  SequenceSet() {}
-  SequenceSet(const std::vector<std::string>& vs):sequences(vs) {}
-};
-
-
-/// A Tree with leaves labelled by sequences
-class SequenceTree: virtual public Tree, public SequenceSet {
-
-public:
   /// remove some leaves - SequenceTree variants duplicated  in both {U,R}SequenceTree
   std::vector<int> prune_leaves(const std::vector<int>&);
 
@@ -146,8 +140,6 @@ bool same_topology(const SequenceTree&,const SequenceTree&);
 SequenceTree RandomTree(const std::vector<std::string>&,double);
 
 void RandomTree(Tree&,double);
-
-void delete_node(SequenceTree& T,const std::string& name);
 
 SequenceTree star_tree(const std::vector<std::string>&);
 

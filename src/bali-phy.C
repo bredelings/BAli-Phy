@@ -721,7 +721,7 @@ vector<int> load_alignment_branch_constraints(const string& filename, const Sequ
 
     for(int j=0;j<name_groups[i].size();j++) 
     {
-      int index = find_index(TC.get_sequences(),name_groups[i][j]);
+      int index = find_index(TC.get_leaf_labels(), name_groups[i][j]);
 
       if (index == -1)
 	throw myexception()<<"Reading alignment constraint file '"<<filename<<"':\n"
@@ -881,7 +881,7 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
     checked_ifstream partitions(filename,"partition weights file");
     string line;
     while(portable_getline(partitions,line)) {
-      Partition p(P.T->get_sequences(),line);
+      Partition p(P.T->get_leaf_labels(),line);
       portable_getline(partitions,line);
       double o = convertTo<double>(line);
       
@@ -1250,7 +1250,7 @@ int main(int argc,char* argv[])
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))
-      P.TC = cow_ptr<SequenceTree>(load_constraint_tree(args["t-constraint"].as<string>(), T.get_sequences()));
+      P.TC = cow_ptr<SequenceTree>(load_constraint_tree(args["t-constraint"].as<string>(), T.get_leaf_labels()));
 
     if (args.count("a-constraint"))
       P.AC = load_alignment_branch_constraints(args["a-constraint"].as<string>(),*P.TC);

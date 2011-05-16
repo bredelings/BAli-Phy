@@ -162,18 +162,18 @@ int main(int argc,char* argv[])
 	std::cerr<<"alignment-reorder: root branch = "<<rootb<<std::endl;
 	std::cerr<<"alignment-reorder: x = "<<rootd<<std::endl;
 	for(int i=0;i<T.n_leaves();i++)
-	  std::cerr<<"alignment-reorder: "<<T.seq(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
+	  std::cerr<<"alignment-reorder: "<<T.label(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
       }
       
       T = add_root((SequenceTree)T,rootb);  // we don't care about the lengths anymore
     }
 
     //----- Standardize order by alphabetical order of names ----//
-    vector<string> names = T.get_sequences();
+    vector<string> names = T.get_leaf_labels();
     
     std::sort(names.begin(),names.end());
 
-    vector<int> mapping1 = compute_mapping(T.get_sequences(),names);
+    vector<int> mapping1 = compute_mapping(T.get_leaf_labels(),names);
 
     T.standardize(mapping1);
 
@@ -188,7 +188,7 @@ int main(int argc,char* argv[])
     if (log_verbose) {
       cerr<<"alignment-reorder: ";
       for(int i=0;i<mapping2.size();i++)
-	cerr<<T.seq(mapping2[i])<<" ";
+	cerr<<T.label(mapping2[i])<<" ";
       cerr<<std::endl;
       
       cerr<<"alignment-reorder: tree = "<<T.write()<<"\n";

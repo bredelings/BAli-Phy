@@ -350,9 +350,7 @@ void shift_leaves(BranchNode* start,int first,int n) {
 vector<int> Tree::prune_leaves(const vector<int>& remove) 
 {
   // get pointers to the current leaves
-  vector<BranchNode*> leaves(n_leaves());
-  for(int i=0;i<leaves.size();i++)
-    leaves[i] = nodes_[i];
+  vector<BranchNode*> old_nodes = nodes_;
 
   // get mask of leaves to remove
   vector<int> do_remove(n_leaves(),false);
@@ -362,11 +360,11 @@ vector<int> Tree::prune_leaves(const vector<int>& remove)
   // remove some leaves and shift others down
   int new_leaves=0;
   BranchNode* node_remainder = NULL;
-  for(int i=0;i<leaves.size();i++)
+  for(int i=0;i<n_leaves();i++)
   {
     if (do_remove[i]) 
     {
-      BranchNode* leaf = leaves[i];
+      BranchNode* leaf = old_nodes[i];
       while(is_leaf_node(leaf) and leaf->out and leaf->out != leaf) {
 	BranchNode* parent = TreeView::unlink_subtree(leaf->out);
 	TreeView(leaf).destroy();
@@ -378,20 +376,21 @@ vector<int> Tree::prune_leaves(const vector<int>& remove)
 	TreeView::remove_node_from_branch(leaf);
     }
     else {
-      name_node(leaves[i],new_leaves++);
-      node_remainder = leaves[i];
+      name_node(old_nodes[i],new_leaves++);
+      node_remainder = old_nodes[i];
     }
   }
-  assert(new_leaves == leaves.size() - remove.size());
+  assert(new_leaves == n_leaves() - remove.size());
   
   // Reconstruct everything from node names
   reanalyze(node_remainder);
 
-  // Construct the map from new to old leaf names
-  vector<int> mapping(new_leaves,-1);
-  for(int i=0;i<leaves.size();i++)
-    if (not do_remove[i])
-      mapping[leaves[i]->node] = i;
+  assert(new_leaves == n_leaves());
+
+  // Construct the map from new to old node names: O(N^2)
+  vector<int> mapping(n_nodes(), -1);
+  for(int i=0;i<mapping.size();i++)
+    mapping[i] = find_index(old_nodes, nodes_[i]);
 
   for(int i=0;i<mapping.size();i++) {
     assert(mapping[i] != -1);
@@ -1442,11 +1441,9 @@ string write(const vector<string>& names, const_branchview b, bool print_lengths
 {
   string output;
 
-  // If this is a leaf node, then print the name
-  if (b.target().is_leaf_node())
-    output += names[b.target()];
   // If this is an internal node, then print the subtrees
-  else {
+  if (b.target().is_internal_node()) 
+  {
     vector<const_branchview> branches = sorted_branches_after(b);
     output = "(";
     for(int i=0;i<branches.size();i++) {
@@ -1457,6 +1454,9 @@ string write(const vector<string>& names, const_branchview b, bool print_lengths
     }
     output += ")";
   }
+
+  // Print the name (it might be empty)
+  output += names[b.target()];
 
   // print the branch length if requested
   if (print_lengths)
