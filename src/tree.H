@@ -80,7 +80,7 @@ public:
 /// Allocate, initialize and return a single-node tree.
 BranchNode* get_first_node();
 /// Allocate, initialize and a new leaf node that is connected to this node.
-BranchNode* add_node(BranchNode* n);
+BranchNode* add_leaf_node(BranchNode* n);
 /// Create a branch connecting nodes n1 and n2
 BranchNode* connect_nodes(BranchNode* n1,BranchNode* n2);
 /// Add a BranchNode* to the node ring of n1, right after n1

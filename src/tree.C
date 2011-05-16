@@ -584,12 +584,15 @@ void Tree::add_first_node() {
   n_leaves_ = 1;
 }
 
-BranchNode* add_node(BranchNode* n) 
+BranchNode* add_leaf_node(BranchNode* n) 
 {
   // The spot to which to link the new node.
   BranchNode* n_link = NULL;
+
+  // if n is a bare node, then the new node with link to n
   if (n->out == n)
     n_link = n;
+  // otherwise it links to a new BranchNode inserted next to n
   else {
     n_link = new BranchNode(-1,n->node,-1);
     n_link->prev = n; 
@@ -612,7 +615,7 @@ BranchNode* add_node(BranchNode* n)
 nodeview Tree::add_node(int node) {
   assert(0 <= node and node < nodes_.size());
 
-  BranchNode* n_leaf = ::add_node(nodes_[node]);
+  BranchNode* n_leaf = ::add_leaf_node(nodes_[node]);
   n_leaf->node = n_leaves_;
 
   reanalyze(n_leaf);
@@ -1159,17 +1162,85 @@ Tree& Tree::operator=(const Tree& T)
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit
 
-// FIXME - don't we need to destroy the current tree?
-int Tree::parse_and_discover_names(const string& line,vector<string>& names)
+int append_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& labels)
 {
-  vector< vector<BranchNode*> > tree_stack(1);
-  names.clear();
+  // determine the level in the tree stack
+  int level = tree_stack.size() - 1;
+
+  // determine the node index
+  int new_index = labels.size();
+
+  // add an empty label for the node
+  labels.push_back(string());
+
+  // determine the parent node of the new leaf node
+  BranchNode* parent = 0;
+  if (level == 0)
+  {
+    parent = new BranchNode;
+    parent->out = parent->next = parent->prev = parent;
+  }
+  else
+    parent = tree_stack[level-1].back()->out;
+
+  // Connect this to a new leaf node of the appropriate index (with that index)
+  BranchNode* child = ::add_leaf_node(parent);
+
+  // make sure that non-root leaf nodes keep the lowest numbers
+  if (parent->node != -1)
+  {
+    child->node = parent->node;
+    child->branch = child->out->branch = new_index - 1;
+    name_node(parent, new_index);
+    std::swap(labels[child->node], labels[parent->node]);
+  }
+  else
+    child->node = new_index;
+    
+
+  // Set the branch lengths for the new child to -1
+  child->out->length = child->length = -1;
+
+  // put the partial node on the tree stack
+  tree_stack.back().push_back(child->out);
+
+  return new_index;
+}
+
+int push_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& labels)
+{
+  // increase the depth
+  tree_stack.push_back( vector<BranchNode*>() );
+
+  // append the empty node
+  return append_empty_node(tree_stack, labels);
+}
+
+#include <iostream>
+
+/*
+ * Tree -> Branch ;
+ * Branch -> [Node] [string] [: double]
+ * Node -> (Branch [, Branch]* )
+ *
+ * pos index were we are in the Branch rule, and runs from 0 (before start) to 4 (after end).
+ */
+
+// FIXME - don't we need to destroy the current tree?
+int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
+{
+  labels.clear();
 
   const string delimiters = "(),:;";
   const string whitespace = "\t\n ";
 
   string prev;
   string word;
+
+  vector< vector<BranchNode*> > tree_stack;
+  push_empty_node(tree_stack, labels);
+  int pos = 0;
+    
   for(int i=0;get_word(word,i,line,delimiters,whitespace);prev=word) 
   {
     //std::cerr<<"word = '"<<word<<"'    depth = "<<tree_stack.size()<<"   stack size = "<<tree_stack.back().size()<<std::endl;
@@ -1177,44 +1248,48 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& names)
     if (word == ";") break;
 
     //------ Process the data given the current state ------//
-    if (word == "(") {
-      tree_stack.push_back(vector<BranchNode*>());
-      if (not (prev == "(" or prev == "," or prev == ""))
+    if (word == "(") 
+    {
+      if (pos != 0)
 	throw myexception()<<"In tree file, found '(' in the middle of word \""<<prev<<"\"";
+
+      push_empty_node(tree_stack, labels);
+      pos = 0;
     }
-    else if (word == ")") {
+    else if (word == ",")
+    {
+      append_empty_node(tree_stack, labels);
+      pos = 0;
+    }
+    else if (word == ")") 
+    {
       // We need at least 2 levels of trees
       if (tree_stack.size() < 2)
 	throw myexception()<<"In tree file, too many end parenthesis.";
 
-      // merge the trees in the top level
-      BranchNode* BN = tree_stack.back()[0];
-      for(int i=1;i<tree_stack.back().size();i++)
-	TreeView::merge_nodes(BN,tree_stack.back()[i]);
-
       // destroy the top level
       tree_stack.pop_back();
-
-      // insert merged trees into the next level down
-      BN = ::add_node(BN);
-      BN->out->length = BN->length = -1;
-      tree_stack.back().push_back(BN);
+      pos = 1;
     }
-    else if (prev == "(" or prev == "," or prev == "") 
+    else if (word == ":")
     {
-      int leaf_index = names.size();
-      names.push_back(word);
-
-      BranchNode* BN = new BranchNode(-1,leaf_index,-1);
-      BN->out = BN->next = BN->prev = BN;
-
-      BN = ::add_node(BN);
-      BN->out->length = BN->length = -1;
-      tree_stack.back().push_back(BN);
+      if (pos > 2)
+	throw myexception()<<"Cannot have a ':' here! (pos == "<<pos<<")";
+      pos = 3;
     }
-    else if (prev == ":") {
-      BranchNode* BN = tree_stack.back().back();
-      BN->out->length = BN->length = convertTo<double>(word);
+    else
+    {
+      BranchNode* BN = tree_stack.back().back()->out;
+
+      if (pos == 0 or pos == 1) {
+	labels[BN->node] = word;
+	pos = 2;
+      }
+      else if (pos == 3)
+      {
+	BN->out->length = BN->length = convertTo<double>(word);	
+	pos = 4;
+      }
     }
   }
 
@@ -1229,7 +1304,7 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& names)
 
   // Handle root_ being a leaf
   if (::is_leaf_node(root_)) {
-    root_->node = names.size();
+    root_->node = labels.size();
     throw myexception()<<"Tree has an unnamed leaf node at the root.  Please remove the useless branch to the root.";
   }
 
@@ -1238,8 +1313,28 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& names)
   // destroy old tree structure
   if (nodes_.size()) TreeView(nodes_[0]).destroy();
 
+  // determine nodes_[]
+  nodes_.resize(labels.size());
+  for(BN_iterator BN(root_);BN;BN++) 
+    nodes_[(*BN)->node] = *BN;
+
+  vector<BranchNode*> old_nodes = nodes_;
+
   // switch to new tree structure
+  n_leaves_ = 0;
+  for(BN_iterator BN(root_);BN;BN++)
+    if (is_leaf_node(*BN))
+      (*BN)->node = n_leaves_++;
+    else
+      (*BN)->node = -1;
+
   reanalyze(root_);
+
+  vector<string> new_labels(labels.size());
+  for(int i=0;i<old_nodes.size();i++)
+    new_labels[old_nodes[i]->node] = labels[i];
+
+  labels = new_labels;
 
   return root_->node;
 }
@@ -1287,7 +1382,7 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
       tree_stack.pop_back();
 
       // insert merged trees into the next level down
-      BN = ::add_node(BN);
+      BN = ::add_leaf_node(BN);
       BN->out->length = BN->length = -1;
       tree_stack.back().push_back(BN);
     }
@@ -1313,7 +1408,7 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
       BranchNode* BN = new BranchNode(-1,leaf_index,-1);
       BN->out = BN->next = BN->prev = BN;
 
-      BN = ::add_node(BN);
+      BN = ::add_leaf_node(BN);
       BN->out->length = BN->length = -1;
       tree_stack.back().push_back(BN);
     }
