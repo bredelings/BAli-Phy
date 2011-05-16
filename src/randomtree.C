@@ -46,25 +46,54 @@ BranchNode* random_sub_node(BranchNode* n)
   return n;
 }
 
-BranchNode* randomly_split_node(BranchNode* n) 
+BranchNode* random_sub_node_after(BranchNode* n)
 {
-  assert(nodeview(n).degree() > 3);
+  unsigned d = nodeview(n).degree()-1;
+  unsigned temp = unsigned( uniform()*d );
 
-  // pull out the first random node (subtree)
-  BranchNode* n1 = random_sub_node(n);
-  n = TreeView::unlink_subtree(n1);
+  BranchNode* n2 = n->next;
+  for(unsigned i=0;i<temp;i++)
+    n2 = n2->next;
 
-  // pull out the second random node (subtree)
-  BranchNode* n2 = random_sub_node(n);
-  n = TreeView::unlink_subtree(n2);
-  
-  // make a node containing both subtrees
-  insert_after(n2,n1);
+  assert(n2 != n);
 
-  // connect the two nodes
-  connect_nodes(n,n1);
+  return n2;
+}
 
-  return n;
+// Take two random parts of the node, and make a new node pointing to them.
+BranchNode* randomly_split_node(Tree& T, BranchNode* n1) 
+{
+  int D0 = degree(n1);
+  int n1_index = n1->node;
+  assert(D0 > 3);
+
+  // get a new node n2 
+  BranchNode* n2 = T.add_leaf_node(n1->node);
+  int n2_index = n2->node;
+
+  // find the sub-node n1 in T[n1_index] that points to T[n2_index]
+  n1 = n2->out;
+  assert(n1->node == n1_index);
+
+  // move the first random branch after b to pull out the first random node (subtree)
+  for(int i=0;i<2;i++)
+  {
+    BranchNode* bn = random_sub_node_after( n1 );
+    int n3_index = bn->out->node;
+    assert(n3_index != n1_index);
+    assert(n3_index != n2_index);
+    T.reconnect_branch(n3_index, n1_index, n2_index);
+  }
+
+  assert(T[n1_index].degree() < D0);
+  assert(T[n1_index].degree() >= 3);
+  assert(n1->node == n1_index);
+
+  assert(T[n2_index].degree() < D0);
+  assert(T[n2_index].degree() >= 3);
+  assert(n2->node == n2_index);
+
+  return n1;
 }
 
 void RandomTree(Tree& T) 
@@ -73,11 +102,11 @@ void RandomTree(Tree& T)
   {
     while(nodeview(*BN).degree() > 3) {
       BranchNode * start = *BN;
-      start = randomly_split_node(start);
+      start = randomly_split_node(T,start);
+      // start our search over at this new starting point.
       BN = BN_iterator(start);
     }
   }
-  T.reanalyze(T[0]);
 }
 
 

@@ -600,7 +600,6 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
 
   T = TC;
   RandomTree(T,1.0);
-  T.get_labels().resize(T.n_nodes());
 
   //-------------- Link --------------------------------//
   link(alignments,T,internal_sequences);
@@ -695,7 +694,6 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
 
   T = TC;
   RandomTree(T,1.0);
-  T.get_labels().resize(T.n_nodes());
 
   //------------- Link Alignment and Tree -----------------//
   link(A,T,internal_sequences);

@@ -82,6 +82,17 @@ inline bool is_internal_branch(const BranchNode* b) {
   return not is_leaf_branch(b);
 }
 
+inline int degree(const BranchNode* b)
+{
+  int d = 1;
+  const BranchNode* b2 = b->next;
+  while(b2 != b) {
+    b2 = b2->next;
+    d++;
+  }
+  return d;
+}
+
 //------------------------------ BN_iterator ---------------------------//
 
 /// FORWARD circular iterator for going over every BranchNode in a tree
@@ -302,7 +313,7 @@ public:
   out_edges_iterator branches_out() const {return n;}
   
   /// Compute the degree of this node
-  unsigned degree() const {return neighbors().size();}
+  unsigned degree() const {return ::degree(n);}
 
   /// The (integer) name of this node
   operator int() const {return name();}
@@ -339,7 +350,7 @@ public:
   const_out_edges_iterator branches_out() const {return n;}
   
   /// Compute the degree of this node
-  unsigned degree() const {return neighbors().size();}
+  unsigned degree() const {return ::degree(n);}
 
   /// The (integer) name of this node
   operator int() const {return name();}
