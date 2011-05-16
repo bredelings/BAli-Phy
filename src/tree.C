@@ -1090,6 +1090,9 @@ void Tree::reconnect_branch(int source_index, int target_index, int new_target_i
 
   BranchNode* target = b.target();
   
+  if (nodes_[target_index] == target)
+    nodes_[target_index] = target->prev;
+
   // remove bt from the ring of the old node
   target->prev->next = target->next;
   target->next->prev = target->prev;
@@ -1099,6 +1102,8 @@ void Tree::reconnect_branch(int source_index, int target_index, int new_target_i
   insert_after(new_target, target);
 
   assert(target->node == new_target_index);
+  assert(nodes_[target_index]->node == target_index);
+  assert(nodes_[new_target_index]->node == new_target_index);
 }
 
 int Tree::induce_partition(const dynamic_bitset<>& partition) 
