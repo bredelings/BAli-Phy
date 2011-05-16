@@ -295,6 +295,98 @@ vector<int> directed_names(const vector<const_branchview>& v)
 }
 
 
+string write(const vector<string>& names, const_branchview b, bool print_lengths)
+{
+  string output;
+
+  // If this is an internal node, then print the subtrees
+  if (b.target().is_internal_node()) 
+  {
+    vector<const_branchview> branches = sorted_branches_after(b);
+    output = "(";
+    for(int i=0;i<branches.size();i++) {
+      output += write(names,branches[i],print_lengths);
+
+      if (i+1<branches.size())
+	output += ",";
+    }
+    output += ")";
+  }
+
+  // Print the name (it might be empty)
+  output += names[b.target()];
+
+  // print the branch length if requested
+  if (print_lengths)
+    output += ":" + convertToString(b.length());
+
+  return output;
+}
+
+string write(const_nodeview root, const vector<string>& names, bool print_lengths) 
+{
+  string output;
+
+  // If this is an internal node, then print the subtrees
+  vector<const_branchview> branches = sorted_neighbors(root);
+  output = "(";
+  for(int i=0;i<branches.size();i++) {
+    output += write(names,branches[i],print_lengths);
+    if (i+1 < branches.size())
+      output += ',';
+  }
+  output += ")";
+
+  // Print the name (it might be empty)
+  output += names[root];
+
+  // Print the terminator
+  output += ";";
+
+  return output;
+}
+
+string write_no_names(const_branchview b, bool print_lengths)
+{
+  string output;
+
+  // If this is a leaf node, then print the name
+  if (b.target().is_leaf_node())
+    output += convertToString(b.target().name()+1);
+  // If this is an internal node, then print the subtrees
+  else {
+    vector<const_branchview> branches = sorted_branches_after(b);
+    output = "(";
+    for(int i=0;i<branches.size();i++) {
+      output += write_no_names(branches[i],print_lengths);
+
+      if (i+1<branches.size())
+	output += ",";
+    }
+    output += ")";
+  }
+
+  // print the branch length if requested
+  if (print_lengths)
+    output += ":" + convertToString(b.length());
+
+  return output;
+}
+
+string write_no_names(const_nodeview root, bool print_lengths) 
+{
+  vector<const_branchview> branches = sorted_neighbors(root);
+
+  string output = "(";
+  for(int i=0;i<branches.size();i++) {
+    output += write_no_names(branches[i],print_lengths);
+    if (i+1 < branches.size())
+      output += ',';
+  }
+  output += ");";
+  return output;
+}
+
 //------------------------ Begin definition of Tree::* routines ------------------------//
 
 void name_node(BranchNode* start,int i) {
@@ -1437,115 +1529,42 @@ int RootedTree::parse_with_names(const string& line,const vector<string>& names)
   return parse_with_names_or_numbers(line,names,false);
 }
 
-string write(const vector<string>& names, const_branchview b, bool print_lengths)
-{
-  string output;
-
-  // If this is an internal node, then print the subtrees
-  if (b.target().is_internal_node()) 
-  {
-    vector<const_branchview> branches = sorted_branches_after(b);
-    output = "(";
-    for(int i=0;i<branches.size();i++) {
-      output += write(names,branches[i],print_lengths);
-
-      if (i+1<branches.size())
-	output += ",";
-    }
-    output += ")";
-  }
-
-  // Print the name (it might be empty)
-  output += names[b.target()];
-
-  // print the branch length if requested
-  if (print_lengths)
-    output += ":" + convertToString(b.length());
-
-  return output;
-}
-
 string write(const RootedTree& T, const vector<string>& names, bool print_lengths) 
 {
-  vector<const_branchview> branches = sorted_neighbors(T.root());
-
-  string output = "(";
-  for(int i=0;i<branches.size();i++) {
-    output += write(names,branches[i],print_lengths);
-    if (i+1 < branches.size())
-      output += ',';
-  }
-  output += ");";
-  return output;
+  return write(T.root(), names, print_lengths);
 }
 
 string write(const Tree& T, const vector<string>& names, bool print_lengths) 
 {
-  vector<const_branchview> branches = sorted_neighbors(T.directed_branch(0).target());
+  string output;
 
-  string output = "(";
+  // If this is an internal node, then print the subtrees
+  vector<const_branchview> branches = sorted_neighbors(T.directed_branch(0).target());
+  output = "(";
   for(int i=0;i<branches.size();i++) {
     output += write(names,branches[i],print_lengths);
     if (i+1 < branches.size())
       output += ',';
   }
-  output += ");";
-  return output;
-}
+  output += ")";
 
-string write_no_names(const_branchview b, bool print_lengths)
-{
-  string output;
+  // Print the name (it might be empty)
+  output += names[T.directed_branch(0).target()];
 
-  // If this is a leaf node, then print the name
-  if (b.target().is_leaf_node())
-    output += convertToString(b.target().name()+1);
-  // If this is an internal node, then print the subtrees
-  else {
-    vector<const_branchview> branches = sorted_branches_after(b);
-    output = "(";
-    for(int i=0;i<branches.size();i++) {
-      output += write_no_names(branches[i],print_lengths);
-
-      if (i+1<branches.size())
-	output += ",";
-    }
-    output += ")";
-  }
-
-  // print the branch length if requested
-  if (print_lengths)
-    output += ":" + convertToString(b.length());
+  // Print the terminator
+  output += ";";
 
   return output;
 }
 
 string write_no_names(const RootedTree& T, bool print_lengths) 
 {
-  vector<const_branchview> branches = sorted_neighbors(T.root());
-
-  string output = "(";
-  for(int i=0;i<branches.size();i++) {
-    output += write_no_names(branches[i],print_lengths);
-    if (i+1 < branches.size())
-      output += ',';
-  }
-  output += ");";
-  return output;
+  return write_no_names(T.root(), print_lengths);
 }
 
 string write_no_names(const Tree& T, bool print_lengths) 
 {
-  vector<const_branchview> branches = sorted_neighbors(T.directed_branch(0).target());
-
-  string output = "(";
-  for(int i=0;i<branches.size();i++) {
-    output += write_no_names(branches[i],print_lengths);
-    if (i+1 < branches.size())
-      output += ',';
-  }
-  output += ");";
-  return output;
+  return write_no_names(T.directed_branch(0).target(), print_lengths);
 }
 
 RootedTree::RootedTree(const BranchNode* BN)
@@ -1602,7 +1621,7 @@ Tree star_tree(int n)
 
   if (n > 1)
     for(int i=0;i<n;i++)
-      add_node(center)->node = i;
+      add_leaf_node(center)->node = i;
 
   return Tree(center);
 }
@@ -1625,8 +1644,6 @@ double length(const Tree& T) {
     total += T.branch(i).length();
   return total;
 }
-
-#include <iostream>
 
 int subtree_height(const Tree& T,int b) 
 {
