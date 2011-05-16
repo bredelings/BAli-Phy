@@ -75,7 +75,7 @@ alignment chop_internal(alignment A, bool keep_empty_columns)
   return A;
 }
 
-alignment add_internal(alignment A,const Tree& T) 
+alignment add_internal(alignment A,const SequenceTree& T) 
 {
   // Complain if A and T don't correspond
   if (A.n_sequences() != T.n_leaves())
@@ -84,9 +84,15 @@ alignment add_internal(alignment A,const Tree& T)
 
   // Add empty sequences
   vector<sequence> S;
-  for(int i=T.n_leaves();i<T.n_nodes();i++) {
+  for(int i=T.n_leaves();i<T.n_nodes();i++) 
+  {
     sequence s;
-    s.name = string("A") + convertToString(i);
+
+    if (T.label(i) == "")
+      throw myexception()<<"Adding internal sequences: Tree has missing internal node name!";
+
+    s.name = T.label(i);
+
     S.push_back(s);
   }
 

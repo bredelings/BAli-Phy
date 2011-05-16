@@ -35,14 +35,14 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "alignment.H"
 #include "alphabet.H"
-#include "tree.H"
+#include "sequencetree.H"
 #include "clone.H"
 
 // Remove sequences to \a A corresponding to internal nodes in \a T
 alignment chop_internal(alignment A,bool keep_empty_columns=false);
 
 // Add sequences to A corresponding to internal nodes in T
-alignment add_internal(alignment A,const Tree& T);
+alignment add_internal(alignment A,const SequenceTree& T);
 
 /// Load an alignment from command line args --align=filename
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);

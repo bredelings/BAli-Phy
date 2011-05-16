@@ -35,9 +35,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "clone.H"
 #include <boost/program_options.hpp>
 
-/// Reorder internal sequences of A to correspond to standardized node names for T
-alignment standardize(const alignment& A, const SequenceTree& T);
-
 /// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
 std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,
 					    const alignment& A);
@@ -48,16 +45,8 @@ std::valarray<double> empirical_frequencies(const boost::program_options::variab
 
 //----------------- Load trees and alignments ---------------------//
 
-
-void remap_T_indices(SequenceTree& T1, const std::vector<std::string>& names);
-void remap_T_indices(SequenceTree& T1, const alignment& T2);
-void remap_T_indices(SequenceTree& T1, const SequenceTree& T2);
-
 /// Map leaf nodes of T to the leaf sequences of A
 void link(alignment& A,SequenceTree& T,bool internal_sequences=true);
-
-/// Map leaf nodes of T to the leaf sequences of A
-void link(alignment& A,RootedSequenceTree& T,bool internal_sequences=true);
 
 void load_As_and_T(const boost::program_options::variables_map& args,
 		   std::vector<alignment>& A,SequenceTree& T,bool internal_sequences=true);

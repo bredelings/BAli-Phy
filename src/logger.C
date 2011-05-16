@@ -35,7 +35,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 
 #include "substitution.H"    // for get_model_probabilitiesby_alignment_column( )
-#include "setup.H"           // for standardize
 
 #include "monitor.H"         // for show_smodel( )
 #include "n_indels.H"
@@ -326,7 +325,7 @@ string AlignmentFunction::operator()(const owned_ptr<Probability_Model>& P, long
 {
   const Parameters& PP = *P.as<Parameters>();
   std::ostringstream output;
-  output<<standardize(*PP[p].A, *PP.T)<<"\n";
+  output<<*PP[p].A<<"\n";
   return output.str();
 }
 

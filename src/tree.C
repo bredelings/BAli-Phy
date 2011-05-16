@@ -1269,7 +1269,7 @@ int push_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& l
  * Branch -> [Node] [string] [: double]
  * Node -> (Branch [, Branch]* )
  *
- * pos index were we are in the Branch rule, and runs from 0 (before start) to 4 (after end).
+ * pos == index where we are in the Branch rule, and runs from 0 (before start) to 4 (after end).
  */
 
 // FIXME - don't we need to destroy the current tree?
@@ -1677,25 +1677,7 @@ string write(const RootedTree& T, const vector<string>& names, bool print_length
 
 string write(const Tree& T, const vector<string>& names, bool print_lengths) 
 {
-  string output;
-
-  // If this is an internal node, then print the subtrees
-  vector<const_branchview> branches = sorted_neighbors(T.directed_branch(0).target());
-  output = "(";
-  for(int i=0;i<branches.size();i++) {
-    output += write(names,branches[i],print_lengths);
-    if (i+1 < branches.size())
-      output += ',';
-  }
-  output += ")";
-
-  // Print the name (it might be empty)
-  output += names[T.directed_branch(0).target()];
-
-  // Print the terminator
-  output += ";";
-
-  return output;
+  return write(T.directed_branch(0).target(), names, print_lengths);
 }
 
 string write_no_names(const RootedTree& T, bool print_lengths) 

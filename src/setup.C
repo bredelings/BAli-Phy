@@ -55,22 +55,6 @@ namespace fs = boost::filesystem;
 using namespace boost::program_options;
 using boost::shared_ptr;
 
-/// Reorder internal sequences of \a A to correspond to standardized node names for \a T
-alignment standardize(const alignment& A, const SequenceTree& T) 
-{
-  SequenceTree T2 = T;
-
-  // if we don't have any internal node sequences, then we are already standardized
-  if (A.n_sequences() == T.n_leaves())
-    return A;
-
-  // standardize NON-LEAF node and branch names in T
-  vector<int> mapping = T2.standardize();
-  vector<int> new_order = invert(mapping);
-
-  return reorder_sequences(A,new_order);
-}
-
 /// Count the number of times the letter with index \a l occurs in \a A.
 int letter_count(const alignment& A,int l) 
 {
@@ -181,8 +165,9 @@ valarray<double> empirical_frequencies(const variables_map& args,const vector<al
 /// \param T The leaf-labelled tree.
 /// \param names The ordered leaf labels.
 ///
-void remap_T_indices(SequenceTree& T,const vector<string>& names)
+void remap_T_leaf_indices(SequenceTree& T,const vector<string>& names)
 {
+  assert(names.size() == T.n_leaves());
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   try {
     vector<int> mapping = compute_mapping(T.get_leaf_labels(), names);
@@ -206,53 +191,56 @@ void remap_T_indices(SequenceTree& T,const vector<string>& names)
 /// \param T The leaf-labelled tree.
 /// \param A A multiple sequence alignment.
 ///
-void remap_T_indices(SequenceTree& T,const alignment& A)
+alignment remap_A_indices(alignment& A, const SequenceTree& T)
 {
-  if (A.n_sequences() < T.n_leaves())
-    throw myexception()<<"Tree has "<<T.n_leaves()<<" leaves, but alignment has only "<<A.n_sequences()<<" sequences.";
+  vector<string> labels = T.get_labels();
+
+  if (A.n_sequences() == T.n_leaves())
+  {
+    labels.resize(T.n_leaves());
+
+  }
+  else if (A.n_sequences() != T.n_nodes())
+    throw myexception()<<"Cannot map alignment onto tree:\n  Alignment has "<<A.n_sequences()<<" sequences.\n  Tree has "<<T.n_leaves()<<" leaves and "<<T.n_nodes()<<" nodes.";
+      
+
+  for(int i=0;i<labels.size();i++)
+    if (labels[i] == "")
+    {
+      if (i<T.n_leaves())
+	throw myexception()<<"Tree has empty label for a leaf node: not allowed!";
+      else
+	throw myexception()<<"Alignment has internal node information, but tree has empty label for an internal node: not allowed!";
+    }
+
+  assert(A.n_sequences() == labels.size());
 
   //----- Remap leaf indices for T onto A's leaf sequence indices -----//
   try {
-    vector<string> names = sequence_names(A,T.n_leaves());  
+    vector<int> mapping = compute_mapping(labels, sequence_names(A));
 
-    remap_T_indices(T,names);
+    return reorder_sequences(A,mapping);
   }
   catch(const bad_mapping<string>& b)
   {
     bad_mapping<string> b2 = b;
     b2.clear();
     if (b.from == 0)
-      b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in alignment.";
+      b2<<"Couldn't find sequence \""<<b2.missing<<"\" in alignment.";
     else
       b2<<"Alignment sequence '"<<b2.missing<<"' not found in the tree.";
     throw b2;
   }
 }
 
-/// \brief Re-index the leaves of tree \a T1 so that the labels have the same ordering as in \a T2.
-///
-/// \param T1 The leaf-labelled tree to re-index.
-/// \param T2 The leaf-labelled tree to match.
-///
-void remap_T_indices(SequenceTree& T1,const SequenceTree& T2)
+void add_internal_labels(SequenceTree& T)
 {
-  if (T1.n_leaves() != T2.n_leaves())
-    throw myexception()<<"Trees do not correspond: different numbers of leaves.";
-
-  //----- Remap leaf indices for T onto A's leaf sequence indices -----//
-  try {
-    remap_T_indices(T1, T2.get_leaf_labels());
-  }
-  catch(const bad_mapping<string>& b)
-  {
-    bad_mapping<string> b2 = b;
-    b2.clear();
-    if (b.from == 0)
-      b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in second tree.";
-    else
-      b2<<"Couldn't find leaf sequence \""<<b2.missing<<"\" in first tree.";
-    throw b2;
-  }
+  for(int i=0;i<T.n_nodes();i++)
+    if (T[i].is_internal_node())
+    {
+      if (T.label(i) == "")
+	T.label(i) = string("A") + convertToString(i);
+    }
 }
 
 /// \brief  Remap the leaf indices of tree \a T to match the alignment \a A: check the result
@@ -280,24 +268,28 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
 		       <<A.n_sequences()<<" sequences.";
 
   //----- IF sequences = leaf nodes THEN maybe add internal sequences.
-  else if (A.n_sequences() == T.n_leaves()) {
+  else if (A.n_sequences() == T.n_leaves()) 
+  {
+    A = remap_A_indices(A,T);
+
     if (internal_sequences)
+    {
+      add_internal_labels(T);
       A = add_internal(A,T);
+      connect_leaf_characters(A,T);
+    }
   }
   //----- IF sequences > leaf nodes THEN maybe complain -------//
-  else {
-    if (not internal_sequences) {
-      alignment A2 = chop_internal(A);
-      if (A2.n_sequences() == T.n_leaves()) {
-	A = A2;
-      }
-      else
-	throw myexception()<<"More alignment sequences than leaf nodes!";
-    } 
-    else if (A.n_sequences() > T.n_nodes())
-      throw myexception()<<"More alignment sequences than tree nodes!";
-    else if (A.n_sequences() < T.n_nodes())
-      throw myexception()<<"Fewer alignment sequences than tree nodes!";
+  else if (A.n_sequences() > T.n_nodes())
+    throw myexception()<<"More alignment sequences than tree nodes!";
+  else if (A.n_sequences() < T.n_nodes())
+    throw myexception()<<"Fewer alignment sequences than tree nodes!";
+  else
+  {
+    A = remap_A_indices(A,T);
+  
+    if (not internal_sequences) 
+      A = chop_internal(A);
   }
   
   //---------- double-check that we have the right number of sequences ---------//
@@ -306,84 +298,9 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
   else
     assert(A.n_sequences() == T.n_leaves());
 
-  //----- Remap leaf indices for T onto A's leaf sequence indices -----//
-  remap_T_indices(T,A);
-
-  if (internal_sequences) {
-    connect_leaf_characters(A,T);
-    for(int i=0;i<T.n_nodes();i++)
-    {
-      if (T[i].is_internal_node())
-	T.label(i) = A.seq(i).name;
-      else
-	assert(T.label(i) == A.seq(i).name);
-    }
-  }
-
-  //---- Check to see that internal nodes satisfy constraints ----//
-  check_alignment(A,T,internal_sequences);
-}
-
-/// \brief  Remap the leaf indices of tree \a T to match the alignment \a A: check the result
-///
-/// \param A The alignment.
-/// \param T The tree.
-/// \param internal_sequences Should the resulting alignment have sequences for internal nodes on the tree?
-///
-void link(alignment& A,RootedSequenceTree& T,bool internal_sequences) 
-{
-  check_names_unique(A);
-
-  // Later, might we WANT sub-branches???
-  if (has_sub_branches(T))
-    remove_sub_branches(T);
-
-  if (internal_sequences and not is_Cayley(T) and T.n_leaves() > 1) {
-    assert(has_polytomy(T));
-    throw myexception()<<"Cannot link a multifurcating tree to an alignment with internal sequences.";
-  }
-
-  //------ IF sequences < leaf nodes THEN complain ---------//
-  if (A.n_sequences() < T.n_leaves())
-    throw myexception()<<"Tree has "<<T.n_leaves()<<" leaves but Alignment only has "
-		       <<A.n_sequences()<<" sequences.";
-
-  //----- IF sequences = leaf nodes THEN maybe add internal sequences.
-  else if (A.n_sequences() == T.n_leaves()) {
-    if (internal_sequences)
-      A = add_internal(A,T);
-  }
-  //----- IF sequences > leaf nodes THEN maybe complain -------//
-  else {
-    if (not internal_sequences)
-      throw myexception()<<"More alignment sequences than leaf nodes!";
-
-    if (A.n_sequences() > T.n_nodes())
-      throw myexception()<<"More alignment sequences than tree nodes!";
-    else if (A.n_sequences() < T.n_nodes())
-      throw myexception()<<"Fewer alignment sequences than tree nodes!";
-  }
-  
-  //---------- double-check that we have the right number of sequences ---------//
-  if (internal_sequences)
-    assert(A.n_sequences() == T.n_nodes());
-  else
-    assert(A.n_sequences() == T.n_leaves());
-
-
-  //----- Remap leaf indices for T onto A's leaf sequence indices -----//
-  remap_T_indices(T,A);
-
-  if (internal_sequences) {
-    connect_leaf_characters(A,T);
-    for(int i=0;i<T.n_nodes();i++)
-    {
-      if (T[i].is_internal_node())
-	T.label(i) = A.seq(i).name;
-      else
-	assert(T.label(i) == A.seq(i).name);
-    }
-  }
+  //----- Check that each alignment sequence maps to a corresponding name in the tree -----//
+  for(int i=0;i<A.n_sequences();i++)
+    assert(T.label(i) == A.seq(i).name);
 
   //---- Check to see that internal nodes satisfy constraints ----//
   check_alignment(A,T,internal_sequences);
@@ -397,40 +314,6 @@ void link(alignment& A,RootedSequenceTree& T,bool internal_sequences)
 ///
 void link(vector<alignment>& alignments, SequenceTree& T, const vector<bool>& internal_sequences)
 {
-  for(int i=1;i<alignments.size();i++)
-  {
-    if (alignments[i].n_sequences() != alignments[0].n_sequences())
-      throw myexception()<<"Alignment #"<<i+1<<" has "<<alignments[i].n_sequences()<<" sequences, but the previous alignments have "<<alignments[0].n_sequences()<<" sequences!";
-
-    vector<int> mapping = compute_mapping(sequence_names(alignments[i]),sequence_names(alignments[0]));
-    vector<int> new_order = invert(mapping);
-
-    alignments[i] = reorder_sequences(alignments[i],new_order);
-  }
-
-  for(int i=0;i<alignments.size();i++) 
-    link(alignments[i],T,internal_sequences[i]);
-}
-
-/// \brief Reorder leaf indices of T and sequences indices of alignments to match alignments[0]; check the result.
-///
-/// \param alignments The alignments.
-/// \param T The leaf-labelled tree.
-/// \param internal_sequences Should each resulting alignment have sequences for internal nodes on the tree?
-///
-void link(vector<alignment>& alignments, RootedSequenceTree& T, const vector<bool>& internal_sequences)
-{
-  for(int i=1;i<alignments.size();i++)
-  {
-    if (alignments[i].n_sequences() != alignments[0].n_sequences())
-      throw myexception()<<"Alignment #"<<i+1<<" has "<<alignments[i].n_sequences()<<" sequences, but the previous alignments have "<<alignments[0].n_sequences()<<" sequences!";
-
-    vector<int> mapping = compute_mapping(sequence_names(alignments[i]),sequence_names(alignments[0]));
-    vector<int> new_order = invert(mapping);
-
-    alignments[i] = reorder_sequences(alignments[i],new_order);
-  }
-
   for(int i=0;i<alignments.size();i++) 
     link(alignments[i],T,internal_sequences[i]);
 }
@@ -732,7 +615,7 @@ SequenceTree load_constraint_tree(const string& filename,const vector<string>& n
   remove_sub_branches(constraint);
   
   try{
-    remap_T_indices(constraint,names);
+    remap_T_leaf_indices(constraint,names);
   }
   catch(const bad_mapping<string>& b) {
     bad_mapping<string> b2 = b;
