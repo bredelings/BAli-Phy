@@ -215,6 +215,8 @@ Matrix counts_to_probability(const Tree& T,const vector<int>& column,
   return Pr_align_pair;
 }
 
+void add_internal_labels(SequenceTree& T);
+
 void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A,RootedSequenceTree& T) 
 {
   //--------------- Load and link template A and T -----------------//
@@ -224,14 +226,24 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
   int maxalignments = args["max-alignments"].as<int>();
   unsigned skip = args["skip"].as<unsigned>();
 
-  vector< shared_ptr<const alphabet> > alphabets;
-  alphabets.push_back(shared_ptr<const alphabet>(A.get_alphabet().clone()));
   if (log_verbose) std::cerr<<"alignment-gild: Loading alignments...";
-  alignments = load_alignments(std::cin,alphabets,skip,maxalignments);
+
+  // Instead of reordering the tree, just specify the names, here.
+
+  alignments = load_alignments(std::cin, T.get_leaf_labels(), A.get_alphabet(), skip, maxalignments);
+
+  if (alignments.size() == 0)
+  {
+    std::cerr<<"retrying...\n";
+    add_internal_labels(T);
+    alignments = load_alignments(std::cin, T.get_labels(), A.get_alphabet(), skip, maxalignments);
+  }
+
   if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
   if (alignments.empty()) 
     throw myexception()<<"Alignment sample is empty.";
 
+  /*
   //---------- Re-link the tree to the loaded alignments -----------//
   alignment A2 = chop_internal(alignments.front());
   
@@ -255,6 +267,7 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
     if (A.seqlength(pi[i]) != A2.seqlength(i))
       throw myexception()<<"Sequence '"<<T.label(i)<<"' has different length in alignment estimate and alignment samples!";
   }
+  */
 }
 
 
@@ -332,6 +345,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("alphabet",value<string>(),"set to 'Codons' to prefer codon alphabets")
     ("skip",value<unsigned>()->default_value(0),"number of tree samples to skip")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
+    ("verbose,v","Output more log messages on stderr.")
     ;
 
   // positional options
@@ -352,6 +366,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<all<<"\n";
     exit(0);
   }
+
+  if (args.count("verbose")) log_verbose = 1;
 
   return args;
 }
@@ -425,6 +441,7 @@ vector<double> letter_weights_project(const vector<int>& column, const Matrix& Q
     // Map the leaf indices of ST to the leaf indices of T
     SequenceTree ST = T;
     vector<int> mapping = ST.prune_leaves(remove);
+    mapping.resize(ST.n_leaves());
     assert(f == mapping);
 
     // Project Q down
