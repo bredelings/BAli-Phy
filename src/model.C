@@ -124,14 +124,6 @@ void Model::set_parameter_values(const vector<double>& p)
   recalc_all();
 }
 
-
-void Model::set_parameter(int i, const Parameter& P) 
-{
-  assert(0 <= i and i < n_parameters());
-  parameters_[i] = P;
-  recalc(vector<int>(1,i));
-}
-
 string Model::header() const
 {
   vector<string> names;
@@ -271,11 +263,11 @@ int SuperModel::register_submodel(const string& prefix)
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
-void SuperModel::write_one(int index, const Parameter& P)
+void SuperModel::write_value(int index, double p)
 {
   assert(index < n_parameters());
 
-  parameters_[index] = P;
+  parameters_[index].value = p;
 
   const vector<model_slot>& model_slots = model_slots_for_index[index];
 
@@ -287,16 +279,8 @@ void SuperModel::write_one(int index, const Parameter& P)
 
     //... write it down into a sub-model, if the usage is not from the top-level model.
     if (m != -1)
-      SubModels(m).set_parameter(s,P);
+      SubModels(m).set_parameter_value(s,p);
   }
-}
-
-// can I write the supermodel so that it actually SHARES the values of the sub-models?
-void SuperModel::write_value(int index, double p)
-{
-  Parameter P = get_parameter(index);
-  P.value = p;
-  write_one(index,P);
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
@@ -423,12 +407,6 @@ void SuperModel::set_parameter_values(const vector<double>& p)
 
   write();
   recalc_all();
-}
-
-void SuperModel::set_parameter(int i, const Parameter& P) 
-{
-  write_one(i,P);
-  recalc_one(i);
 }
 
 void SuperModel::set_parameter_values(const vector<int>& indices,const vector<double>& p)

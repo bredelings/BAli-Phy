@@ -153,8 +153,6 @@ public:
   const Parameter& get_parameter(int i) const {return parameters_[i];}
   /// Get ALL model parameters
   const std::vector<Parameter>& get_parameters() const {return parameters_;}
-  /// Set A model parameter value
-  virtual void set_parameter(int p,const Parameter& P);
 
   unsigned n_parameters() const {return parameters_.size();}
 
@@ -246,8 +244,6 @@ protected:
   void write();
   /// Propagate changes to child model parameters down to child Model objects.
   void write_to_submodel(int m);
-  /// Store ONE parameter down into submodels
-  void write_one(int i, const Parameter& P);
   /// Store ONE parameter value down into submodels
   void write_value(int i,double p);
   /// Store SOME parameters down into submodels
@@ -270,9 +266,6 @@ public:
   void set_parameter_values(const std::vector<int>& indices,std::vector<double>::const_iterator& p);
   /// Set ALL model parameters
   void set_parameter_values(const std::vector<double>& p);
-
-  /// Set A model parameter
-  void set_parameter(int i, const Parameter& P);
 
   /// Access a child Model as type T
   template<typename T>
