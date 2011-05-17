@@ -369,13 +369,9 @@ void SuperModel::write_to_submodel(int m)
     {
       int index = arg_expressions[i].parent_index;
       sub_args[i].value = parameters_[index].value;
-      sub_args[i].fixed = parameters_[index].fixed;
-      sub_args[i].bounds = parameters_[index].bounds;
     }
-    else {
+    else
       sub_args[i].value = arg_expressions[i].constant_value;
-      sub_args[i].fixed = true;
-    }
   }
 
   SubModels(m).set_parameters(sub_args);
