@@ -463,8 +463,6 @@ void SuperModel::check() const
   for(int m=0;m<n_submodels(); m++)
   {
     // Read the current argument lists for each sub-model
-    vector<Parameter> sub_args = SubModels(m).get_parameters();
-
     const vector<arg_expression>& arg_expressions = slot_expressions_for_submodel[m];
 
     for(int i=0;i<arg_expressions.size();i++)
@@ -472,10 +470,10 @@ void SuperModel::check() const
       if (arg_expressions[i].is_term_ref())
       {
 	int index = arg_expressions[i].parent_index;
-	assert(sub_args[i].value == parameters_[index].value);
+	assert(SubModels(m).get_parameter_value(i) == get_parameter_value(index));
       }
       else
-	assert(sub_args[i].value == arg_expressions[i].constant_value );
+	assert(SubModels(m).get_parameter_value(i) == arg_expressions[i].constant_value );
     }
   }
 }
