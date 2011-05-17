@@ -400,7 +400,7 @@ public:
 
   double branch_mean() const;
 
-  const Parameter& branch_mean(int i) const;
+  int branch_mean_index(int i) const;
 
   void branch_mean(int i,double); 
 

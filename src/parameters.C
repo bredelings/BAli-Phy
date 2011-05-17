@@ -564,7 +564,7 @@ efloat_t Parameters::prior_no_alignment() const
   // prior on mu[i], the mean branch length for scale i
   for(int i=0;i<n_branch_means();i++) {
     //  return pow(efloat_t(branch_mean()),-1.0);
-    Pr *= gamma_pdf(branch_mean(i).value, 0.5, 2.0);
+    Pr *= gamma_pdf(get_parameter_value(branch_mean_index(i)), 0.5, 2.0);
   }
     
   // prior on the substitution model
@@ -878,26 +878,22 @@ int Parameters::n_branch_means() const
   return n_scales;
 }
 
-const Parameter& Parameters::branch_mean(int i) const 
+int Parameters::branch_mean_index(int i) const 
 {
   assert(0 <= i and i < n_branch_means());
 
-  return get_parameter(1+i);
+  return 1+i;
 }
 
 
 void Parameters::branch_mean(int i, double x)
 {
-  assert(0 <= i and i < n_branch_means());
-
-  set_parameter_value(1+i,x);
+  set_parameter_value(branch_mean_index(i),x);
 }
 
 void Parameters::branch_mean_tricky(int i,double x)
 {
-  assert(0 <= i and i < n_branch_means());
-
-  parameters_[1+i].value = x;
+  parameters_[branch_mean_index(i)].value = x;
   
   for(int j=0;j<scale_for_partition.size();j++)
     if (scale_for_partition[j] == i)
