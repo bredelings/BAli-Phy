@@ -70,6 +70,11 @@ public:
   virtual int parse(const std::string& s);
   virtual int parse_nexus(const std::string& s,const std::vector<std::string>& names);
 
+  /// Parse and load the Newick format string 's', discovering and reporting leaf names in 'names'
+  virtual int parse_and_discover_names(const std::string& s,std::vector<std::string>& names);
+  /// Parse and load the Newick format string 's', where node names are given in 'names', or numerical starting at 1
+  virtual int parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names, bool allow_numbers=true);
+
   /// load this tree from the file \a file
   virtual void read(std::istream& file);
 
@@ -104,6 +109,11 @@ public:
   std::string write(bool=true) const;
 
   std::string write_with_bootstrap_fraction(const std::vector<double>&, bool print_lengths=true) const;
+
+  /// Parse and load the Newick format string 's', discovering and reporting leaf names in 'names'
+  int parse_and_discover_names(const std::string& s,std::vector<std::string>& names);
+  /// Parse and load the Newick format string 's', where node names are given in 'names', or numerical starting at 1
+  int parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names, bool allow_numbers=true);
 
   /// load this tree from the string \a s
   int parse(const std::string& s);

@@ -121,7 +121,22 @@ vector<int> SequenceTree::standardize(const vector<int>& lnames)
 // one object on the stack then we quit
 int SequenceTree::parse(const string& line) 
 {
-  return parse_and_discover_names(line,labels);
+  return Tree::parse_and_discover_names(line,labels);
+}
+
+int SequenceTree::parse_and_discover_names(const std::string& s,std::vector<std::string>& names)
+{
+  int root = Tree::parse_and_discover_names(s,names);
+  labels = names;
+  return root;
+}
+
+int SequenceTree::parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names, bool allow_numbers)
+{
+  int root = Tree::parse_with_names_or_numbers(s,names, allow_numbers);
+  labels = names;
+  labels.resize(n_nodes());
+  return root;
 }
 
 int SequenceTree::parse_nexus(const string& s,const vector<string>& names) 
@@ -234,6 +249,24 @@ string RootedSequenceTree::write(bool print_lengths) const
 string RootedSequenceTree::write_with_bootstrap_fraction(const vector<double>& bf, bool print_lengths) const 
 {
   return ::write_with_bootstrap_fraction(*this, get_labels(), bf, print_lengths);
+}
+
+int RootedSequenceTree::parse_and_discover_names(const std::string& s,std::vector<std::string>& names)
+{
+  int r = SequenceTree::parse_and_discover_names(s,names);
+
+  root_ = nodes_[r];
+
+  return r;
+}
+
+int RootedSequenceTree::parse_with_names_or_numbers(const std::string& s, const std::vector<std::string>& names, bool allow_numbers)
+{
+  int r = SequenceTree::parse_with_names_or_numbers(s,names,allow_numbers);
+
+  root_ = nodes_[r];
+
+  return r;
 }
 
 int RootedSequenceTree::parse(const string& s) 

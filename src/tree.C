@@ -1665,11 +1665,6 @@ int RootedTree::parse_with_names_or_numbers(const string& s,const vector<string>
   return r;
 }
 
-int RootedTree::parse_with_names(const string& line,const vector<string>& names)
-{
-  return parse_with_names_or_numbers(line,names,false);
-}
-
 string write(const RootedTree& T, const vector<string>& names, bool print_lengths) 
 {
   return write(T.root(), names, print_lengths);

@@ -80,19 +80,11 @@ namespace trees_format
   
   bool reader_t::next_tree(SequenceTree& T)
   {
-    T.get_labels().clear();
-    T.get_labels() = leaf_names;
-    T.get_labels().resize( T.n_nodes() );
-    
     return next_tree(static_cast<Tree&>(T));
   }
   
   bool reader_t::next_tree(RootedSequenceTree& T)
   {
-    T.get_labels().clear();
-    T.get_labels() = leaf_names;
-    T.get_labels().resize( T.n_nodes() );
-    
     return next_tree(static_cast<RootedTree&>(T));
   }
   
