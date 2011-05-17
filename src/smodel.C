@@ -202,7 +202,7 @@ namespace substitution {
 
     // set the frequency parameters
     for(int i=0;i<n_letters();i++)
-      parameters_[i+1].value = pi2[i];
+      *parameters_[i+1].value = pi2[i];
 
     // recompute everything
     recalc_all();

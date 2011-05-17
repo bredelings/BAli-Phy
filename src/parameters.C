@@ -893,7 +893,7 @@ void Parameters::branch_mean(int i, double x)
 
 void Parameters::branch_mean_tricky(int i,double x)
 {
-  parameters_[branch_mean_index(i)].value = x;
+  *parameters_[branch_mean_index(i)].value = x;
   
   for(int j=0;j<scale_for_partition.size();j++)
     if (scale_for_partition[j] == i)

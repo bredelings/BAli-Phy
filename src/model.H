@@ -34,6 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "clone.H"
 #include "mytypes.H"
 #include "bounds.H"
+#include "cow-ptr.H"
 
 // FIXME - the way to have a model class with members as submodels is to
 //   1. hard-code the SubModels(m) function to return the models you want,
@@ -46,7 +47,7 @@ std::string parameter_name(const std::string& prefix,int i,int n);
 struct Parameter
 {
   std::string name;
-  double value;
+  cow_ptr<double> value;
   Bounds<double> bounds;
   bool fixed;
 
@@ -134,7 +135,7 @@ public:
   virtual void set_bounds(int i,const Bounds<double>& b) {parameters_[i].bounds = b;}
 
   /// Get A model parameter value
-  double get_parameter_value(int i) const {return parameters_[i].value;}
+  double get_parameter_value(int i) const {return *parameters_[i].value;}
   /// Get SOME model parameter values
   std::vector<double> get_parameter_values(const std::vector<int>&) const;
   /// Get ALL model parameter values

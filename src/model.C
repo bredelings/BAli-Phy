@@ -77,7 +77,7 @@ std::vector<double> Model::get_parameter_values() const
   vector<double> values(n_parameters());
 
   for(int i=0;i<values.size();i++)
-    values[i] = parameters_[i].value;
+    values[i] = *parameters_[i].value;
 
   return values;
 }
@@ -87,7 +87,7 @@ std::vector<double> Model::get_parameter_values(const std::vector<int>& indices)
   vector<double> values(indices.size());
 
   for(int i=0;i<values.size();i++)
-    values[i] = parameters_[indices[i]].value;
+    values[i] = *parameters_[indices[i]].value;
 
   return values;
 }
@@ -95,7 +95,7 @@ std::vector<double> Model::get_parameter_values(const std::vector<int>& indices)
 void Model::set_parameter_value(int i,double value) 
 {
   assert(0 <= i and i < n_parameters());
-  parameters_[i].value = value;
+  *parameters_[i].value = value;
   recalc(vector<int>(1,i));
 }
 
@@ -111,7 +111,7 @@ void Model::set_parameter_values(const vector<int>& indices,vector<double>::cons
   assert(indices.size() <= parameters_.size());
 
   for(int i=0;i<indices.size();i++,p++)
-    parameters_[indices[i]].value = *p;
+    *parameters_[indices[i]].value = *p;
 
   recalc(indices);
 }
@@ -120,7 +120,7 @@ void Model::set_parameter_values(const vector<double>& p)
 {
   assert(parameters_.size() == p.size()) ; 
   for(int i=0;i< parameters_.size() ; i++)
-    parameters_[i].value = p[i];
+    *parameters_[i].value = p[i];
   recalc_all();
 }
 
@@ -267,7 +267,7 @@ void SuperModel::write_value(int index, double p)
 {
   assert(index < n_parameters());
 
-  parameters_[index].value = p;
+  *parameters_[index].value = p;
 
   const vector<model_slot>& model_slots = model_slots_for_index[index];
 
@@ -300,7 +300,7 @@ void SuperModel::write_values(const vector<int>& indices,vector<double>::const_i
     assert(index < n_parameters());
 
     // set the values
-    parameters_[index].value = value;
+    *parameters_[index].value = value;
 
     // record the revelant slots and values for each submodel
     for(int j=0;j<model_slots_for_index[index].size();j++)
@@ -363,7 +363,7 @@ void SuperModel::read_from_submodel(int m)
       if (model_slots_for_index[i][j].model_index != m) continue;
 
       int s = model_slots_for_index[i][j].slot;
-      parameters_[i].value = SubModels(m).get_parameter_value(s);
+      *parameters_[i].value = SubModels(m).get_parameter_value(s);
     }
   }
 }
@@ -403,7 +403,7 @@ void SuperModel::set_parameter_values(const vector<double>& p)
   assert(n_parameters() == p.size()) ; 
 
   for(int i=0; i<n_parameters(); i++)
-    parameters_[i].value = p[i];
+    *parameters_[i].value = p[i];
 
   write();
   recalc_all();
