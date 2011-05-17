@@ -132,13 +132,6 @@ void Model::set_parameter(int i, const Parameter& P)
   recalc(vector<int>(1,i));
 }
 
-void Model::set_parameters(const vector<Parameter>& P) 
-{
-  assert(P.size() == n_parameters());
-  parameters_ = P;
-  recalc_all();
-}
-
 string Model::header() const
 {
   vector<string> names;
@@ -357,7 +350,7 @@ void SuperModel::write()
 void SuperModel::write_to_submodel(int m) 
 {
   // Read the current argument lists for each sub-model
-  vector<Parameter> sub_args = SubModels(m).get_parameters();
+  vector<double> sub_args = SubModels(m).get_parameter_values();
 
   // Determine how these arguments should be computed from top level parameters
   const vector<arg_expression>& arg_expressions = slot_expressions_for_submodel[m];
@@ -368,13 +361,13 @@ void SuperModel::write_to_submodel(int m)
     if (arg_expressions[i].is_term_ref())
     {
       int index = arg_expressions[i].parent_index;
-      sub_args[i].value = parameters_[index].value;
+      sub_args[i] = get_parameter_value(index);
     }
     else
-      sub_args[i].value = arg_expressions[i].constant_value;
+      sub_args[i] = arg_expressions[i].constant_value;
   }
 
-  SubModels(m).set_parameters(sub_args);
+  SubModels(m).set_parameter_values(sub_args);
 }
 
 void SuperModel::read_from_submodel(int m)
@@ -436,15 +429,6 @@ void SuperModel::set_parameter(int i, const Parameter& P)
 {
   write_one(i,P);
   recalc_one(i);
-}
-
-void SuperModel::set_parameters(const vector<Parameter>& p) 
-{
-  for(int i=0;i<n_parameters();i++)
-    parameters_[i] = p[i];
-
-  write();
-  recalc_all();
 }
 
 void SuperModel::set_parameter_values(const vector<int>& indices,const vector<double>& p)

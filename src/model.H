@@ -155,8 +155,6 @@ public:
   const std::vector<Parameter>& get_parameters() const {return parameters_;}
   /// Set A model parameter value
   virtual void set_parameter(int p,const Parameter& P);
-  /// Set ALL model parameters
-  virtual void set_parameters(const std::vector<Parameter>& P);
 
   unsigned n_parameters() const {return parameters_.size();}
 
@@ -275,8 +273,6 @@ public:
 
   /// Set A model parameter
   void set_parameter(int i, const Parameter& P);
-  /// Set ALL model parameters
-  void set_parameters(const std::vector<Parameter>& P);
 
   /// Access a child Model as type T
   template<typename T>
