@@ -130,6 +130,5 @@ SequenceTree RandomTree(const vector<string>& s,double branch_mean)
 {
   SequenceTree T = star_tree(s);
   RandomTree(T,branch_mean);
-  T.get_labels().resize(T.n_nodes());
   return T;
 }
