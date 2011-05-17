@@ -1193,17 +1193,14 @@ namespace substitution {
     for(int i=0;i<6;i++)
       total += get_parameter_value(i);
 
-    for(int i=0;i<6;i++)
-      parameters_[i].value /= total;
+    S(0,1) = get_parameter_value(0)/total; // AG
+    S(0,2) = get_parameter_value(1)/total; // AT
+    S(0,3) = get_parameter_value(2)/total; // AC
 
-    S(0,1) = get_parameter_value(0); // AG
-    S(0,2) = get_parameter_value(1); // AT
-    S(0,3) = get_parameter_value(2); // AC
+    S(1,2) = get_parameter_value(3)/total; // GT
+    S(1,3) = get_parameter_value(4)/total; // GC
 
-    S(1,2) = get_parameter_value(3); // GT
-    S(1,3) = get_parameter_value(4); // GC
-
-    S(2,3) = get_parameter_value(5); // TC
+    S(2,3) = get_parameter_value(5)/total; // TC
   }
 
   GTR::GTR(const Nucleotides& N)
