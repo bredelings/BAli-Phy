@@ -457,7 +457,9 @@ vector<int> Tree::prune_leaves(const vector<int>& remove)
     if (do_remove[i]) 
     {
       BranchNode* leaf = old_nodes[i];
-      while(is_leaf_node(leaf) and leaf->out and leaf->out != leaf) {
+      while(is_leaf_node(leaf) and leaf->out and leaf->out != leaf) 
+      {
+	old_nodes[leaf->node] = 0;
 	BranchNode* parent = TreeView::unlink_subtree(leaf->out);
 	TreeView(leaf).destroy();
 	leaf = parent;
@@ -465,7 +467,10 @@ vector<int> Tree::prune_leaves(const vector<int>& remove)
 
       // remove nodes of degree 2
       if (leaf->next != leaf and leaf->next->next == leaf)
+      {
+	old_nodes[leaf->node] = 0;
 	TreeView::remove_node_from_branch(leaf);
+      }
     }
     else {
       name_node(old_nodes[i],new_leaves++);
@@ -479,10 +484,11 @@ vector<int> Tree::prune_leaves(const vector<int>& remove)
 
   assert(new_leaves == n_leaves());
 
-  // Construct the map from new to old node names: O(N^2)
+  // Construct the map from new to old node names
   vector<int> mapping(n_nodes(), -1);
-  for(int i=0;i<mapping.size();i++)
-    mapping[i] = find_index(old_nodes, nodes_[i]);
+  for(int i=0;i<old_nodes.size();i++)
+    if (old_nodes[i])
+      mapping[old_nodes[i]->node] = i;
 
   for(int i=0;i<mapping.size();i++) {
     assert(mapping[i] != -1);
