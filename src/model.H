@@ -48,13 +48,13 @@ std::string parameter_name(const std::string& prefix,int i,int n);
 struct Parameter
 {
   std::string name;
-  cow_ptr<Double> value;
+  polymorphic_cow_ptr<Object> value;
   Bounds<double> bounds;
   bool fixed;
 
-  Parameter(const std::string&, Double);
-  Parameter(const std::string&, Double, bool);
-  Parameter(const std::string&, Double, const Bounds<double>&, bool=false);
+  Parameter(const std::string&, const Object&);
+  Parameter(const std::string&, const Object&, bool);
+  Parameter(const std::string&, const Object&, const Bounds<double>&, bool=false);
 };
 
 
@@ -98,7 +98,7 @@ struct Parameter
 ///
 /// Next: make models out-of-date unless we call model.update();
 ///
-class Model: public Cloneable 
+class Model: public Cloneable // public Object!
 {
 protected:
   /// Parameter values
@@ -106,11 +106,6 @@ protected:
 
   virtual int add_parameter(const Parameter&);
   
-  /// \brief Recalculate internal data based on changing one parameter
-  ///
-  /// \param i The parameter that changed.
-  void recalc_one(int i);
-
   /// \brief Recalculate internal data based on current parameters
   ///
   ////  \param indices The indices of the parameters that changed.
@@ -136,20 +131,49 @@ public:
   virtual void set_bounds(int i,const Bounds<double>& b) {parameters_[i].bounds = b;}
 
   /// Get A model parameter value
-  Double get_parameter_value(int i) const {return *parameters_[i].value;}
+  template <typename T>
+  const T& get_parameter_value_as(int i) const {return *dynamic_pointer_cast<T>(parameters_[i].value);}
+  /// Get A model parameter value
+  Double get_parameter_value(int i) const {return get_parameter_value_as<Double>(i);}
+  /// Get SOME model parameter values
+  template <typename T>
+  std::vector<T> get_parameter_values_as(const std::vector<int>& indices) const
+  {
+    std::vector<T> values(indices.size());
+    
+    for(int i=0;i<values.size();i++)
+      values[i] = *dynamic_pointer_cast<const T>(parameters_[indices[i]].value);
+    
+    return values;  
+  }
   /// Get SOME model parameter values
   std::vector<Double> get_parameter_values(const std::vector<int>&) const;
+  /// Get ALL model parameter values
+  template <typename T>
+  std::vector<T> get_parameter_values_as() const
+  {
+    std::vector<Double> values(n_parameters());
+    
+    for(int i=0;i<values.size();i++)
+      values[i] = *dynamic_pointer_cast<const T>(parameters_[i].value);
+    
+    return values;  
+  }
   /// Get ALL model parameter values
   std::vector<Double> get_parameter_values() const;
 
   /// Set A model parameter value
-  virtual void set_parameter_value(int p,Double value);
+          void set_parameter_value(int p,Double value);
   /// Set SOME of the model parameter values
-  virtual void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
+          void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
   /// Set SOME of the model parameter values
-  virtual void set_parameter_values(const std::vector<int>& indices,std::vector<Double>::const_iterator& p);
+          void set_parameter_values(const std::vector<int>& indices,const std::vector<polymorphic_cow_ptr<Object> >& p);
   /// Set ALL model parameter values
-  virtual void set_parameter_values(const std::vector<Double>& p);
+          void set_parameter_values(const std::vector<Double>& p);
+  /// Set ALL model parameter values
+          void set_parameter_values(const std::vector<polymorphic_cow_ptr<Object> >& p);
+  /// Set SOME of the model parameter values
+  virtual void set_parameter_values_(const std::vector<int>& indices,std::vector<polymorphic_cow_ptr<Object> >::const_iterator& p);
 
   /// Get A model parameter
   const Parameter& get_parameter(int i) const {return parameters_[i];}
@@ -247,7 +271,7 @@ protected:
   /// Store ONE parameter value down into submodels
   void write_value(int i,Double p);
   /// Store SOME parameters down into submodels
-  void write_values(const std::vector<int>&,std::vector<Double>::const_iterator&);
+  void write_values(const std::vector<int>&,std::vector<polymorphic_cow_ptr<Object> >::const_iterator&);
 
 public:
   /// Make a copy of ourselves
@@ -258,14 +282,7 @@ public:
   virtual void set_fixed(int i,bool f) {Model::set_fixed(i,f); write();}
   virtual void set_bounds(int i,const Bounds<double>& b) {Model::set_bounds(i,b); write();}
 
-  /// Set A model parameter
-  void set_parameter_value(int p,Double value);
-  /// Set SOME of the model parameters
-  void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
-  /// Set SOME of the model parameters
-  void set_parameter_values(const std::vector<int>& indices,std::vector<Double>::const_iterator& p);
-  /// Set ALL model parameters
-  void set_parameter_values(const std::vector<Double>& p);
+  void set_parameter_values_(const std::vector<int>& indices,std::vector<polymorphic_cow_ptr<Object> >::const_iterator& p);
 
   /// Access a child Model as type T
   template<typename T>

@@ -167,15 +167,15 @@ namespace probability {
 
   Uniform::Uniform() 
   {
-    add_parameter(Parameter("start", 0.0));
-    add_parameter(Parameter("end", 1.0));
+    add_parameter(Parameter("start", Double(0.0)));
+    add_parameter(Parameter("end", Double(1.0)));
   }
 
   Uniform::Uniform(double s, double e) 
   {
     assert(s<e);
-    add_parameter(Parameter("start", s));
-    add_parameter(Parameter("end", e));
+    add_parameter(Parameter("start", Double(s)));
+    add_parameter(Parameter("end", Double(e)));
   }
 
   Uniform::~Uniform() {}
@@ -264,13 +264,13 @@ namespace probability {
 
 
   Gamma::Gamma() {
-    add_parameter(Parameter("alpha", 1.0, lower_bound(0.0)));
-    add_parameter(Parameter("beta", 1.0, lower_bound(0.0)));
+    add_parameter(Parameter("alpha", Double(1.0), lower_bound(0.0)));
+    add_parameter(Parameter("beta", Double(1.0), lower_bound(0.0)));
   }
 
   Gamma::Gamma(double a, double b) {
-    add_parameter(Parameter("alpha", a, lower_bound(0.0)));
-    add_parameter(Parameter("beta", b, lower_bound(0.0)));
+    add_parameter(Parameter("alpha", Double(a), lower_bound(0.0)));
+    add_parameter(Parameter("beta", Double(b), lower_bound(0.0)));
   }
 
   Gamma::~Gamma() {}
@@ -353,13 +353,13 @@ namespace probability {
 
 
   Beta::Beta() {
-    add_parameter(Parameter("alpha", 1.0, lower_bound(0.0)));
-    add_parameter(Parameter("beta", 1.0, lower_bound(0.0)));
+    add_parameter(Parameter("alpha", Double(1.0), lower_bound(0.0)));
+    add_parameter(Parameter("beta", Double(1.0), lower_bound(0.0)));
   }
 
   Beta::Beta(double a, double b) {
-    add_parameter(Parameter("alpha", a, lower_bound(0.0)));
-    add_parameter(Parameter("beta", b, lower_bound(0.0)));
+    add_parameter(Parameter("alpha", Double(a), lower_bound(0.0)));
+    add_parameter(Parameter("beta", Double(b), lower_bound(0.0)));
   }
 
   Beta::~Beta() {}
@@ -419,13 +419,13 @@ namespace probability {
   }
 
   LogNormal::LogNormal() {
-    add_parameter(Parameter("lmu", 0.0, lower_bound(0.0)));
-    add_parameter(Parameter("lsigma", 1.0, lower_bound(0.0)));
+    add_parameter(Parameter("lmu", Double(0.0), lower_bound(0.0)));
+    add_parameter(Parameter("lsigma", Double(1.0), lower_bound(0.0)));
   }
 
   LogNormal::LogNormal(double lmu, double lsigma) {
-    add_parameter(Parameter("lmu", lmu, lower_bound(0.0)));
-    add_parameter(Parameter("lsigma", lsigma, lower_bound(0.0)));
+    add_parameter(Parameter("lmu", Double(lmu), lower_bound(0.0)));
+    add_parameter(Parameter("lsigma", Double(lsigma), lower_bound(0.0)));
   }
 
   LogNormal::~LogNormal() {}
@@ -482,13 +482,13 @@ namespace probability {
   }
 
   Normal::Normal() {
-    add_parameter(Parameter("mu", 0.0, lower_bound(0.0)));
-    add_parameter(Parameter("sigma", 1.0, lower_bound(0.0)));
+    add_parameter(Parameter("mu", Double(0.0), lower_bound(0.0)));
+    add_parameter(Parameter("sigma", Double(1.0), lower_bound(0.0)));
   }
 
   Normal::Normal(double mu, double sigma) {
-    add_parameter(Parameter("mu", mu, lower_bound(0.0)));
-    add_parameter(Parameter("sigma", sigma, lower_bound(0.0)));
+    add_parameter(Parameter("mu", Double(mu), lower_bound(0.0)));
+    add_parameter(Parameter("sigma", Double(sigma), lower_bound(0.0)));
   }
 
   Normal::~Normal() {}
@@ -534,11 +534,11 @@ namespace probability {
   }
 
   Exponential::Exponential() {
-    add_parameter(Parameter("mu", 1.0, lower_bound(0.0)));
+    add_parameter(Parameter("mu", Double(1.0), lower_bound(0.0)));
   }
 
   Exponential::Exponential(double mu) {
-    add_parameter(Parameter("mu", mu, lower_bound(0.0)));
+    add_parameter(Parameter("mu", Double(mu), lower_bound(0.0)));
   }
 
   Exponential::~Exponential() {}
@@ -569,14 +569,14 @@ namespace probability {
 
   Cauchy::Cauchy() 
   {
-    add_parameter(Parameter("m", 0, lower_bound(0.0)));
-    add_parameter(Parameter("s", 1, lower_bound(0.0)));
+    add_parameter(Parameter("m", Double(0), lower_bound(0.0)));
+    add_parameter(Parameter("s", Double(1), lower_bound(0.0)));
   }
 
   Cauchy::Cauchy(double m_, double s_)
   {
-    add_parameter(Parameter("m", m_, lower_bound(0.0)));
-    add_parameter(Parameter("s", s_, lower_bound(0.0)));
+    add_parameter(Parameter("m", Double(m_), lower_bound(0.0)));
+    add_parameter(Parameter("s", Double(s_), lower_bound(0.0)));
   }
 
   Cauchy::~Cauchy() {}

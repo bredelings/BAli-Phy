@@ -137,7 +137,7 @@ namespace substitution {
   SimpleExchangeModel::SimpleExchangeModel(unsigned n)
     :ExchangeModel(n)
   {
-    add_parameter(Parameter("rho",exp(-4),lower_bound(0)));
+    add_parameter(Parameter("rho",Double(exp(-4)),lower_bound(0)));
     recalc_all();
   }
 
@@ -199,7 +199,7 @@ namespace substitution {
 
     // set the frequency parameters
     for(int i=0;i<n_letters();i++)
-      *parameters_[i+1].value = pi2[i];
+      parameters_[i+1].value = polymorphic_cow_ptr<Object>( Double(pi2[i]) );
 
     // recompute everything
     recalc_all();
@@ -249,12 +249,12 @@ namespace substitution {
      ModelWithAlphabet<alphabet>(a)
   {
     // Start with *f = 1
-    add_parameter(Parameter("f",1.0,between(0, 1)));
+    add_parameter(Parameter("f",Double(1.0),between(0, 1)));
     //    parameters_[0].fixed = true;
 
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(Parameter(pname, 1.0/n_letters(), between(0, 1)));
+      add_parameter(Parameter(pname, Double(1.0/n_letters()), between(0, 1)));
     }
 
     // initialize everything
@@ -268,7 +268,7 @@ namespace substitution {
     if (pi.size() != a.size())
       throw myexception()<<"Constructing a frequency model on alphabet '"<<a.name<<"' but got frequencies of "<<pi.size()<<" letters instead of the expected "<<a.size();
 
-    add_parameter(Parameter("f", 1.0, between(0, 1)));
+    add_parameter(Parameter("f", Double(1.0), between(0, 1)));
     // Start with *f = 1
     // set_fixed(0,true);
 
@@ -276,7 +276,7 @@ namespace substitution {
     f /= f.sum();
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(Parameter(pname, f[i], between(0, 1)));
+      add_parameter(Parameter(pname, Double(f[i]), between(0, 1)));
     }
 
     // initialize everything
@@ -392,11 +392,11 @@ namespace substitution {
   TripletsFrequencyModel::TripletsFrequencyModel(const Triplets& T)
     : TripletFrequencyModel(T)
   {
-    add_super_parameter(Parameter("g", 1, between(0, 1) ));
+    add_super_parameter(Parameter("g", Double(1), between(0, 1) ));
 
     for(int i=0;i<n_letters();i++) {
       string pname = string("v") + Alphabet().letter(i);
-      add_super_parameter(Parameter(pname, 1.0/n_letters(), between(0, 1) ));
+      add_super_parameter(Parameter(pname, Double(1.0/n_letters()), between(0, 1) ));
     }
 
     insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
@@ -519,12 +519,12 @@ namespace substitution {
   CodonsFrequencyModel::CodonsFrequencyModel(const Codons& C)
     : CodonFrequencyModel(C)
   {
-    add_super_parameter(Parameter("c", 0.5, between(0, 1)));
-    add_super_parameter(Parameter("h", 0.5, between(0, 1)));
+    add_super_parameter(Parameter("c", Double(0.5), between(0, 1)));
+    add_super_parameter(Parameter("h", Double(0.5), between(0, 1)));
 
     for(int i=0;i<C.getAminoAcids().size();i++) {
       string pname = string("b_") + Alphabet().getAminoAcids().letter(i);
-      add_super_parameter(Parameter(pname, 1.0/C.getAminoAcids().size(), between(0, 1)));
+      add_super_parameter(Parameter(pname,  Double(1.0/C.getAminoAcids().size()), between(0, 1)));
     }
 
     insert_submodel("1",TripletsFrequencyModel(C));
@@ -584,11 +584,11 @@ namespace substitution {
   CodonsFrequencyModel2::CodonsFrequencyModel2(const Codons& C)
     : CodonFrequencyModel(C)
   {
-    add_super_parameter(Parameter("h", 0.5, between(0, 1)));
+    add_super_parameter(Parameter("h", Double(0.5), between(0, 1)));
 
     for(int i=0;i<C.getAminoAcids().size();i++) {
       string pname = string("b_") + Alphabet().getAminoAcids().letter(i);
-      add_super_parameter(Parameter(pname, 1.0/C.getAminoAcids().size(), between(0, 1)));
+      add_super_parameter(Parameter(pname, Double(1.0/C.getAminoAcids().size()), between(0, 1)));
     }
 
     insert_submodel("1",TripletsFrequencyModel(C));
@@ -827,7 +827,7 @@ namespace substitution {
   {
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(Parameter(pname, 1.0/n_letters(), between(0, 1)));
+      add_parameter(Parameter(pname, Double(1.0/n_letters()), between(0, 1)));
     }
 
     recalc_all();
@@ -840,7 +840,7 @@ namespace substitution {
 
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(Parameter(pname, f[i], between(0, 1)));
+      add_parameter(Parameter(pname, Double(f[i]), between(0, 1)));
     }
 
     recalc_all();
@@ -910,7 +910,7 @@ namespace substitution {
   INV_Model::INV_Model(const alphabet& a)
     :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
   {
-    add_parameter(Parameter("INV::f", 1, between(0, 1)));
+    add_parameter(Parameter("INV::f", Double(1), between(0, 1)));
 
     // Calculate S matrix
     for(int i=0;i<S.size1();i++)
@@ -1110,7 +1110,7 @@ namespace substitution {
   HKY::HKY(const Nucleotides& N)
     : NucleotideExchangeModel(N)
   { 
-    add_parameter(Parameter("HKY::kappa", 2, lower_bound(0)));
+    add_parameter(Parameter("HKY::kappa", Double(2), lower_bound(0)));
     recalc_all();
   }
 
@@ -1149,8 +1149,8 @@ namespace substitution {
   TN::TN(const Nucleotides& N)
     : NucleotideExchangeModel(N)
   { 
-    add_parameter(Parameter("TN::kappa(pur)",2, lower_bound(0)));
-    add_parameter(Parameter("TN::kappa(pyr)",2, lower_bound(0)));
+    add_parameter(Parameter("TN::kappa(pur)",Double(2), lower_bound(0)));
+    add_parameter(Parameter("TN::kappa(pyr)",Double(2), lower_bound(0)));
     recalc_all();
   }
 
@@ -1203,12 +1203,12 @@ namespace substitution {
   GTR::GTR(const Nucleotides& N)
       : NucleotideExchangeModel(N)
     { 
-      add_parameter(Parameter("GTR::AG", 2.0/8, between(0, 1)));
-      add_parameter(Parameter("GTR::AT", 1.0/8, between(0, 1)));
-      add_parameter(Parameter("GTR::AC", 1.0/8, between(0, 1)));
-      add_parameter(Parameter("GTR::GT", 1.0/8, between(0, 1)));
-      add_parameter(Parameter("GTR::GC", 1.0/8, between(0, 1)));
-      add_parameter(Parameter("GTR::TC", 2.0/8, between(0, 1)));
+      add_parameter(Parameter("GTR::AG", Double(2.0/8), between(0, 1)));
+      add_parameter(Parameter("GTR::AT", Double(1.0/8), between(0, 1)));
+      add_parameter(Parameter("GTR::AC", Double(1.0/8), between(0, 1)));
+      add_parameter(Parameter("GTR::GT", Double(1.0/8), between(0, 1)));
+      add_parameter(Parameter("GTR::GC", Double(1.0/8), between(0, 1)));
+      add_parameter(Parameter("GTR::TC", Double(2.0/8), between(0, 1)));
 
       recalc_all();
     }
@@ -1326,7 +1326,7 @@ namespace substitution {
   M0::M0(const Codons& C,const NucleotideExchangeModel& N)
     :CodonAlphabetExchangeModel(C)
   { 
-    add_super_parameter(Parameter("M0::omega", 1.0, lower_bound(0)));
+    add_super_parameter(Parameter("M0::omega", Double(1.0), lower_bound(0)));
     insert_submodel("1",N);
     recalc_all();
   }
@@ -1586,7 +1586,7 @@ namespace substitution {
       {
 	string index = convertToString(m+1);
 	string pname = string("a") + letter + index;
-	add_super_parameter(Parameter(pname, 1.0/n, between(0, 1)));
+	add_super_parameter(Parameter(pname, Double(1.0/n), between(0, 1)));
       }
     }
 
@@ -1683,7 +1683,7 @@ namespace substitution {
     for(int i=0;i<n_cat;i++)
     {
       string name = "CAT::f"+convertToString(i+1);
-      add_parameter(Parameter(name,prior_fraction[i],between(0,1)));
+      add_parameter(Parameter(name,Double(prior_fraction[i]),between(0,1)));
     }
 
     recalc_all();
@@ -1893,14 +1893,14 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // bin frequencies
     for(int i=0;i<n;i++) {
       string pname = "DP::f" + convertToString(i+1);
-      add_super_parameter(Parameter(pname, 1.0/n, between(0, 1)));
+      add_super_parameter(Parameter(pname, Double(1.0/n), between(0, 1)));
     }
 
     // bin values
     string p_name = "DP::rate";
     if (p >= 0) p_name = string("DP::") + M.parameter_name(p);
     for(int i=0;i<n;i++)
-      add_super_parameter(Parameter(p_name+convertToString(i+1), 1.0, between(0,n)));
+      add_super_parameter(Parameter(p_name+convertToString(i+1), Double(1.0), between(0,n)));
 
     check();
     recalc_all();
@@ -2033,7 +2033,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     :ReversibleWrapperOver<MultiModel>(M),
      INV(SimpleReversibleMarkovModel(INV_Model(M.Alphabet())))
   {
-    add_super_parameter(Parameter("INV::p", 0.01, between(0, 1)));
+    add_super_parameter(Parameter("INV::p", Double(0.01), between(0, 1)));
 
     check();
     recalc_all();
@@ -2125,7 +2125,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   WithINV2::WithINV2(const MultiModel& M)
     :freq(M.frequencies())
   {
-    add_super_parameter(Parameter("INV::p", 0.01, between(0, 1)));
+    add_super_parameter(Parameter("INV::p", Double(0.01), between(0, 1)));
     insert_submodel("VAR", M);
     insert_submodel("INV", SimpleReversibleMarkovModel(INV_Model(M.Alphabet())));
 
@@ -2172,10 +2172,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   M2::M2(const M0& M1,const ReversibleFrequencyModel& R) 
     :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,3)
   {
-    add_super_parameter(Parameter("M2::f[AA INV]",   1.0/3, between(0, 1)));
-    add_super_parameter(Parameter("M2::f[Neutral]",  1.0/3, between(0, 1)));
-    add_super_parameter(Parameter("M2::f[Selected]", 1.0 - get_parameter_value(0) - get_parameter_value(1), between(0, 1)));
-    add_super_parameter(Parameter("M2::omega", 1.0, lower_bound(0)));
+    add_super_parameter(Parameter("M2::f[AA INV]",   Double(1.0/3), between(0, 1)));
+    add_super_parameter(Parameter("M2::f[Neutral]",  Double(1.0/3), between(0, 1)));
+    add_super_parameter(Parameter("M2::f[Selected]", Double(1.0 - get_parameter_value(0) - get_parameter_value(1)), between(0, 1)));
+    add_super_parameter(Parameter("M2::omega", Double(1.0), lower_bound(0)));
 
     check();
     recalc_all();
@@ -2239,11 +2239,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   M2a::M2a(const M0& M1,const ReversibleFrequencyModel& R) 
     :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,3)
   {
-    add_super_parameter(Parameter("M2a::f[AA INV]",   1.0/3, between(0, 1)));
-    add_super_parameter(Parameter("M2a::f[Neutral]",  1.0/3, between(0, 1)));
-    add_super_parameter(Parameter("M2a::f[Selected]", 1.0 - get_parameter_value(0) - get_parameter_value(1), between(0, 1)));
-    add_super_parameter(Parameter("M2a::omega1", 0.5, between(0,1)));
-    add_super_parameter(Parameter("M2a::omega3", 2.0, lower_bound(1)));
+    add_super_parameter(Parameter("M2a::f[AA INV]",   Double(1.0/3), between(0, 1)));
+    add_super_parameter(Parameter("M2a::f[Neutral]",  Double(1.0/3), between(0, 1)));
+    add_super_parameter(Parameter("M2a::f[Selected]", Double(1.0 - get_parameter_value(0) - get_parameter_value(1)), between(0, 1)));
+    add_super_parameter(Parameter("M2a::omega1", Double(0.5), between(0,1)));
+    add_super_parameter(Parameter("M2a::omega3", Double(2.0), lower_bound(1)));
 
     check();
     recalc_all();
@@ -2318,14 +2318,14 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // Call "insert_" instead of "add_" since we are actually STORING the submodel!
     insert_submodel("S",*S);
 
-    add_super_parameter(Parameter("M8b::f[Purifying]", 0.6, between(0, 1)));
-    add_super_parameter(Parameter("M8b::f[Neutral]", 0.3, between(0, 1)));
-    add_super_parameter(Parameter("M8b::f[Positive]", 1.0 - get_parameter_value(0) - get_parameter_value(1), between(0, 1)));
+    add_super_parameter(Parameter("M8b::f[Purifying]", Double(0.6), between(0, 1)));
+    add_super_parameter(Parameter("M8b::f[Neutral]", Double(0.3), between(0, 1)));
+    add_super_parameter(Parameter("M8b::f[Positive]", Double(1.0 - get_parameter_value(0) - get_parameter_value(1)), between(0, 1)));
     // there is no omega1 - instead the Purifying values come from the Beta distribution.
-    add_super_parameter(Parameter("M8b::omega2", 1.0, true /* fixed */));
-    add_super_parameter(Parameter("M8b::omega3", 2.0, lower_bound(1)));
+    add_super_parameter(Parameter("M8b::omega2", Double(1.0), true /* fixed */));
+    add_super_parameter(Parameter("M8b::omega3", Double(2.0), lower_bound(1)));
 
-    add_super_parameter(Parameter("M8b::omega3_non_zero", 1.0));
+    add_super_parameter(Parameter("M8b::omega3_non_zero", Double(1.0)));
 
     check();
     recalc_all();
@@ -2455,13 +2455,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // p
     for(int i=0;i<n;i++) {
       string pname = "M3::f" + convertToString(i+1);
-      add_super_parameter(Parameter(pname, 1.0/n, between(0, 1)));
+      add_super_parameter(Parameter(pname, Double(1.0/n), between(0, 1)));
     }
 
     // omega
     for(int i=0;i<n;i++) {
       string pname = "M3::omega" + convertToString(i+1);
-      add_super_parameter(Parameter(pname, 1.0, lower_bound(0)));
+      add_super_parameter(Parameter(pname, Double(1.0), lower_bound(0)));
     }
 
     check();
@@ -2566,13 +2566,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     for(int i=0;i<models.size();i++) {
       string pname = string("Mixture::p") + convertToString(i+1);
-      add_super_parameter(Parameter(pname, 1.0/models.size(), between(0, 1)));
+      add_super_parameter(Parameter(pname, Double(1.0/models.size()), between(0, 1)));
       insert_submodel(string("M")+convertToString(i+1),*models[i]);
     }
 
     for(int i=0;i<models.size();i++) {
       string pname = string("Mixture::prior") + convertToString(i+1);
-      add_super_parameter(Parameter(pname, 1.0/models.size()));
+      add_super_parameter(Parameter(pname, Double(1.0/models.size())));
     }
 
     pi.resize(Alphabet().size());

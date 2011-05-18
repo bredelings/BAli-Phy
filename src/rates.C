@@ -66,7 +66,7 @@ namespace substitution {
   }
 
   Gamma::Gamma() {
-    add_parameter(Parameter("gamma::sigma/mu", 0.1, lower_bound(0)));
+    add_parameter(Parameter("gamma::sigma/mu", Double(0.1), lower_bound(0)));
   }
 
   //--------------- Beta RateDistribution -----------------//
@@ -123,8 +123,8 @@ namespace substitution {
 
   Beta::Beta()
   {
-    add_parameter(Parameter("beta::mu", 0.5, between(0, 1)));
-    add_parameter(Parameter("beta::Var/mu", 0.1, between(0,1)));
+    add_parameter(Parameter("beta::mu", Double(0.5), between(0, 1)));
+    add_parameter(Parameter("beta::Var/mu", Double(0.1), between(0,1)));
   }
 
   //-------------- LogNormal Distribution ----------------//
@@ -159,7 +159,7 @@ namespace substitution {
 
   LogNormal::LogNormal() 
   {
-    add_parameter(Parameter("log-normal::sigma/mu", 0.1, lower_bound(0)));
+    add_parameter(Parameter("log-normal::sigma/mu", Double(0.1), lower_bound(0)));
   }
     
 
@@ -198,7 +198,7 @@ namespace substitution {
     // Set the rates and fractions
     for(int i=0;i<n_dists();i++) {
       string pname = string("multi:p")+convertToString(i+1);
-      add_parameter(Parameter(pname, 1.0/n_dists(), between(0, 1)));
+      add_parameter(Parameter(pname, Double(1.0/n_dists()), between(0, 1)));
     }
 
     for(int i=0;i<models.size();i++)
