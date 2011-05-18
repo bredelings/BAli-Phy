@@ -132,7 +132,7 @@ double branch_likelihood::operator()(const optimize::Vector& v) const
   }
 
   //---------------- Set parameters -------------------//
-  vector<double> p = smodel->get_parameter_values();
+  vector<Double> p = smodel->get_parameter_values();
   for(int i=0;i<parameters.size();i++) 
     p[parameters[i]] = v[T.n_branches()+i];
 
@@ -170,7 +170,7 @@ double log_branch_likelihood::operator()(const optimize::Vector& v) const
     T2.branch(i).set_length(exp(v[i]));
 
   //---------------- Set parameters -------------------//
-  vector<double> p = smodel->get_parameter_values();
+  vector<Double> p = smodel->get_parameter_values();
   for(int i=0;i<parameters.size();i++) 
     p[parameters[i]] = v[T.n_branches()+i];
 
@@ -393,7 +393,7 @@ void estimate_tree(const alignment& A,
   for(int b=0;b<T.n_branches();b++)
     T.branch(b).set_length(exp(end[b]));
 
-  vector<double> p = smodel.get_parameter_values();
+  vector<Double> p = smodel.get_parameter_values();
   for(int i=0;i<parameters.size();i++)
     p[parameters[i]] = end[i+T.n_branches()];
   smodel.set_parameter_values(p);

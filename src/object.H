@@ -48,6 +48,7 @@ public:
 template<typename T>
 class POD: public Object 
 {
+protected:
   T t;
 public:
   POD<T>* clone() const {return new POD<T>(*this);}
@@ -85,6 +86,52 @@ public:
 };
 
 template <typename T>
+class POD_math: public Object
+{
+protected:
+  T t;
+public:
+  POD_math<T>* clone() const {return new POD_math<T>(*this);}
+
+  operator T() const {return t;}
+
+  //  template <typename U>
+  //  operator POD_math<U>() const {return t;}
+
+  POD_math<T>& operator=(const POD_math<T>& p2) {t = p2.t; return *this;}
+
+  POD_math<T>& operator=(const T& t2) {t = t2; return *this;}
+
+  POD_math() {}
+  POD_math(const T& t2):t(t2) {}
+
+  std::string print() const {return convertToString(t);}
+
+  virtual maybe_t compare(const Object& O) const 
+  {
+    // The same object
+    if (this == &O) return yes;
+
+    // The same value and type
+    const POD_math<T>* o = dynamic_cast<const POD_math<T>*>(&O);
+    if (o and t == o->t) return yes;
+
+    // Not the same
+    return no;
+  }
+
+  POD_math<T>& operator+=(const T& t2) {t += t2; return *this;}
+  POD_math<T>& operator-=(const T& t2) {t -= t2; return *this;}
+  POD_math<T>& operator*=(const T& t2) {t *= t2; return *this;}
+  POD_math<T>& operator/=(const T& t2) {t /= t2; return *this;}
+
+  POD_math<T> operator+(const T& t2) const {POD_math<T> t3 = *this; t3+= t2; return t3;}
+  POD_math<T> operator-(const T& t2) const {POD_math<T> t3 = *this; t3-= t2; return t3;}
+  POD_math<T> operator*(const T& t2) const {POD_math<T> t3 = *this; t3*= t2; return t3;}
+  POD_math<T> operator/(const T& t2) const {POD_math<T> t3 = *this; t3/= t2; return t3;}
+};
+
+template <typename T>
 bool unshare(boost::shared_ptr<T>& ptr)
 {
   if (ptr.unique()) return false;
@@ -94,9 +141,9 @@ bool unshare(boost::shared_ptr<T>& ptr)
   return true;
 }
 
-typedef POD<double> Double;
-typedef POD<int> Int;
-typedef POD<unsigned> Unsigned;
+typedef POD_math<double> Double;
+typedef POD_math<int> Int;
+typedef POD_math<unsigned> Unsigned;
 typedef POD<bool> Bool;
 
 #endif

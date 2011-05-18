@@ -35,6 +35,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mytypes.H"
 #include "bounds.H"
 #include "cow-ptr.H"
+#include "object.H"
 
 // FIXME - the way to have a model class with members as submodels is to
 //   1. hard-code the SubModels(m) function to return the models you want,
@@ -47,13 +48,13 @@ std::string parameter_name(const std::string& prefix,int i,int n);
 struct Parameter
 {
   std::string name;
-  cow_ptr<double> value;
+  cow_ptr<Double> value;
   Bounds<double> bounds;
   bool fixed;
 
-  Parameter(const std::string&, double);
-  Parameter(const std::string&, double, bool);
-  Parameter(const std::string&, double, const Bounds<double>&, bool=false);
+  Parameter(const std::string&, Double);
+  Parameter(const std::string&, Double, bool);
+  Parameter(const std::string&, Double, const Bounds<double>&, bool=false);
 };
 
 
@@ -135,25 +136,23 @@ public:
   virtual void set_bounds(int i,const Bounds<double>& b) {parameters_[i].bounds = b;}
 
   /// Get A model parameter value
-  double get_parameter_value(int i) const {return *parameters_[i].value;}
+  Double get_parameter_value(int i) const {return *parameters_[i].value;}
   /// Get SOME model parameter values
-  std::vector<double> get_parameter_values(const std::vector<int>&) const;
+  std::vector<Double> get_parameter_values(const std::vector<int>&) const;
   /// Get ALL model parameter values
-  std::vector<double> get_parameter_values() const;
+  std::vector<Double> get_parameter_values() const;
 
   /// Set A model parameter value
-  virtual void set_parameter_value(int p,double value);
+  virtual void set_parameter_value(int p,Double value);
   /// Set SOME of the model parameter values
-  virtual void set_parameter_values(const std::vector<int>& indices,const std::vector<double>& p);
+  virtual void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
   /// Set SOME of the model parameter values
-  virtual void set_parameter_values(const std::vector<int>& indices,std::vector<double>::const_iterator& p);
+  virtual void set_parameter_values(const std::vector<int>& indices,std::vector<Double>::const_iterator& p);
   /// Set ALL model parameter values
-  virtual void set_parameter_values(const std::vector<double>& p);
+  virtual void set_parameter_values(const std::vector<Double>& p);
 
   /// Get A model parameter
   const Parameter& get_parameter(int i) const {return parameters_[i];}
-  /// Get ALL model parameters
-  const std::vector<Parameter>& get_parameters() const {return parameters_;}
 
   unsigned n_parameters() const {return parameters_.size();}
 
@@ -195,7 +194,7 @@ public:
 struct arg_expression
 {
   int parent_index;
-  double constant_value;
+  Double constant_value;
   bool is_constant() const {return parent_index == -1;}
   bool is_term_ref() const {return parent_index != -1;}
 
@@ -246,9 +245,9 @@ protected:
   /// Propagate changes to child model parameters down to child Model objects.
   void write_to_submodel(int m);
   /// Store ONE parameter value down into submodels
-  void write_value(int i,double p);
+  void write_value(int i,Double p);
   /// Store SOME parameters down into submodels
-  void write_values(const std::vector<int>&,std::vector<double>::const_iterator&);
+  void write_values(const std::vector<int>&,std::vector<Double>::const_iterator&);
 
 public:
   /// Make a copy of ourselves
@@ -260,13 +259,13 @@ public:
   virtual void set_bounds(int i,const Bounds<double>& b) {Model::set_bounds(i,b); write();}
 
   /// Set A model parameter
-  void set_parameter_value(int p,double value);
+  void set_parameter_value(int p,Double value);
   /// Set SOME of the model parameters
-  void set_parameter_values(const std::vector<int>& indices,const std::vector<double>& p);
+  void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
   /// Set SOME of the model parameters
-  void set_parameter_values(const std::vector<int>& indices,std::vector<double>::const_iterator& p);
+  void set_parameter_values(const std::vector<int>& indices,std::vector<Double>::const_iterator& p);
   /// Set ALL model parameters
-  void set_parameter_values(const std::vector<double>& p);
+  void set_parameter_values(const std::vector<Double>& p);
 
   /// Access a child Model as type T
   template<typename T>

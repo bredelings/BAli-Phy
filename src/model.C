@@ -33,17 +33,17 @@ string parameter_name(const string& prefix, int i,int n)
   return prefix + convertToString(i);
 }
 
-Parameter::Parameter(const string& n, double v)
+Parameter::Parameter(const string& n, Double v)
   :name(n), value(v), fixed(false)
 {
 }
 
-Parameter::Parameter(const string& n, double v, bool f)
+Parameter::Parameter(const string& n, Double v, bool f)
   :name(n), value(v), fixed(f)
 {
 }
 
-Parameter::Parameter(const string& n, double v, const Bounds<double>& b, bool f)
+Parameter::Parameter(const string& n, Double v, const Bounds<double>& b, bool f)
   :name(n), value(v), bounds(b), fixed(f)
 {
 }
@@ -72,9 +72,9 @@ int Model::add_parameter(const Parameter& P)
   return parameters_.size()-1;
 }
 
-std::vector<double> Model::get_parameter_values() const
+std::vector<Double> Model::get_parameter_values() const
 {
-  vector<double> values(n_parameters());
+  vector<Double> values(n_parameters());
 
   for(int i=0;i<values.size();i++)
     values[i] = *parameters_[i].value;
@@ -82,9 +82,9 @@ std::vector<double> Model::get_parameter_values() const
   return values;
 }
 
-std::vector<double> Model::get_parameter_values(const std::vector<int>& indices) const
+std::vector<Double> Model::get_parameter_values(const std::vector<int>& indices) const
 {
-  vector<double> values(indices.size());
+  vector<Double> values(indices.size());
 
   for(int i=0;i<values.size();i++)
     values[i] = *parameters_[indices[i]].value;
@@ -92,21 +92,21 @@ std::vector<double> Model::get_parameter_values(const std::vector<int>& indices)
   return values;
 }
 
-void Model::set_parameter_value(int i,double value) 
+void Model::set_parameter_value(int i,Double value) 
 {
   assert(0 <= i and i < n_parameters());
   *parameters_[i].value = value;
   recalc(vector<int>(1,i));
 }
 
-void Model::set_parameter_values(const vector<int>& indices,const vector<double>& p)
+void Model::set_parameter_values(const vector<int>& indices,const vector<Double>& p)
 {
   assert(indices.size() == p.size());
-  vector<double>::const_iterator b = p.begin();
+  vector<Double>::const_iterator b = p.begin();
   set_parameter_values(indices,b);
 }
 
-void Model::set_parameter_values(const vector<int>& indices,vector<double>::const_iterator& p)
+void Model::set_parameter_values(const vector<int>& indices,vector<Double>::const_iterator& p)
 {
   assert(indices.size() <= parameters_.size());
 
@@ -116,7 +116,7 @@ void Model::set_parameter_values(const vector<int>& indices,vector<double>::cons
   recalc(indices);
 }
 
-void Model::set_parameter_values(const vector<double>& p) 
+void Model::set_parameter_values(const vector<Double>& p) 
 {
   assert(parameters_.size() == p.size()) ; 
   for(int i=0;i< parameters_.size() ; i++)
@@ -135,7 +135,7 @@ string Model::header() const
 
 string Model::state() const
 {
-  return join<double>(get_parameter_values(),'\t');
+  return join<Double>(get_parameter_values(),'\t');
 }
 
 int SuperModel::add_parameter(const Parameter& P)
@@ -263,7 +263,7 @@ int SuperModel::register_submodel(const string& prefix)
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
-void SuperModel::write_value(int index, double p)
+void SuperModel::write_value(int index, Double p)
 {
   assert(index < n_parameters());
 
@@ -285,16 +285,16 @@ void SuperModel::write_value(int index, double p)
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
 /// \todo This only writes the VALUES I think.
-void SuperModel::write_values(const vector<int>& indices,vector<double>::const_iterator& p)
+void SuperModel::write_values(const vector<int>& indices,vector<Double>::const_iterator& p)
 {
   vector<vector<int> > model_slots(n_submodels());
-  vector<vector<double> > model_values(n_submodels());
+  vector<vector<Double> > model_values(n_submodels());
 
   // Set the parameter values in the top level
   for(int i=0;i<indices.size();i++)
   {
     int index = indices[i];
-    double value = *(p+i);
+    Double value = *(p+i);
 
     // check that all the indices are in range
     assert(index < n_parameters());
@@ -334,7 +334,7 @@ void SuperModel::write()
 void SuperModel::write_to_submodel(int m) 
 {
   // Read the current argument lists for each sub-model
-  vector<double> sub_args = SubModels(m).get_parameter_values();
+  vector<Double> sub_args = SubModels(m).get_parameter_values();
 
   // Determine how these arguments should be computed from top level parameters
   const vector<arg_expression>& arg_expressions = slot_expressions_for_submodel[m];
@@ -383,13 +383,13 @@ efloat_t SuperModel::prior() const {
   return P;
 }
 
-void SuperModel::set_parameter_value(int p,double value) 
+void SuperModel::set_parameter_value(int p,Double value) 
 {
   write_value(p,value);
   recalc_one(p);
 }
 
-void SuperModel::set_parameter_values(const vector<int>& indices,vector<double>::const_iterator& p)
+void SuperModel::set_parameter_values(const vector<int>& indices,vector<Double>::const_iterator& p)
 {
   assert(indices.size() <= n_parameters());
 
@@ -398,7 +398,7 @@ void SuperModel::set_parameter_values(const vector<int>& indices,vector<double>:
   recalc(indices);
 }
 
-void SuperModel::set_parameter_values(const vector<double>& p) 
+void SuperModel::set_parameter_values(const vector<Double>& p) 
 {
   assert(n_parameters() == p.size()) ; 
 
@@ -409,10 +409,10 @@ void SuperModel::set_parameter_values(const vector<double>& p)
   recalc_all();
 }
 
-void SuperModel::set_parameter_values(const vector<int>& indices,const vector<double>& p)
+void SuperModel::set_parameter_values(const vector<int>& indices,const vector<Double>& p)
 {
   assert(indices.size() == p.size());
-  vector<double>::const_iterator b = p.begin();
+  vector<Double>::const_iterator b = p.begin();
   set_parameter_values(indices,b);
 }
 

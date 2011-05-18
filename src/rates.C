@@ -38,7 +38,7 @@ namespace substitution {
 
   void Uniform::recalc(const vector<int>&)
   {
-    vector<double> p(2);
+    vector<Double> p(2);
     p[0] = 0;
     p[1] = 2;
     D->set_parameter_values(p);
@@ -56,9 +56,9 @@ namespace substitution {
 
   void Gamma::recalc(const vector<int>&)
   {
-    double s = minmax(get_parameter_value(0), 1.0e-5, 3.0);
+    double s = minmax(double(get_parameter_value(0)), 1.0e-5, 3.0);
 
-    vector<double> p(2);
+    vector<Double> p(2);
     p[0] = 1.0/(s*s);
     p[1] = 1.0/p[0];
 
@@ -91,7 +91,7 @@ namespace substitution {
     if (mu < 0 or mu > 1) std::abort();
     if (gamma < 0 or gamma > 1) std::abort();
     
-    vector<double> p(2);
+    vector<Double> p(2);
     p[0] = std::max(a, alpha_beta_min);
     p[1] = std::max(b, alpha_beta_min);
 
@@ -142,12 +142,12 @@ namespace substitution {
 
   void LogNormal::recalc(const vector<int>&)
   {
-    double s = minmax(get_parameter_value(0), 1.0e-5, 1.0e5);
+    double s = minmax(double(get_parameter_value(0)), 1.0e-5, 1.0e5);
 
     double Var = s*s;
     double lVar = log1p(Var);
 
-    vector<double> p(2);
+    vector<Double> p(2);
     double lm = p[0] = -0.5 * lVar;
     double ls = p[1] = sqrt(lVar);
 

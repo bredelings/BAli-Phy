@@ -27,7 +27,7 @@ using std::valarray;
 using std::vector;
 using std::string;
 
-valarray<double> convert(const vector<double>& v1)
+valarray<double> convert(const vector<Double>& v1)
 {
   valarray<double> v2(v1.size());
   for(int i=0;i<v1.size();i++)
@@ -35,9 +35,9 @@ valarray<double> convert(const vector<double>& v1)
   return v2;
 }
 
-vector<double> convert(const valarray<double>& v1)
+vector<Double> convert(const valarray<double>& v1)
 {
-  vector<double> v2(v1.size());
+  vector<Double> v2(v1.size());
   for(int i=0;i<v1.size();i++)
     v2[i] = v1[i];
   return v2;
@@ -51,51 +51,11 @@ double dirichlet_fiddle(valarray<double>& p2,double N)
   return dirichlet_pdf(p1,safe_count(p2*N))/dirichlet_pdf(p2,safe_count(p1*N));
 }
 
-double dirichlet_fiddle(vector<double>& p,double N)
+double dirichlet_fiddle(vector<Double>& p,double N)
 {
   valarray<double> x = convert(p);
   double ratio = dirichlet_fiddle(x,N);
   p = convert(x);
-  return ratio;
-}
-
-vector<double> read(const vector<double>& p, const vector<bool>& mask)
-{
-  vector<double> sub(n_elements(mask));
-
-  for(int i=0,j=0;i<p.size();i++)
-    if (mask[i])
-      sub[j++] = p[i];
-
-  return sub;
-}
-
-void write(const vector<double>& sub, vector<double>& p, const vector<bool>& mask)
-{
-  for(int i=0,j=0;i<p.size();i++)
-    if (mask[i])
-      p[i] = sub[j++];
-}
-
-
-double dirichlet_fiddle(vector<double>& p,double N, const vector<bool>& mask)
-{
-  assert(p.size() == mask.size());
-
-  vector<double> sub = read(p,mask);
-
-  double ratio = 1;
-
-  if (sub.size()) {
-    double s = sum(sub);
-
-    scale(sub, 1.0/s);
-    ratio = dirichlet_fiddle(sub,N);
-    scale(sub, s);
-
-    write(sub,p,mask);
-  }
-
   return ratio;
 }
 
@@ -106,7 +66,14 @@ double scale_gaussian(double& x, double sigma)
   return scale;
 }
 
-double scale_gaussian2(vector<double>& x, const vector<double>& p)
+double scale_gaussian(Double& x, double sigma)
+{
+  double scale = exp( gaussian(0,sigma) );
+  x *= scale;
+  return scale;
+}
+
+double scale_gaussian2(vector<Double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"scale_gaussian: expected one dimension, got "<<x.size()<<".";
@@ -117,14 +84,14 @@ double scale_gaussian2(vector<double>& x, const vector<double>& p)
 }
 
 
-double shift_gaussian(vector<double>& x, const vector<double>& p)
+double shift_gaussian(vector<Double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_gaussian: expected one dimension, got "<<x.size()<<".";
   if (p.size() != 1) 
     throw myexception()<<"shift_gaussian: expected one parameter, got "<<p.size()<<".";
 
-  double& f = x[0];
+  Double& f = x[0];
   double  sigma = p[0];
 
   f += gaussian(0,sigma);
@@ -132,7 +99,7 @@ double shift_gaussian(vector<double>& x, const vector<double>& p)
   return 1.0;
 }
 
-double shift_laplace(vector<double>& x, const vector<double>& p)
+double shift_laplace(vector<Double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_laplace: expected one dimension, got "<<x.size()<<".";
@@ -140,7 +107,7 @@ double shift_laplace(vector<double>& x, const vector<double>& p)
   if (p.size() != 1) 
     throw myexception()<<"shift_laplace: expected one parameter, got "<<p.size()<<".";
 
-  double& f = x[0];
+  Double& f = x[0];
   double  s = p[0];
 
   f += laplace(0,s);
@@ -148,14 +115,14 @@ double shift_laplace(vector<double>& x, const vector<double>& p)
   return 1.0;
 }
 
-double shift_cauchy(vector<double>& x, const vector<double>& p)
+double shift_cauchy(vector<Double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_cauchy: expected one dimension, got "<<x.size()<<".";
   if (p.size() != 1) 
     throw myexception()<<"shift_cauchy: expected one parameter, got "<<p.size()<<".";
 
-  double& f = x[0];
+  Double& f = x[0];
   double  s = p[0];
 
   f += cauchy(0,s);
@@ -163,14 +130,14 @@ double shift_cauchy(vector<double>& x, const vector<double>& p)
   return 1.0;
 }
 
-double shift_delta(vector<double>& x, const vector<double>& p)
+double shift_delta(vector<Double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_delta: expected one dimension, got "<<x.size()<<".";
   if (p.size() != 1) 
     throw myexception()<<"shift_delta: expected one parameter, got "<<p.size()<<".";
 
-  double& lambda_O = x[0];
+  Double& lambda_O = x[0];
   double  sigma = p[0];
 
   double pdel =  lambda_O-logdiff(0,lambda_O);
@@ -183,14 +150,14 @@ double shift_delta(vector<double>& x, const vector<double>& p)
   return 1;
 }
 
-double shift_epsilon(vector<double>& x, const vector<double>& p)
+double shift_epsilon(vector<Double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_epsilon: expected one dimension, got "<<x.size()<<".";
   if (p.size() != 1) 
     throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
 
-  double& lambda_E = x[0];
+  Double& lambda_E = x[0];
   double  sigma = p[0];
 
   double E_length = lambda_E - logdiff(0,lambda_E);
@@ -201,14 +168,14 @@ double shift_epsilon(vector<double>& x, const vector<double>& p)
 }
 
 
-double bit_flip(vector<double>& x, const vector<double>& p)
+double bit_flip(vector<Double>& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_epsilon: expected one dimension, got "<<x.size()<<".";
   //  if (p.size() != 1) 
   //    throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
 
-  double& B = x[0];
+  Double& B = x[0];
   B = 1.0 - B;
 
   if (B < 0.5) B = 0;
@@ -218,7 +185,7 @@ double bit_flip(vector<double>& x, const vector<double>& p)
 }
 
 
-double dirichlet_proposal(std::vector<double>& x,const std::vector<double>& p)
+double dirichlet_proposal(std::vector<Double>& x,const std::vector<double>& p)
 {
   if (p.size() != 1) 
     throw myexception()<<"dirichlet_proposal: expected one parameter, got "<<p.size()<<".";
@@ -231,7 +198,7 @@ double dirichlet_proposal(std::vector<double>& x,const std::vector<double>& p)
   double s = sum(x);
 
   scale(x, 1.0/s);
-  double ratio = dirichlet_fiddle(x,N*x.size());
+  double ratio = dirichlet_fiddle(x, N*x.size());
   scale(x, s);
 
   return ratio;
@@ -312,11 +279,11 @@ double sorted_proposal(std::valarray<double>& x,const std::vector<double>& p)
 
 */
 
-double less_than::operator()(std::vector<double>& x,const std::vector<double>& p) const
+double less_than::operator()(std::vector<Double>& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++) 
-    x[i] = reflect_less_than(x[i],max);
+    x[i] = reflect_less_than(double(x[i]),max);
   return ratio;
 }
 
@@ -325,11 +292,11 @@ less_than::less_than(double m, const Proposal_Fn& P)
    proposal(P)
 { }
 
-double more_than::operator()(std::vector<double>& x,const std::vector<double>& p) const
+double more_than::operator()(std::vector<Double>& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++) 
-    x[i] = reflect_more_than(x[i],min);
+    x[i] = reflect_more_than(double(x[i]),min);
   return ratio;
 }
 
@@ -338,11 +305,11 @@ more_than::more_than(double m, const Proposal_Fn& P)
    proposal(P)
 { }
 
-double Between::operator()(std::vector<double>& x,const std::vector<double>& p) const
+double Between::operator()(std::vector<Double>& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++)
-    x[i] = wrap(x[i],min,max);
+    x[i] = wrap(double(x[i]),min,max);
   return ratio;
 }
 
@@ -352,7 +319,7 @@ Between::Between(double m1, double m2, const Proposal_Fn& P)
 { }
 
 
-double log_scaled::operator()(std::vector<double>& x,const std::vector<double>& p) const
+double log_scaled::operator()(std::vector<Double>& x,const std::vector<double>& p) const
 {
   if (x.size() != 1) 
     throw myexception()<<"log_scaled: expected one dimension, got "<<x.size()<<".";
@@ -378,7 +345,7 @@ log_scaled::log_scaled(const Proposal_Fn& P)
 { }
 
 
-double LOD_scaled::operator()(std::vector<double>& x,const std::vector<double>& p) const
+double LOD_scaled::operator()(std::vector<Double>& x,const std::vector<double>& p) const
 {
   if (x.size() != 1) 
     throw myexception()<<"LOD_scaled: expected one dimension, got "<<x.size()<<".";
@@ -403,7 +370,7 @@ LOD_scaled::LOD_scaled(const Proposal_Fn& P)
 { }
 
 
-double sorted::operator()(std::vector<double>& x,const std::vector<double>& p) const
+double sorted::operator()(std::vector<Double>& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
 
@@ -418,7 +385,7 @@ sorted::sorted(const Proposal_Fn& P)
 
 double Proposal2::operator()(Probability_Model& P) const
 {
-  vector<double> parameters = P.get_parameter_values();
+  //  vector<Double> parameters = P.get_parameter_values();
 
   if (not indices.size())
     throw myexception()<<"Proposal2::operator() - No parameters to alter! (all parameters fixed?)";
@@ -434,7 +401,7 @@ double Proposal2::operator()(Probability_Model& P) const
     p[i] = loadvalue(P.keys, pnames[i]);
 
   // read, alter, and write parameter values
-  vector<double> x = P.get_parameter_values(indices);
+  vector<Double> x = P.get_parameter_values(indices);
   double ratio = (*proposal)(x,p);
   P.set_parameter_values(indices,x);
 

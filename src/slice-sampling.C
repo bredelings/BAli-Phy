@@ -248,7 +248,7 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
 
 double constant_sum_slice_function::operator()(double t)
 {
-  vector<double> x = P.get_parameter_values(indices);
+  vector<Double> x = P.get_parameter_values(indices);
 
   double total = sum(x);
 
@@ -271,7 +271,7 @@ double constant_sum_slice_function::operator()()
 {
   count++;
 
-  vector<double> x = P.get_parameter_values(indices);
+  vector<Double> x = P.get_parameter_values(indices);
 
   double total = sum(x);
 
@@ -295,7 +295,7 @@ constant_sum_slice_function::constant_sum_slice_function(Probability_Model& P_, 
    n(n_),
    P(P_)
 { 
-  vector<double> x = P.get_parameter_values(indices);
+  vector<Double> x = P.get_parameter_values(indices);
   double total = sum(x);
 
   set_lower_bound(0);

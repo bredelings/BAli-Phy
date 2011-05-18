@@ -45,8 +45,8 @@ namespace substitution {
     return string("pS") + convertToString(i);
   }
 
-  template <typename T>
-  valarray<T> get_varray(const vector<T>& v1,int start, int n) 
+  template <typename T,typename U>
+  valarray<T> get_varray(const vector<U>& v1,int start, int n) 
   {
     assert(start>=0);
     assert(n>0);
@@ -58,14 +58,14 @@ namespace substitution {
     return v2;
   }
 
-  template <typename T>
-  inline valarray<T> get_varray(const vector<T>& v1) 
+  template <typename T, typename U>
+  inline valarray<T> get_varray(const vector<U>& v1) 
   {
-    return get_varray(v1,0,v1.size());
+    return get_varray<T,U>(v1,0,v1.size());
   }
 
-  template <typename T>
-  void set_varray(vector<T>& v1,int start,const valarray<T>& v2) 
+  template <typename T, typename U>
+  void set_varray(vector<U>& v1,int start,const valarray<T>& v2) 
   {
     assert(start>=0);
     assert(v2.size() > 0);
@@ -77,32 +77,29 @@ namespace substitution {
   }
 
   template <typename T>
-  inline valarray<T> set_varray(const vector<T>& v1,const valarray<T>& v2) 
+  efloat_t dirichlet_pdf(const vector<T>& p1,int start, int n, const valarray<double>& q)
   {
-    return set_varray(v1,v2);
-  }
-
-
-  efloat_t dirichlet_pdf(const vector<double>& p1,int start, int n, const valarray<double>& q)
-  {
-    valarray<double> p2 = get_varray(p1,start,n);
+    valarray<double> p2 = get_varray<double>(p1,start,n);
 
     return ::dirichlet_pdf(p2,q);
   }
 
-  efloat_t dirichlet_pdf(const vector<double>& p1,const valarray<double>& q)
+  template <typename T>
+  efloat_t dirichlet_pdf(const vector<T>& p1,const valarray<double>& q)
   {
     return dirichlet_pdf(p1,0,p1.size(),q);
   }
 
-  efloat_t dirichlet_pdf(const vector<double>& p1,int start, int n, double N)
+  template <typename T>
+  efloat_t dirichlet_pdf(const vector<T>& p1,int start, int n, double N)
   {
-    valarray<double> p2 = get_varray(p1,start,n);
+    valarray<double> p2 = get_varray<double>(p1,start,n);
 
     return ::dirichlet_pdf(p2,N);
   }
 
-  efloat_t dirichlet_pdf(const vector<double>& p1,double N)
+  template <typename T>
+  efloat_t dirichlet_pdf(const vector<T>& p1,double N)
   {
     return dirichlet_pdf(p1,0,p1.size(),N);
   }
@@ -211,7 +208,7 @@ namespace substitution {
   void SimpleFrequencyModel::recalc(const vector<int>&)
   {
     // compute frequencies
-    pi = get_varray(get_parameter_values(),1,n_letters());
+    pi = get_varray<double>(get_parameter_values(),1,n_letters());
     pi /= pi.sum();
     
     // compute transition rates
@@ -316,9 +313,9 @@ namespace substitution {
     //------------------ compute triplet frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
 
-    vector<double> sub_parameters = SubModels(0).get_parameter_values();
+    vector<Double> sub_parameters = SubModels(0).get_parameter_values();
 
-    vector<double> triplet_parameters(n_letters()+1);
+    vector<Double> triplet_parameters(n_letters()+1);
     triplet_parameters[0] = sub_parameters[0];
     set_varray(triplet_parameters,1,pi);
 
@@ -346,7 +343,7 @@ namespace substitution {
 
   void TripletsFrequencyModel::recalc(const vector<int>&)
   {
-    valarray<double> nu = get_varray(get_parameter_values(), 1, n_letters());
+    valarray<double> nu = get_varray<double>(get_parameter_values(), 1, n_letters());
 
     //------------- compute frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
@@ -430,7 +427,7 @@ namespace substitution {
       pi[i] = f_aa[aa]/n_aa[aa];
     }
 
-    vector<double> codon_parameters(n_letters()+1);
+    vector<Double> codon_parameters(n_letters()+1);
     codon_parameters[0] = SubModels(0).get_parameter_value(0);
     set_varray(codon_parameters,1,pi);
 
@@ -466,7 +463,7 @@ namespace substitution {
     double c = get_parameter_value(0);
 
     //------------- compute frequencies ------------------//
-    valarray<double> aa_pi = get_varray(get_parameter_values(), 2, aa_size());
+    valarray<double> aa_pi = get_varray<double>(get_parameter_values(), 2, aa_size());
 
     // get codon frequencies of sub-alphabet
     valarray<double> sub_pi = SubModels(0).frequencies();
@@ -540,7 +537,7 @@ namespace substitution {
   void CodonsFrequencyModel2::recalc(const vector<int>&)
   {
     //------------- compute frequencies ------------------//
-    valarray<double> aa_pref_ = get_varray(get_parameter_values(), 1, aa_size());
+    valarray<double> aa_pref_ = get_varray<double>(get_parameter_values(), 1, aa_size());
 
     valarray<double> aa_pref(n_letters());
     for(int i=0;i<n_letters();i++)
@@ -761,7 +758,7 @@ namespace substitution {
     const int N = n_states();
     assert(N == n_letters());
 
-    pi = get_varray(get_parameter_values(),0,N);
+    pi = get_varray<double>(get_parameter_values(),0,N);
     pi /= pi.sum();
 
     for(int i=0;i<N;i++)
@@ -1802,7 +1799,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   void MultiParameterModel::recalc_submodel_instances()
   {
     // recalc sub-models
-    vector<double> params = SubModel().get_parameter_values();
+    vector<Double> params = SubModel().get_parameter_values();
     for(int b=0;b<fraction.size();b++) {
       sub_parameter_models[b] = &SubModel();
 
@@ -2494,13 +2491,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     pi = 0;
     int sm_total = n_submodels();
     for(int sm=0;sm<sm_total;sm++)
-      pi += get_parameter_value(sm)*SubModels(sm).frequencies();
+      pi += double(get_parameter_value(sm))*SubModels(sm).frequencies();
   }
 
   efloat_t MixtureModel::super_prior() const 
   {
-    valarray<double> p = get_varray(get_parameter_values(),0,n_submodels());
-    valarray<double> q = get_varray(get_parameter_values(),n_submodels(),n_submodels());
+    valarray<double> p = get_varray<double>(get_parameter_values(),0,n_submodels());
+    valarray<double> q = get_varray<double>(get_parameter_values(),n_submodels(),n_submodels());
 
     return dirichlet_pdf(get_parameter_values(), 0, n_submodels(), 10.0*q);
   }

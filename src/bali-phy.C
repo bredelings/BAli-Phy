@@ -353,7 +353,7 @@ void set_parameters(Parameters& P, const variables_map& args)
   }
 
   // set parameters
-  vector<double> parameters = P.get_parameter_values();
+  vector<Double> parameters = P.get_parameter_values();
   for(int i=0;i<doset.size();i++) {
     //parse
     vector<string> parse = split(doset[i],'=');

@@ -22,14 +22,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 
-double dirichlet_fiddle(std::vector<double>& p,double N);
-
-double dirichlet_fiddle(std::vector<double>& p,double N,const std::vector<bool>& mask);
-
-double dirichlet_fiddle_old(std::vector<double>& p,double sigma);
-
-double dirichlet_fiddle_old(std::vector<double>& p,double sigma,const std::vector<bool>& mask);
-
 double scale_gaussian(double& x,double sigma);
 
 #include "parameters.H"
@@ -54,7 +46,7 @@ public:
 
 // This type of proposal can't check if arguments are fixed, and therefore must assume that they are
 // all variable.  Therefore, it can't have any fixed arguments.
-typedef double (*proposal_fn)(std::vector<double>& x,const std::vector<double>& p);
+typedef double (*proposal_fn)(std::vector<Double>& x,const std::vector<double>& p);
 
 // This wrapper class therefore cannot have any fixed arguments.
 class Proposal_Fn
@@ -63,7 +55,7 @@ class Proposal_Fn
 public:
   virtual Proposal_Fn* clone() const {return new Proposal_Fn(*this);}
 
-  virtual double operator()(std::vector<double>& x,const std::vector<double>& p) const 
+  virtual double operator()(std::vector<Double>& x,const std::vector<double>& p) const 
   {
     return proposal(x,p);
   }
@@ -80,7 +72,7 @@ class less_than: public Proposal_Fn
   owned_ptr<Proposal_Fn> proposal;
 public:
   less_than* clone() const {return new less_than(*this);}
-  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<Double>& x,const std::vector<double>& p) const;
   less_than(double m,const Proposal_Fn& P);
 };
 
@@ -90,7 +82,7 @@ class more_than: public Proposal_Fn
   owned_ptr<Proposal_Fn> proposal;
 public:
   more_than* clone() const {return new more_than(*this);}
-  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<Double>& x,const std::vector<double>& p) const;
   more_than(double m,const Proposal_Fn& P);
 };
 
@@ -101,7 +93,7 @@ class Between: public Proposal_Fn
   owned_ptr<Proposal_Fn> proposal;
 public:
   Between* clone() const {return new Between(*this);}
-  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<Double>& x,const std::vector<double>& p) const;
   Between(double m1,double m2,const Proposal_Fn& P);
 };
 
@@ -110,7 +102,7 @@ class log_scaled: public Proposal_Fn
   owned_ptr<Proposal_Fn> proposal;
 public:
   log_scaled* clone() const {return new log_scaled(*this);}
-  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<Double>& x,const std::vector<double>& p) const;
   log_scaled(const Proposal_Fn& P);
 };
 
@@ -119,7 +111,7 @@ class LOD_scaled: public Proposal_Fn
   owned_ptr<Proposal_Fn> proposal;
 public:
   LOD_scaled* clone() const {return new LOD_scaled(*this);}
-  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<Double>& x,const std::vector<double>& p) const;
   LOD_scaled(const Proposal_Fn& P);
 };
 
@@ -128,7 +120,7 @@ class sorted: public Proposal_Fn
   owned_ptr<Proposal_Fn> proposal;
 public:
   sorted* clone() const {return new sorted(*this);}
-  double operator()(std::vector<double>& x,const std::vector<double>& p) const;
+  double operator()(std::vector<Double>& x,const std::vector<double>& p) const;
   sorted(const Proposal_Fn& P);
 };
 
@@ -149,21 +141,21 @@ public:
 };
 
 
-double dirichlet_proposal(std::vector<double>& x,const std::vector<double>& p);
+double dirichlet_proposal(std::vector<Double>& x,const std::vector<double>& p);
 
-double scale_gaussian2(std::vector<double>& x,const std::vector<double>& p);
+double scale_gaussian2(std::vector<Double>& x,const std::vector<double>& p);
 
-double shift_gaussian(std::vector<double>& x,const std::vector<double>& p);
+double shift_gaussian(std::vector<Double>& x,const std::vector<double>& p);
 
-double shift_laplace(std::vector<double>& x,const std::vector<double>& p);
+double shift_laplace(std::vector<Double>& x,const std::vector<double>& p);
 
-double shift_cauchy(std::vector<double>& x,const std::vector<double>& p);
+double shift_cauchy(std::vector<Double>& x,const std::vector<double>& p);
 
-double shift_delta(std::vector<double>& x, const std::vector<double>& p);
+double shift_delta(std::vector<Double>& x, const std::vector<double>& p);
 
-double shift_epsilon(std::vector<double>& x, const std::vector<double>& p);
+double shift_epsilon(std::vector<Double>& x, const std::vector<double>& p);
 
-double bit_flip(std::vector<double>& x, const std::vector<double>& p);
+double bit_flip(std::vector<Double>& x, const std::vector<double>& p);
 
 
 #endif

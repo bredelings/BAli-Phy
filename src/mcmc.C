@@ -578,7 +578,7 @@ namespace MCMC {
 
     //---------- Record Statistics - -------------//
     Result result(2);
-    vector<double> x = P->get_parameter_values(indices);
+    vector<Double> x = P->get_parameter_values(indices);
     double total = sum(x);
     double factor = (total - v2)/(total-v1);
     result.totals[0] = std::abs(log(v2/v1)) + (indices.size()-1)*(std::abs(log(factor)));
@@ -1085,7 +1085,7 @@ vector< std::pair<int, Bounds<double> > > change_bound(owned_ptr<Probability_Mod
     Bounds<double> orig_bounds = P->get_bounds(index);
     P->set_bounds(index, orig_bounds and new_bounds);
     Bounds<double> total_bounds = P->get_bounds(index);
-    P->set_parameter_value(index, wrap(P->get_parameter_value(index), total_bounds));
+    P->set_parameter_value(index, wrap(double(P->get_parameter_value(index)), total_bounds));
 #ifndef NDEBUG
     clog<<"bounds: "<<name<<" = "<<P->get_parameter_value(index)<<"  in  "<<P->get_bounds(index)<<endl;
 #endif
