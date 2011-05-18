@@ -98,7 +98,7 @@ struct Parameter
 ///
 /// Next: make models out-of-date unless we call model.update();
 ///
-class Model: public Cloneable // public Object!
+class Model: public Object
 {
 protected:
   /// Parameter values
