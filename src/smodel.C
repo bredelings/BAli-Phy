@@ -46,22 +46,12 @@ namespace substitution {
   }
 
   template <typename T,typename U>
-  valarray<T> get_varray(const vector<U>& v1,int start, int n) 
+  valarray<T> get_varray(const vector<U>& v1) 
   {
-    assert(start>=0);
-    assert(n>0);
-    assert(start + n <= v1.size());
-
-    valarray<T> v2(n);
+    valarray<T> v2(v1.size());
     for(int i=0;i<v2.size();i++)
-      v2[i] = v1[start+i];
+      v2[i] = v1[i];
     return v2;
-  }
-
-  template <typename T, typename U>
-  inline valarray<T> get_varray(const vector<U>& v1) 
-  {
-    return get_varray<T,U>(v1,0,v1.size());
   }
 
   template <typename T, typename U>
@@ -77,31 +67,19 @@ namespace substitution {
   }
 
   template <typename T>
-  efloat_t dirichlet_pdf(const vector<T>& p1,int start, int n, const valarray<double>& q)
+  efloat_t dirichlet_pdf(const vector<T>& p1,const valarray<double>& q)
   {
-    valarray<double> p2 = get_varray<double>(p1,start,n);
+    valarray<double> p2 = get_varray<double>(p1);
 
     return ::dirichlet_pdf(p2,q);
   }
 
   template <typename T>
-  efloat_t dirichlet_pdf(const vector<T>& p1,const valarray<double>& q)
-  {
-    return dirichlet_pdf(p1,0,p1.size(),q);
-  }
-
-  template <typename T>
-  efloat_t dirichlet_pdf(const vector<T>& p1,int start, int n, double N)
-  {
-    valarray<double> p2 = get_varray<double>(p1,start,n);
-
-    return ::dirichlet_pdf(p2,N);
-  }
-
-  template <typename T>
   efloat_t dirichlet_pdf(const vector<T>& p1,double N)
   {
-    return dirichlet_pdf(p1,0,p1.size(),N);
+    valarray<double> p2 = get_varray<double>(p1);
+
+    return ::dirichlet_pdf(p2,N);
   }
 
 
@@ -208,7 +186,7 @@ namespace substitution {
   void SimpleFrequencyModel::recalc(const vector<int>&)
   {
     // compute frequencies
-    pi = get_varray<double>(get_parameter_values(),1,n_letters());
+    pi = get_varray<double>( get_parameter_values( range<int>(1,n_letters()) ) );
     pi /= pi.sum();
     
     // compute transition rates
@@ -231,7 +209,7 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    Pr *= dirichlet_pdf(get_parameter_values(), 1, n_letters(), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values( range<int>(1, n_letters() ) ), 1.0);
 
     return Pr;
   }
@@ -343,7 +321,7 @@ namespace substitution {
 
   void TripletsFrequencyModel::recalc(const vector<int>&)
   {
-    valarray<double> nu = get_varray<double>(get_parameter_values(), 1, n_letters());
+    valarray<double> nu = get_varray<double>( get_parameter_values( range<int>(1,n_letters()) ) );
 
     //------------- compute frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
@@ -381,7 +359,7 @@ namespace substitution {
 
   efloat_t TripletsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(get_parameter_values(),1,n_letters(),4.0);
+    return dirichlet_pdf(get_parameter_values( range<int>(1,n_letters() ) ), 4.0);
   }
 
   string TripletsFrequencyModel::name() const 
@@ -463,7 +441,7 @@ namespace substitution {
     double c = get_parameter_value(0);
 
     //------------- compute frequencies ------------------//
-    valarray<double> aa_pi = get_varray<double>(get_parameter_values(), 2, aa_size());
+    valarray<double> aa_pi = get_varray<double>(get_parameter_values( range<int>(2,aa_size()) ) );
 
     // get codon frequencies of sub-alphabet
     valarray<double> sub_pi = SubModels(0).frequencies();
@@ -508,7 +486,7 @@ namespace substitution {
 
   efloat_t CodonsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(get_parameter_values(), 2, aa_size(), 2.0);
+    return dirichlet_pdf(get_parameter_values( range<int>(2, aa_size() ) ), 2.0);
   }
 
   string CodonsFrequencyModel::name() const 
@@ -537,7 +515,7 @@ namespace substitution {
   void CodonsFrequencyModel2::recalc(const vector<int>&)
   {
     //------------- compute frequencies ------------------//
-    valarray<double> aa_pref_ = get_varray<double>(get_parameter_values(), 1, aa_size());
+    valarray<double> aa_pref_ = get_varray<double>(get_parameter_values( range<int>(1,aa_size()) ) );
 
     valarray<double> aa_pref(n_letters());
     for(int i=0;i<n_letters();i++)
@@ -573,7 +551,7 @@ namespace substitution {
 
   efloat_t CodonsFrequencyModel2::super_prior() const 
   {
-    return dirichlet_pdf(get_parameter_values(), 1, aa_size(), 2.0);
+    return dirichlet_pdf(get_parameter_values( range<int>(1, aa_size() ) ), 2.0);
   }
 
   string CodonsFrequencyModel2::name() const 
@@ -758,7 +736,7 @@ namespace substitution {
     const int N = n_states();
     assert(N == n_letters());
 
-    pi = get_varray<double>(get_parameter_values(),0,N);
+    pi = get_varray<double>(get_parameter_values( range<int>(0,N) ) );
     pi /= pi.sum();
 
     for(int i=0;i<N;i++)
@@ -812,7 +790,7 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    Pr *= dirichlet_pdf(get_parameter_values(), 0, n_letters(), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values( range<int>(0, n_letters()) ), 1.0);
 
     return Pr;
   }
@@ -1838,11 +1816,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // Prior on the fractions
     double n_f = 1.0 + p_values.size()/2.0;
-    Pr *= dirichlet_pdf(get_parameter_values(),0              ,p_values.size(),n_f);
+    Pr *= dirichlet_pdf(get_parameter_values( range<int>(0 ,p_values.size() ) ), n_f);
 
     // Prior on the rates
     double n_r = 2.0; // + p_values.size()/2.0;
-    Pr *= dirichlet_pdf(get_parameter_values(),p_values.size(),p_values.size(),n_r);
+    Pr *= dirichlet_pdf(get_parameter_values( range<int>(p_values.size(),p_values.size() ) ), n_r);
 
     return Pr;
   }
@@ -2156,7 +2134,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     n[0] = 1;
     n[1] = 98;
     n[2] = 1;
-    efloat_t P = dirichlet_pdf(get_parameter_values(), 0, 3, n);
+    efloat_t P = dirichlet_pdf(get_parameter_values( range<int>(0, 3) ), n);
 
     // prior on omega
     double omega = get_parameter_value(3);
@@ -2213,7 +2191,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     n[0] = 1;
     n[1] = 98;
     n[2] = 1;
-    efloat_t Pr = dirichlet_pdf(get_parameter_values(), 0, 3, n);
+    efloat_t Pr = dirichlet_pdf(get_parameter_values( range<int>(0, 3) ), n);
 
     // prior on omega1: log(omega1) = -Exponential(0.05), so omega1 \in [0,1]
     
@@ -2264,7 +2242,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     q[1] = 10; // Neutral
     q[2] = 1;  // Positive selection
     
-    efloat_t Pr = dirichlet_pdf(get_parameter_values(), 0, 3, q);
+    efloat_t Pr = dirichlet_pdf(get_parameter_values( range<int>(0, 3) ), q);
 
     // prior on omega3: log(omega3) = Exponential(0.05), so omega3 \in [1,\infty]
     if (not is_fixed(4))
@@ -2432,7 +2410,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     if (n <= 1) return P;
 
     // prior on frequencies
-    P *= dirichlet_pdf(get_parameter_values(), 0, n, 4.0);
+    P *= dirichlet_pdf(get_parameter_values( range<int>(0, n) ), 4.0);
 
     // prior on omegas
     double f = 0.05/n;
@@ -2496,10 +2474,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   efloat_t MixtureModel::super_prior() const 
   {
-    valarray<double> p = get_varray<double>(get_parameter_values(),0,n_submodels());
-    valarray<double> q = get_varray<double>(get_parameter_values(),n_submodels(),n_submodels());
+    valarray<double> p = get_varray<double>(get_parameter_values( range<int>(0,n_submodels()) ) );
+    valarray<double> q = get_varray<double>(get_parameter_values( range<int>(n_submodels(), n_submodels()) ) );
 
-    return dirichlet_pdf(get_parameter_values(), 0, n_submodels(), 10.0*q);
+    return dirichlet_pdf(get_parameter_values( range<int>(0, n_submodels()) ), 10.0*q);
   }
 
   const MultiModel::Base_Model_t& MixtureModel::base_model(int m) const 
