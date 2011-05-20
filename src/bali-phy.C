@@ -298,6 +298,23 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 //FIXME - how to record that the user said '--fix A' ?
 
+int parameter_with_extension(const Model& M, const string& name)
+{
+  vector<int> indices = parameters_with_extension(M, name);
+  if (not indices.size())
+    return -1;
+
+  if (indices.size() == 1)
+    return indices.back();
+
+  myexception e;
+  e<<"Multiple parameter names fit the pattern '"<<name<<"':\n";
+  for(int i=0;i<indices.size();i++)
+    e<<"   * "<<M.parameter_name(indices[i])<<"\n";
+
+  throw e;
+}
+
 /// Parse command line arguments of the form --fix X=x or --unfix X=x or --set X=x and modify P
 void set_parameters(Parameters& P, const variables_map& args) 
 {
@@ -337,7 +354,7 @@ void set_parameters(Parameters& P, const variables_map& args)
   // fix parameters
   for(int i=0;i<fix.size();i++) {
     int p=-1;
-    if (p=find_parameter(P,fix[i]),p!=-1)
+    if (p=parameter_with_extension(P,fix[i]),p!=-1)
       P.set_fixed(p,true);
     else
       throw myexception()<<"Can't find parameter '"<<fix[i]<<"' to fix.";
@@ -346,7 +363,7 @@ void set_parameters(Parameters& P, const variables_map& args)
   // unfix parameters
   for(int i=0;i<unfix.size();i++) {
     int p=-1;
-    if (p=find_parameter(P,unfix[i]),p!=-1)
+    if (p=parameter_with_extension(P,unfix[i]),p!=-1)
       P.set_fixed(p,false);
     else
       throw myexception()<<"Can't find parameter '"<<unfix[i]<<"' to unfix.";
@@ -364,7 +381,7 @@ void set_parameters(Parameters& P, const variables_map& args)
     double value = convertTo<double>(parse[1]);
 
     int p=-1;
-    if (p=find_parameter(P,name),p!=-1)
+    if (p=parameter_with_extension(P,name),p!=-1)
       parameters[p] = value;
     else
       P.keys[name] = value;
