@@ -66,6 +66,8 @@ struct Parameter
 //    o make supermodels into an Op plus models, as arguments?
 //    o allow models to have computed objects as parts.
 //    o allow sharing between models.
+//    o pull priors out of models ->
+//      + in fact, priors are objects that RETURN models, a "density" model, and a "simulate" model.
 // 4. Make model evaluation lazy.
 // - before: remove read().
 // - before: remove set_rate()
