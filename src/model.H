@@ -58,6 +58,22 @@ struct Parameter
 };
 
 
+// TODO
+// 1. Make models take generic Object's as inputs.
+// 2. Make models into functions.
+// 3. ??
+//    o make all stored objects into models?
+//    o make supermodels into an Op plus models, as arguments?
+//    o allow models to have computed objects as parts.
+//    o allow sharing between models.
+// 4. Make model evaluation lazy.
+// - before: remove read().
+// - before: remove set_rate()
+// - before: remove (set_)frequencies( )
+// - during: make recalc() a constant function.
+// - during: write parameters to submodels {now, simply}.  Recalc later.
+
+
 // Rewrite:
 // - A supermodel is actually a function on a collection of sub-expressions.
 // - Currently models carry their own parameters, but in the future the expressions should
@@ -188,6 +204,9 @@ public:
   std::string state() const;
 
   virtual void check() const {}
+
+  // Evaluate the model and return the result
+  boost::shared_ptr<const Object> evaluate() const;
 
   /// Construct an empty model
   Model() {}

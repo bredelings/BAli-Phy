@@ -131,6 +131,11 @@ string Model::state() const
   return join<Double>(get_parameter_values(),'\t');
 }
 
+boost::shared_ptr<const Object> Model::evaluate() const
+{
+  return boost::shared_ptr<const Object>(clone());
+}
+
 int SuperModel::add_parameter(const Parameter& P)
 {
   int index = Model::add_parameter(P);
