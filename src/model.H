@@ -201,10 +201,6 @@ public:
   /// The model's name
   virtual std::string name() const =0;
 
-  std::string header() const;
-
-  std::string state() const;
-
   virtual void check() const {}
 
   // Evaluate the model and return the result

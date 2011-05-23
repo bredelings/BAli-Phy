@@ -117,20 +117,6 @@ void Model::set_parameter_values_(const vector<int>& indices,vector<polymorphic_
   recalc(indices);
 }
 
-string Model::header() const
-{
-  vector<string> names;
-  const int n = n_parameters();
-  for(int i=0;i<n;i++)
-    names.push_back(parameter_name(i));
-  return join(names,'\t');
-}
-
-string Model::state() const
-{
-  return join<Double>(get_parameter_values(),'\t');
-}
-
 boost::shared_ptr<const Object> Model::evaluate() const
 {
   return boost::shared_ptr<const Object>(clone());
