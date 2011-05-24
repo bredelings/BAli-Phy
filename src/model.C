@@ -370,16 +370,6 @@ efloat_t SuperModel::prior() const {
   return P;
 }
 
-void SuperModel::set_parameter_values_(const vector<int>& indices,vector<polymorphic_cow_ptr<Object> >::const_iterator& p)
-{
-  assert(indices.size() <= n_parameters());
-
-  for(int i=0;i<indices.size();i++)
-    write_value(indices[i],*(p+i));
-
-  update();
-}
-
 void SuperModel::check() const
 {
   for(int m=0;m<n_submodels(); m++)

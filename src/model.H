@@ -240,7 +240,7 @@ public:
   /// Set ALL model parameter values
           void set_parameter_values(const std::vector<polymorphic_cow_ptr<Object> >& p);
   /// Set SOME of the model parameter values
-  virtual void set_parameter_values_(const std::vector<int>& indices,std::vector<polymorphic_cow_ptr<Object> >::const_iterator& p);
+          void set_parameter_values_(const std::vector<int>& indices,std::vector<polymorphic_cow_ptr<Object> >::const_iterator& p);
 
   /// Get A model parameter
   const Parameter& get_parameter(int i) const {return parameters_[i];}
@@ -343,8 +343,6 @@ public:
   SuperModel* clone() const =0;
   
   efloat_t prior() const;
-
-  void set_parameter_values_(const std::vector<int>& indices,std::vector<polymorphic_cow_ptr<Object> >::const_iterator& p);
 
   /// Access a child Model as type T
   template<typename T>
