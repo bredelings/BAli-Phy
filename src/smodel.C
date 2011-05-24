@@ -880,15 +880,21 @@ namespace substitution {
 
   //---------------------- INV_Model --------------------------//
 
+  const alphabet& INV_Model::Alphabet() const
+  {
+    return get_parameter_value_as<alphabet>(1);
+  }
+
   string INV_Model::name() const 
   {
     return "INV";
   }
 
   INV_Model::INV_Model(const alphabet& a)
-    :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+    :AlphabetExchangeModel(a)
   {
     add_parameter(Parameter("INV::f", Double(1), between(0, 1)));
+    add_parameter(Parameter("alphabet", a));
 
     // Calculate S matrix
     for(int i=0;i<S.size1();i++)

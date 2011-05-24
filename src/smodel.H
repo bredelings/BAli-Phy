@@ -293,10 +293,12 @@ namespace substitution {
   };
 
   
-  class INV_Model: public AlphabetExchangeModel,public ModelWithAlphabet<alphabet> 
+  class INV_Model: public AlphabetExchangeModel
   {
   public:
     INV_Model* clone() const {return new INV_Model(*this);}
+
+    const alphabet& Alphabet() const;
 
     string name() const;
       
