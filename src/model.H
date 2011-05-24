@@ -336,8 +336,6 @@ protected:
   void write_value(int i,Double p);
   /// Store ONE parameter value down into submodels
   void write_value(int i,polymorphic_cow_ptr<Object>  p);
-  /// Store SOME parameters down into submodels
-  void write_values(const std::vector<int>&,std::vector<polymorphic_cow_ptr<Object> >::const_iterator&);
 
 public:
   /// Make a copy of ourselves

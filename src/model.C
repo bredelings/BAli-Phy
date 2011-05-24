@@ -340,14 +340,6 @@ void SuperModel::write_value(int index, polymorphic_cow_ptr<Object> p)
   }
 }
 
-// can I write the supermodel so that it actually SHARES the values of the sub-models?
-/// \todo This only writes the VALUES I think.
-void SuperModel::write_values(const vector<int>& indices,vector<polymorphic_cow_ptr<Object> >::const_iterator& p)
-{
-  for(int i=0;i<indices.size();i++)
-    write_value(indices[i],*(p+i));
-}
-
 void SuperModel::write() 
 {
   for(int i=0;i<n_parameters();i++)
@@ -388,7 +380,8 @@ void SuperModel::set_parameter_values_(const vector<int>& indices,vector<polymor
 {
   assert(indices.size() <= n_parameters());
 
-  write_values(indices,p);
+  for(int i=0;i<indices.size();i++)
+    write_value(indices[i],*(p+i));
 
   update();
 }
