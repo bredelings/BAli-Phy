@@ -383,9 +383,9 @@ namespace MCMC {
     for(int i=0;i<P->n_parameters();i++)
     {
       Bounds<double> range = P->get_bounds(i);
-      if (not range.in_range(P->get_parameter_value(i)))
-	throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value(i)<<" is NOT in range "<<range;
-      if (not range.in_range(P2->get_parameter_value(i)))
+      if (not range.in_range(P->get_parameter_value_as<Double>(i)))
+	throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value_as<Double>(i)<<" is NOT in range "<<range;
+      if (not range.in_range(P2->get_parameter_value_as<Double>(i)))
 	in_range = false;
     }
 
@@ -395,8 +395,8 @@ namespace MCMC {
       if (n == 2) {
 	if (n_indices == 1) {
 	  int i = p2->get_indices()[0];
-	  double v1 = P->get_parameter_value(i);
-	  double v2 = P2->get_parameter_value(i);
+	  double v1 = P->get_parameter_value_as<Double>(i);
+	  double v2 = P2->get_parameter_value_as<Double>(i);
 	  //      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
 	  result.totals[1] = std::abs(v2-v1);
 	}
@@ -406,8 +406,8 @@ namespace MCMC {
 	  for(int i=0;i<n_indices;i++) 
 	  {
 	    int j = p2->get_indices()[i];
-	    double v1 = P->get_parameter_value(j);
-	    double v2 = P2->get_parameter_value(j);
+	    double v1 = P->get_parameter_value_as<Double>(j);
+	    double v2 = P2->get_parameter_value_as<Double>(j);
 	    total += std::abs(log(v1/v2));
 	  }
 	  result.totals[1] = total;
@@ -528,7 +528,7 @@ namespace MCMC {
   {
     if (P->is_fixed(index)) return;
 
-    double v1 = P->get_parameter_value(index);
+    double v1 = P->get_parameter_value_as<Double>(index);
 
     parameter_slice_function logp(*P,index,transform,inverse);
 
@@ -571,14 +571,14 @@ namespace MCMC {
     for(int i=0;i<indices.size();i++)
       if (P->is_fixed(indices[i])) return;
 
-    double v1 = P->get_parameter_value(indices[n]);
+    double v1 = P->get_parameter_value_as<Double>(indices[n]);
     constant_sum_slice_function slice_levels_function(*P,indices,n);
 
     double v2 = sample(*P,slice_levels_function,v1);
 
     //---------- Record Statistics - -------------//
     Result result(2);
-    vector<Double> x = P->get_parameter_values(indices);
+    vector<Double> x = P->get_parameter_values_as<Double>(indices);
     double total = sum(x);
     double factor = (total - v2)/(total-v1);
     result.totals[0] = std::abs(log(v2/v1)) + (indices.size()-1)*(std::abs(log(factor)));
@@ -1085,9 +1085,9 @@ vector< std::pair<int, Bounds<double> > > change_bound(owned_ptr<Probability_Mod
     Bounds<double> orig_bounds = P->get_bounds(index);
     P->set_bounds(index, orig_bounds and new_bounds);
     Bounds<double> total_bounds = P->get_bounds(index);
-    P->set_parameter_value(index, wrap(double(P->get_parameter_value(index)), total_bounds));
+    P->set_parameter_value(index, wrap(double(P->get_parameter_value_as<Double>(index)), total_bounds));
 #ifndef NDEBUG
-    clog<<"bounds: "<<name<<" = "<<P->get_parameter_value(index)<<"  in  "<<P->get_bounds(index)<<endl;
+    clog<<"bounds: "<<name<<" = "<<P->get_parameter_value_as<Double>(index)<<"  in  "<<P->get_bounds(index)<<endl;
 #endif
     changed_bounds.push_back( std::pair<int,Bounds<double> >(index,orig_bounds) );
   }

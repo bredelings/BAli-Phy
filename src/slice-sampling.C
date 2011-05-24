@@ -53,7 +53,7 @@ double parameter_slice_function::operator()()
 
 double parameter_slice_function::current_value() const
 {
-  return P.get_parameter_value(n);
+  return P.get_parameter_value_as<Double>(n);
 }
 
 parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_)
@@ -153,7 +153,7 @@ double sum_of_means(const Parameters& P)
 {
   double sum = 0;
   for(int i=0;i<P.n_branch_means();i++) 
-    sum += P.get_parameter_value(P.branch_mean_index(i));
+    sum += P.get_parameter_value_as<Double>(P.branch_mean_index(i));
   return sum;
 }
 
@@ -169,7 +169,7 @@ double set_sum_of_means_tricky(Parameters& P, double t)
   double sum = sum_of_means(P);
   double scale = t/sum;
   for(int i=0;i<P.n_branch_means();i++) 
-    P.branch_mean_tricky(i,P.get_parameter_value(P.branch_mean_index(i))*scale);
+    P.branch_mean_tricky(i,P.get_parameter_value_as<Double>(P.branch_mean_index(i))*scale);
 
   return scale;
 }
@@ -230,13 +230,13 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
     if (b2.has_lower_bound and b2.lower_bound > 0)
     {
       b2.has_lower_bound = true;
-      b2.lower_bound = log(b2.lower_bound) - log(P.get_parameter_value(P.branch_mean_index(i)));
+      b2.lower_bound = log(b2.lower_bound) - log(P.get_parameter_value_as<Double>(P.branch_mean_index(i)));
     }
     else
       b2.has_lower_bound = false;
 
     if (b2.has_upper_bound)
-      b2.upper_bound = log(b2.upper_bound) - log(P.get_parameter_value(P.branch_mean_index(i)));
+      b2.upper_bound = log(b2.upper_bound) - log(P.get_parameter_value_as<Double>(P.branch_mean_index(i)));
 
     b = b and b2;
   }
@@ -248,7 +248,7 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
 
 double constant_sum_slice_function::operator()(double t)
 {
-  vector<Double> x = P.get_parameter_values(indices);
+  vector<Double> x = P.get_parameter_values_as<Double>(indices);
 
   double total = sum(x);
 
@@ -271,7 +271,7 @@ double constant_sum_slice_function::operator()()
 {
   count++;
 
-  vector<Double> x = P.get_parameter_values(indices);
+  vector<Double> x = P.get_parameter_values_as<Double>(indices);
 
   double total = sum(x);
 
@@ -285,7 +285,7 @@ double constant_sum_slice_function::operator()()
 
 double constant_sum_slice_function::current_value() const
 {
-  return P.get_parameter_value(indices[n]);
+  return P.get_parameter_value_as<Double>(indices[n]);
 }
 
 
@@ -295,7 +295,7 @@ constant_sum_slice_function::constant_sum_slice_function(Probability_Model& P_, 
    n(n_),
    P(P_)
 { 
-  vector<Double> x = P.get_parameter_values(indices);
+  vector<Double> x = P.get_parameter_values_as<Double>(indices);
   double total = sum(x);
 
   set_lower_bound(0);
