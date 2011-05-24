@@ -295,7 +295,6 @@ namespace substitution {
   
   class INV_Model: public AlphabetExchangeModel,public ModelWithAlphabet<alphabet> 
   {
-    Matrix P;
   public:
     INV_Model* clone() const {return new INV_Model(*this);}
 
