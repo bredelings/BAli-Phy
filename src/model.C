@@ -165,7 +165,7 @@ void Model::set_parameter_values(const vector<polymorphic_cow_ptr<Object> >& p)
 }
 
 Model::Model()
-  :valid(true)
+  :valid(false)
 { }
 
 boost::shared_ptr<const Object> Model::evaluate() const
