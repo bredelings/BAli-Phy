@@ -78,6 +78,7 @@ struct Parameter
 //    o before: remove (set_)frequencies( )
 //    o during: make recalc() a constant function.
 //    o during: write parameters to submodels {now, simply}.  Recalc later.
+//    o why do set_rate() and frequencies() cause problems? We should just do them on copies.
 // 5. Fix multimodel to return base_model(i,m) instead of base_model(m)?
 //
 // Problems:
