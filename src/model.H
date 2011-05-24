@@ -239,8 +239,6 @@ public:
           void set_parameter_values(const std::vector<Double>& p);
   /// Set ALL model parameter values
           void set_parameter_values(const std::vector<polymorphic_cow_ptr<Object> >& p);
-  /// Set SOME of the model parameter values
-          void set_parameter_values_(const std::vector<int>& indices,std::vector<polymorphic_cow_ptr<Object> >::const_iterator& p);
 
   /// Get A model parameter
   const Parameter& get_parameter(int i) const {return parameters_[i];}

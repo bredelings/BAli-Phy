@@ -146,7 +146,10 @@ void Model::set_parameter_values(const vector<int>& indices,const vector<polymor
   assert(indices.size() == p.size());
   vector<polymorphic_cow_ptr<Object> >::const_iterator b = p.begin();
 
-  set_parameter_values_(indices,b);
+  for(int i=0;i<indices.size();i++)
+    write_value(indices[i], p[i]);
+
+  update();
 }
 
 void Model::set_parameter_values(const vector<Double>& p) 
@@ -159,16 +162,6 @@ void Model::set_parameter_values(const vector<polymorphic_cow_ptr<Object> >& p)
 {
   assert(p.size() == n_parameters());
   set_parameter_values(iota<int>(n_parameters()), p);
-}
-
-void Model::set_parameter_values_(const vector<int>& indices,vector<polymorphic_cow_ptr<Object> >::const_iterator& p)
-{
-  assert(indices.size() <= parameters_.size());
-
-  for(int i=0;i<indices.size();i++)
-    write_value(indices[i],*(p+i));
-
-  update();
 }
 
 Model::Model()
