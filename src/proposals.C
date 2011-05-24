@@ -401,7 +401,7 @@ double Proposal2::operator()(Probability_Model& P) const
     p[i] = loadvalue(P.keys, pnames[i]);
 
   // read, alter, and write parameter values
-  vector<Double> x = P.get_parameter_values(indices);
+  vector<Double> x = P.get_parameter_values_as<Double>(indices);
   double ratio = (*proposal)(x,p);
   P.set_parameter_values(indices,x);
 

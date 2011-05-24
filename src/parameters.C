@@ -544,7 +544,7 @@ void Parameters::set_beta(double b)
 
 double Parameters::get_beta() const
 {
-  return get_parameter_value(0);
+  return get_parameter_value_as<Double>(0);
 }
 
 efloat_t Parameters::prior_no_alignment() const 
@@ -564,7 +564,7 @@ efloat_t Parameters::prior_no_alignment() const
   // prior on mu[i], the mean branch length for scale i
   for(int i=0;i<n_branch_means();i++) {
     //  return pow(efloat_t(branch_mean()),-1.0);
-    Pr *= gamma_pdf(get_parameter_value(branch_mean_index(i)), 0.5, 2.0);
+    Pr *= gamma_pdf(get_parameter_value_as<Double>(branch_mean_index(i)), 0.5, 2.0);
   }
     
   // prior on the substitution model
@@ -767,7 +767,7 @@ void Parameters::recalc(const vector<int>& indices)
 	data_partitions[j]->set_beta(get_beta());    
     else
     {
-      double mu = get_parameter_value(index);
+      double mu = get_parameter_value_as<Double>(index);
       
       int p = index - 1;
       

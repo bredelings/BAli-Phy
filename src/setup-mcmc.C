@@ -707,7 +707,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
       {
 	Parameters& PP = *P.as<Parameters>();
-	out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j))<<endl;
+	out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value_as<Double>(PP.branch_mean_index(j))<<endl;
       }
       show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
@@ -734,7 +734,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
       {
 	Parameters& PP = *P.as<Parameters>();
-	out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j))<<endl;
+	out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value_as<Double>(PP.branch_mean_index(j))<<endl;
       }
       show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
@@ -761,7 +761,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
       {
 	Parameters& PP = *P.as<Parameters>();
-	out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value(PP.branch_mean_index(j))<<endl;
+	out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value_as<Double>(PP.branch_mean_index(j))<<endl;
       }
       show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
@@ -780,7 +780,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 
   for(int i=0; i<P.as<Parameters>()->n_branch_means(); i++)
   {
-    if (P->get_parameter_value(P.as<Parameters>()->branch_mean_index(i)) > 0.5)
+    if (P->get_parameter_value_as<Double>(P.as<Parameters>()->branch_mean_index(i)) > 0.5)
       P->set_parameter_value(P.as<Parameters>()->branch_mean_index(i), 0.5);
   }
 
