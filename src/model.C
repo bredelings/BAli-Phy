@@ -92,8 +92,8 @@ vector<int> Model::modified_parameters() const
 
 void Model::recalc_all() 
 {
-  recalc(iota<int>(n_parameters()));
-  validate();
+  modify_all_parameters();
+  update();
 }
 
 int Model::add_parameter(const Parameter& P)
