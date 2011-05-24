@@ -31,8 +31,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cassert>
 #include <boost/shared_ptr.hpp>
 #include "myexception.H"
-#include "clone.H"
-
+#include "object.H"
+#include "owned-ptr.H"
 
 /// An exception that is thrown upon reading a letter that is not in the current alphabet.
 struct bad_letter:public myexception 
@@ -51,7 +51,7 @@ struct bad_letter:public myexception
 /***************** struct alphabet ********************/
 
 /// Converts between a list of letters, and their integer indices
-class alphabet: public Cloneable 
+class alphabet: public Object
 {
   /// The letters of the alphabet
   std::vector<std::string> letters_;
@@ -318,7 +318,7 @@ public:
 };
 
 /// A Class that maps 3 nucleotides to an outcome in the amino_acid+stop alphabet
-class Genetic_Code: public Cloneable
+class Genetic_Code: public Object
 {
   std::string name_;
 
