@@ -322,8 +322,8 @@ void SuperModel::write_value(int index, polymorphic_cow_ptr<Object> p)
     int s = model_slots[i].slot;
 
     //... write it down into a sub-model, if the usage is not from the top-level model.
-    if (m != -1)
-      SubModels(m).set_parameter_value(s,p);
+    if (m != -1) 
+      SubModels(m).write_value(s,p);
   }
 }
 
