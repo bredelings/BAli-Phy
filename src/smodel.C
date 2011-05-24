@@ -1080,6 +1080,18 @@ namespace substitution {
   // mtzoa Rota Stabelli 2009
   // mtart Rota Stabelli 2009
 
+
+  const Nucleotides& NucleotideExchangeModel::Alphabet() const
+  {
+    return get_parameter_value_as<Nucleotides>(0);
+  }
+  
+  NucleotideExchangeModel::NucleotideExchangeModel(const Nucleotides& N)
+    :AlphabetExchangeModel(N)
+  {
+    add_parameter(Parameter("alphabet", N));
+  }
+
   //------------------------- HKY -----------------------------//
   string HKY::name() const {
     return "HKY";
@@ -1087,7 +1099,7 @@ namespace substitution {
 
   efloat_t HKY::prior() const 
   {
-    if (is_fixed(0))
+    if (is_fixed(1))
       return 1;
     else
       return laplace_pdf(log(kappa()), log(2), 0.25)/kappa();
@@ -1123,9 +1135,9 @@ namespace substitution {
   efloat_t TN::prior() const 
   {
     efloat_t P = 1;
-    if (not is_fixed(0))
-      P *= laplace_pdf(log(kappa1()), log(2), 0.25)/kappa1();
     if (not is_fixed(1))
+      P *= laplace_pdf(log(kappa1()), log(2), 0.25)/kappa1();
+    if (not is_fixed(2))
       P *= laplace_pdf(log(kappa2()), log(2), 0.25)/kappa2();
     return P;
   }
@@ -1179,7 +1191,7 @@ namespace substitution {
 
     n *= 4;
 
-    return dirichlet_pdf(get_parameter_values_as<Double>(), n);
+    return dirichlet_pdf( get_parameter_values_as<Double>( range<int>(1,6) ), n);
   }
 
   void GTR::recalc(const vector<int>&) 
@@ -1188,16 +1200,16 @@ namespace substitution {
 
     double total = 0;
     for(int i=0;i<6;i++)
-      total += get_parameter_value_as<Double>(i);
+      total += get_parameter_value_as<Double>(1+i);
 
-    S(0,1) = get_parameter_value_as<Double>(0)/total; // AG
-    S(0,2) = get_parameter_value_as<Double>(1)/total; // AT
-    S(0,3) = get_parameter_value_as<Double>(2)/total; // AC
+    S(0,1) = get_parameter_value_as<Double>(1)/total; // AG
+    S(0,2) = get_parameter_value_as<Double>(2)/total; // AT
+    S(0,3) = get_parameter_value_as<Double>(3)/total; // AC
 
-    S(1,2) = get_parameter_value_as<Double>(3)/total; // GT
-    S(1,3) = get_parameter_value_as<Double>(4)/total; // GC
+    S(1,2) = get_parameter_value_as<Double>(4)/total; // GT
+    S(1,3) = get_parameter_value_as<Double>(5)/total; // GC
 
-    S(2,3) = get_parameter_value_as<Double>(5)/total; // TC
+    S(2,3) = get_parameter_value_as<Double>(6)/total; // TC
   }
 
   GTR::GTR(const Nucleotides& N)

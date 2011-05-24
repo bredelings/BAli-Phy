@@ -384,16 +384,14 @@ namespace substitution {
     LG();
   };
 
-  class NucleotideExchangeModel: public AlphabetExchangeModel,
-				 public ModelWithAlphabet<Nucleotides>
+  class NucleotideExchangeModel: public AlphabetExchangeModel
   {
   public:
     NucleotideExchangeModel* clone() const=0;
 
-    NucleotideExchangeModel(const Nucleotides& N)
-      :AlphabetExchangeModel(N),
-       ModelWithAlphabet<Nucleotides>(N)
-    {}
+    const Nucleotides& Alphabet() const;
+
+    NucleotideExchangeModel(const Nucleotides& N);
   };
 
   /// The Hasegawa, Kishino, Yano (1985)
@@ -405,9 +403,9 @@ namespace substitution {
     virtual HKY* clone() const {return new HKY(*this);}
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa() const {return get_parameter_value_as<Double>(0);}
+    double kappa() const {return get_parameter_value_as<Double>(1);}
     /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa(double k) {set_parameter_value(0,k);}
+    void kappa(double k) {set_parameter_value(1,k);}
 
     virtual efloat_t prior() const;
 
@@ -426,14 +424,14 @@ namespace substitution {
     virtual TN* clone() const {return new TN(*this);}
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa1() const {return get_parameter_value_as<Double>(0);}
+    double kappa1() const {return get_parameter_value_as<Double>(1);}
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa2() const {return get_parameter_value_as<Double>(1);}
+    double kappa2() const {return get_parameter_value_as<Double>(2);}
 
     /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa1(double k) {set_parameter_value(0,k);}
+    void kappa1(double k) {set_parameter_value(1,k);}
     /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa2(double k) {set_parameter_value(1,k);}
+    void kappa2(double k) {set_parameter_value(2,k);}
 
     virtual efloat_t prior() const;
 
