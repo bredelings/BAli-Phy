@@ -100,8 +100,8 @@ namespace probability {
 
     double moment(int m) const;
 
-    double start() const {return get_parameter_value(0);}
-    double end() const {return get_parameter_value(1);}
+    double start() const {return get_parameter_value_as<Double>(0);}
+    double end() const {return get_parameter_value_as<Double>(1);}
  
     Uniform();
     Uniform(double,double);
@@ -129,7 +129,7 @@ namespace probability {
 
     double variance() const;
 
-    double mu() const {return get_parameter_value(0);}
+    double mu() const {return get_parameter_value_as<Double>(0);}
  
     Exponential();
 
@@ -158,8 +158,8 @@ namespace probability {
 
     double variance() const;
 
-    double alpha() const {return get_parameter_value(0);}
-    double beta() const {return get_parameter_value(1);}
+    double alpha() const {return get_parameter_value_as<Double>(0);}
+    double beta() const {return get_parameter_value_as<Double>(1);}
  
     Gamma();
 
@@ -186,8 +186,8 @@ namespace probability {
 
     double mean() const;
 
-    double alpha() const {return get_parameter_value(0);}
-    double beta() const {return get_parameter_value(1);}
+    double alpha() const {return get_parameter_value_as<Double>(0);}
+    double beta() const {return get_parameter_value_as<Double>(1);}
  
     Beta();
     Beta(double,double);
@@ -215,8 +215,8 @@ namespace probability {
 
     double variance() const;
 
-    double lmu() const {return get_parameter_value(0);}
-    double lsigma() const {return get_parameter_value(1);}
+    double lmu() const {return get_parameter_value_as<Double>(0);}
+    double lsigma() const {return get_parameter_value_as<Double>(1);}
  
     LogNormal();
     LogNormal(double,double);
@@ -244,8 +244,8 @@ namespace probability {
 
     double variance() const;
 
-    double mu() const {return get_parameter_value(0);}
-    double sigma() const {return get_parameter_value(1);}
+    double mu() const {return get_parameter_value_as<Double>(0);}
+    double sigma() const {return get_parameter_value_as<Double>(1);}
  
     Normal();
     Normal(double,double);
@@ -269,8 +269,8 @@ namespace probability {
 
     double moment(int m) const;
 
-    double m() const {return get_parameter_value(0);}
-    double s() const {return get_parameter_value(1);}
+    double m() const {return get_parameter_value_as<Double>(0);}
+    double s() const {return get_parameter_value_as<Double>(1);}
  
     Cauchy();
     Cauchy(double m_=0.0,double s_=1.0);

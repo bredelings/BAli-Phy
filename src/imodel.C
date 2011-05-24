@@ -393,9 +393,9 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const
 {
   using namespace states;
 
-  double delta   = exp(get_parameter_value(0));
-  double e       = exp(get_parameter_value(1));
-  double t       = exp(get_parameter_value(2));
+  double delta   = exp(get_parameter_value_as<Double>(0));
+  double e       = exp(get_parameter_value_as<Double>(1));
+  double t       = exp(get_parameter_value_as<Double>(2));
 
   if (is_training()) delta = std::min(delta,0.005);
 
@@ -473,14 +473,14 @@ efloat_t SimpleIndelModel::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda_O
-  double lambda_O = get_parameter_value(0);
+  double lambda_O = get_parameter_value_as<Double>(0);
   double pdel =  lambda_O-logdiff(0,lambda_O);
   double rate =  log(-logdiff(0,pdel)) - log(D);
 
   Pr *= laplace_pdf(rate,-5, 0.5);
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double lambda_E = get_parameter_value(1);
+  double lambda_E = get_parameter_value_as<Double>(1);
   if (lambda_E >= 0) return 0;
 
   double E_length = lambda_E - logdiff(0,lambda_E);
@@ -508,19 +508,19 @@ efloat_t NewIndelModel::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda_O
-  double rate = get_parameter_value(0);
+  double rate = get_parameter_value_as<Double>(0);
 
-  Pr *= laplace_pdf(rate,get_parameter_value(2), get_parameter_value(3));
+  Pr *= laplace_pdf(rate,get_parameter_value_as<Double>(2), get_parameter_value_as<Double>(3));
 
   // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double log_epsilon = get_parameter_value(1);
+  double log_epsilon = get_parameter_value_as<Double>(1);
 
   // We can't scale time appropriately if e = 1.
   // Also, the calculation below diverges if e = 1.
   if (log_epsilon >= 0) return 0;
 
   double E_length = log_epsilon - logdiff(0,log_epsilon);
-  double E_length_mean = get_parameter_value(4);
+  double E_length_mean = get_parameter_value_as<Double>(4);
 
   Pr *= exp_exponential_pdf(E_length,E_length_mean);
 
@@ -534,8 +534,8 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   if (not time_dependant)
     t = 1;
 
-  double rate    = exp(get_parameter_value(0));
-  double e = exp(get_parameter_value(1));
+  double rate    = exp(get_parameter_value_as<Double>(0));
+  double e = exp(get_parameter_value_as<Double>(1));
 
   // Return a model with all probabilities zero if e==1.
   // Scaling time by 1/(1.0-e) doesn't work if e==1.
@@ -614,7 +614,7 @@ string NewIndelModel::name() const
 
 efloat_t NewIndelModel::lengthp(int l) const 
 {
-  double e = exp(get_parameter_value(1));
+  double e = exp(get_parameter_value_as<Double>(1));
   if (l < 0)
     return 0;
   else if (l==0)
@@ -639,10 +639,10 @@ efloat_t TKF1::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda
-  Pr *= laplace_pdf(get_parameter_value(0),get_parameter_value(2), get_parameter_value(3));
+  Pr *= laplace_pdf(get_parameter_value_as<Double>(0),get_parameter_value_as<Double>(2), get_parameter_value_as<Double>(3));
 
   // Calculate prior on mean sequence length
-  Pr *= exponential_pdf(get_parameter_value(1), get_parameter_value(4));
+  Pr *= exponential_pdf(get_parameter_value_as<Double>(1), get_parameter_value_as<Double>(4));
 
   return Pr;
 }
@@ -704,8 +704,8 @@ indel::PairHMM TKF1::get_branch_HMM(double t) const
   if (not time_dependant)
     t = 1;
 
-  double lambda = exp(get_parameter_value(0));
-  double mean_length = get_parameter_value(1);
+  double lambda = exp(get_parameter_value_as<Double>(0));
+  double mean_length = get_parameter_value_as<Double>(1);
   double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
   double mu = lambda/sigma;                       // s = lambda/mu
 
@@ -721,7 +721,7 @@ string TKF1::name() const
 
 efloat_t TKF1::lengthp(int l) const 
 {
-  double mean_length = get_parameter_value(1);
+  double mean_length = get_parameter_value_as<Double>(1);
 
   double sigma = mean_length/(1.0 + mean_length);
 
@@ -744,17 +744,17 @@ efloat_t TKF2::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda
-  Pr *= laplace_pdf(get_parameter_value(0),get_parameter_value(3), get_parameter_value(4));
+  Pr *= laplace_pdf(get_parameter_value_as<Double>(0),get_parameter_value_as<Double>(3), get_parameter_value_as<Double>(4));
 
   // Calculate prior on epsilon
-  double lambda_E = get_parameter_value(1);
+  double lambda_E = get_parameter_value_as<Double>(1);
   double E_length = lambda_E - logdiff(0,lambda_E);
-  double E_length_mean = get_parameter_value(5);
+  double E_length_mean = get_parameter_value_as<Double>(5);
 
   Pr *= exp_exponential_pdf(E_length,E_length_mean);
 
   // Calculate prior on mean sequence length
-  Pr *= exponential_pdf(get_parameter_value(2), get_parameter_value(6));
+  Pr *= exponential_pdf(get_parameter_value_as<Double>(2), get_parameter_value_as<Double>(6));
 
   return Pr;
 }
@@ -766,9 +766,9 @@ indel::PairHMM TKF2::get_branch_HMM(double t) const
   if (not time_dependant)
     t = 1;
 
-  double lambda = exp(get_parameter_value(0));
-  double e = exp(get_parameter_value(1));
-  double mean_length = get_parameter_value(2);
+  double lambda = exp(get_parameter_value_as<Double>(0));
+  double e = exp(get_parameter_value_as<Double>(1));
+  double mean_length = get_parameter_value_as<Double>(2);
   double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
   double mu = lambda/sigma;                       // s = lambda/mu
 
@@ -788,7 +788,7 @@ efloat_t TKF2::lengthp(int l) const
 {
   // FIXME -  this is wrong
   std::abort();
-  double mean_length = get_parameter_value(1);
+  double mean_length = get_parameter_value_as<Double>(1);
 
   double sigma = mean_length/(1.0 + mean_length);
 
@@ -814,10 +814,10 @@ efloat_t TKF1_Transducer::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on lambda
-  Pr *= laplace_pdf(get_parameter_value(0),get_parameter_value(2), get_parameter_value(3));
+  Pr *= laplace_pdf(get_parameter_value_as<Double>(0),get_parameter_value_as<Double>(2), get_parameter_value_as<Double>(3));
 
   // Calculate prior on mean sequence length
-  Pr *= exponential_pdf(get_parameter_value(1), get_parameter_value(4));
+  Pr *= exponential_pdf(get_parameter_value_as<Double>(1), get_parameter_value_as<Double>(4));
 
   return Pr;
 }
@@ -825,8 +825,8 @@ efloat_t TKF1_Transducer::prior() const
 // States: S, letters, E
 Matrix TKF1_Transducer::root_chain() const
 {
-  double lambda = exp(get_parameter_value(0));
-  double mean_length = get_parameter_value(1);
+  double lambda = exp(get_parameter_value_as<Double>(0));
+  double mean_length = get_parameter_value_as<Double>(1);
   double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
   double mu = lambda/sigma;                       // s = lambda/mu
 
@@ -912,8 +912,8 @@ indel::PairTransducer TKF1_Transducer::get_branch_Transducer(double t) const
   if (not time_dependent)
     t = 1;
 
-  double lambda = exp(get_parameter_value(0));
-  double mean_length = get_parameter_value(1);
+  double lambda = exp(get_parameter_value_as<Double>(0));
+  double mean_length = get_parameter_value_as<Double>(1);
   double sigma = mean_length/(1.0 + mean_length); // E L = s/(1-s)
   double mu = lambda/sigma;                       // s = lambda/mu
 
@@ -941,9 +941,9 @@ TKF1_Transducer::TKF1_Transducer(bool b)
 // States: S, letters, E
 Matrix FS_Transducer::root_chain() const
 {
-  double tau      = get_parameter_value(5);
-  double mean_s   = get_parameter_value(3);
-  double mean_f   = get_parameter_value(4);
+  double tau      = get_parameter_value_as<Double>(5);
+  double mean_s   = get_parameter_value_as<Double>(3);
+  double mean_f   = get_parameter_value_as<Double>(4);
 
   double e_s = mean_s/(1+mean_s);
   double e_f = mean_f/(1+mean_f);
@@ -973,17 +973,17 @@ efloat_t FS_Transducer::prior() const
   efloat_t Pr = 1;
 
   // Calculate prior on indel rate
-  double lambda_s = get_parameter_value(0);
-  double lambda_f = get_parameter_value(1);
+  double lambda_s = get_parameter_value_as<Double>(0);
+  double lambda_f = get_parameter_value_as<Double>(1);
 
   if (lambda_f < lambda_s) return 0;
 
-  Pr *= laplace_pdf(lambda_s, get_parameter_value(6), get_parameter_value(8));
-  Pr *= laplace_pdf(lambda_f, get_parameter_value(7), get_parameter_value(8));
+  Pr *= laplace_pdf(lambda_s, get_parameter_value_as<Double>(6), get_parameter_value_as<Double>(8));
+  Pr *= laplace_pdf(lambda_f, get_parameter_value_as<Double>(7), get_parameter_value_as<Double>(8));
 
   // Calculate prior on indel length
-  double E_length_mean = get_parameter_value(9);
-  double log_r = get_parameter_value(2);
+  double E_length_mean = get_parameter_value_as<Double>(9);
+  double log_r = get_parameter_value_as<Double>(2);
   double E_length_r = log_r - logdiff(0,log_r);
 
   Pr *= exp_exponential_pdf(E_length_r,E_length_mean);
@@ -1196,12 +1196,12 @@ indel::PairTransducer FS_Transducer::get_branch_Transducer(double t) const
   if (not time_dependent)
     t = 1;
 
-  double lambda_s      = exp(get_parameter_value(0));
-  double lambda_f      = exp(get_parameter_value(1));
-  double r             = exp(get_parameter_value(2));
-  double mean_length_s = get_parameter_value(3);
-  double mean_length_f = get_parameter_value(4);
-  double tau           = get_parameter_value(5);
+  double lambda_s      = exp(get_parameter_value_as<Double>(0));
+  double lambda_f      = exp(get_parameter_value_as<Double>(1));
+  double r             = exp(get_parameter_value_as<Double>(2));
+  double mean_length_s = get_parameter_value_as<Double>(3);
+  double mean_length_f = get_parameter_value_as<Double>(4);
+  double tau           = get_parameter_value_as<Double>(5);
 
   double sigma_s = mean_length_s/(1.0 + mean_length_s); // E L = s/(1-s)
   double mu_s = lambda_s/sigma_s;                       // s = lambda/mu

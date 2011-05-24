@@ -132,13 +132,8 @@ double branch_likelihood::operator()(const optimize::Vector& v) const
   }
 
   //---------------- Set parameters -------------------//
-  vector<Double> p = smodel->get_parameter_values();
-  for(int i=0;i<parameters.size();i++) 
-    p[parameters[i]] = v[T.n_branches()+i];
-
-  smodel->set_parameter_values(p);
-  smodel->set_rate(1);
-
+  for(int i=0;i<parameters.size();i++)
+    smodel->set_parameter_value(parameters[i], v[T.n_branches()+i]);
 
   //----- Setup cached CL's + Transition matrices -----//
   data_partition DP("DP",A,T2,*smodel);
@@ -170,13 +165,8 @@ double log_branch_likelihood::operator()(const optimize::Vector& v) const
     T2.branch(i).set_length(exp(v[i]));
 
   //---------------- Set parameters -------------------//
-  vector<Double> p = smodel->get_parameter_values();
   for(int i=0;i<parameters.size();i++) 
-    p[parameters[i]] = v[T.n_branches()+i];
-
-  smodel->set_parameter_values(p);
-  smodel->set_rate(1);
-
+    smodel->set_parameter_value(parameters[i], v[T.n_branches()+i]);
 
   //----- Setup cached CL's + Transition matrices -----//
   data_partition DP("DP",A,T2,*smodel);
@@ -384,7 +374,7 @@ void estimate_tree(const alignment& A,
   for(int b=0;b<T.n_branches();b++)
     start[b] = log(T.branch(b).length());
   for(int i=0;i<parameters.size();i++)
-    start[i+T.n_branches()] = smodel.get_parameter_value( parameters[i] );
+    start[i+T.n_branches()] = smodel.get_parameter_value_as<Double>( parameters[i] );
 
   //    optimize::Vector end = search_gradient(start,score);
   //    optimize::Vector end = search_basis(start,score);
@@ -393,10 +383,9 @@ void estimate_tree(const alignment& A,
   for(int b=0;b<T.n_branches();b++)
     T.branch(b).set_length(exp(end[b]));
 
-  vector<Double> p = smodel.get_parameter_values();
   for(int i=0;i<parameters.size();i++)
-    p[parameters[i]] = end[i+T.n_branches()];
-  smodel.set_parameter_values(p);
+    smodel.set_parameter_value(parameters[i], end[i+T.n_branches()]);
+
   smodel.set_rate(1);
 }
 
