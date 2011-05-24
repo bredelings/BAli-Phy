@@ -168,10 +168,10 @@ public:
   const std::string& parameter_name(int i) const {return parameters_[i].name;}
 
   bool is_fixed(int i) const                {return parameters_[i].fixed;}
-  virtual void set_fixed(int i,bool f)      {parameters_[i].fixed = f;}
+  void set_fixed(int i,bool f)      {parameters_[i].fixed = f;}
 
   const Bounds<double>& get_bounds(int i) const {return parameters_[i].bounds;}
-  virtual void set_bounds(int i,const Bounds<double>& b) {parameters_[i].bounds = b;}
+  void set_bounds(int i,const Bounds<double>& b) {parameters_[i].bounds = b;}
 
   /// Get A model parameter value
   template <typename T>
@@ -323,9 +323,6 @@ public:
   SuperModel* clone() const =0;
   
   efloat_t prior() const;
-  
-  virtual void set_fixed(int i,bool f) {Model::set_fixed(i,f); write();}
-  virtual void set_bounds(int i,const Bounds<double>& b) {Model::set_bounds(i,b); write();}
 
   void set_parameter_values_(const std::vector<int>& indices,std::vector<polymorphic_cow_ptr<Object> >::const_iterator& p);
 
