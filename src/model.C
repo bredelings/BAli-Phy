@@ -311,14 +311,6 @@ int SuperModel::register_submodel(const string& prefix)
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
-void SuperModel::write_value(int index, Double p)
-{
-  assert(index < n_parameters());
-
-  write_value(index, polymorphic_cow_ptr<Object>(p) );
-}
-
-// can I write the supermodel so that it actually SHARES the values of the sub-models?
 void SuperModel::write_value(int index, polymorphic_cow_ptr<Object> p)
 {
   assert(index < n_parameters());
