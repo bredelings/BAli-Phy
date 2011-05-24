@@ -1778,8 +1778,8 @@ namespace substitution {
       assert(cache.up_to_date(root_branches[i]));
       efloat_t L1 = cache[root_branches[i]].other_subst;
       other_subst2 *= L1;
-      efloat_t L2 = other_subst3[root_branches[i]];
-      assert(std::abs(log(L2) - log(L1)) < 1.0e-9);
+      //      efloat_t L2 = other_subst3[root_branches[i]];
+      //      assert(std::abs(log(L2) - log(L1)) < 1.0e-9);
     }
 
     assert(std::abs(log(other_subst1) - log(other_subst2)) < 1.0e-9);
