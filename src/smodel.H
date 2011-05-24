@@ -458,10 +458,11 @@ namespace substitution {
   };
     
 
-  class TripletExchangeModel: public AlphabetExchangeModel, 
-			      public ModelWithAlphabet<Triplets> 
+  class TripletExchangeModel: public AlphabetExchangeModel
   {
   public:
+    const Triplets& Alphabet() const;
+
     TripletExchangeModel* clone() const=0;
 
     TripletExchangeModel(const Triplets& T);
@@ -488,11 +489,12 @@ namespace substitution {
 
 
 
-  class CodonAlphabetExchangeModel: public AlphabetExchangeModel, 
-			    public ModelWithAlphabet<Codons> 
+  class CodonAlphabetExchangeModel: public AlphabetExchangeModel
   {
   public:
     CodonAlphabetExchangeModel* clone() const=0;
+
+    const Codons& Alphabet() const;
 
     int AminoAcid(int l) const {return Alphabet().translate(l);}
 
@@ -502,8 +504,9 @@ namespace substitution {
   };
 
 
-  class M0: public CodonAlphabetExchangeModel,
-		public SuperModelOver<NucleotideExchangeModel>
+  class M0: public SuperModelOver<NucleotideExchangeModel>,
+	    public CodonAlphabetExchangeModel
+		
   {
     void recalc(const std::vector<int>&);
   public:

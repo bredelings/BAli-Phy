@@ -1227,9 +1227,16 @@ namespace substitution {
 
   //------------------------ Triplet Models -------------------//
 
+  const Triplets& TripletExchangeModel::Alphabet() const
+  {
+    return get_parameter_value_as<Triplets>(0);
+  }
+
   TripletExchangeModel::TripletExchangeModel(const Triplets& T)
-    :AlphabetExchangeModel(T),ModelWithAlphabet<Triplets>(T)
-  { }
+    :AlphabetExchangeModel(T)
+  { 
+    add_parameter(Parameter("alphabet",T));
+  }
 
   void SingletToTripletExchangeModel::recalc(const vector<int>&)
   {
@@ -1274,19 +1281,25 @@ namespace substitution {
   }
 
   //------------------------ Codon Models -------------------//
+  const Codons& CodonAlphabetExchangeModel::Alphabet() const
+  {
+    return get_parameter_value_as<Codons>(0);
+  }
 
   CodonAlphabetExchangeModel::CodonAlphabetExchangeModel(const Codons& C)
-    :AlphabetExchangeModel(C),ModelWithAlphabet<Codons>(C)
-  { }
+    :AlphabetExchangeModel(C)
+  { 
+    add_parameter(Parameter("alphabet",C));
+  }
 
   /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
   double M0::omega() const {
-    return get_parameter_value_as<Double>(0);
+    return get_parameter_value_as<Double>(1);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
   void M0::omega(double w) {
-    set_parameter_value(0,w);
+    set_parameter_value(1,w);
   }
 
   void M0::recalc(const vector<int>&)
@@ -1325,7 +1338,7 @@ namespace substitution {
 
   efloat_t M0::super_prior() const 
   {
-    if (is_fixed(0))
+    if (is_fixed(1))
       return 1;
     else
       return laplace_pdf(log(omega()), 0, 0.1)/omega();
@@ -1338,6 +1351,9 @@ namespace substitution {
   M0::M0(const Codons& C,const NucleotideExchangeModel& N)
     :CodonAlphabetExchangeModel(C)
   { 
+    // problem! CodonAlphabetExchangeModel adds a parameter, but doesn't know to bump models_slots_for_index, since its not a supermodel!
+    model_slots_for_index.push_back(vector<model_slot>());
+
     add_super_parameter(Parameter("M0::omega", Double(1.0), lower_bound(0)));
     insert_submodel("1",N);
     recalc_all();
