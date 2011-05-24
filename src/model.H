@@ -217,7 +217,7 @@ public:
   }
 
   /// Get SOME model parameter values
-  std::vector<polymorphic_cow_ptr<Object> > get_parameter_values(const std::vector<int>&) const;
+  std::vector<boost::shared_ptr<const Object> > get_parameter_values(const std::vector<int>&) const;
 
   /// Get ALL model parameter values
   template <typename T>
@@ -231,23 +231,23 @@ public:
     return values;  
   }
   /// Get ALL model parameter values
-  std::vector<polymorphic_cow_ptr<Object> > get_parameter_values() const;
+  std::vector<boost::shared_ptr<const Object> > get_parameter_values() const;
 
   /// Store ONE parameter value down into submodels
-  virtual void write_value(int i, const polymorphic_cow_ptr<Object>& p);
+  virtual void write_value(int i, const boost::shared_ptr<const Object>& p);
 
   /// Set A model parameter value
           void set_parameter_value(int p,Double value);
   /// Set A model parameter value
-          void set_parameter_value(int p,const polymorphic_cow_ptr<Object>& value);
+          void set_parameter_value(int p, const boost::shared_ptr<const Object>& value);
   /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
   /// Set SOME of the model parameter values
-          void set_parameter_values(const std::vector<int>& indices,const std::vector<polymorphic_cow_ptr<Object> >& p);
+          void set_parameter_values(const std::vector<int>& indices,const std::vector<boost::shared_ptr<const Object> >& p);
   /// Set ALL model parameter values
           void set_parameter_values(const std::vector<Double>& p);
   /// Set ALL model parameter values
-          void set_parameter_values(const std::vector<polymorphic_cow_ptr<Object> >& p);
+          void set_parameter_values(const std::vector<boost::shared_ptr<const Object> >& p);
 
   /// Get A model parameter
   const Parameter& get_parameter(int i) const {return parameters_[i];}
@@ -294,7 +294,7 @@ public:
 struct arg_expression
 {
   int parent_index;
-  polymorphic_cow_ptr<Object> constant_value;
+  boost::shared_ptr<const Object> constant_value;
   bool is_constant() const {return parent_index == -1;}
   bool is_term_ref() const {return parent_index != -1;}
 
@@ -343,7 +343,7 @@ protected:
   /// Propagate changes to child model parameters down to child Model objects.
   void write();
   /// Store ONE parameter value down into submodels
-  void write_value(int i, const polymorphic_cow_ptr<Object>& p);
+  void write_value(int i, const boost::shared_ptr<const Object>& p);
 
 public:
   /// Make a copy of ourselves

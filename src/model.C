@@ -26,6 +26,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 using std::vector;
 using std::string;
 
+using boost::shared_ptr;
+
 string parameter_name(const string& prefix, int i,int n) 
 {
   if (i>=n)
@@ -106,9 +108,9 @@ int Model::add_parameter(const Parameter& P)
   return parameters_.size()-1;
 }
 
-std::vector< polymorphic_cow_ptr<Object> > Model::get_parameter_values() const
+std::vector< shared_ptr<const Object> > Model::get_parameter_values() const
 {
-  std::vector< polymorphic_cow_ptr<Object> > values(n_parameters());
+  std::vector< shared_ptr<const Object> > values(n_parameters());
 
   for(int i=0;i<values.size();i++)
     values[i] = get_parameter_value(i);
@@ -116,9 +118,9 @@ std::vector< polymorphic_cow_ptr<Object> > Model::get_parameter_values() const
   return values;  
 }
 
-std::vector< polymorphic_cow_ptr<Object> > Model::get_parameter_values(const std::vector<int>& indices) const
+std::vector< shared_ptr<const Object> > Model::get_parameter_values(const std::vector<int>& indices) const
 {
-  std::vector< polymorphic_cow_ptr<Object> > values(indices.size());
+  std::vector< shared_ptr<const Object> > values(indices.size());
     
   for(int i=0;i<values.size();i++)
     values[i] = get_parameter_value(indices[i]);
@@ -126,7 +128,7 @@ std::vector< polymorphic_cow_ptr<Object> > Model::get_parameter_values(const std
   return values;  
 }
 
-void Model::write_value(int i,const polymorphic_cow_ptr<Object>& value)
+void Model::write_value(int i,const shared_ptr<const Object>& value)
 {
   parameters_[i].value = value;
   modify_parameter(i);
@@ -134,27 +136,26 @@ void Model::write_value(int i,const polymorphic_cow_ptr<Object>& value)
 
 void Model::set_parameter_value(int i,Double value) 
 {
-  set_parameter_value(i, polymorphic_cow_ptr<Object>(value) );
+  set_parameter_value(i, shared_ptr<const Object>( value.clone()) );
 }
 
-void Model::set_parameter_value(int i,const polymorphic_cow_ptr<Object>& value) 
+void Model::set_parameter_value(int i,const shared_ptr<const Object>& value) 
 {
-  set_parameter_values(vector<int>(1,i), vector< polymorphic_cow_ptr<Object> >(1, value) );
+  set_parameter_values(vector<int>(1,i), vector< shared_ptr<const Object> >(1, value) );
 }
 
 void Model::set_parameter_values(const vector<int>& indices,const vector<Double>& p)
 {
-  vector< polymorphic_cow_ptr<Object> > p2(p.size());
+  vector< shared_ptr<const Object> > p2(p.size());
   for(int i=0;i<p.size();i++)
-    p2[i] = polymorphic_cow_ptr<Object>(p[i]);
+    p2[i] = shared_ptr<const Object>( p[i].clone() );
 
   set_parameter_values(indices,p2);
 }
 
-void Model::set_parameter_values(const vector<int>& indices,const vector<polymorphic_cow_ptr<Object> >& p)
+void Model::set_parameter_values(const vector<int>& indices,const vector<shared_ptr<const Object> >& p)
 {
   assert(indices.size() == p.size());
-  vector<polymorphic_cow_ptr<Object> >::const_iterator b = p.begin();
 
   for(int i=0;i<indices.size();i++)
     write_value(indices[i], p[i]);
@@ -168,7 +169,7 @@ void Model::set_parameter_values(const vector<Double>& p)
   set_parameter_values(iota<int>(n_parameters()), p);
 }
 
-void Model::set_parameter_values(const vector<polymorphic_cow_ptr<Object> >& p) 
+void Model::set_parameter_values(const vector<shared_ptr<const Object> >& p) 
 {
   assert(p.size() == n_parameters());
   set_parameter_values(iota<int>(n_parameters()), p);
@@ -317,7 +318,7 @@ int SuperModel::register_submodel(const string& prefix)
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
-void SuperModel::write_value(int index, const polymorphic_cow_ptr<Object>& p)
+void SuperModel::write_value(int index, const shared_ptr<const Object>& p)
 {
   assert(index < n_parameters());
 
