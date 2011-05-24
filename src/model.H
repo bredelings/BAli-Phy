@@ -60,7 +60,7 @@ struct Parameter
 
 // TODO
 // 1. Make models take generic Object's as inputs.
-//    o make models take alphabets as arguments, and thus store them in the argument list
+//    o make substitution models take alphabets as arguments, and thus store them in the argument list
 // 2. Make models into functions.
 //    o separate result objects from model objects
 //    o make the model objects inherit from the result objects
@@ -73,11 +73,29 @@ struct Parameter
 //    o pull priors out of models ->
 //      + in fact, priors are objects that RETURN models, a "density" model, and a "simulate" model.
 // 4. Make model evaluation lazy.
-// - before: remove read().
-// - before: remove set_rate()
-// - before: remove (set_)frequencies( )
-// - during: make recalc() a constant function.
-// - during: write parameters to submodels {now, simply}.  Recalc later.
+//    o before: remove read().
+//    o before: remove set_rate()
+//    o before: remove (set_)frequencies( )
+//    o during: make recalc() a constant function.
+//    o during: write parameters to submodels {now, simply}.  Recalc later.
+// 5. Fix multimodel to return base_model(i,m) instead of base_model(m)?
+//
+// Problems:
+//    o If we make the models inherit from their result types, then we inherit the base result type twice:
+//    AO
+//    |\
+//    | \
+//    |  \
+//    |   \
+//    BO   A-model
+//    \    |
+//     \   |
+//      \  |
+//       \ |
+//        \|
+//         B-model
+//
+
 
 
 // Rewrite:
