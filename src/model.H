@@ -60,7 +60,11 @@ struct Parameter
 
 // TODO
 // 1. Make models take generic Object's as inputs.
+//    o make models take alphabets as arguments, and thus store them in the argument list
 // 2. Make models into functions.
+//    o separate result objects from model objects
+//    o make the model objects inherit from the result objects
+//    o inheritance of data members (e.g. Q) becomes inheritance of data members in the result objects
 // 3. ??
 //    o make all stored objects into models?
 //    o make supermodels into an Op plus models, as arguments?
