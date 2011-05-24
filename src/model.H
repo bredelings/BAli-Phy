@@ -226,6 +226,8 @@ public:
 
   /// Set A model parameter value
           void set_parameter_value(int p,Double value);
+  /// Set A model parameter value
+          void set_parameter_value(int p,polymorphic_cow_ptr<Object> value);
   /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
   /// Set SOME of the model parameter values
@@ -334,6 +336,8 @@ protected:
   void write_to_submodel(int m);
   /// Store ONE parameter value down into submodels
   void write_value(int i,Double p);
+  /// Store ONE parameter value down into submodels
+  void write_value(int i,polymorphic_cow_ptr<Object>  p);
   /// Store SOME parameters down into submodels
   void write_values(const std::vector<int>&,std::vector<polymorphic_cow_ptr<Object> >::const_iterator&);
 

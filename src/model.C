@@ -118,7 +118,12 @@ std::vector<Double> Model::get_parameter_values(const std::vector<int>& indices)
 
 void Model::set_parameter_value(int i,Double value) 
 {
-  set_parameter_values(vector<int>(1,i), vector<Double>(1, value) );
+  set_parameter_value(i, polymorphic_cow_ptr<Object>(value) );
+}
+
+void Model::set_parameter_value(int i,polymorphic_cow_ptr<Object> value) 
+{
+  set_parameter_values(vector<int>(1,i), vector< polymorphic_cow_ptr<Object> >(1, value) );
 }
 
 void Model::set_parameter_values(const vector<int>& indices,const vector<Double>& p)
@@ -310,7 +315,15 @@ void SuperModel::write_value(int index, Double p)
 {
   assert(index < n_parameters());
 
-  parameters_[index].value = polymorphic_cow_ptr<Object>(p);
+  write_value(index, polymorphic_cow_ptr<Object>(p) );
+}
+
+// can I write the supermodel so that it actually SHARES the values of the sub-models?
+void SuperModel::write_value(int index, polymorphic_cow_ptr<Object> p)
+{
+  assert(index < n_parameters());
+
+  parameters_[index].value = p;
   modify_parameter(index);
 
   const vector<model_slot>& model_slots = model_slots_for_index[index];
