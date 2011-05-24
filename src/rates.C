@@ -49,14 +49,14 @@ namespace substitution {
   //--------------- GammaRateDistribution -----------------//
   
   efloat_t Gamma::prior() const {
-    double g_sigma = get_parameter_value(0);
+    double g_sigma = get_parameter_value_as<Double>(0);
     double log_g_sigma = log(g_sigma);
     return laplace_pdf(log_g_sigma,-3,1.0);
   }
 
   void Gamma::recalc(const vector<int>&)
   {
-    double s = minmax(double(get_parameter_value(0)), 1.0e-5, 3.0);
+    double s = minmax(double(get_parameter_value_as<Double>(0)), 1.0e-5, 3.0);
 
     vector<Double> p(2);
     p[0] = 1.0/(s*s);
@@ -80,8 +80,8 @@ namespace substitution {
 
   void Beta::recalc(const vector<int>& indices)
   {
-    double mu = get_parameter_value(0);      // E(x)
-    double gamma = get_parameter_value(1);   // Var(x)/E(x)
+    double mu = get_parameter_value_as<Double>(0);      // E(x)
+    double gamma = get_parameter_value_as<Double>(1);   // Var(x)/E(x)
 
     double N = 1.0/gamma - 1.0;
 
@@ -100,8 +100,8 @@ namespace substitution {
 
   efloat_t Beta::prior() const 
   {
-    double mu = get_parameter_value(0);      // E(x)
-    double gamma = get_parameter_value(1);   // Var(x)/E(x)
+    double mu = get_parameter_value_as<Double>(0);      // E(x)
+    double gamma = get_parameter_value_as<Double>(1);   // Var(x)/E(x)
 
     double N = 1.0/gamma - 1.0;
 
@@ -135,14 +135,14 @@ namespace substitution {
   //          Var X = (exp(lsigma^2)-1  => log(Var X + 1) = lsigma^2
 
   efloat_t LogNormal::prior() const {
-    double g_sigma = get_parameter_value(0);
+    double g_sigma = get_parameter_value_as<Double>(0);
     double log_g_sigma = log(g_sigma);
     return laplace_pdf(log_g_sigma,-3,1.0);
   }
 
   void LogNormal::recalc(const vector<int>&)
   {
-    double s = minmax(double(get_parameter_value(0)), 1.0e-5, 1.0e5);
+    double s = minmax(double(get_parameter_value_as<Double>(0)), 1.0e-5, 1.0e5);
 
     double Var = s*s;
     double lVar = log1p(Var);

@@ -266,7 +266,7 @@ namespace substitution {
     SimpleExchangeModel* clone() const {return new SimpleExchangeModel(*this);}
 
     /// Get the parameter 'rho' (model switching rate)
-    double rho() const {return get_parameter_value(0);}
+    double rho() const {return get_parameter_value_as<Double>(0);}
     /// Set the parameter 'rho' (model switching rate)
     void   rho(double r) {set_parameter_value(0,r);}
 
@@ -399,7 +399,7 @@ namespace substitution {
     virtual HKY* clone() const {return new HKY(*this);}
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa() const {return get_parameter_value(0);}
+    double kappa() const {return get_parameter_value_as<Double>(0);}
     /// Set the parameter 'kappa' (transition/transversion ratio)
     void kappa(double k) {set_parameter_value(0,k);}
 
@@ -420,9 +420,9 @@ namespace substitution {
     virtual TN* clone() const {return new TN(*this);}
 
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa1() const {return get_parameter_value(0);}
+    double kappa1() const {return get_parameter_value_as<Double>(0);}
     /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa2() const {return get_parameter_value(1);}
+    double kappa2() const {return get_parameter_value_as<Double>(1);}
 
     /// Set the parameter 'kappa' (transition/transversion ratio)
     void kappa1(double k) {set_parameter_value(0,k);}
@@ -553,7 +553,7 @@ namespace substitution {
 
     void frequencies(const valarray<double>&);
     
-    double f() const {return get_parameter_value(0);}
+    double f() const {return get_parameter_value_as<Double>(0);}
 
     SimpleFrequencyModel* clone() const {return new SimpleFrequencyModel(*this);}
 
@@ -1051,7 +1051,7 @@ namespace substitution {
     std::vector<double> fraction;
 
     // a(m,l) is the probability that a letter is in component "m" given that it is of type "l"
-    inline double  a(int m,int l) const {return get_parameter_value(m+l*fraction.size());}
+    inline double  a(int m,int l) const {return get_parameter_value_as<Double>(m+l*fraction.size());}
 
     void recalc(const std::vector<int>&);
 

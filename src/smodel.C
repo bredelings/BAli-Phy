@@ -186,7 +186,7 @@ namespace substitution {
   void SimpleFrequencyModel::recalc(const vector<int>&)
   {
     // compute frequencies
-    pi = get_varray<double>( get_parameter_values( range<int>(1,n_letters()) ) );
+    pi = get_varray<double>( get_parameter_values_as<Double>( range<int>(1,n_letters()) ) );
     pi /= pi.sum();
     
     // compute transition rates
@@ -209,14 +209,14 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    Pr *= dirichlet_pdf(get_parameter_values( range<int>(1, n_letters() ) ), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1, n_letters() ) ), 1.0);
 
     return Pr;
   }
 
   string SimpleFrequencyModel::name() const 
   {
-    if (is_fixed(0) and get_parameter_value(0) == 1.0)
+    if (is_fixed(0) and get_parameter_value_as<Double>(0) == 1.0)
       return "F";
     else
       return "gwF";
@@ -291,7 +291,7 @@ namespace substitution {
     //------------------ compute triplet frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
 
-    vector<Double> sub_parameters = SubModels(0).get_parameter_values();
+    vector<Double> sub_parameters = SubModels(0).get_parameter_values_as<Double>();
 
     vector<Double> triplet_parameters(n_letters()+1);
     triplet_parameters[0] = sub_parameters[0];
@@ -321,7 +321,7 @@ namespace substitution {
 
   void TripletsFrequencyModel::recalc(const vector<int>&)
   {
-    valarray<double> nu = get_varray<double>( get_parameter_values( range<int>(1,n_letters()) ) );
+    valarray<double> nu = get_varray<double>( get_parameter_values_as<Double>( range<int>(1,n_letters()) ) );
 
     //------------- compute frequencies ------------------//
     pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
@@ -332,7 +332,7 @@ namespace substitution {
 
 
     //------------ compute transition rates -------------//
-    double g = get_parameter_value(0);
+    double g = get_parameter_value_as<Double>(0);
 
     valarray<double> nu_g(n_letters());
     for(int i=0;i<n_letters();i++)
@@ -359,7 +359,7 @@ namespace substitution {
 
   efloat_t TripletsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(get_parameter_values( range<int>(1,n_letters() ) ), 4.0);
+    return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1,n_letters() ) ), 4.0);
   }
 
   string TripletsFrequencyModel::name() const 
@@ -406,7 +406,7 @@ namespace substitution {
     }
 
     vector<Double> codon_parameters(n_letters()+1);
-    codon_parameters[0] = SubModels(0).get_parameter_value(0);
+    codon_parameters[0] = SubModels(0).get_parameter_value_as<Double>(0);
     set_varray(codon_parameters,1,pi);
 
     codons->set_parameter_values(codon_parameters);
@@ -438,10 +438,10 @@ namespace substitution {
 
   void CodonsFrequencyModel::recalc(const vector<int>&)
   {
-    double c = get_parameter_value(0);
+    double c = get_parameter_value_as<Double>(0);
 
     //------------- compute frequencies ------------------//
-    valarray<double> aa_pi = get_varray<double>(get_parameter_values( range<int>(2,aa_size()) ) );
+    valarray<double> aa_pi = get_varray<double>(get_parameter_values_as<Double>( range<int>(2,aa_size()) ) );
 
     // get codon frequencies of sub-alphabet
     valarray<double> sub_pi = SubModels(0).frequencies();
@@ -468,7 +468,7 @@ namespace substitution {
 
 
     //------------ compute transition rates -------------//
-    double h = get_parameter_value(1);
+    double h = get_parameter_value_as<Double>(1);
 
     valarray<double> factor_h(n_letters());
     for(int i=0;i<n_letters();i++)
@@ -486,7 +486,7 @@ namespace substitution {
 
   efloat_t CodonsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(get_parameter_values( range<int>(2, aa_size() ) ), 2.0);
+    return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(2, aa_size() ) ), 2.0);
   }
 
   string CodonsFrequencyModel::name() const 
@@ -515,7 +515,7 @@ namespace substitution {
   void CodonsFrequencyModel2::recalc(const vector<int>&)
   {
     //------------- compute frequencies ------------------//
-    valarray<double> aa_pref_ = get_varray<double>(get_parameter_values( range<int>(1,aa_size()) ) );
+    valarray<double> aa_pref_ = get_varray<double>(get_parameter_values_as<Double>( range<int>(1,aa_size()) ) );
 
     valarray<double> aa_pref(n_letters());
     for(int i=0;i<n_letters();i++)
@@ -533,7 +533,7 @@ namespace substitution {
 
 
     //------------ compute transition rates -------------//
-    double h = get_parameter_value(0);
+    double h = get_parameter_value_as<Double>(0);
 
     valarray<double> aa_pref_h(n_letters());
     for(int i=0;i<n_letters();i++)
@@ -551,7 +551,7 @@ namespace substitution {
 
   efloat_t CodonsFrequencyModel2::super_prior() const 
   {
-    return dirichlet_pdf(get_parameter_values( range<int>(1, aa_size() ) ), 2.0);
+    return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1, aa_size() ) ), 2.0);
   }
 
   string CodonsFrequencyModel2::name() const 
@@ -736,7 +736,7 @@ namespace substitution {
     const int N = n_states();
     assert(N == n_letters());
 
-    pi = get_varray<double>(get_parameter_values( range<int>(0,N) ) );
+    pi = get_varray<double>(get_parameter_values_as<Double>( range<int>(0,N) ) );
     pi /= pi.sum();
 
     for(int i=0;i<N;i++)
@@ -790,7 +790,7 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    Pr *= dirichlet_pdf(get_parameter_values( range<int>(0, n_letters()) ), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0, n_letters()) ), 1.0);
 
     return Pr;
   }
@@ -1157,7 +1157,7 @@ namespace substitution {
 
     n *= 4;
 
-    return dirichlet_pdf(get_parameter_values(), n);
+    return dirichlet_pdf(get_parameter_values_as<Double>(), n);
   }
 
   void GTR::recalc(const vector<int>&) 
@@ -1166,16 +1166,16 @@ namespace substitution {
 
     double total = 0;
     for(int i=0;i<6;i++)
-      total += get_parameter_value(i);
+      total += get_parameter_value_as<Double>(i);
 
-    S(0,1) = get_parameter_value(0)/total; // AG
-    S(0,2) = get_parameter_value(1)/total; // AT
-    S(0,3) = get_parameter_value(2)/total; // AC
+    S(0,1) = get_parameter_value_as<Double>(0)/total; // AG
+    S(0,2) = get_parameter_value_as<Double>(1)/total; // AT
+    S(0,3) = get_parameter_value_as<Double>(2)/total; // AC
 
-    S(1,2) = get_parameter_value(3)/total; // GT
-    S(1,3) = get_parameter_value(4)/total; // GC
+    S(1,2) = get_parameter_value_as<Double>(3)/total; // GT
+    S(1,3) = get_parameter_value_as<Double>(4)/total; // GC
 
-    S(2,3) = get_parameter_value(5)/total; // TC
+    S(2,3) = get_parameter_value_as<Double>(5)/total; // TC
   }
 
   GTR::GTR(const Nucleotides& N)
@@ -1247,7 +1247,7 @@ namespace substitution {
 
   /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
   double M0::omega() const {
-    return get_parameter_value(0);
+    return get_parameter_value_as<Double>(0);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
@@ -1589,7 +1589,7 @@ namespace substitution {
   void CAT_FixedFrequencyModel::recalc(const std::vector<int>&)
   {
     for(int i=0;i<fraction.size();i++)
-      fraction[i] = get_parameter_value(i);
+      fraction[i] = get_parameter_value_as<Double>(i);
   }
 
   const MultiModel::Base_Model_t& CAT_FixedFrequencyModel::base_model(int i) const {
@@ -1777,7 +1777,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   void MultiParameterModel::recalc_submodel_instances()
   {
     // recalc sub-models
-    vector<Double> params = SubModel().get_parameter_values();
+    vector<Double> params = SubModel().get_parameter_values_as<Double>();
     for(int b=0;b<fraction.size();b++) {
       sub_parameter_models[b] = &SubModel();
 
@@ -1802,7 +1802,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       if (p_change == -1)
 	p_values[m] = M.rate();
       else
-	p_values[m] = M.get_parameter_value(p_change);
+	p_values[m] = M.get_parameter_value_as<Double>(p_change);
 
     if (p_change != -1)
       SubModel().set_fixed(p_change,true);
@@ -1816,11 +1816,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // Prior on the fractions
     double n_f = 1.0 + p_values.size()/2.0;
-    Pr *= dirichlet_pdf(get_parameter_values( range<int>(0 ,p_values.size() ) ), n_f);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0 ,p_values.size() ) ), n_f);
 
     // Prior on the rates
     double n_r = 2.0; // + p_values.size()/2.0;
-    Pr *= dirichlet_pdf(get_parameter_values( range<int>(p_values.size(),p_values.size() ) ), n_r);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(p_values.size(),p_values.size() ) ), n_r);
 
     return Pr;
   }
@@ -1848,8 +1848,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // write parameter values to fraction / p_values
     for(int i=0;i<p_values.size();i++)
     {
-      fraction[i] = get_parameter_value(i);
-      p_values[i] = get_parameter_value(i+p_values.size());
+      fraction[i] = get_parameter_value_as<Double>(i);
+      p_values[i] = get_parameter_value_as<Double>(i+p_values.size());
     }
     
     // We need to do this when either P_values changes, or the SUBMODEL changes
@@ -1973,7 +1973,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   efloat_t WithINV::super_prior() const {
-    double p = get_parameter_value(0);
+    double p = get_parameter_value_as<Double>(0);
 
     if (is_fixed(0))
       return 1;
@@ -1997,7 +1997,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   vector<double> WithINV::distribution() const {
-    double p = get_parameter_value(0);
+    double p = get_parameter_value_as<Double>(0);
 
     vector<double> dist = SubModel().distribution();
     for(int i=0;i<dist.size();i++)
@@ -2046,7 +2046,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   void WithINV2::recalc(const vector<int>&) 
   {
-    double p = get_parameter_value(0);
+    double p = get_parameter_value_as<Double>(0);
 
     freq = (1-p)*VAR().frequencies() + p*INV().frequencies();
   }
@@ -2058,7 +2058,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   efloat_t WithINV2::super_prior() const 
   {
-    double p = get_parameter_value(0);
+    double p = get_parameter_value_as<Double>(0);
 
     if (is_fixed(0))
       return 1;
@@ -2082,7 +2082,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   vector<double> WithINV2::distribution() const {
-    double p = get_parameter_value(0);
+    double p = get_parameter_value_as<Double>(0);
 
     vector<double> dist = VAR().distribution();
     for(int i=0;i<dist.size();i++)
@@ -2116,13 +2116,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //-------------------- M2 --------------------//
   void M2::recalc(const vector<int>&) 
   {
-    fraction[0] = get_parameter_value(0);
-    fraction[1] = get_parameter_value(1);
-    fraction[2] = get_parameter_value(2);
+    fraction[0] = get_parameter_value_as<Double>(0);
+    fraction[1] = get_parameter_value_as<Double>(1);
+    fraction[2] = get_parameter_value_as<Double>(2);
 
     p_values[0] = 0;
     p_values[1] = 1;
-    p_values[2] = get_parameter_value(3);
+    p_values[2] = get_parameter_value_as<Double>(3);
 
     recalc_submodel_instances();
   }
@@ -2134,10 +2134,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     n[0] = 1;
     n[1] = 98;
     n[2] = 1;
-    efloat_t P = dirichlet_pdf(get_parameter_values( range<int>(0, 3) ), n);
+    efloat_t P = dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0, 3) ), n);
 
     // prior on omega
-    double omega = get_parameter_value(3);
+    double omega = get_parameter_value_as<Double>(3);
     if (not is_fixed(3))
       P *= exponential_pdf(log(omega),0.05)/omega;
     return P;
@@ -2152,7 +2152,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     add_super_parameter(Parameter("M2::f[AA INV]",   Double(1.0/3), between(0, 1)));
     add_super_parameter(Parameter("M2::f[Neutral]",  Double(1.0/3), between(0, 1)));
-    add_super_parameter(Parameter("M2::f[Selected]", Double(1.0 - get_parameter_value(0) - get_parameter_value(1)), between(0, 1)));
+    add_super_parameter(Parameter("M2::f[Selected]", Double(1.0 - get_parameter_value_as<Double>(0) - get_parameter_value_as<Double>(1)), between(0, 1)));
     add_super_parameter(Parameter("M2::omega", Double(1.0), lower_bound(0)));
 
     check();
@@ -2173,13 +2173,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //-------------------- M2a -------------------//
   void M2a::recalc(const vector<int>&) 
   {
-    fraction[0] = get_parameter_value(0);
-    fraction[1] = get_parameter_value(1);
-    fraction[2] = get_parameter_value(2);
+    fraction[0] = get_parameter_value_as<Double>(0);
+    fraction[1] = get_parameter_value_as<Double>(1);
+    fraction[2] = get_parameter_value_as<Double>(2);
 
-    p_values[0] = get_parameter_value(3);
+    p_values[0] = get_parameter_value_as<Double>(3);
     p_values[1] = 1;
-    p_values[2] = get_parameter_value(4);
+    p_values[2] = get_parameter_value_as<Double>(4);
 
     recalc_submodel_instances();
   }
@@ -2191,19 +2191,19 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     n[0] = 1;
     n[1] = 98;
     n[2] = 1;
-    efloat_t Pr = dirichlet_pdf(get_parameter_values( range<int>(0, 3) ), n);
+    efloat_t Pr = dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0, 3) ), n);
 
     // prior on omega1: log(omega1) = -Exponential(0.05), so omega1 \in [0,1]
     
     if (not is_fixed(3)) {
-      double omega1 = get_parameter_value(3);
+      double omega1 = get_parameter_value_as<Double>(3);
       Pr *= exponential_pdf(-log(omega1),0.05)/omega1;
     }
 
     // prior on omega3: log(omega3) = Exponential(0.05), so omega3 \in [1,\infty]
     if (not is_fixed(4))
     {
-      double omega3 = get_parameter_value(4);
+      double omega3 = get_parameter_value_as<Double>(4);
       Pr *= exponential_pdf(log(omega3),0.05)/omega3;
     }
 
@@ -2219,7 +2219,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     add_super_parameter(Parameter("M2a::f[AA INV]",   Double(1.0/3), between(0, 1)));
     add_super_parameter(Parameter("M2a::f[Neutral]",  Double(1.0/3), between(0, 1)));
-    add_super_parameter(Parameter("M2a::f[Selected]", Double(1.0 - get_parameter_value(0) - get_parameter_value(1)), between(0, 1)));
+    add_super_parameter(Parameter("M2a::f[Selected]", Double(1.0 - get_parameter_value_as<Double>(0) - get_parameter_value_as<Double>(1)), between(0, 1)));
     add_super_parameter(Parameter("M2a::omega1", Double(0.5), between(0,1)));
     add_super_parameter(Parameter("M2a::omega3", Double(2.0), lower_bound(1)));
 
@@ -2242,12 +2242,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     q[1] = 10; // Neutral
     q[2] = 1;  // Positive selection
     
-    efloat_t Pr = dirichlet_pdf(get_parameter_values( range<int>(0, 3) ), q);
+    efloat_t Pr = dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0, 3) ), q);
 
     // prior on omega3: log(omega3) = Exponential(0.05), so omega3 \in [1,\infty]
     if (not is_fixed(4))
     {
-      double omega3 = get_parameter_value(4);
+      double omega3 = get_parameter_value_as<Double>(4);
       Pr *= exponential_pdf(log(omega3),0.05)/omega3;
     }
 
@@ -2298,7 +2298,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     add_super_parameter(Parameter("M8b::f[Purifying]", Double(0.6), between(0, 1)));
     add_super_parameter(Parameter("M8b::f[Neutral]", Double(0.3), between(0, 1)));
-    add_super_parameter(Parameter("M8b::f[Positive]", Double(1.0 - get_parameter_value(0) - get_parameter_value(1)), between(0, 1)));
+    add_super_parameter(Parameter("M8b::f[Positive]", Double(1.0 - get_parameter_value_as<Double>(0) - get_parameter_value_as<Double>(1)), between(0, 1)));
     // there is no omega1 - instead the Purifying values come from the Beta distribution.
     add_super_parameter(Parameter("M8b::omega2", Double(1.0), true /* fixed */));
     add_super_parameter(Parameter("M8b::omega3", Double(2.0), lower_bound(1)));
@@ -2315,12 +2315,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // Get the discrete distribution on the 3 categories
     valarray<double> ff(3);
-    ff[0] = get_parameter_value(0); // f[Purifying]
-    ff[1] = get_parameter_value(1); // f[Neutral]
-    ff[2] = get_parameter_value(2); // f[Positive]
+    ff[0] = get_parameter_value_as<Double>(0); // f[Purifying]
+    ff[1] = get_parameter_value_as<Double>(1); // f[Neutral]
+    ff[2] = get_parameter_value_as<Double>(2); // f[Positive]
 
     // This will be either 0.0 or 1.0
-    double omega3_non_zero = get_parameter_value(5);
+    double omega3_non_zero = get_parameter_value_as<Double>(5);
 
     // If its 0.0, then act like ff[2] = 0
     // This allows us to decrease the dimension of the model, w/o removing
@@ -2346,7 +2346,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       else
       {
         fraction[i] = ff[i - nbin + 1];
-        p_values[i] = get_parameter_value(i - nbin + 1 + 2);
+        p_values[i] = get_parameter_value_as<Double>(i - nbin + 1 + 2);
       }
     }
 
@@ -2359,7 +2359,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //M3
 
   double M3::omega(int i) const {
-    return get_parameter_value(fraction.size() + i);
+    return get_parameter_value_as<Double>(fraction.size() + i);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
@@ -2372,10 +2372,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   void M3::recalc(const vector<int>&) 
   {
     for(int i=0;i<fraction.size();i++)
-      fraction[i] = get_parameter_value(i);
+      fraction[i] = get_parameter_value_as<Double>(i);
 
     for(int i=0;i<fraction.size();i++)
-      p_values[i] = get_parameter_value(fraction.size()+i);
+      p_values[i] = get_parameter_value_as<Double>(fraction.size()+i);
 
     recalc_submodel_instances();
   }
@@ -2410,7 +2410,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     if (n <= 1) return P;
 
     // prior on frequencies
-    P *= dirichlet_pdf(get_parameter_values( range<int>(0, n) ), 4.0);
+    P *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0, n) ), 4.0);
 
     // prior on omegas
     double f = 0.05/n;
@@ -2469,15 +2469,15 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     pi = 0;
     int sm_total = n_submodels();
     for(int sm=0;sm<sm_total;sm++)
-      pi += double(get_parameter_value(sm))*SubModels(sm).frequencies();
+      pi += double(get_parameter_value_as<Double>(sm))*SubModels(sm).frequencies();
   }
 
   efloat_t MixtureModel::super_prior() const 
   {
-    valarray<double> p = get_varray<double>(get_parameter_values( range<int>(0,n_submodels()) ) );
-    valarray<double> q = get_varray<double>(get_parameter_values( range<int>(n_submodels(), n_submodels()) ) );
+    valarray<double> p = get_varray<double>(get_parameter_values_as<Double>( range<int>(0,n_submodels()) ) );
+    valarray<double> q = get_varray<double>(get_parameter_values_as<Double>( range<int>(n_submodels(), n_submodels()) ) );
 
-    return dirichlet_pdf(get_parameter_values( range<int>(0, n_submodels()) ), 10.0*q);
+    return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0, n_submodels()) ), 10.0*q);
   }
 
   const MultiModel::Base_Model_t& MixtureModel::base_model(int m) const 
@@ -2519,7 +2519,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     vector<double> dist(n_base_models());
 
     for(int sm=0,m=0; sm<sm_total; sm++) {
-      double f = get_parameter_value(sm);
+      double f = get_parameter_value_as<Double>(sm);
       for(int i=0;i<SubModels(sm).n_base_models();i++)
 	dist[m++] = f*SubModels(0).distribution()[i];
     }

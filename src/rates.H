@@ -89,7 +89,7 @@ namespace substitution {
     /// Fraction of sub-distribution i
     double fraction(int i) const {
       assert(0 <= i and i < n_dists());
-      return get_parameter_value(i);
+      return get_parameter_value_as<Double>(i);
     }
 
     std::string name() const;
