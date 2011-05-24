@@ -370,7 +370,6 @@ void set_parameters(Parameters& P, const variables_map& args)
   }
 
   // set parameters
-  vector<Double> parameters = P.get_parameter_values();
   for(int i=0;i<doset.size();i++) {
     //parse
     vector<string> parse = split(doset[i],'=');
@@ -378,15 +377,16 @@ void set_parameters(Parameters& P, const variables_map& args)
       throw myexception()<<"Ill-formed initial condition '"<<doset[i]<<"'.";
 
     string name = parse[0];
-    double value = convertTo<double>(parse[1]);
+    Double value = convertTo<double>(parse[1]);
 
     int p=-1;
     if (p=parameter_with_extension(P,name),p!=-1)
-      parameters[p] = value;
+      P.set_parameter_value(p,value);
     else
       P.keys[name] = value;
   }
-  P.set_parameter_values(parameters);
+
+  P.recalc_all();
 }
 
 /// Close the files.
