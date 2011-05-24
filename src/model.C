@@ -106,14 +106,24 @@ int Model::add_parameter(const Parameter& P)
   return parameters_.size()-1;
 }
 
-std::vector<Double> Model::get_parameter_values() const
+std::vector< polymorphic_cow_ptr<Object> > Model::get_parameter_values() const
 {
-  return get_parameter_values_as<Double>();
+  std::vector< polymorphic_cow_ptr<Object> > values(n_parameters());
+
+  for(int i=0;i<values.size();i++)
+    values[i] = get_parameter_value(i);
+    
+  return values;  
 }
 
-std::vector<Double> Model::get_parameter_values(const std::vector<int>& indices) const
+std::vector< polymorphic_cow_ptr<Object> > Model::get_parameter_values(const std::vector<int>& indices) const
 {
-  return get_parameter_values_as<Double>(indices);
+  std::vector< polymorphic_cow_ptr<Object> > values(indices.size());
+    
+  for(int i=0;i<values.size();i++)
+    values[i] = get_parameter_value(indices[i]);
+  
+  return values;  
 }
 
 void Model::write_value(int i,polymorphic_cow_ptr<Object> value)
@@ -343,7 +353,7 @@ void SuperModel::read_from_submodel(int m)
 
       int s = model_slots_for_index[i][j].slot;
 
-      parameters_[i].value = polymorphic_cow_ptr<Object>( SubModels(m).get_parameter_value(s) );
+      parameters_[i].value = SubModels(m).get_parameter_value(s);
     }
   }
 }
@@ -375,10 +385,10 @@ void SuperModel::check() const
       if (arg_expressions[i].is_term_ref())
       {
 	int index = arg_expressions[i].parent_index;
-	assert(SubModels(m).get_parameter_value(i) == get_parameter_value(index));
+	assert(SubModels(m).get_parameter_value(i)->equals( *get_parameter_value(index)) );
       }
       else
-	assert(SubModels(m).get_parameter_value(i) == arg_expressions[i].constant_value );
+	assert(SubModels(m).get_parameter_value(i)->equals( *arg_expressions[i].constant_value ) );
     }
   }
 }
@@ -406,7 +416,13 @@ void show_parameters(std::ostream& o,const Model& M) {
     o<<"    ";
     if (M.is_fixed(i)) 
       o<<"*";
-    o<<M.parameter_name(i)<<" = "<<M.get_parameter_value(i);
+    o<<M.parameter_name(i)<<" = ";
+    if (M.parameter_has_type<Double>(i))
+      o<<M.get_parameter_value_as<Double>(i);
+    else if (M.parameter_has_type<Int>(i))
+      o<<M.get_parameter_value_as<Int>(i);
+    else
+      o<<"[unprintable]";
   }
   o<<"\n";
 }

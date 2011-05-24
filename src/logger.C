@@ -175,7 +175,12 @@ TableViewerFunction::TableViewerFunction(const owned_ptr<TableFunction<string> >
 
 double GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
-  return P->get_parameter_value(p);
+  if (P->parameter_has_type<Double>(p))
+    return P->get_parameter_value_as<Double>(p);
+  else if (P->parameter_has_type<Int>(p))
+    return P->get_parameter_value_as<Int>(p);
+  else
+    return -1;
 }
 
 string GetPriorFunction::operator()(const owned_ptr<Probability_Model>& P, long)

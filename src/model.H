@@ -193,10 +193,14 @@ public:
   void set_bounds(int i,const Bounds<double>& b) {parameters_[i].bounds = b;}
 
   /// Get A model parameter value
+  polymorphic_cow_ptr<Object> get_parameter_value(int i) const {return parameters_[i].value;}
+
   template <typename T>
-  const T& get_parameter_value_as(int i) const {return *dynamic_pointer_cast<T>(parameters_[i].value);}
+  bool parameter_has_type(int index) const {return dynamic_pointer_cast<T>(get_parameter_value(index));}
+
   /// Get A model parameter value
-  Double get_parameter_value(int i) const {return get_parameter_value_as<Double>(i);}
+  template <typename T>
+  const T& get_parameter_value_as(int i) const {return *dynamic_pointer_cast<T>(get_parameter_value(i));}
   /// Get SOME model parameter values
   template <typename T>
   std::vector<T> get_parameter_values_as(const std::vector<int>& indices) const
@@ -204,25 +208,26 @@ public:
     std::vector<T> values(indices.size());
     
     for(int i=0;i<values.size();i++)
-      values[i] = *dynamic_pointer_cast<const T>(parameters_[indices[i]].value);
+      values[i] = *dynamic_pointer_cast<const T>(get_parameter_value(indices[i]));
     
     return values;  
   }
   /// Get SOME model parameter values
-  std::vector<Double> get_parameter_values(const std::vector<int>&) const;
+  std::vector<polymorphic_cow_ptr<Object> > get_parameter_values(const std::vector<int>&) const;
+
   /// Get ALL model parameter values
   template <typename T>
   std::vector<T> get_parameter_values_as() const
   {
-    std::vector<Double> values(n_parameters());
+    std::vector<T> values(n_parameters());
     
     for(int i=0;i<values.size();i++)
-      values[i] = *dynamic_pointer_cast<const T>(parameters_[i].value);
+      values[i] = get_parameter_value_as<T>(i);
     
     return values;  
   }
   /// Get ALL model parameter values
-  std::vector<Double> get_parameter_values() const;
+  std::vector<polymorphic_cow_ptr<Object> > get_parameter_values() const;
 
   /// Store ONE parameter value down into submodels
   virtual void write_value(int i,polymorphic_cow_ptr<Object>  p);
@@ -285,12 +290,12 @@ public:
 struct arg_expression
 {
   int parent_index;
-  Double constant_value;
+  polymorphic_cow_ptr<Object> constant_value;
   bool is_constant() const {return parent_index == -1;}
   bool is_term_ref() const {return parent_index != -1;}
 
-  arg_expression():parent_index(-1),constant_value(0) {}
-  arg_expression(int i):parent_index(i),constant_value(0) {}
+  arg_expression():parent_index(-1) {}
+  arg_expression(int i):parent_index(i) {}
 };
 
 struct model_slot
