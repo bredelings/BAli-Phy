@@ -1294,11 +1294,6 @@ int main(int argc,char* argv[])
     // read and store partitions and weights, if any.
     setup_partition_weights(args,P);
 
-    //----- Initialize Likelihood caches and character index caches -----//
-
-    // Why do we need to do this, again?
-    P.recalc_all();
-
     //---------------Do something------------------//
     if (args.count("show-only"))
     {
