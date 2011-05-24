@@ -1777,15 +1777,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   void MultiParameterModel::recalc_submodel_instances()
   {
     // recalc sub-models
-    vector<Double> params = SubModel().get_parameter_values_as<Double>();
     for(int b=0;b<fraction.size();b++) {
       sub_parameter_models[b] = &SubModel();
 
       if (p_change == -1)
 	sub_parameter_models[b]->set_rate(p_values[b]);
       else {
-	params[p_change] = p_values[b];
-	sub_parameter_models[b]->set_parameter_values(params);
+	sub_parameter_models[b]->set_parameter_value(p_change, p_values[b]);
       }
     }
   }
