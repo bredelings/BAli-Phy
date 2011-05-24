@@ -193,14 +193,17 @@ public:
   void set_bounds(int i,const Bounds<double>& b) {parameters_[i].bounds = b;}
 
   /// Get A model parameter value
-  polymorphic_cow_ptr<Object> get_parameter_value(int i) const {return parameters_[i].value;}
+  boost::shared_ptr<const Object> get_parameter_value(int i) const {return parameters_[i].value;}
 
   template <typename T>
-  bool parameter_has_type(int index) const {return dynamic_pointer_cast<T>(get_parameter_value(index));}
+  bool parameter_has_type(int index) const {return dynamic_pointer_cast<const T>(get_parameter_value(index));}
 
   /// Get A model parameter value
   template <typename T>
-  const T& get_parameter_value_as(int i) const {return *dynamic_pointer_cast<T>(get_parameter_value(i));}
+  const T& get_parameter_value_as(int i) const {
+    const Object& O = *get_parameter_value(i);
+    return dynamic_cast<const T&>(O);
+  }
   /// Get SOME model parameter values
   template <typename T>
   std::vector<T> get_parameter_values_as(const std::vector<int>& indices) const
@@ -208,10 +211,11 @@ public:
     std::vector<T> values(indices.size());
     
     for(int i=0;i<values.size();i++)
-      values[i] = *dynamic_pointer_cast<const T>(get_parameter_value(indices[i]));
+      values[i] = get_parameter_value_as<const T>(indices[i]);
     
     return values;  
   }
+
   /// Get SOME model parameter values
   std::vector<polymorphic_cow_ptr<Object> > get_parameter_values(const std::vector<int>&) const;
 
@@ -230,12 +234,12 @@ public:
   std::vector<polymorphic_cow_ptr<Object> > get_parameter_values() const;
 
   /// Store ONE parameter value down into submodels
-  virtual void write_value(int i,polymorphic_cow_ptr<Object>  p);
+  virtual void write_value(int i, const polymorphic_cow_ptr<Object>& p);
 
   /// Set A model parameter value
           void set_parameter_value(int p,Double value);
   /// Set A model parameter value
-          void set_parameter_value(int p,polymorphic_cow_ptr<Object> value);
+          void set_parameter_value(int p,const polymorphic_cow_ptr<Object>& value);
   /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
   /// Set SOME of the model parameter values
@@ -339,7 +343,7 @@ protected:
   /// Propagate changes to child model parameters down to child Model objects.
   void write();
   /// Store ONE parameter value down into submodels
-  void write_value(int i,polymorphic_cow_ptr<Object>  p);
+  void write_value(int i, const polymorphic_cow_ptr<Object>& p);
 
 public:
   /// Make a copy of ourselves

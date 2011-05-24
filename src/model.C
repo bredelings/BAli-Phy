@@ -126,7 +126,7 @@ std::vector< polymorphic_cow_ptr<Object> > Model::get_parameter_values(const std
   return values;  
 }
 
-void Model::write_value(int i,polymorphic_cow_ptr<Object> value)
+void Model::write_value(int i,const polymorphic_cow_ptr<Object>& value)
 {
   parameters_[i].value = value;
   modify_parameter(i);
@@ -137,7 +137,7 @@ void Model::set_parameter_value(int i,Double value)
   set_parameter_value(i, polymorphic_cow_ptr<Object>(value) );
 }
 
-void Model::set_parameter_value(int i,polymorphic_cow_ptr<Object> value) 
+void Model::set_parameter_value(int i,const polymorphic_cow_ptr<Object>& value) 
 {
   set_parameter_values(vector<int>(1,i), vector< polymorphic_cow_ptr<Object> >(1, value) );
 }
@@ -317,7 +317,7 @@ int SuperModel::register_submodel(const string& prefix)
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
-void SuperModel::write_value(int index, polymorphic_cow_ptr<Object> p)
+void SuperModel::write_value(int index, const polymorphic_cow_ptr<Object>& p)
 {
   assert(index < n_parameters());
 
