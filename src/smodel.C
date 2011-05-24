@@ -904,19 +904,31 @@ namespace substitution {
       
   //----------------------- EQU -------------------------//
 
+  const alphabet& EQU::Alphabet() const
+  {
+    return get_parameter_value_as<alphabet>(0);
+  }
+
   string EQU::name() const {
     return "EQU";
   }
 
   EQU::EQU(const alphabet& a) 
-    :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
+    :AlphabetExchangeModel(a)
   {
+    add_parameter(Parameter("alphabet", a));
+
     for(int i=0;i<n_states();i++)
       for(int j=0;j<n_states();j++)
 	S(i,j) = 1;
   }
 
   //----------------------- Empirical -------------------------//
+
+  const alphabet& Empirical::Alphabet() const
+  {
+    return get_parameter_value_as<alphabet>(0);
+  }
 
   void Empirical::load_file(const string& filename) 
   {
@@ -942,13 +954,17 @@ namespace substitution {
 
   /// Construct an Empirical model on alphabet \a a
   Empirical::Empirical(const alphabet& a) 
-    :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a)
-  { }
+    :AlphabetExchangeModel(a)
+  { 
+    add_parameter(Parameter("alphabet",a));
+  }
 
   /// Construct an Empirical model on alphabet \a a with name \n
   Empirical::Empirical(const alphabet& a,const string& n) 
-    :AlphabetExchangeModel(a),ModelWithAlphabet<alphabet>(a),name_(n)
-  { }
+    :AlphabetExchangeModel(a),name_(n)
+  { 
+    add_parameter(Parameter("alphabet",a));
+  }
 
   PAM::PAM()
     :Empirical(AminoAcids(),"PAM")

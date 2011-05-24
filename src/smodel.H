@@ -309,11 +309,13 @@ namespace substitution {
 
   /// The EQU model for any alphabet - all letters are treated the same
   /// This model has no parameters
-  class EQU: public AlphabetExchangeModel,public ModelWithAlphabet<alphabet> 
+  class EQU: public AlphabetExchangeModel
   {
   public:
 
     virtual EQU* clone() const {return new EQU(*this);}
+
+    const alphabet& Alphabet() const;
 
     string name() const;
 
@@ -325,7 +327,7 @@ namespace substitution {
   //------------------ Empirical Substitution Model ---------------------//
 
   /// A generic model for any alphabet - the exchangeability matrix is loaded from a file
-  class Empirical: public AlphabetExchangeModel,public ModelWithAlphabet<alphabet> 
+  class Empirical: public AlphabetExchangeModel
   {
     /// Specificy this model based on the matrix that was loaded
     string name_;
@@ -338,6 +340,8 @@ namespace substitution {
     void load_file(const string& filename);
 
     virtual Empirical* clone() const {return new Empirical(*this);}
+
+    const alphabet& Alphabet() const;
 
     string name() const {return name_;}
 
