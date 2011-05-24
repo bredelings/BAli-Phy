@@ -55,6 +55,41 @@ void Model::validate() const
     parameters_[i].changed = false;
 }
 
+void Model::invalidate() const
+{
+  valid = false;
+}
+
+void Model::modify_parameter(int i) const
+{
+  parameters_[i].changed = true;
+
+  invalidate();
+}
+
+void Model::modify_parameters(const vector<int>& indices)
+{
+  for(int i=0;i<indices.size();i++)
+    modify_parameter(indices[i]);
+}
+
+void Model::modify_all_parameters() const
+{
+  for(int i=0;i<n_parameters();i++)
+    modify_parameter(i);
+}
+
+vector<int> Model::modified_parameters() const
+{
+  vector<int> changed;
+
+  for(int i=0;i<n_parameters();i++)
+    if (parameters_[i].changed)
+      changed.push_back(i);
+
+  return changed;
+}
+
 void Model::recalc_all() 
 {
   recalc(iota<int>(n_parameters()));
@@ -120,9 +155,12 @@ void Model::set_parameter_values_(const vector<int>& indices,vector<polymorphic_
   assert(indices.size() <= parameters_.size());
 
   for(int i=0;i<indices.size();i++,p++)
+  {
     parameters_[indices[i]].value = *p;
+    modify_parameter(indices[i]);
+  }
 
-  recalc(indices);
+  recalc(modified_parameters());
   validate();
 }
 
@@ -139,11 +177,7 @@ void Model::update() const
 {
   if (not is_valid())
   {
-    vector<int> changed;
-    for(int i=0;i<n_parameters();i++)
-      if (parameters_[i].changed)
-	changed.push_back(i);
-    //    recalc(changed);
+    //    recalc(modified_parameters());
     validate();
   }
 }

@@ -102,6 +102,7 @@ struct Parameter
 // 3. go, break all the models by moving their functionality
 //    to a result type.
 // 4.  This will identify the callers that need to be fixed.
+// E-mail sibon.
 
 
 // Rewrite:
@@ -154,6 +155,17 @@ protected:
 
   void validate() const;
 
+  void invalidate() const;
+
+  /// Mark this parameter as being possibly different than the last computed value
+  void modify_parameter(int) const;
+  /// Mark these parameters as being possibly different than the last computed value
+  void modify_parameters(const std::vector<int>&);
+  /// Mark all parameters as being possibly different than the last computed value
+  void modify_all_parameters() const;
+  /// Which parameters have been modified?
+  std::vector<int> modified_parameters() const;
+
   virtual int add_parameter(const Parameter&);
   
   /// \brief Recalculate internal data based on current parameters
@@ -163,7 +175,7 @@ protected:
 
 public:
   /// Recalculate all internal data based on current parameters
-  virtual void recalc_all();
+  void recalc_all();
 
   /// Make a copy of this object
   virtual Model* clone() const =0;
