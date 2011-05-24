@@ -116,6 +116,11 @@ std::vector<Double> Model::get_parameter_values(const std::vector<int>& indices)
   return get_parameter_values_as<Double>(indices);
 }
 
+void Model::write_value(int i,polymorphic_cow_ptr<Object>  p)
+{
+  std::abort();
+}
+
 void Model::set_parameter_value(int i,Double value) 
 {
   set_parameter_value(i, polymorphic_cow_ptr<Object>(value) );

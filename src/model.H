@@ -224,6 +224,9 @@ public:
   /// Get ALL model parameter values
   std::vector<Double> get_parameter_values() const;
 
+  /// Store ONE parameter value down into submodels
+  virtual void write_value(int i,polymorphic_cow_ptr<Object>  p);
+
   /// Set A model parameter value
           void set_parameter_value(int p,Double value);
   /// Set A model parameter value
