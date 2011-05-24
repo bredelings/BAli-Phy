@@ -254,7 +254,7 @@ public:
   boost::shared_ptr<const Object> evaluate() const;
 
   bool is_valid() const {return valid;}
-  void update();
+  virtual void update();
 
   /// Construct an empty model
   Model();
