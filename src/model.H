@@ -51,6 +51,7 @@ struct Parameter
   polymorphic_cow_ptr<Object> value;
   Bounds<double> bounds;
   bool fixed;
+  mutable bool changed;
 
   Parameter(const std::string&, const Object&);
   Parameter(const std::string&, const Object&, bool);
@@ -142,10 +143,12 @@ struct Parameter
 class Model: public Object
 {
 protected:
-  bool valid;
+  mutable bool valid;
 
   /// Parameter values
   std::vector< Parameter > parameters_;
+
+  void validate() const;
 
   virtual int add_parameter(const Parameter&);
   

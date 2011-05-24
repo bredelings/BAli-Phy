@@ -34,23 +34,31 @@ string parameter_name(const string& prefix, int i,int n)
 }
 
 Parameter::Parameter(const string& n, const Object& v)
-  :name(n), value(v), fixed(false)
+  :name(n), value(v), fixed(false), changed(true)
 {
 }
 
 Parameter::Parameter(const string& n, const Object& v, bool f)
-  :name(n), value(v), fixed(f)
+  :name(n), value(v), fixed(f), changed(true)
 {
 }
 
 Parameter::Parameter(const string& n, const Object& v, const Bounds<double>& b, bool f)
-  :name(n), value(v), bounds(b), fixed(f)
+  :name(n), value(v), bounds(b), fixed(f), changed(true)
 {
+}
+
+void Model::validate() const
+{
+  valid = true;
+  for(int i=0;i<n_parameters();i++)
+    parameters_[i].changed = false;
 }
 
 void Model::recalc_all() 
 {
   recalc(iota<int>(n_parameters()));
+  validate();
 }
 
 int Model::add_parameter(const Parameter& P)
@@ -115,6 +123,7 @@ void Model::set_parameter_values_(const vector<int>& indices,vector<polymorphic_
     parameters_[indices[i]].value = *p;
 
   recalc(indices);
+  validate();
 }
 
 Model::Model()
@@ -128,6 +137,15 @@ boost::shared_ptr<const Object> Model::evaluate() const
 
 void Model::update() const
 {
+  if (not is_valid())
+  {
+    vector<int> changed;
+    for(int i=0;i<n_parameters();i++)
+      if (parameters_[i].changed)
+	changed.push_back(i);
+    //    recalc(changed);
+    validate();
+  }
 }
 
 int SuperModel::add_parameter(const Parameter& P)
@@ -383,6 +401,7 @@ void SuperModel::set_parameter_values_(const vector<int>& indices,vector<polymor
   write_values(indices,p);
 
   recalc(indices);
+  validate();
 }
 
 void SuperModel::check() const
@@ -407,6 +426,10 @@ void SuperModel::check() const
 
 void SuperModel::update() const
 {
+  for(int i=0;i<n_submodels();i++)
+    SubModels(i).update();
+
+  Model::update();
 }
 
 SuperModel::SuperModel()
