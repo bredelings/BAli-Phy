@@ -1267,6 +1267,8 @@ namespace substitution {
     static const double inv_frac_mean;
     static const double max_inv_rate;
 
+    int p_index;
+
     owned_ptr<SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> > INV;
 
   public:

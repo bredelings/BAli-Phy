@@ -232,32 +232,10 @@ int SuperModel::n_super_parameters() const
 // apparent the super-parameters are the first ones
 int SuperModel::add_super_parameter(const Parameter& P)
 {
-  // skip initial super-only parameters
-  int I=0;
-  while(I < n_parameters() and
-	model_slots_for_index[I].size() == 1 and 
-	is_super_parameter(I))
-    I++;
+  int index = add_parameter(P);
+  model_slots_for_index[index].push_back(model_slot());
 
-  // Add the new parameter and shift the ones after it
-  parameters_.insert(parameters_.begin()+I           ,P);
-
-  // Register the new parameter as being used at the top level, and shift the ones after it
-  model_slots_for_index.insert(model_slots_for_index.begin()+I     ,vector<model_slot>(1,model_slot()) );
-
-  // For each model...
-  for(int m=0;m < n_submodels(); m++)
-  {
-    // ... for each of its arguments ...
-    vector<arg_expression>& slot_expressions = slot_expressions_for_submodel[m];
-    for(int i=0;i < slot_expressions.size(); i++)
-      // ... that takes its value from a top-level variable that is affected ...
-      if (slot_expressions[i].is_term_ref() and slot_expressions[i].parent_index >= I)
-	// ... correct the reference to the parent index.
-	slot_expressions[i].parent_index++;
-  }
-
-  return I;
+  return index;
 }
 
 int SuperModel::register_last_submodel(const vector<arg_expression>& args)

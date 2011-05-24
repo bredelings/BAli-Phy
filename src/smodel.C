@@ -2005,9 +2005,9 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   efloat_t WithINV::super_prior() const {
-    double p = get_parameter_value_as<Double>(0);
+    double p = get_parameter_value_as<Double>(p_index);
 
-    if (is_fixed(0))
+    if (is_fixed(p_index))
       return 1;
     else
       return beta_pdf(p, 1, 2);
@@ -2029,7 +2029,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   vector<double> WithINV::distribution() const {
-    double p = get_parameter_value_as<Double>(0);
+    double p = get_parameter_value_as<Double>(p_index);
 
     vector<double> dist = SubModel().distribution();
     for(int i=0;i<dist.size();i++)
@@ -2043,7 +2043,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     :ReversibleWrapperOver<MultiModel>(M),
      INV(SimpleReversibleMarkovModel(INV_Model(M.Alphabet())))
   {
-    add_super_parameter(Parameter("INV::p", Double(0.01), between(0, 1)));
+    p_index = add_super_parameter(Parameter("INV::p", Double(0.01), between(0, 1)));
 
     check();
     recalc_all();
