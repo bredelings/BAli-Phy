@@ -116,9 +116,10 @@ std::vector<Double> Model::get_parameter_values(const std::vector<int>& indices)
   return get_parameter_values_as<Double>(indices);
 }
 
-void Model::write_value(int i,polymorphic_cow_ptr<Object>  p)
+void Model::write_value(int i,polymorphic_cow_ptr<Object> value)
 {
-  std::abort();
+  parameters_[i].value = value;
+  modify_parameter(i);
 }
 
 void Model::set_parameter_value(int i,Double value) 
@@ -164,11 +165,8 @@ void Model::set_parameter_values_(const vector<int>& indices,vector<polymorphic_
 {
   assert(indices.size() <= parameters_.size());
 
-  for(int i=0;i<indices.size();i++,p++)
-  {
-    parameters_[indices[i]].value = *p;
-    modify_parameter(indices[i]);
-  }
+  for(int i=0;i<indices.size();i++)
+    write_value(indices[i],*(p+i));
 
   update();
 }
@@ -320,8 +318,7 @@ void SuperModel::write_value(int index, polymorphic_cow_ptr<Object> p)
 {
   assert(index < n_parameters());
 
-  parameters_[index].value = p;
-  modify_parameter(index);
+  Model::write_value(index, p);
 
   const vector<model_slot>& model_slots = model_slots_for_index[index];
 
