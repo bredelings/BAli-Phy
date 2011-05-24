@@ -22,6 +22,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <boost/shared_ptr.hpp>
 
+using boost::const_pointer_cast;
+
 /// A copy-on-write pointer class that stores X objects exactly: NOT objects derived from X
 template <class X> class cow_ptr
 {
@@ -29,7 +31,7 @@ private:
   boost::shared_ptr<X> data;
 
   // create a new copy of data = make a direct copy otherwise
-  void copy()                            
+  void copy()
   {
     if (not data.unique()) {
       X* data_old = data.get();
@@ -57,7 +59,7 @@ public:
     
   X& operator*()                          {assert(data); copy(); return *data;}
   X* operator->()                         {assert(data); copy(); return data.get();}
-  X* get()                                {assert(data); copy(); return data.get();}
+  X* modify()                             {assert(data); copy(); return data.get();}
 
   void reset()
   {
@@ -74,6 +76,11 @@ public:
     return data == 0? 0: &this_type::copy;
   }
 
+  operator boost::shared_ptr<const X>() const
+  {
+    return data;
+  }
+
   long use_count() const
   {
     return data.use_count();
@@ -87,12 +94,19 @@ public:
 
   cow_ptr& operator=(const cow_ptr& r)
   {
-    if (this != &r)
-      data = r.data;
+    data = r.data;
+    return *this;
+  }
+
+  cow_ptr& operator=(const boost::shared_ptr<const X>& r)
+  {
+    data = const_pointer_cast<X>(r);
     return *this;
   }
 
   cow_ptr(const cow_ptr& r) throw()             : data(r.data) {}
+
+  cow_ptr(boost::shared_ptr<const X> p) : data(const_pointer_cast<X>(p)) {}
 
   explicit cow_ptr(X* p = 0) throw()            : data(p) {}
 
@@ -119,7 +133,7 @@ private:
   boost::shared_ptr<X> data;
 
   // create a new copy of data = make a direct copy otherwise
-  void copy()                            
+  void copy()
   {
     if (not data.unique()) {
       X* data_old = data.get();
@@ -147,7 +161,7 @@ public:
     
   X& operator*()                          {assert(data); copy(); return *data;}
   X* operator->()                         {assert(data); copy(); return data.get();}
-  X* get()                                {assert(data); copy(); return data.get();}
+  X* modify()                             {assert(data); copy(); return data.get();}
 
   void reset()
   {
@@ -164,6 +178,11 @@ public:
     return data == 0? 0: &this_type::copy;
   }
 
+  operator boost::shared_ptr<const X>() const
+  {
+    return data;
+  }
+
   long use_count() const
   {
     return data.use_count();
@@ -177,12 +196,19 @@ public:
 
   polymorphic_cow_ptr& operator=(const polymorphic_cow_ptr& r)
   {
-    if (this != &r)
-      data = r.data;
+    data = r.data;
+    return *this;
+  }
+
+  polymorphic_cow_ptr& operator=(const boost::shared_ptr<const X>& r)
+  {
+    data = const_pointer_cast<X>(r);
     return *this;
   }
 
   polymorphic_cow_ptr(const polymorphic_cow_ptr& r) throw()             : data(r.data) {}
+
+  polymorphic_cow_ptr(boost::shared_ptr<const X> p) : data(const_pointer_cast<X>(p)) {}
 
   template <typename Y> friend class polymorphic_cow_ptr;
 
