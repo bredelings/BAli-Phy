@@ -160,8 +160,7 @@ void Model::set_parameter_values_(const vector<int>& indices,vector<polymorphic_
     modify_parameter(indices[i]);
   }
 
-  recalc(modified_parameters());
-  validate();
+  update();
 }
 
 Model::Model()
@@ -173,11 +172,11 @@ boost::shared_ptr<const Object> Model::evaluate() const
   return boost::shared_ptr<const Object>(clone());
 }
 
-void Model::update() const
+void Model::update()
 {
   if (not is_valid())
   {
-    //    recalc(modified_parameters());
+    recalc(modified_parameters());
     validate();
   }
 }
@@ -312,6 +311,7 @@ void SuperModel::write_value(int index, Double p)
   assert(index < n_parameters());
 
   parameters_[index].value = polymorphic_cow_ptr<Object>(p);
+  modify_parameter(index);
 
   const vector<model_slot>& model_slots = model_slots_for_index[index];
 
@@ -345,6 +345,7 @@ void SuperModel::write_values(const vector<int>& indices,vector<polymorphic_cow_
 
     // set the values
     parameters_[index].value = value;
+    modify_parameter(index);
 
     // record the revelant slots and values for each submodel
     for(int j=0;j<model_slots_for_index[index].size();j++)
@@ -434,8 +435,7 @@ void SuperModel::set_parameter_values_(const vector<int>& indices,vector<polymor
 
   write_values(indices,p);
 
-  recalc(indices);
-  validate();
+  update();
 }
 
 void SuperModel::check() const
@@ -458,7 +458,7 @@ void SuperModel::check() const
   }
 }
 
-void SuperModel::update() const
+void SuperModel::update()
 {
   for(int i=0;i<n_submodels();i++)
     SubModels(i).update();
