@@ -117,9 +117,17 @@ void Model::set_parameter_values_(const vector<int>& indices,vector<polymorphic_
   recalc(indices);
 }
 
+Model::Model()
+  :valid(true)
+{ }
+
 boost::shared_ptr<const Object> Model::evaluate() const
 {
   return boost::shared_ptr<const Object>(clone());
+}
+
+void Model::update() const
+{
 }
 
 int SuperModel::add_parameter(const Parameter& P)
@@ -395,6 +403,10 @@ void SuperModel::check() const
 	assert(SubModels(m).get_parameter_value(i) == arg_expressions[i].constant_value );
     }
   }
+}
+
+void SuperModel::update() const
+{
 }
 
 SuperModel::SuperModel()

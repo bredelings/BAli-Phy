@@ -142,6 +142,8 @@ struct Parameter
 class Model: public Object
 {
 protected:
+  bool valid;
+
   /// Parameter values
   std::vector< Parameter > parameters_;
 
@@ -159,7 +161,7 @@ public:
   /// Make a copy of this object
   virtual Model* clone() const =0;
 
-  /// the prior for the model, on the same scale as 'fiddle()'
+  /// the prior for the model, on the same scale as proposal densities
   virtual efloat_t prior() const {return 1.0;}
 
   /// Names of the parameters
@@ -229,8 +231,11 @@ public:
   // Evaluate the model and return the result
   boost::shared_ptr<const Object> evaluate() const;
 
+  bool is_valid() const {return valid;}
+  virtual void update() const;
+
   /// Construct an empty model
-  Model() {}
+  Model();
 
   virtual ~Model() {};
 };
@@ -350,6 +355,8 @@ public:
   int n_submodels() const;
 
   void check() const;
+
+  virtual void update() const;
 
   SuperModel();
 };
