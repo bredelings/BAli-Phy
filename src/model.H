@@ -97,7 +97,11 @@ struct Parameter
 //        \|
 //         B-model
 //
-
+// 1. Convert to lazy calculation
+// 2. make alphabets a model argument
+// 3. go, break all the models by moving their functionality
+//    to a result type.
+// 4.  This will identify the callers that need to be fixed.
 
 
 // Rewrite:
