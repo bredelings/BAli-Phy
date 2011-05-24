@@ -64,9 +64,14 @@ public:
     data.reset();
   }
 
-  operator bool() const
+  // For conversion to unspecified bool
+  typedef cow_ptr<X> this_type;
+
+  typedef void (this_type::*unspecified_bool_type)();
+
+  operator unspecified_bool_type() const // never throws
   {
-    return data;
+    return data == 0? 0: &this_type::copy;
   }
 
   long use_count() const
@@ -149,9 +154,14 @@ public:
     data.reset();
   }
 
-  operator bool() const
+  // For conversion to unspecified bool
+  typedef polymorphic_cow_ptr<X> this_type;
+
+  typedef void (this_type::*unspecified_bool_type)();
+
+  operator unspecified_bool_type() const // never throws
   {
-    return data;
+    return data == 0? 0: &this_type::copy;
   }
 
   long use_count() const

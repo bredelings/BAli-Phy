@@ -90,9 +90,13 @@ public:
   }
 
   /// Check if non-NULL
-  operator bool() const
+  typedef owned_ptr<X> this_type;
+
+  typedef X * (this_type::*unspecified_bool_type)() const;
+
+  operator unspecified_bool_type() const // never throws
   {
-    return data;
+    return data == 0? 0: &this_type::get;
   }
 
   /// Check if NULL
