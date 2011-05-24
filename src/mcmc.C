@@ -382,6 +382,8 @@ namespace MCMC {
     bool in_range = true;
     for(int i=0;i<P->n_parameters();i++)
     {
+      if (not P->parameter_has_type<Double>(i)) continue;
+	
       Bounds<double> range = P->get_bounds(i);
       if (not range.in_range(P->get_parameter_value_as<Double>(i)))
 	throw myexception()<<"Parameter "<<P->parameter_name(i)<<" = "<<P->get_parameter_value_as<Double>(i)<<" is NOT in range "<<range;
