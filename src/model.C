@@ -274,7 +274,7 @@ int SuperModel::register_last_submodel(const vector<arg_expression>& args)
     }
 
   // Set the submodel parameters
-  write_to_submodel(m_index);
+  write();
 
   return m_index;
 }
@@ -344,72 +344,14 @@ void SuperModel::write_value(int index, polymorphic_cow_ptr<Object> p)
 /// \todo This only writes the VALUES I think.
 void SuperModel::write_values(const vector<int>& indices,vector<polymorphic_cow_ptr<Object> >::const_iterator& p)
 {
-  vector<vector<int> > model_slots(n_submodels());
-  vector<vector<polymorphic_cow_ptr<Object> > > model_values(n_submodels());
-
-  // Set the parameter values in the top level
   for(int i=0;i<indices.size();i++)
-  {
-    int index = indices[i];
-    polymorphic_cow_ptr<Object> value = *(p+i);
-
-    // check that all the indices are in range
-    assert(index < n_parameters());
-
-    // set the values
-    parameters_[index].value = value;
-    modify_parameter(index);
-
-    // record the revelant slots and values for each submodel
-    for(int j=0;j<model_slots_for_index[index].size();j++)
-    {
-      int m = model_slots_for_index[index][j].model_index;
-      int s = model_slots_for_index[index][j].slot;
-
-      if (m != -1)
-      {
-	model_slots[m].push_back(s);
-	model_values[m].push_back(value);
-      }
-    }
-  }
-
-  // Write the changes down into submodels AND recalculate them.
-  for(int m=0;m < n_submodels();m++)
-  {
-    if (not model_slots.size()) continue;
-
-    SubModels(m).set_parameter_values(model_slots[m], model_values[m]);
-  }
+    write_value(indices[i],*(p+i));
 }
 
 void SuperModel::write() 
 {
-  for(int m=0;m<n_submodels(); m++)
-    write_to_submodel(m);
-}
-
-void SuperModel::write_to_submodel(int m) 
-{
-  // Read the current argument lists for each sub-model
-  vector<Double> sub_args = SubModels(m).get_parameter_values();
-
-  // Determine how these arguments should be computed from top level parameters
-  const vector<arg_expression>& arg_expressions = slot_expressions_for_submodel[m];
-
-  // Modify the sub_args
-  for(int i=0;i<arg_expressions.size();i++)
-  {
-    if (arg_expressions[i].is_term_ref())
-    {
-      int index = arg_expressions[i].parent_index;
-      sub_args[i] = get_parameter_value(index);
-    }
-    else
-      sub_args[i] = arg_expressions[i].constant_value;
-  }
-
-  SubModels(m).set_parameter_values(sub_args);
+  for(int i=0;i<n_parameters();i++)
+    write_value(i, parameters_[i].value);
 }
 
 void SuperModel::read_from_submodel(int m)

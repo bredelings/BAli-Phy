@@ -332,8 +332,6 @@ protected:
   void read_from_submodel(int);
   /// Propagate changes to child model parameters down to child Model objects.
   void write();
-  /// Propagate changes to child model parameters down to child Model objects.
-  void write_to_submodel(int m);
   /// Store ONE parameter value down into submodels
   void write_value(int i,Double p);
   /// Store ONE parameter value down into submodels
