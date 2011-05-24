@@ -170,6 +170,10 @@ namespace substitution {
     recalc_all();
   }
 
+  const alphabet& SimpleFrequencyModel::Alphabet() const
+  {
+    return get_parameter_value_as<alphabet>(1);
+  }
 
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
   {
@@ -177,7 +181,7 @@ namespace substitution {
 
     // set the frequency parameters
     for(int i=0;i<n_letters();i++)
-      parameters_[i+1].value = polymorphic_cow_ptr<Object>( Double(pi2[i]) );
+      parameters_[i+2].value = polymorphic_cow_ptr<Object>( Double(pi2[i]) );
 
     // recompute everything
     recalc_all();
@@ -186,7 +190,7 @@ namespace substitution {
   void SimpleFrequencyModel::recalc(const vector<int>&)
   {
     // compute frequencies
-    pi = get_varray<double>( get_parameter_values_as<Double>( range<int>(1,n_letters()) ) );
+    pi = get_varray<double>( get_parameter_values_as<Double>( range<int>(2,n_letters()) ) );
     pi /= pi.sum();
     
     // compute transition rates
@@ -209,7 +213,7 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1, n_letters() ) ), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(2, n_letters() ) ), 1.0);
 
     return Pr;
   }
@@ -223,12 +227,13 @@ namespace substitution {
   }
   
   SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a)
-    :ReversibleFrequencyModel(a),
-     ModelWithAlphabet<alphabet>(a)
+    :ReversibleFrequencyModel(a)
   {
     // Start with *f = 1
     add_parameter(Parameter("f",Double(1.0),between(0, 1)));
     //    parameters_[0].fixed = true;
+
+    add_parameter(Parameter("alphabet",a));
 
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
@@ -240,8 +245,7 @@ namespace substitution {
   }
 
   SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a,const valarray<double>& pi)
-    :ReversibleFrequencyModel(a),
-     ModelWithAlphabet<alphabet>(a)
+    :ReversibleFrequencyModel(a)
   {
     if (pi.size() != a.size())
       throw myexception()<<"Constructing a frequency model on alphabet '"<<a.name<<"' but got frequencies of "<<pi.size()<<" letters instead of the expected "<<a.size();
@@ -249,6 +253,8 @@ namespace substitution {
     add_parameter(Parameter("f", Double(1.0), between(0, 1)));
     // Start with *f = 1
     // set_fixed(0,true);
+
+    add_parameter(Parameter("alphabet",a));
 
     valarray<double> f = pi;
     f /= f.sum();

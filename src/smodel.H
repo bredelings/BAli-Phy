@@ -548,14 +548,14 @@ namespace substitution {
 
 
 
-  class SimpleFrequencyModel: public ReversibleFrequencyModel,
-			      public ModelWithAlphabet<alphabet>
+  class SimpleFrequencyModel: public ReversibleFrequencyModel
   {
   protected:
     void recalc(const std::vector<int>&);
 
   public:
-    
+    const alphabet& Alphabet() const;
+
     const valarray<double>& frequencies() const {return pi;}
 
     void frequencies(const valarray<double>&);
