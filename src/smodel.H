@@ -192,17 +192,21 @@ namespace substitution {
 
 
   //------------------------- Markov Substitution Model ----------------------------//
-
-  /// A substitution model which obeys the Markov property
-  class MarkovModel: virtual public IndependantAdditiveModel 
+  struct MarkovModelObject
   {
-  protected:
-
     /// Rate matrix
     Matrix Q;
 
     std::vector<unsigned> state_letters_;
 
+    MarkovModelObject(int n):Q(n,n), state_letters_(n)
+    { }
+  };
+
+
+  /// A substitution model which obeys the Markov property
+  class MarkovModel: virtual public IndependantAdditiveModel, protected MarkovModelObject 
+  {
   public:
 
     virtual MarkovModel* clone() const =0;
@@ -512,12 +516,18 @@ namespace substitution {
   };
 
   //------------------------ Reversible frequency model --------------------//
-  class ReversibleFrequencyModel: virtual public AlphabetModel
+  struct ReversibleFrequencyModelObject
   {
-  protected:
     Matrix R;
 
     valarray<double> pi;
+
+    ReversibleFrequencyModelObject(int n): R(n,n), pi(n)
+    { }
+  };
+
+  class ReversibleFrequencyModel: virtual public AlphabetModel, protected ReversibleFrequencyModelObject
+  {
   public:
     ReversibleFrequencyModel* clone() const =0;
 

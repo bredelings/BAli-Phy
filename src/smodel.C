@@ -132,8 +132,7 @@ namespace substitution {
   }
 
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
-    :R(a.size(),a.size()),
-     pi(1.0/a.size(),a.size())
+    :ReversibleFrequencyModelObject( a.size() )
   { 
     add_parameter(Parameter("alphabet",a));
   }
@@ -599,7 +598,7 @@ namespace substitution {
 
   /// Construct a Makov model on alphabet 'a'
   MarkovModel::MarkovModel(const alphabet& a)
-    :Q(a.size(),a.size()),state_letters_(a.size())
+    :MarkovModelObject( a.size() )
   {
     for(int i=0;i<a.size();i++)
       state_letters_[i] = i;
