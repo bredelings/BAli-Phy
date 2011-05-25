@@ -133,7 +133,7 @@ namespace substitution {
     virtual Matrix transition_p(double t) const =0;
 
     /// Get the equilibrium frequencies
-    virtual const valarray<double>& frequencies() const=0;
+    virtual valarray<double> frequencies() const=0;
 
     ReversibleModel() {}
   };
@@ -524,7 +524,7 @@ namespace substitution {
     const alphabet& Alphabet() const;
 
     /// Get the equilibrium frequencies
-    const valarray<double>& frequencies() const {return pi;}
+    valarray<double> frequencies() const {return pi;}
 
     double operator()(int i,int j) const {return R(i,j);}
 
@@ -541,7 +541,7 @@ namespace substitution {
     void recalc(const std::vector<int>&);
 
   public:
-    const valarray<double>& frequencies() const {return pi;}
+    valarray<double> frequencies() const {return pi;}
 
     void frequencies(const valarray<double>&);
     
@@ -565,7 +565,7 @@ namespace substitution {
 
   public:
     
-    const valarray<double>& frequencies() const {return pi;}
+    valarray<double> frequencies() const {return pi;}
 
     void frequencies(const valarray<double>&);
     
@@ -746,7 +746,7 @@ namespace substitution {
     Matrix transition_p(double t) const;
 
     /// Get the equilibrium frequencies
-    const valarray<double>& frequencies() const {return pi;}
+    valarray<double> frequencies() const {return pi;}
 
     virtual efloat_t prior() const;
 
@@ -795,7 +795,7 @@ namespace substitution {
     virtual ReversibleMarkovSuperModel* clone() const {return new ReversibleMarkovSuperModel(*this);}
 
     /// Get the equilibrium
-    const valarray<double>& frequencies() const {return R->frequencies();}
+    valarray<double> frequencies() const {return R->frequencies();}
 
     efloat_t prior() const {return S->prior() * R->prior();}
 
@@ -814,7 +814,7 @@ namespace substitution {
     /// Make a copy of this object
     virtual SimpleReversibleMarkovModel* clone() const {return new SimpleReversibleMarkovModel(*this);}
 
-    const valarray<double>& frequencies() const {return R->frequencies();}
+    valarray<double> frequencies() const {return R->frequencies();}
     
     void frequencies(const valarray<double>& pi);
 
@@ -837,7 +837,7 @@ namespace substitution {
     virtual ReversibleWrapperOver* clone() const=0;
 
     /// Get the equilibrium frequencies
-    const valarray<double>& frequencies() const {
+    valarray<double> frequencies() const {
       return SubModel().frequencies();
     }
 
@@ -875,7 +875,7 @@ namespace substitution {
     virtual Matrix transition_p(double t,int i) const;
 
     /// Get the equilibrium frequencies.  Currently all branch models must have the same frequencies.
-    virtual const valarray<double>& frequencies() const;
+    valarray<double> frequencies() const;
 
     ReversibleAdditiveCollection() {}
 
@@ -1027,7 +1027,7 @@ namespace substitution {
     const alphabet& Alphabet() const {return SubModel().Alphabet();}
 
     /// Get the equilibrium frequencies
-    const valarray<double>& frequencies() const { return SubModel().frequencies(); }
+    valarray<double> frequencies() const { return SubModel().frequencies(); }
 
     string name() const;
 
@@ -1056,7 +1056,7 @@ namespace substitution {
     MultiFrequencyModel* clone() const {return new MultiFrequencyModel(*this);}
 
     /// Get the equilibrium frequencies
-    const valarray<double>& frequencies() const;
+    valarray<double> frequencies() const;
 
     string name() const;
 
@@ -1092,7 +1092,7 @@ namespace substitution {
     efloat_t prior() const;
 
     /// Get the equilibrium frequencies - Gotta define this, cuz MultiModel is reversible...
-    const valarray<double>& frequencies() const;
+    valarray<double> frequencies() const;
 
     string name() const {return name_;}
 
@@ -1141,7 +1141,7 @@ namespace substitution {
     MultiParameterModel* clone() const=0;
 
     /// Get the equilibrium frequencies
-    const valarray<double>& frequencies() const;
+    valarray<double> frequencies() const;
 
     /// Construct a mixture of variants of model M with parameter p set to n_bin different values
     MultiParameterModel(const MultiModel& M,int p,int n_bins);
@@ -1235,7 +1235,7 @@ namespace substitution {
     efloat_t super_prior() const;
 
     /// Get the equilibrium frequencies
-    const valarray<double>& frequencies() const;
+    valarray<double> frequencies() const;
 
     string name() const;
 
@@ -1309,15 +1309,13 @@ namespace substitution {
 
   class MixtureModel: public MultiModel, public SuperModelOver<MultiModel> 
   {
-    valarray<double> pi;
-
     efloat_t super_prior() const;
     void recalc(const std::vector<int>&);
   public:
     virtual MixtureModel* clone() const {return new MixtureModel(*this);}
 
     /// Get the equilibrium frequencies
-    const valarray<double>& frequencies() const {return pi;}
+    valarray<double> frequencies() const;
 
     string name() const;
 
@@ -1363,7 +1361,7 @@ namespace substitution {
 
     virtual ModulatedMarkovModel* clone() const {return new ModulatedMarkovModel(*this);}
 
-    const valarray<double>& frequencies() const {return pi;}
+    valarray<double> frequencies() const {return pi;}
 
     string name() const;
 

@@ -1423,7 +1423,7 @@ namespace substitution {
     return part(i).transition_p(t);
   }
 
-  const valarray<double>& ReversibleAdditiveCollection::frequencies() const
+  valarray<double> ReversibleAdditiveCollection::frequencies() const
   {
     return part(0).frequencies();
   }
@@ -1587,7 +1587,7 @@ namespace substitution {
   }
 
   /// Get the equilibrium frequencies
-  const std::valarray<double>& MultiFrequencyModel::frequencies() const {
+  std::valarray<double> MultiFrequencyModel::frequencies() const {
     return SubModel().frequencies();
   }
 
@@ -1675,7 +1675,7 @@ namespace substitution {
   }
 
   /// Get the equilibrium frequencies
-  const std::valarray<double>& CAT_FixedFrequencyModel::frequencies() const {
+  valarray<double> CAT_FixedFrequencyModel::frequencies() const {
     cerr<<"CAT model with fixed frequences does not HAVE an 'overall' frequencies method."<<endl;
     std::abort();
   }
@@ -1838,7 +1838,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
     /// Get the equilibrium frequencies
-  const std::valarray<double>& MultiParameterModel::frequencies() const {
+  std::valarray<double> MultiParameterModel::frequencies() const {
     return SubModel().frequencies();
   }
 
@@ -2013,7 +2013,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   const double WithINV::max_inv_rate = 0.01;
 
   /// Get the equilibrium frequencies
-  const std::valarray<double>& WithINV::frequencies() const {
+  valarray<double> WithINV::frequencies() const {
     return SubModel().frequencies();
   }
 
@@ -2417,12 +2417,17 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 	base_models.push_back(SubModels(m).base_model(i));
       }
     }
+  }
+
+  valarray<double> MixtureModel::frequencies() const
+  {
+    valarray<double> pi(0.0, Alphabet().size());
 
     //recalculate pi
-    pi = 0;
-    int sm_total = n_submodels();
-    for(int sm=0;sm<sm_total;sm++)
+    for(int sm=0; sm < n_submodels(); sm++)
       pi += double(get_parameter_value_as<Double>(sm))*SubModels(sm).frequencies();
+
+    return pi;
   }
 
   efloat_t MixtureModel::super_prior() const 
@@ -2458,8 +2463,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       string pname = string("Mixture::prior") + convertToString(i+1);
       add_super_parameter(Parameter(pname, Double(1.0/models.size())));
     }
-
-    pi.resize(Alphabet().size());
 
     check();
     recalc_all();
