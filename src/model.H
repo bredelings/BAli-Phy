@@ -82,20 +82,7 @@ struct Parameter
 //    o why do set_rate() and frequencies() cause problems? We should just do them on copies.
 // 5. Fix multimodel to return base_model(i,m) instead of base_model(m)?
 //
-// Problems:
-//    o If we make the models inherit from their result types, then we inherit the base result type twice:
-//    AO
-//    |\
-//    | \
-//    |  \
-//    |   \
-//    BO   A-model
-//    \    |
-//     \   |
-//      \  |
-//       \ |
-//        \|
-//         B-model
+// TODO:
 //
 // 1. Convert to lazy calculation
 // 2. make alphabets a model argument
