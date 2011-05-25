@@ -85,7 +85,7 @@ namespace substitution {
 
 
   ExchangeModel::ExchangeModel(unsigned n)
-    :S(n,n)
+    :ExchangeModelObject(n)
   {}
 
   efloat_t SimpleExchangeModel::prior() const 

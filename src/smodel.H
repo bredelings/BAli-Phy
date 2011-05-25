@@ -194,6 +194,8 @@ namespace substitution {
   //------------------------- Markov Substitution Model ----------------------------//
   struct MarkovModelObject
   {
+    virtual MarkovModelObject* clone() const {return new MarkovModelObject(*this);}
+
     /// Rate matrix
     Matrix Q;
 
@@ -227,12 +229,18 @@ namespace substitution {
   //------------------------ Exchangeability Model ----------------------//
 
 
-
-  class ExchangeModel: virtual public ::Model
+  struct ExchangeModelObject
   {
-  protected:
     ublas::symmetric_matrix<double> S;
 
+    virtual ExchangeModelObject* clone() const {return new ExchangeModelObject(*this);}
+
+    ExchangeModelObject(int n):S(n,n)
+    { }
+  };
+
+  class ExchangeModel: virtual public ::Model, protected ExchangeModelObject
+  {
   public:
     
     double operator()(int i,int j) const {return S(i,j);}
@@ -518,6 +526,8 @@ namespace substitution {
   //------------------------ Reversible frequency model --------------------//
   struct ReversibleFrequencyModelObject
   {
+    ReversibleFrequencyModelObject* clone() const {return new ReversibleFrequencyModelObject(*this);}
+
     Matrix R;
 
     valarray<double> pi;
