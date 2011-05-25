@@ -1507,14 +1507,14 @@ namespace substitution {
     return base_model(0).n_parts();
   }
 
-  double MultiModel::rate() const {
+  double MultiModelObject::rate() const {
     double r=0;
     for(int m=0;m<n_base_models();m++)
       r += distribution()[m]*base_model(m).rate();
     return r;
   }
 
-  void MultiModel::set_rate(double r)  {
+  void MultiModelObject::set_rate(double r)  {
     double scale = r/rate();
     for(int m=0;m<n_base_models();m++) {
       base_model(m).set_rate(base_model(m).rate()*scale);
@@ -1522,7 +1522,7 @@ namespace substitution {
   }
 
   // This is per-branch, per-column - doesn't pool info about each branches across columns
-  Matrix MultiModel::transition_p(double t) const {
+  Matrix MultiModelObject::transition_p(double t) const {
     Matrix P = distribution()[0] * transition_p(t,0,0);
     for(int m=1;m<n_base_models();m++)
       P += distribution()[m] * transition_p(t,0,m);

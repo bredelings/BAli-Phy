@@ -62,7 +62,7 @@ namespace substitution {
     return p;
   }
 
-  efloat_t Pr_star(const alignment& A, const Tree& T, const MultiModel& MModel, const Mat_Cache& MC) 
+  efloat_t Pr_star(const alignment& A, const Tree& T, const MultiModelObject& MModel, const Mat_Cache& MC) 
   {
     efloat_t p = 1;
   

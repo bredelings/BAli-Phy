@@ -98,6 +98,8 @@ namespace substitution {
     unsigned n_letters() const {return Alphabet().size();}
   };
 
+
+
   /// A generic model of the process of substitution
   class Model: virtual public AlphabetModel
   {
@@ -995,6 +997,9 @@ namespace substitution {
   public:
     virtual MultiModelObject* clone() const {return new MultiModelObject(*this);}
 
+    double rate() const;
+    void set_rate(double);
+
     /// The number of components
     int n_base_models() const {return base_models.size();}
 
@@ -1007,6 +1012,18 @@ namespace substitution {
 
     /// Get the probability of each base models
     const std::vector<double>& distribution() const {return fraction;}
+
+    const std::vector<unsigned>& state_letters() const {return base_model(0).state_letters();}
+
+    unsigned n_states() const {return state_letters().size();}
+
+    /// Get a transition probability matrix for time 't', averaging over models
+    Matrix transition_p(double t) const;
+
+    /// Get a transition probability matrix for time 't' and model 'm'
+    Matrix transition_p(double t,int i, int m) const {return base_model(m).transition_p(t,i);}
+
+    virtual ~MultiModelObject() {}
   };
 
 
@@ -1016,16 +1033,18 @@ namespace substitution {
   public:
     virtual MultiModel* clone() const=0;
 
-    double rate() const;
-    void set_rate(double);
+    double rate() const {return MultiModelObject::rate();}
+    void set_rate(double r) {MultiModelObject::set_rate(r);}
 
-    const std::vector<unsigned>& state_letters() const {return base_model(0).state_letters();}
+    const std::vector<unsigned>& state_letters() const {return MultiModelObject::state_letters();}
+
+    unsigned n_states() const {return MultiModelObject::n_states();}
 
     /// Get a transition probability matrix for time 't', averaging over models
-    Matrix transition_p(double t) const;
+    Matrix transition_p(double t) const {return MultiModelObject::transition_p(t);}
 
     /// Get a transition probability matrix for time 't' and model 'm'
-    Matrix transition_p(double t,int i, int m) const {return base_model(m).transition_p(t,i);}
+    Matrix transition_p(double t,int i, int m) const {return MultiModelObject::transition_p(t,i,m);}
 
     ~MultiModel() {}
   };

@@ -141,7 +141,7 @@ public:
   /// Release token and mark unused.
   void release_token(int token);
   
-  Multi_Likelihood_Cache(const substitution::MultiModel& M);
+  Multi_Likelihood_Cache(const substitution::MultiModelObject& M);
 };
 
 /// A single view into the shared Multi_Likelihood_Cache
@@ -260,7 +260,7 @@ public:
   Likelihood_Cache& operator=(const Likelihood_Cache&);
 
   Likelihood_Cache(const Likelihood_Cache& LC);
-  Likelihood_Cache(const Tree& T, const substitution::MultiModel& M,int l=0);
+  Likelihood_Cache(const Tree& T, const substitution::MultiModelObject& M,int l=0);
 
   ~Likelihood_Cache();
 };

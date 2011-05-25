@@ -193,7 +193,7 @@ namespace substitution {
     peeling_info(const Tree&T) { reserve(T.n_branches()); }
   };
 
-  void WeightedFrequencyMatrix(Matrix& F, const MultiModel& MModel) 
+  void WeightedFrequencyMatrix(Matrix& F, const MultiModelObject& MModel) 
   {
     // cache matrix of frequencies
     const int n_models = MModel.n_base_models();
@@ -210,7 +210,7 @@ namespace substitution {
   }
 
   efloat_t calc_root_probability(const alignment&, const Tree& T,Likelihood_Cache& cache,
-			       const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
+			       const MultiModelObject& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
     default_timer_stack.push_timer("substitution::calc_root");
@@ -309,7 +309,7 @@ namespace substitution {
   }
 
   efloat_t calc_root_probability_unaligned(const alignment&,const Tree& T,Likelihood_Cache& cache,
-					   const MultiModel& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
+					   const MultiModelObject& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
     default_timer_stack.push_timer("substitution::calc_root_unaligned");
@@ -420,7 +420,7 @@ namespace substitution {
 
   void peel_leaf_branch(int b0,subA_index_t& I, Likelihood_Cache& cache,
 			const vector<int>& sequence, const alignment& A, const Tree& T, 
-			const vector<Matrix>& transition_P,const MultiModel& MModel)
+			const vector<Matrix>& transition_P,const MultiModelObject& MModel)
   {
     total_peel_leaf_branches++;
     default_timer_stack.push_timer("substitution::peel_leaf_branch");
@@ -470,7 +470,7 @@ namespace substitution {
     default_timer_stack.pop_timer();
   }
 
-  void FrequencyMatrix(Matrix& F, const MultiModel& MModel) 
+  void FrequencyMatrix(Matrix& F, const MultiModelObject& MModel) 
   {
     // cache matrix of frequencies
     const int n_models = F.size1();
@@ -485,7 +485,7 @@ namespace substitution {
 
   void peel_leaf_branch_F81(int b0, subA_index_t& I, Likelihood_Cache& cache,
 			    const vector<int>& sequence, const alignment& A, const Tree& T, 
-			    const MultiModel& MModel)
+			    const MultiModelObject& MModel)
   {
     total_peel_leaf_branches++;
     default_timer_stack.push_timer("substitution::peel_leaf_branch");
@@ -561,7 +561,7 @@ namespace substitution {
 
   void peel_leaf_branch_modulated(int b0,subA_index_t& I, Likelihood_Cache& cache, 
 				  const vector<int>& sequence, const alignment& A, const Tree& T, 
-				  const vector<Matrix>& transition_P,const MultiModel& MModel)
+				  const vector<Matrix>& transition_P,const MultiModelObject& MModel)
   {
     total_peel_leaf_branches++;
     default_timer_stack.push_timer("substitution::peel_leaf_branch");
@@ -622,7 +622,7 @@ namespace substitution {
   ///
   /// Answer: Yes, because which columns "go away" is computed and then passed in via \a index.
   efloat_t collect_vanishing_internal(const vector<int>& b, ublas::matrix<int>& index, Likelihood_Cache& cache,
-				      const MultiModel& MModel)
+				      const MultiModelObject& MModel)
   {
     assert(b.size() == 3);
     assert(index.size2() == 2);
@@ -682,7 +682,7 @@ namespace substitution {
 
   /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
   efloat_t get_other_subst_behind_branch(int b0, const alignment& A, const Tree& T, subA_index_t& I, Likelihood_Cache& cache,
-					 const MultiModel& MModel)
+					 const MultiModelObject& MModel)
   {
     // This only makes sense if we have presence/absence information to sequences at internal nodes
     assert(A.n_sequences() == T.n_nodes());
@@ -717,7 +717,7 @@ namespace substitution {
   }
 
   void peel_internal_branch(const vector<int>& b,ublas::matrix<int>& index, Likelihood_Cache& cache,
-			    const vector<Matrix>& transition_P,const MultiModel& IF_DEBUG(MModel))
+			    const vector<Matrix>& transition_P,const MultiModelObject& IF_DEBUG(MModel))
   {
     assert(b.size() == 3);
 
@@ -780,7 +780,7 @@ namespace substitution {
   }
 
   void peel_internal_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
-			    const vector<Matrix>& transition_P,const MultiModel& MModel)
+			    const vector<Matrix>& transition_P,const MultiModelObject& MModel)
   {
     total_peel_internal_branches++;
     default_timer_stack.push_timer("substitution::peel_internal_branch");
@@ -815,7 +815,7 @@ namespace substitution {
   }
 
   void peel_internal_branch_F81(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
-				const MultiModel& MModel)
+				const MultiModelObject& MModel)
   {
     //    std::cerr<<"got here! (internal)"<<endl;
     total_peel_internal_branches++;
@@ -922,7 +922,7 @@ namespace substitution {
 
   void peel_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, 
 		   const vector< vector<int> >& sequences, const alignment& A, const Tree& T, 
-		   const Mat_Cache& MC, const MultiModel& MModel)
+		   const Mat_Cache& MC, const MultiModelObject& MModel)
   {
     total_peel_branches++;
     default_timer_stack.push_timer("substitution::peel_branch");
@@ -998,7 +998,7 @@ namespace substitution {
   static 
   int calculate_caches_for_node(int n, const vector< vector<int> >& sequences, const alignment& A, 
 				subA_index_t& I, const Mat_Cache& MC, const Tree& T,Likelihood_Cache& cache,
-				const MultiModel& MModel) 
+				const MultiModelObject& MModel) 
   {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_node(n, T, cache);
@@ -1022,7 +1022,7 @@ namespace substitution {
   static 
   int calculate_caches_for_branch(int b, const vector< vector<int> >& sequences, const alignment& A, 
 				  subA_index_t& I, const Mat_Cache& MC, const Tree& T,Likelihood_Cache& cache,
-				  const MultiModel& MModel) 
+				  const MultiModelObject& MModel) 
   {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_branch(b, T, cache);
@@ -1035,7 +1035,7 @@ namespace substitution {
   }
 
   /// Construct a likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
-  Matrix get_letter_likelihoods(int l, const alphabet& a, const MultiModel& MM)
+  Matrix get_letter_likelihoods(int l, const alphabet& a, const MultiModelObject& MM)
   {
     assert(a.is_feature(l));
 
@@ -1089,7 +1089,7 @@ namespace substitution {
     const alphabet& a = P.get_alphabet();
     const int n_letters = a.size();
 
-    const MultiModel& MM = P.SModel();
+    const MultiModelObject& MM = P.SModel();
     const int n_models = MM.n_base_models();
     const int n_states = MM.n_states();
 
@@ -1129,7 +1129,7 @@ namespace substitution {
     const Tree& T = *P.T;
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
-    const MultiModel& MM = P.SModel();
+    const MultiModelObject& MM = P.SModel();
 
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
@@ -1231,7 +1231,7 @@ namespace substitution {
   /// Get the total likelihood for columns behind b0 that have been deleted before b0.source (e.g. and so b0.source is -).
   efloat_t other_subst_behind_branch(int b0, const vector< vector<int> >& sequences, const alignment& A, const Tree& T, 
 				     subA_index_t& I, Likelihood_Cache& LC,
-				     const Mat_Cache& MC, const MultiModel& MModel)
+				     const Mat_Cache& MC, const MultiModelObject& MModel)
   {
     if (LC.up_to_date(b0) and dynamic_cast<subA_index_internal*>(&I))
       return LC[b0].other_subst;
@@ -1267,7 +1267,7 @@ namespace substitution {
     for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
       rb.push_back(*i);
 
-    const MultiModel& MModel= P.SModel();
+    const MultiModelObject& MModel= P.SModel();
     vector<int> leaf_branch_list = get_leaf_branches_from_subtree_nodes(T,nodes);
 
     efloat_t Pr3 = 1;
@@ -1391,7 +1391,7 @@ namespace substitution {
 
   }
 
-  efloat_t branch_total(int b0, const subA_index_t& I, const Likelihood_Cache& cache, const MultiModel& MModel)
+  efloat_t branch_total(int b0, const subA_index_t& I, const Likelihood_Cache& cache, const MultiModelObject& MModel)
   {
     // scratch matrix 
     const int n_models = cache.n_models();
@@ -1428,7 +1428,7 @@ namespace substitution {
 
   void compare_branch_totals(subA_index_t& I1, subA_index_t& I2,
 			     Likelihood_Cache& LC1, Likelihood_Cache& LC2, const Tree& T,
-			     const vector< vector<int> >& sequences, const alignment& A, const MultiModel& MModel)
+			     const vector< vector<int> >& sequences, const alignment& A, const MultiModelObject& MModel)
   {
     assert(LC1.root == LC2.root);
     
@@ -1466,7 +1466,7 @@ namespace substitution {
   ///
   efloat_t Pr_unaligned_root(const vector< vector<int> >& sequences, const alignment& A,
 			     subA_index_t& I, const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC,
-			     const MultiModel& MModel)
+			     const MultiModelObject& MModel)
   {
     total_likelihood++;
     default_timer_stack.push_timer("substitution");
@@ -1544,7 +1544,7 @@ namespace substitution {
 
   efloat_t Pr(const vector< vector<int> >& sequences, const alignment& A,subA_index_t& I, 
 	      const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC,
-	      const MultiModel& MModel)
+	      const MultiModelObject& MModel)
   {
     total_likelihood++;
     default_timer_stack.push_timer("substitution");
@@ -1673,7 +1673,7 @@ namespace substitution {
   vector<Matrix> 
   get_likelihoods_by_alignment_column(const vector< vector<int> >& sequences, const alignment& A,
 				      subA_index_t& I, const Mat_Cache& MC,
-				      const Tree& T,Likelihood_Cache& cache,const MultiModel& MModel)
+				      const Tree& T,Likelihood_Cache& cache,const MultiModelObject& MModel)
   {
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);

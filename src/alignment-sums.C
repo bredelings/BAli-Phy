@@ -88,7 +88,7 @@ vector< Matrix > distributions_star(const data_partition& P,
 {
   const alignment& A = *P.A;
   const alphabet& a = A.get_alphabet();
-  const substitution::MultiModel& MModel = P.SModel();
+  const substitution::MultiModelObject& MModel = P.SModel();
   const SequenceTree& T = *P.T;
 
   //FIXME modify this to add a shift of 2
