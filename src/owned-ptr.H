@@ -128,7 +128,7 @@ public:
   owned_ptr& operator=(const owned_ptr<Y>& yp)
   {
     if (data.get() != yp.get()) {
-      boost::scoped_ptr<X> temp(yp->clone());
+      boost::scoped_ptr<X> temp(yp?yp->clone():0);
       data.swap(temp);
     }
     return *this;
@@ -137,7 +137,7 @@ public:
   owned_ptr& operator=(const owned_ptr& xp)
   {
     if (data.get() != xp.get()) {
-      boost::scoped_ptr<X> temp(xp->clone());
+      boost::scoped_ptr<X> temp(xp?xp->clone():0);
       data.swap(temp);
     }
     return *this;
@@ -146,7 +146,7 @@ public:
   owned_ptr& operator=(const X* xp)
   {
     if (data.get() != xp) {
-      boost::scoped_ptr<X> temp(xp->clone());
+      boost::scoped_ptr<X> temp(xp?xp->clone():0);
       data.swap(temp);
     }
     return *this;
@@ -176,17 +176,17 @@ public:
   {}
 
   owned_ptr(X* xp)
-    : data(xp->clone()) {}
+    : data(xp?xp->clone():0) {}
 
   owned_ptr(const X& x)
     : data(x.clone()) {}
 
   owned_ptr(const owned_ptr& xp)
-    : data(xp->clone()) {}
+    : data(xp?xp->clone():0) {}
 
   template <class Y> 
   owned_ptr(const owned_ptr<Y>& yp)
-    : data(yp->clone()) {}
+    : data(yp?yp->clone():0) {}
 
   // no need for ~owned_ptr - the scoped_ptr takes care of everything.
 };
