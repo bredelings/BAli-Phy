@@ -740,7 +740,7 @@ namespace substitution {
   };
   
   /// A Felsenstein-81 model, in which Q_ij = a*pi[j]
-  class F81_Model: public ReversibleMarkovModel, public ModelWithAlphabet<alphabet>
+  class F81_Model: public ReversibleMarkovModel
   {
     double alpha_;
     valarray<double> pi;
@@ -751,6 +751,8 @@ namespace substitution {
     void set_rate(double);
 
     double alpha() const {return alpha_;}
+
+    const alphabet& Alphabet() const;
 
     /// Make a copy of this object
     virtual F81_Model* clone() const {return new F81_Model(*this);}
@@ -772,8 +774,7 @@ namespace substitution {
 
 
   class ReversibleMarkovSuperModel: public ReversibleMarkovModel,
-				    public SuperModel,
-				    public ModelWithAlphabet<alphabet>
+				    public SuperModel
   {
   protected:
     /// The exchange model
@@ -803,6 +804,7 @@ namespace substitution {
     }
 
   public:
+    const alphabet& Alphabet() const {return S->Alphabet();}
 
     /// Make a copy of this object
     virtual ReversibleMarkovSuperModel* clone() const {return new ReversibleMarkovSuperModel(*this);}

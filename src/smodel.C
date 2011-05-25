@@ -758,7 +758,7 @@ namespace substitution {
     const int N = n_states();
     assert(N == n_letters());
 
-    pi = get_varray<double>(get_parameter_values_as<Double>( range<int>(0,N) ) );
+    pi = get_varray<double>(get_parameter_values_as<Double>( range<int>(1,N) ) );
     pi /= pi.sum();
 
     for(int i=0;i<N;i++)
@@ -790,6 +790,11 @@ namespace substitution {
 
     alpha_ *= scale;
   }
+
+  const alphabet& F81_Model::Alphabet() const
+  {
+    return get_parameter_value_as<alphabet>(0);
+  }
   
   Matrix F81_Model::transition_p(double t) const
   {
@@ -812,7 +817,7 @@ namespace substitution {
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0, n_letters()) ), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1, n_letters()) ), 1.0);
 
     return Pr;
   }
@@ -823,8 +828,10 @@ namespace substitution {
   }
 
   F81_Model::F81_Model(const alphabet& a)
-    :ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a),alpha_(1),pi(a.size())
+    :ReversibleMarkovModel(a),alpha_(1),pi(a.size())
   {
+    add_parameter(Parameter("alphabet",a));
+
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
       add_parameter(Parameter(pname, Double(1.0/n_letters()), between(0, 1)));
@@ -834,8 +841,10 @@ namespace substitution {
   }
 
   F81_Model::F81_Model(const alphabet& a,const valarray<double>& f)
-    :ReversibleMarkovModel(a),ModelWithAlphabet<alphabet>(a),alpha_(1),pi(a.size())
+    :ReversibleMarkovModel(a),alpha_(1),pi(a.size())
   {
+    add_parameter(Parameter("alphabet",a));
+
     assert(f.size() == n_letters());
 
     for(int i=0;i<n_letters();i++) {
@@ -871,7 +880,6 @@ namespace substitution {
   /// Construct a reversible Markov model on alphabet 'a'
   ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const AlphabetExchangeModel& S1,const ReversibleFrequencyModel& R1)
     :ReversibleMarkovModel(S1.Alphabet()),
-     ModelWithAlphabet<alphabet>(S1.Alphabet()),
      S(S1),
      R(R1)
   {
