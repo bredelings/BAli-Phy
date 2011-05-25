@@ -1652,6 +1652,11 @@ namespace substitution {
   }
 
   //---------------------- CAT_FixedFrequencyModel -----------------------//
+  const alphabet& CAT_FixedFrequencyModel::Alphabet() const
+  {
+    return get_parameter_value_as<alphabet>(0);
+  }
+
 
   efloat_t CAT_FixedFrequencyModel::prior() const
   {
@@ -1669,7 +1674,7 @@ namespace substitution {
   void CAT_FixedFrequencyModel::recalc(const std::vector<int>&)
   {
     for(int i=0;i<fraction.size();i++)
-      fraction[i] = get_parameter_value_as<Double>(i);
+      fraction[i] = get_parameter_value_as<Double>(1+i);
   }
 
   const MultiModel::Base_Model_t& CAT_FixedFrequencyModel::base_model(int i) const {
@@ -1758,12 +1763,15 @@ namespace substitution {
   }
 
   CAT_FixedFrequencyModel::CAT_FixedFrequencyModel(const alphabet& a)
-    :ModelWithAlphabet<alphabet>(a)
-  { }
+  { 
+    add_parameter(Parameter("alphabet",a));
+  }
 
   CAT_FixedFrequencyModel::CAT_FixedFrequencyModel(const alphabet& a, const string& n)
-    :ModelWithAlphabet<alphabet>(a),name_(n)
-  { }
+    :name_(n)
+  { 
+    add_parameter(Parameter("alphabet",a));
+  }
 
   C20_CAT_FixedFrequencyModel::C20_CAT_FixedFrequencyModel()
     :CAT_FixedFrequencyModel(AminoAcids())

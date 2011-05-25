@@ -98,21 +98,6 @@ namespace substitution {
     unsigned n_letters() const {return Alphabet().size();}
   };
 
-  /// This class stores an alphabet AND associates a model with it
-  template <class alphabet_t>
-  class ModelWithAlphabet: virtual public AlphabetModel
-  {
-    boost::shared_ptr<const alphabet_t> A;
-  public:
-    const alphabet_t& Alphabet() const {return *A;}
-
-    ModelWithAlphabet(const alphabet_t& a)
-      :A(a.clone())
-    {}
-  };
-  
-
-
   /// A generic model of the process of substitution
   class Model: virtual public AlphabetModel
   {
@@ -1093,7 +1078,7 @@ namespace substitution {
 
 
   /// A substitution model based on running identical copies of an input model with different frequencies.
-  class CAT_FixedFrequencyModel: public MultiModel, public ModelWithAlphabet<alphabet>
+  class CAT_FixedFrequencyModel: public MultiModel
   {
   protected:
     /// Components of the mixture - Reversible Markov models express as S+R
@@ -1109,6 +1094,8 @@ namespace substitution {
 
     void recalc(const std::vector<int>&);
   public:
+    const alphabet& Alphabet() const;
+
     /// Load the site frequencies from \a file
     void load_file(std::istream& file);
 
