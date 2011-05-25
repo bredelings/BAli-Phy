@@ -126,10 +126,17 @@ namespace substitution {
 
   //----------------------- Frequency Models ------------------------//
 
+  const alphabet& ReversibleFrequencyModel::Alphabet() const
+  {
+    return get_parameter_value_as<alphabet>(0);
+  }
+
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
     :R(a.size(),a.size()),
      pi(1.0/a.size(),a.size())
-  { }
+  { 
+    add_parameter(Parameter("alphabet",a));
+  }
 
   void UniformFrequencyModel::frequencies(const valarray<double>&) 
   { }
@@ -155,24 +162,17 @@ namespace substitution {
   }
   
   UniformFrequencyModel::UniformFrequencyModel(const alphabet& a)
-    :ReversibleFrequencyModel(a),
-     ModelWithAlphabet<alphabet>(a)
+    :ReversibleFrequencyModel(a)
   {
     // initialize everything
     recalc_all();
   }
 
   UniformFrequencyModel::UniformFrequencyModel(const alphabet& a,const valarray<double>&)
-    :ReversibleFrequencyModel(a),
-     ModelWithAlphabet<alphabet>(a)
+    :ReversibleFrequencyModel(a)
   {
     // initialize everything
     recalc_all();
-  }
-
-  const alphabet& SimpleFrequencyModel::Alphabet() const
-  {
-    return get_parameter_value_as<alphabet>(1);
   }
 
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
@@ -220,7 +220,7 @@ namespace substitution {
 
   string SimpleFrequencyModel::name() const 
   {
-    if (is_fixed(0) and get_parameter_value_as<Double>(0) == 1.0)
+    if (is_fixed(1) and get_parameter_value_as<Double>(1) == 1.0)
       return "F";
     else
       return "gwF";
@@ -232,8 +232,6 @@ namespace substitution {
     // Start with *f = 1
     add_parameter(Parameter("f",Double(1.0),between(0, 1)));
     //    parameters_[0].fixed = true;
-
-    add_parameter(Parameter("alphabet",a));
 
     for(int i=0;i<n_letters();i++) {
       string pname = string("pi") + Alphabet().letter(i);
@@ -254,8 +252,6 @@ namespace substitution {
     // Start with *f = 1
     // set_fixed(0,true);
 
-    add_parameter(Parameter("alphabet",a));
-
     valarray<double> f = pi;
     f /= f.sum();
     for(int i=0;i<n_letters();i++) {
@@ -269,9 +265,13 @@ namespace substitution {
 
 
   //------------------- Triplet Frequency Model -----------------//
+  const Triplets& TripletFrequencyModel::Alphabet() const
+  {
+    return get_parameter_value_as<Triplets>(0);
+  }
+
   TripletFrequencyModel::TripletFrequencyModel(const Triplets& T)
-    :ReversibleFrequencyModel(T),
-     ModelWithAlphabet<Triplets>(T)
+    :ReversibleFrequencyModel(T)
   { }
     
   valarray<double> triplet_from_singlet_frequencies(const Triplets& T,const SimpleFrequencyModel& N)
@@ -320,6 +320,9 @@ namespace substitution {
     : TripletFrequencyModel(T),
       triplets(SimpleFrequencyModel(T))
   {
+    // problem: TripletFrequency model won't have done this for its alphabet parameter
+    model_slots_for_index.push_back(vector<model_slot>());
+
     insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
     recalc_all();
   }
@@ -376,6 +379,9 @@ namespace substitution {
   TripletsFrequencyModel::TripletsFrequencyModel(const Triplets& T)
     : TripletFrequencyModel(T)
   {
+    // problem: TripletFrequency model won't have done this for its alphabet parameter
+    model_slots_for_index.push_back(vector<model_slot>());
+
     add_super_parameter(Parameter("g", Double(1), between(0, 1) ));
 
     for(int i=0;i<n_letters();i++) {
@@ -389,9 +395,13 @@ namespace substitution {
   }
 
   //------------------- Codon Frequency Model -----------------//
+  const Codons& CodonFrequencyModel::Alphabet() const
+  {
+    return get_parameter_value_as<Codons>(0);
+  }
+
   CodonFrequencyModel::CodonFrequencyModel(const Codons& C)
-    :ReversibleFrequencyModel(C),
-     ModelWithAlphabet<Codons>(C)
+    :ReversibleFrequencyModel(C)
   { }
 
 
@@ -432,6 +442,9 @@ namespace substitution {
     : CodonFrequencyModel(C),
       codons(SimpleFrequencyModel(C))
   {
+    // problem: CodonFrequency model won't have done this for its alphabet parameter
+    model_slots_for_index.push_back(vector<model_slot>());
+
     insert_submodel("1",SimpleFrequencyModel(C.getAminoAcids()));
 
     recalc_all();
@@ -503,6 +516,9 @@ namespace substitution {
   CodonsFrequencyModel::CodonsFrequencyModel(const Codons& C)
     : CodonFrequencyModel(C)
   {
+    // problem: CodonFrequency model won't have done this for its alphabet parameter
+    model_slots_for_index.push_back(vector<model_slot>());
+
     add_super_parameter(Parameter("c", Double(0.5), between(0, 1)));
     add_super_parameter(Parameter("h", Double(0.5), between(0, 1)));
 

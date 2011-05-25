@@ -536,6 +536,8 @@ namespace substitution {
   public:
     ReversibleFrequencyModel* clone() const =0;
 
+    const alphabet& Alphabet() const;
+
     /// Get the equilibrium frequencies
     const valarray<double>& frequencies() const {return pi;}
 
@@ -554,13 +556,11 @@ namespace substitution {
     void recalc(const std::vector<int>&);
 
   public:
-    const alphabet& Alphabet() const;
-
     const valarray<double>& frequencies() const {return pi;}
 
     void frequencies(const valarray<double>&);
     
-    double f() const {return get_parameter_value_as<Double>(0);}
+    double f() const {return get_parameter_value_as<Double>(1);}
 
     SimpleFrequencyModel* clone() const {return new SimpleFrequencyModel(*this);}
 
@@ -573,8 +573,7 @@ namespace substitution {
     explicit SimpleFrequencyModel(const alphabet& a,const valarray<double>&);
   };
 
-  class UniformFrequencyModel: public ReversibleFrequencyModel,
-			      public ModelWithAlphabet<alphabet>
+  class UniformFrequencyModel: public ReversibleFrequencyModel
   {
   protected:
     void recalc(const std::vector<int>&);
@@ -594,17 +593,18 @@ namespace substitution {
     explicit UniformFrequencyModel(const alphabet& a,const valarray<double>&);
   };
 
-  class TripletFrequencyModel: public ReversibleFrequencyModel,
-			       public ModelWithAlphabet<Triplets>
+  class TripletFrequencyModel: public ReversibleFrequencyModel
   {
   public:
     TripletFrequencyModel* clone() const =0;
+
+    const Triplets& Alphabet() const;
 
     explicit TripletFrequencyModel(const Triplets& T);
   };
 
   class IndependentNucleotideFrequencyModel: public TripletFrequencyModel,
-					 public SuperModelOver<SimpleFrequencyModel>
+					     public SuperModelOver<SimpleFrequencyModel>
   {
     owned_ptr<SimpleFrequencyModel> triplets;
 
@@ -635,11 +635,12 @@ namespace substitution {
     explicit TripletsFrequencyModel(const Triplets& T);
   };
 
-  class CodonFrequencyModel: public ReversibleFrequencyModel,
-			       public ModelWithAlphabet<Codons>
+  class CodonFrequencyModel: public ReversibleFrequencyModel
   {
   public:
     CodonFrequencyModel* clone() const =0;
+
+    const Codons& Alphabet() const;
 
     explicit CodonFrequencyModel(const Codons& C);
   };
