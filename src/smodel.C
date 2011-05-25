@@ -1502,7 +1502,7 @@ namespace substitution {
 
   //--------------- MultiRate Models ----------------//
 
-  int MultiModel::n_parts() const
+  int MultiModelObject::n_parts() const
   {
     // This should be the same for all base models.
     return base_model(0).n_parts();
@@ -1538,6 +1538,18 @@ namespace substitution {
     return f;
   }
 
+
+  void UnitModel::recalc(const std::vector<int>&)
+  {
+    // set the distribution to 1.0
+    fraction.resize(1);
+    fraction[0] = 1;
+
+    // make a copy of the submodel
+    base_models.resize(1);
+    base_models[0] = SubModel();
+  }
+
   string UnitModel::name() const {
     return string("[") + SubModels(0).name() + "]";
   }
@@ -1546,6 +1558,8 @@ namespace substitution {
   {
     SimpleReversibleAdditiveCollection<ReversibleAdditiveModel> M(RA);
     insert_submodel("0",M);
+
+    recalc_all();
   }
 
   UnitModel::UnitModel(const Base_Model_t& M)
@@ -1572,18 +1586,6 @@ namespace substitution {
     return Pr;
   }
 
-  const MultiModel::Base_Model_t& MultiFrequencyModel::base_model(int i) const {
-    return *sub_parameter_models[i];
-  }
-
-  MultiModel::Base_Model_t& MultiFrequencyModel::base_model(int i) {
-    return *sub_parameter_models[i];
-  }
-  
-  vector<double> MultiFrequencyModel::distribution() const {
-    return fraction;
-  }
-
   /// Get the equilibrium frequencies
   const std::valarray<double>& MultiFrequencyModel::frequencies() const {
     return SubModel().frequencies();
@@ -1595,6 +1597,7 @@ namespace substitution {
     valarray<double> f = frequencies();
 
     // calculate probability of each sub-model
+    fraction.resize(f.size());
     for(int m=0;m<fraction.size();m++) 
     {
       // Pr(m) = sum_l Pr(m|l)*Pr(l)
@@ -1606,6 +1609,7 @@ namespace substitution {
     if (std::abs(sum(fraction) - 1.0) > 1.0e-5) cerr<<"ERROR: sum(fraction) = "<<sum(fraction)<<endl;
 
     // recalculate sub-models
+    base_models.resize(fraction.size());
     valarray<double> fm(Alphabet().size());
     for(int m=0;m<fraction.size();m++) 
     {
@@ -1616,8 +1620,9 @@ namespace substitution {
       if (std::abs(fm.sum() - 1.0) > 1.0e-5) cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<fm.sum()<<endl;
 
       // get a new copy of the sub-model and set the frequencies
-      sub_parameter_models[m] = SubModel();
-      sub_parameter_models[m]->SubModel().frequencies(fm);
+      owned_ptr<SimpleReversibleMarkovModel> temp = SubModel();
+      temp->frequencies(fm);
+      base_models[m] = SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>( *temp );
     }
   }
 
@@ -1627,13 +1632,8 @@ namespace substitution {
   }
 
   MultiFrequencyModel::MultiFrequencyModel(const AlphabetExchangeModel& E,int n)
-    :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E)),
-     fraction(n)
+    :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E))
   { 
-    sub_parameter_models.resize(n);
-    for(int i=0;i<n;i++)
-      sub_parameter_models[i] = SubModel();
-
     // Set up variable names
     //   - initial probability that a letter l is in a submodel of type m = 1/n
     for(int l=0;l<Alphabet().size();l++) 
@@ -1660,33 +1660,18 @@ namespace substitution {
 
   efloat_t CAT_FixedFrequencyModel::prior() const
   {
-    valarray<double> f(fraction.size());
-    for(int i=0;i<f.size();i++)
-      f[i] = prior_fraction[i];
+    valarray<double> f = get_varray<double>(prior_fraction);
 
-    valarray<double> x(fraction.size());
-    for(int i=0;i<x.size();i++)
-      x[i] = fraction[i];
+    valarray<double> x = get_varray<double>(fraction);
 
     return ::dirichlet_pdf(x,safe_count(f*10.0));
   }
 
   void CAT_FixedFrequencyModel::recalc(const std::vector<int>&)
   {
+    fraction.resize(prior_fraction.size());
     for(int i=0;i<fraction.size();i++)
       fraction[i] = get_parameter_value_as<Double>(1+i);
-  }
-
-  const MultiModel::Base_Model_t& CAT_FixedFrequencyModel::base_model(int i) const {
-    return *sub_parameter_models[i];
-  }
-
-  MultiModel::Base_Model_t& CAT_FixedFrequencyModel::base_model(int i) {
-    return *sub_parameter_models[i];
-  }
-  
-  vector<double> CAT_FixedFrequencyModel::distribution() const {
-    return fraction;
   }
 
   /// Get the equilibrium frequencies
@@ -1738,8 +1723,8 @@ namespace substitution {
       for(int j=0;j<f_ordered.size();j++)
 	f_ordered[letter[j]] = f[j];
 
-      sub_parameter_models.push_back(SimpleReversibleAdditiveCollection<F81_Model>(F81_Model(a,f_ordered)));
-      sub_parameter_models.back()->set_rate(1);
+      base_models.push_back(SimpleReversibleAdditiveCollection<F81_Model>(F81_Model(a,f_ordered)));
+      base_models.back()->set_rate(1);
     }
 
     //------- 6: Create the parameters for fiddling --------//
@@ -1828,31 +1813,28 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   //---------------------------- class MultiModel --------------------------//
-  const MultiModel::Base_Model_t& MultiParameterModel::base_model(int m) const {
-    int i = m / SubModel().n_base_models();
-    int j = m % SubModel().n_base_models();
+  void MultiParameterModel::recalc(const vector<int>&)
+  {
+    int N = SubModel().n_base_models() * p_values.size();
 
-    return sub_parameter_models[i]->base_model(j);
-  }
+    // recalc fractions and base models
+    fraction.resize( N );
+    base_models.resize( N );
 
-  MultiModel::Base_Model_t& MultiParameterModel::base_model(int m) {
-    int i = m / SubModel().n_base_models();
-    int j = m % SubModel().n_base_models();
-
-    return sub_parameter_models[i]->base_model(j);
-  }
-  
-  vector<double> MultiParameterModel::distribution() const {
-    vector<double> dist(n_base_models());
-
-    for(int m=0;m<dist.size();m++) {
+    for(int m=0;m<fraction.size();m++) 
+    {
       int i = m / SubModel().n_base_models();
       int j = m % SubModel().n_base_models();
 
-      dist[m] = fraction[i]*sub_parameter_models[i]->distribution()[j];
-    }
+      fraction[m] = weights[i]*SubModel().distribution()[j];
 
-    return dist;
+      base_models[m] = SubModel().base_model(j);
+      if (p_change == -1)
+	base_models[m]->set_rate(p_values[i]);
+      else {
+	base_models[m]->set_parameter_value(p_change, p_values[i]);
+      }
+    }
   }
 
     /// Get the equilibrium frequencies
@@ -1862,26 +1844,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   // Um, summed-over parameter lives on as its MEAN
 
-  void MultiParameterModel::recalc_submodel_instances()
-  {
-    // recalc sub-models
-    for(int b=0;b<fraction.size();b++) {
-      sub_parameter_models[b] = &SubModel();
-
-      if (p_change == -1)
-	sub_parameter_models[b]->set_rate(p_values[b]);
-      else {
-	sub_parameter_models[b]->set_parameter_value(p_change, p_values[b]);
-      }
-    }
-  }
-
   MultiParameterModel::MultiParameterModel(const MultiModel& M,int p,int n) 
     :ReversibleWrapperOver<MultiModel>(M),
-     sub_parameter_models(vector<owned_ptr<MultiModel> >(n,M)),
-     fraction(n),
      p_change(p),
-     p_values(n)
+     p_values(n),
+     weights(n)
   { 
     // start with sane values for p_values
     for(int m=0;m<p_values.size();m++)
@@ -1911,7 +1878,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return Pr;
   }
 
-  void DirichletParameterModel::recalc(const vector<int>&) 
+  void DirichletParameterModel::recalc(const vector<int>& indices) 
   {
     /*
     // sort bins to enforce monotonically increasing order
@@ -1934,12 +1901,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // write parameter values to fraction / p_values
     for(int i=0;i<p_values.size();i++)
     {
-      fraction[i] = get_parameter_value_as<Double>(i);
+      weights[i] = get_parameter_value_as<Double>(i);
       p_values[i] = get_parameter_value_as<Double>(i+p_values.size());
     }
     
-    // We need to do this when either P_values changes, or the SUBMODEL changes
-    recalc_submodel_instances();
+    // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
+    MultiParameterModel::recalc(indices);
   }
 
   string DirichletParameterModel::name() const {
@@ -1990,7 +1957,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return SubModelAs<Distribution>(1);
   }
 
-  void DistributionParameterModel::recalc(const vector<int>&) 
+  void DistributionParameterModel::recalc(const vector<int>& indices) 
   {
     // We only need to do this when the DISTRIBUTION changes (?)
     Discretization d(p_values.size(),D());
@@ -2000,11 +1967,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     d.scale(1.0/ratio);
 
-    fraction = d.f;
+    weights = d.f;
     p_values = d.r;
     
-    // We need to do this when either P_values changes, or the SUBMODEL changes
-    recalc_submodel_instances();
+    // recalc_submodel_instances: we need to do this when either P_values changes, or the SUBMODEL changes
+    MultiParameterModel::recalc(indices);
   }
 
   string DistributionParameterModel::name() const {
@@ -2050,8 +2017,24 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return SubModel().frequencies();
   }
 
-  void WithINV::recalc(const vector<int>&) {
+  void WithINV::recalc(const vector<int>&) 
+  {
+    int n = SubModel().n_base_models();
+
+    // compute base models
+    fraction.resize(n+1);
+    double p = get_parameter_value_as<Double>(p_index);
+    for(int i=0;i<n;i++)
+      fraction[i] = SubModel().distribution()[i] * (1.0-p);
+    fraction.back() = p;
+
+    // compute base models
+    base_models.resize(n + 1);
+    for(int i=0;i<n;i++)
+      base_models[i] = SubModel().base_model(i);
+
     INV->SubModel().frequencies(SubModel().frequencies());
+    base_models.back() = INV;
   }
 
   string WithINV::name() const {
@@ -2067,32 +2050,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       return beta_pdf(p, 1, 2);
   }
 
-    /// Access the base models
-  const MultiModel::Base_Model_t& WithINV::base_model(int m) const {
-    if (m<SubModel().n_base_models())
-      return SubModel().base_model(m);
-    else
-      return *INV;
-  }
-
-  MultiModel::Base_Model_t& WithINV::base_model(int m) {
-    if (m<SubModel().n_base_models())
-      return SubModel().base_model(m);
-    else
-      return *INV;
-  }
-
-  vector<double> WithINV::distribution() const {
-    double p = get_parameter_value_as<Double>(p_index);
-
-    vector<double> dist = SubModel().distribution();
-    for(int i=0;i<dist.size();i++)
-      dist[i] *= (1-p);
-
-    dist.push_back(p);
-    return dist;
-  }
-
   WithINV::WithINV(const MultiModel& M)
     :ReversibleWrapperOver<MultiModel>(M),
      INV(SimpleReversibleMarkovModel(INV_Model(M.Alphabet())))
@@ -2103,114 +2060,19 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     recalc_all();
   }
 
-
-  //--------------- Invariant Sites Model 2 ----------------//
-
-  const double WithINV2::inv_frac_mean = 0.1;
-  const double WithINV2::max_inv_rate = 0.01;
-
-  /// Get the equilibrium frequencies
-  //  const std::valarray<double>& WithINV2::frequencies() const {
-  //    return VAR->frequencies();
-  //  }
-
-  const MultiModel& WithINV2::VAR() const {
-    return SubModelAs<MultiModel>(0);
-  }
-
-  MultiModel& WithINV2::VAR() {
-    return SubModelAs<MultiModel>(0);
-  }
-
-  const SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>& WithINV2::INV() const {
-    return SubModelAs<SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> >(1);
-  }
-
-  SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>& WithINV2::INV() {
-    return SubModelAs<SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> >(1);
-  }
-
-  void WithINV2::recalc(const vector<int>&) 
-  {
-    double p = get_parameter_value_as<Double>(0);
-
-    freq = (1-p)*VAR().frequencies() + p*INV().frequencies();
-  }
-
-  string WithINV2::name() const 
-  {
-    return VAR().name() + " + INV2";
-  }
-
-  efloat_t WithINV2::super_prior() const 
-  {
-    double p = get_parameter_value_as<Double>(0);
-
-    if (is_fixed(0))
-      return 1;
-    else
-      return beta_pdf(p, 1, 2);
-  }
-
-    /// Access the base models
-  const MultiModel::Base_Model_t& WithINV2::base_model(int m) const {
-    if (m<VAR().n_base_models())
-      return VAR().base_model(m);
-    else
-      return INV();
-  }
-
-  MultiModel::Base_Model_t& WithINV2::base_model(int m) {
-    if (m<VAR().n_base_models())
-      return VAR().base_model(m);
-    else
-      return INV();
-  }
-
-  vector<double> WithINV2::distribution() const {
-    double p = get_parameter_value_as<Double>(0);
-
-    vector<double> dist = VAR().distribution();
-    for(int i=0;i<dist.size();i++)
-      dist[i] *= (1-p);
-
-    dist.push_back(p);
-    return dist;
-  }
-
-  const valarray<double>& WithINV2::frequencies() const {
-    return freq;
-
-  }
-
-//  NOTE: Shouldn't we have a generic 'frequencies' calculation if we need one?
-//  ????: And do we need one?
-
-  WithINV2::WithINV2(const MultiModel& M)
-    :freq(M.frequencies())
-  {
-    add_super_parameter(Parameter("INV::p", Double(0.01), between(0, 1)));
-    insert_submodel("VAR", M);
-    insert_submodel("INV", SimpleReversibleMarkovModel(INV_Model(M.Alphabet())));
-
-    check();
-    recalc_all();
-  }
-
-
-
   //-------------------- M2 --------------------//
-  void M2::recalc(const vector<int>&) 
+  void M2::recalc(const vector<int>& indices) 
   {
-    fraction[0] = get_parameter_value_as<Double>(0);
-    fraction[1] = get_parameter_value_as<Double>(1);
-    fraction[2] = get_parameter_value_as<Double>(2);
+    weights[0] = get_parameter_value_as<Double>(0);
+    weights[1] = get_parameter_value_as<Double>(1);
+    weights[2] = get_parameter_value_as<Double>(2);
 
     p_values[0] = 0;
     p_values[1] = 1;
     p_values[2] = get_parameter_value_as<Double>(3);
 
-    recalc_submodel_instances();
+    // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
+    MultiParameterModel::recalc(indices);
   }
 
   efloat_t M2::super_prior() const 
@@ -2257,17 +2119,18 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   //-------------------- M2a -------------------//
-  void M2a::recalc(const vector<int>&) 
+  void M2a::recalc(const vector<int>& indices) 
   {
-    fraction[0] = get_parameter_value_as<Double>(0);
-    fraction[1] = get_parameter_value_as<Double>(1);
-    fraction[2] = get_parameter_value_as<Double>(2);
+    weights[0] = get_parameter_value_as<Double>(0);
+    weights[1] = get_parameter_value_as<Double>(1);
+    weights[2] = get_parameter_value_as<Double>(2);
 
     p_values[0] = get_parameter_value_as<Double>(3);
     p_values[1] = 1;
     p_values[2] = get_parameter_value_as<Double>(4);
 
-    recalc_submodel_instances();
+    // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
+    MultiParameterModel::recalc(indices);
   }
 
   efloat_t M2a::super_prior() const 
@@ -2395,7 +2258,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     recalc_all();
   }
 
-  void M8b::recalc(const vector<int>&) 
+  void M8b::recalc(const vector<int>& indices) 
   {
     UniformDiscretization d(nbin, *S);
 
@@ -2426,44 +2289,43 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     {
       if (i < nbin)
       {
-        fraction[i] = d.f[i] * ff[0];
+        weights[i] = d.f[i] * ff[0];
         p_values[i] = d.r[i];
       }
       else
       {
-        fraction[i] = ff[i - nbin + 1];
+        weights[i] = ff[i - nbin + 1];
         p_values[i] = get_parameter_value_as<Double>(i - nbin + 1 + 2);
       }
     }
 
-    /// We need to do this when either P_values changes, 
-    /// or the SUBMODEL changes
-    /// MultiParameterModel::recalc_submodel_instances ()
-    recalc_submodel_instances();
+    // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
+    MultiParameterModel::recalc(indices);
   }
 
   //M3
 
   double M3::omega(int i) const {
-    return get_parameter_value_as<Double>(fraction.size() + i);
+    return get_parameter_value_as<Double>(weights.size() + i);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
   void M3::omega(int i,double w) {
-    set_parameter_value(fraction.size()+i,w);
+    set_parameter_value(weights.size()+i,w);
   }
 
   // NOTE: we only enforce order in the LOGGING of the omegas
 
-  void M3::recalc(const vector<int>&) 
+  void M3::recalc(const vector<int>& indices) 
   {
-    for(int i=0;i<fraction.size();i++)
-      fraction[i] = get_parameter_value_as<Double>(i);
+    for(int i=0;i<weights.size();i++)
+      weights[i] = get_parameter_value_as<Double>(i);
 
-    for(int i=0;i<fraction.size();i++)
-      p_values[i] = get_parameter_value_as<Double>(fraction.size()+i);
+    for(int i=0;i<weights.size();i++)
+      p_values[i] = get_parameter_value_as<Double>(weights.size()+i);
 
-    recalc_submodel_instances();
+    // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
+    MultiParameterModel::recalc(indices);
   }
 
   // FIXME: Conditional on one omega being small, the probability of the other ones being
@@ -2491,7 +2353,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   efloat_t M3::super_prior() const 
   {
     efloat_t P = 1;
-    int n = fraction.size();
+    int n = weights.size();
 
     if (n <= 1) return P;
 
@@ -2510,7 +2372,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   string M3::name() const {
-    return SubModels(0).name() + " + M3[" + convertToString(fraction.size()) + "]";
+    return SubModels(0).name() + " + M3[" + convertToString(weights.size()) + "]";
   }
 
   M3::M3(const M0& M1,const ReversibleFrequencyModel& R, int n) 
@@ -2540,17 +2402,22 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   { 
   }
 
-  int MixtureModel::n_base_models() const 
-  {
-    int total=0;
-    for(int i=0; i<n_submodels(); i++)
-      total += SubModels(i).n_base_models();
-    return total;
-  }
-
-
   void MixtureModel::recalc(const vector<int>&) 
   {
+    fraction.clear();
+    base_models.clear();
+
+    for(int m=0;m<n_submodels();m++)
+    {
+      double fm = get_parameter_value_as<Double>(m);
+
+      for(int i=0;i<SubModels(m).n_base_models();i++)
+      {
+	fraction.push_back(fm * SubModels(m).distribution()[i]);
+	base_models.push_back(SubModels(m).base_model(i));
+      }
+    }
+
     //recalculate pi
     pi = 0;
     int sm_total = n_submodels();
@@ -2564,53 +2431,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     valarray<double> q = get_varray<double>(get_parameter_values_as<Double>( range<int>(n_submodels(), n_submodels()) ) );
 
     return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0, n_submodels()) ), 10.0*q);
-  }
-
-  const MultiModel::Base_Model_t& MixtureModel::base_model(int m) const 
-  {
-    assert(m >= 0);
-
-    int sm_total = n_submodels();
-    for(int sm=0;sm<sm_total;sm++) {
-      if (m < SubModels(sm).n_base_models())
-	return SubModels(sm).base_model(m);
-      else
-	m -= SubModels(sm).n_base_models();
-    }
-
-    // we don't even have that many base models...
-    std::abort();
-  }
-
-  MultiModel::Base_Model_t& MixtureModel::base_model(int m) 
-  {
-    assert(m >= 0);
-
-    int sm_total = n_submodels();
-    for(int sm=0; sm<sm_total; sm++) {
-      if (m < SubModels(sm).n_base_models())
-	return SubModels(sm).base_model(m);
-      else
-	m -= SubModels(sm).n_base_models();
-    }
-
-    // we don't even have that many base models...
-    std::abort();
-  }
-
-  vector<double> MixtureModel::distribution() const 
-  {
-    int sm_total = n_submodels();
-
-    vector<double> dist(n_base_models());
-
-    for(int sm=0,m=0; sm<sm_total; sm++) {
-      double f = get_parameter_value_as<Double>(sm);
-      for(int i=0;i<SubModels(sm).n_base_models();i++)
-	dist[m++] = f*SubModels(0).distribution()[i];
-    }
-    
-    return dist;
   }
 
   string MixtureModel::name() const {

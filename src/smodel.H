@@ -962,31 +962,44 @@ namespace substitution {
 
   /// Umm... is this reversible?
   /// Also, what if we have two base classes: ReversibleAdditive, and F81?
-  class MultiModel: public ReversibleAdditiveModel 
+  class MultiModelObject
   {
   public:
-
     typedef ReversibleAdditiveCollection Base_Model_t;
-    
-    MultiModel* clone() const =0;
+
+  protected:
+    mutable std::vector< owned_ptr<Base_Model_t> > base_models;
+
+    mutable std::vector< double > fraction;
+
+  public:
+    virtual MultiModelObject* clone() const {return new MultiModelObject(*this);}
 
     /// The number of components
-    virtual int n_base_models() const=0;
+    int n_base_models() const {return base_models.size();}
 
     /// The number of different branch models per components
     int n_parts() const;
 
     /// Access the base models
-    virtual const Base_Model_t& base_model(int m) const=0;
-    virtual       Base_Model_t& base_model(int m)      =0;
+    const Base_Model_t& base_model(int m) const {return *base_models[m];}
+          Base_Model_t& base_model(int m)       {return *base_models[m];}
+
+    /// Get the probability of each base models
+    const std::vector<double>& distribution() const {return fraction;}
+  };
+
+
+  class MultiModel: public ReversibleAdditiveModel, public MultiModelObject
+  {
+
+  public:
+    virtual MultiModel* clone() const=0;
 
     double rate() const;
     void set_rate(double);
 
-    virtual const std::vector<unsigned>& state_letters() const {return base_model(0).state_letters();}
-
-    /// Get the probability of each base models
-    virtual std::vector<double> distribution() const=0;
+    const std::vector<unsigned>& state_letters() const {return base_model(0).state_letters();}
 
     /// Get a transition probability matrix for time 't', averaging over models
     Matrix transition_p(double t) const;
@@ -1003,6 +1016,7 @@ namespace substitution {
   class UnitModel: public MultiModel,
 		   public SuperModelOver< MultiModel::Base_Model_t >
   {
+    void recalc(const std::vector<int>&);
   public:
     UnitModel* clone() const {return new UnitModel(*this);}
 
@@ -1014,15 +1028,6 @@ namespace substitution {
 
     /// Get the equilibrium frequencies
     const valarray<double>& frequencies() const { return SubModel().frequencies(); }
-
-    /// The number of models
-    int n_base_models() const {return 1;}
-
-    /// Access the base model
-    const Base_Model_t& base_model(int) const {return SubModel();}
-          Base_Model_t& base_model(int)       {return SubModel();}
-
-    std::vector<double> distribution() const {return std::vector<double>(1,1);}
 
     string name() const;
 
@@ -1039,12 +1044,6 @@ namespace substitution {
 			     public ReversibleWrapperOver<SimpleReversibleMarkovModel> 
   {
   protected:
-    /// Components of the mixture - Reversible Markov models express as S+R
-    std::vector<owned_ptr<SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> > > sub_parameter_models;
-
-    /// Fraction of the sites with each parameter value (weights on the mixture components)
-    std::vector<double> fraction;
-
     // a(m,l) is the probability that a letter is in component "m" given that it is of type "l"
     inline double  a(int m,int l) const {return get_parameter_value_as<Double>(m+l*fraction.size());}
 
@@ -1055,16 +1054,6 @@ namespace substitution {
     efloat_t super_prior() const;
 
     MultiFrequencyModel* clone() const {return new MultiFrequencyModel(*this);}
-
-    /// The number of models
-    int n_base_models() const {return fraction.size();}
-
-    /// Access the base models
-    const Base_Model_t& base_model(int m) const;
-          Base_Model_t& base_model(int m)      ;
-
-    /// Get the probability of each base models
-    std::vector<double> distribution() const;
 
     /// Get the equilibrium frequencies
     const valarray<double>& frequencies() const;
@@ -1081,14 +1070,8 @@ namespace substitution {
   class CAT_FixedFrequencyModel: public MultiModel
   {
   protected:
-    /// Components of the mixture - Reversible Markov models express as S+R
-    std::vector<owned_ptr<SimpleReversibleAdditiveCollection<F81_Model> > > sub_parameter_models;
-
     /// Fraction of the sites with each parameter value, according to model estimate
     std::vector<double> prior_fraction;
-
-    /// Fraction of the sites with each parameter value (weights on the mixture components)
-    std::vector<double> fraction;
 
     string name_;
 
@@ -1106,17 +1089,7 @@ namespace substitution {
 
     CAT_FixedFrequencyModel* clone() const {return new CAT_FixedFrequencyModel(*this);}
 
-    /// The number of models
-    int n_base_models() const {return fraction.size();}
-
     efloat_t prior() const;
-
-    /// Access the base models
-    const Base_Model_t& base_model(int m) const;
-          Base_Model_t& base_model(int m)      ;
-
-    /// Get the probability of each base models
-    std::vector<double> distribution() const;
 
     /// Get the equilibrium frequencies - Gotta define this, cuz MultiModel is reversible...
     const valarray<double>& frequencies() const;
@@ -1154,29 +1127,18 @@ namespace substitution {
 			     public ReversibleWrapperOver<MultiModel> 
   {
   protected:
-    /// MultiModels w/ different values of the parameter set
-    std::vector<owned_ptr<MultiModel> > sub_parameter_models;
-    /// Fraction of the sites with each parameter value
-    std::vector<double> fraction;
-
     /// The parameter which is varying;
     int p_change;
+
     /// The values it takes on
     std::vector<double> p_values;
 
-    void recalc_submodel_instances();
+    /// The weights for the different avlues
+    std::vector<double> weights;
+
+    void recalc(const std::vector<int>&);
   public:
     MultiParameterModel* clone() const=0;
-
-    /// The number of models
-    int n_base_models() const {return p_values.size() * SubModel().n_base_models();}
-
-    /// Access the base models
-    const Base_Model_t& base_model(int m) const;
-          Base_Model_t& base_model(int m)      ;
-
-    /// Get the probability of each base models
-    std::vector<double> distribution() const;
 
     /// Get the equilibrium frequencies
     const valarray<double>& frequencies() const;
@@ -1262,6 +1224,7 @@ namespace substitution {
 
     int p_index;
 
+    // what if the multimodel's other components are modulated markov models, though?
     owned_ptr<SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> > INV;
 
   public:
@@ -1271,68 +1234,12 @@ namespace substitution {
 
     efloat_t super_prior() const;
 
-    /// The number of models
-    int n_base_models() const {return 1 +  SubModel().n_base_models();}
-
-    /// Access the base models
-    const Base_Model_t& base_model(int m) const;
-          Base_Model_t& base_model(int m)      ;
-
-    std::vector<double> distribution() const;
-
     /// Get the equilibrium frequencies
     const valarray<double>& frequencies() const;
 
     string name() const;
 
     WithINV(const MultiModel& M);
-  };
-
-  /// The Invariant-sites model: a certain fraction of the sites don't change
-
-  /// The Invariant-sites model: a certain fraction of the sites don't change
-  /// The only parameter is 'p', the fraction of sites which don't change
-  /// To keep branch lengths the same, inflate rates by 1/(1-p).
-  //  class WithINV2: public MultiModel, public ReversibleWrapperOver<MultiModel> 
-
-  class WithINV2: public MultiModel,
-		  public SuperModelOver< ::Model>
-  {
-    valarray<double> freq;
-
-    static const double inv_frac_mean;
-    static const double max_inv_rate;
-
-    const MultiModel& VAR() const;
-          MultiModel& VAR();
-
-    const SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>& INV() const ;
-          SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>& INV();
-
-  public:
-    virtual WithINV2* clone() const {return new WithINV2(*this);}
-
-    const alphabet& Alphabet() const {return VAR().Alphabet();}
-
-    void recalc(const std::vector<int>&);
-
-    efloat_t super_prior() const;
-
-    /// The number of models
-    int n_base_models() const {return 1 +  VAR().n_base_models();}
-
-    /// Access the base models
-    const Base_Model_t& base_model(int m) const;
-          Base_Model_t& base_model(int m)      ;
-
-    std::vector<double> distribution() const;
-
-    /// Get the equilibrium frequencies
-    const valarray<double>& frequencies() const;
-
-    string name() const;
-
-    WithINV2(const MultiModel& M);
   };
 
   class M2: public MultiParameterModel
@@ -1402,24 +1309,15 @@ namespace substitution {
 
   class MixtureModel: public MultiModel, public SuperModelOver<MultiModel> 
   {
-    efloat_t super_prior() const;
-    void recalc(const std::vector<int>&);
-
     valarray<double> pi;
 
+    efloat_t super_prior() const;
+    void recalc(const std::vector<int>&);
   public:
     virtual MixtureModel* clone() const {return new MixtureModel(*this);}
 
-    /// The number of models
-    int n_base_models() const;
-
-    const Base_Model_t& base_model(int m) const;
-          Base_Model_t& base_model(int m);
-
     /// Get the equilibrium frequencies
     const valarray<double>& frequencies() const {return pi;}
-
-    std::vector<double> distribution() const;
 
     string name() const;
 
