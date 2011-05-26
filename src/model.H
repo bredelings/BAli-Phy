@@ -281,12 +281,15 @@ public:
 struct arg_expression
 {
   int parent_index;
+  int sub_model_index;
   boost::shared_ptr<const Object> constant_value;
-  bool is_constant() const {return parent_index == -1;}
-  bool is_term_ref() const {return parent_index != -1;}
 
-  arg_expression():parent_index(-1) {}
-  arg_expression(int i):parent_index(i) {}
+  bool is_constant() const {return parent_index == -1 and sub_model_index == -1;}
+  bool is_term_ref() const {return parent_index != -1;}
+  bool is_submodel_ref() const {return sub_model_index != -1;}
+
+  arg_expression():parent_index(-1), sub_model_index(-1) {}
+  arg_expression(int i):parent_index(i), sub_model_index(-1) {}
 };
 
 struct model_slot
