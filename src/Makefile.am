@@ -96,7 +96,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/partition.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C timer_stack.C \
-	  setup-mcmc.C io.C logger.C AIS.C
+	  setup-mcmc.C io.C logger.C AIS.C operator.C
 
 nodist_bali_phy_SOURCES = git_version.h
 bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@ 
@@ -135,7 +135,7 @@ alignment_gild_SOURCES = tools/alignment-gild.C alignment.C alphabet.C \
 	sequence.C util.C rng.C tree.C sequencetree.C tools/optimize.C \
 	tools/findroot.C setup.C imodel.C probability.C sequence-format.C \
 	model.C tools/distance-methods.C alignment-random.C alignment-util.C \
-	randomtree.C tree-util.C tools/inverse.C io.C
+	randomtree.C tree-util.C tools/inverse.C io.C operator.C
 
 alignment_gild_LDADD = ${ATLAS_LIBS}
 
@@ -173,14 +173,14 @@ alignment_identity_SOURCES = tools/alignment-identity.C alignment.C alphabet.C s
 alignment_reorder_SOURCES = tools/alignment-reorder.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C tools/optimize.C tools/findroot.C setup.C imodel.C \
 	sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C \
-	model.C tree-util.C io.C
+	model.C tree-util.C io.C operator.C
 
 #---------------------------------------------------------------
 
 alignment_thin_SOURCES = tools/alignment-thin.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C setup.C imodel.C sequence-format.C randomtree.C \
 	alignment-util.C probability.C alignment-random.C model.C tree-util.C \
-	tools/distance-methods.C tools/inverse.C tools/index-matrix.C io.C
+	tools/distance-methods.C tools/inverse.C tools/index-matrix.C io.C operator.C
 
 #---------------------------------------------------------------
 
@@ -201,18 +201,18 @@ alignment_draw_SOURCES = tools/alignment-draw.C alignment.C alphabet.C sequence.
 
 #---------------------------------------------------------------
 
-joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C model.C alignment-random.C alignment-util.C randomtree.C tools/statistics.C tools/joint-A-T.C tools/partition.C io.C
+joint_indels_SOURCES = tools/joint-indels.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C model.C alignment-random.C alignment-util.C randomtree.C tools/statistics.C tools/joint-A-T.C tools/partition.C io.C operator.C
 
 #---------------------------------------------------------------
 
 joint_parsimony_SOURCES = tools/joint-parsimony.C alignment.C alphabet.C sequence.C util.C rng.C tree.C \
 	sequencetree.C tree-util.C setup.C imodel.C probability.C sequence-format.C \
 	model.C alignment-random.C alignment-util.C randomtree.C \
-	tools/parsimony.C tools/joint-A-T.C n_indels.C io.C
+	tools/parsimony.C tools/joint-A-T.C n_indels.C io.C operator.C
 
 #---------------------------------------------------------------
 
-alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C io.C
+alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C io.C operator.C
 
 #---------------------------------------------------------------
 
@@ -220,7 +220,7 @@ alignment_cat_SOURCES = tools/alignment-cat.C alphabet.C sequence.C util.C seque
 
 #---------------------------------------------------------------
 
-alignment_translate_SOURCES = tools/alignment-translate.C alignment.C alignment-util.C alphabet.C sequence.C sequence-format.C util.C tree.C setup.C imodel.C model.C probability.C sequencetree.C randomtree.C rng.C tree-util.C alignment-random.C io.C
+alignment_translate_SOURCES = tools/alignment-translate.C alignment.C alignment-util.C alphabet.C sequence.C sequence-format.C util.C tree.C setup.C imodel.C model.C probability.C sequencetree.C randomtree.C rng.C tree-util.C alignment-random.C io.C operator.C
 
 #---------------------------------------------------------------
 
@@ -232,7 +232,7 @@ alignment_convert_SOURCES = tools/alignment-convert.C alignment.C alignment-util
 
 #---------------------------------------------------------------
 
-alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C tools/partition.C io.C
+alignment_find_conserved_SOURCES = tools/alignment-find-conserved.C alignment.C alphabet.C sequence.C util.C rng.C tree.C sequencetree.C setup.C imodel.C tools/parsimony.C sequence-format.C randomtree.C alignment-util.C probability.C alignment-random.C model.C tree-util.C tools/statistics.C tools/partition.C io.C operator.C
 
 #---------------------------------------------------------------
 
@@ -293,7 +293,7 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
 	alignment-random.C parameters.C myexception.C monitor.C \
 	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
-	timer_stack.C io.C
+	timer_stack.C io.C operator.C
 
 #---------------------------------------------------------------
 

@@ -36,6 +36,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "bounds.H"
 #include "cow-ptr.H"
 #include "object.H"
+#include "operator.H"
 
 // FIXME - the way to have a model class with members as submodels is to
 //   1. hard-code the SubModels(m) function to return the models you want,
@@ -132,7 +133,7 @@ struct Parameter
 ///
 /// Next: make models out-of-date unless we call model.update();
 ///
-class Model: public Object
+class Model: public Operator
 {
 protected:
   mutable bool valid;
