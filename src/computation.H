@@ -20,17 +20,11 @@ struct Computation: public Object
   Computation(int n_inputs):used_values(n_inputs) { }
 };
 
-class Context;
-
-struct OperationArgs
+struct OperationArgs: public Object
 {
-  Context& CTX;
-  boost::shared_ptr<Computation> computation;
-  int index_of_caller;
+  virtual OperationArgs* clone() const = 0;
 
-  OperationArgs(Context& A, int i);
-
-  boost::shared_ptr<const Object> evaluate(int slot);
+  virtual boost::shared_ptr<const Object> evaluate(int slot) = 0;
 
   template <typename T>
   boost::shared_ptr<const T> evaluate_as(int slot)
@@ -42,7 +36,21 @@ struct OperationArgs
       throw myexception()<<"Cannot convert '"<<typeid(o.get()).name()<<" to "<<typeid(T).name();
     return converted;
   }
+};
 
+class Context;
+
+struct ContextOperationArgs: public OperationArgs
+{
+  Context& CTX;
+  boost::shared_ptr<Computation> computation;
+  int index_of_caller;
+
+  boost::shared_ptr<const Object> evaluate(int slot);
+
+  ContextOperationArgs* clone() const {return new ContextOperationArgs(*this);}
+
+  ContextOperationArgs(Context& A, int i);
 };
 
 #endif

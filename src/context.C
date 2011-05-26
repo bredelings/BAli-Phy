@@ -79,7 +79,7 @@ shared_ptr<const Object> Context::evaluate(int index)
   // to get a new result.
   if (not V.computed)
   {
-    OperationArgs Args(*this, index);
+    ContextOperationArgs Args(*this, index);
 
     // recursive calls to evaluate happen in here.
     shared_ptr<const Object> new_result = (*O)(Args);

@@ -2,7 +2,7 @@
 #include "context.H"
 #include "formula.H"
 
-OperationArgs::OperationArgs(Context& A, int i)
+ContextOperationArgs::ContextOperationArgs(Context& A, int i)
   :CTX(A), index_of_caller(i) 
 { 
   int n_input_slots = CTX.F->n_input_indices(index_of_caller);
@@ -10,7 +10,7 @@ OperationArgs::OperationArgs(Context& A, int i)
   computation = boost::shared_ptr<Computation>( new Computation(n_input_slots) );
 }
 
-boost::shared_ptr<const Object> OperationArgs::evaluate(int slot)
+boost::shared_ptr<const Object> ContextOperationArgs::evaluate(int slot)
 {
   int index_to_evaluate = CTX.F->input_indices(index_of_caller)[slot];
   if (not computation->used_values[slot])
