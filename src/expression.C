@@ -7,6 +7,10 @@ using boost::shared_ptr;
 using std::vector;
 using std::string;
 
+term_ref_expression::term_ref_expression(const term_ref& r):term(r) {}
+term_ref_expression::term_ref_expression(int i, boost::shared_ptr<const Formula> f):term(i,f) {}
+
+
 shared_ptr<const expression> dummy_expression::substitute(int dummy, shared_ptr<const expression> E) const
 {
   if (index == dummy) 

@@ -47,8 +47,8 @@ struct term_ref
   std::string print() const;
 
   operator int() const {return index;}
-  term_ref():index(-1) {}
-  term_ref(int i,polymorphic_cow_ptr<Formula> f):index(i),F(f) {}
+  term_ref();
+  term_ref(int i, boost::shared_ptr<const Formula> f);
   term_ref(int i,const Formula& f);
 };
 
@@ -102,8 +102,8 @@ struct term_ref_expression: public expression
   term_ref term;
   term_ref_expression* clone() const {return new term_ref_expression(*this);}
   std::string print() const {return term.print();}
-  term_ref_expression(const term_ref& r):term(r) {}
-  term_ref_expression(int i, polymorphic_cow_ptr<Formula> f):term(i,f) {}
+  term_ref_expression(const term_ref& r);
+  term_ref_expression(int i, boost::shared_ptr<const Formula> f);
 };
 
 // a dummy variable expression

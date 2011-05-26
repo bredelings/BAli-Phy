@@ -15,7 +15,10 @@ bool term_ref::is_state() const {return F->is_state(index);}
 bool term_ref::is_constant() const {return F->is_constant(index);}
 bool term_ref::is_computed() const {return F->is_computed(index);}
 string term_ref::print() const {return F->name_for_index(index);}
+term_ref::term_ref():index(-1) { }
 term_ref::term_ref(int i,const Formula& f):index(i),F(f.clone()) {}
+term_ref::term_ref(int i,boost::shared_ptr<const Formula> f):index(i),F(f) {}
+
 
 string Formula::name_for_index(int index) const
 {
