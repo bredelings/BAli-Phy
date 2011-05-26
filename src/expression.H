@@ -54,8 +54,6 @@ struct term_ref
 
 struct expression: public Object
 {
-  polymorphic_cow_ptr<Formula> F;
-
   // an expression can be
   // - a term reference
   // - a constant (probably one w/o an index so far)
