@@ -1862,6 +1862,27 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     return R;
   }
+
+  class MultiParameterOp: public Operation
+  {
+    MultiParameterOp* clone() const {return new MultiParameterOp(*this);}
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+
+      // The input-model should really be a lambda function taking the single value (or first value) p_change
+      const MultiModel& M = *Args.evaluate_as<substitution::MultiModel>(0);
+      const Int& p_change = *Args.evaluate_as<Int>(1);
+      const DiscreteDistribution& D = *Args.evaluate_as<DiscreteDistribution>(2);
+      
+      boost::shared_ptr< MultiModelObject > R ( MultiParameterFunction(M, p_change, D).clone() );
+
+      return R;
+    }
+
+    std::string name() const {return "MultiParameter";}
+  };
+
   //---------------------------- class MultiModel --------------------------//
   void MultiParameterModel::recalc(const vector<int>&)
   {
