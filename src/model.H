@@ -438,7 +438,7 @@ class OpModelOf: public OpModel, public X
 {
   void recalc(const std::vector<int>& /*indices*/ )
   {
-    static_cast<X&>(this) = dynamic_cast<const X&>(*evaluate());
+    X::operator=( dynamic_cast<const X&>( *evaluate() ) );
   }
 
 public:
