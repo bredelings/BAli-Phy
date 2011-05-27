@@ -1834,6 +1834,34 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     { }
   };
 
+  MultiModelObject MultiParameterFunction(const MultiModel& M, Int p_change, const DiscreteDistribution& D)
+  {
+    int N = M.n_base_models() * D.size();
+
+    MultiModelObject R;
+
+    // recalc fractions and base models
+    R.resize(N);
+
+    for(int m=0;m<R.n_base_models();m++) 
+    {
+      int i = m / M.n_base_models();
+      int j = m % M.n_base_models();
+
+      R.fraction[m] = D.weights[i]*M.distribution()[j];
+
+      R.base_models[m] = M.base_model(j);
+
+      if (p_change == -1) {
+	double value = dynamic_cast<const Double&>(*D.values[i]);
+	R.base_models[m]->set_rate( value );
+      }
+      else
+	R.base_models[m]->set_parameter_value(p_change, D.values[i]);
+    }
+
+    return R;
+  }
   //---------------------------- class MultiModel --------------------------//
   void MultiParameterModel::recalc(const vector<int>&)
   {
