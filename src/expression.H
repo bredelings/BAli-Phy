@@ -291,6 +291,10 @@ struct expression_ref: public boost::shared_ptr<const expression>
     :boost::shared_ptr<const expression>(new named_parameter_expression(s))
   {}
 
+  expression_ref(const char* s)
+    :boost::shared_ptr<const expression>(new named_parameter_expression(s))
+  {}
+
   expression_ref(const Model& M)
     :boost::shared_ptr<const expression>(new model_expression(M))
   { }
