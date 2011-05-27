@@ -92,7 +92,7 @@ struct Conversion: public Operation
 {
   // The 'context' should include the knowledge of the input slots
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual IfThenElse* clone() const {return new IfThenElse(*this);}
+  virtual Conversion* clone() const {return new Conversion(*this);}
 
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
