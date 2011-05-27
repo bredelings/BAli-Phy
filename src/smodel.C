@@ -1820,17 +1820,19 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   class DiscreteDistribution: public Object
   {
   public:
-    vector<Double> weights;
+    vector< double > fraction;
     vector< boost::shared_ptr<Object> > values;
+
+    DiscreteDistribution* clone() const {return new DiscreteDistribution(*this);}
 
     int size() const
     {
-      assert(weights.size() == values.size());
-      return weights.size();
+      assert(fraction.size() == values.size());
+      return fraction.size();
     }
 
     DiscreteDistribution(int s)
-      :weights(s), values(s)
+      :fraction(s), values(s)
     { }
   };
 
@@ -1848,7 +1850,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       int i = m / M.n_base_models();
       int j = m % M.n_base_models();
 
-      R.fraction[m] = D.weights[i]*M.distribution()[j];
+      R.fraction[m] = D.fraction[i]*M.distribution()[j];
 
       R.base_models[m] = M.base_model(j);
 
@@ -1886,26 +1888,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //---------------------------- class MultiModel --------------------------//
   void MultiParameterModel::recalc(const vector<int>&)
   {
-    int N = SubModel().n_base_models() * p_values.size();
+    DiscreteDistribution D(weights.size());
+    D.fraction = weights;
+    for(int i=0;i<weights.size();i++)
+      D.values[i] = boost::shared_ptr<Object>( new Double(p_values[i]) );
 
-    // recalc fractions and base models
-    fraction.resize( N );
-    base_models.resize( N );
-
-    for(int m=0;m<fraction.size();m++) 
-    {
-      int i = m / SubModel().n_base_models();
-      int j = m % SubModel().n_base_models();
-
-      fraction[m] = weights[i]*SubModel().distribution()[j];
-
-      base_models[m] = SubModel().base_model(j);
-      if (p_change == -1)
-	base_models[m]->set_rate(p_values[i]);
-      else {
-	base_models[m]->set_parameter_value(p_change, p_values[i]);
-      }
-    }
+    MultiModelObject::operator=( MultiParameterFunction(SubModel(), p_change, D) );
   }
 
     /// Get the equilibrium frequencies
