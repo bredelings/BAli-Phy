@@ -1817,6 +1817,23 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     load_file(file);
   }
 
+  class DiscreteDistribution: public Object
+  {
+  public:
+    vector<Double> weights;
+    vector< boost::shared_ptr<Object> > values;
+
+    int size() const
+    {
+      assert(weights.size() == values.size());
+      return weights.size();
+    }
+
+    DiscreteDistribution(int s)
+      :weights(s), values(s)
+    { }
+  };
+
   //---------------------------- class MultiModel --------------------------//
   void MultiParameterModel::recalc(const vector<int>&)
   {
