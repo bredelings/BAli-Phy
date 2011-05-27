@@ -664,3 +664,81 @@ vector<int> parameters_with_extension(const Model& M, string name)
   return indices;
 }
 
+
+// can I write the supermodel so that it actually SHARES the values of the sub-models?
+void OpModel::write_value(int index, const shared_ptr<const Object>& p)
+{
+  assert(index < n_parameters());
+
+  Model::write_value(index, p);
+
+  const vector<model_slot>& model_slots = model_slots_for_index[index];
+
+  // For each model that uses this top-level index...
+  for(int i=0;i<model_slots.size();i++)
+  {
+    int m = model_slots[i].model_index;
+    int s = model_slots[i].slot;
+
+    //... write it down into a sub-model, if the usage is not from the top-level model.
+    if (m != -1) 
+      sub_models[m]->write_value(s,p);
+  }
+}
+
+
+string OpModel::name() const
+{
+  vector<string> arg_names;
+  return Op->print_expression(arg_names);
+}
+
+void OpModel::check() const
+{
+  
+}
+
+shared_ptr<const Object> OpModel::evaluate(int slot)
+{
+  const arg_expression& slot_arg = slot_expressions_for_op[slot];
+
+  if (slot_arg.is_term_ref())
+  {
+    // find the parameter and return it
+    int parameter_index = slot_arg.parent_index;
+    return parameters_[parameter_index].value;
+  }
+  else if (slot_arg.is_constant())
+  {
+    // return the relevant constant
+    return slot_arg.constant_value;
+  }
+  else
+  {
+    assert(slot_arg.is_submodel_ref());
+
+    // update the relevant sub_model, and return a 
+    int submodel_index = slot_arg.sub_model_index;
+
+    // make the submodel update itself -- it already knows its parameter values
+    sub_models[submodel_index]->update();
+
+    // return the value.  Currently, the updated sub-modesl IS its own value.
+    shared_ptr<const Model> sub = sub_models[submodel_index];
+    return boost::static_pointer_cast<const Object>( sub );
+  }  
+}
+
+boost::shared_ptr<const Object> OpModel::evaluate()
+{
+  return (*Op)(*this);
+}
+
+OpModel::OpModel(shared_ptr< const Operation > O)
+  :Op(O)
+{
+  for(int i=0;i<O->n_args(); i++)
+    ;
+}
+
+OpModelOf<Double>* a;

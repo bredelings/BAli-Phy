@@ -397,6 +397,54 @@ public:
   SuperModelOver<SubModel_t>* clone() const =0;
 };
 
+#include "operation.H"
+#include "computation.H"
+
+class OpModel: virtual public Model, public OperationArgs
+{
+  /// by index, what does each input parameter do?
+  std::vector<std::vector<model_slot> > model_slots_for_index;
+
+  /// these are the instantiated sub_models
+  std::vector< polymorphic_cow_ptr< Model > > sub_models;
+  /// how do we assemble the inputs for each sub_model
+  std::vector<std::vector<arg_expression> > slot_expressions_for_submodel;
+
+  /// what is the top-level operation
+  boost::shared_ptr< const Operation > Op;
+  /// how do we assemble the inputs for the top-level op?
+  std::vector<arg_expression> slot_expressions_for_op;
+
+  void write_value(int i, const boost::shared_ptr<const Object>& p);
+public:
+
+  OpModel* clone() const {return new OpModel(*this);}
+
+  //prior
+
+  std::string name() const;
+
+  void check() const;
+
+  boost::shared_ptr<const Object> evaluate(int);
+  
+  boost::shared_ptr<const Object> evaluate();
+
+  OpModel(boost::shared_ptr< const Operation > O);
+};
+
+template <typename X>
+class OpModelOf: public OpModel, public X
+{
+  void recalc(const std::vector<int>& /*indices*/ )
+  {
+    static_cast<X&>(this) = dynamic_cast<const X&>(*evaluate());
+  }
+
+public:
+  OpModelOf<X>* clone() const {return new OpModelOf<X>(*this);}
+};
+
 int find_parameter(const Model& M,const std::string& name);
 
 void show_parameters(std::ostream& o,const Model& M);
