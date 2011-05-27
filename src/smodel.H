@@ -989,12 +989,10 @@ namespace substitution {
   public:
     typedef ReversibleAdditiveCollection Base_Model_t;
 
-  protected:
     mutable std::vector< owned_ptr<Base_Model_t> > base_models;
 
     mutable std::vector< double > fraction;
 
-  public:
     virtual MultiModelObject* clone() const {return new MultiModelObject(*this);}
 
     double rate() const;
@@ -1002,6 +1000,7 @@ namespace substitution {
 
     /// The number of components
     int n_base_models() const {return base_models.size();}
+    void resize(int i);
 
     /// The number of different branch models per components
     int n_parts() const;

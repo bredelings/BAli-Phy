@@ -1501,6 +1501,12 @@ namespace substitution {
 
   //--------------- MultiRate Models ----------------//
 
+  void MultiModelObject::resize(int s)
+  {
+    fraction.resize(s);
+    base_models.resize(s);
+  }
+
   int MultiModelObject::n_parts() const
   {
     // This should be the same for all base models.
