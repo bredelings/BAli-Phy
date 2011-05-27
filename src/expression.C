@@ -2,6 +2,7 @@
 #include "util.H"
 #include "operation.H"
 #include "formula.H"
+#include "model.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -84,6 +85,23 @@ operation_expression::operation_expression(const Operation& O,const vector< shar
 operation_expression::operation_expression(shared_ptr<const Operation> O,const vector< shared_ptr<const expression> >& A)
   :operator_expression(A),
    op(O->clone())
+{ }
+
+vector< shared_ptr< const expression > > model_args(const Model& M)
+{
+  vector< shared_ptr< const expression > > args;
+
+  for(int i=0;i<M.n_parameters();i++) 
+  {
+    args.push_back( shared_ptr< const expression> ( new named_parameter_expression(M.parameter_name(i) ) ) );
+  }
+
+  return args;
+}
+
+model_expression::model_expression(const Model& M)
+  :operator_expression( model_args(M) ),
+   m(M.clone())
 { }
 
 lambda_expression::lambda_expression(const Operation& O)

@@ -152,8 +152,6 @@ struct operator_expression: public expression
   operator_expression(const std::vector< boost::shared_ptr<const expression> >& A);
 };
 
-class Operation;
-
 /// An expression with a direct operation
 struct operation_expression: public operator_expression
 {
@@ -167,6 +165,21 @@ struct operation_expression: public operator_expression
   operation_expression(const Operation& O,const std::vector< boost::shared_ptr<const expression> >& A);
 
   operation_expression(boost::shared_ptr<const Operation> O,const std::vector< boost::shared_ptr<const expression> >& A);
+};
+
+#include "model.H"
+
+struct model_expression: public operator_expression
+{
+  boost::shared_ptr<const Model> m;
+
+  model_expression* clone() const {return new model_expression(*this);}
+
+  const Model* get_operator() const {return &(*m);}
+
+  model_expression(const Model& M);
+
+  model_expression(boost::shared_ptr<const Model> M);
 };
 
 struct lambda_expression: public expression
@@ -273,6 +286,14 @@ struct expression_ref: public boost::shared_ptr<const expression>
   expression_ref(const Operation& o)
     :boost::shared_ptr<const expression>(new lambda_expression(o))
   {}
+
+  expression_ref(const std::string& s)
+    :boost::shared_ptr<const expression>(new named_parameter_expression(s))
+  {}
+
+  expression_ref(const Model& M)
+    :boost::shared_ptr<const expression>(new model_expression(M))
+  { }
 };
 
 template <typename T>
