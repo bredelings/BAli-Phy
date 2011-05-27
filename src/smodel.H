@@ -194,7 +194,7 @@ namespace substitution {
 
 
   //------------------------- Markov Substitution Model ----------------------------//
-  struct MarkovModelObject
+  struct MarkovModelObject: public Object
   {
     virtual MarkovModelObject* clone() const {return new MarkovModelObject(*this);}
 
@@ -231,7 +231,7 @@ namespace substitution {
   //------------------------ Exchangeability Model ----------------------//
 
 
-  struct ExchangeModelObject
+  struct ExchangeModelObject: public Object
   {
     ublas::symmetric_matrix<double> S;
 
@@ -526,7 +526,7 @@ namespace substitution {
   };
 
   //------------------------ Reversible frequency model --------------------//
-  struct ReversibleFrequencyModelObject
+  struct ReversibleFrequencyModelObject: public Object
   {
     ReversibleFrequencyModelObject* clone() const {return new ReversibleFrequencyModelObject(*this);}
 
@@ -984,7 +984,7 @@ namespace substitution {
 
   /// Umm... is this reversible?
   /// Also, what if we have two base classes: ReversibleAdditive, and F81?
-  class MultiModelObject
+  class MultiModelObject: public Object
   {
   public:
     typedef ReversibleAdditiveCollection Base_Model_t;
