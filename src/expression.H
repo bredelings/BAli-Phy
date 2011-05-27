@@ -106,6 +106,14 @@ struct term_ref_expression: public expression
   term_ref_expression(int i, boost::shared_ptr<const Formula> f);
 };
 
+struct named_parameter_expression: public expression
+{
+  std::string parameter_name;
+  named_parameter_expression* clone() const {return new named_parameter_expression(*this);}
+  std::string print() const {return parameter_name;}
+  named_parameter_expression(const std::string& s):parameter_name(s) { }
+};
+
 // a dummy variable expression
 struct dummy_expression: public expression
 {
