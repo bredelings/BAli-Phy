@@ -1856,7 +1856,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return R;
   }
 
-  class MultiParameterOp: public Operation
+  struct MultiParameterOp: public Operation
   {
     MultiParameterOp* clone() const {return new MultiParameterOp(*this);}
 
@@ -1874,6 +1874,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     }
 
     std::string name() const {return "MultiParameter";}
+
+    MultiParameterOp():Operation(3) { }
   };
 
   //---------------------------- class MultiModel --------------------------//
