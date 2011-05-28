@@ -1856,6 +1856,47 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return R;
   }
 
+  boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const Distribution& D, Int n)
+  {
+    // Make a discretization - not uniform.
+    Discretization d(n,D);
+
+    double ratio = d.scale()/D.mean();
+    
+    bool good_enough = (ratio > 1.0/1.5 and ratio < 1.5);
+
+    // problem - this isn't completely general
+    d.scale(1.0/ratio);
+    
+    boost::shared_ptr<DiscreteDistribution> R( new DiscreteDistribution(n) );
+    R->fraction = d.f;
+
+    for(int i=0;i<n;i++)
+    {
+      Double V = d.r[i];
+      R->values[i] = boost::shared_ptr<Double>( V.clone() );
+    }
+
+    return R;
+  }
+
+  struct DiscretizationOp: public Operation
+  {
+    DiscretizationOp* clone() const {return new DiscretizationOp(*this);}
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      const Distribution& D = *Args.evaluate_as<Distribution>(0);
+      const Int& n = *Args.evaluate_as<Int>(1);
+      
+      return DiscretizationFunction(D, n);
+    }
+
+    std::string name() const {return "DiscretizedDistribution";}
+
+    DiscretizationOp():Operation(1) { }
+  };
+
   struct MultiParameterOp: public Operation
   {
     MultiParameterOp* clone() const {return new MultiParameterOp(*this);}
@@ -2021,7 +2062,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     weights = d.f;
     p_values = d.r;
-    
+    // FIXME
+    // 1. Convert MultiParameterModel to using DiscreteDistribtion internall
+    // 2. Use DiscretizationFunction here
+
+   
     // recalc_submodel_instances: we need to do this when either P_values changes, or the SUBMODEL changes
     MultiParameterModel::recalc(indices);
   }
