@@ -1817,24 +1817,15 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     load_file(file);
   }
 
-  class DiscreteDistribution: public Object
+  int DiscreteDistribution::size() const
   {
-  public:
-    vector< double > fraction;
-    vector< boost::shared_ptr<Object> > values;
+    assert(fraction.size() == values.size());
+    return fraction.size();
+  }
 
-    DiscreteDistribution* clone() const {return new DiscreteDistribution(*this);}
-
-    int size() const
-    {
-      assert(fraction.size() == values.size());
-      return fraction.size();
-    }
-
-    DiscreteDistribution(int s)
-      :fraction(s), values(s)
-    { }
-  };
+  DiscreteDistribution::DiscreteDistribution(int s)
+    :fraction(s), values(s)
+  { }
 
   MultiModelObject MultiParameterFunction(const MultiModel& M, Int p_change, const DiscreteDistribution& D)
   {

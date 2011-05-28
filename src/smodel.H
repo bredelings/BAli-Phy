@@ -1160,6 +1160,19 @@ namespace substitution {
     C20_CAT_FixedFrequencyModel();
   };
 
+  class DiscreteDistribution: public Object
+  {
+  public:
+    std::vector< double > fraction;
+    std::vector< boost::shared_ptr<Object> > values;
+
+    DiscreteDistribution* clone() const {return new DiscreteDistribution(*this);}
+
+    int size() const;
+
+    DiscreteDistribution(int s);
+  };
+
   /// A mixture of variants of model M with parameter p set to n_bin different values
   class MultiParameterModel: public MultiModel, 
 			     public ReversibleWrapperOver<MultiModel> 
