@@ -1184,7 +1184,7 @@ namespace substitution {
     /// The values it takes on
     std::vector<double> p_values;
 
-    /// The weights for the different avlues
+    /// The weights for the different values
     std::vector<double> weights;
 
     void recalc(const std::vector<int>&);
