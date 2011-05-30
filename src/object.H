@@ -149,4 +149,7 @@ typedef POD_math<int> Int;
 typedef POD_math<unsigned> Unsigned;
 typedef POD<bool> Bool;
 
+template <typename T>
+boost::shared_ptr<const T> ptr(const T& t) {return boost::shared_ptr<const T>(t.clone());}
+
 #endif
