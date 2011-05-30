@@ -2092,8 +2092,15 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   /*--------------- Gamma Sites Model----------------*/
 
+  void GammaParameterModel::recalc(const vector<int>&)
+  {
+    DiscreteDistribution DD = *DiscretizationFunction( D(), n_bins );
+
+    MultiModelObject::operator=( MultiParameterFunction(SubModel(), p_change, DD) );
+  }
+
   GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
-    :DistributionParameterModel(M,Gamma(),-1,n)
+    :DistributionParameterModel(M,Gamma(),-1,n),n_bins(n)
   {}
 
 

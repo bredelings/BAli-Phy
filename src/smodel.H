@@ -1242,8 +1242,10 @@ namespace substitution {
 
   /// A discrete-gamma Model
   //  Only has one parameter: the shape parameter for the gamma
-  class GammaParameterModel: public DistributionParameterModel {
-
+  class GammaParameterModel: public DistributionParameterModel 
+  {
+    int n_bins;
+    void recalc(const std::vector<int>&);
   public:
     virtual GammaParameterModel* clone() const {return new GammaParameterModel(*this);}
 
