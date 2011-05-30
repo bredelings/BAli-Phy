@@ -707,7 +707,14 @@ string OpModel::name() const
 
 void OpModel::check() const
 {
-  
+  for(int i=0;i<n_parameters();i++)
+    for(int j=0;j<model_slots_for_index[i].size();j++)
+    {
+      int m =  model_slots_for_index[i][j].model_index;
+      int s =  model_slots_for_index[i][j].slot;
+      if (m != -1)
+	assert(sub_models[m]->get_parameter_value(s)->equals( *get_parameter_value(i)) );
+    }
 }
 
 shared_ptr<const Object> OpModel::evaluate(int slot)
