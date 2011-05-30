@@ -298,6 +298,11 @@ struct expression_ref: public boost::shared_ptr<const expression>
   expression_ref(const Model& M)
     :boost::shared_ptr<const expression>(new model_expression(M))
   { }
+
+  explicit expression_ref(const int& i):boost::shared_ptr<const expression>(new constant_expression(Int(i))) {}
+  explicit expression_ref(const Int& i):boost::shared_ptr<const expression>(new constant_expression(i)) {}
+  explicit expression_ref(const double& d):boost::shared_ptr<const expression>(new constant_expression(Double(d))) {}
+  explicit expression_ref(const Double& d):boost::shared_ptr<const expression>(new constant_expression(d)) {}
 };
 
 template <typename T>
@@ -309,10 +314,10 @@ public:
   typed_expression_ref(const boost::shared_ptr<const expression>& v): expression_ref(v) {}
   typed_expression_ref(const term_ref& t): expression_ref(t) {}
 
-  explicit typed_expression_ref(const int& i):expression_ref(new constant_expression(Int(i))) {}
-  explicit typed_expression_ref(const Int& i):expression_ref(new constant_expression(i)) {}
-  explicit typed_expression_ref(const double& d):expression_ref(new constant_expression(Double(d))) {}
-  explicit typed_expression_ref(const Double& d):expression_ref(new constant_expression(d)) {}
+  explicit typed_expression_ref(const int& i):expression_ref(i) {}
+  explicit typed_expression_ref(const Int& i):expression_ref(i) {}
+  explicit typed_expression_ref(const double& d):expression_ref(d) {}
+  explicit typed_expression_ref(const Double& d):expression_ref(d) {}
 };
 
 template <typename T>
