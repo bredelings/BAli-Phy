@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define SETUP_H
 
 #include <vector>
+#include <string>
 #include <valarray>
 #include "alignment.H"
 #include "sequencetree.H"
