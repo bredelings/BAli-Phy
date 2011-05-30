@@ -38,6 +38,8 @@ using std::cerr;
 using std::endl;
 using std::istringstream;
 
+using boost::shared_ptr;
+
 namespace substitution {
 
   string s_parameter_name(int i,int n) {
@@ -1888,10 +1890,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
-      const Distribution& D = *Args.evaluate_as<Distribution>(0);
-      const Int& n = *Args.evaluate_as<Int>(1);
+      shared_ptr<const Distribution> D = Args.evaluate_as<Distribution>(0);
+      shared_ptr<const Int> n = Args.evaluate_as<Int>(1);
       
-      return DiscretizationFunction(D, n);
+      return DiscretizationFunction(*D, *n);
     }
 
     std::string name() const {return "DiscretizedDistribution";}
@@ -1905,13 +1907,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
-
       // The input-model should really be a lambda function taking the single value (or first value) p_change
-      const MultiModel& M = *Args.evaluate_as<substitution::MultiModel>(0);
-      const Int& p_change = *Args.evaluate_as<Int>(1);
-      const DiscreteDistribution& D = *Args.evaluate_as<DiscreteDistribution>(2);
+      shared_ptr<const MultiModel> M = Args.evaluate_as<substitution::MultiModel>(0);
+      shared_ptr<const Int> p_change = Args.evaluate_as<Int>(1);
+      shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(2);
       
-      boost::shared_ptr< MultiModelObject > R ( MultiParameterFunction(M, p_change, D).clone() );
+      boost::shared_ptr< MultiModelObject > R ( MultiParameterFunction(*M, *p_change, *D).clone() );
 
       return R;
     }
@@ -2114,7 +2115,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     insert_submodel("DIST",Gamma());
   }
-
 
   /*--------------- LogNormal Sites Model----------------*/
 
