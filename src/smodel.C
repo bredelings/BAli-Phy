@@ -1896,7 +1896,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     std::string name() const {return "DiscretizedDistribution";}
 
-    DiscretizationOp():Operation(1) { }
+    DiscretizationOp():Operation(2) { }
   };
 
   struct MultiParameterOp: public Operation
