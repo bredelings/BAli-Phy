@@ -234,6 +234,8 @@ struct function_expression: public operator_expression
   function_expression* clone() const {return new function_expression(*this);}
 };
 
+std::vector<std::string> find_named_parameters(boost::shared_ptr<const expression> e);
+
 boost::shared_ptr<const expression> substitute(boost::shared_ptr<const expression> E1, int dummy, boost::shared_ptr<const expression> E2);
 
 boost::shared_ptr<const expression> apply(const expression& E,boost::shared_ptr<const expression> arg);
