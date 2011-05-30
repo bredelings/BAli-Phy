@@ -1864,6 +1864,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     double ratio = d.scale()/D.mean();
     
+    // this used to affect the prior
     bool good_enough = (ratio > 1.0/1.5 and ratio < 1.5);
 
     // problem - this isn't completely general
@@ -2088,14 +2089,26 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   void GammaParameterModel::recalc(const vector<int>&)
   {
-    DiscreteDistribution DD = *DiscretizationFunction( D(), n_bins );
+    DiscreteDistribution DD = *DiscretizationFunction( SubModelAs<Distribution>(1), n_bins );
 
     MultiModelObject::operator=( MultiParameterFunction(SubModel(), p_change, DD) );
   }
 
+  string GammaParameterModel::name() const
+  {
+    string p_name = "rate";
+    if (p_change > -1)
+      p_name = SubModels(0).parameter_name(p_change);
+
+    string dist_name = p_name + "~" + SubModels(1).name() + "(" + convertToString(n_bins) + ")";
+    return SubModels(0).name() + " + " + dist_name;    
+  }
+
   GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
-    :DistributionParameterModel(M,Gamma(),-1,n),n_bins(n)
-  {}
+    :MultiParameterModel(M,-1,n),n_bins(n)
+  {
+    insert_submodel("DIST",Gamma());
+  }
 
 
   /*--------------- LogNormal Sites Model----------------*/
