@@ -1954,12 +1954,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     int p_index = SubModel().n_parameters();
 
     // Prior on the fractions
-    double n_f = 1.0 + p_values.size()/2.0;
-    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(p_index ,p_values.size() ) ), n_f);
+    double n_f = 1.0 + n_bins/2.0;
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(p_index ,n_bins ) ), n_f);
 
     // Prior on the rates
-    double n_r = 2.0; // + p_values.size()/2.0;
-    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(p_index+p_values.size(),p_values.size() ) ), n_r);
+    double n_r = 2.0; // + n_bins/2.0;
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(p_index+n_bins,n_bins ) ), n_r);
 
     return Pr;
   }
@@ -1969,35 +1969,31 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     /*
     // sort bins to enforce monotonically increasing order
     vector<double> values;
-    for(int i=0;i<p_values.size();i++)
-      values.push_back(parameters_[i+p_values.size()]);
+    for(int i=0;i<n_bins;i++)
+      values.push_back(parameters_[i+n_bins]);
     
-    vector<int> order = iota<int>(p_values.size());
+    vector<int> order = iota<int>(n_bins);
 
     sort(order.begin(), order.end(), sequence_order<double>(values));
 
     vector<double> p2 = parameters_;
-    for(int i=0;i<p_values.size();i++) {
+    for(int i=0;i<n_bins;i++) {
       p2[i] = parameters_[order[i]];
-      p2[i+p_values.size()] = parameters_[order[i]+p_values.size()];
+      p2[i+n_bins] = parameters_[order[i]+n_bins];
     }
     parameters_ = p2;
     */
     int p_index = SubModel().n_parameters();
 
     // write parameter values to fraction / p_values
-    for(int i=0;i<p_values.size();i++)
+    DiscreteDistribution D(n_bins);
+
+    for(int i=0;i<n_bins;i++)
     {
-      weights[i] = get_parameter_value_as<Double>(p_index+i);
-      p_values[i] = get_parameter_value_as<Double>(p_index+i+p_values.size());
+      D.fraction[i] = get_parameter_value_as<Double>(p_index+i);
+      D.values[i] = get_parameter_value(p_index+i+n_bins);
     }
     
-    // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
-    DiscreteDistribution D(weights.size());
-    D.fraction = weights;
-    for(int i=0;i<weights.size();i++)
-      D.values[i] = boost::shared_ptr<Object>( new Double(p_values[i]) );
-
     MultiModelObject::operator=( MultiParameterFunction(SubModel(), p_change, D) );
   }
 
@@ -2006,12 +2002,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     if (p_change > -1)
       p_name = SubModels(0).parameter_name(p_change);
 
-    string dist_name = p_name + "~Dirichlet[" + convertToString(p_values.size()) + "]";
+    string dist_name = p_name + "~Dirichlet[" + convertToString(n_bins) + "]";
     return SubModels(0).name() + " + " + dist_name;
   }
 
   DirichletParameterModel::DirichletParameterModel(const MultiModel& M, int p, int n)
-    :MultiParameterModel(M,p,n)
+    :MultiParameterModel(M,p,n),n_bins(n)
   {
     // bin frequencies
     for(int i=0;i<n;i++) {

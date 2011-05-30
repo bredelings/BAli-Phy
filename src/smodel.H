@@ -1205,6 +1205,8 @@ namespace substitution {
   class DirichletParameterModel: public MultiParameterModel
   {
   protected:
+    int n_bins;
+
     efloat_t super_prior() const;
 
     void recalc(const std::vector<int>&);
