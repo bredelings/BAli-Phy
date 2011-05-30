@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "logsum.H"
 #include "probability.H"
 #include "io.H"
+#include "expression.H"
 
 using std::vector;
 using std::valarray;
@@ -2031,14 +2032,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   //--------------- Distribution-based Model----------------//
 
-  efloat_t DistributionParameterModel::super_prior() const
-  {
-    if (not good_enough)
-      return 0.0;
-    else
-      return 1.0;
-  }
-
   Distribution& DistributionParameterModel::D()
   {
     return SubModelAs<Distribution>(1);
@@ -2054,8 +2047,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // We only need to do this when the DISTRIBUTION changes (?)
     Discretization d(p_values.size(),D());
     double ratio = d.scale()/D().mean();
-
-    good_enough = (ratio > 1.0/1.5 and ratio < 1.5);
 
     d.scale(1.0/ratio);
 
@@ -2085,8 +2076,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const Distribution& RD, int p, int n)
-    :MultiParameterModel(M,p,n),
-     good_enough(false)
+    :MultiParameterModel(M,p,n)
   {
     insert_submodel("DIST",RD);
 
@@ -2731,4 +2721,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     recalc_all();
   }
   
+void ff()
+{
+  expression_ref E = MultiParameterOp();
+
+  OpModelOf<MultiModelObject> OM(E);
 }
+
+}
+
