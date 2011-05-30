@@ -2105,8 +2105,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
-    :MultiParameterModel(M,-1,n),n_bins(n)
+    :ReversibleWrapperOver<MultiModel>(M),
+     p_change(-1),
+     n_bins(n)
   {
+    if (p_change != -1)
+      SubModel().set_fixed(p_change,true);
+
     insert_submodel("DIST",Gamma());
   }
 
