@@ -1187,7 +1187,6 @@ namespace substitution {
     /// The weights for the different values
     std::vector<double> weights;
 
-    void recalc(const std::vector<int>&);
   public:
     MultiParameterModel* clone() const=0;
 

@@ -1920,17 +1920,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   };
 
   //---------------------------- class MultiModel --------------------------//
-  void MultiParameterModel::recalc(const vector<int>&)
-  {
-    DiscreteDistribution D(weights.size());
-    D.fraction = weights;
-    for(int i=0;i<weights.size();i++)
-      D.values[i] = boost::shared_ptr<Object>( new Double(p_values[i]) );
 
-    MultiModelObject::operator=( MultiParameterFunction(SubModel(), p_change, D) );
-  }
-
-    /// Get the equilibrium frequencies
+  /// Get the equilibrium frequencies
   std::valarray<double> MultiParameterModel::frequencies() const {
     return SubModel().frequencies();
   }
@@ -1999,7 +1990,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     }
     
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
-    MultiParameterModel::recalc(indices);
+    DiscreteDistribution D(weights.size());
+    D.fraction = weights;
+    for(int i=0;i<weights.size();i++)
+      D.values[i] = boost::shared_ptr<Object>( new Double(p_values[i]) );
+
+    MultiModelObject::operator=( MultiParameterFunction(SubModel(), p_change, D) );
   }
 
   string DirichletParameterModel::name() const {
@@ -2068,7 +2064,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
    
     // recalc_submodel_instances: we need to do this when either P_values changes, or the SUBMODEL changes
-    MultiParameterModel::recalc(indices);
+    DiscreteDistribution D(weights.size());
+    D.fraction = weights;
+    for(int i=0;i<weights.size();i++)
+      D.values[i] = boost::shared_ptr<Object>( new Double(p_values[i]) );
+
+    MultiModelObject::operator=( MultiParameterFunction(SubModel(), p_change, D) );
   }
 
   string DistributionParameterModel::name() const {
