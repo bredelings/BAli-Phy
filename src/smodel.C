@@ -1951,13 +1951,15 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     efloat_t Pr  = 1;
 
+    int p_index = SubModel().n_parameters();
+
     // Prior on the fractions
     double n_f = 1.0 + p_values.size()/2.0;
-    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0 ,p_values.size() ) ), n_f);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(p_index ,p_values.size() ) ), n_f);
 
     // Prior on the rates
     double n_r = 2.0; // + p_values.size()/2.0;
-    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(p_values.size(),p_values.size() ) ), n_r);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(p_index+p_values.size(),p_values.size() ) ), n_r);
 
     return Pr;
   }
@@ -1981,12 +1983,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     }
     parameters_ = p2;
     */
+    int p_index = SubModel().n_parameters();
 
     // write parameter values to fraction / p_values
     for(int i=0;i<p_values.size();i++)
     {
-      weights[i] = get_parameter_value_as<Double>(i);
-      p_values[i] = get_parameter_value_as<Double>(i+p_values.size());
+      weights[i] = get_parameter_value_as<Double>(p_index+i);
+      p_values[i] = get_parameter_value_as<Double>(p_index+i+p_values.size());
     }
     
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
