@@ -1985,7 +1985,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     */
     int p_index = SubModel().n_parameters();
 
-    // write parameter values to fraction / p_values
     DiscreteDistribution D(n_bins);
 
     for(int i=0;i<n_bins;i++)
@@ -2007,8 +2006,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   DirichletParameterModel::DirichletParameterModel(const MultiModel& M, int p, int n)
-    :MultiParameterModel(M,p,n),n_bins(n)
+    :ReversibleWrapperOver<MultiModel>(M),
+     p_change(p),
+     n_bins(n)
   {
+    if (p_change != -1)
+      SubModel().set_fixed(p_change,true);
+
     // bin frequencies
     for(int i=0;i<n;i++) {
       string pname = "DP::f" + convertToString(i+1);

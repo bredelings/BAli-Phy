@@ -1202,9 +1202,14 @@ namespace substitution {
 
 
   /// A class of uncoupled rates/values
-  class DirichletParameterModel: public MultiParameterModel
+  class DirichletParameterModel: public MultiModel,
+				 public ReversibleWrapperOver<MultiModel> 
   {
   protected:
+    /// The parameter which is varying;
+    int p_change;
+
+    /// The number of bins
     int n_bins;
 
     efloat_t super_prior() const;
