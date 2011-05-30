@@ -37,6 +37,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "cow-ptr.H"
 #include "object.H"
 #include "operator.H"
+#include "operation.H"
+#include "computation.H"
 
 // FIXME - the way to have a model class with members as submodels is to
 //   1. hard-code the SubModels(m) function to return the models you want,
@@ -397,8 +399,7 @@ public:
   SuperModelOver<SubModel_t>* clone() const =0;
 };
 
-#include "operation.H"
-#include "computation.H"
+class expression_ref;
 
 class OpModel: virtual public Model, public OperationArgs
 {
@@ -430,7 +431,7 @@ public:
   
   boost::shared_ptr<const Object> evaluate();
 
-  OpModel(boost::shared_ptr< const Operation > O);
+  OpModel(const expression_ref&);
 };
 
 template <typename X>
@@ -443,6 +444,8 @@ class OpModelOf: public OpModel, public X
 
 public:
   OpModelOf<X>* clone() const {return new OpModelOf<X>(*this);}
+
+  OpModelOf(const expression_ref& e):OpModel(e) { }
 };
 
 int find_parameter(const Model& M,const std::string& name);

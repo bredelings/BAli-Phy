@@ -17,11 +17,13 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "model.H"
-#include "myexception.H"
-#include "util.H"
 #include <set>
 #include <map>
+
+#include "util.H"
+#include "myexception.H"
+#include "model.H"
+#include "expression.H"
 
 using std::vector;
 using std::string;
@@ -734,11 +736,7 @@ boost::shared_ptr<const Object> OpModel::evaluate()
   return (*Op)(*this);
 }
 
-OpModel::OpModel(shared_ptr< const Operation > O)
-  :Op(O)
+OpModel::OpModel(const expression_ref& r)
 {
-  for(int i=0;i<O->n_args(); i++)
-    ;
+  const operation_expression oe = dynamic_cast<const operation_expression&>(*r);
 }
-
-OpModelOf<Double>* a;
