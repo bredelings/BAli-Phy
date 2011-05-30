@@ -757,7 +757,71 @@ boost::shared_ptr<const Object> OpModel::evaluate()
   return (*Op)(*this);
 }
 
+
+
 OpModel::OpModel(const expression_ref& r)
 {
-  const operation_expression oe = dynamic_cast<const operation_expression&>(*r);
+  shared_ptr<const operation_expression> e = dynamic_pointer_cast<const operation_expression>(r);
+
+  if (not e)
+    throw myexception()<<"Trying to create an OpModel from a non-op expression:\n  "<<e->print();
+
+  // find all named parameters, and add them to the OpModel
+  vector<string> names = find_named_parameters(e);
+  for(int i=0;i<names.size();i++)
+  {
+    add_parameter(Parameter(names[i]));
+    model_slots_for_index.push_back(vector<model_slot>());
+  }
+
+  Op = e->op;
+  for(int i=0;i<e->args.size();i++)
+  {
+    arg_expression a;
+
+    // handle the args[i] being a named parameter
+    if (shared_ptr<const named_parameter_expression> pe = dynamic_pointer_cast<const named_parameter_expression>(e->args[i]))
+      a.parent_index = find_index(names, pe->parameter_name);
+
+    // handle the args[i] being a constant
+    else if (shared_ptr<const constant_expression> ce = dynamic_pointer_cast<const constant_expression>(e->args[i]) )
+      a.constant_value = ce->value;
+
+    // handle the args[i] being a model
+    else if ( shared_ptr<const model_expression> me = dynamic_pointer_cast<const model_expression>(e->args[i]) )
+    {
+      int m_index = sub_models.size();
+      sub_models.push_back( me->m );
+
+      a.sub_model_index = m_index;
+
+      vector<string> sub_names = parameter_names( *sub_models[m_index] );
+      for(int slot=0;slot<sub_names.size();slot++)
+      {
+	int index = find_index(names, sub_names[slot]);
+	model_slots_for_index[index].push_back( model_slot(m_index,slot) );
+      }
+    }
+
+    // handle the args[i] being an operation expression
+    else if (shared_ptr<const operation_expression> oe = dynamic_pointer_cast<const operation_expression>(e->args[i]) )
+    {
+      int m_index = sub_models.size();
+      sub_models.push_back( ptr<Model>( OpModel( expression_ref( oe ) ) ) );
+
+      a.sub_model_index = m_index;
+
+      vector<string> sub_names = parameter_names( *sub_models[m_index] );
+      for(int slot=0;slot<sub_names.size();slot++)
+      {
+	int index = find_index(names, sub_names[slot]);
+	model_slots_for_index[index].push_back( model_slot(m_index,slot) );
+      }
+    }
+    else
+      throw myexception()<<"OpModel: can't handle sub-expression '"<<e->args[i]->print()<<"'";
+
+    slot_expressions_for_op.push_back(a);
+  }
+
 }
