@@ -411,8 +411,6 @@ class OpModel: virtual public Model, public OperationArgs
 
   /// these are the instantiated sub_models
   std::vector< polymorphic_cow_ptr< Model > > sub_models;
-  /// how do we assemble the inputs for each sub_model
-  std::vector<std::vector<arg_expression> > slot_expressions_for_submodel;
 
   /// what is the top-level operation
   boost::shared_ptr< const Operation > Op;
