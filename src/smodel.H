@@ -1164,7 +1164,8 @@ namespace substitution {
   {
   public:
     std::vector< double > fraction;
-    std::vector< boost::shared_ptr<Object> > values;
+    // If we really want to change this, make it polymorphic_cow_ptr<Object>, so we can assign from shared_ptr<const Object>
+    std::vector< boost::shared_ptr<const Object> > values;
 
     DiscreteDistribution* clone() const {return new DiscreteDistribution(*this);}
 
