@@ -37,6 +37,16 @@ string parameter_name(const string& prefix, int i,int n)
   return prefix + convertToString(i);
 }
 
+Parameter::Parameter(const string& n)
+  :name(n), fixed(false), changed(true)
+{
+}
+
+Parameter::Parameter(const string& n, shared_ptr<const Object> v)
+  :name(n), value(v), fixed(false), changed(true)
+{
+}
+
 Parameter::Parameter(const string& n, const Object& v)
   :name(n), value(v), fixed(false), changed(true)
 {

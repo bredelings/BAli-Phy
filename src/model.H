@@ -56,6 +56,9 @@ struct Parameter
   bool fixed;
   mutable bool changed;
 
+  Parameter(const std::string&);
+  Parameter(const std::string&, boost::shared_ptr<const Object>);
+
   Parameter(const std::string&, const Object&);
   Parameter(const std::string&, const Object&, bool);
   Parameter(const std::string&, const Object&, const Bounds<double>&, bool=false);
