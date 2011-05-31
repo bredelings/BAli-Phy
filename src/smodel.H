@@ -239,16 +239,18 @@ namespace substitution {
 
     virtual ExchangeModelObject* clone() const {return new ExchangeModelObject(*this);}
 
+    double operator()(int i,int j) const {return S(i,j);}
+
+    int n_states() const {return S.size1();}
+
     ExchangeModelObject(int n):S(n,n)
     { }
   };
 
-  class ExchangeModel: virtual public ::Model, protected ExchangeModelObject
+  class ExchangeModel: virtual public ::Model, public ExchangeModelObject
   {
   public:
     
-    double operator()(int i,int j) const {return S(i,j);}
-
     unsigned n_states() const {return S.size1();}
 
     ExchangeModel* clone() const =0;
@@ -528,29 +530,33 @@ namespace substitution {
   };
 
   //------------------------ Reversible frequency model --------------------//
-  struct ReversibleFrequencyModelObject: public Object
+  struct ReversibleFrequencyModelObject: public SModelObject
   {
     ReversibleFrequencyModelObject* clone() const {return new ReversibleFrequencyModelObject(*this);}
 
     Matrix R;
 
+    double operator()(int i,int j) const {return R(i,j);}
+
     std::vector<double> pi;
 
-    ReversibleFrequencyModelObject(int n): R(n,n), pi(n)
+    ReversibleFrequencyModelObject(const alphabet& a)
+      : SModelObject(a),
+	R(a.size(),a.size()), pi(a.size())
     { }
   };
 
-  class ReversibleFrequencyModel: virtual public AlphabetModel, protected ReversibleFrequencyModelObject
+  class ReversibleFrequencyModel: virtual public AlphabetModel, public ReversibleFrequencyModelObject
   {
   public:
     ReversibleFrequencyModel* clone() const =0;
 
     const alphabet& Alphabet() const;
 
+    int n_letters() const;
+
     /// Get the equilibrium frequencies
     valarray<double> frequencies() const;
-
-    double operator()(int i,int j) const {return R(i,j);}
 
     ReversibleFrequencyModel(const alphabet& a);
 
@@ -717,12 +723,11 @@ namespace substitution {
   protected:
     mutable cached_value<EigenValues> eigensystem;
 
-    std::vector<double> pi;
-
     void recalc_eigensystem() const;
 
-    void invalidate_eigensystem();
   public:
+    std::vector<double> pi;
+
     virtual ReversibleMarkovModelObject* clone() const {return new ReversibleMarkovModelObject(*this);}
 
     std::valarray<double> frequencies() const;
@@ -730,6 +735,8 @@ namespace substitution {
     double rate() const;
 
     void set_rate(double);
+
+    void invalidate_eigensystem();
 
     const EigenValues& get_eigensystem() const;
 

@@ -193,12 +193,17 @@ namespace substitution {
     return get_parameter_value_as<alphabet>(0);
   }
 
+  int ReversibleFrequencyModel::n_letters() const
+  {
+    return Alphabet().size();
+  }
+
   valarray<double> ReversibleFrequencyModel::frequencies() const {
     return get_varray<double>(pi);
   }
 
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
-    :ReversibleFrequencyModelObject( a.size() )
+    :ReversibleFrequencyModelObject( a )
   { 
     add_parameter(Parameter("alphabet",a));
   }
@@ -940,11 +945,12 @@ namespace substitution {
 
     recalc_all();
   }
-  /*
+
   shared_ptr<ReversibleMarkovModelObject> get_Q_matrix(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
   {
-    shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(R.Alphabet()) );
+    shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(F.Alphabet()) );
 
+    R->Alphabet();
     // This doesn't work for Modulated markov models
     assert(F.n_states() == F.Alphabet().size());
 
@@ -960,7 +966,7 @@ namespace substitution {
       double sum=0;
       for(int j=0;j<N;j++) {
 	if (i==j) continue;
-	Q(i,j) = (*S)(i,j) * (*F)(i,j);
+	Q(i,j) = S(i,j) * F(i,j);
 	sum += Q(i,j);
       }
       Q(i,i) = -sum;
@@ -968,30 +974,14 @@ namespace substitution {
 
     R->invalidate_eigensystem();
     
-    R->pi = F->frequencies();
-
+    R->pi = F.pi;
 
     return R;
   }
-  */
+
   void ReversibleMarkovSuperModel::recalc(const vector<int>&)
   {
-    const unsigned N = n_states();
-
-    // recompute rate matrix
-    for(int i=0;i<N;i++) {
-      double sum=0;
-      for(int j=0;j<N;j++) {
-	if (i==j) continue;
-	Q(i,j) = (*S)(i,j) * (*R)(i,j);
-	sum += Q(i,j);
-      }
-      Q(i,i) = -sum;
-    }
-
-    invalidate_eigensystem();
-
-    pi = get_vector<double>( R->frequencies() );
+    ReversibleMarkovModelObject::operator=( *get_Q_matrix(*S, *R) );
   }
 
   string ReversibleMarkovSuperModel::name() const {
