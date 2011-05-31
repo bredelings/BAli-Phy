@@ -207,27 +207,6 @@ namespace substitution {
     { }
   };
 
-
-  /// A substitution model which obeys the Markov property
-  class MarkovModel: virtual public IndependantAdditiveModel, protected MarkovModelObject 
-  {
-  public:
-
-    virtual MarkovModel* clone() const =0;
-
-    /// The transition rate matrix
-    virtual const Matrix& transition_rates() const {return Q;};
-
-    /// The transition probability matrix
-    virtual Matrix transition_p(double t) const =0;
-
-    virtual const std::vector<unsigned>& state_letters() const {return state_letters_;}
-
-    /// Construct a Makov model on alphabet 'a_'
-    MarkovModel(const alphabet& a);
-  };
-
-
   //------------------------ Exchangeability Model ----------------------//
 
 
