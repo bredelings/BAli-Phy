@@ -81,6 +81,7 @@ struct Parameter
 //    o allow sharing between models.
 //    o pull priors out of models ->
 //      + in fact, priors are objects that RETURN models, a "density" model, and a "simulate" model.
+//    o do some caching of results?
 // 4. Make model evaluation lazy.
 //    o before: remove read().
 //    o before: remove set_rate()
