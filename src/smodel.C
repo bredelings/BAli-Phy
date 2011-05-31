@@ -598,15 +598,6 @@ namespace substitution {
     recalc_all();
   }
 
-
-  /// Construct a Makov model on alphabet 'a'
-  MarkovModel::MarkovModel(const alphabet& a)
-    :MarkovModelObject( a.size() )
-  {
-    for(int i=0;i<a.size();i++)
-      state_letters_[i] = i;
-  }
-  
   //----------------------- ReversibleMarkovModel --------------------------//
   // Q(i,j) = S(i,j)*pi[j]   for i!=j
   // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
@@ -749,9 +740,12 @@ namespace substitution {
   }
 
   ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)
-    :MarkovModel(a), 
+    :MarkovModelObject(a.size()), 
      eigensystem(a.size())
-  { }
+  {
+    for(int i=0;i<a.size();i++)
+      state_letters_[i] = i;
+  }
 
   //------------------------ F81 Model -------------------------//
 

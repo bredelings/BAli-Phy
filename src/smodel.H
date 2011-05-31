@@ -720,7 +720,7 @@ namespace substitution {
   //   3. return DN*(O*Dt*O)*DP
 
   /// A Markov substitution model which is reversible
-  class ReversibleMarkovModel: public MarkovModel,
+  class ReversibleMarkovModel: protected MarkovModelObject,
 			       public Independant_Additive_Reversible_Model 
   {
     mutable cached_value<EigenValues> eigensystem;
@@ -738,8 +738,13 @@ namespace substitution {
     /// Make a copy of this object
     virtual ReversibleMarkovModel* clone() const =0;
 
+    /// The transition rate matrix
+    virtual const Matrix& transition_rates() const {return Q;};
+
+    virtual const std::vector<unsigned>& state_letters() const {return state_letters_;}
+
     /// The transition probability matrix - which we can now compute
-    Matrix transition_p(double t) const;
+    virtual Matrix transition_p(double t) const;
 
     ReversibleMarkovModel(const alphabet& a);
     
