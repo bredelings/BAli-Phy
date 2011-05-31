@@ -256,7 +256,7 @@ public:
   virtual void check() const {}
 
   // Evaluate the model and return the result
-  boost::shared_ptr<const Object> evaluate() const;
+  virtual boost::shared_ptr<const Object> evaluate();
 
   bool is_valid() const {return valid;}
   virtual void update();
