@@ -676,6 +676,13 @@ vector<int> parameters_with_extension(const Model& M, string name)
   return indices;
 }
 
+efloat_t OpModel::prior() const
+{
+  efloat_t Pr = 1;
+  for(int i=0;i<sub_models.size();i++)
+    Pr *= sub_models[i]->prior();
+  return Pr;
+}
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
 void OpModel::write_value(int index, const shared_ptr<const Object>& p)

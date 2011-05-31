@@ -424,7 +424,7 @@ public:
 
   OpModel* clone() const {return new OpModel(*this);}
 
-  //prior
+  efloat_t prior() const;
 
   std::string name() const;
 
