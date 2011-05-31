@@ -418,6 +418,8 @@ class OpModel: virtual public Model, public OperationArgs
   std::vector<arg_expression> slot_expressions_for_op;
 
   void write_value(int i, const boost::shared_ptr<const Object>& p);
+
+  void recalc(const std::vector<int>&) {std::abort();}
 public:
 
   OpModel* clone() const {return new OpModel(*this);}
