@@ -766,7 +766,32 @@ boost::shared_ptr<const Object> OpModel::evaluate()
   return (*Op)(*this);
 }
 
+int OpModel::add_submodel(shared_ptr<const Model> m)
+{
+  int m_index = sub_models.size();
+  sub_models.push_back( m );
 
+  vector<string> names = parameter_names( *this );
+
+  vector<string> sub_names = parameter_names( *sub_models[m_index] );
+
+  for(int slot=0;slot<sub_names.size();slot++)
+  {
+    int index = find_index(names, sub_names[slot]);
+
+    // Record the use of this top-level index in submodel=m_index, slot=slot
+    model_slots_for_index[index].push_back( model_slot(m_index,slot) );
+    
+    // default parameter values AND bounds from submodels
+    if (not parameters_[index].value) {
+      parameters_[index].value = sub_models[m_index]->get_parameter_value(slot);
+      // should we continually narrow the bounds by and-ing them together?
+      parameters_[index].bounds = sub_models[m_index]->get_bounds(slot);
+    }
+  }
+
+  return m_index;
+}
 
 OpModel::OpModel(const expression_ref& r)
 {
@@ -798,47 +823,12 @@ OpModel::OpModel(const expression_ref& r)
 
     // handle the args[i] being a model
     else if ( shared_ptr<const model_expression> me = dynamic_pointer_cast<const model_expression>(e->args[i]) )
-    {
-      int m_index = sub_models.size();
-      sub_models.push_back( me->m );
-
-      a.sub_model_index = m_index;
-
-      vector<string> sub_names = parameter_names( *sub_models[m_index] );
-      for(int slot=0;slot<sub_names.size();slot++)
-      {
-	int index = find_index(names, sub_names[slot]);
-	model_slots_for_index[index].push_back( model_slot(m_index,slot) );
-
-	// default parameter values from submodels
-	if (not parameters_[index].value) {
-	  parameters_[index].value = sub_models[m_index]->get_parameter_value(slot);
-	  parameters_[index].bounds = sub_models[m_index]->get_bounds(slot);
-	}
-      }
-    }
+      a.sub_model_index = add_submodel( me->m );
 
     // handle the args[i] being an operation expression
     else if (shared_ptr<const operation_expression> oe = dynamic_pointer_cast<const operation_expression>(e->args[i]) )
-    {
-      int m_index = sub_models.size();
-      // These submodels have no recalc function!
-      sub_models.push_back( ptr<Model>( OpModel( expression_ref( oe ) ) ) );
+      a.sub_model_index = add_submodel(ptr<Model>( OpModel( expression_ref( oe ) ) ) );
 
-      a.sub_model_index = m_index;
-
-      vector<string> sub_names = parameter_names( *sub_models[m_index] );
-      for(int slot=0;slot<sub_names.size();slot++)
-      {
-	int index = find_index(names, sub_names[slot]);
-	model_slots_for_index[index].push_back( model_slot(m_index,slot) );
-
-	// default parameter values from submodels
-	if (not parameters_[index].value)
-	  parameters_[index].value = sub_models[m_index]->get_parameter_value(slot);
-	  parameters_[index].bounds = sub_models[m_index]->get_bounds(slot);
-      }
-    }
     else
       throw myexception()<<"OpModel: can't handle sub-expression '"<<e->args[i]->print()<<"'";
 

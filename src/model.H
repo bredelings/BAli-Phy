@@ -420,6 +420,8 @@ class OpModel: virtual public Model, public OperationArgs
   void write_value(int i, const boost::shared_ptr<const Object>& p);
 
   void recalc(const std::vector<int>&) {std::abort();}
+
+  int add_submodel(boost::shared_ptr<const Model>);
 public:
 
   OpModel* clone() const {return new OpModel(*this);}
