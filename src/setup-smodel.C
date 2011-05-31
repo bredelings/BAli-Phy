@@ -348,11 +348,11 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   return true;
 }
 
-/// \brief Construct a ReversibleAdditiveModel from model \a M
-owned_ptr<ReversibleAdditiveModel> get_RA(::Model* M, const string& name,
+/// \brief Construct a ReversibleMarkovModel from model \a M
+owned_ptr<ReversibleMarkovModel> get_RA(::Model* M, const string& name,
 					     const valarray<double>& frequencies)
 {
-  if (ReversibleAdditiveModel* RA  = dynamic_cast<ReversibleAdditiveModel*>(M))
+  if (ReversibleMarkovModel* RA  = dynamic_cast<ReversibleMarkovModel*>(M))
     return *RA;
 
   try {
@@ -364,8 +364,8 @@ owned_ptr<ReversibleAdditiveModel> get_RA(::Model* M, const string& name,
   }
 }
 
-/// \brief Construct a ReversibleAdditiveModel from the top of the model stack
-owned_ptr<ReversibleAdditiveModel> get_RA(vector<owned_ptr< ::Model> >& model_stack, 
+/// \brief Construct a ReversibleMarkovModel from the top of the model stack
+owned_ptr<ReversibleMarkovModel> get_RA(vector<owned_ptr< ::Model> >& model_stack, 
 					     const string& name,
 					     const valarray<double>& frequencies)
 {
