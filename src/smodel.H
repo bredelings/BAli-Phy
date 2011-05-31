@@ -534,7 +534,7 @@ namespace substitution {
 
     Matrix R;
 
-    valarray<double> pi;
+    std::vector<double> pi;
 
     ReversibleFrequencyModelObject(int n): R(n,n), pi(n)
     { }
@@ -548,7 +548,7 @@ namespace substitution {
     const alphabet& Alphabet() const;
 
     /// Get the equilibrium frequencies
-    valarray<double> frequencies() const {return pi;}
+    valarray<double> frequencies() const;
 
     double operator()(int i,int j) const {return R(i,j);}
 
@@ -565,7 +565,7 @@ namespace substitution {
     void recalc(const std::vector<int>&);
 
   public:
-    valarray<double> frequencies() const {return pi;}
+    valarray<double> frequencies() const;
 
     void frequencies(const valarray<double>&);
     
@@ -589,7 +589,7 @@ namespace substitution {
 
   public:
     
-    valarray<double> frequencies() const {return pi;}
+    valarray<double> frequencies() const;
 
     void frequencies(const valarray<double>&);
     
@@ -717,7 +717,7 @@ namespace substitution {
   protected:
     mutable cached_value<EigenValues> eigensystem;
 
-    valarray<double> pi;
+    std::vector<double> pi;
 
     void recalc_eigensystem() const;
 
@@ -725,7 +725,7 @@ namespace substitution {
   public:
     virtual ReversibleMarkovModelObject* clone() const {return new ReversibleMarkovModelObject(*this);}
 
-    std::valarray<double> frequencies() const {return pi;}
+    std::valarray<double> frequencies() const;
 
     double rate() const;
 
@@ -1492,7 +1492,7 @@ namespace substitution {
     owned_ptr<Beta> S;
 
     int nbin;
-    valarray<double> pi;
+    std::vector<double> pi;
 
     void recalc(const std::vector<int>&);
 

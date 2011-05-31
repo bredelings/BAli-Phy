@@ -57,6 +57,24 @@ namespace substitution {
     return v2;
   }
 
+  template <typename T,typename U>
+  vector<T> get_vector(const valarray<U>& v1) 
+  {
+    vector<T> v2(v1.size());
+    for(int i=0;i<v2.size();i++)
+      v2[i] = v1[i];
+    return v2;
+  }
+
+  template <typename T,typename U>
+  vector<T> get_vector(const vector<U>& v1) 
+  {
+    vector<T> v2(v1.size());
+    for(int i=0;i<v2.size();i++)
+      v2[i] = v1[i];
+    return v2;
+  }
+
   template <typename T, typename U>
   void set_varray(vector<U>& v1,int start,const valarray<T>& v2) 
   {
@@ -67,6 +85,29 @@ namespace substitution {
     //copy from valarray
     for(int i=0;i<v2.size();i++)
       v1[start + i] = v2[i];
+  }
+
+  template <typename T, typename U>
+  void set_varray(vector<U>& v1,int start,const vector<T>& v2) 
+  {
+    assert(start>=0);
+    assert(v2.size() > 0);
+    assert(start + v2.size() <= v1.size());
+
+    //copy from valarray
+    for(int i=0;i<v2.size();i++)
+      v1[start + i] = v2[i];
+  }
+
+  void scale(vector<double>& v, double s)
+  {
+    for(int i=0;i<v.size();i++)
+      v[i] *= s;
+  }
+
+  void normalize(vector<double>& v)
+  {
+    scale(v, 1.0/sum(v));
   }
 
   template <typename T>
@@ -152,6 +193,10 @@ namespace substitution {
     return get_parameter_value_as<alphabet>(0);
   }
 
+  valarray<double> ReversibleFrequencyModel::frequencies() const {
+    return get_varray<double>(pi);
+  }
+
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
     :ReversibleFrequencyModelObject( a.size() )
   { 
@@ -163,9 +208,7 @@ namespace substitution {
 
   void UniformFrequencyModel::recalc(const vector<int>&)
   {
-    for(int i=0;i<n_letters();i++)
-      pi[i] = 1;
-    pi /= pi.sum();
+    pi = std::vector<double>(n_letters(), 1.0/n_letters());
     
     // compute transition rates
     for(int i=0;i<n_letters();i++)
@@ -195,6 +238,14 @@ namespace substitution {
     recalc_all();
   }
 
+  valarray<double> SimpleFrequencyModel::frequencies() const {
+    return get_varray<double>(pi);
+  }
+
+  valarray<double> UniformFrequencyModel::frequencies() const {
+    return get_varray<double>(pi);
+  }
+
   void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
   {
     assert(pi2.size() == n_letters());
@@ -210,8 +261,8 @@ namespace substitution {
   void SimpleFrequencyModel::recalc(const vector<int>&)
   {
     // compute frequencies
-    pi = get_varray<double>( get_parameter_values_as<Double>( range<int>(2,n_letters()) ) );
-    pi /= pi.sum();
+    pi = get_vector<double>( get_parameter_values_as<Double>( range<int>(2,n_letters()) ) );
+    normalize(pi);
     
     // compute transition rates
     valarray<double> pi_f(n_letters());
@@ -315,7 +366,7 @@ namespace substitution {
   void IndependentNucleotideFrequencyModel::recalc(const vector<int>&)
   {
     //------------------ compute triplet frequencies ------------------//
-    pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
+    pi = get_vector<double>( triplet_from_singlet_frequencies(Alphabet(),SubModels(0)) );
 
     vector<Double> sub_parameters = SubModels(0).get_parameter_values_as<Double>();
 
@@ -353,11 +404,12 @@ namespace substitution {
     valarray<double> nu = get_varray<double>( get_parameter_values_as<Double>( range<int>(1,n_letters()) ) );
 
     //------------- compute frequencies ------------------//
-    pi = triplet_from_singlet_frequencies(Alphabet(),SubModels(0));
+    pi = get_vector<double>( triplet_from_singlet_frequencies(Alphabet(),SubModels(0)) );
 
-    pi *= nu;
+    for(int i=0;i<pi.size();i++)
+      pi[i] *= nu[i];
 
-    pi /= pi.sum();
+    normalize(pi);
 
 
     //------------ compute transition rates -------------//
@@ -503,8 +555,7 @@ namespace substitution {
       pi[i] = sub_pi[i] * factor[i];
 
     // scale so as to sum to 1
-    pi /= pi.sum();
-
+    normalize(pi);
 
     //------------ compute transition rates -------------//
     double h = get_parameter_value_as<Double>(1);
@@ -571,7 +622,7 @@ namespace substitution {
       pi[i] = sub_pi[i] * aa_pref[i];
 
     // scale so as to sum to 1
-    pi /= pi.sum();
+    normalize(pi);
 
 
     //------------ compute transition rates -------------//
@@ -617,6 +668,8 @@ namespace substitution {
   }
 
   //----------------------- ReversibleMarkovModel --------------------------//
+  std::valarray<double> ReversibleMarkovModelObject::frequencies() const {return get_varray<double>(pi);}
+
   ReversibleMarkovModelObject::ReversibleMarkovModelObject(const alphabet& A)
     :MarkovModelObject(A),
      eigensystem(A.size()),
@@ -791,8 +844,8 @@ namespace substitution {
     const int N = n_states();
     assert(N == n_letters());
 
-    pi = get_varray<double>(get_parameter_values_as<Double>( range<int>(1,N) ) );
-    pi /= pi.sum();
+    pi = get_vector<double>( get_parameter_values_as<Double>( range<int>(1,N) ) );
+    normalize(pi);
 
     for(int i=0;i<N;i++)
       for(int j=0;j<N;j++)
@@ -938,7 +991,7 @@ namespace substitution {
 
     invalidate_eigensystem();
 
-    pi = R->frequencies();
+    pi = get_vector<double>( R->frequencies() );
   }
 
   string ReversibleMarkovSuperModel::name() const {
