@@ -809,6 +809,12 @@ OpModel::OpModel(const expression_ref& r)
       {
 	int index = find_index(names, sub_names[slot]);
 	model_slots_for_index[index].push_back( model_slot(m_index,slot) );
+
+	// default parameter values from submodels
+	if (not parameters_[index].value) {
+	  parameters_[index].value = sub_models[m_index]->get_parameter_value(slot);
+	  parameters_[index].bounds = sub_models[m_index]->get_bounds(slot);
+	}
       }
     }
 
@@ -816,6 +822,7 @@ OpModel::OpModel(const expression_ref& r)
     else if (shared_ptr<const operation_expression> oe = dynamic_pointer_cast<const operation_expression>(e->args[i]) )
     {
       int m_index = sub_models.size();
+      // These submodels have no recalc function!
       sub_models.push_back( ptr<Model>( OpModel( expression_ref( oe ) ) ) );
 
       a.sub_model_index = m_index;
@@ -825,6 +832,11 @@ OpModel::OpModel(const expression_ref& r)
       {
 	int index = find_index(names, sub_names[slot]);
 	model_slots_for_index[index].push_back( model_slot(m_index,slot) );
+
+	// default parameter values from submodels
+	if (not parameters_[index].value)
+	  parameters_[index].value = sub_models[m_index]->get_parameter_value(slot);
+	  parameters_[index].bounds = sub_models[m_index]->get_bounds(slot);
       }
     }
     else
