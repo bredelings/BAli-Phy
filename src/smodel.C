@@ -85,6 +85,24 @@ namespace substitution {
     return ::dirichlet_pdf(p2,N);
   }
 
+  SModelObject::SModelObject(const alphabet& A)
+    :a(ptr(A)),
+     state_letters_(A.size())
+  { 
+    for(int i=0;i<n_states();i++)
+      state_letters_[i] = i;
+  }
+
+  SModelObject::SModelObject(const alphabet& A, int n)
+    :a(ptr(A)),
+     state_letters_(n)
+  { 
+    if (n%A.size() != 0)
+      throw myexception()<<"Cannot construct a model with "<<A.size()<<" letters and "<<n<<" states!";
+
+    for(int i=0;i<n_states();i++)
+      state_letters_[i] = i%n_letters();
+  }
 
 
   ExchangeModel::ExchangeModel(unsigned n)
@@ -600,15 +618,13 @@ namespace substitution {
 
   //----------------------- ReversibleMarkovModel --------------------------//
   ReversibleMarkovModelObject::ReversibleMarkovModelObject(const alphabet& A)
-    :MarkovModelObject(A.size()),
-     a(A.clone()),
+    :MarkovModelObject(A),
      eigensystem(A.size()),
      pi(A.size())
   { }
 
   ReversibleMarkovModelObject::ReversibleMarkovModelObject(const alphabet& A,int n)
-    :MarkovModelObject(n),
-     a(ptr(A)),
+    :MarkovModelObject(A),
      eigensystem(n),
      pi(n)
   { }
@@ -871,7 +887,40 @@ namespace substitution {
 
     recalc_all();
   }
+  /*
+  shared_ptr<ReversibleMarkovModelObject> get_Q_matrix(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
+  {
+    shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(R.Alphabet()) );
 
+    // This doesn't work for Modulated markov models
+    assert(F.n_states() == F.Alphabet().size());
+
+    // The exchange model and the frequency model should have the same number of states, if not the same alphabet
+    assert(S.n_states() == F.n_states());
+
+    const unsigned N = S.n_states();
+
+    // recompute rate matrix
+    Matrix& Q = R->Q;
+
+    for(int i=0;i<N;i++) {
+      double sum=0;
+      for(int j=0;j<N;j++) {
+	if (i==j) continue;
+	Q(i,j) = (*S)(i,j) * (*F)(i,j);
+	sum += Q(i,j);
+      }
+      Q(i,i) = -sum;
+    }
+
+    R->invalidate_eigensystem();
+    
+    R->pi = F->frequencies();
+
+
+    return R;
+  }
+  */
   void ReversibleMarkovSuperModel::recalc(const vector<int>&)
   {
     const unsigned N = n_states();

@@ -194,20 +194,39 @@ namespace substitution {
 
 
   //------------------------- Markov Substitution Model ----------------------------//
-  struct MarkovModelObject: public Object
+  struct SModelObject
+  {
+  protected:
+    boost::shared_ptr<const alphabet> a;
+
+    std::vector<unsigned> state_letters_;
+  public:
+    const std::vector<unsigned>& state_letters() const {return state_letters_;}
+
+    unsigned n_states() const {return state_letters_.size();}
+
+    const alphabet& Alphabet() const {return *a;}
+
+    int n_letters() const {return a->size();}
+
+    SModelObject(const alphabet&);
+
+    SModelObject(const alphabet&,int);
+  };
+
+  struct MarkovModelObject: public SModelObject
   {
     virtual MarkovModelObject* clone() const {return new MarkovModelObject(*this);}
 
     /// Rate matrix
     Matrix Q;
 
-    std::vector<unsigned> state_letters_;
+    MarkovModelObject(const alphabet & A)
+      :SModelObject(A), Q(n_states(), n_states())
+    { }
 
-    const std::vector<unsigned>& state_letters() const {return state_letters_;}
-
-    unsigned n_states() const {return state_letters_.size();}
-
-    MarkovModelObject(int n):Q(n,n), state_letters_(n)
+    MarkovModelObject(const alphabet & A,int n)
+      :SModelObject(A,n), Q(n_states(), n_states())
     { }
   };
 
@@ -696,8 +715,6 @@ namespace substitution {
   class ReversibleMarkovModelObject: public MarkovModelObject
   {
   protected:
-    boost::shared_ptr<const alphabet> a;
-
     mutable cached_value<EigenValues> eigensystem;
 
     valarray<double> pi;
@@ -707,10 +724,6 @@ namespace substitution {
     void invalidate_eigensystem();
   public:
     virtual ReversibleMarkovModelObject* clone() const {return new ReversibleMarkovModelObject(*this);}
-
-    const alphabet& Alphabet() const {return *a;}
-
-    int n_letters() const {return a->size();}
 
     std::valarray<double> frequencies() const {return pi;}
 
