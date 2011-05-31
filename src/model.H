@@ -435,20 +435,6 @@ public:
   OpModel(const expression_ref&);
 };
 
-template <typename X>
-class OpModelOf: public OpModel, public X
-{
-  void recalc(const std::vector<int>& /*indices*/ )
-  {
-    X::operator=( dynamic_cast<const X&>( *evaluate() ) );
-  }
-
-public:
-  OpModelOf<X>* clone() const {return new OpModelOf<X>(*this);}
-
-  OpModelOf(const expression_ref& e):OpModel(e) { }
-};
-
 int find_parameter(const Model& M,const std::string& name);
 
 void show_parameters(std::ostream& o,const Model& M);

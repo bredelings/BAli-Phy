@@ -2743,9 +2743,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
 }
 
-void ff(const Model& M, int p_change, int n_bins)
+using namespace substitution;
+
+OpModel gamma_parameter_model(const ::Model& M, int p_change, int n_bins)
 {
-  using namespace substitution;
   // a model expression takes all the models parameters and returns the model as a result;
 
   expression_ref D = DiscretizationOp();
@@ -2756,14 +2757,16 @@ void ff(const Model& M, int p_change, int n_bins)
   const Operation& O =  MPO;
   expression_ref MP = MultiParameterOp();
   expression_ref E1 = MP(M, Constant<Int>(p_change), D(Gamma(), Constant<Int>(n_bins) ) );
-  expression_ref E2 = (~MultiParameterOp())(M, E(p_change), D(Gamma(), E(n_bins) ) );
+  expression_ref E2 = (~MultiParameterOp())(M, E(p_change), (~DiscretizationOp())(Gamma(), E(n_bins) ) );
  
-  OpModelOf<MultiModelObject> OM(E1);
-  OM.set_parameter_value(3,3);
+  OpModel OM(E1);
+  //  OM.set_parameter_value(3,3);
 
   std::cout<<ME->print()<<std::endl;
   std::cout<<E1->print()<<std::endl;
   std::cout<<join( find_named_parameters(ME),"\n" );
+
+  return OM;
 }
 
 
