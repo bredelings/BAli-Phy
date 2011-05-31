@@ -957,7 +957,7 @@ namespace substitution {
     recalc_all();
   }
 
-  shared_ptr<ReversibleMarkovModelObject> get_Q_matrix(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
+  shared_ptr<ReversibleMarkovModelObject> Q_from_R_and_S_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
   {
     shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(F.Alphabet()) );
 
@@ -2002,30 +2002,31 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     :fraction(s), values(s)
   { }
 
-  MultiModelObject MultiParameterFunction(const MultiModel& M, Int p_change, const DiscreteDistribution& D)
+  MultiModelObject MultiParameterFunction(const MultiModel& M_, Int p_change, const DiscreteDistribution& D)
   {
-    int N = M.n_base_models() * D.size();
+    shared_ptr<MultiModel> M = ptr(M_);
 
-    MultiModelObject R(M.Alphabet());
+    int N = M->n_base_models() * D.size();
+
+    MultiModelObject R(M->Alphabet());
 
     // recalc fractions and base models
     R.resize(N);
 
     for(int m=0;m<R.n_base_models();m++) 
     {
-      int i = m / M.n_base_models();
-      int j = m % M.n_base_models();
+      int i = m / M->n_base_models();
+      int j = m % M->n_base_models();
 
-      R.fraction[m] = D.fraction[i]*M.distribution()[j];
+      R.fraction[m] = D.fraction[i]*M->distribution()[j];
 
-      R.base_models[m] = M.base_model(j);
-
-      if (p_change == -1) {
-	double value = dynamic_cast<const Double&>(*D.values[i]);
-	R.base_models[m]->set_rate( value );
-      }
+      Double value = dynamic_cast<const Double&>(*D.values[i]);
+      if (p_change == -1)
+	M->set_rate( value );
       else
-	R.base_models[m]->set_parameter_value(p_change, D.values[i]);
+	M->set_parameter_value(p_change, value);
+
+      R.base_models[m] = M->base_model(j);
     }
 
     return R;
