@@ -214,22 +214,6 @@ namespace substitution {
     SModelObject(const alphabet&,int);
   };
 
-  struct MarkovModelObject: public SModelObject
-  {
-    virtual MarkovModelObject* clone() const {return new MarkovModelObject(*this);}
-
-    /// Rate matrix
-    Matrix Q;
-
-    MarkovModelObject(const alphabet & A)
-      :SModelObject(A), Q(n_states(), n_states())
-    { }
-
-    MarkovModelObject(const alphabet & A,int n)
-      :SModelObject(A,n), Q(n_states(), n_states())
-    { }
-  };
-
   //------------------------ Exchangeability Model ----------------------//
 
 
@@ -718,7 +702,25 @@ namespace substitution {
 
   //------------------------- Reversible Substitution Model -----------------------//
 
-  class ReversibleMarkovModelObject: public MarkovModelObject
+  class ReversibleAdditiveObject: public SModelObject
+  {
+  public:
+    virtual ReversibleAdditiveObject* clone() const =0;
+
+    virtual double rate() const =0;
+
+    virtual void set_rate(double) =0;
+
+    virtual Matrix transition_p(double t) const = 0;
+
+    virtual std::valarray<double> frequencies() const =0;
+
+    ReversibleAdditiveObject(const alphabet& a);
+
+    ReversibleAdditiveObject(const alphabet& a, int n);
+  };
+
+  class ReversibleMarkovModelObject: public ReversibleAdditiveObject
   {
   protected:
     mutable cached_value<EigenValues> eigensystem;
@@ -726,6 +728,9 @@ namespace substitution {
     void recalc_eigensystem() const;
 
   public:
+    /// Rate matrix
+    Matrix Q;
+
     std::vector<double> pi;
 
     virtual ReversibleMarkovModelObject* clone() const {return new ReversibleMarkovModelObject(*this);}
@@ -741,7 +746,7 @@ namespace substitution {
     const EigenValues& get_eigensystem() const;
 
     /// The transition probability matrix - which we can now compute
-    virtual Matrix transition_p(double t) const;
+    Matrix transition_p(double t) const;
 
     ReversibleMarkovModelObject(const alphabet& a);
 

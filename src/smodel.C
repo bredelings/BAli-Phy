@@ -673,17 +673,28 @@ namespace substitution {
   }
 
   //----------------------- ReversibleMarkovModel --------------------------//
+  ReversibleAdditiveObject::ReversibleAdditiveObject(const alphabet& a)
+    :SModelObject(a)
+  { }
+
+  ReversibleAdditiveObject::ReversibleAdditiveObject(const alphabet& a, int n)
+    :SModelObject(a,n)
+  { }
+
+
   std::valarray<double> ReversibleMarkovModelObject::frequencies() const {return get_varray<double>(pi);}
 
   ReversibleMarkovModelObject::ReversibleMarkovModelObject(const alphabet& A)
-    :MarkovModelObject(A),
+    :ReversibleAdditiveObject(A),
      eigensystem(A.size()),
+     Q(A.size(), A.size()),
      pi(A.size())
   { }
 
   ReversibleMarkovModelObject::ReversibleMarkovModelObject(const alphabet& A,int n)
-    :MarkovModelObject(A),
+    :ReversibleAdditiveObject(A,n),
      eigensystem(n),
+     Q(A.size(), A.size()),
      pi(n)
   { }
 
