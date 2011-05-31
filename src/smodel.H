@@ -710,6 +710,16 @@ namespace substitution {
 
   //------------------------- Reversible Substitution Model -----------------------//
 
+  class ReversibleMarkovModelObject: public MarkovModelObject
+  {
+  protected:
+    mutable cached_value<EigenValues> eigensystem;
+
+  public:
+    virtual ReversibleMarkovModelObject* clone() const {return new ReversibleMarkovModelObject(*this);}
+    ReversibleMarkovModelObject(int n);
+  };
+
   // Store S2 = pi^0.5 * S * pi^0.5
   // Store EigenValues(S2) -> D,O
   // Is this worth it?  Try it later...
@@ -720,14 +730,12 @@ namespace substitution {
   //   3. return DN*(O*Dt*O)*DP
 
   /// A Markov substitution model which is reversible
-  class ReversibleMarkovModel: protected MarkovModelObject,
+  class ReversibleMarkovModel: protected ReversibleMarkovModelObject,
 			       public Independant_Additive_Reversible_Model 
   {
-    mutable cached_value<EigenValues> eigensystem;
-    void recalc_eigensystem() const;
-
   protected:
     void invalidate_eigensystem();
+    void recalc_eigensystem() const;
 
   public:
     double rate() const;

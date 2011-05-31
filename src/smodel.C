@@ -599,6 +599,12 @@ namespace substitution {
   }
 
   //----------------------- ReversibleMarkovModel --------------------------//
+  ReversibleMarkovModelObject::ReversibleMarkovModelObject(int n)
+    :MarkovModelObject(n),
+     eigensystem(n)
+  { }
+
+
   // Q(i,j) = S(i,j)*pi[j]   for i!=j
   // Q(i,i) = -sum_{i!=j} S(i,j)*pi[j]
 
@@ -740,8 +746,7 @@ namespace substitution {
   }
 
   ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)
-    :MarkovModelObject(a.size()), 
-     eigensystem(a.size())
+    :ReversibleMarkovModelObject(a.size())
   {
     for(int i=0;i<a.size();i++)
       state_letters_[i] = i;
