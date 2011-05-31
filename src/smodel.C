@@ -990,6 +990,24 @@ namespace substitution {
     return R;
   }
 
+  struct Q_from_R_and_S_Op: public Operation
+  {
+    Q_from_R_and_S_Op* clone() const {return new Q_from_R_and_S_Op(*this);}
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(0);
+      shared_ptr<const ReversibleFrequencyModelObject> F = Args.evaluate_as<ReversibleFrequencyModelObject>(1);
+      
+      return Q_from_R_and_S_Function(*S, *F);
+    }
+
+    std::string name() const {return "Q_from_R_and_S";}
+
+    Q_from_R_and_S_Op():Operation(2) { }
+  };
+
+  expression_ref Q_from_R_and_S = Q_from_R_and_S_Op();
   void ReversibleMarkovSuperModel::recalc(const vector<int>&)
   {
     ReversibleMarkovModelObject::operator=( *get_Q_matrix(*S, *R) );
