@@ -29,7 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "logsum.H"
 #include "util.H"
 #include "setup.H"
-#include "smodel.H"
 
 #include "alignment-util.H"
 #include "tree-util.H"
@@ -47,7 +46,7 @@ using std::endl;
 joint_A_T::joint_A_T(const vector<alignment>& A1,const vector<SequenceTree>& T1,bool internal)
   :A(A1),T(T1)
 {
-  unsigned s = min(A.size(),T.size());
+  unsigned s = std::min(A.size(),T.size());
   if (s != A.size())
     std::cerr<<"joint-A-T: Warning! only using "<<s<<"/"<<A.size()<<" alignments to match number of trees."<<endl;
 
