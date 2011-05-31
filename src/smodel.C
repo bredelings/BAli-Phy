@@ -1504,6 +1504,17 @@ namespace substitution {
 
   //--------------- MultiRate Models ----------------//
 
+  valarray<double> MultiModelObject::frequencies() const
+  {
+    valarray<double> pi(0.0, Alphabet().size());
+
+    //recalculate pi
+    for(int i=0; i < n_base_models(); i++)
+      pi += fraction[i] * base_models[i]->frequencies();
+
+    return pi;
+  }
+
   void MultiModelObject::resize(int s)
   {
     fraction.resize(s);
@@ -1538,6 +1549,24 @@ namespace substitution {
     return P;
   }
 
+  MultiModelObject::MultiModelObject(const alphabet& a)
+    :a(a.clone())
+  { }
+
+  MultiModelObject::MultiModelObject(const alphabet& a, int n)
+    :a(a.clone()),
+     base_models(n),
+     fraction(n)
+  { }
+
+  MultiModel::MultiModel(const alphabet& a)
+    :MultiModelObject(a)
+  { }
+
+  MultiModel::MultiModel(const alphabet& a, int n)
+    :MultiModelObject(a,n)
+  { }
+
   Matrix frequency_matrix(const MultiModel& M) {
     Matrix f(M.n_base_models(),M.n_states());
     for(int m=0;m<f.size1();m++)
@@ -1563,6 +1592,7 @@ namespace substitution {
   }
 
   UnitModel::UnitModel(const ReversibleAdditiveModel& RA)
+    :MultiModel(RA.Alphabet())
   {
     SimpleReversibleAdditiveCollection<ReversibleAdditiveModel> M(RA);
     insert_submodel("0",M);
@@ -1571,6 +1601,7 @@ namespace substitution {
   }
 
   UnitModel::UnitModel(const Base_Model_t& M)
+    :MultiModel(M.Alphabet())
   {
     insert_submodel("0",M);
   }
@@ -1640,7 +1671,8 @@ namespace substitution {
   }
 
   MultiFrequencyModel::MultiFrequencyModel(const AlphabetExchangeModel& E,int n)
-    :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E))
+    :MultiModel(Alphabet()),
+     ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E))
   { 
     // Set up variable names
     //   - initial probability that a letter l is in a submodel of type m = 1/n
@@ -1756,12 +1788,14 @@ namespace substitution {
   }
 
   CAT_FixedFrequencyModel::CAT_FixedFrequencyModel(const alphabet& a)
+    :MultiModel(a)
   { 
     add_parameter(Parameter("alphabet",a));
   }
 
   CAT_FixedFrequencyModel::CAT_FixedFrequencyModel(const alphabet& a, const string& n)
-    :name_(n)
+    :MultiModel(a),
+     name_(n)
   { 
     add_parameter(Parameter("alphabet",a));
   }
@@ -1834,7 +1868,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     int N = M.n_base_models() * D.size();
 
-    MultiModelObject R;
+    MultiModelObject R(M.Alphabet());
 
     // recalc fractions and base models
     R.resize(N);
@@ -1932,7 +1966,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   // Um, summed-over parameter lives on as its MEAN
 
   MultiParameterModel::MultiParameterModel(const MultiModel& M,int p,int n) 
-    :ReversibleWrapperOver<MultiModel>(M),
+    :MultiModel(M.Alphabet()),
+     ReversibleWrapperOver<MultiModel>(M),
      p_change(p),
      p_values(n),
      weights(n)
@@ -2009,7 +2044,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   DirichletParameterModel::DirichletParameterModel(const MultiModel& M, int p, int n)
-    :ReversibleWrapperOver<MultiModel>(M),
+    :MultiModel(M.Alphabet()),
+     ReversibleWrapperOver<MultiModel>(M),
      p_change(p),
      n_bins(n)
   {
@@ -2088,32 +2124,21 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   /*--------------- Gamma Sites Model----------------*/
 
-  void GammaParameterModel::recalc(const vector<int>&)
+  void GammaParameterModel::recalc(const std::vector<int>& indices)
   {
-    DiscreteDistribution DD = *DiscretizationFunction( SubModelAs<Distribution>(1), n_bins );
-
-    MultiModelObject::operator=( MultiParameterFunction(SubModel(), p_change, DD) );
-  }
-
-  string GammaParameterModel::name() const
-  {
-    string p_name = "rate";
-    if (p_change > -1)
-      p_name = SubModels(0).parameter_name(p_change);
-
-    string dist_name = p_name + "~" + SubModels(1).name() + "(" + convertToString(n_bins) + ")";
-    return SubModels(0).name() + " + " + dist_name;    
+    MultiModelObject::operator=( dynamic_cast<const MultiModelObject&>( *evaluate() ) );
   }
 
   GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
-    :ReversibleWrapperOver<MultiModel>(M),
+    :MultiModel(M.Alphabet()),
+     OpModel( 
+	     (~MultiParameterOp())(M, E(-1), (~DiscretizationOp())(Gamma(), E(n) ) ) 
+	      ),
      p_change(-1),
      n_bins(n)
   {
-    if (p_change != -1)
-      SubModel().set_fixed(p_change,true);
-
-    insert_submodel("DIST",Gamma());
+    show_parameters(std::cout, *this);
+    recalc_all();
   }
 
   /*--------------- LogNormal Sites Model----------------*/
@@ -2167,7 +2192,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   WithINV::WithINV(const MultiModel& M)
-    :ReversibleWrapperOver<MultiModel>(M),
+    :MultiModel(M.Alphabet()),
+     ReversibleWrapperOver<MultiModel>(M),
      INV(SimpleReversibleMarkovModel(INV_Model(M.Alphabet())))
   {
     p_index = add_super_parameter(Parameter("INV::p", Double(0.01), between(0, 1)));
@@ -2568,6 +2594,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   MixtureModel::MixtureModel(const std::vector<owned_ptr<MultiModel> >& models)
+    :MultiModel(models[0]->Alphabet())
   {
     for(int i=0;i<models.size();i++) {
       string pname = string("Mixture::p") + convertToString(i+1);
@@ -2768,5 +2795,6 @@ OpModel gamma_parameter_model(const ::Model& M, int p_change, int n_bins)
 
   return OM;
 }
+
 
 

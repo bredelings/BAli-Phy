@@ -858,15 +858,6 @@ namespace substitution {
 
     virtual ReversibleWrapperOver* clone() const=0;
 
-    /// Get the equilibrium frequencies
-    valarray<double> frequencies() const {
-      return SubModel().frequencies();
-    }
-
-    const alphabet& Alphabet() const { 
-      return SubModel().Alphabet(); 
-    }
-
     ReversibleWrapperOver(const T& M) {
       insert_submodel("BASE",M);
     }
@@ -989,9 +980,13 @@ namespace substitution {
   public:
     typedef ReversibleAdditiveCollection Base_Model_t;
 
+    boost::shared_ptr<const alphabet> a;
+
     mutable std::vector< owned_ptr<Base_Model_t> > base_models;
 
     mutable std::vector< double > fraction;
+
+    const alphabet& Alphabet() const {return *a;}
 
     virtual MultiModelObject* clone() const {return new MultiModelObject(*this);}
 
@@ -1014,6 +1009,8 @@ namespace substitution {
 
     const std::vector<unsigned>& state_letters() const {return base_model(0).state_letters();}
 
+    valarray<double> frequencies() const;
+
     unsigned n_states() const {return state_letters().size();}
 
     /// Get a transition probability matrix for time 't', averaging over models
@@ -1021,6 +1018,10 @@ namespace substitution {
 
     /// Get a transition probability matrix for time 't' and model 'm'
     Matrix transition_p(double t,int i, int m) const {return base_model(m).transition_p(t,i);}
+
+    MultiModelObject(const alphabet& a);
+
+    MultiModelObject(const alphabet& a, int n);
 
     virtual ~MultiModelObject() {}
   };
@@ -1031,6 +1032,8 @@ namespace substitution {
 
   public:
     virtual MultiModel* clone() const=0;
+
+    const alphabet& Alphabet() const {return MultiModelObject::Alphabet();}
 
     double rate() const {return MultiModelObject::rate();}
     void set_rate(double r) {MultiModelObject::set_rate(r);}
@@ -1044,6 +1047,12 @@ namespace substitution {
 
     /// Get a transition probability matrix for time 't' and model 'm'
     Matrix transition_p(double t,int i, int m) const {return MultiModelObject::transition_p(t,i,m);}
+
+    valarray<double> frequencies() const {return MultiModelObject::frequencies();}
+
+    MultiModel(const alphabet& a);
+
+    MultiModel(const alphabet& a, int n);
 
     ~MultiModel() {}
   };
@@ -1245,8 +1254,7 @@ namespace substitution {
 
   /// A discrete-gamma Model
   //  Only has one parameter: the shape parameter for the gamma
-  class GammaParameterModel: public MultiModel,
- 			     public ReversibleWrapperOver<MultiModel> 
+  class GammaParameterModel: public MultiModel, public OpModel
   {
     /// The parameter which is varying;
     int p_change;
@@ -1257,8 +1265,6 @@ namespace substitution {
     void recalc(const std::vector<int>&);
   public:
     virtual GammaParameterModel* clone() const {return new GammaParameterModel(*this);}
-
-    string name() const;
 
     /// Construct a discrete gamma model on top of 'M', with 'n' bins
     GammaParameterModel(const MultiModel& M, int n);
