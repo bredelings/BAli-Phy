@@ -748,12 +748,12 @@ shared_ptr<const Object> OpModel::evaluate(int slot)
     // update the relevant sub_model, and return a 
     int submodel_index = slot_arg.sub_model_index;
 
-    // make the submodel update itself -- it already knows its parameter values
-    sub_models[submodel_index]->update();
-
     // if the model is an opmodel, then we don't need to do weird result passing.
     if (OpModel* M = dynamic_cast<OpModel*>(&*sub_models[submodel_index]))
       return M->evaluate();
+
+    // make the submodel update itself -- it already knows its parameter values
+    sub_models[submodel_index]->update();
 
     // return the value.  Currently, the updated sub-modesl IS its own value.
     shared_ptr<const Model> sub = sub_models[submodel_index];
