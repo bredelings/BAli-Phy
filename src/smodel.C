@@ -2002,7 +2002,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return Pr;
   }
 
-  void DirichletParameterModel::recalc(const vector<int>& indices) 
+  void DirichletParameterModel::recalc(const vector<int>&) 
   {
     /*
     // sort bins to enforce monotonically increasing order
@@ -2080,7 +2080,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return SubModelAs<Distribution>(1);
   }
 
-  void DistributionParameterModel::recalc(const vector<int>& indices) 
+  void DistributionParameterModel::recalc(const vector<int>&) 
   {
     // We only need to do this when the DISTRIBUTION changes (?)
     Discretization d(p_values.size(),D());
@@ -2124,7 +2124,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   /*--------------- Gamma Sites Model----------------*/
 
-  void GammaParameterModel::recalc(const std::vector<int>& indices)
+  void GammaParameterModel::recalc(const std::vector<int>&)
   {
     MultiModelObject::operator=( dynamic_cast<const MultiModelObject&>( *evaluate() ) );
   }
