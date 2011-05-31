@@ -755,6 +755,9 @@ namespace substitution {
     /// The transition probability matrix - which we can now compute
     virtual Matrix transition_p(double t) const;
 
+    /// Get the equilibrium frequencies
+    valarray<double> frequencies() const {return pi;}
+
     ReversibleMarkovModel(const alphabet& a);
     
     ~ReversibleMarkovModel() {}
@@ -779,9 +782,6 @@ namespace substitution {
 
     /// The transition probability matrix - which we can now compute
     Matrix transition_p(double t) const;
-
-    /// Get the equilibrium frequencies
-    valarray<double> frequencies() const {return pi;}
 
     virtual efloat_t prior() const;
 
@@ -828,9 +828,6 @@ namespace substitution {
 
     /// Make a copy of this object
     virtual ReversibleMarkovSuperModel* clone() const {return new ReversibleMarkovSuperModel(*this);}
-
-    /// Get the equilibrium
-    valarray<double> frequencies() const {return R->frequencies();}
 
     efloat_t prior() const {return S->prior() * R->prior();}
 
@@ -1441,8 +1438,6 @@ namespace substitution {
   public:
 
     virtual ModulatedMarkovModel* clone() const {return new ModulatedMarkovModel(*this);}
-
-    valarray<double> frequencies() const {return pi;}
 
     string name() const;
 

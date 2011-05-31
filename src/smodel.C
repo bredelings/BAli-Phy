@@ -873,6 +873,8 @@ namespace substitution {
     }
 
     invalidate_eigensystem();
+
+    pi = R->frequencies();
   }
 
   string ReversibleMarkovSuperModel::name() const {
