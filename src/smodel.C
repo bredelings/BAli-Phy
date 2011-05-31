@@ -2763,32 +2763,3 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   // Now how to write MultiParameterModel( M, p_change, DiscretizationFunction( Gamma(), n_bins ) ) as an expression?
 
 }
-
-using namespace substitution;
-
-OpModel gamma_parameter_model(const ::Model& M, int p_change, int n_bins)
-{
-  // a model expression takes all the models parameters and returns the model as a result;
-
-  expression_ref D = DiscretizationOp();
-
-  MultiParameterOp MPO;
-
-  const expression_ref ME= M;
-  const Operation& O =  MPO;
-  expression_ref MP = MultiParameterOp();
-  expression_ref E1 = MP(M, Constant<Int>(p_change), D(Gamma(), Constant<Int>(n_bins) ) );
-  expression_ref E2 = (~MultiParameterOp())(M, E(p_change), (~DiscretizationOp())(Gamma(), E(n_bins) ) );
- 
-  OpModel OM(E1);
-  //  OM.set_parameter_value(3,3);
-
-  std::cout<<ME->print()<<std::endl;
-  std::cout<<E1->print()<<std::endl;
-  std::cout<<join( find_named_parameters(ME),"\n" );
-
-  return OM;
-}
-
-
-
