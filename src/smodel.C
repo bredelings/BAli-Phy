@@ -599,8 +599,16 @@ namespace substitution {
   }
 
   //----------------------- ReversibleMarkovModel --------------------------//
-  ReversibleMarkovModelObject::ReversibleMarkovModelObject(int n)
+  ReversibleMarkovModelObject::ReversibleMarkovModelObject(const alphabet& A)
+    :MarkovModelObject(A.size()),
+     a(A.clone()),
+     eigensystem(A.size()),
+     pi(A.size())
+  { }
+
+  ReversibleMarkovModelObject::ReversibleMarkovModelObject(const alphabet& A,int n)
     :MarkovModelObject(n),
+     a(ptr(A)),
      eigensystem(n),
      pi(n)
   { }
@@ -747,10 +755,17 @@ namespace substitution {
   }
 
   ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)
-    :ReversibleMarkovModelObject(a.size())
+    :ReversibleMarkovModelObject(a)
   {
     for(int i=0;i<a.size();i++)
       state_letters_[i] = i;
+  }
+
+  ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a, int n)
+    :ReversibleMarkovModelObject(a, n)
+  {
+    for(int i=0;i<n;i++)
+      state_letters_[i] = -1;
   }
 
   //------------------------ F81 Model -------------------------//

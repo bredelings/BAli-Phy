@@ -203,6 +203,8 @@ namespace substitution {
 
     std::vector<unsigned> state_letters_;
 
+    const std::vector<unsigned>& state_letters() const {return state_letters_;}
+
     MarkovModelObject(int n):Q(n,n), state_letters_(n)
     { }
   };
@@ -692,12 +694,22 @@ namespace substitution {
   class ReversibleMarkovModelObject: public MarkovModelObject
   {
   protected:
+    boost::shared_ptr<const alphabet> a;
+
     mutable cached_value<EigenValues> eigensystem;
+
     valarray<double> pi;
 
   public:
     virtual ReversibleMarkovModelObject* clone() const {return new ReversibleMarkovModelObject(*this);}
-    ReversibleMarkovModelObject(int n);
+
+    const alphabet& Alphabet() const {return *a;}
+
+    std::valarray<double> frequencies() const {return pi;}
+
+    ReversibleMarkovModelObject(const alphabet& a);
+
+    ReversibleMarkovModelObject(const alphabet& a,int n);
   };
 
   // Store S2 = pi^0.5 * S * pi^0.5
@@ -721,6 +733,8 @@ namespace substitution {
     double rate() const;
     void set_rate(double);
     
+    const alphabet& Alphabet() const {return ReversibleMarkovModelObject::Alphabet();}
+
     const EigenValues& get_eigensystem() const;
 
     /// Make a copy of this object
@@ -738,6 +752,8 @@ namespace substitution {
     valarray<double> frequencies() const {return pi;}
 
     ReversibleMarkovModel(const alphabet& a);
+    
+    ReversibleMarkovModel(const alphabet& a, int n);
     
     ~ReversibleMarkovModel() {}
   };
