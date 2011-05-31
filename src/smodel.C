@@ -621,7 +621,7 @@ namespace substitution {
   // Then Q = S*D, and we can easily compute the exponential
   // So, S(i,j) = Q(i,i)/pi[i]
 
-  double ReversibleMarkovModel::rate() const 
+  double ReversibleMarkovModelObject::rate() const 
   {
     const unsigned N = n_states();
     
@@ -650,14 +650,14 @@ namespace substitution {
     return scale/Alphabet().width();
   }
 
-  void ReversibleMarkovModel::invalidate_eigensystem() 
+  void ReversibleMarkovModelObject::invalidate_eigensystem() 
   {
     eigensystem.invalidate();
     // UNCOMMENT - to test savings from lazy eigensystem calculation.
     // recalc_eigensystem();
   }
 
-  const EigenValues& ReversibleMarkovModel::get_eigensystem() const
+  const EigenValues& ReversibleMarkovModelObject::get_eigensystem() const
   {
     if (not eigensystem.is_valid())
       recalc_eigensystem();
@@ -667,7 +667,7 @@ namespace substitution {
     return eigensystem;
   }
 
-  void ReversibleMarkovModel::set_rate(double r)  
+  void ReversibleMarkovModelObject::set_rate(double r)  
   {
     if (r == rate()) return;
 
@@ -744,14 +744,14 @@ namespace substitution {
     eigensystem = EigenValues(S);
   }
 
-  Matrix ReversibleMarkovModel::transition_p(double t) const 
+  Matrix ReversibleMarkovModelObject::transition_p(double t) const 
   {
-    vector<double> pi(n_states());
+    vector<double> pi2(n_states());
     const valarray<double> f = frequencies();
-    assert(pi.size() == f.size());
-    for(int i=0;i<pi.size();i++)
-      pi[i] = f[i];
-    return exp(get_eigensystem(), pi,t);
+    assert(pi2.size() == f.size());
+    for(int i=0;i<pi2.size();i++)
+      pi2[i] = f[i];
+    return exp(get_eigensystem(), pi2,t);
   }
 
   ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)

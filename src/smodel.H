@@ -703,6 +703,8 @@ namespace substitution {
     valarray<double> pi;
 
     void recalc_eigensystem() const;
+
+    void invalidate_eigensystem();
   public:
     virtual ReversibleMarkovModelObject* clone() const {return new ReversibleMarkovModelObject(*this);}
 
@@ -711,6 +713,15 @@ namespace substitution {
     int n_letters() const {return a->size();}
 
     std::valarray<double> frequencies() const {return pi;}
+
+    double rate() const;
+
+    void set_rate(double);
+
+    const EigenValues& get_eigensystem() const;
+
+    /// The transition probability matrix - which we can now compute
+    Matrix transition_p(double t) const;
 
     ReversibleMarkovModelObject(const alphabet& a);
 
@@ -731,17 +742,14 @@ namespace substitution {
 			       public Independant_Additive_Reversible_Model 
   {
   protected:
-    void invalidate_eigensystem();
 
   public:
-    double rate() const;
-    void set_rate(double);
+    double rate() const {return ReversibleMarkovModelObject::rate();}
+    void set_rate(double r) {ReversibleMarkovModelObject::set_rate(r);}
     
     const alphabet& Alphabet() const {return ReversibleMarkovModelObject::Alphabet();}
 
     int n_letters() const {return Alphabet().size();}
-
-    const EigenValues& get_eigensystem() const;
 
     /// Make a copy of this object
     virtual ReversibleMarkovModel* clone() const =0;
@@ -753,11 +761,10 @@ namespace substitution {
 
     unsigned n_states() const {return state_letters().size();}
 
-    /// The transition probability matrix - which we can now compute
-    virtual Matrix transition_p(double t) const;
-
     /// Get the equilibrium frequencies
     valarray<double> frequencies() const {return ReversibleMarkovModelObject::frequencies();}
+
+    virtual Matrix transition_p(double t) const {return ReversibleMarkovModelObject::transition_p(t);}
 
     ReversibleMarkovModel(const alphabet& a);
     
