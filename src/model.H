@@ -66,12 +66,14 @@ struct Parameter
 
 
 // TODO
-// 1. Make models take generic Object's as inputs.
-//    o make substitution models take alphabets as arguments, and thus store them in the argument list
+// 1. Make models take generic Object's as inputs. [DONE]
+//    o make substitution models take alphabets as arguments, and thus store them in the argument list [DONE]
 // 2. Make models into functions.
+//    o give all models a meaningful evaluate() member function, and use that?
 //    o separate result objects from model objects
 //    o make the model objects inherit from the result objects
 //    o inheritance of data members (e.g. Q) becomes inheritance of data members in the result objects
+//    o call update of submodels only when accessing the submodel?
 // 3. ??
 //    o make all stored objects into models?
 //    o make supermodels into an Op plus models, as arguments?
@@ -91,10 +93,11 @@ struct Parameter
 // TODO:
 //
 // 1. Convert to lazy calculation
-// 2. make alphabets a model argument
+// 2. make alphabets a model argument [DONE]
 // 3. go, break all the models by moving their functionality
 //    to a result type.
-// 4.  This will identify the callers that need to be fixed.
+// 4. This will identify the callers that need to be fixed.
+// 5. Make a ReversibleMarkovModelObject
 // E-mail sibon.
 
 
