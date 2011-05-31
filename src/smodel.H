@@ -721,7 +721,7 @@ namespace substitution {
     const EigenValues& get_eigensystem() const;
 
     /// The transition probability matrix - which we can now compute
-    Matrix transition_p(double t) const;
+    virtual Matrix transition_p(double t) const;
 
     ReversibleMarkovModelObject(const alphabet& a);
 
