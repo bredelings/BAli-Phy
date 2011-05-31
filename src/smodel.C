@@ -697,7 +697,7 @@ namespace substitution {
    *           = pi^-1.2 * exp(S2) * pi^1/2
    */
 
-  void ReversibleMarkovModel::recalc_eigensystem() const
+  void ReversibleMarkovModelObject::recalc_eigensystem() const
   {
     const unsigned n = n_states();
 
