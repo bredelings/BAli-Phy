@@ -601,7 +601,8 @@ namespace substitution {
   //----------------------- ReversibleMarkovModel --------------------------//
   ReversibleMarkovModelObject::ReversibleMarkovModelObject(int n)
     :MarkovModelObject(n),
-     eigensystem(n)
+     eigensystem(n),
+     pi(n)
   { }
 
 
@@ -829,7 +830,7 @@ namespace substitution {
   }
 
   F81_Model::F81_Model(const alphabet& a)
-    :ReversibleMarkovModel(a),alpha_(1),pi(a.size())
+    :ReversibleMarkovModel(a),alpha_(1)
   {
     add_parameter(Parameter("alphabet",a));
 
@@ -842,7 +843,7 @@ namespace substitution {
   }
 
   F81_Model::F81_Model(const alphabet& a,const valarray<double>& f)
-    :ReversibleMarkovModel(a),alpha_(1),pi(a.size())
+    :ReversibleMarkovModel(a),alpha_(1)
   {
     add_parameter(Parameter("alphabet",a));
 

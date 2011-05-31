@@ -714,6 +714,7 @@ namespace substitution {
   {
   protected:
     mutable cached_value<EigenValues> eigensystem;
+    valarray<double> pi;
 
   public:
     virtual ReversibleMarkovModelObject* clone() const {return new ReversibleMarkovModelObject(*this);}
@@ -763,7 +764,6 @@ namespace substitution {
   class F81_Model: public ReversibleMarkovModel
   {
     double alpha_;
-    valarray<double> pi;
 
     void recalc(const std::vector<int>&);
   public:
@@ -1417,8 +1417,6 @@ namespace substitution {
   protected:
     owned_ptr<MultiModel> M;
     owned_ptr<ExchangeModel> S;
-
-    valarray<double> pi;
 
     void recalc(const std::vector<int>&);
 
