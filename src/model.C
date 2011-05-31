@@ -412,6 +412,8 @@ void show_parameters(std::ostream& o,const Model& M) {
       o<<M.get_parameter_value_as<Double>(i);
     else if (M.parameter_has_type<Int>(i))
       o<<M.get_parameter_value_as<Int>(i);
+    else if (not M.get_parameter_value(i))
+      o<<"[NULL]";
     else
       o<<"[unprintable]";
   }
