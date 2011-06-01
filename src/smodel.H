@@ -763,7 +763,7 @@ namespace substitution {
   //   3. return DN*(O*Dt*O)*DP
 
   /// A Markov substitution model which is reversible
-  class ReversibleMarkovModel: protected ReversibleMarkovModelObject,
+  class ReversibleMarkovModel: public ReversibleMarkovModelObject,
 			       public Independant_Additive_Reversible_Model 
   {
   protected:
