@@ -1010,7 +1010,7 @@ namespace substitution {
   expression_ref Q_from_R_and_S = Q_from_R_and_S_Op();
   void ReversibleMarkovSuperModel::recalc(const vector<int>&)
   {
-    ReversibleMarkovModelObject::operator=( *get_Q_matrix(*S, *R) );
+    ReversibleMarkovModelObject::operator=( *Q_from_R_and_S_Function(*S, *R) );
   }
 
   string ReversibleMarkovSuperModel::name() const {
