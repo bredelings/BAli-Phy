@@ -908,6 +908,43 @@ namespace substitution {
     }
   };
 
+  class ReversibleAdditiveCollectionObject: public Object
+  {
+    std::vector< boost::shared_ptr<ReversibleAdditiveObject> > parts;
+
+  public:
+    virtual ReversibleAdditiveCollectionObject* clone() const {return new ReversibleAdditiveCollectionObject(*this);}
+
+    const alphabet& Alphabet() const;
+
+    const std::vector<unsigned>& state_letters() const;
+    
+    unsigned n_states() const {return state_letters().size();}
+
+    /// How many different models do we contain?
+    int n_parts() const;
+
+    /// Return the i-th branch model
+    const ReversibleAdditiveObject& part(int i) const;
+    /// Return the i-th branch model
+          ReversibleAdditiveObject& part(int i);
+
+    double rate() const;
+    void set_rate(double);
+
+    /// The transition probability matrix over time t for the i-th branch model
+    Matrix transition_p(double t,int i) const;
+
+    /// Get the equilibrium frequencies.  Currently all branch models must have the same frequencies.
+    valarray<double> frequencies() const;
+
+    ReversibleAdditiveCollectionObject() {};
+
+    ReversibleAdditiveCollectionObject(const ReversibleAdditiveObject& O)
+      :parts(1,ptr(O))
+    {}
+  };
+
   /// Class for a collection of models that could be used on different branches of the tree.
   class ReversibleAdditiveCollection: virtual public Model, virtual public AdditiveModel
   {
