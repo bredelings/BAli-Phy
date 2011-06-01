@@ -1729,16 +1729,16 @@ namespace substitution {
     return string("[") + SubModels(0).name() + "]";
   }
 
-  UnitModel::UnitModel(const ReversibleAdditiveModel& RA)
+  UnitModel::UnitModel(const ReversibleMarkovModel& RA)
     :MultiModel(RA.Alphabet())
   {
-    SimpleReversibleAdditiveCollection<ReversibleAdditiveModel> M(RA);
+    SimpleReversibleAdditiveCollection<ReversibleMarkovModel> M(RA);
     insert_submodel("0",M);
 
     recalc_all();
   }
 
-  UnitModel::UnitModel(const Base_Model_t& M)
+  UnitModel::UnitModel(const ReversibleAdditiveCollection& M)
     :MultiModel(M.Alphabet())
   {
     insert_submodel("0",M);

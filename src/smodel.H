@@ -1160,9 +1160,9 @@ namespace substitution {
 
     string name() const;
 
-    UnitModel(const ReversibleAdditiveModel& M);
+    UnitModel(const ReversibleMarkovModel& M);
 
-    UnitModel(const Base_Model_t& M);
+    UnitModel(const ReversibleAdditiveCollection& M);
 
     ~UnitModel() {};
   };
