@@ -1533,17 +1533,32 @@ namespace substitution {
 
   //--------------- MultiBranch Models --------------//
 
-  const alphabet& ReversibleAdditiveCollection::Alphabet() const 
+  const alphabet& ReversibleAdditiveCollectionObject::Alphabet() const 
   {
     return part(0).Alphabet();
   }
 
-  const std::vector<unsigned>& ReversibleAdditiveCollection::state_letters() const
+  int ReversibleAdditiveCollectionObject::n_parts() const
+  {
+    return parts.size();
+  }
+
+  const ReversibleAdditiveModel& ReversibleAdditiveCollectionObject::part(int i) const
+  {
+    return *parts[i];
+  }
+
+  ReversibleAdditiveModel& ReversibleAdditiveCollectionObject::part(int i)
+  {
+    return *parts[i];
+  }
+
+  const vector<unsigned>& ReversibleAdditiveCollectionObject::state_letters() const
   {
     return part(0).state_letters();
   }
 
-  double ReversibleAdditiveCollection::rate() const
+  double ReversibleAdditiveCollectionObject::rate() const
   {
     // FIXME... (see below)
     if (n_parts() > 1) std::abort();
@@ -1552,20 +1567,27 @@ namespace substitution {
     return part(0).rate();
   }
 
-  void ReversibleAdditiveCollection::set_rate(double r)
+  void ReversibleAdditiveCollectionObject::set_rate(double r)
   {
     for(int i=0;i<n_parts();i++)
       return part(i).set_rate(r);
   }
 
-  Matrix ReversibleAdditiveCollection::transition_p(double t, int i) const
+  Matrix ReversibleAdditiveCollectionObject::transition_p(double t, int i) const
   {
     return part(i).transition_p(t);
   }
 
-  valarray<double> ReversibleAdditiveCollection::frequencies() const
+  valarray<double> ReversibleAdditiveCollectionObject::frequencies() const
   {
     return part(0).frequencies();
+  }
+
+
+
+  const std::vector<unsigned>& ReversibleAdditiveCollection::state_letters() const
+  {
+    return ReversibleAdditiveCollectionObject::state_letters();
   }
 
   //------------ A Branch/Site Model ----------------//

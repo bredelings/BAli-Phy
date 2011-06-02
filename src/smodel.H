@@ -910,7 +910,8 @@ namespace substitution {
 
   class ReversibleAdditiveCollectionObject: public Object
   {
-    std::vector< owned_ptr<ReversibleAdditiveObject> > parts;
+  protected:
+    std::vector< owned_ptr<ReversibleAdditiveModel> > parts;
 
   public:
     virtual ReversibleAdditiveCollectionObject* clone() const {return new ReversibleAdditiveCollectionObject(*this);}
@@ -925,9 +926,9 @@ namespace substitution {
     int n_parts() const;
 
     /// Return the i-th branch model
-    const ReversibleAdditiveObject& part(int i) const;
+    const ReversibleAdditiveModel& part(int i) const;
     /// Return the i-th branch model
-          ReversibleAdditiveObject& part(int i);
+          ReversibleAdditiveModel& part(int i);
 
     double rate() const;
     void set_rate(double);
@@ -940,39 +941,41 @@ namespace substitution {
 
     ReversibleAdditiveCollectionObject() {};
 
-    ReversibleAdditiveCollectionObject(const ReversibleAdditiveObject& O)
+    ReversibleAdditiveCollectionObject(const ReversibleAdditiveModel& O)
       :parts(1,O)
     {}
   };
 
   /// Class for a collection of models that could be used on different branches of the tree.
-  class ReversibleAdditiveCollection: virtual public Model, virtual public AdditiveModel
+  class ReversibleAdditiveCollection: virtual public Model, 
+				      virtual public AdditiveModel, 
+				      public ReversibleAdditiveCollectionObject
   {
-  protected:
-    std::vector< owned_ptr<ReversibleAdditiveModel> > parts;
   public:
     virtual ReversibleAdditiveCollection* clone() const=0;
 
-    const alphabet& Alphabet() const;
+    const alphabet& Alphabet() const {return ReversibleAdditiveCollectionObject::Alphabet();}
 
     const std::vector<unsigned>& state_letters() const;
     
+    unsigned n_states() const {return ReversibleAdditiveCollectionObject::n_states();}
+
     /// How many different models do we contain?
-    int n_parts() const {return parts.size();}
+    int n_parts() const {return ReversibleAdditiveCollectionObject::n_parts();}
 
     /// Return the i-th branch model
-    const ReversibleAdditiveModel& part(int i) const {return *parts[i];}
+    const ReversibleAdditiveModel& part(int i) const {return ReversibleAdditiveCollectionObject::part(i);}
     /// Return the i-th branch model
-          ReversibleAdditiveModel& part(int i)       {return *parts[i];}
+          ReversibleAdditiveModel& part(int i)       {return ReversibleAdditiveCollectionObject::part(i);}
 
-    double rate() const;
-    void set_rate(double);
+    double rate() const {return ReversibleAdditiveCollectionObject::rate();}
+    void set_rate(double r) {return ReversibleAdditiveCollectionObject::set_rate(r);}
 
     /// The transition probability matrix over time t for the i-th branch model
-    virtual Matrix transition_p(double t,int i) const;
+    virtual Matrix transition_p(double t,int i) const {return ReversibleAdditiveCollectionObject::transition_p(t,i);}
 
     /// Get the equilibrium frequencies.  Currently all branch models must have the same frequencies.
-    valarray<double> frequencies() const;
+    valarray<double> frequencies() const {return ReversibleAdditiveCollectionObject::frequencies();}
 
     ReversibleAdditiveCollection() {}
 
