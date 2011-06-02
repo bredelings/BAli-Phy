@@ -1375,9 +1375,6 @@ namespace substitution {
 
     int p_index;
 
-    // what if the multimodel's other components are modulated markov models, though?
-    owned_ptr<SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> > INV;
-
   public:
     virtual WithINV* clone() const {return new WithINV(*this);}
 

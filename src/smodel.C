@@ -2341,8 +2341,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   WithINV::WithINV(const MultiModel& M)
     :MultiModel(M.Alphabet()),
-     ReversibleWrapperOver<MultiModel>(M),
-     INV(SimpleReversibleMarkovModel(INV_Model(M.Alphabet())))
+     ReversibleWrapperOver<MultiModel>(M)
   {
     p_index = add_super_parameter(Parameter("INV::p", Double(0.01), between(0, 1)));
 
