@@ -829,44 +829,14 @@ namespace substitution {
 
 
   class ReversibleMarkovSuperModel: public ReversibleMarkovModel,
-				    public SuperModel
+				    public OpModel
   {
   protected:
-    /// The exchange model
-    owned_ptr<AlphabetExchangeModel> S;
-
-    /// The frequency model
-    owned_ptr<ReversibleFrequencyModel> R;
-
     void recalc(const std::vector<int>&);
 
-    const ::Model& SubModels(int i) const {
-      if (i==0)
-	return *S;
-      else if (i==1)
-	return *R;
-      else
-	std::abort();
-    }
-
-    ::Model& SubModels(int i) {
-      if (i==0)
-	return *S;
-      else if (i==1)
-	return *R;
-      else
-	std::abort();
-    }
-
   public:
-    const alphabet& Alphabet() const {return S->Alphabet();}
-
     /// Make a copy of this object
     virtual ReversibleMarkovSuperModel* clone() const {return new ReversibleMarkovSuperModel(*this);}
-
-    efloat_t prior() const {return S->prior() * R->prior();}
-
-    string name() const;
 
     /// Construct a reversible Markov model on alphabet 'a'
     ReversibleMarkovSuperModel(const AlphabetExchangeModel& S1, const ReversibleFrequencyModel& R1);
@@ -875,15 +845,15 @@ namespace substitution {
   };
 
 
-  class SimpleReversibleMarkovModel: public ReversibleMarkovSuperModel
+  class SimpleReversibleMarkovModel: public ReversibleMarkovModel,
+				     public OpModel
   {
+  protected:
+    void recalc(const std::vector<int>&);
+
   public:
     /// Make a copy of this object
     virtual SimpleReversibleMarkovModel* clone() const {return new SimpleReversibleMarkovModel(*this);}
-
-    valarray<double> frequencies() const {return R->frequencies();}
-    
-    void frequencies(const valarray<double>& pi);
 
     explicit SimpleReversibleMarkovModel(const AlphabetExchangeModel& E);
     explicit SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>&);

@@ -1010,43 +1010,39 @@ namespace substitution {
   expression_ref Q_from_R_and_S = Q_from_R_and_S_Op();
   void ReversibleMarkovSuperModel::recalc(const vector<int>&)
   {
-    ReversibleMarkovModelObject::operator=( *Q_from_R_and_S_Function(*S, *R) );
-  }
-
-  string ReversibleMarkovSuperModel::name() const {
-    return S->name() + "+" + R->name();
+    ReversibleMarkovModelObject::operator=( dynamic_cast<const ReversibleMarkovModelObject&>( *evaluate() ) );
   }
 
   /// Construct a reversible Markov model on alphabet 'a'
   ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const AlphabetExchangeModel& S1,const ReversibleFrequencyModel& R1)
     :ReversibleMarkovModel(S1.Alphabet()),
-     S(S1),
-     R(R1)
-  {
-    register_submodel("S");
-    register_submodel("R");
+     OpModel( Q_from_R_and_S(S1,R1) )
+  { 
+    // name: return S1.name() + "+" + R1.name();
 
+    show_parameters(std::cout, *this);
     recalc_all();
   }
+
     
-
-
-  void SimpleReversibleMarkovModel::frequencies(const valarray<double>& pi) 
+  void SimpleReversibleMarkovModel::recalc(const vector<int>&)
   {
-    SimpleFrequencyModel* R2 = dynamic_cast<SimpleFrequencyModel*>(R.get());
-    R2->frequencies(pi);
-    read();
-    recalc_all();
+    ReversibleMarkovModelObject::operator=( dynamic_cast<const ReversibleMarkovModelObject&>( *evaluate() ) );
   }
 
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const AlphabetExchangeModel& E)
-      :ReversibleMarkovSuperModel(E,SimpleFrequencyModel(E.Alphabet()))
+    :ReversibleMarkovModel(E.Alphabet()),
+     OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(E.Alphabet())) )
   { }
 
   SimpleReversibleMarkovModel::
   SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
-      :ReversibleMarkovSuperModel(E,SimpleFrequencyModel(E.Alphabet(),pi))
-  { }
+    :ReversibleMarkovModel(E.Alphabet()),
+     OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(E.Alphabet(),pi)) )
+  {
+    show_parameters(std::cout, *this);
+    recalc_all();
+  }
 
   //---------------------- INV_Model --------------------------//
 
@@ -1591,7 +1587,7 @@ namespace substitution {
   }
 
   //------------ A Branch/Site Model ----------------//
-
+  /*
   void BranchSiteCollection::recalc(const std::vector<int>&)
   {
     P.resize(S.size());
@@ -1646,6 +1642,7 @@ namespace substitution {
 
     recalc_all();
   }
+  */
 
   //--------------- MultiRate Models ----------------//
 
