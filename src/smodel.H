@@ -1059,11 +1059,9 @@ namespace substitution {
   class MultiModelObject: public Object
   {
   public:
-    typedef ReversibleAdditiveCollection Base_Model_t;
-
     boost::shared_ptr<const alphabet> a;
 
-    mutable std::vector< owned_ptr<Base_Model_t> > base_models;
+    mutable std::vector< owned_ptr<ReversibleAdditiveCollectionObject> > base_models;
 
     mutable std::vector< double > fraction;
 
@@ -1082,8 +1080,8 @@ namespace substitution {
     int n_parts() const;
 
     /// Access the base models
-    const Base_Model_t& base_model(int m) const {return *base_models[m];}
-          Base_Model_t& base_model(int m)       {return *base_models[m];}
+    const ReversibleAdditiveCollectionObject& base_model(int m) const {return *base_models[m];}
+          ReversibleAdditiveCollectionObject& base_model(int m)       {return *base_models[m];}
 
     /// Get the probability of each base models
     const std::vector<double>& distribution() const {return fraction;}
@@ -1142,15 +1140,15 @@ namespace substitution {
  
   /// A MultiRate Model with a single rate
   class UnitModel: public MultiModel,
-		   public SuperModelOver< MultiModel::Base_Model_t >
+		   public SuperModelOver< ReversibleAdditiveCollection >
   {
     void recalc(const std::vector<int>&);
   public:
     UnitModel* clone() const {return new UnitModel(*this);}
 
-    MultiModel::Base_Model_t& SubModel() {return SuperModelOver<Base_Model_t>::SubModels(0); }
+          ReversibleAdditiveCollection& SubModel() {return SuperModelOver<ReversibleAdditiveCollection>::SubModels(0); }
 
-    const Base_Model_t& SubModel() const {return SuperModelOver<Base_Model_t>::SubModels(0); }
+    const ReversibleAdditiveCollection& SubModel() const {return SuperModelOver<ReversibleAdditiveCollection>::SubModels(0); }
 
     const alphabet& Alphabet() const {return SubModel().Alphabet();}
 

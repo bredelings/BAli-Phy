@@ -1804,9 +1804,9 @@ namespace substitution {
       if (std::abs(fm.sum() - 1.0) > 1.0e-5) cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<fm.sum()<<endl;
 
       // get a new copy of the sub-model and set the frequencies
-      owned_ptr<SimpleReversibleMarkovModel> temp = SubModel();
-      temp->frequencies(fm);
-      base_models[m] = SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>( *temp );
+      //      owned_ptr<ReversibleMarkovModelObject> temp = SubModel().evaluate();
+      //      temp->frequencies(fm);
+      //      base_models[m] = SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>( *temp );
     }
   }
 
@@ -2322,8 +2322,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // do not messing with submodel instead of going through top model
     SimpleReversibleMarkovModel INV2(INV_Model(SubModel().Alphabet()), SubModel().frequencies());
-    SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> INV3(INV2);
-    base_models.back() = INV3;
+    base_models.back() = SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>(INV2);
   }
 
   string WithINV::name() const {
@@ -2822,9 +2821,9 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     T=0;
     for(int m=0; m < n_models; m++) 
     {
-      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M2->base_model(m));
+      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M2->base_model(m).part(0));
       if (not RM)
-	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model '"<<M->base_model(m).name()<<"'";
+	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model"; // what is the name?
 
       unsigned N = RM->n_states();
       
@@ -2841,13 +2840,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     unsigned T1=0;
     for(int m1=0; m1 < n_models; m1++) 
     {
-      const ReversibleMarkovModel* RM1 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m1));
+      const ReversibleMarkovModel* RM1 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m1).part(0));
       unsigned N1 = RM1->n_states();
 
       unsigned T2=0;
       for(int m2=0; m2 < n_models; m2++) 
       {
-	const ReversibleMarkovModel* RM2 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m2));
+	const ReversibleMarkovModel* RM2 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m2).part(0));
 	unsigned N2 = RM2->n_states();
 	assert(N1 == N2);
 
@@ -2881,9 +2880,9 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     unsigned T = 0;
     for(int m=0; m < M->n_base_models(); m++) 
     {
-      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m));
+      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m).part(0));
       if (not RM)
-	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model '"<<M->base_model(m).name()<<"'";
+	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model"; // what is the name?
       T += RM->n_states();
     }
 
