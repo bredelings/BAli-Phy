@@ -1602,21 +1602,6 @@ namespace substitution {
       std::abort();
   }
   
-  int BranchSiteCollection::n_parts() const 
-  {
-    return P.size();
-  }
-
-  const ReversibleMarkovSuperModel& BranchSiteCollection::part(int i) const
-  {
-    return *P[i];
-  }
-
-        ReversibleMarkovSuperModel& BranchSiteCollection::part(int i)
-  {
-    return *P[i];
-  }
-
   string BranchSiteCollection::name() const
   {
     vector<string> names;

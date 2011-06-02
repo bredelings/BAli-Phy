@@ -910,7 +910,7 @@ namespace substitution {
 
   class ReversibleAdditiveCollectionObject: public Object
   {
-    std::vector< boost::shared_ptr<ReversibleAdditiveObject> > parts;
+    std::vector< owned_ptr<ReversibleAdditiveObject> > parts;
 
   public:
     virtual ReversibleAdditiveCollectionObject* clone() const {return new ReversibleAdditiveCollectionObject(*this);}
@@ -941,13 +941,15 @@ namespace substitution {
     ReversibleAdditiveCollectionObject() {};
 
     ReversibleAdditiveCollectionObject(const ReversibleAdditiveObject& O)
-      :parts(1,ptr(O))
+      :parts(1,O)
     {}
   };
 
   /// Class for a collection of models that could be used on different branches of the tree.
   class ReversibleAdditiveCollection: virtual public Model, virtual public AdditiveModel
   {
+  protected:
+    std::vector< owned_ptr<ReversibleAdditiveModel> > parts;
   public:
     virtual ReversibleAdditiveCollection* clone() const=0;
 
@@ -956,15 +958,15 @@ namespace substitution {
     const std::vector<unsigned>& state_letters() const;
     
     /// How many different models do we contain?
-    virtual int n_parts() const =0;
+    int n_parts() const {return parts.size();}
 
     /// Return the i-th branch model
-    virtual const ReversibleAdditiveModel& part(int i) const =0;
+    const ReversibleAdditiveModel& part(int i) const {return *parts[i];}
     /// Return the i-th branch model
-    virtual       ReversibleAdditiveModel& part(int i) =0;
+          ReversibleAdditiveModel& part(int i)       {return *parts[i];}
 
-    virtual double rate() const;
-    virtual void set_rate(double);
+    double rate() const;
+    void set_rate(double);
 
     /// The transition probability matrix over time t for the i-th branch model
     virtual Matrix transition_p(double t,int i) const;
@@ -996,14 +998,6 @@ namespace substitution {
   public:
     BranchSiteCollection* clone() const {return new BranchSiteCollection(*this);}
 
-    /// How many different models do we contain?
-    int n_parts() const;
-
-    /// Return the i-th branch model
-    const ReversibleMarkovSuperModel& part(int i) const;
-    /// Return the i-th branch model
-          ReversibleMarkovSuperModel& part(int i);
-
     std::string name() const;
 
     BranchSiteCollection(const std::vector<AlphabetExchangeModel>& S1, const ReversibleFrequencyModel& R1);
@@ -1022,10 +1016,11 @@ namespace substitution {
 
     const T& SubModel() const {return SuperModelOver<T>::SubModels(0); }
 
-    const ReversibleAdditiveModel& part(int) const { return SubModel();}
-          ReversibleAdditiveModel& part(int)       { return SubModel();}
-
-    int n_parts() const {return 1;}
+    void recalc(const std::vector<int>&)
+    {
+      parts.resize(1);
+      parts[0] = SubModel();
+    }
 
     std::string name() const {return SubModel().name();}
     
