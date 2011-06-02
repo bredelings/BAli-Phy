@@ -1543,12 +1543,12 @@ namespace substitution {
     return parts.size();
   }
 
-  const ReversibleAdditiveModel& ReversibleAdditiveCollectionObject::part(int i) const
+  const ReversibleAdditiveObject& ReversibleAdditiveCollectionObject::part(int i) const
   {
     return *parts[i];
   }
 
-  ReversibleAdditiveModel& ReversibleAdditiveCollectionObject::part(int i)
+  ReversibleAdditiveObject& ReversibleAdditiveCollectionObject::part(int i)
   {
     return *parts[i];
   }

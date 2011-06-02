@@ -911,7 +911,7 @@ namespace substitution {
   class ReversibleAdditiveCollectionObject: public Object
   {
   protected:
-    std::vector< owned_ptr<ReversibleAdditiveModel> > parts;
+    std::vector< owned_ptr<ReversibleAdditiveObject> > parts;
 
   public:
     virtual ReversibleAdditiveCollectionObject* clone() const {return new ReversibleAdditiveCollectionObject(*this);}
@@ -926,9 +926,9 @@ namespace substitution {
     int n_parts() const;
 
     /// Return the i-th branch model
-    const ReversibleAdditiveModel& part(int i) const;
+    const ReversibleAdditiveObject& part(int i) const;
     /// Return the i-th branch model
-          ReversibleAdditiveModel& part(int i);
+          ReversibleAdditiveObject& part(int i);
 
     double rate() const;
     void set_rate(double);
@@ -941,7 +941,7 @@ namespace substitution {
 
     ReversibleAdditiveCollectionObject() {};
 
-    ReversibleAdditiveCollectionObject(const ReversibleAdditiveModel& O)
+    ReversibleAdditiveCollectionObject(const ReversibleAdditiveObject& O)
       :parts(1,O)
     {}
   };
@@ -964,9 +964,9 @@ namespace substitution {
     int n_parts() const {return ReversibleAdditiveCollectionObject::n_parts();}
 
     /// Return the i-th branch model
-    const ReversibleAdditiveModel& part(int i) const {return ReversibleAdditiveCollectionObject::part(i);}
+    const ReversibleAdditiveObject& part(int i) const {return ReversibleAdditiveCollectionObject::part(i);}
     /// Return the i-th branch model
-          ReversibleAdditiveModel& part(int i)       {return ReversibleAdditiveCollectionObject::part(i);}
+          ReversibleAdditiveObject& part(int i)       {return ReversibleAdditiveCollectionObject::part(i);}
 
     double rate() const {return ReversibleAdditiveCollectionObject::rate();}
     void set_rate(double r) {return ReversibleAdditiveCollectionObject::set_rate(r);}
