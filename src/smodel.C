@@ -2313,8 +2313,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     for(int i=0;i<n;i++)
       base_models[i] = SubModel().base_model(i);
 
-    INV->SubModel().frequencies(SubModel().frequencies());
-    base_models.back() = INV;
+    // do not messing with submodel instead of going through top model
+    SimpleReversibleMarkovModel INV2(INV_Model(SubModel().Alphabet()), SubModel().frequencies());
+    SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel> INV3(INV2);
+    base_models.back() = INV3;
   }
 
   string WithINV::name() const {
