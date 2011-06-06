@@ -434,8 +434,6 @@ public:
 
   void check() const;
 
-  void update();
-
   boost::shared_ptr<const Object> evaluate(int);
   
   boost::shared_ptr<const Object> evaluate();

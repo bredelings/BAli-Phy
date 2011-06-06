@@ -787,8 +787,6 @@ int OpModel::add_submodel(shared_ptr<const Model> m)
   return m_index;
 }
 
-void OpModel::update() { }
-
 OpModel::OpModel(const expression_ref& r)
 {
   shared_ptr<const operation_expression> e = dynamic_pointer_cast<const operation_expression>(r);
