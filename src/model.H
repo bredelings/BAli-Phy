@@ -89,7 +89,15 @@ struct Parameter
 //    o during: make recalc() a constant function.
 //    o during: write parameters to submodels {now, simply}.  Recalc later.
 //    o why do set_rate() and frequencies() cause problems? We should just do them on copies.
+//    o call update only when calling SubModel(i), remove SuperModel::update()
 // 5. Fix multimodel to return base_model(i,m) instead of base_model(m)?
+// 6. Allow models to evaluate multiple expressions, ala class Parameters? (e.g. prior, likelihood, etc.)
+//    - When those expressions take outside arguments, (such as Exp(Q t), where t comes from outside)
+//      it might be helpful to allocate a permanent parameter for the argment of that function.  Then
+//      this parameter would be clearly marked as an 'input', and would not need to be updated if the
+//      *value* was unchanged.
+// 7. Store cached intermediate results in same array as input variable values?
+// 8. Handle various annotations, such as priors, bounds, model_names, computed variable names, etc. from Formula.
 //
 // TODO:
 //
