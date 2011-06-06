@@ -194,7 +194,7 @@ namespace substitution {
 
 
   //------------------------- Markov Substitution Model ----------------------------//
-  struct SModelObject: public Object
+  struct SModelObject: virtual public Object
   {
   protected:
     boost::shared_ptr<const alphabet> a;
