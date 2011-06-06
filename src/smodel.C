@@ -146,6 +146,16 @@ namespace substitution {
   }
 
 
+  AlphabetExchangeModelObject::AlphabetExchangeModelObject(const alphabet& a)
+    :SModelObject(a),ExchangeModelObject(a.size())
+  {
+  }
+
+  AlphabetExchangeModelObject::AlphabetExchangeModelObject(const alphabet& a, int n)
+    :SModelObject(a,n),ExchangeModelObject(n)
+  {
+  }
+
   efloat_t SimpleExchangeModel::prior() const 
   {
     if (is_fixed(0))
@@ -185,12 +195,6 @@ namespace substitution {
   {
     add_parameter(Parameter("rho",Double(exp(-4)),lower_bound(0)));
     add_parameter(Parameter("n_states",Int(n)));
-  }
-
-
-  AlphabetExchangeModel::AlphabetExchangeModel(const alphabet& a)
-  {
-    add_parameter(Parameter("alphabet",a));
   }
 
   //----------------------- Frequency Models ------------------------//
@@ -1053,9 +1057,9 @@ namespace substitution {
 
   //---------------------- INV_Model --------------------------//
 
-  shared_ptr<ExchangeModelObject> INV_Exchange_Function(const alphabet& a)
+  shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a)
   {
-    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
+    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
 
     // Calculate S matrix
     for(int i=0;i<a.size();i++)
@@ -1081,8 +1085,8 @@ namespace substitution {
   }
 
   INV_Model::INV_Model(const alphabet& a)
-    :AlphabetExchangeModel(a)
   {
+    add_parameter(Parameter("alphabet",a));
   }
       
   //----------------------- EQU -------------------------//
@@ -1114,8 +1118,9 @@ namespace substitution {
   }
 
   EQU::EQU(const alphabet& a) 
-    :AlphabetExchangeModel(a)
-  { }
+  {
+    add_parameter(Parameter("alphabet",a));
+  }
 
   //----------------------- Empirical -------------------------//
 
@@ -1156,13 +1161,15 @@ namespace substitution {
 
   /// Construct an Empirical model on alphabet \a a
   Empirical::Empirical(const alphabet& a) 
-    :AlphabetExchangeModel(a)
-  { }
+  { 
+    add_parameter(Parameter("alphabet",a));
+  }
 
   /// Construct an Empirical model on alphabet \a a with name \n
   Empirical::Empirical(const alphabet& a,const string& n) 
-    :AlphabetExchangeModel(a),name_(n)
+    :name_(n)
   { 
+    add_parameter(Parameter("alphabet",a));
     add_parameter(Parameter("S"));
   }
 
@@ -1287,7 +1294,6 @@ namespace substitution {
   }
   
   NucleotideExchangeModel::NucleotideExchangeModel(const Nucleotides& N)
-    :AlphabetExchangeModel(N)
   { }
 
   //------------------------- HKY -----------------------------//
@@ -1303,11 +1309,11 @@ namespace substitution {
       return laplace_pdf(log(kappa()), log(2), 0.25)/kappa();
   }
 
-  shared_ptr<ExchangeModelObject> HKY_Function(const Nucleotides& a, double kappa)
+  shared_ptr<AlphabetExchangeModelObject> HKY_Function(const Nucleotides& a, double kappa)
   {
     assert(a.size()==4);
 
-    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
+    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
 
     for(int i=0;i<a.size();i++)
       for(int j=0;j<a.size();j++) {
@@ -1333,6 +1339,7 @@ namespace substitution {
   HKY::HKY(const Nucleotides& N)
     : NucleotideExchangeModel(N)
   { 
+    add_parameter(Parameter("alphabet",N));
     add_parameter(Parameter("HKY::kappa", Double(2), lower_bound(0)));
   }
 
@@ -1356,7 +1363,7 @@ namespace substitution {
   {
     assert(a.size()==4);
 
-    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
+    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
 
     for(int i=0;i<a.size();i++)
       for(int j=0;j<a.size();j++) {
@@ -1385,6 +1392,7 @@ namespace substitution {
   TN::TN(const Nucleotides& N)
     : NucleotideExchangeModel(N)
   { 
+    add_parameter(Parameter("alphabet",N));
     add_parameter(Parameter("TN::kappa(pur)",Double(2), lower_bound(0)));
     add_parameter(Parameter("TN::kappa(pyr)",Double(2), lower_bound(0)));
   }
@@ -1418,14 +1426,14 @@ namespace substitution {
   }
 
 
-  shared_ptr<ExchangeModelObject> GTR_Function(const Nucleotides& a, 
+  shared_ptr<AlphabetExchangeModelObject> GTR_Function(const Nucleotides& a, 
 					      double AG, double AT, double AC,
 					      double GT, double GC, 
 					      double TC)
   {
     assert(a.size()==4);
 
-    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
+    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
 
     double total = AG + AT + AC + GT + GC + TC;
 
@@ -1460,6 +1468,7 @@ namespace substitution {
   GTR::GTR(const Nucleotides& N)
       : NucleotideExchangeModel(N)
     { 
+      add_parameter(Parameter("alphabet",N));
       add_parameter(Parameter("GTR::AG", Double(2.0/8), between(0, 1)));
       add_parameter(Parameter("GTR::AT", Double(1.0/8), between(0, 1)));
       add_parameter(Parameter("GTR::AC", Double(1.0/8), between(0, 1)));
@@ -1476,12 +1485,13 @@ namespace substitution {
   }
 
   TripletExchangeModel::TripletExchangeModel(const Triplets& T)
-    :AlphabetExchangeModel(T)
-  { }
-
-  shared_ptr<ExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2)
   {
-    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(T.size()) );
+    add_parameter(Parameter("alphabet",T));
+  }
+
+  shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2)
+  {
+    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(T) );
     ublas::symmetric_matrix<double>& S = R->S;
 
     for(int i=0;i<T.size();i++)
@@ -1527,6 +1537,7 @@ namespace substitution {
   SingletToTripletExchangeModel::SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& N)
     :TripletExchangeModel(T)
   { 
+    add_parameter(Parameter("alphabet",T));
     insert_submodel("1",N);
   }
 
@@ -1541,9 +1552,9 @@ namespace substitution {
     set_parameter_value(omega_index,w);
   }
 
-  shared_ptr<const ExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
+  shared_ptr<const AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
   {
-    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(C.size()) );
+    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(C) );
     ublas::symmetric_matrix<double>& S = R->S;
 
     for(int i=0;i<C.size();i++) 
