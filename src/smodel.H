@@ -231,23 +231,21 @@ namespace substitution {
     { }
   };
 
-  class ExchangeModel: virtual public ::Model, public ExchangeModelObject
+  class ExchangeModel: virtual public ::Model
   {
   public:
     
-    unsigned n_states() const {return S.size1();}
+    void recalc(const std::vector<int>&) { std::abort(); }
 
     ExchangeModel* clone() const =0;
     
-    ExchangeModel(unsigned n);
+    virtual boost::shared_ptr<const Object> evaluate() { std::abort(); }
 
     virtual ~ExchangeModel() {};
   };
 
   class SimpleExchangeModel: public ExchangeModel
   {
-    void recalc(const std::vector<int>&);
-
   public:
 
     SimpleExchangeModel* clone() const {return new SimpleExchangeModel(*this);}
@@ -261,19 +259,21 @@ namespace substitution {
 
     string name() const;
 
+    boost::shared_ptr<const Object> evaluate();
+
     SimpleExchangeModel(unsigned n);
 
     ~SimpleExchangeModel() {}
   };
 
 
-  class AlphabetExchangeModel: public ExchangeModel,
-			       virtual public AlphabetModel 
+  class AlphabetExchangeModel: public ExchangeModel, public AlphabetModel
   {
   public:
-    
     AlphabetExchangeModel* clone() const =0;
     
+    const alphabet& Alphabet() const {return get_parameter_value_as<alphabet>(0);}
+
     AlphabetExchangeModel(const alphabet& a);
 
     virtual ~AlphabetExchangeModel() {};
@@ -284,6 +284,8 @@ namespace substitution {
   {
   public:
     INV_Model* clone() const {return new INV_Model(*this);}
+
+    boost::shared_ptr<const Object> evaluate();
 
     const alphabet& Alphabet() const;
 
@@ -301,6 +303,8 @@ namespace substitution {
   public:
 
     virtual EQU* clone() const {return new EQU(*this);}
+
+    boost::shared_ptr<const Object> evaluate();
 
     const alphabet& Alphabet() const;
 
@@ -331,6 +335,8 @@ namespace substitution {
     const alphabet& Alphabet() const;
 
     string name() const {return name_;}
+
+    boost::shared_ptr<const Object> evaluate();
 
     Empirical(const alphabet& a); 
 
@@ -384,7 +390,6 @@ namespace substitution {
   /// The Hasegawa, Kishino, Yano (1985)
   class HKY: public NucleotideExchangeModel
   {
-    virtual void recalc(const std::vector<int>&);
   public:
 
     virtual HKY* clone() const {return new HKY(*this);}
@@ -398,6 +403,8 @@ namespace substitution {
 
     string name() const;
 
+    boost::shared_ptr<const Object> evaluate();
+
     /// Construct an HKY model on alphabet 'a'
     HKY(const Nucleotides& N);
   };
@@ -405,7 +412,6 @@ namespace substitution {
   /// The Tamura-Nei (1993) model
   class TN: public NucleotideExchangeModel 
   {
-    virtual void recalc(const std::vector<int>&);
   public:
 
     virtual TN* clone() const {return new TN(*this);}
@@ -424,6 +430,8 @@ namespace substitution {
 
     string name() const;
 
+    boost::shared_ptr<const Object> evaluate();
+
     /// Construct an HKY model on alphabet 'a'
     TN(const Nucleotides& N);
   };
@@ -431,7 +439,6 @@ namespace substitution {
   /// The General Time Reversible model
   class GTR: public NucleotideExchangeModel 
   {
-    virtual void recalc(const std::vector<int>&);
   public:
     
     virtual GTR* clone() const {return new GTR(*this);}
@@ -439,6 +446,8 @@ namespace substitution {
     virtual efloat_t prior() const;
 
     string name() const;
+
+    boost::shared_ptr<const Object> evaluate();
 
     /// Construct a GTR model on alphabet 'a'
     GTR(const Nucleotides& N);
@@ -460,7 +469,6 @@ namespace substitution {
   class SingletToTripletExchangeModel: public TripletExchangeModel,
 				       public SuperModelOver<NucleotideExchangeModel>
   {
-    void recalc(const std::vector<int>&);
   public:
 
     efloat_t prior() const { return SuperModelOver<NucleotideExchangeModel>::prior(); }
@@ -468,6 +476,8 @@ namespace substitution {
     SingletToTripletExchangeModel* clone() const {return new SingletToTripletExchangeModel(*this);}
 
     string name() const;
+
+    boost::shared_ptr<const Object> evaluate();
 
     SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& M);
 
@@ -495,7 +505,6 @@ namespace substitution {
 	    public CodonAlphabetExchangeModel
 		
   {
-    void recalc(const std::vector<int>&);
   public:
     efloat_t super_prior() const;
 
@@ -507,6 +516,8 @@ namespace substitution {
     void omega(double w);
 
     string name() const;
+
+    boost::shared_ptr<const Object> evaluate();
 
     M0(const Codons& C,const NucleotideExchangeModel& M);
 

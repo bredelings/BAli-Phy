@@ -146,10 +146,6 @@ namespace substitution {
   }
 
 
-  ExchangeModel::ExchangeModel(unsigned n)
-    :ExchangeModelObject(n)
-  {}
-
   efloat_t SimpleExchangeModel::prior() const 
   {
     if (is_fixed(0))
@@ -158,15 +154,26 @@ namespace substitution {
       return laplace_pdf(log(rho()), -3, 1)/rho();
   }
 
-  void SimpleExchangeModel::recalc(const vector<int>&)
+  shared_ptr<ExchangeModelObject> SimpleExchangeFunction(double rho, int n)
   {
-    double r = rho();
-    for(int i=0;i<n_states();i++) {
-      for(int j=0;j<n_states();j++)
-	S(i,j) = r;
+    shared_ptr<ExchangeModelObject> R (new ExchangeModelObject(n));
 
-      S(i,i) = 0;       // this is NOT a rate away.
+    for(int i=0;i<n;i++) {
+      for(int j=0;j<n;j++)
+	R->S(i,j) = rho;
+
+      R->S(i,i) = 0;       // this is NOT a rate away.
     }
+
+    return R;
+  }
+
+  shared_ptr<const Object> SimpleExchangeModel::evaluate()
+  {
+    Double rho = get_parameter_value_as<Double>(0);
+    Int n = get_parameter_value_as<Int>(1);
+
+    return SimpleExchangeFunction(rho, n);
   }
 
   string SimpleExchangeModel::name() const 
@@ -175,16 +182,16 @@ namespace substitution {
   }
 
   SimpleExchangeModel::SimpleExchangeModel(unsigned n)
-    :ExchangeModel(n)
   {
     add_parameter(Parameter("rho",Double(exp(-4)),lower_bound(0)));
-    recalc_all();
+    add_parameter(Parameter("n_states",Int(n)));
   }
 
 
   AlphabetExchangeModel::AlphabetExchangeModel(const alphabet& a)
-    :ExchangeModel(a.size())
-  {}
+  {
+    add_parameter(Parameter("alphabet",a));
+  }
 
   //----------------------- Frequency Models ------------------------//
 
@@ -1015,7 +1022,7 @@ namespace substitution {
 
   /// Construct a reversible Markov model on alphabet 'a'
   ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const AlphabetExchangeModel& S1,const ReversibleFrequencyModel& R1)
-    :ReversibleMarkovModel(S1.Alphabet()),
+    :ReversibleMarkovModel(R1.Alphabet()),
      OpModel( Q_from_R_and_S(S1,R1) )
   { 
     // name: return S1.name() + "+" + R1.name();
@@ -1046,9 +1053,26 @@ namespace substitution {
 
   //---------------------- INV_Model --------------------------//
 
+  shared_ptr<ExchangeModelObject> INV_Exchange_Function(const alphabet& a)
+  {
+    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
+
+    // Calculate S matrix
+    for(int i=0;i<a.size();i++)
+      for(int j=0;j<a.size();j++)
+	R->S(i,j) = 0;
+
+    return R;
+  }
+
+  shared_ptr<const Object> INV_Model::evaluate()
+  {
+    return INV_Exchange_Function(Alphabet());
+  }
+
   const alphabet& INV_Model::Alphabet() const
   {
-    return get_parameter_value_as<alphabet>(1);
+    return get_parameter_value_as<alphabet>(0);
   }
 
   string INV_Model::name() const 
@@ -1059,16 +1083,26 @@ namespace substitution {
   INV_Model::INV_Model(const alphabet& a)
     :AlphabetExchangeModel(a)
   {
-    add_parameter(Parameter("INV::f", Double(1), between(0, 1)));
-    add_parameter(Parameter("alphabet", a));
-
-    // Calculate S matrix
-    for(int i=0;i<S.size1();i++)
-      for(int j=0;j<S.size2();j++)
-	S(i,j) = 0;
   }
       
   //----------------------- EQU -------------------------//
+
+  shared_ptr<ExchangeModelObject> EQU_Exchange_Function(const alphabet& a)
+  {
+    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
+
+    // Calculate S matrix
+    for(int i=0;i<a.size();i++)
+      for(int j=0;j<a.size();j++)
+	R->S(i,j) = 1;
+
+    return R;
+  }
+
+  shared_ptr<const Object> EQU::evaluate()
+  {
+    return EQU_Exchange_Function(Alphabet());
+  }
 
   const alphabet& EQU::Alphabet() const
   {
@@ -1081,15 +1115,14 @@ namespace substitution {
 
   EQU::EQU(const alphabet& a) 
     :AlphabetExchangeModel(a)
-  {
-    add_parameter(Parameter("alphabet", a));
-
-    for(int i=0;i<n_states();i++)
-      for(int j=0;j<n_states();j++)
-	S(i,j) = 1;
-  }
+  { }
 
   //----------------------- Empirical -------------------------//
+
+  shared_ptr<const Object> Empirical::evaluate()
+  {
+    return get_parameter_value(1);
+  }
 
   const alphabet& Empirical::Alphabet() const
   {
@@ -1109,12 +1142,15 @@ namespace substitution {
 
   void Empirical::load_file(std::istream& file)
   {
+    shared_ptr<ExchangeModelObject> R (new ExchangeModelObject(Alphabet().size()));
+
     for(int i=0;i<Alphabet().size();i++)
       for(int j=0;j<i;j++) {
-	file>>S(i,j);
-	S(j,i) = S(i,j);
+	file>>R->S(i,j);
+	R->S(j,i) = R->S(i,j);
       }
 
+    set_parameter_value(1, R);
     // the file has frequencies as well... where would we put them?
   }
 
@@ -1129,7 +1165,7 @@ namespace substitution {
   Empirical::Empirical(const alphabet& a,const string& n) 
     :AlphabetExchangeModel(a),name_(n)
   { 
-    add_parameter(Parameter("alphabet",a));
+    add_parameter(Parameter("S"));
   }
 
   PAM::PAM()
@@ -1254,9 +1290,7 @@ namespace substitution {
   
   NucleotideExchangeModel::NucleotideExchangeModel(const Nucleotides& N)
     :AlphabetExchangeModel(N)
-  {
-    add_parameter(Parameter("alphabet", N));
-  }
+  { }
 
   //------------------------- HKY -----------------------------//
   string HKY::name() const {
@@ -1271,17 +1305,30 @@ namespace substitution {
       return laplace_pdf(log(kappa()), log(2), 0.25)/kappa();
   }
 
-  void HKY::recalc(const vector<int>&) {
-    assert(Alphabet().size()==4);
+  shared_ptr<ExchangeModelObject> HKY_Function(const Nucleotides& a, double kappa)
+  {
+    assert(a.size()==4);
 
-    for(int i=0;i<Alphabet().size();i++)
-      for(int j=0;j<Alphabet().size();j++) {
+    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
+
+    for(int i=0;i<a.size();i++)
+      for(int j=0;j<a.size();j++) {
 	if (i==j) continue;
-	if (Alphabet().transversion(i,j))
-	  S(i,j) = 1;
+	if (a.transversion(i,j))
+	  R->S(i,j) = 1;
 	else
-	  S(i,j) = kappa();
+	  R->S(i,j) = kappa;
       }
+
+    return R;
+  }
+
+  shared_ptr<const Object> HKY::evaluate()
+  {
+    const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
+    Double kappa = get_parameter_value_as<Double>(1);
+
+    return HKY_Function(N, kappa);
   }
 
   /// Construct an HKY model on alphabet 'a'
@@ -1289,7 +1336,6 @@ namespace substitution {
     : NucleotideExchangeModel(N)
   { 
     add_parameter(Parameter("HKY::kappa", Double(2), lower_bound(0)));
-    recalc_all();
   }
 
   //------------------------- TN -----------------------------//
@@ -1308,19 +1354,33 @@ namespace substitution {
     return P;
   }
 
-  void TN::recalc(const vector<int>&) { 
-    assert(Alphabet().size()==4);
+  shared_ptr<ExchangeModelObject> TN_Function(const Nucleotides& a, double kappa1, double kappa2)
+  {
+    assert(a.size()==4);
 
-    for(int i=0;i<Alphabet().size();i++)
-      for(int j=0;j<Alphabet().size();j++) {
+    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
+
+    for(int i=0;i<a.size();i++)
+      for(int j=0;j<a.size();j++) {
 	if (i==j) continue;
-	if (Alphabet().transversion(i,j))
-	  S(i,j) = 1;
-	else if (Alphabet().purine(i))
-	  S(i,j) = kappa1();
+	if (a.transversion(i,j))
+	  R->S(i,j) = 1;
+	else if (a.purine(i))
+	  R->S(i,j) = kappa1;
 	else
-	  S(i,j) = kappa2();
+	  R->S(i,j) = kappa2;
       }
+
+    return R;
+  }
+
+  shared_ptr<const Object> TN::evaluate()
+  {
+    const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
+    Double kappa1 = get_parameter_value_as<Double>(1);
+    Double kappa2 = get_parameter_value_as<Double>(2);
+
+    return TN_Function(N, kappa1, kappa2);
   }
 
   /// Construct a TN model on alphabet 'a'
@@ -1329,7 +1389,6 @@ namespace substitution {
   { 
     add_parameter(Parameter("TN::kappa(pur)",Double(2), lower_bound(0)));
     add_parameter(Parameter("TN::kappa(pyr)",Double(2), lower_bound(0)));
-    recalc_all();
   }
 
   string GTR::name() const {
@@ -1360,22 +1419,44 @@ namespace substitution {
     return dirichlet_pdf( get_parameter_values_as<Double>( range<int>(1,6) ), n);
   }
 
-  void GTR::recalc(const vector<int>&) 
+
+  shared_ptr<ExchangeModelObject> GTR_Function(const Nucleotides& a, 
+					      double AG, double AT, double AC,
+					      double GT, double GC, 
+					      double TC)
   {
-    assert(Alphabet().size()==4);
+    assert(a.size()==4);
 
-    double total = 0;
-    for(int i=0;i<6;i++)
-      total += get_parameter_value_as<Double>(1+i);
+    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
 
-    S(0,1) = get_parameter_value_as<Double>(1)/total; // AG
-    S(0,2) = get_parameter_value_as<Double>(2)/total; // AT
-    S(0,3) = get_parameter_value_as<Double>(3)/total; // AC
+    double total = AG + AT + AC + GT + GC + TC;
 
-    S(1,2) = get_parameter_value_as<Double>(4)/total; // GT
-    S(1,3) = get_parameter_value_as<Double>(5)/total; // GC
+    R->S(0,1) = AG/total;
+    R->S(0,2) = AT/total;
+    R->S(0,3) = AC/total;
 
-    S(2,3) = get_parameter_value_as<Double>(6)/total; // TC
+    R->S(1,2) = GT/total;
+    R->S(1,3) = GC/total;
+
+    R->S(2,3) = TC/total;
+
+    return R;
+  }
+
+  shared_ptr<const Object> GTR::evaluate()
+  {
+    const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
+
+    Double AG = get_parameter_value_as<Double>(1);
+    Double AT = get_parameter_value_as<Double>(2);
+    Double AC = get_parameter_value_as<Double>(3);
+
+    Double GT = get_parameter_value_as<Double>(4);
+    Double GC = get_parameter_value_as<Double>(5);
+
+    Double TC = get_parameter_value_as<Double>(6);
+
+    return GTR_Function(N, AG, AT, AC, GT, GC, TC);
   }
 
   GTR::GTR(const Nucleotides& N)
@@ -1387,8 +1468,6 @@ namespace substitution {
       add_parameter(Parameter("GTR::GT", Double(1.0/8), between(0, 1)));
       add_parameter(Parameter("GTR::GC", Double(1.0/8), between(0, 1)));
       add_parameter(Parameter("GTR::TC", Double(2.0/8), between(0, 1)));
-
-      recalc_all();
     }
 
   //------------------------ Triplet Models -------------------//
@@ -1404,15 +1483,18 @@ namespace substitution {
     add_parameter(Parameter("alphabet",T));
   }
 
-  void SingletToTripletExchangeModel::recalc(const vector<int>&)
+  shared_ptr<ExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2)
   {
-    for(int i=0;i<Alphabet().size();i++)
+    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(T.size()) );
+    ublas::symmetric_matrix<double>& S = R->S;
+
+    for(int i=0;i<T.size();i++)
       for(int j=0;j<i;j++) 
       {
 	int nmuts=0;
 	int pos=-1;
 	for(int p=0;p<3;p++)
-	  if (Alphabet().sub_nuc(i,p) != Alphabet().sub_nuc(j,p)) {
+	  if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
 	    nmuts++;
 	    pos=p;
 	  }
@@ -1423,13 +1505,21 @@ namespace substitution {
 
 	if (nmuts == 1) {
 
-	  int l1 = Alphabet().sub_nuc(i,pos);
-	  int l2 = Alphabet().sub_nuc(j,pos);
+	  int l1 = T.sub_nuc(i,pos);
+	  int l2 = T.sub_nuc(j,pos);
 	  assert(l1 != l2);
 
-	  S(i,j) = SubModels(0)(l1,l2);
+	  S(i,j) = S2(l1,l2);
 	}
       }
+
+    return R;
+  }
+
+  shared_ptr<const Object> SingletToTripletExchangeModel::evaluate()
+  {
+    shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(0).evaluate());
+    return SingletToTripletExchangeFunction(Alphabet(), *S2);
   }
 
   string SingletToTripletExchangeModel::name() const {
@@ -1442,8 +1532,6 @@ namespace substitution {
     :TripletExchangeModel(T)
   { 
     insert_submodel("1",N);
-
-    recalc_all();
   }
 
   //------------------------ Codon Models -------------------//
@@ -1468,15 +1556,18 @@ namespace substitution {
     set_parameter_value(1,w);
   }
 
-  void M0::recalc(const vector<int>&)
+  shared_ptr<const ExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
   {
-    for(int i=0;i<Alphabet().size();i++) 
+    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(C.size()) );
+    ublas::symmetric_matrix<double>& S = R->S;
+
+    for(int i=0;i<C.size();i++) 
     {
       for(int j=0;j<i;j++) {
 	int nmuts=0;
 	int pos=-1;
 	for(int p=0;p<3;p++)
-	  if (Alphabet().sub_nuc(i,p) != Alphabet().sub_nuc(j,p)) {
+	  if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
 	    nmuts++;
 	    pos=p;
 	  }
@@ -1487,19 +1578,28 @@ namespace substitution {
 
 	if (nmuts == 1) {
 
-	  int l1 = Alphabet().sub_nuc(i,pos);
-	  int l2 = Alphabet().sub_nuc(j,pos);
+	  int l1 = C.sub_nuc(i,pos);
+	  int l2 = C.sub_nuc(j,pos);
 	  assert(l1 != l2);
 
-	  rate = SubModels(0)(l1,l2);
+	  rate = S2(l1,l2);
 
-	  if (AminoAcid(i) != AminoAcid(j))
-	    rate *= omega();	
+	  if (C.translate(i) != C.translate(j))
+	    rate *= omega;	
 	}
 
 	S(i,j) = S(j,i) = rate;
       }
     }
+
+    return R;
+  }
+
+  shared_ptr<const Object> M0::evaluate()
+  {
+    shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(0).evaluate());
+    Double omega = get_parameter_value_as<Double>(1);
+    return M0_Function(Alphabet(), *S2, omega);
   }
 
   efloat_t M0::super_prior() const 
@@ -1522,7 +1622,6 @@ namespace substitution {
 
     add_super_parameter(Parameter("M0::omega", Double(1.0), lower_bound(0)));
     insert_submodel("1",N);
-    recalc_all();
   }
 
   M0::~M0() {}
@@ -2835,6 +2934,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // rates for between-model transitions
     unsigned T1=0;
+    shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(S->evaluate());
     for(int m1=0; m1 < n_models; m1++) 
     {
       const ReversibleMarkovModel* RM1 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m1).part(0));
@@ -2848,7 +2948,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 	assert(N1 == N2);
 
 	if (m1 != m2) {
-	  double S12 = (*S)(m1,m2);
+	  double S12 = (*S2)(m1,m2);
 	  for(int s1=0;s1<N1;s1++)
 	    Q(T1+s1,T2+s1) = S12*M_f[m2];
 	}
