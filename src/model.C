@@ -787,7 +787,7 @@ int OpModel::add_submodel(shared_ptr<const Model> m)
 
 OpModel::OpModel(const expression_ref& r)
 {
-  shared_ptr<const operation_expression> e = dynamic_pointer_cast<const operation_expression>(r);
+  shared_ptr<const operation_expression> e = boost::dynamic_pointer_cast<const operation_expression>(r);
 
   if (not e)
     throw myexception()<<"Trying to create an OpModel from a non-op expression:\n  "<<e->print();
@@ -806,19 +806,19 @@ OpModel::OpModel(const expression_ref& r)
     arg_expression a;
 
     // handle the args[i] being a named parameter
-    if (shared_ptr<const named_parameter_expression> pe = dynamic_pointer_cast<const named_parameter_expression>(e->args[i]))
+    if (shared_ptr<const named_parameter_expression> pe = boost::dynamic_pointer_cast<const named_parameter_expression>(e->args[i]))
       a.parent_index = find_index(names, pe->parameter_name);
 
     // handle the args[i] being a constant
-    else if (shared_ptr<const constant_expression> ce = dynamic_pointer_cast<const constant_expression>(e->args[i]) )
+    else if (shared_ptr<const constant_expression> ce = boost::dynamic_pointer_cast<const constant_expression>(e->args[i]) )
       a.constant_value = ce->value;
 
     // handle the args[i] being a model
-    else if ( shared_ptr<const model_expression> me = dynamic_pointer_cast<const model_expression>(e->args[i]) )
+    else if ( shared_ptr<const model_expression> me = boost::dynamic_pointer_cast<const model_expression>(e->args[i]) )
       a.sub_model_index = add_submodel( me->m );
 
     // handle the args[i] being an operation expression
-    else if (shared_ptr<const operation_expression> oe = dynamic_pointer_cast<const operation_expression>(e->args[i]) )
+    else if (shared_ptr<const operation_expression> oe = boost::dynamic_pointer_cast<const operation_expression>(e->args[i]) )
       a.sub_model_index = add_submodel(ptr<Model>( OpModel( expression_ref( oe ) ) ) );
 
     else

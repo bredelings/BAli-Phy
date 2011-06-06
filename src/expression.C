@@ -199,12 +199,12 @@ shared_ptr<const expression> expression::apply(const expression& arg) const
 
 void find_named_parameters_(shared_ptr<const expression> e, vector<string>& names)
 {
-  if (shared_ptr<const named_parameter_expression> n = dynamic_pointer_cast<const named_parameter_expression>(e)) 
+  if (shared_ptr<const named_parameter_expression> n = boost::dynamic_pointer_cast<const named_parameter_expression>(e)) 
   {
     if (not includes(names,n->parameter_name))
       names.push_back(n->parameter_name);
   }
-  else if (shared_ptr<const operator_expression> o = dynamic_pointer_cast<const operator_expression>(e)) 
+  else if (shared_ptr<const operator_expression> o = boost::dynamic_pointer_cast<const operator_expression>(e)) 
   {
     for(int i=0;i<o->args.size();i++)
       find_named_parameters_(o->args[i], names);
