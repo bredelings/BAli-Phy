@@ -1157,9 +1157,7 @@ namespace substitution {
   /// Construct an Empirical model on alphabet \a a
   Empirical::Empirical(const alphabet& a) 
     :AlphabetExchangeModel(a)
-  { 
-    add_parameter(Parameter("alphabet",a));
-  }
+  { }
 
   /// Construct an Empirical model on alphabet \a a with name \n
   Empirical::Empirical(const alphabet& a,const string& n) 
@@ -1479,9 +1477,7 @@ namespace substitution {
 
   TripletExchangeModel::TripletExchangeModel(const Triplets& T)
     :AlphabetExchangeModel(T)
-  { 
-    add_parameter(Parameter("alphabet",T));
-  }
+  { }
 
   shared_ptr<ExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2)
   {
@@ -1542,9 +1538,7 @@ namespace substitution {
 
   CodonAlphabetExchangeModel::CodonAlphabetExchangeModel(const Codons& C)
     :AlphabetExchangeModel(C)
-  { 
-    add_parameter(Parameter("alphabet",C));
-  }
+  { }
 
   /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
   double M0::omega() const {
