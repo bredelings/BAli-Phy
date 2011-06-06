@@ -81,7 +81,13 @@ struct Parameter
 //    o before: remove set_rate()
 //    o before: remove (set_)frequencies( )
 //    o before: stop making models inherit from Objects
-//      - ReversibleFrequencyModel, ReversibleMarkovModel, MultiModel
+//      - ReversibleMarkovModel
+//        + F81_Model, ReversibleMarkovSuperModel, SimpleReversibleMarkovModel
+//      - ReversibleFrequencyModel
+//        + SimpleFrequencyModel, UniformFrequencyModel, TripletFM, IndependentNucleotideFM, TripletsFM, CodonFM,
+//          AACodonFM, CodonsFM, CodonsFM2, 
+//      - MultiModel
+//        + 
 //    o during: make recalc() a constant function.
 //    o during: write parameters to submodels {now, simply}.  Recalc later.
 //    o why do set_rate() and frequencies() cause problems? We should just do them on copies.
