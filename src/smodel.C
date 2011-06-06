@@ -1589,6 +1589,24 @@ namespace substitution {
     return R;
   }
 
+  struct M0_Op: public Operation
+  {
+    M0_Op* clone() const {return new M0_Op(*this);}
+
+    shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      shared_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
+      shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(1);
+      shared_ptr<const Double> omega = Args.evaluate_as<Double>(2);
+
+      return M0_Function(*C, *S, *omega);
+    }
+
+    string name() const {return "M0";}
+
+    M0_Op():Operation(3) { }
+  };
+
   shared_ptr<const Object> M0::evaluate()
   {
     shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(0).evaluate());
