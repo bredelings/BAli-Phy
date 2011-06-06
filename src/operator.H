@@ -5,7 +5,7 @@
 #include <string>
 #include "object.H"
 
-struct Operator: public Object
+struct Operator: virtual public Object
 {
   virtual std::string name() const=0;
   virtual std::string print() const;

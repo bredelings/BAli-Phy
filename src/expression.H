@@ -52,7 +52,7 @@ struct term_ref
   term_ref(int i,const Formula& f);
 };
 
-struct expression: public Object
+struct expression: virtual public Object
 {
   // an expression can be
   // - a term reference

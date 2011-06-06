@@ -217,7 +217,7 @@ namespace substitution {
   //------------------------ Exchangeability Model ----------------------//
 
 
-  struct ExchangeModelObject: public Object
+  struct ExchangeModelObject: virtual public Object
   {
     ublas::symmetric_matrix<double> S;
 
@@ -865,7 +865,7 @@ namespace substitution {
     }
   };
 
-  class ReversibleAdditiveCollectionObject: public Object
+  class ReversibleAdditiveCollectionObject: virtual public Object
   {
   protected:
     std::vector< owned_ptr<ReversibleAdditiveObject> > parts;
@@ -1013,7 +1013,7 @@ namespace substitution {
 
   /// Umm... is this reversible?
   /// Also, what if we have two base classes: ReversibleAdditive, and F81?
-  class MultiModelObject: public Object
+  class MultiModelObject: virtual public Object
   {
   public:
     boost::shared_ptr<const alphabet> a;
@@ -1205,7 +1205,7 @@ namespace substitution {
     C20_CAT_FixedFrequencyModel();
   };
 
-  class DiscreteDistribution: public Object
+  class DiscreteDistribution: virtual public Object
   {
   public:
     std::vector< double > fraction;

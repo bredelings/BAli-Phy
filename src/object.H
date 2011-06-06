@@ -49,7 +49,7 @@ public:
 };
 
 template<typename T>
-class POD: public Object 
+class POD: virtual public Object 
 {
 protected:
   T t;
@@ -89,7 +89,7 @@ public:
 };
 
 template <typename T>
-class POD_math: public Object
+class POD_math: virtual public Object
 {
 protected:
   T t;

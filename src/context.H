@@ -11,10 +11,10 @@ class Formula;
 class Computation;
 
 // Values
-struct Context: public Object
+struct Context: virtual public Object
 {
   // member type
-  struct value: public Object
+  struct value: virtual public Object
   {
     value* clone() const {return new value(*this);}
 

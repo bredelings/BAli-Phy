@@ -51,7 +51,7 @@ struct bad_letter:public myexception
 /***************** struct alphabet ********************/
 
 /// Converts between a list of letters, and their integer indices
-class alphabet: public Object
+class alphabet: virtual public Object
 {
   /// The letters of the alphabet
   std::vector<std::string> letters_;
@@ -318,7 +318,7 @@ public:
 };
 
 /// A Class that maps 3 nucleotides to an outcome in the amino_acid+stop alphabet
-class Genetic_Code: public Object
+class Genetic_Code: virtual public Object
 {
   std::string name_;
 

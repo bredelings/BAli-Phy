@@ -18,7 +18,7 @@ struct expression_ref;
 // Eventually the Formula should be the secondary object, cuz the evaluation tree
 //  may change as the Context changes.
 
-struct Formula: public Object
+struct Formula: virtual public Object
 {
   struct Term
   {

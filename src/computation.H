@@ -8,7 +8,7 @@
 #include "myexception.H"
 
 /// Describes a completed computation
-struct Computation: public Object
+struct Computation: virtual public Object
 {
   Computation* clone() const {return new Computation(*this);}
 
@@ -20,7 +20,7 @@ struct Computation: public Object
   Computation(int n_inputs):used_values(n_inputs) { }
 };
 
-struct OperationArgs: public Object
+struct OperationArgs: virtual public Object
 {
   virtual OperationArgs* clone() const = 0;
 
