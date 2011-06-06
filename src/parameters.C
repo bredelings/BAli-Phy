@@ -955,7 +955,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
 
   // load values from sub-models (smodels/imodel)
-  read();
+  check();
 
   // don't constrain any branch lengths
   for(int b=0;b<TC->n_branches();b++)
@@ -1033,7 +1033,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
 
   // load values from sub-models (smodels/imodel)
-  read();
+  check();
 
   // don't constrain any branch lengths
   for(int b=0;b<TC->n_branches();b++)

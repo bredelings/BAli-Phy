@@ -83,7 +83,7 @@ struct Parameter
 //      + in fact, priors are objects that RETURN models, a "density" model, and a "simulate" model.
 //    o do some caching of results?
 // 4. Make model evaluation lazy.
-//    o before: remove read().
+//    o before: remove read(). [ DONE ] 
 //    o before: remove set_rate()
 //    o before: remove (set_)frequencies( )
 //    o during: make recalc() a constant function.
@@ -336,10 +336,6 @@ protected:
   /// The prior for the parameters of the upper model
   virtual efloat_t super_prior() const {return 1.0;}
   
-  /// Load parameter values from all sub-models.  Values may conflict!
-  void read();
-  /// Load parameter values from this in sub-model m.  Values may conflict!
-  void read_from_submodel(int);
   /// Propagate changes to child model parameters down to child Model objects.
   void write();
   /// Store ONE parameter value down into submodels

@@ -335,29 +335,6 @@ void SuperModel::write()
     write_value(i, parameters_[i].value);
 }
 
-void SuperModel::read_from_submodel(int m)
-{
-  for(int i=0;i<n_parameters();i++)
-  {
-    for(int j=0;j<model_slots_for_index[i].size();j++)
-    {
-      if (model_slots_for_index[i][j].model_index != m) continue;
-
-      int s = model_slots_for_index[i][j].slot;
-
-      parameters_[i].value = SubModels(m).get_parameter_value(s);
-    }
-  }
-}
-
-void SuperModel::read()
-{
-  for(int m = 0;m < n_submodels(); m++)
-    read_from_submodel(m);
-
-  check();
-}
-
 efloat_t SuperModel::prior() const {
   efloat_t  P = super_prior();
   for(int i=0;i<n_submodels();i++)
