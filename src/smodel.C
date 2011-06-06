@@ -1021,7 +1021,7 @@ namespace substitution {
   }
 
   /// Construct a reversible Markov model on alphabet 'a'
-  ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const AlphabetExchangeModel& S1,const ReversibleFrequencyModel& R1)
+  ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
     :ReversibleMarkovModel(R1.Alphabet()),
      OpModel( Q_from_R_and_S(S1,R1) )
   { 
@@ -1531,23 +1531,14 @@ namespace substitution {
   }
 
   //------------------------ Codon Models -------------------//
-  const Codons& CodonAlphabetExchangeModel::Alphabet() const
-  {
-    return get_parameter_value_as<Codons>(0);
-  }
-
-  CodonAlphabetExchangeModel::CodonAlphabetExchangeModel(const Codons& C)
-    :AlphabetExchangeModel(C)
-  { }
-
   /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
   double M0::omega() const {
-    return get_parameter_value_as<Double>(1);
+    return get_parameter_value_as<Double>(omega_index);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
   void M0::omega(double w) {
-    set_parameter_value(1,w);
+    set_parameter_value(omega_index,w);
   }
 
   shared_ptr<const ExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
@@ -1607,33 +1598,26 @@ namespace substitution {
     M0_Op():Operation(3) { }
   };
 
-  shared_ptr<const Object> M0::evaluate()
-  {
-    shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(0).evaluate());
-    Double omega = get_parameter_value_as<Double>(1);
-    return M0_Function(Alphabet(), *S2, omega);
-  }
+  expression_ref M0E = M0_Op();
 
   efloat_t M0::super_prior() const 
   {
-    if (is_fixed(1))
+    if (is_fixed(omega_index))
       return 1;
     else
       return laplace_pdf(log(omega()), 0, 0.1)/omega();
   }
-
+  /*
   string M0::name() const {
     return string("M0[") + SubModels(0).name() + "]";
   }
-
+  */
   M0::M0(const Codons& C,const NucleotideExchangeModel& N)
-    :CodonAlphabetExchangeModel(C)
+    :OpModel( M0E(Constant(C),N,"M0::omega") )
   { 
-    // problem! CodonAlphabetExchangeModel adds a parameter, but doesn't know to bump models_slots_for_index, since its not a supermodel!
-    model_slots_for_index.push_back(vector<model_slot>());
-
-    add_super_parameter(Parameter("M0::omega", Double(1.0), lower_bound(0)));
-    insert_submodel("1",N);
+    omega_index = find_parameter(*this,"M0::omega");
+    set_parameter_value(omega_index, Double(1));
+    set_bounds(omega_index, lower_bound(0));
   }
 
   M0::~M0() {}

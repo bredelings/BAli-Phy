@@ -235,12 +235,8 @@ namespace substitution {
   {
   public:
     
-    void recalc(const std::vector<int>&) { std::abort(); }
-
     ExchangeModel* clone() const =0;
     
-    virtual boost::shared_ptr<const Object> evaluate() { std::abort(); }
-
     virtual ~ExchangeModel() {};
   };
 
@@ -486,25 +482,9 @@ namespace substitution {
 
 
 
-  class CodonAlphabetExchangeModel: public AlphabetExchangeModel
+  class M0: public ExchangeModel, public OpModel
   {
-  public:
-    CodonAlphabetExchangeModel* clone() const=0;
-
-    const Codons& Alphabet() const;
-
-    int AminoAcid(int l) const {return Alphabet().translate(l);}
-
-    CodonAlphabetExchangeModel(const Codons& C);
-
-    ~CodonAlphabetExchangeModel() {}
-  };
-
-
-  class M0: public SuperModelOver<NucleotideExchangeModel>,
-	    public CodonAlphabetExchangeModel
-		
-  {
+    int omega_index;
   public:
     efloat_t super_prior() const;
 
@@ -514,10 +494,6 @@ namespace substitution {
     double omega() const;
     /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
     void omega(double w);
-
-    string name() const;
-
-    boost::shared_ptr<const Object> evaluate();
 
     M0(const Codons& C,const NucleotideExchangeModel& M);
 
@@ -850,7 +826,7 @@ namespace substitution {
     virtual ReversibleMarkovSuperModel* clone() const {return new ReversibleMarkovSuperModel(*this);}
 
     /// Construct a reversible Markov model on alphabet 'a'
-    ReversibleMarkovSuperModel(const AlphabetExchangeModel& S1, const ReversibleFrequencyModel& R1);
+    ReversibleMarkovSuperModel(const ExchangeModel& S1, const ReversibleFrequencyModel& R1);
     
     ~ReversibleMarkovSuperModel() {}
   };
