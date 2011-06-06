@@ -207,6 +207,8 @@ namespace substitution {
 
     const alphabet& Alphabet() const {return *a;}
 
+    boost::shared_ptr<const alphabet> get_alphabet() const {return a;}
+
     int n_letters() const {return a->size();}
 
     SModelObject(const alphabet&);
@@ -229,6 +231,14 @@ namespace substitution {
 
     ExchangeModelObject(int n):S(n,n)
     { }
+  };
+
+  struct AlphabetExchangeModelObject: public SModelObject, public ExchangeModelObject
+  {
+    virtual AlphabetExchangeModelObject* clone() const {return new AlphabetExchangeModelObject(*this);}
+
+    AlphabetExchangeModelObject(const alphabet& a);
+    AlphabetExchangeModelObject(const alphabet& a, int n);
   };
 
   class ExchangeModel: virtual public ::Model
@@ -263,14 +273,16 @@ namespace substitution {
   };
 
 
-  class AlphabetExchangeModel: public ExchangeModel, public AlphabetModel
+  class AlphabetExchangeModel: public ExchangeModel
   {
   public:
     AlphabetExchangeModel* clone() const =0;
     
-    const alphabet& Alphabet() const {return get_parameter_value_as<alphabet>(0);}
-
-    AlphabetExchangeModel(const alphabet& a);
+    const alphabet& Alphabet() const 
+    {
+      // return dynamic_pointer_cast<AlphabetExchangeModelObject>(evaluate())->get_alphabet();
+      return get_parameter_value_as<alphabet>(0);
+    }
 
     virtual ~AlphabetExchangeModel() {};
   };
@@ -482,7 +494,7 @@ namespace substitution {
 
 
 
-  class M0: public ExchangeModel, public OpModel
+  class M0: public AlphabetExchangeModel, public OpModel
   {
     int omega_index;
   public:
