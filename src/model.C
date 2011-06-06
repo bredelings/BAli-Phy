@@ -689,6 +689,31 @@ void OpModel::write_value(int index, const shared_ptr<const Object>& p)
 string OpModel::name() const
 {
   vector<string> arg_names;
+  for(int i=0;i<slot_expressions_for_op.size();i++)
+  {
+    const arg_expression& slot_arg = slot_expressions_for_op[i];
+
+    if (slot_arg.is_term_ref())
+    {
+      int parameter_index = slot_arg.parent_index;
+      arg_names.push_back( parameter_name(parameter_index) );
+    }
+    else if (slot_arg.is_constant())
+    {
+      // return the relevant constant
+      arg_names.push_back( slot_arg.constant_value->print() );
+    }
+    else
+    {
+      assert(slot_arg.is_submodel_ref());
+      
+      // update the relevant sub_model, and return a 
+      int submodel_index = slot_arg.sub_model_index;
+      
+      arg_names.push_back( sub_models[submodel_index]->name() );
+    }    
+  }
+  
   return Op->print_expression(arg_names);
 }
 
@@ -761,6 +786,8 @@ int OpModel::add_submodel(shared_ptr<const Model> m)
 
   return m_index;
 }
+
+void OpModel::update() { }
 
 OpModel::OpModel(const expression_ref& r)
 {
