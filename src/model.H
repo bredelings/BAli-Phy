@@ -40,12 +40,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "operation.H"
 #include "computation.H"
 
-// FIXME - the way to have a model class with members as submodels is to
-//   1. hard-code the SubModels(m) function to return the models you want,
-//      instead of arranging to put pointers to member objects into a vector.
-//   2. but then when you modify the class member models, you need to notify the parent..
-//   3. we COULD have an upwards-pointing chain as well...
-
 std::string parameter_name(const std::string& prefix,int i,int n);
 
 struct Parameter
