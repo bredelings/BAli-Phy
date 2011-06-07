@@ -507,16 +507,16 @@ namespace substitution {
 
     //    const vector<unsigned>& smap = MModel.state_letters();
 
-    vector<const F81_Model*> SubModels(n_models);
+    vector<const F81_Object*> SubModels(n_models);
     for(int m=0;m<n_models;m++) {
-      SubModels[m] = static_cast<const F81_Model*>(&MModel.base_model(m).part(0));
+      SubModels[m] = static_cast<const F81_Object*>(&MModel.base_model(m).part(0));
       assert(SubModels[m]);
     }
     const double t = T.directed_branch(b0).length();
 
     valarray<double> exp_a_t(n_models);
     for(int m=0;m<n_models;m++) 
-      exp_a_t[m] = exp(-t * SubModels[m]->alpha());
+      exp_a_t[m] = exp(-t * SubModels[m]->alpha_);
 
     Matrix& F = cache.scratch(1);
     FrequencyMatrix(F,MModel); // F(m,l2)
@@ -852,16 +852,16 @@ namespace substitution {
     for(int i=0;i<b.size();i++)
       branch_cache.push_back(&cache[b[i]]);
     
-    vector<const F81_Model*> SubModels(n_models);
+    vector<const F81_Object*> SubModels(n_models);
     for(int m=0;m<n_models;m++) {
-      SubModels[m] = static_cast<const F81_Model*>(&MModel.base_model(m).part(0));
+      SubModels[m] = static_cast<const F81_Object*>(&MModel.base_model(m).part(0));
       assert(SubModels[m]);
     }
     const double t = T.directed_branch(b0).length();
 
     valarray<double> exp_a_t(n_models);
     for(int m=0;m<n_models;m++) 
-      exp_a_t[m] = exp(-t * SubModels[m]->alpha());
+      exp_a_t[m] = exp(-t * SubModels[m]->alpha_);
 
     Matrix& F = cache.scratch(1);
     FrequencyMatrix(F,MModel); // F(m,l2)
