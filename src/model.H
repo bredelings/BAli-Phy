@@ -267,7 +267,7 @@ public:
   virtual void check() const {}
 
   // Evaluate the model and return the result
-  virtual boost::shared_ptr<const Object> evaluate();
+  virtual boost::shared_ptr<const Object> evaluate() const;
 
   bool is_valid() const {return valid;}
   virtual void update();
@@ -414,7 +414,7 @@ public:
 
 class expression_ref;
 
-class OpModel: virtual public Model, public OperationArgs
+class OpModel: virtual public Model
 {
   friend class OpModelOperationArgs;
 
@@ -447,9 +447,9 @@ public:
 
   void check() const;
 
-  boost::shared_ptr<const Object> evaluate(int);
+  boost::shared_ptr<const Object> evaluate(int) const;
   
-  boost::shared_ptr<const Object> evaluate();
+  boost::shared_ptr<const Object> evaluate() const;
 
   OpModel(const expression_ref&);
 };

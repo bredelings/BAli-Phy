@@ -191,7 +191,7 @@ Model::Model()
   :valid(false)
 { }
 
-boost::shared_ptr<const Object> Model::evaluate()
+boost::shared_ptr<const Object> Model::evaluate() const
 {
   shared_ptr<Model> M (clone());
   M->update();
@@ -659,17 +659,17 @@ vector<int> parameters_with_extension(const Model& M, string name)
 
 struct OpModelOperationArgs: public OperationArgs
 {
-  OpModel& M;
+  const OpModel& M;
   boost::shared_ptr<Computation> computation;
 
   boost::shared_ptr<const Object> evaluate(int slot);
 
   OpModelOperationArgs* clone() const {return new OpModelOperationArgs(*this);}
 
-  OpModelOperationArgs(OpModel& m);
+  OpModelOperationArgs(const OpModel& m);
 };
 
-OpModelOperationArgs::OpModelOperationArgs(OpModel& m)
+OpModelOperationArgs::OpModelOperationArgs(const OpModel& m)
   :M(m)
 { 
   int n_input_slots = m.Op->n_args();
@@ -764,7 +764,7 @@ void OpModel::check() const
     }
 }
 
-shared_ptr<const Object> OpModel::evaluate(int slot)
+shared_ptr<const Object> OpModel::evaluate(int slot) const
 {
   const arg_expression& slot_arg = slot_expressions_for_op[slot];
 
@@ -787,10 +787,10 @@ shared_ptr<const Object> OpModel::evaluate(int slot)
     int submodel_index = slot_arg.sub_model_index;
 
     return sub_models[submodel_index]->evaluate();
-  }  
+  }
 }
 
-boost::shared_ptr<const Object> OpModel::evaluate()
+boost::shared_ptr<const Object> OpModel::evaluate() const
 {
   OpModelOperationArgs A(*this);
   return (*Op)(A);

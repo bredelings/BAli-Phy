@@ -178,7 +178,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> SimpleExchangeModel::evaluate()
+  shared_ptr<const Object> SimpleExchangeModel::evaluate() const
   {
     Double rho = get_parameter_value_as<Double>(0);
     Int n = get_parameter_value_as<Int>(1);
@@ -933,7 +933,7 @@ namespace substitution {
 	Q(i,j) = (pi[j] - ((i==j)?1:0))*alpha_;
   }
 
-  shared_ptr<const Object> F81_Model::evaluate()
+  shared_ptr<const Object> F81_Model::evaluate() const
   {
     const int N = Alphabet().size();
 
@@ -1098,7 +1098,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> INV_Model::evaluate()
+  shared_ptr<const Object> INV_Model::evaluate() const
   {
     return INV_Exchange_Function(Alphabet());
   }
@@ -1132,7 +1132,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> EQU::evaluate()
+  shared_ptr<const Object> EQU::evaluate() const
   {
     return EQU_Exchange_Function(Alphabet());
   }
@@ -1153,7 +1153,7 @@ namespace substitution {
 
   //----------------------- Empirical -------------------------//
 
-  shared_ptr<const Object> Empirical::evaluate()
+  shared_ptr<const Object> Empirical::evaluate() const
   {
     return get_parameter_value(1);
   }
@@ -1356,7 +1356,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> HKY::evaluate()
+  shared_ptr<const Object> HKY::evaluate() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
     Double kappa = get_parameter_value_as<Double>(1);
@@ -1408,7 +1408,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> TN::evaluate()
+  shared_ptr<const Object> TN::evaluate() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
     Double kappa1 = get_parameter_value_as<Double>(1);
@@ -1478,7 +1478,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> GTR::evaluate()
+  shared_ptr<const Object> GTR::evaluate() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
 
@@ -1551,7 +1551,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> SingletToTripletExchangeModel::evaluate()
+  shared_ptr<const Object> SingletToTripletExchangeModel::evaluate() const
   {
     shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(0).evaluate());
     return SingletToTripletExchangeFunction(Alphabet(), *S2);

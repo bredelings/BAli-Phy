@@ -227,7 +227,7 @@ namespace substitution {
 
     string name() const;
 
-    boost::shared_ptr<const Object> evaluate();
+    boost::shared_ptr<const Object> evaluate() const;
 
     SimpleExchangeModel(unsigned n);
 
@@ -255,7 +255,7 @@ namespace substitution {
   public:
     INV_Model* clone() const {return new INV_Model(*this);}
 
-    boost::shared_ptr<const Object> evaluate();
+    boost::shared_ptr<const Object> evaluate() const;
 
     const alphabet& Alphabet() const;
 
@@ -274,7 +274,7 @@ namespace substitution {
 
     virtual EQU* clone() const {return new EQU(*this);}
 
-    boost::shared_ptr<const Object> evaluate();
+    boost::shared_ptr<const Object> evaluate() const;
 
     const alphabet& Alphabet() const;
 
@@ -306,7 +306,7 @@ namespace substitution {
 
     string name() const {return name_;}
 
-    boost::shared_ptr<const Object> evaluate();
+    boost::shared_ptr<const Object> evaluate() const;
 
     Empirical(const alphabet& a); 
 
@@ -373,7 +373,7 @@ namespace substitution {
 
     string name() const;
 
-    boost::shared_ptr<const Object> evaluate();
+    boost::shared_ptr<const Object> evaluate() const;
 
     /// Construct an HKY model on alphabet 'a'
     HKY(const Nucleotides& N);
@@ -400,7 +400,7 @@ namespace substitution {
 
     string name() const;
 
-    boost::shared_ptr<const Object> evaluate();
+    boost::shared_ptr<const Object> evaluate() const;
 
     /// Construct an HKY model on alphabet 'a'
     TN(const Nucleotides& N);
@@ -417,7 +417,7 @@ namespace substitution {
 
     string name() const;
 
-    boost::shared_ptr<const Object> evaluate();
+    boost::shared_ptr<const Object> evaluate() const;
 
     /// Construct a GTR model on alphabet 'a'
     GTR(const Nucleotides& N);
@@ -447,7 +447,7 @@ namespace substitution {
 
     string name() const;
 
-    boost::shared_ptr<const Object> evaluate();
+    boost::shared_ptr<const Object> evaluate() const;
 
     SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& M);
 
@@ -791,7 +791,7 @@ namespace substitution {
 
     string name() const;
 
-    boost::shared_ptr<const Object> evaluate();
+    boost::shared_ptr<const Object> evaluate() const;
 
     F81_Model(const alphabet& a);
     F81_Model(const alphabet& a,const valarray<double>&);
