@@ -93,9 +93,6 @@ namespace substitution {
   class AlphabetModel: virtual public ::Model
   {
   public:
-    virtual const alphabet& Alphabet() const =0;
-
-    unsigned n_letters() const {return Alphabet().size();}
   };
 
 
