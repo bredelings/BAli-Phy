@@ -81,8 +81,6 @@ struct Parameter
 //    o before: remove set_rate()
 //    o before: remove (set_)frequencies( )
 //    o before: stop making models inherit from Objects
-//      - ReversibleMarkovModel
-//        + F81_Model, ReversibleMarkovSuperModel, SimpleReversibleMarkovModel
 //      - ReversibleFrequencyModel
 //        + SimpleFrequencyModel, UniformFrequencyModel, TripletFM, IndependentNucleotideFM, TripletsFM, CodonFM,
 //          AACodonFM, CodonsFM, CodonsFM2, 
