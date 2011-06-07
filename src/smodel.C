@@ -1100,12 +1100,7 @@ namespace substitution {
 
   shared_ptr<const Object> INV_Model::evaluate() const
   {
-    return INV_Exchange_Function(Alphabet());
-  }
-
-  const alphabet& INV_Model::Alphabet() const
-  {
-    return get_parameter_value_as<alphabet>(0);
+    return INV_Exchange_Function(get_parameter_value_as<alphabet>(0));
   }
 
   string INV_Model::name() const 
@@ -1134,12 +1129,7 @@ namespace substitution {
 
   shared_ptr<const Object> EQU::evaluate() const
   {
-    return EQU_Exchange_Function(Alphabet());
-  }
-
-  const alphabet& EQU::Alphabet() const
-  {
-    return get_parameter_value_as<alphabet>(0);
+    return EQU_Exchange_Function(get_parameter_value_as<alphabet>(0));
   }
 
   string EQU::name() const {
@@ -1158,11 +1148,6 @@ namespace substitution {
     return get_parameter_value(1);
   }
 
-  const alphabet& Empirical::Alphabet() const
-  {
-    return get_parameter_value_as<alphabet>(0);
-  }
-
   void Empirical::load_file(const string& filename) 
   {
     name_ = string("Empirical[") + get_basename(filename) + "]";
@@ -1176,9 +1161,11 @@ namespace substitution {
 
   void Empirical::load_file(std::istream& file)
   {
-    shared_ptr<ExchangeModelObject> R (new ExchangeModelObject(Alphabet().size()));
+    const alphabet& a = get_parameter_value_as<alphabet>(0);
 
-    for(int i=0;i<Alphabet().size();i++)
+    shared_ptr<ExchangeModelObject> R (new ExchangeModelObject(a.size()));
+
+    for(int i=0;i<a.size();i++)
       for(int j=0;j<i;j++) {
 	file>>R->S(i,j);
 	R->S(j,i) = R->S(i,j);
@@ -1508,11 +1495,6 @@ namespace substitution {
 
   //------------------------ Triplet Models -------------------//
 
-  const Triplets& TripletExchangeModel::Alphabet() const
-  {
-    return get_parameter_value_as<Triplets>(0);
-  }
-
   TripletExchangeModel::TripletExchangeModel(const Triplets& T)
   {
     add_parameter(Parameter("alphabet",T));
@@ -1554,7 +1536,7 @@ namespace substitution {
   shared_ptr<const Object> SingletToTripletExchangeModel::evaluate() const
   {
     shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(0).evaluate());
-    return SingletToTripletExchangeFunction(Alphabet(), *S2);
+    return SingletToTripletExchangeFunction(get_parameter_value_as<Triplets>(0), *S2);
   }
 
   string SingletToTripletExchangeModel::name() const {
@@ -2922,38 +2904,60 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   // when the discrete approximation to the continuous distribution has
   // low resolution.
 
-  void ModulatedMarkovModel::recalc(const vector<int>&) 
+  shared_ptr<ReversibleMarkovModelObject> Modulated_Markov_Function(const ExchangeModelObject& S,MultiModelObject M)
   {
-    const int n_models = M->n_base_models();
+    // Make a copy and use this.
+    M.set_rate(1);
 
-    owned_ptr<MultiModel> M2 = M;
+    unsigned T = 0;
+    for(int m=0; m < M.n_base_models(); m++) 
+    {
+      const ReversibleMarkovModelObject* RM = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m).part(0));
+      if (not RM)
+	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model"; // what is the name?
+      T += RM->n_states();
+    }
 
-    // Make a copy (treated as a value), and use this.
-    M2->set_rate(1);
+    shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(*M.get_alphabet(), T) );
 
-    const valarray<double>& M_pi = M->frequencies();
-    const vector<double>&   M_f  = M->distribution();
+    // calculate the state_letters() map here!
+
+    T = 0;
+    for(int m=0; m < M.n_base_models(); m++) 
+    {
+      unsigned N = M.base_model(m).n_states();
+      for(int i=0; i<N; i++)
+	R->state_letters_[T+i] = M.base_model(m).state_letters()[i];
+
+      T += N;
+    }
+
+    const int n_models = M.n_base_models();
+
+
+    const valarray<double>& M_pi = M.frequencies();
+    const vector<double>&   M_f  = M.distribution();
 
     // calculate pi[ ] for each state
-    unsigned T = 0;
+    T = 0;
     for(int m=0; m < n_models; m++) {
-      unsigned N = M->base_model(m).n_states();
+      unsigned N = M.base_model(m).n_states();
       for(int s=0; s < N; s++) 
-	pi[T+s] = M_pi[s] * M_f[m];
+	R->pi[T+s] = M_pi[s] * M_f[m];
       T += N;
     }
     
 
     // initially zero out the matrix
-    for(int i=0;i<Q.size1();i++)
-      for(int j=0;j<Q.size2();j++)
-	Q(i,j) = 0;
+    for(int i=0;i<R->Q.size1();i++)
+      for(int j=0;j<R->Q.size2();j++)
+	R->Q(i,j) = 0;
 
     // rates for within-model transitions
     T=0;
     for(int m=0; m < n_models; m++) 
     {
-      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M2->base_model(m).part(0));
+      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M.base_model(m).part(0));
       if (not RM)
 	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model"; // what is the name?
 
@@ -2963,30 +2967,29 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       const Matrix& QM = RM->transition_rates();
       for(int s1=0; s1 < N; s1++) 
 	for(int s2=0; s2 < N; s2++)
-	  Q(T+s1,T+s2) = QM(s1,s2);
+	  R->Q(T+s1,T+s2) = QM(s1,s2);
 
       T += N;
     }
 
     // rates for between-model transitions
     unsigned T1=0;
-    shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(S->evaluate());
     for(int m1=0; m1 < n_models; m1++) 
     {
-      const ReversibleMarkovModel* RM1 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m1).part(0));
+      const ReversibleMarkovModelObject* RM1 = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m1).part(0));
       unsigned N1 = RM1->n_states();
 
       unsigned T2=0;
       for(int m2=0; m2 < n_models; m2++) 
       {
-	const ReversibleMarkovModel* RM2 = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m2).part(0));
+	const ReversibleMarkovModelObject* RM2 = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m2).part(0));
 	unsigned N2 = RM2->n_states();
 	assert(N1 == N2);
 
 	if (m1 != m2) {
-	  double S12 = (*S2)(m1,m2);
+	  double S12 = S(m1,m2);
 	  for(int s1=0;s1<N1;s1++)
-	    Q(T1+s1,T2+s1) = S12*M_f[m2];
+	    R->Q(T1+s1,T2+s1) = S12*M_f[m2];
 	}
 
 	T2 += N2;
@@ -2995,54 +2998,35 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     }
 
     // recompute diagonals 
-    for(int i=0;i<Q.size1();i++) 
+    for(int i=0;i<R->Q.size1();i++) 
     {
       double sum=0;
-      for(int j=0;j<Q.size2();j++)
+      for(int j=0;j<R->Q.size2();j++)
 	if (i!=j)
-	  sum += Q(i,j);
-      Q(i,i) = -sum;
+	  sum += R->Q(i,j);
+      R->Q(i,i) = -sum;
     }
 
-    invalidate_eigensystem();
+    R->invalidate_eigensystem();
+
+    return R;
+  }
+
+  shared_ptr<const Object> ModulatedMarkovModel::evaluate() const
+  {
+    shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(SubModels(0).evaluate());
+    shared_ptr<const ExchangeModelObject> S = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(1).evaluate());
+
+    return Modulated_Markov_Function(*S, *M);
   }
 
   ModulatedMarkovModel::ModulatedMarkovModel(const MultiModel& MM, const ExchangeModel& EM)
     :ReversibleMarkovModel(MM.Alphabet()),M(MM),S(EM)
   {
-    unsigned T = 0;
-    for(int m=0; m < M->n_base_models(); m++) 
-    {
-      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M->base_model(m).part(0));
-      if (not RM)
-	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model"; // what is the name?
-      T += RM->n_states();
-    }
-
-    // resize for larger state set
-    pi.resize(T);
-
-    Q.resize(T,T);
-
-    state_letters_.resize(T);
-
-    // calculate the state_letters() map here!
-
-    T = 0;
-    for(int m=0; m < M->n_base_models(); m++) 
-    {
-      unsigned N = M->base_model(m).n_states();
-      for(int i=0; i<N; i++)
-	state_letters_[T+i] = M->base_model(m).state_letters()[i];
-
-      T += N;
-    }
-
     register_submodel("M");
     register_submodel("S");
 
     check();
-    recalc_all();
   }
   
   // Now how to write MultiParameterModel( M, p_change, DiscretizationFunction( Gamma(), n_bins ) ) as an expression?

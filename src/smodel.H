@@ -161,8 +161,9 @@ namespace substitution {
   protected:
     boost::shared_ptr<const alphabet> a;
 
-    std::vector<unsigned> state_letters_;
   public:
+    std::vector<unsigned> state_letters_;
+
     const std::vector<unsigned>& state_letters() const {return state_letters_;}
 
     unsigned n_states() const {return state_letters_.size();}
@@ -256,8 +257,6 @@ namespace substitution {
 
     boost::shared_ptr<const Object> evaluate() const;
 
-    const alphabet& Alphabet() const;
-
     string name() const;
       
     INV_Model(const alphabet& a);
@@ -274,8 +273,6 @@ namespace substitution {
     virtual EQU* clone() const {return new EQU(*this);}
 
     boost::shared_ptr<const Object> evaluate() const;
-
-    const alphabet& Alphabet() const;
 
     string name() const;
 
@@ -300,8 +297,6 @@ namespace substitution {
     void load_file(const string& filename);
 
     virtual Empirical* clone() const {return new Empirical(*this);}
-
-    const alphabet& Alphabet() const;
 
     string name() const {return name_;}
 
@@ -426,8 +421,6 @@ namespace substitution {
   class TripletExchangeModel: public AlphabetExchangeModel
   {
   public:
-    const Triplets& Alphabet() const;
-
     TripletExchangeModel* clone() const=0;
 
     TripletExchangeModel(const Triplets& T);
@@ -1007,6 +1000,8 @@ namespace substitution {
 
     const alphabet& Alphabet() const {return *a;}
 
+    boost::shared_ptr<const alphabet> get_alphabet() const {return a;}
+
     virtual MultiModelObject* clone() const {return new MultiModelObject(*this);}
 
     double rate() const;
@@ -1421,7 +1416,7 @@ namespace substitution {
     owned_ptr<MultiModel> M;
     owned_ptr<ExchangeModel> S;
 
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
 
     const ::Model& SubModels(int i) const {
       if (i==0)
@@ -1448,6 +1443,8 @@ namespace substitution {
     string name() const;
 
     const alphabet& Alphabet() const {return M->Alphabet();}
+
+    boost::shared_ptr<const Object> evaluate() const;
 
     ModulatedMarkovModel(const MultiModel& M, const ExchangeModel& S);
   };
