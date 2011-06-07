@@ -101,16 +101,8 @@ namespace substitution {
   class Model: virtual public AlphabetModel
   {
   public:
-    
-    virtual const std::vector<unsigned>& state_letters() const=0;
-
-    unsigned n_states() const { return state_letters().size();}
-
     /// Make a copy of this object
     virtual Model* clone() const =0;
-
-    /// Construct an empty model
-    Model() {};
 
     virtual ~Model() {}
   };
@@ -140,14 +132,6 @@ namespace substitution {
   {
   public:
     virtual AdditiveModel* clone() const=0;
-
-    virtual double rate() const =0;
-
-    // FIXME - here we are treating the model object as a calculated result.
-    //         therefore, we cannot do this to actual submodels.
-    //         Instead, make a copy (which is like the evaluated value of the model function)
-    //           and modify the copy.
-    virtual void set_rate(double) =0;
 
     AdditiveModel() {}
   };
