@@ -131,12 +131,6 @@ namespace substitution {
     /// Make a copy of this object
     virtual ReversibleModel* clone() const =0;
 
-    /// The transition probability matrix over time t
-    virtual Matrix transition_p(double t) const =0;
-
-    /// Get the equilibrium frequencies
-    virtual valarray<double> frequencies() const=0;
-
     ReversibleModel() {}
   };
 
