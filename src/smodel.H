@@ -1410,41 +1410,14 @@ namespace substitution {
 
   
   class ModulatedMarkovModel: public ReversibleMarkovModel,
-			      public SuperModel
+			      public OpModel
   {
   protected:
-    owned_ptr<MultiModel> M;
-    owned_ptr<ExchangeModel> S;
-
     void recalc(const std::vector<int>&) {std::abort();}
-
-    const ::Model& SubModels(int i) const {
-      if (i==0)
-	return *M;
-      else if (i==1)
-	return *S;
-      else
-	std::abort();
-    }
-
-    ::Model& SubModels(int i) {
-      if (i==0)
-	return *M;
-      else if (i==1)
-	return *S;
-      else
-	std::abort();
-    }
 
   public:
 
     virtual ModulatedMarkovModel* clone() const {return new ModulatedMarkovModel(*this);}
-
-    string name() const;
-
-    const alphabet& Alphabet() const {return M->Alphabet();}
-
-    boost::shared_ptr<const Object> evaluate() const;
 
     ModulatedMarkovModel(const MultiModel& M, const ExchangeModel& S);
   };

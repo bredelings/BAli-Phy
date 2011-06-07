@@ -2872,11 +2872,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
 
-  string ModulatedMarkovModel::name() const 
-  {
-    return M->name() + " + " + S->name();
-  }
-
   // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
   //         Q(mi -> ni) = R(m->n)        for model exchange
   // and     Q(mi -> nj) = 0              for all other pairs
@@ -3012,14 +3007,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return R;
   }
 
-  shared_ptr<const Object> ModulatedMarkovModel::evaluate() const
-  {
-    shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(SubModels(0).evaluate());
-    shared_ptr<const ExchangeModelObject> S = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(1).evaluate());
-
-    return Modulated_Markov_Function(*S, *M);
-  }
-
   struct Modulated_Markov_Op: public Operation
   {
     Modulated_Markov_Op* clone() const {return new Modulated_Markov_Op(*this);}
@@ -3040,13 +3027,9 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   expression_ref Modulated_Markov_E = Modulated_Markov_Op();
 
   ModulatedMarkovModel::ModulatedMarkovModel(const MultiModel& MM, const ExchangeModel& EM)
-    :ReversibleMarkovModel(MM.Alphabet()),M(MM),S(EM)
-  {
-    register_submodel("M");
-    register_submodel("S");
-
-    check();
-  }
+    :ReversibleMarkovModel(MM.Alphabet()),
+     OpModel(Modulated_Markov_E(MM,EM))
+  { }
   
   // Now how to write MultiParameterModel( M, p_change, DiscretizationFunction( Gamma(), n_bins ) ) as an expression?
 
