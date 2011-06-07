@@ -170,9 +170,6 @@ namespace substitution {
   public:
     virtual IndependantAdditiveModel* clone() const=0;
 
-    /// The transition probability matrix
-    virtual Matrix transition_p(double t) const =0;
-
     IndependantAdditiveModel() {}
   };
 
@@ -181,9 +178,6 @@ namespace substitution {
   {
   public:
     virtual Independant_Additive_Reversible_Model* clone() const=0;
-
-    /// The transition probability matrix
-    virtual Matrix transition_p(double) const=0;
   };
 
 
