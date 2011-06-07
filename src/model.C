@@ -656,6 +656,40 @@ vector<int> parameters_with_extension(const Model& M, string name)
   return indices;
 }
 
+struct OpModelOperationArgs: public OperationArgs
+{
+  OpModel& M;
+  boost::shared_ptr<Computation> computation;
+
+  boost::shared_ptr<const Object> evaluate(int slot);
+
+  OpModelOperationArgs* clone() const {return new OpModelOperationArgs(*this);}
+
+  OpModelOperationArgs(OpModel& m);
+};
+
+OpModelOperationArgs::OpModelOperationArgs(OpModel& m)
+  :M(m)
+{ 
+  int n_input_slots = m.Op->n_args();
+  
+  computation = boost::shared_ptr<Computation>( new Computation(n_input_slots) );
+}
+
+boost::shared_ptr<const Object> OpModelOperationArgs::evaluate(int slot)
+{
+  if (not computation->used_values[slot])
+  {
+    computation->used_values[slot] = M.evaluate(slot);
+    computation->slots_used_order.push_back(slot);
+  }
+  
+  // Whatever we evaluated should NOT evaluate to NULL!
+  assert( computation->used_values[slot] );
+  
+  return computation->used_values[slot];
+}
+
 efloat_t OpModel::prior() const
 {
   efloat_t Pr = 1;
@@ -757,7 +791,8 @@ shared_ptr<const Object> OpModel::evaluate(int slot)
 
 boost::shared_ptr<const Object> OpModel::evaluate()
 {
-  return (*Op)(*this);
+  OpModelOperationArgs A(*this);
+  return (*Op)(A);
 }
 
 int OpModel::add_submodel(shared_ptr<const Model> m)

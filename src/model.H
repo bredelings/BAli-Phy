@@ -416,6 +416,8 @@ class expression_ref;
 
 class OpModel: virtual public Model, public OperationArgs
 {
+  friend class OpModelOperationArgs;
+
   /// by index, what does each input parameter do?
   std::vector<std::vector<model_slot> > model_slots_for_index;
 
