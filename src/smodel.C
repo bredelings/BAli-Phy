@@ -1071,14 +1071,14 @@ namespace substitution {
   }
 
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const AlphabetExchangeModel& E)
-    :ReversibleMarkovModel(E.Alphabet()),
-     OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(E.Alphabet())) )
+    :ReversibleMarkovModel(*E.get_alphabet()),
+     OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(*E.get_alphabet())) )
   { }
 
   SimpleReversibleMarkovModel::
   SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
-    :ReversibleMarkovModel(E.Alphabet()),
-     OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(E.Alphabet(),pi)) )
+    :ReversibleMarkovModel(*E.get_alphabet()),
+     OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(*E.get_alphabet(),pi)) )
   {
     show_parameters(std::cout, *this);
     recalc_all();

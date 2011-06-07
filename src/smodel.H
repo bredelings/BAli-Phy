@@ -240,10 +240,9 @@ namespace substitution {
   public:
     AlphabetExchangeModel* clone() const =0;
     
-    const alphabet& Alphabet() const 
+    boost::shared_ptr<const alphabet> get_alphabet() const 
     {
-      // return dynamic_pointer_cast<AlphabetExchangeModelObject>(evaluate())->get_alphabet();
-      return get_parameter_value_as<alphabet>(0);
+      return dynamic_pointer_cast<const AlphabetExchangeModelObject>(evaluate())->get_alphabet();
     }
 
     virtual ~AlphabetExchangeModel() {};
