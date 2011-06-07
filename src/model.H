@@ -438,6 +438,9 @@ public:
 
   efloat_t prior() const;
 
+  /// The prior for the parameters of the upper model
+  virtual efloat_t super_prior() const {return 1.0;}
+
   std::string name() const;
 
   void check() const;

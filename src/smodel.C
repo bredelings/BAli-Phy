@@ -866,50 +866,7 @@ namespace substitution {
 
   //------------------------ F81 Model -------------------------//
 
-  void F81_Model::recalc(const vector<int>&)
-  {
-    const int N = n_states();
-    assert(N == n_letters());
-
-    pi = get_vector<double>( get_parameter_values_as<Double>( range<int>(1,N) ) );
-    normalize(pi);
-
-    for(int i=0;i<N;i++)
-      for(int j=0;j<N;j++)
-	Q(i,j) = (pi[j] - ((i==j)?1:0))*alpha_;
-  }
-
-  double  F81_Model::rate() const
-  {
-    const unsigned N = n_states();
-
-    double sum=0;
-    for(int i=0;i<N;i++)
-      sum += pi[i]*(1.0-pi[i]);
-
-    return sum*alpha_;
-  }
-
-  void F81_Model::set_rate(double r)
-  {
-    if (r == rate()) return;
-
-    if (rate() == 0 and r != 0)
-      throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
-
-    double scale = r/rate();
-
-    Q *= scale;
-
-    alpha_ *= scale;
-  }
-
-  const alphabet& F81_Model::Alphabet() const
-  {
-    return get_parameter_value_as<alphabet>(0);
-  }
-  
-  Matrix F81_Model::transition_p(double t) const
+  Matrix F81_Object::transition_p(double t) const
   {
     const unsigned N = n_states();
 
@@ -924,13 +881,81 @@ namespace substitution {
     return E;
   }
 
+  double F81_Object::rate() const
+  {
+    const unsigned N = n_states();
+
+    double sum=0;
+    for(int i=0;i<N;i++)
+      sum += pi[i]*(1.0-pi[i]);
+
+    return sum*alpha_;
+  }
+
+  void F81_Object::set_rate(double r)
+  {
+    if (r == rate()) return;
+
+    if (rate() == 0 and r != 0)
+      throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
+
+    double scale = r/rate();
+
+    Q *= scale;
+
+    alpha_ *= scale;
+  }
+
+  F81_Object::F81_Object(const alphabet& a)
+    :ReversibleMarkovModelObject(a),
+     alpha_(1)
+  {
+    const int N = a.size();
+
+    for(int i=0;i<N;i++)
+      pi[i] = 1.0/N;
+
+    for(int i=0;i<N;i++)
+      for(int j=0;j<N;j++)
+	Q(i,j) = (pi[j] - ((i==j)?1:0))*alpha_;
+  }
+
+  F81_Object::F81_Object(const alphabet& a, const valarray<double>& v)
+    :ReversibleMarkovModelObject(a),
+     alpha_(1)
+  { 
+    const int N = a.size();
+
+    pi = get_vector<double>(v);
+
+    for(int i=0;i<N;i++)
+      for(int j=0;j<N;j++)
+	Q(i,j) = (pi[j] - ((i==j)?1:0))*alpha_;
+  }
+
+  shared_ptr<const Object> F81_Model::evaluate()
+  {
+    const int N = Alphabet().size();
+
+    const alphabet& a =  get_parameter_value_as<alphabet>(0);
+    valarray<double> pi = get_varray<double>( get_parameter_values_as<Double>( range<int>(1,N) ) );
+    pi /= pi.sum();
+
+    return shared_ptr<const F81_Object>(new F81_Object(a, pi) );
+  }
+
+  const alphabet& F81_Model::Alphabet() const
+  {
+    return get_parameter_value_as<alphabet>(0);
+  }
+  
   efloat_t F81_Model::prior() const
   {
     // uniform prior on f
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1, n_letters()) ), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1, Alphabet().size()) ), 1.0);
 
     return Pr;
   }
@@ -941,26 +966,30 @@ namespace substitution {
   }
 
   F81_Model::F81_Model(const alphabet& a)
-    :ReversibleMarkovModel(a),alpha_(1)
+    :ReversibleMarkovModel(a)
   {
     add_parameter(Parameter("alphabet",a));
 
-    for(int i=0;i<n_letters();i++) {
+    int N = a.size();
+
+    for(int i=0;i<N;i++) {
       string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(Parameter(pname, Double(1.0/n_letters()), between(0, 1)));
+      add_parameter(Parameter(pname, Double(1.0/N), between(0, 1)));
     }
 
     recalc_all();
   }
 
   F81_Model::F81_Model(const alphabet& a,const valarray<double>& f)
-    :ReversibleMarkovModel(a),alpha_(1)
+    :ReversibleMarkovModel(a)
   {
     add_parameter(Parameter("alphabet",a));
 
-    assert(f.size() == n_letters());
+    int N = a.size();
 
-    for(int i=0;i<n_letters();i++) {
+    assert(f.size() == N);
+
+    for(int i=0;i<N;i++) {
       string pname = string("pi") + Alphabet().letter(i);
       add_parameter(Parameter(pname, Double(f[i]), between(0, 1)));
     }

@@ -796,30 +796,40 @@ namespace substitution {
     
     ~ReversibleMarkovModel() {}
   };
+
+  struct F81_Object: public ReversibleMarkovModelObject
+  {
+  public:
+    double alpha_;
+
+    /// Make a copy of this object
+    virtual F81_Object* clone() const {return new F81_Object(*this);}
+
+    double rate() const;
+    void set_rate(double);
+
+    /// The transition probability matrix - which we can now compute
+    Matrix transition_p(double t) const;
+
+    F81_Object(const alphabet& a);
+    F81_Object(const alphabet& a, const valarray<double>&);
+  };
   
   /// A Felsenstein-81 model, in which Q_ij = a*pi[j]
   class F81_Model: public ReversibleMarkovModel
   {
-    double alpha_;
-
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
   public:
-    double rate() const;
-    void set_rate(double);
-
-    double alpha() const {return alpha_;}
-
     const alphabet& Alphabet() const;
 
     /// Make a copy of this object
     virtual F81_Model* clone() const {return new F81_Model(*this);}
 
-    /// The transition probability matrix - which we can now compute
-    Matrix transition_p(double t) const;
-
     virtual efloat_t prior() const;
 
     string name() const;
+
+    boost::shared_ptr<const Object> evaluate();
 
     F81_Model(const alphabet& a);
     F81_Model(const alphabet& a,const valarray<double>&);
