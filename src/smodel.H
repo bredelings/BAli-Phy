@@ -89,16 +89,9 @@ namespace substitution {
   using std::valarray;
 
   //--------------------- class AlphabetModel ----------------------//
-  /// A model that is associated with an alphabet
-  class AlphabetModel: virtual public ::Model
-  {
-  public:
-  };
-
-
 
   /// A generic model of the process of substitution
-  class Model: virtual public AlphabetModel
+  class Model: virtual public ::Model
   {
   public:
     /// Make a copy of this object
@@ -498,7 +491,7 @@ namespace substitution {
     { }
   };
 
-  class ReversibleFrequencyModel: virtual public AlphabetModel, public ReversibleFrequencyModelObject
+  class ReversibleFrequencyModel: virtual public ::Model, public ReversibleFrequencyModelObject
   {
   public:
     ReversibleFrequencyModel* clone() const =0;
