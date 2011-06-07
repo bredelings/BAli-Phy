@@ -193,8 +193,9 @@ Model::Model()
 
 boost::shared_ptr<const Object> Model::evaluate()
 {
-  update();
-  return boost::shared_ptr<const Object>(clone());
+  shared_ptr<Model> M (clone());
+  M->update();
+  return M;
 }
 
 void Model::update()
