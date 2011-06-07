@@ -191,7 +191,7 @@ Model::Model()
   :valid(false)
 { }
 
-boost::shared_ptr<const Object> Model::evaluate() const
+boost::shared_ptr<const Object> Model::result() const
 {
   shared_ptr<Model> M (clone());
   M->update();
@@ -681,7 +681,7 @@ boost::shared_ptr<const Object> OpModelOperationArgs::evaluate(int slot)
 {
   if (not computation->used_values[slot])
   {
-    computation->used_values[slot] = M.evaluate(slot);
+    computation->used_values[slot] = M.slot_result(slot);
     computation->slots_used_order.push_back(slot);
   }
   
@@ -764,7 +764,7 @@ void OpModel::check() const
     }
 }
 
-shared_ptr<const Object> OpModel::evaluate(int slot) const
+shared_ptr<const Object> OpModel::slot_result(int slot) const
 {
   const arg_expression& slot_arg = slot_expressions_for_op[slot];
 
@@ -786,11 +786,11 @@ shared_ptr<const Object> OpModel::evaluate(int slot) const
     // update the relevant sub_model, and return a 
     int submodel_index = slot_arg.sub_model_index;
 
-    return sub_models[submodel_index]->evaluate();
+    return sub_models[submodel_index]->result();
   }
 }
 
-boost::shared_ptr<const Object> OpModel::evaluate() const
+boost::shared_ptr<const Object> OpModel::result() const
 {
   OpModelOperationArgs A(*this);
   return (*Op)(A);

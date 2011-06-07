@@ -178,7 +178,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> SimpleExchangeModel::evaluate() const
+  shared_ptr<const Object> SimpleExchangeModel::result() const
   {
     Double rho = get_parameter_value_as<Double>(0);
     Int n = get_parameter_value_as<Int>(1);
@@ -925,7 +925,7 @@ namespace substitution {
 	Q(i,j) = (pi[j] - ((i==j)?1:0))*alpha_;
   }
 
-  shared_ptr<const Object> F81_Model::evaluate() const
+  shared_ptr<const Object> F81_Model::result() const
   {
     const int N = Alphabet().size();
 
@@ -1073,7 +1073,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> INV_Model::evaluate() const
+  shared_ptr<const Object> INV_Model::result() const
   {
     return INV_Exchange_Function(get_parameter_value_as<alphabet>(0));
   }
@@ -1102,7 +1102,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> EQU::evaluate() const
+  shared_ptr<const Object> EQU::result() const
   {
     return EQU_Exchange_Function(get_parameter_value_as<alphabet>(0));
   }
@@ -1118,7 +1118,7 @@ namespace substitution {
 
   //----------------------- Empirical -------------------------//
 
-  shared_ptr<const Object> Empirical::evaluate() const
+  shared_ptr<const Object> Empirical::result() const
   {
     return get_parameter_value(1);
   }
@@ -1318,7 +1318,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> HKY::evaluate() const
+  shared_ptr<const Object> HKY::result() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
     Double kappa = get_parameter_value_as<Double>(1);
@@ -1370,7 +1370,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> TN::evaluate() const
+  shared_ptr<const Object> TN::result() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
     Double kappa1 = get_parameter_value_as<Double>(1);
@@ -1440,7 +1440,7 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> GTR::evaluate() const
+  shared_ptr<const Object> GTR::result() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
 
@@ -1508,9 +1508,9 @@ namespace substitution {
     return R;
   }
 
-  shared_ptr<const Object> SingletToTripletExchangeModel::evaluate() const
+  shared_ptr<const Object> SingletToTripletExchangeModel::result() const
   {
-    shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(0).evaluate());
+    shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(0).result());
     return SingletToTripletExchangeFunction(get_parameter_value_as<Triplets>(0), *S2);
   }
 
@@ -1811,7 +1811,7 @@ namespace substitution {
 
     // make a copy of the submodel
     base_models.resize(1);
-    base_models[0] = *dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(SubModel().evaluate());
+    base_models[0] = *dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(SubModel().result());
   }
 
   string UnitModel::name() const {
@@ -1881,7 +1881,7 @@ namespace substitution {
       if (std::abs(fm.sum() - 1.0) > 1.0e-5) cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<fm.sum()<<endl;
 
       // get a new copy of the sub-model and set the frequencies
-      //      owned_ptr<ReversibleMarkovModelObject> temp = SubModel().evaluate();
+      //      owned_ptr<ReversibleMarkovModelObject> temp = SubModel().result();
       //      temp->frequencies(fm);
       //      base_models[m] = SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>( *temp );
     }
@@ -1987,7 +1987,7 @@ namespace substitution {
 
       // FIXME!  This should NOT be so complicated.
       shared_ptr<const ReversibleAdditiveCollectionObject> R = 
-	dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(SimpleReversibleAdditiveCollection(F81_Model(a,f_ordered)).evaluate());
+	dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(SimpleReversibleAdditiveCollection(F81_Model(a,f_ordered)).result());
       base_models.push_back(*R);
       base_models.back()->set_rate(1);
     }
@@ -2352,7 +2352,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   void GammaParameterModel::recalc(const std::vector<int>&)
   {
-    MultiModelObject::operator=( dynamic_cast<const MultiModelObject&>( *evaluate() ) );
+    MultiModelObject::operator=( dynamic_cast<const MultiModelObject&>( *result() ) );
   }
 
   GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
@@ -2403,7 +2403,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // do not messing with submodel instead of going through top model
     SimpleReversibleMarkovModel INV2(INV_Model(SubModel().Alphabet()), SubModel().frequencies());
     SimpleReversibleAdditiveCollection INV3(INV2);
-    shared_ptr<const ReversibleAdditiveCollectionObject> INV4 = dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(INV3.evaluate());
+    shared_ptr<const ReversibleAdditiveCollectionObject> INV4 = dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(INV3.result());
     base_models.back() = *INV4;
   }
 

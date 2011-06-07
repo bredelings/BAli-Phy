@@ -267,7 +267,7 @@ public:
   virtual void check() const {}
 
   // Evaluate the model and return the result
-  virtual boost::shared_ptr<const Object> evaluate() const;
+  virtual boost::shared_ptr<const Object> result() const;
 
   bool is_valid() const {return valid;}
   virtual void update();
@@ -447,9 +447,9 @@ public:
 
   void check() const;
 
-  boost::shared_ptr<const Object> evaluate(int) const;
+  boost::shared_ptr<const Object> slot_result(int) const;
   
-  boost::shared_ptr<const Object> evaluate() const;
+  boost::shared_ptr<const Object> result() const;
 
   OpModel(const expression_ref&);
 };
