@@ -3020,6 +3020,25 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return Modulated_Markov_Function(*S, *M);
   }
 
+  struct Modulated_Markov_Op: public Operation
+  {
+    Modulated_Markov_Op* clone() const {return new Modulated_Markov_Op(*this);}
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      shared_ptr<const MultiModelObject> M = Args.evaluate_as<MultiModelObject>(0);
+      shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(1);
+
+      return Modulated_Markov_Function(*S, *M);
+    }
+
+    std::string name() const {return "Modulated_Markov";}
+
+    Modulated_Markov_Op():Operation(2) { }
+  };
+
+  expression_ref Modulated_Markov_E = Modulated_Markov_Op();
+
   ModulatedMarkovModel::ModulatedMarkovModel(const MultiModel& MM, const ExchangeModel& EM)
     :ReversibleMarkovModel(MM.Alphabet()),M(MM),S(EM)
   {
