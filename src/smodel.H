@@ -716,33 +716,17 @@ namespace substitution {
   //   3. return DN*(O*Dt*O)*DP
 
   /// A Markov substitution model which is reversible
-  class ReversibleMarkovModel: public ReversibleMarkovModelObject,
-			       public Independant_Additive_Reversible_Model 
+  class ReversibleMarkovModel: public Independant_Additive_Reversible_Model 
   {
-  protected:
-
   public:
-    double rate() const {return ReversibleMarkovModelObject::rate();}
-    void set_rate(double r) {ReversibleMarkovModelObject::set_rate(r);}
-    
-    const alphabet& Alphabet() const {return ReversibleMarkovModelObject::Alphabet();}
-
-    int n_letters() const {return Alphabet().size();}
 
     /// Make a copy of this object
     virtual ReversibleMarkovModel* clone() const =0;
 
-    /// The transition rate matrix
-    virtual const Matrix& transition_rates() const {return Q;};
-
-    virtual const std::vector<unsigned>& state_letters() const {return ReversibleMarkovModelObject::state_letters();}
-
-    unsigned n_states() const {return state_letters().size();}
-
-    /// Get the equilibrium frequencies
-    valarray<double> frequencies() const {return ReversibleMarkovModelObject::frequencies();}
-
-    virtual Matrix transition_p(double t) const {return ReversibleMarkovModelObject::transition_p(t);}
+    boost::shared_ptr<const alphabet> get_alphabet() const 
+    {
+      return dynamic_pointer_cast<const ReversibleMarkovModelObject>(evaluate())->get_alphabet();
+    }
 
     ReversibleMarkovModel(const alphabet& a);
     
@@ -794,9 +778,6 @@ namespace substitution {
   class ReversibleMarkovSuperModel: public ReversibleMarkovModel,
 				    public OpModel
   {
-  protected:
-    void recalc(const std::vector<int>&);
-
   public:
     /// Make a copy of this object
     virtual ReversibleMarkovSuperModel* clone() const {return new ReversibleMarkovSuperModel(*this);}
@@ -811,9 +792,6 @@ namespace substitution {
   class SimpleReversibleMarkovModel: public ReversibleMarkovModel,
 				     public OpModel
   {
-  protected:
-    void recalc(const std::vector<int>&);
-
   public:
     /// Make a copy of this object
     virtual SimpleReversibleMarkovModel* clone() const {return new SimpleReversibleMarkovModel(*this);}
@@ -849,7 +827,9 @@ namespace substitution {
   public:
     virtual ReversibleAdditiveCollectionObject* clone() const {return new ReversibleAdditiveCollectionObject(*this);}
 
-    const alphabet& Alphabet() const;
+    boost::shared_ptr<const alphabet> get_alphabet() const;
+
+    const alphabet& Alphabet() const {return *get_alphabet();}
 
     const std::vector<unsigned>& state_letters() const;
     
@@ -881,36 +861,15 @@ namespace substitution {
 
   /// Class for a collection of models that could be used on different branches of the tree.
   class ReversibleAdditiveCollection: virtual public Model, 
-				      virtual public AdditiveModel, 
-				      public ReversibleAdditiveCollectionObject
+				      virtual public AdditiveModel
   {
   public:
+    boost::shared_ptr<const alphabet> get_alphabet() const 
+    {
+      return dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(evaluate())->get_alphabet();
+    }
+
     virtual ReversibleAdditiveCollection* clone() const=0;
-
-    const alphabet& Alphabet() const {return ReversibleAdditiveCollectionObject::Alphabet();}
-
-    const std::vector<unsigned>& state_letters() const;
-    
-    unsigned n_states() const {return ReversibleAdditiveCollectionObject::n_states();}
-
-    /// How many different models do we contain?
-    int n_parts() const {return ReversibleAdditiveCollectionObject::n_parts();}
-
-    /// Return the i-th branch model
-    const ReversibleAdditiveObject& part(int i) const {return ReversibleAdditiveCollectionObject::part(i);}
-    /// Return the i-th branch model
-          ReversibleAdditiveObject& part(int i)       {return ReversibleAdditiveCollectionObject::part(i);}
-
-    double rate() const {return ReversibleAdditiveCollectionObject::rate();}
-    void set_rate(double r) {return ReversibleAdditiveCollectionObject::set_rate(r);}
-
-    /// The transition probability matrix over time t for the i-th branch model
-    virtual Matrix transition_p(double t,int i) const {return ReversibleAdditiveCollectionObject::transition_p(t,i);}
-
-    /// Get the equilibrium frequencies.  Currently all branch models must have the same frequencies.
-    valarray<double> frequencies() const {return ReversibleAdditiveCollectionObject::frequencies();}
-
-    ReversibleAdditiveCollection() {}
 
     virtual ~ReversibleAdditiveCollection() {}
   };
@@ -923,7 +882,7 @@ namespace substitution {
 
     std::vector<owned_ptr<ReversibleMarkovSuperModel> > P;
 
-    void recalc(const std::vector<int>&);
+    boost::shared_ptr<const Object> evaluate() const;
 
     int n_submodels() const;
 
@@ -940,30 +899,30 @@ namespace substitution {
   };
 
   /// A multi-branch model with only 1 part.
-  template<typename T>
   class SimpleReversibleAdditiveCollection: public ReversibleAdditiveCollection,
-  //					    public ReversibleAdditiveModel,
-					    public SuperModelOver<T>
+					    public SuperModelOver<ReversibleAdditiveModel>
   {
   public:
-    virtual SimpleReversibleAdditiveCollection<T>* clone() const {return new SimpleReversibleAdditiveCollection<T>(*this);}
+    virtual SimpleReversibleAdditiveCollection* clone() const {return new SimpleReversibleAdditiveCollection(*this);}
 
-          T& SubModel()       {return SuperModelOver<T>::SubModels(0); }
+          ReversibleAdditiveModel& SubModel()       {return SubModels(0); }
 
-    const T& SubModel() const {return SuperModelOver<T>::SubModels(0); }
+    const ReversibleAdditiveModel& SubModel() const {return SubModels(0); }
 
-    void recalc(const std::vector<int>&)
+    boost::shared_ptr<const Object> evaluate() const
     {
-      parts.resize(1);
-      parts[0] = SubModel();
+      boost::shared_ptr<const ReversibleAdditiveObject> O = dynamic_pointer_cast<const ReversibleAdditiveObject>(SubModel().evaluate());
+      boost::shared_ptr<const ReversibleAdditiveCollectionObject> R (new  ReversibleAdditiveCollectionObject(* O) );
+      return R;
     }
+
+    void update() { }
 
     std::string name() const {return SubModel().name();}
     
-    SimpleReversibleAdditiveCollection(const T& t)
+    SimpleReversibleAdditiveCollection(const ReversibleAdditiveModel& t)
     {
-      insert_submodel("0",t);
-      recalc_all();
+      this->insert_submodel("0",t);
     }
 
     virtual ~SimpleReversibleAdditiveCollection() {}
@@ -1085,11 +1044,12 @@ namespace substitution {
 
     const ReversibleAdditiveCollection& SubModel() const {return SuperModelOver<ReversibleAdditiveCollection>::SubModels(0); }
 
+    /*
     const alphabet& Alphabet() const {return SubModel().Alphabet();}
 
     /// Get the equilibrium frequencies
     valarray<double> frequencies() const { return SubModel().frequencies(); }
-
+    */
     string name() const;
 
     UnitModel(const ReversibleMarkovModel& M);
@@ -1115,9 +1075,6 @@ namespace substitution {
     efloat_t super_prior() const;
 
     MultiFrequencyModel* clone() const {return new MultiFrequencyModel(*this);}
-
-    /// Get the equilibrium frequencies
-    valarray<double> frequencies() const;
 
     string name() const;
 

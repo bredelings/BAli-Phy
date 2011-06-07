@@ -851,18 +851,10 @@ namespace substitution {
   }
 
   ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)
-    :ReversibleMarkovModelObject(a)
-  {
-    for(int i=0;i<a.size();i++)
-      state_letters_[i] = i;
-  }
+  { }
 
   ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a, int n)
-    :ReversibleMarkovModelObject(a, n)
-  {
-    for(int i=0;i<n;i++)
-      state_letters_[i] = -1;
-  }
+  { }
 
   //------------------------ F81 Model -------------------------//
 
@@ -1048,28 +1040,14 @@ namespace substitution {
   };
 
   expression_ref Q_from_R_and_S = Q_from_R_and_S_Op();
-  void ReversibleMarkovSuperModel::recalc(const vector<int>&)
-  {
-    ReversibleMarkovModelObject::operator=( dynamic_cast<const ReversibleMarkovModelObject&>( *evaluate() ) );
-  }
 
   /// Construct a reversible Markov model on alphabet 'a'
   ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
     :ReversibleMarkovModel(R1.Alphabet()),
      OpModel( Q_from_R_and_S(S1,R1) )
-  { 
-    // name: return S1.name() + "+" + R1.name();
-
-    show_parameters(std::cout, *this);
-    recalc_all();
-  }
+  { }
 
     
-  void SimpleReversibleMarkovModel::recalc(const vector<int>&)
-  {
-    ReversibleMarkovModelObject::operator=( dynamic_cast<const ReversibleMarkovModelObject&>( *evaluate() ) );
-  }
-
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const AlphabetExchangeModel& E)
     :ReversibleMarkovModel(*E.get_alphabet()),
      OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(*E.get_alphabet())) )
@@ -1079,10 +1057,7 @@ namespace substitution {
   SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
     :ReversibleMarkovModel(*E.get_alphabet()),
      OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(*E.get_alphabet(),pi)) )
-  {
-    show_parameters(std::cout, *this);
-    recalc_all();
-  }
+  { }
 
   //---------------------- INV_Model --------------------------//
 
@@ -1646,9 +1621,9 @@ namespace substitution {
 
   //--------------- MultiBranch Models --------------//
 
-  const alphabet& ReversibleAdditiveCollectionObject::Alphabet() const 
+  shared_ptr<const alphabet> ReversibleAdditiveCollectionObject::get_alphabet() const 
   {
-    return part(0).Alphabet();
+    return part(0).get_alphabet();
   }
 
   int ReversibleAdditiveCollectionObject::n_parts() const
@@ -1694,13 +1669,6 @@ namespace substitution {
   valarray<double> ReversibleAdditiveCollectionObject::frequencies() const
   {
     return part(0).frequencies();
-  }
-
-
-
-  const std::vector<unsigned>& ReversibleAdditiveCollection::state_letters() const
-  {
-    return ReversibleAdditiveCollectionObject::state_letters();
   }
 
   //------------ A Branch/Site Model ----------------//
@@ -1835,7 +1803,7 @@ namespace substitution {
   }
 
 
-  void UnitModel::recalc(const std::vector<int>&)
+  void UnitModel::recalc(const vector<int>&)
   {
     // set the distribution to 1.0
     fraction.resize(1);
@@ -1843,7 +1811,7 @@ namespace substitution {
 
     // make a copy of the submodel
     base_models.resize(1);
-    base_models[0] = SubModel();
+    base_models[0] = *dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(SubModel().evaluate());
   }
 
   string UnitModel::name() const {
@@ -1851,16 +1819,16 @@ namespace substitution {
   }
 
   UnitModel::UnitModel(const ReversibleMarkovModel& RA)
-    :MultiModel(RA.Alphabet())
+    :MultiModel(*RA.get_alphabet())
   {
-    SimpleReversibleAdditiveCollection<ReversibleMarkovModel> M(RA);
+    SimpleReversibleAdditiveCollection M(RA);
     insert_submodel("0",M);
 
     recalc_all();
   }
 
   UnitModel::UnitModel(const ReversibleAdditiveCollection& M)
-    :MultiModel(M.Alphabet())
+    :MultiModel(*M.get_alphabet())
   {
     insert_submodel("0",M);
   }
@@ -1882,11 +1850,6 @@ namespace substitution {
     }
 
     return Pr;
-  }
-
-  /// Get the equilibrium frequencies
-  std::valarray<double> MultiFrequencyModel::frequencies() const {
-    return SubModel().frequencies();
   }
 
   void MultiFrequencyModel::recalc(const vector<int>&) 
@@ -2022,7 +1985,10 @@ namespace substitution {
       for(int j=0;j<f_ordered.size();j++)
 	f_ordered[letter[j]] = f[j];
 
-      base_models.push_back(SimpleReversibleAdditiveCollection<F81_Model>(F81_Model(a,f_ordered)));
+      // FIXME!  This should NOT be so complicated.
+      shared_ptr<const ReversibleAdditiveCollectionObject> R = 
+	dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(SimpleReversibleAdditiveCollection(F81_Model(a,f_ordered)).evaluate());
+      base_models.push_back(*R);
       base_models.back()->set_rate(1);
     }
 
@@ -2436,7 +2402,9 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // do not messing with submodel instead of going through top model
     SimpleReversibleMarkovModel INV2(INV_Model(SubModel().Alphabet()), SubModel().frequencies());
-    base_models.back() = SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>(INV2);
+    SimpleReversibleAdditiveCollection INV3(INV2);
+    shared_ptr<const ReversibleAdditiveCollectionObject> INV4 = dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(INV3.evaluate());
+    base_models.back() = *INV4;
   }
 
   string WithINV::name() const {
@@ -2952,17 +2920,15 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     T=0;
     for(int m=0; m < n_models; m++) 
     {
-      const ReversibleMarkovModel* RM = dynamic_cast<const ReversibleMarkovModel*>(&M.base_model(m).part(0));
+      const ReversibleMarkovModelObject* RM = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m).part(0));
       if (not RM)
 	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model"; // what is the name?
 
       unsigned N = RM->n_states();
       
-
-      const Matrix& QM = RM->transition_rates();
       for(int s1=0; s1 < N; s1++) 
 	for(int s2=0; s2 < N; s2++)
-	  R->Q(T+s1,T+s2) = QM(s1,s2);
+	  R->Q(T+s1,T+s2) = RM->Q(s1,s2);
 
       T += N;
     }
