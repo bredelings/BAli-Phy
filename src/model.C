@@ -693,7 +693,7 @@ boost::shared_ptr<const Object> OpModelOperationArgs::evaluate(int slot)
 
 efloat_t OpModel::prior() const
 {
-  efloat_t Pr = 1;
+  efloat_t Pr = super_prior();
   for(int i=0;i<sub_models.size();i++)
     Pr *= sub_models[i]->prior();
   return Pr;
