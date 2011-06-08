@@ -1206,19 +1206,10 @@ namespace substitution {
   };
 
 
-  class DistributionParameterModel: public MultiParameterModel
+  class DistributionParameterModel: public MultiModel, public OpModel
   {
-  protected:
-          Distribution& D();
-    const Distribution& D() const;
-
-    void recalc(const std::vector<int>&);
-
   public:
-
     DistributionParameterModel* clone() const {return new DistributionParameterModel(*this);}
-
-    string name() const;
 
     DistributionParameterModel(const MultiModel& M, const Distribution& RD,int p,int n);
   };
@@ -1228,7 +1219,7 @@ namespace substitution {
   class GammaParameterModel: public MultiModel, public OpModel
   {
   public:
-    virtual GammaParameterModel* clone() const {return new GammaParameterModel(*this);}
+    GammaParameterModel* clone() const {return new GammaParameterModel(*this);}
 
     /// Construct a discrete gamma model on top of 'M', with 'n' bins
     GammaParameterModel(const MultiModel& M, int n);
@@ -1236,9 +1227,10 @@ namespace substitution {
 
   /// A discrete-lognormal Model
   //  Only has one parameter: the shape parameter for the gamma
-  class LogNormalParameterModel: public DistributionParameterModel {
+  class LogNormalParameterModel: public MultiModel, public OpModel
+  {
   public:
-    virtual LogNormalParameterModel* clone() const {return new LogNormalParameterModel(*this);}
+    LogNormalParameterModel* clone() const {return new LogNormalParameterModel(*this);}
 
     /// Construct a discrete gamma model on top of 'M', with 'n' bins
     LogNormalParameterModel(const MultiModel& M, int n);

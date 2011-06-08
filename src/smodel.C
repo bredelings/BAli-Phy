@@ -2292,40 +2292,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   //--------------- Distribution-based Model----------------//
 
-  Distribution& DistributionParameterModel::D()
-  {
-    return SubModelAs<Distribution>(1);
-  }
-
-  const Distribution& DistributionParameterModel::D() const
-  {
-    return SubModelAs<Distribution>(1);
-  }
-
-  void DistributionParameterModel::recalc(const vector<int>&) 
-  {
-    // We only need to do this when the DISTRIBUTION changes (?)
-    Discretization d(p_values.size(),D());
-    double ratio = d.scale()/D().mean();
-
-    d.scale(1.0/ratio);
-
-    weights = d.f;
-    p_values = d.r;
-    // FIXME
-    // 1. Convert MultiParameterModel to using DiscreteDistribtion internall
-    // 2. Use DiscretizationFunction here
-
-   
-    // recalc_submodel_instances: we need to do this when either P_values changes, or the SUBMODEL changes
-    DiscreteDistribution D(weights.size());
-    D.fraction = weights;
-    for(int i=0;i<weights.size();i++)
-      D.values[i] = boost::shared_ptr<Object>( new Double(p_values[i]) );
-
-    MultiModelObject::operator=( MultiParameterFunction(SubModel(), p_change, D) );
-  }
-
+  /*
   string DistributionParameterModel::name() const {
     string p_name = "rate";
     if (p_change > -1)
@@ -2334,15 +2301,14 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     string dist_name = p_name + "~" + D().name() + "(" + convertToString(p_values.size()) + ")";
     return SubModels(0).name() + " + " + dist_name;
   }
+  */
 
-  DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const Distribution& RD, int p, int n)
-    :MultiParameterModel(M,p,n)
-  {
-    insert_submodel("DIST",RD);
-
-    check();
-    recalc_all();
-  }
+  DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const Distribution& D, int p, int n)
+    :MultiModel(M.Alphabet()),
+     OpModel( 
+	     (~MultiParameterOp())(M, E(-1), (~DiscretizationOp())(D, E(n) ) ) 
+	      )
+  { }
 
   /*--------------- Gamma Sites Model----------------*/
 
@@ -2358,7 +2324,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   /*--------------- LogNormal Sites Model----------------*/
 
   LogNormalParameterModel::LogNormalParameterModel(const MultiModel& M,int n)
-    :DistributionParameterModel(M,LogNormal(),-1,n)
+    :MultiModel(M.Alphabet()),
+     OpModel( 
+	     (~MultiParameterOp())(M, E(-1), (~DiscretizationOp())(LogNormal(), E(n) ) ) 
+	      )
   {}
 
 
