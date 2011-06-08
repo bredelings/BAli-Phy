@@ -1847,7 +1847,7 @@ namespace substitution {
     {
       valarray<double> a_l(n);
       for(int m=0;m<a_l.size();m++)
-	a_l[m] = a(m,l);
+	a_l[m] = A(m,l);
 
       Pr *= ::dirichlet_pdf(a_l, n/2.0);
     }
@@ -1855,38 +1855,56 @@ namespace substitution {
     return Pr;
   }
 
-  void MultiFrequencyModel::recalc(const vector<int>&) 
+  template <typename T>
+  struct MMatrix
   {
+    T operator()(int,int) const;
+  };
+
+  shared_ptr<MultiModelObject> Multi_Frequency_Function(const AlphabetExchangeModelObject& S, 
+							const ReversibleFrequencyModelObject& F,
+							const MMatrix<Double>& a)
+  {
+  }
+
+  shared_ptr<const Object> MultiFrequencyModel::result() const
+  {
+    shared_ptr<const ReversibleMarkovModelObject> M = SubModel().result_as<ReversibleMarkovModelObject>();
+
     // get underlying frequencies from our submodel
-    valarray<double> f = frequencies();
+    valarray<double> f = M->frequencies();
+
+    const alphabet& a = *M->get_alphabet();
+
+    shared_ptr<MultiModelObject> R (new MultiModelObject(a));
 
     // calculate probability of each sub-model
-    fraction.resize(f.size());
+    R->fraction.resize(f.size());
     for(int m=0;m<fraction.size();m++) 
     {
       // Pr(m) = sum_l Pr(m|l)*Pr(l)
-      fraction[m] = 0;
-      for(int l=0;l<Alphabet().size();l++)
-	fraction[m] += a(m,l)*f[l];
+      R->fraction[m] = 0;
+      for(int l=0;l<a.size();l++)
+	R->fraction[m] += get_parameter_value_as<Double>(m+l*R->fraction.size())*f[l];
     }
 
-    if (std::abs(sum(fraction) - 1.0) > 1.0e-5) cerr<<"ERROR: sum(fraction) = "<<sum(fraction)<<endl;
+    if (std::abs(sum(R->fraction) - 1.0) > 1.0e-5) cerr<<"ERROR: sum(fraction) = "<<sum(R->fraction)<<endl;
 
     // recalculate sub-models
-    base_models.resize(fraction.size());
-    valarray<double> fm(Alphabet().size());
-    for(int m=0;m<fraction.size();m++) 
+    R->base_models.resize(R->fraction.size());
+    vector<double> fm(a.size());
+    for(int m=0;m<R->fraction.size();m++) 
     {
       // Pr(l|m) = Pr(m|l)*Pr(l)/Pr(m)
       for(int l=0;l<fm.size();l++)
-	fm[l] = a(m,l)*f[l]/fraction[m];
+	fm[l] = get_parameter_value_as<Double>(m+l*R->fraction.size())*f[l]/fraction[m];
 
-      if (std::abs(fm.sum() - 1.0) > 1.0e-5) cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<fm.sum()<<endl;
+      if (std::abs(sum(fm) - 1.0) > 1.0e-5) cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<sum(fm)<<endl;
 
       // get a new copy of the sub-model and set the frequencies
-      //      owned_ptr<ReversibleMarkovModelObject> temp = SubModel().result();
-      //      temp->frequencies(fm);
-      //      base_models[m] = SimpleReversibleAdditiveCollection<SimpleReversibleMarkovModel>( *temp );
+      owned_ptr<ReversibleMarkovModelObject> Mm = *M;
+      Mm->pi = fm; // wait... this doesn't adjust Q!  We need to separate the ExchangeModel and the FrequencyModel
+      base_models[m] = ReversibleAdditiveCollectionObject( *Mm );
     }
   }
 
@@ -1912,6 +1930,13 @@ namespace substitution {
 	add_super_parameter(Parameter(pname, Double(1.0/n), between(0, 1)));
       }
     }
+
+    // Convert this to an op model
+    // Q. How do we introduce the top-level frequency parameters?
+    // A. We could use a ReversibleFrequencyModel in the expression.
+    //
+    // Q. How do we introduce the A(m,l) parameters, since their number is variable?
+    // A. ??
 
     recalc_all();
   }

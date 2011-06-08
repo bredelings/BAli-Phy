@@ -1045,15 +1045,17 @@ namespace substitution {
   {
   protected:
     // a(m,l) is the probability that a letter is in component "m" given that it is of type "l"
-    inline double  a(int m,int l) const {return get_parameter_value_as<Double>(m+l*fraction.size());}
+    inline double  A(int m,int l) const {return get_parameter_value_as<Double>(m+l*fraction.size());}
 
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
 
 
   public:
     efloat_t super_prior() const;
 
     MultiFrequencyModel* clone() const {return new MultiFrequencyModel(*this);}
+
+    boost::shared_ptr<const Object> result() const;
 
     string name() const;
 
