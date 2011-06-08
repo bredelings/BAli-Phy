@@ -1510,8 +1510,7 @@ namespace substitution {
 
   shared_ptr<const Object> SingletToTripletExchangeModel::result() const
   {
-    shared_ptr<const ExchangeModelObject> S2 = dynamic_pointer_cast<const ExchangeModelObject>(SubModels(0).result());
-    return SingletToTripletExchangeFunction(get_parameter_value_as<Triplets>(0), *S2);
+    return SingletToTripletExchangeFunction(get_parameter_value_as<Triplets>(0), *SubModels(0).result_as<ExchangeModelObject>() );
   }
 
   string SingletToTripletExchangeModel::name() const {
@@ -1811,7 +1810,7 @@ namespace substitution {
 
     // make a copy of the submodel
     base_models.resize(1);
-    base_models[0] = *dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(SubModel().result());
+    base_models[0] = *SubModel().result_as<ReversibleAdditiveCollectionObject>();
   }
 
   string UnitModel::name() const {
@@ -1985,10 +1984,7 @@ namespace substitution {
       for(int j=0;j<f_ordered.size();j++)
 	f_ordered[letter[j]] = f[j];
 
-      // FIXME!  This should NOT be so complicated.
-      shared_ptr<const ReversibleAdditiveCollectionObject> R = 
-	dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(SimpleReversibleAdditiveCollection(F81_Model(a,f_ordered)).result());
-      base_models.push_back(*R);
+      base_models.push_back(*SimpleReversibleAdditiveCollection(F81_Model(a,f_ordered)).result_as<ReversibleAdditiveCollectionObject>() );
       base_models.back()->set_rate(1);
     }
 
@@ -2378,7 +2374,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   void WithINV::recalc(const vector<int>&) 
   {
-    shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(SubModel().result());
+    shared_ptr<const MultiModelObject> M = SubModel().result_as<MultiModelObject>();
 
     int n = M->n_base_models();
 
@@ -2397,8 +2393,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // do not messing with submodel instead of going through top model
     SimpleReversibleMarkovModel INV2(INV_Model(M->Alphabet()), M->frequencies());
     SimpleReversibleAdditiveCollection INV3(INV2);
-    shared_ptr<const ReversibleAdditiveCollectionObject> INV4 = dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(INV3.result());
-    base_models.back() = *INV4;
+    base_models.back() = *INV3.result_as<ReversibleAdditiveCollectionObject>();
   }
 
   string WithINV::name() const {

@@ -243,7 +243,7 @@ namespace substitution {
     
     boost::shared_ptr<const alphabet> get_alphabet() const 
     {
-      return dynamic_pointer_cast<const AlphabetExchangeModelObject>(result())->get_alphabet();
+      return result_as<AlphabetExchangeModelObject>()->get_alphabet();
     }
 
     virtual ~AlphabetExchangeModel() {};
@@ -725,7 +725,7 @@ namespace substitution {
 
     boost::shared_ptr<const alphabet> get_alphabet() const 
     {
-      return dynamic_pointer_cast<const ReversibleMarkovModelObject>(result())->get_alphabet();
+      return result_as<ReversibleMarkovModelObject>()->get_alphabet();
     }
 
     ReversibleMarkovModel(const alphabet& a);
@@ -866,7 +866,7 @@ namespace substitution {
   public:
     boost::shared_ptr<const alphabet> get_alphabet() const 
     {
-      return dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(result())->get_alphabet();
+      return result_as<ReversibleAdditiveCollectionObject>()->get_alphabet();
     }
 
     virtual ReversibleAdditiveCollection* clone() const=0;
@@ -911,7 +911,7 @@ namespace substitution {
 
     boost::shared_ptr<const Object> result() const
     {
-      boost::shared_ptr<const ReversibleAdditiveObject> O = dynamic_pointer_cast<const ReversibleAdditiveObject>(SubModel().result());
+      boost::shared_ptr<const ReversibleAdditiveObject> O = SubModel().result_as<ReversibleAdditiveObject>();
       boost::shared_ptr<const ReversibleAdditiveCollectionObject> R (new  ReversibleAdditiveCollectionObject(* O) );
       return R;
     }
