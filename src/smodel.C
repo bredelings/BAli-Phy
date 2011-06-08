@@ -2350,21 +2350,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   /*--------------- Gamma Sites Model----------------*/
 
-  void GammaParameterModel::recalc(const std::vector<int>&)
-  {
-    MultiModelObject::operator=( dynamic_cast<const MultiModelObject&>( *result() ) );
-  }
-
   GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
     :MultiModel(M.Alphabet()),
      OpModel( 
 	     (~MultiParameterOp())(M, E(-1), (~DiscretizationOp())(Gamma(), E(n) ) ) 
-	      ),
-     p_change(-1),
-     n_bins(n)
+	      )
   {
     show_parameters(std::cout, *this);
-    recalc_all();
   }
 
   /*--------------- LogNormal Sites Model----------------*/
@@ -2386,22 +2378,24 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   void WithINV::recalc(const vector<int>&) 
   {
-    int n = SubModel().n_base_models();
+    shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(SubModel().result());
+
+    int n = M->n_base_models();
 
     // compute base models
     fraction.resize(n+1);
     double p = get_parameter_value_as<Double>(p_index);
     for(int i=0;i<n;i++)
-      fraction[i] = SubModel().distribution()[i] * (1.0-p);
+      fraction[i] = M->distribution()[i] * (1.0-p);
     fraction.back() = p;
 
     // compute base models
     base_models.resize(n + 1);
     for(int i=0;i<n;i++)
-      base_models[i] = SubModel().base_model(i);
+      base_models[i] = M->base_model(i);
 
     // do not messing with submodel instead of going through top model
-    SimpleReversibleMarkovModel INV2(INV_Model(SubModel().Alphabet()), SubModel().frequencies());
+    SimpleReversibleMarkovModel INV2(INV_Model(M->Alphabet()), M->frequencies());
     SimpleReversibleAdditiveCollection INV3(INV2);
     shared_ptr<const ReversibleAdditiveCollectionObject> INV4 = dynamic_pointer_cast<const ReversibleAdditiveCollectionObject>(INV3.result());
     base_models.back() = *INV4;

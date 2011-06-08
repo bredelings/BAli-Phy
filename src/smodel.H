@@ -1227,13 +1227,6 @@ namespace substitution {
   //  Only has one parameter: the shape parameter for the gamma
   class GammaParameterModel: public MultiModel, public OpModel
   {
-    /// The parameter which is varying;
-    int p_change;
-
-    /// The number of bins
-    int n_bins;
-
-    void recalc(const std::vector<int>&);
   public:
     virtual GammaParameterModel* clone() const {return new GammaParameterModel(*this);}
 
