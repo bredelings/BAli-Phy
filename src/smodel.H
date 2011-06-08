@@ -1006,23 +1006,6 @@ namespace substitution {
   public:
     virtual MultiModel* clone() const=0;
 
-    const alphabet& Alphabet() const {return MultiModelObject::Alphabet();}
-
-    double rate() const {return MultiModelObject::rate();}
-    void set_rate(double r) {MultiModelObject::set_rate(r);}
-
-    const std::vector<unsigned>& state_letters() const {return MultiModelObject::state_letters();}
-
-    unsigned n_states() const {return MultiModelObject::n_states();}
-
-    /// Get a transition probability matrix for time 't', averaging over models
-    Matrix transition_p(double t) const {return MultiModelObject::transition_p(t);}
-
-    /// Get a transition probability matrix for time 't' and model 'm'
-    Matrix transition_p(double t,int i, int m) const {return MultiModelObject::transition_p(t,i,m);}
-
-    valarray<double> frequencies() const {return MultiModelObject::frequencies();}
-
     MultiModel(const alphabet& a);
 
     MultiModel(const alphabet& a, int n);
