@@ -974,10 +974,10 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     cow_ptr<data_partition> dp;
     if (imodel_for_partition[i] != -1) {
       const IndelModel& IM = IModel(imodel_for_partition[i]);
-      dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,SM,IM));
+      dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,*SM.result_as<substitution::MultiModelObject>(),IM));
     }
     else 
-      dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,SM));
+      dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,*SM.result_as<substitution::MultiModelObject>()));
 
     // add the data partition
     data_partitions.push_back(dp);
