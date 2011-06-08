@@ -263,6 +263,8 @@ public:
   /// The model's name
   virtual std::string name() const =0;
 
+  std::string print() const {return name();}
+
   virtual void check() const {}
 
   // Evaluate the model and return the result
