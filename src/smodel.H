@@ -909,21 +909,13 @@ namespace substitution {
 
     const ReversibleAdditiveModel& SubModel() const {return SubModels(0); }
 
-    boost::shared_ptr<const Object> result() const
-    {
-      boost::shared_ptr<const ReversibleAdditiveObject> O = SubModel().result_as<ReversibleAdditiveObject>();
-      boost::shared_ptr<const ReversibleAdditiveCollectionObject> R (new  ReversibleAdditiveCollectionObject(* O) );
-      return R;
-    }
+    boost::shared_ptr<const Object> result() const;
 
     void update() { }
 
-    std::string name() const {return SubModel().name();}
+    std::string name() const;
     
-    SimpleReversibleAdditiveCollection(const ReversibleAdditiveModel& t)
-    {
-      this->insert_submodel("0",t);
-    }
+    SimpleReversibleAdditiveCollection(const ReversibleAdditiveModel& t);
 
     virtual ~SimpleReversibleAdditiveCollection() {}
   };

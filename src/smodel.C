@@ -1670,6 +1670,22 @@ namespace substitution {
     return part(0).frequencies();
   }
 
+  shared_ptr<const Object> SimpleReversibleAdditiveCollection::result() const
+  {
+    shared_ptr<const ReversibleAdditiveObject> O = SubModel().result_as<ReversibleAdditiveObject>();
+    shared_ptr<const ReversibleAdditiveCollectionObject> R (new  ReversibleAdditiveCollectionObject(* O) );
+    return R;
+  }
+
+  string SimpleReversibleAdditiveCollection::name() const {
+    return "{"+SubModel().name()+"}";
+  }
+    
+  SimpleReversibleAdditiveCollection::SimpleReversibleAdditiveCollection(const ReversibleAdditiveModel& t)
+  {
+    insert_submodel("0",t);
+  }
+
   //------------ A Branch/Site Model ----------------//
   /*
   void BranchSiteCollection::recalc(const std::vector<int>&)
@@ -1826,8 +1842,6 @@ namespace substitution {
   {
     SimpleReversibleAdditiveCollection M(RA);
     insert_submodel("0",M);
-
-    recalc_all();
   }
 
   UnitModel::UnitModel(const ReversibleAdditiveCollection& M)
