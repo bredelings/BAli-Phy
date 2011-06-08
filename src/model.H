@@ -267,6 +267,10 @@ public:
   // Evaluate the model and return the result
   virtual boost::shared_ptr<const Object> result() const;
 
+  // Evaluate the model and return the result
+  template <typename T>
+  boost::shared_ptr<const T> result_as() const {return boost::dynamic_pointer_cast<const T>(result());}
+
   bool is_valid() const {return valid;}
   virtual void update();
 
