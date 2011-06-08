@@ -1802,15 +1802,19 @@ namespace substitution {
   }
 
 
-  void UnitModel::recalc(const vector<int>&)
+  shared_ptr<const Object> UnitModel::result() const
   {
+    shared_ptr<MultiModelObject> R (new MultiModelObject(*SubModels(0).get_alphabet()));
+
     // set the distribution to 1.0
-    fraction.resize(1);
-    fraction[0] = 1;
+    R->fraction.resize(1);
+    R->fraction[0] = 1;
 
     // make a copy of the submodel
-    base_models.resize(1);
-    base_models[0] = *SubModel().result_as<ReversibleAdditiveCollectionObject>();
+    R->base_models.resize(1);
+    R->base_models[0] = *SubModel().result_as<ReversibleAdditiveCollectionObject>();
+
+    return R;
   }
 
   string UnitModel::name() const {

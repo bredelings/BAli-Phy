@@ -1036,7 +1036,7 @@ namespace substitution {
   class UnitModel: public MultiModel,
 		   public SuperModelOver< ReversibleAdditiveCollection >
   {
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
   public:
     UnitModel* clone() const {return new UnitModel(*this);}
 
@@ -1044,13 +1044,9 @@ namespace substitution {
 
     const ReversibleAdditiveCollection& SubModel() const {return SuperModelOver<ReversibleAdditiveCollection>::SubModels(0); }
 
-    /*
-    const alphabet& Alphabet() const {return SubModel().Alphabet();}
-
-    /// Get the equilibrium frequencies
-    valarray<double> frequencies() const { return SubModel().frequencies(); }
-    */
     string name() const;
+
+    boost::shared_ptr<const Object> result() const;
 
     UnitModel(const ReversibleMarkovModel& M);
 
