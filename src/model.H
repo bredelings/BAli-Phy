@@ -73,7 +73,7 @@ struct Parameter
 //    o make supermodels into an Op plus models, as arguments?
 //    o allow models to have computed objects as parts.
 //    o allow sharing between models.
-//    o pull priors out of models ->
+//    o pull priors out of models (or expressions) ->
 //      + in fact, priors are objects that RETURN models, a "density" model, and a "simulate" model.
 //    o do some caching of results?
 // 4. Make model evaluation lazy.
@@ -81,6 +81,7 @@ struct Parameter
 //    o before: remove set_rate()
 //    o before: remove (set_)frequencies( )
 //    o before: stop making models inherit from Objects
+//    o before: convert all recalc() in smodel.H to result()
 //      - ReversibleFrequencyModel
 //        + SimpleFrequencyModel, UniformFrequencyModel, TripletFM, IndependentNucleotideFM, TripletsFM, CodonFM,
 //          AACodonFM, CodonsFM, CodonsFM2, 
