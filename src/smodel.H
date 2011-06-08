@@ -1224,7 +1224,9 @@ namespace substitution {
   public:
     virtual WithINV* clone() const {return new WithINV(*this);}
 
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
+
+    boost::shared_ptr<const Object> result() const;
 
     efloat_t super_prior() const;
 

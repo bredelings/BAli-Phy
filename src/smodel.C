@@ -2384,28 +2384,32 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return SubModel().frequencies();
   }
 
-  void WithINV::recalc(const vector<int>&) 
+  shared_ptr<const Object> WithINV::result() const
   {
     shared_ptr<const MultiModelObject> M = SubModel().result_as<MultiModelObject>();
+
+    shared_ptr<const MultiModelObject> R (new MultiModelObject(*M->get_alphabet()));
 
     int n = M->n_base_models();
 
     // compute base models
-    fraction.resize(n+1);
+    R->fraction.resize(n+1);
     double p = get_parameter_value_as<Double>(p_index);
     for(int i=0;i<n;i++)
-      fraction[i] = M->distribution()[i] * (1.0-p);
-    fraction.back() = p;
+      R->fraction[i] = M->distribution()[i] * (1.0-p);
+    R->fraction.back() = p;
 
     // compute base models
-    base_models.resize(n + 1);
+    R->base_models.resize(n + 1);
     for(int i=0;i<n;i++)
-      base_models[i] = M->base_model(i);
+      R->base_models[i] = M->base_model(i);
 
     // do not messing with submodel instead of going through top model
     SimpleReversibleMarkovModel INV2(INV_Model(M->Alphabet()), M->frequencies());
     SimpleReversibleAdditiveCollection INV3(INV2);
-    base_models.back() = *INV3.result_as<ReversibleAdditiveCollectionObject>();
+    R->base_models.back() = *INV3.result_as<ReversibleAdditiveCollectionObject>();
+
+    return R;
   }
 
   string WithINV::name() const {
@@ -2428,7 +2432,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     p_index = add_super_parameter(Parameter("INV::p", Double(0.01), between(0, 1)));
 
     check();
-    recalc_all();
   }
 
   //-------------------- M2 --------------------//
