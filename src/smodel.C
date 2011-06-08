@@ -1839,7 +1839,7 @@ namespace substitution {
   //---------------------- MultiFrequencyModel -----------------------//
   efloat_t MultiFrequencyModel::super_prior() const 
   {
-    const int n = fraction.size();
+    const int n = Alphabet().size();
 
     efloat_t Pr = 1;
 
@@ -1847,7 +1847,7 @@ namespace substitution {
     {
       valarray<double> a_l(n);
       for(int m=0;m<a_l.size();m++)
-	a_l[m] = A(m,l);
+	a_l[m] = get_parameter_value_as<Double>(m+l*n);
 
       Pr *= ::dirichlet_pdf(a_l, n/2.0);
     }

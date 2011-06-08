@@ -1044,8 +1044,6 @@ namespace substitution {
 			     public ReversibleWrapperOver<SimpleReversibleMarkovModel> 
   {
   protected:
-    // a(m,l) is the probability that a letter is in component "m" given that it is of type "l"
-    inline double  A(int m,int l) const {return get_parameter_value_as<Double>(m+l*fraction.size());}
 
     void recalc(const std::vector<int>&) {std::abort();}
 
