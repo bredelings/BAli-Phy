@@ -1089,7 +1089,7 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
   out_screen<<"\n";
   for(int i=0;i<P.n_data_partitions();i++) {
     int s_index = P.get_smodel_index_for_partition(i);
-    out_screen<<"#"<<i+1<<": subst ~ "<<P[i].SModel().name()<<" ("<<s_index+1<<")    ";
+    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
 
     int i_index = P.get_imodel_index_for_partition(i);
     string i_name = "none";

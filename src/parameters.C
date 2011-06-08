@@ -465,7 +465,7 @@ efloat_t data_partition::heated_likelihood() const
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
-			       const substitution::MultiModel& SM,const IndelModel& IM)
+			       const substitution::MultiModelObject& SM,const IndelModel& IM)
   :IModel_(IM),
    SModel_(SM),
    partition_name(n),
@@ -501,7 +501,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
-			       const substitution::MultiModel& SM)
+			       const substitution::MultiModelObject& SM)
   :SModel_(SM),
    partition_name(n),
    cached_alignment_prior_for_branch(t.n_branches()),
@@ -663,7 +663,7 @@ void Parameters::recalc_smodel(int m)
   {
     if (smodel_for_partition[i] == m) {
       // copy our IModel down into the data partition
-      data_partitions[i]->SModel_ = SModels[m];
+      data_partitions[i]->SModel_ = SModels[m]->result_as<substitution::MultiModelObject>();
 
       // recompute cached computations
       data_partitions[i]->recalc_smodel();

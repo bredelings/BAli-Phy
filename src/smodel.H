@@ -1030,7 +1030,7 @@ namespace substitution {
     ~MultiModel() {}
   };
 
-  Matrix frequency_matrix(const MultiModel&);
+  Matrix frequency_matrix(const MultiModelObject&);
  
   /// A MultiRate Model with a single rate
   class UnitModel: public MultiModel,

@@ -1793,7 +1793,7 @@ namespace substitution {
     :MultiModelObject(a,n)
   { }
 
-  Matrix frequency_matrix(const MultiModel& M) {
+  Matrix frequency_matrix(const MultiModelObject& M) {
     Matrix f(M.n_base_models(),M.n_states());
     for(int m=0;m<f.size1();m++)
       for(int l=0;l<f.size2();l++)
