@@ -52,6 +52,7 @@ struct Parameter
 
   Parameter(const std::string&);
   Parameter(const std::string&, boost::shared_ptr<const Object>);
+  Parameter(const std::string&, boost::shared_ptr<const Object>, const Bounds<double>&, bool=false);
 
   Parameter(const std::string&, const Object&);
   Parameter(const std::string&, const Object&, bool);
@@ -458,6 +459,43 @@ public:
 
   OpModel(const expression_ref&);
 };
+
+class LambdaModel: public Model
+{
+  int p_change;
+
+  polymorphic_cow_ptr< Model > sub_model;
+public:
+  LambdaModel* clone() const {return new LambdaModel(*this);}
+
+  void write_value(int i, const boost::shared_ptr<const Object>& p);
+  
+  void recalc(const std::vector<int>&) {std::abort();}
+
+  efloat_t prior() const;
+
+  std::string name() const;
+
+  boost::shared_ptr<const Object> result() const;
+
+  LambdaModel(const Model& M, int p_change);
+};
+
+
+
+class ModelFunction: virtual public Object
+{
+  int p_change;
+
+  mutable polymorphic_cow_ptr < Model > sub_model;
+public:
+  ModelFunction* clone() const {return new ModelFunction(*this);}
+
+  boost::shared_ptr<const Object> operator()(boost::shared_ptr<const Object> O) const;
+
+  ModelFunction(const Model& M, int p);
+};
+
 
 int find_parameter(const Model& M,const std::string& name);
 

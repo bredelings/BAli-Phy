@@ -2128,31 +2128,21 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     :fraction(s), values(s)
   { }
 
-  MultiModelObject MultiParameterFunction(const MultiModel& M_, Int p_change, const DiscreteDistribution& D)
+  shared_ptr<MultiModelObject> MultiParameterFunction(const ModelFunction& F, const DiscreteDistribution& D)
   {
-    shared_ptr<MultiModel> M = ptr(M_);
+    shared_ptr<MultiModelObject> R;
 
-    int N = M->n_base_models() * D.size();
-
-    MultiModelObject R(M->Alphabet());
-
-    // recalc fractions and base models
-    R.resize(N);
-
-    for(int m=0;m<R.n_base_models();m++) 
+    for(int i=0;i<D.fraction.size();i++)
     {
-      int i = m / M->n_base_models();
-      int j = m % M->n_base_models();
+      shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(F(D.values[i]));
 
-      R.fraction[m] = D.fraction[i]*M->distribution()[j];
-
-      Double value = dynamic_cast<const Double&>(*D.values[i]);
-      if (p_change == -1)
-	M->set_rate( value );
-      else
-	M->set_parameter_value(p_change, value);
-
-      R.base_models[m] = M->base_model(j);
+      if (not R) R = shared_ptr<MultiModelObject>(new MultiModelObject(*M->get_alphabet()));
+      
+      for(int j=0;j<M->n_base_models();j++)
+      {
+	R->fraction.push_back( D.fraction[i] * M->distribution()[j] );
+	R->base_models.push_back( M->base_model(j) );
+      }
     }
 
     return R;
@@ -2236,19 +2226,18 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       // The input-model should really be a lambda function taking the single value (or first value) p_change
-      shared_ptr<const MultiModel> M = Args.evaluate_as<substitution::MultiModel>(0);
-      shared_ptr<const Int> p_change = Args.evaluate_as<Int>(1);
-      shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(2);
+      shared_ptr<const ModelFunction> F = Args.evaluate_as<ModelFunction>(0);
+      shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(1);
       
-      boost::shared_ptr< MultiModelObject > R ( MultiParameterFunction(*M, *p_change, *D).clone() );
-
-      return R;
+      return MultiParameterFunction(*F, *D);
     }
 
     std::string name() const {return "MultiParameter";}
 
-    MultiParameterOp():Operation(3) { }
+    MultiParameterOp():Operation(2) { }
   };
+
+  expression_ref MultiParameter = MultiParameterOp();
 
   struct MultiRateOp: public Operation
   {
@@ -2346,8 +2335,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       D.fraction[i] = get_parameter_value_as<Double>(p_index+i);
       D.values[i] = get_parameter_value(p_index+i+n_bins);
     }
+
+    shared_ptr<const ModelFunction> F = dynamic_pointer_cast<const ModelFunction>(LambdaModel(SubModel(), p_change).result());
     
-    MultiModelObject::operator=( MultiParameterFunction(SubModel(), p_change, D) );
+    MultiModelObject::operator=( *MultiParameterFunction(*F, D) );
   }
 
   string DirichletParameterModel::name() const {
@@ -2400,7 +2391,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const Distribution& D, int p, int n)
     :MultiModel(M.Alphabet()),
      OpModel( 
-	     (~MultiParameterOp())(M, E(-1), Discretization(D, E(n) ) ) 
+	     MultiParameter(LambdaModel(M,p), Discretization(D, E(n) ) ) 
 	      )
   { }
 
