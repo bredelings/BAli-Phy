@@ -151,4 +151,6 @@ typedef POD<bool> Bool;
 
 template <typename T>
 boost::shared_ptr<T> ptr(const T& t) {return boost::shared_ptr<T>(t.clone());}
+template <typename T>
+boost::shared_ptr<const T> const_ptr(const T& t) {return boost::shared_ptr<const T>(t.clone());}
 #endif
