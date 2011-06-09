@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 using std::vector;
 
 /// Set branch 'b' to have length 'l', and compute the transition matrices
-void MatCache::setlength(int b,double l,Tree& T,const substitution::MultiModel& SModel) {
+void MatCache::setlength(int b,double l,Tree& T,const substitution::MultiModelObject& SModel) {
   assert(l >= 0);
   assert(b >= 0 and b < T.n_branches());
   T.branch(b).set_length(l);
@@ -30,7 +30,7 @@ void MatCache::setlength(int b,double l,Tree& T,const substitution::MultiModel& 
     transition_P_[b][m] = SModel.transition_p(l,0,m);
 }
 
-void MatCache::recalc(const Tree& T,const substitution::MultiModel& SModel) {
+void MatCache::recalc(const Tree& T,const substitution::MultiModelObject& SModel) {
   for(int b=0;b<T.n_branches();b++)
     for(int m=0;m<SModel.n_base_models();m++)
       transition_P_[b][m] = SModel.transition_p(T.branch(b).length(),0,m);
@@ -51,7 +51,7 @@ int MatCache::n_states() const
   return n_states_;
 }
 
-MatCache::MatCache(const Tree& T,const substitution::MultiModel& SM)
+MatCache::MatCache(const Tree& T,const substitution::MultiModelObject& SM)
   :n_branches_(T.n_branches()),
    n_models_(SM.n_base_models()),
    n_states_(SM.state_letters().size()),

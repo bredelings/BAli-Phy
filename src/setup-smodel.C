@@ -463,7 +463,7 @@ bool process_stack_Multi(vector<string>& string_stack,
   {
     owned_ptr<MultiModel> MM = get_MM(model_stack,"Modulated",frequencies);
 
-    int n = MM->n_base_models();
+    int n = MM->result_as<MultiModelObject>()->n_base_models();
     model_stack.back() = ModulatedMarkovModel(*MM,
 					      SimpleExchangeModel(n));
   }

@@ -72,7 +72,7 @@ vector<double> get_post_rate_probs(const vector< vector<double> >& P)
   return f;
 }
 
-double E_rate(const vector<vector<double> >& P, int c,const substitution::MultiModel& smodel)
+double E_rate(const vector<vector<double> >& P, int c,const substitution::MultiModelObject& smodel)
 {
   double R=0;
   for(int m=0;m<smodel.n_base_models();m++)
@@ -81,7 +81,7 @@ double E_rate(const vector<vector<double> >& P, int c,const substitution::MultiM
 }
 
 void show_rate_probs(std::ostream& o, const vector< vector<double> >& P,
-		     const substitution::MultiModel& smodel)
+		     const substitution::MultiModelObject& smodel)
 {
   for(int c=0; c<P.size(); c++)
     o<<c<<" "<<E_rate(P,c,smodel)<<endl;
@@ -136,7 +136,9 @@ double branch_likelihood::operator()(const optimize::Vector& v) const
     smodel->set_parameter_value(parameters[i], v[T.n_branches()+i]);
 
   //----- Setup cached CL's + Transition matrices -----//
-  data_partition DP("DP",A,T2,*smodel);
+  substitution::MultiModelObject M = *smodel->result_as<substitution::MultiModelObject>();
+  M.set_rate(1);
+  data_partition DP("DP",A,T2,M);
 
   return log(DP.likelihood() * smodel->prior() * prior_exponential(T2,0.2));
 }
@@ -169,13 +171,15 @@ double log_branch_likelihood::operator()(const optimize::Vector& v) const
     smodel->set_parameter_value(parameters[i], v[T.n_branches()+i]);
 
   //----- Setup cached CL's + Transition matrices -----//
-  data_partition DP("DP",A,T2,*smodel);
+  substitution::MultiModelObject M = *smodel->result_as<substitution::MultiModelObject>();
+  M.set_rate(1);
+  data_partition DP("DP",A,T2,M);
 
   return log(DP.likelihood() * smodel->prior() * prior_exponential(T2,0.2));
 }
 
 
-double getSimilarity(double t,substitution::MultiModel& SM) 
+double getSimilarity(double t,const substitution::MultiModelObject& SM) 
 {
   double S = 0;
 
@@ -191,7 +195,7 @@ double getSimilarity(double t,substitution::MultiModel& SM)
   return S;
 }
 
-Matrix getSimilarity(const SequenceTree& T,substitution::MultiModel& SM) {
+Matrix getSimilarity(const SequenceTree& T,const substitution::MultiModelObject& SM) {
   int n = T.n_leaves();
   Matrix S(n,n);
 
@@ -296,9 +300,11 @@ std::ostream& print_entire(std::ostream& o,vector<string> labels, const Matrix& 
 }
 
 void analyze_rates(const alignment& A,const SequenceTree& T,
-		   const substitution::MultiModel& smodel)
+		   substitution::MultiModelObject smodel)
 {
   if (smodel.n_base_models() == 1) return;
+
+  smodel.set_rate(1);
 
   data_partition DP("DP",A,T,smodel);
 
@@ -385,8 +391,6 @@ void estimate_tree(const alignment& A,
 
   for(int i=0;i<parameters.size();i++)
     smodel.set_parameter_value(parameters[i], end[i+T.n_branches()]);
-
-  smodel.set_rate(1);
 }
 
 variables_map parse_cmd_line(int argc,char* argv[]) 
@@ -471,7 +475,7 @@ int main(int argc,char* argv[])
     owned_ptr<substitution::MultiModel> smodel_in = get_smodel(args,A);
     set_parameters(*smodel_in,args);
     cout<<"Using substitution model: "<<smodel_in->name()<<endl;
-    smodel_in->set_rate(1);
+    // smodel_in->set_rate(1);
     show_parameters(cout,*smodel_in);
     cout<<endl;
 
@@ -480,7 +484,7 @@ int main(int argc,char* argv[])
 
 
     //----- Prior & Posterior Rate Distributions (rate-bin probabilities) -------- //
-    analyze_rates(A,T,*smodel_in);
+    analyze_rates(A,T,*smodel_in->result_as<substitution::MultiModelObject>());
 
     //------- Estimate branch lengths -------------//
     owned_ptr<substitution::MultiModel> smodel_est = smodel_in;
@@ -501,12 +505,12 @@ int main(int argc,char* argv[])
       show_parameters(cout,*smodel_est);
       cout<<endl<<endl;
 
-      analyze_rates(A,T2,*smodel_est);
+      analyze_rates(A,T2,*smodel_est->result_as<substitution::MultiModelObject>());
     }
 
     //------- Set up function to maximize --------//
-    Matrix S1 = getSimilarity(T,*smodel_in);
-    Matrix S2 = getSimilarity(T2,*smodel_est);
+    Matrix S1 = getSimilarity(T,*smodel_in->result_as<substitution::MultiModelObject>());
+    Matrix S2 = getSimilarity(T2,*smodel_est->result_as<substitution::MultiModelObject>());
 
     Matrix D = C(S);
     cout<<"%difference (actual) = \n";

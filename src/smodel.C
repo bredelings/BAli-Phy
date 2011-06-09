@@ -1785,11 +1785,9 @@ namespace substitution {
   { }
 
   MultiModel::MultiModel(const alphabet& a)
-    :MultiModelObject(a)
   { }
 
   MultiModel::MultiModel(const alphabet& a, int n)
-    :MultiModelObject(a,n)
   { }
 
   Matrix frequency_matrix(const MultiModelObject& M) {
@@ -2250,12 +2248,25 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   //---------------------------- class MultiModel --------------------------//
 
-  /// Get the equilibrium frequencies
-  std::valarray<double> MultiParameterModel::frequencies() const {
-    return SubModel().frequencies();
+  // Um, summed-over parameter lives on as its MEAN
+  shared_ptr<const Object> MultiParameterModel::result() const
+  {
+    shared_ptr<DiscreteDistribution> D( new DiscreteDistribution(weights.size()) );
+    D->fraction = weights;
+
+    for(int i=0;i<weights.size();i++)
+    {
+      Double V = p_values[i];
+      D->values[i] = ptr( V );
+    }
+
+    shared_ptr<const ModelFunction> F = LambdaModel(SubModel(),p_change).result_as<const ModelFunction>();
+
+    shared_ptr<MultiModelObject> R = MultiParameterFunction(*F,*D);
+
+    return R;
   }
 
-  // Um, summed-over parameter lives on as its MEAN
 
   MultiParameterModel::MultiParameterModel(const MultiModel& M,int p,int n) 
     :MultiModel(M.Alphabet()),
@@ -2266,10 +2277,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   { 
     // start with sane values for p_values
     for(int m=0;m<p_values.size();m++)
-      if (p_change == -1)
-	p_values[m] = M.rate();
-      else
-	p_values[m] = M.get_parameter_value_as<Double>(p_change);
+      p_values[m] = M.get_parameter_value_as<Double>(p_change);
 
     if (p_change != -1)
       SubModel().set_fixed(p_change,true);
@@ -2294,7 +2302,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return Pr;
   }
 
-  void DirichletParameterModel::recalc(const vector<int>&) 
+  shared_ptr<const Object> DirichletParameterModel::result() const
   {
     /*
     // sort bins to enforce monotonically increasing order
@@ -2325,7 +2333,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     shared_ptr<const ModelFunction> F = dynamic_pointer_cast<const ModelFunction>(LambdaModel(SubModel(), p_change).result());
     
-    MultiModelObject::operator=( *MultiParameterFunction(*F, D) );
+    return MultiParameterFunction(*F, D);
   }
 
   string DirichletParameterModel::name() const {
@@ -2408,11 +2416,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   const double WithINV::inv_frac_mean = 0.1;
   const double WithINV::max_inv_rate = 0.01;
 
-  /// Get the equilibrium frequencies
-  valarray<double> WithINV::frequencies() const {
-    return SubModel().frequencies();
-  }
-
   shared_ptr<const Object> WithINV::result() const
   {
     shared_ptr<const MultiModelObject> M = SubModel().result_as<MultiModelObject>();
@@ -2462,6 +2465,39 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     check();
   }
+
+  shared_ptr< DiscreteDistribution > M2_Function(Double f1, Double f2, Double f3, Double omega)
+  {
+    shared_ptr< DiscreteDistribution > R ( new DiscreteDistribution(3) );
+    R->fraction[0] = f1;
+    R->fraction[1] = f2;
+    R->fraction[2] = f3;
+
+    R->values[0] = ptr( Double(0) );
+    R->values[1] = ptr( Double(1) );
+    R->values[2] = ptr( omega );
+
+    return R;
+  }
+
+  struct M2_Op: public Operation
+  {
+    M2_Op* clone() const {return new M2_Op(*this);}
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      shared_ptr<const Double> f1 = Args.evaluate_as<Double>(0);
+      shared_ptr<const Double> f2 = Args.evaluate_as<Double>(1);
+      shared_ptr<const Double> f3 = Args.evaluate_as<Double>(2);
+      shared_ptr<const Double> omega = Args.evaluate_as<Double>(3);
+
+      return M2_Function(*f1, *f2, *f3, *omega);
+    }
+
+    string name() const {return "M2";}
+
+    M2_Op(): Operation(4) { }
+  };
 
   //-------------------- M2 --------------------//
   void M2::recalc(const vector<int>& indices) 
@@ -2816,7 +2852,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     for(int m=0;m<n_submodels();m++)
     {
-      shared_ptr<const MultiModelObject> M = SubModels(0).result_as<MultiModelObject>();
+      shared_ptr<const MultiModelObject> M = SubModels(m).result_as<MultiModelObject>();
 
       if (not R)
       {
@@ -2826,10 +2862,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
       double fm = get_parameter_value_as<Double>(m);
 
-      for(int i=0;i<SubModels(m).n_base_models();i++)
+      for(int i=0;i<M->n_base_models();i++)
       {
-	R->fraction.push_back(fm * SubModels(m).distribution()[i]);
-	R->base_models.push_back(ptr( SubModels(m).base_model(i)) );
+	R->fraction.push_back(fm * M->distribution()[i]);
+	R->base_models.push_back(ptr( M->base_model(i)) );
       }
     }
 

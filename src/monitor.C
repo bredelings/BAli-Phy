@@ -46,7 +46,7 @@ void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<doub
       o<<"f"<<a.lookup(i)<<" = "<<f[i]<<"\n";
 }
 
-void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
+void show_frequencies(std::ostream& o,const substitution::MultiModelObject& MModel) {
   const alphabet& a = MModel.Alphabet();
 
   if (MModel.n_base_models() == 1) {
@@ -68,7 +68,7 @@ void show_frequencies(std::ostream& o,const substitution::MultiModel& MModel) {
   }
 }
 
-void show_smodel(std::ostream& o, const substitution::MultiModel& MModel)
+void show_smodel(std::ostream& o, const substitution::MultiModelObject& MModel)
 {
   for(int i=0;i<MModel.n_base_models();i++)
     o<<"    rate"<<i<<" = "<<MModel.base_model(i).rate();
@@ -86,7 +86,7 @@ void show_smodels(std::ostream& o, const Parameters& P)
 {
   for(int m=0;m<P.n_smodels();m++) {
     o<<"smodel"<<m+1<<endl;
-    show_smodel(o,P.SModel(m));
+    show_smodel(o,*P.SModel(m).result_as<substitution::MultiModelObject>());
   }
 }
 

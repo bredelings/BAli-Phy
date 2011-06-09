@@ -986,11 +986,20 @@ namespace substitution {
   };
 
 
-  class MultiModel: public ReversibleAdditiveModel, public MultiModelObject
+  class MultiModel: public ReversibleAdditiveModel
   {
 
   public:
     virtual MultiModel* clone() const=0;
+
+    boost::shared_ptr<const alphabet> get_alphabet() const 
+    {
+      return result_as<AlphabetExchangeModelObject>()->get_alphabet();
+    }
+
+    const alphabet& Alphabet() const {
+      return *get_alphabet();
+    }
 
     MultiModel(const alphabet& a);
 
@@ -1137,6 +1146,8 @@ namespace substitution {
     std::vector<double> weights;
 
   public:
+    boost::shared_ptr<const Object> result() const;
+
     MultiParameterModel* clone() const=0;
 
     /// Get the equilibrium frequencies
@@ -1162,9 +1173,12 @@ namespace substitution {
 
     efloat_t super_prior() const;
 
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
+
+    void update() { }
 
   public:
+    boost::shared_ptr<const Object> result() const;
 
     DirichletParameterModel* clone() const {return new DirichletParameterModel(*this);}
 
@@ -1228,9 +1242,6 @@ namespace substitution {
     boost::shared_ptr<const Object> result() const;
 
     efloat_t super_prior() const;
-
-    /// Get the equilibrium frequencies
-    valarray<double> frequencies() const;
 
     string name() const;
 
