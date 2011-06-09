@@ -347,8 +347,6 @@ namespace substitution {
     NucleotideExchangeModel* clone() const=0;
 
     const Nucleotides& Alphabet() const;
-
-    NucleotideExchangeModel(const Nucleotides& N);
   };
 
   /// The Hasegawa, Kishino, Yano (1985)
@@ -728,10 +726,6 @@ namespace substitution {
       return result_as<ReversibleMarkovModelObject>()->get_alphabet();
     }
 
-    ReversibleMarkovModel(const alphabet& a);
-    
-    ReversibleMarkovModel(const alphabet& a, int n);
-    
     ~ReversibleMarkovModel() {}
   };
 

@@ -850,12 +850,6 @@ namespace substitution {
     return exp(get_eigensystem(), pi2,t);
   }
 
-  ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a)
-  { }
-
-  ReversibleMarkovModel::ReversibleMarkovModel(const alphabet& a, int n)
-  { }
-
   //------------------------ F81 Model -------------------------//
 
   Matrix F81_Object::transition_p(double t) const
@@ -958,7 +952,6 @@ namespace substitution {
   }
 
   F81_Model::F81_Model(const alphabet& a)
-    :ReversibleMarkovModel(a)
   {
     add_parameter(Parameter("alphabet",a));
 
@@ -973,7 +966,6 @@ namespace substitution {
   }
 
   F81_Model::F81_Model(const alphabet& a,const valarray<double>& f)
-    :ReversibleMarkovModel(a)
   {
     add_parameter(Parameter("alphabet",a));
 
@@ -1043,20 +1035,17 @@ namespace substitution {
 
   /// Construct a reversible Markov model on alphabet 'a'
   ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
-    :ReversibleMarkovModel(R1.Alphabet()),
-     OpModel( Q_from_R_and_S(S1,R1) )
+    :OpModel( Q_from_R_and_S(S1,R1) )
   { }
 
     
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const AlphabetExchangeModel& E)
-    :ReversibleMarkovModel(*E.get_alphabet()),
-     OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(*E.get_alphabet())) )
+    :OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(*E.get_alphabet())) )
   { }
 
   SimpleReversibleMarkovModel::
   SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
-    :ReversibleMarkovModel(*E.get_alphabet()),
-     OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(*E.get_alphabet(),pi)) )
+    :OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(*E.get_alphabet(),pi)) )
   { }
 
   //---------------------- INV_Model --------------------------//
@@ -1284,9 +1273,6 @@ namespace substitution {
     return get_parameter_value_as<Nucleotides>(0);
   }
   
-  NucleotideExchangeModel::NucleotideExchangeModel(const Nucleotides& N)
-  { }
-
   //------------------------- HKY -----------------------------//
   string HKY::name() const {
     return "HKY";
@@ -1328,7 +1314,6 @@ namespace substitution {
 
   /// Construct an HKY model on alphabet 'a'
   HKY::HKY(const Nucleotides& N)
-    : NucleotideExchangeModel(N)
   { 
     add_parameter(Parameter("alphabet",N));
     add_parameter(Parameter("HKY::kappa", Double(2), lower_bound(0)));
@@ -1381,7 +1366,6 @@ namespace substitution {
 
   /// Construct a TN model on alphabet 'a'
   TN::TN(const Nucleotides& N)
-    : NucleotideExchangeModel(N)
   { 
     add_parameter(Parameter("alphabet",N));
     add_parameter(Parameter("TN::kappa(pur)",Double(2), lower_bound(0)));
@@ -1457,16 +1441,15 @@ namespace substitution {
   }
 
   GTR::GTR(const Nucleotides& N)
-      : NucleotideExchangeModel(N)
-    { 
-      add_parameter(Parameter("alphabet",N));
-      add_parameter(Parameter("GTR::AG", Double(2.0/8), between(0, 1)));
-      add_parameter(Parameter("GTR::AT", Double(1.0/8), between(0, 1)));
-      add_parameter(Parameter("GTR::AC", Double(1.0/8), between(0, 1)));
-      add_parameter(Parameter("GTR::GT", Double(1.0/8), between(0, 1)));
-      add_parameter(Parameter("GTR::GC", Double(1.0/8), between(0, 1)));
-      add_parameter(Parameter("GTR::TC", Double(2.0/8), between(0, 1)));
-    }
+  { 
+    add_parameter(Parameter("alphabet",N));
+    add_parameter(Parameter("GTR::AG", Double(2.0/8), between(0, 1)));
+    add_parameter(Parameter("GTR::AT", Double(1.0/8), between(0, 1)));
+    add_parameter(Parameter("GTR::AC", Double(1.0/8), between(0, 1)));
+    add_parameter(Parameter("GTR::GT", Double(1.0/8), between(0, 1)));
+    add_parameter(Parameter("GTR::GC", Double(1.0/8), between(0, 1)));
+    add_parameter(Parameter("GTR::TC", Double(2.0/8), between(0, 1)));
+  }
 
   //------------------------ Triplet Models -------------------//
 
@@ -3041,8 +3024,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   expression_ref Modulated_Markov_E = Modulated_Markov_Op();
 
   ModulatedMarkovModel::ModulatedMarkovModel(const MultiModel& MM, const ExchangeModel& EM)
-    :ReversibleMarkovModel(MM.Alphabet()),
-     OpModel(Modulated_Markov_E(MM,EM))
+    :OpModel(Modulated_Markov_E(MM,EM))
   { }
   
   // Now how to write MultiParameterModel( M, p_change, DiscretizationFunction( Gamma(), n_bins ) ) as an expression?
