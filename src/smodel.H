@@ -1001,10 +1001,6 @@ namespace substitution {
       return *get_alphabet();
     }
 
-    MultiModel(const alphabet& a);
-
-    MultiModel(const alphabet& a, int n);
-
     ~MultiModel() {}
   };
 

@@ -1784,12 +1784,6 @@ namespace substitution {
      fraction(n)
   { }
 
-  MultiModel::MultiModel(const alphabet& a)
-  { }
-
-  MultiModel::MultiModel(const alphabet& a, int n)
-  { }
-
   Matrix frequency_matrix(const MultiModelObject& M) {
     Matrix f(M.n_base_models(),M.n_states());
     for(int m=0;m<f.size1();m++)
@@ -1819,14 +1813,12 @@ namespace substitution {
   }
 
   UnitModel::UnitModel(const ReversibleMarkovModel& RA)
-    :MultiModel(*RA.get_alphabet())
   {
     SimpleReversibleAdditiveCollection M(RA);
     insert_submodel("0",M);
   }
 
   UnitModel::UnitModel(const ReversibleAdditiveCollection& M)
-    :MultiModel(*M.get_alphabet())
   {
     insert_submodel("0",M);
   }
@@ -1856,11 +1848,13 @@ namespace substitution {
     T operator()(int,int) const;
   };
 
+  /*
   shared_ptr<MultiModelObject> Multi_Frequency_Function(const AlphabetExchangeModelObject& S, 
 							const ReversibleFrequencyModelObject& F,
 							const MMatrix<Double>& a)
   {
   }
+  */
 
   shared_ptr<const Object> MultiFrequencyModel::result() const
   {
@@ -1911,8 +1905,7 @@ namespace substitution {
   }
 
   MultiFrequencyModel::MultiFrequencyModel(const AlphabetExchangeModel& E,int n)
-    :MultiModel(Alphabet()),
-     ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E))
+    :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E))
   { 
     // Set up variable names
     //   - initial probability that a letter l is in a submodel of type m = 1/n
@@ -2037,14 +2030,12 @@ namespace substitution {
   }
 
   CAT_FixedFrequencyModel::CAT_FixedFrequencyModel(const alphabet& a)
-    :MultiModel(a)
   { 
     add_parameter(Parameter("alphabet",a));
   }
 
   CAT_FixedFrequencyModel::CAT_FixedFrequencyModel(const alphabet& a, const string& n)
-    :MultiModel(a),
-     name_(n)
+    :name_(n)
   { 
     add_parameter(Parameter("alphabet",a));
   }
@@ -2269,8 +2260,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
 
   MultiParameterModel::MultiParameterModel(const MultiModel& M,int p,int n) 
-    :MultiModel(M.Alphabet()),
-     ReversibleWrapperOver<MultiModel>(M),
+    :ReversibleWrapperOver<MultiModel>(M),
      p_change(p),
      p_values(n),
      weights(n)
@@ -2346,8 +2336,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   DirichletParameterModel::DirichletParameterModel(const MultiModel& M, int p, int n)
-    :MultiModel(M.Alphabet()),
-     ReversibleWrapperOver<MultiModel>(M),
+    :ReversibleWrapperOver<MultiModel>(M),
      p_change(p),
      n_bins(n)
   {
@@ -2384,8 +2373,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   */
 
   DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const Distribution& D, int p, int n)
-    :MultiModel(M.Alphabet()),
-     OpModel( 
+    :OpModel( 
 	     MultiParameter(LambdaModel(M,p), Discretization(D, E(n) ) ) 
 	      )
   { }
@@ -2393,8 +2381,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   /*--------------- Gamma Sites Model----------------*/
 
   GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
-    :MultiModel(M.Alphabet()),
-     OpModel( 
+    :OpModel( 
 	     MultiRate(M, Discretization(Gamma(), E(n) ) ) 
 	      )
   {
@@ -2404,8 +2391,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   /*--------------- LogNormal Sites Model----------------*/
 
   LogNormalParameterModel::LogNormalParameterModel(const MultiModel& M,int n)
-    :MultiModel(M.Alphabet()),
-     OpModel( 
+    :OpModel( 
 	     MultiRate(M, Discretization(LogNormal(), E(n) ) ) 
 	      )
   {}
@@ -2458,8 +2444,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   WithINV::WithINV(const MultiModel& M)
-    :MultiModel(M.Alphabet()),
-     ReversibleWrapperOver<MultiModel>(M)
+    :ReversibleWrapperOver<MultiModel>(M)
   {
     p_index = add_super_parameter(Parameter("INV::p", Double(0.01), between(0, 1)));
 
@@ -2841,11 +2826,14 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   { 
   }
 
+  /*
   shared_ptr<MultiModel> MixtureModelFunction(const DiscreteDistribution& D)
   {
-    
+  How should I handle an expression with a variable number ofarguments?
+  How should I handle an op with a variable number of arguments?
+  Should I create a Vector<Object> so that the number of arguments is fixed?
   }
-
+  */
   shared_ptr<const Object> MixtureModel::result() const
   {
     shared_ptr<MultiModelObject> R;
@@ -2894,7 +2882,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   MixtureModel::MixtureModel(const std::vector<owned_ptr<MultiModel> >& models)
-    :MultiModel(models[0]->Alphabet())
   {
     for(int i=0;i<models.size();i++) {
       string pname = string("Mixture::p") + convertToString(i+1);
