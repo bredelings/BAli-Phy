@@ -1828,7 +1828,7 @@ namespace substitution {
 
     // make a copy of the submodel
     R->base_models.resize(1);
-    R->base_models[0] = *SubModel().result_as<ReversibleAdditiveCollectionObject>();
+    R->base_models[0] = SubModel().result_as<const ReversibleAdditiveCollectionObject>();
 
     return R;
   }
@@ -1918,8 +1918,10 @@ namespace substitution {
       // get a new copy of the sub-model and set the frequencies
       owned_ptr<ReversibleMarkovModelObject> Mm = *M;
       Mm->pi = fm; // wait... this doesn't adjust Q!  We need to separate the ExchangeModel and the FrequencyModel
-      base_models[m] = ReversibleAdditiveCollectionObject( *Mm );
+      base_models[m] = const_ptr( ReversibleAdditiveCollectionObject( *Mm ) );
     }
+
+    return R;
   }
 
   string MultiFrequencyModel::name() const {
@@ -2027,7 +2029,7 @@ namespace substitution {
       for(int j=0;j<f_ordered.size();j++)
 	f_ordered[letter[j]] = f[j];
 
-      base_models.push_back(*SimpleReversibleAdditiveCollection(F81_Model(a,f_ordered)).result_as<ReversibleAdditiveCollectionObject>() );
+      base_models.push_back(SimpleReversibleAdditiveCollection(F81_Model(a,f_ordered)).result_as<const ReversibleAdditiveCollectionObject>() );
       base_models.back()->set_rate(1);
     }
 
@@ -2141,7 +2143,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       for(int j=0;j<M->n_base_models();j++)
       {
 	R->fraction.push_back( D.fraction[i] * M->distribution()[j] );
-	R->base_models.push_back( M->base_model(j) );
+	R->base_models.push_back( const_ptr( M->base_model(j) ) );
       }
     }
 
@@ -2169,7 +2171,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       Double value = dynamic_cast<const Double&>(*D.values[i]);
       M->set_rate( value );
 
-      R.base_models[m] = M->base_model(j);
+      R.base_models[m] = ptr( M->base_model(j) );
     }
 
     return R;
@@ -2444,12 +2446,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // compute base models
     R->base_models.resize(n + 1);
     for(int i=0;i<n;i++)
-      R->base_models[i] = M->base_model(i);
+      R->base_models[i] = ptr( M->base_model(i) );
 
     // do not messing with submodel instead of going through top model
     SimpleReversibleMarkovModel INV2(INV_Model(M->Alphabet()), M->frequencies());
     SimpleReversibleAdditiveCollection INV3(INV2);
-    R->base_models.back() = *INV3.result_as<ReversibleAdditiveCollectionObject>();
+    R->base_models.back() = INV3.result_as<const ReversibleAdditiveCollectionObject>();
 
     return R;
   }
@@ -2830,7 +2832,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       for(int i=0;i<SubModels(m).n_base_models();i++)
       {
 	fraction.push_back(fm * SubModels(m).distribution()[i]);
-	base_models.push_back(SubModels(m).base_model(i));
+	base_models.push_back(ptr( SubModels(m).base_model(i)) );
       }
     }
   }

@@ -822,7 +822,7 @@ namespace substitution {
   class ReversibleAdditiveCollectionObject: virtual public Object
   {
   protected:
-    std::vector< owned_ptr<ReversibleAdditiveObject> > parts;
+    std::vector< polymorphic_cow_ptr<ReversibleAdditiveObject> > parts;
 
   public:
     virtual ReversibleAdditiveCollectionObject* clone() const {return new ReversibleAdditiveCollectionObject(*this);}
@@ -855,7 +855,7 @@ namespace substitution {
     ReversibleAdditiveCollectionObject() {};
 
     ReversibleAdditiveCollectionObject(const ReversibleAdditiveObject& O)
-      :parts(1,O)
+      :parts(1,ptr(O))
     {}
   };
 
@@ -945,7 +945,7 @@ namespace substitution {
   public:
     boost::shared_ptr<const alphabet> a;
 
-    mutable std::vector< owned_ptr<ReversibleAdditiveCollectionObject> > base_models;
+    mutable std::vector< polymorphic_cow_ptr<ReversibleAdditiveCollectionObject> > base_models;
 
     mutable std::vector< double > fraction;
 
