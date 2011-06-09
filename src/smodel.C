@@ -2803,32 +2803,35 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   { 
   }
 
-  void MixtureModel::recalc(const vector<int>&) 
+  shared_ptr<MultiModel> MixtureModelFunction(const DiscreteDistribution& D)
   {
-    fraction.clear();
-    base_models.clear();
+    
+  }
+
+  shared_ptr<const Object> MixtureModel::result() const
+  {
+    shared_ptr<MultiModelObject> R;
 
     for(int m=0;m<n_submodels();m++)
     {
+      shared_ptr<const MultiModelObject> M = SubModels(0).result_as<MultiModelObject>();
+
+      if (not R)
+      {
+	const alphabet & a = *M->get_alphabet();
+	R = shared_ptr<MultiModelObject>(new MultiModelObject(a));
+      }
+
       double fm = get_parameter_value_as<Double>(m);
 
       for(int i=0;i<SubModels(m).n_base_models();i++)
       {
-	fraction.push_back(fm * SubModels(m).distribution()[i]);
-	base_models.push_back(ptr( SubModels(m).base_model(i)) );
+	R->fraction.push_back(fm * SubModels(m).distribution()[i]);
+	R->base_models.push_back(ptr( SubModels(m).base_model(i)) );
       }
     }
-  }
 
-  valarray<double> MixtureModel::frequencies() const
-  {
-    valarray<double> pi(0.0, Alphabet().size());
-
-    //recalculate pi
-    for(int sm=0; sm < n_submodels(); sm++)
-      pi += double(get_parameter_value_as<Double>(sm))*SubModels(sm).frequencies();
-
-    return pi;
+    return R;
   }
 
   efloat_t MixtureModel::super_prior() const 

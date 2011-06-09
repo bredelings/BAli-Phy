@@ -1304,19 +1304,14 @@ namespace substitution {
   class MixtureModel: public MultiModel, public SuperModelOver<MultiModel> 
   {
     efloat_t super_prior() const;
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
+    void update() { }
   public:
     virtual MixtureModel* clone() const {return new MixtureModel(*this);}
 
-    /// Get the equilibrium frequencies
-    valarray<double> frequencies() const;
+    boost::shared_ptr<const Object> result() const;
 
     string name() const;
-
-    const alphabet& Alphabet() const {
-      assert(SubModels(0).Alphabet() == SubModels(1).Alphabet());
-      return SubModels(0).Alphabet();
-    }
 
     MixtureModel(const std::vector<owned_ptr<MultiModel> >& models);
   };
