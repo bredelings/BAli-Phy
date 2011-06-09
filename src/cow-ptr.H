@@ -153,6 +153,7 @@ public:
     data = r.data;
     return *this;
   }
+  template <typename Y> friend boost::shared_ptr<Y> dynamic_pointer_cast(const polymorphic_cow_ptr<X>&);
 #endif
 
   const X& operator*()    const throw()   {assert(data); return *data;}
@@ -231,10 +232,9 @@ inline void swap(polymorphic_cow_ptr<X>& p1,polymorphic_cow_ptr<X>& p2)
 }
 
 template <typename X,typename Y>
-polymorphic_cow_ptr<X> dynamic_pointer_cast(const polymorphic_cow_ptr<Y>& ptr1)
+boost::shared_ptr<X> dynamic_pointer_cast(const polymorphic_cow_ptr<Y>& ptr1)
 {
-  polymorphic_cow_ptr<X> ptr2(ptr1, _cow_ptr::dynamic_cast_tag() );
-  return ptr2;
+  return boost::dynamic_pointer_cast<X>(ptr1.data);
 }
 
 #endif // COW_PTR_H
