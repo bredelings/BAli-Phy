@@ -1136,10 +1136,10 @@ namespace substitution {
     int p_change;
 
     /// The values it takes on
-    std::vector<double> p_values;
+    mutable std::vector<double> p_values;
 
     /// The weights for the different values
-    std::vector<double> weights;
+    mutable std::vector<double> weights;
 
   public:
     boost::shared_ptr<const Object> result() const;
@@ -1246,10 +1246,12 @@ namespace substitution {
 
   class M2: public MultiParameterModel
   {
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
+    void update() { }
 
   public:
-    
+    boost::shared_ptr<const Object> result() const;
+
     efloat_t super_prior() const;
 
     M2* clone() const {return new M2(*this);}
@@ -1264,10 +1266,12 @@ namespace substitution {
   /// omega_1 < 1.
   class M2a: public MultiParameterModel
   {
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
+    void update() { }
 
   public:
-    
+    boost::shared_ptr<const Object> result() const;
+
     efloat_t super_prior() const;
 
     M2a* clone() const {return new M2a(*this);}
@@ -1279,8 +1283,10 @@ namespace substitution {
 
   class M3: public MultiParameterModel 
   {
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
+    void update() { }
   public:
+    boost::shared_ptr<const Object> result() const;
     
     efloat_t super_prior() const;
 
@@ -1332,6 +1338,7 @@ namespace substitution {
     void recalc(const std::vector<int>&) {std::abort();}
 
   public:
+    boost::shared_ptr<const Object> result() const;
 
     virtual ModulatedMarkovModel* clone() const {return new ModulatedMarkovModel(*this);}
 
@@ -1363,13 +1370,16 @@ namespace substitution {
     int nbin;
     std::vector<double> pi;
 
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
+    void update() { }
 
     /* These methods are already defined for us in SuperModelOver<::Model>
     const ::Model& SubModels(int i) const;
           ::Model& SubModels(int i) */
 
   public:
+    boost::shared_ptr<const Object> result() const;
+
     virtual M8b* clone() const {return new M8b(*this);}
 
     efloat_t super_prior() const;

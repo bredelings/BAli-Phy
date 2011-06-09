@@ -2485,7 +2485,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   };
 
   //-------------------- M2 --------------------//
-  void M2::recalc(const vector<int>& indices) 
+  shared_ptr<const Object> M2::result() const
   {
     weights[0] = get_parameter_value_as<Double>(0);
     weights[1] = get_parameter_value_as<Double>(1);
@@ -2496,7 +2496,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     p_values[2] = get_parameter_value_as<Double>(3);
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
-    MultiParameterModel::recalc(indices);
+    return MultiParameterModel::result();
   }
 
   efloat_t M2::super_prior() const 
@@ -2543,7 +2543,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   //-------------------- M2a -------------------//
-  void M2a::recalc(const vector<int>& indices) 
+  shared_ptr<const Object> M2a::result() const
   {
     weights[0] = get_parameter_value_as<Double>(0);
     weights[1] = get_parameter_value_as<Double>(1);
@@ -2554,7 +2554,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     p_values[2] = get_parameter_value_as<Double>(4);
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
-    MultiParameterModel::recalc(indices);
+    return MultiParameterModel::result();
   }
 
   efloat_t M2a::super_prior() const 
@@ -2682,7 +2682,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     recalc_all();
   }
 
-  void M8b::recalc(const vector<int>& indices) 
+  shared_ptr<const Object> M8b::result() const
   {
     UniformDiscretization d(nbin, *S);
 
@@ -2724,7 +2724,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     }
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
-    MultiParameterModel::recalc(indices);
+    return MultiParameterModel::result();
   }
 
   //M3
@@ -2740,7 +2740,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   // NOTE: we only enforce order in the LOGGING of the omegas
 
-  void M3::recalc(const vector<int>& indices) 
+  shared_ptr<const Object> M3::result() const
   {
     for(int i=0;i<weights.size();i++)
       weights[i] = get_parameter_value_as<Double>(i);
@@ -2749,7 +2749,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       p_values[i] = get_parameter_value_as<Double>(weights.size()+i);
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
-    MultiParameterModel::recalc(indices);
+    return MultiParameterModel::result();
   }
 
   // FIXME: Conditional on one omega being small, the probability of the other ones being
