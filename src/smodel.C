@@ -1877,7 +1877,7 @@ namespace substitution {
 
     // calculate probability of each sub-model
     R->fraction.resize(f.size());
-    for(int m=0;m<fraction.size();m++) 
+    for(int m=0;m<R->fraction.size();m++) 
     {
       // Pr(m) = sum_l Pr(m|l)*Pr(l)
       R->fraction[m] = 0;
@@ -1894,14 +1894,14 @@ namespace substitution {
     {
       // Pr(l|m) = Pr(m|l)*Pr(l)/Pr(m)
       for(int l=0;l<fm.size();l++)
-	fm[l] = get_parameter_value_as<Double>(m+l*R->fraction.size())*f[l]/fraction[m];
+	fm[l] = get_parameter_value_as<Double>(m+l*R->fraction.size())*f[l]/R->fraction[m];
 
       if (std::abs(sum(fm) - 1.0) > 1.0e-5) cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<sum(fm)<<endl;
 
       // get a new copy of the sub-model and set the frequencies
       owned_ptr<ReversibleMarkovModelObject> Mm = *M;
       Mm->pi = fm; // wait... this doesn't adjust Q!  We need to separate the ExchangeModel and the FrequencyModel
-      base_models[m] = const_ptr( ReversibleAdditiveCollectionObject( *Mm ) );
+      R->base_models[m] = const_ptr( ReversibleAdditiveCollectionObject( *Mm ) );
     }
 
     return R;
@@ -1909,7 +1909,7 @@ namespace substitution {
 
   string MultiFrequencyModel::name() const {
     return SubModels(0).name() + " + multi_freq[" + 
-      convertToString(fraction.size()) + "]";
+      convertToString(n_submodels()) + "]";
   }
 
   MultiFrequencyModel::MultiFrequencyModel(const AlphabetExchangeModel& E,int n)
@@ -1951,22 +1951,19 @@ namespace substitution {
   {
     valarray<double> f = get_varray<double>(prior_fraction);
 
-    valarray<double> x = get_varray<double>(fraction);
+    valarray<double> x = get_varray<double>( get_parameter_values_as<Double>( range<int>(2, prior_fraction.size()) ) );
 
     return ::dirichlet_pdf(x,safe_count(f*10.0));
   }
 
-  void CAT_FixedFrequencyModel::recalc(const std::vector<int>&)
+  shared_ptr<const Object> CAT_FixedFrequencyModel::result() const
   {
-    fraction.resize(prior_fraction.size());
-    for(int i=0;i<fraction.size();i++)
-      fraction[i] = get_parameter_value_as<Double>(1+i);
-  }
+    shared_ptr<MultiModelObject> R = ptr( get_parameter_value_as<MultiModelObject>(1) );
 
-  /// Get the equilibrium frequencies
-  valarray<double> CAT_FixedFrequencyModel::frequencies() const {
-    cerr<<"CAT model with fixed frequences does not HAVE an 'overall' frequencies method."<<endl;
-    std::abort();
+    for(int i=0;i<prior_fraction.size();i++)
+      R->fraction[i] = get_parameter_value_as<Double>(2+i);
+
+    return R;
   }
 
   void CAT_FixedFrequencyModel::load_file(std::istream& file)
@@ -1983,9 +1980,9 @@ namespace substitution {
 
     //------- 3: category weights --------//
     portable_getline(file,line);
-    fraction = prior_fraction = split<double>(line,' ');
-    if (fraction.size() != n_cat) 
-      throw myexception()<<"In reading CAT-Fixed model '"<<name_<<"' expected weights for "<<n_cat<<" categories, but got "<<fraction.size();
+    prior_fraction = split<double>(line,' ');
+    if (prior_fraction.size() != n_cat) 
+      throw myexception()<<"In reading CAT-Fixed model '"<<name_<<"' expected weights for "<<n_cat<<" categories, but got "<<prior_fraction.size();
 
     //------- 4: alphabet order ---------//
     portable_getline(file,line);
@@ -1999,6 +1996,8 @@ namespace substitution {
       letter[i] = a[unordered_letters[i]];
 
     //------- 5-end: frequencies of the actual classes ----//
+    shared_ptr<MultiModelObject> M(new MultiModelObject(a));
+
     for(int i=0;i<n_cat;i++)
     {
       portable_getline(file,line);
@@ -2012,9 +2011,12 @@ namespace substitution {
       for(int j=0;j<f_ordered.size();j++)
 	f_ordered[letter[j]] = f[j];
 
-      base_models.push_back(SimpleReversibleAdditiveCollection(F81_Model(a,f_ordered)).result_as<const ReversibleAdditiveCollectionObject>() );
-      base_models.back()->set_rate(1);
+      M->fraction.push_back(prior_fraction[i]);
+      M->base_models.push_back(SimpleReversibleAdditiveCollection(F81_Model(a,f_ordered)).result_as<const ReversibleAdditiveCollectionObject>() );
+
+      M->base_models.back()->set_rate(1);
     }
+    add_parameter(Parameter("CAT_frequencies",M));
 
     //------- 6: Create the parameters for fiddling --------//
     for(int i=0;i<n_cat;i++)

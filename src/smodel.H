@@ -1060,7 +1060,9 @@ namespace substitution {
 
     string name_;
 
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
+
+    void update() { }
   public:
     const alphabet& Alphabet() const;
 
@@ -1076,10 +1078,9 @@ namespace substitution {
 
     efloat_t prior() const;
 
-    /// Get the equilibrium frequencies - Gotta define this, cuz MultiModel is reversible...
-    valarray<double> frequencies() const;
-
     string name() const {return name_;}
+
+    boost::shared_ptr<const Object> result() const;
 
     /// Create a CAT_FixedFrequencyModel with alphabet \a a.
     CAT_FixedFrequencyModel(const alphabet& a);
