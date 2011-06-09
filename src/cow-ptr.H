@@ -24,6 +24,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using boost::const_pointer_cast;
 
+template <typename X>
+struct constant_value: public boost::shared_ptr<const X>
+{
+  explicit constant_value(const boost::shared_ptr<const X>& x):boost::shared_ptr<const X>(x) { }
+};
+
 /// A copy-on-write pointer class that stores X objects exactly: NOT objects derived from X
 template <class X> class cow_ptr
 {
@@ -101,12 +107,22 @@ public:
   cow_ptr& operator=(const boost::shared_ptr<const X>& r)
   {
     data = const_pointer_cast<X>(r);
+    copy();
+    return *this;
+  }
+
+  cow_ptr& operator=(const boost::shared_ptr<X>& r)
+  {
+    data = r;
+    copy();
     return *this;
   }
 
   cow_ptr(const cow_ptr& r) throw()             : data(r.data) {}
 
-  cow_ptr(boost::shared_ptr<const X> p) : data(const_pointer_cast<X>(p)) {}
+  cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) {copy();}
+
+  cow_ptr(const boost::shared_ptr<X>& p) : data(p) {copy();}
 
   explicit cow_ptr(X* p = 0) throw()            : data(p) {}
 
@@ -201,15 +217,29 @@ public:
     return *this;
   }
 
+  // Just because r is const, doesn't mean that there isn't a non-const pointer to it.
   polymorphic_cow_ptr& operator=(const boost::shared_ptr<const X>& r)
   {
     data = const_pointer_cast<X>(r);
+    copy();
+    return *this;
+  }
+
+  polymorphic_cow_ptr& operator=(const boost::shared_ptr<X>& r)
+  {
+    data = r;
+    copy();
     return *this;
   }
 
   polymorphic_cow_ptr(const polymorphic_cow_ptr& r) throw()             : data(r.data) {}
 
-  polymorphic_cow_ptr(boost::shared_ptr<const X> p) : data(const_pointer_cast<X>(p)) {}
+  polymorphic_cow_ptr(const constant_value<X>& p) : data(const_pointer_cast<X>(p)) { }
+
+  // Just because p is const, doesn't mean that there isn't a non-const pointer to it.
+  polymorphic_cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { copy();}
+
+  polymorphic_cow_ptr(const boost::shared_ptr<X>&       p) : data(p) {copy();}
 
   template <typename Y> friend class polymorphic_cow_ptr;
 
