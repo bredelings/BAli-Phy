@@ -203,7 +203,7 @@ public:
   boost::shared_ptr<const Object> get_parameter_value(int i) const {return parameters_[i].value;}
 
   template <typename T>
-  bool parameter_has_type(int index) const {return dynamic_pointer_cast<const T>(get_parameter_value(index));}
+  bool parameter_has_type(int index) const {return boost::dynamic_pointer_cast<const T>(get_parameter_value(index));}
 
   /// Get A model parameter value
   template <typename T>
