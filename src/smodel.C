@@ -2242,6 +2242,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   // Um, summed-over parameter lives on as its MEAN
   shared_ptr<const Object> MultiParameterModel::result() const
   {
+    /*
     shared_ptr<DiscreteDistribution> D( new DiscreteDistribution(weights.size()) );
     D->fraction = weights;
 
@@ -2250,10 +2251,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       Double V = p_values[i];
       D->values[i] = ptr( V );
     }
+    */
 
     shared_ptr<const ModelFunction> F = LambdaModel(SubModel(),p_change).result_as<const ModelFunction>();
 
-    shared_ptr<MultiModelObject> R = MultiParameterFunction(*F,*D);
+    shared_ptr<MultiModelObject> R = MultiParameterFunction(*F, D);
 
     return R;
   }
@@ -2262,12 +2264,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   MultiParameterModel::MultiParameterModel(const MultiModel& M,int p,int n) 
     :ReversibleWrapperOver<MultiModel>(M),
      p_change(p),
-     p_values(n),
-     weights(n)
+     D(n)
   { 
     // start with sane values for p_values
-    for(int m=0;m<p_values.size();m++)
-      p_values[m] = M.get_parameter_value_as<Double>(p_change);
+    for(int m=0;m<n;m++)
+      D.values[m] = M.get_parameter_value(p_change);
 
     if (p_change != -1)
       SubModel().set_fixed(p_change,true);
@@ -2487,13 +2488,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //-------------------- M2 --------------------//
   shared_ptr<const Object> M2::result() const
   {
-    weights[0] = get_parameter_value_as<Double>(0);
-    weights[1] = get_parameter_value_as<Double>(1);
-    weights[2] = get_parameter_value_as<Double>(2);
+    D.fraction[0] = get_parameter_value_as<Double>(0);
+    D.fraction[1] = get_parameter_value_as<Double>(1);
+    D.fraction[2] = get_parameter_value_as<Double>(2);
 
-    p_values[0] = 0;
-    p_values[1] = 1;
-    p_values[2] = get_parameter_value_as<Double>(3);
+    D.values[0] = ptr( Double(0) );
+    D.values[1] = ptr( Double(1) );
+    D.values[2] = get_parameter_value(3);
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
     return MultiParameterModel::result();
@@ -2545,13 +2546,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //-------------------- M2a -------------------//
   shared_ptr<const Object> M2a::result() const
   {
-    weights[0] = get_parameter_value_as<Double>(0);
-    weights[1] = get_parameter_value_as<Double>(1);
-    weights[2] = get_parameter_value_as<Double>(2);
+    D.fraction[0] = get_parameter_value_as<Double>(0);
+    D.fraction[1] = get_parameter_value_as<Double>(1);
+    D.fraction[2] = get_parameter_value_as<Double>(2);
 
-    p_values[0] = get_parameter_value_as<Double>(3);
-    p_values[1] = 1;
-    p_values[2] = get_parameter_value_as<Double>(4);
+    D.values[0] = get_parameter_value(3);
+    D.values[1] = ptr( Double(1) );
+    D.values[2] = get_parameter_value(4);
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
     return MultiParameterModel::result();
@@ -2709,17 +2710,17 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     /// The first 3 pairs are set by the discretized
     /// Beta distribution. There remain two pairs. 
 
-    for (int i = 0; i < p_values.size(); i++)
+    for (int i = 0; i < D.values.size(); i++)
     {
       if (i < nbin)
       {
-        weights[i] = d.f[i] * ff[0];
-        p_values[i] = d.r[i];
+        D.fraction[i] = d.f[i] * ff[0];
+        D.values[i] = ptr( Double(d.r[i]) );
       }
       else
       {
-        weights[i] = ff[i - nbin + 1];
-        p_values[i] = get_parameter_value_as<Double>(i - nbin + 1 + 2);
+        D.fraction[i] = ff[i - nbin + 1];
+        D.values[i] = get_parameter_value(i - nbin + 1 + 2);
       }
     }
 
@@ -2730,23 +2731,29 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //M3
 
   double M3::omega(int i) const {
-    return get_parameter_value_as<Double>(weights.size() + i);
+    int n = get_parameter_value_as<Int>(0);
+    return get_parameter_value_as<Double>(n + i);
   }
 
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  void M3::omega(int i,double w) {
-    set_parameter_value(weights.size()+i,w);
+  void M3::omega(int i,double w) 
+  {
+    int n = get_parameter_value_as<Int>(0);
+
+    set_parameter_value(n+i,w);
   }
 
   // NOTE: we only enforce order in the LOGGING of the omegas
 
   shared_ptr<const Object> M3::result() const
   {
-    for(int i=0;i<weights.size();i++)
-      weights[i] = get_parameter_value_as<Double>(i);
+    int n = get_parameter_value_as<Int>(0);
 
-    for(int i=0;i<weights.size();i++)
-      p_values[i] = get_parameter_value_as<Double>(weights.size()+i);
+    for(int i=0;i<n;i++)
+      D.fraction[i] = get_parameter_value_as<Double>(1+i);
+
+    for(int i=0;i<n;i++)
+      D.values[i] = get_parameter_value(1+n+i);
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
     return MultiParameterModel::result();
@@ -2777,7 +2784,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   efloat_t M3::super_prior() const 
   {
     efloat_t P = 1;
-    int n = weights.size();
+    int n = get_parameter_value_as<Int>(0);
 
     if (n <= 1) return P;
 
@@ -2796,12 +2803,15 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   string M3::name() const {
-    return SubModels(0).name() + " + M3[" + convertToString(weights.size()) + "]";
+    int n = get_parameter_value_as<Int>(0);
+    return SubModels(0).name() + " + M3[" + convertToString(n) + "]";
   }
 
   M3::M3(const M0& M1,const ReversibleFrequencyModel& R, int n) 
     :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,n)
   {
+    add_super_parameter(Parameter("n", Int(n)));
+
     // p
     for(int i=0;i<n;i++) {
       string pname = "M3::f" + convertToString(i+1);

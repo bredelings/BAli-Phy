@@ -1136,10 +1136,7 @@ namespace substitution {
     int p_change;
 
     /// The values it takes on
-    mutable std::vector<double> p_values;
-
-    /// The weights for the different values
-    mutable std::vector<double> weights;
+    mutable DiscreteDistribution D;
 
   public:
     boost::shared_ptr<const Object> result() const;
@@ -1338,8 +1335,6 @@ namespace substitution {
     void recalc(const std::vector<int>&) {std::abort();}
 
   public:
-    boost::shared_ptr<const Object> result() const;
-
     virtual ModulatedMarkovModel* clone() const {return new ModulatedMarkovModel(*this);}
 
     ModulatedMarkovModel(const MultiModel& M, const ExchangeModel& S);
