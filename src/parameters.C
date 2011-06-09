@@ -1049,7 +1049,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     const substitution::MultiModel& SM = SModel(smodel_for_partition[i]);
 
     // create data partition
-    data_partitions.push_back(cow_ptr<data_partition>(data_partition(name,A[i],*T,SM)));
+    data_partitions.push_back(cow_ptr<data_partition>(data_partition(name,A[i],*T,*SM.result_as<substitution::MultiModelObject>())));
 
     // register data partition as sub-model
     register_submodel(name);
