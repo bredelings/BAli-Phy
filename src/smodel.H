@@ -1021,6 +1021,8 @@ namespace substitution {
 
     string name() const;
 
+    void update() { }
+
     boost::shared_ptr<const Object> result() const;
 
     UnitModel(const ReversibleMarkovModel& M);
@@ -1223,6 +1225,8 @@ namespace substitution {
 
   public:
     virtual WithINV* clone() const {return new WithINV(*this);}
+
+    void update() { }
 
     void recalc(const std::vector<int>&) {std::abort();}
 

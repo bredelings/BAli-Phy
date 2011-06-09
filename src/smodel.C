@@ -2158,6 +2158,33 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return R;
   }
 
+  MultiModelObject MultiRateFunction(const MultiModelObject& M_, const DiscreteDistribution& D)
+  {
+    shared_ptr<MultiModelObject> M = ptr(M_);
+
+    int N = M->n_base_models() * D.size();
+
+    MultiModelObject R(M->Alphabet());
+
+    // recalc fractions and base models
+    R.resize(N);
+
+    for(int m=0;m<R.n_base_models();m++) 
+    {
+      int i = m / M->n_base_models();
+      int j = m % M->n_base_models();
+
+      R.fraction[m] = D.fraction[i]*M->distribution()[j];
+
+      Double value = dynamic_cast<const Double&>(*D.values[i]);
+      M->set_rate( value );
+
+      R.base_models[m] = M->base_model(j);
+    }
+
+    return R;
+  }
+
   boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const Distribution& D, Int n)
   {
     // Make a discretization - not uniform.
@@ -2200,6 +2227,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     DiscretizationOp():Operation(2) { }
   };
 
+  expression_ref Discretization = DiscretizationOp();
+
   struct MultiParameterOp: public Operation
   {
     MultiParameterOp* clone() const {return new MultiParameterOp(*this);}
@@ -2220,6 +2249,28 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     MultiParameterOp():Operation(3) { }
   };
+
+  struct MultiRateOp: public Operation
+  {
+    MultiRateOp* clone() const {return new MultiRateOp(*this);}
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      // The input-model should really be a lambda function taking the single value (or first value) p_change
+      shared_ptr<const MultiModelObject> M = Args.evaluate_as<MultiModelObject>(0);
+      shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(1);
+      
+      boost::shared_ptr< MultiModelObject > R ( MultiRateFunction(*M, *D).clone() );
+
+      return R;
+    }
+
+    std::string name() const {return "MultiRate";}
+
+    MultiRateOp():Operation(2) { }
+  };
+
+  expression_ref MultiRate = MultiRateOp();
 
   //---------------------------- class MultiModel --------------------------//
 
@@ -2349,7 +2400,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const Distribution& D, int p, int n)
     :MultiModel(M.Alphabet()),
      OpModel( 
-	     (~MultiParameterOp())(M, E(-1), (~DiscretizationOp())(D, E(n) ) ) 
+	     (~MultiParameterOp())(M, E(-1), Discretization(D, E(n) ) ) 
 	      )
   { }
 
@@ -2358,7 +2409,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
     :MultiModel(M.Alphabet()),
      OpModel( 
-	     (~MultiParameterOp())(M, E(-1), (~DiscretizationOp())(Gamma(), E(n) ) ) 
+	     MultiRate(M, Discretization(Gamma(), E(n) ) ) 
 	      )
   {
     show_parameters(std::cout, *this);
@@ -2369,7 +2420,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   LogNormalParameterModel::LogNormalParameterModel(const MultiModel& M,int n)
     :MultiModel(M.Alphabet()),
      OpModel( 
-	     (~MultiParameterOp())(M, E(-1), (~DiscretizationOp())(LogNormal(), E(n) ) ) 
+	     MultiRate(M, Discretization(LogNormal(), E(n) ) ) 
 	      )
   {}
 
