@@ -64,14 +64,12 @@ struct Parameter
 // 1. Make models take generic Object's as inputs. [DONE]
 //    o make substitution models take alphabets as arguments, and thus store them in the argument list [DONE]
 // 2. Make models into functions.
-//    o give all models a meaningful evaluate() member function, and use that?
-//    o separate result objects from model objects
-//    o make the model objects inherit from the result objects
-//    o inheritance of data members (e.g. Q) becomes inheritance of data members in the result objects
-//    o call update of submodels only when accessing the submodel?
+//    o separate result objects from model objects [WORKING...]
+//    o give most models a meaningful result() member function, and use that? [WORKING...]
+//    o however, some objects, like Parameters, evaluate multiple different expressions
 // 3. ??
 //    o make all stored objects into models?
-//    o make supermodels into an Op plus models, as arguments?
+//    o make supermodels into an Op plus models, as arguments? [WORKING...]
 //    o allow models to have computed objects as parts.
 //    o allow sharing between models.
 //    o pull priors out of models (or expressions) ->
