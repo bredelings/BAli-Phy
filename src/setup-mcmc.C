@@ -324,11 +324,11 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     if (s >= P.n_smodels()) continue;
 
     // Handle multi-frequency models
-    const alphabet& a = P.SModel(s).Alphabet();
-    const int asize = a.size();
+    boost::shared_ptr<const alphabet> a = P.SModel(s).result_as<substitution::MultiModelObject>()->get_alphabet();
+    const int asize = a->size();
 
     for(int l=0;l<asize;l++) {
-      string pname = prefix+ "a" + a.lookup(l) + "*";
+      string pname = prefix+ "a" + a->lookup(l) + "*";
       add_dirichlet_slice_moves(P, pname, slice_moves, 3);
     }
 
@@ -600,11 +600,11 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     // Handle multi-frequency models
     set_if_undef(P.keys,"MF::dirichlet_N",10.0);
 
-    const alphabet& a = P.SModel(s).Alphabet();
-    const int asize = a.size();
+    boost::shared_ptr<const alphabet> a = P.SModel(s).result_as<substitution::MultiModelObject>()->get_alphabet();
+    const int asize = a->size();
 
     for(int l=0;l<asize;l++) {
-      string pname = prefix+ "a" + a.lookup(l) + "*";
+      string pname = prefix+ "a" + a->lookup(l) + "*";
       add_MH_move(P, dirichlet_proposal, pname, "MF::dirichlet_N",     1,  parameter_moves);
     }
   }

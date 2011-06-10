@@ -423,13 +423,6 @@ namespace substitution {
   public:
     ReversibleFrequencyModel* clone() const =0;
 
-    const alphabet& Alphabet() const;
-
-    int n_letters() const;
-
-    /// Get the equilibrium frequencies
-    valarray<double> frequencies() const;
-
     ReversibleFrequencyModel(const alphabet& a);
 
     virtual ~ReversibleFrequencyModel() {}
@@ -440,13 +433,14 @@ namespace substitution {
   class SimpleFrequencyModel: public ReversibleFrequencyModel
   {
   protected:
-    void recalc(const std::vector<int>&);
-
+    void recalc(const std::vector<int>&) {std::abort();}
+    void update() { }
   public:
+
+    boost::shared_ptr<const Object> result() const;
+
     valarray<double> frequencies() const;
 
-    void frequencies(const valarray<double>&);
-    
     double f() const {return get_parameter_value_as<Double>(1);}
 
     SimpleFrequencyModel* clone() const {return new SimpleFrequencyModel(*this);}
@@ -749,15 +743,6 @@ namespace substitution {
 
   public:
     virtual MultiModel* clone() const=0;
-
-    boost::shared_ptr<const alphabet> get_alphabet() const 
-    {
-      return result_as<AlphabetExchangeModelObject>()->get_alphabet();
-    }
-
-    const alphabet& Alphabet() const {
-      return *get_alphabet();
-    }
 
     ~MultiModel() {}
   };

@@ -118,20 +118,6 @@ namespace substitution {
 
   //----------------------- Frequency Models ------------------------//
 
-  const alphabet& ReversibleFrequencyModel::Alphabet() const
-  {
-    return get_parameter_value_as<alphabet>(0);
-  }
-
-  int ReversibleFrequencyModel::n_letters() const
-  {
-    return Alphabet().size();
-  }
-
-  valarray<double> ReversibleFrequencyModel::frequencies() const {
-    return get_varray<double>(pi);
-  }
-
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
     :ReversibleFrequencyModelObject( a )
   { 
@@ -174,43 +160,37 @@ namespace substitution {
   }
 
   valarray<double> SimpleFrequencyModel::frequencies() const {
-    return get_varray<double>(pi);
+    return get_varray<double>( result_as<ReversibleFrequencyModelObject>()->pi );
   }
 
   valarray<double> UniformFrequencyModel::frequencies() const {
     return get_varray<double>(pi);
   }
 
-  void SimpleFrequencyModel::frequencies(const valarray<double>& pi2) 
+  shared_ptr<const Object> SimpleFrequencyModel::result() const
   {
-    assert(pi2.size() == n_letters());
+    const alphabet& a = get_parameter_value_as<alphabet>(0);
 
-    // set the frequency parameters
-    for(int i=0;i<n_letters();i++)
-      parameters_[i+2].value = polymorphic_cow_ptr<Object>( Double(pi2[i]) );
+    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
 
-    // recompute everything
-    recalc_all();
-  }
-
-  void SimpleFrequencyModel::recalc(const vector<int>&)
-  {
     // compute frequencies
-    pi = get_vector<double>( get_parameter_values_as<Double>( range<int>(2,n_letters()) ) );
-    normalize(pi);
+    R->pi = get_vector<double>( get_parameter_values_as<Double>( range<int>(2,n_letters()) ) );
+    normalize(R->pi);
     
     // compute transition rates
     valarray<double> pi_f(n_letters());
     for(int i=0;i<n_letters();i++)
-      pi_f[i] = pow(pi[i],f());
+      pi_f[i] = pow(R->pi[i],f());
 
     for(int i=0;i<n_letters();i++)
       for(int j=0;j<n_letters();j++)
-	R(i,j) = pi_f[i]/pi[i] * pi_f[j];
+	R->R(i,j) = pi_f[i]/R->pi[i] * pi_f[j];
 
     // diagonal entries should have no effect
     for(int i=0;i<n_letters();i++)
-      R(i,i) = 0;
+      R->R(i,i) = 0;
+
+    return R;
   }
 
   efloat_t SimpleFrequencyModel::prior() const 
@@ -470,7 +450,7 @@ namespace substitution {
     valarray<double> aa_pi = get_varray<double>(get_parameter_values_as<Double>( range<int>(2,aa_size()) ) );
 
     // get codon frequencies of sub-alphabet
-    valarray<double> sub_pi = SubModels(0).frequencies();
+    valarray<double> sub_pi = get_varray<double>( SubModels(0).result_as<ReversibleFrequencyModelObject>()->pi );
 
     // get aa frequencies of sub-alphabet
     valarray<double> sub_aa_pi(0.0,aa_size());
@@ -550,7 +530,7 @@ namespace substitution {
       aa_pref[i] = aa_pref_[Alphabet().translate(i)];
 
     // get codon frequencies of sub-alphabet
-    valarray<double> sub_pi = SubModels(0).frequencies();
+    valarray<double> sub_pi = get_varray<double>( SubModels(0).result_as<ReversibleFrequencyModelObject>()->pi );
 
     // scale triplet frequencies by aa prefs
     for(int i=0;i<n_letters();i++) 
@@ -1397,17 +1377,18 @@ namespace substitution {
   //---------------------- MultiFrequencyModel -----------------------//
   efloat_t MultiFrequencyModel::super_prior() const 
   {
-    const int n = Alphabet().size();
+    shared_ptr<const alphabet> aa = SubModel().result_as<ReversibleMarkovModelObject>()->get_alphabet();
 
     efloat_t Pr = 1;
+    int n = get_parameter_value_as<Int>(-1); // which one would this be? the last one?
 
-    for(int l=0;l<Alphabet().size();l++) 
+    for(int l=0;l<aa->size();l++) 
     {
       valarray<double> a_l(n);
       for(int m=0;m<a_l.size();m++)
 	a_l[m] = get_parameter_value_as<Double>(m+l*n);
 
-      Pr *= ::dirichlet_pdf(a_l, n/2.0);
+      Pr *= ::dirichlet_pdf(a_l, aa->size()/2.0);
     }
 
     return Pr;
@@ -1478,11 +1459,15 @@ namespace substitution {
   MultiFrequencyModel::MultiFrequencyModel(const AlphabetExchangeModel& E,int n)
     :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E))
   { 
+    shared_ptr<const alphabet> aa = SubModel().result_as<ReversibleMarkovModelObject>()->get_alphabet();
+
+    add_parameter(Parameter("n",Int(n)));
+
     // Set up variable names
     //   - initial probability that a letter l is in a submodel of type m = 1/n
-    for(int l=0;l<Alphabet().size();l++) 
+    for(int l=0;l<aa->size();l++) 
     {
-      string letter = Alphabet().lookup(l);
+      string letter = aa->lookup(l);
 
       for(int m=0;m<n;m++) 
       {
