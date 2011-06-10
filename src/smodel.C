@@ -124,21 +124,24 @@ namespace substitution {
     add_parameter(Parameter("alphabet",a));
   }
 
-  void UniformFrequencyModel::frequencies(const valarray<double>&) 
-  { }
-
-  void UniformFrequencyModel::recalc(const vector<int>&)
+  boost::shared_ptr<const Object>  UniformFrequencyModel::result() const
   {
-    pi = std::vector<double>(n_letters(), 1.0/n_letters());
+    const alphabet& a = get_parameter_value_as<alphabet>(0);
+
+    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
+
+    R->pi = std::vector<double>(a.size(), 1.0/a.size());
     
     // compute transition rates
-    for(int i=0;i<n_letters();i++)
-      for(int j=0;j<n_letters();j++)
-	R(i,j) = 1;
+    for(int i=0;i<a.size();i++)
+      for(int j=0;j<a.size();j++)
+	R->R(i,j) = 1;
 
     // diagonal entries should have no effect
-    for(int i=0;i<n_letters();i++)
-      R(i,i) = 0;
+    for(int i=0;i<a.size();i++)
+      R->R(i,i) = 0;
+
+    return R;
   }
 
   string UniformFrequencyModel::name() const {
@@ -159,10 +162,6 @@ namespace substitution {
     recalc_all();
   }
 
-  valarray<double> UniformFrequencyModel::frequencies() const {
-    return get_varray<double>(pi);
-  }
-
   shared_ptr<const Object> SimpleFrequencyModel::result() const
   {
     const alphabet& a = get_parameter_value_as<alphabet>(0);
@@ -175,15 +174,15 @@ namespace substitution {
     
     // compute transition rates
     valarray<double> pi_f(n_letters());
-    for(int i=0;i<n_letters();i++)
+    for(int i=0;i<a.size();i++)
       pi_f[i] = pow(R->pi[i],f());
 
-    for(int i=0;i<n_letters();i++)
-      for(int j=0;j<n_letters();j++)
+    for(int i=0;i<a.size();i++)
+      for(int j=0;j<a.size();j++)
 	R->R(i,j) = pi_f[i]/R->pi[i] * pi_f[j];
 
     // diagonal entries should have no effect
-    for(int i=0;i<n_letters();i++)
+    for(int i=0;i<a.size();i++)
       R->R(i,i) = 0;
 
     return R;

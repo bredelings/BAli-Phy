@@ -455,14 +455,12 @@ namespace substitution {
   class UniformFrequencyModel: public ReversibleFrequencyModel
   {
   protected:
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
 
   public:
     
-    valarray<double> frequencies() const;
+    boost::shared_ptr<const Object> result() const;
 
-    void frequencies(const valarray<double>&);
-    
     UniformFrequencyModel* clone() const {return new UniformFrequencyModel(*this);}
 
     string name() const;
