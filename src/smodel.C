@@ -2126,7 +2126,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     D.values[2] = get_parameter_value(4);
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
-    return MultiParameterModel::result();
+    shared_ptr<const ModelFunction> F = LambdaModel(SubModel(),p_change).result_as<const ModelFunction>();
+
+    shared_ptr<MultiModelObject> R = MultiParameterFunction(*F, D);
+
+    return R;
   }
 
   efloat_t M2a::super_prior() const 
@@ -2160,7 +2164,9 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
   M2a::M2a(const M0& M1,const ReversibleFrequencyModel& R) 
-    :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,3)
+    :ReversibleWrapperOver<MultiModel>(UnitModel(ReversibleMarkovSuperModel(M1,R))),
+     p_change(0),
+     D(3)
   {
     add_super_parameter(Parameter("M2a::f[AA INV]",   Double(1.0/3), between(0, 1)));
     add_super_parameter(Parameter("M2a::f[Neutral]",  Double(1.0/3), between(0, 1)));
