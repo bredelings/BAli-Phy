@@ -297,8 +297,6 @@ namespace substitution {
   {
   public:
     NucleotideExchangeModel* clone() const=0;
-
-    const Nucleotides& Alphabet() const;
   };
 
   /// The Hasegawa, Kishino, Yano (1985)
@@ -418,7 +416,7 @@ namespace substitution {
 
   //------------------------ Reversible frequency model --------------------//
 
-  class ReversibleFrequencyModel: virtual public ::Model, public ReversibleFrequencyModelObject
+  class ReversibleFrequencyModel: virtual public ::Model
   {
   public:
     ReversibleFrequencyModel* clone() const =0;
@@ -475,19 +473,17 @@ namespace substitution {
   public:
     TripletFrequencyModel* clone() const =0;
 
-    const Triplets& Alphabet() const;
-
     explicit TripletFrequencyModel(const Triplets& T);
   };
 
   class IndependentNucleotideFrequencyModel: public TripletFrequencyModel,
 					     public SuperModelOver<SimpleFrequencyModel>
   {
-    owned_ptr<SimpleFrequencyModel> triplets;
-
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
 
   public:
+    boost::shared_ptr<const Object> result() const;
+
     IndependentNucleotideFrequencyModel* clone() const {return new IndependentNucleotideFrequencyModel(*this);}
 
     string name() const;
@@ -500,9 +496,11 @@ namespace substitution {
 				public SuperModelOver<SimpleFrequencyModel>
   {
   protected:
-    void recalc(const std::vector<int>&);
+    void recalc(const std::vector<int>&) {std::abort();}
 
   public:
+    boost::shared_ptr<const Object> result() const;
+
     TripletsFrequencyModel* clone() const {return new TripletsFrequencyModel(*this);}
 
     efloat_t super_prior() const;
@@ -517,8 +515,6 @@ namespace substitution {
   public:
     CodonFrequencyModel* clone() const =0;
 
-    const Codons& Alphabet() const;
-
     explicit CodonFrequencyModel(const Codons& C);
   };
 
@@ -526,12 +522,10 @@ namespace substitution {
 			       public SuperModelOver<SimpleFrequencyModel>
   {
   protected:
-    owned_ptr<SimpleFrequencyModel> codons;
-
-    void recalc(const std::vector<int>&);
-
-    int aa_size() const {return Alphabet().getAminoAcids().size();}
+    void recalc(const std::vector<int>&) {std::abort();}
   public:
+    boost::shared_ptr<const Object> result() const;
+
     AACodonFrequencyModel* clone() const {return new AACodonFrequencyModel(*this);}
 
     string name() const;
@@ -543,11 +537,11 @@ namespace substitution {
 			      public SuperModelOver<TripletsFrequencyModel>
   {
   protected:
-    void recalc(const std::vector<int>&);
-
-    int aa_size() const {return Alphabet().getAminoAcids().size();}
+    void recalc(const std::vector<int>&) {std::abort();}
 
   public:
+    boost::shared_ptr<const Object> result() const;
+
     CodonsFrequencyModel* clone() const {return new CodonsFrequencyModel(*this);}
 
     efloat_t super_prior() const;
@@ -562,11 +556,11 @@ namespace substitution {
 			      public SuperModelOver<TripletsFrequencyModel>
   {
   protected:
-    void recalc(const std::vector<int>&);
-
-    int aa_size() const {return Alphabet().getAminoAcids().size();}
+    void recalc(const std::vector<int>&) {std::abort();}
 
   public:
+    boost::shared_ptr<const Object> result() const;
+
     CodonsFrequencyModel2* clone() const {return new CodonsFrequencyModel2(*this);}
 
     efloat_t super_prior() const;
@@ -610,8 +604,6 @@ namespace substitution {
   {
     void recalc(const std::vector<int>&) {std::abort();}
   public:
-    const alphabet& Alphabet() const;
-
     /// Make a copy of this object
     virtual F81_Model* clone() const {return new F81_Model(*this);}
 

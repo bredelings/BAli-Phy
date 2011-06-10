@@ -40,7 +40,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "operation.H"
 #include "computation.H"
 
+class Model;
+
 std::string parameter_name(const std::string& prefix,int i,int n);
+
+int find_parameter(const Model& M,const std::string& name);
 
 struct Parameter
 {
@@ -97,7 +101,8 @@ struct Parameter
 //      this parameter would be clearly marked as an 'input', and would not need to be updated if the
 //      *value* was unchanged.
 // 7. Store cached intermediate results in same array as input variable values?
-// 8. Handle various annotations, such as priors, bounds, model_names, computed variable names, etc. from Formula.
+// 8. Handle various annotations, such as priors, bounds, model_names, computed variable names, transition-kernels, loggers, etc. from Formula.
+// 9. Consider the possibility of evaluating functions that DO something, and have a void return type.
 //
 // TODO:
 //
@@ -199,6 +204,7 @@ public:
 
   /// Get A model parameter value
   boost::shared_ptr<const Object> get_parameter_value(int i) const {return parameters_[i].value;}
+  boost::shared_ptr<const Object> get_parameter_value(const std::string& p_name) const {return get_parameter_value(find_parameter(*this,p_name));}
 
   template <typename T>
   bool parameter_has_type(int index) const {return boost::dynamic_pointer_cast<const T>(get_parameter_value(index));}
@@ -495,8 +501,6 @@ public:
   ModelFunction(const Model& M, int p);
 };
 
-
-int find_parameter(const Model& M,const std::string& name);
 
 void show_parameters(std::ostream& o,const Model& M);
 

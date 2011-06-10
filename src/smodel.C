@@ -119,7 +119,6 @@ namespace substitution {
   //----------------------- Frequency Models ------------------------//
 
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
-    :ReversibleFrequencyModelObject( a )
   { 
     add_parameter(Parameter("alphabet",a));
   }
@@ -169,11 +168,11 @@ namespace substitution {
     shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
 
     // compute frequencies
-    R->pi = get_vector<double>( get_parameter_values_as<Double>( range<int>(2,n_letters()) ) );
+    R->pi = get_vector<double>( get_parameter_values_as<Double>( range<int>(2,a.size()) ) );
     normalize(R->pi);
     
     // compute transition rates
-    valarray<double> pi_f(n_letters());
+    valarray<double> pi_f(a.size());
     for(int i=0;i<a.size();i++)
       pi_f[i] = pow(R->pi[i],f());
 
@@ -190,11 +189,13 @@ namespace substitution {
 
   efloat_t SimpleFrequencyModel::prior() const 
   {
+    const alphabet& a = get_parameter_value_as<alphabet>(0);
+
     // uniform prior on f
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(2, n_letters() ) ), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(2, a.size() ) ), 1.0);
 
     return Pr;
   }
@@ -214,9 +215,9 @@ namespace substitution {
     add_parameter(Parameter("f",Double(1.0),between(0, 1)));
     //    parameters_[0].fixed = true;
 
-    for(int i=0;i<n_letters();i++) {
-      string pname = string("pi") + Alphabet().letter(i);
-      add_parameter(Parameter(pname, Double(1.0/n_letters()), between(0, 1)));
+    for(int i=0;i<a.size();i++) {
+      string pname = string("pi") + a.letter(i);
+      add_parameter(Parameter(pname, Double(1.0/a.size()), between(0, 1)));
     }
 
     // initialize everything
@@ -235,8 +236,8 @@ namespace substitution {
 
     valarray<double> f = pi;
     f /= f.sum();
-    for(int i=0;i<n_letters();i++) {
-      string pname = string("pi") + Alphabet().letter(i);
+    for(int i=0;i<a.size();i++) {
+      string pname = string("pi") + a.letter(i);
       add_parameter(Parameter(pname, Double(f[i]), between(0, 1)));
     }
 
@@ -246,49 +247,51 @@ namespace substitution {
 
 
   //------------------- Triplet Frequency Model -----------------//
-  const Triplets& TripletFrequencyModel::Alphabet() const
-  {
-    return get_parameter_value_as<Triplets>(0);
-  }
-
   TripletFrequencyModel::TripletFrequencyModel(const Triplets& T)
     :ReversibleFrequencyModel(T)
   { }
     
-  valarray<double> triplet_from_singlet_frequencies(const Triplets& T,const SimpleFrequencyModel& N)
+  valarray<double> triplet_from_singlet_frequencies(const Triplets& T,const ReversibleFrequencyModelObject& N)
   {
-    if (not dynamic_cast<const Nucleotides*>(&N.Alphabet()))
+    if (not dynamic_pointer_cast<const Nucleotides>(N.get_alphabet()))
       throw myexception()<<"Singlet frequencies are not nucleotide frequencies.";
-
-    vector<double> sub_pi = N.result_as<ReversibleFrequencyModelObject>()->pi;
 
     valarray<double> pi(1.0,T.size());
 
     for(int i=0;i<T.size();i++) 
       for(int j=0;j<3;j++)
-	pi[i] *= sub_pi[T.sub_nuc(i,j)];
+	pi[i] *= N.pi[T.sub_nuc(i,j)];
 
     pi /= pi.sum();
     
     return pi;
   }
 
-  void IndependentNucleotideFrequencyModel::recalc(const vector<int>&)
+
+  boost::shared_ptr<const Object> IndependentNucleotideFrequencyModel::result() const
   {
+    const Triplets& T = get_parameter_value_as<Triplets>(0);
+
+    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(T) );
+
     //------------------ compute triplet frequencies ------------------//
-    pi = get_vector<double>( triplet_from_singlet_frequencies(Alphabet(),SubModels(0)) );
 
-    vector<Double> sub_parameters = SubModels(0).get_parameter_values_as<Double>();
+    // 1. Get the nucleotide frequencies
+    shared_ptr<const ReversibleFrequencyModelObject> nucs = SubModels(0).result_as<ReversibleFrequencyModelObject>();
 
-    vector<Double> triplet_parameters(n_letters()+1);
-    triplet_parameters[0] = sub_parameters[0];
-    set_varray(triplet_parameters,1,pi);
+    // 2. Then get the corresponding triplet frequencies
+    R->pi = get_vector<double>( triplet_from_singlet_frequencies(T, *nucs) );
 
-    triplets->set_parameter_values(triplet_parameters);
+    // 3. Then construct a +F triplets model from them
+    //    (?? hey, shouldn't I need to specify e.g. Muse&Gaut or Yang-type here?)
+    shared_ptr<const ReversibleFrequencyModelObject> triplets;
+    triplets = SimpleFrequencyModel(T,get_varray<double>(R->pi) ).result_as<ReversibleFrequencyModelObject>();
 
-    for(int i=0;i<n_letters();i++)
-      for(int j=0;j<n_letters();j++)
-	R(i,j) = (*triplets)(i,j);
+    for(int i=0;i<T.size();i++)
+      for(int j=0;j<T.size();j++)
+	R->R(i,j) = (*triplets)(i,j);
+
+    return R;
   }
 
   string IndependentNucleotideFrequencyModel::name() const
@@ -298,8 +301,7 @@ namespace substitution {
 
   
   IndependentNucleotideFrequencyModel::IndependentNucleotideFrequencyModel(const Triplets& T) 
-    : TripletFrequencyModel(T),
-      triplets(SimpleFrequencyModel(T))
+    : TripletFrequencyModel(T)
   {
     // problem: TripletFrequency model won't have done this for its alphabet parameter
     model_slots_for_index.push_back(vector<model_slot>());
@@ -309,48 +311,61 @@ namespace substitution {
   }
 
 
-  void TripletsFrequencyModel::recalc(const vector<int>&)
+  boost::shared_ptr<const Object> TripletsFrequencyModel::result() const
   {
-    valarray<double> nu = get_varray<double>( get_parameter_values_as<Double>( range<int>(1,n_letters()) ) );
+    const Triplets& T = get_parameter_value_as<Triplets>(0);
+
+    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(T) );
+
+    valarray<double> nu = get_varray<double>( get_parameter_values_as<Double>( range<int>(1,T.size()) ) );
 
     //------------- compute frequencies ------------------//
-    pi = get_vector<double>( triplet_from_singlet_frequencies(Alphabet(),SubModels(0)) );
 
-    for(int i=0;i<pi.size();i++)
-      pi[i] *= nu[i];
+    // 1. Get the nucleotide frequencies
+    shared_ptr<const ReversibleFrequencyModelObject> nucs = SubModels(0).result_as<ReversibleFrequencyModelObject>();
 
-    normalize(pi);
+    // 2. Then get the corresponding triplet frequencies
+    R->pi = get_vector<double>( triplet_from_singlet_frequencies(T, *nucs) );
+
+    for(int i=0;i<T.size();i++)
+      R->pi[i] *= nu[i];
+
+    normalize(R->pi);
 
 
     //------------ compute transition rates -------------//
     double g = get_parameter_value_as<Double>(0);
 
-    valarray<double> nu_g(n_letters());
-    for(int i=0;i<n_letters();i++)
+    valarray<double> nu_g(T.size());
+    for(int i=0;i<T.size();i++)
       nu_g[i] = pow(nu[i],g);
 
 
     // FIXME - can we really handle two mutations?
     // Should the restriction on 1 mutation be HERE?
-    for(int i=0;i<n_letters();i++)
-      for(int j=0;j<n_letters();j++) {
-	R(i,j) = nu_g[i]/nu[i]*nu_g[j];
+    for(int i=0;i<T.size();i++)
+      for(int j=0;j<T.size();j++) {
+	R->R(i,j) = nu_g[i]/nu[i]*nu_g[j];
 	for(int k=0;k<3;k++) {
-	  int n1 = Alphabet().sub_nuc(i,k);
-	  int n2 = Alphabet().sub_nuc(j,k);
+	  int n1 = T.sub_nuc(i,k);
+	  int n2 = T.sub_nuc(j,k);
 	  if (n1 != n2)
-	    R(i,j) *= SubModels(0)(n1,n2);
+	    R->R(i,j) *= (*nucs)(n1,n2);
 	}
       }
 
     // diagonal entries should have no effect
-    for(int i=0;i<n_letters();i++)
-      R(i,i) = 0;
+    for(int i=0;i<T.size();i++)
+      R->R(i,i) = 0;
+
+    return R;
   }
 
   efloat_t TripletsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1,n_letters() ) ), 4.0);
+    const Triplets& T = get_parameter_value_as<Triplets>(0);
+
+    return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(2,T.size() ) ), 4.0);
   }
 
   string TripletsFrequencyModel::name() const 
@@ -366,9 +381,9 @@ namespace substitution {
 
     add_super_parameter(Parameter("g", Double(1), between(0, 1) ));
 
-    for(int i=0;i<n_letters();i++) {
-      string pname = string("v") + Alphabet().letter(i);
-      add_super_parameter(Parameter(pname, Double(1.0/n_letters()), between(0, 1) ));
+    for(int i=0;i<T.size();i++) {
+      string pname = string("v") + T.letter(i);
+      add_super_parameter(Parameter(pname, Double(1.0/T.size()), between(0, 1) ));
     }
 
     insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
@@ -377,41 +392,56 @@ namespace substitution {
   }
 
   //------------------- Codon Frequency Model -----------------//
-  const Codons& CodonFrequencyModel::Alphabet() const
-  {
-    return get_parameter_value_as<Codons>(0);
-  }
-
   CodonFrequencyModel::CodonFrequencyModel(const Codons& C)
     :ReversibleFrequencyModel(C)
   { }
 
+  // FIXME - these frequency models are a bit messed up.
+  // (i)  I need to think more clearly about the use of +gwF parameters.
+  // (ii) I need to put priors on the +gwF parameters here, instead of abusing SubModels for that purpose.
+  //  - I can make an frequency model OBJECT w/o constructing a MODEL.
+  //  - I should make a +gwF FUNCTION that is used by SimpleFrequencyModel.
+  //  - I should make a +F FUNCTION as well.
+  //  - I would not need a submodel anymore.
+  // (iii) I should 
 
-  void AACodonFrequencyModel::recalc(const vector<int>&)
+  boost::shared_ptr<const Object> AACodonFrequencyModel::result() const
   {
+    const Codons& C = get_parameter_value_as<Codons>(0);
+
+    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(C) );
+
     //----------- get amino acid frequencies and counts ------------//
-    vector<double> f_aa = SubModels(0).result_as<ReversibleFrequencyModelObject>()->pi;
-    vector<int> n_aa(aa_size(),0);
-    for(int i=0;i<Alphabet().size();i++) {
-      int aa = Alphabet().translate(i);
+    // 1. Get unweighted codon frequencies
+    shared_ptr<const ReversibleFrequencyModelObject> amino_acids = SubModels(0).result_as<ReversibleFrequencyModelObject>();
+
+    vector<double> f_aa = amino_acids->pi;
+    vector<int> n_aa(f_aa.size(),0);
+    for(int i=0;i<C.size();i++) {
+      int aa = C.translate(i);
       n_aa[aa]++;
     }
       
     //------------------ compute triplet frequencies ------------------//
-    for(int i=0;i<pi.size();i++) {
-      int aa = Alphabet().translate(i);
-      pi[i] = f_aa[aa]/n_aa[aa];
+    for(int i=0;i<C.size();i++) {
+      int aa = C.translate(i);
+      R->pi[i] = f_aa[aa]/n_aa[aa];
     }
 
-    vector<Double> codon_parameters(n_letters()+1);
-    codon_parameters[0] = SubModels(0).get_parameter_value_as<Double>(0);
-    set_varray(codon_parameters,1,pi);
+    //    vector<Double> codon_parameters(n_letters()+1);
+    //    codon_parameters[0] = SubModels(0).get_parameter_value_as<Double>(0);
+    //    set_varray(codon_parameters,1,pi);
+    SimpleFrequencyModel CM(C,get_varray<double>(R->pi) );
+    CM.set_parameter_value(find_parameter(CM,"f"), SubModels(0).get_parameter_value("f"));
+      
+    shared_ptr<const ReversibleFrequencyModelObject> codons = CM.result_as<ReversibleFrequencyModelObject>();
+    //    (copy the "f" from the amino-acid model)
 
-    codons->set_parameter_values(codon_parameters);
+    for(int i=0;i<C.size();i++)
+      for(int j=0;j<C.size();j++)
+	R->R(i,j) = (*codons)(i,j);
 
-    for(int i=0;i<n_letters();i++)
-      for(int j=0;j<n_letters();j++)
-	R(i,j) = (*codons)(i,j);
+    return R;
   }
 
   string AACodonFrequencyModel::name() const
@@ -421,8 +451,7 @@ namespace substitution {
 
   
   AACodonFrequencyModel::AACodonFrequencyModel(const Codons& C) 
-    : CodonFrequencyModel(C),
-      codons(SimpleFrequencyModel(C))
+    : CodonFrequencyModel(C)
   {
     // problem: CodonFrequency model won't have done this for its alphabet parameter
     model_slots_for_index.push_back(vector<model_slot>());
@@ -437,56 +466,65 @@ namespace substitution {
 
   //------------------- Codons Frequency Model -----------------//
 
-  void CodonsFrequencyModel::recalc(const vector<int>&)
+  boost::shared_ptr<const Object> CodonsFrequencyModel::result() const
   {
-    double c = get_parameter_value_as<Double>(0);
+    const Codons& C = get_parameter_value_as<Codons>(0);
+    int aa_size = C.getAminoAcids().size();
+
+    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(C) );
+
+    double c = get_parameter_value_as<Double>(1);
 
     //------------- compute frequencies ------------------//
-    valarray<double> aa_pi = get_varray<double>(get_parameter_values_as<Double>( range<int>(2,aa_size()) ) );
+    valarray<double> aa_pi = get_varray<double>(get_parameter_values_as<Double>( range<int>(2,aa_size) ) );
 
     // get codon frequencies of sub-alphabet
-    valarray<double> sub_pi = get_varray<double>( SubModels(0).result_as<ReversibleFrequencyModelObject>()->pi );
+    shared_ptr<const ReversibleFrequencyModelObject> M = SubModels(0).result_as<ReversibleFrequencyModelObject>();
+    valarray<double> sub_pi = get_varray<double>( M->pi );
 
     // get aa frequencies of sub-alphabet
-    valarray<double> sub_aa_pi(0.0,aa_size());
-    for(int i=0;i<n_letters();i++)
-      sub_aa_pi[Alphabet().translate(i)] += sub_pi[i];
+    valarray<double> sub_aa_pi(0.0,aa_size);
+    for(int i=0;i<C.size();i++)
+      sub_aa_pi[C.translate(i)] += sub_pi[i];
 
     // get factors by which to multiply sub-alphabet frequencies
-    valarray<double> factor(n_letters());
-    for(int i=0;i<n_letters();i++) 
+    valarray<double> factor(C.size());
+    for(int i=0;i<C.size();i++) 
     {
-      int j = Alphabet().translate(i);
+      int j = C.translate(i);
       factor[i] = pow(aa_pi[j]/sub_aa_pi[j],c);
     }
 
     // compute aa-aware codon frequencies
-    for(int i=0;i<n_letters();i++) 
-      pi[i] = sub_pi[i] * factor[i];
+    for(int i=0;i<C.size();i++) 
+      R->pi[i] = sub_pi[i] * factor[i];
 
     // scale so as to sum to 1
-    normalize(pi);
+    normalize(R->pi);
 
     //------------ compute transition rates -------------//
     double h = get_parameter_value_as<Double>(1);
 
-    valarray<double> factor_h(n_letters());
-    for(int i=0;i<n_letters();i++)
+    valarray<double> factor_h(C.size());
+    for(int i=0;i<C.size();i++)
       factor_h[i] = pow(factor[i],h);
 
 
-    for(int i=0;i<n_letters();i++)
-      for(int j=0;j<n_letters();j++)
-	R(i,j) = SubModels(0)(i,j) * factor_h[i]/factor[i]*factor_h[j];
+    for(int i=0;i<C.size();i++)
+      for(int j=0;j<C.size();j++)
+	R->R(i,j) = (*M)(i,j) * factor_h[i]/factor[i]*factor_h[j];
 
     // diagonal entries should have no effect
-    for(int i=0;i<n_letters();i++)
-      R(i,i) = 0;
+    for(int i=0;i<C.size();i++)
+      R->R(i,i) = 0;
+
+    return R;
   }
 
   efloat_t CodonsFrequencyModel::super_prior() const 
   {
-    return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(2, aa_size() ) ), 2.0);
+    const Codons& C = get_parameter_value_as<Codons>(0);
+    return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(2, C.getAminoAcids().size() ) ), 2.0);
   }
 
   string CodonsFrequencyModel::name() const 
@@ -500,11 +538,11 @@ namespace substitution {
     // problem: CodonFrequency model won't have done this for its alphabet parameter
     model_slots_for_index.push_back(vector<model_slot>());
 
-    add_super_parameter(Parameter("c", Double(0.5), between(0, 1)));
-    add_super_parameter(Parameter("h", Double(0.5), between(0, 1)));
+    add_super_parameter(Parameter("c", Double(0.5), between(0, 1))); // 1
+    add_super_parameter(Parameter("h", Double(0.5), between(0, 1))); // 2
 
     for(int i=0;i<C.getAminoAcids().size();i++) {
-      string pname = string("b_") + Alphabet().getAminoAcids().letter(i);
+      string pname = string("b_") + C.getAminoAcids().letter(i);
       add_super_parameter(Parameter(pname,  Double(1.0/C.getAminoAcids().size()), between(0, 1)));
     }
 
@@ -515,46 +553,55 @@ namespace substitution {
 
   //------------------- Codons Frequency Model 2 -----------------//
 
-  void CodonsFrequencyModel2::recalc(const vector<int>&)
+  boost::shared_ptr<const Object>  CodonsFrequencyModel2::result() const
   {
-    //------------- compute frequencies ------------------//
-    valarray<double> aa_pref_ = get_varray<double>(get_parameter_values_as<Double>( range<int>(1,aa_size()) ) );
+    const Codons& C = get_parameter_value_as<Codons>(0);
 
-    valarray<double> aa_pref(n_letters());
-    for(int i=0;i<n_letters();i++)
-      aa_pref[i] = aa_pref_[Alphabet().translate(i)];
+    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(C) );
+
+    //------------- compute frequencies ------------------//
+    valarray<double> aa_pref_ = get_varray<double>(get_parameter_values_as<Double>( range<int>(1,C.getAminoAcids().size()) ) );
+
+    valarray<double> aa_pref(C.size());
+    for(int i=0;i<C.size();i++)
+      aa_pref[i] = aa_pref_[C.translate(i)];
 
     // get codon frequencies of sub-alphabet
-    valarray<double> sub_pi = get_varray<double>( SubModels(0).result_as<ReversibleFrequencyModelObject>()->pi );
+    shared_ptr<const ReversibleFrequencyModelObject> M = SubModels(0).result_as<ReversibleFrequencyModelObject>();
+    valarray<double> sub_pi = get_varray<double>( M->pi );
 
     // scale triplet frequencies by aa prefs
-    for(int i=0;i<n_letters();i++) 
-      pi[i] = sub_pi[i] * aa_pref[i];
+    for(int i=0;i<C.size();i++) 
+      R->pi[i] = sub_pi[i] * aa_pref[i];
 
     // scale so as to sum to 1
-    normalize(pi);
+    normalize(R->pi);
 
 
     //------------ compute transition rates -------------//
     double h = get_parameter_value_as<Double>(0);
 
-    valarray<double> aa_pref_h(n_letters());
-    for(int i=0;i<n_letters();i++)
+    valarray<double> aa_pref_h(C.size());
+    for(int i=0;i<C.size();i++)
       aa_pref_h[i] = pow(aa_pref[i], h);
 
 
-    for(int i=0;i<n_letters();i++)
-      for(int j=0;j<n_letters();j++)
-	R(i,j) = SubModels(0)(i,j) * aa_pref_h[i]/aa_pref[i] * aa_pref_h[j];
+    for(int i=0;i<C.size();i++)
+      for(int j=0;j<C.size();j++)
+	R->R(i,j) = (*M)(i,j) * aa_pref_h[i]/aa_pref[i] * aa_pref_h[j];
 
     // diagonal entries should have no effect
-    for(int i=0;i<n_letters();i++)
-      R(i,i) = 0;
+    for(int i=0;i<C.size();i++)
+      R->R(i,i) = 0;
+
+    return R;
   }
 
   efloat_t CodonsFrequencyModel2::super_prior() const 
   {
-    return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1, aa_size() ) ), 2.0);
+    const Codons& C = get_parameter_value_as<Codons>(0);
+
+    return dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1, C.getAminoAcids().size() ) ), 2.0);
   }
 
   string CodonsFrequencyModel2::name() const 
@@ -568,7 +615,7 @@ namespace substitution {
     add_super_parameter(Parameter("h", Double(0.5), between(0, 1)));
 
     for(int i=0;i<C.getAminoAcids().size();i++) {
-      string pname = string("b_") + Alphabet().getAminoAcids().letter(i);
+      string pname = string("b_") + C.getAminoAcids().letter(i);
       add_super_parameter(Parameter(pname, Double(1.0/C.getAminoAcids().size()), between(0, 1)));
     }
 
@@ -581,34 +628,34 @@ namespace substitution {
 
   shared_ptr<const Object> F81_Model::result() const
   {
-    const int N = Alphabet().size();
+    const alphabet& a = get_parameter_value_as<alphabet>(0);
 
-    const alphabet& a =  get_parameter_value_as<alphabet>(0);
+    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
+
+    const int N = a.size();
+
     valarray<double> pi = get_varray<double>( get_parameter_values_as<Double>( range<int>(1,N) ) );
     pi /= pi.sum();
 
     return shared_ptr<const F81_Object>(new F81_Object(a, pi) );
   }
 
-  const alphabet& F81_Model::Alphabet() const
-  {
-    return get_parameter_value_as<alphabet>(0);
-  }
-  
   efloat_t F81_Model::prior() const
   {
+    const alphabet& a = get_parameter_value_as<alphabet>(0);
     // uniform prior on f
     efloat_t Pr = 1;
 
     // uniform - 1 observeration per letter
-    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1, Alphabet().size()) ), 1.0);
+    Pr *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(1, a.size()) ), 1.0);
 
     return Pr;
   }
 
   string F81_Model::name() const
   {
-    return string("F81[")+Alphabet().name+"]";
+    const alphabet& a = get_parameter_value_as<alphabet>(0);
+    return string("F81[")+a.name+"]";
   }
 
   F81_Model::F81_Model(const alphabet& a)
@@ -618,7 +665,7 @@ namespace substitution {
     int N = a.size();
 
     for(int i=0;i<N;i++) {
-      string pname = string("pi") + Alphabet().letter(i);
+      string pname = string("pi") + a.letter(i);
       add_parameter(Parameter(pname, Double(1.0/N), between(0, 1)));
     }
 
@@ -634,7 +681,7 @@ namespace substitution {
     assert(f.size() == N);
 
     for(int i=0;i<N;i++) {
-      string pname = string("pi") + Alphabet().letter(i);
+      string pname = string("pi") + a.letter(i);
       add_parameter(Parameter(pname, Double(f[i]), between(0, 1)));
     }
 
@@ -928,11 +975,6 @@ namespace substitution {
   // mtart Rota Stabelli 2009
 
 
-  const Nucleotides& NucleotideExchangeModel::Alphabet() const
-  {
-    return get_parameter_value_as<Nucleotides>(0);
-  }
-  
   //------------------------- HKY -----------------------------//
   string HKY::name() const {
     return "HKY";
@@ -1281,7 +1323,7 @@ namespace substitution {
 
   //------------ A Branch/Site Model ----------------//
   /*
-  void BranchSiteCollection::recalc(const std::vector<int>&)
+  boost::shared_ptr<const Object> BranchSiteCollection::result() const
   {
     P.resize(S.size());
     for(int i=0;i<S.size();i++)
@@ -1710,7 +1752,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     double ratio = d.scale()/D.mean();
     
     // this used to affect the prior
-    bool good_enough = (ratio > 1.0/1.5 and ratio < 1.5);
+    //    bool good_enough = (ratio > 1.0/1.5 and ratio < 1.5);
 
     // problem - this isn't completely general
     d.scale(1.0/ratio);
