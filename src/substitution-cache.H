@@ -24,7 +24,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "mytypes.H"
 #include "tree.H"
-#include "smodel.H"
+#include "smodel-objects.H"
+
+namespace substitution
+{
+  class MultiModelObject;
+}
+
 
 /// An object to store cached conditional likelihoods for a single branch
 struct Likelihood_Cache_Branch: public std::vector< Matrix >

@@ -19,6 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "substitution.H"
 #include "substitution-index.H"
+#include "smodel-objects.H"
 #include "matcache.H"
 #include "rng.H"
 #include <cmath>
@@ -936,7 +937,7 @@ namespace substitution {
       int n_states = cache.scratch(0).size2();
       int n_letters = A.get_alphabet().n_letters();
       if (n_states == n_letters) {
-	if (dynamic_cast<const F81_Model*>(&MModel.base_model(0)))
+	if (dynamic_cast<const F81_Object*>(&MModel.base_model(0)))
 	  peel_leaf_branch_F81(b0, I, cache, sequences[b0], A, T, MModel);
 	else
 	  peel_leaf_branch(b0, I, cache, sequences[b0], A, T, MC.transition_P(B0), MModel);
@@ -945,7 +946,7 @@ namespace substitution {
 	peel_leaf_branch_modulated(b0, I, cache, sequences[b0], A, T, MC.transition_P(B0), MModel);
     }
     else if (bb == 2) {
-      if (dynamic_cast<const F81_Model*>(&MModel.base_model(0)))
+      if (dynamic_cast<const F81_Object*>(&MModel.base_model(0)))
 	peel_internal_branch_F81(b0, I, cache, A, T, MModel);
       else
 	peel_internal_branch(b0, I, cache, A, T, MC.transition_P(B0), MModel);

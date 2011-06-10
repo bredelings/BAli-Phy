@@ -24,7 +24,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "parameters.H"
 #include <string>
 #include "model.H"
-#include "smodel.H"
+
+namespace substitution {
+  class MultiModelObject;
+}
 
 void print_stats(std::ostream& o,const Parameters& P,bool=true);
 

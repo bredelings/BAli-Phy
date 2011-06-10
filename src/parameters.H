@@ -33,7 +33,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mytypes.H"
 #include "sequencetree.H"
 #include "probability-model.H"
-#include "smodel.H"
 #include "imodel.H"
 #include "alignment.H"
 #include "matcache.H"
@@ -107,7 +106,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 // we should probably make a multi-branch model out of a single frequencymodel
 // and multiple exchange models.
 
-
+namespace substitution
+{
+  class MultiModelObject;
+  class MultiModel;
+}
 
 extern bool use_internal_index;
 
@@ -347,9 +350,9 @@ public:
   /// How many substitution models?
   int n_smodels() const {return SModels.size();}
   /// Get the substitution::Model
-  const substitution::MultiModel& SModel(int i) const {return *SModels[i];}
+  const substitution::MultiModel& SModel(int i) const;
   /// Get the substitution::Model
-        substitution::MultiModel& SModel(int i)       {return *SModels[i];}
+  substitution::MultiModel& SModel(int i);
   
   /// How many substitution models?
   int n_imodels() const {return IModels.size();}

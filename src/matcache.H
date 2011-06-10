@@ -21,9 +21,14 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define MATCACHE_H
 
 #include <vector>
-#include "smodel.H"
 #include "tree.H"
 #include "mytypes.H"
+#include "smodel-objects.H"
+
+namespace substitution
+{
+  class MultiModelObject;
+}
 
 struct Mat_Cache
 {

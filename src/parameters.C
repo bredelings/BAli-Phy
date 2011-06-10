@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///
 
 #include "parameters.H"
+#include "smodel.H"
 #include "rng.H"
 #include "substitution.H"
 #include "substitution-index.H"
@@ -630,6 +631,18 @@ efloat_t Parameters::heated_likelihood() const
 
   return Pr;
 }
+
+  /// Get the substitution::Model
+const substitution::MultiModel& Parameters::SModel(int i) const 
+{
+  return *SModels[i];
+}
+  /// Get the substitution::Model
+substitution::MultiModel& Parameters::SModel(int i)
+{
+  return *SModels[i];
+}
+
 
 void Parameters::recalc_imodels() 
 {
