@@ -927,3 +927,15 @@ ModelFunction::ModelFunction(const Model& M, int p)
   :p_change(p),
    sub_model(M.clone())
 { }
+
+shared_ptr<Model> prefix_model(const Model& M, const string& prefix)
+{
+  shared_ptr<Model> M2 (M.clone());
+
+  for(int i=0;i<M2->n_parameters();i++)
+  {
+    M2->rename_parameter(i,prefix + "::" + M2->parameter_name(i));
+  }
+
+  return M2;
+}

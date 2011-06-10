@@ -195,6 +195,7 @@ public:
 
   /// Names of the parameters
   const std::string& parameter_name(int i) const {return parameters_[i].name;}
+  void rename_parameter(int i, const std::string& s) {parameters_[i].name = s;}
 
   bool is_fixed(int i) const                {return parameters_[i].fixed;}
   void set_fixed(int i,bool f)      {parameters_[i].fixed = f;}
@@ -513,4 +514,7 @@ std::vector<std::string> short_parameter_names(const Model& M);
 std::vector<std::string> short_parameter_names(std::vector<std::string> names);
 
 std::vector<int> parameters_with_extension(const Model& M, std::string name);
+
+boost::shared_ptr<Model> prefix_model(const Model&, const std::string& prefix);
+
 #endif
