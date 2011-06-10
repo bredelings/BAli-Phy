@@ -202,10 +202,11 @@ namespace substitution {
 
   string SimpleFrequencyModel::name() const 
   {
+    const alphabet& a = get_parameter_value_as<alphabet>(0);
     if (is_fixed(1) and get_parameter_value_as<Double>(1) == 1.0)
-      return "F";
+      return "F["+a.name+"]";
     else
-      return "gwF";
+      return "gwF["+a.name+"]";
   }
   
   SimpleFrequencyModel::SimpleFrequencyModel(const alphabet& a)
