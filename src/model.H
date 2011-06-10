@@ -477,6 +477,7 @@ public:
   boost::shared_ptr<const Object> result() const;
 
   LambdaModel(const Model& M, int p_change);
+  LambdaModel(const Model& M, const std::string&);
 };
 
 

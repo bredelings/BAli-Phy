@@ -905,6 +905,17 @@ LambdaModel::LambdaModel(const Model& M, int p)
   sub_model->set_fixed(p_change, true);
 }
 
+LambdaModel::LambdaModel(const Model& M, const string& p_name)
+  :p_change(find_parameter(M,p_name)),
+   sub_model(M.clone())
+{
+  for(int i=0;i<M.n_parameters();i++)
+    if (i != p_change)
+      add_parameter(Parameter(M.parameter_name(i), M.get_parameter_value(i), M.get_bounds(i),M.is_fixed(i)));
+
+  sub_model->set_fixed(p_change, true);
+}
+
 shared_ptr<const Object> ModelFunction::operator()(boost::shared_ptr<const Object> O) const
 {
   sub_model->set_parameter_value(p_change,O);
