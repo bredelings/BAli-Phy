@@ -159,10 +159,6 @@ namespace substitution {
     recalc_all();
   }
 
-  valarray<double> SimpleFrequencyModel::frequencies() const {
-    return get_varray<double>( result_as<ReversibleFrequencyModelObject>()->pi );
-  }
-
   valarray<double> UniformFrequencyModel::frequencies() const {
     return get_varray<double>(pi);
   }
@@ -265,7 +261,7 @@ namespace substitution {
     if (not dynamic_cast<const Nucleotides*>(&N.Alphabet()))
       throw myexception()<<"Singlet frequencies are not nucleotide frequencies.";
 
-    valarray<double> sub_pi = N.frequencies();
+    vector<double> sub_pi = N.result_as<ReversibleFrequencyModelObject>()->pi;
 
     valarray<double> pi(1.0,T.size());
 
@@ -395,7 +391,7 @@ namespace substitution {
   void AACodonFrequencyModel::recalc(const vector<int>&)
   {
     //----------- get amino acid frequencies and counts ------------//
-    valarray<double> f_aa = SubModels(0).frequencies();
+    vector<double> f_aa = SubModels(0).result_as<ReversibleFrequencyModelObject>()->pi;
     vector<int> n_aa(aa_size(),0);
     for(int i=0;i<Alphabet().size();i++) {
       int aa = Alphabet().translate(i);
