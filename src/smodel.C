@@ -39,6 +39,7 @@ using std::endl;
 using std::istringstream;
 
 using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 
 namespace substitution {
 
@@ -269,7 +270,7 @@ namespace substitution {
   }
 
 
-  boost::shared_ptr<const Object> IndependentNucleotideFrequencyModel::result() const
+  shared_ptr<const Object> IndependentNucleotideFrequencyModel::result() const
   {
     const Triplets& T = get_parameter_value_as<Triplets>(0);
 
@@ -312,7 +313,7 @@ namespace substitution {
   }
 
 
-  boost::shared_ptr<const Object> TripletsFrequencyModel::result() const
+  shared_ptr<const Object> TripletsFrequencyModel::result() const
   {
     const Triplets& T = get_parameter_value_as<Triplets>(0);
 
@@ -406,7 +407,7 @@ namespace substitution {
   //  - I would not need a submodel anymore.
   // (iii) I should 
 
-  boost::shared_ptr<const Object> AACodonFrequencyModel::result() const
+  shared_ptr<const Object> AACodonFrequencyModel::result() const
   {
     const Codons& C = get_parameter_value_as<Codons>(0);
 
@@ -467,7 +468,7 @@ namespace substitution {
 
   //------------------- Codons Frequency Model -----------------//
 
-  boost::shared_ptr<const Object> CodonsFrequencyModel::result() const
+  shared_ptr<const Object> CodonsFrequencyModel::result() const
   {
     const Codons& C = get_parameter_value_as<Codons>(0);
     int aa_size = C.getAminoAcids().size();
@@ -554,7 +555,7 @@ namespace substitution {
 
   //------------------- Codons Frequency Model 2 -----------------//
 
-  boost::shared_ptr<const Object>  CodonsFrequencyModel2::result() const
+  shared_ptr<const Object>  CodonsFrequencyModel2::result() const
   {
     const Codons& C = get_parameter_value_as<Codons>(0);
 
