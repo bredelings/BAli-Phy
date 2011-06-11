@@ -51,6 +51,12 @@ struct Context: virtual public Object
   /// Update the value of a non-constant, non-computed index
   void set_value(int index, const Object& O);
 
+  /// Update the value of a non-constant, non-computed index
+  void set_value(const std::string& var, boost::shared_ptr<const Object> O);
+
+  /// Update the value of a non-constant, non-computed index
+  void set_value(const std::string& var, const Object& O);
+
   /// How many indices total do we have?
   int size() const;
 
