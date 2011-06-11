@@ -743,17 +743,17 @@ namespace substitution {
 
   /// Construct a reversible Markov model on alphabet 'a'
   ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
-    :OpModel( Q_from_R_and_S(S1,R1) )
+    :OpModel( Q_from_R_and_S(*prefix_model(S1,"S"),*prefix_model(R1,"R")) )
   { }
 
     
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const AlphabetExchangeModel& E)
-    :OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(*E.get_alphabet())) )
+    :OpModel( Q_from_R_and_S( *prefix_model(E,"S"), *prefix_model(SimpleFrequencyModel(*E.get_alphabet()),"R") ) )
   { }
 
   SimpleReversibleMarkovModel::
   SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
-    :OpModel( Q_from_R_and_S(E, SimpleFrequencyModel(*E.get_alphabet(),pi)) )
+    :OpModel( Q_from_R_and_S( *prefix_model(E,"S"), *prefix_model(SimpleFrequencyModel(*E.get_alphabet(),pi),"R") ) )
   { }
 
   //---------------------- INV_Model --------------------------//
