@@ -1384,7 +1384,9 @@ namespace substitution {
 
   shared_ptr<const Object> UnitModel::result() const
   {
-    shared_ptr<MultiModelObject> R (new MultiModelObject(*SubModels(0).get_alphabet()));
+    shared_ptr<const ReversibleAdditiveCollectionObject> sub = SubModel().result_as<const ReversibleAdditiveCollectionObject>();
+
+    shared_ptr<MultiModelObject> R (new MultiModelObject(*sub->get_alphabet()));
 
     // set the distribution to 1.0
     R->fraction.resize(1);
@@ -1392,7 +1394,7 @@ namespace substitution {
 
     // make a copy of the submodel
     R->base_models.resize(1);
-    R->base_models[0] = SubModel().result_as<const ReversibleAdditiveCollectionObject>();
+    R->base_models[0] = sub;
 
     return R;
   }
