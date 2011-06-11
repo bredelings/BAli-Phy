@@ -835,7 +835,7 @@ namespace substitution {
   {
     const alphabet& a = get_parameter_value_as<alphabet>(0);
 
-    shared_ptr<ExchangeModelObject> R (new ExchangeModelObject(a.size()));
+    shared_ptr<ExchangeModelObject> R (new AlphabetExchangeModelObject(a));
 
     for(int i=0;i<a.size();i++)
       for(int j=0;j<i;j++) {
