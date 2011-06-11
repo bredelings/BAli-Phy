@@ -444,6 +444,9 @@ class OpModel: virtual public Model
 
   void recalc(const std::vector<int>&) {std::abort();}
 
+  // Is this a good idea?
+  void update() { }
+
   int add_submodel(boost::shared_ptr<const Model>);
 public:
 
