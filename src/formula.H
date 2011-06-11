@@ -21,13 +21,17 @@ struct expression_ref;
 
 // Goal: Allow other objects without values that may reference objects that can take values.
 //       - bounds / domains
-//       - default values
+//       - default values (default_value X v)
+//            We could allow v to be a computed expression.  It would have to not depend on X, though.
+//            As a computed expression, it could refer to a constant node.  We would evaluate that node
+//             to get its value.
 //       - assertions
 //       - unique names for computed values.  (e.g. Z = X*Y)
 //         + how does this relate to the unique INTEGER names?
 //         + how to separate the expression description "X*Y" from the *name* "Z"?
 //         + can I merge Z=X*Y and W=X*Y even though that have different names?
 //           - The second one could be a nickname.  But lets abort/complain, for now.
+//         + solution: let's make names an external tag.  That way, an expression could have multiple names.
 //       - attributes (e.g. var X)
 //       - transition kernels,
 //       - priors
@@ -37,57 +41,46 @@ struct expression_ref;
 //       - IO and file reading or writing
 //       - ... and general procedures!
 //
-// Querying?
+// Querying?  E.g. Does X have a default value? -> Is there a (default_value X v) expression?
 //
+// 
+
 // Cycles are probably prohibited... as we do not need self-reference in that way.
 //   - Hmm... recursive functions are useful, though.
 //
 // Also, note that for some computed values, we do not need to cache values:
 //   - e.g. f(g(h(x)).  Just cache the final result.
 
+// Hmm... if expressions can be used in modal operators, then it might matter if they are
+//  top-level expressions, or just a sub-expression of another expression.
+// For example, default_prior(x~Normal(0,1)) would have x~Normal(0,1) as a sub-expression.
+// For new perhaps just let sub-models set the prior.
 
 // TODO: We need to know now to *combine* formulas into a larger formula, in order to make
-//       model creation easier.
+//       model creation easier.  e.f. f(x), x=1, x~Normal(0,sigma^2)
 
-// What kinds of terms do we need?
+// Q: What is the simplest way to introduce an unlimited number of different term types?
+// A: Can I make all terms be expressions?
+// 1. That way I don't have to invent new terms, to get new expressions.
+// 2. Each expressions can be decomposed so that it only references other terms.
+// - I could restrict the kind of expressions that are allowed.
+//   (I should replace "state nodes" with named_parameter_expression.
+//
+// - Currently, I allow
+//    + constant terms (holds value)
+//    + variable (hold: nothing? default value? bounds?)
+//    + operation expressions (holds operation)
 //
 // - all terms have:
-//    * name
 //    * list of inputs
-//      - list of outputs, computed from inputs.
+//      - cached: list of outputs
+//      - cached: list of outputs with slots
+//    * how do I modify expression to make the idea of sub-expressions general?
+//    * how do I handle (f x) really being of type f and having just 1 sub-expression, x, when this is true?
 //
-// - Evaluable terms (can have a current value)
-//   + variable terms
-//     * default values
+// - I can disallow lambda expressions. (do not opt-in)
 //
-//   + constant terms
-//     * constant value
-//
-//   + computed terms
-//     * operation
-//
-//
-// Can I make all terms be expressions?
-//
-// What is the simplest way to introduce an unlimited number of different term types?
-//
-// So, each term should be an expression.
-// 1. That way I don't have to invent new terms, to get new expressions.
-// 2. It can be decomposed so that it only references other terms.
 
-// At least, we can handle an op-expression that way.  And a function-expression.
-//
-// Can we handle lambda-expressions, though?
-// Is a lambda expression (lambda \1 (f \1)) ?
-// + If we add (f \1), then we are allowing unbound dummies...
-//   - Hmm...
-//
-// default_value_expression
-// bounds_expression
-// prior_expression
-// 
-// I then need to be able to compare expressions for equality, I think...
-//
 // I could separate expressions (in the Formula) from FACTORED expression (in the Context?)
 // Then expressions would be only modified to use term_refs as arguments for computational purposes...
 
