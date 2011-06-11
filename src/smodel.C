@@ -1386,7 +1386,7 @@ namespace substitution {
   {
     shared_ptr<const ReversibleAdditiveCollectionObject> sub = SubModel().result_as<const ReversibleAdditiveCollectionObject>();
 
-    shared_ptr<MultiModelObject> R (new MultiModelObject(*sub->get_alphabet()));
+    shared_ptr<MultiModelObject> R (new MultiModelObject);
 
     // set the distribution to 1.0
     R->fraction.resize(1);
@@ -1457,7 +1457,7 @@ namespace substitution {
 
     const alphabet& a = *M->get_alphabet();
 
-    shared_ptr<MultiModelObject> R (new MultiModelObject(a));
+    shared_ptr<MultiModelObject> R (new MultiModelObject);
 
     // calculate probability of each sub-model
     R->fraction.resize(f.size());
@@ -1583,7 +1583,7 @@ namespace substitution {
       letter[i] = a[unordered_letters[i]];
 
     //------- 5-end: frequencies of the actual classes ----//
-    shared_ptr<MultiModelObject> M(new MultiModelObject(a));
+    shared_ptr<MultiModelObject> M(new MultiModelObject);
 
     for(int i=0;i<n_cat;i++)
     {
@@ -1708,7 +1708,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     {
       shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(F(D.values[i]));
 
-      if (not R) R = shared_ptr<MultiModelObject>(new MultiModelObject(*M->get_alphabet()));
+      if (not R) R = shared_ptr<MultiModelObject>(new MultiModelObject);
       
       for(int j=0;j<M->n_base_models();j++)
       {
@@ -1726,7 +1726,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     int N = M->n_base_models() * D.size();
 
-    MultiModelObject R(M->Alphabet());
+    MultiModelObject R;
 
     // recalc fractions and base models
     R.resize(N);
@@ -2003,7 +2003,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     shared_ptr<const MultiModelObject> M = SubModel().result_as<MultiModelObject>();
 
-    shared_ptr<const MultiModelObject> R (new MultiModelObject(*M->get_alphabet()));
+    shared_ptr<MultiModelObject> R (new MultiModelObject);
 
     int n = M->n_base_models();
 
@@ -2455,10 +2455,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       shared_ptr<const MultiModelObject> M = SubModels(m).result_as<MultiModelObject>();
 
       if (not R)
-      {
-	const alphabet & a = *M->get_alphabet();
-	R = shared_ptr<MultiModelObject>(new MultiModelObject(a));
-      }
+	R = shared_ptr<MultiModelObject>(new MultiModelObject);
 
       double fm = get_parameter_value_as<Double>(m);
 

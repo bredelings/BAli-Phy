@@ -263,9 +263,9 @@ namespace substitution
   public:
     boost::shared_ptr<const alphabet> a;
 
-    mutable std::vector< polymorphic_cow_ptr<ReversibleAdditiveCollectionObject> > base_models;
+    std::vector< polymorphic_cow_ptr<ReversibleAdditiveCollectionObject> > base_models;
 
-    mutable std::vector< double > fraction;
+    std::vector< double > fraction;
 
     boost::shared_ptr<const alphabet> get_alphabet() const;
 
@@ -302,9 +302,9 @@ namespace substitution
     /// Get a transition probability matrix for time 't' and model 'm'
     Matrix transition_p(double t,int i, int m) const {return base_model(m).transition_p(t,i);}
 
-    MultiModelObject(const alphabet& a);
+    MultiModelObject();
 
-    MultiModelObject(const alphabet& a, int n);
+    MultiModelObject(int n);
 
     virtual ~MultiModelObject() {}
   };

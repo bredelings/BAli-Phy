@@ -374,13 +374,11 @@ namespace substitution
     return P;
   }
 
-  MultiModelObject::MultiModelObject(const alphabet& a)
-    :a(a.clone())
+  MultiModelObject::MultiModelObject()
   { }
 
-  MultiModelObject::MultiModelObject(const alphabet& a, int n)
-    :a(a.clone()),
-     base_models(n),
+  MultiModelObject::MultiModelObject(int n)
+    :base_models(n),
      fraction(n)
   { }
 
