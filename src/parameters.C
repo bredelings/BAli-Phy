@@ -421,8 +421,8 @@ efloat_t data_partition::prior_alignment() const
 #ifndef NDEBUG      
       int target = TT.branch(b).target();
       int source  = TT.branch(b).source();
-      efloat_t p1 = cached_alignment_prior_for_branch[b];
-      efloat_t p2 = prior_branch(AA, get_branch_HMM(b), target, source);
+      //efloat_t p1 = cached_alignment_prior_for_branch[b];
+      //efloat_t p2 = prior_branch(AA, get_branch_HMM(b), target, source);
       //double error = log(p1) - log(p2);
       assert(not different(cached_alignment_prior_for_branch[b], prior_branch(AA, get_branch_HMM(b), target, source)));
 #endif
