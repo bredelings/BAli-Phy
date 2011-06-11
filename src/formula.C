@@ -232,6 +232,10 @@ term_ref Formula::add_computed_node(const expression_ref& e)
   shared_ptr<const term_ref_expression> tr = boost::dynamic_pointer_cast<const term_ref_expression>(e);
   if (tr)
     return tr->term;
+
+  shared_ptr<const named_parameter_expression> var = boost::dynamic_pointer_cast<const named_parameter_expression>(e);
+  if (var)
+    return add_state_node(var->parameter_name);
   
   shared_ptr<const operation_expression> func = boost::dynamic_pointer_cast<const operation_expression>(e);
   if (func)

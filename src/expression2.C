@@ -86,7 +86,9 @@ int main()
 {
   Formula f;
   polymorphic_cow_ptr<Formula> F(f);
-  term_ref x = F->add_state_node("X");
+  //  term_ref x = F->add_state_node("X");
+  expression_ref x("X");
+  term_ref x_index = F->add_computed_node(x);
   term_ref y = F->add_state_node("Y");
   term_ref z = F->add_state_node("Z");
   term_ref w = F->add_state_node("W");
@@ -133,7 +135,7 @@ int main()
 
   Context CTX1(F);
 
-  CTX1.set_value(x,Double(2));
+  CTX1.set_value(x_index,Double(2));
   CTX1.set_value(y,Double(3));
   CTX1.set_value(z,Double(4));
   CTX1.set_value(w,Int(5));
@@ -150,7 +152,7 @@ int main()
   cout<<"CTX1 = \n"<<CTX1<<"\n";
   cout<<"CTX2 = \n"<<CTX2<<"\n";
   cout<<"Fiddling X and Y in CTX1...\n";
-  CTX1.set_value(x,Double(3));
+  CTX1.set_value(x_index,Double(3));
   CTX1.set_value(y,Double(2));
   cout<<"CTX1 = \n"<<CTX1<<"\n";
   cout<<"CTX2 = \n"<<CTX2<<"\n";
