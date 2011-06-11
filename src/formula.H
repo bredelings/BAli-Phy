@@ -16,7 +16,80 @@ struct Operation;
 struct expression_ref;
 
 // Eventually the Formula should be the secondary object, cuz the evaluation tree
-//  may change as the Context changes.
+//  may change as the Context changes.  Still, the Formula represents the (entire, current)
+// model, even if it changes
+
+// Goal: Allow other objects without values that may reference objects that can take values.
+//       - bounds / domains
+//       - default values
+//       - assertions
+//       - unique names for computed values.  (e.g. Z = X*Y)
+//         + how does this relate to the unique INTEGER names?
+//         + how to separate the expression description "X*Y" from the *name* "Z"?
+//         + can I merge Z=X*Y and W=X*Y even though that have different names?
+//           - The second one could be a nickname.  But lets abort/complain, for now.
+//       - attributes (e.g. var X)
+//       - transition kernels,
+//       - priors
+//       - default priors
+//       - logging routines
+//       - random number generators
+//       - IO and file reading or writing
+//       - ... and general procedures!
+//
+// Querying?
+//
+// Cycles are probably prohibited... as we do not need self-reference in that way.
+//   - Hmm... recursive functions are useful, though.
+//
+// Also, note that for some computed values, we do not need to cache values:
+//   - e.g. f(g(h(x)).  Just cache the final result.
+
+
+// TODO: We need to know now to *combine* formulas into a larger formula, in order to make
+//       model creation easier.
+
+// What kinds of terms do we need?
+//
+// - all terms have:
+//    * name
+//    * list of inputs
+//      - list of outputs, computed from inputs.
+//
+// - Evaluable terms (can have a current value)
+//   + variable terms
+//     * default values
+//
+//   + constant terms
+//     * constant value
+//
+//   + computed terms
+//     * operation
+//
+//
+// Can I make all terms be expressions?
+//
+// What is the simplest way to introduce an unlimited number of different term types?
+//
+// So, each term should be an expression.
+// 1. That way I don't have to invent new terms, to get new expressions.
+// 2. It can be decomposed so that it only references other terms.
+
+// At least, we can handle an op-expression that way.  And a function-expression.
+//
+// Can we handle lambda-expressions, though?
+// Is a lambda expression (lambda \1 (f \1)) ?
+// + If we add (f \1), then we are allowing unbound dummies...
+//   - Hmm...
+//
+// default_value_expression
+// bounds_expression
+// prior_expression
+// 
+// I then need to be able to compare expressions for equality, I think...
+//
+// I could separate expressions (in the Formula) from FACTORED expression (in the Context?)
+// Then expressions would be only modified to use term_refs as arguments for computational purposes...
 
 struct Formula: virtual public Object
 {
@@ -34,8 +107,10 @@ struct Formula: virtual public Object
     Term(boost::shared_ptr<const Object> O):default_value(O),constant(false) { }
   };
 
+  /// The list of terms that compose this Formula
   std::vector<Term> terms;
 
+  /// cached list of which terms are variables
   std::vector<int> state_indices;
 
   term_ref find_computation(const Operation& o, const std::vector<int>& indices) const;
