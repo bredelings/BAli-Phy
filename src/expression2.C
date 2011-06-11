@@ -88,10 +88,9 @@ int main()
   polymorphic_cow_ptr<Formula> F(f);
   //  term_ref x = F->add_state_node("X");
   expression_ref x("X");
-  term_ref x_index = F->add_computed_node(x);
-  term_ref y = F->add_state_node("Y");
-  term_ref z = F->add_state_node("Z");
-  term_ref w = F->add_state_node("W");
+  expression_ref y("Y");
+  expression_ref z("Z");
+  expression_ref w("W");
   term_ref one = F->add_constant_node(Double(1));
 
   typed_expression_ref<Double> X = x;
@@ -135,10 +134,10 @@ int main()
 
   Context CTX1(F);
 
-  CTX1.set_value(x_index,Double(2));
-  CTX1.set_value(y,Double(3));
-  CTX1.set_value(z,Double(4));
-  CTX1.set_value(w,Int(5));
+  CTX1.set_value("X",Double(2));
+  CTX1.set_value("Y",Double(3));
+  CTX1.set_value("Z",Double(4));
+  CTX1.set_value("W",Int(5));
 
   cout<<"CTX1 = \n"<<CTX1<<"\n";
 
@@ -152,19 +151,19 @@ int main()
   cout<<"CTX1 = \n"<<CTX1<<"\n";
   cout<<"CTX2 = \n"<<CTX2<<"\n";
   cout<<"Fiddling X and Y in CTX1...\n";
-  CTX1.set_value(x_index,Double(3));
-  CTX1.set_value(y,Double(2));
+  CTX1.set_value("X",Double(3));
+  CTX1.set_value("Y",Double(2));
   cout<<"CTX1 = \n"<<CTX1<<"\n";
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   result = CTX1.evaluate(x_times_y_plus_one);
 
   cout<<"Fiddling W in CTX2...\n";
-  CTX2.set_value(w,Int(-1));
+  CTX2.set_value("W",Int(-1));
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   cout<<"Fiddling Z in CTX2...\n";
-  CTX2.set_value(z,Double(0));
+  CTX2.set_value("Z",Double(0));
   result = CTX2.evaluate(cond);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 }
