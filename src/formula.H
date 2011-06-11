@@ -108,6 +108,10 @@ struct Formula: virtual public Object
 
   term_ref find_computation(const Operation& o, const std::vector<int>& indices) const;
 
+  term_ref find_term_with_name(const std::string&) const;
+
+  term_ref find_constant_with_value(const boost::shared_ptr<const Object>& value) const;
+
   term_ref add_term(const Term&);
 
 public:
@@ -148,6 +152,8 @@ public:
   term_ref add_computed_node(const Operation& o, const std::vector<int>& indices);
 
   term_ref add_computed_node(const expression_ref& e);
+
+  term_ref find_expression(const expression_ref& e);
 
   term_ref add_state_node(const std::string& name);
 

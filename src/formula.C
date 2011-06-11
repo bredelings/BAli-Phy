@@ -127,27 +127,23 @@ term_ref Formula::add_term(const Term& t)
   {
     if (not t.constant)
     {
-      for(int i=0;i<size();i++)
-	if (terms[i].name == t.name)
-	{
-	  if (is_state(i))
-	    return term_ref(i,*this);
-	  else
-	    throw myexception()<<"Can't insert a new state variable named '"<<t.name<<"': a term with that name already exists at index "<<i<<".";
-	}
+      int index = find_term_with_name(t.name);
 
-      state_indices.push_back(new_index);
+      if (index == -1)
+	state_indices.push_back(new_index);
+      else if (is_state(index)) 
+	return term_ref(index,*this);
+      else
+	throw myexception()<<"Can't insert a new state variable named '"<<t.name<<"': a term with that name already exists at index "<<index<<".";
     }
     else 
     {
       if (not t.default_value)
 	throw myexception()<<"Constant node must provide a value!";
 
-      for(int index=0;index<size();index++)
-      {
-	if (is_constant(index) and t.default_value->equals(*terms[index].default_value))
-	  return term_ref(index,*this);
-      }
+      int index = find_constant_with_value(t.default_value);
+
+      if (index != -1) return term_ref(index,*this);
     }
 
   }
@@ -224,6 +220,59 @@ term_ref Formula::add_computed_node(const expression_ref& e)
   shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
   if (lambda)
     throw myexception()<<"Lambda expressions cannot currently be calculated";
+
+  shared_ptr<const constant_expression> constant = boost::dynamic_pointer_cast<const constant_expression>(e);
+  if (constant)
+    return add_constant_node(constant->value->print(), constant->value);
+  
+  shared_ptr<const term_ref_expression> tr = boost::dynamic_pointer_cast<const term_ref_expression>(e);
+  if (tr)
+    return tr->term;
+
+  shared_ptr<const named_parameter_expression> var = boost::dynamic_pointer_cast<const named_parameter_expression>(e);
+  if (var)
+    return add_state_node(var->parameter_name);
+
+  shared_ptr<const operation_expression> func = boost::dynamic_pointer_cast<const operation_expression>(e);
+  if (func)
+  {
+    vector<int> arg_indices;
+    for(int i=0;i<func->args.size();i++)
+      arg_indices.push_back( add_computed_node(func->args[i] ) );
+
+    return add_computed_node(*(func->op), arg_indices);
+  }
+
+  std::abort();
+}
+
+term_ref Formula::find_term_with_name(const string& name) const
+{
+  for(int i=0;i<size();i++)
+    if (terms[i].name == name)
+      return term_ref(i,*this);
+
+  return term_ref();
+}
+
+term_ref Formula::find_constant_with_value(const shared_ptr<const Object>& value) const
+{
+  assert(value);
+
+  for(int index=0;index<size();index++)
+  {
+    if (is_constant(index) and value->equals(*terms[index].default_value))
+      return term_ref(index,*this);
+  }
+
+  return term_ref();
+}
+
+term_ref Formula::find_expression(const expression_ref& e)
+{
+  shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
+  if (lambda)
+    return term_ref();
 
   shared_ptr<const constant_expression> constant = boost::dynamic_pointer_cast<const constant_expression>(e);
   if (constant)
