@@ -276,7 +276,7 @@ term_ref Formula::find_expression(const expression_ref& e)
 
   shared_ptr<const constant_expression> constant = boost::dynamic_pointer_cast<const constant_expression>(e);
   if (constant)
-    return add_constant_node(constant->value->print(), constant->value);
+    return find_constant_with_value(constant->value);
   
   shared_ptr<const term_ref_expression> tr = boost::dynamic_pointer_cast<const term_ref_expression>(e);
   if (tr)
@@ -284,16 +284,16 @@ term_ref Formula::find_expression(const expression_ref& e)
 
   shared_ptr<const named_parameter_expression> var = boost::dynamic_pointer_cast<const named_parameter_expression>(e);
   if (var)
-    return add_state_node(var->parameter_name);
+    return find_term_with_name(var->parameter_name);
   
   shared_ptr<const operation_expression> func = boost::dynamic_pointer_cast<const operation_expression>(e);
   if (func)
   {
     vector<int> arg_indices;
     for(int i=0;i<func->args.size();i++)
-      arg_indices.push_back( add_computed_node(func->args[i] ) );
+      arg_indices.push_back( find_expression(func->args[i] ) );
 
-    return add_computed_node(*(func->op), arg_indices);
+    return find_computation(*(func->op), arg_indices);
   }
 
   std::abort();
