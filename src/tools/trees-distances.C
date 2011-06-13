@@ -275,7 +275,7 @@ struct hungarian_data
 
   int slack(int x, int y) const
   {
-    return cost(x,y) - lx[x] + ly[y];
+    return cost(x,y) - lx[x] - ly[y];
   }
 
   hungarian_data(const ublas::matrix<int>& M)
