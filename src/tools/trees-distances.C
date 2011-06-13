@@ -285,9 +285,7 @@ struct hungarian_data
      ly(N),
      x_to_y(N),
      y_to_x(N),
-     UX(N),
      in_UX(N),
-     UY(N),
      in_UY(N),
      prev_x_of_y(N),
      prev_y_of_x(N)
@@ -308,6 +306,7 @@ void hungarian_data::init()
 void hungarian_data::clear()
 {
   UX.clear();
+  UY.clear();
 
   for(int x=0;x<N;x++)
   {
@@ -316,10 +315,13 @@ void hungarian_data::clear()
     prev_x_of_y[x] = -1;
     prev_y_of_x[y] = -1;
 
-    // x cannot be in UY because its initially empty
     in_UY[y] = 0;
-    in_UX[x] = (x_to_y[x] == -1)?0:1;
+    in_UX[x] = 0;
   }
+
+  for(int x=0;x<N;x++)
+    if (x_to_y[x] == -1)
+      add_to_UX(x);
 }
 
 void hungarian_data::update_labels()
