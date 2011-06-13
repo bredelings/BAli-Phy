@@ -390,7 +390,7 @@ int hungarian_data::consider_new_x_y_edges(int& s)
   {
     int x = UX[s];
     
-    for(int y=1;y<N;y++)
+    for(int y=0;y<N;y++)
     {
       // We've already added this one
       if (is_in_UY(y)) continue;
@@ -417,7 +417,7 @@ void hungarian_data::consider_new_y_x_edges(int& t)
   {
     int y = UY[t];
     
-    for(int x=1;x<N;x++)
+    for(int x=0;x<N;x++)
     {
       // We've already added this one
       if (is_in_UX(x)) continue;
