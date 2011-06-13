@@ -438,6 +438,8 @@ vector<int> hungarian_data::perfect_matching()
   assert(cost.size1() == cost.size2());
   assert(N == cost.size1());
 
+  init();
+
   // The edges with this orientation are now part of the matching M
   while(true)
   {
