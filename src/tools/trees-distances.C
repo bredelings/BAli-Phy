@@ -381,7 +381,7 @@ void hungarian_data::add_to_UY(int y)
 {
   assert(0 <= y and y < N);
   in_UY[y] = true;
-  UX.push_back(y);
+  UY.push_back(y);
 }
 
 int hungarian_data::consider_new_x_y_edges(int s, int)
