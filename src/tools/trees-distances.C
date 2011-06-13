@@ -298,8 +298,8 @@ void hungarian_data::init()
 {
   for(int i=0;i<N;i++)
   {
-    x_to_y[N] = -1;
-    y_to_x[N] = -1;
+    x_to_y[i] = -1;
+    y_to_x[i] = -1;
   }
 }
 
