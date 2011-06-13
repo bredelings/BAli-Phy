@@ -270,8 +270,8 @@ struct hungarian_data
 
   void update_labels();
 
-  int consider_new_x_y_edges(int,int);
-  void consider_new_y_x_edges(int,int);
+  int consider_new_x_y_edges(int&);
+  void consider_new_y_x_edges(int&);
 
   int slack(int x, int y) const
   {
@@ -384,7 +384,7 @@ void hungarian_data::add_to_UY(int y)
   UY.push_back(y);
 }
 
-int hungarian_data::consider_new_x_y_edges(int s, int)
+int hungarian_data::consider_new_x_y_edges(int& s)
 {
   for(;s<UX.size();s++)
   {
@@ -411,7 +411,7 @@ int hungarian_data::consider_new_x_y_edges(int s, int)
   return -1;
 }
 
-void hungarian_data::consider_new_y_x_edges(int, int t)
+void hungarian_data::consider_new_y_x_edges(int& t)
 {
   for(;t<UY.size();t++)
   {
@@ -462,8 +462,8 @@ vector<int> hungarian_data::perfect_matching()
       int s=0, t=0;
       while ((s < UX.size() or t < UY.size()) and found_y < 0)
       {
-	found_y = consider_new_x_y_edges(s,t);
-	consider_new_y_x_edges(s,t);
+	found_y = consider_new_x_y_edges(s);
+	consider_new_y_x_edges(t);
       }
 
       if (found_y < 0) update_labels();
