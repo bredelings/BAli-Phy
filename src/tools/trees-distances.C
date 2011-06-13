@@ -251,8 +251,9 @@ struct hungarian_data
   vector<int> UY;
   vector<int> in_UY;
 
-  vector<int> prev_x_of_y;
-  vector<int> prev_y_of_x;
+  // Since an alternating tree means that x->y->x2 requires (x2,y) to be an edge, we just need to
+  // store the x->x2 edge.  We can reconstruct the y from x2.
+  vector<int> prev_x_of_x;
 
   void init();
 
@@ -266,12 +267,11 @@ struct hungarian_data
   bool is_in_UY(int y) const {return in_UY[y];}
   void add_to_UY(int);
 
-  vector<int> perfect_matching();
+  std::pair<int,int> consider_new_edges();
 
   void update_labels();
 
-  int consider_new_x_y_edges(int&);
-  void consider_new_y_x_edges(int&);
+  vector<int> perfect_matching();
 
   int slack(int x, int y) const
   {
@@ -287,8 +287,7 @@ struct hungarian_data
      y_to_x(N),
      in_UX(N),
      in_UY(N),
-     prev_x_of_y(N),
-     prev_y_of_x(N)
+     prev_x_of_x(N)
   { 
     assert(cost.size1() == cost.size2());
   }
@@ -312,8 +311,7 @@ void hungarian_data::clear()
   {
     int y = x;
 
-    prev_x_of_y[x] = -1;
-    prev_y_of_x[y] = -1;
+    prev_x_of_x[x] = -1;
 
     in_UY[y] = 0;
     in_UX[x] = 0;
@@ -349,6 +347,8 @@ void hungarian_data::update_labels()
     }
   }
   
+  check_matching();
+
   // if x is in UX, then += delta.
   for(int i=0;i<UX.size();i++)
     lx[UX[i]] += delta;
@@ -366,11 +366,22 @@ void hungarian_data::check_matching() const
   for(int x=0;x<N;x++)
     if (x_to_y[x] != -1)
       assert(slack(x,x_to_y[x]) == 0);
+
+  for(int x1=0;x1<N;x1++)
+    for(int x2=0;x2<x1;x2++)
+      if (x_to_y[x1] != -1)
+	assert(x_to_y[x1] != x_to_y[x2]);
+
+  for(int y1=0;y1<N;y1++)
+    for(int y2=0;y2<y1;y2++)
+      if (y_to_x[y1] != -1)
+	assert(y_to_x[y1] != y_to_x[y2]);
 }
 
 int hungarian_data::add_to_UX(int x)
 {
   assert(0 <= x and x < N);
+  assert(not is_in_UX(x));
   in_UX[x] = true;
   UX.push_back(x);
 
@@ -384,9 +395,9 @@ void hungarian_data::add_to_UY(int y)
   UY.push_back(y);
 }
 
-int hungarian_data::consider_new_x_y_edges(int& s)
+std::pair<int,int> hungarian_data::consider_new_edges()
 {
-  for(;s<UX.size();s++)
+  for(int s=0;s<UX.size();s++)
   {
     int x = UX[s];
     
@@ -398,39 +409,22 @@ int hungarian_data::consider_new_x_y_edges(int& s)
       // For each edge from x in the equality graph...
       if (slack(x,y) == 0)
       {
-	// add y to the set UY
-	add_to_UY(y);
-	prev_x_of_y[y] = x;
-
 	// We found an unused one!
 	if (y_to_x[y] == -1)
-	  return y;
-      }
-    }
-  }
-  return -1;
-}
+	  return std::pair<int,int>(x,y);
+	else
+	{
+	  // add y to the set UY
+	  add_to_UY(y);
+	  int x2 = y_to_x[y];
 
-void hungarian_data::consider_new_y_x_edges(int& t)
-{
-  for(;t<UY.size();t++)
-  {
-    int y = UY[t];
-    
-    for(int x=0;x<N;x++)
-    {
-      // We've already added this one
-      if (is_in_UX(x)) continue;
-      
-      // For each edge from x in the equality graph...
-      if (slack(x,y) == 0)
-      {
-	// add y to the set UY
-	add_to_UX(x);
-	prev_y_of_x[x] = y;
+	  prev_x_of_x[x2] = x;
+	  add_to_UX(x2);
+	}
       }
     }
   }
+  return std::pair<int,int>(-1,-1);
 }
 
 vector<int> hungarian_data::perfect_matching()
@@ -443,14 +437,14 @@ vector<int> hungarian_data::perfect_matching()
   // The edges with this orientation are now part of the matching M
   while(true)
   {
-    // 1. Initialize variables
-    clear();
-
-    if (UX.size() == 0) return x_to_y;
-
-    int found_y = -2;
+    std::pair<int,int> found(-2,-2);
     do
     {
+      // 1. Initialize variables
+      clear();
+      
+      if (UX.size() == 0) return x_to_y;
+
       // We search for a path from a vertex x \in UX to a vertex y in \UY.
       // (1) We can make this a tree, by refusing to revisit any previously-visited node.
       // (2) We can keep track of this tree by remembering the parent node for every visited node.
@@ -460,29 +454,30 @@ vector<int> hungarian_data::perfect_matching()
       //      So, from x3,y4 we can recovert (x2 as prevx[x3], and y3 as x_to_y[x2])
 
       // Consider each (UX,y) vertex to add to the tree
-      found_y = -2;
-      int s=0, t=0;
-      while ((s < UX.size() or t < UY.size()) and found_y < 0)
-      {
-	found_y = consider_new_x_y_edges(s);
-	consider_new_y_x_edges(t);
-      }
+      found = consider_new_edges();
 
-      if (found_y < 0) update_labels();
+      if (found.first < 0) update_labels();
       
-    } while(found_y < 0);
+    } while(found.first < 0);
+
+    vector<int> x_to_y_old = x_to_y;
 
     // we should have found a new edge, here.
-    int y = found_y;
-    do
+    int x = found.first;
+    int y = found.second;
+    while(x >= 0)
     {
-      int x = prev_x_of_y[y];
+      int next_y = x_to_y[x];
+      int next_x = prev_x_of_x[x];
 
       x_to_y[x] = y;
       y_to_x[y] = x;
 
-      y = prev_y_of_x[x];
-    } while (y != -1);
+      x = next_x;
+      y = next_y;
+    }
+
+    check_matching();
   }
 }
 
