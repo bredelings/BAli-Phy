@@ -474,16 +474,15 @@ vector<int> hungarian_data::perfect_matching()
 
     // we should have found a new edge, here.
     int y = found_y;
-    while (true)
+    do
     {
       int x = prev_x_of_y[y];
-      if (x == -1) break;
 
       x_to_y[x] = y;
       y_to_x[y] = x;
 
       y = prev_y_of_x[x];
-    }
+    } while (y != -1);
   }
 }
 
