@@ -166,7 +166,10 @@ ublas::matrix<double> distances(const vector<tree_record>& trees,
     // calculate the pairwise distances
     for(int i=0;i<trees.size();i++) {
       for(int j=0;j<i;j++)
+      {
 	D(i,j) = D(j,i) = metric_fn(trees[i],trees[j]);
+	assert(D(i,j) == metric_fn(trees[j],trees[i]));
+      }
       D(i,i) = 0;
     }
     return D;
@@ -214,6 +217,315 @@ int topology_distance2(const tree_record& t1, const tree_record& t2)
   return (n1-shared) + (n2-shared);
 }
 
+// G= is the (undirected) graph of edges in G with slack(x,y)=0.
+// 
+
+struct hungarian_data
+{
+  int N;
+
+  ublas::matrix<int> cost;
+
+  vector<int> lx;
+  vector<int> ly;
+
+  // M is the matching on (some) of the vertices.
+  vector<int> x_to_y;
+  vector<int> y_to_x;
+
+  // U is the set of vertices reachable from unmatched vertices in X.  It is divided into UX and UY.
+  vector<int> UX;
+  vector<int> in_UX;
+
+  vector<int> UY;
+  vector<int> in_UY;
+
+  vector<int> prev_x_of_y;
+  vector<int> prev_y_of_x;
+
+  void init();
+
+  void clear();
+
+  bool is_in_UX(int x) const {return in_UX[x];}
+  int add_to_UX(int);
+
+  void check_matching() const;
+
+  bool is_in_UY(int y) const {return in_UY[y];}
+  void add_to_UY(int);
+
+  vector<int> perfect_matching();
+
+  void update_labels();
+
+  int consider_new_x_y_edges(int,int);
+  void consider_new_y_x_edges(int,int);
+
+  int slack(int x, int y) const
+  {
+    return cost(x,y) - lx[x] + ly[y];
+  }
+
+  hungarian_data(const ublas::matrix<int>& M)
+    :N(M.size1()),
+     cost(M),
+     lx(N),
+     ly(N),
+     x_to_y(N),
+     y_to_x(N),
+     UX(N),
+     in_UX(N),
+     UY(N),
+     in_UY(N),
+     prev_x_of_y(N),
+     prev_y_of_x(N)
+  { 
+    assert(cost.size1() == cost.size2());
+  }
+};
+
+void hungarian_data::init()
+{
+  for(int i=0;i<N;i++)
+  {
+    x_to_y[N] = -1;
+    y_to_x[N] = -1;
+  }
+}
+
+void hungarian_data::clear()
+{
+  UX.clear();
+
+  for(int x=0;x<N;x++)
+  {
+    int y = x;
+
+    prev_x_of_y[x] = -1;
+    prev_y_of_x[y] = -1;
+
+    // x cannot be in UY because its initially empty
+    in_UY[y] = 0;
+    in_UX[x] = (x_to_y[x] == -1)?0:1;
+  }
+}
+
+void hungarian_data::update_labels()
+{
+  // We update the labelling by computing
+  //   delta = min(x \in UX,y \not \in UY) slack(x,y)
+  // Here slack(x,y) = l[x] + l[y] - cost(x,y) >=0 and slack(x,y) == 0 implies
+  //   that (x,y) is in the equality subgraph.
+
+  // compute the first_y not in UY.
+  int first_y = 0;
+  while(is_in_UY(first_y))
+    first_y++;
+
+  int delta = slack(UX[0],first_y);
+
+  for(int s=0;s<UX.size();s++)
+  {
+    int x = UX[s];
+    for(int y=first_y;y<N;y++)
+    {
+      if (is_in_UY(y)) continue;
+
+      delta = std::min(delta, slack(x,y));
+    }
+  }
+  
+  // if x is in UX, then += delta.
+  for(int i=0;i<UX.size();i++)
+    lx[UX[i]] += delta;
+
+  // if y is in UY, then -= delta.
+  for(int i=0;i<UY.size();i++)
+    ly[UY[i]] -= delta;
+
+  check_matching();
+}
+
+void hungarian_data::check_matching() const
+{
+  // all of the existing 
+  for(int x=0;x<N;x++)
+    if (x_to_y[x] != -1)
+      assert(slack(x,x_to_y[x]) == 0);
+}
+
+int hungarian_data::add_to_UX(int x)
+{
+  assert(0 <= x and x < N);
+  in_UX[x] = true;
+  UX.push_back(x);
+
+  return UX.size();
+}
+
+void hungarian_data::add_to_UY(int y)
+{
+  assert(0 <= y and y < N);
+  in_UY[y] = true;
+  UX.push_back(y);
+}
+
+int hungarian_data::consider_new_x_y_edges(int s, int)
+{
+  for(;s<UX.size();s++)
+  {
+    int x = UX[s];
+    
+    for(int y=1;y<N;y++)
+    {
+      // We've already added this one
+      if (is_in_UY(y)) continue;
+      
+      // For each edge from x in the equality graph...
+      if (slack(x,y) == 0)
+      {
+	// add y to the set UY
+	add_to_UY(y);
+	prev_x_of_y[y] = x;
+
+	// We found an unused one!
+	if (y_to_x[y] == -1)
+	  return y;
+      }
+    }
+  }
+  return -1;
+}
+
+void hungarian_data::consider_new_y_x_edges(int, int t)
+{
+  for(;t<UY.size();t++)
+  {
+    int y = UY[t];
+    
+    for(int x=1;x<N;x++)
+    {
+      // We've already added this one
+      if (is_in_UX(x)) continue;
+      
+      // For each edge from x in the equality graph...
+      if (slack(x,y) == 0)
+      {
+	// add y to the set UY
+	add_to_UX(x);
+	prev_y_of_x[x] = y;
+      }
+    }
+  }
+}
+
+vector<int> hungarian_data::perfect_matching()
+{
+  assert(cost.size1() == cost.size2());
+  assert(N == cost.size1());
+
+  // The edges with this orientation are now part of the matching M
+  while(true)
+  {
+    // 1. Initialize variables
+    clear();
+
+    if (UX.size() == 0) return x_to_y;
+
+    int found_y = -2;
+    do
+    {
+      // We search for a path from a vertex x \in UX to a vertex y in \UY.
+      // (1) We can make this a tree, by refusing to revisit any previously-visited node.
+      // (2) We can keep track of this tree by remembering the parent node for every visited node.
+      // (3) We can, in fact track only the sequences of x's, and the last y.
+      //     Thus, x1, x2, x3 y4
+      //      This is because we actually have x1->(y2,x2)->(y3,x3)->y4
+      //      So, from x3,y4 we can recovert (x2 as prevx[x3], and y3 as x_to_y[x2])
+
+      // Consider each (UX,y) vertex to add to the tree
+      found_y = -2;
+      int s=0, t=0;
+      while ((s < UX.size() or t < UY.size()) and found_y < 0)
+      {
+	found_y = consider_new_x_y_edges(s,t);
+	consider_new_y_x_edges(s,t);
+      }
+
+      if (found_y < 0) update_labels();
+      
+    } while(found_y < 0);
+
+    // we should have found a new edge, here.
+    int y = found_y;
+    while (true)
+    {
+      int x = prev_x_of_y[y];
+      if (x == -1) break;
+
+      x_to_y[x] = y;
+      y_to_x[y] = x;
+
+      y = prev_y_of_x[x];
+    }
+  }
+}
+
+int min_perfect_matching_cost(const ublas::matrix<int>& C)
+{
+  vector<int> x_to_y = hungarian_data(C).perfect_matching();
+
+  // make sure all vertices are matched
+  for(int x=0;x<x_to_y.size();x++)
+    assert(x_to_y[x] != -1);
+
+  // compute the cost
+  int cost = 0;
+  for(int x=0;x<x_to_y.size();x++)
+    cost += C(x, x_to_y[x]);
+
+  return cost;
+}
+
+using boost::dynamic_bitset;
+
+int split_distance_to_dummy(const dynamic_bitset<>& S1)
+{
+  int count1 = S1.count();
+  int count2 = S1.size() - count1;
+
+  return std::min(count1, count2);
+}
+
+int split_distance(const dynamic_bitset<>& S1, const dynamic_bitset<>& S2)
+{
+  return std::min((S1^S2).count(), (S1&S2).count());
+}
+
+double matching_distance(const tree_record& t1, const tree_record& t2)
+{
+  assert(t1.n_leaves() == t2.n_leaves());
+
+  const int N = std::max(t1.n_internal_branches(), t2.n_internal_branches());
+
+  ublas::matrix<int> C(N,N);
+
+  for(int i=0;i<t1.n_internal_branches();i++)
+    for(int j=0;j<t2.n_internal_branches();j++)
+      C(i,j) = split_distance(t1.partitions[i], t2.partitions[j]);
+
+  for(int i=t1.n_internal_branches();i<N;i++)
+    for(int j=0;j<t2.n_internal_branches();j++)
+      C(i,j) = split_distance_to_dummy(t1.partitions[i]);
+
+  for(int j=t2.n_internal_branches();j<N;j++)
+    for(int i=0;i<t1.n_internal_branches();i++)
+      C(i,j) = split_distance_to_dummy(t2.partitions[j]);
+
+  return min_perfect_matching_cost(C);
+}
+
 double robinson_foulds_distance2(const tree_record& t1, const tree_record& t2)
 {
   return topology_distance2(t1,t2);
@@ -254,6 +566,8 @@ int main(int argc,char* argv[])
       metric_fn = &branch_distance2;
     else if (metric == "internal-branch")
       metric_fn = &internal_branch_distance2;
+    else if (metric == "matching")
+      metric_fn = &matching_distance;
     else
       throw myexception()<<"Metric '"<<metric<<"' not implemented.";
       
