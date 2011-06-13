@@ -43,6 +43,17 @@ using po::variables_map;
 using namespace std;
 using namespace statistics;
 
+template <typename T>
+void print_matrix(const ublas::matrix<T>& M, char space=' ', char eol='\n')
+{
+  for(int i=0;i<M.size1();i++) {
+    vector<double> v(M.size2());
+    for(int j=0;j<v.size();j++)
+      v[j] = M(i,j);
+    cout<<join(v,space)<<eol;
+  }
+}
+
 ublas::matrix<double> remove_duplicates(const ublas::matrix<double>& D)
 {
   assert(D.size1() == D.size2());
@@ -598,12 +609,7 @@ int main(int argc,char* argv[])
       if (args.count("remove-duplicates"))
 	D = remove_duplicates(D);
 
-      for(int i=0;i<D.size1();i++) {
-	vector<double> v(D.size2());
-	for(int j=0;j<v.size();j++)
-	  v[j] = D(i,j);
-	cout<<join(v,'\t')<<endl;
-      }
+      print_matrix(D,'\t','\n');
     }
 
     else if (analysis == "autocorrelation") 
