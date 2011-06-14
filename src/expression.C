@@ -72,7 +72,7 @@ string operator_expression::print() const
 }
 
 operator_expression::operator_expression(const vector< shared_ptr<const expression> >& A)
- :args(A)
+  :expression(A)
 { }
 
 // operation expression

@@ -54,7 +54,10 @@ struct term_ref
 
 struct expression: virtual public Object
 {
-  // an expression can be
+  // An expression may or may not have sub-expressions
+  std::vector< boost::shared_ptr<const expression> > args;
+
+  // An expression can be
   // - a term reference
   // - a constant (probably one w/o an index so far)
   // - an op taking expressions as arguments.
@@ -63,7 +66,7 @@ struct expression: virtual public Object
 
   expression* clone() const =0;
 
-  virtual int n_args() const {return 0;}
+  virtual int n_args() const {return args.size();}
   
   virtual int highest_unused_dummy() const {return 0;}
 
@@ -80,6 +83,8 @@ struct expression: virtual public Object
   boost::shared_ptr<const expression> apply(const expression& E) const;
 
   expression() {}
+  expression(int i):args(i) {}
+  expression(const std::vector< boost::shared_ptr<const expression> >& A):args(A) { }
   virtual ~expression() {}
 };
 
@@ -131,11 +136,6 @@ struct dummy_expression: public expression
 /// This is an abstract base class for applying an atomic operator to arguments
 struct operator_expression: public expression
 {
-  // what expressions should be plugged in to each slot in the op?
-  std::vector< boost::shared_ptr<const expression> > args;
-
-  int n_args() const {return args.size();}
-
   std::vector<std::string> print_arg_expressions() const;
 
   virtual operator_expression* clone() const=0;
