@@ -113,24 +113,24 @@ int main()
   cout<<"mul(x)(y) = "<<mul(x)(y)->print()<<"\n";
   cout<<"mul(x,y) = "<<mul(x,y)->print()<<"\n\n\n";
 
-  term_ref x_times_y_plus_one = F->add_computed_node( plus(mul(x)(y))(one) );
+  term_ref x_times_y_plus_one = F->add_expression( plus(mul(x)(y))(one) );
 
-  term_ref z_gt_1 = F->add_computed_node(gt(z)(one));
+  term_ref z_gt_1 = F->add_expression(gt(z)(one));
 
-  term_ref x_plus_y = F->add_computed_node(plus(x)(y));
+  term_ref x_plus_y = F->add_expression(plus(x)(y));
 
-  term_ref w_2 = F->add_computed_node( muli(w)(w) );
+  term_ref w_2 = F->add_expression( muli(w)(w) );
 
-  term_ref cond = F->add_computed_node( If(z_gt_1, x_times_y_plus_one, w_2));
+  term_ref cond = F->add_expression( If(z_gt_1, x_times_y_plus_one, w_2));
 
   // this should be a dup and do nothing
-  F->add_computed_node( If( gt(z)(one) ) ( plus( mul(x)(y))(one) ) ( muli(w)(w) ) );
+  F->add_expression( If( gt(z)(one) ) ( plus( mul(x)(y))(one) ) ( muli(w)(w) ) );
   // -- using multiple arguments instead of one at a time.  This works up to 3 arguments
-  F->add_computed_node( If( gt(z, one) , plus( mul(x, y), one) , muli(w,w) ) );
+  F->add_expression( If( gt(z, one) , plus( mul(x, y), one) , muli(w,w) ) );
   // -- using automatic creation of operators based on typed references
-  F->add_computed_node( If( Z > One , X*Y+One , W*W ) );
+  F->add_expression( If( Z > One , X*Y+One , W*W ) );
   // -- can we create constants easily?
-  F->add_computed_node( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
+  F->add_expression( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
 
   Context CTX1(F);
 

@@ -152,7 +152,7 @@ public:
 
   term_ref add_computed_node(const Operation& o, const std::vector<int>& indices);
 
-  term_ref add_computed_node(const expression_ref& e);
+  term_ref add_expression(const expression_ref& e);
 
   term_ref find_expression(const expression_ref& e);
 

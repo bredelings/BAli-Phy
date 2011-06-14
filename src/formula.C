@@ -215,7 +215,7 @@ term_ref Formula::add_constant_node(const string& name, shared_ptr<const Object>
   return add_term(t);
 }
 
-term_ref Formula::add_computed_node(const expression_ref& e)
+term_ref Formula::add_expression(const expression_ref& e)
 {
   shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
   if (lambda)
@@ -238,7 +238,7 @@ term_ref Formula::add_computed_node(const expression_ref& e)
   {
     vector<int> arg_indices;
     for(int i=0;i<func->args.size();i++)
-      arg_indices.push_back( add_computed_node(func->args[i] ) );
+      arg_indices.push_back( add_expression(func->args[i] ) );
 
     return add_computed_node(*(func->op), arg_indices);
   }
