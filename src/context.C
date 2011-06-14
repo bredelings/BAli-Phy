@@ -124,7 +124,7 @@ void Context::set_value(int index, shared_ptr<const Object> O)
   if (F->has_inputs(index))
     throw myexception()<<"Cannot overwrite computed nodes!";
 
-  if (F->terms[index].constant) 
+  if (F->is_constant(index))
     throw myexception()<<"Cannot overwrite constant value!";
 
   // FIXME: improve function by checking first if the new value is different?

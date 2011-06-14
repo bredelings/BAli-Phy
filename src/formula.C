@@ -38,7 +38,7 @@ bool Formula::has_inputs(int index) const
 
 bool Formula::is_constant(int index) const
 {
-  if (terms[index].constant)
+  if (dynamic_pointer_cast<const constant_expression>(terms[index].E))
   {
     assert(not is_computed(index));
     return true;
@@ -125,7 +125,7 @@ term_ref Formula::add_term(const Term& t)
     throw myexception()<<"Can't have input indices with no operation!";
   else
   {
-    if (not t.constant)
+    if (not (dynamic_pointer_cast<const constant_expression>(t.E)))
     {
       int index = find_term_with_name(t.name);
 
@@ -211,7 +211,6 @@ term_ref Formula::add_constant_node(const shared_ptr<const expression>& e, const
 {
   Term t(e, value);
   t.name = name;
-  t.constant = true;
   return add_term(t);
 }
 

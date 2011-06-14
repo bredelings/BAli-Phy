@@ -95,11 +95,10 @@ struct Formula: virtual public Object
     std::vector<int> affected_indices;
     std::string name;
     boost::shared_ptr<const Object> default_value;
-    bool constant;
     bool top_level;
 
-    Term(const boost::shared_ptr<const expression>& e):E(e),constant(false),top_level(false) {}
-    Term(const boost::shared_ptr<const expression>& e, boost::shared_ptr<const Object> O):E(e),default_value(O),constant(false),top_level(false) { }
+    Term(const boost::shared_ptr<const expression>& e):E(e),top_level(false) {}
+    Term(const boost::shared_ptr<const expression>& e, boost::shared_ptr<const Object> O):E(e),default_value(O),top_level(false) { }
   };
 
   /// The list of terms that compose this Formula
