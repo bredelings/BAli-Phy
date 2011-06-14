@@ -64,6 +64,24 @@ string dummy_expression::print() const {
   return string("#")+convertToString(index);
 }
 
+// tuple expression
+
+string tuple_expression::print() const
+{
+  return print_operator_expression("",print_arg_expressions());
+}
+
+tuple_expression::tuple_expression(int i)
+  :expression(i) 
+{ 
+  // a tuple expression of size 1 is just the same as the thing it contains
+  assert(i > 1);
+}
+
+tuple_expression::tuple_expression(const std::vector< boost::shared_ptr<const expression> >& A)
+  :expression(A)
+{ }
+
 // operator expression
 
 string operator_expression::print() const 

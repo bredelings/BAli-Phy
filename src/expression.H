@@ -132,6 +132,16 @@ struct dummy_expression: public expression
   dummy_expression(int i):index(i) {}
 };
 
+struct tuple_expression: public expression
+{
+  tuple_expression* clone() const {return new tuple_expression(*this);}
+
+  std::string print() const;
+
+  tuple_expression(int i);
+  tuple_expression(const std::vector< boost::shared_ptr<const expression> >& A);
+};
+
 /// This is an abstract base class for applying an atomic operator to arguments
 struct operator_expression: public expression
 {
