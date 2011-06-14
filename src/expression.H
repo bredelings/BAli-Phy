@@ -185,6 +185,64 @@ struct model_expression: public operator_expression
   model_expression(boost::shared_ptr<const Model> M);
 };
 
+enum function_type_t {data_function_f, body_function_f, annotation_f};
+
+struct Function: public Operator
+{
+  Function* clone() const {return new Function(*this);}
+
+  std::string f_name;
+  int n_args;
+
+  boost::shared_ptr<const expression> eval_expression;
+
+  function_type_t what_type;
+
+  std::string name() const {return f_name;}
+  bool is_data_constructor() const {return what_type == data_function_f;}
+  bool is_function() const {return what_type == body_function_f;}
+  bool is_annotation() const {return what_type == annotation_f;}
+  Function(const std::string&, int n, function_type_t);
+};
+
+/// A data expression is evaluates to itself. (Is this different than a *constructor*)
+struct function_expression: public operator_expression
+{
+  boost::shared_ptr<const Function> F;
+
+  const Function* get_operator() const {return &(*F);}
+
+  function_expression* clone() const {return new function_expression(*this);}
+
+  function_expression(const Function& O,const std::vector< boost::shared_ptr<const expression> >& A);
+
+  function_expression(boost::shared_ptr<const Function> O,const std::vector< boost::shared_ptr<const expression> >& A);
+};
+
+Function data_function(const std::string&, int);
+
+Function annotation_function(const std::string& , int);
+
+std::vector<std::string> find_named_parameters(boost::shared_ptr<const expression> e);
+
+boost::shared_ptr<const expression> substitute(boost::shared_ptr<const expression> E1, int dummy, boost::shared_ptr<const expression> E2);
+
+boost::shared_ptr<const expression> apply(const expression& E,boost::shared_ptr<const expression> arg);
+
+boost::shared_ptr<const expression> apply(const expression& E,const expression& arg);
+
+boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
+					  boost::shared_ptr<const expression> arg);
+
+boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
+					  const expression& arg);
+boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
+					  const std::vector<boost::shared_ptr<const expression> > args,
+					  int i);
+
+boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
+					  const std::vector<boost::shared_ptr<const expression> > args);
+
 struct lambda_expression: public expression
 {
   dummy_expression dummy_variable;
@@ -213,49 +271,9 @@ struct lambda_expression: public expression
   { }
 
   lambda_expression(const Operation& O);
+
+  lambda_expression(const Function& F);
 };
-
-struct Function: public Operator
-{
-  Function* clone() const {return new Function(*this);}
-
-  std::string f_name;
-  boost::shared_ptr<const expression> eval_expression;
-
-  std::string name() const {return f_name;}
-  bool is_data_constructor() const {return not eval_expression;}
-  Function(const std::string&);
-};
-
-/// A data expression is evaluates to itself. (Is this different than a *constructor*)
-struct function_expression: public operator_expression
-{
-  boost::shared_ptr<Function> F;
-
-  const Function* get_operator() const {return &(*F);}
-
-  function_expression* clone() const {return new function_expression(*this);}
-};
-
-std::vector<std::string> find_named_parameters(boost::shared_ptr<const expression> e);
-
-boost::shared_ptr<const expression> substitute(boost::shared_ptr<const expression> E1, int dummy, boost::shared_ptr<const expression> E2);
-
-boost::shared_ptr<const expression> apply(const expression& E,boost::shared_ptr<const expression> arg);
-
-boost::shared_ptr<const expression> apply(const expression& E,const expression& arg);
-
-boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
-					  boost::shared_ptr<const expression> arg);
-
-boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
-					  const expression& arg);
-boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
-					  const std::vector<boost::shared_ptr<const expression> > args,
-					  int i);
-
-boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
-					  const std::vector<boost::shared_ptr<const expression> > args);
 
 struct expression_ref: public boost::shared_ptr<const expression>
 {
@@ -290,6 +308,10 @@ struct expression_ref: public boost::shared_ptr<const expression>
 
   expression_ref(const Operation& o)
     :boost::shared_ptr<const expression>(new lambda_expression(o))
+  {}
+
+  expression_ref(const Function& f)
+    :boost::shared_ptr<const expression>(new lambda_expression(f))
   {}
 
   expression_ref(const std::string& s)

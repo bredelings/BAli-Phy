@@ -102,7 +102,7 @@ operation_expression::operation_expression(const Operation& O,const vector< shar
 
 operation_expression::operation_expression(shared_ptr<const Operation> O,const vector< shared_ptr<const expression> >& A)
   :operator_expression(A),
-   op(O->clone())
+   op(O)
 { }
 
 vector< shared_ptr< const expression > > model_args(const Model& M)
@@ -122,6 +122,16 @@ model_expression::model_expression(const Model& M)
    m(M.clone())
 { }
 
+function_expression::function_expression(const Function& f,const std::vector< boost::shared_ptr<const expression> >& A)
+  :operator_expression(A),
+   F(f.clone())
+{ }
+
+function_expression::function_expression(boost::shared_ptr<const Function> f,const std::vector< boost::shared_ptr<const expression> >& A)
+  :operator_expression(A),
+   F(f)
+{ }
+
 lambda_expression::lambda_expression(const Operation& O)
   :dummy_variable(0)
 {
@@ -138,6 +148,40 @@ lambda_expression::lambda_expression(const Operation& O)
     E = shared_ptr<const expression>(new lambda_expression(i,E));
   
   quantified_expression = E;
+}
+
+lambda_expression::lambda_expression(const Function& F)
+  :dummy_variable(0)
+{
+  int n = F.n_args;
+  assert(n != -1);
+  
+  vector< shared_ptr<const expression> > A;
+  for(int i=0;i<n;i++)
+    A.push_back(shared_ptr<const expression>(new dummy_expression(i)));
+  
+  shared_ptr<const expression> E(new function_expression(F, A));
+  
+  for(int i=n-1;i>0;i--)
+    E = shared_ptr<const expression>(new lambda_expression(i,E));
+  
+  quantified_expression = E;
+}
+
+Function::Function(const string& s, int n, function_type_t f_t)
+  :f_name(s), n_args(n), what_type(f_t)
+{
+  
+}
+
+Function data_function(const std::string& s, int n)
+{
+  return Function(s, n, data_function_f);
+}
+
+Function annotation_function(const std::string& s, int n)
+{
+  return Function(s, n, annotation_f);
 }
 
 shared_ptr<const expression> lambda_expression::substitute(int dummy, shared_ptr<const expression> E) const
