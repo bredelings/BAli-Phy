@@ -91,7 +91,7 @@ int main()
   expression_ref y("Y");
   expression_ref z("Z");
   expression_ref w("W");
-  term_ref one = F->add_constant_node(Double(1));
+  term_ref one = F->add_expression(Constant(Double(1)));
 
   typed_expression_ref<Double> X = x;
   typed_expression_ref<Double> Y = y;
@@ -99,7 +99,7 @@ int main()
   typed_expression_ref<Double> Z = z;
   typed_expression_ref<Double> One(1.0);
 
-  F->add_constant_node(Double(1));
+  F->add_expression(Constant(Double(1)));
 
   expression_ref mul = Multiply<Double>();
   expression_ref muli = Multiply<Int>();

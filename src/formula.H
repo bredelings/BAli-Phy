@@ -88,6 +88,7 @@ struct Formula: virtual public Object
 {
   struct Term
   {
+    boost::shared_ptr<const expression> E;
     boost::shared_ptr<Operation> op;
     std::vector<int> input_indices;
     std::vector<std::pair<int,int> > affected_slots;
@@ -97,8 +98,8 @@ struct Formula: virtual public Object
     bool constant;
     bool top_level;
 
-    Term():constant(false),top_level(false) {}
-    Term(boost::shared_ptr<const Object> O):default_value(O),constant(false),top_level(false) { }
+    Term(const boost::shared_ptr<const expression>& e):E(e),constant(false),top_level(false) {}
+    Term(const boost::shared_ptr<const expression>& e, boost::shared_ptr<const Object> O):E(e),default_value(O),constant(false),top_level(false) { }
   };
 
   /// The list of terms that compose this Formula
@@ -150,25 +151,25 @@ public:
 
   void set_directly_affects_in_slot(int index1, int index2, int slot);
 
-  term_ref add_computed_node(const Operation& o, const std::vector<int>& indices);
+  term_ref add_computed_node(const boost::shared_ptr<const expression>& e, const Operation& o, const std::vector<int>& indices);
 
   term_ref add_expression(const expression_ref& e);
 
   term_ref find_expression(const expression_ref& e);
 
-  term_ref add_state_node(const std::string& name);
+  term_ref add_state_node(const boost::shared_ptr<const expression>& e, const std::string& name);
 
-  term_ref add_state_node(const std::string& name, const Object&);
+  term_ref add_state_node(const boost::shared_ptr<const expression>& e, const std::string& name, const Object&);
 
-  term_ref add_state_node(const std::string& name, boost::shared_ptr<const Object> value);
+  term_ref add_state_node(const boost::shared_ptr<const expression>& e, const std::string& name, boost::shared_ptr<const Object> value);
 
-  term_ref add_constant_node(const std::string& name, const Object&  value);
+  term_ref add_constant_node(const boost::shared_ptr<const expression>& e, const std::string& name, const Object&  value);
 
-  term_ref add_constant_node(const Object&  value);
+  term_ref add_constant_node(const boost::shared_ptr<const expression>& e, const Object&  value);
 
-  term_ref add_constant_node(const std::string& name, boost::shared_ptr<const Object> value);
+  term_ref add_constant_node(const boost::shared_ptr<const expression>& e, const std::string& name, boost::shared_ptr<const Object> value);
 
-  term_ref add_constant_node(boost::shared_ptr<const Object> value);
+  term_ref add_constant_node(const boost::shared_ptr<const expression>& e, boost::shared_ptr<const Object> value);
 };
 
 #endif

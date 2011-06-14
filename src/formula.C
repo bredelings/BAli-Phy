@@ -152,14 +152,14 @@ term_ref Formula::add_term(const Term& t)
   return term_ref(new_index,*this);
 }
 
-term_ref Formula::add_computed_node(const Operation& o, const vector<int>& indices)
+term_ref Formula::add_computed_node(const shared_ptr<const expression>& e, const Operation& o, const vector<int>& indices)
 {
   // compute the name of node we might add
   vector<string> input_names;
   for(int slot=0;slot<indices.size();slot++)
     input_names.push_back(terms[indices[slot]].name);
 
-  Term t;
+  Term t(e);
   t.op = shared_ptr<Operation>(o.clone());
   t.name = o.print_expression(input_names);
   t.input_indices = indices;
@@ -169,47 +169,47 @@ term_ref Formula::add_computed_node(const Operation& o, const vector<int>& indic
   return new_index;
 }
 
-term_ref Formula::add_state_node(const string& name)
+term_ref Formula::add_state_node(const shared_ptr<const expression>& e, const string& name)
 {
-  Term t;
+  Term t(e);
   t.name = name;
   return add_term(t);
 }
 
-term_ref Formula::add_state_node(const string& name, const Object& value)
+term_ref Formula::add_state_node(const shared_ptr<const expression>& e, const string& name, const Object& value)
 {
-  Term t;
+  Term t(e);
   t.name = name;
   t.default_value = shared_ptr<const Object>(value.clone());
   return add_term(t);
 }
 
-term_ref Formula::add_state_node(const string& name, shared_ptr<const Object> value)
+term_ref Formula::add_state_node(const shared_ptr<const expression>& e, const string& name, shared_ptr<const Object> value)
 {
-  Term t(value);
+  Term t(e,value);
   t.name = name;
   t.default_value = shared_ptr<const Object>(value->clone());
   return add_term(t);
 }
 
-term_ref Formula::add_constant_node(const Object& value)
+term_ref Formula::add_constant_node(const shared_ptr<const expression>& e, const Object& value)
 {
-  return add_constant_node(value.print(), shared_ptr<const Object>(value.clone()));
+  return add_constant_node(e, value.print(), shared_ptr<const Object>(value.clone()));
 }
 
-term_ref Formula::add_constant_node(const string& name, const Object& value)
+term_ref Formula::add_constant_node(const shared_ptr<const expression>& e, const string& name, const Object& value)
 {
-  return add_constant_node(name, shared_ptr<const Object>(value.clone()));
+  return add_constant_node(e, name, shared_ptr<const Object>(value.clone()));
 }
 
-term_ref Formula::add_constant_node(shared_ptr<const Object> value)
+term_ref Formula::add_constant_node(const shared_ptr<const expression>& e, shared_ptr<const Object> value)
 {
-  return add_constant_node(value->print(), shared_ptr<const Object>(value->clone()));
+  return add_constant_node(e, value->print(), shared_ptr<const Object>(value->clone()));
 }
 
-term_ref Formula::add_constant_node(const string& name, shared_ptr<const Object> value)
+term_ref Formula::add_constant_node(const shared_ptr<const expression>& e, const string& name, shared_ptr<const Object> value)
 {
-  Term t(value);
+  Term t(e, value);
   t.name = name;
   t.constant = true;
   return add_term(t);
@@ -223,7 +223,7 @@ term_ref Formula::add_expression(const expression_ref& e)
 
   shared_ptr<const constant_expression> constant = boost::dynamic_pointer_cast<const constant_expression>(e);
   if (constant)
-    return add_constant_node(constant->value->print(), constant->value);
+    return add_constant_node(e, constant->value->print(), constant->value);
   
   shared_ptr<const term_ref_expression> tr = boost::dynamic_pointer_cast<const term_ref_expression>(e);
   if (tr)
@@ -231,7 +231,7 @@ term_ref Formula::add_expression(const expression_ref& e)
 
   shared_ptr<const named_parameter_expression> var = boost::dynamic_pointer_cast<const named_parameter_expression>(e);
   if (var)
-    return add_state_node(var->parameter_name);
+    return add_state_node(e, var->parameter_name);
 
   shared_ptr<const operation_expression> func = boost::dynamic_pointer_cast<const operation_expression>(e);
   if (func)
@@ -240,7 +240,7 @@ term_ref Formula::add_expression(const expression_ref& e)
     for(int i=0;i<func->args.size();i++)
       arg_indices.push_back( add_expression(func->args[i] ) );
 
-    return add_computed_node(*(func->op), arg_indices);
+    return add_computed_node(e, *(func->op), arg_indices);
   }
 
   std::abort();
