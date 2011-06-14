@@ -95,9 +95,10 @@ struct Formula: virtual public Object
     std::string name;
     boost::shared_ptr<const Object> default_value;
     bool constant;
+    bool top_level;
 
-    Term():constant(false) {}
-    Term(boost::shared_ptr<const Object> O):default_value(O),constant(false) { }
+    Term():constant(false),top_level(false) {}
+    Term(boost::shared_ptr<const Object> O):default_value(O),constant(false),top_level(false) { }
   };
 
   /// The list of terms that compose this Formula
