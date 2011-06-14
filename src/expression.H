@@ -68,13 +68,12 @@ struct expression: virtual public Object
 
   virtual int n_args() const {return args.size();}
   
-  virtual int highest_unused_dummy() const {return 0;}
+  virtual int highest_unused_dummy() const;
 
   // return NULL if no change
-  virtual boost::shared_ptr<const expression> substitute(int, boost::shared_ptr<const expression>) const
-  {
-    return boost::shared_ptr<const expression>();
-  }
+  virtual boost::shared_ptr<const expression> substitute(int, boost::shared_ptr<const expression>) const;
+
+  std::vector<std::string> print_arg_expressions() const;
 
   virtual std::string print() const = 0;
 
@@ -136,13 +135,7 @@ struct dummy_expression: public expression
 /// This is an abstract base class for applying an atomic operator to arguments
 struct operator_expression: public expression
 {
-  std::vector<std::string> print_arg_expressions() const;
-
   virtual operator_expression* clone() const=0;
-
-  boost::shared_ptr<const expression> substitute(int dummy, boost::shared_ptr<const expression> E) const;
-
-  int highest_unused_dummy() const;
 
   // For printing, what is the operator name called?
   virtual const Operator* get_operator() const=0;

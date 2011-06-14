@@ -12,6 +12,46 @@ term_ref_expression::term_ref_expression(const term_ref& r):term(r) {}
 term_ref_expression::term_ref_expression(int i, boost::shared_ptr<const Formula> f):term(i,f) {}
 
 
+vector<string> expression::print_arg_expressions() const 
+{
+  vector<string> arg_names;
+  for(int i=0;i<args.size();i++)
+    arg_names.push_back( args[i]->print() );
+  
+  return arg_names;
+}
+
+shared_ptr<const expression> expression::substitute(int dummy, shared_ptr<const expression> E) const
+{
+  // construct the substituted arg list, and see if 
+  vector< shared_ptr<const expression> > new_args(args.size());
+  bool change = false;
+  for(int i=0;i<args.size();i++)
+  {
+    new_args[i] = ::substitute(args[i], dummy, E);
+    if (new_args[i] != args[i])
+      change = true;
+  }
+  
+  shared_ptr<expression> result;
+  
+  if (change)
+  {
+    result = shared_ptr<expression>( clone() );
+    result->args = new_args;
+  }
+  
+  return result;
+}
+
+int expression::highest_unused_dummy() const
+{
+  int highest = 0;
+  for(int i=0;i<args.size();i++)
+    highest = std::max(highest, args[i]->highest_unused_dummy());
+  return highest;
+}
+
 shared_ptr<const expression> dummy_expression::substitute(int dummy, shared_ptr<const expression> E) const
 {
   if (index == dummy) 
@@ -25,46 +65,6 @@ string dummy_expression::print() const {
 }
 
 // operator expression
-
-vector<string> operator_expression::print_arg_expressions() const 
-{
-  vector<string> arg_names;
-  for(int i=0;i<args.size();i++)
-    arg_names.push_back( args[i]->print() );
-  
-  return arg_names;
-}
-
-shared_ptr<const expression> operator_expression::substitute(int dummy, shared_ptr<const expression> E) const
-{
-  // construct the substituted arg list, and see if 
-  vector< shared_ptr<const expression> > new_args(args.size());
-  bool change = false;
-  for(int i=0;i<args.size();i++)
-  {
-    new_args[i] = ::substitute(args[i], dummy, E);
-    if (new_args[i] != args[i])
-      change = true;
-  }
-  
-  shared_ptr<operator_expression> result;
-  
-  if (change)
-  {
-    result = shared_ptr<operator_expression>( clone() );
-    result->args = new_args;
-  }
-  
-  return result;
-}
-
-int operator_expression::highest_unused_dummy() const
-{
-  int highest = 0;
-  for(int i=0;i<args.size();i++)
-    highest = std::max(highest, args[i]->highest_unused_dummy());
-  return highest;
-}
 
 string operator_expression::print() const 
 {
