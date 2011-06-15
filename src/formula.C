@@ -221,7 +221,7 @@ term_ref Formula::add_expression(const expression_ref& e)
     for(int i=0;i<func->args.size();i++)
       arg_indices.push_back( add_expression(func->args[i] ) );
 
-    return add_computed_node(e, *(func->op), arg_indices);
+    return add_computed_node(e, dynamic_cast<const Operation&>(*func->op), arg_indices);
   }
 
   shared_ptr<const function_expression> func2 = boost::dynamic_pointer_cast<const function_expression>(e);
@@ -285,7 +285,7 @@ term_ref Formula::find_expression(const expression_ref& e)
     for(int i=0;i<func->args.size();i++)
       arg_indices.push_back( find_expression(func->args[i] ) );
 
-    return find_computation(*(func->op), arg_indices);
+    return find_computation(dynamic_cast<const Operation&>(*func->op), arg_indices);
   }
 
   std::abort();

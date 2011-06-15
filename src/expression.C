@@ -89,20 +89,22 @@ string operator_expression::print() const
   return get_operator()->print_expression( print_arg_expressions() );
 }
 
-operator_expression::operator_expression(const vector< shared_ptr<const expression> >& A)
-  :expression(A)
+operator_expression::operator_expression(const Operator& O, const vector< shared_ptr<const expression> >& A)
+  :expression(A),op(shared_ptr<const Operator>(O.clone()))
+{ }
+
+operator_expression::operator_expression(const shared_ptr<const Operator>& O, const vector< shared_ptr<const expression> >& A)
+  :expression(A),op(O)
 { }
 
 // operation expression
 
 operation_expression::operation_expression(const Operation& O,const vector< shared_ptr<const expression> >& A)
-  :operator_expression(A),
-   op(O.clone())
+  :operator_expression(O,A)
 { }
 
 operation_expression::operation_expression(shared_ptr<const Operation> O,const vector< shared_ptr<const expression> >& A)
-  :operator_expression(A),
-   op(O)
+  :operator_expression(O,A)
 { }
 
 vector< shared_ptr< const expression > > model_args(const Model& M)
@@ -118,18 +120,15 @@ vector< shared_ptr< const expression > > model_args(const Model& M)
 }
 
 model_expression::model_expression(const Model& M)
-  :operator_expression( model_args(M) ),
-   m(M.clone())
+  :operator_expression(M, model_args(M) )
 { }
 
-function_expression::function_expression(const Function& f,const std::vector< boost::shared_ptr<const expression> >& A)
-  :operator_expression(A),
-   F(f.clone())
+function_expression::function_expression(const Function& F,const std::vector< boost::shared_ptr<const expression> >& A)
+  :operator_expression(F,A)
 { }
 
-function_expression::function_expression(boost::shared_ptr<const Function> f,const std::vector< boost::shared_ptr<const expression> >& A)
-  :operator_expression(A),
-   F(f)
+function_expression::function_expression(boost::shared_ptr<const Function> F,const std::vector< boost::shared_ptr<const expression> >& A)
+  :operator_expression(F, A)
 { }
 
 lambda_expression::lambda_expression(const Operation& O)

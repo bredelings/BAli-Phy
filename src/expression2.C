@@ -101,6 +101,10 @@ int main()
 
   F->add_expression(Constant(Double(1)));
 
+  expression_ref default_value (data_function("default_value",2));
+  default_value("X")(One);
+  //  F->add_expression(  default_value("X")(One) );
+
   expression_ref mul = Multiply<Double>();
   expression_ref muli = Multiply<Int>();
   expression_ref plus = Add<Double>();
@@ -166,4 +170,6 @@ int main()
   CTX2.set_value("Z",Double(0));
   result = CTX2.evaluate(cond);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
+
+  
 }

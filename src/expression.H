@@ -35,6 +35,8 @@ class Formula;
 // - expression variables are parameters, and are kept track of using pointers, which
 //   I think is problematic.
 
+// Make Operator expression more generic. Just store a pointer to the Operator object.
+// This should allow unduplicating some code.
 
 struct term_ref
 {
@@ -145,25 +147,27 @@ struct tuple_expression: public expression
 /// This is an abstract base class for applying an atomic operator to arguments
 struct operator_expression: public expression
 {
-  virtual operator_expression* clone() const=0;
+  /// The top-level operation?
+  boost::shared_ptr<const Operator> op;
+
+  virtual operator_expression* clone() const {return new operator_expression(*this);};
 
   // For printing, what is the operator name called?
-  virtual const Operator* get_operator() const=0;
+  virtual const Operator* get_operator() const {return &(*op);}
 
   virtual std::string print() const;
 
-  operator_expression(const std::vector< boost::shared_ptr<const expression> >& A);
+  operator_expression(const Operator& O, const std::vector< boost::shared_ptr<const expression> >& A);
+
+  operator_expression(const boost::shared_ptr<const Operator>& O, const std::vector< boost::shared_ptr<const expression> >& A);
 };
 
 /// An expression with a direct operation
 struct operation_expression: public operator_expression
 {
-  /// The top-level operation?
-  boost::shared_ptr<const Operation> op;
-
   operation_expression* clone() const {return new operation_expression(*this);}
 
-  const Operation* get_operator() const {return &(*op);}
+  const Operation* get_operator() const {return dynamic_cast<const Operation*>(&(*op));}
 
   operation_expression(const Operation& O,const std::vector< boost::shared_ptr<const expression> >& A);
 
@@ -174,11 +178,9 @@ struct operation_expression: public operator_expression
 
 struct model_expression: public operator_expression
 {
-  boost::shared_ptr<const Model> m;
-
   model_expression* clone() const {return new model_expression(*this);}
 
-  const Model* get_operator() const {return &(*m);}
+  const Model* get_operator() const {return dynamic_cast<const Model*>(&(*op));}
 
   model_expression(const Model& M);
 
@@ -208,9 +210,7 @@ struct Function: public Operator
 /// A data expression is evaluates to itself. (Is this different than a *constructor*)
 struct function_expression: public operator_expression
 {
-  boost::shared_ptr<const Function> F;
-
-  const Function* get_operator() const {return &(*F);}
+  const Function* get_operator() const {return dynamic_cast<const Function*>(&(*op));}
 
   function_expression* clone() const {return new function_expression(*this);}
 
