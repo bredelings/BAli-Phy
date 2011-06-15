@@ -97,8 +97,8 @@ struct Formula: virtual public Object
     boost::shared_ptr<const Object> default_value;
     bool top_level;
 
-    Term(const boost::shared_ptr<const expression>& e):E(e),top_level(false) {}
-    Term(const boost::shared_ptr<const expression>& e, boost::shared_ptr<const Object> O):E(e),default_value(O),top_level(false) { }
+    Term(const boost::shared_ptr<const expression>& e):E(e),name(e->print()),top_level(false) {}
+    Term(const boost::shared_ptr<const expression>& e, boost::shared_ptr<const Object> O):E(e),name(e->print()),default_value(O),top_level(false) { }
   };
 
   /// The list of terms that compose this Formula
@@ -156,11 +156,11 @@ public:
 
   term_ref find_expression(const expression_ref& e);
 
-  term_ref add_state_node(const boost::shared_ptr<const expression>& e, const std::string& name);
+  term_ref add_state_node(const boost::shared_ptr<const expression>& e);
 
-  term_ref add_state_node(const boost::shared_ptr<const expression>& e, const std::string& name, const Object&);
+  term_ref add_state_node(const boost::shared_ptr<const expression>& e, const Object&);
 
-  term_ref add_state_node(const boost::shared_ptr<const expression>& e, const std::string& name, boost::shared_ptr<const Object> value);
+  term_ref add_state_node(const boost::shared_ptr<const expression>& e, boost::shared_ptr<const Object> value);
 };
 
 #endif

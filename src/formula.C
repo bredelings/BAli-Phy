@@ -161,7 +161,6 @@ term_ref Formula::add_computed_node(const shared_ptr<const expression>& e, const
 
   Term t(e);
   t.op = shared_ptr<Operation>(o.clone());
-  t.name = o.print_expression(input_names);
   t.input_indices = indices;
 
   term_ref new_index = add_term(t);
@@ -169,25 +168,22 @@ term_ref Formula::add_computed_node(const shared_ptr<const expression>& e, const
   return new_index;
 }
 
-term_ref Formula::add_state_node(const shared_ptr<const expression>& e, const string& name)
+term_ref Formula::add_state_node(const shared_ptr<const expression>& e)
 {
   Term t(e);
-  t.name = name;
   return add_term(t);
 }
 
-term_ref Formula::add_state_node(const shared_ptr<const expression>& e, const string& name, const Object& value)
+term_ref Formula::add_state_node(const shared_ptr<const expression>& e, const Object& value)
 {
   Term t(e);
-  t.name = name;
   t.default_value = shared_ptr<const Object>(value.clone());
   return add_term(t);
 }
 
-term_ref Formula::add_state_node(const shared_ptr<const expression>& e, const string& name, shared_ptr<const Object> value)
+term_ref Formula::add_state_node(const shared_ptr<const expression>& e, shared_ptr<const Object> value)
 {
   Term t(e,value);
-  t.name = name;
   t.default_value = shared_ptr<const Object>(value->clone());
   return add_term(t);
 }
@@ -202,7 +198,6 @@ term_ref Formula::add_expression(const expression_ref& e)
   if (constant)
   {
     Term t(e, constant->value);
-    t.name = constant->value->print();
     return add_term(t);
   }
   
@@ -212,7 +207,7 @@ term_ref Formula::add_expression(const expression_ref& e)
 
   shared_ptr<const named_parameter_expression> var = boost::dynamic_pointer_cast<const named_parameter_expression>(e);
   if (var)
-    return add_state_node(e, var->parameter_name);
+    return add_state_node(e);
 
   shared_ptr<const operation_expression> func = boost::dynamic_pointer_cast<const operation_expression>(e);
   if (func)
@@ -253,7 +248,8 @@ term_ref Formula::find_constant_with_value(const shared_ptr<const Object>& value
 
   for(int index=0;index<size();index++)
   {
-    if (is_constant(index) and value->equals(*terms[index].default_value))
+    shared_ptr<const constant_expression> C = dynamic_pointer_cast<const constant_expression>(terms[index].E);
+    if (C and value->equals(*C->value))
       return term_ref(index,*this);
   }
 
