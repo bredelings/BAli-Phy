@@ -98,6 +98,9 @@ struct constant_expression: public expression
   constant_expression* clone() const {return new constant_expression(*this);}
 
   std::string print() const {return value->print();}
+
+  tribool compare(const Object& o) const;
+  
   explicit constant_expression(const Object& o): value(o.clone()) {}
   explicit constant_expression(boost::shared_ptr<const Object> v): value(v) {}
 };
@@ -108,6 +111,9 @@ struct term_ref_expression: public expression
   term_ref term;
   term_ref_expression* clone() const {return new term_ref_expression(*this);}
   std::string print() const {return term.print();}
+
+  tribool compare(const Object& o) const;
+
   term_ref_expression(const term_ref& r);
   term_ref_expression(int i, boost::shared_ptr<const Formula> f);
 };
@@ -117,6 +123,9 @@ struct named_parameter_expression: public expression
   std::string parameter_name;
   named_parameter_expression* clone() const {return new named_parameter_expression(*this);}
   std::string print() const {return parameter_name;}
+
+  tribool compare(const Object& o) const;
+  
   named_parameter_expression(const std::string& s):parameter_name(s) { }
 };
 
@@ -131,6 +140,9 @@ struct dummy_expression: public expression
 
   dummy_expression* clone() const {return new dummy_expression(*this);}
   std::string print() const;
+
+  tribool compare(const Object& o) const;
+  
   dummy_expression(int i):index(i) {}
 };
 
@@ -140,6 +152,8 @@ struct tuple_expression: public expression
 
   std::string print() const;
 
+  tribool compare(const Object& o) const;
+  
   tuple_expression(int i);
   tuple_expression(const std::vector< boost::shared_ptr<const expression> >& A);
 };
@@ -157,6 +171,8 @@ struct operator_expression: public expression
 
   virtual std::string print() const;
 
+  tribool compare(const Object& o) const;
+  
   operator_expression(const Operator& O, const std::vector< boost::shared_ptr<const expression> >& A);
 
   operator_expression(const boost::shared_ptr<const Operator>& O, const std::vector< boost::shared_ptr<const expression> >& A);

@@ -52,6 +52,30 @@ int expression::highest_unused_dummy() const
   return highest;
 }
 
+tribool constant_expression::compare(const Object& o) const {
+  const constant_expression* E = dynamic_cast<const constant_expression*>(&o);
+  if (not E) 
+    return false;
+
+  return value->compare(*E->value);
+}
+
+tribool term_ref_expression::compare(const Object& o) const {
+  const term_ref_expression* E = dynamic_cast<const term_ref_expression*>(&o);
+  if (not E) 
+    return false;
+
+  return term == E->term;
+}
+
+tribool dummy_expression::compare(const Object& o) const {
+  const dummy_expression* E = dynamic_cast<const dummy_expression*>(&o);
+  if (not E) 
+    return false;
+
+  return index == E->index;
+}
+
 shared_ptr<const expression> dummy_expression::substitute(int dummy, shared_ptr<const expression> E) const
 {
   if (index == dummy) 
@@ -62,6 +86,52 @@ shared_ptr<const expression> dummy_expression::substitute(int dummy, shared_ptr<
 
 string dummy_expression::print() const {
   return string("#")+convertToString(index);
+}
+
+tribool named_parameter_expression::compare(const Object& o) const {
+  const named_parameter_expression* E = dynamic_cast<const named_parameter_expression*>(&o);
+  if (not E) 
+    return false;
+
+  return parameter_name == E->parameter_name;
+}
+
+tribool operator_expression::compare(const Object& o) const 
+{
+  const operator_expression* E = dynamic_cast<const operator_expression*>(&o);
+  if (not E) 
+    return false;
+
+  tribool same = op->compare(*E->op);
+
+  if (not same) return false;
+
+  if (n_args() != E->n_args()) return false;
+
+  for(int i=0;i<n_args();i++) {
+    same = same and args[i]->compare(*E->args[i]);
+    if (not same) return false;
+  }
+
+  return same;
+}
+
+tribool tuple_expression::compare(const Object& o) const 
+{
+  const tuple_expression* E = dynamic_cast<const tuple_expression*>(&o);
+  if (not E) 
+    return false;
+
+  if (n_args() != E->n_args()) return false;
+
+  tribool same = true;
+
+  for(int i=0;i<n_args();i++) {
+    same = same and args[i]->compare(*E->args[i]);
+    if (not same) return false;
+  }
+
+  return same;
 }
 
 // tuple expression

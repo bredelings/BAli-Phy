@@ -4,43 +4,45 @@
 #include <string>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/logic/tribool.hpp>
 
 #include "util.H"
 
-enum maybe_t {maybe = -1, no = 0, yes = 1};
+using boost::logic::tribool;
+using boost::logic::indeterminate;
 
 class Object {
 public:
   virtual Object* clone() const =0;
 
-  virtual maybe_t compare(const Object& O) const
+  virtual tribool compare(const Object& O) const
   {
     if (this == &O) 
-      return yes;
+      return true;
     else
-      return maybe;
+      return indeterminate;
   }
 
   bool equals(const Object& O) const
   {
-    return compare(O) == yes;
+    return compare(O) == true;
   }
 
   bool not_equals(const Object& O) const
   {
-    return compare(O) == no;
+    return compare(O) == false;
   }
 
   bool maybe_equals(const Object& O) const
   {
-    maybe_t m = compare(O);
-    return (m == yes or m == maybe);
+    tribool m = compare(O);
+    return (m == true or m == indeterminate);
   }
 
   bool maybe_not_equals(const Object& O) const
   {
-    maybe_t m = compare(O);
-    return (m == no or m == maybe);
+    tribool m = compare(O);
+    return (m == false or m == indeterminate);
   }
 
   virtual std::string print() const {return "[unprintable]";}
@@ -70,17 +72,17 @@ public:
 
   std::string print() const {return convertToString(t);}
 
-  virtual maybe_t compare(const Object& O) const 
+  virtual tribool compare(const Object& O) const 
   {
     // The same object
-    if (this == &O) return yes;
+    if (this == &O) return true;
 
     // The same value
     const POD<T>* o = dynamic_cast<const POD<T>*>(&O);
-    if (o and t == o->t) return yes;
+    if (o and t == o->t) return true;
 
     // Not the same
-    return no;
+    return false;
   }
 
   // Doesn't seem to do ANYTHING?  Why not?
@@ -110,17 +112,17 @@ public:
 
   std::string print() const {return convertToString(t);}
 
-  virtual maybe_t compare(const Object& O) const 
+  virtual tribool compare(const Object& O) const 
   {
     // The same object
-    if (this == &O) return yes;
+    if (this == &O) return true;
 
     // The same value and type
     const POD_math<T>* o = dynamic_cast<const POD_math<T>*>(&O);
-    if (o and t == o->t) return yes;
+    if (o and t == o->t) return true;
 
     // Not the same
-    return no;
+    return false;
   }
 
   POD_math<T>& operator+=(const T& t2) {t += t2; return *this;}
