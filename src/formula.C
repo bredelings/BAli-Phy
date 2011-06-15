@@ -168,26 +168,6 @@ term_ref Formula::add_computed_node(const shared_ptr<const expression>& e, const
   return new_index;
 }
 
-term_ref Formula::add_state_node(const shared_ptr<const expression>& e)
-{
-  Term t(e);
-  return add_term(t);
-}
-
-term_ref Formula::add_state_node(const shared_ptr<const expression>& e, const Object& value)
-{
-  Term t(e);
-  t.default_value = shared_ptr<const Object>(value.clone());
-  return add_term(t);
-}
-
-term_ref Formula::add_state_node(const shared_ptr<const expression>& e, shared_ptr<const Object> value)
-{
-  Term t(e,value);
-  t.default_value = shared_ptr<const Object>(value->clone());
-  return add_term(t);
-}
-
 term_ref Formula::add_expression(const expression_ref& e)
 {
   shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
@@ -196,10 +176,7 @@ term_ref Formula::add_expression(const expression_ref& e)
 
   shared_ptr<const constant_expression> constant = boost::dynamic_pointer_cast<const constant_expression>(e);
   if (constant)
-  {
-    Term t(e, constant->value);
-    return add_term(t);
-  }
+    return add_term(Term(e, constant->value));
   
   shared_ptr<const term_ref_expression> tr = boost::dynamic_pointer_cast<const term_ref_expression>(e);
   if (tr)
@@ -207,7 +184,8 @@ term_ref Formula::add_expression(const expression_ref& e)
 
   shared_ptr<const named_parameter_expression> var = boost::dynamic_pointer_cast<const named_parameter_expression>(e);
   if (var)
-    return add_state_node(e);
+    // If we add Term(e,value), then value becomes the default value.
+    return add_term(Term(e));
 
   shared_ptr<const operation_expression> func = boost::dynamic_pointer_cast<const operation_expression>(e);
   if (func)

@@ -155,12 +155,6 @@ public:
   term_ref add_expression(const expression_ref& e);
 
   term_ref find_expression(const expression_ref& e);
-
-  term_ref add_state_node(const boost::shared_ptr<const expression>& e);
-
-  term_ref add_state_node(const boost::shared_ptr<const expression>& e, const Object&);
-
-  term_ref add_state_node(const boost::shared_ptr<const expression>& e, boost::shared_ptr<const Object> value);
 };
 
 #endif
