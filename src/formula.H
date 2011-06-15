@@ -59,27 +59,9 @@ struct expression_ref;
 // TODO: We need to know now to *combine* formulas into a larger formula, in order to make
 //       model creation easier.  e.f. f(x), x=1, x~Normal(0,sigma^2)
 
-// Q: What is the simplest way to introduce an unlimited number of different term types?
-// A: Can I make all terms be expressions?
-// 1. That way I don't have to invent new terms, to get new expressions.
-// 2. Each expressions can be decomposed so that it only references other terms.
-// - I could restrict the kind of expressions that are allowed.
-//   (I should replace "state nodes" with named_parameter_expression.
-//
-// - Currently, I allow
-//    + constant terms (holds value)
-//    + variable (hold: nothing? default value? bounds?)
-//    + operation expressions (holds operation)
-//
-// - all terms have:
-//    * list of inputs
-//      - cached: list of outputs
-//      - cached: list of outputs with slots
-//    * how do I modify expression to make the idea of sub-expressions general?
-//    * how do I handle (f x) really being of type f and having just 1 sub-expression, x, when this is true?
-//
-// - I can disallow lambda expressions. (do not opt-in)
-//
+// TODO: Now that adding expressions is sanitized, searching for them (e.g. for duplicates)
+//       should be sanitized as well.  For this, I need to be able to compare expressions for
+//       equality.  I should require that compare is not "maybe"
 
 // I could separate expressions (in the Formula) from FACTORED expression (in the Context?)
 // Then expressions would be only modified to use term_refs as arguments for computational purposes...
