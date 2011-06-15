@@ -164,6 +164,10 @@ term_ref Formula::add_term(const Term& t)
 
 term_ref Formula::add_expression(const expression_ref& e)
 {
+  shared_ptr<const term_ref_expression> tr = boost::dynamic_pointer_cast<const term_ref_expression>(e);
+  if (tr)
+    return tr->term;
+
   shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
   if (lambda)
     throw myexception()<<"Lambda expressions cannot currently be calculated";
@@ -172,16 +176,12 @@ term_ref Formula::add_expression(const expression_ref& e)
   if (constant)
     return add_term(Term(e, constant->value));
   
-  shared_ptr<const term_ref_expression> tr = boost::dynamic_pointer_cast<const term_ref_expression>(e);
-  if (tr)
-    return tr->term;
-
   shared_ptr<const named_parameter_expression> var = boost::dynamic_pointer_cast<const named_parameter_expression>(e);
   if (var)
     // If we add Term(e,value), then value becomes the default value.
     return add_term(Term(e));
 
-  shared_ptr<const operation_expression> func = boost::dynamic_pointer_cast<const operation_expression>(e);
+  shared_ptr<const operator_expression> func = boost::dynamic_pointer_cast<const operator_expression>(e);
   if (func)
   {
     vector<int> arg_indices;
@@ -191,16 +191,6 @@ term_ref Formula::add_expression(const expression_ref& e)
     Term t(e);
     t.input_indices = arg_indices;
     return add_term(t);
-  }
-
-  shared_ptr<const function_expression> func2 = boost::dynamic_pointer_cast<const function_expression>(e);
-  if (func2)
-  {
-    vector<int> arg_indices;
-    for(int i=0;i<func2->args.size();i++)
-      arg_indices.push_back( add_expression(func2->args[i] ) );
-
-    //    return add_computed_node(*(func->op), arg_indices);
   }
 
   std::abort();
