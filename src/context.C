@@ -27,7 +27,7 @@ shared_ptr<const Object> Context::evaluate(int index)
 
   if (V.computation) assert(V.result);
 
-  shared_ptr<const Operation> O = F->terms[index].op;
+  shared_ptr<const Operation> O = F->operation(index);
 
   if (input_indices.size() == 0)
   {
@@ -35,15 +35,13 @@ shared_ptr<const Object> Context::evaluate(int index)
       throw myexception()<<"Evaluating term "<<F->terms[index].name<<" (index = "<<index<<"): leaf node is not marked up-to-date!";
     if (not V.result)
       throw myexception()<<"Evaluating term "<<F->terms[index].name<<" (index = "<<index<<"): leaf node value has not been set!";
-
-    // Since this is a leaf node, it should not have a computation.
+    // Since this is a leaf node, it should not be an operator expression
     assert(not O);
 
     return V.result;
   }
 
   assert(O);
-
   
   // First try to validate our old computation, if possible
   if (not V.computed and V.computation)

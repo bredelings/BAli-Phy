@@ -29,11 +29,20 @@ bool Formula::has_inputs(int index) const
 {
   bool is_internal = (n_input_indices(index) > 0);
   if (not is_internal)
-    assert(not terms[index].op);
+    assert(not operation(index));
   else
-    assert(terms[index].op);
+    assert(operation(index));
 
   return is_internal;
+}
+
+boost::shared_ptr<const Operation> Formula::operation(int index) const
+{
+  shared_ptr<const operator_expression> E = dynamic_pointer_cast<const operator_expression>(terms[index].E);
+  shared_ptr<const Operation> O;
+  if (not E) return O;
+  O = dynamic_pointer_cast<const Operation>(E->op);
+  return O;
 }
 
 bool Formula::is_constant(int index) const
@@ -61,12 +70,12 @@ bool Formula::is_computed(int index) const
 {
   if (has_inputs(index))
   {
-    assert(terms[index].op);
+    assert(operation(index));
     return true;
   }
   else
   {
-    assert(not terms[index].op);
+    assert(not operation(index));
     return false;
   }
 }
@@ -96,7 +105,7 @@ term_ref Formula::find_computation(const Operation& o, const vector<int>& indice
 {
   // avoid adding duplicate calculations
   for(int index=0; index<size(); index++)
-    if ((indices == terms[index].input_indices) and (typeid(o) == typeid(*terms[index].op)))
+    if ((indices == terms[index].input_indices) and (typeid(o) == typeid(*operation(index))))
 	return term_ref(index,*this);
 
   return term_ref();
@@ -109,9 +118,10 @@ term_ref Formula::add_term(const Term& t)
   term_ref ref;
 
   // check new computed nodes, mark their inputs.
-  if (t.op) 
+  if (shared_ptr<const operation_expression> E = dynamic_pointer_cast<const operation_expression>(t.E)) 
   {
-    ref = find_computation(*t.op, t.input_indices);
+    shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->op);
+    ref = find_computation(*O, t.input_indices);
     if (ref.index != -1)
       return ref;
 
@@ -154,13 +164,7 @@ term_ref Formula::add_term(const Term& t)
 
 term_ref Formula::add_computed_node(const shared_ptr<const expression>& e, const Operation& o, const vector<int>& indices)
 {
-  // compute the name of node we might add
-  vector<string> input_names;
-  for(int slot=0;slot<indices.size();slot++)
-    input_names.push_back(terms[indices[slot]].name);
-
   Term t(e);
-  t.op = shared_ptr<Operation>(o.clone());
   t.input_indices = indices;
 
   term_ref new_index = add_term(t);

@@ -89,7 +89,7 @@ struct Formula: virtual public Object
   struct Term
   {
     boost::shared_ptr<const expression> E;
-    boost::shared_ptr<Operation> op;
+
     std::vector<int> input_indices;
     std::vector<std::pair<int,int> > affected_slots;
     std::vector<int> affected_indices;
@@ -130,7 +130,7 @@ public:
 
   int n_affected_indices(int index) const {return terms[index].affected_indices.size();}
 
-  boost::shared_ptr<const Operation> operation(int s) const {return terms[s].op;}
+  boost::shared_ptr<const Operation> operation(int s) const;
 
   bool has_inputs(int index) const;
 
