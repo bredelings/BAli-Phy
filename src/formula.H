@@ -150,8 +150,6 @@ public:
 
   void set_directly_affects_in_slot(int index1, int index2, int slot);
 
-  term_ref add_computed_node(const boost::shared_ptr<const expression>& e, const Operation& o, const std::vector<int>& indices);
-
   term_ref add_expression(const expression_ref& e);
 
   term_ref find_expression(const expression_ref& e);

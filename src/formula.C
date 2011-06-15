@@ -162,16 +162,6 @@ term_ref Formula::add_term(const Term& t)
   return term_ref(new_index,*this);
 }
 
-term_ref Formula::add_computed_node(const shared_ptr<const expression>& e, const Operation& o, const vector<int>& indices)
-{
-  Term t(e);
-  t.input_indices = indices;
-
-  term_ref new_index = add_term(t);
-
-  return new_index;
-}
-
 term_ref Formula::add_expression(const expression_ref& e)
 {
   shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
@@ -198,7 +188,9 @@ term_ref Formula::add_expression(const expression_ref& e)
     for(int i=0;i<func->args.size();i++)
       arg_indices.push_back( add_expression(func->args[i] ) );
 
-    return add_computed_node(e, dynamic_cast<const Operation&>(*func->op), arg_indices);
+    Term t(e);
+    t.input_indices = arg_indices;
+    return add_term(t);
   }
 
   shared_ptr<const function_expression> func2 = boost::dynamic_pointer_cast<const function_expression>(e);
