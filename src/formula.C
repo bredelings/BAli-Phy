@@ -192,28 +192,6 @@ term_ref Formula::add_state_node(const shared_ptr<const expression>& e, const st
   return add_term(t);
 }
 
-term_ref Formula::add_constant_node(const shared_ptr<const expression>& e, const Object& value)
-{
-  return add_constant_node(e, value.print(), shared_ptr<const Object>(value.clone()));
-}
-
-term_ref Formula::add_constant_node(const shared_ptr<const expression>& e, const string& name, const Object& value)
-{
-  return add_constant_node(e, name, shared_ptr<const Object>(value.clone()));
-}
-
-term_ref Formula::add_constant_node(const shared_ptr<const expression>& e, shared_ptr<const Object> value)
-{
-  return add_constant_node(e, value->print(), shared_ptr<const Object>(value->clone()));
-}
-
-term_ref Formula::add_constant_node(const shared_ptr<const expression>& e, const string& name, shared_ptr<const Object> value)
-{
-  Term t(e, value);
-  t.name = name;
-  return add_term(t);
-}
-
 term_ref Formula::add_expression(const expression_ref& e)
 {
   shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
@@ -222,7 +200,11 @@ term_ref Formula::add_expression(const expression_ref& e)
 
   shared_ptr<const constant_expression> constant = boost::dynamic_pointer_cast<const constant_expression>(e);
   if (constant)
-    return add_constant_node(e, constant->value->print(), constant->value);
+  {
+    Term t(e, constant->value);
+    t.name = constant->value->print();
+    return add_term(t);
+  }
   
   shared_ptr<const term_ref_expression> tr = boost::dynamic_pointer_cast<const term_ref_expression>(e);
   if (tr)
@@ -242,8 +224,19 @@ term_ref Formula::add_expression(const expression_ref& e)
     return add_computed_node(e, *(func->op), arg_indices);
   }
 
+  shared_ptr<const function_expression> func2 = boost::dynamic_pointer_cast<const function_expression>(e);
+  if (func2)
+  {
+    vector<int> arg_indices;
+    for(int i=0;i<func2->args.size();i++)
+      arg_indices.push_back( add_expression(func2->args[i] ) );
+
+    //    return add_computed_node(*(func->op), arg_indices);
+  }
+
   std::abort();
 }
+
 
 term_ref Formula::find_term_with_name(const string& name) const
 {

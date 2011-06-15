@@ -161,14 +161,6 @@ public:
   term_ref add_state_node(const boost::shared_ptr<const expression>& e, const std::string& name, const Object&);
 
   term_ref add_state_node(const boost::shared_ptr<const expression>& e, const std::string& name, boost::shared_ptr<const Object> value);
-
-  term_ref add_constant_node(const boost::shared_ptr<const expression>& e, const std::string& name, const Object&  value);
-
-  term_ref add_constant_node(const boost::shared_ptr<const expression>& e, const Object&  value);
-
-  term_ref add_constant_node(const boost::shared_ptr<const expression>& e, const std::string& name, boost::shared_ptr<const Object> value);
-
-  term_ref add_constant_node(const boost::shared_ptr<const expression>& e, boost::shared_ptr<const Object> value);
 };
 
 #endif
