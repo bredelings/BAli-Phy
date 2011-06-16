@@ -8,6 +8,10 @@ using boost::shared_ptr;
 using std::vector;
 using std::string;
 
+
+string term_ref_expression::print() const {
+  return "{"+term.print()+"}["+convertToString(term.index)+"]";
+}
 term_ref_expression::term_ref_expression(const term_ref& r):term(r) {}
 term_ref_expression::term_ref_expression(int i, boost::shared_ptr<const Formula> f):term(i,f) {}
 

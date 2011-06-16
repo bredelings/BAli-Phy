@@ -110,7 +110,7 @@ struct term_ref_expression: public expression
 {
   term_ref term;
   term_ref_expression* clone() const {return new term_ref_expression(*this);}
-  std::string print() const {return term.print();}
+  std::string print() const;
 
   tribool compare(const Object& o) const;
 
