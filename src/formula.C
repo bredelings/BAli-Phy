@@ -115,27 +115,21 @@ term_ref Formula::add_term(const Term& t)
 {
   int new_index = terms.size();
 
-  term_ref ref;
-
-  if (shared_ptr<const operation_expression> E = dynamic_pointer_cast<const operation_expression>(t.E)) 
   {
-    shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->op);
-    ref = find_computation(*O, t.input_indices);
-    if (ref.index != -1)
-      return ref;
-
+    shared_ptr<const expression> E (t.E->clone());
+    if (t.E->compare(*E) == indeterminate)
+      std::cerr<<"Warning: expression "<<t.E->print()<<" does not compare equal to itself! ("<<t.E->compare(*E)<<")\n";
   }
-  else if (t.input_indices.size())
-    throw myexception()<<"Can't have input indices with no operation!";
-  else
-  {
-    int index = find_expression2(t.E);
 
+  // Check if the expression already exists
+  int index = find_expression2(t.E);
+  if (index != -1) {
     if (index != -1) return term_ref(index,*this);
   }
 
   // Warn about duplicate names
-  if (int same_name = find_term_with_name(t.name) != -1)
+  int same_name = find_term_with_name(t.name);
+  if (same_name != -1)
     std::cerr<<"Warning ["<<new_index<<"]: term with name '"<<t.name<<"' already exists at index "<<same_name<<".!\n";
 
   // Update ref for parameters
