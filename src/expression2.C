@@ -101,10 +101,6 @@ int main()
 
   F->add_expression(Constant(Double(1)));
 
-  expression_ref default_value (data_function("default_value",2));
-  default_value("X")(One);
-  //  F->add_expression(  default_value("X")(One) );
-
   expression_ref mul = Multiply<Double>();
   expression_ref muli = Multiply<Int>();
   expression_ref plus = Add<Double>();
@@ -135,6 +131,9 @@ int main()
   F->add_expression( If( Z > One , X*Y+One , W*W ) );
   // -- can we create constants easily?
   F->add_expression( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
+
+  expression_ref default_value (data_function("default_value",2));
+  F->add_expression(  default_value("X")(One) );
 
   Context CTX1(F);
 
