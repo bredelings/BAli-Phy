@@ -16,6 +16,12 @@ struct Multiply: public Operation
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Multiply* clone() const {return new Multiply(*this);}
 
+  tribool compare(const Object& o) const 
+  {
+    const Multiply<T>* E = dynamic_cast<const Multiply<T>*>(&o);
+    return E;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
@@ -44,6 +50,12 @@ struct IfThenElse: public Operation
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual IfThenElse* clone() const {return new IfThenElse(*this);}
 
+  tribool compare(const Object& o) const 
+  {
+    const IfThenElse* E = dynamic_cast<const IfThenElse*>(&o);
+    return E;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     boost::shared_ptr<const Bool> condition = Args.evaluate_as<Bool>(0);
@@ -66,6 +78,12 @@ struct GreaterThan: public Operation
   // The 'context' should include the knowledge of the input slots
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual GreaterThan* clone() const {return new GreaterThan(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const GreaterThan<T>* E = dynamic_cast<const GreaterThan<T>*>(&o);
+    return E;
+  }
 
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
@@ -94,6 +112,12 @@ struct Conversion: public Operation
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Conversion* clone() const {return new Conversion(*this);}
 
+  tribool compare(const Object& o) const 
+  {
+    const Conversion<X,Y>* E = dynamic_cast<const Conversion<X,Y>*>(&o);
+    return E;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     boost::shared_ptr<const X> x = Args.evaluate_as<X>(0);
@@ -113,6 +137,12 @@ struct Add: public Operation
   // The 'context' should include the knowledge of the input slots
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Add* clone() const {return new Add(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Add<T>* E = dynamic_cast<const Add<T>*>(&o);
+    return E;
+  }
 
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
