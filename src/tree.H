@@ -33,6 +33,21 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <list>
 #include "tree-branchnode.H"
 
+// TODO.
+// 1. Add node and branch attributes to tree objects.
+//    - Some attributes are string attributes, but we can also have attribues of other types.
+// 2. Add the ability to read and write string attributes in NEWICK format.
+// 3. Remove class SequenceTree
+//    - The leaf labels are just a special attribute
+//    - Perhaps the branch lengths are ALSO just a special attribute?
+// 4. Replace 
+
+// Future goal: ability to save and reload trees exactly, for checkpoint-restore.
+// Future goal: remove branch indices from tree structure, refer to branches via (node,node) pairs
+//              instead of single integers?
+// Future goal: stop forcing a particular order for nodes.
+//              - instead allow accessors such as leaf_node(i), internal_node(i), leaf_branch(i), internal_branch(i), etc.
+
 //---------------------------------- TreeView --------------------------//
 
 /// This class wraps a BranchNode* and treats it as a reference to a tree.
