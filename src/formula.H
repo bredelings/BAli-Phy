@@ -45,26 +45,24 @@ struct expression_ref;
 //
 // 
 
-// Cycles are probably prohibited... as we do not need self-reference in that way.
-//   - Hmm... recursive functions are useful, though.
+// Cycles should not occur in expressions, since each expression naturally uses its
+// sub-expressions as arguments.
 //
 // Also, note that for some computed values, we do not need to cache values:
 //   - e.g. f(g(h(x)).  Just cache the final result.
 
-// Hmm... if expressions can be used in modal operators, then it might matter if they are
-//  top-level expressions, or just a sub-expression of another expression.
-// For example, default_prior(x~Normal(0,1)) would have x~Normal(0,1) as a sub-expression.
-// For new perhaps just let sub-models set the prior.
-
+// TODO: mark expressions that were directly added as top-level expressions.
+//
 // TODO: We need to know now to *combine* formulas into a larger formula, in order to make
 //       model creation easier.  e.f. f(x), x=1, x~Normal(0,sigma^2)
 
-// TODO: Now that adding expressions is sanitized, searching for them (e.g. for duplicates)
-//       should be sanitized as well.  For this, I need to be able to compare expressions for
-//       equality.  I should require that compare is not "maybe"
+// TODO: We need to know how to evaluate data expressions.
 
-// I could separate expressions (in the Formula) from FACTORED expression (in the Context?)
-// Then expressions would be only modified to use term_refs as arguments for computational purposes...
+// TODO: Now that adding expressions is sanitized, and searching expressions is sanitized,
+//       I need to be able to search for expressions of a certain form, such as (default_value X ?)
+//       and learn the value.
+//
+//       I could create the "_" match object that does not record its matches, and also _1, _2, _3, etc.
 
 struct Formula: virtual public Object
 {
