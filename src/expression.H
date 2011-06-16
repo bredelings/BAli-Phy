@@ -196,6 +196,8 @@ struct Function: public Operator
 {
   Function* clone() const {return new Function(*this);}
 
+  tribool compare(const Object& o) const;
+  
   std::string f_name;
   int n_args;
 

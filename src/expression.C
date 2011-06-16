@@ -230,6 +230,15 @@ lambda_expression::lambda_expression(const Function& F)
   quantified_expression = E;
 }
 
+tribool Function::compare(const Object& o) const
+{
+  const Function* E = dynamic_cast<const Function*>(&o);
+  if (not E) 
+    return false;
+
+  return f_name == E->f_name;
+}
+
 Function::Function(const string& s, int n, function_type_t f_t)
   :f_name(s), n_args(n), what_type(f_t)
 {
