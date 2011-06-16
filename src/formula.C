@@ -45,6 +45,15 @@ boost::shared_ptr<const Operation> Formula::operation(int index) const
   return O;
 }
 
+boost::shared_ptr<const Function> Formula::function(int index) const
+{
+  shared_ptr<const function_expression> E = dynamic_pointer_cast<const function_expression>(terms[index].E);
+  shared_ptr<const Function> F;
+  if (not E) return F;
+  F = dynamic_pointer_cast<const Function>(E->op);
+  return F;
+}
+
 bool Formula::is_constant(int index) const
 {
   if (dynamic_pointer_cast<const constant_expression>(terms[index].E))

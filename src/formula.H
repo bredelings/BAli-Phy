@@ -114,6 +114,8 @@ public:
 
   boost::shared_ptr<const Operation> operation(int s) const;
 
+  boost::shared_ptr<const Function> function(int s) const;
+
   bool has_inputs(int index) const;
 
   bool is_constant(int index) const;
