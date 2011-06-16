@@ -117,7 +117,6 @@ term_ref Formula::add_term(const Term& t)
 
   term_ref ref;
 
-  // check new computed nodes, mark their inputs.
   if (shared_ptr<const operation_expression> E = dynamic_pointer_cast<const operation_expression>(t.E)) 
   {
     shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->op);
@@ -125,40 +124,46 @@ term_ref Formula::add_term(const Term& t)
     if (ref.index != -1)
       return ref;
 
+  }
+  else if (t.input_indices.size())
+    throw myexception()<<"Can't have input indices with no operation!";
+  else
+  {
+    int index = find_expression2(t.E);
+
+    if (index != -1) return term_ref(index,*this);
+  }
+
+  // Warn about duplicate names
+  if (int same_name = find_term_with_name(t.name) != -1)
+    std::cerr<<"Warning ["<<new_index<<"]: term with name '"<<t.name<<"' already exists at index "<<same_name<<".!\n";
+
+  // Update ref for parameters
+  if (dynamic_pointer_cast<const named_parameter_expression>(t.E))
+    state_indices.push_back(new_index);
+
+  // Check that constant node has a value
+  if (shared_ptr<const constant_expression> C = dynamic_pointer_cast<const constant_expression>(t.E))
+  {
+    if (not C->value and t.default_value)
+      throw myexception()<<"Constant node must provide a value!";
+  }
+
+  // Check new computed nodes, mark slots as being affected
+  if (t.E->n_args() or t.input_indices.size())
+  {
+    assert(t.input_indices.size() == t.E->n_args());
+
     for(int slot=0;slot<t.input_indices.size();slot++)
     {
       int input_index = t.input_indices[slot];
       set_directly_affects_in_slot(input_index,new_index,slot);
     }
   }
-  else if (t.input_indices.size())
-    throw myexception()<<"Can't have input indices with no operation!";
-  else
-  {
-    if (not (dynamic_pointer_cast<const constant_expression>(t.E)))
-    {
-      int index = find_term_with_name(t.name);
 
-      if (index == -1)
-	state_indices.push_back(new_index);
-      else if (is_state(index)) 
-	return term_ref(index,*this);
-      else
-	throw myexception()<<"Can't insert a new state variable named '"<<t.name<<"': a term with that name already exists at index "<<index<<".";
-    }
-    else 
-    {
-      if (not t.default_value)
-	throw myexception()<<"Constant node must provide a value!";
-
-      int index = find_constant_with_value(t.default_value);
-
-      if (index != -1) return term_ref(index,*this);
-    }
-
-  }
-
+  // Actually add the term
   terms.push_back(t);
+
   return term_ref(new_index,*this);
 }
 
@@ -202,6 +207,15 @@ term_ref Formula::find_term_with_name(const string& name) const
   for(int i=0;i<size();i++)
     if (terms[i].name == name)
       return term_ref(i,*this);
+
+  return term_ref();
+}
+
+term_ref Formula::find_expression2(const shared_ptr<const expression>& E) const
+{
+  for(int i=0;i<terms.size();i++)
+    if (terms[i].E->compare(*E))
+      return term_ref(i, *this);
 
   return term_ref();
 }
