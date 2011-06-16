@@ -122,9 +122,10 @@ term_ref Formula::add_term(const Term& t)
   }
 
   // Check if the expression already exists
-  int index = find_expression2(t.E);
+  int index = find_expression(t.E);
   if (index != -1) {
-    if (index != -1) return term_ref(index,*this);
+    //    std::cerr<<"   term "<<t.E->print()<<" already present\n";
+    return term_ref(index,*this);
   }
 
   // Warn about duplicate names
@@ -157,7 +158,7 @@ term_ref Formula::add_term(const Term& t)
 
   // Actually add the term
   terms.push_back(t);
-
+  //  std::cerr<<"adding term "<<t.E->print()<<"\n";
   return term_ref(new_index,*this);
 }
 
@@ -201,54 +202,17 @@ term_ref Formula::find_term_with_name(const string& name) const
   return term_ref();
 }
 
-term_ref Formula::find_expression2(const shared_ptr<const expression>& E) const
+term_ref Formula::find_expression(const expression_ref& E) const
 {
   for(int i=0;i<terms.size();i++)
-    if (terms[i].E->compare(*E))
+  {
+    tribool same = terms[i].E->compare(*E);
+    if (same == indeterminate)
+      std::cerr<<"Warning: '"<<E->print()<<"' and '"<<terms[i].E->print()<<"' are unsure if they are equal.";
+    if (same)
       return term_ref(i, *this);
+  }
+
 
   return term_ref();
 }
-
-term_ref Formula::find_constant_with_value(const shared_ptr<const Object>& value) const
-{
-  assert(value);
-
-  for(int index=0;index<size();index++)
-  {
-    shared_ptr<const constant_expression> C = dynamic_pointer_cast<const constant_expression>(terms[index].E);
-    if (C and value->equals(*C->value))
-      return term_ref(index,*this);
-  }
-
-  return term_ref();
-}
-
-term_ref Formula::find_expression(const expression_ref& e)
-{
-  shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
-  if (lambda)
-    return term_ref();
-
-  shared_ptr<const constant_expression> constant = boost::dynamic_pointer_cast<const constant_expression>(e);
-  if (constant)
-    return find_constant_with_value(constant->value);
-  
-
-  shared_ptr<const named_parameter_expression> var = boost::dynamic_pointer_cast<const named_parameter_expression>(e);
-  if (var)
-    return find_term_with_name(var->parameter_name);
-  
-  shared_ptr<const operation_expression> func = boost::dynamic_pointer_cast<const operation_expression>(e);
-  if (func)
-  {
-    vector<int> arg_indices;
-    for(int i=0;i<func->args.size();i++)
-      arg_indices.push_back( find_expression(func->args[i] ) );
-
-    return find_computation(dynamic_cast<const Operation&>(*func->op), arg_indices);
-  }
-
-  std::abort();
-}
-

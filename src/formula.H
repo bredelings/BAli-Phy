@@ -93,8 +93,6 @@ struct Formula: virtual public Object
 
   term_ref find_term_with_name(const std::string&) const;
 
-  term_ref find_expression2(const boost::shared_ptr<const expression>&) const;
-
   term_ref find_constant_with_value(const boost::shared_ptr<const Object>& value) const;
 
   term_ref add_term(const Term&);
@@ -136,7 +134,7 @@ public:
 
   term_ref add_expression(const expression_ref& e);
 
-  term_ref find_expression(const expression_ref& e);
+  term_ref find_expression(const expression_ref& e) const;
 };
 
 #endif
