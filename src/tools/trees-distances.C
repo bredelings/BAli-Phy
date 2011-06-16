@@ -618,7 +618,7 @@ int main(int argc,char* argv[])
       ublas::matrix<double> D = distances(trees,metric_fn);
       
       // set the window size
-      int max_lag = int( double(trees.size()/20.0 + 1.0 ) );
+      int max_lag = int( double(trees.size()/10.0 + 1.0 ) );
       if (args.count("max-lag"))
 	max_lag = min(max_lag,args["max-lag"].as<int>());
       
