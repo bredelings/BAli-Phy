@@ -5,6 +5,19 @@
 using std::vector;
 using std::string;
 
+tribool Operator::compare(const Object& o) const
+{
+  if (this == &o) return true;
+
+  const Operator* O = dynamic_cast<const Operator*>(&o);
+
+  if (not O) return false;
+
+  if (name() != O->name()) return false;
+
+  return indeterminate;
+}
+
 string print_operator_expression(const string& name, const vector<string>& arguments)
 {
   string output = name;
