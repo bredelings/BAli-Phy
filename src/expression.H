@@ -105,19 +105,6 @@ struct constant_expression: public expression
   explicit constant_expression(boost::shared_ptr<const Object> v): value(v) {}
 };
 
-// a term reference expression
-struct term_ref_expression: public expression
-{
-  term_ref term;
-  term_ref_expression* clone() const {return new term_ref_expression(*this);}
-  std::string print() const;
-
-  tribool compare(const Object& o) const;
-
-  term_ref_expression(const term_ref& r);
-  term_ref_expression(int i, boost::shared_ptr<const Formula> f);
-};
-
 struct named_parameter_expression: public expression
 {
   std::string parameter_name;
@@ -318,9 +305,7 @@ struct expression_ref: public boost::shared_ptr<const expression>
     :boost::shared_ptr<const expression>(v) 
   {}
 
-  expression_ref(const term_ref& t)
-    :boost::shared_ptr<const expression>(new term_ref_expression(t)) 
-  {}
+  expression_ref(const term_ref& t);
 
   expression_ref(const Operation& o)
     :boost::shared_ptr<const expression>(new lambda_expression(o))

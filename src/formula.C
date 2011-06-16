@@ -169,10 +169,6 @@ term_ref Formula::add_term(const Term& t)
 
 term_ref Formula::add_expression(const expression_ref& e)
 {
-  shared_ptr<const term_ref_expression> tr = boost::dynamic_pointer_cast<const term_ref_expression>(e);
-  if (tr)
-    return tr->term;
-
   shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
   if (lambda)
     throw myexception()<<"Lambda expressions cannot currently be calculated";
@@ -244,9 +240,6 @@ term_ref Formula::find_expression(const expression_ref& e)
   if (constant)
     return find_constant_with_value(constant->value);
   
-  shared_ptr<const term_ref_expression> tr = boost::dynamic_pointer_cast<const term_ref_expression>(e);
-  if (tr)
-    return tr->term;
 
   shared_ptr<const named_parameter_expression> var = boost::dynamic_pointer_cast<const named_parameter_expression>(e);
   if (var)

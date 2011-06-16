@@ -9,13 +9,6 @@ using std::vector;
 using std::string;
 
 
-string term_ref_expression::print() const {
-  return "{"+term.print()+"}["+convertToString(term.index)+"]";
-}
-term_ref_expression::term_ref_expression(const term_ref& r):term(r) {}
-term_ref_expression::term_ref_expression(int i, boost::shared_ptr<const Formula> f):term(i,f) {}
-
-
 vector<string> expression::print_arg_expressions() const 
 {
   vector<string> arg_names;
@@ -64,13 +57,9 @@ tribool constant_expression::compare(const Object& o) const {
   return value->compare(*E->value);
 }
 
-tribool term_ref_expression::compare(const Object& o) const {
-  const term_ref_expression* E = dynamic_cast<const term_ref_expression*>(&o);
-  if (not E) 
-    return false;
-
-  return term == E->term;
-}
+expression_ref::expression_ref(const term_ref& t)
+  :boost::shared_ptr<const expression>(t.F->terms[t.index].E)
+{}
 
 tribool dummy_expression::compare(const Object& o) const {
   const dummy_expression* E = dynamic_cast<const dummy_expression*>(&o);
