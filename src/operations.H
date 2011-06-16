@@ -30,7 +30,7 @@ struct Multiply: public Operation
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
-    return print_infix_expression("+",inputs);
+    return print_infix_expression("*",inputs);
   }
 
   std::string name() const {return "+";}
