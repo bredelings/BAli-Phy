@@ -168,21 +168,11 @@ std::vector<std::string> find_named_parameters(boost::shared_ptr<const expressio
 
 boost::shared_ptr<const expression> substitute(boost::shared_ptr<const expression> E1, int dummy, boost::shared_ptr<const expression> E2);
 
-boost::shared_ptr<const expression> apply(const expression& E,boost::shared_ptr<const expression> arg);
+// Single-arg version
+boost::shared_ptr<const expression> apply(const expression_ref& E,const expression_ref& arg);
 
-boost::shared_ptr<const expression> apply(const expression& E,const expression& arg);
-
-boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
-					  boost::shared_ptr<const expression> arg);
-
-boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
-					  const expression& arg);
-boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
-					  const std::vector<boost::shared_ptr<const expression> > args,
-					  int i);
-
-boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
-					  const std::vector<boost::shared_ptr<const expression> > args);
+// Multiple-arg version
+boost::shared_ptr<const expression> apply(const expression_ref& E, const std::vector<boost::shared_ptr<const expression> > args);
 
 expression_ref lambda_expression(const Operator& O);
 
@@ -248,6 +238,10 @@ struct expression_ref: public boost::shared_ptr<const expression>
 
   expression_ref(const Model& M)
     :boost::shared_ptr<const expression>(new expression(M,model_args(M)))
+  { }
+
+  expression_ref(const expression& e)
+    :boost::shared_ptr<const expression>(e.clone())
   { }
 
   explicit expression_ref(const int& i):boost::shared_ptr<const expression>(new expression(constant(Int(i)))) {}

@@ -233,33 +233,16 @@ shared_ptr<const expression> substitute(shared_ptr<const expression> E1, int dum
   return shared_ptr<const expression>(new expression(E1->head,args));
 }
 
-shared_ptr<const expression> apply(const expression& E,shared_ptr<const expression> arg)
+shared_ptr<const expression> apply(const expression_ref& E,const expression_ref& arg)
 {
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E.head);
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->head);
   if (not L)
-    throw myexception()<<"Too many arguments to expression "<<E.print()<<".  (Is this a function at all?)";
+    throw myexception()<<"Too many arguments to expression "<<E->print()<<".  (Is this a function at all?)";
 
-  return substitute(E.args[0], L->dummy, arg);
+  return substitute(E->args[0], L->dummy, arg);
 }
 
-shared_ptr<const expression> apply(const expression& E,const expression& arg)
-{
-  return apply(E,shared_ptr<const expression>(arg.clone()));
-}
-
-shared_ptr<const expression> apply(shared_ptr<const expression> E,
-				   shared_ptr<const expression> arg)
-{
-  return apply(*E,arg);
-}
-
-shared_ptr<const expression> apply(shared_ptr<const expression> E,
-				   const expression& arg)
-{
-  return apply(*E,shared_ptr<const expression>(arg.clone()));
-}
-
-shared_ptr<const expression> apply(shared_ptr<const expression> E,
+shared_ptr<const expression> apply(const expression_ref& E,
 				   const vector<shared_ptr<const expression> > args,
 				   int i)
 {
@@ -271,7 +254,7 @@ shared_ptr<const expression> apply(shared_ptr<const expression> E,
   return result1;
 }
 
-shared_ptr<const expression> apply(shared_ptr<const expression> E,
+shared_ptr<const expression> apply(const expression_ref& E,
 				   const vector<shared_ptr<const expression> > args)
 {
   return apply(E,args,0);
