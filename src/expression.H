@@ -191,8 +191,6 @@ struct operator_expression: public expression
   // For printing, what is the operator name called?
   virtual const Operator* get_operator() const {return dynamic_cast<const Operator*>(&(*head));}
 
-  virtual std::string print() const;
-
   operator_expression(const Operator& O, const std::vector< boost::shared_ptr<const expression> >& A);
 
   operator_expression(const boost::shared_ptr<const Operator>& O, const std::vector< boost::shared_ptr<const expression> >& A);

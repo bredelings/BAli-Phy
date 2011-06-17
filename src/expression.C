@@ -21,8 +21,12 @@ vector<string> expression::print_arg_expressions() const
 string expression::print() const 
 {
   string result;
-  if (head)
-    result = head->print();
+  if (head) {
+    if (const Operator* O = dynamic_cast<const Operator*>(&*head))
+      return O->print_expression(print_arg_expressions());
+    else
+      result = head->print();
+  }
   return print_operator_expression(result,print_arg_expressions());
 }
 
@@ -197,13 +201,6 @@ string tuple_expression::print() const
 tuple_expression::tuple_expression(const std::vector< boost::shared_ptr<const expression> >& A)
   :expression(A)
 { }
-
-// operator expression
-
-string operator_expression::print() const 
-{
-  return get_operator()->print_expression( print_arg_expressions() );
-}
 
 operator_expression::operator_expression(const Operator& O, const vector< shared_ptr<const expression> >& A)
   :expression(O,A)
