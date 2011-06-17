@@ -97,16 +97,15 @@ struct parameter: public Object
 };
 
 // a dummy variable expression
-struct dummy_expression: public expression
+struct dummy: public Object
 {
   int index;
 
-  dummy_expression* clone() const {return new dummy_expression(*this);}
+  dummy* clone() const {return new dummy(*this);}
   std::string print() const;
-
   tribool compare(const Object& o) const;
   
-  dummy_expression(int i):index(i) {}
+  dummy(int i):index(i) {}
 };
 
 struct match: public Object
@@ -177,7 +176,7 @@ expression_ref lambda_expression(const Operator& O);
 //         there is no overlap.
 struct lambda: public Object
 {
-  int dummy;
+  int dummy_index;
   
   lambda* clone() const {return new lambda(*this);}
 
