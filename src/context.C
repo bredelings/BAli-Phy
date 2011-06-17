@@ -67,7 +67,7 @@ shared_ptr<const Object> Context::evaluate(int index)
   // Hey, how about a model expression?
   // Hey, how about a tuple expression?
 
-  // Otherwise the expression must be a op expression
+  // Otherwise the expression must be an op expression
   shared_ptr<const Operation> O = F->operation(index);
   assert(O);
   
