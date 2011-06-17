@@ -73,14 +73,6 @@ shared_ptr<const expression> expression::substitute(int dummy, shared_ptr<const 
   return result;
 }
 
-int expression::highest_unused_dummy() const
-{
-  int highest = 0;
-  for(int i=0;i<args.size();i++)
-    highest = std::max(highest, args[i]->highest_unused_dummy());
-  return highest;
-}
-
 tribool constant::compare(const Object& o) const 
 {
   const constant* E = dynamic_cast<const constant*>(&o);
@@ -130,7 +122,6 @@ string match::print() const
   else
     return string("_")+convertToString(index);
 }
-
 
 // How would we handle lambda expressions, here?
 bool find_match(const expression_ref& pattern, const expression_ref& E, vector<shared_ptr<const expression> >& results)

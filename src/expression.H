@@ -10,53 +10,40 @@
 
 class Formula;
 
-// Eventually, many things should be 'expressions'.  Expressions must be
-// generic, and therefore probably must use dynamic typing instead of static
-// typing. Expressions can have constants plugged in to dummy variables.  However, C++0x/boost
-// functions can also have that.  Furthermore, boost functions should also
-// be able to be type safe, if they are constructed using templates. So,
-// why don't I just use boost functions?
-// - Well, boost functions do only one thing: calculate.
-// - Probably one could CONSTRUCT a boost function from a 'expression'.
+// However, C++0x/boost functions can also do binding.  How should expressions relate to them?
+// How do you bind a 2nd argument in haskell? (currying?)  Can you use match arguments like _?
+// Should I replace the match arguments with a (M x)(f x) operator to specify which dummies are for matching?
 
 // Note: I want to be able to construct expressions simply.  For example, I want
 // to have an exp(x) expression that does something like exp(Q) = exp_sym(pi(Q),S(Q))
 
-// Note: it would be nice to have expressions be able to return pairs and other objects.
-// That would make it much easier for functions to have single return values, since such
-// a "single" value could contain multiple parts.
+// Note: Expressions can now return multiple values, in an s-expression... I think?
 
 // Note: it is probably necessary for the different parts of a structure to be able to be
 // dynamically computed.  A structure is, in some sense, also a function, if structures are
 // s-expressions.
 
-// Question: How does this relate to BEAST input files?
-// - in BEAST, each object is described using a name, which is basically an ID.
-// - expression variables are parameters, and are kept track of using pointers, which
-//   I think is problematic.
-
-// Make Operator expression more generic. Just store a pointer to the Operator object.
-// This should allow unduplicating some code.
+// Question: Do I really want objects to have names in the Formula?
 
 class term_ref;
 
-// I could add a 1st-arg object;
-// - Then I could make multiple 1st-arg type objects
+// Head objects include:
 // - parameter(string)
 // - dummy(int)
 // - match(int)
 // - operation
 // - function / data
-// - tuple?  Hmm.. is a tuple a data expression?  Perhaps it is.
-//   + only data expressions need to pretend that arguments are expressions...?
-//   + can we have (2,3) instead of (constant(2),constant(3))?
+// - tuple should really be a data expression.
+// - constant? Can we have (2,3) instead of (constant(2),constant(3))?
 // - Model?
 //
-// - lambda??????????
+// - lambda(int)??????????
+
+// TODO: make substitute, apply, and print_arg_expressions external functions, not member functions.
 
 struct expression: virtual public Object
 {
-  // The operator
+  // The operator or object
   // FIXME - if I made everything into an Operator, then (say) a parameter could specify&require only 0 arguments.
   boost::shared_ptr<const Object> head;
 
@@ -67,10 +54,9 @@ struct expression: virtual public Object
   tribool compare(const Object& o) const;
   std::string print() const;
   
-  virtual int n_args() const {return args.size();}
+  /// The number of terms after the head
+  int n_args() const {return args.size();}
   
-  virtual int highest_unused_dummy() const;
-
   // return NULL if no change
   virtual boost::shared_ptr<const expression> substitute(int, boost::shared_ptr<const expression>) const;
 
@@ -122,8 +108,6 @@ struct parameter: public Object
 struct dummy_expression: public expression
 {
   int index;
-
-  virtual int highest_unused_dummy() const {return index+1;}
 
   boost::shared_ptr<const expression> substitute(int dummy, boost::shared_ptr<const expression> E) const;
 
@@ -210,11 +194,6 @@ struct lambda_expression: public expression
   dummy_expression dummy_variable;
   
   boost::shared_ptr<const expression> quantified_expression;
-  
-  int highest_unused_dummy() const 
-  {
-    return quantified_expression->highest_unused_dummy();
-  }
   
   // FIXME - If we're substituting a lambda expression we have to rename its dummys to make sure
   //         there is no overlap.
