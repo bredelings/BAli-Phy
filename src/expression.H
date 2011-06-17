@@ -57,9 +57,6 @@ struct expression: virtual public Object
   /// The number of terms after the head
   int n_args() const {return args.size();}
   
-  // return NULL if no change
-  virtual boost::shared_ptr<const expression> substitute(int, boost::shared_ptr<const expression>) const;
-
   std::vector<std::string> print_arg_expressions() const;
 
   boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E) const;
@@ -76,8 +73,6 @@ struct expression: virtual public Object
 	     const std::vector< boost::shared_ptr<const expression> >& A):head(O), args(A) { }
   virtual ~expression() {}
 };
-
-boost::shared_ptr<const expression> substitute(boost::shared_ptr<const expression> E1, int dummy, boost::shared_ptr<const expression> E2);
 
 // a constant expression
 struct constant: public Object
@@ -108,8 +103,6 @@ struct parameter: public Object
 struct dummy_expression: public expression
 {
   int index;
-
-  boost::shared_ptr<const expression> substitute(int dummy, boost::shared_ptr<const expression> E) const;
 
   dummy_expression* clone() const {return new dummy_expression(*this);}
   std::string print() const;
@@ -191,31 +184,17 @@ boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
 boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E,
 					  const std::vector<boost::shared_ptr<const expression> > args);
 
-struct lambda_expression: public expression
+expression_ref lambda_expression(const Operator& O);
+
+// FIXME - If we're substituting a lambda expression we have to rename its dummys to make sure
+//         there is no overlap.
+struct lambda: public Object
 {
-  dummy_expression dummy_variable;
+  int dummy;
   
-  boost::shared_ptr<const expression> quantified_expression;
-  
-  // FIXME - If we're substituting a lambda expression we have to rename its dummys to make sure
-  //         there is no overlap.
-  boost::shared_ptr<const expression> substitute(int dummy, boost::shared_ptr<const expression> E) const;
+  lambda* clone() const {return new lambda(*this);}
 
-  lambda_expression* clone() const {return new lambda_expression(*this);}
-
-  std::string print() const 
-  {
-    return std::string("(lambda ") + dummy_variable.print() + ")(" + quantified_expression->print() + ")";
-  }
-
-  lambda_expression(int dummy, boost::shared_ptr<const expression> E)
-    :dummy_variable(dummy),
-     quantified_expression(E)
-  { }
-
-  lambda_expression(const Operation& O);
-
-  lambda_expression(const Function& F);
+  lambda(int d);
 };
 
 struct expression_ref: public boost::shared_ptr<const expression>
@@ -248,11 +227,11 @@ struct expression_ref: public boost::shared_ptr<const expression>
   expression_ref(const term_ref& t);
 
   expression_ref(const Operation& o)
-    :boost::shared_ptr<const expression>(new lambda_expression(o))
+    :boost::shared_ptr<const expression>(lambda_expression(o))
   {}
 
   expression_ref(const Function& f)
-    :boost::shared_ptr<const expression>(new lambda_expression(f))
+    :boost::shared_ptr<const expression>(lambda_expression(f))
   {}
 
   expression_ref(const std::string& s)

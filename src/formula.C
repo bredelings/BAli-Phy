@@ -158,9 +158,11 @@ term_ref Formula::add_term(const Term& t)
 
 term_ref Formula::add_expression(const expression_ref& e)
 {
-  shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
+  shared_ptr<const lambda> L = boost::dynamic_pointer_cast<const lambda>(e->head);
   // could lambda expressions just evaluate to themselves?  With non-dependent sub-expressions evaluated?
-  if (lambda)
+  // we need to be able to add them, even if we can't evaluate them...
+  // yes, they should evaluate to themselves.
+  if (L)
     throw myexception()<<"Lambda expressions cannot currently be calculated";
 
   shared_ptr<const constant> c = boost::dynamic_pointer_cast<const constant>(e->head);

@@ -24,6 +24,10 @@ string expression::print() const
   if (head) {
     if (const Operator* O = dynamic_cast<const Operator*>(&*head))
       return O->print_expression(print_arg_expressions());
+    if (const lambda* L = dynamic_cast<const lambda*>(&*head))
+    {
+      return "(lambda "+convertToString(L->dummy)+")("+args[0]->print()+")";
+    }
     else
       result = head->print();
   }
@@ -50,29 +54,6 @@ tribool expression::compare(const Object& o) const
   return same;
 }
 
-shared_ptr<const expression> expression::substitute(int dummy, shared_ptr<const expression> E) const
-{
-  // construct the substituted arg list, and see if 
-  vector< shared_ptr<const expression> > new_args(args.size());
-  bool change = false;
-  for(int i=0;i<args.size();i++)
-  {
-    new_args[i] = ::substitute(args[i], dummy, E);
-    if (new_args[i] != args[i])
-      change = true;
-  }
-  
-  shared_ptr<expression> result;
-  
-  if (change)
-  {
-    result = shared_ptr<expression>( clone() );
-    result->args = new_args;
-  }
-  
-  return result;
-}
-
 tribool constant::compare(const Object& o) const 
 {
   const constant* E = dynamic_cast<const constant*>(&o);
@@ -92,14 +73,6 @@ tribool dummy_expression::compare(const Object& o) const {
     return false;
 
   return index == E->index;
-}
-
-shared_ptr<const expression> dummy_expression::substitute(int dummy, shared_ptr<const expression> E) const
-{
-  if (index == dummy) 
-    return E;
-  else
-    return shared_ptr<const expression>();
 }
 
 string dummy_expression::print() const {
@@ -179,8 +152,11 @@ vector< shared_ptr< const expression > > model_args(const Model& M)
   return args;
 }
 
-lambda_expression::lambda_expression(const Operation& O)
-  :dummy_variable(0)
+lambda::lambda(int d)
+  :dummy(d)
+{ }
+
+expression_ref lambda_expression(const Operator& O)
 {
   int n = O.n_args();
   assert(n != -1);
@@ -191,28 +167,13 @@ lambda_expression::lambda_expression(const Operation& O)
   
   shared_ptr<const expression> E(new expression(O, A));
   
-  for(int i=n-1;i>0;i--)
-    E = shared_ptr<const expression>(new lambda_expression(i,E));
+  for(int i=n-1;i>=0;i--) 
+  {
+    vector<shared_ptr<const expression> > args(1,E);
+    E = shared_ptr<const expression>(new expression(lambda(i),args));
+  }
   
-  quantified_expression = E;
-}
-
-lambda_expression::lambda_expression(const Function& F)
-  :dummy_variable(0)
-{
-  int n = F.n_args;
-  assert(n != -1);
-  
-  vector< shared_ptr<const expression> > A;
-  for(int i=0;i<n;i++)
-    A.push_back(shared_ptr<const expression>(new dummy_expression(i)));
-  
-  shared_ptr<const expression> E(new expression(F, A));
-  
-  for(int i=n-1;i>0;i--)
-    E = shared_ptr<const expression>(new lambda_expression(i,E));
-  
-  quantified_expression = E;
+  return E;
 }
 
 tribool Function::compare(const Object& o) const
@@ -240,34 +201,45 @@ Function annotation_function(const std::string& s, int n)
   return Function(s, n, annotation_f);
 }
 
-shared_ptr<const expression> lambda_expression::substitute(int dummy, shared_ptr<const expression> E) const
-{
-  if (dummy_variable.index == dummy)
-    throw myexception()<<"Trying to substitution for dummy "<<dummy<<" in lambda express that quantifies it!";
-
-  shared_ptr<const expression> result = quantified_expression->substitute(dummy,E);
-  
-  if (not result) return result;
-  
-  return shared_ptr<const expression>(new lambda_expression(dummy_variable.index,result));
-}
-
 shared_ptr<const expression> substitute(shared_ptr<const expression> E1, int dummy, shared_ptr<const expression> E2)
 {
-  shared_ptr<const expression> E3 = E1->substitute(dummy,E2);
-  if (E3) 
-    return E3;
-  else
-    return E1;
+  vector<shared_ptr<const expression> > args(E1->n_args());
+  bool found = false;
+  for(int i=0;i<E1->n_args();i++)
+  {
+    args[i] = substitute(E1->args[i],dummy,E2);
+    if (args[i] != E1->args[i]) found = true;
+  }
+
+  if (shared_ptr<const dummy_expression> D = dynamic_pointer_cast<const dummy_expression>(E1))
+  {
+    assert(E1->n_args() == 0);
+    if (D->index == dummy)
+      return E2;
+    else
+      return E1;
+  }
+
+  // This is not a dummy expression, and the arguments (we didn't search head) do not contain the dummy being replaced;
+  if (not found) return E1;
+
+  // make sure we don't try to substitute for quantified dummies
+  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E1->head))
+  {
+    if (L->dummy == dummy)
+      throw myexception()<<"Trying to substitution for dummy "<<dummy<<" in lambda express that quantifies it!";
+  }
+
+  return shared_ptr<const expression>(new expression(E1->head,args));
 }
 
 shared_ptr<const expression> apply(const expression& E,shared_ptr<const expression> arg)
 {
-  const lambda_expression* lambda = dynamic_cast<const lambda_expression*>(&E);
-  if (not lambda)
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E.head);
+  if (not L)
     throw myexception()<<"Too many arguments to expression "<<E.print()<<".  (Is this a function at all?)";
 
-  return substitute(lambda->quantified_expression, lambda->dummy_variable.index, arg);
+  return substitute(E.args[0], L->dummy, arg);
 }
 
 shared_ptr<const expression> apply(const expression& E,const expression& arg)
