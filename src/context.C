@@ -55,7 +55,7 @@ shared_ptr<const Object> Context::evaluate(int index)
 	  args[i] = shared_ptr<const expression>(new constant_expression(arg_result));
       }
 
-      V.result = shared_ptr<const Object>(new function_expression(f,args));
+      V.result = shared_ptr<const Object>(new expression(f,args));
       V.computed = true;
     }
 

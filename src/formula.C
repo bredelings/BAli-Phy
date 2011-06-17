@@ -38,20 +38,12 @@ bool Formula::has_inputs(int index) const
 
 boost::shared_ptr<const Operation> Formula::operation(int index) const
 {
-  shared_ptr<const operator_expression> E = dynamic_pointer_cast<const operator_expression>(terms[index].E);
-  shared_ptr<const Operation> O;
-  if (not E) return O;
-  O = dynamic_pointer_cast<const Operation>(E->head);
-  return O;
+  return dynamic_pointer_cast<const Operation>(terms[index].E->head);
 }
 
 boost::shared_ptr<const Function> Formula::function(int index) const
 {
-  shared_ptr<const function_expression> E = dynamic_pointer_cast<const function_expression>(terms[index].E);
-  shared_ptr<const Function> F;
-  if (not E) return F;
-  F = dynamic_pointer_cast<const Function>(E->head);
-  return F;
+  return dynamic_pointer_cast<const Function>(terms[index].E->head);
 }
 
 bool Formula::is_constant(int index) const
@@ -180,12 +172,12 @@ term_ref Formula::add_expression(const expression_ref& e)
     // If we add Term(e,value), then value becomes the default value.
     return add_term(Term(e));
 
-  shared_ptr<const operator_expression> func = boost::dynamic_pointer_cast<const operator_expression>(e);
-  if (func)
+  shared_ptr<const Operator> op = boost::dynamic_pointer_cast<const Operator>(e->head);
+  if (op)
   {
     vector<int> arg_indices;
-    for(int i=0;i<func->args.size();i++)
-      arg_indices.push_back( add_expression(func->args[i] ) );
+    for(int i=0;i<e->args.size();i++)
+      arg_indices.push_back( add_expression(e->args[i] ) );
 
     Term t(e);
     t.input_indices = arg_indices;

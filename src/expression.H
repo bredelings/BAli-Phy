@@ -243,18 +243,6 @@ struct Function: public Operator
   Function(const std::string&, int n, function_type_t);
 };
 
-/// A data expression is evaluates to itself. (Is this different than a *constructor*)
-struct function_expression: public operator_expression
-{
-  const Function* get_operator() const {return dynamic_cast<const Function*>(&(*head));}
-
-  function_expression* clone() const {return new function_expression(*this);}
-
-  function_expression(const Function& O,const std::vector< boost::shared_ptr<const expression> >& A);
-
-  function_expression(boost::shared_ptr<const Function> O,const std::vector< boost::shared_ptr<const expression> >& A);
-};
-
 Function data_function(const std::string&, int);
 
 Function annotation_function(const std::string& , int);
