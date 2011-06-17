@@ -23,6 +23,11 @@ class Formula;
 // dynamically computed.  A structure is, in some sense, also a function, if structures are
 // s-expressions.
 
+// A quote operator would affect how arguments were evaluated.
+// - Do I want the question of whether the argument is an expression to affect its evaluation?
+// - Perhaps I could evaluate all expression-type arguments.
+// - Quoting would stop prevent this, and would take the place of constant(expression(...)).
+
 // Question: Do I really want objects to have names in the Formula?
 
 class expression_ref;
@@ -126,7 +131,7 @@ bool find_match(const expression_ref& pattern,const expression_ref& E, std::vect
 
 std::vector< boost::shared_ptr< const expression > > model_args(const Model& M);
 
-enum function_type_t {data_function_f, body_function_f, annotation_f};
+enum function_type_t {data_function_f, body_function_f};
 
 struct Function: public Operator
 {
@@ -146,13 +151,10 @@ struct Function: public Operator
   std::string name() const {return f_name;}
   bool is_data_constructor() const {return what_type == data_function_f;}
   bool is_function() const {return what_type == body_function_f;}
-  bool is_annotation() const {return what_type == annotation_f;}
   Function(const std::string&, int n, function_type_t);
 };
 
 Function data_function(const std::string&, int);
-
-Function annotation_function(const std::string& , int);
 
 std::vector<std::string> find_named_parameters(boost::shared_ptr<const expression> e);
 

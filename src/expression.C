@@ -207,11 +207,6 @@ Function data_function(const std::string& s, int n)
   return Function(s, n, data_function_f);
 }
 
-Function annotation_function(const std::string& s, int n)
-{
-  return Function(s, n, annotation_f);
-}
-
 shared_ptr<const expression> substitute(shared_ptr<const expression> E1, int dummy_index, shared_ptr<const expression> E2)
 {
   vector<shared_ptr<const expression> > args(E1->n_args());
