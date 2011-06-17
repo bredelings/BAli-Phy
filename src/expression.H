@@ -71,6 +71,8 @@ struct expression: virtual public Object
 
   expression* clone() const =0;
 
+  tribool compare(const Object& o) const;
+  
   virtual int n_args() const {return args.size();}
   
   virtual int highest_unused_dummy() const;
@@ -80,15 +82,18 @@ struct expression: virtual public Object
 
   std::vector<std::string> print_arg_expressions() const;
 
-  virtual std::string print() const = 0;
+  virtual std::string print() const;
 
   boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E) const;
 
   boost::shared_ptr<const expression> apply(const expression& E) const;
 
   expression() {}
-  expression(int i):args(i) {}
+  explicit expression(const Object& O):head(O.clone()) {}
+  explicit expression(const boost::shared_ptr<const Object>& O):head(O) {}
   expression(const std::vector< boost::shared_ptr<const expression> >& A):args(A) { }
+  expression(const boost::shared_ptr<const Object>& O, 
+	     const std::vector< boost::shared_ptr<const expression> >& A):head(O), args(A) { }
   virtual ~expression() {}
 };
 
@@ -157,7 +162,6 @@ struct tuple_expression: public expression
 
   tribool compare(const Object& o) const;
   
-  tuple_expression(int i);
   tuple_expression(const std::vector< boost::shared_ptr<const expression> >& A);
 };
 

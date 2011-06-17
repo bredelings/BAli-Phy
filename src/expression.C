@@ -18,6 +18,34 @@ vector<string> expression::print_arg_expressions() const
   return arg_names;
 }
 
+string expression::print() const 
+{
+  string result;
+  if (head)
+    result = head->print();
+  return print_operator_expression(result,print_arg_expressions());
+}
+
+tribool expression::compare(const Object& o) const 
+{
+  const expression* E = dynamic_cast<const expression*>(&o);
+  if (not E) 
+    return false;
+
+  tribool same = head->compare(*E->head);
+
+  if (not same) return false;
+
+  if (n_args() != E->n_args()) return false;
+
+  for(int i=0;i<n_args();i++) {
+    same = same and args[i]->compare(*E->args[i]);
+    if (not same) return false;
+  }
+
+  return same;
+}
+
 shared_ptr<const expression> expression::substitute(int dummy, shared_ptr<const expression> E) const
 {
   // construct the substituted arg list, and see if 
@@ -149,13 +177,6 @@ tribool tuple_expression::compare(const Object& o) const
 string tuple_expression::print() const
 {
   return print_operator_expression("",print_arg_expressions());
-}
-
-tuple_expression::tuple_expression(int i)
-  :expression(i) 
-{ 
-  // a tuple expression of size 1 is just the same as the thing it contains
-  assert(i > 1);
 }
 
 tuple_expression::tuple_expression(const std::vector< boost::shared_ptr<const expression> >& A)
