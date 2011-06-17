@@ -107,7 +107,15 @@ shared_ptr<const Object> Context::evaluate(int index)
     ContextOperationArgs Args(*this, index);
 
     // recursive calls to evaluate happen in here.
-    shared_ptr<const Object> new_result = (*O)(Args);
+    shared_ptr<const Object> new_result;
+    try{
+      new_result = (*O)(Args);
+    }
+    catch(myexception& e)
+    {
+      e.prepend("Evaluating expression '"+F->terms[index].E->print()+"':\n");
+      throw e;
+    }
     V.computation = Args.computation;
     V.computed = true;
 
@@ -248,6 +256,23 @@ Context::Context(const polymorphic_cow_ptr<Formula>& F_)
       values[index]->computed = true;
     }
 
+    if (shared_ptr<const parameter> C = dynamic_pointer_cast<const parameter>(F->terms[index].E->head)) 
+    {
+      // actually, any match in find_match_expression should produce an INDEX in formula!
+      // we could then evaluate that index to get an actual object...
+      expression_ref default_value (data_function("default_value",2));
+      vector<shared_ptr<const expression> > results;
+      expression_ref query = default_value(F->terms[index].E)(match(0));
+      term_ref found = F->find_match_expression(query, results);
+      if (found != -1)
+      {
+	assert(results.size());
+	shared_ptr<const constant> C = dynamic_pointer_cast<const constant>(results[0]->head);
+	assert(C);
+	values[index]->result = shared_ptr<const Object>(C->value->clone());
+	values[index]->computed = true;
+      }
+    }
     // find the default value, if its a parameter?
   }
 }
