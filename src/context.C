@@ -27,7 +27,7 @@ shared_ptr<const Object> Context::evaluate(int index)
 
   if (V.computation) assert(V.result);
 
-  // If we are a constant, or named_parameter_expression, or.... ?
+  // If we are a constant, or parameter, or.... ?
   if (input_indices.size() == 0)
   {
     if (not V.computed)

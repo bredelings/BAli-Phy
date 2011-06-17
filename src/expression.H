@@ -78,16 +78,9 @@ struct expression: virtual public Object
   // An expression may or may not have sub-expressions
   std::vector< boost::shared_ptr<const expression> > args;
 
-  // An expression can be
-  // - a term reference
-  // - a constant (probably one w/o an index so far)
-  // - an op taking expressions as arguments.
-  // - a dummy var
-  // - a lambda-expression binding dummies in its arguments
-
-  expression* clone() const =0;
-
+  expression* clone() const {return new expression(*this);}
   tribool compare(const Object& o) const;
+  std::string print() const;
   
   virtual int n_args() const {return args.size();}
   
@@ -97,8 +90,6 @@ struct expression: virtual public Object
   virtual boost::shared_ptr<const expression> substitute(int, boost::shared_ptr<const expression>) const;
 
   std::vector<std::string> print_arg_expressions() const;
-
-  virtual std::string print() const;
 
   boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E) const;
 
@@ -140,13 +131,6 @@ struct parameter: public Object
   tribool compare(const Object& o) const;
   
   parameter(const std::string& s):parameter_name(s) { }
-};
-
-struct named_parameter_expression: public expression
-{
-  named_parameter_expression* clone() const {return new named_parameter_expression(*this);}
-
-  named_parameter_expression(const std::string& s):expression(parameter(s)) { }
 };
 
 // a dummy variable expression
@@ -367,11 +351,11 @@ struct expression_ref: public boost::shared_ptr<const expression>
   {}
 
   expression_ref(const std::string& s)
-    :boost::shared_ptr<const expression>(new named_parameter_expression(s))
+    :boost::shared_ptr<const expression>(new expression(parameter(s)))
   {}
 
   expression_ref(const char* s)
-    :boost::shared_ptr<const expression>(new named_parameter_expression(s))
+    :boost::shared_ptr<const expression>(new expression(parameter(s)))
   {}
 
   expression_ref(const Model& M)

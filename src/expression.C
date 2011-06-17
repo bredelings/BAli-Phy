@@ -229,7 +229,7 @@ vector< shared_ptr< const expression > > model_args(const Model& M)
 
   for(int i=0;i<M.n_parameters();i++) 
   {
-    args.push_back( shared_ptr< const expression> ( new named_parameter_expression(M.parameter_name(i) ) ) );
+    args.push_back( shared_ptr< const expression >(new expression(parameter(M.parameter_name(i)) ) ) );
   }
 
   return args;
