@@ -10,11 +10,11 @@ using std::string;
 
 using boost::dynamic_pointer_cast;
 
-vector<string> expression::print_arg_expressions() const 
+vector<string> print_arg_expressions(const expression& e)
 {
   vector<string> arg_names;
-  for(int i=0;i<args.size();i++)
-    arg_names.push_back( args[i]->print() );
+  for(int i=0;i<e.args.size();i++)
+    arg_names.push_back( e.args[i]->print() );
   
   return arg_names;
 }
@@ -22,17 +22,16 @@ vector<string> expression::print_arg_expressions() const
 string expression::print() const 
 {
   string result;
-  if (head) {
-    if (const Operator* O = dynamic_cast<const Operator*>(&*head))
-      return O->print_expression(print_arg_expressions());
-    if (const lambda* L = dynamic_cast<const lambda*>(&*head))
-    {
-      return "(lambda "+convertToString(L->dummy_index)+")("+args[0]->print()+")";
-    }
-    else
-      result = head->print();
-  }
-  return print_operator_expression(result,print_arg_expressions());
+  assert(head);
+
+  if (const Operator* O = dynamic_cast<const Operator*>(&*head))
+    return O->print_expression(print_arg_expressions(*this));
+
+  if (const lambda* L = dynamic_cast<const lambda*>(&*head))
+    return "(lambda "+convertToString(L->dummy_index)+")("+args[0]->print()+")";
+
+  else
+    return print_operator_expression(head->print(),print_arg_expressions(*this));
 }
 
 tribool expression::compare(const Object& o) const 

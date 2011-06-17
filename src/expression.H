@@ -31,15 +31,14 @@ class expression_ref;
 // - parameter(string)
 // - dummy(int)
 // - match(int)
+// - lambda(int)
 // - operation
 // - function / data
-// - tuple should really be a data expression.
-// - constant? Can we have (2,3) instead of (constant(2),constant(3))?
+//   + FIXME tuple should really be a data expression.
+// - constant?
+//   + FIXME: Can we have (2,3) instead of (constant(2),constant(3))?
 // - Model?
-//
-// - lambda(int)??????????
-
-// TODO: make substitute, apply, and print_arg_expressions external functions, not member functions.
+//   + FIXME: should we evaluate these?
 
 struct expression: virtual public Object
 {
@@ -50,15 +49,14 @@ struct expression: virtual public Object
   // An expression may or may not have sub-expressions
   std::vector< boost::shared_ptr<const expression> > args;
 
+  /// The number of terms after the head
+  int n_args() const {return args.size();}
+  
+  // Methods from Object
   expression* clone() const {return new expression(*this);}
   tribool compare(const Object& o) const;
   std::string print() const;
   
-  /// The number of terms after the head
-  int n_args() const {return args.size();}
-  
-  std::vector<std::string> print_arg_expressions() const;
-
   expression() {}
   explicit expression(const object_ref& O);
   expression(const object_ref& O, const expression_ref& args);
