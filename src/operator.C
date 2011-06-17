@@ -21,7 +21,8 @@ tribool Operator::compare(const Object& o) const
 string print_operator_expression(const string& name, const vector<string>& arguments)
 {
   string output = name;
-  output += "(" + join(arguments,", ") + ")";
+  if (arguments.size())
+    output += "(" + join(arguments,", ") + ")";
   return output;
 }
 
