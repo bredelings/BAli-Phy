@@ -849,12 +849,12 @@ OpModel::OpModel(const expression_ref& e)
     arg_expression a;
 
     // handle the args[i] being a named parameter
-    if (shared_ptr<const parameter> pe = boost::dynamic_pointer_cast<const parameter>(e->args[i]->head))
-      a.parent_index = find_index(names, pe->parameter_name);
+    if (shared_ptr<const parameter> p = boost::dynamic_pointer_cast<const parameter>(e->args[i]->head))
+      a.parent_index = find_index(names, p->parameter_name);
 
     // handle the args[i] being a constant
-    else if (shared_ptr<const constant_expression> ce = boost::dynamic_pointer_cast<const constant_expression>(e->args[i]) )
-      a.constant_value = ce->value;
+    else if (shared_ptr<const constant> c = boost::dynamic_pointer_cast<const constant>(e->args[i]->head) )
+      a.constant_value = c->value;
 
     // handle the args[i] being a model
     else if ( shared_ptr<const Model> M = boost::dynamic_pointer_cast<const Model>(e->args[i]->head) )

@@ -49,7 +49,7 @@ class term_ref;
 // - function / data
 // - tuple?  Hmm.. is a tuple a data expression?  Perhaps it is.
 //   + only data expressions need to pretend that arguments are expressions...?
-//   + can we have (2,3) instead of (constant_expression(2),constant_expression(3))?
+//   + can we have (2,3) instead of (constant(2),constant(3))?
 // - Model?
 //
 // - lambda??????????
@@ -94,17 +94,17 @@ struct expression: virtual public Object
 boost::shared_ptr<const expression> substitute(boost::shared_ptr<const expression> E1, int dummy, boost::shared_ptr<const expression> E2);
 
 // a constant expression
-struct constant_expression: public expression
+struct constant: public Object
 {
   boost::shared_ptr<const Object> value;
-  constant_expression* clone() const {return new constant_expression(*this);}
+  constant* clone() const {return new constant(*this);}
 
   std::string print() const {return value->print();}
 
   tribool compare(const Object& o) const;
   
-  explicit constant_expression(const Object& o): value(o.clone()) {}
-  explicit constant_expression(boost::shared_ptr<const Object> v): value(v) {}
+  explicit constant(const Object& o): value(o.clone()) {}
+  explicit constant(boost::shared_ptr<const Object> v): value(v) {}
 };
 
 struct parameter: public Object
@@ -309,10 +309,10 @@ struct expression_ref: public boost::shared_ptr<const expression>
     :boost::shared_ptr<const expression>(new model_expression(M))
   { }
 
-  explicit expression_ref(const int& i):boost::shared_ptr<const expression>(new constant_expression(Int(i))) {}
-  explicit expression_ref(const Int& i):boost::shared_ptr<const expression>(new constant_expression(i)) {}
-  explicit expression_ref(const double& d):boost::shared_ptr<const expression>(new constant_expression(Double(d))) {}
-  explicit expression_ref(const Double& d):boost::shared_ptr<const expression>(new constant_expression(d)) {}
+  explicit expression_ref(const int& i):boost::shared_ptr<const expression>(new expression(constant(Int(i)))) {}
+  explicit expression_ref(const Int& i):boost::shared_ptr<const expression>(new expression(constant(i))) {}
+  explicit expression_ref(const double& d):boost::shared_ptr<const expression>(new expression(constant(Double(d)))) {}
+  explicit expression_ref(const Double& d):boost::shared_ptr<const expression>(new expression(constant(d))) {}
 };
 
 template <typename T>
@@ -333,7 +333,7 @@ public:
 template <typename T>
 typed_expression_ref<T> Constant(const T& t)
 {
-  return typed_expression_ref<T>(new constant_expression(t));
+  return typed_expression_ref<T>(new expression(constant(t)));
 }
 
 template <typename T>

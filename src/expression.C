@@ -81,8 +81,9 @@ int expression::highest_unused_dummy() const
   return highest;
 }
 
-tribool constant_expression::compare(const Object& o) const {
-  const constant_expression* E = dynamic_cast<const constant_expression*>(&o);
+tribool constant::compare(const Object& o) const 
+{
+  const constant* E = dynamic_cast<const constant*>(&o);
   if (not E) 
     return false;
 

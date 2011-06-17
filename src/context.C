@@ -52,7 +52,7 @@ shared_ptr<const Object> Context::evaluate(int index)
 	if (exp_result)
 	  args[i] = exp_result;
 	else
-	  args[i] = shared_ptr<const expression>(new constant_expression(arg_result));
+	  args[i] = shared_ptr<const expression>(new expression(constant(arg_result)));
       }
 
       V.result = shared_ptr<const Object>(new expression(f,args));
@@ -240,7 +240,7 @@ Context::Context(const polymorphic_cow_ptr<Formula>& F_)
     values[index] = shared_ptr<value>(new value);
 
     // set initial value if this is a constant
-    if (shared_ptr<const constant_expression> C = dynamic_pointer_cast<const constant_expression>(F->terms[index].E)) 
+    if (shared_ptr<const constant> C = dynamic_pointer_cast<const constant>(F->terms[index].E->head)) 
     {
       assert(not F->has_inputs(index));
       // do we need to get an unshared copy here?

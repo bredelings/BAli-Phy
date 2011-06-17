@@ -48,7 +48,7 @@ boost::shared_ptr<const Function> Formula::function(int index) const
 
 bool Formula::is_constant(int index) const
 {
-  if (dynamic_pointer_cast<const constant_expression>(terms[index].E))
+  if (dynamic_pointer_cast<const constant>(terms[index].E->head))
   {
     assert(not is_computed(index));
     return true;
@@ -163,8 +163,8 @@ term_ref Formula::add_expression(const expression_ref& e)
   if (lambda)
     throw myexception()<<"Lambda expressions cannot currently be calculated";
 
-  shared_ptr<const constant_expression> constant = boost::dynamic_pointer_cast<const constant_expression>(e);
-  if (constant)
+  shared_ptr<const constant> c = boost::dynamic_pointer_cast<const constant>(e->head);
+  if (c)
     return add_term(Term(e));
   
   shared_ptr<const parameter> var = boost::dynamic_pointer_cast<const parameter>(e->head);
