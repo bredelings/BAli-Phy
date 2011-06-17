@@ -170,18 +170,6 @@ int n_match_results(const expression_ref&);
 
 bool match(const expression_ref& pattern,const expression_ref& E, std::vector<boost::shared_ptr<const expression> >& results);
 
-/// This should be a kind of data expression
-struct tuple_expression: public expression
-{
-  tuple_expression* clone() const {return new tuple_expression(*this);}
-
-  std::string print() const;
-
-  tribool compare(const Object& o) const;
-  
-  tuple_expression(const std::vector< boost::shared_ptr<const expression> >& A);
-};
-
 /// This is an abstract base class for applying an atomic operator to arguments
 struct operator_expression: public expression
 {
