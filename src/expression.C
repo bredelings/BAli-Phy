@@ -126,8 +126,9 @@ string match_expression::print() const
     return string("_")+convertToString(index);
 }
 
-tribool named_parameter_expression::compare(const Object& o) const {
-  const named_parameter_expression* E = dynamic_cast<const named_parameter_expression*>(&o);
+tribool parameter::compare(const Object& o) const 
+{
+  const parameter* E = dynamic_cast<const parameter*>(&o);
   if (not E) 
     return false;
 
@@ -354,7 +355,7 @@ shared_ptr<const expression> expression::apply(const expression& arg) const
 
 void find_named_parameters_(shared_ptr<const expression> e, vector<string>& names)
 {
-  if (shared_ptr<const named_parameter_expression> n = boost::dynamic_pointer_cast<const named_parameter_expression>(e)) 
+  if (shared_ptr<const parameter> n = boost::dynamic_pointer_cast<const parameter>(e->head)) 
   {
     if (not includes(names,n->parameter_name))
       names.push_back(n->parameter_name);

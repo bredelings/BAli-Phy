@@ -113,15 +113,22 @@ struct constant_expression: public expression
   explicit constant_expression(boost::shared_ptr<const Object> v): value(v) {}
 };
 
-struct named_parameter_expression: public expression
+struct parameter: public Object
 {
   std::string parameter_name;
-  named_parameter_expression* clone() const {return new named_parameter_expression(*this);}
-  std::string print() const {return parameter_name;}
 
+  parameter* clone() const {return new parameter(*this);}
+  std::string print() const {return parameter_name;}
   tribool compare(const Object& o) const;
   
-  named_parameter_expression(const std::string& s):parameter_name(s) { }
+  parameter(const std::string& s):parameter_name(s) { }
+};
+
+struct named_parameter_expression: public expression
+{
+  named_parameter_expression* clone() const {return new named_parameter_expression(*this);}
+
+  named_parameter_expression(const std::string& s):expression(parameter(s)) { }
 };
 
 // a dummy variable expression

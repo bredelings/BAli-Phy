@@ -143,7 +143,7 @@ term_ref Formula::add_term(const Term& t)
     std::cerr<<"Warning ["<<new_index<<"]: term with name '"<<t.name<<"' already exists at index "<<same_name<<".!\n";
 
   // Update ref for parameters
-  if (dynamic_pointer_cast<const named_parameter_expression>(t.E))
+  if (dynamic_pointer_cast<const parameter>(t.E->head))
     state_indices.push_back(new_index);
 
   // Check that constant node has a value
@@ -181,7 +181,7 @@ term_ref Formula::add_expression(const expression_ref& e)
   if (constant)
     return add_term(Term(e, constant->value));
   
-  shared_ptr<const named_parameter_expression> var = boost::dynamic_pointer_cast<const named_parameter_expression>(e);
+  shared_ptr<const parameter> var = boost::dynamic_pointer_cast<const parameter>(e->head);
   if (var)
     // If we add Term(e,value), then value becomes the default value.
     return add_term(Term(e));
