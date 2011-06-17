@@ -146,13 +146,6 @@ term_ref Formula::add_term(const Term& t)
   if (dynamic_pointer_cast<const parameter>(t.E->head))
     state_indices.push_back(new_index);
 
-  // Check that constant node has a value
-  if (shared_ptr<const constant_expression> C = dynamic_pointer_cast<const constant_expression>(t.E))
-  {
-    if (not C->value and t.default_value)
-      throw myexception()<<"Constant node must provide a value!";
-  }
-
   // Check new computed nodes, mark slots as being affected
   if (t.E->n_args() or t.input_indices.size())
   {
@@ -174,12 +167,13 @@ term_ref Formula::add_term(const Term& t)
 term_ref Formula::add_expression(const expression_ref& e)
 {
   shared_ptr<const lambda_expression> lambda = boost::dynamic_pointer_cast<const lambda_expression>(e);
+  // could lambda expressions just evaluate to themselves?  With non-dependent sub-expressions evaluated?
   if (lambda)
     throw myexception()<<"Lambda expressions cannot currently be calculated";
 
   shared_ptr<const constant_expression> constant = boost::dynamic_pointer_cast<const constant_expression>(e);
   if (constant)
-    return add_term(Term(e, constant->value));
+    return add_term(Term(e));
   
   shared_ptr<const parameter> var = boost::dynamic_pointer_cast<const parameter>(e->head);
   if (var)
