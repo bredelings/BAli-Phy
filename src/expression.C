@@ -8,6 +8,7 @@ using boost::shared_ptr;
 using std::vector;
 using std::string;
 
+using boost::dynamic_pointer_cast;
 
 vector<string> expression::print_arg_expressions() const 
 {
@@ -54,6 +55,20 @@ tribool expression::compare(const Object& o) const
   return same;
 }
 
+expression::expression(const Object& O)
+ :head(O.clone()) 
+{}
+
+expression::expression(const shared_ptr<const Object>& O)
+ :head(O)
+{}
+
+expression::expression(const shared_ptr<const Object>& O, const expression_ref arg)
+ :head(O) 
+{
+  args.push_back(arg);
+}
+
 tribool constant::compare(const Object& o) const 
 {
   const constant* E = dynamic_cast<const constant*>(&o);
@@ -64,7 +79,7 @@ tribool constant::compare(const Object& o) const
 }
 
 expression_ref::expression_ref(const term_ref& t)
-  :boost::shared_ptr<const expression>(t.F->terms[t.index].E)
+  :shared_ptr<const expression>(t.F->terms[t.index].E)
 {}
 
 tribool dummy_expression::compare(const Object& o) const {
@@ -260,24 +275,14 @@ shared_ptr<const expression> apply(const expression_ref& E,
   return apply(E,args,0);
 }
 
-shared_ptr<const expression> expression::apply(shared_ptr<const expression> arg) const
-{
-  return ::apply(*this,arg);
-}
-
-shared_ptr<const expression> expression::apply(const expression& arg) const
-{
-  return ::apply(*this,arg);
-}
-
 void find_named_parameters_(shared_ptr<const expression> e, vector<string>& names)
 {
-  if (shared_ptr<const parameter> n = boost::dynamic_pointer_cast<const parameter>(e->head)) 
+  if (shared_ptr<const parameter> n = dynamic_pointer_cast<const parameter>(e->head)) 
   {
     if (not includes(names,n->parameter_name))
       names.push_back(n->parameter_name);
   }
-  else if (shared_ptr<const Operator> o = boost::dynamic_pointer_cast<const Operator>(e->head)) 
+  else if (shared_ptr<const Operator> o = dynamic_pointer_cast<const Operator>(e->head)) 
   {
     for(int i=0;i<e->args.size();i++)
       find_named_parameters_(e->args[i], names);

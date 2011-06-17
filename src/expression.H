@@ -25,7 +25,7 @@ class Formula;
 
 // Question: Do I really want objects to have names in the Formula?
 
-class term_ref;
+class expression_ref;
 
 // Head objects include:
 // - parameter(string)
@@ -59,13 +59,10 @@ struct expression: virtual public Object
   
   std::vector<std::string> print_arg_expressions() const;
 
-  boost::shared_ptr<const expression> apply(boost::shared_ptr<const expression> E) const;
-
-  boost::shared_ptr<const expression> apply(const expression& E) const;
-
   expression() {}
-  explicit expression(const Object& O):head(O.clone()) {}
-  explicit expression(const boost::shared_ptr<const Object>& O):head(O) {}
+  explicit expression(const Object& O);
+  explicit expression(const boost::shared_ptr<const Object>& O);
+  explicit expression(const boost::shared_ptr<const Object>& O, const expression_ref args);
   expression(const std::vector< boost::shared_ptr<const expression> >& A):args(A) { }
   expression(const Object& O, 
 	     const std::vector< boost::shared_ptr<const expression> >& A):head(O.clone()), args(A) { }
@@ -186,6 +183,8 @@ struct lambda: public Object
 
   lambda(int d);
 };
+
+class term_ref;
 
 struct expression_ref: public boost::shared_ptr<const expression>
 {
