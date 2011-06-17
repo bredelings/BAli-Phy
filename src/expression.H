@@ -60,14 +60,10 @@ struct expression: virtual public Object
   std::vector<std::string> print_arg_expressions() const;
 
   expression() {}
-  explicit expression(const Object& O);
-  explicit expression(const boost::shared_ptr<const Object>& O);
-  explicit expression(const boost::shared_ptr<const Object>& O, const expression_ref args);
-  expression(const std::vector< boost::shared_ptr<const expression> >& A):args(A) { }
-  expression(const Object& O, 
-	     const std::vector< boost::shared_ptr<const expression> >& A):head(O.clone()), args(A) { }
-  expression(const boost::shared_ptr<const Object>& O, 
-	     const std::vector< boost::shared_ptr<const expression> >& A):head(O), args(A) { }
+  explicit expression(const object_ref& O);
+  expression(const object_ref& O, const expression_ref& args);
+  expression(const object_ref& O, const std::vector< boost::shared_ptr<const expression> >& A);
+
   virtual ~expression() {}
 };
 

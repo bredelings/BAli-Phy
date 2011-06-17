@@ -55,19 +55,19 @@ tribool expression::compare(const Object& o) const
   return same;
 }
 
-expression::expression(const Object& O)
- :head(O.clone()) 
+expression::expression(const object_ref& O)
+  :head(O)
 {}
 
-expression::expression(const shared_ptr<const Object>& O)
- :head(O)
-{}
-
-expression::expression(const shared_ptr<const Object>& O, const expression_ref arg)
+expression::expression(const object_ref& O, const expression_ref& arg)
  :head(O) 
 {
   args.push_back(arg);
 }
+
+expression::expression(const object_ref& O, const std::vector< boost::shared_ptr<const expression> >& A)
+ :head(O), args(A)
+{ }
 
 tribool constant::compare(const Object& o) const 
 {
@@ -180,13 +180,10 @@ expression_ref lambda_expression(const Operator& O)
   for(int i=0;i<n;i++)
     A.push_back(shared_ptr<const expression>(new expression(dummy(i))));
   
-  shared_ptr<const expression> E(new expression(O, A));
+  expression_ref E(new expression(O, A));
   
   for(int i=n-1;i>=0;i--) 
-  {
-    vector<shared_ptr<const expression> > args(1,E);
-    E = shared_ptr<const expression>(new expression(lambda(i),args));
-  }
+    E = shared_ptr<const expression>(new expression(lambda(i),E));
   
   return E;
 }
