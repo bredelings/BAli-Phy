@@ -92,6 +92,8 @@ struct expression: virtual public Object
   explicit expression(const Object& O):head(O.clone()) {}
   explicit expression(const boost::shared_ptr<const Object>& O):head(O) {}
   expression(const std::vector< boost::shared_ptr<const expression> >& A):args(A) { }
+  expression(const Object& O, 
+	     const std::vector< boost::shared_ptr<const expression> >& A):head(O.clone()), args(A) { }
   expression(const boost::shared_ptr<const Object>& O, 
 	     const std::vector< boost::shared_ptr<const expression> >& A):head(O), args(A) { }
   virtual ~expression() {}

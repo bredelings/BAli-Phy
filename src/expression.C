@@ -172,16 +172,12 @@ string operator_expression::print() const
 }
 
 operator_expression::operator_expression(const Operator& O, const vector< shared_ptr<const expression> >& A)
-  :expression(A)
-{
-  head = shared_ptr<const Operator>(O.clone());
-}
+  :expression(O,A)
+{ }
 
 operator_expression::operator_expression(const shared_ptr<const Operator>& O, const vector< shared_ptr<const expression> >& A)
-  :expression(A)
-{
-  head = O;
-}
+  :expression(O,A)
+{ }
 
 // operation expression
 
