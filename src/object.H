@@ -60,6 +60,11 @@ struct object_ref: public boost::shared_ptr<const Object>
     :boost::shared_ptr<const Object>(o)
   { }
 
+  template <typename T>
+  object_ref(const boost::shared_ptr<const T>& o)
+    :boost::shared_ptr<const Object>(boost::static_pointer_cast<const Object>(o))
+  { }
+
   object_ref(const Object& o)
     :boost::shared_ptr<const Object>(o.clone())
   { }
