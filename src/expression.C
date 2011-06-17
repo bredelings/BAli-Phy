@@ -174,14 +174,6 @@ tribool parameter::compare(const Object& o) const
   return parameter_name == E->parameter_name;
 }
 
-operator_expression::operator_expression(const Operator& O, const vector< shared_ptr<const expression> >& A)
-  :expression(O,A)
-{ }
-
-operator_expression::operator_expression(const shared_ptr<const Operator>& O, const vector< shared_ptr<const expression> >& A)
-  :expression(O,A)
-{ }
-
 vector< shared_ptr< const expression > > model_args(const Model& M)
 {
   vector< shared_ptr< const expression > > args;
@@ -193,10 +185,6 @@ vector< shared_ptr< const expression > > model_args(const Model& M)
 
   return args;
 }
-
-model_expression::model_expression(const Model& M)
-  :operator_expression(M, model_args(M) )
-{ }
 
 lambda_expression::lambda_expression(const Operation& O)
   :dummy_variable(0)
@@ -341,10 +329,10 @@ void find_named_parameters_(shared_ptr<const expression> e, vector<string>& name
     if (not includes(names,n->parameter_name))
       names.push_back(n->parameter_name);
   }
-  else if (shared_ptr<const operator_expression> o = boost::dynamic_pointer_cast<const operator_expression>(e)) 
+  else if (shared_ptr<const Operator> o = boost::dynamic_pointer_cast<const Operator>(e->head)) 
   {
-    for(int i=0;i<o->args.size();i++)
-      find_named_parameters_(o->args[i], names);
+    for(int i=0;i<e->args.size();i++)
+      find_named_parameters_(e->args[i], names);
   }
 }
 

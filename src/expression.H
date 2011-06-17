@@ -155,32 +155,9 @@ int n_match_results(const expression_ref&);
 
 bool match(const expression_ref& pattern,const expression_ref& E, std::vector<boost::shared_ptr<const expression> >& results);
 
-/// This is an abstract base class for applying an atomic operator to arguments
-struct operator_expression: public expression
-{
-  /// The top-level operation?
-  virtual operator_expression* clone() const {return new operator_expression(*this);};
-
-  // For printing, what is the operator name called?
-  virtual const Operator* get_operator() const {return dynamic_cast<const Operator*>(&(*head));}
-
-  operator_expression(const Operator& O, const std::vector< boost::shared_ptr<const expression> >& A);
-
-  operator_expression(const boost::shared_ptr<const Operator>& O, const std::vector< boost::shared_ptr<const expression> >& A);
-};
-
 #include "model.H"
 
-struct model_expression: public operator_expression
-{
-  model_expression* clone() const {return new model_expression(*this);}
-
-  const Model* get_operator() const {return dynamic_cast<const Model*>(&(*head));}
-
-  model_expression(const Model& M);
-
-  model_expression(boost::shared_ptr<const Model> M);
-};
+std::vector< boost::shared_ptr< const expression > > model_args(const Model& M);
 
 enum function_type_t {data_function_f, body_function_f, annotation_f};
 
@@ -306,7 +283,7 @@ struct expression_ref: public boost::shared_ptr<const expression>
   {}
 
   expression_ref(const Model& M)
-    :boost::shared_ptr<const expression>(new model_expression(M))
+    :boost::shared_ptr<const expression>(new expression(M,model_args(M)))
   { }
 
   explicit expression_ref(const int& i):boost::shared_ptr<const expression>(new expression(constant(Int(i)))) {}
