@@ -50,6 +50,21 @@ public:
   virtual ~Object() {}
 };
 
+struct object_ref: public boost::shared_ptr<const Object>
+{
+  explicit object_ref(Object *o)
+    :boost::shared_ptr<const Object>(o)
+  { }
+
+  object_ref(const boost::shared_ptr<const Object>& o)
+    :boost::shared_ptr<const Object>(o)
+  { }
+
+  object_ref(const Object& o)
+    :boost::shared_ptr<const Object>(o.clone())
+  { }
+};
+
 template<typename T>
 class POD: virtual public Object 
 {
