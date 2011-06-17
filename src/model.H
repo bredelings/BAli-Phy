@@ -266,6 +266,8 @@ public:
 
   unsigned n_parameters() const {return parameters_.size();}
 
+  int n_args() const {return n_parameters();}
+
   /// The model's name
   virtual std::string name() const =0;
 

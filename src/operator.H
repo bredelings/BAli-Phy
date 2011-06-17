@@ -11,6 +11,7 @@ struct Operator: virtual public Object
   virtual std::string name() const=0;
   virtual std::string print() const;
   virtual std::string print_expression(const std::vector<std::string>& args) const;
+  virtual int n_args() const=0;
   tribool compare(const Object& o) const;
 };
 

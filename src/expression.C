@@ -225,7 +225,7 @@ tribool Function::compare(const Object& o) const
 }
 
 Function::Function(const string& s, int n, function_type_t f_t)
-  :f_name(s), n_args(n), what_type(f_t)
+  :f_name(s), n_args_(n), what_type(f_t)
 {
   
 }

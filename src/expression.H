@@ -152,7 +152,9 @@ struct Function: public Operator
   tribool compare(const Object& o) const;
   
   std::string f_name;
-  int n_args;
+  int n_args_;
+
+  int n_args() const {return n_args_;}
 
   boost::shared_ptr<const expression> eval_expression;
 
