@@ -133,7 +133,7 @@ int main()
   F->add_expression( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
 
   expression_ref default_value (data_function("default_value",2));
-  F->add_expression(  default_value("X")(One) );
+  term_ref defv = F->add_expression(  default_value("X")(One) );
 
   Context CTX1(F);
 
@@ -168,7 +168,9 @@ int main()
   cout<<"Fiddling Z in CTX2...\n";
   CTX2.set_value("Z",Double(0));
   result = CTX2.evaluate(cond);
-  cout<<"CTX2 = \n"<<CTX2<<"\n";
+  //  CTX2.evaluate(defv);
+  //  cout<<"CTX2 = \n"<<CTX2<<"\n";
 
-  
+  // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).
+  // I could introduce a QUOTE expression... that sounds rather LISP-y.
 }
