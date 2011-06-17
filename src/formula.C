@@ -114,20 +114,19 @@ term_ref Formula::find_computation(const Operation& o, const vector<int>& indice
 
 term_ref Formula::add_term(const Term& t)
 {
+  // If the expression already exists, then return a reference to the existing term
+  int index = find_expression(t.E);
+  if (index != -1) return term_ref(index,*this);
+
   int new_index = terms.size();
 
+#ifndef NDEBUG
   {
     shared_ptr<const expression> E (t.E->clone());
     if (t.E->compare(*E) == indeterminate)
       std::cerr<<"Warning: expression "<<t.E->print()<<" does not compare equal to itself! ("<<t.E->compare(*E)<<")\n";
   }
-
-  // Check if the expression already exists
-  int index = find_expression(t.E);
-  if (index != -1) {
-    //    std::cerr<<"   term "<<t.E->print()<<" already present\n";
-    return term_ref(index,*this);
-  }
+#endif
 
   // Warn about duplicate names
   int same_name = find_term_with_name(t.name);
@@ -158,35 +157,13 @@ term_ref Formula::add_term(const Term& t)
 
 term_ref Formula::add_expression(const expression_ref& e)
 {
-  shared_ptr<const lambda> L = boost::dynamic_pointer_cast<const lambda>(e->head);
-  // could lambda expressions just evaluate to themselves?  With non-dependent sub-expressions evaluated?
-  // we need to be able to add them, even if we can't evaluate them...
-  // yes, they should evaluate to themselves.
-  if (L)
-    throw myexception()<<"Lambda expressions cannot currently be calculated";
+  vector<int> arg_indices;
+  for(int i=0;i<e->args.size();i++)
+    arg_indices.push_back( add_expression(e->args[i] ) );
 
-  shared_ptr<const constant> c = boost::dynamic_pointer_cast<const constant>(e->head);
-  if (c)
-    return add_term(Term(e));
-  
-  shared_ptr<const parameter> var = boost::dynamic_pointer_cast<const parameter>(e->head);
-  if (var)
-    // If we add Term(e,value), then value becomes the default value.
-    return add_term(Term(e));
-
-  shared_ptr<const Operator> op = boost::dynamic_pointer_cast<const Operator>(e->head);
-  if (op)
-  {
-    vector<int> arg_indices;
-    for(int i=0;i<e->args.size();i++)
-      arg_indices.push_back( add_expression(e->args[i] ) );
-
-    Term t(e);
-    t.input_indices = arg_indices;
-    return add_term(t);
-  }
-
-  std::abort();
+  Term t(e);
+  t.input_indices = arg_indices;
+  return add_term(t);
 }
 
 

@@ -117,6 +117,8 @@ int main()
 
   term_ref z_gt_1 = F->add_expression(gt(z)(one));
 
+  term_ref z_gt = F->add_expression(gt(z));
+
   term_ref x_plus_y = F->add_expression(plus(x)(y));
 
   term_ref w_2 = F->add_expression( muli(w)(w) );
@@ -169,6 +171,7 @@ int main()
   CTX2.set_value("Z",Double(0));
   result = CTX2.evaluate(cond);
   CTX2.evaluate(defv);
+  CTX2.evaluate(z_gt);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).

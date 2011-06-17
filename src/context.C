@@ -39,6 +39,15 @@ shared_ptr<const Object> Context::evaluate(int index)
   }
 
   // If the expression is a function expression...
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(F->terms[index].E->head);
+  if (L)
+  {
+    V.result = F->terms[index].E;
+    V.computed = true;
+    return V.result;
+  }
+
+  // If the expression is a function expression...
   shared_ptr<const Function> f = F->function(index);
   if (f)
   {
