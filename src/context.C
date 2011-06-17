@@ -27,26 +27,53 @@ shared_ptr<const Object> Context::evaluate(int index)
 
   if (V.computation) assert(V.result);
 
-  shared_ptr<const Operation> O = F->operation(index);
-
+  // If we are a constant, or named_parameter_expression, or.... ?
   if (input_indices.size() == 0)
   {
     if (not V.computed)
       throw myexception()<<"Evaluating term "<<F->terms[index].name<<" (index = "<<index<<"): leaf node is not marked up-to-date!";
     if (not V.result)
       throw myexception()<<"Evaluating term "<<F->terms[index].name<<" (index = "<<index<<"): leaf node value has not been set!";
-    // Since this is a leaf node, it should not be an operator expression
-    assert(not O);
 
     return V.result;
   }
 
+  // If the expression is a function expression...
+  shared_ptr<const Function> f = F->function(index);
+  if (f)
+  {
+    if (not V.computed)
+    {
+      vector<shared_ptr<const expression> > args(input_indices.size());
+      for(int i=0;i<args.size();i++)
+      {
+	shared_ptr<const Object> arg_result = evaluate(input_indices[i]);
+	shared_ptr<const expression> exp_result = dynamic_pointer_cast<const expression>(arg_result);
+	if (exp_result)
+	  args[i] = exp_result;
+	else
+	  args[i] = shared_ptr<const expression>(new constant_expression(arg_result));
+      }
+
+      V.result = shared_ptr<const Object>(new function_expression(f,args));
+      V.computed = true;
+    }
+
+    assert(V.computed);
+    assert(V.result);
+    return V.result;
+  }
+
+  // Hey, how about a model expression?
+  // Hey, how about a tuple expression?
+
+  // Otherwise the expression must be a op expression
+  shared_ptr<const Operation> O = F->operation(index);
   assert(O);
   
   // First try to validate our old computation, if possible
   if (not V.computed and V.computation)
   {
-
     const vector<int>& slots_used = V.computation->slots_used_order;
 
     // The computation is assumed true, unless any of the slots end up
