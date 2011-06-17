@@ -38,22 +38,7 @@ class Formula;
 // Make Operator expression more generic. Just store a pointer to the Operator object.
 // This should allow unduplicating some code.
 
-struct term_ref
-{
-  int index;
-  polymorphic_cow_ptr<Formula> F;
-
-  bool is_state() const;
-  bool is_constant() const;
-  bool is_computed() const;
-  std::string print() const;
-
-  operator int() const {return index;}
-  term_ref();
-  term_ref(int i, boost::shared_ptr<const Formula> f);
-  term_ref(int i,const Formula& f);
-};
-
+class term_ref;
 
 // I could add a 1st-arg object;
 // - Then I could make multiple 1st-arg type objects

@@ -67,6 +67,24 @@ struct expression_ref;
 // TODO: I need to implement matching, in order to search for default values, and for bounds.
 //
 
+class Formula;
+
+struct term_ref
+{
+  int index;
+  polymorphic_cow_ptr<Formula> F;
+
+  bool is_state() const;
+  bool is_constant() const;
+  bool is_computed() const;
+  std::string print() const;
+
+  operator int() const {return index;}
+  term_ref();
+  term_ref(int i, boost::shared_ptr<const Formula> f);
+  term_ref(int i,const Formula& f);
+};
+
 struct Formula: virtual public Object
 {
   struct Term
