@@ -134,26 +134,6 @@ tribool named_parameter_expression::compare(const Object& o) const {
   return parameter_name == E->parameter_name;
 }
 
-tribool operator_expression::compare(const Object& o) const 
-{
-  const operator_expression* E = dynamic_cast<const operator_expression*>(&o);
-  if (not E) 
-    return false;
-
-  tribool same = head->compare(*E->head);
-
-  if (not same) return false;
-
-  if (n_args() != E->n_args()) return false;
-
-  for(int i=0;i<n_args();i++) {
-    same = same and args[i]->compare(*E->args[i]);
-    if (not same) return false;
-  }
-
-  return same;
-}
-
 tribool tuple_expression::compare(const Object& o) const 
 {
   const tuple_expression* E = dynamic_cast<const tuple_expression*>(&o);

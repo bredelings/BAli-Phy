@@ -176,8 +176,6 @@ struct operator_expression: public expression
 
   virtual std::string print() const;
 
-  tribool compare(const Object& o) const;
-  
   operator_expression(const Operator& O, const std::vector< boost::shared_ptr<const expression> >& A);
 
   operator_expression(const boost::shared_ptr<const Operator>& O, const std::vector< boost::shared_ptr<const expression> >& A);
