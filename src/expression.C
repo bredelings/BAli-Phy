@@ -126,6 +126,40 @@ string match_expression::print() const
     return string("_")+convertToString(index);
 }
 
+
+// How would we handle lambda expressions, here?
+bool match(const expression_ref& pattern, const expression_ref& E, vector<shared_ptr<const expression> >& results)
+{
+  // if this is a match expression, then succeed, and store E as the result of the match
+  shared_ptr<const match_expression> M = dynamic_pointer_cast<const match_expression>(pattern);
+  if (M) 
+  {
+    assert(pattern->n_args() == 0);
+    
+    if (results.size() < M->index) results.resize(M->index+1);
+
+    if (results[M->index]) 
+      throw myexception()<<"Match expression '"<<pattern->print()<<"' contains match index "<<M->index<<"' more than once!";
+
+    results[M->index] = E;
+
+    return true;
+  }
+
+  // 
+  if (pattern->n_args() != E->n_args()) return false;
+
+  // The heads have to compare equal.  There is no matching there. (Will there be, later?)
+  if (pattern->head->compare(*E->head) != true)
+    return false;
+
+  for(int i=0;i<pattern->n_args();i++)
+    if (not match(pattern->args[i], E->args[i], results))
+      return false;
+
+  return true;
+}
+
 tribool parameter::compare(const Object& o) const 
 {
   const parameter* E = dynamic_cast<const parameter*>(&o);

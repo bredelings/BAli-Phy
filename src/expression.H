@@ -54,9 +54,25 @@ struct term_ref
   term_ref(int i,const Formula& f);
 };
 
+
+// I could add a 1st-arg object;
+// - Then I could make multiple 1st-arg type objects
+// - parameter(string)
+// - dummy(int)
+// - match(int)
+// - operation
+// - function / data
+// - tuple?  Hmm.. is a tuple a data expression?  Perhaps it is.
+//   + only data expressions need to pretend that arguments are expressions...?
+//   + can we have (2,3) instead of (constant_expression(2),constant_expression(3))?
+// - Model?
+//
+// - lambda??????????
+
 struct expression: virtual public Object
 {
   // The operator
+  // FIXME - if I made everything into an Operator, then (say) a parameter could specify&require only 0 arguments.
   boost::shared_ptr<const Object> head;
 
   // An expression may or may not have sub-expressions
@@ -163,6 +179,14 @@ struct match_expression: public expression
   match_expression(int i):index(i) { }
 };
 
+class expression_ref;
+
+// This no longer needs to be a virtual member function, because we can now walk the expression from outside.
+int n_match_results(const expression_ref&);
+
+bool match(const expression_ref& pattern,const expression_ref& E, std::vector<boost::shared_ptr<const expression> >& results);
+
+/// This should be a kind of data expression
 struct tuple_expression: public expression
 {
   tuple_expression* clone() const {return new tuple_expression(*this);}
