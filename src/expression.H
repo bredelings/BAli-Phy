@@ -133,6 +133,19 @@ struct dummy_expression: public expression
   dummy_expression(int i):index(i) {}
 };
 
+struct match_expression: public expression
+{
+  int index;
+
+  match_expression* clone() const {return new match_expression(*this);}
+
+  tribool compare(const Object& o) const;
+  
+  std::string print() const;
+
+  match_expression(int i):index(i) { }
+};
+
 struct tuple_expression: public expression
 {
   tuple_expression* clone() const {return new tuple_expression(*this);}

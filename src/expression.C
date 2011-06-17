@@ -81,6 +81,23 @@ string dummy_expression::print() const {
   return string("#")+convertToString(index);
 }
 
+tribool match_expression::compare(const Object& o) const 
+{
+  const match_expression* E = dynamic_cast<const match_expression*>(&o);
+  if (not E) 
+    return false;
+
+  return index == E->index;
+}
+
+string match_expression::print() const 
+{
+  if (index == -1) 
+    return "_";
+  else
+    return string("_")+convertToString(index);
+}
+
 tribool named_parameter_expression::compare(const Object& o) const {
   const named_parameter_expression* E = dynamic_cast<const named_parameter_expression*>(&o);
   if (not E) 
