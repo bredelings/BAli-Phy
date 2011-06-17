@@ -181,16 +181,6 @@ operator_expression::operator_expression(const shared_ptr<const Operator>& O, co
   :expression(O,A)
 { }
 
-// operation expression
-
-operation_expression::operation_expression(const Operation& O,const vector< shared_ptr<const expression> >& A)
-  :operator_expression(O,A)
-{ }
-
-operation_expression::operation_expression(shared_ptr<const Operation> O,const vector< shared_ptr<const expression> >& A)
-  :operator_expression(O,A)
-{ }
-
 vector< shared_ptr< const expression > > model_args(const Model& M)
 {
   vector< shared_ptr< const expression > > args;
@@ -217,7 +207,7 @@ lambda_expression::lambda_expression(const Operation& O)
   for(int i=0;i<n;i++)
     A.push_back(shared_ptr<const expression>(new dummy_expression(i)));
   
-  shared_ptr<const expression> E(new operation_expression(O, A));
+  shared_ptr<const expression> E(new expression(O, A));
   
   for(int i=n-1;i>0;i--)
     E = shared_ptr<const expression>(new lambda_expression(i,E));

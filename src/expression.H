@@ -184,18 +184,6 @@ struct operator_expression: public expression
   operator_expression(const boost::shared_ptr<const Operator>& O, const std::vector< boost::shared_ptr<const expression> >& A);
 };
 
-/// An expression with a direct operation
-struct operation_expression: public operator_expression
-{
-  operation_expression* clone() const {return new operation_expression(*this);}
-
-  const Operation* get_operator() const {return dynamic_cast<const Operation*>(&(*head));}
-
-  operation_expression(const Operation& O,const std::vector< boost::shared_ptr<const expression> >& A);
-
-  operation_expression(boost::shared_ptr<const Operation> O,const std::vector< boost::shared_ptr<const expression> >& A);
-};
-
 #include "model.H"
 
 struct model_expression: public operator_expression
