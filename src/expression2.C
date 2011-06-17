@@ -168,8 +168,8 @@ int main()
   cout<<"Fiddling Z in CTX2...\n";
   CTX2.set_value("Z",Double(0));
   result = CTX2.evaluate(cond);
-  //  CTX2.evaluate(defv);
-  //  cout<<"CTX2 = \n"<<CTX2<<"\n";
+  CTX2.evaluate(defv);
+  cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).
   // I could introduce a QUOTE expression... that sounds rather LISP-y.
