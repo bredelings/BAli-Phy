@@ -154,6 +154,12 @@ public:
   term_ref add_expression(const expression_ref& e);
 
   term_ref find_expression(const expression_ref& e) const;
+
+  term_ref find_match_expression(const expression_ref& e, std::vector< boost::shared_ptr<const expression> >&) const;
+
+  bool find_match2(const expression_ref& e, int index, std::vector<int>&) const;
+
+  term_ref find_match_expression2(const expression_ref& e, std::vector<int>&) const;
 };
 
 #endif

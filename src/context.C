@@ -243,6 +243,7 @@ Context::Context(const polymorphic_cow_ptr<Formula>& F_)
  :F(F_),
   values(F->size()) 
 {
+  // First initialize all constant values.  Probably I should just move this to evaluate
   for(int index=0;index<values.size();index++)
   {
     values[index] = shared_ptr<value>(new value);
@@ -255,21 +256,24 @@ Context::Context(const polymorphic_cow_ptr<Formula>& F_)
       values[index]->result = shared_ptr<Object>(C->value->clone());
       values[index]->computed = true;
     }
+  }
 
+  // Then set all default values.
+  for(int index=0;index<values.size();index++)
+  {
     if (shared_ptr<const parameter> C = dynamic_pointer_cast<const parameter>(F->terms[index].E->head)) 
     {
-      // actually, any match in find_match_expression should produce an INDEX in formula!
-      // we could then evaluate that index to get an actual object...
+      // This match results an expression, which contains a constant, which contains a value.
+      // The easiest way to extract the constant value is just to evaluate the expression.
+
       expression_ref default_value (data_function("default_value",2));
-      vector<shared_ptr<const expression> > results;
+      vector<int> results;
       expression_ref query = default_value(F->terms[index].E)(match(0));
-      term_ref found = F->find_match_expression(query, results);
+      term_ref found = F->find_match_expression2(query, results);
       if (found != -1)
       {
 	assert(results.size());
-	shared_ptr<const constant> C = dynamic_pointer_cast<const constant>(results[0]->head);
-	assert(C);
-	values[index]->result = shared_ptr<const Object>(C->value->clone());
+	values[index]->result = evaluate(results[0]);
 	values[index]->computed = true;
       }
     }

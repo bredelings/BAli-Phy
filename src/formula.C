@@ -211,3 +211,65 @@ term_ref Formula::find_expression(const expression_ref& E) const
 
   return term_ref();
 }
+
+bool Formula::find_match2(const expression_ref& query, int index, std::vector<int>& results) const
+{
+  // if this is a match expression, then succeed, and store E as the result of the match
+  shared_ptr<const match> M = dynamic_pointer_cast<const match>(query->head);
+  if (M) 
+  {
+    assert(query->n_args() == 0);
+    
+    if (M->index >= 0)
+    {
+      if (results.size() < M->index+1) results.resize(M->index+1);
+
+      if (results[M->index]) 
+	throw myexception()<<"Match expression '"<<query->print()<<"' contains match index "<<M->index<<"' more than once!";
+      results[M->index] = index;
+    }
+
+    return true;
+  }
+
+  const expression_ref& E = terms[index].E;
+
+  if (query->n_args() != E->n_args()) return false;
+
+  // The heads have to compare equal.  There is no matching there. (Will there be, later?)
+  if (query->head->compare(*E->head) != true)
+    return false;
+
+  for(int i=0;i<query->n_args();i++)
+    if (not find_match2(query->args[i], terms[index].input_indices[i], results))
+      return false;
+
+  return true;
+  
+}
+
+term_ref Formula::find_match_expression(const expression_ref& E, std::vector< boost::shared_ptr<const expression> >& results) const
+{
+  for(int i=0;i<terms.size();i++)
+  {
+    results.clear();
+    if (find_match(E, terms[i].E, results))
+      return term_ref(i, *this);
+  }
+
+  results.clear();
+  return term_ref();
+}
+
+term_ref Formula::find_match_expression2(const expression_ref& query, std::vector<int>& results) const
+{
+  for(int i=0;i<terms.size();i++)
+  {
+    results.clear();
+    if (find_match2(query, i, results))
+      return term_ref(i, *this);
+  }
+
+  results.clear();
+  return term_ref();
+}

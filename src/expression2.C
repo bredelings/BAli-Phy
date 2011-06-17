@@ -133,11 +133,11 @@ int main()
   F->add_expression( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
 
   expression_ref default_value (data_function("default_value",2));
-  term_ref defv = F->add_expression(  default_value("X")(One) );
+  term_ref defv = F->add_expression(  default_value("X")(Constant(Double(2.0))) );
 
   Context CTX1(F);
 
-  CTX1.set_value("X",Double(2));
+  //  CTX1.set_value("X",Double(2));
   CTX1.set_value("Y",Double(3));
   CTX1.set_value("Z",Double(4));
   CTX1.set_value("W",Int(5));
