@@ -135,17 +135,17 @@ struct dummy_expression: public expression
   dummy_expression(int i):index(i) {}
 };
 
-struct match_expression: public expression
+struct match: public Object
 {
   int index;
 
-  match_expression* clone() const {return new match_expression(*this);}
+  match* clone() const {return new match(*this);}
 
   tribool compare(const Object& o) const;
   
   std::string print() const;
 
-  match_expression(int i):index(i) { }
+  match(int i):index(i) { }
 };
 
 class expression_ref;
@@ -153,7 +153,7 @@ class expression_ref;
 // This no longer needs to be a virtual member function, because we can now walk the expression from outside.
 int n_match_results(const expression_ref&);
 
-bool match(const expression_ref& pattern,const expression_ref& E, std::vector<boost::shared_ptr<const expression> >& results);
+bool find_match(const expression_ref& pattern,const expression_ref& E, std::vector<boost::shared_ptr<const expression> >& results);
 
 #include "model.H"
 
@@ -280,6 +280,10 @@ struct expression_ref: public boost::shared_ptr<const expression>
 
   expression_ref(const char* s)
     :boost::shared_ptr<const expression>(new expression(parameter(s)))
+  {}
+
+  expression_ref(const match& m)
+    :boost::shared_ptr<const expression>(new expression(m))
   {}
 
   expression_ref(const Model& M)

@@ -114,16 +114,16 @@ string dummy_expression::print() const {
   return string("#")+convertToString(index);
 }
 
-tribool match_expression::compare(const Object& o) const 
+tribool match::compare(const Object& o) const 
 {
-  const match_expression* E = dynamic_cast<const match_expression*>(&o);
+  const match* E = dynamic_cast<const match*>(&o);
   if (not E) 
     return false;
 
   return index == E->index;
 }
 
-string match_expression::print() const 
+string match::print() const 
 {
   if (index == -1) 
     return "_";
@@ -133,20 +133,22 @@ string match_expression::print() const
 
 
 // How would we handle lambda expressions, here?
-bool match(const expression_ref& pattern, const expression_ref& E, vector<shared_ptr<const expression> >& results)
+bool find_match(const expression_ref& pattern, const expression_ref& E, vector<shared_ptr<const expression> >& results)
 {
   // if this is a match expression, then succeed, and store E as the result of the match
-  shared_ptr<const match_expression> M = dynamic_pointer_cast<const match_expression>(pattern);
+  shared_ptr<const match> M = dynamic_pointer_cast<const match>(pattern->head);
   if (M) 
   {
     assert(pattern->n_args() == 0);
     
-    if (results.size() < M->index) results.resize(M->index+1);
+    if (M->index >= 0)
+    {
+      if (results.size() < M->index+1) results.resize(M->index+1);
 
-    if (results[M->index]) 
-      throw myexception()<<"Match expression '"<<pattern->print()<<"' contains match index "<<M->index<<"' more than once!";
-
-    results[M->index] = E;
+      if (results[M->index]) 
+	throw myexception()<<"Match expression '"<<pattern->print()<<"' contains match index "<<M->index<<"' more than once!";
+      results[M->index] = E;
+    }
 
     return true;
   }
@@ -159,7 +161,7 @@ bool match(const expression_ref& pattern, const expression_ref& E, vector<shared
     return false;
 
   for(int i=0;i<pattern->n_args();i++)
-    if (not match(pattern->args[i], E->args[i], results))
+    if (not find_match(pattern->args[i], E->args[i], results))
       return false;
 
   return true;

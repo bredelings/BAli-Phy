@@ -173,4 +173,17 @@ int main()
 
   // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).
   // I could introduce a QUOTE expression... that sounds rather LISP-y.
+
+  expression_ref pattern = default_value("X")(match(0));
+  expression_ref target = default_value("X")(One);
+  vector<shared_ptr<const expression> > results;
+  cout<<"Checking if expression "<<target->print()<<" matches query "<<pattern->print()<<":\n";
+  if (find_match(pattern, target,results))
+  {
+    cout<<"match has size "<<results.size()<<"\n";
+    if (results.size())
+      cout<<"   value = "<<results[0]->print()<<"\n";
+  }
+  else
+    cout<<"no match!";
 }
