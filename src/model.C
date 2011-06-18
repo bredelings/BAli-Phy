@@ -843,7 +843,7 @@ OpModel::OpModel(const expression_ref& r)
     model_slots_for_index.push_back(vector<model_slot>());
   }
 
-  Op = dynamic_pointer_cast<const Operation>(e->op);
+  Op = dynamic_pointer_cast<const Operation>(e->head);
   for(int i=0;i<e->args.size();i++)
   {
     arg_expression a;
@@ -858,7 +858,7 @@ OpModel::OpModel(const expression_ref& r)
 
     // handle the args[i] being a model
     else if ( shared_ptr<const model_expression> me = boost::dynamic_pointer_cast<const model_expression>(e->args[i]) )
-      a.sub_model_index = add_submodel( dynamic_pointer_cast<const Model>(me->op) );
+      a.sub_model_index = add_submodel( dynamic_pointer_cast<const Model>(me->head) );
 
     // handle the args[i] being an operation expression
     else if (shared_ptr<const operation_expression> oe = boost::dynamic_pointer_cast<const operation_expression>(e->args[i]) )

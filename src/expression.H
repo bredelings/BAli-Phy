@@ -56,6 +56,9 @@ struct term_ref
 
 struct expression: virtual public Object
 {
+  // The operator
+  boost::shared_ptr<const Object> head;
+
   // An expression may or may not have sub-expressions
   std::vector< boost::shared_ptr<const expression> > args;
 
@@ -162,12 +165,10 @@ struct tuple_expression: public expression
 struct operator_expression: public expression
 {
   /// The top-level operation?
-  boost::shared_ptr<const Operator> op;
-
   virtual operator_expression* clone() const {return new operator_expression(*this);};
 
   // For printing, what is the operator name called?
-  virtual const Operator* get_operator() const {return &(*op);}
+  virtual const Operator* get_operator() const {return dynamic_cast<const Operator*>(&(*head));}
 
   virtual std::string print() const;
 
@@ -183,7 +184,7 @@ struct operation_expression: public operator_expression
 {
   operation_expression* clone() const {return new operation_expression(*this);}
 
-  const Operation* get_operator() const {return dynamic_cast<const Operation*>(&(*op));}
+  const Operation* get_operator() const {return dynamic_cast<const Operation*>(&(*head));}
 
   operation_expression(const Operation& O,const std::vector< boost::shared_ptr<const expression> >& A);
 
@@ -196,7 +197,7 @@ struct model_expression: public operator_expression
 {
   model_expression* clone() const {return new model_expression(*this);}
 
-  const Model* get_operator() const {return dynamic_cast<const Model*>(&(*op));}
+  const Model* get_operator() const {return dynamic_cast<const Model*>(&(*head));}
 
   model_expression(const Model& M);
 
@@ -228,7 +229,7 @@ struct Function: public Operator
 /// A data expression is evaluates to itself. (Is this different than a *constructor*)
 struct function_expression: public operator_expression
 {
-  const Function* get_operator() const {return dynamic_cast<const Function*>(&(*op));}
+  const Function* get_operator() const {return dynamic_cast<const Function*>(&(*head));}
 
   function_expression* clone() const {return new function_expression(*this);}
 

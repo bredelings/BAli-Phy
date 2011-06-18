@@ -112,7 +112,7 @@ tribool operator_expression::compare(const Object& o) const
   if (not E) 
     return false;
 
-  tribool same = op->compare(*E->op);
+  tribool same = head->compare(*E->head);
 
   if (not same) return false;
 
@@ -170,12 +170,16 @@ string operator_expression::print() const
 }
 
 operator_expression::operator_expression(const Operator& O, const vector< shared_ptr<const expression> >& A)
-  :expression(A),op(shared_ptr<const Operator>(O.clone()))
-{ }
+  :expression(A)
+{
+  head = shared_ptr<const Operator>(O.clone());
+}
 
 operator_expression::operator_expression(const shared_ptr<const Operator>& O, const vector< shared_ptr<const expression> >& A)
-  :expression(A),op(O)
-{ }
+  :expression(A)
+{
+  head = O;
+}
 
 // operation expression
 

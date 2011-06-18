@@ -41,7 +41,7 @@ boost::shared_ptr<const Operation> Formula::operation(int index) const
   shared_ptr<const operator_expression> E = dynamic_pointer_cast<const operator_expression>(terms[index].E);
   shared_ptr<const Operation> O;
   if (not E) return O;
-  O = dynamic_pointer_cast<const Operation>(E->op);
+  O = dynamic_pointer_cast<const Operation>(E->head);
   return O;
 }
 
@@ -50,7 +50,7 @@ boost::shared_ptr<const Function> Formula::function(int index) const
   shared_ptr<const function_expression> E = dynamic_pointer_cast<const function_expression>(terms[index].E);
   shared_ptr<const Function> F;
   if (not E) return F;
-  F = dynamic_pointer_cast<const Function>(E->op);
+  F = dynamic_pointer_cast<const Function>(E->head);
   return F;
 }
 
