@@ -60,7 +60,7 @@ struct expression_ref;
 
 // DONE: Implement matching, in order to search for default values, and for bounds.
 
-// TODO: change expression_refs to an object pointer.
+// DONE: change expression_refs to an object pointer.
 // TODO: allow storing (non-functional) prior expresssions, so that we can write out the dependence relations.
 // TODO: allow constructing prior EXPRESSIONS (e.g. these may specify constants OR variables).
 // TODO: allow tuples to specify arguments to priors.
