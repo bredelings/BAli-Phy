@@ -174,6 +174,11 @@ vector< expression_ref > model_args(const Model& M)
   return args;
 }
 
+expression_ref model_expression(const Model& M)
+{
+  return new expression(M,model_args(M));
+}
+
 lambda::lambda(int d)
   :dummy_index(d)
 { }

@@ -101,11 +101,11 @@ int main()
 
   F->add_expression(Double(1));
 
-  expression_ref mul = Multiply<Double>();
-  expression_ref muli = Multiply<Int>();
-  expression_ref plus = Add<Double>();
-  expression_ref gt = GreaterThan<Double>();
-  expression_ref If = IfThenElse();
+  expression_ref mul = lambda_expression( Multiply<Double>() );
+  expression_ref muli = lambda_expression( Multiply<Int>() );
+  expression_ref plus = lambda_expression( Add<Double>() );
+  expression_ref gt = lambda_expression( GreaterThan<Double>() );
+  expression_ref If = lambda_expression( IfThenElse() );
 
   cout<<"Demonstrate lambda functions\n";
   cout<<"mul = "<<mul->print()<<"\n";
@@ -134,7 +134,7 @@ int main()
   // -- can we create constants easily?
   F->add_expression( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
 
-  expression_ref default_value (data_function("default_value",2));
+  expression_ref default_value = lambda_expression(data_function("default_value",2));
   term_ref defv = F->add_expression(  default_value("X")(Constant(Double(2.0))) );
 
   Context CTX1(F);

@@ -297,7 +297,7 @@ Context::Context(const polymorphic_cow_ptr<Formula>& F_)
       // This match results in an expression, which contains a constant, which contains a value.
       // The easiest way to extract the constant value is just to evaluate the expression.
 
-      expression_ref default_value (data_function("default_value",2));
+      expression_ref default_value = lambda_expression(data_function("default_value",2));
       vector<int> results;
       expression_ref query = default_value(F->terms[index].E)(match(0));
       term_ref found = F->find_match_expression2(query, results);

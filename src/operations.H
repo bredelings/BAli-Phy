@@ -171,21 +171,21 @@ struct Add: public Operation
 template <typename T>
 typed_expression_ref<T> operator*(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
 {
-  expression_ref times = Multiply<T>();
+  expression_ref times = lambda_expression( Multiply<T>() );
   return times(arg1,arg2);
 }
 
 template <typename T>
 typed_expression_ref<T> operator+(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
 {
-  expression_ref plus = Add<T>();
+  expression_ref plus = lambda_expression( Add<T>() );
   return plus(arg1,arg2);
 }
 
 template <typename T>
 typed_expression_ref<T> operator>(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
 {
-  expression_ref gt = GreaterThan<T>();
+  expression_ref gt = lambda_expression( GreaterThan<T>() );
   return gt(arg1,arg2);
 }
 

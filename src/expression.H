@@ -217,18 +217,6 @@ struct expression_ref: public boost::shared_ptr<const Object>
 
   expression_ref(const term_ref& t);
 
-  expression_ref(const Operation& o)
-    :boost::shared_ptr<const Object>(lambda_expression(o))
-  {}
-
-  expression_ref(const Function& f)
-    :boost::shared_ptr<const Object>(lambda_expression(f))
-  {}
-
-  expression_ref(const Model& M)
-    :boost::shared_ptr<const Object>(new expression(M,model_args(M)))
-  { }
-
   expression_ref(const std::string& s)
     :boost::shared_ptr<const Object>(new parameter(s))
   {}

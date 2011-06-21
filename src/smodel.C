@@ -740,21 +740,21 @@ namespace substitution {
     Q_from_R_and_S_Op():Operation(2) { }
   };
 
-  expression_ref Q_from_R_and_S = Q_from_R_and_S_Op();
+  expression_ref Q_from_R_and_S = lambda_expression( Q_from_R_and_S_Op() );
 
   /// Construct a reversible Markov model on alphabet 'a'
   ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
-    :OpModel( Q_from_R_and_S(*prefix_model(S1,"S"),*prefix_model(R1,"R")) )
+    :OpModel( Q_from_R_and_S(model_expression(*prefix_model(S1,"S")),model_expression(*prefix_model(R1,"R"))) )
   { }
 
     
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const AlphabetExchangeModel& E)
-    :OpModel( Q_from_R_and_S( *prefix_model(E,"S"), *prefix_model(SimpleFrequencyModel(*E.get_alphabet()),"R") ) )
+    :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*E.get_alphabet()),"R") ) ) )
   { }
 
   SimpleReversibleMarkovModel::
   SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
-    :OpModel( Q_from_R_and_S( *prefix_model(E,"S"), *prefix_model(SimpleFrequencyModel(*E.get_alphabet(),pi),"R") ) )
+    :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*E.get_alphabet(),pi),"R")) ) )
   { }
 
   //---------------------- INV_Model --------------------------//
@@ -1281,7 +1281,7 @@ namespace substitution {
     M0_Op():Operation(3) { }
   };
 
-  expression_ref M0E = M0_Op();
+  expression_ref M0E = lambda_expression( M0_Op() );
 
   efloat_t M0::super_prior() const 
   {
@@ -1296,7 +1296,7 @@ namespace substitution {
   }
   */
   M0::M0(const Codons& C,const NucleotideExchangeModel& N)
-    :OpModel( M0E(C,N,"M0::omega") )
+    :OpModel( M0E(C,model_expression(N),"M0::omega") )
   { 
     omega_index = find_parameter(*this,"M0::omega");
     set_parameter_value(omega_index, Double(1));
@@ -1790,7 +1790,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     DiscretizationOp():Operation(2) { }
   };
 
-  expression_ref Discretization = DiscretizationOp();
+  expression_ref Discretization = lambda_expression( DiscretizationOp() );
 
   struct MultiParameterOp: public Operation
   {
@@ -1810,7 +1810,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     MultiParameterOp():Operation(2) { }
   };
 
-  expression_ref MultiParameter = MultiParameterOp();
+  expression_ref MultiParameter = lambda_expression( MultiParameterOp() );
 
   struct MultiRateOp: public Operation
   {
@@ -1832,7 +1832,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     MultiRateOp():Operation(2) { }
   };
 
-  expression_ref MultiRate = MultiRateOp();
+  expression_ref MultiRate = lambda_expression( MultiRateOp() );
 
   //---------------------------- class MultiModel --------------------------//
 
@@ -1972,7 +1972,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const Distribution& D, int p, int n)
     :OpModel( 
-	     MultiParameter(LambdaModel(M,p), Discretization(D, E(n) ) ) 
+	     MultiParameter(model_expression(LambdaModel(M,p)), Discretization(model_expression(D), Int(n) ) ) 
 	      )
   { }
 
@@ -1980,7 +1980,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
     :OpModel( 
-	     MultiRate(M, Discretization(Gamma(), E(n) ) ) 
+	     MultiRate(model_expression(M), Discretization(model_expression(Gamma()), Int(n) ) ) 
 	      )
   {
     show_parameters(std::cout, *this);
@@ -1990,7 +1990,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   LogNormalParameterModel::LogNormalParameterModel(const MultiModel& M,int n)
     :OpModel( 
-	     MultiRate(M, Discretization(LogNormal(), E(n) ) ) 
+	     MultiRate(model_expression(M), Discretization(model_expression(LogNormal()), Int(n) ) ) 
 	      )
   {}
 
@@ -2659,10 +2659,10 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     Modulated_Markov_Op():Operation(2) { }
   };
 
-  expression_ref Modulated_Markov_E = Modulated_Markov_Op();
+  expression_ref Modulated_Markov_E = lambda_expression( Modulated_Markov_Op() );
 
   ModulatedMarkovModel::ModulatedMarkovModel(const MultiModel& MM, const ExchangeModel& EM)
-    :OpModel(Modulated_Markov_E(MM,EM))
+    :OpModel(Modulated_Markov_E(model_expression(MM),model_expression(EM)))
   { }
   
   // Now how to write MultiParameterModel( M, p_change, DiscretizationFunction( Gamma(), n_bins ) ) as an expression?
