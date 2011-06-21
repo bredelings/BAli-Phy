@@ -64,7 +64,7 @@ expression::expression(const object_ref& O, const expression_ref& arg)
   args.push_back(arg);
 }
 
-expression::expression(const object_ref& O, const std::vector< boost::shared_ptr<const expression> >& A)
+expression::expression(const object_ref& O, const std::vector< expression_ref >& A)
  :head(O), args(A)
 { }
 
@@ -78,7 +78,7 @@ tribool constant::compare(const Object& o) const
 }
 
 expression_ref::expression_ref(const term_ref& t)
-  :shared_ptr<const expression>(t.F->terms[t.index].E)
+  :shared_ptr<const Object>(t.F->terms[t.index].E)
 {}
 
 tribool dummy::compare(const Object& o) const {
@@ -111,35 +111,43 @@ string match::print() const
 }
 
 // How would we handle lambda expressions, here?
-bool find_match(const expression_ref& pattern, const expression_ref& E, vector<shared_ptr<const expression> >& results)
+bool find_match(const expression_ref& pattern, const expression_ref& E, vector< expression_ref >& results)
 {
   // if this is a match expression, then succeed, and store E as the result of the match
-  shared_ptr<const match> M = dynamic_pointer_cast<const match>(pattern->head);
+  shared_ptr<const match> M = dynamic_pointer_cast<const match>(pattern);
   if (M) 
   {
-    assert(pattern->n_args() == 0);
-    
     if (M->index >= 0)
     {
       if (results.size() < M->index+1) results.resize(M->index+1);
 
-      if (results[M->index]) 
-	throw myexception()<<"Match expression '"<<pattern->print()<<"' contains match index "<<M->index<<"' more than once!";
+      if (results[M->index]) throw myexception()<<"Match expression contains match index "<<M->index<<"' more than once!";
+
       results[M->index] = E;
     }
 
     return true;
   }
 
-  // 
-  if (pattern->n_args() != E->n_args()) return false;
+  shared_ptr<const expression> pattern_exp = dynamic_pointer_cast<const expression>(pattern);
+
+  // If this is a leaf constant, then check if E is equal to it.
+  if (not pattern_exp)
+    return (pattern->compare(*E) == true);
+
+  // If pattern is an expression but E is not, then there is no match.
+  shared_ptr<const expression> E_exp = dynamic_pointer_cast<const expression>(E);
+  if (not E_exp) return false;
+
+  // Expressions must have the same number of arguments
+  if (pattern_exp->n_args() != E_exp->n_args()) return false;
 
   // The heads have to compare equal.  There is no matching there. (Will there be, later?)
-  if (pattern->head->compare(*E->head) != true)
+  if (pattern_exp->head->compare(*E_exp->head) != true)
     return false;
 
-  for(int i=0;i<pattern->n_args();i++)
-    if (not find_match(pattern->args[i], E->args[i], results))
+  for(int i=0;i<pattern_exp->n_args();i++)
+    if (not find_match(pattern_exp->args[i], E_exp->args[i], results))
       return false;
 
   return true;
@@ -154,13 +162,13 @@ tribool parameter::compare(const Object& o) const
   return parameter_name == E->parameter_name;
 }
 
-vector< shared_ptr< const expression > > model_args(const Model& M)
+vector< expression_ref > model_args(const Model& M)
 {
-  vector< shared_ptr< const expression > > args;
+  vector< expression_ref > args;
 
   for(int i=0;i<M.n_parameters();i++) 
   {
-    args.push_back( shared_ptr< const expression >(new expression(parameter(M.parameter_name(i)) ) ) );
+    args.push_back( expression_ref(new parameter(M.parameter_name(i)) ) );
   }
 
   return args;
@@ -175,14 +183,14 @@ expression_ref lambda_expression(const Operator& O)
   int n = O.n_args();
   assert(n != -1);
   
-  vector< shared_ptr<const expression> > A;
+  vector< expression_ref > A;
   for(int i=0;i<n;i++)
-    A.push_back(shared_ptr<const expression>(new expression(dummy(i))));
+    A.push_back(expression_ref(new dummy(i)));
   
   expression_ref E(new expression(O, A));
   
   for(int i=n-1;i>=0;i--) 
-    E = shared_ptr<const expression>(new expression(lambda(i),E));
+    E = expression_ref(new expression(lambda(i),E));
   
   return E;
 }
@@ -207,27 +215,33 @@ Function data_function(const std::string& s, int n)
   return Function(s, n, data_function_f);
 }
 
-shared_ptr<const expression> substitute(shared_ptr<const expression> E1, int dummy_index, shared_ptr<const expression> E2)
+expression_ref substitute(const expression_ref& R1, int dummy_index, const expression_ref& R2)
 {
-  vector<shared_ptr<const expression> > args(E1->n_args());
+  // If this is the relevant dummy, then substitute
+  if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R1))
+  {
+    if (D->index == dummy_index)
+      return R2;
+    else
+      return R1;
+  }
+
+  shared_ptr< const expression> E1 = dynamic_pointer_cast<const expression>(R1);
+
+  // If this is any other constant, then it doesn't contain the dummy
+  if (not E1) return R1;
+
+  // If this is an expression, then compute the substituted args
+  vector< expression_ref > args(E1->n_args());
   bool found = false;
   for(int i=0;i<E1->n_args();i++)
   {
-    args[i] = substitute(E1->args[i],dummy_index,E2);
+    args[i] = substitute(E1->args[i], dummy_index, R2);
     if (args[i] != E1->args[i]) found = true;
   }
 
-  if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(E1->head))
-  {
-    assert(E1->n_args() == 0);
-    if (D->index == dummy_index)
-      return E2;
-    else
-      return E1;
-  }
-
   // This is not a dummy expression, and the arguments (we didn't search head) do not contain the dummy being replaced;
-  if (not found) return E1;
+  if (not found) return R1;
 
   // make sure we don't try to substitute for quantified dummies
   if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E1->head))
@@ -236,11 +250,18 @@ shared_ptr<const expression> substitute(shared_ptr<const expression> E1, int dum
       throw myexception()<<"Trying to substitution for dummy "<<dummy_index<<" in lambda express that quantifies it!";
   }
 
-  return shared_ptr<const expression>(new expression(E1->head,args));
+  // Construct a new expression containing the substituted args.
+  return expression_ref(new expression(E1->head,args));
 }
 
-shared_ptr<const expression> apply(const expression_ref& E,const expression_ref& arg)
+expression_ref apply(const expression_ref& R,const expression_ref& arg)
 {
+  assert(R);
+
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  if (not E)
+    throw myexception()<<"Too many arguments to constant "<<R->print()<<".";
+
   shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->head);
   if (not L)
     throw myexception()<<"Too many arguments to expression "<<E->print()<<".  (Is this a function at all?)";
@@ -248,11 +269,11 @@ shared_ptr<const expression> apply(const expression_ref& E,const expression_ref&
   return substitute(E->args[0], L->dummy_index, arg);
 }
 
-shared_ptr<const expression> apply(const expression_ref& E,
-				   const vector<shared_ptr<const expression> > args,
-				   int i)
+expression_ref apply(const expression_ref& E,
+		     const vector< expression_ref > args,
+		     int i)
 {
-  shared_ptr<const expression> result1 = apply(E,args[i]);
+  expression_ref result1 = apply(E,args[i]);
 
   if (i<args.size())
     result1 = apply(result1, args, i+1);
@@ -260,27 +281,31 @@ shared_ptr<const expression> apply(const expression_ref& E,
   return result1;
 }
 
-shared_ptr<const expression> apply(const expression_ref& E,
-				   const vector<shared_ptr<const expression> > args)
+expression_ref apply(const expression_ref& E,
+		     const vector< expression_ref > args)
 {
   return apply(E,args,0);
 }
 
-void find_named_parameters_(shared_ptr<const expression> e, vector<string>& names)
+void find_named_parameters_(const expression_ref& R, vector<string>& names)
 {
-  if (shared_ptr<const parameter> n = dynamic_pointer_cast<const parameter>(e->head)) 
+  assert(R);
+  // If this is a parameter, then makes sure we've got its name.
+  if (shared_ptr<const parameter> n = dynamic_pointer_cast<const parameter>(R))
   {
     if (not includes(names,n->parameter_name))
       names.push_back(n->parameter_name);
   }
-  else if (shared_ptr<const Operator> o = dynamic_pointer_cast<const Operator>(e->head)) 
+
+  // If this is an expression, check its sub-objects
+  else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
-    for(int i=0;i<e->args.size();i++)
-      find_named_parameters_(e->args[i], names);
+    for(int i=0;i<E->args.size();i++)
+      find_named_parameters_(E->args[i], names);
   }
 }
 
-vector<string> find_named_parameters(shared_ptr<const expression> e)
+vector<string> find_named_parameters(const expression_ref& e)
 {
   vector<string> names;
   find_named_parameters_(e,names);

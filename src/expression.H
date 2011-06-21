@@ -52,7 +52,7 @@ struct expression: virtual public Object
   boost::shared_ptr<const Object> head;
 
   // An expression may or may not have sub-expressions
-  std::vector< boost::shared_ptr<const expression> > args;
+  std::vector< expression_ref > args;
 
   /// The number of terms after the head
   int n_args() const {return args.size();}
@@ -65,7 +65,7 @@ struct expression: virtual public Object
   expression() {}
   explicit expression(const object_ref& O);
   expression(const object_ref& O, const expression_ref& args);
-  expression(const object_ref& O, const std::vector< boost::shared_ptr<const expression> >& A);
+  expression(const object_ref& O, const std::vector< expression_ref >& A);
 
   virtual ~expression() {}
 };
@@ -125,11 +125,11 @@ class expression_ref;
 // This no longer needs to be a virtual member function, because we can now walk the expression from outside.
 int n_match_results(const expression_ref&);
 
-bool find_match(const expression_ref& pattern,const expression_ref& E, std::vector<boost::shared_ptr<const expression> >& results);
+bool find_match(const expression_ref& pattern,const expression_ref& E, std::vector< expression_ref >& results);
 
 #include "model.H"
 
-std::vector< boost::shared_ptr< const expression > > model_args(const Model& M);
+std::vector< expression_ref > model_args(const Model& M);
 
 enum function_type_t {data_function_f, body_function_f};
 
@@ -144,8 +144,6 @@ struct Function: public Operator
 
   int n_args() const {return n_args_;}
 
-  boost::shared_ptr<const expression> eval_expression;
-
   function_type_t what_type;
 
   std::string name() const {return f_name;}
@@ -156,17 +154,19 @@ struct Function: public Operator
 
 Function data_function(const std::string&, int);
 
-std::vector<std::string> find_named_parameters(boost::shared_ptr<const expression> e);
+std::vector<std::string> find_named_parameters(const expression_ref&);
 
-boost::shared_ptr<const expression> substitute(boost::shared_ptr<const expression> E1, int dummy, boost::shared_ptr<const expression> E2);
+expression_ref substitute(const expression_ref& E1, int dummy, const expression_ref& E2);
 
-// Single-arg version
-boost::shared_ptr<const expression> apply(const expression_ref& E,const expression_ref& arg);
+// Single-arg version  (Is this a function at all?)";
+expression_ref apply(const expression_ref& E,const expression_ref& arg);
 
 // Multiple-arg version
-boost::shared_ptr<const expression> apply(const expression_ref& E, const std::vector<boost::shared_ptr<const expression> > args);
+expression_ref apply(const expression_ref& E, const std::vector< expression_ref > args);
 
 expression_ref lambda_expression(const Operator& O);
+
+expression_ref model_expression(const Model& M);
 
 // FIXME - If we're substituting a lambda expression we have to rename its dummys to make sure
 //         there is no overlap.
@@ -181,7 +181,7 @@ struct lambda: public Object
 
 class term_ref;
 
-struct expression_ref: public boost::shared_ptr<const expression>
+struct expression_ref: public boost::shared_ptr<const Object>
 {
   expression_ref operator()(const expression_ref& arg) const
   {
@@ -200,48 +200,49 @@ struct expression_ref: public boost::shared_ptr<const expression>
     return apply(apply(apply(*this,arg1),arg2),arg3);
   }
 
-  expression_ref(expression* v)
-    :boost::shared_ptr<const expression>(v) 
+  expression_ref() {}
+
+  expression_ref(Object* v)
+    :boost::shared_ptr<const Object>(v) 
   {}
 
-  expression_ref(const boost::shared_ptr<const expression>& v)
-    :boost::shared_ptr<const expression>(v) 
+  expression_ref(const boost::shared_ptr<const Object>& v)
+    :boost::shared_ptr<const Object>(v) 
+  {}
+
+  template <typename T>
+  expression_ref(const boost::shared_ptr<const T>& v)
+    :boost::shared_ptr<const Object>(boost::static_pointer_cast<const Object>(v)) 
   {}
 
   expression_ref(const term_ref& t);
 
   expression_ref(const Operation& o)
-    :boost::shared_ptr<const expression>(lambda_expression(o))
+    :boost::shared_ptr<const Object>(lambda_expression(o))
   {}
 
   expression_ref(const Function& f)
-    :boost::shared_ptr<const expression>(lambda_expression(f))
-  {}
-
-  expression_ref(const std::string& s)
-    :boost::shared_ptr<const expression>(new expression(parameter(s)))
-  {}
-
-  expression_ref(const char* s)
-    :boost::shared_ptr<const expression>(new expression(parameter(s)))
-  {}
-
-  expression_ref(const match& m)
-    :boost::shared_ptr<const expression>(new expression(m))
+    :boost::shared_ptr<const Object>(lambda_expression(f))
   {}
 
   expression_ref(const Model& M)
-    :boost::shared_ptr<const expression>(new expression(M,model_args(M)))
+    :boost::shared_ptr<const Object>(new expression(M,model_args(M)))
   { }
 
-  expression_ref(const expression& e)
-    :boost::shared_ptr<const expression>(e.clone())
-  { }
+  expression_ref(const std::string& s)
+    :boost::shared_ptr<const Object>(new parameter(s))
+  {}
 
-  explicit expression_ref(const int& i):boost::shared_ptr<const expression>(new expression(constant(Int(i)))) {}
-  explicit expression_ref(const Int& i):boost::shared_ptr<const expression>(new expression(constant(i))) {}
-  explicit expression_ref(const double& d):boost::shared_ptr<const expression>(new expression(constant(Double(d)))) {}
-  explicit expression_ref(const Double& d):boost::shared_ptr<const expression>(new expression(constant(d))) {}
+  expression_ref(const char* s)
+    :boost::shared_ptr<const Object>(new parameter(s))
+  {}
+
+  expression_ref(const Object& o)
+    :boost::shared_ptr<const Object>(o.clone())
+  {}
+
+  expression_ref(const int& i):boost::shared_ptr<const Object>(new Int(i)) {}
+  expression_ref(const double& d):boost::shared_ptr<const Object>(new Double(d)) {}
 };
 
 template <typename T>
@@ -250,19 +251,18 @@ struct typed_expression_ref: expression_ref
 public:
   typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   typed_expression_ref(expression* v): expression_ref(v) {}
-  typed_expression_ref(const boost::shared_ptr<const expression>& v): expression_ref(v) {}
+  typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
   typed_expression_ref(const term_ref& t): expression_ref(t) {}
 
-  explicit typed_expression_ref(const int& i):expression_ref(i) {}
-  explicit typed_expression_ref(const Int& i):expression_ref(i) {}
-  explicit typed_expression_ref(const double& d):expression_ref(d) {}
-  explicit typed_expression_ref(const Double& d):expression_ref(d) {}
+  typed_expression_ref(const Object& o):expression_ref(o) {}
+  typed_expression_ref(const int& i):expression_ref(i) {}
+  typed_expression_ref(const double& d):expression_ref(d) {}
 };
 
 template <typename T>
 typed_expression_ref<T> Constant(const T& t)
 {
-  return typed_expression_ref<T>(new expression(constant(t)));
+  return typed_expression_ref<T>(t.clone());
 }
 
 template <typename T>

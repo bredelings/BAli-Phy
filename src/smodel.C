@@ -1296,7 +1296,7 @@ namespace substitution {
   }
   */
   M0::M0(const Codons& C,const NucleotideExchangeModel& N)
-    :OpModel( M0E(Constant(C),N,"M0::omega") )
+    :OpModel( M0E(C,N,"M0::omega") )
   { 
     omega_index = find_parameter(*this,"M0::omega");
     set_parameter_value(omega_index, Double(1));

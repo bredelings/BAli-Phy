@@ -38,23 +38,32 @@ bool Formula::has_inputs(int index) const
 
 boost::shared_ptr<const Operation> Formula::operation(int index) const
 {
-  return dynamic_pointer_cast<const Operation>(terms[index].E->head);
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(terms[index].E);
+  if (not E)
+    return shared_ptr<const Operation>();
+
+  return dynamic_pointer_cast<const Operation>(E->head);
 }
 
 boost::shared_ptr<const Function> Formula::function(int index) const
 {
-  return dynamic_pointer_cast<const Function>(terms[index].E->head);
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(terms[index].E);
+  if (not E)
+    return shared_ptr<const Function>();
+
+  return dynamic_pointer_cast<const Function>(E->head);
 }
 
 bool Formula::is_constant(int index) const
 {
-  if (dynamic_pointer_cast<const constant>(terms[index].E->head))
-  {
-    assert(not is_computed(index));
-    return true;
-  }
-  else
-    return false;
+  if (dynamic_pointer_cast<const expression>(terms[index].E)) return false;
+
+  if (dynamic_pointer_cast<const parameter>(terms[index].E)) return false;
+
+  if (dynamic_pointer_cast<const dummy>(terms[index].E)) return false;
+
+  assert(not is_computed(index));
+  return true;
 }
 
 bool Formula::is_state(int index) const
@@ -122,7 +131,7 @@ term_ref Formula::add_term(const Term& t)
 
 #ifndef NDEBUG
   {
-    shared_ptr<const expression> E (t.E->clone());
+    expression_ref E (t.E->clone());
     if (t.E->compare(*E) == indeterminate)
       std::cerr<<"Warning: expression "<<t.E->print()<<" does not compare equal to itself! ("<<t.E->compare(*E)<<")\n";
   }
@@ -134,20 +143,21 @@ term_ref Formula::add_term(const Term& t)
     std::cerr<<"Warning ["<<new_index<<"]: term with name '"<<t.name<<"' already exists at index "<<same_name<<".!\n";
 
   // Update ref for parameters
-  if (dynamic_pointer_cast<const parameter>(t.E->head))
+  if (dynamic_pointer_cast<const parameter>(t.E))
     state_indices.push_back(new_index);
 
   // Check new computed nodes, mark slots as being affected
-  if (t.E->n_args() or t.input_indices.size())
-  {
-    assert(t.input_indices.size() == t.E->n_args());
-
-    for(int slot=0;slot<t.input_indices.size();slot++)
+  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(t.E))
+    if (E->n_args() or t.input_indices.size())
     {
-      int input_index = t.input_indices[slot];
-      set_directly_affects_in_slot(input_index,new_index,slot);
+      assert(t.input_indices.size() == E->n_args());
+
+      for(int slot=0;slot<t.input_indices.size();slot++)
+      {
+	int input_index = t.input_indices[slot];
+	set_directly_affects_in_slot(input_index,new_index,slot);
+      }
     }
-  }
 
   // Actually add the term
   terms.push_back(t);
@@ -155,14 +165,18 @@ term_ref Formula::add_term(const Term& t)
   return term_ref(new_index,*this);
 }
 
-term_ref Formula::add_expression(const expression_ref& e)
+term_ref Formula::add_expression(const expression_ref& R)
 {
-  vector<int> arg_indices;
-  for(int i=0;i<e->args.size();i++)
-    arg_indices.push_back( add_expression(e->args[i] ) );
+  Term t(R);
 
-  Term t(e);
-  t.input_indices = arg_indices;
+  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(t.E))
+  {
+    vector<int> arg_indices;
+    for(int i=0;i<E->args.size();i++)
+      arg_indices.push_back( add_expression(E->args[i] ) );
+    t.input_indices = arg_indices;
+  }
+
   return add_term(t);
 }
 
@@ -194,17 +208,16 @@ term_ref Formula::find_expression(const expression_ref& E) const
 bool Formula::find_match2(const expression_ref& query, int index, std::vector<int>& results) const
 {
   // if this is a match expression, then succeed, and store E as the result of the match
-  shared_ptr<const match> M = dynamic_pointer_cast<const match>(query->head);
+  shared_ptr<const match> M = dynamic_pointer_cast<const match>(query);
   if (M) 
   {
-    assert(query->n_args() == 0);
-    
     if (M->index >= 0)
+
     {
       if (results.size() < M->index+1) results.resize(M->index+1);
 
-      if (results[M->index]) 
-	throw myexception()<<"Match expression '"<<query->print()<<"' contains match index "<<M->index<<"' more than once!";
+      if (results[M->index]) throw myexception()<<"Match expression  contains match index "<<M->index<<"' more than once!";
+
       results[M->index] = index;
     }
 
@@ -213,21 +226,32 @@ bool Formula::find_match2(const expression_ref& query, int index, std::vector<in
 
   const expression_ref& E = terms[index].E;
 
-  if (query->n_args() != E->n_args()) return false;
+  shared_ptr<const expression> query_exp = dynamic_pointer_cast<const expression>(query);
+
+  // If this is a leaf constant, then check if E is equal to it.
+  if (not query_exp)
+    return (query->compare(*E) == true);
+
+  // If pattern is an expression but E is not, then there is no match.
+  shared_ptr<const expression> E_exp = dynamic_pointer_cast<const expression>(E);
+  if (not E_exp) return false;
+
+  // Expressions must have the same number of arguments
+  if (query_exp->n_args() != E_exp->n_args()) return false;
 
   // The heads have to compare equal.  There is no matching there. (Will there be, later?)
-  if (query->head->compare(*E->head) != true)
+  if (query_exp->head->compare(*E_exp->head) != true)
     return false;
 
-  for(int i=0;i<query->n_args();i++)
-    if (not find_match2(query->args[i], terms[index].input_indices[i], results))
+  for(int i=0;i<query_exp->n_args();i++)
+    if (not find_match2(query_exp->args[i], terms[index].input_indices[i], results))
       return false;
 
   return true;
   
 }
 
-term_ref Formula::find_match_expression(const expression_ref& E, std::vector< boost::shared_ptr<const expression> >& results) const
+term_ref Formula::find_match_expression(const expression_ref& E, std::vector< expression_ref >& results) const
 {
   for(int i=0;i<terms.size();i++)
   {

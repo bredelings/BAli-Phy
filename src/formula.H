@@ -45,8 +45,7 @@ struct expression_ref;
 //
 // 
 
-// Cycles should not occur in expressions, since each expression naturally uses its
-// sub-expressions as arguments.
+// Cycles won't occur in expressions, since each expression naturally uses its sub-expressions as arguments.
 //
 // Also, note that for some computed values, we do not need to cache values:
 //   - e.g. f(g(h(x)).  Just cache the final result.
@@ -57,15 +56,15 @@ struct expression_ref;
 //       model creation easier.  e.f. f(x), x=1, x~Normal(0,sigma^2)
 
 // TODO: We need to know how to evaluate data expressions.
+// - use promises?? hopefully not...
 
-// TODO: Now that adding expressions is sanitized, and searching expressions is sanitized,
-//       I need to be able to search for expressions of a certain form, such as (default_value X ?)
-//       and learn the value.
-//
-//       I could create the "_" match object that does not record its matches, and also _1, _2, _3, etc.
+// DONE: Implement matching, in order to search for default values, and for bounds.
 
-// TODO: I need to implement matching, in order to search for default values, and for bounds.
-//
+// TODO: change expression_refs to an object pointer.
+// TODO: allow storing (non-functional) prior expresssions, so that we can write out the dependence relations.
+// TODO: allow constructing prior EXPRESSIONS (e.g. these may specify constants OR variables).
+// TODO: allow tuples to specify arguments to priors.
+// TODO: allow lists... for what?
 
 class Formula;
 
@@ -89,7 +88,7 @@ struct Formula: virtual public Object
 {
   struct Term
   {
-    boost::shared_ptr<const expression> E;
+    expression_ref E;
 
     std::vector<int> input_indices;
     std::vector<std::pair<int,int> > affected_slots;
@@ -97,7 +96,7 @@ struct Formula: virtual public Object
     std::string name;
     bool top_level;
 
-    Term(const boost::shared_ptr<const expression>& e):E(e),name(e->print()),top_level(false) {}
+    Term(const expression_ref& e):E(e),name(e->print()),top_level(false) {}
   };
 
   /// The list of terms that compose this Formula
@@ -110,7 +109,7 @@ struct Formula: virtual public Object
 
   term_ref find_term_with_name(const std::string&) const;
 
-  term_ref find_constant_with_value(const boost::shared_ptr<const Object>& value) const;
+  term_ref find_constant_with_value(const object_ref& value) const;
 
   term_ref add_term(const Term&);
 
@@ -155,7 +154,7 @@ public:
 
   term_ref find_expression(const expression_ref& e) const;
 
-  term_ref find_match_expression(const expression_ref& e, std::vector< boost::shared_ptr<const expression> >&) const;
+  term_ref find_match_expression(const expression_ref& e, std::vector< expression_ref >&) const;
 
   bool find_match2(const expression_ref& e, int index, std::vector<int>&) const;
 

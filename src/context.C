@@ -25,21 +25,53 @@ shared_ptr<const Object> Context::evaluate(int index)
 
   const vector<int>& input_indices = F->input_indices(index);
 
+  expression_ref R = F->terms[index].E;
+
   if (V.computation) assert(V.result);
+
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  if (not E)
+  {
+    assert(not V.computation);
+    assert(input_indices.size() == 0);
+    if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
+    {
+      if (not V.computed)
+	throw myexception()<<"Parameter '"<<P->print()<<"' is not marked up-to-date!";
+      if (not V.result)
+	throw myexception()<<"Parameter '"<<P->print()<<"' has not been set!";
+      return V.result;
+    }
+    else if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R))
+      throw myexception()<<"Cannot evaluate dummy variables!";
+    else if (shared_ptr<const match> D = dynamic_pointer_cast<const match>(R))
+      throw myexception()<<"Cannot evaluate dummy variables!";
+
+    // This is a literal constant
+    if (not V.computed)
+    {
+      V.computed = true;
+      V.result = R;
+    }
+    else
+    {
+      assert(R);
+      assert(R->compare(*V.result));
+    }
+    return V.result;
+  }
 
   // If we are a constant, or parameter, or.... ?
   if (input_indices.size() == 0)
   {
     if (not V.computed)
       throw myexception()<<"Evaluating term "<<F->terms[index].name<<" (index = "<<index<<"): leaf node is not marked up-to-date!";
-    if (not V.result)
-      throw myexception()<<"Evaluating term "<<F->terms[index].name<<" (index = "<<index<<"): leaf node value has not been set!";
 
     return V.result;
   }
 
   // If the expression is a function expression...
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(F->terms[index].E->head);
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->head);
   if (L)
   {
     V.result = F->terms[index].E;
@@ -53,7 +85,7 @@ shared_ptr<const Object> Context::evaluate(int index)
   {
     if (not V.computed)
     {
-      vector<shared_ptr<const expression> > args(input_indices.size());
+      vector< expression_ref > args(input_indices.size());
       for(int i=0;i<args.size();i++)
       {
 	shared_ptr<const Object> arg_result = evaluate(input_indices[i]);
@@ -252,27 +284,17 @@ Context::Context(const polymorphic_cow_ptr<Formula>& F_)
  :F(F_),
   values(F->size()) 
 {
+
   // First initialize all constant values.  Probably I should just move this to evaluate
   for(int index=0;index<values.size();index++)
-  {
     values[index] = shared_ptr<value>(new value);
-
-    // set initial value if this is a constant
-    if (shared_ptr<const constant> C = dynamic_pointer_cast<const constant>(F->terms[index].E->head)) 
-    {
-      assert(not F->has_inputs(index));
-      // do we need to get an unshared copy here?
-      values[index]->result = shared_ptr<Object>(C->value->clone());
-      values[index]->computed = true;
-    }
-  }
 
   // Then set all default values.
   for(int index=0;index<values.size();index++)
   {
-    if (shared_ptr<const parameter> C = dynamic_pointer_cast<const parameter>(F->terms[index].E->head)) 
+    if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(F->terms[index].E)) 
     {
-      // This match results an expression, which contains a constant, which contains a value.
+      // This match results in an expression, which contains a constant, which contains a value.
       // The easiest way to extract the constant value is just to evaluate the expression.
 
       expression_ref default_value (data_function("default_value",2));
