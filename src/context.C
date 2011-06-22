@@ -61,20 +61,11 @@ shared_ptr<const Object> Context::evaluate(int index)
     return V.result;
   }
 
-  // If we are a constant, or parameter, or.... ?
-  if (input_indices.size() == 0)
-  {
-    if (not V.computed)
-      throw myexception()<<"Evaluating term "<<F->terms[index].name<<" (index = "<<index<<"): leaf node is not marked up-to-date!";
-
-    return V.result;
-  }
-
   // If the expression is a function expression...
   shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->head);
   if (L)
   {
-    V.result = F->terms[index].E;
+    V.result = R;
     V.computed = true;
     return V.result;
   }
@@ -87,16 +78,9 @@ shared_ptr<const Object> Context::evaluate(int index)
     {
       vector< expression_ref > args(input_indices.size());
       for(int i=0;i<args.size();i++)
-      {
-	shared_ptr<const Object> arg_result = evaluate(input_indices[i]);
-	shared_ptr<const expression> exp_result = dynamic_pointer_cast<const expression>(arg_result);
-	if (exp_result)
-	  args[i] = exp_result;
-	else
-	  args[i] = shared_ptr<const expression>(new expression(constant(arg_result)));
-      }
+	args[i] = evaluate(input_indices[i]);
 
-      V.result = shared_ptr<const Object>(new expression(f,args));
+      V.result = expression_ref(new expression(f,args));
       V.computed = true;
     }
 
