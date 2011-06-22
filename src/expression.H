@@ -39,16 +39,13 @@ class expression_ref;
 // - lambda(int)
 // - operation
 // - function / data
-//   + FIXME tuple should really be a data expression.
-// - constant?
-//   + FIXME: Can we have (2,3) instead of (constant(2),constant(3))?
-// - Model?
 //   + FIXME: should we evaluate these?
 
 struct expression: virtual public Object
 {
+  // FIXME - replace args with sub, and make sub[0] = head, sub[i] = args[i-1]
+
   // The operator or object
-  // FIXME - if I made everything into an Operator, then (say) a parameter could specify&require only 0 arguments.
   boost::shared_ptr<const Object> head;
 
   // An expression may or may not have sub-expressions
@@ -127,10 +124,6 @@ int n_match_results(const expression_ref&);
 
 bool find_match(const expression_ref& pattern,const expression_ref& E, std::vector< expression_ref >& results);
 
-#include "model.H"
-
-std::vector< expression_ref > model_args(const Model& M);
-
 enum function_type_t {data_function_f, body_function_f};
 
 struct Function: public Operator
@@ -165,8 +158,6 @@ expression_ref apply(const expression_ref& E,const expression_ref& arg);
 expression_ref apply(const expression_ref& E, const std::vector< expression_ref > args);
 
 expression_ref lambda_expression(const Operator& O);
-
-expression_ref model_expression(const Model& M);
 
 // FIXME - If we're substituting a lambda expression we have to rename its dummys to make sure
 //         there is no overlap.

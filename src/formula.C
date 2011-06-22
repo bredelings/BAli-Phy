@@ -6,10 +6,13 @@
 
 #include "util.H"
 
+#include <iostream>
+
 using boost::shared_ptr;
 using std::vector;
 using std::string;
 using std::pair;
+using std::cerr;
 
 bool term_ref::is_state() const {return F->is_state(index);}
 bool term_ref::is_constant() const {return F->is_constant(index);}

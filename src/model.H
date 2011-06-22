@@ -522,4 +522,8 @@ std::vector<int> parameters_with_extension(const Model& M, std::string name);
 
 boost::shared_ptr<Model> prefix_model(const Model&, const std::string& prefix);
 
+std::vector< expression_ref > model_args(const Model& M);
+
+expression_ref model_expression(const Model& M);
+
 #endif

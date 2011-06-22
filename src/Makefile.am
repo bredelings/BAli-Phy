@@ -294,7 +294,7 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
 	alignment-random.C parameters.C myexception.C monitor.C \
 	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
-	timer_stack.C io.C operator.C expression.C formula.C smodel-objects.C
+	timer_stack.C io.C operator.C expression.C smodel-objects.C
 
 #---------------------------------------------------------------
 
@@ -317,7 +317,7 @@ path_graph_SOURCES = tools/path-graph.C alignment.C alphabet.C sequence.C util.C
 #---------------------------------------------------------------
 
 expression2_SOURCES = expression2.C util.C formula.C context.C computation.C \
-	operator.C operations.C expression.C model.C
+	operator.C expression.C
 
 #---------------------------------------------------------------
 

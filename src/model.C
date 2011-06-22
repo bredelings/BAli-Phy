@@ -945,3 +945,21 @@ shared_ptr<Model> prefix_model(const Model& M, const string& prefix)
 
   return M2;
 }
+
+vector< expression_ref > model_args(const Model& M)
+{
+  vector< expression_ref > args;
+
+  for(int i=0;i<M.n_parameters();i++) 
+  {
+    args.push_back( expression_ref(new parameter(M.parameter_name(i)) ) );
+  }
+
+  return args;
+}
+
+expression_ref model_expression(const Model& M)
+{
+  return new expression(M,model_args(M));
+}
+

@@ -2,7 +2,6 @@
 #include "util.H"
 #include "operation.H"
 #include "formula.H"
-#include "model.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -160,23 +159,6 @@ tribool parameter::compare(const Object& o) const
     return false;
 
   return parameter_name == E->parameter_name;
-}
-
-vector< expression_ref > model_args(const Model& M)
-{
-  vector< expression_ref > args;
-
-  for(int i=0;i<M.n_parameters();i++) 
-  {
-    args.push_back( expression_ref(new parameter(M.parameter_name(i)) ) );
-  }
-
-  return args;
-}
-
-expression_ref model_expression(const Model& M)
-{
-  return new expression(M,model_args(M));
 }
 
 lambda::lambda(int d)
