@@ -28,9 +28,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <iostream>
 #include <util.H>
+#include "object.H"
 
 template <typename T>
-struct Bounds
+struct Bounds: public Object
 {
   /// is there a lower bound on the range?
   bool has_lower_bound;
@@ -41,6 +42,21 @@ struct Bounds
   bool has_upper_bound;
   /// the value of the upper bound, if any
   T upper_bound;
+
+  Bounds<T>* clone() const {return new Bounds<T>(*this);}
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) return true;
+
+    const Bounds<T>* B = dynamic_cast<const Bounds<T>*>(&O);
+    if (not B) return false;
+
+    if (has_lower_bound != B->has_lower_bound) return false;
+    if (lower_bound != B->lower_bound) return false;
+    if (has_upper_bound != B->has_upper_bound) return false;
+    if (upper_bound != B->upper_bound) return false;
+    return true;
+  }
 
   /// check if a value is below the lower bound on the range
   bool below_lower_bound(double x) const { return (has_lower_bound and x<lower_bound); }
