@@ -145,6 +145,12 @@ struct Function: public Operator
   Function(const std::string&, int n, function_type_t);
 };
 
+expression_ref Tuple(int);
+
+extern expression_ref Cons;
+
+extern expression_ref ListEnd;
+
 Function data_function(const std::string&, int);
 
 std::vector<std::string> find_named_parameters(const expression_ref&);

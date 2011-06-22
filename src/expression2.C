@@ -142,6 +142,8 @@ int main()
 
   expression_ref default_value = lambda_expression(data_function("default_value",2));
   term_ref defv = F->add_expression(  default_value("X")(Constant(Double(2.0))) );
+  term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
+  term_ref tuple_x_y = F->add_expression(Tuple(2)(X,Y));
 
   Context CTX1(F);
 
@@ -178,6 +180,8 @@ int main()
   result = CTX2.evaluate(cond);
   CTX2.evaluate(defv);
   CTX2.evaluate(z_gt);
+  CTX2.evaluate(list_x_y);
+  CTX2.evaluate(tuple_x_y);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).

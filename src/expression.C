@@ -299,3 +299,12 @@ vector<string> find_named_parameters(const expression_ref& e)
   return names;
 }
 
+expression_ref Tuple(int n)
+{
+  return lambda_expression( data_function("Tuple",n) );
+}
+
+expression_ref Cons = lambda_expression( data_function("Cons",2) );
+
+expression_ref ListEnd = lambda_expression( data_function("[]",0) );
+
