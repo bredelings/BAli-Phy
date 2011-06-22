@@ -20,7 +20,7 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-/* 1. To do a series of operations on a state node, access the value and mark it uncomputed.
+/* 1. To do a series of operations on a parameter, obtained a shared_ptr to the value and mark it uncomputed.
  * We think of this as obtaining a 'lock' on the value.  Any attempts to obtain the variable's
  *   value will then throw an exception.
  * After we are finished modifying the value, we can mark it up-to-date again.
@@ -28,12 +28,18 @@ using std::endl;
  */
 
 /*
- * 2. A probability model has a collection of variables, and als
- * (i)  a dependency graph. Which variables does each variable condition on?
- * (ii) a density function: each random variable should occur in exactly one density.
- * (iii) a possibly an UNNORMALIZED density.
- * (iv) a random sample( ): function.
- *   o How do we do random functions?  I guess we could mark them uncacheable.  See I/O monad in Haskell?
+ * 2. A probability model has a collection of variables, and also
+ * (i)  a series of annotations (x,y) ~ distribution(a,b,c)
+ * (ii) we can represent this as (~ (x,y) distribution (a,b,c)) where (x,y)
+ *  + here (x,y) and (a,b,c) are tuples.
+ *  + here distribution is a constant object.
+ * (iii) the distribution object will specify
+ *  + expressions for the density
+ *  + member functions for the density
+ *  + a distribution name
+ *  + a possibly an UNNORMALIZED density.
+ *  + a random sample( ): function.
+ *   o How do we evaluate random functions?  I guess we could mark them uncacheable.  See I/O monad in Haskell?
  */
 
 
