@@ -73,7 +73,7 @@ struct term_ref
   int index;
   polymorphic_cow_ptr<Formula> F;
 
-  bool is_state() const;
+  bool is_parameter() const;
   bool is_constant() const;
   bool is_computed() const;
   std::string print() const;
@@ -103,7 +103,7 @@ struct Formula: virtual public Object
   std::vector<Term> terms;
 
   /// cached list of which terms are variables
-  std::vector<int> state_indices;
+  std::vector<int> parameter_indices;
 
   term_ref find_computation(const Operation& o, const std::vector<int>& indices) const;
 
@@ -136,9 +136,9 @@ public:
 
   bool is_constant(int index) const;
 
-  int n_state_nodes() const;
+  int n_parameters() const;
 
-  bool is_state(int index) const;
+  bool is_parameter(int index) const;
 
   bool is_computed(int index) const;
 

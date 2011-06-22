@@ -14,7 +14,7 @@ using std::string;
 using std::pair;
 using std::cerr;
 
-bool term_ref::is_state() const {return F->is_state(index);}
+bool term_ref::is_parameter() const {return F->is_parameter(index);}
 bool term_ref::is_constant() const {return F->is_constant(index);}
 bool term_ref::is_computed() const {return F->is_computed(index);}
 string term_ref::print() const {return F->name_for_index(index);}
@@ -69,14 +69,14 @@ bool Formula::is_constant(int index) const
   return true;
 }
 
-bool Formula::is_state(int index) const
+bool Formula::is_parameter(int index) const
 {
   return (not is_computed(index) and not is_constant(index));
 }
 
-int Formula::n_state_nodes() const
+int Formula::n_parameters() const
 {
-  return state_indices.size();
+  return parameter_indices.size();
 }
 
 bool Formula::is_computed(int index) const
@@ -147,7 +147,7 @@ term_ref Formula::add_term(const Term& t)
 
   // Update ref for parameters
   if (dynamic_pointer_cast<const parameter>(t.E))
-    state_indices.push_back(new_index);
+    parameter_indices.push_back(new_index);
 
   // Check new computed nodes, mark slots as being affected
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(t.E))
