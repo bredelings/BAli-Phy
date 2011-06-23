@@ -141,7 +141,7 @@ term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
     vector<expression_ref> results; 
 
     // If its a probability expression, then...
-    if (find_match(query,F->terms[i].E,results))
+    if (find_match(query,(*F)[i],results))
     {
       // Extract the density operation
       shared_ptr<const Operation> density_op = dynamic_pointer_cast<const Operation>(results[0]);

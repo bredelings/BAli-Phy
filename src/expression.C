@@ -79,7 +79,7 @@ tribool constant::compare(const Object& o) const
 }
 
 expression_ref::expression_ref(const term_ref& t)
-  :shared_ptr<const Object>(t.F->terms[t.index].E)
+  :shared_ptr<const Object>((*t.F)[t.index])
 {}
 
 tribool dummy::compare(const Object& o) const {

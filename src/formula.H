@@ -84,7 +84,7 @@ struct term_ref
   term_ref(int i,const Formula& f);
 };
 
-struct Formula: virtual public Object
+class Formula: virtual public Object
 {
   struct Term
   {
