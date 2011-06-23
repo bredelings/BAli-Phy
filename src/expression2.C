@@ -158,13 +158,20 @@ term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
 	Pr = Pr_i * Pr;
     }
   }
-  expression_ref prob = lambda_expression( data_function("probability",1) );
 
-  F->add_expression(prob(Pr));
+  // If this model has random variables... 
+  if (Pr)
+  {
+    expression_ref prob = lambda_expression( data_function("probability",1) );
 
-  vector<int> results;
-  F->find_match_expression2(prob(_1),results);
-  return term_ref(results[0],F);
+    F->add_expression(prob(Pr));
+
+    vector<int> results;
+    F->find_match_expression2(prob(_1),results);
+    return term_ref(results[0],F);
+  }
+  else
+    return term_ref();
 }
 
 
