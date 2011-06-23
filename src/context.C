@@ -30,6 +30,7 @@ shared_ptr<const Object> Context::evaluate(int index)
   if (V.computation) assert(V.result);
 
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  // FIXME - single-term, 0-argument functions should not need to be expressions.
   if (not E)
   {
     assert(not V.computation);
