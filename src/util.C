@@ -25,7 +25,6 @@ along with BAli-Phy; see the file COPYING.  If not see
  */
 
 #include "util.H"
-#include "io.H"
 
 using std::vector;
 using std::string;
