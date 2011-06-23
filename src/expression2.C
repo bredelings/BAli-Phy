@@ -30,7 +30,7 @@ using std::endl;
 /*
  * 2. A probability model has a collection of variables, and also
  * (i)  a series of annotations (x,y) ~ distribution(a,b,c)
- * (ii) we can represent this as (~ (x,y) distribution (a,b,c)) where (x,y)
+ * (ii) we can represent this as (~ distribution (x,y) (a,b,c))
  *  + here (x,y) and (a,b,c) are tuples.
  *  + here distribution is a constant object.
  * (iii) the distribution object will specify
@@ -133,18 +133,25 @@ term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
 
   typed_expression_ref<Log_Double> Pr;
 
+  // Check each expression in the Formula
   for(int i=0;i<F->size();i++)
   {
     expression_ref Exp = prob_density(1,1,String("Exp"),exponential_density());
     vector<expression_ref> results; 
 
+    // If its a probability expression, then...
     if (find_match(query,F->terms[i].E,results))
     {
+      // Extract the density operation
       shared_ptr<const Operation> density_op = dynamic_pointer_cast<const Operation>(results[0]);
       if (not density_op) throw myexception()<<"Expression "<<i<<" does have an Op in the right place!";
 
+      // Create an expression for calculating the density of these random variables given their inputs
       expression_ref density_func = lambda_expression( *density_op );
       typed_expression_ref<Log_Double> Pr_i = density_func(results[1], results[2]);
+
+      // Extend the probability expression to include this term also.
+      // (FIXME: a balanced tree could save computation time)
       if (not Pr)
 	Pr = Pr_i;
       else
