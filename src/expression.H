@@ -242,6 +242,7 @@ template <typename T>
 struct typed_expression_ref: expression_ref
 {
 public:
+  typed_expression_ref() {}
   typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   typed_expression_ref(expression* v): expression_ref(v) {}
   typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
