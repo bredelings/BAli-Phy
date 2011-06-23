@@ -180,10 +180,10 @@ int main()
   Formula f;
   polymorphic_cow_ptr<Formula> F(f);
   //  term_ref x = F->add_state_node("X");
-  expression_ref x("X");
-  expression_ref y("Y");
-  expression_ref z("Z");
-  expression_ref w("W");
+  expression_ref x = parameter("X");
+  expression_ref y = parameter("Y");
+  expression_ref z = parameter("Z");
+  expression_ref w = parameter("W");
   term_ref one = F->add_expression(Double(1));
 
   typed_expression_ref<Double> X = x;
@@ -228,12 +228,12 @@ int main()
   F->add_expression( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
 
   expression_ref default_value = lambda_expression(data_function("default_value",2));
-  term_ref defv = F->add_expression(  default_value("X")(Constant(Double(2.0))) );
+  term_ref defv = F->add_expression(  default_value(parameter("X"))(Constant(Double(2.0))) );
   term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
   term_ref tuple_x_y = F->add_expression(Tuple(2)(X,Y));
   expression_ref Exp = prob_density(1,1,String("Exp"),exponential_density());
-  term_ref prior_x_y = F->add_expression(distributed_as(Exp,"X",Y+One));
-  term_ref prior_y_z = F->add_expression(distributed_as(Exp,"Y",Z+One));
+  term_ref prior_x_y = F->add_expression(distributed_as(Exp,parameter("X"),Y+One));
+  term_ref prior_y_z = F->add_expression(distributed_as(Exp,parameter("Y"),Z+One));
   term_ref probability_expression = add_probability_expression(F);
 
   Context CTX1(F);
@@ -280,8 +280,8 @@ int main()
   // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).
   // I could introduce a QUOTE expression to prevent this... that sounds rather LISP-y.
 
-  expression_ref pattern = default_value("X")(match(0));
-  expression_ref target = default_value("X")(One);
+  expression_ref pattern = default_value(parameter("X"))(match(0));
+  expression_ref target = default_value(parameter("X"))(One);
   vector< expression_ref > results;
   cout<<"Checking if expression "<<target->print()<<" matches query "<<pattern->print()<<":\n";
   if (find_match(pattern, target,results))

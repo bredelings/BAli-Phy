@@ -221,7 +221,7 @@ struct expression_ref: public boost::shared_ptr<const Object>
   {}
 
   expression_ref(const term_ref& t);
-
+  /*
   expression_ref(const std::string& s)
     :boost::shared_ptr<const Object>(new parameter(s))
   {}
@@ -229,7 +229,7 @@ struct expression_ref: public boost::shared_ptr<const Object>
   expression_ref(const char* s)
     :boost::shared_ptr<const Object>(new parameter(s))
   {}
-
+  */
   expression_ref(const Object& o)
     :boost::shared_ptr<const Object>(o.clone())
   {}

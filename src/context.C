@@ -250,13 +250,13 @@ void Context::set_value(int index, shared_ptr<const Object> O)
 
 void Context::set_value(const std::string& var, const Object& O)
 {
-  int index = F->find_expression(var);
+  int index = F->find_expression(parameter(var));
   return set_value(index,O);
 }
 
 void Context::set_value(const std::string& var, shared_ptr<const Object> O)
 {
-  int index = F->find_expression(var);
+  int index = F->find_expression(parameter(var));
   return set_value(index,O);
 }
 
