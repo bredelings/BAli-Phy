@@ -136,7 +136,6 @@ term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
   // Check each expression in the Formula
   for(int i=0;i<F->size();i++)
   {
-    expression_ref Exp = prob_density(1,1,String("Exp"),exponential_density());
     vector<expression_ref> results; 
 
     // If its a probability expression, then...
@@ -231,7 +230,7 @@ int main()
   term_ref defv = F->add_expression(  default_value(parameter("X"))(Constant(Double(2.0))) );
   term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
   term_ref tuple_x_y = F->add_expression(Tuple(2)(X,Y));
-  expression_ref Exp = prob_density(1,1,String("Exp"),exponential_density());
+  expression_ref Exp = prob_density(1,1,"Exp",exponential_density());
   term_ref prior_x_y = F->add_expression(distributed_as(Exp,parameter("X"),Y+One));
   term_ref prior_y_z = F->add_expression(distributed_as(Exp,parameter("Y"),Z+One));
   term_ref probability_expression = add_probability_expression(F);
