@@ -112,7 +112,9 @@ struct exponential_density: public Operation
     shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
     shared_ptr<const Double> mu = Args.evaluate_as<Double>(1);
 
-    Log_Double result = exp<log_double_t>(-*x/ *mu)/ *mu;
+    Log_Double result = log_double_t(0);
+    if (*x >= 0)
+      result = exp<log_double_t>(-*x/ *mu)/ *mu;
     return shared_ptr<const Object>(result.clone());
   }
 
