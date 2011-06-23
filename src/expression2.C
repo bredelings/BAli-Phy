@@ -88,6 +88,79 @@ using std::endl;
  *    Hmm... mightn't we need to modify the probability model from the context?
  */
 
+// Fields: n_random, n_parameters, string, density op
+expression_ref prob_density = lambda_expression( data_function("prob_density",4) );
+
+// Fields: (prob_density) (random vars) (parameter expressions)
+expression_ref distributed_as = lambda_expression( data_function("~",3) );
+
+struct exponential_density: public Operation
+{
+  exponential_density* clone() const {return new exponential_density;}
+  
+  tribool compare(const Object& o) const
+  {
+    if (this == &o) return true;
+
+    if (dynamic_cast<const exponential_density*>(&o)) return true;
+
+    return false;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
+    shared_ptr<const Double> mu = Args.evaluate_as<Double>(1);
+
+    Log_Double result = exp<log_double_t>(-*x/ *mu)/ *mu;
+    return shared_ptr<const Object>(result.clone());
+  }
+
+  string name() const {return "exponential_density";}
+
+  exponential_density():Operation(2) { }
+};
+
+match _(-1);
+match _1(0);
+match _2(1);
+match _3(2);
+match _4(3);
+
+term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
+{
+  expression_ref query = distributed_as(prob_density(_,_,_,_1),_2,_3);
+
+  typed_expression_ref<Log_Double> Pr;
+
+  for(int i=0;i<F->size();i++)
+  {
+    expression_ref Exp = prob_density(1,1,String("Exp"),exponential_density());
+    vector<expression_ref> results; 
+
+    if (find_match(query,F->terms[i].E,results))
+    {
+      shared_ptr<const Operation> density_op = dynamic_pointer_cast<const Operation>(results[0]);
+      if (not density_op) throw myexception()<<"Expression "<<i<<" does have an Op in the right place!";
+
+      expression_ref density_func = lambda_expression( *density_op );
+      typed_expression_ref<Log_Double> Pr_i = density_func(results[1], results[2]);
+      if (not Pr)
+	Pr = Pr_i;
+      else
+	Pr = Pr_i * Pr;
+    }
+  }
+  expression_ref prob = lambda_expression( data_function("probability",1) );
+
+  F->add_expression(prob(Pr));
+
+  vector<int> results;
+  F->find_match_expression2(prob(_1),results);
+  return term_ref(results[0],F);
+}
+
+
 int main()
 {
   Formula f;
@@ -144,6 +217,10 @@ int main()
   term_ref defv = F->add_expression(  default_value("X")(Constant(Double(2.0))) );
   term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
   term_ref tuple_x_y = F->add_expression(Tuple(2)(X,Y));
+  expression_ref Exp = prob_density(1,1,String("Exp"),exponential_density());
+  term_ref prior_x_y = F->add_expression(distributed_as(Exp,"X",Y+One));
+  term_ref prior_y_z = F->add_expression(distributed_as(Exp,"Y",Z+One));
+  term_ref probability_expression = add_probability_expression(F);
 
   Context CTX1(F);
 
@@ -182,10 +259,12 @@ int main()
   CTX2.evaluate(z_gt);
   CTX2.evaluate(list_x_y);
   CTX2.evaluate(tuple_x_y);
+  CTX2.evaluate(prior_x_y);
+  CTX2.evaluate(probability_expression);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).
-  // I could introduce a QUOTE expression... that sounds rather LISP-y.
+  // I could introduce a QUOTE expression to prevent this... that sounds rather LISP-y.
 
   expression_ref pattern = default_value("X")(match(0));
   expression_ref target = default_value("X")(One);
