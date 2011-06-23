@@ -93,10 +93,9 @@ struct Formula: virtual public Object
     std::vector<int> input_indices;
     std::vector<std::pair<int,int> > affected_slots;
     std::vector<int> affected_indices;
-    std::string name;
     bool top_level;
 
-    Term(const expression_ref& e):E(e),name(e->print()),top_level(false) {}
+    Term(const expression_ref& e):E(e),top_level(false) {}
   };
 
   /// The list of terms that compose this Formula
@@ -117,6 +116,8 @@ public:
   Formula* clone() const {return new Formula(*this);}
 
   int size() const {return terms.size();}
+
+  const expression_ref& operator[](int i) const {return terms[i].E;}
 
   const std::vector<int>& input_indices(int index) const {return terms[index].input_indices;}
 
@@ -153,6 +154,8 @@ public:
   term_ref add_expression(const expression_ref& e);
 
   term_ref find_expression(const expression_ref& e) const;
+
+  bool find_match_expression(const expression_ref& e, int index, std::vector< expression_ref >&) const;
 
   term_ref find_match_expression(const expression_ref& e, std::vector< expression_ref >&) const;
 

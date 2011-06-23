@@ -25,7 +25,7 @@ shared_ptr<const Object> Context::evaluate(int index)
 
   const vector<int>& input_indices = F->input_indices(index);
 
-  expression_ref R = F->terms[index].E;
+  expression_ref R = (*F)[index];
 
   if (V.computation) assert(V.result);
 
@@ -123,7 +123,7 @@ shared_ptr<const Object> Context::evaluate(int index)
 	V.computed = false;
     }
     if (V.computed)
-      std::cerr<<"revalidating computation "<<F->terms[index].name<<"\n";
+      std::cerr<<"revalidating computation "<<(*F)[index]->print()<<"\n";
   }
 
   // If the result is not yet marked as computed, then we must run the computation
@@ -139,7 +139,7 @@ shared_ptr<const Object> Context::evaluate(int index)
     }
     catch(myexception& e)
     {
-      e.prepend("Evaluating expression '"+F->terms[index].E->print()+"':\n");
+      e.prepend("Evaluating expression '"+(*F)[index]->print()+"':\n");
       throw e;
     }
     V.computation = Args.computation;
@@ -149,7 +149,7 @@ shared_ptr<const Object> Context::evaluate(int index)
     if (not V.result or new_result->maybe_not_equals(*V.result))
       V.result = new_result;
 
-    std::cerr<<"recomputing "<<F->terms[index].name<<"\n";
+    std::cerr<<"recomputing "<<(*F)[index]->print()<<"\n";
   }
     
   assert(V.result);
@@ -277,14 +277,14 @@ Context::Context(const polymorphic_cow_ptr<Formula>& F_)
   // Then set all default values.
   for(int index=0;index<values.size();index++)
   {
-    if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(F->terms[index].E)) 
+    if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>((*F)[index])) 
     {
       // This match results in an expression, which contains a constant, which contains a value.
       // The easiest way to extract the constant value is just to evaluate the expression.
 
       expression_ref default_value = lambda_expression(data_function("default_value",2));
       vector<int> results;
-      expression_ref query = default_value(F->terms[index].E)(match(0));
+      expression_ref query = default_value((*F)[index])(match(0));
       term_ref found = F->find_match_expression2(query, results);
       if (found != -1)
       {
@@ -301,7 +301,7 @@ ostream& operator<<(ostream& o, const Context& C)
 {
   for(int index=0;index<C.size();index++)
   {
-    o<<index<<" "<<C.F->terms[index].name<<" = ";
+    o<<index<<" "<<(*C.F)[index]->print()<<" = ";
     if (C.values[index]->result)
       o<<C.values[index]->result->print();
     else

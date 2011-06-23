@@ -25,7 +25,7 @@ term_ref::term_ref(int i,boost::shared_ptr<const Formula> f):index(i),F(f) {}
 
 string Formula::name_for_index(int index) const
 {
-  return terms[index].name;
+  return terms[index].E->print();
 }
 
 bool Formula::has_inputs(int index) const 
@@ -141,9 +141,9 @@ term_ref Formula::add_term(const Term& t)
 #endif
 
   // Warn about duplicate names
-  int same_name = find_term_with_name(t.name);
+  int same_name = find_term_with_name(t.E->print());
   if (same_name != -1)
-    std::cerr<<"Warning ["<<new_index<<"]: term with name '"<<t.name<<"' already exists at index "<<same_name<<".!\n";
+    std::cerr<<"Warning ["<<new_index<<"]: term with name '"<<t.E->print()<<"' already exists at index "<<same_name<<".!\n";
 
   // Update ref for parameters
   if (dynamic_pointer_cast<const parameter>(t.E))
@@ -187,7 +187,7 @@ term_ref Formula::add_expression(const expression_ref& R)
 term_ref Formula::find_term_with_name(const string& name) const
 {
   for(int i=0;i<size();i++)
-    if (terms[i].name == name)
+    if (terms[i].E->print() == name)
       return term_ref(i,*this);
 
   return term_ref();
@@ -254,16 +254,23 @@ bool Formula::find_match2(const expression_ref& query, int index, std::vector<in
   
 }
 
+bool Formula::find_match_expression(const expression_ref& E, int index, std::vector< expression_ref >& results) const
+{
+  results.clear();
+  bool success = find_match(E, (*this)[index], results);
+
+  if (not success)
+    results.clear();
+
+  return success;
+}
+
 term_ref Formula::find_match_expression(const expression_ref& E, std::vector< expression_ref >& results) const
 {
   for(int i=0;i<terms.size();i++)
-  {
-    results.clear();
-    if (find_match(E, terms[i].E, results))
+    if (find_match_expression(E, i, results))
       return term_ref(i, *this);
-  }
 
-  results.clear();
   return term_ref();
 }
 
