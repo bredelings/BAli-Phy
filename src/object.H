@@ -2,11 +2,12 @@
 #define OBJECT_H
 
 #include <string>
-
 #include <boost/shared_ptr.hpp>
 #include <boost/logic/tribool.hpp>
 
 #include "util.H"
+
+#include "log-double.H"
 
 using boost::logic::tribool;
 using boost::logic::indeterminate;
@@ -170,6 +171,8 @@ typedef POD_math<double> Double;
 typedef POD_math<int> Int;
 typedef POD_math<unsigned> Unsigned;
 typedef POD<bool> Bool;
+typedef POD<std::string> String;
+typedef POD_math<log_double_t> Log_Double;
 
 template <typename T>
 boost::shared_ptr<T> ptr(const T& t) {return boost::shared_ptr<T>(t.clone());}
