@@ -126,13 +126,19 @@ term_ref Formula::find_computation(const Operation& o, const vector<int>& indice
 
 term_ref Formula::add_expression(const expression_ref& R)
 {
+  return add_sub_expression(R,true);
+}
+
+term_ref Formula::add_sub_expression(const expression_ref& R, bool top)
+{
   Term t(R);
+  t.top_level = top;
 
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(t.E))
   {
     vector<int> arg_indices;
     for(int i=0;i<E->args.size();i++)
-      arg_indices.push_back( add_expression(E->args[i] ) );
+      arg_indices.push_back( add_sub_expression(E->args[i] ) );
     t.input_indices = arg_indices;
   }
 

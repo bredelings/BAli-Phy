@@ -110,6 +110,7 @@ class Formula: virtual public Object
 
   term_ref find_constant_with_value(const object_ref& value) const;
 
+  term_ref add_sub_expression(const expression_ref& e, bool top=false);
 public:
   Formula* clone() const {return new Formula(*this);}
 
