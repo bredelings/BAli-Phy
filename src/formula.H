@@ -110,8 +110,6 @@ struct Formula: virtual public Object
 
   term_ref find_constant_with_value(const object_ref& value) const;
 
-  term_ref add_term(const Term&);
-
 public:
   Formula* clone() const {return new Formula(*this);}
 

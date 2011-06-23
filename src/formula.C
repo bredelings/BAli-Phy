@@ -124,8 +124,18 @@ term_ref Formula::find_computation(const Operation& o, const vector<int>& indice
   return term_ref();
 }
 
-term_ref Formula::add_term(const Term& t)
+term_ref Formula::add_expression(const expression_ref& R)
 {
+  Term t(R);
+
+  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(t.E))
+  {
+    vector<int> arg_indices;
+    for(int i=0;i<E->args.size();i++)
+      arg_indices.push_back( add_expression(E->args[i] ) );
+    t.input_indices = arg_indices;
+  }
+
   // If the expression already exists, then return a reference to the existing term
   int index = find_expression(t.E);
   if (index != -1) return term_ref(index,*this);
@@ -167,22 +177,6 @@ term_ref Formula::add_term(const Term& t)
   //  std::cerr<<"adding term "<<t.E->print()<<"\n";
   return term_ref(new_index,*this);
 }
-
-term_ref Formula::add_expression(const expression_ref& R)
-{
-  Term t(R);
-
-  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(t.E))
-  {
-    vector<int> arg_indices;
-    for(int i=0;i<E->args.size();i++)
-      arg_indices.push_back( add_expression(E->args[i] ) );
-    t.input_indices = arg_indices;
-  }
-
-  return add_term(t);
-}
-
 
 term_ref Formula::find_term_with_name(const string& name) const
 {
