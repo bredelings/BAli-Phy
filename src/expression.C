@@ -18,6 +18,8 @@ vector<string> print_arg_expressions(const expression& e)
   return arg_names;
 }
 
+// How do I make constructor-specific methods of printing data expressions?
+// Can I move to defining the print function using an expression?
 string expression::print() const 
 {
   string result;
