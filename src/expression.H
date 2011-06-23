@@ -197,6 +197,14 @@ struct expression_ref: public boost::shared_ptr<const Object>
     return apply(apply(apply(*this,arg1),arg2),arg3);
   }
 
+  expression_ref operator()(const expression_ref& arg1, 
+			    const expression_ref& arg2,
+			    const expression_ref& arg3,
+			    const expression_ref& arg4) const
+  {
+    return apply(apply(apply(apply(*this,arg1),arg2),arg3),arg4);
+  }
+
   expression_ref() {}
 
   expression_ref(Object* v)
