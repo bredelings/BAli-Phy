@@ -66,6 +66,26 @@ struct expression_ref;
 // TODO: allow tuples to specify arguments to priors.
 // TODO: allow lists... for what?
 
+// 4. eval_match( )...
+// Functions that cannot be represented in static flow graph
+// - are doing work.
+// - probably only need to have their results cached, instead of having their internal processing checkpointed, just like Ops.
+
+// // A function is defined by
+// (defun name=string args=expression_ref guard=expression_ref body=expression_ref)
+// The args will be an element or tuple that the calling args must eval_match.
+// I it eval_matches to True, then this definition applies.
+// We then substitute into the body, and return eval_match the body against Q.
+
+// Backtracking in eval_match could be expensive...
+
+// I should probably make a generic context structure that can
+// * store references to variables
+// * store a list of functions
+// * define expressions
+// I could then make my current context into one where certain expressions are cached.
+// How should I genericize the FreeOperationArgs?
+
 class Formula;
 
 struct term_ref
