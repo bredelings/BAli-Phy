@@ -206,41 +206,7 @@ Function data_function(const std::string& s, int n)
 
 expression_ref substitute(const expression_ref& R1, int dummy_index, const expression_ref& R2)
 {
-  // If this is the relevant dummy, then substitute
-  if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R1))
-  {
-    if (D->index == dummy_index)
-      return R2;
-    else
-      return R1;
-  }
-
-  shared_ptr< const expression> E1 = dynamic_pointer_cast<const expression>(R1);
-
-  // If this is any other constant, then it doesn't contain the dummy
-  if (not E1) return R1;
-
-  // If this is an expression, then compute the substituted args
-  vector< expression_ref > args(E1->n_args());
-  bool found = false;
-  for(int i=0;i<E1->n_args();i++)
-  {
-    args[i] = substitute(E1->args[i], dummy_index, R2);
-    if (args[i] != E1->args[i]) found = true;
-  }
-
-  // This is not a dummy expression, and the arguments (we didn't search head) do not contain the dummy being replaced;
-  if (not found) return R1;
-
-  // make sure we don't try to substitute for quantified dummies
-  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E1->head))
-  {
-    if (L->dummy_index == dummy_index)
-      throw myexception()<<"Trying to substitution for dummy "<<dummy_index<<" in lambda express that quantifies it!";
-  }
-
-  // Construct a new expression containing the substituted args.
-  return expression_ref(new expression(E1->head,args));
+  return substitute(R1,dummy(dummy_index),R2);
 }
 
 expression_ref substitute(const expression_ref& R1, const object_ref& D, const expression_ref& R2)

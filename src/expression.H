@@ -157,6 +157,8 @@ std::vector<std::string> find_named_parameters(const expression_ref&);
 
 expression_ref substitute(const expression_ref& E1, int dummy, const expression_ref& E2);
 
+expression_ref substitute(const expression_ref& E1, const object_ref& D, const expression_ref& E2);
+
 // Single-arg version  (Is this a function at all?)";
 expression_ref apply(const expression_ref& E,const expression_ref& arg);
 
