@@ -275,4 +275,8 @@ std::ostream& operator<<(std::ostream& o,const expression_ref& R)
 // how does boost::bind work? boost::spirit?
 #endif
 
+expression_ref eval(const expression_ref& R);
+
+expression_ref eval_match(const expression_ref& R, const expression_ref& Q, std::vector<expression_ref>& results);
+
 #endif

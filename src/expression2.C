@@ -293,4 +293,9 @@ int main()
   }
   else
     cout<<"no match!";
+
+  results.clear();
+  expression_ref R = eval_match(Tuple(2)(One+One,One+One+One),Tuple(2)(Constant(Double(2)),Constant(Double(3))),results);
+  if (R)
+    cout<<"R = "<<R->print()<<"\n";
 }
