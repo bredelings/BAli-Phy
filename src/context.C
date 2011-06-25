@@ -156,11 +156,17 @@ shared_ptr<const Object> Context::evaluate(int index)
   return V.result;
 }
 
-
-void Context::set_value(int index, const Object& O)
+boost::shared_ptr<const Object> Context::get_value(const std::string& var) const
 {
-  shared_ptr<const Object> O2 ( O.clone() );
-  set_value(index, O2);
+  int index = F->find_expression(parameter(var));
+  return get_value(index);
+}
+
+boost::shared_ptr<const Object> Context::get_value(int index) const
+{
+  assert(dynamic_cast<const parameter*>(&*(*F)[index]));
+  assert(values[index]->computed);
+  return values[index]->result;
 }
 
 // A node is "computed" (i.e. V.computed) iff we know the value for this node.
@@ -178,7 +184,7 @@ void Context::set_value(int index, const Object& O)
 // A2. Yes.  If any intermediate node has all inputs with the same value, then that
 //     node could be re-shared.
 
-void Context::set_value(int index, shared_ptr<const Object> O)
+void Context::set_value(int index, const object_ref& O)
 {
   if (F->has_inputs(index))
     throw myexception()<<"Cannot overwrite computed nodes!";
@@ -248,13 +254,7 @@ void Context::set_value(int index, shared_ptr<const Object> O)
   }
 }
 
-void Context::set_value(const std::string& var, const Object& O)
-{
-  int index = F->find_expression(parameter(var));
-  return set_value(index,O);
-}
-
-void Context::set_value(const std::string& var, shared_ptr<const Object> O)
+void Context::set_value(const std::string& var, const object_ref& O)
 {
   int index = F->find_expression(parameter(var));
   return set_value(index,O);

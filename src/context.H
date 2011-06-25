@@ -46,16 +46,16 @@ struct Context: virtual public Object
   boost::shared_ptr<const Object> evaluate(int index);
 
   /// Update the value of a non-constant, non-computed index
-  void set_value(int index, boost::shared_ptr<const Object> O);
+  boost::shared_ptr<const Object> get_value(const std::string&) const;
+
+  /// Update the value of a non-constant, non-computed index -- or should this be the nth parameter?
+  boost::shared_ptr<const Object> get_value(int index) const;
 
   /// Update the value of a non-constant, non-computed index
-  void set_value(int index, const Object& O);
+  void set_value(int index, const object_ref&);
 
   /// Update the value of a non-constant, non-computed index
-  void set_value(const std::string& var, boost::shared_ptr<const Object> O);
-
-  /// Update the value of a non-constant, non-computed index
-  void set_value(const std::string& var, const Object& O);
+  void set_value(const std::string& var, const object_ref&);
 
   /// How many indices total do we have?
   int size() const;
