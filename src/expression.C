@@ -236,9 +236,13 @@ expression_ref substitute(const expression_ref& R1, const object_ref& D, const e
   // If this is any other constant, then it doesn't contain the dummy
   if (not E1) return R1;
 
-  // If this is an expression, then compute the substituted args
-  vector< expression_ref > args(E1->n_args());
+  // This is an expression, so compute the substituted head
   bool found = false;
+  expression_ref head = substitute(E1->head,D,R2);
+  if (head != E1->head) found = true;
+
+  // This is an expression, so compute the substituted args
+  vector< expression_ref > args(E1->n_args());
   for(int i=0;i<E1->n_args();i++)
   {
     args[i] = substitute(E1->args[i], D, R2);
@@ -256,7 +260,7 @@ expression_ref substitute(const expression_ref& R1, const object_ref& D, const e
   }
 
   // Construct a new expression containing the substituted args.
-  return expression_ref(new expression(E1->head,args));
+  return expression_ref(new expression(head,args));
 }
 
 expression_ref apply(const expression_ref& R,const expression_ref& arg)
