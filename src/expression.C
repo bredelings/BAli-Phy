@@ -378,6 +378,21 @@ expression_ref eval(const Context& C, const expression_ref& R)
   if (L)
     return R;
 
+  shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E->head);
+  if (E2)
+  {
+    shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E2->head);
+    if (not L)
+      throw myexception()<<"Can't evaluate expression '"<<E->print()<<"' with head = '"<<E2->print()<<"'";
+
+    if (E->n_args() > 1)
+      throw myexception()<<"Expression '"<<E->print()<<"' applies a lambda function to more than one argument.";
+
+    // FIXME - is this enough evaluation?
+    return eval(C,substitute(E2->args[0], L->dummy_index, E->args[0]));
+  }
+  
+
   // If the expression is a data function expression, evaluate its arguments
   shared_ptr<const Function> f = dynamic_pointer_cast<const Function>(E->head);
   if (f and f->what_type == data_function_f)
