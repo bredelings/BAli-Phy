@@ -161,6 +161,9 @@ expression_ref substitute(const expression_ref& E1, int dummy, const expression_
 
 expression_ref substitute(const expression_ref& E1, const object_ref& D, const expression_ref& E2);
 
+/// Substitute for all matches found
+expression_ref substitute(const expression_ref& R, const std::vector<expression_ref>& replace);
+
 // Single-arg version  (Is this a function at all?)";
 expression_ref apply(const expression_ref& E,const expression_ref& arg);
 
@@ -216,6 +219,10 @@ struct expression_ref: public boost::shared_ptr<const Object>
   {}
 
   expression_ref(const boost::shared_ptr<const Object>& v)
+    :boost::shared_ptr<const Object>(v) 
+  {}
+
+  explicit expression_ref(const boost::shared_ptr<Object>& v)
     :boost::shared_ptr<const Object>(v) 
   {}
 
@@ -279,8 +286,12 @@ std::ostream& operator<<(std::ostream& o,const expression_ref& R)
 // how does boost::bind work? boost::spirit?
 #endif
 
-expression_ref eval(const expression_ref& R);
+class Context;
 
-expression_ref eval_match(const expression_ref& R, const expression_ref& Q, std::vector<expression_ref>& results);
+expression_ref eval(const Context& C, const expression_ref& R);
+
+bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, std::vector<expression_ref>& results,bool=false);
+
+
 
 #endif

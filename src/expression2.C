@@ -207,6 +207,8 @@ int main()
   cout<<"mul(x)(y) = "<<mul(x)(y)->print()<<"\n";
   cout<<"mul(x,y) = "<<mul(x,y)->print()<<"\n\n\n";
 
+  expression_ref defun = lambda_expression( data_function("defun",3) );
+
   term_ref x_times_y_plus_one = F->add_expression( plus(mul(x)(y))(one) );
 
   term_ref z_gt_1 = F->add_expression(gt(z)(one));
@@ -227,6 +229,8 @@ int main()
   F->add_expression( If( Z > One , X*Y+One , W*W ) );
   // -- can we create constants easily?
   F->add_expression( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
+
+  F->add_expression( defun( lambda_expression(body_function("square",1))(_1), Bool(true), mul(_1,_1)) );
 
   expression_ref default_value = lambda_expression(data_function("default_value",2));
   term_ref defv = F->add_expression(  default_value(parameter("X"))(Constant(Double(2.0))) );
@@ -295,7 +299,12 @@ int main()
     cout<<"no match!";
 
   results.clear();
-  expression_ref R = eval_match(Tuple(2)(One+One,One+One+One),Tuple(2)(Constant(Double(2)),Constant(Double(3))),results);
-  if (R)
-    cout<<"R = "<<R->print()<<"\n";
+  expression_ref test = Tuple(2)(One+One,One+One+One);
+  if (eval_match(CTX1,test,Tuple(2)(Constant(Double(2)),Constant(Double(3))),results) )
+    cout<<"R = "<<test->print()<<"\n";
+
+  expression_ref test2 = Tuple(2)(lambda_expression(body_function("square",1))(parameter("X")),One+One);
+  results.clear();
+  if (eval_match(CTX1, test2,Tuple(2)( Constant(Double(9)),Constant(Double(2))), results))
+    cout<<"R2 = "<<test2->print()<<"\n";
 }
