@@ -86,6 +86,12 @@ struct expression_ref;
 // I could then make my current context into one where certain expressions are cached.
 // How should I genericize the FreeOperationArgs?
 
+// 5. Higher-order functions
+// - TODO: make expression.head just the first argument.
+// - perhaps I can treat ALL applies as expressions that don't get substituted until they are evaluated...
+//   + the expressions could be evaluated to something lower-order and they put into the static-flow context
+// - assert that we never have an expression with just 1 arguments (e.g. just a head, and no more arguments)
+
 class Formula;
 
 struct term_ref
