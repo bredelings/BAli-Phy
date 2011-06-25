@@ -267,15 +267,15 @@ expression_ref apply(const expression_ref& R,const expression_ref& arg)
 {
   assert(R);
 
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-  if (not E)
-    throw myexception()<<"Too many arguments to constant "<<R->print()<<".";
+  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  {
+    if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->head))
+      return substitute(E->args[0], L->dummy_index, arg);
+  }
 
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->head);
-  if (not L)
-    throw myexception()<<"Too many arguments to expression "<<E->print()<<".  (Is this a function at all?)";
-
-  return substitute(E->args[0], L->dummy_index, arg);
+  // Allow applying non-lambda expressions to arguments.
+  // We need this to apply variables that turn out to be functions.
+  return expression_ref(new expression(R,arg));
 }
 
 expression_ref apply(const expression_ref& E,
