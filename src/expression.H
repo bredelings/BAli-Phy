@@ -153,6 +153,8 @@ extern expression_ref ListEnd;
 
 Function data_function(const std::string&, int);
 
+Function body_function(const std::string&, int);
+
 std::vector<std::string> find_named_parameters(const expression_ref&);
 
 expression_ref substitute(const expression_ref& E1, int dummy, const expression_ref& E2);

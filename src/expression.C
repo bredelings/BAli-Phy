@@ -204,6 +204,11 @@ Function data_function(const std::string& s, int n)
   return Function(s, n, data_function_f);
 }
 
+Function body_function(const std::string& s, int n)
+{
+  return Function(s, n, body_function_f);
+}
+
 expression_ref substitute(const expression_ref& R1, int dummy_index, const expression_ref& R2)
 {
   return substitute(R1,dummy(dummy_index),R2);
