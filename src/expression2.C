@@ -175,7 +175,6 @@ term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
     return term_ref();
 }
 
-
 int main()
 {
   Formula f;
@@ -230,7 +229,15 @@ int main()
   // -- can we create constants easily?
   F->add_expression( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
 
-  F->add_expression( defun( lambda_expression(body_function("square",1))(_1), Bool(true), mul(_1,_1)) );
+  expression_ref square = lambda_expression(body_function("square",1));
+  expression_ref fmap = lambda_expression(body_function("fmap",2));
+
+  F->add_expression( defun( square(_1), Bool(true), mul(_1,_1)) );
+
+  F->add_expression( defun( fmap(_,ListEnd), Bool(true), ListEnd) );
+
+  // Oops, we have no way to create 
+  F->add_expression( defun( fmap(_1,Cons(_2,_3)), Bool(true), Cons(_1(_2),fmap(_1,_3) )) );
 
   expression_ref default_value = lambda_expression(data_function("default_value",2));
   term_ref defv = F->add_expression(  default_value(parameter("X"))(Constant(Double(2.0))) );
@@ -303,8 +310,15 @@ int main()
   if (eval_match(CTX1,test,Tuple(2)(Constant(Double(2)),Constant(Double(3))),results) )
     cout<<"R = "<<test->print()<<"\n";
 
-  expression_ref test2 = Tuple(2)(lambda_expression(body_function("square",1))(parameter("X")),One+One);
+
+  expression_ref test2 = Tuple(2)(square(parameter("X")),One+One);
   results.clear();
   if (eval_match(CTX1, test2,Tuple(2)( Constant(Double(9)),Constant(Double(2))), results))
     cout<<"R2 = "<<test2->print()<<"\n";
+
+  expression_ref test3 = fmap(square,Cons(parameter("X"),Cons(One+One,ListEnd)));
+
+  cout<<" "<<test3->print()<<" = ";
+  test3 = eval(CTX1, test3);
+  cout<<test3->print()<<"\n";
 }
