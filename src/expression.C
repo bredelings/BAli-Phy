@@ -531,7 +531,7 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
       // 1. If R matches the def, then store the results.
       if (not eval_match(C,R,def,def_match_results,true)) continue;
 
-      // 2. substitude the results into the guard expression
+      // 2. substitute the results into the guard expression
       guard = substitute(guard,def_match_results);
 
       //   ... and see if it evaluates to True
