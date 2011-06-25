@@ -123,11 +123,11 @@ struct exponential_density: public Operation
   exponential_density():Operation(2) { }
 };
 
-match _(-1);
-match _1(0);
-match _2(1);
-match _3(2);
-match _4(3);
+expression_ref _ = match(-1);
+expression_ref _1 = match(0);
+expression_ref _2 = match(1);
+expression_ref _3 = match(2);
+expression_ref _4 = match(3);
 
 term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
 {
