@@ -10,13 +10,13 @@ using std::string;
 
 using boost::dynamic_pointer_cast;
 
-vector<string> print_arg_expressions(const expression& e)
+vector<string> print_arg_expressions(const expression& e,int start)
 {
-  vector<string> arg_names;
-  for(int i=0;i<e.args.size();i++)
-    arg_names.push_back( e.args[i]->print() );
+  vector<string> sub_names;
+  for(int i=start;i<e.size();i++)
+    sub_names.push_back( e.sub[i]->print() );
   
-  return arg_names;
+  return sub_names;
 }
 
 // How do I make constructor-specific methods of printing data expressions?
@@ -24,16 +24,18 @@ vector<string> print_arg_expressions(const expression& e)
 string expression::print() const 
 {
   string result;
-  assert(head);
+  assert(sub[0]);
 
-  if (const Operator* O = dynamic_cast<const Operator*>(&*head))
-    return O->print_expression(print_arg_expressions(*this));
+  if (const Operator* O = dynamic_cast<const Operator*>(&*sub[0]))
+    return O->print_expression(print_arg_expressions(*this,1));
 
-  if (const lambda* L = dynamic_cast<const lambda*>(&*head))
-    return "(lambda "+convertToString(L->dummy_index)+")("+args[0]->print()+")";
+  if (const lambda* L = dynamic_cast<const lambda*>(&*sub[0]))
+    return "(lambda "+convertToString(L->dummy_index)+")("+sub[1]->print()+")";
 
+  if (size() == 1)
+    return sub[0]->print();
   else
-    return print_operator_expression(head->print(),print_arg_expressions(*this));
+    return "("+join(print_arg_expressions(*this,0),", ")+")";
 }
 
 tribool expression::compare(const Object& o) const 
@@ -42,32 +44,30 @@ tribool expression::compare(const Object& o) const
   if (not E) 
     return false;
 
-  tribool same = head->compare(*E->head);
+  if (size() != E->size()) return false;
 
-  if (not same) return false;
-
-  if (n_args() != E->n_args()) return false;
-
-  for(int i=0;i<n_args();i++) {
-    same = same and args[i]->compare(*E->args[i]);
+  tribool same = true;
+  for(int i=0;i<size();i++) 
+  {
+    same = same and sub[i]->compare(*E->sub[i]);
     if (not same) return false;
   }
 
   return same;
 }
 
-expression::expression(const object_ref& O)
-  :head(O)
+expression::expression(const expression_ref& E)
+  :sub(1,E)
 {}
 
-expression::expression(const object_ref& O, const expression_ref& arg)
- :head(O) 
+expression::expression(const expression_ref& E1, const expression_ref& E2)
 {
-  args.push_back(arg);
+  sub.push_back(E1);
+  sub.push_back(E2);
 }
 
-expression::expression(const object_ref& O, const std::vector< expression_ref >& A)
- :head(O), args(A)
+expression::expression(const std::vector< expression_ref >& E)
+  :sub(E)
 { }
 
 tribool constant::compare(const Object& o) const 
@@ -142,14 +142,11 @@ bool find_match(const expression_ref& pattern, const expression_ref& E, vector< 
   if (not E_exp) return false;
 
   // Expressions must have the same number of arguments
-  if (pattern_exp->n_args() != E_exp->n_args()) return false;
+  if (pattern_exp->size() != E_exp->size()) return false;
 
-  // The heads have to compare equal.  There is no matching there. (Will there be, later?)
-  if (pattern_exp->head->compare(*E_exp->head) != true)
-    return false;
-
-  for(int i=0;i<pattern_exp->n_args();i++)
-    if (not find_match(pattern_exp->args[i], E_exp->args[i], results))
+  // Sub-expressions must match
+  for(int i=0;i<pattern_exp->size();i++)
+    if (not find_match(pattern_exp->sub[i], E_exp->sub[i], results))
       return false;
 
   return true;
@@ -173,16 +170,16 @@ expression_ref lambda_expression(const Operator& O)
   int n = O.n_args();
   assert(n != -1);
   
-  vector< expression_ref > A;
+  expression* E = new expression(O);
   for(int i=0;i<n;i++)
-    A.push_back(expression_ref(new dummy(i)));
+    E->sub.push_back(expression_ref(new dummy(i)));
   
-  expression_ref E(new expression(O, A));
+  expression_ref R(E);
   
   for(int i=n-1;i>=0;i--) 
-    E = expression_ref(new expression(lambda(i),E));
+    R = expression_ref(new expression(lambda(i),R));
   
-  return E;
+  return R;
 }
 
 tribool Function::compare(const Object& o) const
@@ -236,31 +233,27 @@ expression_ref substitute(const expression_ref& R1, const object_ref& D, const e
   // If this is any other constant, then it doesn't contain the dummy
   if (not E1) return R1;
 
-  // This is an expression, so compute the substituted head
+  // This is an expression, so compute the substituted sub-expressions
   bool found = false;
-  expression_ref head = substitute(E1->head,D,R2);
-  if (head != E1->head) found = true;
-
-  // This is an expression, so compute the substituted args
-  vector< expression_ref > args(E1->n_args());
-  for(int i=0;i<E1->n_args();i++)
+  vector< expression_ref > sub(E1->size());
+  for(int i=0;i<E1->size();i++)
   {
-    args[i] = substitute(E1->args[i], D, R2);
-    if (args[i] != E1->args[i]) found = true;
+    sub[i] = substitute(E1->sub[i], D, R2);
+    if (sub[i] != E1->sub[i]) found = true;
   }
 
   // This is not a dummy expression, and the arguments (we didn't search head) do not contain the dummy being replaced;
   if (not found) return R1;
 
   // make sure we don't try to substitute for quantified dummies
-  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E1->head))
+  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E1->sub[0]))
   {
     if (D->compare(dummy(L->dummy_index)))
       throw myexception()<<"Trying to substitution for dummy "<<L->dummy_index<<" in lambda express that quantifies it!";
   }
 
   // Construct a new expression containing the substituted args.
-  return expression_ref(new expression(head,args));
+  return expression_ref(new expression(sub));
 }
 
 expression_ref apply(const expression_ref& R,const expression_ref& arg)
@@ -269,8 +262,8 @@ expression_ref apply(const expression_ref& R,const expression_ref& arg)
 
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
-    if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->head))
-      return substitute(E->args[0], L->dummy_index, arg);
+    if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+      return substitute(E->sub[1], L->dummy_index, arg);
   }
 
   // Allow applying non-lambda expressions to arguments.
@@ -309,8 +302,8 @@ void find_named_parameters_(const expression_ref& R, vector<string>& names)
   // If this is an expression, check its sub-objects
   else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
-    for(int i=0;i<E->args.size();i++)
-      find_named_parameters_(E->args[i], names);
+    for(int i=0;i<E->size();i++)
+      find_named_parameters_(E->sub[i], names);
   }
 }
 
@@ -346,7 +339,7 @@ struct FreeOperationArgs: public OperationArgs
 
 boost::shared_ptr<const Object> FreeOperationArgs::evaluate(int slot)
 {
-  return eval(C,E.args[slot]);
+  return eval(C,E.sub[slot+1]);
 }
 
 // Contexts (can) allow three things
@@ -374,33 +367,33 @@ expression_ref eval(const Context& C, const expression_ref& R)
   }
 
   // If the expression is a function expression...
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->head);
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
   if (L)
     return R;
 
-  shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E->head);
+  shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E->sub[0]);
   if (E2)
   {
-    shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E2->head);
+    shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E2->sub[0]);
     if (not L)
       throw myexception()<<"Can't evaluate expression '"<<E->print()<<"' with head = '"<<E2->print()<<"'";
 
-    if (E->n_args() > 1)
+    if (E->size() > 2)
       throw myexception()<<"Expression '"<<E->print()<<"' applies a lambda function to more than one argument.";
 
     // FIXME - is this enough evaluation?
-    return eval(C,substitute(E2->args[0], L->dummy_index, E->args[0]));
+    return eval(C,substitute(E2->sub[1], L->dummy_index, E->sub[1]));
   }
   
 
   // If the expression is a data function expression, evaluate its arguments
-  shared_ptr<const Function> f = dynamic_pointer_cast<const Function>(E->head);
+  shared_ptr<const Function> f = dynamic_pointer_cast<const Function>(E->sub[0]);
   if (f and f->what_type == data_function_f)
   {
     // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
     shared_ptr<expression> V (E->clone());
-    for(int i=0;i<V->args.size();i++)
-      V->args[i] = eval(C,V->args[i]);
+    for(int i=1;i<V->size();i++)
+      V->sub[i] = eval(C,V->sub[i]);
 
     return shared_ptr<const expression>(V);
   }
@@ -408,8 +401,8 @@ expression_ref eval(const Context& C, const expression_ref& R)
   {
     // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
     shared_ptr<expression> V (E->clone());
-    for(int i=0;i<V->args.size();i++)
-      V->args[i] = eval(C,V->args[i]);
+    for(int i=1;i<V->size();i++)
+      V->sub[i] = eval(C,V->sub[i]);
 
     Function defun_f("defun",3,body_function_f);
 
@@ -420,12 +413,12 @@ expression_ref eval(const Context& C, const expression_ref& R)
 
       shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(DR);
       if (not DE) continue;
-      if (defun_f.compare(*DE->head) != true) continue;
-      if (DE->n_args() != 3) continue;
+      if (defun_f.compare(*DE->sub[0]) != true) continue;
+      if (DE->size() != 4) continue;
 
-      expression_ref def = DE->args[0];
-      expression_ref guard = DE->args[1];
-      expression_ref body = DE->args[2];
+      expression_ref def = DE->sub[1];
+      expression_ref guard = DE->sub[2];
+      expression_ref body = DE->sub[3];
 
       shared_ptr<const expression> RE = dynamic_pointer_cast<const expression>(R);
 
@@ -451,7 +444,7 @@ expression_ref eval(const Context& C, const expression_ref& R)
   // Hey, how about a model expression?
 
   // Otherwise the expression must be an op expression
-  shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->head);
+  shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]);
   assert(O);
   
   FreeOperationArgs Args(C,*E);
@@ -492,22 +485,22 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
 
   // If the eval expression or the query expression is a literal constant, just evaluate R and see if it matches.
   // Do the same if the eval expression is an object returned from an operation
-  if (not QE or not RE or dynamic_cast<const Operation*>(&*RE->head))
+  if (not QE or not RE or dynamic_cast<const Operation*>(&*RE->sub[0]))
   {
     R = eval(C,R);
     vector<expression_ref> results2 = results; // FIXME!  This is a bit expensive...
     return find_match(Q,R,results2);
   }
   
-  shared_ptr<const Function> QF = dynamic_pointer_cast<const Function>(QE->head);
+  shared_ptr<const Function> QF = dynamic_pointer_cast<const Function>(QE->sub[0]);
 
   if (no_eval_top_level or (QF and QF->what_type == data_function_f))
   {
     // Expressions must have the same number of arguments
-    if (QE->n_args() != RE->n_args()) return false;
+    if (QE->size() != RE->size()) return false;
 
     // The heads have to compare equal.  There is no matching there. (Will there be, later?)
-    if (QE->head->compare(*RE->head) != true)
+    if (QE->sub[0]->compare(*RE->sub[0]) != true)
       return false;
 
     // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
@@ -516,8 +509,8 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
     R = boost::const_pointer_cast<const expression>(RV);
 
     // If all the arguments match, then the whole expression matches
-    for(int i=0;i<QE->n_args();i++)
-      if (not eval_match(C,RV->args[i],QE->args[i],results))
+    for(int i=1;i<QE->size();i++)
+      if (not eval_match(C,RV->sub[i],QE->sub[i],results))
 	return false;
 
     return true;
@@ -533,12 +526,12 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
 
       shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(DR);
       if (not DE) continue;
-      if (defun_f.compare(*DE->head) != true) continue;
-      if (DE->n_args() != 3) continue;
+      if (defun_f.compare(*DE->sub[0]) != true) continue;
+      if (DE->size() != 4) continue;
 
-      expression_ref def = DE->args[0];
-      expression_ref guard = DE->args[1];
-      expression_ref body = DE->args[2];
+      expression_ref def = DE->sub[1];
+      expression_ref guard = DE->sub[2];
+      expression_ref body = DE->sub[3];
 
       shared_ptr<const expression> RE = dynamic_pointer_cast<const expression>(R);
 

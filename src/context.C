@@ -63,7 +63,7 @@ shared_ptr<const Object> Context::evaluate(int index)
   }
 
   // If the expression is a function expression...
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->head);
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
   if (L)
   {
     V.result = R;
@@ -77,11 +77,12 @@ shared_ptr<const Object> Context::evaluate(int index)
   {
     if (not V.computed)
     {
-      vector< expression_ref > args(input_indices.size());
-      for(int i=0;i<args.size();i++)
-	args[i] = evaluate(input_indices[i]);
+      vector< expression_ref > sub(input_indices.size()+1);
+      sub[0] = f;
+      for(int i=1;i<sub.size();i++)
+	sub[i] = evaluate(input_indices[i-1]);
 
-      V.result = expression_ref(new expression(f,args));
+      V.result = expression_ref(new expression(sub));
       V.computed = true;
     }
 

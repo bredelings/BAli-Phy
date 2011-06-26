@@ -45,14 +45,11 @@ struct expression: virtual public Object
 {
   // FIXME - replace args with sub, and make sub[0] = head, sub[i] = args[i-1]
 
-  // The operator or object
-  boost::shared_ptr<const Object> head;
-
   // An expression may or may not have sub-expressions
-  std::vector< expression_ref > args;
+  std::vector< expression_ref > sub;
 
   /// The number of terms after the head
-  int n_args() const {return args.size();}
+  int size() const {return sub.size();}
   
   // Methods from Object
   expression* clone() const {return new expression(*this);}
@@ -60,9 +57,9 @@ struct expression: virtual public Object
   std::string print() const;
   
   expression() {}
-  explicit expression(const object_ref& O);
-  expression(const object_ref& O, const expression_ref& args);
-  expression(const object_ref& O, const std::vector< expression_ref >& A);
+  explicit expression(const expression_ref&);
+  explicit expression(const expression_ref&, const expression_ref&);
+  expression(const std::vector< expression_ref >& V);
 
   virtual ~expression() {}
 };

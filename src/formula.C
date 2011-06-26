@@ -45,7 +45,7 @@ boost::shared_ptr<const Operation> Formula::operation(int index) const
   if (not E)
     return shared_ptr<const Operation>();
 
-  return dynamic_pointer_cast<const Operation>(E->head);
+  return dynamic_pointer_cast<const Operation>(E->sub[0]);
 }
 
 boost::shared_ptr<const Function> Formula::function(int index) const
@@ -54,7 +54,7 @@ boost::shared_ptr<const Function> Formula::function(int index) const
   if (not E)
     return shared_ptr<const Function>();
 
-  return dynamic_pointer_cast<const Function>(E->head);
+  return dynamic_pointer_cast<const Function>(E->sub[0]);
 }
 
 bool Formula::is_constant(int index) const
@@ -131,52 +131,45 @@ term_ref Formula::add_expression(const expression_ref& R)
 
 term_ref Formula::add_sub_expression(const expression_ref& R, bool top)
 {
+#ifndef NDEBUG
+  {
+    expression_ref R2 (R->clone());
+    if (R->compare(*R2) != true)
+      std::cerr<<"Warning: expression "<<R->print()<<" does not compare equal to itself! ("<<R->compare(*R2)<<")\n";
+  }
+#endif
+
+  // If the expression already exists, then return a reference to the existing term
+  int index = find_expression(R);
+  if (index != -1) return term_ref(index,*this);
+
+  // Create a term for this expression
   Term t(R);
   t.top_level = top;
 
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(t.E))
   {
-    vector<int> arg_indices;
-    for(int i=0;i<E->args.size();i++)
-      arg_indices.push_back( add_sub_expression(E->args[i] ) );
-    t.input_indices = arg_indices;
+    // FIXME - how about the head?
+    for(int i=1;i<E->size();i++)
+      t.input_indices.push_back( add_sub_expression(E->sub[i] ) );
   }
-
-  // If the expression already exists, then return a reference to the existing term
-  int index = find_expression(t.E);
-  if (index != -1) return term_ref(index,*this);
 
   int new_index = terms.size();
 
-#ifndef NDEBUG
+  for(int slot=0;slot<t.input_indices.size();slot++)
   {
-    expression_ref E (t.E->clone());
-    if (t.E->compare(*E) == indeterminate)
-      std::cerr<<"Warning: expression "<<t.E->print()<<" does not compare equal to itself! ("<<t.E->compare(*E)<<")\n";
+    int input_index = t.input_indices[slot];
+    set_directly_affects_in_slot(input_index,new_index,slot);
   }
-#endif
 
   // Warn about duplicate names
-  int same_name = find_term_with_name(t.E->print());
+  int same_name = find_term_with_name(R->print());
   if (same_name != -1)
-    std::cerr<<"Warning ["<<new_index<<"]: term with name '"<<t.E->print()<<"' already exists at index "<<same_name<<".!\n";
+    std::cerr<<"Warning ["<<new_index<<"]: term with name '"<<R->print()<<"' already exists at index "<<same_name<<".!\n";
 
   // Update ref for parameters
   if (dynamic_pointer_cast<const parameter>(t.E))
     parameter_indices.push_back(new_index);
-
-  // Check new computed nodes, mark slots as being affected
-  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(t.E))
-    if (E->n_args() or t.input_indices.size())
-    {
-      assert(t.input_indices.size() == E->n_args());
-
-      for(int slot=0;slot<t.input_indices.size();slot++)
-      {
-	int input_index = t.input_indices[slot];
-	set_directly_affects_in_slot(input_index,new_index,slot);
-      }
-    }
 
   // Actually add the term
   terms.push_back(t);
@@ -240,14 +233,14 @@ bool Formula::find_match2(const expression_ref& query, int index, std::vector<in
   if (not E_exp) return false;
 
   // Expressions must have the same number of arguments
-  if (query_exp->n_args() != E_exp->n_args()) return false;
+  if (query_exp->size() != E_exp->size()) return false;
 
   // The heads have to compare equal.  There is no matching there. (Will there be, later?)
-  if (query_exp->head->compare(*E_exp->head) != true)
+  if (query_exp->sub[0]->compare(*E_exp->sub[0]) != true)
     return false;
 
-  for(int i=0;i<query_exp->n_args();i++)
-    if (not find_match2(query_exp->args[i], terms[index].input_indices[i], results))
+  for(int i=1;i<query_exp->size();i++)
+    if (not find_match2(query_exp->sub[i], terms[index].input_indices[i-1], results))
       return false;
 
   return true;
