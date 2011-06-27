@@ -9,6 +9,7 @@
 
 class Formula;
 class Computation;
+class expression_ref;
 
 // Values
 struct Context: virtual public Object
@@ -62,6 +63,8 @@ struct Context: virtual public Object
 
   /// Is index1 possibly used in the computation of index2?
   bool index_may_affect_index(int index1, int index2) const;
+
+  int add_expression(const expression_ref& e);
 
   Context();
   Context(const polymorphic_cow_ptr<Formula>&);

@@ -268,13 +268,26 @@ int Context::size() const
   return F->size();
 }
 
+int Context::add_expression(const expression_ref& e)
+{
+  int s = size();
+  int index = F->add_expression(e);
+
+  values.resize(F->size());
+
+  for(int i=s;i<size();i++)
+    values[i] = shared_ptr<value>(new value);
+
+  return index;
+}
+
 Context::Context()
   :F(new Formula)
 { }
 
 Context::Context(const polymorphic_cow_ptr<Formula>& F_)
  :F(F_),
-  values(F->size()) 
+  values(F->size())
 {
 
   // First initialize all constant values.  Probably I should just move this to evaluate
