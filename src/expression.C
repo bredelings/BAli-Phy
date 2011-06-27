@@ -499,15 +499,15 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
     return find_match(Q,R,results2);
   }
   
-  shared_ptr<const Function> QF = dynamic_pointer_cast<const Function>(QE->sub[0]);
+  shared_ptr<const Function> RF = dynamic_pointer_cast<const Function>(RE->sub[0]);
 
-  if (no_eval_top_level or (QF and QF->what_type == data_function_f))
+  if (no_eval_top_level or (RF and RF->what_type == data_function_f))
   {
     // Expressions must have the same number of arguments
-    if (QE->size() != RE->size()) return false;
+    if (RE->size() != QE->size()) return false;
 
     // The heads have to compare equal.  There is no matching there. (Will there be, later?)
-    if (QE->sub[0]->compare(*RE->sub[0]) != true)
+    if (RE->sub[0]->compare(*QE->sub[0]) != true)
       return false;
 
     // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
@@ -522,7 +522,7 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
 
     return true;
   }
-  else if (QF and QF->what_type == body_function_f)
+  else if (RF and RF->what_type == body_function_f)
   {
     Function defun_f("defun",3,body_function_f);
 
@@ -550,7 +550,8 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
       guard = substitute(guard,def_match_results);
 
       //   ... and see if it evaluates to True
-      if (not eval_match(C, guard, Bool(true), results)) continue;
+      vector<expression_ref> temp_results;
+      if (not eval_match(C, guard, Bool(true), temp_results)) continue;
 
       // 3. Substitute the body, and see if it eval_matches ~ Q
       body = substitute(body,def_match_results);
