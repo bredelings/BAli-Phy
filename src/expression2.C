@@ -327,4 +327,10 @@ int main()
   cout<<" "<<test3<<" = ";
   test3 = eval(CTX1, test3);
   cout<<test3<<"\n";
+
+  expression_ref test4 = take(3,repeat(X));
+  cout<<" "<<test4<<" = ";
+  cout.flush();
+  test4 = eval(CTX1, test4);
+  cout<<test4<<"\n";
 }
