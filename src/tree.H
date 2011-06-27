@@ -36,7 +36,25 @@ along with BAli-Phy; see the file COPYING.  If not see
 // TODO.
 // 1. Add node and branch attributes to tree objects.
 //    - Some attributes are string attributes, but we can also have attribues of other types.
+//    - Let's use boost::any< >.
+//    - Let's store the properties on the nodes and branches.
+//    - Let's give each branch a vector<boost::any >.
+//    - Each property will have an integer index, and (optionally) a string name, stored in the tree structure.
+//      and not on the nodes.  This gives us to ability to quickly look up the property value, given that we can
+//      quickly look up the node.
+//    - The properties will also be associate with the nodes even when the node names (integer indices) change.
+//    - It also allows us to add or remove nodes/branches -> new nodes have no properties, initially.
+//    - If a node is missing a property, then the any value will be empty.
+//    - We will create an extra node object, and an extra branch object to store the properties.
+//      + Each BranchNode will point to its Node object, and its Branch object.
+//    - When printing a tree, we can query each property (each value) about whether it is a string.
+//    - We will only print string properties.
+//    - We will select a specific (string) property to use as the leaf label.
+//      + How do we avoid printing that property ALSO as a property?
 // 2. Add the ability to read and write string attributes in NEWICK format.
+//    - Extend the parser to handle a character at a time, instead of a word at a time.
+//    - Allow recognizing [] comments, and ignoring them.
+//    - In certain places, recognize and keep [&key=value] comments.
 // 3. Remove class SequenceTree
 //    - The leaf labels are just a special attribute
 //    - Perhaps the branch lengths are ALSO just a special attribute?
