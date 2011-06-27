@@ -61,23 +61,21 @@ struct expression_ref;
 // DONE: Implement matching, in order to search for default values, and for bounds.
 
 // DONE: change expression_refs to an object pointer.
-// TODO: allow storing (non-functional) prior expresssions, so that we can write out the dependence relations.
-// TODO: allow constructing prior EXPRESSIONS (e.g. these may specify constants OR variables).
-// TODO: allow tuples to specify arguments to priors.
-// TODO: allow lists... for what?
+// DONE: allow storing (non-functional) prior expresssions, so that we can write out the dependence relations.
+//  - TODO: handle more complicated priors
+//  - TODO: add infrastructure for querying the variable dependance graph.
+//  - TODO: mark some random variables as fixed (e.g. as data)
+// DONE: allow lists...
+//  - TODO: for what?
+// TODO: define a print function.  Need a print Op.
 
 // 4. eval_match( )...
 // Functions that cannot be represented in static flow graph
 // - are doing work.
 // - probably only need to have their results cached, instead of having their internal processing checkpointed, just like Ops.
-
-// // A function is defined by
-// (defun name=string args=expression_ref guard=expression_ref body=expression_ref)
-// The args will be an element or tuple that the calling args must eval_match.
-// I it eval_matches to True, then this definition applies.
-// We then substitute into the body, and return eval_match the body against Q.
-
-// Backtracking in eval_match could be expensive...
+// - How can we move eval( ) and eval_match( ) into the compiled static flow graph?
+// - That is, how can we know what sub-expressions do NOT need to be recomputed?
+// - How can we handle dynamically-created expressions?
 
 // I should probably make a generic context structure that can
 // * store references to variables
@@ -87,7 +85,7 @@ struct expression_ref;
 // How should I genericize the FreeOperationArgs?
 
 // 5. Higher-order functions
-// - TODO: make expression.head just the first argument.
+// - DONE: make expression.head just the first argument.
 // - perhaps I can treat ALL applies as expressions that don't get substituted until they are evaluated...
 //   + the expressions could be evaluated to something lower-order and they put into the static-flow context
 // - assert that we never have an expression with just 1 arguments (e.g. just a head, and no more arguments)
