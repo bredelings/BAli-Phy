@@ -166,6 +166,41 @@ struct Add: public Operation
   Add():Operation(2) {}
 };
 
+template<typename T>
+struct Minus: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Minus* clone() const {return new Minus(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Minus<T>* E = dynamic_cast<const Minus<T>*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
+    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+
+    boost::shared_ptr<T> r ( new T );
+
+    *r = (*x) - (*y);
+
+    return r;
+  }
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "-";}
+
+  Minus():Operation(2) {}
+};
+
 #include "formula.H"
 
 template <typename T>
@@ -180,6 +215,13 @@ typed_expression_ref<T> operator+(typed_expression_ref<T> arg1, typed_expression
 {
   expression_ref plus = lambda_expression( Add<T>() );
   return plus(arg1,arg2);
+}
+
+template <typename T>
+typed_expression_ref<T> operator-(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+{
+  expression_ref minus = lambda_expression( Minus<T>() );
+  return minus(arg1,arg2);
 }
 
 template <typename T>
