@@ -407,10 +407,6 @@ expression_ref eval(const Context& C, const expression_ref& R)
   else if (f and f->what_type == body_function_f)
   {
     // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
-    shared_ptr<expression> V (E->clone());
-    for(int i=1;i<V->size();i++)
-      V->sub[i] = eval(C,V->sub[i]);
-
     Function defun_f("defun",3,body_function_f);
 
     // For each function definition f x1..x[i]..xn | guard = body
@@ -431,13 +427,15 @@ expression_ref eval(const Context& C, const expression_ref& R)
 
       vector<expression_ref> def_match_results;
       // 1. If R matches the def, then store the results.
-      if (not find_match(def, boost::const_pointer_cast<const expression>(V), def_match_results)) continue;
+      expression_ref V (R->clone());
+      if (not eval_match(C,V,def,def_match_results,true)) continue;
 
       // 2. substitute the results into the guard expression
       guard = substitute(guard,def_match_results);
 
       //   ... and see if it evaluates to True
-      if (eval(C,guard)->compare(Bool(true)) != true) continue;
+      vector<expression_ref> temp_results;
+      if (not eval_match(C, guard, Bool(true), temp_results)) continue;
 
       // 3. Substitute the body
       body = substitute(body,def_match_results);
