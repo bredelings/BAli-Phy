@@ -102,17 +102,14 @@ struct Parameter
 //      *value* was unchanged.
 // 7. Store cached intermediate results in same array as input variable values?
 // 8. Handle various annotations, such as priors, bounds, model_names, computed variable names, transition-kernels, loggers, etc. from Formula.
-// 9. Consider the possibility of evaluating functions that DO something, and have a void return type.
-//
-// TODO:
-//
-// 1. Convert to lazy calculation
-// 2. make alphabets a model argument [DONE]
-// 3. go, break all the models by moving their functionality
-//    to a result type.
-// 4. This will identify the callers that need to be fixed.
-// 5. Make a ReversibleMarkovModelObject
-// E-mail sibon.
+// 9. Consider the possibility of evaluating functions that DO something, and have a void return type?
+// 10. TODO: Make the model store most of its properties in a Context object and a Formula Object.
+//   - The Context will store the values, and the Formula will store the attributes.
+//   - Expose the top-level attribute for Formulae (expose top-level indices only?)
+//   - Can I prefix names?
+//   - TODO: Get rid of references to parameters_
+//     + parameters_[i].changed: separate array?
+//     +
 
 
 // Rewrite:
