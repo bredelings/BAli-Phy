@@ -201,31 +201,71 @@ struct Minus: public Operation
   Minus():Operation(2) {}
 };
 
-#include "formula.H"
+template<typename T>
+struct Divide: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Divide* clone() const {return new Divide(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Divide<T>* E = dynamic_cast<const Divide<T>*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
+    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+
+    boost::shared_ptr<T> r ( new T );
+
+    *r = (*x) / (*y);
+
+    return r;
+  }
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "/";}
+
+  Divide():Operation(2) {}
+};
 
 template <typename T>
-typed_expression_ref<T> operator*(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+typed_expression_ref<T> operator*(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
 {
   expression_ref times = lambda_expression( Multiply<T>() );
   return times(arg1,arg2);
 }
 
 template <typename T>
-typed_expression_ref<T> operator+(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+typed_expression_ref<T> operator/(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
+{
+  expression_ref div = lambda_expression( Divide<T>() );
+  return div(arg1,arg2);
+}
+
+template <typename T>
+typed_expression_ref<T> operator+(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
 {
   expression_ref plus = lambda_expression( Add<T>() );
   return plus(arg1,arg2);
 }
 
 template <typename T>
-typed_expression_ref<T> operator-(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+typed_expression_ref<T> operator-(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
 {
   expression_ref minus = lambda_expression( Minus<T>() );
   return minus(arg1,arg2);
 }
 
 template <typename T>
-typed_expression_ref<T> operator>(typed_expression_ref<T> arg1, typed_expression_ref<T> arg2)
+typed_expression_ref<Bool> operator>(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
 {
   expression_ref gt = lambda_expression( GreaterThan<T>() );
   return gt(arg1,arg2);
