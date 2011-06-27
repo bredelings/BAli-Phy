@@ -79,6 +79,16 @@ int Formula::n_parameters() const
   return parameter_indices.size();
 }
 
+int Formula::parameter_index(int i) const
+{
+  return parameter_indices[i];
+}
+
+string Formula::parameter_name(int i) const
+{
+  return terms[parameter_index(i)].E->print();
+}
+
 bool Formula::is_computed(int index) const
 {
   if (has_inputs(index))

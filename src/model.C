@@ -118,7 +118,7 @@ void Model::recalc_all()
 int Model::add_parameter(const Parameter& P)
 {
   for(int i=0;i<n_parameters();i++)
-    if (parameters_[i].name == P.name)
+    if (parameter_name(i) == P.name)
       throw myexception()<<"A parameter with name '"<<P.name<<"' already exists - cannot add another one.";
 
   C.F->add_expression(parameter(P.name));
@@ -148,9 +148,9 @@ std::vector< shared_ptr<const Object> > Model::get_parameter_values(const std::v
   return values;  
 }
 
-const std::string& Model::parameter_name(int i) const
+std::string Model::parameter_name(int i) const
 {
-  return parameters_[i].name;
+  return C.F->parameter_name(i);
 }
 
 void Model::rename_parameter(int i, const std::string& s)

@@ -110,7 +110,7 @@ struct Parameter
 //   - Can I prefix names?
 //   - TODO: Get rid of references to parameters_
 //     + parameters_[i].changed: separate array?
-//     +
+//   - How can attributes change efficiently?
 
 
 // Rewrite:
@@ -197,7 +197,7 @@ public:
   virtual efloat_t prior() const {return 1.0;}
 
   /// Names of the parameters
-  const std::string& parameter_name(int i) const;
+  std::string parameter_name(int i) const;
   void rename_parameter(int i, const std::string& s);
 
   bool is_fixed(int i) const;

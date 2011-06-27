@@ -162,6 +162,10 @@ public:
 
   int n_parameters() const;
 
+  int parameter_index(int i) const;
+
+  std::string parameter_name(int i) const;
+
   bool is_parameter(int index) const;
 
   bool is_computed(int index) const;
