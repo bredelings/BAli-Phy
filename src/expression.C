@@ -161,6 +161,19 @@ tribool parameter::compare(const Object& o) const
   return parameter_name == E->parameter_name;
 }
 
+tribool lambda::compare(const Object& o) const 
+{
+  const lambda* L = dynamic_cast<const lambda*>(&o);
+  if (not L) 
+    return false;
+
+  return dummy_index == L->dummy_index;
+}
+
+string lambda::print() const {
+  return string("lambda[")+convertToString(dummy_index)+"]";
+}
+
 lambda::lambda(int d)
   :dummy_index(d)
 { }
