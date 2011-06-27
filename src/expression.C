@@ -613,8 +613,10 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
   else if (RF and RF->what_type == body_function_f)
   {
     expression_ref body = find_function_body(C,R);
-    if (body)
-      return eval_match(C,body,Q,results);
+    if (body) {
+      R = body;
+      return eval_match(C,R,Q,results);
+    }
     else
       throw myexception()<<"No function definition for expression '"<<R->print()<<"'";
   }
