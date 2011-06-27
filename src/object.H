@@ -4,6 +4,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include <boost/logic/tribool.hpp>
+#include <iostream>
 
 #include "util.H"
 
@@ -178,4 +179,17 @@ template <typename T>
 boost::shared_ptr<T> ptr(const T& t) {return boost::shared_ptr<T>(t.clone());}
 template <typename T>
 boost::shared_ptr<const T> const_ptr(const T& t) {return boost::shared_ptr<const T>(t.clone());}
+
+template<typename T>
+inline std::ostream& operator<<(std::ostream& o,const boost::shared_ptr<T>& R)
+{
+  return o<<R->print();
+}
+
+inline std::ostream& operator<<(std::ostream& o,const Object& R)
+{
+  return o<<R.print();
+}
+
+
 #endif

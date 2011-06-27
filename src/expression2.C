@@ -201,10 +201,10 @@ int main()
   expression_ref If = lambda_expression( IfThenElse() );
 
   cout<<"Demonstrate lambda functions\n";
-  cout<<"mul = "<<mul->print()<<"\n";
-  cout<<"mul(x) = "<<mul(x)->print()<<"\n";
-  cout<<"mul(x)(y) = "<<mul(x)(y)->print()<<"\n";
-  cout<<"mul(x,y) = "<<mul(x,y)->print()<<"\n\n\n";
+  cout<<"mul = "<<mul<<"\n";
+  cout<<"mul(x) = "<<mul(x)<<"\n";
+  cout<<"mul(x)(y) = "<<mul(x)(y)<<"\n";
+  cout<<"mul(x,y) = "<<mul(x,y)<<"\n\n\n";
 
   expression_ref defun = lambda_expression( data_function("defun",3) );
 
@@ -295,12 +295,12 @@ int main()
   expression_ref pattern = default_value(parameter("X"))(match(0));
   expression_ref target = default_value(parameter("X"))(One);
   vector< expression_ref > results;
-  cout<<"Checking if expression "<<target->print()<<" matches query "<<pattern->print()<<":\n";
+  cout<<"Checking if expression "<<target<<" matches query "<<pattern<<":\n";
   if (find_match(pattern, target,results))
   {
     cout<<"match has size "<<results.size()<<"\n";
     if (results.size())
-      cout<<"   value = "<<results[0]->print()<<"\n";
+      cout<<"   value = "<<results[0]<<"\n";
   }
   else
     cout<<"no match!";
@@ -308,17 +308,17 @@ int main()
   results.clear();
   expression_ref test = Tuple(2)(One+One,One+One+One);
   if (eval_match(CTX1,test,Tuple(2)(Constant(Double(2)),Constant(Double(3))),results) )
-    cout<<"R = "<<test->print()<<"\n";
+    cout<<"R = "<<test<<"\n";
 
 
   expression_ref test2 = Tuple(2)(square(parameter("X")),One+One);
   results.clear();
   if (eval_match(CTX1, test2,Tuple(2)( Constant(Double(9)),Constant(Double(2))), results))
-    cout<<"R2 = "<<test2->print()<<"\n";
+    cout<<"R2 = "<<test2<<"\n";
 
   expression_ref test3 = fmap(square,Cons(parameter("X"),Cons(One+One,ListEnd)));
 
-  cout<<" "<<test3->print()<<" = ";
+  cout<<" "<<test3<<" = ";
   test3 = eval(CTX1, test3);
-  cout<<test3->print()<<"\n";
+  cout<<test3<<"\n";
 }

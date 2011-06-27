@@ -272,12 +272,7 @@ expression_ref E(const T& t) {return expression_ref(t);}
 
 inline expression_ref operator~(const Operation& O) {return E(O);}
 
-/*
-std::ostream& operator<<(std::ostream& o,const expression_ref& R)
-{
-  return o<<R->print();
-}
-*/
+
 #ifdef STDCXXOX
 // create an Op automatically from a function... using E(?)
 // how does boost::bind work? boost::spirit?
