@@ -105,6 +105,72 @@ struct GreaterThan: public Operation
   GreaterThan():Operation(2) {}
 };
 
+template<typename T>
+struct LessThan: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual LessThan* clone() const {return new LessThan(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const LessThan<T>* E = dynamic_cast<const LessThan<T>*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
+    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+
+    Bool condition = (*x < *y);
+
+    return boost::shared_ptr<const Bool>(new Bool(condition));
+  }
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "<";}
+
+  LessThan():Operation(2) {}
+};
+
+template<typename T>
+struct Equals: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Equals* clone() const {return new Equals(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Equals<T>* E = dynamic_cast<const Equals<T>*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
+    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+
+    Bool condition = (*x == *y);
+
+    return boost::shared_ptr<const Bool>(new Bool(condition));
+  }
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "==";}
+
+  Equals():Operation(2) {}
+};
+
 template<typename X, typename Y>
 struct Conversion: public Operation
 {
@@ -239,36 +305,43 @@ struct Divide: public Operation
 template <typename T>
 typed_expression_ref<T> operator*(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
 {
-  expression_ref times = lambda_expression( Multiply<T>() );
-  return times(arg1,arg2);
+  return lambda_expression( Multiply<T>() )(arg1, arg2);
 }
 
 template <typename T>
 typed_expression_ref<T> operator/(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
 {
-  expression_ref div = lambda_expression( Divide<T>() );
-  return div(arg1,arg2);
+  return lambda_expression( Divide<T>() )(arg1, arg2);
 }
 
 template <typename T>
 typed_expression_ref<T> operator+(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
 {
-  expression_ref plus = lambda_expression( Add<T>() );
-  return plus(arg1,arg2);
+  return lambda_expression( Add<T>() )(arg1, arg2);
 }
 
 template <typename T>
 typed_expression_ref<T> operator-(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
 {
-  expression_ref minus = lambda_expression( Minus<T>() );
-  return minus(arg1,arg2);
+  return lambda_expression( Minus<T>() )(arg1, arg2);
 }
 
 template <typename T>
 typed_expression_ref<Bool> operator>(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
 {
-  expression_ref gt = lambda_expression( GreaterThan<T>() );
-  return gt(arg1,arg2);
+  return lambda_expression( GreaterThan<T>() )(arg1, arg2);
+}
+
+template <typename T>
+typed_expression_ref<Bool> operator<(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
+{
+  return lambda_expression( LessThan<T>() )(arg1, arg2);
+}
+
+template <typename T>
+typed_expression_ref<Bool> operator==(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)
+{
+  return lambda_expression( Equals<T>() )(arg1, arg2);
 }
 
 #endif
