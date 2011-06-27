@@ -197,6 +197,7 @@ int main()
   expression_ref mul = lambda_expression( Multiply<Double>() );
   expression_ref muli = lambda_expression( Multiply<Int>() );
   expression_ref plus = lambda_expression( Add<Double>() );
+  expression_ref minusi = lambda_expression( Minus<Int>() );
   expression_ref gt = lambda_expression( GreaterThan<Double>() );
   expression_ref If = lambda_expression( IfThenElse() );
 
@@ -230,14 +231,19 @@ int main()
   F->add_expression( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
 
   expression_ref square = lambda_expression(body_function("square",1));
-  expression_ref fmap = lambda_expression(body_function("fmap",2));
-
   F->add_expression( defun( square(_1), Bool(true), mul(_1,_1)) );
 
+  expression_ref fmap = lambda_expression(body_function("fmap",2));
   F->add_expression( defun( fmap(_,ListEnd), Bool(true), ListEnd) );
-
-  // Oops, we have no way to create 
   F->add_expression( defun( fmap(_1,Cons(_2,_3)), Bool(true), Cons(_1(_2),fmap(_1,_3) )) );
+
+  expression_ref take = lambda_expression(body_function("take",2));
+  F->add_expression( defun( take(_,ListEnd), Bool(true), ListEnd) );
+  F->add_expression( defun( take(0,_), Bool(true), ListEnd) );
+  F->add_expression( defun( take(_1,Cons(_2,_3)), Bool(true), Cons(_2,take(minusi(_1,1),_3)) ) );
+
+  expression_ref repeat = lambda_expression(body_function("repeat",1));
+  F->add_expression( defun( repeat(_1), Bool(true), Cons(_1,repeat(_1)) ) );
 
   expression_ref default_value = lambda_expression(data_function("default_value",2));
   term_ref defv = F->add_expression(  default_value(parameter("X"))(Constant(Double(2.0))) );
