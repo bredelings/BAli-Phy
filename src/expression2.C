@@ -245,6 +245,9 @@ int main()
   expression_ref repeat = lambda_expression(body_function("repeat",1));
   F->add_expression( defun( repeat(_1), true, Cons(_1,repeat(_1)) ) );
 
+  expression_ref iterate = lambda_expression(body_function("iterate",2));
+  F->add_expression( defun( iterate(_1,_2), true, Cons(_2,iterate(_1,_1(_2))) ) );
+
   expression_ref default_value = lambda_expression(data_function("default_value",2));
   term_ref defv = F->add_expression(  default_value(parameter("X"), 2.0) );
   term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
@@ -330,7 +333,21 @@ int main()
 
   expression_ref test4 = take(3,repeat(X));
   cout<<" "<<test4<<" = ";
-  cout.flush();
   test4 = eval(CTX1, test4);
   cout<<test4<<"\n";
+
+  expression_ref test5 = take(3,fmap(square,repeat(X)));
+  cout<<" "<<test5<<" = ";
+  test5 = eval(CTX1, test5);
+  cout<<test5<<"\n";
+
+  // Here we hit the problem of substituting lambda expressions into lambda expressions: match name collision!
+  /*
+  iterate(plus(1.0),1.0);
+  expression_ref test6 = take(3,fmap(square,iterate(plus(1.0),1.0)));
+  cout<<" "<<test6<<" = ";
+  cout.flush();
+  test6 = eval(CTX1, test6);
+  cout<<test6<<"\n";
+  */
 }
