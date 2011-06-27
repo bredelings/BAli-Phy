@@ -198,18 +198,18 @@ public:
   virtual efloat_t prior() const {return 1.0;}
 
   /// Names of the parameters
-  const std::string& parameter_name(int i) const {return parameters_[i].name;}
-  void rename_parameter(int i, const std::string& s) {parameters_[i].name = s;}
+  const std::string& parameter_name(int i) const;
+  void rename_parameter(int i, const std::string& s);
 
-  bool is_fixed(int i) const                {return parameters_[i].fixed;}
-  void set_fixed(int i,bool f)      {parameters_[i].fixed = f;}
+  bool is_fixed(int i) const;
+  void set_fixed(int i,bool f);
 
-  const Bounds<double>& get_bounds(int i) const {return parameters_[i].bounds;}
-  void set_bounds(int i,const Bounds<double>& b) {parameters_[i].bounds = b;}
+  const Bounds<double>& get_bounds(int i) const;
+  void set_bounds(int i,const Bounds<double>& b);
 
   /// Get A model parameter value
-  boost::shared_ptr<const Object> get_parameter_value(int i) const {return parameters_[i].value;}
-  boost::shared_ptr<const Object> get_parameter_value(const std::string& p_name) const {return get_parameter_value(find_parameter(*this,p_name));}
+  boost::shared_ptr<const Object> get_parameter_value(int i) const;
+  boost::shared_ptr<const Object> get_parameter_value(const std::string& p_name) const;
 
   template <typename T>
   bool parameter_has_type(int index) const {return boost::dynamic_pointer_cast<const T>(get_parameter_value(index));}

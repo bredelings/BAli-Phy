@@ -152,6 +152,46 @@ std::vector< shared_ptr<const Object> > Model::get_parameter_values(const std::v
   return values;  
 }
 
+const std::string& Model::parameter_name(int i) const
+{
+  return parameters_[i].name;
+}
+
+void Model::rename_parameter(int i, const std::string& s)
+{
+  parameters_[i].name = s;
+}
+
+bool Model::is_fixed(int i) const
+{
+  return parameters_[i].fixed;
+}
+
+void Model::set_fixed(int i,bool f)
+{
+  parameters_[i].fixed = f;
+}
+
+const Bounds<double>& Model::get_bounds(int i) const 
+{
+  return parameters_[i].bounds;
+}
+
+void Model::set_bounds(int i,const Bounds<double>& b) 
+{
+  parameters_[i].bounds = b;
+}
+
+boost::shared_ptr<const Object> Model::get_parameter_value(int i) const
+{
+  return parameters_[i].value;
+}
+
+boost::shared_ptr<const Object> Model::get_parameter_value(const std::string& p_name) const 
+{
+  return get_parameter_value(find_parameter(*this,p_name));
+}
+
 void Model::write_value(int i,const shared_ptr<const Object>& value)
 {
   parameters_[i].value = value;
