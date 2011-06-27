@@ -228,7 +228,7 @@ int main()
   // -- using automatic creation of operators based on typed references
   F->add_expression( If( Z > One , X*Y+One , W*W ) );
   // -- can we create constants easily?
-  F->add_expression( If( Z > Constant(Double(1.0)), X*Y+Constant(Double(1)), W*W ) );
+  F->add_expression( If( Z > Constant(1.0), X*Y+Constant(1.0), W*W ) );
 
   expression_ref square = lambda_expression(body_function("square",1));
   F->add_expression( defun( square(_1), true, mul(_1,_1)) );
@@ -246,7 +246,7 @@ int main()
   F->add_expression( defun( repeat(_1), true, Cons(_1,repeat(_1)) ) );
 
   expression_ref default_value = lambda_expression(data_function("default_value",2));
-  term_ref defv = F->add_expression(  default_value(parameter("X"))(Constant(Double(2.0))) );
+  term_ref defv = F->add_expression(  default_value(parameter("X"), 2.0) );
   term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
   term_ref tuple_x_y = F->add_expression(Tuple(2)(X,Y));
   expression_ref Exp = prob_density(1,1,"Exp",exponential_density());
@@ -313,13 +313,13 @@ int main()
 
   results.clear();
   expression_ref test = Tuple(2)(One+One,One+One+One);
-  if (eval_match(CTX1,test,Tuple(2)(Constant(Double(2)),Constant(Double(3))),results) )
+  if (eval_match(CTX1,test,Tuple(2)(2.0,3.0),results) )
     cout<<"R = "<<test<<"\n";
 
 
   expression_ref test2 = Tuple(2)(square(parameter("X")),One+One);
   results.clear();
-  if (eval_match(CTX1, test2,Tuple(2)( Constant(Double(9)),Constant(Double(2))), results))
+  if (eval_match(CTX1, test2,Tuple(2)(9.0, 2.0), results))
     cout<<"R2 = "<<test2<<"\n";
 
   expression_ref test3 = fmap(square,Cons(parameter("X"),Cons(One+One,ListEnd)));

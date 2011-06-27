@@ -244,7 +244,7 @@ struct expression_ref: public boost::shared_ptr<const Object>
 };
 
 template <typename T>
-struct typed_expression_ref: expression_ref
+struct typed_expression_ref: public expression_ref
 {
 public:
   typed_expression_ref() {}
@@ -252,16 +252,48 @@ public:
   typed_expression_ref(expression* v): expression_ref(v) {}
   typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
   typed_expression_ref(const term_ref& t): expression_ref(t) {}
-
   typed_expression_ref(const Object& o):expression_ref(o) {}
-  typed_expression_ref(const int& i):expression_ref(i) {}
-  typed_expression_ref(const double& d):expression_ref(d) {}
 };
 
 template <typename T>
-typed_expression_ref<T> Constant(const T& t)
+struct typed_expression_ref<POD<T> >: public expression_ref
 {
-  return typed_expression_ref<T>(t.clone());
+public:
+  typed_expression_ref() {}
+  typed_expression_ref(const expression_ref& e):expression_ref(e) {}
+  typed_expression_ref(expression* v): expression_ref(v) {}
+  typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  typed_expression_ref(const term_ref& t): expression_ref(t) {}
+  typed_expression_ref(const Object& o):expression_ref(o) {}
+  typed_expression_ref(const T& t):expression_ref(POD<T>(t)) {}
+};
+
+template <typename T>
+struct typed_expression_ref<POD_math<T> >: public expression_ref
+{
+public:
+  typed_expression_ref() {}
+  typed_expression_ref(const expression_ref& e):expression_ref(e) {}
+  typed_expression_ref(expression* v): expression_ref(v) {}
+  typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  typed_expression_ref(const term_ref& t): expression_ref(t) {}
+  typed_expression_ref(const Object& o):expression_ref(o) {}
+  typed_expression_ref(const T& t):expression_ref(POD_math<T>(t)) {}
+};
+
+inline typed_expression_ref<Double> Constant(const double& d)
+{
+  return typed_expression_ref<Double>(Double(d));
+}
+
+inline typed_expression_ref<Int> Constant(const int& i)
+{
+  return typed_expression_ref<Int>(Int(i));
+}
+
+inline typed_expression_ref<Bool> Constant(const bool& b)
+{
+  return typed_expression_ref<Bool>(Bool(b));
 }
 
 template <typename T>
