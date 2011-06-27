@@ -559,4 +559,6 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
 
     throw myexception()<<"No function definition for expression '"<<R->print()<<"'";
   }
+  else
+    throw myexception()<<"Don't know how to evaluate expression '"<<R->print()<<"'";
 }
