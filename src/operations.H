@@ -36,10 +36,10 @@ struct Multiply: public Operation
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
-    return print_infix_expression("*",inputs);
+    return print_infix_expression(inputs);
   }
 
-  std::string name() const {return "+";}
+  std::string name() const {return "*";}
 
   Multiply():Operation(2) {}
 };
@@ -97,7 +97,7 @@ struct GreaterThan: public Operation
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
-    return print_infix_expression(">",inputs);
+    return print_infix_expression(inputs);
   }
 
   std::string name() const {return ">";}
@@ -158,7 +158,7 @@ struct Add: public Operation
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
-    return print_infix_expression("+",inputs);
+    return print_infix_expression(inputs);
   }
 
   std::string name() const {return "+";}

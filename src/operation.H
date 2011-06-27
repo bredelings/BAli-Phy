@@ -22,8 +22,8 @@ struct Operation: public Operator
   Operation(int n):n_args_(n) { }
 };
 
-std::string print_operator_expression(const std::string& name, const std::vector<std::string>& arguments);
+std::string print_operator_expression(const std::vector<std::string>& arguments);
 
-std::string print_infix_expression(const std::string& name,const std::vector<std::string>& arguments);
+std::string print_infix_expression(const std::vector<std::string>& arguments);
 
 #endif
