@@ -325,6 +325,9 @@ expression_ref shift_quantified_dummies(const expression_ref& R, int delta)
 expression_ref substitute(const expression_ref& R1, const object_ref& D, const expression_ref& R2)
 {
   vector<int> I1 = get_quantified_indices(R1);
+  if (const dummy* d = dynamic_cast<const dummy*>(&*D))
+    remove_element(I1,d->index);
+
   vector<int> I2 = get_quantified_indices(R2);
 
   // If either expression contains no lambda expressions, then their dummy expression can't clash w/ each other.
@@ -332,14 +335,15 @@ expression_ref substitute(const expression_ref& R1, const object_ref& D, const e
     return substitute_(R1,D,R2);
 
   // If all the lambda dummies in R2 are after all the lambda dummies in R1, they also can't clash
-  int max1 = max(I1);
-  int min2 = min(I2);
-  int shift = (max1+1)-min2;
-  if (shift <= 0)
+  int shift1 = max(I2)+1 - min(I1);
+  int shift2 = max(I1)+1 - min(I2);
+
+  // If the lambda ranges are non-overlapping
+  if (shift1 <= 0 or shift2 <= 0)
     return substitute_(R1,D,R2);
 
   // Shift the dummies in R2 past all the dummies in R1
-  expression_ref R2_shifted = shift_quantified_dummies(R2, shift);
+  expression_ref R2_shifted = shift_quantified_dummies(R2, shift2);
   return substitute_(R1,D,R2_shifted);
 }
 
