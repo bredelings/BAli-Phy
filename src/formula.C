@@ -9,6 +9,7 @@
 #include <iostream>
 
 using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 using std::vector;
 using std::string;
 using std::pair;

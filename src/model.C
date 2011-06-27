@@ -29,6 +29,7 @@ using std::vector;
 using std::string;
 
 using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 
 string parameter_name(const string& prefix, int i,int n) 
 {

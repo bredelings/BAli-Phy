@@ -11,6 +11,8 @@ using std::string;
 using std::pair;
 using std::ostream;
 
+using boost::dynamic_pointer_cast;
+
 bool Context::index_may_affect_index(int index1, int index2) const
 {
   if (values[index2]->computed) 
