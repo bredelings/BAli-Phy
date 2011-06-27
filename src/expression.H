@@ -296,12 +296,6 @@ inline typed_expression_ref<Bool> Constant(const bool& b)
   return typed_expression_ref<Bool>(Bool(b));
 }
 
-template <typename T>
-expression_ref E(const T& t) {return expression_ref(t);}
-
-inline expression_ref operator~(const Operation& O) {return E(O);}
-
-
 #ifdef STDCXXOX
 // create an Op automatically from a function... using E(?)
 // how does boost::bind work? boost::spirit?

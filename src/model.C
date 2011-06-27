@@ -71,7 +71,10 @@ void Model::validate() const
 {
   valid = true;
   for(int i=0;i<n_parameters();i++)
+  {
     parameters_[i].changed = false;
+    changed[i] = false;
+  }
 }
 
 void Model::invalidate() const
@@ -82,6 +85,7 @@ void Model::invalidate() const
 void Model::modify_parameter(int i) const
 {
   parameters_[i].changed = true;
+  changed[i] = true;
 
   invalidate();
 }
@@ -100,13 +104,13 @@ void Model::modify_all_parameters() const
 
 vector<int> Model::modified_parameters() const
 {
-  vector<int> changed;
+  vector<int> changed_parameters;
 
   for(int i=0;i<n_parameters();i++)
-    if (parameters_[i].changed)
-      changed.push_back(i);
+    if (changed[i])
+      changed_parameters.push_back(i);
 
-  return changed;
+  return changed_parameters;
 }
 
 void Model::recalc_all() 
@@ -120,6 +124,9 @@ int Model::add_parameter(const Parameter& P)
   for(int i=0;i<n_parameters();i++)
     if (parameters_[i].name == P.name)
       throw myexception()<<"A parameter with name '"<<P.name<<"' already exists - cannot add another one.";
+
+  C.F->add_expression(parameter(P.name));
+  changed.push_back(true);
 
   parameters_.push_back(P);
   return parameters_.size()-1;

@@ -39,6 +39,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "operator.H"
 #include "operation.H"
 #include "computation.H"
+#include "context.H"
+#include "formula.H"
 
 class Model;
 
@@ -156,6 +158,11 @@ class Model: public Operator
 {
 protected:
   mutable bool valid;
+
+  /// Parameter values and model attributes
+  Context C;
+
+  mutable std::vector<bool> changed;
 
   /// Parameter values
   std::vector< Parameter > parameters_;

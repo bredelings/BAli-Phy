@@ -266,6 +266,10 @@ int Context::size() const
   return F->size();
 }
 
+Context::Context()
+  :F(new Formula)
+{ }
+
 Context::Context(const polymorphic_cow_ptr<Formula>& F_)
  :F(F_),
   values(F->size()) 
