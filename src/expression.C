@@ -435,7 +435,7 @@ expression_ref eval(const Context& C, const expression_ref& R)
 
       //   ... and see if it evaluates to True
       vector<expression_ref> temp_results;
-      if (not eval_match(C, guard, Bool(true), temp_results)) continue;
+      if (not eval_match(C, guard, true, temp_results)) continue;
 
       // 3. Substitute the body
       body = substitute(body,def_match_results);
@@ -549,7 +549,7 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
 
       //   ... and see if it evaluates to True
       vector<expression_ref> temp_results;
-      if (not eval_match(C, guard, Bool(true), temp_results)) continue;
+      if (not eval_match(C, guard, true, temp_results)) continue;
 
       // 3. Substitute the body, and see if it eval_matches ~ Q
       body = substitute(body,def_match_results);

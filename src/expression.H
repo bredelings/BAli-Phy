@@ -232,20 +232,15 @@ struct expression_ref: public boost::shared_ptr<const Object>
 
   expression_ref(const term_ref& t);
 
-  expression_ref(const std::string& s)
-    :boost::shared_ptr<const Object>(new String(s))
-  {}
-
-  expression_ref(const char* s)
-    :boost::shared_ptr<const Object>(new String(s))
-  {}
-
   expression_ref(const Object& o)
     :boost::shared_ptr<const Object>(o.clone())
   {}
 
   expression_ref(const int& i):boost::shared_ptr<const Object>(new Int(i)) {}
   expression_ref(const double& d):boost::shared_ptr<const Object>(new Double(d)) {}
+  expression_ref(const bool& b):boost::shared_ptr<const Object>(new Bool(b)) {}
+  expression_ref(const std::string& s):boost::shared_ptr<const Object>(new String(s)) {}
+  expression_ref(const char* s):boost::shared_ptr<const Object>(new String(s)) {}
 };
 
 template <typename T>
