@@ -342,12 +342,10 @@ int main()
   cout<<test5<<"\n";
 
   // Here we hit the problem of substituting lambda expressions into lambda expressions: match name collision!
-  /*
   iterate(plus(1.0),1.0);
   expression_ref test6 = take(3,fmap(square,iterate(plus(1.0),1.0)));
   cout<<" "<<test6<<" = ";
   cout.flush();
   test6 = eval(CTX1, test6);
   cout<<test6<<"\n";
-  */
 }
