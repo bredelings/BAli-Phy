@@ -229,7 +229,7 @@ expression_ref substitute(const expression_ref& R1, int dummy_index, const expre
   return substitute(R1,dummy(dummy_index),R2);
 }
 
-expression_ref substitute(const expression_ref& R1, const object_ref& D, const expression_ref& R2)
+expression_ref substitute_(const expression_ref& R1, const object_ref& D, const expression_ref& R2)
 {
   // If this is the relevant dummy, then substitute
   if (D->compare(*R1))
@@ -245,7 +245,7 @@ expression_ref substitute(const expression_ref& R1, const object_ref& D, const e
   vector< expression_ref > sub(E1->size());
   for(int i=0;i<E1->size();i++)
   {
-    sub[i] = substitute(E1->sub[i], D, R2);
+    sub[i] = substitute_(E1->sub[i], D, R2);
     if (sub[i] != E1->sub[i]) found = true;
   }
 
@@ -261,6 +261,86 @@ expression_ref substitute(const expression_ref& R1, const object_ref& D, const e
 
   // Construct a new expression containing the substituted args.
   return expression_ref(new expression(sub));
+}
+
+
+void get_quantified_indices(const expression_ref& R,vector<int>& indices)
+{
+  shared_ptr< const expression> E = dynamic_pointer_cast<const expression>(R);
+  if (not E) return;
+
+  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+  {
+    if (not includes(indices,L->dummy_index))
+      indices.push_back(L->dummy_index);
+  }
+
+  for(int i=0;i<E->size();i++)
+    get_quantified_indices(E->sub[i],indices);
+}
+
+vector<int> get_quantified_indices(const expression_ref& R)
+{
+  vector<int> indices;
+  get_quantified_indices(R,indices);
+  return indices;
+}
+
+expression_ref shift_quantified_dummies(const expression_ref& R, int delta)
+{
+  shared_ptr< const expression> E = dynamic_pointer_cast<const expression>(R);
+  if (not E) return R;
+
+  // make sure we don't try to substitute for quantified dummies
+  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+  {
+    int old_index = L->dummy_index;
+    int new_index = old_index + delta;
+
+    expression_ref R2 = substitute_(E->sub[1], dummy(old_index), dummy(new_index));
+    R2 = shift_quantified_dummies(R2,delta);
+    R2 = expression_ref(new expression(lambda(new_index),R2));
+    return R2;
+  }
+
+  // This is an expression, so compute the substituted sub-expressions
+  bool found = false;
+  vector< expression_ref > sub(E->size());
+  for(int i=0;i<E->size();i++)
+  {
+    sub[i] = shift_quantified_dummies(E->sub[i],delta);
+    if (sub[i] != E->sub[i]) found = true;
+  }
+
+  // No quantified dummy expressions were found.
+  if (not found)
+    return R;
+
+  // Construct a new expression containing the substituted args.
+  else
+    return expression_ref(new expression(sub));
+}
+
+
+expression_ref substitute(const expression_ref& R1, const object_ref& D, const expression_ref& R2)
+{
+  vector<int> I1 = get_quantified_indices(R1);
+  vector<int> I2 = get_quantified_indices(R2);
+
+  // If either expression contains no lambda expressions, then their dummy expression can't clash w/ each other.
+  if (I1.size() == 0 or I2.size() == 0)
+    return substitute_(R1,D,R2);
+
+  // If all the lambda dummies in R2 are after all the lambda dummies in R1, they also can't clash
+  int max1 = max(I1);
+  int min2 = min(I2);
+  int shift = (max1+1)-min2;
+  if (shift <= 0)
+    return substitute_(R1,D,R2);
+
+  // Shift the dummies in R2 past all the dummies in R1
+  expression_ref R2_shifted = shift_quantified_dummies(R2, shift);
+  return substitute_(R1,D,R2_shifted);
 }
 
 expression_ref apply(const expression_ref& R,const expression_ref& arg)
