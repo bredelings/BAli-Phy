@@ -429,6 +429,49 @@ boost::shared_ptr<const Object> FreeOperationArgs::evaluate(int slot)
   return eval(C,E.sub[slot+1]);
 }
 
+expression_ref find_function_body(const Context& C, expression_ref& R)
+{
+  Function defun_f("defun",3,body_function_f);
+
+  // For each function definition f x1..x[i]..xn | guard = body
+  for(int i=0;i<C.F->size();i++)
+  {
+    expression_ref DR = (*C.F)[i];
+    
+    shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(DR);
+    if (not DE) continue;
+    if (defun_f.compare(*DE->sub[0]) != true) continue;
+    if (DE->size() != 4) continue;
+    
+    expression_ref def = DE->sub[1];
+    expression_ref guard = DE->sub[2];
+    expression_ref body = DE->sub[3];
+    
+    vector<expression_ref> def_match_results;
+    // 1. If R matches the def, then store the results.
+    if (not eval_match(C,R,def,def_match_results,true)) continue;
+    
+    // 2. substitute the results into the guard expression
+    guard = substitute(guard,def_match_results);
+    
+    //   ... and see if it evaluates to True
+    vector<expression_ref> temp_results;
+    if (not eval_match(C, guard, true, temp_results)) continue;
+    
+    // 3. Substitute the body
+    body = substitute(body,def_match_results);
+    
+    return body;
+  }
+  return expression_ref();
+}
+
+expression_ref find_function_body(const Context& C, const expression_ref& R)
+{
+  expression_ref V (R->clone());
+  return find_function_body(C,V);
+}
+
 // Contexts (can) allow three things
 // 1. Variables to have values
 // 2. Caching
@@ -486,44 +529,11 @@ expression_ref eval(const Context& C, const expression_ref& R)
   }
   else if (f and f->what_type == body_function_f)
   {
-    // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
-    Function defun_f("defun",3,body_function_f);
-
-    // For each function definition f x1..x[i]..xn | guard = body
-    for(int i=0;i<C.F->size();i++)
-    {
-      expression_ref DR = (*C.F)[i];
-
-      shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(DR);
-      if (not DE) continue;
-      if (defun_f.compare(*DE->sub[0]) != true) continue;
-      if (DE->size() != 4) continue;
-
-      expression_ref def = DE->sub[1];
-      expression_ref guard = DE->sub[2];
-      expression_ref body = DE->sub[3];
-
-      shared_ptr<const expression> RE = dynamic_pointer_cast<const expression>(R);
-
-      vector<expression_ref> def_match_results;
-      // 1. If R matches the def, then store the results.
-      expression_ref V (R->clone());
-      if (not eval_match(C,V,def,def_match_results,true)) continue;
-
-      // 2. substitute the results into the guard expression
-      guard = substitute(guard,def_match_results);
-
-      //   ... and see if it evaluates to True
-      vector<expression_ref> temp_results;
-      if (not eval_match(C, guard, true, temp_results)) continue;
-
-      // 3. Substitute the body
-      body = substitute(body,def_match_results);
-
+    expression_ref body = find_function_body(C,R);
+    if (body)
       return eval(C,body);
-    }
-
-    throw myexception()<<"No function definition for expression '"<<R->print()<<"'";
+    else
+      throw myexception()<<"No function definition for expression '"<<R->print()<<"'";
   }
 
   // Hey, how about a model expression?
@@ -602,42 +612,11 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
   }
   else if (RF and RF->what_type == body_function_f)
   {
-    Function defun_f("defun",3,body_function_f);
-
-    // For each function definition f x1..x[i]..xn | guard = body
-    for(int i=0;i<C.F->size();i++)
-    {
-      expression_ref DR = (*C.F)[i];
-
-      shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(DR);
-      if (not DE) continue;
-      if (defun_f.compare(*DE->sub[0]) != true) continue;
-      if (DE->size() != 4) continue;
-
-      expression_ref def = DE->sub[1];
-      expression_ref guard = DE->sub[2];
-      expression_ref body = DE->sub[3];
-
-      shared_ptr<const expression> RE = dynamic_pointer_cast<const expression>(R);
-
-      vector<expression_ref> def_match_results;
-      // 1. If R matches the def, then store the results.
-      if (not eval_match(C,R,def,def_match_results,true)) continue;
-
-      // 2. substitute the results into the guard expression
-      guard = substitute(guard,def_match_results);
-
-      //   ... and see if it evaluates to True
-      vector<expression_ref> temp_results;
-      if (not eval_match(C, guard, true, temp_results)) continue;
-
-      // 3. Substitute the body, and see if it eval_matches ~ Q
-      body = substitute(body,def_match_results);
-
+    expression_ref body = find_function_body(C,R);
+    if (body)
       return eval_match(C,body,Q,results);
-    }
-
-    throw myexception()<<"No function definition for expression '"<<R->print()<<"'";
+    else
+      throw myexception()<<"No function definition for expression '"<<R->print()<<"'";
   }
   else
     throw myexception()<<"Don't know how to evaluate expression '"<<R->print()<<"'";
