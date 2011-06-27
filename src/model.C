@@ -38,32 +38,32 @@ string parameter_name(const string& prefix, int i,int n)
 }
 
 Parameter::Parameter(const string& n)
-  :name(n), fixed(false), changed(true)
+  :name(n), fixed(false)
 {
 }
 
 Parameter::Parameter(const string& n, shared_ptr<const Object> v)
-  :name(n), value(v), fixed(false), changed(true)
+  :name(n), value(v), fixed(false)
 {
 }
 
 Parameter::Parameter(const string& n, shared_ptr<const Object> v, const Bounds<double>& b, bool f)
-  :name(n), value(v), bounds(b), fixed(f), changed(true)
+  :name(n), value(v), bounds(b), fixed(f)
 {
 }
 
 Parameter::Parameter(const string& n, const Object& v)
-  :name(n), value(v), fixed(false), changed(true)
+  :name(n), value(v), fixed(false)
 {
 }
 
 Parameter::Parameter(const string& n, const Object& v, bool f)
-  :name(n), value(v), fixed(f), changed(true)
+  :name(n), value(v), fixed(f)
 {
 }
 
 Parameter::Parameter(const string& n, const Object& v, const Bounds<double>& b, bool f)
-  :name(n), value(v), bounds(b), fixed(f), changed(true)
+  :name(n), value(v), bounds(b), fixed(f)
 {
 }
 
@@ -71,10 +71,7 @@ void Model::validate() const
 {
   valid = true;
   for(int i=0;i<n_parameters();i++)
-  {
-    parameters_[i].changed = false;
     changed[i] = false;
-  }
 }
 
 void Model::invalidate() const
@@ -84,7 +81,6 @@ void Model::invalidate() const
 
 void Model::modify_parameter(int i) const
 {
-  parameters_[i].changed = true;
   changed[i] = true;
 
   invalidate();
@@ -237,6 +233,11 @@ void Model::set_parameter_values(const vector<shared_ptr<const Object> >& p)
 {
   assert(p.size() == n_parameters());
   set_parameter_values(iota<int>(n_parameters()), p);
+}
+
+unsigned Model::n_parameters() const 
+{
+  return C.F->n_parameters();
 }
 
 Model::Model()

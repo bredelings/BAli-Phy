@@ -54,7 +54,6 @@ struct Parameter
   polymorphic_cow_ptr<Object> value;
   Bounds<double> bounds;
   bool fixed;
-  mutable bool changed;
 
   Parameter(const std::string&);
   Parameter(const std::string&, boost::shared_ptr<const Object>);
@@ -268,7 +267,7 @@ public:
   /// Get A model parameter
   const Parameter& get_parameter(int i) const {return parameters_[i];}
 
-  unsigned n_parameters() const {return parameters_.size();}
+  unsigned n_parameters() const;
 
   int n_args() const {return n_parameters();}
 
