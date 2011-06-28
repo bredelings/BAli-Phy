@@ -68,6 +68,10 @@ struct expression_ref;
 // DONE: allow lists...
 //  - TODO: for what?
 // TODO: define a print function.  Need a print Op.
+//  - Can I print constant strings surrounded by quotes?
+//  - Can I print x+(y+z) as x+y+z?
+//  - Can I print (Cons x y) as x:y?
+//  - Can I print (Cons x []) as [x]?
 
 // 4. eval_match( )...
 // Functions that cannot be represented in static flow graph
