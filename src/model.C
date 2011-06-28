@@ -122,11 +122,13 @@ int Model::add_parameter(const Parameter& P)
     if (parameter_name(i) == P.name)
       throw myexception()<<"A parameter with name '"<<P.name<<"' already exists - cannot add another one.";
 
+  int index = n_parameters();
+
   C.add_expression(parameter(P.name));
   changed.push_back(true);
+  bounds.push_back(P.bounds);
+  fixed.push_back(P.fixed);
 
-  parameters_.push_back(P);
-  int index = parameters_.size()-1;
   if (P.value)
     C.set_value(index, *P.value);
   return index;
@@ -164,22 +166,22 @@ void Model::rename_parameter(int i, const std::string& s)
 
 bool Model::is_fixed(int i) const
 {
-  return parameters_[i].fixed;
+  return fixed[i];
 }
 
 void Model::set_fixed(int i,bool f)
 {
-  parameters_[i].fixed = f;
+  fixed[i] = f;
 }
 
 const Bounds<double>& Model::get_bounds(int i) const 
 {
-  return parameters_[i].bounds;
+  return bounds[i];
 }
 
 void Model::set_bounds(int i,const Bounds<double>& b) 
 {
-  parameters_[i].bounds = b;
+  bounds[i] = b;
 }
 
 boost::shared_ptr<const Object> Model::get_parameter_value(int i) const

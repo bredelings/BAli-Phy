@@ -162,9 +162,8 @@ protected:
   Context C;
 
   mutable std::vector<bool> changed;
-
-  /// Parameter values
-  std::vector< Parameter > parameters_;
+  std::vector< Bounds<double> > bounds;
+  std::vector< bool > fixed;
 
   void validate() const;
 
