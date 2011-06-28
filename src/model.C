@@ -122,11 +122,14 @@ int Model::add_parameter(const Parameter& P)
     if (parameter_name(i) == P.name)
       throw myexception()<<"A parameter with name '"<<P.name<<"' already exists - cannot add another one.";
 
-  C.F->add_expression(parameter(P.name));
+  C.add_expression(parameter(P.name));
   changed.push_back(true);
 
   parameters_.push_back(P);
-  return parameters_.size()-1;
+  int index = parameters_.size()-1;
+  if (P.value)
+    C.set_value(index, *P.value);
+  return index;
 }
 
 std::vector< shared_ptr<const Object> > Model::get_parameter_values() const
@@ -181,7 +184,7 @@ void Model::set_bounds(int i,const Bounds<double>& b)
 
 boost::shared_ptr<const Object> Model::get_parameter_value(int i) const
 {
-  return parameters_[i].value;
+  return C.get_value(i);
 }
 
 boost::shared_ptr<const Object> Model::get_parameter_value(const std::string& p_name) const 
@@ -191,7 +194,7 @@ boost::shared_ptr<const Object> Model::get_parameter_value(const std::string& p_
 
 void Model::write_value(int i,const shared_ptr<const Object>& value)
 {
-  parameters_[i].value = value;
+  C.set_value(i,value);
   modify_parameter(i);
 }
 
@@ -239,6 +242,13 @@ void Model::set_parameter_values(const vector<shared_ptr<const Object> >& p)
 unsigned Model::n_parameters() const 
 {
   return C.F->n_parameters();
+}
+
+Parameter Model::get_parameter(int i) const
+{
+  Parameter P = parameters_[i];
+  P.value = C.get_value(i);
+  return P;
 }
 
 Model::Model()
@@ -387,7 +397,7 @@ void SuperModel::write_value(int index, const shared_ptr<const Object>& p)
 void SuperModel::write() 
 {
   for(int i=0;i<n_parameters();i++)
-    write_value(i, parameters_[i].value);
+    write_value(i, C.get_value(i) );
 }
 
 efloat_t SuperModel::prior() const {
@@ -826,7 +836,7 @@ shared_ptr<const Object> OpModel::slot_result(int slot) const
   {
     // find the parameter and return it
     int parameter_index = slot_arg.parent_index;
-    return parameters_[parameter_index].value;
+    return C.get_value(parameter_index);
   }
   else if (slot_arg.is_constant())
   {
@@ -867,8 +877,8 @@ int OpModel::add_submodel(shared_ptr<const Model> m)
     model_slots_for_index[index].push_back( model_slot(m_index,slot) );
     
     // default parameter values AND bounds from submodels
-    if (not parameters_[index].value) {
-      parameters_[index].value = sub_models[m_index]->get_parameter_value(slot);
+    if (not C.values[index]->computed) {
+      C.set_value(index,sub_models[m_index]->get_parameter_value(slot) );
       // should we continually narrow the bounds by and-ing them together?
       parameters_[index].bounds = sub_models[m_index]->get_bounds(slot);
     }

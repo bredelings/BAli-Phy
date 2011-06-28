@@ -906,7 +906,7 @@ void Parameters::branch_mean(int i, double x)
 
 void Parameters::branch_mean_tricky(int i,double x)
 {
-  parameters_[branch_mean_index(i)].value = polymorphic_cow_ptr<Object>( Double(x) );
+  C.set_value(branch_mean_index(i), Double(x) );
   
   for(int j=0;j<scale_for_partition.size();j++)
     if (scale_for_partition[j] == i)
