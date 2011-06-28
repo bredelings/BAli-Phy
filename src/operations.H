@@ -9,6 +9,64 @@
 #include "computation.H"
 #include "expression.H"
 
+struct Print: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Print* clone() const {return new Print(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Print* E = dynamic_cast<const Print*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    boost::shared_ptr<const Object> x = Args.evaluate(0);
+
+    return boost::shared_ptr<String> ( new String(x->print() ) );
+  }
+
+  std::string name() const {return "sys_print";}
+
+  Print():Operation(1) {}
+};
+
+struct Concat: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Concat* clone() const {return new Concat(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Concat* E = dynamic_cast<const Concat*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    boost::shared_ptr<const String> x = Args.evaluate_as<String>(0);
+    boost::shared_ptr<const String> y = Args.evaluate_as<String>(1);
+
+    const std::string& X = *x;
+    const std::string& Y = *y;
+
+    return boost::shared_ptr<String> ( new String(X+Y) );
+  }
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "++";}
+
+  Concat():Operation(2) {}
+};
+
+
 template <typename T>
 struct Multiply: public Operation
 {
