@@ -159,7 +159,7 @@ std::string Model::parameter_name(int i) const
 
 void Model::rename_parameter(int i, const std::string& s)
 {
-  parameters_[i].name = s;
+  C.F->rename_parameter(i,s);
 }
 
 bool Model::is_fixed(int i) const

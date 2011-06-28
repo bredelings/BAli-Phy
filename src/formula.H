@@ -168,6 +168,8 @@ public:
 
   int parameter_index(int i) const;
 
+  void rename_parameter(int i, const std::string& s);
+
   std::string parameter_name(int i) const;
 
   bool is_parameter(int index) const;

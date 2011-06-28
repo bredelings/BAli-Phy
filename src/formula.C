@@ -90,6 +90,16 @@ string Formula::parameter_name(int i) const
   return terms[parameter_index(i)].E->print();
 }
 
+void Formula::rename_parameter(int i, const string& s)
+{
+  assert(is_parameter(i));
+  expression_ref old_p = terms[i].E;
+  expression_ref new_p = parameter(s);
+
+  for(int i=0;i<terms.size();i++)
+    terms[i].E = substitute(terms[i].E,old_p,new_p);
+}
+
 bool Formula::is_computed(int index) const
 {
   if (has_inputs(index))
