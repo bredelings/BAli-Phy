@@ -486,6 +486,7 @@ expression_ref eval(const Context& C, const expression_ref& R)
 {
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
+  // 0. If R is not an expression
   if (not E)
   {
     if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
@@ -500,12 +501,16 @@ expression_ref eval(const Context& C, const expression_ref& R)
       return R;
   }
 
-  // If the expression is a function expression...
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  // 1. Compute the head
+  expression_ref head = eval(C,E->sub[0]);
+
+  // 2. If head is a lambda, then this is a lambda expression.  It evaluates to itself.
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(head);
   if (L)
     return R;
 
-  shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E->sub[0]);
+  // 3. If head is an expression, then apply the expression to E->sub[1]
+  shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(head);
   if (E2)
   {
     shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E2->sub[0]);
@@ -520,8 +525,8 @@ expression_ref eval(const Context& C, const expression_ref& R)
   }
   
 
-  // If the expression is a data function expression, evaluate its arguments
-  shared_ptr<const Function> f = dynamic_pointer_cast<const Function>(E->sub[0]);
+  // 4. If the head is a constructor, evaluate its arguments
+  shared_ptr<const Function> f = dynamic_pointer_cast<const Function>(head);
   if (f and f->what_type == data_function_f)
   {
     // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
@@ -531,6 +536,7 @@ expression_ref eval(const Context& C, const expression_ref& R)
 
     return shared_ptr<const expression>(V);
   }
+  // 5. If the head is a function, evaluate the substituted body
   else if (f and f->what_type == body_function_f)
   {
     expression_ref body = find_function_body(C,R);
@@ -542,29 +548,38 @@ expression_ref eval(const Context& C, const expression_ref& R)
 
   // Hey, how about a model expression?
 
-  // Otherwise the expression must be an op expression
-  shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]);
-  assert(O);
-  
-  FreeOperationArgs Args(C,*E);
-
-  // recursive calls to evaluate happen in here.
-  shared_ptr<const Object> new_result;
-  try{
-    return (*O)(Args);
-  }
-  catch(myexception& e)
+  // 6. If the head is an Operation, evaluate the operation.
+  shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(head);
+  if (O)
   {
-    e.prepend("Evaluating expression '"+R->print()+"':\n");
-    throw e;
+    FreeOperationArgs Args(C,*E);
+
+    // recursive calls to evaluate happen in here.
+    shared_ptr<const Object> new_result;
+    try{
+      return (*O)(Args);
+    }
+    catch(myexception& e)
+    {
+      e.prepend("Evaluating expression '"+R->print()+"':\n");
+      throw e;
+    }
   }
+  /*
+  else if (E->size() == 1)
+  {
+    return eval(C,head);
+  }
+  */
+  else
+    throw myexception()<<"Don't know how to evaluate expression '"<<R<<"'";
 }
 
 // problem: expression_ref is currently designed to be unmodifiable.
 
 bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, std::vector<expression_ref>& results, bool no_eval_top_level)
 {
-  // If we are matching against a match expression, then succeed and store the result if asked.
+  // -1. If we are matching against a match expression, then succeed and store the result if asked.
   if (shared_ptr<const match> M = dynamic_pointer_cast<const match>(Q))
   {
     if (M->index >= 0)
@@ -579,27 +594,63 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
     return true;
   }
 
-  shared_ptr<const expression> QE = dynamic_pointer_cast<const expression>(Q);
+  // 1. Compute the head
   shared_ptr<const expression> RE = dynamic_pointer_cast<const expression>(R);
+  expression_ref head;
+  if (RE)
+    head = eval(C,RE->sub[0]);
 
   // If the eval expression or the query expression is a literal constant, just evaluate R and see if it matches.
   // Do the same if the eval expression is an object returned from an operation
-  if (not QE or not RE or dynamic_cast<const Operation*>(&*RE->sub[0]))
+  // 0. What if R is a literal constant
+  // 6. What if head is an operation expression?
+  if (not RE or dynamic_cast<const Operation*>(&*head))
   {
     R = eval(C,R);
     vector<expression_ref> results2 = results; // FIXME!  This is a bit expensive...
-    return find_match(Q,R,results2);
+    if (find_match(Q,R,results2))
+    {
+      results = results2;
+      return true;
+    }
+    else
+      return false;
   }
   
-  shared_ptr<const Function> RF = dynamic_pointer_cast<const Function>(RE->sub[0]);
-
-  if (no_eval_top_level or (RF and RF->what_type == data_function_f))
+  // 2. If head is a lambda, then this is a lambda expression.  It evaluates to itself.
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(head);
+    
+  // 3. If head is an expression, then apply the expression to E->sub[1]
+  shared_ptr<const expression> RE2 = dynamic_pointer_cast<const expression>(head);
+  if (RE2)
   {
-    // Expressions must have the same number of arguments
+    shared_ptr<const lambda> L2 = dynamic_pointer_cast<const lambda>(RE2->sub[0]);
+    if (not L2)
+      throw myexception()<<"Can't eval_match expression '"<<RE->print()<<"' with head = '"<<RE2->print()<<"'";
+
+    if (RE->size() > 2)
+      throw myexception()<<"Expression '"<<RE->print()<<"' applies a lambda function to more than one argument.";
+
+    // FIXME - is this enough evaluation?
+    R = substitute(RE2->sub[1], L2->dummy_index, RE->sub[1]);
+    return eval_match(C,R,Q,results);
+  }
+
+  shared_ptr<const Function> RF = dynamic_pointer_cast<const Function>(head);
+
+  // 4. If the head is a constructor, evaluate_match its arguments
+  if (no_eval_top_level or (RF and RF->what_type == data_function_f) or L)
+  {
+    // Q must be an expression also.
+    shared_ptr<const expression> QE = dynamic_pointer_cast<const expression>(Q);
+    if (not QE) return false;
+
+    // Q must have the same number of arguments
     if (RE->size() != QE->size()) return false;
 
-    // The heads have to compare equal.  There is no matching there. (Will there be, later?)
-    if (RE->sub[0]->compare(*QE->sub[0]) != true)
+    // Q must have the same head here.
+    // FIXME: There is no matching or evaluation of the head, here. (Will there be, later?)
+    if (head->compare(*QE->sub[0]) != true)
       return false;
 
     // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
@@ -614,6 +665,7 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
 
     return true;
   }
+  // 5. If the head is a function, eval_match the substituted body
   else if (RF and RF->what_type == body_function_f)
   {
     expression_ref body = find_function_body(C,R);
@@ -624,6 +676,13 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
     else
       throw myexception()<<"No function definition for expression '"<<R->print()<<"'";
   }
+  /*
+  else if (RE->size() == 1)
+  {
+    R = RE->sub[0];
+    return eval_match(C,R,Q,results);
+  }
+  */
   else
     throw myexception()<<"Don't know how to evaluate expression '"<<R->print()<<"'";
 }
