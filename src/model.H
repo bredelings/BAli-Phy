@@ -264,9 +264,6 @@ public:
   /// Set ALL model parameter values
           void set_parameter_values(const std::vector<boost::shared_ptr<const Object> >& p);
 
-  /// Get A model parameter
-  Parameter get_parameter(int i) const;
-
   unsigned n_parameters() const;
 
   int n_args() const {return n_parameters();}

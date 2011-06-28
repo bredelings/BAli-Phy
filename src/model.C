@@ -244,13 +244,6 @@ unsigned Model::n_parameters() const
   return C.F->n_parameters();
 }
 
-Parameter Model::get_parameter(int i) const
-{
-  Parameter P = parameters_[i];
-  P.value = C.get_value(i);
-  return P;
-}
-
 Model::Model()
   :valid(false)
 { }
@@ -364,9 +357,12 @@ int SuperModel::register_submodel(const string& prefix)
 
   for(int i=0;i<M.n_parameters();i++)
   {
-    Parameter P = M.get_parameter(i);
-    P.name = prefix + "::" + P.name;
-    int index = add_parameter(P);
+    string name = prefix + "::" + M.parameter_name(i);
+    object_ref value = M.get_parameter_value(i);
+    Bounds<double> bounds = M.get_bounds(i);
+    bool fixed = M.is_fixed(i);
+
+    int index = add_parameter(Parameter(name,value,bounds,fixed));
     args.push_back(index);
   }
 
