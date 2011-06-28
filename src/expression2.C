@@ -113,7 +113,7 @@ struct exponential_density: public Operation
     shared_ptr<const Double> mu = Args.evaluate_as<Double>(1);
 
     Log_Double result = log_double_t(0);
-    if (*x >= 0)
+    if (*x >= 0.0)
       result = exp<log_double_t>(-*x/ *mu)/ *mu;
     return shared_ptr<const Object>(result.clone());
   }
@@ -228,7 +228,7 @@ int main()
   // -- using automatic creation of operators based on typed references
   F->add_expression( If( Z > One , X*Y+One , W*W ) );
   // -- can we create constants easily?
-  F->add_expression( If( Z > Constant(1.0), X*Y+Constant(1.0), W*W ) );
+  F->add_expression( If( Z > 1.0, X*Y+1.0, W*W ) );
 
   expression_ref square = lambda_expression(body_function("square",1));
   F->add_expression( defun( square(_1), true, mul(_1,_1)) );
