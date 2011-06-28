@@ -876,7 +876,7 @@ int OpModel::add_submodel(shared_ptr<const Model> m)
     if (not C.values[index]->computed) {
       C.set_value(index,sub_models[m_index]->get_parameter_value(slot) );
       // should we continually narrow the bounds by and-ing them together?
-      parameters_[index].bounds = sub_models[m_index]->get_bounds(slot);
+      set_bounds(index, sub_models[m_index]->get_bounds(slot) );
     }
   }
 
