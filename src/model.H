@@ -105,9 +105,9 @@ struct Parameter
 // 8. Handle various annotations, such as priors, bounds, model_names, computed variable names, transition-kernels, loggers, etc. from Formula.
 // 9. Consider the possibility of evaluating functions that DO something, and have a void return type?
 // 10. TODO: Make the model store most of its properties in a Context object and a Formula Object.
+//   - FIX: implement Formula::rename_parameter( ).
 //   - The Context will store the values, and the Formula will store the attributes.
 //   - Expose the top-level attribute for Formulae (expose top-level indices only?)
-//   - Can I prefix names?
 //   - TODO: Get rid of references to parameters_
 //     + parameters_[i].changed: separate array?
 //   - How can attributes change efficiently?
