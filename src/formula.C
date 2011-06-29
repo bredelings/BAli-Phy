@@ -194,7 +194,10 @@ term_ref Formula::add_sub_expression(const expression_ref& R, bool top)
 
   // Actually add the term
   terms.push_back(t);
-  //  std::cerr<<"adding term "<<t.E->print()<<"\n";
+
+  // Index the top-level expressions.
+  if (top) top_level_expressions.push_back(new_index);
+
   return term_ref(new_index,*this);
 }
 
@@ -299,4 +302,20 @@ term_ref Formula::find_match_expression2(const expression_ref& query, std::vecto
 
   results.clear();
   return term_ref();
+}
+
+boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>& F1, const boost::shared_ptr<Formula>& F2)
+{
+  shared_ptr<Formula> F (F1->clone());
+  for(int i=0;i<F2->size();i++)
+    F->add_expression(F2->exp(i));
+  return F;
+}
+
+boost::shared_ptr<Formula> prefix_formula(const boost::shared_ptr<const Formula>& F, const std::string& prefix)
+{
+  shared_ptr<Formula> F2 (F->clone());
+  for(int i=0;i<F2->n_parameters();i++)
+    F2->rename_parameter(i,prefix + "::" + F2->parameter_name(i));
+  return F2;
 }

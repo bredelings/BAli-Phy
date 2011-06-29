@@ -129,6 +129,9 @@ class Formula: virtual public Object
   /// The list of terms that compose this Formula
   std::vector<Term> terms;
 
+  /// Which terms are top-level terms?
+  std::vector<int> top_level_expressions;
+
   /// cached list of which terms are variables
   std::vector<int> parameter_indices;
 
@@ -144,7 +147,11 @@ public:
 
   int size() const {return terms.size();}
 
-  const expression_ref& operator[](int i) const {return terms[i].E;}
+  const expression_ref& sub_exp(int i) const {return terms[i].E;}
+
+  const expression_ref& exp(int i) const {return terms[top_level_expressions[i]].E;}
+
+  const expression_ref& operator[](int i) const {return sub_exp(i);}
 
   const std::vector<int>& input_indices(int index) const {return terms[index].input_indices;}
 
@@ -197,4 +204,7 @@ public:
   term_ref find_match_expression2(const expression_ref& e, std::vector<int>&) const;
 };
 
+boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>&, const boost::shared_ptr<Formula>&);
+
+boost::shared_ptr<Formula> prefix_formula(const boost::shared_ptr<const Formula>&,const std::string&);
 #endif
