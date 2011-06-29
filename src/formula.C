@@ -312,7 +312,7 @@ boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>& F1, c
   return F;
 }
 
-boost::shared_ptr<Formula> prefix_formula(const boost::shared_ptr<const Formula>& F, const std::string& prefix)
+boost::shared_ptr<Formula> prefix_formula(const std::string& prefix,const boost::shared_ptr<const Formula>& F)
 {
   shared_ptr<Formula> F2 (F->clone());
   for(int i=0;i<F2->n_parameters();i++)

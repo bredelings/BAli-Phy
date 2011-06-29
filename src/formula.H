@@ -204,7 +204,7 @@ public:
   term_ref find_match_expression2(const expression_ref& e, std::vector<int>&) const;
 };
 
-boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>&, const boost::shared_ptr<Formula>&);
+boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>&, const boost::shared_ptr<const Formula>&);
 
-boost::shared_ptr<Formula> prefix_formula(const boost::shared_ptr<const Formula>&,const std::string&);
+boost::shared_ptr<Formula> prefix_formula(const std::string&,const boost::shared_ptr<const Formula>&);
 #endif
