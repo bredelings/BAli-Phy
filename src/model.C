@@ -449,14 +449,14 @@ void show_parameters(std::ostream& o,const Model& M) {
     if (M.is_fixed(i)) 
       o<<"*";
     o<<M.parameter_name(i)<<" = ";
-    if (M.parameter_has_type<Double>(i))
-      o<<M.get_parameter_value_as<Double>(i);
-    else if (M.parameter_has_type<Int>(i))
-      o<<M.get_parameter_value_as<Int>(i);
-    else if (not M.get_parameter_value(i))
-      o<<"[NULL]";
-    else
-      o<<"[unprintable]";
+    string output="[NULL]";
+    if (M.get_parameter_value(i))
+    {
+      output=M.get_parameter_value(i)->print();
+      if (output.find(10) != string::npos or output.find(13) != string::npos)
+	output = "[multiline]";
+    }
+    o<<output;
   }
   o<<"\n";
 }
