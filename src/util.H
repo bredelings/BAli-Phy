@@ -126,7 +126,7 @@ struct bad_mapping: public myexception
     : myexception(s),
       missing(t),
       from(f),
-      size1(s2),
+      size1(s1),
       size2(s2)
   { }
 
