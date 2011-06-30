@@ -7,7 +7,7 @@
 
 #include "object.H"
 
-class OperationArgs;
+struct OperationArgs;
 
 #include "operator.H"
 

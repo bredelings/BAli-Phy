@@ -8,12 +8,13 @@
 #include "object.H"
 
 class Formula;
-class Computation;
-class expression_ref;
+struct Computation;
+struct expression_ref;
 
 // Values
-struct Context: virtual public Object
+class Context: virtual public Object
 {
+public:
   // member type
   struct value: virtual public Object
   {

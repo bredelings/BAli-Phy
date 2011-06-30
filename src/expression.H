@@ -30,7 +30,7 @@ class Formula;
 
 // Question: Do I really want objects to have names in the Formula?
 
-class expression_ref;
+struct expression_ref;
 
 // Head objects include:
 // - parameter(string)
@@ -114,8 +114,6 @@ struct match: public Object
   match(int i):index(i) { }
 };
 
-class expression_ref;
-
 // This no longer needs to be a virtual member function, because we can now walk the expression from outside.
 int n_match_results(const expression_ref&);
 
@@ -182,7 +180,7 @@ struct lambda: public Object
   lambda(int d);
 };
 
-class term_ref;
+struct term_ref;
 
 struct formula_expression_ref;
 

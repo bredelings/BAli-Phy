@@ -45,7 +45,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 // how to have different models, with different moves
 // and possibly moves between models?
 
-class slice_function;
+struct slice_function;
 
 namespace MCMC {
 

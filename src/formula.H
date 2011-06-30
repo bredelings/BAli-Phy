@@ -9,7 +9,7 @@
 #include "object.H"
 #include "expression.H"
 
-struct Formula;
+class Formula;
 
 struct Computation;
 struct Operation;

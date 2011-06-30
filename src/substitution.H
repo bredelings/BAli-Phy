@@ -28,7 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "alignment.H"
 #include "tree.H"
-class Mat_Cache;
+struct Mat_Cache;
 class Parameters;
 #include "parameters.H"
 #include "substitution-cache.H"

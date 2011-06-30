@@ -424,7 +424,7 @@ public:
   SuperModelOver<SubModel_t>* clone() const =0;
 };
 
-class expression_ref;
+struct expression_ref;
 
 class OpModel: virtual public Model
 {
