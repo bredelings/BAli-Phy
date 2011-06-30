@@ -104,13 +104,24 @@ struct Parameter
 // 7. Store cached intermediate results in same array as input variable values?
 // 8. Handle various annotations, such as priors, bounds, model_names, computed variable names, transition-kernels, loggers, etc. from Formula.
 // 9. Consider the possibility of evaluating functions that DO something, and have a void return type?
-// 10. TODO: Make the model store most of its properties in a Context object and a Formula Object.
-//   - FIX: implement Formula::rename_parameter( ).
-//   - The Context will store the values, and the Formula will store the attributes.
+// 10. DONE: Make the model store most of its properties in a Context object and a Formula Object.
+//   - DONE: implement Formula::rename_parameter( ).
+//     + The Context will store the values, and the Formula will store the attributes.
 //   - Expose the top-level attribute for Formulae (expose top-level indices only?)
 //   - TODO: Get rid of references to parameters_
 //     + parameters_[i].changed: separate array?
 //   - How can attributes change efficiently?
+// 11. Make a FormulaModel that uses the Context to calculate
+//   (a) load default values
+//   (b) calculate priors
+//   (c) set bounds.
+//   [The model class still stores the bounds and fixed-ness, so they can easily change]
+//   (d) How do we do things like MultiParameterModel, where an operation takes a function as an argument?
+// 12. Replace OpModels with FormulaModels:
+//   (a) Make each Model also an Operation.  
+//   (b) Make each Model also 
+//   (b) Make each Model compute priors based on the FOrmulae.
+//   (c) Wait... should I 
 
 
 // Rewrite:
