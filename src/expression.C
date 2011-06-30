@@ -366,12 +366,10 @@ expression_ref apply(const expression_ref& E,
 		     const vector< expression_ref > args,
 		     int i)
 {
-  expression_ref result1 = apply(E,args[i]);
-
   if (i<args.size())
-    result1 = apply(result1, args, i+1);
-
-  return result1;
+    return apply(apply(E,args[i]), args, i+1);
+  else
+    return E;
 }
 
 expression_ref apply(const expression_ref& E,
