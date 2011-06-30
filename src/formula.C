@@ -304,7 +304,7 @@ term_ref Formula::find_match_expression2(const expression_ref& query, std::vecto
   return term_ref();
 }
 
-boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>& F1, const boost::shared_ptr<Formula>& F2)
+boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>& F1, const boost::shared_ptr<const Formula>& F2)
 {
   shared_ptr<Formula> F (F1->clone());
   for(int i=0;i<F2->size();i++)
