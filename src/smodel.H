@@ -437,8 +437,6 @@ namespace substitution {
 
     boost::shared_ptr<const Object> result() const;
 
-    double f() const {return get_parameter_value_as<Double>(1);}
-
     SimpleFrequencyModel* clone() const {return new SimpleFrequencyModel(*this);}
 
     efloat_t prior() const;

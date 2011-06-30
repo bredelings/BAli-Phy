@@ -162,20 +162,20 @@ namespace substitution {
     recalc_all();
   }
 
-  shared_ptr<const Object> SimpleFrequencyModel::result() const
+  shared_ptr<ReversibleFrequencyModelObject> Plus_gwF_Function(const alphabet& a, double f, const vector<double>& pi)
   {
-    const alphabet& a = get_parameter_value_as<alphabet>(0);
+    assert(a.size() == pi.size());
 
     shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
 
     // compute frequencies
-    R->pi = get_vector<double>( get_parameter_values_as<Double>( range<int>(2,a.size()) ) );
+    R->pi = pi;
     normalize(R->pi);
     
     // compute transition rates
     valarray<double> pi_f(a.size());
     for(int i=0;i<a.size();i++)
-      pi_f[i] = pow(R->pi[i],f());
+      pi_f[i] = pow(R->pi[i],f);
 
     for(int i=0;i<a.size();i++)
       for(int j=0;j<a.size();j++)
@@ -186,6 +186,15 @@ namespace substitution {
       R->R(i,i) = 0;
 
     return R;
+  }
+
+  shared_ptr<const Object> SimpleFrequencyModel::result() const
+  {
+    const alphabet& a = get_parameter_value_as<alphabet>(0);
+    double f = get_parameter_value_as<Double>(1);
+    vector<double> pi = get_vector<double>( get_parameter_values_as<Double>( range<int>(2,a.size()) ) );
+
+    return Plus_gwF_Function(a,f,pi);
   }
 
   efloat_t SimpleFrequencyModel::prior() const 
@@ -246,7 +255,6 @@ namespace substitution {
     // initialize everything
     recalc_all();
   }
-
 
   //------------------- Triplet Frequency Model -----------------//
   TripletFrequencyModel::TripletFrequencyModel(const Triplets& T)
