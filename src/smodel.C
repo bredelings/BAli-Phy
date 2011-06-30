@@ -230,7 +230,7 @@ namespace substitution {
       return Plus_gwF_Function(*a,f,pi);
     }
 
-    std::string name() const {return "Q_from_R_and_S";}
+    std::string name() const {return "+gwF";}
 
     Plus_gwF_Op(const alphabet& A):Operation(1+A.size()),a(A.clone()) { }
   };
