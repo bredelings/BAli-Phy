@@ -293,6 +293,64 @@ namespace substitution {
     dirichlet_density():Operation(2) { }
   };
 
+  struct laplace_density: public Operation
+  {
+    laplace_density* clone() const {return new laplace_density;}
+    
+    tribool compare(const Object& o) const
+    {
+      if (this == &o) return true;
+      
+      if (dynamic_cast<const laplace_density*>(&o)) return true;
+      
+      return false;
+    }
+    
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      double x = *Args.evaluate_as<Double>(0);
+      expression_ref A =  Args.evaluate(1);
+
+      vector<double> a = get_vector<double,Double>(A);
+
+      return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x,a[0],a[1]) ) );
+    }
+
+    string name() const {return "laplace_density";}
+    
+    laplace_density():Operation(2) { }
+  };
+
+  struct log_laplace_density: public Operation
+  {
+    log_laplace_density* clone() const {return new log_laplace_density;}
+    
+    tribool compare(const Object& o) const
+    {
+      if (this == &o) return true;
+      
+      if (dynamic_cast<const log_laplace_density*>(&o)) return true;
+      
+      return false;
+    }
+    
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      double x = *Args.evaluate_as<Double>(0);
+      expression_ref A =  Args.evaluate(1);
+
+      vector<double> a = get_vector<double,Double>(A);
+
+      return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a[0],a[1])/x ) );
+    }
+
+    string name() const {return "log_laplace_density";}
+    
+    log_laplace_density():Operation(2) { }
+  };
+
+  expression_ref log_laplace = prob_density("log_laplace",log_laplace_density());
+
   struct uniform_density: public Operation
   {
     uniform_density* clone() const {return new uniform_density;}
