@@ -130,7 +130,7 @@ int Model::add_parameter(const Parameter& P)
   fixed.push_back(P.fixed);
 
   if (P.value)
-    C.set_value(index, *P.value);
+    C.set_parameter_value(index, *P.value);
   return index;
 }
 
@@ -186,7 +186,7 @@ void Model::set_bounds(int i,const Bounds<double>& b)
 
 boost::shared_ptr<const Object> Model::get_parameter_value(int i) const
 {
-  return C.get_value(i);
+  return C.get_parameter_value(i);
 }
 
 boost::shared_ptr<const Object> Model::get_parameter_value(const std::string& p_name) const 
@@ -196,7 +196,7 @@ boost::shared_ptr<const Object> Model::get_parameter_value(const std::string& p_
 
 void Model::write_value(int i,const shared_ptr<const Object>& value)
 {
-  C.set_value(i,value);
+  C.set_parameter_value(C.F->parameter_index(i),value);
   modify_parameter(i);
 }
 
@@ -395,7 +395,7 @@ void SuperModel::write_value(int index, const shared_ptr<const Object>& p)
 void SuperModel::write() 
 {
   for(int i=0;i<n_parameters();i++)
-    write_value(i, C.get_value(i) );
+    write_value(i, C.get_parameter_value(i) );
 }
 
 efloat_t SuperModel::prior() const {
@@ -834,7 +834,7 @@ shared_ptr<const Object> OpModel::slot_result(int slot) const
   {
     // find the parameter and return it
     int parameter_index = slot_arg.parent_index;
-    return C.get_value(parameter_index);
+    return C.get_parameter_value(parameter_index);
   }
   else if (slot_arg.is_constant())
   {
@@ -876,7 +876,7 @@ int OpModel::add_submodel(shared_ptr<const Model> m)
     
     // default parameter values AND bounds from submodels
     if (not C.values[index]->computed) {
-      C.set_value(index,sub_models[m_index]->get_parameter_value(slot) );
+      C.set_parameter_value(index,sub_models[m_index]->get_parameter_value(slot) );
       // should we continually narrow the bounds by and-ing them together?
       set_bounds(index, sub_models[m_index]->get_bounds(slot) );
     }

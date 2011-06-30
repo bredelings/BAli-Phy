@@ -488,7 +488,7 @@ expression_ref eval(const Context& C, const expression_ref& R)
   if (not E)
   {
     if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
-      return C.get_value(P->parameter_name);
+      return C.get_parameter_value(P->parameter_name);
     else if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R))
       throw myexception()<<"Cannot evaluate dummy variables!";
     else if (shared_ptr<const match> D = dynamic_pointer_cast<const match>(R))

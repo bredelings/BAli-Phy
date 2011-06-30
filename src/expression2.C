@@ -268,10 +268,10 @@ int main()
 
   Context CTX1(F);
 
-  //  CTX1.set_value("X",Double(2));
-  CTX1.set_value("Y",Double(3));
-  CTX1.set_value("Z",Double(4));
-  CTX1.set_value("W",Int(5));
+  //  CTX1.set_parameter_value("X",Double(2));
+  CTX1.set_parameter_value("Y",Double(3));
+  CTX1.set_parameter_value("Z",Double(4));
+  CTX1.set_parameter_value("W",Int(5));
 
   cout<<"CTX1 = \n"<<CTX1<<"\n";
 
@@ -285,19 +285,19 @@ int main()
   cout<<"CTX1 = \n"<<CTX1<<"\n";
   cout<<"CTX2 = \n"<<CTX2<<"\n";
   cout<<"Fiddling X and Y in CTX1...\n";
-  CTX1.set_value("X",Double(3));
-  CTX1.set_value("Y",Double(2));
+  CTX1.set_parameter_value("X",Double(3));
+  CTX1.set_parameter_value("Y",Double(2));
   cout<<"CTX1 = \n"<<CTX1<<"\n";
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   result = CTX1.evaluate(x_times_y_plus_one);
 
   cout<<"Fiddling W in CTX2...\n";
-  CTX2.set_value("W",Int(-1));
+  CTX2.set_parameter_value("W",Int(-1));
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   cout<<"Fiddling Z in CTX2...\n";
-  CTX2.set_value("Z",Double(0));
+  CTX2.set_parameter_value("Z",Double(0));
   result = CTX2.evaluate(cond);
   CTX2.evaluate(defv);
   CTX2.evaluate(z_gt);

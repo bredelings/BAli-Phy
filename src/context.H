@@ -14,6 +14,12 @@ struct expression_ref;
 // Values
 class Context: virtual public Object
 {
+  /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
+  boost::shared_ptr<const Object> get_value(int index) const;
+
+  /// Update the value of a non-constant, non-computed index
+  void set_value(int index, const object_ref&);
+
 public:
   // member type
   struct value: virtual public Object
@@ -47,17 +53,17 @@ public:
   /// Return the value of a particular index, computing it if necessary
   boost::shared_ptr<const Object> evaluate(int index);
 
-  /// Get the value of a non-constant, non-computed index
-  boost::shared_ptr<const Object> get_value(const std::string&) const;
-
   /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-  boost::shared_ptr<const Object> get_value(int index) const;
+  boost::shared_ptr<const Object> get_parameter_value(int index) const;
+
+  /// Get the value of a non-constant, non-computed index
+  boost::shared_ptr<const Object> get_parameter_value(const std::string&) const;
 
   /// Update the value of a non-constant, non-computed index
-  void set_value(int index, const object_ref&);
+  void set_parameter_value(int index, const object_ref&);
 
   /// Update the value of a non-constant, non-computed index
-  void set_value(const std::string& var, const object_ref&);
+  void set_parameter_value(const std::string& var, const object_ref&);
 
   /// How many indices total do we have?
   int size() const;

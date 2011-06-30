@@ -159,7 +159,12 @@ shared_ptr<const Object> Context::evaluate(int index)
   return V.result;
 }
 
-boost::shared_ptr<const Object> Context::get_value(const std::string& var) const
+boost::shared_ptr<const Object> Context::get_parameter_value(int index) const
+{
+  return get_value(F->parameter_index(index));
+}
+
+boost::shared_ptr<const Object> Context::get_parameter_value(const std::string& var) const
 {
   int index = F->find_expression(parameter(var));
   return get_value(index);
@@ -257,7 +262,12 @@ void Context::set_value(int index, const object_ref& O)
   }
 }
 
-void Context::set_value(const std::string& var, const object_ref& O)
+void Context::set_parameter_value(int index, const object_ref& O)
+{
+  set_value(F->parameter_index(index),O);
+}
+
+void Context::set_parameter_value(const std::string& var, const object_ref& O)
 {
   int index = F->find_expression(parameter(var));
   return set_value(index,O);
