@@ -1169,6 +1169,32 @@ namespace substitution {
     return R;
   }
 
+  struct HKY_Op: public Operation
+  {
+    HKY_Op* clone() const {return new HKY_Op;}
+    
+    tribool compare(const Object& o) const
+    {
+      if (this == &o) return true;
+      
+      if (dynamic_cast<const HKY_Op*>(&o)) return true;
+      
+      return false;
+    }
+    
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+      double kappa = *Args.evaluate_as<Double>(1);
+
+      return HKY_Function(*N,kappa);
+    }
+
+    string name() const {return "HKY";}
+    
+    HKY_Op():Operation(2) { }
+  };
+
   shared_ptr<const Object> HKY::result() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
