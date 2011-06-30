@@ -4,7 +4,7 @@ using boost::shared_ptr;
 
 formula_expression_ref formula_expression_ref::operator()(const formula_expression_ref& R) const
 {
-  return formula_expression_ref(combine(F,R.F), exp()(R.exp()));
+  return formula_expression_ref(combine(F, R.F), exp()(R.exp()));
 }
 
 formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg) const
