@@ -1164,9 +1164,10 @@ int Tree::induce_partition(const dynamic_bitset<>& partition)
     // split the node and note the name of the newly added branch
     else {
       nodeview new_node = add_leaf_node(group1[0]->node);
+#ifndef NDEBUG
       int old_index = group1[0]->node;
       int new_index = new_node;
-
+#endif
       for(int i=0;i<group2.size();i++) {
 	reconnect_branch(group2[i]->out->node, group2[i]->node, new_node);
 	assert(group2[i]->node == new_index);
