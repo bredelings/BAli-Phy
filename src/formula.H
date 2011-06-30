@@ -145,7 +145,11 @@ class Formula: virtual public Object
 public:
   Formula* clone() const {return new Formula(*this);}
 
-  int size() const {return terms.size();}
+  int n_sub_exp() const {return terms.size();}
+
+  int n_exp() const {return top_level_expressions.size();}
+
+  int size() const {return n_sub_exp();}
 
   const expression_ref& sub_exp(int i) const {return terms[i].E;}
 

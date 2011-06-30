@@ -322,7 +322,7 @@ boost::shared_ptr<Formula> prefix_formula(const std::string& prefix,const boost:
 
 std::ostream& operator<<(std::ostream& o, const Formula& F)
 {
-  for(int index=0;index<F.size();index++)
+  for(int index=0;index<F.n_exp();index++)
     o<<index<<" "<<F.exp(index)->print()<<"\n";
   return o;
 }
