@@ -22,7 +22,7 @@ template <class T>
 struct vector_accumulator: accumulator<T>,
 			   public std::vector<T>
 {
-  void operator()(const T& t){push_back(t);}
+  void operator()(const T& t){std::vector<T>::push_back(t);}
 };
 
 void scan_lines(std::istream& file,int skip,int subsample, int max, 
