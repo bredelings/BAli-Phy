@@ -184,12 +184,16 @@ struct lambda: public Object
 
 class term_ref;
 
+struct formula_expression_ref;
+
 struct expression_ref: public boost::shared_ptr<const Object>
 {
   expression_ref operator()(const expression_ref& arg) const
   {
     return apply(*this,arg);
   }
+
+  formula_expression_ref operator()(const formula_expression_ref& arg) const;
 
   expression_ref operator()(const expression_ref& arg1, const expression_ref& arg2) const
   {
