@@ -42,7 +42,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "owned-ptr.H"
 
 
-class slice_function;
+struct slice_function;
 
 namespace MCMC {
 
