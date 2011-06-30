@@ -411,6 +411,9 @@ namespace substitution {
     return formula_expression_ref(F,Plus_gwF(a)(f)(Vars));
   }
 
+  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a);
+  formula_expression_ref HKY_Model(const alphabet& a);
+
   shared_ptr<const Object> SimpleFrequencyModel::result() const
   {
     const alphabet& a = get_parameter_value_as<alphabet>(0);
@@ -454,6 +457,8 @@ namespace substitution {
       add_parameter(Parameter(pname, Double(1.0/a.size()), between(0, 1)));
     }
 
+    //    std::cout<<*Simple_gwF_Model(HKY_Model(a),a).F<<"\n";
+    //    exit(0);
     // initialize everything
     recalc_all();
   }
@@ -475,6 +480,8 @@ namespace substitution {
       add_parameter(Parameter(pname, Double(f[i]), between(0, 1)));
     }
 
+    //    std::cout<<*Simple_gwF_Model(HKY_Model(a),a).F<<"\n";
+    //    exit(0);
     // initialize everything
     recalc_all();
   }
@@ -1968,16 +1975,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 ");
     load_file(file);
   }
-
-  int DiscreteDistribution::size() const
-  {
-    assert(fraction.size() == values.size());
-    return fraction.size();
-  }
-
-  DiscreteDistribution::DiscreteDistribution(int s)
-    :fraction(s), values(s)
-  { }
 
   shared_ptr<MultiModelObject> MultiParameterFunction(const ModelFunction& F, const DiscreteDistribution& D)
   {

@@ -324,6 +324,16 @@ namespace substitution
     return part(0).frequencies();
   }
 
+  int DiscreteDistribution::size() const
+  {
+    assert(fraction.size() == values.size());
+    return fraction.size();
+  }
+
+  DiscreteDistribution::DiscreteDistribution(int s)
+    :fraction(s), values(s)
+  { }
+
   shared_ptr<const alphabet> MultiModelObject::get_alphabet() const 
   {
     return base_model(0).get_alphabet();

@@ -840,20 +840,6 @@ namespace substitution {
     C20_CAT_FixedFrequencyModel();
   };
 
-  class DiscreteDistribution: virtual public Object
-  {
-  public:
-    std::vector< double > fraction;
-    // If we really want to change this, make it polymorphic_cow_ptr<Object>, so we can assign from shared_ptr<const Object>
-    std::vector< boost::shared_ptr<const Object> > values;
-
-    DiscreteDistribution* clone() const {return new DiscreteDistribution(*this);}
-
-    int size() const;
-
-    DiscreteDistribution(int s);
-  };
-
   /// A mixture of variants of model M with parameter p set to n_bin different values
   class MultiParameterModel: public MultiModel, 
 			     public ReversibleWrapperOver<MultiModel> 
