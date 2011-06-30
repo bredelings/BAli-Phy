@@ -12,7 +12,7 @@ struct formula_expression_ref
 
   formula_expression_ref operator()(const formula_expression_ref&) const;
 
-  expression_ref exp() const {return F->exp(index);}
+  expression_ref exp() const {return F->sub_exp(index);}
 
   int add_expression(const expression_ref&);
 
