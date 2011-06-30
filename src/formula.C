@@ -319,3 +319,11 @@ boost::shared_ptr<Formula> prefix_formula(const std::string& prefix,const boost:
     F2->rename_parameter(i,prefix + "::" + F2->parameter_name(i));
   return F2;
 }
+
+std::ostream& operator<<(std::ostream& o, const Formula& F)
+{
+  for(int index=0;index<F.size();index++)
+    o<<index<<" "<<F.exp(index)->print()<<"\n";
+  return o;
+}
+

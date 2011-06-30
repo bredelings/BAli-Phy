@@ -207,4 +207,6 @@ public:
 boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>&, const boost::shared_ptr<const Formula>&);
 
 boost::shared_ptr<Formula> prefix_formula(const std::string&,const boost::shared_ptr<const Formula>&);
+
+std::ostream& operator<<(std::ostream&, const Formula& F);
 #endif
