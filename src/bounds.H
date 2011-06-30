@@ -57,6 +57,26 @@ struct Bounds: public Object
     if (upper_bound != B->upper_bound) return false;
     return true;
   }
+  std::string print() const
+  {
+    std::string output = "(";
+
+    if (has_lower_bound)
+      output += convertToString(lower_bound);
+    else
+      output += "Inf";
+
+    output += ", ";
+
+    if (has_upper_bound)
+      output += convertToString(upper_bound);
+    else
+      output += "Inf";
+
+    output += ")";
+
+    return output;
+  }
 
   /// check if a value is below the lower bound on the range
   bool below_lower_bound(double x) const { return (has_lower_bound and x<lower_bound); }
