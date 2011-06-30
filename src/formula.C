@@ -308,7 +308,7 @@ boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>& F1, c
 {
   shared_ptr<Formula> F (F1->clone());
   for(int i=0;i<F2->size();i++)
-    F->add_expression(F2->exp(i));
+    F->add_expression(F2->sub_exp(i));
   return F;
 }
 
