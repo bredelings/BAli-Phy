@@ -202,7 +202,10 @@ boost::shared_ptr<const T> const_ptr(const T& t) {return boost::shared_ptr<const
 template<typename T>
 inline std::ostream& operator<<(std::ostream& o,const boost::shared_ptr<T>& R)
 {
-  return o<<R->print();
+  if (R)
+    return o<<R->print();
+  else
+    return o<<"[NULL]";
 }
 
 inline std::ostream& operator<<(std::ostream& o,const Object& R)
