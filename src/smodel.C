@@ -918,6 +918,14 @@ namespace substitution {
     :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*E.get_alphabet(),pi),"R")) ) )
   { }
 
+  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a)
+  {
+    formula_expression_ref R = prefix_formula("R",FR);
+    formula_expression_ref S = prefix_formula("S",Plus_gwF_Model(a));
+    
+    return Q_from_R_and_S(R)(S);
+  }
+
   //---------------------- INV_Model --------------------------//
 
   shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a)
