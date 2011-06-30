@@ -316,7 +316,7 @@ boost::shared_ptr<Formula> prefix_formula(const std::string& prefix,const boost:
 {
   shared_ptr<Formula> F2 (F->clone());
   for(int i=0;i<F2->n_parameters();i++)
-    F2->rename_parameter(i,prefix + "::" + F2->parameter_name(i));
+    F2->rename_parameter(F2->parameter_index(i),prefix + "::" + F2->parameter_name(i));
   return F2;
 }
 
