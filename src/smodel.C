@@ -30,6 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "probability.H"
 #include "io.H"
 #include "expression.H"
+#include "formula_expression.H"
 
 using std::vector;
 using std::valarray;
@@ -40,6 +41,30 @@ using std::istringstream;
 
 using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
+
+template <typename T,typename U>
+std::valarray<T> get_varray(const expression_ref& R) 
+{
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  assert(E);
+  
+  valarray<T> v2(E->size()-1);
+  for(int i=0;i<v2.size()-1;i++)
+    v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
+  return v2;
+}
+
+template <typename T,typename U>
+std::vector<T> get_vector(const expression_ref& R) 
+{
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  assert(E);
+  
+  vector<T> v2(E->size()-1);
+  for(int i=0;i<v2.size()-1;i++)
+    v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
+  return v2;
+}
 
 namespace substitution {
 
@@ -186,6 +211,134 @@ namespace substitution {
       R->R(i,i) = 0;
 
     return R;
+  }
+
+  struct Plus_gwF_Op: public Operation
+  {
+    shared_ptr<const alphabet> a;
+
+    Plus_gwF_Op* clone() const {return new Plus_gwF_Op(*this);}
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      double f = *Args.evaluate_as<Double>(0);
+
+      vector<double> pi;
+      for(int i=0;i<a->size();i++)
+	pi.push_back(*Args.evaluate_as<Double>(1+i));
+
+      return Plus_gwF_Function(*a,f,pi);
+    }
+
+    std::string name() const {return "Q_from_R_and_S";}
+
+    Plus_gwF_Op(const alphabet& A):Operation(1+A.size()),a(A.clone()) { }
+  };
+
+  expression_ref Plus_gwF(const alphabet& a)
+  {
+    return lambda_expression( Plus_gwF_Op(a) );
+  }
+
+  expression_ref default_value = lambda_expression(data_function("default_value",2));
+
+  expression_ref bounds = lambda_expression(data_function("bounds",2));
+
+  // Fields: n_random, n_parameters, string, density op
+  expression_ref prob_density = lambda_expression( data_function("prob_density",2) );
+
+  // Fields: (prob_density) (random vars) (parameter expressions)
+  expression_ref distributed_as = lambda_expression( data_function("~",3) );
+
+  struct dirichlet_density: public Operation
+  {
+    dirichlet_density* clone() const {return new dirichlet_density;}
+    
+    tribool compare(const Object& o) const
+    {
+      if (this == &o) return true;
+      
+      if (dynamic_cast<const dirichlet_density*>(&o)) return true;
+      
+      return false;
+    }
+    
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      expression_ref X = Args.evaluate(0);
+      expression_ref N = Args.evaluate(1);
+      
+      valarray<double> x = get_varray<double,Double>(X);
+      valarray<double> n = get_varray<double,Double>(N);
+
+      shared_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x,n) ) );
+
+      return R;
+    }
+
+    string name() const {return "dirichlet_density";}
+    
+    dirichlet_density():Operation(2) { }
+  };
+
+  struct uniform_density: public Operation
+  {
+    uniform_density* clone() const {return new uniform_density;}
+    
+    tribool compare(const Object& o) const
+    {
+      if (this == &o) return true;
+      
+      if (dynamic_cast<const uniform_density*>(&o)) return true;
+      
+      return false;
+    }
+    
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      return shared_ptr<Log_Double> (new Log_Double( 1.0 ) );
+    }
+
+    string name() const {return "uniform_density";}
+    
+    uniform_density():Operation(2) { }
+  };
+
+  formula_expression_ref Plus_gwF_Model(const alphabet& a)
+  {
+    shared_ptr<Formula> F (new Formula);
+    
+    vector<expression_ref> parameters;
+    vector<expression_ref> Vars;
+    vector<expression_ref> N;
+    expression_ref f = parameter("f");
+    F->add_expression( f );
+    F->add_expression( default_value( f, 1.0) );
+    F->add_expression( bounds( f, between(0,1) ) );
+    F->add_expression( distributed_as( prob_density("Uniform",uniform_density()), 
+				       f,
+				       Tuple(0)
+				       ) 
+		       );
+
+
+    for(int i=0;i<a.size();i++)
+    {
+      string pname = string("pi") + a.letter(i);
+      Vars.push_back( parameter(pname) );
+      N.push_back( Double(1.0) );
+      F->add_expression( parameter(pname) );
+      F->add_expression( default_value( parameter(pname) , 1.0/a.size() ) );
+      F->add_expression( bounds( parameter(pname) , between(0,1) ) );
+    }
+
+    F->add_expression( distributed_as( prob_density("Dirichlet",dirichlet_density()), 
+				       Tuple(a.size())(Vars), 
+				       Tuple(a.size())(N)
+				       ) 
+		       );
+
+    return formula_expression_ref(F,Plus_gwF(a)(f)(Vars));
   }
 
   shared_ptr<const Object> SimpleFrequencyModel::result() const
