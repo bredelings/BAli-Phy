@@ -45,10 +45,16 @@ using boost::dynamic_pointer_cast;
 template <typename T,typename U>
 std::valarray<T> get_varray(const expression_ref& R) 
 {
+  if (dynamic_cast<const U*>(&*R))
+  {
+    std::valarray<T> v2(1);
+    v2[0] = *dynamic_cast<const U*>(&*R);
+  }
+    
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   assert(E);
   
-  valarray<T> v2(E->size()-1);
+  std::valarray<T> v2(E->size()-1);
   for(int i=0;i<v2.size()-1;i++)
     v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
   return v2;
@@ -57,10 +63,16 @@ std::valarray<T> get_varray(const expression_ref& R)
 template <typename T,typename U>
 std::vector<T> get_vector(const expression_ref& R) 
 {
+  if (dynamic_cast<const U*>(&*R))
+  {
+    std::vector<T> v2(1);
+    v2[0] = *dynamic_cast<const U*>(&*R);
+  }
+    
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   assert(E);
   
-  vector<T> v2(E->size()-1);
+  std::vector<T> v2(E->size()-1);
   for(int i=0;i<v2.size()-1;i++)
     v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
   return v2;
