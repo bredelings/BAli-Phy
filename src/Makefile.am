@@ -97,7 +97,8 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  tools/partition.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C timer_stack.C \
 	  setup-mcmc.C io.C logger.C AIS.C operator.C expression.C formula.C \
-	  setup-imodel.C smodel-objects.C context.C computation.C
+	  setup-imodel.C smodel-objects.C context.C computation.C \
+	  formula_expression.C
 
 nodist_bali_phy_SOURCES = git_version.h
 bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@ 
@@ -295,7 +296,7 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	alignment-random.C parameters.C myexception.C monitor.C \
 	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
 	timer_stack.C io.C operator.C expression.C smodel-objects.C context.C \
-	formula.C computation.C
+	formula.C computation.C formula_expression.C
 
 #---------------------------------------------------------------
 
