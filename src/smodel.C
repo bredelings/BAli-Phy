@@ -1273,6 +1273,19 @@ namespace substitution {
     HKY_Op():Operation(2) { }
   };
 
+  formula_expression_ref HKY_Model(const alphabet& a)
+  {
+    expression_ref kappa = parameter("kappa");
+    formula_expression_ref R(lambda_expression(HKY_Op())(a,kappa));
+    R.add_expression(kappa);
+    R.add_expression(default_value(kappa,2.0));
+    R.add_expression(bounds(kappa,lower_bound(0)));
+    R.add_expression(distributed_as(log_laplace, kappa, Tuple(2)(log(2), 0.25) ) );
+    
+    return R;
+  }
+  
+
   shared_ptr<const Object> HKY::result() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
