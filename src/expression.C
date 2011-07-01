@@ -525,12 +525,9 @@ expression_ref eval(const Context& C, const expression_ref& R)
   shared_ptr<const Function> f = dynamic_pointer_cast<const Function>(head);
   if (f and f->what_type == data_function_f)
   {
-    // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
-    shared_ptr<expression> V (E->clone());
-    for(int i=1;i<V->size();i++)
-      V->sub[i] = eval(C,V->sub[i]);
-
-    return shared_ptr<const expression>(V);
+    expression_ref R2 = R;
+    eval_match(C,R2,expression_ref(),results);
+    return R2;
   }
   // 5. If the head is a function, evaluate the substituted body
   else if (f and f->what_type == body_function_f)
