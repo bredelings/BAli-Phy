@@ -505,21 +505,19 @@ expression_ref eval(const Context& C, const expression_ref& R)
   // 2. If head is a lambda, then this is a lambda expression.  It evaluates to itself.
   shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(head);
   if (L)
-    return R;
+  {
+    expression_ref R2 = R;
+    eval_match(C,R2,0,results);
+    return R2;
+  }
 
   // 3. If head is an expression, then apply the expression to E->sub[1]
   shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(head);
   if (E2)
   {
-    shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E2->sub[0]);
-    if (not L)
-      throw myexception()<<"Can't evaluate expression '"<<E->print()<<"' with head = '"<<E2->print()<<"'";
-
-    if (E->size() > 2)
-      throw myexception()<<"Expression '"<<E->print()<<"' applies a lambda function to more than one argument.";
-
-    // FIXME - is this enough evaluation?
-    return eval(C,substitute(E2->sub[1], L->dummy_index, E->sub[1]));
+    expression_ref R2 = R;
+    eval_match(C,R2,0,results);
+    return R2;
   }
   
 
