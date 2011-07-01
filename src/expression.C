@@ -177,14 +177,19 @@ expression_ref lambda_expression(const Operator& O)
   int n = O.n_args();
   assert(n != -1);
   
-  expression* E = new expression(O);
-  for(int i=0;i<n;i++)
-    E->sub.push_back(expression_ref(new dummy(i)));
-  
-  expression_ref R(E);
+  expression_ref R;
+  if (n == 0)
+    R = expression_ref(O.clone());
+  else
+  {
+    expression* E = new expression(O);
+    for(int i=0;i<n;i++)
+      E->sub.push_back(expression_ref(dummy(i)));
+    R = expression_ref(E);
+  }
   
   for(int i=n-1;i>=0;i--) 
-    R = expression_ref(new expression(lambda(i),R));
+    R = expression_ref(expression(lambda(i),R));
   
   return R;
 }
@@ -588,7 +593,7 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
       return true;
     }
 
-  // 1. Compute the head
+  // 0. If R is not an expression
   shared_ptr<const expression> RE = dynamic_pointer_cast<const expression>(R);
   if (not RE)
   {
@@ -612,27 +617,14 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
       return false;
   }
 
+  // 1. Compute the head
   expression_ref head = eval(C,RE->sub[0]);
 
-  // If the eval expression or the query expression is a literal constant, just evaluate R and see if it matches.
-  // Do the same if the eval expression is an object returned from an operation
-  // 0. What if R is a literal constant
-  // 6. What if head is an operation expression?
-  if (not RE or dynamic_cast<const Operation*>(&*head))
-  {
-    R = eval(C,R);
-    vector<expression_ref> results2 = results; // FIXME!  This is a bit expensive...
-    if (find_match(Q,R,results2))
-    {
-      results = results2;
-      return true;
-    }
-    else
-      return false;
-  }
-  
+  if (RE->size() == 1) throw myexception()<<"Expression '"<<R<<"' with only one element is not allowed!";
+
   // 2. If head is a lambda, then this is a lambda expression.  It evaluates to itself.
   shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(head);
+  if (not Q) return true;
     
   // 3. If head is an expression, then apply the expression to E->sub[1]
   shared_ptr<const expression> RE2 = dynamic_pointer_cast<const expression>(head);
@@ -655,27 +647,36 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
   // 4. If the head is a constructor, evaluate_match its arguments
   if (no_eval_top_level or (RF and RF->what_type == data_function_f) or L)
   {
-    // Q must be an expression also.
-    shared_ptr<const expression> QE = dynamic_pointer_cast<const expression>(Q);
-    if (not QE) return false;
+    shared_ptr<const expression> QE;
+    if (Q)
+    {
+      // Q must be an expression also.
+      QE = dynamic_pointer_cast<const expression>(Q);
+      if (not QE) return false;
 
-    // Q must have the same number of arguments
-    if (RE->size() != QE->size()) return false;
+      // Q must have the same number of arguments
+      if (RE->size() != QE->size()) return false;
 
-    // Q must have the same head here.
-    // FIXME: There is no matching or evaluation of the head, here. (Will there be, later?)
-    if (head->compare(*QE->sub[0]) != true)
-      return false;
+      // Q must have the same head here.
+      // FIXME: There is no matching or evaluation of the head, here. (Will there be, later?)
+      if (head->compare(*QE->sub[0]) != true)
+	return false;
+    }
 
     // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
     shared_ptr<expression> RV (RE->clone());
     // Make RE point to this new object, that is being modified below, but not through RE
     R = boost::const_pointer_cast<const expression>(RV);
 
+    if (Q)
     // If all the arguments match, then the whole expression matches
     for(int i=1;i<QE->size();i++)
-      if (not eval_match(C,RV->sub[i],QE->sub[i],results))
+    {
+      expression_ref Q_sub;
+      if (QE) Q_sub = QE->sub[i];
+      if (not eval_match(C, RV->sub[i], Q_sub, results))
 	return false;
+    }
 
     return true;
   }
@@ -690,8 +691,26 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
     else
       throw myexception()<<"No function definition for expression '"<<R->print()<<"'";
   }
+  // 6. If the head is an Operation, evaluate the operation.
+  else if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(head))
+  {
+    FreeOperationArgs Args(C,*RE);
+
+    // recursive calls to evaluate happen in here.
+    shared_ptr<const Object> new_result;
+    try{
+      R = (*O)(Args);
+      return eval_match(C,R,Q,results);
+    }
+    catch(myexception& e)
+    {
+      e.prepend("Evaluating expression '"+R->print()+"':\n");
+      throw e;
+    }
+  }
+
   /*
-  else if (RE->size() == 1)
+
   {
     R = RE->sub[0];
     return eval_match(C,R,Q,results);
