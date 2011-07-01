@@ -495,7 +495,7 @@ expression_ref eval(const Context& C, const expression_ref& R)
   if (not E)
   {
     expression_ref R2 = R;
-    eval_match(C,R2,0,results,true);
+    eval_match(C,R2,0,results);
     return R2;
   }
 
