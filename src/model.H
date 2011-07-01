@@ -301,6 +301,8 @@ public:
   /// Construct an empty model
   Model();
 
+  Model(const boost::shared_ptr<const Formula>&);
+
   virtual ~Model() {};
 };
 

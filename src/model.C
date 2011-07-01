@@ -250,6 +250,25 @@ Model::Model()
   :Operation(0),valid(false)
 { }
 
+Model::Model(const shared_ptr<const Formula>& F)
+  :Operation(0),valid(false),C(F)
+{
+  for(int i=0;i<n_parameters();i++)
+  {
+    expression_ref var = parameter(parameter_name(i));
+    expression_ref bounds = lambda_expression(data_function("bounds",2));
+    vector<int> results;
+    expression_ref query = bounds(var,match(0));
+    term_ref found = C.F->find_match_expression2(query, results);
+    if (found != -1)
+    {
+      assert(results.size());
+      shared_ptr<const Bounds<double> > b = C.evaluate_as<Bounds<double> >(results[0]);
+      set_bounds(i,*b);
+    }
+  }
+}
+
 boost::shared_ptr<const Object> Model::result() const
 {
   shared_ptr<Model> M (clone());
