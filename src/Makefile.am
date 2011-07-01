@@ -27,7 +27,7 @@ dist-hook: git_version.stamp
 
 noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            dp-matrix.H mytypes.H setup.H 5way.H eigenvalue.H \
-           n_indels.H smodel.H alignment-constraint.H exponential.H \
+           n_indels.H smodel/smodel.H alignment-constraint.H exponential.H \
            parameters.H substitution-cache.H alignment.H hmm.H pow2.H \
            substitution.H alignment-sums.H imodel.H probability.H \
            substitution-index.H alignment-util.H likelihood.H proposals.H \
@@ -42,7 +42,7 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            version.H cow-ptr.H tools/index-matrix.H cached_value.H \
 	   tools/consensus-tree.H tools/partition.H slice-sampling.H \
 	   timer_stack.H setup-mcmc.H probability-model.H owned-ptr.H \
-	   bounds.H io.H
+	   bounds.H io.H smodel/objects.H smodel/operations.H
 
 LDFLAGS = @ldflags@
 
@@ -86,7 +86,7 @@ endif
 bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
           rng.C exponential.C eigenvalue.C parameters.C likelihood.C mcmc.C \
 	  choose.C sequencetree.C sample-branch-lengths.C \
-	  util.C randomtree.C alphabet.C smodel.C bali-phy.C \
+	  util.C randomtree.C alphabet.C smodel/smodel.C bali-phy.C \
 	  hmm.C dp-engine.C dp-array.C dp-matrix.C 3way.C 2way.C sample-alignment.C \
 	  sample-tri.C sample-node.C imodel.C 5way.C sample-topology-NNI.C \
 	  setup.C rates.C matcache.C sample-two-nodes.C sequence-format.C \
@@ -97,8 +97,8 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  tools/partition.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C timer_stack.C \
 	  setup-mcmc.C io.C logger.C AIS.C operator.C expression.C formula.C \
-	  setup-imodel.C smodel-objects.C context.C computation.C \
-	  formula_expression.C smodel-operations.C
+	  setup-imodel.C smodel/objects.C context.C computation.C \
+	  formula_expression.C smodel/operations.C
 
 nodist_bali_phy_SOURCES = git_version.h
 bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@ 
@@ -289,14 +289,14 @@ cut_range_SOURCES = tools/cut-range.C util.C
 analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	sequence.C tools/distance-methods.C \
 	util.C sequencetree.C substitution.C eigenvalue.C tree.C \
-	exponential.C setup-smodel.C smodel.C imodel.C rng.C likelihood.C \
+	exponential.C setup-smodel.C smodel/smodel.C imodel.C rng.C likelihood.C \
 	choose.C tools/optimize.C setup.C rates.C matcache.C alignment-util.C \
 	sequence-format.C randomtree.C model.C  probability.C \
 	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
 	alignment-random.C parameters.C myexception.C monitor.C \
 	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
-	timer_stack.C io.C operator.C expression.C smodel-objects.C context.C \
-	formula.C computation.C formula_expression.C smodel-operations.C
+	timer_stack.C io.C operator.C expression.C smodel/objects.C context.C \
+	formula.C computation.C formula_expression.C smodel/operations.C
 
 #---------------------------------------------------------------
 

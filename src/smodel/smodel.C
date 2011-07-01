@@ -31,7 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "io.H"
 #include "expression.H"
 #include "formula_expression.H"
-#include "smodel-operations.H"
+#include "smodel/operations.H"
 
 using std::vector;
 using std::valarray;
@@ -662,7 +662,15 @@ namespace substitution {
   SimpleReversibleMarkovModel::
   SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
     :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*E.get_alphabet(),pi),"R")) ) )
-  { }
+  { 
+    DNA a;
+    formula_expression_ref R = Simple_gwF_Model(TN_Model(a),a,pi);
+    efloat_t prior1 = prior();
+    
+    FormulaModel M(R);
+    efloat_t prior2 = M.prior();
+    std::cerr<<"prior1 = "<<log(prior1)<<"     prior2 = "<<log(prior2)<<"\n";
+  }
 
   //---------------------- INV_Model --------------------------//
 

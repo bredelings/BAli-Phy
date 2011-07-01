@@ -4,7 +4,7 @@
 AC_PREREQ(2.59)
 AC_INIT(BAli-Phy, 2.1.1, benjamin.redelings@nescent.org)
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE([1.9 foreign])
+AM_INIT_AUTOMAKE([1.9 foreign subdir-objects])
 AC_CONFIG_SRCDIR([src/bali-phy.C])
 AC_CONFIG_HEADER([config.h])
 

@@ -1,4 +1,4 @@
-#include "smodel-objects.H"
+#include "smodel/objects.H"
 
 #include "exponential.H"
 

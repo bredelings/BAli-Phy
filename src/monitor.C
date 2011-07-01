@@ -37,8 +37,7 @@ extern "C" {
 #include "setup.H"
 #include "alignment.H"
 #include "alignment-util.H"
-#include "smodel.H"
-#include "smodel-objects.H"
+#include "smodel/smodel.H"
 
 using std::valarray;
 using std::endl;

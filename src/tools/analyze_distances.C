@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include "tree.H"
 #include "alignment.H"
-#include "smodel.H"
+#include "smodel/smodel.H"
 #include "substitution.H"
 #include "substitution-cache.H"
 #include "substitution-index.H"

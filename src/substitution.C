@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "substitution.H"
 #include "substitution-index.H"
-#include "smodel-objects.H"
+#include "smodel/objects.H"
 #include "matcache.H"
 #include "rng.H"
 #include <cmath>

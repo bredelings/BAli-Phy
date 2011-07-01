@@ -71,7 +71,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef SMODEL_H
 #define SMODEL_H
 
-#include "smodel-objects.H"
+#include "smodel/objects.H"
 #include <valarray>
 #include <vector>
 #include <string>

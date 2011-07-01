@@ -1,5 +1,5 @@
 #include "rates.H"
-#include "smodel-operations.H"
+#include "smodel/operations.H"
 
 using boost::shared_ptr;
 using std::vector;

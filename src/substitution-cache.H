@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "mytypes.H"
 #include "tree.H"
-#include "smodel-objects.H"
+#include "smodel/objects.H"
 
 namespace substitution
 {
