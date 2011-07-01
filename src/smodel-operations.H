@@ -88,15 +88,6 @@ namespace substitution {
   {
     HKY_Op* clone() const {return new HKY_Op;}
     
-    tribool compare(const Object& o) const
-    {
-      if (this == &o) return true;
-      
-      if (dynamic_cast<const HKY_Op*>(&o)) return true;
-      
-      return false;
-    }
-    
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       boost::shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
@@ -117,15 +108,6 @@ namespace substitution {
   struct TN_Op: public Operation
   {
     TN_Op* clone() const {return new TN_Op;}
-    
-    tribool compare(const Object& o) const
-    {
-      if (this == &o) return true;
-      
-      if (dynamic_cast<const TN_Op*>(&o)) return true;
-      
-      return false;
-    }
     
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
@@ -155,15 +137,6 @@ namespace substitution {
   struct dirichlet_density: public Operation
   {
     dirichlet_density* clone() const {return new dirichlet_density;}
-    
-    tribool compare(const Object& o) const
-    {
-      if (this == &o) return true;
-      
-      if (dynamic_cast<const dirichlet_density*>(&o)) return true;
-      
-      return false;
-    }
     
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
