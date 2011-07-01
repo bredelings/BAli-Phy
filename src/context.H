@@ -53,6 +53,17 @@ public:
   /// Return the value of a particular index, computing it if necessary
   boost::shared_ptr<const Object> evaluate(int index);
 
+  template <typename T>
+  boost::shared_ptr<const T> evaluate_as(int index)
+  {
+    boost::shared_ptr<const Object> o = evaluate(index);
+    assert(o);
+    boost::shared_ptr<const T> converted =  boost::dynamic_pointer_cast<const T>(o);
+    if (not converted)
+      throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<typeid(o.get()).name()<<" to type "<<typeid(T).name();
+    return converted;
+  }
+
   /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
   boost::shared_ptr<const Object> get_parameter_value(int index) const;
 
