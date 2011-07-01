@@ -196,8 +196,6 @@ namespace substitution {
       add_parameter(Parameter(pname, Double(1.0/a.size()), between(0, 1)));
     }
 
-    //    std::cout<<*Simple_gwF_Model(HKY_Model(a),a).F<<"\n";
-    //    exit(0);
     // initialize everything
     recalc_all();
   }
@@ -219,11 +217,6 @@ namespace substitution {
       add_parameter(Parameter(pname, Double(f[i]), between(0, 1)));
     }
 
-    formula_expression_ref R = Simple_gwF_Model(TN_Model(a),a);
-    FormulaModel M(R);
-    //    std::cout<<*R.F<<"\n";
-    show_parameters(std::cout, M);
-    //    exit(0);
     // initialize everything
     recalc_all();
   }
