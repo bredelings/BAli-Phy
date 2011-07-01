@@ -178,6 +178,8 @@ protected:
   std::vector< Bounds<double> > bounds;
   std::vector< bool > fixed;
 
+  int prior_index;
+
   void validate() const;
 
   void invalidate() const;
@@ -206,7 +208,7 @@ public:
   virtual Model* clone() const {return new Model(*this);}
 
   /// the prior for the model, on the same scale as proposal densities
-  virtual efloat_t prior() const {return 1.0;}
+  virtual efloat_t prior() const;
 
   /// Names of the parameters
   std::string parameter_name(int i) const;
@@ -541,4 +543,5 @@ std::vector< expression_ref > model_args(const Model& M);
 
 expression_ref model_expression(const Model& M);
 
+term_ref add_probability_expression(Context& C);
 #endif

@@ -24,6 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "myexception.H"
 #include "model.H"
 #include "expression.H"
+#include "operations.H"
 
 using std::vector;
 using std::string;
@@ -246,8 +247,16 @@ unsigned Model::n_parameters() const
   return C.F->n_parameters();
 }
 
+efloat_t Model::prior() const
+{
+  if (prior_index == -1) return 1.0;
+
+  shared_ptr<const Log_Double> R = C.evaluate_as<Log_Double>(prior_index);
+  return *R;
+}
+
 Model::Model()
-  :Operation(0),valid(false)
+  :Operation(0),valid(false),prior_index(-1)
 { }
 
 Model::Model(const shared_ptr<const Formula>& F)
@@ -272,6 +281,8 @@ Model::Model(const shared_ptr<const Formula>& F)
       set_bounds(i,*b);
     }
   }
+
+  prior_index = add_probability_expression(C);
 }
 
 boost::shared_ptr<const Object> Model::result() const
@@ -1043,5 +1054,57 @@ expression_ref model_expression(const Model& M)
     sub.push_back( parameter(M.parameter_name(i)) );
   
   return new expression(sub);
+}
+
+// Fields: n_random, n_parameters, string, density op
+expression_ref prob_density = lambda_expression( data_function("prob_density",4) );
+
+// Fields: (prob_density) (random vars) (parameter expressions)
+expression_ref distributed_as = lambda_expression( data_function("~",3) );
+
+term_ref add_probability_expression(Context& C)
+{
+  expression_ref query = distributed_as(prob_density(_,_,_,_1),_2,_3);
+
+  typed_expression_ref<Log_Double> Pr;
+
+  // Check each expression in the Formula
+  for(int i=0;i<C.F->size();i++)
+  {
+    vector<expression_ref> results; 
+
+    // If its a probability expression, then...
+    if (find_match(query,(*C.F)[i],results))
+    {
+      // Extract the density operation
+      shared_ptr<const Operation> density_op = boost::dynamic_pointer_cast<const Operation>(results[0]);
+      if (not density_op) throw myexception()<<"Expression "<<i<<" does have an Op in the right place!";
+
+      // Create an expression for calculating the density of these random variables given their inputs
+      expression_ref density_func = lambda_expression( *density_op );
+      typed_expression_ref<Log_Double> Pr_i = density_func(results[1], results[2]);
+
+      // Extend the probability expression to include this term also.
+      // (FIXME: a balanced tree could save computation time)
+      if (not Pr)
+	Pr = Pr_i;
+      else
+	Pr = Pr_i * Pr;
+    }
+  }
+
+  // If this model has random variables... 
+  if (Pr)
+  {
+    expression_ref prob = lambda_expression( data_function("probability",1) );
+
+    C.add_expression(prob(Pr));
+
+    vector<int> results;
+    C.F->find_match_expression2(prob(_1),results);
+    return term_ref(results[0],C.F);
+  }
+  else
+    return term_ref();
 }
 
