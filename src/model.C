@@ -907,7 +907,7 @@ int OpModel::add_submodel(shared_ptr<const Model> m)
     model_slots_for_index[index].push_back( model_slot(m_index,slot) );
     
     // default parameter values AND bounds from submodels
-    if (not C.values[index]->computed) {
+    if (not C.is_up_to_date(index)) {
       C.set_parameter_value(index,sub_models[m_index]->get_parameter_value(slot) );
       // should we continually narrow the bounds by and-ing them together?
       set_bounds(index, sub_models[m_index]->get_bounds(slot) );

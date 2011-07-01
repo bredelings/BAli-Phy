@@ -2,7 +2,7 @@
 #include "context.H"
 #include "formula.H"
 
-ContextOperationArgs::ContextOperationArgs(Context& A, int i)
+ContextOperationArgs::ContextOperationArgs(const Context& A, int i)
   :CTX(A), index_of_caller(i) 
 { 
   int n_input_slots = CTX.F->n_input_indices(index_of_caller);

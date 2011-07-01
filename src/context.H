@@ -14,13 +14,11 @@ struct expression_ref;
 // Values
 class Context: virtual public Object
 {
-  /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-  boost::shared_ptr<const Object> get_value(int index) const;
-
-  /// Update the value of a non-constant, non-computed index
-  void set_value(int index, const object_ref&);
-
 public:
+  /// Structure that specifies how to compute each index from other indices (context-independent)
+  polymorphic_cow_ptr<Formula> F;
+
+protected:
   // member type
   struct value: virtual public Object
   {
@@ -38,23 +36,21 @@ public:
     value():computed(false) { }
   };
 
-  // data members
-
-  /// Structure that specifies how to compute each index from other indices (context-independent)
-  polymorphic_cow_ptr<Formula> F;
-
   /// The current state of this particular context
-  std::vector< boost::shared_ptr<value> > values;
+  mutable std::vector< boost::shared_ptr<value> > values;
 
-  // member functions
+  /// Update the value of a non-constant, non-computed index
+  void set_value(int index, const object_ref&);
+
+public:
 
   Context* clone() const {return new Context(*this);}
 
   /// Return the value of a particular index, computing it if necessary
-  boost::shared_ptr<const Object> evaluate(int index);
+  boost::shared_ptr<const Object> evaluate(int index) const;
 
   template <typename T>
-  boost::shared_ptr<const T> evaluate_as(int index)
+  boost::shared_ptr<const T> evaluate_as(int index) const
   {
     boost::shared_ptr<const Object> o = evaluate(index);
     assert(o);
@@ -63,6 +59,13 @@ public:
       throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<typeid(*o.get()).name()<<" to type "<<typeid(T).name();
     return converted;
   }
+
+  /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
+  boost::shared_ptr<const Object> get_value(int index) const;
+
+  bool is_up_to_date(int index) const {return values[index]->computed;}
+
+  bool is_shared(int index) const {return not values[index].unique();}
 
   /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
   boost::shared_ptr<const Object> get_parameter_value(int index) const;

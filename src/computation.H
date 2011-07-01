@@ -42,7 +42,7 @@ class Context;
 
 struct ContextOperationArgs: public OperationArgs
 {
-  Context& CTX;
+  const Context& CTX;
   boost::shared_ptr<Computation> computation;
   int index_of_caller;
 
@@ -50,7 +50,7 @@ struct ContextOperationArgs: public OperationArgs
 
   ContextOperationArgs* clone() const {return new ContextOperationArgs(*this);}
 
-  ContextOperationArgs(Context& A, int i);
+  ContextOperationArgs(const Context& A, int i);
 };
 
 #endif

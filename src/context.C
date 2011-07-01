@@ -21,7 +21,7 @@ bool Context::index_may_affect_index(int index1, int index2) const
     return includes(F->input_indices(index2), index1);
 }
 
-shared_ptr<const Object> Context::evaluate(int index)
+shared_ptr<const Object> Context::evaluate(int index) const
 {
   value& V = *values[index];
 
@@ -172,8 +172,6 @@ boost::shared_ptr<const Object> Context::get_parameter_value(const std::string& 
 
 boost::shared_ptr<const Object> Context::get_value(int index) const
 {
-  assert(dynamic_cast<const parameter*>(&*(*F)[index]));
-  assert(values[index]->computed);
   return values[index]->result;
 }
 
@@ -332,19 +330,16 @@ ostream& operator<<(ostream& o, const Context& C)
   for(int index=0;index<C.size();index++)
   {
     o<<index<<" "<<(*C.F)[index]->print()<<" = ";
-    if (C.values[index]->result)
-      o<<C.values[index]->result->print();
-    else
-      o<<"null";
+    o<<C.get_value(index);
     if (C.F->is_constant(index))
       o<<" [constant]";
     else
       o<<"           ";
-    if (not C.values[index].unique())
+    if (C.is_shared(index))
       o<<" [shared]";
     else
       o<<"         ";
-    if (C.values[index]->computed)
+    if (C.is_up_to_date(index))
       o<<" [computed]";
     else
       o<<"           ";
