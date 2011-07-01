@@ -25,6 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "model.H"
 #include "expression.H"
 #include "operations.H"
+#include "formula_expression.H"
 
 using std::vector;
 using std::string;
@@ -1106,5 +1107,20 @@ term_ref add_probability_expression(Context& C)
   }
   else
     return term_ref();
+}
+
+boost::shared_ptr<const Object> FormulaModel::result() const
+{
+  return C.evaluate(result_index);
+}
+
+FormulaModel::FormulaModel(const boost::shared_ptr<const Formula>& F,int i)
+  :Model(F),result_index(i)
+{ }
+
+FormulaModel::FormulaModel(const formula_expression_ref& R)
+  :Model(R.F),result_index(R.index)
+{
+  std::cout<<*C.F<<"\n";
 }
 

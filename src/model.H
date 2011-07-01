@@ -524,6 +524,18 @@ public:
   ModelFunction(const Model& M, int p);
 };
 
+struct FormulaModel: public Model
+{
+  int result_index;
+
+  FormulaModel* clone() const {return new FormulaModel(*this);}
+
+  boost::shared_ptr<const Object> result() const;
+
+  FormulaModel(const boost::shared_ptr<const Formula>&,int);
+  FormulaModel(const formula_expression_ref&);
+};
+
 
 void show_parameters(std::ostream& o,const Model& M);
 
