@@ -608,10 +608,17 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
       return false;
   }
 
-  // 1. Compute the head
-  expression_ref head = eval(C,RE->sub[0]);
-
   if (RE->size() == 1) throw myexception()<<"Expression '"<<R<<"' with only one element is not allowed!";
+
+  // 1. Evaluate the head
+  expression_ref head = eval(C,RE->sub[0]);
+  if (head != RE->sub[0])
+  {
+    shared_ptr<expression> RV (RE->clone());
+    RV->sub[0] = head;
+    RE = RV;
+    R = RE;
+  }
 
   // 2. If head is a lambda, then this is a lambda expression.  It evaluates to itself.
   shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(head);
@@ -670,6 +677,7 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
 
     return true;
   }
+
   // 5. If the head is a function, eval_match the substituted body
   else if (RF and RF->what_type == body_function_f)
   {
