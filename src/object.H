@@ -21,8 +21,10 @@ public:
   {
     if (this == &O) 
       return true;
-    else
-      return indeterminate;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return indeterminate;
   }
 
   bool equals(const Object& O) const
