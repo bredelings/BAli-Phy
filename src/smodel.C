@@ -1033,39 +1033,6 @@ namespace substitution {
     add_parameter(Parameter("alphabet",T));
   }
 
-  shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2)
-  {
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(T) );
-    ublas::symmetric_matrix<double>& S = R->S;
-
-    for(int i=0;i<T.size();i++)
-      for(int j=0;j<i;j++) 
-      {
-	int nmuts=0;
-	int pos=-1;
-	for(int p=0;p<3;p++)
-	  if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
-	    nmuts++;
-	    pos=p;
-	  }
-	assert(nmuts>0);
-	assert(pos >= 0 and pos < 3);
-	
-	S(i,j) = 0;
-
-	if (nmuts == 1) {
-
-	  int l1 = T.sub_nuc(i,pos);
-	  int l2 = T.sub_nuc(j,pos);
-	  assert(l1 != l2);
-
-	  S(i,j) = S2(l1,l2);
-	}
-      }
-
-    return R;
-  }
-
   shared_ptr<const Object> SingletToTripletExchangeModel::result() const
   {
     return SingletToTripletExchangeFunction(get_parameter_value_as<Triplets>(0), *SubModels(0).result_as<ExchangeModelObject>() );

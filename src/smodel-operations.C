@@ -127,6 +127,40 @@ formula_expression_ref TN_Model(const alphabet& a)
     return R;
   }
 
+
+  shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2)
+  {
+    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(T) );
+    ublas::symmetric_matrix<double>& S = R->S;
+
+    for(int i=0;i<T.size();i++)
+      for(int j=0;j<i;j++) 
+      {
+	int nmuts=0;
+	int pos=-1;
+	for(int p=0;p<3;p++)
+	  if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
+	    nmuts++;
+	    pos=p;
+	  }
+	assert(nmuts>0);
+	assert(pos >= 0 and pos < 3);
+	
+	S(i,j) = 0;
+
+	if (nmuts == 1) {
+
+	  int l1 = T.sub_nuc(i,pos);
+	  int l2 = T.sub_nuc(j,pos);
+	  assert(l1 != l2);
+
+	  S(i,j) = S2(l1,l2);
+	}
+      }
+
+    return R;
+  }
+
 expression_ref log_laplace = prob_density("log_laplace",log_laplace_density());
 
 formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi)

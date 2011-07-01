@@ -191,6 +191,8 @@ struct laplace_density: public Operation
   laplace_density():Operation(2) { }
 };
 
+  boost::shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2);
+
 struct log_laplace_density: public Operation
 {
   log_laplace_density* clone() const {return new log_laplace_density;}
