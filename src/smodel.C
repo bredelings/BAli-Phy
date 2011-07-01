@@ -384,7 +384,7 @@ namespace substitution {
     expression_ref f = parameter("f");
     F->add_expression( f );
     F->add_expression( default_value( f, 1.0) );
-    F->add_expression( bounds( f, between(0,1) ) );
+    F->add_expression( bounds( f, between(0.0,1.0) ) );
     F->add_expression( distributed_as( prob_density("Uniform",uniform_density()), 
 				       f,
 				       Tuple(0)
@@ -399,7 +399,7 @@ namespace substitution {
       N.push_back( Double(1.0) );
       F->add_expression( parameter(pname) );
       F->add_expression( default_value( parameter(pname) , 1.0/a.size() ) );
-      F->add_expression( bounds( parameter(pname) , between(0,1) ) );
+      F->add_expression( bounds( parameter(pname) , between(0.0,1.0) ) );
     }
 
     F->add_expression( distributed_as( prob_density("Dirichlet",dirichlet_density()), 
@@ -1286,7 +1286,7 @@ namespace substitution {
     formula_expression_ref R(lambda_expression(HKY_Op())(a,kappa));
     R.add_expression(kappa);
     R.add_expression(default_value(kappa,2.0));
-    R.add_expression(bounds(kappa,lower_bound(0)));
+    R.add_expression(bounds(kappa,lower_bound(0.0)));
     R.add_expression(distributed_as(log_laplace, kappa, Tuple(2)(log(2), 0.25) ) );
     
     return R;
