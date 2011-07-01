@@ -646,3 +646,10 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
   else
     throw myexception()<<"Don't know how to evaluate expression '"<<R->print()<<"'";
 }
+
+expression_ref _ = match(-1);
+expression_ref _1 = match(0);
+expression_ref _2 = match(1);
+expression_ref _3 = match(2);
+expression_ref _4 = match(3);
+

@@ -314,4 +314,9 @@ expression_ref eval(const Context& C, const expression_ref& R);
 
 bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, std::vector<expression_ref>& results,bool=false);
 
+extern expression_ref _;
+extern expression_ref _1;
+extern expression_ref _2;
+extern expression_ref _3;
+extern expression_ref _4;
 #endif
