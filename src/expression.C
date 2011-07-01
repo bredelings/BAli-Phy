@@ -653,3 +653,13 @@ expression_ref _2 = match(1);
 expression_ref _3 = match(2);
 expression_ref _4 = match(3);
 
+expression_ref default_value = lambda_expression(data_function("default_value",2));
+
+expression_ref bounds = lambda_expression(data_function("bounds",2));
+
+// Fields: n_random, n_parameters, string, density op
+expression_ref prob_density = lambda_expression( data_function("prob_density",2) );
+
+// Fields: (prob_density) (random vars) (parameter expressions)
+expression_ref distributed_as = lambda_expression( data_function("~",3) );
+

@@ -1057,12 +1057,6 @@ expression_ref model_expression(const Model& M)
   return new expression(sub);
 }
 
-// Fields: n_random, n_parameters, string, density op
-expression_ref prob_density = lambda_expression( data_function("prob_density",2) );
-
-// Fields: (prob_density) (random vars) (parameter expressions)
-expression_ref distributed_as = lambda_expression( data_function("~",3) );
-
 term_ref add_probability_expression(Context& C)
 {
   expression_ref query = distributed_as(prob_density(_,_1),_2,_3);

@@ -62,7 +62,6 @@ void set_varray(std::vector<U>& v1,int start,const std::vector<T>& v2)
     v1[start + i] = v2[i];
 }
 
-
 namespace substitution
 {
   //------------------------- Markov Substitution Model ----------------------------//

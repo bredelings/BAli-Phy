@@ -88,12 +88,6 @@ using std::endl;
  *    Hmm... mightn't we need to modify the probability model from the context?
  */
 
-// Fields: n_random, n_parameters, string, density op
-expression_ref prob_density = lambda_expression( data_function("prob_density",4) );
-
-// Fields: (prob_density) (random vars) (parameter expressions)
-expression_ref distributed_as = lambda_expression( data_function("~",3) );
-
 struct exponential_density: public Operation
 {
   exponential_density* clone() const {return new exponential_density;}
@@ -125,7 +119,7 @@ struct exponential_density: public Operation
 
 term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
 {
-  expression_ref query = distributed_as(prob_density(_,_,_,_1),_2,_3);
+  expression_ref query = distributed_as(prob_density(_,_1),_2,_3);
 
   typed_expression_ref<Log_Double> Pr;
 
@@ -255,7 +249,7 @@ int main()
   term_ref defv = F->add_expression(  default_value(parameter("X"), 2.0) );
   term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
   term_ref tuple_x_y = F->add_expression(Tuple(2)(X,Y));
-  expression_ref Exp = prob_density(1,1,"Exp",exponential_density());
+  expression_ref Exp = prob_density("Exp",exponential_density());
   term_ref prior_x_y = F->add_expression(distributed_as(Exp,parameter("X"),Y+One));
   term_ref prior_y_z = F->add_expression(distributed_as(Exp,parameter("Y"),Z+One));
   term_ref probability_expression = add_probability_expression(F);

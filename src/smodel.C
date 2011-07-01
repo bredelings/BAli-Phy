@@ -31,6 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "io.H"
 #include "expression.H"
 #include "formula_expression.H"
+#include "smodel-operations.H"
 
 using std::vector;
 using std::valarray;
@@ -42,59 +43,12 @@ using std::istringstream;
 using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 
-template <typename T,typename U>
-std::valarray<T> get_varray(const expression_ref& R) 
-{
-  if (dynamic_cast<const U*>(&*R))
-  {
-    std::valarray<T> v2(1);
-    v2[0] = *dynamic_cast<const U*>(&*R);
-  }
-    
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-  assert(E);
-  
-  std::valarray<T> v2(E->size()-1);
-  for(int i=0;i<v2.size()-1;i++)
-    v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
-  return v2;
-}
-
-template <typename T,typename U>
-std::vector<T> get_vector(const expression_ref& R) 
-{
-  if (dynamic_cast<const U*>(&*R))
-  {
-    std::vector<T> v2(1);
-    v2[0] = *dynamic_cast<const U*>(&*R);
-  }
-    
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-  assert(E);
-  
-  std::vector<T> v2(E->size()-1);
-  for(int i=0;i<v2.size()-1;i++)
-    v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
-  return v2;
-}
-
 namespace substitution {
 
   string s_parameter_name(int i,int n) {
     if (i>=n)
       throw myexception()<<"substitution model: referred to parameter "<<i<<" but there are only "<<n<<" parameters.";
     return string("pS") + convertToString(i);
-  }
-
-  void scale(vector<double>& v, double s)
-  {
-    for(int i=0;i<v.size();i++)
-      v[i] *= s;
-  }
-
-  void normalize(vector<double>& v)
-  {
-    scale(v, 1.0/sum(v));
   }
 
   template <typename T>
@@ -198,229 +152,6 @@ namespace substitution {
     // initialize everything
     recalc_all();
   }
-
-  shared_ptr<ReversibleFrequencyModelObject> Plus_gwF_Function(const alphabet& a, double f, const vector<double>& pi)
-  {
-    assert(a.size() == pi.size());
-
-    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
-
-    // compute frequencies
-    R->pi = pi;
-    normalize(R->pi);
-    
-    // compute transition rates
-    valarray<double> pi_f(a.size());
-    for(int i=0;i<a.size();i++)
-      pi_f[i] = pow(R->pi[i],f);
-
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++)
-	R->R(i,j) = pi_f[i]/R->pi[i] * pi_f[j];
-
-    // diagonal entries should have no effect
-    for(int i=0;i<a.size();i++)
-      R->R(i,i) = 0;
-
-    return R;
-  }
-
-  struct Plus_gwF_Op: public Operation
-  {
-    shared_ptr<const alphabet> a;
-
-    Plus_gwF_Op* clone() const {return new Plus_gwF_Op(*this);}
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      double f = *Args.evaluate_as<Double>(0);
-
-      vector<double> pi;
-      for(int i=0;i<a->size();i++)
-	pi.push_back(*Args.evaluate_as<Double>(1+i));
-
-      return Plus_gwF_Function(*a,f,pi);
-    }
-
-    std::string name() const {return "+gwF";}
-
-    Plus_gwF_Op(const alphabet& A):Operation(1+A.size()),a(A.clone()) { }
-  };
-
-  expression_ref Plus_gwF(const alphabet& a)
-  {
-    return lambda_expression( Plus_gwF_Op(a) );
-  }
-
-  expression_ref default_value = lambda_expression(data_function("default_value",2));
-
-  expression_ref bounds = lambda_expression(data_function("bounds",2));
-
-  // Fields: n_random, n_parameters, string, density op
-  expression_ref prob_density = lambda_expression( data_function("prob_density",2) );
-
-  // Fields: (prob_density) (random vars) (parameter expressions)
-  expression_ref distributed_as = lambda_expression( data_function("~",3) );
-
-  struct dirichlet_density: public Operation
-  {
-    dirichlet_density* clone() const {return new dirichlet_density;}
-    
-    tribool compare(const Object& o) const
-    {
-      if (this == &o) return true;
-      
-      if (dynamic_cast<const dirichlet_density*>(&o)) return true;
-      
-      return false;
-    }
-    
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      expression_ref X = Args.evaluate(0);
-      expression_ref N = Args.evaluate(1);
-      
-      valarray<double> x = get_varray<double,Double>(X);
-      valarray<double> n = get_varray<double,Double>(N);
-
-      shared_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x,n) ) );
-
-      return R;
-    }
-
-    string name() const {return "dirichlet_density";}
-    
-    dirichlet_density():Operation(2) { }
-  };
-
-  struct laplace_density: public Operation
-  {
-    laplace_density* clone() const {return new laplace_density;}
-    
-    tribool compare(const Object& o) const
-    {
-      if (this == &o) return true;
-      
-      if (dynamic_cast<const laplace_density*>(&o)) return true;
-      
-      return false;
-    }
-    
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      double x = *Args.evaluate_as<Double>(0);
-      expression_ref A =  Args.evaluate(1);
-
-      vector<double> a = get_vector<double,Double>(A);
-
-      return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x,a[0],a[1]) ) );
-    }
-
-    string name() const {return "laplace_density";}
-    
-    laplace_density():Operation(2) { }
-  };
-
-  struct log_laplace_density: public Operation
-  {
-    log_laplace_density* clone() const {return new log_laplace_density;}
-    
-    tribool compare(const Object& o) const
-    {
-      if (this == &o) return true;
-      
-      if (dynamic_cast<const log_laplace_density*>(&o)) return true;
-      
-      return false;
-    }
-    
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      double x = *Args.evaluate_as<Double>(0);
-      expression_ref A =  Args.evaluate(1);
-
-      vector<double> a = get_vector<double,Double>(A);
-
-      return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a[0],a[1])/x ) );
-    }
-
-    string name() const {return "log_laplace_density";}
-    
-    log_laplace_density():Operation(2) { }
-  };
-
-  expression_ref log_laplace = prob_density("log_laplace",log_laplace_density());
-
-  struct uniform_density: public Operation
-  {
-    uniform_density* clone() const {return new uniform_density;}
-    
-    tribool compare(const Object& o) const
-    {
-      if (this == &o) return true;
-      
-      if (dynamic_cast<const uniform_density*>(&o)) return true;
-      
-      return false;
-    }
-    
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      return shared_ptr<Log_Double> (new Log_Double( 1.0 ) );
-    }
-
-    string name() const {return "uniform_density";}
-    
-    uniform_density():Operation(2) { }
-  };
-
-  formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi)
-  {
-    assert(a.size() == pi.size());
-    shared_ptr<Formula> F (new Formula);
-    
-    vector<expression_ref> parameters;
-    vector<expression_ref> Vars;
-    vector<expression_ref> N;
-    expression_ref f = parameter("f");
-    F->add_expression( f );
-    F->add_expression( default_value( f, 1.0) );
-    F->add_expression( bounds( f, between(0.0,1.0) ) );
-    F->add_expression( distributed_as( prob_density("Uniform",uniform_density()), 
-				       f,
-				       Tuple(0)
-				       ) 
-		       );
-
-
-    for(int i=0;i<a.size();i++)
-    {
-      string pname = string("pi") + a.letter(i);
-      Vars.push_back( parameter(pname) );
-      N.push_back( Double(1.0) );
-      F->add_expression( parameter(pname) );
-      F->add_expression( default_value( parameter(pname) , pi[i] ) );
-      F->add_expression( bounds( parameter(pname) , between(0.0, 1.0) ) );
-    }
-
-    F->add_expression( distributed_as( prob_density("Dirichlet",dirichlet_density()), 
-				       Tuple(a.size())(Vars), 
-				       Tuple(a.size())(N)
-				       ) 
-		       );
-
-    return formula_expression_ref(F,Plus_gwF(a)(f)(Vars));
-  }
-
-  formula_expression_ref Plus_gwF_Model(const alphabet& a)
-  {
-    valarray<double> pi (1.0/a.size(), a.size());
-    return Plus_gwF_Model(a,pi);
-  }
-
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a);
-  formula_expression_ref HKY_Model(const alphabet& a);
-  formula_expression_ref TN_Model(const alphabet& a);
 
   shared_ptr<const Object> SimpleFrequencyModel::result() const
   {
@@ -939,58 +670,6 @@ namespace substitution {
     recalc_all();
   }
 
-  shared_ptr<ReversibleMarkovModelObject> Q_from_R_and_S_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
-  {
-    shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(F.Alphabet()) );
-
-    R->Alphabet();
-    // This doesn't work for Modulated markov models
-    assert(F.n_states() == F.Alphabet().size());
-
-    // The exchange model and the frequency model should have the same number of states, if not the same alphabet
-    assert(S.n_states() == F.n_states());
-
-    const unsigned N = S.n_states();
-
-    // recompute rate matrix
-    Matrix& Q = R->Q;
-
-    for(int i=0;i<N;i++) {
-      double sum=0;
-      for(int j=0;j<N;j++) {
-	if (i==j) continue;
-	Q(i,j) = S(i,j) * F(i,j);
-	sum += Q(i,j);
-      }
-      Q(i,i) = -sum;
-    }
-
-    R->invalidate_eigensystem();
-    
-    R->pi = F.pi;
-
-    return R;
-  }
-
-  struct Q_from_R_and_S_Op: public Operation
-  {
-    Q_from_R_and_S_Op* clone() const {return new Q_from_R_and_S_Op(*this);}
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(0);
-      shared_ptr<const ReversibleFrequencyModelObject> F = Args.evaluate_as<ReversibleFrequencyModelObject>(1);
-      
-      return Q_from_R_and_S_Function(*S, *F);
-    }
-
-    std::string name() const {return "Q_from_R_and_S";}
-
-    Q_from_R_and_S_Op():Operation(2) { }
-  };
-
-  expression_ref Q_from_R_and_S = lambda_expression( Q_from_R_and_S_Op() );
-
   /// Construct a reversible Markov model on alphabet 'a'
   ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
     :OpModel( Q_from_R_and_S(model_expression(*prefix_model(S1,"S")),model_expression(*prefix_model(R1,"R"))) )
@@ -1006,35 +685,7 @@ namespace substitution {
     :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*E.get_alphabet(),pi),"R")) ) )
   { }
 
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a)
-  {
-    formula_expression_ref R = prefix_formula("R",FR);
-    formula_expression_ref S = prefix_formula("S",Plus_gwF_Model(a));
-    
-    return Q_from_R_and_S(R)(S);
-  }
-
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a, const valarray<double>& pi)
-  {
-    formula_expression_ref R = prefix_formula("R",FR);
-    formula_expression_ref S = prefix_formula("S",Plus_gwF_Model(a,pi));
-    
-    return Q_from_R_and_S(R)(S);
-  }
-
   //---------------------- INV_Model --------------------------//
-
-  shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a)
-  {
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
-
-    // Calculate S matrix
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++)
-	R->S(i,j) = 0;
-
-    return R;
-  }
 
   shared_ptr<const Object> INV_Model::result() const
   {
@@ -1255,63 +906,6 @@ namespace substitution {
       return laplace_pdf(log(kappa()), log(2), 0.25)/kappa();
   }
 
-  shared_ptr<AlphabetExchangeModelObject> HKY_Function(const Nucleotides& a, double kappa)
-  {
-    assert(a.size()==4);
-
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
-
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++) {
-	if (i==j) continue;
-	if (a.transversion(i,j))
-	  R->S(i,j) = 1;
-	else
-	  R->S(i,j) = kappa;
-      }
-
-    return R;
-  }
-
-  struct HKY_Op: public Operation
-  {
-    HKY_Op* clone() const {return new HKY_Op;}
-    
-    tribool compare(const Object& o) const
-    {
-      if (this == &o) return true;
-      
-      if (dynamic_cast<const HKY_Op*>(&o)) return true;
-      
-      return false;
-    }
-    
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
-      double kappa = *Args.evaluate_as<Double>(1);
-
-      return HKY_Function(*N,kappa);
-    }
-
-    string name() const {return "HKY";}
-    
-    HKY_Op():Operation(2) { }
-  };
-
-  formula_expression_ref HKY_Model(const alphabet& a)
-  {
-    expression_ref kappa = parameter("kappa");
-    formula_expression_ref R(lambda_expression(HKY_Op())(a,kappa));
-    R.add_expression(kappa);
-    R.add_expression(default_value(kappa,2.0));
-    R.add_expression(bounds(kappa,lower_bound(0.0)));
-    R.add_expression(distributed_as(log_laplace, kappa, Tuple(2)(log(2), 0.25) ) );
-    
-    return R;
-  }
-  
-
   shared_ptr<const Object> HKY::result() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
@@ -1343,84 +937,15 @@ namespace substitution {
     return P;
   }
 
-  shared_ptr<ExchangeModelObject> TN_Function(const Nucleotides& a, double kappa1, double kappa2)
-  {
-    assert(a.size()==4);
-
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
-
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++) {
-	if (i==j) continue;
-	if (a.transversion(i,j))
-	  R->S(i,j) = 1;
-	else if (a.purine(i))
-	  R->S(i,j) = kappa1;
-	else
-	  R->S(i,j) = kappa2;
-      }
-
-    return R;
-  }
-
-  struct TN_Op: public Operation
-  {
-    TN_Op* clone() const {return new TN_Op;}
-    
-    tribool compare(const Object& o) const
-    {
-      if (this == &o) return true;
-      
-      if (dynamic_cast<const TN_Op*>(&o)) return true;
-      
-      return false;
-    }
-    
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
-      double kappa1 = *Args.evaluate_as<Double>(1);
-      double kappa2 = *Args.evaluate_as<Double>(2);
-
-      return TN_Function(*N,kappa1,kappa2);
-    }
-
-    string name() const {return "TN";}
-    
-    TN_Op():Operation(3) { }
-  };
-
-  formula_expression_ref TN_Model(const alphabet& a)
-  {
-    expression_ref kappa1 = parameter("TN::kappa(pur)");
-    expression_ref kappa2 = parameter("TN::kappa(pyr)");
-
-    formula_expression_ref R(lambda_expression(TN_Op())(a,kappa1,kappa2));
-
-    R.add_expression(kappa1);
-    R.add_expression(kappa2);
-
-    R.add_expression(default_value(kappa1,2.0));
-    R.add_expression(default_value(kappa2,2.0));
-
-    R.add_expression(bounds(kappa1,lower_bound(0.0)));
-    R.add_expression(bounds(kappa2,lower_bound(0.0)));
-
-    R.add_expression(distributed_as(log_laplace, kappa1, Tuple(2)(log(2), 0.25) ) );
-    R.add_expression(distributed_as(log_laplace, kappa2, Tuple(2)(log(2), 0.25) ) );
-    
-    return R;
-  }
-  
   shared_ptr<const Object> TN::result() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
     Double kappa1 = get_parameter_value_as<Double>(1);
     Double kappa2 = get_parameter_value_as<Double>(2);
-
+    
     return TN_Function(N, kappa1, kappa2);
   }
-
+  
   /// Construct a TN model on alphabet 'a'
   TN::TN(const Nucleotides& N)
   { 
@@ -1615,26 +1140,6 @@ namespace substitution {
 
     return R;
   }
-
-  struct M0_Op: public Operation
-  {
-    M0_Op* clone() const {return new M0_Op(*this);}
-
-    shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      shared_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
-      shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(1);
-      shared_ptr<const Double> omega = Args.evaluate_as<Double>(2);
-
-      return M0_Function(*C, *S, *omega);
-    }
-
-    string name() const {return "M0";}
-
-    M0_Op():Operation(3) { }
-  };
-
-  expression_ref M0E = lambda_expression( M0_Op() );
 
   efloat_t M0::super_prior() const 
   {
@@ -2044,139 +1549,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     load_file(file);
   }
 
-  shared_ptr<MultiModelObject> MultiParameterFunction(const ModelFunction& F, const DiscreteDistribution& D)
-  {
-    shared_ptr<MultiModelObject> R;
-
-    for(int i=0;i<D.fraction.size();i++)
-    {
-      shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(F(D.values[i]));
-
-      if (not R) R = shared_ptr<MultiModelObject>(new MultiModelObject);
-      
-      for(int j=0;j<M->n_base_models();j++)
-      {
-	R->fraction.push_back( D.fraction[i] * M->distribution()[j] );
-	R->base_models.push_back( const_ptr( M->base_model(j) ) );
-      }
-    }
-
-    return R;
-  }
-
-  MultiModelObject MultiRateFunction(const MultiModelObject& M_, const DiscreteDistribution& D)
-  {
-    shared_ptr<MultiModelObject> M = ptr(M_);
-
-    int N = M->n_base_models() * D.size();
-
-    MultiModelObject R;
-
-    // recalc fractions and base models
-    R.resize(N);
-
-    for(int m=0;m<R.n_base_models();m++) 
-    {
-      int i = m / M->n_base_models();
-      int j = m % M->n_base_models();
-
-      R.fraction[m] = D.fraction[i]*M->distribution()[j];
-
-      Double value = dynamic_cast<const Double&>(*D.values[i]);
-      M->set_rate( value );
-
-      R.base_models[m] = ptr( M->base_model(j) );
-    }
-
-    return R;
-  }
-
-  boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const Distribution& D, Int n)
-  {
-    // Make a discretization - not uniform.
-    Discretization d(n,D);
-
-    double ratio = d.scale()/D.mean();
-    
-    // this used to affect the prior
-    //    bool good_enough = (ratio > 1.0/1.5 and ratio < 1.5);
-
-    // problem - this isn't completely general
-    d.scale(1.0/ratio);
-    
-    boost::shared_ptr<DiscreteDistribution> R( new DiscreteDistribution(n) );
-    R->fraction = d.f;
-
-    for(int i=0;i<n;i++)
-    {
-      Double V = d.r[i];
-      R->values[i] = boost::shared_ptr<Double>( V.clone() );
-    }
-
-    return R;
-  }
-
-  struct DiscretizationOp: public Operation
-  {
-    DiscretizationOp* clone() const {return new DiscretizationOp(*this);}
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      shared_ptr<const Distribution> D = Args.evaluate_as<Distribution>(0);
-      shared_ptr<const Int> n = Args.evaluate_as<Int>(1);
-      
-      return DiscretizationFunction(*D, *n);
-    }
-
-    std::string name() const {return "DiscretizedDistribution";}
-
-    DiscretizationOp():Operation(2) { }
-  };
-
-  expression_ref Discretization = lambda_expression( DiscretizationOp() );
-
-  struct MultiParameterOp: public Operation
-  {
-    MultiParameterOp* clone() const {return new MultiParameterOp(*this);}
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      // The input-model should really be a lambda function taking the single value (or first value) p_change
-      shared_ptr<const ModelFunction> F = Args.evaluate_as<ModelFunction>(0);
-      shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(1);
-      
-      return MultiParameterFunction(*F, *D);
-    }
-
-    std::string name() const {return "MultiParameter";}
-
-    MultiParameterOp():Operation(2) { }
-  };
-
-  expression_ref MultiParameter = lambda_expression( MultiParameterOp() );
-
-  struct MultiRateOp: public Operation
-  {
-    MultiRateOp* clone() const {return new MultiRateOp(*this);}
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      // The input-model should really be a lambda function taking the single value (or first value) p_change
-      shared_ptr<const MultiModelObject> M = Args.evaluate_as<MultiModelObject>(0);
-      shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(1);
-      
-      boost::shared_ptr< MultiModelObject > R ( MultiRateFunction(*M, *D).clone() );
-
-      return R;
-    }
-
-    std::string name() const {return "MultiRate";}
-
-    MultiRateOp():Operation(2) { }
-  };
-
-  expression_ref MultiRate = lambda_expression( MultiRateOp() );
-
   //---------------------------- class MultiModel --------------------------//
 
   // Um, summed-over parameter lives on as its MEAN
@@ -2315,7 +1687,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const Distribution& D, int p, int n)
     :OpModel( 
-	     MultiParameter(model_expression(LambdaModel(M,p)), Discretization(model_expression(D), Int(n) ) ) 
+	     MultiParameter(model_expression(LambdaModel(M,p)), Discretize(model_expression(D), Int(n) ) ) 
 	      )
   { }
 
@@ -2323,7 +1695,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
     :OpModel( 
-	     MultiRate(model_expression(M), Discretization(model_expression(Gamma()), Int(n) ) ) 
+	     MultiRate(model_expression(M), Discretize(model_expression(Gamma()), Int(n) ) ) 
 	      )
   {
     show_parameters(std::cout, *this);
@@ -2333,7 +1705,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   LogNormalParameterModel::LogNormalParameterModel(const MultiModel& M,int n)
     :OpModel( 
-	     MultiRate(model_expression(M), Discretization(model_expression(LogNormal()), Int(n) ) ) 
+	     MultiRate(model_expression(M), Discretize(model_expression(LogNormal()), Int(n) ) ) 
 	      )
   {}
 
@@ -2391,39 +1763,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     check();
   }
-
-  shared_ptr< DiscreteDistribution > M2_Function(Double f1, Double f2, Double f3, Double omega)
-  {
-    shared_ptr< DiscreteDistribution > R ( new DiscreteDistribution(3) );
-    R->fraction[0] = f1;
-    R->fraction[1] = f2;
-    R->fraction[2] = f3;
-
-    R->values[0] = ptr( Double(0) );
-    R->values[1] = ptr( Double(1) );
-    R->values[2] = ptr( omega );
-
-    return R;
-  }
-
-  struct M2_Op: public Operation
-  {
-    M2_Op* clone() const {return new M2_Op(*this);}
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      shared_ptr<const Double> f1 = Args.evaluate_as<Double>(0);
-      shared_ptr<const Double> f2 = Args.evaluate_as<Double>(1);
-      shared_ptr<const Double> f3 = Args.evaluate_as<Double>(2);
-      shared_ptr<const Double> omega = Args.evaluate_as<Double>(3);
-
-      return M2_Function(*f1, *f2, *f3, *omega);
-    }
-
-    string name() const {return "M2";}
-
-    M2_Op(): Operation(4) { }
-  };
 
   //-------------------- M2 --------------------//
   shared_ptr<const Object> M2::result() const
@@ -2851,158 +2190,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     recalc_all();
   }
 
-
-  // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
-  //         Q(mi -> ni) = R(m->n)        for model exchange
-  // and     Q(mi -> nj) = 0              for all other pairs
-
-  // We assume that R(m->n) = S(m,n) * M->distribution()[n]
-
-  // This should result in a Markov chain where the frequencies are
-  //  frequencies()[mi] = pi[i] * f[m] 
-  // with pi = M->frequencies() 
-  // and   f = M->distribution()
-
-  // PROBLEM: I don't have a good way of defining the switching rate.
-  // Right now, I have S(m,n) = rho, S(m,m) = 0
-  // But, the S(m,n) do not correspond to switching rates exactly.
-  // Instead, the switching rate is now rho*f[n], which is going to
-  // be something like rho*(n-1)/n if there are n categories.
-  
-  // ADDITIONALLY, depending on how fine-grained the categories are,
-  // a switching rate has a different interpretation.
-
-  // HOWEVER, I think the current approach works for now, because it
-  // approximates the model that at rate 'rho' the rate is randomly
-  // re-drawn from the underlying distribution.  A lot of the time it
-  // will fall in the same bin, giving a lower observed switching rate
-  // when the discrete approximation to the continuous distribution has
-  // low resolution.
-
-  shared_ptr<ReversibleMarkovModelObject> Modulated_Markov_Function(const ExchangeModelObject& S,MultiModelObject M)
-  {
-    // Make a copy and use this.
-    M.set_rate(1);
-
-    unsigned T = 0;
-    for(int m=0; m < M.n_base_models(); m++) 
-    {
-      const ReversibleMarkovModelObject* RM = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m).part(0));
-      if (not RM)
-	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model"; // what is the name?
-      T += RM->n_states();
-    }
-
-    shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(*M.get_alphabet(), T) );
-
-    // calculate the state_letters() map here!
-
-    T = 0;
-    for(int m=0; m < M.n_base_models(); m++) 
-    {
-      unsigned N = M.base_model(m).n_states();
-      for(int i=0; i<N; i++)
-	R->state_letters_[T+i] = M.base_model(m).state_letters()[i];
-
-      T += N;
-    }
-
-    const int n_models = M.n_base_models();
-
-
-    const valarray<double>& M_pi = M.frequencies();
-    const vector<double>&   M_f  = M.distribution();
-
-    // calculate pi[ ] for each state
-    T = 0;
-    for(int m=0; m < n_models; m++) {
-      unsigned N = M.base_model(m).n_states();
-      for(int s=0; s < N; s++) 
-	R->pi[T+s] = M_pi[s] * M_f[m];
-      T += N;
-    }
-    
-
-    // initially zero out the matrix
-    for(int i=0;i<R->Q.size1();i++)
-      for(int j=0;j<R->Q.size2();j++)
-	R->Q(i,j) = 0;
-
-    // rates for within-model transitions
-    T=0;
-    for(int m=0; m < n_models; m++) 
-    {
-      const ReversibleMarkovModelObject* RM = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m).part(0));
-      if (not RM)
-	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model"; // what is the name?
-
-      unsigned N = RM->n_states();
-      
-      for(int s1=0; s1 < N; s1++) 
-	for(int s2=0; s2 < N; s2++)
-	  R->Q(T+s1,T+s2) = RM->Q(s1,s2);
-
-      T += N;
-    }
-
-    // rates for between-model transitions
-    unsigned T1=0;
-    for(int m1=0; m1 < n_models; m1++) 
-    {
-      const ReversibleMarkovModelObject* RM1 = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m1).part(0));
-      unsigned N1 = RM1->n_states();
-
-      unsigned T2=0;
-      for(int m2=0; m2 < n_models; m2++) 
-      {
-	const ReversibleMarkovModelObject* RM2 = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m2).part(0));
-	unsigned N2 = RM2->n_states();
-	assert(N1 == N2);
-
-	if (m1 != m2) {
-	  double S12 = S(m1,m2);
-	  for(int s1=0;s1<N1;s1++)
-	    R->Q(T1+s1,T2+s1) = S12*M_f[m2];
-	}
-
-	T2 += N2;
-      }
-      T1 += N1;
-    }
-
-    // recompute diagonals 
-    for(int i=0;i<R->Q.size1();i++) 
-    {
-      double sum=0;
-      for(int j=0;j<R->Q.size2();j++)
-	if (i!=j)
-	  sum += R->Q(i,j);
-      R->Q(i,i) = -sum;
-    }
-
-    R->invalidate_eigensystem();
-
-    return R;
-  }
-
-  struct Modulated_Markov_Op: public Operation
-  {
-    Modulated_Markov_Op* clone() const {return new Modulated_Markov_Op(*this);}
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      shared_ptr<const MultiModelObject> M = Args.evaluate_as<MultiModelObject>(0);
-      shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(1);
-
-      return Modulated_Markov_Function(*S, *M);
-    }
-
-    std::string name() const {return "Modulated_Markov";}
-
-    Modulated_Markov_Op():Operation(2) { }
-  };
-
-  expression_ref Modulated_Markov_E = lambda_expression( Modulated_Markov_Op() );
 
   ModulatedMarkovModel::ModulatedMarkovModel(const MultiModel& MM, const ExchangeModel& EM)
     :OpModel(Modulated_Markov_E(model_expression(MM),model_expression(EM)))

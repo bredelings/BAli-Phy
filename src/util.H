@@ -462,6 +462,11 @@ void scale(std::vector<T>& v, const U& S)
     v[i] *= S;
 }
 
+inline void normalize(std::vector<double>& v)
+{
+  scale(v, 1.0/sum(v));
+}
+
 template<typename T>
 std::vector<T> select(const std::vector<T>& v1,bool pred(const T&))
 {

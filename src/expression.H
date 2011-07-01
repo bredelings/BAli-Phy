@@ -319,4 +319,16 @@ extern expression_ref _1;
 extern expression_ref _2;
 extern expression_ref _3;
 extern expression_ref _4;
+
+extern expression_ref default_value;
+
+extern expression_ref bounds;
+
+// Fields: n_random, n_parameters, string, density op
+extern expression_ref prob_density;
+
+// Fields: (prob_density) (random vars) (parameter expressions)
+extern expression_ref distributed_as;
+
+
 #endif
