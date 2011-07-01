@@ -251,7 +251,12 @@ Model::Model()
 { }
 
 Model::Model(const shared_ptr<const Formula>& F)
-  :Operation(0),valid(false),C(F)
+  :Operation(0),
+   valid(false),
+   C(F),
+   changed(F->n_parameters(), true),
+   bounds(F->n_parameters()),
+   fixed(F->n_parameters(),false)
 {
   for(int i=0;i<n_parameters();i++)
   {
