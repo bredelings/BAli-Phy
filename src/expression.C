@@ -535,11 +535,9 @@ expression_ref eval(const Context& C, const expression_ref& R)
   // 5. If the head is a function, evaluate the substituted body
   else if (f and f->what_type == body_function_f)
   {
-    expression_ref body = find_function_body(C,R);
-    if (body)
-      return eval(C,body);
-    else
-      throw myexception()<<"No function definition for expression '"<<R->print()<<"'";
+    expression_ref R2 = R;
+    eval_match(C,R2,expression_ref(),results);
+    return R2;
   }
 
   // Hey, how about a model expression?
