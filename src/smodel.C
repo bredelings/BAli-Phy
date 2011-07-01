@@ -374,8 +374,9 @@ namespace substitution {
     uniform_density():Operation(2) { }
   };
 
-  formula_expression_ref Plus_gwF_Model(const alphabet& a)
+  formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi)
   {
+    assert(a.size() == pi.size());
     shared_ptr<Formula> F (new Formula);
     
     vector<expression_ref> parameters;
@@ -398,8 +399,8 @@ namespace substitution {
       Vars.push_back( parameter(pname) );
       N.push_back( Double(1.0) );
       F->add_expression( parameter(pname) );
-      F->add_expression( default_value( parameter(pname) , 1.0/a.size() ) );
-      F->add_expression( bounds( parameter(pname) , between(0.0,1.0) ) );
+      F->add_expression( default_value( parameter(pname) , pi[i] ) );
+      F->add_expression( bounds( parameter(pname) , between(0.0, 1.0) ) );
     }
 
     F->add_expression( distributed_as( prob_density("Dirichlet",dirichlet_density()), 
@@ -409,6 +410,12 @@ namespace substitution {
 		       );
 
     return formula_expression_ref(F,Plus_gwF(a)(f)(Vars));
+  }
+
+  formula_expression_ref Plus_gwF_Model(const alphabet& a)
+  {
+    valarray<double> pi (1.0/a.size(), a.size());
+    return Plus_gwF_Model(a,pi);
   }
 
   formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a);
@@ -999,6 +1006,14 @@ namespace substitution {
   {
     formula_expression_ref R = prefix_formula("R",FR);
     formula_expression_ref S = prefix_formula("S",Plus_gwF_Model(a));
+    
+    return Q_from_R_and_S(R)(S);
+  }
+
+  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a, const valarray<double>& pi)
+  {
+    formula_expression_ref R = prefix_formula("R",FR);
+    formula_expression_ref S = prefix_formula("S",Plus_gwF_Model(a,pi));
     
     return Q_from_R_and_S(R)(S);
   }
