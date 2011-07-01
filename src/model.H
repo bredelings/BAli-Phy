@@ -203,7 +203,7 @@ public:
   void recalc_all();
 
   /// Make a copy of this object
-  virtual Model* clone() const =0;
+  virtual Model* clone() const {return new Model(*this);}
 
   /// the prior for the model, on the same scale as proposal densities
   virtual efloat_t prior() const {return 1.0;}
@@ -281,7 +281,7 @@ public:
   int n_args() const {return n_parameters();}
 
   /// The model's name
-  virtual std::string name() const =0;
+  virtual std::string name() const {return "unnamed";}
 
   std::string print() const {return name();}
 
