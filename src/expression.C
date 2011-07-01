@@ -487,74 +487,10 @@ expression_ref find_function_body(const Context& C, const expression_ref& R)
 
 expression_ref eval(const Context& C, const expression_ref& R)
 {
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-
+  expression_ref R2 = R;
   vector<expression_ref> results;
-
-  // 0. If R is not an expression
-  if (not E)
-  {
-    expression_ref R2 = R;
-    eval_match(C,R2,expression_ref(),results);
-    return R2;
-  }
-
-  // 1. Compute the head
-  expression_ref head = eval(C,E->sub[0]);
-
-  // 2. If head is a lambda, then this is a lambda expression.  It evaluates to itself.
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(head);
-  if (L)
-  {
-    expression_ref R2 = R;
-    eval_match(C,R2,expression_ref(),results);
-    return R2;
-  }
-
-  // 3. If head is an expression, then apply the expression to E->sub[1]
-  shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(head);
-  if (E2)
-  {
-    expression_ref R2 = R;
-    eval_match(C,R2,expression_ref(),results);
-    return R2;
-  }
-  
-
-  // 4. If the head is a constructor, evaluate its arguments
-  shared_ptr<const Function> f = dynamic_pointer_cast<const Function>(head);
-  if (f and f->what_type == data_function_f)
-  {
-    expression_ref R2 = R;
-    eval_match(C,R2,expression_ref(),results);
-    return R2;
-  }
-  // 5. If the head is a function, evaluate the substituted body
-  else if (f and f->what_type == body_function_f)
-  {
-    expression_ref R2 = R;
-    eval_match(C,R2,expression_ref(),results);
-    return R2;
-  }
-
-  // Hey, how about a model expression?
-
-  // 6. If the head is an Operation, evaluate the operation.
-  shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(head);
-  if (O)
-  {
-    expression_ref R2 = R;
-    eval_match(C,R2,expression_ref(),results);
-    return R2;
-  }
-  /*
-  else if (E->size() == 1)
-  {
-    return eval(C,head);
-  }
-  */
-  else
-    throw myexception()<<"Don't know how to evaluate expression '"<<R<<"'";
+  eval_match(C,R2,expression_ref(),results);
+  return R2;
 }
 
 // problem: expression_ref is currently designed to be unmodifiable.
