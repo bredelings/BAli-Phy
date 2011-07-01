@@ -665,7 +665,7 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
     R = boost::const_pointer_cast<const expression>(RV);
 
     // If all the arguments match, then the whole expression matches
-    for(int i=1;i<QE->size();i++)
+    for(int i=1;i<RE->size();i++)
     {
       expression_ref Q_sub;
       if (QE) Q_sub = QE->sub[i];
