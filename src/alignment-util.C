@@ -1003,6 +1003,7 @@ istream& load_more_alignments(list<alignment>& alignments, istream& ifile, const
     // skip over alignments due to subsampling
     find_and_skip_alignments(ifile,subsample-1);
   }
+  return ifile;
 }
 
 list<alignment> load_alignments(istream& ifile, const vector<string>& names, const alphabet& a,
