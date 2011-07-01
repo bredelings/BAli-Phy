@@ -484,19 +484,14 @@ expression_ref eval(const Context& C, const expression_ref& R)
 {
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
+  vector<expression_ref> results;
+
   // 0. If R is not an expression
   if (not E)
   {
-    if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
-      return C.get_parameter_value(P->parameter_name);
-    else if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R))
-      throw myexception()<<"Cannot evaluate dummy variables!";
-    else if (shared_ptr<const match> D = dynamic_pointer_cast<const match>(R))
-      throw myexception()<<"Cannot evaluate dummy variables!";
-
-    // This is a literal constant
-    else
-      return R;
+    expression_ref R2 = R;
+    eval_match(C,R2,0,results,true);
+    return R2;
   }
 
   // 1. Compute the head
@@ -578,25 +573,46 @@ expression_ref eval(const Context& C, const expression_ref& R)
 bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, std::vector<expression_ref>& results, bool no_eval_top_level)
 {
   // -1. If we are matching against a match expression, then succeed and store the result if asked.
-  if (shared_ptr<const match> M = dynamic_pointer_cast<const match>(Q))
-  {
-    if (M->index >= 0)
+  if (Q)
+    if (shared_ptr<const match> M = dynamic_pointer_cast<const match>(Q))
     {
-      if (results.size() < M->index+1) results.resize(M->index+1);
-
-      if (results[M->index]) throw myexception()<<"Match expression contains match index "<<M->index<<"' more than once!";
-
-      results[M->index] = expression_ref(R->clone());
+      if (M->index >= 0)
+      {
+	if (results.size() < M->index+1) results.resize(M->index+1);
+	
+	if (results[M->index]) throw myexception()<<"Match expression contains match index "<<M->index<<"' more than once!";
+	
+	results[M->index] = expression_ref(R->clone());
+      }
+      
+      return true;
     }
-
-    return true;
-  }
 
   // 1. Compute the head
   shared_ptr<const expression> RE = dynamic_pointer_cast<const expression>(R);
-  expression_ref head;
-  if (RE)
-    head = eval(C,RE->sub[0]);
+  if (not RE)
+  {
+    if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
+      R = C.get_parameter_value(P->parameter_name);
+    else if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R))
+      throw myexception()<<"Cannot evaluate dummy variables!";
+    else if (shared_ptr<const match> M = dynamic_pointer_cast<const match>(R))
+      throw myexception()<<"Cannot evaluate match variables!";
+    
+    if (not Q) return true;
+
+    // Do we have to do this?
+    vector<expression_ref> results2 = results; 
+    if (find_match(Q,R,results))
+    {
+      results = results2;
+      return true;
+    }
+    else
+      return false;
+  }
+
+  expression_ref head = eval(C,RE->sub[0]);
 
   // If the eval expression or the query expression is a literal constant, just evaluate R and see if it matches.
   // Do the same if the eval expression is an object returned from an operation
