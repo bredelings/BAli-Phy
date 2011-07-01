@@ -550,18 +550,9 @@ expression_ref eval(const Context& C, const expression_ref& R)
   shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(head);
   if (O)
   {
-    FreeOperationArgs Args(C,*E);
-
-    // recursive calls to evaluate happen in here.
-    shared_ptr<const Object> new_result;
-    try{
-      return (*O)(Args);
-    }
-    catch(myexception& e)
-    {
-      e.prepend("Evaluating expression '"+R->print()+"':\n");
-      throw e;
-    }
+    expression_ref R2 = R;
+    eval_match(C,R2,0,results);
+    return R2;
   }
   /*
   else if (E->size() == 1)
@@ -668,7 +659,6 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
     // Make RE point to this new object, that is being modified below, but not through RE
     R = boost::const_pointer_cast<const expression>(RV);
 
-    if (Q)
     // If all the arguments match, then the whole expression matches
     for(int i=1;i<QE->size();i++)
     {
