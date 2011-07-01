@@ -1690,9 +1690,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     :OpModel( 
 	     MultiRate(model_expression(M), Discretize(model_expression(Gamma()), Int(n) ) ) 
 	      )
-  {
-    show_parameters(std::cout, *this);
-  }
+  { }
 
   /*--------------- LogNormal Sites Model----------------*/
 
