@@ -420,6 +420,7 @@ namespace substitution {
 
   formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a);
   formula_expression_ref HKY_Model(const alphabet& a);
+  formula_expression_ref TN_Model(const alphabet& a);
 
   shared_ptr<const Object> SimpleFrequencyModel::result() const
   {
@@ -487,7 +488,10 @@ namespace substitution {
       add_parameter(Parameter(pname, Double(f[i]), between(0, 1)));
     }
 
-    //    std::cout<<*Simple_gwF_Model(HKY_Model(a),a).F<<"\n";
+    formula_expression_ref R = Simple_gwF_Model(TN_Model(a),a);
+    FormulaModel M(R);
+    //    std::cout<<*R.F<<"\n";
+    show_parameters(std::cout, M);
     //    exit(0);
     // initialize everything
     recalc_all();
@@ -1359,6 +1363,55 @@ namespace substitution {
     return R;
   }
 
+  struct TN_Op: public Operation
+  {
+    TN_Op* clone() const {return new TN_Op;}
+    
+    tribool compare(const Object& o) const
+    {
+      if (this == &o) return true;
+      
+      if (dynamic_cast<const TN_Op*>(&o)) return true;
+      
+      return false;
+    }
+    
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+      double kappa1 = *Args.evaluate_as<Double>(1);
+      double kappa2 = *Args.evaluate_as<Double>(2);
+
+      return TN_Function(*N,kappa1,kappa2);
+    }
+
+    string name() const {return "TN";}
+    
+    TN_Op():Operation(3) { }
+  };
+
+  formula_expression_ref TN_Model(const alphabet& a)
+  {
+    expression_ref kappa1 = parameter("TN::kappa(pur)");
+    expression_ref kappa2 = parameter("TN::kappa(pyr)");
+
+    formula_expression_ref R(lambda_expression(TN_Op())(a,kappa1,kappa2));
+
+    R.add_expression(kappa1);
+    R.add_expression(kappa2);
+
+    R.add_expression(default_value(kappa1,2.0));
+    R.add_expression(default_value(kappa2,2.0));
+
+    R.add_expression(bounds(kappa1,lower_bound(0.0)));
+    R.add_expression(bounds(kappa2,lower_bound(0.0)));
+
+    R.add_expression(distributed_as(log_laplace, kappa1, Tuple(2)(log(2), 0.25) ) );
+    R.add_expression(distributed_as(log_laplace, kappa2, Tuple(2)(log(2), 0.25) ) );
+    
+    return R;
+  }
+  
   shared_ptr<const Object> TN::result() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
