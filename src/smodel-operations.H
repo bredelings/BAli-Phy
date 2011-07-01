@@ -78,6 +78,8 @@ struct Plus_gwF_Op: public Operation
 
 expression_ref Plus_gwF(const alphabet& a);
 
+  boost::shared_ptr<ExchangeModelObject> SimpleExchangeFunction(double rho, int n);
+
 boost::shared_ptr<AlphabetExchangeModelObject> HKY_Function(const Nucleotides& a, double kappa);
 
 struct HKY_Op: public Operation

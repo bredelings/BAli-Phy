@@ -43,6 +43,20 @@ expression_ref Plus_gwF(const alphabet& a)
   return lambda_expression( Plus_gwF_Op(a) );
 }
 
+  shared_ptr<ExchangeModelObject> SimpleExchangeFunction(double rho, int n)
+  {
+    shared_ptr<ExchangeModelObject> R (new ExchangeModelObject(n));
+
+    for(int i=0;i<n;i++) {
+      for(int j=0;j<n;j++)
+	R->S(i,j) = rho;
+
+      R->S(i,i) = 0;       // this is NOT a rate away.
+    }
+
+    return R;
+  }
+
 shared_ptr<AlphabetExchangeModelObject> HKY_Function(const Nucleotides& a, double kappa)
 {
   assert(a.size()==4);

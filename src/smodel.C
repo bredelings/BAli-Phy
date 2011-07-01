@@ -75,20 +75,6 @@ namespace substitution {
       return laplace_pdf(log(rho()), -3, 1)/rho();
   }
 
-  shared_ptr<ExchangeModelObject> SimpleExchangeFunction(double rho, int n)
-  {
-    shared_ptr<ExchangeModelObject> R (new ExchangeModelObject(n));
-
-    for(int i=0;i<n;i++) {
-      for(int j=0;j<n;j++)
-	R->S(i,j) = rho;
-
-      R->S(i,i) = 0;       // this is NOT a rate away.
-    }
-
-    return R;
-  }
-
   shared_ptr<const Object> SimpleExchangeModel::result() const
   {
     Double rho = get_parameter_value_as<Double>(0);
