@@ -164,7 +164,7 @@ struct Parameter
 ///
 /// Next: make models out-of-date unless we call model.update();
 ///
-class Model: public Operator
+class Model: public Operation
 {
 protected:
   mutable bool valid;
@@ -287,6 +287,7 @@ public:
 
   // Evaluate the model and return the result
   virtual boost::shared_ptr<const Object> result() const;
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   // Evaluate the model and return the result
   template <typename T>

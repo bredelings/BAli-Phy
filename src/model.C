@@ -247,7 +247,7 @@ unsigned Model::n_parameters() const
 }
 
 Model::Model()
-  :valid(false)
+  :Operation(0),valid(false)
 { }
 
 boost::shared_ptr<const Object> Model::result() const
@@ -255,6 +255,14 @@ boost::shared_ptr<const Object> Model::result() const
   shared_ptr<Model> M (clone());
   M->update();
   return M;
+}
+
+shared_ptr<const Object> Model::operator()(OperationArgs& Args) const
+{
+  shared_ptr<Model> M (clone());
+  for(int i=0;i<n_parameters();i++)
+    M->set_parameter_value(i,Args.evaluate(i));
+  return M->result();
 }
 
 void Model::update()
