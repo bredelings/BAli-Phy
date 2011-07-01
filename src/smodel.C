@@ -683,18 +683,6 @@ namespace substitution {
       
   //----------------------- EQU -------------------------//
 
-  shared_ptr<ExchangeModelObject> EQU_Exchange_Function(const alphabet& a)
-  {
-    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
-
-    // Calculate S matrix
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++)
-	R->S(i,j) = 1;
-
-    return R;
-  }
-
   shared_ptr<const Object> EQU::result() const
   {
     return EQU_Exchange_Function(get_parameter_value_as<alphabet>(0));
@@ -962,29 +950,6 @@ namespace substitution {
   }
 
 
-  shared_ptr<AlphabetExchangeModelObject> GTR_Function(const Nucleotides& a, 
-					      double AG, double AT, double AC,
-					      double GT, double GC, 
-					      double TC)
-  {
-    assert(a.size()==4);
-
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
-
-    double total = AG + AT + AC + GT + GC + TC;
-
-    R->S(0,1) = AG/total;
-    R->S(0,2) = AT/total;
-    R->S(0,3) = AC/total;
-
-    R->S(1,2) = GT/total;
-    R->S(1,3) = GC/total;
-
-    R->S(2,3) = TC/total;
-
-    return R;
-  }
-
   shared_ptr<const Object> GTR::result() const
   {
     const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
@@ -1046,45 +1011,6 @@ namespace substitution {
   /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
   void M0::omega(double w) {
     set_parameter_value(omega_index,w);
-  }
-
-  shared_ptr<const AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
-  {
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(C) );
-    ublas::symmetric_matrix<double>& S = R->S;
-
-    for(int i=0;i<C.size();i++) 
-    {
-      for(int j=0;j<i;j++) {
-	int nmuts=0;
-	int pos=-1;
-	for(int p=0;p<3;p++)
-	  if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
-	    nmuts++;
-	    pos=p;
-	  }
-	assert(nmuts>0);
-	assert(pos >= 0 and pos < 3);
-
-	double rate=0.0;
-
-	if (nmuts == 1) {
-
-	  int l1 = C.sub_nuc(i,pos);
-	  int l2 = C.sub_nuc(j,pos);
-	  assert(l1 != l2);
-
-	  rate = S2(l1,l2);
-
-	  if (C.translate(i) != C.translate(j))
-	    rate *= omega;	
-	}
-
-	S(i,j) = S(j,i) = rate;
-      }
-    }
-
-    return R;
   }
 
   efloat_t M0::super_prior() const 

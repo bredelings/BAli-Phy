@@ -80,7 +80,9 @@ expression_ref Plus_gwF(const alphabet& a);
 
   boost::shared_ptr<ExchangeModelObject> SimpleExchangeFunction(double rho, int n);
 
-boost::shared_ptr<AlphabetExchangeModelObject> HKY_Function(const Nucleotides& a, double kappa);
+  boost::shared_ptr<ExchangeModelObject> EQU_Exchange_Function(const alphabet& a);
+
+  boost::shared_ptr<AlphabetExchangeModelObject> HKY_Function(const Nucleotides& a, double kappa);
 
 struct HKY_Op: public Operation
 {
@@ -141,7 +143,14 @@ struct TN_Op: public Operation
 
 formula_expression_ref TN_Model(const alphabet& a);
   
+  boost::shared_ptr<AlphabetExchangeModelObject> GTR_Function(const Nucleotides& a, 
+							      double AG, double AT, double AC,
+							      double GT, double GC, 
+							      double TC);
+
   boost::shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a);
+
+  boost::shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
 
 struct dirichlet_density: public Operation
 {
@@ -254,8 +263,6 @@ struct Q_from_R_and_S_Op: public Operation
 };
 
 extern expression_ref Q_from_R_and_S;
-
-  boost::shared_ptr<const AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
 
 struct M0_Op: public Operation
 {
