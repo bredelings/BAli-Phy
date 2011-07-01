@@ -60,7 +60,7 @@ public:
     assert(o);
     boost::shared_ptr<const T> converted =  boost::dynamic_pointer_cast<const T>(o);
     if (not converted)
-      throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<typeid(o.get()).name()<<" to type "<<typeid(T).name();
+      throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<typeid(*o.get()).name()<<" to type "<<typeid(T).name();
     return converted;
   }
 
