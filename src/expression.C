@@ -495,7 +495,7 @@ expression_ref eval(const Context& C, const expression_ref& R)
   if (not E)
   {
     expression_ref R2 = R;
-    eval_match(C,R2,0,results);
+    eval_match(C,R2,expression_ref(),results);
     return R2;
   }
 
@@ -507,7 +507,7 @@ expression_ref eval(const Context& C, const expression_ref& R)
   if (L)
   {
     expression_ref R2 = R;
-    eval_match(C,R2,0,results);
+    eval_match(C,R2,expression_ref(),results);
     return R2;
   }
 
@@ -516,7 +516,7 @@ expression_ref eval(const Context& C, const expression_ref& R)
   if (E2)
   {
     expression_ref R2 = R;
-    eval_match(C,R2,0,results);
+    eval_match(C,R2,expression_ref(),results);
     return R2;
   }
   
@@ -549,7 +549,7 @@ expression_ref eval(const Context& C, const expression_ref& R)
   if (O)
   {
     expression_ref R2 = R;
-    eval_match(C,R2,0,results);
+    eval_match(C,R2,expression_ref(),results);
     return R2;
   }
   /*
