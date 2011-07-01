@@ -620,7 +620,7 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
 
   // 2. If head is a lambda, then this is a lambda expression.  It evaluates to itself.
   shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(head);
-  if (not Q) return true;
+  if (L and not Q) return true;
     
   // 3. If head is an expression, then apply the expression to E->sub[1]
   shared_ptr<const expression> RE2 = dynamic_pointer_cast<const expression>(head);
