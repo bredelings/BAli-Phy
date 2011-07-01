@@ -111,10 +111,12 @@ struct Parameter
 //   - TODO: Get rid of references to parameters_
 //     + parameters_[i].changed: separate array?
 //   - How can attributes change efficiently?
-// 11. Make a FormulaModel that uses the Context to calculate
+// 11. Make a FormulaModel that uses the Formula to
 //   (a) load default values
-//   (b) calculate priors
-//   (c) set bounds.
+//   (b) set bounds.
+//     and uses the context to 
+//   (c) calculate priors
+//   (d) calculate results...
 //   [The model class still stores the bounds and fixed-ness, so they can easily change]
 //   (d) How do we do things like MultiParameterModel, where an operation takes a function as an argument?
 // 12. Replace OpModels with FormulaModels:
