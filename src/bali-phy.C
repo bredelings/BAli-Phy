@@ -917,21 +917,21 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
   }
 }
 
-vector<polymorphic_cow_ptr<substitution::MultiModel> > 
+vector<polymorphic_cow_ptr<Model> > 
 get_smodels(const variables_map& args, const vector<alignment>& A,
 	    const shared_items<string>& smodel_names_mapping)
 {
-  vector<polymorphic_cow_ptr<substitution::MultiModel> > smodels;
+  vector<polymorphic_cow_ptr<Model> > smodels;
   for(int i=0;i<smodel_names_mapping.n_unique_items();i++) 
   {
     vector<alignment> alignments;
     for(int j=0;j<smodel_names_mapping.n_partitions_for_item(i);j++)
       alignments.push_back(A[smodel_names_mapping.partitions_for_item[i][j]]);
 
-    owned_ptr<substitution::MultiModel> full_smodel = get_smodel(args,
+    owned_ptr<Model> full_smodel = get_smodel(args,
 								    smodel_names_mapping.unique(i),
 								    alignments);
-    polymorphic_cow_ptr<substitution::MultiModel> temp (*full_smodel);
+    polymorphic_cow_ptr<Model> temp (*full_smodel);
     smodels.push_back(temp);
   }
   return smodels;
@@ -1237,7 +1237,7 @@ int main(int argc,char* argv[])
     
     vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
 
-    vector<polymorphic_cow_ptr<substitution::MultiModel> > 
+    vector<polymorphic_cow_ptr<Model> > 
       full_smodels = get_smodels(args,A,smodel_names_mapping);
 
     if (args["letters"].as<string>() == "star")

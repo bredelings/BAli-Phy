@@ -109,7 +109,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 namespace substitution
 {
   class MultiModelObject;
-  class MultiModel;
 }
 
 extern bool use_internal_index;
@@ -269,7 +268,7 @@ public:
 class Parameters: public SuperModel, public Probability_Model
 {
   /// The substitution::Model
-  std::vector<polymorphic_cow_ptr<substitution::MultiModel> > SModels;
+  std::vector<polymorphic_cow_ptr<Model> >SModels;
   std::vector<int> smodel_for_partition;
 
   /// The IndelModel
@@ -350,9 +349,9 @@ public:
   /// How many substitution models?
   int n_smodels() const {return SModels.size();}
   /// Get the substitution::Model
-  const substitution::MultiModel& SModel(int i) const;
+  const Model& SModel(int i) const;
   /// Get the substitution::Model
-  substitution::MultiModel& SModel(int i);
+        Model& SModel(int i);
   
   /// How many substitution models?
   int n_imodels() const {return IModels.size();}
@@ -417,12 +416,12 @@ public:
   Model& SubModels(int);
 
   Parameters(const std::vector<alignment>& A, const SequenceTree&, 
-	     const std::vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
+	     const std::vector<polymorphic_cow_ptr<Model> >&,
 	     const std::vector<int>&,
 	     const std::vector<int>&);
 
   Parameters(const std::vector<alignment>& A, const SequenceTree&, 
-	     const std::vector<polymorphic_cow_ptr<substitution::MultiModel> >&,
+	     const std::vector<polymorphic_cow_ptr<Model> >&,
 	     const std::vector<int>&,
 	     const std::vector<polymorphic_cow_ptr<IndelModel> >&,
 	     const std::vector<int>&,

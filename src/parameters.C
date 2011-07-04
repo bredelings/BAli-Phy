@@ -633,12 +633,12 @@ efloat_t Parameters::heated_likelihood() const
 }
 
   /// Get the substitution::Model
-const substitution::MultiModel& Parameters::SModel(int i) const 
+const Model& Parameters::SModel(int i) const 
 {
   return *SModels[i];
 }
   /// Get the substitution::Model
-substitution::MultiModel& Parameters::SModel(int i)
+      Model& Parameters::SModel(int i)
 {
   return *SModels[i];
 }
@@ -914,7 +914,7 @@ void Parameters::branch_mean_tricky(int i,double x)
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
-		       const vector<polymorphic_cow_ptr<substitution::MultiModel> >& SMs,
+		       const vector<polymorphic_cow_ptr<Model> >& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<polymorphic_cow_ptr<IndelModel> >& IMs,
 		       const vector<int>& i_mapping,
@@ -981,7 +981,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string name = string("part") + convertToString(i+1);
 
     // get reference to smodel for data-partition
-    const substitution::MultiModel& SM = SModel(smodel_for_partition[i]);
+    const Model& SM = SModel(smodel_for_partition[i]);
 
     // create a data partition
     cow_ptr<data_partition> dp;
@@ -1001,7 +1001,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
-		       const vector<polymorphic_cow_ptr<substitution::MultiModel> >& SMs,
+		       const vector<polymorphic_cow_ptr<Model> >& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<int>& scale_mapping)
   :SModels(SMs),
@@ -1059,7 +1059,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string name = string("part") + convertToString(i+1);
 
     // get reference to smodel for data-partition
-    const substitution::MultiModel& SM = SModel(smodel_for_partition[i]);
+    const Model& SM = SModel(smodel_for_partition[i]);
 
     // create data partition
     data_partitions.push_back(cow_ptr<data_partition>(data_partition(name,A[i],*T,*SM.result_as<substitution::MultiModelObject>())));
