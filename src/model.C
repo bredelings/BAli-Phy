@@ -271,9 +271,8 @@ Model::Model(const shared_ptr<const Formula>& F)
   for(int i=0;i<n_parameters();i++)
   {
     expression_ref var = parameter(parameter_name(i));
-    expression_ref bounds = lambda_expression(data_function("bounds",2));
     vector<int> results;
-    expression_ref query = bounds(var,match(0));
+    expression_ref query = ::bounds(var,match(0));
     term_ref found = C.F->find_match_expression2(query, results);
     if (found != -1)
     {
@@ -1091,8 +1090,6 @@ term_ref add_probability_expression(Context& C)
   // If this model has random variables... 
   if (Pr)
   {
-    expression_ref prob = lambda_expression( data_function("probability",1) );
-
     C.add_expression(prob(Pr));
 
     vector<int> results;

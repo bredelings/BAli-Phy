@@ -316,12 +316,16 @@ extern expression_ref _4;
 
 expression_ref Tuple(int);
 
+// 2 Fields, a value, and a Cons or a ListEnd
 extern expression_ref Cons;
 
+// 0 fields
 extern expression_ref ListEnd;
 
+// 2 Fields: parameter, value
 extern expression_ref default_value;
 
+// 2 Fields: parameter, Bounds<double>
 extern expression_ref bounds;
 
 // 2 Fields: string, density op
@@ -330,4 +334,18 @@ extern expression_ref prob_density;
 // 3 Fields: (prob_density) (random vars) (parameter expressions)
 extern expression_ref distributed_as;
 
+// 1 Field: a value
+extern expression_ref sys_print;
+
+// 2 Fields: string1 string2
+extern expression_ref concat;
+
+// 1 Fields: the density expression
+extern expression_ref prob;
+
+// 3 fields: condition body1 body2
+extern expression_ref If;
+
+// 3 Fields: definition, guard, body
+extern expression_ref defun;
 #endif

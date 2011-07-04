@@ -3,6 +3,7 @@
 #include "operation.H"
 #include "formula.H"
 #include "context.H"
+#include "operations.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -663,3 +664,12 @@ expression_ref prob_density = lambda_expression( data_function("prob_density",2)
 // Fields: (prob_density) (random vars) (parameter expressions)
 expression_ref distributed_as = lambda_expression( data_function("~",3) );
 
+expression_ref sys_print = lambda_expression( Print() );
+
+expression_ref concat = lambda_expression( Concat() );
+
+expression_ref prob = lambda_expression( data_function("probability",1) );
+
+expression_ref If = lambda_expression( IfThenElse() );
+
+expression_ref defun = lambda_expression( data_function("defun",3) );

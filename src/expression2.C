@@ -140,8 +140,6 @@ term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
   // If this model has random variables... 
   if (Pr)
   {
-    expression_ref prob = lambda_expression( data_function("probability",1) );
-
     F->add_expression(prob(Pr));
 
     vector<int> results;
@@ -176,15 +174,12 @@ int main()
   expression_ref plus = lambda_expression( Add<Double>() );
   expression_ref minusi = lambda_expression( Minus<Int>() );
   expression_ref gt = lambda_expression( GreaterThan<Double>() );
-  expression_ref If = lambda_expression( IfThenElse() );
 
   cout<<"Demonstrate lambda functions\n";
   cout<<"mul = "<<mul<<"\n";
   cout<<"mul(x) = "<<mul(x)<<"\n";
   cout<<"mul(x)(y) = "<<mul(x)(y)<<"\n";
   cout<<"mul(x,y) = "<<mul(x,y)<<"\n\n\n";
-
-  expression_ref defun = lambda_expression( data_function("defun",3) );
 
   term_ref x_times_y_plus_one = F->add_expression( plus(mul(x)(y))(one) );
 
@@ -225,16 +220,14 @@ int main()
   expression_ref iterate = lambda_expression(body_function("iterate",2));
   F->add_expression( defun( iterate(_1,_2), true, Cons(_2,iterate(_1,_1(_2))) ) );
 
-  expression_ref sys_print = lambda_expression( Print() );
   expression_ref print = lambda_expression(body_function("print",1));
   expression_ref print_list = lambda_expression(body_function("print_list",1));
-  expression_ref concat = lambda_expression( Concat() );
+
   F->add_expression( defun( print_list(Cons(_1,ListEnd)), true, print(_1) ) );
   F->add_expression( defun( print_list(Cons(_1,_2)), true, concat(print(_1),concat(", ",print_list(_2))) ) );
   F->add_expression( defun( print(Cons(_1,_2)), true, concat("[",concat(print_list(Cons(_1,_2)),"]")) ) );
   F->add_expression( defun( print(_1), true, sys_print(_1) ) );
 
-  expression_ref default_value = lambda_expression(data_function("default_value",2));
   term_ref defv = F->add_expression(  default_value(parameter("X"), 2.0) );
   term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
   term_ref tuple_x_y = F->add_expression(Tuple(2)(X,Y));
