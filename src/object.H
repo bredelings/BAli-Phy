@@ -40,13 +40,13 @@ public:
   bool maybe_equals(const Object& O) const
   {
     tribool m = compare(O);
-    return (m == true or m == indeterminate);
+    return (m or indeterminate(m));
   }
 
   bool maybe_not_equals(const Object& O) const
   {
     tribool m = compare(O);
-    return (m == false or m == indeterminate);
+    return (not m or indeterminate(m));
   }
 
   virtual std::string print() const {return "[unprintable]";}
