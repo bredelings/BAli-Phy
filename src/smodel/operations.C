@@ -89,7 +89,7 @@ namespace substitution
 
   formula_expression_ref HKY_Model(const alphabet& a)
   {
-    expression_ref kappa = parameter("kappa");
+    expression_ref kappa = parameter("HKY::kappa");
     formula_expression_ref R(lambda_expression(HKY_Op())(a,kappa));
     R.add_expression(kappa);
     R.add_expression(default_value(kappa,2.0));
