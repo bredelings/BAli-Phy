@@ -361,37 +361,37 @@ struct Divide: public Operation
 };
 
 #define def_operators(T) \
-typed_expression_ref<T> operator*(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
+inline typed_expression_ref<T> operator*(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
 {\
   return lambda_expression( Multiply<T>() )(arg1, arg2);	\
 }\
 \
-typed_expression_ref<T> operator/(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
+inline typed_expression_ref<T> operator/(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
 {\
   return lambda_expression( Divide<T>() )(arg1, arg2);\
 }\
 \
-typed_expression_ref<T> operator+(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
+inline typed_expression_ref<T> operator+(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
 {\
   return lambda_expression( Add<T>() )(arg1, arg2);\
 }\
 \
-typed_expression_ref<T> operator-(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
+inline typed_expression_ref<T> operator-(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
 {\
   return lambda_expression( Minus<T>() )(arg1, arg2);\
 }\
 \
-typed_expression_ref<Bool> operator>(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
+inline typed_expression_ref<Bool> operator>(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
 {\
   return lambda_expression( GreaterThan<T>() )(arg1, arg2);\
 }\
 \
-typed_expression_ref<Bool> operator<(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
+inline typed_expression_ref<Bool> operator<(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
 {\
   return lambda_expression( LessThan<T>() )(arg1, arg2);\
 }\
 \
-typed_expression_ref<Bool> operator==(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
+inline typed_expression_ref<Bool> operator==(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
 {\
   return lambda_expression( Equals<T>() )(arg1, arg2);\
 }\
