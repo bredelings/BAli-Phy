@@ -28,43 +28,31 @@ using std::endl;
  */
 
 /*
- * 2. A probability model has a collection of variables, and also
- * (i)  a series of annotations (x,y) ~ distribution(a,b,c)
- * (ii) we can represent this as (~ distribution (x,y) (a,b,c))
- *  + here (x,y) and (a,b,c) are tuples.
+ * 2. A probability model has a collection of variables, and also a series of densities of the form
+ *
+ *              (x,y) ~ distribution(a,b,c)
+ * 
+ * These will be expressed as annotations of the form:
+ * 
+ *              (~ distribution (x,y) (a,b,c))
+ *
+ *  + here (x,y) and (a,b,c) are either single elements, or tuples if more than one element.
  *  + here distribution is a constant object.
- * (iii) the distribution object will specify
- *  + expressions for the density
- *  + member functions for the density
+ *
+ * The distribution object currently specifies
  *  + a distribution name
+ *  + an expression for the density
+ *
+ * It will eventually also specify
  *  + a possibly an UNNORMALIZED density.
  *  + a random sample( ): function.
- *   o How do we evaluate random functions?  I guess we could mark them uncacheable.  See I/O monad in Haskell?
- */
-
-
-/*
- * 3. A probability model is a collection of variables, where each variable has a 
- *    (i) name
- *    (ii) integer index
- *    (iii) a distribution/dependency-structure, if and only if the variable is random.
- *      - The dependency structure is as x ~ x,y|z,w
- *      - The distribution specifies what the actual density is.
- *    A variable that is not random is a parameter, and can be changed by optimization routines,
- *      but not MCMC routines.
- *    A variable that is random is "random variable" and can be changed by MCMC routines.
+ *   o How do we evaluate random functions?  I guess we could mark them uncacheable.
+ *     See I/O monad in Haskell?
+ *
+ * A variable that is not random is a parameter, and can be changed by optimization routines,
+ *    but not MCMC routines.
+ * A variable that is random is "random variable" and can be changed by MCMC routines.
  *    The distribution 
- *
- *    Each distribution has
- *    (i) a name
- *    (ii) a density function
- *    (iii) an un-normalized density function
- *    (iv) a sampling function.
- *    Perhaps each distribution should also specify the dimension of each random variable that
- *    is sampled from it (not parameters), so that we know if it is a density or not.  0 would
- *    indicate a discrete variable, while 1 and higher would mean that it was continuous.
- *
- *    Q: How shall we sample densities like x,y|z,w?
  *
  *    ------------
  *    Issue. There could be multiple factorizations of the same joint distribution.  Thus,
@@ -75,17 +63,27 @@ using std::endl;
  *
  *    Finally, it might be possible to augment, or unaugment, various parts of the model.
  *    ------------
+ */
+
+/*
+ * 3. The static-flow evaluation framework allows caching along a DAG, but has a
+ * lot of limitations on the kind of expressions it allows.  
  *
- *    Anyway, this approach allows distribution to be C++ objects.  They are outside the calculation
- *    framework, so that's OK.  On the other hand, they need to provide calculations that fit inside
- *    that framework as member functions.  Perhaps the density functions can ALSO provide normal C++
- *    density functions a member functions, also?
+ * 1. No data constructors as a head.
+ * 2. No eval_match( ).
+ * 3. No body functions.
+ * 4. Operations may not evaluate to expressions (and so provoke further evaluation).
+ * 5. No Functions as function arguments
  *
- *    Implementation: A probability model is independent of specific values for its variables
- *    Therefore it is independent from any Context.  However, a probability model should be able
- *    to create a context.  So, perhaps a probability model allows creating a "probability context".
+ * Idea: Regarding #1, We should be able to allow data constructors easily enough.
  *
- *    Hmm... mightn't we need to modify the probability model from the context?
+ * Idea: When evaluating (\x (f x)) (expression),
+ *       we could actually assign values to the dummy variables.
+ *       (Would we need a stack-frame equivalent, with recursions?)  
+ *
+ * Idea: Always re-lookup expressions.  This will be general, but slow.
+ *       However, it will give us an idea what is going on.
+ *      
  */
 
 struct exponential_density: public Operation
