@@ -202,32 +202,6 @@ int main()
   // -- can we create constants easily?
   F->add_expression( If( Z > 1.0, X*Y+1.0, W*W ) );
 
-  expression_ref square = lambda_expression(body_function("square",1));
-  F->add_expression( defun( square(_1), true, mul(_1,_1)) );
-
-  expression_ref fmap = lambda_expression(body_function("fmap",2));
-  F->add_expression( defun( fmap(_,ListEnd), true, ListEnd) );
-  F->add_expression( defun( fmap(_1,Cons(_2,_3)), true, Cons(_1(_2),fmap(_1,_3) )) );
-
-  expression_ref take = lambda_expression(body_function("take",2));
-  F->add_expression( defun( take(_,ListEnd), true, ListEnd) );
-  F->add_expression( defun( take(0,_), true, ListEnd) );
-  F->add_expression( defun( take(_1,Cons(_2,_3)), true, Cons(_2,take(minusi(_1,1),_3)) ) );
-
-  expression_ref repeat = lambda_expression(body_function("repeat",1));
-  F->add_expression( defun( repeat(_1), true, Cons(_1,repeat(_1)) ) );
-
-  expression_ref iterate = lambda_expression(body_function("iterate",2));
-  F->add_expression( defun( iterate(_1,_2), true, Cons(_2,iterate(_1,_1(_2))) ) );
-
-  expression_ref print = lambda_expression(body_function("print",1));
-  expression_ref print_list = lambda_expression(body_function("print_list",1));
-
-  F->add_expression( defun( print_list(Cons(_1,ListEnd)), true, print(_1) ) );
-  F->add_expression( defun( print_list(Cons(_1,_2)), true, concat(print(_1),concat(", ",print_list(_2))) ) );
-  F->add_expression( defun( print(Cons(_1,_2)), true, concat("[",concat(print_list(Cons(_1,_2)),"]")) ) );
-  F->add_expression( defun( print(_1), true, sys_print(_1) ) );
-
   term_ref defv = F->add_expression(  default_value(parameter("X"), 2.0) );
   term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
   term_ref tuple_x_y = F->add_expression(Tuple(2)(X,Y));
@@ -279,6 +253,33 @@ int main()
 
   // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).
   // I could introduce a QUOTE expression to prevent this... that sounds rather LISP-y.
+
+  expression_ref square = lambda_expression(body_function("square",1));
+  CTX1.add_expression( defun( square(_1), true, mul(_1,_1)) );
+
+  expression_ref fmap = lambda_expression(body_function("fmap",2));
+  CTX1.add_expression( defun( fmap(_,ListEnd), true, ListEnd) );
+  CTX1.add_expression( defun( fmap(_1,Cons(_2,_3)), true, Cons(_1(_2),fmap(_1,_3) )) );
+
+  expression_ref take = lambda_expression(body_function("take",2));
+  CTX1.add_expression( defun( take(_,ListEnd), true, ListEnd) );
+  CTX1.add_expression( defun( take(0,_), true, ListEnd) );
+  CTX1.add_expression( defun( take(_1,Cons(_2,_3)), true, Cons(_2,take(minusi(_1,1),_3)) ) );
+
+  expression_ref repeat = lambda_expression(body_function("repeat",1));
+  CTX1.add_expression( defun( repeat(_1), true, Cons(_1,repeat(_1)) ) );
+
+  expression_ref iterate = lambda_expression(body_function("iterate",2));
+  CTX1.add_expression( defun( iterate(_1,_2), true, Cons(_2,iterate(_1,_1(_2))) ) );
+
+  expression_ref print = lambda_expression(body_function("print",1));
+  expression_ref print_list = lambda_expression(body_function("print_list",1));
+
+  CTX1.add_expression( defun( print_list(Cons(_1,ListEnd)), true, print(_1) ) );
+  CTX1.add_expression( defun( print_list(Cons(_1,_2)), true, concat(print(_1),concat(", ",print_list(_2))) ) );
+  CTX1.add_expression( defun( print(Cons(_1,_2)), true, concat("[",concat(print_list(Cons(_1,_2)),"]")) ) );
+  CTX1.add_expression( defun( print(_1), true, sys_print(_1) ) );
+
 
   expression_ref pattern = default_value(parameter("X"))(match(0));
   expression_ref target = default_value(parameter("X"))(One);
