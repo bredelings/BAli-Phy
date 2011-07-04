@@ -210,19 +210,26 @@ int main()
   term_ref prior_y_z = F->add_expression(distributed_as(Exp,parameter("Y"),Z+One));
   term_ref probability_expression = add_probability_expression(F);
 
+  cout<<"Creating an Context...\n";
   Context CTX1(F);
 
+  cout<<"Setting a few variables...\n";
   //  CTX1.set_parameter_value("X",Double(2));
   CTX1.set_parameter_value("Y",Double(3));
   CTX1.set_parameter_value("Z",Double(4));
   CTX1.set_parameter_value("W",Int(5));
 
+  cout<<"X should have 2 as a default value.\n";
   cout<<"CTX1 = \n"<<CTX1<<"\n";
 
+  cout<<"\n\n";
+  cout<<"Copying the context: values should be shared betwee CTX1 and CTX2.\n";
   Context CTX2 = CTX1;
 
   cout<<"CTX1 = \n"<<CTX1<<"\n";
 
+  cout<<"\n\n";
+  cout<<"Evaluating expressions in the Context: results should be visible in both CTX1 and CTX2.\n";
   shared_ptr<const Object> result = CTX1.evaluate(x_times_y_plus_one);
   CTX1.evaluate(cond);
   CTX1.evaluate(defv);
@@ -231,47 +238,61 @@ int main()
   CTX1.evaluate(tuple_x_y);
   CTX1.evaluate(prior_x_y);
   CTX1.evaluate(probability_expression);
-
   cout<<"CTX1 = \n"<<CTX1<<"\n";
   cout<<"CTX2 = \n"<<CTX2<<"\n";
-  cout<<"Fiddling X and Y in CTX1...\n";
+
+  cout<<"\n\n";
+  cout<<"Changing X and Y from 2,3 to 3,2 in CTX1: downstream computations should be invalidated in CTX1.\n";
   CTX1.set_parameter_value("X",Double(3));
   CTX1.set_parameter_value("Y",Double(2));
   cout<<"CTX1 = \n"<<CTX1<<"\n";
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
+  cout<<"\n\n";
+  cout<<"Evaluating X*Y+1.0 in CTX1: since X*Y is unchanged, old computation should be re-used.\n";
   result = CTX1.evaluate(x_times_y_plus_one);
 
-  cout<<"Fiddling W in CTX2...\n";
+  cout<<"\n\n";
+  cout<<"Changing W in CTX2: If(Z>1,X*Y+1,W*W) is unaffected should remain valid.\n";
   CTX2.set_parameter_value("W",Int(-1));
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
-  cout<<"Fiddling Z in CTX2...\n";
+  cout<<"\n\n";
+  cout<<"Changing Z in CTX2 and evaluating If(Z>1,X*Y+1,W*W):\n";
   CTX2.set_parameter_value("Z",Double(0));
   result = CTX2.evaluate(cond);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
+  cout<<"\n\n";
+  cout<<"Non-cached higher-order function framework:\n";
   // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).
   // I could introduce a QUOTE expression to prevent this... that sounds rather LISP-y.
 
+  cout<<" Adding function 'square' to CTX1.\n";
   expression_ref square = lambda_expression(body_function("square",1));
   CTX1.add_expression( defun( square(_1), true, mul(_1,_1)) );
 
+  cout<<" Adding function 'fmap' to CTX1.\n";
   expression_ref fmap = lambda_expression(body_function("fmap",2));
   CTX1.add_expression( defun( fmap(_,ListEnd), true, ListEnd) );
   CTX1.add_expression( defun( fmap(_1,Cons(_2,_3)), true, Cons(_1(_2),fmap(_1,_3) )) );
 
+  cout<<" Adding function 'take' to CTX1.\n";
   expression_ref take = lambda_expression(body_function("take",2));
   CTX1.add_expression( defun( take(_,ListEnd), true, ListEnd) );
   CTX1.add_expression( defun( take(0,_), true, ListEnd) );
   CTX1.add_expression( defun( take(_1,Cons(_2,_3)), true, Cons(_2,take(minusi(_1,1),_3)) ) );
 
+  cout<<" Adding function 'repeat' to CTX1.\n";
   expression_ref repeat = lambda_expression(body_function("repeat",1));
   CTX1.add_expression( defun( repeat(_1), true, Cons(_1,repeat(_1)) ) );
 
+  cout<<" Adding function 'iterate' to CTX1.\n";
   expression_ref iterate = lambda_expression(body_function("iterate",2));
   CTX1.add_expression( defun( iterate(_1,_2), true, Cons(_2,iterate(_1,_1(_2))) ) );
 
+  cout<<" Adding function 'print' to CTX1.\n";
+  cout<<" Adding function 'print_list' to CTX1.\n";
   expression_ref print = lambda_expression(body_function("print",1));
   expression_ref print_list = lambda_expression(body_function("print_list",1));
 
@@ -280,6 +301,8 @@ int main()
   CTX1.add_expression( defun( print(Cons(_1,_2)), true, concat("[",concat(print_list(Cons(_1,_2)),"]")) ) );
   CTX1.add_expression( defun( print(_1), true, sys_print(_1) ) );
 
+  cout<<" CTX1 now contains this list of non-sub expressions:\n";
+  cout<<*CTX1.F<<"\n";
 
   expression_ref pattern = default_value(parameter("X"))(match(0));
   expression_ref target = default_value(parameter("X"))(One);
