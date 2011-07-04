@@ -30,6 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "rates.H"
 #include "myexception.H"
+#include "smodel/operations.H"
 
 using std::vector;
 using std::valarray;
@@ -115,7 +116,7 @@ bool process_stack_Markov(vector<string>& string_stack,
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
     if (N)
-      model_stack.push_back(TN(*N));
+      model_stack.push_back(FormulaModel(TN_Model(a)));
     else
       throw myexception()<<"TN: '"<<a.name<<"' is not a nucleotide alphabet.";
   }
