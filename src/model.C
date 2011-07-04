@@ -198,7 +198,7 @@ boost::shared_ptr<const Object> Model::get_parameter_value(const std::string& p_
 
 void Model::write_value(int i,const shared_ptr<const Object>& value)
 {
-  C.set_parameter_value(C.F->parameter_index(i),value);
+  C.set_parameter_value(i,value);
   modify_parameter(i);
 }
 
