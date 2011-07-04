@@ -1143,15 +1143,15 @@ namespace substitution {
     return string("[") + SubModels(0).name() + "]";
   }
 
-  UnitModel::UnitModel(const ReversibleMarkovModel& RA)
+  UnitModel::UnitModel(const ::Model& M)
   {
-    SimpleReversibleAdditiveCollection M(RA);
-    insert_submodel("0",M);
-  }
-
-  UnitModel::UnitModel(const ReversibleAdditiveCollection& M)
-  {
-    insert_submodel("0",M);
+    if (M.result_as<ReversibleAdditiveObject>())
+    {
+      SimpleReversibleAdditiveCollection M2(M);
+      insert_submodel("0",M2);
+    }
+    else
+      insert_submodel("0",M);
   }
 
   //---------------------- MultiFrequencyModel -----------------------//

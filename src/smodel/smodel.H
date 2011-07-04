@@ -746,9 +746,7 @@ namespace substitution {
 
     boost::shared_ptr<const Object> result() const;
 
-    UnitModel(const ReversibleMarkovModel& M);
-
-    UnitModel(const ReversibleAdditiveCollection& M);
+    UnitModel(const ::Model& M);
 
     ~UnitModel() {};
   };
