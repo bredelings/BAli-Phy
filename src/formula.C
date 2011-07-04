@@ -92,6 +92,7 @@ string Formula::parameter_name(int i) const
 
 void Formula::rename_parameter(int i, const string& s)
 {
+  i = parameter_index(i);
   assert(is_parameter(i));
   expression_ref old_p = terms[i].E;
   expression_ref new_p = parameter(s);
