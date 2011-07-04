@@ -625,7 +625,7 @@ namespace substitution {
     virtual ReversibleMarkovSuperModel* clone() const {return new ReversibleMarkovSuperModel(*this);}
 
     /// Construct a reversible Markov model on alphabet 'a'
-    ReversibleMarkovSuperModel(const ExchangeModel& S1, const ReversibleFrequencyModel& R1);
+    ReversibleMarkovSuperModel(const ::Model& S1, const ::Model& R1);
     
     ~ReversibleMarkovSuperModel() {}
   };

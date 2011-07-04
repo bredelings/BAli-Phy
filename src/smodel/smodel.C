@@ -650,7 +650,7 @@ namespace substitution {
   }
 
   /// Construct a reversible Markov model on alphabet 'a'
-  ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ExchangeModel& S1,const ReversibleFrequencyModel& R1)
+  ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ::Model& S1,const ::Model& R1)
     :OpModel( Q_from_R_and_S(model_expression(*prefix_model(S1,"S")),model_expression(*prefix_model(R1,"R"))) )
   { }
 
@@ -663,6 +663,7 @@ namespace substitution {
   SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
     :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*E.get_alphabet(),pi),"R")) ) )
   { 
+    /*
     DNA a;
     formula_expression_ref R = Simple_gwF_Model(TN_Model(a),a,pi);
     efloat_t prior1 = prior();
@@ -670,6 +671,7 @@ namespace substitution {
     FormulaModel M(R);
     efloat_t prior2 = M.prior();
     std::cerr<<"prior1 = "<<log(prior1)<<"     prior2 = "<<log(prior2)<<"\n";
+    */
   }
 
   //---------------------- INV_Model --------------------------//
