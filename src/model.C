@@ -91,11 +91,8 @@ expression_ref model_result_expression(const Model& M)
 expression_ref model_prior_expression(const Model& M)
 {
   vector< expression_ref > sub;
-  sub.push_back( model_prior(M) );
-  sub.push_back( get_tuple( model_parameter_expressions( M ) ) );
-  sub.push_back( Tuple(0) );
-  
-  return new expression(sub);
+
+  return distributed_as( prob_density(M.name(),model_prior(M)), get_tuple( model_parameter_expressions( M ) ), Tuple(0) );
 }
 
 void Model::validate() const
