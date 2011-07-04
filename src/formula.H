@@ -147,6 +147,8 @@ public:
 
   int n_sub_exp() const {return terms.size();}
 
+  int exp_sub_index(int i) const {return top_level_expressions[i];}
+
   int n_exp() const {return top_level_expressions.size();}
 
   int size() const {return n_sub_exp();}
