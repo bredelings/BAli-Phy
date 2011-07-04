@@ -44,6 +44,12 @@ log_double_t beta_pdf(double p,double a, double b);
 
 log_double_t gamma_pdf(double y, double a, double b);
 
+log_double_t normal_pdf(double y, double mu, double sigma);
+
+log_double_t log_normal_pdf(double y, double mu, double sigma);
+
+log_double_t cauchy_pdf(double y, double a, double b);
+
 // -------- Topology counting functions ------ //
 log_double_t num_branches(int n);
 log_double_t num_topologies(int n);

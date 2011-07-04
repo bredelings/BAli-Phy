@@ -94,7 +94,7 @@ namespace substitution
     R.add_expression(kappa);
     R.add_expression(default_value(kappa,2.0));
     R.add_expression(bounds(kappa,lower_bound(0.0)));
-    R.add_expression(distributed_as(log_laplace, kappa, Tuple(2)(log(2), 0.25) ) );
+    R.add_expression(distributed_as(log_laplace_dist, kappa, Tuple(2)(log(2), 0.25) ) );
     
     return R;
   }
@@ -135,8 +135,8 @@ namespace substitution
     R.add_expression(bounds(kappa1,lower_bound(0.0)));
     R.add_expression(bounds(kappa2,lower_bound(0.0)));
 
-    R.add_expression(distributed_as(log_laplace, kappa1, Tuple(2)(log(2), 0.25) ) );
-    R.add_expression(distributed_as(log_laplace, kappa2, Tuple(2)(log(2), 0.25) ) );
+    R.add_expression(distributed_as(log_laplace_dist, kappa1, Tuple(2)(log(2), 0.25) ) );
+    R.add_expression(distributed_as(log_laplace_dist, kappa2, Tuple(2)(log(2), 0.25) ) );
     
     return R;
   }
@@ -210,8 +210,6 @@ namespace substitution
     return R;
   }
 
-  expression_ref log_laplace = prob_density("log_laplace",log_laplace_density());
-
   formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi)
   {
     assert(a.size() == pi.size());
@@ -241,7 +239,7 @@ namespace substitution
       F->add_expression( bounds( parameter(pname) , between(0.0, 1.0) ) );
     }
 
-    F->add_expression( distributed_as( prob_density("Dirichlet",dirichlet_density()), 
+    F->add_expression( distributed_as( dirichlet_dist,
 				       Tuple(a.size())(Vars), 
 				       Tuple(a.size())(N)
 				       ) 

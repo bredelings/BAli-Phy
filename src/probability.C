@@ -145,3 +145,21 @@ log_double_t gamma_pdf(double x,double a, double b)
 
   return Pr;
 }
+
+log_double_t normal_pdf(double x, double mu, double sigma)
+{
+  log_double_t Pr = 1;
+  double sigma2 = sigma * sigma;
+  x -= mu;
+
+  Pr.log() = -0.5*log(2.0*M_PI*sigma2) -(x*x)/(2.0*sigma2);
+
+  return Pr;
+}
+
+log_double_t log_normal_pdf(double x, double mu, double sigma)
+{
+  log_double_t Pr = 1;
+  Pr.log() = normal_pdf(log(x),mu,sigma)-log(x);
+  return Pr;
+}

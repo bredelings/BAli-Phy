@@ -320,7 +320,7 @@ path_graph_SOURCES = tools/path-graph.C alignment.C alphabet.C sequence.C util.C
 #---------------------------------------------------------------
 
 expression2_SOURCES = expression2.C util.C formula.C context.C computation.C \
-	operator.C expression.C
+	operator.C expression.C probability.C
 
 #---------------------------------------------------------------
 
