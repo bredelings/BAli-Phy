@@ -204,9 +204,14 @@ struct uniform_density: public Operation
 {
   uniform_density* clone() const {return new uniform_density;}
     
-  boost::shared_ptr<const Object> operator()(OperationArgs&) const
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    return boost::shared_ptr<Log_Double> (new Log_Double( 1.0 ) );
+    double x = *Args.evaluate_as<Double>(0);
+    expression_ref A =  Args.evaluate(1);
+
+    std::vector<double> a = get_vector<double,Double>(A);
+
+    return boost::shared_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a[0],a[1]) ) );
   }
 
   std::string name() const {return "uniform_density";}

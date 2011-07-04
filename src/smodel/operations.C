@@ -224,7 +224,7 @@ namespace substitution
     F->add_expression( bounds( f, between(0.0,1.0) ) );
     F->add_expression( distributed_as( prob_density("Uniform",uniform_density()), 
 				       f,
-				       Tuple(0)
+				       Tuple(2)(0.0,1.0)
 				       ) 
 		       );
 
