@@ -97,6 +97,8 @@ bool process_stack_Markov(vector<string>& string_stack,
 {
   string arg;
 
+  formula_expression_ref R;
+
   //------ Get the base markov model (Reversible Markov) ------//
   if (match(string_stack,"EQU",arg))
     model_stack.push_back(EQU(a));
@@ -107,24 +109,24 @@ bool process_stack_Markov(vector<string>& string_stack,
   else if (match(string_stack,"HKY",arg)) 
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
-    if (N)
-      model_stack.push_back(FormulaModel(HKY_Model(a)));
-    else
+    if (not N)
       throw myexception()<<"HKY: '"<<a.name<<"' is not a nucleotide alphabet.";
+
+    R = HKY_Model(a);
   }
   else if (match(string_stack,"TN",arg)) 
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
-    if (N)
-      model_stack.push_back(FormulaModel(TN_Model(a)));
-    else
+    if (not N)
       throw myexception()<<"TN: '"<<a.name<<"' is not a nucleotide alphabet.";
+
+    R = TN_Model(a);
   }
   else if (match(string_stack,"GTR",arg)) 
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
     if (N)
-      model_stack.push_back(GTR(*N));
+      model_stack.push_back(FormulaModel(model_formula(GTR(*N))));
     else
       throw myexception()<<"GTR: '"<<a.name<<"' is not a nucleotide alphabet.";
   }
@@ -229,6 +231,8 @@ bool process_stack_Markov(vector<string>& string_stack,
   else
     return false;
 
+  if (R.index != -1)
+    model_stack.push_back(FormulaModel(R));
   return true;
 }
 
