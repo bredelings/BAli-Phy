@@ -1151,11 +1151,13 @@ FormulaModel::FormulaModel(const boost::shared_ptr<const Formula>& F,int i)
   :Model(F),result_index(i)
 {
   std::cout<<*C.F<<std::endl;
+  std::cout<<"prior_index = "<<prior_index<<"\n";
 }
 
 FormulaModel::FormulaModel(const formula_expression_ref& R)
   :Model(R.F),result_index(R.index)
 {
   std::cout<<*C.F<<std::endl;
+  std::cout<<"prior_index = "<<prior_index<<"\n";
 }
 
