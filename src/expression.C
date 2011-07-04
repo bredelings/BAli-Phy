@@ -674,7 +674,7 @@ const expression_ref get_tuple(const vector<expression_ref>& v)
   if (v.size() == 1) return v[0];
 
   vector<expression_ref> sub(v.size()+1);
-  sub[0] = Tuple(v.size());
+  sub[0] = data_function("Tuple",v.size());
   for(int i=0;i<v.size();i++)
     sub[i+1] = v[i];
 
