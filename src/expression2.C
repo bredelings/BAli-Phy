@@ -223,13 +223,13 @@ int main()
   cout<<"CTX1 = \n"<<CTX1<<"\n";
 
   cout<<"\n\n";
-  cout<<"Copying the context: values should be shared betwee CTX1 and CTX2.\n";
+  cout<<"Copying the context: values should be shared between CTX1 and CTX2.\n";
   Context CTX2 = CTX1;
 
   cout<<"CTX1 = \n"<<CTX1<<"\n";
 
   cout<<"\n\n";
-  cout<<"Evaluating expressions in the Context: results should be visible in both CTX1 and CTX2.\n";
+  cout<<"Evaluating expressions in CTX1: results should be visible in CTX2 also.\n";
   shared_ptr<const Object> result = CTX1.evaluate(x_times_y_plus_one);
   CTX1.evaluate(cond);
   CTX1.evaluate(defv);
@@ -301,7 +301,7 @@ int main()
   CTX1.add_expression( defun( print(Cons(_1,_2)), true, concat("[",concat(print_list(Cons(_1,_2)),"]")) ) );
   CTX1.add_expression( defun( print(_1), true, sys_print(_1) ) );
 
-  cout<<" CTX1 now contains this list of non-sub expressions:\n";
+  cout<<"\n CTX1 now contains this list of non-sub expressions:\n";
   cout<<*CTX1.F<<"\n";
 
   cout<<"\n\n";
@@ -320,7 +320,7 @@ int main()
     cout<<"no match!";
 
   expression_ref test = Tuple(2)(One+One,One+One+One);
-  cout<<"\n\n";
+  cout<<"\n";
   cout<<"Eval test: does "<<test<<" match "<<Tuple(2)(2.0,3.0)<<"?\n";
   results.clear();
   if (eval_match(CTX1,test,Tuple(2)(2.0,3.0),results) )
@@ -328,39 +328,39 @@ int main()
 
 
   expression_ref test2 = Tuple(2)(square(parameter("X")),One+One);
-  cout<<"\n\n";
+  cout<<"\n";
   cout<<"Eval test: does "<<test2<<" match "<<Tuple(2)(9.0, 2.0)<<"?\n";
   results.clear();
   if (eval_match(CTX1, test2,Tuple(2)(9.0, 2.0), results))
     cout<<"yes, result = "<<test2<<"\n";
 
   expression_ref test3 = fmap(square,Cons(parameter("X"),Cons(One+One,ListEnd)));
-  cout<<"\n\n";
+  cout<<"\n";
   cout<<"Eval test: "<<test3<<" = ";
   test3 = eval(CTX1, test3);
   cout<<test3<<"\n";
 
   expression_ref test4 = take(3,repeat(X));
-  cout<<"\n\n";
+  cout<<"\n";
   cout<<"Eval test: "<<test4<<" = ";
   test4 = eval(CTX1, test4);
   cout<<test4<<"\n";
 
   expression_ref test5 = take(3,fmap(square,repeat(X)));
-  cout<<"\n\n";
+  cout<<"\n";
   cout<<"Eval test: "<<test5<<" = ";
   test5 = eval(CTX1, test5);
   cout<<test5<<"\n";
 
   // Here we hit the problem of substituting lambda expressions into lambda expressions: match name collision!
   expression_ref test6 = take(3,fmap(square,iterate(plus(1.0),1.0)));
-  cout<<"\n\n";
+  cout<<"\n";
   cout<<"Eval test: "<<test6<<" = ";
   test6 = eval(CTX1, test6);
   cout<<test6<<"\n";
 
   expression_ref test7 = print(take(3,fmap(square,iterate(plus(1.0),1.0))));
-  cout<<"\n\n";
+  cout<<"\n";
   cout<<"Eval test: "<<test7<<" = ";
   test7 = eval(CTX1, test7);
   cout<<test7<<"\n";
