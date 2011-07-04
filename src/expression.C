@@ -369,19 +369,12 @@ expression_ref apply(const expression_ref& R,const expression_ref& arg)
 }
 
 expression_ref apply(const expression_ref& E,
-		     const vector< expression_ref > args,
-		     int i)
-{
-  if (i<args.size())
-    return apply(apply(E,args[i]), args, i+1);
-  else
-    return E;
-}
-
-expression_ref apply(const expression_ref& E,
 		     const vector< expression_ref > args)
 {
-  return apply(E,args,0);
+  expression_ref E2 = E;
+  for(int i=0;i<args.size();i++)
+    E2 = apply(E2,args[i]);
+  return E2;
 }
 
 void find_named_parameters_(const expression_ref& R, vector<string>& names)
