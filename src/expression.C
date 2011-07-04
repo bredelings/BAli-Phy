@@ -667,6 +667,19 @@ expression_ref If = lambda_expression( IfThenElse() );
 
 expression_ref defun = lambda_expression( data_function("defun",3) );
 
+std::vector<expression_ref> get_ref_vector(const expression_ref& R)
+{
+  boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
+  if (not E)
+    return std::vector<expression_ref>(1,R);
+    
+  std::vector<expression_ref> v2(E->size()-1);
+  for(int i=0;i<v2.size();i++)
+    v2[i] = E->sub[i+1];
+  return v2;
+}
+
 const expression_ref get_tuple(const vector<expression_ref>& v)
 {
   if (not v.size()) return Tuple(0);
