@@ -1057,7 +1057,7 @@ namespace substitution {
     return "{"+SubModel().name()+"}";
   }
     
-  SimpleReversibleAdditiveCollection::SimpleReversibleAdditiveCollection(const ReversibleAdditiveModel& t)
+  SimpleReversibleAdditiveCollection::SimpleReversibleAdditiveCollection(const ::Model& t)
   {
     insert_submodel("0",t);
   }

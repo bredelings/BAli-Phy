@@ -697,14 +697,14 @@ namespace substitution {
 
   /// A multi-branch model with only 1 part.
   class SimpleReversibleAdditiveCollection: public ReversibleAdditiveCollection,
-					    public SuperModelOver<ReversibleAdditiveModel>
+					    public SuperModelOver< ::Model>
   {
   public:
     virtual SimpleReversibleAdditiveCollection* clone() const {return new SimpleReversibleAdditiveCollection(*this);}
 
-          ReversibleAdditiveModel& SubModel()       {return SubModels(0); }
+          ::Model& SubModel()       {return SubModels(0); }
 
-    const ReversibleAdditiveModel& SubModel() const {return SubModels(0); }
+    const ::Model& SubModel() const {return SubModels(0); }
 
     boost::shared_ptr<const Object> result() const;
 
@@ -712,7 +712,7 @@ namespace substitution {
 
     std::string name() const;
     
-    SimpleReversibleAdditiveCollection(const ReversibleAdditiveModel& t);
+    SimpleReversibleAdditiveCollection(const ::Model& t);
 
     virtual ~SimpleReversibleAdditiveCollection() {}
   };
