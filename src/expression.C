@@ -675,7 +675,7 @@ const expression_ref get_tuple(const vector<expression_ref>& v)
 
   vector<expression_ref> sub(v.size()+1);
   sub[0] = Tuple(v.size());
-  for(int i=0;i<sub.size();i++)
+  for(int i=0;i<v.size();i++)
     sub[i+1] = v[i];
 
   return expression_ref(expression(sub));

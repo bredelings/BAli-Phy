@@ -308,6 +308,21 @@ public:
   virtual ~Model() {};
 };
 
+struct model_prior: public Operation
+{
+  polymorphic_cow_ptr<Model> M;
+
+  model_prior* clone() const {return new model_prior(*this);}
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "model_prior["+M->name()+"]";}
+
+  std::string print() const {return name();}
+
+  model_prior(const Model& M_):Operation(2),M(M_) { }
+};
+
 
 /// \brief Abstract class for Model objects that are built out of other Model objects.
 ///
@@ -553,7 +568,9 @@ boost::shared_ptr<Model> prefix_model(const Model&, const std::string& prefix);
 
 std::vector< expression_ref > model_args(const Model& M);
 
-expression_ref model_expression(const Model& M);
+expression_ref model_result_expression(const Model& M);
 
 term_ref add_probability_expression(Context& C);
+
+formula_expression_ref model_formula(const Model& M);
 #endif

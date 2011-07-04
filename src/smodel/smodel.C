@@ -651,16 +651,16 @@ namespace substitution {
 
   /// Construct a reversible Markov model on alphabet 'a'
   ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ::Model& S1,const ::Model& R1)
-    :OpModel( Q_from_R_and_S(model_expression(*prefix_model(S1,"S")),model_expression(*prefix_model(R1,"R"))) )
+    :OpModel( Q_from_R_and_S(model_result_expression(*prefix_model(S1,"S")),model_result_expression(*prefix_model(R1,"R"))) )
   { }
 
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ::Model& E)
-    :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*get_alphabet(E)),"R") ) ) )
+    :OpModel( Q_from_R_and_S( model_result_expression(*prefix_model(E,"S")), model_result_expression(*prefix_model(SimpleFrequencyModel(*get_alphabet(E)),"R") ) ) )
   { }
 
   SimpleReversibleMarkovModel::
   SimpleReversibleMarkovModel(const ::Model& E,const valarray<double>& pi)
-    :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*get_alphabet(E),pi),"R")) ) )
+    :OpModel( Q_from_R_and_S( model_result_expression(*prefix_model(E,"S")), model_result_expression(*prefix_model(SimpleFrequencyModel(*get_alphabet(E),pi),"R")) ) )
   { 
     /*
     DNA a;
@@ -1035,7 +1035,7 @@ namespace substitution {
   }
   */
   M0::M0(const Codons& C,const ::Model& N)
-    :OpModel( M0E(C,model_expression(N),parameter("M0::omega")) )
+    :OpModel( M0E(C,model_result_expression(N),parameter("M0::omega")) )
   { 
     omega_index = find_parameter(*this,"M0::omega");
     set_parameter_value(omega_index, Double(1));
@@ -1554,7 +1554,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   DistributionParameterModel::DistributionParameterModel(const ::Model& M,const Distribution& D, int p, int n)
     :OpModel( 
-	     MultiParameter(model_expression(LambdaModel(M,p)), Discretize(model_expression(D), Int(n) ) ) 
+	     MultiParameter(model_result_expression(LambdaModel(M,p)), Discretize(model_result_expression(D), Int(n) ) ) 
 	      )
   { }
 
@@ -1562,7 +1562,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   GammaParameterModel::GammaParameterModel(const ::Model& M,int n)
     :OpModel( 
-	     MultiRate(model_expression(M), Discretize(model_expression(Gamma()), Int(n) ) ) 
+	     MultiRate(model_result_expression(M), Discretize(model_result_expression(Gamma()), Int(n) ) ) 
 	      )
   { }
 
@@ -1570,7 +1570,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   LogNormalParameterModel::LogNormalParameterModel(const ::Model& M,int n)
     :OpModel( 
-	     MultiRate(model_expression(M), Discretize(model_expression(LogNormal()), Int(n) ) ) 
+	     MultiRate(model_result_expression(M), Discretize(model_result_expression(LogNormal()), Int(n) ) ) 
 	      )
   {}
 
@@ -2057,7 +2057,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
 
   ModulatedMarkovModel::ModulatedMarkovModel(const ::Model& MM, const ::Model& EM)
-    :OpModel(Modulated_Markov_E(model_expression(MM),model_expression(EM)))
+    :OpModel(Modulated_Markov_E(model_result_expression(MM),model_result_expression(EM)))
   { }
   
   // Now how to write MultiParameterModel( M, p_change, DiscretizationFunction( Gamma(), n_bins ) ) as an expression?

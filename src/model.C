@@ -70,6 +70,34 @@ Parameter::Parameter(const string& n, const Object& v, const Bounds<double>& b, 
 {
 }
 
+vector<expression_ref> model_parameter_expressions(const Model& M)
+{
+  vector< expression_ref > sub;
+  for(int i=0;i<M.n_parameters();i++) 
+    sub.push_back( parameter(M.parameter_name(i)) );
+  return sub;
+}
+
+expression_ref model_result_expression(const Model& M)
+{
+  vector< expression_ref > sub;
+  sub.push_back( M );
+  for(int i=0;i<M.n_parameters();i++) 
+    sub.push_back( parameter(M.parameter_name(i)) );
+  
+  return new expression(sub);
+}
+
+expression_ref model_prior_expression(const Model& M)
+{
+  vector< expression_ref > sub;
+  sub.push_back( model_prior(M) );
+  sub.push_back( get_tuple( model_parameter_expressions( M ) ) );
+  sub.push_back( Tuple(0) );
+  
+  return new expression(sub);
+}
+
 void Model::validate() const
 {
   valid = true;
@@ -299,6 +327,33 @@ shared_ptr<const Object> Model::operator()(OperationArgs& Args) const
     M->set_parameter_value(i,Args.evaluate(i));
   return M->result();
 }
+
+boost::shared_ptr<const Object> model_prior::operator()(OperationArgs& Args) const
+{
+  shared_ptr<Model> M2 (M->clone());
+  for(int i=0;i<M2->n_parameters();i++)
+    M2->set_parameter_value(i,Args.evaluate(i));
+
+  return shared_ptr<const Object>(new Log_Double(M2->prior()));
+}
+
+formula_expression_ref model_formula(const Model& M)
+{
+  shared_ptr<Formula> F ( new Formula );
+  for(int i=0;i<M.n_parameters();i++)
+  {
+    expression_ref var = parameter(M.parameter_name(i));
+    F->add_expression(bounds(var, M.get_bounds(i)));
+
+    if (M.get_parameter_value(i))
+      F->add_expression(default_value(var, M.get_parameter_value(i)));
+  }
+
+  F->add_expression( model_prior_expression(M) );
+  int result_index = F->add_expression( model_result_expression(M) );
+  return formula_expression_ref(F, result_index);
+}
+
 
 void Model::update()
 {
@@ -1044,16 +1099,6 @@ shared_ptr<Model> prefix_model(const Model& M, const string& prefix)
   }
 
   return M2;
-}
-
-expression_ref model_expression(const Model& M)
-{
-  vector< expression_ref > sub;
-  sub.push_back( M );
-  for(int i=0;i<M.n_parameters();i++) 
-    sub.push_back( parameter(M.parameter_name(i)) );
-  
-  return new expression(sub);
 }
 
 term_ref add_probability_expression(Context& C)
