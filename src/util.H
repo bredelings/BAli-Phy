@@ -75,6 +75,7 @@ template <class T>
 std::string convertToString(T t)
 {
   std::ostringstream o;
+  o<<std::boolalpha;
   o.flags(o.flags() | std::ios::fixed);
   
   if (o << t)
