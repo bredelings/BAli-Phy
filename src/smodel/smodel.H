@@ -837,7 +837,7 @@ namespace substitution {
 
   /// A mixture of variants of model M with parameter p set to n_bin different values
   class MultiParameterModel: public MultiModel, 
-			     public ReversibleWrapperOver<MultiModel> 
+			     public ReversibleWrapperOver< ::Model> 
   {
   protected:
     /// The parameter which is varying;
@@ -855,7 +855,7 @@ namespace substitution {
     valarray<double> frequencies() const;
 
     /// Construct a mixture of variants of model M with parameter p set to n_bin different values
-    MultiParameterModel(const MultiModel& M,int p,int n_bins);
+    MultiParameterModel(const ::Model& M,int p,int n_bins);
 
     ~MultiParameterModel() {}
   };
@@ -863,7 +863,7 @@ namespace substitution {
 
   /// A class of uncoupled rates/values
   class DirichletParameterModel: public MultiModel,
-				 public ReversibleWrapperOver<MultiModel> 
+				 public ReversibleWrapperOver< ::Model> 
   {
   protected:
     /// The parameter which is varying;
@@ -885,7 +885,7 @@ namespace substitution {
 
     string name() const;
 
-    DirichletParameterModel(const MultiModel& M,int p,int n);
+    DirichletParameterModel(const ::Model& M,int p,int n);
   };
 
 
@@ -894,7 +894,7 @@ namespace substitution {
   public:
     DistributionParameterModel* clone() const {return new DistributionParameterModel(*this);}
 
-    DistributionParameterModel(const MultiModel& M, const Distribution& RD,int p,int n);
+    DistributionParameterModel(const ::Model& M, const Distribution& RD,int p,int n);
   };
 
   /// A discrete-gamma Model
@@ -905,7 +905,7 @@ namespace substitution {
     GammaParameterModel* clone() const {return new GammaParameterModel(*this);}
 
     /// Construct a discrete gamma model on top of 'M', with 'n' bins
-    GammaParameterModel(const MultiModel& M, int n);
+    GammaParameterModel(const ::Model& M, int n);
   };
 
   /// A discrete-lognormal Model
@@ -916,7 +916,7 @@ namespace substitution {
     LogNormalParameterModel* clone() const {return new LogNormalParameterModel(*this);}
 
     /// Construct a discrete gamma model on top of 'M', with 'n' bins
-    LogNormalParameterModel(const MultiModel& M, int n);
+    LogNormalParameterModel(const ::Model& M, int n);
   };
 
 
@@ -926,7 +926,7 @@ namespace substitution {
   /// The Invariant-sites model: a certain fraction of the sites don't change
   /// The only parameter is 'p', the fraction of sites which don't change
   /// To keep branch lengths the same, inflate rates by 1/(1-p).
-  class WithINV: public MultiModel, public ReversibleWrapperOver<MultiModel> 
+  class WithINV: public MultiModel, public ReversibleWrapperOver< ::Model> 
   {
     static const double inv_frac_mean;
     static const double max_inv_rate;
@@ -946,7 +946,7 @@ namespace substitution {
 
     string name() const;
 
-    WithINV(const MultiModel& M);
+    WithINV(const ::Model& M);
   };
 
   class M2: public MultiParameterModel

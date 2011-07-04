@@ -1440,8 +1440,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
 
-  MultiParameterModel::MultiParameterModel(const MultiModel& M,int p,int n) 
-    :ReversibleWrapperOver<MultiModel>(M),
+  MultiParameterModel::MultiParameterModel(const ::Model& M,int p,int n) 
+    :ReversibleWrapperOver< ::Model>(M),
      p_change(p),
      D(n)
   { 
@@ -1515,8 +1515,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return SubModels(0).name() + " + " + dist_name;
   }
 
-  DirichletParameterModel::DirichletParameterModel(const MultiModel& M, int p, int n)
-    :ReversibleWrapperOver<MultiModel>(M),
+  DirichletParameterModel::DirichletParameterModel(const ::Model& M, int p, int n)
+    :ReversibleWrapperOver< ::Model>(M),
      p_change(p),
      n_bins(n)
   {
@@ -1552,7 +1552,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
   */
 
-  DistributionParameterModel::DistributionParameterModel(const MultiModel& M,const Distribution& D, int p, int n)
+  DistributionParameterModel::DistributionParameterModel(const ::Model& M,const Distribution& D, int p, int n)
     :OpModel( 
 	     MultiParameter(model_expression(LambdaModel(M,p)), Discretize(model_expression(D), Int(n) ) ) 
 	      )
@@ -1560,7 +1560,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   /*--------------- Gamma Sites Model----------------*/
 
-  GammaParameterModel::GammaParameterModel(const MultiModel& M,int n)
+  GammaParameterModel::GammaParameterModel(const ::Model& M,int n)
     :OpModel( 
 	     MultiRate(model_expression(M), Discretize(model_expression(Gamma()), Int(n) ) ) 
 	      )
@@ -1568,7 +1568,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   /*--------------- LogNormal Sites Model----------------*/
 
-  LogNormalParameterModel::LogNormalParameterModel(const MultiModel& M,int n)
+  LogNormalParameterModel::LogNormalParameterModel(const ::Model& M,int n)
     :OpModel( 
 	     MultiRate(model_expression(M), Discretize(model_expression(LogNormal()), Int(n) ) ) 
 	      )
@@ -1621,8 +1621,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
       return beta_pdf(p, 1, 2);
   }
 
-  WithINV::WithINV(const MultiModel& M)
-    :ReversibleWrapperOver<MultiModel>(M)
+  WithINV::WithINV(const ::Model& M)
+    :ReversibleWrapperOver< ::Model>(M)
   {
     p_index = add_super_parameter(Parameter("INV::p", Double(0.01), between(0, 1)));
 
