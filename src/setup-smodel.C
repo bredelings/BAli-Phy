@@ -498,7 +498,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       throw myexception()<<"Trying to construct an M2 model from a '"<<model_stack.back().get()->name()
 			 <<"' model, which is not a M0 model.";
 
-    model_stack.back() = M2(*YM, SimpleFrequencyModel(*YM->get_alphabet()));
+    model_stack.back() = M2(*YM, SimpleFrequencyModel(*get_alphabet(*YM)));
   }
   else if (match(string_stack,"M2a",arg)) {
 
@@ -508,7 +508,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       throw myexception()<<"Trying to construct an M2a model from a '"<<model_stack.back().get()->name()
 			 <<"' model, which is not a M0 model.";
 
-    model_stack.back() = M2a(*YM, SimpleFrequencyModel(*YM->get_alphabet()));
+    model_stack.back() = M2a(*YM, SimpleFrequencyModel(*get_alphabet(*YM)));
   }
   else if (match(string_stack,"M8b",arg)) {
     int n=3;
@@ -521,7 +521,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       throw myexception()<<"Trying to construct an M8b model from a '"<<model_stack.back().get()->name()
 			 <<"' model, which is not a M0 model.";
 
-    model_stack.back() = M8b(*YM, SimpleFrequencyModel(*YM->get_alphabet()), n);
+    model_stack.back() = M8b(*YM, SimpleFrequencyModel(*get_alphabet(*YM)), n);
   }
   else if (match(string_stack,"M3",arg)) {
     int n=3;
@@ -534,7 +534,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       throw myexception()<<"Trying to construct an M3 model from a '"<<model_stack.back().get()->name()
 			 <<"' model, which is not a M0 model.";
 
-    model_stack.back() = M3(*YM, SimpleFrequencyModel(*YM->get_alphabet()), n);
+    model_stack.back() = M3(*YM, SimpleFrequencyModel(*get_alphabet(*YM)), n);
   }
   else if (match(string_stack,"M7",arg)) {
     int n=4;
@@ -547,7 +547,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       throw myexception()<<"Trying to construct an M7 model from a '"<<model_stack.back().get()->name()
 			 <<"' model, which is not a M0 model.";
 
-    model_stack.back() = M7(*YM, SimpleFrequencyModel(*YM->get_alphabet()), n);
+    model_stack.back() = M7(*YM, SimpleFrequencyModel(*get_alphabet(*YM)), n);
   }
   else
     return false;

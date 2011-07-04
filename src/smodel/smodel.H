@@ -188,16 +188,16 @@ namespace substitution {
   };
 
 
+  inline boost::shared_ptr<const alphabet> get_alphabet(const ::Model& M)
+  {
+    return dynamic_cast<const SModelObject&>(*M.result()).get_alphabet();
+  }
+    
   class AlphabetExchangeModel: public ExchangeModel
   {
   public:
     AlphabetExchangeModel* clone() const =0;
     
-    boost::shared_ptr<const alphabet> get_alphabet() const 
-    {
-      return result_as<AlphabetExchangeModelObject>()->get_alphabet();
-    }
-
     virtual ~AlphabetExchangeModel() {};
   };
 
@@ -377,11 +377,11 @@ namespace substitution {
   };
 
   class SingletToTripletExchangeModel: public TripletExchangeModel,
-				       public SuperModelOver<NucleotideExchangeModel>
+				       public SuperModelOver< ::Model>
   {
   public:
 
-    efloat_t prior() const { return SuperModelOver<NucleotideExchangeModel>::prior(); }
+    efloat_t prior() const { return SuperModelOver< ::Model>::prior(); }
 
     SingletToTripletExchangeModel* clone() const {return new SingletToTripletExchangeModel(*this);}
 
@@ -389,7 +389,7 @@ namespace substitution {
 
     boost::shared_ptr<const Object> result() const;
 
-    SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& M);
+    SingletToTripletExchangeModel(const Triplets& T,const ::Model& M);
 
     ~SingletToTripletExchangeModel() {}
   };
@@ -409,7 +409,7 @@ namespace substitution {
     /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
     void omega(double w);
 
-    M0(const Codons& C,const NucleotideExchangeModel& M);
+    M0(const Codons& C,const ::Model& M);
 
     ~M0();
   };
@@ -589,11 +589,6 @@ namespace substitution {
     /// Make a copy of this object
     virtual ReversibleMarkovModel* clone() const =0;
 
-    boost::shared_ptr<const alphabet> get_alphabet() const 
-    {
-      return result_as<ReversibleMarkovModelObject>()->get_alphabet();
-    }
-
     ~ReversibleMarkovModel() {}
   };
 
@@ -638,8 +633,8 @@ namespace substitution {
     /// Make a copy of this object
     virtual SimpleReversibleMarkovModel* clone() const {return new SimpleReversibleMarkovModel(*this);}
 
-    explicit SimpleReversibleMarkovModel(const AlphabetExchangeModel& E);
-    explicit SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>&);
+    explicit SimpleReversibleMarkovModel(const ::Model& E);
+    explicit SimpleReversibleMarkovModel(const ::Model& E,const valarray<double>&);
   };
 
   //--------------------------- Implement the underlying alphabet -------------------------//

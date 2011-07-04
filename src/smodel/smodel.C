@@ -654,14 +654,13 @@ namespace substitution {
     :OpModel( Q_from_R_and_S(model_expression(*prefix_model(S1,"S")),model_expression(*prefix_model(R1,"R"))) )
   { }
 
-    
-  SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const AlphabetExchangeModel& E)
-    :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*E.get_alphabet()),"R") ) ) )
+  SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ::Model& E)
+    :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*get_alphabet(E)),"R") ) ) )
   { }
 
   SimpleReversibleMarkovModel::
-  SimpleReversibleMarkovModel(const AlphabetExchangeModel& E,const valarray<double>& pi)
-    :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*E.get_alphabet(),pi),"R")) ) )
+  SimpleReversibleMarkovModel(const ::Model& E,const valarray<double>& pi)
+    :OpModel( Q_from_R_and_S( model_expression(*prefix_model(E,"S")), model_expression(*prefix_model(SimpleFrequencyModel(*get_alphabet(E),pi),"R")) ) )
   { 
     /*
     DNA a;
@@ -1005,7 +1004,7 @@ namespace substitution {
     return n;
   }
   
-  SingletToTripletExchangeModel::SingletToTripletExchangeModel(const Triplets& T,const NucleotideExchangeModel& N)
+  SingletToTripletExchangeModel::SingletToTripletExchangeModel(const Triplets& T,const ::Model& N)
     :TripletExchangeModel(T)
   { 
     add_parameter(Parameter("alphabet",T));
@@ -1035,7 +1034,7 @@ namespace substitution {
     return string("M0[") + SubModels(0).name() + "]";
   }
   */
-  M0::M0(const Codons& C,const NucleotideExchangeModel& N)
+  M0::M0(const Codons& C,const ::Model& N)
     :OpModel( M0E(C,model_expression(N),parameter("M0::omega")) )
   { 
     omega_index = find_parameter(*this,"M0::omega");
