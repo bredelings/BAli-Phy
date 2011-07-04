@@ -234,7 +234,8 @@ void Context::set_value(int index, const object_ref& O)
       if (mask[index2]) continue;
 
       // If index2 is not known to have identical USED inputs ...
-      if (not values[index2]->computed or values[index2]->computation->used_values[slot2])
+      // (which occurs unless there is an up-to-date computation that does NOT use slot2)
+      if (not (values[index2]->computed and values[index2]->computation and not values[index2]->computation->used_values[slot2]))
       {
 	// ... then it is not known to have identical outputs
 	NOT_known_value_unchanged.push_back(index2);
