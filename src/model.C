@@ -327,9 +327,13 @@ shared_ptr<const Object> Model::operator()(OperationArgs& Args) const
 
 boost::shared_ptr<const Object> model_prior::operator()(OperationArgs& Args) const
 {
+  expression_ref R = Args.evaluate(0);
+
+  vector<expression_ref> v = get_ref_vector(R);
+
   shared_ptr<Model> M2 (M->clone());
   for(int i=0;i<M2->n_parameters();i++)
-    M2->set_parameter_value(i,Args.evaluate(i));
+    M2->set_parameter_value(i,v[i]);
 
   return shared_ptr<const Object>(new Log_Double(M2->prior()));
 }
