@@ -92,11 +92,11 @@ class likelihood: public function
 protected:
   alignment A;
   SequenceTree T;
-  owned_ptr<substitution::MultiModel> smodel;
+  owned_ptr<Model> smodel;
   vector<int> parameters;
 public:
   likelihood(const alignment& A1,
-	     const substitution::MultiModel& SM,
+	     const Model& SM,
 	     const SequenceTree& T1,
 	     const vector<int>& v)
     : A(A1),
@@ -112,7 +112,7 @@ public:
   double operator()(const optimize::Vector&) const;
 
   branch_likelihood(const alignment& A1,
-		    const substitution::MultiModel& SM,
+		    const Model& SM,
 		    const SequenceTree& T1,
 		    const vector<int>& v)
     : likelihood(A1,SM,T1,v)
@@ -150,7 +150,7 @@ public:
   double operator()(const optimize::Vector&) const;
 
   log_branch_likelihood(const alignment& A1,
-			const substitution::MultiModel& SM,
+			const Model& SM,
 			const SequenceTree& T1,
 			const vector<int>& v)
     : likelihood(A1,SM,T1,v)
@@ -369,7 +369,7 @@ void set_parameters(Model& M, const variables_map& args)
 
 void estimate_tree(const alignment& A,
 		   SequenceTree& T,
-		   substitution::MultiModel& smodel,
+		   Model& smodel,
 		   const vector<int>& parameters)
 {
   //------- Estimate branch lengths -------------//
@@ -472,7 +472,7 @@ int main(int argc,char* argv[])
     cout<<"%similarity = \n";
     print_lower(cout,T.get_leaf_labels(),S)<<"\n";
 
-    owned_ptr<substitution::MultiModel> smodel_in = get_smodel(args,A);
+    owned_ptr<Model> smodel_in = get_smodel(args,A);
     set_parameters(*smodel_in,args);
     cout<<"Using substitution model: "<<smodel_in->name()<<endl;
     // smodel_in->set_rate(1);
@@ -487,7 +487,7 @@ int main(int argc,char* argv[])
     analyze_rates(A,T,*smodel_in->result_as<substitution::MultiModelObject>());
 
     //------- Estimate branch lengths -------------//
-    owned_ptr<substitution::MultiModel> smodel_est = smodel_in;
+    owned_ptr<Model> smodel_est = smodel_in;
     SequenceTree T2 = T;
 
     if (args.count("search")) {

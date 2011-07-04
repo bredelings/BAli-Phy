@@ -92,25 +92,25 @@ void load_bali_phy_rc(boost::program_options::variables_map&,
 		      const boost::program_options::options_description&);
 
 //------------------------ Substitution stuff ----------------------//
-namespace substitution { class MultiModel; }
+class Model;
 
 /// Return a substitution::Model specified by args
-owned_ptr<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
-						  const alphabet& a,const std::valarray<double>& default_frequencies);
+owned_ptr<Model> get_smodel(const boost::program_options::variables_map& args,
+			    const alphabet& a,const std::valarray<double>& default_frequencies);
 
 /// Return a substitution::Model specified by name
-owned_ptr<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
-						  const std::string&,
-						  const alignment& A);
+owned_ptr<Model> get_smodel(const boost::program_options::variables_map& args,
+			    const std::string&,
+			    const alignment& A);
 
 /// Return a substitution::Model specified by args
-owned_ptr<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
-						  const alignment& A);
+owned_ptr<Model> get_smodel(const boost::program_options::variables_map& args,
+			    const alignment& A);
 
 /// Return a substitution::Model specified by name
-owned_ptr<substitution::MultiModel> get_smodel(const boost::program_options::variables_map& args,
-						  const std::string&,
-						  const std::vector<alignment>& A);
+owned_ptr<Model> get_smodel(const boost::program_options::variables_map& args,
+			    const std::string&,
+			    const std::vector<alignment>& A);
 
 //--------------------------- Indel stuff --------------------------//
 class IndelModel;
