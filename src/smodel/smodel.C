@@ -1174,20 +1174,6 @@ namespace substitution {
     return Pr;
   }
 
-  template <typename T>
-  struct MMatrix
-  {
-    T operator()(int,int) const;
-  };
-
-  /*
-  shared_ptr<MultiModelObject> Multi_Frequency_Function(const AlphabetExchangeModelObject& S, 
-							const ReversibleFrequencyModelObject& F,
-							const MMatrix<Double>& a)
-  {
-  }
-  */
-
   shared_ptr<const Object> MultiFrequencyModel::result() const
   {
     shared_ptr<const ReversibleMarkovModelObject> M = SubModel().result_as<ReversibleMarkovModelObject>();
@@ -1236,8 +1222,8 @@ namespace substitution {
       convertToString(n_submodels()) + "]";
   }
 
-  MultiFrequencyModel::MultiFrequencyModel(const AlphabetExchangeModel& E,int n)
-    :ReversibleWrapperOver<SimpleReversibleMarkovModel>(SimpleReversibleMarkovModel(E))
+  MultiFrequencyModel::MultiFrequencyModel(const ::Model& E,int n)
+    :ReversibleWrapperOver< ::Model>(SimpleReversibleMarkovModel(E))
   { 
     shared_ptr<const alphabet> aa = SubModel().result_as<ReversibleMarkovModelObject>()->get_alphabet();
 

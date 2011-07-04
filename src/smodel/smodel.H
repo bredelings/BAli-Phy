@@ -730,15 +730,15 @@ namespace substitution {
 
   /// A MultiRate Model with a single rate
   class UnitModel: public MultiModel,
-		   public SuperModelOver< ReversibleAdditiveCollection >
+		   public SuperModelOver< ::Model >
   {
     void recalc(const std::vector<int>&) {std::abort();}
   public:
     UnitModel* clone() const {return new UnitModel(*this);}
+    
+          ::Model& SubModel() {return SuperModelOver< ::Model>::SubModels(0); }
 
-          ReversibleAdditiveCollection& SubModel() {return SuperModelOver<ReversibleAdditiveCollection>::SubModels(0); }
-
-    const ReversibleAdditiveCollection& SubModel() const {return SuperModelOver<ReversibleAdditiveCollection>::SubModels(0); }
+    const ::Model& SubModel() const {return SuperModelOver< ::Model>::SubModels(0); }
 
     string name() const;
 
@@ -756,7 +756,7 @@ namespace substitution {
 
   /// A substitution model based on running identical copies of an input model with different frequencies.
   class MultiFrequencyModel: public MultiModel, 
-			     public ReversibleWrapperOver<SimpleReversibleMarkovModel> 
+			     public ReversibleWrapperOver< ::Model> 
   {
   protected:
 
@@ -772,7 +772,7 @@ namespace substitution {
 
     string name() const;
 
-    MultiFrequencyModel(const AlphabetExchangeModel& M,int n_bins);
+    MultiFrequencyModel(const ::Model& M,int n_bins);
 
     ~MultiFrequencyModel() {}
   };
