@@ -108,7 +108,7 @@ bool process_stack_Markov(vector<string>& string_stack,
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
     if (N)
-      model_stack.push_back(HKY(*N));
+      model_stack.push_back(FormulaModel(HKY_Model(a)));
     else
       throw myexception()<<"HKY: '"<<a.name<<"' is not a nucleotide alphabet.";
   }
