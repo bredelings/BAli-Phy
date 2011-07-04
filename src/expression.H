@@ -348,4 +348,40 @@ extern expression_ref If;
 
 // 3 Fields: definition, guard, body
 extern expression_ref defun;
+
+template <typename T,typename U>
+std::valarray<T> get_varray(const expression_ref& R)
+{
+  if (dynamic_cast<const U*>(&*R))
+  {
+    std::valarray<T> v2(1);
+    v2[0] = *dynamic_cast<const U*>(&*R);
+  }
+
+  boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  assert(E);
+  
+  std::valarray<T> v2(E->size()-1);
+  for(int i=0;i<v2.size();i++)
+    v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
+  return v2;
+}
+
+template <typename T,typename U>
+std::vector<T> get_vector(const expression_ref& R) 
+{
+  if (dynamic_cast<const U*>(&*R))
+  {
+    std::vector<T> v2(1);
+    v2[0] = *dynamic_cast<const U*>(&*R);
+  }
+    
+  boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  assert(E);
+  
+  std::vector<T> v2(E->size()-1);
+  for(int i=0;i<v2.size();i++)
+    v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
+  return v2;
+}
 #endif

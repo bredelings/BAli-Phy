@@ -14,42 +14,6 @@
 #include "model.H"
 #include "formula_expression.H"
 
-template <typename T,typename U>
-std::valarray<T> get_varray(const expression_ref& R)
-{
-  if (dynamic_cast<const U*>(&*R))
-  {
-    std::valarray<T> v2(1);
-    v2[0] = *dynamic_cast<const U*>(&*R);
-  }
-
-  boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-  assert(E);
-  
-  std::valarray<T> v2(E->size()-1);
-  for(int i=0;i<v2.size();i++)
-    v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
-  return v2;
-}
-
-template <typename T,typename U>
-std::vector<T> get_vector(const expression_ref& R) 
-{
-  if (dynamic_cast<const U*>(&*R))
-  {
-    std::vector<T> v2(1);
-    v2[0] = *dynamic_cast<const U*>(&*R);
-  }
-    
-  boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-  assert(E);
-  
-  std::vector<T> v2(E->size()-1);
-  for(int i=0;i<v2.size();i++)
-    v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
-  return v2;
-}
-
 namespace substitution {
 
   boost::shared_ptr<ReversibleFrequencyModelObject> Plus_gwF_Function(const alphabet& a, double f, const std::vector<double>& pi);
@@ -134,83 +98,7 @@ namespace substitution {
 
   boost::shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
 
-  struct dirichlet_density: public Operation
-  {
-    dirichlet_density* clone() const {return new dirichlet_density;}
-    
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      expression_ref X = Args.evaluate(0);
-      expression_ref N = Args.evaluate(1);
-      
-      std::valarray<double> x = get_varray<double,Double>(X);
-      std::valarray<double> n = get_varray<double,Double>(N);
-
-      boost::shared_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x,n) ) );
-
-      return R;
-    }
-
-    std::string name() const {return "dirichlet_density";}
-    
-    dirichlet_density():Operation(2) { }
-  };
-
-  struct laplace_density: public Operation
-  {
-    laplace_density* clone() const {return new laplace_density;}
-    
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      double x = *Args.evaluate_as<Double>(0);
-      expression_ref A =  Args.evaluate(1);
-
-      std::vector<double> a = get_vector<double,Double>(A);
-
-      return boost::shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x,a[0],a[1]) ) );
-    }
-
-    std::string name() const {return "laplace_density";}
-    
-    laplace_density():Operation(2) { }
-  };
-
   boost::shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2);
-
-  struct log_laplace_density: public Operation
-  {
-    log_laplace_density* clone() const {return new log_laplace_density;}
-    
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      double x = *Args.evaluate_as<Double>(0);
-      expression_ref A =  Args.evaluate(1);
-
-      std::vector<double> a = get_vector<double,Double>(A);
-
-      return boost::shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a[0],a[1])/x ) );
-    }
-
-    std::string name() const {return "log_laplace_density";}
-    
-    log_laplace_density():Operation(2) { }
-  };
-
-  extern expression_ref log_laplace;
-
-  struct uniform_density: public Operation
-  {
-    uniform_density* clone() const {return new uniform_density;}
-    
-    boost::shared_ptr<const Object> operator()(OperationArgs&) const
-    {
-      return boost::shared_ptr<Log_Double> (new Log_Double( 1.0 ) );
-    }
-
-    std::string name() const {return "uniform_density";}
-    
-    uniform_density():Operation(2) { }
-  };
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a, const std::valarray<double>& pi);
 
