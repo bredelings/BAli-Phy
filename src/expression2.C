@@ -225,6 +225,12 @@ int main()
 
   shared_ptr<const Object> result = CTX1.evaluate(x_times_y_plus_one);
   CTX1.evaluate(cond);
+  CTX1.evaluate(defv);
+  CTX1.evaluate(z_gt);
+  CTX1.evaluate(list_x_y);
+  CTX1.evaluate(tuple_x_y);
+  CTX1.evaluate(prior_x_y);
+  CTX1.evaluate(probability_expression);
 
   cout<<"CTX1 = \n"<<CTX1<<"\n";
   cout<<"CTX2 = \n"<<CTX2<<"\n";
@@ -243,12 +249,6 @@ int main()
   cout<<"Fiddling Z in CTX2...\n";
   CTX2.set_parameter_value("Z",Double(0));
   result = CTX2.evaluate(cond);
-  CTX2.evaluate(defv);
-  CTX2.evaluate(z_gt);
-  CTX2.evaluate(list_x_y);
-  CTX2.evaluate(tuple_x_y);
-  CTX2.evaluate(prior_x_y);
-  CTX2.evaluate(probability_expression);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).
