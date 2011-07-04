@@ -12,6 +12,10 @@ formula_expression_ref expression_ref::operator()(const formula_expression_ref& 
   return formula_expression_ref(*this)(arg);
 }
 
+formula_expression_ref::formula_expression_ref()
+  :index(-1)
+{ }
+
 formula_expression_ref::formula_expression_ref(const expression_ref& R)
 {
   Formula* F2 = new Formula();
