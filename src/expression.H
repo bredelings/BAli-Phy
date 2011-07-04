@@ -3,6 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <vector>
+#include <valarray>
 #include <string>
 #include "cow-ptr.H"
 #include "object.H"

@@ -10,6 +10,7 @@
 #include "computation.H"
 #include "operation.H"
 #include "operations.H"
+#include "distribution-operations.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -69,15 +70,13 @@ using std::endl;
  * 3. The static-flow evaluation framework allows caching along a DAG, but has a
  * lot of limitations on the kind of expressions it allows.  
  *
- * 1. No data constructors as a head.
+ * 1. [FIXED] No data constructors as a head.
  * 2. No eval_match( ).
  * 3. No body functions.
  * 4. Operations may not evaluate to expressions (and so provoke further evaluation).
- * 5. No Functions as function arguments
+ * 5. No functions as function arguments
  *
- * Idea: Regarding #1, We should be able to allow data constructors easily enough.
- *
- * Idea: When evaluating (\x (f x)) (expression),
+ * Idea: When evaluating the application of (\x (f x)) to (expression),
  *       we could actually assign values to the dummy variables.
  *       (Would we need a stack-frame equivalent, with recursions?)  
  *
@@ -85,26 +84,6 @@ using std::endl;
  *       However, it will give us an idea what is going on.
  *      
  */
-
-struct exponential_density: public Operation
-{
-  exponential_density* clone() const {return new exponential_density;}
-  
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    shared_ptr<const Double> mu = Args.evaluate_as<Double>(1);
-
-    Log_Double result = log_double_t(0);
-    if (*x >= 0.0)
-      result = exp<log_double_t>(-*x/ *mu)/ *mu;
-    return shared_ptr<const Object>(result.clone());
-  }
-
-  string name() const {return "exponential_density";}
-
-  exponential_density():Operation(2) { }
-};
 
 term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
 {
