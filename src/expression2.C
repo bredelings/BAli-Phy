@@ -304,6 +304,8 @@ int main()
   cout<<" CTX1 now contains this list of non-sub expressions:\n";
   cout<<*CTX1.F<<"\n";
 
+  cout<<"\n\n";
+  cout<<"Match test:\n";
   expression_ref pattern = default_value(parameter("X"))(match(0));
   expression_ref target = default_value(parameter("X"))(One);
   vector< expression_ref > results;
@@ -312,45 +314,54 @@ int main()
   {
     cout<<"match has size "<<results.size()<<"\n";
     if (results.size())
-      cout<<"   value = "<<results[0]<<"\n";
+      cout<<"   _0 = "<<results[0]<<"\n";
   }
   else
     cout<<"no match!";
 
-  results.clear();
   expression_ref test = Tuple(2)(One+One,One+One+One);
+  cout<<"\n\n";
+  cout<<"Eval test: does "<<test<<" match "<<Tuple(2)(2.0,3.0)<<"?\n";
+  results.clear();
   if (eval_match(CTX1,test,Tuple(2)(2.0,3.0),results) )
-    cout<<"R = "<<test<<"\n";
+    cout<<"yes, result = "<<test<<"\n";
 
 
   expression_ref test2 = Tuple(2)(square(parameter("X")),One+One);
+  cout<<"\n\n";
+  cout<<"Eval test: does "<<test2<<" match "<<Tuple(2)(9.0, 2.0)<<"?\n";
   results.clear();
   if (eval_match(CTX1, test2,Tuple(2)(9.0, 2.0), results))
-    cout<<"R2 = "<<test2<<"\n";
+    cout<<"yes, result = "<<test2<<"\n";
 
   expression_ref test3 = fmap(square,Cons(parameter("X"),Cons(One+One,ListEnd)));
-  cout<<" "<<test3<<" = ";
+  cout<<"\n\n";
+  cout<<"Eval test: "<<test3<<" = ";
   test3 = eval(CTX1, test3);
   cout<<test3<<"\n";
 
   expression_ref test4 = take(3,repeat(X));
-  cout<<" "<<test4<<" = ";
+  cout<<"\n\n";
+  cout<<"Eval test: "<<test4<<" = ";
   test4 = eval(CTX1, test4);
   cout<<test4<<"\n";
 
   expression_ref test5 = take(3,fmap(square,repeat(X)));
-  cout<<" "<<test5<<" = ";
+  cout<<"\n\n";
+  cout<<"Eval test: "<<test5<<" = ";
   test5 = eval(CTX1, test5);
   cout<<test5<<"\n";
 
   // Here we hit the problem of substituting lambda expressions into lambda expressions: match name collision!
   expression_ref test6 = take(3,fmap(square,iterate(plus(1.0),1.0)));
-  cout<<" "<<test6<<" = ";
+  cout<<"\n\n";
+  cout<<"Eval test: "<<test6<<" = ";
   test6 = eval(CTX1, test6);
   cout<<test6<<"\n";
 
   expression_ref test7 = print(take(3,fmap(square,iterate(plus(1.0),1.0))));
-  cout<<" "<<test7<<" = ";
+  cout<<"\n\n";
+  cout<<"Eval test: "<<test7<<" = ";
   test7 = eval(CTX1, test7);
   cout<<test7<<"\n";
 }
