@@ -666,3 +666,27 @@ expression_ref prob = lambda_expression( data_function("probability",1) );
 expression_ref If = lambda_expression( IfThenElse() );
 
 expression_ref defun = lambda_expression( data_function("defun",3) );
+
+const expression_ref get_tuple(const vector<expression_ref>& v)
+{
+  if (not v.size()) return Tuple(0);
+
+  if (v.size() == 1) return v[0];
+
+  vector<expression_ref> sub(v.size()+1);
+  sub[0] = Tuple(v.size());
+  for(int i=0;i<sub.size();i++)
+    sub[i+1] = v[i];
+
+  return expression_ref(expression(sub));
+}
+
+const expression_ref get_list(const vector<expression_ref>& v)
+{
+  expression_ref E = ListEnd;
+
+  for(int i=v.size()-1;i>=0;i++)
+    E = Cons(v[i],E);
+
+  return E;
+}

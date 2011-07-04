@@ -385,4 +385,8 @@ std::vector<T> get_vector(const expression_ref& R)
     v2[i] = *dynamic_cast<const U*>(&*E->sub[i+1]);
   return v2;
 }
+
+const expression_ref get_tuple(const std::vector<expression_ref>& v);
+
+const expression_ref get_list(const std::vector<expression_ref>& v);
 #endif
