@@ -1152,7 +1152,9 @@ boost::shared_ptr<const Object> FormulaModel::result() const
 
 FormulaModel::FormulaModel(const boost::shared_ptr<const Formula>& F,int i)
   :Model(F),result_index(i)
-{ }
+{
+  std::cout<<*C.F<<std::endl;
+}
 
 FormulaModel::FormulaModel(const formula_expression_ref& R)
   :Model(R.F),result_index(R.index)
