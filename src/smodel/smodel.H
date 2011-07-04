@@ -963,14 +963,14 @@ namespace substitution {
 
     string name() const;
 
-    M2(const M0& M1,const ReversibleFrequencyModel& R);
+    M2(const M0& M1,const ::Model& R);
   };
 
   /// M2a model has three omega parameters.
   /// In M2 model, omega_1 = 0. In M2a model,
   /// omega_1 < 1.
   class M2a: public MultiModel, 
-	     public ReversibleWrapperOver<MultiModel> 
+	     public ReversibleWrapperOver< ::Model> 
   {
     /// The parameter which is varying;
     int p_change;
@@ -990,7 +990,7 @@ namespace substitution {
 
     string name() const;
 
-    M2a(const M0& M1,const ReversibleFrequencyModel& R);
+    M2a(const M0& M1,const ::Model& R);
   };
 
   class M3: public MultiParameterModel 
@@ -1012,7 +1012,7 @@ namespace substitution {
 
     string name() const;
 
-    M3(const M0& M1,const ReversibleFrequencyModel& R, int n);
+    M3(const M0& M1,const ::Model& R, int n);
   };
 
 
@@ -1023,11 +1023,11 @@ namespace substitution {
 
     //    string name() const;
 
-    M7(const M0& M1,const ReversibleFrequencyModel& R, int n);
+    M7(const M0& M1,const ::Model& R, int n);
   };
 
 
-  class MixtureModel: public MultiModel, public SuperModelOver<MultiModel> 
+  class MixtureModel: public MultiModel, public SuperModelOver< ::Model> 
   {
     efloat_t super_prior() const;
     void recalc(const std::vector<int>&) {std::abort();}
@@ -1039,7 +1039,7 @@ namespace substitution {
 
     string name() const;
 
-    MixtureModel(const std::vector<owned_ptr<MultiModel> >& models);
+    MixtureModel(const std::vector<owned_ptr< ::Model> >& models);
   };
 
   
@@ -1052,7 +1052,7 @@ namespace substitution {
   public:
     virtual ModulatedMarkovModel* clone() const {return new ModulatedMarkovModel(*this);}
 
-    ModulatedMarkovModel(const MultiModel& M, const ExchangeModel& S);
+    ModulatedMarkovModel(const ::Model& M, const ::Model& S);
   };
 
   /// In M8b model, omega1 ~ Beta with proportion p1.
@@ -1102,7 +1102,7 @@ namespace substitution {
     // This is already defined as SubmodelAs<MultiModel>(0).frequencies() in ReversibleWrapperOver<MultiModel>
     // const alphabet& Alphabet() const {return M->Alphabet();}
 
-    M8b(const M0& M, const ReversibleFrequencyModel& R, const int n_binBeta);
+    M8b(const M0& M, const ::Model& R, const int n_binBeta);
   };
 
 

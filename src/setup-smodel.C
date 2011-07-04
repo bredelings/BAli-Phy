@@ -481,7 +481,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (model_stack.size() < n)
       throw myexception()<<"Dual: can't find "<<n<<" models to combine";
     
-    vector <owned_ptr<MultiModel> > models;
+    vector <owned_ptr< ::Model> > models;
     for(int m=0;m<n;m++) {
       owned_ptr<MultiModel> M = get_MM(model_stack,"Mixture",frequencies);
       model_stack.pop_back();

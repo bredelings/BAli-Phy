@@ -1664,7 +1664,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return SubModels(0).name() + " + M2";
   }
 
-  M2::M2(const M0& M1,const ReversibleFrequencyModel& R) 
+  M2::M2(const M0& M1,const ::Model& R) 
     :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,3)
   {
     add_super_parameter(Parameter("M2::f[AA INV]",   Double(1.0/3), between(0, 1)));
@@ -1736,8 +1736,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return SubModels(0).name() + " + M2a";
   }
 
-  M2a::M2a(const M0& M1,const ReversibleFrequencyModel& R) 
-    :ReversibleWrapperOver<MultiModel>(UnitModel(ReversibleMarkovSuperModel(M1,R))),
+  M2a::M2a(const M0& M1,const ::Model& R) 
+    :ReversibleWrapperOver< ::Model>(UnitModel(ReversibleMarkovSuperModel(M1,R))),
      p_change(0),
      D(3)
   {
@@ -1804,7 +1804,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   /// bins are APPROXIMATELY evenly spaced.
   /// -----------------------------------------------------
   M8b::M8b(const M0& MM, 
-           const ReversibleFrequencyModel& R,
+           const ::Model& R,
            const int n)
     : MultiParameterModel(
         UnitModel(ReversibleMarkovSuperModel(MM,R)),
@@ -1957,7 +1957,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return SubModels(0).name() + " + M3[" + convertToString(n) + "]";
   }
 
-  M3::M3(const M0& M1,const ReversibleFrequencyModel& R, int n) 
+  M3::M3(const M0& M1,const ::Model& R, int n) 
     :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,n)
   {
     add_super_parameter(Parameter("n", Int(n)));
@@ -1980,7 +1980,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
 
 
-  M7::M7(const M0& M1,const ReversibleFrequencyModel& R, int n) 
+  M7::M7(const M0& M1,const ::Model& R, int n) 
     :DistributionParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
 				Beta(),0,n)
   { 
@@ -2038,7 +2038,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return name;
   }
 
-  MixtureModel::MixtureModel(const std::vector<owned_ptr<MultiModel> >& models)
+  MixtureModel::MixtureModel(const std::vector<owned_ptr< ::Model> >& models)
   {
     for(int i=0;i<models.size();i++) {
       string pname = string("Mixture::p") + convertToString(i+1);
@@ -2056,7 +2056,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   }
 
 
-  ModulatedMarkovModel::ModulatedMarkovModel(const MultiModel& MM, const ExchangeModel& EM)
+  ModulatedMarkovModel::ModulatedMarkovModel(const ::Model& MM, const ::Model& EM)
     :OpModel(Modulated_Markov_E(model_expression(MM),model_expression(EM)))
   { }
   
