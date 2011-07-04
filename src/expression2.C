@@ -90,15 +90,6 @@ struct exponential_density: public Operation
 {
   exponential_density* clone() const {return new exponential_density;}
   
-  tribool compare(const Object& o) const
-  {
-    if (this == &o) return true;
-
-    if (dynamic_cast<const exponential_density*>(&o)) return true;
-
-    return false;
-  }
-
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
