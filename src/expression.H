@@ -140,12 +140,6 @@ struct Function: public Operator
   Function(const std::string&, int n, function_type_t);
 };
 
-expression_ref Tuple(int);
-
-extern expression_ref Cons;
-
-extern expression_ref ListEnd;
-
 Function data_function(const std::string&, int);
 
 Function body_function(const std::string&, int);
@@ -320,15 +314,20 @@ extern expression_ref _2;
 extern expression_ref _3;
 extern expression_ref _4;
 
+expression_ref Tuple(int);
+
+extern expression_ref Cons;
+
+extern expression_ref ListEnd;
+
 extern expression_ref default_value;
 
 extern expression_ref bounds;
 
-// Fields: n_random, n_parameters, string, density op
+// 2 Fields: string, density op
 extern expression_ref prob_density;
 
-// Fields: (prob_density) (random vars) (parameter expressions)
+// 3 Fields: (prob_density) (random vars) (parameter expressions)
 extern expression_ref distributed_as;
-
 
 #endif
