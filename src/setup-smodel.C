@@ -236,12 +236,15 @@ owned_ptr<AlphabetExchangeModel> get_EM(::Model* M, const string& name)
 {
   assert(M);
 
+  if (not M->result_as<AlphabetExchangeModelObject>())
+    throw myexception()<<name<<": '"<<M->name()<<"' is not an exchange model.";
+
   AlphabetExchangeModel* AEM = dynamic_cast<AlphabetExchangeModel*>(M);
 
   if (not AEM)
-    throw myexception()<<name<<": '"<<M->name()<<"' is not an exchange model.";
+    throw myexception()<<name<<": '"<<M->name()<<"' is not an exchange model. (old)";
 
-  return *AEM;
+  return AEM;
 }
 
 
