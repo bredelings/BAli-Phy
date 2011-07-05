@@ -254,7 +254,7 @@ formula_expression_ref get_EM(const formula_expression_ref& R, const string& nam
 
 
 /// \brief Construct an AlphabetExchangeModel from the top of the model stack
-formula_expression_ref get_EM(vector<formula_expression_ref >& model_stack, const string& name)
+formula_expression_ref get_EM(vector<formula_expression_ref>& model_stack, const string& name)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": Needed an exchange model, but no model was given.";
@@ -366,7 +366,7 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
   try {
     formula_expression_ref top = get_EM(M,name);
     shared_ptr<const alphabet> a = get_alphabet( FormulaModel(top) );
-    // If the frequencies.size() != alphabet.size(), this call with throw a meaningful exception.
+    // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
     return Simple_gwF_Model(top, *a, frequencies); 
   }
   catch (std::exception& e) { 
