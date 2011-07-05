@@ -265,7 +265,7 @@ namespace substitution {
 
     std::string name() const {return "Unit_Collection";}
 
-    Unit_Collection_Op():Operation(2) { }
+    Unit_Collection_Op():Operation(1) { }
   };
 
   extern expression_ref Unit_Collection;
@@ -296,7 +296,7 @@ namespace substitution {
 
     std::string name() const {return "Unit_Mixture";}
 
-    Unit_Mixture_Op():Operation(2) { }
+    Unit_Mixture_Op():Operation(1) { }
   };
 
   extern expression_ref Unit_Mixture;
