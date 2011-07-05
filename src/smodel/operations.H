@@ -94,6 +94,30 @@ namespace substitution {
 							      double GT, double GC, 
 							      double TC);
 
+  struct GTR_Op: public Operation
+  {
+    GTR_Op* clone() const {return new GTR_Op;}
+    
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      boost::shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+      double AG = *Args.evaluate_as<Double>(1);
+      double AT = *Args.evaluate_as<Double>(2);
+      double AC = *Args.evaluate_as<Double>(3);
+      double GT = *Args.evaluate_as<Double>(4);
+      double GC = *Args.evaluate_as<Double>(5);
+      double TC = *Args.evaluate_as<Double>(6);
+
+      return GTR_Function(*N,AG,AT,AC,GT,GC,TC);
+    }
+
+    std::string name() const {return "GTR";}
+    
+    GTR_Op():Operation(7) { }
+  };
+
+  formula_expression_ref GTR_Model(const alphabet& a);
+  
   boost::shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a);
 
   boost::shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);

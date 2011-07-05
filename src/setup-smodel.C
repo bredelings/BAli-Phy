@@ -125,10 +125,14 @@ bool process_stack_Markov(vector<string>& string_stack,
   else if (match(string_stack,"GTR",arg)) 
   {
     const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
-    if (N)
-      model_stack.push_back(FormulaModel(model_formula(GTR(*N))));
-    else
+    if (not N)
       throw myexception()<<"GTR: '"<<a.name<<"' is not a nucleotide alphabet.";
+
+    // FIXME - allow/make a general GTR model!
+
+    R = GTR_Model(a);
+    // model_stack.push_back(GTR(*N));
+    //    model_stack.push_back(FormulaModel(model_formula(GTR(*N))));
   }
   /* THINKO - Must tripletmodels be constructed from nucleotide-specific models?
   else if (match(string_stack,"EQUx3",arg)) {

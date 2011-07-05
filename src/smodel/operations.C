@@ -176,7 +176,49 @@ namespace substitution
     return R;
   }
 
+  formula_expression_ref GTR_Model(const alphabet& a)
+  {
+    expression_ref AG = parameter("GTR::AG");
+    expression_ref AT = parameter("GTR::AT");
+    expression_ref AC = parameter("GTR::AC");
+    expression_ref GT = parameter("GTR::GT");
+    expression_ref GC = parameter("GTR::GC");
+    expression_ref TC = parameter("GTR::TC");
 
+    formula_expression_ref R(lambda_expression(GTR_Op())(a)(AG)(AT)(AC)(GT)(GC)(TC));
+
+    R.add_expression(AG);
+    R.add_expression(AT);
+    R.add_expression(AC);
+    R.add_expression(GT);
+    R.add_expression(GC);
+    R.add_expression(TC);
+
+    R.add_expression(default_value(AG,2.0/8));
+    R.add_expression(default_value(AT,1.0/8));
+    R.add_expression(default_value(AC,1.0/8));
+    R.add_expression(default_value(GT,1.0/8));
+    R.add_expression(default_value(GC,1.0/8));
+    R.add_expression(default_value(GC,1.0/8));
+    R.add_expression(default_value(TC,2.0/8));
+
+    R.add_expression(bounds(AG,between(0.0,1.0)));
+    R.add_expression(bounds(AT,between(0.0,1.0)));
+    R.add_expression(bounds(AC,between(0.0,1.0)));
+    R.add_expression(bounds(GT,between(0.0,1.0)));
+    R.add_expression(bounds(GC,between(0.0,1.0)));
+    R.add_expression(bounds(GC,between(0.0,1.0)));
+    R.add_expression(bounds(TC,between(0.0,1.0)));
+
+    R.add_expression(distributed_as(dirichlet_dist, 
+				    Tuple(6)(AG)(AT)(AC)(GT)(GC)(TC), 
+				    Tuple(6)(8.0)(4.0)(4.0)(4.0)(4.0)(8.0)
+				    )
+		     );
+    
+    return R;
+  }
+  
   shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2)
   {
     shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(T) );
