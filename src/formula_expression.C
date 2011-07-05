@@ -37,20 +37,6 @@ formula_expression_ref::formula_expression_ref()
   :index(-1)
 { }
 
-formula_expression_ref::formula_expression_ref(int i)
-{ 
-  Formula* F2 = new Formula();
-  index = F2->add_expression(i);
-  F = shared_ptr<const Formula>(F2);
-}
-
-formula_expression_ref::formula_expression_ref(double d)
-{ 
-  Formula* F2 = new Formula();
-  index = F2->add_expression(d);
-  F = shared_ptr<const Formula>(F2);
-}
-
 formula_expression_ref::formula_expression_ref(const expression_ref& R)
 {
   Formula* F2 = new Formula();
