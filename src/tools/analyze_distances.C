@@ -472,7 +472,7 @@ int main(int argc,char* argv[])
     cout<<"%similarity = \n";
     print_lower(cout,T.get_leaf_labels(),S)<<"\n";
 
-    owned_ptr<Model> smodel_in = get_smodel(args,A);
+    owned_ptr<Model> smodel_in = FormulaModel( get_smodel(args,A) );
     set_parameters(*smodel_in,args);
     cout<<"Using substitution model: "<<smodel_in->name()<<endl;
     // smodel_in->set_rate(1);

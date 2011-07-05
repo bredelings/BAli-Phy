@@ -35,6 +35,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequencetree.H"
 #include "clone.H"
 #include <boost/program_options.hpp>
+#include "formula_expression.H"
 
 /// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
 std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,
@@ -95,22 +96,22 @@ void load_bali_phy_rc(boost::program_options::variables_map&,
 class Model;
 
 /// Return a substitution::Model specified by args
-owned_ptr<Model> get_smodel(const boost::program_options::variables_map& args,
-			    const alphabet& a,const std::valarray<double>& default_frequencies);
+formula_expression_ref get_smodel(const boost::program_options::variables_map& args,
+				  const alphabet& a,const std::valarray<double>& default_frequencies);
 
 /// Return a substitution::Model specified by name
-owned_ptr<Model> get_smodel(const boost::program_options::variables_map& args,
-			    const std::string&,
-			    const alignment& A);
+formula_expression_ref get_smodel(const boost::program_options::variables_map& args,
+				  const std::string&,
+				  const alignment& A);
 
 /// Return a substitution::Model specified by args
-owned_ptr<Model> get_smodel(const boost::program_options::variables_map& args,
-			    const alignment& A);
+formula_expression_ref get_smodel(const boost::program_options::variables_map& args,
+				  const alignment& A);
 
 /// Return a substitution::Model specified by name
-owned_ptr<Model> get_smodel(const boost::program_options::variables_map& args,
-			    const std::string&,
-			    const std::vector<alignment>& A);
+formula_expression_ref get_smodel(const boost::program_options::variables_map& args,
+				  const std::string&,
+				  const std::vector<alignment>& A);
 
 //--------------------------- Indel stuff --------------------------//
 class IndelModel;

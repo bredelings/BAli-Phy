@@ -928,11 +928,13 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
     for(int j=0;j<smodel_names_mapping.n_partitions_for_item(i);j++)
       alignments.push_back(A[smodel_names_mapping.partitions_for_item[i][j]]);
 
-    owned_ptr<Model> full_smodel = get_smodel(args,
-								    smodel_names_mapping.unique(i),
-								    alignments);
-    polymorphic_cow_ptr<Model> temp (*full_smodel);
+    formula_expression_ref full_smodel = get_smodel(args,
+						    smodel_names_mapping.unique(i),
+						    alignments);
+    FormulaModel FM(full_smodel);
+    polymorphic_cow_ptr<Model> temp(FM);
     smodels.push_back(temp);
+    cout<<"SModel "<<i+1<<": prior = "<<log(smodels.back()->prior())<<"\n";
   }
   return smodels;
 }

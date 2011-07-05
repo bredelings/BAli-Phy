@@ -36,6 +36,7 @@ using std::vector;
 using std::valarray;
 using namespace substitution;
 using boost::program_options::variables_map;
+using boost::shared_ptr;
 
 /// \brief Take a string of the form \a s[\a arg] off the top of \a sstack, if its present
 ///
@@ -80,7 +81,7 @@ string default_markov_model(const alphabet& a)
     return "";
 }
 
-owned_ptr< ::Model> 
+formula_expression_ref
 get_smodel_(const string& smodel,const alphabet& a,const valarray<double>&);
 
 /// \brief Construct a model from the top of the string stack
@@ -91,7 +92,7 @@ get_smodel_(const string& smodel,const alphabet& a,const valarray<double>&);
 /// \param frequencies The initial frequencies for the model.
 ///
 bool process_stack_Markov(vector<string>& string_stack,
-			  vector<owned_ptr< ::Model> >& model_stack,
+			  vector<formula_expression_ref >& model_stack,
 			  const alphabet& a,
 			  const valarray<double>& frequencies)
 {
@@ -218,19 +219,21 @@ bool process_stack_Markov(vector<string>& string_stack,
     if (not C)
       throw myexception()<<"M0: '"<<a.name<<"' is not a 'Codons' alphabet";
 
-    owned_ptr< ::Model> N_submodel = HKY(C->getNucleotides());
+    formula_expression_ref N_submodel = HKY(C->getNucleotides());
 
     if (not arg.empty()) 
     {
-      owned_ptr< ::Model> submodel = get_smodel_(arg,C->getNucleotides(),valarray<double>());
+      formula_expression_ref submodel = get_smodel_(arg,C->getNucleotides(),valarray<double>());
 
-      if (not submodel.as<NucleotideExchangeModel>())
+      FormulaModel FM(submodel);
+      if (not FM.result_as<AlphabetExchangeModelObject>() or 
+	  not dynamic_pointer_cast<const Nucleotides>(FM.result_as<AlphabetExchangeModelObject>()->get_alphabet()))
 	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide replacement model.";
 
-      N_submodel = submodel.as<NucleotideExchangeModel>();
+      N_submodel = submodel;
     }
 
-    model_stack.push_back( M0(*C, *N_submodel) );
+    model_stack.push_back( M0(*C, FormulaModel(N_submodel)) );
   }
   else
     return false;
@@ -241,24 +244,22 @@ bool process_stack_Markov(vector<string>& string_stack,
 }
 
 /// \brief Construct an AlphabetExchangeModel from model \a M
-owned_ptr< ::Model> get_EM(::Model* M, const string& name)
+formula_expression_ref get_EM(const formula_expression_ref& R, const string& name)
 {
-  assert(M);
+  if (FormulaModel(R).result_as<AlphabetExchangeModelObject>())
+    return R;
 
-  if (M->result_as<AlphabetExchangeModelObject>())
-    return *M;
-
-  throw myexception()<<name<<": '"<<M->name()<<"' is not an exchange model.";
+  throw myexception()<<name<<": '"<<R.F->sub_exp(R.index)<<"' is not an exchange model.";
 }
 
 
 /// \brief Construct an AlphabetExchangeModel from the top of the model stack
-owned_ptr< ::Model> get_EM(vector<owned_ptr< ::Model> >& model_stack, const string& name)
+formula_expression_ref get_EM(vector<formula_expression_ref >& model_stack, const string& name)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": Needed an exchange model, but no model was given.";
 
-  return get_EM(model_stack.back().get(),name);
+  return get_EM(model_stack.back(), name);
 }
 
 
@@ -270,35 +271,35 @@ owned_ptr< ::Model> get_EM(vector<owned_ptr< ::Model> >& model_stack, const stri
 /// \param frequencies The initial frequencies for the model.
 ///
 bool process_stack_Frequencies(vector<string>& string_stack,
-			       vector<owned_ptr< ::Model> >& model_stack,
+			       vector<formula_expression_ref >& model_stack,
 			       const alphabet& a,
 			       const valarray<double>& frequencies)
 {
   string arg;
   
   if (match(string_stack,"F=constant",arg)) {
-    owned_ptr< ::Model> EM = get_EM(model_stack,"F=constant");
+    formula_expression_ref EM = get_EM(model_stack,"F=constant");
 
     SimpleFrequencyModel F(a,frequencies);
 
     for(int i=0;i<F.n_parameters();i++)
       F.set_fixed(i,true);
 
-    model_stack.back() = ReversibleMarkovSuperModel(*EM,F);
+    model_stack.back() = Reversible_Markov_Model(EM,F);
   }
   else if (match(string_stack,"F",arg)) {
-    owned_ptr< ::Model> EM = get_EM(model_stack,"F");
+    formula_expression_ref EM = get_EM(model_stack,"F");
 
     SimpleFrequencyModel F(a,frequencies);
 
-    model_stack.back() = ReversibleMarkovSuperModel(*EM,F);
+    model_stack.back() = Reversible_Markov_Model(EM,F);
   }
   else if (match(string_stack,"F=uniform",arg)) {
-    owned_ptr< ::Model> EM = get_EM(model_stack,"F=uniform");
+    formula_expression_ref EM = get_EM(model_stack,"F=uniform");
 
     UniformFrequencyModel UF(a,frequencies);
 
-    model_stack.back() = ReversibleMarkovSuperModel(*EM,UF);
+    model_stack.back() = Reversible_Markov_Model(EM,UF);
   }
   else if (match(string_stack,"F=nucleotides",arg)) 
   {
@@ -306,9 +307,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     if (not T)
       throw myexception()<<"F=nucleotides:: '"<<a.name<<"' is not a triplet alphabet.";
 
-    owned_ptr< ::Model> EM = get_EM(model_stack,"F=nucleotides");
+    formula_expression_ref EM = get_EM(model_stack,"F=nucleotides");
 
-    model_stack.back() = ReversibleMarkovSuperModel(*EM,IndependentNucleotideFrequencyModel(*T));
+    model_stack.back() = Reversible_Markov_Model(EM, IndependentNucleotideFrequencyModel(*T));
   }
   else if (match(string_stack,"F=amino-acids",arg)) 
   {
@@ -316,9 +317,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     if (not C)
       throw myexception()<<"F=amino-acids:: '"<<a.name<<"' is not a codon alphabet.";
 
-    owned_ptr< ::Model> EM = get_EM(model_stack,"F=nucleotides");
+    formula_expression_ref EM = get_EM(model_stack,"F=nucleotides");
 
-    model_stack.back() = ReversibleMarkovSuperModel(*EM,AACodonFrequencyModel(*C));
+    model_stack.back() = Reversible_Markov_Model(EM, AACodonFrequencyModel(*C));
   }
   else if (match(string_stack,"F=triplets",arg)) 
   {
@@ -326,9 +327,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     if (not T)
       throw myexception()<<"F=triplets:: '"<<a.name<<"' is not a triplet alphabet.";
 
-    owned_ptr< ::Model> EM = get_EM(model_stack,"F=triplets");
+    formula_expression_ref EM = get_EM(model_stack,"F=triplets");
 
-    model_stack.back() = ReversibleMarkovSuperModel(*EM,TripletsFrequencyModel(*T));
+    model_stack.back() = Reversible_Markov_Model(EM,TripletsFrequencyModel(*T));
   }
   else if (match(string_stack,"F=codons",arg)) 
   {
@@ -336,9 +337,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     if (not C)
       throw myexception()<<"F=codons:: '"<<a.name<<"' is not a codon alphabet.";
 
-    owned_ptr< ::Model> EM = get_EM(model_stack,"F=codons");
+    formula_expression_ref EM = get_EM(model_stack,"F=codons");
 
-    model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonsFrequencyModel(*C));
+    model_stack.back() = Reversible_Markov_Model(EM,CodonsFrequencyModel(*C));
   }
   else if (match(string_stack,"F=codons2",arg)) 
   {
@@ -346,9 +347,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
     if (not C)
       throw myexception()<<"F=codons2:: '"<<a.name<<"' is not a codon alphabet.";
 
-    owned_ptr< ::Model> EM = get_EM(model_stack,"F=codons2");
+    formula_expression_ref EM = get_EM(model_stack,"F=codons2");
 
-    model_stack.back() = ReversibleMarkovSuperModel(*EM,CodonsFrequencyModel2(*C));
+    model_stack.back() = Reversible_Markov_Model(EM,CodonsFrequencyModel2(*C));
   }
   else
     return false;
@@ -356,73 +357,74 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 }
 
 /// \brief Construct a ReversibleMarkovModel from model \a M
-owned_ptr< ::Model> get_RA(::Model* M, const string& name,
+formula_expression_ref get_RA(const formula_expression_ref& M, const string& name,
 					     const valarray<double>& frequencies)
 {
-  if (M->result_as<ReversibleMarkovModelObject>())
-    return *M;
-
+  if (FormulaModel(M).result_as<ReversibleMarkovModelObject>())
+    return M;
 
   try {
+    formula_expression_ref top = get_EM(M,name);
+    shared_ptr<const alphabet> a = get_alphabet( FormulaModel(top) );
     // If the frequencies.size() != alphabet.size(), this call with throw a meaningful exception.
-    return SimpleReversibleMarkovModel(*get_EM(M,name),frequencies); 
+    return Simple_gwF_Model(top, *a, frequencies); 
   }
   catch (std::exception& e) { 
-    throw myexception()<<name<<": Can't construct a SimpleReversibleMarkovModel from '"<<M->name()<<"':\n "<<e.what();
+    throw myexception()<<name<<": Can't construct a SimpleReversibleMarkovModel from '"<<M.F->sub_exp(M.index)<<"':\n "<<e.what();
   }
 }
 
 /// \brief Construct a ReversibleMarkovModel from the top of the model stack
-owned_ptr< ::Model> get_RA(vector<owned_ptr< ::Model> >& model_stack, 
+formula_expression_ref get_RA(vector<formula_expression_ref >& model_stack, 
 			   const string& name,
 			   const valarray<double>& frequencies)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": couldn't find any model to use.";
   
-  return get_RA(model_stack.back().get(), name, frequencies);
+  return get_RA(model_stack.back(), name, frequencies);
 }
 
 
 /// \brief Construct a MultiModel from model \a M
-owned_ptr< ::Model> 
-get_MM(::Model *M, const string& name, const valarray<double>& frequencies)
+formula_expression_ref
+get_MM(const formula_expression_ref& M, const string& name, const valarray<double>& frequencies)
 {
-  if (M->result_as<MultiModelObject>())
-    return *M;
+  if (FormulaModel(M).result_as<MultiModelObject>())
+    return M;
 
   try { 
-    return UnitModel(*get_RA(M,name,frequencies)) ; 
+    return UnitModel(FormulaModel( get_RA(M,name,frequencies))) ; 
   }
   catch (std::exception& e) { 
-    throw myexception()<<name<<": Can't construct a UnitModel from '"<<M->name()<<"':\n"<<e.what();
+    throw myexception()<<name<<": Can't construct a UnitModel from '"<<M.F->sub_exp(M.index)<<"':\n"<<e.what();
   }
 }
 
 /// \brief Construct a MultiModel from the top of the model stack.
-owned_ptr< ::Model>
-get_MM(vector<owned_ptr< ::Model> >& model_stack, const string& name,const valarray<double>& frequencies)
+formula_expression_ref
+get_MM(vector<formula_expression_ref >& model_stack, const string& name,const valarray<double>& frequencies)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": Trying to construct a MultiModel, but no model was given.";
 
-  return get_MM(model_stack.back().get(), name, frequencies);
+  return get_MM(model_stack.back(), name, frequencies);
 }
 
 bool process_stack_Multi(vector<string>& string_stack,  
-			 vector<owned_ptr< ::Model> >& model_stack,
+			 vector<formula_expression_ref >& model_stack,
 			 const valarray<double>& frequencies)
 {
   string arg;
   if (match(string_stack,"single",arg)) 
-      model_stack.back() = UnitModel(*get_RA(model_stack,"single",frequencies));
+    model_stack.back() = UnitModel(FormulaModel(get_RA(model_stack,"single",frequencies)));
 
   else if (match(string_stack,"gamma_plus_uniform",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = DistributionParameterModel(UnitModel(*get_RA(model_stack,"gamma_plus_uniform",frequencies)),
+    model_stack.back() = DistributionParameterModel(UnitModel(FormulaModel(get_RA(model_stack,"gamma_plus_uniform",frequencies))),
 						    Uniform() + Gamma(),
 						    -1,//rate!
 						    n);
@@ -432,47 +434,37 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = GammaParameterModel(*get_MM(model_stack,"gamma",frequencies),n);
-  }
-  else if (match(string_stack,"double_gamma",arg)) {
-    int n=4;
-    if (not arg.empty())
-      n = convertTo<int>(arg);
-
-    model_stack.back() = DistributionParameterModel(UnitModel(*get_RA(model_stack,"double_gamma",frequencies)),
-						    Gamma() + Gamma(),
-						    -1,//rate!
-						    n);
+    model_stack.back() = MultiRate(get_MM(model_stack,"gamma",frequencies),  Discretize(model_formula(Gamma()), expression_ref(n)) );
   }
   else if (match(string_stack,"log-normal",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = LogNormalParameterModel(*get_MM(model_stack,"log-normal",frequencies),n);
+    model_stack.back() = MultiRate(get_MM(model_stack,"gamma",frequencies),  Discretize(model_formula(LogNormal()), expression_ref(n)) );
   }
   else if (match(string_stack,"multi_freq",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = MultiFrequencyModel(*get_EM(model_stack,"multi_freq"),n);
+    model_stack.back() = MultiFrequencyModel(FormulaModel(get_EM(model_stack,"multi_freq")),n);
   }
   else if (match(string_stack,"INV",arg))
-    model_stack.back() = WithINV(*get_MM(model_stack,"INV",frequencies));
+    model_stack.back() = WithINV( FormulaModel(get_MM(model_stack,"INV",frequencies)) );
 
   else if (match(string_stack,"DP",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
-    model_stack.back() = DirichletParameterModel(*get_MM(model_stack,"DP",frequencies),-1,n);
+    model_stack.back() = DirichletParameterModel(FormulaModel(get_MM(model_stack,"DP",frequencies)),-1,n);
   }
   else if (match(string_stack,"Modulated",arg))
   {
-    owned_ptr< ::Model> MM = get_MM(model_stack,"Modulated",frequencies);
+    formula_expression_ref MM = get_MM(model_stack,"Modulated",frequencies);
 
-    int n = MM->result_as<MultiModelObject>()->n_base_models();
-    model_stack.back() = ModulatedMarkovModel(*MM,
+    int n = FormulaModel(MM).result_as<MultiModelObject>()->n_base_models();
+    model_stack.back() = ModulatedMarkovModel(FormulaModel(MM),
 					      SimpleExchangeModel(n));
   }
   else if (match(string_stack,"Mixture",arg)) 
@@ -486,80 +478,58 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (model_stack.size() < n)
       throw myexception()<<"Dual: can't find "<<n<<" models to combine";
     
-    vector <owned_ptr< ::Model> > models;
+    vector < owned_ptr< ::Model> > models;
     for(int m=0;m<n;m++) {
-      owned_ptr< ::Model> M = get_MM(model_stack,"Mixture",frequencies);
+      formula_expression_ref M = get_MM(model_stack,"Mixture",frequencies);
       model_stack.pop_back();
-      models.push_back(M);
+      models.push_back( FormulaModel(M) );
     }
 
-    model_stack.push_back(MixtureModel(models));
+    model_stack.push_back(model_formula(MixtureModel(models)));
   }
-  else if (match(string_stack,"M2",arg)) {
-
-    M0* YM = dynamic_cast<M0*>(model_stack.back().get());
-
-    if (not YM)
-      throw myexception()<<"Trying to construct an M2 model from a '"<<model_stack.back().get()->name()
-			 <<"' model, which is not a M0 model.";
-
-    model_stack.back() = M2(*YM, SimpleFrequencyModel(*get_alphabet(*YM)));
+  else if (match(string_stack,"M2",arg)) 
+  {
+    FormulaModel FM(model_stack.back());
+    model_stack.back() = M2(FM, SimpleFrequencyModel(*get_alphabet(FM)));
   }
-  else if (match(string_stack,"M2a",arg)) {
-
-    M0* YM = dynamic_cast<M0*>(model_stack.back().get());
-
-    if (not YM)
-      throw myexception()<<"Trying to construct an M2a model from a '"<<model_stack.back().get()->name()
-			 <<"' model, which is not a M0 model.";
-
-    model_stack.back() = M2a(*YM, SimpleFrequencyModel(*get_alphabet(*YM)));
+  else if (match(string_stack,"M2a",arg)) 
+  {
+    FormulaModel FM(model_stack.back());
+    model_stack.back() = M2a(FM, SimpleFrequencyModel(*get_alphabet(FM)));
   }
-  else if (match(string_stack,"M8b",arg)) {
+  else if (match(string_stack,"M8b",arg))
+  {
     int n=3;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    M0* YM = dynamic_cast<M0*>(model_stack.back().get());
-
-    if (not YM)
-      throw myexception()<<"Trying to construct an M8b model from a '"<<model_stack.back().get()->name()
-			 <<"' model, which is not a M0 model.";
-
-    model_stack.back() = M8b(*YM, SimpleFrequencyModel(*get_alphabet(*YM)), n);
+    FormulaModel FM(model_stack.back());
+    model_stack.back() = M8b(FM, SimpleFrequencyModel(*get_alphabet(FM)),n);
   }
-  else if (match(string_stack,"M3",arg)) {
+  else if (match(string_stack,"M3",arg)) 
+  {
     int n=3;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    M0* YM = dynamic_cast<M0*>(model_stack.back().get());
-
-    if (not YM)
-      throw myexception()<<"Trying to construct an M3 model from a '"<<model_stack.back().get()->name()
-			 <<"' model, which is not a M0 model.";
-
-    model_stack.back() = M3(*YM, SimpleFrequencyModel(*get_alphabet(*YM)), n);
+    FormulaModel FM(model_stack.back());
+    model_stack.back() = M3(FM, SimpleFrequencyModel(*get_alphabet(FM)),n); 
   }
-  else if (match(string_stack,"M7",arg)) {
+  else if (match(string_stack,"M7",arg)) 
+  {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    M0* YM = dynamic_cast<M0*>(model_stack.back().get());
-
-    if (not YM)
-      throw myexception()<<"Trying to construct an M7 model from a '"<<model_stack.back().get()->name()
-			 <<"' model, which is not a M0 model.";
-
-    model_stack.back() = M7(*YM, SimpleFrequencyModel(*get_alphabet(*YM)), n);
+    FormulaModel FM(model_stack.back());
+    model_stack.back() = M7(FM, SimpleFrequencyModel(*get_alphabet(FM)),n); 
   }
   else
     return false;
   return true;
 }
 
-owned_ptr< ::Model> 
+formula_expression_ref 
 get_smodel_(const string& smodel,const alphabet& a,const valarray<double>& frequencies) 
 {
   // Initialize the string stack from the model name
@@ -569,7 +539,7 @@ get_smodel_(const string& smodel,const alphabet& a,const valarray<double>& frequ
   std::reverse(string_stack.begin(),string_stack.end());
 
   // Initialize the model stack 
-  vector<owned_ptr< ::Model> > model_stack;
+  vector<formula_expression_ref > model_stack;
   if (not process_stack_Markov(string_stack,model_stack,a,frequencies)) 
   {
     string model_name = default_markov_model(a);
@@ -597,7 +567,7 @@ get_smodel_(const string& smodel,const alphabet& a,const valarray<double>& frequ
 
   //---------------------- Stack should be empty now ----------------------//
   if (model_stack.size()>1) {
-    throw myexception()<<"Substitution model "<<model_stack.back()->name()<<" was specified but not used!\n";
+    throw myexception()<<"Substitution model "<<model_stack.back().F<<" was specified but not used!\n";
   }
 
   return model_stack.back();
@@ -610,18 +580,18 @@ get_smodel_(const string& smodel,const alphabet& a,const valarray<double>& frequ
 /// \param a The alphabet.
 /// \param frequencies The initial letter frequencies in the model.
 ///
-owned_ptr< ::Model>
+formula_expression_ref
 get_smodel(const string& smodel_name, const alphabet& a, const valarray<double>& frequencies) 
 {
   assert(frequencies.size() == a.size());
 
   //------------------ Get smodel ----------------------//
-  owned_ptr< ::Model> smodel = get_smodel_(smodel_name,a,frequencies);
+  formula_expression_ref smodel = get_smodel_(smodel_name,a,frequencies);
 
   // check if the model actually fits alphabet a...
 
   // --------- Convert smodel to MultiModel ------------//
-  owned_ptr< ::Model> full_smodel = get_MM(smodel.get(),"Final",frequencies);
+  formula_expression_ref full_smodel = get_MM(smodel,"Final",frequencies);
 
   return full_smodel;
 }
@@ -633,7 +603,7 @@ get_smodel(const string& smodel_name, const alphabet& a, const valarray<double>&
 ///
 /// This routine constructs the initial frequencies based on all of the alignments.
 ///
-owned_ptr< ::Model> get_smodel(const variables_map& args, const string& smodel_name,const vector<alignment>& A) 
+formula_expression_ref get_smodel(const variables_map& args, const string& smodel_name,const vector<alignment>& A) 
 {
   for(int i=1;i<A.size();i++)
     if (A[i].get_alphabet() != A[0].get_alphabet())
@@ -641,12 +611,12 @@ owned_ptr< ::Model> get_smodel(const variables_map& args, const string& smodel_n
   return get_smodel(smodel_name,A[0].get_alphabet(),empirical_frequencies(args,A));
 }
 
-owned_ptr< ::Model> get_smodel(const variables_map& args, const string& smodel_name,const alignment& A) 
+formula_expression_ref get_smodel(const variables_map& args, const string& smodel_name,const alignment& A) 
 {
   return get_smodel(smodel_name,A.get_alphabet(),empirical_frequencies(args,A));
 }
 
-owned_ptr< ::Model> get_smodel(const variables_map& args, const alignment& A) 
+formula_expression_ref get_smodel(const variables_map& args, const alignment& A) 
 {
   string smodel_name = args["smodel"].as<string>();
   return get_smodel(smodel_name,A.get_alphabet(),empirical_frequencies(args,A));
