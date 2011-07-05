@@ -24,6 +24,20 @@ namespace substitution {
 
     Plus_gwF_Op* clone() const {return new Plus_gwF_Op(*this);}
 
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+
+      const Plus_gwF_Op* O2 = dynamic_cast<const Plus_gwF_Op*>(&O);
+
+      if (a != O2->a) return false;
+      
+      return true;
+    }
+
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       double f = *Args.evaluate_as<Double>(0);
@@ -52,6 +66,16 @@ namespace substitution {
   {
     HKY_Op* clone() const {return new HKY_Op;}
     
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       boost::shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
@@ -73,6 +97,16 @@ namespace substitution {
   {
     TN_Op* clone() const {return new TN_Op;}
     
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       boost::shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
@@ -98,6 +132,16 @@ namespace substitution {
   {
     GTR_Op* clone() const {return new GTR_Op;}
     
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       boost::shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
@@ -134,6 +178,16 @@ namespace substitution {
   {
     Q_from_S_and_R_Op* clone() const {return new Q_from_S_and_R_Op(*this);}
 
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       boost::shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(0);
@@ -152,6 +206,16 @@ namespace substitution {
   struct M0_Op: public Operation
   {
     M0_Op* clone() const {return new M0_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
@@ -182,6 +246,16 @@ namespace substitution {
   {
     Unit_Collection_Op* clone() const {return new Unit_Collection_Op(*this);}
 
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       boost::shared_ptr<const ReversibleAdditiveObject> O = Args.evaluate_as<const ReversibleAdditiveObject>(0);
@@ -202,6 +276,16 @@ namespace substitution {
   struct Unit_Mixture_Op: public Operation
   {
     Unit_Mixture_Op* clone() const {return new Unit_Mixture_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
@@ -224,6 +308,16 @@ namespace substitution {
   struct DiscretizationOp: public Operation
   {
     DiscretizationOp* clone() const {return new DiscretizationOp(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
@@ -248,6 +342,16 @@ namespace substitution {
   {
     MultiParameterOp* clone() const {return new MultiParameterOp(*this);}
 
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       // The input-model should really be a lambda function taking the single value (or first value) p_change
@@ -267,6 +371,16 @@ namespace substitution {
   struct MultiRateOp: public Operation
   {
     MultiRateOp* clone() const {return new MultiRateOp(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
@@ -319,6 +433,16 @@ namespace substitution {
   {
     Modulated_Markov_Op* clone() const {return new Modulated_Markov_Op(*this);}
 
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       boost::shared_ptr<const MultiModelObject> M = Args.evaluate_as<MultiModelObject>(0);
@@ -339,6 +463,16 @@ namespace substitution {
   struct M2_Op: public Operation
   {
     M2_Op* clone() const {return new M2_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
