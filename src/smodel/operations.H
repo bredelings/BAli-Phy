@@ -217,6 +217,8 @@ namespace substitution {
 
   extern expression_ref Unit_Mixture;
 
+  formula_expression_ref Unit_Model(const formula_expression_ref&);
+
   boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const probability::Distribution& D, Int n);
 
   struct DiscretizationOp: public Operation

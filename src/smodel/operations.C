@@ -418,6 +418,17 @@ namespace substitution
 
   expression_ref Unit_Mixture = lambda_expression( Unit_Mixture_Op() );
 
+  formula_expression_ref Unit_Model(const formula_expression_ref& R)
+  {
+    formula_expression_ref R2 = R;
+
+    R2 = Unit_Collection(R2);
+
+    R2 = Unit_Mixture(R2);
+
+    return R2;
+  }
+
   boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const Distribution& D, Int n)
   {
     // Make a discretization - not uniform.
