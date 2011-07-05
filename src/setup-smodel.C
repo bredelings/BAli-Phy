@@ -225,9 +225,8 @@ bool process_stack_Markov(vector<string>& string_stack,
     {
       formula_expression_ref submodel = get_smodel_(arg,C->getNucleotides(),valarray<double>());
 
-      FormulaModel FM(submodel);
-      if (not FM.result_as<AlphabetExchangeModelObject>() or 
-	  not dynamic_pointer_cast<const Nucleotides>(FM.result_as<AlphabetExchangeModelObject>()->get_alphabet()))
+      if (not submodel.result_as<AlphabetExchangeModelObject>() or 
+	  not dynamic_pointer_cast<const Nucleotides>(submodel.result_as<AlphabetExchangeModelObject>()->get_alphabet()))
 	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide replacement model.";
 
       N_submodel = submodel;
@@ -246,7 +245,7 @@ bool process_stack_Markov(vector<string>& string_stack,
 /// \brief Construct an AlphabetExchangeModel from model \a M
 formula_expression_ref get_EM(const formula_expression_ref& R, const string& name)
 {
-  if (FormulaModel(R).result_as<AlphabetExchangeModelObject>())
+  if (R.result_as<AlphabetExchangeModelObject>())
     return R;
 
   throw myexception()<<name<<": '"<<R.F->sub_exp(R.index)<<"' is not an exchange model.";
@@ -360,7 +359,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 formula_expression_ref get_RA(const formula_expression_ref& M, const string& name,
 					     const valarray<double>& frequencies)
 {
-  if (FormulaModel(M).result_as<ReversibleMarkovModelObject>())
+  if (M.result_as<ReversibleMarkovModelObject>())
     return M;
 
   try {
@@ -390,7 +389,7 @@ formula_expression_ref get_RA(vector<formula_expression_ref >& model_stack,
 formula_expression_ref
 get_MM(const formula_expression_ref& M, const string& name, const valarray<double>& frequencies)
 {
-  if (FormulaModel(M).result_as<MultiModelObject>())
+  if (M.result_as<MultiModelObject>())
     return M;
 
   try { 
@@ -460,7 +459,7 @@ bool process_stack_Multi(vector<string>& string_stack,
   {
     formula_expression_ref MM = get_MM(model_stack,"Modulated",frequencies);
 
-    int n = FormulaModel(MM).result_as<MultiModelObject>()->n_base_models();
+    int n = MM.result_as<MultiModelObject>()->n_base_models();
     model_stack.back() = ModulatedMarkovModel(FormulaModel(MM),
 					      SimpleExchangeModel(n));
   }

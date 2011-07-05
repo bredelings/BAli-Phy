@@ -1,4 +1,5 @@
 #include "formula_expression.H"
+#include "context.H"
 
 using boost::shared_ptr;
 
@@ -66,4 +67,10 @@ int formula_expression_ref::add_expression(const expression_ref& R)
   int new_index = F2->add_expression(R);
   F = shared_ptr<const Formula>(F2);
   return new_index;
+}
+
+boost::shared_ptr<const Object> formula_expression_ref::result() const
+{
+  Context C(F);
+  return C.evaluate(index);
 }

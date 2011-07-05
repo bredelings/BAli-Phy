@@ -16,6 +16,11 @@ struct formula_expression_ref
 
   int add_expression(const expression_ref&);
 
+  boost::shared_ptr<const Object> result() const;
+
+  template <typename T>
+  boost::shared_ptr<const T> result_as() const {return boost::dynamic_pointer_cast<const T>(result());}
+
   formula_expression_ref();
   formula_expression_ref(const expression_ref&);
   formula_expression_ref(const boost::shared_ptr<const Formula>& F, int);
