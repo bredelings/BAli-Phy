@@ -217,7 +217,7 @@ term_ref Formula::find_expression(const expression_ref& E) const
   {
     tribool same = terms[i].E->compare(*E);
     if (indeterminate(same))
-      std::cerr<<"Warning: '"<<E->print()<<"' and '"<<terms[i].E->print()<<"' are unsure if they are equal.";
+      std::cerr<<"Warning: '"<<E->print()<<"' and '"<<terms[i].E->print()<<"' are unsure if they are equal.\n\n";
     if (same)
       return term_ref(i, *this);
   }
