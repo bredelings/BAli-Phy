@@ -13,6 +13,16 @@ struct exponential_density: public Operation
 {
   exponential_density* clone() const {return new exponential_density;}
   
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
@@ -33,6 +43,16 @@ struct gamma_density: public Operation
 {
   gamma_density* clone() const {return new gamma_density;}
   
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
@@ -54,6 +74,16 @@ struct beta_density: public Operation
 {
   beta_density* clone() const {return new beta_density;}
   
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
@@ -75,6 +105,16 @@ struct normal_density: public Operation
 {
   normal_density* clone() const {return new normal_density;}
   
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
@@ -96,6 +136,16 @@ struct log_normal_density: public Operation
 {
   log_normal_density* clone() const {return new log_normal_density;}
   
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
@@ -117,6 +167,16 @@ struct cauchy_density: public Operation
 {
   cauchy_density* clone() const {return new cauchy_density;}
   
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
@@ -138,6 +198,16 @@ struct dirichlet_density: public Operation
 {
   dirichlet_density* clone() const {return new dirichlet_density;}
     
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     expression_ref X = Args.evaluate(0);
@@ -162,6 +232,16 @@ struct laplace_density: public Operation
 {
   laplace_density* clone() const {return new laplace_density;}
     
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     double x = *Args.evaluate_as<Double>(0);
@@ -183,6 +263,16 @@ struct log_laplace_density: public Operation
 {
   log_laplace_density* clone() const {return new log_laplace_density;}
     
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     double x = *Args.evaluate_as<Double>(0);
@@ -204,6 +294,16 @@ struct uniform_density: public Operation
 {
   uniform_density* clone() const {return new uniform_density;}
     
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
   {
     double x = *Args.evaluate_as<Double>(0);
