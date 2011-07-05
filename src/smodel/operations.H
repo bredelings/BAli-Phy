@@ -128,26 +128,26 @@ namespace substitution {
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a);
 
-  boost::shared_ptr<ReversibleMarkovModelObject> Q_from_R_and_S_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F);
+  boost::shared_ptr<ReversibleMarkovModelObject> Q_from_S_and_R_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F);
 
-  struct Q_from_R_and_S_Op: public Operation
+  struct Q_from_S_and_R_Op: public Operation
   {
-    Q_from_R_and_S_Op* clone() const {return new Q_from_R_and_S_Op(*this);}
+    Q_from_S_and_R_Op* clone() const {return new Q_from_S_and_R_Op(*this);}
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
       boost::shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(0);
       boost::shared_ptr<const ReversibleFrequencyModelObject> F = Args.evaluate_as<ReversibleFrequencyModelObject>(1);
       
-      return Q_from_R_and_S_Function(*S, *F);
+      return Q_from_S_and_R_Function(*S, *F);
     }
 
-    std::string name() const {return "Q_from_R_and_S";}
+    std::string name() const {return "Q_from_S_and_R";}
 
-    Q_from_R_and_S_Op():Operation(2) { }
+    Q_from_S_and_R_Op():Operation(2) { }
   };
 
-  extern expression_ref Q_from_R_and_S;
+  extern expression_ref Q_from_S_and_R;
 
   struct M0_Op: public Operation
   {

@@ -296,7 +296,7 @@ namespace substitution
     return Plus_gwF_Model(a,pi);
   }
 
-  shared_ptr<ReversibleMarkovModelObject> Q_from_R_and_S_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
+  shared_ptr<ReversibleMarkovModelObject> Q_from_S_and_R_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
   {
     shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(F.Alphabet()) );
 
@@ -329,7 +329,7 @@ namespace substitution
     return R;
   }
 
-  expression_ref Q_from_R_and_S = lambda_expression( Q_from_R_and_S_Op() );
+  expression_ref Q_from_S_and_R = lambda_expression( Q_from_S_and_R_Op() );
 
   shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
   {
@@ -373,28 +373,28 @@ namespace substitution
 
   expression_ref M0E = lambda_expression( M0_Op() );
 
-  formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& FR, const formula_expression_ref& FS)
+  formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& FS, const formula_expression_ref& FR)
   {
-    formula_expression_ref R = prefix_formula("R",FR);
     formula_expression_ref S = prefix_formula("S",FS);
+    formula_expression_ref R = prefix_formula("R",FR);
     
-    return Q_from_R_and_S(R)(S);
+    return Q_from_S_and_R(S)(R);
   }
 
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a)
+  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FS, const alphabet& a)
   {
-    formula_expression_ref R = prefix_formula("R",FR);
-    formula_expression_ref S = prefix_formula("S",Plus_gwF_Model(a));
+    formula_expression_ref S = prefix_formula("S",FS);
+    formula_expression_ref R = prefix_formula("R",Plus_gwF_Model(a));
     
-    return Q_from_R_and_S(R)(S);
+    return Q_from_S_and_R(S)(R);
   }
 
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a, const valarray<double>& pi)
+  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FS, const alphabet& a, const valarray<double>& pi)
   {
-    formula_expression_ref R = prefix_formula("R",FR);
-    formula_expression_ref S = prefix_formula("S",Plus_gwF_Model(a,pi));
+    formula_expression_ref S = prefix_formula("S",FS);
+    formula_expression_ref R = prefix_formula("R",Plus_gwF_Model(a,pi));
     
-    return Q_from_R_and_S(R)(S);
+    return Q_from_S_and_R(S)(R);
   }
 
   boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const Distribution& D, Int n)
