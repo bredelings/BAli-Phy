@@ -178,8 +178,44 @@ namespace substitution {
   boost::shared_ptr<ReversibleAdditiveCollectionObject>
   Unit_Collection_Function(const boost::shared_ptr<const ReversibleAdditiveObject>& O);
 
+  struct Unit_Collection_Op: public Operation
+  {
+    Unit_Collection_Op* clone() const {return new Unit_Collection_Op(*this);}
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      boost::shared_ptr<const ReversibleAdditiveObject> O = Args.evaluate_as<const ReversibleAdditiveObject>(0);
+      
+      return Unit_Collection_Function(O);
+    }
+
+    std::string name() const {return "DiscretizedDistribution";}
+
+    Unit_Collection_Op():Operation(2) { }
+  };
+
+  extern expression_ref Unit_Collection;
+
   boost::shared_ptr<MultiModelObject>
   Unit_Mixture_Function(const boost::shared_ptr<const ReversibleAdditiveCollectionObject>& O);
+
+  struct Unit_Mixture_Op: public Operation
+  {
+    Unit_Mixture_Op* clone() const {return new Unit_Mixture_Op(*this);}
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      boost::shared_ptr<const ReversibleAdditiveCollectionObject> O = Args.evaluate_as<const ReversibleAdditiveCollectionObject>(0);
+      
+      return Unit_Mixture_Function(O);
+    }
+
+    std::string name() const {return "DiscretizedDistribution";}
+
+    Unit_Mixture_Op():Operation(2) { }
+  };
+
+  extern expression_ref Unit_Mixture;
 
   boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const probability::Distribution& D, Int n);
 

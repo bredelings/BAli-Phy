@@ -398,6 +398,8 @@ namespace substitution
     return shared_ptr<ReversibleAdditiveCollectionObject>(new ReversibleAdditiveCollectionObject(* O) );
   }
 
+  expression_ref Unit_Collection = lambda_expression( Unit_Collection_Op() );
+
   shared_ptr<MultiModelObject>
   Unit_Mixture_Function(const shared_ptr<const ReversibleAdditiveCollectionObject>& O)
   {
@@ -413,6 +415,8 @@ namespace substitution
 
     return R;
   }
+
+  expression_ref Unit_Mixture = lambda_expression( Unit_Mixture_Op() );
 
   boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const Distribution& D, Int n)
   {
