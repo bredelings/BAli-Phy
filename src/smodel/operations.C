@@ -12,37 +12,6 @@ namespace substitution
 {
   using namespace probability;
 
-  shared_ptr<ReversibleFrequencyModelObject> Plus_gwF_Function(const alphabet& a, double f, const vector<double>& pi)
-  {
-    assert(a.size() == pi.size());
-
-    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
-
-    // compute frequencies
-    R->pi = pi;
-    normalize(R->pi);
-    
-    // compute transition rates
-    valarray<double> pi_f(a.size());
-    for(int i=0;i<a.size();i++)
-      pi_f[i] = pow(R->pi[i],f);
-
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++)
-	R->R(i,j) = pi_f[i]/R->pi[i] * pi_f[j];
-
-    // diagonal entries should have no effect
-    for(int i=0;i<a.size();i++)
-      R->R(i,i) = 0;
-
-    return R;
-  }
-
-  expression_ref Plus_gwF(const alphabet& a)
-  {
-    return lambda_expression( Plus_gwF_Op(a) );
-  }
-
   shared_ptr<ExchangeModelObject> SimpleExchangeFunction(double rho, int n)
   {
     shared_ptr<ExchangeModelObject> R (new ExchangeModelObject(n));
@@ -219,6 +188,48 @@ namespace substitution
     return R;
   }
   
+  shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
+  {
+    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(C) );
+    ublas::symmetric_matrix<double>& S = R->S;
+
+    for(int i=0;i<C.size();i++) 
+    {
+      for(int j=0;j<i;j++) {
+	int nmuts=0;
+	int pos=-1;
+	for(int p=0;p<3;p++)
+	  if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
+	    nmuts++;
+	    pos=p;
+	  }
+	assert(nmuts>0);
+	assert(pos >= 0 and pos < 3);
+
+	double rate=0.0;
+
+	if (nmuts == 1) {
+
+	  int l1 = C.sub_nuc(i,pos);
+	  int l2 = C.sub_nuc(j,pos);
+	  assert(l1 != l2);
+
+	  rate = S2(l1,l2);
+
+	  if (C.translate(i) != C.translate(j))
+	    rate *= omega;	
+	}
+
+	S(i,j) = S(j,i) = rate;
+      }
+    }
+
+    return R;
+  }
+
+
+  expression_ref M0E = lambda_expression( M0_Op() );
+
   shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2)
   {
     shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(T) );
@@ -252,6 +263,38 @@ namespace substitution
     return R;
   }
 
+  shared_ptr<ReversibleFrequencyModelObject> Plus_gwF_Function(const alphabet& a, double f, const vector<double>& pi)
+  {
+    assert(a.size() == pi.size());
+
+    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
+
+    // compute frequencies
+    R->pi = pi;
+    normalize(R->pi);
+    
+    // compute transition rates
+    valarray<double> pi_f(a.size());
+    for(int i=0;i<a.size();i++)
+      pi_f[i] = pow(R->pi[i],f);
+
+    for(int i=0;i<a.size();i++)
+      for(int j=0;j<a.size();j++)
+	R->R(i,j) = pi_f[i]/R->pi[i] * pi_f[j];
+
+    // diagonal entries should have no effect
+    for(int i=0;i<a.size();i++)
+      R->R(i,i) = 0;
+
+    return R;
+  }
+
+  expression_ref Plus_gwF(const alphabet& a)
+  {
+    return lambda_expression( Plus_gwF_Op(a) );
+  }
+
+  // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
   formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi)
   {
     assert(a.size() == pi.size());
@@ -331,48 +374,6 @@ namespace substitution
 
   expression_ref Q_from_S_and_R = lambda_expression( Q_from_S_and_R_Op() );
 
-  shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
-  {
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(C) );
-    ublas::symmetric_matrix<double>& S = R->S;
-
-    for(int i=0;i<C.size();i++) 
-    {
-      for(int j=0;j<i;j++) {
-	int nmuts=0;
-	int pos=-1;
-	for(int p=0;p<3;p++)
-	  if (C.sub_nuc(i,p) != C.sub_nuc(j,p)) {
-	    nmuts++;
-	    pos=p;
-	  }
-	assert(nmuts>0);
-	assert(pos >= 0 and pos < 3);
-
-	double rate=0.0;
-
-	if (nmuts == 1) {
-
-	  int l1 = C.sub_nuc(i,pos);
-	  int l2 = C.sub_nuc(j,pos);
-	  assert(l1 != l2);
-
-	  rate = S2(l1,l2);
-
-	  if (C.translate(i) != C.translate(j))
-	    rate *= omega;	
-	}
-
-	S(i,j) = S(j,i) = rate;
-      }
-    }
-
-    return R;
-  }
-
-
-  expression_ref M0E = lambda_expression( M0_Op() );
-
   formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& FS, const formula_expression_ref& FR)
   {
     formula_expression_ref S = prefix_formula("S",FS);
@@ -381,20 +382,14 @@ namespace substitution
     return Q_from_S_and_R(S)(R);
   }
 
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FS, const alphabet& a)
+  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& S, const alphabet& a)
   {
-    formula_expression_ref S = prefix_formula("S",FS);
-    formula_expression_ref R = prefix_formula("R",Plus_gwF_Model(a));
-    
-    return Q_from_S_and_R(S)(R);
+    return Reversible_Markov_Model(S,Plus_gwF_Model(a));
   }
 
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FS, const alphabet& a, const valarray<double>& pi)
+  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& S, const alphabet& a, const valarray<double>& pi)
   {
-    formula_expression_ref S = prefix_formula("S",FS);
-    formula_expression_ref R = prefix_formula("R",Plus_gwF_Model(a,pi));
-    
-    return Q_from_S_and_R(S)(R);
+    return Reversible_Markov_Model(S,Plus_gwF_Model(a,pi));
   }
 
   boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const Distribution& D, Int n)
