@@ -394,7 +394,7 @@ get_MM(const formula_expression_ref& M, const string& name, const valarray<doubl
     return M;
 
   try { 
-    return UnitModel(FormulaModel( get_RA(M,name,frequencies))) ; 
+    return Unit_Model( get_RA(M,name,frequencies) ) ; 
   }
   catch (std::exception& e) { 
     throw myexception()<<name<<": Can't construct a UnitModel from '"<<M.F->sub_exp(M.index)<<"':\n"<<e.what();
@@ -417,17 +417,14 @@ bool process_stack_Multi(vector<string>& string_stack,
 {
   string arg;
   if (match(string_stack,"single",arg)) 
-    model_stack.back() = UnitModel(FormulaModel(get_RA(model_stack,"single",frequencies)));
+    model_stack.back() = get_MM(model_stack,"single",frequencies);
 
   else if (match(string_stack,"gamma_plus_uniform",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = DistributionParameterModel(UnitModel(FormulaModel(get_RA(model_stack,"gamma_plus_uniform",frequencies))),
-						    Uniform() + Gamma(),
-						    -1,//rate!
-						    n);
+    model_stack.back() = MultiRate(get_MM(model_stack,"gamma_plus_uniform",frequencies),  Discretize(model_formula(Gamma()+Uniform()), expression_ref(n)) );
   }
   else if (match(string_stack,"gamma",arg)) {
     int n=4;
