@@ -175,6 +175,12 @@ namespace substitution {
 
   formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a, const std::valarray<double>& pi);
 
+  boost::shared_ptr<ReversibleAdditiveCollectionObject>
+  Unit_Collection_Function(const boost::shared_ptr<const ReversibleAdditiveObject>& O);
+
+  boost::shared_ptr<MultiModelObject>
+  Unit_Mixture_Function(const boost::shared_ptr<const ReversibleAdditiveCollectionObject>& O);
+
   boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const probability::Distribution& D, Int n);
 
   struct DiscretizationOp: public Operation
