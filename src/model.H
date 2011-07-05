@@ -300,6 +300,8 @@ public:
   bool is_valid() const {return valid;}
   virtual void update();
 
+  virtual operator formula_expression_ref() const;
+
   /// Construct an empty model
   Model();
 
@@ -546,6 +548,8 @@ struct FormulaModel: public Model
   FormulaModel* clone() const {return new FormulaModel(*this);}
 
   boost::shared_ptr<const Object> result() const;
+
+  operator formula_expression_ref() const;
 
   FormulaModel(const boost::shared_ptr<const Formula>&,int);
   FormulaModel(const formula_expression_ref&);

@@ -365,6 +365,11 @@ void Model::update()
   }
 }
 
+Model::operator formula_expression_ref() const
+{
+  return model_formula(*this);
+}
+
 int SuperModel::add_parameter(const Parameter& P)
 {
   int index = Model::add_parameter(P);
@@ -1163,5 +1168,10 @@ FormulaModel::FormulaModel(const formula_expression_ref& R)
 {
   std::cout<<*C.F<<std::endl;
   std::cout<<"prior_index = "<<prior_index<<"\n";
+}
+
+FormulaModel::operator formula_expression_ref() const
+{
+  return formula_expression_ref(C.F,result_index);
 }
 
