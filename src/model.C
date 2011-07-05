@@ -313,6 +313,11 @@ Model::Model(const shared_ptr<const Formula>& F)
   }
 
   prior_index = add_probability_expression(C);
+
+  std::cout<<*C.F<<"\n";
+  std::cout<<"prior_index = "<<prior_index<<"\n";
+  std::cout<<"prior = "<<log(prior())<<"\n";
+  std::cout<<C<<std::endl;
 }
 
 boost::shared_ptr<const Object> Model::result() const
@@ -1160,17 +1165,11 @@ boost::shared_ptr<const Object> FormulaModel::result() const
 
 FormulaModel::FormulaModel(const boost::shared_ptr<const Formula>& F,int i)
   :Model(F),result_index(i)
-{
-  std::cout<<*C.F<<std::endl;
-  std::cout<<"prior_index = "<<prior_index<<"\n";
-}
+{ }
 
 FormulaModel::FormulaModel(const formula_expression_ref& R)
   :Model(R.F),result_index(R.index)
-{
-  std::cout<<*C.F<<std::endl;
-  std::cout<<"prior_index = "<<prior_index<<"\n";
-}
+{ }
 
 FormulaModel::operator formula_expression_ref() const
 {
