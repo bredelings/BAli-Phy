@@ -17,6 +17,8 @@ struct formula_expression_ref
   int add_expression(const expression_ref&);
 
   formula_expression_ref();
+  formula_expression_ref(int n);
+  formula_expression_ref(double d);
   formula_expression_ref(const expression_ref&);
   formula_expression_ref(const boost::shared_ptr<const Formula>& F, int);
   formula_expression_ref(const boost::shared_ptr<const Formula>& F, const expression_ref&);

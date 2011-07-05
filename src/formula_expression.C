@@ -7,14 +7,49 @@ formula_expression_ref formula_expression_ref::operator()(const formula_expressi
   return formula_expression_ref(combine(F, R.F), exp()(R.exp()));
 }
 
-formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg) const
+formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1) const
 {
-  return formula_expression_ref(*this)(arg);
+  return formula_expression_ref(*this)(arg1);
+}
+
+formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1,
+						  const formula_expression_ref& arg2) const
+{
+  return (*this)(arg1)(arg2);
+}
+
+formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1,
+						  const formula_expression_ref& arg2,
+						  const formula_expression_ref& arg3) const						  
+{
+  return (*this)(arg1)(arg2)(arg3);
+}
+
+formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1,
+						  const formula_expression_ref& arg2,
+						  const formula_expression_ref& arg3,
+						  const formula_expression_ref& arg4) const						  
+{
+  return (*this)(arg1)(arg2)(arg3)(arg4);
 }
 
 formula_expression_ref::formula_expression_ref()
   :index(-1)
 { }
+
+formula_expression_ref::formula_expression_ref(int i)
+{ 
+  Formula* F2 = new Formula();
+  index = F2->add_expression(i);
+  F = shared_ptr<const Formula>(F2);
+}
+
+formula_expression_ref::formula_expression_ref(double d)
+{ 
+  Formula* F2 = new Formula();
+  index = F2->add_expression(d);
+  F = shared_ptr<const Formula>(F2);
+}
 
 formula_expression_ref::formula_expression_ref(const expression_ref& R)
 {

@@ -186,7 +186,19 @@ struct expression_ref: public boost::shared_ptr<const Object>
     return apply(*this,arg);
   }
 
-  formula_expression_ref operator()(const formula_expression_ref& arg) const;
+  formula_expression_ref operator()(const formula_expression_ref& arg1) const;
+
+  formula_expression_ref operator()(const formula_expression_ref& arg1,
+				    const formula_expression_ref& arg2) const;
+
+  formula_expression_ref operator()(const formula_expression_ref& arg1,
+				    const formula_expression_ref& arg2,
+				    const formula_expression_ref& arg3) const;
+
+  formula_expression_ref operator()(const formula_expression_ref& arg1,
+				    const formula_expression_ref& arg2,
+				    const formula_expression_ref& arg3,
+				    const formula_expression_ref& arg4) const;
 
   expression_ref operator()(const expression_ref& arg1, const expression_ref& arg2) const
   {
