@@ -961,7 +961,7 @@ namespace substitution {
 
     string name() const;
 
-    M2(const M0& M1,const ::Model& R);
+    M2(const ::Model& M1,const ::Model& R);
   };
 
   /// M2a model has three omega parameters.
@@ -988,7 +988,7 @@ namespace substitution {
 
     string name() const;
 
-    M2a(const M0& M1,const ::Model& R);
+    M2a(const ::Model& M1,const ::Model& R);
   };
 
   class M3: public MultiParameterModel 
@@ -1010,7 +1010,7 @@ namespace substitution {
 
     string name() const;
 
-    M3(const M0& M1,const ::Model& R, int n);
+    M3(const ::Model& M1,const ::Model& R, int n);
   };
 
 
@@ -1021,7 +1021,7 @@ namespace substitution {
 
     //    string name() const;
 
-    M7(const M0& M1,const ::Model& R, int n);
+    M7(const ::Model& M1,const ::Model& R, int n);
   };
 
 
@@ -1059,7 +1059,7 @@ namespace substitution {
   ///class M8b: public MultiParameterModel {
   ///public:
   ///
-  ///  M8b(const M0& M1,const ReversibleFrequencyModel& R, int n);
+  ///  M8b(const ::Model& M1,const ReversibleFrequencyModel& R, int n);
   ///};
   ///public ReversibleMarkovModel,
   /// MultiParameterModel::p_change - 
@@ -1100,7 +1100,7 @@ namespace substitution {
     // This is already defined as SubmodelAs<MultiModel>(0).frequencies() in ReversibleWrapperOver<MultiModel>
     // const alphabet& Alphabet() const {return M->Alphabet();}
 
-    M8b(const M0& M, const ::Model& R, const int n_binBeta);
+    M8b(const ::Model& M, const ::Model& R, const int n_binBeta);
   };
 
 
