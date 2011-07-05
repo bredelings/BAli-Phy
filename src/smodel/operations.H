@@ -169,6 +169,8 @@ namespace substitution {
 
   extern expression_ref M0E;
 
+  formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& FR, const formula_expression_ref& FS);
+
   formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a);
 
   formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a, const std::valarray<double>& pi);

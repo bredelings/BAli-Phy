@@ -373,6 +373,14 @@ namespace substitution
 
   expression_ref M0E = lambda_expression( M0_Op() );
 
+  formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& FR, const formula_expression_ref& FS)
+  {
+    formula_expression_ref R = prefix_formula("R",FR);
+    formula_expression_ref S = prefix_formula("S",FS);
+    
+    return Q_from_R_and_S(R)(S);
+  }
+
   formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a)
   {
     formula_expression_ref R = prefix_formula("R",FR);
