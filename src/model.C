@@ -1146,11 +1146,8 @@ term_ref add_probability_expression(Context& C)
   // If this model has random variables... 
   if (Pr)
   {
-    C.add_expression(prob(Pr));
-
-    vector<int> results;
-    C.F->find_match_expression2(prob(_1),results);
-    return term_ref(results[0],C.F);
+    int index = C.add_expression(Pr);
+    return term_ref(index, C.F);
   }
   else
     return term_ref();
