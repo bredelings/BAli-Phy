@@ -677,7 +677,7 @@ namespace substitution {
 
   shared_ptr<const Object> INV_Model::result() const
   {
-    return INV_Exchange_Function(get_parameter_value_as<alphabet>(0));
+    return INV_Exchange_Function(*get_parameter_value_as<alphabet>(0), get_parameter_value_as<alphabet>(0)->size());
   }
 
   string INV_Model::name() const 
