@@ -1049,8 +1049,7 @@ namespace substitution {
   shared_ptr<const Object> SimpleReversibleAdditiveCollection::result() const
   {
     shared_ptr<const ReversibleAdditiveObject> O = SubModel().result_as<ReversibleAdditiveObject>();
-    shared_ptr<const ReversibleAdditiveCollectionObject> R (new  ReversibleAdditiveCollectionObject(* O) );
-    return R;
+    return Unit_Collection_Function(O);
   }
 
   string SimpleReversibleAdditiveCollection::name() const {
@@ -1126,17 +1125,7 @@ namespace substitution {
   {
     shared_ptr<const ReversibleAdditiveCollectionObject> sub = SubModel().result_as<const ReversibleAdditiveCollectionObject>();
 
-    shared_ptr<MultiModelObject> R (new MultiModelObject);
-
-    // set the distribution to 1.0
-    R->fraction.resize(1);
-    R->fraction[0] = 1;
-
-    // make a copy of the submodel
-    R->base_models.resize(1);
-    R->base_models[0] = sub;
-
-    return R;
+    return Unit_Mixture_Function(sub);
   }
 
   string UnitModel::name() const {
