@@ -549,6 +549,8 @@ struct FormulaModel: public Model
 
   boost::shared_ptr<const Object> result() const;
 
+  std::string name() const;
+
   operator formula_expression_ref() const;
 
   FormulaModel(const boost::shared_ptr<const Formula>&,int);

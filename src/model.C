@@ -273,6 +273,11 @@ unsigned Model::n_parameters() const
   return C.F->n_parameters();
 }
 
+std::string FormulaModel::name() const
+{
+  return C.F->sub_exp(result_index)->print();
+}
+
 efloat_t Model::prior() const
 {
   if (prior_index == -1) return 1.0;
