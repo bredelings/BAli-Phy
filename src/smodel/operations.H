@@ -162,7 +162,7 @@ namespace substitution {
 
   formula_expression_ref GTR_Model(const alphabet& a);
   
-  boost::shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a);
+  boost::shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a,int n);
 
   boost::shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
 

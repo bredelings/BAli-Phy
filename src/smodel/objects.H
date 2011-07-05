@@ -99,7 +99,7 @@ namespace substitution
 
     double operator()(int i,int j) const {return S(i,j);}
 
-    int n_states() const {return S.size1();}
+    int size() const {return S.size1();}
 
     ExchangeModelObject(int n):S(n,n)
     { }

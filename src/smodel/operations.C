@@ -110,13 +110,13 @@ namespace substitution
     return R;
   }
   
-  shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a)
+  shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a,int n)
   {
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
+    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a,n) );
 
     // Calculate S matrix
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++)
+    for(int i=0;i<R->n_states();i++)
+      for(int j=0;j<R->n_states();j++)
 	R->S(i,j) = 0;
 
     return R;
@@ -348,9 +348,9 @@ namespace substitution
     assert(F.n_states() == F.Alphabet().size());
 
     // The exchange model and the frequency model should have the same number of states, if not the same alphabet
-    assert(S.n_states() == F.n_states());
+    assert(S.size() == F.n_states());
 
-    const unsigned N = S.n_states();
+    const unsigned N = F.n_states();
 
     // recompute rate matrix
     Matrix& Q = R->Q;
