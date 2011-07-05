@@ -339,7 +339,7 @@ boost::shared_ptr<const Object> model_prior::operator()(OperationArgs& Args) con
 {
   expression_ref R = Args.evaluate(0);
 
-  vector<expression_ref> v = get_ref_vector(R);
+  vector<expression_ref> v = get_ref_vector_from_tuple(R);
 
   shared_ptr<Model> M2 (M->clone());
   for(int i=0;i<M2->n_parameters();i++)

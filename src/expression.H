@@ -404,7 +404,9 @@ std::vector<T> get_vector(const expression_ref& R)
   return v2;
 }
 
-std::vector<expression_ref> get_ref_vector(const expression_ref& R);
+std::vector<expression_ref> get_ref_vector_from_list(const expression_ref& R);
+
+std::vector<expression_ref> get_ref_vector_from_tuple(const expression_ref& R);
 
 const expression_ref get_tuple(const std::vector<expression_ref>& v);
 
