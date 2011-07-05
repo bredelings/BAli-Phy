@@ -263,7 +263,7 @@ namespace substitution {
       return Unit_Collection_Function(O);
     }
 
-    std::string name() const {return "DiscretizedDistribution";}
+    std::string name() const {return "Unit_Collection";}
 
     Unit_Collection_Op():Operation(2) { }
   };
@@ -294,7 +294,7 @@ namespace substitution {
       return Unit_Mixture_Function(O);
     }
 
-    std::string name() const {return "DiscretizedDistribution";}
+    std::string name() const {return "Unit_Mixture";}
 
     Unit_Mixture_Op():Operation(2) { }
   };
