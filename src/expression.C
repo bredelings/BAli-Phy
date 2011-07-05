@@ -44,7 +44,12 @@ tribool expression::compare(const Object& o) const
   tribool same = true;
   for(int i=0;i<size();i++) 
   {
-    same = same and sub[i]->compare(*E->sub[i]);
+    tribool b = sub[i]->compare(*E->sub[i]);
+
+    if (indeterminate(b))
+      std::cerr<<"Warning: '"<<sub[i]<<"' and '"<<E->sub[i]<<"' are unsure if they are equal.\n\n";
+
+    same = same and b;
     if (not same) return false;
   }
 
