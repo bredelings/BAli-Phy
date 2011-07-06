@@ -92,7 +92,11 @@ expression_ref model_prior_expression(const Model& M)
 {
   vector< expression_ref > sub;
 
-  return distributed_as( prob_density(M.name(),model_prior(M)), get_tuple( model_parameter_expressions( M ) ), Tuple(0) );
+  return distributed( get_tuple( model_parameter_expressions( M ) ),
+		      Tuple(2)(prob_density(M.name(),model_prior(M)), 
+			       Tuple(0) 
+			       )
+		      );
 }
 
 void Model::validate() const
@@ -1119,8 +1123,7 @@ shared_ptr<Model> prefix_model(const Model& M, const string& prefix)
 
 term_ref add_probability_expression(Context& C)
 {
-  expression_ref query = distributed_as(prob_density(_,_1),_2,_3);
-  expression_ref query2 = distributed(_2,Tuple(2)(prob_density(_,_1),_3));
+  expression_ref query = distributed(_2,Tuple(2)(prob_density(_,_1),_3));
 
   typed_expression_ref<Log_Double> Pr;
 
@@ -1130,11 +1133,7 @@ term_ref add_probability_expression(Context& C)
     vector<expression_ref> results; 
 
     // If its a probability expression, then...
-    if (not find_match(query, C.F->exp(i), results))
-    {
-      results.clear();
-      if (not find_match(query2, C.F->exp(i), results)) continue;
-    }
+    if (not find_match(query, C.F->exp(i), results)) continue;
 
     // Extract the density operation
     shared_ptr<const Operation> density_op = boost::dynamic_pointer_cast<const Operation>(results[0]);

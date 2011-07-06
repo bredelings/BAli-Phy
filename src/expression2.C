@@ -97,7 +97,7 @@ using std::endl;
 
 term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
 {
-  expression_ref query = distributed_as(prob_density(_,_1),_2,_3);
+  expression_ref query = distributed(_2,Tuple(2)(prob_density(_,_1),_3));
 
   typed_expression_ref<Log_Double> Pr;
 
@@ -194,9 +194,9 @@ int main()
   term_ref defv = F->add_expression(  default_value(parameter("X"), 2.0) );
   term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
   term_ref tuple_x_y = F->add_expression(Tuple(2)(X,Y));
-  expression_ref Exp = prob_density("Exp",exponential_density());
-  term_ref prior_x_y = F->add_expression(distributed_as(Exp,parameter("X"),Y+One));
-  term_ref prior_y_z = F->add_expression(distributed_as(Exp,parameter("Y"),Z+One));
+
+  term_ref prior_x_y = F->add_expression(distributed(parameter("X"),Tuple(2)(exponential_dist,Y+One)));
+  term_ref prior_y_z = F->add_expression(distributed(parameter("Y"),Tuple(2)(exponential_dist,Z+One)));
   term_ref probability_expression = add_probability_expression(F);
 
   cout<<"Creating an Context...\n";

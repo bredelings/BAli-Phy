@@ -297,7 +297,7 @@ namespace substitution
     }
 
     expression_ref N = get_tuple(vector<double>(a.size(), 1.0) );
-    F.add_expression( distributed_as( dirichlet_dist, F, N ) );
+    F.add_expression( distributed( F, Tuple(2)(dirichlet_dist,N ) ) );
 
     return F;
   }
@@ -313,12 +313,7 @@ namespace substitution
   {
     assert(a.size() == pi.size());
     
-    formula_expression_ref f = def_parameter("f", 1.0, between(0,1));
-    f.add_expression( distributed_as( prob_density("Uniform",uniform_density()), 
-				      f,
-				      Tuple(2)(0.0,1.0)
-				      ) 
-		      );
+    formula_expression_ref f = def_parameter("f", 1.0, between(0,1), uniform_dist, Tuple(2)(0.0, 1.0));
 
     formula_expression_ref Vars = Frequencies_Model(a,pi);
 
@@ -686,9 +681,7 @@ namespace substitution
     {
       string var_name = "Mixture::p"+convertToString(i+1);
       parameter var(var_name);
-      formula_expression_ref Var(var); 
-      Var.add_expression( default_value(var, 1.0/N) );
-      Var.add_expression( bounds(var, between(0.0, 1.0)) );
+      formula_expression_ref Var = def_parameter(var_name, 1.0/N, between(0,1)); 
 
       models_list = Cons(models[i], models_list);
       vars_list = Cons(Var, vars_list);
@@ -697,7 +690,7 @@ namespace substitution
     }
     formula_expression_ref R= Mixture_E(vars_list, models_list);
 
-    R.add_expression(distributed_as(dirichlet_dist, vars_tuple, n_tuple ) );
+    R.add_expression(distributed(vars_tuple, Tuple(2)(dirichlet_dist, n_tuple ) ) );
 
     return R;
   }

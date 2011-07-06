@@ -660,7 +660,6 @@ expression_ref bounds = lambda_expression(data_function("bounds",2));
 expression_ref prob_density = lambda_expression( data_function("prob_density",2) );
 
 // Fields: (prob_density) (random vars) (parameter expressions)
-expression_ref distributed_as = lambda_expression( data_function("~",3) );
 expression_ref distributed = lambda_expression( data_function("~",2) );
 
 expression_ref sys_print = lambda_expression( Print() );

@@ -344,8 +344,6 @@ extern expression_ref bounds;
 // 2 Fields: string, density op
 extern expression_ref prob_density;
 
-// 3 Fields: (prob_density) (random vars) (parameter expressions)
-extern expression_ref distributed_as;
 // 2 Fields: (random vars) (prob_density (parameter expressions))
 extern expression_ref distributed;
 
