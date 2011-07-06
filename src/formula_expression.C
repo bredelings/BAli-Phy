@@ -85,3 +85,16 @@ formula_expression_ref def_parameter(const std::string& name, const expression_r
   return Var;
 }
 
+formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref& D)
+{
+  formula_expression_ref Var = def_parameter(name,def_value,b);
+  Var.add_expression(distributed(Var.exp(),D));
+  return Var;
+}
+
+formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref& F, const expression_ref& A)
+{
+  expression_ref D = Tuple(2)(F,A);
+  return def_parameter(name,def_value,b,D);
+}
+

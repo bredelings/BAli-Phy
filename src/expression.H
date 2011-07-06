@@ -346,6 +346,8 @@ extern expression_ref prob_density;
 
 // 3 Fields: (prob_density) (random vars) (parameter expressions)
 extern expression_ref distributed_as;
+// 2 Fields: (random vars) (prob_density (parameter expressions))
+extern expression_ref distributed;
 
 // 1 Field: a value
 extern expression_ref sys_print;

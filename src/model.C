@@ -1120,6 +1120,7 @@ shared_ptr<Model> prefix_model(const Model& M, const string& prefix)
 term_ref add_probability_expression(Context& C)
 {
   expression_ref query = distributed_as(prob_density(_,_1),_2,_3);
+  expression_ref query2 = distributed(_2,Tuple(2)(prob_density(_,_1),_3));
 
   typed_expression_ref<Log_Double> Pr;
 
@@ -1129,23 +1130,26 @@ term_ref add_probability_expression(Context& C)
     vector<expression_ref> results; 
 
     // If its a probability expression, then...
-    if (find_match(query,(*C.F)[i],results))
+    if (not find_match(query,(*C.F)[i],results))
     {
-      // Extract the density operation
-      shared_ptr<const Operation> density_op = boost::dynamic_pointer_cast<const Operation>(results[0]);
-      if (not density_op) throw myexception()<<"Expression "<<i<<" does have an Op in the right place!";
-
-      // Create an expression for calculating the density of these random variables given their inputs
-      expression_ref density_func = lambda_expression( *density_op );
-      typed_expression_ref<Log_Double> Pr_i = density_func(results[1], results[2]);
-
-      // Extend the probability expression to include this term also.
-      // (FIXME: a balanced tree could save computation time)
-      if (not Pr)
-	Pr = Pr_i;
-      else
-	Pr = Pr_i * Pr;
+      results.clear();
+      if (not find_match(query2,(*C.F)[i],results)) continue;
     }
+
+    // Extract the density operation
+    shared_ptr<const Operation> density_op = boost::dynamic_pointer_cast<const Operation>(results[0]);
+    if (not density_op) throw myexception()<<"Expression "<<i<<" does have an Op in the right place!";
+    
+    // Create an expression for calculating the density of these random variables given their inputs
+    expression_ref density_func = lambda_expression( *density_op );
+    typed_expression_ref<Log_Double> Pr_i = density_func(results[1], results[2]);
+    
+    // Extend the probability expression to include this term also.
+    // (FIXME: a balanced tree could save computation time)
+    if (not Pr)
+      Pr = Pr_i;
+    else
+      Pr = Pr_i * Pr;
   }
 
   // If this model has random variables... 

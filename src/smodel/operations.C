@@ -91,24 +91,12 @@ namespace substitution
 
   formula_expression_ref TN_Model(const alphabet& a)
   {
-    expression_ref kappa1 = parameter("TN::kappa(pur)");
-    expression_ref kappa2 = parameter("TN::kappa(pyr)");
+    formula_expression_ref kappa1 = def_parameter("TN::kappa(pur)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(2)(log(2), 0.25));
+    formula_expression_ref kappa2 = def_parameter("TN::kappa(pyr)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(2)(log(2), 0.25));
 
-    formula_expression_ref R(lambda_expression(TN_Op())(a,kappa1,kappa2));
+    expression_ref TN = lambda_expression(TN_Op());
 
-    R.add_expression(kappa1);
-    R.add_expression(kappa2);
-
-    R.add_expression(default_value(kappa1,2.0));
-    R.add_expression(default_value(kappa2,2.0));
-
-    R.add_expression(bounds(kappa1,lower_bound(0.0)));
-    R.add_expression(bounds(kappa2,lower_bound(0.0)));
-
-    R.add_expression(distributed_as(log_laplace_dist, kappa1, Tuple(2)(log(2), 0.25) ) );
-    R.add_expression(distributed_as(log_laplace_dist, kappa2, Tuple(2)(log(2), 0.25) ) );
-    
-    return R;
+    return TN(a)(kappa1)(kappa2);
   }
   
   shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a,int n)
@@ -144,7 +132,7 @@ namespace substitution
     // Where do we get our frequencies from?
     formula_expression_ref INV = INV_for_Mixture(R);
     expression_ref F;
-    INV = Q_from_S_and_R(INV,F);
+    //    INV = Q_from_S_and_R(INV,F);
     INV = Unit_Mixture(Unit_Collection(INV));
 
     return Mixture_E(Cons(1.0-p,Cons(P,ListEnd)), Cons(R,Cons(INV,ListEnd)));
