@@ -676,10 +676,8 @@ vector<expression_ref> get_ref_vector_from_list(const expression_ref& R)
 {
   expression_ref R2 = R;
   vector<expression_ref> V;
-  while(not R2->compare(*ListEnd))
+  while(boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R2))
   {
-    boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-    assert(E);
     assert(E->size() == 3);
     V.push_back(E->sub[1]);
     R2 = E->sub[2];
