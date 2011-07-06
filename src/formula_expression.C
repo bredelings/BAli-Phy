@@ -1,5 +1,6 @@
 #include "formula_expression.H"
 #include "context.H"
+#include "bounds.H"
 
 using boost::shared_ptr;
 
@@ -74,3 +75,13 @@ boost::shared_ptr<const Object> formula_expression_ref::result() const
   Context C(F);
   return C.evaluate(index);
 }
+
+formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b)
+{
+  expression_ref var = parameter(name);
+  formula_expression_ref Var (var);
+  Var.add_expression( default_value(var, def_value) );
+  Var.add_expression( bounds(var, b) );
+  return Var;
+}
+

@@ -329,10 +329,7 @@ namespace substitution
     for(int i=0;i<a.size();i++)
     {
       string pname = string("pi") + a.letter(i);
-      expression_ref var = parameter(pname);
-      formula_expression_ref Var ( var );
-      Var.add_expression( default_value( var , pi[i] ) );
-      Var.add_expression( bounds( var , between(0.0, 1.0) ) );
+      formula_expression_ref Var  = def_parameter(pname, pi[i], between(0,1));
       F = F(Var);
     }
 
@@ -346,15 +343,6 @@ namespace substitution
   {
     valarray<double> pi (1.0/a.size(), a.size());
     return Frequencies_Model(a, pi);
-  }
-
-  formula_expression_ref def_parameter(const string& name, const expression_ref& def_value, const Bounds<double>& b)
-  {
-    expression_ref var = parameter(name);
-    formula_expression_ref Var (var);
-    Var.add_expression( default_value(var, def_value) );
-    Var.add_expression( bounds(var, b) );
-    return Var;
   }
 
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.

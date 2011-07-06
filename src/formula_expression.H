@@ -29,4 +29,7 @@ struct formula_expression_ref
 
 formula_expression_ref prefix_formula(const std::string&,const formula_expression_ref&);
 
+template <typename T> struct Bounds;
+
+formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b);
 #endif
