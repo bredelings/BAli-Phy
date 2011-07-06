@@ -62,12 +62,10 @@ formula_expression_ref prefix_formula(const std::string& prefix,const formula_ex
   return formula_expression_ref(prefix_formula(prefix,R.F),R.index);
 }
 
-int formula_expression_ref::add_expression(const expression_ref& R)
+int formula_expression_ref::add_expression(const formula_expression_ref& R)
 {
-  Formula* F2 = F->clone();
-  int new_index = F2->add_expression(R);
-  F = shared_ptr<const Formula>(F2);
-  return new_index;
+  F = combine(F, R.F);
+  return F->find_expression(R.exp());
 }
 
 boost::shared_ptr<const Object> formula_expression_ref::result() const

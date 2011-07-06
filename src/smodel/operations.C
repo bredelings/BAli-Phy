@@ -174,7 +174,7 @@ namespace substitution
 				 Tuple(2)(dirichlet_dist, 
 					  Tuple(6)(8.0)(4.0)(4.0)(4.0)(4.0)(8.0)
 					  )
-				 ).exp()
+				 )
 		     );
     
     return R;

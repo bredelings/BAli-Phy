@@ -14,7 +14,7 @@ struct formula_expression_ref
 
   expression_ref exp() const {return F->sub_exp(index);}
 
-  int add_expression(const expression_ref&);
+  int add_expression(const formula_expression_ref&);
 
   boost::shared_ptr<const Object> result() const;
 

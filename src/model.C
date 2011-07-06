@@ -1125,15 +1125,15 @@ term_ref add_probability_expression(Context& C)
   typed_expression_ref<Log_Double> Pr;
 
   // Check each expression in the Formula
-  for(int i=0;i<C.F->size();i++)
+  for(int i=0;i<C.F->n_exp();i++)
   {
     vector<expression_ref> results; 
 
     // If its a probability expression, then...
-    if (not find_match(query,(*C.F)[i],results))
+    if (not find_match(query, C.F->exp(i), results))
     {
       results.clear();
-      if (not find_match(query2,(*C.F)[i],results)) continue;
+      if (not find_match(query2, C.F->exp(i), results)) continue;
     }
 
     // Extract the density operation
