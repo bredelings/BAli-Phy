@@ -42,24 +42,39 @@ using boost::shared_ptr;
 ///
 /// \param sstack A stack of strings that represent a substitution model.
 /// \param s The model name to match.
-/// \param arg A posible argument.
+/// \param args The possible argument.
 ///
-bool match(vector<string>& sstack,const string& s,string& arg) {
+bool match(vector<string>& sstack,const string& s, vector<string>& args) {
   if (not sstack.size())
     return false;
   
   string name = sstack.back();
 
-  vector<string> arguments = get_arguments(name,'[',']');
+  args = get_arguments(name,'[',']');
 
   if (name != s) return false;
+
+  sstack.pop_back();
+
+  return true;
+}
+
+/// \brief Take a string of the form \a s[\a arg] off the top of \a sstack, if its present
+///
+/// \param sstack A stack of strings that represent a substitution model.
+/// \param s The model name to match.
+/// \param arg A possible argument.
+///
+bool match(vector<string>& sstack,const string& s,string& arg) 
+{
+  vector<string> arguments;
+
+  if (not match(sstack,s,arguments)) return false;
 
   if (arguments.size() == 0)
     arg = "";
   else if (arguments.size() > 0)
     arg = arguments[0];
-
-  sstack.pop_back();
 
   return true;
 }
@@ -82,7 +97,13 @@ string default_markov_model(const alphabet& a)
 }
 
 formula_expression_ref
-get_smodel_(const string& smodel,const alphabet& a,const valarray<double>&);
+get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >&);
+
+formula_expression_ref
+get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a);
+
+formula_expression_ref
+get_smodel_(const string& smodel);
 
 /// \brief Construct a model from the top of the string stack
 ///
@@ -93,8 +114,8 @@ get_smodel_(const string& smodel,const alphabet& a,const valarray<double>&);
 ///
 bool process_stack_Markov(vector<string>& string_stack,
 			  vector<formula_expression_ref >& model_stack,
-			  const alphabet& a,
-			  const valarray<double>& frequencies)
+			  const shared_ptr<const alphabet>& a,
+			  const shared_ptr<const valarray<double> >& frequencies)
 {
   string arg;
 
@@ -102,128 +123,133 @@ bool process_stack_Markov(vector<string>& string_stack,
 
   //------ Get the base markov model (Reversible Markov) ------//
   if (match(string_stack,"EQU",arg))
-    model_stack.push_back(EQU(a));
+    model_stack.push_back(EQU(*a));
 
   else if (match(string_stack,"F81",arg))
-    model_stack.push_back(F81_Model(a,frequencies));
+  {
+    if (frequencies)
+      model_stack.push_back(F81_Model(*a,*frequencies));
+    else
+      model_stack.push_back(F81_Model(*a));
+  }
 
   else if (match(string_stack,"HKY",arg)) 
   {
-    const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
+    const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
-      throw myexception()<<"HKY: '"<<a.name<<"' is not a nucleotide alphabet.";
+      throw myexception()<<"HKY: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-    R = HKY_Model(a);
+    R = HKY_Model(*a);
   }
   else if (match(string_stack,"TN",arg)) 
   {
-    const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
+    const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
-      throw myexception()<<"TN: '"<<a.name<<"' is not a nucleotide alphabet.";
+      throw myexception()<<"TN: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-    R = TN_Model(a);
+    R = TN_Model(*a);
   }
   else if (match(string_stack,"GTR",arg)) 
   {
-    const Nucleotides* N = dynamic_cast<const Nucleotides*>(&a);
+    const Nucleotides* N = dynamic_cast<const Nucleotides*>(&*a);
     if (not N)
-      throw myexception()<<"GTR: '"<<a.name<<"' is not a nucleotide alphabet.";
+      throw myexception()<<"GTR: '"<<a->name<<"' is not a nucleotide alphabet.";
 
     // FIXME - allow/make a general GTR model!
 
-    R = GTR_Model(a);
+    R = GTR_Model(*a);
     // model_stack.push_back(GTR(*N));
     //    model_stack.push_back(FormulaModel(model_formula(GTR(*N))));
   }
   /* THINKO - Must tripletmodels be constructed from nucleotide-specific models?
   else if (match(string_stack,"EQUx3",arg)) {
-    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (T) 
       model_stack.push_back(SingletToTripletExchangeModel(*T,EQU(T->getNucleotides())));
     else
-      throw myexception()<<"EQUx3:: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"EQUx3:: '"<<a->name<<"' is not a triplet alphabet.";
   }
   */      
   else if (match(string_stack,"HKYx3",arg)) 
   {
-    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (T) 
       model_stack.push_back(SingletToTripletExchangeModel(*T,HKY(T->getNucleotides())));
     else
-      throw myexception()<<"HKYx3: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"HKYx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   else if (match(string_stack,"TNx3",arg)) 
   {
-    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (T) 
       model_stack.push_back(SingletToTripletExchangeModel(*T,TN(T->getNucleotides())));
     else
-      throw myexception()<<"TNx3: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"TNx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   else if (match(string_stack,"GTRx3",arg)) 
   {
-    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (T) 
       model_stack.push_back(SingletToTripletExchangeModel(*T,GTR(T->getNucleotides())));
     else
-      throw myexception()<<"GTRx3: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"GTRx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   else if (match(string_stack,"PAM",arg)) {
-    if (a != AminoAcids())
-      throw myexception()<<"PAM: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
+    if (*a != AminoAcids())
+      throw myexception()<<"PAM: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(PAM());
   }
   else if (match(string_stack,"JTT",arg)) {
-    if (a != AminoAcids())
-      throw myexception()<<"JTT: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
+    if (*a != AminoAcids())
+      throw myexception()<<"JTT: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(JTT());
   }
   else if (match(string_stack,"WAG",arg)) {
-    if (a != AminoAcids())
-      throw myexception()<<"WAG: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
+    if (*a != AminoAcids())
+      throw myexception()<<"WAG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(WAG());
   }
   else if (match(string_stack,"LG",arg)) {
-    if (a != AminoAcids())
-      throw myexception()<<"LG: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
+    if (*a != AminoAcids())
+      throw myexception()<<"LG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(LG());
   }
   else if (match(string_stack,"Empirical",arg)) {
-    Empirical M(a);
+    Empirical M(*a);
     M.load_file(arg);
     model_stack.push_back(M);
   }
   else if (match(string_stack,"C10",arg))
   {
-    if (a != AminoAcids())
-      throw myexception()<<"C20: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
+    if (*a != AminoAcids())
+      throw myexception()<<"C20: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(C10_CAT_FixedFrequencyModel());
   }
   else if (match(string_stack,"C20",arg))
   {
-    if (a != AminoAcids())
-      throw myexception()<<"C20: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
+    if (*a != AminoAcids())
+      throw myexception()<<"C20: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
     model_stack.push_back(C20_CAT_FixedFrequencyModel());
   }
   else if (match(string_stack,"CAT-Fix",arg)) {
-    if (a != AminoAcids())
-      throw myexception()<<"CAT-Fix: '"<<a.name<<"' is not an 'Amino-Acids' alphabet.";
-    CAT_FixedFrequencyModel M(a);
+    if (*a != AminoAcids())
+      throw myexception()<<"CAT-Fix: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
+    CAT_FixedFrequencyModel M(*a);
     M.load_file(arg);
     model_stack.push_back(M);
   }
 
   else if (match(string_stack,"M0",arg)) 
   {
-    const Codons* C = dynamic_cast<const Codons*>(&a);
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
-      throw myexception()<<"M0: '"<<a.name<<"' is not a 'Codons' alphabet";
+      throw myexception()<<"M0: '"<<a->name<<"' is not a 'Codons' alphabet";
 
     formula_expression_ref N_submodel = HKY(C->getNucleotides());
 
     if (not arg.empty()) 
     {
-      formula_expression_ref submodel = get_smodel_(arg,C->getNucleotides(),valarray<double>());
+      formula_expression_ref submodel = get_smodel_(arg, const_ptr( C->getNucleotides() ) );
 
       if (not submodel.result_as<AlphabetExchangeModelObject>() or 
 	  not dynamic_pointer_cast<const Nucleotides>(submodel.result_as<AlphabetExchangeModelObject>()->get_alphabet()))
@@ -261,6 +287,18 @@ formula_expression_ref get_EM(vector<formula_expression_ref>& model_stack, const
   return get_EM(model_stack.back(), name);
 }
 
+/// \brief Construct an AlphabetExchangeModel from the top of the model stack
+formula_expression_ref get_EM_default(vector<formula_expression_ref>& model_stack, 
+				      const string& name,
+				      const shared_ptr<const alphabet>& a, 
+				      const shared_ptr< const valarray<double> >& frequencies)
+{
+  if (model_stack.empty())
+    model_stack.push_back( get_smodel_(default_markov_model(*a), a, frequencies));
+
+  return get_EM(model_stack.back(), name);
+}
+
 
 /// \brief Construct a model from the top of the string stack
 ///
@@ -271,15 +309,15 @@ formula_expression_ref get_EM(vector<formula_expression_ref>& model_stack, const
 ///
 bool process_stack_Frequencies(vector<string>& string_stack,
 			       vector<formula_expression_ref >& model_stack,
-			       const alphabet& a,
-			       const valarray<double>& frequencies)
+			       const shared_ptr<const alphabet>& a,
+			       const shared_ptr<const valarray<double> >& frequencies)
 {
   string arg;
   
   if (match(string_stack,"F=constant",arg)) {
     formula_expression_ref EM = get_EM(model_stack,"F=constant");
 
-    SimpleFrequencyModel F(a,frequencies);
+    SimpleFrequencyModel F(*a,*frequencies);
 
     for(int i=0;i<F.n_parameters();i++)
       F.set_fixed(i,true);
@@ -289,22 +327,22 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   else if (match(string_stack,"F",arg)) {
     formula_expression_ref EM = get_EM(model_stack,"F");
 
-    SimpleFrequencyModel F(a,frequencies);
+    SimpleFrequencyModel F(*a,*frequencies);
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
   else if (match(string_stack,"F=uniform",arg)) {
     formula_expression_ref EM = get_EM(model_stack,"F=uniform");
 
-    UniformFrequencyModel UF(a,frequencies);
+    UniformFrequencyModel UF(*a,*frequencies);
 
     model_stack.back() = Reversible_Markov_Model(EM,UF);
   }
   else if (match(string_stack,"F=nucleotides",arg)) 
   {
-    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"F=nucleotides:: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"F=nucleotides:: '"<<a->name<<"' is not a triplet alphabet.";
 
     formula_expression_ref EM = get_EM(model_stack,"F=nucleotides");
 
@@ -312,9 +350,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   }
   else if (match(string_stack,"F=amino-acids",arg)) 
   {
-    const Codons* C = dynamic_cast<const Codons*>(&a);
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
-      throw myexception()<<"F=amino-acids:: '"<<a.name<<"' is not a codon alphabet.";
+      throw myexception()<<"F=amino-acids:: '"<<a->name<<"' is not a codon alphabet.";
 
     formula_expression_ref EM = get_EM(model_stack,"F=nucleotides");
 
@@ -322,9 +360,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   }
   else if (match(string_stack,"F=triplets",arg)) 
   {
-    const Triplets* T = dynamic_cast<const Triplets*>(&a);
+    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"F=triplets:: '"<<a.name<<"' is not a triplet alphabet.";
+      throw myexception()<<"F=triplets:: '"<<a->name<<"' is not a triplet alphabet.";
 
     formula_expression_ref EM = get_EM(model_stack,"F=triplets");
 
@@ -332,9 +370,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   }
   else if (match(string_stack,"F=codons",arg)) 
   {
-    const Codons* C = dynamic_cast<const Codons*>(&a);
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
-      throw myexception()<<"F=codons:: '"<<a.name<<"' is not a codon alphabet.";
+      throw myexception()<<"F=codons:: '"<<a->name<<"' is not a codon alphabet.";
 
     formula_expression_ref EM = get_EM(model_stack,"F=codons");
 
@@ -342,9 +380,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   }
   else if (match(string_stack,"F=codons2",arg)) 
   {
-    const Codons* C = dynamic_cast<const Codons*>(&a);
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
-      throw myexception()<<"F=codons2:: '"<<a.name<<"' is not a codon alphabet.";
+      throw myexception()<<"F=codons2:: '"<<a->name<<"' is not a codon alphabet.";
 
     formula_expression_ref EM = get_EM(model_stack,"F=codons2");
 
@@ -357,7 +395,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
 /// \brief Construct a ReversibleMarkovModel from model \a M
 formula_expression_ref get_RA(const formula_expression_ref& M, const string& name,
-					     const valarray<double>& frequencies)
+			      const shared_ptr< const valarray<double> >& frequencies)
 {
   if (M.result_as<ReversibleMarkovModelObject>())
     return M;
@@ -366,7 +404,10 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
     formula_expression_ref top = get_EM(M,name);
     shared_ptr<const alphabet> a = get_alphabet( FormulaModel(top) );
     // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
-    return Simple_gwF_Model(top, *a, frequencies); 
+    if (frequencies)
+      return Simple_gwF_Model(top, *a, *frequencies); 
+    else
+      return Simple_gwF_Model(top, *a); 
   }
   catch (std::exception& e) { 
     throw myexception()<<name<<": Can't construct a SimpleReversibleMarkovModel from '"<<M.F->sub_exp(M.index)<<"':\n "<<e.what();
@@ -375,8 +416,8 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
 
 /// \brief Construct a ReversibleMarkovModel from the top of the model stack
 formula_expression_ref get_RA(vector<formula_expression_ref >& model_stack, 
-			   const string& name,
-			   const valarray<double>& frequencies)
+			      const string& name,
+			      const shared_ptr< const valarray<double> >& frequencies)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": couldn't find any model to use.";
@@ -385,9 +426,22 @@ formula_expression_ref get_RA(vector<formula_expression_ref >& model_stack,
 }
 
 
+/// \brief Construct a ReversibleMarkovModel from the top of the model stack
+formula_expression_ref get_RA_default(vector<formula_expression_ref >& model_stack, 
+				      const string& name,
+				      const shared_ptr<const alphabet>& a,
+				      const shared_ptr< const valarray<double> >& frequencies)
+{
+  if (model_stack.empty())
+    model_stack.push_back( get_smodel_(default_markov_model(*a), a, frequencies));
+  
+  return get_RA(model_stack.back(), name, frequencies);
+}
+
+
 /// \brief Construct a MultiModel from model \a M
 formula_expression_ref
-get_MM(const formula_expression_ref& M, const string& name, const valarray<double>& frequencies)
+get_MM(const formula_expression_ref& M, const string& name, const shared_ptr< const valarray<double> >& frequencies)
 {
   if (M.result_as<MultiModelObject>())
     return M;
@@ -402,7 +456,7 @@ get_MM(const formula_expression_ref& M, const string& name, const valarray<doubl
 
 /// \brief Construct a MultiModel from the top of the model stack.
 formula_expression_ref
-get_MM(vector<formula_expression_ref >& model_stack, const string& name,const valarray<double>& frequencies)
+get_MM(vector<formula_expression_ref >& model_stack, const string& name,const shared_ptr< const valarray<double> >& frequencies)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": Trying to construct a MultiModel, but no model was given.";
@@ -410,34 +464,49 @@ get_MM(vector<formula_expression_ref >& model_stack, const string& name,const va
   return get_MM(model_stack.back(), name, frequencies);
 }
 
+/// \brief Construct a MultiModel from the top of the model stack.
+formula_expression_ref
+get_MM_default(vector<formula_expression_ref >& model_stack, const string& name, 
+	       const shared_ptr<const alphabet>& a, 
+	       const shared_ptr< const valarray<double> >& frequencies)
+{
+  if (model_stack.empty())
+    model_stack.push_back( get_smodel_(default_markov_model(*a), a, frequencies));
+
+  return get_MM(model_stack.back(), name, frequencies);
+}
+
 bool process_stack_Multi(vector<string>& string_stack,  
 			 vector<formula_expression_ref >& model_stack,
-			 const valarray<double>& frequencies)
+			  const shared_ptr<const alphabet>& a,
+			 const shared_ptr< const valarray<double> >& frequencies)
 {
   string arg;
+  vector<string> args;
+
   if (match(string_stack,"single",arg)) 
-    model_stack.back() = get_MM(model_stack,"single",frequencies);
+    model_stack.back() = get_MM_default(model_stack,"single",a,frequencies);
 
   else if (match(string_stack,"gamma_plus_uniform",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = MultiRate(get_MM(model_stack,"gamma_plus_uniform",frequencies),  Discretize(model_formula(Gamma()+Uniform()), expression_ref(n)) );
+    model_stack.back() = MultiRate(get_MM_default(model_stack,"gamma_plus_uniform",a,frequencies),  Discretize(model_formula(Gamma()+Uniform()), expression_ref(n)) );
   }
   else if (match(string_stack,"gamma",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = MultiRate(get_MM(model_stack,"gamma",frequencies),  Discretize(model_formula(Gamma()), expression_ref(n)) );
+    model_stack.back() = MultiRate(get_MM_default(model_stack,"gamma",a,frequencies),  Discretize(model_formula(Gamma()), expression_ref(n)) );
   }
   else if (match(string_stack,"log-normal",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = MultiRate(get_MM(model_stack,"gamma",frequencies),  Discretize(model_formula(LogNormal()), expression_ref(n)) );
+    model_stack.back() = MultiRate(get_MM_default(model_stack,"log-normal",a,frequencies),  Discretize(model_formula(LogNormal()), expression_ref(n)) );
   }
   else if (match(string_stack,"multi_freq",arg)) {
     int n=4;
@@ -447,41 +516,30 @@ bool process_stack_Multi(vector<string>& string_stack,
     model_stack.back() = MultiFrequencyModel(FormulaModel(get_EM(model_stack,"multi_freq")),n);
   }
   else if (match(string_stack,"INV",arg))
-    model_stack.back() = WithINV( FormulaModel(get_MM(model_stack,"INV",frequencies)) );
+    model_stack.back() = WithINV( FormulaModel(get_MM_default(model_stack,"INV",a,frequencies)) );
 
   else if (match(string_stack,"DP",arg)) {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
-    model_stack.back() = DirichletParameterModel(FormulaModel(get_MM(model_stack,"DP",frequencies)),-1,n);
+    model_stack.back() = DirichletParameterModel(FormulaModel(get_MM_default(model_stack,"DP",a,frequencies)),-1,n);
   }
   else if (match(string_stack,"Modulated",arg))
   {
-    formula_expression_ref MM = get_MM(model_stack,"Modulated",frequencies);
+    formula_expression_ref MM = get_MM_default(model_stack,"Modulated",a,frequencies);
 
     int n = MM.result_as<MultiModelObject>()->n_base_models();
     model_stack.back() = ModulatedMarkovModel(FormulaModel(MM),
 					      SimpleExchangeModel(n));
   }
-  else if (match(string_stack,"Mixture",arg)) 
+  else if (match(string_stack,"Mixture",args)) 
   {
-    int n=1;
-    if (arg.empty())
-      throw myexception()<<"Mixture model must specify number of submodels as Mixture[n]";
-    else
-      n = convertTo<int>(arg);
+    vector <formula_expression_ref> models;
+    for(int i=0;i<args.size();i++)
+      models.push_back( get_MM (get_smodel_(args[i], a, frequencies),"Mixture",frequencies ) );
 
-    if (model_stack.size() < n)
-      throw myexception()<<"Dual: can't find "<<n<<" models to combine";
-    
-    vector < owned_ptr< ::Model> > models;
-    for(int m=0;m<n;m++) {
-      formula_expression_ref M = get_MM(model_stack,"Mixture",frequencies);
-      model_stack.pop_back();
-      models.push_back( FormulaModel(M) );
-    }
-
-    model_stack.push_back(model_formula(MixtureModel(models)));
+    model_stack.push_back(Mixture_Model(models));
+    std::cout<<"Mixture formula = "<<*model_stack.back().F<<std::endl;
   }
   else if (match(string_stack,"M2",arg)) 
   {
@@ -526,7 +584,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 }
 
 formula_expression_ref 
-get_smodel_(const string& smodel,const alphabet& a,const valarray<double>& frequencies) 
+get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a,const shared_ptr<const valarray<double> >& frequencies) 
 {
   // Initialize the string stack from the model name
   vector<string> string_stack;
@@ -534,28 +592,30 @@ get_smodel_(const string& smodel,const alphabet& a,const valarray<double>& frequ
     string_stack = split(smodel,'+');
   std::reverse(string_stack.begin(),string_stack.end());
 
+
   // Initialize the model stack 
   vector<formula_expression_ref > model_stack;
+  /*
   if (not process_stack_Markov(string_stack,model_stack,a,frequencies)) 
   {
-    string model_name = default_markov_model(a);
+    string model_name = default_markov_model(*a);
     if (not model_name.size())
-      throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a.name<<"'";
+      throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a->name<<"'";
     string_stack.push_back(model_name);
     if (not process_stack_Markov(string_stack,model_stack,a,frequencies))
-      throw myexception()<<"Can't guess the base CTMC model for alphabet '"<<a.name<<"'";
+      throw myexception()<<"Can't guess the base CTMC model for alphabet '"<<a->name<<"'";
   }
-
+  */
 
   //-------- Run the model specification -----------//
   while(string_stack.size()) {
     int length = string_stack.size();
 
-    process_stack_Markov(string_stack,model_stack,a,frequencies);
+    process_stack_Markov(string_stack, model_stack, a, frequencies);
 
-    process_stack_Frequencies(string_stack,model_stack,a,frequencies);
+    process_stack_Frequencies(string_stack, model_stack, a, frequencies);
 
-    process_stack_Multi(string_stack,model_stack,frequencies);
+    process_stack_Multi(string_stack, model_stack, a, frequencies);
 
     if (string_stack.size() == length)
       throw myexception()<<"Couldn't process substitution model level \""<<string_stack.back()<<"\"";
@@ -569,6 +629,18 @@ get_smodel_(const string& smodel,const alphabet& a,const valarray<double>& frequ
   return model_stack.back();
 }
 
+formula_expression_ref
+get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a)
+{
+  return get_smodel_(smodel, a, shared_ptr<const valarray<double> >());
+}
+
+formula_expression_ref
+get_smodel_(const string& smodel)
+{
+  return get_smodel_(smodel, shared_ptr<const alphabet>(),shared_ptr<const valarray<double> >());
+}
+
 
 /// \brief Constrict a substitution::MultiModel for a specific alphabet
 ///
@@ -577,9 +649,9 @@ get_smodel_(const string& smodel,const alphabet& a,const valarray<double>& frequ
 /// \param frequencies The initial letter frequencies in the model.
 ///
 formula_expression_ref
-get_smodel(const string& smodel_name, const alphabet& a, const valarray<double>& frequencies) 
+get_smodel(const string& smodel_name, const shared_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >& frequencies) 
 {
-  assert(frequencies.size() == a.size());
+  assert(frequencies->size() == a->size());
 
   //------------------ Get smodel ----------------------//
   formula_expression_ref smodel = get_smodel_(smodel_name,a,frequencies);
@@ -604,16 +676,24 @@ formula_expression_ref get_smodel(const variables_map& args, const string& smode
   for(int i=1;i<A.size();i++)
     if (A[i].get_alphabet() != A[0].get_alphabet())
       throw myexception()<<"alignments in partition don't all have the same alphabet!";
-  return get_smodel(smodel_name,A[0].get_alphabet(),empirical_frequencies(args,A));
+
+  shared_ptr< const valarray<double> > frequencies (new valarray<double>(empirical_frequencies(args,A)));
+
+  return get_smodel(smodel_name, const_ptr( A[0].get_alphabet() ), frequencies);
 }
 
 formula_expression_ref get_smodel(const variables_map& args, const string& smodel_name,const alignment& A) 
 {
-  return get_smodel(smodel_name,A.get_alphabet(),empirical_frequencies(args,A));
+  shared_ptr< const valarray<double> > frequencies (new valarray<double>(empirical_frequencies(args,A)));
+
+  return get_smodel(smodel_name, const_ptr( A.get_alphabet() ), frequencies);
 }
 
 formula_expression_ref get_smodel(const variables_map& args, const alignment& A) 
 {
   string smodel_name = args["smodel"].as<string>();
-  return get_smodel(smodel_name,A.get_alphabet(),empirical_frequencies(args,A));
+
+  shared_ptr< const valarray<double> > frequencies (new valarray<double>(empirical_frequencies(args,A)));
+
+  return get_smodel(smodel_name, const_ptr( A.get_alphabet() ), frequencies);
 }
