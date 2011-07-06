@@ -198,6 +198,18 @@ public:
   /// Estimate frequencies from counts in a way that uses alphabet-dependant pseudocounts
   virtual std::valarray<double> get_frequencies_from_counts(const std::valarray<double>&,double=1.0) const;
 
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    const alphabet* a = dynamic_cast<const alphabet*>(&O);
+
+    return (*this) == *a;
+  }
+
   std::string print () const {return name;}
 
   /// Construct an alphabet with the given name
