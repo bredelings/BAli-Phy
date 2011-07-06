@@ -489,6 +489,39 @@ namespace substitution {
     M2_Op(): Operation(4) { }
   };
 
+  // Mixture_Function [Double] [MultiModelObject] -> MultiModelObject
+  boost::shared_ptr<const MultiModelObject> Mixture_Function(const expression_ref&, const expression_ref&);
+
+  struct Mixture_Op: public Operation
+  {
+    Mixture_Op* clone() const {return new Mixture_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      expression_ref DL = Args.evaluate(0);
+      expression_ref ML = Args.evaluate(1);
+
+      return Mixture_Function(DL, ML);
+    }
+
+    std::string name() const {return "Mixture";}
+
+    Mixture_Op(): Operation(2) { }
+  };
+
+  extern expression_ref Mixture_E;
+
+  formula_expression_ref Mixture_Model(const std::vector<formula_expression_ref>& models);
 }
 
 #endif

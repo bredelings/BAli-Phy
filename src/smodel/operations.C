@@ -656,4 +656,50 @@ namespace substitution
     return R;
   }
 
+  shared_ptr<const MultiModelObject> Mixture_Function(const expression_ref& DL, const expression_ref& ML)
+  {
+    vector<expression_ref> D = get_ref_vector_from_list(DL);
+    vector<expression_ref> M = get_ref_vector_from_list(ML);
+    assert(D.size() == M.size());
+
+    shared_ptr<MultiModelObject> R (new MultiModelObject);
+
+    for(int m=0;m<M.size();m++)
+    {
+      shared_ptr<const MultiModelObject> MM = dynamic_pointer_cast<const MultiModelObject>(M[m]);
+
+      double w = dynamic_cast<const Double&>(*D[m]);
+
+      for(int i=0;i<MM->n_base_models();i++)
+      {
+	R->fraction.push_back(w * MM->distribution()[i]);
+	R->base_models.push_back(ptr( MM->base_model(i)) );
+      }
+    }
+
+    return R;
+  }
+
+  expression_ref Mixture_E = lambda_expression(Mixture_Op());
+
+  formula_expression_ref Mixture_Model(const vector<formula_expression_ref>& models)
+  {
+    const int N = models.size();
+
+    formula_expression_ref vars_list = ListEnd;
+    formula_expression_ref models_list = ListEnd;
+    for(int i=0;i<N;i++)
+    {
+      string var_name = "Mixture::p"+convertToString(i+1);
+      parameter var(var_name);
+      formula_expression_ref Var(var); 
+      Var.add_expression( default_value(var, 1.0/N) );
+      Var.add_expression( bounds(var, between(0.0, 1.0)) );
+
+      models_list = Cons(models[i], models_list);
+      vars_list = Cons(Var, vars_list);
+    }
+
+    return Mixture_E(vars_list, models_list);
+  }
 }
