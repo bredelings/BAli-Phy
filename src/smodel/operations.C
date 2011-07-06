@@ -1,6 +1,7 @@
 #include "rates.H"
 #include "smodel/operations.H"
 #include "distribution-operations.H"
+#include "../operations.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -121,6 +122,34 @@ namespace substitution
 
     return R;
   }
+
+  shared_ptr<AlphabetExchangeModelObject> INV_for_Mixture_Function(const shared_ptr<const MultiModelObject>& M)
+  {
+    shared_ptr<AlphabetExchangeModelObject> R = INV_Exchange_Function(*M->base_models[0]->get_alphabet(), M->base_models[0]->n_states());
+
+    return R;
+  }
+
+  expression_ref INV_for_Mixture = lambda_expression( INV_for_Mixture_Op() );
+
+  formula_expression_ref WithINV_Model(const formula_expression_ref& R)
+  {
+    typed_expression_ref<Double> p = parameter("INV::p");
+    formula_expression_ref P(p);
+    P.add_expression( default_value(p,1.0) );
+    P.add_expression( bounds(p,between(0.0, 1.0)) );
+    P.add_expression(distributed_as(beta_dist, p, Tuple(2)(1.0, 2.0) ) );
+
+
+    // Where do we get our frequencies from?
+    formula_expression_ref INV = INV_for_Mixture(R);
+    expression_ref F;
+    INV = Q_from_S_and_R(INV,F);
+    INV = Unit_Mixture(Unit_Collection(INV));
+
+    return Mixture_E(Cons(1.0-p,Cons(P,ListEnd)), Cons(R,Cons(INV,ListEnd)));
+  }
+
 
   shared_ptr<AlphabetExchangeModelObject> GTR_Function(const Nucleotides& a, 
 						       double AG, double AT, double AC,
@@ -686,8 +715,10 @@ namespace substitution
   {
     const int N = models.size();
 
-    formula_expression_ref vars_list = ListEnd;
     formula_expression_ref models_list = ListEnd;
+    formula_expression_ref vars_list = ListEnd;
+    expression_ref vars_tuple = Tuple(models.size());
+    expression_ref n_tuple = Tuple(models.size());
     for(int i=0;i<N;i++)
     {
       string var_name = "Mixture::p"+convertToString(i+1);
@@ -698,8 +729,13 @@ namespace substitution
 
       models_list = Cons(models[i], models_list);
       vars_list = Cons(Var, vars_list);
+      vars_tuple = vars_tuple(var);
+      n_tuple = n_tuple(1.0);
     }
+    formula_expression_ref R= Mixture_E(vars_list, models_list);
 
-    return Mixture_E(vars_list, models_list);
+    R.add_expression(distributed_as(dirichlet_dist, vars_tuple, n_tuple ) );
+
+    return R;
   }
 }
