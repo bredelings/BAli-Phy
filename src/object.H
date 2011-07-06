@@ -49,7 +49,7 @@ public:
     return (not m or indeterminate(m));
   }
 
-  virtual std::string print() const {return std::string("unprintable[")+typeid(*this).name()+"]";}
+  virtual std::string print() const {return std::string("unprintable[")+demangle(typeid(*this).name())+"]";}
 
   virtual ~Object() {}
 };

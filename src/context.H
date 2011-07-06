@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 #include "cow-ptr.H"
 #include "object.H"
+#include "util.H"
 
 class Formula;
 struct Computation;
@@ -56,7 +57,7 @@ public:
     assert(o);
     boost::shared_ptr<const T> converted =  boost::dynamic_pointer_cast<const T>(o);
     if (not converted)
-      throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<typeid(*o.get()).name()<<" to type "<<typeid(T).name();
+      throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(*o.get()).name())<<" to type "<<demangle(typeid(T).name());
     return converted;
   }
 

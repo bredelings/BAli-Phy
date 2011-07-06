@@ -6,6 +6,7 @@
 
 #include "object.H"
 #include "myexception.H"
+#include "util.H"
 
 /// Describes a completed computation
 struct Computation: virtual public Object
@@ -33,7 +34,7 @@ struct OperationArgs: virtual public Object
     assert(o);
     boost::shared_ptr<const T> converted =  boost::dynamic_pointer_cast<const T>(o);
     if (not converted)
-      throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<typeid(*o.get()).name()<<" to type "<<typeid(T).name();
+      throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(*o.get()).name())<<" to type "<<demangle(typeid(T).name());
     return converted;
   }
 };

@@ -60,7 +60,7 @@ T convertTo(const std::string& s)
 { 
   T t;
   if (not can_be_converted_to<T>(s,t))
-    throw myexception()<<"String '"<<s<<"' is not of type "<<typeid(T).name();
+    throw myexception()<<"String '"<<s<<"' is not of type "<<demangle(typeid(T).name());
   return t;
 }
 
