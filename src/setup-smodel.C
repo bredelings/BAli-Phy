@@ -517,6 +517,7 @@ bool process_stack_Multi(vector<string>& string_stack,
   }
   else if (match(string_stack,"INV",arg))
     model_stack.back() = WithINV( FormulaModel(get_MM_default(model_stack,"INV",a,frequencies)) );
+  //    model_stack.back() = WithINV_Model(get_MM_default(model_stack,"INV",a,frequencies));
 
   else if (match(string_stack,"DP",arg)) {
     int n=4;
@@ -589,23 +590,23 @@ get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a,const share
   // Initialize the string stack from the model name
   vector<string> string_stack;
   if (smodel != "") 
+  {
     string_stack = split(smodel,'+');
-  std::reverse(string_stack.begin(),string_stack.end());
-
-
-  // Initialize the model stack 
-  vector<formula_expression_ref > model_stack;
-  /*
-  if (not process_stack_Markov(string_stack,model_stack,a,frequencies)) 
+    std::reverse(string_stack.begin(),string_stack.end());
+  }
+  else
   {
     string model_name = default_markov_model(*a);
     if (not model_name.size())
       throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a->name<<"'";
     string_stack.push_back(model_name);
-    if (not process_stack_Markov(string_stack,model_stack,a,frequencies))
-      throw myexception()<<"Can't guess the base CTMC model for alphabet '"<<a->name<<"'";
+    //    if (not process_stack_Markov(string_stack,model_stack,a,frequencies))
+    //      throw myexception()<<"Can't guess the base CTMC model for alphabet '"<<a->name<<"'";
   }
-  */
+
+
+  // Initialize the model stack 
+  vector<formula_expression_ref > model_stack;
 
   //-------- Run the model specification -----------//
   while(string_stack.size()) {
