@@ -36,6 +36,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <map>
 #include <typeinfo>
 
+std::string demangle(const std::string&);
+
 #ifdef __GXX_EXPERIMENTAL_CXX0X__
 #define foreach(a,b) for(auto a=(b).begin();a != (b).end();a++)
 #else
@@ -578,4 +580,5 @@ void remove_elements(std::vector<int>& v, const std::vector<int>& e);
 void check_supplied_filenames(int n, const std::vector<std::string>& files, bool exact=true);
 
 extern int log_verbose;
+
 #endif
