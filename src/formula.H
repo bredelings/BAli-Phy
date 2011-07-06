@@ -73,6 +73,13 @@ struct expression_ref;
 //  - Can I print (Cons x y) as x:y?
 //  - Can I print (Cons x []) as [x]?
 
+// TODO: separate out distributions and parameters as a sub-object to make it easier to pass around distributions
+//       separately from what is distributed that way.
+//    - goal: make it easier to declare a variable with default_value, bounds, and distribution all in one step.
+//    - formula_expression_ref f = new_parameter("f", 1.0, bounds(0.0, 1.0), uniform_dist(0.0, 1.0) )
+//    - Do I want to make distribution families?  That is functions like \a \b uniform_dist(a,b) ?
+//      Then it could be easier to supply arguments.
+
 // 4. eval_match( )...
 // Functions that cannot be represented in static flow graph
 // - are doing work.
