@@ -699,7 +699,7 @@ std::vector<expression_ref> get_ref_vector_from_tuple(const expression_ref& R)
   return v2;
 }
 
-const expression_ref get_tuple(const vector<expression_ref>& v)
+template<> expression_ref get_tuple<>(const vector<expression_ref>& v)
 {
   if (not v.size()) return Tuple(0);
 
@@ -713,7 +713,7 @@ const expression_ref get_tuple(const vector<expression_ref>& v)
   return expression_ref(expression(sub));
 }
 
-const expression_ref get_list(const vector<expression_ref>& v)
+expression_ref get_list(const vector<expression_ref>& v)
 {
   expression_ref E = ListEnd;
 
