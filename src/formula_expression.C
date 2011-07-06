@@ -64,6 +64,7 @@ formula_expression_ref prefix_formula(const std::string& prefix,const formula_ex
 
 int formula_expression_ref::add_expression(const formula_expression_ref& R)
 {
+  // The indices of the first argument are (currently) not altered, so 'index' is unchanged.
   F = combine(F, R.F);
   return F->find_expression(R.exp());
 }

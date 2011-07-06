@@ -297,7 +297,7 @@ namespace substitution
     }
 
     expression_ref N = get_tuple(vector<double>(a.size(), 1.0) );
-    F.add_expression( distributed_as( dirichlet_dist, F.exp(), N ) );
+    F.add_expression( distributed_as( dirichlet_dist, F, N ) );
 
     return F;
   }
@@ -315,7 +315,7 @@ namespace substitution
     
     formula_expression_ref f = def_parameter("f", 1.0, between(0,1));
     f.add_expression( distributed_as( prob_density("Uniform",uniform_density()), 
-				      f.exp(),
+				      f,
 				      Tuple(2)(0.0,1.0)
 				      ) 
 		      );
