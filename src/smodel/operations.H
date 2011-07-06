@@ -42,16 +42,14 @@ namespace substitution {
     {
       double f = *Args.evaluate_as<Double>(0);
 
-      std::vector<double> pi;
-      for(int i=0;i<a->size();i++)
-	pi.push_back(*Args.evaluate_as<Double>(1+i));
+      std::vector<double> pi = get_vector<double,Double>(Args.evaluate(1));
 
       return Plus_gwF_Function(*a,f,pi);
     }
 
     std::string name() const {return "+gwF";}
 
-    Plus_gwF_Op(const alphabet& A):Operation(1+A.size()),a(A.clone()) { }
+    Plus_gwF_Op(const alphabet& A):Operation(2),a(A.clone()) { }
   };
 
   expression_ref Plus_gwF(const alphabet& a);

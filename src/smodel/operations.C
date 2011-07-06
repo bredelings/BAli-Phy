@@ -323,43 +323,55 @@ namespace substitution
     return lambda_expression( Plus_gwF_Op(a) );
   }
 
+  formula_expression_ref Frequencies_Model(const alphabet& a, const valarray<double>& pi)
+  {
+    formula_expression_ref F = Tuple(a.size());
+    for(int i=0;i<a.size();i++)
+    {
+      string pname = string("pi") + a.letter(i);
+      expression_ref var = parameter(pname);
+      formula_expression_ref Var ( var );
+      Var.add_expression( default_value( var , pi[i] ) );
+      Var.add_expression( bounds( var , between(0.0, 1.0) ) );
+      F = F(Var);
+    }
+
+    expression_ref N = get_tuple(vector<double>(a.size(), 1.0) );
+    F.add_expression( distributed_as( dirichlet_dist, F.exp(), N ) );
+
+    return F;
+  }
+
+  formula_expression_ref Frequencies_Model(const alphabet& a)
+  {
+    valarray<double> pi (1.0/a.size(), a.size());
+    return Frequencies_Model(a, pi);
+  }
+
+  formula_expression_ref def_parameter(const string& name, const expression_ref& def_value, const Bounds<double>& b)
+  {
+    expression_ref var = parameter(name);
+    formula_expression_ref Var (var);
+    Var.add_expression( default_value(var, def_value) );
+    Var.add_expression( bounds(var, b) );
+    return Var;
+  }
+
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
   formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi)
   {
     assert(a.size() == pi.size());
-    shared_ptr<Formula> F (new Formula);
     
-    vector<expression_ref> parameters;
-    vector<expression_ref> Vars;
-    vector<expression_ref> N;
-    expression_ref f = parameter("f");
-    F->add_expression( f );
-    F->add_expression( default_value( f, 1.0) );
-    F->add_expression( bounds( f, between(0.0,1.0) ) );
-    F->add_expression( distributed_as( prob_density("Uniform",uniform_density()), 
-				       f,
-				       Tuple(2)(0.0,1.0)
-				       ) 
-		       );
+    formula_expression_ref f = def_parameter("f", 1.0, between(0,1));
+    f.add_expression( distributed_as( prob_density("Uniform",uniform_density()), 
+				      f.exp(),
+				      Tuple(2)(0.0,1.0)
+				      ) 
+		      );
 
+    formula_expression_ref Vars = Frequencies_Model(a,pi);
 
-    for(int i=0;i<a.size();i++)
-    {
-      string pname = string("pi") + a.letter(i);
-      Vars.push_back( parameter(pname) );
-      N.push_back( Double(1.0) );
-      F->add_expression( parameter(pname) );
-      F->add_expression( default_value( parameter(pname) , pi[i] ) );
-      F->add_expression( bounds( parameter(pname) , between(0.0, 1.0) ) );
-    }
-
-    F->add_expression( distributed_as( dirichlet_dist,
-				       Tuple(a.size())(Vars), 
-				       Tuple(a.size())(N)
-				       ) 
-		       );
-
-    return formula_expression_ref(F,Plus_gwF(a)(f)(Vars));
+    return Plus_gwF(a)(f)(Vars);
   }
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a)
