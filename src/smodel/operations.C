@@ -59,14 +59,11 @@ namespace substitution
 
   formula_expression_ref HKY_Model(const alphabet& a)
   {
-    expression_ref kappa = parameter("HKY::kappa");
-    formula_expression_ref R(lambda_expression(HKY_Op())(a,kappa));
-    R.add_expression(kappa);
-    R.add_expression(default_value(kappa,2.0));
-    R.add_expression(bounds(kappa,lower_bound(0.0)));
-    R.add_expression(distributed_as(log_laplace_dist, kappa, Tuple(2)(log(2), 0.25) ) );
-    
-    return R;
+    expression_ref HKY = lambda_expression(HKY_Op());
+
+    formula_expression_ref kappa = def_parameter("HKY::kappa", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(2)(log(2), 0.25));
+
+    return HKY(a)(kappa);
   }
   
   shared_ptr<ExchangeModelObject> TN_Function(const Nucleotides& a, double kappa1, double kappa2)
@@ -123,11 +120,7 @@ namespace substitution
   formula_expression_ref WithINV_Model(const formula_expression_ref& R)
   {
     typed_expression_ref<Double> p = parameter("INV::p");
-    formula_expression_ref P(p);
-    P.add_expression( default_value(p,1.0) );
-    P.add_expression( bounds(p,between(0.0, 1.0)) );
-    P.add_expression(distributed_as(beta_dist, p, Tuple(2)(1.0, 2.0) ) );
-
+    formula_expression_ref P = def_parameter("INV::p", 1.0, between(0.0, 1.0), beta_dist, Tuple(2)(1.0, 2.0) );
 
     // Where do we get our frequencies from?
     formula_expression_ref INV = INV_for_Mixture(R);
@@ -164,42 +157,24 @@ namespace substitution
 
   formula_expression_ref GTR_Model(const alphabet& a)
   {
-    expression_ref AG = parameter("GTR::AG");
-    expression_ref AT = parameter("GTR::AT");
-    expression_ref AC = parameter("GTR::AC");
-    expression_ref GT = parameter("GTR::GT");
-    expression_ref GC = parameter("GTR::GC");
-    expression_ref TC = parameter("GTR::TC");
+    formula_expression_ref AG = def_parameter("GTR::AG", 2.0/8, between(0.0,1.0));
+    formula_expression_ref AT = def_parameter("GTR::AT", 1.0/8, between(0.0,1.0));
+    formula_expression_ref AC = def_parameter("GTR::AC", 1.0/8, between(0.0,1.0));
+    formula_expression_ref GT = def_parameter("GTR::GT", 1.0/8, between(0.0,1.0));
+    formula_expression_ref GC = def_parameter("GTR::GC", 1.0/8, between(0.0,1.0));
+    formula_expression_ref TC = def_parameter("GTR::TC", 2.0/8, between(0.0,1.0));
 
-    formula_expression_ref R(lambda_expression(GTR_Op())(a)(AG)(AT)(AC)(GT)(GC)(TC));
+    expression_ref GTR = lambda_expression(GTR_Op());
+    
+    formula_expression_ref R = GTR(a)(AG)(AT)(AC)(GT)(GC)(TC);
 
-    R.add_expression(AG);
-    R.add_expression(AT);
-    R.add_expression(AC);
-    R.add_expression(GT);
-    R.add_expression(GC);
-    R.add_expression(TC);
-
-    R.add_expression(default_value(AG,2.0/8));
-    R.add_expression(default_value(AT,1.0/8));
-    R.add_expression(default_value(AC,1.0/8));
-    R.add_expression(default_value(GT,1.0/8));
-    R.add_expression(default_value(GC,1.0/8));
-    R.add_expression(default_value(GC,1.0/8));
-    R.add_expression(default_value(TC,2.0/8));
-
-    R.add_expression(bounds(AG,between(0.0,1.0)));
-    R.add_expression(bounds(AT,between(0.0,1.0)));
-    R.add_expression(bounds(AC,between(0.0,1.0)));
-    R.add_expression(bounds(GT,between(0.0,1.0)));
-    R.add_expression(bounds(GC,between(0.0,1.0)));
-    R.add_expression(bounds(GC,between(0.0,1.0)));
-    R.add_expression(bounds(TC,between(0.0,1.0)));
-
-    R.add_expression(distributed_as(dirichlet_dist, 
-				    Tuple(6)(AG)(AT)(AC)(GT)(GC)(TC), 
-				    Tuple(6)(8.0)(4.0)(4.0)(4.0)(4.0)(8.0)
-				    )
+    // I should generalize this...
+    // Should I make a tuple of tuples?
+    R.add_expression(distributed(Tuple(6)(AG)(AT)(AC)(GT)(GC)(TC),
+				 Tuple(2)(dirichlet_dist, 
+					  Tuple(6)(8.0)(4.0)(4.0)(4.0)(4.0)(8.0)
+					  )
+				 ).exp()
 		     );
     
     return R;
