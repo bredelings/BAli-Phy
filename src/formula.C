@@ -7,6 +7,7 @@
 #include "util.H"
 
 #include <iostream>
+#include <sstream>
 
 using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
@@ -303,6 +304,13 @@ term_ref Formula::find_match_expression2(const expression_ref& query, std::vecto
 
   results.clear();
   return term_ref();
+}
+
+string Formula::print() const
+{
+  std::ostringstream o;
+  o<<(*this);
+  return o.str();
 }
 
 boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>& F1, const boost::shared_ptr<const Formula>& F2)

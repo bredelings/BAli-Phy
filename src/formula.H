@@ -208,6 +208,8 @@ public:
   bool find_match2(const expression_ref& e, int index, std::vector<int>&) const;
 
   term_ref find_match_expression2(const expression_ref& e, std::vector<int>&) const;
+
+  std::string print() const;
 };
 
 boost::shared_ptr<Formula> combine(const boost::shared_ptr<const Formula>&, const boost::shared_ptr<const Formula>&);
