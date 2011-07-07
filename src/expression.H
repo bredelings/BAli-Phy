@@ -420,6 +420,15 @@ expression_ref get_tuple(const std::vector<T>& v)
 
 template<> expression_ref get_tuple<>(const std::vector<expression_ref>& v);
 
+template <typename T>
+expression_ref get_tuple(const std::valarray<T>& v)
+{
+  std::vector<expression_ref> v2;
+  for(int i=0;i<v.size();i++)
+    v2.push_back(v[i]);
+
+  return get_tuple(v2);
+}
 
 expression_ref get_list(const std::vector<expression_ref>& v);
 #endif
