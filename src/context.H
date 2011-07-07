@@ -48,7 +48,7 @@ public:
   Context* clone() const {return new Context(*this);}
 
   /// Return the value of a particular index, computing it if necessary
-  bool eval_match(int index, expression_ref& R, const expression_ref& Q,const std::vector<expression_ref>& results) const;
+  bool eval_match(int index, expression_ref& R, const expression_ref& Q,std::vector<expression_ref>& results) const;
 
   /// Return the value of a particular index, computing it if necessary
   boost::shared_ptr<const Object> evaluate(int index) const;

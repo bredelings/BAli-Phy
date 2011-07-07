@@ -21,7 +21,7 @@ bool Context::index_may_affect_index(int index1, int index2) const
     return includes(F->input_indices(index2), index1);
 }
 
-bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, const vector<expression_ref>& results) const
+bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, vector<expression_ref>& results) const
 {
   value& V = *values[index];
 
