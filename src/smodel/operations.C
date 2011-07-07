@@ -469,6 +469,23 @@ namespace substitution
     return R;
   }
 
+  shared_ptr<DiscreteDistribution> ExtendDiscreteDistributionFunction(const DiscreteDistribution& D,const expression_ref& V, const Double& p)
+  {
+    shared_ptr<DiscreteDistribution> D2(new DiscreteDistribution(D.size()+1));
+    for(int i=0;i<D.size();i++)
+    {
+      D2->fraction[i] = D.fraction[i]*(1.0-p);
+      D2->values[i] = D.values[i];
+    }
+
+    D2->fraction[D.size()] = p;
+    D2->values[D.size()] = V;
+
+    return D2;
+  }
+
+  expression_ref ExtendDiscreteDistribution = lambda_expression( ExtendDiscreteDistributionOp() );
+
   expression_ref Discretize = lambda_expression( DiscretizationOp() );
 
   shared_ptr<MultiModelObject> MultiParameterFunction(const ModelFunction& F, const DiscreteDistribution& D)

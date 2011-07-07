@@ -335,6 +335,38 @@ namespace substitution {
 
   formula_expression_ref Unit_Model(const formula_expression_ref&);
 
+  boost::shared_ptr<DiscreteDistribution> ExtendDiscreteDistributionFunction(const DiscreteDistribution& D,const expression_ref& V, const Double& p);
+
+  struct ExtendDiscreteDistributionOp: public Operation
+  {
+    ExtendDiscreteDistributionOp* clone() const {return new ExtendDiscreteDistributionOp(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    {
+      boost::shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(0);
+      expression_ref V = Args.evaluate(1);
+      boost::shared_ptr<const Double> p = Args.evaluate_as<Double>(2);
+      
+      return ExtendDiscreteDistributionFunction(*D, V, *p);
+    }
+
+    std::string name() const {return "ExtendDiscreteDistribution";}
+
+    ExtendDiscreteDistributionOp():Operation(3) { }
+  };
+
+  extern expression_ref ExtendDiscreteDistribution;
+
   boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const probability::Distribution& D, Int n);
 
   struct DiscretizationOp: public Operation
