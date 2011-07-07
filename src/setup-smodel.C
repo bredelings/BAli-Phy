@@ -318,7 +318,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   {
     formula_expression_ref EM = get_EM(model_stack,"F=constant");
 
-    formula_expression_ref F = Plus_gwF_Model(*a)(1.0)( get_tuple(*frequencies) );
+    formula_expression_ref F = Plus_gwF(*a)(1.0)( get_tuple(*frequencies) );
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
