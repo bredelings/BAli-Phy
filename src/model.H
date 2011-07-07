@@ -69,22 +69,18 @@ struct Parameter
 // 1. Make models take generic Object's as inputs. [DONE]
 //    o make substitution models take alphabets as arguments, and thus store them in the argument list [DONE]
 // 2. Make models into functions.
-//    o separate result objects from model objects [WORKING...]
-//    o give most models a meaningful result() member function, and use that? [WORKING...]
 //    o however, some objects, like Parameters, evaluate multiple different expressions
 // 3. ??
 //    o make all stored objects into models?
 //    o make supermodels into an Op plus models, as arguments? [WORKING...]
 //    o allow models to have computed objects as parts.
 //    o allow sharing between models.
-//    o pull priors out of models (or expressions) ->
-//      + in fact, priors are objects that RETURN models, a "density" model, and a "simulate" model.
+//    o pull priors out of models (or expressions).
 //    o do some caching of results?
 // 4. Make model evaluation lazy.
 //    o before: remove read(). [ DONE ] 
 //    o before: remove set_rate()
 //    o before: remove (set_)frequencies( )
-//    o before: stop making models inherit from Objects
 //    o before: convert all recalc() in smodel.H to result()
 //      - ReversibleFrequencyModel
 //        + SimpleFrequencyModel, UniformFrequencyModel, TripletFM, IndependentNucleotideFM, TripletsFM, CodonFM,
