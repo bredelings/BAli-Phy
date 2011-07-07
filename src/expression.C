@@ -634,14 +634,6 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
       throw e;
     }
   }
-
-  /*
-
-  {
-    R = RE->sub[0];
-    return eval_match(C,R,Q,results);
-  }
-  */
   else
     throw myexception()<<"Don't know how to evaluate expression '"<<R->print()<<"'";
 }
