@@ -196,6 +196,10 @@ namespace substitution {
 
   boost::shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2);
 
+  formula_expression_ref Plus_F_Model(const alphabet& a, const std::valarray<double>& pi);
+
+  formula_expression_ref Plus_F_Model(const alphabet& a);
+
   formula_expression_ref Plus_gwF_Model(const alphabet& a, const std::valarray<double>& pi);
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a);

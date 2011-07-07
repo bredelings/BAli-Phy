@@ -96,6 +96,18 @@ namespace substitution
     return TN(a)(kappa1)(kappa2);
   }
   
+  /*
+   * OK, so an INV model can be see as one of two things.  It can be an additional rate (e.g. 0) to run
+   * an underlying model at. Or, it can be seen as an additional rate to run every model in a mixture at.
+   * 
+   * Finally, we note that the ability to use + expressions to specify models is in fact a a problem
+   * for a different sub-language.  We are really interested in how to specify models in the real
+   * sub-language - the more expressive one.  For that, we need to make the handling of discrete distributions
+   * more accurate.  That is, we need to (for example) easily be able to add categories to discrete distributions.
+   * We can then take a "Gamma()" distribution, and add an extra category 0 to that w/ weight p.
+   *   For the + expressions in setup-smodel its OK to hack in a gammaINV model, temporarily.
+   */
+
   shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a,int n)
   {
     shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a,n) );
@@ -306,6 +318,22 @@ namespace substitution
   {
     valarray<double> pi (1.0/a.size(), a.size());
     return Frequencies_Model(a, pi);
+  }
+
+  // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
+  formula_expression_ref Plus_F_Model(const alphabet& a, const valarray<double>& pi)
+  {
+    assert(a.size() == pi.size());
+    
+    formula_expression_ref Vars = Frequencies_Model(a,pi);
+
+    return Plus_gwF(a)(1.0)(Vars);
+  }
+
+  formula_expression_ref Plus_F_Model(const alphabet& a)
+  {
+    valarray<double> pi (1.0/a.size(), a.size());
+    return Plus_gwF_Model(a,pi);
   }
 
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
