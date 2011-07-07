@@ -316,14 +316,14 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   
   if (match(string_stack,"F=constant",arg)) 
   {
-    formula_expression_ref EM = get_EM(model_stack,"F=constant");
+    formula_expression_ref EM = get_EM_default(model_stack,"+F=constant", a, frequencies);
 
     formula_expression_ref F = Plus_gwF(*a)(1.0)( get_tuple(*frequencies) );
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
   else if (match(string_stack,"F",arg)) {
-    formula_expression_ref EM = get_EM(model_stack,"F");
+    formula_expression_ref EM = get_EM_default(model_stack,"+F", a, frequencies);
 
     formula_expression_ref F;
     if (frequencies)
@@ -333,20 +333,23 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
-  else if (match(string_stack,"F=uniform",arg)) {
-    formula_expression_ref EM = get_EM(model_stack,"F=uniform");
+  else if (match(string_stack,"F=uniform",arg)) 
+  {
+    formula_expression_ref EM = get_EM_default(model_stack,"+F=uniform", a, frequencies);
 
-    UniformFrequencyModel UF(*a,*frequencies);
+    vector<double> pi(a->size(),1.0/a->size() );
 
-    model_stack.back() = Reversible_Markov_Model(EM,UF);
+    formula_expression_ref F = Plus_gwF(*a)(1.0)( get_tuple( pi ) );
+
+    model_stack.back() = Reversible_Markov_Model(EM,F);
   }
   else if (match(string_stack,"F=nucleotides",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"F=nucleotides:: '"<<a->name<<"' is not a triplet alphabet.";
+      throw myexception()<<"+F=nucleotides:: '"<<a->name<<"' is not a triplet alphabet.";
 
-    formula_expression_ref EM = get_EM(model_stack,"F=nucleotides");
+    formula_expression_ref EM = get_EM_default(model_stack,"+F=nucleotides", a, frequencies);
 
     model_stack.back() = Reversible_Markov_Model(EM, IndependentNucleotideFrequencyModel(*T));
   }
@@ -354,9 +357,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
-      throw myexception()<<"F=amino-acids:: '"<<a->name<<"' is not a codon alphabet.";
+      throw myexception()<<"+F=amino-acids:: '"<<a->name<<"' is not a codon alphabet.";
 
-    formula_expression_ref EM = get_EM(model_stack,"F=nucleotides");
+    formula_expression_ref EM = get_EM_default(model_stack,"+F=amino-acids", a, frequencies);
 
     model_stack.back() = Reversible_Markov_Model(EM, AACodonFrequencyModel(*C));
   }
@@ -364,9 +367,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"F=triplets:: '"<<a->name<<"' is not a triplet alphabet.";
+      throw myexception()<<"+F=triplets:: '"<<a->name<<"' is not a triplet alphabet.";
 
-    formula_expression_ref EM = get_EM(model_stack,"F=triplets");
+    formula_expression_ref EM = get_EM_default(model_stack,"+F=triplets", a, frequencies);
 
     model_stack.back() = Reversible_Markov_Model(EM,TripletsFrequencyModel(*T));
   }
@@ -374,9 +377,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
-      throw myexception()<<"F=codons:: '"<<a->name<<"' is not a codon alphabet.";
+      throw myexception()<<"+F=codons:: '"<<a->name<<"' is not a codon alphabet.";
 
-    formula_expression_ref EM = get_EM(model_stack,"F=codons");
+    formula_expression_ref EM = get_EM_default(model_stack,"+F=codons", a, frequencies);
 
     model_stack.back() = Reversible_Markov_Model(EM,CodonsFrequencyModel(*C));
   }
@@ -384,9 +387,9 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
-      throw myexception()<<"F=codons2:: '"<<a->name<<"' is not a codon alphabet.";
+      throw myexception()<<"+F=codons2:: '"<<a->name<<"' is not a codon alphabet.";
 
-    formula_expression_ref EM = get_EM(model_stack,"F=codons2");
+    formula_expression_ref EM = get_EM_default(model_stack,"+F=codons2", a, frequencies);
 
     model_stack.back() = Reversible_Markov_Model(EM,CodonsFrequencyModel2(*C));
   }
