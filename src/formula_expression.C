@@ -9,6 +9,11 @@ formula_expression_ref formula_expression_ref::operator()(const formula_expressi
   return formula_expression_ref(combine(F, R.F), exp()(R.exp()));
 }
 
+formula_expression_ref formula_expression_ref::operator()(const expression_ref& R) const
+{
+  return formula_expression_ref(F, exp()(R));
+}
+
 formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1) const
 {
   return formula_expression_ref(*this)(arg1);
