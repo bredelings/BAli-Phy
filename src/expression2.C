@@ -66,35 +66,6 @@ using std::endl;
  *    ------------
  */
 
-/*
- * 3. The static-flow evaluation framework allows caching along a DAG, but has a
- * lot of limitations on the kind of expressions it allows.  
- *
- * 1. [FIXED] No data constructors as a head.
- * 2. No eval_match( ).
- * 3. No body functions.
- * 4. Operations may not evaluate to expressions (and so provoke further evaluation).
- *    (This is actually what we need to walk the tree)
- *    (We could evaluate expressions that result from operations by allowing a general expression evaluator.)
- *     Such an evaluator would check that to see which, if any, of its sub-expressions are already present in the context.
- *     Missing expressions would be assumed to be uncached -> fine.
- *     Present expressions could be cached -> but how would we know if they changed? FIXME.
- * <> No Recursion... although this comes automatically from 4, really.
- * 5. No functions as function arguments
- * 6. No way of recording which expressions could alter and force the recalculation of more general expressions.
- *
- * Idea: When evaluating the application of (\x (f x)) to (expression),
- *       we could actually assign values to the dummy variables.
- *       (Would we need a stack-frame equivalent?
- *        If we have recursion, or if we simply have multiple expressions calling the same function,
- *        then we might need to consider several different values for the function's arguments.)
- *       (Actually, would 
- *
- * Idea: Always re-lookup expressions.  This will be general, but slow.
- *       However, it will give us an idea what is going on.
- *      
- */
-
 term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
 {
   expression_ref query = distributed(_2,Tuple(2)(prob_density(_,_1),_3));
