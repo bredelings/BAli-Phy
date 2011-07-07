@@ -105,7 +105,7 @@ struct expression_ref;
  * lot of limitations on the kind of expressions it allows.  
  *
  * 1. [FIXED] No data constructors as a head.
- * 2. No eval_match( ).
+ * 2. [FIXED] No eval_match( ).
  * 3. No body functions.
  * 4. Operations may not evaluate to expressions (and so provoke further evaluation).
  *    (This is actually what we need to walk the tree)
