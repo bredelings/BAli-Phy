@@ -314,20 +314,22 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 {
   string arg;
   
-  if (match(string_stack,"F=constant",arg)) {
+  if (match(string_stack,"F=constant",arg)) 
+  {
     formula_expression_ref EM = get_EM(model_stack,"F=constant");
 
-    SimpleFrequencyModel F(*a,*frequencies);
-
-    for(int i=0;i<F.n_parameters();i++)
-      F.set_fixed(i,true);
+    formula_expression_ref F = Plus_gwF_Model(*a)(1.0)( get_tuple(*frequencies) );
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
   else if (match(string_stack,"F",arg)) {
     formula_expression_ref EM = get_EM(model_stack,"F");
 
-    SimpleFrequencyModel F(*a,*frequencies);
+    formula_expression_ref F;
+    if (frequencies)
+      F = Plus_F_Model(*a,*frequencies);
+    else
+      F = Plus_F_Model(*a);
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
@@ -499,7 +501,9 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = MultiRate(get_MM_default(model_stack,"gamma",a,frequencies),  Discretize(model_formula(Gamma()), expression_ref(n)) );
+    formula_expression_ref base = get_MM_default(model_stack,"gamma",a,frequencies);
+    formula_expression_ref dist = Discretize(model_formula(Gamma()), expression_ref(n));
+    model_stack.back() = MultiRate(base,  dist);
   }
   else if (match(string_stack,"log-normal",arg)) {
     int n=4;
