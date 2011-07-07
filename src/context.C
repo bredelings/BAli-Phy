@@ -31,6 +31,22 @@ bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, 
 
   if (V.computation) assert(V.result);
 
+  // -1. If we are matching against a match expression, then succeed and store the result if asked.
+  if (Q)
+    if (shared_ptr<const match> M = dynamic_pointer_cast<const match>(Q))
+    {
+      if (M->index >= 0)
+      {
+	if (results.size() < M->index+1) results.resize(M->index+1);
+	
+	if (results[M->index]) throw myexception()<<"Match expression contains match index "<<M->index<<"' more than once!";
+	
+	results[M->index] = expression_ref(R->clone());
+      }
+      
+      return true;
+    }
+
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   // FIXME - single-term, 0-argument functions should not need to be expressions.
   if (not E)
