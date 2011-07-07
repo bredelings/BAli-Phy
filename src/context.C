@@ -21,13 +21,13 @@ bool Context::index_may_affect_index(int index1, int index2) const
     return includes(F->input_indices(index2), index1);
 }
 
-shared_ptr<const Object> Context::evaluate(int index) const
+bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, const vector<expression_ref>& results) const
 {
   value& V = *values[index];
 
   const vector<int>& input_indices = F->input_indices(index);
 
-  expression_ref R = (*F)[index];
+  R = (*F)[index];
 
   if (V.computation) assert(V.result);
 
@@ -43,7 +43,8 @@ shared_ptr<const Object> Context::evaluate(int index) const
 	throw myexception()<<"Parameter '"<<P->print()<<"' is not marked up-to-date!";
       if (not V.result)
 	throw myexception()<<"Parameter '"<<P->print()<<"' has not been set!";
-      return V.result;
+      R = V.result;
+      return true;
     }
     else if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R))
       throw myexception()<<"Cannot evaluate dummy variables!";
@@ -61,7 +62,8 @@ shared_ptr<const Object> Context::evaluate(int index) const
       assert(R);
       assert(R->compare(*V.result));
     }
-    return V.result;
+    R = V.result;
+    return true;
   }
 
   // If the expression is a function expression...
@@ -70,7 +72,7 @@ shared_ptr<const Object> Context::evaluate(int index) const
   {
     V.result = R;
     V.computed = true;
-    return V.result;
+    return true;
   }
 
   // If the expression is a function expression...
@@ -90,7 +92,8 @@ shared_ptr<const Object> Context::evaluate(int index) const
 
     assert(V.computed);
     assert(V.result);
-    return V.result;
+    R = V.result;
+    return true;
   }
 
   // Hey, how about a model expression?
@@ -126,7 +129,7 @@ shared_ptr<const Object> Context::evaluate(int index) const
 	V.computed = false;
     }
     if (V.computed)
-      std::cerr<<"revalidating computation "<<(*F)[index]->print()<<"\n";
+      std::cerr<<"\n   + revalidating computation "<<(*F)[index]->print()<<"\n";
   }
 
   // If the result is not yet marked as computed, then we must run the computation
@@ -152,11 +155,21 @@ shared_ptr<const Object> Context::evaluate(int index) const
     if (not V.result or new_result->maybe_not_equals(*V.result))
       V.result = new_result;
 
-    std::cerr<<"recomputing "<<(*F)[index]->print()<<"\n";
+    std::cerr<<"\n   + recomputing "<<(*F)[index]->print()<<"\n";
   }
     
   assert(V.result);
-  return V.result;
+  R = V.result;
+  return true;
+}
+
+shared_ptr<const Object> Context::evaluate(int index) const
+{
+  expression_ref R;
+  expression_ref Q;
+  vector<expression_ref> results;
+  eval_match(index,R,Q,results);
+  return R;
 }
 
 boost::shared_ptr<const Object> Context::get_parameter_value(int index) const
