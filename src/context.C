@@ -47,9 +47,9 @@ bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, 
       return true;
     }
 
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  shared_ptr<const expression> RE = dynamic_pointer_cast<const expression>(R);
   // FIXME - single-term, 0-argument functions should not need to be expressions.
-  if (not E)
+  if (not RE)
   {
     assert(not V.computation);
     assert(input_indices.size() == 0);
@@ -92,19 +92,41 @@ bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, 
       return false;
   }
 
-  // If the expression is a function expression...
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  // 1. Evaluate the head
+  // MISSING.
+
+  // 2. If head is a lambda, then this is a lambda expression.  It evaluates to itself.
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(RE->sub[0]);
   if (L)
   {
     V.result = R;
     V.computed = true;
-    return true;
+    if (not Q) return true;
   }
+    
+  // 3. If head is an expression, then apply the expression to RE->sub[1]
+  // MISSING.
 
-  // If the expression is a function expression...
+  // 4. If the head is a constructor, eval_match its arguments
   shared_ptr<const Function> f = F->function(index);
-  if (f)
+  if ((f and f->what_type == data_function_f) or L)
   {
+    shared_ptr<const expression> QE;
+    if (Q)
+    {
+      // Q must be an expression also.
+      QE = dynamic_pointer_cast<const expression>(Q);
+      if (not QE) return false;
+
+      // Q must have the same number of arguments
+      if (RE->size() != QE->size()) return false;
+
+      // Q must have the same head here.
+      // FIXME: There is no matching or evaluation of the head, here. (Will there be, later?)
+      if (RE->sub[0]->compare(*QE->sub[0]) != true)
+	return false;
+    }
+
     if (not V.computed)
     {
       vector< expression_ref > sub(input_indices.size()+1);
@@ -122,71 +144,85 @@ bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, 
     return true;
   }
 
-  // Hey, how about a model expression?
-  // Hey, how about a tuple expression?
+  // 5. If the head is a function, eval_match the substituted body
+  // MISSING
 
-  // Otherwise the expression must be an op expression
+  // 6. If the head is an Operation, evaluate the operation.
   shared_ptr<const Operation> O = F->operation(index);
-  assert(O);
-  
-  // First try to validate our old computation, if possible
-  if (not V.computed and V.computation)
+  if (O)
   {
-    const vector<int>& slots_used = V.computation->slots_used_order;
-
-    // The computation is assumed true, unless any of the slots end up
-    // having different values
-    V.computed = true;
-
-    for(int i=0;V.computed and i < slots_used.size();i++)
+    // First try to validate our old computation, if possible
+    if (not V.computed and V.computation)
     {
-      int slot = slots_used[i];
-
-      // We must first evaluate each used argument.
-
-      // By evaluating them in the same order in which they were used, we guarantee
-      //  that this evaluation will not be wasted.
-      shared_ptr<const Object> v = evaluate(input_indices[slot]);
-
-      // If the value is not the same as the value used to compute the previous result
-      //   they we have to redo the computation.
-      if (v != V.computation->used_values[slot])
-      //FIXME: Should we use v->maybe_not_equals( ) above?
-	V.computed = false;
+      const vector<int>& slots_used = V.computation->slots_used_order;
+      
+      // The computation is assumed true, unless any of the slots end up
+      // having different values
+      V.computed = true;
+      
+      for(int i=0;V.computed and i < slots_used.size();i++)
+      {
+	int slot = slots_used[i];
+	
+	// We must first evaluate each used argument.
+	
+	// By evaluating them in the same order in which they were used, we guarantee
+	//  that this evaluation will not be wasted.
+	shared_ptr<const Object> v = evaluate(input_indices[slot]);
+	
+	// If the value is not the same as the value used to compute the previous result
+	//   they we have to redo the computation.
+	if (v != V.computation->used_values[slot])
+	  //FIXME: Should we use v->maybe_not_equals( ) above?
+	  V.computed = false;
+      }
+      if (V.computed)
+	std::cerr<<"\n   + revalidating computation "<<(*F)[index]->print()<<"\n";
     }
-    if (V.computed)
-      std::cerr<<"\n   + revalidating computation "<<(*F)[index]->print()<<"\n";
-  }
-
-  // If the result is not yet marked as computed, then we must run the computation
-  // to get a new result.
-  if (not V.computed)
-  {
-    ContextOperationArgs Args(*this, index);
-
-    // recursive calls to evaluate happen in here.
-    shared_ptr<const Object> new_result;
-    try{
-      new_result = (*O)(Args);
-    }
-    catch(myexception& e)
-    {
-      e.prepend("Evaluating expression '"+(*F)[index]->print()+"':\n");
-      throw e;
-    }
-    V.computation = Args.computation;
-    V.computed = true;
-
-    // Only replace the result if (a) the value is different or (b) we can't check that.
-    if (not V.result or new_result->maybe_not_equals(*V.result))
-      V.result = new_result;
-
-    std::cerr<<"\n   + recomputing "<<(*F)[index]->print()<<"\n";
-  }
     
-  assert(V.result);
-  R = V.result;
-  return true;
+    // If the result is not yet marked as computed, then we must run the computation
+    // to get a new result.
+    if (not V.computed)
+    {
+      ContextOperationArgs Args(*this, index);
+      
+      // recursive calls to evaluate happen in here.
+      shared_ptr<const Object> new_result;
+      try{
+	new_result = (*O)(Args);
+      }
+      catch(myexception& e)
+      {
+	e.prepend("Evaluating expression '"+(*F)[index]->print()+"':\n");
+	throw e;
+      }
+      V.computation = Args.computation;
+      V.computed = true;
+      
+      // Only replace the result if (a) the value is different or (b) we can't check that.
+      if (not V.result or new_result->maybe_not_equals(*V.result))
+	V.result = new_result;
+      
+      std::cerr<<"\n   + recomputing "<<(*F)[index]->print()<<"\n";
+    }
+
+    assert(V.result);
+    R = V.result;
+
+    if (not Q) return true;
+
+    // Do we have to do this?
+    vector<expression_ref> results2 = results; 
+    if (find_match(Q,R,results))
+    {
+      results = results2;
+      return true;
+    }
+    else
+      return false;
+  }
+  else
+    throw myexception()<<"Don't know how to evaluate expression '"<<R->print()<<"'";
 }
 
 shared_ptr<const Object> Context::evaluate(int index) const
