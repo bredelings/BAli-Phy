@@ -78,8 +78,18 @@ bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, 
       assert(R);
       assert(R->compare(*V.result));
     }
-    R = V.result;
-    return true;
+
+    if (not Q) return true;
+
+    // Do we have to do this?
+    vector<expression_ref> results2 = results; 
+    if (find_match(Q,R,results))
+    {
+      results = results2;
+      return true;
+    }
+    else
+      return false;
   }
 
   // If the expression is a function expression...
