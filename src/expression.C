@@ -225,6 +225,8 @@ Function body_function(const std::string& s, int n)
   return Function(s, n, body_function_f);
 }
 
+
+/// Do the substitutions match(i) -> replace[i] for all i where replace[i] is not null.
 expression_ref substitute(const expression_ref& R, const vector<expression_ref>& replace)
 {
   expression_ref R2 = R;
@@ -240,6 +242,23 @@ expression_ref substitute(const expression_ref& R1, int dummy_index, const expre
   return substitute(R1,dummy(dummy_index),R2);
 }
 
+/// 1. Hey, could we solve the problem of needing to rename dummies by doing capture-avoiding substitution?
+/// I think we could!
+///
+/// Suppose we have Lf.Lx.fx, and we apply it to Lx.x (the identity function), then we get
+///    (Lf.Lx.fx)(Lx.x) = (Lx.fx)[f := Lx.x] = Lx.(Lx.x)x.
+/// Then, if we apply this to y, we get
+///    (Lx.(Lx.x)x)y = (Lx.x)x[x := y] = (Lx.x)y 
+/// And
+///    (Lx.x)y = y;
+///
+/// 2. However, is sometimes still necessary to rename dummies.  This is true if R2 contains unbound dummies
+///    that are bound in R1.
+///
+///    For example, apply Lx.y to x, then we would get Lx.x, which is not allowed.
+///    Instead, we must "alpha-convert" Lx.y to Lz.y, and then apply Lz.y to x, leading to Lz.x .
+
+/// Literally R2 for D in R1. (e.g. don't rename variables in R2).  Throw an exception if D is a lambda-bound dummy variable.
 expression_ref substitute_(const expression_ref& R1, const object_ref& D, const expression_ref& R2)
 {
   // If this is the relevant dummy, then substitute
@@ -250,6 +269,17 @@ expression_ref substitute_(const expression_ref& R1, const object_ref& D, const 
 
   // If this is any other constant, then it doesn't contain the dummy
   if (not E1) return R1;
+
+  // Make sure we don't try to substitute for lambda-quantified dummies
+  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E1->sub[0]))
+  {
+    if (D->compare(dummy(L->dummy_index)))
+      throw myexception()<<"Trying to substitution for dummy "<<L->dummy_index<<" in lambda express that quantifies it!";
+    // FIXME: If we want to do "capture-avoiding substitution, we shouldn't die, but
+    //        just do nothing.  So, we can do "return R1;"
+    //
+    //        But probably this is really because we did something silly, so let's at least give a warning message.
+  }
 
   // This is an expression, so compute the substituted sub-expressions
   bool found = false;
@@ -262,13 +292,6 @@ expression_ref substitute_(const expression_ref& R1, const object_ref& D, const 
 
   // This is not a dummy expression, and the arguments (we didn't search head) do not contain the dummy being replaced;
   if (not found) return R1;
-
-  // make sure we don't try to substitute for quantified dummies
-  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E1->sub[0]))
-  {
-    if (D->compare(dummy(L->dummy_index)))
-      throw myexception()<<"Trying to substitution for dummy "<<L->dummy_index<<" in lambda express that quantifies it!";
-  }
 
   // Construct a new expression containing the substituted args.
   return expression_ref(new expression(sub));
