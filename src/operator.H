@@ -5,8 +5,14 @@
 #include <string>
 #include "object.H"
 
+enum assoc_type {assoc_none=0,assoc_left=1, assoc_right=2};
+
 struct Operator: virtual public Object
 {
+  // -1 is left associativity
+  virtual assoc_type associativity() const {return assoc_none;}
+  // -1 is not infix
+  virtual int precedence() const {return -1;}
   virtual Operator* clone() const =0;
   virtual std::string name() const=0;
   virtual std::string print() const;

@@ -135,6 +135,13 @@ struct Function: public Operator
 
   function_type_t what_type;
 
+  assoc_type assoc;
+
+  int prec;
+
+  assoc_type associativity() const {return assoc;}
+  virtual int precedence() const {return prec;}
+
   std::string name() const {return f_name;}
   bool is_data_constructor() const {return what_type == data_function_f;}
   bool is_function() const {return what_type == body_function_f;}
@@ -142,6 +149,10 @@ struct Function: public Operator
 };
 
 Function data_function(const std::string&, int);
+
+Function left_assoc_data_function(const std::string& s,int prec=0);
+
+Function right_assoc_data_function(const std::string& s,int prec=0);
 
 Function body_function(const std::string&, int);
 

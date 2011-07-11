@@ -28,7 +28,22 @@ string expression::print() const
   assert(sub[0]);
 
   if (const Operator* O = dynamic_cast<const Operator*>(&*sub[0]))
+  {
+    if (O->precedence() > -1)
+    {
+      assert(O->n_args() == 2);
+      return sub[1]->print() + O->name() + sub[2]->print();
+    }
+    else if (O->name() == "Tuple")
+    {
+      vector<string> sub_names;
+      for(int i=1;i<size();i++)
+	sub_names.push_back( sub[i]->print() );
+      return print_operator_expression(sub_names);
+    }
+      
     return O->print_expression(print_arg_expressions(*this));
+  }
 
   return print_operator_expression( print_arg_expressions(*this) );
 }
@@ -210,7 +225,7 @@ tribool Function::compare(const Object& o) const
 }
 
 Function::Function(const string& s, int n, function_type_t f_t)
-  :f_name(s), n_args_(n), what_type(f_t)
+  :f_name(s), n_args_(n), what_type(f_t),assoc(assoc_none),prec(-1)
 {
   
 }
@@ -218,6 +233,22 @@ Function::Function(const string& s, int n, function_type_t f_t)
 Function data_function(const std::string& s, int n)
 {
   return Function(s, n, data_function_f);
+}
+
+Function left_assoc_data_function(const std::string& s,int prec)
+{
+  Function f(s, 2, data_function_f);
+  f.prec = prec;
+  f.assoc = assoc_left;
+  return f;
+}
+
+Function right_assoc_data_function(const std::string& s,int prec)
+{
+  Function f(s, 2, data_function_f);
+  f.prec = prec;
+  f.assoc = assoc_right;
+  return f;
 }
 
 Function body_function(const std::string& s, int n)
@@ -435,7 +466,7 @@ expression_ref Tuple(int n)
   return lambda_expression( data_function("Tuple",n) );
 }
 
-expression_ref Cons = lambda_expression( data_function("Cons",2) );
+expression_ref Cons = lambda_expression( right_assoc_data_function(":",2) );
 
 expression_ref ListEnd = lambda_expression( data_function("[]",0) );
 
