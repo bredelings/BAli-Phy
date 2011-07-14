@@ -17,6 +17,13 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* To use cow-ptrs safely you must remember the following things.
+ *
+ * 1. A cow-ptr that is set from an external pointer may be modified through that pointer.
+ * 2. 
+ *
+ */
+
 #ifndef COW_PTR_H
 #define COW_PTR_H
 
@@ -109,14 +116,12 @@ public:
   cow_ptr& operator=(const boost::shared_ptr<const X>& r)
   {
     data = const_pointer_cast<X>(r);
-    copy();
     return *this;
   }
 
   cow_ptr& operator=(const boost::shared_ptr<X>& r)
   {
     data = r;
-    copy();
     return *this;
   }
 
@@ -225,14 +230,12 @@ public:
   polymorphic_cow_ptr& operator=(const boost::shared_ptr<const X>& r)
   {
     data = const_pointer_cast<X>(r);
-    copy();
     return *this;
   }
 
   polymorphic_cow_ptr& operator=(const boost::shared_ptr<X>& r)
   {
     data = r;
-    copy();
     return *this;
   }
 
