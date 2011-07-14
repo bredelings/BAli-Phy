@@ -1038,7 +1038,7 @@ OpModel::OpModel(const expression_ref& r)
 	a.sub_model_index = add_submodel( M );
 
       // handle the sub[i] being an operation expression
-      else if (shared_ptr<const Operation> arg_O = boost::dynamic_pointer_cast<const Operation>(sub_e->sub[0]) )
+      else if (shared_ptr<const Operation> arg_O = dynamic_pointer_cast<const Operation>(sub_e->sub[0]) )
 	a.sub_model_index = add_submodel(ptr<Model>( OpModel( e->sub[i] ) ) );
       else
 	throw myexception()<<"OpModel: can't handle sub-expression '"<<e->sub[i]->print()<<"'";
@@ -1136,7 +1136,7 @@ term_ref add_probability_expression(Context& C)
     if (not find_match(query, C.F->exp(i), results)) continue;
 
     // Extract the density operation
-    shared_ptr<const Operation> density_op = boost::dynamic_pointer_cast<const Operation>(results[0]);
+    shared_ptr<const Operation> density_op = dynamic_pointer_cast<const Operation>(results[0]);
     if (not density_op) throw myexception()<<"Expression "<<i<<" does have an Op in the right place!";
     
     // Create an expression for calculating the density of these random variables given their inputs
