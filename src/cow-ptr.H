@@ -169,7 +169,10 @@ public:
     data = r.data;
     return *this;
   }
-  template <typename Y> friend boost::shared_ptr<Y> dynamic_pointer_cast(const polymorphic_cow_ptr<X>&);
+
+  template <typename Y,typename Z> 
+  friend boost::shared_ptr<const Y> dynamic_pointer_cast(const polymorphic_cow_ptr<Z>&);
+  template <typename Y,typename Z> friend boost::shared_ptr<Y> dynamic_pointer_cast(polymorphic_cow_ptr<Z>&);
 #endif
 
   const X& operator*()    const throw()   {assert(data); return *data;}
@@ -261,10 +264,26 @@ inline void swap(polymorphic_cow_ptr<X>& p1,polymorphic_cow_ptr<X>& p2)
   p1.swap(p2);
 }
 
-template <typename X,typename Y>
-boost::shared_ptr<X> dynamic_pointer_cast(const polymorphic_cow_ptr<Y>& ptr1)
+template <typename Y,typename Z>
+boost::shared_ptr<const Y> dynamic_pointer_cast(const polymorphic_cow_ptr<Z>& ptr1)
 {
-  return boost::dynamic_pointer_cast<X>(ptr1.data);
+  return boost::dynamic_pointer_cast<const Y>(ptr1.data);
+}
+
+template <typename Y,typename Z>
+boost::shared_ptr<Y> dynamic_pointer_cast(polymorphic_cow_ptr<Z>& ptr1)
+{
+  return boost::dynamic_pointer_cast<Y>(ptr1.data);
+}
+
+template <class T, class U> inline bool operator==(const polymorphic_cow_ptr<T>& t, const polymorphic_cow_ptr<U>& u)
+{
+  return t.get() == u.get();
+}
+
+template <class T, class U> inline bool operator!=(const polymorphic_cow_ptr<T>& t, const polymorphic_cow_ptr<U>& u)
+{
+  return t.get() != u.get();
 }
 
 #endif // COW_PTR_H
