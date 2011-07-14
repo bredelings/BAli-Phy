@@ -81,7 +81,7 @@ term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
     if (find_match(query,(*F)[i],results))
     {
       // Extract the density operation
-      shared_ptr<const Operation> density_op = boost::dynamic_pointer_cast<const Operation>(results[0]);
+      shared_ptr<const Operation> density_op = dynamic_pointer_cast<Operation>(results[0]);
       if (not density_op) throw myexception()<<"Expression "<<i<<" does have an Op in the right place!";
 
       // Create an expression for calculating the density of these random variables given their inputs

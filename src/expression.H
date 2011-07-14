@@ -115,6 +115,20 @@ struct match: public Object
   match(int i):index(i) { }
 };
 
+struct let_obj: public Object
+{
+  let_obj* clone() const {return new let_obj(*this);}
+
+  std::string print() const;
+};
+
+struct case_obj: public Object
+{
+  case_obj* clone() const {return new case_obj(*this);}
+
+  std::string print() const;
+};
+
 // This no longer needs to be a virtual member function, because we can now walk the expression from outside.
 int n_match_results(const expression_ref&);
 
@@ -160,7 +174,7 @@ std::vector<std::string> find_named_parameters(const expression_ref&);
 
 expression_ref substitute(const expression_ref& E1, int dummy, const expression_ref& E2);
 
-expression_ref substitute(const expression_ref& E1, const object_ref& D, const expression_ref& E2);
+expression_ref substitute(const expression_ref& E1, const expression_ref& D, const expression_ref& E2);
 
 /// Substitute for all matches found
 expression_ref substitute(const expression_ref& R, const std::vector<expression_ref>& replace);
@@ -190,7 +204,7 @@ struct term_ref;
 
 struct formula_expression_ref;
 
-struct expression_ref: public boost::shared_ptr<const Object>
+struct expression_ref: public polymorphic_cow_ptr<Object>
 {
   expression_ref operator()(const expression_ref& arg) const
   {
@@ -239,33 +253,33 @@ struct expression_ref: public boost::shared_ptr<const Object>
   expression_ref() {}
 
   expression_ref(Object* v)
-    :boost::shared_ptr<const Object>(v) 
+    :polymorphic_cow_ptr<Object>(v) 
   {}
 
   expression_ref(const boost::shared_ptr<const Object>& v)
-    :boost::shared_ptr<const Object>(v) 
+    :polymorphic_cow_ptr<Object>(v) 
   {}
 
   explicit expression_ref(const boost::shared_ptr<Object>& v)
-    :boost::shared_ptr<const Object>(v) 
+    :polymorphic_cow_ptr<Object>(v) 
   {}
 
   template <typename T>
   expression_ref(const boost::shared_ptr<const T>& v)
-    :boost::shared_ptr<const Object>(boost::static_pointer_cast<const Object>(v)) 
+    :polymorphic_cow_ptr<Object>(boost::static_pointer_cast<const Object>(v)) 
   {}
 
   expression_ref(const term_ref& t);
 
   expression_ref(const Object& o)
-    :boost::shared_ptr<const Object>(o.clone())
+    :polymorphic_cow_ptr<Object>(o.clone())
   {}
 
-  expression_ref(const int& i):boost::shared_ptr<const Object>(new Int(i)) {}
-  expression_ref(const double& d):boost::shared_ptr<const Object>(new Double(d)) {}
-  expression_ref(const bool& b):boost::shared_ptr<const Object>(new Bool(b)) {}
-  expression_ref(const std::string& s):boost::shared_ptr<const Object>(new String(s)) {}
-  expression_ref(const char* s):boost::shared_ptr<const Object>(new String(s)) {}
+  expression_ref(const int& i):polymorphic_cow_ptr<Object>(new Int(i)) {}
+  expression_ref(const double& d):polymorphic_cow_ptr<Object>(new Double(d)) {}
+  expression_ref(const bool& b):polymorphic_cow_ptr<Object>(new Bool(b)) {}
+  expression_ref(const std::string& s):polymorphic_cow_ptr<Object>(new String(s)) {}
+  expression_ref(const char* s):polymorphic_cow_ptr<Object>(new String(s)) {}
 };
 
 template <typename T>
@@ -379,7 +393,7 @@ std::valarray<T> get_varray(const expression_ref& R)
   if (not R)
     return std::valarray<T>();
 
-  boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  boost::shared_ptr<const expression> E = dynamic_pointer_cast<expression>(R);
 
   if (not E)
   {
@@ -400,7 +414,7 @@ std::vector<T> get_vector(const expression_ref& R)
   if (not R)
     return std::vector<T>();
 
-  boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  boost::shared_ptr<const expression> E = dynamic_pointer_cast<expression>(R);
 
   if (not E)
   {

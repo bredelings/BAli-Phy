@@ -95,7 +95,7 @@ tribool constant::compare(const Object& o) const
 }
 
 expression_ref::expression_ref(const term_ref& t)
-  :shared_ptr<const Object>((*t.F)[t.index])
+  :polymorphic_cow_ptr<Object>((*t.F)[t.index])
 {}
 
 tribool dummy::compare(const Object& o) const {
@@ -125,6 +125,16 @@ string match::print() const
     return "_";
   else
     return string("_")+convertToString(index);
+}
+
+string let_obj::print() const 
+{
+  return "let";
+}
+
+string case_obj::print() const 
+{
+  return "case";
 }
 
 // How would we handle lambda expressions, here?
@@ -290,7 +300,7 @@ expression_ref substitute(const expression_ref& R1, int dummy_index, const expre
 ///    Instead, we must "alpha-convert" Lx.y to Lz.y, and then apply Lz.y to x, leading to Lz.x .
 
 /// Literally R2 for D in R1. (e.g. don't rename variables in R2).  Throw an exception if D is a lambda-bound dummy variable.
-expression_ref substitute_(const expression_ref& R1, const object_ref& D, const expression_ref& R2)
+expression_ref substitute_(const expression_ref& R1, const expression_ref& D, const expression_ref& R2)
 {
   // If this is the relevant dummy, then substitute
   if (D->compare(*R1))
@@ -351,6 +361,23 @@ vector<int> get_quantified_indices(const expression_ref& R)
   return indices;
 }
 
+int get_highest_used_index(const expression_ref& R)
+{
+  shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R);
+  if (D) return D->index;
+  
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(R);
+  if (L) return L->dummy_index;
+  
+  int index = -1;
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  if (E)
+    for(int i=0;i<E->size();i++)
+      index = std::max(index, get_highest_used_index(E->sub[i]) );
+
+  return index;
+}
+
 expression_ref shift_quantified_dummies(const expression_ref& R, int delta)
 {
   shared_ptr< const expression> E = dynamic_pointer_cast<const expression>(R);
@@ -387,7 +414,7 @@ expression_ref shift_quantified_dummies(const expression_ref& R, int delta)
 }
 
 
-expression_ref substitute(const expression_ref& R1, const object_ref& D, const expression_ref& R2)
+expression_ref substitute(const expression_ref& R1, const expression_ref& D, const expression_ref& R2)
 {
   vector<int> I1 = get_quantified_indices(R1);
   if (const dummy* d = dynamic_cast<const dummy*>(&*D))
@@ -567,7 +594,7 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
     }
 
   // 0. If R is not an expression
-  shared_ptr<const expression> RE = dynamic_pointer_cast<const expression>(R);
+  shared_ptr<expression> RE = dynamic_pointer_cast<expression>(R);
   if (not RE)
   {
     if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
@@ -596,10 +623,8 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
   expression_ref head = eval(C,RE->sub[0]);
   if (head != RE->sub[0])
   {
-    shared_ptr<expression> RV (RE->clone());
-    RV->sub[0] = head;
-    RE = RV;
-    R = RE;
+    // This should affect R.
+    RE->sub[0] = head;
   }
 
   // 2. If head is a lambda, then this is a lambda expression.  It evaluates to itself.
@@ -643,17 +668,12 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
 	return false;
     }
 
-    // Make a new expression object that is the same as RE.  We'll point its argument expression_ref's elsewhere.
-    shared_ptr<expression> RV (RE->clone());
-    // Make RE point to this new object, that is being modified below, but not through RE
-    R = boost::const_pointer_cast<const expression>(RV);
-
     // If all the arguments match, then the whole expression matches
     for(int i=1;i<RE->size();i++)
     {
       expression_ref Q_sub;
       if (QE) Q_sub = QE->sub[i];
-      if (not eval_match(C, RV->sub[i], Q_sub, results))
+      if (not eval_match(C, RE->sub[i], Q_sub, results))
 	return false;
     }
 
@@ -767,4 +787,109 @@ expression_ref get_list(const vector<expression_ref>& v)
     E = Cons(v[i],E);
 
   return E;
+}
+
+/* Legal terms are:
+
+T,U,V -> x
+      -> Lx.T
+      -> U T
+      -> c U[]
+      -> let {x=U} in T
+      -> case U of {c x[i] -> V[i]}
+*/
+
+/* The normalization rules are:
+
+   1. (x)* -> x
+   2. (Lx.T)* -> Lx.(T)*
+   3. (U T)* -> let x = (T)* in (U)* x , x fresh
+   4. (c U[i]) -> let x[i] = (U[i])* in c x[i], x fresh
+   5. (let {x[i] = U[i]} in T)* -> let {x=(U[i])*} in (T)*
+   6. (case U of {c[i] x[i][] -> T[i]})* -> case (U)* of {c[i] x[i][] -> (T[i])*}
+ */
+
+/*
+  x -> dummy[index]
+  Lx.T ->(lambda[index] T)
+  (U T) -> (U T)
+  (c U[i]) -> (c U[i])
+  (let {x[i] = U[i]} in T) -> (let [(x[i],U[i])] T)
+ */
+
+/*
+ *  Perhaps switch to (lambda dummy E) instead of (lambda[index] E)
+ */ 
+
+expression_ref add_let(const expression_ref& R,const expression_ref& D, const expression_ref& B)
+{
+  expression* E = new expression;
+  E->sub.push_back(let_obj());
+  E->sub.push_back(Tuple(2)(D,B));
+  E->sub.push_back(R);
+  return E;
+}
+
+
+expression_ref launchbury_normalize(const expression_ref& R)
+{
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
+  // Literal constant.  Treat as 0-arg constructor.
+  if (not E) return R;
+  
+  // 2. Lambda
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  if (L)
+  {
+    assert(E->size() == 2);
+    expression* V = new expression(E);
+    V->sub[1] = launchbury_normalize(V->sub[1]);
+    return expression_ref(V);
+  }
+
+  // 1. Var
+  shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(E->sub[0]);
+  if (E->size() == 1)
+    return D;
+  
+  // 3. Application
+  shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E->sub[0]);
+  
+  
+  // 4. Constructor
+  shared_ptr<const Function> F = dynamic_pointer_cast<const Function>(E->sub[0]);
+  if (F)
+  {
+    // Actually we probably just need x[i] not to be free in E->sub[i]
+    int var_index = get_highest_used_index(R)+1;
+
+    expression* C = new expression;
+    C->sub.push_back(E->sub[0]);
+    for(int i=1;i<E->size();i++)
+      C->sub.push_back( dummy(var_index++) );
+
+    expression* V = new expression;
+    V->sub.push_back(let_obj());
+    V->sub.push_back(ListEnd);
+    V->sub.push_back(E);
+    
+    //    expression* Defs = new expression(Tuple(
+    
+    for(int i=1;i<E->size();i++)
+    {
+      expression_ref Ei = launchbury_normalize(E->sub[1]);
+      V->sub[1] = Cons(Tuple(2)(C->sub[i], Ei), V->sub[1]);
+    }
+  }
+
+  // 5. Let 
+  shared_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
+  if (Let)
+  {
+    expression* V = new expression(E);
+    V->sub[2] = launchbury_normalize(V->sub[2]);
+
+    expression_ref S1 = V->sub[1];
+  }
 }
