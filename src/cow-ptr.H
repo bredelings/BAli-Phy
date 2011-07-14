@@ -122,9 +122,9 @@ public:
 
   cow_ptr(const cow_ptr& r) throw()             : data(r.data) {}
 
-  cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) {copy();}
+  cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { }
 
-  cow_ptr(const boost::shared_ptr<X>& p) : data(p) {copy();}
+  cow_ptr(const boost::shared_ptr<X>& p) : data(p) { }
 
   explicit cow_ptr(X* p = 0) throw()            : data(p) {}
 
@@ -241,9 +241,9 @@ public:
   polymorphic_cow_ptr(const constant_value<X>& p) : data(const_pointer_cast<X>(p)) { }
 
   // Just because p is const, doesn't mean that there isn't a non-const pointer to it.
-  polymorphic_cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { copy();}
+  polymorphic_cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { }
 
-  polymorphic_cow_ptr(const boost::shared_ptr<X>&       p) : data(p) {copy();}
+  polymorphic_cow_ptr(const boost::shared_ptr<X>&       p) : data(p) { }
 
   template <typename Y> friend class polymorphic_cow_ptr;
 
@@ -266,15 +266,15 @@ inline void swap(polymorphic_cow_ptr<X>& p1,polymorphic_cow_ptr<X>& p2)
 }
 
 template <typename Y,typename Z>
-boost::shared_ptr<const Y> dynamic_pointer_cast(const polymorphic_cow_ptr<Z>& ptr1)
+boost::shared_ptr<const Y> dynamic_pointer_cast(const polymorphic_cow_ptr<Z>& p)
 {
-  return boost::dynamic_pointer_cast<const Y>(ptr1.get_ptr());
+  return boost::dynamic_pointer_cast<const Y>(p.get_ptr());
 }
 
 template <typename Y,typename Z>
-boost::shared_ptr<Y> dynamic_pointer_cast(polymorphic_cow_ptr<Z>& ptr1)
+boost::shared_ptr<Y> dynamic_pointer_cast(polymorphic_cow_ptr<Z>& p)
 {
-  return boost::dynamic_pointer_cast<Y>(ptr1.modify_ptr());
+  return boost::dynamic_pointer_cast<Y>(p.modify_ptr());
 }
 
 template <class T, class U> inline bool operator==(const polymorphic_cow_ptr<T>& t, const polymorphic_cow_ptr<U>& u)
