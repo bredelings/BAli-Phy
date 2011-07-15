@@ -4,6 +4,8 @@
 #include "formula.H"
 #include "context.H"
 #include "operations.H"
+#include <set>
+#include <iterator>
 
 using boost::shared_ptr;
 using std::vector;
@@ -300,68 +302,80 @@ expression_ref substitute(const expression_ref& R1, int dummy_index, const expre
 ///    Instead, we must "alpha-convert" Lx.y to Lz.y, and then apply Lz.y to x, leading to Lz.x .
 
 /// Literally R2 for D in R1. (e.g. don't rename variables in R2).  Throw an exception if D is a lambda-bound dummy variable.
-expression_ref substitute_(const expression_ref& R1, const expression_ref& D, const expression_ref& R2)
+
+template <typename T>
+void add(std::set<T>& S1, const std::set<T>& S2)
 {
-  // If this is the relevant dummy, then substitute
-  if (D->compare(*R1))
-    return R2;
-
-  shared_ptr< const expression> E1 = dynamic_pointer_cast<const expression>(R1);
-
-  // If this is any other constant, then it doesn't contain the dummy
-  if (not E1) return R1;
-
-  // Make sure we don't try to substitute for lambda-quantified dummies
-  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E1->sub[0]))
-  {
-    if (D->compare(dummy(L->dummy_index)))
-      throw myexception()<<"Trying to substitution for dummy "<<L->dummy_index<<" in lambda express that quantifies it!";
-    // FIXME: If we want to do "capture-avoiding substitution, we shouldn't die, but
-    //        just do nothing.  So, we can do "return R1;"
-    //
-    //        But probably this is really because we did something silly, so let's at least give a warning message.
-  }
-
-  // This is an expression, so compute the substituted sub-expressions
-  bool found = false;
-  vector< expression_ref > sub(E1->size());
-  for(int i=0;i<E1->size();i++)
-  {
-    sub[i] = substitute_(E1->sub[i], D, R2);
-    if (sub[i] != E1->sub[i]) found = true;
-  }
-
-  // This is not a dummy expression, and the arguments (we didn't search head) do not contain the dummy being replaced;
-  if (not found) return R1;
-
-  // Construct a new expression containing the substituted args.
-  return expression_ref(new expression(sub));
+  std::set<T> result;
+  std::merge(S1.begin(), S1.end(),
+	     S2.begin(), S2.end(),
+	     std::inserter(result, result.begin())
+	);
+  S1.swap(result);
 }
 
 
-void get_quantified_indices(const expression_ref& R,vector<int>& indices)
+std::set<int> get_free_indices(const expression_ref& R)
 {
+  std::set<int> S;
+
+  // fv x = { x }
+  if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R)) 
+  {
+    S.insert(D->index);
+    return S;
+  }
+
+  // fv c = { }
   shared_ptr< const expression> E = dynamic_pointer_cast<const expression>(R);
-  if (not E) return;
+  if (not E)
+    return S;
 
-  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+  // fv Lx.M = fv(M) - x
+  else if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
   {
-    if (not includes(indices,L->dummy_index))
-      indices.push_back(L->dummy_index);
+    S = get_free_indices(E->sub[1]);
+    S.erase(L->dummy_index);
+  }
+  else 
+  {
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+
+    // fv let {x[i]=U[i]} T = fv(T) + fv(U[i]) - fv(x[i])
+    if (parse_let_expression(R, vars, bodies, T))
+    {
+      S = get_free_indices(T);
+      for(int i=0;i<bodies.size();i++)
+	add(S, get_free_indices(bodies[i]) );
+
+      for(int i=0;i<vars.size();i++)
+      {
+	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
+	assert(D);
+	S.erase(D->index);
+      }
+    }
+    // fv c x[i] = fv(x[i])
+    else if (dynamic_pointer_cast<const Function>(E->sub[0]))
+    {
+      for(int i=1;i<E->size();i++)
+	add(S, get_free_indices(E->sub[i]));
+    }
+
+    // fv M N = fv(M) + fv(N)
+    else if (E->size() == 2)
+    {
+      S = get_free_indices(E->sub[0]);
+      add(S, get_free_indices(E->sub[1]));
+    }
   }
 
-  for(int i=0;i<E->size();i++)
-    get_quantified_indices(E->sub[i],indices);
+  return S;
 }
 
-vector<int> get_quantified_indices(const expression_ref& R)
-{
-  vector<int> indices;
-  get_quantified_indices(R,indices);
-  return indices;
-}
-
-int get_highest_used_index(const expression_ref& R)
+static int get_highest_used_index(const expression_ref& R)
 {
   shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R);
   if (D) return D->index;
@@ -378,67 +392,106 @@ int get_highest_used_index(const expression_ref& R)
   return index;
 }
 
-expression_ref shift_quantified_dummies(const expression_ref& R, int delta)
+static void rename_lambda(expression_ref& R, int old_name, int new_name)
 {
-  shared_ptr< const expression> E = dynamic_pointer_cast<const expression>(R);
-  if (not E) return R;
-
-  // make sure we don't try to substitute for quantified dummies
-  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+  if (shared_ptr<dummy> D = dynamic_pointer_cast<dummy>(R))
   {
-    int old_index = L->dummy_index;
-    int new_index = old_index + delta;
+    if (D->index == old_name) D->index = new_name;
+    return;
+  }
 
-    expression_ref R2 = substitute_(E->sub[1], dummy(old_index), dummy(new_index));
-    R2 = shift_quantified_dummies(R2,delta);
-    R2 = expression_ref(new expression(lambda(new_index),R2));
-    return R2;
+  shared_ptr<expression> E = dynamic_pointer_cast<expression>(R);
+  if (not E) return;
+
+  if (shared_ptr<lambda> L = dynamic_pointer_cast<lambda>(E->sub[0]))
+    if (L->dummy_index == old_name)
+      L->dummy_index = new_name;
+
+  // This is an expression, so compute the substituted sub-expressions
+  for(int i=0;i<E->size();i++)
+    rename_lambda(E->sub[i], old_name, new_name);
+}
+
+/// Return the min of v
+template<typename T>
+T max(const std::set<T>& v)
+{
+  T t = *v.begin();
+  foreach(i,v)
+    t = std::max(t,*i);
+
+  return t;
+}
+
+/// Return the min of v
+template<typename T>
+T min(const std::set<T>& v)
+{
+  T t = *v.begin();
+  foreach(i,v)
+    t = std::min(t,*i);
+
+  return t;
+}
+
+// If we use de Bruijn indices, then, as before bound indices in R2 are no problem.
+// Unlike before, we have a separate type for free variables: they therefore cannot be bound
+//  by substituting them.
+
+// Idea: replace lambda[index] with just lambda.
+//  + Bound indices have in index that is the number of lambda terms 
+//  + Binders can include let, lambda, and case.
+
+
+void do_substitute(expression_ref& R1, const expression_ref& D, const expression_ref& R2)
+{
+  // If this is the relevant dummy, then substitute
+  if (D->compare(*R1))
+  {
+    R1 = R2;
+    return;
+  }
+
+  shared_ptr<expression> E1 = dynamic_pointer_cast<expression>(R1);
+
+  // If this is any other constant, then it doesn't contain the dummy
+  if (not E1) return;
+
+  // Make sure we don't try to substitute for lambda-quantified dummies
+  if (shared_ptr<lambda> L = dynamic_pointer_cast<lambda>(E1->sub[0]))
+  {
+    // This is a "capture-avoiding substitution".
+    if (D->compare(dummy(L->dummy_index))) return;
+
+    std::set<int> fv2 = get_free_indices(R2);
+    // this lambda binds a free variable in R2
+    if (fv2.find(L->dummy_index) != fv2.end())
+    {
+      add( fv2, get_free_indices(E1->sub[1]) );
+
+      int new_index = max(fv2)+1;
+      do_substitute(E1->sub[1], dummy(L->dummy_index), dummy(new_index));
+      L->dummy_index = new_index;
+    }
   }
 
   // This is an expression, so compute the substituted sub-expressions
-  bool found = false;
-  vector< expression_ref > sub(E->size());
-  for(int i=0;i<E->size();i++)
-  {
-    sub[i] = shift_quantified_dummies(E->sub[i],delta);
-    if (sub[i] != E->sub[i]) found = true;
-  }
-
-  // No quantified dummy expressions were found.
-  if (not found)
-    return R;
-
-  // Construct a new expression containing the substituted args.
-  else
-    return expression_ref(new expression(sub));
+  for(int i=0;i<E1->size();i++)
+    do_substitute(E1->sub[i], D, R2);
 }
-
 
 expression_ref substitute(const expression_ref& R1, const expression_ref& D, const expression_ref& R2)
 {
-  vector<int> I1 = get_quantified_indices(R1);
-  if (const dummy* d = dynamic_cast<const dummy*>(&*D))
-    remove_element(I1,d->index);
-
-  vector<int> I2 = get_quantified_indices(R2);
-
-  // If either expression contains no lambda expressions, then their dummy expression can't clash w/ each other.
-  if (I1.size() == 0 or I2.size() == 0)
-    return substitute_(R1,D,R2);
-
-  // If all the lambda dummies in R2 are after all the lambda dummies in R1, they also can't clash
-  int shift1 = max(I2)+1 - min(I1);
-  int shift2 = max(I1)+1 - min(I2);
-
-  // If the lambda ranges are non-overlapping
-  if (shift1 <= 0 or shift2 <= 0)
-    return substitute_(R1,D,R2);
-
-  // Shift the dummies in R2 past all the dummies in R1
-  expression_ref R2_shifted = shift_quantified_dummies(R2, shift2);
-  return substitute_(R1,D,R2_shifted);
+  expression_ref R1b = R1;
+  do_substitute(R1b, D, R2);
+  return R1b;
 }
 
+
+// When applying Lx.M to N, we need to make sure that no occurrence of x has the free variables in N bound.
+// At each occurence of x, we need to know 
+// (i) what are the lambda's that class with the free variables of N
+// (ii) what free variables of M are 
 expression_ref apply(const expression_ref& R,const expression_ref& arg)
 {
   assert(R);
