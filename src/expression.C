@@ -547,6 +547,18 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
     }
   }
 
+  // Make sure we don't try to substitute for let-quantified dummies
+  {
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+    if (parse_let_expression(R1, vars, bodies, T))
+    {
+      for(int i=0;i<vars.size();i++)
+	if (D->compare(*vars[i])) return;
+    }
+  }
+
   // This is an expression, so compute the substituted sub-expressions
   for(int i=0;i<E1->size();i++)
     do_substitute(E1->sub[i], D, R2);
