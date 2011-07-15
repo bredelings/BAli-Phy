@@ -1081,5 +1081,6 @@ expression_ref launchbury_normalize(const expression_ref& R)
     return V;
   }
 
-  throw myexception()<<"I don't recognize expression '"+ R->print() + "'";
+  std::cerr<<"I don't recognize expression '"+ R->print() + "'\n";
+  return R;
 }
