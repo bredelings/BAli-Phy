@@ -13,6 +13,49 @@ using std::string;
 
 using boost::dynamic_pointer_cast;
 
+//let [(x[i], bodies[i])] T
+bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars, vector<expression_ref>& bodies, expression_ref& T)
+{
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  if (not E) return false;
+
+  if (not dynamic_pointer_cast<let_obj>(E->sub[0])) return false;
+
+  vector<expression_ref> pairs = get_ref_vector_from_list(E->sub[1]);
+  for(int i=0;i<pairs.size();i++)
+  {
+    shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(pairs[i]);
+    vars.push_back(E2->sub[1]);
+    bodies.push_back(E2->sub[2]);
+  }
+
+  T = E->sub[2];
+
+  return true;
+}
+
+//case T [(c[i] X[i],E[i])]
+bool parse_case_expression(const expression_ref& R, vector<expression_ref>& vars, vector<expression_ref>& bodies, expression_ref& T)
+{
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  if (not E) return false;
+
+  if (not dynamic_pointer_cast<case_obj>(E->sub[0])) return false;
+
+  vector<expression_ref> pairs = get_ref_vector_from_list(E->sub[2]);
+  for(int i=0;i<pairs.size();i++)
+  {
+    shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(pairs[i]);
+    vars.push_back(E2->sub[1]);
+    bodies.push_back(E2->sub[2]);
+  }
+
+  T = E->sub[1];
+
+  return true;
+}
+
+
 vector<string> print_arg_expressions(const expression& e)
 {
   vector<string> sub_names;
@@ -45,6 +88,35 @@ string expression::print() const
     }
       
     return O->print_expression(print_arg_expressions(*this));
+  }
+
+  //  if (false)
+  {
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+
+    if (parse_let_expression(*this, vars, bodies, T))
+    {
+      result = "let {";
+      vector<string> parts;
+      for(int i=0;i<vars.size();i++)
+	parts.push_back(vars[i]->print() + " = " + bodies[i]->print());
+      result += join(parts,',');
+      result += "} in " + T->print();
+      return result;
+    }
+
+    if (parse_case_expression(*this, vars, bodies, T))
+    {
+      result = "case " + T->print() + " in {";
+      vector<string> parts;
+      for(int i=0;i<vars.size();i++)
+	parts.push_back( vars[i]->print() + " -> " + bodies[i]->print() );
+      result += join(parts,',');
+      result += "}";
+      return result;
+    }
   }
 
   return print_operator_expression( print_arg_expressions(*this) );
@@ -868,27 +940,44 @@ T,U,V -> x
   (U T) -> (U T)
   (c U[i]) -> (c U[i])
   (let {x[i] = U[i]} in T) -> (let [(x[i],U[i])] T)
+  (case T in {c[i] x[i] -> U[i]}) -> (case T [(c[i] x[i],U[i])]
  */
 
 /*
  *  Perhaps switch to (lambda dummy E) instead of (lambda[index] E)
  */ 
 
-expression_ref add_let(const expression_ref& R,const expression_ref& D, const expression_ref& B)
+// FIXME: add operator expressions :-P
+
+expression_ref let_expression(const vector<expression_ref>& vars, const vector<expression_ref>& bodies, const expression_ref& T)
 {
-  expression* E = new expression;
-  E->sub.push_back(let_obj());
-  E->sub.push_back(Tuple(2)(D,B));
-  E->sub.push_back(R);
+  // FIXME: merge with existing let expression...
+
+  expression* E = new expression( let_obj() );
+  E->sub.push_back(ListEnd);
+  E->sub.push_back(T);
+
+  for(int i=0;i<vars.size();i++)
+  {
+    expression_ref t = Tuple(2)(vars[i], bodies[i]);
+    E->sub[1] = Cons(t, E->sub[1]);
+  }
+
   return E;
 }
 
+expression_ref let_expression(const expression_ref& var, const expression_ref& body, const expression_ref& T)
+{
+  vector<expression_ref> vars(1,var);
+  vector<expression_ref> bodies(1,body);
+  return let_expression(vars, bodies, T);
+}
 
 expression_ref launchbury_normalize(const expression_ref& R)
 {
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
-  // Literal constant.  Treat as 0-arg constructor.
+  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
   if (not E) return R;
   
   // 2. Lambda
@@ -896,9 +985,13 @@ expression_ref launchbury_normalize(const expression_ref& R)
   if (L)
   {
     assert(E->size() == 2);
-    expression* V = new expression(E);
-    V->sub[1] = launchbury_normalize(V->sub[1]);
-    return expression_ref(V);
+    expression* V = new expression(*E);
+    V->sub[1] = launchbury_normalize(E->sub[1]);
+
+    if (V->sub[1] == E->sub[1])
+      return R;
+    else
+      return V;
   }
 
   // 1. Var
@@ -908,32 +1001,42 @@ expression_ref launchbury_normalize(const expression_ref& R)
   
   // 3. Application
   shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E->sub[0]);
-  
+  if (D or E2)
+  {
+    int var_index = get_highest_used_index(R)+1;
+    expression_ref x = dummy(var_index);
+
+    return let_expression(x, E->sub[1], E->sub[0](x));
+  }
   
   // 4. Constructor
-  shared_ptr<const Function> F = dynamic_pointer_cast<const Function>(E->sub[0]);
-  if (F)
+  if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
+      dynamic_pointer_cast<const Operation>(E->sub[0]))
   {
-    // Actually we probably just need x[i] not to be free in E->sub[i]
     int var_index = get_highest_used_index(R)+1;
 
     expression* C = new expression;
     C->sub.push_back(E->sub[0]);
-    for(int i=1;i<E->size();i++)
-      C->sub.push_back( dummy(var_index++) );
 
-    expression* V = new expression;
-    V->sub.push_back(let_obj());
-    V->sub.push_back(ListEnd);
-    V->sub.push_back(E);
-    
-    //    expression* Defs = new expression(Tuple(
-    
+    // Actually we probably just need x[i] not to be free in E->sub[i]
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
     for(int i=1;i<E->size();i++)
     {
-      expression_ref Ei = launchbury_normalize(E->sub[1]);
-      V->sub[1] = Cons(Tuple(2)(C->sub[i], Ei), V->sub[1]);
+      if (dynamic_pointer_cast<const dummy>(E->sub[i]))
+      {
+	C->sub.push_back(E->sub[i]);
+      }
+      else
+      {
+	expression_ref var = dummy( var_index++ );
+	C->sub.push_back( var );
+	vars.push_back( var );
+	bodies.push_back( E->sub[i] );
+      }
     }
+
+    return let_expression(vars, bodies, C);
   }
 
   // 5. Let 
@@ -941,8 +1044,42 @@ expression_ref launchbury_normalize(const expression_ref& R)
   if (Let)
   {
     expression* V = new expression(E);
+
+    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[1]);
+    while(bodies)
+    {
+      assert(bodies->size() == 3);
+      shared_ptr<expression> let_group = dynamic_pointer_cast<expression>(bodies->sub[1]);
+      assert(let_group);
+      let_group->sub[2] = launchbury_normalize(let_group->sub[2]);
+      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+    }
+    
     V->sub[2] = launchbury_normalize(V->sub[2]);
 
-    expression_ref S1 = V->sub[1];
+    return V;
   }
+
+  // 6. Case
+  shared_ptr<const case_obj> Case = dynamic_pointer_cast<const case_obj>(E->sub[0]);
+  if (Case)
+  {
+    expression* V = new expression(E);
+
+    V->sub[1] = launchbury_normalize(V->sub[1]);
+
+    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
+    while(bodies)
+    {
+      assert(bodies->size() == 3);
+      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
+      assert(alternative);
+      alternative->sub[2] = launchbury_normalize(alternative->sub[2]);
+      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+    }
+    
+    return V;
+  }
+
+  throw myexception()<<"I don't recognize expression '"+ R->print() + "'";
 }

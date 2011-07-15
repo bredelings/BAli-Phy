@@ -456,4 +456,6 @@ expression_ref get_tuple(const std::valarray<T>& v)
 }
 
 expression_ref get_list(const std::vector<expression_ref>& v);
+
+expression_ref launchbury_normalize(const expression_ref& R);
 #endif
