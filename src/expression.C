@@ -989,6 +989,10 @@ expression_ref launchbury_normalize(const expression_ref& R)
 {
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
+  // 1. Var
+  if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R))
+    return R;
+  
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
   if (not E) return R;
   
@@ -1006,19 +1010,19 @@ expression_ref launchbury_normalize(const expression_ref& R)
       return V;
   }
 
-  // 1. Var
-  shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(E->sub[0]);
-  if (E->size() == 1)
-    return D;
-  
   // 3. Application
-  shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E->sub[0]);
-  if (D or E2)
+  if (dynamic_pointer_cast<const expression>(E->sub[0]) or dynamic_pointer_cast<const dummy>(E->sub[0]))
   {
-    int var_index = get_highest_used_index(R)+1;
-    expression_ref x = dummy(var_index);
+    assert(E->size() == 2);
+    if (dynamic_pointer_cast<const dummy>(E->sub[1])) 
+      return R;
+    else
+    {
+      int var_index = get_highest_used_index(R)+1;
+      expression_ref x = dummy(var_index);
 
-    return let_expression(x, E->sub[1], E->sub[0](x));
+      return let_expression(x, launchbury_normalize(E->sub[1]), launchbury_normalize(E->sub[0])(x));
+    }
   }
   
   // 4. Constructor
@@ -1044,7 +1048,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
 	expression_ref var = dummy( var_index++ );
 	C->sub.push_back( var );
 	vars.push_back( var );
-	bodies.push_back( E->sub[i] );
+	bodies.push_back( launchbury_normalize(E->sub[i]) );
       }
     }
 
