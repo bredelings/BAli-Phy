@@ -264,6 +264,16 @@ int main()
   cout<<"\n CTX1 now contains this list of non-sub expressions:\n";
   cout<<*CTX1.F<<"\n";
 
+  for(int i=0;i<CTX1.F->n_exp();i++)
+  {
+    expression_ref R = CTX1.F->exp(i);
+    cout<<i<<"  "<<R->print()<<"\n";
+
+    expression_ref N = launchbury_normalize(R);
+    cout<<"     "<<N->print()<<"\n";
+  }
+
+
   cout<<"\n\n";
   cout<<"Match test:\n";
   expression_ref pattern = default_value(parameter("X"))(match(0));
