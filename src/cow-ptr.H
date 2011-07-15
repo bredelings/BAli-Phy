@@ -17,11 +17,16 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* To use cow-ptrs safely you must remember the following things.
+/* To use cow-ptrs safely, you must remember the following things.
  *
- * 1. A cow-ptr that is set from an external pointer may be modified through that pointer.
- * 2. 
+ * 1. A cow-ptr that is set from an external pointer may still have its object 
+ *    modifed out from under it through that pointer.  If the external pointer is
+ *    also a cow-ptr, though, then you will be safe.
  *
+ * 2. When dynamic_pointer_cast< >(p1) gives you a non-const pointer p2, it makes p1
+ *    pointer point to a new object, and gives you a non-const pointer to that object.
+ *    Be careful that p1 doesn't change again, thus losing any further changes you make
+ *    through p2. (Hmm... make dynamic_pointer_cast< > give you a weak_ptr< >?)
  */
 
 #ifndef COW_PTR_H
