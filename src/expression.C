@@ -386,6 +386,17 @@ void add(std::set<T>& S1, const std::set<T>& S2)
   S1.swap(result);
 }
 
+template <typename T>
+std::set<T> intersection(std::set<T>& S1, const std::set<T>& S2)
+{
+  std::set<T> result;
+  std::set_intersection(S1.begin(), S1.end(),
+			S2.begin(), S2.end(),
+			std::inserter(result, result.begin())
+	);
+  return result;
+}
+
 
 std::set<int> get_free_indices(const expression_ref& R)
 {
@@ -524,6 +535,7 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
     return;
   }
 
+  // FIXME: If we modify R1 later, will this modification show up in E1?
   shared_ptr<expression> E1 = dynamic_pointer_cast<expression>(R1);
 
   // If this is any other constant, then it doesn't contain the dummy
@@ -542,8 +554,8 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
       add( fv2, get_free_indices(E1->sub[1]) );
 
       int new_index = max(fv2)+1;
-      do_substitute(E1->sub[1], dummy(L->dummy_index), dummy(new_index));
-      L->dummy_index = new_index;
+      rename_lambda(R1, L->dummy_index, new_index);
+      E1 = dynamic_pointer_cast<expression>(R1);
     }
   }
 
@@ -554,8 +566,27 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
     expression_ref T;
     if (parse_let_expression(R1, vars, bodies, T))
     {
+      // Don't substitute into out-of-scope variables.
+      std::set<int> bound;
       for(int i=0;i<vars.size();i++)
+      {
 	if (D->compare(*vars[i])) return;
+	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
+	bound.insert(D->index);
+      }
+
+      // Rename bound variables 'vars' if they are free in R2
+      std::set<int> fv2 = get_free_indices(R2);
+      std::set<int> overlap = intersection(bound,fv2);
+      if (not overlap.empty())
+      {
+	// should perhaps not consider D free in R1.
+	add(fv2, get_free_indices(R1));
+	int new_index = max(fv2)+1;
+	foreach(i,overlap)
+	  rename_lambda(R1,*i,new_index++);
+	E1 = dynamic_pointer_cast<expression>(R1);
+      }
     }
   }
 
