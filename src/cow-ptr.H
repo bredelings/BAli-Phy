@@ -282,6 +282,7 @@ boost::shared_ptr<const Y> dynamic_pointer_cast(const polymorphic_cow_ptr<Z>& p)
 template <typename Y,typename Z>
 boost::shared_ptr<Y> dynamic_pointer_cast(polymorphic_cow_ptr<Z>& p)
 {
+  // FIXME: this does a 'copy' even if the case fails.
   return boost::dynamic_pointer_cast<Y>(p.modify_ptr());
 }
 
