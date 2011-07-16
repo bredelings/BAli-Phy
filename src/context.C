@@ -77,6 +77,7 @@ bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, 
     {
       assert(R);
       assert(R->compare(*V.result));
+      R = V.result;
     }
 
     if (not Q) return true;

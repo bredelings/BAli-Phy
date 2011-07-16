@@ -17,6 +17,18 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+/* To use cow-ptrs safely, you must remember the following things.
+ *
+ * 1. A cow-ptr that is set from an external pointer may still have its object 
+ *    modifed out from under it through that pointer.  If the external pointer is
+ *    also a cow-ptr, though, then you will be safe.
+ *
+ * 2. When dynamic_pointer_cast< >(p1) gives you a non-const pointer p2, it makes p1
+ *    pointer point to a new object, and gives you a non-const pointer to that object.
+ *    Be careful that p1 doesn't change again, thus losing any further changes you make
+ *    through p2. (Hmm... make dynamic_pointer_cast< > give you a weak_ptr< >?)
+ */
+
 #ifndef COW_PTR_H
 #define COW_PTR_H
 
@@ -58,6 +70,8 @@ public:
     return *this;
   }
 #endif
+  boost::shared_ptr<const X> get_ptr()    const {        return data;}
+  boost::shared_ptr<X>       modify_ptr()       {copy(); return data;}
 
   const X& operator*()    const throw()   {assert(data); return *data;}
   const X* operator->()   const throw()   {assert(data); return data.get();}
@@ -107,22 +121,20 @@ public:
   cow_ptr& operator=(const boost::shared_ptr<const X>& r)
   {
     data = const_pointer_cast<X>(r);
-    copy();
     return *this;
   }
 
   cow_ptr& operator=(const boost::shared_ptr<X>& r)
   {
     data = r;
-    copy();
     return *this;
   }
 
   cow_ptr(const cow_ptr& r) throw()             : data(r.data) {}
 
-  cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) {copy();}
+  cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { }
 
-  cow_ptr(const boost::shared_ptr<X>& p) : data(p) {copy();}
+  cow_ptr(const boost::shared_ptr<X>& p) : data(p) { }
 
   explicit cow_ptr(X* p = 0) throw()            : data(p) {}
 
@@ -169,8 +181,10 @@ public:
     data = r.data;
     return *this;
   }
-  template <typename Y> friend boost::shared_ptr<Y> dynamic_pointer_cast(const polymorphic_cow_ptr<X>&);
+
 #endif
+  boost::shared_ptr<const X> get_ptr()    const {        return data;}
+  boost::shared_ptr<X>       modify_ptr()       {copy(); return data;}
 
   const X& operator*()    const throw()   {assert(data); return *data;}
   const X* operator->()   const throw()   {assert(data); return data.get();}
@@ -221,14 +235,12 @@ public:
   polymorphic_cow_ptr& operator=(const boost::shared_ptr<const X>& r)
   {
     data = const_pointer_cast<X>(r);
-    copy();
     return *this;
   }
 
   polymorphic_cow_ptr& operator=(const boost::shared_ptr<X>& r)
   {
     data = r;
-    copy();
     return *this;
   }
 
@@ -237,9 +249,9 @@ public:
   polymorphic_cow_ptr(const constant_value<X>& p) : data(const_pointer_cast<X>(p)) { }
 
   // Just because p is const, doesn't mean that there isn't a non-const pointer to it.
-  polymorphic_cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { copy();}
+  polymorphic_cow_ptr(const boost::shared_ptr<const X>& p) : data(const_pointer_cast<X>(p)) { }
 
-  polymorphic_cow_ptr(const boost::shared_ptr<X>&       p) : data(p) {copy();}
+  polymorphic_cow_ptr(const boost::shared_ptr<X>&       p) : data(p) { }
 
   template <typename Y> friend class polymorphic_cow_ptr;
 
@@ -261,10 +273,27 @@ inline void swap(polymorphic_cow_ptr<X>& p1,polymorphic_cow_ptr<X>& p2)
   p1.swap(p2);
 }
 
-template <typename X,typename Y>
-boost::shared_ptr<X> dynamic_pointer_cast(const polymorphic_cow_ptr<Y>& ptr1)
+template <typename Y,typename Z>
+boost::shared_ptr<const Y> dynamic_pointer_cast(const polymorphic_cow_ptr<Z>& p)
 {
-  return boost::dynamic_pointer_cast<X>(ptr1.data);
+  return boost::dynamic_pointer_cast<const Y>(p.get_ptr());
+}
+
+template <typename Y,typename Z>
+boost::shared_ptr<Y> dynamic_pointer_cast(polymorphic_cow_ptr<Z>& p)
+{
+  // FIXME: this does a 'copy' even if the case fails.
+  return boost::dynamic_pointer_cast<Y>(p.modify_ptr());
+}
+
+template <class T, class U> inline bool operator==(const polymorphic_cow_ptr<T>& t, const polymorphic_cow_ptr<U>& u)
+{
+  return t.get() == u.get();
+}
+
+template <class T, class U> inline bool operator!=(const polymorphic_cow_ptr<T>& t, const polymorphic_cow_ptr<U>& u)
+{
+  return t.get() != u.get();
 }
 
 #endif // COW_PTR_H
