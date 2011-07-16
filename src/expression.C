@@ -35,7 +35,7 @@ bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars,
 }
 
 //case T [(patterns[i],E[i])]
-bool parse_case_expression(const expression_ref& R, vector<expression_ref>& vars, vector<expression_ref>& bodies, expression_ref& T)
+bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<expression_ref>& vars, vector<expression_ref>& bodies)
 {
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return false;
@@ -107,7 +107,7 @@ string expression::print() const
       return result;
     }
 
-    if (parse_case_expression(*this, vars, bodies, T))
+    if (parse_case_expression(*this, T, vars, bodies))
     {
       result = "case " + T->print() + " in {";
       vector<string> parts;
@@ -215,6 +215,8 @@ string alt_obj::name() const
 {
   return "->";
 }
+
+expression_ref Alt = lambda_expression( alt_obj() );
 
 // How would we handle lambda expressions, here?
 bool find_match(const expression_ref& pattern, const expression_ref& E, vector< expression_ref >& results)
@@ -495,6 +497,7 @@ static int get_highest_used_index(const expression_ref& R)
   return index;
 }
 
+// Rename dummies even if they're bound.
 static void rename_lambda(expression_ref& R, int old_name, int new_name)
 {
   if (shared_ptr<dummy> D = dynamic_pointer_cast<dummy>(R))
@@ -1023,6 +1026,28 @@ expression_ref let_expression(const expression_ref& var, const expression_ref& b
   vector<expression_ref> vars(1,var);
   vector<expression_ref> bodies(1,body);
   return let_expression(vars, bodies, T);
+}
+
+expression_ref case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+{
+  expression* E = new expression( case_obj() );
+  E->sub.push_back(T);
+  E->sub.push_back(ListEnd);
+
+  for(int i=0;i<patterns.size();i++)
+  {
+    expression_ref t = Alt(patterns[i], bodies[i]);
+    E->sub[2] = Cons(t, E->sub[2]);
+  }
+
+  return E;
+}
+
+expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body)
+{
+  vector<expression_ref> patterns(1, pattern);
+  vector<expression_ref> bodies(1, body);
+  return case_expression(T,patterns, bodies);
 }
 
 expression_ref launchbury_normalize(const expression_ref& R)
