@@ -34,7 +34,7 @@ bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars,
   return true;
 }
 
-//case T [(c[i] X[i],E[i])]
+//case T [(patterns[i],E[i])]
 bool parse_case_expression(const expression_ref& R, vector<expression_ref>& vars, vector<expression_ref>& bodies, expression_ref& T)
 {
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
@@ -392,6 +392,17 @@ void add(std::set<T>& S1, const std::set<T>& S2)
 }
 
 template <typename T>
+void remove(std::set<T>& S1, const std::set<T>& S2)
+{
+  std::set<T> result;
+  std::set_difference(S1.begin(), S1.end(),
+	     S2.begin(), S2.end(),
+	     std::inserter(result, result.begin())
+	);
+  S1.swap(result);
+}
+
+template <typename T>
 std::set<T> intersection(std::set<T>& S1, const std::set<T>& S2)
 {
   std::set<T> result;
@@ -402,6 +413,44 @@ std::set<T> intersection(std::set<T>& S1, const std::set<T>& S2)
   return result;
 }
 
+std::set<int> get_free_indices(const expression_ref& R);
+
+std::set<int> get_pattern_indices(const expression_ref& R)
+{
+  return get_free_indices(R);
+}
+
+// Return the list of dummy variable indices that are bound at the top level of the expression
+std::set<int> get_bound_indices(const expression_ref& R)
+{
+  std::set<int> bound;
+
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  if (not E) return bound;
+
+  // Make sure we don't try to substitute for lambda-quantified dummies
+  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+    bound.insert(L->dummy_index);
+  else if (dynamic_pointer_cast<const alt_obj>(E->sub[0]))
+    bound = get_pattern_indices(E->sub[1]);
+  else 
+  {
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+    if (parse_let_expression(R, vars, bodies, T))
+    {
+      // Don't substitute into local variables.
+      for(int i=0;i<vars.size();i++)
+      {
+	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
+	bound.insert(D->index);
+      }
+    }
+  }
+
+  return bound;
+}
 
 std::set<int> get_free_indices(const expression_ref& R)
 {
@@ -416,49 +465,15 @@ std::set<int> get_free_indices(const expression_ref& R)
 
   // fv c = { }
   shared_ptr< const expression> E = dynamic_pointer_cast<const expression>(R);
-  if (not E)
-    return S;
+  if (not E) return S;
 
-  // fv Lx.M = fv(M) - x
-  else if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
-  {
-    S = get_free_indices(E->sub[1]);
-    S.erase(L->dummy_index);
-  }
-  else 
-  {
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
-    expression_ref T;
+  std::set<int> bound = get_bound_indices(R);
 
-    // fv let {x[i]=U[i]} T = fv(T) + fv(U[i]) - fv(x[i])
-    if (parse_let_expression(R, vars, bodies, T))
-    {
-      S = get_free_indices(T);
-      for(int i=0;i<bodies.size();i++)
-	add(S, get_free_indices(bodies[i]) );
+  for(int i=0;i<E->size();i++)
+    add(S, get_free_indices(E->sub[i]));
 
-      for(int i=0;i<vars.size();i++)
-      {
-	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
-	assert(D);
-	S.erase(D->index);
-      }
-    }
-    // fv c x[i] = fv(x[i])
-    else if (dynamic_pointer_cast<const Function>(E->sub[0]))
-    {
-      for(int i=1;i<E->size();i++)
-	add(S, get_free_indices(E->sub[i]));
-    }
-
-    // fv M N = fv(M) + fv(N)
-    else if (E->size() == 2)
-    {
-      S = get_free_indices(E->sub[0]);
-      add(S, get_free_indices(E->sub[1]));
-    }
-  }
+  foreach(i,bound)
+    S.erase(*i);
 
   return S;
 }
@@ -546,56 +561,45 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
   // If this is any other constant, then it doesn't contain the dummy
   if (not E1) return;
 
-  // Make sure we don't try to substitute for lambda-quantified dummies
-  if (shared_ptr<lambda> L = dynamic_pointer_cast<lambda>(E1->sub[0]))
+  // What indices are bound at the top level?
+  std::set<int> bound = get_bound_indices(R1);
+
+  if (not bound.empty())
   {
-    // This is a "capture-avoiding substitution".
-    if (D->compare(dummy(L->dummy_index))) return;
-
-    std::set<int> fv2 = get_free_indices(R2);
-    // this lambda binds a free variable in R2
-    if (fv2.find(L->dummy_index) != fv2.end())
+    // Don't substitute into local variables
+    foreach(i,bound)
     {
-      add( fv2, get_free_indices(E1->sub[1]) );
+      if (D->compare(dummy(*i))) return;
+    }
+    
+    std::set<int> fv2 = get_free_indices(R2);
+    std::set<int> overlap = intersection(bound,fv2);
+    
+    // If some of the free variables in R2 are bound in R1, then do alpha-renaming on R1 to avoid name capture.
+    if (not overlap.empty())
+    {
+      // Determine the free variables of R1 so that we can avoid them in alpha renaming
+      std::set<int> fv1 = get_free_indices(R1);
 
+      // If R1 does not contain D, then we won't do any substitution anyway, so avoid alpha renaming.
+      if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(D))
+      {
+	if (fv1.find(D2->index) == fv1.end()) return;
+      }
+
+      // Compute the total set of free variables to avoid clashes with when alpha renaming.
+      add(fv2, get_free_indices(R1));
       int new_index = max(fv2)+1;
-      rename_lambda(R1, L->dummy_index, new_index);
+
+      // Do the alpha renaming
+      foreach(i,overlap)
+	rename_lambda(R1,*i,new_index++);
+
       E1 = dynamic_pointer_cast<expression>(R1);
     }
   }
 
-  // Make sure we don't try to substitute for let-quantified dummies
-  {
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
-    expression_ref T;
-    if (parse_let_expression(R1, vars, bodies, T))
-    {
-      // Don't substitute into out-of-scope variables.
-      std::set<int> bound;
-      for(int i=0;i<vars.size();i++)
-      {
-	if (D->compare(*vars[i])) return;
-	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
-	bound.insert(D->index);
-      }
-
-      // Rename bound variables 'vars' if they are free in R2
-      std::set<int> fv2 = get_free_indices(R2);
-      std::set<int> overlap = intersection(bound,fv2);
-      if (not overlap.empty())
-      {
-	// should perhaps not consider D free in R1.
-	add(fv2, get_free_indices(R1));
-	int new_index = max(fv2)+1;
-	foreach(i,overlap)
-	  rename_lambda(R1,*i,new_index++);
-	E1 = dynamic_pointer_cast<expression>(R1);
-      }
-    }
-  }
-
-  // This is an expression, so compute the substituted sub-expressions
+  // Since this is an expression, substitute into sub-expressions
   for(int i=0;i<E1->size();i++)
     do_substitute(E1->sub[i], D, R2);
 }
