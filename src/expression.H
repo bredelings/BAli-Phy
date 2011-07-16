@@ -140,6 +140,17 @@ struct alt_obj: public Operator
   int n_args() const {return 2;}
 };
 
+struct equal_obj: public Operator
+{
+  equal_obj* clone() const {return new equal_obj(*this);}
+
+  std::string name() const;
+
+  int precedence() const {return 0;}
+
+  int n_args() const {return 2;}
+};
+
 // This no longer needs to be a virtual member function, because we can now walk the expression from outside.
 int n_match_results(const expression_ref&);
 
@@ -468,9 +479,16 @@ expression_ref get_tuple(const std::valarray<T>& v)
 
 expression_ref get_list(const std::vector<expression_ref>& v);
 
-expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body);
+expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise = expression_ref());
 
 expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
+
+expression_ref multi_case_expression(const std::vector<expression_ref>& terms, const std::vector<expression_ref>& patterns, 
+				     const expression_ref& body, const expression_ref& otherwise = expression_ref());
+
+expression_ref def_function(const std::vector<expression_ref>& patterns, const expression_ref& body, const expression_ref& otherwise = expression_ref());
+
+expression_ref def_function(const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise = expression_ref());
 
 expression_ref launchbury_normalize(const expression_ref& R);
 #endif

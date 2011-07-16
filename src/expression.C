@@ -216,6 +216,11 @@ string alt_obj::name() const
   return "->";
 }
 
+string equal_obj::name() const 
+{
+  return "=";
+}
+
 expression_ref Alt(const expression_ref& pattern, const expression_ref& body)
 {
   // We can't just substitute into \x \y Alt(x,y) cuz alt_obj binds its first argument.
@@ -1013,7 +1018,7 @@ expression_ref let_expression(const vector<expression_ref>& vars, const vector<e
 
   for(int i=0;i<vars.size();i++)
   {
-    expression_ref t = Tuple(2)(vars[i], bodies[i]);
+    expression_ref t = lambda_expression( equal_obj() )(vars[i], bodies[i]);
     E->sub[1] = Cons(t, E->sub[1]);
   }
 
@@ -1039,11 +1044,79 @@ expression_ref case_expression(const expression_ref& T, const vector<expression_
   return E;
 }
 
-expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body)
+expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
 {
   vector<expression_ref> patterns(1, pattern);
   vector<expression_ref> bodies(1, body);
+  if (otherwise and not dynamic_pointer_cast<const dummy>(pattern))
+  {
+    patterns.push_back(dummy(-1));
+    bodies.push_back(otherwise);
+  }
   return case_expression(T,patterns, bodies);
+}
+
+expression_ref multi_case_expression(const vector<expression_ref>& terms, const vector<expression_ref>& patterns, 
+				     const expression_ref& body, const expression_ref& otherwise)
+{
+  assert(terms.size() == patterns.size());
+  std::set<int> free;
+  for(int i=0;i<terms.size();i++)
+    add(free, get_free_indices(terms[i]));
+
+  std::set<int> free_patterns;
+  for(int i=0;i<patterns.size();i++)
+    add(free_patterns, get_pattern_indices(patterns[i]));
+
+  assert(intersection(free, free_patterns).empty());
+  std::set<int> free_body = get_free_indices(body);
+  remove(free_body, free_patterns);
+
+  expression_ref R = body;
+  for(int i=patterns.size()-1; i>=0; i--)
+    R = case_expression(terms[i],patterns[i],R,otherwise);
+
+  return R;
+}
+
+expression_ref def_function(const vector<expression_ref>& patterns, const expression_ref& body, const expression_ref& otherwise)
+{
+  // Find the first safe var index
+  std::set<int> free = get_free_indices(body);
+  add(free, get_free_indices(otherwise));
+
+  for(int i=0;i<patterns.size();i++)
+    add(free, get_pattern_indices(patterns[i]));
+
+  int var_index = 0;
+  if (not free.empty()) var_index = max(free)+1;
+
+  // Construct the dummies
+  vector<expression_ref> terms;
+  for(int i=0;i<patterns.size();i++)
+    terms.push_back(dummy(var_index+i));
+
+  // Construct the case expression
+  expression_ref R = multi_case_expression(terms, patterns, body, otherwise);
+
+  // Turn it into a function
+  for(int i=patterns.size()-1;i>=0;i--)
+    R = expression(lambda(var_index+i),R);
+
+  return R;
+}
+
+expression_ref def_function(const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
+{
+  vector<expression_ref> patterns;
+
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(pattern);
+  if (not E)
+    patterns.push_back(pattern);
+  else
+    for(int i=1;i<E->size();i++)
+      patterns.push_back(E->sub[i]);
+  return def_function(patterns,body,otherwise);
 }
 
 expression_ref launchbury_normalize(const expression_ref& R)
@@ -1075,8 +1148,12 @@ expression_ref launchbury_normalize(const expression_ref& R)
   if (dynamic_pointer_cast<const expression>(E->sub[0]) or dynamic_pointer_cast<const dummy>(E->sub[0]))
   {
     assert(E->size() == 2);
-    if (dynamic_pointer_cast<const dummy>(E->sub[1])) 
-      return R;
+    if (dynamic_pointer_cast<const dummy>(E->sub[1]))
+    { 
+      expression* V = new expression(*E);
+      V->sub[0] = launchbury_normalize(E->sub[0]);
+      return V;
+    }
     else
     {
       int var_index = get_safe_binder_index(R);
