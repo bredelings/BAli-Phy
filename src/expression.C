@@ -1129,7 +1129,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
   shared_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
   if (Let)
   {
-    expression* V = new expression(E);
+    expression* V = new expression(*E);
 
     shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[1]);
     while(bodies)
@@ -1150,7 +1150,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
   shared_ptr<const case_obj> Case = dynamic_pointer_cast<const case_obj>(E->sub[0]);
   if (Case)
   {
-    expression* V = new expression(E);
+    expression* V = new expression(*E);
 
     V->sub[1] = launchbury_normalize(V->sub[1]);
 
