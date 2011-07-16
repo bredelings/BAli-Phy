@@ -216,7 +216,14 @@ string alt_obj::name() const
   return "->";
 }
 
-expression_ref Alt = lambda_expression( alt_obj() );
+expression_ref Alt(const expression_ref& pattern, const expression_ref& body)
+{
+  // We can't just substitute into \x \y Alt(x,y) cuz alt_obj binds its first argument.
+  expression* E = new expression(alt_obj() );
+  E->sub.push_back(pattern);
+  E->sub.push_back(body);
+  return E;
+}
 
 // How would we handle lambda expressions, here?
 bool find_match(const expression_ref& pattern, const expression_ref& E, vector< expression_ref >& results)
@@ -1034,16 +1041,8 @@ expression_ref case_expression(const expression_ref& T, const vector<expression_
   E->sub.push_back(T);
   E->sub.push_back(ListEnd);
 
-  for(int i=0;i<patterns.size();i++)
-  {
-    // We can't just substitute into alt, cuz it binds its first argument.
-    expression *Alt = new expression(alt_obj());
-    Alt->sub.push_back(patterns[i]);
-    Alt->sub.push_back(bodies[i]);
-    expression_ref t (Alt);
-
-    E->sub[2] = Cons(t, E->sub[2]);
-  }
+  for(int i=patterns.size()-1;i>=0;i--)
+    E->sub[2] = Cons(Alt(patterns[i],bodies[i]), E->sub[2]);
 
   return E;
 }
