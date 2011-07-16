@@ -211,6 +211,11 @@ string case_obj::print() const
   return "case";
 }
 
+string alt_obj::name() const 
+{
+  return "->";
+}
+
 // How would we handle lambda expressions, here?
 bool find_match(const expression_ref& pattern, const expression_ref& E, vector< expression_ref >& results)
 {

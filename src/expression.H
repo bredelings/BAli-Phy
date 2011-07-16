@@ -129,6 +129,17 @@ struct case_obj: public Object
   std::string print() const;
 };
 
+struct alt_obj: public Operator
+{
+  alt_obj* clone() const {return new alt_obj(*this);}
+
+  std::string name() const;
+
+  int precedence() const {return 0;}
+
+  int n_args() const {return 2;}
+};
+
 // This no longer needs to be a virtual member function, because we can now walk the expression from outside.
 int n_match_results(const expression_ref&);
 
