@@ -1036,7 +1036,12 @@ expression_ref case_expression(const expression_ref& T, const vector<expression_
 
   for(int i=0;i<patterns.size();i++)
   {
-    expression_ref t = Alt(patterns[i], bodies[i]);
+    // We can't just substitute into alt, cuz it binds its first argument.
+    expression *Alt = new expression(alt_obj());
+    Alt->sub.push_back(patterns[i]);
+    Alt->sub.push_back(bodies[i]);
+    expression_ref t (Alt);
+
     E->sub[2] = Cons(t, E->sub[2]);
   }
 
