@@ -35,10 +35,10 @@ using std::endl;
  * 
  * These will be expressed as annotations of the form:
  * 
- *              (~ distribution (x,y) (a,b,c))
+ *              (~ (x,y) (distribution (a,b,c)))
  *
- *  + here (x,y) and (a,b,c) are either single elements, or tuples if more than one element.
- *  + here distribution is a constant object.
+ *  + Here (x,y) and (a,b,c) are either single elements, or tuples if more than one element.
+ *  + Here distribution is a constant object that is currently of the form (prob_density "Exp", exponential_density)
  *
  * The distribution object currently specifies
  *  + a distribution name
