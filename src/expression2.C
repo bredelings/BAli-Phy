@@ -139,6 +139,7 @@ int main()
   cout<<"mul = "<<mul<<"\n";
   cout<<"mul(x) = "<<mul(x)<<"\n";
   cout<<"mul(x)(y) = "<<mul(x)(y)<<"\n";
+  cout<<"mul(#1) = "<<mul(dummy(1))<<"\n";
   cout<<"mul(x,y) = "<<mul(x,y)<<"\n\n\n";
 
   term_ref x_times_y_plus_one = F->add_expression( plus(mul(x)(y))(one) );
