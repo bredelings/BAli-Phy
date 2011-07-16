@@ -487,23 +487,6 @@ std::set<int> get_free_indices(const expression_ref& R)
   return S;
 }
 
-static int get_highest_used_index(const expression_ref& R)
-{
-  shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R);
-  if (D) return D->index;
-  
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(R);
-  if (L) return L->dummy_index;
-  
-  int index = -1;
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-  if (E)
-    for(int i=0;i<E->size();i++)
-      index = std::max(index, get_highest_used_index(E->sub[i]) );
-
-  return index;
-}
-
 // Rename dummies even if they're bound.
 static void rename_lambda(expression_ref& R, int old_name, int new_name)
 {
@@ -545,6 +528,15 @@ T min(const std::set<T>& v)
     t = std::min(t,*i);
 
   return t;
+}
+
+static int get_safe_binder_index(const expression_ref& R)
+{
+  std::set<int> free = get_free_indices(R);
+  if (free.empty()) 
+    return 0;
+  else
+    return max(free)+1;
 }
 
 // If we use de Bruijn indices, then, as before bound indices in R2 are no problem.
@@ -1087,7 +1079,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
       return R;
     else
     {
-      int var_index = get_highest_used_index(R)+1;
+      int var_index = get_safe_binder_index(R);
       expression_ref x = dummy(var_index);
 
       return let_expression(x, launchbury_normalize(E->sub[1]), launchbury_normalize(E->sub[0])(x));
@@ -1098,7 +1090,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
   if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
       dynamic_pointer_cast<const Operation>(E->sub[0]))
   {
-    int var_index = get_highest_used_index(R)+1;
+    int var_index = get_safe_binder_index(R);
 
     expression* C = new expression;
     C->sub.push_back(E->sub[0]);
