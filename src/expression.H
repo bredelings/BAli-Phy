@@ -118,6 +118,7 @@ struct match: public Object
 struct let_obj: public Object
 {
   let_obj* clone() const {return new let_obj(*this);}
+  tribool compare(const Object& o) const;
 
   std::string print() const;
 };
@@ -125,6 +126,7 @@ struct let_obj: public Object
 struct case_obj: public Object
 {
   case_obj* clone() const {return new case_obj(*this);}
+  tribool compare(const Object& o) const;
 
   std::string print() const;
 };
@@ -132,6 +134,7 @@ struct case_obj: public Object
 struct alt_obj: public Operator
 {
   alt_obj* clone() const {return new alt_obj(*this);}
+  tribool compare(const Object& o) const;
 
   std::string name() const;
 
@@ -143,6 +146,7 @@ struct alt_obj: public Operator
 struct equal_obj: public Operator
 {
   equal_obj* clone() const {return new equal_obj(*this);}
+  tribool compare(const Object& o) const;
 
   std::string name() const;
 

@@ -206,9 +206,29 @@ string let_obj::print() const
   return "let";
 }
 
+tribool let_obj::compare(const Object& O) const
+{
+  if (this == &O) 
+    return true;
+  
+  if (typeid(*this) != typeid(O)) return false;
+  
+  return true;
+}
+
 string case_obj::print() const 
 {
   return "case";
+}
+
+tribool case_obj::compare(const Object& O) const
+{
+  if (this == &O) 
+    return true;
+  
+  if (typeid(*this) != typeid(O)) return false;
+  
+  return true;
 }
 
 string alt_obj::name() const 
@@ -216,9 +236,29 @@ string alt_obj::name() const
   return "->";
 }
 
+tribool alt_obj::compare(const Object& O) const
+{
+  if (this == &O) 
+    return true;
+  
+  if (typeid(*this) != typeid(O)) return false;
+  
+  return true;
+}
+
 string equal_obj::name() const 
 {
   return "=";
+}
+
+tribool equal_obj::compare(const Object& O) const
+{
+  if (this == &O) 
+    return true;
+  
+  if (typeid(*this) != typeid(O)) return false;
+  
+  return true;
 }
 
 expression_ref Alt(const expression_ref& pattern, const expression_ref& body)
