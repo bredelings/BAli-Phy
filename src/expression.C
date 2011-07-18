@@ -181,7 +181,10 @@ tribool dummy::compare(const Object& o) const {
 }
 
 string dummy::print() const {
-  return string("#")+convertToString(index);
+  if (index < 0)
+    return "_";
+  else
+    return string("#")+convertToString(index);
 }
 
 tribool match::compare(const Object& o) const 
@@ -578,6 +581,18 @@ T min(const std::set<T>& v)
 static int get_safe_binder_index(const expression_ref& R)
 {
   std::set<int> free = get_free_indices(R);
+  if (free.empty()) 
+    return 0;
+  else
+    return max(free)+1;
+}
+
+static int get_safe_binder_index_for_alt(const expression_ref& R1, const expression_ref& R2)
+{
+  std::set<int> pattern_vars = get_pattern_indices(R1);
+  std::set<int> free = get_free_indices(R2);
+  remove(free, pattern_vars);
+
   if (free.empty()) 
     return 0;
   else
@@ -1072,19 +1087,128 @@ expression_ref let_expression(const expression_ref& var, const expression_ref& b
   return let_expression(vars, bodies, T);
 }
 
-expression_ref case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+bool is_irrefutable_pattern(const expression_ref& R)
 {
-  expression* E = new expression( case_obj() );
-  E->sub.push_back(T);
-  E->sub.push_back(ListEnd);
-
-  for(int i=patterns.size()-1;i>=0;i--)
-    E->sub[2] = Cons(Alt(patterns[i],bodies[i]), E->sub[2]);
-
-  return E;
+  return dynamic_pointer_cast<const dummy>(R);
 }
 
-expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
+bool is_simple_pattern(const expression_ref& R)
+{
+  if (is_irrefutable_pattern(R)) return true;
+
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>( R );
+
+  //  0-arg constructor, since we've already bailed on dummy variables
+  if (not E) return true;
+
+  assert(dynamic_pointer_cast<const Function>(E->sub[0]));
+
+  // Arguments of multi-arg constructors must all be irrefutable patterns
+  for(int j=1;j<E->size();j++)
+    if (not is_irrefutable_pattern(E->sub[j]))
+      return false;
+
+  return true;
+}
+
+// This function currently assumes that all the patterns are just variables.
+
+expression_ref case_expression(bool decompose, const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies);
+
+expression_ref simple_case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+{
+  expression_ref R = case_expression(false, T, patterns, bodies);
+
+  for(int i=patterns.size()-1;i>=0;i--)
+  {
+    if (not is_simple_pattern(patterns[i]))
+      throw myexception()<<"simple_case_expression( ): pattern '"<<patterns[i]<<"' is not free variable in expression '"<<R<<"'";
+  }
+
+  return R;
+}
+
+template <typename T>
+vector<T> skip(int n, const vector<T>& v)
+{
+  if (v.size() <= n) return vector<T>();
+
+  vector<T> v2(v.size() - n);
+  for(int i=0;i<v2.size();i++)
+    v2[i] = v2[i+n];
+
+  return v2;
+}
+
+expression_ref case_expression(bool decompose, const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+{
+  using std::max;
+
+  if (not decompose)
+  {
+    expression* E = new expression( case_obj() );
+    E->sub.push_back(T);
+    E->sub.push_back(ListEnd);
+
+    for(int i=patterns.size()-1;i>=0;i--)
+      E->sub[2] = Cons(Alt(patterns[i],bodies[i]), E->sub[2]);
+    return E;
+  }
+
+  vector<expression_ref> ok_patterns;
+  vector<expression_ref> ok_bodies;
+  for(int i=0;i<patterns.size();i++)
+  {
+    ok_patterns.push_back(patterns[i]);
+    ok_bodies.push_back(bodies[i]);
+    int var_index = max(get_safe_binder_index(T), max(get_safe_binder_index(patterns[i]), get_safe_binder_index(bodies[i])));
+
+    // 1. we don't have to decompose this if its an irrefutable pattern
+    if (is_irrefutable_pattern((patterns[i]))) continue;
+
+    shared_ptr<expression> PE = dynamic_pointer_cast<expression>( ok_patterns.back() );
+
+    // 2. we don't have to decompose this if its a simple branch: 0-arg constructor
+    if (not PE) continue;
+
+    assert(dynamic_pointer_cast<const Function>(PE->sub[0]));
+    vector<int> complex_patterns;
+    for(int j=1;j<PE->size();j++)
+      if (not is_irrefutable_pattern(PE->sub[j]))
+	complex_patterns.push_back(j);
+
+    // 2. we don't have to decompose this if its a simple branch: n-arg constructor with all variable arguments.
+    if (complex_patterns.empty()) continue;
+
+
+    // 3a. Construct the expression to match if this pattern doesn't match.
+    expression_ref otherwise;
+    if (i < patterns.size()-1)
+      otherwise = case_expression(true, T, skip(i+1, patterns), skip(i+1,bodies));
+    
+    // 3b. Construct the simple case expression and modified body for this expression.
+    vector<expression_ref> sub_terms;
+    vector<expression_ref> sub_patterns;
+    for(int j=0;j<complex_patterns.size();j++)
+    {
+      int index = complex_patterns[j];
+
+      // y ~ PE->sub[index]
+      expression_ref new_var = dummy(var_index++);
+      sub_terms.push_back(new_var);
+      sub_patterns.push_back(PE->sub[index]);
+      PE->sub[index] = new_var;
+    }
+
+    ok_bodies.back() = multi_case_expression(true, sub_terms, sub_patterns, ok_bodies.back(), otherwise);
+
+    return simple_case_expression(T, ok_patterns, ok_bodies);
+  }
+
+  return simple_case_expression(T, patterns, bodies);
+}
+
+expression_ref case_expression(bool decompose, const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
 {
   vector<expression_ref> patterns(1, pattern);
   vector<expression_ref> bodies(1, body);
@@ -1093,10 +1217,10 @@ expression_ref case_expression(const expression_ref& T, const expression_ref& pa
     patterns.push_back(dummy(-1));
     bodies.push_back(otherwise);
   }
-  return case_expression(T,patterns, bodies);
+  return case_expression(decompose, T,patterns, bodies);
 }
 
-expression_ref multi_case_expression(const vector<expression_ref>& terms, const vector<expression_ref>& patterns, 
+expression_ref multi_case_expression(bool decompose, const vector<expression_ref>& terms, const vector<expression_ref>& patterns, 
 				     const expression_ref& body, const expression_ref& otherwise)
 {
   assert(terms.size() == patterns.size());
@@ -1114,59 +1238,89 @@ expression_ref multi_case_expression(const vector<expression_ref>& terms, const 
 
   expression_ref R = body;
   for(int i=patterns.size()-1; i>=0; i--)
-    R = case_expression(terms[i],patterns[i],R,otherwise);
+    R = case_expression(decompose, terms[i],patterns[i],R,otherwise);
 
   return R;
 }
 
-expression_ref def_function(const vector<expression_ref>& patterns, const expression_ref& body, const expression_ref& otherwise)
+expression_ref def_function(bool decompose, const vector< vector<expression_ref> >& patterns, const vector<expression_ref>& bodies, const expression_ref& otherwise)
 {
+
   // Find the first safe var index
-  std::set<int> free = get_free_indices(body);
-  add(free, get_free_indices(otherwise));
+  std::set<int> free;
+  if (otherwise)
+    free = get_free_indices(otherwise);
 
   for(int i=0;i<patterns.size();i++)
-    add(free, get_pattern_indices(patterns[i]));
-
+  {
+    add(free, get_free_indices(bodies[i]));
+  
+    for(int j=0; j<patterns[i].size(); j++)
+      add(free, get_pattern_indices(patterns[i][j]));
+  }
+  
   int var_index = 0;
   if (not free.empty()) var_index = max(free)+1;
 
+  // All versions of the function must have the same arity
+  assert(patterns.size());
+  for(int i=1;i<patterns.size();i++)
+    assert(patterns[0].size() == patterns[i].size());
+
   // Construct the dummies
   vector<expression_ref> terms;
-  for(int i=0;i<patterns.size();i++)
+  for(int i=0;i<patterns[0].size();i++)
     terms.push_back(dummy(var_index+i));
-
+    
   // Construct the case expression
-  expression_ref R = multi_case_expression(terms, patterns, body, otherwise);
+  expression_ref R = otherwise;
+  for(int i=patterns.size()-1; i>=0; i--)
+    R = multi_case_expression(decompose, terms, patterns[i], bodies[i], R);
 
   // Turn it into a function
-  for(int i=patterns.size()-1;i>=0;i--)
+  for(int i=patterns[0].size()-1;i>=0;i--)
     R = expression(lambda(var_index+i),R);
 
   return R;
 }
 
-expression_ref def_function(const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
+expression_ref def_function(bool decompose, const vector<expression_ref>& patterns, const expression_ref& body, const expression_ref& otherwise)
 {
-  vector<expression_ref> patterns;
+  return def_function(decompose, vector< vector<expression_ref> >(1,patterns), vector<expression_ref>(1,body), otherwise);
+}
 
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(pattern);
-  if (not E)
-    patterns.push_back(pattern);
-  else
-    for(int i=1;i<E->size();i++)
-      patterns.push_back(E->sub[i]);
-  return def_function(patterns,body,otherwise);
+expression_ref def_function(bool decompose, const vector<expression_ref>& pattern, const vector<expression_ref>& bodies, const expression_ref& otherwise)
+{
+  vector< vector<expression_ref> > patterns;
+
+  for(int i=0;i<pattern.size();i++)
+  {
+    patterns.push_back( vector<expression_ref>() );
+
+    shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(pattern[i]);
+    if (not E)
+      patterns.back().push_back(pattern[i]);
+    else
+      for(int i=1;i<E->size();i++)
+	patterns.back().push_back(E->sub[i]);
+  }
+
+  return def_function(decompose, patterns, bodies, otherwise);
+}
+
+expression_ref def_function(bool decompose, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
+{
+  return def_function(decompose, vector<expression_ref>(1,pattern), vector<expression_ref>(1,body), otherwise);
 }
 
 expression_ref launchbury_normalize(const expression_ref& R)
 {
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-
   // 1. Var
   if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R))
     return R;
   
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
   if (not E) return R;
   

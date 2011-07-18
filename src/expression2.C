@@ -268,8 +268,25 @@ int main()
   expression_ref v3 = dummy(3);
   expression_ref v4 = dummy(4);
 
-  CTX1.add_expression( case_expression(dummy(0), Cons(dummy(1),ListEnd), dummy(1)) );
-  CTX1.add_expression( def_function(Tuple(2)(v0, Cons(v1, v2)), Cons(v1, v3((typed_expression_ref<Double>(v0)-1.0),v2))) );
+  CTX1.add_expression( case_expression(false, dummy(0), Cons(dummy(1),ListEnd), dummy(1)) );
+  CTX1.add_expression( case_expression(true, dummy(0), Cons(dummy(1),ListEnd), dummy(1)) );
+  CTX1.add_expression( def_function(false, Tuple(2)(v0, Cons(v1, v2)), Cons(v1, v3((typed_expression_ref<Double>(v0)-1.0),v2))) );
+  CTX1.add_expression( def_function(true, Tuple(2)(v0, Cons(v1, v2)), Cons(v1, v3((typed_expression_ref<Double>(v0)-1.0),v2))) );
+
+  {  
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    patterns.push_back( Tuple(2)(0, v0) );
+    bodies.push_back( ListEnd );
+
+    patterns.push_back( Tuple(2)(v0, ListEnd) );
+    bodies.push_back( ListEnd );
+
+    patterns.push_back( Tuple(2)(v0, Cons(v1,v2) ) );
+    bodies.push_back( Cons(v1, v3(typed_expression_ref<Int>(v0)-1, v2) ) );
+    CTX1.add_expression( def_function(false, patterns, bodies) );
+    CTX1.add_expression( def_function(true, patterns, bodies) );
+  }
 
   cout<<"\n CTX1 now contains this list of non-sub expressions:\n";
   cout<<*CTX1.F<<"\n";
