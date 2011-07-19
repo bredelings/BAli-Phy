@@ -25,13 +25,27 @@ bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars,
   for(int i=0;i<pairs.size();i++)
   {
     shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(pairs[i]);
+    assert(dynamic_pointer_cast<const dummy>(E2->sub[1]));
     vars.push_back(E2->sub[1]);
     bodies.push_back(E2->sub[2]);
   }
 
   T = E->sub[2];
 
+  assert(vars.size() == bodies.size());
+
   return true;
+}
+
+void parse_alternatives(const expression_ref& R, vector<expression_ref>& cases, vector<expression_ref>& results)
+{
+  vector<expression_ref> pairs = get_ref_vector_from_list(R);
+  for(int i=0;i<pairs.size();i++)
+  {
+    shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(pairs[i]);
+    cases.push_back(E2->sub[1]);
+    results.push_back(E2->sub[2]);
+  }
 }
 
 //case T [(patterns[i],E[i])]
@@ -971,6 +985,257 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
   else
     throw myexception()<<"Don't know how to evaluate expression '"<<R->print()<<"'";
 }
+
+struct heap_dummy_state
+{
+  expression_ref evaluates_to;
+  bool on_heap;
+  heap_dummy_state():on_heap(true) {}
+};
+
+// a dummy variable expression
+struct heap_dummy: public Object
+{
+  shared_ptr< heap_dummy_state > target;
+
+  heap_dummy* clone() const {return new heap_dummy(*this);}
+
+  std::string print() const 
+  {
+    return "<"+convertToString(target.get()) + ">";
+  }
+
+  tribool compare(const Object& o) const
+  {
+    const heap_dummy* E = dynamic_cast<const heap_dummy*>(&o);
+    if (not E) 
+      return false;
+
+    return target == E->target;
+  }
+
+  const expression_ref& value() const {return target->evaluates_to;}
+        expression_ref& value()       {return target->evaluates_to;}
+
+  bool is_on_heap() const {return target->on_heap;}
+  
+  heap_dummy():
+    target(new heap_dummy_state)
+  { }
+};
+
+
+
+expression_ref evaluate_mark1(const expression_ref& R)
+{
+  expression_ref control = R;
+  vector<expression_ref> S;
+
+  while(true)
+  {
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+
+    // -1. A free variable. This should never happen.
+    // Can we allow unreducable expressions with free variables to be treated as values?
+    shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(control);
+    assert(not D);
+
+    shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(control);
+
+    // 3. Var1: If we are evaluating a variable...
+    if (shared_ptr<heap_dummy> H = dynamic_pointer_cast<heap_dummy>(control))
+    {
+      assert(H->target->on_heap);
+
+      // Take it off the heap
+      H->target->on_heap = false;
+
+      // Put a "currently calculating H" marking on the stack
+      S.push_back(*H);
+
+      // Begin evaluating the value of what p evaluates to.
+      assert(H->value());
+      control = H->value();
+
+      continue;
+    }
+
+
+    else if (not E)
+    {
+      if (S.empty()) return control;
+
+      expression_ref TOP = S.back();
+      S.pop_back();
+
+      shared_ptr<heap_dummy> H = dynamic_pointer_cast<heap_dummy>(TOP);
+
+      // 7. Case2: case expression?
+      if (not H)
+      {
+	vector<expression_ref> cases;
+	vector<expression_ref> results;
+	parse_alternatives(TOP, cases, results);
+
+	expression_ref result;
+	for(int i=0;i<cases.size() and not result;i++)
+	{
+	  if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(cases[i]))
+	    result = substitute(results[i], cases[i], R);
+	  else if (R->compare(*cases[i]))
+	    result = results[i];
+	}
+	if (result)
+	{
+	  control = result;
+	  continue;
+	}
+	else
+	  std::abort();
+      }
+      // 2. Substitute??
+      if (H->is_on_heap())
+	std::abort();
+
+      // 8. Var3: Update pointer
+      else {
+	// Set the value of the pointer
+	H->value() = control;
+	// Put it back on the heap
+	H->target->on_heap = true;
+      }
+      
+    }
+    
+    else if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+    {
+      if (S.empty()) return control;
+
+      shared_ptr<heap_dummy> H = dynamic_pointer_cast<heap_dummy>(S.back());
+      assert(H);
+      S.pop_back();
+
+      // 2. App2: Substitute
+      if (H->is_on_heap())
+	control = apply(control,*H);
+      // 4. Var2: Update pointer
+      else
+      {
+	// Set the value of the pointer
+	H->value() = control;
+	// Put it back on the heap
+	H->target->on_heap = true;
+      }
+
+      continue;
+    }
+
+    else if ( shared_ptr<const Function> F = dynamic_pointer_cast<const Function>(E->sub[0]) )
+    {
+      if (S.empty()) return control;
+
+      expression_ref TOP = S.back();
+      S.pop_back();
+
+      shared_ptr<heap_dummy> H = dynamic_pointer_cast<heap_dummy>(TOP);
+
+      // 7. Case2: case expression?
+      if (not H)
+      {
+	vector<expression_ref> cases;
+	vector<expression_ref> results;
+	parse_alternatives(TOP, cases, results);
+
+	expression_ref result;
+	for(int i=0;i<cases.size() and not result;i++)
+	{
+	  if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(cases[i]))
+	    result = substitute(results[i], cases[i], E->sub[i]);
+	  else if (shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(cases[i]))
+	  {
+	    if (E->sub[0]->compare(*E2->sub[0]))
+	    {
+	      assert(E->size() == E2->size());
+	      result = results[i];
+	      for(int j=1;j<E->size();j++)
+		result = substitute(result, E2->sub[i], E->sub[i]);
+	    }
+	  }
+	}
+	if (result)
+	{
+	  control = result;
+	  continue;
+	}
+	else
+	  std::abort();
+      }
+      // 2. Substitute??
+      if (H->is_on_heap())
+	std::abort();
+
+      // 8. Var3: Update pointer
+      else {
+	// Set the value of the pointer
+	H->value() = control;
+	// Put it back on the heap
+	H->target->on_heap = true;
+      }
+      continue;
+    }
+
+    // 5. Let = let [(x[i], bodies[i])] in T
+    else if (parse_let_expression(control, vars, bodies, T))
+    {
+      vector<shared_ptr<heap_dummy> > new_heap_vars;
+      for(int i=0;i<vars.size();i++)
+	new_heap_vars.push_back( shared_ptr<heap_dummy>(new heap_dummy) );
+
+      // Substitute the new heap vars for the dummy vars in expression T and in the bodies
+      for(int i=0;i<vars.size();i++) 
+      {
+	for(int j=0;j<vars.size();j++)
+	  bodies[j] = substitute(bodies[j], vars[i], *new_heap_vars[i]);
+
+	T = substitute(T, vars[i], *new_heap_vars[i]);
+      }
+
+      for(int i=0;i<vars.size();i++) 
+      {
+	new_heap_vars[i]->value() = bodies[i];
+      }
+
+      control = T;
+      // FIXME: we will never free recursive functions if we are not careful...
+      continue;
+    }
+
+    else if (dynamic_pointer_cast<const case_obj>(E->sub[0]))
+    {
+      S.push_back(E->sub[2]);
+      control = E->sub[1];
+      continue;
+    }
+
+
+    // 1. App1 = Application expressions: compute head
+    else if (dynamic_pointer_cast<const expression>(E->sub[0]) or dynamic_pointer_cast<const dummy>(E->sub[0]))
+    {
+      assert(E->size() == 2);
+      assert(dynamic_pointer_cast<const heap_dummy>(E->sub[1]));
+
+      // Put the argument on the stack
+      S.push_back(E->sub[1]);
+
+      // Begin evaluating the head
+      control = E->sub[0];
+      continue;
+    }
+  }
+}
+
 
 expression_ref _ = match(-1);
 expression_ref _1 = match(0);

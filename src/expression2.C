@@ -361,4 +361,12 @@ int main()
   cout<<"Eval test: "<<test7<<" = ";
   test7 = eval(CTX1, test7);
   cout<<test7<<"\n";
+
+  expression_ref test8 = let_expression(v0,1,v0);
+  cout<<"\n";
+  cout<<"Eval test:     "<<test8<<" = \n";
+  test8 = launchbury_normalize(test8);
+  cout<<"   normalized: "<<test8<<" = ";
+  test8 = evaluate_mark1(test8);
+  cout<<test8<<"\n";
 }
