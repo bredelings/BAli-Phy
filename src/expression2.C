@@ -347,7 +347,7 @@ int main()
   test7 = eval(CTX1, test7);
   cout<<test7<<"\n";
 
-  // take 
+  // take - actually, this requires handling operators.
   expression_ref def_take;
   {  
     take = named_dummy("take");
@@ -427,6 +427,7 @@ int main()
   test10 = evaluate_mark1(test10);
   cout<<test10<<"\n";
 
+  // We might actually have to print the result to calculate the whole thing.
   expression_ref test11 = let_expression(take, def_take,
 					let_expression(iterate, def_iterate,
 						       take(3)(iterate(plus(1),1))
