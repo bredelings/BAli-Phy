@@ -1249,6 +1249,8 @@ expression_ref evaluate_mark1(const expression_ref& R)
       control = E->sub[0];
       continue;
     }
+    else
+      throw myexception()<<"mark1: couldn't process control expression '"<<control<<"'";
   }
 }
 
