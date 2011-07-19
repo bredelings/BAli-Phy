@@ -640,6 +640,8 @@ static int get_safe_binder_index_for_alt(const expression_ref& R1, const express
 
 void do_substitute(expression_ref& R1, const expression_ref& D, const expression_ref& R2)
 {
+  assert(not is_wildcard(D));
+
   // If this is the relevant dummy, then substitute
   if (D->compare(*R1))
   {
