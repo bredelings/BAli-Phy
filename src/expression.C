@@ -349,22 +349,27 @@ tribool parameter::compare(const Object& o) const
   return parameter_name == E->parameter_name;
 }
 
-tribool lambda::compare(const Object& o) const 
+tribool lambda::compare(const Object& O) const 
 {
-  const lambda* L = dynamic_cast<const lambda*>(&o);
-  if (not L) 
-    return false;
-
-  return dummy_index == L->dummy_index;
+  if (this == &O) 
+    return true;
+  
+  if (typeid(*this) != typeid(O)) return false;
+  
+  return true;
 }
 
 string lambda::print() const {
-  return string("lambda[")+convertToString(dummy_index)+"]";
+  return "lambda";
 }
 
-lambda::lambda(int d)
-  :dummy_index(d)
-{ }
+expression_ref lambda_quantify(int dummy_index, const expression_ref& R)
+{
+  expression* E = new expression(lambda());
+  E->sub.push_back(dummy(dummy_index));
+  E->sub.push_back(R);
+  return E;
+}
 
 expression_ref lambda_expression(const Operator& O)
 {
@@ -383,7 +388,7 @@ expression_ref lambda_expression(const Operator& O)
   }
   
   for(int i=n-1;i>=0;i--) 
-    R = expression_ref(expression(lambda(i),R));
+    R = lambda_quantify(i,R);
   
   return R;
 }
@@ -514,7 +519,11 @@ std::set<int> get_bound_indices(const expression_ref& R)
 
   // Make sure we don't try to substitute for lambda-quantified dummies
   if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
-    bound.insert(L->dummy_index);
+  {
+    shared_ptr<const dummy> D  = dynamic_pointer_cast<const dummy>(E->sub[1]);
+    if (D)
+      bound.insert(D->index);
+  }
   else if (dynamic_pointer_cast<const alt_obj>(E->sub[0]))
     bound = get_pattern_indices(E->sub[1]);
   else 
@@ -576,10 +585,6 @@ static void rename_lambda(expression_ref& R, int old_name, int new_name)
 
   shared_ptr<expression> E = dynamic_pointer_cast<expression>(R);
   if (not E) return;
-
-  if (shared_ptr<lambda> L = dynamic_pointer_cast<lambda>(E->sub[0]))
-    if (L->dummy_index == old_name)
-      L->dummy_index = new_name;
 
   // This is an expression, so compute the substituted sub-expressions
   for(int i=0;i<E->size();i++)
@@ -717,7 +722,7 @@ expression_ref apply(const expression_ref& R,const expression_ref& arg)
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
     if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
-      return substitute(E->sub[1], L->dummy_index, arg);
+      return substitute(E->sub[2], E->sub[1], arg);
   }
 
   // Allow applying non-lambda expressions to arguments.
@@ -935,7 +940,7 @@ bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, st
       throw myexception()<<"Expression '"<<RE->print()<<"' applies a lambda function to more than one argument.";
 
     // FIXME - is this enough evaluation?
-    R = substitute(RE2->sub[1], L2->dummy_index, RE->sub[1]);
+    R = substitute(RE2->sub[2], RE2->sub[1], RE->sub[1]);
     return eval_match(C,R,Q,results);
   }
 
@@ -1232,7 +1237,6 @@ expression_ref evaluate_mark1(const expression_ref& R)
       throw myexception()<<"mark1: couldn't process control expression '"<<control<<"'";
   }
 }
-
 
 expression_ref _ = match(-1);
 expression_ref _1 = match(0);
@@ -1597,7 +1601,7 @@ expression_ref def_function(bool decompose, const vector< vector<expression_ref>
 
   // Turn it into a function
   for(int i=patterns[0].size()-1;i>=0;i--)
-    R = expression(lambda(var_index+i),R);
+    R = lambda_quantify(var_index+i, R);
 
   return R;
 }
@@ -1663,11 +1667,11 @@ expression_ref launchbury_normalize(const expression_ref& R)
   shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
   if (L)
   {
-    assert(E->size() == 2);
+    assert(E->size() == 3);
     expression* V = new expression(*E);
-    V->sub[1] = launchbury_normalize(E->sub[1]);
+    V->sub[2] = launchbury_normalize(E->sub[2]);
 
-    if (V->sub[1] == E->sub[1])
+    if (V->sub[2] == E->sub[2])
       return R;
     else
       return V;

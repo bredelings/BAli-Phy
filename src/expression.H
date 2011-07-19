@@ -235,13 +235,9 @@ expression_ref lambda_expression(const Operator& O);
 //         there is no overlap.
 struct lambda: public Object
 {
-  int dummy_index;
-  
   lambda* clone() const {return new lambda(*this);}
   tribool compare(const Object& o) const;
   std::string print() const;
-
-  lambda(int d);
 };
 
 struct term_ref;
