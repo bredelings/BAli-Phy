@@ -1001,7 +1001,9 @@ struct heap_dummy_state
 {
   expression_ref evaluates_to;
   bool on_heap;
-  heap_dummy_state():on_heap(true) {}
+  string name;
+  heap_dummy_state():on_heap(true),name(convertToString(this)) {}
+  heap_dummy_state(const std::string& s):on_heap(true),name(s) {}
 };
 
 // a dummy variable expression
@@ -1013,7 +1015,7 @@ struct heap_dummy: public Object
 
   std::string print() const 
   {
-    return "<"+convertToString(target.get()) + ">";
+    return "<" + target->name + ">";
   }
 
   tribool compare(const Object& o) const
@@ -1033,8 +1035,52 @@ struct heap_dummy: public Object
   heap_dummy():
     target(new heap_dummy_state)
   { }
+
+  heap_dummy(const string& s):
+    target(new heap_dummy_state(s))
+  { }
 };
 
+using std::map;
+
+void discover_heap_vars(const expression_ref& R, map< shared_ptr<heap_dummy_state>, std::string>& names)
+{
+  if (shared_ptr<const heap_dummy> H = dynamic_pointer_cast<const heap_dummy>(R))
+  {
+    if (names.find(H->target) != names.end())
+    {
+      // back out, we've been through this node before.
+    }
+
+    if (names.find(H->target) == names.end())
+    {
+      int num = names.size()+1;
+      // give this node a name and mark it visited
+      names[H->target] = "p"+convertToString(num);
+
+      discover_heap_vars(H->target->evaluates_to, names);
+    }
+
+  }
+
+  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  {
+    for(int i=0;i<E->size();i++)
+      discover_heap_vars(E->sub[i], names);
+  }
+}
+
+void show_heap_expression(expression_ref& R)
+{
+  map< shared_ptr<heap_dummy_state>, std::string> names;
+
+  discover_heap_vars(R,names);
+  std::cout<<R<<std::endl;
+  foreach(i,names)
+  {
+    std::cout<<"<"<<i->first->name<<"> = "<<i->first->evaluates_to<<std::endl;
+  }
+}
 
 
 expression_ref evaluate_mark1(const expression_ref& R)
@@ -1047,6 +1093,8 @@ expression_ref evaluate_mark1(const expression_ref& R)
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
+
+    //    std::cout<<" stack size = "<<S.size()<<"  control = '"<<control<<"'\n\n";
 
     // -1. A free variable. This should never happen.
     // Can we allow unreducable expressions with free variables to be treated as values?
@@ -1076,7 +1124,11 @@ expression_ref evaluate_mark1(const expression_ref& R)
 
     else if (not E or dynamic_pointer_cast<const Function>(E->sub[0]) )
     {
-      if (S.empty()) return control;
+      if (S.empty()) 
+      {
+	show_heap_expression(control);
+	return control;
+      }
 
       expression_ref TOP = S.back();
       S.pop_back();
@@ -1138,7 +1190,7 @@ expression_ref evaluate_mark1(const expression_ref& R)
 	  std::abort();
       }
       // 2. Substitute??
-      if (H->is_on_heap())
+      else if (H->is_on_heap())
 	std::abort();
 
       // 8. Var3: Update pointer
@@ -1153,7 +1205,11 @@ expression_ref evaluate_mark1(const expression_ref& R)
     
     else if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
     {
-      if (S.empty()) return control;
+      if (S.empty()) 
+      {
+	show_heap_expression(control);
+	return control;
+      }
 
       shared_ptr<heap_dummy> H = dynamic_pointer_cast<heap_dummy>(S.back());
       assert(H);
@@ -1179,7 +1235,13 @@ expression_ref evaluate_mark1(const expression_ref& R)
     {
       vector<shared_ptr<heap_dummy> > new_heap_vars;
       for(int i=0;i<vars.size();i++)
-	new_heap_vars.push_back( shared_ptr<heap_dummy>(new heap_dummy) );
+      {
+	shared_ptr<const named_dummy> ND = dynamic_pointer_cast<const named_dummy>(vars[i]);
+	if (ND)
+	  new_heap_vars.push_back( shared_ptr<heap_dummy>(new heap_dummy(ND->name)) );
+	else
+	  new_heap_vars.push_back( shared_ptr<heap_dummy>(new heap_dummy) );
+      }
 
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
       for(int i=0;i<vars.size();i++) 
