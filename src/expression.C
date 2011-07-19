@@ -575,11 +575,11 @@ std::set<int> get_free_indices(const expression_ref& R)
 }
 
 // Rename dummies even if they're bound.
-static void rename_lambda(expression_ref& R, int old_name, int new_name)
+static void rename_dummy(expression_ref& R, const expression_ref& old_dummy, const expression_ref new_dummy)
 {
-  if (shared_ptr<dummy> D = dynamic_pointer_cast<dummy>(R))
+  if (old_dummy->compare(*R))
   {
-    if (D->index == old_name) D->index = new_name;
+    R = new_dummy;
     return;
   }
 
@@ -588,7 +588,7 @@ static void rename_lambda(expression_ref& R, int old_name, int new_name)
 
   // This is an expression, so compute the substituted sub-expressions
   for(int i=0;i<E->size();i++)
-    rename_lambda(E->sub[i], old_name, new_name);
+    rename_dummy(E->sub[i], old_dummy, new_dummy);
 }
 
 /// Return the min of v
@@ -692,7 +692,7 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
 
       // Do the alpha renaming
       foreach(i,overlap)
-	rename_lambda(R1,*i,new_index++);
+	rename_dummy(R1, dummy(*i), dummy(new_index++));
 
       E1 = dynamic_pointer_cast<expression>(R1);
     }
