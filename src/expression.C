@@ -622,18 +622,6 @@ static int get_safe_binder_index(const expression_ref& R)
     return max(free)+1;
 }
 
-static int get_safe_binder_index_for_alt(const expression_ref& R1, const expression_ref& R2)
-{
-  std::set<int> pattern_vars = get_pattern_indices(R1);
-  std::set<int> free = get_free_indices(R2);
-  remove(free, pattern_vars);
-
-  if (free.empty()) 
-    return 0;
-  else
-    return max(free)+1;
-}
-
 // If we use de Bruijn indices, then, as before bound indices in R2 are no problem.
 // Unlike before, we have a separate type for free variables: they therefore cannot be bound
 //  by substituting them.
