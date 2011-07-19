@@ -123,7 +123,7 @@ string expression::print() const
 
     if (parse_case_expression(*this, T, vars, bodies))
     {
-      result = "case " + T->print() + " in {";
+      result = "case " + T->print() + " of {";
       vector<string> parts;
       for(int i=0;i<vars.size();i++)
 	parts.push_back( vars[i]->print() + " -> " + bodies[i]->print() );
