@@ -273,21 +273,6 @@ int main()
   CTX1.add_expression( def_function(false, Tuple(v0, Cons(v1, v2)), Cons(v1, v3((typed_expression_ref<Double>(v0)-1.0),v2))) );
   CTX1.add_expression( def_function(true, Tuple(v0, Cons(v1, v2)), Cons(v1, v3((typed_expression_ref<Double>(v0)-1.0),v2))) );
 
-  {  
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    patterns.push_back( Tuple(0, v0) );
-    bodies.push_back( ListEnd );
-
-    patterns.push_back( Tuple(v0, ListEnd) );
-    bodies.push_back( ListEnd );
-
-    patterns.push_back( Tuple(v0, Cons(v1,v2) ) );
-    bodies.push_back( Cons(v1, v3(typed_expression_ref<Int>(v0)-1, v2) ) );
-    CTX1.add_expression( def_function(false, patterns, bodies) );
-    CTX1.add_expression( def_function(true, patterns, bodies) );
-  }
-
   cout<<"\n CTX1 now contains this list of non-sub expressions:\n";
   cout<<*CTX1.F<<"\n";
 
@@ -362,6 +347,58 @@ int main()
   test7 = eval(CTX1, test7);
   cout<<test7<<"\n";
 
+  // take 
+  expression_ref def_take;
+  {  
+    take = named_dummy("take");
+
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    patterns.push_back( Tuple(0, v1) );
+    bodies.push_back( ListEnd );
+
+    patterns.push_back( Tuple(v1, ListEnd) );
+    bodies.push_back( ListEnd );
+
+    typed_expression_ref<Int> I1 = v1;
+    patterns.push_back( Tuple(v1, Cons(v2,v3) ) );
+    bodies.push_back( Cons(v2, take(I1-1)(v3) ) );
+
+    def_take = def_function(true, patterns, bodies);
+
+    CTX1.add_expression( def_function(false, patterns, bodies) );
+    CTX1.add_expression( def_take );
+  }
+
+  // iterate
+  expression_ref def_iterate;
+  {  
+    iterate = named_dummy("iterate");
+
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    patterns.push_back( Tuple(v1, v2) );
+    bodies.push_back( Cons(v2, iterate(v1)(v1(v2))) );
+
+    def_iterate = def_function(true, patterns, bodies);
+  }
+
+  // fmap
+  expression_ref def_fmap;
+  {  
+    fmap = named_dummy("fmap");
+
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    patterns.push_back( Tuple(v1, ListEnd) );
+    bodies.push_back( ListEnd );
+
+    patterns.push_back( Tuple(v1, Cons(v2,v3)) );
+    bodies.push_back( Cons(v1(v2), fmap(v2)(v3) ) );
+
+    def_fmap = def_function(true, patterns, bodies);
+  }
+
   expression_ref test8 = let_expression(v0,1,v0);
   cout<<"\n";
   cout<<"Eval test:     "<<test8<<" = \n";
@@ -369,4 +406,13 @@ int main()
   cout<<"   normalized: "<<test8<<" = ";
   test8 = evaluate_mark1(test8);
   cout<<test8<<"\n";
+
+  expression_ref test9 = let_expression(take,def_take,
+					take);
+  cout<<"\n";
+  cout<<"Eval test:     "<<test9<<" = \n";
+  test9 = launchbury_normalize(test9);
+  cout<<"   normalized: "<<test9<<" = ";
+  test9 = evaluate_mark1(test9);
+  cout<<test9<<"\n";
 }
