@@ -1627,7 +1627,7 @@ bool is_dummy(const expression_ref& R)
 expression_ref launchbury_normalize(const expression_ref& R)
 {
   // 1. Var
-  if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R))
+  if (is_dummy(R))
     return R;
   
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
@@ -1650,10 +1650,10 @@ expression_ref launchbury_normalize(const expression_ref& R)
   }
 
   // 3. Application
-  if (dynamic_pointer_cast<const expression>(E->sub[0]) or dynamic_pointer_cast<const dummy>(E->sub[0]))
+  if (dynamic_pointer_cast<const expression>(E->sub[0]) or is_dummy(E->sub[0]))
   {
     assert(E->size() == 2);
-    if (dynamic_pointer_cast<const dummy>(E->sub[1]))
+    if (is_dummy(E->sub[1]))
     { 
       expression* V = new expression(*E);
       V->sub[0] = launchbury_normalize(E->sub[0]);
@@ -1682,7 +1682,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
     vector<expression_ref> bodies;
     for(int i=1;i<E->size();i++)
     {
-      if (dynamic_pointer_cast<const dummy>(E->sub[i]))
+      if (is_dummy(E->sub[i]))
       {
 	C->sub.push_back(E->sub[i]);
       }
