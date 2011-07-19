@@ -407,12 +407,35 @@ int main()
   test8 = evaluate_mark1(test8);
   cout<<test8<<"\n";
 
-  expression_ref test9 = let_expression(take,def_take,
-					take);
+  expression_ref test9 = case_expression(true, Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
+
   cout<<"\n";
   cout<<"Eval test:     "<<test9<<" = \n";
   test9 = launchbury_normalize(test9);
   cout<<"   normalized: "<<test9<<" = ";
   test9 = evaluate_mark1(test9);
   cout<<test9<<"\n";
+
+
+  expression_ref test10 = let_expression(take, def_take,
+					 take(2)(Cons(1,Cons(2,Cons(3,ListEnd))))
+					);
+  cout<<"\n";
+  cout<<"Eval test:     "<<test10<<" = \n";
+  test10 = launchbury_normalize(test10);
+  cout<<"   normalized: "<<test10<<" = ";
+  test10 = evaluate_mark1(test10);
+  cout<<test10<<"\n";
+
+  expression_ref test11 = let_expression(take, def_take,
+					let_expression(iterate, def_iterate,
+						       take(3)(iterate(plus(1),1))
+						       )
+					);
+  cout<<"\n";
+  cout<<"Eval test:     "<<test11<<" = \n";
+  test11 = launchbury_normalize(test11);
+  cout<<"   normalized: "<<test11<<" = ";
+  test11 = evaluate_mark1(test11);
+  cout<<test11<<"\n";
 }
