@@ -68,7 +68,7 @@ using std::endl;
 
 term_ref add_probability_expression(polymorphic_cow_ptr<Formula>& F)
 {
-  expression_ref query = distributed(_2,Tuple(2)(prob_density(_,_1),_3));
+  expression_ref query = distributed(_2,Tuple(prob_density(_,_1),_3));
 
   typed_expression_ref<Log_Double> Pr;
 
@@ -165,10 +165,10 @@ int main()
 
   term_ref defv = F->add_expression(  default_value(parameter("X"), 2.0) );
   term_ref list_x_y = F->add_expression(Cons(X,Cons(Y,ListEnd)));
-  term_ref tuple_x_y = F->add_expression(Tuple(2)(X,Y));
+  term_ref tuple_x_y = F->add_expression(Tuple(X,Y));
 
-  term_ref prior_x_y = F->add_expression(distributed(parameter("X"),Tuple(2)(exponential_dist,Y+One)));
-  term_ref prior_y_z = F->add_expression(distributed(parameter("Y"),Tuple(2)(exponential_dist,Z+One)));
+  term_ref prior_x_y = F->add_expression(distributed(parameter("X"),Tuple(exponential_dist,Y+One)));
+  term_ref prior_y_z = F->add_expression(distributed(parameter("Y"),Tuple(exponential_dist,Z+One)));
   term_ref probability_expression = add_probability_expression(F);
 
   cout<<"Creating an Context...\n";
@@ -270,19 +270,19 @@ int main()
 
   CTX1.add_expression( case_expression(false, dummy(0), Cons(dummy(1),ListEnd), dummy(1)) );
   CTX1.add_expression( case_expression(true, dummy(0), Cons(dummy(1),ListEnd), dummy(1)) );
-  CTX1.add_expression( def_function(false, Tuple(2)(v0, Cons(v1, v2)), Cons(v1, v3((typed_expression_ref<Double>(v0)-1.0),v2))) );
-  CTX1.add_expression( def_function(true, Tuple(2)(v0, Cons(v1, v2)), Cons(v1, v3((typed_expression_ref<Double>(v0)-1.0),v2))) );
+  CTX1.add_expression( def_function(false, Tuple(v0, Cons(v1, v2)), Cons(v1, v3((typed_expression_ref<Double>(v0)-1.0),v2))) );
+  CTX1.add_expression( def_function(true, Tuple(v0, Cons(v1, v2)), Cons(v1, v3((typed_expression_ref<Double>(v0)-1.0),v2))) );
 
   {  
     vector<expression_ref> patterns;
     vector<expression_ref> bodies;
-    patterns.push_back( Tuple(2)(0, v0) );
+    patterns.push_back( Tuple(0, v0) );
     bodies.push_back( ListEnd );
 
-    patterns.push_back( Tuple(2)(v0, ListEnd) );
+    patterns.push_back( Tuple(v0, ListEnd) );
     bodies.push_back( ListEnd );
 
-    patterns.push_back( Tuple(2)(v0, Cons(v1,v2) ) );
+    patterns.push_back( Tuple(v0, Cons(v1,v2) ) );
     bodies.push_back( Cons(v1, v3(typed_expression_ref<Int>(v0)-1, v2) ) );
     CTX1.add_expression( def_function(false, patterns, bodies) );
     CTX1.add_expression( def_function(true, patterns, bodies) );
@@ -316,19 +316,19 @@ int main()
   else
     cout<<"no match!";
 
-  expression_ref test = Tuple(2)(One+One,One+One+One);
+  expression_ref test = Tuple(One+One,One+One+One);
   cout<<"\n";
-  cout<<"Eval test: does "<<test<<" match "<<Tuple(2)(2.0,3.0)<<"?\n";
+  cout<<"Eval test: does "<<test<<" match "<<Tuple(2.0,3.0)<<"?\n";
   results.clear();
-  if (eval_match(CTX1,test,Tuple(2)(2.0,3.0),results) )
+  if (eval_match(CTX1,test,Tuple(2.0,3.0),results) )
     cout<<"yes, result = "<<test<<"\n";
 
 
-  expression_ref test2 = Tuple(2)(square(parameter("X")),One+One);
+  expression_ref test2 = Tuple(square(parameter("X")),One+One);
   cout<<"\n";
-  cout<<"Eval test: does "<<test2<<" match "<<Tuple(2)(9.0, 2.0)<<"?\n";
+  cout<<"Eval test: does "<<test2<<" match "<<Tuple(9.0, 2.0)<<"?\n";
   results.clear();
-  if (eval_match(CTX1, test2,Tuple(2)(9.0, 2.0), results))
+  if (eval_match(CTX1, test2,Tuple(9.0, 2.0), results))
     cout<<"yes, result = "<<test2<<"\n";
 
   expression_ref test3 = fmap(square,Cons(parameter("X"),Cons(One+One,ListEnd)));
