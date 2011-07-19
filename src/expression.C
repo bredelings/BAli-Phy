@@ -1237,7 +1237,7 @@ expression_ref evaluate_mark1(const expression_ref& R)
 
 
     // 1. App1 = Application expressions: compute head
-    else if (dynamic_pointer_cast<const expression>(E->sub[0]) or dynamic_pointer_cast<const dummy>(E->sub[0]))
+    else if (dynamic_pointer_cast<const expression>(E->sub[0]) or dynamic_pointer_cast<const heap_dummy>(E->sub[0]))
     {
       assert(E->size() == 2);
       assert(dynamic_pointer_cast<const heap_dummy>(E->sub[1]));
