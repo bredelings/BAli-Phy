@@ -1,5 +1,4 @@
 #include "operator.H"
-
 #include "util.H"
 
 using std::vector;
@@ -20,10 +19,7 @@ tribool Operator::compare(const Object& o) const
 
 string print_operator_expression(const vector<string>& arguments)
 {
-  if (arguments.size() > 1)
-    return "(" + join(arguments," ") + ")";
-  else
-    return arguments[0];
+  return join(arguments," ");
 }
 
 string print_infix_expression(const vector<string>& arguments)
@@ -31,7 +27,7 @@ string print_infix_expression(const vector<string>& arguments)
   if (arguments.size() != 3)
     throw myexception()<<"Infix("<<arguments[0]<<"): got "<<arguments.size()-1<<" additional arguments!";
 
-  return "("+arguments[1]+arguments[0]+arguments[2]+")";
+  return arguments[1]+arguments[0]+arguments[2];
 }
 
 string Operator::print() const

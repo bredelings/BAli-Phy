@@ -70,39 +70,12 @@ bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<ex
 }
 
 
-vector<string> print_arg_expressions(const expression& e)
-{
-  vector<string> sub_names;
-  for(int i=0;i<e.size();i++)
-    sub_names.push_back( e.sub[i]->print() );
-  
-  return sub_names;
-}
-
 // How do I make constructor-specific methods of printing data expressions?
 // Can I move to defining the print function using an expression?
 string expression::print() const 
 {
   string result;
   assert(sub[0]);
-
-  if (const Operator* O = dynamic_cast<const Operator*>(&*sub[0]))
-  {
-    if (O->precedence() > -1)
-    {
-      assert(O->n_args() == 2);
-      return sub[1]->print() + O->name() + sub[2]->print();
-    }
-    else if (O->name() == "Tuple")
-    {
-      vector<string> sub_names;
-      for(int i=1;i<size();i++)
-	sub_names.push_back( sub[i]->print() );
-      return print_operator_expression(sub_names);
-    }
-      
-    return O->print_expression(print_arg_expressions(*this));
-  }
 
   //  if (false)
   {
@@ -133,7 +106,61 @@ string expression::print() const
     }
   }
 
-  return print_operator_expression( print_arg_expressions(*this) );
+  // Print the (unparenthesized) sub-expressions
+  vector<string> args(size());
+  for(int i=0;i<size();i++)
+    args[i] = sub[i]->print();
+
+  vector<string> pargs = args;
+  for(int i=0;i<size();i++)
+    if (dynamic_cast<const expression*>(&*sub[i]))
+      pargs[i] = "(" + args[i] + ")";
+  
+  if (const Operator* O = dynamic_cast<const Operator*>(&*sub[0]))
+  {
+    if (O->precedence() > -1)
+    {
+      assert(O->n_args() == 2);
+      if (const expression* E = dynamic_cast<const expression*>(&*sub[1]))
+      {
+	if (O->compare(*E->sub[0]) and O->associativity()==assoc_left)
+	  pargs[1] = args[1];
+	else if (const Operator* O2 = dynamic_cast<const Operator*>(&*E->sub[0]))
+	  if (O2->precedence() > O->precedence())
+	    pargs[1] = args[1];
+      }
+      if (const expression* E = dynamic_cast<const expression*>(&*sub[2]))
+      {
+	if (O->compare(*E->sub[0]) and O->associativity()==assoc_right)
+	  pargs[2] = args[2];
+	else if (const Operator* O2 = dynamic_cast<const Operator*>(&*E->sub[0]))
+	  if (O2->precedence() > O->precedence())
+	    pargs[2] = args[2];
+      }
+      return pargs[1] + pargs[0] + pargs[2];
+    }
+    else if (O->name() == "Tuple")
+    {
+      // Should Tuple's parenthesis sub-expressions?
+      vector<string> sub_names;
+      for(int i=1;i<size();i++)
+	sub_names.push_back( args[i] );
+      return "(" + join(sub_names,",") + ")";
+    }
+      
+    return O->print_expression( pargs );
+  }
+
+  // *this is an application expression
+  if (const expression* E = dynamic_cast<const expression*>(&*sub[0]))
+  {
+    // this->sub[0] is also an application expression
+    if (dynamic_cast<const expression*>(&*E->sub[0]) or is_dummy(E->sub[0]))
+      // Don't parenthesize sub[0]
+      pargs[0] = args[0];
+  }
+
+  return print_operator_expression( pargs );
 }
 
 tribool expression::compare(const Object& o) const 
