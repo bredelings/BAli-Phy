@@ -201,6 +201,19 @@ string dummy::print() const {
     return string("#")+convertToString(index);
 }
 
+tribool named_dummy::compare(const Object& o) const 
+{
+  const named_dummy* E = dynamic_cast<const named_dummy*>(&o);
+  if (not E) 
+    return false;
+
+  return name == E->name;
+}
+
+string named_dummy::print() const {
+  return name;
+}
+
 tribool match::compare(const Object& o) const 
 {
   const match* E = dynamic_cast<const match*>(&o);

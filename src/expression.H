@@ -102,6 +102,18 @@ struct dummy: public Object
   dummy(int i):index(i) {}
 };
 
+// a dummy variable expression
+struct named_dummy: public Object
+{
+  std::string name;
+
+  named_dummy* clone() const {return new named_dummy(*this);}
+  std::string print() const;
+  tribool compare(const Object& o) const;
+  
+  named_dummy(const std::string& s):name(s) {}
+};
+
 struct match: public Object
 {
   int index;
