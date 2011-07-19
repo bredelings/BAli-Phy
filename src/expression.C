@@ -1083,8 +1083,8 @@ expression_ref evaluate_mark1(const expression_ref& R)
 	for(int i=0;i<cases.size() and not result;i++)
 	{
 	  if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(cases[i]))
-	    result = substitute(results[i], cases[i], R);
-	  else if (R->compare(*cases[i]))
+	    result = substitute(results[i], cases[i], control);
+	  else if (control->compare(*cases[i]))
 	    result = results[i];
 	}
 	if (result)
