@@ -732,6 +732,27 @@ expression_ref Tuple(int n)
   return lambda_expression( data_function("Tuple",n) );
 }
 
+expression_ref Tuple(const expression_ref& R1,const expression_ref& R2)
+{
+  return Tuple(2)(R1)(R2);
+}
+
+expression_ref Tuple(const expression_ref& R1,const expression_ref& R2,const expression_ref& R3)
+{
+  return Tuple(3)(R1)(R2)(R3);
+}
+
+expression_ref Tuple(const expression_ref& R1,const expression_ref& R2,const expression_ref& R3,const expression_ref& R4)
+{
+  return Tuple(4)(R1)(R2)(R3)(R4);
+}
+
+expression_ref Tuple(const expression_ref& R1,const expression_ref& R2,const expression_ref& R3,const expression_ref& R4,const expression_ref& R5)
+{
+  return Tuple(5)(R1)(R2)(R3)(R4)(R5);
+}
+
+
 expression_ref Cons = lambda_expression( right_assoc_data_function(":",2) );
 
 expression_ref ListEnd = lambda_expression( data_function("[]",0) );

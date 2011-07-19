@@ -379,6 +379,10 @@ extern expression_ref _3;
 extern expression_ref _4;
 
 expression_ref Tuple(int);
+expression_ref Tuple(const expression_ref&, const expression_ref&);
+expression_ref Tuple(const expression_ref&, const expression_ref&, const expression_ref&);
+expression_ref Tuple(const expression_ref&, const expression_ref&, const expression_ref&, const expression_ref&);
+expression_ref Tuple(const expression_ref&, const expression_ref&, const expression_ref&, const expression_ref&, const expression_ref&);
 
 // 2 Fields, a value, and a Cons or a ListEnd
 extern expression_ref Cons;
