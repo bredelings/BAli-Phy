@@ -116,6 +116,10 @@ struct named_dummy: public Object
 
 bool is_dummy(const expression_ref&);
 
+bool is_wildcard(const expression_ref&);
+
+bool is_irrefutable_pattern(const expression_ref& R);
+
 struct match: public Object
 {
   int index;
