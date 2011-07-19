@@ -1551,14 +1551,49 @@ expression_ref def_function(bool decompose, const vector< vector<expression_ref>
     assert(patterns[0].size() == patterns[i].size());
 
   // Construct the dummies
-  vector<expression_ref> terms;
+  vector<expression_ref> args;
   for(int i=0;i<patterns[0].size();i++)
-    terms.push_back(dummy(var_index+i));
+    args.push_back(dummy(var_index+i));
     
   // Construct the case expression
   expression_ref R = otherwise;
   for(int i=patterns.size()-1; i>=0; i--)
-    R = multi_case_expression(decompose, terms, patterns[i], bodies[i], R);
+  {
+    vector<expression_ref> test_args;
+    vector<expression_ref> test_patterns;
+    expression_ref body = bodies[i];
+
+    for(int j=0;j<patterns[i].size();j++)
+    {
+      const expression_ref& P = patterns[i][j];
+
+      // If the pattern is irrefutable, then just substitute in the corresponding arg[]
+      if (is_irrefutable_pattern(P))
+      {
+	if (not is_wildcard(P))
+	  body = substitute(body, P, args[j]);
+      }
+      // If the pattern involves a test, record the test.
+      else
+      {
+	test_args.push_back(args[j]);
+	test_patterns.push_back(P);
+      }
+    }
+
+    // Only add tests if there are any tests.
+    if (test_args.size())
+      R = multi_case_expression(decompose, test_args, test_patterns, body, R);
+
+    // If there are no tests, then the 'otherwise' condition cannot occur.  This should only happen on the last pattern.
+    else
+    {
+      R = body;
+      assert(i==patterns.size()-1);
+    }
+  }
+
+  assert(R);
 
   // Turn it into a function
   for(int i=patterns[0].size()-1;i>=0;i--)
