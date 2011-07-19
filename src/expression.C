@@ -1081,7 +1081,7 @@ expression_ref evaluate_mark1(const expression_ref& R)
     }
 
 
-    else if (not E)
+    else if (not E or dynamic_pointer_cast<const Function>(E->sub[0]) )
     {
       if (S.empty()) return control;
 
@@ -1100,11 +1100,42 @@ expression_ref evaluate_mark1(const expression_ref& R)
 	expression_ref result;
 	for(int i=0;i<cases.size() and not result;i++)
 	{
+	  // If its a dummy, then match it.
 	  if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(cases[i]))
-	    result = substitute(results[i], cases[i], control);
-	  else if (control->compare(*cases[i]))
+	  {
 	    result = results[i];
+
+	    // Substitute the matched value into the expression if the dummy isn't "_";
+	    if (D2->index >= 0)
+	      result = substitute(result, cases[i], control);
+	  }
+	  // If we are a 0-arg literal constant constructor, then match iff control==cases[i]
+	  else if (not E)
+	  {
+	    if (control->compare(*cases[i]))
+	      result = results[i];
+	  }
+	  // If we are an n-arg constructor, then match iff the case is an expression and the head matches.
+	  else if (E)
+	  {
+	    if (shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(cases[i]))
+	    {
+	      if (E->sub[0]->compare(*E2->sub[0]))
+	      {
+		assert(E->size() == E2->size());
+
+		result = results[i];
+
+		for(int j=1;j<E->size();j++)
+		{
+		  if (not is_wildcard(E2->sub[j]))
+		    result = substitute(result, E2->sub[j], E->sub[j]);
+		}
+	      }
+	    }
+	  }
 	}
+
 	if (result)
 	{
 	  control = result;
@@ -1147,60 +1178,6 @@ expression_ref evaluate_mark1(const expression_ref& R)
 	H->target->on_heap = true;
       }
 
-      continue;
-    }
-
-    else if ( shared_ptr<const Function> F = dynamic_pointer_cast<const Function>(E->sub[0]) )
-    {
-      if (S.empty()) return control;
-
-      expression_ref TOP = S.back();
-      S.pop_back();
-
-      shared_ptr<heap_dummy> H = dynamic_pointer_cast<heap_dummy>(TOP);
-
-      // 7. Case2: case expression?
-      if (not H)
-      {
-	vector<expression_ref> cases;
-	vector<expression_ref> results;
-	parse_alternatives(TOP, cases, results);
-
-	expression_ref result;
-	for(int i=0;i<cases.size() and not result;i++)
-	{
-	  if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(cases[i]))
-	    result = substitute(results[i], cases[i], E->sub[i]);
-	  else if (shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(cases[i]))
-	  {
-	    if (E->sub[0]->compare(*E2->sub[0]))
-	    {
-	      assert(E->size() == E2->size());
-	      result = results[i];
-	      for(int j=1;j<E->size();j++)
-		result = substitute(result, E2->sub[i], E->sub[i]);
-	    }
-	  }
-	}
-	if (result)
-	{
-	  control = result;
-	  continue;
-	}
-	else
-	  std::abort();
-      }
-      // 2. Substitute??
-      if (H->is_on_heap())
-	std::abort();
-
-      // 8. Var3: Update pointer
-      else {
-	// Set the value of the pointer
-	H->value() = control;
-	// Put it back on the heap
-	H->target->on_heap = true;
-      }
       continue;
     }
 
