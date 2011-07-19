@@ -528,7 +528,10 @@ std::set<int> get_bound_indices(const expression_ref& R)
       for(int i=0;i<vars.size();i++)
       {
 	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
-	bound.insert(D->index);
+	if (D)
+	  bound.insert(D->index);
+	else
+	  assert(dynamic_pointer_cast<const named_dummy>(vars[i]));
       }
     }
   }
