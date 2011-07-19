@@ -114,6 +114,8 @@ struct named_dummy: public Object
   named_dummy(const std::string& s):name(s) {}
 };
 
+bool is_dummy(const expression_ref&);
+
 struct match: public Object
 {
   int index;

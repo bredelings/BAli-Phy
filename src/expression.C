@@ -25,7 +25,7 @@ bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars,
   for(int i=0;i<pairs.size();i++)
   {
     shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(pairs[i]);
-    assert(dynamic_pointer_cast<const dummy>(E2->sub[1]));
+    assert(is_dummy(E2->sub[1]));
     vars.push_back(E2->sub[1]);
     bodies.push_back(E2->sub[2]);
   }
@@ -1610,6 +1610,15 @@ expression_ref def_function(bool decompose, const vector<expression_ref>& patter
 expression_ref def_function(bool decompose, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
 {
   return def_function(decompose, vector<expression_ref>(1,pattern), vector<expression_ref>(1,body), otherwise);
+}
+
+bool is_dummy(const expression_ref& R)
+{
+  if (dynamic_cast<const dummy*>(&*R)) return true;
+
+  if (dynamic_cast<const named_dummy*>(&*R)) return true;
+
+  return false;
 }
 
 expression_ref launchbury_normalize(const expression_ref& R)
