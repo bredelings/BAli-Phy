@@ -57,6 +57,10 @@ CXXFLAGS += -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasi
 endif
 
 LIBS = @libs@
+if NO_SYSTEM_BOOST
+LIBS += ../boost/lib/libboost_myparts.la
+endif
+
 
 #-----------------------------------------------------------------
 
@@ -101,7 +105,15 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  formula_expression.C smodel/operations.C distribution-operations.C
 
 nodist_bali_phy_SOURCES = git_version.h
-bali_phy_LDADD = @BOOST_MPI_LIBS@ @MPI_LDFLAGS@ 
+
+if WITH_MPI
+bali_phy_LDADD = ${LDADD} @MPI_LDFLAGS@ 
+if NO_SYSTEM_BOOST
+bali_phy_LDADD += ../boost/lib/libboost_myparts_mpi.la
+else
+bali_phy_LDADD += ${LIBS} -lboost_mpi${BOOST_SUFFIX} -lboost_serialization${BOOST_SUFFIX}
+endif
+endif
 
 # always "rebuild" these
 BUILT_SOURCES = version.C git_version.stamp

@@ -101,7 +101,7 @@ ORIG_CXXFLAGS=$CXXFLAGS
 
 AC_PROG_CXX
 AC_PROG_CPP
-AC_PROG_RANLIB
+AC_PROG_LIBTOOL
 AC_PROG_INSTALL
 
 CFLAGS=$ORIG_CFLAGS
@@ -420,13 +420,8 @@ else
   echo " * Not using system BOOST libraries: we'll build our own."
 
   boost_includes="-isystem \$(top_srcdir)/boost/include"
-  boost_libs="\$(top_builddir)/boost/lib/chrono/libboost_chrono.a \$(top_builddir)/boost/lib/filesystem/libboost_filesystem.a \$(top_builddir)/boost/lib/system/libboost_system.a \$(top_builddir)/boost/lib/program_options/libboost_program_options.a -lrt"
 
   CXXFLAGS="$boost_includes $CXXFLAGS"
-  LIBS="$boost_libs $LIBS"
-  if test "$use_mpi" != no ; then
-     BOOST_MPI_LIBS="\$(top_builddir)/boost/lib/mpi/libboost_mpi.a \$(top_builddir)/boost/lib/serialization/libboost_serialization.a"
-  fi
 fi
 libs=$LIBS
 AC_SUBST(libs)

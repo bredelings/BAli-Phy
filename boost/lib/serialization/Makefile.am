@@ -1,6 +1,6 @@
-noinst_LIBRARIES = libboost_serialization.a
+noinst_LTLIBRARIES = libboost_serialization.la
 
-libboost_serialization_a_SOURCES =  src/archive_exception.cpp \
+libboost_serialization_la_SOURCES =  src/archive_exception.cpp \
     src/basic_archive.cpp \
     src/basic_iarchive.cpp \
     src/basic_iserializer.cpp \

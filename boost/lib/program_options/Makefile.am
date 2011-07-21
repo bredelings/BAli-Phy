@@ -1,8 +1,8 @@
-noinst_LIBRARIES = libboost_program_options.a
+noinst_LTLIBRARIES = libboost_program_options.la
 
 INCLUDES = -I$(top_srcdir)/boost/
 
-libboost_program_options_a_SOURCES = src/cmdline.cpp \
+libboost_program_options_la_SOURCES = src/cmdline.cpp \
 src/config_file.cpp \
 src/convert.cpp \
 src/options_description.cpp \

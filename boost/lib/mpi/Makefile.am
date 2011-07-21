@@ -1,6 +1,6 @@
-noinst_LIBRARIES = libboost_mpi.a
+noinst_LTLIBRARIES = libboost_mpi.la
 
-libboost_mpi_a_SOURCES = src/broadcast.cpp \
+libboost_mpi_la_SOURCES = src/broadcast.cpp \
     src/communicator.cpp \
     src/computation_tree.cpp \
     src/content_oarchive.cpp \
@@ -20,5 +20,5 @@ libboost_mpi_a_SOURCES = src/broadcast.cpp \
     src/text_skeleton_oarchive.cpp \
     src/timer.cpp
 
-libboost_mpi_a_CXXFLAGS = @MPI_CXXFLAGS@
-# libboost_mpi_a_LIBADD = @MPI_LDFLAGS@
+libboost_mpi_la_CXXFLAGS = @MPI_CXXFLAGS@
+# libboost_mpi_la_LIBADD = @MPI_LDFLAGS@
