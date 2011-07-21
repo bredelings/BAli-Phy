@@ -385,7 +385,7 @@ if test "$use_mpi" != no ; then
    AC_CHECK_LIB(boost_mpi${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_serialization library! (-lboost_mpi${BOOST_SUFFIX})" ; exit 1])
 fi
 
-boost_libs="-lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX}";
+boost_libs="-lboost_program_options${BOOST_SUFFIX} -lboost_filesystem${BOOST_SUFFIX} -lboost_system${BOOST_SUFFIX}";
 
 AC_MSG_CHECKING(include/compile/link for the BOOST.program_options library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
@@ -418,7 +418,7 @@ else
   echo " * Not using system BOOST libraries: we'll build our own."
 
   boost_includes="-isystem \$(top_srcdir)/boost/include"
-  boost_libs="\$(top_builddir)/boost/lib/filesystem/libboost_filesystem.a \$(top_builddir)/boost/lib/program_options/libboost_program_options.a"
+  boost_libs="\$(top_builddir)/boost/lib/filesystem/libboost_filesystem.a \$(top_builddir)/boost/lib/system/libboost_system.a \$(top_builddir)/boost/lib/program_options/libboost_program_options.a"
 
   CXXFLAGS="$boost_includes $CXXFLAGS"
   LIBS="$boost_libs $LIBS"
@@ -456,6 +456,7 @@ AC_OUTPUT([
   src/Makefile 
   boost/Makefile 
   boost/lib/Makefile 
+  boost/lib/system/Makefile 
   boost/lib/filesystem/Makefile 
   boost/lib/program_options/Makefile
   boost/lib/serialization/Makefile

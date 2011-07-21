@@ -1,24 +1,24 @@
 noinst_LIBRARIES = libboost_mpi.a
 
-libboost_mpi_a_SOURCES = broadcast.cpp \
-    communicator.cpp \
-    computation_tree.cpp \
-    content_oarchive.cpp \
-    environment.cpp \
-    exception.cpp \
-    graph_communicator.cpp \
-    group.cpp \
-    intercommunicator.cpp \
-    mpi_datatype_cache.cpp \
-    mpi_datatype_oarchive.cpp \
-    packed_iarchive.cpp \
-    packed_oarchive.cpp \
-    packed_skeleton_iarchive.cpp \
-    packed_skeleton_oarchive.cpp \
-    point_to_point.cpp \
-    request.cpp \
-    text_skeleton_oarchive.cpp \
-    timer.cpp
+libboost_mpi_a_SOURCES = src/broadcast.cpp \
+    src/communicator.cpp \
+    src/computation_tree.cpp \
+    src/content_oarchive.cpp \
+    src/environment.cpp \
+    src/exception.cpp \
+    src/graph_communicator.cpp \
+    src/group.cpp \
+    src/intercommunicator.cpp \
+    src/mpi_datatype_cache.cpp \
+    src/mpi_datatype_oarchive.cpp \
+    src/packed_iarchive.cpp \
+    src/packed_oarchive.cpp \
+    src/packed_skeleton_iarchive.cpp \
+    src/packed_skeleton_oarchive.cpp \
+    src/point_to_point.cpp \
+    src/request.cpp \
+    src/text_skeleton_oarchive.cpp \
+    src/timer.cpp
 
 libboost_mpi_a_CXXFLAGS = @MPI_CXXFLAGS@
 # libboost_mpi_a_LIBADD = @MPI_LDFLAGS@

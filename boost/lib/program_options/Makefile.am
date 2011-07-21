@@ -2,12 +2,14 @@ noinst_LIBRARIES = libboost_program_options.a
 
 INCLUDES = -I$(top_srcdir)/boost/
 
-libboost_program_options_a_SOURCES = cmdline.cpp \
-config_file.cpp \
-options_description.cpp \
-parsers.cpp \
-positional_options.cpp \
-split.cpp \
-value_semantic.cpp \
-variables_map.cpp \
-utf8_codecvt_facet.cpp convert.cpp 
+libboost_program_options_a_SOURCES = src/cmdline.cpp \
+src/config_file.cpp \
+src/convert.cpp \
+src/options_description.cpp \
+src/parsers.cpp \
+src/positional_options.cpp \
+src/split.cpp \
+src/utf8_codecvt_facet.cpp \
+src/value_semantic.cpp \
+src/variables_map.cpp \
+src/winmain.cpp

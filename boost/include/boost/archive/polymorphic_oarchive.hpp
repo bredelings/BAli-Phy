@@ -116,7 +116,7 @@ public:
                 #ifndef BOOST_NO_FUNCTION_TEMPLATE_ORDERING
                 const
                 #endif
-                ::boost::serialization::nvp<T> & t, int
+                ::boost::serialization::nvp< T > & t, int
         ){
         save_start(t.name());
         archive::save(* this->This(), t.const_value());
@@ -127,7 +127,7 @@ protected:
 public:
     // utility functions implemented by all legal archives
     virtual unsigned int get_flags() const = 0;
-    virtual unsigned int get_library_version() const = 0;
+    virtual library_version_type get_library_version() const = 0;
     virtual void save_binary(const void * t, std::size_t size) = 0;
 
     virtual void save_object(

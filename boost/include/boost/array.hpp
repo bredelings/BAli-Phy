@@ -13,9 +13,10 @@
  * accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
  *
+ * 28 Dec 2010 - (mtc) Added cbegin and cend (and crbegin and crend) for C++Ox compatibility.
  * 10 Mar 2010 - (mtc) fill method added, matching resolution of the standard library working group.
- *		See <http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#776> or Trac issue #3168
- *		Eventually, we should remove "assign" which is now a synonym for "fill" (Marshall Clow)
+ *      See <http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#776> or Trac issue #3168
+ *      Eventually, we should remove "assign" which is now a synonym for "fill" (Marshall Clow)
  * 10 Mar 2010 - added workaround for SUNCC and !STLPort [trac #3893] (Marshall Clow)
  * 29 Jan 2004 - c_array() added, BOOST_NO_PRIVATE_IN_AGGREGATE removed (Nico Josuttis)
  * 23 Aug 2002 - fix for Non-MSVC compilers combined with MSVC libraries.
@@ -69,10 +70,13 @@ namespace boost {
         typedef std::ptrdiff_t difference_type;
 
         // iterator support
-        iterator begin() { return elems; }
-        const_iterator begin() const { return elems; }
-        iterator end() { return elems+N; }
-        const_iterator end() const { return elems+N; }
+        iterator        begin()       { return elems; }
+        const_iterator  begin() const { return elems; }
+        const_iterator cbegin() const { return elems; }
+        
+        iterator        end()       { return elems+N; }
+        const_iterator  end() const { return elems+N; }
+        const_iterator cend() const { return elems+N; }
 
         // reverse iterator support
 #if !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION) && !defined(BOOST_MSVC_STD_ITERATOR) && !defined(BOOST_NO_STD_ITERATOR_TRAITS)
@@ -99,8 +103,15 @@ namespace boost {
         const_reverse_iterator rbegin() const {
             return const_reverse_iterator(end());
         }
+        const_reverse_iterator crbegin() const {
+            return const_reverse_iterator(end());
+        }
+
         reverse_iterator rend() { return reverse_iterator(begin()); }
         const_reverse_iterator rend() const {
+            return const_reverse_iterator(begin());
+        }
+        const_reverse_iterator crend() const {
             return const_reverse_iterator(begin());
         }
 
@@ -169,7 +180,7 @@ namespace boost {
         }
 
         // assign one value to all elements
-        void assign (const T& value) { fill ( value ); }	// A synonym for fill
+        void assign (const T& value) { fill ( value ); }    // A synonym for fill
         void fill   (const T& value)
         {
             std::fill_n(begin(),size(),value);
@@ -200,10 +211,13 @@ namespace boost {
         typedef std::ptrdiff_t difference_type;
 
         // iterator support
-        iterator begin() { return iterator( reinterpret_cast< T * >( this ) ); }
-        const_iterator begin() const { return const_iterator(  reinterpret_cast< const T * >( this ) ); }
-        iterator end() { return begin(); }
-        const_iterator end() const { return begin(); }
+        iterator        begin()       { return       iterator( reinterpret_cast<       T * >( this ) ); }
+        const_iterator  begin() const { return const_iterator( reinterpret_cast< const T * >( this ) ); }
+        const_iterator cbegin() const { return const_iterator( reinterpret_cast< const T * >( this ) ); }
+
+        iterator        end()       { return  begin(); }
+        const_iterator  end() const { return  begin(); }
+        const_iterator cend() const { return cbegin(); }
 
         // reverse iterator support
 #if !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION) && !defined(BOOST_MSVC_STD_ITERATOR) && !defined(BOOST_NO_STD_ITERATOR_TRAITS)
@@ -230,8 +244,15 @@ namespace boost {
         const_reverse_iterator rbegin() const {
             return const_reverse_iterator(end());
         }
+        const_reverse_iterator crbegin() const {
+            return const_reverse_iterator(end());
+        }
+
         reverse_iterator rend() { return reverse_iterator(begin()); }
         const_reverse_iterator rend() const {
+            return const_reverse_iterator(begin());
+        }
+        const_reverse_iterator crend() const {
             return const_reverse_iterator(begin());
         }
 
@@ -295,13 +316,13 @@ namespace boost {
 
         // assign one value to all elements
         void assign (const T& value) { fill ( value ); }
-		void fill   (const T& ) {}
-		
+        void fill   (const T& ) {}
+        
         // check range (may be private because it is static)
         static reference failed_rangecheck () {
                 std::out_of_range e("attempt to access element of an empty array");
                 boost::throw_exception(e);
-#if defined(BOOST_NO_EXCEPTIONS) || !defined(BOOST_MSVC)
+#if defined(BOOST_NO_EXCEPTIONS) || (!defined(BOOST_MSVC) && !defined(__PATHSCALE__))
                 //
                 // We need to return something here to keep
                 // some compilers happy: however we will never
@@ -345,6 +366,66 @@ namespace boost {
     inline void swap (array<T,N>& x, array<T,N>& y) {
         x.swap(y);
     }
+
+#if defined(__SUNPRO_CC)
+//  Trac ticket #4757; the Sun Solaris compiler can't handle
+//  syntax like 'T(&get_c_array(boost::array<T,N>& arg))[N]'
+//  
+//  We can't just use this for all compilers, because the 
+//      borland compilers can't handle this form. 
+    namespace detail {
+       template <typename T, std::size_t N> struct c_array
+       {
+           typedef T type[N];
+       };
+    }
+    
+   // Specific for boost::array: simply returns its elems data member.
+   template <typename T, std::size_t N>
+   typename detail::c_array<T,N>::type& get_c_array(boost::array<T,N>& arg)
+   {
+       return arg.elems;
+   }
+
+   // Specific for boost::array: simply returns its elems data member.
+   template <typename T, std::size_t N>
+   typename const detail::c_array<T,N>::type& get_c_array(const boost::array<T,N>& arg)
+   {
+       return arg.elems;
+   }
+#else
+// Specific for boost::array: simply returns its elems data member.
+    template <typename T, std::size_t N>
+    T(&get_c_array(boost::array<T,N>& arg))[N]
+    {
+        return arg.elems;
+    }
+    
+    // Const version.
+    template <typename T, std::size_t N>
+    const T(&get_c_array(const boost::array<T,N>& arg))[N]
+    {
+        return arg.elems;
+    }
+#endif
+    
+#if 0
+    // Overload for std::array, assuming that std::array will have
+    // explicit conversion functions as discussed at the WG21 meeting
+    // in Summit, March 2009.
+    template <typename T, std::size_t N>
+    T(&get_c_array(std::array<T,N>& arg))[N]
+    {
+        return static_cast<T(&)[N]>(arg);
+    }
+    
+    // Const version.
+    template <typename T, std::size_t N>
+    const T(&get_c_array(const std::array<T,N>& arg))[N]
+    {
+        return static_cast<T(&)[N]>(arg);
+    }
+#endif
 
 } /* namespace boost */
 
