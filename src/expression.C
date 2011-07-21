@@ -113,8 +113,16 @@ string expression::print() const
 
   vector<string> pargs = args;
   for(int i=0;i<size();i++)
-    if (dynamic_cast<const expression*>(&*sub[i]))
-      pargs[i] = "(" + args[i] + ")";
+  {
+    const expression* E = dynamic_cast<const expression*>(&*sub[i]);
+    if (not E) continue;
+
+    const Operator* O = dynamic_cast<const Operator*>(&*E->sub[0]);
+
+    if (O and O->name() == "Tuple") continue;
+
+    pargs[i] = "(" + args[i] + ")";
+  }
   
   if (const Operator* O = dynamic_cast<const Operator*>(&*sub[0]))
   {
@@ -145,7 +153,7 @@ string expression::print() const
       vector<string> sub_names;
       for(int i=1;i<size();i++)
 	sub_names.push_back( args[i] );
-      return "(" + join(sub_names,",") + ")";
+      return "(" + join(sub_names,", ") + ")";
     }
       
     return O->print_expression( pargs );
