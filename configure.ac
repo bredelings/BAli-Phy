@@ -362,6 +362,8 @@ if test "$use_mpi" != no ; then
 fi
 
 #---------------------- Check for BOOST ------------------#
+#FIXME: add chrono
+
 echo "------------------------------------------"
 if test "$use_system_boost" = yes ; then
 echo " * Looking for the system BOOST headers..."
@@ -418,7 +420,7 @@ else
   echo " * Not using system BOOST libraries: we'll build our own."
 
   boost_includes="-isystem \$(top_srcdir)/boost/include"
-  boost_libs="\$(top_builddir)/boost/lib/filesystem/libboost_filesystem.a \$(top_builddir)/boost/lib/system/libboost_system.a \$(top_builddir)/boost/lib/program_options/libboost_program_options.a"
+  boost_libs="\$(top_builddir)/boost/lib/chrono/libboost_chrono.a \$(top_builddir)/boost/lib/filesystem/libboost_filesystem.a \$(top_builddir)/boost/lib/system/libboost_system.a \$(top_builddir)/boost/lib/program_options/libboost_program_options.a"
 
   CXXFLAGS="$boost_includes $CXXFLAGS"
   LIBS="$boost_libs $LIBS"
@@ -456,8 +458,9 @@ AC_OUTPUT([
   src/Makefile 
   boost/Makefile 
   boost/lib/Makefile 
-  boost/lib/system/Makefile 
+  boost/lib/chrono/Makefile 
   boost/lib/filesystem/Makefile 
+  boost/lib/system/Makefile 
   boost/lib/program_options/Makefile
   boost/lib/serialization/Makefile
   boost/lib/mpi/Makefile
