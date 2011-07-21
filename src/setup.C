@@ -27,7 +27,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 
-#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem/operations.hpp>
 #include <boost/shared_ptr.hpp>
 
