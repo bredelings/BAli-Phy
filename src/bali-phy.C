@@ -476,7 +476,7 @@ string init_dir(const variables_map& args)
 {
   vector<string> alignment_filenames = args["align"].as<vector<string> >();
   for(int i=0;i<alignment_filenames.size();i++)
-    alignment_filenames[i] = remove_extension(fs::path( alignment_filenames[i] ).leaf());
+    alignment_filenames[i] = remove_extension( fs::path( alignment_filenames[i] ).leaf().string() );
 
   string name = join(alignment_filenames,'-');
   if (args.count("name"))
@@ -1161,7 +1161,6 @@ int main(int argc,char* argv[])
     feclearexcept(FE_DIVBYZERO|FE_OVERFLOW|FE_INVALID);
 #endif
     fp_scale::initialize();
-    fs::path::default_name_check(fs::portable_posix_name);
 
     gsl_set_error_handler(&my_gsl_error_handler);
 

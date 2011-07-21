@@ -409,9 +409,9 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 AC_MSG_CHECKING(include/compile/link for the BOOST.filesystem library)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
   #include <boost/filesystem/operations.hpp>
-  namespace fs = boost::filesystem;
+  using namespace boost::filesystem;
 ]],
-[[fs::path::default_name_check(fs::portable_posix_name);]])],
+[[file_size("");]])],
  [AC_MSG_RESULT([yes])],
  [AC_MSG_FAILURE([libboost_filesystem failure])])
 else
