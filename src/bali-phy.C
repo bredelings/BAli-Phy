@@ -137,6 +137,7 @@ namespace mpi = boost::mpi;
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/chrono.hpp>
 
 #include "substitution.H"
 #include "myexception.H"
@@ -162,6 +163,7 @@ namespace mpi = boost::mpi;
 #include "smodel/smodel.H"
 
 namespace fs = boost::filesystem;
+namespace chrono = boost::chrono;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -1031,19 +1033,28 @@ void check_alignment_values(const alignment& A,const string& filename)
   }
 }
 
-time_t start_time = time(NULL);
+chrono::system_clock::time_point start_time = chrono::system_clock::now();
+
+string ctime(const chrono::system_clock::time_point& t)
+{
+  time_t t2 = chrono::system_clock::to_time_t(start_time);
+  char* c = ctime(&t2);
+  return c;
+}
 
 void show_ending_messages()
 {
-  time_t end_time = time(NULL);
+  using namespace chrono;
 
-  if (end_time - start_time > 2) 
+  system_clock::time_point end_time = system_clock::now();
+  
+  if (end_time - start_time > seconds(2)) 
   {
     cout<<endl;
-    cout<<"start time: "<<ctime(&start_time)<<endl;
-    cout<<"  end time: "<<ctime(&end_time)<<endl;
-    cout<<"total (elapsed) time: "<<duration(end_time-start_time)<<endl;
-    cout<<"total (CPU) time: "<<duration(total_cpu_time())<<endl;
+    cout<<"start time: "<<ctime(start_time)<<endl;
+    cout<<"  end time: "<<ctime(end_time)<<endl;
+    cout<<"total (elapsed) time: "<<duration_string( duration_cast<seconds>(end_time-start_time) )<<endl;
+    cout<<"total (CPU) time: "<<duration_string( duration_cast<seconds>(total_cpu_time()) )<<endl;
   }
   if (substitution::total_likelihood > 1) {
     cout<<endl;

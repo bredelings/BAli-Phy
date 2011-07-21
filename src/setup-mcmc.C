@@ -682,12 +682,13 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 		   ostream& out_log,ostream& out_both)
 {
   using namespace MCMC;
+  using namespace boost::chrono;
 
   int n_pre_burnin = args["pre-burnin"].as<int>();
 
   if (n_pre_burnin <= 0) return;
 
-  double t1 = total_cpu_time();
+  duration_t t1 = total_cpu_time();
   out_both<<"Beginning pre-burnin: "<<n_pre_burnin<<" iterations."<<endl;
 
   if (P.as<Parameters>()->variable_alignment() and not args.count("tree"))
@@ -774,9 +775,9 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
   P.as<Parameters>()->variable_alignment(true);
 
   out_log<<Stats<<endl;
-  double t2 = total_cpu_time();
+  duration_t t2 = total_cpu_time();
   out_log<<default_timer_stack.report()<<endl;
-  out_both<<"Finished pre-burnin in "<<(t2-t1)<<" seconds.\n"<<endl;
+  out_both<<"Finished pre-burnin in "<<duration_cast<boost::chrono::duration<double> >(t2-t1)<<".\n"<<endl;
 
 
   for(int i=0; i<P.as<Parameters>()->n_branch_means(); i++)

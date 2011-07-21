@@ -29,31 +29,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "config.h"
 
-#ifdef HAVE_SYS_RESOURCE_H
-extern "C" {
-#include <sys/resource.h>
-}
-#else
-#include <time.h>
-#endif
-
 using namespace std;
-
-/* Issues: cross-platform timing code needs fixing to work on Windows:
-   I think I can use GetProcessTimes or GetThreadTimes, as follows:
-
-   FILETIME creationTime;
-   FILETIME exitTime;
-   FILETIME kernelTime;
-   FILETIME userTime;
-
-   GetThreadTimes
-      (GetCurrentThread (),
-       &creationTime,
-       &exitTime,
-       &kernelTime,
-       &userTime); 
-*/
+using namespace boost::chrono;
 
 /// This timer stack is a global variable that is always available.
 timer_stack default_timer_stack;
@@ -73,23 +50,16 @@ double total_time(const clock_t& t)
 }
 #endif
 
-time_point_t total_cpu_time()
+duration_t total_cpu_time()
 {
-#ifdef HAVE_SYS_RESOURCE_H
-  struct rusage R;        
-
-  getrusage(RUSAGE_SELF, &R);
-
-  return total_time(R.ru_utime)+total_time(R.ru_stime);  
-#else
-  return total_time(clock());
-#endif
+  return process_user_cpu_clock::now() - process_user_cpu_clock::time_point();
 }
 
-string duration(time_t T)
+string duration_string(seconds t)
 {
-  time_t total = T;
-  string s = convertToString(total) + " seconds";
+  long long T = t.count();
+
+  string s = convertToString(t);
 
   unsigned long seconds = T%60;
   T = (T - seconds)/60;
@@ -136,10 +106,10 @@ void timer_stack::credit_active_timers()
 {
   assert(record_stack.size() == start_time_stack.size());
 
-  double now = total_cpu_time();
+  duration_t now = total_cpu_time();
   for(int i=0;i<n_active_timers();i++)
   {
-    double elapsed = now - start_time_stack[i];
+    duration_t elapsed = now - start_time_stack[i];
     record_stack[i]->second.duration += elapsed;
     start_time_stack[i] = now;
   }
@@ -156,13 +126,13 @@ void timer_stack::push_timer(const string& s)
 void timer_stack::pop_timer()
 {
   if (record_stack.empty()) throw myexception()<<"Trying to remove a non-existent timer!";
-  time_point_t start = start_time_stack.back();
+  duration_t start = start_time_stack.back();
   start_time_stack.pop_back();
 
   container_t::iterator record = record_stack.back();
   record_stack.pop_back();
 
-  time_point_t end = total_cpu_time();
+  duration_t end = total_cpu_time();
 
   record->second.duration += (end-start);
 }
@@ -173,7 +143,7 @@ string timer_stack::report()
 
   ostringstream o;
 
-  double T = total_cpu_time();
+  duration_t T = total_cpu_time();
 
   vector<duration_t> times(total_times.size());
   vector<container_t::iterator> records(total_times.size());
@@ -190,7 +160,7 @@ string timer_stack::report()
   for(int r=0;r<records.size();r++)
   {
     container_t::iterator i = records[order[r]];
-    double t = i->second.duration;
+    duration_t t = i->second.duration;
 
     o<<setw(5)<<(t*100/T)<<"%"
      <<"         "<<setw(6)<<t<<" sec"

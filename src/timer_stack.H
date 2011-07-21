@@ -40,13 +40,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include <map>
 #include <vector>
+#include <boost/chrono.hpp>
 
-typedef double time_point_t;
-typedef double duration_t;
+typedef boost::chrono::nanoseconds duration_t;
 
-time_point_t total_cpu_time();
+duration_t total_cpu_time();
 
-std::string duration(time_t);
+std::string duration_string(boost::chrono::seconds);
 
 struct region_profile 
 {
@@ -62,7 +62,7 @@ public:
 
 private:
   std::vector<container_t::iterator> record_stack;
-  std::vector<time_point_t> start_time_stack;
+  std::vector<duration_t> start_time_stack;
 
   container_t::iterator lookup_profile(const std::string&);
   
