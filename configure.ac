@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT(BAli-Phy, 2.1.1, benjamin.redelings@nescent.org)
+AC_INIT(BAli-Phy, 2.2.0-pre-alpha, benjamin.redelings@nescent.org)
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([1.9 foreign subdir-objects])
 AC_CONFIG_SRCDIR([src/bali-phy.C])
@@ -251,7 +251,7 @@ AM_CONDITIONAL(WITH_MPI, test "$use_mpi" != no)
 #determine the OS that is being targeted
 AM_CONDITIONAL(HOST_MINGW32,test "${host_os_noversion}" = mingw32)
 AM_CONDITIONAL(HOST_CYGWIN,test "${host_os_noversion}" = cygwin)
-AM_CONDITIONAL(HOST_LINUX,test "${host_os_noversion}" = linux)
+qAM_CONDITIONAL(HOST_LINUX,test "${host_os_noversion}" = linux)
 AM_CONDITIONAL(HOST_DARWIN,test "${host_os_noversion}" = darwin)
 
 #determine the CPU that is being targetted:
