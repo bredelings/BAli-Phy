@@ -264,7 +264,6 @@ AM_CONDITIONAL(HAVE_CAIRO, test "${cairo}" = yes)
 
 # Checks for library functions.
 AC_HEADER_STDC
-AC_FUNC_MALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_CHECK_HEADERS([sys/resource.h])
 AC_CHECK_FUNCS([floor pow sqrt strchr log2 getrlimit setrlimit])
