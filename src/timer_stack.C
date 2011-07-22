@@ -57,7 +57,7 @@ duration_t total_cpu_time()
 
 string duration_string(seconds t)
 {
-  long long T = t.count();
+  unsigned long T = t.count();
 
   string s = convertToString(t);
 
