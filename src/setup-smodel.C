@@ -38,6 +38,7 @@ using std::valarray;
 using namespace substitution;
 using boost::program_options::variables_map;
 using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 
 /// \brief Take a string of the form \a s[\a arg] off the top of \a sstack, if its present
 ///
