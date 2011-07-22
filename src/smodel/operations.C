@@ -8,6 +8,7 @@ using std::vector;
 using std::valarray;
 using std::string;
 using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 
 namespace substitution
 {
