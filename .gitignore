@@ -1,5 +1,6 @@
 Makefile.in
-config.*
+config.guess*
+config.sub*
 aclocal.m4
 compile
 configure
