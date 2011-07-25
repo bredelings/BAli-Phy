@@ -93,7 +93,7 @@ expression_ref model_prior_expression(const Model& M)
   vector< expression_ref > sub;
 
   return distributed( get_tuple( model_parameter_expressions( M ) ),
-		      Tuple(2)(prob_density(M.name(),model_prior(M)), 
+		      Tuple(prob_density(M.name(), model_prior(M)), 
 			       Tuple(0) 
 			       )
 		      );
@@ -288,6 +288,11 @@ efloat_t Model::prior() const
 
   shared_ptr<const Log_Double> R = C.evaluate_as<Log_Double>(prior_index);
   return *R;
+}
+
+vector<string> Model::show_priors() const
+{
+  return show_probability_expressions(C);
 }
 
 Model::Model()
@@ -523,6 +528,17 @@ efloat_t SuperModel::prior() const {
   for(int i=0;i<n_submodels();i++)
     P *= SubModels(i).prior();
   return P;
+}
+
+vector<string> SuperModel::show_priors() const 
+{
+  vector<string> pr_exp;
+  for(int i=0;i<n_submodels();i++)
+  {
+    vector<string> pe = SubModels(i).show_priors();
+    pr_exp.insert(pr_exp.end(), pe.begin(), pe.end());
+  }
+  return pr_exp;
 }
 
 void SuperModel::check() const
@@ -881,6 +897,17 @@ efloat_t OpModel::prior() const
   return Pr;
 }
 
+vector<string> OpModel::show_priors() const 
+{
+  vector<string> pr_exp;
+  for(int i=0;i<sub_models.size();i++)
+  {
+    vector<string> pe = sub_models[i]->show_priors();
+    pr_exp.insert(pr_exp.end(), pe.begin(), pe.end());
+  }
+  return pr_exp;
+}
+
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
 void OpModel::write_value(int index, const shared_ptr<const Object>& p)
 {
@@ -1123,9 +1150,32 @@ shared_ptr<Model> prefix_model(const Model& M, const string& prefix)
   return M2;
 }
 
+vector<string> show_probability_expressions(const Context& C)
+{
+  expression_ref query = distributed(_2,Tuple(prob_density(_1,_), _3));
+
+  vector<string> expressions;
+
+  // Check each expression in the Formula
+  for(int i=0;i<C.F->n_exp();i++)
+  {
+    vector<expression_ref> results; 
+
+    // If its a probability expression, then...
+    if (not find_match(query, C.F->exp(i), results)) continue;
+
+    // Extract the density operation
+    string prob_exp = results[1]->print() + " ~ " + results[0]->print()+results[2]->print();
+
+    expressions.push_back( prob_exp );
+  }
+
+  return expressions;
+}
+
 term_ref add_probability_expression(Context& C)
 {
-  expression_ref query = distributed(_2,Tuple(2)(prob_density(_,_1),_3));
+  expression_ref query = distributed(_2,Tuple(prob_density(_,_1),_3));
 
   typed_expression_ref<Log_Double> Pr;
 

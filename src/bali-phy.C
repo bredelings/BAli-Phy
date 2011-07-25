@@ -1120,6 +1120,12 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
   out_both<<" mu ~ Gamma(alpha=0.5, beta=2)   [mean=1, variance=2]"<<endl;
   if (P.n_data_partitions() > 1)
     out_both<<"(Each partition has a separate 'mu' except where specified by --same-scale.)"<<endl;
+
+  vector<string> pr_exp = P.show_priors();
+  out_both<<"\n";
+  for(int i=0;i<pr_exp.size();i++)
+    out_both<<pr_exp[i]<<"\n"<<endl;
+
   out_both<<endl;
 }
 

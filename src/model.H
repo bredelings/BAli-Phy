@@ -156,6 +156,9 @@ struct Parameter
 // This could be tricky for the dirichlet process, unless we can make the entire 
 // vector a parameter.... and ALSO make its elements parameters?
 //
+// It almost seems like we could use a list...?
+
+
 /// \brief An object that depends on a number of parameters, and updates itself when they change.
 ///
 /// Model objects
@@ -307,6 +310,8 @@ public:
 
   virtual operator formula_expression_ref() const;
 
+  virtual std::vector<std::string> show_priors() const;
+
   /// Construct an empty model
   Model();
 
@@ -438,6 +443,8 @@ public:
 
   virtual void update();
 
+  virtual std::vector<std::string> show_priors() const;
+
   SuperModel();
 };
 
@@ -505,6 +512,8 @@ public:
   boost::shared_ptr<const Object> slot_result(int) const;
   
   boost::shared_ptr<const Object> result() const;
+
+  virtual std::vector<std::string> show_priors() const;
 
   OpModel(const expression_ref&);
 };
@@ -582,6 +591,8 @@ std::vector< expression_ref > model_args(const Model& M);
 expression_ref model_result_expression(const Model& M);
 
 term_ref add_probability_expression(Context& C);
+
+std::vector< std::string > show_probability_expressions(const Context& C);
 
 formula_expression_ref model_formula(const Model& M);
 #endif
