@@ -7,6 +7,7 @@ AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE([1.9 foreign subdir-objects])
 AC_CONFIG_SRCDIR([src/bali-phy.C])
 AC_CONFIG_HEADER([config.h])
+AC_CONFIG_MACRO_DIR([m4])
 
 # Specify extra include paths
 AC_ARG_WITH([extra-includes], AS_HELP_STRING([--with-extra-includes=DIR],[Add extra include paths]),
