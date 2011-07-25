@@ -119,7 +119,7 @@ string expression::print() const
 
     const Operator* O = dynamic_cast<const Operator*>(&*E->sub[0]);
 
-    if (O and O->name() == "Tuple") continue;
+    if (O and O->name() == "()") continue;
 
     pargs[i] = "(" + args[i] + ")";
   }
@@ -147,7 +147,7 @@ string expression::print() const
       }
       return pargs[1] + pargs[0] + pargs[2];
     }
-    else if (O->name() == "Tuple")
+    else if (O->name() == "()")
     {
       // Should Tuple's parenthesis sub-expressions?
       vector<string> sub_names;
@@ -789,7 +789,7 @@ vector<string> find_named_parameters(const expression_ref& e)
 
 expression_ref Tuple(int n)
 {
-  return lambda_expression( data_function("Tuple",n) );
+  return lambda_expression( data_function("()",n) );
 }
 
 expression_ref Tuple(const expression_ref& R1,const expression_ref& R2)
@@ -1383,7 +1383,7 @@ template<> expression_ref get_tuple<>(const vector<expression_ref>& v)
   if (v.size() == 1) return v[0];
 
   vector<expression_ref> sub(v.size()+1);
-  sub[0] = data_function("Tuple",v.size());
+  sub[0] = data_function("()",v.size());
   for(int i=0;i<v.size();i++)
     sub[i+1] = v[i];
 
