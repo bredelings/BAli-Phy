@@ -583,6 +583,55 @@ std::set<int> get_bound_indices(const expression_ref& R)
   return bound;
 }
 
+// Return the list of dummy variable indices that are bound at the top level of the expression
+void alpha_rename(shared_ptr<expression>& E, const expression_ref& x, const expression_ref& y)
+{
+  //  std::cout<<" replacing "<<x<<" with "<<y<<" in "<<E->print()<<":\n";
+  // Make sure we don't try to substitute for lambda-quantified dummies
+  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+  {
+    assert(E->sub[1]->compare(*x));
+    E->sub[1] = y;
+    E->sub[2] = substitute(E->sub[2], x, y);
+  }
+  else if (dynamic_pointer_cast<const alt_obj>(E->sub[0]))
+  {
+    // assert(pattern E->sub[1] contains x
+    E->sub[1] = substitute(E->sub[1], x, y);
+    E->sub[2] = substitute(E->sub[2], x, y);
+  }
+  else if (dynamic_pointer_cast<const let_obj>(E->sub[0]))
+  {
+    E->sub[2] = substitute(E->sub[2], x, y);
+
+    // This is kind of an awkward way to simultaneously walk/modify an expression
+    expression_ref* R2 = &E->sub[1];
+    bool found = false;
+    while(shared_ptr<expression> E2 = dynamic_pointer_cast<expression>(*R2))
+    {
+      shared_ptr<expression> E3 = dynamic_pointer_cast<expression>(E2->sub[1]);
+      assert(E3);
+
+      // substitute in the body of v = expression
+      E3->sub[2] = substitute(E3->sub[2], x, y);
+
+      // substitute for the bound variable
+      if (x->compare(*E3->sub[1]))
+      {
+	E3->sub[1] = y;
+	found = true;
+      }
+
+      // Go to the next definition
+      R2 = &E2->sub[2];
+    }
+    assert(found);
+  }
+  else
+    assert(false);
+  //  std::cout<<"    "<<E->print()<<"\n";
+}
+
 std::set<int> get_free_indices(const expression_ref& R)
 {
   std::set<int> S;
@@ -607,23 +656,6 @@ std::set<int> get_free_indices(const expression_ref& R)
     S.erase(*i);
 
   return S;
-}
-
-// Rename dummies even if they're bound.
-static void rename_dummy(expression_ref& R, const expression_ref& old_dummy, const expression_ref new_dummy)
-{
-  if (old_dummy->compare(*R))
-  {
-    R = new_dummy;
-    return;
-  }
-
-  shared_ptr<expression> E = dynamic_pointer_cast<expression>(R);
-  if (not E) return;
-
-  // This is an expression, so compute the substituted sub-expressions
-  for(int i=0;i<E->size();i++)
-    rename_dummy(E->sub[i], old_dummy, new_dummy);
 }
 
 /// Return the min of v
@@ -658,12 +690,17 @@ static int get_safe_binder_index(const expression_ref& R)
 }
 
 // If we use de Bruijn indices, then, as before bound indices in R2 are no problem.
-// Unlike before, we have a separate type for free variables: they therefore cannot be bound
-//  by substituting them.
+// If we do NOT use de Bruijn indices for FREE variables, then we don't have to adjust them when we substitute.
 
-// Idea: replace lambda[index] with just lambda.
-//  + Bound indices have in index that is the number of lambda terms 
-//  + Binders can include let, lambda, and case.
+// Current problem: we need a generic way to represent which indices are bound.
+
+// For de bruijn indices in case expressions, we could specify (?:?):(_:?) where ? means "keep" and "_" means not to keep.
+// When the user specifies such a pattern we could number the ? variables on the horizontal level.
+
+// We could also number individual variables in letrec expressions horizontally.
+
+// However, how do we add names back in when we want to print them?
+
 
 // Idea: switch to de bruijn indices for bound variables only.  Makes substitution much simpler!
 // Question: how would I encode names?
@@ -717,7 +754,7 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
 
       // Do the alpha renaming
       foreach(i,overlap)
-	rename_dummy(R1, dummy(*i), dummy(new_index++));
+	alpha_rename(E1, dummy(*i), dummy(new_index++));
 
       E1 = dynamic_pointer_cast<expression>(R1);
     }
