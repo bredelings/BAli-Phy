@@ -665,6 +665,8 @@ static int get_safe_binder_index(const expression_ref& R)
 //  + Bound indices have in index that is the number of lambda terms 
 //  + Binders can include let, lambda, and case.
 
+// Idea: switch to de bruijn indices for bound variables only.  Makes substitution much simpler!
+// Question: how would I encode names?
 
 void do_substitute(expression_ref& R1, const expression_ref& D, const expression_ref& R2)
 {
@@ -1037,8 +1039,9 @@ struct heap_dummy_state
   expression_ref evaluates_to;
   bool on_heap;
   string name;
-  heap_dummy_state():on_heap(true),name(convertToString(this)) {}
-  heap_dummy_state(const std::string& s):on_heap(true),name(s) {}
+  bool named;
+  heap_dummy_state():on_heap(true),name(convertToString(this)),named(false) {}
+  heap_dummy_state(const std::string& s):on_heap(true),name(s),named(true) {}
 };
 
 // a dummy variable expression
@@ -1073,6 +1076,10 @@ struct heap_dummy: public Object
 
   heap_dummy(const string& s):
     target(new heap_dummy_state(s))
+  { }
+
+  heap_dummy(const shared_ptr< heap_dummy_state >& t)
+    :target(t)
   { }
 };
 
@@ -1109,12 +1116,46 @@ void show_heap_expression(expression_ref& R)
 {
   map< shared_ptr<heap_dummy_state>, std::string> names;
 
+  int var_index = get_safe_binder_index(R);
+
   discover_heap_vars(R,names);
+
   std::cout<<R<<std::endl;
+  vector< expression_ref > replace;
   foreach(i,names)
   {
+    replace.push_back( heap_dummy( i->first) );
+    var_index = std::max(var_index, get_safe_binder_index(i->first->evaluates_to) );
     std::cout<<"<"<<i->first->name<<"> = "<<i->first->evaluates_to<<std::endl;
   }
+  std::cout<<R<<std::endl;
+  vector<expression_ref> vars;
+  vector<expression_ref> bodies;
+  foreach(i,names)
+  {
+    if (not i->first->named)
+      vars.push_back(dummy(var_index++));
+    else
+      vars.push_back(named_dummy(i->first->name));
+    bodies.push_back( i->first->evaluates_to );
+  }
+
+  for(int i=0;i<bodies.size();i++)
+  {
+    std::cout<<"------\n";
+    std::cout<<replace[i]<<" -> "<<vars[i]<<":\n";
+    for(int j=0;j<bodies.size();j++)
+    {
+      bodies[j] = substitute(bodies[j], replace[i], vars[i]);
+      std::cout<<vars[j]<<" = "<<bodies[j]<<std::endl;
+    }
+
+    R = substitute(R, replace[i], vars[i]);
+    std::cout<<"R = "<<R<<std::endl;
+  }
+
+  R = let_expression(vars, bodies, R);
+  std::cout<<R<<std::endl;
 }
 
 
