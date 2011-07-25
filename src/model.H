@@ -147,6 +147,15 @@ struct Parameter
 //   * refering to a function of the variables.
 //   * priors do both, in a sense.
 
+
+// Variable State: (i) Dirichlet Process or (ii) Augmenting and unaugmenting
+//
+// As long as we can express the probability as a fixed expression of this
+// variable state then I think its OK.
+//
+// This could be tricky for the dirichlet process, unless we can make the entire 
+// vector a parameter.... and ALSO make its elements parameters?
+//
 /// \brief An object that depends on a number of parameters, and updates itself when they change.
 ///
 /// Model objects
