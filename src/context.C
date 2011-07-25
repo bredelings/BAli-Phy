@@ -177,8 +177,10 @@ bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, 
 	  //FIXME: Should we use v->maybe_not_equals( ) above?
 	  V.computed = false;
       }
+#ifndef NDEBUG
       if (V.computed)
 	std::cerr<<"\n   + revalidating computation "<<(*F)[index]->print()<<"\n";
+#endif
     }
     
     // If the result is not yet marked as computed, then we must run the computation
@@ -203,8 +205,9 @@ bool Context::eval_match(int index, expression_ref& R, const expression_ref& Q, 
       // Only replace the result if (a) the value is different or (b) we can't check that.
       if (not V.result or new_result->maybe_not_equals(*V.result))
 	V.result = new_result;
-      
+#ifndef NDEBUG      
       std::cerr<<"\n   + recomputing "<<(*F)[index]->print()<<"\n";
+#endif
     }
 
     assert(V.result);

@@ -318,10 +318,12 @@ Model::Model(const shared_ptr<const Formula>& F)
 
   prior_index = add_probability_expression(C);
 
+#ifndef NDEBUG
   std::cout<<*C.F<<"\n";
   std::cout<<"prior_index = "<<prior_index<<"\n";
   std::cout<<"prior = "<<log(prior())<<"\n";
   std::cout<<C<<std::endl;
+#endif
 }
 
 boost::shared_ptr<const Object> Model::result() const

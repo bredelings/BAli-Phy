@@ -935,7 +935,7 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
     FormulaModel FM(full_smodel);
     polymorphic_cow_ptr<Model> temp(FM);
     smodels.push_back(temp);
-    cout<<"SModel "<<i+1<<": prior = "<<log(smodels.back()->prior())<<"\n";
+    //    cout<<"SModel "<<i+1<<": prior = "<<log(smodels.back()->prior())<<"\n";
   }
   return smodels;
 }
