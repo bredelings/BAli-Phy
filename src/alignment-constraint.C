@@ -221,7 +221,7 @@ vector< vector<int> > get_pins(const ublas::matrix<int>& constraint,const alignm
 
       // Even if the constraints for the leaf nodes are satisfied, we can't align
       // to the relevant leaf characters THROUGH the relevant internal nodes, if the
-      // character is not present not present at the internal nodes that we have
+      // character is not present at the internal nodes that we have
       // access to.  Therefore, no alignment that we choose can satisfy
       // this constraint, so we must bail out.
       if (x == -1 or y == -1) {
