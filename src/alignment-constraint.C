@@ -20,6 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <utility>
 #include "alignment-constraint.H"
 #include "alignment-util.H"
 #include "tree-util.H"
@@ -30,6 +31,7 @@ using std::string;
 using std::ifstream;
 using std::vector;
 using std::valarray;
+using std::pair;
 
 using boost::program_options::variables_map;
 using boost::dynamic_bitset;
@@ -187,6 +189,79 @@ vector<int> constraint_columns(const ublas::matrix<int>& constraint,const alignm
 
   return columns;
 }
+
+
+// When the alignment is project onto 2 or 3 sequences, its columns are ordered 
+// in a particular way so that only one path through the DP matrix correspond to 
+// each alignment.
+// 
+// seq1 is a list of columns that contain the x-ordinate sequence(s)
+// seq2 is a list of columns that contain the y-coordinate sequence(s)
+// seq12 is a list of columns that occur in either of the two sequences, and represents
+//      the current path through the DP matrix.
+
+// This routine moves a square at [x-D,x+D]*[y-D,y+D] along the points x,y in seq12 to
+// find the leftmost and rightmost x-coordinates for each y.  As y increases, these
+// two x-coordinates may not decrease.
+
+// Question.  Is the (0,0) square actually at (1,1) in the matrix?
+
+vector< pair<int,int> > get_x_ranges_for_band(int D, const vector<int>& seq1, const vector<int>& seq2, 
+					      const vector<int>& seq12)
+{
+  // The DP matrix has size (W+1)*(H+1) and is [0,W]x[0,H]
+  int W = seq1.size();
+  int H = seq2.size();
+
+  int x = 0;
+  int y = 0;
+
+  // we'll compute the first and last indices, instead of first and last+1
+  vector< pair<int,int> > xboundaries(H+1, pair<int,int>(0,W));
+
+  // Determine xmin[y]
+  for(int x=0,y=0,k=0;k<seq12.size();k++)
+  {
+    if (x<seq1.size() and seq1[x] == seq12[k])
+      x++;
+    if (y<seq2.size() and seq2[y] == seq12[k])
+    {
+      y++;
+
+      // Avoid setting an xmin not in [0,W]
+      if (x-D < 0) continue;
+
+      // If the top of the square is out of the DP matrix then we are done.
+      if (y+D > H) break;
+
+      // Set the xmax for row y+D
+      xboundaries[y+D].first = x-D;
+    }
+  }
+
+  // Determine xmax[y]
+  for(int x=W,y=H,k=seq12.size()-1;k>=0;k--)
+  {
+    if (x>0 and seq1[x-1] == seq12[k])
+      x--;
+    if (y>0 and seq2[y-1] == seq12[k])
+    {
+      y--;
+
+      // Avoid setting an xmin not in [0,W]
+      if (x+D > W) continue;
+
+      // If the top of the square is out of the DP matrix then we are done
+      if (y-D < 0) break;
+
+      // Set the xmax for row y-D
+      xboundaries[y-D].second = x+D;
+    }
+  }
+
+  return xboundaries;
+}
+
 
 // We need to make sure that the pinned column coordinates always increase.
 // By considering constraints between seq1 and seq2 in the order of seq12 we can guarantee this,

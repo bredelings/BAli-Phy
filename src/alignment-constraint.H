@@ -19,6 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
+#include <utility>
 #include "alignment.H"
 #include "sequencetree.H"
 #include "io.H"
@@ -35,3 +36,8 @@ boost::dynamic_bitset<> constraint_satisfied(const ublas::matrix<int>& constrain
 void report_constraints(const boost::dynamic_bitset<>& s1, const boost::dynamic_bitset<>& s2, int p);
 
 bool any_branches_constrained(const std::vector<int>&,const SequenceTree& T,const SequenceTree& TC, const std::vector<int>&);
+
+std::vector< std::pair<int,int> > get_x_ranges_for_band(int D, 
+							const std::vector<int>& seq1, 
+							const std::vector<int>& seq2, 
+							const std::vector<int>& seq12);
