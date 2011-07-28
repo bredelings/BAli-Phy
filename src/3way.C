@@ -466,7 +466,7 @@ namespace A3 {
     assert(l == path.size()-1);
 
     for(int i=0;i<T.n_leaves();i++) 
-      assert(A.seqlength(i) == old.seqlength(i));
+      assert(A.seqlength(T.leaf_node(i)) == old.seqlength(T.leaf_node(i)));
 
     //  std::cerr<<"new = "<<A<<endl;  
     //  std::cerr<<"new(reordered) = "<<project(A,n0,n1,n2,n3)<<endl;

@@ -519,7 +519,7 @@ namespace A5 {
     assert(l == path.size()-1);
 
     for(int s=0;s<T.n_leaves();s++) 
-      assert(A.seqlength(s) == old.seqlength(s));
+      assert(A.seqlength(T.leaf_node(s)) == old.seqlength(T.leaf_node(s)));
 
     //  std::cerr<<"new = "<<A<<endl;  
     //  std::cerr<<"new(reordered) = "<<project(A,n0,n1,n2,n3)<<endl;

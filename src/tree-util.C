@@ -135,8 +135,8 @@ vector<int> extends_map(const Tree& T,const Tree& Q)
   vector<int> branch_map(Q.n_branches()*2,-1);
   for(int i=0;i<Q.n_leafbranches();i++) 
   {
-    const_branchview Qb = Q.directed_branch(i);
-    const_branchview Tb = T.directed_branch(i);
+    const_branchview Qb = Q.directed_branch(Q.leaf_branch(i));
+    const_branchview Tb = T.directed_branch(T.leaf_branch(i));
 
     assert(Qb.name() == i);
     
