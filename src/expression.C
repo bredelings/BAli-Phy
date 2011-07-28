@@ -750,13 +750,21 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
 
       // Compute the total set of free variables to avoid clashes with when alpha renaming.
       add(fv2, get_free_indices(R1));
-      int new_index = max(fv2)+1;
+
+      // we don't want to rename on top of any other variables bound here
+      int new_index = std::max(max(fv2),max(bound))+1;
 
       // Do the alpha renaming
       foreach(i,overlap)
 	alpha_rename(E1, dummy(*i), dummy(new_index++));
 
-      E1 = dynamic_pointer_cast<expression>(R1);
+      // We rename a bound variable dummy(*i) in R1 that is free in R2 to a new variable dummy(new_index)
+      //   that is not bound or free in the initial version of R1 and free in R2.
+
+      // The conditions are therefore:
+      //   dummy(*i) must be bound in R1
+      //   dummy(new_index) must be neither bound nor free in R1
+      //   dummy(new_index) must not be free in R2
     }
   }
 
