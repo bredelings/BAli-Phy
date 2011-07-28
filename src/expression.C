@@ -586,7 +586,10 @@ std::set<int> get_bound_indices(const expression_ref& R)
 // Return the list of dummy variable indices that are bound at the top level of the expression
 void alpha_rename(shared_ptr<expression>& E, const expression_ref& x, const expression_ref& y)
 {
-  //  std::cout<<" replacing "<<x<<" with "<<y<<" in "<<E->print()<<":\n";
+  // assert: x is bound in E
+  // assert: y is neither bound in E nor free in E
+
+  // std::cout<<" replacing "<<x<<" with "<<y<<" in "<<E->print()<<":\n";
   // Make sure we don't try to substitute for lambda-quantified dummies
   if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
   {
@@ -629,7 +632,7 @@ void alpha_rename(shared_ptr<expression>& E, const expression_ref& x, const expr
   }
   else
     assert(false);
-  //  std::cout<<"    "<<E->print()<<"\n";
+  // std::cout<<"    "<<E->print()<<"\n";
 }
 
 std::set<int> get_free_indices(const expression_ref& R)
