@@ -1870,6 +1870,14 @@ expression_ref launchbury_normalize(const expression_ref& R)
       return let_expression(x, launchbury_normalize(E->sub[1]), launchbury_normalize(E->sub[0])(x));
     }
   }
+
+  // FIXME! Handle operations.
+  // Extend the stack handling to be able to work on more than one argument.
+  // Currently there is no need to evaluate arguments before applying them to functions.
+  // Can we avoid evaluating functions before calling an operation?
+  // - well, we could make the operation throw an exception identifying which is the first argument that needs to be
+  //   evaluated.
+  // - then, we could put the operation on the stack and begin evaluating just that one argument.
   
   // 4. Constructor
   if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
