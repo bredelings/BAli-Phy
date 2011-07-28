@@ -670,6 +670,9 @@ void Tree::add_first_node() {
 
   leaf_nodes_.invalidate();
   internal_nodes_.invalidate();
+
+  leaf_branches_.invalidate();
+  internal_branches_.invalidate();
 }
 
 BranchNode* add_leaf_node(BranchNode* n) 
@@ -721,8 +724,12 @@ nodeview Tree::add_leaf_node(int node)
 
   // Update the nodes_ array
   nodes_.push_back(n_leaf);
+
   leaf_nodes_.invalidate();
   internal_nodes_.invalidate();
+
+  leaf_branches_.invalidate();
+  internal_branches_.invalidate();
 
   // Update the branches_ array
   branches_.resize(branches_.size()+2);
@@ -1078,6 +1085,9 @@ void Tree::recompute(BranchNode* start,bool recompute_partitions)
   leaf_nodes_.invalidate();
   internal_nodes_.invalidate();
 
+  leaf_branches_.invalidate();
+  internal_branches_.invalidate();
+
   if (not start) return;
 
   n_leaves_ = 0;
@@ -1301,6 +1311,9 @@ Tree& Tree::operator=(const Tree& T)
   leaf_nodes_.invalidate();
   internal_nodes_.invalidate();
   
+  leaf_branches_.invalidate();
+  internal_branches_.invalidate();
+
   // recalculate pointer indices
   BranchNode* start = T.copy();
   recompute(start,false);
