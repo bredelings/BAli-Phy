@@ -1193,6 +1193,7 @@ void show_heap_expression(expression_ref& R)
 
   R = let_expression(vars, bodies, R);
   std::cout<<R<<std::endl;
+  std::cout<<"substituted = "<<launchbury_unnormalize(R)<<std::endl;
 }
 
 
@@ -1933,4 +1934,115 @@ expression_ref launchbury_normalize(const expression_ref& R)
 
   std::cerr<<"I don't recognize expression '"+ R->print() + "'\n";
   return R;
+}
+
+expression_ref launchbury_unnormalize(const expression_ref& R)
+{
+  // 1. Var
+  if (is_dummy(R))
+    return R;
+  
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
+  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+  if (not E) return R;
+  
+  // 2. Lambda
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  if (L)
+  {
+    assert(E->size() == 3);
+    expression* V = new expression(*E);
+    V->sub[2] = launchbury_unnormalize(E->sub[2]);
+
+    if (V->sub[2] == E->sub[2])
+      return R;
+    else
+      return V;
+  }
+
+  // 3. Application
+  if (dynamic_pointer_cast<const expression>(E->sub[0]) or is_dummy(E->sub[0]))
+  {
+    expression* V = new expression(*E);
+    V->sub[0] = launchbury_unnormalize(E->sub[0]);
+    V->sub[1] = launchbury_unnormalize(E->sub[1]);
+    return V;
+  }
+  
+  // 4. Constructor
+  if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
+      dynamic_pointer_cast<const Operation>(E->sub[0]))
+  {
+    expression* V = new expression(*E);
+    for(int i=0;i<E->size();i++)
+      V->sub[i] = launchbury_unnormalize(E->sub[i]);
+    return V;
+  }
+
+  // 5. Let 
+  shared_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
+  if (Let)
+  {
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+    parse_let_expression(R, vars, bodies, T);
+
+    // unnormalize T and the bodies
+    T = launchbury_unnormalize(T);
+    for(int i=0; i<vars.size(); i++)
+      bodies[i] = launchbury_unnormalize(bodies[i]);
+
+    // Here I should be finding the list of free variables for each body...
+    // ... but how do I handle named variables?
+
+    // substitute for constants
+    for(int i=vars.size()-1; i>=0; i--)
+    {
+      if (is_dummy(bodies[i])) continue;
+      if (dynamic_pointer_cast<const expression>(bodies[i])) continue;
+
+      expression_ref var = vars[i];
+      expression_ref body = bodies[i];
+
+      vars.erase(vars.begin() + i);
+      bodies.erase(bodies.begin() + i);
+
+      // substitute for the value of this variable in T and in the remaining bodies;
+      for(int j=0;j<vars.size();j++)
+	bodies[j] = substitute(bodies[j], var, body);
+      T = substitute(T, var, body);
+    }
+
+    if (vars.size())
+      return let_expression(vars, bodies, T);
+    else
+      return T;
+  }
+
+  // 6. Case
+  shared_ptr<const case_obj> Case = dynamic_pointer_cast<const case_obj>(E->sub[0]);
+  if (Case)
+  {
+    expression* V = new expression(*E);
+
+    V->sub[1] = launchbury_unnormalize(V->sub[1]);
+
+    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
+    while(bodies)
+    {
+      assert(bodies->size() == 3);
+      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
+      assert(alternative);
+      alternative->sub[2] = launchbury_unnormalize(alternative->sub[2]);
+      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+    }
+    
+    return V;
+  }
+
+  std::cerr<<"I don't recognize expression '"+ R->print() + "'\n";
+  return R;
+
 }
