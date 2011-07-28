@@ -669,6 +669,7 @@ void Tree::add_first_node() {
   n_leaves_ = 1;
 
   leaf_nodes_.invalidate();
+  internal_nodes_.invalidate();
 }
 
 BranchNode* add_leaf_node(BranchNode* n) 
@@ -721,6 +722,7 @@ nodeview Tree::add_leaf_node(int node)
   // Update the nodes_ array
   nodes_.push_back(n_leaf);
   leaf_nodes_.invalidate();
+  internal_nodes_.invalidate();
 
   // Update the branches_ array
   branches_.resize(branches_.size()+2);
@@ -1008,6 +1010,7 @@ void Tree::reanalyze(BranchNode* start)
   branches_.clear();
 
   leaf_nodes_.invalidate();
+  internal_nodes_.invalidate();
 
   //--------------- Count nodes ---------------//
   n_leaves_ = 0;
@@ -1073,6 +1076,7 @@ void Tree::reanalyze(BranchNode* start)
 void Tree::recompute(BranchNode* start,bool recompute_partitions) 
 {
   leaf_nodes_.invalidate();
+  internal_nodes_.invalidate();
 
   if (not start) return;
 
@@ -1176,6 +1180,7 @@ BranchNode* connect_nodes(BranchNode* n1, BranchNode* n2)
 void Tree::reconnect_branch(int source_index, int target_index, int new_target_index)
 {
   leaf_nodes_.invalidate();
+  internal_nodes_.invalidate();
 
   branchview b = directed_branch(source_index, target_index);
 
@@ -1294,6 +1299,7 @@ Tree& Tree::operator=(const Tree& T)
   branches_ = std::vector<BranchNode*>(T.branches_.size(),(BranchNode*)NULL);
 
   leaf_nodes_.invalidate();
+  internal_nodes_.invalidate();
   
   // recalculate pointer indices
   BranchNode* start = T.copy();
@@ -1462,6 +1468,7 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
     nodes_[(*BN)->node] = *BN;
 
   leaf_nodes_.invalidate();
+  internal_nodes_.invalidate();
 
   vector<BranchNode*> old_nodes = nodes_;
 
