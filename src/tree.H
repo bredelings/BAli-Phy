@@ -294,8 +294,23 @@ public:
   };
 
   /// Get the directed branch from 'node1' -> 'node2'
-  branchview directed_branch(int n1,int n2) const {
+  const_branchview directed_branch(int n1,int n2) const {
     return find_branch_pointer(n1,n2);
+  }
+
+  /// Get the directed branch from 'node1' -> 'node2'
+  branchview directed_branch(int n1,int n2) {
+    return find_branch_pointer(n1,n2);
+  }
+
+  /// Get the directed branch from 'node1' -> 'node2'
+  const_branchview directed_branch(const tree_edge& e) const {
+    return directed_branch(e.source, e.target);
+  }
+
+  /// Get the directed branch from 'node1' -> 'node2'
+  branchview directed_branch(const tree_edge& e) {
+    return directed_branch(e.source, e.target);
   }
 
   /// Get the branch connecting n1 <-> n2
@@ -316,6 +331,14 @@ public:
     return bv;
   }
   
+  const_branchview branch(const tree_edge& e) const {
+    return branch(e.source, e.target);
+  }
+
+  branchview branch(const tree_edge& e) {
+    return branch(e.source, e.target);
+  }
+
   /// Get a reference to the 'i'-th node
         nodeview operator[](int i)       {return nodes_[i];}
   /// Get a reference to the 'i'-th node
