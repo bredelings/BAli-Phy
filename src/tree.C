@@ -398,6 +398,24 @@ void name_node(BranchNode* start,int i) {
   } while (n != start);
 }
 
+const vector<int>& Tree::leaf_nodes() const
+{
+  // Require that leaf node ORDER is determined by the node_ order,
+  // and in increase order for node names.
+  if (not leaf_nodes_.is_valid())
+  {
+    leaf_nodes_.modify_value().clear();
+    for(int i=0;i<nodes_.size();i++)
+      if (is_leaf_node(nodes_[i]))
+	leaf_nodes_.modify_value().push_back(i);
+    leaf_nodes_.validate();
+  }
+
+  assert(n_leaves() == leaf_nodes_.access_value().size());
+
+  return leaf_nodes_;
+}
+
 vector<int> Tree::standardize() {
   vector<int> lnames(n_leaves());
   for(int i=0;i<lnames.size();i++)
@@ -588,6 +606,8 @@ void Tree::add_first_node() {
   branches_.push_back(BN);
 
   n_leaves_ = 1;
+
+  leaf_nodes_.invalidate();
 }
 
 BranchNode* add_leaf_node(BranchNode* n) 
@@ -639,6 +659,7 @@ nodeview Tree::add_leaf_node(int node)
 
   // Update the nodes_ array
   nodes_.push_back(n_leaf);
+  leaf_nodes_.invalidate();
 
   // Update the branches_ array
   branches_.resize(branches_.size()+2);
@@ -920,10 +941,12 @@ BranchNode* get_parent(BranchNode* start) {
 //NOTE: both of these routines assume that prev,next, and old pointers are correct
 
 /// This routine assumes only that leaf nodes have proper names
-void Tree::reanalyze(BranchNode* start) {
-
+void Tree::reanalyze(BranchNode* start) 
+{
   nodes_.clear();
   branches_.clear();
+
+  leaf_nodes_.invalidate();
 
   //--------------- Count nodes ---------------//
   n_leaves_ = 0;
@@ -988,6 +1011,8 @@ void Tree::reanalyze(BranchNode* start) {
 /// Computes nodes_[] and branch_[] indices, and cached_partitions[]
 void Tree::recompute(BranchNode* start,bool recompute_partitions) 
 {
+  leaf_nodes_.invalidate();
+
   if (not start) return;
 
   n_leaves_ = 0;
@@ -1089,6 +1114,8 @@ BranchNode* connect_nodes(BranchNode* n1, BranchNode* n2)
 
 void Tree::reconnect_branch(int source_index, int target_index, int new_target_index)
 {
+  leaf_nodes_.invalidate();
+
   branchview b = directed_branch(source_index, target_index);
 
   if (b.target().degree() < 2)
@@ -1204,6 +1231,8 @@ Tree& Tree::operator=(const Tree& T)
     cached_partitions = T.cached_partitions;
   nodes_ = std::vector<BranchNode*>(T.nodes_.size(),(BranchNode*)NULL);
   branches_ = std::vector<BranchNode*>(T.branches_.size(),(BranchNode*)NULL);
+
+  leaf_nodes_.invalidate();
   
   // recalculate pointer indices
   BranchNode* start = T.copy();
@@ -1370,6 +1399,8 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
   nodes_.resize(labels.size());
   for(BN_iterator BN(root_);BN;BN++) 
     nodes_[(*BN)->node] = *BN;
+
+  leaf_nodes_.invalidate();
 
   vector<BranchNode*> old_nodes = nodes_;
 

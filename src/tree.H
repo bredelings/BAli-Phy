@@ -32,6 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/dynamic_bitset.hpp>
 #include <list>
 #include "tree-branchnode.H"
+#include "cached_value.H"
 
 // TODO.
 // 1. Add node and branch attributes to tree objects.
@@ -159,6 +160,8 @@ protected:
   /// an index to one BranchNode for each node
   std::vector<BranchNode*> nodes_;
 
+  mutable cached_value<std::vector<int> > leaf_nodes_;
+
   /// an index to one BranchNode for each node
   std::vector<BranchNode*> branches_;
 
@@ -222,6 +225,8 @@ public:
 
   /// the number of leaf nodes
   int n_leaves() const {return n_leaves_;}
+  int leaf_node(int i) const {return leaf_nodes()[i];}
+  const std::vector<int>& leaf_nodes() const;
 
   /// the number of branches
   int n_branches() const {return branches_.size()/2;}
