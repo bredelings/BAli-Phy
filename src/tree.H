@@ -126,6 +126,15 @@ void knit_node_together(const std::vector<BranchNode*>& nodes);
 
 //------------------------------------ Tree -----------------------------//
 
+struct tree_edge
+{
+  int source;
+  int target;
+  tree_edge():source(-1),target(-1) { }
+  tree_edge(int s, int t):source(s), target(t) { }
+  tree_edge(const BranchNode* BN):source(BN->node), target(BN->out->node) { }
+};
+
 /**
  * @brief An unrooted tree class.
  *
@@ -162,8 +171,15 @@ protected:
 
   mutable cached_value<std::vector<int> > leaf_nodes_;
 
+  mutable cached_value<std::vector<int> > internal_nodes_;
+
   /// an index to one BranchNode for each node
   std::vector<BranchNode*> branches_;
+
+  mutable cached_value<std::vector<tree_edge> > leaf_branches_;
+
+  mutable cached_value<std::vector<tree_edge> > internal_branches_;
+
 
   /// re-compute cached_partitions
   void compute_partitions() const;
@@ -225,14 +241,23 @@ public:
 
   /// the number of leaf nodes
   int n_leaves() const {return n_leaves_;}
-  int leaf_node(int i) const {return leaf_nodes()[i];}
   const std::vector<int>& leaf_nodes() const;
+  int leaf_node(int i) const {return leaf_nodes()[i];}
+
+  const std::vector<int>& internal_nodes() const;
+  int internal_node(int i) const {return internal_nodes()[i];}
 
   /// the number of branches
   int n_branches() const {return branches_.size()/2;}
 
+  const std::vector<tree_edge>& leaf_branches() const;
+  tree_edge leaf_branch(int i) const {return leaf_branches()[i];}
+
   /// the number of leaf branches
   int n_leafbranches() const {return (n_branches()==1)?1:n_leaves();}
+
+  const std::vector<tree_edge>& internal_branches() const;
+  tree_edge internal_branch(int i) const {return internal_branches()[i];}
 
   /// Get the branch with name 'b'
   const_branchview branch(int b) const {

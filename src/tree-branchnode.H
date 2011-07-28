@@ -73,13 +73,19 @@ inline bool is_internal_node(const BranchNode* n) {
 }
 
 /// Predicate: return true if this branch is a leaf branch.
+inline bool is_branch(const BranchNode* b) 
+{
+  return (b->out);
+}
+
+/// Predicate: return true if this branch is a leaf branch.
 inline bool is_leaf_branch(const BranchNode* b) {
-  return (is_leaf_node(b) or is_leaf_node(b->out));
+  return (is_branch(b) and (is_leaf_node(b) or is_leaf_node(b->out)));
 }
 
 /// Predicate: return true if this branch is an internal branch.
 inline bool is_internal_branch(const BranchNode* b) {
-  return not is_leaf_branch(b);
+  return (is_branch(b) and not is_leaf_branch(b));
 }
 
 inline int degree(const BranchNode* b)

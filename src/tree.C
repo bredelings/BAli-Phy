@@ -401,7 +401,7 @@ void name_node(BranchNode* start,int i) {
 const vector<int>& Tree::leaf_nodes() const
 {
   // Require that leaf node ORDER is determined by the node_ order,
-  // and in increase order for node names.
+  // and in increasing order of node names.
   if (not leaf_nodes_.is_valid())
   {
     leaf_nodes_.modify_value().clear();
@@ -414,6 +414,67 @@ const vector<int>& Tree::leaf_nodes() const
   assert(n_leaves() == leaf_nodes_.access_value().size());
 
   return leaf_nodes_;
+}
+
+const vector<int>& Tree::internal_nodes() const
+{
+  // Require that internal node ORDER is determined by the node_ order,
+  // and in increasing order of node names.
+  if (not internal_nodes_.is_valid())
+  {
+    internal_nodes_.modify_value().clear();
+    for(int i=0;i<nodes_.size();i++)
+      if (is_internal_node(nodes_[i]))
+	internal_nodes_.modify_value().push_back(i);
+    internal_nodes_.validate();
+  }
+
+  assert(n_nodes() - n_leaves() == internal_nodes_.access_value().size());
+
+  return internal_nodes_;
+}
+
+const vector<tree_edge>& Tree::leaf_branches() const
+{
+  // Require that leaf branch ORDER is determined by the branches_ order,
+  // and in increasing order of node names.
+  if (not leaf_branches_.is_valid())
+  {
+    leaf_branches_.modify_value().clear();
+    if (nodes_.size() == 2)
+      leaf_branches_.modify_value().push_back(nodes_[0]);
+    else
+    {
+      for(int i=0;i<branches_.size();i++)
+	// orient branches away from leaf nodes
+	if (is_branch(branches_[i]) and is_leaf_node(branches_[i]))
+	  leaf_branches_.modify_value().push_back( branches_[i] );
+    }
+    leaf_branches_.validate();
+  }
+
+  assert(leaf_branches_.value().size() == n_leafbranches());
+
+  return leaf_branches_;
+}
+
+const vector<tree_edge>& Tree::internal_branches() const
+{
+  // Require that internal branch ORDER is determined by the branches_ order,
+  // and in increasing order of node names.
+  if (not internal_branches_.is_valid())
+  {
+    internal_branches_.modify_value().clear();
+    for(int i=0;i<branches_.size();i++)
+      // Choose the orientation with the smaller name
+      if (is_internal_branch(branches_[i]) and branches_[i]->branch < branches_[i]->out->branch)
+	internal_branches_.modify_value().push_back( branches_[i] );
+    internal_branches_.validate();
+  }
+
+  assert(internal_branches_.value().size() == n_branches() - n_leafbranches());
+
+  return internal_branches_;
 }
 
 vector<int> Tree::standardize() {
