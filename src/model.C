@@ -1165,7 +1165,9 @@ vector<string> show_probability_expressions(const Context& C)
     if (not find_match(query, C.F->exp(i), results)) continue;
 
     // Extract the density operation
-    string prob_exp = results[1]->print() + " ~ " + results[0]->print()+results[2]->print();
+    shared_ptr<const String> name = dynamic_pointer_cast<const String>(results[0]);
+
+    string prob_exp = results[1]->print() + " ~ " + string(*name)+results[2]->print();
 
     expressions.push_back( prob_exp );
   }
