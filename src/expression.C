@@ -1549,7 +1549,6 @@ expression_ref let_expression(const vector<expression_ref>& vars, const vector<e
   if (vars.size() == 0) return T;
 
   // merge with existing let expression...
-  if (false)
   {
     vector<expression_ref> vars2;
     vector<expression_ref> bodies2;
