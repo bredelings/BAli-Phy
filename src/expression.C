@@ -1538,8 +1538,23 @@ T,U,V -> x
 
 expression_ref let_expression(const vector<expression_ref>& vars, const vector<expression_ref>& bodies, const expression_ref& T)
 {
-  // FIXME: merge with existing let expression...
   if (vars.size() == 0) return T;
+
+  // merge with existing let expression...
+  if (false)
+  {
+    vector<expression_ref> vars2;
+    vector<expression_ref> bodies2;
+    expression_ref T2;
+    if (parse_let_expression(T, vars2, bodies2, T2))
+    {
+      vector<expression_ref> vars12 = vars;
+      vector<expression_ref> bodies12 = bodies;
+      vars12.insert(vars12.end(),vars2.begin(), vars2.end());
+      bodies12.insert(bodies12.end(), bodies2.begin(), bodies2.end());
+      return let_expression(vars12, bodies12, T2);
+    }
+  }
 
   expression* E = new expression( let_obj() );
   E->sub.push_back(ListEnd);
