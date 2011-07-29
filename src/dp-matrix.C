@@ -247,13 +247,13 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins)
   if (x.size() != 0)
   {
     for(int i=0;i<x[0];i++)
-      yboundaries[i] = pair<int,int>(0,y[0]-1);
+      yboundaries[i] = pair<int,int>(0, y[0]-1);
 
-    for(int k=0;k<(int)x.size()-1;k++)
-      for(int i=x[i];i<x[i+1];i++)
-	yboundaries[i] = pair<int,int>(0,y[i]-1);
+    for(int k=0;k+1<(int)x.size();k++)
+      for(int i=x[k];i<x[k+1];i++)
+	yboundaries[i] = pair<int,int>(y[k], y[k+1]-1);
 
-    for(int i=0;i<I-1;i++)
+    for(int i=x.back();i<I;i++)
       yboundaries[i] = pair<int,int>(y.back(), J-1);
   }
   if (pins[0].size() == 0) 
