@@ -114,6 +114,12 @@ public:
   //  POD(const boost::enable_if_c<boost::is_convertible<U,T>::type,U>& u):t(u) { }
 };
 
+template<> 
+inline std::string POD<std::string>::print() const
+{
+  return "\""+t+"\"";
+}
+
 template <typename T>
 class POD_math: virtual public Object
 {
