@@ -1539,6 +1539,7 @@ T,U,V -> x
 expression_ref let_expression(const vector<expression_ref>& vars, const vector<expression_ref>& bodies, const expression_ref& T)
 {
   // FIXME: merge with existing let expression...
+  if (vars.size() == 0) return T;
 
   expression* E = new expression( let_obj() );
   E->sub.push_back(ListEnd);
@@ -2045,10 +2046,7 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
       T = substitute(T, var, body);
     }
 
-    if (vars.size())
-      return let_expression(vars, bodies, T);
-    else
-      return T;
+    return let_expression(vars, bodies, T);
   }
 
   // 6. Case
