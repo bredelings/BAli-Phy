@@ -162,6 +162,7 @@ inline void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
   {
     int y1 = 1 + yboundaries[0].first;
     int y2 = 1 + yboundaries[0].second;
+    assert(y1 <= y2);
     for(int y=y1;y<=y2;y++)
       clear_cell(x1-1,y);
   }
@@ -170,6 +171,7 @@ inline void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
   {
     int y1 = 1 + yboundaries[0].first;
     int y2 = 1 + yboundaries[0].second;
+    assert(y1 <= y2);
     clear_cell(x1,y1-1);
     forward_first_cell(x1,y1);
     for(int y=y1+1;y<=y2;y++)
@@ -181,6 +183,9 @@ inline void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
   {
     int y1 = 1 + yboundaries[x-1].first;
     int y2 = 1 + yboundaries[x-1].second;
+    assert(y1 <= y2);
+    assert(yboundaries[x-1].first >= yboundaries[x-2].first);
+    assert(yboundaries[x-1].second >= yboundaries[x-2].second);
 
     // clear the untouched empty cells to our left
     int z2 = 1 + yboundaries[x-2].second;
@@ -266,6 +271,11 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins)
     for(int i=x.back();i<I;i++)
       yboundaries[i] = pair<int,int>(y.back(), J-1);
   }
+
+  forward_band(yboundaries);
+  compute_Pr_sum_all_paths();
+  return;
+
   if (pins[0].size() == 0) 
     forward_square();
   else 
