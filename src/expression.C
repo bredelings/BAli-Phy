@@ -2045,10 +2045,9 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
     for(int i=0; i<vars.size(); i++)
       bodies[i] = launchbury_unnormalize(bodies[i]);
 
-    // Here I should be finding the list of free variables for each body...
-    // ... but how do I handle named variables?
-
     /*
+      Identify cycles of size > 1...
+      But what is the optimal behavior in that case?
     ublas::matrix<int> U(vars.size(), vars.size());
     for(int i=0;i<vars.size();i++)
     {
@@ -2059,7 +2058,7 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
     }
     */
 
-    // substitute for constants
+    // substitute for non-recursive lets
     bool changed = true;
     while(changed)
     {
