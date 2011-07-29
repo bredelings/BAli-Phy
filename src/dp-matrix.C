@@ -234,16 +234,32 @@ void DPmatrix::forward_square()
 // FIXME - fix up pins for new matrix coordinates
 void DPmatrix::forward_constrained(const vector< vector<int> >& pins) 
 {
+  using std::pair;
+
   const int I = size1()-1;
   const int J = size2()-1;
 
+  vector< pair<int,int> > yboundaries(I, pair<int,int>(0,J-1));
+
+  const vector<int>& x = pins[0];
+  const vector<int>& y = pins[1];
+
+  if (x.size() != 0)
+  {
+    for(int i=0;i<x[0];i++)
+      yboundaries[i] = pair<int,int>(0,y[0]-1);
+
+    for(int k=0;k<(int)x.size()-1;k++)
+      for(int i=x[i];i<x[i+1];i++)
+	yboundaries[i] = pair<int,int>(0,y[i]-1);
+
+    for(int i=0;i<I-1;i++)
+      yboundaries[i] = pair<int,int>(y.back(), J-1);
+  }
   if (pins[0].size() == 0) 
     forward_square();
   else 
   {
-    const vector<int>& x = pins[0];
-    const vector<int>& y = pins[1];
-
     // Propogate from S to first pin
     forward_square_first(1,1,x[0],y[0]);
 
