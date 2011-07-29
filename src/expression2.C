@@ -350,7 +350,7 @@ int main()
   // take - actually, this requires handling operators.
   expression_ref def_take;
   {  
-    take = named_dummy("take");
+    take = dummy("take");
 
     vector<expression_ref> patterns;
     vector<expression_ref> bodies;
@@ -373,7 +373,7 @@ int main()
   // iterate
   expression_ref def_iterate;
   {  
-    iterate = named_dummy("iterate");
+    iterate = dummy("iterate");
 
     vector<expression_ref> patterns;
     vector<expression_ref> bodies;
@@ -386,7 +386,7 @@ int main()
   // fmap
   expression_ref def_fmap;
   {  
-    fmap = named_dummy("fmap");
+    fmap = dummy("fmap");
 
     vector<expression_ref> patterns;
     vector<expression_ref> bodies;

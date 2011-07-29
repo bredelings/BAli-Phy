@@ -221,32 +221,39 @@ expression_ref::expression_ref(const term_ref& t)
   :polymorphic_cow_ptr<Object>((*t.F)[t.index])
 {}
 
-tribool dummy::compare(const Object& o) const {
+tribool dummy::compare(const Object& o) const 
+{
   const dummy* E = dynamic_cast<const dummy*>(&o);
   if (not E) 
     return false;
 
-  return index == E->index;
+  if (name.size())
+    return name == E->name;
+  else
+    return index == E->index;
 }
 
 string dummy::print() const {
-  if (index < 0)
+  if (name.size())
+    return name;
+  else if (index < 0)
     return "_";
   else
     return string("#")+convertToString(index);
 }
 
-tribool named_dummy::compare(const Object& o) const 
+bool dummy::operator<(const dummy& D) const 
 {
-  const named_dummy* E = dynamic_cast<const named_dummy*>(&o);
-  if (not E) 
-    return false;
+  if (name.size() and not D.name.size())
+      return true;
 
-  return name == E->name;
-}
+  if (not name.size() and D.name.size())
+      return false;
 
-string named_dummy::print() const {
-  return name;
+  if (name.size())
+    return name < D.name;
+  else
+    return index < D.index;
 }
 
 tribool match::compare(const Object& o) const 
@@ -537,17 +544,17 @@ std::set<T> intersection(std::set<T>& S1, const std::set<T>& S2)
   return result;
 }
 
-std::set<int> get_free_indices(const expression_ref& R);
+std::set<dummy> get_free_indices(const expression_ref& R);
 
-std::set<int> get_pattern_indices(const expression_ref& R)
+std::set<dummy> get_pattern_indices(const expression_ref& R)
 {
   return get_free_indices(R);
 }
 
 // Return the list of dummy variable indices that are bound at the top level of the expression
-std::set<int> get_bound_indices(const expression_ref& R)
+std::set<dummy> get_bound_indices(const expression_ref& R)
 {
-  std::set<int> bound;
+  std::set<dummy> bound;
 
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return bound;
@@ -555,9 +562,8 @@ std::set<int> get_bound_indices(const expression_ref& R)
   // Make sure we don't try to substitute for lambda-quantified dummies
   if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
   {
-    shared_ptr<const dummy> D  = dynamic_pointer_cast<const dummy>(E->sub[1]);
-    if (D)
-      bound.insert(D->index);
+    if (shared_ptr<const dummy> D  = dynamic_pointer_cast<const dummy>(E->sub[1]))
+      bound.insert(*D);
   }
   else if (dynamic_pointer_cast<const alt_obj>(E->sub[0]))
     bound = get_pattern_indices(E->sub[1]);
@@ -570,13 +576,8 @@ std::set<int> get_bound_indices(const expression_ref& R)
     {
       // Don't substitute into local variables.
       for(int i=0;i<vars.size();i++)
-      {
-	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
-	if (D)
-	  bound.insert(D->index);
-	else
-	  assert(dynamic_pointer_cast<const named_dummy>(vars[i]));
-      }
+	if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]))
+	  bound.insert(*D);
     }
   }
 
@@ -635,14 +636,14 @@ void alpha_rename(shared_ptr<expression>& E, const expression_ref& x, const expr
   // std::cout<<"    "<<E->print()<<"\n";
 }
 
-std::set<int> get_free_indices(const expression_ref& R)
+std::set<dummy> get_free_indices(const expression_ref& R)
 {
-  std::set<int> S;
+  std::set<dummy> S;
 
   // fv x = { x }
   if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R)) 
   {
-    S.insert(D->index);
+    S.insert(*D);
     return S;
   }
 
@@ -650,7 +651,7 @@ std::set<int> get_free_indices(const expression_ref& R)
   shared_ptr< const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return S;
 
-  std::set<int> bound = get_bound_indices(R);
+  std::set<dummy> bound = get_bound_indices(R);
 
   for(int i=0;i<E->size();i++)
     add(S, get_free_indices(E->sub[i]));
@@ -672,6 +673,11 @@ T max(const std::set<T>& v)
   return t;
 }
 
+int max_index(const std::set<dummy>& s)
+{
+  return max(s).index;
+}
+
 /// Return the min of v
 template<typename T>
 T min(const std::set<T>& v)
@@ -685,11 +691,11 @@ T min(const std::set<T>& v)
 
 static int get_safe_binder_index(const expression_ref& R)
 {
-  std::set<int> free = get_free_indices(R);
+  std::set<dummy> free = get_free_indices(R);
   if (free.empty()) 
     return 0;
   else
-    return max(free)+1;
+    return max_index(free)+1;
 }
 
 // If we use de Bruijn indices, then, as before bound indices in R2 are no problem.
@@ -726,7 +732,7 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
   if (not E1) return;
 
   // What indices are bound at the top level?
-  std::set<int> bound = get_bound_indices(R1);
+  std::set<dummy> bound = get_bound_indices(R1);
 
   if (not bound.empty())
   {
@@ -736,26 +742,26 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
       if (D->compare(dummy(*i))) return;
     }
     
-    std::set<int> fv2 = get_free_indices(R2);
-    std::set<int> overlap = intersection(bound,fv2);
+    std::set<dummy> fv2 = get_free_indices(R2);
+    std::set<dummy> overlap = intersection(bound,fv2);
     
     // If some of the free variables in R2 are bound in R1, then do alpha-renaming on R1 to avoid name capture.
     if (not overlap.empty())
     {
       // Determine the free variables of R1 so that we can avoid them in alpha renaming
-      std::set<int> fv1 = get_free_indices(R1);
+      std::set<dummy> fv1 = get_free_indices(R1);
 
       // If R1 does not contain D, then we won't do any substitution anyway, so avoid alpha renaming.
       if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(D))
       {
-	if (fv1.find(D2->index) == fv1.end()) return;
+	if (fv1.find(*D2) == fv1.end()) return;
       }
 
       // Compute the total set of free variables to avoid clashes with when alpha renaming.
       add(fv2, get_free_indices(R1));
 
       // we don't want to rename on top of any other variables bound here
-      int new_index = std::max(max(fv2),max(bound))+1;
+      int new_index = std::max(max_index(fv2),max_index(bound))+1;
 
       // Do the alpha renaming
       foreach(i,overlap)
@@ -1195,7 +1201,7 @@ void show_heap_expression(expression_ref& R)
     if (not i->first->named)
       vars.push_back(dummy(var_index++));
     else
-      vars.push_back(named_dummy(i->first->name));
+      vars.push_back(dummy(i->first->name));
     bodies.push_back( i->first->evaluates_to );
   }
 
@@ -1372,9 +1378,10 @@ expression_ref evaluate_mark1(const expression_ref& R)
       vector<shared_ptr<heap_dummy> > new_heap_vars;
       for(int i=0;i<vars.size();i++)
       {
-	shared_ptr<const named_dummy> ND = dynamic_pointer_cast<const named_dummy>(vars[i]);
-	if (ND)
-	  new_heap_vars.push_back( shared_ptr<heap_dummy>(new heap_dummy(ND->name)) );
+	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
+	assert(D);
+	if (D->name.size())
+	  new_heap_vars.push_back( shared_ptr<heap_dummy>(new heap_dummy(D->name)) );
 	else
 	  new_heap_vars.push_back( shared_ptr<heap_dummy>(new heap_dummy) );
       }
@@ -1713,16 +1720,16 @@ expression_ref multi_case_expression(bool decompose, const vector<expression_ref
 				     const expression_ref& body, const expression_ref& otherwise)
 {
   assert(terms.size() == patterns.size());
-  std::set<int> free;
+  std::set<dummy> free;
   for(int i=0;i<terms.size();i++)
     add(free, get_free_indices(terms[i]));
 
-  std::set<int> free_patterns;
+  std::set<dummy> free_patterns;
   for(int i=0;i<patterns.size();i++)
     add(free_patterns, get_pattern_indices(patterns[i]));
 
   assert(intersection(free, free_patterns).empty());
-  std::set<int> free_body = get_free_indices(body);
+  std::set<dummy> free_body = get_free_indices(body);
   remove(free_body, free_patterns);
 
   expression_ref R = body;
@@ -1734,9 +1741,8 @@ expression_ref multi_case_expression(bool decompose, const vector<expression_ref
 
 expression_ref def_function(bool decompose, const vector< vector<expression_ref> >& patterns, const vector<expression_ref>& bodies, const expression_ref& otherwise)
 {
-
   // Find the first safe var index
-  std::set<int> free;
+  std::set<dummy> free;
   if (otherwise)
     free = get_free_indices(otherwise);
 
@@ -1749,7 +1755,7 @@ expression_ref def_function(bool decompose, const vector< vector<expression_ref>
   }
   
   int var_index = 0;
-  if (not free.empty()) var_index = max(free)+1;
+  if (not free.empty()) var_index = max_index(free)+1;
 
   // All versions of the function must have the same arity
   assert(patterns.size());
@@ -1841,8 +1847,6 @@ bool is_dummy(const expression_ref& R)
 {
   if (dynamic_cast<const dummy*>(&*R)) return true;
 
-  if (dynamic_cast<const named_dummy*>(&*R)) return true;
-
   return false;
 }
 
@@ -1850,8 +1854,9 @@ bool is_wildcard(const expression_ref& R)
 {
   shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R);
   if (not D) return false;
+  if (D->name.size()) return false;
 
-  return (D->index < 0) ;
+  return (D->index < 0);
 }
 
 expression_ref launchbury_normalize(const expression_ref& R)

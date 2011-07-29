@@ -95,24 +95,18 @@ struct dummy: public Object
 {
   int index;
 
+  std::string name;
+
   dummy* clone() const {return new dummy(*this);}
   std::string print() const;
   tribool compare(const Object& o) const;
   
+  bool operator<(const dummy&) const;
+
   dummy(int i):index(i) {}
+  dummy(const std::string& s):index(-1),name(s) {}
 };
 
-// a dummy variable expression
-struct named_dummy: public Object
-{
-  std::string name;
-
-  named_dummy* clone() const {return new named_dummy(*this);}
-  std::string print() const;
-  tribool compare(const Object& o) const;
-  
-  named_dummy(const std::string& s):name(s) {}
-};
 
 bool is_dummy(const expression_ref&);
 
