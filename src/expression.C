@@ -1177,7 +1177,7 @@ void discover_heap_vars(const expression_ref& R, map< shared_ptr<heap_dummy_stat
   }
 }
 
-void show_heap_expression(expression_ref& R)
+void compact_heap_expression(expression_ref& R)
 {
   map< shared_ptr<heap_dummy_state>, std::string> names;
 
@@ -1185,15 +1185,15 @@ void show_heap_expression(expression_ref& R)
 
   discover_heap_vars(R,names);
 
-  std::cout<<R<<std::endl;
+  //  std::cout<<R<<std::endl;
   vector< expression_ref > replace;
   foreach(i,names)
   {
     replace.push_back( heap_dummy( i->first) );
     var_index = std::max(var_index, get_safe_binder_index(i->first->evaluates_to) );
-    std::cout<<"<"<<i->first->name<<"> = "<<i->first->evaluates_to<<std::endl;
+    //    std::cout<<"<"<<i->first->name<<"> = "<<i->first->evaluates_to<<std::endl;
   }
-  std::cout<<R<<std::endl;
+  //  std::cout<<R<<std::endl;
   vector<expression_ref> vars;
   vector<expression_ref> bodies;
   foreach(i,names)
@@ -1207,21 +1207,22 @@ void show_heap_expression(expression_ref& R)
 
   for(int i=0;i<bodies.size();i++)
   {
-    std::cout<<"------\n";
-    std::cout<<replace[i]<<" -> "<<vars[i]<<":\n";
+    //    std::cout<<"------\n";
+    //    std::cout<<replace[i]<<" -> "<<vars[i]<<":\n";
     for(int j=0;j<bodies.size();j++)
     {
       bodies[j] = substitute(bodies[j], replace[i], vars[i]);
-      std::cout<<vars[j]<<" = "<<bodies[j]<<std::endl;
+      //      std::cout<<vars[j]<<" = "<<bodies[j]<<std::endl;
     }
 
     R = substitute(R, replace[i], vars[i]);
-    std::cout<<"R = "<<R<<std::endl;
+    //    std::cout<<"R = "<<R<<std::endl;
   }
 
   R = let_expression(vars, bodies, R);
-  std::cout<<R<<std::endl;
-  std::cout<<"substituted = "<<launchbury_unnormalize(R)<<std::endl;
+  //  std::cout<<R<<std::endl;
+  R = launchbury_unnormalize(R);
+  //  std::cout<<"substituted = "<<launchbury_unnormalize(R)<<std::endl;
 }
 
 
@@ -1268,7 +1269,7 @@ expression_ref evaluate_mark1(const expression_ref& R)
     {
       if (S.empty()) 
       {
-	show_heap_expression(control);
+	compact_heap_expression(control);
 	return control;
       }
 
@@ -1349,7 +1350,7 @@ expression_ref evaluate_mark1(const expression_ref& R)
     {
       if (S.empty()) 
       {
-	show_heap_expression(control);
+	compact_heap_expression(control);
 	return control;
       }
 
@@ -2048,22 +2049,43 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
     // Here I should be finding the list of free variables for each body...
     // ... but how do I handle named variables?
 
-    // substitute for constants
-    for(int i=vars.size()-1; i>=0; i--)
+    /*
+    ublas::matrix<int> U(vars.size(), vars.size());
+    for(int i=0;i<vars.size();i++)
     {
-      if (is_dummy(bodies[i])) continue;
-      if (dynamic_pointer_cast<const expression>(bodies[i])) continue;
-
-      expression_ref var = vars[i];
-      expression_ref body = bodies[i];
-
-      vars.erase(vars.begin() + i);
-      bodies.erase(bodies.begin() + i);
-
-      // substitute for the value of this variable in T and in the remaining bodies;
+      std::set<dummy> free = get_free_indices(bodies[i]);
       for(int j=0;j<vars.size();j++)
-	bodies[j] = substitute(bodies[j], var, body);
-      T = substitute(T, var, body);
+	if (free.find(vars[j]))
+	U(i,j) = 0;
+    }
+    */
+
+    // substitute for constants
+    bool changed = true;
+    while(changed)
+    {
+      changed = false;
+
+      for(int i=vars.size()-1; i>=0; i--)
+      {
+	shared_ptr<const dummy> V = dynamic_pointer_cast<const dummy>(vars[i]);
+	assert(V);
+	std::set<dummy> free = get_free_indices(bodies[i]);
+	if (free.find(*V) != free.end()) continue;
+	
+	changed = true;
+	
+	expression_ref var = vars[i];
+	expression_ref body = bodies[i];
+	
+	vars.erase(vars.begin() + i);
+	bodies.erase(bodies.begin() + i);
+	
+	// substitute for the value of this variable in T and in the remaining bodies;
+	for(int j=0;j<vars.size();j++)
+	  bodies[j] = substitute(bodies[j], var, body);
+	T = substitute(T, var, body);
+      }
     }
 
     return let_expression(vars, bodies, T);

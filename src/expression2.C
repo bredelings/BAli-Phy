@@ -403,7 +403,7 @@ int main()
   cout<<"\n";
   cout<<"Eval test:     "<<test8<<" = \n";
   test8 = launchbury_normalize(test8);
-  cout<<"   normalized: "<<test8<<" = ";
+  cout<<"   normalized: "<<test8<<" = \n";
   test8 = evaluate_mark1(test8);
   cout<<test8<<"\n";
 
@@ -412,7 +412,7 @@ int main()
   cout<<"\n";
   cout<<"Eval test:     "<<test9<<" = \n";
   test9 = launchbury_normalize(test9);
-  cout<<"   normalized: "<<test9<<" = ";
+  cout<<"   normalized: "<<test9<<" = \n";
   test9 = evaluate_mark1(test9);
   cout<<test9<<"\n";
 
@@ -423,7 +423,7 @@ int main()
   cout<<"\n";
   cout<<"Eval test:     "<<test10<<" = \n";
   test10 = launchbury_normalize(test10);
-  cout<<"   normalized: "<<test10<<" = ";
+  cout<<"   normalized: "<<test10<<" = \n";
   test10 = evaluate_mark1(test10);
   cout<<test10<<"\n";
 
@@ -436,7 +436,7 @@ int main()
   cout<<"\n";
   cout<<"Eval test:     "<<test11<<" = \n";
   test11 = launchbury_normalize(test11);
-  cout<<"   normalized: "<<test11<<" = ";
+  cout<<"   normalized: "<<test11<<" = \n";
   test11 = evaluate_mark1(test11);
   cout<<test11<<"\n";
 }
