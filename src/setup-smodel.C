@@ -265,7 +265,7 @@ bool process_stack_Markov(vector<string>& string_stack,
   else
     return false;
 
-  if (R.index != -1)
+  if (R.exp())
     model_stack.push_back(FormulaModel(R));
   return true;
 }
@@ -276,7 +276,7 @@ formula_expression_ref get_EM(const formula_expression_ref& R, const string& nam
   if (R.result_as<AlphabetExchangeModelObject>())
     return R;
 
-  throw myexception()<<name<<": '"<<R.F->sub_exp(R.index)<<"' is not an exchange model.";
+  throw myexception()<<name<<": '"<<R.exp()<<"' is not an exchange model.";
 }
 
 
@@ -417,7 +417,7 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
       return Simple_gwF_Model(top, *a); 
   }
   catch (std::exception& e) { 
-    throw myexception()<<name<<": Can't construct a SimpleReversibleMarkovModel from '"<<M.F->sub_exp(M.index)<<"':\n "<<e.what();
+    throw myexception()<<name<<": Can't construct a SimpleReversibleMarkovModel from '"<<M.exp()<<"':\n "<<e.what();
   }
 }
 
@@ -457,7 +457,7 @@ get_MM(const formula_expression_ref& M, const string& name, const shared_ptr< co
     return Unit_Model( get_RA(M,name,frequencies) ) ; 
   }
   catch (std::exception& e) { 
-    throw myexception()<<name<<": Can't construct a UnitModel from '"<<M.F->sub_exp(M.index)<<"':\n"<<e.what();
+    throw myexception()<<name<<": Can't construct a UnitModel from '"<<M.exp()<<"':\n"<<e.what();
   }
 }
 
@@ -560,7 +560,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       models.push_back( get_MM (get_smodel_(args[i], a, frequencies),"Mixture",frequencies ) );
 
     model_stack.push_back(Mixture_Model(models));
-    std::cout<<"Mixture formula = "<<*model_stack.back().F<<std::endl;
+    std::cout<<"Mixture formula = "<<model_stack.back()<<std::endl;
   }
   else if (match(string_stack,"M2",arg)) 
   {
@@ -644,7 +644,7 @@ get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a,const share
 
   //---------------------- Stack should be empty now ----------------------//
   if (model_stack.size()>1) {
-    throw myexception()<<"Substitution model "<<model_stack.back().F<<" was specified but not used!\n";
+    throw myexception()<<"Substitution model "<<model_stack.back()<<" was specified but not used!\n";
   }
 
   return model_stack.back();

@@ -372,8 +372,8 @@ formula_expression_ref model_formula(const Model& M)
   }
 
   F->add_expression( model_prior_expression(M) );
-  int result_index = F->add_expression( model_result_expression(M) );
-  return formula_expression_ref(F, result_index);
+
+  return formula_expression_ref(F, model_result_expression(M) );
 }
 
 
@@ -1223,11 +1223,12 @@ FormulaModel::FormulaModel(const boost::shared_ptr<const Formula>& F,int i)
 { }
 
 FormulaModel::FormulaModel(const formula_expression_ref& R)
-  :Model(R.F),result_index(R.index)
+  :Model(R.notes ),
+   result_index( C.add_expression(R.exp()) )
 { }
 
 FormulaModel::operator formula_expression_ref() const
 {
-  return formula_expression_ref(C.F,result_index);
+  return formula_expression_ref(C.F, C.F->sub_exp(result_index));
 }
 

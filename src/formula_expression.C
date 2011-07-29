@@ -6,12 +6,12 @@ using boost::shared_ptr;
 
 formula_expression_ref formula_expression_ref::operator()(const formula_expression_ref& R) const
 {
-  return formula_expression_ref(combine(F, R.F), exp()(R.exp()));
+  return formula_expression_ref(combine(notes, R.notes), exp()(R.exp()));
 }
 
 formula_expression_ref formula_expression_ref::operator()(const expression_ref& R) const
 {
-  return formula_expression_ref(F, exp()(R));
+  return formula_expression_ref(notes, exp()(R));
 }
 
 formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1) const
@@ -41,42 +41,34 @@ formula_expression_ref expression_ref::operator()(const formula_expression_ref& 
 }
 
 formula_expression_ref::formula_expression_ref()
-  :index(-1)
 { }
 
-formula_expression_ref::formula_expression_ref(const expression_ref& R)
-{
-  Formula* F2 = new Formula();
-  index = F2->add_expression(R);
-  F = shared_ptr<const Formula>(F2);
-}
-
-formula_expression_ref::formula_expression_ref(const shared_ptr<const Formula>& F1, int i)
-  : F(F1),index(i)
+formula_expression_ref::formula_expression_ref(const expression_ref& r)
+  :R(r), notes(new Formula)
 { }
 
-formula_expression_ref::formula_expression_ref(const shared_ptr<const Formula>& F1, const expression_ref& R)
-{
-  Formula* F2 = F1->clone();
-  index = F2->add_expression(R);
-  F = shared_ptr<const Formula>(F2);
-}
+formula_expression_ref::formula_expression_ref(const shared_ptr<const Formula>& F1, const expression_ref& r)
+  :R(r),
+   notes(F1)
+{ }
 
 formula_expression_ref prefix_formula(const std::string& prefix,const formula_expression_ref& R)
 {
-  return formula_expression_ref(prefix_formula(prefix,R.F),R.index);
+  return formula_expression_ref(prefix_formula(prefix, R.notes), add_prefix(prefix, R.exp()));
 }
 
 int formula_expression_ref::add_expression(const formula_expression_ref& R)
 {
   // The indices of the first argument are (currently) not altered, so 'index' is unchanged.
-  F = combine(F, R.F);
-  return F->find_expression(R.exp());
+  notes = combine(notes, R.notes);
+  return notes->add_expression(R.exp());
 }
 
 boost::shared_ptr<const Object> formula_expression_ref::result() const
 {
-  Context C(F);
+  polymorphic_cow_ptr<Formula> notes2 = notes;
+  int index = notes2->add_expression(exp());
+  Context C(notes2);
   return C.evaluate(index);
 }
 
@@ -102,3 +94,7 @@ formula_expression_ref def_parameter(const std::string& name, const expression_r
   return def_parameter(name,def_value,b,D);
 }
 
+std::ostream& operator<<(std::ostream& o, const formula_expression_ref& F)
+{
+  o<<F.exp();
+}

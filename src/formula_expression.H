@@ -3,18 +3,19 @@
 
 #include <boost/shared_ptr.hpp>
 #include "formula.H"
+#include <iostream>
 
-
-struct formula_expression_ref
+class formula_expression_ref
 {
-  boost::shared_ptr<const Formula> F;
-  int index;
+  expression_ref R;
+public:
+  polymorphic_cow_ptr<Formula> notes;
 
   formula_expression_ref operator()(const formula_expression_ref&) const;
 
   formula_expression_ref operator()(const expression_ref&) const;
 
-  expression_ref exp() const {return F->sub_exp(index);}
+  expression_ref exp() const {return R;}
 
   int add_expression(const formula_expression_ref&);
 
@@ -25,11 +26,12 @@ struct formula_expression_ref
 
   formula_expression_ref();
   formula_expression_ref(const expression_ref&);
-  formula_expression_ref(const boost::shared_ptr<const Formula>& F, int);
   formula_expression_ref(const boost::shared_ptr<const Formula>& F, const expression_ref&);
 };
 
 formula_expression_ref prefix_formula(const std::string&,const formula_expression_ref&);
+
+std::ostream& operator<<(std::ostream&, const formula_expression_ref& F);
 
 template <typename T> struct Bounds;
 
