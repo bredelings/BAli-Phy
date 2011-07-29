@@ -837,6 +837,17 @@ vector<string> find_named_parameters(const expression_ref& e)
   return names;
 }
 
+expression_ref add_prefix(const string& prefix, const expression_ref& R)
+{
+  vector<string> names = find_named_parameters(R);
+
+  expression_ref R2 = R;
+  for(int i=0;i<names.size();i++)
+    R2 = substitute(R2, parameter(names[i]), parameter(prefix+"::"+names[i]));
+
+  return R2;
+}
+
 expression_ref Tuple(int n)
 {
   return lambda_expression( data_function("()",n) );

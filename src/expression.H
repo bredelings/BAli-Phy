@@ -520,4 +520,6 @@ expression_ref launchbury_normalize(const expression_ref& R);
 expression_ref launchbury_unnormalize(const expression_ref& R);
 
 expression_ref evaluate_mark1(const expression_ref& R);
+
+expression_ref add_prefix(const std::string&, const expression_ref& R);
 #endif
