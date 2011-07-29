@@ -36,6 +36,7 @@ using std::max;
 using std::endl;
 using std::isnan;
 using std::isfinite;
+using std::pair;
 
 void state_matrix::clear() 
 {
@@ -131,6 +132,51 @@ inline void DPmatrix::forward_square_first(int x1,int y1,int x2,int y2) {
 
   // forward other rows
   for(int x=x1+1;x<=x2;x++) {
+    clear_cell(x,y1-1);
+    for(int y=y1;y<=y2;y++)
+      forward_cell(x,y);
+  }
+}
+
+inline void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries) 
+{
+  // note: (x,y) is located at (x+1,y+1) in the matrix.
+
+  const int I = size1()-1;
+  const int J = size2()-1;
+
+  const int x1 = 1;
+  const int x2 = I;
+
+  assert(yboundaries.back().first + 1 == I);
+  assert(yboundaries.back().second + 1 == J);
+
+  // Since we are using M(0,0) instead of S(0,0), we need to run only the silent states at (0,0)
+  // We can only use non-silent states at (0,0) to simulate S
+
+  // clear left border: x = -1 (what is adjacent to the first row?)
+  {
+    int y1 = 1 + yboundaries[0].first;
+    int y2 = 1 + yboundaries[0].second;
+    for(int y=y1;y<=y2;y++)
+      clear_cell(x1-1,y);
+  }
+
+  // forward first row, with exception for S(0,0): x = 0
+  {
+    int y1 = 1 + yboundaries[0].first;
+    int y2 = 1 + yboundaries[0].second;
+    clear_cell(x1,y1-1);
+    forward_first_cell(x1,y1);
+    for(int y=y1+1;y<=y2;y++)
+      forward_cell(x1,y);
+  }
+
+  // forward other rows: x = 1...I-1
+  for(int x=x1+1;x<=x2;x++) 
+  {
+    int y1 = 1 + yboundaries[x-1].first;
+    int y2 = 1 + yboundaries[x-1].second;
     clear_cell(x,y1-1);
     for(int y=y1;y<=y2;y++)
       forward_cell(x,y);
@@ -576,6 +622,8 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 
 //DPmatrixSimple::~DPmatrixSimple() {}
 
+
+// Make this no longer virtual?
 inline void DPmatrixConstrained::clear_cell(int i2,int j2) 
 {
   scale(i2,j2) = INT_MIN;
