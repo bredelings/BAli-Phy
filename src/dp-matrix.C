@@ -181,7 +181,17 @@ inline void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
   {
     int y1 = 1 + yboundaries[x-1].first;
     int y2 = 1 + yboundaries[x-1].second;
+
+    // clear the untouched empty cells to our left
+    int z2 = 1 + yboundaries[x-2].second;
+    assert(z2 >= y1-1);
+    for(int y=z2+1;y<=y2;y++)
+      clear_cell(x-1,y);
+
+    // clear the untouched empty cell below us
     clear_cell(x,y1-1);
+
+    // compute the untouched cells in this row
     for(int y=y1;y<=y2;y++)
       forward_cell(x,y);
   }
