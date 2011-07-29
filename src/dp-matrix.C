@@ -148,8 +148,12 @@ inline void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
   const int x1 = 1;
   const int x2 = I;
 
-  assert(yboundaries.back().first + 1 == I);
-  assert(yboundaries.back().second + 1 == J);
+  assert(yboundaries.size());
+
+  assert(yboundaries.size() - 1 == I - 1);
+
+  assert(yboundaries[0].first == 0);
+  assert(yboundaries.back().second == J - 1);
 
   // Since we are using M(0,0) instead of S(0,0), we need to run only the silent states at (0,0)
   // We can only use non-silent states at (0,0) to simulate S
