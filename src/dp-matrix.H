@@ -118,7 +118,6 @@ public:
   void forward_square();
 
   /// Compute the forward probabilities for a square
-  void forward_band(int);
   void forward_band(const std::vector< std::pair<int,int> >& boundaries);
 
   /// compute FP for entire matrix, with some points on path pinned
