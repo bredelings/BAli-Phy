@@ -200,6 +200,8 @@ inline void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
     for(int y=y1;y<=y2;y++)
       forward_cell(x,y);
   }
+
+  compute_Pr_sum_all_paths();
 }
 
 inline void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
