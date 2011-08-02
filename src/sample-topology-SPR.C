@@ -527,83 +527,29 @@ efloat_t heated_likelihood_unaligned_root(const Parameters& P)
   return pow(likelihood_unaligned_root(P), P.get_beta());
 }
 
-/// A (sortable) branch indentified by the pair of nodes at either end.
-struct spr_branch
-{
-  int node1;
-  int node2;
-
-  /// Check if the other branch is the same and has the same orientation
-  bool same_orientation(const spr_branch& b2) const
-  {
-    if (node1 == b2.node1 and node2 == b2.node2) return true;
-    return false;
-  }
-
-  /// Check if the other branch is the same but has the opposite orientation
-  bool opposite_orientation(const spr_branch& b2) const
-  {
-    if (node1 == b2.node2 and node2 == b2.node1) return true;
-    return false;
-  }
-
-  /// Check if the other branch is the same regardless of orientation
-  bool operator==(const spr_branch& b2) const
-  {
-    if (same_orientation(b2)) return true;
-    if (opposite_orientation(b2)) return true;
-    return false;
-  }
-
-  /// Order branches (for sorting)
-  bool operator<(const spr_branch& b2) const
-  {
-    int b1n1 = std::min(node1,node2);
-    int b1n2 = std::max(node1,node2);
-
-    int b2n1 = std::min(b2.node1, b2.node2);
-    int b2n2 = std::max(b2.node1, b2.node2);
-
-    if (b1n1 < b2n1) return true;
-    if (b1n1 > b2n1) return false;
-    if (b1n2 < b2n2) return true;
-    if (b1n2 > b2n2) return false;
-
-    return false;
-  }
-
-  spr_branch()
-    :node1(-1),node2(-1)
-  {}
-
-  spr_branch(int n1, int n2)
-    :node1(n1),node2(n2)
-  {}
-};
-
 /// Express branch \a b of tree \a T in terms of the nodes at either end
-spr_branch get_spr_branch(const Tree& T, int b)
+tree_edge get_tree_edge(const Tree& T, int b)
 {
   int n1 = T.directed_branch(b).source();
   int n2 = T.directed_branch(b).target();
-  return spr_branch(n1,n2);
+  return tree_edge(n1,n2);
 }
 
-std::ostream& operator<<(std::ostream& o, const spr_branch& b)
+std::ostream& operator<<(std::ostream& o, const tree_edge& b)
 {
   o<<"["<<b.node1<<","<<b.node2<<"]";
   return o;
 }
 
 /// Represent positions along branches as a fraction in [0,1) from node1 to node2
-struct spr_attachment_points: public map<spr_branch,double>
+struct spr_attachment_points: public map<tree_edge,double>
 {
 };
 
 /// Represent the probability of attaching to a branch
-struct spr_attachment_probabilities: public map<spr_branch,efloat_t>
+struct spr_attachment_probabilities: public map<tree_edge,efloat_t>
 {
-  map<spr_branch,efloat_t> LLL;
+  map<tree_edge,efloat_t> LLL;
 };
 
 /// Perform an SPR move: move the subtree BEHIND \a b1 to the branch indicated by \a b2,
@@ -615,13 +561,13 @@ int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_p
   // unbroken target branch
   /// \todo Correctly handle moving to the same topology -- but allow branch lengths to change.
   double L = T.directed_branch(b_target).length();
-  map<spr_branch, double>::const_iterator record = locations.find(get_spr_branch(T,b_target));
+  map<tree_edge, double>::const_iterator record = locations.find(get_tree_edge(T,b_target));
   if (record == locations.end())
   {
     std::cerr<<"Branch not found in spr location object!\n"<<std::endl;
     std::abort();
   }
-  spr_branch B_unbroken_target = record->first;
+  tree_edge B_unbroken_target = record->first;
   // U is the fraction of the way from B_unbroken_target.node1 
   // toward B_unbroken_target.node2 to place the new node.
   double U = record->second; 
@@ -673,7 +619,7 @@ public:
   int BM;
 
   /// The current attachment branch, specified in terms of its endpoint nodes
-  spr_branch B0;
+  tree_edge B0;
 
   /// A list of attachment branches, where the current branch is B1 at index 0
   vector<const_branchview> attachment_branches;
@@ -696,16 +642,16 @@ public:
   }
   
   /// Express a branch \a in attachment_branches in terms of its endpoint nodes
-  spr_branch get_spr_branch(int b) const
+  tree_edge get_tree_edge(int b) const
   {
     if (not T.subtree_contains_branch(b_parent,b))
-      throw myexception()<<"spr_info::get_spr_branch( ): Subtree does not contain branch "<<b;
+      throw myexception()<<"spr_info::get_tree_edge( ): Subtree does not contain branch "<<b;
 
     int n0 = T.directed_branch(b_parent).target();
     if (T.directed_branch(b).target() == n0 or T.directed_branch(b).source() == n0)
       return B0;
 
-    return ::get_spr_branch(T,b);
+    return ::get_tree_edge(T,b);
   }
 
   /// Convert a branch \a b to its index in attachment_branches
@@ -718,7 +664,7 @@ public:
   }
 
   /// Convert abranch \a s to its index in attachment_branches
-  int spr_branch_to_index(const spr_branch& s) const
+  int tree_edge_to_index(const tree_edge& s) const
   {
     if (s == B0)
       return 0;
@@ -729,14 +675,14 @@ public:
 
   /// Express properties of branches as vectors indexed by their position in attachment_branches
   template<typename U>
-  vector<U> convert_to_vector(const map<spr_branch,U>& M) const
+  vector<U> convert_to_vector(const map<tree_edge,U>& M) const
   {
     assert(M.size() == n_attachment_branches());
     vector<U> v(n_attachment_branches());
 
-    for(typename map<spr_branch,U>::const_iterator i=M.begin();i != M.end(); i++)
+    for(typename map<tree_edge,U>::const_iterator i=M.begin();i != M.end(); i++)
     {
-      int index = spr_branch_to_index(i->first);
+      int index = tree_edge_to_index(i->first);
       v[index] = i->second;
     }
 
@@ -764,7 +710,7 @@ spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
   }
   B1 = std::min(child_branches[0].undirected_name(), child_branches[1].undirected_name());
   BM = std::max(child_branches[0].undirected_name(), child_branches[1].undirected_name());
-  B0 = spr_branch(child_branches[0].target(), child_branches[1].target());
+  B0 = tree_edge(child_branches[0].target(), child_branches[1].target());
 
   /*----------- get the list of possible attachment points, with [0] being the current one.------- */
   // \todo - With tree constraints, or with a variable alignment and alignment constraints,
@@ -795,7 +741,7 @@ spr_attachment_points get_spr_attachment_points(const Tree& T, int b1, int branc
 {
   spr_info I(T, b1, branch_to_move);
 
-  spr_branch B0(I.child_branches[0].target(), I.child_branches[1].target());
+  tree_edge B0(I.child_branches[0].target(), I.child_branches[1].target());
   double L0a = I.child_branches[0].length();
   double L0b = I.child_branches[1].length();
 
@@ -805,7 +751,7 @@ spr_attachment_points get_spr_attachment_points(const Tree& T, int b1, int branc
 
   // compute attachment locations for non-current branches
   for(int i=1;i<I.attachment_branches.size();i++)
-    locations[get_spr_branch(T, I.attachment_branches[i])] = uniform();
+    locations[get_tree_edge(T, I.attachment_branches[i])] = uniform();
 
   return locations;
 }
@@ -878,7 +824,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
   {
     // Define target branch b2 - pointing away from b1
     int b2 = branch_names[i];
-    spr_branch B2 = I.get_spr_branch(b2);
+    tree_edge B2 = I.get_tree_edge(b2);
 
     // ** 1. SPR ** : alter the tree.
     *P.T = T0;
