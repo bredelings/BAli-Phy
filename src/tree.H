@@ -138,11 +138,51 @@ void knit_node_together(const std::vector<BranchNode*>& nodes);
 
 struct tree_edge
 {
-  int source;
-  int target;
-  tree_edge():source(-1),target(-1) { }
-  tree_edge(int s, int t):source(s), target(t) { }
-  tree_edge(const BranchNode* BN):source(BN->node), target(BN->out->node) { }
+  int n1;
+  int n2;
+
+  /// Check if the other branch is the same and has the same orientation
+  bool same_orientation(const tree_edge& b2) const
+  {
+    if (n1 == b2.n1 and n2 == b2.n2) return true;
+    return false;
+  }
+
+  /// Check if the other branch is the same but has the opposite orientation
+  bool opposite_orientation(const tree_edge& b2) const
+  {
+    if (n1 == b2.n2 and n2 == b2.n1) return true;
+    return false;
+  }
+
+  /// Check if the other branch is the same regardless of orientation
+  bool operator==(const tree_edge& b2) const
+  {
+    if (same_orientation(b2)) return true;
+    if (opposite_orientation(b2)) return true;
+    return false;
+  }
+
+  /// Order branches (for sorting)
+  bool operator<(const tree_edge& b2) const
+  {
+    int b1n1 = std::min(n1,n2);
+    int b1n2 = std::max(n1,n2);
+
+    int b2n1 = std::min(b2.n1, b2.n2);
+    int b2n2 = std::max(b2.n1, b2.n2);
+
+    if (b1n1 < b2n1) return true;
+    if (b1n1 > b2n1) return false;
+    if (b1n2 < b2n2) return true;
+    if (b1n2 > b2n2) return false;
+
+    return false;
+  }
+
+  tree_edge():n1(-1),n2(-1) { }
+  tree_edge(int s, int t):n1(s), n2(t) { }
+  tree_edge(const BranchNode* BN):n1(BN->node), n2(BN->out->node) { }
 };
 
 /**
@@ -305,12 +345,12 @@ public:
 
   /// Get the directed branch from 'node1' -> 'node2'
   const_branchview directed_branch(const tree_edge& e) const {
-    return directed_branch(e.source, e.target);
+    return directed_branch(e.n1, e.n2);
   }
 
   /// Get the directed branch from 'node1' -> 'node2'
   branchview directed_branch(const tree_edge& e) {
-    return directed_branch(e.source, e.target);
+    return directed_branch(e.n1, e.n2);
   }
 
   /// Get the branch connecting n1 <-> n2
@@ -332,11 +372,11 @@ public:
   }
   
   const_branchview branch(const tree_edge& e) const {
-    return branch(e.source, e.target);
+    return branch(e.n1, e.n2);
   }
 
   branchview branch(const tree_edge& e) {
-    return branch(e.source, e.target);
+    return branch(e.n1, e.n2);
   }
 
   /// Get a reference to the 'i'-th node
