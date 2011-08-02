@@ -85,7 +85,7 @@ struct sample_tri_multi_calculation
 
   void set_proposal_probabilities(const std::vector<efloat_t>&);
 
-  int choose(std::vector<Parameters>& p);
+  int choose(std::vector<Parameters>& p, bool=true);
 };
 
 //------------------- Checking Routines ------------------------//

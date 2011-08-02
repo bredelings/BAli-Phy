@@ -338,7 +338,7 @@ void sample_tri_multi_calculation::set_proposal_probabilities(const vector<efloa
   assert(Pr[0] > 0.0);
 }
 
-int sample_tri_multi_calculation::choose(vector<Parameters>& p)
+int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
 {
   assert(p.size() == nodes.size());
 
@@ -469,7 +469,7 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p)
 
   efloat_t C2 = A3::correction(p[C],nodes[C]);
   // If we reject the proposed move, then don't do anything.
-  if (myrandomf() > double(C1/C2))
+  if (correct and myrandomf() > double(C1/C2))
     return -1;
 
   return C;
