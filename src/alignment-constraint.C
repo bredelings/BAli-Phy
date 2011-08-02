@@ -402,3 +402,52 @@ bool any_branches_constrained(const vector<int>& branches,const SequenceTree& T,
 
   return false;
 }
+
+vector< pair<int,int> > get_yboundaries_from_pins(int I, int J, const vector< vector<int> >& pins)
+{
+  vector< pair<int,int> > yboundaries(I, pair<int,int>(0,J-1));
+
+  const vector<int>& x = pins[0];
+  const vector<int>& y = pins[1];
+
+  if (x.size() != 0)
+  {
+    for(int i=0;i<x[0];i++)
+      yboundaries[i] = pair<int,int>(0, y[0]-1);
+
+    for(int k=0;k+1<(int)x.size();k++)
+      for(int i=x[k];i<x[k+1];i++)
+	yboundaries[i] = pair<int,int>(y[k], y[k+1]-1);
+
+    for(int i=x.back();i<I;i++)
+      yboundaries[i] = pair<int,int>(y.back(), J-1);
+  }
+
+  return yboundaries;
+}
+
+vector< pair<int,int> > boundaries_intersection(const vector< pair<int,int> >& boundaries1,const vector< pair<int,int> >& boundaries2)
+{
+  assert(boundaries1.size());
+
+  assert(boundaries1.size() == boundaries2.size());
+
+  assert(boundaries1[0].first == 0);
+  assert(boundaries2[0].first == 0);
+
+  int L1 = boundaries1.size()-1;
+
+  assert(boundaries1.back().second == boundaries2.back().second);
+  int L2 = boundaries1.back().second;
+
+  vector< pair<int,int> > boundaries3 = boundaries1;
+
+  for(int i=0; i<boundaries3.size();i++)
+  {
+    boundaries3[i].first = std::max(boundaries3[i].first, boundaries2[i].first);
+    boundaries3[i].second = std::min(boundaries3[i].second, boundaries2[i].second);
+    assert(boundaries3[i].second >= boundaries3[i].first);
+  }
+
+  return boundaries3;
+}
