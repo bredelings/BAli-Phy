@@ -219,6 +219,8 @@ vector< pair<int,int> > get_x_ranges_for_band(int D, const vector<int>& seq1, co
   // we'll compute the first and last indices, instead of first and last+1
   vector< pair<int,int> > xboundaries(H+1, pair<int,int>(0,W));
 
+  if (D<0) return xboundaries;
+
   // Determine xmin[y]
   for(int x=0,y=0,k=0;k<seq12.size();k++)
   {
@@ -262,6 +264,11 @@ vector< pair<int,int> > get_x_ranges_for_band(int D, const vector<int>& seq1, co
   return xboundaries;
 }
 
+vector< pair<int,int> > get_y_ranges_for_band(int D, const vector<int>& seq1, const vector<int>& seq2, 
+					      const vector<int>& seq12)
+{
+  return get_x_ranges_for_band(D, seq1, seq2, seq12);
+}
 
 // We need to make sure that the pinned column coordinates always increase.
 // By considering constraints between seq1 and seq2 in the order of seq12 we can guarantee this,

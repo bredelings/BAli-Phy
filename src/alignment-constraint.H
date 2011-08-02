@@ -41,3 +41,7 @@ std::vector< std::pair<int,int> > get_x_ranges_for_band(int D,
 							const std::vector<int>& seq1, 
 							const std::vector<int>& seq2, 
 							const std::vector<int>& seq12);
+std::vector< std::pair<int,int> > get_y_ranges_for_band(int D, 
+							const std::vector<int>& seq1, 
+							const std::vector<int>& seq2, 
+							const std::vector<int>& seq12);

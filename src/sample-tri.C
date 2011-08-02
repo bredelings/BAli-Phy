@@ -39,6 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::abs;
 using std::vector;
+using std::pair;
 using std::endl;
 using boost::dynamic_bitset;
 
@@ -46,7 +47,7 @@ using namespace A3;
 
 // FIXME - resample the path multiple times - pick one on opposite side of the middle 
 
-boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P,const vector<int>& nodes)
+boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P,const vector<int>& nodes, int bandwidth=-1)
 {
   default_timer_stack.push_timer("alignment::DP2/3-way");
   const Tree& T = *P.T;
@@ -176,6 +177,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
   //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23,columns);
+
+  vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, columns);
 
   // if the constraints are currently met but cannot be met
   if (pins.size() == 1 and pins[0][0] == -1)
