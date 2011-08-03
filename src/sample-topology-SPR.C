@@ -223,6 +223,32 @@ double effective_length(const Tree& T, int b)
   return effective_lengths(T)[b];
 }
 
+vector<double> effective_lengths_min(const Tree& T)
+{
+  vector<double> lengths(2*T.n_branches(),0);
+
+  vector<const_branchview> branches = branches_from_leaves(T);
+
+  for(int i=0;i<branches.size();i++)
+  {
+    lengths[branches[i]] = branches[i].length();
+
+    vector<const_branchview> pre_b;
+    append(branches[i].branches_before(),pre_b);
+    if (pre_b.size() > 0) 
+    {
+      double min_prev = pre_b[0].length();
+      for(int j=1;j<pre_b.size();j++)
+	min_prev = std::min(min_prev, pre_b[i].length());
+
+      lengths[branches[i]] += min_prev;
+    }
+  }
+
+  return lengths;
+}
+
+
 int choose_SPR_target(SequenceTree& T1, int b1_) 
 {
   const_branchview b1 = T1.directed_branch(b1_);
