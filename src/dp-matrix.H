@@ -138,9 +138,6 @@ public:
   virtual ~DPmatrix() {}
 };
 
-int bandwidth(const DPmatrix&,const std::vector<int>&);
-int bandwidth2(const DPmatrix&,const std::vector<int>&);
-
 
 /// 2D Dynamic Programming Matrix for chains which only emit or don't emit
 class DPmatrixNoEmit: public DPmatrix {
