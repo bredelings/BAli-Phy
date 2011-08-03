@@ -517,9 +517,11 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
     //----------------- Part 2: Backward -----------------//
 
-    // Set the initial alignment.  The only things that should be changed are things that will be invalidated after the sampling...
-    // ..... really?
-    // This is just to get the correct bandwidth on the DP calculations.
+    // Set the initial alignment, so that our bandwidth is relative to this one.
+    //
+    // This just selects another alignment w/in the range of possible alignments, so the previous
+    //   cache invalidations should work for this alignment as well.
+    //
     for(int i=0;i<p2.size();i++)
       for(int j=0;j<p2[i].n_data_partitions();j++)
 	p2[i][j].A = p[C1][j].A;
