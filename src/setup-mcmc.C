@@ -709,6 +709,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 
   MoveStats Stats;
   // 1. First choose the scale of the tree
+  if (fraction_non_gap(*P.as<Parameters>()) > 1.0/20)
   {
     MoveAll pre_burnin("pre-burnin");
 
@@ -728,6 +729,8 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
       pre_burnin.iterate(P,Stats);
     }
   }
+  else
+    out_both<<"Skipping fixed-alignment tree-size pre-burnin: too many gaps in initial alignment!"<<std::endl;
   out_both<<endl;
 
   // 2. Then do an initial tree search - SPR - ignore indel information
