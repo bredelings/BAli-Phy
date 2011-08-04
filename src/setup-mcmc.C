@@ -817,7 +817,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     // enable and disable moves
     enable_disable_transition_kernels(pre_burnin,args);
 
-    for(int i=0;i<n_pre_burnin;i++) {
+    for(int i=0;i<2*n_pre_burnin;i++) {
       out_both<<" SPR+A #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
       out_both<<"   |A| = "<<Get_Total_Alignment_Length_Function()(P,0);
       out_both<<"   |T| = "<<Get_Tree_Length_Function()(P,0);
