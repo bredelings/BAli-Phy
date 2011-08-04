@@ -482,6 +482,28 @@ int choose_subtree_branch_uniform2(const Tree& T)
 }
 
 
+void sample_SPR_flat_one(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b1) 
+{
+  Parameters& PP = *P.as<Parameters>();
+
+  if (PP.T->directed_branch(b1).target().is_leaf_node()) return;
+
+  double p = loadvalue(P->keys,"SPR_slice_fraction",-0.25);
+
+  int b2 = choose_SPR_target(*PP.T,b1);
+
+  double L_effective = effective_length(*PP.T, b1);
+
+  if (not PP.variable_alignment() and uniform() < p) {
+    MCMC::Result result = sample_SPR(PP,b1,b2,true);
+    SPR_inc(Stats,result,"SPR (flat/slice)",L_effective);
+  }
+  else  {
+    MCMC::Result result = sample_SPR(PP,b1,b2);
+    SPR_inc(Stats,result,"SPR (flat)",L_effective);
+  }
+}
+
 void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
@@ -493,18 +515,7 @@ void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   {
     int b1 = choose_subtree_branch_uniform(*PP.T);
 
-    int b2 = choose_SPR_target(*PP.T,b1);
-
-    double L_effective = effective_length(*PP.T, b1);
-
-    if (not PP.variable_alignment() and uniform() < p) {
-      MCMC::Result result = sample_SPR(PP,b1,b2,true);
-      SPR_inc(Stats,result,"SPR (flat/slice)",L_effective);
-    }
-    else  {
-      MCMC::Result result = sample_SPR(PP,b1,b2);
-      SPR_inc(Stats,result,"SPR (flat)",L_effective);
-    }
+    sample_SPR_flat_one(P, Stats, b1);
   }
 }
 
@@ -1151,6 +1162,19 @@ void sample_SPR_search_all(owned_ptr<Probability_Model>& P,MoveStats& Stats)
 
   for(int b=0;b<2*B;b++) {
     slice_sample_branch_length(P,Stats,b);
+    bool changed = sample_SPR_search_one(*P.as<Parameters>(),Stats,b);
+    if (not changed) three_way_topology_sample(P,Stats,b);
+    slice_sample_branch_length(P,Stats,b);
+  }
+}
+
+void sample_SPR_A_search_all(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
+{
+  int B = P.as<Parameters>()->T->n_branches();
+
+  for(int b=0;b<2*B;b++) {
+    slice_sample_branch_length(P,Stats,b);
+    sample_SPR_flat_one(P, Stats, b);
     bool changed = sample_SPR_search_one(*P.as<Parameters>(),Stats,b);
     if (not changed) three_way_topology_sample(P,Stats,b);
     slice_sample_branch_length(P,Stats,b);

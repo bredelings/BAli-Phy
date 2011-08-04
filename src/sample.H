@@ -87,6 +87,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>&, MCMC
 
 void sample_SPR_all(owned_ptr<Probability_Model>&, MCMC::MoveStats&);
 void sample_SPR_search_all(owned_ptr<Probability_Model>&, MCMC::MoveStats&);
+void sample_SPR_A_search_all(owned_ptr<Probability_Model>&, MCMC::MoveStats&);
 void sample_SPR_flat(owned_ptr<Probability_Model>&, MCMC::MoveStats&);
 void sample_SPR_nodes(owned_ptr<Probability_Model>&, MCMC::MoveStats&);
 void slide_node_move(owned_ptr<Probability_Model>&, MCMC::MoveStats&, int);

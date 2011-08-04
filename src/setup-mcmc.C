@@ -774,6 +774,51 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
   // Set all alignments that COULD be variable back to being variable.
   P.as<Parameters>()->variable_alignment(true);
 
+
+  // 4. Then do an initial tree search - SPR - with variable alignment
+  if (P->keys.find("pre-burnin-A") != P->keys.end())
+  {
+    // turn training on
+    {
+      Parameters& PP = *P.as<Parameters>();
+      for(int i=0;i<PP.n_imodels();i++)
+	PP.IModel(i).set_training(true);
+      PP.recalc_imodels();
+    }
+
+    MoveAll pre_burnin("pre-burnin+A");
+    pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
+    pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
+				      "scale_means_only","mean"));
+    pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths,
+				"walk_tree_sample_branch_lengths","tree:lengths"));
+    pre_burnin.add(1,SingleMove(sample_SPR_A_search_all,"SPR_search_all",
+				"tree:topology:lengths"));
+
+    // enable and disable moves
+    enable_disable_transition_kernels(pre_burnin,args);
+
+    for(int i=0;i<n_pre_burnin;i++) {
+      out_both<<" SPR+A #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
+      for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
+      {
+	Parameters& PP = *P.as<Parameters>();
+	out_both<<"     mu"<<j+1<<" = "<<PP.get_parameter_value_as<Double>(PP.branch_mean_index(j))<<endl;
+      }
+      show_parameters(out_log,*P);
+      pre_burnin.iterate(P,Stats);
+    }
+
+    // turn training back off
+    {
+      Parameters& PP = *P.as<Parameters>();
+      for(int i=0;i<PP.n_imodels();i++)
+	PP.IModel(i).set_training(false);
+      PP.recalc_imodels();
+    }
+  }
+  out_both<<endl;
+
   out_log<<Stats<<endl;
   duration_t t2 = total_cpu_time();
   out_log<<default_timer_stack.report()<<endl;
