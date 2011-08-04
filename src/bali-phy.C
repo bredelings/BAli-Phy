@@ -1037,7 +1037,7 @@ chrono::system_clock::time_point start_time = chrono::system_clock::now();
 
 string ctime(const chrono::system_clock::time_point& t)
 {
-  time_t t2 = chrono::system_clock::to_time_t(start_time);
+  time_t t2 = chrono::system_clock::to_time_t(t);
   char* c = ctime(&t2);
   return c;
 }
