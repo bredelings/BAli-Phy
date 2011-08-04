@@ -678,6 +678,19 @@ void avoid_zero_likelihood(owned_ptr<Probability_Model>& P, ostream& out_log,ost
   }
 }
 
+double fraction_non_gap(const Parameters& P)
+{
+  double total_char = 0;
+  double total_cell = 0;
+  for(int i=0;i<P.n_data_partitions();i++)
+  {
+    const alignment& A = *P[i].A;
+    total_char += sum(sequence_lengths(A));
+    total_cell += A.n_sequences()*A.length();
+  }
+  return total_char/total_cell;
+}
+
 void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 		   ostream& out_log,ostream& out_both)
 {
@@ -718,6 +731,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
   out_both<<endl;
 
   // 2. Then do an initial tree search - SPR - ignore indel information
+  if (fraction_non_gap(*P.as<Parameters>()) > 1.0/20)
   {
     MoveAll pre_burnin("pre-burnin");
     pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
@@ -741,10 +755,13 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
       show_parameters(out_log,*P);
       pre_burnin.iterate(P,Stats);
     }
+    out_both<<endl;
   }
-  out_both<<endl;
+  else
+    out_both<<"Skipping fixed-alignment SPR pre-burnin: too many gaps in initial alignment!"<<std::endl;
 
     // 3. Then do a further tree search - NNI - w/ the actual model
+  if (fraction_non_gap(*P.as<Parameters>()) > 1.0/20)
   {
     MoveAll pre_burnin("pre-burnin");
 
@@ -769,6 +786,8 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
       pre_burnin.iterate(P,Stats);
     }
   }
+  else
+    out_both<<"Skipping fixed-alignment NNI pre-burnin: too many gaps in initial alignment!"<<std::endl;
   out_both<<endl;
 
   // Set all alignments that COULD be variable back to being variable.
