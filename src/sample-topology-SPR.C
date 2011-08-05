@@ -193,6 +193,11 @@ double do_SPR(Parameters& P, int b1, int b2)
   return ratio;
 }
 
+// Consider penalizing lengths for being too close to equilibrium: branches couldn't get infinitely long.
+// Consider using actual substitution matrices.
+// Consider measuring similarities/differences by counting.
+// Problem: how do we handle multiple partitions?
+
 vector<double> effective_lengths(const Tree& T)
 {
   vector<double> lengths(2*T.n_branches(),0);
