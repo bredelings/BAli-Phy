@@ -205,6 +205,7 @@ vector<int> constraint_columns(const ublas::matrix<int>& constraint,const alignm
 // two x-coordinates may not decrease.
 
 // Question.  Is the (0,0) square actually at (1,1) in the matrix?
+// Answer. Yes, but we are going to store ranges in the unadjusted (0,0) coordinates.
 
 vector< pair<int,int> > get_x_ranges_for_band(int D, const vector<int>& seq1, const vector<int>& seq2, 
 					      const vector<int>& seq12)
