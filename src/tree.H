@@ -76,6 +76,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 // - check_subA( )
 // - extends_map( )
 // - remap_T_leaf_indices( ): assumes leaf nodes numbered 0..n-1
+// - alignment constraints are indexed by leaf index numbered 0...n-1
 
 //---------------------------------- TreeView --------------------------//
 
