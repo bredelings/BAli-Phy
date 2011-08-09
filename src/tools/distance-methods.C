@@ -21,6 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <list>
 #include <valarray>
+#include "boost/tuple/tuple.hpp"
 #include "util.H"
 #include "inverse.H"
 
@@ -28,6 +29,7 @@ using std::list;
 using std::vector;
 
 using boost::dynamic_bitset;
+using namespace boost::tuples;
 
 /// Compute the sum of all path lengths delta[b] passing through each branch b.
 vector<double> FastMTM(const Tree& T,const Matrix& D,
@@ -407,3 +409,170 @@ Matrix C(const Matrix& M) {
   return I;
 }
 
+double sum_1(const Matrix& D, int x)
+{
+  int N = D.size1();
+  assert(N = D.size2());
+
+  double total = 0;
+
+  for(int i=0;i<N;i++)
+    total += D(i,x);
+
+  return total;
+}
+
+double sum_2(const Matrix& D, int x)
+{
+  int N = D.size1();
+  assert(N = D.size2());
+
+  double total = 0;
+
+  for(int i=0;i<N;i++)
+    total += D(x,i);
+
+  return total;
+}
+
+std::pair<int,int> arg_min_dist(const Matrix& D)
+{
+  assert(D.size1() >= 2);
+  assert(D.size1() == D.size2());
+
+  int xmin = 0;
+  int ymin = 1;
+  int value = D(xmin,ymin);
+
+  for(int i=0;i<D.size1();i++)
+    for(int j=0;j<D.size2();j++)
+      if (i != j and D(i,j) < value)
+      {
+	xmin = i;
+	ymin = j;
+	value = D(i,j);
+      }
+
+  return std::pair<int,int>(xmin, ymin);
+}
+
+int cluster_edges(Tree& T, const tree_edge& e1, const tree_edge& e2)
+{
+  assert(e1.node1 != e2.node1);
+  assert(e1.node2 == e2.node2);
+
+  nodeview u = T.create_node_on_branch( T.branch(e1) );
+
+  T.reconnect_branch(e2.node1, e2.node2, u);
+
+  return u;
+}
+
+
+Tree NJ(Matrix D)
+{
+  int N = D.size1();
+
+  // Handle N=0
+  if (N == 0)
+  {
+    Tree T;
+    return T;
+  }
+
+  // Handle N=2
+  if (N == 1) {
+    Tree T;
+    T.add_first_node();
+    return T;
+  }
+
+  // Handle N=2
+  if (N == 2)
+  {
+    Tree T;
+    T.add_first_node();
+    T.add_leaf_node(0);
+    T.branch(0).set_length(D(0,1));
+    return T;
+  }
+
+  Tree T = star_tree(N);
+  vector<tree_edge> mapping = T.leaf_branches();
+  while (1)
+  {
+    N = D.size1();
+    if (N == 2) break;
+
+    vector<double> divergence(N);
+    for(int i=0;i<N;i++)
+    {
+      divergence[i] = 0;
+      for(int j=0;j<N;j++)
+	if (i != j)
+	  divergence[i] += D(i,j);
+    }
+
+    Matrix M(N,N);
+    for(int i=0;i<N;i++)
+      for(int j=0;j<N;j++)
+      {
+	M(i,j) = D(i,j) - (divergence[i] + divergence[j])/(N-2);
+      }
+    
+    int f, g;
+    tie(f,g) = arg_min_dist(M);
+    
+    //1. join the two leaves f and g to the new node u
+    int u = cluster_edges(T, mapping[f], mapping[g]);
+    tree_edge h(u, mapping[f].node2);
+    
+    //2. set the lengths of the edges from f->u and g->u
+    T.directed_branch(mapping[f].node1, u).set_length( D(f,g) / 2 + (divergence[f]-divergence[g]) / (2*(N-2)) );
+    T.directed_branch(mapping[g].node1, u).set_length( D(f,g) / 2 + (divergence[g]-divergence[f]) / (2*(N-2)) );
+    
+    //3. construct the new distance matrix and mapping 
+    
+    vector<int> new_to_old;
+    vector<tree_edge> mapping2;
+    for(int i=0;i<mapping.size();i++)
+    {
+      if (i == f or i ==g)
+	;
+      else
+      {
+	new_to_old.push_back(i);
+	mapping2.push_back(mapping[i]);
+      }
+    }
+    new_to_old.push_back(-1);
+    mapping2.push_back(h);
+    
+    assert(N-1 == new_to_old.size());
+    Matrix D2(N-1, N-1);
+    
+    for(int i=0; i< N-1; i++)
+      for(int j=0;j < N-1; j++)
+      {
+	if (new_to_old[i] == -1 and new_to_old[j] == -1)
+	  D2(i,j) = 0;
+	else if (new_to_old[i] == -1)
+	  D2(i,j) = (D(f,j)+D(g,j)-D(f,g))/2.0;
+	else if (new_to_old[j] == -1)
+	  D2(i,j) = (D(i,f)+D(i,g)-D(f,g))/2.0;
+	else
+	  D2(i,j) = D(new_to_old[i], new_to_old[j]);
+      }
+
+    D.resize(N-1, N-1);
+    D = D2;
+    mapping = mapping2;
+  }
+
+  //5. if there is just one branch left, the set its length and quit.
+  assert(D.size1() == 2);
+  assert(mapping[0] == mapping[1]);
+  T.directed_branch(mapping[0]).set_length(D(0,1));
+
+  return T;
+}
