@@ -27,28 +27,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cassert>
 #include "util.H"
 
-#include "config.h"
-
 using namespace std;
 using namespace boost::chrono;
 
 /// This timer stack is a global variable that is always available.
 timer_stack default_timer_stack;
-
-#ifdef HAVE_SYS_RESOURCE_H
-double total_time(const timeval& t)
-{
-  double T = t.tv_sec;
-  T += double(t.tv_usec)/1000000;
-  return T;
-}
-#else
-double total_time(const clock_t& t)
-{
-  // FIXME - this will unfortunately wrap around every 72 minutes on a 32-bit system!
-  return double(t)/CLOCKS_PER_SEC;
-}
-#endif
 
 duration_t total_cpu_time()
 {

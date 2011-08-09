@@ -33,6 +33,31 @@ along with BAli-Phy; see the file COPYING.  If not see
  *                Then, the container class, not the iterators, could convert to vector<>.
  */
 
+
+/*
+ * Add node and branch pointers to attribute structures.
+ *
+ * - Use copy-on-write pointers so that when we copy a tree w/ a lot of data, we don't have to copy the data
+ *   that we don't modify.
+ *
+ * - The attribute structure will be a vector of boost::any.  The user of an attribute must know what its type is.
+ *
+ * - Attributes will be indexed, but unnamed in attribute list structure.  However, class Tree will store 
+ *   names for attributes.  Empty names correspond to unnamed attributes.
+ *
+ * - Possibly reserve node attribute 0 for node names and branch attribute 0 for branch lengths.
+ *
+ * - Do I want to try to put node names (indices) into the attribute structure?
+ *   + How would I handle directed branch names?
+ */
+
+/*
+struct attributes
+{
+  vector< cow_ptr<boost::any > > attributes;
+};
+*/
+
 #ifndef BRANCHNODE
 #define BRANCHNODE
 
