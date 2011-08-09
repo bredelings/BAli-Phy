@@ -502,7 +502,7 @@ Tree NJ(Matrix D)
   while (1)
   {
     N = D.size1();
-    if (N == 2) break;
+    if (N == 3) break;
 
     vector<double> divergence(N);
     for(int i=0;i<N;i++)
@@ -554,25 +554,41 @@ Tree NJ(Matrix D)
     for(int i=0; i< N-1; i++)
       for(int j=0;j < N-1; j++)
       {
-	if (new_to_old[i] == -1 and new_to_old[j] == -1)
+	int I = new_to_old[i];
+	int J = new_to_old[j];
+	if (I != -1)
+	  assert(mapping2[i] == mapping[I]);
+	if (J != -1)
+	  assert(mapping2[j] == mapping[J]);
+	if (I == -1 and J == -1)
 	  D2(i,j) = 0;
-	else if (new_to_old[i] == -1)
-	  D2(i,j) = (D(f,j)+D(g,j)-D(f,g))/2.0;
-	else if (new_to_old[j] == -1)
-	  D2(i,j) = (D(i,f)+D(i,g)-D(f,g))/2.0;
+	else if (I == -1)
+	  D2(i,j) = (D(f,J) + D(g,J) - D(f,g))/2.0;
+	else if (J == -1)
+	  D2(i,j) = (D(I,f) + D(I,g) - D(f,g))/2.0;
 	else
-	  D2(i,j) = D(new_to_old[i], new_to_old[j]);
+	  D2(i,j) = D(I,J);
       }
 
     D.resize(N-1, N-1);
     D = D2;
     mapping = mapping2;
+
+    std::cout<<write_no_names(T)<<std::endl;
   }
 
   //5. if there is just one branch left, the set its length and quit.
-  assert(D.size1() == 2);
-  assert(mapping[0] == mapping[1]);
-  T.directed_branch(mapping[0]).set_length(D(0,1));
+  assert(D.size1() == 3);
+  assert(mapping[0].node2 == mapping[1].node2);
+  assert(mapping[0].node2 == mapping[2].node2);
+
+  double L0 = ( D(0,1) + D(0,2) - D(1,2) ) / 2;
+  double L1 = ( D(1,0) + D(1,2) - D(0,2) ) / 2;
+  double L2 = ( D(2,0) + D(2,1) - D(0,1) ) / 2;
+
+  T.directed_branch(mapping[0]).set_length( L0 );
+  T.directed_branch(mapping[1]).set_length( L1 );
+  T.directed_branch(mapping[2]).set_length( L2 );
 
   return T;
 }
