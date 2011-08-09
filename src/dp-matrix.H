@@ -201,14 +201,14 @@ public:
   double emit__(int i,int j) const;
 
   /// Construct a DP array from an HMM, emission probabilities, and substitution model
-  DPmatrixEmit(const std::vector<int>&,
-	       const std::vector<double>&,
-	       const Matrix&,
+  DPmatrixEmit(const std::vector<int>& state_emit,
+	       const std::vector<double>& start_pi,
+	       const Matrix& HMM,
 	       double Beta,
-	       const std::vector< double >&,
-	       const std::vector< Matrix >&,
-	       const std::vector< Matrix >&, 
-	       const Matrix&);
+	       const std::vector< double >& distribution,
+	       const std::vector< Matrix >& dists1,
+	       const std::vector< Matrix >& dists2, 
+	       const Matrix& frequency);
   
   virtual ~DPmatrixEmit() {}
 };

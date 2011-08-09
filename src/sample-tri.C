@@ -39,6 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::abs;
 using std::vector;
+using std::pair;
 using std::endl;
 using boost::dynamic_bitset;
 
@@ -46,7 +47,7 @@ using namespace A3;
 
 // FIXME - resample the path multiple times - pick one on opposite side of the middle 
 
-boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P,const vector<int>& nodes)
+boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P,const vector<int>& nodes, int bandwidth)
 {
   default_timer_stack.push_timer("alignment::DP2/3-way");
   const Tree& T = *P.T;
@@ -169,19 +170,24 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
   //------------------ Compute the DP matrix ---------------------//
 
-  //   Matrices.prune(); prune is broken!
-  
   //  vector<int> path_old = get_path_3way(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
   //  vector<int> path_old_g = Matrices.generalize(path_old);
 
   //  vector<int> path_g = Matrices.forward(P.features,(int)P.constants[0],path_old_g);
   vector<vector<int> > pins = get_pins(P.alignment_constraint,A,group1,group2 | group3,seq1,seq23,columns);
 
+  vector< pair<int,int> > yboundaries = get_y_ranges_for_band(bandwidth, seq23, seq1, columns);
+
   // if the constraints are currently met but cannot be met
   if (pins.size() == 1 and pins[0][0] == -1)
     ; //std::cerr<<"Constraints cannot be expressed in terms of DP matrix paths!"<<std::endl;
-  else {
-    Matrices->forward_constrained(pins);
+  else 
+  {
+    const int I = seq1.size()+1;
+    const int J = seq23.size()+1;
+    yboundaries = boundaries_intersection(yboundaries, get_yboundaries_from_pins(I, J, pins));
+
+    Matrices->forward_band(yboundaries);
     if (Matrices->Pr_sum_all_paths() <= 0.0) 
       std::cerr<<"Constraints give this choice probability 0"<<std::endl;
   }
@@ -243,7 +249,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 }
 
 sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p,const vector< vector<int> >& nodes_,
-			       bool do_OS,bool do_OP)
+							   bool do_OS,bool do_OP, int b)
   :
 #ifndef NDEBUG_DP
   P0(p[0]),
@@ -252,7 +258,8 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
   Matrices(p.size()),
   OS(p.size()),
   OP(p.size()),
-  Pr(p.size())
+  Pr(p.size()),
+  bandwidth(b)
 {
   assert(p.size() == nodes.size());
 
@@ -274,7 +281,7 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
   {
     for(int j=0;j<p[i].n_data_partitions();j++) {
       if (p[i][j].variable_alignment())
-	Matrices[i].push_back( tri_sample_alignment_base(p[i][j],nodes[i]) );
+	Matrices[i].push_back( tri_sample_alignment_base(p[i][j],nodes[i],bandwidth) );
       else
 	Matrices[i].push_back( boost::shared_ptr<DPmatrixConstrained>());
     }
@@ -472,10 +479,10 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p)
 // and match parts of the routine, while saving state.
 
 int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<efloat_t>& rho, bool do_OS,bool do_OP) 
+		     const vector<efloat_t>& rho, bool do_OS,bool do_OP, int bandwidth) 
 {
   try {
-    sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP);
+    sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP, bandwidth);
 
     // The DP matrix construction didn't work.
     if (tri.Pr[0] <= 0.0) return -1;
@@ -494,6 +501,8 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
 
 void tri_sample_alignment(Parameters& P,int node1,int node2) 
 {
+  int bandwidth = loadvalue(P.keys,"bandwidth",-1.0);
+
   P.set_root(node1);
 
   vector<dynamic_bitset<> > s1(P.n_data_partitions());
@@ -514,7 +523,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
 
   vector<efloat_t> rho(1,1);
 
-  int C = sample_tri_multi(p,nodes,rho,false,false);
+  int C = sample_tri_multi(p,nodes,rho,false,false, bandwidth);
 
   if (C != -1) {
     P = p[C];

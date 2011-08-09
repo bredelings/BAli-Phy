@@ -63,7 +63,7 @@ int sample_two_nodes_multi(std::vector<Parameters>& p,const std::vector< std::ve
 
 /// Routine for simultaneously sampling between several Parameter choices, and summing out some nodes
 int sample_tri_multi(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes,
-		     const std::vector<efloat_t>& rho, bool do_OS,bool do_OP);
+		     const std::vector<efloat_t>& rho, bool do_OS,bool do_OP, int bandwidth=-1);
 
 
 struct sample_tri_multi_calculation
@@ -78,9 +78,10 @@ struct sample_tri_multi_calculation
   std::vector< std::vector<efloat_t> > OP;
   std::vector<efloat_t> Pr;
   efloat_t C1;
+  int bandwidth;
 
   sample_tri_multi_calculation(std::vector<Parameters>& p,const std::vector< std::vector<int> >& nodes_,
-			       bool do_OS,bool do_OP);
+			       bool do_OS,bool do_OP,int b=-1);
 
   void set_proposal_probabilities(const std::vector<efloat_t>&);
 

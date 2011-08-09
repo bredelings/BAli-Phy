@@ -220,6 +220,8 @@ vector< pair<int,int> > get_x_ranges_for_band(int D, const vector<int>& seq1, co
   // we'll compute the first and last indices, instead of first and last+1
   vector< pair<int,int> > xboundaries(H+1, pair<int,int>(0,W));
 
+  if (D<0) return xboundaries;
+
   // Determine xmin[y]
   for(int x=0,y=0,k=0;k<seq12.size();k++)
   {
@@ -263,6 +265,11 @@ vector< pair<int,int> > get_x_ranges_for_band(int D, const vector<int>& seq1, co
   return xboundaries;
 }
 
+vector< pair<int,int> > get_y_ranges_for_band(int D, const vector<int>& seq1, const vector<int>& seq2, 
+					      const vector<int>& seq12)
+{
+  return get_x_ranges_for_band(D, seq1, seq2, seq12);
+}
 
 // We need to make sure that the pinned column coordinates always increase.
 // By considering constraints between seq1 and seq2 in the order of seq12 we can guarantee this,
@@ -395,4 +402,53 @@ bool any_branches_constrained(const vector<int>& branches,const SequenceTree& T,
       return true;
 
   return false;
+}
+
+vector< pair<int,int> > get_yboundaries_from_pins(int I, int J, const vector< vector<int> >& pins)
+{
+  vector< pair<int,int> > yboundaries(I, pair<int,int>(0,J-1));
+
+  const vector<int>& x = pins[0];
+  const vector<int>& y = pins[1];
+
+  if (x.size() != 0)
+  {
+    for(int i=0;i<x[0];i++)
+      yboundaries[i] = pair<int,int>(0, y[0]-1);
+
+    for(int k=0;k+1<(int)x.size();k++)
+      for(int i=x[k];i<x[k+1];i++)
+	yboundaries[i] = pair<int,int>(y[k], y[k+1]-1);
+
+    for(int i=x.back();i<I;i++)
+      yboundaries[i] = pair<int,int>(y.back(), J-1);
+  }
+
+  return yboundaries;
+}
+
+vector< pair<int,int> > boundaries_intersection(const vector< pair<int,int> >& boundaries1,const vector< pair<int,int> >& boundaries2)
+{
+  assert(boundaries1.size());
+
+  assert(boundaries1.size() == boundaries2.size());
+
+  assert(boundaries1[0].first == 0);
+  assert(boundaries2[0].first == 0);
+
+  int L1 = boundaries1.size()-1;
+
+  assert(boundaries1.back().second == boundaries2.back().second);
+  int L2 = boundaries1.back().second;
+
+  vector< pair<int,int> > boundaries3 = boundaries1;
+
+  for(int i=0; i<boundaries3.size();i++)
+  {
+    boundaries3[i].first = std::max(boundaries3[i].first, boundaries2[i].first);
+    boundaries3[i].second = std::min(boundaries3[i].second, boundaries2[i].second);
+    assert(boundaries3[i].second >= boundaries3[i].first);
+  }
+
+  return boundaries3;
 }

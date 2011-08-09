@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "pow2.H"
 #include "choose.H"
 #include "util.H"
+#include "alignment-constraint.H"
 
 using std::vector;
 using std::valarray;
@@ -138,7 +139,7 @@ inline void DPmatrix::forward_square_first(int x1,int y1,int x2,int y2) {
   }
 }
 
-inline void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries) 
+void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries) 
 {
   // note: (x,y) is located at (x+1,y+1) in the matrix.
 
@@ -200,6 +201,8 @@ inline void DPmatrix::forward_band(const vector< pair<int,int> >& yboundaries)
     for(int y=y1;y<=y2;y++)
       forward_cell(x,y);
   }
+
+  compute_Pr_sum_all_paths();
 }
 
 inline void DPmatrix::forward_square(int x1,int y1,int x2,int y2) {
@@ -254,29 +257,15 @@ void DPmatrix::forward_constrained(const vector< vector<int> >& pins)
   const int I = size1()-1;
   const int J = size2()-1;
 
-  vector< pair<int,int> > yboundaries(I, pair<int,int>(0,J-1));
+  vector< pair<int,int> > yboundaries = get_yboundaries_from_pins(I, J, pins);
 
   const vector<int>& x = pins[0];
   const vector<int>& y = pins[1];
 
-  if (x.size() != 0)
-  {
-    for(int i=0;i<x[0];i++)
-      yboundaries[i] = pair<int,int>(0, y[0]-1);
-
-    for(int k=0;k+1<(int)x.size();k++)
-      for(int i=x[k];i<x[k+1];i++)
-	yboundaries[i] = pair<int,int>(y[k], y[k+1]-1);
-
-    for(int i=x.back();i<I;i++)
-      yboundaries[i] = pair<int,int>(y.back(), J-1);
-  }
-
   forward_band(yboundaries);
-  compute_Pr_sum_all_paths();
-  return;
+   return;
 
-  if (pins[0].size() == 0) 
+  if (x.size() == 0) 
     forward_square();
   else 
   {

@@ -41,3 +41,11 @@ std::vector< std::pair<int,int> > get_x_ranges_for_band(int D,
 							const std::vector<int>& seq1, 
 							const std::vector<int>& seq2, 
 							const std::vector<int>& seq12);
+std::vector< std::pair<int,int> > get_y_ranges_for_band(int D, 
+							const std::vector<int>& seq1, 
+							const std::vector<int>& seq2, 
+							const std::vector<int>& seq12);
+
+std::vector< std::pair<int,int> > get_yboundaries_from_pins(int I, int J, const std::vector< std::vector<int> >& pins);
+
+std::vector< std::pair<int,int> > boundaries_intersection(const std::vector< std::pair<int,int> >&,const std::vector< std::pair<int,int> >&);
