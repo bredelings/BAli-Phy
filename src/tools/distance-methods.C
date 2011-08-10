@@ -442,7 +442,7 @@ std::pair<int,int> arg_min_dist(const Matrix& D)
 
   int xmin = 0;
   int ymin = 1;
-  int value = D(xmin,ymin);
+  double value = D(xmin,ymin);
 
   for(int i=0;i<D.size1();i++)
     for(int j=0;j<D.size2();j++)
