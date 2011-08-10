@@ -900,17 +900,30 @@ void exchange_subtrees(Tree& T, int br1, int br2)
   T.recompute(n0);
 }
 
+// Currently, we HAVE to assign new branch names, but only to backwards branches
 nodeview Tree::create_node_on_branch(int br) 
 {
   BranchNode* b = branches_[br];
 
-  BranchNode* n = TreeView::create_node_on_branch(b,-1);
+  int B = branches_.size()/2;
+  BranchNode* n = TreeView::create_node_on_branch(b,B);
 
-  //FIXME - reanalyze destroys branch names, and so destroys length information...
-  //  lets put branch information in the tree structure!
-  //  std::abort();
+  // Name the new node
+  name_node(n, nodes_.size());
+  nodes_.push_back(n);
 
-  reanalyze(nodes_[0]);
+  // Reserve space for more branches
+  branches_.resize(branches_.size()+2);
+
+  // Rename only backwards branches.
+  // This does NOT destroy length information.
+  for(BN_iterator BN(nodes_[0]);BN;BN++) {
+    if ((*BN)->branch > (*BN)->out->branch)
+      (*BN)->branch = (*BN)->out->branch + B+1;
+  }
+
+  // Recompute the nodes_ and branches_ array and check our invariants.
+  recompute(nodes_[0], true);
 
   return n;
 }
