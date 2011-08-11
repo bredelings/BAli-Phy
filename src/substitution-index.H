@@ -60,11 +60,16 @@ along with BAli-Phy; see the file COPYING.  If not see
  * on branch b is c.  If I(c,b) = -1, then this column is not indexed for 
  * branch b.
  * - The current method is wasteful when most of the I(c,b)'s == -1.
+ */
+
+/* PROJECT: Fixing alignments to handle walking when there's lots of gaps.
  * - We currently need to 
  *   (a) Map internal node characters to subA-indices. 
  *     - Do we need to map back?
  *   (b) Map subA-indices from one branch to subA-indices for an adjacent branch.
  *   (c) Map subA-indices from three adjacent branches to each other. (at the root)
+ *   (d) Separate leaf sequence data from the alignment.
+ *   (e) Write a generic interface for things you want to do, like walk the alignment.
  *   
  * - We also need to walk through the alignment ...
  *   + ... that has a character in sequence s.
