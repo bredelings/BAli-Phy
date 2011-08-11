@@ -719,7 +719,8 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     enable_disable_transition_kernels(pre_burnin,args);
 
     for(int i=0;i<3;i++) {
-      out_both<<" Tree size #"<<i+1<<"   likelihood = "<<P->likelihood();
+      out_both<<" Tree size #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
+      out_both<<"   |T| = "<<Get_Tree_Length_Function()(P,0);
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
       {
 	Parameters& PP = *P.as<Parameters>();
@@ -749,7 +750,8 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     enable_disable_transition_kernels(pre_burnin,args);
 
     for(int i=0;i<n_pre_burnin;i++) {
-      out_both<<" SPR #"<<i+1<<"   likelihood = "<<P->likelihood();
+      out_both<<" SPR #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
+      out_both<<"   |T| = "<<Get_Tree_Length_Function()(P,0);
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
       {
 	Parameters& PP = *P.as<Parameters>();
@@ -779,7 +781,8 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 
     int n_pre_burnin2 = n_pre_burnin + (int)log(P.as<Parameters>()->T->n_leaves());
     for(int i=0;i<n_pre_burnin2;i++) {
-      out_both<<" NNI #"<<i+1<<"   likelihood = "<<P->likelihood();
+      out_both<<" NNI #"<<i+1<<"   prior = "<<P->prior()<<"   likelihood = "<<P->likelihood();
+      out_both<<"   |T| = "<<Get_Tree_Length_Function()(P,0);
       for(int j=0;j<P.as<Parameters>()->n_branch_means();j++)
       {
 	Parameters& PP = *P.as<Parameters>();
