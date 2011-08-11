@@ -67,7 +67,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 // Future goal: stop forcing a particular order for nodes.
 //              - instead allow accessors such as leaf_node(i), internal_node(i), leaf_branch(i), internal_branch(i), etc.
 
-// problem areas:
+// Problem areas:
 // - standardize: Names leaves, and assumes that rest of tree nodes get named based on leaf node names
 //                Also assumes leaf nodes are named 0..n-1
 // - branch_partition: Assumes leaf nodes are named 0..n-1
@@ -77,6 +77,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 // - extends_map( )
 // - remap_T_leaf_indices( ): assumes leaf nodes numbered 0..n-1
 // - alignment constraints are indexed by leaf index numbered 0...n-1
+
+// Solution?
+// - For now, just assume that the leaf nodes are labelled by their order in leaf_nodes.
+//   + I should probably have a separate function to compute leaf-labelled branch partitions.
+//
+// - Well, when comparing two trees this is still problematic.
+//   + We want to be able to say that two leaf-labelled trees are equivalent.
 
 //---------------------------------- TreeView --------------------------//
 
