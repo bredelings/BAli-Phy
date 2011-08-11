@@ -46,11 +46,6 @@ void resize(ublas::matrix<int>& M1,int s1,int s2,int clear=0)
   M1.swap(M2);
 }
 
-int alignment::add_note(int l) const {
-  notes.push_back(ublas::matrix<int>(length()+1,l));
-  return notes.size()-1;
-}
-
 bool all_gaps(const alignment& A,int column,const boost::dynamic_bitset<>& mask) {
   for(int i=0;i<A.n_sequences();i++)
     if (mask[i] and A.character(column,i))
@@ -97,9 +92,6 @@ int alignment::index(const string& s) const {
 void alignment::changelength(int l) 
 {
   array.resize(l,array.size2());
-
-  for(int i=0;i<notes.size();i++)
-    notes[i].resize(l+1,notes[i].size2());
 }
 
 void alignment::delete_column(int column) {
@@ -134,8 +126,6 @@ alignment& alignment::operator=(const alignment& A) {
 
   array.resize(A.array.size1(),A.array.size2());
   array = A.array;
-
-  notes = A.notes;
 
   return *this;
 }
@@ -460,9 +450,6 @@ alignment blank_copy(const alignment& A1,int length)
 
   // make a blank array
   A2.array.resize(length, A1.array.size2());
-
-  // make blank notes
-  A2.notes.reserve(A1.notes.size());
 
   return A2;
 }

@@ -52,26 +52,11 @@ class alignment
 
   /// The alphabet that translates integers back to letters.
   boost::shared_ptr<const alphabet> a;
-
-  /// An expandable list of arrays for caching information.
-  mutable std::vector<ublas::matrix<int> > notes;
   
 public:
 
   /// Unsafe - Make a copy of the alignment without preserving the homology array
   friend alignment blank_copy(const alignment&,int length);
-
-  /// Returns the number of notes
-  int n_notes() const {return notes.size();}
-
-  /// Adds a note of size (length()+1 X l)
-  int add_note(int l) const;
-
-  /// Access the n-th note.
-  ublas::matrix<int>& note(int n) const {return notes[n];}
-
-  /// Access the n-th note.
-  int& note(int n,int i,int j) const {return notes[n](i,j);}
 
   /// The order of the sequence named s
   int index(const std::string& s) const;
@@ -118,7 +103,7 @@ public:
   /// Print alignment in PHYLIP format
   void print_phylip(std::ostream&) const;
 
-  /// Resize the alignment array and the notes
+  /// Resize the alignment array
   void changelength(int l);
   /// Remove a column from the alignment, preserving the information in other columns.
   void delete_column(int i);
