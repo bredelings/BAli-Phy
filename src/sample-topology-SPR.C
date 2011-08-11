@@ -1209,6 +1209,7 @@ void sample_SPR_A_search_all(owned_ptr<Probability_Model>& P,MoveStats& Stats)
     bool changed = sample_SPR_search_one(*P.as<Parameters>(),Stats,b);
     if (not changed) three_way_topology_sample(P,Stats,b);
     slice_sample_branch_length(P,Stats,b);
+    scale_means_only(P,Stats);
   }
 }
 
