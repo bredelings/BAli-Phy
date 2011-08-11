@@ -68,8 +68,10 @@ along with BAli-Phy; see the file COPYING.  If not see
  *     - Do we need to map back?
  *   (b) Map subA-indices from one branch to subA-indices for an adjacent branch.
  *   (c) Map subA-indices from three adjacent branches to each other. (at the root)
- *   (d) Separate leaf sequence data from the alignment.
+ *   (d) DONE - Separate leaf sequence data from the alignment.
  *   (e) Write a generic interface for things you want to do, like walk the alignment.
+ *   (f) Modify substitution.C to avoid refering to the alignment (esp. A.alphabet) where unnecessary.
+ *   
  *   
  * - We also need to walk through the alignment ...
  *   + ... that has a character in sequence s.
