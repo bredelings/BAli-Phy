@@ -137,6 +137,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const alignment
 ///
 valarray<double> empirical_frequencies(const variables_map& args,const vector<alignment>& alignments) 
 {
+  // FIXME - what if the alphabets are different??
   int total=0;
   for(int i=0;i<alignments.size();i++)
     total += alignments[i].length();
@@ -149,7 +150,7 @@ valarray<double> empirical_frequencies(const variables_map& args,const vector<al
   {
     for(int c=0;c<alignments[i].length();c++)
       for(int s=0;s<alignments[i].n_sequences();s++)
-	A(c+L,s) = alignments[i](c,s);
+	A.set_value(c+L,s, alignments[i](c,s) );
     L += alignments[i].length();
   }
 
@@ -380,7 +381,7 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Seque
 	or args.count("randomize-alignment"))
       for(int column=0;column< alignments[i].length();column++) {
 	for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
-	  alignments[i](column,j) = alphabet::not_gap;
+	  alignments[i].set_value(column,j, alphabet::not_gap);
       }
 
     //---- Check that internal sequence satisfy constraints ----//
@@ -434,7 +435,7 @@ void load_As_and_T(const variables_map& args,vector<alignment>& alignments,Roote
 	or args.count("randomize-alignment"))
       for(int column=0;column< alignments[i].length();column++) {
 	for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
-	  alignments[i](column,j) = alphabet::not_gap;
+	  alignments[i].set_value(column,j, alphabet::not_gap);
       }
 
     //---- Check that internal sequence satisfy constraints ----//
@@ -498,7 +499,7 @@ void load_As_and_random_T(const variables_map& args,vector<alignment>& alignment
 	or args.count("randomize-alignment"))
       for(int column=0;column< alignments[i].length();column++) {
 	for(int j=T.n_leaves();j<alignments[i].n_sequences();j++) 
-	  alignments[i](column,j) = alphabet::not_gap;
+	  alignments[i].set_value(column,j, alphabet::not_gap);
       }
 
     //---- Check that internal sequence satisfy constraints ----//
@@ -533,7 +534,7 @@ void load_A_and_T(const variables_map& args,alignment& A,RootedSequenceTree& T,b
       or args.count("randomize-alignment"))
     for(int column=0;column< A.length();column++) {
       for(int i=T.n_leaves();i<A.n_sequences();i++) 
-	A(column,i) = alphabet::not_gap;
+	A.set_value(column,i, alphabet::not_gap );
     }
 
   //---- Check that internal sequence satisfy constraints ----//
@@ -588,7 +589,7 @@ void load_A_and_random_T(const variables_map& args,alignment& A,SequenceTree& T,
       or args.count("randomize-alignment"))
     for(int column=0;column< A.length();column++) {
       for(int i=T.n_leaves();i<A.n_sequences();i++) 
-	A(column,i) = alphabet::not_gap;
+	A.set_value(column,i, alphabet::not_gap);
     }
 
   //---- Check that internal sequence satisfy constraints ----//

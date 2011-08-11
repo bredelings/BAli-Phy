@@ -124,9 +124,9 @@ public:
   void delete_column(int i);
 
   /// The feature (letter,gap,non-gap) of sequence s in column l
-  int& operator()(int l,int s) {return array(l,s); }
+  void set_value(int l,int s,int v) {array(l,s) = v; }
   /// The feature (letter,gap,non-gap) of sequence s in column l
-  const int& operator()(int l,int s) const {return array(l,s); }
+  int operator()(int l,int s) const {return array(l,s); }
 
   /// Does sequence i have a gap at position j ?
   bool gap(int i,int j) const {return array(i,j)==alphabet::gap;}

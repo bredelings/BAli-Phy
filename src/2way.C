@@ -60,9 +60,9 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
     if (c1 < subA1.size() and (c2 == seq1.size() or (c2<seq1.size() and subA1[c1] < seq1[c2]))) {
       for(int i=0;i<A.n_sequences();i++) {
 	if (group1[i])
-	  A(column,i) = old(subA1[c1],i);
+	  A.set_value(column,i, old(subA1[c1],i));
 	else
-	  A(column,i) = alphabet::gap;
+	  A.set_value(column,i, alphabet::gap );
       }
       c1++;
       assert(not all_gaps(A,column));
@@ -70,9 +70,9 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
     else if (c3 < subA2.size() and (c4 == seq2.size() or (c4<seq2.size() and subA2[c3] < seq2[c4]))) {
       for(int i=0;i<A.n_sequences();i++) {
 	if (group1[i])
-	  A(column,i) = alphabet::gap;
+	  A.set_value(column,i, alphabet::gap);
 	else
-	  A(column,i) = old(subA2[c3],i);
+	  A.set_value(column,i, old(subA2[c3],i) );
       }
       c3++;
       assert(not all_gaps(A,column));
@@ -80,9 +80,9 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
     else if (path[l]==0) {
       for(int i=0;i<A.n_sequences();i++) {
 	if (group1[i])
-	  A(column,i) = old(seq1[c2],i);
+	  A.set_value(column,i, old(seq1[c2],i));
 	else
-	  A(column,i) = old(seq2[c4],i);
+	  A.set_value(column,i, old(seq2[c4],i));
       }
       c1++;c2++;c3++;c4++;l++;
       assert(not all_gaps(A,column));
@@ -90,9 +90,9 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
     else if (path[l]==1) {
       for(int i=0;i<A.n_sequences();i++) {
 	if (group1[i])
-	  A(column,i) = alphabet::gap;
+	  A.set_value(column,i, alphabet::gap);
 	else
-	  A(column,i) = old(seq2[c4],i);
+	  A.set_value(column,i, old(seq2[c4],i) );
       }
       c3++;c4++;l++;
       assert(not all_gaps(A,column));
@@ -100,9 +100,9 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
     else {
       for(int i=0;i<A.n_sequences();i++) {
 	if (group1[i])
-	  A(column,i) = old(seq1[c2],i);
+	  A.set_value(column,i, old(seq1[c2],i) );
 	else
-	  A(column,i) = alphabet::gap;
+	  A.set_value(column,i, alphabet::gap );
       }
       c1++;c2++;l++;
       assert(not all_gaps(A,column));

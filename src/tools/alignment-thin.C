@@ -242,7 +242,7 @@ int remove_almost_empty_columns(alignment& A,int n)
     {
       if (column != length)
 	for(int i=0;i<A.n_sequences();i++)
-	  A(length,i) = A(column,i);
+	  A.set_value(length,i, A(column,i) );
       length++;
     }
 

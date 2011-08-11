@@ -455,9 +455,9 @@ namespace A5 {
 	     (cS[i] < seq[i].size() and subA[i][cA[i]] != seq[i][cS[i]]))) {
 	  for(int s=0;s<A.n_sequences();s++){
 	    if (group[i][s])
-	      A(column,s) = old(subA[i][cA[i]],s);
+	      A.set_value(column,s, old(subA[i][cA[i]],s) );
 	    else
-	      A(column,s) = alphabet::gap;
+	      A.set_value(column,s, alphabet::gap );
 	  }
 	  cA[i]++;
 	  done = true;
@@ -471,16 +471,16 @@ namespace A5 {
       int bits = states_list[path[l]] & bitsmask;
 
       for(int s=0;s<A.n_sequences();s++) 
-	A(column,s) = alphabet::gap;
+	A.set_value(column,s, alphabet::gap );
 
       for(int s=0;s<A.n_sequences();s++) {
 	if (s == nodes[4]) {
 	  if (bitset(bits,4))
-	    A(column,s) = alphabet::not_gap;
+	    A.set_value(column,s, alphabet::not_gap );
 	}
 	else if (s == nodes[5]) {
 	  if (bitset(bits,5))
-	    A(column,s) = alphabet::not_gap;
+	    A.set_value(column,s, alphabet::not_gap );
 	}
 	else {
 	  // which group is sequence 's' in?
@@ -494,7 +494,7 @@ namespace A5 {
 
 	  // copy from the  correct column, based on the group 'j'
 	  if (bitset(bits,j))
-	    A(column,s) = old(seq[j][cS[j]],s);
+	    A.set_value(column,s, old(seq[j][cS[j]],s) );
 	}
       }
 
@@ -542,7 +542,7 @@ namespace A5 {
     A2.changelength(columns.size());
     for(int column=0;column<A2.length();column++) {
       for(int i=0;i<nodes.size();i++) 
-	A2(column,i) = A1(columns[column],nodes[i]);
+	A2.set_value(column,i, A1(columns[column],nodes[i]) );
     }
 
     return A2;

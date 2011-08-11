@@ -137,10 +137,10 @@ alignment stretch(const alignment& A1, const vector<int>& columns,int fill)
   for(int c=0;c<A2.length();c++) {
     if (columns[c] == -1)
       for(int i=0;i<A2.n_sequences();i++)
-	A2(c,i) = fill;
+	A2.set_value(c,i, fill);
     else
       for(int i=0;i<A2.n_sequences();i++)
-	A2(c,i) = A1(columns[c],i);
+	A2.set_value(c,i, A1(columns[c],i) );
   }
   return A2;
 }
@@ -259,7 +259,7 @@ int main(int argc,char* argv[])
 
       O.add_sequence(sequence("",""));
       for(int c=0;c<O.length();c++)
-	O(c,O.n_sequences()-1) = fill;
+	O.set_value(c,O.n_sequences()-1, fill);
 
       // append the second alignment as extra rows
       vector<sequence> sequences = A2b.convert_to_sequences();

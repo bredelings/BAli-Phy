@@ -1005,7 +1005,7 @@ alignment get_alignment(const ublas::matrix<int>& M, const alignment& A1)
       if (index >= 0)
 	index = sequences[i][index];
 
-      A2(c,i) = index;
+      A2.set_value(c,i, index);
     }
   }
 

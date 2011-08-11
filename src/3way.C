@@ -410,9 +410,9 @@ namespace A3 {
 	     (cS[i] < seq[i].size() and subA[i][cA[i]] != seq[i][cS[i]]))) {
 	  for(int s=0;s<A.n_sequences();s++){
 	    if (group[i][s])
-	      A(column,s) = old(subA[i][cA[i]],s);
+	      A.set_value(column,s, old(subA[i][cA[i]],s) );
 	    else
-	      A(column,s) = alphabet::gap;
+	      A.set_value(column,s, alphabet::gap );
 	  }
 	  cA[i]++;
 	  done = true;
@@ -424,12 +424,12 @@ namespace A3 {
       //----------------- Insert a column corresponding to path[l] -------------------//
       int bits = states_list[path[l]] & bitsmask;
       for(int s=0;s<A.n_sequences();s++) 
-	A(column,s) = alphabet::gap;
+	A.set_value(column,s, alphabet::gap );
       
       for(int s=0;s<A.n_sequences();s++) {
 	if (s == n0) {
 	  if (dl(path[l]))
-	    A(column,s) = alphabet::not_gap;
+	    A.set_value(column,s, alphabet::not_gap);
 	}
 	else {
 	  // which group is sequence 's' in?
@@ -443,7 +443,7 @@ namespace A3 {
 
 	  // copy from the  correct column, based on the group 'j'
 	  if (bitset(bits,1+j))
-	    A(column,s) = old(seq[j][cS[j]],s);
+	    A.set_value(column,s, old(seq[j][cS[j]],s) );
 	}
       }
 
@@ -544,10 +544,10 @@ namespace A3 {
     vector<int> columns = getorder(A1,n0,n1,n2,n3);
     A2.changelength(columns.size());
     for(int i=0;i<A2.length();i++) {
-      A2(i,0) = A1(columns[i],n0);
-      A2(i,1) = A1(columns[i],n1);
-      A2(i,2) = A1(columns[i],n2);
-      A2(i,3) = A1(columns[i],n3);
+      A2.set_value(i,0, A1(columns[i],n0));
+      A2.set_value(i,1, A1(columns[i],n1));
+      A2.set_value(i,2, A1(columns[i],n2));
+      A2.set_value(i,3, A1(columns[i],n3));
     }
 
     return A2;

@@ -343,9 +343,9 @@ void minimally_connect_leaf_characters(alignment& A,const Tree& T)
     // put present characters into the alignment.
     for(int i=T.n_leaves();i<T.n_nodes();i++) {
       if (present[i])
-	A(column,i) = alphabet::not_gap;
+	A.set_value(column,i, alphabet::not_gap );
       else
-	A(column,i) = alphabet::gap;
+	A.set_value(column,i, alphabet::gap );
     }
   }
   remove_empty_columns(A);
@@ -369,7 +369,7 @@ void connect_leaf_characters(alignment& A,const Tree& T)
     // put present characters into the alignment.
     for(int i=T.n_leaves();i<T.n_nodes();i++) {
       if (present[i])
-	A(column,i) = alphabet::not_gap;
+	A.set_value(column,i, alphabet::not_gap);
     }
   }
 }
@@ -1494,7 +1494,7 @@ alignment select_columns(const alignment& A,const vector<int>& sites)
   for(int i=0;i<sites.size();i++) {
     int column = sites[i];
     for(int j=0;j<A2.n_sequences();j++)
-      A2(i,j) = A(column,j);
+      A2.set_value(i,j, A(column,j) );
   }
   return A2;
 }
@@ -1508,7 +1508,7 @@ alignment reverse(const alignment& A)
   // Reverse
   for(int i=0;i<A2.n_sequences();i++) 
     for(int j=0;j<A2.length();j++)
-      A2(j,i) = A(L-j-1,i);
+      A2.set_value(j,i, A(L-j-1,i) );
 
   return A2;
 }
@@ -1527,7 +1527,7 @@ alignment complement(const alignment& A)
   // Reverse
   for(int i=0;i<A2.n_sequences();i++) 
     for(int j=0;j<A2.length();j++)
-      A2(j,i) = N->complement(A(j,i));
+      A2.set_value(j,i, N->complement(A(j,i)) );
 
   return A2;
 }
@@ -1548,7 +1548,7 @@ alignment reverse_complement(const alignment& A)
   // Reverse
   for(int i=0;i<A2.n_sequences();i++) 
     for(int j=0;j<A2.length();j++)
-      A2(j,i) = N->complement(A(L-j-1,i));
+      A2.set_value(j,i, N->complement(A(L-j-1,i)) );
 
   return A2;
 }
@@ -1600,7 +1600,7 @@ alignment unalign_all(const alignment& A, int n)
   // Clear the new alignment
   for(int i=0;i<A2.length();i++)
     for(int j=0;j<A2.n_sequences();j++)
-      A2(i,j) = alphabet::gap;
+      A2.set_value(i,j, alphabet::gap );
 
   // For each row of the new alignment
   int start_column=0;
@@ -1611,7 +1611,7 @@ alignment unalign_all(const alignment& A, int n)
 
     // write them into the correct position, move start_column
     for(int j=0;j<s.size();j++)
-      A2(start_column++,i) = s[j];
+      A2.set_value(start_column++,i, s[j] );
   }
  
   return A2;

@@ -55,7 +55,7 @@ alignment randomize(const alignment& A,int n) {
     }
 
     for(int c=0;c<A2.length();c++)
-      A2(c,i) = s[c];
+      A2.set_value(c,i, s[c]);
   }
 
   remove_empty_columns(A2);
