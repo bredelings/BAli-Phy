@@ -60,6 +60,17 @@ along with BAli-Phy; see the file COPYING.  If not see
  * on branch b is c.  If I(c,b) = -1, then this column is not indexed for 
  * branch b.
  * - The current method is wasteful when most of the I(c,b)'s == -1.
+ * - We currently need to 
+ *   (a) Map internal node characters to subA-indices. 
+ *     - Do we need to map back?
+ *   (b) Map subA-indices from one branch to subA-indices for an adjacent branch.
+ *   (c) Map subA-indices from three adjacent branches to each other. (at the root)
+ *   
+ * - We also need to walk through the alignment ...
+ *   + ... that has a character in sequence s.
+ *   + ... that has a character in any of sequence s[0], s[1], ...., or s[n-1].
+ *   This is for get_order( )
+ *
  * - So why do we do it this way?  When do we need the column information?
  *   + We do not need it in get_column_likelihoods( ): there we are just reordering
  *     sub-columns.
@@ -71,6 +82,20 @@ along with BAli-Phy; see the file COPYING.  If not see
  *     - We could then CACHE the column information on the DAG nodes, if we were trying to match a 
  *       specific linear order.
  *     - We would then still have to handle ordering the columns in/for get_column_likelihoods( )
+ *
+ * IDEA: Suppose I used a partially ordered graph.
+ *   + Modifying the alignment becomes more complicated.
+ *   + Mostly we modify alignments only in 
+ *     - alignment.C
+ *     - 2way.C (construct)
+ *     - 3way.C (construct, project)
+ *     - 5way.C (construct, project)
+ *     - alignment-random.C (randomize)
+ *     - alignment-util.C (minimally_connect_leaf_characters, connect_leaf_characters, select_columns, reverse, complement, reverse_complement, unalign_all)
+ *     - setup.C (various load_A_T functions: clear internal node sequences)
+ *     - tools/alignment-thin.C (remove_almost_empty_columns)
+ *     - tools/index-matrix.C (get_alignment)
+ *     - tools/alignment-compare.C (get_alignment)
  *
  * 4. Note that even for the indexing scheme subA_index_leaf (in which all
  * columns correspond to CL index at the root of the tree) the ORDER
