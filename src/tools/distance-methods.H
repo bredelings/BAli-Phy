@@ -41,4 +41,6 @@ std::vector<double> LeastSquares(const Tree& T, const Matrix & D, const Matrix& 
 std::vector<double> FastLeastSquares(const Tree& T, const Matrix & D,
 				const std::vector<std::vector<int> >& leaf_set);
 
+Tree NJ(Matrix D);
+
 #endif

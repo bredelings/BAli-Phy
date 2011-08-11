@@ -193,6 +193,11 @@ double do_SPR(Parameters& P, int b1, int b2)
   return ratio;
 }
 
+// Consider penalizing lengths for being too close to equilibrium: branches couldn't get infinitely long.
+// Consider using actual substitution matrices.
+// Consider measuring similarities/differences by counting.
+// Problem: how do we handle multiple partitions?
+
 vector<double> effective_lengths(const Tree& T)
 {
   vector<double> lengths(2*T.n_branches(),0);
@@ -222,6 +227,32 @@ double effective_length(const Tree& T, int b)
 {
   return effective_lengths(T)[b];
 }
+
+vector<double> effective_lengths_min(const Tree& T)
+{
+  vector<double> lengths(2*T.n_branches(),0);
+
+  vector<const_branchview> branches = branches_from_leaves(T);
+
+  for(int i=0;i<branches.size();i++)
+  {
+    lengths[branches[i]] = branches[i].length();
+
+    vector<const_branchview> pre_b;
+    append(branches[i].branches_before(),pre_b);
+    if (pre_b.size() > 0) 
+    {
+      double min_prev = pre_b[0].length();
+      for(int j=1;j<pre_b.size();j++)
+	min_prev = std::min(min_prev, pre_b[i].length());
+
+      lengths[branches[i]] += min_prev;
+    }
+  }
+
+  return lengths;
+}
+
 
 int choose_SPR_target(SequenceTree& T1, int b1_) 
 {

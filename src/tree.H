@@ -76,6 +76,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 // - check_subA( )
 // - extends_map( )
 // - remap_T_leaf_indices( ): assumes leaf nodes numbered 0..n-1
+// - alignment constraints are indexed by leaf index numbered 0...n-1
 
 //---------------------------------- TreeView --------------------------//
 
@@ -180,10 +181,17 @@ struct tree_edge
     return false;
   }
 
+  tree_edge reverse() const;
+
   tree_edge():node1(-1),node2(-1) { }
   tree_edge(int s, int t):node1(s), node2(t) { }
   tree_edge(const BranchNode* BN):node1(BN->node), node2(BN->out->node) { }
 };
+
+inline tree_edge tree_edge::reverse() const
+{
+  return tree_edge(node2, node1);
+}
 
 /**
  * @brief An unrooted tree class.

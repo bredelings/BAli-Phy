@@ -338,7 +338,7 @@ void sample_tri_multi_calculation::set_proposal_probabilities(const vector<efloa
   assert(Pr[0] > 0.0);
 }
 
-int sample_tri_multi_calculation::choose(vector<Parameters>& p)
+int sample_tri_multi_calculation::choose(vector<Parameters>& p, bool correct)
 {
   assert(p.size() == nodes.size());
 
@@ -469,7 +469,7 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p)
 
   efloat_t C2 = A3::correction(p[C],nodes[C]);
   // If we reject the proposed move, then don't do anything.
-  if (myrandomf() > double(C1/C2))
+  if (correct and myrandomf() > double(C1/C2))
     return -1;
 
   return C;
@@ -479,10 +479,10 @@ int sample_tri_multi_calculation::choose(vector<Parameters>& p)
 // and match parts of the routine, while saving state.
 
 int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
-		     const vector<efloat_t>& rho, bool do_OS,bool do_OP, int bandwidth) 
+		     const vector<efloat_t>& rho, bool do_OS,bool do_OP) 
 {
   try {
-    sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP, bandwidth);
+    sample_tri_multi_calculation tri(p, nodes, do_OS, do_OP);
 
     // The DP matrix construction didn't work.
     if (tri.Pr[0] <= 0.0) return -1;
@@ -497,6 +497,56 @@ int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
   }
 }
 
+int sample_tri_multi(vector<Parameters>& p,const vector< vector<int> >& nodes,
+		     const vector<efloat_t>& rho, bool do_OS,bool do_OP, int bandwidth) 
+{
+  assert(bandwidth >= 0);
+  try {
+    vector<Parameters> p2 = p;
+
+    //----------------- Part 1: Forward -----------------//
+    sample_tri_multi_calculation tri1(p, nodes, do_OS, do_OP, bandwidth);
+
+    // The DP matrix construction didn't work.
+    if (tri1.Pr[0] <= 0.0) return -1;
+
+    tri1.set_proposal_probabilities(rho);
+
+    int C1 = tri1.choose(p,false);
+    assert(C1 != -1);
+
+    //----------------- Part 2: Backward -----------------//
+
+    // Set the initial alignment, so that our bandwidth is relative to this one.
+    //
+    // This just selects another alignment w/in the range of possible alignments, so the previous
+    //   cache invalidations should work for this alignment as well.
+    //
+    for(int i=0;i<p2.size();i++)
+      for(int j=0;j<p2[i].n_data_partitions();j++)
+	p2[i][j].A = p[C1][j].A;
+
+    sample_tri_multi_calculation tri2(p2, nodes, do_OS, do_OP, bandwidth);
+
+    // The DP matrix construction didn't work.
+    if (tri2.Pr[0] <= 0.0) return -1;
+
+    tri2.set_proposal_probabilities(rho);
+
+    efloat_t ratio = tri1.Pr[C1]*choose_MH_P(0,C1,tri1.Pr)/(tri2.Pr[0]*choose_MH_P(C1,0,tri2.Pr));
+
+    ratio *= tri1.C1 / tri2.C1;
+
+    if (uniform() < double(ratio))
+      return C1;
+    else
+      return -1;
+  }
+  catch (std::bad_alloc&) {
+    std::cerr<<"Allocation failed in sample_tri_multi!  Proceeding."<<std::endl;
+    return -1;
+  }
+}
 
 
 void tri_sample_alignment(Parameters& P,int node1,int node2) 
@@ -523,7 +573,11 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
 
   vector<efloat_t> rho(1,1);
 
-  int C = sample_tri_multi(p,nodes,rho,false,false, bandwidth);
+  int C = -1;
+  if (bandwidth >= 0)
+    C = sample_tri_multi(p,nodes,rho,false,false, bandwidth);
+  else
+    C = sample_tri_multi(p,nodes,rho,false,false);
 
   if (C != -1) {
     P = p[C];
