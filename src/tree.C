@@ -1776,23 +1776,6 @@ Tree::~Tree()
     delete branches_[i];
 }
 
-void add_left_right(BranchNode*& top, BranchNode* left,BranchNode* right) {
-  BranchNode* n = new BranchNode;
-
-  n->prev = left;
-  n->prev->next = n;
-
-  n->next = right;
-  n->next->prev = n;
-
-  n->prev->prev = n->next;
-  n->next->next = n->prev;
-
-  top->out = n;
-  n->out = top;
-}
-
-
 // IDEA - always include root and root->out, but if we don't want a stem
 // just make the ring which WOULD contain root->out skip it.  We still have
 // pointers INTO the ring from root->out->{prev,next}.
