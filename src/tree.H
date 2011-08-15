@@ -227,6 +227,15 @@ protected:
   /// The number of leaf nodes
   int n_leaves_;
 
+  /// The number of node attributes
+  int n_node_attributes_;
+
+  /// The number of directed branch attributes
+  int n_undirected_branch_attributes_;
+
+  /// The number of undirected attributes
+  int n_directed_branch_attributes_;
+
   friend class branchview;
   friend class const_branchview;
   friend std::vector<int> extends_map(const Tree&,const Tree&);
@@ -323,6 +332,12 @@ public:
 
   const std::vector<tree_edge>& internal_branches() const;
   tree_edge internal_branch(int i) const {return internal_branches()[i];}
+
+  int n_node_attributes() const {return n_node_attributes_;}
+
+  int n_undirected_branch_attributes() const {return n_undirected_branch_attributes_;}
+
+  int n_directed_branch_attributes() const {return n_directed_branch_attributes_;}
 
   /// Get the branch with name 'b'
   const_branchview branch(int b) const {

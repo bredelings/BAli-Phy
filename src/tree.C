@@ -1623,12 +1623,24 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
 
 Tree::Tree()
   :caches_valid(false),
-   n_leaves_(0) 
+   n_leaves_(0),
+   n_node_attributes_(0),
+   n_undirected_branch_attributes_(1),
+   n_directed_branch_attributes_(0)
 {}
 
 Tree::Tree(const BranchNode* BN) 
-  :caches_valid(false)
+  :caches_valid(false),
+   n_node_attributes_(0),
+   n_undirected_branch_attributes_(1),
+   n_directed_branch_attributes_(0)
 {
+  if (BN->undirected_branch_attributes)
+    n_undirected_branch_attributes_ = BN->undirected_branch_attributes->size();
+
+  if (BN->directed_branch_attributes)
+    n_directed_branch_attributes_ = BN->directed_branch_attributes->size();
+
   reanalyze(TreeView::copy_tree(BN));
 }
 
@@ -1636,6 +1648,9 @@ Tree::Tree(const Tree& T)
     :caches_valid(T.caches_valid),
      cached_partitions(T.cached_partitions),
      n_leaves_(T.n_leaves_),
+     n_node_attributes_(T.n_node_attributes()),
+     n_undirected_branch_attributes_(T.n_undirected_branch_attributes()),
+     n_directed_branch_attributes_(T.n_directed_branch_attributes()),
      nodes_(T.nodes_.size(),(BranchNode*)NULL),
      branches_(T.branches_.size(),(BranchNode*)NULL)
 {
