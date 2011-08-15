@@ -45,6 +45,9 @@ BranchNode* TreeView::copy_node(const BranchNode* start) {
   const BranchNode* n1 = start;
 
   BranchNode* start2 = new BranchNode(n1->branch,n1->node,n1->length);
+  {
+    start2->node_attributes = n1->node_attributes->unused_copy();
+  }
   BranchNode* n2 = start2;
 
   if (start->out == start)
@@ -57,7 +60,10 @@ BranchNode* TreeView::copy_node(const BranchNode* start) {
     if (n1 == start)
       n2->next = start2;
     else
+    {
       n2->next = new BranchNode(n1->branch,n1->node,n1->length);
+      n2->next->node_attributes = start2->node_attributes;
+    }
 
     n2->next->prev = n2;
 
@@ -67,7 +73,10 @@ BranchNode* TreeView::copy_node(const BranchNode* start) {
   return n2;
 }
 
-
+// This routine walks the entire original tree using the update "n = n->out->next".
+// It visits each directed branch (e.g. BranchNode) exactly once.
+// - on visiting a new BranchNode, it copies the branch attributes.
+// - before it moves to a new BranchNode, it makes sure that the node exists and copies the attributes.
 BranchNode* TreeView::copy_tree(const BranchNode* start) {
 
   const BranchNode* here1 = start;
@@ -76,12 +85,24 @@ BranchNode* TreeView::copy_tree(const BranchNode* start) {
   
   do {
     
-    // If we jump out to another node, then create it if its not there
+    // 1. If we jump out to another node, then create it if its not there (and copy node attributes)
     if (!here2->out) {
       here2->out = copy_node(here1->out);
       here2->out->out = here2;
     }
 
+    // Now that our destination node is sure to exist, we can refer to the reverse branch
+
+    // 2. Share undirected branch attributes if already present, otherwise copy them from original tree.
+    if (here2->out->undirected_branch_attributes)
+      here2->undirected_branch_attributes = here2->out->undirected_branch_attributes;
+    else
+      here2->undirected_branch_attributes = here1->undirected_branch_attributes->unused_copy();
+      
+    // 3. Copy directed branch attributes from original tree.
+    here2->directed_branch_attributes = here1->directed_branch_attributes->unused_copy();
+
+    // 4. Move to next directed branch
     here1 = here1->out->next;
     here2 = here2->out->next;
     
@@ -130,6 +151,7 @@ void insert_branch_into_node(BranchNode* n1, BranchNode* n3)
   else
     insert_after(n3, n1->out);
 }
+
 
 /// Unlink the branch (n1,n2=n1->out) from n2 and relink it to n3
 BranchNode* unlink_branch_from_node(BranchNode* n1)
@@ -186,7 +208,9 @@ BranchNode* reconnect_branch(BranchNode* n1, BranchNode* n3)
   return remainder;
 }
 
-void TreeView::exchange_subtrees(BranchNode* n1, BranchNode* n2) {
+// rewrite use a new reconnect_branch( ) operation.
+void TreeView::exchange_subtrees(BranchNode* n1, BranchNode* n2) 
+{
   // I should assert that the subtrees are disjoint, somehow...
 
   // Neither branches comes from a leaf node
@@ -205,10 +229,13 @@ void TreeView::exchange_subtrees(BranchNode* n1, BranchNode* n2) {
   reconnect_branch(b2,n1);
 }
 
-void TreeView::merge_nodes(BranchNode* n1,BranchNode* n2) {
+// the node attributes of the second node will be lost!
+void TreeView::merge_nodes(BranchNode* n1,BranchNode* n2) 
+{
   std::swap(n1->next,n2->next);
   n1->next->prev = n1;
   n2->next->prev = n2;
+  n1->node_attributes = n2->node_attributes;
 }
 
 // this preserves sub-branch directions
@@ -224,7 +251,13 @@ BranchNode* TreeView::create_node_on_branch(BranchNode* b1, int  new_branchname)
 
   // Create a ring of size 2 - duplicate branch names and lengths
   BranchNode* n1 = new BranchNode(b2->branch,-1,b2->length);
+  n1->node_attributes = new tree_attributes(b1->node_attributes->size());
+  n1->directed_branch_attributes = new tree_attributes(b1->directed_branch_attributes->size());
+
   BranchNode* n2 = new BranchNode(b1->branch,-1,b1->length);
+  n2->node_attributes = n1->node_attributes;
+  n2->directed_branch_attributes = new tree_attributes(b1->directed_branch_attributes->size());
+
   n1->next = n1->prev = n2;
   n2->next = n2->prev = n1;
 
@@ -237,15 +270,25 @@ BranchNode* TreeView::create_node_on_branch(BranchNode* b1, int  new_branchname)
 
   int delta = std::abs(b2->branch - b1->branch);
 
-  // choose sub-branch to give the new name to
+  // choose sub-branch to give the new name to. (It will go to the one pointed to by b2)
   if (b1->node > b2->node)
     std::swap(b1,b2);
+
+  b1->out->undirected_branch_attributes.swap( b2->undirected_branch_attributes );
+  b1->out->directed_branch_attributes.swap( b2->directed_branch_attributes );
+  assert(b1->undirected_branch_attributes == b1->out->undirected_branch_attributes );
+
 
   // determine sub-branch direction;
   if (b2->branch > b2->out->branch)
     b2 = b2->out;
 
   // set new branch name and set length to 0
+  b2->undirected_branch_attributes = new tree_attributes(b1->undirected_branch_attributes->size());
+  b2->out->undirected_branch_attributes = b2->undirected_branch_attributes;
+  (*b2->undirected_branch_attributes)[0] = double(0.0);
+
+  b2->undirected_branch_attributes->name = new_branchname;
   b2->branch = new_branchname;
   b2->out->branch = new_branchname + delta;
   b2->length = b2->out->length = 0;
@@ -310,8 +353,15 @@ int TreeView::remove_node_from_branch(BranchNode* n1, int branch_to_move)
 
   b1->length += b2->length;
   b2->length = b1->length;
+  (*b1->undirected_branch_attributes)[0] = boost::any_cast<double>((*b1->undirected_branch_attributes)[0]) +
+    boost::any_cast<double>((*b2->undirected_branch_attributes)[0]);
 
+  // Summary: here we are deleting the n2<-->b2 branch.
+
+  
   b2->branch = n1->branch; // preserve the direction of the remaining branch.
+  b2->undirected_branch_attributes = n1->undirected_branch_attributes; 
+  b2->directed_branch_attributes = n1->directed_branch_attributes; 
 
   //-------- Remove the node, and reconnect --------//
   delete n1;
@@ -338,11 +388,14 @@ BranchNode* TreeView::unlink_subtree(BranchNode* b)
     return prev;
   }
   else {
+    // we're trying to remove a subtree from the node, not destroy the node.
     BranchNode* copy = new BranchNode;
     copy->prev = copy->next = copy->out = copy;
+    copy->node_attributes = new tree_attributes(b->node_attributes->size());
     copy->node = b->node;
     copy->branch = b->branch;
 
+    // we return what remains, which is the copy, NOT b.
     return copy;
   }
 }
@@ -474,6 +527,7 @@ void name_node(BranchNode* start,int i) {
 
   do {
     n->node = i;
+    n->node_attributes = start->node_attributes;
     n = n->next;
   } while (n != start);
 }
@@ -756,7 +810,7 @@ void Tree::add_first_node() {
   internal_branches_.invalidate();
 }
 
-BranchNode* add_leaf_node(BranchNode* n) 
+BranchNode* add_leaf_node(BranchNode* n, int n_u_a, int n_d_a) 
 {
   // The spot to which to link the new node.
   BranchNode* n_link = NULL;
@@ -766,7 +820,11 @@ BranchNode* add_leaf_node(BranchNode* n)
     n_link = n;
   // otherwise it links to a new BranchNode inserted next to n
   else {
+    assert(n_u_a == n->undirected_branch_attributes->size());
+    assert(n_d_a == n->directed_branch_attributes->size());
+
     n_link = new BranchNode(-1,n->node,-1);
+    n_link->node_attributes = n->node_attributes;
     n_link->prev = n; 
     n_link->next = n->next;
 
@@ -779,6 +837,12 @@ BranchNode* add_leaf_node(BranchNode* n)
   n_leaf->prev = n_leaf->next = n_leaf;
   n_leaf->out = n_link;
   n_link->out = n_leaf;
+
+  n_leaf->node_attributes = new tree_attributes(n->node_attributes->size());
+  n_leaf->undirected_branch_attributes = new tree_attributes(n_u_a);
+  n_leaf->out->undirected_branch_attributes = n_leaf->undirected_branch_attributes;
+  n_leaf->directed_branch_attributes = new tree_attributes(n_d_a);
+  n_leaf->out->directed_branch_attributes = new tree_attributes(n_d_a);
 
   return n_leaf;
 }
@@ -798,8 +862,12 @@ nodeview Tree::add_leaf_node(int node)
   }
 
   // Add the new leaf node to the tree
-  BranchNode* n_leaf = ::add_leaf_node(nodes_[node]);
+  BranchNode* n_leaf = ::add_leaf_node(nodes_[node], n_undirected_branch_attributes(), n_directed_branch_attributes());
+
   n_leaf->node = nodes_.size();
+
+  n_leaf->undirected_branch_attributes->name = n_branches_old;
+
   n_leaf->branch = n_branches_old;
   n_leaf->out->branch = 2*n_branches_old+1;
 
@@ -965,6 +1033,8 @@ void Tree::compute_partitions() const
   caches_valid = true;
 }
 
+
+// This could create loops it we don't check that the subtrees are disjoint.
 void exchange_subtrees(Tree& T, int br1, int br2) 
 {
   branchview b1 = T.directed_branch(br1).reverse();
@@ -1053,6 +1123,7 @@ void Tree::remove_node_from_branch(int node)
 /// for the attachment branch, it may be pointing either towards or away
 /// from the attachment point.
 ///
+/// Got m1<--->x<--->m2 and n1<--->n2, and trying to move x onto (n1,n2)
 int SPR(Tree& T, int br1,int br2, int branch_to_move) 
 {
   int x1 = T.directed_branch(br1).source();
@@ -1177,6 +1248,7 @@ void Tree::reanalyze(BranchNode* start)
   //------------- Clear all names -------------//
   for(BN_iterator BN(start);BN;BN++) {
     (*BN)->node = -1;
+    (*BN)->undirected_branch_attributes->name = -1;
     (*BN)->branch = -1;
   }
 
@@ -1196,8 +1268,10 @@ void Tree::reanalyze(BranchNode* start)
 
       if (temp[i]->branch == -1) {
 	// name the branch out of the node
-	temp[i]->branch = b++;
-	temp[i]->out->branch = temp[i]->branch + B;
+	temp[i]->undirected_branch_attributes->name = b;
+	temp[i]->branch = b;
+	temp[i]->out->branch = b + B;
+	b++;
 
 	// add the parent to the list if we are its last child
 	BranchNode* next = get_parent(temp[i]->out);
@@ -1267,6 +1341,13 @@ void Tree::check_structure() const {
     assert(BN->next->prev == BN);
   }
 
+  //------ Check that BranchNode in a node has the same node attributes -------//
+  for(BN_iterator BN(nodes_[0]);BN;BN++) 
+  {
+    assert((*BN)->prev->node_attributes == (*BN)->node_attributes);
+    assert((*BN)->next->node_attributes == (*BN)->node_attributes);
+  }
+
   for(int i=0;i<branches_.size();i++) {
 
     BranchNode* BN = branches_[i];
@@ -1283,6 +1364,12 @@ void Tree::check_structure() const {
     //reversed branch must have a different name
     assert(std::abs(BN->branch - BN->out->branch) == n_branches());
 
+    //reversed branch must have a different name
+    assert(BN->undirected_branch_attributes->name == std::min(BN->branch,BN->out->branch));
+
+    //reversed branch must have the same undirected attributes
+    assert(BN->undirected_branch_attributes == BN->out->undirected_branch_attributes);
+
     //this branch and its reversal must link to each other consistently
     assert(BN->out->out == BN);
 
@@ -1292,7 +1379,7 @@ void Tree::check_structure() const {
 #endif
 }
 
-BranchNode* connect_nodes(BranchNode* n1, BranchNode* n2)
+BranchNode* connect_nodes(BranchNode* n1, BranchNode* n2, int n_u_a, int n_d_a)
 {
   BranchNode* c1 = new BranchNode;
   insert_after(n1,c1);
@@ -1301,6 +1388,11 @@ BranchNode* connect_nodes(BranchNode* n1, BranchNode* n2)
   insert_after(n2,c2);
 
   c1->length = c2->length = -1.0;
+  c1->directed_branch_attributes = new tree_attributes(n_d_a);
+  c2->directed_branch_attributes = new tree_attributes(n_d_a);
+  
+  c1->undirected_branch_attributes = new tree_attributes(n_u_a);
+  c2->undirected_branch_attributes = c1->undirected_branch_attributes;
 
   c1->out = c2;
   c2->out = c1;
@@ -1308,6 +1400,10 @@ BranchNode* connect_nodes(BranchNode* n1, BranchNode* n2)
   return c1;
 }
 
+
+// There are problems with now, because this could mess up 
+// - leaf nodes having low indices
+// - leaf branches having low indices
 void Tree::reconnect_branch(int source_index, int target_index, int new_target_index)
 {
   leaf_nodes_.invalidate();
@@ -1448,7 +1544,7 @@ Tree& Tree::operator=(const Tree& T)
 // count depth -> if we are at depth 0, and have
 // one object on the stack then we quit
 
-int append_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& labels)
+int append_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& labels, int n_n_a, int n_u_a, int n_d_a)
 {
   // determine the level in the tree stack
   int level = tree_stack.size() - 1;
@@ -1464,18 +1560,20 @@ int append_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>&
   if (level == 0)
   {
     parent = new BranchNode;
+    parent->node_attributes = new tree_attributes(n_n_a);
     parent->out = parent->next = parent->prev = parent;
   }
   else
     parent = tree_stack[level-1].back()->out;
 
   // Connect this to a new leaf node of the appropriate index (with that index)
-  BranchNode* child = ::add_leaf_node(parent);
+  BranchNode* child = ::add_leaf_node(parent, n_u_a, n_d_a);
 
   // make sure that non-root leaf nodes keep the lowest numbers
   if (parent->node != -1)
   {
     child->node = parent->node;
+    child->undirected_branch_attributes->name = new_index - 1;
     child->branch = child->out->branch = new_index - 1;
     name_node(parent, new_index);
     std::swap(labels[child->node], labels[parent->node]);
@@ -1493,13 +1591,13 @@ int append_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>&
   return new_index;
 }
 
-int push_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& labels)
+int push_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& labels, int n_node_attributes, int n_undirected_attributes, int n_directed_attributes)
 {
   // increase the depth
   tree_stack.push_back( vector<BranchNode*>() );
 
   // append the empty node
-  return append_empty_node(tree_stack, labels);
+  return append_empty_node(tree_stack, labels, n_node_attributes, n_undirected_attributes, n_directed_attributes);
 }
 
 #include <iostream>
@@ -1524,7 +1622,7 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
   string word;
 
   vector< vector<BranchNode*> > tree_stack;
-  push_empty_node(tree_stack, labels);
+  push_empty_node(tree_stack, labels, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
   int pos = 0;
     
   for(int i=0;get_word(word,i,line,delimiters,whitespace);prev=word) 
@@ -1539,12 +1637,12 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
       if (pos != 0)
 	throw myexception()<<"In tree file, found '(' in the middle of word \""<<prev<<"\"";
 
-      push_empty_node(tree_stack, labels);
+      push_empty_node(tree_stack, labels, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
       pos = 0;
     }
     else if (word == ",")
     {
-      append_empty_node(tree_stack, labels);
+      append_empty_node(tree_stack, labels, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
       pos = 0;
     }
     else if (word == ")") 
@@ -1574,6 +1672,7 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
       else if (pos == 3)
       {
 	BN->out->length = BN->length = convertTo<double>(word);	
+	(*BN->undirected_branch_attributes)[0] = convertTo<double>(word);	
 	pos = 4;
       }
     }
@@ -1671,8 +1770,9 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
       tree_stack.pop_back();
 
       // insert merged trees into the next level down
-      BN = ::add_leaf_node(BN);
+      BN = ::add_leaf_node(BN, n_undirected_branch_attributes(), n_directed_branch_attributes());
       BN->out->length = BN->length = -1;
+
       tree_stack.back().push_back(BN);
     }
     else if (prev == "(" or prev == "," or prev == "") 
@@ -1695,15 +1795,17 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
       }
 
       BranchNode* BN = new BranchNode(-1,leaf_index,-1);
+      BN->node_attributes = new tree_attributes(n_node_attributes());
       BN->out = BN->next = BN->prev = BN;
 
-      BN = ::add_leaf_node(BN);
+      BN = ::add_leaf_node(BN,n_undirected_branch_attributes(), n_directed_branch_attributes());
       BN->out->length = BN->length = -1;
       tree_stack.back().push_back(BN);
     }
     else if (prev == ":") {
       BranchNode* BN = tree_stack.back().back();
       BN->out->length = BN->length = convertTo<double>(word);
+      (*BN->undirected_branch_attributes)[0] = convertTo<double>(word);	
     }
   }
 
@@ -1980,7 +2082,7 @@ Tree star_tree(int n)
 
   if (n > 1)
     for(int i=0;i<n;i++)
-      add_leaf_node(center)->node = i;
+      add_leaf_node(center,1,0)->node = i;
 
   return Tree(center);
 }
