@@ -1055,27 +1055,63 @@ void Tree::remove_node_from_branch(int node)
 ///
 int SPR(Tree& T, int br1,int br2, int branch_to_move) 
 {
-  BranchNode* b1 = (BranchNode*)T.directed_branch(br1);
-  BranchNode* b2 = (BranchNode*)T.directed_branch(br2);
+  int x1 = T.directed_branch(br1).source();
+  int x2 = T.directed_branch(br1).target();
 
-  assert(T.n_leaves() > 2);
+  std::vector<const_branchview> m_branches;
+  append(T.directed_branch(x2,x1).branches_after(), m_branches);
+  assert(m_branches.size() == 2);
+  int m1 = m_branches[0].target();
+  int m2 = m_branches[1].target();
 
-  // don't regraft to the sub-branches we are being pruned from
-  assert(b2 != b1->prev and b2 != b1->next);
-  assert(T.partition(b1->out->branch)[b2->node]);
-  assert(T.partition(b1->out->branch)[b2->out->node]);
+  int n1 = T.directed_branch(br2).source();
+  int n2 = T.directed_branch(br2).target();
 
-  //------------ Prune the subtree -----------------//
-  BranchNode* newbranch = TreeView::unlink_subtree(b1)->out;
-  int dead_branch = TreeView::remove_node_from_branch(newbranch->out, branch_to_move);
-  assert(dead_branch >= T.n_leafbranches());
-  
-  //----------- Regraft the subtree ---------------//
-  TreeView::create_node_on_branch(b2,dead_branch);
-  TreeView::merge_nodes(b1,b2->out);
-  name_node(b1,b1->node);
+  //-------------------- Correctly order m1 and m2 ----------------------//
+  // Preserve the name of the branch with the smaller name (to avoid renaming leaf branches!)
+  // (The name of the x<--->n1 branch gets preserved)
+  if (branch_to_move == -1)
+  {
+    if (T.directed_branch(m1,x1).undirected_name() > T.directed_branch(m2,x1).undirected_name() )
+      std::swap(m1,m2);
+  }
+  // ensure that (x,m2) is the branch to move
+  else
+  {
+    if (T.directed_branch(m1,x1).name() == branch_to_move or T.directed_branch(x1,m1).name() == branch_to_move)
+      std::swap(m1,m2);
+    else if (T.directed_branch(m2,x1).name() == branch_to_move or T.directed_branch(x1,m2).name() == branch_to_move)
+      ;
+    else
+      std::abort(); // we couldn't find the branch to move!
+  }
 
-  T.recompute(b1);
+  //-------------------- Correctly order n1 and n2 ----------------------//
+  // choose sub-branch to give the new name to. (It will go to the one pointed to by b2)
+  if (n1 > n2)
+    std::swap(n1,n2);
+
+  //------ Merge the branches (m1,x1) and (x1,m2) -------//
+  int dead_branch = T.directed_branch(m2,x1).undirected_name();
+
+  T.directed_branch(m1,x1).set_length( T.directed_branch(m1,x1).length() + T.directed_branch(m2,x1).length() );
+
+  T.directed_branch(m2,x1).set_length( 0.0 );
+
+  //------------ Reconnect the branches ---------------//
+
+  // Reconnect (m1,x) to m2, making x a degree-2 node
+  // This leaves m1 connected to its branch, so m1 can be a leaf.
+  assert(not T[m2].is_leaf_node());
+  T.reconnect_branch(tree_edge(m1,x1), m2);
+
+  // Reconnect (x,m2) to n2, leaving x a degree-2 node
+  T.reconnect_branch(tree_edge(x1,m2), n2);
+
+  // Reconnect (n1,n2) to x, making x a degree-3 node again.
+  // This leaves n1 connected to its branch, so n1 can be a leaf.
+  assert(not T[n2].is_leaf_node());
+  T.reconnect_branch(tree_edge(n1,n2), x1);
 
   return dead_branch;
 }
