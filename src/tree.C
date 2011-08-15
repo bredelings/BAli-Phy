@@ -1104,6 +1104,7 @@ BranchNode* get_parent(BranchNode* start) {
 
 //NOTE: both of these routines assume that prev,next, and old pointers are correct
 
+//  This routine should be independent of the circular order at nodes.
 /// This routine assumes only that leaf nodes have proper names
 void Tree::reanalyze(BranchNode* start) 
 {
