@@ -100,6 +100,19 @@ TreeView TreeView::copy() const {
   return copy_tree(root);
 }
 
+/// Insert the partial node n2 after the partial node n1 in the ring containing n1.
+void insert_after(BranchNode* n1,BranchNode* n2)
+{
+  n2->node_attributes = n1->node_attributes;
+  n2->node = n1->node;
+  
+  n2->prev = n1;
+  n2->next = n1->next;
+  
+  n2->prev->next = n2;
+  n2->next->prev = n2;
+}
+
 void TreeView::exchange_subtrees(BranchNode* n1, BranchNode* n2) {
   // I should assert that the subtrees are disjoint, somehow...
 
@@ -649,8 +662,9 @@ int Tree::edges_distance(int i,int j) const {
   return d;
 }
 
-BranchNode* get_first_node() {
+BranchNode* get_first_node(int n_node_attributes) {
   BranchNode* BN = new BranchNode(0,0,-1);
+  BN->node_attributes = new tree_attributes(n_node_attributes);
   BN->prev = BN->next = BN;
   BN->out = BN;
 
@@ -661,7 +675,7 @@ void Tree::add_first_node() {
   if (nodes_.size())
     throw myexception()<<"Trying to add first node to tree which is not empty";
 
-  BranchNode* BN = get_first_node();
+  BranchNode* BN = get_first_node(0);
 
   nodes_.push_back(BN);
   branches_.push_back(BN);
@@ -1170,18 +1184,6 @@ void Tree::check_structure() const {
   }
 
 #endif
-}
-
-/// Insert the partial node n2 after the partial node n1 in the ring containing n1.
-void insert_after(BranchNode* n1,BranchNode* n2)
-{
-  n2->node = n1->node;
-
-  n2->prev = n1;
-  n2->next = n1->next;
-
-  n2->prev->next = n2;
-  n2->next->prev = n2;
 }
 
 BranchNode* connect_nodes(BranchNode* n1, BranchNode* n2)
@@ -1882,7 +1884,7 @@ vector<const_branchview> sorted_branches_after(const_branchview b) {
 
 Tree star_tree(int n) 
 {
-  BranchNode* center = get_first_node();
+  BranchNode* center = get_first_node(0);
 
   if (n > 1)
     for(int i=0;i<n;i++)
