@@ -51,17 +51,45 @@ along with BAli-Phy; see the file COPYING.  If not see
  *   + How would I handle directed branch names?
  */
 
-/*
-struct attributes
-{
-  vector< cow_ptr<boost::any > > attributes;
-};
-*/
-
 #ifndef BRANCHNODE
 #define BRANCHNODE
 
 #include <vector>
+
+#include <boost/any.hpp>
+#include <boost/intrusive_ptr.hpp>
+
+struct tree_attributes: public std::vector< boost::any >
+{
+  int count;
+  int name;
+
+  tree_attributes* unused_copy() const
+  {
+    tree_attributes* temp = new tree_attributes(*this);
+    temp->count = 0;
+    return temp;
+  }
+
+  tree_attributes():count(0),name(-1) { }
+  tree_attributes(int n):std::vector< boost::any >(n), count(0),name(-1) { }
+};
+
+
+inline void intrusive_ptr_add_ref(tree_attributes* a)
+{
+  ++a->count;
+}
+
+inline void intrusive_ptr_release(tree_attributes* a)
+{
+  if (--(a->count) == 0)
+    delete a;
+}
+
+// Built-in attributes:
+// undirected_branch[0] = double branch length
+
 
 /// A structure that uniquely identifies both a node and a directed branch
 struct BranchNode 
@@ -70,6 +98,12 @@ struct BranchNode
   int branch;
   /// The (integer) name of this node
   int node;
+  /// Attributes for this (undirected) branch
+  boost::intrusive_ptr<tree_attributes> undirected_branch_attributes;
+  /// Attributes for this (directed) branch
+  boost::intrusive_ptr<tree_attributes> directed_branch_attributes;
+  /// Attributes for this node
+  boost::intrusive_ptr<tree_attributes> node_attributes;
 
   /// Pointer to prev BranchNode in this node (forms a circular list)
   BranchNode *prev;
