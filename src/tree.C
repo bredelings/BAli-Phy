@@ -969,16 +969,20 @@ void exchange_subtrees(Tree& T, int br1, int br2)
 {
   BranchNode* n0 = (BranchNode*)T[0];
 
-  BranchNode* b1 = (BranchNode*)T.directed_branch(br1);
-  BranchNode* b2 = (BranchNode*)T.directed_branch(br2);
+  branchview b1 = T.directed_branch(br1).reverse();
+  branchview b2 = T.directed_branch(br2).reverse();
 
-  assert(not T.subtree_contains(br1,b2->out->node));
-  assert(not T.subtree_contains(br2,b1->out->node));
+  int s1 = b1.source();
+  int t1 = b1.target();
 
-  TreeView::exchange_subtrees(b1,b2);
+  int s2 = b2.source();
+  int t2 = b2.target();
 
-  // don't mess with the names
-  T.recompute(n0);
+  assert(not T.subtree_contains(br1,s2));
+  assert(not T.subtree_contains(br2,s1));
+
+  T.reconnect_branch(s1,t1,t2);
+  T.reconnect_branch(s2,t2,t1);
 }
 
 // Currently, we HAVE to assign new branch names, but only to backwards branches
