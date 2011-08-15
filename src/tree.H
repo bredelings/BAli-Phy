@@ -129,19 +129,6 @@ public:
   ~TreeView() {}
 };
 
-/// Allocate, initialize and return a single-node tree.
-BranchNode* get_first_node();
-/// Allocate, initialize and a new leaf node that is connected to this node.
-BranchNode* add_leaf_node(BranchNode* n);
-/// Create a branch connecting nodes n1 and n2
-BranchNode* connect_nodes(BranchNode* n1,BranchNode* n2);
-/// Add a BranchNode* to the node ring of n1, right after n1
-void insert_after(BranchNode* n1,BranchNode* n2);
-/// Mark all BranchNode's in the node right of start as being part of node i.
-void name_node(BranchNode* start,int i);
-/// Link all the BranchNode's into a node ring.
-void knit_node_together(const std::vector<BranchNode*>& nodes);
-
 //------------------------------------ Tree -----------------------------//
 
 struct tree_edge
