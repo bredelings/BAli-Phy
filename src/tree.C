@@ -675,7 +675,7 @@ void Tree::add_first_node() {
   if (nodes_.size())
     throw myexception()<<"Trying to add first node to tree which is not empty";
 
-  BranchNode* BN = get_first_node(0);
+  BranchNode* BN = get_first_node(n_node_attributes());
 
   nodes_.push_back(BN);
   branches_.push_back(BN);
