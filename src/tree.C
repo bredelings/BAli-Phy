@@ -967,8 +967,6 @@ void Tree::compute_partitions() const
 
 void exchange_subtrees(Tree& T, int br1, int br2) 
 {
-  BranchNode* n0 = (BranchNode*)T[0];
-
   branchview b1 = T.directed_branch(br1).reverse();
   branchview b2 = T.directed_branch(br2).reverse();
 
