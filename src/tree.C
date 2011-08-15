@@ -113,6 +113,76 @@ void insert_after(BranchNode* n1,BranchNode* n2)
   n2->next->prev = n2;
 }
 
+void insert_branch_into_node(BranchNode* n1, BranchNode* n3)
+{
+  if (n3->out == n3)
+  {
+    BranchNode* n2 = n1->out;
+    n1->out = n3;
+    n3->out = n1;
+
+    n3->directed_branch_attributes = n2->directed_branch_attributes;
+    n3->undirected_branch_attributes = n2->undirected_branch_attributes;
+    n3->branch = n2->branch;
+
+    delete n2;
+  }
+  else
+    insert_after(n3, n1->out);
+}
+
+/// Unlink the branch (n1,n2=n1->out) from n2 and relink it to n3
+BranchNode* unlink_branch_from_node(BranchNode* n1)
+{
+  assert(n1->out != n1);
+  BranchNode* n2 = n1->out;
+
+  // we need to insert a new BranchNode here so that we don't remove the node, just the edge to it.
+  if (is_leaf_node(n2)) 
+  {
+    // the node will become a degree 0 node
+    BranchNode* degree_0_node = n2;
+    degree_0_node->out = degree_0_node;
+
+    // link n1 to a new node *fragment*, and call the fragment n2
+    n1->out = new BranchNode;
+    n2 = n1->out;
+    n2->out = n1;
+
+    insert_after(n2, degree_0_node);
+  }
+
+  // disconnect node n2 from its node
+  n2->prev->next = n2->next;
+  n2->next->prev = n2->prev;
+
+  // but disconnect it from its former node
+  n2->node_attributes.reset();
+  n2->node = -1;
+
+  // n1->out is returned as a node *fragment*, and therefore has no node attributes, though it does have branch attributes.
+  BranchNode* remainder = n2->prev;
+
+  // relink n2 as a leaf node so that we can easily walk the resulting tree to clean it up.
+  n2->prev = n2->next = n2;
+
+  return remainder;
+}
+
+// unlink the branch (n1,n2=n1->out) from n2 and relink it to n3
+// all properties are preserved
+void reconnect_branch(BranchNode* n1, BranchNode* n3)
+{
+  // if we're already attached to n3, don't do all this stuff.
+  if (n1->out->node == n3->node) return;
+
+  // unlink the n1->out from its node, possibly create a new BranchNode if n1->out is 
+  unlink_branch_from_node(n1);
+
+  // insert n1->out into node n3, possibly deleting it if n3 is a leaf node.
+  insert_branch_into_node(n1,n3);
+}
+
 void TreeView::exchange_subtrees(BranchNode* n1, BranchNode* n2) {
   // I should assert that the subtrees are disjoint, somehow...
 
@@ -123,19 +193,13 @@ void TreeView::exchange_subtrees(BranchNode* n1, BranchNode* n2) {
   // The nodes are distinct
   assert(n1 != n2);
 
-  // Switch the nodes that we point to
-  std::swap(n1->prev,n2->prev);
-  std::swap(n1->next,n2->next);
-
-  // Switch the nodes that point to us
-  n1->prev->next = n1;
-  n1->next->prev = n1;
-
-  n2->prev->next = n2;
-  n2->next->prev = n2;
-
-  // Switch the node name that we are part of
-  std::swap(n1->node,n2->node);
+  BranchNode* b1 = n1->out;
+  n1 = n1->prev;
+  BranchNode* b2 = n2->out;
+  n2 = n2->prev;
+    
+  reconnect_branch(b1,n2);
+  reconnect_branch(b2,n1);
 }
 
 void TreeView::merge_nodes(BranchNode* n1,BranchNode* n2) {
