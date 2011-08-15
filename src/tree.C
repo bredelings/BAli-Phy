@@ -1300,6 +1300,11 @@ void Tree::reconnect_branch(int source_index, int target_index, int new_target_i
   caches_valid = false;
 }
 
+void Tree::reconnect_branch(const tree_edge& e, int new_target_index)
+{
+  reconnect_branch(e.node1, e.node2, new_target_index);
+}
+
 int Tree::induce_partition(const dynamic_bitset<>& partition) 
 {
   assert(partition.size() == n_leaves());

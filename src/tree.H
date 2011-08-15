@@ -464,6 +464,8 @@ public:
 
   void reconnect_branch(int source, int target, int new_target);
 
+  void reconnect_branch(const tree_edge& e, int new_target);
+
   /// Create an identical tree that does not share memory with the original
   Tree& operator=(const Tree& T); 
 
