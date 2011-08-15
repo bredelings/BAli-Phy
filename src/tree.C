@@ -171,16 +171,19 @@ BranchNode* unlink_branch_from_node(BranchNode* n1)
 
 // unlink the branch (n1,n2=n1->out) from n2 and relink it to n3
 // all properties are preserved
-void reconnect_branch(BranchNode* n1, BranchNode* n3)
+BranchNode* reconnect_branch(BranchNode* n1, BranchNode* n3)
 {
   // if we're already attached to n3, don't do all this stuff.
-  if (n1->out->node == n3->node) return;
+  if (n1->out->node == n3->node) return n1->out;
 
   // unlink the n1->out from its node, possibly create a new BranchNode if n1->out is 
-  unlink_branch_from_node(n1);
+  BranchNode* remainder = unlink_branch_from_node(n1);
 
   // insert n1->out into node n3, possibly deleting it if n3 is a leaf node.
   insert_branch_into_node(n1,n3);
+
+  // return a pointer to a part of the node that used to contain n2.
+  return remainder;
 }
 
 void TreeView::exchange_subtrees(BranchNode* n1, BranchNode* n2) {
@@ -1276,22 +1279,20 @@ void Tree::reconnect_branch(int source_index, int target_index, int new_target_i
   if (b.target().degree() < 2)
     throw myexception()<<"Cannot move branch away from target "<<target_index<<": degree is "<<b.target().degree();
 
+  BranchNode* branch = b;
+
   BranchNode* target = b.target();
   
   if (nodes_[target_index] == target)
     nodes_[target_index] = target->prev;
-
-  // remove bt from the ring of the old node
-  target->prev->next = target->next;
-  target->next->prev = target->prev;
-
+    
   BranchNode* new_target = nodes_[new_target_index];
 
-  insert_after(new_target, target);
+  ::reconnect_branch(branch, new_target);
 
-  assert(target->node == new_target_index);
-  assert(nodes_[target_index]->node == target_index);
-  assert(nodes_[new_target_index]->node == new_target_index);
+  check_structure();
+
+  caches_valid = false;
 }
 
 int Tree::induce_partition(const dynamic_bitset<>& partition) 
