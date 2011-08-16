@@ -225,13 +225,13 @@ protected:
   int n_leaves_;
 
   /// The number of node attributes
-  int n_node_attributes_;
+  std::vector<std::string> node_attribute_names;
 
   /// The number of directed branch attributes
-  int n_undirected_branch_attributes_;
+  std::vector<std::string> undirected_branch_attribute_names;
 
   /// The number of undirected attributes
-  int n_directed_branch_attributes_;
+  std::vector<std::string> directed_branch_attribute_names;
 
   friend class branchview;
   friend class const_branchview;
@@ -330,11 +330,26 @@ public:
   const std::vector<tree_edge>& internal_branches() const;
   tree_edge internal_branch(int i) const {return internal_branches()[i];}
 
-  int n_node_attributes() const {return n_node_attributes_;}
+  int n_node_attributes() const {return node_attribute_names.size();}
 
-  int n_undirected_branch_attributes() const {return n_undirected_branch_attributes_;}
+  bool node_attribute_has_name(int i) const {return not node_attribute_names[i].empty();}
 
-  int n_directed_branch_attributes() const {return n_directed_branch_attributes_;}
+  const std::string& node_attribute_name(int i) const {return node_attribute_names[i];}
+
+
+  int n_undirected_branch_attributes() const {return undirected_branch_attribute_names.size();}
+
+  bool undirected_branch_attribute_has_name(int i) const {return not undirected_branch_attribute_names[i].empty();}
+
+  const std::string& undirected_branch_attribute_name(int i) const {return undirected_branch_attribute_names[i];}
+
+
+  int n_directed_branch_attributes() const {return directed_branch_attribute_names.size();}
+
+  bool directed_branch_attribute_has_name(int i) const {return not directed_branch_attribute_names[i].empty();}
+
+  const std::string& directed_branch_attribute_name(int i) const {return directed_branch_attribute_names[i];}
+
 
   /// Get the branch with name 'b'
   const_branchview branch(int b) const {
