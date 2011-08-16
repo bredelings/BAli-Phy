@@ -94,10 +94,6 @@ inline void intrusive_ptr_release(tree_attributes* a)
 /// A structure that uniquely identifies both a node and a directed branch
 struct BranchNode 
 {
-  /// The (integer) name of this directed branch
-  int branch;
-  /// The (integer) name of this node
-  int node;
   /// Attributes for this (undirected) branch
   boost::intrusive_ptr<tree_attributes> undirected_branch_attributes;
   /// Attributes for this (directed) branch
@@ -112,13 +108,12 @@ struct BranchNode
   /// Point to BranchNode on the other end of this branch
   BranchNode *out;
 
-  /// The length of the this branch
-  double length;
-
   /// Construct a NULL BranchNode
-  BranchNode():branch(-1),node(-1),prev(NULL),next(NULL),out(NULL),length(-1) {}
-  /// Construct a BranchNode for node n, and for branch b with length l
-  BranchNode(int b,int n,double l):branch(b),node(n),prev(NULL),next(NULL),out(NULL),length(l) {}
+  BranchNode()
+    :prev(NULL),
+     next(NULL),
+     out(NULL)
+  {}
 };
 
 /// Predicate: return true if this node is a leaf node.
@@ -368,7 +363,7 @@ public:
   bool is_internal_node() const {return ::is_internal_node(n);}
 
   /// The (integer) name of this node
-  int name() const {return n->node;}
+  int name() const {return n->node_attributes->name;}
 
   /// Return an iterator over the neighbors of this node.
   neighbors_iterator neighbors() const {return n;}
@@ -405,7 +400,7 @@ public:
   bool is_internal_node() const {return ::is_internal_node(n);}
 
   /// The (integer) name of this node
-  int name() const {return n->node;}
+  int name() const {return n->node_attributes->name;}
 
   /// Return an iterator over the neighbors of this node.
   const_neighbors_iterator neighbors()    const {return n;}
@@ -497,17 +492,22 @@ public:
   nodeview target() const { return b->out;}
 
   /// The (integer) name of this directed branch.
-  int name() const {return b->branch;}
+  int name() const {return b->directed_branch_attributes->name;}
   /// The (integer) name of this branch, as an undirected branch.
-  int undirected_name() const { return std::min(b->branch,b->out->branch); }
+  int undirected_name() const { return b->undirected_branch_attributes->name; }
 
   /// Get a reference to an undirected branch, which is the direction with the smaller name
-  branchview undirected() const {
+  branchview undirected() const 
+  {
     BranchNode* BN = b;
 
-    assert(BN->out->branch != BN->branch);
-    if (BN->out->branch < BN->branch)
+    assert(name() != reverse().name());
+    if (name() != undirected_name())
+    {
       BN = BN->out;
+    }
+
+    assert(BN->undirected_branch_attributes->name == undirected_name());
 
     return BN;
   }
@@ -527,10 +527,10 @@ public:
   edges_after_iterator branches_after() const {return b;}
 
   /// Return this branch's length
-  double length() const {return b->length;}
+  double length() const { return boost::any_cast<double>((*b->undirected_branch_attributes)[0]); }
 
   /// Alter this branch's length
-  void set_length(double d) const {b->out->length = b->length = d;}
+  void set_length(double d) const {(*b->undirected_branch_attributes)[0] = d;}
 
   /// The (integer) name of this directed branch
   operator int() const {return name();}
@@ -555,18 +555,23 @@ public:
   const_nodeview target() const { return b->out;}
 
   /// The (integer) name of this directed branch.
-  int name() const {return b->branch;}
+  int name() const {return b->directed_branch_attributes->name;}
   /// The (integer) name of this branch, as an undirected branch.
-  int undirected_name() const { return std::min(b->branch,b->out->branch); }
+  int undirected_name() const { return b->undirected_branch_attributes->name;}
 
   /// Get a reference to an undirected branch, which is the direction with the smaller name
-  const_branchview undirected() const {
+  const_branchview undirected() const 
+  {
     const BranchNode* BN = b;
 
-    assert(BN->out->branch != BN->branch);
-    if (BN->out->branch < BN->branch)
+    assert(name() != reverse().name());
+    if (name() != undirected_name())
+    {
       BN = BN->out;
+    }
 
+    assert(BN->undirected_branch_attributes->name == undirected_name());
+    
     return BN;
   }
 
@@ -585,7 +590,7 @@ public:
   const_edges_after_iterator branches_after() const {return b;}
 
   /// Return this branch's length
-  double length() const {return b->length;}
+  double length() const { return boost::any_cast<double>((*b->undirected_branch_attributes)[0]); }
 
   /// The (integer) name of this directed branch
   operator int() const {return name();}

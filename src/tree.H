@@ -36,10 +36,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 // TODO.
 // 1. Add node and branch attributes to tree objects.
-//    - Some attributes are string attributes, but we can also have attribues of other types.
-//    - Let's use boost::any< >.
-//    - Let's store the properties on the nodes and branches.
-//    - Let's give each branch a vector<boost::any >.
 //    - Each property will have an integer index, and (optionally) a string name, stored in the tree structure.
 //      and not on the nodes.  This gives us to ability to quickly look up the property value, given that we can
 //      quickly look up the node.
@@ -84,6 +80,20 @@ along with BAli-Phy; see the file COPYING.  If not see
 //
 // - Well, when comparing two trees this is still problematic.
 //   + We want to be able to say that two leaf-labelled trees are equivalent.
+//   + Solution: Relabel the entire tree so that leaf labels are in 0..n-1.
+//               We don't need to do this always, just when doing 'impose_leaf_labels( )'.
+//               This would ensure that leaf_node(i) returns the ith node in the labelling.
+//
+//               We could optionally treat leaf labels as an extra attribute as well.
+//               If so, we could make leaf_node(i) to be based on the leaf labels...
+//     
+//               When reading in trees with numeric labels, we could impose the leaf labels
+//               after the entire tree is read in.
+//
+//               Hmm.. for the interface, we could just say that impose_leaf_labels( ) results in
+//               leaf_node(i) returning the i-th labelled node.
+//   + Basically, don't constantly require that leaf labels are 0..n-1, just arrange for that
+//     to be true for the time interval where we are going to use it.
 
 //---------------------------------- TreeView --------------------------//
 
@@ -179,7 +189,7 @@ struct tree_edge
 
   tree_edge():node1(-1),node2(-1) { }
   tree_edge(int s, int t):node1(s), node2(t) { }
-  tree_edge(const BranchNode* BN):node1(BN->node), node2(BN->out->node) { }
+  tree_edge(const BranchNode* BN):node1(BN->node_attributes->name), node2(BN->out->node_attributes->name) { }
 };
 
 inline tree_edge tree_edge::reverse() const
@@ -244,7 +254,7 @@ protected:
 
   /// re-compute cached_partitions
   void compute_partitions() const;
-
+  
   /// re-compute partitions if necessary
   void prepare_partitions() const {
     if (not caches_valid)
@@ -266,12 +276,12 @@ protected:
 
     BranchNode* n1 = nodes_[node1];
 
-    while(n1->out->node != node2) {
+    while(n1->out->node_attributes->name != node2) {
       n1=n1->next;
       if (n1 == nodes_[node1]) break;
     }
 
-    if (n1->out->node == node2)
+    if (n1->out->node_attributes->name == node2)
       return n1;
     else
       return NULL;

@@ -181,10 +181,10 @@ vector<int> extends_map(const Tree& T,const Tree& Q)
   {
     if (not leaves_T[leaf]) continue;
 
-    while (nodes_T[leaves_T[leaf]->out->node].leaf_degree >= 2)
+    while (nodes_T[leaves_T[leaf]->out->node_attributes->name].leaf_degree >= 2)
     {
-      int p = leaves_T[leaf]->out->node;
-      int q = leaves_Q[leaf]->out->node;
+      int p = leaves_T[leaf]->out->node_attributes->name;
+      int q = leaves_Q[leaf]->out->node_attributes->name;
 
       if (nodes_Q[q].leaf_degree == nodes_Q[q].degree)
 	goto out;
@@ -207,8 +207,8 @@ vector<int> extends_map(const Tree& T,const Tree& Q)
 	if (*j == leaf)
 	  j++;
 	else {
-	  int n1 = leaves_T[*j]->node;
-	  int n2 = leaves_Q[*j]->node;
+	  int n1 = leaves_T[*j]->node_attributes->name;
+	  int n2 = leaves_Q[*j]->node_attributes->name;
 	  leaves_T[*j] = NULL;
 	  leaves_Q[*j] = NULL;
 	  nodes_T[n1].deleted = true;
@@ -235,12 +235,12 @@ vector<int> extends_map(const Tree& T,const Tree& Q)
       if (nodes_T[p].degree == 2) 
       {
 	BranchNode* N = leaves_T[leaf];
-	nodes_T[N->node].deleted = true;
+	nodes_T[N->node_attributes->name].deleted = true;
 	N = N->out;
-	while(nodes_T[N->out->node].deleted)
+	while(nodes_T[N->out->node_attributes->name].deleted)
 	  N = N->next;
 	leaves_T[leaf] = N;
-	p = N->out->node;
+	p = N->out->node_attributes->name;
 	nodes_T[p].adjacent_leaves.merge(LT);
 	nodes_T[p].leaf_degree++;
       }
@@ -248,17 +248,17 @@ vector<int> extends_map(const Tree& T,const Tree& Q)
       if (nodes_Q[q].degree == 2) 
       {
 	BranchNode* N = leaves_Q[leaf];
-	nodes_Q[N->node].deleted = true;
+	nodes_Q[N->node_attributes->name].deleted = true;
 	N = N->out;
-	while(nodes_Q[N->out->node].deleted)
+	while(nodes_Q[N->out->node_attributes->name].deleted)
 	  N = N->next;
 	leaves_Q[leaf] = N;
-	q = N->out->node;
+	q = N->out->node_attributes->name;
 	nodes_Q[q].adjacent_leaves.merge(LQ);
 	nodes_Q[q].leaf_degree++;
 
-	branch_map[leaves_Q[leaf]->branch] = leaves_T[leaf]->branch;
-	branch_map[leaves_Q[leaf]->out->branch] = leaves_T[leaf]->out->branch;
+	branch_map[leaves_Q[leaf]->directed_branch_attributes->name] = leaves_T[leaf]->directed_branch_attributes->name;
+	branch_map[leaves_Q[leaf]->out->directed_branch_attributes->name] = leaves_T[leaf]->out->directed_branch_attributes->name;
       }
     }
   }

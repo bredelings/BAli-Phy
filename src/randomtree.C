@@ -64,22 +64,22 @@ BranchNode* random_sub_node_after(BranchNode* n)
 BranchNode* randomly_split_node(Tree& T, BranchNode* n1) 
 {
   int D0 = degree(n1);
-  int n1_index = n1->node;
+  int n1_index = n1->node_attributes->name;
   assert(D0 > 3);
 
   // get a new node n2 
-  BranchNode* n2 = T.add_leaf_node(n1->node);
-  int n2_index = n2->node;
+  BranchNode* n2 = T.add_leaf_node(n1->node_attributes->name);
+  int n2_index = n2->node_attributes->name;
 
   // find the sub-node n1 in T[n1_index] that points to T[n2_index]
   n1 = n2->out;
-  assert(n1->node == n1_index);
+  assert(n1->node_attributes->name == n1_index);
 
   // move the first random branch after b to pull out the first random node (subtree)
   for(int i=0;i<2;i++)
   {
     BranchNode* bn = random_sub_node_after( n1 );
-    int n3_index = bn->out->node;
+    int n3_index = bn->out->node_attributes->name;
     assert(n3_index != n1_index);
     assert(n3_index != n2_index);
     T.reconnect_branch(n3_index, n1_index, n2_index);
@@ -87,11 +87,11 @@ BranchNode* randomly_split_node(Tree& T, BranchNode* n1)
 
   assert(T[n1_index].degree() < D0);
   assert(T[n1_index].degree() >= 3);
-  assert(n1->node == n1_index);
+  assert(n1->node_attributes->name == n1_index);
 
   assert(T[n2_index].degree() < D0);
   assert(T[n2_index].degree() >= 3);
-  assert(n2->node == n2_index);
+  assert(n2->node_attributes->name == n2_index);
 
   return n1;
 }
