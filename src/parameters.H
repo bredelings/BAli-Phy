@@ -134,6 +134,9 @@ class data_partition: public Probability_Model, public Mat_Cache
   /// Cached prior for the pairwise alignment on each branch.
   mutable std::vector<cached_value<efloat_t> > cached_alignment_prior_for_branch;
 
+  /// The pairwise alignment for each branch
+  std::vector< cached_value< std::vector<int> > > pairwise_alignment_for_branch;
+
   /// Cached transition counts for the pair-HMM on each branch.
   mutable std::vector<cached_value<ublas::matrix<int> > > cached_alignment_counts_for_branch;
 
