@@ -334,6 +334,8 @@ public:
 
   bool node_attribute_has_name(int i) const {return not node_attribute_names[i].empty();}
 
+  void node_attribute_set_name(int i, const std::string& s) {node_attribute_names[i] = s;}
+
   const std::string& node_attribute_name(int i) const {return node_attribute_names[i];}
 
 
@@ -341,12 +343,16 @@ public:
 
   bool undirected_branch_attribute_has_name(int i) const {return not undirected_branch_attribute_names[i].empty();}
 
+  void undirected_branch_attribute_set_name(int i, const std::string& s) {undirected_branch_attribute_names[i] = s;}
+
   const std::string& undirected_branch_attribute_name(int i) const {return undirected_branch_attribute_names[i];}
 
 
   int n_directed_branch_attributes() const {return directed_branch_attribute_names.size();}
 
   bool directed_branch_attribute_has_name(int i) const {return not directed_branch_attribute_names[i].empty();}
+
+  void directed_branch_attribute_set_name(int i, const std::string& s) {directed_branch_attribute_names[i] = s;}
 
   const std::string& directed_branch_attribute_name(int i) const {return directed_branch_attribute_names[i];}
 
