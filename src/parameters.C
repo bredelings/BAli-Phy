@@ -287,6 +287,9 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 
 void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& pi) const
 {
+  if (not variable_alignment())
+    throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
+
   int B = T->directed_branch(b).reverse();
 
   if (pairwise_alignment_for_branch[b].is_valid())
@@ -307,6 +310,9 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
 
 const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
 {
+  if (not variable_alignment())
+    throw myexception()<<"Alignment variation is OFF: what pairwise alignment are you referring to?";
+
   int B = T->directed_branch(b).reverse();
 
   if (pairwise_alignment_for_branch[b].is_valid())
