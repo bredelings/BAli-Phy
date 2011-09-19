@@ -24,15 +24,32 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment.H"
 #include "tree.H"
 
+struct pairwise_alignment_t: public std::vector<int>
+{
+  void flip();
+  pairwise_alignment_t flipped() const;
+
+  pairwise_alignment_t(const std::vector<int>&);
+  pairwise_alignment_t(const pairwise_alignment_t&);
+  pairwise_alignment_t();
+};
+
+bool operator==(const pairwise_alignment_t&, const pairwise_alignment_t&);
+
 namespace A2 {
 
-namespace states {
-  const int M  = 0;
-  const int G1 = 1;
-  const int G2 = 2;
-  const int E  = 3;
-  const int S  = 4;
-}
+  namespace states {
+    const int M  = 0;
+    const int G1 = 1;
+    const int G2 = 2;
+    const int E  = 3;
+    const int S  = 4;
+  }
+
+  int flip(int s);
+
+  pairwise_alignment_t get_pairwise_alignment(const alignment& A, int n1, int n2);
+
 
   alignment construct(const alignment& old, const std::vector<int>& path, int n1,int n2, 
 		      const Tree& T, const std::vector<int>& seq1,const std::vector<int>& seq2);

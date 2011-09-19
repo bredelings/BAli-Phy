@@ -24,7 +24,80 @@ along with BAli-Phy; see the file COPYING.  If not see
 using namespace std;
 using boost::dynamic_bitset;
 
+void pairwise_alignment_t::flip()
+{
+  
+  for(int i=0;i<size();i++)
+    (*this)[i] = A2::flip((*this)[i]);
+}
+
+pairwise_alignment_t pairwise_alignment_t::flipped() const
+{
+  pairwise_alignment_t pi (*this);
+  pi.flip();
+  return pi;
+}
+
+pairwise_alignment_t::pairwise_alignment_t()
+{ }
+
+pairwise_alignment_t::pairwise_alignment_t(const vector<int>& pi)
+  :vector<int>(pi)
+{ }
+
+pairwise_alignment_t::pairwise_alignment_t(const pairwise_alignment_t& pi)
+  :vector<int>(pi)
+{ }
+
+bool operator==(const pairwise_alignment_t& pi1, const pairwise_alignment_t& pi2)
+{
+  if (pi1.size() != pi2.size()) return false;
+
+  for(int i=0;i<pi1.size();i++)
+    if (pi1[i] != pi2[i]) return false;
+
+  return true;
+}
+
 namespace A2 {
+
+
+  int flip(int s)
+  {
+    if (s == states::G1)
+      return states::G2;
+    else if (s == states::G2) 
+      return states::G1;
+    else return s;
+  }
+
+  pairwise_alignment_t get_pairwise_alignment(const alignment& A, int n1, int n2)
+  {
+    pairwise_alignment_t pi;
+    pi.reserve(A.length()+2);
+    pi.push_back(A2::states::S);
+    for(int c=0;c<A.length();c++)
+    {
+      int S = -1;
+      if (A.character(c,n1))
+      {
+	if (A.character(c,n2))
+	  S = A2::states::M;
+	else
+	  S = A2::states::G2;
+      }
+      else
+      {
+	if (A.character(c,n2))
+	  S = A2::states::G1;
+      }
+      if (S != -1)
+	pi.push_back(S);
+    }
+    pi.push_back(A2::states::E);
+
+    return pi;
+  }
 
 alignment construct(const alignment& old, const vector<int>& path, int n1,int n2,
 		    const Tree& T, const vector<int>& seq1,const vector<int>& seq2) {

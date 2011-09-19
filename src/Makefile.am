@@ -309,7 +309,7 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
 	timer_stack.C io.C operator.C expression.C smodel/objects.C context.C \
 	formula.C computation.C formula_expression.C smodel/operations.C \
-	distribution-operations.C
+	distribution-operations.C 2way.C
 
 #---------------------------------------------------------------
 

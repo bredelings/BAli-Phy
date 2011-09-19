@@ -285,6 +285,54 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 #endif
 }
 
+void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& pi) const
+{
+  int B = T->directed_branch(b).reverse();
+
+  if (pairwise_alignment_for_branch[b].is_valid())
+  {
+    assert(pi == pairwise_alignment_for_branch[b]);
+    assert(pairwise_alignment_for_branch[B].is_valid());
+    assert(pairwise_alignment_for_branch[B] == pi.flipped());
+  }
+  else
+  {
+    assert(not pairwise_alignment_for_branch[B].is_valid());
+  }
+
+
+  pairwise_alignment_for_branch[b] = pi;
+  pairwise_alignment_for_branch[B] = pi.flipped();
+}
+
+const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
+{
+  int B = T->directed_branch(b).reverse();
+
+  if (pairwise_alignment_for_branch[b].is_valid())
+  {
+    int n1 = T->directed_branch(b).source();
+    int n2 = T->directed_branch(b).target();
+    assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
+    assert(pairwise_alignment_for_branch[B].is_valid());
+    assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
+  }
+  else
+  {
+    assert(not pairwise_alignment_for_branch[B].is_valid());
+    int n1 = T->directed_branch(b).source();
+    int n2 = T->directed_branch(b).target();
+    set_pairwise_alignment_(b, A2::get_pairwise_alignment(*A,n1,n2));
+  }
+
+  return pairwise_alignment_for_branch[b];
+}
+
+void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi)
+{
+  set_pairwise_alignment_(b,pi);
+}
+
 void data_partition::note_sequence_length_changed(int n)
 {
   if (not variable_alignment())
@@ -303,6 +351,10 @@ void data_partition::note_alignment_changed_on_branch(int b)
   cached_alignment_prior.invalidate();
   cached_alignment_prior_for_branch[b].invalidate();
   cached_alignment_counts_for_branch[b].invalidate();
+
+  int B = T->directed_branch(b).reverse();
+  pairwise_alignment_for_branch[b].invalidate();
+  pairwise_alignment_for_branch[B].invalidate();
 
   const Tree& TT = *T;
   int target = TT.branch(b).target();
@@ -472,6 +524,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    partition_name(n),
    cached_alignment_prior_for_branch(t.n_branches()),
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
+   pairwise_alignment_for_branch(2*t.n_branches()),
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
    cached_transition_P(t.n_branches()),

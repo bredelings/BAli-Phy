@@ -43,6 +43,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tools/partition.H"
 #include "cow-ptr.H"
 #include "cached_value.H"
+#include "2way.H"
 
 //------------------------------- parameter-containing class --------------------------//
 
@@ -135,7 +136,9 @@ class data_partition: public Probability_Model, public Mat_Cache
   mutable std::vector<cached_value<efloat_t> > cached_alignment_prior_for_branch;
 
   /// The pairwise alignment for each branch
-  std::vector< cached_value< std::vector<int> > > pairwise_alignment_for_branch;
+  mutable std::vector< cached_value< pairwise_alignment_t > > pairwise_alignment_for_branch;
+
+  void set_pairwise_alignment_(int b, const pairwise_alignment_t&) const;
 
   /// Cached transition counts for the pair-HMM on each branch.
   mutable std::vector<cached_value<ublas::matrix<int> > > cached_alignment_counts_for_branch;
@@ -238,6 +241,10 @@ public:
   void invalidate_subA_index_one_branch(int b);
   // invalidate subA indices for all branches
   void invalidate_subA_index_all();
+
+  const pairwise_alignment_t& get_pairwise_alignment(int b) const;
+
+  void set_pairwise_alignment(int b, const pairwise_alignment_t&);
 
   void subA_index_allow_invalid_branches(bool);
 
