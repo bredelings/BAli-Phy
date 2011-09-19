@@ -440,7 +440,7 @@ string open_dir(const string& dirbase)
     string dirname = dirbase + "-" + convertToString(i);
 
     if (not fs::exists(dirname)) {
-      fs::create_directory(dirname);
+      fs::create_directories(dirname);
       return dirname;
     }
   }
