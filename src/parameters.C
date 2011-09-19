@@ -336,6 +336,7 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
 
 void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi)
 {
+  note_alignment_changed_on_branch(b);
   set_pairwise_alignment_(b,pi);
 }
 
