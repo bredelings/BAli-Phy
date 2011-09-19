@@ -132,6 +132,8 @@ namespace A3 {
 		      int n0,int n1,int n2,int n3,const Tree& T,
 		      const std::vector<int>& seq1,const std::vector<int>& seq2, const std::vector<int>& seq3);
 
+  pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>&,int n1, int n2);
+
   std::vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3);
   alignment project(const alignment& A1,int n0,int n1,int n2,int n3);
   alignment project(const alignment& A1,const std::vector<int>&);
@@ -144,12 +146,10 @@ namespace A3 {
 
   efloat_t acceptance_ratio(const Parameters& P1,const std::vector<int>&,
 			    const Parameters& P2,const std::vector<int>&);
-
 }
 
 
 std::vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3);
 std::vector<int> get_path_3way(const alignment& A,const std::vector<int>& nodes);
-
 
 #endif

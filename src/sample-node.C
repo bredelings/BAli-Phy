@@ -194,6 +194,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   for(int i=1;i<4;i++) {
     int b = T.branch(nodes[0],nodes[i]);
     P.note_alignment_changed_on_branch(b);
+    P.set_pairwise_alignment(b, A3::get_pairwise_alignment_from_path(path, 0, i));
   }
 
 #ifndef NDEBUG
