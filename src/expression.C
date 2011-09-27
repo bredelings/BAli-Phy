@@ -1843,6 +1843,31 @@ expression_ref def_function(bool decompose, const expression_ref& pattern, const
   return def_function(decompose, vector<expression_ref>(1,pattern), vector<expression_ref>(1,body), otherwise);
 }
 
+bool is_WHNF(const expression_ref& R)
+{
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
+  if (E)
+  {
+    // 2. Lambda
+    shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+    if (L) return true;
+
+    // 4. Constructor
+    shared_ptr<const Function> RF = dynamic_pointer_cast<const Function>(E->sub[0]);
+    if (RF and RF->what_type == data_function_f) return true;
+
+    return false;
+  }
+  else
+  {
+    
+
+    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    return true;
+  }
+}
+
 bool is_dummy(const expression_ref& R)
 {
   if (dynamic_cast<const dummy*>(&*R)) return true;
@@ -2114,3 +2139,136 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
   return R;
 
 }
+
+// Examples: 
+// 1. (((\a \b a+b) x) y) with x=1, y=2
+// 2. (x+y)+z
+// 3. case x:y:[] of {[] -> [], h:t -> h:[]}  with x=1, y=2
+
+// Question: should I separation the "computation" from the reg?
+
+// How do I check if a reduction depends on the value of (previous unevaluated) parameters?
+// - Does the "new" part conflict with the unchanged-argument idea?
+
+
+reg::reg():name(convertToString(this)),named(false) {}
+reg::reg(const string& s):name(s),named(true) {}
+
+// a dummy variable expression
+struct reg_var: public Object
+{
+  shared_ptr< reg > target;
+
+  reg_var* clone() const {return new reg_var(*this);}
+
+  std::string print() const 
+  {
+    return "<" + target->name + ">";
+  }
+
+  tribool compare(const Object& o) const
+  {
+    const reg_var* E = dynamic_cast<const reg_var*>(&o);
+    if (not E) 
+      return false;
+
+    return target == E->target;
+  }
+
+  const expression_ref& value() const {return target->E;}
+        expression_ref& value()       {return target->E;}
+
+  reg_var():
+    target(new reg)
+  { }
+
+  reg_var(const string& s):
+    target(new reg(s))
+  { }
+
+  reg_var(const shared_ptr< reg >& r)
+    :target(r)
+  { }
+};
+
+// Question: if the dimension of a vector changes, and I want to make each elements
+// into a (sub-) parameter, then how do I number them?  Currently the parameters are
+// a property of the context, not of the expression, but this seems to make the parameters
+// deterministically depend on other parameters, in a sense.
+
+#include <list>
+using std::list;
+
+struct reg_machine
+{
+  int n_tokens;
+  vector< list <reg> > regs_for_token;
+  list<reg> all_regs;
+
+  vector<bool> is_token_active;
+  vector<int> unused_tokens;
+
+  int get_unused_token();
+};
+
+expression_ref incremental_evaluate(context& C, const shared_ptr<reg>& R_)
+{
+  shared_ptr<reg> R = R_;
+
+  int t = C.token;
+
+  // See if the result is already computed
+  while(t < R->results.size() and R->results[t]->is_valid())
+  {
+    R = R->results[t];
+    assert(not is_WHNF(R->E));
+  }
+
+  // Compute the value of this result
+  expression_ref control = R->E;
+
+  // If this expression cannot be reduced further, then just return it here.
+  if (is_WHNF(R->E)) return R->E;
+
+
+  // -1. A free variable. This should never happen.
+  shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(control);
+  assert(not D);
+  
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(control);
+
+  // 3. Var1: If we are evaluating a variable...
+  if (shared_ptr<reg_var> RV = dynamic_pointer_cast<reg_var>(control))
+  {
+  }
+
+  return control;
+}
+
+expression_ref incremental_evaluate(context& C, const expression_ref& E)
+{
+  shared_ptr<reg> R(new reg);
+  R->E = launchbury_normalize(E);
+
+  return incremental_evaluate(C,R);
+}
+
+
+// + 
+// apply 
+// +-*/
+// constructor
+// case
+// let
+
+
+
+
+
+
+
+
+
+
+
+

@@ -439,4 +439,8 @@ int main()
   cout<<"   normalized: "<<test11<<" = \n";
   test11 = evaluate_mark1(test11);
   cout<<test11<<"\n";
+
+  context C;
+  C.token = 0;
+  cout<<incremental_evaluate(C,6)<<"\n";
 }
