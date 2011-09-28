@@ -2221,7 +2221,7 @@ expression_ref incremental_evaluate(context& C, const shared_ptr<reg>& R_)
 
   int t = C.token;
 
-  // See if the result is already computed
+  /*------- I. See if the result is already computed -----*/
   while(t < R->results.size() and R->results[t]->is_valid())
   {
     R = R->results[t];
@@ -2233,6 +2233,35 @@ expression_ref incremental_evaluate(context& C, const shared_ptr<reg>& R_)
 
   // If this expression cannot be reduced further, then just return it here.
   if (is_WHNF(R->E)) return R->E;
+
+  /*------------ II. Prepare the target slot -------------*/
+  if (t >= R->results.size())
+  {
+    R->results.resize(t+1);
+  }
+
+  for(int i=0; i<R->results.size(); i++)
+  {
+    if (not R->results[i]) {
+      // HERE is where we should add the reg to reg_machine->regs_for_token
+      R->results[i] = shared_ptr<reg>(new reg);
+      R->results[i]->parent = R;
+    }
+  }
+
+  /*--------- III. a ---------*/
+  /*
+    Now, I need to
+    (a) evaluate the expression.
+    (b) discover which args were EVALUATED, and (?) which args were REFERENCED. (but probably not)
+    (c) I need to determine if any parameters were used.
+    (d) I need to determine if any NEW parameters were used.
+
+    Q1: Hmm... how do I discover if any NEW parameters were used?
+    Do I need to consider where each used parameter has ever been used before?
+
+    q2: 
+   */
 
 
   // -1. A free variable. This should never happen.
