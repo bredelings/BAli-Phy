@@ -891,12 +891,19 @@ struct FreeOperationArgs: public OperationArgs
   const Context& C;
   const expression& E;
 
+  boost::shared_ptr<const Object> reference(int slot) const;
+
   boost::shared_ptr<const Object> evaluate(int slot);
 
   FreeOperationArgs* clone() const {return new FreeOperationArgs(*this);}
 
   FreeOperationArgs(const Context& C1,const expression& E1):C(C1),E(E1) { }
 };
+
+boost::shared_ptr<const Object> FreeOperationArgs::reference(int slot) const
+{
+  return E.sub[slot+1];
+}
 
 boost::shared_ptr<const Object> FreeOperationArgs::evaluate(int slot)
 {
@@ -2260,7 +2267,23 @@ expression_ref incremental_evaluate(context& C, const shared_ptr<reg>& R_)
     Q1: Hmm... how do I discover if any NEW parameters were used?
     Do I need to consider where each used parameter has ever been used before?
 
-    q2: 
+    Q2: Suppose I change all the operations (such as @ and CASE and LET) into operators
+     - would this actually work?
+
+    Q3: How would a PLUS operator work?
+    A3: The expression would be (+ R1 R2), where R1 and R2 are objects referencing regs r1 and r2.
+        
+   */
+
+  /*
+    Application.
+    Letrec.
+    Case.
+    Operation.
+
+    Free variable.  Odd!  Should not occur?
+
+    Parameter.  Do not handle yet.
    */
 
 

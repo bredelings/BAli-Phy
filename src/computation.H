@@ -25,6 +25,8 @@ struct OperationArgs: virtual public Object
 {
   virtual OperationArgs* clone() const = 0;
 
+  virtual boost::shared_ptr<const Object> reference(int slot) const = 0;
+
   virtual boost::shared_ptr<const Object> evaluate(int slot) = 0;
 
   template <typename T>
@@ -46,6 +48,8 @@ struct ContextOperationArgs: public OperationArgs
   const Context& CTX;
   boost::shared_ptr<Computation> computation;
   int index_of_caller;
+
+  boost::shared_ptr<const Object> reference(int slot) const;
 
   boost::shared_ptr<const Object> evaluate(int slot);
 

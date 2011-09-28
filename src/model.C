@@ -860,6 +860,8 @@ struct OpModelOperationArgs: public OperationArgs
   const OpModel& M;
   boost::shared_ptr<Computation> computation;
 
+  boost::shared_ptr<const Object> reference(int slot) const;
+
   boost::shared_ptr<const Object> evaluate(int slot);
 
   OpModelOperationArgs* clone() const {return new OpModelOperationArgs(*this);}
@@ -873,6 +875,11 @@ OpModelOperationArgs::OpModelOperationArgs(const OpModel& m)
   int n_input_slots = m.Op->n_args();
   
   computation = boost::shared_ptr<Computation>( new Computation(n_input_slots) );
+}
+
+boost::shared_ptr<const Object> OpModelOperationArgs::reference(int slot) const
+{
+  std::abort();
 }
 
 boost::shared_ptr<const Object> OpModelOperationArgs::evaluate(int slot)

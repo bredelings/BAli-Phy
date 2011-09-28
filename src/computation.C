@@ -10,6 +10,14 @@ ContextOperationArgs::ContextOperationArgs(const Context& A, int i)
   computation = boost::shared_ptr<Computation>( new Computation(n_input_slots) );
 }
 
+boost::shared_ptr<const Object> ContextOperationArgs::reference(int slot) const
+{
+  std::abort();
+
+  int index_to_evaluate = CTX.F->input_indices(index_of_caller)[slot];
+  return CTX.F->sub_exp(index_to_evaluate);
+}
+
 boost::shared_ptr<const Object> ContextOperationArgs::evaluate(int slot)
 {
   int index_to_evaluate = CTX.F->input_indices(index_of_caller)[slot];

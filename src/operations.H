@@ -9,6 +9,45 @@
 #include "computation.H"
 #include "expression.H"
 
+
+struct Apply: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Apply* clone() const {return new Apply(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Apply* E = dynamic_cast<const Apply*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+  std::string name() const;
+
+  Apply():Operation(2) {}
+};
+
+struct Case: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Case* clone() const {return new Case(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Case* E = dynamic_cast<const Case*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+  std::string name() const;
+
+  Case():Operation(2) {}
+};
+
 struct Print: public Operation
 {
   // The 'context' should include the knowledge of the input slots
