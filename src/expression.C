@@ -1843,6 +1843,10 @@ expression_ref def_function(bool decompose, const expression_ref& pattern, const
   return def_function(decompose, vector<expression_ref>(1,pattern), vector<expression_ref>(1,body), otherwise);
 }
 
+// WHNF = Weak head normal form.
+// HNF requires that the body of a lambda is reduced as well,
+//  while WHNF does not have this requirement.
+// Therefore, \x -> 1+1 is WHNF but not HNF.
 bool is_WHNF(const expression_ref& R)
 {
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
