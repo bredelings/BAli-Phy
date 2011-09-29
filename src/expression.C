@@ -126,7 +126,15 @@ string expression::print() const
   
   if (const Operator* O = dynamic_cast<const Operator*>(&*sub[0]))
   {
-    if (O->precedence() > -1)
+    if (dynamic_cast<const Apply*>(O))
+    {
+      vector<string> sub_names;
+      for(int i=1;i<size();i++)
+	sub_names.push_back( args[i] );
+      return join(sub_names," ");
+    }
+
+    else if (O->precedence() > -1)
     {
       assert(O->n_args() == 2);
       if (const expression* E = dynamic_cast<const expression*>(&*sub[1]))
