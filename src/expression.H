@@ -135,14 +135,6 @@ struct let_obj: public Object
   std::string print() const;
 };
 
-struct case_obj: public Object
-{
-  case_obj* clone() const {return new case_obj(*this);}
-  tribool compare(const Object& o) const;
-
-  std::string print() const;
-};
-
 struct alt_obj: public Operator
 {
   alt_obj* clone() const {return new alt_obj(*this);}

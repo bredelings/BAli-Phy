@@ -54,7 +54,7 @@ bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<ex
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return false;
 
-  if (not dynamic_pointer_cast<case_obj>(E->sub[0])) return false;
+  if (not dynamic_pointer_cast<Case>(E->sub[0])) return false;
 
   vector<expression_ref> pairs = get_ref_vector_from_list(E->sub[2]);
   for(int i=0;i<pairs.size();i++)
@@ -279,21 +279,6 @@ string let_obj::print() const
 }
 
 tribool let_obj::compare(const Object& O) const
-{
-  if (this == &O) 
-    return true;
-  
-  if (typeid(*this) != typeid(O)) return false;
-  
-  return true;
-}
-
-string case_obj::print() const 
-{
-  return "case";
-}
-
-tribool case_obj::compare(const Object& O) const
 {
   if (this == &O) 
     return true;
@@ -1413,7 +1398,7 @@ expression_ref evaluate_mark1(const expression_ref& R)
       continue;
     }
 
-    else if (dynamic_pointer_cast<const case_obj>(E->sub[0]))
+    else if (dynamic_pointer_cast<const Case>(E->sub[0]))
     {
       S.push_back(E->sub[2]);
       control = E->sub[1];
@@ -1649,7 +1634,7 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ve
 
   if (not decompose)
   {
-    expression* E = new expression( case_obj() );
+    expression* E = new expression( Case() );
     E->sub.push_back(T);
     E->sub.push_back(ListEnd);
 
@@ -1939,6 +1924,27 @@ expression_ref launchbury_normalize(const expression_ref& R)
     }
   }
 
+  // 6. Case
+  shared_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
+  if (IsCase)
+  {
+    expression* V = new expression(*E);
+
+    V->sub[1] = launchbury_normalize(V->sub[1]);
+
+    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
+    while(bodies)
+    {
+      assert(bodies->size() == 3);
+      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
+      assert(alternative);
+      alternative->sub[2] = launchbury_normalize(alternative->sub[2]);
+      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+    }
+    
+    return V;
+  }
+
   // FIXME! Handle operations.
   // Extend the stack handling to be able to work on more than one argument.
   // Currently there is no need to evaluate arguments before applying them to functions.
@@ -1998,27 +2004,6 @@ expression_ref launchbury_normalize(const expression_ref& R)
     return V;
   }
 
-  // 6. Case
-  shared_ptr<const case_obj> Case = dynamic_pointer_cast<const case_obj>(E->sub[0]);
-  if (Case)
-  {
-    expression* V = new expression(*E);
-
-    V->sub[1] = launchbury_normalize(V->sub[1]);
-
-    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
-    while(bodies)
-    {
-      assert(bodies->size() == 3);
-      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
-      assert(alternative);
-      alternative->sub[2] = launchbury_normalize(alternative->sub[2]);
-      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
-    }
-    
-    return V;
-  }
-
   std::cerr<<"I don't recognize expression '"+ R->print() + "'\n";
   return R;
 }
@@ -2057,6 +2042,27 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
     return V;
   }
   
+  // 6. Case
+  shared_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
+  if (IsCase)
+  {
+    expression* V = new expression(*E);
+
+    V->sub[1] = launchbury_unnormalize(V->sub[1]);
+
+    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
+    while(bodies)
+    {
+      assert(bodies->size() == 3);
+      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
+      assert(alternative);
+      alternative->sub[2] = launchbury_unnormalize(alternative->sub[2]);
+      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+    }
+    
+    return V;
+  }
+
   // 4. Constructor
   if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
       dynamic_pointer_cast<const Operation>(E->sub[0]))
@@ -2123,27 +2129,6 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
     }
 
     return let_expression(vars, bodies, T);
-  }
-
-  // 6. Case
-  shared_ptr<const case_obj> Case = dynamic_pointer_cast<const case_obj>(E->sub[0]);
-  if (Case)
-  {
-    expression* V = new expression(*E);
-
-    V->sub[1] = launchbury_unnormalize(V->sub[1]);
-
-    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
-    while(bodies)
-    {
-      assert(bodies->size() == 3);
-      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
-      assert(alternative);
-      alternative->sub[2] = launchbury_unnormalize(alternative->sub[2]);
-      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
-    }
-    
-    return V;
   }
 
   std::cerr<<"I don't recognize expression '"+ R->print() + "'\n";
