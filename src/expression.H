@@ -558,4 +558,6 @@ struct context
 
 expression_ref incremental_evaluate(context& C, const expression_ref&);
 
+void parse_alternatives(const expression_ref& R, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
+
 #endif
