@@ -809,7 +809,7 @@ expression_ref apply(const expression_ref& R,const expression_ref& arg)
 
   // Allow applying non-lambda expressions to arguments.
   // We need this to apply variables that turn out to be functions.
-  return expression_ref(new expression(R,arg));
+  return apply_expression(R,arg);
 }
 
 expression_ref apply(const expression_ref& E,
@@ -1425,16 +1425,16 @@ expression_ref evaluate_mark1(const expression_ref& R)
 
 
     // 1. App1 = Application expressions: compute head
-    else if (dynamic_pointer_cast<const expression>(E->sub[0]) or dynamic_pointer_cast<const heap_dummy>(E->sub[0]))
+    else if (dynamic_pointer_cast<const Apply>(E->sub[0]))
     {
-      assert(E->size() == 2);
-      assert(dynamic_pointer_cast<const heap_dummy>(E->sub[1]));
+      assert(E->size() == 3);
+      assert(dynamic_pointer_cast<const heap_dummy>(E->sub[2]));
 
       // Put the argument on the stack
-      S.push_back(E->sub[1]);
+      S.push_back(E->sub[2]);
 
       // Begin evaluating the head
-      control = E->sub[0];
+      control = E->sub[1];
       continue;
     }
     else
@@ -1924,13 +1924,13 @@ expression_ref launchbury_normalize(const expression_ref& R)
   }
 
   // 3. Application
-  if (dynamic_pointer_cast<const expression>(E->sub[0]) or is_dummy(E->sub[0]))
+  if (dynamic_pointer_cast<const Apply>(E->sub[0]))
   {
-    assert(E->size() == 2);
-    if (is_dummy(E->sub[1]))
+    assert(E->size() == 3);
+    if (is_dummy(E->sub[2]))
     { 
       expression* V = new expression(*E);
-      V->sub[0] = launchbury_normalize(E->sub[0]);
+      V->sub[1] = launchbury_normalize(E->sub[1]);
       return V;
     }
     else
@@ -1938,7 +1938,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
       int var_index = get_safe_binder_index(R);
       expression_ref x = dummy(var_index);
 
-      return let_expression(x, launchbury_normalize(E->sub[1]), launchbury_normalize(E->sub[0])(x));
+      return let_expression(x, launchbury_normalize(E->sub[2]), launchbury_normalize(E->sub[1])(x));
     }
   }
 
