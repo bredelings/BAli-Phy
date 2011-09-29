@@ -452,4 +452,13 @@ int main()
   cout<<"   normalized: "<<test12<<" = \n";
   test12 = incremental_evaluate(C,test12);
   cout<<test12<<"\n";
+
+  expression_ref test13 = case_expression(true, Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
+
+  cout<<"\n";
+  cout<<"Eval test:     "<<test13<<" = \n";
+  test13 = launchbury_normalize(test13);
+  cout<<"   normalized: "<<test13<<" = \n";
+  test13 = incremental_evaluate(C,test13);
+  cout<<test13<<"\n";
 }
