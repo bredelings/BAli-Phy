@@ -130,7 +130,7 @@ string expression::print() const
     {
       vector<string> sub_names;
       for(int i=1;i<size();i++)
-	sub_names.push_back( args[i] );
+	sub_names.push_back( pargs[i] );
       return join(sub_names," ");
     }
 
