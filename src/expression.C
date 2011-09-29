@@ -2495,22 +2495,7 @@ shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
       Q2: Suppose I change all the operations (such as @ and CASE and LET) into operators
       - would this actually work?
       
-      Q3: How would a PLUS operator work?
-      A3: The expression would be (+ R1 R2), where R1 and R2 are objects referencing regs r1 and r2.
-      
     */
-    
-    /*
-      Application.
-      Letrec.
-      Case.
-      Operation.
-      
-      Free variable.  Odd!  Should not occur?
-      
-      Parameter.  Do not handle yet.
-    */
-    
     
     // -1. A free variable. This should never happen.
     shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(control);
