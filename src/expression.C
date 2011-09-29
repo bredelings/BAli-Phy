@@ -1946,7 +1946,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
       int var_index = get_safe_binder_index(R);
       expression_ref x = dummy(var_index);
 
-      return let_expression(x, launchbury_normalize(E->sub[2]), launchbury_normalize(E->sub[1])(x));
+      return let_expression(x, launchbury_normalize(E->sub[2]), apply_expression(launchbury_normalize(E->sub[1]),x));
     }
   }
 
