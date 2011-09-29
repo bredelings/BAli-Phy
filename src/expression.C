@@ -2395,18 +2395,23 @@ struct RegOperationArgs: public OperationArgs
 
     assert(RV);
 
-    shared_ptr<reg> R2 = incremental_evaluate(C,RV->target);
+    if (not R.used_inputs[slot])
+    {
+      R.used_inputs[slot] = incremental_evaluate(C,RV->target);
 
-    assert(R2->is_valid());
+      assert(R.used_inputs[slot]->is_valid());
+    }
 
-    return R2->E;
+    return R.used_inputs[slot]->E;
   }
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
   RegOperationArgs(const shared_ptr<const expression>& e, reg& r, context& c)
     :E(e),R(r),C(c)
-  { }
+  { 
+    R.used_inputs.resize(E->size()-1);
+  }
 };
 
 shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)

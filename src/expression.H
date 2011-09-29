@@ -529,7 +529,7 @@ struct reg
   // Which expression is this a reduction of
   boost::shared_ptr<const reg> parent;
 
-  // Which input values were used to reduce the parent to this exprssion
+  // Which input values were used to reduce the parent to this expression
   std::vector<boost::shared_ptr<const reg> > used_inputs;
 
   // Which reduction results made use of the value of this expression
