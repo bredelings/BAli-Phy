@@ -2380,7 +2380,7 @@ struct RegOperationArgs: public OperationArgs
 {
   shared_ptr<const expression> E;
 
-  reg& R;
+  shared_ptr<reg>& R;
 
   context& C;
 
@@ -2395,22 +2395,26 @@ struct RegOperationArgs: public OperationArgs
 
     assert(RV);
 
-    if (not R.used_inputs[slot])
+    if (not R->used_inputs[slot])
     {
-      R.used_inputs[slot] = incremental_evaluate(C,RV->target);
+      shared_ptr<reg> result = incremental_evaluate(C,RV->target);
 
-      assert(R.used_inputs[slot]->is_valid());
+      assert(result->is_valid());
+
+      R->used_inputs[slot] = result;
+
+      result->outputs.push_back(R);
     }
 
-    return R.used_inputs[slot]->E;
+    return R->used_inputs[slot]->E;
   }
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-  RegOperationArgs(const shared_ptr<const expression>& e, reg& r, context& c)
+  RegOperationArgs(const shared_ptr<const expression>& e, shared_ptr<reg>& r, context& c)
     :E(e),R(r),C(c)
   { 
-    R.used_inputs.resize(E->size()-1);
+    R->used_inputs.resize(E->size()-1);
   }
 };
 
@@ -2512,7 +2516,7 @@ shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
     // 3. Var1: If we are evaluating a variable...
     if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
     {
-      RegOperationArgs Args(E, *R->results[t], C);
+      RegOperationArgs Args(E, R->results[t], C);
       R->results[t]->E = (*O)(Args);
     }
   }
