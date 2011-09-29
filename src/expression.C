@@ -2034,6 +2034,145 @@ expression_ref launchbury_normalize(const expression_ref& R)
   return R;
 }
 
+expression_ref graph_normalize(const expression_ref& R)
+{
+  // 1. Var
+  if (is_dummy(R))
+    return R;
+  
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
+  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+  if (not E) return R;
+  
+  // 2. Lambda
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  if (L)
+  {
+    assert(E->size() == 3);
+    expression* V = new expression(*E);
+    V->sub[2] = graph_normalize(E->sub[2]);
+
+    if (V->sub[2] == E->sub[2])
+      return R;
+    else
+      return V;
+  }
+
+  // 3. Application
+  if (dynamic_pointer_cast<const Apply>(E->sub[0]))
+  {
+    assert(E->size() == 3);
+    expression_ref f = graph_normalize(E->sub[1]);
+    expression_ref x = graph_normalize(E->sub[2]);
+
+    int var_index = get_safe_binder_index(R);
+    expression_ref f_ = dummy(var_index++);
+    expression_ref x_ = dummy(var_index++);
+
+    if (is_dummy(x))
+    { 
+      return let_expression(f_, f, apply_expression(f_,x));
+    }
+    else
+    {
+      vector<expression_ref> vars;
+      vector<expression_ref> bodies;
+
+      vars.push_back(f_);
+      vars.push_back(x_);
+
+      bodies.push_back(f);
+      bodies.push_back(x);
+
+      return let_expression(vars, bodies, apply_expression(f_,x_));
+    }
+  }
+
+  // 6. Case
+  shared_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
+  if (IsCase)
+  {
+    expression* V = new expression(*E);
+
+    V->sub[1] = graph_normalize(V->sub[1]);
+
+    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
+    while(bodies)
+    {
+      assert(bodies->size() == 3);
+      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
+      assert(alternative);
+      alternative->sub[2] = graph_normalize(alternative->sub[2]);
+      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+    }
+    
+    return V;
+  }
+
+  // FIXME! Handle operations.
+  // Extend the stack handling to be able to work on more than one argument.
+  // Currently there is no need to evaluate arguments before applying them to functions.
+  // Can we avoid evaluating functions before calling an operation?
+  // - well, we could make the operation throw an exception identifying which is the first argument that needs to be
+  //   evaluated.
+  // - then, we could put the operation on the stack and begin evaluating just that one argument.
+  
+  // 4. Constructor
+  if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
+      dynamic_pointer_cast<const Operation>(E->sub[0]))
+  {
+    int var_index = get_safe_binder_index(R);
+
+    expression* C = new expression;
+    C->sub.push_back(E->sub[0]);
+
+    // Actually we probably just need x[i] not to be free in E->sub[i]
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    for(int i=1;i<E->size();i++)
+    {
+      if (is_dummy(E->sub[i]))
+      {
+	C->sub.push_back(E->sub[i]);
+      }
+      else
+      {
+	expression_ref var = dummy( var_index++ );
+	C->sub.push_back( var );
+	vars.push_back( var );
+	bodies.push_back( graph_normalize(E->sub[i]) );
+      }
+    }
+
+    return let_expression(vars, bodies, C);
+  }
+
+  // 5. Let 
+  shared_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
+  if (Let)
+  {
+    expression* V = new expression(*E);
+
+    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[1]);
+    while(bodies)
+    {
+      assert(bodies->size() == 3);
+      shared_ptr<expression> let_group = dynamic_pointer_cast<expression>(bodies->sub[1]);
+      assert(let_group);
+      let_group->sub[2] = graph_normalize(let_group->sub[2]);
+      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+    }
+    
+    V->sub[2] = graph_normalize(V->sub[2]);
+
+    return V;
+  }
+
+  std::cerr<<"I don't recognize expression '"+ R->print() + "'\n";
+  return R;
+}
+
 expression_ref launchbury_unnormalize(const expression_ref& R)
 {
   // 1. Var
@@ -2254,6 +2393,8 @@ struct RegOperationArgs: public OperationArgs
   {
     shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( reference(slot) );
 
+    assert(RV);
+
     shared_ptr<reg> R2 = incremental_evaluate(C,RV->target);
 
     assert(R2->is_valid());
@@ -2392,7 +2533,7 @@ shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
 expression_ref incremental_evaluate(context& C, const expression_ref& E)
 {
   shared_ptr<reg> R(new reg);
-  R->E = launchbury_normalize(E);
+  R->E = graph_normalize(E);
 
   shared_ptr<reg> R2 =  incremental_evaluate(C,R);
   return R2->E;

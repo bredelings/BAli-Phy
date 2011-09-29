@@ -444,7 +444,7 @@ int main()
   C.token = 0;
   cout<<incremental_evaluate(C,6)<<"\n";
 
-  expression_ref test12 = One+One;
+  expression_ref test12 = apply_expression(apply_expression(plus,One),One);
 
   cout<<"\n";
   cout<<"Eval test:     "<<test12<<" = \n";
