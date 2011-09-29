@@ -2534,13 +2534,109 @@ shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
   return R;
 }
 
+void compact_graph_expression(expression_ref& R);
+
 expression_ref incremental_evaluate(context& C, const expression_ref& E)
 {
   shared_ptr<reg> R(new reg);
   R->E = graph_normalize(E);
 
   shared_ptr<reg> R2 =  incremental_evaluate(C,R);
-  return R2->E;
+
+  expression_ref result = R2->E;
+  compact_graph_expression(result);
+
+  shared_ptr<const reg> R3 = R2;
+  while(true)
+  {
+    expression_ref rrr = R3->E;
+    compact_graph_expression(rrr);
+    std::cout<<rrr<<" <- ";
+    if (R3->parent)
+      R3 = R3->parent;
+    else
+      break;
+  }
+  std::cout<<"\n";
+
+
+  return result;
+}
+
+
+void discover_graph_vars(const expression_ref& R, map< shared_ptr<reg>, std::string>& names)
+{
+  if (shared_ptr<const reg_var> H = dynamic_pointer_cast<const reg_var>(R))
+  {
+    if (names.find(H->target) != names.end())
+    {
+      // back out, we've been through this node before.
+    }
+
+    if (names.find(H->target) == names.end())
+    {
+      int num = names.size()+1;
+      // give this node a name and mark it visited
+      names[H->target] = "p"+convertToString(num);
+
+      discover_graph_vars(H->target->E, names);
+    }
+
+  }
+
+  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  {
+    for(int i=0;i<E->size();i++)
+      discover_graph_vars(E->sub[i], names);
+  }
+}
+
+void compact_graph_expression(expression_ref& R)
+{
+  map< shared_ptr<reg>, std::string> names;
+
+  int var_index = get_safe_binder_index(R);
+
+  discover_graph_vars(R,names);
+
+  //  std::cout<<R<<std::endl;
+  vector< expression_ref > replace;
+  foreach(i,names)
+  {
+    replace.push_back( reg_var( i->first) );
+    var_index = std::max(var_index, get_safe_binder_index(i->first->E) );
+    //    std::cout<<"<"<<i->first->name<<"> = "<<i->first->E<<std::endl;
+  }
+  //  std::cout<<R<<std::endl;
+  vector<expression_ref> vars;
+  vector<expression_ref> bodies;
+  foreach(i,names)
+  {
+    if (not i->first->named)
+      vars.push_back(dummy(var_index++));
+    else
+      vars.push_back(dummy(i->first->name));
+    bodies.push_back( i->first->E );
+  }
+
+  for(int i=0;i<bodies.size();i++)
+  {
+    //    std::cout<<"------\n";
+    //    std::cout<<replace[i]<<" -> "<<vars[i]<<":\n";
+    for(int j=0;j<bodies.size();j++)
+    {
+      bodies[j] = substitute(bodies[j], replace[i], vars[i]);
+      //      std::cout<<vars[j]<<" = "<<bodies[j]<<std::endl;
+    }
+
+    R = substitute(R, replace[i], vars[i]);
+    //    std::cout<<"R = "<<R<<std::endl;
+  }
+
+  R = let_expression(vars, bodies, R);
+  //  std::cout<<R<<std::endl;
+  R = launchbury_unnormalize(R);
+  //  std::cout<<"substituted = "<<launchbury_unnormalize(R)<<std::endl;
 }
 
 
