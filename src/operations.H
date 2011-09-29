@@ -22,6 +22,8 @@ struct Apply: public Operation
     return E;
   }
 
+  int precedence() const {return 10;}
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const;
