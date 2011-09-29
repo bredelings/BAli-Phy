@@ -2274,41 +2274,43 @@ shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
 
   int t = C.token;
 
-  /*------- I. See if the result is already computed -----*/
-  while(t < R->results.size() and R->results[t]->is_valid())
+  while (true)
   {
-    R = R->results[t];
-    assert(not is_WHNF(R->E));
-  }
-
-  // Compute the value of this result
-  expression_ref control = R->E;
-
-  // If this expression cannot be reduced further, then just return it here.
-  if (is_WHNF(R->E)) return R;
-
-  /*------------ II. Prepare the target slot -------------*/
-  if (t >= R->results.size())
-  {
-    R->results.resize(t+1);
-  }
-
-  for(int i=0; i<R->results.size(); i++)
-  {
-    if (not R->results[i]) {
-      // HERE is where we should add the reg to reg_machine->regs_for_token
-      R->results[i] = shared_ptr<reg>(new reg);
-      R->results[i]->parent = R;
+    /*------- I. See if the result is already computed -----*/
+    while(t < R->results.size() and R->results[t]->is_valid())
+    {
+      assert(not is_WHNF(R->E));
+      R = R->results[t];
     }
-  }
 
-  /*--------- III. a ---------*/
-  
-  vector<expression_ref> vars;
-  vector<expression_ref> bodies;
-  expression_ref T;
-  if (parse_let_expression(control, vars, bodies, T))
-  {
+    // Compute the value of this result
+    expression_ref control = R->E;
+
+    // If this expression cannot be reduced further, then just return it here.
+    if (is_WHNF(R->E)) return R;
+
+    /*------------ II. Prepare the target slot -------------*/
+    if (t >= R->results.size())
+    {
+      R->results.resize(t+1);
+    }
+    
+    for(int i=0; i<R->results.size(); i++)
+    {
+      if (not R->results[i]) {
+	// HERE is where we should add the reg to reg_machine->regs_for_token
+	R->results[i] = shared_ptr<reg>(new reg);
+	R->results[i]->parent = R;
+      }
+    }
+    
+    /*--------- III. a ---------*/
+    
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+    if (parse_let_expression(control, vars, bodies, T))
+    {
       vector<shared_ptr<reg_var> > new_heap_vars;
       for(int i=0;i<vars.size();i++)
       {
@@ -2319,66 +2321,69 @@ shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
 	else
 	  new_heap_vars.push_back( shared_ptr<reg_var>(new reg_var) );
       }
-
+      
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
       for(int i=0;i<vars.size();i++) 
       {
 	for(int j=0;j<vars.size();j++)
 	  bodies[j] = substitute(bodies[j], vars[i], *new_heap_vars[i]);
-
+	
 	T = substitute(T, vars[i], *new_heap_vars[i]);
       }
-
+      
       for(int i=0;i<vars.size();i++) 
       {
 	new_heap_vars[i]->value() = bodies[i];
       }
-
-      control = T;
-  }
-  
-
-  /*
-    Now, I need to
-    (a) evaluate the expression.
-    (b) discover which args were EVALUATED, and (?) which args were REFERENCED. (but probably not)
-    (c) I need to determine if any parameters were used.
-    (d) I need to determine if any NEW parameters were used.
-
-    Q1: Hmm... how do I discover if any NEW parameters were used?
-    Do I need to consider where each used parameter has ever been used before?
-
-    Q2: Suppose I change all the operations (such as @ and CASE and LET) into operators
-     - would this actually work?
-
-    Q3: How would a PLUS operator work?
-    A3: The expression would be (+ R1 R2), where R1 and R2 are objects referencing regs r1 and r2.
-        
-   */
-
-  /*
-    Application.
-    Letrec.
-    Case.
-    Operation.
-
-    Free variable.  Odd!  Should not occur?
-
-    Parameter.  Do not handle yet.
-   */
-
-
-  // -1. A free variable. This should never happen.
-  shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(control);
-  assert(not D);
-  
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(control);
-  assert(E);
-
-  // 3. Var1: If we are evaluating a variable...
-  if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
-  {
-    RegOperationArgs(E, *R->results[t], C);
+      
+      R->E = T;
+      continue;
+    }
+    
+    
+    /*
+      Now, I need to
+      (a) evaluate the expression.
+      (b) discover which args were EVALUATED, and (?) which args were REFERENCED. (but probably not)
+      (c) I need to determine if any parameters were used.
+      (d) I need to determine if any NEW parameters were used.
+      
+      Q1: Hmm... how do I discover if any NEW parameters were used?
+      Do I need to consider where each used parameter has ever been used before?
+      
+      Q2: Suppose I change all the operations (such as @ and CASE and LET) into operators
+      - would this actually work?
+      
+      Q3: How would a PLUS operator work?
+      A3: The expression would be (+ R1 R2), where R1 and R2 are objects referencing regs r1 and r2.
+      
+    */
+    
+    /*
+      Application.
+      Letrec.
+      Case.
+      Operation.
+      
+      Free variable.  Odd!  Should not occur?
+      
+      Parameter.  Do not handle yet.
+    */
+    
+    
+    // -1. A free variable. This should never happen.
+    shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(control);
+    assert(not D);
+    
+    shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(control);
+    assert(E);
+    
+    // 3. Var1: If we are evaluating a variable...
+    if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
+    {
+      RegOperationArgs Args(E, *R->results[t], C);
+      R->results[t]->E = (*O)(Args);
+    }
   }
 
   return R;
