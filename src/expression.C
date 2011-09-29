@@ -2233,7 +2233,42 @@ struct reg_machine
   int get_unused_token();
 };
 
-expression_ref incremental_evaluate(context& C, const shared_ptr<reg>& R_)
+shared_ptr<reg> incremental_evaluate(context&, const shared_ptr<reg>&);
+
+#include "computation.H"
+
+struct RegOperationArgs: public OperationArgs
+{
+  shared_ptr<const expression> E;
+
+  reg& R;
+
+  context& C;
+
+  boost::shared_ptr<const Object> reference(int slot) const
+  {
+    return E->sub[slot+1];
+  }
+
+  boost::shared_ptr<const Object> evaluate(int slot)
+  {
+    shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( reference(slot) );
+
+    shared_ptr<reg> R2 = incremental_evaluate(C,RV->target);
+
+    assert(R2->is_valid());
+
+    return R2->E;
+  }
+
+  RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
+
+  RegOperationArgs(const shared_ptr<const expression>& e, reg& r, context& c)
+    :E(e),R(r),C(c)
+  { }
+};
+
+shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
 {
   shared_ptr<reg> R = R_;
 
@@ -2250,7 +2285,7 @@ expression_ref incremental_evaluate(context& C, const shared_ptr<reg>& R_)
   expression_ref control = R->E;
 
   // If this expression cannot be reduced further, then just return it here.
-  if (is_WHNF(R->E)) return R->E;
+  if (is_WHNF(R->E)) return R;
 
   /*------------ II. Prepare the target slot -------------*/
   if (t >= R->results.size())
@@ -2268,6 +2303,41 @@ expression_ref incremental_evaluate(context& C, const shared_ptr<reg>& R_)
   }
 
   /*--------- III. a ---------*/
+  
+  vector<expression_ref> vars;
+  vector<expression_ref> bodies;
+  expression_ref T;
+  if (parse_let_expression(control, vars, bodies, T))
+  {
+      vector<shared_ptr<reg_var> > new_heap_vars;
+      for(int i=0;i<vars.size();i++)
+      {
+	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
+	assert(D);
+	if (D->name.size())
+	  new_heap_vars.push_back( shared_ptr<reg_var>(new reg_var(D->name)) );
+	else
+	  new_heap_vars.push_back( shared_ptr<reg_var>(new reg_var) );
+      }
+
+      // Substitute the new heap vars for the dummy vars in expression T and in the bodies
+      for(int i=0;i<vars.size();i++) 
+      {
+	for(int j=0;j<vars.size();j++)
+	  bodies[j] = substitute(bodies[j], vars[i], *new_heap_vars[i]);
+
+	T = substitute(T, vars[i], *new_heap_vars[i]);
+      }
+
+      for(int i=0;i<vars.size();i++) 
+      {
+	new_heap_vars[i]->value() = bodies[i];
+      }
+
+      control = T;
+  }
+  
+
   /*
     Now, I need to
     (a) evaluate the expression.
@@ -2303,13 +2373,15 @@ expression_ref incremental_evaluate(context& C, const shared_ptr<reg>& R_)
   assert(not D);
   
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(control);
+  assert(E);
 
   // 3. Var1: If we are evaluating a variable...
-  if (shared_ptr<reg_var> RV = dynamic_pointer_cast<reg_var>(control))
+  if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
   {
+    RegOperationArgs(E, *R->results[t], C);
   }
 
-  return control;
+  return R;
 }
 
 expression_ref incremental_evaluate(context& C, const expression_ref& E)
@@ -2317,7 +2389,8 @@ expression_ref incremental_evaluate(context& C, const expression_ref& E)
   shared_ptr<reg> R(new reg);
   R->E = launchbury_normalize(E);
 
-  return incremental_evaluate(C,R);
+  shared_ptr<reg> R2 =  incremental_evaluate(C,R);
+  return R2->E;
 }
 
 

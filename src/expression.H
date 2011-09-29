@@ -556,8 +556,6 @@ struct context
   context(): token(-1) { }
 };
 
-expression_ref incremental_evaluate(context& C, const boost::shared_ptr<reg>&);
-
 expression_ref incremental_evaluate(context& C, const expression_ref&);
 
 #endif
