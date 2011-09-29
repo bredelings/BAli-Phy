@@ -215,6 +215,12 @@ expression_ref apply(const expression_ref& E,const expression_ref& arg);
 // Multiple-arg version
 expression_ref apply(const expression_ref& E, const std::vector< expression_ref > args);
 
+// Single-arg version  (Is this a function at all?)";
+expression_ref apply_expression(const expression_ref& E,const expression_ref& arg);
+
+// Multiple-arg version
+expression_ref apply_expression(const expression_ref& E, const std::vector< expression_ref > args);
+
 expression_ref lambda_expression(const Operator& O);
 
 // FIXME - If we're substituting a lambda expression we have to rename its dummys to make sure

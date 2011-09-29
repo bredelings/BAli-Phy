@@ -775,6 +775,24 @@ expression_ref substitute(const expression_ref& R1, const expression_ref& D, con
 }
 
 
+expression_ref apply_expression(const expression_ref& R,const expression_ref& arg)
+{
+  expression* E = new expression(Apply());
+  E->sub.push_back(R);
+  E->sub.push_back(arg);
+  return E;
+}
+
+expression_ref apply_expression(const expression_ref& E,
+				const vector< expression_ref > args)
+{
+  expression_ref E2 = E;
+  for(int i=0;i<args.size();i++)
+    E2 = apply_expression(E2,args[i]);
+  return E2;
+}
+
+
 // When applying Lx.M to N, we need to make sure that no occurrence of x has the free variables in N bound.
 // At each occurence of x, we need to know 
 // (i) what are the lambda's that class with the free variables of N
