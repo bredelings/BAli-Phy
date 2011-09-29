@@ -2107,7 +2107,17 @@ expression_ref graph_normalize(const expression_ref& R)
       bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
     }
     
-    return V;
+    if (is_dummy(V->sub[1]))
+      return V;
+    else
+    {
+      int var_index = get_safe_binder_index(R);
+      expression_ref x = dummy(var_index);
+      expression_ref obj = V->sub[1];
+      V->sub[1] = x;
+
+      return let_expression(x,obj,V);
+    }
   }
 
   // FIXME! Handle operations.
