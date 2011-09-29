@@ -443,4 +443,13 @@ int main()
   context C;
   C.token = 0;
   cout<<incremental_evaluate(C,6)<<"\n";
+
+  expression_ref test12 = One+One;
+
+  cout<<"\n";
+  cout<<"Eval test:     "<<test12<<" = \n";
+  test12 = launchbury_normalize(test12);
+  cout<<"   normalized: "<<test12<<" = \n";
+  test12 = incremental_evaluate(C,test12);
+  cout<<test12<<"\n";
 }
