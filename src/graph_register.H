@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <set>
 #include "object.H"
 #include "expression.H"
 
@@ -26,7 +27,7 @@ struct reg
   std::vector<boost::shared_ptr<const reg> > used_inputs;
 
   // Which reduction results made use of the value of this expression
-  std::vector<boost::shared_ptr<const reg> > outputs;
+  std::set<boost::shared_ptr<const reg> > outputs;
 
   // For each different context, what does this expression reduce to?
   std::vector<boost::shared_ptr<reg> > results;

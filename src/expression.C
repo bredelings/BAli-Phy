@@ -2376,7 +2376,7 @@ struct RegOperationArgs: public OperationArgs
 
       R->used_inputs[slot] = result;
 
-      result->outputs.push_back(R);
+      result->outputs.insert(R);
     }
 
     return R->used_inputs[slot]->E;
