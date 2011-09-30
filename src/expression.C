@@ -1861,21 +1861,43 @@ expression_ref def_function(bool decompose, const expression_ref& pattern, const
   return def_function(decompose, vector<expression_ref>(1,pattern), vector<expression_ref>(1,body), otherwise);
 }
 
-// WHNF = Weak head normal form.
-// HNF requires that the body of a lambda is reduced as well,
-//  while WHNF does not have this requirement.
+// Def: a redex is an expression that matches the LHS of a reduction rule.
+
+// NF = the expression contains no redexes.
+
+// HNF = an expression that is either:
+//  * a variable
+//  * a data value
+//  * a built-in function applied to too few arguments
+//  * a lambda abstraction whose body is not reducible.
+// An expression in HNF may contain redexes in argument positions whereas a NF may not.
+// - but how?
+
+// WHNF = Weak head normal form. WHNF terms have no restriction on the body of lambdas, and so include:
+//  * a variable
+//  + a data value
+//  + a built-in Operation (like +) that cannot be performed for some reason. (?)
+//  * a lambda expression
+//  + a constructor
+// The terms in + are extensions to the basic lambda calculus.
+
+// Basically, HNF requires that the body of a lambda is reduced as well, while WHNF does not have this requirement.
 // Therefore, \x -> 1+1 is WHNF but not HNF.
+
 bool is_WHNF(const expression_ref& R)
 {
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
   if (E)
   {
-    // 2. Lambda
+    // 3. An Operation whose arguments cannot be evaluated, or that does not have all its arguments?
+    // Neither case is allowed, currently.
+
+    // 4. Lambda
     shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
     if (L) return true;
 
-    // 4. Constructor
+    // 5. Constructor
     shared_ptr<const Function> RF = dynamic_pointer_cast<const Function>(E->sub[0]);
     if (RF and RF->what_type == data_function_f) return true;
 
@@ -1883,9 +1905,8 @@ bool is_WHNF(const expression_ref& R)
   }
   else
   {
-    
-
-    // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+    // 1. a (dummy) variable.
+    // 2. Literal constant.  Treat as 0-arg constructor.
     return true;
   }
 }
