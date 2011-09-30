@@ -2374,9 +2374,6 @@ struct RegOperationArgs: public OperationArgs
     {
       shared_ptr<reg> result = incremental_evaluate(C,RV->target);
 
-      //      while (shared_ptr<const reg_var> RV2 = dynamic_pointer_cast<const reg_var>(result))
-      //	result = RV2->target->E;
-
       R->used_inputs[slot] = result;
 
       result->outputs.push_back(R);
