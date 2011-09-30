@@ -2429,6 +2429,7 @@ shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
     
     /*--------- III. a ---------*/
     
+    // 1. Let expressions
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
@@ -2468,30 +2469,14 @@ shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
       continue;
     }
     
-    
-    /*
-      Now, I need to
-      (a) evaluate the expression.
-      (b) discover which args were EVALUATED, and (?) which args were REFERENCED. (but probably not)
-      (c) I need to determine if any parameters were used.
-      (d) I need to determine if any NEW parameters were used.
-      
-      Q1: Hmm... how do I discover if any NEW parameters were used?
-      Do I need to consider where each used parameter has ever been used before?
-      
-      Q2: Suppose I change all the operations (such as @ and CASE and LET) into operators
-      - would this actually work?
-      
-    */
-    
-    // -1. A free variable. This should never happen.
+    // 2. A free variable. This should never happen.
     shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(control);
     assert(not D);
     
     shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(control);
     assert(E);
     
-    // 3. Var1: If we are evaluating a variable...
+    // 3. An Operation (includes @, case, +, etc.)
     if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
     {
       RegOperationArgs Args(E, R->results[t], C);
