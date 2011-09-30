@@ -11,6 +11,7 @@
 #include "operation.H"
 #include "operations.H"
 #include "distribution-operations.H"
+#include "graph_register.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -461,4 +462,17 @@ int main()
   cout<<"   normalized: "<<test13<<" = \n";
   test13 = incremental_evaluate(C,test13);
   cout<<test13<<"\n";
+
+  expression_ref test14 = let_expression(take, def_take,
+					let_expression(iterate, def_iterate,
+						       take(3)(iterate(plus(1),1))
+						       )
+					);
+
+  cout<<"\n";
+  cout<<"Eval test:     "<<test14<<" = \n";
+  test14 = launchbury_normalize(test14);
+  cout<<"   normalized: "<<test14<<" = \n";
+  test14 = incremental_evaluate(C,test14);
+  cout<<test14<<"\n";
 }

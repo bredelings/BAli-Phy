@@ -2321,46 +2321,11 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
 // How do I check if a reduction depends on the value of (previous unevaluated) parameters?
 // - Does the "new" part conflict with the unchanged-argument idea?
 
+#include "graph_register.H"
 
 reg::reg():name(convertToString(this)),named(false) {}
 reg::reg(const string& s):name(s),named(true) {}
 
-// a dummy variable expression
-struct reg_var: public Object
-{
-  shared_ptr< reg > target;
-
-  reg_var* clone() const {return new reg_var(*this);}
-
-  std::string print() const 
-  {
-    return "<" + target->name + ">";
-  }
-
-  tribool compare(const Object& o) const
-  {
-    const reg_var* E = dynamic_cast<const reg_var*>(&o);
-    if (not E) 
-      return false;
-
-    return target == E->target;
-  }
-
-  const expression_ref& value() const {return target->E;}
-        expression_ref& value()       {return target->E;}
-
-  reg_var():
-    target(new reg)
-  { }
-
-  reg_var(const string& s):
-    target(new reg(s))
-  { }
-
-  reg_var(const shared_ptr< reg >& r)
-    :target(r)
-  { }
-};
 
 // Question: if the dimension of a vector changes, and I want to make each elements
 // into a (sub-) parameter, then how do I number them?  Currently the parameters are
@@ -2409,7 +2374,8 @@ struct RegOperationArgs: public OperationArgs
     {
       shared_ptr<reg> result = incremental_evaluate(C,RV->target);
 
-      assert(result->is_valid());
+      //      while (shared_ptr<const reg_var> RV2 = dynamic_pointer_cast<const reg_var>(result))
+      //	result = RV2->target->E;
 
       R->used_inputs[slot] = result;
 
@@ -2471,29 +2437,34 @@ shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
     expression_ref T;
     if (parse_let_expression(control, vars, bodies, T))
     {
-      vector<shared_ptr<reg_var> > new_heap_vars;
+      vector<shared_ptr<reg_var> > new_reg_vars;
       for(int i=0;i<vars.size();i++)
       {
 	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
 	assert(D);
 	if (D->name.size())
-	  new_heap_vars.push_back( shared_ptr<reg_var>(new reg_var(D->name)) );
+	  new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(D->name)) );
 	else
-	  new_heap_vars.push_back( shared_ptr<reg_var>(new reg_var) );
+	  new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var) );
       }
       
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
       for(int i=0;i<vars.size();i++) 
       {
+	// if the body is already a reg_var, let's not add a new reg_var just to point to it!
+	expression_ref replacement_reg_var = new_reg_vars[i]->clone();
+	if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(bodies[i]))
+	  replacement_reg_var = bodies[i];
+
 	for(int j=0;j<vars.size();j++)
-	  bodies[j] = substitute(bodies[j], vars[i], *new_heap_vars[i]);
+	  bodies[j] = substitute(bodies[j], vars[i], *replacement_reg_var);
 	
-	T = substitute(T, vars[i], *new_heap_vars[i]);
+	T = substitute(T, vars[i], *replacement_reg_var);
       }
       
       for(int i=0;i<vars.size();i++) 
       {
-	new_heap_vars[i]->value() = bodies[i];
+	new_reg_vars[i]->value() = bodies[i];
       }
       
       R->E = T;
@@ -2551,13 +2522,12 @@ expression_ref incremental_evaluate(context& C, const expression_ref& E)
   {
     expression_ref rrr = R3->E;
     compact_graph_expression(rrr);
-    std::cout<<rrr<<" <- ";
+    std::cout<<rrr<<" <- \n";
     if (R3->parent)
       R3 = R3->parent;
     else
       break;
   }
-  std::cout<<"\n";
 
 
   return result;
