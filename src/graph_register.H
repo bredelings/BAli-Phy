@@ -91,10 +91,21 @@ struct reg_machine
   std::vector< std::list <reg> > regs_for_token;
   std::list<reg> all_regs;
 
+  /// is each token in use or not?
   std::vector<bool> is_token_active;
-  std::vector<int> unused_tokens;
 
-  int get_unused_token();
+  /// Return an unused token.
+  int find_free_token() const;
+  /// Create an unused token.
+  int add_token();
+  /// Acquire a token for use with C columns and B/2 branches.
+  int claim_token();
+  /// Setup token2 to point to cached likelihoods for token1
+  void copy_token(int token1,int token2);
+  /// Initialize token
+  void init_token(int token);
+  /// Release token and mark unused.
+  void release_token(int token);
 };
 
 struct context: virtual public Object
@@ -136,7 +147,10 @@ struct context: virtual public Object
 
   int add_expression(const expression_ref& e);
 
-  context(): token(-1) { }
+  context& operator=(const context&);
+  context(const context& C);
+
+  context();
 };
 
 expression_ref incremental_evaluate(const context& C, const expression_ref&);

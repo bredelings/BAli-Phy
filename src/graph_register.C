@@ -9,6 +9,52 @@ using std::map;
 reg::reg():name(convertToString(this)),named(false) {}
 reg::reg(const string& s):name(s),named(true) {}
 
+
+int reg_machine::find_free_token() const
+{
+  int token=-1;
+  for(int i=0;i<is_token_active.size();i++)
+    if (not is_token_active[i]) {
+      token = i;
+      break;
+    }
+  
+  return token;
+}
+
+int reg_machine::add_token()
+{
+  int token = is_token_active.size();
+  is_token_active.push_back(false);
+  return token;
+}
+
+int reg_machine::claim_token()
+{
+  int token = find_free_token();
+
+  if (token == -1)
+    token = add_token();
+
+  is_token_active[token] = true;
+
+  //  std::cerr<<"-> "<<countt(active)<<"/"<<active.size()<<std::endl;
+  return token;
+}
+
+void reg_machine::copy_token(int token1,int token2)
+{
+}
+
+void reg_machine::init_token(int token)
+{
+}
+
+void reg_machine::release_token(int token)
+{
+  is_token_active[token] = false;
+}
+
 shared_ptr<reg> incremental_evaluate(const context&, const shared_ptr<reg>&);
 
 /// Return the value of a particular index, computing it if necessary
@@ -49,6 +95,23 @@ int context::add_expression(const expression_ref& e)
   return heads.size()-1;
 }
 
+context& context::operator=(const context&C)
+{
+}
+
+context::context()
+  :machine(new reg_machine),
+   token(machine->claim_token())
+{
+  machine->init_token(token);
+}
+
+context::context(const context& C)
+  :machine(C.machine),
+   token(machine->claim_token())
+{
+  machine->copy_token(token, C.token);
+}
 
 expression_ref graph_normalize(const expression_ref& R)
 {

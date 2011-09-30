@@ -449,7 +449,6 @@ int main()
   cout<<test11<<"\n";
 
   context C;
-  C.token = 0;
   cout<<incremental_evaluate(C,6)<<"\n";
 
   expression_ref test12 = apply_expression(apply_expression(plus,One),One);
