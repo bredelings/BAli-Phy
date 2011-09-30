@@ -475,4 +475,22 @@ int main()
   cout<<"   normalized: "<<test14<<" = \n";
   test14 = incremental_evaluate(C,test14);
   cout<<test14<<"\n";
+
+
+  //print(take(3,fmap(square,iterate(plus(1.0),1.0))));
+  expression_ref test15 = let_expression(take, def_take,
+					let_expression(iterate, def_iterate,
+						       take(3)(iterate(plus(1),1))
+						       )
+					);
+
+  cout<<"\n";
+  cout<<"Eval test:     "<<test15<<" = \n";
+  test15 = launchbury_normalize(test15);
+  cout<<"   normalized: "<<test15<<" = \n";
+  test15 = incremental_evaluate(C,test15);
+  cout<<test15<<"\n";
+
+
+  
 }
