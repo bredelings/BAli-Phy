@@ -1876,10 +1876,11 @@ expression_ref def_function(bool decompose, const expression_ref& pattern, const
 // WHNF = Weak head normal form. WHNF terms have no restriction on the body of lambdas, and so include:
 //  * a variable
 //  + a data value
-//  + a built-in Operation (like +) that cannot be performed for some reason. (?)
+//  + a built-in Operation (like "+") with too few arguments.
 //  * a lambda expression
 //  + a constructor
 // The terms in + are extensions to the basic lambda calculus.
+// Question: how about the expression (@ x y), which cannot be reduced?
 
 // Basically, HNF requires that the body of a lambda is reduced as well, while WHNF does not have this requirement.
 // Therefore, \x -> 1+1 is WHNF but not HNF.
@@ -2353,20 +2354,6 @@ reg::reg(const string& s):name(s),named(true) {}
 // a property of the context, not of the expression, but this seems to make the parameters
 // deterministically depend on other parameters, in a sense.
 
-#include <list>
-using std::list;
-
-struct reg_machine
-{
-  int n_tokens;
-  vector< list <reg> > regs_for_token;
-  list<reg> all_regs;
-
-  vector<bool> is_token_active;
-  vector<int> unused_tokens;
-
-  int get_unused_token();
-};
 
 shared_ptr<reg> incremental_evaluate(context&, const shared_ptr<reg>&);
 

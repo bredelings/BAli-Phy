@@ -8,6 +8,8 @@
 #include <set>
 #include "object.H"
 #include "expression.H"
+#include "util.H"
+#include <list>
 
 struct reg
 {
@@ -78,12 +80,62 @@ struct reg_var: public Object
   { }
 };
 
-struct context
+// How do we handle parameters?
+// * well, parameters could be reg's, so that a separate reg must be a separate parameter.
+// * how, then, do we handle reg NAME's, if reg's are not uniquely identified by their names?
+
+
+struct reg_machine
 {
+  int n_tokens;
+  std::vector< std::list <reg> > regs_for_token;
+  std::list<reg> all_regs;
+
+  std::vector<bool> is_token_active;
+  std::vector<int> unused_tokens;
+
+  int get_unused_token();
+};
+
+struct context: virtual public Object
+{
+  boost::shared_ptr<reg_machine> machine;
+
   int token;
+  
+  context* clone() const {return new context(*this);}
 
   // the list of expressions that we are interested in evaluating.
   std::vector<reg> heads;
+
+  /// Return the value of a particular index, computing it if necessary
+  boost::shared_ptr<const Object> evaluate(int index) const;
+
+  template <typename T>
+  boost::shared_ptr<const T> evaluate_as(int index) const
+  {
+    boost::shared_ptr<const Object> o = evaluate(index);
+    assert(o);
+    boost::shared_ptr<const T> converted =  boost::dynamic_pointer_cast<const T>(o);
+    if (not converted)
+      throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(*o.get()).name())<<" to type "<<demangle(typeid(T).name());
+    return converted;
+  }
+
+  /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
+  boost::shared_ptr<const Object> get_parameter_value(int index) const;
+
+  /// Get the value of a non-constant, non-computed index
+  boost::shared_ptr<const Object> get_parameter_value(const std::string&) const;
+
+  /// Update the value of a non-constant, non-computed index
+  void set_parameter_value(int index, const object_ref&);
+
+  /// Update the value of a non-constant, non-computed index
+  void set_parameter_value(const std::string& var, const object_ref&);
+
+  int add_expression(const expression_ref& e);
+
   context(): token(-1) { }
 };
 
