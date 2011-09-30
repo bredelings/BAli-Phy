@@ -139,4 +139,6 @@ struct context: virtual public Object
   context(): token(-1) { }
 };
 
+expression_ref incremental_evaluate(const context& C, const expression_ref&);
+
 #endif

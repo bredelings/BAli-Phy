@@ -365,6 +365,13 @@ int main()
     patterns.push_back( Tuple(v1, Cons(v2,v3) ) );
     bodies.push_back( Cons(v2, take(I1-1)(v3) ) );
 
+    // FIXME - get rid of def_function.
+    //       - start using a fixpoint function definition.
+    // take 0  _  = []
+    // take _  [] = []
+    // take n h:t = h:(take (n-1) t)
+
+    //       - lambda take.n.x.case n of {0->[],_->case x of {[] -> [],h:t->h:(take (n-3) t)}}
     def_take = def_function(true, patterns, bodies);
 
     CTX1.add_expression( def_function(false, patterns, bodies) );

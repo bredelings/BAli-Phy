@@ -515,10 +515,11 @@ expression_ref evaluate_mark1(const expression_ref& R);
 
 expression_ref add_prefix(const std::string&, const expression_ref& R);
 
-struct context;
-
-expression_ref incremental_evaluate(const context& C, const expression_ref&);
+bool parse_let_expression(const expression_ref& R, std::vector<expression_ref>& vars, std::vector<expression_ref>& bodies, expression_ref& T);
 
 void parse_alternatives(const expression_ref& R, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
 
+bool is_WHNF(const expression_ref& R);
+
+int get_safe_binder_index(const expression_ref& R);
 #endif
