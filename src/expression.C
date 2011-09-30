@@ -2345,9 +2345,6 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
 
 #include "graph_register.H"
 
-reg::reg():name(convertToString(this)),named(false) {}
-reg::reg(const string& s):name(s),named(true) {}
-
 
 // Question: if the dimension of a vector changes, and I want to make each elements
 // into a (sub-) parameter, then how do I number them?  Currently the parameters are
@@ -2355,7 +2352,7 @@ reg::reg(const string& s):name(s),named(true) {}
 // deterministically depend on other parameters, in a sense.
 
 
-shared_ptr<reg> incremental_evaluate(context&, const shared_ptr<reg>&);
+shared_ptr<reg> incremental_evaluate(const context&, const shared_ptr<reg>&);
 
 #include "computation.H"
 
@@ -2365,7 +2362,7 @@ struct RegOperationArgs: public OperationArgs
 
   shared_ptr<reg>& R;
 
-  context& C;
+  const context& C;
 
   boost::shared_ptr<const Object> reference(int slot) const
   {
@@ -2392,14 +2389,14 @@ struct RegOperationArgs: public OperationArgs
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-  RegOperationArgs(const shared_ptr<const expression>& e, shared_ptr<reg>& r, context& c)
+  RegOperationArgs(const shared_ptr<const expression>& e, shared_ptr<reg>& r, const context& c)
     :E(e),R(r),C(c)
   { 
     R->used_inputs.resize(E->size()-1);
   }
 };
 
-shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
+shared_ptr<reg> incremental_evaluate(const context& C, const shared_ptr<reg>& R_)
 {
   shared_ptr<reg> R = R_;
 
@@ -2497,7 +2494,7 @@ shared_ptr<reg> incremental_evaluate(context& C, const shared_ptr<reg>& R_)
 
 void compact_graph_expression(expression_ref& R);
 
-expression_ref incremental_evaluate(context& C, const expression_ref& E)
+expression_ref incremental_evaluate(const context& C, const expression_ref& E)
 {
   shared_ptr<reg> R(new reg);
   R->E = graph_normalize(E);

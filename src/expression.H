@@ -517,7 +517,7 @@ expression_ref add_prefix(const std::string&, const expression_ref& R);
 
 struct context;
 
-expression_ref incremental_evaluate(context& C, const expression_ref&);
+expression_ref incremental_evaluate(const context& C, const expression_ref&);
 
 void parse_alternatives(const expression_ref& R, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
 

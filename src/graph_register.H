@@ -106,7 +106,7 @@ struct context: virtual public Object
   context* clone() const {return new context(*this);}
 
   // the list of expressions that we are interested in evaluating.
-  std::vector<reg> heads;
+  std::vector<boost::shared_ptr<reg> > heads;
 
   /// Return the value of a particular index, computing it if necessary
   boost::shared_ptr<const Object> evaluate(int index) const;
