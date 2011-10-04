@@ -113,6 +113,11 @@ context::context(const context& C)
   machine->copy_token(token, C.token);
 }
 
+context::~context()
+{
+  machine->release_token(token);
+}
+
 expression_ref graph_normalize(const expression_ref& R)
 {
   // 1. Var

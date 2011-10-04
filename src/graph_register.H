@@ -151,6 +151,8 @@ struct context: virtual public Object
   context(const context& C);
 
   context();
+
+  ~context();
 };
 
 expression_ref incremental_evaluate(const context& C, const expression_ref&);
