@@ -81,6 +81,36 @@ efloat_t prior_gamma(const SequenceTree& T,double branch_mean)
   return p;
 }
 
+/// Tree prior: topology & branch lengths (dirichlet)
+efloat_t prior_dirichlet(const SequenceTree& T,double branch_mean) 
+{
+  efloat_t p = 1;
+
+  // --------- uniform prior on topologies --------//
+  if (T.n_leaves()>3)
+    p /= num_topologies(T.n_leaves());
+
+  // ---- Gamma (sum) + Dirichlet (relative lengths) prior on branch lengths ---- //
+  std::valarray<double> branch_lengths(T.n_branches());
+  for(int i=0;i<branch_lengths.size();i++)
+    branch_lengths[i] = T.branch(i).length();
+  double branch_length_sum = branch_lengths.sum();
+  branch_lengths /= branch_length_sum;
+
+  // The branch-length sum.
+  p *= gamma_pdf(branch_length_sum, 0.5, branch_mean*2.0);
+
+  // The relative branch lengths.  Probably I should only do the 
+  p *= dirichlet_pdf(branch_lengths, 0.5);
+
+  // The current method has uncertainly in the total length, PLUS uncertain in the partition-specific
+  //   scaling factor.
+  // So, perhaps the sum should be partition-specific, and I should only do the relative branch lengths
+  //   here.
+  // That might require that changing a single length changes all the lengths, though.
+  return p;
+}
+
 /// Tree prior: branch lengths & topology
 efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean) 
 {
@@ -88,8 +118,12 @@ efloat_t prior(const Parameters& P, const SequenceTree& T,double branch_mean)
 
   if (P.branch_prior_type == 0)
     p *= prior_exponential(T,branch_mean);
-  else 
+  else if (P.branch_prior_type == 1)
     p *= prior_gamma(T,branch_mean);
+  else if (P.branch_prior_type == 2)
+    p *= prior_dirichlet(T,branch_mean);
+  else
+    throw myexception()<<"I don't understand branch prior type = "<<P.branch_prior_type;
 
   p *= topology_weight(P,T);
 

@@ -247,7 +247,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("alphabet",value<vector<string> >()->composing(),"The alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("smodel",value<vector<string> >()->composing(),"Substitution model.")
     ("imodel",value<vector<string> >()->composing(),"Indel model: none, RS05, RS07-no-T, or RS07.")
-    ("branch-prior",value<string>()->default_value("Gamma"),"Exponential or Gamma.")
+    ("branch-prior",value<string>()->default_value("Gamma"),"Exponential, Gamma, or Dirichlet.")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
     ;
@@ -1115,8 +1115,13 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
   out_both<<"Prior on branch lengths T[b]:\n";
   if (P.branch_prior_type == 0)
     out_both<<" T[b] ~ Exponential(mu)   [mean=mu, variance=mu^2]"<<endl;
-  else
+  else if (P.branch_prior_type == 1)
     out_both<<" T[b] ~ Gamma(alpha=0.5, beta=2*mu)   [mean=mu, variance=2*mu^2]"<<endl;
+  else if (P.branch_prior_type == 2)
+  {
+    out_both<<" T[b]/Tree length ~ Dirichlet(alpha=0.5)"<<endl;
+    out_both<<" Tree length ~ Gamma(alpha=0.5, beta=2*mu)   [mean=mu, variance=2*mu^2]"<<endl;
+  }
   out_both<<" mu ~ Gamma(alpha=0.5, beta=2)   [mean=1, variance=2]"<<endl;
   if (P.n_data_partitions() > 1)
     out_both<<"(Each partition has a separate 'mu' except where specified by --same-scale.)"<<endl;
@@ -1277,6 +1282,8 @@ int main(int argc,char* argv[])
       P.branch_prior_type = 0;
     else if (branch_prior == "Gamma") 
       P.branch_prior_type = 1;
+    else if (branch_prior == "Dirichlet") 
+      P.branch_prior_type = 2;
     else
       throw myexception()<<"I don't understand --branch-prior argument '"<<branch_prior<<"'.\n  Only 'Exponential' and 'Gamma' are allowed.";
 
