@@ -123,6 +123,7 @@ expression_ref graph_normalize(const expression_ref& R);
 int context::add_expression(const expression_ref& E)
 {
   shared_ptr<reg> R ( new reg );
+  std::cout<<"add: "<<E->print()<<"\n";
   R->E = graph_normalize(E);
   heads.push_back(R);
   return heads.size()-1;
@@ -447,6 +448,7 @@ shared_ptr<reg> incremental_evaluate(const context& C, const shared_ptr<reg>& R_
     // 3. An Operation (includes @, case, +, etc.)
     if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
     {
+      std::cout<<"Executing operation: "<<O->print()<<"\n";
       RegOperationArgs Args(E, R->results[t], C);
       R->results[t]->E = (*O)(Args);
       if (Args.changeable)
