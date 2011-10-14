@@ -505,4 +505,9 @@ int main()
   C.set_parameter_value("Y",2.0);
   C.set_parameter_value("Z",4.0);
   cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
+  cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
+
+  C.add_expression( apply_expression(apply_expression(plus,apply_expression(apply_expression(plus,X),Y)),Z) );
+  cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
+  cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
 }
