@@ -348,6 +348,8 @@ struct RegOperationArgs: public OperationArgs
     :E(e),R(r),C(c),changeable(false)
   { 
     R->used_inputs.resize(E->size()-1);
+    for(int i=0;i<R->used_inputs.size();i++)
+      R->used_inputs[i].reset();
   }
 };
 
@@ -459,8 +461,6 @@ shared_ptr<reg> incremental_evaluate(const context& C, const shared_ptr<reg>& R_
       else
       {
 	R->E = result;
-	R->results[t]->used_inputs.clear();
-	R->used_inputs.clear();
       }
     }
   }
