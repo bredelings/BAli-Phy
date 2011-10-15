@@ -336,7 +336,7 @@ struct RegOperationArgs: public OperationArgs
       result->outputs.insert(R);
 
       if (result->changeable) 
-	R->changeable = true;
+	changeable = true;
     }
 
     return R->used_inputs[slot]->E;
