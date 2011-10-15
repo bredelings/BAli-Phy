@@ -450,9 +450,18 @@ shared_ptr<reg> incremental_evaluate(const context& C, const shared_ptr<reg>& R_
     {
       std::cout<<"Executing operation: "<<O->print()<<"\n";
       RegOperationArgs Args(E, R->results[t], C);
-      R->results[t]->E = (*O)(Args);
+      expression_ref result = (*O)(Args);
       if (Args.changeable)
+      {
+	R->results[t]->E = result;
 	R->results[t]->changeable = true;
+      }
+      else
+      {
+	R->E = result;
+	R->results[t]->used_inputs.clear();
+	R->used_inputs.clear();
+      }
     }
   }
 
