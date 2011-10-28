@@ -138,10 +138,12 @@ AC_ARG_ENABLE([profile],
              [profile=$enableval],
              [profile=no])
 
-AC_ARG_ENABLE([static],
-              AS_HELP_STRING([--enable-static], [Link statically]),
-             [static=$enablevals],
-             [static=no])
+echo "force_static = $force_static"
+AC_ARG_ENABLE([force_static],
+              AS_HELP_STRING([--force-static], [Link statically]),
+             [force_static=$enablevals],
+             [force_static=no])
+echo "force_static = $force_static"
 
 AC_ARG_ENABLE([cairo],
               AS_HELP_STRING([--enable-cairo], [Build drawing programs that depend on libcairo]),
@@ -232,7 +234,7 @@ if test "$GXX" = yes ; then
   fi
 
   # also set the LDFLAGS for a static build
-  if test "${host_os_noversion}" != "darwin" && test "$static" = yes ; then
+  if test "${host_os_noversion}" != "darwin" && test "$force_static" = yes ; then
     LDFLAGS="$LDFLAGS -static"
   fi
 
@@ -244,7 +246,7 @@ AC_SUBST(ldflags)
 
 AM_CONDITIONAL(GCC, test "$GXX" = yes)
 AM_CONDITIONAL(DEBUG, test "$debug" = yes)
-AM_CONDITIONAL(STATIC, test "$static" = yes)
+AM_CONDITIONAL(STATIC, test "$force_static" = yes)
 AM_CONDITIONAL(SYSTEM_BOOST, test "$use_system_boost" = yes)
 AM_CONDITIONAL(NO_SYSTEM_BOOST, test "$use_system_boost" = no)
 AM_CONDITIONAL(WITH_MPI, test "$use_mpi" != no)
@@ -291,8 +293,8 @@ AC_CHECK_HEADERS([gsl/gsl_randist.h],[],[echo "Error: I can't find the GSL libra
 
 echo " * Looking for GSL libraries..."
 
-AC_CHECK_LIB2(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas LIBS='$LIBS').  If GSL is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
-AC_CHECK_LIB2(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl LIBS='$LIBS')  If GSL is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
+AC_CHECK_LIB(gslcblas, main, [], [echo "Error: I can't find the GSL library! (-lgslcblas LIBS='$LIBS').  If GSL is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
+AC_CHECK_LIB(gsl, main, [], [echo "Error: I can't find the GSL library! (-lgsl LIBS='$LIBS')  If GSL is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
 AC_CHECK_LIB(gsl, gsl_cdf_beta_Pinv, [echo "Good... you've got GSL version 1.8 or higher."], [echo "Error: You have the GSL library, but not version 1.8 or higher (LIBS='$LIBS').  If GSL 1.8 or higher is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
 
 AC_MSG_CHECKING(include/compile/link for the GSL library)
@@ -431,7 +433,7 @@ echo "------------------------------------------"
 cairo_progs=""
 if test -n "$cairo" && test "$cairo" != "no"; then
    temp=""
-   if test "$static" == "yes" ; then
+   if test "$force_static" == "yes" ; then
      temp="--static"
    fi
    PKG_CHECK_MODULES(CAIRO,"cairo $temp")
