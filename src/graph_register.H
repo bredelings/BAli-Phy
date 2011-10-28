@@ -22,6 +22,9 @@ struct reg
   // Is this variable named?
   bool named;
 
+  // Is this a parameter value, or dependent on a parameter value?
+  bool changeable;
+
   // Which expression is this a reduction of
   boost::shared_ptr<const reg> parent;
 
@@ -112,6 +115,10 @@ struct context: virtual public Object
 {
   boost::shared_ptr<reg_machine> machine;
 
+  std::vector<std::string> parameter_names;
+
+  std::vector<boost::shared_ptr<reg> > parameters;
+
   int token;
   
   context* clone() const {return new context(*this);}
@@ -140,10 +147,16 @@ struct context: virtual public Object
   boost::shared_ptr<const Object> get_parameter_value(const std::string&) const;
 
   /// Update the value of a non-constant, non-computed index
-  void set_parameter_value(int index, const object_ref&);
+  void set_parameter_value(int index, const expression_ref&);
 
   /// Update the value of a non-constant, non-computed index
-  void set_parameter_value(const std::string& var, const object_ref&);
+  void set_parameter_value(const std::string& var, const expression_ref&);
+
+  int n_parameters() const;
+
+  int find_parameter(const std::string&) const;
+
+  int add_parameter(const std::string& s);
 
   int add_expression(const expression_ref& e);
 

@@ -307,6 +307,10 @@ struct expression_ref: public polymorphic_cow_ptr<Object>
     :polymorphic_cow_ptr<Object>(o.clone())
   {}
 
+  expression_ref(const polymorphic_cow_ptr<Object>& o)
+    :polymorphic_cow_ptr<Object>(o)
+  {}
+
   expression_ref(const int& i):polymorphic_cow_ptr<Object>(new Int(i)) {}
   expression_ref(const double& d):polymorphic_cow_ptr<Object>(new Double(d)) {}
   expression_ref(const bool& b):polymorphic_cow_ptr<Object>(new Bool(b)) {}

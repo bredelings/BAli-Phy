@@ -6,8 +6,8 @@ using std::string;
 using std::vector;
 using std::map;
 
-reg::reg():name(convertToString(this)),named(false) {}
-reg::reg(const string& s):name(s),named(true) {}
+reg::reg():name(convertToString(this)),named(false),changeable(false) {}
+reg::reg(const string& s):name(s),named(true),changeable(false) {}
 
 
 int reg_machine::find_free_token() const
@@ -77,26 +77,61 @@ shared_ptr<const Object> context::get_parameter_value(const std::string&) const
 }
 
 /// Update the value of a non-constant, non-computed index
-void context::set_parameter_value(int index, const object_ref&)
+void context::set_parameter_value(int index, const expression_ref& O)
 {
-  
+  assert(is_WHNF(O));
+  if (parameters[index]->E)
+    // FIXME - invalidation is not working yet.
+    std::abort();
+  else
+  {
+    // Note - this doesn't separate parameters from their value.
+    parameters[index]->E = O;
+    parameters[index]->changeable = true;
+  }
 }
 
 /// Update the value of a non-constant, non-computed index
-void context::set_parameter_value(const std::string& var, const object_ref&)
+void context::set_parameter_value(const std::string& var, const expression_ref& O)
 {
+  set_parameter_value(find_parameter(var), O);
 }
 
-int context::add_expression(const expression_ref& e)
+int context::n_parameters() const
+{
+  return parameters.size();
+}
+
+int context::find_parameter(const string& s) const
+{
+  int index = find_index(parameter_names, s);
+  if (index == -1)
+    throw myexception()<<"Can't find parameter named '"<<s<<"'";
+  return index;
+}
+
+int context::add_parameter(const string& s)
+{
+  int index = n_parameters();
+  parameter_names.push_back(s);
+  parameters.push_back( shared_ptr<reg>(new reg) );
+  return index;
+}
+
+expression_ref graph_normalize(const expression_ref& R);
+
+int context::add_expression(const expression_ref& E)
 {
   shared_ptr<reg> R ( new reg );
-  R->E = e;
+  std::cout<<"add: "<<E->print()<<"\n";
+  R->E = graph_normalize(E);
   heads.push_back(R);
   return heads.size()-1;
 }
 
 context& context::operator=(const context&C)
 {
+  return *this;
 }
 
 context::context()
@@ -279,6 +314,8 @@ struct RegOperationArgs: public OperationArgs
 
   const context& C;
 
+  bool changeable;
+
   boost::shared_ptr<const Object> reference(int slot) const
   {
     return E->sub[slot+1];
@@ -297,6 +334,9 @@ struct RegOperationArgs: public OperationArgs
       R->used_inputs[slot] = result;
 
       result->outputs.insert(R);
+
+      if (result->changeable) 
+	changeable = true;
     }
 
     return R->used_inputs[slot]->E;
@@ -305,9 +345,11 @@ struct RegOperationArgs: public OperationArgs
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
   RegOperationArgs(const shared_ptr<const expression>& e, shared_ptr<reg>& r, const context& c)
-    :E(e),R(r),C(c)
+    :E(e),R(r),C(c),changeable(false)
   { 
     R->used_inputs.resize(E->size()-1);
+    for(int i=0;i<R->used_inputs.size();i++)
+      R->used_inputs[i].reset();
   }
 };
 
@@ -344,6 +386,7 @@ shared_ptr<reg> incremental_evaluate(const context& C, const shared_ptr<reg>& R_
 	// HERE is where we should add the reg to reg_machine->regs_for_token
 	R->results[i] = shared_ptr<reg>(new reg);
 	R->results[i]->parent = R;
+	R->results[i]->changeable = R->changeable;
       }
     }
     
@@ -389,6 +432,14 @@ shared_ptr<reg> incremental_evaluate(const context& C, const shared_ptr<reg>& R_
       continue;
     }
     
+    /// IIIb. A parameter -> Set the result according to the context
+    if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(control))
+    {
+      int index = C.find_parameter(p->parameter_name);
+      R->results[t] = C.parameters[index];
+      continue;
+    }
+
     // 2. A free variable. This should never happen.
     shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(control);
     assert(not D);
@@ -399,8 +450,18 @@ shared_ptr<reg> incremental_evaluate(const context& C, const shared_ptr<reg>& R_
     // 3. An Operation (includes @, case, +, etc.)
     if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
     {
+      std::cout<<"Executing operation: "<<O->print()<<"\n";
       RegOperationArgs Args(E, R->results[t], C);
-      R->results[t]->E = (*O)(Args);
+      expression_ref result = (*O)(Args);
+      if (Args.changeable)
+      {
+	R->results[t]->E = result;
+	R->results[t]->changeable = true;
+      }
+      else
+      {
+	R->E = result;
+      }
     }
   }
 

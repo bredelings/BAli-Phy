@@ -1907,6 +1907,9 @@ bool is_WHNF(const expression_ref& R)
   }
   else
   {
+    if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(R))
+      return false;
+
     // 1. a (dummy) variable.
     // 2. Literal constant.  Treat as 0-arg constructor.
     return true;

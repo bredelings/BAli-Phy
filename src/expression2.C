@@ -497,6 +497,17 @@ int main()
   test15 = incremental_evaluate(C,test15);
   cout<<test15<<"\n";
 
+  C.add_parameter("X");
+  C.add_parameter("Y");
+  C.add_parameter("Z");
+  C.add_expression((X+Y)+Z);
+  C.set_parameter_value("X",1.0);
+  C.set_parameter_value("Y",2.0);
+  C.set_parameter_value("Z",4.0);
+  cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
+  cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
 
-  
+  C.add_expression( apply_expression(apply_expression(plus,apply_expression(apply_expression(plus,X),Y)),Z) );
+  cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
+  cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
 }
