@@ -140,7 +140,7 @@ AC_ARG_ENABLE([profile],
 
 AC_ARG_ENABLE([static],
               AS_HELP_STRING([--enable-static], [Link statically]),
-             [static=yes],
+             [static=$enablevals],
              [static=no])
 
 AC_ARG_ENABLE([cairo],
