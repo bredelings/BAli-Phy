@@ -1,6 +1,16 @@
 set(BOOST_LIBS boost_program_options boost_filesystem boost_chrono boost_system)
 set(GSL_LIBS gslcblas gsl m)
 
+set(GIT_VERSION_CMD ${PROJECT_SOURCE_DIR}/scripts/git_version.sh)
+
+add_custom_command (
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/git_version.h
+  COMMAND ${GIT_VERSION_CMD} -k -s ${PROJECT_SOURCE_DIR} -o ${PROJECT_BINARY_DIR}/git_version.h
+#  DEPENDS MakeTable
+  )
+
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+
 add_executable(bali-phy sequence.C tree.C alignment.C substitution.C
   moves.C rng.C exponential.C eigenvalue.C parameters.C likelihood.C
   mcmc.C choose.C sequencetree.C sample-branch-lengths.C util.C
@@ -17,7 +27,7 @@ add_executable(bali-phy sequence.C tree.C alignment.C substitution.C
   setup-mcmc.C io.C logger.C AIS.C operator.C expression.C formula.C
   setup-imodel.C smodel/objects.C context.C computation.C
   formula_expression.C smodel/operations.C distribution-operations.C
-  operations.C) 
+  operations.C git_version.h) 
 target_link_libraries(bali-phy ${BOOST_LIBS} ${GSL_LIBS})
 
 add_executable(model_P tools/model_P.C tools/statistics.C rng.C util.C)

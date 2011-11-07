@@ -19,8 +19,11 @@ include(CheckCXXSourceCompiles)
 #  "${PROJECT_BINARY_DIR}/bali-phy-Config.h"
 #  )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -g -pg -D_GLIBCXX_DEBUG")
+add_definitions("-Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing")
+add_definitions("-pg")
+add_definitions("-g -D_GLIBCXX_DEBUG")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Woverloaded-virtual -Wstrict-aliasing")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -g -pg -D_GLIBCXX_DEBUG")
 
 # Add extra CMake libraries into ./CMake
 #set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake ${CMAKE_MODULE_PATH})
