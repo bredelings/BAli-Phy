@@ -192,7 +192,7 @@ vector<int> constraint_columns(const ublas::matrix<int>& constraint,const alignm
 
 
 // When the alignment is project onto 2 or 3 sequences, its columns are ordered 
-// in a particular way so that only one path through the DP matrix correspond to 
+// in a particular way so that only one path through the DP matrix corresponds to 
 // each alignment.
 // 
 // seq1 is a list of columns that contain the x-ordinate sequence(s)
