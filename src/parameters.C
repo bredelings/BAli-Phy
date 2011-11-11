@@ -151,10 +151,20 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
     // use the length, unless we are unaligned
     double t = T->branch(b).length();
 
+    double indel_scale_by = 1.0;
+    int indel_scale_branch = -1;
+    if (get_parameter_value_as<Bool>(1))
+    {
+      indel_scale_by = exp( get_parameter_value_as<Double>(0) );
+      indel_scale_branch = get_parameter_value_as<Int>(2);
+    }
+
     // compute and cache the branch HMM
     if (branch_HMM_type[b] == 1)
       HMM = IModel_->get_branch_HMM(-1);
-    else 
+    else if (b == indel_scale_branch)
+      HMM = IModel_->get_branch_HMM(t*branch_mean()*indel_scale_by);
+    else
       HMM = IModel_->get_branch_HMM(t*branch_mean());
   }
 
@@ -396,8 +406,17 @@ void data_partition::note_alignment_changed()
 
 void data_partition::recalc(const vector<int>& indices)
 {
-  if (indices.size())
-    throw myexception()<<"What parameter is this???";
+  // If there is no indel model, we have no parameters
+  if (not has_IModel()) throw myexception()<<"What parameter is this???";
+
+  for(int i=0;i<indices.size();i++)
+  {
+    int index = indices[i];
+    if (index > 2) throw myexception()<<"What parameter is this???";
+    
+    // invalidate cached imodels and cached Pr(alignment_for_branch[b]) for each branch b.
+    recalc_imodel();
+  }
 }
 
 /// Get the mean branch length
@@ -437,7 +456,21 @@ string data_partition::name() const
 
 efloat_t data_partition::prior_no_alignment() const 
 {
-  return 1.0;
+  efloat_t Pr = 1.0;
+
+  if (has_IModel())
+  {
+    double indel_scale_by = get_parameter_value_as<Double>(0);
+    Pr *= laplace_pdf(indel_scale_by, 0, 1);
+
+    bool indel_scale_on = get_parameter_value_as<Bool>(1);
+    Pr *= 0.5;
+
+    int indel_scale_branch = get_parameter_value_as<Int>(2);
+    Pr *= 1.0/(T->n_branches());
+  }
+
+  return Pr;
 }
 
 // We want to decrease 
@@ -559,6 +592,13 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
   for(int b=0;b<cached_transition_P.size();b++)
     cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
 							   Matrix(n_states, n_states));
+
+  if (has_IModel())
+  {
+    add_parameter(Parameter("lambda_scale", Double(0.0)));
+    add_parameter(Parameter("lambda_scale_on", Bool(false)));
+    add_parameter(Parameter("lambda_scale_branch", Int(0), between(0,T->n_branches()-1)));
+  }
 }
 
 data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
@@ -873,6 +913,14 @@ void Parameters::recalc(const vector<int>& indices)
       recalc_imodel(M);
     else
       M -= n_imodels();
+
+    // I don't think we need to update any locally cached values if things cached inside
+    // a data_partition change.
+
+    // Note that a set_parameter_value( ) leads to 
+    // (a) first setting our own value, then setting submodels (via 'write'). (pre-order)
+    // (b) first recalcing submodels, then recalcing ourselves (via 'update'). (post-order)
+    // So, we don't need to involve recalc on submodels from here.
   }
 }
 
