@@ -179,6 +179,8 @@ double GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P, l
     return P->get_parameter_value_as<Double>(p);
   else if (P->parameter_has_type<Int>(p))
     return P->get_parameter_value_as<Int>(p);
+  else if (P->parameter_has_type<Bool>(p))
+    return (int)P->get_parameter_value_as<Bool>(p);
   else
     return -1;
 }
