@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2009 Benjamin Redelings
+   Copyright (C) 2004-2011 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
