@@ -65,7 +65,7 @@ CPPFLAGS="$CPPFLAGS $extra_includes"
 LDFLAGS="$LDFLAGS $extra_libs"
 
 # Specify extra library paths
-AC_ARG_WITH([system-boost], AS_HELP_STRING([--with-system-boost],[Add extra library paths]),
+AC_ARG_WITH([system-boost], AS_HELP_STRING([--with-system-boost],[Use the Boost libraries installed on the system, instead of building our own.]),
   use_system_boost=yes,
   use_system_boost=no
 )
