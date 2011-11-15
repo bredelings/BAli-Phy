@@ -168,7 +168,7 @@ std::vector<int> compute_mapping(const std::vector<T>& v1,const std::vector<T>& 
   return mapping;
 }
 
-/// Apply an inverse mapping
+/// Apply an inverse mapping (= an ordering).
 template <class T>
 std::vector<T> apply_indices(const std::vector<T>& v,const std::vector<int>& indices)
 {
