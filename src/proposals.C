@@ -210,11 +210,8 @@ double bit_flip(vector< object_ref >& x, const vector<double>&)
   //  if (p.size() != 1) 
   //    throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
 
-  shared_ptr<Double> B = dynamic_pointer_cast<Double>(x[0]);
-  *B = 1.0 - *B;
-
-  if (*B < 0.5) *B = 0;
-  if (*B > 0.5) *B = 1;
+  shared_ptr<Bool> B = dynamic_pointer_cast<Bool>(x[0]);
+  *B = not *B;
 
   return 1;
 }

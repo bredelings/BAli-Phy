@@ -1816,7 +1816,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     add_super_parameter(Parameter("M8b::omega2", Double(1.0), true /* fixed */));
     add_super_parameter(Parameter("M8b::omega3", Double(2.0), lower_bound(1)));
 
-    add_super_parameter(Parameter("M8b::omega3_non_zero", Double(1.0)));
+    add_super_parameter(Parameter("M8b::omega3_non_zero", Bool(true)));
 
     check();
     recalc_all();
