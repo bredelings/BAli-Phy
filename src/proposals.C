@@ -27,7 +27,10 @@ using std::valarray;
 using std::vector;
 using std::string;
 
-valarray<double> convert(const vector<Double>& v1)
+using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
+
+valarray<double> convert_to_valarray(const vector<Double>& v1)
 {
   valarray<double> v2(v1.size());
   for(int i=0;i<v1.size();i++)
@@ -35,11 +38,31 @@ valarray<double> convert(const vector<Double>& v1)
   return v2;
 }
 
-vector<Double> convert(const valarray<double>& v1)
+valarray<double> convert_to_valarray(const vector< object_ref >& v1)
+{
+  valarray<double> v2(v1.size());
+  for(int i=0;i<v1.size();i++)
+  {
+    shared_ptr<const Double> D = dynamic_pointer_cast<const Double>(v1[i]);
+    v2[i] = *D;
+  }
+  return v2;
+}
+
+vector<Double> convert_to_Double_vector(const valarray<double>& v1)
 {
   vector<Double> v2(v1.size());
   for(int i=0;i<v1.size();i++)
     v2[i] = v1[i];
+  return v2;
+}
+
+template<typename T>
+vector< object_ref > convert_to_object_vector(const vector<T>& v1)
+{
+  vector< object_ref > v2(v1.size());
+  for(int i=0;i<v1.size();i++)
+    v2[i] = object_ref(v1[i].clone());
   return v2;
 }
 
@@ -53,9 +76,17 @@ double dirichlet_fiddle(valarray<double>& p2,double N)
 
 double dirichlet_fiddle(vector<Double>& p,double N)
 {
-  valarray<double> x = convert(p);
+  valarray<double> x = convert_to_valarray(p);
   double ratio = dirichlet_fiddle(x,N);
-  p = convert(x);
+  p = convert_to_Double_vector(x);
+  return ratio;
+}
+
+double dirichlet_fiddle(vector< object_ref >& p,double N)
+{
+  valarray<double> x = convert_to_valarray(p);
+  double ratio = dirichlet_fiddle(x,N);
+  p = convert_to_object_vector( convert_to_Double_vector(x) );
   return ratio;
 }
 
@@ -73,33 +104,37 @@ double scale_gaussian(Double& x, double sigma)
   return scale;
 }
 
-double scale_gaussian2(vector<Double>& x, const vector<double>& p)
+double scale_gaussian2(vector< object_ref >& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"scale_gaussian: expected one dimension, got "<<x.size()<<".";
   if (p.size() != 1) 
     throw myexception()<<"scale_gaussian: expected one parameter, got "<<p.size()<<".";
 
-  return scale_gaussian(x[0],p[0]);
+  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
+
+  double ratio = scale_gaussian(*x0,p[0]);
+
+  return ratio;
 }
 
 
-double shift_gaussian(vector<Double>& x, const vector<double>& p)
+double shift_gaussian(vector< object_ref >& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_gaussian: expected one dimension, got "<<x.size()<<".";
   if (p.size() != 1) 
     throw myexception()<<"shift_gaussian: expected one parameter, got "<<p.size()<<".";
 
-  Double& f = x[0];
+  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
   double  sigma = p[0];
 
-  f += gaussian(0,sigma);
+  *x0 += gaussian(0,sigma);
 
   return 1.0;
 }
 
-double shift_laplace(vector<Double>& x, const vector<double>& p)
+double shift_laplace(vector< object_ref >& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_laplace: expected one dimension, got "<<x.size()<<".";
@@ -107,85 +142,85 @@ double shift_laplace(vector<Double>& x, const vector<double>& p)
   if (p.size() != 1) 
     throw myexception()<<"shift_laplace: expected one parameter, got "<<p.size()<<".";
 
-  Double& f = x[0];
+  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
   double  s = p[0];
 
-  f += laplace(0,s);
+  *x0 += laplace(0,s);
 
   return 1.0;
 }
 
-double shift_cauchy(vector<Double>& x, const vector<double>& p)
+double shift_cauchy(vector< object_ref >& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_cauchy: expected one dimension, got "<<x.size()<<".";
   if (p.size() != 1) 
     throw myexception()<<"shift_cauchy: expected one parameter, got "<<p.size()<<".";
 
-  Double& f = x[0];
+  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
   double  s = p[0];
 
-  f += cauchy(0,s);
+  *x0 += cauchy(0,s);
 
   return 1.0;
 }
 
-double shift_delta(vector<Double>& x, const vector<double>& p)
+double shift_delta(vector< object_ref >& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_delta: expected one dimension, got "<<x.size()<<".";
   if (p.size() != 1) 
     throw myexception()<<"shift_delta: expected one parameter, got "<<p.size()<<".";
 
-  Double& lambda_O = x[0];
+  shared_ptr<Double> lambda_O = dynamic_pointer_cast<Double>(x[0]);
   double  sigma = p[0];
 
-  double pdel =  lambda_O-logdiff(0,lambda_O);
+  double pdel =  *lambda_O-logdiff(0, *lambda_O);
   double rate =  log(-logdiff(0,pdel));
 
   rate        += gaussian(0,sigma);
   pdel        =  logdiff(0,-exp(rate));
-  lambda_O    =  pdel - logsum(0,pdel);
+  *lambda_O    =  pdel - logsum(0,pdel);
 
   return 1;
 }
 
-double shift_epsilon(vector<Double>& x, const vector<double>& p)
+double shift_epsilon(vector< object_ref >& x, const vector<double>& p)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_epsilon: expected one dimension, got "<<x.size()<<".";
   if (p.size() != 1) 
     throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
 
-  Double& lambda_E = x[0];
+  shared_ptr<Double> lambda_E = dynamic_pointer_cast<Double>(x[0]);
   double  sigma = p[0];
 
-  double E_length = lambda_E - logdiff(0,lambda_E);
+  double E_length = *lambda_E - logdiff(0,*lambda_E);
   E_length += cauchy(0,sigma);
-  lambda_E = E_length - logsum(0,E_length);
+  *lambda_E = E_length - logsum(0,E_length);
 
   return 1;
 }
 
 
-double bit_flip(vector<Double>& x, const vector<double>& p)
+double bit_flip(vector< object_ref >& x, const vector<double>&)
 {
   if (x.size() != 1) 
     throw myexception()<<"shift_epsilon: expected one dimension, got "<<x.size()<<".";
   //  if (p.size() != 1) 
   //    throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
 
-  Double& B = x[0];
-  B = 1.0 - B;
+  shared_ptr<Double> B = dynamic_pointer_cast<Double>(x[0]);
+  *B = 1.0 - *B;
 
-  if (B < 0.5) B = 0;
-  if (B > 0.5) B = 1;
+  if (*B < 0.5) *B = 0;
+  if (*B > 0.5) *B = 1;
 
   return 1;
 }
 
 
-double dirichlet_proposal(std::vector<Double>& x,const std::vector<double>& p)
+double dirichlet_proposal(std::vector< object_ref >& x,const std::vector<double>& p)
 {
   if (p.size() != 1) 
     throw myexception()<<"dirichlet_proposal: expected one parameter, got "<<p.size()<<".";
@@ -195,11 +230,15 @@ double dirichlet_proposal(std::vector<Double>& x,const std::vector<double>& p)
   if (N <= 0)
     throw myexception()<<"dirichlet_proposal: parameter N <= 0! (N = "<<N<<", x.size() == "<<x.size()<<")";
 
-  double s = sum(x);
+  valarray<double> x2 = convert_to_valarray(x);
 
-  scale(x, 1.0/s);
-  double ratio = dirichlet_fiddle(x, N*x.size());
-  scale(x, s);
+  double s = x2.sum();
+
+  x2 /= s;
+  double ratio = dirichlet_fiddle(x2, N*x.size());
+  x2 *= s;
+
+  x = convert_to_object_vector( convert_to_Double_vector(x2));
 
   return ratio;
 }
@@ -279,11 +318,14 @@ double sorted_proposal(std::valarray<double>& x,const std::vector<double>& p)
 
 */
 
-double less_than::operator()(std::vector<Double>& x,const std::vector<double>& p) const
+double less_than::operator()(std::vector< object_ref >& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++) 
-    x[i] = reflect_less_than(double(x[i]),max);
+  {
+    shared_ptr<Double> X = dynamic_pointer_cast<Double>(x[i]);
+    *X = reflect_less_than(double(*X),max);
+  }
   return ratio;
 }
 
@@ -292,11 +334,14 @@ less_than::less_than(double m, const Proposal_Fn& P)
    proposal(P)
 { }
 
-double more_than::operator()(std::vector<Double>& x,const std::vector<double>& p) const
+double more_than::operator()(std::vector< object_ref >& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++) 
-    x[i] = reflect_more_than(double(x[i]),min);
+  {
+    shared_ptr<Double> X = dynamic_pointer_cast<Double>(x[i]);
+    *X = reflect_more_than(double(*X),min);
+  }
   return ratio;
 }
 
@@ -305,11 +350,14 @@ more_than::more_than(double m, const Proposal_Fn& P)
    proposal(P)
 { }
 
-double Between::operator()(std::vector<Double>& x,const std::vector<double>& p) const
+double Between::operator()(std::vector< object_ref >& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++)
-    x[i] = wrap(double(x[i]),min,max);
+  {
+    shared_ptr<Double> X = dynamic_pointer_cast<Double>(x[i]);
+    *X = wrap(double(*X),min,max);
+  }
   return ratio;
 }
 
@@ -319,23 +367,26 @@ Between::Between(double m1, double m2, const Proposal_Fn& P)
 { }
 
 
-double log_scaled::operator()(std::vector<Double>& x,const std::vector<double>& p) const
+double log_scaled::operator()(std::vector< object_ref >& x,const std::vector<double>& p) const
 {
   if (x.size() != 1) 
     throw myexception()<<"log_scaled: expected one dimension, got "<<x.size()<<".";
-  if (x[0] < 0.0) 
+
+  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
+
+  double x1 = *x0;
+
+  if (x1 < 0.0) 
     throw myexception()<<"log_scaled: x[0] is negative!";
-  if (x[0] == 0.0) 
+  if (x1 == 0.0) 
     throw myexception()<<"log_scaled: x[0] is zero!";
 
-  double x1 = x[0];
-
-  x[0] = log(x[0]);
+  *x0 = log(*x0);
   double r = (*proposal)(x,p);
-  x[0] = wrap<double>(x[0],-500,500);
-  x[0] = exp(x[0]);
+  *x0 = wrap<double>(*x0,-500,500);
+  *x0 = exp(*x0);
 
-  double x2 = x[0];
+  double x2 = *x0;
 
   return r * x2/x1;
 }
@@ -345,22 +396,24 @@ log_scaled::log_scaled(const Proposal_Fn& P)
 { }
 
 
-double LOD_scaled::operator()(std::vector<Double>& x,const std::vector<double>& p) const
+double LOD_scaled::operator()(std::vector< object_ref >& x,const std::vector<double>& p) const
 {
   if (x.size() != 1) 
     throw myexception()<<"LOD_scaled: expected one dimension, got "<<x.size()<<".";
-  if (x[0] < 0.0) 
+
+  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
+
+  double x1 = *x0;
+  if (x1 < 0.0) 
     throw myexception()<<"LOD_scaled: x[0] is negative!";
-  if (x[0] == 0.0) 
+  if (x1 == 0.0) 
     throw myexception()<<"LOD_scaled: x[0] is zero!";
 
-  double x1 = x[0];
-
-  x[0] = log(x[0]/(1-x[0]));
+  *x0 = log(*x0/(1-*x0));
   double r = (*proposal)(x,p);
-  x[0] = exp(x[0])/(1+exp(x[0]));
+  *x0 = exp(*x0)/(1+exp(*x0));
 
-  double x2 = x[0];
+  double x2 = *x0;
 
   return r * x2*(1.0-x2)/(x1*(1.0-x1));
 }
@@ -370,11 +423,22 @@ LOD_scaled::LOD_scaled(const Proposal_Fn& P)
 { }
 
 
-double sorted::operator()(std::vector<Double>& x,const std::vector<double>& p) const
+double sorted::operator()(std::vector< object_ref >& x,const std::vector<double>& p) const
 {
   double ratio = (*proposal)(x,p);
 
-  std::sort(x.begin(),x.end());
+  vector<double> x2(x.size());
+  for(int i=0;i<x2.size();i++)
+  {
+    shared_ptr<const Double> D = dynamic_pointer_cast<const Double>(x[i]);
+    x2[i] = *D;
+  }
+
+  vector<int> order = iota<int>( x.size() );
+
+  std::sort(order.begin(), order.end(), sequence_order<double>(x2));
+
+  x = apply_indices(x, order);
 
   return ratio;
 }
@@ -385,7 +449,7 @@ sorted::sorted(const Proposal_Fn& P)
 
 double Proposal2::operator()(Probability_Model& P) const
 {
-  //  vector<Double> parameters = P.get_parameter_values();
+  //  vector< object_ref > parameters = P.get_parameter_values();
 
   if (not indices.size())
     throw myexception()<<"Proposal2::operator() - No parameters to alter! (all parameters fixed?)";
@@ -401,9 +465,16 @@ double Proposal2::operator()(Probability_Model& P) const
     p[i] = loadvalue(P.keys, pnames[i]);
 
   // read, alter, and write parameter values
-  vector<Double> x = P.get_parameter_values_as<Double>(indices);
+  vector< shared_ptr<const Object> > y = P.get_parameter_values(indices);
+  vector< object_ref > x(y.size());
+  for(int i=0;i<x.size();i++)
+    x[i] = y[i];
+
   double ratio = (*proposal)(x,p);
-  P.set_parameter_values(indices,x);
+
+  for(int i=0;i<y.size();i++)
+    y[i] = x[i];
+  P.set_parameter_values(indices,y);
 
   return ratio;
 }
