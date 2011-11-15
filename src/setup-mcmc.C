@@ -251,6 +251,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
 
   add_MH_move(P, Between(-20,20,shift_cauchy), "lambda_scale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+  add_MH_move(P, bit_flip,   "lambda_scale_on", "M8b::f_dirichlet_N",     1,  MH_moves, 10);
 
   return MH_moves;
 }
