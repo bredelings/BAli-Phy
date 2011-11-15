@@ -372,8 +372,9 @@ double log_scaled::operator()(std::vector< object_ref >& x,const std::vector<dou
   if (x.size() != 1) 
     throw myexception()<<"log_scaled: expected one dimension, got "<<x.size()<<".";
 
-  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
+  shared_ptr<Double> x0;
 
+  x0 = dynamic_pointer_cast<Double>(x[0]);
   double x1 = *x0;
 
   if (x1 < 0.0) 
@@ -382,7 +383,11 @@ double log_scaled::operator()(std::vector< object_ref >& x,const std::vector<dou
     throw myexception()<<"log_scaled: x[0] is zero!";
 
   *x0 = log(*x0);
+  x0.reset();
+
   double r = (*proposal)(x,p);
+
+  x0 = dynamic_pointer_cast<Double>(x[0]);
   *x0 = wrap<double>(*x0,-500,500);
   *x0 = exp(*x0);
 
@@ -401,16 +406,22 @@ double LOD_scaled::operator()(std::vector< object_ref >& x,const std::vector<dou
   if (x.size() != 1) 
     throw myexception()<<"LOD_scaled: expected one dimension, got "<<x.size()<<".";
 
-  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
+  shared_ptr<Double> x0;
 
+  x0 = dynamic_pointer_cast<Double>(x[0]);
   double x1 = *x0;
+
   if (x1 < 0.0) 
     throw myexception()<<"LOD_scaled: x[0] is negative!";
   if (x1 == 0.0) 
     throw myexception()<<"LOD_scaled: x[0] is zero!";
 
   *x0 = log(*x0/(1-*x0));
+  x0.reset();
+
   double r = (*proposal)(x,p);
+
+  x0 = dynamic_pointer_cast<Double>(x[0]);
   *x0 = exp(*x0)/(1+exp(*x0));
 
   double x2 = *x0;
