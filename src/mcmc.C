@@ -395,14 +395,14 @@ namespace MCMC {
     if (in_range and accept_MH(*P,*P2,ratio)) {
       result.totals[0] = 1;
       if (n == 2) {
-	if (n_indices == 1) {
-	  int i = p2->get_indices()[0];
-	  double v1 = P->get_parameter_value_as<Double>(i);
-	  double v2 = P2->get_parameter_value_as<Double>(i);
+	int first_index = p2->get_indices()[0];
+	if (n_indices == 1 and P->parameter_has_type<Double>(first_index)) {
+	  double v1 = P->get_parameter_value_as<Double>(first_index);
+	  double v2 = P2->get_parameter_value_as<Double>(first_index);
 	  //      cerr<<"v1 = "<<v1<<"   v2 = "<<v2<<"\n";
 	  result.totals[1] = std::abs(v2-v1);
 	}
-	else //currently this can only be a dirichlet proposal
+	else if (n_indices > 1 and P->parameter_has_type<Double>(first_index)) //currently this can only be a dirichlet proposal
 	{
 	  double total = 0;
 	  for(int i=0;i<n_indices;i++) 
