@@ -56,6 +56,9 @@ public:
 
 struct object_ref: polymorphic_cow_ptr<Object>
 {
+  object_ref()
+  { }
+
   explicit object_ref(Object *o)
     :polymorphic_cow_ptr<Object>(o)
   { }
