@@ -432,7 +432,7 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 
     /*--------- III. a ---------*/
     
-    // 1. Let expressions
+    // 1. Recursive let expressions
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
