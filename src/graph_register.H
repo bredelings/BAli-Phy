@@ -29,10 +29,10 @@ struct reg
   std::vector<boost::shared_ptr<reg> > used_inputs;
 
   // Which reduction results made use of the value of this expression (via an operation)
-  std::set<boost::shared_ptr<const reg> > outputs;
+  std::set<boost::shared_ptr<reg> > outputs;
 
   // Which reduction results made use of the value of this expression (via call)
-  std::set<boost::shared_ptr<const reg> > call_outputs;
+  std::set<boost::shared_ptr<reg> > call_outputs;
 
   // Does this expression reduce to another expression that we need to evaluate?
   boost::shared_ptr<reg> call;

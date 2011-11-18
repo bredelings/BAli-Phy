@@ -117,13 +117,68 @@ void context::set_parameter_value(int index, const expression_ref& O)
   assert(is_WHNF(O));
 
   shared_ptr<reg> P = parameters[index];
-  assert(P->changeable);
 
-  if (*P->result)
-    // FIXME - invalidation is not working yet.
-    std::abort();
-  else
-    P->result = shared_ptr< shared_ptr< const Object> >(new shared_ptr<const Object>(O));
+  assert(P->result);
+  assert(P->changeable);
+  assert(not P->call);
+
+  // The result value here cannot be shared.
+  P->result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
+
+  *P->result = O;
+
+  vector< shared_ptr<reg> > NOT_known_value_unchanged;
+  std::set< shared_ptr<reg> > visited;
+
+  // The index that we just altered cannot be known to be unchanged.
+  NOT_known_value_unchanged.push_back(P);
+  visited.insert(P);
+
+  // For each reg R1 that cannot (w/o recomputing) be known to be unchanged...
+  for(int i=0;i<NOT_known_value_unchanged.size();i++)
+  {
+    shared_ptr<reg> R1 = NOT_known_value_unchanged[i];
+
+    // ... consider each downstream index2 that has index1 in slot2 of its computation (possibly unused).
+    foreach(j,R1->outputs)
+    {
+      shared_ptr<reg> R2 = *j;
+
+      // This one already marked NOT known_value_unchanged
+      if (visited.find(R2) != visited.end()) continue;
+
+      // Since R2 is not known to have identical USED inputs ...
+      // ... then it is not known to have identical outputs
+      NOT_known_value_unchanged.push_back(R2);
+      visited.insert(R2);
+
+      // Since the computation may be different, it can't be shared.
+      R2->result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
+
+      // Since the computation may be different, we don't know if the value has changed.
+      (*R2->result).reset();
+      clear_call(R2);
+    }
+
+    foreach(j,R1->call_outputs)
+    {
+      shared_ptr<reg> R2 = *j;
+
+      // This one already marked NOT known_value_unchanged
+      if (visited.find(R2) != visited.end()) continue;
+
+      // Since R2 is not known to have identical USED inputs ...
+      // ... then it is not known to have identical outputs
+      NOT_known_value_unchanged.push_back(R2);
+      visited.insert(R2);
+
+      // Since the computation may be different, it can't be shared.
+      R2->result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
+
+      // Since the computation may be different, we don't know if the value has changed.
+      (*R2->result).reset();
+    }
+  }
 }
 
 /// Update the value of a non-constant, non-computed index
