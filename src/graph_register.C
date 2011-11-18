@@ -320,8 +320,6 @@ struct RegOperationArgs: public OperationArgs
 
   const context& C;
 
-  bool changeable;
-
   boost::shared_ptr<const Object> reference(int slot) const
   {
     return E->sub[slot+1];
@@ -344,7 +342,7 @@ struct RegOperationArgs: public OperationArgs
       R2->outputs.insert(R);
 
       if (R2->changeable) 
-	changeable = true;
+	R->changeable = true;
     }
 
     return *(R2->result);
@@ -353,7 +351,7 @@ struct RegOperationArgs: public OperationArgs
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
   RegOperationArgs(const shared_ptr<reg>& r, const context& c)
-    :R(r),C(c),changeable(false)
+    :R(r),C(c)
   { 
     // The object we are evaluating had better be a class expression (with parts).
     E = dynamic_pointer_cast<const expression>(R->E);
@@ -465,9 +463,13 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
     {
       RegOperationArgs Args(R, C);
       expression_ref result = (*O)(Args);
-      if (Args.changeable)
+      if (not R->changeable)
       {
-	R->changeable = true;
+	// The old used_input slots are not invalid, which is OK since none of them are changeable.
+	R->E = result;
+      }
+      else
+      {
 	if (is_WHNF(result))
 	  *(R->result) = result;
 	else
@@ -478,14 +480,11 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 	    R->call = shared_ptr<reg>(new reg(result));
 	}
       }
-      else
-      {
-	R->E = result;
-      }
+
       std::cout<<"Executing statement: "<<compact_graph_expression(E)<<"\n";
       std::cout<<"Executing operation: "<<O<<"\n";
       std::cout<<"Result = "<<compact_graph_expression(result)<<"\n";
-      std::cout<<"Result changeable: "<<Args.changeable<<"\n\n";
+      std::cout<<"Result changeable: "<<R->changeable<<"\n\n";
     }
   }
 
