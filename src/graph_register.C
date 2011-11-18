@@ -336,6 +336,7 @@ struct RegOperationArgs: public OperationArgs
 
     if (not R->used_inputs[slot])
     {
+      // do we really want to allow incremental_evaluate to modify R2, here?
       incremental_evaluate(C,R2);
 
       R->used_inputs[slot] = R2;
