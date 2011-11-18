@@ -6,9 +6,9 @@ using std::string;
 using std::vector;
 using std::map;
 
-reg::reg():name(convertToString(this)),named(false),changeable(false) {}
-reg::reg(const string& s):name(s),named(true),changeable(false) {}
-reg::reg(const expression_ref& e):E(e),name(convertToString(this)),named(false),changeable(false) {}
+reg::reg():name(convertToString(this)),named(false),changeable(false),result(new shared_ptr<const Object>) {}
+reg::reg(const string& s):name(s),named(true),changeable(false), result(new shared_ptr<const Object>) {}
+reg::reg(const expression_ref& e):E(e),name(convertToString(this)),named(false),changeable(false),result(new shared_ptr<const Object>) {}
 
 int reg_machine::find_free_token() const
 {
@@ -83,7 +83,7 @@ void context::set_parameter_value(int index, const expression_ref& O)
   shared_ptr<reg> P = parameters[index];
   assert(P->changeable);
 
-  if (P->result)
+  if (*P->result)
     // FIXME - invalidation is not working yet.
     std::abort();
   else
@@ -369,14 +369,10 @@ expression_ref compact_graph_expression(const expression_ref& R);
 
 shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>& R)
 {
-  while (true)
-  {
-    // Create the (possibly shared) result slot if it doesn't exist.
-    if (not R->result) R->result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object> );
-    
-    // Return the result if its available
-    if (*(R->result)) break;
+  assert(R->result);
 
+  while (not *R->result)
+  {
     // If we know what to call, then call it and use it to set the result
     if (R->call)
     {
@@ -493,7 +489,6 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
     }
   }
 
-  assert(R->result);
   assert(*R->result);
 
   return *(R->result);
