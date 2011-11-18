@@ -10,6 +10,42 @@ reg::reg():name(convertToString(this)),named(false),changeable(false),result(new
 reg::reg(const string& s):name(s),named(true),changeable(false), result(new shared_ptr<const Object>) {}
 reg::reg(const expression_ref& e):E(e),name(convertToString(this)),named(false),changeable(false),result(new shared_ptr<const Object>) {}
 
+void set_used_input(const shared_ptr<reg>& R1, int slot, const shared_ptr<reg>& R2)
+{
+  if (R1->used_inputs[slot]) return;
+
+  R1->used_inputs[slot] = R2;
+  R2->outputs.insert(R1);
+}
+
+void clear_used_input(const shared_ptr<reg>& R, int slot)
+{
+  shared_ptr<reg> R2 = R->used_inputs[slot];
+  if (not R2) return;
+
+  R2->outputs.erase(R);
+  R->used_inputs[slot].reset();
+}
+
+void clear_used_inputs(const shared_ptr<reg>& R)
+{
+  for(int i=0;i<R->used_inputs.size();i++)
+    clear_used_input(R,i);
+}
+
+void set_call(const shared_ptr<reg>& R1, const shared_ptr<reg>& R2)
+{
+  assert(not R1->call);
+  R1->call = R2;
+  R2->call_outputs.insert(R1);
+}
+
+void clear_call(const shared_ptr<reg>& R)
+{
+  R->call->call_outputs.erase(R);
+  R->call.reset();
+}
+
 int reg_machine::find_free_token() const
 {
   int token=-1;
@@ -337,9 +373,7 @@ struct RegOperationArgs: public OperationArgs
       // do we really want to allow incremental_evaluate to modify R2, here?
       incremental_evaluate(C,R2);
 
-      R->used_inputs[slot] = R2;
-
-      R2->outputs.insert(R);
+      set_used_input(R, slot, R2);
 
       if (R2->changeable) 
 	R->changeable = true;
@@ -475,9 +509,9 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 	else
 	{
 	  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
-	    R->call = RV->target;
+	    set_call(R, RV->target);
 	  else
-	    R->call = shared_ptr<reg>(new reg(result));
+	    set_call(R, shared_ptr<reg>(new reg(result)));
 	}
       }
 
