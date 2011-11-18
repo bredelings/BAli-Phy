@@ -25,25 +25,26 @@ struct reg
   // Is this a parameter value, or dependent on a parameter value?
   bool changeable;
 
-  // Which expression is this a reduction of
-  boost::shared_ptr<const reg> parent;
-
   // Which input values were used to reduce the parent to this expression
   std::vector<boost::shared_ptr<const reg> > used_inputs;
 
   // Which reduction results made use of the value of this expression
   std::set<boost::shared_ptr<const reg> > outputs;
 
-  // For each different context, what does this expression reduce to?
-  std::vector<boost::shared_ptr<reg> > results;
+  // Does this expression reduce to another expression that we need to evaluate?
+  boost::shared_ptr<reg> call;
 
-  // Which parameter VALUES have been used in computing this redex?
+  // What does this expression reduce to eventually? (WHNF)
+  boost::shared_ptr< boost::shared_ptr<const Object> > result;
+
+  // Which parameter VALUES have been used in computing the call/result
   std::vector<int> used_parameters;
 
   bool is_valid() const {return E;}
 
   reg();
   reg(const std::string& s);
+  reg(const expression_ref&);
 };
 
 
@@ -124,7 +125,7 @@ struct context: virtual public Object
   context* clone() const {return new context(*this);}
 
   // the list of expressions that we are interested in evaluating.
-  std::vector<boost::shared_ptr<reg> > heads;
+  mutable std::vector<boost::shared_ptr<reg> > heads;
 
   /// Return the value of a particular index, computing it if necessary
   boost::shared_ptr<const Object> evaluate(int index) const;

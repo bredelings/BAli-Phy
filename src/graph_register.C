@@ -8,7 +8,7 @@ using std::map;
 
 reg::reg():name(convertToString(this)),named(false),changeable(false) {}
 reg::reg(const string& s):name(s),named(true),changeable(false) {}
-
+reg::reg(const expression_ref& e):E(e),name(convertToString(this)),named(false),changeable(false) {}
 
 int reg_machine::find_free_token() const
 {
@@ -55,7 +55,7 @@ void reg_machine::release_token(int token)
   is_token_active[token] = false;
 }
 
-shared_ptr<reg> incremental_evaluate(const context&, const shared_ptr<reg>&);
+shared_ptr<reg> incremental_evaluate(const context&, shared_ptr<reg>&);
 
 /// Return the value of a particular index, computing it if necessary
 shared_ptr<const Object> context::evaluate(int index) const
@@ -80,15 +80,15 @@ shared_ptr<const Object> context::get_parameter_value(const std::string&) const
 void context::set_parameter_value(int index, const expression_ref& O)
 {
   assert(is_WHNF(O));
-  if (parameters[index]->E)
+
+  shared_ptr<reg> P = parameters[index];
+  assert(P->changeable);
+
+  if (P->result)
     // FIXME - invalidation is not working yet.
     std::abort();
   else
-  {
-    // Note - this doesn't separate parameters from their value.
-    parameters[index]->E = O;
-    parameters[index]->changeable = true;
-  }
+    P->result = shared_ptr< shared_ptr< const Object> >(new shared_ptr<const Object>(O));
 }
 
 /// Update the value of a non-constant, non-computed index
@@ -113,8 +113,15 @@ int context::find_parameter(const string& s) const
 int context::add_parameter(const string& s)
 {
   int index = n_parameters();
+
+  shared_ptr<reg> R(new reg(parameter(s)));
+  R->name = s;
+  R->named = true;
+  R->changeable = true;
+
   parameter_names.push_back(s);
-  parameters.push_back( shared_ptr<reg>(new reg) );
+  parameters.push_back( R );
+
   return index;
 }
 
@@ -310,7 +317,7 @@ struct RegOperationArgs: public OperationArgs
 {
   shared_ptr<const expression> E;
 
-  shared_ptr<reg>& R;
+  const shared_ptr<reg>& R;
 
   const context& C;
 
@@ -323,73 +330,80 @@ struct RegOperationArgs: public OperationArgs
 
   boost::shared_ptr<const Object> evaluate(int slot)
   {
+    // Any slot that we are going to evaluate needs to point to another node
     shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( reference(slot) );
-
     assert(RV);
+    shared_ptr<reg> R2 = RV->target;
 
     if (not R->used_inputs[slot])
     {
-      shared_ptr<reg> result = incremental_evaluate(C,RV->target);
+      incremental_evaluate(C,R2);
 
-      R->used_inputs[slot] = result;
+      R->used_inputs[slot] = R2;
 
-      result->outputs.insert(R);
+      R2->outputs.insert(R);
 
-      if (result->changeable) 
+      if (R2->changeable) 
 	changeable = true;
     }
 
-    return R->used_inputs[slot]->E;
+    return *(R2->result);
   }
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-  RegOperationArgs(const shared_ptr<const expression>& e, shared_ptr<reg>& r, const context& c)
-    :E(e),R(r),C(c),changeable(false)
+  RegOperationArgs(const shared_ptr<reg>& r, const context& c)
+    :R(r),C(c),changeable(false)
   { 
+    // The object we are evaluating had better be a class expression (with parts).
+    E = dynamic_pointer_cast<const expression>(R->E);
+    assert(E);
+
     R->used_inputs.resize(E->size()-1);
     for(int i=0;i<R->used_inputs.size();i++)
       R->used_inputs[i].reset();
   }
 };
 
-shared_ptr<reg> incremental_evaluate(const context& C, const shared_ptr<reg>& R_)
-{
-  shared_ptr<reg> R = R_;
+expression_ref compact_graph_expression(const expression_ref& R);
 
+shared_ptr<reg> incremental_evaluate(const context& C, shared_ptr<reg>& R)
+{
   int t = C.token;
 
   while (true)
   {
-    /*------- I. See if the result is already computed -----*/
-    while(t < R->results.size() and R->results[t]->is_valid())
+    // Create the (possibly shared) result slot if it doesn't exist.
+    if (not R->result) R->result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object> );
+    
+    // Return the result if its available
+    if (*(R->result)) return R;
+
+    // If we know what to call, then call it and use it to set the result
+    if (R->call)
     {
-      assert(not is_WHNF(R->E));
-      R = R->results[t];
+      incremental_evaluate(C, R->call);
+
+      // If the used_inputs weren't changeable, we would have replaced R->E with R->call.
+      assert(R->changeable);
+      
+      *(R->result) = *(R->call->result);
+      continue;
     }
+
+    /*---------- Below here, there is no call, and no result. ------------*/
 
     // Compute the value of this result
     expression_ref control = R->E;
+    std::cout<<R->name<<":control = "<<control<<"\n";
+    std::cout<<R->name<<":control(c) = "<<compact_graph_expression(control)<<"\n";
 
     // If this expression cannot be reduced further, then just return it here.
-    if (is_WHNF(R->E)) return R;
+    if (is_WHNF(R->E)) {
+      *(R->result) = R->E;
+      continue;
+    }
 
-    /*------------ II. Prepare the target slot -------------*/
-    if (t >= R->results.size())
-    {
-      R->results.resize(t+1);
-    }
-    
-    for(int i=0; i<R->results.size(); i++)
-    {
-      if (not R->results[i]) {
-	// HERE is where we should add the reg to reg_machine->regs_for_token
-	R->results[i] = shared_ptr<reg>(new reg);
-	R->results[i]->parent = R;
-	R->results[i]->changeable = R->changeable;
-      }
-    }
-    
     /*--------- III. a ---------*/
     
     // 1. Let expressions
@@ -436,8 +450,13 @@ shared_ptr<reg> incremental_evaluate(const context& C, const shared_ptr<reg>& R_
     if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(control))
     {
       int index = C.find_parameter(p->parameter_name);
-      R->results[t] = C.parameters[index];
-      continue;
+      if (not R->changeable)
+      {
+	R = C.parameters[index];
+	continue;
+      }
+      else
+	throw myexception()<<"Parameter with no result?!";
     }
 
     // 2. A free variable. This should never happen.
@@ -450,48 +469,44 @@ shared_ptr<reg> incremental_evaluate(const context& C, const shared_ptr<reg>& R_
     // 3. An Operation (includes @, case, +, etc.)
     if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
     {
-      std::cout<<"Executing operation: "<<O->print()<<"\n";
-      RegOperationArgs Args(E, R->results[t], C);
+      RegOperationArgs Args(R, C);
       expression_ref result = (*O)(Args);
       if (Args.changeable)
       {
-	R->results[t]->E = result;
-	R->results[t]->changeable = true;
+	R->changeable = true;
+	if (is_WHNF(result))
+	  *(R->result) = result;
+	else
+	{
+	  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
+	    R->call = RV->target;
+	  else
+	    R->call = shared_ptr<reg>(new reg(result));
+	}
       }
       else
       {
 	R->E = result;
       }
+      std::cout<<"Executing statement: "<<compact_graph_expression(E)<<"\n";
+      std::cout<<"Executing operation: "<<O<<"\n";
+      std::cout<<"Result = "<<compact_graph_expression(result)<<"\n";
+      std::cout<<"Result changeable: "<<Args.changeable<<"\n\n";
     }
   }
 
   return R;
 }
 
-void compact_graph_expression(expression_ref& R);
-
 expression_ref incremental_evaluate(const context& C, const expression_ref& E)
 {
   shared_ptr<reg> R(new reg);
   R->E = graph_normalize(E);
 
-  shared_ptr<reg> R2 =  incremental_evaluate(C,R);
+  incremental_evaluate(C,R);
 
-  expression_ref result = R2->E;
-  compact_graph_expression(result);
-
-  shared_ptr<const reg> R3 = R2;
-  while(true)
-  {
-    expression_ref rrr = R3->E;
-    compact_graph_expression(rrr);
-    std::cout<<rrr<<" <- \n";
-    if (R3->parent)
-      R3 = R3->parent;
-    else
-      break;
-  }
-
+  expression_ref result = *(R->result);
+  result = compact_graph_expression(result);
 
   return result;
 }
@@ -524,8 +539,9 @@ void discover_graph_vars(const expression_ref& R, map< shared_ptr<reg>, std::str
   }
 }
 
-void compact_graph_expression(expression_ref& R)
+expression_ref compact_graph_expression(const expression_ref& R_)
 {
+  expression_ref R = R_;
   map< shared_ptr<reg>, std::string> names;
 
   int var_index = get_safe_binder_index(R);
@@ -570,6 +586,7 @@ void compact_graph_expression(expression_ref& R)
   //  std::cout<<R<<std::endl;
   R = launchbury_unnormalize(R);
   //  std::cout<<"substituted = "<<launchbury_unnormalize(R)<<std::endl;
+  return R;
 }
 
 
