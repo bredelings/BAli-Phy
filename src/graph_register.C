@@ -42,6 +42,8 @@ void set_call(const shared_ptr<reg>& R1, const shared_ptr<reg>& R2)
 
 void clear_call(const shared_ptr<reg>& R)
 {
+  if (not R->call) return;
+
   R->call->call_outputs.erase(R);
   R->call.reset();
 }
