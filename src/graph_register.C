@@ -55,13 +55,12 @@ void reg_machine::release_token(int token)
   is_token_active[token] = false;
 }
 
-shared_ptr<reg> incremental_evaluate(const context&, shared_ptr<reg>&);
+shared_ptr<const Object> incremental_evaluate(const context&, shared_ptr<reg>&);
 
 /// Return the value of a particular index, computing it if necessary
 shared_ptr<const Object> context::evaluate(int index) const
 {
-  shared_ptr<reg> result = incremental_evaluate(*this,heads[index]);
-  return result->E;
+  return incremental_evaluate(*this,heads[index]);
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
@@ -309,7 +308,7 @@ expression_ref graph_normalize(const expression_ref& R)
   return R;
 }
 
-shared_ptr<reg> incremental_evaluate(const context&, const shared_ptr<reg>&);
+shared_ptr<const Object> incremental_evaluate(const context&, const shared_ptr<reg>&);
 
 #include "computation.H"
 
@@ -367,17 +366,15 @@ struct RegOperationArgs: public OperationArgs
 
 expression_ref compact_graph_expression(const expression_ref& R);
 
-shared_ptr<reg> incremental_evaluate(const context& C, shared_ptr<reg>& R)
+shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>& R)
 {
-  int t = C.token;
-
   while (true)
   {
     // Create the (possibly shared) result slot if it doesn't exist.
     if (not R->result) R->result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object> );
     
     // Return the result if its available
-    if (*(R->result)) return R;
+    if (*(R->result)) break;
 
     // If we know what to call, then call it and use it to set the result
     if (R->call)
@@ -495,7 +492,10 @@ shared_ptr<reg> incremental_evaluate(const context& C, shared_ptr<reg>& R)
     }
   }
 
-  return R;
+  assert(R->result);
+  assert(*R->result);
+
+  return *(R->result);
 }
 
 expression_ref incremental_evaluate(const context& C, const expression_ref& E)
@@ -503,9 +503,7 @@ expression_ref incremental_evaluate(const context& C, const expression_ref& E)
   shared_ptr<reg> R(new reg);
   R->E = graph_normalize(E);
 
-  incremental_evaluate(C,R);
-
-  expression_ref result = *(R->result);
+  expression_ref result = incremental_evaluate(C,R);
   result = compact_graph_expression(result);
 
   return result;
