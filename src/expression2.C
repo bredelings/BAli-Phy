@@ -511,4 +511,19 @@ int main()
   cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
   C.set_parameter_value("Z",7.0);
   cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
+
+  C.set_parameter_value("X",1);
+  C.set_parameter_value("Y",2);
+  C.set_parameter_value("Z",4);
+
+  expression_ref test16 = let_expression(take, def_take,
+					let_expression(iterate, def_iterate,
+						       take(y)(iterate(plus(x),z))
+						       )
+					);
+
+  C.add_expression( test16 );
+  cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
+  C.set_parameter_value("Y",0);
+  cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
 }
