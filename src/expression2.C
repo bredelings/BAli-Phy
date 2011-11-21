@@ -471,6 +471,7 @@ int main()
   cout<<"   normalized: "<<test12<<" = \n";
   test12 = incremental_evaluate(C,test12);
   cout<<test12<<"\n";
+  test12.reset();
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
   expression_ref test13 = case_expression(true, Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
@@ -481,6 +482,7 @@ int main()
   cout<<"   normalized: "<<test13<<" = \n";
   test13 = incremental_evaluate(C,test13);
   cout<<test13<<"\n";
+  test13.reset();
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
   expression_ref test14 = let_expression(take, def_take,
@@ -495,6 +497,7 @@ int main()
   cout<<"   normalized: "<<test14<<" = \n";
   test14 = incremental_evaluate(C,test14);
   cout<<test14<<"\n";
+  test14.reset();
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
 
@@ -511,6 +514,7 @@ int main()
   cout<<"   normalized: "<<test15<<" = \n";
   test15 = incremental_evaluate(C,test15);
   cout<<test15<<"\n";
+  test15.reset();
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
   C.add_parameter("X");
@@ -551,6 +555,7 @@ int main()
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   C.set_parameter_value("Y",0);
+  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
@@ -562,8 +567,11 @@ int main()
 
 					 )));
   C.add_expression( test17 );
+  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   C.set_parameter_value("Y",2);
+  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   C.set_parameter_value("Y",1);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
@@ -572,6 +580,7 @@ int main()
   C.set_parameter_value("X",2);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   C.set_parameter_value("Z",3);
+  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 }
