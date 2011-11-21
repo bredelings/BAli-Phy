@@ -460,6 +460,7 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 {
   assert(R->result);
 
+  std::cout<<"Statement: "<<R->E->print()<<"\n";
   while (not *R->result)
   {
     // If we know what to call, then call it and use it to set the result
@@ -478,8 +479,10 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 
     // Compute the value of this result
     expression_ref control = R->E;
+#ifndef NDEBUG
     std::cout<<R->name<<":control = "<<control<<"\n";
     std::cout<<R->name<<":control(c) = "<<compact_graph_expression(control)<<"\n";
+#endif
 
     // If this expression cannot be reduced further, then just return it here.
     if (is_WHNF(R->E)) {
@@ -572,12 +575,18 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 	}
       }
 
+#ifndef NDEBUG
       std::cout<<"Executing statement: "<<compact_graph_expression(E)<<"\n";
       std::cout<<"Executing operation: "<<O<<"\n";
-      std::cout<<"Result = "<<compact_graph_expression(result)<<"\n";
       std::cout<<"Result changeable: "<<R->changeable<<"\n\n";
+#endif
     }
   }
+
+#ifndef NDEBUG
+  std::cout<<"Result = "<<compact_graph_expression(*R->result)<<"\n";
+  std::cout<<"Result changeable: "<<R->changeable<<"\n\n";
+#endif
 
   assert(*R->result);
 
