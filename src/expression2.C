@@ -472,7 +472,7 @@ int main()
   test12 = incremental_evaluate(C,test12);
   cout<<test12<<"\n";
   test12.reset();
-  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
+  cout<<"A:C.n_regs() = "<<C.n_regs()<<"\n";
 
   expression_ref test13 = case_expression(true, Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
 
@@ -517,6 +517,7 @@ int main()
   test15.reset();
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
+  cout<<"add parameters X,Y,Z\n";
   C.add_parameter("X");
   C.add_parameter("Y");
   C.add_parameter("Z");
@@ -526,7 +527,7 @@ int main()
   C.set_parameter_value("X",1.0);
   C.set_parameter_value("Y",2.0);
   C.set_parameter_value("Z",4.0);
-  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
+  cout<<"B:C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
@@ -581,6 +582,18 @@ int main()
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   C.set_parameter_value("Z",3);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
+  cout<<"set Y=0\n";
+
+  // Apparently we are generating new garbage each time we run this.
+  C.set_parameter_value("Y",5);
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
+  C.set_parameter_value("Y",5);
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
+  C.set_parameter_value("Y",5);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 }
