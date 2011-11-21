@@ -45,9 +45,14 @@ struct reg
 
   bool is_valid() const {return E;}
 
+  reg* prev_reg;
+  reg* next_reg;
+
   reg();
   reg(const std::string& s);
   reg(const expression_ref&);
+
+  ~reg();
 };
 
 
@@ -119,6 +124,9 @@ struct context: virtual public Object
 {
   boost::shared_ptr<reg_machine> machine;
 
+  boost::shared_ptr<reg> first_reg;
+  boost::shared_ptr<reg> last_reg;
+
   std::vector<std::string> parameter_names;
 
   std::vector<boost::shared_ptr<reg> > parameters;
@@ -163,6 +171,12 @@ struct context: virtual public Object
   int add_parameter(const std::string& s);
 
   int add_expression(const expression_ref& e);
+
+  int n_regs() const;
+
+  boost::shared_ptr<reg> allocate_reg();
+  boost::shared_ptr<reg> allocate_reg(const std::string&);
+  boost::shared_ptr<reg> allocate_reg(const expression_ref&);
 
   context& operator=(const context&);
   context(const context& C);

@@ -557,4 +557,5 @@ int main()
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   C.set_parameter_value("Z",3);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 }

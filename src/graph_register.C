@@ -6,9 +6,24 @@ using std::string;
 using std::vector;
 using std::map;
 
-reg::reg():name(convertToString(this)),named(false),changeable(false),result(new shared_ptr<const Object>) {}
-reg::reg(const string& s):name(s),named(true),changeable(false), result(new shared_ptr<const Object>) {}
-reg::reg(const expression_ref& e):E(e),name(convertToString(this)),named(false),changeable(false),result(new shared_ptr<const Object>) {}
+reg::reg():name(convertToString(this)),named(false),changeable(false),result(new shared_ptr<const Object>),prev_reg(0),next_reg(0) {}
+reg::reg(const string& s):name(s),named(true),changeable(false), result(new shared_ptr<const Object>),prev_reg(0),next_reg(0) {}
+reg::reg(const expression_ref& e):E(e),name(convertToString(this)),named(false),changeable(false),result(new shared_ptr<const Object>),prev_reg(0),next_reg(0) {}
+
+reg::~reg()
+{
+  if (prev_reg)
+  {
+    prev_reg->next_reg = next_reg;
+    prev_reg = 0;
+  }
+
+  if (next_reg)
+  {
+    next_reg->prev_reg = prev_reg;
+    next_reg = 0;
+  }
+}
 
 void set_used_input(const shared_ptr<reg>& R1, int slot, const shared_ptr<reg>& R2)
 {
@@ -206,7 +221,7 @@ int context::add_parameter(const string& s)
 {
   int index = n_parameters();
 
-  shared_ptr<reg> R(new reg(parameter(s)));
+  shared_ptr<reg> R = allocate_reg(s);
   R->name = s;
   R->named = true;
   R->changeable = true;
@@ -219,13 +234,61 @@ int context::add_parameter(const string& s)
 
 expression_ref graph_normalize(const expression_ref& R);
 
+int context::n_regs() const
+{
+  reg* here = first_reg->next_reg;
+  int count = 0;
+  for(;here != last_reg.get();here = here->next_reg)
+    count++;
+  return count;
+}
+
 int context::add_expression(const expression_ref& E)
 {
-  shared_ptr<reg> R ( new reg );
+  shared_ptr<reg> R = allocate_reg(E);
   std::cout<<"add: "<<E->print()<<"\n";
   R->E = graph_normalize(E);
   heads.push_back(R);
   return heads.size()-1;
+}
+
+shared_ptr<reg> context::allocate_reg()
+{
+  shared_ptr<reg> R(new reg);
+
+  R->next_reg = last_reg.get();
+  R->prev_reg = last_reg->prev_reg;
+
+  R->prev_reg->next_reg = R.get();
+  R->next_reg->prev_reg = R.get();
+
+  return R;
+}
+
+shared_ptr<reg> context::allocate_reg(const string& s)
+{
+  shared_ptr<reg> R(new reg(s));
+
+  R->next_reg = last_reg.get();
+  R->prev_reg = last_reg->prev_reg;
+
+  R->prev_reg->next_reg = R.get();
+  R->next_reg->prev_reg = R.get();
+
+  return R;
+}
+
+shared_ptr<reg> context::allocate_reg(const expression_ref& E)
+{
+  shared_ptr<reg> R(new reg(E));
+
+  R->next_reg = last_reg.get();
+  R->prev_reg = last_reg->prev_reg;
+
+  R->prev_reg->next_reg = R.get();
+  R->next_reg->prev_reg = R.get();
+
+  return R;
 }
 
 context& context::operator=(const context&C)
@@ -238,6 +301,12 @@ context::context()
    token(machine->claim_token())
 {
   machine->init_token(token);
+
+  first_reg = shared_ptr<reg>(new reg);
+  last_reg = shared_ptr<reg>(new reg);
+
+  first_reg->next_reg = last_reg.get();
+  last_reg->prev_reg = first_reg.get();
 }
 
 context::context(const context& C)
@@ -245,6 +314,12 @@ context::context(const context& C)
    token(machine->claim_token())
 {
   machine->copy_token(token, C.token);
+
+  first_reg = shared_ptr<reg>(new reg);
+  last_reg = shared_ptr<reg>(new reg);
+
+  first_reg->next_reg = last_reg.get();
+  last_reg->prev_reg = first_reg.get();
 }
 
 context::~context()
@@ -634,6 +709,7 @@ void discover_graph_vars(const expression_ref& R, map< shared_ptr<reg>, std::str
 
 expression_ref compact_graph_expression(const expression_ref& R_)
 {
+  return R_;
   expression_ref R = R_;
   map< shared_ptr<reg>, std::string> names;
 
