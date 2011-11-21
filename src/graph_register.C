@@ -630,6 +630,7 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
 	R->E = result;
+	clear_used_inputs(R);
       }
       else
       {
