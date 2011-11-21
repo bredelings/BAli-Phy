@@ -63,51 +63,6 @@ void clear_call(const shared_ptr<reg>& R)
   R->call.reset();
 }
 
-int reg_machine::find_free_token() const
-{
-  int token=-1;
-  for(int i=0;i<is_token_active.size();i++)
-    if (not is_token_active[i]) {
-      token = i;
-      break;
-    }
-  
-  return token;
-}
-
-int reg_machine::add_token()
-{
-  int token = is_token_active.size();
-  is_token_active.push_back(false);
-  return token;
-}
-
-int reg_machine::claim_token()
-{
-  int token = find_free_token();
-
-  if (token == -1)
-    token = add_token();
-
-  is_token_active[token] = true;
-
-  //  std::cerr<<"-> "<<countt(active)<<"/"<<active.size()<<std::endl;
-  return token;
-}
-
-void reg_machine::copy_token(int token1,int token2)
-{
-}
-
-void reg_machine::init_token(int token)
-{
-}
-
-void reg_machine::release_token(int token)
-{
-  is_token_active[token] = false;
-}
-
 shared_ptr<const Object> incremental_evaluate(const context&, shared_ptr<reg>&);
 
 /// Return the value of a particular index, computing it if necessary
@@ -291,11 +246,7 @@ context& context::operator=(const context&C)
 }
 
 context::context()
-  :machine(new reg_machine),
-   token(machine->claim_token())
 {
-  machine->init_token(token);
-
   first_reg = shared_ptr<reg>(new reg);
   last_reg = shared_ptr<reg>(new reg);
 
@@ -304,11 +255,7 @@ context::context()
 }
 
 context::context(const context& C)
-  :machine(C.machine),
-   token(machine->claim_token())
 {
-  machine->copy_token(token, C.token);
-
   first_reg = shared_ptr<reg>(new reg);
   last_reg = shared_ptr<reg>(new reg);
 
@@ -318,7 +265,6 @@ context::context(const context& C)
 
 context::~context()
 {
-  machine->release_token(token);
 }
 
 expression_ref graph_normalize(const expression_ref& R)
@@ -598,6 +544,8 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
       }
       
       R->E = T;
+      assert(not R->call);
+      assert(not *R->result);
       continue;
     }
     
@@ -631,6 +579,8 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
 	R->E = result;
 	clear_used_inputs(R);
+	assert(not R->call);
+	assert(not *R->result);
       }
       else
       {

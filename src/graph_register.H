@@ -97,33 +97,8 @@ struct reg_var: public Object
 // * how, then, do we handle reg NAME's, if reg's are not uniquely identified by their names?
 
 
-struct reg_machine
-{
-  int n_tokens;
-  std::vector< std::list <reg> > regs_for_token;
-  std::list<reg> all_regs;
-
-  /// is each token in use or not?
-  std::vector<bool> is_token_active;
-
-  /// Return an unused token.
-  int find_free_token() const;
-  /// Create an unused token.
-  int add_token();
-  /// Acquire a token for use with C columns and B/2 branches.
-  int claim_token();
-  /// Setup token2 to point to cached likelihoods for token1
-  void copy_token(int token1,int token2);
-  /// Initialize token
-  void init_token(int token);
-  /// Release token and mark unused.
-  void release_token(int token);
-};
-
 struct context: virtual public Object
 {
-  boost::shared_ptr<reg_machine> machine;
-
   mutable boost::shared_ptr<reg> first_reg;
   mutable boost::shared_ptr<reg> last_reg;
 
@@ -131,8 +106,6 @@ struct context: virtual public Object
 
   std::vector<boost::shared_ptr<reg> > parameters;
 
-  int token;
-  
   context* clone() const {return new context(*this);}
 
   // the list of expressions that we are interested in evaluating.
