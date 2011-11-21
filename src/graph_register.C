@@ -15,14 +15,14 @@ reg::~reg()
   if (prev_reg)
   {
     prev_reg->next_reg = next_reg;
-    prev_reg = 0;
   }
 
   if (next_reg)
   {
     next_reg->prev_reg = prev_reg;
-    next_reg = 0;
   }
+  prev_reg = 0;
+  next_reg = 0;
 }
 
 void set_used_input(const shared_ptr<reg>& R1, int slot, const shared_ptr<reg>& R2)
@@ -252,43 +252,37 @@ int context::add_expression(const expression_ref& E)
   return heads.size()-1;
 }
 
-shared_ptr<reg> context::allocate_reg()
+shared_ptr<reg> context::add_reg(const shared_ptr<reg>& R) const
 {
-  shared_ptr<reg> R(new reg);
-
   R->next_reg = last_reg.get();
   R->prev_reg = last_reg->prev_reg;
-
+  
   R->prev_reg->next_reg = R.get();
   R->next_reg->prev_reg = R.get();
 
   return R;
 }
 
-shared_ptr<reg> context::allocate_reg(const string& s)
+shared_ptr<reg> context::add_reg(reg* r) const
 {
-  shared_ptr<reg> R(new reg(s));
+  shared_ptr<reg> R(r);
 
-  R->next_reg = last_reg.get();
-  R->prev_reg = last_reg->prev_reg;
-
-  R->prev_reg->next_reg = R.get();
-  R->next_reg->prev_reg = R.get();
-
-  return R;
+  return add_reg(R);
 }
 
-shared_ptr<reg> context::allocate_reg(const expression_ref& E)
+shared_ptr<reg> context::allocate_reg() const
 {
-  shared_ptr<reg> R(new reg(E));
+  return add_reg(new reg);
+}
 
-  R->next_reg = last_reg.get();
-  R->prev_reg = last_reg->prev_reg;
+shared_ptr<reg> context::allocate_reg(const string& s) const
+{
+  return add_reg(new reg(s));
+}
 
-  R->prev_reg->next_reg = R.get();
-  R->next_reg->prev_reg = R.get();
-
-  return R;
+shared_ptr<reg> context::allocate_reg(const expression_ref& E) const
+{
+  return add_reg(new reg(E));
 }
 
 context& context::operator=(const context&C)
@@ -535,7 +529,7 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 {
   assert(R->result);
 
-  std::cout<<"Statement: "<<R->E->print()<<"\n";
+  //  std::cout<<"Statement: "<<R->E->print()<<"\n";
   while (not *R->result)
   {
     // If we know what to call, then call it and use it to set the result
@@ -555,8 +549,8 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
     // Compute the value of this result
     expression_ref control = R->E;
 #ifndef NDEBUG
-    std::cout<<R->name<<":control = "<<control<<"\n";
-    std::cout<<R->name<<":control(c) = "<<compact_graph_expression(control)<<"\n";
+    //    std::cout<<R->name<<":control = "<<control<<"\n";
+    //    std::cout<<R->name<<":control(c) = "<<compact_graph_expression(control)<<"\n";
 #endif
 
     // If this expression cannot be reduced further, then just return it here.
@@ -579,9 +573,9 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
 	assert(D);
 	if (D->name.size())
-	  new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(D->name)) );
+	  new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(C.allocate_reg(D->name))) );
 	else
-	  new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var) );
+	  new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(C.allocate_reg())) );
       }
       
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
@@ -646,21 +640,21 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 	  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
 	    set_call(R, RV->target);
 	  else
-	    set_call(R, shared_ptr<reg>(new reg(result)));
+	    set_call(R, shared_ptr<reg>(C.allocate_reg(result)));
 	}
       }
 
 #ifndef NDEBUG
-      std::cout<<"Executing statement: "<<compact_graph_expression(E)<<"\n";
-      std::cout<<"Executing operation: "<<O<<"\n";
-      std::cout<<"Result changeable: "<<R->changeable<<"\n\n";
+      //      std::cout<<"Executing statement: "<<compact_graph_expression(E)<<"\n";
+      //      std::cout<<"Executing operation: "<<O<<"\n";
+      //      std::cout<<"Result changeable: "<<R->changeable<<"\n\n";
 #endif
     }
   }
 
 #ifndef NDEBUG
-  std::cout<<"Result = "<<compact_graph_expression(*R->result)<<"\n";
-  std::cout<<"Result changeable: "<<R->changeable<<"\n\n";
+  //  std::cout<<"Result = "<<compact_graph_expression(*R->result)<<"\n";
+  //  std::cout<<"Result changeable: "<<R->changeable<<"\n\n";
 #endif
 
   assert(*R->result);
@@ -670,7 +664,7 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 
 expression_ref incremental_evaluate(const context& C, const expression_ref& E)
 {
-  shared_ptr<reg> R(new reg);
+  shared_ptr<reg> R = C.allocate_reg();
   R->E = graph_normalize(E);
 
   expression_ref result = incremental_evaluate(C,R);
@@ -765,15 +759,3 @@ expression_ref compact_graph_expression(const expression_ref& R_)
 // constructor
 // case
 // let
-
-
-
-
-
-
-
-
-
-
-
-

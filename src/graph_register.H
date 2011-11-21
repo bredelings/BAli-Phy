@@ -124,8 +124,8 @@ struct context: virtual public Object
 {
   boost::shared_ptr<reg_machine> machine;
 
-  boost::shared_ptr<reg> first_reg;
-  boost::shared_ptr<reg> last_reg;
+  mutable boost::shared_ptr<reg> first_reg;
+  mutable boost::shared_ptr<reg> last_reg;
 
   std::vector<std::string> parameter_names;
 
@@ -174,9 +174,11 @@ struct context: virtual public Object
 
   int n_regs() const;
 
-  boost::shared_ptr<reg> allocate_reg();
-  boost::shared_ptr<reg> allocate_reg(const std::string&);
-  boost::shared_ptr<reg> allocate_reg(const expression_ref&);
+  boost::shared_ptr<reg> add_reg(const boost::shared_ptr<reg>&) const;
+  boost::shared_ptr<reg> add_reg(reg*) const;
+  boost::shared_ptr<reg> allocate_reg() const;
+  boost::shared_ptr<reg> allocate_reg(const std::string&) const;
+  boost::shared_ptr<reg> allocate_reg(const expression_ref&) const;
 
   context& operator=(const context&);
   context(const context& C);
