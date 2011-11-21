@@ -133,6 +133,7 @@ int main()
   expression_ref mul = lambda_expression( Multiply<Double>() );
   expression_ref muli = lambda_expression( Multiply<Int>() );
   expression_ref plus = lambda_expression( Add<Double>() );
+  expression_ref plus_i = lambda_expression( Add<Int>() );
   expression_ref minusi = lambda_expression( Minus<Int>() );
   expression_ref gt = lambda_expression( GreaterThan<Double>() );
 
@@ -407,6 +408,16 @@ int main()
     def_fmap = def_function(true, patterns, bodies);
   }
 
+  // sum_i
+  // sum [] = 0
+  // sum h:t = h+(sum t)
+  expression_ref sum_i_def = lambda_quantify(0,lambda_quantify(1,case_expression(true, v1, ListEnd, 0,
+										 case_expression(true, v1, Cons(v2,v3), plus_i(v2,v0(v3)))
+										 )
+							       )
+					     );
+  expression_ref sum_i = dummy("sum_i");
+
   expression_ref test8 = let_expression(v0,1,v0);
   cout<<"\n";
   cout<<"Eval test:     "<<test8<<" = \n";
@@ -518,7 +529,7 @@ int main()
 
   expression_ref test16 = let_expression(take, def_take,
 					let_expression(iterate, def_iterate,
-						       take(y)(iterate(plus(x),z))
+						       take(y)(iterate(plus_i(x),z))
 						       )
 					);
 
@@ -526,4 +537,24 @@ int main()
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
   C.set_parameter_value("Y",0);
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
+
+  expression_ref test17 = let_expression(take, def_take,
+			  let_expression(iterate, def_iterate,
+					 let_expression(sum_i, sum_i_def(sum_i),
+
+					 sum_i(take(y)(iterate(plus_i(x),z)))
+
+					 )));
+  C.add_expression( test17 );
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  C.set_parameter_value("Y",2);
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  C.set_parameter_value("Y",1);
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  C.set_parameter_value("Y",3);
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  C.set_parameter_value("X",2);
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  C.set_parameter_value("Z",3);
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
 }

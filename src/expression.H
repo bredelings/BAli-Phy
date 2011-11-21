@@ -222,6 +222,7 @@ expression_ref apply_expression(const expression_ref& E,const expression_ref& ar
 expression_ref apply_expression(const expression_ref& E, const std::vector< expression_ref > args);
 
 expression_ref lambda_expression(const Operator& O);
+expression_ref lambda_quantify(int dummy_index, const expression_ref& R);
 
 // FIXME - If we're substituting a lambda expression we have to rename its dummys to make sure
 //         there is no overlap.
