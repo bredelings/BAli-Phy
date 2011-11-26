@@ -229,6 +229,7 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
   bool in_word = false;
   bool in_quote = false;
   bool in_delimiter = false;
+  word.clear();
 
   for(;i<s.size();i++)
   {
@@ -260,7 +261,8 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 
   if (not in_word) return false;
 
-  word = s.substr(start,i-start);
+  if (start != -1)
+    word += s.substr(start,i-start);
 
   return true;
 }
