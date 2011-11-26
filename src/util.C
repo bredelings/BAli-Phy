@@ -248,11 +248,38 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 	continue;
       }
 
+      if (c == '\'')
+      {
+	in_word = true;
+	in_quote = true;
+	start = i+1;
+	continue;
+      }
+
       in_word = true;
       start = i;
     }
     else
     {
+      if (in_quote)
+      {
+	if (c == '\'')
+	{
+	  word += s.substr(start, i-start);
+	  start = i+1;
+	  in_quote = false;
+	}
+	continue;
+      }
+
+      if (c == '\'')
+      {
+	word += s.substr(start, i-start);
+	start = i+1;
+	in_quote = true;
+	continue;
+      }
+
       if (contains_char(whitespace, c)) break;
 
       if (contains_char(delimiters, c)) break;
