@@ -1277,20 +1277,38 @@ int main(int argc,char* argv[])
 
     set_parameters(P,args);
 
+    // Set the initial value of the branch to (optionally) scale the indel rate by.
     if (args.count("lambda-scale-branch"))
     {
+      // Currently this code doesn't make sense of the topology can change so the partition 
+      //  described in the partition file is not longer a part of the tree.
+      // Therefore, you should supply an initial tree using --tree=<treefile> and also
+      //  add "--disable topology " or "--disable topology,alignment_branch".
+
+      // Find the name of the file containing the partition describing the branch to set.
       string filename = args["lambda-scale-branch"].as<string>();
+      // Format is e.g "taxon1 taxon2 taxon3 | taxon4 taxon 5".
+
+      // Open the file
       checked_ifstream partition(filename,"partition file for specifying which branch may have a different indel rate");
+
+      // Read the first line
       string line;
       portable_getline(partition, line);
+
+      // Create the partition from the line
       Partition p(P.T->get_leaf_labels(), line);
+
+      // Get the integer name of the branch on the current tree.
       int b = which_branch(*P.T, p);
       if (b == -1)
 	throw myexception()<<"Partition '"<<p<<"' is not in the starting tree '"<<*P.T<<"'";
       b = T.directed_branch(b).undirected_name();
       
+      // Get a list of all parameters with names ending in lambda_scale_branch
       vector<int> indices = parameters_with_extension(P,"lambda_scale_branch");
 
+      // Set the parameters to the  correct value.
       object_ref B = Int(b);
       for(int i=0;i<indices.size();i++)
 	P.set_parameter_value(indices[i], B);
