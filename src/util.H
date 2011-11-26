@@ -449,6 +449,9 @@ bool contains_char(const std::string& s,char c);
 bool get_word(std::string& word, int& i,const std::string& s,
 	      const std::string& delimiters,const std::string& whitespace);
 
+bool get_word(std::string& word, int& i, std::vector<std::string>& comments, const std::string& s,
+	      const std::string& delimiters,const std::string& whitespace);
+
 template<typename T>
 T sum(const std::vector<T>& v)
 {

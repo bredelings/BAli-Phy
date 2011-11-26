@@ -218,25 +218,47 @@ bool contains_char(const string& s,char c) {
 bool get_word(string& word, int& i, const string& s,
 	      const string& delimiters,const string& whitespace) 
 {
-  if (i >= s.size()) 
-    return false;
+  vector<string> comments;
+  return get_word(word, i, comments, s, delimiters, whitespace);
+}
 
-  while(contains_char(whitespace,s[i])) {
-    i++;
-    if (i >= s.size()) 
-      return false;
+bool get_word(string& word, int& i, vector<string>& comments,const string& s,
+	      const string& delimiters,const string& whitespace) 
+{
+  int start = -1;
+  bool in_word = false;
+  bool in_quote = false;
+  bool in_delimiter = false;
+
+  for(;i<s.size();i++)
+  {
+    char c = s[i];
+
+    if (in_delimiter) return true;
+
+    if (not in_word)
+    {
+      if (contains_char(whitespace, c)) continue;
+
+      if (contains_char(delimiters, c))
+      {
+	word = s.substr(i,1);
+	in_delimiter = true;
+	continue;
+      }
+
+      in_word = true;
+      start = i;
+    }
+    else
+    {
+      if (contains_char(whitespace, c)) break;
+
+      if (contains_char(delimiters, c)) break;
+    }
   }
 
-  int start = i;
-  if (contains_char(delimiters,s[i])) {
-    word = s.substr(i,1);
-    i++;
-    return true;
-  }
-
-  do { i++; }
-  while(not contains_char(delimiters,s[i]) and not contains_char(whitespace,s[i])
-	and i < s.size());
+  if (not in_word) return false;
 
   word = s.substr(start,i-start);
 
