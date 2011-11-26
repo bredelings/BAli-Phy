@@ -455,7 +455,8 @@ string write(const vector<string>& names, const_branchview b, bool print_lengths
   }
 
   // Print the name (it might be empty)
-  output += names[b.target()];
+  if (names[b.target()].size())
+    output += "'" + names[b.target()] + "'";
 
   // print the branch length if requested
   if (print_lengths)
