@@ -226,10 +226,13 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 	      const string& delimiters,const string& whitespace) 
 {
   int start = -1;
+  int start_comment = -1;
   bool in_word = false;
   bool in_quote = false;
   bool in_delimiter = false;
+  bool in_comment = false;
   word.clear();
+  comments.clear();
 
   for(;i<s.size();i++)
   {
@@ -239,6 +242,17 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 
     if (not in_word)
     {
+      if (in_comment)
+      {
+	if (c == ']') {
+	  comments.back() = s.substr(start_comment, i-start_comment);
+	  in_comment = false;
+	}
+	continue;
+      }
+
+      // Don't have to handle in_quote here -> can't happen.
+
       if (contains_char(whitespace, c)) continue;
 
       if (contains_char(delimiters, c))
@@ -256,11 +270,28 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 	continue;
       }
 
+      if (not in_comment and c == '[')
+      {
+	in_comment = true;
+	start_comment = i+1;
+	comments.push_back(string());
+	continue;
+      }
+
       in_word = true;
       start = i;
     }
     else
     {
+      if (in_comment)
+      {
+	if (c == ']') {
+	  comments.back() = s.substr(start_comment, i-start_comment);
+	  in_comment = false;
+	  start = i+1;
+	}
+      }
+
       if (in_quote)
       {
 	if (c == '\'')
@@ -283,6 +314,16 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
       if (contains_char(whitespace, c)) break;
 
       if (contains_char(delimiters, c)) break;
+
+      if (not in_comment and c == '[')
+      {
+	word += s.substr(start, i-start);
+	in_comment = true;
+	start_comment = i+1;
+	comments.push_back(string());
+	continue;
+      }
+
     }
   }
 
