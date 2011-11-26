@@ -290,6 +290,7 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 	  in_comment = false;
 	  start = i+1;
 	}
+	continue;
       }
 
       if (in_quote)
