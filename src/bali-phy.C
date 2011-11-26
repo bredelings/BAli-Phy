@@ -250,6 +250,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("branch-prior",value<string>()->default_value("Gamma"),"Exponential, Gamma, or Dirichlet.")
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
+    ("lambda-scale-branch",value<string>(),"File with partition describing branch to scale")
     ;
   options_description all("All options");
   all.add(general).add(mcmc).add(parameters).add(model).add(advanced);
@@ -1275,6 +1276,22 @@ int main(int argc,char* argv[])
     Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
 
     set_parameters(P,args);
+
+    if (args.count("lambda-scale-branch"))
+    {
+      string filename = args["lambda-scale-branch"].as<string>();
+      checked_ifstream partition(filename,"partition file for specifying which branch may have a different indel rate");
+      string line;
+      portable_getline(partition, line);
+      Partition p(P.T->get_leaf_labels(), line);
+      int b = which_branch(*P.T, p);
+
+      vector<int> indices = parameters_with_extension(P,"lambda_scale_branch");
+
+      object_ref B = Int(b);
+      for(int i=0;i<indices.size();i++)
+	P.set_parameter_value(indices[i], B);
+    }
 
     //------------- Set the branch prior type --------------//
     string branch_prior = args["branch-prior"].as<string>();
