@@ -526,6 +526,8 @@ public:
   /// Return an iterator over the branches adjacent to this branch, and pointing away from its target
   edges_after_iterator branches_after() const {return b;}
 
+  bool has_length() const {return not (*b->undirected_branch_attributes)[0].empty(); }
+
   /// Return this branch's length
   double length() const { return boost::any_cast<double>((*b->undirected_branch_attributes)[0]); }
 
@@ -588,6 +590,8 @@ public:
 
   /// Return an iterator over the branches adjacent to this branch, and pointing away from its target
   const_edges_after_iterator branches_after() const {return b;}
+
+  bool has_length() const {return not (*b->undirected_branch_attributes)[0].empty(); }
 
   /// Return this branch's length
   double length() const { return boost::any_cast<double>((*b->undirected_branch_attributes)[0]); }
