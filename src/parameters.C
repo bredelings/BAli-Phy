@@ -597,7 +597,7 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
   {
     add_parameter(Parameter("lambda_scale", Double(0.0)));
     add_parameter(Parameter("lambda_scale_on", Bool(false)));
-    add_parameter(Parameter("lambda_scale_branch", Int(0), between(0,T->n_branches()-1)));
+    add_parameter(Parameter("lambda_scale_branch", Int(-1), between(0,T->n_branches()-1)));
   }
 }
 
