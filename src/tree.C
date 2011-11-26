@@ -459,7 +459,7 @@ string write(const vector<string>& names, const_branchview b, bool print_lengths
     output += "'" + names[b.target()] + "'";
 
   // print the branch length if requested
-  if (print_lengths)
+  if (print_lengths and b.has_length())
     output += ":" + convertToString(b.length());
 
   return output;
