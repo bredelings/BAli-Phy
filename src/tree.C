@@ -1677,7 +1677,6 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
       else if (pos == 3)
       {
 	(*BN->undirected_branch_attributes)[0] = convertTo<double>(word);	
-	(*BN->undirected_branch_attributes)[0] = convertTo<double>(word);	
 	pos = 4;
       }
     }
@@ -1809,7 +1808,6 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
     }
     else if (prev == ":") {
       BranchNode* BN = tree_stack.back().back();
-      (*BN->undirected_branch_attributes)[0] = convertTo<double>(word);	
       (*BN->undirected_branch_attributes)[0] = convertTo<double>(word);	
     }
   }
