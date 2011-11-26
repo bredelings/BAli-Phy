@@ -1285,7 +1285,10 @@ int main(int argc,char* argv[])
       portable_getline(partition, line);
       Partition p(P.T->get_leaf_labels(), line);
       int b = which_branch(*P.T, p);
-
+      if (b == -1)
+	throw myexception()<<"Partition '"<<p<<"' is not in the starting tree '"<<*P.T<<"'";
+      b = T.directed_branch(b).undirected_name();
+      
       vector<int> indices = parameters_with_extension(P,"lambda_scale_branch");
 
       object_ref B = Int(b);
