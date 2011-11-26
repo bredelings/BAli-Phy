@@ -54,7 +54,7 @@ public:
   virtual ~Object() {}
 };
 
-struct object_ref: polymorphic_cow_ptr<Object>
+struct object_ref: public polymorphic_cow_ptr<Object>
 {
   object_ref()
   { }
