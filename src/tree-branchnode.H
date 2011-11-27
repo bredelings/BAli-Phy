@@ -384,6 +384,8 @@ public:
   /// Is this nodeview non-NULL?
   bool valid() const {return n;}
 
+  tree_attributes& attributes() {return *n->node_attributes;}
+
   /// Construct the nodeview from a BranchNode*.
   nodeview(BranchNode* bn):n(bn) {}
 };
@@ -536,6 +538,9 @@ public:
   /// Alter this branch's length
   void set_length(double d) const {(*b->undirected_branch_attributes)[0] = d;}
 
+  tree_attributes& undirected_attributes() {return *b->undirected_branch_attributes;}
+  tree_attributes& directed_attributes() {return *b->directed_branch_attributes;}
+
   /// The (integer) name of this directed branch
   operator int() const {return name();}
   /// Access the BranchNode* used to reference the directed branch.
@@ -597,6 +602,9 @@ public:
 
   /// Return this branch's length
   double length() const { return boost::any_cast<double>((*b->undirected_branch_attributes)[0]); }
+
+  const tree_attributes& undirected_attributes() const {return *b->undirected_branch_attributes;}
+  const tree_attributes& directed_attributes() const {return *b->directed_branch_attributes;}
 
   /// The (integer) name of this directed branch
   operator int() const {return name();}
