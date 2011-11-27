@@ -39,7 +39,6 @@ public:
   const std::string& label(int i) const {return labels[i];}
 
   /// get all the labels
-        std::vector<std::string>& get_labels()       {return labels;}
   const std::vector<std::string>& get_labels() const {return labels;}
 
   /// get the leaf labels
