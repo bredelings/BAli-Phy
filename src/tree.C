@@ -1727,6 +1727,7 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
 
   const string delimiters = "(),:;";
   const string whitespace = "\t\n ";
+  const string comment_prefix = "&&";
 
   string prev;
   string word;
@@ -1741,26 +1742,34 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
     vector< pair<string, any> > tags;
     for(int j=0;j<comments.size();j++)
     {
-      string& comment = comments[j];
-      if (comment.size() >= 3 and comment[0] == '&' and comment[1] == '&')
+      // skip this comment if it doesn't have the prefix
+      if (comments[j].size() < comment_prefix.size()) continue;
+      if (comments[j].substr(0, comment_prefix.size()) != comment_prefix) continue;
+
+      // remove the prefix;
+      string comment = comments[j].substr(comment_prefix.size(), comments[j].size() - comment_prefix.size());
+
+      // split the comment on ','
+      vector<string> pieces = split(comment,',');
+
+      for(int k=0;k<pieces.size();k++)
       {
-	int L = comment.size();
-	int sep = comment.find('=',2);
+	int L = pieces[k].size();
+
+	int sep = pieces[k].find('=',0);
 
 	string attribute;
 	any value;
 
-	if (sep == -1)
+	if (sep == -1 or sep == 0)
 	{
-	  attribute = comment.substr(2,L-2);
+	  attribute = pieces[k];
 	  value = string();
 	}
-	else if (sep == 2)
-	  continue;
 	else
 	{
-	  attribute = comment.substr(2,sep-2);
-	  value     = comment.substr(sep+1,L-sep-1);
+	  attribute = pieces[k].substr(0,sep);
+	  value     = pieces[k].substr(sep+1,L-sep-1);
 	}
 
 	tags.push_back(pair<string,any>(attribute, value) );
