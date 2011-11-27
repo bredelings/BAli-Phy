@@ -328,6 +328,12 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
     }
   }
 
+  if (in_quote)
+    throw myexception()<<"Unterminated quote parsing tree";
+
+  if (in_comment)
+    throw myexception()<<"Unterminated comment parsing tree";
+
   if (not in_word) return false;
 
   if (start != -1)
