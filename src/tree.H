@@ -223,13 +223,13 @@ class Tree
 protected:
   /// The number of leaf nodes
   int n_leaves_;
-
+public:
   /// The number of node attributes
   std::vector<std::string> node_attribute_names;
-
   /// The number of directed branch attributes
   std::vector<std::string> undirected_branch_attribute_names;
 
+protected:
   /// The number of undirected attributes
   std::vector<std::string> directed_branch_attribute_names;
 
@@ -335,6 +335,12 @@ public:
   bool node_attribute_has_name(int i) const {return not node_attribute_names[i].empty();}
 
   void node_attribute_set_name(int i, const std::string& s) {node_attribute_names[i] = s;}
+
+  int find_node_attribute_index_by_name(const std::string& s) const;
+
+  int add_node_attribute();
+
+  int add_node_attribute(const std::string&);
 
   const std::string& node_attribute_name(int i) const {return node_attribute_names[i];}
 
