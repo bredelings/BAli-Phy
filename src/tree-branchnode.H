@@ -418,6 +418,8 @@ public:
   /// The (integer) name of this node
   bool valid() const {return n;}
 
+  const tree_attributes& attributes() const {return *n->node_attributes;}
+
   /// Construct the const_nodeview from a BranchNode*.
   const_nodeview(const BranchNode* bn):n(bn) {}
   /// Construct the const_nodeview from a nodeview
