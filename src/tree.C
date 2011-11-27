@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 using std::vector;
 using std::string;
 using std::pair;
+using boost::any;
 using boost::dynamic_bitset;
 
 void TreeView::destroy_tree(BranchNode* start) {
@@ -477,7 +478,7 @@ string write(const vector<string>& names,
       output += "[&&" + node_attribute_names[i];
       string value = boost::any_cast<string>(n.attributes()[i]);
       if (value.size())
-	output += '=' + boost::any_cast<string>(n.attributes()[i]);
+	output += '=' + value;
       output += ']';
     }
   }
@@ -496,7 +497,13 @@ string write(const vector<string>& names,
     if (i == branch_length_index) continue;
 
     if (undirected_branch_attribute_names[i].size() and boost::any_cast<string>(&b.undirected_attributes()[i]))
-      branch_output += "[&&" + undirected_branch_attribute_names[i] + '=' + boost::any_cast<string>(b.undirected_attributes()[i]) + ']';
+    {
+      branch_output += "[&&" + undirected_branch_attribute_names[i];
+      string value = boost::any_cast<string>(b.undirected_attributes()[i]);
+      if (value.size())
+	branch_output += '=' + value;
+      branch_output += ']';
+    }
   }
   if (branch_output.size() > 2)
     output += branch_output;
@@ -1682,7 +1689,7 @@ int push_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& l
   return append_empty_node(tree_stack, labels, n_node_attributes, n_undirected_attributes, n_directed_attributes);
 }
 
-void set_attributes(const vector<pair<string,string> >& tags, vector<string>& attribute_names, tree_attributes& attributes)
+void set_attributes(const vector<pair<string,any> >& tags, vector<string>& attribute_names, tree_attributes& attributes)
 {
   for(int k=0;k<tags.size();k++)
   {
@@ -1731,7 +1738,7 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
     
   for(int i=0;get_word(word,i,comments,line,delimiters,whitespace);prev=word) 
   {
-    vector< pair<string,string> > tags;
+    vector< pair<string, any> > tags;
     for(int j=0;j<comments.size();j++)
     {
       string& comment = comments[j];
@@ -1741,11 +1748,12 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
 	int sep = comment.find('=',2);
 
 	string attribute;
-	string value;
+	any value;
 
 	if (sep == -1)
 	{
 	  attribute = comment.substr(2,L-2);
+	  value = string();
 	}
 	else if (sep == 2)
 	  continue;
@@ -1755,7 +1763,7 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
 	  value     = comment.substr(sep+1,L-sep-1);
 	}
 
-	tags.push_back(pair<string,string>(attribute, value) );
+	tags.push_back(pair<string,any>(attribute, value) );
       }
     }
     //std::cerr<<"word = '"<<word<<"'    depth = "<<tree_stack.size()<<"   stack size = "<<tree_stack.back().size()<<std::endl;
