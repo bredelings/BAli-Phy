@@ -235,8 +235,8 @@ void add_internal_labels(SequenceTree& T)
   for(int i=0;i<T.n_nodes();i++)
     if (T[i].is_internal_node())
     {
-      if (T.label(i) == "")
-	T.label(i) = string("A") + convertToString(i);
+      if (T.get_label(i) == "")
+	T.set_label(i, string("A") + convertToString(i));
     }
 }
 
@@ -297,7 +297,7 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
 
   //----- Check that each alignment sequence maps to a corresponding name in the tree -----//
   for(int i=0;i<A.n_sequences();i++)
-    assert(T.label(i) == A.seq(i).name);
+    assert(T.get_label(i) == A.seq(i).name);
 
   //---- Check to see that internal nodes satisfy constraints ----//
   check_alignment(A,T,internal_sequences);

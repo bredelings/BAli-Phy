@@ -83,8 +83,8 @@ ublas::matrix<int> load_alignment_constraint(const string& filename,SequenceTree
       }
 
       for(int i=0;i<T.n_leaves();i++) {
-	if (not includes(names,T.label(i)))
-	  error<<"'"<<T.label(i)<<"' found in data set but not in header.\n";
+	if (not includes(names,T.get_label(i)))
+	  error<<"'"<<T.get_label(i)<<"' found in data set but not in header.\n";
       }
       throw error;
     }

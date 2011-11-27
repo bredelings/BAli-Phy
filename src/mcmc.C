@@ -1020,7 +1020,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
       assert(A.n_sequences() == T.n_leaves() and not P[i].variable_alignment());
 
     for(int j=0;j<A.n_sequences();j++)
-      assert(T.label(j) == A.seq(j).name);    
+      assert(T.get_label(j) == A.seq(j).name);    
   }
 
   s_out<<"\n\n\n";

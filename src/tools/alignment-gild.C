@@ -265,7 +265,7 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
       throw myexception()<<"Alignment estimate has different sequences or sequence order than alignment samples";
     
     if (A.seqlength(pi[i]) != A2.seqlength(i))
-      throw myexception()<<"Sequence '"<<T.label(i)<<"' has different length in alignment estimate and alignment samples!";
+      throw myexception()<<"Sequence '"<<T.get_label(i)<<"' has different length in alignment estimate and alignment samples!";
   }
   */
 }
@@ -557,7 +557,7 @@ int main(int argc,char* argv[]) {
 
     //------- Print column names -------//
     for(int i=0;i<T.n_leaves();i++) {
-      cout<<T.label(i);
+      cout<<T.get_label(i);
       if (i != T.n_leaves()-1)
 	cout<<" ";
       else

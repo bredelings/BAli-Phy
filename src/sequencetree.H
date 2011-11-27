@@ -35,11 +35,11 @@ protected:
 
 public:
   /// get a single label
-        std::string& label(int i)       {return labels[i];}
-  const std::string& label(int i) const {return labels[i];}
+  void  set_label(int i, const std::string& s) {labels[i] = s;}
+  const std::string& get_label(int i) const {return labels[i];}
 
   /// get all the labels
-  const std::vector<std::string>& get_labels() const {return labels;}
+  std::vector<std::string> get_labels() const {return labels;}
 
   /// get the leaf labels
   std::vector<std::string> get_leaf_labels() const;

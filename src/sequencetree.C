@@ -333,10 +333,10 @@ RootedSequenceTree::RootedSequenceTree(const RootedSequenceTree& T1, const Roote
   labels.resize(n_nodes());
 
   for(int i=0;i<T1.n_leaves();i++) 
-    labels[l++] = T1.label(i);
+    labels[l++] = T1.get_label(i);
 
   for(int i=0;i<T2.n_leaves();i++) 
-    labels[l++] = T2.label(i);
+    labels[l++] = T2.get_label(i);
 
   // Hmmm.. n_leaves() could be odd if there is a root leaf...
 }

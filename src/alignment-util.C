@@ -88,10 +88,10 @@ alignment add_internal(alignment A,const SequenceTree& T)
   {
     sequence s;
 
-    if (T.label(i) == "")
+    if (T.get_label(i) == "")
       throw myexception()<<"Adding internal sequences: Tree has missing internal node name!";
 
-    s.name = T.label(i);
+    s.name = T.get_label(i);
 
     S.push_back(s);
   }

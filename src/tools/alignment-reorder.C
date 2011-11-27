@@ -162,7 +162,7 @@ int main(int argc,char* argv[])
 	std::cerr<<"alignment-reorder: root branch = "<<rootb<<std::endl;
 	std::cerr<<"alignment-reorder: x = "<<rootd<<std::endl;
 	for(int i=0;i<T.n_leaves();i++)
-	  std::cerr<<"alignment-reorder: "<<T.label(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
+	  std::cerr<<"alignment-reorder: "<<T.get_label(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
       }
       
       T = add_root((SequenceTree)T,rootb);  // we don't care about the lengths anymore
@@ -188,7 +188,7 @@ int main(int argc,char* argv[])
     if (log_verbose) {
       cerr<<"alignment-reorder: ";
       for(int i=0;i<mapping2.size();i++)
-	cerr<<T.label(mapping2[i])<<" ";
+	cerr<<T.get_label(mapping2[i])<<" ";
       cerr<<std::endl;
       
       cerr<<"alignment-reorder: tree = "<<T.write()<<"\n";
