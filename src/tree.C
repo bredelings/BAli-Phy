@@ -1619,6 +1619,7 @@ int push_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& l
 int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
 {
   labels.clear();
+  node_attribute_names.clear();
 
   const string delimiters = "(),:;";
   const string whitespace = "\t\n ";
@@ -1627,11 +1628,25 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
   string word;
 
   vector< vector<BranchNode*> > tree_stack;
+  vector< string > comments;
   push_empty_node(tree_stack, labels, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
   int pos = 0;
     
-  for(int i=0;get_word(word,i,line,delimiters,whitespace);prev=word) 
+  for(int i=0;get_word(word,i,comments,line,delimiters,whitespace);prev=word) 
   {
+    vector< pair<string,string> > tags;
+    for(int j=0;j<comments.size();j++)
+    {
+      string& comment = comments[j];
+      if (comment.size() >= 3 and comment[0] == '&' and comment[1] == '&')
+      {
+	int L = comment.size();
+	int sep = comment.find('=',2);
+	if (sep == -1 or sep == 2) continue;
+	tags.push_back(pair<string,string>(comment.substr(2,sep-2),
+					   comment.substr(sep+1,L-sep-1)));
+      }
+    }
     //std::cerr<<"word = '"<<word<<"'    depth = "<<tree_stack.size()<<"   stack size = "<<tree_stack.back().size()<<std::endl;
 
     if (word == ";") break;
@@ -1670,7 +1685,23 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
     {
       BranchNode* BN = tree_stack.back().back()->out;
 
-      if (pos == 0 or pos == 1) {
+      if (pos == 0 or pos == 1) 
+      {
+	for(int k=0;k<tags.size();k++)
+	{
+	  int index = find_index(node_attribute_names, tags[k].first );
+	  
+	  if (index == -1) {
+	    index = node_attribute_names.size();
+	    node_attribute_names.push_back( tags[k].first );
+	  }
+
+	  if (BN->node_attributes->size() < n_node_attributes())
+	    BN->node_attributes->resize( n_node_attributes() );
+
+	  (*BN->node_attributes)[index] = tags[k].second;
+	}
+
 	labels[BN->node_attributes->name] = word;
 	pos = 2;
       }
