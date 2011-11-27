@@ -473,7 +473,13 @@ string write(const vector<string>& names,
     if (i == node_label_index) continue;
 
     if (node_attribute_names[i].size() and boost::any_cast<string>(&n.attributes()[i]))
-      output += "[&&" + node_attribute_names[i] + '=' + boost::any_cast<string>(n.attributes()[i]) + ']';
+    {
+      output += "[&&" + node_attribute_names[i];
+      string value = boost::any_cast<string>(n.attributes()[i]);
+      if (value.size())
+	output += '=' + boost::any_cast<string>(n.attributes()[i]);
+      output += ']';
+    }
   }
 
 
@@ -1733,9 +1739,23 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
       {
 	int L = comment.size();
 	int sep = comment.find('=',2);
-	if (sep == -1 or sep == 2) continue;
-	tags.push_back(pair<string,string>(comment.substr(2,sep-2),
-					   comment.substr(sep+1,L-sep-1)));
+
+	string attribute;
+	string value;
+
+	if (sep == -1)
+	{
+	  attribute = comment.substr(2,L-2);
+	}
+	else if (sep == 2)
+	  continue;
+	else
+	{
+	  attribute = comment.substr(2,sep-2);
+	  value     = comment.substr(sep+1,L-sep-1);
+	}
+
+	tags.push_back(pair<string,string>(attribute, value) );
       }
     }
     //std::cerr<<"word = '"<<word<<"'    depth = "<<tree_stack.size()<<"   stack size = "<<tree_stack.back().size()<<std::endl;
