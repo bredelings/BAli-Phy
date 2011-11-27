@@ -1732,6 +1732,9 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
   string prev;
   string word;
 
+  if (line.empty()) 
+    throw myexception()<<"Trying to parse tree from empty string";
+
   vector< vector<BranchNode*> > tree_stack;
   vector< string > comments;
   push_empty_node(tree_stack, labels, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
