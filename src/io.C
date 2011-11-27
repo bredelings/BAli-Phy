@@ -42,6 +42,12 @@ istream& portable_getline(istream& file,string& s)
   if (c == CR and file.good() and file.peek() == LF)
     file.ignore();
 
+  // FIXME: redo this using the underlying buffer...
+  // If we read to the EOF, then the last file.get() will set the failbit, because
+  //  it didn't return a character.  But we don't want this, unless s is empty.
+  if (file.eof() and s.size() and file.fail())
+    file.clear( file.rdstate() & ~ios::failbit );
+
   return file;
 }
 
