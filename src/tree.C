@@ -490,14 +490,14 @@ string write(const vector<string>& names,
     output += "'" + names[n] + "'";
 
   // Print the attributes, if any
-  output += get_attribute_string(n.attributes(), node_attribute_names, "&&NHX:", ":");
+  output += get_attribute_string(n.attributes(), node_attribute_names, "&&NHX:", ":", node_label_index);
 
   string branch_output = ":";
 
   // print the branch length if requested
   if (print_lengths and b.has_length())
     branch_output += convertToString(b.length());
-  branch_output += get_attribute_string(b.undirected_attributes(), undirected_branch_attribute_names, "&&NHX:", ":");
+  branch_output += get_attribute_string(b.undirected_attributes(), undirected_branch_attribute_names, "&&NHX:", ":", branch_length_index);
 
   if (branch_output.size() > 1)
     output += branch_output;
