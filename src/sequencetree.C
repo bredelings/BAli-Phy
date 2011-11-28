@@ -162,6 +162,9 @@ SequenceTree::SequenceTree(const Tree& T,const vector<string>& names)
     labels.resize(n_nodes());
   else if (labels.size() != n_nodes())
     throw myexception()<<"Can't label tree of "<<n_nodes()<<" nodes with "<<names.size()<<" labels!\n";
+
+  for(int i=0;i<labels.size();i++)
+    (*nodes_[i]->node_attributes)[node_label_index] = names[i];
 }
 
 SequenceTree::SequenceTree(const RootedSequenceTree& RT) 
