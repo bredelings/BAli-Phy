@@ -1933,6 +1933,16 @@ int Tree::parse_with_names(const string& line,const vector<string>& names)
 
 int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& names,bool allow_numbers)
 {
+  node_attribute_names.clear();
+  if (node_label_index != -1)
+    node_attribute_names.resize(node_label_index+1);
+
+  directed_branch_attribute_names.clear();
+
+  undirected_branch_attribute_names.clear();
+  if (branch_length_index != -1)
+    undirected_branch_attribute_names.resize(branch_length_index+1);
+
   if (names.size() == 0 and not allow_numbers)
     throw myexception()<<"Tree::parse_with_names_or_numbers( ): must supply leaf names if integers are not allowed.";
 
