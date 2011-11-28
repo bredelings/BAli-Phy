@@ -223,6 +223,10 @@ class Tree
 protected:
   /// The number of leaf nodes
   int n_leaves_;
+
+  int node_label_index;
+  int branch_length_index;
+
 public:
   /// The number of node attributes
   std::vector<std::string> node_attribute_names;

@@ -1755,8 +1755,14 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
 {
   labels.clear();
   node_attribute_names.clear();
+  if (node_label_index != -1)
+    node_attribute_names.resize(node_label_index+1);
+
   directed_branch_attribute_names.clear();
-  undirected_branch_attribute_names = vector<string>(1);
+
+  undirected_branch_attribute_names.clear();
+  if (branch_length_index != -1)
+    undirected_branch_attribute_names.resize(branch_length_index+1);
 
   const string delimiters = "(),:;";
   const string whitespace = "\t\n ";
@@ -1845,6 +1851,9 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
 	set_attributes(tags, node_attribute_names, *BN->node_attributes);
 
 	labels[BN->node_attributes->name] = word;
+	if (node_label_index != -1)
+	  (*BN->node_attributes)[node_label_index] = word;
+
 	pos = 2;
       }
       else if (pos == 2)
@@ -1853,7 +1862,8 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
       {
 	set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
-	(*BN->undirected_branch_attributes)[0] = convertTo<double>(word);	
+	if (branch_length_index != -1)
+	  (*BN->undirected_branch_attributes)[branch_length_index] = convertTo<double>(word);	
 	pos = 4;
       }
       else if (pos == 4)
@@ -2025,14 +2035,18 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
 Tree::Tree()
   :caches_valid(false),
    n_leaves_(0),
-   node_attribute_names(0),
+   node_label_index(0),
+   branch_length_index(0),
+   node_attribute_names(1),
    undirected_branch_attribute_names(1),
    directed_branch_attribute_names(0)
 {}
 
 Tree::Tree(const BranchNode* BN) 
   :caches_valid(false),
-   node_attribute_names(0),
+   node_label_index(0),
+   branch_length_index(0),
+   node_attribute_names(1),
    undirected_branch_attribute_names(1),
    directed_branch_attribute_names(0)
 {
@@ -2049,6 +2063,8 @@ Tree::Tree(const Tree& T)
     :caches_valid(T.caches_valid),
      cached_partitions(T.cached_partitions),
      n_leaves_(T.n_leaves_),
+     node_label_index(T.node_label_index),
+     branch_length_index(T.branch_length_index),
      node_attribute_names(T.n_node_attributes()),
      undirected_branch_attribute_names(T.n_undirected_branch_attributes()),
      directed_branch_attribute_names(T.n_directed_branch_attributes()),
