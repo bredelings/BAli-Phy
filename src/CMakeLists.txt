@@ -129,28 +129,28 @@ target_link_libraries(alignment_thin ${BOOST_LIBS} ${GSL_LIBS})
 
 add_executable(alignment_chop_internal tools/alignment-chop-internal.C
   alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C
-  alignment-util.C io.C) 
+  alignment-util.C io.C sequencetree.C) 
 target_link_libraries(alignment_chop_internal ${BOOST_LIBS} ${GSL_LIBS})
 
 #---------------------------------------------------------------
 
 add_executable(alignment_indices tools/alignment-indices.C alignment.C
   alphabet.C sequence.C util.C tree.C sequence-format.C
-  alignment-util.C io.C)
+  alignment-util.C io.C sequencetree.C)
 target_link_libraries(alignment_indices ${BOOST_LIBS} ${GSL_LIBS})
 
 #---------------------------------------------------------------
 
 add_executable(alignments_diff tools/alignments-diff.C alignment.C
   alphabet.C sequence.C util.C tree.C sequence-format.C
-  alignment-util.C io.C)
+  alignment-util.C io.C sequencetree.C)
 target_link_libraries(alignments_diff ${BOOST_LIBS} ${GSL_LIBS})
 
 #---------------------------------------------------------------
 
 add_executable(alignment_draw tools/alignment-draw.C alignment.C
   alphabet.C sequence.C sequence-format.C util.C alignment-util.C
-  tools/colors.C tree.C io.C) 
+  tools/colors.C tree.C io.C sequencetree.C) 
 target_link_libraries(alignment_draw ${BOOST_LIBS} ${GSL_LIBS})
 
 #---------------------------------------------------------------
@@ -196,14 +196,14 @@ target_link_libraries(alignment_translate ${BOOST_LIBS} ${GSL_LIBS})
 
 add_executable(alignment_find tools/alignment-find.C alignment.C
   alphabet.C sequence.C alignment-util.C rng.C util.C
-  sequence-format.C tree.C io.C) 
+  sequence-format.C tree.C io.C sequencetree.C) 
 target_link_libraries(alignment_find ${BOOST_LIBS} ${GSL_LIBS})
 
 #---------------------------------------------------------------
 
 add_executable(alignment_convert tools/alignment-convert.C alignment.C
   alignment-util.C sequence.C alphabet.C util.C sequence-format.C
-  tree.C io.C) 
+  tree.C io.C sequencetree.C) 
 target_link_libraries(alignment_convert ${BOOST_LIBS} ${GSL_LIBS})
 
 #---------------------------------------------------------------
@@ -331,7 +331,7 @@ target_link_libraries(trees_distances ${BOOST_LIBS} ${GSL_LIBS})
 #---------------------------------------------------------------
 
 add_executable(path_graph tools/path-graph.C alignment.C alphabet.C
-  sequence.C util.C sequence-format.C alignment-util.C tree.C io.C)
+  sequence.C util.C sequence-format.C alignment-util.C tree.C io.C sequencetree.C)
 target_link_libraries(path_graph ${BOOST_LIBS} ${GSL_LIBS})
 
 #---------------------------------------------------------------

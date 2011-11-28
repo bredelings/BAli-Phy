@@ -199,19 +199,19 @@ alignment_thin_SOURCES = tools/alignment-thin.C alignment.C alphabet.C sequence.
 #---------------------------------------------------------------
 
 alignment_chop_internal_SOURCES = tools/alignment-chop-internal.C alignment.C alphabet.C sequence.C util.C tree.C \
-	sequence-format.C alignment-util.C io.C
+	sequence-format.C alignment-util.C io.C sequencetree.C
 
 #---------------------------------------------------------------
 
-alignment_indices_SOURCES = tools/alignment-indices.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C io.C
+alignment_indices_SOURCES = tools/alignment-indices.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C io.C sequencetree.C
 
 #---------------------------------------------------------------
 
-alignments_diff_SOURCES = tools/alignments-diff.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C io.C
+alignments_diff_SOURCES = tools/alignments-diff.C alignment.C alphabet.C sequence.C util.C tree.C sequence-format.C alignment-util.C io.C sequencetree.C
 
 #---------------------------------------------------------------
 
-alignment_draw_SOURCES = tools/alignment-draw.C alignment.C alphabet.C sequence.C sequence-format.C util.C alignment-util.C tools/colors.C tree.C io.C
+alignment_draw_SOURCES = tools/alignment-draw.C alignment.C alphabet.C sequence.C sequence-format.C util.C alignment-util.C tools/colors.C tree.C io.C sequencetree.C
 
 #---------------------------------------------------------------
 
@@ -238,11 +238,11 @@ alignment_translate_SOURCES = tools/alignment-translate.C alignment.C alignment-
 
 #---------------------------------------------------------------
 
-alignment_find_SOURCES = tools/alignment-find.C alignment.C alphabet.C sequence.C alignment-util.C rng.C util.C sequence-format.C tree.C io.C
+alignment_find_SOURCES = tools/alignment-find.C alignment.C alphabet.C sequence.C alignment-util.C rng.C util.C sequence-format.C tree.C io.C sequencetree.C
 
 #---------------------------------------------------------------
 
-alignment_convert_SOURCES = tools/alignment-convert.C alignment.C alignment-util.C sequence.C alphabet.C util.C sequence-format.C tree.C io.C
+alignment_convert_SOURCES = tools/alignment-convert.C alignment.C alignment-util.C sequence.C alphabet.C util.C sequence-format.C tree.C io.C sequencetree.C
 
 #---------------------------------------------------------------
 
@@ -327,7 +327,7 @@ draw_tree_LDADD = ${CAIRO_LIBS}
 #---------------------------------------------------------------
 
 path_graph_SOURCES = tools/path-graph.C alignment.C alphabet.C sequence.C util.C \
-	sequence-format.C alignment-util.C tree.C io.C
+	sequence-format.C alignment-util.C tree.C io.C sequencetree.C
 
 #---------------------------------------------------------------
 

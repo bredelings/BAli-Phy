@@ -31,12 +31,24 @@ using boost::dynamic_bitset;
 
 //-------------------------- SequenceTree methods ----------------------------//
 
-int SequenceTree::index(const string& l) const 
+void SequenceTree::set_label(int i, const string& s)
 {
-  assert(labels.size() == n_nodes());
-  for(int i=0;i<labels.size();i++)
-    if (labels[i] == l) return i;
-  return -1;
+  labels[i] = s;
+}
+
+const string& SequenceTree::get_label(int i) const 
+{
+  return labels[i];
+}
+
+vector<string> SequenceTree::get_labels() const
+{
+  vector<string> node_labels(n_nodes());
+
+  for(int i=0;i<node_labels.size();i++)
+    node_labels[i] = get_label(i);
+
+  return node_labels;
 }
 
 vector<string> SequenceTree::get_leaf_labels() const
@@ -44,9 +56,17 @@ vector<string> SequenceTree::get_leaf_labels() const
   vector<string> leaf_labels(n_leaves());
 
   for(int i=0;i<leaf_labels.size();i++)
-    leaf_labels[i] = labels[i];
+    leaf_labels[i] = get_label(i);
 
   return leaf_labels;
+}
+
+int SequenceTree::index(const string& l) const 
+{
+  assert(labels.size() == n_nodes());
+  for(int i=0;i<labels.size();i++)
+    if (labels[i] == l) return i;
+  return -1;
 }
 
 
