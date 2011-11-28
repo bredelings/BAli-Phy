@@ -438,6 +438,28 @@ vector<int> directed_names(const vector<const_branchview>& v)
 }
 
 
+string get_attribute_string(const tree_attributes& attributes, const vector<string>& attribute_names, const string& prefix, const string& delim, int ignore_index = -1)
+{
+  string output = "";
+
+  for(int i=0;i<attributes.size() and i<attribute_names.size();i++)
+  {
+    // The label should be (will be) printed above.  Don't print it here.
+    if (i == ignore_index) continue;
+
+    if (attribute_names[i].size() and boost::any_cast<string>(&attributes[i]))
+    {
+      if (output.size()) output += delim;
+      output += attribute_names[i] + "=" + boost::any_cast<string>(attributes[i]);
+    }
+  }
+
+  if (output.size())
+    output = "[" + prefix + output + "]";
+
+  return output;
+}
+
 string write(const vector<string>& names, 
 	     const vector<string>& node_attribute_names, const vector<string>& undirected_branch_attribute_names,
 	     const_branchview b, bool print_lengths)
@@ -468,44 +490,16 @@ string write(const vector<string>& names,
     output += "'" + names[n] + "'";
 
   // Print the attributes, if any
-  for(int i=0;i<n.attributes().size() and i<node_attribute_names.size();i++)
-  {
-    // The label should be (will be) printed above.  Don't print it here.
-    if (i == node_label_index) continue;
-
-    if (node_attribute_names[i].size() and boost::any_cast<string>(&n.attributes()[i]))
-    {
-      output += "[&&" + node_attribute_names[i];
-      string value = boost::any_cast<string>(n.attributes()[i]);
-      if (value.size())
-	output += '=' + value;
-      output += ']';
-    }
-  }
-
+  output += get_attribute_string(n.attributes(), node_attribute_names, "&&NHX:", ":");
 
   string branch_output = ":";
 
   // print the branch length if requested
   if (print_lengths and b.has_length())
     branch_output += convertToString(b.length());
+  branch_output += get_attribute_string(b.undirected_attributes(), undirected_branch_attribute_names, "&&NHX:", ":");
 
-  // Print the non-length attributes (e.g. starting with attribute 1) if there are any
-  for(int i=1;i<b.undirected_attributes().size() and i<undirected_branch_attribute_names.size();i++)
-  {
-    // The branch length should be (will be) printed above.  Don't print it here.
-    if (i == branch_length_index) continue;
-
-    if (undirected_branch_attribute_names[i].size() and boost::any_cast<string>(&b.undirected_attributes()[i]))
-    {
-      branch_output += "[&&" + undirected_branch_attribute_names[i];
-      string value = boost::any_cast<string>(b.undirected_attributes()[i]);
-      if (value.size())
-	branch_output += '=' + value;
-      branch_output += ']';
-    }
-  }
-  if (branch_output.size() > 2)
+  if (branch_output.size() > 1)
     output += branch_output;
 
   return output;
