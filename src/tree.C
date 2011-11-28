@@ -1707,6 +1707,45 @@ void set_attributes(const vector<pair<string,any> >& tags, vector<string>& attri
   }
 }
 
+void add_comments(vector< pair<string,any> >& tags, const vector<string>& comments, const string& prefix, const string& delim)
+{
+  for(int j=0;j<comments.size();j++)
+  {
+    // skip this comment if it doesn't have the prefix
+    if (comments[j].size() < prefix.size()) continue;
+    if (comments[j].substr(0, prefix.size()) != prefix) continue;
+    
+    // remove the prefix;
+    string comment = comments[j].substr(prefix.size(), comments[j].size() - prefix.size());
+    
+    // split the comment on ','
+    vector<string> pieces = split(comment, delim);
+    
+    for(int k=0;k<pieces.size();k++)
+    {
+      int L = pieces[k].size();
+      
+      int sep = pieces[k].find('=',0);
+      
+      string attribute;
+      any value;
+      
+      if (sep == -1 or sep == 0)
+      {
+	attribute = pieces[k];
+	value = string();
+      }
+      else
+      {
+	attribute = pieces[k].substr(0,sep);
+	value     = pieces[k].substr(sep+1,L-sep-1);
+      }
+      
+      tags.push_back(pair<string,any>(attribute, value) );
+    }
+  }
+}
+
 #include <iostream>
 
 /*
@@ -1727,7 +1766,6 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
 
   const string delimiters = "(),:;";
   const string whitespace = "\t\n ";
-  const string comment_prefix = "&&";
 
   string prev;
   string word;
@@ -1743,41 +1781,9 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
   for(int i=0;get_word(word,i,comments,line,delimiters,whitespace);prev=word) 
   {
     vector< pair<string, any> > tags;
-    for(int j=0;j<comments.size();j++)
-    {
-      // skip this comment if it doesn't have the prefix
-      if (comments[j].size() < comment_prefix.size()) continue;
-      if (comments[j].substr(0, comment_prefix.size()) != comment_prefix) continue;
+    add_comments(tags, comments, "&&NHX:", ":");
+    add_comments(tags, comments, "&!", ",!");
 
-      // remove the prefix;
-      string comment = comments[j].substr(comment_prefix.size(), comments[j].size() - comment_prefix.size());
-
-      // split the comment on ','
-      vector<string> pieces = split(comment,',');
-
-      for(int k=0;k<pieces.size();k++)
-      {
-	int L = pieces[k].size();
-
-	int sep = pieces[k].find('=',0);
-
-	string attribute;
-	any value;
-
-	if (sep == -1 or sep == 0)
-	{
-	  attribute = pieces[k];
-	  value = string();
-	}
-	else
-	{
-	  attribute = pieces[k].substr(0,sep);
-	  value     = pieces[k].substr(sep+1,L-sep-1);
-	}
-
-	tags.push_back(pair<string,any>(attribute, value) );
-      }
-    }
     //std::cerr<<"word = '"<<word<<"'    depth = "<<tree_stack.size()<<"   stack size = "<<tree_stack.back().size()<<std::endl;
 
     if (word == ";")
