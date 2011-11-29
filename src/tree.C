@@ -464,7 +464,7 @@ string write(const vector<string>& names,
 	     const vector<string>& node_attribute_names, const vector<string>& undirected_branch_attribute_names,
 	     const_branchview b, bool print_lengths)
 {
-  const int node_label_index = -1;
+  const int node_label_index = 0;
   const int branch_length_index = 0;
 
   string output;
@@ -489,7 +489,7 @@ string write(const vector<string>& names,
   if (names[n].size())
     output += "'" + names[n] + "'";
 
-  // Print the attributes, if any
+  // Print the node attributes, if any
   output += get_attribute_string(n.attributes(), node_attribute_names, "&&NHX:", ":", node_label_index);
 
   string branch_output = ":";
@@ -509,6 +509,9 @@ string write(const_nodeview root, const vector<string>& names,
 	     const vector<string>& node_attribute_names, const vector<string>& undirected_branch_attribute_names,
 	     bool print_lengths) 
 {
+  const int node_label_index = 0;
+  const int branch_length_index = 0;
+
   string output;
 
   // If this is an internal node, then print the subtrees
@@ -522,7 +525,11 @@ string write(const_nodeview root, const vector<string>& names,
   output += ")";
 
   // Print the name (it might be empty)
-  output += names[root];
+  if (names[root].size())
+    output += "'" + names[root] + "'";
+
+  // Print the node attributes, if any
+  output += get_attribute_string(root.attributes(), node_attribute_names, "&&NHX:", ":", node_label_index);
 
   // Print the terminator
   output += ";";
