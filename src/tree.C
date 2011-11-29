@@ -84,6 +84,10 @@ BranchNode* TreeView::copy_tree(const BranchNode* start) {
   const BranchNode* here1 = start;
   BranchNode* start2 = copy_node(start);
   BranchNode* here2 = start2;
+
+  // If this is a bare node (e.g. a single-noe tree) then we don't need to do anything else.
+  if (start2->out == start2)
+    return start2;
   
   do {
     
@@ -153,7 +157,7 @@ void insert_branch_into_node(BranchNode* n1, BranchNode* n3)
 }
 
 
-/// Unlink the branch (n1,n2=n1->out) from n2 and relink it to n3
+/// Unlink the branch (n1,n2=n1->out) from n2
 BranchNode* unlink_branch_from_node(BranchNode* n1)
 {
   assert(n1->out != n1);
@@ -402,8 +406,7 @@ BranchNode* TreeView::unlink_subtree(BranchNode* b)
     // we're trying to remove a subtree from the node, not destroy the node.
     BranchNode* copy = new BranchNode;
     copy->prev = copy->next = copy->out = copy;
-    copy->node_attributes = new tree_attributes(b->node_attributes->size());
-    copy->node_attributes->name = b->node_attributes->name;
+    copy->node_attributes = b->node_attributes->unused_copy();
 
     // we return what remains, which is the copy, NOT b.
     return copy;
@@ -516,13 +519,16 @@ string write(const_nodeview root, const vector<string>& names,
 
   // If this is an internal node, then print the subtrees
   vector<const_branchview> branches = sorted_neighbors(root);
-  output = "(";
-  for(int i=0;i<branches.size();i++) {
-    output += write(names,node_attribute_names,undirected_branch_attribute_names,branches[i],print_lengths);
-    if (i+1 < branches.size())
-      output += ',';
+  if (branches.size())
+  {
+    output = "(";
+    for(int i=0;i<branches.size();i++) {
+      output += write(names,node_attribute_names,undirected_branch_attribute_names,branches[i],print_lengths);
+      if (i+1 < branches.size())
+	output += ',';
+    }
+    output += ")";
   }
-  output += ")";
 
   // Print the name (it might be empty)
   if (names[root].size())
@@ -1290,7 +1296,9 @@ void Tree::reanalyze(BranchNode* start)
       n_leaves_++;
   }
   nodes_.resize(1+total_branch_nodes/2);
-  branches_.resize(total_branch_nodes);
+
+  if (total_branch_nodes > 1) // handle 1-node tree
+    branches_.resize(total_branch_nodes);
 
   if (n_leaves_ == 1) {
     recompute(start);
@@ -1364,8 +1372,10 @@ void Tree::recompute(BranchNode* start,bool recompute_partitions)
     //construct the nodes_ index
     nodes_[(*BN)->node_attributes->name] = *BN;
 
-    //construct the branches_ index
-    branches_[(*BN)->directed_branch_attributes->name] = *BN;
+    // handle the case of a 1-leaf tree.
+    if ((*BN)->directed_branch_attributes)
+      //construct the branches_ index 
+      branches_[(*BN)->directed_branch_attributes->name] = *BN;
   }
   
   check_structure();
@@ -1948,8 +1958,6 @@ int Tree::parse_and_discover_names(const string& line)
   leaf_nodes_.invalidate();
   internal_nodes_.invalidate();
 
-  vector<BranchNode*> old_nodes = nodes_;
-
   // switch to new tree structure
   n_leaves_ = 0;
   for(BN_iterator BN(root_);BN;BN++)
@@ -1961,8 +1969,10 @@ int Tree::parse_and_discover_names(const string& line)
 
     // set the number of attributes to the correct number
     (*BN)->node_attributes->resize(n_node_attributes());
-    (*BN)->undirected_branch_attributes->resize(n_undirected_branch_attributes());
-    (*BN)->directed_branch_attributes->resize(n_directed_branch_attributes());
+    if ((*BN)->undirected_branch_attributes)
+      (*BN)->undirected_branch_attributes->resize(n_undirected_branch_attributes());
+    if ((*BN)->directed_branch_attributes)
+      (*BN)->directed_branch_attributes->resize(n_directed_branch_attributes());
   }
 
   reanalyze(root_);
