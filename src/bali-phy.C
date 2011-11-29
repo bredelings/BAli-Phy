@@ -1317,6 +1317,25 @@ int main(int argc,char* argv[])
       for(int i=0;i<indices.size();i++)
 	P.set_parameter_value(indices[i], B);
     }
+    else if (P.T->find_undirected_branch_attribute_index_by_name("lambda-scale-branch") != -1)
+    {
+      int attribute_index = P.T->find_undirected_branch_attribute_index_by_name("lambda-scale-branch");
+
+      int bb = -1;
+      for(int b=0;b<P.T->n_branches();b++)
+      {
+	boost::any value = P.T->branch(b).undirected_attribute(attribute_index);
+	if (not value.empty())
+	  bb = b;
+      }
+      // Get a list of all parameters with names ending in lambda_scale_branch
+      vector<int> indices = parameters_with_extension(P,"lambda_scale_branch");
+
+      // Set the parameters to the  correct value.
+      object_ref B = Int(bb);
+      for(int i=0;i<indices.size();i++)
+	P.set_parameter_value(indices[i], B);
+    }
 
     //------------- Set the branch prior type --------------//
     string branch_prior = args["branch-prior"].as<string>();
