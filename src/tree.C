@@ -1648,6 +1648,11 @@ void Tree::set_n_node_attributes(int n)
       (*BN)->node_attributes->resize(n);
 }
 
+int Tree::find_undirected_branch_attribute_index_by_name(const string& name)  const
+{
+  return find_index(undirected_branch_attribute_names,name);
+}
+
 void Tree::set_n_undirected_branch_attributes(int n)
 {
   undirected_branch_attribute_names.resize(n);
@@ -1655,6 +1660,11 @@ void Tree::set_n_undirected_branch_attributes(int n)
   if (nodes_.size()) 
     for(BN_iterator BN(nodes_[0]);BN;BN++) 
       (*BN)->undirected_branch_attributes->resize(n);
+}
+
+int Tree::find_directed_branch_attribute_index_by_name(const string& name)  const
+{
+  return find_index(directed_branch_attribute_names,name);
 }
 
 void Tree::set_n_directed_branch_attributes(int n)
@@ -1917,8 +1927,8 @@ int Tree::parse_and_discover_names(const string& line)
   BranchNode* root_ = TreeView::unlink_subtree(remainder->out);
 
   // Handle root_ being a leaf
-  if (::is_leaf_node(root_))
-    throw myexception()<<"Tree has an unnamed leaf node at the root.  Please remove the useless branch to the root.";
+  //  if (::is_leaf_node(root_) and )
+  //    throw myexception()<<"Tree has an unnamed leaf node at the root.  Please remove the useless branch to the root.";
 
   TreeView(remainder).destroy();
 

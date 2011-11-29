@@ -358,6 +358,8 @@ public:
 
   void undirected_branch_attribute_set_name(int i, const std::string& s) {undirected_branch_attribute_names[i] = s;}
 
+  int find_undirected_branch_attribute_index_by_name(const std::string& s) const;
+
   const std::string& undirected_branch_attribute_name(int i) const {return undirected_branch_attribute_names[i];}
 
 
@@ -368,6 +370,8 @@ public:
   bool directed_branch_attribute_has_name(int i) const {return not directed_branch_attribute_names[i].empty();}
 
   void directed_branch_attribute_set_name(int i, const std::string& s) {directed_branch_attribute_names[i] = s;}
+
+  int find_directed_branch_attribute_index_by_name(const std::string& s) const;
 
   const std::string& directed_branch_attribute_name(int i) const {return directed_branch_attribute_names[i];}
 
