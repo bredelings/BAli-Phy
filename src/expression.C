@@ -1461,9 +1461,6 @@ expression_ref default_value = lambda_expression(data_function("default_value",2
 
 expression_ref bounds = lambda_expression(data_function("bounds",2));
 
-// Fields: n_random, n_parameters, string, density op
-expression_ref prob_density = lambda_expression( data_function("prob_density",2) );
-
 // Fields: (prob_density) (random vars) (parameter expressions)
 expression_ref distributed = lambda_expression( data_function("~",2) );
 

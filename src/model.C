@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "expression.H"
 #include "operations.H"
 #include "formula_expression.H"
+#include "distribution-operations.H"
 
 using std::vector;
 using std::string;

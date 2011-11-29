@@ -1,5 +1,8 @@
 #include "distribution-operations.H"
 
+// Fields: n_random, n_parameters, string, density op
+expression_ref prob_density = lambda_expression( data_function("prob_density",2) );
+
 expression_ref exponential_dist = prob_density("Exponential", exponential_density());
 
 expression_ref gamma_dist       = prob_density("Gamma", gamma_density());

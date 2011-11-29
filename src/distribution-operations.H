@@ -321,4 +321,7 @@ struct uniform_density: public Operation
 
 extern expression_ref uniform_dist;
 
+// 2 Fields: string, density op
+extern expression_ref prob_density;
+
 #endif
