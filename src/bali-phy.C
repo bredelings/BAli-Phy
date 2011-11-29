@@ -810,8 +810,12 @@ void sanitize_branch_lengths(SequenceTree& T)
 {
   double min_branch = 0.000001;
   for(int i=0;i<T.n_branches();i++)
+  {
+    if (not T.branch(i).has_length())
+      T.branch(i).set_length(3.0/T.n_branches());
     if (T.branch(i).length() > 0)
       min_branch = std::min(min_branch,T.branch(i).length());
+  }
   
   for(int i=0;i<T.n_branches();i++) {
     if (T.branch(i).length() == 0)
