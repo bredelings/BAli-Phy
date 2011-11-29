@@ -443,6 +443,11 @@ public:
   }
 
   /// Get a reference to the 'i'-th node
+        nodeview node(int i)       {return nodes_[i];}
+  /// Get a reference to the 'i'-th node
+  const_nodeview node(int i) const {return nodes_[i];}
+
+  /// Get a reference to the 'i'-th node
         nodeview operator[](int i)       {return nodes_[i];}
   /// Get a reference to the 'i'-th node
   const_nodeview operator[](int i) const {return nodes_[i];}
