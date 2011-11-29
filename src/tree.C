@@ -1836,7 +1836,12 @@ int Tree::parse_and_discover_names(const string& line)
 
     if (word == ";")
     {
-      assert( tags.empty() );
+      BranchNode* BN = tree_stack.back().back()->out;
+      if (pos == 0 or pos == 1 or pos == 2)
+	set_attributes(tags, node_attribute_names, *BN->node_attributes);
+      else if (pos == 3 or pos == 4)
+	assert( tags.empty() );
+
       break;
     }
 
