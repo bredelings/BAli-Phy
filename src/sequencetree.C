@@ -126,8 +126,7 @@ vector<int> SequenceTree::standardize(const vector<int>& lnames)
 // one object on the stack then we quit
 int SequenceTree::parse(const string& line) 
 {
-  vector<string> labels;
-  int root = Tree::parse_and_discover_names(line,labels);
+  int root = Tree::parse_and_discover_names(line);
 
   for(int i=0;i<n_nodes();i++)
     if (node(i).attribute(node_label_index).empty())
@@ -136,9 +135,9 @@ int SequenceTree::parse(const string& line)
   return root;
 }
 
-int SequenceTree::parse_and_discover_names(const std::string& s,std::vector<std::string>& names)
+int SequenceTree::parse_and_discover_names(const std::string& s)
 {
-  int root = Tree::parse_and_discover_names(s,names);
+  int root = Tree::parse_and_discover_names(s);
 
   for(int i=0;i<n_nodes();i++)
     if (node(i).attribute(node_label_index).empty())
@@ -273,9 +272,9 @@ string RootedSequenceTree::write_with_bootstrap_fraction(const vector<double>& b
   return ::write_with_bootstrap_fraction(*this, get_labels(), bf, print_lengths);
 }
 
-int RootedSequenceTree::parse_and_discover_names(const std::string& s,std::vector<std::string>& names)
+int RootedSequenceTree::parse_and_discover_names(const std::string& s)
 {
-  int r = SequenceTree::parse_and_discover_names(s,names);
+  int r = SequenceTree::parse_and_discover_names(s);
 
   root_ = nodes_[r];
 

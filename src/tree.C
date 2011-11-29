@@ -1652,16 +1652,14 @@ void Tree::set_n_directed_branch_attributes(int n)
       (*BN)->directed_branch_attributes->resize(n);
 }
 
-int append_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& labels, int n_n_a, int n_u_a, int n_d_a)
+int append_empty_node(vector< vector<BranchNode*> >& tree_stack, int& n_nodes, int n_n_a, int n_u_a, int n_d_a)
 {
   // determine the level in the tree stack
   int level = tree_stack.size() - 1;
 
   // determine the node index
-  int new_index = labels.size();
-
-  // add an empty label for the node
-  labels.push_back(string());
+  int new_index = n_nodes;
+  n_nodes++;
 
   // determine the parent node of the new leaf node
   BranchNode* parent = 0;
@@ -1690,7 +1688,6 @@ int append_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>&
     child->undirected_branch_attributes->name = new_index - 1;
     child->directed_branch_attributes->name = child->out->directed_branch_attributes->name = new_index - 1;
     name_node(parent, new_index);
-    std::swap(labels[child->node_attributes->name], labels[parent->node_attributes->name]);
   }
   else
     child->node_attributes->name = new_index;
@@ -1701,13 +1698,13 @@ int append_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>&
   return new_index;
 }
 
-int push_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& labels, int n_node_attributes, int n_undirected_attributes, int n_directed_attributes)
+int push_empty_node(vector< vector<BranchNode*> >& tree_stack, int& n_nodes, int n_node_attributes, int n_undirected_attributes, int n_directed_attributes)
 {
   // increase the depth
   tree_stack.push_back( vector<BranchNode*>() );
 
   // append the empty node
-  return append_empty_node(tree_stack, labels, n_node_attributes, n_undirected_attributes, n_directed_attributes);
+  return append_empty_node(tree_stack, n_nodes, n_node_attributes, n_undirected_attributes, n_directed_attributes);
 }
 
 void set_attributes(const vector<pair<string,any> >& tags, vector<string>& attribute_names, tree_attributes& attributes)
@@ -1778,9 +1775,8 @@ void add_comments(vector< pair<string,any> >& tags, const vector<string>& commen
  */
 
 // FIXME - don't we need to destroy the current tree?
-int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
+int Tree::parse_and_discover_names(const string& line)
 {
-  labels.clear();
   node_attribute_names.clear();
   if (node_label_index != -1)
     node_attribute_names.resize(node_label_index+1);
@@ -1802,7 +1798,8 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
 
   vector< vector<BranchNode*> > tree_stack;
   vector< string > comments;
-  push_empty_node(tree_stack, labels, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+  int N = 0;
+  push_empty_node(tree_stack, N, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
   int pos = 0;
     
   for(int i=0;get_word(word,i,comments,line,delimiters,whitespace);prev=word) 
@@ -1827,7 +1824,7 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
       if (pos != 0)
 	throw myexception()<<"In tree file, found '(' in the middle of word \""<<prev<<"\"";
 
-      push_empty_node(tree_stack, labels, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+      push_empty_node(tree_stack, N, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
       pos = 0;
     }
     else if (word == ",")
@@ -1839,7 +1836,7 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
       else if (pos == 3 or pos == 4)
 	set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
 
-      append_empty_node(tree_stack, labels, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+      append_empty_node(tree_stack, N, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
       pos = 0;
     }
     else if (word == ")") 
@@ -1877,7 +1874,6 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
       {
 	set_attributes(tags, node_attribute_names, *BN->node_attributes);
 
-	labels[BN->node_attributes->name] = word;
 	if (node_label_index != -1)
 	  (*BN->node_attributes)[node_label_index] = word;
 
@@ -1907,10 +1903,8 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
   BranchNode* root_ = TreeView::unlink_subtree(remainder->out);
 
   // Handle root_ being a leaf
-  if (::is_leaf_node(root_)) {
-    root_->node_attributes->name = labels.size();
+  if (::is_leaf_node(root_))
     throw myexception()<<"Tree has an unnamed leaf node at the root.  Please remove the useless branch to the root.";
-  }
 
   TreeView(remainder).destroy();
 
@@ -1918,7 +1912,7 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
   if (nodes_.size()) TreeView(nodes_[0]).destroy();
 
   // determine nodes_[]
-  nodes_.resize(labels.size());
+  nodes_.resize(N);
   for(BN_iterator BN(root_);BN;BN++) 
     nodes_[(*BN)->node_attributes->name] = *BN;
 
@@ -1943,12 +1937,6 @@ int Tree::parse_and_discover_names(const string& line,vector<string>& labels)
   }
 
   reanalyze(root_);
-
-  vector<string> new_labels(labels.size());
-  for(int i=0;i<old_nodes.size();i++)
-    new_labels[old_nodes[i]->node_attributes->name] = labels[i];
-
-  labels = new_labels;
 
   return root_->node_attributes->name;
 }
@@ -2235,9 +2223,9 @@ RootedTree& RootedTree::operator=(const RootedTree& RT) {
   return *this;
 }
 
-int RootedTree::parse_and_discover_names(const string& s,vector<string>& names)
+int RootedTree::parse_and_discover_names(const string& s)
 {
-  int r = Tree::parse_and_discover_names(s, names);
+  int r = Tree::parse_and_discover_names(s);
 
   root_ = nodes_[r];
 
