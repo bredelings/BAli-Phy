@@ -29,10 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// A Tree with leaves labelled by sequences
 class SequenceTree: virtual public Tree
 {
-protected:
-  /// A label for each node
-  std::vector<std::string> labels;
-
 public:
   /// get a single label
   void  set_label(int i, const std::string& s);
@@ -46,9 +42,6 @@ public:
 
   /// find the index for a particular sequence
   int index(const std::string&) const;
-
-  /// remove some leaves - SequenceTree variants duplicated  in both {U,R}SequenceTree
-  std::vector<int> prune_leaves(const std::vector<int>&);
 
   /// generate standard internal node and internal branch names given current leaf names
   virtual std::vector<int> standardize();
@@ -91,9 +84,6 @@ public:
 
   /// create a tree with a single node named \a s
   explicit SequenceTree(const std::string& s);
-
-  /// Create a SequenceTree from a RootedSequenceTree (doesn't delete the root node)
-  SequenceTree(const class RootedSequenceTree&);
 };
 
 
@@ -117,8 +107,6 @@ public:
   /// load this tree from the string \a s
   int parse(const std::string& s);
   int parse_nexus(const std::string& s,const std::vector<std::string>&);
-
-  RootedSequenceTree& operator=(const RootedSequenceTree&);
 
   /// create from  \a file
   RootedSequenceTree() {}

@@ -384,7 +384,11 @@ public:
   /// Is this nodeview non-NULL?
   bool valid() const {return n;}
 
-  tree_attributes& attributes() {return *n->node_attributes;}
+        tree_attributes& attributes()       {return *n->node_attributes;}
+  const tree_attributes& attributes() const {return *n->node_attributes;}
+
+        boost::any& attribute(int i)       {return attributes()[i];}
+  const boost::any& attribute(int i) const {return attributes()[i];}
 
   /// Construct the nodeview from a BranchNode*.
   nodeview(BranchNode* bn):n(bn) {}
@@ -421,6 +425,7 @@ public:
   bool valid() const {return n;}
 
   const tree_attributes& attributes() const {return *n->node_attributes;}
+  const boost::any& attribute(int i) const {return attributes()[i];}
 
   /// Construct the const_nodeview from a BranchNode*.
   const_nodeview(const BranchNode* bn):n(bn) {}
@@ -539,7 +544,16 @@ public:
   void set_length(double d) const {(*b->undirected_branch_attributes)[0] = d;}
 
   tree_attributes& undirected_attributes() {return *b->undirected_branch_attributes;}
+  const tree_attributes& undirected_attributes() const {return *b->undirected_branch_attributes;}
+
+        boost::any& undirected_attribute(int i)       {return undirected_attributes()[i];}
+  const boost::any& undirected_attribute(int i) const {return undirected_attributes()[i];}
+
   tree_attributes& directed_attributes() {return *b->directed_branch_attributes;}
+  const tree_attributes& directed_attributes() const {return *b->directed_branch_attributes;}
+
+        boost::any& directed_attribute(int i)       {return directed_attributes()[i];}
+  const boost::any& directed_attribute(int i) const {return directed_attributes()[i];}
 
   /// The (integer) name of this directed branch
   operator int() const {return name();}
@@ -604,7 +618,9 @@ public:
   double length() const { return boost::any_cast<double>((*b->undirected_branch_attributes)[0]); }
 
   const tree_attributes& undirected_attributes() const {return *b->undirected_branch_attributes;}
+  const boost::any& undirected_attribute(int i) const {return undirected_attributes()[i];}
   const tree_attributes& directed_attributes() const {return *b->directed_branch_attributes;}
+  const boost::any& directed_attribute(int i) const {return directed_attributes()[i];}
 
   /// The (integer) name of this directed branch
   operator int() const {return name();}
