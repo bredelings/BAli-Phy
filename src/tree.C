@@ -1625,6 +1625,33 @@ int Tree::find_node_attribute_index_by_name(const string& name)  const
   return find_index(node_attribute_names,name);
 }
 
+void Tree::set_n_node_attributes(int n)
+{
+  node_attribute_names.resize(n);
+
+  if (nodes_.size())
+    for(BN_iterator BN(nodes_[0]);BN;BN++) 
+      (*BN)->node_attributes->resize(n);
+}
+
+void Tree::set_n_undirected_branch_attributes(int n)
+{
+  undirected_branch_attribute_names.resize(n);
+
+  if (nodes_.size()) 
+    for(BN_iterator BN(nodes_[0]);BN;BN++) 
+      (*BN)->undirected_branch_attributes->resize(n);
+}
+
+void Tree::set_n_directed_branch_attributes(int n)
+{
+  directed_branch_attribute_names.resize(n);
+
+  if (nodes_.size())
+    for(BN_iterator BN(nodes_[0]);BN;BN++) 
+      (*BN)->directed_branch_attributes->resize(n);
+}
+
 int append_empty_node(vector< vector<BranchNode*> >& tree_stack, vector<string>& labels, int n_n_a, int n_u_a, int n_d_a)
 {
   // determine the level in the tree stack
@@ -2046,25 +2073,29 @@ Tree::Tree()
   :caches_valid(false),
    n_leaves_(0),
    node_label_index(0),
-   branch_length_index(0),
-   node_attribute_names(1),
-   undirected_branch_attribute_names(1),
-   directed_branch_attribute_names(0)
-{}
+   branch_length_index(0)
+{
+  if (node_label_index != -1 and node_label_index >= n_node_attributes())
+    set_n_node_attributes(node_label_index+1);
+  if (branch_length_index != -1 and branch_length_index >= n_undirected_branch_attributes())
+    set_n_undirected_branch_attributes(branch_length_index+1);
+}
 
 Tree::Tree(const BranchNode* BN) 
   :caches_valid(false),
    node_label_index(0),
-   branch_length_index(0),
-   node_attribute_names(1),
-   undirected_branch_attribute_names(1),
-   directed_branch_attribute_names(0)
+   branch_length_index(0)
 {
   if (BN->undirected_branch_attributes)
     undirected_branch_attribute_names.resize( BN->undirected_branch_attributes->size() );
 
   if (BN->directed_branch_attributes)
     directed_branch_attribute_names.resize( BN->directed_branch_attributes->size() );
+
+  if (node_label_index != -1 and node_label_index >= n_node_attributes())
+    set_n_node_attributes(node_label_index+1);
+  if (branch_length_index != -1 and branch_length_index >= n_undirected_branch_attributes())
+    set_n_undirected_branch_attributes(branch_length_index+1);
 
   reanalyze(TreeView::copy_tree(BN));
 }
@@ -2292,7 +2323,7 @@ vector<const_branchview> sorted_branches_after(const_branchview b) {
 
 Tree star_tree(int n) 
 {
-  BranchNode* center = get_first_node(0);
+  BranchNode* center = get_first_node(1);
 
   if (n > 1)
     for(int i=0;i<n;i++)

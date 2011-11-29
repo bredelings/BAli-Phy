@@ -34,6 +34,8 @@ using boost::dynamic_bitset;
 void SequenceTree::set_label(int i, const string& s)
 {
   labels[i] = s;
+  assert(node_label_index != -1);
+  (*nodes_[i]->node_attributes)[node_label_index] = s;
 }
 
 const string& SequenceTree::get_label(int i) const 
@@ -176,15 +178,13 @@ SequenceTree::SequenceTree(const std::string& s)
 }
 
 SequenceTree::SequenceTree(const Tree& T,const vector<string>& names)
-  :Tree(T),labels(names)
+  :Tree(T),labels(T.n_nodes())
 {
-  if (labels.size() == n_leaves())
-    labels.resize(n_nodes());
-  else if (labels.size() != n_nodes())
+  if (names.size() != n_nodes() and names.size() != n_leaves())
     throw myexception()<<"Can't label tree of "<<n_nodes()<<" nodes with "<<names.size()<<" labels!\n";
 
-  for(int i=0;i<labels.size();i++)
-    (*nodes_[i]->node_attributes)[node_label_index] = names[i];
+  for(int i=0;i<names.size();i++)
+    set_label(i, names[i]);
 }
 
 SequenceTree::SequenceTree(const RootedSequenceTree& RT) 
