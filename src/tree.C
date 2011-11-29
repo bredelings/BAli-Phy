@@ -1579,6 +1579,13 @@ Tree& Tree::operator=(const Tree& T)
   if (nodes_.size()) TreeView(nodes_[0]).destroy();
 
   n_leaves_ = T.n_leaves_;
+  node_label_index = T.node_label_index;
+  branch_length_index = T.branch_length_index;
+
+  node_attribute_names = T.node_attribute_names;
+  undirected_branch_attribute_names = T.undirected_branch_attribute_names;
+  directed_branch_attribute_names = T.directed_branch_attribute_names;
+
   caches_valid = T.caches_valid;
   cached_partitions.clear();
   if (caches_valid)
@@ -2101,9 +2108,9 @@ Tree::Tree(const Tree& T)
      n_leaves_(T.n_leaves_),
      node_label_index(T.node_label_index),
      branch_length_index(T.branch_length_index),
-     node_attribute_names(T.n_node_attributes()),
-     undirected_branch_attribute_names(T.n_undirected_branch_attributes()),
-     directed_branch_attribute_names(T.n_directed_branch_attributes()),
+     node_attribute_names(T.node_attribute_names),
+     undirected_branch_attribute_names(T.undirected_branch_attribute_names),
+     directed_branch_attribute_names(T.directed_branch_attribute_names),
      nodes_(T.nodes_.size(),(BranchNode*)NULL),
      branches_(T.branches_.size(),(BranchNode*)NULL)
 {
