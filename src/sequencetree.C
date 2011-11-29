@@ -66,8 +66,8 @@ vector<string> SequenceTree::get_leaf_labels() const
 int SequenceTree::index(const string& l) const 
 {
   assert(labels.size() == n_nodes());
-  for(int i=0;i<labels.size();i++)
-    if (labels[i] == l) return i;
+  for(int i=0;i<n_nodes();i++)
+    if (get_label(i) == l) return i;
   return -1;
 }
 
@@ -81,7 +81,7 @@ vector<int> SequenceTree::prune_leaves(const vector<int>& remove)
   // figure out the mapping
   vector<string> newnames(mapping.size());
   for(int i=0;i<mapping.size();i++)
-    newnames[i] = labels[mapping[i]];
+    newnames[i] = get_label(mapping[i]);
 
   // select the new names
   labels = newnames;
@@ -132,9 +132,9 @@ vector<int> SequenceTree::standardize(const vector<int>& lnames)
 {
   assert(lnames.size() == n_leaves());
 
-  vector<string> old = labels;
+  vector<string> old = get_labels();
   for(int i=0;i<n_leaves();i++)
-    labels[lnames[i]] = old[i];
+    set_label(lnames[i], old[i] );
 
   return Tree::standardize(lnames);
 }
@@ -356,10 +356,10 @@ RootedSequenceTree::RootedSequenceTree(const RootedSequenceTree& T1, const Roote
   labels.resize(n_nodes());
 
   for(int i=0;i<T1.n_leaves();i++) 
-    labels[l++] = T1.get_label(i);
+    set_label(l++, T1.get_label(i));
 
   for(int i=0;i<T2.n_leaves();i++) 
-    labels[l++] = T2.get_label(i);
+    set_label(l++, T2.get_label(i));
 
   // Hmmm.. n_leaves() could be odd if there is a root leaf...
 }
