@@ -657,9 +657,10 @@ vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc
   }
 
   // Write out the proability that each column is in a particular substitution component to C<>.P<>.CAT
-  for(int i=0;i<P.n_data_partitions();i++)
-    loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
-				      Mixture_Components_Function(i) ) );
+  if (P.keys.find("log-categories") != P.keys.end())
+    for(int i=0;i<P.n_data_partitions();i++)
+      loggers.push_back( FunctionLogger(base + ".P" + convertToString(i+1)+".CAT", 
+					Mixture_Components_Function(i) ) );
 
   // Write out the alignments for each (variable) partition to C<>.P<>.fastas
   for(int i=0;i<P.n_data_partitions();i++)
