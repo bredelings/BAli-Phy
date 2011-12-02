@@ -29,6 +29,7 @@ struct reg
   std::vector< int > used_inputs;
 
   // Which reduction results made use of the value of this expression (via an operation)
+  // fixme! multiset?
   std::set< int > outputs;
 
   // Which reduction results made use of the value of this expression (via call)
@@ -45,7 +46,7 @@ struct reg
 
   bool is_valid() const {return E;}
 
-  enum States {none=0,free=1,used=2};
+  enum States {none=0,free=1,used=2,checked=3};
 
   int prev_reg;
   int next_reg;
@@ -96,6 +97,7 @@ struct reg_var: public Object
 struct reg_heap
 {
   std::vector<reg> memory;
+  std::vector<int> roots;
 
   int first_free_reg;
 
@@ -113,11 +115,17 @@ struct reg_heap
 
   int add_reg_to_free_list(int);
   int get_free_reg();
+
   int add_reg_to_used_list(int);
   int get_used_reg();
+  void remove_reg_from_used_list(int);
+  void reclaim_used_reg(int);
+
   void expand_memory(int);
 
   int allocate_reg();
+
+  void collect_garbage();
 
   reg_heap();
 };
@@ -179,6 +187,7 @@ struct context: virtual public Object
   int allocate_reg() const;
   int allocate_reg(const std::string&) const;
   int allocate_reg(const expression_ref&) const;
+
 };
 
 expression_ref incremental_evaluate(const context& C, const expression_ref&);

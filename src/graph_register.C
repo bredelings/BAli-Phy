@@ -66,6 +66,7 @@ void clear_used_input(const context& C,int R, int slot)
   if (R2 == -1) return;
   assert(R2 >= 0 and R2 < C.n_regs());
 
+  // FIXME - we should treat different slots differently
   C[R2].outputs.erase(R);
   C[R].used_inputs[slot] = -1;
 }
@@ -215,6 +216,7 @@ int context::add_parameter(const string& s)
   int index = n_parameters();
 
   int R = allocate_reg(s);
+  memory.roots.push_back(R);
   access(R).name = s;
   access(R).named = true;
   access(R).changeable = true;
@@ -267,6 +269,7 @@ int context::add_expression(const expression_ref& E)
   }
 
   heads.push_back(R);
+  memory.roots.push_back(R);
   return heads.size()-1;
 }
 
@@ -275,7 +278,8 @@ int reg_heap::add_reg_to_free_list(int r)
   access(r).state = reg::free;
   access(r).prev_reg = -1;
   access(r).next_reg = first_free_reg;
-  access(r).prev_reg = r;
+  if (first_free_reg != -1)
+    access(first_free_reg).prev_reg = r;
   first_free_reg = r;
   return r;
 }
@@ -289,6 +293,7 @@ int reg_heap::get_free_reg()
     first_free_reg = access(r).next_reg;
     access(r).prev_reg = -1;
     access(r).next_reg = -1;
+    assert(access(r).state == reg::free);
     access(r).state = reg::none;
   }
   return r;
@@ -299,7 +304,8 @@ int reg_heap::add_reg_to_used_list(int r)
   access(r).state = reg::used;
   access(r).prev_reg = -1;
   access(r).next_reg = first_used_reg;
-  access(r).prev_reg = r;
+  if (first_used_reg != -1)
+    access(first_used_reg).prev_reg = r;
   first_used_reg = r;
   return r;
 }
@@ -318,26 +324,62 @@ int reg_heap::get_used_reg()
   return r;
 }
 
+void reg_heap::remove_reg_from_used_list(int r)
+{
+  int P = access(r).prev_reg;
+  int N = access(r).next_reg;
+
+  if (P == -1)
+    first_used_reg = N;
+  else
+    access(P).next_reg = N;
+
+  if (N == -1)
+    ;
+  else
+    access(N).prev_reg = P;
+
+  access(r).state = reg::none;
+}
+
+void reg_heap::reclaim_used_reg(int r)
+{
+  remove_reg_from_used_list(r);
+  add_reg_to_free_list(r);
+}
+
 void reg_heap::expand_memory(int s)
 {
+  assert(n_regs() == n_used_regs() + n_free_regs());
+
   int k = memory.size();
   memory.resize(memory.size()+s);
   for(int i=k;i<memory.size();i++)
     add_reg_to_free_list(i);
+
+  assert(n_regs() == n_used_regs() + n_free_regs());
 }
 
 int reg_heap::allocate_reg()
 {
+  assert(n_regs() == n_used_regs() + n_free_regs());
+
   int r = get_free_reg();
 
-  if (first_free_reg == -1)
+  // allocation failed
+  if (r == -1)
   {
-    expand_memory(memory.size()*2+10);
+    collect_garbage();
+    assert(n_used_regs() + n_free_regs() == n_regs());
+    if (memory.size() < n_used_regs()*2+10)
+      expand_memory(memory.size()*2+10);
     r = get_free_reg();
     assert(r != -1);
   }
 
   add_reg_to_used_list(r);
+
+  assert(n_regs() == n_used_regs() + n_free_regs());
 
   return r;
 }
@@ -361,6 +403,81 @@ int context::allocate_reg(const expression_ref& E) const
   int r = memory.allocate_reg();
   access(r).init(E);
   return r;
+}
+
+void get_exp_refs(const expression_ref& R, vector<int>& refs)
+{
+  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( R ))
+  {
+    refs.push_back(RV->target);
+  }
+  else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  {
+    for(int i=0;i<E->size();i++)
+      get_exp_refs(E->sub[i],refs);
+  }
+}
+
+vector<int> get_exp_refs(const expression_ref& R)
+{
+  vector<int> regs;
+  get_exp_refs(R,regs);
+  return regs;
+}
+
+vector<int> get_reg_refs(const reg& R)
+{
+  vector<int> refs;
+
+  get_exp_refs(R.E, refs);
+
+  if (R.call != -1)
+    refs.push_back(R.call);
+  
+  for(int j=0;j<R.used_inputs.size();j++)
+    if (R.used_inputs[j] != -1)
+      refs.push_back(R.used_inputs[j]);
+
+  return refs;
+}
+
+void reg_heap::collect_garbage()
+{
+  assert(n_regs() == n_used_regs() + n_free_regs());
+
+  vector<int> scan;
+  for(int i=0;i<roots.size();i++)
+    scan.push_back(roots[i]);
+
+  while (not scan.empty())
+  {
+    vector<int> next_scan;
+    for(int i=0;i<scan.size();i++)
+    {
+      reg& R = access(scan[i]);
+      assert(R.state != reg::free);
+      if (R.state == reg::checked) continue;
+
+      R.state = reg::checked;
+      vector<int> used_in_R = get_reg_refs(R);
+   
+      next_scan.insert(next_scan.end(), used_in_R.begin(), used_in_R.end());
+    }
+    scan = next_scan;
+  }
+
+  int here = first_used_reg;
+  for(;here != -1;)
+  {
+    reg& R = access(here);
+    int next = access(here).next_reg;
+    if (R.state == reg::checked)
+      R.state = reg::used;
+    else 
+      reclaim_used_reg(here);
+
+    here = next;
+  }
 }
 
 reg_heap::reg_heap()
@@ -677,7 +794,6 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
     /// IIIb. A parameter -> Set the result according to the context
     if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(control))
     {
-      int index = C.find_parameter(p->parameter_name);
       if (not C[R].changeable)
       {
 	std::abort();
@@ -740,10 +856,14 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 expression_ref incremental_evaluate(const context& C, const expression_ref& E)
 {
   int R = C.allocate_reg();
+  C.memory.roots.push_back(R);
   C[R].E = graph_normalize(C,E);
 
   expression_ref result = incremental_evaluate(C,R);
   result = compact_graph_expression(C, result);
+
+  C.memory.roots.pop_back();
+  C.memory.collect_garbage();
 
   return result;
 }
