@@ -252,9 +252,20 @@ int reg_heap::n_used_regs() const
 
 int context::add_expression(const expression_ref& E)
 {
-  int R = allocate_reg(E);
   std::cout<<"add: "<<E->print()<<"\n";
-  access(R).E = graph_normalize(*this, E);
+
+  int R = -1;
+  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
+  {
+    int param_index = find_parameter(P->parameter_name);
+    R = parameters[param_index];
+  }
+  else 
+  {
+    R = allocate_reg(E);
+    access(R).E = graph_normalize(*this, E);
+  }
+
   heads.push_back(R);
   return heads.size()-1;
 }
