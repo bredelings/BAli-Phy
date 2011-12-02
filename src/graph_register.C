@@ -573,8 +573,8 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
  *    For example, X+Y would be replaced with p+q, with p->X and q->Y.  However, I do not want
  *    to allow memory locations to simply reference other locations, as in p->q, q->2.
  *
- * 2. Replacing references to parameters with references to the memory locations that store the
- *    values for those parameters.  
+ * 2. Similarly, I think we are currently allowing reg_var's to be returned as WHNF results?
+ *    
  */
 
 shared_ptr<const Object> incremental_evaluate(const context& C, int R)
