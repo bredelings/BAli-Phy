@@ -673,11 +673,11 @@ namespace substitution {
 
   class BranchSiteCollection: public ReversibleAdditiveCollection, public SuperModel
   {
-    std::vector< owned_ptr<AlphabetExchangeModel> > S;
+    mutable std::vector< owned_ptr<AlphabetExchangeModel> > S;
+    
+    mutable owned_ptr<ReversibleFrequencyModel> R;
 
-    owned_ptr<ReversibleFrequencyModel> R;
-
-    std::vector<owned_ptr<ReversibleMarkovSuperModel> > P;
+    mutable std::vector<owned_ptr<ReversibleMarkovSuperModel> > P;
 
     boost::shared_ptr<const Object> result() const;
 

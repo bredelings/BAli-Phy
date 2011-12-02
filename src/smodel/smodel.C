@@ -1062,12 +1062,13 @@ namespace substitution {
   }
 
   //------------ A Branch/Site Model ----------------//
-  /*
+
   boost::shared_ptr<const Object> BranchSiteCollection::result() const
   {
     P.resize(S.size());
     for(int i=0;i<S.size();i++)
       P[i] = ReversibleMarkovSuperModel(*S[i],*R);
+    std::abort();
   }
 
   int BranchSiteCollection::n_submodels() const
@@ -1117,7 +1118,6 @@ namespace substitution {
 
     recalc_all();
   }
-  */
 
   //--------------- MultiRate Models ----------------//
 
