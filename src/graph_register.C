@@ -6,64 +6,102 @@ using std::string;
 using std::vector;
 using std::map;
 
-reg::reg():name(convertToString(this)),named(false),changeable(false),result(new shared_ptr<const Object>),prev_reg(0),next_reg(0) {}
-reg::reg(const string& s):name(s),named(true),changeable(false), result(new shared_ptr<const Object>),prev_reg(0),next_reg(0) {}
-reg::reg(const expression_ref& e):E(e),name(convertToString(this)),named(false),changeable(false),result(new shared_ptr<const Object>),prev_reg(0),next_reg(0) {}
-
-reg::~reg()
+void reg::clear()
 {
-  if (prev_reg)
-  {
-    prev_reg->next_reg = next_reg;
-  }
-
-  if (next_reg)
-  {
-    next_reg->prev_reg = prev_reg;
-  }
-  prev_reg = 0;
-  next_reg = 0;
+  E = expression_ref();
+  name.clear();
+  named = false;
+  changeable = false;
+  used_inputs.clear();
+  outputs.clear();
+  call_outputs.clear();
+  call = -1;
+  result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object>);
 }
 
-void set_used_input(const shared_ptr<reg>& R1, int slot, const shared_ptr<reg>& R2)
+void reg::init()
 {
-  if (R1->used_inputs[slot]) return;
-
-  R1->used_inputs[slot] = R2;
-  R2->outputs.insert(R1);
+  clear();
 }
 
-void clear_used_input(const shared_ptr<reg>& R, int slot)
+void reg::init(const string& s)
 {
-  shared_ptr<reg> R2 = R->used_inputs[slot];
-  if (not R2) return;
-
-  R2->outputs.erase(R);
-  R->used_inputs[slot].reset();
+  init();
+  name = s;
+  named = true;
 }
 
-void clear_used_inputs(const shared_ptr<reg>& R)
+void reg::init(const expression_ref& e)
 {
-  for(int i=0;i<R->used_inputs.size();i++)
-    clear_used_input(R,i);
+  init();
+  E = e;
+  name = convertToString(this);
 }
 
-void set_call(const shared_ptr<reg>& R1, const shared_ptr<reg>& R2)
+reg::reg()
+ :name(convertToString(this)),
+  named(false),
+  changeable(false),
+  result(new shared_ptr<const Object>),
+  prev_reg(-1),
+  next_reg(-1),
+  state(none)
+{}
+
+void set_used_input(const context& C, int R1, int slot, int R2)
 {
-  assert(not R1->call);
-  R1->call = R2;
-  R2->call_outputs.insert(R1);
+  assert(R1 >= 0 and R1 < C.n_regs());
+  assert(R2 >= 0 and R2 < C.n_regs());
+
+  // fixme
+  if (C[R1].used_inputs[slot] != -1) return;
+
+  C[R1].used_inputs[slot] = R2;
+  C[R2].outputs.insert(R1);
 }
 
-void clear_call(const shared_ptr<reg>& R)
+void clear_used_input(const context& C,int R, int slot)
 {
-  if (not R->call) return;
+  int R2 = C[R].used_inputs[slot];
+  if (R2 == -1) return;
+  assert(R2 >= 0 and R2 < C.n_regs());
 
-  R->call->call_outputs.erase(R);
-  R->call.reset();
+  C[R2].outputs.erase(R);
+  C[R].used_inputs[slot] = -1;
 }
 
-shared_ptr<const Object> incremental_evaluate(const context&, shared_ptr<reg>&);
+void clear_used_inputs(const context& C,int R)
+{
+  for(int i=0;i<C[R].used_inputs.size();i++)
+    clear_used_input(C,R,i);
+}
+
+void clear_used_inputs(const context& C,int R, int S)
+{
+  clear_used_inputs(C,R);
+  C[R].used_inputs = vector<int>(S, -1);
+}
+
+void set_call(const context& C, int R1, int R2)
+{
+  assert(C[R1].call == -1);
+  assert(R2 >= 0 and R2 < C.n_regs());
+
+  C[R1].call = R2;
+  C[R2].call_outputs.insert(R1);
+}
+
+void clear_call(const context& C, int R)
+{
+  int R2 = C[R].call;
+  if (R2 == -1) return;
+  assert(R2 >= 0 and R2 < C.n_regs());
+  
+  C[R].call = -1;
+  C[R2].call_outputs.erase(R);
+}
+
+shared_ptr<const Object> incremental_evaluate(const context&, int);
 
 /// Return the value of a particular index, computing it if necessary
 shared_ptr<const Object> context::evaluate(int index) const
@@ -74,7 +112,7 @@ shared_ptr<const Object> context::evaluate(int index) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 shared_ptr<const Object> context::get_parameter_value(int index) const
 {
-  return heads[index]->E;
+  return access(heads[index]).E;
 }
 
 /// Get the value of a non-constant, non-computed index
@@ -88,19 +126,19 @@ void context::set_parameter_value(int index, const expression_ref& O)
 {
   assert(is_WHNF(O));
 
-  shared_ptr<reg> P = parameters[index];
+  int P = parameters[index];
 
-  assert(P->result);
-  assert(P->changeable);
-  assert(not P->call);
+  assert(access(P).result);
+  assert(access(P).changeable);
+  assert(access(P).call == -1);
 
   // The result value here cannot be shared.
-  P->result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
+  access(P).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
 
-  *P->result = O;
+  *access(P).result = O;
 
-  vector< shared_ptr<reg> > NOT_known_value_unchanged;
-  std::set< shared_ptr<reg> > visited;
+  vector< int > NOT_known_value_unchanged;
+  std::set< int > visited;
 
   // The index that we just altered cannot be known to be unchanged.
   NOT_known_value_unchanged.push_back(P);
@@ -109,12 +147,12 @@ void context::set_parameter_value(int index, const expression_ref& O)
   // For each reg R1 that cannot (w/o recomputing) be known to be unchanged...
   for(int i=0;i<NOT_known_value_unchanged.size();i++)
   {
-    shared_ptr<reg> R1 = NOT_known_value_unchanged[i];
+    int R1 = NOT_known_value_unchanged[i];
 
     // ... consider each downstream index2 that has index1 in slot2 of its computation (possibly unused).
-    foreach(j,R1->outputs)
+    foreach(j,access(R1).outputs)
     {
-      shared_ptr<reg> R2 = *j;
+      int R2 = *j;
 
       // This one already marked NOT known_value_unchanged
       if (visited.find(R2) != visited.end()) continue;
@@ -125,16 +163,16 @@ void context::set_parameter_value(int index, const expression_ref& O)
       visited.insert(R2);
 
       // Since the computation may be different, it can't be shared.
-      R2->result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
+      access(R2).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
 
       // Since the computation may be different, we don't know if the value has changed.
-      (*R2->result).reset();
-      clear_call(R2);
+      (*access(R2).result).reset();
+      clear_call(*this,R2);
     }
 
-    foreach(j,R1->call_outputs)
+    foreach(j,access(R1).call_outputs)
     {
-      shared_ptr<reg> R2 = *j;
+      int R2 = *j;
 
       // This one already marked NOT known_value_unchanged
       if (visited.find(R2) != visited.end()) continue;
@@ -145,10 +183,10 @@ void context::set_parameter_value(int index, const expression_ref& O)
       visited.insert(R2);
 
       // Since the computation may be different, it can't be shared.
-      R2->result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
+      access(R2).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
 
       // Since the computation may be different, we don't know if the value has changed.
-      (*R2->result).reset();
+      (*access(R2).result).reset();
     }
   }
 }
@@ -176,10 +214,10 @@ int context::add_parameter(const string& s)
 {
   int index = n_parameters();
 
-  shared_ptr<reg> R = allocate_reg(s);
-  R->name = s;
-  R->named = true;
-  R->changeable = true;
+  int R = allocate_reg(s);
+  access(R).name = s;
+  access(R).named = true;
+  access(R).changeable = true;
 
   parameter_names.push_back(s);
   parameters.push_back( R );
@@ -187,92 +225,153 @@ int context::add_parameter(const string& s)
   return index;
 }
 
-expression_ref graph_normalize(const expression_ref& R);
+expression_ref graph_normalize(const context&, const expression_ref&);
 
-int context::n_regs() const
+int reg_heap::n_regs() const
 {
-  reg* here = first_reg->next_reg;
+  return memory.size();
+}
+
+int reg_heap::n_free_regs() const
+{
+  int here = first_free_reg;
   int count = 0;
-  for(;here != last_reg.get();here = here->next_reg)
+  for(;here != -1;here = access(here).next_reg)
+    count++;
+  return count;
+}
+
+int reg_heap::n_used_regs() const
+{
+  int here = first_used_reg;
+  int count = 0;
+  for(;here != -1;here = access(here).next_reg)
     count++;
   return count;
 }
 
 int context::add_expression(const expression_ref& E)
 {
-  shared_ptr<reg> R = allocate_reg(E);
+  int R = allocate_reg(E);
   std::cout<<"add: "<<E->print()<<"\n";
-  R->E = graph_normalize(E);
+  access(R).E = graph_normalize(*this, E);
   heads.push_back(R);
   return heads.size()-1;
 }
 
-shared_ptr<reg> context::add_reg(const shared_ptr<reg>& R) const
+int reg_heap::add_reg_to_free_list(int r)
 {
-  R->next_reg = last_reg.get();
-  R->prev_reg = last_reg->prev_reg;
-  
-  R->prev_reg->next_reg = R.get();
-  R->next_reg->prev_reg = R.get();
-
-  return R;
+  access(r).state = reg::free;
+  access(r).prev_reg = -1;
+  access(r).next_reg = first_free_reg;
+  access(r).prev_reg = r;
+  first_free_reg = r;
+  return r;
 }
 
-shared_ptr<reg> context::add_reg(reg* r) const
+int reg_heap::get_free_reg()
 {
-  shared_ptr<reg> R(r);
-
-  return add_reg(R);
+  int r = first_free_reg;
+  if (r != -1)
+  {
+    assert(access(r).state == reg::free);
+    first_free_reg = access(r).next_reg;
+    access(r).prev_reg = -1;
+    access(r).next_reg = -1;
+    access(r).state = reg::none;
+  }
+  return r;
 }
 
-shared_ptr<reg> context::allocate_reg() const
+int reg_heap::add_reg_to_used_list(int r)
 {
-  return add_reg(new reg);
+  access(r).state = reg::used;
+  access(r).prev_reg = -1;
+  access(r).next_reg = first_used_reg;
+  access(r).prev_reg = r;
+  first_used_reg = r;
+  return r;
 }
 
-shared_ptr<reg> context::allocate_reg(const string& s) const
+int reg_heap::get_used_reg()
 {
-  return add_reg(new reg(s));
+  int r = first_free_reg;
+  if (r != -1)
+  {
+    assert(access(r).state == reg::used);
+    first_free_reg = access(r).next_reg;
+    access(r).prev_reg = -1;
+    access(r).next_reg = -1;
+    access(r).state = reg::none;
+  }
+  return r;
 }
 
-shared_ptr<reg> context::allocate_reg(const expression_ref& E) const
+void reg_heap::expand_memory(int s)
 {
-  return add_reg(new reg(E));
+  int k = memory.size();
+  memory.resize(memory.size()+s);
+  for(int i=k;i<memory.size();i++)
+    add_reg_to_free_list(i);
 }
 
-context& context::operator=(const context&C)
+int reg_heap::allocate_reg()
 {
-  return *this;
+  int r = get_free_reg();
+
+  if (first_free_reg == -1)
+  {
+    expand_memory(memory.size()*2+10);
+    r = get_free_reg();
+    assert(r != -1);
+  }
+
+  add_reg_to_used_list(r);
+
+  return r;
 }
 
-context::context()
+int context::allocate_reg() const
 {
-  first_reg = shared_ptr<reg>(new reg);
-  last_reg = shared_ptr<reg>(new reg);
-
-  first_reg->next_reg = last_reg.get();
-  last_reg->prev_reg = first_reg.get();
+  int r = memory.allocate_reg();
+  access(r).init();
+  return r;
 }
 
-context::context(const context& C)
+int context::allocate_reg(const string& s) const
 {
-  first_reg = shared_ptr<reg>(new reg);
-  last_reg = shared_ptr<reg>(new reg);
-
-  first_reg->next_reg = last_reg.get();
-  last_reg->prev_reg = first_reg.get();
+  int r = memory.allocate_reg();
+  access(r).init(s);
+  return r;
 }
 
-context::~context()
+int context::allocate_reg(const expression_ref& E) const
 {
+  int r = memory.allocate_reg();
+  access(r).init(E);
+  return r;
 }
 
-expression_ref graph_normalize(const expression_ref& R)
+reg_heap::reg_heap()
+  :first_free_reg(-1),
+   first_used_reg(-1)
+{ }
+
+expression_ref graph_normalize(const context& C, const expression_ref& R)
 {
   // 1. Var
   if (is_dummy(R))
     return R;
   
+  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
+  {
+    int param_index = C.find_parameter(P->parameter_name);
+    
+    int param_location = C.parameters[param_index];
+
+    return expression_ref(new reg_var(param_location) );
+  }
+
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
@@ -284,7 +383,7 @@ expression_ref graph_normalize(const expression_ref& R)
   {
     assert(E->size() == 3);
     expression* V = new expression(*E);
-    V->sub[2] = graph_normalize(E->sub[2]);
+    V->sub[2] = graph_normalize(C,E->sub[2]);
 
     if (V->sub[2] == E->sub[2])
       return R;
@@ -296,8 +395,8 @@ expression_ref graph_normalize(const expression_ref& R)
   if (dynamic_pointer_cast<const Apply>(E->sub[0]))
   {
     assert(E->size() == 3);
-    expression_ref f = graph_normalize(E->sub[1]);
-    expression_ref x = graph_normalize(E->sub[2]);
+    expression_ref f = graph_normalize(C,E->sub[1]);
+    expression_ref x = graph_normalize(C,E->sub[2]);
 
     int var_index = get_safe_binder_index(R);
     expression_ref f_ = dummy(var_index++);
@@ -328,7 +427,7 @@ expression_ref graph_normalize(const expression_ref& R)
   {
     expression* V = new expression(*E);
 
-    V->sub[1] = graph_normalize(V->sub[1]);
+    V->sub[1] = graph_normalize(C,V->sub[1]);
 
     shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
     while(bodies)
@@ -336,7 +435,7 @@ expression_ref graph_normalize(const expression_ref& R)
       assert(bodies->size() == 3);
       shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
       assert(alternative);
-      alternative->sub[2] = graph_normalize(alternative->sub[2]);
+      alternative->sub[2] = graph_normalize(C,alternative->sub[2]);
       bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
     }
     
@@ -367,8 +466,8 @@ expression_ref graph_normalize(const expression_ref& R)
   {
     int var_index = get_safe_binder_index(R);
 
-    expression* C = new expression;
-    C->sub.push_back(E->sub[0]);
+    expression* Con = new expression;
+    Con->sub.push_back(E->sub[0]);
 
     // Actually we probably just need x[i] not to be free in E->sub[i]
     vector<expression_ref> vars;
@@ -377,18 +476,18 @@ expression_ref graph_normalize(const expression_ref& R)
     {
       if (is_dummy(E->sub[i]))
       {
-	C->sub.push_back(E->sub[i]);
+	Con->sub.push_back(E->sub[i]);
       }
       else
       {
 	expression_ref var = dummy( var_index++ );
-	C->sub.push_back( var );
+	Con->sub.push_back( var );
 	vars.push_back( var );
-	bodies.push_back( graph_normalize(E->sub[i]) );
+	bodies.push_back( graph_normalize(C,E->sub[i]) );
       }
     }
 
-    return let_expression(vars, bodies, C);
+    return let_expression(vars, bodies, Con);
   }
 
   // 5. Let 
@@ -403,11 +502,11 @@ expression_ref graph_normalize(const expression_ref& R)
       assert(bodies->size() == 3);
       shared_ptr<expression> let_group = dynamic_pointer_cast<expression>(bodies->sub[1]);
       assert(let_group);
-      let_group->sub[2] = graph_normalize(let_group->sub[2]);
+      let_group->sub[2] = graph_normalize(C,let_group->sub[2]);
       bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
     }
     
-    V->sub[2] = graph_normalize(V->sub[2]);
+    V->sub[2] = graph_normalize(C,V->sub[2]);
 
     return V;
   }
@@ -416,7 +515,7 @@ expression_ref graph_normalize(const expression_ref& R)
   return R;
 }
 
-shared_ptr<const Object> incremental_evaluate(const context&, const shared_ptr<reg>&);
+shared_ptr<const Object> incremental_evaluate(const context&, int);
 
 #include "computation.H"
 
@@ -424,7 +523,7 @@ struct RegOperationArgs: public OperationArgs
 {
   shared_ptr<const expression> E;
 
-  const shared_ptr<reg>& R;
+  const int R;
 
   const context& C;
 
@@ -438,70 +537,78 @@ struct RegOperationArgs: public OperationArgs
     // Any slot that we are going to evaluate needs to point to another node
     shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( reference(slot) );
     assert(RV);
-    shared_ptr<reg> R2 = RV->target;
+    int R2 = RV->target;
 
-    if (not R->used_inputs[slot])
+    if (not C[R].used_inputs[slot] != -1)
     {
-      // do we really want to allow incremental_evaluate to modify R2, here?
       incremental_evaluate(C,R2);
 
-      set_used_input(R, slot, R2);
+      set_used_input(C, R, slot, R2);
 
-      if (R2->changeable) 
-	R->changeable = true;
+      if (C[R2].changeable) 
+	C[R].changeable = true;
     }
 
-    return *(R2->result);
+    return *(C[R2].result);
   }
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-  RegOperationArgs(const shared_ptr<reg>& r, const context& c)
+  RegOperationArgs(int r, const context& c)
     :R(r),C(c)
   { 
     // The object we are evaluating had better be a class expression (with parts).
-    E = dynamic_pointer_cast<const expression>(R->E);
+    E = dynamic_pointer_cast<const expression>(C[R].E);
     assert(E);
 
-    R->used_inputs.resize(E->size()-1);
-    for(int i=0;i<R->used_inputs.size();i++)
-      R->used_inputs[i].reset();
+    clear_used_inputs(C, R, E->size()-1);
   }
 };
 
-expression_ref compact_graph_expression(const expression_ref& R);
+expression_ref compact_graph_expression(const context& C, const expression_ref& R);
 
-shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>& R)
+/*
+ * Issues:
+ * 1. Chains of reg_var.  I allow reg_var in expression to allow references to memory locations.
+ *    For example, X+Y would be replaced with p+q, with p->X and q->Y.  However, I do not want
+ *    to allow memory locations to simply reference other locations, as in p->q, q->2.
+ *
+ * 2. Replacing references to parameters with references to the memory locations that store the
+ *    values for those parameters.  
+ */
+
+shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 {
-  assert(R->result);
+  assert(R >= 0 and R < C.n_regs());
+  assert(C[R].result);
 
-  //  std::cout<<"Statement: "<<R->E->print()<<"\n";
-  while (not *R->result)
+  //  std::cout<<"Statement: "<<C[R].E->print()<<"\n";
+  while (not *C[R].result)
   {
     // If we know what to call, then call it and use it to set the result
-    if (R->call)
+    if (C[R].call != -1)
     {
-      incremental_evaluate(C, R->call);
+      incremental_evaluate(C, C[R].call);
 
       // If the used_inputs weren't changeable, we would have replaced R->E with R->call.
-      assert(R->changeable);
+      assert(C[R].changeable);
       
-      *(R->result) = *(R->call->result);
+      *(C[R].result) = *(C[C[R].call].result);
       continue;
     }
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
     // Compute the value of this result
-    expression_ref control = R->E;
+    expression_ref control = C[R].E;
 #ifndef NDEBUG
-    //    std::cout<<R->name<<":control = "<<control<<"\n";
-    //    std::cout<<R->name<<":control(c) = "<<compact_graph_expression(control)<<"\n";
+    //    std::cout<<C[R].name<<":control = "<<control<<"\n";
+    //    std::cout<<C[R].name<<":control(c) = "<<compact_graph_expression(control)<<"\n";
 #endif
 
     // If this expression cannot be reduced further, then just return it here.
-    if (is_WHNF(R->E)) {
-      *(R->result) = R->E;
+    if (is_WHNF(C[R].E)) {
+      *(C[R].result) = C[R].E;
       continue;
     }
 
@@ -531,6 +638,13 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
 	expression_ref replacement_reg_var = new_reg_vars[i]->clone();
 	if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(bodies[i]))
 	  replacement_reg_var = bodies[i];
+	/*
+	else if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(bodies[i]))
+	{
+	  int param_location = find_parameter(P->parameter_name);
+	  replacement_reg_var = expression_ref(new reg_var(param_location));
+	}
+	*/
 
 	for(int j=0;j<vars.size();j++)
 	  bodies[j] = substitute(bodies[j], vars[i], *replacement_reg_var);
@@ -540,12 +654,12 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
       
       for(int i=0;i<vars.size();i++) 
       {
-	new_reg_vars[i]->value() = bodies[i];
+	C[ new_reg_vars[i]->target ].E = bodies[i];
       }
       
-      R->E = T;
-      assert(not R->call);
-      assert(not *R->result);
+      C[R].E = T;
+      assert(C[R].call == -1);
+      assert(not *C[R].result);
       continue;
     }
     
@@ -553,10 +667,9 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
     if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(control))
     {
       int index = C.find_parameter(p->parameter_name);
-      if (not R->changeable)
+      if (not C[R].changeable)
       {
-	R = C.parameters[index];
-	continue;
+	std::abort();
       }
       else
 	throw myexception()<<"Parameter with no result?!";
@@ -574,58 +687,58 @@ shared_ptr<const Object> incremental_evaluate(const context& C, shared_ptr<reg>&
     {
       RegOperationArgs Args(R, C);
       expression_ref result = (*O)(Args);
-      if (not R->changeable)
+      if (not C[R].changeable)
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
-	R->E = result;
-	clear_used_inputs(R);
-	assert(not R->call);
-	assert(not *R->result);
+	C[R].E = result;
+	clear_used_inputs(C,R);
+	assert(C[R].call == -1);
+	assert(not *C[R].result);
       }
       else
       {
 	if (is_WHNF(result))
-	  *(R->result) = result;
+	  *(C[R].result) = result;
 	else
 	{
 	  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
-	    set_call(R, RV->target);
+	    set_call(C, R, RV->target);
 	  else
-	    set_call(R, shared_ptr<reg>(C.allocate_reg(result)));
+	    set_call(C, R, C.allocate_reg(result));
 	}
       }
 
 #ifndef NDEBUG
       //      std::cout<<"Executing statement: "<<compact_graph_expression(E)<<"\n";
       //      std::cout<<"Executing operation: "<<O<<"\n";
-      //      std::cout<<"Result changeable: "<<R->changeable<<"\n\n";
+      //      std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
 #endif
     }
   }
 
 #ifndef NDEBUG
-  //  std::cout<<"Result = "<<compact_graph_expression(*R->result)<<"\n";
-  //  std::cout<<"Result changeable: "<<R->changeable<<"\n\n";
+  //  std::cout<<"Result = "<<compact_graph_expression(*C[R].result)<<"\n";
+  //  std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
 #endif
 
-  assert(*R->result);
+  assert(*C[R].result);
 
-  return *(R->result);
+  return *(C[R].result);
 }
 
 expression_ref incremental_evaluate(const context& C, const expression_ref& E)
 {
-  shared_ptr<reg> R = C.allocate_reg();
-  R->E = graph_normalize(E);
+  int R = C.allocate_reg();
+  C[R].E = graph_normalize(C,E);
 
   expression_ref result = incremental_evaluate(C,R);
-  result = compact_graph_expression(result);
+  result = compact_graph_expression(C, result);
 
   return result;
 }
 
 
-void discover_graph_vars(const expression_ref& R, map< shared_ptr<reg>, std::string>& names)
+void discover_graph_vars(const context& C, const expression_ref& R, map< int, std::string>& names)
 {
   if (shared_ptr<const reg_var> H = dynamic_pointer_cast<const reg_var>(R))
   {
@@ -640,7 +753,7 @@ void discover_graph_vars(const expression_ref& R, map< shared_ptr<reg>, std::str
       // give this node a name and mark it visited
       names[H->target] = "p"+convertToString(num);
 
-      discover_graph_vars(H->target->E, names);
+      discover_graph_vars(C, C[H->target].E, names);
     }
 
   }
@@ -648,26 +761,26 @@ void discover_graph_vars(const expression_ref& R, map< shared_ptr<reg>, std::str
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
     for(int i=0;i<E->size();i++)
-      discover_graph_vars(E->sub[i], names);
+      discover_graph_vars(C, E->sub[i], names);
   }
 }
 
-expression_ref compact_graph_expression(const expression_ref& R_)
+expression_ref compact_graph_expression(const context& C, const expression_ref& R_)
 {
-  return R_;
+  //  return R_;
   expression_ref R = R_;
-  map< shared_ptr<reg>, std::string> names;
+  map< int, std::string> names;
 
   int var_index = get_safe_binder_index(R);
 
-  discover_graph_vars(R,names);
+  discover_graph_vars(C, R,names);
 
   //  std::cout<<R<<std::endl;
   vector< expression_ref > replace;
   foreach(i,names)
   {
     replace.push_back( reg_var( i->first) );
-    var_index = std::max(var_index, get_safe_binder_index(i->first->E) );
+    var_index = std::max(var_index, get_safe_binder_index(C[i->first].E) );
     //    std::cout<<"<"<<i->first->name<<"> = "<<i->first->E<<std::endl;
   }
   //  std::cout<<R<<std::endl;
@@ -675,11 +788,11 @@ expression_ref compact_graph_expression(const expression_ref& R_)
   vector<expression_ref> bodies;
   foreach(i,names)
   {
-    if (not i->first->named)
+    if (not C[i->first].named)
       vars.push_back(dummy(var_index++));
     else
-      vars.push_back(dummy(i->first->name));
-    bodies.push_back( i->first->E );
+      vars.push_back(dummy(C[i->first].name));
+    bodies.push_back( C[i->first].E );
   }
 
   for(int i=0;i<bodies.size();i++)

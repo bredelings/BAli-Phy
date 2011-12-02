@@ -515,12 +515,14 @@ int main()
   test15 = incremental_evaluate(C,test15);
   cout<<test15<<"\n";
   test15.reset();
+  cout<<"C.n_used_regs() = "<<C.n_used_regs()<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
   cout<<"add parameters X,Y,Z\n";
   C.add_parameter("X");
   C.add_parameter("Y");
   C.add_parameter("Z");
+  cout<<"C.n_used_regs() = "<<C.n_used_regs()<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   C.add_expression((X+Y)+Z);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
