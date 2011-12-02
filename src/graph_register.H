@@ -10,6 +10,7 @@
 #include "expression.H"
 #include "util.H"
 #include <list>
+#include <utility>
 
 struct reg
 {
@@ -30,7 +31,7 @@ struct reg
 
   // Which reduction results made use of the value of this expression (via an operation)
   // fixme! multiset?
-  std::set< int > outputs;
+  std::set< std::pair<int,int> > outputs;
 
   // Which reduction results made use of the value of this expression (via call)
   std::set< int > call_outputs;

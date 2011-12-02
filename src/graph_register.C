@@ -5,6 +5,7 @@ using boost::shared_ptr;
 using std::string;
 using std::vector;
 using std::map;
+using std::pair;
 
 void reg::clear()
 {
@@ -57,7 +58,7 @@ void set_used_input(const context& C, int R1, int slot, int R2)
   if (C[R1].used_inputs[slot] != -1) return;
 
   C[R1].used_inputs[slot] = R2;
-  C[R2].outputs.insert(R1);
+  C[R2].outputs.insert(pair<int,int>(R1,slot));
 }
 
 void clear_used_input(const context& C,int R, int slot)
@@ -67,7 +68,7 @@ void clear_used_input(const context& C,int R, int slot)
   assert(R2 >= 0 and R2 < C.n_regs());
 
   // FIXME - we should treat different slots differently
-  C[R2].outputs.erase(R);
+  C[R2].outputs.erase(pair<int,int>(R,slot));
   C[R].used_inputs[slot] = -1;
 }
 
@@ -153,7 +154,7 @@ void context::set_parameter_value(int index, const expression_ref& O)
     // ... consider each downstream index2 that has index1 in slot2 of its computation (possibly unused).
     foreach(j,access(R1).outputs)
     {
-      int R2 = *j;
+      int R2 = j->first;
 
       // This one already marked NOT known_value_unchanged
       if (visited.find(R2) != visited.end()) continue;
