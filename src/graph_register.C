@@ -448,6 +448,7 @@ vector<int> get_reg_refs(const reg& R)
 
 void reg_heap::collect_garbage()
 {
+  std::cout<<"***********Garbage Collection******************"<<std::endl;
   assert(n_regs() == n_used_regs() + n_free_regs());
 
   vector<int> scan;
@@ -716,9 +717,10 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
   assert(R >= 0 and R < C.n_regs());
   assert(C[R].result);
 
-  //  std::cout<<"Statement: "<<C[R].E->print()<<"\n";
+  std::cout<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
   while (not *C[R].result)
   {
+    std::cout<<"   statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
     // If we know what to call, then call it and use it to set the result
     if (C[R].call != -1)
     {
@@ -850,9 +852,9 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
       }
 
 #ifndef NDEBUG
-      //      std::cout<<"Executing statement: "<<compact_graph_expression(E)<<"\n";
-      //      std::cout<<"Executing operation: "<<O<<"\n";
-      //      std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
+      //      std::cout<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
+      std::cout<<"Executing operation: "<<O<<"\n";
+      std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
 #endif
     }
   }
