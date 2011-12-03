@@ -30,7 +30,6 @@ struct reg
   std::vector< int > used_inputs;
 
   // Which reduction results made use of the value of this expression (via an operation)
-  // fixme! multiset?
   std::set< std::pair<int,int> > outputs;
 
   // Which reduction results made use of the value of this expression (via call)
@@ -52,6 +51,7 @@ struct reg
   int prev_reg;
   int next_reg;
   States state;
+  int on_stack;
 
   void clear();
   void init();
