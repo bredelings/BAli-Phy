@@ -708,6 +708,7 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
 
 shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 {
+  assert(C[R].state == reg::used);
   assert(R >= 0 and R < C.n_regs());
   assert(C[R].result);
 
