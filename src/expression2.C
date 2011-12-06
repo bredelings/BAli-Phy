@@ -598,4 +598,11 @@ int main()
   C.set_parameter_value("Y",5);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
+
+  C.set_parameter_value("X",1.0);
+  C.set_parameter_value("Y",2.0);
+  C.set_parameter_value("Z",4.0);
+  context D = C;
+  cout<<"D.evaluate(1) = "<<D.evaluate(1)<<"\n";
+  cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
 }
