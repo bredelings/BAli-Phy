@@ -230,10 +230,11 @@ int context::n_parameters() const
 
 int context::find_parameter(const string& s) const
 {
-  int index = find_index(parameter_names, s);
-  if (index == -1)
+  for(int i=0;i<n_parameters();i++)
+    if (parameter_name(i) == s)
+      return i;
+
     throw myexception()<<"Can't find parameter named '"<<s<<"'";
-  return index;
 }
 
 int context::add_parameter(const string& s)
