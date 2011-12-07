@@ -120,6 +120,8 @@ void context::add_variable(const string& name, int R)
   if (variables.find(name) != variables.end())
     throw myexception()<<"Cannot add parameter '"<<name<<"' - that name is already used!";
 
+  assert(access(R).state == reg::used);
+
   variables[name] = R;
 }
 
@@ -140,6 +142,8 @@ void context::rename_variable(const string& s1, const string& s2)
   int R = loc->second;
 
   variables.erase(loc);
+
+  assert(access(R).state == reg::used);
 
   variables[s2] = R;
 }
