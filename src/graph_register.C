@@ -123,6 +123,8 @@ void context::add_variable(const string& name, int R)
   assert(access(R).state == reg::used);
 
   variables[name] = R;
+  access(R).name = name;
+  access(R).named = true;
 }
 
 void context::rename_variable(const string& s1, const string& s2)
@@ -156,7 +158,6 @@ void context::rename_parameter(int i, const string& new_name)
 
   int R = parameters[i];
 
-  access(R).name = new_name;
   assert( access(R).named == true );
   assert( access(R).changeable == true );
   access(R).E = parameter(new_name);
@@ -182,12 +183,17 @@ shared_ptr<const Object> context::get_parameter_value(const std::string&) const
   return shared_ptr<const Object>();
 }
 
-/// Update the value of a non-constant, non-computed index
 void context::set_parameter_value(int index, const expression_ref& O)
 {
-  assert(is_WHNF(O));
-
   int P = parameters[index];
+
+  set_reg_value(P, O);
+}
+
+/// Update the value of a non-constant, non-computed index
+void context::set_reg_value(int P, const expression_ref& O)
+{
+  assert(is_WHNF(O));
 
   assert(access(P).result);
   assert(access(P).changeable);
@@ -282,8 +288,6 @@ int context::add_parameter(const string& name)
   memory.roots.push_back( R );
   parameters.push_back( R );
 
-  access(R).name = name;
-  access(R).named = true;
   access(R).changeable = true;
   access(R).E = parameter(name);
 

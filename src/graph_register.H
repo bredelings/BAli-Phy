@@ -186,6 +186,9 @@ public:
   boost::shared_ptr<const Object> get_parameter_value(const std::string&) const;
 
   /// Update the value of a non-constant, non-computed index
+  void set_reg_value(int index, const expression_ref&);
+
+  /// Update the value of a non-constant, non-computed index
   void set_parameter_value(int index, const expression_ref&);
 
   /// Update the value of a non-constant, non-computed index
