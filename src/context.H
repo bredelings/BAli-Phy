@@ -15,7 +15,6 @@ struct expression_ref;
 // Values
 class Context: virtual public Object
 {
-public:
   /// Structure that specifies how to compute each index from other indices (context-independent)
   polymorphic_cow_ptr<Formula> F;
 
@@ -64,12 +63,20 @@ public:
     return converted;
   }
 
+  polymorphic_cow_ptr<Formula> get_formula() const {return F;}
+
   /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
   boost::shared_ptr<const Object> get_value(int index) const;
 
   bool is_up_to_date(int index) const {return values[index]->computed;}
 
   bool is_shared(int index) const {return not values[index].unique();}
+
+  std::string parameter_name(int i) const;
+
+  void rename_parameter(int i, const std::string& s);
+
+  int n_parameters() const;
 
   /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
   boost::shared_ptr<const Object> get_parameter_value(int index) const;
@@ -90,6 +97,16 @@ public:
   bool index_may_affect_index(int index1, int index2) const;
 
   int add_expression(const expression_ref& e);
+
+  int n_expressions() const;
+
+  expression_ref get_expression(int i) const;
+
+  int n_sub_expressions() const;
+
+  expression_ref get_sub_expression(int i) const;
+
+  int find_match_expression2(const expression_ref& e, std::vector<int>&) const;
 
   Context();
   Context(const polymorphic_cow_ptr<Formula>&);

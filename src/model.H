@@ -590,8 +590,6 @@ std::vector< expression_ref > model_args(const Model& M);
 
 expression_ref model_result_expression(const Model& M);
 
-term_ref add_probability_expression(Context& C);
-
 std::vector< std::string > show_probability_expressions(const Context& C);
 
 formula_expression_ref model_formula(const Model& M);

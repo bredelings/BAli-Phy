@@ -276,11 +276,11 @@ int main()
   CTX1.add_expression( def_function(true, Tuple(v0, Cons(v1, v2)), Cons(v1, v3((typed_expression_ref<Double>(v0)-1.0),v2))) );
 
   cout<<"\n CTX1 now contains this list of non-sub expressions:\n";
-  cout<<*CTX1.F<<"\n";
+  //  cout<<*CTX1.F<<"\n";
 
-  for(int i=0;i<CTX1.F->n_exp();i++)
+  for(int i=0;i<CTX1.n_expressions();i++)
   {
-    expression_ref R = CTX1.F->exp(i);
+    expression_ref R = CTX1.get_expression(i);
     cout<<i<<"  "<<R->print()<<"\n";
 
     expression_ref N = launchbury_normalize(R);

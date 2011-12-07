@@ -249,6 +249,12 @@ boost::shared_ptr<const Object> Context::get_parameter_value(const std::string& 
   return get_value(index);
 }
 
+std::string Context::parameter_name(int i) const {return F->parameter_name(i);}
+
+void Context::rename_parameter(int i, const string& s) {F->rename_parameter(i,s);}
+
+int Context::n_parameters() const {return F->n_parameters();}
+
 boost::shared_ptr<const Object> Context::get_value(int index) const
 {
   return values[index]->result;
@@ -369,6 +375,31 @@ int Context::add_expression(const expression_ref& e)
   return index;
 }
 
+int Context::n_expressions() const
+{
+  return F->n_exp();
+}
+
+expression_ref Context::get_expression(int i) const
+{
+  return F->exp(i);
+}
+
+int Context::n_sub_expressions() const
+{
+  return F->n_sub_exp();
+}
+
+expression_ref Context::get_sub_expression(int i) const
+{
+  return F->sub_exp(i);
+}
+
+int Context::find_match_expression2(const expression_ref& e, std::vector<int>& result) const
+{
+  return F->find_match_expression2(e,result);
+}
+
 Context::Context()
   :F(new Formula)
 { }
@@ -409,12 +440,8 @@ ostream& operator<<(ostream& o, const Context& C)
 {
   for(int index=0;index<C.size();index++)
   {
-    o<<index<<" "<<(*C.F)[index]->print()<<" = ";
+    o<<index<<" "<<C.get_sub_expression(index)<<" = ";
     o<<C.get_value(index);
-    if (C.F->is_constant(index))
-      o<<" [constant]";
-    else
-      o<<"           ";
     if (C.is_shared(index))
       o<<" [shared]";
     else

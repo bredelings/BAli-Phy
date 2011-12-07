@@ -188,12 +188,12 @@ std::vector< shared_ptr<const Object> > Model::get_parameter_values(const std::v
 
 std::string Model::parameter_name(int i) const
 {
-  return C.F->parameter_name(i);
+  return C.parameter_name(i);
 }
 
 void Model::rename_parameter(int i, const std::string& s)
 {
-  C.F->rename_parameter(i,s);
+  C.rename_parameter(i,s);
 }
 
 bool Model::is_fixed(int i) const
@@ -275,12 +275,12 @@ void Model::set_parameter_values(const vector<shared_ptr<const Object> >& p)
 
 unsigned Model::n_parameters() const 
 {
-  return C.F->n_parameters();
+  return C.n_parameters();
 }
 
 std::string FormulaModel::name() const
 {
-  return C.F->sub_exp(result_index)->print();
+  return C.get_sub_expression(result_index)->print();
 }
 
 efloat_t Model::prior() const
@@ -300,6 +300,8 @@ Model::Model()
   :Operation(0),valid(false),prior_index(-1)
 { }
 
+int add_probability_expression(Context& C);
+
 Model::Model(const shared_ptr<const Formula>& F)
   :Operation(0),
    valid(false),
@@ -313,7 +315,7 @@ Model::Model(const shared_ptr<const Formula>& F)
     expression_ref var = parameter(parameter_name(i));
     vector<int> results;
     expression_ref query = ::bounds(var,match(0));
-    term_ref found = C.F->find_match_expression2(query, results);
+    int found = C.find_match_expression2(query, results);
     if (found != -1)
     {
       assert(results.size());
@@ -325,7 +327,7 @@ Model::Model(const shared_ptr<const Formula>& F)
   prior_index = add_probability_expression(C);
 
 #ifndef NDEBUG
-  std::cout<<*C.F<<"\n";
+  std::cout<<C<<"\n";
   std::cout<<"prior_index = "<<prior_index<<"\n";
   std::cout<<"prior = "<<log(prior())<<"\n";
   std::cout<<C<<std::endl;
@@ -878,7 +880,7 @@ OpModelOperationArgs::OpModelOperationArgs(const OpModel& m)
   computation = boost::shared_ptr<Computation>( new Computation(n_input_slots) );
 }
 
-boost::shared_ptr<const Object> OpModelOperationArgs::reference(int slot) const
+boost::shared_ptr<const Object> OpModelOperationArgs::reference(int /* slot */) const
 {
   std::abort();
 }
@@ -1165,12 +1167,12 @@ vector<string> show_probability_expressions(const Context& C)
   vector<string> expressions;
 
   // Check each expression in the Formula
-  for(int i=0;i<C.F->n_exp();i++)
+  for(int i=0;i<C.n_expressions();i++)
   {
     vector<expression_ref> results; 
 
     // If its a probability expression, then...
-    if (not find_match(query, C.F->exp(i), results)) continue;
+    if (not find_match(query, C.get_expression(i), results)) continue;
 
     // Extract the density operation
     shared_ptr<const String> name = dynamic_pointer_cast<const String>(results[0]);
@@ -1183,19 +1185,19 @@ vector<string> show_probability_expressions(const Context& C)
   return expressions;
 }
 
-term_ref add_probability_expression(Context& C)
+int add_probability_expression(Context& C)
 {
   expression_ref query = distributed(_2,Tuple(prob_density(_,_1),_3));
 
   typed_expression_ref<Log_Double> Pr;
 
   // Check each expression in the Formula
-  for(int i=0;i<C.F->n_exp();i++)
+  for(int i=0;i<C.n_expressions();i++)
   {
     vector<expression_ref> results; 
 
     // If its a probability expression, then...
-    if (not find_match(query, C.F->exp(i), results)) continue;
+    if (not find_match(query, C.get_expression(i), results)) continue;
 
     // Extract the density operation
     shared_ptr<const Operation> density_op = dynamic_pointer_cast<const Operation>(results[0]);
@@ -1216,11 +1218,10 @@ term_ref add_probability_expression(Context& C)
   // If this model has random variables... 
   if (Pr)
   {
-    int index = C.add_expression(Pr);
-    return term_ref(index, C.F);
+    return C.add_expression(Pr);
   }
   else
-    return term_ref();
+    return -1;
 }
 
 boost::shared_ptr<const Object> FormulaModel::result() const
@@ -1239,6 +1240,6 @@ FormulaModel::FormulaModel(const formula_expression_ref& R)
 
 FormulaModel::operator formula_expression_ref() const
 {
-  return formula_expression_ref(C.F, C.F->sub_exp(result_index));
+  return formula_expression_ref(C.get_formula(), C.get_formula()->sub_exp(result_index));
 }
 

@@ -927,9 +927,9 @@ expression_ref find_function_body(const Context& C, expression_ref& R)
   Function defun_f("defun",3,body_function_f);
 
   // For each function definition f x1..x[i]..xn | guard = body
-  for(int i=0;i<C.F->size();i++)
+  for(int i=0;i<C.n_sub_expressions();i++)
   {
-    expression_ref DR = (*C.F)[i];
+    expression_ref DR = C.get_sub_expression(i);
     
     shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(DR);
     if (not DE) continue;
