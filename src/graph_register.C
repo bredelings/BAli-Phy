@@ -106,7 +106,12 @@ void clear_call(const context& C, int R)
 
 string context::parameter_name(int i) const
 {
-  return parameter_names[i];
+  expression_ref E = access(parameters[i]).E;
+  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
+  {
+    return P->parameter_name;
+  }
+  throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
 }
 
 void context::rename_parameter(int i, const string& s)
