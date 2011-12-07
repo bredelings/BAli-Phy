@@ -292,6 +292,7 @@ int context::add_compute_expression(const string& s, const expression_ref& E)
   int index = add_compute_expression( E );
   int R = heads[index];
   variables[s] = R;
+  return index;
 }
 
 /// Add an expression that is exact and may NOT be replaced with its reduced form
@@ -320,6 +321,7 @@ int context::add_expression(const string& s, const expression_ref& E)
   int index = add_expression(E);
   int R = heads[index];
   variables[s] = R;
+  return index;
 }
 
 int reg_heap::add_reg_to_free_list(int r)
