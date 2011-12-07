@@ -104,6 +104,24 @@ void clear_call(const context& C, int R)
   C[R2].call_outputs.erase(R);
 }
 
+string context::parameter_name(int i) const
+{
+  return parameter_names[i];
+}
+
+void context::rename_parameter(int i, const string& s)
+{
+  assert(s.size() != 0);
+  parameter_names[i] = s;
+
+  int R = parameters[i];
+
+  access(R).name = s;
+  assert( access(R).named == true );
+  assert( access(R).changeable == true );
+  access(R).E = parameter(s);
+}
+
 shared_ptr<const Object> incremental_evaluate(const context&, int);
 
 /// Return the value of a particular index, computing it if necessary
@@ -215,17 +233,19 @@ int context::find_parameter(const string& s) const
 
 int context::add_parameter(const string& s)
 {
+  assert(s.size() != 0);
+
   int index = n_parameters();
 
   int R = allocate_reg(s);
   memory.roots.push_back(R);
+  parameter_names.push_back(s);
+  parameters.push_back( R );
+
   access(R).name = s;
   access(R).named = true;
   access(R).changeable = true;
   access(R).E = parameter(s);
-
-  parameter_names.push_back(s);
-  parameters.push_back( R );
 
   return index;
 }
@@ -255,6 +275,21 @@ int reg_heap::n_used_regs() const
   return count;
 }
 
+/// Add an expression that may be replaced by its reduced form
+int context::add_compute_expression(const expression_ref& E)
+{
+  return add_expression( E );
+}
+
+/// Add an expression that may be replaced by its reduced form
+int context::add_compute_expression(const string& s, const expression_ref& E)
+{
+  int index = add_compute_expression( E );
+  int R = heads[index];
+  variables[s] = R;
+}
+
+/// Add an expression that is exact and may NOT be replaced with its reduced form
 int context::add_expression(const expression_ref& E)
 {
   std::cout<<"add: "<<E->print()<<"\n";
@@ -265,15 +300,21 @@ int context::add_expression(const expression_ref& E)
     int param_index = find_parameter(P->parameter_name);
     R = parameters[param_index];
   }
-  else 
-  {
-    R = allocate_reg(E);
-    access(R).E = graph_normalize(*this, E);
+  else {
+    R = allocate_reg( graph_normalize(*this,E) );
   }
 
   heads.push_back(R);
   memory.roots.push_back(R);
   return heads.size()-1;
+}
+
+/// Add an expression that is exact and may NOT be replaced with its reduced form
+int context::add_expression(const string& s, const expression_ref& E)
+{
+  int index = add_expression(E);
+  int R = heads[index];
+  variables[s] = R;
 }
 
 int reg_heap::add_reg_to_free_list(int r)
