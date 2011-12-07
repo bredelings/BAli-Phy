@@ -137,7 +137,6 @@ struct context: virtual public Object
   int n_regs() const {return memory.n_regs();}
   int n_used_regs() const {return memory.n_used_regs();}
 
-  std::vector<std::string> parameter_names;
   std::vector<int> parameters;
   std::map<std::string,int> variables;
 

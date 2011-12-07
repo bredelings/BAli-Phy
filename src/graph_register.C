@@ -117,7 +117,6 @@ string context::parameter_name(int i) const
 void context::rename_parameter(int i, const string& s)
 {
   assert(s.size() != 0);
-  parameter_names[i] = s;
 
   int R = parameters[i];
 
@@ -245,7 +244,6 @@ int context::add_parameter(const string& s)
 
   int R = allocate_reg(s);
   memory.roots.push_back(R);
-  parameter_names.push_back(s);
   parameters.push_back( R );
 
   access(R).name = s;
