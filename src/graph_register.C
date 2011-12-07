@@ -114,16 +114,48 @@ string context::parameter_name(int i) const
   throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
 }
 
-void context::rename_parameter(int i, const string& s)
+void context::add_variable(const string& name, int R)
 {
-  assert(s.size() != 0);
+  // if there's already an 's', then complain
+  if (variables.find(name) != variables.end())
+    throw myexception()<<"Cannot add parameter '"<<name<<"' - that name is already used!";
+
+  variables[name] = R;
+}
+
+void context::rename_variable(const string& s1, const string& s2)
+{
+  // zero-length names are not allowed
+  assert(s1.size() != 0);
+  assert(s2.size() != 0);
+
+  // if there's already an 's', then complain
+  if (variables.find(s2) != variables.end())
+    throw myexception()<<"Cannot rename parameter '"<<s1<<"' to '"<<s2<<"' - that name is already used!";
+
+  // Remove the old name -> reg mapping
+  map<string,int>::iterator loc = variables.find(s1);
+  assert(loc != variables.end());
+
+  int R = loc->second;
+
+  variables.erase(loc);
+
+  variables[s2] = R;
+}
+
+void context::rename_parameter(int i, const string& new_name)
+{
+  string old_name = parameter_name(i);
+
+  rename_variable(old_name, new_name);
 
   int R = parameters[i];
 
-  access(R).name = s;
+  access(R).name = new_name;
   assert( access(R).named == true );
   assert( access(R).changeable == true );
-  access(R).E = parameter(s);
+  access(R).E = parameter(new_name);
 }
 
 shared_ptr<const Object> incremental_evaluate(const context&, int);
@@ -236,20 +268,22 @@ int context::find_parameter(const string& s) const
     throw myexception()<<"Can't find parameter named '"<<s<<"'";
 }
 
-int context::add_parameter(const string& s)
+int context::add_parameter(const string& name)
 {
-  assert(s.size() != 0);
+  assert(name.size() != 0);
 
   int index = n_parameters();
 
-  int R = allocate_reg(s);
-  memory.roots.push_back(R);
+  int R = allocate_reg( name );
+  memory.roots.push_back( R );
   parameters.push_back( R );
 
-  access(R).name = s;
+  access(R).name = name;
   access(R).named = true;
   access(R).changeable = true;
-  access(R).E = parameter(s);
+  access(R).E = parameter(name);
+
+  add_variable(name, R);
 
   return index;
 }
@@ -286,11 +320,12 @@ int context::add_compute_expression(const expression_ref& E)
 }
 
 /// Add an expression that may be replaced by its reduced form
-int context::add_compute_expression(const string& s, const expression_ref& E)
+int context::add_compute_expression(const string& name, const expression_ref& E)
 {
   int index = add_compute_expression( E );
   int R = heads[index];
-  variables[s] = R;
+
+  add_variable(name, R);
   return index;
 }
 
@@ -315,11 +350,11 @@ int context::add_expression(const expression_ref& E)
 }
 
 /// Add an expression that is exact and may NOT be replaced with its reduced form
-int context::add_expression(const string& s, const expression_ref& E)
+int context::add_expression(const string& name, const expression_ref& E)
 {
   int index = add_expression(E);
   int R = heads[index];
-  variables[s] = R;
+  add_variable(name, R);
   return index;
 }
 

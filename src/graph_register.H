@@ -134,11 +134,19 @@ struct reg_heap
 struct context: virtual public Object
 {
   mutable reg_heap memory;
-  int n_regs() const {return memory.n_regs();}
-  int n_used_regs() const {return memory.n_used_regs();}
 
   std::vector<int> parameters;
+
+protected:
   std::map<std::string,int> variables;
+  /// Register a variable called 'name' as having location 'R'
+  void add_variable(const std::string& name, int R);
+  /// Change the name of the i-th named variable
+  void rename_variable(const std::string&, const std::string&);
+
+public:
+  int n_regs() const {return memory.n_regs();}
+  int n_used_regs() const {return memory.n_used_regs();}
 
   reg& access(int i) const {return memory[i];}
 
