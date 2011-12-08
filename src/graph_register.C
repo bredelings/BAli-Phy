@@ -25,6 +25,14 @@ using std::pair;
  * - 
  *
  * How do I handle formulaexpressions?
+ *
+ * TODO
+ * - for find_match, just call the standard one in expresion, cuz we only need to look through
+ *   reg_vars in computations, not in handling standard note expressions.
+ *
+ * - should I separate add_expression from add_note_expression( )?
+ *
+ * - should I only allow compute expressions ( but not note expression ) to have result != null_ptr?
  */
 
 void reg::clear()
