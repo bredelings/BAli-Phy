@@ -395,7 +395,7 @@ int context::add_expression(const string& name, const expression_ref& E)
   return index;
 }
 
-int context::n_expression() const
+int context::n_expressions() const
 {
   return heads.size();
 }
