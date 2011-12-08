@@ -441,20 +441,6 @@ int reg_heap::add_reg_to_used_list(int r)
   return r;
 }
 
-int reg_heap::get_used_reg()
-{
-  int r = first_used_reg;
-  if (r != -1)
-  {
-    assert(access(r).state == reg::used);
-    first_free_reg = access(r).next_reg;
-    access(r).prev_reg = -1;
-    access(r).next_reg = -1;
-    access(r).state = reg::none;
-  }
-  return r;
-}
-
 void reg_heap::remove_reg_from_used_list(int r)
 {
   int P = access(r).prev_reg;

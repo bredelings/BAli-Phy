@@ -125,19 +125,25 @@ class reg_heap
   std::vector<int> roots;
   std::vector<int> stack_roots;
 
+  /// Start of free list 
   int first_free_reg;
 
+  /// Start of used list 
   int first_used_reg;
 
   int allocate_reg();
   void expand_memory(int);
 
+  /// Add a reg (not on any list) to the free list
   int add_reg_to_free_list(int);
+  /// Take the first free reg off the free list, or return -1 if empty
   int get_free_reg();
 
+  /// Add a reg (not on any list) to the used list
   int add_reg_to_used_list(int);
-  int get_used_reg();
+
   void remove_reg_from_used_list(int);
+
   void reclaim_used_reg(int);
 
 public:
