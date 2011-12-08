@@ -216,6 +216,7 @@ void context::set_reg_value(int P, const expression_ref& OO)
   expression_ref O = translate_refs(OO);
   assert(is_WHNF(O));
 
+  assert(dynamic_pointer_cast<const parameter>(access(P).E));
   assert(access(P).result);
   assert(access(P).changeable);
   assert(access(P).call == -1);
