@@ -639,6 +639,9 @@ expression_ref context::translate_refs(const expression_ref& R) const
   {
     int param_index = find_parameter(P->parameter_name);
     
+    if (param_index == -1)
+      throw myexception()<<"Can't translate undefined parameter '"<<P->parameter_name<<"' in expression!";
+
     int param_location = parameters[param_index];
 
     return expression_ref(new reg_var(param_location) );
