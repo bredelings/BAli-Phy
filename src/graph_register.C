@@ -515,6 +515,13 @@ int reg_heap::allocate_root_reg()
   return R;
 }
 
+int reg_heap::allocate_stack_reg()
+{
+  int R = allocate_reg();
+  stack_roots.push_back(R);
+  return R;
+}
+
 int reg_heap::allocate_reg()
 {
   assert(n_regs() == n_used_regs() + n_free_regs());
@@ -546,24 +553,10 @@ int context::allocate_root_reg() const
   return r;
 }
 
-int context::allocate_reg() const
+int context::allocate_stack_reg() const
 {
-  int r = memory.allocate_reg();
+  int r = memory.allocate_stack_reg();
   access(r).init();
-  return r;
-}
-
-int context::allocate_reg(const string& s) const
-{
-  int r = memory.allocate_reg();
-  access(r).init(s);
-  return r;
-}
-
-int context::allocate_reg(const expression_ref& E) const
-{
-  int r = memory.allocate_reg();
-  access(r).init(E);
   return r;
 }
 
@@ -951,16 +944,7 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
     {
       vector<shared_ptr<reg_var> > new_reg_vars;
       for(int i=0;i<vars.size();i++)
-      {
-	shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]);
-	assert(D);
-	if (D->name.size())
-	  new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(C.allocate_reg(D->name))) );
-	else
-	  new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(C.allocate_reg())) );
-
-	C.push_reg( new_reg_vars.back()->target );
-      }
+	new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(C.allocate_stack_reg())) );
       
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
       for(int i=0;i<vars.size();i++) 
@@ -1035,8 +1019,12 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 	{
 	  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
 	    set_call(C, R, RV->target);
-	  else
-	    set_call(C, R, C.allocate_reg(result));
+	  else {
+	    int R2 = C.allocate_stack_reg();
+	    C.access(R2).E = result;
+	    set_call(C, R, R2);
+	    C.pop_reg(R2);
+	  }
 	}
       }
 
@@ -1060,8 +1048,7 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 
 expression_ref incremental_evaluate(const context& C, const expression_ref& E)
 {
-  int R = C.allocate_reg();
-  C.push_reg(R);
+  int R = C.allocate_stack_reg();
   C[R].E = graph_normalize(C,E);
 
   expression_ref result = incremental_evaluate(C,R);

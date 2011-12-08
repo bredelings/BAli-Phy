@@ -129,6 +129,9 @@ protected:
 
   int first_used_reg;
 
+  int allocate_reg();
+  void expand_memory(int);
+
 public:
   const reg& access(int i) const {return memory[i];}
         reg& access(int i)       {return memory[i];}
@@ -151,10 +154,8 @@ public:
   void push_reg(int);
   void pop_reg(int);
 
-  void expand_memory(int);
-
   int allocate_root_reg();
-  int allocate_reg();
+  int allocate_stack_reg();
 
   void collect_garbage();
 
@@ -248,9 +249,7 @@ public:
   expression_ref get_expression(int i) const;
 
   int allocate_root_reg() const;
-  int allocate_reg() const;
-  int allocate_reg(const std::string&) const;
-  int allocate_reg(const expression_ref&) const;
+  int allocate_stack_reg() const;
 
   void collect_garbage() const;
 };
