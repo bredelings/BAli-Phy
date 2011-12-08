@@ -211,8 +211,9 @@ void context::set_parameter_value(int index, const expression_ref& O)
 }
 
 /// Update the value of a non-constant, non-computed index
-void context::set_reg_value(int P, const expression_ref& O)
+void context::set_reg_value(int P, const expression_ref& OO)
 {
+  expression_ref O = translate_refs(OO);
   assert(is_WHNF(O));
 
   assert(access(P).result);
@@ -369,7 +370,7 @@ int context::add_expression(const expression_ref& E)
     R = parameters[param_index];
   }
   else {
-    R = allocate_reg( graph_normalize(*this,E) );
+    R = allocate_reg( graph_normalize(*this,translate_refs(E)) );
   }
 
   heads.push_back(R);
@@ -611,21 +612,50 @@ reg_heap::reg_heap()
    first_used_reg(-1)
 { }
 
+/// Translate named variables (struct var) and named parameters (struct parameter) into the appropriate references
+expression_ref context::translate_refs(const expression_ref& R) const
+{
+  // Replace parameters with the appropriate reg_var: of value parameter( )
+  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
+  {
+    int param_index = find_parameter(P->parameter_name);
+    
+    int param_location = parameters[param_index];
+
+    return expression_ref(new reg_var(param_location) );
+  }
+
+  // Replace parameters with the appropriate reg_var: of value whatever
+  if (shared_ptr<const var> V = dynamic_pointer_cast<const var>(R))
+  {
+    map<string,int>::const_iterator loc = variables.find(V->name);
+    if (loc == variables.end())
+      throw myexception()<<"Can't translate undefined variable '"<<V->name<<"' in expression!";
+
+    int R = loc->second;
+
+    return expression_ref(new reg_var(R) );
+  }
+
+  // Other constants have no parts, and don't need to be translated
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  if (not E) return R;
+
+  // Translate the parts of the expression
+  expression_ref R2 = R;
+  expression* V = new expression(*E);
+  for(int i=0;i<V->size();i++)
+    V->sub[i] = translate_refs(V->sub[i]);
+
+  return V;
+}
+
 expression_ref graph_normalize(const context& C, const expression_ref& R)
 {
   // 1. Var
   if (is_dummy(R))
     return R;
   
-  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
-  {
-    int param_index = C.find_parameter(P->parameter_name);
-    
-    int param_location = C.parameters[param_index];
-
-    return expression_ref(new reg_var(param_location) );
-  }
-
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.

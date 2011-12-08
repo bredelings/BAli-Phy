@@ -61,6 +61,31 @@ struct reg
   reg();
 };
 
+struct var: public Object
+{
+  std::string name;
+
+  var* clone() const {return new var(*this);}
+
+  std::string print() const
+  {
+    return "<" + name + ">";
+  }
+
+  tribool compare(const Object& o) const
+  {
+    const var* V = dynamic_cast<const var*>(&o);
+    if (not V)
+      return false;
+
+    return name == V->name;
+  }
+
+  var(const std::string& s)
+    :name(s)
+  { }
+};
+
 
 struct reg_var: public Object
 {
@@ -143,6 +168,8 @@ protected:
   void add_variable(const std::string& name, int R);
   /// Change the name of the i-th named variable
   void rename_variable(const std::string&, const std::string&);
+
+  expression_ref translate_refs(const expression_ref& R) const;
 
 public:
   int n_regs() const {return memory.n_regs();}
