@@ -53,20 +53,6 @@ void reg::init()
   clear();
 }
 
-void reg::init(const string& s)
-{
-  init();
-  name = s;
-  named = true;
-}
-
-void reg::init(const expression_ref& e)
-{
-  init();
-  E = e;
-  name = convertToString(this);
-}
-
 reg::reg()
  :name(convertToString(this)),
   named(false),

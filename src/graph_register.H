@@ -54,8 +54,6 @@ struct reg
 
   void clear();
   void init();
-  void init(const std::string& s);
-  void init(const expression_ref&);
 
   reg();
 };
