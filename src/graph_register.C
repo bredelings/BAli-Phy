@@ -184,6 +184,19 @@ shared_ptr<const Object> context::evaluate(int index) const
   return incremental_evaluate(*this,heads[index]);
 }
 
+expression_ref graph_normalize(const context&, const expression_ref&);
+
+shared_ptr<const Object> context::evaluate(const expression_ref& E) const
+{
+  int R = allocate_stack_reg();
+  access(R).E = graph_normalize(*this, translate_refs(E));
+
+  shared_ptr<const Object> result = incremental_evaluate(*this,R);
+  pop_reg(R);
+
+  return result;
+}
+
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 shared_ptr<const Object> context::get_parameter_value(int index) const
 {
@@ -308,8 +321,6 @@ int context::add_parameter(const string& name)
 
   return index;
 }
-
-expression_ref graph_normalize(const context&, const expression_ref&);
 
 int reg_heap::n_regs() const
 {

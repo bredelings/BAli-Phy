@@ -217,6 +217,9 @@ public:
   /// Return the value of a particular index, computing it if necessary
   boost::shared_ptr<const Object> evaluate(int index) const;
 
+  /// Return the value of a particular index, computing it if necessary
+  boost::shared_ptr<const Object> evaluate(const expression_ref&) const;
+
   template <typename T>
   boost::shared_ptr<const T> evaluate_as(int index) const
   {
