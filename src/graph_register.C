@@ -304,6 +304,11 @@ int context::find_parameter(const string& s) const
     throw myexception()<<"Can't find parameter named '"<<s<<"'";
 }
 
+int context::n_variables() const
+{
+  return variables.size();
+}
+
 int context::find_variable(const string& s) const
 {
   map<string,int>::const_iterator loc = variables.find(s);

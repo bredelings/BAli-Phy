@@ -252,6 +252,8 @@ public:
   /// Lookup the reg for the named parameter s
   int find_parameter(const std::string& s) const;
 
+  int n_variables() const;
+
   /// Lookup the reg for the named variable s (not a parameter)
   int find_variable(const std::string& s) const;
 
