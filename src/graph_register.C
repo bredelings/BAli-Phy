@@ -39,8 +39,6 @@ using std::pair;
 void reg::clear()
 {
   E = expression_ref();
-  name.clear();
-  named = false;
   changeable = false;
   used_inputs.clear();
   outputs.clear();
@@ -55,9 +53,7 @@ void reg::init()
 }
 
 reg::reg()
- :name(convertToString(this)),
-  named(false),
-  changeable(false),
+ :changeable(false),
   result(new shared_ptr<const Object>),
   prev_reg(-1),
   next_reg(-1),
@@ -137,8 +133,6 @@ void context::add_variable(const string& name, int R)
   assert(access(R).state == reg::used);
 
   variables[name] = R;
-  access(R).name = name;
-  access(R).named = true;
 }
 
 void context::rename_variable(const string& s1, const string& s2)
@@ -170,7 +164,6 @@ void context::rename_parameter(int i, const string& new_name)
 
   int R = parameters[i];
 
-  assert( access(R).named == true );
   assert( access(R).changeable == true );
   access(R).E = parameter(new_name);
 
@@ -1103,10 +1096,7 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
   vector<expression_ref> bodies;
   foreach(i,names)
   {
-    if (not C[i->first].named)
-      vars.push_back(dummy(var_index++));
-    else
-      vars.push_back(dummy(C[i->first].name));
+    vars.push_back(dummy(var_index++));
     bodies.push_back( C[i->first].E );
   }
 

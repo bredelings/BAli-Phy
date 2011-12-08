@@ -17,12 +17,6 @@ struct reg
   // The expression
   expression_ref E;
 
-  // The name of the variable
-  std::string name;
-
-  // Is this variable named?
-  bool named;
-
   // Is this a parameter value, or dependent on a parameter value?
   bool changeable;
 
