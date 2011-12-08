@@ -225,6 +225,11 @@ public:
   {
     return convert<const T>( evaluate(index) );
   }
+
+  template <typename T>
+  boost::shared_ptr<const T> evaluate_as(const expression_ref& E) const
+  {
+    return convert<const T>( evaluate(E) );
   }
 
   /// Find the name of the ith named parameter
