@@ -483,6 +483,22 @@ void reg_heap::reclaim_used_reg(int r)
   add_reg_to_free_list(r);
 }
 
+void reg_heap::push_reg(int R)
+{
+  stack_roots.push_back(R);
+}
+
+void reg_heap::pop_reg(int R)
+{
+  if (stack_roots.empty())
+    throw myexception()<<"Popping reg "<<R<<" when the top reg on the stack is ";
+
+  if (stack_roots.back() != R)
+    throw myexception()<<"Popping reg "<<R<<" when the top reg on the stack is ";
+
+  stack_roots.pop_back();
+}
+
 void reg_heap::expand_memory(int s)
 {
   assert(n_regs() == n_used_regs() + n_free_regs());
@@ -540,6 +556,11 @@ int context::allocate_reg(const expression_ref& E) const
   return r;
 }
 
+void context::collect_garbage() const
+{
+  memory.collect_garbage();
+}
+
 void get_exp_refs(const expression_ref& R, vector<int>& refs)
 {
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( R ))
@@ -584,6 +605,8 @@ void reg_heap::collect_garbage()
   vector<int> scan;
   for(int i=0;i<roots.size();i++)
     scan.push_back(roots[i]);
+  for(int i=0;i<stack_roots.size();i++)
+    scan.push_back(stack_roots[i]);
 
   while (not scan.empty())
   {
@@ -1031,14 +1054,14 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 expression_ref incremental_evaluate(const context& C, const expression_ref& E)
 {
   int R = C.allocate_reg();
-  C.memory.roots.push_back(R);
+  C.push_reg(R);
   C[R].E = graph_normalize(C,E);
 
   expression_ref result = incremental_evaluate(C,R);
   result = compact_graph_expression(C, result);
 
-  C.memory.roots.pop_back();
-  C.memory.collect_garbage();
+  C.pop_reg(R);
+  C.collect_garbage();
 
   return result;
 }

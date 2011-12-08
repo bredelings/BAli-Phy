@@ -124,6 +124,7 @@ struct reg_heap
 {
   std::vector<reg> memory;
   std::vector<int> roots;
+  std::vector<int> stack_roots;
 
   int first_free_reg;
 
@@ -147,6 +148,9 @@ struct reg_heap
   void remove_reg_from_used_list(int);
   void reclaim_used_reg(int);
 
+  void push_reg(int);
+  void pop_reg(int);
+
   void expand_memory(int);
 
   int allocate_reg();
@@ -156,13 +160,12 @@ struct reg_heap
   reg_heap();
 };
 
-struct context: virtual public Object
+class context: virtual public Object
 {
   mutable reg_heap memory;
 
   std::vector<int> parameters;
 
-protected:
   std::map<std::string,int> variables;
   /// Register a variable called 'name' as having location 'R'
   void add_variable(const std::string& name, int R);
@@ -172,6 +175,9 @@ protected:
   expression_ref translate_refs(const expression_ref& R) const;
 
 public:
+  void push_reg(int R) const {memory.push_reg(R);}
+  void pop_reg(int R) const {memory.pop_reg(R);}
+
   int n_regs() const {return memory.n_regs();}
   int n_used_regs() const {return memory.n_used_regs();}
 
@@ -244,6 +250,7 @@ public:
   int allocate_reg(const std::string&) const;
   int allocate_reg(const expression_ref&) const;
 
+  void collect_garbage() const;
 };
 
 expression_ref incremental_evaluate(const context& C, const expression_ref&);
