@@ -282,6 +282,7 @@ public:
 
 expression_ref incremental_evaluate(const context& C, const expression_ref&);
 
+boost::shared_ptr<context> prefix_formula(const std::string&, const boost::shared_ptr<const context>&);
 
 std::ostream& operator<<(std::ostream&, const context& C);
 #endif

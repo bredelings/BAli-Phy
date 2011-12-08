@@ -1119,6 +1119,13 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
   return R;
 }
 
+boost::shared_ptr<context> prefix_formula(const std::string& prefix, const boost::shared_ptr<const context>& C)
+{
+  shared_ptr<context> C2(C->clone());
+  for(int i=0;i<C2->n_parameters();i++)
+    C2->rename_parameter(i, prefix + "::" + C2->parameter_name(i));
+  return C2;
+}
 
 std::ostream& operator<<(std::ostream& o, const context& C)
 {
