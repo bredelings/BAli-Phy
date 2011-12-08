@@ -282,4 +282,6 @@ public:
 
 expression_ref incremental_evaluate(const context& C, const expression_ref&);
 
+
+std::ostream& operator<<(std::ostream&, const context& C);
 #endif

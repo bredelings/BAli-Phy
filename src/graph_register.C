@@ -1,3 +1,4 @@
+#include <iostream>
 #include "graph_register.H"
 #include "operations.H"
 
@@ -1119,9 +1120,12 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
 }
 
 
-// + 
-// apply 
-// +-*/
-// constructor
-// case
-// let
+std::ostream& operator<<(std::ostream& o, const context& C)
+{
+  for(int index = 0;index < C.n_expressions(); index++)
+  {
+    o<<index<<" "<<C.get_expression(index);
+    o<<"\n";
+  }
+  return o;
+}
