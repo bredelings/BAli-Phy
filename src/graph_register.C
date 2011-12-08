@@ -77,58 +77,58 @@ reg::reg()
   state(none)
 {}
 
-void set_used_input(const context& C, int R1, int slot, int R2)
+void context::set_used_input(int R1, int slot, int R2) const
 {
-  assert(R1 >= 0 and R1 < C.n_regs());
-  assert(R2 >= 0 and R2 < C.n_regs());
+  assert(R1 >= 0 and R1 < n_regs());
+  assert(R2 >= 0 and R2 < n_regs());
 
   // fixme
-  if (C[R1].used_inputs[slot] != -1) return;
+  if (access(R1).used_inputs[slot] != -1) return;
 
-  C[R1].used_inputs[slot] = R2;
-  C[R2].outputs.insert(pair<int,int>(R1,slot));
+  access(R1).used_inputs[slot] = R2;
+  access(R2).outputs.insert(pair<int,int>(R1,slot));
 }
 
-void clear_used_input(const context& C,int R, int slot)
+void context::clear_used_input(int R, int slot) const
 {
-  int R2 = C[R].used_inputs[slot];
+  int R2 = access(R).used_inputs[slot];
   if (R2 == -1) return;
-  assert(R2 >= 0 and R2 < C.n_regs());
+  assert(R2 >= 0 and R2 < n_regs());
 
   // FIXME - we should treat different slots differently
-  C[R2].outputs.erase(pair<int,int>(R,slot));
-  C[R].used_inputs[slot] = -1;
+  access(R2).outputs.erase(pair<int,int>(R,slot));
+  access(R).used_inputs[slot] = -1;
 }
 
-void clear_used_inputs(const context& C,int R)
+void context::clear_used_inputs(int R) const
 {
-  for(int i=0;i<C[R].used_inputs.size();i++)
-    clear_used_input(C,R,i);
+  for(int i=0;i<access(R).used_inputs.size();i++)
+    clear_used_input(R,i);
 }
 
-void clear_used_inputs(const context& C,int R, int S)
+void context::clear_used_inputs(int R, int S) const
 {
-  clear_used_inputs(C,R);
-  C[R].used_inputs = vector<int>(S, -1);
+  clear_used_inputs(R);
+  access(R).used_inputs = vector<int>(S, -1);
 }
 
-void set_call(const context& C, int R1, int R2)
+void context::set_call(int R1, int R2) const
 {
-  assert(C[R1].call == -1);
-  assert(R2 >= 0 and R2 < C.n_regs());
+  assert(access(R1).call == -1);
+  assert(R2 >= 0 and R2 < n_regs());
 
-  C[R1].call = R2;
-  C[R2].call_outputs.insert(R1);
+  access(R1).call = R2;
+  access(R2).call_outputs.insert(R1);
 }
 
-void clear_call(const context& C, int R)
+void context::clear_call(int R) const
 {
-  int R2 = C[R].call;
+  int R2 = access(R).call;
   if (R2 == -1) return;
-  assert(R2 >= 0 and R2 < C.n_regs());
+  assert(R2 >= 0 and R2 < n_regs());
   
-  C[R].call = -1;
-  C[R2].call_outputs.erase(R);
+  access(R).call = -1;
+  access(R2).call_outputs.erase(R);
 }
 
 string context::parameter_name(int i) const
@@ -263,7 +263,7 @@ void context::set_reg_value(int P, const expression_ref& OO)
 
       // Since the computation may be different, we don't know if the value has changed.
       (*access(R2).result).reset();
-      clear_call(*this,R2);
+      clear_call(R2);
     }
 
     foreach(j,access(R1).call_outputs)
@@ -634,7 +634,6 @@ reg_heap::reg_heap()
    first_used_reg(-1)
 { }
 
-/// Translate named variables (struct var) and named parameters (struct parameter) into the appropriate references
 expression_ref context::translate_refs(const expression_ref& R) const
 {
   // Replace parameters with the appropriate reg_var: of value parameter( )
@@ -849,7 +848,7 @@ struct RegOperationArgs: public OperationArgs
     {
       incremental_evaluate(C,R2);
 
-      set_used_input(C, R, slot, R2);
+      C.set_used_input(R, slot, R2);
 
       if (C[R2].changeable) 
 	C[R].changeable = true;
@@ -867,7 +866,7 @@ struct RegOperationArgs: public OperationArgs
     E = dynamic_pointer_cast<const expression>(C[R].E);
     assert(E);
 
-    clear_used_inputs(C, R, E->size()-1);
+    C.clear_used_inputs(R, E->size()-1);
   }
 };
 
@@ -993,7 +992,7 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
 	C[R].E = result;
-	clear_used_inputs(C,R);
+	C.clear_used_inputs(R);
 	assert(C[R].call == -1);
 	assert(not *C[R].result);
       }
@@ -1004,11 +1003,11 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 	else
 	{
 	  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
-	    set_call(C, R, RV->target);
+	    C.set_call(R, RV->target);
 	  else {
 	    int R2 = C.allocate_stack_reg();
 	    C.access(R2).E = result;
-	    set_call(C, R, R2);
+	    C.set_call(R, R2);
 	    C.pop_reg(R2);
 	  }
 	}

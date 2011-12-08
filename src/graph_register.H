@@ -183,6 +183,13 @@ class context: virtual public Object
   expression_ref translate_refs(const expression_ref& R) const;
 
 public:
+  void set_used_input(int R1, int slot, int R2) const;
+  void clear_used_input(int R, int slot) const;
+  void clear_used_inputs(int R) const;
+  void clear_used_inputs(int R, int S) const;
+  void set_call(int R1, int R2) const;
+  void clear_call(int R) const;
+
   void push_reg(int R) const {memory.push_reg(R);}
   void pop_reg(int R) const {memory.pop_reg(R);}
 
