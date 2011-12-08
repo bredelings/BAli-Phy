@@ -1021,13 +1021,8 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 
 expression_ref incremental_evaluate(const context& C, const expression_ref& E)
 {
-  int R = C.allocate_stack_reg();
-  C[R].E = graph_normalize(C,E);
-
-  expression_ref result = incremental_evaluate(C,R);
+  expression_ref result = C.evaluate(E);
   result = compact_graph_expression(C, result);
-
-  C.pop_reg(R);
   C.collect_garbage();
 
   return result;
