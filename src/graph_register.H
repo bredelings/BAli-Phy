@@ -255,8 +255,10 @@ public:
 
   int n_parameters() const;
 
-  int find_parameter(const std::string&) const;
+  /// Lookup the reg for the named parameter s
+  int find_parameter(const std::string& s) const;
 
+  /// Create a new parameter named s
   int add_parameter(const std::string& s);
 
   /// Add a literal expression that may NOT be reduced
