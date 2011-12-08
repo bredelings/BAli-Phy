@@ -524,7 +524,7 @@ int main()
   C.add_parameter("Z");
   cout<<"C.n_used_regs() = "<<C.n_used_regs()<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
-  C.add_expression((X+Y)+Z);
+  C.add_compute_expression((X+Y)+Z);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   C.set_parameter_value("X",1.0);
   C.set_parameter_value("Y",2.0);
@@ -535,7 +535,7 @@ int main()
   cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  C.add_expression( apply_expression(apply_expression(plus,apply_expression(apply_expression(plus,X),Y)),Z) );
+  C.add_compute_expression( apply_expression(apply_expression(plus,apply_expression(apply_expression(plus,X),Y)),Z) );
   cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   C.set_parameter_value("Z",7.0);
@@ -553,7 +553,7 @@ int main()
 						       )
 					);
 
-  C.add_expression( test16 );
+  C.add_compute_expression( test16 );
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
@@ -569,7 +569,7 @@ int main()
 					 sum_i(take(y)(iterate(plus_i(x),z)))
 
 					 )));
-  C.add_expression( test17 );
+  C.add_compute_expression( test17 );
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";

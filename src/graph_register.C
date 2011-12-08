@@ -124,6 +124,65 @@ void clear_call(const context& C, int R)
   C[R2].call_outputs.erase(R);
 }
 
+string context::parameter_name(int i) const
+{
+  expression_ref E = access(parameters[i]).E;
+  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
+  {
+    return P->parameter_name;
+  }
+  throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
+}
+
+void context::add_variable(const string& name, int R)
+{
+  // if there's already an 's', then complain
+  if (variables.find(name) != variables.end())
+    throw myexception()<<"Cannot add parameter '"<<name<<"' - that name is already used!";
+
+  assert(access(R).state == reg::used);
+
+  variables[name] = R;
+  access(R).name = name;
+  access(R).named = true;
+}
+
+void context::rename_variable(const string& s1, const string& s2)
+{
+  // zero-length names are not allowed
+  assert(s1.size() != 0);
+  assert(s2.size() != 0);
+
+  // if there's already an 's', then complain
+  if (variables.find(s2) != variables.end())
+    throw myexception()<<"Cannot rename parameter '"<<s1<<"' to '"<<s2<<"' - that name is already used!";
+
+  // Remove the old name -> reg mapping
+  map<string,int>::iterator loc = variables.find(s1);
+  assert(loc != variables.end());
+
+  int R = loc->second;
+
+  variables.erase(loc);
+
+  assert(access(R).state == reg::used);
+
+  variables[s2] = R;
+}
+
+void context::rename_parameter(int i, const string& new_name)
+{
+  string old_name = parameter_name(i);
+
+  rename_variable(old_name, new_name);
+
+  int R = parameters[i];
+
+  assert( access(R).named == true );
+  assert( access(R).changeable == true );
+  access(R).E = parameter(new_name);
+}
+
 shared_ptr<const Object> incremental_evaluate(const context&, int);
 
 /// Return the value of a particular index, computing it if necessary
@@ -144,12 +203,17 @@ shared_ptr<const Object> context::get_parameter_value(const std::string&) const
   return shared_ptr<const Object>();
 }
 
-/// Update the value of a non-constant, non-computed index
 void context::set_parameter_value(int index, const expression_ref& O)
 {
-  assert(is_WHNF(O));
-
   int P = parameters[index];
+
+  set_reg_value(P, O);
+}
+
+/// Update the value of a non-constant, non-computed index
+void context::set_reg_value(int P, const expression_ref& O)
+{
+  assert(is_WHNF(O));
 
   assert(access(P).result);
   assert(access(P).changeable);
@@ -227,25 +291,27 @@ int context::n_parameters() const
 
 int context::find_parameter(const string& s) const
 {
-  int index = find_index(parameter_names, s);
-  if (index == -1)
+  for(int i=0;i<n_parameters();i++)
+    if (parameter_name(i) == s)
+      return i;
+
     throw myexception()<<"Can't find parameter named '"<<s<<"'";
-  return index;
 }
 
-int context::add_parameter(const string& s)
+int context::add_parameter(const string& name)
 {
+  assert(name.size() != 0);
+
   int index = n_parameters();
 
-  int R = allocate_reg(s);
-  memory.roots.push_back(R);
-  access(R).name = s;
-  access(R).named = true;
-  access(R).changeable = true;
-  access(R).E = parameter(s);
-
-  parameter_names.push_back(s);
+  int R = allocate_reg( name );
+  memory.roots.push_back( R );
   parameters.push_back( R );
+
+  access(R).changeable = true;
+  access(R).E = parameter(name);
+
+  add_variable(name, R);
 
   return index;
 }
@@ -275,6 +341,23 @@ int reg_heap::n_used_regs() const
   return count;
 }
 
+/// Add an expression that may be replaced by its reduced form
+int context::add_compute_expression(const expression_ref& E)
+{
+  return add_expression( E );
+}
+
+/// Add an expression that may be replaced by its reduced form
+int context::add_compute_expression(const string& name, const expression_ref& E)
+{
+  int index = add_compute_expression( E );
+  int R = heads[index];
+
+  add_variable(name, R);
+  return index;
+}
+
+/// Add an expression that is exact and may NOT be replaced with its reduced form
 int context::add_expression(const expression_ref& E)
 {
   std::cout<<"add: "<<E->print()<<"\n";
@@ -285,15 +368,22 @@ int context::add_expression(const expression_ref& E)
     int param_index = find_parameter(P->parameter_name);
     R = parameters[param_index];
   }
-  else 
-  {
-    R = allocate_reg(E);
-    access(R).E = graph_normalize(*this, E);
+  else {
+    R = allocate_reg( graph_normalize(*this,E) );
   }
 
   heads.push_back(R);
   memory.roots.push_back(R);
   return heads.size()-1;
+}
+
+/// Add an expression that is exact and may NOT be replaced with its reduced form
+int context::add_expression(const string& name, const expression_ref& E)
+{
+  int index = add_expression(E);
+  int R = heads[index];
+  add_variable(name, R);
+  return index;
 }
 
 int reg_heap::add_reg_to_free_list(int r)

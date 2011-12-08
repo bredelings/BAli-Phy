@@ -134,11 +134,19 @@ struct reg_heap
 struct context: virtual public Object
 {
   mutable reg_heap memory;
+
+  std::vector<int> parameters;
+
+protected:
+  std::map<std::string,int> variables;
+  /// Register a variable called 'name' as having location 'R'
+  void add_variable(const std::string& name, int R);
+  /// Change the name of the i-th named variable
+  void rename_variable(const std::string&, const std::string&);
+
+public:
   int n_regs() const {return memory.n_regs();}
   int n_used_regs() const {return memory.n_used_regs();}
-
-  std::vector<std::string> parameter_names;
-  std::vector<int> parameters;
 
   reg& access(int i) const {return memory[i];}
 
@@ -165,11 +173,20 @@ struct context: virtual public Object
     return converted;
   }
 
+  /// Find the name of the ith named parameter
+  std::string parameter_name(int i) const;
+
+  /// Change the name of the i-th named parameter
+  void rename_parameter(int i, const std::string& s);
+
   /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
   boost::shared_ptr<const Object> get_parameter_value(int index) const;
 
   /// Get the value of a non-constant, non-computed index
   boost::shared_ptr<const Object> get_parameter_value(const std::string&) const;
+
+  /// Update the value of a non-constant, non-computed index
+  void set_reg_value(int index, const expression_ref&);
 
   /// Update the value of a non-constant, non-computed index
   void set_parameter_value(int index, const expression_ref&);
@@ -183,7 +200,15 @@ struct context: virtual public Object
 
   int add_parameter(const std::string& s);
 
+  /// Add a literal expression that may NOT be reduced
   int add_expression(const expression_ref& e);
+  /// Add a literal expression that may NOT be reduced
+  int add_expression(const std::string& s, const expression_ref& e);
+
+  /// Add a literal expression that MAY be reduced
+  int add_compute_expression(const expression_ref& e);
+  /// Add a literal expression that MAY be reduced
+  int add_compute_expression(const std::string& s, const expression_ref& e);
 
   int allocate_reg() const;
   int allocate_reg(const std::string&) const;
