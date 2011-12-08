@@ -233,5 +233,14 @@ inline std::ostream& operator<<(std::ostream& o,const Object& R)
   return o<<R.print();
 }
 
+template <typename T>
+boost::shared_ptr<T> convert(const boost::shared_ptr<const Object>& o)
+{
+  assert(o);
+  boost::shared_ptr<T> converted =  boost::dynamic_pointer_cast<const T>(o);
+  if (not converted)
+    throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(*o.get()).name())<<" to type "<<demangle(typeid(T).name());
+  return converted;
+}
 
 #endif
