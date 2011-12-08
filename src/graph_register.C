@@ -74,8 +74,7 @@ reg::reg()
   result(new shared_ptr<const Object>),
   prev_reg(-1),
   next_reg(-1),
-  state(none),
-  on_stack(0)
+  state(none)
 {}
 
 void set_used_input(const context& C, int R1, int slot, int R2)
@@ -408,7 +407,6 @@ expression_ref context::get_expression(int i) const
 
 int reg_heap::add_reg_to_free_list(int r)
 {
-  assert(access(r).on_stack == 0);
   access(r).state = reg::free;
   access(r).prev_reg = -1;
   access(r).next_reg = first_free_reg;
@@ -434,7 +432,6 @@ int reg_heap::get_free_reg()
 
 int reg_heap::add_reg_to_used_list(int r)
 {
-  assert(access(r).on_stack == 0);
   access(r).state = reg::used;
   access(r).prev_reg = -1;
   access(r).next_reg = first_used_reg;
@@ -630,7 +627,7 @@ void reg_heap::collect_garbage()
   {
     reg& R = access(here);
     int next = access(here).next_reg;
-    if (R.state == reg::checked or R.on_stack > 0)
+    if (R.state == reg::checked)
       R.state = reg::used;
     else 
       reclaim_used_reg(here);
@@ -948,9 +945,7 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 	else
 	  new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(C.allocate_reg())) );
 
-	assert(	C[new_reg_vars.back()->target].on_stack >= 0);
-
-	C[new_reg_vars.back()->target].on_stack++;
+	C.push_reg( new_reg_vars.back()->target );
       }
       
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
@@ -977,12 +972,10 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
       C[R].E = T;
 
       for(int i=0;i<vars.size();i++) 
-      {
 	C[ new_reg_vars[i]->target ].E = bodies[i];
-	assert(	C[new_reg_vars.back()->target].on_stack > 0);
-	C[ new_reg_vars[i]->target ].on_stack--;
-	assert(	C[new_reg_vars.back()->target].on_stack >= 0);
-      }
+
+      for(int i=vars.size()-1; i>=0; i--) 
+	C.pop_reg( new_reg_vars[i]->target );
       
       assert(C[R].call == -1);
       assert(not *C[R].result);

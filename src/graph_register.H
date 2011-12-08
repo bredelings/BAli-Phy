@@ -51,7 +51,6 @@ struct reg
   int prev_reg;
   int next_reg;
   States state;
-  int on_stack;
 
   void clear();
   void init();
