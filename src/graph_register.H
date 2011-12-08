@@ -190,7 +190,6 @@ public:
   void set_call(int R1, int R2) const;
   void clear_call(int R) const;
 
-  void push_reg(int R) const {memory.push_reg(R);}
   void pop_reg(int R) const {memory.pop_reg(R);}
 
   int n_regs() const {return memory.n_regs();}
