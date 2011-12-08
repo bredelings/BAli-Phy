@@ -124,13 +124,21 @@ class reg_heap
   std::vector<reg> memory;
   std::vector<int> roots;
   std::vector<int> stack_roots;
-protected:
+
   int first_free_reg;
 
   int first_used_reg;
 
   int allocate_reg();
   void expand_memory(int);
+
+  int add_reg_to_free_list(int);
+  int get_free_reg();
+
+  int add_reg_to_used_list(int);
+  int get_used_reg();
+  void remove_reg_from_used_list(int);
+  void reclaim_used_reg(int);
 
 public:
   const reg& access(int i) const {return memory[i];}
@@ -142,14 +150,6 @@ public:
   int n_regs() const;
   int n_free_regs() const;
   int n_used_regs() const;
-
-  int add_reg_to_free_list(int);
-  int get_free_reg();
-
-  int add_reg_to_used_list(int);
-  int get_used_reg();
-  void remove_reg_from_used_list(int);
-  void reclaim_used_reg(int);
 
   void push_reg(int);
   void pop_reg(int);
