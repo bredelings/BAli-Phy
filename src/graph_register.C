@@ -372,15 +372,6 @@ int context::add_expression(const expression_ref& E)
   return heads.size()-1;
 }
 
-/// Add an expression that is exact and may NOT be replaced with its reduced form
-int context::add_expression(const string& name, const expression_ref& E)
-{
-  int index = add_expression(E);
-  int R = heads[index];
-  add_variable(name, R);
-  return index;
-}
-
 int context::n_expressions() const
 {
   return heads.size();

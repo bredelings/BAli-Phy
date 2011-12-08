@@ -253,8 +253,6 @@ public:
 
   /// Add a literal expression that may NOT be reduced
   int add_expression(const expression_ref& e);
-  /// Add a literal expression that may NOT be reduced
-  int add_expression(const std::string& s, const expression_ref& e);
 
   /// Add a literal expression that MAY be reduced
   int add_compute_expression(const expression_ref& e);
