@@ -659,6 +659,17 @@ expression_ref context::translate_refs(const expression_ref& R) const
   return V;
 }
 
+int context::find_match_expression(const expression_ref& query, std::vector<expression_ref>& results) const
+{
+  for(int i=0;i<n_expressions();i++)
+  {
+    results.clear();
+    if (find_match(query, get_expression(i), results))
+      return i;
+  }
+  return -1;
+}
+
 expression_ref graph_normalize(const context& C, const expression_ref& R)
 {
   // 1. Var

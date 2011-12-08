@@ -277,7 +277,7 @@ public:
 
   void collect_garbage() const;
 
-  int find_match_expression2(const expression_ref& e, std::vector<int>&) const;
+  int find_match_expression(const expression_ref& e, std::vector<expression_ref>&) const;
 };
 
 expression_ref incremental_evaluate(const context& C, const expression_ref&);
