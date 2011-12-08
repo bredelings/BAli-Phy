@@ -9,31 +9,11 @@ using std::map;
 using std::pair;
 
 /*
- * OK, so I wish to be able to refer to registers by name.
- * - References to these names should be converted to reg_var's when an expression is added.
+ * Separate NoteLists (which are just raw expressions) from the executable context.
+ * + We only call "combine" on NoteLists.
+ * + We only find_match_note( ) on NoteLists.
+ * + We allow starting from any place in find_match_note( ).
  *
- * I would like to think of a context as a collection of expression, not all of which are
- * necessarily executable.
- * - executable expressions would need to be converted to a normal form
- * - when added, I might which to do at least let-processing, in order to create sub-expressions
- *   in advance, so that the sub-expression results could be shared if the context were copied.
- *
- * Do I need to separate top-level expressions from other expressions?
- * - 
- *
- * I think that my next 'context' must be BOTH a context AND a Formula.
- * - That is, it is a collection of expressions, SOME of which are executable.
- * - 
- *
- * How do I handle formulaexpressions?
- *
- * TODO
- * - for find_match, just call the standard one in expresion, cuz we only need to look through
- *   reg_vars in computations, not in handling standard note expressions.
- *
- * - should I separate add_expression from add_note_expression( )?
- *
- * - should I only allow compute expressions ( but not note expression ) to have result != null_ptr?
  */
 
 void reg::clear()
