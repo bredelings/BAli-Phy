@@ -174,13 +174,13 @@ void context::rename_parameter(int i, const string& new_name)
 {
   string old_name = parameter_name(i);
 
-  rename_variable(old_name, new_name);
-
   int R = parameters[i];
 
   assert( access(R).named == true );
   assert( access(R).changeable == true );
   access(R).E = parameter(new_name);
+
+  rename_variable(old_name, new_name);
 }
 
 shared_ptr<const Object> incremental_evaluate(const context&, int);
@@ -384,6 +384,16 @@ int context::add_expression(const string& name, const expression_ref& E)
   int R = heads[index];
   add_variable(name, R);
   return index;
+}
+
+int context::n_expression() const
+{
+  return heads.size();
+}
+
+expression_ref context::get_expression(int i) const
+{
+  return access(heads[i]).E;
 }
 
 int reg_heap::add_reg_to_free_list(int r)

@@ -210,6 +210,9 @@ public:
   /// Add a literal expression that MAY be reduced
   int add_compute_expression(const std::string& s, const expression_ref& e);
 
+  int n_expression() const;
+  expression_ref get_expression(int i) const;
+
   int allocate_reg() const;
   int allocate_reg(const std::string&) const;
   int allocate_reg(const expression_ref&) const;
