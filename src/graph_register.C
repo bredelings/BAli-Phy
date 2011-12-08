@@ -346,13 +346,19 @@ int reg_heap::n_used_regs() const
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const expression_ref& E)
 {
-  return add_expression( graph_normalize(*this, E) );
+  int index = add_expression( graph_normalize(*this, E) );
+  int R = heads[index];
+  access(R).result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object>);
+  return index;
 }
 
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const string& name, const expression_ref& E)
 {
-  return add_expression( name, graph_normalize(*this, E) );
+  int index = add_compute_expression( graph_normalize(*this, E) );
+  int R = heads[index];
+  add_variable(name, R);
+  return index;
 }
 
 /// Add an expression that is exact and may NOT be replaced with its reduced form
@@ -360,14 +366,13 @@ int context::add_expression(const expression_ref& E)
 {
   std::cout<<"add: "<<E->print()<<"\n";
 
+  expression_ref T = translate_refs(E);
+
   int R = -1;
-  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
-  {
-    int param_index = find_parameter(P->parameter_name);
-    R = parameters[param_index];
-  }
+  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
+    R = RV->target;
   else
-    R = allocate_reg( translate_refs(E) );
+    R = allocate_reg( T );
 
   heads.push_back(R);
   memory.roots.push_back(R);
