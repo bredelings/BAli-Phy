@@ -307,6 +307,15 @@ int context::find_parameter(const string& s) const
     throw myexception()<<"Can't find parameter named '"<<s<<"'";
 }
 
+int context::find_variable(const string& s) const
+{
+  map<string,int>::const_iterator loc = variables.find(s);
+  if (loc == variables.end())
+    return -1;
+
+  return loc->second;
+}
+
 int context::add_parameter(const string& name)
 {
   assert(name.size() != 0);
