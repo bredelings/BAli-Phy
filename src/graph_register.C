@@ -345,17 +345,13 @@ int reg_heap::n_used_regs() const
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const expression_ref& E)
 {
-  return add_expression( E );
+  return add_expression( graph_normalize(*this, E) );
 }
 
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const string& name, const expression_ref& E)
 {
-  int index = add_compute_expression( E );
-  int R = heads[index];
-
-  add_variable(name, R);
-  return index;
+  return add_expression( name, graph_normalize(*this, E) );
 }
 
 /// Add an expression that is exact and may NOT be replaced with its reduced form
@@ -369,9 +365,8 @@ int context::add_expression(const expression_ref& E)
     int param_index = find_parameter(P->parameter_name);
     R = parameters[param_index];
   }
-  else {
-    R = allocate_reg( graph_normalize(*this,translate_refs(E)) );
-  }
+  else
+    R = allocate_reg( translate_refs(E) );
 
   heads.push_back(R);
   memory.roots.push_back(R);
