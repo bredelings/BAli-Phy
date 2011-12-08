@@ -313,13 +313,11 @@ int context::add_parameter(const string& name)
 
   int index = n_parameters();
 
-  int R = allocate_reg( name );
-  memory.roots.push_back( R );
+  int R = allocate_root_reg();
   parameters.push_back( R );
 
   access(R).changeable = true;
   access(R).E = parameter(name);
-
   add_variable(name, R);
 
   return index;
@@ -379,10 +377,12 @@ int context::add_expression(const expression_ref& E)
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
     R = RV->target;
   else
-    R = allocate_reg( T );
+  {
+    R = allocate_root_reg();
+    access(R).E = T;
+  }
 
   heads.push_back(R);
-  memory.roots.push_back(R);
   return heads.size()-1;
 }
 
@@ -508,6 +508,13 @@ void reg_heap::expand_memory(int s)
   assert(n_regs() == n_used_regs() + n_free_regs());
 }
 
+int reg_heap::allocate_root_reg()
+{
+  int R = allocate_reg();
+  roots.push_back(R);
+  return R;
+}
+
 int reg_heap::allocate_reg()
 {
   assert(n_regs() == n_used_regs() + n_free_regs());
@@ -529,6 +536,13 @@ int reg_heap::allocate_reg()
 
   assert(n_regs() == n_used_regs() + n_free_regs());
   assert(access(r).state == reg::used);
+  return r;
+}
+
+int context::allocate_root_reg() const
+{
+  int r = memory.allocate_root_reg();
+  access(r).init();
   return r;
 }
 

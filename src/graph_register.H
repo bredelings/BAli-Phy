@@ -119,16 +119,17 @@ struct reg_var: public Object
 // * well, parameters could be reg's, so that a separate reg must be a separate parameter.
 // * how, then, do we handle reg NAME's, if reg's are not uniquely identified by their names?
 
-struct reg_heap
+class reg_heap
 {
   std::vector<reg> memory;
   std::vector<int> roots;
   std::vector<int> stack_roots;
-
+protected:
   int first_free_reg;
 
   int first_used_reg;
 
+public:
   const reg& access(int i) const {return memory[i];}
         reg& access(int i)       {return memory[i];}
 
@@ -152,6 +153,7 @@ struct reg_heap
 
   void expand_memory(int);
 
+  int allocate_root_reg();
   int allocate_reg();
 
   void collect_garbage();
@@ -245,6 +247,7 @@ public:
   int n_expression() const;
   expression_ref get_expression(int i) const;
 
+  int allocate_root_reg() const;
   int allocate_reg() const;
   int allocate_reg(const std::string&) const;
   int allocate_reg(const expression_ref&) const;
