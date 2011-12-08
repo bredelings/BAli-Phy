@@ -170,16 +170,23 @@ public:
 
 class context: virtual public Object
 {
+  // FIXME - disallow operator=() as long as there are any regs on the stack?
+  //         (that is, which we are in the middle of modifying the context)?
+
+  /// The array of registers that make up our memory.
   mutable reg_heap memory;
 
+  /// The register indices of the named parameters.
   std::vector<int> parameters;
 
+  /// A list of variable names, and the register indices to which they correspond.
   std::map<std::string,int> variables;
   /// Register a variable called 'name' as having location 'R'
   void add_variable(const std::string& name, int R);
   /// Change the name of the i-th named variable
   void rename_variable(const std::string&, const std::string&);
 
+  /// Translate named variables (struct var) and named parameters (struct parameter) into reg_var references
   expression_ref translate_refs(const expression_ref& R) const;
 
 public:
@@ -190,9 +197,12 @@ public:
   void set_call(int R1, int R2) const;
   void clear_call(int R) const;
 
+  /// Remove a stack-allocated reg from the stack.
   void pop_reg(int R) const {memory.pop_reg(R);}
 
+  /// The total size of the reg memory
   int n_regs() const {return memory.n_regs();}
+  /// How many regs are not known to be free?
   int n_used_regs() const {return memory.n_used_regs();}
 
   reg& access(int i) const {return memory[i];}
@@ -260,10 +270,14 @@ public:
   int n_expression() const;
   expression_ref get_expression(int i) const;
 
+  /// Allocate a reg which will be a root for garbage-collection
   int allocate_root_reg() const;
+  /// Allocate a reg which will be on the stack until removed
   int allocate_stack_reg() const;
 
   void collect_garbage() const;
+
+  int find_match_expression2(const expression_ref& e, std::vector<int>&) const;
 };
 
 expression_ref incremental_evaluate(const context& C, const expression_ref&);
