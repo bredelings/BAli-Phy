@@ -127,8 +127,11 @@ string context::parameter_name(int i) const
 void context::add_variable(const string& name, int R)
 {
   // if there's already an 's', then complain
-  if (variables.find(name) != variables.end())
-    throw myexception()<<"Cannot add parameter '"<<name<<"' - that name is already used!";
+  if (find_variable(name) != -1)
+    throw myexception()<<"Cannot add variable '"<<name<<"': there is already a variable with that name.";
+
+  if (find_parameter(name) != -1)
+    throw myexception()<<"Cannot add variable '"<<name<<"': there is already a parameter with that name.";
 
   assert(access(R).state == reg::used);
 
@@ -141,9 +144,12 @@ void context::rename_variable(const string& s1, const string& s2)
   assert(s1.size() != 0);
   assert(s2.size() != 0);
 
-  // if there's already an 's', then complain
-  if (variables.find(s2) != variables.end())
-    throw myexception()<<"Cannot rename parameter '"<<s1<<"' to '"<<s2<<"' - that name is already used!";
+  // if there's already an 's2', then complain
+  if (find_variable(s2) != -1)
+    throw myexception()<<"Cannot rename variable '"<<s1<<"' to '"<<s2<<"': there is already a variable with that name.";
+
+  if (find_parameter(s2) != -1)
+    throw myexception()<<"Cannot rename variable '"<<s1<<"' to '"<<s2<<"': there is already a parameter with that name.";
 
   // Remove the old name -> reg mapping
   map<string,int>::iterator loc = variables.find(s1);
@@ -166,8 +172,6 @@ void context::rename_parameter(int i, const string& new_name)
 
   assert( access(R).changeable == true );
   access(R).E = parameter(new_name);
-
-  rename_variable(old_name, new_name);
 }
 
 shared_ptr<const Object> incremental_evaluate(const context&, int);
@@ -320,7 +324,6 @@ int context::add_parameter(const string& name)
 
   access(R).changeable = true;
   access(R).E = parameter(name);
-  add_variable(name, R);
 
   return index;
 }
