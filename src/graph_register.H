@@ -47,7 +47,6 @@ struct reg
   States state;
 
   void clear();
-  void init();
 
   reg();
 };

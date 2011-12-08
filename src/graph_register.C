@@ -47,11 +47,6 @@ void reg::clear()
   result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object>);
 }
 
-void reg::init()
-{
-  clear();
-}
-
 reg::reg()
  :changeable(false),
   result(new shared_ptr<const Object>),
@@ -534,14 +529,14 @@ int reg_heap::allocate_reg()
 int context::allocate_root_reg() const
 {
   int r = memory.allocate_root_reg();
-  access(r).init();
+  access(r).clear();
   return r;
 }
 
 int context::allocate_stack_reg() const
 {
   int r = memory.allocate_stack_reg();
-  access(r).init();
+  access(r).clear();
   return r;
 }
 
