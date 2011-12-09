@@ -840,6 +840,10 @@ struct RegOperationArgs: public OperationArgs
       // If R2 -> result was changeable, then R -> result will be changeable as well.
       if (C[R2].changeable) 
 	C[R].changeable = true;
+
+      // Adjust the reference, if it changed.
+      if (R2 != RV->target)
+	dynamic_pointer_cast<expression>(C[R].E)->sub[slot+1] = new reg_var(R2);
     }
 
     return *(C[R2].result);
@@ -863,13 +867,23 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
   /*
    * eval r: p[r] = E
    * 
-   *   if E is WHNF then
+   *   if p[r] = E => F then
+   *      return r.
+   *  
+   *   else if p[r] = E has a call to p[s] then
+   *      s = eval s
+   *      p[r] = E => (result of p[s])
+   *      if p[r] is not changeable
+   *         r = s
+   *      return r;
+   *  
+   *   else if E is WHNF then
    *      p[r] = E => E
    *
-   *   if E is a variable p[s] then
+   *   else if E is a variable p[s] then
    *      p[r] = p[s] => p[s]
    *
-   *   if E is a parameter then the result must already be set
+   *   else if E is a parameter then the result must already be set
    *      p[r] = parameter => R
    *     
    *   else
@@ -880,39 +894,51 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
    *         restart
    *      else
    *         if (F is a variable p[s])
-   *            s = eval s
-   *            p[r] = E-> (p[s] = ?? => R)
+   *            p[r] = E => p[s]
    *         else if (F is WHNF)
    *            p[r] = E => F
    *         else
    *            s = allocate new reg
-   *            p[r] = E -> (p[s] = F => R)
+   *            p[r] = E => p[s]
    *         end if
    *   end if
    *
-   *   if p[r] = ?? => p[s] then
+   *   Cases at this point:
+   *   - NOT p[r] = parameter => E
+   *   - NOT p[r] = parameter => p[s]
+   *   -     p[r] = E => E
+   *   -     p[r] = p[s] => p[s]
+   *   -     p[r] = E => p[s] @ changeable
+   *   -     p[r] = E => F    @ changeable
+   *   - NOT p[r] = E => p[s] 
+   *     --> p[r] = p[s] / restart
+   *   - NOT p[r] = E => F 
+   *     --> p[r] = F    / restart
+   *
+   *   if p[r] = E => p[s] then
    *      if (not changeable)
    *         r = s
    *      else
    *         set_call(r,s)
+   *         restart
    *
-   *   Cases after loop:
-   *   - p[r] = parameter => E
-   *   - p[r] = parameter => p[s]
-   *   - p[r] = E => E
-   *   - p[r] = p[s] => p[s]
-   *   - p[r] = E -> (p[s] = ? => R) @changeable
-   *   - p[r] = E => F @ changeable
-   *   (the unchangeable cases cause a restart)
+   *   Cases at this point:
    *
-   *  The problematic cases:
-   *   - p[r] = parameter => p[s]
-   *   - p[r] = p[s] => p[s]
-   *   - p[r] = E => p[s] @changeable
-   *  Isn't it true that in all these cases, we can add a call?
-   *   
+   *   - NOT p[r] = parameter => E
+   *   - NOT p[r] = parameter => p[s]
+   *   -     p[r] = E => E
+   *   - NOT p[r] = p[s] => p[s]
+   *     --> p[r] = p[s] -> call s
+   *   - NOT p[r] = E => p[s] @ changeable
+   *     --> p[r] = p[s] -> call s
+   *   -     p[r] = E => F    @ changeable
+   *   - NOT p[r] = E => p[s] 
+   *     --> p[r] = p[s] / restart
+   *   - NOT p[r] = E => F 
+   *     --> p[r] = F    / restart
    */
 
+/// Evaluate C[R] and return a reg containing the results that looks through unchangeable redirections = reg_var chains
 int  incremental_evaluate(const context& C, int R)
 {
   assert(C[R].state == reg::used);
@@ -930,9 +956,14 @@ int  incremental_evaluate(const context& C, int R)
     // If we know what to call, then call it and use it to set the result
     if (C[R].call != -1)
     {
-      incremental_evaluate(C, C[R].call);
+      // Evaluate C[S], looking through unchangeable redirections
+      int S = incremental_evaluate(C, C[R].call);
 
-      *(C[R].result) = *(C[C[R].call].result);
+      *(C[R].result) = *(C[S].result);
+
+      if (not C[R].changeable)
+	R = S;
+
       continue;
     }
 
