@@ -1009,7 +1009,6 @@ expression_ref incremental_evaluate(const context& C, const expression_ref& E)
 {
   expression_ref result = C.evaluate(E);
   result = compact_graph_expression(C, result);
-  C.collect_garbage();
 
   return result;
 }
