@@ -866,7 +866,7 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
    *      p[r] = E => E
    *
    *   if E is a variable p[s] then
-   *      p[r] = E => E
+   *      p[r] = p[s] => p[s]
    *
    *   if E is a parameter then the result must already be set
    *      p[r] = parameter => R
@@ -895,8 +895,7 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
    *   - p[r] = parameter => p[s]
    *   - p[r] = E => E
    *   - p[r] = p[s] => p[s]
-   *   - p[r] = E -> (p[s] = F => R) @ changeable
-   *   - p[r] = E => p[s] @ changeable
+   *   - p[r] = E -> (p[s] = ? => R) @changeable
    *   - p[r] = E => F @ changeable
    *   (the unchangeable cases cause a restart)
    *
