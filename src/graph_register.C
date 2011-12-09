@@ -969,17 +969,17 @@ int  incremental_evaluate(const context& C, int R)
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
-    /*
-     * If this expression is already reduced to a normal form, then just return it here.
-     * IMPORTANT: Currently, this check also quite the reduction loop on variables, as well!
-     *            This is by design, even if the variables are not exactly WHNF.
-     */
+    // Check for WHNF *OR* heap variables
     else if (is_WHNF(C[R].E))
       *(C[R].result) = C[R].E;
 
-    /*--------- III. a ---------*/
+    // A parameter has a result that is not computed by reducing an expression.
+    //       The result must be set.  Therefore, complain if the result is missing.
+    else if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(C[R].E))
+      throw myexception()<<"Parameter with no result?! (Changeable = "<<C[R].changeable<<")";
+
     
-    // 1. Reduction: let expression
+    // Reduction: let expression
     else if (parse_let_expression(C[R].E, vars, bodies, T))
     {
       vector<shared_ptr<reg_var> > new_reg_vars;
@@ -1013,48 +1013,46 @@ int  incremental_evaluate(const context& C, int R)
       assert(not *C[R].result);
     }
     
-    // 2. A parameter has a result that is not computed by reducing an expression.
-    //       The result must be set.  Therefore, complain if the result is missing.
-    else if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(C[R].E))
-      throw myexception()<<"Parameter with no result?! (Changeable = "<<C[R].changeable<<")";
-
+    // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
       shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(C[R].E);
       assert(E);
       
-      // 3. Reduction: Operation (includes @, case, +, etc.)
-      if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
+      shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]);
+      assert(O);
+
+      // Although the reg itself is not a parameter, it will stay changeable if it ever computes a changeable result.
+      // Therefore, we cannot do "assert(not C[R].changeable);" here.
+
+      RegOperationArgs Args(R, C);
+      expression_ref result = (*O)(Args);
+      if (not C[R].changeable)
       {
-	RegOperationArgs Args(R, C);
-	expression_ref result = (*O)(Args);
-	if (not C[R].changeable)
-	{
-	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
-	  C[R].E = result;
-	  C.clear_used_inputs(R);
-	  assert(C[R].call == -1);
-	  assert(not *C[R].result);
+	// The old used_input slots are not invalid, which is OK since none of them are changeable.
+	C[R].E = result;
+	C.clear_used_inputs(R);
+	assert(C[R].call == -1);
+	assert(not *C[R].result);
+      }
+      else
+      {
+	// Check for WHNF *OR* heap variables
+	if (is_WHNF(result))
+	  *(C[R].result) = result;
+	else {
+	  int R2 = C.allocate_stack_reg();
+	  C.access(R2).E = result;
+	  *C[R].result = shared_ptr<const Object>(new reg_var(R2));
+	  C.pop_reg(R2);
 	}
-	else
-	{
-	  // This includes reg_vars!
-	  if (is_WHNF(result))
-	    *(C[R].result) = result;
-	  else {
-	    int R2 = C.allocate_stack_reg();
-	    C.access(R2).E = result;
-	    *C[R].result = shared_ptr<const Object>(new reg_var(R2));
-	    C.pop_reg(R2);
-	  }
-	}
+      }
 	
 #ifndef NDEBUG
-	//      std::cout<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
-	std::cout<<"Executing operation: "<<O<<"\n";
-	std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
+      //      std::cout<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
+      std::cout<<"Executing operation: "<<O<<"\n";
+      std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
 #endif
-      }
     }
 
     // 4. We can't exit the loop with a reg_var in the result slot. Change to a call.
