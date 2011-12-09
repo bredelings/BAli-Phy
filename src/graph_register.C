@@ -980,6 +980,7 @@ int  incremental_evaluate(const context& C, int R)
 	T = substitute(T, vars[i], *replacement_reg_var);
       }
       
+      assert(not C[R].changeable);
       C[R].E = T;
 
       for(int i=0;i<vars.size();i++) 
