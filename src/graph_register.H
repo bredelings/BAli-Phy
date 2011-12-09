@@ -159,6 +159,7 @@ public:
   reg_heap();
 };
 
+/// This class contains only compute expressions, parameters, and names for the compute expressions
 class context: virtual public Object
 {
   // FIXME - disallow operator=() as long as there are any regs on the stack?
@@ -209,7 +210,7 @@ public:
   boost::shared_ptr<const Object> evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
-  boost::shared_ptr<const Object> evaluate(const expression_ref&) const;
+  boost::shared_ptr<const Object> evaluate_expression(const expression_ref&) const;
 
   template <typename T>
   boost::shared_ptr<const T> evaluate_as(int index) const
@@ -218,9 +219,9 @@ public:
   }
 
   template <typename T>
-  boost::shared_ptr<const T> evaluate_as(const expression_ref& E) const
+  boost::shared_ptr<const T> evaluate_expression_as(const expression_ref& E) const
   {
-    return convert<const T>( evaluate(E) );
+    return convert<const T>( evaluate_expression(E) );
   }
 
   /// Find the name of the ith named parameter
@@ -277,8 +278,6 @@ public:
 
   int find_match_expression(const expression_ref& e, std::vector<expression_ref>&) const;
 };
-
-expression_ref incremental_evaluate(const context& C, const expression_ref&);
 
 boost::shared_ptr<context> prefix_formula(const std::string&, const boost::shared_ptr<const context>&);
 

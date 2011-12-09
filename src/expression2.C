@@ -461,7 +461,7 @@ int main()
 
   context C;
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
-  cout<<incremental_evaluate(C,6)<<"\n";
+  cout<<C.evaluate_expression(6)<<"\n";
 
   expression_ref test12 = apply_expression(apply_expression(plus,One),One);
 
@@ -469,7 +469,7 @@ int main()
   cout<<"Eval test:     "<<test12<<" = \n";
   test12 = launchbury_normalize(test12);
   cout<<"   normalized: "<<test12<<" = \n";
-  test12 = incremental_evaluate(C,test12);
+  test12 = C.evaluate_expression(test12);
   cout<<test12<<"\n";
   test12.reset();
   cout<<"A:C.n_regs() = "<<C.n_regs()<<"\n";
@@ -480,7 +480,7 @@ int main()
   cout<<"Eval test:     "<<test13<<" = \n";
   test13 = launchbury_normalize(test13);
   cout<<"   normalized: "<<test13<<" = \n";
-  test13 = incremental_evaluate(C,test13);
+  test13 = C.evaluate_expression(test13);
   cout<<test13<<"\n";
   test13.reset();
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
@@ -495,7 +495,7 @@ int main()
   cout<<"Eval test:     "<<test14<<" = \n";
   test14 = launchbury_normalize(test14);
   cout<<"   normalized: "<<test14<<" = \n";
-  test14 = incremental_evaluate(C,test14);
+  test14 = C.evaluate_expression(test14);
   cout<<test14<<"\n";
   test14.reset();
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
@@ -512,7 +512,7 @@ int main()
   cout<<"Eval test:     "<<test15<<" = \n";
   test15 = launchbury_normalize(test15);
   cout<<"   normalized: "<<test15<<" = \n";
-  test15 = incremental_evaluate(C,test15);
+  test15 = C.evaluate_expression(test15);
   cout<<test15<<"\n";
   test15.reset();
   cout<<"C.n_used_regs() = "<<C.n_used_regs()<<"\n";

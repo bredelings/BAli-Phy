@@ -159,7 +159,7 @@ shared_ptr<const Object> context::evaluate(int index) const
 
 expression_ref graph_normalize(const context&, const expression_ref&);
 
-shared_ptr<const Object> context::evaluate(const expression_ref& E) const
+shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) const
 {
   int R = allocate_stack_reg();
   access(R).E = graph_normalize(*this, translate_refs(E));
@@ -1004,15 +1004,6 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 
   return *(C[R].result);
 }
-
-expression_ref incremental_evaluate(const context& C, const expression_ref& E)
-{
-  expression_ref result = C.evaluate(E);
-  result = compact_graph_expression(C, result);
-
-  return result;
-}
-
 
 void discover_graph_vars(const context& C, const expression_ref& R, map< int, std::string>& names)
 {
