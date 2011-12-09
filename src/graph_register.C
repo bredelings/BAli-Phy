@@ -859,15 +859,49 @@ struct RegOperationArgs: public OperationArgs
 
 expression_ref compact_graph_expression(const context& C, const expression_ref& R);
 
-/*
- * Issues:
- * 1. Chains of reg_var.  I allow reg_var in expression to allow references to memory locations.
- *    For example, X+Y would be replaced with p+q, with p->X and q->Y.  However, I do not want
- *    to allow memory locations to simply reference other locations, as in p->q, q->2.
- *
- * 2. Similarly, I think we are currently allowing reg_var's to be returned as WHNF results?
- *    
- */
+  /*
+   * eval r: p[r] = E
+   * 
+   *   if E is WHNF then
+   *      p[r] = E => E
+   *
+   *   if E is a variable p[s] then
+   *      p[r] = E => E
+   *
+   *   if E is a parameter then the result must already be set
+   *      p[r] = parameter => R
+   *     
+   *   else
+   *      assert(E is not a parameter)
+   *      reduce E -> (F,changable)         [operations + let expression]
+   *      if E->F is unchangeable
+   *         p[r] = F
+   *         restart
+   *      else
+   *         if (F is a variable p[s])
+   *            s = eval s
+   *            p[r] = E-> (p[s] = ?? => R)
+   *         else if (F is WHNF)
+   *            p[r] = E => F
+   *         else
+   *            s = allocate new reg
+   *            p[r] = E -> (p[s] = F => R)
+   *         end if
+   *   end if
+   *
+   *   Cases after loop:
+   *   
+   *   - p[r] = parameter => E
+   *   - p[r] = parameter => p[s]
+   *   - p[r] = E => E
+   *   - p[r] = p[s] => p[s]
+   *   - p[r] = E -> (p[s] = F => R) @ changeable
+   *   - p[r] = E => p[s] @ changeable
+   *   - p[r] = E => F @ changeable
+   *   (the unchangeable cases cause a restart)
+   *
+   *   
+   */
 
 int  incremental_evaluate(const context& C, int R)
 {
