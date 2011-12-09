@@ -73,6 +73,7 @@ void context::clear_used_inputs(int R, int S) const
 void context::set_call(int R1, int R2) const
 {
   assert(access(R1).call == -1);
+  assert(not *access(R1).result);
   assert(R2 >= 0 and R2 < n_regs());
 
   access(R1).call = R2;
