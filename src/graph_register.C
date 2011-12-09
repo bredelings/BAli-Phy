@@ -194,21 +194,45 @@ void context::set_parameter_value(int index, const expression_ref& O)
   set_reg_value(P, O);
 }
 
+void set_call_if_reg_result(const context& C, int R)
+{
+  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(*C[R].result))
+  {
+    int R2 = RV->target;
+    
+    // clear the result slot
+    (*C[R].result).reset();
+    
+    C.set_call(R,R2);
+  }
+}
+
 /// Update the value of a non-constant, non-computed index
 void context::set_reg_value(int P, const expression_ref& OO)
 {
-  expression_ref O = translate_refs(OO);
-  assert(is_WHNF(O));
+  expression_ref O = graph_normalize(*this, translate_refs(OO));
 
   assert(dynamic_pointer_cast<const parameter>(access(P).E));
   assert(access(P).result);
   assert(access(P).changeable);
-  assert(access(P).call == -1);
+  clear_call(P);
 
-  // The result value here cannot be shared.
-  access(P).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
+  if (not is_WHNF(O))
+  {
+    int R = allocate_stack_reg();
+    access(R).E = O;
+    O = expression_ref( new reg_var(R) );
 
-  *access(P).result = O;
+    // The result value here cannot be shared.
+    access(P).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >(O));
+    pop_reg(R);
+  }
+  else
+  {
+    // The result value here cannot be shared.
+    access(P).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >(O));
+  }
+  set_call_if_reg_result(*this, P);
 
   vector< int > NOT_known_value_unchanged;
   std::set< int > visited;
@@ -1058,15 +1082,7 @@ int  incremental_evaluate(const context& C, int R)
     }
 
     // 4. We can't exit the loop with a reg_var in the result slot. Change to a call.
-    if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(*C[R].result))
-    {
-      int R2 = RV->target;
-
-      // clear the result slot
-      (*C[R].result).reset();
-      
-      C.set_call(R,R2);
-    }
+    set_call_if_reg_result(C,R);
   }
 
 #ifndef NDEBUG
