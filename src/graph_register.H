@@ -174,8 +174,6 @@ class context: virtual public Object
   std::map<std::string,int> variables;
   /// Register a variable called 'name' as having location 'R'
   void add_variable(const std::string& name, int R);
-  /// Change the name of the i-th named variable
-  void rename_variable(const std::string&, const std::string&);
 
   /// Translate named variables (struct var) and named parameters (struct parameter) into reg_var references
   expression_ref translate_refs(const expression_ref& R) const;
@@ -255,6 +253,9 @@ public:
 
   /// Lookup the reg for the named variable s (not a parameter)
   int find_variable(const std::string& s) const;
+
+  /// Change the name of the variable named s 
+  void rename_variable(const std::string& s, const std::string&);
 
   /// Create a new parameter named s
   int add_parameter(const std::string& s);
