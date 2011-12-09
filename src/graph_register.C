@@ -917,13 +917,6 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 	expression_ref replacement_reg_var = new_reg_vars[i]->clone();
 	if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(bodies[i]))
 	  replacement_reg_var = bodies[i];
-	/*
-	else if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(bodies[i]))
-	{
-	  int param_location = find_parameter(P->parameter_name);
-	  replacement_reg_var = expression_ref(new reg_var(param_location));
-	}
-	*/
 
 	for(int j=0;j<vars.size();j++)
 	  bodies[j] = substitute(bodies[j], vars[i], *replacement_reg_var);
