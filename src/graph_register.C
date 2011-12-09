@@ -832,7 +832,11 @@ struct RegOperationArgs: public OperationArgs
     if (not C[R].used_inputs[slot] != -1)
     {
       // evaluate R
-      incremental_evaluate(C, R2);
+      R2 = incremental_evaluate(C, R2);
+
+      // Adjust the reference, if it changed.
+      if (R2 != RV->target)
+	dynamic_pointer_cast<expression>(C[R].E)->sub[slot+1] = new reg_var(R2);
 
       // mark R2 used by R in the correct slot
       C.set_used_input(R, slot, R2);
@@ -840,10 +844,6 @@ struct RegOperationArgs: public OperationArgs
       // If R2 -> result was changeable, then R -> result will be changeable as well.
       if (C[R2].changeable) 
 	C[R].changeable = true;
-
-      // Adjust the reference, if it changed.
-      if (R2 != RV->target)
-	dynamic_pointer_cast<expression>(C[R].E)->sub[slot+1] = new reg_var(R2);
     }
 
     return *(C[R2].result);
