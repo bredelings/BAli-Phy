@@ -889,8 +889,13 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
    *         end if
    *   end if
    *
+   *   if p[r] = ?? => p[s] then
+   *      if (not changeable)
+   *         r = s
+   *      else
+   *         set_call(r,s)
+   *
    *   Cases after loop:
-   *   
    *   - p[r] = parameter => E
    *   - p[r] = parameter => p[s]
    *   - p[r] = E => E
@@ -899,6 +904,11 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
    *   - p[r] = E => F @ changeable
    *   (the unchangeable cases cause a restart)
    *
+   *  The problematic cases:
+   *   - p[r] = parameter => p[s]
+   *   - p[r] = p[s] => p[s]
+   *   - p[r] = E => p[s] @changeable
+   *  Isn't it true that in all these cases, we can add a call?
    *   
    */
 
