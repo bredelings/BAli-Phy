@@ -996,6 +996,22 @@ int  incremental_evaluate(const context& C, int R)
     }
   }
 
+
+  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(*C[R].result))
+  {
+    int R2 = RV->target;
+
+    R2 = incremental_evaluate(C,R2);
+
+    expression_ref result = *C[R2].result;
+
+    if (R2 != RV->target)
+      *(C[R].result) = shared_ptr<const Object>(new reg_var(R2));
+
+    if (not C[R].changeable)
+      R = R2;
+  }
+
 #ifndef NDEBUG
   //  std::cout<<"Result = "<<compact_graph_expression(*C[R].result)<<"\n";
   //  std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
