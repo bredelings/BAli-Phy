@@ -999,6 +999,8 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
 #endif
 
   assert(*C[R].result);
+  assert(is_WHNF(*C[R].result));
+  assert(not dynamic_pointer_cast<const reg_var>(*C[R].result));
 
   return *(C[R].result);
 }
