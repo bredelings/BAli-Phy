@@ -428,6 +428,7 @@ void reg_heap::remove_reg_from_used_list(int r)
 
 void reg_heap::reclaim_used_reg(int r)
 {
+  // FIXME - we need to carefully clear references to things that might reference us back.. don't we?
   access(r).clear();
   remove_reg_from_used_list(r);
   add_reg_to_free_list(r);
@@ -502,6 +503,7 @@ int reg_heap::allocate_reg()
 int context::allocate_root_reg() const
 {
   int r = memory.allocate_root_reg();
+  // FIXME - this should be unnecessary
   access(r).clear();
   return r;
 }
@@ -509,6 +511,7 @@ int context::allocate_root_reg() const
 int context::allocate_stack_reg() const
 {
   int r = memory.allocate_stack_reg();
+  // FIXME - this should be unnecessary
   access(r).clear();
   return r;
 }
