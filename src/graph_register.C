@@ -156,6 +156,8 @@ int incremental_evaluate(const context&, int);
 shared_ptr<const Object> context::evaluate(int index) const
 {
   int R = incremental_evaluate(*this, heads[index]);
+  // FIXME - I'd like to update heads[index] to be R if it changed.
+  //         This probably requires updating the memory roots.
   return *access(R).result;
 }
 
