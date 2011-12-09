@@ -167,6 +167,9 @@ class context: virtual public Object
   /// The array of registers that make up our memory.
   mutable reg_heap memory;
 
+  // the list of expressions that we are interested in evaluating.
+  std::vector<int> heads;
+
   /// The register indices of the named parameters.
   std::vector<int> parameters;
 
@@ -201,9 +204,6 @@ public:
   expression_ref& value(int i) const {return memory[i].E;}
 
   context* clone() const {return new context(*this);}
-
-  // the list of expressions that we are interested in evaluating.
-  mutable std::vector<int> heads;
 
   /// Return the value of a particular index, computing it if necessary
   boost::shared_ptr<const Object> evaluate(int index) const;
