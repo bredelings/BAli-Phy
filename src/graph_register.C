@@ -922,45 +922,34 @@ int  incremental_evaluate(const context& C, int R)
   std::cout<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
   while (not *C[R].result)
   {
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+
     std::cout<<"   statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
     // If we know what to call, then call it and use it to set the result
     if (C[R].call != -1)
     {
       incremental_evaluate(C, C[R].call);
 
-      // If the used_inputs weren't changeable, we would have replaced R->E with R->call.
-      assert(C[R].changeable);
-      
       *(C[R].result) = *(C[C[R].call].result);
       continue;
     }
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
-    // Compute the value of this result
-    expression_ref control = C[R].E;
-#ifndef NDEBUG
-    //    std::cout<<C[R].name<<":control = "<<control<<"\n";
-    //    std::cout<<C[R].name<<":control(c) = "<<compact_graph_expression(control)<<"\n";
-#endif
-
     /*
      * If this expression is already reduced to a normal form, then just return it here.
      * IMPORTANT: Currently, this check also quite the reduction loop on variables, as well!
      *            This is by design, even if the variables are not exactly WHNF.
      */
-    if (is_WHNF(C[R].E)) {
+    else if (is_WHNF(C[R].E))
       *(C[R].result) = C[R].E;
-      continue;
-    }
 
     /*--------- III. a ---------*/
     
-    // 1. Recursive let expressions
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
-    expression_ref T;
-    if (parse_let_expression(control, vars, bodies, T))
+    // 1. Reduction: let expression
+    else if (parse_let_expression(C[R].E, vars, bodies, T))
     {
       vector<shared_ptr<reg_var> > new_reg_vars;
       for(int i=0;i<vars.size();i++)
@@ -991,73 +980,62 @@ int  incremental_evaluate(const context& C, int R)
       
       assert(C[R].call == -1);
       assert(not *C[R].result);
-      continue;
     }
     
     // 2. A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
-    if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(control))
+    else if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(C[R].E))
       throw myexception()<<"Parameter with no result?! (Changeable = "<<C[R].changeable<<")";
 
-    // 3. A free variable. This should never happen.
-    shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(control);
-    assert(not D);
-    
-    shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(control);
-    assert(E);
-    
-    // 4. An Operation (includes @, case, +, etc.)
-    if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
+    else
     {
-      RegOperationArgs Args(R, C);
-      expression_ref result = (*O)(Args);
-      if (not C[R].changeable)
+      shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(C[R].E);
+      assert(E);
+      
+      // 3. Reduction: Operation (includes @, case, +, etc.)
+      if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
       {
-	// The old used_input slots are not invalid, which is OK since none of them are changeable.
-	C[R].E = result;
-	C.clear_used_inputs(R);
-	assert(C[R].call == -1);
-	assert(not *C[R].result);
-      }
-      else
-      {
-	if (is_WHNF(result))
-	  *(C[R].result) = result;
+	RegOperationArgs Args(R, C);
+	expression_ref result = (*O)(Args);
+	if (not C[R].changeable)
+	{
+	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
+	  C[R].E = result;
+	  C.clear_used_inputs(R);
+	  assert(C[R].call == -1);
+	  assert(not *C[R].result);
+	}
 	else
 	{
-	  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
-	    C.set_call(R, RV->target);
+	  // This includes reg_vars!
+	  if (is_WHNF(result))
+	    *(C[R].result) = result;
 	  else {
 	    int R2 = C.allocate_stack_reg();
 	    C.access(R2).E = result;
-	    C.set_call(R, R2);
+	    *C[R].result = shared_ptr<const Object>(new reg_var(R2));
 	    C.pop_reg(R2);
 	  }
 	}
-      }
-
+	
 #ifndef NDEBUG
-      //      std::cout<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
-      std::cout<<"Executing operation: "<<O<<"\n";
-      std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
+	//      std::cout<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
+	std::cout<<"Executing operation: "<<O<<"\n";
+	std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
 #endif
+      }
     }
-  }
 
+    // 4. We can't exit the loop with a reg_var in the result slot. Change to a call.
+    if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(*C[R].result))
+    {
+      int R2 = RV->target;
 
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(*C[R].result))
-  {
-    int R2 = RV->target;
-
-    R2 = incremental_evaluate(C,R2);
-
-    expression_ref result = *C[R2].result;
-
-    if (R2 != RV->target)
-      *(C[R].result) = shared_ptr<const Object>(new reg_var(R2));
-
-    if (not C[R].changeable)
-      R = R2;
+      // clear the result slot
+      (*C[R].result).reset();
+      
+      C.set_call(R,R2);
+    }
   }
 
 #ifndef NDEBUG
