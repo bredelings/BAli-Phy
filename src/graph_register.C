@@ -149,12 +149,13 @@ void context::rename_parameter(int i, const string& new_name)
   access(R).E = parameter(new_name);
 }
 
-shared_ptr<const Object> incremental_evaluate(const context&, int);
+int incremental_evaluate(const context&, int);
 
 /// Return the value of a particular index, computing it if necessary
 shared_ptr<const Object> context::evaluate(int index) const
 {
-  return incremental_evaluate(*this,heads[index]);
+  int R = incremental_evaluate(*this, heads[index]);
+  return *access(R).result;
 }
 
 expression_ref graph_normalize(const context&, const expression_ref&);
@@ -164,7 +165,8 @@ shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) c
   int R = allocate_stack_reg();
   access(R).E = graph_normalize(*this, translate_refs(E));
 
-  shared_ptr<const Object> result = incremental_evaluate(*this,R);
+  incremental_evaluate(*this,R);
+  shared_ptr<const Object> result = *access(R).result;
   pop_reg(R);
 
   return result;
@@ -799,7 +801,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
   return R;
 }
 
-shared_ptr<const Object> incremental_evaluate(const context&, int);
+int incremental_evaluate(const context&, int);
 
 #include "computation.H"
 
@@ -825,10 +827,13 @@ struct RegOperationArgs: public OperationArgs
 
     if (not C[R].used_inputs[slot] != -1)
     {
-      incremental_evaluate(C,R2);
+      // evaluate R
+      incremental_evaluate(C, R2);
 
+      // mark R2 used by R in the correct slot
       C.set_used_input(R, slot, R2);
 
+      // If R2 -> result was changeable, then R -> result will be changeable as well.
       if (C[R2].changeable) 
 	C[R].changeable = true;
     }
@@ -861,7 +866,7 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
  *    
  */
 
-shared_ptr<const Object> incremental_evaluate(const context& C, int R)
+int  incremental_evaluate(const context& C, int R)
 {
   assert(C[R].state == reg::used);
   assert(R >= 0 and R < C.n_regs());
@@ -892,7 +897,11 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
     //    std::cout<<C[R].name<<":control(c) = "<<compact_graph_expression(control)<<"\n";
 #endif
 
-    // If this expression cannot be reduced further, then just return it here.
+    /*
+     * If this expression is already reduced to a normal form, then just return it here.
+     * IMPORTANT: Currently, this check also quite the reduction loop on variables, as well!
+     *            This is by design, even if the variables are not exactly WHNF.
+     */
     if (is_WHNF(C[R].E)) {
       *(C[R].result) = C[R].E;
       continue;
@@ -937,25 +946,19 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
       continue;
     }
     
-    /// IIIb. A parameter -> Set the result according to the context
+    // 2. A parameter has a result that is not computed by reducing an expression.
+    //       The result must be set.  Therefore, complain if the result is missing.
     if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(control))
-    {
-      if (not C[R].changeable)
-      {
-	std::abort();
-      }
-      else
-	throw myexception()<<"Parameter with no result?!";
-    }
+      throw myexception()<<"Parameter with no result?! (Changeable = "<<C[R].changeable<<")";
 
-    // 2. A free variable. This should never happen.
+    // 3. A free variable. This should never happen.
     shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(control);
     assert(not D);
     
     shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(control);
     assert(E);
     
-    // 3. An Operation (includes @, case, +, etc.)
+    // 4. An Operation (includes @, case, +, etc.)
     if (shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]))
     {
       RegOperationArgs Args(R, C);
@@ -1002,7 +1005,7 @@ shared_ptr<const Object> incremental_evaluate(const context& C, int R)
   assert(is_WHNF(*C[R].result));
   assert(not dynamic_pointer_cast<const reg_var>(*C[R].result));
 
-  return *(C[R].result);
+  return R;
 }
 
 void discover_graph_vars(const context& C, const expression_ref& R, map< int, std::string>& names)
