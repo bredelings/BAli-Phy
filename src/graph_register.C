@@ -35,6 +35,12 @@ reg::reg()
   state(none)
 {}
 
+int context::add_note(const expression_ref& E)
+{
+  notes.push_back(E);
+  return notes.size()-1;
+}
+
 void context::set_used_input(int R1, int slot, int R2) const
 {
   assert(R1 >= 0 and R1 < n_regs());
@@ -671,16 +677,24 @@ expression_ref context::translate_refs(const expression_ref& R) const
   return V;
 }
 
-int context::find_match_expression(const expression_ref& query, std::vector<expression_ref>& results) const
+int context::find_match_notes(const expression_ref& query, std::vector<expression_ref>& results, int start) const
 {
-  for(int i=0;i<n_expressions();i++)
+  assert(start >= 0);
+  for(int i=start;i<n_notes();i++)
   {
     results.clear();
-    if (find_match(query, get_expression(i), results))
+    if (find_match(query, get_note(i), results))
       return i;
   }
   return -1;
 }
+
+context::context()
+{ }
+
+context::context(const vector<expression_ref>& N)
+  :notes(N)
+{ }
 
 expression_ref graph_normalize(const context& C, const expression_ref& R)
 {

@@ -182,7 +182,21 @@ class context: virtual public Object
   /// Translate named variables (struct var) and named parameters (struct parameter) into reg_var references
   expression_ref translate_refs(const expression_ref& R) const;
 
+  std::vector<expression_ref> notes;
+
 public:
+  int n_notes() const {return notes.size();}
+
+  const std::vector<expression_ref>& get_notes() const {return notes;}
+  std::vector<expression_ref>& get_notes() {return notes;}
+
+  const expression_ref get_note(int i) const {return notes[i];}
+  expression_ref get_note(int i) {return notes[i];}
+
+  int add_note(const expression_ref&);
+
+  int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
+
   void set_used_input(int R1, int slot, int R2) const;
   void clear_used_input(int R, int slot) const;
   void clear_used_inputs(int R) const;
@@ -276,7 +290,9 @@ public:
 
   void collect_garbage() const;
 
-  int find_match_expression(const expression_ref& e, std::vector<expression_ref>&) const;
+  context();
+
+  context(const std::vector<expression_ref>&);
 };
 
 boost::shared_ptr<context> prefix_formula(const std::string&, const boost::shared_ptr<const context>&);
