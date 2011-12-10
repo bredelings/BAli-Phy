@@ -175,7 +175,8 @@ class context: virtual public Object
   std::vector<int> parameters;
 
   /// A list of variable names, and the register indices to which they correspond.
-  std::map<std::string,int> variables;
+  std::vector<std::pair<std::string,int> > variables;
+
   /// Register a variable called 'name' as having location 'R'
   void add_variable(const std::string& name, int R);
 
@@ -271,8 +272,10 @@ public:
   /// Lookup the reg for the named variable s (not a parameter)
   int find_variable(const std::string& s) const;
 
+  const std::string& variable_name(int i) const;
+
   /// Change the name of the variable named s 
-  void rename_variable(const std::string& s, const std::string&);
+  void rename_variable(int i, const std::string&);
 
   /// Create a new parameter named s
   int add_parameter(const std::string& s);

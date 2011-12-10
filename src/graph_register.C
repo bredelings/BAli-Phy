@@ -117,13 +117,13 @@ void context::add_variable(const string& name, int R)
 
   assert(access(R).state == reg::used);
 
-  variables[name] = R;
+  variables.push_back(std::pair<string,int>(name,R));
 }
 
-void context::rename_variable(const string& s1, const string& s2)
+void context::rename_variable(int i, const string& s2)
 {
   // zero-length names are not allowed
-  assert(s1.size() != 0);
+  const string& s1 = variables[i].first;
   assert(s2.size() != 0);
 
   // if there's already an 's2', then complain
@@ -134,16 +134,11 @@ void context::rename_variable(const string& s1, const string& s2)
     throw myexception()<<"Cannot rename variable '"<<s1<<"' to '"<<s2<<"': there is already a parameter with that name.";
 
   // Remove the old name -> reg mapping
-  map<string,int>::iterator loc = variables.find(s1);
-  assert(loc != variables.end());
+  int R = variables[i].second;
 
-  int R = loc->second;
-
-  variables.erase(loc);
+  variables[i].first = s2;
 
   assert(access(R).state == reg::used);
-
-  variables[s2] = R;
 }
 
 void context::rename_parameter(int i, const string& new_name)
@@ -321,11 +316,16 @@ int context::n_variables() const
 
 int context::find_variable(const string& s) const
 {
-  map<string,int>::const_iterator loc = variables.find(s);
-  if (loc == variables.end())
-    return -1;
+  for(int i=0;i<variables.size();i++)
+    if (variables[i].first == s)
+      return i;
 
-  return loc->second;
+  return -1;
+}
+
+const string& context::variable_name(int i) const
+{
+  return variables[i].first;
 }
 
 int context::add_parameter(const string& name)
@@ -657,11 +657,11 @@ expression_ref context::translate_refs(const expression_ref& R) const
   // Replace parameters with the appropriate reg_var: of value whatever
   if (shared_ptr<const var> V = dynamic_pointer_cast<const var>(R))
   {
-    map<string,int>::const_iterator loc = variables.find(V->name);
-    if (loc == variables.end())
+    int loc = find_variable(V->name);
+    if (loc == -1)
       throw myexception()<<"Can't translate undefined variable '"<<V->name<<"' in expression!";
 
-    int R = loc->second;
+    int R = variables[loc].second;
 
     return expression_ref(new reg_var(R) );
   }
@@ -1227,8 +1227,8 @@ boost::shared_ptr<context> prefix_formula(const std::string& prefix, const boost
     C2->rename_parameter(i, prefix + "::" + C2->parameter_name(i));
 
   // prefix the variable names
-  for(int i=0;i<C2->n_parameters();i++)
-    ;
+  for(int i=0;i<C2->n_variables();i++)
+    C2->rename_variable(i, prefix + "::" + C2->variable_name(i));
 
   // prefix the names in the model
   add_prefix(prefix, C2->get_notes());
