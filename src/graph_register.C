@@ -179,13 +179,25 @@ shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) c
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 shared_ptr<const Object> context::get_parameter_value(int index) const
 {
-  return access(heads[index]).E;
+  int P = parameters[index];
+
+  if (not *access(P).result and access(P).call == -1)
+    return shared_ptr<const Object>();
+
+  // If the value needs to be compute (e.g. its a call expression) then compute it.
+  incremental_evaluate(P);
+
+  return *access(P).result;
 }
 
 /// Get the value of a non-constant, non-computed index
-shared_ptr<const Object> context::get_parameter_value(const std::string&) const
+shared_ptr<const Object> context::get_parameter_value(const std::string& name) const
 {
-  return shared_ptr<const Object>();
+  int index = find_parameter(name);
+  if (index == -1)
+    throw myexception()<<"Cannot find parameter called '"<<name<<"'";
+
+  return get_parameter_value(index);
 }
 
 void context::set_parameter_value(int index, const expression_ref& O)
