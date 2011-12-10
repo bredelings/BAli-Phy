@@ -723,6 +723,8 @@ context::context(const vector<expression_ref>& N)
 
 expression_ref graph_normalize(const context& C, const expression_ref& R)
 {
+  if (not R) return R;
+
   // 1. Var
   if (is_dummy(R))
     return R;
