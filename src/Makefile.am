@@ -101,7 +101,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  tools/partition.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C timer_stack.C \
 	  setup-mcmc.C io.C logger.C AIS.C operator.C expression.C formula.C \
-	  setup-imodel.C smodel/objects.C context.C computation.C \
+	  setup-imodel.C smodel/objects.C context.C computation.C graph_register.C \
 	  formula_expression.C smodel/operations.C distribution-operations.C operations.C
 
 nodist_bali_phy_SOURCES = git_version.h
@@ -303,7 +303,7 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	util.C sequencetree.C substitution.C eigenvalue.C tree.C \
 	exponential.C setup-smodel.C smodel/smodel.C imodel.C rng.C likelihood.C \
 	choose.C tools/optimize.C setup.C rates.C matcache.C alignment-util.C \
-	sequence-format.C randomtree.C model.C  probability.C \
+	sequence-format.C randomtree.C model.C graph_register.C  probability.C \
 	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
 	alignment-random.C parameters.C myexception.C monitor.C \
 	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \

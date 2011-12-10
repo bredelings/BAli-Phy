@@ -711,7 +711,7 @@ shared_ptr<const Object> context::default_parameter_value(int i) const
   expression_ref default_value = lambda_expression(data_function("default_value",2));
 
   vector<expression_ref> results;
-  expression_ref query = default_value( parameter_name(i) )(match(0));
+  expression_ref query = default_value( parameter( parameter_name(i) ) )(match(0));
   int found = find_match_notes(query, results, 0);
 
   if (found != -1)

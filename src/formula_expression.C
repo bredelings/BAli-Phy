@@ -1,8 +1,10 @@
 #include "formula_expression.H"
 #include "context.H"
 #include "bounds.H"
+#include "graph_register.H"
 
 using boost::shared_ptr;
+using std::vector;
 
 formula_expression_ref formula_expression_ref::operator()(const formula_expression_ref& R) const
 {
@@ -43,33 +45,38 @@ formula_expression_ref expression_ref::operator()(const formula_expression_ref& 
 formula_expression_ref::formula_expression_ref()
 { }
 
-formula_expression_ref::formula_expression_ref(const expression_ref& r)
-  :R(r), notes(new Formula)
+formula_expression_ref::formula_expression_ref(const expression_ref& R)
+  :I(0),notes(1,R)
 { }
 
-formula_expression_ref::formula_expression_ref(const shared_ptr<const Formula>& F1, const expression_ref& r)
-  :R(r),
-   notes(F1)
+formula_expression_ref::formula_expression_ref(const vector<expression_ref>& N, int i)
+  :I(i),notes(N)
 { }
+
+formula_expression_ref::formula_expression_ref(const vector<expression_ref>& N, const expression_ref& R)
+  :notes(N)
+{ 
+  I = N.size();
+  notes.push_back(R);
+}
 
 formula_expression_ref prefix_formula(const std::string& prefix,const formula_expression_ref& R)
 {
-  return formula_expression_ref(prefix_formula(prefix, R.notes), add_prefix(prefix, R.exp()));
+  return formula_expression_ref(prefix_formula(prefix, R.notes), R.index());
 }
 
 int formula_expression_ref::add_expression(const formula_expression_ref& R)
 {
   // The indices of the first argument are (currently) not altered, so 'index' is unchanged.
-  notes = combine(notes, R.notes);
-  return notes->add_expression(R.exp());
+  int i = notes.size() + R.index();
+  notes.insert(notes.end(), R.notes.begin(), R.notes.end());
+  return i;
 }
 
 boost::shared_ptr<const Object> formula_expression_ref::result() const
 {
-  polymorphic_cow_ptr<Formula> notes2 = notes;
-  int index = notes2->add_expression(exp());
-  Context C(notes2);
-  return C.evaluate(index);
+  context C(notes);
+  return C.evaluate_expression(exp());
 }
 
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b)

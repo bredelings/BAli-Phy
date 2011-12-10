@@ -7,15 +7,17 @@
 
 class formula_expression_ref
 {
-  expression_ref R;
+  int I;
 public:
-  polymorphic_cow_ptr<Formula> notes;
+  std::vector<expression_ref> notes;
 
   formula_expression_ref operator()(const formula_expression_ref&) const;
 
   formula_expression_ref operator()(const expression_ref&) const;
 
-  expression_ref exp() const {return R;}
+  int index() const {return I;}
+
+  expression_ref exp() const {return notes[I];}
 
   int add_expression(const formula_expression_ref&);
 
@@ -26,7 +28,8 @@ public:
 
   formula_expression_ref();
   formula_expression_ref(const expression_ref&);
-  formula_expression_ref(const boost::shared_ptr<const Formula>& F, const expression_ref&);
+  formula_expression_ref(const std::vector<expression_ref>&, int);
+  formula_expression_ref(const std::vector<expression_ref>&, const expression_ref&);
 };
 
 formula_expression_ref prefix_formula(const std::string&,const formula_expression_ref&);

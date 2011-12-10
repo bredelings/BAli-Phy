@@ -156,7 +156,7 @@ int Model::add_parameter(const Parameter& P)
 
   int index = n_parameters();
 
-  C.add_expression(parameter(P.name));
+  C.add_parameter(P.name);
   changed.push_back(true);
   bounds.push_back(P.bounds);
   fixed.push_back(P.fixed);
@@ -280,7 +280,7 @@ unsigned Model::n_parameters() const
 
 std::string FormulaModel::name() const
 {
-  return C.get_sub_expression(result_index)->print();
+  return R->print();
 }
 
 efloat_t Model::prior() const
@@ -300,28 +300,28 @@ Model::Model()
   :Operation(0),valid(false),prior_index(-1)
 { }
 
-int add_probability_expression(Context& C);
+int add_probability_expression(context& C);
 
-Model::Model(const shared_ptr<const Formula>& F)
+Model::Model(const vector<expression_ref>& N)
   :Operation(0),
    valid(false),
-   C(F),
-   changed(F->n_parameters(), true),
-   bounds(F->n_parameters()),
-   fixed(F->n_parameters(),false)
+   C(N),
+   changed(C.n_parameters(), true),
+   bounds(C.n_parameters()),
+   fixed(C.n_parameters(),false)
 {
   C.alphabetize_parameters();
 
   for(int i=0;i<n_parameters();i++)
   {
     expression_ref var = parameter(parameter_name(i));
-    vector<int> results;
+    vector<expression_ref> results;
     expression_ref query = ::bounds(var,match(0));
-    int found = C.find_match_expression2(query, results);
+    int found = C.find_match_notes(query, results, 0);
     if (found != -1)
     {
       assert(results.size());
-      shared_ptr<const Bounds<double> > b = C.evaluate_as<Bounds<double> >(results[0]);
+      shared_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[0]);
       set_bounds(i,*b);
     }
   }
@@ -366,19 +366,19 @@ boost::shared_ptr<const Object> model_prior::operator()(OperationArgs& Args) con
 
 formula_expression_ref model_formula(const Model& M)
 {
-  shared_ptr<Formula> F ( new Formula );
+  vector<expression_ref> N;
   for(int i=0;i<M.n_parameters();i++)
   {
     expression_ref var = parameter(M.parameter_name(i));
-    F->add_expression(bounds(var, M.get_bounds(i)));
+    N.push_back(bounds(var, M.get_bounds(i)));
 
     if (M.get_parameter_value(i))
-      F->add_expression(default_value(var, M.get_parameter_value(i)));
+      N.push_back(default_value(var, M.get_parameter_value(i)));
   }
 
-  F->add_expression( model_prior_expression(M) );
+  N.push_back( model_prior_expression(M) );
 
-  return formula_expression_ref(F, model_result_expression(M) );
+  return formula_expression_ref(N, model_result_expression(M) );
 }
 
 
@@ -1034,7 +1034,9 @@ int OpModel::add_submodel(shared_ptr<const Model> m)
     model_slots_for_index[index].push_back( model_slot(m_index,slot) );
     
     // default parameter values AND bounds from submodels
-    if (not C.is_up_to_date(index)) {
+
+    // only set the value here if its not already set.
+    if (not C.get_parameter_value(index)) {
       C.set_parameter_value(index,sub_models[m_index]->get_parameter_value(slot) );
       // should we continually narrow the bounds by and-ing them together?
       set_bounds(index, sub_models[m_index]->get_bounds(slot) );
@@ -1162,7 +1164,7 @@ shared_ptr<Model> prefix_model(const Model& M, const string& prefix)
   return M2;
 }
 
-vector<string> show_probability_expressions(const Context& C)
+vector<string> show_probability_expressions(const context& C)
 {
   expression_ref query = distributed(_2,Tuple(prob_density(_1,_), _3));
 
@@ -1187,7 +1189,7 @@ vector<string> show_probability_expressions(const Context& C)
   return expressions;
 }
 
-int add_probability_expression(Context& C)
+int add_probability_expression(context& C)
 {
   expression_ref query = distributed(_2,Tuple(prob_density(_,_1),_3));
 
@@ -1199,7 +1201,7 @@ int add_probability_expression(Context& C)
     vector<expression_ref> results; 
 
     // If its a probability expression, then...
-    if (not find_match(query, C.get_expression(i), results)) continue;
+    if (not find_match(query, C.get_note(i), results)) continue;
 
     // Extract the density operation
     shared_ptr<const Operation> density_op = dynamic_pointer_cast<const Operation>(results[0]);
@@ -1220,7 +1222,7 @@ int add_probability_expression(Context& C)
   // If this model has random variables... 
   if (Pr)
   {
-    return C.add_expression(Pr);
+    return C.add_compute_expression(Pr);
   }
   else
     return -1;
@@ -1228,20 +1230,25 @@ int add_probability_expression(Context& C)
 
 boost::shared_ptr<const Object> FormulaModel::result() const
 {
-  return C.evaluate(result_index);
+  return C.evaluate(0);
 }
 
-FormulaModel::FormulaModel(const boost::shared_ptr<const Formula>& F,int i)
-  :Model(F),result_index(i)
-{ }
+FormulaModel::FormulaModel(const vector<expression_ref>& N,int i)
+  :Model(N),
+   R(N[i])
+{ 
+  C.add_compute_expression(R);
+}
 
-FormulaModel::FormulaModel(const formula_expression_ref& R)
-  :Model(R.notes ),
-   result_index( C.add_expression(R.exp()) )
-{ }
+FormulaModel::FormulaModel(const formula_expression_ref& r)
+  :Model(r.notes ),
+   R(r.exp())
+{ 
+  C.add_compute_expression(R);
+}
 
 FormulaModel::operator formula_expression_ref() const
 {
-  return formula_expression_ref(C.get_formula(), C.get_formula()->sub_exp(result_index));
+  return formula_expression_ref(C.get_notes(), R);
 }
 

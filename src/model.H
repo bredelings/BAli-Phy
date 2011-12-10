@@ -39,8 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "operator.H"
 #include "operation.H"
 #include "computation.H"
-#include "context.H"
-#include "formula.H"
+#include "graph_register.H"
 
 class Model;
 
@@ -180,7 +179,7 @@ protected:
   mutable bool valid;
 
   /// Parameter values and model attributes
-  Context C;
+  context C;
 
   mutable std::vector<bool> changed;
   std::vector< Bounds<double> > bounds;
@@ -315,7 +314,7 @@ public:
   /// Construct an empty model
   Model();
 
-  Model(const boost::shared_ptr<const Formula>&);
+  Model(const std::vector<expression_ref>&);
 
   virtual ~Model() {};
 };
@@ -557,7 +556,7 @@ public:
 
 struct FormulaModel: public Model
 {
-  int result_index;
+  expression_ref R;
 
   FormulaModel* clone() const {return new FormulaModel(*this);}
 
@@ -567,7 +566,7 @@ struct FormulaModel: public Model
 
   operator formula_expression_ref() const;
 
-  FormulaModel(const boost::shared_ptr<const Formula>&,int);
+  FormulaModel(const std::vector<expression_ref>&,int);
   FormulaModel(const formula_expression_ref&);
 };
 
@@ -590,7 +589,7 @@ std::vector< expression_ref > model_args(const Model& M);
 
 expression_ref model_result_expression(const Model& M);
 
-std::vector< std::string > show_probability_expressions(const Context& C);
+std::vector< std::string > show_probability_expressions(const context& C);
 
 formula_expression_ref model_formula(const Model& M);
 #endif
