@@ -185,7 +185,7 @@ shared_ptr<const Object> context::get_parameter_value(int index) const
     return shared_ptr<const Object>();
 
   // If the value needs to be compute (e.g. its a call expression) then compute it.
-  incremental_evaluate(P);
+  incremental_evaluate(*this, P);
 
   return *access(P).result;
 }
@@ -1231,9 +1231,9 @@ void add_prefix(const string& prefix, vector<expression_ref>& notes)
     add_prefix(prefix, notes[i]);
 }
 
-vector<expression_ref> prefix_formula(const string& name, const vector<expression_ref>& N)
+vector<expression_ref> prefix_formula(const string& prefix, const vector<expression_ref>& N)
 {
-  vector<expression_ref N2 = N;
+  vector<expression_ref> N2 = N;
   add_prefix(prefix, N2);
   return N2;
 }
