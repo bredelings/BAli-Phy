@@ -9,10 +9,10 @@ using std::map;
 using std::pair;
 
 /*
- * Separate NoteLists (which are just raw expressions) from the executable context.
- * + We only call "combine" on NoteLists.
- * + We only find_match_note( ) on NoteLists.
- * + We allow starting from any place in find_match_note( ).
+ * Perhaps we want to make a separate class for treating a vector<expression_ref> as a model.
+ * + We only call "combine" on these lists of notes.
+ * + We only find_match_note( ) on such lists as well.
+ *   - Allow starting from any place in find_match_note( ).
  *
  */
 
