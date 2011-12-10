@@ -340,6 +340,8 @@ int context::add_parameter(const string& name)
   access(R).changeable = true;
   access(R).E = parameter(name);
 
+  set_parameter_value(index, default_parameter_value(index) );
+  
   return index;
 }
 
