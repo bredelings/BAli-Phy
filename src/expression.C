@@ -866,11 +866,11 @@ set<string> find_named_parameters(const vector<expression_ref>& notes)
 
 expression_ref add_prefix(const string& prefix, const expression_ref& R)
 {
-  vector<string> names = find_named_parameters(R);
+  std::set<string> names = find_named_parameters(R);
 
   expression_ref R2 = R;
-  for(int i=0;i<names.size();i++)
-    R2 = substitute(R2, parameter(names[i]), parameter(prefix+"::"+names[i]));
+  foreach(i,names)
+    R2 = substitute(R2, parameter(*i), parameter(prefix+"::"+*i));
 
   return R2;
 }

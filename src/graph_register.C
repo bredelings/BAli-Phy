@@ -1186,11 +1186,25 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
   return R;
 }
 
+void add_prefix(const string& prefix, vector<expression_ref>& notes)
+{
+  for(int i=0;i<notes.size();i++)
+    add_prefix(prefix, notes[i]);
+}
+
 boost::shared_ptr<context> prefix_formula(const std::string& prefix, const boost::shared_ptr<const context>& C)
 {
   shared_ptr<context> C2(C->clone());
+  // prefix the parameter names
   for(int i=0;i<C2->n_parameters();i++)
     C2->rename_parameter(i, prefix + "::" + C2->parameter_name(i));
+
+  // prefix the variable names
+  for(int i=0;i<C2->n_parameters();i++)
+    ;
+
+  // prefix the names in the model
+  add_prefix(prefix, C2->get_notes());
   return C2;
 }
 
