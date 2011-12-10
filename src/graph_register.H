@@ -197,6 +197,8 @@ public:
 
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
 
+  boost::shared_ptr<const Object> default_parameter_value(int i) const;
+
   void set_used_input(int R1, int slot, int R2) const;
   void clear_used_input(int R, int slot) const;
   void clear_used_inputs(int R) const;
