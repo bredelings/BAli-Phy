@@ -1219,6 +1219,13 @@ void add_prefix(const string& prefix, vector<expression_ref>& notes)
     add_prefix(prefix, notes[i]);
 }
 
+vector<expression_ref> prefix_formula(const string& name, const vector<expression_ref>& N)
+{
+  vector<expression_ref N2 = N;
+  add_prefix(prefix, N2);
+  return N2;
+}
+
 boost::shared_ptr<context> prefix_formula(const std::string& prefix, const boost::shared_ptr<const context>& C)
 {
   shared_ptr<context> C2(C->clone());
@@ -1233,6 +1240,13 @@ boost::shared_ptr<context> prefix_formula(const std::string& prefix, const boost
   // prefix the names in the model
   add_prefix(prefix, C2->get_notes());
   return C2;
+}
+
+vector<expression_ref> combine(const vector<expression_ref>& N1, const vector<expression_ref>& N2)
+{
+  vector<expression_ref> N3 = N1;
+  N3.insert(N3.end(), N2.begin(), N2.end());
+  return N3;
 }
 
 std::ostream& operator<<(std::ostream& o, const context& C)
