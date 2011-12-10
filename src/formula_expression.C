@@ -97,4 +97,5 @@ formula_expression_ref def_parameter(const std::string& name, const expression_r
 std::ostream& operator<<(std::ostream& o, const formula_expression_ref& F)
 {
   o<<F.exp();
+  return o;
 }
