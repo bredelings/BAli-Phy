@@ -11,6 +11,7 @@
 using boost::shared_ptr;
 using std::vector;
 using std::string;
+using std::set;
 
 using boost::dynamic_pointer_cast;
 
@@ -830,28 +831,36 @@ expression_ref apply(const expression_ref& E,
   return E2;
 }
 
-void find_named_parameters_(const expression_ref& R, vector<string>& names)
+void find_named_parameters(const expression_ref& R, std::set<string>& names)
 {
   assert(R);
   // If this is a parameter, then makes sure we've got its name.
   if (shared_ptr<const parameter> n = dynamic_pointer_cast<const parameter>(R))
   {
-    if (not includes(names,n->parameter_name))
-      names.push_back(n->parameter_name);
+    if (names.find(n->parameter_name) == names.end())
+      names.insert(n->parameter_name);
   }
 
   // If this is an expression, check its sub-objects
   else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
     for(int i=0;i<E->size();i++)
-      find_named_parameters_(E->sub[i], names);
+      find_named_parameters(E->sub[i], names);
   }
 }
 
-vector<string> find_named_parameters(const expression_ref& e)
+set<string> find_named_parameters(const expression_ref& e)
 {
-  vector<string> names;
-  find_named_parameters_(e,names);
+  set<string> names;
+  find_named_parameters(e, names);
+  return names;
+}
+
+set<string> find_named_parameters(const vector<expression_ref>& notes)
+{
+  set<string> names;
+  for(int i=0;i<notes.size();i++)
+    find_named_parameters(notes[i], names);
   return names;
 }
 

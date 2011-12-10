@@ -1053,10 +1053,10 @@ OpModel::OpModel(const expression_ref& r)
     throw myexception()<<"Trying to create an OpModel from a non-op expression:\n  "<<e->print();
 
   // find all named parameters, and add them to the OpModel
-  vector<string> names = find_named_parameters(e);
-  for(int i=0;i<names.size();i++)
+  std::set<string> names = find_named_parameters(e);
+  foreach(i,names)
   {
-    add_parameter(Parameter(names[i]));
+    add_parameter(Parameter(*i));
     model_slots_for_index.push_back(vector<model_slot>());
   }
 
@@ -1067,7 +1067,7 @@ OpModel::OpModel(const expression_ref& r)
 
     // handle the sub[i] being a named parameter
     if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(e->sub[i]))
-      a.parent_index = find_index(names, p->parameter_name);
+      a.parent_index = find_parameter(*this, p->parameter_name);
 
     // handle the sub[i] being an expression
     else if (shared_ptr<const expression> sub_e = dynamic_pointer_cast<const expression>(e->sub[i]))

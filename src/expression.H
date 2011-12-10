@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <valarray>
+#include <set>
 #include <string>
 #include "cow-ptr.H"
 #include "object.H"
@@ -200,7 +201,9 @@ Function right_assoc_data_function(const std::string& s,int prec=0);
 
 Function body_function(const std::string&, int);
 
-std::vector<std::string> find_named_parameters(const expression_ref&);
+std::set<std::string> find_named_parameters(const expression_ref&);
+
+std::set<std::string> find_named_parameters(const std::vector<expression_ref>&);
 
 expression_ref substitute(const expression_ref& E1, int dummy, const expression_ref& E2);
 
