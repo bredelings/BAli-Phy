@@ -713,7 +713,13 @@ shared_ptr<const Object> context::default_parameter_value(int i) const
 
 context::context(const vector<expression_ref>& N)
   :notes(N)
-{ }
+{
+  std::set<string> names = find_named_parameters(notes);
+  
+  // Then set all default values.
+  foreach(i,names)
+    add_parameter(*i);
+ }
 
 expression_ref graph_normalize(const context& C, const expression_ref& R)
 {
