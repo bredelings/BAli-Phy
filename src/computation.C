@@ -14,10 +14,10 @@ ContextOperationArgs::ContextOperationArgs(const Context& A, int i)
 { 
   int n_input_slots = CTX.get_formula()->n_input_indices(index_of_caller);
   
-  computation = boost::shared_ptr<Computation>( new Computation(n_input_slots) );
+  computation = shared_ptr<Computation>( new Computation(n_input_slots) );
 }
 
-boost::shared_ptr<const Object> ContextOperationArgs::reference(int slot) const
+shared_ptr<const Object> ContextOperationArgs::reference(int slot) const
 {
   std::abort();
 
@@ -25,7 +25,7 @@ boost::shared_ptr<const Object> ContextOperationArgs::reference(int slot) const
   return CTX.get_sub_expression(index_to_evaluate);
 }
 
-boost::shared_ptr<const Object> ContextOperationArgs::evaluate(int slot)
+shared_ptr<const Object> ContextOperationArgs::evaluate(int slot)
 {
   int index_to_evaluate = CTX.get_formula()->input_indices(index_of_caller)[slot];
   if (not computation->used_values[slot])
@@ -39,4 +39,3 @@ boost::shared_ptr<const Object> ContextOperationArgs::evaluate(int slot)
   
   return computation->used_values[slot];
 }
-
