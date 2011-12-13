@@ -386,7 +386,7 @@ int reg_heap::n_used_regs() const
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const expression_ref& E)
 {
-  std::cout<<"add: "<<E->print()<<"\n";
+  std::cerr<<"add: "<<E->print()<<"\n";
 
   expression_ref T = graph_normalize(*this, translate_refs(E) );
 
@@ -609,7 +609,7 @@ vector<int> get_reg_refs(const reg& R)
 
 void reg_heap::collect_garbage()
 {
-  std::cout<<"***********Garbage Collection******************"<<std::endl;
+  std::cerr<<"***********Garbage Collection******************"<<std::endl;
   assert(n_regs() == n_used_regs() + n_free_regs());
 
   vector<int> scan;
@@ -1033,14 +1033,14 @@ int  incremental_evaluate(const context& C, int R)
   assert(R >= 0 and R < C.n_regs());
   assert(C[R].result);
 
-  std::cout<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+  std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
   while (not *C[R].result)
   {
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
 
-    std::cout<<"   statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+    std::cerr<<"   statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
     // If we know what to call, then call it and use it to set the result
     if (C[R].call != -1)
     {
@@ -1137,9 +1137,9 @@ int  incremental_evaluate(const context& C, int R)
       }
 	
 #ifndef NDEBUG
-      //      std::cout<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
-      std::cout<<"Executing operation: "<<O<<"\n";
-      std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
+      //      std::cerr<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
+      std::cerr<<"Executing operation: "<<O<<"\n";
+      std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n";
 #endif
     }
 
@@ -1148,8 +1148,8 @@ int  incremental_evaluate(const context& C, int R)
   }
 
 #ifndef NDEBUG
-  //  std::cout<<"Result = "<<compact_graph_expression(*C[R].result)<<"\n";
-  //  std::cout<<"Result changeable: "<<C[R].changeable<<"\n\n";
+  //  std::cerr<<"Result = "<<compact_graph_expression(*C[R].result)<<"\n";
+  //  std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n";
 #endif
 
   assert(*C[R].result);
@@ -1196,15 +1196,15 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
 
   discover_graph_vars(C, R,names);
 
-  //  std::cout<<R<<std::endl;
+  //  std::cerr<<R<<std::endl;
   vector< expression_ref > replace;
   foreach(i,names)
   {
     replace.push_back( reg_var( i->first) );
     var_index = std::max(var_index, get_safe_binder_index(C[i->first].E) );
-    //    std::cout<<"<"<<i->first->name<<"> = "<<i->first->E<<std::endl;
+    //    std::cerr<<"<"<<i->first->name<<"> = "<<i->first->E<<std::endl;
   }
-  //  std::cout<<R<<std::endl;
+  //  std::cerr<<R<<std::endl;
   vector<expression_ref> vars;
   vector<expression_ref> bodies;
   foreach(i,names)
@@ -1215,22 +1215,22 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
 
   for(int i=0;i<bodies.size();i++)
   {
-    //    std::cout<<"------\n";
-    //    std::cout<<replace[i]<<" -> "<<vars[i]<<":\n";
+    //    std::cerr<<"------\n";
+    //    std::cerr<<replace[i]<<" -> "<<vars[i]<<":\n";
     for(int j=0;j<bodies.size();j++)
     {
       bodies[j] = substitute(bodies[j], replace[i], vars[i]);
-      //      std::cout<<vars[j]<<" = "<<bodies[j]<<std::endl;
+      //      std::cerr<<vars[j]<<" = "<<bodies[j]<<std::endl;
     }
 
     R = substitute(R, replace[i], vars[i]);
-    //    std::cout<<"R = "<<R<<std::endl;
+    //    std::cerr<<"R = "<<R<<std::endl;
   }
 
   R = let_expression(vars, bodies, R);
-  //  std::cout<<R<<std::endl;
+  //  std::cerr<<R<<std::endl;
   R = launchbury_unnormalize(R);
-  //  std::cout<<"substituted = "<<launchbury_unnormalize(R)<<std::endl;
+  //  std::cerr<<"substituted = "<<launchbury_unnormalize(R)<<std::endl;
   return R;
 }
 
