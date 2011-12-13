@@ -1171,12 +1171,12 @@ vector<string> show_probability_expressions(const context& C)
   vector<string> expressions;
 
   // Check each expression in the Formula
-  for(int i=0;i<C.n_expressions();i++)
+  for(int i=0;i<C.n_notes();i++)
   {
     vector<expression_ref> results; 
 
     // If its a probability expression, then...
-    if (not find_match(query, C.get_expression(i), results)) continue;
+    if (not find_match(query, C.get_note(i), results)) continue;
 
     // Extract the density operation
     shared_ptr<const String> name = dynamic_pointer_cast<const String>(results[0]);
@@ -1196,7 +1196,7 @@ int add_probability_expression(context& C)
   typed_expression_ref<Log_Double> Pr;
 
   // Check each expression in the Formula
-  for(int i=0;i<C.n_expressions();i++)
+  for(int i=0;i<C.n_notes();i++)
   {
     vector<expression_ref> results; 
 
