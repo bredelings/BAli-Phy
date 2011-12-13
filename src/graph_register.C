@@ -888,6 +888,7 @@ int incremental_evaluate(const context&, int);
 
 #include "computation.H"
 
+/// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
 struct RegOperationArgs: public OperationArgs
 {
   shared_ptr<const expression> E;
@@ -926,6 +927,11 @@ struct RegOperationArgs: public OperationArgs
     }
 
     return *(C[R2].result);
+  }
+
+  shared_ptr<const Object> evaluate_expression(const expression_ref& e)
+  {
+    return C.evaluate_expression(e);
   }
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
