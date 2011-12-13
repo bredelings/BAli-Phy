@@ -32,12 +32,7 @@ struct OperationArgs: virtual public Object
   template <typename T>
   boost::shared_ptr<const T> evaluate_as(int slot)
   {
-    boost::shared_ptr<const Object> o = evaluate(slot);
-    assert(o);
-    boost::shared_ptr<const T> converted =  boost::dynamic_pointer_cast<const T>(o);
-    if (not converted)
-      throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(*o.get()).name())<<" to type "<<demangle(typeid(T).name());
-    return converted;
+    return convert<const T>( evaluate(slot) );
   }
 };
 
