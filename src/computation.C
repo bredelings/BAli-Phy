@@ -2,6 +2,13 @@
 #include "context.H"
 #include "formula.H"
 
+using boost::shared_ptr;
+
+shared_ptr<const Object> OperationArgs::evaluate_expression(const expression_ref& E)
+{
+  return E;
+}
+
 ContextOperationArgs::ContextOperationArgs(const Context& A, int i)
   :CTX(A), index_of_caller(i) 
 { 

@@ -21,6 +21,8 @@ struct Computation: virtual public Object
   Computation(int n_inputs):used_values(n_inputs) { }
 };
 
+struct expression_ref;
+
 struct OperationArgs: virtual public Object
 {
   virtual OperationArgs* clone() const = 0;
@@ -34,6 +36,8 @@ struct OperationArgs: virtual public Object
   {
     return convert<const T>( evaluate(slot) );
   }
+
+  virtual boost::shared_ptr<const Object> evaluate_expression(const expression_ref&);
 };
 
 class Context;
