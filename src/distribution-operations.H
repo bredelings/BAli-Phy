@@ -242,15 +242,7 @@ struct laplace_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    double x = *Args.evaluate_as<Double>(0);
-    expression_ref A =  Args.evaluate(1);
-
-    std::vector<double> a = get_vector<double,Double>(A);
-
-    return boost::shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x,a[0],a[1]) ) );
-  }
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "laplace_density";}
     
@@ -273,15 +265,7 @@ struct log_laplace_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    double x = *Args.evaluate_as<Double>(0);
-    expression_ref A =  Args.evaluate(1);
-
-    std::vector<double> a = get_vector<double,Double>(A);
-
-    return boost::shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a[0],a[1])/x ) );
-  }
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "log_laplace_density";}
     
@@ -304,15 +288,7 @@ struct uniform_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    double x = *Args.evaluate_as<Double>(0);
-    expression_ref A =  Args.evaluate(1);
-
-    std::vector<double> a = get_vector<double,Double>(A);
-
-    return boost::shared_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a[0],a[1]) ) );
-  }
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "uniform_density";}
     

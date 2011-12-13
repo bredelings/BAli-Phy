@@ -1,5 +1,46 @@
 #include "distribution-operations.H"
 
+using boost::shared_ptr;
+
+shared_ptr<const Object> laplace_density::operator()(OperationArgs& Args) const
+{
+  double x = *Args.evaluate_as<Double>(0);
+  shared_ptr<const expression> a_E = Args.evaluate_as<expression>(1);
+  
+  // Idea: we could define this conversion INSIDE the machine...
+  std::vector<double> a(a_E->size() - 1);
+  for(int i=0;i<a.size();i++)
+    a[i] = *convert<const Double>(Args.evaluate_expression(a_E->sub[i+1]));
+  
+  return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x,a[0],a[1]) ) );
+}
+
+shared_ptr<const Object> log_laplace_density::operator()(OperationArgs& Args) const
+{
+  double x = *Args.evaluate_as<Double>(0);
+  shared_ptr<const expression> a_E = Args.evaluate_as<expression>(1);
+  
+  // Idea: we could define this conversion INSIDE the machine...
+  std::vector<double> a(a_E->size() - 1);
+  for(int i=0;i<a.size();i++)
+    a[i] = *convert<const Double>(Args.evaluate_expression(a_E->sub[i+1]));
+  
+  return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a[0],a[1])/x ) );
+}
+
+shared_ptr<const Object> uniform_density::operator()(OperationArgs& Args) const
+{
+  double x = *Args.evaluate_as<Double>(0);
+  shared_ptr<const expression> a_E = Args.evaluate_as<expression>(1);
+  
+  // Idea: we could define this conversion INSIDE the machine...
+  std::vector<double> a(a_E->size() - 1);
+  for(int i=0;i<a.size();i++)
+    a[i] = *convert<const Double>(Args.evaluate_expression(a_E->sub[i+1]));
+  
+  return shared_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a[0],a[1]) ) );
+}
+
 // Fields: n_random, n_parameters, string, density op
 expression_ref prob_density = lambda_expression( data_function("prob_density",2) );
 
