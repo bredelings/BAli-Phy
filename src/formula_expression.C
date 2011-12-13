@@ -62,7 +62,7 @@ formula_expression_ref::formula_expression_ref(const vector<expression_ref>& N, 
 
 formula_expression_ref prefix_formula(const std::string& prefix,const formula_expression_ref& R)
 {
-  return formula_expression_ref(prefix_formula(prefix, R.notes), R.index());
+  return formula_expression_ref(add_prefix(prefix, R.notes), R.index());
 }
 
 int formula_expression_ref::add_expression(const formula_expression_ref& R)
