@@ -181,11 +181,14 @@ shared_ptr<const Object> context::get_parameter_value(int index) const
 {
   int P = parameters[index];
 
-  if (not *access(P).result and access(P).call == -1)
-    return shared_ptr<const Object>();
+  if (not *access(P).result)
+  {
+    // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
+    if (access(P).call == -1) return shared_ptr<const Object>();
 
-  // If the value needs to be compute (e.g. its a call expression) then compute it.
-  incremental_evaluate(*this, P);
+    // If the value needs to be compute (e.g. its a call expression) then compute it.
+    incremental_evaluate(*this, P);
+  }
 
   return *access(P).result;
 }
