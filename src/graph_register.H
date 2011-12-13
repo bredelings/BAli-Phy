@@ -300,6 +300,61 @@ public:
   context(const std::vector<expression_ref>&);
 };
 
+class reg_ptr
+{
+  int R;
+  const context& C;
+public:
+
+  const reg& operator*()    const throw()   {assert(R != -1); return C[R];}
+  const reg* operator->()   const throw()   {assert(R != -1); return &C[R];}
+  const reg* get()          const throw()   {assert(R != -1); return &C[R];}
+    
+  reg& operator*()                          {assert(R != -1); return C[R];}
+  reg* operator->()                         {assert(R != -1); return &C[R];}
+  reg* modify()                             {assert(R != -1); return &C[R];}
+
+  void reset() { R = -1 ;}
+
+  // For conversion to unspecified bool
+  typedef reg_ptr this_type;
+
+  typedef reg* (this_type::*unspecified_bool_type)();
+
+  operator unspecified_bool_type() const // never throws
+  {
+    return R == -1 ? 0: &this_type::modify;
+  }
+
+  void pop_reg()
+  {
+    C.pop_reg(R);
+    reset();
+  }
+
+  const context& get_context() const {return C;}
+
+  boost::shared_ptr<const Object> evaluate() const
+  {
+    return C.evaluate(R);
+  }
+
+  template<typename T>
+  boost::shared_ptr<const T> evaluate_as() const
+  {
+    return C.evaluate_as<T>(R);
+  }
+
+  reg_ptr(int r, const context& c)
+    :R(r), C(c)
+  { }
+
+  ~reg_ptr()
+  {
+    reset();
+  }
+};
+
 void add_prefix(const std::string&, std::vector<expression_ref>&);
 
 std::vector<expression_ref> prefix_formula(const std::string&, const std::vector<expression_ref>&);
