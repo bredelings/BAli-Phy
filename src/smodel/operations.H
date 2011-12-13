@@ -38,14 +38,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      double f = *Args.evaluate_as<Double>(0);
-
-      std::vector<double> pi = get_vector<double,Double>(Args.evaluate(1));
-
-      return Plus_gwF_Function(*a,f,pi);
-    }
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "+gwF";}
 

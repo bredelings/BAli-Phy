@@ -2,6 +2,7 @@
 #include "smodel/operations.H"
 #include "distribution-operations.H"
 #include "../operations.H"
+#include "expression.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -12,6 +13,20 @@ using boost::dynamic_pointer_cast;
 
 namespace substitution
 {
+  shared_ptr<const Object> Plus_gwF_Op::operator()(OperationArgs& Args) const
+  {
+    double f = *Args.evaluate_as<Double>(0);
+    
+    shared_ptr<const expression> pi_E = Args.evaluate_as<expression>(1);
+    
+    // Idea: we could define this conversion INSIDE the machine...
+    std::vector<double> pi(pi_E->size() - 1);
+    for(int i=0;i<pi.size();i++)
+      pi[i] = *convert<const Double>(Args.evaluate_expression(pi_E->sub[i+1]));
+    
+    return Plus_gwF_Function(*a,f,pi);
+  }
+
   using namespace probability;
 
   shared_ptr<ExchangeModelObject> SimpleExchangeFunction(double rho, int n)
