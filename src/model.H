@@ -556,7 +556,9 @@ public:
 
 struct FormulaModel: public Model
 {
-  expression_ref R;
+  int I;
+
+  int result_index;
 
   FormulaModel* clone() const {return new FormulaModel(*this);}
 

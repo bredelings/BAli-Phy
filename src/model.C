@@ -278,11 +278,6 @@ unsigned Model::n_parameters() const
   return C.n_parameters();
 }
 
-std::string FormulaModel::name() const
-{
-  return R->print();
-}
-
 efloat_t Model::prior() const
 {
   if (prior_index == -1) return 1.0;
@@ -1228,27 +1223,30 @@ int add_probability_expression(context& C)
     return -1;
 }
 
+std::string FormulaModel::name() const
+{
+  return C.get_note(I)->print();
+}
+
 boost::shared_ptr<const Object> FormulaModel::result() const
 {
-  return C.evaluate(0);
+  return C.evaluate(result_index);
 }
 
 FormulaModel::FormulaModel(const vector<expression_ref>& N,int i)
   :Model(N),
-   R(N[i])
-{ 
-  C.add_compute_expression(R);
-}
+   I(i),
+   result_index( C.add_compute_expression(C.get_note(I)) )
+{ }
 
 FormulaModel::FormulaModel(const formula_expression_ref& r)
-  :Model(r.notes ),
-   R(r.exp())
-{ 
-  C.add_compute_expression(R);
-}
+  :Model( r.notes ),
+   I( r.index() ),
+   result_index( C.add_compute_expression(C.get_note(I)) )
+{ }
 
 FormulaModel::operator formula_expression_ref() const
 {
-  return formula_expression_ref(C.get_notes(), R);
+  return formula_expression_ref(C.get_notes(), I);
 }
 
