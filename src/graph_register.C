@@ -1033,7 +1033,8 @@ int  incremental_evaluate(const context& C, int R)
   assert(R >= 0 and R < C.n_regs());
   assert(C[R].result);
 
-  std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+  if (not *C[R].result)
+    std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
   while (not *C[R].result)
   {
     vector<expression_ref> vars;
