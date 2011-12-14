@@ -74,6 +74,26 @@ struct Print: public Operation
   Print():Operation(1) {}
 };
 
+struct Seq: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Seq* clone() const {return new Seq(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Seq* E = dynamic_cast<const Seq*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "seq";}
+
+  Seq():Operation(2) {}
+};
+
+
 struct Concat: public Operation
 {
   // The 'context' should include the knowledge of the input slots

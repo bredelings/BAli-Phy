@@ -7,6 +7,12 @@ using std::string;
 using boost::dynamic_pointer_cast;
 using boost::shared_ptr;
 
+shared_ptr<const Object> Seq::operator()(OperationArgs& Args) const
+{
+  Args.evaluate(0);
+  return Args.evaluate(1);
+}
+
 shared_ptr<const Object> Apply::operator()(OperationArgs& Args) const
 {
   shared_ptr<const Object> f = Args.evaluate(0);
