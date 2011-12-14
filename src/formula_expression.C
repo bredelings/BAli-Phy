@@ -48,6 +48,7 @@ formula_expression_ref expression_ref::operator()(const formula_expression_ref& 
 }
 
 formula_expression_ref::formula_expression_ref()
+  :I(-1)
 { }
 
 formula_expression_ref::formula_expression_ref(const expression_ref& R)
