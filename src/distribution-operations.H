@@ -23,14 +23,7 @@ struct exponential_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    boost::shared_ptr<const Double> mu = Args.evaluate_as<Double>(1);
-
-    Log_Double result = exponential_pdf(*x,*mu);
-    return boost::shared_ptr<const Object>(result.clone());
-  }
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "exponential_density";}
 
@@ -53,15 +46,7 @@ struct gamma_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    expression_ref a = Args.evaluate(1);
-
-    std::valarray<double> A = get_varray<double,Double>(a);
-    Log_Double result = gamma_pdf(*x, A[0], A[1]);
-    return boost::shared_ptr<const Object>(result.clone());
-  }
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "gamma_density";}
 
@@ -84,15 +69,7 @@ struct beta_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    expression_ref a = Args.evaluate(1);
-
-    std::valarray<double> A = get_varray<double,Double>(a);
-    Log_Double result = beta_pdf(*x, A[0], A[1]);
-    return boost::shared_ptr<const Object>(result.clone());
-  }
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "beta_density";}
 
@@ -115,15 +92,7 @@ struct normal_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    expression_ref a = Args.evaluate(1);
-
-    std::valarray<double> A = get_varray<double,Double>(a);
-    Log_Double result = normal_pdf(*x, A[0], A[1]);
-    return boost::shared_ptr<const Object>(result.clone());
-  }
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "normal_density";}
 
@@ -146,16 +115,8 @@ struct log_normal_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    expression_ref a = Args.evaluate(1);
-
-    std::valarray<double> A = get_varray<double,Double>(a);
-    Log_Double result = log_normal_pdf(*x, A[0], A[1]);
-    return boost::shared_ptr<const Object>(result.clone());
-  }
-
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+ 
   std::string name() const {return "log_normal_density";}
 
   log_normal_density():Operation(2) { }
@@ -177,15 +138,7 @@ struct cauchy_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    boost::shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-    expression_ref a = Args.evaluate(1);
-
-    std::valarray<double> A = get_varray<double,Double>(a);
-    Log_Double result = cauchy_pdf(*x, A[0], A[1]);
-    return boost::shared_ptr<const Object>(result.clone());
-  }
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "cauchy_density";}
 
@@ -208,18 +161,7 @@ struct dirichlet_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-  {
-    expression_ref X = Args.evaluate(0);
-    expression_ref N = Args.evaluate(1);
-      
-    std::valarray<double> x = get_varray<double,Double>(X);
-    std::valarray<double> n = get_varray<double,Double>(N);
-
-    boost::shared_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x,n) ) );
-
-    return R;
-  }
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "dirichlet_density";}
     

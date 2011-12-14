@@ -2,6 +2,78 @@
 
 using boost::shared_ptr;
 
+shared_ptr<const Object> exponential_density::operator()(OperationArgs& Args) const
+{
+  shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
+  shared_ptr<const Double> mu = Args.evaluate_as<Double>(1);
+  
+  Log_Double result = exponential_pdf(*x,*mu);
+  return shared_ptr<const Object>(result.clone());
+}
+
+shared_ptr<const Object> gamma_density::operator()(OperationArgs& Args) const
+{
+  shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
+  expression_ref a = Args.evaluate(1);
+  
+  std::valarray<double> A = get_varray<double,Double>(a);
+  Log_Double result = gamma_pdf(*x, A[0], A[1]);
+  return shared_ptr<const Object>(result.clone());
+}
+
+shared_ptr<const Object> beta_density::operator()(OperationArgs& Args) const
+{
+  shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
+  expression_ref a = Args.evaluate(1);
+  
+  std::valarray<double> A = get_varray<double,Double>(a);
+  Log_Double result = beta_pdf(*x, A[0], A[1]);
+  return shared_ptr<const Object>(result.clone());
+}
+
+shared_ptr<const Object> normal_density::operator()(OperationArgs& Args) const
+{
+  shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
+  expression_ref a = Args.evaluate(1);
+  
+  std::valarray<double> A = get_varray<double,Double>(a);
+  Log_Double result = normal_pdf(*x, A[0], A[1]);
+  return shared_ptr<const Object>(result.clone());
+}
+
+shared_ptr<const Object> log_normal_density::operator()(OperationArgs& Args) const
+{
+  shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
+  expression_ref a = Args.evaluate(1);
+  
+  std::valarray<double> A = get_varray<double,Double>(a);
+  Log_Double result = log_normal_pdf(*x, A[0], A[1]);
+  return shared_ptr<const Object>(result.clone());
+}
+
+shared_ptr<const Object> cauchy_density::operator()(OperationArgs& Args) const
+{
+  shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
+  expression_ref a = Args.evaluate(1);
+  
+  std::valarray<double> A = get_varray<double,Double>(a);
+  Log_Double result = cauchy_pdf(*x, A[0], A[1]);
+  return shared_ptr<const Object>(result.clone());
+}
+
+shared_ptr<const Object> dirichlet_density::operator()(OperationArgs& Args) const
+{
+  expression_ref X = Args.evaluate(0);
+  expression_ref N = Args.evaluate(1);
+  
+  std::valarray<double> x = get_varray<double,Double>(X);
+  std::valarray<double> n = get_varray<double,Double>(N);
+  
+  shared_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x,n) ) );
+  
+  return R;
+}
+
 shared_ptr<const Object> laplace_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
