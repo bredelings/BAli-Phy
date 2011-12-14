@@ -6,14 +6,19 @@
 using boost::shared_ptr;
 using std::vector;
 
-formula_expression_ref formula_expression_ref::operator()(const formula_expression_ref& R) const
+formula_expression_ref formula_expression_ref::operator()(const formula_expression_ref& R2) const
 {
-  return formula_expression_ref(combine(notes, R.notes), exp()(R.exp()));
+  // Perhaps I should take out the expression that is the argument... we perhaps not.
+  formula_expression_ref R3(combine(notes, R2.notes), I);
+  R3.notes[I] = R3.notes[I](R2.exp());
+  return R3;
 }
 
-formula_expression_ref formula_expression_ref::operator()(const expression_ref& R) const
+formula_expression_ref formula_expression_ref::operator()(const expression_ref& R2) const
 {
-  return formula_expression_ref(notes, exp()(R));
+  formula_expression_ref R3(*this);
+  R3.notes[I] = R3.notes[I](R2);
+  return R3;
 }
 
 formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1) const
