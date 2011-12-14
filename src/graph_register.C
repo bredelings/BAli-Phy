@@ -78,9 +78,18 @@ void context::clear_used_inputs(int R, int S) const
 
 void context::set_call(int R1, int R2) const
 {
+  // Check that R1 is legal
+  assert(0 <= R1 and R1 < n_regs());
+  assert(access(R1).state == reg::used);
+
+  // Check that R2 is legal
+  assert(0 <= R2 and R2 < n_regs());
+  assert(access(R2).state == reg::used);
+
+  // Check that we aren't overriding an existing *call*
   assert(access(R1).call == -1);
+  // Check that we aren't overriding an existing *result*
   assert(not *access(R1).result);
-  assert(R2 >= 0 and R2 < n_regs());
 
   access(R1).call = R2;
   access(R2).call_outputs.insert(R1);
@@ -216,6 +225,9 @@ void set_call_if_reg_result(const context& C, int R)
   {
     int R2 = RV->target;
     
+    assert(0 <= R2 and R2 < C.n_regs());
+    assert(C[R2].state == reg::used);
+
     // clear the result slot
     (*C[R].result).reset();
     
