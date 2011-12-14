@@ -2193,22 +2193,3 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
   return R;
 
 }
-
-// Examples: 
-// 1. (((\a \b a+b) x) y) with x=1, y=2
-// 2. (x+y)+z
-// 3. case x:y:[] of {[] -> [], h:t -> h:[]}  with x=1, y=2
-
-// Question: should I separation the "computation" from the reg?
-
-// How do I check if a reduction depends on the value of (previous unevaluated) parameters?
-// - Does the "new" part conflict with the unchanged-argument idea?
-
-#include "graph_register.H"
-
-
-// Question: if the dimension of a vector changes, and I want to make each elements
-// into a (sub-) parameter, then how do I number them?  Currently the parameters are
-// a property of the context, not of the expression, but this seems to make the parameters
-// deterministically depend on other parameters, in a sense.
-
