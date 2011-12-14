@@ -386,7 +386,7 @@ int reg_heap::n_used_regs() const
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const expression_ref& E)
 {
-  std::cerr<<"add: "<<E->print()<<"\n";
+  //  std::cerr<<"add: "<<E->print()<<"\n";
 
   expression_ref T = graph_normalize(*this, translate_refs(E) );
 
@@ -609,7 +609,7 @@ vector<int> get_reg_refs(const reg& R)
 
 void reg_heap::collect_garbage()
 {
-  std::cerr<<"***********Garbage Collection******************"<<std::endl;
+  //  std::cerr<<"***********Garbage Collection******************"<<std::endl;
   assert(n_regs() == n_used_regs() + n_free_regs());
 
   vector<int> scan;
@@ -883,8 +883,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
     return V;
   }
 
-  std::cerr<<"I don't recognize expression '"+ R->print() + "'\n";
-  return R;
+  throw myexception()<<"graph_normalize: I don't recognize expression '"+ R->print() + "'";
 }
 
 int incremental_evaluate(const context&, int);
@@ -1033,15 +1032,16 @@ int  incremental_evaluate(const context& C, int R)
   assert(R >= 0 and R < C.n_regs());
   assert(C[R].result);
 
-  if (not *C[R].result)
-    std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+  // if (not *C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+
   while (not *C[R].result)
   {
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
 
-    std::cerr<<"   statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+    // std::cerr<<"   statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+
     // If we know what to call, then call it and use it to set the result
     if (C[R].call != -1)
     {
@@ -1139,8 +1139,8 @@ int  incremental_evaluate(const context& C, int R)
 	
 #ifndef NDEBUG
       //      std::cerr<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
-      std::cerr<<"Executing operation: "<<O<<"\n";
-      std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n";
+      //      std::cerr<<"Executing operation: "<<O<<"\n";
+      //      std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n";
 #endif
     }
 
