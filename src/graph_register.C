@@ -9,11 +9,46 @@ using std::map;
 using std::pair;
 
 /*
- * Perhaps we want to make a separate class for treating a vector<expression_ref> as a model.
- * + We only call "combine" on these lists of notes.
- * + We only find_match_note( ) on such lists as well.
- *   - Allow starting from any place in find_match_note( ).
+ * 1. Q: When can we allow sharing of partially-evaluated expressions between contexts?
+ *    A: If the memories for the two contexts are completely separate, then only when
+ *       the WHNF reduced result doesn't (directly or indirectly) reference a var newly
+ *       allocated in only one of the contexts.
  *
+ * 2. Q: Therefore, we seek to put the contexts BACK into a single machine!  How can we handle
+ *       nodes that are in only SOME of the graphs?
+ *    A:
+ *      (i) Give each graph a unique name.
+ *     (ii) Allowing each node and edge to list the names of the graphs that contain it.
+ *    (iii) When initializing a graph, we need to walk all its nodes and edges in order to name them.
+ *     (iv) When destroying a graph, we also need to walk all its nodes and edges in order to un-name them.
+ *      (v) When modifying a node in a graph with name N, we first check if that node is in any other graphs.
+ *          - If the node is in a unique graph, then just modify it.
+ *          - If the node is NOT is a unique graph, then
+ *            (a) duplicate the node n1->n2, and move the name N to the new node n2.
+ *            (b) update all edges to n1 to point to the new node n2.
+ *            (c) modify the new node n2 that is now unique to graph N.
+ *     (vi) If the out-edges from a node are part of its VALUE, then modifying any single node n1 entails
+ *          walking up the tree toward the heads in order to split the nodes.
+ *    (vii) If we split a node pointed to by a head, then we need to modify the head, but only for the graph
+ *          that is being modified.
+ *
+ * 3. How do we succeed in clearing a node if we need to update the nodes that connect to it?
+ *    We need to do this clearing from inside the machine!
+ *    Move the set_*( ) and clear_*( ) routines into reg_heap!(?)
+ *
+ * 4. The ultimate goal of the root re-work was ACTUALLY to enable a pointer that also prevents the reg
+ *    it points to from being garbage-collected.
+ *    
+ *    (i) We convert to expression_ref only by COMPLETELY (e.g. not partially) evaluating the object,
+ *        including any of its constructor fields, if they exist.  (This is involves creating a copy of the
+ *        object, if any fields are unevaluated.)
+ *      
+ *   (ii) We would like to have a type T that can reference partially-evaluate structures.  Referencing a
+ *        field and a head type evaluates the structure, and returns a reference of type T to that field. 
+ *        However, to convert to expression_ref, we COMPLETELY evaluate.  If the field is already an
+ *        atomic (i.e. non-expression) object, this is quite simple.  If not, then it would trigger more
+ *        evaluation.
+ *        
  */
 
 void reg::clear()
