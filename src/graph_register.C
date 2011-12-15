@@ -64,8 +64,8 @@ void reg::clear()
 
 reg::reg()
  :changeable(false),
-  result(new shared_ptr<const Object>),
   call(-1),
+  result(new shared_ptr<const Object>),
   prev_reg(-1),
   next_reg(-1),
   state(none)
