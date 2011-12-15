@@ -20,16 +20,17 @@ void reg::clear()
 {
   E = expression_ref();
   changeable = false;
+  result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object>);
   used_inputs.clear();
   outputs.clear();
   call_outputs.clear();
   call = -1;
-  result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object>);
 }
 
 reg::reg()
  :changeable(false),
   result(new shared_ptr<const Object>),
+  call(-1),
   prev_reg(-1),
   next_reg(-1),
   state(none)
