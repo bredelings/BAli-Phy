@@ -14,28 +14,28 @@
 
 struct reg
 {
-  // The expression
+  /// The expression
   expression_ref E;
 
-  // Is this a parameter value, or dependent on a parameter value?
+  /// Is E a parameter, or is the result dependent on a parameter value?
   bool changeable;
 
-  // Which input values were used to reduce this expression
+  /// Which reg's were used to reduce this expression?
   std::vector< int > used_inputs;
 
-  // Which reduction results made use of the value of this expression (via an operation)
+  /// Which pairs (reg,slot) USED the reduction result of E (via an operation)?
   std::set< std::pair<int,int> > outputs;
 
-  // Which reduction results made use of the value of this expression (via call)
+  /// Which reduction results made use of the value of this expression (via call)
   std::set< int > call_outputs;
 
-  // Does this expression reduce to another expression that we need to evaluate?
+  /// Does E reduce to another reg that we need to evaluate to get the true result?
   int call;
 
-  // What does this expression reduce to eventually? (WHNF)
+  /// What does E reduce to eventually? (WHNF, but not a heap variable.)
   boost::shared_ptr< boost::shared_ptr<const Object> > result;
 
-  // Which parameter VALUES have been used in computing the call/result
+  /// Which arguments have we EVALUATED the call/result of E?
   std::vector<int> used_parameters;
 
   bool is_valid() const {return E;}
