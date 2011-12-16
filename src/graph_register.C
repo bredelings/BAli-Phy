@@ -7,6 +7,7 @@ using std::string;
 using std::vector;
 using std::map;
 using std::pair;
+using std::set;
 
 /*
  * 1. Q: When can we allow sharing of partially-evaluated expressions between contexts?
@@ -627,11 +628,11 @@ void context::collect_garbage() const
   memory.collect_garbage();
 }
 
-void get_exp_refs(const expression_ref& R, vector<int>& refs)
+void get_exp_refs(const expression_ref& R, set<int>& refs)
 {
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( R ))
   {
-    refs.push_back(RV->target);
+    refs.insert(RV->target);
   }
   else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
@@ -640,25 +641,25 @@ void get_exp_refs(const expression_ref& R, vector<int>& refs)
   }
 }
 
-vector<int> get_exp_refs(const expression_ref& R)
+set<int> get_exp_refs(const expression_ref& R)
 {
-  vector<int> regs;
+  set<int> regs;
   get_exp_refs(R,regs);
   return regs;
 }
 
-vector<int> get_reg_refs(const reg& R)
+set<int> get_reg_refs(const reg& R)
 {
-  vector<int> refs;
+  set<int> refs;
 
   get_exp_refs(R.E, refs);
 
   if (R.call != -1)
-    refs.push_back(R.call);
+    refs.insert(R.call);
 
   for(int j=0;j<R.used_inputs.size();j++)
     if (R.used_inputs[j] != -1)
-      assert(includes(refs, R.used_inputs[j]));
+      assert(refs.find(R.used_inputs[j]) != refs.end());
 
   return refs;
 }
@@ -682,7 +683,7 @@ void reg_heap::collect_garbage()
       if (R.state == reg::checked) continue;
 
       R.state = reg::checked;
-      vector<int> used_in_R = get_reg_refs(R);
+      set<int> used_in_R = get_reg_refs(R);
    
       next_scan.insert(next_scan.end(), used_in_R.begin(), used_in_R.end());
     }
