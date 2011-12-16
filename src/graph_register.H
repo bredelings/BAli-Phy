@@ -175,17 +175,28 @@ public:
   void clear_E(int R);
   void set_E(int R, const expression_ref& e);
 
+  /*----- Token manager ------*/
+
+  /// How many tokens are there, maximum
   int n_tokens;
 
+  /// The list of unused_tokens
   std::vector<int> unused_tokens;
 
+  /// Is a particular token unused?
   bool token_is_used(int) const;
 
+  /// How many tokens are there, maximum?
   int get_n_tokens() const {return n_tokens;}
 
+  /// Acquire an unused token
   int get_unused_token();
 
+  /// Release a used token
   void release_token(int);
+
+  /// Acquire a copy of a token
+  int copy_token(int);
 
   reg_heap();
 };

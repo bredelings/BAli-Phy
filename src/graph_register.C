@@ -740,6 +740,11 @@ bool reg_heap::token_is_used(int t) const
   return true;
 }
 
+int reg_heap::copy_token(int t)
+{
+  return get_unused_token();
+}
+
 reg_heap::reg_heap()
   :first_free_reg(-1),
    first_used_reg(-1),
@@ -815,7 +820,7 @@ shared_ptr<const Object> context::default_parameter_value(int i) const
   {
     assert(results.size());
     return results[0];
-  }  
+  }
   else
     return shared_ptr<const Object>();
 }
