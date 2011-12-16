@@ -665,22 +665,6 @@ void context::collect_garbage() const
   memory.collect_garbage();
 }
 
-set<int> get_reg_refs(const reg& R)
-{
-  set<int> refs;
-
-  get_exp_refs(R.E, refs);
-
-  if (R.call != -1)
-    refs.insert(R.call);
-
-  for(int j=0;j<R.used_inputs.size();j++)
-    if (R.used_inputs[j] != -1)
-      assert(refs.find(R.used_inputs[j]) != refs.end());
-
-  return refs;
-}
-
 void reg_heap::collect_garbage()
 {
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
@@ -700,10 +684,16 @@ void reg_heap::collect_garbage()
       if (R.state == reg::checked) continue;
 
       R.state = reg::checked;
-      set<int> used_in_R = get_reg_refs(R);
+
+      // Make sure that we have already correctly got all the references!
       assert(get_exp_refs(R.E) == R.references);
    
-      next_scan.insert(next_scan.end(), used_in_R.begin(), used_in_R.end());
+      // Count the references from E
+      next_scan.insert(next_scan.end(), R.references.begin(), R.references.end());
+
+      // Count also the references from the call
+      if (R.call != -1) 
+	next_scan.insert(next_scan.end(), R.call);
     }
     scan = next_scan;
   }
@@ -1201,13 +1191,18 @@ int  incremental_evaluate(const context& C, int R)
       RegOperationArgs Args(R, C);
       expression_ref result = (*O)(Args);
 
+      // Check that the result of applying the operation only uses regs referenced from E.
+      for(int j=0;j<C.access(R).used_inputs.size();j++)
+	if (C.access(R).used_inputs[j] != -1)
+	  assert(C.access(R).references.find(C.access(R).used_inputs[j]) != C.access(R).references.end());
+
       if (not C[R].changeable)
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
 	assert(C.access(R).call == -1);
 	assert(not *C.access(R).result);
-	C.set_E(R, result);
 	C.clear_used_inputs(R);
+	C.set_E(R, result);
       }
       else
       {
