@@ -51,10 +51,24 @@ using std::pair;
  *        
  */
 
+
+/*
+ * If a reg is shared, then all of its descendants must be shared as well.  (Here, "descendants" means
+ * the terms in E, which determine the computation to be done.)  Therefore, we have a single version of edges in
+ * - E
+ * - used_inputs
+ * - call
+ * - changeable
+ * Since these terms describe the computation.
+ *
+ * Instead of annotating each edge with a graph number, we can simply assume that
+ * (a) if a node is in graph N, then out-edges are in graph N.
+ */
+
 reg::reg()
  :changeable(false),
   call(-1),
-  // initialize result to NULL, so that inserting copies of reg() doesn't result in sharing.
+  // initialize result to NULL, so that inserting copies of a single reg() doesn't result in sharing.
   prev_reg(-1),
   next_reg(-1),
   state(none)
@@ -142,6 +156,16 @@ void reg_heap::clear_call(int R)
   
   access(R).call = -1;
   access(R2).call_outputs.erase(R);
+}
+
+void reg_heap::set_E(int R, const expression_ref& e)
+{
+  access(R).E = e;
+}
+
+void reg_heap::clear_E(int R)
+{
+  access(R).E = expression_ref();
 }
 
 string context::parameter_name(int i) const
@@ -540,6 +564,7 @@ void reg_heap::reclaim_used_reg(int r)
   // Downstream objects could still exist
   clear_used_inputs(r);
   clear_call(r);
+  clear_E(r);
 
   remove_reg_from_used_list(r);
   add_reg_to_free_list(r);

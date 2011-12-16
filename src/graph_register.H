@@ -161,6 +161,8 @@ public:
   void set_call(int R1, int R2);
   void clear_call(int R);
   void clear(int);
+  void clear_E(int R);
+  void set_E(int R, const expression_ref& e);
 
   reg_heap();
 };
@@ -297,6 +299,7 @@ public:
   void set_call(int R1, int R2) const {memory.set_call(R1, R2);}
   void clear_call(int R) const {memory.clear_call(R);}
   void set_call_if_reg_result(int R) const;
+  void set_E(int R, const expression_ref& e) const {memory.set_E(R,e);}
 
   /// Allocate a reg which will be a root for garbage-collection
   root_t allocate_reg() const {return memory.allocate_reg();}
