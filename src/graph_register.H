@@ -54,6 +54,9 @@ struct reg
   int next_reg;
   States state;
 
+  /* 5. Which sub-graphs are we in for sub-graph sharing? */
+  std::set<int> owners;
+
   reg();
 };
 
