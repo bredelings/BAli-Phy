@@ -348,7 +348,7 @@ void context::set_reg_value(int P, const expression_ref& OO)
   assert(dynamic_pointer_cast<const parameter>(access(P).E));
   assert(access(P).result);
   assert(access(P).changeable);
-  memory.clear_call(P);
+  memory->clear_call(P);
 
   if (not is_WHNF(O))
   {
@@ -398,7 +398,7 @@ void context::set_reg_value(int P, const expression_ref& OO)
 
       // Since the computation may be different, we don't know if the value has changed.
       (*access(R2).result).reset();
-      memory.clear_call(R2);
+      memory->clear_call(R2);
     }
 
     foreach(j,access(R1).call_outputs)
@@ -662,7 +662,7 @@ reg_heap::root_t reg_heap::allocate_reg()
 
 void context::collect_garbage() const
 {
-  memory.collect_garbage();
+  memory->collect_garbage();
 }
 
 void reg_heap::collect_garbage()
@@ -770,6 +770,7 @@ int context::find_match_notes(const expression_ref& query, std::vector<expressio
 }
 
 context::context()
+  :memory(new reg_heap())
 { }
 
 shared_ptr<const Object> context::default_parameter_value(int i) const
@@ -790,7 +791,8 @@ shared_ptr<const Object> context::default_parameter_value(int i) const
 }
 
 context::context(const vector<expression_ref>& N)
-  :notes(N)
+  :memory(new reg_heap()),
+   notes(N)
 {
   std::set<string> names = find_named_parameters(notes);
   

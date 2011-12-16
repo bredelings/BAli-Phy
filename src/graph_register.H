@@ -185,7 +185,7 @@ class context: virtual public Object
   //         (that is, which we are in the middle of modifying the context)?
 
   /// The array of registers that make up our memory.
-  mutable reg_heap memory;
+  mutable boost::shared_ptr<reg_heap> memory;
 
   // the list of expressions that we are interested in evaluating.
   std::vector<reg_heap::root_t> heads;
@@ -222,19 +222,19 @@ public:
   boost::shared_ptr<const Object> default_parameter_value(int i) const;
 
   /// Remove a stack-allocated reg from the stack.
-  root_t push_root(int R) const {return memory.push_root(R);}
-  void pop_root(root_t r) const {memory.pop_root(r);}
+  root_t push_root(int R) const {return memory->push_root(R);}
+  void pop_root(root_t r) const {memory->pop_root(r);}
 
   /// The total size of the reg memory
-  int n_regs() const {return memory.n_regs();}
+  int n_regs() const {return memory->n_regs();}
   /// How many regs are not known to be free?
-  int n_used_regs() const {return memory.n_used_regs();}
+  int n_used_regs() const {return memory->n_used_regs();}
 
-  reg& access(int i) const {return memory[i];}
+  reg& access(int i) const {return memory->access(i);}
 
-  reg& operator[](int i) const {return memory[i];}
+  reg& operator[](int i) const {return memory->access(i);}
 
-  expression_ref& value(int i) const {return memory[i].E;}
+  expression_ref& value(int i) const {return memory->access(i).E;}
 
   context* clone() const {return new context(*this);}
 
@@ -303,17 +303,17 @@ public:
   int n_expressions() const;
   expression_ref get_expression(int i) const;
 
-  void set_used_input(int R1, int slot, int R2) const {memory.set_used_input(R1, slot, R2);}
-  void clear_used_input(int R, int slot) const {memory.clear_used_input(R, slot);}
-  void clear_used_inputs(int R) const {memory.clear_used_inputs(R);}
-  void clear_used_inputs(int R, int S) const {memory.clear_used_inputs(R,S);}
-  void set_call(int R1, int R2) const {memory.set_call(R1, R2);}
-  void clear_call(int R) const {memory.clear_call(R);}
+  void set_used_input(int R1, int slot, int R2) const {memory->set_used_input(R1, slot, R2);}
+  void clear_used_input(int R, int slot) const {memory->clear_used_input(R, slot);}
+  void clear_used_inputs(int R) const {memory->clear_used_inputs(R);}
+  void clear_used_inputs(int R, int S) const {memory->clear_used_inputs(R,S);}
+  void set_call(int R1, int R2) const {memory->set_call(R1, R2);}
+  void clear_call(int R) const {memory->clear_call(R);}
   void set_call_if_reg_result(int R) const;
-  void set_E(int R, const expression_ref& e) const {memory.set_E(R,e);}
+  void set_E(int R, const expression_ref& e) const {memory->set_E(R,e);}
 
   /// Allocate a reg which will be a root for garbage-collection
-  root_t allocate_reg() const {return memory.allocate_reg();}
+  root_t allocate_reg() const {return memory->allocate_reg();}
 
   void collect_garbage() const;
 
