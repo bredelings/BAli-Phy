@@ -20,6 +20,12 @@ struct reg
   /// Is E a parameter, or is the result dependent on a parameter value?
   bool changeable;
 
+  /// What does E reduce to eventually? (WHNF, but not a heap variable.)
+  boost::shared_ptr< boost::shared_ptr<const Object> > result;
+
+  /// Does E reduce to another reg that we need to evaluate to get the true result?
+  int call;
+
   /// Which reg's were used to reduce this expression?
   std::vector< int > used_inputs;
 
@@ -28,12 +34,6 @@ struct reg
 
   /// Which reduction results made use of the value of this expression (via call)
   std::set< int > call_outputs;
-
-  /// Does E reduce to another reg that we need to evaluate to get the true result?
-  int call;
-
-  /// What does E reduce to eventually? (WHNF, but not a heap variable.)
-  boost::shared_ptr< boost::shared_ptr<const Object> > result;
 
   bool is_valid() const {return E;}
 
