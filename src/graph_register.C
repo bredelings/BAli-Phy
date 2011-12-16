@@ -51,21 +51,10 @@ using std::pair;
  *        
  */
 
-void reg::clear()
-{
-  E = expression_ref();
-  changeable = false;
-  result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object>);
-  used_inputs.clear();
-  outputs.clear();
-  call_outputs.clear();
-  call = -1;
-}
-
 reg::reg()
  :changeable(false),
   call(-1),
-  result(new shared_ptr<const Object>),
+  // initialize result to NULL, so that inserting copies of reg() doesn't result in sharing.
   prev_reg(-1),
   next_reg(-1),
   state(none)
@@ -77,7 +66,21 @@ int context::add_note(const expression_ref& E)
   return notes.size()-1;
 }
 
-void context::set_used_input(int R1, int slot, int R2) const
+void reg_heap::clear(int R)
+{
+  access(R).E = expression_ref();
+  access(R).changeable = false;
+  access(R).result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object>);
+
+  access(R).used_inputs.clear();
+  access(R).call = -1;
+
+  // Upstream objects can NOT still exist - otherwise this object would be used :-)
+  access(R).outputs.clear();
+  access(R).call_outputs.clear();
+}
+
+void reg_heap::set_used_input(int R1, int slot, int R2)
 {
   assert(R1 >= 0 and R1 < n_regs());
   assert(R2 >= 0 and R2 < n_regs());
@@ -89,7 +92,7 @@ void context::set_used_input(int R1, int slot, int R2) const
   access(R2).outputs.insert(pair<int,int>(R1,slot));
 }
 
-void context::clear_used_input(int R, int slot) const
+void reg_heap::clear_used_input(int R, int slot)
 {
   int R2 = access(R).used_inputs[slot];
   if (R2 == -1) return;
@@ -100,19 +103,19 @@ void context::clear_used_input(int R, int slot) const
   access(R).used_inputs[slot] = -1;
 }
 
-void context::clear_used_inputs(int R) const
+void reg_heap::clear_used_inputs(int R)
 {
   for(int i=0;i<access(R).used_inputs.size();i++)
     clear_used_input(R,i);
 }
 
-void context::clear_used_inputs(int R, int S) const
+void reg_heap::clear_used_inputs(int R, int S)
 {
   clear_used_inputs(R);
   access(R).used_inputs = vector<int>(S, -1);
 }
 
-void context::set_call(int R1, int R2) const
+void reg_heap::set_call(int R1, int R2)
 {
   // Check that R1 is legal
   assert(0 <= R1 and R1 < n_regs());
@@ -131,7 +134,7 @@ void context::set_call(int R1, int R2) const
   access(R2).call_outputs.insert(R1);
 }
 
-void context::clear_call(int R) const
+void reg_heap::clear_call(int R)
 {
   int R2 = access(R).call;
   if (R2 == -1) return;
@@ -143,7 +146,7 @@ void context::clear_call(int R) const
 
 string context::parameter_name(int i) const
 {
-  expression_ref E = access(parameters[i]).E;
+  expression_ref E = access(*parameters[i]).E;
   if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
   {
     return P->parameter_name;
@@ -190,7 +193,7 @@ void context::rename_parameter(int i, const string& new_name)
 {
   string old_name = parameter_name(i);
 
-  int R = parameters[i];
+  int R = *parameters[i];
 
   assert( access(R).changeable == true );
   access(R).E = parameter(new_name);
@@ -201,22 +204,24 @@ int incremental_evaluate(const context&, int);
 /// Return the value of a particular index, computing it if necessary
 shared_ptr<const Object> context::evaluate(int index) const
 {
-  int R = incremental_evaluate(*this, heads[index]);
-  // FIXME - I'd like to update heads[index] to be R if it changed.
-  //         This probably requires updating the memory roots.
-  return *access(R).result;
+  int& H = *heads[index];
+
+  H = incremental_evaluate(*this, H);
+
+  return *access(H).result;
 }
 
 expression_ref graph_normalize(const context&, const expression_ref&);
 
 shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) const
 {
-  int R = allocate_stack_reg();
+  root_t r = allocate_reg();
+  int& R = *r;
   access(R).E = graph_normalize(*this, translate_refs(E));
 
-  incremental_evaluate(*this,R);
+  R = incremental_evaluate(*this,R);
   shared_ptr<const Object> result = *access(R).result;
-  pop_reg(R);
+  pop_root(r);
 
   return result;
 }
@@ -224,7 +229,7 @@ shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) c
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 shared_ptr<const Object> context::get_parameter_value(int index) const
 {
-  int P = parameters[index];
+  int P = *parameters[index];
 
   if (not *access(P).result)
   {
@@ -250,24 +255,24 @@ shared_ptr<const Object> context::get_parameter_value(const std::string& name) c
 
 void context::set_parameter_value(int index, const expression_ref& O)
 {
-  int P = parameters[index];
+  int P = *parameters[index];
 
   set_reg_value(P, O);
 }
 
-void set_call_if_reg_result(const context& C, int R)
+void context::set_call_if_reg_result(int R) const
 {
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(*C[R].result))
+  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(*access(R).result))
   {
     int R2 = RV->target;
     
-    assert(0 <= R2 and R2 < C.n_regs());
-    assert(C[R2].state == reg::used);
+    assert(0 <= R2 and R2 < n_regs());
+    assert(access(R2).state == reg::used);
 
     // clear the result slot
-    (*C[R].result).reset();
+    (*access(R).result).reset();
     
-    C.set_call(R,R2);
+    set_call(R,R2);
   }
 }
 
@@ -279,24 +284,25 @@ void context::set_reg_value(int P, const expression_ref& OO)
   assert(dynamic_pointer_cast<const parameter>(access(P).E));
   assert(access(P).result);
   assert(access(P).changeable);
-  clear_call(P);
+  memory.clear_call(P);
 
   if (not is_WHNF(O))
   {
-    int R = allocate_stack_reg();
-    access(R).E = O;
-    O = expression_ref( new reg_var(R) );
+    root_t r = allocate_reg();
+    access(*r).E = O;
+    O = expression_ref( new reg_var(*r) );
 
     // The result value here cannot be shared.
     access(P).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >(O));
-    pop_reg(R);
+    set_call_if_reg_result(P);
+    pop_root(r);
   }
   else
   {
     // The result value here cannot be shared.
     access(P).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >(O));
+    set_call_if_reg_result(P);
   }
-  set_call_if_reg_result(*this, P);
 
   vector< int > NOT_known_value_unchanged;
   std::set< int > visited;
@@ -328,7 +334,7 @@ void context::set_reg_value(int P, const expression_ref& OO)
 
       // Since the computation may be different, we don't know if the value has changed.
       (*access(R2).result).reset();
-      clear_call(R2);
+      memory.clear_call(R2);
     }
 
     foreach(j,access(R1).call_outputs)
@@ -397,11 +403,11 @@ int context::add_parameter(const string& name)
 
   int index = n_parameters();
 
-  int R = allocate_root_reg();
-  parameters.push_back( R );
+  root_t r = allocate_reg();
+  parameters.push_back( r );
 
-  access(R).changeable = true;
-  access(R).E = parameter(name);
+  access(*r).changeable = true;
+  access(*r).E = parameter(name);
 
   set_parameter_value(index, default_parameter_value(index) );
   
@@ -434,20 +440,22 @@ int reg_heap::n_used_regs() const
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const expression_ref& E)
 {
-  //  std::cerr<<"add: "<<E->print()<<"\n";
+  std::cerr<<"add: "<<E->print()<<"\n";
 
   expression_ref T = graph_normalize(*this, translate_refs(E) );
 
-  int R = -1;
+  root_t r;
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
-    R = RV->target;
+  {
+    r = push_root( RV->target );
+  }
   else
   {
-    R = allocate_root_reg();
-    access(R).E = T;
+    r = allocate_reg();
+    access(*r).E = T;
   }
 
-  heads.push_back(R);
+  heads.push_back(r);
   return heads.size()-1;
 }
 
@@ -455,7 +463,7 @@ int context::add_compute_expression(const expression_ref& E)
 int context::add_compute_expression(const string& name, const expression_ref& E)
 {
   int index = add_compute_expression( E );
-  int R = heads[index];
+  int R = *heads[index];
   add_variable(name, R);
   return index;
 }
@@ -467,11 +475,12 @@ int context::n_expressions() const
 
 expression_ref context::get_expression(int i) const
 {
-  return access(heads[i]).E;
+  return access(*heads[i]).E;
 }
 
 int reg_heap::add_reg_to_free_list(int r)
 {
+  clear(r);
   access(r).state = reg::free;
   access(r).prev_reg = -1;
   access(r).next_reg = first_free_reg;
@@ -527,25 +536,24 @@ void reg_heap::remove_reg_from_used_list(int r)
 void reg_heap::reclaim_used_reg(int r)
 {
   // FIXME - we need to carefully clear references to things that might reference us back.. don't we?
-  access(r).clear();
+
+  // Downstream objects could still exist
+  clear_used_inputs(r);
+  clear_call(r);
+
   remove_reg_from_used_list(r);
   add_reg_to_free_list(r);
 }
 
-void reg_heap::push_reg(int R)
+reg_heap::root_t reg_heap::push_root(int R)
 {
-  stack_roots.push_back(R);
+  assert(0 <= R and R < n_regs());
+  return roots.insert(roots.end(), R);
 }
 
-void reg_heap::pop_reg(int R)
+void reg_heap::pop_root(reg_heap::root_t r)
 {
-  if (stack_roots.empty())
-    throw myexception()<<"Popping reg "<<R<<" when the top reg on the stack is ";
-
-  if (stack_roots.back() != R)
-    throw myexception()<<"Popping reg "<<R<<" when the top reg on the stack is ";
-
-  stack_roots.pop_back();
+  roots.erase(r);
 }
 
 void reg_heap::expand_memory(int s)
@@ -560,21 +568,7 @@ void reg_heap::expand_memory(int s)
   assert(n_regs() == n_used_regs() + n_free_regs());
 }
 
-int reg_heap::allocate_root_reg()
-{
-  int R = allocate_reg();
-  roots.push_back(R);
-  return R;
-}
-
-int reg_heap::allocate_stack_reg()
-{
-  int R = allocate_reg();
-  stack_roots.push_back(R);
-  return R;
-}
-
-int reg_heap::allocate_reg()
+reg_heap::root_t reg_heap::allocate_reg()
 {
   assert(n_regs() == n_used_regs() + n_free_regs());
 
@@ -595,23 +589,10 @@ int reg_heap::allocate_reg()
 
   assert(n_regs() == n_used_regs() + n_free_regs());
   assert(access(r).state == reg::used);
-  return r;
-}
 
-int context::allocate_root_reg() const
-{
-  int r = memory.allocate_root_reg();
-  // FIXME - this should be unnecessary
-  access(r).clear();
-  return r;
-}
+  root_t root = roots.insert(roots.end(), r);
 
-int context::allocate_stack_reg() const
-{
-  int r = memory.allocate_stack_reg();
-  // FIXME - this should be unnecessary
-  access(r).clear();
-  return r;
+  return root;
 }
 
 void context::collect_garbage() const
@@ -657,14 +638,12 @@ vector<int> get_reg_refs(const reg& R)
 
 void reg_heap::collect_garbage()
 {
-  //  std::cerr<<"***********Garbage Collection******************"<<std::endl;
+  std::cerr<<"***********Garbage Collection******************"<<std::endl;
   assert(n_regs() == n_used_regs() + n_free_regs());
 
   vector<int> scan;
-  for(int i=0;i<roots.size();i++)
-    scan.push_back(roots[i]);
-  for(int i=0;i<stack_roots.size();i++)
-    scan.push_back(stack_roots[i]);
+  foreach(i,roots)
+    scan.push_back(*i);
 
   while (not scan.empty())
   {
@@ -712,7 +691,7 @@ expression_ref context::translate_refs(const expression_ref& R) const
     if (param_index == -1)
       throw myexception()<<"Can't translate undefined parameter '"<<P->parameter_name<<"' in expression!";
 
-    int param_location = parameters[param_index];
+    int param_location = *parameters[param_index];
 
     return expression_ref(new reg_var(param_location) );
   }
@@ -1076,11 +1055,11 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
 /// Evaluate C[R] and return a reg containing the results that looks through unchangeable redirections = reg_var chains
 int  incremental_evaluate(const context& C, int R)
 {
-  assert(C[R].state == reg::used);
   assert(R >= 0 and R < C.n_regs());
+  assert(C[R].state == reg::used);
   assert(C[R].result);
 
-  // if (not *C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+  if (not *C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
 
   while (not *C[R].result)
   {
@@ -1088,7 +1067,7 @@ int  incremental_evaluate(const context& C, int R)
     vector<expression_ref> bodies;
     expression_ref T;
 
-    // std::cerr<<"   statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+    std::cerr<<"   statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
 
     // If we know what to call, then call it and use it to set the result
     if (C[R].call != -1)
@@ -1120,8 +1099,12 @@ int  incremental_evaluate(const context& C, int R)
     else if (parse_let_expression(C[R].E, vars, bodies, T))
     {
       vector<shared_ptr<reg_var> > new_reg_vars;
+      vector<reg_heap::root_t> new_regs;
       for(int i=0;i<vars.size();i++)
-	new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(C.allocate_stack_reg())) );
+      {
+	new_regs.push_back(C.allocate_reg());
+	new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(*new_regs.back())) );
+      }
       
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
       for(int i=0;i<vars.size();i++) 
@@ -1143,8 +1126,8 @@ int  incremental_evaluate(const context& C, int R)
       for(int i=0;i<vars.size();i++) 
 	C[ new_reg_vars[i]->target ].E = bodies[i];
 
-      for(int i=vars.size()-1; i>=0; i--) 
-	C.pop_reg( new_reg_vars[i]->target );
+      for(int i=0;i<new_regs.size(); i++)
+	C.pop_root( new_regs[i] );
       
       assert(C[R].call == -1);
       assert(not *C[R].result);
@@ -1153,6 +1136,8 @@ int  incremental_evaluate(const context& C, int R)
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
+      assert(not *C[R].result);
+
       shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(C[R].E);
       assert(E);
       
@@ -1162,12 +1147,17 @@ int  incremental_evaluate(const context& C, int R)
       // Although the reg itself is not a parameter, it will stay changeable if it ever computes a changeable result.
       // Therefore, we cannot do "assert(not C[R].changeable);" here.
 
+      assert(not *C[R].result);
       RegOperationArgs Args(R, C);
+      assert(not *C[R].result);
       expression_ref result = (*O)(Args);
+      assert(not *C[R].result);
       if (not C[R].changeable)
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
+      assert(not *C[R].result);
 	C[R].E = result;
+      assert(not *C[R].result);
 	C.clear_used_inputs(R);
 	assert(C[R].call == -1);
 	assert(not *C[R].result);
@@ -1176,24 +1166,24 @@ int  incremental_evaluate(const context& C, int R)
       {
 	// Check for WHNF *OR* heap variables
 	if (is_WHNF(result))
-	  *(C[R].result) = result;
+	  *C[R].result = result;
 	else {
-	  int R2 = C.allocate_stack_reg();
-	  C.access(R2).E = result;
-	  *C[R].result = shared_ptr<const Object>(new reg_var(R2));
-	  C.pop_reg(R2);
+	  reg_heap::root_t r2 = C.allocate_reg();
+	  C.access(*r2).E = result;
+	  *C[R].result = shared_ptr<const Object>(new reg_var(*r2));
+	  C.pop_root(r2);
 	}
       }
 	
 #ifndef NDEBUG
-      //      std::cerr<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
-      //      std::cerr<<"Executing operation: "<<O<<"\n";
-      //      std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n";
+      // std::cerr<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
+      std::cerr<<"Executing operation: "<<O<<"\n";
+      std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n";
 #endif
     }
 
     // 4. We can't exit the loop with a reg_var in the result slot. Change to a call.
-    set_call_if_reg_result(C,R);
+    C.set_call_if_reg_result(R);
   }
 
 #ifndef NDEBUG

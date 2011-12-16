@@ -46,8 +46,6 @@ struct reg
   int next_reg;
   States state;
 
-  void clear();
-
   reg();
 };
 
@@ -113,8 +111,7 @@ struct reg_var: public Object
 class reg_heap
 {
   std::vector<reg> memory;
-  std::vector<int> roots;
-  std::vector<int> stack_roots;
+  std::list<int> roots;
 
   /// Start of free list 
   int first_free_reg;
@@ -122,7 +119,6 @@ class reg_heap
   /// Start of used list 
   int first_used_reg;
 
-  int allocate_reg();
   void expand_memory(int);
 
   /// Add a reg (not on any list) to the free list
@@ -138,6 +134,9 @@ class reg_heap
   void reclaim_used_reg(int);
 
 public:
+  typedef std::list<int>::iterator root_t;
+  typedef std::list<int>::const_iterator const_root_t;
+
   const reg& access(int i) const {return memory[i];}
         reg& access(int i)       {return memory[i];}
 
@@ -148,13 +147,20 @@ public:
   int n_free_regs() const;
   int n_used_regs() const;
 
-  void push_reg(int);
-  void pop_reg(int);
+  root_t push_root(int);
+  void pop_root(root_t);
 
-  int allocate_root_reg();
-  int allocate_stack_reg();
+  root_t allocate_reg();
 
   void collect_garbage();
+
+  void set_used_input(int R1, int slot, int R2);
+  void clear_used_input(int R, int slot);
+  void clear_used_inputs(int R);
+  void clear_used_inputs(int R, int S);
+  void set_call(int R1, int R2);
+  void clear_call(int R);
+  void clear(int);
 
   reg_heap();
 };
@@ -169,10 +175,10 @@ class context: virtual public Object
   mutable reg_heap memory;
 
   // the list of expressions that we are interested in evaluating.
-  std::vector<int> heads;
+  std::vector<reg_heap::root_t> heads;
 
   /// The register indices of the named parameters.
-  std::vector<int> parameters;
+  std::vector<reg_heap::root_t> parameters;
 
   /// A list of variable names, and the register indices to which they correspond.
   std::vector<std::pair<std::string,int> > variables;
@@ -186,6 +192,8 @@ class context: virtual public Object
   std::vector<expression_ref> notes;
 
 public:
+  typedef reg_heap::root_t root_t;
+
   int n_notes() const {return notes.size();}
 
   const std::vector<expression_ref>& get_notes() const {return notes;}
@@ -200,15 +208,9 @@ public:
 
   boost::shared_ptr<const Object> default_parameter_value(int i) const;
 
-  void set_used_input(int R1, int slot, int R2) const;
-  void clear_used_input(int R, int slot) const;
-  void clear_used_inputs(int R) const;
-  void clear_used_inputs(int R, int S) const;
-  void set_call(int R1, int R2) const;
-  void clear_call(int R) const;
-
   /// Remove a stack-allocated reg from the stack.
-  void pop_reg(int R) const {memory.pop_reg(R);}
+  root_t push_root(int R) const {return memory.push_root(R);}
+  void pop_root(root_t r) const {memory.pop_root(r);}
 
   /// The total size of the reg memory
   int n_regs() const {return memory.n_regs();}
@@ -288,10 +290,16 @@ public:
   int n_expressions() const;
   expression_ref get_expression(int i) const;
 
+  void set_used_input(int R1, int slot, int R2) const {memory.set_used_input(R1, slot, R2);}
+  void clear_used_input(int R, int slot) const {memory.clear_used_input(R, slot);}
+  void clear_used_inputs(int R) const {memory.clear_used_inputs(R);}
+  void clear_used_inputs(int R, int S) const {memory.clear_used_inputs(R,S);}
+  void set_call(int R1, int R2) const {memory.set_call(R1, R2);}
+  void clear_call(int R) const {memory.clear_call(R);}
+  void set_call_if_reg_result(int R) const;
+
   /// Allocate a reg which will be a root for garbage-collection
-  int allocate_root_reg() const;
-  /// Allocate a reg which will be on the stack until removed
-  int allocate_stack_reg() const;
+  root_t allocate_reg() const {return memory.allocate_reg();}
 
   void collect_garbage() const;
 
@@ -302,56 +310,40 @@ public:
 
 class reg_ptr
 {
-  int R;
+  reg_heap::root_t r;
   const context& C;
 public:
+  typedef reg_heap::root_t root_t;
 
-  const reg& operator*()    const throw()   {assert(R != -1); return C[R];}
-  const reg* operator->()   const throw()   {assert(R != -1); return &C[R];}
-  const reg* get()          const throw()   {assert(R != -1); return &C[R];}
+  const reg& operator*()    const throw()   {return  C[*r];}
+  const reg* operator->()   const throw()   {return &C[*r];}
+  const reg* get()          const throw()   {return &C[*r];}
     
-  reg& operator*()                          {assert(R != -1); return C[R];}
-  reg* operator->()                         {assert(R != -1); return &C[R];}
-  reg* modify()                             {assert(R != -1); return &C[R];}
-
-  void reset() { R = -1 ;}
-
-  // For conversion to unspecified bool
-  typedef reg_ptr this_type;
-
-  typedef reg* (this_type::*unspecified_bool_type)();
-
-  operator unspecified_bool_type() const // never throws
-  {
-    return R == -1 ? 0: &this_type::modify;
-  }
-
-  void pop_reg()
-  {
-    C.pop_reg(R);
-    reset();
-  }
+  reg& operator*()                          {return  C[*r];}
+  reg* operator->()                         {return &C[*r];}
+  reg* modify()                             {return &C[*r];}
 
   const context& get_context() const {return C;}
 
   boost::shared_ptr<const Object> evaluate() const
   {
-    return C.evaluate(R);
+    return C.evaluate(*r);
   }
 
   template<typename T>
   boost::shared_ptr<const T> evaluate_as() const
   {
-    return C.evaluate_as<T>(R);
+    return C.evaluate_as<T>(*r);
   }
 
-  reg_ptr(int r, const context& c)
-    :R(r), C(c)
+  reg_ptr(int R, const context& c)
+    :r(c.push_root(R)), C(c)
   { }
 
   ~reg_ptr()
   {
-    reset();
+    C.pop_root(r);
+    r = root_t();
   }
 };
 
