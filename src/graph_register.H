@@ -14,6 +14,8 @@
 
 struct reg
 {
+  /* 1. The computation */
+
   /// The expression
   expression_ref E;
 
@@ -26,8 +28,12 @@ struct reg
   /// Does E reduce to another reg that we need to evaluate to get the true result?
   int call;
 
+  /* 2. The computations we used */
   /// Which reg's were used to reduce this expression?
   std::vector< int > used_inputs;
+
+
+  /* 3. The computations that use or reference us.. */
 
   /// Which pairs (reg,slot) USED the reduction result of E (via an operation)?
   std::set< std::pair<int,int> > outputs;
@@ -35,8 +41,8 @@ struct reg
   /// Which reduction results made use of the value of this expression (via call)
   std::set< int > call_outputs;
 
-  bool is_valid() const {return E;}
 
+  /* 4. Fields used by the memory manager */
   enum States {none=0,free=1,used=2,checked=3};
 
   int prev_reg;
