@@ -41,6 +41,11 @@ struct reg
   /// Which reduction results made use of the value of this expression (via call)
   std::set< int > call_outputs;
 
+  /// The nodes that directly reference us (not via a call)
+  std::set< int > referenced_by_in_E;
+
+  /// The nodes that we directly reference from E
+  std::set< int > references;
 
   /* 4. Fields used by the memory manager */
   enum States {none=0,free=1,used=2,checked=3};
