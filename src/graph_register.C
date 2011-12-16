@@ -181,9 +181,6 @@ set<int> get_exp_refs(const expression_ref& R)
 
 void reg_heap::set_E(int R, const expression_ref& e)
 {
-  assert(access(R).call == -1);
-  assert(not *access(R).result);
-
   clear_E(R);
 
   access(R).E = e;
@@ -197,9 +194,11 @@ void reg_heap::set_E(int R, const expression_ref& e)
 
 void reg_heap::clear_E(int R)
 {
+  /*
   clear_call(R);
   clear_used_inputs(R);
   (*access(R).result).reset();
+  */
 
   foreach(r,access(R).references)
     access(*r).referenced_by_in_E.erase(R);
@@ -702,6 +701,7 @@ void reg_heap::collect_garbage()
 
       R.state = reg::checked;
       set<int> used_in_R = get_reg_refs(R);
+      assert(get_exp_refs(R.E) == R.references);
    
       next_scan.insert(next_scan.end(), used_in_R.begin(), used_in_R.end());
     }
@@ -991,7 +991,11 @@ struct RegOperationArgs: public OperationArgs
 
       // Adjust the reference, if it changed.
       if (R2 != RV->target)
-	dynamic_pointer_cast<expression>(C[R].E)->sub[slot+1] = new reg_var(R2);
+      {
+	expression_ref E2 = C[R].E;
+	dynamic_pointer_cast<expression>(E2)->sub[slot+1] = new reg_var(R2);
+	C.set_E(R, E2);
+      }
 
       // mark R2 used by R in the correct slot
       C.set_used_input(R, slot, R2);
@@ -1104,6 +1108,7 @@ int  incremental_evaluate(const context& C, int R)
   assert(R >= 0 and R < C.n_regs());
   assert(C[R].state == reg::used);
   assert(C[R].result);
+  assert(get_exp_refs(C.access(R).E) == C.access(R).references);
 
   if (not *C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
 
@@ -1114,6 +1119,7 @@ int  incremental_evaluate(const context& C, int R)
     expression_ref T;
 
     std::cerr<<"   statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+    assert(get_exp_refs(C.access(R).E) == C.access(R).references);
 
     // If we know what to call, then call it and use it to set the result
     if (C[R].call != -1)
@@ -1169,7 +1175,7 @@ int  incremental_evaluate(const context& C, int R)
       assert(not C[R].changeable);
 
       for(int i=0;i<vars.size();i++) 
-	C[ new_reg_vars[i]->target ].E = bodies[i];
+	C.set_E( new_reg_vars[i]->target , bodies[i]);
 
       C.set_E(R, T);
 
@@ -1198,6 +1204,8 @@ int  incremental_evaluate(const context& C, int R)
       if (not C[R].changeable)
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
+	assert(C.access(R).call == -1);
+	assert(not *C.access(R).result);
 	C.set_E(R, result);
 	C.clear_used_inputs(R);
       }
