@@ -160,6 +160,8 @@ void reg_heap::clear_call(int R)
 
 void reg_heap::set_E(int R, const expression_ref& e)
 {
+  assert(access(R).call == -1);
+  assert(not *access(R).result);
   access(R).E = e;
 }
 
@@ -220,7 +222,7 @@ void context::rename_parameter(int i, const string& new_name)
   int R = *parameters[i];
 
   assert( access(R).changeable == true );
-  access(R).E = parameter(new_name);
+  set_E(R, parameter(new_name) );
 }
 
 int incremental_evaluate(const context&, int);
@@ -241,7 +243,7 @@ shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) c
 {
   root_t r = allocate_reg();
   int& R = *r;
-  access(R).E = graph_normalize(*this, translate_refs(E));
+  set_E(R, graph_normalize(*this, translate_refs(E)) );
 
   R = incremental_evaluate(*this,R);
   shared_ptr<const Object> result = *access(R).result;
@@ -313,7 +315,7 @@ void context::set_reg_value(int P, const expression_ref& OO)
   if (not is_WHNF(O))
   {
     root_t r = allocate_reg();
-    access(*r).E = O;
+    set_E(*r, O);
     O = expression_ref( new reg_var(*r) );
 
     // The result value here cannot be shared.
@@ -431,7 +433,7 @@ int context::add_parameter(const string& name)
   parameters.push_back( r );
 
   access(*r).changeable = true;
-  access(*r).E = parameter(name);
+  set_E(*r, parameter(name) );
 
   set_parameter_value(index, default_parameter_value(index) );
   
@@ -476,7 +478,7 @@ int context::add_compute_expression(const expression_ref& E)
   else
   {
     r = allocate_reg();
-    access(*r).E = T;
+    set_E( *r, T );
   }
 
   heads.push_back(r);
@@ -1146,10 +1148,11 @@ int  incremental_evaluate(const context& C, int R)
       }
       
       assert(not C[R].changeable);
-      C[R].E = T;
 
       for(int i=0;i<vars.size();i++) 
 	C[ new_reg_vars[i]->target ].E = bodies[i];
+
+      C.set_E(R, T);
 
       for(int i=0;i<new_regs.size(); i++)
 	C.pop_root( new_regs[i] );
@@ -1161,8 +1164,6 @@ int  incremental_evaluate(const context& C, int R)
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
-      assert(not *C[R].result);
-
       shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(C[R].E);
       assert(E);
       
@@ -1172,20 +1173,14 @@ int  incremental_evaluate(const context& C, int R)
       // Although the reg itself is not a parameter, it will stay changeable if it ever computes a changeable result.
       // Therefore, we cannot do "assert(not C[R].changeable);" here.
 
-      assert(not *C[R].result);
       RegOperationArgs Args(R, C);
-      assert(not *C[R].result);
       expression_ref result = (*O)(Args);
-      assert(not *C[R].result);
+
       if (not C[R].changeable)
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
-      assert(not *C[R].result);
-	C[R].E = result;
-      assert(not *C[R].result);
+	C.set_E(R, result);
 	C.clear_used_inputs(R);
-	assert(C[R].call == -1);
-	assert(not *C[R].result);
       }
       else
       {
@@ -1194,7 +1189,7 @@ int  incremental_evaluate(const context& C, int R)
 	  *C[R].result = result;
 	else {
 	  reg_heap::root_t r2 = C.allocate_reg();
-	  C.access(*r2).E = result;
+	  C.set_E(*r2, result );
 	  *C[R].result = shared_ptr<const Object>(new reg_var(*r2));
 	  C.pop_root(r2);
 	}
