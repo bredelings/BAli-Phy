@@ -159,15 +159,53 @@ void reg_heap::clear_call(int R)
   access(R2).call_outputs.erase(R);
 }
 
+void get_exp_refs(const expression_ref& R, set<int>& refs)
+{
+  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( R ))
+  {
+    refs.insert(RV->target);
+  }
+  else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  {
+    for(int i=0;i<E->size();i++)
+      get_exp_refs(E->sub[i],refs);
+  }
+}
+
+set<int> get_exp_refs(const expression_ref& R)
+{
+  set<int> regs;
+  get_exp_refs(R,regs);
+  return regs;
+}
+
 void reg_heap::set_E(int R, const expression_ref& e)
 {
   assert(access(R).call == -1);
   assert(not *access(R).result);
+
+  clear_E(R);
+
   access(R).E = e;
+  access(R).references = get_exp_refs(e);
+  foreach(r, access(R).references)
+  {
+    assert(access(*r).referenced_by_in_E.find(R) == access(*r).referenced_by_in_E.end());
+    access(*r).referenced_by_in_E.insert(R);
+  }
 }
 
 void reg_heap::clear_E(int R)
 {
+  clear_call(R);
+  clear_used_inputs(R);
+  (*access(R).result).reset();
+
+  foreach(r,access(R).references)
+    access(*r).referenced_by_in_E.erase(R);
+
+  access(R).references.clear();
+
   access(R).E = expression_ref();
 }
 
@@ -626,26 +664,6 @@ reg_heap::root_t reg_heap::allocate_reg()
 void context::collect_garbage() const
 {
   memory.collect_garbage();
-}
-
-void get_exp_refs(const expression_ref& R, set<int>& refs)
-{
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( R ))
-  {
-    refs.insert(RV->target);
-  }
-  else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
-  {
-    for(int i=0;i<E->size();i++)
-      get_exp_refs(E->sub[i],refs);
-  }
-}
-
-set<int> get_exp_refs(const expression_ref& R)
-{
-  set<int> regs;
-  get_exp_refs(R,regs);
-  return regs;
 }
 
 set<int> get_reg_refs(const reg& R)
