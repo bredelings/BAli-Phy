@@ -35,9 +35,6 @@ struct reg
   /// What does E reduce to eventually? (WHNF, but not a heap variable.)
   boost::shared_ptr< boost::shared_ptr<const Object> > result;
 
-  /// Which arguments have we EVALUATED the call/result of E?
-  std::vector<int> used_parameters;
-
   bool is_valid() const {return E;}
 
   enum States {none=0,free=1,used=2,checked=3};
