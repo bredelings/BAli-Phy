@@ -712,9 +712,38 @@ void reg_heap::collect_garbage()
   }
 }
 
+int reg_heap::get_unused_token()
+{
+  if (unused_tokens.empty())
+  {
+    unused_tokens.push_back(n_tokens);
+    n_tokens++;
+  }
+
+  int t = unused_tokens.back();
+  unused_tokens.pop_back();
+  return t;
+}
+
+void reg_heap::release_token(int t)
+{
+  assert(token_is_used(t));
+  unused_tokens.push_back(t);
+}
+
+bool reg_heap::token_is_used(int t) const
+{
+  assert(t < n_tokens);
+
+  if (includes(unused_tokens,t)) return false;
+
+  return true;
+}
+
 reg_heap::reg_heap()
   :first_free_reg(-1),
-   first_used_reg(-1)
+   first_used_reg(-1),
+   n_tokens(0)
 { }
 
 expression_ref context::translate_refs(const expression_ref& R) const
@@ -770,7 +799,8 @@ int context::find_match_notes(const expression_ref& query, std::vector<expressio
 }
 
 context::context()
-  :memory(new reg_heap())
+  :memory(new reg_heap()),
+   token(memory->get_unused_token())
 { }
 
 shared_ptr<const Object> context::default_parameter_value(int i) const
@@ -792,6 +822,7 @@ shared_ptr<const Object> context::default_parameter_value(int i) const
 
 context::context(const vector<expression_ref>& N)
   :memory(new reg_heap()),
+   token(memory->get_unused_token()),
    notes(N)
 {
   std::set<string> names = find_named_parameters(notes);

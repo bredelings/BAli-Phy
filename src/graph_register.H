@@ -175,6 +175,18 @@ public:
   void clear_E(int R);
   void set_E(int R, const expression_ref& e);
 
+  int n_tokens;
+
+  std::vector<int> unused_tokens;
+
+  bool token_is_used(int) const;
+
+  int get_n_tokens() const {return n_tokens;}
+
+  int get_unused_token();
+
+  void release_token(int);
+
   reg_heap();
 };
 
@@ -186,6 +198,8 @@ class context: virtual public Object
 
   /// The array of registers that make up our memory.
   mutable boost::shared_ptr<reg_heap> memory;
+
+  int token;
 
   // the list of expressions that we are interested in evaluating.
   std::vector<reg_heap::root_t> heads;
