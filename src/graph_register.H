@@ -23,7 +23,7 @@ struct reg
   bool changeable;
 
   /// What does E reduce to eventually? (WHNF, but not a heap variable.)
-  boost::shared_ptr< boost::shared_ptr<const Object> > result;
+  expression_ref result;
 
   /// Does E reduce to another reg that we need to evaluate to get the true result?
   int call;

@@ -9,6 +9,7 @@ using std::map;
 using std::pair;
 using std::set;
 
+using std::endl;
 /*
  * 1. Q: When can we allow sharing of partially-evaluated expressions between contexts?
  *    A: If the memories for the two contexts are completely separate, then only when
@@ -85,7 +86,7 @@ void reg_heap::clear(int R)
 {
   access(R).E = expression_ref();
   access(R).changeable = false;
-  access(R).result = shared_ptr< shared_ptr<const Object> >(new shared_ptr<const Object>);
+  access(R).result = expression_ref(); // enforce unsharing
 
   access(R).used_inputs.clear();
   access(R).call = -1;
@@ -143,7 +144,7 @@ void reg_heap::set_call(int R1, int R2)
   // Check that we aren't overriding an existing *call*
   assert(access(R1).call == -1);
   // Check that we aren't overriding an existing *result*
-  assert(not *access(R1).result);
+  assert(not access(R1).result);
 
   access(R1).call = R2;
   access(R2).call_outputs.insert(R1);
@@ -197,7 +198,7 @@ void reg_heap::clear_E(int R)
   /*
   clear_call(R);
   clear_used_inputs(R);
-  (*access(R).result).reset();
+  access(R).result.reset();
   */
 
   foreach(r,access(R).references)
@@ -272,7 +273,7 @@ shared_ptr<const Object> context::evaluate(int index) const
 
   H = incremental_evaluate(*this, H);
 
-  return *access(H).result;
+  return access(H).result;
 }
 
 expression_ref graph_normalize(const context&, const expression_ref&);
@@ -284,7 +285,7 @@ shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) c
   set_E(R, graph_normalize(*this, translate_refs(E)) );
 
   R = incremental_evaluate(*this,R);
-  shared_ptr<const Object> result = *access(R).result;
+  shared_ptr<const Object> result = access(R).result;
   pop_root(r);
 
   return result;
@@ -295,7 +296,7 @@ shared_ptr<const Object> context::get_parameter_value(int index) const
 {
   int P = *parameters[index];
 
-  if (not *access(P).result)
+  if (not access(P).result)
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
     if (access(P).call == -1) return shared_ptr<const Object>();
@@ -304,7 +305,7 @@ shared_ptr<const Object> context::get_parameter_value(int index) const
     incremental_evaluate(*this, P);
   }
 
-  return *access(P).result;
+  return access(P).result;
 }
 
 /// Get the value of a non-constant, non-computed index
@@ -326,7 +327,7 @@ void context::set_parameter_value(int index, const expression_ref& O)
 
 void context::set_call_if_reg_result(int R) const
 {
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(*access(R).result))
+  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(access(R).result))
   {
     int R2 = RV->target;
     
@@ -334,7 +335,7 @@ void context::set_call_if_reg_result(int R) const
     assert(access(R2).state == reg::used);
 
     // clear the result slot
-    (*access(R).result).reset();
+    access(R).result.reset();
     
     set_call(R,R2);
   }
@@ -346,7 +347,6 @@ void context::set_reg_value(int P, const expression_ref& OO)
   expression_ref O = graph_normalize(*this, translate_refs(OO));
 
   assert(dynamic_pointer_cast<const parameter>(access(P).E));
-  assert(access(P).result);
   assert(access(P).changeable);
   memory->clear_call(P);
 
@@ -356,16 +356,17 @@ void context::set_reg_value(int P, const expression_ref& OO)
     set_E(*r, O);
     O = expression_ref( new reg_var(*r) );
 
-    // The result value here cannot be shared.
-    access(P).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >(O));
+    // UNSHARE!
+    access(P).result = O;
     set_call_if_reg_result(P);
     pop_root(r);
   }
   else
   {
-    // The result value here cannot be shared.
-    access(P).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >(O));
-    set_call_if_reg_result(P);
+    // UNSHARE!
+    access(P).result = O;
+    if (O)
+      set_call_if_reg_result(P);
   }
 
   vector< int > NOT_known_value_unchanged;
@@ -393,11 +394,10 @@ void context::set_reg_value(int P, const expression_ref& OO)
       NOT_known_value_unchanged.push_back(R2);
       visited.insert(R2);
 
-      // Since the computation may be different, it can't be shared.
-      access(R2).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
+      // UNSHARE!
 
       // Since the computation may be different, we don't know if the value has changed.
-      (*access(R2).result).reset();
+      access(R2).result.reset();
       memory->clear_call(R2);
     }
 
@@ -413,11 +413,10 @@ void context::set_reg_value(int P, const expression_ref& OO)
       NOT_known_value_unchanged.push_back(R2);
       visited.insert(R2);
 
-      // Since the computation may be different, it can't be shared.
-      access(R2).result = shared_ptr< shared_ptr< const Object> >(new shared_ptr< const Object >);
+      // UNSHARE!
 
       // Since the computation may be different, we don't know if the value has changed.
-      (*access(R2).result).reset();
+      access(R2).result.reset();
     }
   }
 }
@@ -1033,7 +1032,7 @@ struct RegOperationArgs: public OperationArgs
 	C[R].changeable = true;
     }
 
-    return *(C[R2].result);
+    return C[R2].result;
   }
 
   shared_ptr<const Object> evaluate_expression(const expression_ref& e)
@@ -1135,12 +1134,11 @@ int  incremental_evaluate(const context& C, int R)
 {
   assert(R >= 0 and R < C.n_regs());
   assert(C[R].state == reg::used);
-  assert(C[R].result);
   assert(get_exp_refs(C.access(R).E) == C.access(R).references);
 
-  if (not *C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+  if (not C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
 
-  while (not *C[R].result)
+  while (not C[R].result)
   {
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -1155,7 +1153,7 @@ int  incremental_evaluate(const context& C, int R)
       // Evaluate C[S], looking through unchangeable redirections
       int S = incremental_evaluate(C, C[R].call);
 
-      *(C[R].result) = *(C[S].result);
+      C[R].result = C[S].result;
 
       if (not C[R].changeable)
 	R = S;
@@ -1167,7 +1165,7 @@ int  incremental_evaluate(const context& C, int R)
 
     // Check for WHNF *OR* heap variables
     else if (is_WHNF(C[R].E))
-      *(C[R].result) = C[R].E;
+      C[R].result = C[R].E;
 
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
@@ -1211,7 +1209,8 @@ int  incremental_evaluate(const context& C, int R)
 	C.pop_root( new_regs[i] );
       
       assert(C[R].call == -1);
-      assert(not *C[R].result);
+      assert(not C[R].result);
+      continue;
     }
     
     // 3. Reduction: Operation (includes @, case, +, etc.)
@@ -1238,19 +1237,20 @@ int  incremental_evaluate(const context& C, int R)
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
 	assert(C.access(R).call == -1);
-	assert(not *C.access(R).result);
+	assert(not C.access(R).result);
 	C.clear_used_inputs(R);
 	C.set_E(R, result);
+	continue;
       }
       else
       {
 	// Check for WHNF *OR* heap variables
 	if (is_WHNF(result))
-	  *C[R].result = result;
+	  C[R].result = result;
 	else {
 	  reg_heap::root_t r2 = C.allocate_reg();
 	  C.set_E(*r2, result );
-	  *C[R].result = shared_ptr<const Object>(new reg_var(*r2));
+	  C[R].result = shared_ptr<const Object>(new reg_var(*r2));
 	  C.pop_root(r2);
 	}
       }
@@ -1258,7 +1258,7 @@ int  incremental_evaluate(const context& C, int R)
 #ifndef NDEBUG
       // std::cerr<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
       std::cerr<<"Executing operation: "<<O<<"\n";
-      std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n";
+      std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n"<<endl;
 #endif
     }
 
@@ -1271,9 +1271,9 @@ int  incremental_evaluate(const context& C, int R)
   //  std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n";
 #endif
 
-  assert(*C[R].result);
-  assert(is_WHNF(*C[R].result));
-  assert(not dynamic_pointer_cast<const reg_var>(*C[R].result));
+  assert(C[R].result);
+  assert(is_WHNF(C[R].result));
+  assert(not dynamic_pointer_cast<const reg_var>(C[R].result));
 
   return R;
 }
