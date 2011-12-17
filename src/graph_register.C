@@ -195,6 +195,12 @@ bool includes(const std::set<T>& s1, const std::set<T>& s2)
   return std::includes(s1.begin(), s1.end(), s2.begin(), s2.end());
 }
 
+template <typename T>
+bool includes(const std::set<T>& s1, const T& t)
+{
+  return s1.find(t) != s1.end();
+}
+
 void reg_heap::set_call(int R1, int R2)
 {
   // Check that R1 is legal
@@ -1359,6 +1365,7 @@ int  incremental_evaluate(const context& C, int R)
   assert(R >= 0 and R < C.n_regs());
   assert(C[R].state == reg::used);
   assert(get_exp_refs(C.access(R).E) == C.access(R).references);
+  assert(includes(C.access(R).owners, C.get_token()));
 
   if (not C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
 

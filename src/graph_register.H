@@ -258,6 +258,8 @@ private:
 
 public:
 
+  int get_token() const {return token;}
+
   int n_notes() const {return notes.size();}
 
   const std::vector<expression_ref>& get_notes() const {return notes;}
