@@ -201,6 +201,12 @@ bool includes(const std::set<T>& s1, const T& t)
   return s1.find(t) != s1.end();
 }
 
+template <typename T,typename U>
+bool includes(const std::map<T,U>& s1, const T& t)
+{
+  return s1.find(t) != s1.end();
+}
+
 void reg_heap::set_call(int R1, int R2)
 {
   // Check that R1 is legal
@@ -266,7 +272,7 @@ void reg_heap::set_E(int R, const expression_ref& e)
     assert(includes(access(*r).owners, access(R).owners) );
 
     // check that *r is not already marked as being referenced by R
-    assert(access(*r).referenced_by_in_E.find(R) == access(*r).referenced_by_in_E.end());
+    assert(not includes( access(*r).referenced_by_in_E, R) );
 
     // mark *r as being referenced by R
     access(*r).referenced_by_in_E.insert(R);
@@ -467,7 +473,7 @@ void context::set_reg_value(int P, const expression_ref& OO)
       int R2 = j->first;
 
       // This one already marked NOT known_value_unchanged
-      if (visited.find(R2) != visited.end()) continue;
+      if (includes(visited, R2)) continue;
 
       // Since R2 is not known to have identical USED inputs ...
       // ... then it is not known to have identical outputs
@@ -486,7 +492,7 @@ void context::set_reg_value(int P, const expression_ref& OO)
       int R2 = *j;
 
       // This one already marked NOT known_value_unchanged
-      if (visited.find(R2) != visited.end()) continue;
+      if (includes(visited, R2)) continue;
 
       // Since R2 is not known to have identical USED inputs ...
       // ... then it is not known to have identical outputs
@@ -590,7 +596,7 @@ int context::add_compute_expression(const expression_ref& E)
   root_t r;
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
   {
-    assert(access(RV->target).owners.find(token) != access(RV->target).owners.end());
+    assert( includes(access(RV->target).owners, token) );
     
     r = push_root( RV->target );
   }
@@ -815,7 +821,7 @@ vector<int> reg_heap::find_ancestor_regs_in_context(int R, int t) const
 {
   vector<int> scan;
   scan.push_back(R);
-  assert(access(R).owners.find(R) != access(R).owners.end());
+  assert(includes(access(R).owners, t));
 
   vector<int> unique;
   for(int i=0;i<scan.size();i++)
@@ -825,7 +831,7 @@ vector<int> reg_heap::find_ancestor_regs_in_context(int R, int t) const
     if (R.state == reg::checked) continue;
 
     // skip this node if its not in context t
-    if (R.owners.find(t) != R.owners.end()) continue;
+    if (not includes(R.owners, t)) continue;
 
     R.state = reg::checked;
     unique.push_back(scan[i]);
@@ -944,7 +950,7 @@ int reg_heap::copy_token(int t)
   for(int i=0;i<token_regs.size();i++)
   {
     std::set<int>& owners = access(token_regs[i]).owners;
-    assert( owners.find(t2) == owners.end());
+    assert( not includes(owners, t2) );
     owners.insert(t2);
   }
 
@@ -1463,7 +1469,7 @@ int  incremental_evaluate(const context& C, int R)
       // Check that the result of applying the operation only uses regs referenced from E.
       for(int j=0;j<C.access(R).used_inputs.size();j++)
 	if (C.access(R).used_inputs[j] != -1)
-	  assert(C.access(R).references.find(C.access(R).used_inputs[j]) != C.access(R).references.end());
+	  assert( includes(C.access(R).references, C.access(R).used_inputs[j]) );
 
       if (not C[R].changeable)
       {
@@ -1515,12 +1521,12 @@ void discover_graph_vars(const context& C, const expression_ref& R, map< int, st
 {
   if (shared_ptr<const reg_var> H = dynamic_pointer_cast<const reg_var>(R))
   {
-    if (names.find(H->target) != names.end())
+    if (includes( names, H->target))
     {
       // back out, we've been through this node before.
     }
 
-    if (names.find(H->target) == names.end())
+    if (not includes(names, H->target))
     {
       int num = names.size()+1;
       // give this node a name and mark it visited
