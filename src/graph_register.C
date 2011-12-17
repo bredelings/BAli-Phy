@@ -67,6 +67,13 @@ using std::endl;
  * (a) if a node is in graph N, then out-edges are in graph N.
  */
 
+/*
+ * It would indeed be faster, when setting a NUMBER of values to remember which parameters are dirty,
+ * and to only invalidate downstream nodes when we know that we are going to access them.
+ * This is essentially what Andrew and Alexei are doing by requiring the user to check the dirtiness
+ *  instead of forcing it do be done as soon as a parameter value is changed.
+ */
+
 reg::reg()
  :changeable(false),
   call(-1),
