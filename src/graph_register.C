@@ -65,6 +65,48 @@ using std::endl;
  *
  * Instead of annotating each edge with a graph number, we can simply assume that
  * (a) if a node is in graph N, then out-edges are in graph N.
+ *
+ * 1. Setting ownership
+ * We need to set ownership for new heads.
+ * When we analyze a let expression, we need to set ownership for the newly created heap vars.
+ * - we COULD set this ownership in set_E.  (Does this ownership setting PROPAGATE?)
+ * When we reduce an expression
+ * (a) the reduced expression cannot reference* any regs the original expression didn't reference.
+ * (b) the exception is when we create a call reg.  Then we need to set ownership on the call reg.
+ *
+ * 2. Removing ownership
+ * If we remove a head, then we would remove ownership for all its descendant.
+ * Not all the let vars may end up being substituted into the resulting expression.
+ * When reducing an expression:
+ * (a) We might replace the original expression, using set_E.  This might reference fewer vars.
+ * (b) We might create a call reg.  No dereferencing here.
+ * 
+ * Now, previous when dereferencing, we didn't worry about the cost of invalidating unreachable
+ * from roots) regs that reference a parameter.  Let's worry about this later.
+ *
+ * Also, not that we would invalidate them only if they had every been computed, and USED the 
+ * parameter.  After being invalidated once, they would never be walked again.  How about the cost
+ * of "splitting" such regs, if they are not garbage collected first?  Let's worry about that later.
+ *
+ * See: let a=X+X, b=Y+Y in b.  Here, 
+ *
+ * 3. Splitting a node.
+ * When splitting a node, we must necessarily split all nodes from which it is transitively
+ *  reachable through references in E.
+ * 
+ * 1. Find all the ancestors with name N -> regs.
+ * 2. Allocate names for them -> new_regs.
+ * 3. Copy the old reg values (E,call,result,changeable) into the new regs.
+ * 4. We then adjust the relevant heads to point to the new regs.
+ * 5. Finally, we adjust the expressions (as well as the values/calls of parameters!)
+ *    (a) map references in E to the new references.
+ *    (b) map references in call to the new references.
+ *    (c) map references in result to the new references.
+ *    (d) changeable should stay the same.
+ *    Q: Do we really want to map result and call? we could also just invalidate them.
+ *    A: Yes, some of these things may not have USED the changed parameter, just REFERENCED iit.
+ *       That means that, in theory, they COULD use it, in the future, and therefore must be
+ *        modified.  But, as of yet, that has not happened.
  */
 
 /*
@@ -73,6 +115,12 @@ using std::endl;
  * This is essentially what Andrew and Alexei are doing by requiring the user to check the dirtiness
  *  instead of forcing it do be done as soon as a parameter value is changed.
  */
+
+/*
+ * Still todo: (1) splitting graphs. (2) Propagating ownership.
+ *
+ *
+ */ 
 
 reg::reg()
  :changeable(false),

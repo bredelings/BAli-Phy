@@ -14,7 +14,7 @@
 
 struct reg
 {
-  /* 1. The computation */
+  /* 1. The computation. */
 
   /// The expression
   expression_ref E;
@@ -33,7 +33,7 @@ struct reg
   std::vector< int > used_inputs;
 
 
-  /* 3. The computations that use or reference us.. */
+  /* 3. The computations that use or reference us. */
 
   /// Which pairs (reg,slot) USED the reduction result of E (via an operation)?
   std::set< std::pair<int,int> > outputs;
