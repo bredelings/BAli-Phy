@@ -52,7 +52,7 @@ struct reg
 
   int prev_reg;
   int next_reg;
-  States state;
+  mutable States state;
 
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
   std::set<int> owners;
@@ -217,6 +217,9 @@ public:
   int copy_token(int);
 
   reg_heap();
+
+  /*----- Graph walking ------*/
+  std::vector<int> find_all_regs_in_context(int) const;
 };
 
 /// This class contains only compute expressions, parameters, and names for the compute expressions

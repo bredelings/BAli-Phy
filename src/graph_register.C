@@ -731,12 +731,54 @@ int reg_heap::get_unused_token()
   return t;
 }
 
+vector<int> reg_heap::find_all_regs_in_context(int t) const
+{
+  vector<int> scan;
+  foreach(i,token_roots[t].heads)
+    scan.push_back(**i);
+  foreach(i,token_roots[t].parameters)
+    scan.push_back(**i);
+
+  vector<int> unique;
+  for(int i=0;i<scan.size();i++)
+  {
+    const reg& R = access(scan[i]);
+    assert(R.state != reg::free and R.state != reg::none);
+    if (R.state == reg::checked) continue;
+
+    R.state = reg::checked;
+    unique.push_back(scan[i]);
+
+    // Make sure that we have already correctly got all the references!
+    assert(get_exp_refs(R.E) == R.references);
+    
+    // Count the references from E
+    scan.insert(scan.end(), R.references.begin(), R.references.end());
+    
+    // Count also the references from the call
+    if (R.call != -1) 
+      scan.insert(scan.end(), R.call);
+  }
+
+  for(int i=0;i<unique.size();i++)
+  {
+    const reg& R = access(unique[i]);
+    assert(R.state == reg::checked);
+
+    R.state = reg::used;
+  }
+
+  return unique;
+}
+
 void reg_heap::release_token(int t)
 {
   assert(token_is_used(t));
 
-  // FIXME - remove the name t from all (used) nodes - disown(t)
-  
+  // remove ownership mark from used regs in this context
+  vector<int> token_regs = find_all_regs_in_context(t);
+  for(int i=0;i<token_regs.size();i++)
+    access(token_regs[i]).owners.erase(t);
 
   // remove the roots for the heads of graph t
   foreach(i,token_roots[t].heads)
@@ -776,7 +818,14 @@ int reg_heap::copy_token(int t)
     token_roots[t2].parameters.insert( token_roots[t2].parameters.end(), push_root(**i) );
   }
 
-  // Add the name t2 from all (used) nodes - posess(t)
+  // remove ownership mark from used regs in this context
+  vector<int> token_regs = find_all_regs_in_context(t2);
+  for(int i=0;i<token_regs.size();i++)
+  {
+    std::set<int>& owners = access(token_regs[i]).owners;
+    assert( owners.find(t2) == owners.end());
+    owners.insert(t2);
+  }
 
   return t2;
 }
