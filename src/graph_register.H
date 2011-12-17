@@ -177,17 +177,29 @@ public:
 
   /*----- Token manager ------*/
 
-  /// How many tokens are there, maximum
-  int n_tokens;
-
   /// The list of unused_tokens
   std::vector<int> unused_tokens;
+
+  struct graph_roots
+  {
+    // the list of expressions that we are interested in evaluating.
+    std::vector<reg_heap::root_t> heads;
+    
+    /// The register indices of the named parameters.
+    std::vector<reg_heap::root_t> parameters;
+
+    bool used;
+    graph_roots():used(false) {}
+  };
+
+  /// The roots for each token
+  std::vector<graph_roots> token_roots;
 
   /// Is a particular token unused?
   bool token_is_used(int) const;
 
   /// How many tokens are there, maximum?
-  int get_n_tokens() const {return n_tokens;}
+  int get_n_tokens() const {return token_roots.size();}
 
   /// Acquire an unused token
   int get_unused_token();

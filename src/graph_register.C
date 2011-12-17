@@ -94,6 +94,8 @@ void reg_heap::clear(int R)
   // Upstream objects can NOT still exist - otherwise this object would be used :-)
   access(R).outputs.clear();
   access(R).call_outputs.clear();
+
+  access(R).owners.clear();
 }
 
 void reg_heap::set_used_input(int R1, int slot, int R2)
@@ -715,39 +717,73 @@ int reg_heap::get_unused_token()
 {
   if (unused_tokens.empty())
   {
-    unused_tokens.push_back(n_tokens);
-    n_tokens++;
+    unused_tokens.push_back(get_n_tokens());
+    token_roots.push_back(graph_roots());
   }
 
   int t = unused_tokens.back();
   unused_tokens.pop_back();
+
+  assert(not token_is_used(t));
+
+  token_roots[t].used = true;
+
   return t;
 }
 
 void reg_heap::release_token(int t)
 {
   assert(token_is_used(t));
+
+  // FIXME - remove the name t from all (used) nodes - disown(t)
+  
+
+  // remove the roots for the heads of graph t
+  foreach(i,token_roots[t].heads)
+  {
+    pop_root(*i);
+  }
+  token_roots[t].heads.clear();
+
+  // remove the roots for the parameters of graph t
+  foreach(i,token_roots[t].parameters)
+  {
+    pop_root(*i);
+  }
+  token_roots[t].parameters.clear();
+
+  // mark unused
   unused_tokens.push_back(t);
+  token_roots[t].used = false;
 }
 
 bool reg_heap::token_is_used(int t) const
 {
-  assert(t < n_tokens);
-
-  if (includes(unused_tokens,t)) return false;
-
-  return true;
+  return token_roots[t].used;
 }
 
 int reg_heap::copy_token(int t)
 {
-  return get_unused_token();
+  int t2 = get_unused_token();
+
+  foreach(i,token_roots[t].heads)
+  {
+    token_roots[t2].heads.insert( token_roots[t2].heads.end(), push_root(**i) );
+  }
+
+  foreach(i,token_roots[t].parameters)
+  {
+    token_roots[t2].parameters.insert( token_roots[t2].parameters.end(), push_root(**i) );
+  }
+
+  // Add the name t2 from all (used) nodes - posess(t)
+
+  return t2;
 }
 
 reg_heap::reg_heap()
   :first_free_reg(-1),
-   first_used_reg(-1),
-   n_tokens(0)
+   first_used_reg(-1)
 { }
 
 expression_ref context::translate_refs(const expression_ref& R) const
