@@ -364,7 +364,11 @@ public:
   void set_E(int R, const expression_ref& e) const {memory->set_E(R,e);}
 
   /// Allocate a reg which will be a root for garbage-collection
-  root_t allocate_reg() const {return memory->allocate_reg();}
+  root_t allocate_reg() const {
+    root_t r = memory->allocate_reg();
+    access(*r).owners.insert(token);
+    return r;
+  }
 
   void collect_garbage() const;
 

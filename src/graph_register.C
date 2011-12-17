@@ -1,6 +1,7 @@
 #include <iostream>
 #include "graph_register.H"
 #include "operations.H"
+#include <algorithm>
 
 using boost::shared_ptr;
 using std::string;
@@ -71,7 +72,7 @@ using std::endl;
  * When we analyze a let expression, we need to set ownership for the newly created heap vars.
  * - we COULD set this ownership in set_E.  (Does this ownership setting PROPAGATE?)
  * When we reduce an expression
- * (a) the reduced expression cannot reference* any regs the original expression didn't reference.
+ * (a) the reduced expression cannot reference (transitively) any regs the original expression didn't reference.
  * (b) the exception is when we create a call reg.  Then we need to set ownership on the call reg.
  *
  * 2. Removing ownership
@@ -188,6 +189,12 @@ void reg_heap::clear_used_inputs(int R, int S)
   access(R).used_inputs = vector<int>(S, -1);
 }
 
+template <typename T>
+bool includes(const std::set<T>& s1, const std::set<T>& s2)
+{
+  return std::includes(s1.begin(), s1.end(), s2.begin(), s2.end());
+}
+
 void reg_heap::set_call(int R1, int R2)
 {
   // Check that R1 is legal
@@ -205,6 +212,9 @@ void reg_heap::set_call(int R1, int R2)
 
   access(R1).call = R2;
   access(R2).call_outputs.insert(R1);
+
+  // check that all of the owners of R are also owners of R.call;
+  assert(includes(access(R2).owners, access(R1).owners));
 }
 
 void reg_heap::clear_call(int R)
@@ -239,13 +249,20 @@ set<int> get_exp_refs(const expression_ref& R)
 
 void reg_heap::set_E(int R, const expression_ref& e)
 {
+  assert(not access(R).owners.empty());
   clear_E(R);
 
   access(R).E = e;
   access(R).references = get_exp_refs(e);
   foreach(r, access(R).references)
   {
+    // check that all of the owners of R are also owners of *r.
+    assert(includes(access(*r).owners, access(R).owners) );
+
+    // check that *r is not already marked as being referenced by R
     assert(access(*r).referenced_by_in_E.find(R) == access(*r).referenced_by_in_E.end());
+
+    // mark *r as being referenced by R
     access(*r).referenced_by_in_E.insert(R);
   }
 }
@@ -567,6 +584,8 @@ int context::add_compute_expression(const expression_ref& E)
   root_t r;
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
   {
+    assert(access(RV->target).owners.find(token) != access(RV->target).owners.end());
+    
     r = push_root( RV->target );
   }
   else
@@ -1386,6 +1405,7 @@ int  incremental_evaluate(const context& C, int R)
       for(int i=0;i<vars.size();i++)
       {
 	new_regs.push_back(C.allocate_reg());
+	C.access(*new_regs.back()).owners = C.access(R).owners;
 	new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(*new_regs.back())) );
       }
       
@@ -1454,6 +1474,7 @@ int  incremental_evaluate(const context& C, int R)
 	  C[R].result = result;
 	else {
 	  reg_heap::root_t r2 = C.allocate_reg();
+	  C.access(*r2).owners = C.access(R).owners;
 	  C.set_E(*r2, result );
 	  C[R].result = shared_ptr<const Object>(new reg_var(*r2));
 	  C.pop_root(r2);
