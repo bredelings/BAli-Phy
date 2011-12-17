@@ -363,9 +363,15 @@ public:
 
   void collect_garbage() const;
 
+  context& operator=(const context& c);
+
   context();
 
+  context(const context&);
+
   context(const std::vector<expression_ref>&);
+
+  ~context();
 };
 
 class reg_ptr

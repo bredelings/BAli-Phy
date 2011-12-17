@@ -838,10 +838,34 @@ int context::find_match_notes(const expression_ref& query, std::vector<expressio
   return -1;
 }
 
+context& context::operator=(const context& C)
+{
+  memory->release_token(token);
+  
+  memory = C.memory;
+  token = memory->copy_token(C.token);
+  variables = C.variables;
+  notes     = C.notes;
+
+  return *this;
+}
+
 context::context()
   :memory(new reg_heap()),
    token(memory->get_unused_token())
 { }
+
+context::context(const context& C)
+  :memory(C.memory),
+   token(memory->copy_token(C.token)),
+   variables(C.variables),
+   notes(C.notes)
+{ }
+
+context::~context()
+{
+  memory->release_token(token);
+}
 
 shared_ptr<const Object> context::default_parameter_value(int i) const
 {
