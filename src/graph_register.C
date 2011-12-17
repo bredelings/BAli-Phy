@@ -213,7 +213,7 @@ void reg_heap::clear_E(int R)
 
 string context::parameter_name(int i) const
 {
-  expression_ref E = access(*parameters[i]).E;
+  expression_ref E = access(*parameters()[i]).E;
   if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
   {
     return P->parameter_name;
@@ -260,7 +260,7 @@ void context::rename_parameter(int i, const string& new_name)
 {
   string old_name = parameter_name(i);
 
-  int R = *parameters[i];
+  int R = *parameters()[i];
 
   assert( access(R).changeable == true );
   set_E(R, parameter(new_name) );
@@ -271,7 +271,7 @@ int incremental_evaluate(const context&, int);
 /// Return the value of a particular index, computing it if necessary
 shared_ptr<const Object> context::evaluate(int index) const
 {
-  int& H = *heads[index];
+  int& H = *heads()[index];
 
   H = incremental_evaluate(*this, H);
 
@@ -296,7 +296,7 @@ shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) c
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 shared_ptr<const Object> context::get_parameter_value(int index) const
 {
-  int P = *parameters[index];
+  int P = *parameters()[index];
 
   if (not access(P).result)
   {
@@ -322,7 +322,7 @@ shared_ptr<const Object> context::get_parameter_value(const std::string& name) c
 
 void context::set_parameter_value(int index, const expression_ref& O)
 {
-  int P = *parameters[index];
+  int P = *parameters()[index];
 
   set_reg_value(P, O);
 }
@@ -431,7 +431,7 @@ void context::set_parameter_value(const std::string& var, const expression_ref& 
 
 int context::n_parameters() const
 {
-  return parameters.size();
+  return parameters().size();
 }
 
 int context::find_parameter(const string& s) const
@@ -469,7 +469,7 @@ int context::add_parameter(const string& name)
   int index = n_parameters();
 
   root_t r = allocate_reg();
-  parameters.push_back( r );
+  parameters().push_back( r );
 
   access(*r).changeable = true;
   set_E(*r, parameter(name) );
@@ -520,27 +520,27 @@ int context::add_compute_expression(const expression_ref& E)
     set_E( *r, T );
   }
 
-  heads.push_back(r);
-  return heads.size()-1;
+  heads().push_back(r);
+  return heads().size()-1;
 }
 
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const string& name, const expression_ref& E)
 {
   int index = add_compute_expression( E );
-  int R = *heads[index];
+  int R = *heads()[index];
   add_variable(name, R);
   return index;
 }
 
 int context::n_expressions() const
 {
-  return heads.size();
+  return heads().size();
 }
 
 expression_ref context::get_expression(int i) const
 {
-  return access(*heads[i]).E;
+  return access(*heads()[i]).E;
 }
 
 int reg_heap::add_reg_to_free_list(int r)
@@ -796,7 +796,7 @@ expression_ref context::translate_refs(const expression_ref& R) const
     if (param_index == -1)
       throw myexception()<<"Can't translate undefined parameter '"<<P->parameter_name<<"' in expression!";
 
-    int param_location = *parameters[param_index];
+    int param_location = *parameters()[param_index];
 
     return expression_ref(new reg_var(param_location) );
   }

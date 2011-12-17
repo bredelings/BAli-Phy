@@ -183,14 +183,20 @@ public:
   struct graph_roots
   {
     // the list of expressions that we are interested in evaluating.
-    std::vector<reg_heap::root_t> heads;
+    std::vector<root_t> heads;
     
     /// The register indices of the named parameters.
-    std::vector<reg_heap::root_t> parameters;
+    std::vector<root_t> parameters;
 
     bool used;
     graph_roots():used(false) {}
   };
+
+  const std::vector<root_t>& get_heads_for_context(int t) const {return token_roots[t].heads;}
+        std::vector<root_t>& get_heads_for_context(int t)       {return token_roots[t].heads;}
+
+  const std::vector<root_t>& get_parameters_for_context(int t) const {return token_roots[t].parameters;}
+        std::vector<root_t>& get_parameters_for_context(int t)       {return token_roots[t].parameters;}
 
   /// The roots for each token
   std::vector<graph_roots> token_roots;
@@ -216,6 +222,10 @@ public:
 /// This class contains only compute expressions, parameters, and names for the compute expressions
 class context: virtual public Object
 {
+public:
+  typedef reg_heap::root_t root_t;
+
+private:
   // FIXME - disallow operator=() as long as there are any regs on the stack?
   //         (that is, which we are in the middle of modifying the context)?
 
@@ -224,11 +234,11 @@ class context: virtual public Object
 
   int token;
 
-  // the list of expressions that we are interested in evaluating.
-  std::vector<reg_heap::root_t> heads;
+  const std::vector<root_t>& heads() const {return memory->get_heads_for_context(token);}
+        std::vector<root_t>& heads()       {return memory->get_heads_for_context(token);}
 
-  /// The register indices of the named parameters.
-  std::vector<reg_heap::root_t> parameters;
+  const std::vector<root_t>& parameters() const {return memory->get_parameters_for_context(token);}
+        std::vector<root_t>& parameters()       {return memory->get_parameters_for_context(token);}
 
   /// A list of variable names, and the register indices to which they correspond.
   std::vector<std::pair<std::string,int> > variables;
@@ -242,7 +252,6 @@ class context: virtual public Object
   std::vector<expression_ref> notes;
 
 public:
-  typedef reg_heap::root_t root_t;
 
   int n_notes() const {return notes.size();}
 
