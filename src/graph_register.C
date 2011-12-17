@@ -786,6 +786,47 @@ int reg_heap::get_unused_token()
   return t;
 }
 
+vector<int> reg_heap::find_ancestor_regs_in_context(int R, int t) const
+{
+  vector<int> scan;
+  scan.push_back(R);
+  assert(access(R).owners.find(R) != access(R).owners.end());
+
+  vector<int> unique;
+  for(int i=0;i<scan.size();i++)
+  {
+    const reg& R = access(scan[i]);
+    assert(R.state != reg::free and R.state != reg::none);
+    if (R.state == reg::checked) continue;
+
+    // skip this node if its not in context t
+    if (R.owners.find(t) != R.owners.end()) continue;
+
+    R.state = reg::checked;
+    unique.push_back(scan[i]);
+
+    // Count the references from E in other regs
+    scan.insert(scan.end(), R.referenced_by_in_E.begin(), R.referenced_by_in_E.end());
+
+    // Count the references from calls by other regs
+    scan.insert(scan.end(), R.call_outputs.begin(), R.call_outputs.end());
+    
+    // Count also the references from the call
+    if (R.call != -1) 
+      scan.insert(scan.end(), R.call);
+  }
+
+  for(int i=0;i<unique.size();i++)
+  {
+    const reg& R = access(unique[i]);
+    assert(R.state == reg::checked);
+
+    R.state = reg::used;
+  }
+
+  return unique;
+}
+
 vector<int> reg_heap::find_all_regs_in_context(int t) const
 {
   vector<int> scan;
