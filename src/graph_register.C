@@ -955,9 +955,6 @@ int reg_heap::uniquify_reg(int R, int t)
     // Adjust E
     set_E(R2, remap_regs(access(R1).E, new_regs) );
 
-    // Adjust result
-    access(R2).result = remap_regs(access(R1).result, new_regs);
-
     // Adjust call
     if (access(R1).call != -1)
     {
@@ -965,6 +962,9 @@ int reg_heap::uniquify_reg(int R, int t)
       assert(includes(new_regs, c));
       set_call(R2, *new_regs[ c ] );
     }
+
+    // Adjust result
+    access(R2).result = remap_regs(access(R1).result, new_regs);
 
     // Set changeable
     access(R2).changeable = access(R1).changeable;
