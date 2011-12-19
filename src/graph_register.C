@@ -352,6 +352,39 @@ void context::rename_parameter(int i, const string& new_name)
 
 int incremental_evaluate(const context&, int);
 
+expression_ref full_evaluate(const context& C, int& R)
+{
+  R = incremental_evaluate(C,R);
+  expression_ref result = C.access(R).result;
+
+  {
+    // If the result is atomic, then we are done.
+    shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
+    if (not E) return result;
+
+    // If the result is a lambda function, then we are done.
+    // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
+    // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
+    if (not dynamic_pointer_cast<const Function>(E->sub[0])) return result;
+  }
+
+  // If the result is a structure, then evaluate its fields and substitute them.
+  {
+    shared_ptr<expression> E = dynamic_pointer_cast<expression>(result);
+    assert(dynamic_pointer_cast<const Function>(E->sub[0]));
+
+    for(int i=1;i<E->size();i++)
+    {
+      shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
+      assert(RV);
+      int R2 = RV->target;
+
+      E->sub[i] = full_evaluate(C, R2);
+    }
+    return result;
+  }
+}
+
 /// Return the value of a particular index, computing it if necessary
 shared_ptr<const Object> context::lazy_evaluate(int index) const
 {
@@ -369,7 +402,7 @@ shared_ptr<const Object> context::evaluate(int index) const
 
   H = incremental_evaluate(*this, H);
 
-  return access(H).result;
+  return full_evaluate(*this, H);
 }
 
 expression_ref graph_normalize(const context&, const expression_ref&);
@@ -393,10 +426,9 @@ shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) c
   int& R = *r;
   set_E(R, graph_normalize(*this, translate_refs(E)) );
 
-  R = incremental_evaluate(*this,R);
-  shared_ptr<const Object> result = access(R).result;
-  pop_root(r);
+  expression_ref result = full_evaluate(*this,R);
 
+  pop_root(r);
   return result;
 }
 
