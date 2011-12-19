@@ -118,9 +118,8 @@ using std::endl;
  */
 
 /*
- * Still todo: (1) splitting graphs. (2) Propagating ownership.
- *
- *
+ * Question: how shall we share sub-expressions between different compute expressions?
+ * Question: how shall we (or, should we) pre-execute non-recursive let expressions?
  */ 
 
 reg::reg()
