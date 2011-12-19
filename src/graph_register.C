@@ -1111,11 +1111,11 @@ expression_ref context::translate_refs(const expression_ref& R) const
 
   // Translate the parts of the expression
   expression_ref R2 = R;
-  expression* V = new expression(*E);
+  shared_ptr<expression> V ( new expression(*E) );
   for(int i=0;i<V->size();i++)
     V->sub[i] = translate_refs(V->sub[i]);
 
-  return V;
+  return shared_ptr<const expression>(V);
 }
 
 int context::find_match_notes(const expression_ref& query, std::vector<expression_ref>& results, int start) const
@@ -1249,7 +1249,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
   shared_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
   if (IsCase)
   {
-    expression* V = new expression(*E);
+    shared_ptr<expression> V ( new expression(*E) );
 
     V->sub[1] = graph_normalize(C,V->sub[1]);
 
@@ -1264,7 +1264,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
     }
     
     if (is_dummy(V->sub[1]))
-      return V;
+      return shared_ptr<const expression>(V);
     else
     {
       int var_index = get_safe_binder_index(R);
@@ -1272,7 +1272,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
       expression_ref obj = V->sub[1];
       V->sub[1] = x;
 
-      return let_expression(x,obj,V);
+      return let_expression(x,obj,shared_ptr<const expression>(V));
     }
   }
 
@@ -1290,7 +1290,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
   {
     int var_index = get_safe_binder_index(R);
 
-    expression* Con = new expression;
+    shared_ptr<expression> Con ( new expression );
     Con->sub.push_back(E->sub[0]);
 
     // Actually we probably just need x[i] not to be free in E->sub[i]
@@ -1311,14 +1311,14 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
       }
     }
 
-    return let_expression(vars, bodies, Con);
+    return let_expression(vars, bodies, shared_ptr<const expression>(Con));
   }
 
   // 5. Let 
   shared_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
   if (Let)
   {
-    expression* V = new expression(*E);
+    shared_ptr<expression> V ( new expression(*E) );
 
     shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[1]);
     while(bodies)
@@ -1332,7 +1332,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
     
     V->sub[2] = graph_normalize(C,V->sub[2]);
 
-    return V;
+    return shared_ptr<const expression>(V);
   }
 
   throw myexception()<<"graph_normalize: I don't recognize expression '"+ R->print() + "'";
