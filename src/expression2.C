@@ -487,7 +487,7 @@ int main()
 
   expression_ref test14 = let_expression(take, def_take,
 					let_expression(iterate, def_iterate,
-						       take(3)(iterate(plus(1),1))
+						       take(3)(iterate(plus_i(1),1))
 						       )
 					);
 
@@ -504,7 +504,7 @@ int main()
   //print(take(3,fmap(square,iterate(plus(1.0),1.0))));
   expression_ref test15 = let_expression(take, def_take,
 					let_expression(iterate, def_iterate,
-						       take(3)(iterate(plus(1),1))
+						       take(3)(iterate(plus_i(1),1))
 						       )
 					);
 
@@ -535,6 +535,19 @@ int main()
   cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
+  {
+    C.set_parameter_value("Z",5.0);
+    context D = C;
+    cout<<"D.evaluate(0) = "<<D.evaluate(0)<<"\n";
+    cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
+    D.set_parameter_value("Z",6.0);
+    cout<<"D.evaluate(0) = "<<D.evaluate(0)<<"\n";
+    cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
+    C.set_parameter_value("Z",7.0);
+    D.set_parameter_value("Z",8.0);
+    cout<<"D.evaluate(0) = "<<D.evaluate(0)<<"\n";
+    cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
+  }
   C.add_compute_expression( apply_expression(apply_expression(plus,apply_expression(apply_expression(plus,X),Y)),Z) );
   cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
@@ -599,10 +612,11 @@ int main()
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  C.set_parameter_value("X",1.0);
-  C.set_parameter_value("Y",2.0);
-  C.set_parameter_value("Z",4.0);
+  C.set_parameter_value("Y",5);
   context D = C;
-  cout<<"D.evaluate(1) = "<<D.evaluate(1)<<"\n";
-  cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
+  cout<<"D.evaluate(3) = "<<D.evaluate(3)<<"\n";
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+  D.set_parameter_value("Y",4);
+  cout<<"D.evaluate(3) = "<<D.evaluate(3)<<"\n";
+  cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
 }
