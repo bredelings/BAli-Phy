@@ -859,7 +859,8 @@ expression_ref remap_regs(const expression_ref R, const std::map<int, reg_heap::
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
     bool different = false;
-    expression* E2 = new expression(E->size());
+    expression* E2 = new expression;
+    E2->sub.resize(E->size());
     for(int i=0;i<E->size();i++)
     {
       E2->sub[i] = remap_regs(E->sub[i], new_regs);
