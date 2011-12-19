@@ -951,7 +951,7 @@ int reg_heap::uniquify_reg(int R, int t)
     int R1 = i->first;
     int R2 = *(i->second);
 
-    access(R2).E = remap_regs(access(R1).E, new_regs);
+    set_E(R2, remap_regs(access(R1).E, new_regs) );
 
     access(R2).result = remap_regs(access(R1).result, new_regs);
 
@@ -959,7 +959,7 @@ int reg_heap::uniquify_reg(int R, int t)
     {
       int c = access(R1).call;
       assert(includes(new_regs, c));
-      access(R2).call = *new_regs[ c ];
+      set_call(R2, *new_regs[ c ] );
     }
 
     access(R2).changeable = access(R1).changeable;
