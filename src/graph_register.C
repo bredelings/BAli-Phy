@@ -859,7 +859,7 @@ expression_ref remap_regs(const expression_ref R, const std::map<int, reg_heap::
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
     bool different = false;
-    expression* E2 = new expression;
+    shared_ptr<expression> E2 ( new expression );
     E2->sub.resize(E->size());
     for(int i=0;i<E->size();i++)
     {
@@ -868,7 +868,7 @@ expression_ref remap_regs(const expression_ref R, const std::map<int, reg_heap::
 	different = true;
     }
     if (different)
-      return E2;
+      return shared_ptr<const expression>(E2);
     else
       return R;
   }
@@ -1206,13 +1206,13 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
   if (L)
   {
     assert(E->size() == 3);
-    expression* V = new expression(*E);
+    shared_ptr<expression> V ( new expression(*E) );
     V->sub[2] = graph_normalize(C,E->sub[2]);
 
     if (V->sub[2] == E->sub[2])
       return R;
     else
-      return V;
+      return shared_ptr<const expression>(V);
   }
 
   // 3. Application
