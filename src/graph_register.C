@@ -202,7 +202,7 @@ bool includes(const std::set<T>& s1, const T& t)
 }
 
 template <typename T,typename U>
-bool includes(const std::map<T,U>& s1, const T& t)
+bool includes(const map<T,U>& s1, const T& t)
 {
   return s1.find(t) != s1.end();
 }
@@ -854,7 +854,7 @@ vector<int> reg_heap::find_ancestor_regs_in_context(int R, int t) const
   return unique;
 }
 
-expression_ref remap_regs(const expression_ref R, const std::map<int, reg_heap::root_t>& new_regs)
+expression_ref remap_regs(const expression_ref R, const map<int, reg_heap::root_t>& new_regs)
 {
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
@@ -874,7 +874,7 @@ expression_ref remap_regs(const expression_ref R, const std::map<int, reg_heap::
   }
   else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
   {
-    std::map<int, reg_heap::root_t>::const_iterator loc = new_regs.find(RV->target);
+    map<int, reg_heap::root_t>::const_iterator loc = new_regs.find(RV->target);
     if (loc == new_regs.end())
       return R;
     else
@@ -917,7 +917,7 @@ int reg_heap::uniquify_reg(int R, int t)
   // 1. Find all the ancestors with name 't'
   vector<int> ancestors = find_ancestor_regs_in_context(R,t);
 
-  std::map<int,root_t> new_regs;
+  map<int,root_t> new_regs;
   for(int i=0;i<ancestors.size();i++)
   {
     // 2. Allocate new regs for each ancestor reg
