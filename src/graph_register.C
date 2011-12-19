@@ -880,6 +880,7 @@ expression_ref remap_regs(const expression_ref R, const std::map<int, reg_heap::
     else
       return new reg_var(*loc->second);
   }
+  // This case handles NULL in addition to atomic objects.
   else
     return R;
 }
@@ -938,11 +939,11 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
   // 4b. Adjust parameters to point to the new regs
-  for(int j=0;j<token_roots[t].heads.size();j++)
+  for(int j=0;j<token_roots[t].parameters.size();j++)
   {
-    int R1 = *token_roots[t].heads[j];
+    int R1 = *token_roots[t].parameters[j];
     if (includes(new_regs, R1))
-      token_roots[t].heads[j] = new_regs[R1];
+      token_roots[t].parameters[j] = new_regs[R1];
   }
 
   // 5. Adjust E, call, and result to point to the new references.
