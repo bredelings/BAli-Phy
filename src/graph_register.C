@@ -968,7 +968,20 @@ int reg_heap::uniquify_reg(int R, int t)
     // Set changeable
     access(R2).changeable = access(R1).changeable;
 
-    // Should we set the used_inputs?
+    // Adjust use edges
+    access(R2).used_inputs = std::vector<int>( access(R1).used_inputs.size() , -1);
+    for(int slot=0;slot<access(R1).used_inputs.size();slot++)
+    {
+      int I1 = access(R1).used_inputs[slot];
+      if (I1 == -1) continue;
+
+      int I2 = I1;
+      map<int, root_t>::const_iterator loc = new_regs.find(I1);
+      if (loc != new_regs.end())
+	I2 = *(loc->second);
+
+      set_used_input(R2, slot, I2);
+    }
   }
 
    return *new_regs[R];
