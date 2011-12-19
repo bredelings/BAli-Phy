@@ -891,7 +891,7 @@ bool reg_heap::reg_is_shared(int R) const
 
   assert(loc != owners.end());
 
-  loc = loc ++;
+  loc++;
 
   return (loc != owners.end());
 }
