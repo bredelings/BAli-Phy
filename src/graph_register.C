@@ -821,7 +821,7 @@ vector<int> reg_heap::find_ancestor_regs_in_context(int R, int t) const
 {
   vector<int> scan;
   scan.push_back(R);
-  assert(includes(access(R).owners, t));
+  assert(reg_is_owned_by(R,t));
 
   vector<int> unique;
   for(int i=0;i<scan.size();i++)
@@ -831,7 +831,7 @@ vector<int> reg_heap::find_ancestor_regs_in_context(int R, int t) const
     if (R.state == reg::checked) continue;
 
     // skip this node if its not in context t
-    if (not includes(R.owners, t)) continue;
+    if (not reg_is_owned_by(scan[i],t)) continue;
 
     R.state = reg::checked;
     unique.push_back(scan[i]);
@@ -887,10 +887,34 @@ expression_ref remap_regs(const expression_ref R, const std::map<int, reg_heap::
     return R;
 }
 
+bool reg_heap::reg_is_shared(int R) const
+{
+  const std::set<int>& owners = access(R).owners;
+
+  std::set<int>::const_iterator loc = owners.begin();
+
+  assert(loc != owners.end());
+
+  loc = loc ++;
+
+  return (loc != owners.end());
+}
+
+bool reg_heap::reg_is_owned_by(int R, int t) const
+{
+  const std::set<int>& owners = access(R).owners;
+
+  return includes(owners, t);
+}
+
 int reg_heap::uniquify_reg(int R, int t)
 {
   // If the reg is already unique, then we don't need to do anything.
-  if (access(R).owners.size() == 1) return R;
+  if (not reg_is_shared(R))
+  {
+    assert(reg_is_owned_by(R,t));
+    return R;
+  }
 
   // 1. Find all the ancestors with name 't'
   vector<int> ancestors = find_ancestor_regs_in_context(R,t);

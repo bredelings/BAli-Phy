@@ -216,6 +216,10 @@ public:
   /// Acquire a copy of a token
   int copy_token(int);
 
+  bool reg_is_shared(int) const;
+
+  bool reg_is_owned_by(int,int) const;
+
   reg_heap();
 
   /*----- Graph walking ------*/
