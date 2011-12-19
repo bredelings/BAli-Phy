@@ -430,7 +430,7 @@ void context::set_call_if_reg_result(int R) const
 /// Update the value of a non-constant, non-computed index
 void context::set_reg_value(int P, const expression_ref& OO)
 {
-  memory->uniquify_reg(P,token);
+  P = memory->uniquify_reg(P,token);
 
   expression_ref O = graph_normalize(*this, translate_refs(OO));
 
