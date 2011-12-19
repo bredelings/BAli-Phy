@@ -222,6 +222,9 @@ public:
   std::vector<int> find_all_regs_in_context(int) const;
   /*----- Graph walking ------*/
   std::vector<int> find_ancestor_regs_in_context(int,int) const;
+
+  /*----- Graph splitting -----*/
+  int uniquify_reg(int reg, int t);
 };
 
 /// This class contains only compute expressions, parameters, and names for the compute expressions

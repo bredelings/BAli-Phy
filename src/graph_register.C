@@ -85,7 +85,7 @@ using std::endl;
  * Now, previous when dereferencing, we didn't worry about the cost of invalidating unreachable
  * from roots) regs that reference a parameter.  Let's worry about this later.
  *
- * Also, not that we would invalidate them only if they had every been computed, and USED the 
+ * Also, note that we would invalidate them only if they had ever been computed, and USED the 
  * parameter.  After being invalidated once, they would never be walked again.  How about the cost
  * of "splitting" such regs, if they are not garbage collected first?  Let's worry about that later.
  *
@@ -97,7 +97,7 @@ using std::endl;
  * 
  * 1. Find all the ancestors with name N -> regs.
  * 2. Allocate names for them -> new_regs.
- * 3. Copy the old reg values (E,call,result,changeable) into the new regs.
+ * 3. Move ownership in N from the old regs to the new regs.
  * 4. We then adjust the relevant heads to point to the new regs.
  * 5. Finally, we adjust the expressions (as well as the values/calls of parameters!)
  *    (a) map references in E to the new references.
@@ -856,6 +856,95 @@ vector<int> reg_heap::find_ancestor_regs_in_context(int R, int t) const
   }
 
   return unique;
+}
+
+expression_ref remap_regs(const expression_ref R, const std::map<int, reg_heap::root_t>& new_regs)
+{
+  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  {
+    bool different = false;
+    expression* E2 = new expression(E->size());
+    for(int i=0;i<E->size();i++)
+    {
+      E2->sub[i] = remap_regs(E->sub[i], new_regs);
+      if (E2->sub[i] != E->sub[i])
+	different = true;
+    }
+    if (different)
+      return E2;
+    else
+      return R;
+  }
+  else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
+  {
+    std::map<int, reg_heap::root_t>::const_iterator loc = new_regs.find(RV->target);
+    if (loc == new_regs.end())
+      return R;
+    else
+      return new reg_var(*loc->second);
+  }
+  else
+    return R;
+}
+
+int reg_heap::uniquify_reg(int R, int t)
+{
+  // If the reg is already unique, then we don't need to do anything.
+  if (access(R).owners.size() == 1) return R;
+
+  // 1. Find all the ancestors with name 't'
+  vector<int> ancestors = find_ancestor_regs_in_context(R,t);
+
+  std::map<int,root_t> new_regs;
+  for(int i=0;i<ancestors.size();i++)
+  {
+    // 2. Allocate new regs for each ancestor reg
+    root_t root = allocate_reg();
+    int R2 = *root;
+    new_regs[ancestors[i]] = root;
+
+    // 3. Move ownership from the old regs to the new regs.
+    access(R2).owners.insert(t);
+    access(ancestors[i]).owners.erase(t);
+  }
+
+  // 4a. Adjust heads to point to the new regs
+  for(int j=0;j<token_roots[t].heads.size();j++)
+  {
+    int R1 = *token_roots[t].heads[j];
+    if (includes(new_regs, R1))
+      token_roots[t].heads[j] = new_regs[R1];
+  }
+
+  // 4b. Adjust parameters to point to the new regs
+  for(int j=0;j<token_roots[t].heads.size();j++)
+  {
+    int R1 = *token_roots[t].heads[j];
+    if (includes(new_regs, R1))
+      token_roots[t].heads[j] = new_regs[R1];
+  }
+
+  // 5. Adjust E, call, and result to point to the new references.
+  foreach(i,new_regs)
+  {
+    int R1 = i->first;
+    int R2 = *(i->second);
+
+    access(R2).E = remap_regs(access(R1).E, new_regs);
+
+    access(R2).result = remap_regs(access(R1).result, new_regs);
+
+    if (access(R1).call != -1)
+    {
+      int c = access(R1).call;
+      assert(includes(new_regs, c));
+      access(R2).call = *new_regs[ c ];
+    }
+
+    access(R2).changeable = access(R1).changeable;
+  }
+
+   return *new_regs[R];
 }
 
 vector<int> reg_heap::find_all_regs_in_context(int t) const
