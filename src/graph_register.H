@@ -299,6 +299,12 @@ public:
   context* clone() const {return new context(*this);}
 
   /// Return the value of a particular index, computing it if necessary
+  boost::shared_ptr<const Object> lazy_evaluate(int index) const;
+
+  /// Return the value of a particular index, computing it if necessary
+  boost::shared_ptr<const Object> lazy_evaluate_expression(const expression_ref&) const;
+
+  /// Return the value of a particular index, computing it if necessary
   boost::shared_ptr<const Object> evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary

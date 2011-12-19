@@ -353,6 +353,16 @@ void context::rename_parameter(int i, const string& new_name)
 int incremental_evaluate(const context&, int);
 
 /// Return the value of a particular index, computing it if necessary
+shared_ptr<const Object> context::lazy_evaluate(int index) const
+{
+  int& H = *heads()[index];
+
+  H = incremental_evaluate(*this, H);
+
+  return access(H).result;
+}
+
+/// Return the value of a particular index, computing it if necessary
 shared_ptr<const Object> context::evaluate(int index) const
 {
   int& H = *heads()[index];
@@ -363,6 +373,19 @@ shared_ptr<const Object> context::evaluate(int index) const
 }
 
 expression_ref graph_normalize(const context&, const expression_ref&);
+
+shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref& E) const
+{
+  root_t r = allocate_reg();
+  int& R = *r;
+  set_E(R, graph_normalize(*this, translate_refs(E)) );
+
+  R = incremental_evaluate(*this,R);
+  shared_ptr<const Object> result = access(R).result;
+  pop_root(r);
+
+  return result;
+}
 
 shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) const
 {
