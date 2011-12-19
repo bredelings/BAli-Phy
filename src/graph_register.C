@@ -351,6 +351,9 @@ void context::rename_parameter(int i, const string& new_name)
 
 int incremental_evaluate(const context&, int);
 
+// Is there a way to generalize the updating of reg_var elements of structures,
+// when incremental evaluation walks a reg_var chain?
+
 expression_ref full_evaluate(const context& C, int& R)
 {
   R = incremental_evaluate(C,R);
@@ -1452,7 +1455,7 @@ struct RegOperationArgs: public OperationArgs
 	C[R].changeable = true;
     }
 
-    return C[R2].result;
+    return full_evaluate(C,R2);
   }
 
   shared_ptr<const Object> evaluate_expression(const expression_ref& e)
