@@ -14,13 +14,9 @@ shared_ptr<const Object> exponential_density::operator()(OperationArgs& Args) co
 shared_ptr<const Object> gamma_density::operator()(OperationArgs& Args) const
 {
   shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a = Args.evaluate_as<expression>(1);
+  expression_ref a = Args.evaluate(1);
   
-  // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> A(a->size() - 1);
-  for(int i=0;i<A.size();i++)
-    A[i] = *convert<const Double>(Args.evaluate_expression(a->sub[i+1]));
-
+  std::valarray<double> A = get_varray<double,Double>(a);
   Log_Double result = gamma_pdf(*x, A[0], A[1]);
   return shared_ptr<const Object>(result.clone());
 }
@@ -28,13 +24,9 @@ shared_ptr<const Object> gamma_density::operator()(OperationArgs& Args) const
 shared_ptr<const Object> beta_density::operator()(OperationArgs& Args) const
 {
   shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a = Args.evaluate_as<expression>(1);
+  expression_ref a = Args.evaluate(1);
   
-  // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> A(a->size() - 1);
-  for(int i=0;i<A.size();i++)
-    A[i] = *convert<const Double>(Args.evaluate_expression(a->sub[i+1]));
-
+  std::valarray<double> A = get_varray<double,Double>(a);
   Log_Double result = beta_pdf(*x, A[0], A[1]);
   return shared_ptr<const Object>(result.clone());
 }
@@ -42,13 +34,9 @@ shared_ptr<const Object> beta_density::operator()(OperationArgs& Args) const
 shared_ptr<const Object> normal_density::operator()(OperationArgs& Args) const
 {
   shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a = Args.evaluate_as<expression>(1);
+  expression_ref a = Args.evaluate(1);
   
-  // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> A(a->size() - 1);
-  for(int i=0;i<A.size();i++)
-    A[i] = *convert<const Double>(Args.evaluate_expression(a->sub[i+1]));
-
+  std::valarray<double> A = get_varray<double,Double>(a);
   Log_Double result = normal_pdf(*x, A[0], A[1]);
   return shared_ptr<const Object>(result.clone());
 }
@@ -56,13 +44,9 @@ shared_ptr<const Object> normal_density::operator()(OperationArgs& Args) const
 shared_ptr<const Object> log_normal_density::operator()(OperationArgs& Args) const
 {
   shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a = Args.evaluate_as<expression>(1);
+  expression_ref a = Args.evaluate(1);
   
-  // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> A(a->size() - 1);
-  for(int i=0;i<A.size();i++)
-    A[i] = *convert<const Double>(Args.evaluate_expression(a->sub[i+1]));
-
+  std::valarray<double> A = get_varray<double,Double>(a);
   Log_Double result = log_normal_pdf(*x, A[0], A[1]);
   return shared_ptr<const Object>(result.clone());
 }
@@ -70,29 +54,20 @@ shared_ptr<const Object> log_normal_density::operator()(OperationArgs& Args) con
 shared_ptr<const Object> cauchy_density::operator()(OperationArgs& Args) const
 {
   shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a = Args.evaluate_as<expression>(1);
+  expression_ref a = Args.evaluate(1);
   
-  // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> A(a->size() - 1);
-  for(int i=0;i<A.size();i++)
-    A[i] = *convert<const Double>(Args.evaluate_expression(a->sub[i+1]));
-
+  std::valarray<double> A = get_varray<double,Double>(a);
   Log_Double result = cauchy_pdf(*x, A[0], A[1]);
   return shared_ptr<const Object>(result.clone());
 }
 
 shared_ptr<const Object> dirichlet_density::operator()(OperationArgs& Args) const
 {
-  shared_ptr<const expression> X = Args.evaluate_as<expression>(0);
-  shared_ptr<const expression> N = Args.evaluate_as<expression>(1);
+  expression_ref X = Args.evaluate(0);
+  expression_ref N = Args.evaluate(1);
   
-  std::valarray<double> x(X->size()-1);
-  for(int i=0;i<x.size();i++)
-    x[i] = *convert<const Double>(Args.evaluate_expression(X->sub[i+1]));
-  
-  std::valarray<double> n(N->size()-1);
-  for(int i=0;i<n.size();i++)
-    n[i] = *convert<const Double>(Args.evaluate_expression(N->sub[i+1]));
+  std::valarray<double> x = get_varray<double,Double>(X);
+  std::valarray<double> n = get_varray<double,Double>(N);
   
   shared_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x,n) ) );
   
@@ -102,40 +77,40 @@ shared_ptr<const Object> dirichlet_density::operator()(OperationArgs& Args) cons
 shared_ptr<const Object> laplace_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a = Args.evaluate_as<expression>(1);
+  shared_ptr<const expression> a_E = Args.evaluate_as<expression>(1);
   
   // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> A(a->size() - 1);
-  for(int i=0;i<A.size();i++)
-    A[i] = *convert<const Double>(Args.evaluate_expression(a->sub[i+1]));
+  std::vector<double> a(a_E->size() - 1);
+  for(int i=0;i<a.size();i++)
+    a[i] = *convert<const Double>(Args.evaluate_expression(a_E->sub[i+1]));
   
-  return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x,A[0],A[1]) ) );
+  return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x,a[0],a[1]) ) );
 }
 
 shared_ptr<const Object> log_laplace_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a = Args.evaluate_as<expression>(1);
+  shared_ptr<const expression> a_E = Args.evaluate_as<expression>(1);
   
   // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> A(a->size() - 1);
-  for(int i=0;i<A.size();i++)
-    A[i] = *convert<const Double>(Args.evaluate_expression(a->sub[i+1]));
+  std::vector<double> a(a_E->size() - 1);
+  for(int i=0;i<a.size();i++)
+    a[i] = *convert<const Double>(Args.evaluate_expression(a_E->sub[i+1]));
   
-  return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),A[0],A[1])/x ) );
+  return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a[0],a[1])/x ) );
 }
 
 shared_ptr<const Object> uniform_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a = Args.evaluate_as<expression>(1);
+  shared_ptr<const expression> a_E = Args.evaluate_as<expression>(1);
   
   // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> A(a->size() - 1);
-  for(int i=0;i<A.size();i++)
-    A[i] = *convert<const Double>(Args.evaluate_expression(a->sub[i+1]));
+  std::vector<double> a(a_E->size() - 1);
+  for(int i=0;i<a.size();i++)
+    a[i] = *convert<const Double>(Args.evaluate_expression(a_E->sub[i+1]));
   
-  return shared_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,A[0],A[1]) ) );
+  return shared_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a[0],a[1]) ) );
 }
 
 // Fields: n_random, n_parameters, string, density op
