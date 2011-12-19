@@ -430,6 +430,8 @@ void context::set_call_if_reg_result(int R) const
 /// Update the value of a non-constant, non-computed index
 void context::set_reg_value(int P, const expression_ref& OO)
 {
+  memory->uniquify_reg(P,token);
+
   expression_ref O = graph_normalize(*this, translate_refs(OO));
 
   assert(dynamic_pointer_cast<const parameter>(access(P).E));
@@ -442,14 +444,12 @@ void context::set_reg_value(int P, const expression_ref& OO)
     set_E(*r, O);
     O = expression_ref( new reg_var(*r) );
 
-    // UNSHARE!
     access(P).result = O;
     set_call_if_reg_result(P);
     pop_root(r);
   }
   else
   {
-    // UNSHARE!
     access(P).result = O;
     if (O)
       set_call_if_reg_result(P);
@@ -480,8 +480,6 @@ void context::set_reg_value(int P, const expression_ref& OO)
       NOT_known_value_unchanged.push_back(R2);
       visited.insert(R2);
 
-      // UNSHARE!
-
       // Since the computation may be different, we don't know if the value has changed.
       access(R2).result.reset();
       memory->clear_call(R2);
@@ -498,8 +496,6 @@ void context::set_reg_value(int P, const expression_ref& OO)
       // ... then it is not known to have identical outputs
       NOT_known_value_unchanged.push_back(R2);
       visited.insert(R2);
-
-      // UNSHARE!
 
       // Since the computation may be different, we don't know if the value has changed.
       access(R2).result.reset();
