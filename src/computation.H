@@ -31,6 +31,11 @@ struct OperationArgs: virtual public Object
 
   virtual boost::shared_ptr<const Object> evaluate(int slot) = 0;
 
+  virtual boost::shared_ptr<const Object> lazy_evaluate(int)
+  {
+    std::abort();
+  }
+
   template <typename T>
   boost::shared_ptr<const T> evaluate_as(int slot)
   {

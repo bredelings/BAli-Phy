@@ -9,12 +9,13 @@ using boost::shared_ptr;
 
 shared_ptr<const Object> Seq::operator()(OperationArgs& Args) const
 {
-  Args.evaluate(0);
-  return Args.evaluate(1);
+  Args.lazy_evaluate(0);
+  return Args.lazy_evaluate(1);
 }
 
 shared_ptr<const Object> Apply::operator()(OperationArgs& Args) const
 {
+  //FIXME - should this be lazy_evaluate?  Perhaps which a lambda function it doesn't matter.
   shared_ptr<const Object> f = Args.evaluate(0);
   shared_ptr<const Object> arg = Args.reference(1);
 
@@ -33,7 +34,7 @@ std::string Apply::name() const {
 
 shared_ptr<const Object> Case::operator()(OperationArgs& Args) const
 {
-  shared_ptr<const Object> obj = Args.evaluate(0);
+  shared_ptr<const Object> obj = Args.lazy_evaluate(0);
   shared_ptr<const Object> alts = Args.reference(1);
 
   vector<expression_ref> cases;

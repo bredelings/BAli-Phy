@@ -1458,6 +1458,37 @@ struct RegOperationArgs: public OperationArgs
     return full_evaluate(C,R2);
   }
 
+  boost::shared_ptr<const Object> lazy_evaluate(int slot)
+  {
+    // Any slot that we are going to evaluate needs to point to another node
+    shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( reference(slot) );
+    assert(RV);
+    int R2 = RV->target;
+
+    if (not C[R].used_inputs[slot] != -1)
+    {
+      // evaluate R
+      R2 = incremental_evaluate(C, R2);
+
+      // Adjust the reference, if it changed.
+      if (R2 != RV->target)
+      {
+	expression_ref E2 = C[R].E;
+	dynamic_pointer_cast<expression>(E2)->sub[slot+1] = new reg_var(R2);
+	C.set_E(R, E2);
+      }
+
+      // mark R2 used by R in the correct slot
+      C.set_used_input(R, slot, R2);
+
+      // If R2 -> result was changeable, then R -> result will be changeable as well.
+      if (C[R2].changeable) 
+	C[R].changeable = true;
+    }
+
+    return C[R2].result;
+  }
+
   shared_ptr<const Object> evaluate_expression(const expression_ref& e)
   {
     return C.evaluate_expression(e);
