@@ -17,12 +17,9 @@ namespace substitution
   {
     double f = *Args.evaluate_as<Double>(0);
     
-    shared_ptr<const expression> pi_E = Args.evaluate_as<expression>(1);
+    expression_ref pi_E = Args.evaluate_as<expression>(1);
     
-    // Idea: we could define this conversion INSIDE the machine...
-    std::vector<double> pi(pi_E->size() - 1);
-    for(int i=0;i<pi.size();i++)
-      pi[i] = *convert<const Double>(Args.evaluate_expression(pi_E->sub[i+1]));
+    std::vector<double> pi = get_vector<double,Double>(pi_E);
     
     return Plus_gwF_Function(*a,f,pi);
   }
