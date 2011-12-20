@@ -1,6 +1,8 @@
 #include "distribution-operations.H"
 
 using boost::shared_ptr;
+using std::vector;
+using std::valarray;
 
 shared_ptr<const Object> exponential_density::operator()(OperationArgs& Args) const
 {
@@ -77,12 +79,9 @@ shared_ptr<const Object> dirichlet_density::operator()(OperationArgs& Args) cons
 shared_ptr<const Object> laplace_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a_E = Args.evaluate_as<expression>(1);
-  
-  // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> a(a_E->size() - 1);
-  for(int i=0;i<a.size();i++)
-    a[i] = *convert<const Double>(Args.evaluate_expression(a_E->sub[i+1]));
+  expression_ref A = Args.evaluate(1);
+
+  vector<double> a = get_vector<double,Double>(A);
   
   return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x,a[0],a[1]) ) );
 }
@@ -90,12 +89,9 @@ shared_ptr<const Object> laplace_density::operator()(OperationArgs& Args) const
 shared_ptr<const Object> log_laplace_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a_E = Args.evaluate_as<expression>(1);
-  
-  // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> a(a_E->size() - 1);
-  for(int i=0;i<a.size();i++)
-    a[i] = *convert<const Double>(Args.evaluate_expression(a_E->sub[i+1]));
+  expression_ref A = Args.evaluate(1);
+
+  vector<double> a = get_vector<double,Double>(A);
   
   return shared_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a[0],a[1])/x ) );
 }
@@ -103,12 +99,9 @@ shared_ptr<const Object> log_laplace_density::operator()(OperationArgs& Args) co
 shared_ptr<const Object> uniform_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
-  shared_ptr<const expression> a_E = Args.evaluate_as<expression>(1);
-  
-  // Idea: we could define this conversion INSIDE the machine...
-  std::vector<double> a(a_E->size() - 1);
-  for(int i=0;i<a.size();i++)
-    a[i] = *convert<const Double>(Args.evaluate_expression(a_E->sub[i+1]));
+  expression_ref A = Args.evaluate(1);
+
+  vector<double> a = get_vector<double,Double>(A);
   
   return shared_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a[0],a[1]) ) );
 }
