@@ -56,6 +56,8 @@ using std::endl;
 
 
 /*
+ *
+ *
  * If a reg is shared, then all of its descendants must be shared as well.  (Here, "descendants" means
  * the terms in E, which determine the computation to be done.)  Therefore, we have a single version of edges in
  * - E
@@ -81,7 +83,7 @@ using std::endl;
  * When reducing an expression:
  * (a) We might replace the original expression, using set_E.  This might reference fewer vars.
  * (b) We might create a call reg.  No dereferencing here.
- * 
+ *
  * Now, previous when dereferencing, we didn't worry about the cost of invalidating unreachable
  * from roots) regs that reference a parameter.  Let's worry about this later.
  *
@@ -91,23 +93,84 @@ using std::endl;
  *
  * See: let a=X+X, b=Y+Y in b.  Here, 
  *
- * 3. Splitting a node.
- * When splitting a node, we must necessarily split all nodes from which it is transitively
- *  reachable through references in E.
+ * 3. Uniquifying a heap variable
+ *
+ * When splitting a heap variable p:
+ *
+ *  The graph itself does not change (I assert) except that the name of heap variables changes.
+ *
+ *  I. We must uniquify any heap variable q which references p through E.
+ *  This is because we must alter q.E to update references to p.  
+ *   - q: This entails updating q.E, q.references, and q.used_inputs
+ *        It also involves updating q.result if its non-NULL.  The result might not change.
+ *   - p: This entails updating p.referenced_by and q.outputs
+ *
+ *  II. We must also uniquify any heap variable q which calls p.
+ *   - q: This entails updating q.call.  It also involves updating
+ *   - p: This entails updating p.call_outputs
+ *
+ *  (Note: if we split just a head h, we would NOT need to update h.result, h.E, h.call, etc.)
+ *
+ *  Q: Can a result for an expression E contain heap variables from inputs that are not in E?
+ *  A: Yes. Calls may contain let expressions which generate new heap variables and pass them
+ *     back to the calling node via constructors or lambdas which contain them.
+ *     These heap variables will not even be marked "used" from the calling node!
+ *    Example: (take 3 (iota 1)) where iota n = n:(iota (n+1))
+ *
+ *  Idea: Follow the call_outputs back as far as they will go from any split node. Remove any results
+ *        from these heap variables.  These heap variables can follow call chains and re-add their result
+ *        in a forward evaluation, if they want to.
+ *        (Result: we don't have to re-run any Ops: the op results have already been updated 
+ *
+ *        If a node has no call, then it is the end of a (possibly trivial) call chain.
+ *        In that case, remap the result.
+ *         Q: Will that influence anything else?
+ *         A: No.  If the result is used as an argument to an operation, the operation should still
+ *            be correct, up to the renaming of reg_vars.
+ *
+ *        Result: no heap variables that are not split need to have their result adjusted.
+ *
+ *  Q: Does this all mean we have to update or invalidate the results of ALL ancestors, even those that
+ *     don't use the parameter whose value is set?
+ *  A: 
+ *
+ *  Q: What kind of expressions will be split because they reference a split node, but do
+ *     not use it? (I'm thinking of If(Z>1,2*X,Y+1).)
+ *
+ * 1. Find all the shared heap variables with token t that can transitively reach p
+ *    through either references in E, or through calls.
+ *
+ * 2. For each of these variables p allocate a new variable q and store the
+ *    mapping from each {p -> q}.
+ *
+ * 3. Transfer membership in t from p[i] -> q[i] for each i.
+ *
+ * 4. Suppose we just initialize everything to be the same as before.
+ *    Then the links will actually not correspond to anything.
+ *    - E // remap
+ *    - result // remap
+ *    - call // remap
+ *    - references // remap
+ *    - used_inputs // remap
+ *    - referenced_by // may shrink, since references from non-t contexts will vanish.
+ *    - outputs // may shrink, since uses from non-t contexts will vanish.
+ *    - call_outputs // may shrink, since calls from non-t contexts will vanish.
+ *
+ *    For each p->q, set 
+ *    - E // remap
+ *    - result // remap if no call, else NULL
+ *    - call // remap
+ *    - references // set by E -- should be the same as remapping.
+ *    - used_inputs // remap
+ *
+ *    For heap variables r that reference split variables p, do
+ *    - E // remap
+ *
+ *    For heap variables r that call split variables p, do
+ *    - call // remap
  * 
- * 1. Find all the ancestors with name N -> regs.
- * 2. Allocate names for them -> new_regs.
- * 3. Move ownership in N from the old regs to the new regs.
- * 4. We then adjust the relevant heads to point to the new regs.
- * 5. Finally, we adjust the expressions (as well as the values/calls of parameters!)
- *    (a) map references in E to the new references.
- *    (b) map references in call to the new references.
- *    (c) map references in result to the new references.
- *    (d) changeable should stay the same.
- *    Q: Do we really want to map result and call? we could also just invalidate them.
- *    A: Yes, some of these things may not have USED the changed parameter, just REFERENCED iit.
- *       That means that, in theory, they COULD use it, in the future, and therefore must be
- *        modified.  But, as of yet, that has not happened.
+ * 5. For all heap variables r in context t that can reach a split variable via a chain of
+ *    calls, unset the result to NULL.
  */
 
 /*
