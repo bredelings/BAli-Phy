@@ -55,7 +55,7 @@ using std::endl;
  */
 
 
-/*
+/* ------------------------------------ Splitting subgraphs ---------------------------------------------
  *
  *
  * If a reg is shared, then all of its descendants must be shared as well.  (Here, "descendants" means
@@ -533,6 +533,8 @@ void context::set_parameter_value(int index, const expression_ref& O)
 
 void context::set_call_if_reg_result(int R) const
 {
+  assert( access(R).result );
+
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(access(R).result))
   {
     int R2 = RV->target;
@@ -933,7 +935,7 @@ int reg_heap::get_unused_token()
   return t;
 }
 
-vector<int> reg_heap::find_ancestor_regs_in_context(int R, int t) const
+vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
 {
   vector<int> scan;
   scan.push_back(R);
@@ -943,14 +945,24 @@ vector<int> reg_heap::find_ancestor_regs_in_context(int R, int t) const
   for(int i=0;i<scan.size();i++)
   {
     const reg& R = access(scan[i]);
+
+    // Regs should be on the used list
     assert(R.state != reg::free and R.state != reg::none);
+
+    // Only consider each reg at most once
     if (R.state == reg::checked) continue;
 
-    // skip this node if its not in context t
+    // A reg must have at least 1 owner.
+    assert(not R.owners.empty());
+
+    // Skip this node if its not in context t
     if (not reg_is_owned_by(scan[i],t)) continue;
 
     R.state = reg::checked;
     unique.push_back(scan[i]);
+
+    // Don't consider parents of this node if its already uniquified.
+    if (not reg_is_shared(scan[i])) continue;
 
     // Count the references from E in other regs
     scan.insert(scan.end(), R.referenced_by_in_E.begin(), R.referenced_by_in_E.end());
@@ -959,8 +971,9 @@ vector<int> reg_heap::find_ancestor_regs_in_context(int R, int t) const
     scan.insert(scan.end(), R.call_outputs.begin(), R.call_outputs.end());
     
     // Count also the references from the call
-    if (R.call != -1) 
-      scan.insert(scan.end(), R.call);
+    // Later: WHY?
+    //    if (R.call != -1) 
+    //      scan.insert(scan.end(), R.call);
   }
 
   for(int i=0;i<unique.size();i++)
@@ -1034,21 +1047,24 @@ int reg_heap::uniquify_reg(int R, int t)
     return R;
   }
 
-  // 1. Find all the ancestors with name 't'
-  vector<int> ancestors = find_ancestor_regs_in_context(R,t);
+  // 1. Find all ancestors with name 't' that are shared
+  vector<int> shared_ancestors = find_shared_ancestor_regs_in_context(R,t);
 
   map<int,root_t> new_regs;
-  for(int i=0;i<ancestors.size();i++)
-  {
-    // 2. Allocate new regs for each ancestor reg
-    root_t root = allocate_reg();
-    int R2 = *root;
-    new_regs[ancestors[i]] = root;
-
-    // 3. Move ownership from the old regs to the new regs.
-    access(R2).owners.insert(t);
-    access(ancestors[i]).owners.erase(t);
-  }
+  for(int i=0;i<shared_ancestors.size();i++)
+    if (reg_is_shared(shared_ancestors[i]))
+    {
+      // 2. Allocate new regs for each ancestor reg
+      root_t root = allocate_reg();
+      int R2 = *root;
+      new_regs[shared_ancestors[i]] = root;
+      
+      // 3. Move ownership from the old regs to the new regs.
+      access(R2).owners.insert(t);
+      access(shared_ancestors[i]).owners.erase(t);
+      
+      assert( not access(shared_ancestors[i]).owners.empty() );
+    }
 
   // 4a. Adjust heads to point to the new regs
   for(int j=0;j<token_roots[t].heads.size();j++)
@@ -1105,7 +1121,9 @@ int reg_heap::uniquify_reg(int R, int t)
     }
   }
 
-   return *new_regs[R];
+  // FIXME - assert that the new outputs and call_outputs are correct, somehow!
+
+  return *new_regs[R];
 }
 
 vector<int> reg_heap::find_all_regs_in_context(int t) const
@@ -1472,8 +1490,6 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
   throw myexception()<<"graph_normalize: I don't recognize expression '"+ R->print() + "'";
 }
 
-int incremental_evaluate(const context&, int);
-
 #include "computation.H"
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
@@ -1647,7 +1663,7 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
    */
 
 /// Evaluate C[R] and return a reg containing the results that looks through unchangeable redirections = reg_var chains
-int  incremental_evaluate(const context& C, int R)
+int incremental_evaluate(const context& C, int R)
 {
   assert(R >= 0 and R < C.n_regs());
   assert(C[R].state == reg::used);
