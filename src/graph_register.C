@@ -1506,6 +1506,12 @@ struct RegOperationArgs: public OperationArgs
     return E->sub[slot+1];
   }
 
+  /*
+   * NOTE: We cannot cache full_evaluate( ) results, because a WHNF constructor expression
+   *       does not USE the result of its arguments, and so will not be marked for
+   *       recomputation when they change.
+   */
+
   boost::shared_ptr<const Object> evaluate(int slot)
   {
     // Any slot that we are going to evaluate needs to point to another node
