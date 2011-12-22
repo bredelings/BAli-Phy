@@ -1741,6 +1741,12 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ex
   return case_expression(decompose, T,patterns, bodies);
 }
 
+/*
+ * \todo FIXME
+ * Can we avoid repeating the same sub-expression on several else-branches of a multi-case expression
+ * by introducing sharing with a let construct?
+ */
+
 expression_ref multi_case_expression(bool decompose, const vector<expression_ref>& terms, const vector<expression_ref>& patterns, 
 				     const expression_ref& body, const expression_ref& otherwise)
 {
