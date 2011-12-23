@@ -167,6 +167,14 @@ using std::endl;
  *       q2.call // remap
  *       q2.result = q2.E  [*IF* q2.result and there is NOT a call.]
  *
+ * Practically, though, doesn't this include EVERY split node, except the original one?
+ * Because a node is split only if it has an E-child that is split.  I think so.
+ * Therefore, We may as well initialize them to remapped values.
+ *
+ * Also, we can find the parents on the periphery, because they are the only E-ancestors
+ * of the original nodes that are still in t. By remapping them, they should STOP being
+ * E-ancestors of the original nodes.
+ *
  * (4) For each reg q that has an updated E and an updated result,
  *       i. find all the call ancestors of q
  *      ii. set their result to q.result
@@ -282,8 +290,7 @@ void reg_heap::set_used_input(int R1, int slot, int R2)
   assert(R1 >= 0 and R1 < n_regs());
   assert(R2 >= 0 and R2 < n_regs());
 
-  // fixme
-  if (access(R1).used_inputs[slot] != -1) return;
+  assert(access(R1).used_inputs[slot] == -1);
 
   access(R1).used_inputs[slot] = R2;
   access(R2).outputs.insert(pair<int,int>(R1,slot));
@@ -592,51 +599,52 @@ void context::set_parameter_value(int index, const expression_ref& O)
   set_reg_value(P, O);
 }
 
-void context::set_call_if_reg_result(int R) const
+void reg_heap::set_reduction_result(int R, const expression_ref& result)
 {
-  assert( access(R).result );
+  // Check that there is no result we are overriding
+  assert(not access(R).result );
 
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(access(R).result))
+  // Check that there is no previous call we are overriding.
+  assert(access(R).call == -1);
+
+  // If the value is a pre-existing reg_var, then call it.
+  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
   {
-    int R2 = RV->target;
+    int Q = RV->target;
     
-    assert(0 <= R2 and R2 < n_regs());
-    assert(access(R2).state == reg::used);
-
-    // clear the result slot
-    access(R).result.reset();
+    assert(0 <= Q and Q < n_regs());
+    assert(access(Q).state == reg::used);
     
-    set_call(R,R2);
+    set_call(R,Q);
+  }
+  // Otherwise, regardless of whether the expression is WHNF or not, create a new reg for the result and call it.
+  else
+  {
+    root_t r = allocate_reg();
+    access(*r).owners = access(R).owners;
+    set_E(*r, result );
+    set_call(R, *r);
+    pop_root(r);
   }
 }
 
 /// Update the value of a non-constant, non-computed index
 void context::set_reg_value(int P, const expression_ref& OO)
 {
+  // Split this reg and its E-ancestors out from other graphs, if its shared.
   P = memory->uniquify_reg(P,token);
 
+  // Normalize the inputs expression
   expression_ref O = graph_normalize(*this, translate_refs(OO));
 
+  // Check that this reg is indeed settable
   assert(dynamic_pointer_cast<const parameter>(access(P).E));
   assert(access(P).changeable);
+
+  // Clear the call, clear the result, and set the value
   memory->clear_call(P);
-
-  if (not is_WHNF(O))
-  {
-    root_t r = allocate_reg();
-    set_E(*r, O);
-    O = expression_ref( new reg_var(*r) );
-
-    access(P).result = O;
-    set_call_if_reg_result(P);
-    pop_root(r);
-  }
-  else
-  {
-    access(P).result = O;
-    if (O)
-      set_call_if_reg_result(P);
-  }
+  access(P).result.reset();
+  set_reduction_result(P, O);
 
   vector< int > NOT_known_value_unchanged;
   std::set< int > visited;
@@ -996,6 +1004,51 @@ int reg_heap::get_unused_token()
   return t;
 }
 
+vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
+{
+  vector<int> ancestors;
+
+  // Add the call parents of R
+  foreach (i, access(R).call_outputs)
+  {
+    int Q = *i;
+    assert(access(Q).state == reg::used);
+
+    access(Q).state = reg::checked;
+
+    assert(reg_is_owned_by(R,t) and not reg_is_shared(R));
+    ancestors.push_back(Q);
+  }
+
+  // Recursively add the call parents
+  for(int i=0;i<ancestors.size();i++)
+  {
+    int Q1 = ancestors[i];
+
+    assert(access(Q1).state == reg::checked);
+
+    foreach(j, access(Q1).call_outputs)
+    {
+      int Q2 = *j;
+
+      // Skip regs that have been seen before.
+      if (access(Q2).state == reg::checked) continue;
+
+      assert( access(Q2).state == reg::used);
+
+      assert(reg_is_owned_by(R,t) and not reg_is_shared(R));
+
+      ancestors.push_back(Q2);
+    }
+  }
+
+  // Reset the mark
+  for(int i=0;i<ancestors.size();i++)
+    access(ancestors[i]).state = reg::used;
+
+  return ancestors;
+}
+
 vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
 {
   vector<int> scan;
@@ -1099,6 +1152,15 @@ bool reg_heap::reg_is_owned_by(int R, int t) const
   return includes(owners, t);
 }
 
+int remap(int R, const map<int,reg_heap::root_t>& new_regs)
+{
+  map<int,reg_heap::root_t>::const_iterator loc = new_regs.find(R);
+  if (loc == new_regs.end())
+    return R;
+  else
+    return *loc->second;
+}
+
 int reg_heap::uniquify_reg(int R, int t)
 {
   // If the reg is already unique, then we don't need to do anything.
@@ -1108,31 +1170,69 @@ int reg_heap::uniquify_reg(int R, int t)
     return R;
   }
 
-  // 1. Find all ancestors with name 't' that are shared
+  vector<int> changed_results;
+
+  // 1. Find all ancestors with name 't' that are *shared*
   vector<int> shared_ancestors = find_shared_ancestor_regs_in_context(R,t);
 
+  // 2. Split these shared regs, and copy the old contents over, remapping as we go.
   map<int,root_t> new_regs;
   for(int i=0;i<shared_ancestors.size();i++)
-    if (reg_is_shared(shared_ancestors[i]))
+  {
+    int R1 = shared_ancestors[i];
+    // 2. Allocate new regs for each ancestor reg
+    root_t root = allocate_reg();
+    int R2 = *root;
+    new_regs[R1] = root;
+
+    // Check no mark on R2
+    assert(access(R2).state == reg::used);
+    
+    // 3. Move ownership from the old regs to the new regs.
+    access(R1).owners.erase(t);
+    access(R2).owners.insert(t);
+    
+    assert( not access(R1).owners.empty() );
+
+    // 4. Initialize fields in the new node
+
+    // 4a. Initialize/Remap E
+    set_E(R2, remap_regs( access(R1).E, new_regs) );
+
+    // 4b. Initialize/Remap call
+    if (access(R1).call != -1)
+      set_call(R2, remap(access(R1).call, new_regs) );
+
+    // 4c. Initialize/Remap used_inputs
+    access(R2).used_inputs = std::vector<int>( access(R1).used_inputs.size() , -1);
+    for(int slot=0;slot<access(R1).used_inputs.size();slot++)
     {
-      // 2. Allocate new regs for each ancestor reg
-      root_t root = allocate_reg();
-      int R2 = *root;
-      new_regs[shared_ancestors[i]] = root;
+      int I = access(R1).used_inputs[slot];
+      if (I == -1) continue;
       
-      // 3. Move ownership from the old regs to the new regs.
-      access(R2).owners.insert(t);
-      access(shared_ancestors[i]).owners.erase(t);
-      
-      assert( not access(shared_ancestors[i]).owners.empty() );
+      set_used_input(R2, slot, remap(I, new_regs) );
     }
+
+    // 4d. Initialize/Remap result if E is in WHNF.
+    if (access(R2).call == -1 and access(R1).result)
+    {
+      access(R2).result = access(R2).E;
+      changed_results.push_back(R2);
+    }
+    // 4d. Initialize/Copy result otherwise.
+    else
+      access(R2).result = access(R1).result;
+
+    // 4e. Initialize/Copy changeable
+    access(R2).changeable = access(R1).changeable;
+  }
 
   // 4a. Adjust heads to point to the new regs
   for(int j=0;j<token_roots[t].heads.size();j++)
   {
     int R1 = *token_roots[t].heads[j];
     if (includes(new_regs, R1))
-      token_roots[t].heads[j] = new_regs[R1];
+      *token_roots[t].heads[j] = *new_regs[R1];
   }
 
   // 4b. Adjust parameters to point to the new regs
@@ -1140,51 +1240,118 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     int R1 = *token_roots[t].parameters[j];
     if (includes(new_regs, R1))
-      token_roots[t].parameters[j] = new_regs[R1];
+      *token_roots[t].parameters[j] = *new_regs[R1];
   }
 
-  // 5. Adjust E, call, and result to point to the new references.
+  // 5. Adjust unsplit PARENTS of split regs
+  vector<int> unsplit_parents;
+  foreach(i,new_regs)
+  {
+    int R1 = i->first;
+
+    foreach(j,access(R1).referenced_by_in_E)
+    {
+      int Q1 = *j;
+
+      // Skip regs that we've handled already.
+      if (access(Q1).state == reg::checked) continue;
+
+      // We are only interested in the E-ancestors in t.
+      if (not reg_is_owned_by(Q1, t)) continue;
+
+      // This reg is a parent of a split reg, but is not split, and so must not be shared itself.
+      assert(not reg_is_shared(Q1));
+
+      // Mark Q1
+      assert(access(Q1).state == reg::used);
+      access(Q1).state = reg::checked;
+      unsplit_parents.push_back(Q1);
+
+      // a. Remap E
+      set_E(Q1, remap_regs(access(Q1).E, new_regs) );
+      
+      // b. Remap call
+      if (access(Q1).call != -1)
+	set_call(Q1, remap(access(Q1).call, new_regs) );
+      
+      // c. Adjust use edges
+      for(int slot=0;slot<access(Q1).used_inputs.size();slot++)
+      {
+	int I1 = access(Q1).used_inputs[slot];
+	if (I1 == -1) continue;
+	
+	int I2 = remap(I1, new_regs);
+	if (I1 == I2) continue;
+	
+	clear_used_input(Q1, slot);
+	set_used_input(Q1, slot, I2);
+      }
+
+      // d. Remap result if E is in WHNF
+      if (access(Q1).call != -1 and access(Q1).result)
+      {
+	access(Q1).result = access(Q1).E;
+	changed_results.push_back(Q1);
+      }
+      
+    }
+  }
+
+  // Unmark the unsplit parental nodes.
+  for(int i=0;i<unsplit_parents.size();i++)
+    access(unsplit_parents[i]).state = reg::used;
+
+  // Check that marks were removed.
   foreach(i,new_regs)
   {
     int R1 = i->first;
     int R2 = *(i->second);
 
-    // Adjust E
-    set_E(R2, remap_regs(access(R1).E, new_regs) );
+    // Original nodes should never have been marked.
+    assert( access(R1).state == reg::used );
 
-    // Adjust call
-    if (access(R1).call != -1)
+    // Split nodes should not have been marked.
+    assert( access(R2).state == reg::used );
+
+    // The split nodes should now be E-ancestors in t
+    foreach(j,access(R2).referenced_by_in_E)
     {
-      int c = access(R1).call;
-      assert(includes(new_regs, c));
-      set_call(R2, *new_regs[ c ] );
+      assert( access(R2).state == reg::used );
     }
 
-    // Adjust result
-    access(R2).result = remap_regs(access(R1).result, new_regs);
-
-    // Set changeable
-    access(R2).changeable = access(R1).changeable;
-
-    // Adjust use edges
-    access(R2).used_inputs = std::vector<int>( access(R1).used_inputs.size() , -1);
-    for(int slot=0;slot<access(R1).used_inputs.size();slot++)
+    // The split nodes should now be E-ancestors in t
+    foreach(j,access(R1).referenced_by_in_E)
     {
-      int I1 = access(R1).used_inputs[slot];
-      if (I1 == -1) continue;
-
-      int I2 = I1;
-      map<int, root_t>::const_iterator loc = new_regs.find(I1);
-      if (loc != new_regs.end())
-	I2 = *(loc->second);
-
-      set_used_input(R2, slot, I2);
+      assert( access(R2).state == reg::used );
     }
   }
+  
+
+  // update the call outputs
+  for(int i=0;i<changed_results.size();i++)
+  {
+    int Q = changed_results[i];
+
+    expression_ref result = access(Q).result;
+
+    vector<int> regs = find_call_ancestors_in_context( Q, t);
+
+    for(int j=0;j<regs.size();j++)
+      access(regs[j]).result = result;
+  }
+
+  int R2 = *new_regs[R];
+
+  // 5. Remove root references to new regs.
+  //    Remove t-ownership from old regs.
+  foreach(i,new_regs)
+  {
+    pop_root(i->second);
+  }
+
 
   // FIXME - assert that the new outputs and call_outputs are correct, somehow!
-
-  return *new_regs[R];
+  return R2;
 }
 
 vector<int> reg_heap::find_all_regs_in_context(int t) const
@@ -1758,11 +1925,15 @@ int incremental_evaluate(const context& C, int R)
 
       if (not C[R].changeable)
 	R = S;
-
-      continue;
+        // FIXME - why don't we set C[R].call = S here?
+        //  Let's try it.
     }
 
     /*---------- Below here, there is no call, and no result. ------------*/
+
+    // Check if E is a reference to a heap variable
+    else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(C[R].E))
+      C.set_call(R, RV->target);
 
     // Check for WHNF *OR* heap variables
     else if (is_WHNF(C[R].E))
@@ -1812,7 +1983,6 @@ int incremental_evaluate(const context& C, int R)
       
       assert(C[R].call == -1);
       assert(not C[R].result);
-      continue;
     }
     
     // 3. Reduction: Operation (includes @, case, +, etc.)
@@ -1835,6 +2005,7 @@ int incremental_evaluate(const context& C, int R)
 	if (C.access(R).used_inputs[j] != -1)
 	  assert( includes(C.access(R).references, C.access(R).used_inputs[j]) );
 
+      // If the reduction doesn't depend on parameters, then replace E with the result.
       if (not C[R].changeable)
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
@@ -1842,31 +2013,17 @@ int incremental_evaluate(const context& C, int R)
 	assert(not C.access(R).result);
 	C.clear_used_inputs(R);
 	C.set_E(R, result);
-	continue;
       }
+      // Otherwise, set the reduction result.
       else
-      {
-	// Check for WHNF *OR* heap variables
-	if (is_WHNF(result))
-	  C[R].result = result;
-	else {
-	  reg_heap::root_t r2 = C.allocate_reg();
-	  C.access(*r2).owners = C.access(R).owners;
-	  C.set_E(*r2, result );
-	  C[R].result = shared_ptr<const Object>(new reg_var(*r2));
-	  C.pop_root(r2);
-	}
-      }
-	
+	C.set_reduction_result(R, result );
+
 #ifndef NDEBUG
       // std::cerr<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
       std::cerr<<"Executing operation: "<<O<<"\n";
       std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n"<<endl;
 #endif
     }
-
-    // 4. We can't exit the loop with a reg_var in the result slot. Change to a call.
-    C.set_call_if_reg_result(R);
   }
 
 #ifndef NDEBUG

@@ -174,6 +174,7 @@ public:
   void clear(int);
   void clear_E(int R);
   void set_E(int R, const expression_ref& e);
+  void set_reduction_result(int R, const expression_ref& E);
 
   /*----- Token manager ------*/
 
@@ -226,7 +227,8 @@ public:
   std::vector<int> find_all_regs_in_context(int) const;
   /*----- Graph walking ------*/
   std::vector<int> find_shared_ancestor_regs_in_context(int,int) const;
-
+  /*----- Graph walking ------*/
+  std::vector<int> find_call_ancestors_in_context(int,int) const;
   /*----- Graph splitting -----*/
   int uniquify_reg(int reg, int t);
 };
@@ -375,9 +377,9 @@ public:
   void clear_used_inputs(int R, int S) const {memory->clear_used_inputs(R,S);}
   void set_call(int R1, int R2) const {memory->set_call(R1, R2);}
   void clear_call(int R) const {memory->clear_call(R);}
-  void set_call_if_reg_result(int R) const;
   void set_E(int R, const expression_ref& e) const {memory->set_E(R,e);}
-
+  void set_reduction_result(int R, const expression_ref& result) const {memory->set_reduction_result(R, result);}
+  
   /// Allocate a reg which will be a root for garbage-collection
   root_t allocate_reg() const {
     root_t r = memory->allocate_reg();
