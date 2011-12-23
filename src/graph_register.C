@@ -1220,8 +1220,8 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int i=0;i<shared_ancestors.size();i++)
   {
     int R1 = shared_ancestors[i];
-    // 2. Allocate new regs for each ancestor reg
-    root_t root = allocate_reg();
+    // 2. Allocate new regs for each ancestor reg in context t
+    root_t root = push_temp_head(t);
     int R2 = *root;
     new_regs[R1] = root;
 
@@ -1398,10 +1398,10 @@ int reg_heap::uniquify_reg(int R, int t)
 
   // 5. Remove root references to new regs.
   //    Remove t-ownership from old regs.
-  foreach(i,new_regs)
-  {
-    pop_root(i->second);
-  }
+  for(int i=0;i<shared_ancestors.size();i++)
+    pop_temp_head(t);
+
+  assert(token_roots[t].temp.empty());
 
   return R2;
 }
