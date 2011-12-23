@@ -10,6 +10,7 @@ using std::map;
 using std::pair;
 using std::set;
 
+using std::cerr;
 using std::endl;
 /*
  * 1. Q: When can we allow sharing of partially-evaluated expressions between contexts?
@@ -1015,6 +1016,9 @@ void reg_heap::collect_garbage()
 
     here = next;
   }
+
+  cerr<<"Regs: "<<n_used_regs()<<"/"<<n_regs()<<endl;
+  cerr<<"#roots = "<<roots.size()<<endl;
 
   remove_unused_ownership_marks();
 
