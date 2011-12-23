@@ -1232,10 +1232,6 @@ int reg_heap::uniquify_reg(int R, int t)
     // Check no mark on R2
     assert(access(R2).state == reg::used);
     
-    // 3. Move ownership from the old regs to the new regs.
-    access(R1).owners.erase(t);
-    access(R2).owners.insert(t);
-    
     assert( not access(R1).owners.empty() );
 
     // 4. Initialize fields in the new node
@@ -1301,11 +1297,14 @@ int reg_heap::uniquify_reg(int R, int t)
       // Skip regs that we've handled already.
       if (access(Q1).state == reg::checked) continue;
 
-      // We are only interested in the E-ancestors in t.
-      if (not reg_is_owned_by(Q1, t)) continue;
+      // NOTE: we could have parent that are in t that are shared, but these
+      // should be original regs that will eventually be removed from t.
 
-      // This reg is a parent of a split reg, but is not split, and so must not be shared itself.
-      assert(not reg_is_shared(Q1));
+      // We are only interested in the unshared E-ancestors in t.
+      if (reg_is_shared(Q1)) continue;
+
+      // We are only interested in the unshared E-ancestors in t.
+      if (not reg_is_owned_by(Q1, t)) continue;
 
       // Mark Q1
       assert(access(Q1).state == reg::used);
@@ -1384,6 +1383,20 @@ int reg_heap::uniquify_reg(int R, int t)
     }
   }
 
+  for(int i=0;i<shared_ancestors.size();i++)
+  {
+    int Q = shared_ancestors[i];
+
+    // These regs should be shared.
+    assert(reg_is_shared(Q));
+
+    // These regs should have originally contained t.
+    assert(includes(access(Q).owners, t) );
+
+    // But now remove membership in t from these regs.
+    access(Q).owners.erase(t);
+  }
+    
 
   // update the call outputs
   for(int i=0;i<changed_results.size();i++)
@@ -1399,6 +1412,16 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
   int R2 = *new_regs[R];
+
+  // Check that marks were removed.
+  foreach(i,new_regs)
+  {
+    int R1 = i->first;
+    int R2 = *(i->second);
+    assert(not includes(access(R1).owners, t) );
+    assert(includes(access(R2).owners, t) );
+    assert(not reg_is_shared(R2));
+  }
 
   // 5. Remove root references to new regs.
   //    Remove t-ownership from old regs.
