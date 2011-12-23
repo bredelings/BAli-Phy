@@ -1466,6 +1466,8 @@ int reg_heap::copy_token(int t)
 {
   int t2 = get_unused_token();
 
+  assert(token_roots[t].temp.empty());
+
   foreach(i,token_roots[t].heads)
   {
     token_roots[t2].heads.insert( token_roots[t2].heads.end(), push_root(**i) );
