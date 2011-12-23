@@ -183,6 +183,9 @@ public:
 
   struct graph_roots
   {
+    // the list of expressions that we are temporarily evaluating
+    std::vector<root_t> temp;
+
     // the list of expressions that we are interested in evaluating.
     std::vector<root_t> heads;
     
@@ -192,6 +195,9 @@ public:
     bool used;
     graph_roots():used(false) {}
   };
+
+  const std::vector<root_t>& get_temp_heads_for_context(int t) const {return token_roots[t].temp;}
+        std::vector<root_t>& get_temp_heads_for_context(int t)       {return token_roots[t].temp;}
 
   const std::vector<root_t>& get_heads_for_context(int t) const {return token_roots[t].heads;}
         std::vector<root_t>& get_heads_for_context(int t)       {return token_roots[t].heads;}
@@ -248,22 +254,27 @@ private:
 
   int token;
 
+  root_t push_temp_head() const;
+  void pop_temp_head() const;
+
+  /// A list of variable names, and the register indices to which they correspond.
+  std::vector<std::pair<std::string,int> > variables;
+
+  std::vector<expression_ref> notes;
+
+  std::vector<root_t>& temp_heads() const {return memory->get_temp_heads_for_context(token);}
+
   const std::vector<root_t>& heads() const {return memory->get_heads_for_context(token);}
         std::vector<root_t>& heads()       {return memory->get_heads_for_context(token);}
 
   const std::vector<root_t>& parameters() const {return memory->get_parameters_for_context(token);}
         std::vector<root_t>& parameters()       {return memory->get_parameters_for_context(token);}
 
-  /// A list of variable names, and the register indices to which they correspond.
-  std::vector<std::pair<std::string,int> > variables;
-
   /// Register a variable called 'name' as having location 'R'
   void add_variable(const std::string& name, int R);
 
   /// Translate named variables (struct var) and named parameters (struct parameter) into reg_var references
   expression_ref translate_refs(const expression_ref& R) const;
-
-  std::vector<expression_ref> notes;
 
 public:
 

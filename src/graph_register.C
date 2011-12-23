@@ -506,26 +506,24 @@ expression_ref graph_normalize(const context&, const expression_ref&);
 
 shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref& E) const
 {
-  root_t r = allocate_reg();
-  int& R = *r;
+  int R = *push_temp_head();
   set_E(R, graph_normalize(*this, translate_refs(E)) );
 
   R = incremental_evaluate(*this,R);
   shared_ptr<const Object> result = access(R).result;
-  pop_root(r);
 
+  pop_temp_head();
   return result;
 }
 
 shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) const
 {
-  root_t r = allocate_reg();
-  int& R = *r;
+  int R = *push_temp_head();
   set_E(R, graph_normalize(*this, translate_refs(E)) );
 
   expression_ref result = full_evaluate(*this,R);
 
-  pop_root(r);
+  pop_temp_head();
   return result;
 }
 
@@ -896,6 +894,19 @@ reg_heap::root_t reg_heap::allocate_reg()
   root_t root = roots.insert(roots.end(), r);
 
   return root;
+}
+
+reg_heap::root_t context::push_temp_head() const
+{
+  temp_heads().push_back( allocate_reg() );
+  return temp_heads().back();
+}
+
+void context::pop_temp_head() const
+{
+  root_t head = temp_heads().back();
+  temp_heads().pop_back();
+  pop_root(head);
 }
 
 void context::collect_garbage() const
@@ -1330,6 +1341,8 @@ int reg_heap::uniquify_reg(int R, int t)
 vector<int> reg_heap::find_all_regs_in_context(int t) const
 {
   vector<int> scan;
+  foreach(i,token_roots[t].temp)
+    scan.push_back(**i);
   foreach(i,token_roots[t].heads)
     scan.push_back(**i);
   foreach(i,token_roots[t].parameters)
