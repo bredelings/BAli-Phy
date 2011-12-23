@@ -1202,7 +1202,8 @@ int reg_heap::uniquify_reg(int R, int t)
       *token_roots[t].parameters[j] = *new_regs[R1];
   }
 
-  // 5. Adjust unsplit PARENTS of split regs
+  // 5. Find the unsplit parents of split regs
+  //    These will be the only parents of the old regs that have context t.
   vector<int> unsplit_parents;
   foreach(i,new_regs)
   {
@@ -1225,38 +1226,10 @@ int reg_heap::uniquify_reg(int R, int t)
       assert(access(Q1).state == reg::used);
       access(Q1).state = reg::checked;
       unsplit_parents.push_back(Q1);
-
-      // a. Remap E
-      set_E(Q1, remap_regs(access(Q1).E, new_regs) );
-      
-      // b. Remap call
-      if (access(Q1).call != -1)
-	set_call(Q1, remap(access(Q1).call, new_regs) );
-      
-      // c. Adjust use edges
-      for(int slot=0;slot<access(Q1).used_inputs.size();slot++)
-      {
-	int I1 = access(Q1).used_inputs[slot];
-	if (I1 == -1) continue;
-	
-	int I2 = remap(I1, new_regs);
-	if (I1 == I2) continue;
-	
-	clear_used_input(Q1, slot);
-	set_used_input(Q1, slot, I2);
-      }
-
-      // d. Remap result if E is in WHNF
-      if (access(Q1).call != -1 and access(Q1).result)
-      {
-	access(Q1).result = access(Q1).E;
-	changed_results.push_back(Q1);
-      }
-      
     }
   }
 
-  // Unmark the unsplit parental nodes.
+  // Unmark the unsplit parents;
   for(int i=0;i<unsplit_parents.size();i++)
     access(unsplit_parents[i]).state = reg::used;
 
@@ -1285,6 +1258,47 @@ int reg_heap::uniquify_reg(int R, int t)
     }
   }
   
+  for(int i=0;i<unsplit_parents.size();i++)
+  {
+    int Q1 = unsplit_parents[i];
+
+    // a. Remap E
+    set_E(Q1, remap_regs(access(Q1).E, new_regs) );
+    
+    // b. Remap call
+    if (access(Q1).call != -1)
+    {
+      int old_call = access(Q1).call;
+      int new_call = remap( old_call , new_regs);
+
+      if (old_call != new_call)
+      {
+	clear_call(Q1);
+	set_call(Q1, new_call);
+      }
+    }
+    
+    // c. Adjust use edges
+    for(int slot=0;slot<access(Q1).used_inputs.size();slot++)
+    {
+      int I1 = access(Q1).used_inputs[slot];
+      if (I1 == -1) continue;
+      
+      int I2 = remap(I1, new_regs);
+      if (I1 == I2) continue;
+      
+      clear_used_input(Q1, slot);
+      set_used_input(Q1, slot, I2);
+    }
+    
+    // d. Remap result if E is in WHNF
+    if (access(Q1).call != -1 and access(Q1).result)
+    {
+      access(Q1).result = access(Q1).E;
+      changed_results.push_back(Q1);
+    }
+  }
+
 
   // update the call outputs
   for(int i=0;i<changed_results.size();i++)
