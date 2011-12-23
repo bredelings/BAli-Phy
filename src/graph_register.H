@@ -245,6 +245,8 @@ public:
   std::vector<int> find_shared_ancestor_regs_in_context(int,int) const;
   /*----- Graph walking ------*/
   std::vector<int> find_call_ancestors_in_context(int,int) const;
+  /*----- Graph walking ------*/
+  void check_results_in_context(int) const;
   /*----- Graph splitting -----*/
   int uniquify_reg(int reg, int t);
 };

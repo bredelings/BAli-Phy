@@ -1206,6 +1206,36 @@ int remap(int R, const map<int,reg_heap::root_t>& new_regs)
     return *loc->second;
 }
 
+void reg_heap::check_results_in_context(int t) const
+{
+  vector<int> WHNF_results;
+  vector<int> regs = find_all_regs_in_context(t);
+  for(int i=0;i<regs.size();i++)
+  {
+    int Q = regs[i];
+    if (access(Q).result and access(Q).call == -1)
+    {
+      assert(access(Q).E->maybe_equals( *access(Q).result) );
+      WHNF_results.push_back(Q);
+    }
+  }
+
+  // Update the call outputs
+  for(int i=0;i<WHNF_results.size();i++)
+  {
+    int Q = WHNF_results[i];
+
+    expression_ref result = access(Q).result;
+
+    vector<int> regs = find_call_ancestors_in_context( Q, t);
+
+    for(int j=0;j<regs.size();j++)
+      if (access(regs[j]).result)
+	assert( access(regs[j]).result == result );
+  }
+
+}
+
 int reg_heap::uniquify_reg(int R, int t)
 {
   assert(token_roots[t].temp.empty());
