@@ -1382,7 +1382,7 @@ int reg_heap::uniquify_reg(int R, int t)
     }
     
     // d. Remap result if E is in WHNF
-    if (access(Q1).call != -1 and access(Q1).result)
+    if (access(Q1).call == -1 and access(Q1).result)
     {
       access(Q1).result = access(Q1).E;
       changed_results.push_back(Q1);
