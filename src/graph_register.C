@@ -1061,9 +1061,10 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
     int Q = *i;
     assert(access(Q).state == reg::used);
 
-    access(Q).state = reg::checked;
+    // Skip ancestors not in this context
+    if (not reg_is_owned_by(R,t)) continue;
 
-    assert(reg_is_owned_by(R,t) and not reg_is_shared(R));
+    access(Q).state = reg::checked;
     ancestors.push_back(Q);
   }
 
@@ -1083,8 +1084,10 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
 
       assert( access(Q2).state == reg::used);
 
-      assert(reg_is_owned_by(R,t) and not reg_is_shared(R));
+      // Skip ancestors not in this context
+      if (not reg_is_owned_by(Q2,t)) continue;
 
+      access(Q2).state = reg::checked;
       ancestors.push_back(Q2);
     }
   }
@@ -1414,7 +1417,16 @@ int reg_heap::uniquify_reg(int R, int t)
     vector<int> regs = find_call_ancestors_in_context( Q, t);
 
     for(int j=0;j<regs.size();j++)
-      access(regs[j]).result = result;
+    {
+      int S = regs[j];
+      access(S).result = result;
+
+      // Any call ancestors of E-ancestors of p should be E-ancestors of p, and therefore should be in t.
+      assert(reg_is_owned_by(S,t));
+
+      // Any call ancestors of E-ancestors of p should be E-ancestors of p, and therefore should be uniquified.
+      assert(not reg_is_shared(S));
+    }
   }
 
   int R2 = *new_regs[R];
