@@ -914,6 +914,36 @@ void context::collect_garbage() const
   memory->collect_garbage();
 }
 
+void reg_heap::remove_unused_ownership_marks()
+{
+  // Clear ownership marks
+  int here = first_used_reg;
+  for(;here != -1;)
+  {
+    reg& R = access(here);
+    R.owners.clear();
+
+    here = R.next_reg;
+  }
+
+  // Mark ownership on regs according to reachability.
+  for(int t=0;t<get_n_tokens();t++)
+  {
+    // Don't compute reachability from unused tokens.
+    if (not token_is_used(t)) continue;
+
+    // Find the all the regs reachable from heads in t
+    vector<int> regs = find_all_regs_in_context(t);
+
+    // Mark regs reachable in t as being owned by t
+    for(int i=0;i<regs.size();i++)
+    {
+      int R = regs[i];
+      access(R).owners.insert(t);
+    }
+  }
+}
+
 void reg_heap::collect_garbage()
 {
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
@@ -959,6 +989,8 @@ void reg_heap::collect_garbage()
 
     here = next;
   }
+
+  remove_unused_ownership_marks();
 }
 
 int reg_heap::get_unused_token()
@@ -1388,6 +1420,9 @@ void reg_heap::release_token(int t)
   vector<int> token_regs = find_all_regs_in_context(t);
   for(int i=0;i<token_regs.size();i++)
     access(token_regs[i]).owners.erase(t);
+
+  // We shouldn't have any temporary heads still on the stack, here!
+  assert(token_roots[t].temp.empty());
 
   // remove the roots for the temporary heads of graph t
   foreach(i,token_roots[t].temp)
