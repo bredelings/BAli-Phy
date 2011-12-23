@@ -1219,15 +1219,20 @@ int reg_heap::uniquify_reg(int R, int t)
   // 1. Find all ancestors with name 't' that are *shared*
   vector<int> shared_ancestors = find_shared_ancestor_regs_in_context(R,t);
 
-  // 2. Split these shared regs, and copy the old contents over, remapping as we go.
+  // 2. Allocate new regs for each *shared* ancestor reg in context t
   map<int,root_t> new_regs;
   for(int i=0;i<shared_ancestors.size();i++)
   {
     int R1 = shared_ancestors[i];
+    new_regs[R1] = push_temp_head(t);
+  }
+
+  // 2. Copy the old contents over, remapping as we go.
+  foreach(i, new_regs)
+  {
+    int R1 = i->first;
     // 2. Allocate new regs for each ancestor reg in context t
-    root_t root = push_temp_head(t);
-    int R2 = *root;
-    new_regs[R1] = root;
+    int R2 = *(i->second);
 
     // Check no mark on R2
     assert(access(R2).state == reg::used);
@@ -1342,6 +1347,7 @@ int reg_heap::uniquify_reg(int R, int t)
     }
   }
   
+  // Remap the unsplit parents.
   for(int i=0;i<unsplit_parents.size();i++)
   {
     int Q1 = unsplit_parents[i];
