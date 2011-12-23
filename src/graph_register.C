@@ -55,16 +55,18 @@ using std::endl;
  */
 
 
-/* ------------------------------------ Splitting subgraphs ---------------------------------------------
+/* ------------------------------------ Shared subgraphs ---------------------------------------------
  *
+ * Goal: Share computation of WHNF structures between contexts, even when those stuctures are uncomputed
+ *       at the time the contexts are split.
  *
- * If a reg is shared, then all of its descendants must be shared as well.  (Here, "descendants" means
- * the terms in E, which determine the computation to be done.)  Therefore, we have a single version of edges in
+ * If a reg is shared, then all of its E-descendants must be shared as well.  (Here, "descendants" means
+ * transitively reachable through node.E's.)  Therefore, we have a single version of edges in
  * - E
  * - used_inputs
  * - call
  * - changeable
- * Since these terms describe the computation.
+ * Since these terms describe the computation that a node represents.
  *
  * Instead of annotating each edge with a graph number, we can simply assume that
  * (a) if a node is in graph N, then out-edges are in graph N.
@@ -97,7 +99,7 @@ using std::endl;
  *
  * When splitting a heap variable p:
  *
- *  The graph itself does not change (I assert) except that the name of heap variables changes.
+ *  NOTE: We only need to split E-ancestors of p that are not already unique!
  *
  *  I. We must uniquify any heap variable q which references p through E.
  *  This is because we must alter q.E to update references to p.  
@@ -111,14 +113,70 @@ using std::endl;
  *
  *  (Note: if we split just a head h, we would NOT need to update h.result, h.E, h.call, etc.)
  *
- *  Q: Can a result for an expression E contain heap variables from inputs that are not in E?
- *  A: Yes. Calls may contain let expressions which generate new heap variables and pass them
- *     back to the calling node via constructors or lambdas which contain them.
- *     These heap variables will not even be marked "used" from the calling node!
- *    Example: (take 3 (iota 1)) where iota n = n:(iota (n+1))
+ *---------------------------------------------------------------------------------------------------
+ *  THEOREM: For a node p, the reduction of p.E could reference any node q that is an E-descendant of p.
+ *           This is because it can certain reference its E-children, and it may also use their results,
+ *            and so it may reference the E-descendants of its children. (rephrase induction.)
  *
- *  Idea: Follow the call_outputs back as far as they will go from any split node. Remove any results
- *        from these heap variables.  These heap variables can follow call chains and re-add their result
+ *  THEOREM: For a node p, p.result can reference a node that is not an E-descendant of p only if
+ *           E generates a new call reg q such that
+ *           (i) q.E is a let expression, or
+ *          (ii) q.result contains a node that is not an E-descendant of q.E.
+ *
+ *  We don't have to consider the case where p.E is a let expression, since in that case p.E
+ *  is replaced with the reduced expression, and so there is no result, and p.E references the created
+ *  nodes.
+ *
+ *  CORROLARY: For a node p, p.result can reference nodes that are not E-descendents of p only if
+ *             these nodes are let-introduced in call-descendants of p.
+ *
+ *  Calls may contain let expressions which generate new heap variables and pass them
+ *  back to the calling node via constructors or lambdas which contain them.
+ *  These heap variables will not even be marked "used" from the calling node!
+ *
+ *  Example: (take 3 (iota 1)) where iota n = n:(iota (n+1))
+ *
+ *  [Therefore, we must update all results which can reach any split reg through a sequence of calls.]
+ * 
+ *---------------------------------------------------------------------------------------------------
+ *
+ * THEOREM:  For a node p, a node q that is NOT an E-ancestor of p can call a node r that IS an
+ *           E-ancestor of p, but only if p is let-introduced.
+ *
+ * CORROLARY: Any node that calls an E-ancestor of a parameter p is also an E-ancestor of p.
+ *
+ *---------------------------------------------------------------------------------------------------
+ *
+ * Question: Could the results of E-ancestors that are NOT E-parents of split nodes change?
+ *
+ *---------------------------------------------------------------------------------------------------
+ *
+ * Algorithm
+ * 
+ * (1) Find and split all the *shared* E-ancestors of p.
+ * 
+ * (2) Initialize each split reg with
+ *       set_E
+ *       set_used_inputs
+ *       set_call
+ *       copy the result
+ *
+ * (3) For each split reg with parent q, such that remap(q)=q2
+ *       q2.E // remap
+ *       q2.used_inputs // remap
+ *       q2.call // remap
+ *       q2.result = q2.E  [*IF* q2.result and there is NOT a call.]
+ *
+ * (4) For each reg q that has an updated E and an updated result,
+ *       i. find all the call ancestors of q
+ *      ii. set their result to q.result
+ *
+ * Check that a compute expression of IF(2>1,X,0) simplifies to just X.
+ *
+ *  Idea: For any node whose call is unadjusted, keep the result.
+ *        For any node whose call is adjusted by splitting, set that node's result to NULL, and 
+ *          find any node that (transitively) calls that node and set its result to NULL. (Sharing, anyone? :-P)
+ *        These heap variables can follow call chains and re-add their result
  *        in a forward evaluation, if they want to.
  *        (Result: we don't have to re-run any Ops: the op results have already been updated 
  *
@@ -130,12 +188,15 @@ using std::endl;
  *
  *        Result: no heap variables that are not split need to have their result adjusted.
  *
- *  Q: Does this all mean we have to update or invalidate the results of ALL ancestors, even those that
- *     don't use the parameter whose value is set?
+ *  Q: Can we guarantee that any ancestral node that is NOT split (and has no call)
+ *     doesn't need its result adjusted?
  *  A: 
  *
  *  Q: What kind of expressions will be split because they reference a split node, but do
  *     not use it? (I'm thinking of If(Z>1,2*X,Y+1).)
+ *
+ *  Q: Can't we just leave the old results, on the theory that (until something is invalidated)
+ *     the old registers are OK - they have the same values?
  *
  * 1. Find all the shared heap variables with token t that can transitively reach p
  *    through either references in E, or through calls.
