@@ -547,6 +547,9 @@ int main()
     D.set_parameter_value("Z",8.0);
     cout<<"D.evaluate(0) = "<<D.evaluate(0)<<"\n";
     cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
+    D.set_parameter_value("X",0.0);
+    cout<<"D.evaluate(0) = "<<D.evaluate(0)<<"\n";
+    cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
   }
   C.add_compute_expression( apply_expression(apply_expression(plus,apply_expression(apply_expression(plus,X),Y)),Z) );
   cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
