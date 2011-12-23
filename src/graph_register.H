@@ -57,6 +57,9 @@ struct reg
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
   std::set<int> owners;
 
+  /* 5. Which sub-graphs are we in for sub-graph sharing? */
+  std::set<int> temp_owners;
+
   reg();
 };
 

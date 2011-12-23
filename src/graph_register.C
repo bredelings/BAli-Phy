@@ -935,6 +935,7 @@ void reg_heap::remove_unused_ownership_marks()
   for(;here != -1;)
   {
     reg& R = access(here);
+    R.temp_owners = R.owners;
     R.owners.clear();
 
     here = R.next_reg;
@@ -955,6 +956,17 @@ void reg_heap::remove_unused_ownership_marks()
       int R = regs[i];
       access(R).owners.insert(t);
     }
+  }
+
+  // Check that we did not ADD any ownership marks!
+  here = first_used_reg;
+  for(;here != -1;)
+  {
+    reg& R = access(here);
+    assert(includes(R.temp_owners, R.owners) );
+    R.temp_owners.clear();
+
+    here = R.next_reg;
   }
 }
 
