@@ -1201,6 +1201,8 @@ int remap(int R, const map<int,reg_heap::root_t>& new_regs)
 
 int reg_heap::uniquify_reg(int R, int t)
 {
+  assert(token_roots[t].temp.empty());
+
   // If the reg is already unique, then we don't need to do anything.
   if (not reg_is_shared(R))
   {
