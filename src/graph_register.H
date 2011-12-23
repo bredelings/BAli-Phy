@@ -256,9 +256,6 @@ private:
 
   int token;
 
-  root_t push_temp_head() const;
-  void pop_temp_head() const;
-
   /// A list of variable names, and the register indices to which they correspond.
   std::vector<std::pair<std::string,int> > variables;
 
@@ -279,6 +276,9 @@ private:
   expression_ref translate_refs(const expression_ref& R) const;
 
 public:
+
+  root_t push_temp_head() const;
+  void pop_temp_head() const;
 
   int get_token() const {return token;}
 

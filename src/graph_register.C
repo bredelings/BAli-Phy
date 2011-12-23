@@ -941,6 +941,16 @@ void reg_heap::remove_unused_ownership_marks()
       access(R).owners.insert(t);
     }
   }
+
+  // Check that we have no un-owned objects that are used
+  here = first_used_reg;
+  for(;here != -1;)
+  {
+    reg& R = access(here);
+    assert(not R.owners.empty());
+
+    here = R.next_reg;
+  }
 }
 
 void reg_heap::collect_garbage()
@@ -1471,7 +1481,7 @@ int reg_heap::copy_token(int t)
   for(int i=0;i<token_regs.size();i++)
   {
     std::set<int>& owners = access(token_regs[i]).owners;
-    assert( not includes(owners, t2) );
+    //    assert( not includes(owners, t2) );
     owners.insert(t2);
   }
 
@@ -1970,12 +1980,11 @@ int incremental_evaluate(const context& C, int R)
     else if (parse_let_expression(C[R].E, vars, bodies, T))
     {
       vector<shared_ptr<reg_var> > new_reg_vars;
-      vector<reg_heap::root_t> new_regs;
       for(int i=0;i<vars.size();i++)
       {
-	new_regs.push_back(C.allocate_reg());
+	int V = *C.push_temp_head();
 	// Don't set ownership here, where it could be cleared by further allocate()s.
-	new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(*new_regs.back())) );
+	new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(V)) );
       }
       
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
@@ -1997,15 +2006,18 @@ int incremental_evaluate(const context& C, int R)
       for(int i=0;i<vars.size();i++) 
       {
 	int V = new_reg_vars[i]->target;
-	// Set ownership here, where it will not be clear by allocates.
+
+	// Set ownership here, where it will not be cleared by futher allocate calls.
 	C.access(V).owners = C.access(R).owners;
+	// Set the bodies of the new reg_vars
 	C.set_E(V , bodies[i]);
       }
 
       C.set_E(R, T);
 
-      for(int i=0;i<new_regs.size(); i++)
-	C.pop_root( new_regs[i] );
+      // Remove the new heap vars from the list of temp heads in reverse order.
+      for(int i=0;i<new_reg_vars.size(); i++)
+	C.pop_temp_head();
       
       assert(C[R].call == -1);
       assert(not C[R].result);
