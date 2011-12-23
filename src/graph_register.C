@@ -1389,6 +1389,13 @@ void reg_heap::release_token(int t)
   for(int i=0;i<token_regs.size();i++)
     access(token_regs[i]).owners.erase(t);
 
+  // remove the roots for the temporary heads of graph t
+  foreach(i,token_roots[t].temp)
+  {
+    pop_root(*i);
+  }
+  token_roots[t].temp.clear();
+
   // remove the roots for the heads of graph t
   foreach(i,token_roots[t].heads)
   {
