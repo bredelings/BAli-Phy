@@ -242,6 +242,8 @@ public:
   /*----- Graph walking ------*/
   std::vector<int> find_all_regs_in_context(int) const;
   /*----- Graph walking ------*/
+  std::vector<int> find_all_regs_in_context_no_check(int) const;
+  /*----- Graph walking ------*/
   std::vector<int> find_shared_ancestor_regs_in_context(int,int) const;
   /*----- Graph walking ------*/
   std::vector<int> find_call_ancestors_in_context(int,int) const;

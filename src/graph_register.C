@@ -949,7 +949,7 @@ void reg_heap::remove_unused_ownership_marks()
     if (not token_is_used(t)) continue;
 
     // Find the all the regs reachable from heads in t
-    vector<int> regs = find_all_regs_in_context(t);
+    vector<int> regs = find_all_regs_in_context_no_check(t);
 
     // Mark regs reachable in t as being owned by t
     for(int i=0;i<regs.size();i++)
@@ -1502,9 +1502,70 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
 {
   vector<int> scan;
   foreach(i,token_roots[t].temp)
+  {
+    assert(reg_is_owned_by(**i, t));
+    scan.push_back(**i);
+  }
+  foreach(i,token_roots[t].heads)
+  {
+    assert(reg_is_owned_by(**i, t));
+    scan.push_back(**i);
+  }
+
+  foreach(i,token_roots[t].parameters)
+  {
+    assert(reg_is_owned_by(**i, t));
+    scan.push_back(**i);
+  }
+
+  vector<int> unique;
+  for(int i=0;i<scan.size();i++)
+  {
+    const reg& R = access(scan[i]);
+    assert(reg_is_owned_by(scan[i], t));
+    assert(R.state != reg::free and R.state != reg::none);
+    if (R.state == reg::checked) continue;
+
+    R.state = reg::checked;
+    unique.push_back(scan[i]);
+
+    // Make sure that we have already correctly got all the references!
+    assert(get_exp_refs(R.E) == R.references);
+    
+    // Count the references from E
+    scan.insert(scan.end(), R.references.begin(), R.references.end());
+
+    foreach(j, R.references)
+    {
+      assert(includes(access(*j).owners, t) );
+    }
+    
+    // Count also the references from the call
+    if (R.call != -1) {
+      assert(includes(access(R.call).owners, t) );
+      scan.insert(scan.end(), R.call);
+    }
+  }
+
+  for(int i=0;i<unique.size();i++)
+  {
+    const reg& R = access(unique[i]);
+    assert(R.state == reg::checked);
+
+    R.state = reg::used;
+  }
+
+  return unique;
+}
+
+vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
+{
+  vector<int> scan;
+  foreach(i,token_roots[t].temp)
     scan.push_back(**i);
   foreach(i,token_roots[t].heads)
     scan.push_back(**i);
+
   foreach(i,token_roots[t].parameters)
     scan.push_back(**i);
 
@@ -1523,7 +1584,7 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
     
     // Count the references from E
     scan.insert(scan.end(), R.references.begin(), R.references.end());
-    
+
     // Count also the references from the call
     if (R.call != -1) 
       scan.insert(scan.end(), R.call);
@@ -1600,7 +1661,7 @@ int reg_heap::copy_token(int t)
   }
 
   // remove ownership mark from used regs in this context
-  vector<int> token_regs = find_all_regs_in_context(t2);
+  vector<int> token_regs = find_all_regs_in_context_no_check(t2);
   for(int i=0;i<token_regs.size();i++)
   {
     std::set<int>& owners = access(token_regs[i]).owners;
@@ -2054,6 +2115,7 @@ int incremental_evaluate(const context& C, int R)
   assert(C[R].state == reg::used);
   assert(get_exp_refs(C.access(R).E) == C.access(R).references);
   assert(includes(C.access(R).owners, C.get_token()));
+  assert(is_WHNF(C[R].result));
 
   if (not C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
 
