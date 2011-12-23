@@ -207,6 +207,11 @@ public:
   const std::vector<root_t>& get_parameters_for_context(int t) const {return token_roots[t].parameters;}
         std::vector<root_t>& get_parameters_for_context(int t)       {return token_roots[t].parameters;}
 
+  /// Allocate a reg in context t and put it on the top of the temporary-head stack.
+  root_t push_temp_head(int t);
+  /// Deallocate the temporary head on the top of the temporary-head stack.
+  void pop_temp_head(int t);
+
   /// The roots for each token
   std::vector<graph_roots> token_roots;
 

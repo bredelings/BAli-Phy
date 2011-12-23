@@ -856,6 +856,24 @@ void reg_heap::pop_root(reg_heap::root_t r)
   roots.erase(r);
 }
 
+reg_heap::root_t reg_heap::push_temp_head(int t)
+{
+  root_t r = allocate_reg();
+  access(*r).owners.insert(t);
+  token_roots[t].temp.push_back(r);
+  return r;
+}
+
+void reg_heap::pop_temp_head(int t)
+{
+  root_t r = token_roots[t].temp.back();
+
+  assert( includes( access(*r).owners, t) );
+
+  token_roots[t].temp.pop_back();
+  pop_root(r);
+}
+
 void reg_heap::expand_memory(int s)
 {
   assert(n_regs() == n_used_regs() + n_free_regs());
@@ -897,15 +915,12 @@ reg_heap::root_t reg_heap::allocate_reg()
 
 reg_heap::root_t context::push_temp_head() const
 {
-  temp_heads().push_back( allocate_reg() );
-  return temp_heads().back();
+  return memory->push_temp_head( token );
 }
 
 void context::pop_temp_head() const
 {
-  root_t head = temp_heads().back();
-  temp_heads().pop_back();
-  pop_root(head);
+  memory->pop_temp_head( token );
 }
 
 void context::collect_garbage() const
