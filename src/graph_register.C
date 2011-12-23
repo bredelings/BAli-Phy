@@ -266,7 +266,6 @@ void reg_heap::clear_used_input(int R, int slot)
   if (R2 == -1) return;
   assert(R2 >= 0 and R2 < n_regs());
 
-  // FIXME - we should treat different slots differently
   access(R2).outputs.erase(pair<int,int>(R,slot));
   access(R).used_inputs[slot] = -1;
 }
@@ -1365,8 +1364,6 @@ int reg_heap::uniquify_reg(int R, int t)
     pop_root(i->second);
   }
 
-
-  // FIXME - assert that the new outputs and call_outputs are correct, somehow!
   return R2;
 }
 
@@ -1684,14 +1681,6 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
     }
   }
 
-  // FIXME! Handle operations.
-  // Extend the stack handling to be able to work on more than one argument.
-  // Currently there is no need to evaluate arguments before applying them to functions.
-  // Can we avoid evaluating functions before calling an operation?
-  // - well, we could make the operation throw an exception identifying which is the first argument that needs to be
-  //   evaluated.
-  // - then, we could put the operation on the stack and begin evaluating just that one argument.
-  
   // 4. Constructor
   if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
       dynamic_pointer_cast<const Operation>(E->sub[0]))
@@ -1949,12 +1938,16 @@ int incremental_evaluate(const context& C, int R)
       // Evaluate C[S], looking through unchangeable redirections
       int S = incremental_evaluate(C, C[R].call);
 
+      // R gets its result from S.
       C[R].result = C[S].result;
 
+      // If C[R].call can be evaluated to refer to S w/o moving through any changable operations, 
+      // then it should be safe to change C[R].call to refer to S, even if R is changeable.
+      C[R].call = S;
+
+      // However, we can only update R to refer to S if R itself isn't changeable.
       if (not C[R].changeable)
 	R = S;
-        // FIXME - why don't we set C[R].call = S here?
-        //  Let's try it.
     }
 
     /*---------- Below here, there is no call, and no result. ------------*/
