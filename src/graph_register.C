@@ -941,16 +941,6 @@ void reg_heap::remove_unused_ownership_marks()
       access(R).owners.insert(t);
     }
   }
-
-  // Check that we have no un-owned objects that are used
-  here = first_used_reg;
-  for(;here != -1;)
-  {
-    reg& R = access(here);
-    assert(not R.owners.empty());
-
-    here = R.next_reg;
-  }
 }
 
 void reg_heap::collect_garbage()
@@ -1000,6 +990,16 @@ void reg_heap::collect_garbage()
   }
 
   remove_unused_ownership_marks();
+
+  // Check that we have no un-owned objects that are used
+  here = first_used_reg;
+  for(;here != -1;)
+  {
+    reg& R = access(here);
+    assert(not R.owners.empty());
+
+    here = R.next_reg;
+  }
 }
 
 int reg_heap::get_unused_token()
