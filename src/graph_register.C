@@ -1926,7 +1926,7 @@ int incremental_evaluate(const context& C, int R)
       for(int i=0;i<vars.size();i++)
       {
 	new_regs.push_back(C.allocate_reg());
-	C.access(*new_regs.back()).owners = C.access(R).owners;
+	// Don't set ownership here, where it could be cleared by further allocate()s.
 	new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(*new_regs.back())) );
       }
       
@@ -1947,7 +1947,12 @@ int incremental_evaluate(const context& C, int R)
       assert(not C[R].changeable);
 
       for(int i=0;i<vars.size();i++) 
-	C.set_E( new_reg_vars[i]->target , bodies[i]);
+      {
+	int V = new_reg_vars[i]->target;
+	// Set ownership here, where it will not be clear by allocates.
+	C.access(V).owners = C.access(R).owners;
+	C.set_E(V , bodies[i]);
+      }
 
       C.set_E(R, T);
 
