@@ -181,6 +181,7 @@ using std::endl;
  *
  * Check that a compute expression of IF(2>1,X,0) simplifies to just X.
  *
+ * Note that, if a call is not to an E-ancestor of p, then the result should be unchanged.
  *  Idea: For any node whose call is unadjusted, keep the result.
  *        For any node whose call is adjusted by splitting, set that node's result to NULL, and 
  *          find any node that (transitively) calls that node and set its result to NULL. (Sharing, anyone? :-P)
@@ -196,50 +197,13 @@ using std::endl;
  *
  *        Result: no heap variables that are not split need to have their result adjusted.
  *
- *  Q: Can we guarantee that any ancestral node that is NOT split (and has no call)
- *     doesn't need its result adjusted?
- *  A: 
- *
  *  Q: What kind of expressions will be split because they reference a split node, but do
  *     not use it? (I'm thinking of If(Z>1,2*X,Y+1).)
  *
  *  Q: Can't we just leave the old results, on the theory that (until something is invalidated)
  *     the old registers are OK - they have the same values?
- *
- * 1. Find all the shared heap variables with token t that can transitively reach p
- *    through either references in E, or through calls.
- *
- * 2. For each of these variables p allocate a new variable q and store the
- *    mapping from each {p -> q}.
- *
- * 3. Transfer membership in t from p[i] -> q[i] for each i.
- *
- * 4. Suppose we just initialize everything to be the same as before.
- *    Then the links will actually not correspond to anything.
- *    - E // remap
- *    - result // remap
- *    - call // remap
- *    - references // remap
- *    - used_inputs // remap
- *    - referenced_by // may shrink, since references from non-t contexts will vanish.
- *    - outputs // may shrink, since uses from non-t contexts will vanish.
- *    - call_outputs // may shrink, since calls from non-t contexts will vanish.
- *
- *    For each p->q, set 
- *    - E // remap
- *    - result // remap if no call, else NULL
- *    - call // remap
- *    - references // set by E -- should be the same as remapping.
- *    - used_inputs // remap
- *
- *    For heap variables r that reference split variables p, do
- *    - E // remap
- *
- *    For heap variables r that call split variables p, do
- *    - call // remap
- * 
- * 5. For all heap variables r in context t that can reach a split variable via a chain of
- *    calls, unset the result to NULL.
+ *  A: No, because they will reference the wrong parameter values.  Constructors don't change
+ *     when the parameters they reference change.
  */
 
 /*
