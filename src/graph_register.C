@@ -1047,11 +1047,6 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
 
     // Count the references from calls by other regs
     scan.insert(scan.end(), R.call_outputs.begin(), R.call_outputs.end());
-    
-    // Count also the references from the call
-    // Later: WHY?
-    //    if (R.call != -1) 
-    //      scan.insert(scan.end(), R.call);
   }
 
   for(int i=0;i<unique.size();i++)
