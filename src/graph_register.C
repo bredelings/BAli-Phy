@@ -1238,6 +1238,13 @@ void reg_heap::check_results_in_context(int t) const
 
 int reg_heap::uniquify_reg(int R, int t)
 {
+#ifndef NDEBUG
+  check_results_in_context(t);
+
+  // This checks that ownership and references are consistent
+  find_all_regs_in_context(t);
+#endif  
+
   assert(token_roots[t].temp.empty());
 
   // If the reg is already unique, then we don't need to do anything.
@@ -1422,6 +1429,7 @@ int reg_heap::uniquify_reg(int R, int t)
     }
   }
 
+  // Remove ownership from the old regs.
   for(int i=0;i<shared_ancestors.size();i++)
   {
     int Q = shared_ancestors[i];
@@ -1437,7 +1445,7 @@ int reg_heap::uniquify_reg(int R, int t)
   }
     
 
-  // update the call outputs
+  // Update the call outputs
   for(int i=0;i<changed_results.size();i++)
   {
     int Q = changed_results[i];
@@ -1461,7 +1469,12 @@ int reg_heap::uniquify_reg(int R, int t)
 
   int R2 = *new_regs[R];
 
-  // Check that marks were removed.
+#ifndef NDEBUG
+  // This checks that ownership and references are consistent
+  find_all_regs_in_context(t);
+#endif
+
+  // Check that ownership has been properly split
   foreach(i,new_regs)
   {
     int R1 = i->first;
@@ -1477,6 +1490,10 @@ int reg_heap::uniquify_reg(int R, int t)
     pop_temp_head(t);
 
   assert(token_roots[t].temp.empty());
+
+#ifndef NDEBUG
+  check_results_in_context(t);
+#endif  
 
   return R2;
 }
