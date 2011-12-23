@@ -1019,11 +1019,11 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
     // Skip this node if its not in context t
     if (not reg_is_owned_by(scan[i],t)) continue;
 
+    // Skip this node if its already unique
+    if (not reg_is_shared(scan[i])) continue;
+
     R.state = reg::checked;
     unique.push_back(scan[i]);
-
-    // Don't consider parents of this node if its already uniquified.
-    if (not reg_is_shared(scan[i])) continue;
 
     // Count the references from E in other regs
     scan.insert(scan.end(), R.referenced_by_in_E.begin(), R.referenced_by_in_E.end());
