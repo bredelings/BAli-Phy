@@ -1539,6 +1539,7 @@ int reg_heap::copy_token(int t)
   for(int i=0;i<token_regs.size();i++)
   {
     std::set<int>& owners = access(token_regs[i]).owners;
+    // FIXME!
     //    assert( not includes(owners, t2) );
     owners.insert(t2);
   }
