@@ -422,6 +422,9 @@ void context::add_variable(const string& name, int R)
 
 void context::rename_variable(int i, const string& s2)
 {
+  // Check that the variable points to a used reg
+  assert(access(variables[i].second).state == reg::used);
+
   // zero-length names are not allowed
   const string& s1 = variables[i].first;
   assert(s2.size() != 0);
@@ -433,12 +436,7 @@ void context::rename_variable(int i, const string& s2)
   if (find_parameter(s2) != -1)
     throw myexception()<<"Cannot rename variable '"<<s1<<"' to '"<<s2<<"': there is already a parameter with that name.";
 
-  // Remove the old name -> reg mapping
-  int R = variables[i].second;
-
   variables[i].first = s2;
-
-  assert(access(R).state == reg::used);
 }
 
 void context::rename_parameter(int i, const string& new_name)
@@ -978,7 +976,9 @@ void reg_heap::remove_unused_ownership_marks()
 
 void reg_heap::collect_garbage()
 {
+#ifndef NDEBUG
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
+#endif
   assert(n_regs() == n_used_regs() + n_free_regs());
 
   vector<int> scan;
@@ -1022,8 +1022,10 @@ void reg_heap::collect_garbage()
     here = next;
   }
 
+#ifndef NDEBUG
   cerr<<"Regs: "<<n_used_regs()<<"/"<<n_regs()<<endl;
   cerr<<"#roots = "<<roots.size()<<endl;
+#endif
 
   remove_unused_ownership_marks();
 
@@ -1468,11 +1470,13 @@ int reg_heap::uniquify_reg(int R, int t)
   find_all_regs_in_context(t);
 #endif
 
-  // Check that ownership has been properly split
+#ifndef NDEBUG
   foreach(i,new_regs)
   {
     int R1 = i->first;
     int R2 = i->second;
+
+    // Check that ownership has been properly split
     assert(not includes(access(R1).owners, t) );
     assert(includes(access(R2).owners, t) );
     assert(not reg_is_shared(R2));
@@ -1485,6 +1489,7 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(access(R1).call == -1 or access(R2).call != -1);
     assert(access(R2).call == -1 or access(R1).call != -1);
   }
+#endif
 
   // 5. Remove root references to new regs.
   //    Remove t-ownership from old regs.
@@ -2139,7 +2144,9 @@ int reg_heap::incremental_evaluate(int R, int t)
   assert(includes(access(R).owners, t));
   assert(is_WHNF(access(R).result));
 
+#ifndef NDEBUG
   if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
+#endif
 
   while (not access(R).result)
   {
@@ -2147,7 +2154,9 @@ int reg_heap::incremental_evaluate(int R, int t)
     vector<expression_ref> bodies;
     expression_ref T;
 
+#ifndef NDEBUG
     std::cerr<<"   statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
+#endif
     assert(get_exp_refs(access(R).E) == access(R).references);
 
     // If we know what to call, then call it and use it to set the result
@@ -2269,11 +2278,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 #endif
     }
   }
-
-#ifndef NDEBUG
-  //  std::cerr<<"Result = "<<compact_graph_expression(*access(R).result)<<"\n";
-  //  std::cerr<<"Result changeable: "<<access(R).changeable<<"\n\n";
-#endif
 
   assert(access(R).result);
   assert(is_WHNF(access(R).result));
