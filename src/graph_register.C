@@ -1114,9 +1114,6 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
     // Only consider each reg at most once
     if (R.state == reg::checked) continue;
 
-    // A reg must have at least 1 owner.
-    assert(not R.owners.empty());
-
     // Skip this node if its not in context t
     if (not reg_is_owned_by(scan[i],t)) continue;
 
