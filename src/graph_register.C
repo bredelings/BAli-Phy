@@ -276,6 +276,9 @@ void reg_heap::set_used_input(int R1, int R2)
 
   // Only add a new used inputs if it is not already present
   assert(not includes(access(R1).used_inputs, R2));
+  // Only add a new used inputs if it is not already present
+  assert(not includes(access(R2).outputs, R1));
+
   // R1 shouldn't have any used inputs if it isn't changeable.
   assert(access(R1).changeable);
   // Don't add unchangeable results as inputs
@@ -302,7 +305,13 @@ void reg_heap::clear_used_input(int R1, int R2)
 
 void reg_heap::clear_used_inputs(int R)
 {
-  access(R).used_inputs.clear();
+  set<int> used_inputs = access(R).used_inputs;
+  foreach(i, used_inputs)
+  {
+    clear_used_input(R, *i);
+  }
+
+  assert(access(R).used_inputs.empty());
 }
 
 void reg_heap::set_call(int R1, int R2)
@@ -1467,6 +1476,14 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(not includes(access(R1).owners, t) );
     assert(includes(access(R2).owners, t) );
     assert(not reg_is_shared(R2));
+
+    // R2 should have a result IFF R1 has a result
+    assert(not access(R1).result or access(R2).result);
+    assert(not access(R2).result or access(R1).result);
+
+    // R2 should have a call IFF R1 has a call
+    assert(access(R1).call == -1 or access(R2).call != -1);
+    assert(access(R2).call == -1 or access(R1).call != -1);
   }
 
   // 5. Remove root references to new regs.
