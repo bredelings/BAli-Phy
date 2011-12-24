@@ -1146,7 +1146,7 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
   return unique;
 }
 
-expression_ref remap_regs(const expression_ref R, const map<int, reg_heap::root_t>& new_regs)
+expression_ref remap_regs(const expression_ref R, const map<int, int>& new_regs)
 {
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
@@ -1166,11 +1166,11 @@ expression_ref remap_regs(const expression_ref R, const map<int, reg_heap::root_
   }
   else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
   {
-    map<int, reg_heap::root_t>::const_iterator loc = new_regs.find(RV->target);
+    map<int, int>::const_iterator loc = new_regs.find(RV->target);
     if (loc == new_regs.end())
       return R;
     else
-      return new reg_var(*loc->second);
+      return new reg_var(loc->second);
   }
   // This case handles NULL in addition to atomic objects.
   else
@@ -1197,13 +1197,13 @@ bool reg_heap::reg_is_owned_by(int R, int t) const
   return includes(owners, t);
 }
 
-int remap(int R, const map<int,reg_heap::root_t>& new_regs)
+int remap(int R, const map<int,int>& new_regs)
 {
-  map<int,reg_heap::root_t>::const_iterator loc = new_regs.find(R);
+  map<int,int>::const_iterator loc = new_regs.find(R);
   if (loc == new_regs.end())
     return R;
   else
-    return *loc->second;
+    return loc->second;
 }
 
 void reg_heap::check_results_in_context(int t) const
@@ -1260,11 +1260,11 @@ int reg_heap::uniquify_reg(int R, int t)
   vector<int> shared_ancestors = find_shared_ancestor_regs_in_context(R,t);
 
   // 2. Allocate new regs for each *shared* ancestor reg in context t
-  map<int,root_t> new_regs;
+  map<int,int> new_regs;
   for(int i=0;i<shared_ancestors.size();i++)
   {
     int R1 = shared_ancestors[i];
-    new_regs[R1] = push_temp_head(t);
+    new_regs[R1] = *push_temp_head(t);
   }
 
   // 2. Copy the old contents over, remapping as we go.
@@ -1272,7 +1272,7 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     int R1 = i->first;
     // 2. Allocate new regs for each ancestor reg in context t
-    int R2 = *(i->second);
+    int R2 = i->second;
 
     // Check no mark on R2
     assert(access(R2).state == reg::used);
@@ -1317,7 +1317,7 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     int R1 = *token_roots[t].heads[j];
     if (includes(new_regs, R1))
-      *token_roots[t].heads[j] = *new_regs[R1];
+      *token_roots[t].heads[j] = new_regs[R1];
   }
 
   // 4b. Adjust parameters to point to the new regs
@@ -1325,7 +1325,7 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     int R1 = *token_roots[t].parameters[j];
     if (includes(new_regs, R1))
-      *token_roots[t].parameters[j] = *new_regs[R1];
+      *token_roots[t].parameters[j] = new_regs[R1];
   }
 
   // 5. Find the unsplit parents of split regs
@@ -1366,7 +1366,7 @@ int reg_heap::uniquify_reg(int R, int t)
   foreach(i,new_regs)
   {
     int R1 = i->first;
-    int R2 = *(i->second);
+    int R2 = i->second;
 
     // Original nodes should never have been marked.
     assert( access(R1).state == reg::used );
@@ -1467,7 +1467,7 @@ int reg_heap::uniquify_reg(int R, int t)
     }
   }
 
-  int R2 = *new_regs[R];
+  int R2 = new_regs[R];
 
 #ifndef NDEBUG
   // This checks that ownership and references are consistent
@@ -1478,7 +1478,7 @@ int reg_heap::uniquify_reg(int R, int t)
   foreach(i,new_regs)
   {
     int R1 = i->first;
-    int R2 = *(i->second);
+    int R2 = i->second;
     assert(not includes(access(R1).owners, t) );
     assert(includes(access(R2).owners, t) );
     assert(not reg_is_shared(R2));
