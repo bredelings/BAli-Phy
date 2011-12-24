@@ -2006,7 +2006,7 @@ public:
 
   shared_ptr<const Object> evaluate_expression(const expression_ref& e)
   {
-    return C.evaluate_expression(e);
+    std::abort();
   }
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
