@@ -1955,8 +1955,8 @@ class RegOperationArgs: public OperationArgs
     return R2;
   }
 
-  /// Evaluate the reg in R1.slot, record dependencies, and update R1.slot for call chains
-  expression_ref lazy_evaluate_slot(int R1, int slot)
+  /// Evaluate the reg R2 in R1.slot and record dependencies. Then update R2=R1.slot for call chains, and return R2.
+  int lazy_evaluate_slot(int R1, int slot)
   {
     shared_ptr<const expression> E1 =  dynamic_pointer_cast<const expression>(C.access(R1).E);
     assert(E1);
@@ -1977,12 +1977,13 @@ class RegOperationArgs: public OperationArgs
       C.set_E(R2, E2);
     }
 
-    return C.access(R2).result;
+    return R2;
   }
 
   expression_ref evaluate_slot(int R1, int slot)
   {
-    expression_ref result = lazy_evaluate_slot(R1,slot);
+    int R2 = lazy_evaluate_slot(R1,slot);
+    expression_ref result = C.access(R2).result;
     
     {
       // If the result is atomic, then we are done.
@@ -2000,13 +2001,7 @@ class RegOperationArgs: public OperationArgs
       assert(dynamic_pointer_cast<const Function>(E->sub[0]));
       
       for(int i=1;i<E->size();i++)
-      {
-	shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
-	assert(RV);
-	int R2 = RV->target;
-
 	E->sub[i] = evaluate_slot(R2, i-1);
-      }
 
       return result;
     }
@@ -2031,7 +2026,8 @@ public:
 
   boost::shared_ptr<const Object> lazy_evaluate(int slot)
   {
-    return lazy_evaluate_slot(R, slot);
+    int R2 = lazy_evaluate_slot(R, slot);
+    return C.access(R2).result;
   }
 
   shared_ptr<const Object> evaluate_expression(const expression_ref&)
