@@ -1242,8 +1242,6 @@ int reg_heap::uniquify_reg(int R, int t)
 
   assert(token_roots[t].temp.empty());
 
-  collect_garbage();
-  
   // If the reg is already unique, then we don't need to do anything.
   if (not reg_is_shared(R))
   {
@@ -1472,8 +1470,6 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(includes(access(R2).owners, t) );
     assert(not reg_is_shared(R2));
   }
-
-  collect_garbage();
 
   // 5. Remove root references to new regs.
   //    Remove t-ownership from old regs.
@@ -2128,8 +2124,6 @@ int incremental_evaluate(const context& C, int R)
 
   if (not C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
 
-  C.collect_garbage();
-
   while (not C[R].result)
   {
     vector<expression_ref> vars;
@@ -2267,8 +2261,6 @@ int incremental_evaluate(const context& C, int R)
   assert(C[R].result);
   assert(is_WHNF(C[R].result));
   assert(not dynamic_pointer_cast<const reg_var>(C[R].result));
-
-  C.collect_garbage();
 
   return R;
 }
