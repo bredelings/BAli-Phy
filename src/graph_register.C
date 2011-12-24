@@ -1931,6 +1931,7 @@ class RegOperationArgs: public OperationArgs
 
   const context& C;
 
+  /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int lazy_evaluate_reg(int R2)
   {
     set<int>::const_iterator loc = C[R].used_inputs.find(R2);
@@ -1954,7 +1955,8 @@ class RegOperationArgs: public OperationArgs
     return R2;
   }
 
-  int lazy_evaluate_reg(int R1, int slot)
+  /// Evaluate the reg in R1.slot, record dependencies, and update R1.slot for call chains
+  expression_ref lazy_evaluate_slot(int R1, int slot)
   {
     shared_ptr<const expression> E1 =  dynamic_pointer_cast<const expression>(C.access(R1).E);
     assert(E1);
@@ -1975,7 +1977,39 @@ class RegOperationArgs: public OperationArgs
       C.set_E(R2, E2);
     }
 
-    return R2;
+    return C.access(R2).result;
+  }
+
+  expression_ref evaluate_slot(int R1, int slot)
+  {
+    expression_ref result = lazy_evaluate_slot(R1,slot);
+    
+    {
+      // If the result is atomic, then we are done.
+      shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
+      if (not E) return result;
+      
+      // If the result is a lambda function, then we are done.
+      // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
+      // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
+      if (not dynamic_pointer_cast<const Function>(E->sub[0])) return result;
+    }
+
+    {
+      shared_ptr<expression> E = dynamic_pointer_cast<expression>(result);
+      assert(dynamic_pointer_cast<const Function>(E->sub[0]));
+      
+      for(int i=1;i<E->size();i++)
+      {
+	shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
+	assert(RV);
+	int R2 = RV->target;
+
+	E->sub[i] = evaluate_slot(R2, i-1);
+      }
+
+      return result;
+    }
   }
 
 public:
@@ -1992,19 +2026,15 @@ public:
 
   boost::shared_ptr<const Object> evaluate(int slot)
   {
-    int R2 = lazy_evaluate_reg(R, slot);
-
-    return full_evaluate(C,R2);
+    return evaluate_slot(R, slot);
   }
 
   boost::shared_ptr<const Object> lazy_evaluate(int slot)
   {
-    int R2 = lazy_evaluate_reg(R, slot);
-
-    return C[R2].result;
+    return lazy_evaluate_slot(R, slot);
   }
 
-  shared_ptr<const Object> evaluate_expression(const expression_ref& e)
+  shared_ptr<const Object> evaluate_expression(const expression_ref&)
   {
     std::abort();
   }
