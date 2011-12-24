@@ -504,6 +504,7 @@ set<int> get_exp_refs(const expression_ref& R)
 
 void reg_heap::set_E(int R, const expression_ref& e)
 {
+  assert(e);
   assert(not access(R).owners.empty());
   clear_E(R);
 
@@ -539,6 +540,9 @@ void reg_heap::set_reduction_result(int R, const expression_ref& result)
 
   // Check that there is no previous call we are overriding.
   assert(access(R).call == -1);
+
+  // if the result is NULL, just leave the result and call both unset.
+  if (not result) return;
 
   // If the value is a pre-existing reg_var, then call it.
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
@@ -1132,11 +1136,11 @@ int reg_heap::uniquify_reg(int R, int t)
     access(R2).changeable = access(R1).changeable;
   }
 
-  // 2. Copy the old contents over, remapping as we go.
+  // 2a. Copy the over and remap E
+  //     This is separate to that avoid linking to regs with no E.
   foreach(i, new_regs)
   {
     int R1 = i->first;
-    // 2. Allocate new regs for each ancestor reg in context t
     int R2 = i->second;
 
     // Check no mark on R2
@@ -1148,6 +1152,14 @@ int reg_heap::uniquify_reg(int R, int t)
 
     // 4a. Initialize/Remap E
     set_E(R2, remap_regs( access(R1).E, new_regs) );
+  }
+
+  // 2b.  Copy over and remap the call, used_inputs, and result
+  //      This is after copying E to avoid linking to regs with no E.
+  foreach(i, new_regs)
+  {
+    int R1 = i->first;
+    int R2 = i->second;
 
     // 4b. Initialize/Remap call
     if (access(R1).call != -1)
@@ -1693,7 +1705,7 @@ shared_ptr<const Object> context::get_parameter_value(int index) const
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
     if (access(P).call == -1) return shared_ptr<const Object>();
 
-    // If the value needs to be compute (e.g. its a call expression) then compute it.
+    // If the value needs to be computed (e.g. its a call expression) then compute it.
     incremental_evaluate(P);
   }
 
