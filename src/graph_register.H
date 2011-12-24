@@ -30,13 +30,13 @@ struct reg
 
   /* 2. The computations we used */
   /// Which reg's were used to reduce this expression?
-  std::vector< int > used_inputs;
+  std::set< int > used_inputs;
 
 
   /* 3. The computations that use or reference us. */
 
   /// Which pairs (reg,slot) USED the reduction result of E (via an operation)?
-  std::set< std::pair<int,int> > outputs;
+  std::set< int > outputs;
 
   /// Which reduction results made use of the value of this expression (via call)
   std::set< int > call_outputs;
@@ -170,10 +170,9 @@ public:
 
   void collect_garbage();
 
-  void set_used_input(int R1, int slot, int R2);
-  void clear_used_input(int R, int slot);
+  void set_used_input(int R1, int R2);
+  void clear_used_input(int R1, int R2);
   void clear_used_inputs(int R);
-  void clear_used_inputs(int R, int S);
   void set_call(int R1, int R2);
   void clear_call(int R);
   void clear(int);
@@ -396,10 +395,9 @@ public:
   int n_expressions() const;
   expression_ref get_expression(int i) const;
 
-  void set_used_input(int R1, int slot, int R2) const {memory->set_used_input(R1, slot, R2);}
-  void clear_used_input(int R, int slot) const {memory->clear_used_input(R, slot);}
+  void set_used_input(int R1, int R2) const {memory->set_used_input(R1, R2);}
+  void clear_used_input(int R1, int R2) const {memory->clear_used_input(R1, R2);}
   void clear_used_inputs(int R) const {memory->clear_used_inputs(R);}
-  void clear_used_inputs(int R, int S) const {memory->clear_used_inputs(R,S);}
   void set_call(int R1, int R2) const {memory->set_call(R1, R2);}
   void clear_call(int R) const {memory->clear_call(R);}
   void set_E(int R, const expression_ref& e) const {memory->set_E(R,e);}

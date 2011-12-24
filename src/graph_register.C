@@ -219,6 +219,25 @@ using std::endl;
  * Question: how shall we (or, should we) pre-execute non-recursive let expressions?
  */ 
 
+template <typename T>
+bool includes(const std::set<T>& s1, const std::set<T>& s2)
+{
+  return std::includes(s1.begin(), s1.end(), s2.begin(), s2.end());
+}
+
+template <typename T>
+bool includes(const std::set<T>& s1, const T& t)
+{
+  return s1.find(t) != s1.end();
+}
+
+template <typename T,typename U>
+bool includes(const map<T,U>& s1, const T& t)
+{
+  return s1.find(t) != s1.end();
+}
+
+
 reg::reg()
  :changeable(false),
   call(-1),
@@ -250,55 +269,40 @@ void reg_heap::clear(int R)
   access(R).owners.clear();
 }
 
-void reg_heap::set_used_input(int R1, int slot, int R2)
+void reg_heap::set_used_input(int R1, int R2)
 {
   assert(R1 >= 0 and R1 < n_regs());
   assert(R2 >= 0 and R2 < n_regs());
 
-  assert(access(R1).used_inputs[slot] == -1);
+  // Only add a new used inputs if it is not already present
+  assert(not includes(access(R1).used_inputs, R2));
+  // R1 shouldn't have any used inputs if it isn't changeable.
+  assert(access(R1).changeable);
+  // Don't add unchangeable results as inputs
+  assert(access(R2).changeable);
+  // Don't add a reg as input if no reduction has been performed.
+  // assert(access(R2).result or access(R2).call != -1);
 
-  access(R1).used_inputs[slot] = R2;
-  access(R2).outputs.insert(pair<int,int>(R1,slot));
+  access(R1).used_inputs.insert(R2);
+  access(R2).outputs.insert(R1);
 }
 
-void reg_heap::clear_used_input(int R, int slot)
+void reg_heap::clear_used_input(int R1, int R2)
 {
-  int R2 = access(R).used_inputs[slot];
-  if (R2 == -1) return;
+  assert(R1 >= 0 and R1 < n_regs());
   assert(R2 >= 0 and R2 < n_regs());
+  set<int>& used_inputs = access(R1).used_inputs;
 
-  access(R2).outputs.erase(pair<int,int>(R,slot));
-  access(R).used_inputs[slot] = -1;
+  set<int>::iterator loc = used_inputs.find(R2);
+  assert(loc != used_inputs.end());
+  used_inputs.erase(loc);
+
+  access(R2).outputs.erase(R1);
 }
 
 void reg_heap::clear_used_inputs(int R)
 {
-  for(int i=0;i<access(R).used_inputs.size();i++)
-    clear_used_input(R,i);
-}
-
-void reg_heap::clear_used_inputs(int R, int S)
-{
-  clear_used_inputs(R);
-  access(R).used_inputs = vector<int>(S, -1);
-}
-
-template <typename T>
-bool includes(const std::set<T>& s1, const std::set<T>& s2)
-{
-  return std::includes(s1.begin(), s1.end(), s2.begin(), s2.end());
-}
-
-template <typename T>
-bool includes(const std::set<T>& s1, const T& t)
-{
-  return s1.find(t) != s1.end();
-}
-
-template <typename T,typename U>
-bool includes(const map<T,U>& s1, const T& t)
-{
-  return s1.find(t) != s1.end();
+  access(R).used_inputs.clear();
 }
 
 void reg_heap::set_call(int R1, int R2)
@@ -375,12 +379,6 @@ void reg_heap::set_E(int R, const expression_ref& e)
 
 void reg_heap::clear_E(int R)
 {
-  /*
-  clear_call(R);
-  clear_used_inputs(R);
-  access(R).result.reset();
-  */
-
   foreach(r,access(R).references)
     access(*r).referenced_by_in_E.erase(R);
 
@@ -623,7 +621,7 @@ void context::set_reg_value(int P, const expression_ref& OO)
     // ... consider each downstream index2 that has index1 in slot2 of its computation (possibly unused).
     foreach(j,access(R1).outputs)
     {
-      int R2 = j->first;
+      int R2 = *j;
 
       // This one already marked NOT known_value_unchanged
       if (includes(visited, R2)) continue;
@@ -1247,6 +1245,8 @@ int reg_heap::uniquify_reg(int R, int t)
 
   assert(token_roots[t].temp.empty());
 
+  collect_garbage();
+  
   // If the reg is already unique, then we don't need to do anything.
   if (not reg_is_shared(R))
   {
@@ -1264,7 +1264,11 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int i=0;i<shared_ancestors.size();i++)
   {
     int R1 = shared_ancestors[i];
-    new_regs[R1] = *push_temp_head(t);
+    int R2 = *push_temp_head(t);
+    new_regs[R1] = R2;
+
+    // 4e. Initialize/Copy changeable
+    access(R2).changeable = access(R1).changeable;
   }
 
   // 2. Copy the old contents over, remapping as we go.
@@ -1289,13 +1293,9 @@ int reg_heap::uniquify_reg(int R, int t)
       set_call(R2, remap(access(R1).call, new_regs) );
 
     // 4c. Initialize/Remap used_inputs
-    access(R2).used_inputs = std::vector<int>( access(R1).used_inputs.size() , -1);
-    for(int slot=0;slot<access(R1).used_inputs.size();slot++)
+    foreach(j, access(R1).used_inputs)
     {
-      int I = access(R1).used_inputs[slot];
-      if (I == -1) continue;
-      
-      set_used_input(R2, slot, remap(I, new_regs) );
+      set_used_input(R2, remap(*j, new_regs) );
     }
 
     // 4d. Initialize/Remap result if E is in WHNF.
@@ -1307,9 +1307,6 @@ int reg_heap::uniquify_reg(int R, int t)
     // 4d. Initialize/Copy result otherwise.
     else
       access(R2).result = access(R1).result;
-
-    // 4e. Initialize/Copy changeable
-    access(R2).changeable = access(R1).changeable;
   }
 
   // 4a. Adjust heads to point to the new regs
@@ -1409,16 +1406,11 @@ int reg_heap::uniquify_reg(int R, int t)
     }
     
     // c. Adjust use edges
-    for(int slot=0;slot<access(Q1).used_inputs.size();slot++)
+    set<int> old_used_inputs = access(Q1).used_inputs;
+    clear_used_inputs(Q1);
+    foreach(j, old_used_inputs)
     {
-      int I1 = access(Q1).used_inputs[slot];
-      if (I1 == -1) continue;
-      
-      int I2 = remap(I1, new_regs);
-      if (I1 == I2) continue;
-      
-      clear_used_input(Q1, slot);
-      set_used_input(Q1, slot, I2);
+      set_used_input(Q1, remap(*j, new_regs));
     }
     
     // d. Remap result if E is in WHNF
@@ -1483,6 +1475,8 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(includes(access(R2).owners, t) );
     assert(not reg_is_shared(R2));
   }
+
+  collect_garbage();
 
   // 5. Remove root references to new regs.
   //    Remove t-ownership from old regs.
@@ -1665,8 +1659,6 @@ int reg_heap::copy_token(int t)
   for(int i=0;i<token_regs.size();i++)
   {
     std::set<int>& owners = access(token_regs[i]).owners;
-    // FIXME!
-    //    assert( not includes(owners, t2) );
     owners.insert(t2);
   }
 
@@ -1933,17 +1925,64 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
 #include "computation.H"
 
 /// These are LAZY operation args! They don't evaluate arguments until they are evaluated by the operation (and then only once).
-struct RegOperationArgs: public OperationArgs
+class RegOperationArgs: public OperationArgs
 {
-  shared_ptr<const expression> E;
-
   const int R;
 
   const context& C;
 
+  int lazy_evaluate_reg(int R2)
+  {
+    set<int>::const_iterator loc = C[R].used_inputs.find(R2);
+
+    // We only need to record the usage, adjust the reference, or mark R as changeable if we haven't already.
+    if (loc == C[R].used_inputs.end())
+    {
+      // Compute the result, and follow non-changeable call chains.
+      R2 = incremental_evaluate(C, R2);
+
+      if (C[R2].changeable) 
+      {
+	// If R2 -> result was changeable, then R -> result will be changeable as well.
+	C[R].changeable = true;
+
+	// Mark R2 used by R only if R2 was a changeable computation.
+	C.set_used_input(R, R2);
+      }
+    }
+
+    return R2;
+  }
+
+  int lazy_evaluate_reg(int R1, int slot)
+  {
+    shared_ptr<const expression> E1 =  dynamic_pointer_cast<const expression>(C.access(R1).E);
+    assert(E1);
+
+    // Any slot that we are going to evaluate needs to point to another node
+    shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( E1->sub[slot+1] );
+    assert(RV);
+
+    int R2 = RV->target;
+
+    R2 = lazy_evaluate_reg(R2);
+
+    // Adjust the reference, if it changed.
+    if (R2 != RV->target)
+    {
+      expression_ref E2 = C[R1].E;
+      dynamic_pointer_cast<expression>(E2)->sub[slot+1] = new reg_var(R2);
+      C.set_E(R2, E2);
+    }
+
+    return R2;
+  }
+
+public:
+
   boost::shared_ptr<const Object> reference(int slot) const
   {
-    return E->sub[slot+1];
+    return dynamic_pointer_cast<const expression>(C[R].E)->sub[slot+1];
   }
 
   /*
@@ -1954,62 +1993,14 @@ struct RegOperationArgs: public OperationArgs
 
   boost::shared_ptr<const Object> evaluate(int slot)
   {
-    // Any slot that we are going to evaluate needs to point to another node
-    shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( reference(slot) );
-    assert(RV);
-    int R2 = RV->target;
-
-    if (not C[R].used_inputs[slot] != -1)
-    {
-      // evaluate R
-      R2 = incremental_evaluate(C, R2);
-
-      // Adjust the reference, if it changed.
-      if (R2 != RV->target)
-      {
-	expression_ref E2 = C[R].E;
-	dynamic_pointer_cast<expression>(E2)->sub[slot+1] = new reg_var(R2);
-	C.set_E(R, E2);
-      }
-
-      // mark R2 used by R in the correct slot
-      C.set_used_input(R, slot, R2);
-
-      // If R2 -> result was changeable, then R -> result will be changeable as well.
-      if (C[R2].changeable) 
-	C[R].changeable = true;
-    }
+    int R2 = lazy_evaluate_reg(R, slot);
 
     return full_evaluate(C,R2);
   }
 
   boost::shared_ptr<const Object> lazy_evaluate(int slot)
   {
-    // Any slot that we are going to evaluate needs to point to another node
-    shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( reference(slot) );
-    assert(RV);
-    int R2 = RV->target;
-
-    if (not C[R].used_inputs[slot] != -1)
-    {
-      // evaluate R
-      R2 = incremental_evaluate(C, R2);
-
-      // Adjust the reference, if it changed.
-      if (R2 != RV->target)
-      {
-	expression_ref E2 = C[R].E;
-	dynamic_pointer_cast<expression>(E2)->sub[slot+1] = new reg_var(R2);
-	C.set_E(R, E2);
-      }
-
-      // mark R2 used by R in the correct slot
-      C.set_used_input(R, slot, R2);
-
-      // If R2 -> result was changeable, then R -> result will be changeable as well.
-      if (C[R2].changeable) 
-	C[R].changeable = true;
-    }
+    int R2 = lazy_evaluate_reg(R, slot);
 
     return C[R2].result;
   }
@@ -2024,11 +2015,7 @@ struct RegOperationArgs: public OperationArgs
   RegOperationArgs(int r, const context& c)
     :R(r),C(c)
   { 
-    // The object we are evaluating had better be a class expression (with parts).
-    E = dynamic_pointer_cast<const expression>(C[R].E);
-    assert(E);
-
-    C.clear_used_inputs(R, E->size()-1);
+    C.clear_used_inputs(R);
   }
 };
 
@@ -2118,6 +2105,8 @@ int incremental_evaluate(const context& C, int R)
   assert(is_WHNF(C[R].result));
 
   if (not C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+
+  C.collect_garbage();
 
   while (not C[R].result)
   {
@@ -2225,9 +2214,8 @@ int incremental_evaluate(const context& C, int R)
       expression_ref result = (*O)(Args);
 
       // Check that the result of applying the operation only uses regs referenced from E.
-      for(int j=0;j<C.access(R).used_inputs.size();j++)
-	if (C.access(R).used_inputs[j] != -1)
-	  assert( includes(C.access(R).references, C.access(R).used_inputs[j]) );
+      // FIXME - this needs to go away.
+      assert( includes(C.access(R).references, C.access(R).used_inputs) );
 
       // If the reduction doesn't depend on parameters, then replace E with the result.
       if (not C[R].changeable)
@@ -2258,6 +2246,8 @@ int incremental_evaluate(const context& C, int R)
   assert(C[R].result);
   assert(is_WHNF(C[R].result));
   assert(not dynamic_pointer_cast<const reg_var>(C[R].result));
+
+  C.collect_garbage();
 
   return R;
 }
