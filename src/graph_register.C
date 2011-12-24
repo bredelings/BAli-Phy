@@ -1986,9 +1986,8 @@ public:
   }
 
   /*
-   * NOTE: We cannot cache full_evaluate( ) results, because a WHNF constructor expression
-   *       does not USE the result of its arguments, and so will not be marked for
-   *       recomputation when they change.
+   * NOTE: When fully evaluating a structure, we must record uses for all of the regs that we
+   *       access, including constructor fields.
    */
 
   boost::shared_ptr<const Object> evaluate(int slot)
