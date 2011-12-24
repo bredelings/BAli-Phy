@@ -445,10 +445,10 @@ void context::rename_parameter(int i, const string& new_name)
 // Is there a way to generalize the updating of reg_var elements of structures,
 // when incremental evaluation walks a reg_var chain?
 
-expression_ref full_evaluate(const context& C, int& R)
+expression_ref context::full_evaluate(int& R) const
 {
-  R = C.incremental_evaluate(R);
-  expression_ref result = C.access(R).result;
+  R = incremental_evaluate(R);
+  expression_ref result = access(R).result;
 
   {
     // If the result is atomic, then we are done.
@@ -472,7 +472,7 @@ expression_ref full_evaluate(const context& C, int& R)
       assert(RV);
       int R2 = RV->target;
 
-      E->sub[i] = full_evaluate(C, R2);
+      E->sub[i] = full_evaluate(R2);
     }
     return result;
   }
@@ -495,7 +495,7 @@ shared_ptr<const Object> context::evaluate(int index) const
 
   H = incremental_evaluate(H);
 
-  return full_evaluate(*this, H);
+  return full_evaluate(H);
 }
 
 expression_ref graph_normalize(const context&, const expression_ref&);
@@ -517,7 +517,7 @@ shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) c
   int R = *push_temp_head();
   set_E(R, graph_normalize(*this, translate_refs(E)) );
 
-  expression_ref result = full_evaluate(*this,R);
+  expression_ref result = full_evaluate(R);
 
   pop_temp_head();
   return result;
