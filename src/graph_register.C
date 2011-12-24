@@ -2238,9 +2238,8 @@ int incremental_evaluate(const context& C, int R)
       RegOperationArgs Args(R, C);
       expression_ref result = (*O)(Args);
 
-      // Check that the result of applying the operation only uses regs referenced from E.
-      // FIXME - this needs to go away.
-      assert( includes(C.access(R).references, C.access(R).used_inputs) );
+      // NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
+      //       How could we assert that?
 
       // If the reduction doesn't depend on parameters, then replace E with the result.
       if (not C[R].changeable)
