@@ -398,11 +398,6 @@ public:
   expression_ref get_expression(int i) const;
 
 protected:  
-  void set_used_input(int R1, int R2) const {memory->set_used_input(R1, R2);}
-  void clear_used_input(int R1, int R2) const {memory->clear_used_input(R1, R2);}
-  void clear_used_inputs(int R) const {memory->clear_used_inputs(R);}
-  void set_call(int R1, int R2) const {memory->set_call(R1, R2);}
-  void clear_call(int R) const {memory->clear_call(R);}
   void set_E(int R, const expression_ref& e) const {memory->set_E(R,e);}
   void set_reduction_result(int R, const expression_ref& result) const {memory->set_reduction_result(R, result);}
   int incremental_evaluate(int R) const {return memory->incremental_evaluate(R,token);}
