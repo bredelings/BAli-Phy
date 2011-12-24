@@ -1178,7 +1178,7 @@ bool reg_heap::reg_is_shared(int R) const
 
   std::set<int>::const_iterator loc = owners.begin();
 
-  assert(loc != owners.end());
+  if (loc == owners.end()) return false;
 
   loc++;
 
