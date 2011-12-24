@@ -282,6 +282,11 @@ private:
   const std::vector<root_t>& parameters() const {return memory->get_parameters_for_context(token);}
         std::vector<root_t>& parameters()       {return memory->get_parameters_for_context(token);}
 
+  root_t push_temp_head() const;
+  void pop_temp_head() const;
+
+  int get_token() const {return token;}
+
   /// Register a variable called 'name' as having location 'R'
   void add_variable(const std::string& name, int R);
 
@@ -289,11 +294,6 @@ private:
   expression_ref translate_refs(const expression_ref& R) const;
 
 public:
-
-  root_t push_temp_head() const;
-  void pop_temp_head() const;
-
-  int get_token() const {return token;}
 
   int n_notes() const {return notes.size();}
 
@@ -321,8 +321,6 @@ public:
   reg& access(int i) const {return memory->access(i);}
 
   reg& operator[](int i) const {return memory->access(i);}
-
-  expression_ref& value(int i) const {return memory->access(i).E;}
 
   context* clone() const {return new context(*this);}
 
@@ -373,7 +371,7 @@ public:
 
   int n_parameters() const;
 
-  /// Lookup the reg for the named parameter s
+  /// Lookup the index for the named parameter s
   int find_parameter(const std::string& s) const;
 
   int n_variables() const;
