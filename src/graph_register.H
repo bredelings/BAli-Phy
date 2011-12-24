@@ -250,6 +250,8 @@ public:
   void check_results_in_context(int) const;
   /*----- Graph splitting -----*/
   int uniquify_reg(int reg, int t);
+
+  int incremental_evaluate(int R, int t);
 };
 
 /// This class contains only compute expressions, parameters, and names for the compute expressions
@@ -402,6 +404,7 @@ public:
   void clear_call(int R) const {memory->clear_call(R);}
   void set_E(int R, const expression_ref& e) const {memory->set_E(R,e);}
   void set_reduction_result(int R, const expression_ref& result) const {memory->set_reduction_result(R, result);}
+  int incremental_evaluate(int R) const {return memory->incremental_evaluate(R,token);}
   
   /// Allocate a reg which will be a root for garbage-collection
   root_t allocate_reg() const {

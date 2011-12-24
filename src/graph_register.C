@@ -442,14 +442,12 @@ void context::rename_parameter(int i, const string& new_name)
   set_E(R, parameter(new_name) );
 }
 
-int incremental_evaluate(const context&, int);
-
 // Is there a way to generalize the updating of reg_var elements of structures,
 // when incremental evaluation walks a reg_var chain?
 
 expression_ref full_evaluate(const context& C, int& R)
 {
-  R = incremental_evaluate(C,R);
+  R = C.incremental_evaluate(R);
   expression_ref result = C.access(R).result;
 
   {
@@ -485,7 +483,7 @@ shared_ptr<const Object> context::lazy_evaluate(int index) const
 {
   int& H = *heads()[index];
 
-  H = incremental_evaluate(*this, H);
+  H = incremental_evaluate(H);
 
   return access(H).result;
 }
@@ -495,7 +493,7 @@ shared_ptr<const Object> context::evaluate(int index) const
 {
   int& H = *heads()[index];
 
-  H = incremental_evaluate(*this, H);
+  H = incremental_evaluate(H);
 
   return full_evaluate(*this, H);
 }
@@ -507,7 +505,7 @@ shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref&
   int R = *push_temp_head();
   set_E(R, graph_normalize(*this, translate_refs(E)) );
 
-  R = incremental_evaluate(*this,R);
+  R = incremental_evaluate(R);
   shared_ptr<const Object> result = access(R).result;
 
   pop_temp_head();
@@ -536,7 +534,7 @@ shared_ptr<const Object> context::get_parameter_value(int index) const
     if (access(P).call == -1) return shared_ptr<const Object>();
 
     // If the value needs to be compute (e.g. its a call expression) then compute it.
-    incremental_evaluate(*this, P);
+    incremental_evaluate(P);
   }
 
   return access(P).result;
@@ -1922,26 +1920,28 @@ class RegOperationArgs: public OperationArgs
 {
   const int R;
 
-  const context& C;
+  reg_heap& M;
+
+  const int t;
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int lazy_evaluate_reg(int R2)
   {
-    set<int>::const_iterator loc = C[R].used_inputs.find(R2);
+    set<int>::const_iterator loc = M[R].used_inputs.find(R2);
 
     // We only need to record the usage, adjust the reference, or mark R as changeable if we haven't already.
-    if (loc == C[R].used_inputs.end())
+    if (loc == M[R].used_inputs.end())
     {
       // Compute the result, and follow non-changeable call chains.
-      R2 = incremental_evaluate(C, R2);
+      R2 = M.incremental_evaluate(R2, t);
 
-      if (C[R2].changeable) 
+      if (M[R2].changeable) 
       {
 	// If R2 -> result was changeable, then R -> result will be changeable as well.
-	C[R].changeable = true;
+	M[R].changeable = true;
 
 	// Mark R2 used by R only if R2 was a changeable computation.
-	C.set_used_input(R, R2);
+	M.set_used_input(R, R2);
       }
     }
 
@@ -1951,7 +1951,7 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2 in R1.slot and record dependencies. Then update R2=R1.slot for call chains, and return R2.
   int lazy_evaluate_slot(int R1, int slot)
   {
-    shared_ptr<const expression> E1 =  dynamic_pointer_cast<const expression>(C.access(R1).E);
+    shared_ptr<const expression> E1 =  dynamic_pointer_cast<const expression>(M.access(R1).E);
     assert(E1);
 
     // Any slot that we are going to evaluate needs to point to another node
@@ -1965,9 +1965,9 @@ class RegOperationArgs: public OperationArgs
     // Adjust the reference, if it changed.
     if (R2 != RV->target)
     {
-      expression_ref E2 = C[R1].E;
+      expression_ref E2 = M[R1].E;
       dynamic_pointer_cast<expression>(E2)->sub[slot+1] = new reg_var(R2);
-      C.set_E(R2, E2);
+      M.set_E(R2, E2);
     }
 
     return R2;
@@ -1976,7 +1976,7 @@ class RegOperationArgs: public OperationArgs
   expression_ref evaluate_slot(int R1, int slot)
   {
     int R2 = lazy_evaluate_slot(R1,slot);
-    expression_ref result = C.access(R2).result;
+    expression_ref result = M.access(R2).result;
     
     {
       // If the result is atomic, then we are done.
@@ -2004,7 +2004,7 @@ public:
 
   boost::shared_ptr<const Object> reference(int slot) const
   {
-    return dynamic_pointer_cast<const expression>(C[R].E)->sub[slot+1];
+    return dynamic_pointer_cast<const expression>(M[R].E)->sub[slot+1];
   }
 
   /*
@@ -2020,7 +2020,7 @@ public:
   boost::shared_ptr<const Object> lazy_evaluate(int slot)
   {
     int R2 = lazy_evaluate_slot(R, slot);
-    return C.access(R2).result;
+    return M.access(R2).result;
   }
 
   shared_ptr<const Object> evaluate_expression(const expression_ref&)
@@ -2030,10 +2030,10 @@ public:
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-  RegOperationArgs(int r, const context& c)
-    :R(r),C(c)
+  RegOperationArgs(int r, reg_heap& m, int T)
+    :R(r),M(m),t(T)
   { 
-    C.clear_used_inputs(R);
+    M.clear_used_inputs(R);
   }
 };
 
@@ -2113,67 +2113,67 @@ expression_ref compact_graph_expression(const context& C, const expression_ref& 
    *     --> p[r] = F    / restart
    */
 
-/// Evaluate C[R] and return a reg containing the results that looks through unchangeable redirections = reg_var chains
-int incremental_evaluate(const context& C, int R)
+/// Evaluate R and return a reg containing the results that looks through unchangeable redirections = reg_var chains
+int reg_heap::incremental_evaluate(int R, int t)
 {
-  assert(R >= 0 and R < C.n_regs());
-  assert(C[R].state == reg::used);
-  assert(get_exp_refs(C.access(R).E) == C.access(R).references);
-  assert(includes(C.access(R).owners, C.get_token()));
-  assert(is_WHNF(C[R].result));
+  assert(R >= 0 and R < n_regs());
+  assert(access(R).state == reg::used);
+  assert(get_exp_refs(access(R).E) == access(R).references);
+  assert(includes(access(R).owners, t));
+  assert(is_WHNF(access(R).result));
 
-  if (not C[R].result) std::cerr<<"Statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
+  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 
-  while (not C[R].result)
+  while (not access(R).result)
   {
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
 
-    std::cerr<<"   statement: "<<R<<":   "<<C[R].E->print()<<std::endl;
-    assert(get_exp_refs(C.access(R).E) == C.access(R).references);
+    std::cerr<<"   statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
+    assert(get_exp_refs(access(R).E) == access(R).references);
 
     // If we know what to call, then call it and use it to set the result
-    if (C[R].call != -1)
+    if (access(R).call != -1)
     {
-      // Evaluate C[S], looking through unchangeable redirections
-      int S = incremental_evaluate(C, C[R].call);
+      // Evaluate S, looking through unchangeable redirections
+      int S = incremental_evaluate(access(R).call, t);
 
       // R gets its result from S.
-      C[R].result = C[S].result;
+      access(R).result = access(S).result;
 
-      // If C[R].call can be evaluated to refer to S w/o moving through any changable operations, 
-      // then it should be safe to change C[R].call to refer to S, even if R is changeable.
-      C[R].call = S;
+      // If access(R).call can be evaluated to refer to S w/o moving through any changable operations, 
+      // then it should be safe to change access(R).call to refer to S, even if R is changeable.
+      access(R).call = S;
 
       // However, we can only update R to refer to S if R itself isn't changeable.
-      if (not C[R].changeable)
+      if (not access(R).changeable)
 	R = S;
     }
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
     // Check if E is a reference to a heap variable
-    else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(C[R].E))
-      C.set_call(R, RV->target);
+    else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(access(R).E))
+      set_call(R, RV->target);
 
     // Check for WHNF *OR* heap variables
-    else if (is_WHNF(C[R].E))
-      C[R].result = C[R].E;
+    else if (is_WHNF(access(R).E))
+      access(R).result = access(R).E;
 
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
-    else if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(C[R].E))
-      throw myexception()<<"Parameter with no result?! (Changeable = "<<C[R].changeable<<")";
+    else if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(access(R).E))
+      throw myexception()<<"Parameter with no result?! (Changeable = "<<access(R).changeable<<")";
 
     
     // Reduction: let expression
-    else if (parse_let_expression(C[R].E, vars, bodies, T))
+    else if (parse_let_expression(access(R).E, vars, bodies, T))
     {
       vector<shared_ptr<reg_var> > new_reg_vars;
       for(int i=0;i<vars.size();i++)
       {
-	int V = *C.push_temp_head();
+	int V = *push_temp_head(t);
 	// Don't set ownership here, where it could be cleared by further allocate()s.
 	new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(V)) );
       }
@@ -2192,75 +2192,75 @@ int incremental_evaluate(const context& C, int R)
 	T = substitute(T, vars[i], *replacement_reg_var);
       }
       
-      assert(not C[R].changeable);
+      assert(not access(R).changeable);
 
       for(int i=0;i<vars.size();i++) 
       {
 	int V = new_reg_vars[i]->target;
 
 	// Set ownership here, where it will not be cleared by futher allocate calls.
-	C.access(V).owners = C.access(R).owners;
+	access(V).owners = access(R).owners;
 	// Set the bodies of the new reg_vars
-	C.set_E(V , bodies[i]);
+	set_E(V , bodies[i]);
       }
 
-      C.set_E(R, T);
+      set_E(R, T);
 
       // Remove the new heap vars from the list of temp heads in reverse order.
       for(int i=0;i<new_reg_vars.size(); i++)
-	C.pop_temp_head();
+	pop_temp_head(t);
       
-      assert(C[R].call == -1);
-      assert(not C[R].result);
+      assert(access(R).call == -1);
+      assert(not access(R).result);
     }
     
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
-      shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(C[R].E);
+      shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(access(R).E);
       assert(E);
       
       shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]);
       assert(O);
 
       // Although the reg itself is not a parameter, it will stay changeable if it ever computes a changeable result.
-      // Therefore, we cannot do "assert(not C[R].changeable);" here.
+      // Therefore, we cannot do "assert(not access(R).changeable);" here.
 
-      RegOperationArgs Args(R, C);
+      RegOperationArgs Args(R, *this, t);
       expression_ref result = (*O)(Args);
 
       // NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
       //       How could we assert that?
 
       // If the reduction doesn't depend on parameters, then replace E with the result.
-      if (not C[R].changeable)
+      if (not access(R).changeable)
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
-	assert(C.access(R).call == -1);
-	assert(not C.access(R).result);
-	C.clear_used_inputs(R);
-	C.set_E(R, result);
+	assert(access(R).call == -1);
+	assert(not access(R).result);
+	clear_used_inputs(R);
+	set_E(R, result);
       }
       // Otherwise, set the reduction result.
       else
-	C.set_reduction_result(R, result );
+	set_reduction_result(R, result );
 
 #ifndef NDEBUG
-      // std::cerr<<"Executing statement: "<<compact_graph_expression(C,E)<<"\n";
+      // std::cerr<<"Executing statement: "<<compact_graph_expression(*this,E)<<"\n";
       std::cerr<<"Executing operation: "<<O<<"\n";
-      std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n"<<endl;
+      std::cerr<<"Result changeable: "<<access(R).changeable<<"\n\n"<<endl;
 #endif
     }
   }
 
 #ifndef NDEBUG
-  //  std::cerr<<"Result = "<<compact_graph_expression(*C[R].result)<<"\n";
-  //  std::cerr<<"Result changeable: "<<C[R].changeable<<"\n\n";
+  //  std::cerr<<"Result = "<<compact_graph_expression(*access(R).result)<<"\n";
+  //  std::cerr<<"Result changeable: "<<access(R).changeable<<"\n\n";
 #endif
 
-  assert(C[R].result);
-  assert(is_WHNF(C[R].result));
-  assert(not dynamic_pointer_cast<const reg_var>(C[R].result));
+  assert(access(R).result);
+  assert(is_WHNF(access(R).result));
+  assert(not dynamic_pointer_cast<const reg_var>(access(R).result));
 
   return R;
 }
