@@ -238,6 +238,148 @@ bool includes(const map<T,U>& s1, const T& t)
 }
 
 
+expression_ref graph_normalize(const expression_ref& R)
+{
+  if (not R) return R;
+
+  // 1. Var
+  if (is_dummy(R))
+    return R;
+  
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
+  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+  if (not E) return R;
+  
+  // 2. Lambda
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  if (L)
+  {
+    assert(E->size() == 3);
+    shared_ptr<expression> V ( new expression(*E) );
+    V->sub[2] = graph_normalize(E->sub[2]);
+
+    if (V->sub[2] == E->sub[2])
+      return R;
+    else
+      return shared_ptr<const expression>(V);
+  }
+
+  // 3. Application
+  if (dynamic_pointer_cast<const Apply>(E->sub[0]))
+  {
+    assert(E->size() == 3);
+    expression_ref f = graph_normalize(E->sub[1]);
+    expression_ref x = graph_normalize(E->sub[2]);
+
+    int var_index = get_safe_binder_index(R);
+    expression_ref f_ = dummy(var_index++);
+    expression_ref x_ = dummy(var_index++);
+
+    if (is_dummy(x))
+    { 
+      return let_expression(f_, f, apply_expression(f_,x));
+    }
+    else
+    {
+      vector<expression_ref> vars;
+      vector<expression_ref> bodies;
+
+      vars.push_back(f_);
+      vars.push_back(x_);
+
+      bodies.push_back(f);
+      bodies.push_back(x);
+
+      return let_expression(vars, bodies, apply_expression(f_,x_));
+    }
+  }
+
+  // 6. Case
+  shared_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
+  if (IsCase)
+  {
+    shared_ptr<expression> V ( new expression(*E) );
+
+    V->sub[1] = graph_normalize(V->sub[1]);
+
+    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
+    while(bodies)
+    {
+      assert(bodies->size() == 3);
+      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
+      assert(alternative);
+      alternative->sub[2] = graph_normalize(alternative->sub[2]);
+      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+    }
+    
+    if (is_dummy(V->sub[1]))
+      return shared_ptr<const expression>(V);
+    else
+    {
+      int var_index = get_safe_binder_index(R);
+      expression_ref x = dummy(var_index);
+      expression_ref obj = V->sub[1];
+      V->sub[1] = x;
+
+      return let_expression(x,obj,shared_ptr<const expression>(V));
+    }
+  }
+
+  // 4. Constructor
+  if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
+      dynamic_pointer_cast<const Operation>(E->sub[0]))
+  {
+    int var_index = get_safe_binder_index(R);
+
+    shared_ptr<expression> Con ( new expression );
+    Con->sub.push_back(E->sub[0]);
+
+    // Actually we probably just need x[i] not to be free in E->sub[i]
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    for(int i=1;i<E->size();i++)
+    {
+      if (is_dummy(E->sub[i]))
+      {
+	Con->sub.push_back(E->sub[i]);
+      }
+      else
+      {
+	expression_ref var = dummy( var_index++ );
+	Con->sub.push_back( var );
+	vars.push_back( var );
+	bodies.push_back( graph_normalize(E->sub[i]) );
+      }
+    }
+
+    return let_expression(vars, bodies, shared_ptr<const expression>(Con));
+  }
+
+  // 5. Let 
+  shared_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
+  if (Let)
+  {
+    shared_ptr<expression> V ( new expression(*E) );
+
+    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[1]);
+    while(bodies)
+    {
+      assert(bodies->size() == 3);
+      shared_ptr<expression> let_group = dynamic_pointer_cast<expression>(bodies->sub[1]);
+      assert(let_group);
+      let_group->sub[2] = graph_normalize(let_group->sub[2]);
+      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+    }
+    
+    V->sub[2] = graph_normalize(V->sub[2]);
+
+    return shared_ptr<const expression>(V);
+  }
+
+  throw myexception()<<"graph_normalize: I don't recognize expression '"+ R->print() + "'";
+}
+
 reg::reg()
  :changeable(false),
   call(-1),
@@ -246,12 +388,6 @@ reg::reg()
   next_reg(-1),
   state(none)
 {}
-
-int context::add_note(const expression_ref& E)
-{
-  notes.push_back(E);
-  return notes.size()-1;
-}
 
 void reg_heap::clear(int R)
 {
@@ -396,174 +532,6 @@ void reg_heap::clear_E(int R)
   access(R).E = expression_ref();
 }
 
-string context::parameter_name(int i) const
-{
-  expression_ref E = access(*parameters()[i]).E;
-  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
-  {
-    return P->parameter_name;
-  }
-  throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
-}
-
-void context::add_variable(const string& name, int R)
-{
-  // if there's already an 's', then complain
-  if (find_variable(name) != -1)
-    throw myexception()<<"Cannot add variable '"<<name<<"': there is already a variable with that name.";
-
-  if (find_parameter(name) != -1)
-    throw myexception()<<"Cannot add variable '"<<name<<"': there is already a parameter with that name.";
-
-  assert(access(R).state == reg::used);
-
-  variables.push_back(std::pair<string,int>(name,R));
-}
-
-void context::rename_variable(int i, const string& s2)
-{
-  // Check that the variable points to a used reg
-  assert(access(variables[i].second).state == reg::used);
-
-  // zero-length names are not allowed
-  const string& s1 = variables[i].first;
-  assert(s2.size() != 0);
-
-  // if there's already an 's2', then complain
-  if (find_variable(s2) != -1)
-    throw myexception()<<"Cannot rename variable '"<<s1<<"' to '"<<s2<<"': there is already a variable with that name.";
-
-  if (find_parameter(s2) != -1)
-    throw myexception()<<"Cannot rename variable '"<<s1<<"' to '"<<s2<<"': there is already a parameter with that name.";
-
-  variables[i].first = s2;
-}
-
-void context::rename_parameter(int i, const string& new_name)
-{
-  string old_name = parameter_name(i);
-
-  int R = *parameters()[i];
-
-  assert( access(R).changeable == true );
-  set_E(R, parameter(new_name) );
-}
-
-// Is there a way to generalize the updating of reg_var elements of structures,
-// when incremental evaluation walks a reg_var chain?
-
-expression_ref context::full_evaluate(int& R) const
-{
-  R = incremental_evaluate(R);
-  expression_ref result = access(R).result;
-
-  {
-    // If the result is atomic, then we are done.
-    shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
-    if (not E) return result;
-
-    // If the result is a lambda function, then we are done.
-    // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
-    // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
-    if (not dynamic_pointer_cast<const Function>(E->sub[0])) return result;
-  }
-
-  // If the result is a structure, then evaluate its fields and substitute them.
-  {
-    shared_ptr<expression> E = dynamic_pointer_cast<expression>(result);
-    assert(dynamic_pointer_cast<const Function>(E->sub[0]));
-
-    for(int i=1;i<E->size();i++)
-    {
-      shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
-      assert(RV);
-      int R2 = RV->target;
-
-      E->sub[i] = full_evaluate(R2);
-    }
-    return result;
-  }
-}
-
-/// Return the value of a particular index, computing it if necessary
-shared_ptr<const Object> context::lazy_evaluate(int index) const
-{
-  int& H = *heads()[index];
-
-  H = incremental_evaluate(H);
-
-  return access(H).result;
-}
-
-/// Return the value of a particular index, computing it if necessary
-shared_ptr<const Object> context::evaluate(int index) const
-{
-  int& H = *heads()[index];
-
-  H = incremental_evaluate(H);
-
-  return full_evaluate(H);
-}
-
-expression_ref graph_normalize(const expression_ref&);
-
-shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref& E) const
-{
-  int R = *push_temp_head();
-  set_E(R, graph_normalize(translate_refs(E)) );
-
-  R = incremental_evaluate(R);
-  shared_ptr<const Object> result = access(R).result;
-
-  pop_temp_head();
-  return result;
-}
-
-shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) const
-{
-  int R = *push_temp_head();
-  set_E(R, graph_normalize(translate_refs(E)) );
-
-  expression_ref result = full_evaluate(R);
-
-  pop_temp_head();
-  return result;
-}
-
-/// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-shared_ptr<const Object> context::get_parameter_value(int index) const
-{
-  int P = *parameters()[index];
-
-  if (not access(P).result)
-  {
-    // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (access(P).call == -1) return shared_ptr<const Object>();
-
-    // If the value needs to be compute (e.g. its a call expression) then compute it.
-    incremental_evaluate(P);
-  }
-
-  return access(P).result;
-}
-
-/// Get the value of a non-constant, non-computed index
-shared_ptr<const Object> context::get_parameter_value(const std::string& name) const
-{
-  int index = find_parameter(name);
-  if (index == -1)
-    throw myexception()<<"Cannot find parameter called '"<<name<<"'";
-
-  return get_parameter_value(index);
-}
-
-void context::set_parameter_value(int index, const expression_ref& O)
-{
-  int P = *parameters()[index];
-
-  set_reg_value(P, O);
-}
-
 void reg_heap::set_reduction_result(int R, const expression_ref& result)
 {
   // Check that there is no result we are overriding
@@ -591,12 +559,6 @@ void reg_heap::set_reduction_result(int R, const expression_ref& result)
     set_call(R, *r);
     pop_root(r);
   }
-}
-
-/// Update the value of a non-constant, non-computed index
-void context::set_reg_value(int P, const expression_ref& O)
-{
-  return memory->set_reg_value(P, translate_refs(O), token);
 }
 
 /// Update the value of a non-constant, non-computed index
@@ -668,62 +630,6 @@ void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
   }
 }
 
-/// Update the value of a non-constant, non-computed index
-void context::set_parameter_value(const std::string& var, const expression_ref& O)
-{
-  set_parameter_value(find_parameter(var), O);
-}
-
-int context::n_parameters() const
-{
-  return parameters().size();
-}
-
-int context::find_parameter(const string& s) const
-{
-  for(int i=0;i<n_parameters();i++)
-    if (parameter_name(i) == s)
-      return i;
-
-    throw myexception()<<"Can't find parameter named '"<<s<<"'";
-}
-
-int context::n_variables() const
-{
-  return variables.size();
-}
-
-int context::find_variable(const string& s) const
-{
-  for(int i=0;i<variables.size();i++)
-    if (variables[i].first == s)
-      return i;
-
-  return -1;
-}
-
-const string& context::variable_name(int i) const
-{
-  return variables[i].first;
-}
-
-int context::add_parameter(const string& name)
-{
-  assert(name.size() != 0);
-
-  int index = n_parameters();
-
-  root_t r = allocate_reg();
-  parameters().push_back( r );
-
-  access(*r).changeable = true;
-  set_E(*r, parameter(name) );
-
-  set_parameter_value(index, default_parameter_value(index) );
-  
-  return index;
-}
-
 int reg_heap::n_regs() const
 {
   return memory.size();
@@ -745,49 +651,6 @@ int reg_heap::n_used_regs() const
   for(;here != -1;here = access(here).next_reg)
     count++;
   return count;
-}
-
-/// Add an expression that may be replaced by its reduced form
-int context::add_compute_expression(const expression_ref& E)
-{
-  std::cerr<<"add: "<<E->print()<<"\n";
-
-  expression_ref T = graph_normalize(translate_refs(E) );
-
-  root_t r;
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
-  {
-    assert( includes(access(RV->target).owners, token) );
-    
-    r = push_root( RV->target );
-  }
-  else
-  {
-    r = allocate_reg();
-    set_E( *r, T );
-  }
-
-  heads().push_back(r);
-  return heads().size()-1;
-}
-
-/// Add an expression that may be replaced by its reduced form
-int context::add_compute_expression(const string& name, const expression_ref& E)
-{
-  int index = add_compute_expression( E );
-  int R = *heads()[index];
-  add_variable(name, R);
-  return index;
-}
-
-int context::n_expressions() const
-{
-  return heads().size();
-}
-
-expression_ref context::get_expression(int i) const
-{
-  return access(*heads()[i]).E;
 }
 
 int reg_heap::add_reg_to_free_list(int r)
@@ -924,21 +787,6 @@ reg_heap::root_t reg_heap::allocate_reg()
   root_t root = roots.insert(roots.end(), r);
 
   return root;
-}
-
-reg_heap::root_t context::push_temp_head() const
-{
-  return memory->push_temp_head( token );
-}
-
-void context::pop_temp_head() const
-{
-  memory->pop_temp_head( token );
-}
-
-void context::collect_garbage() const
-{
-  memory->collect_garbage();
 }
 
 void reg_heap::remove_unused_ownership_marks()
@@ -1692,6 +1540,298 @@ reg_heap::reg_heap()
    first_used_reg(-1)
 { }
 
+reg_heap::root_t context::push_temp_head() const
+{
+  return memory->push_temp_head( token );
+}
+
+string context::parameter_name(int i) const
+{
+  expression_ref E = access(*parameters()[i]).E;
+  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
+  {
+    return P->parameter_name;
+  }
+  throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
+}
+
+int context::add_note(const expression_ref& E)
+{
+  notes.push_back(E);
+  return notes.size()-1;
+}
+
+void context::add_variable(const string& name, int R)
+{
+  // if there's already an 's', then complain
+  if (find_variable(name) != -1)
+    throw myexception()<<"Cannot add variable '"<<name<<"': there is already a variable with that name.";
+
+  if (find_parameter(name) != -1)
+    throw myexception()<<"Cannot add variable '"<<name<<"': there is already a parameter with that name.";
+
+  assert(access(R).state == reg::used);
+
+  variables.push_back(std::pair<string,int>(name,R));
+}
+
+void context::rename_variable(int i, const string& s2)
+{
+  // Check that the variable points to a used reg
+  assert(access(variables[i].second).state == reg::used);
+
+  // zero-length names are not allowed
+  const string& s1 = variables[i].first;
+  assert(s2.size() != 0);
+
+  // if there's already an 's2', then complain
+  if (find_variable(s2) != -1)
+    throw myexception()<<"Cannot rename variable '"<<s1<<"' to '"<<s2<<"': there is already a variable with that name.";
+
+  if (find_parameter(s2) != -1)
+    throw myexception()<<"Cannot rename variable '"<<s1<<"' to '"<<s2<<"': there is already a parameter with that name.";
+
+  variables[i].first = s2;
+}
+
+void context::rename_parameter(int i, const string& new_name)
+{
+  string old_name = parameter_name(i);
+
+  int R = *parameters()[i];
+
+  assert( access(R).changeable == true );
+  set_E(R, parameter(new_name) );
+}
+
+// Is there a way to generalize the updating of reg_var elements of structures,
+// when incremental evaluation walks a reg_var chain?
+
+expression_ref context::full_evaluate(int& R) const
+{
+  R = incremental_evaluate(R);
+  expression_ref result = access(R).result;
+
+  {
+    // If the result is atomic, then we are done.
+    shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
+    if (not E) return result;
+
+    // If the result is a lambda function, then we are done.
+    // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
+    // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
+    if (not dynamic_pointer_cast<const Function>(E->sub[0])) return result;
+  }
+
+  // If the result is a structure, then evaluate its fields and substitute them.
+  {
+    shared_ptr<expression> E = dynamic_pointer_cast<expression>(result);
+    assert(dynamic_pointer_cast<const Function>(E->sub[0]));
+
+    for(int i=1;i<E->size();i++)
+    {
+      shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
+      assert(RV);
+      int R2 = RV->target;
+
+      E->sub[i] = full_evaluate(R2);
+    }
+    return result;
+  }
+}
+
+/// Return the value of a particular index, computing it if necessary
+shared_ptr<const Object> context::lazy_evaluate(int index) const
+{
+  int& H = *heads()[index];
+
+  H = incremental_evaluate(H);
+
+  return access(H).result;
+}
+
+/// Return the value of a particular index, computing it if necessary
+shared_ptr<const Object> context::evaluate(int index) const
+{
+  int& H = *heads()[index];
+
+  H = incremental_evaluate(H);
+
+  return full_evaluate(H);
+}
+
+shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref& E) const
+{
+  int R = *push_temp_head();
+  set_E(R, graph_normalize(translate_refs(E)) );
+
+  R = incremental_evaluate(R);
+  shared_ptr<const Object> result = access(R).result;
+
+  pop_temp_head();
+  return result;
+}
+
+shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) const
+{
+  int R = *push_temp_head();
+  set_E(R, graph_normalize(translate_refs(E)) );
+
+  expression_ref result = full_evaluate(R);
+
+  pop_temp_head();
+  return result;
+}
+
+/// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
+shared_ptr<const Object> context::get_parameter_value(int index) const
+{
+  int P = *parameters()[index];
+
+  if (not access(P).result)
+  {
+    // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
+    if (access(P).call == -1) return shared_ptr<const Object>();
+
+    // If the value needs to be compute (e.g. its a call expression) then compute it.
+    incremental_evaluate(P);
+  }
+
+  return access(P).result;
+}
+
+/// Get the value of a non-constant, non-computed index
+shared_ptr<const Object> context::get_parameter_value(const std::string& name) const
+{
+  int index = find_parameter(name);
+  if (index == -1)
+    throw myexception()<<"Cannot find parameter called '"<<name<<"'";
+
+  return get_parameter_value(index);
+}
+
+void context::set_parameter_value(int index, const expression_ref& O)
+{
+  int P = *parameters()[index];
+
+  set_reg_value(P, O);
+}
+
+/// Update the value of a non-constant, non-computed index
+void context::set_reg_value(int P, const expression_ref& O)
+{
+  return memory->set_reg_value(P, translate_refs(O), token);
+}
+
+/// Update the value of a non-constant, non-computed index
+void context::set_parameter_value(const std::string& var, const expression_ref& O)
+{
+  set_parameter_value(find_parameter(var), O);
+}
+
+int context::n_parameters() const
+{
+  return parameters().size();
+}
+
+int context::find_parameter(const string& s) const
+{
+  for(int i=0;i<n_parameters();i++)
+    if (parameter_name(i) == s)
+      return i;
+
+    throw myexception()<<"Can't find parameter named '"<<s<<"'";
+}
+
+int context::n_variables() const
+{
+  return variables.size();
+}
+
+int context::find_variable(const string& s) const
+{
+  for(int i=0;i<variables.size();i++)
+    if (variables[i].first == s)
+      return i;
+
+  return -1;
+}
+
+const string& context::variable_name(int i) const
+{
+  return variables[i].first;
+}
+
+int context::add_parameter(const string& name)
+{
+  assert(name.size() != 0);
+
+  int index = n_parameters();
+
+  root_t r = allocate_reg();
+  parameters().push_back( r );
+
+  access(*r).changeable = true;
+  set_E(*r, parameter(name) );
+
+  set_parameter_value(index, default_parameter_value(index) );
+  
+  return index;
+}
+
+/// Add an expression that may be replaced by its reduced form
+int context::add_compute_expression(const expression_ref& E)
+{
+  std::cerr<<"add: "<<E->print()<<"\n";
+
+  expression_ref T = graph_normalize(translate_refs(E) );
+
+  root_t r;
+  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
+  {
+    assert( includes(access(RV->target).owners, token) );
+    
+    r = push_root( RV->target );
+  }
+  else
+  {
+    r = allocate_reg();
+    set_E( *r, T );
+  }
+
+  heads().push_back(r);
+  return heads().size()-1;
+}
+
+/// Add an expression that may be replaced by its reduced form
+int context::add_compute_expression(const string& name, const expression_ref& E)
+{
+  int index = add_compute_expression( E );
+  int R = *heads()[index];
+  add_variable(name, R);
+  return index;
+}
+
+int context::n_expressions() const
+{
+  return heads().size();
+}
+
+expression_ref context::get_expression(int i) const
+{
+  return access(*heads()[i]).E;
+}
+
+void context::pop_temp_head() const
+{
+  memory->pop_temp_head( token );
+}
+
+void context::collect_garbage() const
+{
+  memory->collect_garbage();
+}
+
 expression_ref context::translate_refs(const expression_ref& R) const
 {
   // Replace parameters with the appropriate reg_var: of value parameter( )
@@ -1801,148 +1941,6 @@ context::context(const vector<expression_ref>& N)
   foreach(i,names)
     add_parameter(*i);
  }
-
-expression_ref graph_normalize(const expression_ref& R)
-{
-  if (not R) return R;
-
-  // 1. Var
-  if (is_dummy(R))
-    return R;
-  
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-
-  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-  if (not E) return R;
-  
-  // 2. Lambda
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
-  if (L)
-  {
-    assert(E->size() == 3);
-    shared_ptr<expression> V ( new expression(*E) );
-    V->sub[2] = graph_normalize(E->sub[2]);
-
-    if (V->sub[2] == E->sub[2])
-      return R;
-    else
-      return shared_ptr<const expression>(V);
-  }
-
-  // 3. Application
-  if (dynamic_pointer_cast<const Apply>(E->sub[0]))
-  {
-    assert(E->size() == 3);
-    expression_ref f = graph_normalize(E->sub[1]);
-    expression_ref x = graph_normalize(E->sub[2]);
-
-    int var_index = get_safe_binder_index(R);
-    expression_ref f_ = dummy(var_index++);
-    expression_ref x_ = dummy(var_index++);
-
-    if (is_dummy(x))
-    { 
-      return let_expression(f_, f, apply_expression(f_,x));
-    }
-    else
-    {
-      vector<expression_ref> vars;
-      vector<expression_ref> bodies;
-
-      vars.push_back(f_);
-      vars.push_back(x_);
-
-      bodies.push_back(f);
-      bodies.push_back(x);
-
-      return let_expression(vars, bodies, apply_expression(f_,x_));
-    }
-  }
-
-  // 6. Case
-  shared_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
-  if (IsCase)
-  {
-    shared_ptr<expression> V ( new expression(*E) );
-
-    V->sub[1] = graph_normalize(V->sub[1]);
-
-    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
-    while(bodies)
-    {
-      assert(bodies->size() == 3);
-      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
-      assert(alternative);
-      alternative->sub[2] = graph_normalize(alternative->sub[2]);
-      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
-    }
-    
-    if (is_dummy(V->sub[1]))
-      return shared_ptr<const expression>(V);
-    else
-    {
-      int var_index = get_safe_binder_index(R);
-      expression_ref x = dummy(var_index);
-      expression_ref obj = V->sub[1];
-      V->sub[1] = x;
-
-      return let_expression(x,obj,shared_ptr<const expression>(V));
-    }
-  }
-
-  // 4. Constructor
-  if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
-      dynamic_pointer_cast<const Operation>(E->sub[0]))
-  {
-    int var_index = get_safe_binder_index(R);
-
-    shared_ptr<expression> Con ( new expression );
-    Con->sub.push_back(E->sub[0]);
-
-    // Actually we probably just need x[i] not to be free in E->sub[i]
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
-    for(int i=1;i<E->size();i++)
-    {
-      if (is_dummy(E->sub[i]))
-      {
-	Con->sub.push_back(E->sub[i]);
-      }
-      else
-      {
-	expression_ref var = dummy( var_index++ );
-	Con->sub.push_back( var );
-	vars.push_back( var );
-	bodies.push_back( graph_normalize(E->sub[i]) );
-      }
-    }
-
-    return let_expression(vars, bodies, shared_ptr<const expression>(Con));
-  }
-
-  // 5. Let 
-  shared_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
-  if (Let)
-  {
-    shared_ptr<expression> V ( new expression(*E) );
-
-    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[1]);
-    while(bodies)
-    {
-      assert(bodies->size() == 3);
-      shared_ptr<expression> let_group = dynamic_pointer_cast<expression>(bodies->sub[1]);
-      assert(let_group);
-      let_group->sub[2] = graph_normalize(let_group->sub[2]);
-      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
-    }
-    
-    V->sub[2] = graph_normalize(V->sub[2]);
-
-    return shared_ptr<const expression>(V);
-  }
-
-  throw myexception()<<"graph_normalize: I don't recognize expression '"+ R->print() + "'";
-}
 
 #include "computation.H"
 
