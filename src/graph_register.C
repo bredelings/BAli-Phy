@@ -505,12 +505,12 @@ shared_ptr<const Object> context::evaluate(int index) const
   return full_evaluate(H);
 }
 
-expression_ref graph_normalize(const context&, const expression_ref&);
+expression_ref graph_normalize(const expression_ref&);
 
 shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref& E) const
 {
   int R = *push_temp_head();
-  set_E(R, graph_normalize(*this, translate_refs(E)) );
+  set_E(R, graph_normalize(translate_refs(E)) );
 
   R = incremental_evaluate(R);
   shared_ptr<const Object> result = access(R).result;
@@ -522,7 +522,7 @@ shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref&
 shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) const
 {
   int R = *push_temp_head();
-  set_E(R, graph_normalize(*this, translate_refs(E)) );
+  set_E(R, graph_normalize(translate_refs(E)) );
 
   expression_ref result = full_evaluate(R);
 
@@ -594,20 +594,29 @@ void reg_heap::set_reduction_result(int R, const expression_ref& result)
 }
 
 /// Update the value of a non-constant, non-computed index
-void context::set_reg_value(int P, const expression_ref& OO)
+void context::set_reg_value(int P, const expression_ref& O)
 {
-  // Split this reg and its E-ancestors out from other graphs, if its shared.
-  P = memory->uniquify_reg(P,token);
+  return memory->set_reg_value(P, translate_refs(O), token);
+}
+
+/// Update the value of a non-constant, non-computed index
+void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
+{
+  // Check that reg P is owned by context token.
+  assert(reg_is_owned_by(P,token));
 
   // Normalize the inputs expression
-  expression_ref O = graph_normalize(*this, translate_refs(OO));
+  expression_ref O = graph_normalize(OO);
+
+  // Split this reg and its E-ancestors out from other graphs, if its shared.
+  P = uniquify_reg(P,token);
 
   // Check that this reg is indeed settable
   assert(dynamic_pointer_cast<const parameter>(access(P).E));
   assert(access(P).changeable);
 
   // Clear the call, clear the result, and set the value
-  memory->clear_call(P);
+  clear_call(P);
   access(P).result.reset();
   set_reduction_result(P, O);
 
@@ -638,7 +647,7 @@ void context::set_reg_value(int P, const expression_ref& OO)
 
       // Since the computation may be different, we don't know if the value has changed.
       access(R2).result.reset();
-      memory->clear_call(R2);
+      clear_call(R2);
     }
 
     foreach(j,access(R1).call_outputs)
@@ -743,7 +752,7 @@ int context::add_compute_expression(const expression_ref& E)
 {
   std::cerr<<"add: "<<E->print()<<"\n";
 
-  expression_ref T = graph_normalize(*this, translate_refs(E) );
+  expression_ref T = graph_normalize(translate_refs(E) );
 
   root_t r;
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
@@ -1793,7 +1802,7 @@ context::context(const vector<expression_ref>& N)
     add_parameter(*i);
  }
 
-expression_ref graph_normalize(const context& C, const expression_ref& R)
+expression_ref graph_normalize(const expression_ref& R)
 {
   if (not R) return R;
 
@@ -1812,7 +1821,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
   {
     assert(E->size() == 3);
     shared_ptr<expression> V ( new expression(*E) );
-    V->sub[2] = graph_normalize(C,E->sub[2]);
+    V->sub[2] = graph_normalize(E->sub[2]);
 
     if (V->sub[2] == E->sub[2])
       return R;
@@ -1824,8 +1833,8 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
   if (dynamic_pointer_cast<const Apply>(E->sub[0]))
   {
     assert(E->size() == 3);
-    expression_ref f = graph_normalize(C,E->sub[1]);
-    expression_ref x = graph_normalize(C,E->sub[2]);
+    expression_ref f = graph_normalize(E->sub[1]);
+    expression_ref x = graph_normalize(E->sub[2]);
 
     int var_index = get_safe_binder_index(R);
     expression_ref f_ = dummy(var_index++);
@@ -1856,7 +1865,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
   {
     shared_ptr<expression> V ( new expression(*E) );
 
-    V->sub[1] = graph_normalize(C,V->sub[1]);
+    V->sub[1] = graph_normalize(V->sub[1]);
 
     shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
     while(bodies)
@@ -1864,7 +1873,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
       assert(bodies->size() == 3);
       shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
       assert(alternative);
-      alternative->sub[2] = graph_normalize(C,alternative->sub[2]);
+      alternative->sub[2] = graph_normalize(alternative->sub[2]);
       bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
     }
     
@@ -1904,7 +1913,7 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
 	expression_ref var = dummy( var_index++ );
 	Con->sub.push_back( var );
 	vars.push_back( var );
-	bodies.push_back( graph_normalize(C,E->sub[i]) );
+	bodies.push_back( graph_normalize(E->sub[i]) );
       }
     }
 
@@ -1923,11 +1932,11 @@ expression_ref graph_normalize(const context& C, const expression_ref& R)
       assert(bodies->size() == 3);
       shared_ptr<expression> let_group = dynamic_pointer_cast<expression>(bodies->sub[1]);
       assert(let_group);
-      let_group->sub[2] = graph_normalize(C,let_group->sub[2]);
+      let_group->sub[2] = graph_normalize(let_group->sub[2]);
       bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
     }
     
-    V->sub[2] = graph_normalize(C,V->sub[2]);
+    V->sub[2] = graph_normalize(V->sub[2]);
 
     return shared_ptr<const expression>(V);
   }

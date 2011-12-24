@@ -250,6 +250,8 @@ public:
   void check_results_in_context(int) const;
   /*----- Graph splitting -----*/
   int uniquify_reg(int reg, int t);
+  /// Update the value of a non-constant, non-computed index
+  void set_reg_value(int index, const expression_ref&, int t);
 
   int incremental_evaluate(int R, int t);
 };
