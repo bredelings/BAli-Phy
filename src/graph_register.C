@@ -410,6 +410,9 @@ void reg_heap::set_used_input(int R1, int R2)
   assert(R1 >= 0 and R1 < n_regs());
   assert(R2 >= 0 and R2 < n_regs());
 
+  assert(access(R1).E);
+  assert(access(R2).E);
+
   // Only add a new used inputs if it is not already present
   assert(not includes(access(R1).used_inputs, R2));
   // Only add a new used inputs if it is not already present
@@ -582,6 +585,7 @@ void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
   assert(access(P).changeable);
 
   // Clear the call, clear the result, and set the value
+  assert(access(P).used_inputs.empty());
   clear_call(P);
   access(P).result.reset();
   set_reduction_result(P, O);
@@ -599,7 +603,8 @@ void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
     int R1 = NOT_known_value_unchanged[i];
 
     // ... consider each downstream index2 that has index1 in slot2 of its computation (possibly unused).
-    foreach(j,access(R1).outputs)
+    set<int> outputs = access(R1).outputs;
+    foreach(j,outputs)
     {
       int R2 = *j;
 
@@ -613,8 +618,12 @@ void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
 
       // Since the computation may be different, we don't know if the value has changed.
       access(R2).result.reset();
+      // We don't know what the reduction result is, so invalidate the call.
       clear_call(R2);
+      // Remember to clear the used inputs.
+      clear_used_inputs(R2);
     }
+    assert(access(R1).outputs.empty());
 
     foreach(j,access(R1).call_outputs)
     {
