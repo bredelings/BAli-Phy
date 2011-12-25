@@ -12,37 +12,10 @@
 
 class Formula;
 
-// However, C++0x/boost functions can also do binding.  How should expressions relate to them?
-// How do you bind a 2nd argument in haskell? (currying?)  Can you use match arguments like _?
-// Should I replace the match arguments with a (M x)(f x) operator to specify which dummies are for matching?
-
-// Note: I want to be able to construct expressions simply.  For example, I want
-// to have an exp(x) expression that does something like exp(Q) = exp_sym(pi(Q),S(Q))
-
-// Note: Expressions can now return multiple values, in an s-expression... I think?
-
-// Note: it is probably necessary for the different parts of a structure to be able to be
-// dynamically computed.  A structure is, in some sense, also a function, if structures are
-// s-expressions.
-
-// A quote operator would affect how arguments were evaluated.
-// - Do I want the question of whether the argument is an expression to affect its evaluation?
-// - Perhaps I could evaluate all expression-type arguments.
-// - Quoting would stop prevent this, and would take the place of constant(expression(...)).
-
-// Question: Do I really want objects to have names in the Formula?
-
+/// An S-expression: An Object, and possibly an array of Objects.
 struct expression_ref;
 
-// Head objects include:
-// - parameter(string)
-// - dummy(int)
-// - match(int)
-// - lambda(int)
-// - operation
-// - function / data
-//   + FIXME: should we evaluate these?
-
+/// An array of Objects.
 struct expression: virtual public Object
 {
   // FIXME - replace args with sub, and make sub[0] = head, sub[i] = args[i-1]
