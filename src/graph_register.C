@@ -611,7 +611,7 @@ void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
       // This one already marked NOT known_value_unchanged
       if (includes(visited, R2)) continue;
 
-      // Since R2 is not known to have identical USED inputs ...
+      // Since R2 is not known to have identical results for its USED inputs ...
       // ... then it is not known to have identical outputs
       NOT_known_value_unchanged.push_back(R2);
       visited.insert(R2);
