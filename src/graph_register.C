@@ -264,6 +264,11 @@ using std::endl;
  * 9. Finally, implement the Hindley-Milner type system?
  */ 
 
+/*
+ * Perhaps entering a meta-variable triggers a substitution - or pushes arguments
+ * onto the stack!
+ */
+
 template <typename T>
 bool includes(const std::set<T>& s1, const std::set<T>& s2)
 {
