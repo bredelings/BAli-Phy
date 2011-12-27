@@ -217,6 +217,51 @@ using std::endl;
 /*
  * Question: how shall we share sub-expressions between different compute expressions?
  * Question: how shall we (or, should we) pre-execute non-recursive let expressions?
+ *
+ * 1. How can I make M8 models using the new model framework?
+ *
+ * 2. How do we share computations between heads?
+ *
+ *   - If we let-evaluate call heap variables, but refuse
+ *     to evaluate any opreations, then we could empty search
+ *     all E-referenced expressions for duplicates.
+ *
+ *   - To share case results, though, we'd need to factor out the
+ *     relevant maximal free expressions.
+ *
+ *   - To share computations between different branches of execution
+ *     DYNAMICALLY, though, we need arrays.
+ *
+ * 3. How can we benefit from partial evaluation, by e.g. changing
+ *    \n.\x.case n of {...} to \n.case n of \x.{...}?
+ *
+ * 4. How could we benefit from switching to the rho-calculus?
+ *
+ * 5. How can we make the model expressions PRINT more clearly?
+ *
+ *    - Suppress printing of mere conversion functions, on the theory
+ *      that functions which convey no information should not be printed?
+ *
+ *    - Suppress "uniform discretization", or develope a stylized form
+ *      of output for it?
+ *
+ *    - show all the {\pi[i]} as just \pi?
+ *
+ *    - *? Allow actual greek letters - i.e. use unicode?
+ *
+ * 6. Could I switch to thunks?
+ *
+ *    - If so, could I keep the Mark 1 machine around?
+ *
+ * 7. Note that for proper lazy calculation of if-expressions, we
+ *    need to be able to share the results across evaluations. This
+ *    requires so-called "fully-lazy" evaluation, either via 
+ *    lambda-lifting, or via completely lazy evaluation.
+ *
+ * 8. I also need to be able to NOT recompute things when the change
+ *    in value is small!
+ *
+ * 9. Finally, implement the Hindley-Milner type system?
  */ 
 
 template <typename T>
