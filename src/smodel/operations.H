@@ -409,14 +409,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      // The input-model should really be a lambda function taking the single value (or first value) p_change
-      boost::shared_ptr<const ModelFunction> F = Args.evaluate_as<ModelFunction>(0);
-      boost::shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(1);
-      
-      return MultiParameterFunction(*F, *D);
-    }
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "MultiParameter";}
 

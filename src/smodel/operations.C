@@ -521,6 +521,21 @@ namespace substitution
     return R;
   }
 
+  // fmap2 :: (b->c)->[(a,b)]->[(a,c)]
+  // fmap2 f [] = []
+  // fmap2 f (p,x):t = (p,(f x)):t
+  //
+  /// fmap2 = \f.\b.case b of {[]->[],h:t->case h of {(p,x)->(p,(f x)):t}}
+
+  shared_ptr<const Object> MultiParameterOp::operator()(OperationArgs& Args) const
+  {
+    // The input-model should really be a lambda function taking the single value (or first value) p_change
+    shared_ptr<const ModelFunction> F = Args.evaluate_as<ModelFunction>(0);
+    shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(1);
+      
+    return MultiParameterFunction(*F, *D);
+  }
+
   MultiModelObject MultiRateFunction(const MultiModelObject& M_, const DiscreteDistribution& D)
   {
     shared_ptr<MultiModelObject> M = ptr(M_);
