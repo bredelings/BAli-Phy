@@ -525,7 +525,18 @@ namespace substitution
   // fmap2 f [] = []
   // fmap2 f (p,x):t = (p,(f x)):t
   //
-  /// fmap2 = \f.\b.case b of {[]->[],h:t->case h of {(p,x)->(p,(f x)):t}}
+  // fmap2 = \f.\b.case b of {[]->[],h:t->case h of {(p,x)->(p,(f x)):(fmap t2)}}
+  //
+  // 1. Begin by using Args.reference(0) and Args.reference(1) as inputs.
+  // 
+  // 2. Begin transforming the smodel objects into s-expressions.
+  //    - How do we handle the fact that C++ routines want to call
+  //      *member functions* of these data types?
+  //
+  //    - I guess I could define constructors for the C++ types from 
+  //      expression_ref, assuming fully evaluated structures.
+  //
+  // 3. 
 
   shared_ptr<const Object> MultiParameterOp::operator()(OperationArgs& Args) const
   {
