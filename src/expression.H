@@ -18,8 +18,6 @@ struct expression_ref;
 /// An array of Objects.
 struct expression: virtual public Object
 {
-  // FIXME - replace args with sub, and make sub[0] = head, sub[i] = args[i-1]
-
   // An expression may or may not have sub-expressions
   std::vector< expression_ref > sub;
 
