@@ -857,6 +857,7 @@ expression_ref let_float(const expression_ref& R)
     // First float lets in sub-expressions
     expression_ref M = let_float(E->sub[2]);
 
+    //FIXME - we don't handle reg_var's here.  However, they should count as variables
     // \x.M : If x is not free in M and M is not a variable, then replace with (let y=M in \x.y)
     if (not includes(get_free_indices(M), *D) and not dynamic_pointer_cast<const dummy>(M))
     {
