@@ -938,7 +938,7 @@ expression_ref let_float(const expression_ref& R)
     T = let_float(T);
     for(int i=0;i<bodies.size();i++)
       bodies[i] = let_float(bodies[i]);
-    
+
     vector<expression_ref> let_vars;
     vector<expression_ref> let_bodies;
     expression_ref let_T;
@@ -957,7 +957,13 @@ expression_ref let_float(const expression_ref& R)
     for(int i=0;i<bodies.size();i++)
       bodies[i] = let_float(bodies[i]);
 
+
+    // Move lets out of T and into vars
     T = move_lets(T,vars,bodies);
+
+    // Move lets out of bodies and into vars
+    for(int i=0;i<bodies.size();i++)
+      bodies[i] = move_lets(bodies[i],vars,bodies);
 
     return let_expression(vars,bodies,T);
   }
