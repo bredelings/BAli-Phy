@@ -941,13 +941,9 @@ expression_ref let_float(const expression_ref& R)
 
     vector<expression_ref> let_vars;
     vector<expression_ref> let_bodies;
-    expression_ref let_T;
-    if (parse_let_expression(T, let_vars, let_bodies, let_T))
-    {
+    T = move_lets(T, let_vars, let_bodies);
 
-    }
-
-    return case_expression(false, T, vars, bodies);
+    return let_expression(let_vars,let_bodies,case_expression(false, T, vars, bodies));
   }
 
   // Let expressions
