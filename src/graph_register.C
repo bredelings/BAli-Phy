@@ -182,6 +182,8 @@ using std::endl;
  *
  * Check that a compute expression of IF(2>1,X,0) simplifies to just X.
  *
+ * Check that we correctly compute the result and also split the graph when computing X*Y with Y=2 and X=Y.
+ *
  * Note that, if a call is not to an E-ancestor of p, then the result should be unchanged.
  *  Idea: For any node whose call is unadjusted, keep the result.
  *        For any node whose call is adjusted by splitting, set that node's result to NULL, and 
@@ -262,6 +264,18 @@ using std::endl;
  *    in value is small!
  *
  * 9. Finally, implement the Hindley-Milner type system?
+ *
+ *
+ * TODO
+ *  (a) Make M8 evaluate function calls via the \-calculus  -> (c)
+ *  (b) Eliminate the old Context -> (d)
+ *  (c) Turn smodel objects into algebraic data types.
+ *      - DiscreteDistribution [(Double,a)] & ExtendDiscreteDistribution 
+ *      - SModelObject
+ *  (d) Completely lazy evaluation=2
+ *  (e) Sharing of sub-expressions=2 (d)
+ *  (f) Efficient evaluation of if statements=2 (d)
+ *  (g) Move eigensystem computation and caching to the new model framework. (e)
  */ 
 
 /*
