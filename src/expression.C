@@ -537,7 +537,7 @@ void remove(std::set<T>& S1, const std::set<T>& S2)
 }
 
 template <typename T>
-std::set<T> intersection(std::set<T>& S1, const std::set<T>& S2)
+std::set<T> intersection(const std::set<T>& S1, const std::set<T>& S2)
 {
   std::set<T> result;
   std::set_intersection(S1.begin(), S1.end(),
