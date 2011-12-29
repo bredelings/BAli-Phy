@@ -787,36 +787,38 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
 
 expression_ref let_float(const expression_ref& R)
 {
+  // 0. NULL
   if (not R) return R;
 
-  // 1. Var
+  // 1. Dummy variable
   if (is_dummy(R))
     return R;
   
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
-  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+  // 2. Literal constants.  Treat as 0-arg constructor.
   if (not E) return R;
   
-  // 2. Lambda
+  // 3. Lambda expressions
   shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
   if (L)
   {
     shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(E->sub[1]);
+    expression_ref M = let_float(E->sub[2]);
 
     // \x.M : If x is not free in M, the replace with (let y=M in \x.y)
-    if (not includes(get_free_indices(E->sub[2]), *D))
+    if (not includes(get_free_indices(M), *D))
     {
       // Create the new dummy y
       expression_ref y(new dummy(get_safe_binder_index(E)));
 
-      return let_expression(y, E->sub[2], lambda_quantify(E->sub[1], y));
+      return let_expression(y, M, lambda_quantify(E->sub[1], y));
     }
 
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
-    if (parse_let_expression(R, vars, bodies, T))
+    if (parse_let_expression(M, vars, bodies, T))
     {
       // Find the free variables
       vector<set<dummy> > free_vars;
@@ -877,6 +879,51 @@ expression_ref let_float(const expression_ref& R)
     return R;
   }
 
+  // Case expressions
+  vector<expression_ref> vars;
+  vector<expression_ref> bodies;
+  expression_ref T;
+  if (parse_case_expression(R,T,vars,bodies))
+  {
+    T = let_float(T);
+    for(int i=0;i<bodies.size();i++)
+      bodies[i] = let_float(bodies[i]);
+    
+    return case_expression(false, T, vars, bodies);
+  }
+
+  // Let expressions
+  if (parse_let_expression(R,vars,bodies,T))
+  {
+    T = let_float(T);
+    for(int i=0;i<bodies.size();i++)
+      bodies[i] = let_float(bodies[i]);
+
+    return let_expression(vars,bodies,T);
+  }
+
+
+  // Handle application, constructors, and operations.
+  if (shared_ptr<const Operator> O =  dynamic_pointer_cast<const Operator>(E->sub[0]))
+  {
+    expression_ref T;
+    {
+      shared_ptr<expression> V ( E->clone() );
+      for(int i=1;i<V->size();i++)
+	V->sub[i] = let_float(V->sub[i]);
+      T = shared_ptr<const expression>(V);
+    }
+
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+
+    for(int i=1;i<E->size();i++)
+    {
+
+    }
+
+    return let_expression(vars,bodies,T);
+  }
   return R;
 }
 
