@@ -283,25 +283,6 @@ using std::endl;
  * onto the stack!
  */
 
-template <typename T>
-bool includes(const std::set<T>& s1, const std::set<T>& s2)
-{
-  return std::includes(s1.begin(), s1.end(), s2.begin(), s2.end());
-}
-
-template <typename T>
-bool includes(const std::set<T>& s1, const T& t)
-{
-  return s1.find(t) != s1.end();
-}
-
-template <typename T,typename U>
-bool includes(const map<T,U>& s1, const T& t)
-{
-  return s1.find(t) != s1.end();
-}
-
-
 expression_ref graph_normalize(const expression_ref& R)
 {
   if (not R) return R;

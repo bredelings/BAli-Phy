@@ -34,6 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <algorithm>
 #include "myexception.H"
 #include <map>
+#include <set>
 #include <typeinfo>
 
 std::string demangle(const std::string&);
@@ -269,6 +270,25 @@ bool includes(const std::vector<T>& v1, const std::vector<T>& v2) {
       return false;
   return true;
 }
+
+template <typename T>
+bool includes(const std::set<T>& s1, const std::set<T>& s2)
+{
+  return std::includes(s1.begin(), s1.end(), s2.begin(), s2.end());
+}
+
+template <typename T>
+bool includes(const std::set<T>& s1, const T& t)
+{
+  return s1.find(t) != s1.end();
+}
+
+template <typename T,typename U>
+bool includes(const std::map<T,U>& s1, const T& t)
+{
+  return s1.find(t) != s1.end();
+}
+
 
 /// Concatenate members of v, separating by char c
 std::string join(const std::vector<std::string>& v,char c);
