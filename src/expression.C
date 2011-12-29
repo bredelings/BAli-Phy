@@ -806,8 +806,8 @@ expression_ref let_float(const expression_ref& R)
     shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(E->sub[1]);
     expression_ref M = let_float(E->sub[2]);
 
-    // \x.M : If x is not free in M, the replace with (let y=M in \x.y)
-    if (not includes(get_free_indices(M), *D))
+    // \x.M : If x is not free in M and M is not a variable, then replace with (let y=M in \x.y)
+    if (not includes(get_free_indices(M), *D) and not dynamic_pointer_cast<const dummy>(M))
     {
       // Create the new dummy y
       expression_ref y(new dummy(get_safe_binder_index(E)));
