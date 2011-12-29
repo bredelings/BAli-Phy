@@ -472,6 +472,9 @@ namespace substitution
     return R;
   }
 
+  // ExtendDiscreteDistribution (DiscreteDistribution (p1,x1):t) p x = DiscreteDistribution (p,x):(fmap1 \p2->((1.0-p)*p2) t)
+  //     where fmap1 f [] = []
+  //           fmap1 f (p,x):t = (f p,x):t
   shared_ptr<DiscreteDistribution> ExtendDiscreteDistributionFunction(const DiscreteDistribution& D,const expression_ref& V, const Double& p)
   {
     shared_ptr<DiscreteDistribution> D2(new DiscreteDistribution(D.size()+1));
