@@ -949,10 +949,20 @@ expression_ref let_float(const expression_ref& R)
   // Let expressions
   if (parse_let_expression(R,vars,bodies,T))
   {
+    // Float lets in sub-expressions
     T = let_float(T);
     for(int i=0;i<bodies.size();i++)
       bodies[i] = let_float(bodies[i]);
 
+    // Return just T if T doesn't mention any of the let variables
+    {
+      set<dummy> free_vars_T = get_free_indices(T);
+      set<dummy> bound_vars_let;
+      for(int i=0;i<vars.size();i++)
+	bound_vars_let.insert(*dynamic_pointer_cast<const dummy>(vars[i]));
+
+      if (intersection(bound_vars_let, free_vars_T).empty()) return T;
+    }
 
     // Move lets out of T and into vars
     T = move_lets(T,vars,bodies);
