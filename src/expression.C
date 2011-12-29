@@ -854,6 +854,7 @@ expression_ref let_float(const expression_ref& R)
   if (L)
   {
     shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(E->sub[1]);
+    // First float lets in sub-expressions
     expression_ref M = let_float(E->sub[2]);
 
     // \x.M : If x is not free in M and M is not a variable, then replace with (let y=M in \x.y)
@@ -935,6 +936,7 @@ expression_ref let_float(const expression_ref& R)
   expression_ref T;
   if (parse_case_expression(R,T,vars,bodies))
   {
+    // First float lets in sub-expressions
     T = let_float(T);
     for(int i=0;i<bodies.size();i++)
       bodies[i] = let_float(bodies[i]);
@@ -949,7 +951,7 @@ expression_ref let_float(const expression_ref& R)
   // Let expressions
   if (parse_let_expression(R,vars,bodies,T))
   {
-    // Float lets in sub-expressions
+    // First float lets in sub-expressions
     T = let_float(T);
     for(int i=0;i<bodies.size();i++)
       bodies[i] = let_float(bodies[i]);
@@ -978,7 +980,7 @@ expression_ref let_float(const expression_ref& R)
   // 5. Handle application, constructors, and operations.
   if (shared_ptr<const Operator> O =  dynamic_pointer_cast<const Operator>(E->sub[0]))
   {
-    // let_float the arguments
+    // First float lets in sub-expressions
     shared_ptr<expression> V ( E->clone() );
     for(int i=1;i<V->size();i++)
       V->sub[i] = let_float(V->sub[i]);
