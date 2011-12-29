@@ -185,7 +185,7 @@ double getSimilarity(double t,const substitution::MultiModelObject& SM)
 
   for(int m=0;m<SM.n_base_models();m++) {
     // We can't use models with more than one part
-    Matrix Q = SM.transition_p(t,0,m);
+    Matrix Q = SM.transition_p(t,m);
     double Sm = 0;
     for(int i=0;i<Q.size1();i++)
       Sm += SM.base_model(m).frequencies()[i]*Q(i,i);

@@ -148,46 +148,6 @@ namespace substitution
     ReversibleAdditiveObject(const alphabet& a, int n);
   };
 
-  class ReversibleAdditiveCollectionObject: virtual public Object
-  {
-  protected:
-    std::vector< polymorphic_cow_ptr<ReversibleAdditiveObject> > parts;
-
-  public:
-    virtual ReversibleAdditiveCollectionObject* clone() const {return new ReversibleAdditiveCollectionObject(*this);}
-
-    boost::shared_ptr<const alphabet> get_alphabet() const;
-
-    const alphabet& Alphabet() const {return *get_alphabet();}
-
-    const std::vector<unsigned>& state_letters() const;
-    
-    unsigned n_states() const {return state_letters().size();}
-
-    /// How many different models do we contain?
-    int n_parts() const;
-
-    /// Return the i-th branch model
-    const ReversibleAdditiveObject& part(int i) const;
-    /// Return the i-th branch model
-          ReversibleAdditiveObject& part(int i);
-
-    double rate() const;
-    void set_rate(double);
-
-    /// The transition probability matrix over time t for the i-th branch model
-    Matrix transition_p(double t,int i) const;
-
-    /// Get the equilibrium frequencies.  Currently all branch models must have the same frequencies.
-    std::valarray<double> frequencies() const;
-
-    ReversibleAdditiveCollectionObject() {};
-
-    ReversibleAdditiveCollectionObject(const ReversibleAdditiveObject& O)
-      :parts(1,ptr(O))
-    {}
-  };
-
   class ReversibleMarkovModelObject: public ReversibleAdditiveObject
   {
   protected:
@@ -276,7 +236,7 @@ namespace substitution
   public:
     boost::shared_ptr<const alphabet> a;
 
-    std::vector< polymorphic_cow_ptr<ReversibleAdditiveCollectionObject> > base_models;
+    std::vector< polymorphic_cow_ptr<ReversibleAdditiveObject> > base_models;
 
     std::vector< double > fraction;
 
@@ -293,12 +253,9 @@ namespace substitution
     int n_base_models() const {return base_models.size();}
     void resize(int i);
 
-    /// The number of different branch models per components
-    int n_parts() const;
-
     /// Access the base models
-    const ReversibleAdditiveCollectionObject& base_model(int m) const {return *base_models[m];}
-          ReversibleAdditiveCollectionObject& base_model(int m)       {return *base_models[m];}
+    const ReversibleAdditiveObject& base_model(int m) const {return *base_models[m];}
+          ReversibleAdditiveObject& base_model(int m)       {return *base_models[m];}
 
     /// Get the probability of each base models
     const std::vector<double>& distribution() const {return fraction;}
@@ -313,7 +270,7 @@ namespace substitution
     Matrix transition_p(double t) const;
 
     /// Get a transition probability matrix for time 't' and model 'm'
-    Matrix transition_p(double t,int i, int m) const {return base_model(m).transition_p(t,i);}
+    Matrix transition_p(double t,int m) const {return base_model(m).transition_p(t);}
 
     MultiModelObject();
 

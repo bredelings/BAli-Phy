@@ -151,7 +151,7 @@ namespace substitution
     formula_expression_ref INV = INV_for_Mixture(R);
     expression_ref F;
     //    INV = Q_from_S_and_R(INV,F);
-    INV = Unit_Mixture(Unit_Collection(INV));
+    INV = Unit_Mixture(INV);
 
     return Mixture_E(Cons(1.0-p,Cons(P,ListEnd)), Cons(R,Cons(INV,ListEnd)));
   }
@@ -420,16 +420,8 @@ namespace substitution
     return Reversible_Markov_Model(S,Plus_gwF_Model(a,pi));
   }
 
-  shared_ptr<ReversibleAdditiveCollectionObject>
-  Unit_Collection_Function(const shared_ptr<const ReversibleAdditiveObject>& O)
-  {
-    return shared_ptr<ReversibleAdditiveCollectionObject>(new ReversibleAdditiveCollectionObject(* O) );
-  }
-
-  expression_ref Unit_Collection = lambda_expression( Unit_Collection_Op() );
-
   shared_ptr<MultiModelObject>
-  Unit_Mixture_Function(const shared_ptr<const ReversibleAdditiveCollectionObject>& O)
+  Unit_Mixture_Function(const shared_ptr<const ReversibleAdditiveObject>& O)
   {
     shared_ptr<MultiModelObject> R (new MultiModelObject);
 
@@ -449,8 +441,6 @@ namespace substitution
   formula_expression_ref Unit_Model(const formula_expression_ref& R)
   {
     formula_expression_ref R2 = R;
-
-    R2 = Unit_Collection(R2);
 
     R2 = Unit_Mixture(R2);
 
@@ -613,7 +603,7 @@ namespace substitution
     unsigned T = 0;
     for(int m=0; m < M.n_base_models(); m++) 
     {
-      const ReversibleMarkovModelObject* RM = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m).part(0));
+      const ReversibleMarkovModelObject* RM = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m));
       if (not RM)
 	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model"; // what is the name?
       T += RM->n_states();
@@ -658,7 +648,7 @@ namespace substitution
     T=0;
     for(int m=0; m < n_models; m++) 
     {
-      const ReversibleMarkovModelObject* RM = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m).part(0));
+      const ReversibleMarkovModelObject* RM = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m));
       if (not RM)
 	throw myexception()<<"Can't construct a modulated Markov model from non-Markov model"; // what is the name?
 
@@ -675,13 +665,13 @@ namespace substitution
     unsigned T1=0;
     for(int m1=0; m1 < n_models; m1++) 
     {
-      const ReversibleMarkovModelObject* RM1 = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m1).part(0));
+      const ReversibleMarkovModelObject* RM1 = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m1));
       unsigned N1 = RM1->n_states();
 
       unsigned T2=0;
       for(int m2=0; m2 < n_models; m2++) 
       {
-	const ReversibleMarkovModelObject* RM2 = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m2).part(0));
+	const ReversibleMarkovModelObject* RM2 = dynamic_cast<const ReversibleMarkovModelObject*>(&M.base_model(m2));
 	unsigned N2 = RM2->n_states();
 	assert(N1 == N2);
 

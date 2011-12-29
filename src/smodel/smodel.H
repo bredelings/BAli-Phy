@@ -656,67 +656,6 @@ namespace substitution {
     }
   };
 
-  /// Class for a collection of models that could be used on different branches of the tree.
-  class ReversibleAdditiveCollection: virtual public Model, 
-				      virtual public AdditiveModel
-  {
-  public:
-    boost::shared_ptr<const alphabet> get_alphabet() const 
-    {
-      return result_as<ReversibleAdditiveCollectionObject>()->get_alphabet();
-    }
-
-    virtual ReversibleAdditiveCollection* clone() const=0;
-
-    virtual ~ReversibleAdditiveCollection() {}
-  };
-
-  class BranchSiteCollection: public ReversibleAdditiveCollection, public SuperModel
-  {
-    mutable std::vector< owned_ptr<AlphabetExchangeModel> > S;
-    
-    mutable owned_ptr<ReversibleFrequencyModel> R;
-
-    mutable std::vector<owned_ptr<ReversibleMarkovSuperModel> > P;
-
-    boost::shared_ptr<const Object> result() const;
-
-    int n_submodels() const;
-
-    const ::Model& SubModels(int) const ;
-
-          ::Model& SubModels(int);
-
-  public:
-    BranchSiteCollection* clone() const {return new BranchSiteCollection(*this);}
-
-    std::string name() const;
-
-    BranchSiteCollection(const std::vector<AlphabetExchangeModel>& S1, const ReversibleFrequencyModel& R1);
-  };
-
-  /// A multi-branch model with only 1 part.
-  class SimpleReversibleAdditiveCollection: public ReversibleAdditiveCollection,
-					    public SuperModelOver< ::Model>
-  {
-  public:
-    virtual SimpleReversibleAdditiveCollection* clone() const {return new SimpleReversibleAdditiveCollection(*this);}
-
-          ::Model& SubModel()       {return SubModels(0); }
-
-    const ::Model& SubModel() const {return SubModels(0); }
-
-    boost::shared_ptr<const Object> result() const;
-
-    void update() { }
-
-    std::string name() const;
-    
-    SimpleReversibleAdditiveCollection(const ::Model& t);
-
-    virtual ~SimpleReversibleAdditiveCollection() {}
-  };
-
   //----------------------- MultiModel ---------------------------*/
 
   class MultiModel: public ReversibleAdditiveModel

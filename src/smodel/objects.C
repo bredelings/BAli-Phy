@@ -274,56 +274,6 @@ namespace substitution
 	Q(i,j) = (pi[j] - ((i==j)?1:0))*alpha_;
   }
 
-  shared_ptr<const alphabet> ReversibleAdditiveCollectionObject::get_alphabet() const 
-  {
-    return part(0).get_alphabet();
-  }
-
-  int ReversibleAdditiveCollectionObject::n_parts() const
-  {
-    return parts.size();
-  }
-
-  const ReversibleAdditiveObject& ReversibleAdditiveCollectionObject::part(int i) const
-  {
-    return *parts[i];
-  }
-
-  ReversibleAdditiveObject& ReversibleAdditiveCollectionObject::part(int i)
-  {
-    return *parts[i];
-  }
-
-  const vector<unsigned>& ReversibleAdditiveCollectionObject::state_letters() const
-  {
-    return part(0).state_letters();
-  }
-
-  double ReversibleAdditiveCollectionObject::rate() const
-  {
-    // FIXME... (see below)
-    if (n_parts() > 1) std::abort();
-
-    // Does this really work?
-    return part(0).rate();
-  }
-
-  void ReversibleAdditiveCollectionObject::set_rate(double r)
-  {
-    for(int i=0;i<n_parts();i++)
-      return part(i).set_rate(r);
-  }
-
-  Matrix ReversibleAdditiveCollectionObject::transition_p(double t, int i) const
-  {
-    return part(i).transition_p(t);
-  }
-
-  valarray<double> ReversibleAdditiveCollectionObject::frequencies() const
-  {
-    return part(0).frequencies();
-  }
-
   int DiscreteDistribution::size() const
   {
     assert(fraction.size() == values.size());
@@ -356,12 +306,6 @@ namespace substitution
     base_models.resize(s);
   }
 
-  int MultiModelObject::n_parts() const
-  {
-    // This should be the same for all base models.
-    return base_model(0).n_parts();
-  }
-
   double MultiModelObject::rate() const {
     double r=0;
     for(int m=0;m<n_base_models();m++)
@@ -378,9 +322,9 @@ namespace substitution
 
   // This is per-branch, per-column - doesn't pool info about each branches across columns
   Matrix MultiModelObject::transition_p(double t) const {
-    Matrix P = distribution()[0] * transition_p(t,0,0);
+    Matrix P = distribution()[0] * transition_p(t,0);
     for(int m=1;m<n_base_models();m++)
-      P += distribution()[m] * transition_p(t,0,m);
+      P += distribution()[m] * transition_p(t,m);
     return P;
   }
 

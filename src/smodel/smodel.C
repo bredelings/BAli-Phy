@@ -1044,86 +1044,11 @@ namespace substitution {
 
   M0::~M0() {}
 
-  //--------------- MultiBranch Models --------------//
-
-  shared_ptr<const Object> SimpleReversibleAdditiveCollection::result() const
-  {
-    shared_ptr<const ReversibleAdditiveObject> O = SubModel().result_as<ReversibleAdditiveObject>();
-    return Unit_Collection_Function(O);
-  }
-
-  string SimpleReversibleAdditiveCollection::name() const {
-    return "{"+SubModel().name()+"}";
-  }
-    
-  SimpleReversibleAdditiveCollection::SimpleReversibleAdditiveCollection(const ::Model& t)
-  {
-    insert_submodel("0",t);
-  }
-
-  //------------ A Branch/Site Model ----------------//
-
-  boost::shared_ptr<const Object> BranchSiteCollection::result() const
-  {
-    P.resize(S.size());
-    for(int i=0;i<S.size();i++)
-      P[i] = ReversibleMarkovSuperModel(*S[i],*R);
-    std::abort();
-  }
-
-  int BranchSiteCollection::n_submodels() const
-  {
-    return S.size() + 1;
-  }
-
-  const ::Model& BranchSiteCollection::SubModels(int i) const
-  {
-    if (i<S.size())
-      return *S[i];
-    else if (i==S.size())
-      return *R;
-    else
-      std::abort();
-  }
-  
-       ::Model& BranchSiteCollection::SubModels(int i)
-  {
-    if (i<S.size())
-      return *S[i];
-    else if (i==S.size())
-      return *R;
-    else
-      std::abort();
-  }
-  
-  string BranchSiteCollection::name() const
-  {
-    vector<string> names;
-    for(int i=0;i<S.size();i++)
-      names.push_back(S[i]->name());
-
-    return "{"+join(names,",") + "}+" + R->name();
-  }
-
-  BranchSiteCollection::BranchSiteCollection(const vector<AlphabetExchangeModel>& S1, const ReversibleFrequencyModel& R1)
-  {
-    for(int i=0;i<S1.size();i++)
-    {
-      string name = convertToString(i+1);
-
-      register_submodel(name);
-    }
-
-    register_submodel("R");
-
-    recalc_all();
-  }
-
   //--------------- MultiRate Models ----------------//
 
   shared_ptr<const Object> UnitModel::result() const
   {
-    shared_ptr<const ReversibleAdditiveCollectionObject> sub = SubModel().result_as<const ReversibleAdditiveCollectionObject>();
+    shared_ptr<const ReversibleAdditiveObject> sub = SubModel().result_as<const ReversibleAdditiveObject>();
 
     return Unit_Mixture_Function(sub);
   }
@@ -1134,13 +1059,7 @@ namespace substitution {
 
   UnitModel::UnitModel(const ::Model& M)
   {
-    if (M.result_as<ReversibleAdditiveObject>())
-    {
-      SimpleReversibleAdditiveCollection M2(M);
-      insert_submodel("0",M2);
-    }
-    else
-      insert_submodel("0",M);
+    insert_submodel("0",M);
   }
 
   //---------------------- MultiFrequencyModel -----------------------//
@@ -1200,7 +1119,7 @@ namespace substitution {
       // get a new copy of the sub-model and set the frequencies
       owned_ptr<ReversibleMarkovModelObject> Mm = *M;
       Mm->pi = fm; // wait... this doesn't adjust Q!  We need to separate the ExchangeModel and the FrequencyModel
-      R->base_models[m] = const_ptr( ReversibleAdditiveCollectionObject( *Mm ) );
+      R->base_models[m] = const_ptr( *Mm );
     }
 
     return R;
@@ -1314,7 +1233,7 @@ namespace substitution {
 	f_ordered[letter[j]] = f[j];
 
       M->fraction.push_back(prior_fraction[i]);
-      M->base_models.push_back(SimpleReversibleAdditiveCollection(F81_Model(a,f_ordered)).result_as<const ReversibleAdditiveCollectionObject>() );
+      M->base_models.push_back(F81_Model(a,f_ordered).result_as<const ReversibleAdditiveObject>() );
 
       M->base_models.back()->set_rate(1);
     }
@@ -1591,8 +1510,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     // do not messing with submodel instead of going through top model
     SimpleReversibleMarkovModel INV2(INV_Model(M->Alphabet()), M->frequencies());
-    SimpleReversibleAdditiveCollection INV3(INV2);
-    R->base_models.back() = INV3.result_as<const ReversibleAdditiveCollectionObject>();
+    R->base_models.back() = INV2.result_as<const ReversibleAdditiveObject>();
 
     return R;
   }

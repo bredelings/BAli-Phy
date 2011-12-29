@@ -510,7 +510,7 @@ namespace substitution {
 
     vector<const F81_Object*> SubModels(n_models);
     for(int m=0;m<n_models;m++) {
-      SubModels[m] = static_cast<const F81_Object*>(&MModel.base_model(m).part(0));
+      SubModels[m] = static_cast<const F81_Object*>(&MModel.base_model(m));
       assert(SubModels[m]);
     }
     const double t = T.directed_branch(b0).length();
@@ -855,7 +855,7 @@ namespace substitution {
     
     vector<const F81_Object*> SubModels(n_models);
     for(int m=0;m<n_models;m++) {
-      SubModels[m] = static_cast<const F81_Object*>(&MModel.base_model(m).part(0));
+      SubModels[m] = static_cast<const F81_Object*>(&MModel.base_model(m));
       assert(SubModels[m]);
     }
     const double t = T.directed_branch(b0).length();

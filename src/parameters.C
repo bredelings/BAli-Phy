@@ -122,7 +122,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   
   if (not cached_transition_P[b].is_valid())
   {
-    int C = get_branch_subst_category(b);
+    //FIXME - int C = get_branch_subst_category(b);
 
     double l = T->branch(b).length() * branch_mean() / SModel().rate();
     assert(l >= 0);
@@ -131,7 +131,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
     const int n_models = SModel().n_base_models();
     for(int m=0;m<n_models;m++)
     {
-      TP[m] = SModel().transition_p(l,C,m);
+      TP[m] = SModel().transition_p(l,m);
     }
     cached_transition_P[b].validate();
   }
