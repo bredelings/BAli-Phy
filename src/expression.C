@@ -929,7 +929,7 @@ expression_ref let_float(const expression_ref& R)
     return R;
   }
 
-  // Case expressions
+  // 4. Case expressions
   vector<expression_ref> vars;
   vector<expression_ref> bodies;
   expression_ref T;
@@ -957,11 +957,13 @@ expression_ref let_float(const expression_ref& R)
     for(int i=0;i<bodies.size();i++)
       bodies[i] = let_float(bodies[i]);
 
+    T = move_lets(T,vars,bodies);
+
     return let_expression(vars,bodies,T);
   }
 
 
-  // Handle application, constructors, and operations.
+  // 5. Handle application, constructors, and operations.
   if (shared_ptr<const Operator> O =  dynamic_pointer_cast<const Operator>(E->sub[0]))
   {
     // let_float the arguments
