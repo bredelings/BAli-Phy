@@ -786,53 +786,157 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
     do_substitute(E1->sub[i], D, R2);
 }
 
-expression_ref move_lets(const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies)
+bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars, const vector<expression_ref>& let_bodies,
+					 const set<dummy>& bound,
+					 vector<int>& bound_indices, vector<int>& unbound_indices)
+{
+  set<dummy> let_bound;
+  for(int i=0;i<let_vars.size();i++)
+    let_bound.insert(*dynamic_pointer_cast<const dummy>(let_vars[i]));
+
+  // Find the set of bound variables that could be free in let_bodies
+  set<dummy> visible_bound = bound;
+  foreach(i, let_bound)
+    visible_bound.erase(*i);
+
+  vector< set<dummy> > free_vars;
+  for(int i=0;i<let_bodies.size();i++)
+    free_vars.push_back( get_free_indices( let_bodies[i] ) );
+
+  bound_indices.clear();
+  unbound_indices.clear();
+  for(int i=0;i<let_bodies.size();i++)
+    unbound_indices.push_back(i);
+
+  // Find the indices that are not bound (directly or indirectly) by the bound variables
+  set<dummy> new_bound = visible_bound;
+  while (not new_bound.empty())
+  {
+    set<dummy> new_bound_next;
+    for(int i=unbound_indices.size()-1;i>=0;i--)
+    {
+      int index = unbound_indices[i];
+      if (includes(free_vars[index], new_bound))
+      {
+	new_bound_next.insert(*dynamic_pointer_cast<const dummy>(let_vars[index]));
+	bound_indices.push_back(index);
+	unbound_indices.erase( unbound_indices.begin() + i);
+      }
+    }
+    new_bound = new_bound_next;
+  }
+
+  return (not unbound_indices.empty());
+}
+
+/// Given let vars=bodies in (<binder bound> (let R_vars=R_bodies in T)), 
+///  move some of the R_vars=R_bodies up to vars=bodies.
+expression_ref move_lets(const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies,
+			 const set<dummy>& bound, const set<dummy>& free)
 {
   assert(vars.size() == bodies.size());
 
   vector<expression_ref> R_vars;
   vector<expression_ref> R_bodies;
-  expression_ref R2;
-  if (not parse_let_expression(R, R_vars, R_bodies, R2)) return R;
+  expression_ref R2 = R;
 
-  set<dummy> R_bound_vars = get_bound_indices(R);
+  if (not parse_let_expression(R, R_vars, R_bodies, R2))
+    R2 = R;
 
   // Find the set of variables to avoid renaming over.
-  set<dummy> free_vars;
+  set<dummy> avoid = free;
   for(int i=0;i<vars.size();i++)
   {
-    free_vars.insert(*dynamic_pointer_cast<const dummy>(vars[i]));
-    add(free_vars, get_free_indices(bodies[i]));
+    avoid.insert(*dynamic_pointer_cast<const dummy>(vars[i]));
+    add(avoid, get_free_indices(bodies[i]));
   }
+  add(avoid, bound);
 
-  // alpha-rename R
-  int new_index = std::max( max_index(free_vars), max_index(R_bound_vars) ) + 1;
-  
-  shared_ptr<expression> RR ( dynamic_pointer_cast<const expression>(R)->clone() );
+  int new_index = max_index(avoid) + 1;
+    
 
-  foreach(D, R_bound_vars)
+  // Determine which of the let-statements in R we can float.
+  vector<int> unbound_indices;
+  vector<int> bound_indices;
+  if (find_let_statements_with_bound_vars(R_vars, R_bodies, bound, bound_indices, unbound_indices))
   {
-    if (includes(free_vars,*D))
+    // Renaming shouldn't hit any of the other let-binder-variables in R
+    for(int i=0;i<R_vars.size();i++)
     {
-        alpha_rename(RR, *D, dummy(new_index++));
+      dummy D = *dynamic_pointer_cast<const dummy>(R_vars[i]);
+      avoid.insert(D);
     }
-  }
+    
+    // alpha-rename R
+    new_index = max_index(avoid) + 1;
+    
+    
+    shared_ptr<expression> RR ( dynamic_pointer_cast<const expression>(R)->clone() );
+    
+    for(int i=0;i<unbound_indices.size();i++)
+    {
+      int index = unbound_indices[i];
+      dummy D = *dynamic_pointer_cast<const dummy>(R_vars[index]);
+      if (includes(avoid, D))
+	alpha_rename(RR, D, dummy(new_index++));
+    }
   
-  R_vars.clear();
-  R_bodies.clear();
-  parse_let_expression(shared_ptr<const expression>(RR), R_vars, R_bodies, R2);
+    R_vars.clear();
+    R_bodies.clear();
+    parse_let_expression(shared_ptr<const expression>(RR), R_vars, R_bodies, R2);
+    
+    // Add the alpha-renamed versions of the unbound vars/bodies to the higher-level environment
+    for(int i=0;i<unbound_indices.size();i++)
+    {
+      int index = unbound_indices[i];
+#ifndef NDEBUG
+      dummy rv = *dynamic_pointer_cast<const dummy>(R_vars[index]);
+      
+      for(int j=0;j<vars.size();j++)
+	assert(not includes(avoid, rv));
+      
+      avoid.insert(rv);
+#endif
+      vars.push_back(R_vars[index]);
+      bodies.push_back(R_bodies[index]);
+    }
 
-  for(int i=0;i<R_vars.size();i++)
-  {
-    dummy rv = *dynamic_pointer_cast<const dummy>(R_vars[i]);
-    for(int j=0;j<vars.size();j++)
-      assert(not includes(free_vars, rv));
-    free_vars.insert(rv);
-    vars.push_back(R_vars[i]);
-    bodies.push_back(R_bodies[i]);
+    // Construct the remainder expression
+    vector<expression_ref> R_vars2;
+    vector<expression_ref> R_bodies2;
+    for(int i=0;i<bound_indices.size();i++)
+    {
+      int index = bound_indices[i];
+      
+      R_vars2.push_back(R_vars[index]);
+      R_bodies2.push_back(R_bodies[index]);
+    }
+
+    R2 = let_expression(R_vars2, R_bodies2, R2);
   }
 
-  return R2;
+  if ((not bound.empty()) and intersection(get_free_indices(R2), bound).empty() and not dynamic_pointer_cast<const dummy>(R2))
+  {
+    dummy D(new_index++);
+    vars.push_back( D );
+    bodies.push_back( R2 );
+    return D;
+  }
+  else
+    return R2;
+}
+
+expression_ref move_lets(const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies,
+			 const set<dummy>& bound)
+{
+  set<dummy> free;
+  return move_lets(R, vars, bodies, bound, free);
+}
+
+expression_ref move_lets(const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies)
+{
+  set<dummy> bound;
+  return move_lets(R, vars, bodies, bound);
 }
 
 expression_ref let_float(const expression_ref& R)
@@ -853,82 +957,19 @@ expression_ref let_float(const expression_ref& R)
   shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
   if (L)
   {
-    shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(E->sub[1]);
     // First float lets in sub-expressions
     expression_ref M = let_float(E->sub[2]);
 
-    //FIXME - we don't handle reg_var's here.  However, they should count as variables
-    // \x.M : If x is not free in M and M is not a variable, then replace with (let y=M in \x.y)
-    if (not includes(get_free_indices(M), *D) and not dynamic_pointer_cast<const dummy>(M))
-    {
-      // Create the new dummy y
-      expression_ref y(new dummy(get_safe_binder_index(E)));
-
-      return let_expression(y, M, lambda_quantify(E->sub[1], y));
-    }
-
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
-    expression_ref T;
-    if (parse_let_expression(M, vars, bodies, T))
-    {
-      // Find the free variables
-      vector<set<dummy> > free_vars;
-      for(int i=0;i<bodies.size();i++)
-	free_vars[i] = get_free_indices(bodies[i]);
 
-      // Find which one's don't mention x
-      vector<int> no_free_x;
-      set<dummy> free_x_dummies;
-      vector<int> free_x;
-      for(int i=0;i<bodies.size();i++)
-	if (not includes(free_vars[i],*D))
-	  no_free_x.push_back(i);
-	else
-	{
-	  free_x_dummies.insert(*dynamic_pointer_cast<const dummy>(vars[i]));
-	  free_x.push_back(i);
-	}
+    set<dummy> bound;
+    dummy D = *dynamic_pointer_cast<const dummy>(E->sub[1]);
+    bound.insert(D);
 
-      // Remove vars from no_free_x and put them in free_x_dummies if they are connected to vars that mention x
-      bool no_change = false;
-      while (no_change)
-      {
-	no_change = true;
-	for(int i=bodies.size()-1;i>=0;i--)
-	{
-	  int index = no_free_x[i];
-	  if (includes(free_vars[index], free_x_dummies))
-	  {
-	    no_change = false;
-	    free_x_dummies.insert(*dynamic_pointer_cast<const dummy>(vars[index]));
-	    free_x.push_back(index);
-	    no_free_x.erase(no_free_x.begin() + i);
-	  }
-	}
-      }
-      vector<expression_ref> no_free_x_vars;
-      vector<expression_ref> no_free_x_bodies;
+    M = move_lets(M, vars, bodies, bound);
 
-      for(int i=0;i<no_free_x.size();i++)
-      {
-	no_free_x_vars.push_back(vars[no_free_x[i]]);
-	no_free_x_bodies.push_back(bodies[no_free_x[i]]);
-      }
-
-      vector<expression_ref> free_x_vars;
-      vector<expression_ref> free_x_bodies;
-
-      for(int i=0;i<free_x.size();i++)
-      {
-	free_x_vars.push_back(vars[free_x[i]]);
-	free_x_bodies.push_back(bodies[free_x[i]]);
-      }
-
-      return let_expression(no_free_x_vars, no_free_x_bodies, lambda_quantify(E->sub[1], let_expression(free_x_vars,free_x_bodies,T)));
-    }
-
-    return R;
+    return let_expression(vars, bodies, lambda_quantify(D, M) );
   }
 
   // 4. Case expressions
