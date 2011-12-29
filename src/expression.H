@@ -197,6 +197,7 @@ expression_ref apply_expression(const expression_ref& E, const std::vector< expr
 
 expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int dummy_index, const expression_ref& R);
+expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& R);
 
 // FIXME - If we're substituting a lambda expression we have to rename its dummys to make sure
 //         there is no overlap.
@@ -486,6 +487,8 @@ expression_ref def_function(bool decompose, const std::vector<expression_ref>& p
 
 expression_ref launchbury_normalize(const expression_ref& R);
 expression_ref launchbury_unnormalize(const expression_ref& R);
+
+expression_ref let_float(const expression_ref&);
 
 expression_ref evaluate_mark1(const expression_ref& R);
 

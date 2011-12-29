@@ -408,6 +408,14 @@ expression_ref lambda_quantify(int dummy_index, const expression_ref& R)
   return E;
 }
 
+expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& R)
+{
+  expression* E = new expression(lambda());
+  E->sub.push_back(dummy);
+  E->sub.push_back(R);
+  return E;
+}
+
 expression_ref lambda_expression(const Operator& O)
 {
   int n = O.n_args();
@@ -775,6 +783,101 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
   // Since this is an expression, substitute into sub-expressions
   for(int i=0;i<E1->size();i++)
     do_substitute(E1->sub[i], D, R2);
+}
+
+expression_ref let_float(const expression_ref& R)
+{
+  if (not R) return R;
+
+  // 1. Var
+  if (is_dummy(R))
+    return R;
+  
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
+  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+  if (not E) return R;
+  
+  // 2. Lambda
+  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  if (L)
+  {
+    shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(E->sub[1]);
+
+    // \x.M : If x is not free in M, the replace with (let y=M in \x.y)
+    if (not includes(get_free_indices(E->sub[2]), *D))
+    {
+      // Create the new dummy y
+      expression_ref y(new dummy(get_safe_binder_index(E)));
+
+      return let_expression(y, E->sub[2], lambda_quantify(E->sub[1], y));
+    }
+
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+    if (parse_let_expression(R, vars, bodies, T))
+    {
+      // Find the free variables
+      vector<set<dummy> > free_vars;
+      for(int i=0;i<bodies.size();i++)
+	free_vars[i] = get_free_indices(bodies[i]);
+
+      // Find which one's don't mention x
+      vector<int> no_free_x;
+      set<dummy> free_x_dummies;
+      vector<int> free_x;
+      for(int i=0;i<bodies.size();i++)
+	if (not includes(free_vars[i],*D))
+	  no_free_x.push_back(i);
+	else
+	{
+	  free_x_dummies.insert(*dynamic_pointer_cast<const dummy>(vars[i]));
+	  free_x.push_back(i);
+	}
+
+      // Remove vars from no_free_x and put them in free_x_dummies if they are connected to vars that mention x
+      bool no_change = false;
+      while (no_change)
+      {
+	no_change = true;
+	for(int i=bodies.size()-1;i>=0;i--)
+	{
+	  int index = no_free_x[i];
+	  if (includes(free_vars[index], free_x_dummies))
+	  {
+	    no_change = false;
+	    free_x_dummies.insert(*dynamic_pointer_cast<const dummy>(vars[index]));
+	    free_x.push_back(index);
+	    no_free_x.erase(no_free_x.begin() + i);
+	  }
+	}
+      }
+      vector<expression_ref> no_free_x_vars;
+      vector<expression_ref> no_free_x_bodies;
+
+      for(int i=0;i<no_free_x.size();i++)
+      {
+	no_free_x_vars.push_back(vars[no_free_x[i]]);
+	no_free_x_bodies.push_back(bodies[no_free_x[i]]);
+      }
+
+      vector<expression_ref> free_x_vars;
+      vector<expression_ref> free_x_bodies;
+
+      for(int i=0;i<free_x.size();i++)
+      {
+	free_x_vars.push_back(vars[free_x[i]]);
+	free_x_bodies.push_back(bodies[free_x[i]]);
+      }
+
+      return let_expression(no_free_x_vars, no_free_x_bodies, lambda_quantify(E->sub[1], let_expression(free_x_vars,free_x_bodies,T)));
+    }
+
+    return R;
+  }
+
+  return R;
 }
 
 expression_ref substitute(const expression_ref& R1, const expression_ref& D, const expression_ref& R2)
