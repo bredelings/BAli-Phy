@@ -620,7 +620,7 @@ void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
   assert(reg_is_owned_by(P,token));
 
   // Normalize the inputs expression
-  expression_ref O = graph_normalize(OO);
+  expression_ref O = let_float(graph_normalize(OO));
 
   // Split this reg and its E-ancestors out from other graphs, if its shared.
   P = uniquify_reg(P,token);
@@ -1729,7 +1729,7 @@ shared_ptr<const Object> context::evaluate(int index) const
 shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref& E) const
 {
   int R = *push_temp_head();
-  set_E(R, graph_normalize(translate_refs(E)) );
+  set_E(R, let_float(graph_normalize(translate_refs(E)) ));
 
   R = incremental_evaluate(R);
   shared_ptr<const Object> result = access(R).result;
@@ -1741,7 +1741,7 @@ shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref&
 shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) const
 {
   int R = *push_temp_head();
-  set_E(R, graph_normalize(translate_refs(E)) );
+  set_E(R, let_float(graph_normalize(translate_refs(E)) ));
 
   expression_ref result = full_evaluate(R);
 
@@ -1850,7 +1850,9 @@ int context::add_compute_expression(const expression_ref& E)
 {
   std::cerr<<"add: "<<E->print()<<"\n";
 
-  expression_ref T = graph_normalize(translate_refs(E) );
+  expression_ref T = let_float(graph_normalize(translate_refs(E) ));
+
+  std::cerr<<"add: "<<T->print()<<"\n";
 
   root_t r;
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))

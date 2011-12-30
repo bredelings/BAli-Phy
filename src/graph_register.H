@@ -469,4 +469,6 @@ boost::shared_ptr<context> prefix_formula(const std::string&, const boost::share
 std::vector<expression_ref> combine(const std::vector<expression_ref>& N1, const std::vector<expression_ref>& N2);
 
 std::ostream& operator<<(std::ostream&, const context& C);
+
+expression_ref graph_normalize(const expression_ref& R);
 #endif
