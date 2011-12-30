@@ -2238,18 +2238,22 @@ int reg_heap::incremental_evaluate(int R, int t)
     if (access(R).call != -1)
     {
       // Evaluate S, looking through unchangeable redirections
-      int S = incremental_evaluate(access(R).call, t);
-
-      // R gets its result from S.
-      access(R).result = access(S).result;
+      int call = incremental_evaluate(access(R).call, t);
 
       // If access(R).call can be evaluated to refer to S w/o moving through any changable operations, 
       // then it should be safe to change access(R).call to refer to S, even if R is changeable.
-      access(R).call = S;
+      if (call != access(R).call)
+      {
+	clear_call(R);
+	set_call(R,call);
+      }
+
+      // R gets its result from S.
+      access(R).result = access(call).result;
 
       // However, we can only update R to refer to S if R itself isn't changeable.
       if (not access(R).changeable)
-	R = S;
+	R = call;
     }
 
     /*---------- Below here, there is no call, and no result. ------------*/
