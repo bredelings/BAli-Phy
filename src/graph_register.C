@@ -2062,10 +2062,10 @@ class RegOperationArgs: public OperationArgs
     // Adjust the reference, if it changed.
     if (R2 != RV->target)
     {
-      expression_ref E2 = M[R1].E;
-      dynamic_pointer_cast<expression>(E2)->sub[slot+1] = new reg_var(R2);
-      M.set_E(R2, E2);
-    }
+      expression_ref E1_changed = M[R1].E;
+      dynamic_pointer_cast<expression>(E1_changed)->sub[slot+1] = new reg_var(R2);
+      M.set_E(R1, E1_changed);
+  }
 
     return R2;
   }
