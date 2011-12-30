@@ -831,9 +831,10 @@ bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars,
 
 /// Given let vars=bodies in (<binder bound> (let R_vars=R_bodies in T)), 
 ///  move some of the R_vars=R_bodies up to vars=bodies.
-expression_ref move_lets(const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies,
+expression_ref move_lets(bool scope, const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies,
 			 const set<dummy>& bound, const set<dummy>& free)
 {
+  assert(R);
   assert(vars.size() == bodies.size());
 
   vector<expression_ref> R_vars;
@@ -915,7 +916,7 @@ expression_ref move_lets(const expression_ref R, vector<expression_ref>& vars, v
     R2 = let_expression(R_vars2, R_bodies2, R2);
   }
 
-  if ((not bound.empty()) and intersection(get_free_indices(R2), bound).empty() and not dynamic_pointer_cast<const dummy>(R2))
+  if (scope and intersection(get_free_indices(R2), bound).empty() and not dynamic_pointer_cast<const dummy>(R2))
   {
     dummy D(new_index++);
     vars.push_back( D );
@@ -923,20 +924,23 @@ expression_ref move_lets(const expression_ref R, vector<expression_ref>& vars, v
     return D;
   }
   else
+  {
+    assert(R2);
     return R2;
+  }
 }
 
-expression_ref move_lets(const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies,
+expression_ref move_lets(bool scope, const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies,
 			 const set<dummy>& bound)
 {
   set<dummy> free;
-  return move_lets(R, vars, bodies, bound, free);
+  return move_lets(scope, R, vars, bodies, bound, free);
 }
 
-expression_ref move_lets(const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies)
+expression_ref move_lets(bool scope, const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies)
 {
   set<dummy> bound;
-  return move_lets(R, vars, bodies, bound);
+  return move_lets(scope, R, vars, bodies, bound);
 }
 
 expression_ref let_float(const expression_ref& R)
@@ -967,7 +971,7 @@ expression_ref let_float(const expression_ref& R)
     dummy D = *dynamic_pointer_cast<const dummy>(E->sub[1]);
     bound.insert(D);
 
-    M = move_lets(M, vars, bodies, bound);
+    M = move_lets(true, M, vars, bodies, bound);
 
     return let_expression(vars, bodies, lambda_quantify(D, M) );
   }
@@ -985,12 +989,31 @@ expression_ref let_float(const expression_ref& R)
 
     vector<expression_ref> let_vars;
     vector<expression_ref> let_bodies;
-    T = move_lets(T, let_vars, let_bodies);
+    T = move_lets(false, T, let_vars, let_bodies);
+    set<dummy> free_vars = get_free_indices(T);
+
+    for(int i=0;i<bodies.size();i++)
+    {
+      shared_ptr<const expression> C = dynamic_pointer_cast<const expression>(vars[i]);
+      set<dummy> bound;
+      if (C)
+      {
+	assert(dynamic_pointer_cast<const Function>(C->sub[0]));
+	for(int j=1;j<C->size();j++)
+	  bound.insert(*dynamic_pointer_cast<const dummy>(C->sub[i]));
+
+	bodies[i] = move_lets(true, bodies[i], let_vars, let_bodies, bound, free_vars);
+      }
+      else
+      {
+	bodies[i] = move_lets(true, bodies[i], let_vars, let_bodies, bound, free_vars);
+      }
+    }
 
     return let_expression(let_vars,let_bodies,case_expression(false, T, vars, bodies));
   }
 
-  // Let expressions
+  // 5. Let expressions
   if (parse_let_expression(R,vars,bodies,T))
   {
     // First float lets in sub-expressions
@@ -1009,17 +1032,17 @@ expression_ref let_float(const expression_ref& R)
     }
 
     // Move lets out of T and into vars
-    T = move_lets(T,vars,bodies);
+    T = move_lets(false, T,vars,bodies);
 
     // Move lets out of bodies and into vars
     for(int i=0;i<bodies.size();i++)
-      bodies[i] = move_lets(bodies[i],vars,bodies);
+      bodies[i] = move_lets(false, bodies[i],vars,bodies);
 
     return let_expression(vars,bodies,T);
   }
 
 
-  // 5. Handle application, constructors, and operations.
+  // 6. Handle application, constructors, and operations.
   if (shared_ptr<const Operator> O =  dynamic_pointer_cast<const Operator>(E->sub[0]))
   {
     // First float lets in sub-expressions
@@ -1032,7 +1055,7 @@ expression_ref let_float(const expression_ref& R)
     
     // Move lets from arguments into (vars,bodies)
     for(int i=1;i<E->size();i++)
-      V->sub[i] = move_lets(V->sub[i],vars,bodies);
+      V->sub[i] = move_lets(false, V->sub[i],vars,bodies);
       
     return let_expression(vars, bodies, shared_ptr<const expression>(V));
   }
