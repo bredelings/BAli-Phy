@@ -851,6 +851,7 @@ expression_ref move_lets(bool scope, const expression_ref R, vector<expression_r
     avoid.insert(*dynamic_pointer_cast<const dummy>(vars[i]));
     add(avoid, get_free_indices(bodies[i]));
   }
+  add(avoid, get_free_indices(R));
   add(avoid, bound);
 
   int new_index = max_index(avoid) + 1;
@@ -990,7 +991,7 @@ expression_ref let_float(const expression_ref& R)
     vector<expression_ref> let_vars;
     vector<expression_ref> let_bodies;
     T = move_lets(false, T, let_vars, let_bodies);
-    set<dummy> free_vars = get_free_indices(T);
+    set<dummy> free_vars = get_free_indices(R);
 
     for(int i=0;i<bodies.size();i++)
     {
