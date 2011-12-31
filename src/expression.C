@@ -816,7 +816,7 @@ bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars,
     for(int i=unbound_indices.size()-1;i>=0;i--)
     {
       int index = unbound_indices[i];
-      if (includes(free_vars[index], new_bound))
+      if (not intersection(free_vars[index], new_bound).empty())
       {
 	new_bound_next.insert(*dynamic_pointer_cast<const dummy>(let_vars[index]));
 	bound_indices.push_back(index);
