@@ -18,6 +18,9 @@ using boost::dynamic_pointer_cast;
 //let [(x[i], bodies[i])] T
 bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars, vector<expression_ref>& bodies, expression_ref& T)
 {
+  vars.clear();
+  bodies.clear();
+
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return false;
 
@@ -41,6 +44,9 @@ bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars,
 
 void parse_alternatives(const expression_ref& R, vector<expression_ref>& cases, vector<expression_ref>& results)
 {
+  cases.clear();
+  results.clear();
+
   vector<expression_ref> pairs = get_ref_vector_from_list(R);
   for(int i=0;i<pairs.size();i++)
   {
@@ -53,6 +59,9 @@ void parse_alternatives(const expression_ref& R, vector<expression_ref>& cases, 
 //case T [(patterns[i],E[i])]
 bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<expression_ref>& vars, vector<expression_ref>& bodies)
 {
+  vars.clear();
+  bodies.clear();
+
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return false;
 
