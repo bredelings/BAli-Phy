@@ -252,11 +252,6 @@ using std::endl;
  *
  *    - If so, could I keep the Mark 1 machine around?
  *
- * 7. Note that for proper lazy calculation of if-expressions, we
- *    need to be able to share the results across evaluations. This
- *    requires so-called "fully-lazy" evaluation, either via 
- *    lambda-lifting, or via completely lazy evaluation.
- *
  * 8. I also need to be able to NOT recompute things when the change
  *    in value is small!
  *
@@ -265,14 +260,16 @@ using std::endl;
  *
  * TODO
  *  (a) Make M8 evaluate function calls via the \-calculus  -> (c)
- *  (b) Eliminate the old Context -> (d)
+ *  (b) Eliminate the old Context -> (d),(h), (i)
  *  (c) Turn smodel objects into algebraic data types.
  *      - DiscreteDistribution [(Double,a)] & ExtendDiscreteDistribution 
  *      - SModelObject
- *  (d) Completely lazy evaluation=2
+ *  (d) (DONE) let-floating.  (POSTPONE: Completely lazy evaluation=2)
  *  (e) Sharing of sub-expressions=2 (d)
  *  (f) Efficient evaluation of if statements=2 (d)
  *  (g) Move eigensystem computation and caching to the new model framework. (e)
+ *  (h) share sub-expressions between heads.
+ *  (i) avoid recalculating some expressions.
  */ 
 
 /*
