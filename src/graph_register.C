@@ -224,20 +224,17 @@ using std::endl;
  *
  * 2. How do we share computations between heads?
  *
- *   - If we let-evaluate call heap variables, but refuse
- *     to evaluate any opreations, then we could empty search
- *     all E-referenced expressions for duplicates.
+ *   - First, float unbound let-expressions up as high as they can go. (let_float)
+ *     + This allows us to share case results, as well as the results of e.g. \x->5 and \x->2*y).
+ *     + To share computations between different branches of execution DYNAMICALLY, though, we need arrays.
  *
- *   - To share case results, though, we'd need to factor out the
- *     relevant maximal free expressions.
+ *   - Second, we can let-evaluate all top-level expressions once.  Whenever adding a new heap var,
+ *     we can check to see if its sub-expressions already have heap vars for them.
  *
- *   - To share computations between different branches of execution
- *     DYNAMICALLY, though, we need arrays.
- *
- * 3. How can we benefit from partial evaluation, by e.g. changing
+ * 3. [POSTPONE indefinitely!] How can we benefit from partial evaluation, by e.g. changing
  *    \n.\x.case n of {...} to \n.case n of \x.{...}?
  *
- * 4. How could we benefit from switching to the rho-calculus?
+ * 4. [POSTPONE] How could we benefit from switching to the rho-calculus?
  *
  * 5. How can we make the model expressions PRINT more clearly?
  *
