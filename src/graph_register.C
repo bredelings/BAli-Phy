@@ -2340,6 +2340,12 @@ int reg_heap::incremental_evaluate(int R, int t)
       // Although the reg itself is not a parameter, it will stay changeable if it ever computes a changeable result.
       // Therefore, we cannot do "assert(not access(R).changeable);" here.
 
+#ifndef NDEBUG
+      std::cerr<<"   + Executing statement {"<<O<<"}";
+      std::cerr<<": "<<compact_graph_expression(*this, R);
+      std::cerr<<"\n\n";
+#endif
+
       RegOperationArgs Args(R, *this, t);
       expression_ref result = (*O)(Args);
 
@@ -2358,12 +2364,6 @@ int reg_heap::incremental_evaluate(int R, int t)
       // Otherwise, set the reduction result.
       else
 	set_reduction_result(R, result );
-
-#ifndef NDEBUG
-      // std::cerr<<"Executing statement: "<<compact_graph_expression(*this,E)<<"\n";
-      std::cerr<<"Executing operation: "<<O<<"\n";
-      std::cerr<<"Result changeable: "<<access(R).changeable<<"\n\n"<<endl;
-#endif
     }
   }
 
