@@ -144,6 +144,39 @@ int main()
   cout<<"mul(#1) = "<<mul(dummy(1))<<"\n";
   cout<<"mul(x,y) = "<<mul(x,y)<<"\n\n\n";
 
+  cout<<lambda_quantify(dummy("x"),5)<<"\n";
+  cout<<let_float(lambda_quantify(dummy("x"),5))<<"\n";
+  cout<<let_float(let_float(lambda_quantify(dummy("x"),5)))<<"\n";
+  expression_ref case_if;
+  {
+    vector<expression_ref> patterns;
+    patterns.push_back(Bool(true));
+    patterns.push_back(Bool(false));
+
+    vector<expression_ref> bodies;
+    bodies.push_back(dummy(1));
+    bodies.push_back(dummy(2));
+
+    case_if = 
+      lambda_quantify(dummy(0),
+		      lambda_quantify(dummy(1),
+				      lambda_quantify(dummy(2),
+						      case_expression(false,
+								      dummy(0),
+								      patterns,
+								      bodies)
+						      )
+				      )
+		      );
+  }
+
+  expression_ref let_cons = mul(1)(2);
+  cout<<let_cons<<"\n";
+  cout<<graph_normalize(let_cons)<<"\n";
+  cout<<let_float(graph_normalize(let_cons))<<"\n";
+  cout<<graph_normalize(case_if(Z>1.0,X*Y,W))<<"\n";
+  cout<<let_float(graph_normalize(case_if(Z>1.0,X*Y,W)))<<"\n";
+
   term_ref x_times_y_plus_one = F->add_expression( plus(mul(x)(y))(one) );
 
   term_ref z_gt_1 = F->add_expression(gt(z)(one));
@@ -378,6 +411,11 @@ int main()
     CTX1.add_expression( def_function(false, patterns, bodies) );
     CTX1.add_expression( def_take );
   }
+
+  expression_ref test_let_float = def_take;
+  cout<<test_let_float<<"\n";
+  cout<<graph_normalize(test_let_float)<<"\n";
+  cout<<let_float(graph_normalize(test_let_float))<<"\n";
 
   // iterate
   expression_ref def_iterate;
@@ -622,4 +660,6 @@ int main()
   D.set_parameter_value("Y",4);
   cout<<"D.evaluate(3) = "<<D.evaluate(3)<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+
+
 }
