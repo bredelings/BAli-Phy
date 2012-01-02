@@ -277,6 +277,18 @@ using std::endl;
  * onto the stack!
  */
 
+/*
+ * Is the updating of E to forward to call statements causing the problems?
+ * How about updating call statements??
+ * 
+ * - Updating WHNF regs is problematic because it could make the old reg unused
+ *   although it was still used in the result and the results of call-ancestors.
+ *
+ * - Updating non-WHNF regs is problematic because we might need to update the used_inputs
+ *   to refer to the new reg.  This is because the old one might become unused
+ *   (and therefore be garbage-collected.)
+ */
+
 expression_ref graph_normalize(const expression_ref& R)
 {
   if (not R) return R;
