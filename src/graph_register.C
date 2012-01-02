@@ -2229,7 +2229,7 @@ int reg_heap::incremental_evaluate(int R, int t)
   assert(is_WHNF(access(R).result));
 
 #ifndef NDEBUG
-  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
+  //  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
   while (not access(R).result)
@@ -2239,7 +2239,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     expression_ref T;
 
 #ifndef NDEBUG
-    std::cerr<<"   statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
+    //    std::cerr<<"   statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
     assert(get_exp_refs(access(R).E) == access(R).references);
 
