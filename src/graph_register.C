@@ -1857,7 +1857,7 @@ int context::add_compute_expression(const expression_ref& E)
 
   expression_ref T = let_float(graph_normalize(translate_refs(E) ));
 
-  std::cerr<<"add: "<<T->print()<<"\n";
+  std::cerr<<"add [compiled]: "<<T->print()<<"\n";
 
   root_t r;
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
