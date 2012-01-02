@@ -310,6 +310,8 @@ Model::Model(const shared_ptr<const Formula>& F)
    bounds(F->n_parameters()),
    fixed(F->n_parameters(),false)
 {
+  C.alphabetize_parameters();
+
   for(int i=0;i<n_parameters();i++)
   {
     expression_ref var = parameter(parameter_name(i));

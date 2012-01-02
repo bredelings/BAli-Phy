@@ -306,6 +306,20 @@ term_ref Formula::find_match_expression2(const expression_ref& query, std::vecto
   return term_ref();
 }
 
+void Formula::alphabetize_parameters()
+{
+  vector<string> names;
+  for(int i=0;i<n_parameters();i++)
+    names.push_back( parameter_name(i) );
+
+  vector<string> names2 = names;
+  std::sort(names2.begin(), names2.end());
+
+  vector<int> mapping = compute_mapping(names, names2);
+
+  parameter_indices = apply_mapping(parameter_indices, mapping);
+}
+
 string Formula::print() const
 {
   std::ostringstream o;

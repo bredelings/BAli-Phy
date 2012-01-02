@@ -400,6 +400,11 @@ int Context::find_match_expression2(const expression_ref& e, std::vector<int>& r
   return F->find_match_expression2(e,result);
 }
 
+void Context::alphabetize_parameters()
+{
+  F->alphabetize_parameters();
+}
+
 Context::Context()
   :F(new Formula)
 { }

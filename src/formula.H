@@ -247,6 +247,8 @@ public:
 
   term_ref find_match_expression2(const expression_ref& e, std::vector<int>&) const;
 
+  void alphabetize_parameters();
+
   std::string print() const;
 };
 

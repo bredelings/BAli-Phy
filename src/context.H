@@ -108,6 +108,8 @@ public:
 
   int find_match_expression2(const expression_ref& e, std::vector<int>&) const;
 
+  void alphabetize_parameters();
+
   Context();
   Context(const polymorphic_cow_ptr<Formula>&);
 };
