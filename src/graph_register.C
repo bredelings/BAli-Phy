@@ -2143,7 +2143,7 @@ public:
   }
 };
 
-expression_ref compact_graph_expression(const context& C, const expression_ref& R);
+expression_ref compact_graph_expression(const reg_heap& C, int R);
 
   /*
    * eval r: p[r] = E
@@ -2374,79 +2374,78 @@ int reg_heap::incremental_evaluate(int R, int t)
   return R;
 }
 
-void discover_graph_vars(const context& C, const expression_ref& R, map< int, std::string>& names)
+expression_ref subst_referenced_vars(const expression_ref& R, const map<int, expression_ref>& names)
 {
-  if (shared_ptr<const reg_var> H = dynamic_pointer_cast<const reg_var>(R))
-  {
-    if (includes( names, H->target))
-    {
-      // back out, we've been through this node before.
-    }
-
-    if (not includes(names, H->target))
-    {
-      int num = names.size()+1;
-      // give this node a name and mark it visited
-      names[H->target] = "p"+convertToString(num);
-
-      discover_graph_vars(C, C[H->target].E, names);
-    }
-
-  }
-
   if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
+    bool different = false;
+    shared_ptr<expression> E2 ( new expression );
+    E2->sub.resize(E->size());
     for(int i=0;i<E->size();i++)
-      discover_graph_vars(C, E->sub[i], names);
+    {
+      E2->sub[i] = subst_referenced_vars(E->sub[i], names);
+      if (E2->sub[i] != E->sub[i])
+	different = true;
+    }
+    if (different)
+      return shared_ptr<const expression>(E2);
+    else
+      return R;
   }
+  else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
+  {
+    map<int, expression_ref>::const_iterator loc = names.find(RV->target);
+    if (loc == names.end())
+      return R;
+    else
+    {
+      //      assert(get_free_indices(loc->second).empty());
+      return loc->second;
+    }
+  }
+  // This case handles NULL in addition to atomic objects.
+  else
+    return R;
 }
 
-expression_ref compact_graph_expression(const context& C, const expression_ref& R_)
+void discover_graph_vars(const reg_heap& C, int R, map<int,expression_ref>& names)
 {
-  //  return R_;
-  expression_ref R = R_;
-  map< int, std::string> names;
+  expression_ref E = C.access(R).E;
+  set<int> refs = get_exp_refs(E);
 
-  int var_index = get_safe_binder_index(R);
-
-  discover_graph_vars(C, R,names);
-
-  //  std::cerr<<R<<std::endl;
-  vector< expression_ref > replace;
-  foreach(i,names)
+  // If there are no references, then we are done.
+  if (refs.empty()) 
   {
-    replace.push_back( reg_var( i->first) );
-    var_index = std::max(var_index, get_safe_binder_index(C[i->first].E) );
-    //    std::cerr<<"<"<<i->first->name<<"> = "<<i->first->E<<std::endl;
-  }
-  //  std::cerr<<R<<std::endl;
-  vector<expression_ref> vars;
-  vector<expression_ref> bodies;
-  foreach(i,names)
-  {
-    vars.push_back(dummy(var_index++));
-    bodies.push_back( C[i->first].E );
+    names[R] = E;
+    return;
   }
 
-  for(int i=0;i<bodies.size();i++)
+  // If R references R, then terminate the recursion.
+  if (includes(names, R))
   {
-    //    std::cerr<<"------\n";
-    //    std::cerr<<replace[i]<<" -> "<<vars[i]<<":\n";
-    for(int j=0;j<bodies.size();j++)
-    {
-      bodies[j] = substitute(bodies[j], replace[i], vars[i]);
-      //      std::cerr<<vars[j]<<" = "<<bodies[j]<<std::endl;
-    }
-
-    R = substitute(R, replace[i], vars[i]);
-    //    std::cerr<<"R = "<<R<<std::endl;
+    if (not names[R])
+      names[R] = E;
+    return;
   }
 
-  R = let_expression(vars, bodies, R);
-  //  std::cerr<<R<<std::endl;
-  R = launchbury_unnormalize(R);
-  //  std::cerr<<"substituted = "<<launchbury_unnormalize(R)<<std::endl;
-  return R;
+  // avoid infinite loops because of re-entering R
+  names[R] = expression_ref();
+
+  // find the names for each referenced var.
+  foreach(i, refs)
+  {
+    discover_graph_vars(C, *i, names);
+  }
+
+  names[R] = subst_referenced_vars(E, names);
+}
+
+expression_ref compact_graph_expression(const reg_heap& C, int R)
+{
+  map< int, expression_ref> names;
+  discover_graph_vars(C, R, names);
+
+  return launchbury_unnormalize(names[R]);
 }
 
 vector<expression_ref> add_prefix(const string& prefix, const vector<expression_ref>& notes)
