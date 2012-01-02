@@ -490,6 +490,11 @@ void reg_heap::clear_used_input(int R1, int R2)
   assert(loc != used_inputs.end());
   used_inputs.erase(loc);
 
+  // If this reg is unused, then upstream regs are in the process of being destroyed.
+  // However, if this reg is used, then upstream regs may be live, and so should have
+  //  correct edges.
+  assert( access(R1).state != reg::used or includes( access(R2).outputs, R1) );
+
   access(R2).outputs.erase(R1);
 }
 
@@ -533,6 +538,12 @@ void reg_heap::clear_call(int R)
   assert(R2 >= 0 and R2 < n_regs());
   
   access(R).call = -1;
+
+  // If this reg is unused, then upstream regs are in the process of being destroyed.
+  // However, if this reg is used, then upstream regs may be live, and so should have
+  //  correct edges.
+  assert( access(R).state != reg::used or includes(access(R2).call_outputs, R) );
+
   access(R2).call_outputs.erase(R);
 }
 
@@ -774,14 +785,14 @@ void reg_heap::remove_reg_from_used_list(int r)
 
 void reg_heap::reclaim_used_reg(int r)
 {
-  // FIXME - we need to carefully clear references to things that might reference us back.. don't we?
+  // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
+  remove_reg_from_used_list(r);
 
   // Downstream objects could still exist
   clear_used_inputs(r);
   clear_call(r);
   clear_E(r);
 
-  remove_reg_from_used_list(r);
   add_reg_to_free_list(r);
 }
 
