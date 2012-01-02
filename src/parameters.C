@@ -407,7 +407,7 @@ void data_partition::note_alignment_changed()
 void data_partition::recalc(const vector<int>& indices)
 {
   // If there is no indel model, we have no parameters
-  if (not has_IModel()) throw myexception()<<"What parameter is this???";
+  if (indices.size() and not has_IModel()) throw myexception()<<"What parameter is this???";
 
   for(int i=0;i<indices.size();i++)
   {
