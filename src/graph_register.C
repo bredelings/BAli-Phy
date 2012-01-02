@@ -277,18 +277,6 @@ using std::endl;
  * onto the stack!
  */
 
-/*
- * Is the updating of E to forward to call statements causing the problems?
- * How about updating call statements??
- * 
- * - Updating WHNF regs is problematic because it could make the old reg unused
- *   although it was still used in the result and the results of call-ancestors.
- *
- * - Updating non-WHNF regs is problematic because we might need to update the used_inputs
- *   to refer to the new reg.  This is because the old one might become unused
- *   (and therefore be garbage-collected.)
- */
-
 expression_ref graph_normalize(const expression_ref& R)
 {
   if (not R) return R;
@@ -2076,13 +2064,17 @@ class RegOperationArgs: public OperationArgs
 
     R2 = lazy_evaluate_reg(R2);
 
-    // Adjust the reference, if it changed.
-    if (R2 != RV->target)
-    {
-      expression_ref E1_changed = M[R1].E;
-      dynamic_pointer_cast<expression>(E1_changed)->sub[slot+1] = new reg_var(R2);
-      M.set_E(R1, E1_changed);
-  }
+    /*
+     * We could update E1->sub[slot+1] = new reg_var(R2) if R2 != RV->target.  However:
+     *
+     * - Updating WHNF regs is problematic because it could make the old reg unused
+     *   although it was still used in the result and the results of call-ancestors.
+     *   Therefore all call-ancestors would need to be updated.
+     *
+     * - Updating non-WHNF regs is problematic because we might need to update the used_inputs
+     *   to refer to the new reg.  This is because the old one might become unused
+     *   (and therefore be garbage-collected.)
+     */
 
     return R2;
   }
