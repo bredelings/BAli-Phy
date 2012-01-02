@@ -2341,9 +2341,8 @@ int reg_heap::incremental_evaluate(int R, int t)
       // Therefore, we cannot do "assert(not access(R).changeable);" here.
 
 #ifndef NDEBUG
-      std::cerr<<"   + Executing statement {"<<O<<"}";
-      std::cerr<<": "<<compact_graph_expression(*this, R);
-      std::cerr<<"\n\n";
+      string SS = "";
+      SS = compact_graph_expression(*this, R)->print();
 #endif
 
       RegOperationArgs Args(R, *this, t);
@@ -2364,6 +2363,11 @@ int reg_heap::incremental_evaluate(int R, int t)
       // Otherwise, set the reduction result.
       else
 	set_reduction_result(R, result );
+
+#ifndef NDEBUG
+      //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
+      std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
+#endif
     }
   }
 
