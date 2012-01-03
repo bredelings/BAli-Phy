@@ -986,7 +986,11 @@ expression_ref let_float(const expression_ref& R)
       {
 	assert(dynamic_pointer_cast<const Function>(C->sub[0]));
 	for(int j=1;j<C->size();j++)
-	  bound.insert(*dynamic_pointer_cast<const dummy>(C->sub[j]));
+	{
+	  dummy D = *dynamic_pointer_cast<const dummy>(C->sub[j]);
+	  if (not is_wildcard(D))
+	    bound.insert(D);
+	}
       }
 
       bodies[i] = move_lets(true, bodies[i], let_vars, let_bodies, bound, free_in_R);
