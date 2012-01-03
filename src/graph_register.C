@@ -1264,7 +1264,12 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     int R1 = i->first;
 
-    foreach(j,access(R1).referenced_by_in_E)
+    set<int> parents = access(R1).referenced_by_in_E;
+    add(parents, access(R1).outputs);
+    // A node can only call another node if ... ??
+    add(parents, access(R1).call_outputs);
+
+    foreach(j,parents)
     {
       int Q1 = *j;
 
