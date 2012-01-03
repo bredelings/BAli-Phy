@@ -289,6 +289,39 @@ bool includes(const std::map<T,U>& s1, const T& t)
   return s1.find(t) != s1.end();
 }
 
+template <typename T>
+void add(std::set<T>& S1, const std::set<T>& S2)
+{
+  std::set<T> result;
+  std::merge(S1.begin(), S1.end(),
+	     S2.begin(), S2.end(),
+	     std::inserter(result, result.begin())
+	);
+  S1.swap(result);
+}
+
+template <typename T>
+void remove(std::set<T>& S1, const std::set<T>& S2)
+{
+  std::set<T> result;
+  std::set_difference(S1.begin(), S1.end(),
+	     S2.begin(), S2.end(),
+	     std::inserter(result, result.begin())
+	);
+  S1.swap(result);
+}
+
+template <typename T>
+std::set<T> intersection(const std::set<T>& S1, const std::set<T>& S2)
+{
+  std::set<T> result;
+  std::set_intersection(S1.begin(), S1.end(),
+			S2.begin(), S2.end(),
+			std::inserter(result, result.begin())
+	);
+  return result;
+}
+
 
 /// Concatenate members of v, separating by char c
 std::string join(const std::vector<std::string>& v,char c);

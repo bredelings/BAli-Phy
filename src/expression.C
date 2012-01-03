@@ -523,39 +523,6 @@ expression_ref substitute(const expression_ref& R1, int dummy_index, const expre
 
 /// Literally R2 for D in R1. (e.g. don't rename variables in R2).  Throw an exception if D is a lambda-bound dummy variable.
 
-template <typename T>
-void add(std::set<T>& S1, const std::set<T>& S2)
-{
-  std::set<T> result;
-  std::merge(S1.begin(), S1.end(),
-	     S2.begin(), S2.end(),
-	     std::inserter(result, result.begin())
-	);
-  S1.swap(result);
-}
-
-template <typename T>
-void remove(std::set<T>& S1, const std::set<T>& S2)
-{
-  std::set<T> result;
-  std::set_difference(S1.begin(), S1.end(),
-	     S2.begin(), S2.end(),
-	     std::inserter(result, result.begin())
-	);
-  S1.swap(result);
-}
-
-template <typename T>
-std::set<T> intersection(const std::set<T>& S1, const std::set<T>& S2)
-{
-  std::set<T> result;
-  std::set_intersection(S1.begin(), S1.end(),
-			S2.begin(), S2.end(),
-			std::inserter(result, result.begin())
-	);
-  return result;
-}
-
 std::set<dummy> get_free_indices(const expression_ref& R);
 
 std::set<dummy> get_pattern_indices(const expression_ref& R)
