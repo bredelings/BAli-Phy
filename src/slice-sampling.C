@@ -91,7 +91,7 @@ double branch_length_slice_function::operator()()
 
 double branch_length_slice_function::current_value() const
 {
-  return P.T->branch(b).length();
+  return P.T->directed_branch(b).length();
 }
 
 branch_length_slice_function::branch_length_slice_function(Parameters& P_,int b_)
