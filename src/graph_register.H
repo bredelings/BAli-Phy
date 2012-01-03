@@ -397,6 +397,8 @@ public:
   int n_expressions() const;
   expression_ref get_expression(int i) const;
 
+  void alphabetize_parameters();
+
 protected:  
   void set_E(int R, const expression_ref& e) const {memory->set_E(R,e);}
   void set_reduction_result(int R, const expression_ref& result) const {memory->set_reduction_result(R, result);}
