@@ -1475,6 +1475,11 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
       assert(includes(access(*j).owners, t) );
     }
     
+    foreach(j, R.used_inputs)
+    {
+      assert(includes(access(*j).owners, t) );
+    }
+    
     // Count also the references from the call
     if (R.call != -1) {
       assert(includes(access(R.call).owners, t) );
