@@ -507,34 +507,64 @@ namespace substitution
 
   expression_ref Discretize = lambda_expression( DiscretizationOp() );
 
-  shared_ptr<MultiModelObject> MultiParameterFunction(const ModelFunction& F, const expression_ref& D)
+  shared_ptr<const MultiModelObject> MixtureModelFunction(const expression_ref& D)
   {
-    shared_ptr<MultiModelObject> R;
-
     vector<expression_ref> DV;
     {
       shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(D);
       DV = get_ref_vector_from_list(DE->sub[1]);
     }
 
+    shared_ptr<MultiModelObject> M ( new MultiModelObject );
+
     for(int i=0;i<DV.size();i++)
     {
       vector<expression_ref> DT = get_ref_vector_from_tuple(DV[i]);
-      double fraction = *convert<const Double>(DT[0]);
-      shared_ptr<const Object> value = DT[1];
-      shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(F(value));
 
-      if (not R) R = shared_ptr<MultiModelObject>(new MultiModelObject);
+      M->fraction.push_back( *convert<const Double>(DT[0]) );
+      M->base_models.push_back( convert<const ReversibleAdditiveObject>(DT[1]) );
+    }
+    return shared_ptr<const MultiModelObject>(M);
+  }
+
+  boost::shared_ptr<const Object> MixtureModelOp::operator()(OperationArgs& Args) const
+  {
+    return MixtureModelFunction(Args.evaluate(0));
+  }
+
+  expression_ref MixtureModel = lambda_expression( MixtureModelOp() );
+
+  expression_ref MultiParameterFunction(const expression_ref& g, const expression_ref& D)
+  {
+    expression_ref fmap2 = dummy("fmap2");
+    expression_ref def_fmap2;
+    {  
+      expression_ref f = dummy(0);
+      expression_ref p = dummy(1);
+      expression_ref x = dummy(2);
+      expression_ref t = dummy(3);
+
+      vector<expression_ref> patterns;
+      vector<expression_ref> bodies;
+      // fmap2 f [] = []
+      patterns.push_back( Tuple(f, ListEnd) );
+      bodies.push_back( ListEnd );
+
+      // fmap2 f (p,x):t = (p,f x):t
+      patterns.push_back( Tuple(f, Cons(Tuple(p,x),t) ) );
+      bodies.push_back( Cons(Tuple(p,f(x)), fmap2(f)(t) ) );
       
-      for(int j=0;j<M->n_base_models();j++)
-      {
-	R->fraction.push_back( fraction * M->distribution()[j] );
-	R->base_models.push_back( const_ptr( M->base_model(j) ) );
-      }
+      def_fmap2 = def_function(true, patterns, bodies);
     }
 
+    shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(D);
+    assert(DE);
 
-    return R;
+    return let_float(graph_normalize(let_expression(fmap2, def_fmap2, 
+						    DiscreteDistribution(fmap2(g,DE->sub[1]))
+						    )
+				     )
+		     );
   }
 
   // fmap2 :: (b->c)->[(a,b)]->[(a,c)]
@@ -557,10 +587,10 @@ namespace substitution
   shared_ptr<const Object> MultiParameterOp::operator()(OperationArgs& Args) const
   {
     // The input-model should really be a lambda function taking the single value (or first value) p_change
-    shared_ptr<const ModelFunction> F = Args.evaluate_as<ModelFunction>(0);
+    expression_ref F = Args.reference(0);
     expression_ref D = Args.evaluate(1);
       
-    return MultiParameterFunction(*F, *D);
+    return MultiParameterFunction(F, D);
   }
 
   MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D)

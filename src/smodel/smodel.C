@@ -1342,9 +1342,7 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
     shared_ptr<const ModelFunction> F = LambdaModel(SubModel(),p_change).result_as<const ModelFunction>();
 
-    shared_ptr<MultiModelObject> R = MultiParameterFunction(*F, D);
-
-    return R;
+    return MultiParameterFunction(*F, D);
   }
 
 
@@ -1610,7 +1608,8 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
     shared_ptr<const ModelFunction> F = LambdaModel(SubModel(),p_change).result_as<const ModelFunction>();
 
-    shared_ptr<MultiModelObject> R = MultiParameterFunction(*F, D);
+    shared_ptr<MultiModelObject> R;
+    //    shared_ptr<MultiModelObject> R = MultiParameterFunction(*F, D);
 
     return R;
   }

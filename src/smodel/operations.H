@@ -360,7 +360,32 @@ namespace substitution {
 
   extern expression_ref Discretize;
 
-  boost::shared_ptr<MultiModelObject> MultiParameterFunction(const ModelFunction& F, const expression_ref& D);
+  boost::shared_ptr<const MultiModelObject> MixtureModelFunction(const expression_ref& D);
+
+  struct MixtureModelOp: public Operation
+  {
+    MixtureModelOp* clone() const {return new MixtureModelOp(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+    std::string name() const {return "MixtureModel";}
+
+    MixtureModelOp():Operation(1) { }
+  };
+
+  extern expression_ref MixtureModel;
+
+  expression_ref MultiParameterFunction(const expression_ref& F, const expression_ref& D);
 
   MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D);
 
