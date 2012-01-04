@@ -480,14 +480,14 @@ namespace substitution
       expression_ref p = dummy(1);
       expression_ref x = dummy(2);
       expression_ref t = dummy(3);
-      
+
       vector<expression_ref> patterns;
       vector<expression_ref> bodies;
       // fmap1 f [] = []
       patterns.push_back( Tuple(f, ListEnd) );
       bodies.push_back( ListEnd );
-      
-      // fmap f (p,x):t = (f p, x):t
+
+      // fmap1 f (p,x):t = (f p, x):t
       patterns.push_back( Tuple(f, Cons(Tuple(p,x),t) ) );
       bodies.push_back( Cons(Tuple(f(p),x), fmap1(f)(t) ) );
       
