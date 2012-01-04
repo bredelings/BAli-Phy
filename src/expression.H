@@ -208,8 +208,6 @@ struct lambda: public Object
   std::string print() const;
 };
 
-struct term_ref;
-
 struct formula_expression_ref;
 
 struct expression_ref: public polymorphic_cow_ptr<Object>
@@ -277,8 +275,6 @@ struct expression_ref: public polymorphic_cow_ptr<Object>
     :polymorphic_cow_ptr<Object>(boost::static_pointer_cast<const Object>(v)) 
   {}
 
-  expression_ref(const term_ref& t);
-
   expression_ref(const Object& o)
     :polymorphic_cow_ptr<Object>(o.clone())
   {}
@@ -302,7 +298,6 @@ public:
   typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   typed_expression_ref(expression* v): expression_ref(v) {}
   typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
-  typed_expression_ref(const term_ref& t): expression_ref(t) {}
   typed_expression_ref(const Object& o):expression_ref(o) {}
 };
 
@@ -314,7 +309,6 @@ public:
   typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   typed_expression_ref(expression* v): expression_ref(v) {}
   typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
-  typed_expression_ref(const term_ref& t): expression_ref(t) {}
   typed_expression_ref(const Object& o):expression_ref(o) {}
   typed_expression_ref(const T& t):expression_ref(POD<T>(t)) {}
 };
@@ -327,7 +321,6 @@ public:
   typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   typed_expression_ref(expression* v): expression_ref(v) {}
   typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
-  typed_expression_ref(const term_ref& t): expression_ref(t) {}
   typed_expression_ref(const Object& o):expression_ref(o) {}
   typed_expression_ref(const T& t):expression_ref(POD_math<T>(t)) {}
 };
@@ -351,12 +344,6 @@ inline typed_expression_ref<Bool> Constant(const bool& b)
 // create an Op automatically from a function... using E(?)
 // how does boost::bind work? boost::spirit?
 #endif
-
-class Context;
-
-expression_ref eval(const Context& C, const expression_ref& R);
-
-bool eval_match(const Context& C, expression_ref& R, const expression_ref& Q, std::vector<expression_ref>& results,bool=false);
 
 extern expression_ref _;
 extern expression_ref _1;

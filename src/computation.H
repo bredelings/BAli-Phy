@@ -45,21 +45,4 @@ struct OperationArgs: virtual public Object
   virtual boost::shared_ptr<const Object> evaluate_expression(const expression_ref&);
 };
 
-class Context;
-
-struct ContextOperationArgs: public OperationArgs
-{
-  const Context& CTX;
-  boost::shared_ptr<Computation> computation;
-  int index_of_caller;
-
-  boost::shared_ptr<const Object> reference(int slot) const;
-
-  boost::shared_ptr<const Object> evaluate(int slot);
-
-  ContextOperationArgs* clone() const {return new ContextOperationArgs(*this);}
-
-  ContextOperationArgs(const Context& A, int i);
-};
-
 #endif
