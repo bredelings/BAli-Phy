@@ -13,6 +13,15 @@ shared_ptr<const Object> exponential_density::operator()(OperationArgs& Args) co
   return shared_ptr<const Object>(result.clone());
 }
 
+shared_ptr<const Object> log_exponential_density::operator()(OperationArgs& Args) const
+{
+  double x = *Args.evaluate_as<Double>(0);
+  double mu = *Args.evaluate_as<Double>(1);
+  
+  Log_Double result = exponential_pdf(log(x),mu)/x;
+  return shared_ptr<const Object>(result.clone());
+}
+
 shared_ptr<const Object> gamma_density::operator()(OperationArgs& Args) const
 {
   shared_ptr<const Double> x = Args.evaluate_as<Double>(0);
@@ -110,6 +119,8 @@ shared_ptr<const Object> uniform_density::operator()(OperationArgs& Args) const
 expression_ref prob_density = lambda_expression( constructor("prob_density",2) );
 
 expression_ref exponential_dist = prob_density("Exponential", exponential_density());
+
+expression_ref log_exponential_dist = prob_density("LogExponential", log_exponential_density());
 
 expression_ref gamma_dist       = prob_density("Gamma", gamma_density());
 

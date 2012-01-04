@@ -32,6 +32,29 @@ struct exponential_density: public Operation
 
 extern expression_ref exponential_dist;
 
+struct log_exponential_density: public Operation
+{
+  log_exponential_density* clone() const {return new log_exponential_density;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "log_exponential_density";}
+
+  log_exponential_density():Operation(2) { }
+};
+
+extern expression_ref log_exponential_dist;
+
 struct gamma_density: public Operation
 {
   gamma_density* clone() const {return new gamma_density;}
