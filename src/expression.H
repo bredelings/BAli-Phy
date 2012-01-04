@@ -465,8 +465,6 @@ expression_ref launchbury_unnormalize(const expression_ref& R);
 
 expression_ref let_float(const expression_ref&);
 
-expression_ref evaluate_mark1(const expression_ref& R);
-
 expression_ref add_prefix(const std::string&, const expression_ref& R);
 
 bool parse_let_expression(const expression_ref& R, std::vector<expression_ref>& vars, std::vector<expression_ref>& bodies, expression_ref& T);
