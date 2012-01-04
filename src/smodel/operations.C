@@ -447,7 +447,7 @@ namespace substitution
     return R2;
   }
 
-  boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const Distribution& D, Int n)
+  expression_ref DiscretizationFunction(const Distribution& D, Int n)
   {
     // Make a discretization - not uniform.
     Discretization d(n,D);
@@ -460,56 +460,75 @@ namespace substitution
     // problem - this isn't completely general
     d.scale(1.0/ratio);
     
-    boost::shared_ptr<DiscreteDistribution> R( new DiscreteDistribution(n) );
-    R->fraction = d.f;
+    vector<expression_ref> pairs;
 
     for(int i=0;i<n;i++)
-    {
-      Double V = d.r[i];
-      R->values[i] = boost::shared_ptr<Double>( V.clone() );
-    }
+      pairs.push_back( Tuple( d.f[i], d.r[i] ) );
 
-    return R;
+    return DiscreteDistribution( get_list(pairs) );
   }
 
   // ExtendDiscreteDistribution (DiscreteDistribution (p1,x1):t) p x = DiscreteDistribution (p,x):(fmap1 \p2->((1.0-p)*p2) t)
   //     where fmap1 f [] = []
   //           fmap1 f (p,x):t = (f p,x):t
-  shared_ptr<DiscreteDistribution> ExtendDiscreteDistributionFunction(const DiscreteDistribution& D,const expression_ref& V, const Double& p)
+  expression_ref ExtendDiscreteDistributionFunction(const expression_ref& D,const expression_ref& V, const Double& p)
   {
-    shared_ptr<DiscreteDistribution> D2(new DiscreteDistribution(D.size()+1));
-    for(int i=0;i<D.size();i++)
-    {
-      D2->fraction[i] = D.fraction[i]*(1.0-p);
-      D2->values[i] = D.values[i];
+    expression_ref fmap1 = dummy("fmap1");
+    expression_ref def_fmap1;
+    {  
+      expression_ref f = dummy(0);
+      expression_ref p = dummy(1);
+      expression_ref x = dummy(2);
+      expression_ref t = dummy(3);
+      
+      vector<expression_ref> patterns;
+      vector<expression_ref> bodies;
+      // fmap1 f [] = []
+      patterns.push_back( Tuple(f, ListEnd) );
+      bodies.push_back( ListEnd );
+      
+      // fmap f (p,x):t = (f p, x):t
+      patterns.push_back( Tuple(f, Cons(Tuple(p,x),t) ) );
+      bodies.push_back( Cons(Tuple(f(p),x), fmap1(f)(t) ) );
+      
+      def_fmap1 = def_function(true, patterns, bodies);
     }
 
-    D2->fraction[D.size()] = p;
-    D2->values[D.size()] = V;
+    // f x = (1.0-p)*x
+    expression_ref g = lambda_expression( Multiply<Double>() )(1.0-p);
 
-    return D2;
+    shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(D);
+    assert(DE);
+
+    return let_float(graph_normalize(let_expression(fmap1, def_fmap1,DiscreteDistribution(Cons(Tuple(p,V),fmap1(g)(DE->sub[1]))))));
   }
 
   expression_ref ExtendDiscreteDistribution = lambda_expression( ExtendDiscreteDistributionOp() );
 
   expression_ref Discretize = lambda_expression( DiscretizationOp() );
 
-  shared_ptr<MultiModelObject> MultiParameterFunction(const ModelFunction& F, const DiscreteDistribution& D)
+  shared_ptr<MultiModelObject> MultiParameterFunction(const ModelFunction& F, const expression_ref& D)
   {
     shared_ptr<MultiModelObject> R;
 
-    for(int i=0;i<D.fraction.size();i++)
+    vector<expression_ref> DV = get_ref_vector_from_list(D);
+
+    for(int i=0;i<DV.size();i++)
     {
-      shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(F(D.values[i]));
+      vector<expression_ref> DT = get_ref_vector_from_tuple(DV[i]);
+      double fraction = *convert<const Double>(DT[1]);
+      shared_ptr<const Object> value = DT[2];
+      shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(F(value));
 
       if (not R) R = shared_ptr<MultiModelObject>(new MultiModelObject);
       
       for(int j=0;j<M->n_base_models();j++)
       {
-	R->fraction.push_back( D.fraction[i] * M->distribution()[j] );
+	R->fraction.push_back( fraction * M->distribution()[j] );
 	R->base_models.push_back( const_ptr( M->base_model(j) ) );
       }
     }
+
 
     return R;
   }
@@ -535,16 +554,20 @@ namespace substitution
   {
     // The input-model should really be a lambda function taking the single value (or first value) p_change
     shared_ptr<const ModelFunction> F = Args.evaluate_as<ModelFunction>(0);
-    shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(1);
+    expression_ref D = Args.evaluate(1);
       
     return MultiParameterFunction(*F, *D);
   }
 
-  MultiModelObject MultiRateFunction(const MultiModelObject& M_, const DiscreteDistribution& D)
+  MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D)
   {
-    shared_ptr<MultiModelObject> M = ptr(M_);
-
-    int N = M->n_base_models() * D.size();
+    vector<expression_ref> pairs;
+    {
+      shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(D);
+      pairs = get_ref_vector_from_list(DE->sub[1]);
+    }
+    int n_base_models = M_.n_base_models();
+    int N = n_base_models * pairs.size();
 
     MultiModelObject R;
 
@@ -553,12 +576,17 @@ namespace substitution
 
     for(int m=0;m<R.n_base_models();m++) 
     {
-      int i = m / M->n_base_models();
-      int j = m % M->n_base_models();
+      int i = m / n_base_models;
+      int j = m % n_base_models;
 
-      R.fraction[m] = D.fraction[i]*M->distribution()[j];
+      vector<double> T = get_vector<double,Double>(pairs[i]);
+      double p = T[0];
+      double value = T[1];
+      
+      R.fraction[m] = p*M_.distribution()[j];
 
-      Double value = dynamic_cast<const Double&>(*D.values[i]);
+      shared_ptr<MultiModelObject> M = ptr(M_);
+
       M->set_rate( value );
 
       R.base_models[m] = ptr( M->base_model(j) );
@@ -706,18 +734,14 @@ namespace substitution
 
   expression_ref Modulated_Markov_E = lambda_expression( Modulated_Markov_Op() );
 
-  shared_ptr< DiscreteDistribution > M2_Function(Double f1, Double f2, Double f3, Double omega)
+  expression_ref M2_Function(Double f1, Double f2, Double f3, Double omega)
   {
-    shared_ptr< DiscreteDistribution > R ( new DiscreteDistribution(3) );
-    R->fraction[0] = f1;
-    R->fraction[1] = f2;
-    R->fraction[2] = f3;
+    vector<expression_ref> pairs;
+    pairs.push_back( Tuple( f1, Double(0) ) );
+    pairs.push_back( Tuple( f2, Double(1) ) );
+    pairs.push_back( Tuple( f3, omega ) );
 
-    R->values[0] = ptr( Double(0) );
-    R->values[1] = ptr( Double(1) );
-    R->values[2] = ptr( omega );
-
-    return R;
+    return DiscreteDistribution( get_list(pairs) );
   }
 
   shared_ptr<const MultiModelObject> Mixture_Function(const expression_ref& DL, const expression_ref& ML)

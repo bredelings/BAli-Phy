@@ -10,6 +10,7 @@
 #include "cached_value.H"
 #include "cow-ptr.H"
 #include <valarray>
+#include "expression.H"
 
 template <typename T,typename U>
 std::valarray<T> get_varray(const std::vector<U>& v1) 
@@ -199,19 +200,7 @@ namespace substitution
     F81_Object(const alphabet& a, const std::valarray<double>&);
   };
   
-  class DiscreteDistribution: virtual public Object
-  {
-  public:
-    std::vector< double > fraction;
-    // If we really want to change this, make it polymorphic_cow_ptr<Object>, so we can assign from shared_ptr<const Object>
-    std::vector< boost::shared_ptr<const Object> > values;
-
-    DiscreteDistribution* clone() const {return new DiscreteDistribution(*this);}
-
-    int size() const;
-
-    DiscreteDistribution(int s);
-  };
+  extern expression_ref DiscreteDistribution;
 
   //Hmmm [FIXME] ... The peeling algorithm assumes independence across branches
   //                 and a reversible markov chain across each branch.

@@ -297,7 +297,7 @@ namespace substitution {
 
   formula_expression_ref Unit_Model(const formula_expression_ref&);
 
-  boost::shared_ptr<DiscreteDistribution> ExtendDiscreteDistributionFunction(const DiscreteDistribution& D,const expression_ref& V, const Double& p);
+  expression_ref ExtendDiscreteDistributionFunction(const expression_ref& D,const expression_ref& V, const Double& p);
 
   struct ExtendDiscreteDistributionOp: public Operation
   {
@@ -315,7 +315,7 @@ namespace substitution {
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
     {
-      boost::shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(0);
+      expression_ref D = Args.evaluate(0);
       expression_ref V = Args.evaluate(1);
       boost::shared_ptr<const Double> p = Args.evaluate_as<Double>(2);
       
@@ -329,7 +329,7 @@ namespace substitution {
 
   extern expression_ref ExtendDiscreteDistribution;
 
-  boost::shared_ptr<DiscreteDistribution> DiscretizationFunction(const probability::Distribution& D, Int n);
+  expression_ref DiscretizationFunction(const probability::Distribution& D, Int n);
 
   struct DiscretizationOp: public Operation
   {
@@ -360,9 +360,9 @@ namespace substitution {
 
   extern expression_ref Discretize;
 
-  boost::shared_ptr<MultiModelObject> MultiParameterFunction(const ModelFunction& F, const DiscreteDistribution& D);
+  boost::shared_ptr<MultiModelObject> MultiParameterFunction(const ModelFunction& F, const expression_ref& D);
 
-  MultiModelObject MultiRateFunction(const MultiModelObject& M_, const DiscreteDistribution& D);
+  MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D);
 
   struct MultiParameterOp: public Operation
   {
@@ -405,7 +405,7 @@ namespace substitution {
     {
       // The input-model should really be a lambda function taking the single value (or first value) p_change
       boost::shared_ptr<const MultiModelObject> M = Args.evaluate_as<MultiModelObject>(0);
-      boost::shared_ptr<const DiscreteDistribution> D = Args.evaluate_as<DiscreteDistribution>(1);
+      expression_ref D = Args.evaluate(1);
       
       boost::shared_ptr< MultiModelObject > R ( MultiRateFunction(*M, *D).clone() );
 
@@ -477,7 +477,7 @@ namespace substitution {
 
   extern expression_ref Modulated_Markov_E;
 
-  boost::shared_ptr< DiscreteDistribution > M2_Function(Double f1, Double f2, Double f3, Double omega);
+  expression_ref M2_Function(Double f1, Double f2, Double f3, Double omega);
 
   struct M2_Op: public Operation
   {

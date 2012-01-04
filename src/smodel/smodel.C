@@ -1350,12 +1350,13 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   MultiParameterModel::MultiParameterModel(const ::Model& M,int p,int n) 
     :ReversibleWrapperOver< ::Model>(M),
-     p_change(p),
-     D(n)
+     p_change(p)
   { 
     // start with sane values for p_values
+    vector<expression_ref> pairs(n);
     for(int m=0;m<n;m++)
-      D.values[m] = M.get_parameter_value(p_change);
+      pairs[m] = Tuple(1.0/n, M.get_parameter_value(p_change));
+    D = DiscreteDistribution(get_list(pairs));
 
     if (p_change != -1)
       SubModel().set_fixed(p_change,true);
@@ -1401,13 +1402,16 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     */
     int p_index = SubModel().n_parameters();
 
-    DiscreteDistribution D(n_bins);
 
+    vector<expression_ref> pairs;
     for(int i=0;i<n_bins;i++)
     {
-      D.fraction[i] = get_parameter_value_as<Double>(p_index+i);
-      D.values[i] = get_parameter_value(p_index+i+n_bins);
+      Double p = get_parameter_value_as<Double>(p_index+i);
+      expression_ref v = get_parameter_value(p_index+i+n_bins);
+      pairs.push_back(Tuple(p, v));
     }
+
+    expression_ref D = DiscreteDistribution(get_list(pairs));
 
     shared_ptr<const ModelFunction> F = dynamic_pointer_cast<const ModelFunction>(LambdaModel(SubModel(), p_change).result());
     
@@ -1539,13 +1543,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //-------------------- M2 --------------------//
   shared_ptr<const Object> M2::result() const
   {
-    D.fraction[0] = get_parameter_value_as<Double>(0);
-    D.fraction[1] = get_parameter_value_as<Double>(1);
-    D.fraction[2] = get_parameter_value_as<Double>(2);
+    vector<expression_ref> pairs;
+    pairs.push_back( Tuple( get_parameter_value(0), Double(0) ) );
+    pairs.push_back( Tuple( get_parameter_value(1), Double(1) ) );
+    pairs.push_back( Tuple( get_parameter_value(2), get_parameter_value(2) ) );
 
-    D.values[0] = ptr( Double(0) );
-    D.values[1] = ptr( Double(1) );
-    D.values[2] = get_parameter_value(3);
+    D = DiscreteDistribution( get_list(pairs) );
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
     return MultiParameterModel::result();
@@ -1597,13 +1600,12 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //-------------------- M2a -------------------//
   shared_ptr<const Object> M2a::result() const
   {
-    D.fraction[0] = get_parameter_value_as<Double>(0);
-    D.fraction[1] = get_parameter_value_as<Double>(1);
-    D.fraction[2] = get_parameter_value_as<Double>(2);
+    vector<expression_ref> pairs;
+    pairs.push_back(Tuple( get_parameter_value(0), get_parameter_value(3) ));
+    pairs.push_back(Tuple( get_parameter_value(1), Double(1)) );
+    pairs.push_back(Tuple( get_parameter_value(2), get_parameter_value(4) ));
 
-    D.values[0] = get_parameter_value(3);
-    D.values[1] = ptr( Double(1) );
-    D.values[2] = get_parameter_value(4);
+    expression_ref D = get_list(pairs);
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
     shared_ptr<const ModelFunction> F = LambdaModel(SubModel(),p_change).result_as<const ModelFunction>();
@@ -1767,19 +1769,15 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     /// The first 3 pairs are set by the discretized
     /// Beta distribution. There remain two pairs. 
 
-    for (int i = 0; i < D.values.size(); i++)
+    vector<expression_ref> pairs;
+    for (int i = 0; i < nbin+2; i++)
     {
       if (i < nbin)
-      {
-        D.fraction[i] = d.f[i] * ff[0];
-        D.values[i] = ptr( Double(d.r[i]) );
-      }
+	pairs.push_back( Tuple(d.f[i] * ff[0], d.r[i]) );
       else
-      {
-        D.fraction[i] = ff[i - nbin + 1];
-        D.values[i] = get_parameter_value(i - nbin + 1 + 2);
-      }
+	pairs.push_back( Tuple(ff[i - nbin + 1], get_parameter_value(i - nbin + 1 + 2)));
     }
+    D = DiscreteDistribution(get_list(pairs));
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
     return MultiParameterModel::result();
@@ -1806,11 +1804,11 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   {
     int n = get_parameter_value_as<Int>(0);
 
+    vector<expression_ref> pairs;
     for(int i=0;i<n;i++)
-      D.fraction[i] = get_parameter_value_as<Double>(1+i);
+      pairs.push_back( Tuple( get_parameter_value_as<Double>(1+i), get_parameter_value(1+n+i) ) );
 
-    for(int i=0;i<n;i++)
-      D.values[i] = get_parameter_value(1+n+i);
+    D = DiscreteDistribution( get_list(pairs) );
 
     // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
     return MultiParameterModel::result();

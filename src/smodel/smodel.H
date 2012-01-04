@@ -781,7 +781,7 @@ namespace substitution {
     int p_change;
 
     /// The values it takes on
-    mutable DiscreteDistribution D;
+    mutable expression_ref D;
 
   public:
     boost::shared_ptr<const Object> result() const;
@@ -913,7 +913,7 @@ namespace substitution {
     int p_change;
 
     /// The values it takes on
-    mutable DiscreteDistribution D;
+    mutable expression_ref D;
 
     void recalc(const std::vector<int>&) {std::abort();}
     void update() { }
