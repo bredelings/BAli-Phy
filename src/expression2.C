@@ -5,7 +5,6 @@
 #include <boost/shared_ptr.hpp>
 #include "util.H"
 
-#include "formula.H"
 #include "operation.H"
 #include "operations.H"
 #include "distribution-operations.H"

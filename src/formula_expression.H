@@ -2,7 +2,7 @@
 #define FORMULA_EXPRESSION_H
 
 #include <boost/shared_ptr.hpp>
-#include "formula.H"
+#include "expression.H"
 #include <iostream>
 
 class formula_expression_ref
