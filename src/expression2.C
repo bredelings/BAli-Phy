@@ -308,7 +308,7 @@ int main()
   cout<<"Eval test:     "<<test8<<" = \n";
   test8 = launchbury_normalize(test8);
   cout<<"   normalized: "<<test8<<" = \n";
-  test8 = evaluate_mark1(test8);
+  test8 = CTX1.evaluate_expression(test8);
   cout<<test8<<"\n";
 
   expression_ref test9 = case_expression(true, Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
@@ -317,7 +317,7 @@ int main()
   cout<<"Eval test:     "<<test9<<" = \n";
   test9 = launchbury_normalize(test9);
   cout<<"   normalized: "<<test9<<" = \n";
-  test9 = evaluate_mark1(test9);
+  test9 = CTX1.evaluate_expression(test9);
   cout<<test9<<"\n";
 
 
@@ -328,20 +328,20 @@ int main()
   cout<<"Eval test:     "<<test10<<" = \n";
   test10 = launchbury_normalize(test10);
   cout<<"   normalized: "<<test10<<" = \n";
-  test10 = evaluate_mark1(test10);
+  test10 = CTX1.evaluate_expression(test10);
   cout<<test10<<"\n";
 
   // We might actually have to print the result to calculate the whole thing.
   expression_ref test11 = let_expression(take, def_take,
 					let_expression(iterate, def_iterate,
-						       take(3)(iterate(plus(1),1))
+						       take(3)(iterate(plus_i(1),1))
 						       )
 					);
   cout<<"\n";
   cout<<"Eval test:     "<<test11<<" = \n";
   test11 = launchbury_normalize(test11);
   cout<<"   normalized: "<<test11<<" = \n";
-  test11 = evaluate_mark1(test11);
+  test11 = CTX1.evaluate_expression(test11);
   cout<<test11<<"\n";
 
   context C;
