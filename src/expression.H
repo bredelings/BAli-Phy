@@ -10,8 +10,6 @@
 #include "object.H"
 #include "operation.H"
 
-class Formula;
-
 /// An S-expression: An Object, and possibly an array of Objects.
 struct expression_ref;
 
