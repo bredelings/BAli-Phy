@@ -1176,7 +1176,11 @@ vector<string> show_probability_expressions(const context& C)
     // Extract the density operation
     shared_ptr<const String> name = dynamic_pointer_cast<const String>(results[0]);
 
-    string prob_exp = results[1]->print() + " ~ " + string(*name)+results[2]->print();
+    string prob_exp = results[1]->print() + " ~ " + string(*name);
+    if (dynamic_pointer_cast<const expression>(results[2]))
+      prob_exp += results[2]->print();
+    else
+      prob_exp += "(" + results[2]->print() + ")";
 
     expressions.push_back( prob_exp );
   }
