@@ -111,3 +111,32 @@ std::ostream& operator<<(std::ostream& o, const formula_expression_ref& F)
   o<<F.exp();
   return o;
 }
+
+formula_expression_ref lambda_quantify(const expression_ref& d, const formula_expression_ref& F)
+{
+  // Perhaps I should take out the expression that is the argument... we perhaps not.
+  formula_expression_ref F2 = F;
+  F2.notes[F2.index()] = lambda_quantify(d,F.exp());
+  return F2;
+}
+
+formula_expression_ref Tuple(const formula_expression_ref& R1,const formula_expression_ref& R2)
+{
+  return Tuple(2)(R1)(R2);
+}
+
+formula_expression_ref Tuple(const formula_expression_ref& R1,const formula_expression_ref& R2,const formula_expression_ref& R3)
+{
+  return Tuple(3)(R1)(R2)(R3);
+}
+
+formula_expression_ref Tuple(const formula_expression_ref& R1,const formula_expression_ref& R2,const formula_expression_ref& R3,const formula_expression_ref& R4)
+{
+  return Tuple(4)(R1)(R2)(R3)(R4);
+}
+
+formula_expression_ref Tuple(const formula_expression_ref& R1,const formula_expression_ref& R2,const formula_expression_ref& R3,const formula_expression_ref& R4,const formula_expression_ref& R5)
+{
+  return Tuple(5)(R1)(R2)(R3)(R4)(R5);
+}
+
