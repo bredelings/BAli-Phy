@@ -891,6 +891,11 @@ namespace substitution {
     void recalc(const std::vector<int>&) {std::abort();}
     void update() { }
 
+    int p1;
+    int p2;
+    int p3;
+    int p4;
+
   public:
     boost::shared_ptr<const Object> result() const;
 
