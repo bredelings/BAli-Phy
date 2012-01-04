@@ -2522,3 +2522,45 @@ std::ostream& operator<<(std::ostream& o, const context& C)
   }
   return o;
 }
+
+#include "distribution-operations.H"
+
+int add_probability_expression(context& C)
+{
+  expression_ref query = distributed(_2,Tuple(prob_density(_,_1),_3));
+
+  typed_expression_ref<Log_Double> Pr;
+
+  // Check each expression in the Formula
+  for(int i=0;i<C.n_notes();i++)
+  {
+    vector<expression_ref> results; 
+
+    // If its a probability expression, then...
+    if (not find_match(query, C.get_note(i), results)) continue;
+
+    // Extract the density operation
+    shared_ptr<const Operation> density_op = dynamic_pointer_cast<const Operation>(results[0]);
+    if (not density_op) throw myexception()<<"Expression "<<i<<" does have an Op in the right place!";
+    
+    // Create an expression for calculating the density of these random variables given their inputs
+    expression_ref density_func = lambda_expression( *density_op );
+    typed_expression_ref<Log_Double> Pr_i = density_func(results[1], results[2]);
+    
+    // Extend the probability expression to include this term also.
+    // (FIXME: a balanced tree could save computation time)
+    if (not Pr)
+      Pr = Pr_i;
+    else
+      Pr = Pr_i * Pr;
+  }
+
+  // If this model has random variables... 
+  if (Pr)
+  {
+    return C.add_compute_expression(Pr);
+  }
+  else
+    return -1;
+}
+

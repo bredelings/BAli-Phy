@@ -473,4 +473,6 @@ std::vector<expression_ref> combine(const std::vector<expression_ref>& N1, const
 std::ostream& operator<<(std::ostream&, const context& C);
 
 expression_ref graph_normalize(const expression_ref& R);
+
+int add_probability_expression(context& C);
 #endif
