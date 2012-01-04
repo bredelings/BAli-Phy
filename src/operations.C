@@ -42,6 +42,7 @@ shared_ptr<const Object> Case::operator()(OperationArgs& Args) const
   parse_alternatives(alts, cases, results);
 
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(obj);
+  assert(not E or not dynamic_pointer_cast<const lambda>(E->sub[0]));
 
   expression_ref result;
   for(int i=0;i<cases.size() and not result;i++)
