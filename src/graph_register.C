@@ -2332,13 +2332,19 @@ int reg_heap::incremental_evaluate(int R, int t)
       
       assert(not access(R).changeable);
 
+      // Set ownership here, where it will not be cleared by futher allocate calls.
       for(int i=0;i<vars.size();i++) 
       {
 	int V = new_reg_vars[i]->target;
 
-	// Set ownership here, where it will not be cleared by futher allocate calls.
 	access(V).owners = access(R).owners;
-	// Set the bodies of the new reg_vars
+      }
+
+      // Set the bodies of the new reg_vars
+      for(int i=0;i<vars.size();i++) 
+      {
+	int V = new_reg_vars[i]->target;
+
 	set_E(V , bodies[i]);
       }
 
