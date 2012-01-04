@@ -107,7 +107,7 @@ shared_ptr<const Object> uniform_density::operator()(OperationArgs& Args) const
 }
 
 // Fields: n_random, n_parameters, string, density op
-expression_ref prob_density = lambda_expression( data_function("prob_density",2) );
+expression_ref prob_density = lambda_expression( constructor("prob_density",2) );
 
 expression_ref exponential_dist = prob_density("Exponential", exponential_density());
 

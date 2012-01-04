@@ -134,11 +134,9 @@ int n_match_results(const expression_ref&);
 
 bool find_match(const expression_ref& pattern,const expression_ref& E, std::vector< expression_ref >& results);
 
-enum function_type_t {data_function_f, body_function_f};
-
-struct Function: public Operator
+struct constructor: public Operator
 {
-  Function* clone() const {return new Function(*this);}
+  constructor* clone() const {return new constructor(*this);}
 
   tribool compare(const Object& o) const;
   
@@ -146,8 +144,6 @@ struct Function: public Operator
   int n_args_;
 
   int n_args() const {return n_args_;}
-
-  function_type_t what_type;
 
   assoc_type assoc;
 
@@ -157,18 +153,12 @@ struct Function: public Operator
   virtual int precedence() const {return prec;}
 
   std::string name() const {return f_name;}
-  bool is_data_constructor() const {return what_type == data_function_f;}
-  bool is_function() const {return what_type == body_function_f;}
-  Function(const std::string&, int n, function_type_t);
+  constructor(const std::string&, int n);
 };
 
-Function data_function(const std::string&, int);
+constructor left_assoc_constructor(const std::string& s,int prec=0);
 
-Function left_assoc_data_function(const std::string& s,int prec=0);
-
-Function right_assoc_data_function(const std::string& s,int prec=0);
-
-Function body_function(const std::string&, int);
+constructor right_assoc_constructor(const std::string& s,int prec=0);
 
 std::set<std::string> find_named_parameters(const expression_ref&);
 

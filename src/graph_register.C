@@ -366,7 +366,7 @@ expression_ref graph_normalize(const expression_ref& R)
   }
 
   // 4. Constructor
-  if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
+  if (dynamic_pointer_cast<const constructor>(E->sub[0]) or 
       dynamic_pointer_cast<const Operation>(E->sub[0]))
   {
     int var_index = get_safe_binder_index(R);
@@ -1701,13 +1701,13 @@ expression_ref context::full_evaluate(int& R) const
     // If the result is a lambda function, then we are done.
     // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
     // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
-    if (not dynamic_pointer_cast<const Function>(E->sub[0])) return result;
+    if (not dynamic_pointer_cast<const constructor>(E->sub[0])) return result;
   }
 
   // If the result is a structure, then evaluate its fields and substitute them.
   {
     shared_ptr<expression> E = dynamic_pointer_cast<expression>(result);
-    assert(dynamic_pointer_cast<const Function>(E->sub[0]));
+    assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
     for(int i=1;i<E->size();i++)
     {
@@ -2012,7 +2012,7 @@ context::~context()
 
 shared_ptr<const Object> context::default_parameter_value(int i) const
 {
-  expression_ref default_value = lambda_expression(data_function("default_value",2));
+  expression_ref default_value = lambda_expression(constructor("default_value",2));
 
   vector<expression_ref> results;
   expression_ref query = default_value( parameter( parameter_name(i) ) )(match(0));
@@ -2116,12 +2116,12 @@ class RegOperationArgs: public OperationArgs
       // If the result is a lambda function, then we are done.
       // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
       // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
-      if (not dynamic_pointer_cast<const Function>(E->sub[0])) return result;
+      if (not dynamic_pointer_cast<const constructor>(E->sub[0])) return result;
     }
 
     {
       shared_ptr<expression> E = dynamic_pointer_cast<expression>(result);
-      assert(dynamic_pointer_cast<const Function>(E->sub[0]));
+      assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
       
       for(int i=1;i<E->size();i++)
 	E->sub[i] = evaluate_slot(R2, i-1);

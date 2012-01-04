@@ -441,47 +441,36 @@ expression_ref lambda_expression(const Operator& O)
   return R;
 }
 
-tribool Function::compare(const Object& o) const
+tribool constructor::compare(const Object& o) const
 {
-  const Function* E = dynamic_cast<const Function*>(&o);
+  const constructor* E = dynamic_cast<const constructor*>(&o);
   if (not E) 
     return false;
 
   return f_name == E->f_name;
 }
 
-Function::Function(const string& s, int n, function_type_t f_t)
-  :f_name(s), n_args_(n), what_type(f_t),assoc(assoc_none),prec(-1)
+constructor::constructor(const string& s, int n)
+  :f_name(s), n_args_(n), assoc(assoc_none),prec(-1)
 {
   
 }
 
-Function data_function(const std::string& s, int n)
+constructor left_assoc_constructor(const std::string& s,int prec)
 {
-  return Function(s, n, data_function_f);
-}
-
-Function left_assoc_data_function(const std::string& s,int prec)
-{
-  Function f(s, 2, data_function_f);
+  constructor f(s, 2);
   f.prec = prec;
   f.assoc = assoc_left;
   return f;
 }
 
-Function right_assoc_data_function(const std::string& s,int prec)
+constructor right_assoc_constructor(const std::string& s,int prec)
 {
-  Function f(s, 2, data_function_f);
+  constructor f(s, 2);
   f.prec = prec;
   f.assoc = assoc_right;
   return f;
 }
-
-Function body_function(const std::string& s, int n)
-{
-  return Function(s, n, body_function_f);
-}
-
 
 /// Do the substitutions match(i) -> replace[i] for all i where replace[i] is not null.
 expression_ref substitute(const expression_ref& R, const vector<expression_ref>& replace)
@@ -978,7 +967,7 @@ expression_ref let_float(const expression_ref& R)
       
       if (shared_ptr<const expression> C = dynamic_pointer_cast<const expression>(vars[i]))
       {
-	assert(dynamic_pointer_cast<const Function>(C->sub[0]));
+	assert(dynamic_pointer_cast<const constructor>(C->sub[0]));
 	for(int j=1;j<C->size();j++)
 	{
 	  dummy D = *dynamic_pointer_cast<const dummy>(C->sub[j]);
@@ -1150,7 +1139,7 @@ expression_ref add_prefix(const string& prefix, const expression_ref& R)
 
 expression_ref Tuple(int n)
 {
-  return lambda_expression( data_function("()",n) );
+  return lambda_expression( constructor("()",n) );
 }
 
 expression_ref Tuple(const expression_ref& R1,const expression_ref& R2)
@@ -1174,9 +1163,9 @@ expression_ref Tuple(const expression_ref& R1,const expression_ref& R2,const exp
 }
 
 
-expression_ref Cons = lambda_expression( right_assoc_data_function(":",2) );
+expression_ref Cons = lambda_expression( right_assoc_constructor(":",2) );
 
-expression_ref ListEnd = lambda_expression( data_function("[]",0) );
+expression_ref ListEnd = lambda_expression( constructor("[]",0) );
 
 #include "computation.H"
 
@@ -1346,7 +1335,7 @@ expression_ref evaluate_mark1(const expression_ref& R)
     }
 
 
-    else if (not E or dynamic_pointer_cast<const Function>(E->sub[0]) )
+    else if (not E or dynamic_pointer_cast<const constructor>(E->sub[0]) )
     {
       if (S.empty()) 
       {
@@ -1519,22 +1508,22 @@ expression_ref _2 = match(1);
 expression_ref _3 = match(2);
 expression_ref _4 = match(3);
 
-expression_ref default_value = lambda_expression(data_function("default_value",2));
+expression_ref default_value = lambda_expression(constructor("default_value",2));
 
-expression_ref bounds = lambda_expression(data_function("bounds",2));
+expression_ref bounds = lambda_expression(constructor("bounds",2));
 
 // Fields: (prob_density) (random vars) (parameter expressions)
-expression_ref distributed = lambda_expression( data_function("~",2) );
+expression_ref distributed = lambda_expression( constructor("~",2) );
 
 expression_ref sys_print = lambda_expression( Print() );
 
 expression_ref concat = lambda_expression( Concat() );
 
-expression_ref prob = lambda_expression( data_function("probability",1) );
+expression_ref prob = lambda_expression( constructor("probability",1) );
 
 expression_ref If = lambda_expression( IfThenElse() );
 
-expression_ref defun = lambda_expression( data_function("defun",3) );
+expression_ref defun = lambda_expression( constructor("defun",3) );
 
 vector<expression_ref> get_ref_vector_from_list(const expression_ref& R)
 {
@@ -1570,7 +1559,7 @@ template<> expression_ref get_tuple<>(const vector<expression_ref>& v)
   if (v.size() == 1) return v[0];
 
   vector<expression_ref> sub(v.size()+1);
-  sub[0] = data_function("()",v.size());
+  sub[0] = constructor("()",v.size());
   for(int i=0;i<v.size();i++)
     sub[i+1] = v[i];
 
@@ -1675,7 +1664,7 @@ bool is_simple_pattern(const expression_ref& R)
   //  0-arg constructor, since we've already bailed on dummy variables
   if (not E) return true;
 
-  assert(dynamic_pointer_cast<const Function>(E->sub[0]));
+  assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
   // Arguments of multi-arg constructors must all be irrefutable patterns
   for(int j=1;j<E->size();j++)
@@ -1745,7 +1734,7 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ve
     // 2. we don't have to decompose this if its a simple branch: 0-arg constructor
     if (not PE) continue;
 
-    assert(dynamic_pointer_cast<const Function>(PE->sub[0]));
+    assert(dynamic_pointer_cast<const constructor>(PE->sub[0]));
     vector<int> complex_patterns;
     for(int j=1;j<PE->size();j++)
       if (not is_irrefutable_pattern(PE->sub[j]))
@@ -1965,8 +1954,8 @@ bool is_WHNF(const expression_ref& R)
     if (L) return true;
 
     // 5. Constructor
-    shared_ptr<const Function> RF = dynamic_pointer_cast<const Function>(E->sub[0]);
-    if (RF and RF->what_type == data_function_f) return true;
+    shared_ptr<const constructor> RF = dynamic_pointer_cast<const constructor>(E->sub[0]);
+    if (RF) return true;
 
     return false;
   }
@@ -2071,7 +2060,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
   // - then, we could put the operation on the stack and begin evaluating just that one argument.
   
   // 4. Constructor
-  if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
+  if (dynamic_pointer_cast<const constructor>(E->sub[0]) or 
       dynamic_pointer_cast<const Operation>(E->sub[0]))
   {
     int var_index = get_safe_binder_index(R);
@@ -2181,7 +2170,7 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
   }
 
   // 4. Constructor
-  if (dynamic_pointer_cast<const Function>(E->sub[0]) or 
+  if (dynamic_pointer_cast<const constructor>(E->sub[0]) or 
       dynamic_pointer_cast<const Operation>(E->sub[0]))
   {
     expression* V = new expression(*E);
