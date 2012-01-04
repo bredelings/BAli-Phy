@@ -511,13 +511,17 @@ namespace substitution
   {
     shared_ptr<MultiModelObject> R;
 
-    vector<expression_ref> DV = get_ref_vector_from_list(D);
+    vector<expression_ref> DV;
+    {
+      shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(D);
+      DV = get_ref_vector_from_list(DE->sub[1]);
+    }
 
     for(int i=0;i<DV.size();i++)
     {
       vector<expression_ref> DT = get_ref_vector_from_tuple(DV[i]);
-      double fraction = *convert<const Double>(DT[1]);
-      shared_ptr<const Object> value = DT[2];
+      double fraction = *convert<const Double>(DT[0]);
+      shared_ptr<const Object> value = DT[1];
       shared_ptr<const MultiModelObject> M = dynamic_pointer_cast<const MultiModelObject>(F(value));
 
       if (not R) R = shared_ptr<MultiModelObject>(new MultiModelObject);
