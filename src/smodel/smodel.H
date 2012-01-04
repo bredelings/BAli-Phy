@@ -886,28 +886,6 @@ namespace substitution {
     WithINV(const ::Model& M);
   };
 
-  class M2: public MultiParameterModel
-  {
-    void recalc(const std::vector<int>&) {std::abort();}
-    void update() { }
-
-    int p1;
-    int p2;
-    int p3;
-    int p4;
-
-  public:
-    boost::shared_ptr<const Object> result() const;
-
-    efloat_t super_prior() const;
-
-    M2* clone() const {return new M2(*this);}
-
-    string name() const;
-
-    M2(const ::Model& M1,const ::Model& R);
-  };
-
   /// M2a model has three omega parameters.
   /// In M2 model, omega_1 = 0. In M2a model,
   /// omega_1 < 1.

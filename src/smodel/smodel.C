@@ -1538,52 +1538,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     check();
   }
 
-  //-------------------- M2 --------------------//
-  shared_ptr<const Object> M2::result() const
-  {
-    vector<expression_ref> pairs;
-    pairs.push_back( Tuple( get_parameter_value(p1), Double(0) ) );
-    pairs.push_back( Tuple( get_parameter_value(p2), Double(1) ) );
-    pairs.push_back( Tuple( get_parameter_value(p3), get_parameter_value(p4) ) );
-
-    D = DiscreteDistribution( get_list(pairs) );
-
-    // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
-    return MultiParameterModel::result();
-  }
-
-  efloat_t M2::super_prior() const 
-  {
-    // prior on frequencies
-    valarray<double> n(3);
-    n[0] = 1;
-    n[1] = 98;
-    n[2] = 1;
-    efloat_t P = dirichlet_pdf(get_parameter_values_as<Double>( range<int>(p1, 3) ), n);
-
-    // prior on omega
-    double omega = get_parameter_value_as<Double>(p4);
-    if (not is_fixed(3))
-      P *= exponential_pdf(log(omega),0.05)/omega;
-    return P;
-  }
-
-  string M2::name() const {
-    return SubModels(0).name() + " + M2";
-  }
-
-  M2::M2(const ::Model& M1,const ::Model& R) 
-    :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,3)
-  {
-    p1 = add_super_parameter(Parameter("M2::f[AA INV]",   Double(1.0/3), between(0, 1)));
-    p2 = add_super_parameter(Parameter("M2::f[Neutral]",  Double(1.0/3), between(0, 1)));
-    p3 = add_super_parameter(Parameter("M2::f[Selected]", Double(1.0 - get_parameter_value_as<Double>(p1) - get_parameter_value_as<Double>(p2)), between(0, 1)));
-    p4 = add_super_parameter(Parameter("M2::omega", Double(1.0), lower_bound(0)));
-
-    check();
-    recalc_all();
-  }
-
   int any_set(const vector<bool>& mask,int i1,int i2) 
   {
     int inc = (i2 > i1)?1:-1;
