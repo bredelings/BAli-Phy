@@ -2103,31 +2103,41 @@ class RegOperationArgs: public OperationArgs
     return R2;
   }
 
-  expression_ref evaluate_slot(int R1, int slot)
+  expression_ref evaluate_structure(const expression_ref& S)
   {
-    int R2 = lazy_evaluate_slot(R1,slot);
-    expression_ref result = M.access(R2).result;
-    
+    if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( S ))
     {
-      // If the result is atomic, then we are done.
-      shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
-      if (not E) return result;
-      
-      // If the result is a lambda function, then we are done.
-      // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
+      int R2 = lazy_evaluate_reg(RV->target);
+
+      return evaluate_structure( M.access(R2).result );
+    }
+    else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(S))
+    {
+      // If the "structure" is a lambda function, then we are done.
+      // (a) if we were going to USE this, we should just call lazy evaluate! (which return a heap variable)
       // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
-      if (not dynamic_pointer_cast<const constructor>(E->sub[0])) return result;
-    }
-
-    {
-      shared_ptr<expression> E = dynamic_pointer_cast<expression>(result);
+      if (dynamic_pointer_cast<const lambda>(E->sub[0])) return S;
       assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
-      
-      for(int i=1;i<E->size();i++)
-	E->sub[i] = evaluate_slot(R2, i-1);
 
-      return result;
+      // If the result is a constructor expression, then evaluate its fields also.
+      expression_ref S2 = S;
+      shared_ptr<expression> E2 = dynamic_pointer_cast<expression>(S2);
+      
+      bool different = false;
+      for(int i=1;i<E2->size();i++)
+      {
+	E2->sub[i] = evaluate_structure(E->sub[i]);
+	if (E2->sub[i] != E->sub[i])
+	  different = true;
+      }
+
+      if (different)
+	return S2;
+      else
+	return S;
     }
+    else
+      return S;
   }
 
 public:
@@ -2144,7 +2154,7 @@ public:
 
   boost::shared_ptr<const Object> evaluate(int slot)
   {
-    return evaluate_slot(R, slot);
+    return evaluate_structure(reference(slot));
   }
 
   boost::shared_ptr<const Object> lazy_evaluate(int slot)
