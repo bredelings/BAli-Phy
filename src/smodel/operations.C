@@ -74,7 +74,7 @@ namespace substitution
   {
     expression_ref HKY = lambda_expression(HKY_Op());
 
-    formula_expression_ref kappa = def_parameter("HKY::kappa", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(2)(log(2), 0.25));
+    formula_expression_ref kappa = def_parameter("HKY::kappa", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
 
     return HKY(a)(kappa);
   }
@@ -101,8 +101,8 @@ namespace substitution
 
   formula_expression_ref TN_Model(const alphabet& a)
   {
-    formula_expression_ref kappa1 = def_parameter("TN::kappa(pur)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(2)(log(2), 0.25));
-    formula_expression_ref kappa2 = def_parameter("TN::kappa(pyr)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(2)(log(2), 0.25));
+    formula_expression_ref kappa1 = def_parameter("TN::kappa(pur)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
+    formula_expression_ref kappa2 = def_parameter("TN::kappa(pyr)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
 
     expression_ref TN = lambda_expression(TN_Op());
 
@@ -145,7 +145,7 @@ namespace substitution
   formula_expression_ref WithINV_Model(const formula_expression_ref& R)
   {
     typed_expression_ref<Double> p = parameter("INV::p");
-    formula_expression_ref P = def_parameter("INV::p", 1.0, between(0.0, 1.0), beta_dist, Tuple(2)(1.0, 2.0) );
+    formula_expression_ref P = def_parameter("INV::p", 1.0, between(0.0, 1.0), beta_dist, Tuple(1.0, 2.0) );
 
     // Where do we get our frequencies from?
     formula_expression_ref INV = INV_for_Mixture(R);
@@ -196,12 +196,12 @@ namespace substitution
     // I should generalize this...
     // Should I make a tuple of tuples?
     R.add_expression(distributed(Tuple(6)(AG)(AT)(AC)(GT)(GC)(TC),
-				 Tuple(2)(dirichlet_dist, 
-					  Tuple(6)(8.0)(4.0)(4.0)(4.0)(4.0)(8.0)
-					  )
+				 Tuple(dirichlet_dist, 
+				       Tuple(6)(8.0)(4.0)(4.0)(4.0)(4.0)(8.0)
+				       )
 				 )
 		     );
-    
+
     return R;
   }
   
@@ -322,7 +322,7 @@ namespace substitution
     }
 
     expression_ref N = get_tuple(vector<double>(a.size(), 1.0) );
-    F.add_expression( distributed( F, Tuple(2)(dirichlet_dist,N ) ) );
+    F.add_expression( distributed( F, Tuple(dirichlet_dist,N ) ) );
 
     return F;
   }
@@ -354,7 +354,7 @@ namespace substitution
   {
     assert(a.size() == pi.size());
     
-    formula_expression_ref f = def_parameter("f", 1.0, between(0,1), uniform_dist, Tuple(2)(0.0, 1.0));
+    formula_expression_ref f = def_parameter("f", 1.0, between(0,1), uniform_dist, Tuple(0.0, 1.0));
 
     formula_expression_ref Vars = Frequencies_Model(a,pi);
 
@@ -825,7 +825,7 @@ namespace substitution
     }
     formula_expression_ref R= Mixture_E(vars_list, models_list);
 
-    R.add_expression(distributed(vars_tuple, Tuple(2)(dirichlet_dist, n_tuple ) ) );
+    R.add_expression(distributed(vars_tuple, Tuple(dirichlet_dist, n_tuple ) ) );
 
     return R;
   }
