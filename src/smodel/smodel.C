@@ -1736,37 +1736,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return MultiParameterModel::result();
   }
 
-  //M3
-
-  double M3::omega(int i) const {
-    int n = get_parameter_value_as<Int>(0);
-    return get_parameter_value_as<Double>(n + i);
-  }
-
-  /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  void M3::omega(int i,double w) 
-  {
-    int n = get_parameter_value_as<Int>(0);
-
-    set_parameter_value(n+i,w);
-  }
-
-  // NOTE: we only enforce order in the LOGGING of the omegas
-
-  shared_ptr<const Object> M3::result() const
-  {
-    int n = get_parameter_value_as<Int>(0);
-
-    vector<expression_ref> pairs;
-    for(int i=0;i<n;i++)
-      pairs.push_back( Tuple( get_parameter_value_as<Double>(1+i), get_parameter_value(1+n+i) ) );
-
-    D = DiscreteDistribution( get_list(pairs) );
-
-    // recalc_submodel_instances( ): we need to do this when either P_values changes, or the SUBMODEL changes
-    return MultiParameterModel::result();
-  }
-
   // FIXME: Conditional on one omega being small, the probability of the other ones being
   //        small too should be higher.
   //
@@ -1788,55 +1757,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //        Make model that puts a uniform on (conserved,neutral) or (conserved,neutral,positive)
   //        and then has the possibility of [n] conserved rates with a UNIFORM prior.
   //        (The Uniform seems like a good analogue of the dirichlet.)
-
-  efloat_t M3::super_prior() const 
-  {
-    efloat_t P = 1;
-    int n = get_parameter_value_as<Int>(0);
-
-    if (n <= 1) return P;
-
-    // prior on frequencies
-    P *= dirichlet_pdf(get_parameter_values_as<Double>( range<int>(0, n) ), 4.0);
-
-    // prior on omegas
-    double f = 0.05/n;
-    for(int i=0; i < n; i++) 
-    {
-      double w = omega(i);
-      P *= ((1-f)*exponential_pdf(-log(w),0.05)/w + f*exponential_pdf(log(w),0.05)/w);
-    }
-
-    return P;
-  }
-
-  string M3::name() const {
-    int n = get_parameter_value_as<Int>(0);
-    return SubModels(0).name() + " + M3[" + convertToString(n) + "]";
-  }
-
-  M3::M3(const ::Model& M1,const ::Model& R, int n) 
-    :MultiParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),0,n)
-  {
-    add_super_parameter(Parameter("n", Int(n)));
-
-    // p
-    for(int i=0;i<n;i++) {
-      string pname = "M3::f" + convertToString(i+1);
-      add_super_parameter(Parameter(pname, Double(1.0/n), between(0, 1)));
-    }
-
-    // omega
-    for(int i=0;i<n;i++) {
-      string pname = "M3::omega" + convertToString(i+1);
-      add_super_parameter(Parameter(pname, Double(1.0), lower_bound(0)));
-    }
-
-    check();
-    recalc_all();
-  }
-
-
 
   M7::M7(const ::Model& M1,const ::Model& R, int n) 
     :DistributionParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),

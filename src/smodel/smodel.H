@@ -913,29 +913,6 @@ namespace substitution {
     M2a(const ::Model& M1,const ::Model& R);
   };
 
-  class M3: public MultiParameterModel 
-  {
-    void recalc(const std::vector<int>&) {std::abort();}
-    void update() { }
-  public:
-    boost::shared_ptr<const Object> result() const;
-    
-    efloat_t super_prior() const;
-
-    M3* clone() const {return new M3(*this);}
-
-    /// Get the parameter 'omega[i]' (non-synonymous/synonymous rate ratio)
-    double omega(int i) const;
-    /// Set the parameter 'omega[i]' (non-synonymous/synonymous rate ratio)
-    void omega(int i,double w);
-
-
-    string name() const;
-
-    M3(const ::Model& M1,const ::Model& R, int n);
-  };
-
-
   class M7: public DistributionParameterModel {
   public:
     

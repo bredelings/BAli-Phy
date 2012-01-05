@@ -589,6 +589,38 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
   }
+  else if (match(string_stack,"M3",arg)) 
+  {
+    int n=3;
+    if (not arg.empty())
+      n = convertTo<int>(arg);
+
+    formula_expression_ref D = ListEnd;
+    vector<expression_ref> fraction;
+    for(int i=n-1;i>=0;i--)
+    {
+      string pname_f = "M3::f" + convertToString(i+1);
+      string pname_w = "M3::omega" + convertToString(i+1);
+      formula_expression_ref f = def_parameter("M3::f"     + convertToString(i+1), Double(1.0/n), between(0,1));
+      fraction.insert(fraction.begin(), f.exp());
+      formula_expression_ref w = def_parameter("M3::omega" + convertToString(i+1), Double(1.0), lower_bound(0));
+      // P *= ((1-f)*exponential_pdf(-log(w),0.05)/w + f*exponential_pdf(log(w),0.05)/w);
+      w.add_expression( distributed( w, Tuple(log_exponential_dist, 0.05) ) );
+
+      D = Cons(Tuple(f,w),D);
+    }
+    D = DiscreteDistribution(D);
+    D.add_expression(distributed( get_tuple(fraction), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    assert(C);
+    formula_expression_ref S1 = TN_Model(C->getNucleotides());
+    formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
+    formula_expression_ref R = Plus_gwF_Model(*a);
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Q_from_S_and_R(S2,R) );
+
+    model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
+  }
   else if (match(string_stack,"M2a",arg)) 
   {
     FormulaModel FM(model_stack.back());
@@ -602,15 +634,6 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     FormulaModel FM(model_stack.back());
     model_stack.back() = M8b(FM, SimpleFrequencyModel(*get_alphabet(FM)),n);
-  }
-  else if (match(string_stack,"M3",arg)) 
-  {
-    int n=3;
-    if (not arg.empty())
-      n = convertTo<int>(arg);
-
-    FormulaModel FM(model_stack.back());
-    model_stack.back() = M3(FM, SimpleFrequencyModel(*get_alphabet(FM)),n); 
   }
   else if (match(string_stack,"M7",arg)) 
   {
