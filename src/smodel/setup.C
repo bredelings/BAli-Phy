@@ -551,8 +551,8 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     model_stack.back() = MultiFrequencyModel(FormulaModel(get_EM(model_stack,"multi_freq")),n);
   }
-  else if (match(string_stack,"INV",arg))
-    model_stack.back() = WithINV( FormulaModel(get_MM_default(model_stack,"INV",a,frequencies)) );
+  //  else if (match(string_stack,"INV",arg))
+  //    model_stack.back() = WithINV( FormulaModel(get_MM_default(model_stack,"INV",a,frequencies)) );
   //    model_stack.back() = WithINV_Model(get_MM_default(model_stack,"INV",a,frequencies));
 
   else if (match(string_stack,"DP",arg)) {

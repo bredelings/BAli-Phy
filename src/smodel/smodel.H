@@ -808,58 +808,6 @@ namespace substitution {
     DistributionParameterModel(const ::Model& M, const Distribution& RD,int p,int n);
   };
 
-  /// A discrete-gamma Model
-  //  Only has one parameter: the shape parameter for the gamma
-  class GammaParameterModel: public MultiModel, public OpModel
-  {
-  public:
-    GammaParameterModel* clone() const {return new GammaParameterModel(*this);}
-
-    /// Construct a discrete gamma model on top of 'M', with 'n' bins
-    GammaParameterModel(const ::Model& M, int n);
-  };
-
-  /// A discrete-lognormal Model
-  //  Only has one parameter: the shape parameter for the gamma
-  class LogNormalParameterModel: public MultiModel, public OpModel
-  {
-  public:
-    LogNormalParameterModel* clone() const {return new LogNormalParameterModel(*this);}
-
-    /// Construct a discrete gamma model on top of 'M', with 'n' bins
-    LogNormalParameterModel(const ::Model& M, int n);
-  };
-
-
-
-  /// The Invariant-sites model: a certain fraction of the sites don't change
-
-  /// The Invariant-sites model: a certain fraction of the sites don't change
-  /// The only parameter is 'p', the fraction of sites which don't change
-  /// To keep branch lengths the same, inflate rates by 1/(1-p).
-  class WithINV: public MultiModel, public ReversibleWrapperOver< ::Model> 
-  {
-    static const double inv_frac_mean;
-    static const double max_inv_rate;
-
-    int p_index;
-
-  public:
-    virtual WithINV* clone() const {return new WithINV(*this);}
-
-    void update() { }
-
-    void recalc(const std::vector<int>&) {std::abort();}
-
-    boost::shared_ptr<const Object> result() const;
-
-    efloat_t super_prior() const;
-
-    string name() const;
-
-    WithINV(const ::Model& M);
-  };
-
   /// M2a model has three omega parameters.
   /// In M2 model, omega_1 = 0. In M2a model,
   /// omega_1 < 1.
