@@ -31,6 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rates.H"
 #include "myexception.H"
 #include "smodel/operations.H"
+#include "../operations.H"
 #include "distribution-operations.H"
 
 using std::vector;

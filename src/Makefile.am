@@ -94,7 +94,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  hmm.C dp-engine.C dp-array.C dp-matrix.C 3way.C 2way.C sample-alignment.C \
 	  sample-tri.C sample-node.C imodel.C 5way.C sample-topology-NNI.C \
 	  setup.C rates.C sample-two-nodes.C sequence-format.C \
-	  util-random.C alignment-random.C setup-smodel.C sample-topology-SPR.C \
+	  util-random.C alignment-random.C smodel/setup.C sample-topology-SPR.C \
 	  alignment-sums.C alignment-util.C probability.C model.C \
 	  alignment-constraint.C substitution-cache.C substitution-star.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
@@ -302,7 +302,7 @@ cut_range_SOURCES = tools/cut-range.C util.C
 analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	sequence.C tools/distance-methods.C \
 	util.C sequencetree.C substitution.C eigenvalue.C tree.C \
-	exponential.C setup-smodel.C smodel/smodel.C imodel.C rng.C likelihood.C \
+	exponential.C smodel/setup.C smodel/smodel.C imodel.C rng.C likelihood.C \
 	choose.C tools/optimize.C setup.C rates.C alignment-util.C \
 	sequence-format.C randomtree.C model.C graph_register.C  probability.C \
 	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
