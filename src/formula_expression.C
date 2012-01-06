@@ -84,12 +84,18 @@ boost::shared_ptr<const Object> formula_expression_ref::result() const
   return C.evaluate_expression(exp());
 }
 
-formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b)
+formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value)
 {
   expression_ref var = parameter(name);
   formula_expression_ref Var (var);
   Var.add_expression( default_value(var, def_value) );
-  Var.add_expression( bounds(var, b) );
+  return Var;
+}
+
+formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b)
+{
+  formula_expression_ref Var = def_parameter(name, def_value);
+  Var.add_expression( bounds(Var.exp(), b) );
   return Var;
 }
 
