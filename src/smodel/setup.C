@@ -559,7 +559,29 @@ bool process_stack_Multi(vector<string>& string_stack,
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
-    model_stack.back() = DirichletParameterModel(FormulaModel(get_MM_default(model_stack,"DP",a,frequencies)),-1,n);
+
+    vector<expression_ref> fs;
+    vector<expression_ref> rates;
+
+    formula_expression_ref dist = ListEnd;
+    for(int i=0;i<n;i++)
+    {
+      formula_expression_ref f = def_parameter("DP::f"+convertToString(i+1), Double(1.0/n), between(0,1));
+      formula_expression_ref rate = def_parameter("DP::rate"+convertToString(i+1), Double(1.0), between(0,n));
+      
+      fs.push_back(f.exp());
+      rates.push_back(rate.exp());
+
+      // dist = (f,rate):dist
+      dist = Cons(Tuple(f, rate), dist);
+    }
+    dist = DiscreteDistribution(dist);
+    dist.add_expression( distributed( get_tuple(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );
+    dist.add_expression( distributed( get_tuple(rates), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,2.0))) ) );
+
+    //    model_stack.back() = DirichletParameterModel(FormulaModel(get_MM_default(model_stack,"DP",a,frequencies)),-1,n);
+    formula_expression_ref base = get_MM_default(model_stack,"DP",a,frequencies);
+    model_stack.back() = MultiRate(base,  dist);
   }
   else if (match(string_stack,"Modulated",arg))
   {
