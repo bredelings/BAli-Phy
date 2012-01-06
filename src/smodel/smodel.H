@@ -772,34 +772,6 @@ namespace substitution {
     C20_CAT_FixedFrequencyModel();
   };
 
-  /// A class of uncoupled rates/values
-  class DirichletParameterModel: public MultiModel,
-				 public ReversibleWrapperOver< ::Model> 
-  {
-  protected:
-    /// The parameter which is varying;
-    int p_change;
-
-    /// The number of bins
-    int n_bins;
-
-    efloat_t super_prior() const;
-
-    void recalc(const std::vector<int>&) {std::abort();}
-
-    void update() { }
-
-  public:
-    boost::shared_ptr<const Object> result() const;
-
-    DirichletParameterModel* clone() const {return new DirichletParameterModel(*this);}
-
-    string name() const;
-
-    DirichletParameterModel(const ::Model& M,int p,int n);
-  };
-
-
   class DistributionParameterModel: public MultiModel, public OpModel
   {
   public:
