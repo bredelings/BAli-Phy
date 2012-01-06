@@ -780,17 +780,6 @@ namespace substitution {
     DistributionParameterModel(const ::Model& M, const Distribution& RD,int p,int n);
   };
 
-  class M7: public DistributionParameterModel {
-  public:
-    
-    M7* clone() const {return new M7(*this);}
-
-    //    string name() const;
-
-    M7(const ::Model& M1,const ::Model& R, int n);
-  };
-
-
   class MixtureModel: public MultiModel, public SuperModelOver< ::Model> 
   {
     efloat_t super_prior() const;

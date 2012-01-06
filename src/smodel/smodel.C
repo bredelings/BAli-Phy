@@ -1357,34 +1357,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     return -1;
   }
 
-  // FIXME: Conditional on one omega being small, the probability of the other ones being
-  //        small too should be higher.
-  //
-  //        We could require more evidence for conservation if we required it only once.
-  //
-  //        But how can we enforce the idea that at least one of the categories has an
-  //        omega near 1?
-  //
-  //        Goal: Prior should place weak support on neutrality, and medium support on
-  //        some fraction of sites being neutral.  Given sites conserved at level w
-  //        we should place a decent level of support for other omegas being similar
-  //        to w.
-  //
-  //        Perhaps M3 is not quite the model for this, in a Bayesian context.
-  //        Instead: fix one omega to 1.0, and put a uniform prior on its frequency.
-  //        Place a uniform distribution on the other omegas, conditional on not being 1.0.
-  //        The user should decrease the number of omegas if they cannot be reliably estimated.
-  //
-  //        Make model that puts a uniform on (conserved,neutral) or (conserved,neutral,positive)
-  //        and then has the possibility of [n] conserved rates with a UNIFORM prior.
-  //        (The Uniform seems like a good analogue of the dirichlet.)
-
-  M7::M7(const ::Model& M1,const ::Model& R, int n) 
-    :DistributionParameterModel(UnitModel(ReversibleMarkovSuperModel(M1,R)),
-				Beta(),0,n)
-  { 
-  }
-
   /*
   shared_ptr<MultiModel> MixtureModelFunction(const DiscreteDistribution& D)
   {

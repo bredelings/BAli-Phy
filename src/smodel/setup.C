@@ -691,6 +691,28 @@ bool process_stack_Multi(vector<string>& string_stack,
   }
   else if (match(string_stack,"M8b",arg))
   {
+    // FIXME: Conditional on one omega being small, the probability of the other ones being
+    //        small too should be higher.
+    //
+    //        We could require more evidence for conservation if we required it only once.
+    //
+    //        But how can we enforce the idea that at least one of the categories has an
+    //        omega near 1?
+    //
+    //        Goal: Prior should place weak support on neutrality, and medium support on
+    //        some fraction of sites being neutral.  Given sites conserved at level w
+    //        we should place a decent level of support for other omegas being similar
+    //        to w.
+    //
+    //        Perhaps M3 is not quite the model for this, in a Bayesian context.
+    //        Instead: fix one omega to 1.0, and put a uniform prior on its frequency.
+    //        Place a uniform distribution on the other omegas, conditional on not being 1.0.
+    //        The user should decrease the number of omegas if they cannot be reliably estimated.
+    //
+    //        Make model that puts a uniform on (conserved,neutral) or (conserved,neutral,positive)
+    //        and then has the possibility of [n] conserved rates with a UNIFORM prior.
+    //        (The Uniform seems like a good analogue of the dirichlet.)
+
     int n=3;
     if (not arg.empty())
       n = convertTo<int>(arg);
@@ -801,14 +823,22 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
   }
-  else if (match(string_stack,"M7",arg)) 
+  else if (match(string_stack,"M7",arg))
   {
     int n=4;
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    FormulaModel FM(model_stack.back());
-    model_stack.back() = M7(FM, SimpleFrequencyModel(*get_alphabet(FM)),n); 
+    formula_expression_ref D = Discretize(model_formula(Beta()),expression_ref(n));
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    assert(C);
+    formula_expression_ref S1 = TN_Model(C->getNucleotides());
+    formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
+    formula_expression_ref R = Plus_gwF_Model(*a);
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Q_from_S_and_R(S2,R) );
+
+    model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
   }
   else
     return false;
