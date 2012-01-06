@@ -2087,35 +2087,40 @@ class RegOperationArgs: public OperationArgs
     return R2;
   }
 
-  /// Evaluate the reg R2 in R1.slot and record dependencies. Then update R2=R1.slot for call chains, and return R2.
-  int lazy_evaluate_slot(int R1, int slot)
+  /// Reduce the WHNF expression to either a lambda or a constructor, but evaluating a reg_var if passed.
+  expression_ref lazy_evaluate_structure(const expression_ref& S)
   {
-    shared_ptr<const expression> E1 =  dynamic_pointer_cast<const expression>(M.access(R1).E);
-    assert(E1);
-
     // Any slot that we are going to evaluate needs to point to another node
-    shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( E1->sub[slot+1] );
-    assert(RV);
+    if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( S ))
+    {
 
-    int R2 = RV->target;
+      int R2 = RV->target;
 
-    R2 = lazy_evaluate_reg(R2);
+      R2 = lazy_evaluate_reg(R2);
 
-    /*
-     * We could update E1->sub[slot+1] = new reg_var(R2) if R2 != RV->target.  However:
-     *
-     * - Updating WHNF regs is problematic because it could make the old reg unused
-     *   although it was still used in the result and the results of call-ancestors.
-     *   Therefore all call-ancestors would need to be updated.
-     *
-     * - Updating non-WHNF regs is problematic because we might need to update the used_inputs
-     *   to refer to the new reg.  This is because the old one might become unused
-     *   (and therefore be garbage-collected.)
-     */
+      /*
+       * We could update E1->sub[slot+1] = new reg_var(R2) if R2 != RV->target.  However:
+       *
+       * - Updating WHNF regs is problematic because it could make the old reg unused
+       *   although it was still used in the result and the results of call-ancestors.
+       *   Therefore all call-ancestors would need to be updated.
+       *
+       * - Updating non-WHNF regs is problematic because we might need to update the used_inputs
+       *   to refer to the new reg.  This is because the old one might become unused
+       *   (and therefore be garbage-collected.)
+       */
 
-    return R2;
+      return M.access(R2).result;
+    }
+    else
+      return S;
   }
 
+  /*
+   * NOTE: When fully evaluating a structure, we must record uses for all of the regs that we
+   *       access, including constructor fields.
+   */
+  
   expression_ref evaluate_structure(const expression_ref& S)
   {
     if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( S ))
@@ -2160,11 +2165,6 @@ public:
     return dynamic_pointer_cast<const expression>(M[R].E)->sub[slot+1];
   }
 
-  /*
-   * NOTE: When fully evaluating a structure, we must record uses for all of the regs that we
-   *       access, including constructor fields.
-   */
-
   boost::shared_ptr<const Object> evaluate(int slot)
   {
     return evaluate_structure(reference(slot));
@@ -2172,8 +2172,7 @@ public:
 
   boost::shared_ptr<const Object> lazy_evaluate(int slot)
   {
-    int R2 = lazy_evaluate_slot(R, slot);
-    return M.access(R2).result;
+    return lazy_evaluate_structure(reference(slot));
   }
 
   shared_ptr<const Object> evaluate_expression(const expression_ref&)
