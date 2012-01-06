@@ -772,32 +772,6 @@ namespace substitution {
     C20_CAT_FixedFrequencyModel();
   };
 
-  /// A mixture of variants of model M with parameter p set to n_bin different values
-  class MultiParameterModel: public MultiModel, 
-			     public ReversibleWrapperOver< ::Model> 
-  {
-  protected:
-    /// The parameter which is varying;
-    int p_change;
-
-    /// The values it takes on
-    mutable expression_ref D;
-
-  public:
-    boost::shared_ptr<const Object> result() const;
-
-    MultiParameterModel* clone() const=0;
-
-    /// Get the equilibrium frequencies
-    valarray<double> frequencies() const;
-
-    /// Construct a mixture of variants of model M with parameter p set to n_bin different values
-    MultiParameterModel(const ::Model& M,int p,int n_bins);
-
-    ~MultiParameterModel() {}
-  };
-
-
   /// A class of uncoupled rates/values
   class DirichletParameterModel: public MultiModel,
 				 public ReversibleWrapperOver< ::Model> 
@@ -951,58 +925,6 @@ namespace substitution {
 
     ModulatedMarkovModel(const ::Model& M, const ::Model& S);
   };
-
-  /// In M8b model, omega1 ~ Beta with proportion p1.
-  /// omega2 = 1 with p2.
-  /// omega3 > 1 with p3.
-  ///class M8b: public MultiParameterModel {
-  ///public:
-  ///
-  ///  M8b(const ::Model& M1,const ReversibleFrequencyModel& R, int n);
-  ///};
-  ///public ReversibleMarkovModel,
-  /// MultiParameterModel::p_change - 
-  /// 3? Two from Beta, omega3. omega2 is fixed.
-  /// 2? omega1, and omega3. omega2 is fixed.
-  /// We need bin numbers for Beta.
-  /// MultiParameterModel (MultiModel object, p = 2, n = 3)
-  /// 
-  /// NOTE that we need to instantiate M8b somewhere else
-  /// when the program starts.
-  class M8b: public MultiParameterModel
-  {
-  protected:
-    owned_ptr<Beta> S;
-
-    int nbin;
-    std::vector<double> pi;
-
-    void recalc(const std::vector<int>&) {std::abort();}
-    void update() { }
-
-    /* These methods are already defined for us in SuperModelOver<::Model>
-    const ::Model& SubModels(int i) const;
-          ::Model& SubModels(int i) */
-
-  public:
-    boost::shared_ptr<const Object> result() const;
-
-    virtual M8b* clone() const {return new M8b(*this);}
-
-    efloat_t super_prior() const;
-
-    // This is already defined as SubmodelAs<MultiModel>(0).frequencies() in ReversibleWrapperOver<MultiModel>
-    // const valarray<double>& frequencies() const {return pi;}
-
-    string name() const;
-
-    // This is already defined as SubmodelAs<MultiModel>(0).frequencies() in ReversibleWrapperOver<MultiModel>
-    // const alphabet& Alphabet() const {return M->Alphabet();}
-
-    M8b(const ::Model& M, const ::Model& R, const int n_binBeta);
-  };
-
-
 }
 
 #endif
