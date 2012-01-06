@@ -245,6 +245,11 @@ valarray<double> alphabet::get_frequencies_from_counts(const valarray<double>& c
   return f;
 }
 
+string alphabet::print () const {
+  return "'" + name + "'";
+}
+
+
 alphabet::alphabet(const string& s)
   :name(s),gap_letter("-"),wildcard("+"),unknown_letter("?")
 {

@@ -210,7 +210,7 @@ public:
     return (*this) == *a;
   }
 
-  std::string print () const {return name;}
+  std::string print () const;
 
   /// Construct an alphabet with the given name
   alphabet(const std::string& name);
