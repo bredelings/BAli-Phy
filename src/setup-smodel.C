@@ -528,7 +528,20 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    model_stack.back() = MultiRate(get_MM_default(model_stack,"log-normal",a,frequencies),  Discretize(model_formula(LogNormal()), expression_ref(n)) );
+    formula_expression_ref base = get_MM_default(model_stack,"log-normal",a,frequencies);
+    formula_expression_ref dist = Discretize(model_formula(LogNormal()), expression_ref(n));
+    model_stack.back() = MultiRate(base,  dist);
+  }
+  else if (match(string_stack,"log-normal_inv",arg)) {
+    int n=4;
+    if (not arg.empty())
+      n = convertTo<int>(arg);
+
+    formula_expression_ref base = get_MM_default(model_stack,"log-normal_inv",a,frequencies);
+    formula_expression_ref dist = Discretize(model_formula(LogNormal()), expression_ref(n));
+    formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(2)(1.0, 2.0) );
+    dist = ExtendDiscreteDistribution(dist)(0.0)(p);
+    model_stack.back() = MultiRate(base,  dist);
   }
   else if (match(string_stack,"multi_freq",arg)) {
     int n=4;
