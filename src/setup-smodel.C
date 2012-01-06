@@ -704,7 +704,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     formula_expression_ref p1 = def_parameter("M8b::f[Purifying]", Double(0.6), between(0,1));
     formula_expression_ref p2 = def_parameter("M8b::f[Neutral]", Double(0.3), between(0,1));
-    formula_expression_ref p3 = def_parameter("M8b::f[Postive]", Double(0.1), between(0,1));
+    formula_expression_ref p3 = def_parameter("M8b::f[Positive]", Double(0.1), between(0,1));
     formula_expression_ref w = def_parameter("M8b::omega3", Double(1.0), lower_bound(1), log_exponential_dist, 0.05);
     formula_expression_ref I  = def_parameter("M8b::omega3_non_zero", Bool(true));
     formula_expression_ref w3 = If(I)(w)(1.0);
