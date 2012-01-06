@@ -83,12 +83,8 @@ shared_ptr<const Object> Case::operator()(OperationArgs& Args) const
     }
   }
 
-  /*
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
-  {
-    result = RV->target->E;
-  }
-  */
+  if (not result)
+    throw myexception()<<"Case: no valid alternative in '"<<case_expression(false, obj, cases, results)<<"'";
 
   return result;
 }
