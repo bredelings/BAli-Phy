@@ -780,33 +780,6 @@ namespace substitution {
     DistributionParameterModel(const ::Model& M, const Distribution& RD,int p,int n);
   };
 
-  /// M2a model has three omega parameters.
-  /// In M2 model, omega_1 = 0. In M2a model,
-  /// omega_1 < 1.
-  class M2a: public MultiModel, 
-	     public ReversibleWrapperOver< ::Model> 
-  {
-    /// The parameter which is varying;
-    int p_change;
-
-    /// The values it takes on
-    mutable expression_ref D;
-
-    void recalc(const std::vector<int>&) {std::abort();}
-    void update() { }
-
-  public:
-    boost::shared_ptr<const Object> result() const;
-
-    efloat_t super_prior() const;
-
-    M2a* clone() const {return new M2a(*this);}
-
-    string name() const;
-
-    M2a(const ::Model& M1,const ::Model& R);
-  };
-
   class M7: public DistributionParameterModel {
   public:
     

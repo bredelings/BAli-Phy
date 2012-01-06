@@ -661,8 +661,33 @@ bool process_stack_Multi(vector<string>& string_stack,
   }
   else if (match(string_stack,"M2a",arg)) 
   {
-    FormulaModel FM(model_stack.back());
-    model_stack.back() = M2a(FM, SimpleFrequencyModel(*get_alphabet(FM)));
+    formula_expression_ref p1 = def_parameter("M2a::f[AA INV]", Double(1.0/3), between(0,1));
+    formula_expression_ref p2 = def_parameter("M2a::f[Neutral]", Double(1.0/3), between(0,1));
+    formula_expression_ref p3 = def_parameter("M2a::f[Selected]", Double(1.0/3), between(0,1));
+    formula_expression_ref w1 = def_parameter("M2a::omega1", Double(1.0), between(0,1));
+    formula_expression_ref w3 = def_parameter("M2a::omega3", Double(1.0), lower_bound(1));
+    formula_expression_ref D = DiscreteDistribution(Cons(Tuple(p1,w1),
+							 Cons(Tuple(p2,expression_ref(1.0)),
+							      Cons(Tuple(p3,w3),ListEnd)))
+						     );
+    vector<Double> n(3);
+    n[0] = 1;
+    n[1] = 98;
+    n[2] = 1;
+    expression_ref N = get_tuple(n);
+    D.add_expression( distributed( Tuple(p1,p2,p3),   Tuple(dirichlet_dist, N) ) );
+    expression_ref divide = lambda_expression( Divide<Double>() );
+    D.add_expression( distributed( divide(1.0)(w1), Tuple(log_exponential_dist, 0.05) ) );
+    D.add_expression( distributed( w3, Tuple(log_exponential_dist, 0.05) ) );
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    assert(C);
+    formula_expression_ref S1 = TN_Model(C->getNucleotides());
+    formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
+    formula_expression_ref R = Plus_gwF_Model(*a);
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Q_from_S_and_R(S2,R) );
+
+    model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
   }
   else if (match(string_stack,"M8b",arg))
   {
