@@ -637,6 +637,9 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     expression_ref Scale;
     {
+      // FIXME - There's GOT to be a quicker way to create a function expression than this!
+      // How about making a "program"?
+      // - It would be a managed list of equality statements.
       expression_ref scale = dummy("scale");
 
       expression_ref p = dummy(0);
