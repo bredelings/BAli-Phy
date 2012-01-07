@@ -594,17 +594,6 @@ namespace substitution {
   };
 
 
-  class SimpleReversibleMarkovModel: public ReversibleMarkovModel,
-				     public OpModel
-  {
-  public:
-    /// Make a copy of this object
-    virtual SimpleReversibleMarkovModel* clone() const {return new SimpleReversibleMarkovModel(*this);}
-
-    explicit SimpleReversibleMarkovModel(const ::Model& E);
-    explicit SimpleReversibleMarkovModel(const ::Model& E,const valarray<double>&);
-  };
-
   //--------------------------- Implement the underlying alphabet -------------------------//
 
 
@@ -656,30 +645,6 @@ namespace substitution {
     UnitModel(const ::Model& M);
 
     ~UnitModel() {};
-  };
-
-
-  /// A substitution model based on running identical copies of an input model with different frequencies.
-  class MultiFrequencyModel: public MultiModel, 
-			     public ReversibleWrapperOver< ::Model> 
-  {
-  protected:
-
-    void recalc(const std::vector<int>&) {std::abort();}
-
-
-  public:
-    efloat_t super_prior() const;
-
-    MultiFrequencyModel* clone() const {return new MultiFrequencyModel(*this);}
-
-    boost::shared_ptr<const Object> result() const;
-
-    string name() const;
-
-    MultiFrequencyModel(const ::Model& M,int n_bins);
-
-    ~MultiFrequencyModel() {}
   };
 
 
@@ -753,19 +718,6 @@ namespace substitution {
     string name() const;
 
     MixtureModel(const std::vector<owned_ptr< ::Model> >& models);
-  };
-
-  
-  class ModulatedMarkovModel: public ReversibleMarkovModel,
-			      public OpModel
-  {
-  protected:
-    void recalc(const std::vector<int>&) {std::abort();}
-
-  public:
-    virtual ModulatedMarkovModel* clone() const {return new ModulatedMarkovModel(*this);}
-
-    ModulatedMarkovModel(const ::Model& M, const ::Model& S);
   };
 }
 

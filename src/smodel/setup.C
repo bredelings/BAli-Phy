@@ -549,11 +549,11 @@ bool process_stack_Multi(vector<string>& string_stack,
     model_stack.back() = MultiRate(base,  dist);
   }
   else if (match(string_stack,"multi_freq",arg)) {
-    int n=4;
-    if (not arg.empty())
-      n = convertTo<int>(arg);
-
-    model_stack.back() = MultiFrequencyModel(FormulaModel(get_EM(model_stack,"multi_freq")),n);
+    // Pr(l|m) = Pr(m|l)*Pr(l)/Pr(m)
+    // Idea: store Pr(m|l) = probability a letter is in each model
+    //       store Pr(l)   = overall frequencies for each letter
+    //       store Pr(m)   = probability of each model
+    std::abort();
   }
   //  else if (match(string_stack,"INV",arg))
   //    model_stack.back() = WithINV( FormulaModel(get_MM_default(model_stack,"INV",a,frequencies)) );
@@ -592,8 +592,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref MM = get_MM_default(model_stack,"Modulated",a,frequencies);
 
     int n = MM.result_as<MultiModelObject>()->n_base_models();
-    model_stack.back() = ModulatedMarkovModel(FormulaModel(MM),
-					      SimpleExchangeModel(n));
+    model_stack.back() = Modulated_Markov_E(MM, SimpleExchangeModel(n));
   }
   else if (match(string_stack,"Mixture",args)) 
   {

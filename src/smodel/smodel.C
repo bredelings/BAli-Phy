@@ -649,25 +649,6 @@ namespace substitution {
     recalc_all();
   }
 
-  SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ::Model& E)
-    :OpModel( Q_from_S_and_R( model_result_expression(*prefix_model(E,"S")), model_result_expression(*prefix_model(SimpleFrequencyModel(*get_alphabet(E)),"R") ) ) )
-  { }
-
-  SimpleReversibleMarkovModel::
-  SimpleReversibleMarkovModel(const ::Model& E,const valarray<double>& pi)
-    :OpModel( Q_from_S_and_R( model_result_expression(*prefix_model(E,"S")), model_result_expression(*prefix_model(SimpleFrequencyModel(*get_alphabet(E),pi),"R")) ) )
-  { 
-    /*
-    DNA a;
-    formula_expression_ref R = Simple_gwF_Model(TN_Model(a),a,pi);
-    efloat_t prior1 = prior();
-    
-    FormulaModel M(R);
-    efloat_t prior2 = M.prior();
-    std::cerr<<"prior1 = "<<log(prior1)<<"     prior2 = "<<log(prior2)<<"\n";
-    */
-  }
-
   //---------------------- INV_Model --------------------------//
 
   shared_ptr<const Object> INV_Model::result() const
@@ -1024,105 +1005,6 @@ namespace substitution {
     insert_submodel("0",M);
   }
 
-  //---------------------- MultiFrequencyModel -----------------------//
-  efloat_t MultiFrequencyModel::super_prior() const 
-  {
-    shared_ptr<const alphabet> aa = SubModel().result_as<ReversibleMarkovModelObject>()->get_alphabet();
-
-    efloat_t Pr = 1;
-    int n = get_parameter_value_as<Int>(-1); // which one would this be? the last one?
-
-    for(int l=0;l<aa->size();l++) 
-    {
-      valarray<double> a_l(n);
-      for(int m=0;m<a_l.size();m++)
-	a_l[m] = get_parameter_value_as<Double>(m+l*n);
-
-      Pr *= ::dirichlet_pdf(a_l, aa->size()/2.0);
-    }
-
-    return Pr;
-  }
-
-  shared_ptr<const Object> MultiFrequencyModel::result() const
-  {
-    shared_ptr<const ReversibleMarkovModelObject> M = SubModel().result_as<ReversibleMarkovModelObject>();
-
-    // get underlying frequencies from our submodel
-    valarray<double> f = M->frequencies();
-
-    const alphabet& a = *M->get_alphabet();
-
-    shared_ptr<MultiModelObject> R (new MultiModelObject);
-
-    // calculate probability of each sub-model
-    R->fraction.resize(f.size());
-    for(int m=0;m<R->fraction.size();m++) 
-    {
-      // Pr(m) = sum_l Pr(m|l)*Pr(l)
-      R->fraction[m] = 0;
-      for(int l=0;l<a.size();l++)
-	R->fraction[m] += get_parameter_value_as<Double>(m+l*R->fraction.size())*f[l];
-    }
-
-    if (std::abs(sum(R->fraction) - 1.0) > 1.0e-5) cerr<<"ERROR: sum(fraction) = "<<sum(R->fraction)<<endl;
-
-    // recalculate sub-models
-    R->base_models.resize(R->fraction.size());
-    vector<double> fm(a.size());
-    for(int m=0;m<R->fraction.size();m++) 
-    {
-      // Pr(l|m) = Pr(m|l)*Pr(l)/Pr(m)
-      for(int l=0;l<fm.size();l++)
-	fm[l] = get_parameter_value_as<Double>(m+l*R->fraction.size())*f[l]/R->fraction[m];
-
-      if (std::abs(sum(fm) - 1.0) > 1.0e-5) cerr<<"ERROR[m="<<m<<"]: fm.sum() = "<<sum(fm)<<endl;
-
-      // get a new copy of the sub-model and set the frequencies
-      owned_ptr<ReversibleMarkovModelObject> Mm = *M;
-      Mm->pi = fm; // wait... this doesn't adjust Q!  We need to separate the ExchangeModel and the FrequencyModel
-      R->base_models[m] = const_ptr( *Mm );
-    }
-
-    return R;
-  }
-
-  string MultiFrequencyModel::name() const {
-    return SubModels(0).name() + " + multi_freq[" + 
-      convertToString(n_submodels()) + "]";
-  }
-
-  MultiFrequencyModel::MultiFrequencyModel(const ::Model& E,int n)
-    :ReversibleWrapperOver< ::Model>(SimpleReversibleMarkovModel(E))
-  { 
-    shared_ptr<const alphabet> aa = SubModel().result_as<ReversibleMarkovModelObject>()->get_alphabet();
-
-    add_parameter(Parameter("n",Int(n)));
-
-    // Set up variable names
-    //   - initial probability that a letter l is in a submodel of type m = 1/n
-    for(int l=0;l<aa->size();l++) 
-    {
-      string letter = aa->lookup(l);
-
-      for(int m=0;m<n;m++) 
-      {
-	string index = convertToString(m+1);
-	string pname = string("a") + letter + index;
-	add_super_parameter(Parameter(pname, Double(1.0/n), between(0, 1)));
-      }
-    }
-
-    // Convert this to an op model
-    // Q. How do we introduce the top-level frequency parameters?
-    // A. We could use a ReversibleFrequencyModel in the expression.
-    //
-    // Q. How do we introduce the A(m,l) parameters, since their number is variable?
-    // A. ??
-
-    recalc_all();
-  }
-
   //---------------------- CAT_FixedFrequencyModel -----------------------//
   const alphabet& CAT_FixedFrequencyModel::Alphabet() const
   {
@@ -1357,12 +1239,4 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
     check();
     recalc_all();
   }
-
-
-  ModulatedMarkovModel::ModulatedMarkovModel(const ::Model& MM, const ::Model& EM)
-    :OpModel(Modulated_Markov_E(model_result_expression(MM),model_result_expression(EM)))
-  { }
-  
-  // Now how to write MultiParameterModel( M, p_change, DiscretizationFunction( Gamma(), n_bins ) ) as an expression?
-
 }
