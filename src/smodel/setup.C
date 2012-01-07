@@ -627,7 +627,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref S1 = TN_Model(C->getNucleotides());
     formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
     formula_expression_ref R = Plus_gwF_Model(*a);
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Q_from_S_and_R(S2,R) );
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
     model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
   }
@@ -659,7 +659,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref S1 = TN_Model(C->getNucleotides());
     formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
     formula_expression_ref R = Plus_gwF_Model(*a);
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Q_from_S_and_R(S2,R) );
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
     model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
   }
@@ -689,7 +689,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref S1 = TN_Model(C->getNucleotides());
     formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
     formula_expression_ref R = Plus_gwF_Model(*a);
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Q_from_S_and_R(S2,R) );
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
     model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
   }
@@ -823,7 +823,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref S1 = TN_Model(C->getNucleotides());
     formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
     formula_expression_ref R = Plus_gwF_Model(*a);
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Q_from_S_and_R(S2,R) );
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
     model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
   }
@@ -840,7 +840,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref S1 = TN_Model(C->getNucleotides());
     formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
     formula_expression_ref R = Plus_gwF_Model(*a);
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Q_from_S_and_R(S2,R) );
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
     model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
   }
