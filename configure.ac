@@ -463,6 +463,7 @@ AC_OUTPUT([
 ])
 
 echo ""
+echo "CPPFLAGS = $CPPFLAGS"
 echo "CXXFLAGS = $CXXFLAGS"
 echo "LDFLAGS = $LDFLAGS"
 echo "LIBS = $LIBS"
