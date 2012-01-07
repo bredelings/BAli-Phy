@@ -517,43 +517,6 @@ public:
   OpModel(const expression_ref&);
 };
 
-class LambdaModel: public Model
-{
-  int p_change;
-
-  polymorphic_cow_ptr< Model > sub_model;
-public:
-  LambdaModel* clone() const {return new LambdaModel(*this);}
-
-  void write_value(int i, const boost::shared_ptr<const Object>& p);
-  
-  void recalc(const std::vector<int>&) {std::abort();}
-
-  efloat_t prior() const;
-
-  std::string name() const;
-
-  boost::shared_ptr<const Object> result() const;
-
-  LambdaModel(const Model& M, int p_change);
-  LambdaModel(const Model& M, const std::string&);
-};
-
-
-
-class ModelFunction: virtual public Object
-{
-  int p_change;
-
-  mutable polymorphic_cow_ptr < Model > sub_model;
-public:
-  ModelFunction* clone() const {return new ModelFunction(*this);}
-
-  boost::shared_ptr<const Object> operator()(boost::shared_ptr<const Object> O) const;
-
-  ModelFunction(const Model& M, int p);
-};
-
 struct FormulaModel: public Model
 {
   int I;

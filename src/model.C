@@ -1091,62 +1091,6 @@ OpModel::OpModel(const expression_ref& r)
 
 }
 
-void LambdaModel::write_value(int i, const boost::shared_ptr<const Object>& p)
-{
-  if (i>= p_change) i++;
-
-  sub_model->write_value(i,p);
-}
-
-efloat_t LambdaModel::prior() const
-{
-  return sub_model->prior();
-}
-
-shared_ptr<const Object> LambdaModel::result() const
-{
-  return shared_ptr<const Object>(new ModelFunction(*sub_model,p_change));
-}
-
-string LambdaModel::name() const
-{
-  return "(L " + sub_model->parameter_name(p_change)+")(" + sub_model->name() + ")";
-}
-
-LambdaModel::LambdaModel(const Model& M, int p)
-  :p_change(p),
-   sub_model(M.clone())
-{
-  for(int i=0;i<M.n_parameters();i++)
-    if (i != p_change)
-      add_parameter(Parameter(M.parameter_name(i), M.get_parameter_value(i), M.get_bounds(i),M.is_fixed(i)));
-
-  sub_model->set_fixed(p_change, true);
-}
-
-LambdaModel::LambdaModel(const Model& M, const string& p_name)
-  :p_change(find_parameter(M,p_name)),
-   sub_model(M.clone())
-{
-  for(int i=0;i<M.n_parameters();i++)
-    if (i != p_change)
-      add_parameter(Parameter(M.parameter_name(i), M.get_parameter_value(i), M.get_bounds(i),M.is_fixed(i)));
-
-  sub_model->set_fixed(p_change, true);
-}
-
-shared_ptr<const Object> ModelFunction::operator()(boost::shared_ptr<const Object> O) const
-{
-  sub_model->set_parameter_value(p_change,O);
-  
-  return sub_model->result();
-}
-
-ModelFunction::ModelFunction(const Model& M, int p)
-  :p_change(p),
-   sub_model(M.clone())
-{ }
-
 shared_ptr<Model> prefix_model(const Model& M, const string& prefix)
 {
   shared_ptr<Model> M2 (M.clone());
