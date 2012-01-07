@@ -1327,36 +1327,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
   //---------------------------- class MultiModel --------------------------//
 
 
-  //--------------- Distribution-based Model----------------//
-
-  /*
-  string DistributionParameterModel::name() const {
-    string p_name = "rate";
-    if (p_change > -1)
-      p_name = SubModels(0).parameter_name(p_change);
-
-    string dist_name = p_name + "~" + D().name() + "(" + convertToString(p_values.size()) + ")";
-    return SubModels(0).name() + " + " + dist_name;
-  }
-  */
-
-  DistributionParameterModel::DistributionParameterModel(const ::Model& M,const Distribution& D, int p, int n)
-    :OpModel( 
-	     MultiParameter(model_result_expression(LambdaModel(M,p)), Discretize(model_result_expression(D), Int(n) ) ) 
-	      )
-  { }
-
-  int any_set(const vector<bool>& mask,int i1,int i2) 
-  {
-    int inc = (i2 > i1)?1:-1;
-      
-    for(int i=i1;i!=i2;i+=inc) {
-      if (mask[i])
-	return i;
-    }
-    return -1;
-  }
-
   /*
   shared_ptr<MultiModel> MixtureModelFunction(const DiscreteDistribution& D)
   {

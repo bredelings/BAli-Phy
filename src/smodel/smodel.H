@@ -772,14 +772,6 @@ namespace substitution {
     C20_CAT_FixedFrequencyModel();
   };
 
-  class DistributionParameterModel: public MultiModel, public OpModel
-  {
-  public:
-    DistributionParameterModel* clone() const {return new DistributionParameterModel(*this);}
-
-    DistributionParameterModel(const ::Model& M, const Distribution& RD,int p,int n);
-  };
-
   class MixtureModel: public MultiModel, public SuperModelOver< ::Model> 
   {
     efloat_t super_prior() const;
