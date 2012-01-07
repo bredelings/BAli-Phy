@@ -161,8 +161,6 @@ bool process_stack_Markov(vector<string>& string_stack,
     // FIXME - allow/make a general GTR model!
 
     R = GTR_Model(*a);
-    // model_stack.push_back(GTR(*N));
-    //    model_stack.push_back(FormulaModel(model_formula(GTR(*N))));
   }
   /* THINKO - Must tripletmodels be constructed from nucleotide-specific models?
   else if (match(string_stack,"EQUx3",arg)) {
@@ -271,7 +269,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     return false;
 
   if (R.index() != -1)
-    model_stack.push_back(FormulaModel(R));
+    model_stack.push_back(R);
   return true;
 }
 
@@ -414,7 +412,7 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
 
   try {
     formula_expression_ref top = get_EM(M,name);
-    shared_ptr<const alphabet> a = get_alphabet( FormulaModel(top) );
+    shared_ptr<const alphabet> a = top.result_as<SModelObject>()->get_alphabet();
     // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
     if (frequencies)
       return Simple_gwF_Model(top, *a, *frequencies); 
@@ -556,8 +554,8 @@ bool process_stack_Multi(vector<string>& string_stack,
     std::abort();
   }
   //  else if (match(string_stack,"INV",arg))
-  //    model_stack.back() = WithINV( FormulaModel(get_MM_default(model_stack,"INV",a,frequencies)) );
-  //    model_stack.back() = WithINV_Model(get_MM_default(model_stack,"INV",a,frequencies));
+  //  (a) either specify the FREQUENCIES of the model, or
+  //  (b) split every model and make a zero-scaled version of it.
 
   else if (match(string_stack,"DP",arg)) {
     int n=4;
@@ -583,7 +581,6 @@ bool process_stack_Multi(vector<string>& string_stack,
     dist.add_expression( distributed( get_tuple(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );
     dist.add_expression( distributed( get_tuple(rates), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,2.0))) ) );
 
-    //    model_stack.back() = DirichletParameterModel(FormulaModel(get_MM_default(model_stack,"DP",a,frequencies)),-1,n);
     formula_expression_ref base = get_MM_default(model_stack,"DP",a,frequencies);
     model_stack.back() = MultiRate(base,  dist);
   }
