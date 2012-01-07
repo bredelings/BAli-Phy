@@ -594,20 +594,6 @@ namespace substitution {
   };
 
 
-  class ReversibleMarkovSuperModel: public ReversibleMarkovModel,
-				    public OpModel
-  {
-  public:
-    /// Make a copy of this object
-    virtual ReversibleMarkovSuperModel* clone() const {return new ReversibleMarkovSuperModel(*this);}
-
-    /// Construct a reversible Markov model on alphabet 'a'
-    ReversibleMarkovSuperModel(const ::Model& S1, const ::Model& R1);
-    
-    ~ReversibleMarkovSuperModel() {}
-  };
-
-
   class SimpleReversibleMarkovModel: public ReversibleMarkovModel,
 				     public OpModel
   {

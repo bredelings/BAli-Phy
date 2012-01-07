@@ -649,11 +649,6 @@ namespace substitution {
     recalc_all();
   }
 
-  /// Construct a reversible Markov model on alphabet 'a'
-  ReversibleMarkovSuperModel::ReversibleMarkovSuperModel(const ::Model& S1,const ::Model& R1)
-    :OpModel( Q_from_S_and_R(model_result_expression(*prefix_model(S1,"S")),model_result_expression(*prefix_model(R1,"R"))) )
-  { }
-
   SimpleReversibleMarkovModel::SimpleReversibleMarkovModel(const ::Model& E)
     :OpModel( Q_from_S_and_R( model_result_expression(*prefix_model(E,"S")), model_result_expression(*prefix_model(SimpleFrequencyModel(*get_alphabet(E)),"R") ) ) )
   { }
