@@ -34,8 +34,6 @@ namespace probability {
     /// The probability density function at x, estimated on scale dx
     virtual log_double_t pdf(double x) const =0;
 
-    log_double_t operator()(double x) const {return pdf(x);}
-
     /// The cumulative density function at x
     virtual double cdf(double x) const =0;
 
