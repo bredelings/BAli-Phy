@@ -472,51 +472,6 @@ public:
 
 struct expression_ref;
 
-class OpModel: virtual public Model
-{
-  friend class OpModelOperationArgs;
-
-  /// by index, what does each input parameter do?
-  std::vector<std::vector<model_slot> > model_slots_for_index;
-
-  /// these are the instantiated sub_models
-  std::vector< polymorphic_cow_ptr< Model > > sub_models;
-
-  /// what is the top-level operation
-  boost::shared_ptr< const Operation > Op;
-  /// how do we assemble the inputs for the top-level op?
-  std::vector<arg_expression> slot_expressions_for_op;
-
-  void write_value(int i, const boost::shared_ptr<const Object>& p);
-
-  void recalc(const std::vector<int>&) {std::abort();}
-
-  // Is this a good idea?
-  void update() { }
-
-  int add_submodel(boost::shared_ptr<const Model>);
-public:
-
-  OpModel* clone() const {return new OpModel(*this);}
-
-  efloat_t prior() const;
-
-  /// The prior for the parameters of the upper model
-  virtual efloat_t super_prior() const {return 1.0;}
-
-  std::string name() const;
-
-  void check() const;
-
-  boost::shared_ptr<const Object> slot_result(int) const;
-  
-  boost::shared_ptr<const Object> result() const;
-
-  virtual std::vector<std::string> show_priors() const;
-
-  OpModel(const expression_ref&);
-};
-
 struct FormulaModel: public Model
 {
   int I;
