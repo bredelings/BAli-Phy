@@ -1011,39 +1011,6 @@ namespace substitution {
     insert_submodel("1",N);
   }
 
-  //------------------------ Codon Models -------------------//
-  /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  double M0::omega() const {
-    return get_parameter_value_as<Double>(omega_index);
-  }
-
-  /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-  void M0::omega(double w) {
-    set_parameter_value(omega_index,w);
-  }
-
-  efloat_t M0::super_prior() const 
-  {
-    if (is_fixed(omega_index))
-      return 1;
-    else
-      return laplace_pdf(log(omega()), 0, 0.1)/omega();
-  }
-  /*
-  string M0::name() const {
-    return string("M0[") + SubModels(0).name() + "]";
-  }
-  */
-  M0::M0(const Codons& C,const ::Model& N)
-    :OpModel( M0E(C,model_result_expression(N),parameter("M0::omega")) )
-  { 
-    omega_index = find_parameter(*this,"M0::omega");
-    set_parameter_value(omega_index, Double(1));
-    set_bounds(omega_index, lower_bound(0));
-  }
-
-  M0::~M0() {}
-
   //--------------- MultiRate Models ----------------//
 
   shared_ptr<const Object> UnitModel::result() const

@@ -396,24 +396,6 @@ namespace substitution {
 
 
 
-  class M0: public AlphabetExchangeModel, public OpModel
-  {
-    int omega_index;
-  public:
-    efloat_t super_prior() const;
-
-    M0* clone() const {return new M0(*this);}
-
-    /// Get the parameter 'omega' (non-synonymous/synonymous rate ratio)
-    double omega() const;
-    /// Set the parameter 'omega' (non-synonymous/synonymous rate ratio)
-    void omega(double w);
-
-    M0(const Codons& C,const ::Model& M);
-
-    ~M0();
-  };
-
   //------------------------ Reversible frequency model --------------------//
 
   class ReversibleFrequencyModel: virtual public ::Model

@@ -261,7 +261,11 @@ bool process_stack_Markov(vector<string>& string_stack,
       N_submodel = submodel;
     }
 
-    model_stack.push_back( M0(*C, FormulaModel(N_submodel)) );
+    formula_expression_ref S1 = TN_Model(C->getNucleotides());
+    formula_expression_ref w = def_parameter("M0::omega", Double(1), lower_bound(0), log_laplace_dist, Tuple(0.0,0.1));
+    formula_expression_ref M0 = M0E(a)(S1)(w);
+
+    model_stack.push_back( M0 );
   }
   else
     return false;
