@@ -499,13 +499,7 @@ bool process_stack_Multi(vector<string>& string_stack,
   if (match(string_stack,"single",arg)) 
     model_stack.back() = get_MM_default(model_stack,"single",a,frequencies);
 
-  else if (match(string_stack,"gamma_plus_uniform",arg)) {
-    int n=4;
-    if (not arg.empty())
-      n = convertTo<int>(arg);
-
-    model_stack.back() = MultiRate(get_MM_default(model_stack,"gamma_plus_uniform",a,frequencies),  Discretize(model_formula(Gamma()+Uniform()), expression_ref(n)) );
-  }
+  // else if (match(string_stack,"gamma_plus_uniform",arg)) {
   else if (match(string_stack,"gamma",arg)) {
     int n=4;
     if (not arg.empty())

@@ -71,44 +71,6 @@ namespace substitution {
     Uniform();
   };
 
-  /// A sum of distributions for rate variation
-  class MultipleDistribution: public Distribution, public SuperModelOver<Distribution> 
-  {
-  public:
-
-    efloat_t super_prior() const;
-
-    MultipleDistribution* clone() const {return new MultipleDistribution(*this);}
-
-    double cdf(double) const;
-    efloat_t pdf(double) const;
-    
-    /// Number of sub-distributions
-    int n_dists() const {return n_submodels();}
-
-    /// Fraction of sub-distribution i
-    double fraction(int i) const {
-      assert(0 <= i and i < n_dists());
-      return get_parameter_value_as<Double>(i);
-    }
-
-    std::string name() const;
-
-    double moment(int m) const;
-
-    MultipleDistribution(const std::vector<owned_ptr<Distribution> >&);
-
-    ~MultipleDistribution() {}
-  };
-
-
-  inline substitution::MultipleDistribution operator+(const Distribution& D1,const Distribution& D2) {
-    std::vector<owned_ptr<Distribution> > temp;
-    temp.push_back(D1);
-    temp.push_back(D2);
-    return substitution::MultipleDistribution(temp);
-  }
-  
   /// A Discretization of a Distribution
   struct Discretization
   {

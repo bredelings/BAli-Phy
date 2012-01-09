@@ -163,68 +163,6 @@ namespace substitution {
   }
     
 
-  //-------------- MultipleDistribution ----------------//
-
-  efloat_t MultipleDistribution::super_prior() const 
-  {
-    valarray<double> f(n_dists());
-    for(int i=0;i<f.size();i++)
-      f[i] = fraction(i);
-
-    // uniform - 1 observeration per bin
-    return dirichlet_pdf(f,1);
-  }
-
-  double MultipleDistribution::cdf(double x) const 
-  {
-    double P=0;
-    for(int i=0;i<n_dists();i++) 
-      P += fraction(i) * SubModels(i).cdf(x);
-
-    return P;
-  }
-
-  efloat_t MultipleDistribution::pdf(double x) const 
-  {
-    double density=0;
-    for(int i=0;i<n_dists();i++) 
-      density += fraction(i) * SubModels(i).pdf(x);
-
-    return density;
-  }
-
-  MultipleDistribution::MultipleDistribution(const std::vector<owned_ptr<Distribution> >& models) 
-  {
-    // Set the rates and fractions
-    for(int i=0;i<n_dists();i++) {
-      string pname = string("multi:p")+convertToString(i+1);
-      add_parameter(Parameter(pname, Double(1.0/n_dists()), between(0, 1)));
-    }
-
-    for(int i=0;i<models.size();i++)
-      register_submodel(convertToString(i+1));
-  }
-
-  string MultipleDistribution::name() const {
-    string n="multi:(";
-    for(int i=0;i<n_submodels();i++) {
-      n += SubModels(i).name();
-      if (i+1 < n_submodels())
-	n += " + ";
-    }
-    n += ")";
-    return n;
-  }
-
-  double MultipleDistribution::moment(int m) const
-  {
-    double M=0;
-    for(int i=0;i<n_dists();i++) 
-      M += fraction(i) * SubModels(i).moment(m);
-
-    return M;
-  }
-
   /// Choose boundaries between bins based on quantiles
   vector<double> uniform_boundaries(const vector<double>& r, const Distribution& D)
   {
