@@ -24,6 +24,8 @@ struct Apply: public Operation
 
   int precedence() const {return 10;}
 
+  assoc_type associativity() const {return assoc_left;}
+
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const;
