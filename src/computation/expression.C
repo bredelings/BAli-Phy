@@ -508,11 +508,6 @@ expression_ref substitute(const expression_ref& R1, int dummy_index, const expre
 
 std::set<dummy> get_free_indices(const expression_ref& R);
 
-std::set<dummy> get_pattern_indices(const expression_ref& R)
-{
-  return get_free_indices(R);
-}
-
 // Return the list of dummy variable indices that are bound at the top level of the expression
 std::set<dummy> get_bound_indices(const expression_ref& R)
 {
@@ -528,7 +523,7 @@ std::set<dummy> get_bound_indices(const expression_ref& R)
       bound.insert(*D);
   }
   else if (dynamic_pointer_cast<const alt_obj>(E->sub[0]))
-    bound = get_pattern_indices(E->sub[1]);
+    bound = get_free_indices(E->sub[1]);
   else 
   {
     vector<expression_ref> vars;
@@ -1464,7 +1459,7 @@ expression_ref multi_case_expression(bool decompose, const vector<expression_ref
 
   std::set<dummy> free_patterns;
   for(int i=0;i<patterns.size();i++)
-    add(free_patterns, get_pattern_indices(patterns[i]));
+    add(free_patterns, get_free_indices(patterns[i]));
 
   assert(intersection(free, free_patterns).empty());
   std::set<dummy> free_body = get_free_indices(body);
@@ -1489,7 +1484,7 @@ expression_ref def_function(bool decompose, const vector< vector<expression_ref>
     add(free, get_free_indices(bodies[i]));
   
     for(int j=0; j<patterns[i].size(); j++)
-      add(free, get_pattern_indices(patterns[i][j]));
+      add(free, get_free_indices(patterns[i][j]));
   }
   
   int var_index = 0;
