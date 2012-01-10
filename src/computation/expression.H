@@ -8,7 +8,7 @@
 #include <string>
 #include "cow-ptr.H"
 #include "object.H"
-#include "operation.H"
+#include "computation/operation.H"
 
 /// An S-expression: An Object, and possibly an array of Objects.
 struct expression_ref;

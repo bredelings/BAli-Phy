@@ -23,9 +23,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "myexception.H"
 #include "model.H"
-#include "expression.H"
-#include "operations.H"
-#include "formula_expression.H"
+#include "computation/expression.H"
+#include "computation/operations.H"
+#include "computation/formula_expression.H"
 #include "distribution-operations.H"
 
 using std::vector;

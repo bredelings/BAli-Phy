@@ -36,10 +36,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "bounds.H"
 #include "cow-ptr.H"
 #include "object.H"
-#include "operator.H"
-#include "operation.H"
-#include "computation.H"
-#include "graph_register.H"
+#include "computation/computation.H"
+#include "computation/operation.H"
+#include "computation/graph_register.H"
 
 class Model;
 

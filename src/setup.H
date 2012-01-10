@@ -35,7 +35,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequencetree.H"
 #include "clone.H"
 #include <boost/program_options.hpp>
-#include "formula_expression.H"
+#include "computation/formula_expression.H"
 
 /// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
 std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,

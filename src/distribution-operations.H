@@ -4,9 +4,9 @@
 #include <vector>
 #include <valarray>
 #include <string>
-#include "expression.H"
-#include "operation.H"
-#include "computation.H"
+#include "computation/expression.H"
+#include "computation/operation.H"
+#include "computation/computation.H"
 #include "probability.H"
 
 struct exponential_density: public Operation

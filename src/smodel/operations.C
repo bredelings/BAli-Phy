@@ -1,8 +1,8 @@
 #include "rates.H"
 #include "smodel/operations.H"
 #include "distribution-operations.H"
-#include "../operations.H"
-#include "expression.H"
+#include "computation/operations.H"
+#include "computation/expression.H"
 
 using boost::shared_ptr;
 using std::vector;

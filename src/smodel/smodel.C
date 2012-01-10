@@ -29,8 +29,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "logsum.H"
 #include "probability.H"
 #include "io.H"
-#include "expression.H"
-#include "formula_expression.H"
+#include "computation/expression.H"
+#include "computation/formula_expression.H"
 #include "smodel/operations.H"
 
 using std::vector;

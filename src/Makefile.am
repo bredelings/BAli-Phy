@@ -100,10 +100,11 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/partition.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C timer_stack.C \
-	  setup-mcmc.C io.C logger.C AIS.C operator.C expression.C \
-	  setup-imodel.C smodel/objects.C computation.C graph_register.C \
-	  formula_expression.C smodel/operations.C distribution-operations.C \
-	  operations.C
+	  setup-mcmc.C io.C logger.C AIS.C computation/operator.C computation/expression.C \
+	  setup-imodel.C smodel/objects.C computation/computation.C \
+	  computation/graph_register.C \
+	  computation/formula_expression.C smodel/operations.C distribution-operations.C \
+	  computation/operations.C
 
 nodist_bali_phy_SOURCES = git_version.h
 
@@ -304,13 +305,13 @@ analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 	util.C sequencetree.C substitution.C eigenvalue.C tree.C \
 	exponential.C smodel/setup.C smodel/smodel.C imodel.C rng.C likelihood.C \
 	choose.C tools/optimize.C setup.C rates.C alignment-util.C \
-	sequence-format.C randomtree.C model.C graph_register.C  probability.C \
+	sequence-format.C randomtree.C model.C computation/graph_register.C  probability.C \
 	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
 	alignment-random.C parameters.C myexception.C monitor.C \
 	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
-	timer_stack.C io.C operator.C expression.C smodel/objects.C \
-	computation.C formula_expression.C smodel/operations.C \
-	distribution-operations.C 2way.C operations.C
+	timer_stack.C io.C computation/operator.C computation/expression.C smodel/objects.C \
+	computation/computation.C computation/formula_expression.C smodel/operations.C \
+	distribution-operations.C 2way.C computation/operations.C
 
 #---------------------------------------------------------------
 
@@ -332,9 +333,9 @@ path_graph_SOURCES = tools/path-graph.C alignment.C alphabet.C sequence.C util.C
 
 #---------------------------------------------------------------
 
-expression2_SOURCES = expression2.C util.C computation.C \
-	operator.C expression.C probability.C distribution-operations.C operations.C \
-	graph_register.C
+expression2_SOURCES = computation/expression2.C util.C computation/computation.C \
+	computation/operator.C computation/expression.C probability.C distribution-operations.C \
+	computation/operations.C computation/graph_register.C
 
 #---------------------------------------------------------------
 

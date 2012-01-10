@@ -10,7 +10,7 @@
 #include "cached_value.H"
 #include "cow-ptr.H"
 #include <valarray>
-#include "expression.H"
+#include "computation/expression.H"
 
 template <typename T,typename U>
 std::valarray<T> get_varray(const std::vector<U>& v1) 
