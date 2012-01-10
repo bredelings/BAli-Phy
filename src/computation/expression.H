@@ -460,6 +460,8 @@ expression_ref def_function(bool decompose, const expression_ref& pattern, const
 
 expression_ref def_function(bool decompose, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies, const expression_ref& otherwise = expression_ref());
 
+expression_ref def_function(bool decompose, const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies, const expression_ref& otherwise = expression_ref());
+
 expression_ref launchbury_normalize(const expression_ref& R);
 expression_ref launchbury_unnormalize(const expression_ref& R);
 
