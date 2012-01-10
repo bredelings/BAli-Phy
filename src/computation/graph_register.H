@@ -71,7 +71,7 @@ struct var: public Object
 
   std::string print() const
   {
-    return "<" + name + ">";
+    return name;
   }
 
   tribool compare(const Object& o) const
