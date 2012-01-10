@@ -75,7 +75,7 @@ public:
 
   const X& operator*()    const throw()   {assert(data); return *data;}
   const X* operator->()   const throw()   {assert(data); return data.get();}
-  const X* get()          const throw()   {assert(data); return data.get();}
+  const X* get()          const throw()   {              return data.get();}
     
   X& operator*()                          {assert(data); copy(); return *data;}
   X* operator->()                         {assert(data); copy(); return data.get();}
@@ -188,7 +188,7 @@ public:
 
   const X& operator*()    const throw()   {assert(data); return *data;}
   const X* operator->()   const throw()   {assert(data); return data.get();}
-  const X* get()          const throw()   {assert(data); return data.get();}
+  const X* get()          const throw()   {              return data.get();}
     
   X& operator*()                          {assert(data); copy(); return *data;}
   X* operator->()                         {assert(data); copy(); return data.get();}
