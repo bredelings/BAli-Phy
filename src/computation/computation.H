@@ -8,19 +8,6 @@
 #include "myexception.H"
 #include "util.H"
 
-/// Describes a completed computation
-struct Computation: virtual public Object
-{
-  Computation* clone() const {return new Computation(*this);}
-
-  /// What were the values of arguments that were used?
-  std::vector<boost::shared_ptr<const Object> > used_values;
-  /// Which args/slots were used?  in what order? 
-  std::vector<int> slots_used_order;
-
-  Computation(int n_inputs):used_values(n_inputs) { }
-};
-
 struct expression_ref;
 
 struct OperationArgs: virtual public Object
