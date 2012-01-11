@@ -233,8 +233,18 @@ int main()
   expression_ref v3 = dummy(3);
   expression_ref v4 = dummy(4);
 
+  Program Prelude;
+
   // take - actually, this requires handling operators.
-  expression_ref take = dummy("take");
+  expression_ref take = var("take");
+  {
+    typed_expression_ref<Int> I1 = v1;
+    Prelude += Def( take(0, v1), ListEnd )
+                  ( take(v1, ListEnd), ListEnd)
+                  ( take(v1, Cons(v2,v3)), Cons(v2, take(I1 - 1)(v3)) );
+  }
+
+  take = dummy("take");
   expression_ref def_take;
   {  
     vector<expression_ref> patterns;
@@ -265,7 +275,11 @@ int main()
   cout<<let_float(graph_normalize(test_let_float))<<"\n";
 
   // iterate
-  expression_ref iterate = dummy("iterate");
+  expression_ref iterate = var("iterate");
+  {
+    Prelude += Def( iterate(v1,v2), Cons(v2, iterate(v1)(v1(v2))) );
+  }
+  iterate = dummy("iterate");
   expression_ref def_iterate;
   {  
 
@@ -278,7 +292,12 @@ int main()
   }
 
   // fmap
-  expression_ref fmap = dummy("fmap");
+  expression_ref fmap = var("fmap");
+  {
+    Prelude += Def( fmap(v1, ListEnd)    , ListEnd)
+                  ( fmap(v1, Cons(v2,v3)), Cons(v1(v2), fmap(v1, v3) ) );
+  }
+  fmap = dummy("fmap");
   expression_ref def_fmap;
   {  
 
@@ -301,7 +320,13 @@ int main()
 										 )
 							       )
 					     );
-  expression_ref sum_i = dummy("sum_i");
+
+  expression_ref sum_i = var("sum_i");
+  {
+    Prelude += Def( sum_i(ListEnd), 0)
+                  ( sum_i(Cons(v1,v2)), plus_i(v1,sum_i(v2)) );
+  }
+  sum_i = dummy("sum_i");
 
   expression_ref test8 = let_expression(v0,1,v0);
   cout<<"\n";
@@ -332,11 +357,13 @@ int main()
   cout<<test10<<"\n";
 
   // We might actually have to print the result to calculate the whole thing.
-  expression_ref test11 = let_expression(take, def_take,
-					let_expression(iterate, def_iterate,
-						       take(3)(iterate(plus_i(1),1))
-						       )
-					);
+  CTX1 += Prelude;
+  expression_ref test11;
+  {
+    expression_ref take = var("take");
+    expression_ref iterate = var("iterate");
+    test11 = take(3)(iterate(plus_i(1),1));
+  }
   cout<<"\n";
   cout<<"Eval test:     "<<test11<<" = \n";
   test11 = launchbury_normalize(test11);
@@ -508,5 +535,5 @@ int main()
   cout<<"D.evaluate(3) = "<<D.evaluate(3)<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
 
-
+  cout<<"Prelude = \n"<<Prelude<<"\n";
 }

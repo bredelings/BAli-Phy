@@ -1257,6 +1257,15 @@ int reg_heap::uniquify_reg(int R, int t)
       *token_roots[t].parameters[j] = new_regs[R1];
   }
 
+  // 4c. Adjust identifiers to point to the new regs
+  foreach(j, token_roots[t].identifiers)
+  {
+    // Hmmm.... this could be a lot of identifiers to scan...
+    int R1 = *(j->second);
+    if (includes(new_regs, R1))
+      *(j->second) = new_regs[R1];
+  }
+
   // 5. Find the unsplit parents of split regs
   //    These will be the only parents of the old regs that have context t.
   vector<int> unsplit_parents;
@@ -1458,6 +1467,12 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
     scan.push_back(**i);
   }
 
+  foreach(i,token_roots[t].identifiers)
+  {
+    assert(reg_is_owned_by(*(i->second), t));
+    scan.push_back(*(i->second));
+  }
+
   vector<int> unique;
   for(int i=0;i<scan.size();i++)
   {
@@ -1513,6 +1528,11 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 
   foreach(i,token_roots[t].parameters)
     scan.push_back(**i);
+  foreach(i,token_roots[t].identifiers)
+  {
+    scan.push_back(*(i->second));
+  }
+
 
   vector<int> unique;
   for(int i=0;i<scan.size();i++)
@@ -1605,6 +1625,12 @@ int reg_heap::copy_token(int t)
     token_roots[t2].parameters.insert( token_roots[t2].parameters.end(), push_root(**i) );
   }
 
+  token_roots[t].identifiers = token_roots[t2].identifiers;
+  foreach(i,token_roots[t2].identifiers)
+  {
+    i->second = push_root(*(i->second));
+  }
+
   // remove ownership mark from used regs in this context
   vector<int> token_regs = find_all_regs_in_context_no_check(t2);
   for(int i=0;i<token_regs.size();i++)
@@ -1642,37 +1668,26 @@ int context::add_note(const expression_ref& E)
   return notes.size()-1;
 }
 
-void context::add_variable(const string& name, int R)
+reg_heap::root_t reg_heap::add_identifier_to_context(int t, const string& name)
 {
+  map<string,root_t>& identifiers = get_identifiers_for_context(t);
+
   // if there's already an 's', then complain
-  if (find_variable(name) != -1)
-    throw myexception()<<"Cannot add variable '"<<name<<"': there is already a variable with that name.";
+  if (identifiers.find(name) != identifiers.end())
+    throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
-  if (find_parameter(name) != -1)
-    throw myexception()<<"Cannot add variable '"<<name<<"': there is already a parameter with that name.";
-
-  assert(access(R).state == reg::used);
-
-  variables.push_back(std::pair<string,int>(name,R));
+  root_t r = allocate_reg();
+  access(*r).owners.insert(t);
+  identifiers[name] = r;
+  return r;
 }
 
-void context::rename_variable(int i, const string& s2)
+reg_heap::root_t context::add_identifier(const string& name)
 {
-  // Check that the variable points to a used reg
-  assert(access(variables[i].second).state == reg::used);
+  if (find_parameter(name) != -1)
+    throw myexception()<<"Cannot add identifier '"<<name<<"': there is already a parameter with that name.";
 
-  // zero-length names are not allowed
-  const string& s1 = variables[i].first;
-  assert(s2.size() != 0);
-
-  // if there's already an 's2', then complain
-  if (find_variable(s2) != -1)
-    throw myexception()<<"Cannot rename variable '"<<s1<<"' to '"<<s2<<"': there is already a variable with that name.";
-
-  if (find_parameter(s2) != -1)
-    throw myexception()<<"Cannot rename variable '"<<s1<<"' to '"<<s2<<"': there is already a parameter with that name.";
-
-  variables[i].first = s2;
+  return memory->add_identifier_to_context(token,name);
 }
 
 void context::rename_parameter(int i, const string& new_name)
@@ -1834,26 +1849,7 @@ int context::find_parameter(const string& s) const
     if (parameter_name(i) == s)
       return i;
 
-    throw myexception()<<"Can't find parameter named '"<<s<<"'";
-}
-
-int context::n_variables() const
-{
-  return variables.size();
-}
-
-int context::find_variable(const string& s) const
-{
-  for(int i=0;i<variables.size();i++)
-    if (variables[i].first == s)
-      return i;
-
   return -1;
-}
-
-const string& context::variable_name(int i) const
-{
-  return variables[i].first;
 }
 
 int context::add_parameter(const string& name)
@@ -1876,11 +1872,11 @@ int context::add_parameter(const string& name)
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const expression_ref& E)
 {
-  std::cerr<<"add: "<<E->print()<<"\n";
+  std::cerr<<"add: "<<E<<"\n";
 
   expression_ref T = let_float(graph_normalize(translate_refs(E) ));
 
-  std::cerr<<"add [compiled]: "<<T->print()<<"\n";
+  std::cerr<<"add [compiled]: "<<T<<"\n";
 
   root_t r;
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
@@ -1897,15 +1893,6 @@ int context::add_compute_expression(const expression_ref& E)
 
   heads().push_back(r);
   return heads().size()-1;
-}
-
-/// Add an expression that may be replaced by its reduced form
-int context::add_compute_expression(const string& name, const expression_ref& E)
-{
-  int index = add_compute_expression( E );
-  int R = *heads()[index];
-  add_variable(name, R);
-  return index;
 }
 
 int context::n_expressions() const
@@ -1960,11 +1947,11 @@ expression_ref context::translate_refs(const expression_ref& R) const
   // Replace parameters with the appropriate reg_var: of value whatever
   if (shared_ptr<const var> V = dynamic_pointer_cast<const var>(R))
   {
-    int loc = find_variable(V->name);
-    if (loc == -1)
-      throw myexception()<<"Can't translate undefined variable '"<<V->name<<"' in expression!";
+    map<string,root_t>::const_iterator loc = identifiers().find(V->name);
+    if (loc == identifiers().end())
+      throw myexception()<<"Can't translate undefined identifier '"<<V->name<<"' in expression!";
 
-    int R = variables[loc].second;
+    int R = *(loc->second);
 
     return expression_ref(new reg_var(R) );
   }
@@ -1994,13 +1981,51 @@ int context::find_match_notes(const expression_ref& query, std::vector<expressio
   return -1;
 }
 
+context& context::operator+=(const Def& D)
+{
+  Program P2;
+  P2 += D;
+  (*this) += P2;
+
+  return *this;
+}
+
+context& context::operator+=(const Program& P2)
+{
+  // Give each identifier a pointer to an unused location
+  foreach(D, P2.functions)
+  {
+    if (identifiers().find(D->first) == identifiers().end())
+      add_identifier(D->first);
+  }
+
+  // Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
+  foreach(D, P2.functions)
+  {
+    // get the root for each identifier
+    string name = D->first;
+    map<string, root_t>::iterator loc = identifiers().find(name);
+    assert(loc != identifiers().end());
+    root_t r = loc->second;
+    int R = *r;
+
+    expression_ref F = P2.get_function(name);
+
+    assert(R != -1);
+    set_E(R, let_float(graph_normalize(translate_refs(F))));
+  }
+
+  (*P) += P2;
+  return *this;
+}
+
 context& context::operator=(const context& C)
 {
   memory->release_token(token);
   
   memory = C.memory;
   token = memory->copy_token(C.token);
-  variables = C.variables;
+  P = C.P;
   notes     = C.notes;
 
   return *this;
@@ -2008,13 +2033,13 @@ context& context::operator=(const context& C)
 
 context::context()
   :memory(new reg_heap()),
+   P(new Program()),
    token(memory->get_unused_token())
 { }
 
 context::context(const context& C)
   :memory(C.memory),
    token(memory->copy_token(C.token)),
-   variables(C.variables),
    notes(C.notes)
 { }
 
@@ -2050,7 +2075,7 @@ context::context(const vector<expression_ref>& N)
   // Then set all default values.
   foreach(i,names)
     add_parameter(*i);
- }
+}
 
 #include "computation.H"
 
@@ -2519,9 +2544,7 @@ boost::shared_ptr<context> prefix_formula(const std::string& prefix, const boost
   for(int i=0;i<C2->n_parameters();i++)
     C2->rename_parameter(i, prefix + "::" + C2->parameter_name(i));
 
-  // prefix the variable names
-  for(int i=0;i<C2->n_variables();i++)
-    C2->rename_variable(i, prefix + "::" + C2->variable_name(i));
+  // Let's NOT prefix the variable names, since they could be "globally scoped", like fmap
 
   // prefix the names in the model
   C2->get_notes() = add_prefix(prefix, C2->get_notes());

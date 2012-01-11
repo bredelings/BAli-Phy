@@ -11,6 +11,7 @@
 #include "util.H"
 #include <list>
 #include <utility>
+#include "program.H"
 
 struct reg
 {
@@ -196,6 +197,9 @@ public:
     /// The register indices of the named parameters.
     std::vector<root_t> parameters;
 
+    /// Probably this would be non-parameter identifiers
+    std::map<std::string, root_t> identifiers;
+
     bool used;
     graph_roots():used(false) {}
   };
@@ -209,10 +213,16 @@ public:
   const std::vector<root_t>& get_parameters_for_context(int t) const {return token_roots[t].parameters;}
         std::vector<root_t>& get_parameters_for_context(int t)       {return token_roots[t].parameters;}
 
+  const std::map<std::string,root_t>& get_identifiers_for_context(int t) const {return token_roots[t].identifiers;}
+        std::map<std::string,root_t>& get_identifiers_for_context(int t)       {return token_roots[t].identifiers;}
+
   /// Allocate a reg in context t and put it on the top of the temporary-head stack.
   root_t push_temp_head(int t);
   /// Deallocate the temporary head on the top of the temporary-head stack.
   void pop_temp_head(int t);
+
+  /// Add a new identifier, pointing to a newly allocated location
+  root_t add_identifier_to_context(int, const std::string&);
 
   /// The roots for each token
   std::vector<graph_roots> token_roots;
@@ -269,10 +279,9 @@ private:
   /// The array of registers that make up our memory.
   mutable boost::shared_ptr<reg_heap> memory;
 
-  int token;
+  cow_ptr<Program> P;
 
-  /// A list of variable names, and the register indices to which they correspond.
-  std::vector<std::pair<std::string,int> > variables;
+  int token;
 
   std::vector<expression_ref> notes;
 
@@ -284,15 +293,18 @@ private:
   const std::vector<root_t>& parameters() const {return memory->get_parameters_for_context(token);}
         std::vector<root_t>& parameters()       {return memory->get_parameters_for_context(token);}
 
+  const std::map<std::string, root_t>& identifiers() const {return memory->get_identifiers_for_context(token);}
+        std::map<std::string, root_t>& identifiers()       {return memory->get_identifiers_for_context(token);}
+
   root_t push_temp_head() const;
   void pop_temp_head() const;
 
   int get_token() const {return token;}
 
   /// Register a variable called 'name' as having location 'R'
-  void add_variable(const std::string& name, int R);
+  void add_identifier(const std::string& name, int R);
 
-  /// Translate named variables (struct var) and named parameters (struct parameter) into reg_var references
+  /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
   expression_ref translate_refs(const expression_ref& R) const;
 
 public:
@@ -376,18 +388,11 @@ public:
   /// Lookup the index for the named parameter s
   int find_parameter(const std::string& s) const;
 
-  int n_variables() const;
-
-  /// Lookup the reg for the named variable s (not a parameter)
-  int find_variable(const std::string& s) const;
-
-  const std::string& variable_name(int i) const;
-
-  /// Change the name of the variable named s 
-  void rename_variable(int i, const std::string&);
-
   /// Create a new parameter named s
   int add_parameter(const std::string& s);
+
+  /// Reserve an identifier with name s
+  root_t add_identifier(const std::string& s);
 
   /// Add a literal expression that MAY be reduced
   int add_compute_expression(const expression_ref& e);
@@ -414,6 +419,10 @@ protected:
 
   void collect_garbage() const;
 public:
+  context& operator+=(const Def& D);
+
+  context& operator+=(const Program& D);
+
   context& operator=(const context& c);
 
   context();
