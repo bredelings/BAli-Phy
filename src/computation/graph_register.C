@@ -1625,7 +1625,7 @@ int reg_heap::copy_token(int t)
     token_roots[t2].parameters.insert( token_roots[t2].parameters.end(), push_root(**i) );
   }
 
-  token_roots[t].identifiers = token_roots[t2].identifiers;
+  token_roots[t2].identifiers = token_roots[t].identifiers;
   foreach(i,token_roots[t2].identifiers)
   {
     i->second = push_root(*(i->second));
@@ -2039,6 +2039,7 @@ context::context()
 
 context::context(const context& C)
   :memory(C.memory),
+   P(C.P),
    token(memory->copy_token(C.token)),
    notes(C.notes)
 { }
