@@ -9,6 +9,7 @@
 #include "operations.H"
 #include "distribution-operations.H"
 #include "graph_register.H"
+#include "prelude.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -140,7 +141,7 @@ int main()
 
   int z_gt = CTX1.add_compute_expression(gt(z));
 
-  int x_plus_y = CTX1.add_compute_expression(plus(x)(y));
+  CTX1.add_compute_expression(plus(x)(y));
 
   int w_2 = CTX1.add_compute_expression( muli(w)(w) );
 
@@ -160,7 +161,7 @@ int main()
   int tuple_x_y = CTX1.add_compute_expression(Tuple(X,Y));
 
   int prior_x_y = CTX1.add_note(distributed(parameter("X"),Tuple(exponential_dist,Y+One)));
-  int prior_y_z = CTX1.add_note(distributed(parameter("Y"),Tuple(exponential_dist,Z+One)));
+  CTX1.add_note(distributed(parameter("Y"),Tuple(exponential_dist,Z+One)));
   int probability_expression = add_probability_expression(CTX1);
 
   cout<<"Setting a few variables...\n";
@@ -232,39 +233,6 @@ int main()
   expression_ref v2 = dummy(2);
   expression_ref v3 = dummy(3);
   expression_ref v4 = dummy(4);
-
-  Program Prelude;
-
-  // take - actually, this requires handling operators.
-  expression_ref take = var("take");
-  {
-    typed_expression_ref<Int> I1 = v1;
-    Prelude += Def( take(0, v1), ListEnd )
-                  ( take(v1, ListEnd), ListEnd)
-                  ( take(v1, Cons(v2,v3)), Cons(v2, take(I1 - 1)(v3)) );
-  }
-
-  // iterate
-  expression_ref iterate = var("iterate");
-  {
-    Prelude += Def( iterate(v1,v2), Cons(v2, iterate(v1)(v1(v2))) );
-  }
-
-  // fmap
-  expression_ref fmap = var("fmap");
-  {
-    Prelude += Def( fmap(v1, ListEnd)    , ListEnd)
-                  ( fmap(v1, Cons(v2,v3)), Cons(v1(v2), fmap(v1, v3) ) );
-  }
-
-  // sum_i
-  // sum [] = 0
-  // sum h:t = h+(sum t)
-  expression_ref sum_i = var("sum_i");
-  {
-    Prelude += Def( sum_i(ListEnd), 0)
-                  ( sum_i(Cons(v1,v2)), plus_i(v1,sum_i(v2)) );
-  }
 
   CTX1 += Prelude;
 

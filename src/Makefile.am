@@ -104,7 +104,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  setup-imodel.C smodel/objects.C computation/computation.C \
 	  computation/graph_register.C computation/program.C \
 	  computation/formula_expression.C smodel/operations.C distribution-operations.C \
-	  computation/operations.C
+	  computation/operations.C computation/prelude.C
 
 nodist_bali_phy_SOURCES = git_version.h
 
@@ -335,7 +335,8 @@ path_graph_SOURCES = tools/path-graph.C alignment.C alphabet.C sequence.C util.C
 
 expression2_SOURCES = computation/expression2.C util.C computation/computation.C \
 	computation/operator.C computation/expression.C probability.C distribution-operations.C \
-	computation/operations.C computation/graph_register.C computation/program.C
+	computation/operations.C computation/graph_register.C computation/program.C \
+	computation/prelude.C
 
 #---------------------------------------------------------------
 
