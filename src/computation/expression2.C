@@ -244,51 +244,10 @@ int main()
                   ( take(v1, Cons(v2,v3)), Cons(v2, take(I1 - 1)(v3)) );
   }
 
-  take = dummy("take");
-  expression_ref def_take;
-  {  
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    patterns.push_back( Tuple(0, v1) );
-    bodies.push_back( ListEnd );
-
-    patterns.push_back( Tuple(v1, ListEnd) );
-    bodies.push_back( ListEnd );
-
-    typed_expression_ref<Int> I1 = v1;
-    patterns.push_back( Tuple(v1, Cons(v2,v3) ) );
-    bodies.push_back( Cons(v2, take(I1-1)(v3) ) );
-
-    // FIXME - get rid of def_function.
-    //       - start using a fixpoint function definition.
-    // take 0  _  = []
-    // take _  [] = []
-    // take n h:t = h:(take (n-1) t)
-
-    //       - lambda take.n.x.case n of {0->[],_->case x of {[] -> [],h:t->h:(take (n-3) t)}}
-    def_take = def_function(true, patterns, bodies);
-  }
-
-  expression_ref test_let_float = def_take;
-  cout<<test_let_float<<"\n";
-  cout<<graph_normalize(test_let_float)<<"\n";
-  cout<<let_float(graph_normalize(test_let_float))<<"\n";
-
   // iterate
   expression_ref iterate = var("iterate");
   {
     Prelude += Def( iterate(v1,v2), Cons(v2, iterate(v1)(v1(v2))) );
-  }
-  iterate = dummy("iterate");
-  expression_ref def_iterate;
-  {  
-
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    patterns.push_back( Tuple(v1, v2) );
-    bodies.push_back( Cons(v2, iterate(v1)(v1(v2))) );
-
-    def_iterate = def_function(true, patterns, bodies);
   }
 
   // fmap
@@ -297,36 +256,17 @@ int main()
     Prelude += Def( fmap(v1, ListEnd)    , ListEnd)
                   ( fmap(v1, Cons(v2,v3)), Cons(v1(v2), fmap(v1, v3) ) );
   }
-  fmap = dummy("fmap");
-  expression_ref def_fmap;
-  {  
-
-    vector<expression_ref> patterns;
-    vector<expression_ref> bodies;
-    patterns.push_back( Tuple(v1, ListEnd) );
-    bodies.push_back( ListEnd );
-
-    patterns.push_back( Tuple(v1, Cons(v2,v3)) );
-    bodies.push_back( Cons(v1(v2), fmap(v2)(v3) ) );
-
-    def_fmap = def_function(true, patterns, bodies);
-  }
 
   // sum_i
   // sum [] = 0
   // sum h:t = h+(sum t)
-  expression_ref sum_i_def = lambda_quantify(0,lambda_quantify(1,case_expression(true, v1, ListEnd, 0,
-										 case_expression(true, v1, Cons(v2,v3), plus_i(v2,v0(v3)))
-										 )
-							       )
-					     );
-
   expression_ref sum_i = var("sum_i");
   {
     Prelude += Def( sum_i(ListEnd), 0)
                   ( sum_i(Cons(v1,v2)), plus_i(v1,sum_i(v2)) );
   }
-  sum_i = dummy("sum_i");
+
+  CTX1 += Prelude;
 
   expression_ref test8 = let_expression(v0,1,v0);
   cout<<"\n";
@@ -346,9 +286,8 @@ int main()
   cout<<test9<<"\n";
 
 
-  expression_ref test10 = let_expression(take, def_take,
-					 take(2)(Cons(1,Cons(2,Cons(3,ListEnd))))
-					);
+  expression_ref test10 = take(2)(Cons(1,Cons(2,Cons(3,ListEnd))));
+
   cout<<"\n";
   cout<<"Eval test:     "<<test10<<" = \n";
   test10 = launchbury_normalize(test10);
@@ -357,13 +296,7 @@ int main()
   cout<<test10<<"\n";
 
   // We might actually have to print the result to calculate the whole thing.
-  CTX1 += Prelude;
-  expression_ref test11;
-  {
-    expression_ref take = var("take");
-    expression_ref iterate = var("iterate");
-    test11 = take(3)(iterate(plus_i(1),1));
-  }
+  expression_ref test11 = take(3)(iterate(plus_i(1),1));
   cout<<"\n";
   cout<<"Eval test:     "<<test11<<" = \n";
   test11 = launchbury_normalize(test11);
@@ -372,6 +305,7 @@ int main()
   cout<<test11<<"\n";
 
   context C;
+  C += Prelude;
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<C.evaluate_expression(6)<<"\n";
 
@@ -397,11 +331,7 @@ int main()
   test13.reset();
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test14 = let_expression(take, def_take,
-					let_expression(iterate, def_iterate,
-						       take(3)(iterate(plus_i(1),1))
-						       )
-					);
+  expression_ref test14 = take(3)(iterate(plus_i(1),1));
 
   cout<<"\n";
   cout<<"Eval test:     "<<test14<<" = \n";
@@ -414,11 +344,7 @@ int main()
 
 
   //print(take(3,fmap(square,iterate(plus(1.0),1.0))));
-  expression_ref test15 = let_expression(take, def_take,
-					let_expression(iterate, def_iterate,
-						       take(3)(iterate(plus_i(1),1))
-						       )
-					);
+  expression_ref test15 = take(3)(iterate(plus_i(1),1));
 
   cout<<"\n";
   cout<<"Eval test:     "<<test15<<" = \n";
@@ -475,11 +401,7 @@ int main()
   C.set_parameter_value("Z",4);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test16 = let_expression(take, def_take,
-					let_expression(iterate, def_iterate,
-						       take(y)(iterate(plus_i(x),z))
-						       )
-					);
+  expression_ref test16 = take(y)(iterate(plus_i(x),z));
 
   C.add_compute_expression( test16 );
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
@@ -490,13 +412,8 @@ int main()
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test17 = let_expression(take, def_take,
-			  let_expression(iterate, def_iterate,
-					 let_expression(sum_i, sum_i_def(sum_i),
+  expression_ref test17 =  sum_i(take(y)(iterate(plus_i(x),z)));
 
-					 sum_i(take(y)(iterate(plus_i(x),z)))
-
-					 )));
   C.add_compute_expression( test17 );
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
