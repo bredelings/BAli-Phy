@@ -277,6 +277,46 @@ using std::endl;
  * onto the stack!
  */
 
+
+/*
+ * Issue: Regs that are reachable by back-references from reachable regs stil need to be in a
+ *        consistent state.  That is because these regs are reachable in backward walks, such as
+ *        in uniquify and set_reg_value( ).
+ * 
+ * Answer: If we are going to remove ONLY ownership token t, then we need to 
+ *         (a) remove it from ALL used regs, or
+ *         (b) remove it from unused regs that reference used regs.
+ *
+ * The only routines that clear ownership now should be:
+ *
+ * - clear( ).  This is OK because we only clear regs that are not in state reg::used.  Any references
+ *              to these regs is a different problem, and can be caught by finding references to unused
+ *              regs.
+ *
+ * - remove_unused_ownership_marks( ).  This is OK, because we construct the minimal
+ *              and correct ownership marking.
+ * 
+ * - uniquify_reg( ).  Here, we only remove ownership from the regs we split.  We remap any (unsplit) 
+ *                     parents of these regs to refer to the new regs.  Therefore, there should not be
+ *                     any regs in context t that still refer to the old regs.
+ */
+
+
+/*
+ * Issue: How can we share eigensystems between Q matrices that differ only by rate?
+ *
+ * Issue: How can we share eigensystems between Q matrices that are identical by are at separate
+ *        positions in the list?
+ *
+ * Issue: I guess we want to want Q matrices to carry their eigensystem with them, although it will
+ *        be computed lazily...
+ *
+ * OK, so we pass around (ReversibleMarkovModel q pi Eigen(Q,pi) t).  Then any copy of this will copy
+ * the node for the (uncomputed) Eigen(Q,pi).
+ *
+ * Perhaps there is a simple way to compute this as just GetRMM(Q), as opposed to RMM(Q,pi).
+ */
+
 expression_ref graph_normalize(const expression_ref& R)
 {
   if (not R) return R;
