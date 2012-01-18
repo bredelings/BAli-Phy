@@ -149,7 +149,10 @@ class reg_heap
   void reclaim_used_reg(int);
 
   void remove_unused_ownership_marks();
-  
+
+  void check_used_reg(int) const;
+  void check_used_regs() const;
+
 public:
   typedef std::list<int>::iterator root_t;
   typedef std::list<int>::const_iterator const_root_t;

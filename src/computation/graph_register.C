@@ -1447,6 +1447,51 @@ int reg_heap::uniquify_reg(int R, int t)
   return R2;
 }
 
+void reg_heap::check_used_reg(int index) const
+{
+  const reg& R = access(index);
+
+  // Check that we have already correctly recorded all the references!
+  assert(get_exp_refs(R.E) == R.references);
+
+  foreach(r, R.references)
+  {
+    // Check that referenced regs are owned by the owners of R
+    assert(includes(access(*r).owners, R.owners) );
+    
+    // Check that referenced regs are have back-references to R
+    assert(includes( access(*r).referenced_by_in_E, index) );
+  }
+  
+  foreach(r, R.used_inputs)
+  {
+    // Check that used regs are owned by the owners of R
+    assert(includes(access(*r).owners, R.owners) );
+
+    // Check that used regs are have back-references to R
+    assert(includes( access(*r).outputs, index) );
+  }
+
+  if (R.call != -1)
+  {
+    // Check that the call-used reg is owned by owners of R
+    assert(includes(access(R.call).owners, R.owners) );
+
+    // Check that the call-used reg has back-references to R
+    assert(includes(access(R.call).call_outputs, index) );
+  }
+}
+
+void reg_heap::check_used_regs() const
+{
+  // check_used_regs
+  for(int here = first_used_reg;here != -1;)
+  {
+    check_used_reg(here);
+    here = access(here).next_reg;
+  }
+}
+
 vector<int> reg_heap::find_all_regs_in_context(int t) const
 {
   vector<int> scan;
