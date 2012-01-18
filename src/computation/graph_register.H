@@ -437,45 +437,6 @@ public:
   ~context();
 };
 
-class reg_ptr
-{
-  reg_heap::root_t r;
-  const context& C;
-public:
-  typedef reg_heap::root_t root_t;
-
-  const reg& operator*()    const throw()   {return  C[*r];}
-  const reg* operator->()   const throw()   {return &C[*r];}
-  const reg* get()          const throw()   {return &C[*r];}
-    
-  reg& operator*()                          {return  C[*r];}
-  reg* operator->()                         {return &C[*r];}
-  reg* modify()                             {return &C[*r];}
-
-  const context& get_context() const {return C;}
-
-  boost::shared_ptr<const Object> evaluate() const
-  {
-    return C.evaluate(*r);
-  }
-
-  template<typename T>
-  boost::shared_ptr<const T> evaluate_as() const
-  {
-    return C.evaluate_as<T>(*r);
-  }
-
-  reg_ptr(int R, const context& c)
-    :r(c.push_root(R)), C(c)
-  { }
-
-  ~reg_ptr()
-  {
-    C.pop_root(r);
-    r = root_t();
-  }
-};
-
 std::vector<expression_ref> add_prefix(const std::string&, const std::vector<expression_ref>&);
 
 boost::shared_ptr<context> prefix_formula(const std::string&, const boost::shared_ptr<const context>&);
