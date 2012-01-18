@@ -1575,35 +1575,23 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
     R.state = reg::checked;
     unique.push_back(scan[i]);
 
-    // Make sure that we have already correctly got all the references!
-    assert(get_exp_refs(R.E) == R.references);
-    
     // Count the references from E
     scan.insert(scan.end(), R.references.begin(), R.references.end());
 
-    foreach(j, R.references)
-    {
-      assert(includes(access(*j).owners, t) );
-    }
-    
-    foreach(j, R.used_inputs)
-    {
-      assert(includes(access(*j).owners, t) );
-    }
-    
     // Count also the references from the call
-    if (R.call != -1) {
-      assert(includes(access(R.call).owners, t) );
+    if (R.call != -1)
       scan.insert(scan.end(), R.call);
-    }
   }
 
   for(int i=0;i<unique.size();i++)
   {
     const reg& R = access(unique[i]);
     assert(R.state == reg::checked);
+    assert(includes(R.owners, t) );
 
     R.state = reg::used;
+
+    check_used_reg(unique[i]);
   }
 
   return unique;
