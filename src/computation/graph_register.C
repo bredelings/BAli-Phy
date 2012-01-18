@@ -1655,11 +1655,6 @@ void reg_heap::release_token(int t)
 {
   assert(token_is_used(t));
 
-  // remove ownership mark from used regs in this context
-  vector<int> token_regs = find_all_regs_in_context(t);
-  for(int i=0;i<token_regs.size();i++)
-    access(token_regs[i]).owners.erase(t);
-
   // We shouldn't have any temporary heads still on the stack, here!
   assert(token_roots[t].temp.empty());
 
@@ -1687,6 +1682,9 @@ void reg_heap::release_token(int t)
   // mark unused
   unused_tokens.push_back(t);
   token_roots[t].used = false;
+
+  // 
+  remove_unused_ownership_marks();
 }
 
 bool reg_heap::token_is_used(int t) const
