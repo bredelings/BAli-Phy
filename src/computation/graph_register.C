@@ -942,6 +942,7 @@ void reg_heap::collect_garbage()
 {
 #ifndef NDEBUG
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
+  check_used_regs();
 #endif
   assert(n_regs() == n_used_regs() + n_free_regs());
 
@@ -989,6 +990,7 @@ void reg_heap::collect_garbage()
 #ifndef NDEBUG
   cerr<<"Regs: "<<n_used_regs()<<"/"<<n_regs()<<endl;
   cerr<<"#roots = "<<roots.size()<<endl;
+  check_used_regs();
 #endif
 
   remove_unused_ownership_marks();
