@@ -899,7 +899,9 @@ void reg_heap::remove_unused_ownership_marks()
   for(;here != -1;)
   {
     reg& R = access(here);
+#ifndef NDEBUG
     R.temp_owners = R.owners;
+#endif
     R.owners.clear();
 
     here = R.next_reg;
@@ -922,6 +924,7 @@ void reg_heap::remove_unused_ownership_marks()
     }
   }
 
+#ifndef NDEBUG
   // Check that we did not ADD any ownership marks!
   here = first_used_reg;
   for(;here != -1;)
@@ -932,6 +935,7 @@ void reg_heap::remove_unused_ownership_marks()
 
     here = R.next_reg;
   }
+#endif
 }
 
 void reg_heap::collect_garbage()
