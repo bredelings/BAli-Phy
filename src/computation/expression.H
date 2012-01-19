@@ -13,6 +13,8 @@
 /// An S-expression: An Object, and possibly an array of Objects.
 struct expression_ref;
 
+expression_ref operator,(const expression_ref&, const expression_ref&);
+
 /// An array of Objects.
 struct expression: virtual public Object
 {
