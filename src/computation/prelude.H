@@ -4,6 +4,8 @@
 #include "computation/program.H"
 
 extern const expression_ref fmap;
+extern const expression_ref fmap1;
+extern const expression_ref fmap2;
 extern const expression_ref take;
 extern const expression_ref iterate;
 extern const expression_ref sum_i;

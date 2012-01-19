@@ -3,6 +3,8 @@
 #include "computation/graph_register.H"
 
 const expression_ref fmap = var("fmap");
+const expression_ref fmap1 = var("fmap1");
+const expression_ref fmap2 = var("fmap2");
 const expression_ref take = var("take");
 const expression_ref iterate = var("iterate");
 const expression_ref sum_i = var("sum_i");
@@ -22,24 +24,42 @@ Program get_Prelude()
   // take n h:t = h:(take (n-1) t)
   {
     typed_expression_ref<Int> I1 = v1;
-    P += Def( take(0, v1), ListEnd )
-            ( take(v1, ListEnd), ListEnd)
-            ( take(v1, Cons(v2,v3)), Cons(v2, take(I1 - 1)(v3)) );
+    P += Def( (take, 0, v1), ListEnd )
+            ( (take, v1, ListEnd), ListEnd)
+            ( (take, v1, Cons(v2,v3)), (Cons, v2, (take,(I1 - 1),v3)) );
   }
 
   // iterate f x = x:iterate f (f x)
-  P += Def( iterate(v1,v2), Cons(v2, iterate(v1)(v1(v2))) );
+  P += Def( (iterate, v1,v2), (Cons, v2, (iterate, v1, (v1,v2))) );
   
   // fmap f []  = []
   // fmap f h:t = (f h):(fmap f t)
-  P += Def( fmap(v1, ListEnd)    , ListEnd)
-          ( fmap(v1, Cons(v2,v3)), Cons(v1(v2), fmap(v1, v3) ) );
+  P += Def( (fmap, v1, ListEnd)    , ListEnd)
+          ( (fmap, v1, (Cons, v2, v3)), (Cons, Tuple(v1,v2), (fmap, v1, v3) ) );
+
+  // fmap1 f []  = []
+  // fmap1 f (p,x):t = (f p,x):(fmap1 f t)
+  P += Def( (fmap1, v1, ListEnd)    , ListEnd)
+          ( (fmap1, v1, (Cons, Tuple(v2,v3), v4)), (Cons,Tuple((v1,v2),v3), (fmap1, v1, v4) ) );
+
+  // fmap2 f []  = []
+  // fmap2 f (p,x):t = (p,f x):(fmap2 f t)
+  P += Def( (fmap2, v1, ListEnd)    , ListEnd)
+          ( (fmap2, v1, (Cons, Tuple(v2,v3), v4)), (Cons, Tuple(v2,(v1,v3)), (fmap2, v1, v4) ) );
 
   // sum [] = 0
   // sum h:t = h+(sum t)
   expression_ref plus_i = lambda_expression( Add<Int>() );
-  P += Def( sum_i(ListEnd), 0)
-          ( sum_i(Cons(v1,v2)), plus_i(v1,sum_i(v2)) );
+  P += Def( (sum_i, ListEnd), 0)
+          ( (sum_i, (Cons, v1, v2)), (plus_i, v1, (sum_i, v2)) );
+
+  expression_ref times = lambda_expression(Multiply<Double>());
+  expression_ref minus = lambda_expression(Minus<Double>());
+
+  // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
+  expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
+  expression_ref ED = var("ExtendDiscreteDistribution");
+  P += Def( ED(DiscreteDistribution(v0),v1,v2), Cons(Tuple(v1,v2),(fmap1, times(minus(1.0,v1)), v0)));
 
   return P;
 }
