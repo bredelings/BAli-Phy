@@ -16,12 +16,12 @@ bin_SCRIPTS = scripts/bali-phy-sge scripts/bp-analyze.pl scripts/compare-runs.R
 noinst_SCRIPTS = scripts/git_version.sh
 
 # Distributed in the doc/ directory
-nobase_doc_SCRIPTS = scripts/plot-path-graph.R \
+docdir = $(datadir)/doc/@PACKAGE@
+doc_DATA = doc/README.html doc/README.xhtml doc/docbook.css doc/README.pdf \
+		scripts/plot-path-graph.R \
 		scripts/fixedpt-alignment-distances \
 		scripts/pairwise-alignment-distances
 
-docdir = $(datadir)/doc/@PACKAGE@
-doc_DATA = doc/README.html doc/README.xhtml doc/docbook.css doc/README.pdf
 
 examplesdir = $(datadir)/@PACKAGE@/
 nobase_examples_DATA = examples/EF-Tu/5d.fasta examples/EF-Tu/12d.fasta examples/EF-Tu/48b.fasta \
