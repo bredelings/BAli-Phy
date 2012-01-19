@@ -13,7 +13,10 @@
 /// An S-expression: An Object, and possibly an array of Objects.
 struct expression_ref;
 
+/// This represents function application: a,b,c = a(b)(c) and not a(b(c)). The precedence is 18 (low).
 expression_ref operator,(const expression_ref&, const expression_ref&);
+/// This represents the Cons constructor: a&b = Cons a b = a:b.  The precedence is 3 (high).
+expression_ref operator&(const expression_ref&, const expression_ref&);
 
 /// An array of Objects.
 struct expression: virtual public Object

@@ -1089,6 +1089,11 @@ expression_ref operator,(const expression_ref& E1, const expression_ref& E2)
   return apply(E1, E2);
 }
 
+expression_ref operator&(const expression_ref& E1, const expression_ref& E2)
+{
+  return (Cons,E1,E2);
+}
+
 void find_named_parameters(const expression_ref& R, std::set<string>& names)
 {
   assert(R);
