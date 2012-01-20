@@ -94,6 +94,11 @@ int main()
   cout<<"mul(#1) = "<<mul(dummy(1))<<"\n";
   cout<<"mul(x,y) = "<<mul(x,y)<<"\n\n\n";
 
+  // This doesn't work!  Therefore, let_float objects out of IF statements doesn't work either.
+  cout<<lambda_quantify(dummy("x"),lambda_quantify(dummy("y"),dummy("x")))<<"\n";
+  cout<<let_float(lambda_quantify(dummy("x"),lambda_quantify(dummy("y"),dummy("x"))))<<"\n";
+  cout<<let_float(let_float(lambda_quantify(dummy("x"),lambda_quantify(dummy("y"),dummy("x")))))<<"\n";
+
   cout<<lambda_quantify(dummy("x"),5)<<"\n";
   cout<<let_float(lambda_quantify(dummy("x"),5))<<"\n";
   cout<<let_float(let_float(lambda_quantify(dummy("x"),5)))<<"\n";
@@ -206,8 +211,10 @@ int main()
   result = CTX1.evaluate(x_times_y_plus_one_);
 
   cout<<"\n\n";
+  CTX2.evaluate(cond);
   cout<<"Changing W in CTX2: If(Z>1,X*Y+1,W*W) is unaffected should remain valid.\n";
   CTX2.set_parameter_value("W",Int(-1));
+  CTX2.evaluate(cond);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   cout<<"\n\n";
