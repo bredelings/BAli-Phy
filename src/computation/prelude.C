@@ -53,12 +53,11 @@ Program get_Prelude()
           ( (sum_i, v1&v2), (plus_i, v1, (sum_i, v2)) );
 
   expression_ref times = lambda_expression(Multiply<Double>());
-  expression_ref minus = lambda_expression(Minus<Double>());
 
   // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
   expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
   expression_ref ED = var("ExtendDiscreteDistribution");
-  P += Def( ED(DiscreteDistribution(v0),v1,v2), Tuple(v1,v2)&(fmap1, times(minus(1.0,v1)), v0) );
+  P += Def( ED(DiscreteDistribution(v0),v1,v2), Tuple(v1,v2)&(fmap1, times(1.0-v1), v0) );
 
   return P;
 }
