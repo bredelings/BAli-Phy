@@ -302,6 +302,18 @@ using std::endl;
  */
 
 
+bool is_reg_var(const expression_ref& R)
+{
+  if (dynamic_cast<const reg_var*>(&*R)) return true;
+
+  return false;
+}
+
+bool is_reglike(const expression_ref& R)
+{
+  return is_dummy(R) or is_parameter(R) or is_reg_var(R);
+}
+
 /*
  * Issue: How can we share eigensystems between Q matrices that differ only by rate?
  *
@@ -322,7 +334,7 @@ expression_ref graph_normalize(const expression_ref& R)
   if (not R) return R;
 
   // 1. Var
-  if (is_dummy(R))
+  if (is_reglike(R))
     return R;
   
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
@@ -355,9 +367,15 @@ expression_ref graph_normalize(const expression_ref& R)
     expression_ref f_ = dummy(var_index++);
     expression_ref x_ = dummy(var_index++);
 
-    if (is_dummy(x))
+    if (is_reglike(x) and is_reglike(f))
+      return (f,x);
+    else if (is_reglike(x))
     { 
       return let_expression(f_, f, apply_expression(f_,x));
+    }
+    else if (is_reglike(f))
+    {
+      return let_expression(x_, x, apply_expression(f,x_));
     }
     else
     {
@@ -392,7 +410,7 @@ expression_ref graph_normalize(const expression_ref& R)
       bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
     }
     
-    if (is_dummy(V->sub[1]))
+    if (is_reglike(V->sub[1]))
       return shared_ptr<const expression>(V);
     else
     {
@@ -419,7 +437,7 @@ expression_ref graph_normalize(const expression_ref& R)
     vector<expression_ref> bodies;
     for(int i=1;i<E->size();i++)
     {
-      if (is_dummy(E->sub[i]))
+      if (is_reglike(E->sub[i]))
       {
 	Con->sub.push_back(E->sub[i]);
       }
