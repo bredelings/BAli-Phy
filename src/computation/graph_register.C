@@ -1245,7 +1245,9 @@ int reg_heap::uniquify_reg(int R, int t)
   vector<int> changed_results;
 
   // 1. Find all ancestors with name 't' that are *shared*
+  // (Some of these could be unreachable!)
   vector<int> shared_ancestors = find_shared_ancestor_regs_in_context(R,t);
+  int n_new_regs = 0;
 
   // 2. Allocate new regs for each *shared* ancestor reg in context t
   map<int,int> new_regs;
@@ -1253,10 +1255,27 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     int R1 = shared_ancestors[i];
     int R2 = *push_temp_head(t);
+    n_new_regs++;
+    
     new_regs[R1] = R2;
+  }
 
-    // 4e. Initialize/Copy changeable
-    access(R2).changeable = access(R1).changeable;
+
+  // 4e. Initialize/Copy changeable
+  // 2. Remove regs that got deallocated from the list.
+  // Alternatively, I could LOCK them in place.
+  for(map<int,int>::iterator i = new_regs.begin(); i!= new_regs.end();)
+  {
+    int R1 = i->first;
+    int R2 = i->second;
+    if (access(R1).state == reg::used and reg_is_shared(R1))
+    {
+      access(R2).changeable = access(R1).changeable;
+
+      i++;
+    }
+    else
+      new_regs.erase(i++);
   }
 
   // 2a. Copy the over and remap E
@@ -1267,6 +1286,7 @@ int reg_heap::uniquify_reg(int R, int t)
     int R2 = i->second;
 
     // Check no mark on R2
+    assert(access(R1).state == reg::used);
     assert(access(R2).state == reg::used);
     
     assert( not access(R1).owners.empty() );
@@ -1432,9 +1452,9 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
   // Remove ownership from the old regs.
-  for(int i=0;i<shared_ancestors.size();i++)
+  foreach(i,new_regs)
   {
-    int Q = shared_ancestors[i];
+    int Q = i->first;
 
     // These regs should be shared.
     assert(reg_is_shared(Q));
@@ -1499,7 +1519,7 @@ int reg_heap::uniquify_reg(int R, int t)
 
   // 5. Remove root references to new regs.
   //    Remove t-ownership from old regs.
-  for(int i=0;i<shared_ancestors.size();i++)
+  for(int i=0;i<n_new_regs;i++)
     pop_temp_head(t);
 
   assert(token_roots[t].temp.empty());
