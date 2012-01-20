@@ -122,6 +122,17 @@ inline std::string POD<std::string>::print() const
 {
   return "\""+t+"\"";
 }
+#include <boost/type_traits/is_arithmetic.hpp>
+#include <boost/utility/enable_if.hpp>
+
+/***************** Make log_double_t count as an arithmetic type **************/
+#include <boost/mpl/integral_c.hpp>
+namespace boost 
+{
+  template<>
+  struct is_arithmetic<log_double_t>: public mpl::integral_c<bool,true>
+  { };
+}
 
 template <typename T>
 class POD_math: virtual public Object
@@ -129,6 +140,8 @@ class POD_math: virtual public Object
 protected:
   T t;
 public:
+  typedef typename boost::enable_if<boost::is_arithmetic<T>,T>::type base_type;
+
   POD_math<T>* clone() const {return new POD_math<T>(*this);}
 
   operator T() const {return t;}

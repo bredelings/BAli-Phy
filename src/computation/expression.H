@@ -287,22 +287,22 @@ template <typename T>
 struct typed_expression_ref: public expression_ref
 {
 public:
-  typed_expression_ref() {}
-  typed_expression_ref(const expression_ref& e):expression_ref(e) {}
-  typed_expression_ref(expression* v): expression_ref(v) {}
-  typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
-  typed_expression_ref(const Object& o):expression_ref(o) {}
+  explicit typed_expression_ref() {}
+  explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
+  explicit typed_expression_ref(expression* v): expression_ref(v) {}
+  explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  explicit typed_expression_ref(const Object& o):expression_ref(o) {}
 };
 
 template <typename T>
 struct typed_expression_ref<POD<T> >: public expression_ref
 {
 public:
-  typed_expression_ref() {}
-  typed_expression_ref(const expression_ref& e):expression_ref(e) {}
-  typed_expression_ref(expression* v): expression_ref(v) {}
-  typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
-  typed_expression_ref(const Object& o):expression_ref(o) {}
+  explicit typed_expression_ref() {}
+  explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
+  explicit typed_expression_ref(expression* v): expression_ref(v) {}
+  explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  explicit typed_expression_ref(const Object& o):expression_ref(o) {}
   typed_expression_ref(const T& t):expression_ref(POD<T>(t)) {}
 };
 
@@ -310,11 +310,11 @@ template <typename T>
 struct typed_expression_ref<POD_math<T> >: public expression_ref
 {
 public:
-  typed_expression_ref() {}
-  typed_expression_ref(const expression_ref& e):expression_ref(e) {}
-  typed_expression_ref(expression* v): expression_ref(v) {}
-  typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
-  typed_expression_ref(const Object& o):expression_ref(o) {}
+  explicit typed_expression_ref() {}
+  explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
+  explicit typed_expression_ref(expression* v): expression_ref(v) {}
+  explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  explicit typed_expression_ref(const Object& o):expression_ref(o) {}
   typed_expression_ref(const T& t):expression_ref(POD_math<T>(t)) {}
 };
 

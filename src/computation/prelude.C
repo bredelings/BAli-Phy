@@ -23,10 +23,9 @@ Program get_Prelude()
   // take n []  = []
   // take n h:t = h:(take (n-1) t)
   {
-    typed_expression_ref<Int> I1 = v1;
     P += Def( (take, 0, v1), ListEnd )
             ( (take, v1, ListEnd), ListEnd)
-            ( (take, v1, v2&v3), v2&(take,(I1 - 1),v3) );
+            ( (take, v1, v2&v3), v2&(take,(v1 - 1),v3) );
   }
 
   // iterate f x = x:iterate f (f x)
