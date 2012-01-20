@@ -1,6 +1,6 @@
 #include "formula_expression.H"
 #include "bounds.H"
-#include "graph_register.H"
+#include "context.H"
 
 using boost::shared_ptr;
 using std::vector;

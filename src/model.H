@@ -38,7 +38,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "object.H"
 #include "computation/computation.H"
 #include "computation/operation.H"
-#include "computation/graph_register.H"
+#include "computation/context.H"
 
 class Model;
 

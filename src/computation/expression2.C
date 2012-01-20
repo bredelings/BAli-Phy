@@ -8,7 +8,7 @@
 #include "operation.H"
 #include "operations.H"
 #include "distribution-operations.H"
-#include "graph_register.H"
+#include "context.H"
 #include "prelude.H"
 
 using boost::shared_ptr;
