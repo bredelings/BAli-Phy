@@ -129,6 +129,8 @@ int main()
 
   cout<<"Creating an Context...\n";
   context CTX1;
+  CTX1 += Prelude;
+
   CTX1.add_parameter("X");
   CTX1.add_parameter("Y");
   CTX1.add_parameter("Z");
@@ -233,8 +235,6 @@ int main()
   expression_ref v2 = dummy(2);
   expression_ref v3 = dummy(3);
   expression_ref v4 = dummy(4);
-
-  CTX1 += Prelude;
 
   expression_ref test8 = let_expression(v0,1,v0);
   cout<<"\n";
