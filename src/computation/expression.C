@@ -1643,6 +1643,13 @@ bool is_dummy(const expression_ref& R)
   return false;
 }
 
+bool is_parameter(const expression_ref& R)
+{
+  if (dynamic_cast<const parameter*>(&*R)) return true;
+
+  return false;
+}
+
 bool is_wildcard(const expression_ref& R)
 {
   shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R);
