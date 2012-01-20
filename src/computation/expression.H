@@ -376,9 +376,6 @@ extern expression_ref concat;
 // 1 Fields: the density expression
 extern expression_ref prob;
 
-// 3 fields: condition body1 body2
-extern expression_ref If;
-
 // 3 Fields: definition, guard, body
 extern expression_ref defun;
 

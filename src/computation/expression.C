@@ -1242,8 +1242,6 @@ expression_ref concat = lambda_expression( Concat() );
 
 expression_ref prob = lambda_expression( constructor("probability",1) );
 
-expression_ref If = lambda_expression( IfThenElse() );
-
 expression_ref defun = lambda_expression( constructor("defun",3) );
 
 vector<expression_ref> get_ref_vector_from_list(const expression_ref& R)
