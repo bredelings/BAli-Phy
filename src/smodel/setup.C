@@ -33,6 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "smodel/operations.H"
 #include "computation/operations.H"
 #include "distribution-operations.H"
+#include "computation/prelude.H"
 
 using std::vector;
 using std::valarray;
@@ -787,7 +788,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref p3 = def_parameter("M8b::f[Positive]", Double(0.1), between(0,1));
     formula_expression_ref w = def_parameter("M8b::omega3", Double(1.0), lower_bound(1), log_exponential_dist, 0.05);
     formula_expression_ref I  = def_parameter("M8b::omega3_non_zero", Bool(true));
-    formula_expression_ref w3 = If(I)(w)(1.0);
+    formula_expression_ref w3 = (If, I, w, 1.0);
     //    formula_expression_ref w3b = case_expression(
 
     formula_expression_ref D = Cons(Tuple(p3,w3),
