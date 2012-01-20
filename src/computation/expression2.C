@@ -74,10 +74,10 @@ int main()
   expression_ref w = parameter("W");
   expression_ref one = Double(1);
 
-  typed_expression_ref<Double> X = x;
-  typed_expression_ref<Double> Y = y;
-  typed_expression_ref<Int> W = w;
-  typed_expression_ref<Double> Z = z;
+  typed_expression_ref<Double> X ( x );
+  typed_expression_ref<Double> Y ( y );
+  typed_expression_ref<Int> W ( w );
+  typed_expression_ref<Double> Z ( z );
   typed_expression_ref<Double> One(1.0);
 
   expression_ref mul = lambda_expression( Multiply<Double>() );

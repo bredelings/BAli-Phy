@@ -144,7 +144,7 @@ namespace substitution
 
   formula_expression_ref WithINV_Model(const formula_expression_ref& R)
   {
-    typed_expression_ref<Double> p = parameter("INV::p");
+    typed_expression_ref<Double> p ( parameter("INV::p") );
     formula_expression_ref P = def_parameter("INV::p", 1.0, between(0.0, 1.0), beta_dist, Tuple(1.0, 2.0) );
 
     // Where do we get our frequencies from?

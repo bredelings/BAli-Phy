@@ -70,7 +70,7 @@ void f()
   expression_ref v3 = dummy(3);
   expression_ref v4 = dummy(4);
 
-  typed_expression_ref<Int> I1 = v1;
+  typed_expression_ref<Int> I1 ( v1 );
 
   expression_ref take = var("take");
   Program P;

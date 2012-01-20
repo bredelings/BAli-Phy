@@ -2668,7 +2668,7 @@ int add_probability_expression(context& C)
     
     // Create an expression for calculating the density of these random variables given their inputs
     expression_ref density_func = lambda_expression( *density_op );
-    typed_expression_ref<Log_Double> Pr_i = density_func(results[1], results[2]);
+    typed_expression_ref<Log_Double> Pr_i ( density_func(results[1], results[2]) );
     
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)
