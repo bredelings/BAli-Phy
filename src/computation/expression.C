@@ -882,6 +882,12 @@ expression_ref move_lets(bool scope, const set<dummy>& let_bound, const expressi
     return R2;
   }
 
+  if (dynamic_pointer_cast<const parameter>(R2))
+  {
+    assert(R2);
+    return R2;
+  }
+
   // We could float it, but its let_bound, so that would be a waste.
   if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R2))
   {
