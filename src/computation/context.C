@@ -31,7 +31,7 @@ reg_heap::root_t reg_heap::add_identifier_to_context(int t, const string& name)
   map<string,root_t>& identifiers = get_identifiers_for_context(t);
 
   // if there's already an 's', then complain
-  if (identifiers.find(name) != identifiers.end())
+  if (identifiers.count(name))
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
   root_t r = allocate_reg();
@@ -353,7 +353,7 @@ context& context::operator+=(const Program& P2)
   // Give each identifier a pointer to an unused location
   foreach(D, P2.functions)
   {
-    if (identifiers().find(D->first) == identifiers().end())
+    if (not identifiers().count(D->first))
       add_identifier(D->first);
   }
 
