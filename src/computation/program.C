@@ -160,7 +160,8 @@ std::ostream& operator<<(std::ostream& o, const Program& D)
 {
   foreach(f, D.functions)
   {
-    o<<f->first<<" = "<<f->second.first<<"  ("<<f->second.second<<")";
+    o<<f->first<<" = "<<f->second.first<<"  ("<<f->second.second<<")\n";
+    o<<f->first<<" = "<<let_float(f->second.first)<<"  ("<<f->second.second<<")";
     o<<"\n";
   }
   return o;

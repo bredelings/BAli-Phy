@@ -271,4 +271,10 @@ public:
 
 expression_ref graph_normalize(const expression_ref& R);
 
+bool is_reg_var(const expression_ref& R);
+
+bool is_var(const expression_ref& R);
+
+bool is_reg_like(const expression_ref& R);
+
 #endif

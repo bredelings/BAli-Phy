@@ -20,6 +20,11 @@ const expression_ref v2 = dummy(2);
 const expression_ref v3 = dummy(3);
 const expression_ref v4 = dummy(4);
 
+expression_ref operator^(const expression_ref& x, const expression_ref& T)
+{
+  return lambda_quantify(x,T);
+}
+
 Program get_Prelude()
 {
   Program P;
@@ -61,7 +66,7 @@ Program get_Prelude()
 
   // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
   expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
-  P += Def( ExtendDiscreteDistribution(DiscreteDistribution(v0),v1,v2), DiscreteDistribution(Tuple(v1,v2)&(fmap1, times(1.0-v1), v0)) );
+  P += Def( ExtendDiscreteDistribution(DiscreteDistribution(v0),v1,v2), DiscreteDistribution(Tuple(v1,v2)&(fmap1, v4^v4*(1.0-v1), v0)) );
 
   // If True  y z = y
   // If False y z = z
@@ -69,7 +74,7 @@ Program get_Prelude()
           ( (If, v3, v1, v2), v2);
 
   expression_ref MultiParameter = var("MultiParameter");
-  // MultiParameter f (DiscreteDistribution d) = DiscreteDistribution (fmap f d)
+  // MultiParameter f (DiscreteDistribution d) = DiscreteDistribution (fmap2 f d)
   P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (DiscreteDistribution,(fmap2,v1,v2)));
 
   // fst (x,y) = x

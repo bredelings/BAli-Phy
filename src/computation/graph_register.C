@@ -309,9 +309,16 @@ bool is_reg_var(const expression_ref& R)
   return false;
 }
 
+bool is_var(const expression_ref& R)
+{
+  if (dynamic_cast<const var*>(&*R)) return true;
+
+  return false;
+}
+
 bool is_reglike(const expression_ref& R)
 {
-  return is_dummy(R) or is_parameter(R) or is_reg_var(R);
+  return is_dummy(R) or is_parameter(R) or is_reg_var(R) or is_var(R);
 }
 
 /*

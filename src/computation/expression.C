@@ -5,6 +5,7 @@
 #include <set>
 #include <iterator>
 #include <map>
+#include "graph_register.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -882,7 +883,7 @@ expression_ref move_lets(bool scope, const set<dummy>& let_bound, const expressi
     return R2;
   }
 
-  if (dynamic_pointer_cast<const parameter>(R2))
+  if (is_parameter(R2) or is_reg_var(R2) or is_var(R2))
   {
     assert(R2);
     return R2;

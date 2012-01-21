@@ -132,6 +132,9 @@ int main()
   cout<<graph_normalize(case_if(Z>1.0,X*Y,W))<<"\n";
   cout<<let_float(graph_normalize(case_if(Z>1.0,X*Y,W)))<<"\n";
 
+
+  cout<<"\nPrelude = \n"<<Prelude<<"\n\n";
+
   cout<<"Creating an Context...\n";
   context CTX1;
 
@@ -424,6 +427,4 @@ int main()
   D.set_parameter_value("Y",4);
   cout<<"D.evaluate(3) = "<<D.evaluate(3)<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
-
-  cout<<"Prelude = \n"<<Prelude<<"\n";
 }
