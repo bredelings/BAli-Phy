@@ -64,7 +64,7 @@ Program get_Prelude()
   // If True  y z = y
   // If False y z = z
   P += Def( (If, true , v1, v2), v1)
-          ( (If, false, v1, v2), v2);
+          ( (If, v3, v1, v2), v2);
 
   expression_ref MultiParameter = var("MultiParameter");
   // MultiParameter f (DiscreteDistribution d) = DiscreteDistribution (fmap f d)
