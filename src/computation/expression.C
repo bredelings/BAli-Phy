@@ -785,7 +785,7 @@ bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars,
 
 /// Given let vars=bodies in (<binder bound> (let R_vars=R_bodies in T)), 
 ///  move some of the R_vars=R_bodies up to vars=bodies.
-expression_ref move_lets(bool scope, const set<dummy>& let_bound, const expression_ref R, 
+expression_ref move_lets(bool scope, const expression_ref R, 
 			 vector<expression_ref>& vars, vector<expression_ref>& bodies,
 			 const set<dummy>& bound, const set<dummy>& free)
 {
@@ -883,33 +883,11 @@ expression_ref move_lets(bool scope, const set<dummy>& let_bound, const expressi
     return R2;
   }
 
-  if (is_parameter(R2) or is_reg_var(R2) or is_var(R2))
+  // Since we only substitute reg_vars into dummy's (for let, lambda, and case) these are all OK.
+  if (is_parameter(R2) or is_reg_var(R2) or is_var(R2) or is_dummy(R2))
   {
     assert(R2);
     return R2;
-  }
-
-  // We could float it, but its let_bound, so that would be a waste.
-  if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R2))
-  {
-    set<dummy> let_bound2 = let_bound;
-    for(int i=0;i<vars.size();i++)
-    {
-      dummy D2 = *dynamic_pointer_cast<const dummy>(vars[i]);
-      let_bound2.insert(D2);
-    }
-    for(int i=0;i<R_vars.size();i++)
-    {
-      dummy D2 = *dynamic_pointer_cast<const dummy>(R_vars[i]);
-      let_bound2.insert(D2);
-    }
-
-    // Don't change it if its let_bound.
-    if (let_bound2.find(*D) != let_bound2.end())
-    {
-      assert(R2);
-      return R2;
-    }
   }
 
 
@@ -920,19 +898,19 @@ expression_ref move_lets(bool scope, const set<dummy>& let_bound, const expressi
   return D2;
 }
 
-expression_ref move_lets(bool scope, const set<dummy>& let_bound, const expression_ref R, 
+expression_ref move_lets(bool scope, const expression_ref R, 
 			 vector<expression_ref>& vars, vector<expression_ref>& bodies,
 			 const set<dummy>& bound)
 {
   set<dummy> free;
-  return move_lets(scope, let_bound, R, vars, bodies, bound, free);
+  return move_lets(scope, R, vars, bodies, bound, free);
 }
 
-expression_ref move_lets(bool scope, const set<dummy>& let_bound, const expression_ref R,
+expression_ref move_lets(bool scope, const expression_ref R,
 			 vector<expression_ref>& vars, vector<expression_ref>& bodies)
 {
   set<dummy> bound;
-  return move_lets(scope, let_bound, R, vars, bodies, bound);
+  return move_lets(scope, R, vars, bodies, bound);
 }
 
 template <typename T>
@@ -946,7 +924,7 @@ bool operator==(const std::set<T>& S1, const std::set<T>& S2)
 // However, if we have let {z=2} in \x.\y.z, we should not introduce a let dummy
 // for z, because its already let bound.
 
-expression_ref let_float(const set<dummy>& let_bound, const expression_ref& R)
+expression_ref let_float(const expression_ref& R)
 {
   // 0. NULL
   if (not R) return R;
@@ -971,19 +949,17 @@ expression_ref let_float(const set<dummy>& let_bound, const expression_ref& R)
   if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
   {
     // Find the new let-bound set.
-    set<dummy> let_bound2 = let_bound;
     dummy D = *dynamic_pointer_cast<const dummy>(E->sub[1]);
-    let_bound2.erase(D);
 
     // First float lets in sub-expressions
-    expression_ref M = let_float(let_bound2, E->sub[2]);
+    expression_ref M = let_float(E->sub[2]);
 
     // Determine the bound indices
     set<dummy> bound;
     bound.insert(D);
 
     // Move lets across the lambda
-    M = move_lets(true, let_bound, M, vars, bodies, bound, free_in_R);
+    M = move_lets(true, M, vars, bodies, bound, free_in_R);
 
     // Reassemble the expression
     R2 = let_expression(vars, bodies, lambda_quantify(D, M) );
@@ -997,7 +973,7 @@ expression_ref let_float(const set<dummy>& let_bound, const expression_ref& R)
 
     // First float out of case object (bound = {}, free = fv(R))
     T = let_float(T);
-    T = move_lets(true, let_bound, T, let_vars, let_bodies, set<dummy>(), free_in_R);
+    T = move_lets(true, T, let_vars, let_bodies, set<dummy>(), free_in_R);
 
     for(int i=0;i<bodies.size();i++)
     {
@@ -1014,13 +990,9 @@ expression_ref let_float(const set<dummy>& let_bound, const expression_ref& R)
 	}
       }
 
-      // Determine the let-bound variables
-      set<dummy> let_bound2 = let_bound;
-      remove(let_bound2, bound);
-
       // First float out of case object (bound = {}, free = fv(R))
-      bodies[i] = let_float(let_bound2, bodies[i]);
-      bodies[i] = move_lets(true, let_bound2, bodies[i], let_vars, let_bodies, bound, free_in_R);
+      bodies[i] = let_float(bodies[i]);
+      bodies[i] = move_lets(true, bodies[i], let_vars, let_bodies, bound, free_in_R);
     }
 
     R2 = let_expression(let_vars, let_bodies, case_expression(false, T, vars, bodies));
@@ -1036,23 +1008,19 @@ expression_ref let_float(const set<dummy>& let_bound, const expression_ref& R)
 
     set<dummy> free_vars_T = get_free_indices(T);
     if (intersection(bound_vars_let, free_vars_T).empty()) 
-      return let_float(let_bound, T);
-
-    // Determine the let-bound set for sub-expressions
-    set<dummy> let_bound2 = let_bound;
-    add(let_bound2, bound_vars_let);
+      return let_float(T);
 
     // First float lets in sub-expressions
-    T = let_float(let_bound2, T);
+    T = let_float(T);
     for(int i=0;i<bodies.size();i++)
-      bodies[i] = let_float(let_bound2, bodies[i]);
+      bodies[i] = let_float(bodies[i]);
 
     // Move lets out of T and into vars
-    T = move_lets(false, let_bound2, T, vars, bodies, set<dummy>(), free_in_R);
+    T = move_lets(false, T, vars, bodies, set<dummy>(), free_in_R);
 
     // Move lets out of bodies and into vars
     for(int i=0;i<bodies.size();i++)
-      bodies[i] = move_lets(false, let_bound2, bodies[i], vars, bodies, set<dummy>(), free_in_R);
+      bodies[i] = move_lets(false, bodies[i], vars, bodies, set<dummy>(), free_in_R);
 
     R2 = let_expression(vars,bodies,T);
   }
@@ -1069,8 +1037,8 @@ expression_ref let_float(const set<dummy>& let_bound, const expression_ref& R)
     // Move lets from arguments into (vars,bodies)
     for(int i=1;i<E->size();i++)
     {
-      V->sub[i] = let_float(let_bound, V->sub[i]);
-      V->sub[i] = move_lets(true, let_bound, V->sub[i], vars, bodies, set<dummy>(), free_in_R);
+      V->sub[i] = let_float(V->sub[i]);
+      V->sub[i] = move_lets(true, V->sub[i], vars, bodies, set<dummy>(), free_in_R);
     }
       
     R2 = let_expression(vars, bodies, shared_ptr<const expression>(V));
@@ -1084,12 +1052,6 @@ expression_ref let_float(const set<dummy>& let_bound, const expression_ref& R)
 #endif
 
   return R2;
-}
-
-/// When we let_float \x.\y.x, we should float out x, even though its a dummy
-expression_ref let_float(const expression_ref& R)
-{
-  return let_float(set<dummy>(), R);
 }
 
 expression_ref substitute(const expression_ref& R1, const expression_ref& D, const expression_ref& R2)
