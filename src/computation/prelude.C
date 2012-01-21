@@ -9,6 +9,8 @@ const expression_ref take = var("take");
 const expression_ref iterate = var("iterate");
 const expression_ref sum_i = var("sum_i");
 const expression_ref If = var("If");
+const expression_ref ExtendDiscreteDistribution = var("ExtendDiscreteDistribution");
+const expression_ref MultiParameter = var("MultiParameter");
 
 const expression_ref v0 = dummy(0);
 const expression_ref v1 = dummy(1);
@@ -57,8 +59,7 @@ Program get_Prelude()
 
   // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
   expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
-  expression_ref ED = var("ExtendDiscreteDistribution");
-  P += Def( ED(DiscreteDistribution(v0),v1,v2), Tuple(v1,v2)&(fmap1, times(1.0-v1), v0) );
+  P += Def( ExtendDiscreteDistribution(DiscreteDistribution(v0),v1,v2), DiscreteDistribution(Tuple(v1,v2)&(fmap1, times(1.0-v1), v0)) );
 
   // If True  y z = y
   // If False y z = z

@@ -134,7 +134,6 @@ int main()
 
   cout<<"Creating an Context...\n";
   context CTX1;
-  CTX1 += Prelude;
 
   CTX1.add_parameter("X");
   CTX1.add_parameter("Y");
@@ -280,7 +279,6 @@ int main()
   cout<<test11<<"\n";
 
   context C;
-  C += Prelude;
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<C.evaluate_expression(6)<<"\n";
 

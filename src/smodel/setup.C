@@ -518,7 +518,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref base = get_MM_default(model_stack,"gamma",a,frequencies);
     formula_expression_ref dist = Discretize(model_formula(Gamma()), expression_ref(n));
     formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(2)(1.0, 2.0) );
-    dist = ExtendDiscreteDistribution(dist)(0.0)(p);
+    dist = (ExtendDiscreteDistribution, dist, p, 0.0);
     model_stack.back() = MultiRate(base,  dist);
   }
   else if (match(string_stack,"log-normal",arg)) {

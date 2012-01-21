@@ -297,38 +297,6 @@ namespace substitution {
 
   formula_expression_ref Unit_Model(const formula_expression_ref&);
 
-  expression_ref ExtendDiscreteDistributionFunction(const expression_ref& D,const expression_ref& V, const Double& p);
-
-  struct ExtendDiscreteDistributionOp: public Operation
-  {
-    ExtendDiscreteDistributionOp* clone() const {return new ExtendDiscreteDistributionOp(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      expression_ref D = Args.evaluate(0);
-      expression_ref V = Args.evaluate(1);
-      boost::shared_ptr<const Double> p = Args.evaluate_as<Double>(2);
-      
-      return ExtendDiscreteDistributionFunction(*D, V, *p);
-    }
-
-    std::string name() const {return "ExtendDiscreteDistribution";}
-
-    ExtendDiscreteDistributionOp():Operation(3) { }
-  };
-
-  extern expression_ref ExtendDiscreteDistribution;
-
   expression_ref DiscretizationFunction(const probability::Distribution& D, Int n);
 
   struct DiscretizationOp: public Operation
@@ -385,32 +353,7 @@ namespace substitution {
 
   extern expression_ref MixtureModel;
 
-  expression_ref MultiParameterFunction(const expression_ref& F, const expression_ref& D);
-
   MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D);
-
-  struct MultiParameterOp: public Operation
-  {
-    MultiParameterOp* clone() const {return new MultiParameterOp(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "MultiParameter";}
-
-    MultiParameterOp():Operation(2) { }
-  };
-
-  extern expression_ref MultiParameter;
 
   struct MultiRateOp: public Operation
   {

@@ -1,4 +1,5 @@
 #include "computation/context.H"
+#include "prelude.H"
 
 using boost::shared_ptr;
 using std::string;
@@ -393,7 +394,24 @@ context::context()
   :memory(new reg_heap()),
    P(new Program()),
    token(memory->get_unused_token())
-{ }
+{ 
+  (*this) += Prelude;
+}
+
+context::context(const vector<expression_ref>& N)
+  :memory(new reg_heap()),
+   P(new Program()),
+   token(memory->get_unused_token()),
+   notes(N)
+{
+  (*this) += Prelude;
+
+  std::set<string> names = find_named_parameters(notes);
+  
+  // Then set all default values.
+  foreach(i,names)
+    add_parameter(*i);
+}
 
 context::context(const context& C)
   :memory(C.memory),
@@ -427,18 +445,6 @@ shared_ptr<const Object> context::default_parameter_value(int i) const
 reg_heap::root_t context::push_temp_head() const
 {
   return memory->push_temp_head( token );
-}
-
-context::context(const vector<expression_ref>& N)
-  :memory(new reg_heap()),
-   token(memory->get_unused_token()),
-   notes(N)
-{
-  std::set<string> names = find_named_parameters(notes);
-  
-  // Then set all default values.
-  foreach(i,names)
-    add_parameter(*i);
 }
 
 boost::shared_ptr<context> prefix_formula(const std::string& prefix, const boost::shared_ptr<const context>& C)
