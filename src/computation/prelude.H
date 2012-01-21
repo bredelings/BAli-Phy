@@ -12,6 +12,8 @@ extern const expression_ref sum_i;
 extern const expression_ref If;
 extern const expression_ref ExtendDiscreteDistribution;
 extern const expression_ref MultiParameter;
+extern const expression_ref fst;
+extern const expression_ref snd;
 
 extern const Program Prelude;
 

@@ -11,6 +11,8 @@ const expression_ref sum_i = var("sum_i");
 const expression_ref If = var("If");
 const expression_ref ExtendDiscreteDistribution = var("ExtendDiscreteDistribution");
 const expression_ref MultiParameter = var("MultiParameter");
+const expression_ref fst = var("fst");
+const expression_ref snd = var("snd");
 
 const expression_ref v0 = dummy(0);
 const expression_ref v1 = dummy(1);
@@ -69,6 +71,12 @@ Program get_Prelude()
   expression_ref MultiParameter = var("MultiParameter");
   // MultiParameter f (DiscreteDistribution d) = DiscreteDistribution (fmap f d)
   P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (DiscreteDistribution,(fmap2,v1,v2)));
+
+  // fst (x,y) = x
+  P += Def( (fst,Tuple(v1,v2)), v1);
+
+  // snd (x,y) = x
+  P += Def( (snd,Tuple(v1,v2)), v2);
 
   return P;
 }
