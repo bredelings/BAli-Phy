@@ -129,8 +129,9 @@ int main()
   cout<<let_cons<<"\n";
   cout<<graph_normalize(let_cons)<<"\n";
   cout<<let_float(graph_normalize(let_cons))<<"\n";
-  cout<<graph_normalize(case_if(Z>1.0,X*Y,W))<<"\n";
-  cout<<let_float(graph_normalize(case_if(Z>1.0,X*Y,W)))<<"\n";
+  cout<<"graph normalize: "<<graph_normalize(case_if(Z>1.0,X*Y,W))<<"\n";
+  cout<<"let_float: "<<let_float(case_if(Z>1.0,X*Y,W))<<"\n";
+  cout<<"let_float & graph_normalize: "<<let_float(graph_normalize(case_if(Z>1.0,X*Y,W)))<<"\n";
 
 
   cout<<"\nPrelude = \n"<<Prelude<<"\n\n";
