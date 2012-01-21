@@ -75,7 +75,7 @@ Program get_Prelude()
   // fst (x,y) = x
   P += Def( (fst,Tuple(v1,v2)), v1);
 
-  // snd (x,y) = x
+  // snd (x,y) = y
   P += Def( (snd,Tuple(v1,v2)), v2);
 
   return P;
