@@ -353,9 +353,14 @@ struct Add: public Operation
   Add():Operation(2) {}
 };
 
-template<typename T>
+#include <boost/type_traits/is_arithmetic.hpp>
+#include <boost/utility/enable_if.hpp>
+
+template<typename T >
 struct Minus: public Operation
 {
+  typedef typename T::base_type base_type;
+
   // The 'context' should include the knowledge of the input slots
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Minus* clone() const {return new Minus(*this);}
@@ -423,46 +428,108 @@ struct Divide: public Operation
   Divide():Operation(2) {}
 };
 
-#define def_operators(T) \
-inline typed_expression_ref<T> operator*(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
-{\
-  return lambda_expression( Multiply<T>() )(arg1, arg2);	\
-}\
-\
-inline typed_expression_ref<T> operator/(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
-{\
-  return lambda_expression( Divide<T>() )(arg1, arg2);\
-}\
-\
-inline typed_expression_ref<T> operator+(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
-{\
-  return lambda_expression( Add<T>() )(arg1, arg2);\
-}\
-\
-inline typed_expression_ref<T> operator-(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
-{\
-  return lambda_expression( Minus<T>() )(arg1, arg2);\
-}\
-\
-inline typed_expression_ref<Bool> operator>(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
-{\
-  return lambda_expression( GreaterThan<T>() )(arg1, arg2);\
-}\
-\
-inline typed_expression_ref<Bool> operator<(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
-{\
-  return lambda_expression( LessThan<T>() )(arg1, arg2);\
-}\
-\
-inline typed_expression_ref<Bool> operator==(const typed_expression_ref<T>& arg1, const typed_expression_ref<T>& arg2)\
-{\
-  return lambda_expression( Equals<T>() )(arg1, arg2);\
-}\
+#define check_arithmetic(T) typename boost::enable_if<boost::is_arithmetic<T>,T>::type
+#define check_arithmetic2(T1,T2) typename boost::enable_if<boost::is_arithmetic<T1>,T2>::type
 
-def_operators(Double)
+#define def_binary_operator1(Op,M) \
+template <typename T> \
+typed_expression_ref<POD_math<check_arithmetic(T) > > operator Op(const expression_ref& E, const T& t) \
+{ \
+  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),E,t)); \
+} \
+ \
+template <typename T> \
+typed_expression_ref<POD_math<check_arithmetic(T)> > operator Op(const T& t, const expression_ref& E) \
+{ \
+  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),t,E)); \
+} \
+ \
+template <typename T> \
+typed_expression_ref<POD_math<T> > operator Op(const expression_ref& E1, const typed_expression_ref<POD_math<T> >& E2) \
+{ \
+  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),E1,E2)); \
+} \
+\
+template <typename T> \
+typed_expression_ref<POD_math<T> > operator Op(const typed_expression_ref<POD_math<T> >& E1, const expression_ref& E2) \
+{ \
+  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),E1,E2)); \
+} \
+ \
+template <typename T> \
+typed_expression_ref<POD_math<T> > operator Op(const T& t, const typed_expression_ref<POD_math<T> >& E2) \
+{ \
+  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),t,E2)); \
+} \
+\
+template <typename T> \
+typed_expression_ref<POD_math<T> > operator Op(const typed_expression_ref<POD_math<T> >& E1, const T& t) \
+{ \
+  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),E1,t)); \
+} \
+ \
+template <typename T> \
+typed_expression_ref<POD_math<T> > operator Op(const typed_expression_ref<POD_math<T> >& E1, const typed_expression_ref<POD_math<T> >& E2) \
+{ \
+  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),E1,E2)); \
+}
 
-def_operators(Int)
+def_binary_operator1(-,Minus)
+def_binary_operator1(+,Add)
+def_binary_operator1(*,Multiply)
+def_binary_operator1(/,Divide)
 
-def_operators(Log_Double)
+#undef def_binary_operator1
+
+#define def_binary_operator2(Op,M) \
+template <typename T> \
+ typed_expression_ref<check_arithmetic2(T,Bool)> operator Op(const expression_ref& E1, const T& t) \
+{\
+  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),E1,t)); \
+} \
+\
+template <typename T> \
+typed_expression_ref<check_arithmetic2(T,Bool)> operator Op(const T& t, const expression_ref& E2) \
+{\
+  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),t,E2)); \
+}\
+\
+template <typename T> \
+typed_expression_ref<Bool> operator Op(const expression_ref& E1, const typed_expression_ref<POD_math<T> >& E2) \
+{\
+  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),E1,E2)); \
+}\
+\
+template <typename T> \
+typed_expression_ref<Bool> operator Op(const typed_expression_ref<POD_math<T> >& E1, const expression_ref& E2) \
+{\
+  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),E1,E2)); \
+}\
+\
+template <typename T> \
+typed_expression_ref<Bool> operator Op(const T& t, const typed_expression_ref<POD_math<T> >& E2) \
+{\
+  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),t,E2)); \
+}\
+\
+template <typename T> \
+typed_expression_ref<Bool> operator Op(const typed_expression_ref<POD_math<T> >& E1, const T& t) \
+{\
+  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),E1,t)); \
+}\
+\
+template <typename T> \
+typed_expression_ref<Bool> operator Op(const typed_expression_ref<POD_math<T> >& E1, const typed_expression_ref<POD_math<T> >& E2) \
+{\
+  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),E1,E2)); \
+}
+
+def_binary_operator2(<,LessThan)
+def_binary_operator2(>,GreaterThan)
+def_binary_operator2(==,Equals)
+#undef def_binary_operator2
+
+#undef check_arithmetic
+#undef check_arithmetic2
 
 #endif

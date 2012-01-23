@@ -13,6 +13,11 @@
 /// An S-expression: An Object, and possibly an array of Objects.
 struct expression_ref;
 
+/// This represents function application: a,b,c = a(b)(c) and not a(b(c)). The precedence is 18 (low).
+expression_ref operator,(const expression_ref&, const expression_ref&);
+/// This represents the Cons constructor: a&b = Cons a b = a:b.  The precedence is 3 (high).
+expression_ref operator&(const expression_ref&, const expression_ref&);
+
 /// An array of Objects.
 struct expression: virtual public Object
 {
@@ -79,6 +84,8 @@ struct dummy: public Object
 
 
 bool is_dummy(const expression_ref&);
+
+bool is_parameter(const expression_ref&);
 
 bool is_wildcard(const expression_ref&);
 
@@ -282,22 +289,22 @@ template <typename T>
 struct typed_expression_ref: public expression_ref
 {
 public:
-  typed_expression_ref() {}
-  typed_expression_ref(const expression_ref& e):expression_ref(e) {}
-  typed_expression_ref(expression* v): expression_ref(v) {}
-  typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
-  typed_expression_ref(const Object& o):expression_ref(o) {}
+  explicit typed_expression_ref() {}
+  explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
+  explicit typed_expression_ref(expression* v): expression_ref(v) {}
+  explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  explicit typed_expression_ref(const Object& o):expression_ref(o) {}
 };
 
 template <typename T>
 struct typed_expression_ref<POD<T> >: public expression_ref
 {
 public:
-  typed_expression_ref() {}
-  typed_expression_ref(const expression_ref& e):expression_ref(e) {}
-  typed_expression_ref(expression* v): expression_ref(v) {}
-  typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
-  typed_expression_ref(const Object& o):expression_ref(o) {}
+  explicit typed_expression_ref() {}
+  explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
+  explicit typed_expression_ref(expression* v): expression_ref(v) {}
+  explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  explicit typed_expression_ref(const Object& o):expression_ref(o) {}
   typed_expression_ref(const T& t):expression_ref(POD<T>(t)) {}
 };
 
@@ -305,11 +312,11 @@ template <typename T>
 struct typed_expression_ref<POD_math<T> >: public expression_ref
 {
 public:
-  typed_expression_ref() {}
-  typed_expression_ref(const expression_ref& e):expression_ref(e) {}
-  typed_expression_ref(expression* v): expression_ref(v) {}
-  typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
-  typed_expression_ref(const Object& o):expression_ref(o) {}
+  explicit typed_expression_ref() {}
+  explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
+  explicit typed_expression_ref(expression* v): expression_ref(v) {}
+  explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  explicit typed_expression_ref(const Object& o):expression_ref(o) {}
   typed_expression_ref(const T& t):expression_ref(POD_math<T>(t)) {}
 };
 
@@ -368,9 +375,6 @@ extern expression_ref concat;
 
 // 1 Fields: the density expression
 extern expression_ref prob;
-
-// 3 fields: condition body1 body2
-extern expression_ref If;
 
 // 3 Fields: definition, guard, body
 extern expression_ref defun;

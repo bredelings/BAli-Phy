@@ -8,7 +8,7 @@
 #include "operation.H"
 #include "operations.H"
 #include "distribution-operations.H"
-#include "graph_register.H"
+#include "context.H"
 #include "prelude.H"
 
 using boost::shared_ptr;
@@ -74,10 +74,10 @@ int main()
   expression_ref w = parameter("W");
   expression_ref one = Double(1);
 
-  typed_expression_ref<Double> X = x;
-  typed_expression_ref<Double> Y = y;
-  typed_expression_ref<Int> W = w;
-  typed_expression_ref<Double> Z = z;
+  typed_expression_ref<Double> X ( x );
+  typed_expression_ref<Double> Y ( y );
+  typed_expression_ref<Int> W ( w );
+  typed_expression_ref<Double> Z ( z );
   typed_expression_ref<Double> One(1.0);
 
   expression_ref mul = lambda_expression( Multiply<Double>() );
@@ -93,6 +93,11 @@ int main()
   cout<<"mul(x)(y) = "<<mul(x)(y)<<"\n";
   cout<<"mul(#1) = "<<mul(dummy(1))<<"\n";
   cout<<"mul(x,y) = "<<mul(x,y)<<"\n\n\n";
+
+  // This doesn't work!  Therefore, let_float objects out of IF statements doesn't work either.
+  cout<<lambda_quantify(dummy("x"),lambda_quantify(dummy("y"),dummy("x")))<<"\n";
+  cout<<let_float(lambda_quantify(dummy("x"),lambda_quantify(dummy("y"),dummy("x"))))<<"\n";
+  cout<<let_float(let_float(lambda_quantify(dummy("x"),lambda_quantify(dummy("y"),dummy("x")))))<<"\n";
 
   cout<<lambda_quantify(dummy("x"),5)<<"\n";
   cout<<let_float(lambda_quantify(dummy("x"),5))<<"\n";
@@ -124,11 +129,16 @@ int main()
   cout<<let_cons<<"\n";
   cout<<graph_normalize(let_cons)<<"\n";
   cout<<let_float(graph_normalize(let_cons))<<"\n";
-  cout<<graph_normalize(case_if(Z>1.0,X*Y,W))<<"\n";
-  cout<<let_float(graph_normalize(case_if(Z>1.0,X*Y,W)))<<"\n";
+  cout<<"graph normalize: "<<graph_normalize(case_if(Z>1.0,X*Y,W))<<"\n";
+  cout<<"let_float: "<<let_float(case_if(Z>1.0,X*Y,W))<<"\n";
+  cout<<"let_float & graph_normalize: "<<let_float(graph_normalize(case_if(Z>1.0,X*Y,W)))<<"\n";
+
+
+  cout<<"\nPrelude = \n"<<Prelude<<"\n\n";
 
   cout<<"Creating an Context...\n";
   context CTX1;
+
   CTX1.add_parameter("X");
   CTX1.add_parameter("Y");
   CTX1.add_parameter("Z");
@@ -204,8 +214,10 @@ int main()
   result = CTX1.evaluate(x_times_y_plus_one_);
 
   cout<<"\n\n";
+  CTX2.evaluate(cond);
   cout<<"Changing W in CTX2: If(Z>1,X*Y+1,W*W) is unaffected should remain valid.\n";
   CTX2.set_parameter_value("W",Int(-1));
+  CTX2.evaluate(cond);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   cout<<"\n\n";
@@ -233,8 +245,6 @@ int main()
   expression_ref v2 = dummy(2);
   expression_ref v3 = dummy(3);
   expression_ref v4 = dummy(4);
-
-  CTX1 += Prelude;
 
   expression_ref test8 = let_expression(v0,1,v0);
   cout<<"\n";
@@ -273,7 +283,6 @@ int main()
   cout<<test11<<"\n";
 
   context C;
-  C += Prelude;
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<C.evaluate_expression(6)<<"\n";
 
@@ -419,6 +428,4 @@ int main()
   D.set_parameter_value("Y",4);
   cout<<"D.evaluate(3) = "<<D.evaluate(3)<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
-
-  cout<<"Prelude = \n"<<Prelude<<"\n";
 }

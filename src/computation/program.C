@@ -70,7 +70,7 @@ void f()
   expression_ref v3 = dummy(3);
   expression_ref v4 = dummy(4);
 
-  typed_expression_ref<Int> I1 = v1;
+  typed_expression_ref<Int> I1 ( v1 );
 
   expression_ref take = var("take");
   Program P;
@@ -160,7 +160,8 @@ std::ostream& operator<<(std::ostream& o, const Program& D)
 {
   foreach(f, D.functions)
   {
-    o<<f->first<<" = "<<f->second.first<<"  ("<<f->second.second<<")";
+    o<<f->first<<" = "<<f->second.first<<"  ("<<f->second.second<<")\n";
+    o<<f->first<<" = "<<let_float(f->second.first)<<"  ("<<f->second.second<<")";
     o<<"\n";
   }
   return o;

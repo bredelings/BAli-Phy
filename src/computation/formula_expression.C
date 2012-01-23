@@ -1,6 +1,6 @@
 #include "formula_expression.H"
 #include "bounds.H"
-#include "graph_register.H"
+#include "context.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -124,6 +124,36 @@ formula_expression_ref lambda_quantify(const expression_ref& d, const formula_ex
   formula_expression_ref F2 = F;
   F2.notes[F2.index()] = lambda_quantify(d,F.exp());
   return F2;
+}
+
+formula_expression_ref operator,(const expression_ref E1, const formula_expression_ref F2)
+{
+  return E1(F2);
+}
+
+formula_expression_ref operator,(const formula_expression_ref F1, const expression_ref E2)
+{
+  return F1(E2);
+}
+
+formula_expression_ref operator,(const formula_expression_ref F1, const formula_expression_ref F2)
+{
+  return F1(F2);
+}
+
+formula_expression_ref operator&(const expression_ref& E1, const formula_expression_ref& F2)
+{
+  return (Cons,E1,F2);
+}
+
+formula_expression_ref operator&(const formula_expression_ref& F1, const expression_ref& E2)
+{
+  return (Cons,F1,E2);
+}
+
+formula_expression_ref operator&(const formula_expression_ref& F1, const formula_expression_ref& F2)
+{
+  return (Cons,F1,F2);
 }
 
 formula_expression_ref Tuple(const formula_expression_ref& R1,const formula_expression_ref& R2)

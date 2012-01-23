@@ -144,7 +144,7 @@ namespace substitution
 
   formula_expression_ref WithINV_Model(const formula_expression_ref& R)
   {
-    typed_expression_ref<Double> p = parameter("INV::p");
+    typed_expression_ref<Double> p ( parameter("INV::p") );
     formula_expression_ref P = def_parameter("INV::p", 1.0, between(0.0, 1.0), beta_dist, Tuple(1.0, 2.0) );
 
     // Where do we get our frequencies from?
@@ -468,43 +468,6 @@ namespace substitution
     return DiscreteDistribution( get_list(pairs) );
   }
 
-  // ExtendDiscreteDistribution (DiscreteDistribution (p1,x1):t) p x = DiscreteDistribution (p,x):(fmap1 \p2->((1.0-p)*p2) t)
-  //     where fmap1 f [] = []
-  //           fmap1 f (p,x):t = (f p,x):t
-  expression_ref ExtendDiscreteDistributionFunction(const expression_ref& D,const expression_ref& V, const Double& p)
-  {
-    expression_ref fmap1 = dummy("fmap1");
-    expression_ref def_fmap1;
-    {  
-      expression_ref f = dummy(0);
-      expression_ref p = dummy(1);
-      expression_ref x = dummy(2);
-      expression_ref t = dummy(3);
-
-      vector<expression_ref> patterns;
-      vector<expression_ref> bodies;
-      // fmap1 f [] = []
-      patterns.push_back( Tuple(f, ListEnd) );
-      bodies.push_back( ListEnd );
-
-      // fmap1 f (p,x):t = (f p, x):t
-      patterns.push_back( Tuple(f, Cons(Tuple(p,x),t) ) );
-      bodies.push_back( Cons(Tuple(f(p),x), fmap1(f)(t) ) );
-      
-      def_fmap1 = def_function(true, patterns, bodies);
-    }
-
-    // f x = (1.0-p)*x
-    expression_ref g = lambda_expression( Multiply<Double>() )(1.0-p);
-
-    shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(D);
-    assert(DE);
-
-    return let_float(graph_normalize(let_expression(fmap1, def_fmap1,DiscreteDistribution(Cons(Tuple(p,V),fmap1(g)(DE->sub[1]))))));
-  }
-
-  expression_ref ExtendDiscreteDistribution = lambda_expression( ExtendDiscreteDistributionOp() );
-
   expression_ref Discretize = lambda_expression( DiscretizationOp() );
 
   shared_ptr<const MultiModelObject> MixtureModelFunction(const expression_ref& D)
@@ -533,65 +496,6 @@ namespace substitution
   }
 
   expression_ref MixtureModel = lambda_expression( MixtureModelOp() );
-
-  expression_ref MultiParameterFunction(const expression_ref& g, const expression_ref& D)
-  {
-    expression_ref fmap2 = dummy("fmap2");
-    expression_ref def_fmap2;
-    {  
-      expression_ref f = dummy(0);
-      expression_ref p = dummy(1);
-      expression_ref x = dummy(2);
-      expression_ref t = dummy(3);
-
-      vector<expression_ref> patterns;
-      vector<expression_ref> bodies;
-      // fmap2 f [] = []
-      patterns.push_back( Tuple(f, ListEnd) );
-      bodies.push_back( ListEnd );
-
-      // fmap2 f (p,x):t = (p,f x):t
-      patterns.push_back( Tuple(f, Cons(Tuple(p,x),t) ) );
-      bodies.push_back( Cons(Tuple(p,f(x)), fmap2(f)(t) ) );
-      
-      def_fmap2 = def_function(true, patterns, bodies);
-    }
-
-    shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(D);
-    assert(DE);
-
-    return let_float(graph_normalize(let_expression(fmap2, def_fmap2, 
-						    DiscreteDistribution(fmap2(g,DE->sub[1]))
-						    )
-				     )
-		     );
-  }
-
-  // fmap2 :: (b->c)->[(a,b)]->[(a,c)]
-  // fmap2 f [] = []
-  // fmap2 f (p,x):t = (p,(f x)):t
-  //
-  // fmap2 = \f.\b.case b of {[]->[],h:t->case h of {(p,x)->(p,(f x)):(fmap t2)}}
-  //
-  // 1. Begin by using Args.reference(0) and Args.reference(1) as inputs.
-  // 
-  // 2. Begin transforming the smodel objects into s-expressions.
-  //    - How do we handle the fact that C++ routines want to call
-  //      *member functions* of these data types?
-  //
-  //    - I guess I could define constructors for the C++ types from 
-  //      expression_ref, assuming fully evaluated structures.
-  //
-  // 3. 
-
-  shared_ptr<const Object> MultiParameterOp::operator()(OperationArgs& Args) const
-  {
-    // The input-model should really be a lambda function taking the single value (or first value) p_change
-    expression_ref F = Args.reference(0);
-    expression_ref D = Args.evaluate(1);
-      
-    return MultiParameterFunction(F, D);
-  }
 
   MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D)
   {
@@ -628,8 +532,6 @@ namespace substitution
 
     return R;
   }
-
-  expression_ref MultiParameter = lambda_expression( MultiParameterOp() );
 
   expression_ref MultiRate = lambda_expression( MultiRateOp() );
 

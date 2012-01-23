@@ -5,6 +5,7 @@
 #include <set>
 #include <iterator>
 #include <map>
+#include "graph_register.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -779,9 +780,13 @@ bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars,
   return (not unbound_indices.empty());
 }
 
+//question: is move_lets supposed to be called with empty vars?
+//answer: yes, sometimes.
+
 /// Given let vars=bodies in (<binder bound> (let R_vars=R_bodies in T)), 
 ///  move some of the R_vars=R_bodies up to vars=bodies.
-expression_ref move_lets(bool scope, const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies,
+expression_ref move_lets(bool scope, const expression_ref R, 
+			 vector<expression_ref>& vars, vector<expression_ref>& bodies,
 			 const set<dummy>& bound, const set<dummy>& free)
 {
   assert(R);
@@ -798,7 +803,8 @@ expression_ref move_lets(bool scope, const expression_ref R, vector<expression_r
   set<dummy> avoid = free;
   for(int i=0;i<vars.size();i++)
   {
-    avoid.insert(*dynamic_pointer_cast<const dummy>(vars[i]));
+    dummy D = *dynamic_pointer_cast<const dummy>(vars[i]);
+    avoid.insert(D);
     add(avoid, get_free_indices(bodies[i]));
   }
   add(avoid, get_free_indices(R));
@@ -866,29 +872,42 @@ expression_ref move_lets(bool scope, const expression_ref R, vector<expression_r
 
     R2 = let_expression(R_vars2, R_bodies2, R2);
   }
-
-  if (scope and intersection(get_free_indices(R2), bound).empty() and not dynamic_pointer_cast<const dummy>(R2))
-  {
-    dummy D(new_index++);
-    vars.push_back( D );
-    bodies.push_back( R2 );
-    return D;
-  }
+  // If nothing is moveable, then just return the original statement.
   else
+    R2 = R;
+
+  // We can't float this out because its bound, or because there's no bound to float it through.
+  if ((not scope) or (not intersection(get_free_indices(R2), bound).empty()))
   {
     assert(R2);
     return R2;
   }
+
+  // Since we only substitute reg_vars into dummy's (for let, lambda, and case) these are all OK.
+  if (is_parameter(R2) or is_reg_var(R2) or is_var(R2) or is_dummy(R2))
+  {
+    assert(R2);
+    return R2;
+  }
+
+
+  // If R2 is not bound, and its not a let-bound dummy, then create a new expression for it.
+  dummy D2(new_index++);
+  vars.push_back( D2 );
+  bodies.push_back( R2 );
+  return D2;
 }
 
-expression_ref move_lets(bool scope, const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies,
+expression_ref move_lets(bool scope, const expression_ref R, 
+			 vector<expression_ref>& vars, vector<expression_ref>& bodies,
 			 const set<dummy>& bound)
 {
   set<dummy> free;
   return move_lets(scope, R, vars, bodies, bound, free);
 }
 
-expression_ref move_lets(bool scope, const expression_ref R, vector<expression_ref>& vars, vector<expression_ref>& bodies)
+expression_ref move_lets(bool scope, const expression_ref R,
+			 vector<expression_ref>& vars, vector<expression_ref>& bodies)
 {
   set<dummy> bound;
   return move_lets(scope, R, vars, bodies, bound);
@@ -899,6 +918,11 @@ bool operator==(const std::set<T>& S1, const std::set<T>& S2)
 {
   return includes(S1,S2) and includes(S2,S2);
 }
+
+// When we let_float \x.\y.x, we should float out x, even though its a dummy
+
+// However, if we have let {z=2} in \x.\y.z, we should not introduce a let dummy
+// for z, because its already let bound.
 
 expression_ref let_float(const expression_ref& R)
 {
@@ -924,38 +948,37 @@ expression_ref let_float(const expression_ref& R)
   // 3. Lambda expressions
   if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
   {
+    // Find the new let-bound set.
+    dummy D = *dynamic_pointer_cast<const dummy>(E->sub[1]);
+
     // First float lets in sub-expressions
     expression_ref M = let_float(E->sub[2]);
 
-    vector<expression_ref> vars;
-    vector<expression_ref> bodies;
-
+    // Determine the bound indices
     set<dummy> bound;
-    dummy D = *dynamic_pointer_cast<const dummy>(E->sub[1]);
     bound.insert(D);
 
+    // Move lets across the lambda
     M = move_lets(true, M, vars, bodies, bound, free_in_R);
 
+    // Reassemble the expression
     R2 = let_expression(vars, bodies, lambda_quantify(D, M) );
   }
 
   // 4. Case expressions
   else if (parse_case_expression(R,T,vars,bodies))
   {
-    // First float lets in sub-expressions
-    T = let_float(T);
-    for(int i=0;i<bodies.size();i++)
-      bodies[i] = let_float(bodies[i]);
-
-    // Float lets out of case object. (bound = {}, free = fv(R))
     vector<expression_ref> let_vars;
     vector<expression_ref> let_bodies;
+
+    // First float out of case object (bound = {}, free = fv(R))
+    T = let_float(T);
     T = move_lets(true, T, let_vars, let_bodies, set<dummy>(), free_in_R);
 
     for(int i=0;i<bodies.size();i++)
     {
+      // Find the bound variables in the i-th constructor
       set<dummy> bound;
-      
       if (shared_ptr<const expression> C = dynamic_pointer_cast<const expression>(vars[i]))
       {
 	assert(dynamic_pointer_cast<const constructor>(C->sub[0]));
@@ -967,6 +990,8 @@ expression_ref let_float(const expression_ref& R)
 	}
       }
 
+      // First float out of case object (bound = {}, free = fv(R))
+      bodies[i] = let_float(bodies[i]);
       bodies[i] = move_lets(true, bodies[i], let_vars, let_bodies, bound, free_in_R);
     }
 
@@ -976,20 +1001,19 @@ expression_ref let_float(const expression_ref& R)
   // 5. Let expressions
   else if (parse_let_expression(R,vars,bodies,T))
   {
+    // Return let_float(T) if T doesn't mention any of the newly let-bound variables
+    set<dummy> bound_vars_let;
+    for(int i=0;i<vars.size();i++)
+      bound_vars_let.insert(*dynamic_pointer_cast<const dummy>(vars[i]));
+
+    set<dummy> free_vars_T = get_free_indices(T);
+    if (intersection(bound_vars_let, free_vars_T).empty()) 
+      return let_float(T);
+
     // First float lets in sub-expressions
     T = let_float(T);
     for(int i=0;i<bodies.size();i++)
       bodies[i] = let_float(bodies[i]);
-
-    // Return just T if T doesn't mention any of the let variables
-    {
-      set<dummy> free_vars_T = get_free_indices(T);
-      set<dummy> bound_vars_let;
-      for(int i=0;i<vars.size();i++)
-	bound_vars_let.insert(*dynamic_pointer_cast<const dummy>(vars[i]));
-
-      if (intersection(bound_vars_let, free_vars_T).empty()) return T;
-    }
 
     // Move lets out of T and into vars
     T = move_lets(false, T, vars, bodies, set<dummy>(), free_in_R);
@@ -1001,21 +1025,21 @@ expression_ref let_float(const expression_ref& R)
     R2 = let_expression(vars,bodies,T);
   }
 
-
   // 6. Handle application, constructors, and operations.
   else if (shared_ptr<const Operator> O =  dynamic_pointer_cast<const Operator>(E->sub[0]))
   {
     // First float lets in sub-expressions
     shared_ptr<expression> V ( E->clone() );
-    for(int i=1;i<V->size();i++)
-      V->sub[i] = let_float(V->sub[i]);
     
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     
     // Move lets from arguments into (vars,bodies)
     for(int i=1;i<E->size();i++)
+    {
+      V->sub[i] = let_float(V->sub[i]);
       V->sub[i] = move_lets(true, V->sub[i], vars, bodies, set<dummy>(), free_in_R);
+    }
       
     R2 = let_expression(vars, bodies, shared_ptr<const expression>(V));
   }
@@ -1082,6 +1106,16 @@ expression_ref apply(const expression_ref& E,
   for(int i=0;i<args.size();i++)
     E2 = apply(E2,args[i]);
   return E2;
+}
+
+expression_ref operator,(const expression_ref& E1, const expression_ref& E2)
+{
+  return apply(E1, E2);
+}
+
+expression_ref operator&(const expression_ref& E1, const expression_ref& E2)
+{
+  return (Cons,E1,E2);
 }
 
 void find_named_parameters(const expression_ref& R, std::set<string>& names)
@@ -1176,8 +1210,6 @@ expression_ref sys_print = lambda_expression( Print() );
 expression_ref concat = lambda_expression( Concat() );
 
 expression_ref prob = lambda_expression( constructor("probability",1) );
-
-expression_ref If = lambda_expression( IfThenElse() );
 
 expression_ref defun = lambda_expression( constructor("defun",3) );
 
@@ -1629,6 +1661,13 @@ bool is_WHNF(const expression_ref& R)
 bool is_dummy(const expression_ref& R)
 {
   if (dynamic_cast<const dummy*>(&*R)) return true;
+
+  return false;
+}
+
+bool is_parameter(const expression_ref& R)
+{
+  if (dynamic_cast<const parameter*>(&*R)) return true;
 
   return false;
 }
