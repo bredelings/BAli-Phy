@@ -107,14 +107,6 @@ IndelModel& data_partition::IModel()
   std::abort();
 }
 
-int data_partition::get_branch_subst_category(int b) const
-{
-  b = T->directed_branch(b).undirected_name();
-  assert(b >= 0 and b < T->n_branches());
-
-  return (*branch_subst_category)[b];
-}
-
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
   b = T->directed_branch(b).undirected_name();
@@ -122,8 +114,6 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   
   if (not cached_transition_P[b].is_valid())
   {
-    //FIXME - int C = get_branch_subst_category(b);
-
     double l = T->branch(b).length() * branch_mean() / SModel().rate();
     assert(l >= 0);
 
@@ -574,7 +564,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
    T(t),
-   branch_subst_category(vector<int>(T->n_branches(),0)),
    LC(t,SModel()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
@@ -616,7 +605,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
    T(t),
-   branch_subst_category(vector<int>(T->n_branches(),0)),
    LC(t,SModel()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)

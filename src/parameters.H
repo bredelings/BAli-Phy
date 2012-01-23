@@ -180,11 +180,6 @@ public:
   /// Tree pushed down from above
   cow_ptr<SequenceTree> T;
 
-  /// Which part of the substitution model does this branch use
-  cow_ptr< std::vector<int> > branch_subst_category;
-
-  int get_branch_subst_category(int b) const;
-
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;
   
