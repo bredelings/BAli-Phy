@@ -73,7 +73,7 @@ TOOLS = model_P statreport alignment-gild \
 	joint-indels alignment-consensus alignment-info \
 	subsample tree-mean-lengths mctree-mean-lengths trees-bootstrap \
 	joint-parsimony stats-merge stats-select alignment-identity \
-	analyze_distances alignment-cat draw-graph \
+	alignment-cat draw-graph \
 	alignment-compare tree-partitions trees-distances \
 	partitions-supported trees-pair-distances analyze-rates \
 	path-graph alignment-find-conserved alignment-max alignments-diff \

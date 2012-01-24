@@ -128,9 +128,6 @@ class data_partition: public Probability_Model, public Mat_Cache
   /// The IndelModel
   polymorphic_cow_ptr<IndelModel> IModel_;
 
-  /// The substitution::Model
-  polymorphic_cow_ptr<substitution::MultiModelObject> SModel_;
-
   std::string partition_name;
 
   void recalc(const std::vector<int>&);
@@ -225,9 +222,7 @@ public:
   IndelModel& IModel();
 
   /// Get the substitution::Model
-  const substitution::MultiModelObject& SModel() const {return *SModel_;}
-  /// Get the substitution::Model
-  substitution::MultiModelObject& SModel() {return *SModel_;}
+  const substitution::MultiModelObject& SModel() const;
 
   void setlength(int b, double l);
   void setlength_no_invalidate_LC(int b, double l);
@@ -276,6 +271,8 @@ public:
 /// A class to contain all the MCMC state except the alignment
 class Parameters: public SuperModel, public Probability_Model
 {
+  friend class data_partition;
+
   /// The substitution::Model
   std::vector<polymorphic_cow_ptr<Model> >SModels;
   std::vector<int> smodel_for_partition;

@@ -544,10 +544,18 @@ efloat_t data_partition::heated_likelihood() const
     return pow(likelihood(),get_beta());
 }
 
-data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
+/// Get the substitution::Model
+const substitution::MultiModelObject& data_partition::SModel() const 
+{
+  int m = P->smodel_for_partition[partition_index];
+  return *(P->SModels[m]->result_as<substitution::MultiModelObject>());
+}
+
+data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
 			       const substitution::MultiModelObject& SM,const IndelModel& IM)
-  :IModel_(IM),
-   SModel_(SM),
+  :P(p),
+   partition_index(i),
+   IModel_(IM),
    partition_name(n),
    cached_alignment_prior_for_branch(t.n_branches()),
    pairwise_alignment_for_branch(2*t.n_branches()),
@@ -586,9 +594,10 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
   }
 }
 
-data_partition::data_partition(const string& n, const alignment& a,const SequenceTree& t,
+data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
 			       const substitution::MultiModelObject& SM)
-  :SModel_(SM),
+  :P(p),
+   partition_index(i),
    partition_name(n),
    cached_alignment_prior_for_branch(t.n_branches()),
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
@@ -757,10 +766,8 @@ void Parameters::recalc_smodel(int m)
 {
   for(int i=0;i<data_partitions.size();i++) 
   {
-    if (smodel_for_partition[i] == m) {
-      // copy our IModel down into the data partition
-      data_partitions[i]->SModel_ = SModels[m]->result_as<substitution::MultiModelObject>();
-
+    if (smodel_for_partition[i] == m) 
+    {
       // recompute cached computations
       data_partitions[i]->recalc_smodel();
     }
@@ -1004,6 +1011,62 @@ void Parameters::branch_mean_tricky(int i,double x)
       data_partitions[j]->branch_mean_tricky(x);
 }
 
+Parameters& Parameters::operator=(const Parameters& P)
+{
+  Model::operator=(P);
+
+  SuperModel::operator=(P);
+
+  Probability_Model::operator=(P);
+
+  SModels = P.SModels;
+  smodel_for_partition = P.smodel_for_partition;
+
+  IModels = P.IModels;
+  imodel_for_partition = P.imodel_for_partition;
+
+  scale_for_partition = P.scale_for_partition;
+  n_scales = P.n_scales;
+
+  branch_prior_type = P.branch_prior_type;
+
+  data_partitions = P.data_partitions;
+
+  T = P.T;
+
+  TC = P.TC;
+
+  AC = P.AC;
+
+  branch_HMM_type = P.branch_HMM_type;
+
+  beta_series = P.beta_series;
+
+  all_betas = P.all_betas;
+  beta_index = P.beta_index;
+
+  updown = P.updown;
+
+  partitions = P.partitions;
+  partition_weights = P.partition_weights;
+
+  constants = P.constants;
+  features = P.features;
+
+  branch_length_max = P.branch_length_max;
+
+  for(int i=0;i<data_partitions.size();i++)
+    data_partitions[i]->P = this;
+
+  return *this;
+}
+
+Parameters::Parameters(const Parameters& P)
+  :Model(P),SuperModel(P), Probability_Model(P)
+{
+  operator=(P);
+}
+
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       const vector<polymorphic_cow_ptr<Model> >& SMs,
 		       const vector<int>& s_mapping,
@@ -1077,10 +1140,10 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     cow_ptr<data_partition> dp;
     if (imodel_for_partition[i] != -1) {
       const IndelModel& IM = IModel(imodel_for_partition[i]);
-      dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,*SM.result_as<substitution::MultiModelObject>(),IM));
+      dp = cow_ptr<data_partition>(data_partition(name, this, i, A[i], *T, *SM.result_as<substitution::MultiModelObject>(), IM));
     }
     else 
-      dp = cow_ptr<data_partition>(data_partition(name,A[i],*T,*SM.result_as<substitution::MultiModelObject>()));
+      dp = cow_ptr<data_partition>(data_partition(name, this, i, A[i], *T, *SM.result_as<substitution::MultiModelObject>()));
 
     // add the data partition
     data_partitions.push_back(dp);
@@ -1151,7 +1214,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     const Model& SM = SModel(smodel_for_partition[i]);
 
     // create data partition
-    data_partitions.push_back(cow_ptr<data_partition>(data_partition(name,A[i],*T,*SM.result_as<substitution::MultiModelObject>())));
+    data_partitions.push_back(cow_ptr<data_partition>(data_partition(name, this, i, A[i],*T,*SM.result_as<substitution::MultiModelObject>())));
 
     // register data partition as sub-model
     register_submodel(name);
