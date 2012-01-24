@@ -1264,10 +1264,6 @@ int main(int argc,char* argv[])
     vector<polymorphic_cow_ptr<Model> > 
       full_smodels = get_smodels(args,A,smodel_names_mapping);
 
-    if (args["letters"].as<string>() == "star")
-      for(int i=T.n_leaves();i<T.n_branches();i++)
-	T.branch(i).set_length(0);
-
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
 
