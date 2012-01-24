@@ -35,27 +35,16 @@ using std::vector;
 
 void slide_node_move(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
 {
-  if (not P.as<Parameters>()->smodel_full_tree)
-    return;
-
   slide_node(P,Stats,b);
 }
 
 void change_branch_length_move(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
 {
-  Parameters* PP = P.as<Parameters>();
-  if (not PP->smodel_full_tree and b>=PP->T->n_leaves())
-    return;
-
   change_branch_length(P,Stats,b);
 }
 
 void change_branch_length_multi_move(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
 {
-  Parameters* PP = P.as<Parameters>();
-  if (not PP->smodel_full_tree and b>=PP->T->n_leaves())
-    return;
-
   change_branch_length_multi(P,Stats,b);
 }
 
@@ -79,8 +68,6 @@ void sample_tri_one(owned_ptr<Probability_Model>& P, MoveStats&,int b)
 void sample_tri_branch_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
 {
   Parameters* PP = P.as<Parameters>();
-  if (not PP->smodel_full_tree and b>=PP->T->n_leaves())
-    return;
 
   MCMC::Result result(2);
 
@@ -114,8 +101,6 @@ void sample_tri_branch_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int
 void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
 {
   Parameters* PP = P.as<Parameters>();
-  if (not PP->smodel_full_tree and b>=PP->T->n_leaves())
-    return;
 
   if ( loadvalue(PP->keys,"parameter_tri",1.0) < 0.5) return;
 
@@ -173,8 +158,6 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, M
 void sample_tri_branch_type_one(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b) 
 {
   Parameters* PP = P.as<Parameters>();
-  if (not PP->smodel_full_tree and b>=PP->T->n_leaves())
-    return;
 
   MCMC::Result result(1);
 

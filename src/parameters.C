@@ -532,10 +532,7 @@ efloat_t data_partition::prior() const
 
 efloat_t data_partition::likelihood() const 
 {
-  if (smodel_full_tree)
     return substitution::Pr(*this);
-  else
-    return substitution::Pr_star(*this);
 }
 
 efloat_t data_partition::heated_likelihood() const 
@@ -560,7 +557,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_transition_P(t.n_branches()),
    branch_mean_(1.0),
    variable_alignment_(true),
-   smodel_full_tree(true),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
    T(t),
@@ -601,7 +597,6 @@ data_partition::data_partition(const string& n, const alignment& a,const Sequenc
    cached_transition_P(t.n_branches()),
    branch_mean_(1.0),
    variable_alignment_(false),
-   smodel_full_tree(true),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
    T(t),
@@ -1022,7 +1017,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    scale_for_partition(scale_mapping),
    n_scales(max(scale_mapping)+1),
    branch_prior_type(0),
-   smodel_full_tree(true),
    T(t),
    TC(star_tree(t.get_leaf_labels())),
    branch_HMM_type(t.n_branches(),0),
@@ -1104,7 +1098,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    smodel_for_partition(s_mapping),
    scale_for_partition(scale_mapping),
    branch_prior_type(0),
-   smodel_full_tree(true),
    T(t),
    TC(star_tree(t.get_leaf_labels())),
    branch_HMM_type(t.n_branches(),0),

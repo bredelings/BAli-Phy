@@ -107,8 +107,8 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   /******** Precompute distributions at node2 from the 2 subtrees **********/
   distributions_t_local distributions = distributions_tree;
-  if (not P.smodel_full_tree)
-    distributions = distributions_star;
+  //  if (not P.smodel_full_tree)
+  //    distributions = distributions_star;
 
   vector< Matrix > dists1 = distributions(P,seq1,b,true);
   vector< Matrix > dists2 = distributions(P,seq2,b,false);

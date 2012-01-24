@@ -114,10 +114,16 @@ namespace substitution
 
 extern bool use_internal_index;
 
+class Parameters;
+
 /// Each data_partition is a model with one parameter: mu (the branch mean)
 class data_partition: public Probability_Model, public Mat_Cache
 {
   friend class Parameters;
+
+  Parameters* P;
+
+  int partition_index;
 
   /// The IndelModel
   polymorphic_cow_ptr<IndelModel> IModel_;
@@ -160,8 +166,6 @@ class data_partition: public Probability_Model, public Mat_Cache
   bool variable_alignment_;
 
 public:
-
-  bool smodel_full_tree;
 
   /// Is the alignment allowed to vary?
   bool variable_alignment() const {return variable_alignment_;}
@@ -263,9 +267,9 @@ public:
 
   std::string name() const;
 
-  data_partition(const std::string& n, const alignment&, const SequenceTree&,
+  data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&,
 		 const substitution::MultiModelObject&);
-  data_partition(const std::string& n, const alignment&, const SequenceTree&,
+  data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&,
 		 const substitution::MultiModelObject&, const IndelModel&);
 };
 
@@ -290,8 +294,6 @@ public:
 
   /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
   int branch_prior_type;
-
-  bool smodel_full_tree;
 
   bool variable_alignment() const;
 
@@ -419,6 +421,10 @@ public:
 
   const Model& SubModels(int) const;
   Model& SubModels(int);
+
+  Parameters& operator=(const Parameters&);
+
+  Parameters(const Parameters&);
 
   Parameters(const std::vector<alignment>& A, const SequenceTree&, 
 	     const std::vector<polymorphic_cow_ptr<Model> >&,

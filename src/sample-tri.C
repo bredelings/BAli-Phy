@@ -119,8 +119,8 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
   // Precompute distributions at nodes[0]
   distributions_t distributions = distributions_tree;
-  if (not P.smodel_full_tree)
-    distributions = distributions_star;
+  //  if (not P.smodel_full_tree)
+  //    distributions = distributions_star;
 
   vector< Matrix > dists1 = distributions(P,seq1,nodes[0],group1);
   vector< Matrix > dists23 = distributions(P,seq23,nodes[0],group2|group3);

@@ -483,7 +483,7 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 
   topology_move.add(1,NNI_move,false);
   topology_move.add(1,SPR_move);
-  if (P.T->n_leaves() >3 and P.smodel_full_tree)
+  if (P.T->n_leaves() >3)
     tree_moves.add(1,topology_move);
   
   //-------------- tree::lengths (length_moves) -------------//
@@ -498,11 +498,11 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 				   change_branch_length_multi_move,
 				   branches)
 		   );
-  if (P.smodel_full_tree)
-    length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T","lengths:nodes:topology",
-					change_branch_length_and_T,
-					internal_branches)
-		      );
+
+  length_moves1.add(0.01,MoveArgSingle("change_branch_length_and_T","lengths:nodes:topology",
+				       change_branch_length_and_T,
+				       internal_branches)
+		    );
   length_moves.add(1,length_moves1,false);
   // FIXME - Do we really want to do this, under slice sampling?
   length_moves.add(1,SingleMove(walk_tree_sample_branch_lengths,

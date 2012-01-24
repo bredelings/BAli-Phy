@@ -198,7 +198,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   options_description advanced("Advanced options");
   advanced.add_options()
-    ("letters",value<string>()->default_value("full_tree"),"If set to 'star', then use a star tree for substitution")
     ("beta",value<string>(),"MCMCMC temperature")
     ("dbeta",value<string>(),"MCMCMC temperature changes")
     ("internal",value<string>(),"If set to '+', then make all internal node entries wildcards")
@@ -1095,9 +1094,6 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
     out_cache<<"imodel-index"<<i+1<<" = "<<P.get_imodel_index_for_partition(i)<<endl;
   }
   out_cache<<endl;
-
-  if (not P.smodel_full_tree)
-    out_cache<<"substitution model: *-tree"<<endl;
 
   for(int i=0;i<P.n_smodels();i++)
     out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
