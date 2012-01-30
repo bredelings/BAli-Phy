@@ -484,6 +484,7 @@ int add_probability_expression(context& C)
   typed_expression_ref<Log_Double> Pr;
 
   // Check each expression in the Formula
+  map<string,string> prior_expressions;
   for(int i=0;i<C.n_notes();i++)
   {
     vector<expression_ref> results; 
@@ -498,6 +499,10 @@ int add_probability_expression(context& C)
     expression_ref density = dummy(0);
     expression_ref args = dummy(1);
     expression_ref _ = dummy(-1);
+
+    if (prior_expressions.count(x->print()))
+      throw myexception()<<"Duplicate prior expression for variable '"<<x->print()<<"'";
+    prior_expressions[x->print()] = D->print();
     
     // Create an expression for calculating the density of these random variables given their inputs
     expression_ref Pr_i = case_expression(true, D, Tuple((prob_density,_,density),args), (density, x, args));
