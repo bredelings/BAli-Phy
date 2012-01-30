@@ -479,7 +479,7 @@ std::ostream& operator<<(std::ostream& o, const context& C)
 
 int add_probability_expression(context& C)
 {
-  expression_ref query = distributed(_2,Tuple(prob_density(_,_1),_3));
+  expression_ref query = (distributed, _1,_2);
 
   typed_expression_ref<Log_Double> Pr;
 
@@ -492,15 +492,20 @@ int add_probability_expression(context& C)
     if (not find_match(query, C.get_note(i), results)) continue;
 
     // Extract the density operation
-    expression_ref density_func = results[0];
+    expression_ref x = results[0];
+    expression_ref D = results[1];
+
+    expression_ref density = dummy(0);
+    expression_ref args = dummy(1);
+    expression_ref _ = dummy(-1);
     
     // Create an expression for calculating the density of these random variables given their inputs
-    typed_expression_ref<Log_Double> Pr_i ( (density_func, results[1], results[2]) );
+    expression_ref Pr_i = case_expression(true, D, Tuple((prob_density,_,density),args), (density, x, args));
     
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)
     if (not Pr)
-      Pr = Pr_i;
+      Pr = typed_expression_ref<Log_Double>(Pr_i);
     else
       Pr = Pr_i * Pr;
   }
