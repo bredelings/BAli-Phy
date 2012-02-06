@@ -35,6 +35,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 namespace ublas = boost::numeric::ublas;
 
+// TODO - This kind of alignment requires searching every row to find the characters
+//        in that row.
+
+// TODO - I am interested in data structures / algorithms that make it quick and simple
+//        to find all the internal nodes of some tree that connect the present characters 
+//        of some column.
+
 /// A multiple sequence alignment
 class alignment 
 {
@@ -194,12 +201,17 @@ alignment randomize(const alignment&,int n=-1);
 
 alignment blank_copy(const alignment&,int length=0);
 
-// TODO - This kind of alignment requires searching every row to find the characters
-//        in that row.
+std::vector<int> get_sparse_alignment_row(const alignment& A, int i);
 
-// TODO - I am interested in data structures / algorithms that make it quick and simple
-//        to find all the internal nodes of some tree that connect the present characters 
-//        of some column.
+// Consider making an iterator type for moving forward through the sparse
+// matrix and ignoring columns that are empty for some subset of rows.
+
+class sparse_increasing_index_matrix
+{
+  std::vector< std::vector<int> > columns;
+  sparse_increasing_index_matrix(int);
+};
+
 #endif
 
 

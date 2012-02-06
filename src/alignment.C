@@ -473,3 +473,15 @@ alignment reorder_sequences(const alignment& A, const vector<int>& order)
   return A2;
 }
 
+vector<int> get_sparse_alignment_row(const alignment& A, int i)
+{
+  vector<int> columns;
+  for(int c=0;c<A.length();c++)
+    if (A.character(c,i))
+      columns.push_back(c);
+  return columns;
+}
+
+sparse_increasing_index_matrix::sparse_increasing_index_matrix(int n)
+  :columns(n)
+{ }
