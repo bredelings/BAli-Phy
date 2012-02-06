@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// \brief Defines the HMM for three pairwise alignments on adjacent branches of a tree.
 ///
 
+#include <algorithm>
 #include "3way.H"
 #include "bits.H"
 #include "logsum.H"
@@ -33,6 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using boost::dynamic_bitset;
 using std::vector;
+using std::pair;
 
 using namespace A3;
 
@@ -506,6 +508,75 @@ namespace A3 {
     return pi;
   }
 
+  vector<int> convert_to_column_list(const vector<pair<int,int> >& column_indices)
+  {
+    vector<int> order(column_indices.size(),-1);
+    for(int i=0;i<column_indices.size();i++)
+      order[column_indices[i].second] = column_indices[i].first;
+
+    return order;
+  }
+
+  // If we are just getting the order of the columns in the 3-way alignment
+  // the this shouldn't affect anything else, should it??
+
+  // The reason we must look at alignments is that +/- and -/+ ARE ordered
+  // inside pairwise alignments.
+
+  // What happens if we care about alignments that aren't part of the 3way?
+  // Does this block stuff?  I think it did...
+  vector<pair<int,int> > getorder2(const alignment& A,int n0,int n1,int n2,int n3) {
+
+    vector<pair<int,int> > columns;
+    vector<int> AP;                     // alignments present
+
+    //----- Record which sub-alignments present per column ------//
+    for(int column=0;column<A.length();column++) 
+    {
+      int bits=0;
+      if (not A.gap(column,n0))
+	bits |= (1<<0);
+      if (not A.gap(column,n1))
+	bits |= (1<<1);
+      if (not A.gap(column,n2))
+	bits |= (1<<2);
+      if (not A.gap(column,n3))
+	bits |= (1<<3);
+
+      int states = bits_to_states(bits);
+      int ap = states>>6;
+
+      if (ap)
+      {
+	AP.push_back(ap);
+	columns.push_back( pair<int,int>(column,-1) );
+      }
+    }
+
+    //-------- Re-order unordered columns by AP order ---------//
+    vector<int> order = iota((int)columns.size());
+
+    for(int i=0;i+1<order.size();) 
+    {
+      int ap1 = AP[order[i  ]];
+      int ap2 = AP[order[i+1]];
+      if (not (ap1&ap2) and ap1 > ap2) {
+	std::swap(order[i],order[i+1]);
+	if (i>0) i--;
+      }
+      else
+	i++;
+    }
+
+    //------- Place indices into sorted column list -------//
+    for(int i=0;i<order.size();i++)
+      columns[order[i]].second = i;
+    for(int i=0;i<columns.size();i++)
+      assert(columns[i].second >= 0);
+
+    return columns;
+  }
+
   // If we are just getting the order of the columns in the 3-way alignment
   // the this shouldn't affect anything else, should it??
 
@@ -551,6 +622,7 @@ namespace A3 {
 	i++;
     }
 
+    assert(columns == convert_to_column_list(getorder2(A,n0,n1,n2,n3)));
     return columns;
   }
 
