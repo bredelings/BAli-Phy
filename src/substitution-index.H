@@ -184,6 +184,12 @@ along with BAli-Phy; see the file COPYING.  If not see
  * 
  */
 
+/*
+ * We may wish to separate the naming scheme for the indices (leaf, internal) from the
+ * method used to calculate it.  Since the "internal" scheme only makes sense with
+ * augmented alignments, we could define update_one_branch( ) in terms of the pairwise
+ * alignments for the previous branches...*/
+
 struct subA_index_t: public ublas::matrix<int>
 {
 protected:
