@@ -559,6 +559,29 @@ void subA_index_t::check_footprint(const alignment& A,const Tree& T) const
     check_footprint_for_branch(A,T,b);
 }
 
+vector<int> subA_index_t::characters_to_indices(int branch, const alignment& A, const Tree& T)
+{
+  // Make sure the index for this branch is up to date before we start using it.
+  update_branch(A,T,branch);
+
+  int node = T.directed_branch(branch).source();
+
+  vector<int> suba_for_character(A.seqlength(node), -1);
+
+  // walk the alignment row and the subA-index row simultaneously
+  for(int c=0,k=0;c<A.length();c++)
+  {
+    if (not A.character(c,node)) continue;
+
+    int index = (*this)(c,branch);
+    assert(index != -1);
+
+    suba_for_character[k++] = index;
+  }
+
+  return suba_for_character;
+}
+
 subA_index_t::subA_index_t(int s1, int s2)
   :ublas::matrix<int>(s1,s2),
    allow_invalid_branches_(false)

@@ -262,6 +262,8 @@ public:
   virtual void check_footprint_for_branch(const alignment& A1,const Tree& T,int b) const=0;
   void check_footprint(const alignment& A1,const Tree& T) const;
 
+  virtual std::vector<int> characters_to_indices(int branch, const alignment& A, const Tree& T);
+
   virtual ~subA_index_t() {}
 };
 
