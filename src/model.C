@@ -94,7 +94,7 @@ expression_ref model_prior_expression(const Model& M)
   vector< expression_ref > sub;
 
   return distributed( get_tuple( model_parameter_expressions( M ) ),
-		      Tuple(prob_density(model_prior(M).name(), model_prior(M)), 
+		      Tuple(prob_density(model_prior(M).name(), lambda_expression(model_prior(M))), 
 			       Tuple(0) 
 			       )
 		      );
