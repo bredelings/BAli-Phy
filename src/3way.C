@@ -508,15 +508,6 @@ namespace A3 {
     return pi;
   }
 
-  vector<int> convert_to_column_list(const vector<pair<int,int> >& column_indices)
-  {
-    vector<int> order(column_indices.size(),-1);
-    for(int i=0;i<column_indices.size();i++)
-      order[column_indices[i].second] = column_indices[i].first;
-
-    return order;
-  }
-
   // If we are just getting the order of the columns in the 3-way alignment
   // the this shouldn't affect anything else, should it??
 

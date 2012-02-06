@@ -635,6 +635,8 @@ void remove_elements(std::vector<int>& v, const std::vector<int>& e);
 
 void check_supplied_filenames(int n, const std::vector<std::string>& files, bool exact=true);
 
+std::vector<int> convert_to_column_list(const std::vector<std::pair<int,int> >& column_indices);
+
 extern int log_verbose;
 
 #endif

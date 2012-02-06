@@ -28,6 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::vector;
 using std::string;
+using std::pair;
 
 #include <iostream>
 using std::cerr;
@@ -498,3 +499,13 @@ string demangle(const string& s)
   return s;
 }
 #endif
+
+vector<int> convert_to_column_list(const vector<pair<int,int> >& column_indices)
+{
+  vector<int> order(column_indices.size(),-1);
+  for(int i=0;i<column_indices.size();i++)
+    order[column_indices[i].second] = column_indices[i].first;
+  
+  return order;
+}
+
