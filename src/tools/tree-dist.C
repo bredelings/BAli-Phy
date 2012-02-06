@@ -667,13 +667,21 @@ tree_record::tree_record(const Tree& T)
   std::sort(order.begin(),order.end(),sequence_order<dynamic_bitset<> >(temp));
 
   for(int i=0;i<L;i++)
-    branch_lengths[i] = T.branch(i).length();
+  {
+    if (T.branch(i).has_length())
+      branch_lengths[i] = T.branch(i).length();
+    else
+      branch_lengths[i] = 1.0;
+  }
 
   for(int i=L;i<T.n_branches();i++)
   {
     int o = order[i-L];
     partitions[i-L] = temp[o];
-    branch_lengths[i] = T.branch(o+L).length();
+    if (T.branch(o+L).has_length())
+      branch_lengths[i] = T.branch(o+L).length();
+    else
+      branch_lengths[i] = 1.0;
   }
 }
 

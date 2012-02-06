@@ -298,7 +298,8 @@ BranchNode* TreeView::create_node_on_branch(BranchNode* b1, int  new_branchname)
   // set new branch name and set length to 0
   b2->undirected_branch_attributes = new tree_attributes(b1->undirected_branch_attributes->size());
   b2->out->undirected_branch_attributes = b2->undirected_branch_attributes;
-  (*b2->undirected_branch_attributes)[0] = double(0.0);
+  if (not (*b2->out->undirected_branch_attributes)[0].empty())
+    (*b2->undirected_branch_attributes)[0] = double(0.0);
 
   b2->undirected_branch_attributes->name = new_branchname;
   b2->directed_branch_attributes->name = new_branchname;
@@ -364,14 +365,11 @@ int TreeView::remove_node_from_branch(BranchNode* n1, int branch_to_move)
   b1->out = b2;
   b2->out = b1;
 
-  (*b1->undirected_branch_attributes)[0] = boost::any_cast<double>((*b1->undirected_branch_attributes)[0]) +
-    boost::any_cast<double>((*b2->undirected_branch_attributes)[0]);
-  (*b1->undirected_branch_attributes)[0] = boost::any_cast<double>((*b1->undirected_branch_attributes)[0]) +
-    boost::any_cast<double>((*b2->undirected_branch_attributes)[0]);
+  if (not (*b1->undirected_branch_attributes)[0].empty())
+    (*b1->undirected_branch_attributes)[0] = 
+      boost::any_cast<double>((*b1->undirected_branch_attributes)[0]) +
+      boost::any_cast<double>((*b2->undirected_branch_attributes)[0]);
 
-  // Summary: here we are deleting the n2<-->b2 branch.
-
-  
   // Summary: here we are deleting the n2<-->b2 branch.
 
   // preserve the direction of the remaining branch.
