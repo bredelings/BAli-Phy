@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// \brief Defines the HMM for pairwise alignments on 5 branches in an NNI configuration.
 ///
 
+#include <algorithm>
 #include "5way.H"
 #include "bits.H"
 #include "logsum.H"
@@ -32,6 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using boost::dynamic_bitset;
 using std::vector;
+using std::pair;
 
 /// Namespace for the HMM for pairwise alignments on 5 branches in an NNI configuration.
 namespace A5 {
@@ -84,6 +86,59 @@ namespace A5 {
   // What happens if we care about alignments that aren't part of the 3way?
   // Does this block stuff?  I think it did...
 
+  vector<pair<int,int> > getorder2(const alignment& A,const vector<int>& nodes) 
+  {
+    vector<pair<int,int> > columns;
+    vector<int> AP;
+
+    //----- Record which sub-alignments present per column ------//
+    for(int column=0;column<A.length();column++) {
+      int bits = 0;
+      for(int i=0;i<nodes.size();i++)
+	if (not A.gap(column,nodes[i]))
+	  bits |= (1<<i);
+    
+      int states = bits_to_substates(bits);
+      int ap = states>>(5*2);
+      if (ap)
+      {
+	AP.push_back(ap);
+	columns.push_back(pair<int,int>(column,-1));
+      }
+    }
+
+    //-------- Re-order unordered columns by AP order ---------//
+    vector<int> order = iota((int)columns.size());
+
+    for(int i=0;i+1<order.size();) {
+      int ap1 = AP[order[i  ]];
+      int ap2 = AP[order[i+1]];
+      if (not (ap1&ap2) and ap1 > ap2) {
+	std::swap(order[i],order[i+1]);
+	if (i>0) i--;
+      }
+      else
+	i++;
+    }
+
+    //------- Place indices into sorted column list -------//
+    for(int i=0;i<order.size();i++)
+      columns[order[i]].second = i;
+    for(int i=0;i<columns.size();i++)
+      assert(columns[i].second >= 0);
+
+    return columns;
+  }
+
+  // If we are just getting the order of the columns in the 3-way alignment
+  // the this shouldn't affect anything else, should it??
+
+  // The reason we must look at alignments is that +/- and -/+ ARE ordered
+  // inside pairwise alignments.
+
+  // What happens if we care about alignments that aren't part of the 3way?
+  // Does this block stuff?  I think it did...
+
   vector<int> getorder(const alignment& A,const vector<int>& nodes) {
     vector<int> columns;
     vector<int> AP;
@@ -113,6 +168,8 @@ namespace A5 {
       else
 	i++;
     }
+
+    assert(columns == convert_to_column_list(getorder2(A,nodes)));
     return columns;
   }
 
