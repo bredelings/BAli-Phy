@@ -127,7 +127,21 @@ vector< Matrix > distributions_star(const data_partition& P,
   return dist;
 }
 
-
+// We need to handle three situations.
+// For a simple pairwise alignment, we need to handle o--->root and o=root.
+// (The root is just the place where we choose to accumulate the conditional likelihoods and apply the root frequencies.)
+// In the latter case, we end up finding the two branches b1 and b2 that point to the root, and doing b1--->root<---b2.
+// We just need the indices for b1 and b2, conditional on the presences of the sequence at the root node.
+//
+// The way that we are currently selecting the correct columns is currently done OUTSIDE of this routine, in order to
+// pass the order of the columns in.  This order may be different than the ordering of columns in the current alignment matrix,
+// because the pairwise alignment we are about to perform may order +/- ad -/+ in different ways.
+//
+// For sample_tri, we need to do o1--->root and o2--->root<---o3, and so this isn't as hard.  Again the
+// alignment information is all done by selecting the correct columns OUTSIDE this routine, and passing the list of columns
+// in.
+//
+// Finally, it would be easy enough to add a case where the root is on a leaf sequence.  We should do that.
 
 /// Distributions function for a full tree
 vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int root,const dynamic_bitset<>& group)
@@ -149,7 +163,15 @@ vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& s
       required.push_back(T.directed_branch(branches[i]).source());
   }
 
-  vector< Matrix > dist = substitution::get_column_likelihoods(P,branches,required,seq,2);
+  vector< Matrix > dist;
+  if (branches.size())
+    dist = substitution::get_column_likelihoods(P,branches,required,seq,2);
+  else
+  // FIXME - we could easily make 2-leaf trees work here (halfway) by just special-casing get_column_likelihoods when
+  //         branches.size() == 0.
+  //       - essentially we would need to write a copy of peel_leaf_branch that uses identity matrices for all transition probabilities.
+    ;
+
   // note: we could normalize frequencies to sum to 1
   assert(dist.size() == seq.size()+2);
 
