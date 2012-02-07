@@ -482,6 +482,31 @@ vector<int> get_sparse_alignment_row(const alignment& A, int i)
   return columns;
 }
 
+int sparse_increasing_index_matrix::length() const
+{
+  return L;
+}
+
+void sparse_increasing_index_matrix::finish_column()
+{
+  bool empty = true;
+  for(int i=0;i<columns.size();i++)
+    if (columns[i].size() and columns[i].back() == L)
+      empty = false;
+
+  if (not empty)
+    L++;
+}
+
+void sparse_increasing_index_matrix::set_present(int i)
+{
+  if (not columns[i].size() or columns[i].back() != L)
+  {
+    assert(not columns[i].size() or columns[i].back() < L);
+    columns[i].push_back(L);
+  }
+}
+
 sparse_increasing_index_matrix::sparse_increasing_index_matrix(int n)
-  :columns(n)
+  :L(0),columns(n)
 { }

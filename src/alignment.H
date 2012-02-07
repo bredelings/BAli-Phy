@@ -208,7 +208,12 @@ std::vector<int> get_sparse_alignment_row(const alignment& A, int i);
 
 class sparse_increasing_index_matrix
 {
+  int L;
+public:
+  int length() const;
   std::vector< std::vector<int> > columns;
+  void finish_column();
+  void set_present(int i);
   sparse_increasing_index_matrix(int);
 };
 
