@@ -100,14 +100,32 @@ bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2) {
   return not error;
 }
 
+int next_column(const vector< vector<pair<int,int> > >& indices, const vector<int>& branches, const vector<int>& I)
+{
+  int m = -1;
+  for(int i=0;i<branches.size();i++)
+  {
+    int B = branches[i];
+
+    int ii = I[i];
+    if (ii >= indices[B].size()) continue;
+
+    if (m == -1)
+      m = indices[B][ii].first;
+    else
+      m = std::min(m, indices[B][ii].first);
+  }
+  return m;
+}
+
 /// Select rows for branches \a branches, removing columns with all entries == -1
 ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, bool with_columns) const
 {
-  const ublas::matrix<int>& I = *this;
+  const ublas::matrix<int>& II = *this;
 
   // the alignment of sub alignments
-  const int L = I.size1();
-  ublas::matrix<int> subA(L, branches.size() + (with_columns?1:0));
+  const int LL = II.size1();
+  ublas::matrix<int> subA(LL, branches.size() + (with_columns?1:0));
 
   // check that all the branches are valid
   for(int j=0;j<branches.size();j++) 
@@ -115,13 +133,13 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, boo
 
   // copy sub-A indices for each branch
   int l=0;
-  for(int c=0;c<L;c++)
+  for(int c=0;c<LL;c++)
   {
     bool empty = true;
     for(int j=0;j<branches.size();j++) 
     {
-      subA(l,j) = I(c,branches[j]);
-      if (I(c,branches[j]) != -1)
+      subA(l,j) = II(c,branches[j]);
+      if (II(c,branches[j]) != -1)
 	empty = false;
     }
     if (with_columns)
@@ -135,7 +153,57 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, boo
     for(int j=0;j<subA2.size2();j++)
       subA2(i,j) = subA(i,j);
 
-  return subA2;
+  //return subA2;
+  /*******************************************************************************/
+  // Compute the total length of branch indices.
+  // Also check that the indices are up-to-date.
+
+  int total_length = 0;
+  for(int i=0;i<branches.size();i++)
+  {
+    int B = branches[i];
+    total_length += branch_index_length(B);
+  }
+
+  // The alignment of sub alignments
+  ublas::matrix<int> subA3(total_length, branches.size() + (with_columns?1:0));
+
+  vector<int> I(branches.size(),0);
+  int L = 0;
+  while(true)
+  {
+    int c = next_column(indices, branches, I);
+    if (c == -1) break;
+
+    for(int i=0;i<branches.size();i++)
+    {
+      int b = branches[i];
+
+      int j = I[i];
+
+      if (j < indices[b].size() and indices[b][j].first == c) 
+      {
+	subA3(L,i) = indices[b][j].second;
+	I[i]++;
+      }
+      else
+	subA3(L,i) = -1;
+    }
+
+    if (with_columns)
+      subA3(L,branches.size()) = c;
+
+    L++;
+  }
+
+  ublas::matrix<int> subA4(L, subA3.size2() );
+  for(int i=0;i<subA4.size1();i++)
+    for(int j=0;j<subA4.size2();j++)
+      subA4(i,j) = subA3(i,j);
+
+  assert(subA_identical(subA4, subA2));
+
+  return subA4;
 }
 
 /// Select rows for branches \a branches, removing columns with all entries == -1
