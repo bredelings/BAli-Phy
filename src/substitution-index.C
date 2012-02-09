@@ -38,6 +38,16 @@ using std::pair;
 using boost::dynamic_bitset;
 
 
+vector<pair<int,int> > sparsify_row(const ublas::matrix<int>& M, int r)
+{
+  vector<pair<int,int> > columns;
+  for(int c=0;c<M.size1();c++)
+    if (M(c,r) != -1)
+      columns.push_back(pair<int,int>(c,M(c,r)));
+
+  return columns;
+}
+
 /// Are there characters present in column c of the alignment A at any of the nodes?
 static inline bool any_present(const alignment& A,int c, const vector<int>& nodes) {
   for(int i=0;i<nodes.size();i++)
@@ -599,6 +609,80 @@ subA_index_t::subA_index_t(int s1, int s2)
   invalidate_all_branches();
 }
 
+
+vector<pair<int,int> > subtract(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
+{
+  vector<pair<int,int> > p3;
+
+  int I1 = 0;
+  int I2 = 0;
+  while(I1 < p1.size() or I2 < p2.size())
+  {
+    if (I1 < p1.size() and I2 >= p2.size())
+      I1++;
+    else if (I2 < p2.size() and I1 >= p1.size())
+    {
+      p3.push_back(p2[I2]);
+      I2++;
+    }
+    else if (I1 < p1.size() and I2 < p2.size())
+    {
+      if (p1[I1].first < p2[I2].first)
+	I1++;
+      else if (p1[I1].first == p2[I2].first)
+      {
+	I1++;
+	I2++;
+      }
+      else // p1[I1].first > p2[I2].first
+      {
+	p3.push_back(p2[I2]);
+	I2++;
+      }
+    }
+  }
+  return p3;
+}
+
+vector<pair<int,int> > combine_non_overlapping(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
+{
+  vector<pair<int,int> > p3;
+
+  int I1 = 0;
+  int I2 = 0;
+  while(I1 < p1.size() or I2 < p2.size())
+  {
+    if (I1 < p1.size() and I2 >= p2.size())
+    {
+      p3.push_back(p1[I1]);
+      I1++;
+    }
+    else if (I2 < p2.size() and I1 >= p1.size())
+    {
+      p3.push_back(p2[I2]);
+      I2++;
+    }
+    else if (I1 < p1.size() and I2 < p2.size())
+    {
+      if (p1[I1].first < p2[I2].first)
+      {
+	p3.push_back(p1[I1]);
+	I1++;
+      }
+      else if (p1[I1].first == p2[I2].first)
+      {
+	throw myexception()<<"Index collections are overlapping!";
+      }
+      else // p1[I1].first > p2[I2].first
+      {
+	p3.push_back(p2[I2]);
+	I2++;
+      }
+    }
+  }
+  return p3;
+}
+
 void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b) 
 {
   ublas::matrix<int>& I = *this;
@@ -611,6 +695,52 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
     resize(A.length(), n_rows());
   }
 
+  // Reset to have no characters
+  indices[b].clear();
+
+  // notes for leaf sequences
+  if (b < T.n_leaves()) 
+  {
+    int k=0;
+    for(int c=0;c<A.length();c++)
+      if (A.character(c,b))
+	indices[b].push_back(std::pair<int,int>(c,k++));
+  }
+  else {
+    // get 2 branches leading into this one
+    vector<const_branchview> prev;
+    append(T.directed_branch(b).branches_before(),prev);
+    assert(prev.size() == 2);
+
+    // sort branches by rank
+    if (rank(T,prev[0]) > rank(T,prev[1]))
+      std::swap(prev[0],prev[1]);
+
+    // find the columns and indices that are in the 2nd, but NOT the first branch index collection
+    vector<pair<int,int> > new_2nd = subtract(indices[prev[0]], indices[prev[1]]);
+
+    // construct the sorted +/- map
+    vector<int> mapping_2nd(indices[prev[1]].size(), 0);
+    for(int i=0;i<new_2nd.size();i++)
+      mapping_2nd[new_2nd[i].second] = 1;
+
+    // construct the mapping from old to new indices
+    for(int i=0,k=indices[prev[0]].size();i<mapping_2nd.size();i++)
+      if (mapping_2nd[i])
+	mapping_2nd[i] = k++;
+      else
+	mapping_2nd[i] = -1;
+
+    // map the new_2nd columns to their new indices.
+    for(int i=0;i<new_2nd.size();i++) {
+      new_2nd[i].second = mapping_2nd[new_2nd[i].second];
+      assert(new_2nd[i].second != -1);
+    }
+
+    // construct the index with correctly sorted list of columns
+    indices[b] = combine_non_overlapping(indices[prev[0]], new_2nd);
+  }
+
   // notes for leaf sequences
   if (b < T.n_leaves()) {
     int l=0;
@@ -621,7 +751,7 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
 	I(c,b) = l++;
     }
     up_to_date[b] = true;
-    indices[b].resize(l);
+    assert(l == indices[b].size());
   }
   else {
     // get 2 branches leading into this one
@@ -661,8 +791,7 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
     }
 
     // create subA index for this branch
-    up_to_date[b] = true;
-    indices[b].resize(l);
+    assert(l == indices[b].size());
     l = 0;
     for(int i=0;i<mappings.size();i++) {
       for(int j=0;j<mappings[i].size();j++) {
@@ -680,6 +809,10 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
     }
     assert(l == indices[b].size());
   }
+
+  assert(indices[b] == sparsify_row(*this,b));
+
+  up_to_date[b] = true;
 }
 
 // If branch 'b' is markes as having an up-to-date index, then
@@ -746,6 +879,9 @@ void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int
       I(c,b) = alphabet::gap;
   }
   assert(l == A.seqlength(node));
+
+  assert(indices[b] == sparsify_row(*this,b));
+
   up_to_date[b] = true;
 }
 
