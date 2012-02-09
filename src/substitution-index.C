@@ -279,16 +279,18 @@ ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const a
 						    const vector<int>& nodes) 
 {
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b,A,T,true);
+  ublas::matrix<int> subA = get_subA_index_sparse(b,A,T,true);
 
   // select and order the columns we want to keep
   const int B = b.size();
-  int l=0;
-  for(int c=0;c<subA.size1();c++)
+  for(int i=0,l=0;i<subA.size1();i++)
+  {
+    int c = subA(i,b.size());
     if (any_present(A,c,nodes))
-      subA(c,B) = l++;
+      subA(i,B) = l++;
     else
-      subA(c,B) = alphabet::gap;
+      subA(i,B) = -1;
+  }
 
   // return processed indices
   return subA_select(subA);
