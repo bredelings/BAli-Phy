@@ -212,7 +212,7 @@ public:
   int n_rows() const;
 
   bool branch_index_valid(int b) const {
-    up_to_date[b];
+    return up_to_date[b];
   }
 
   int branch_index_length(int b) const 
