@@ -285,7 +285,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const a
   const int B = b.size();
   for(int i=0,l=0;i<subA.size1();i++)
   {
-    int c = subA(i,b.size());
+    int c = subA(i,B);
     if (any_present(A,c,nodes))
       subA(i,B) = l++;
     else
