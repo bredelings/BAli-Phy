@@ -33,6 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #endif
 
 using std::vector;
+using std::pair;
 
 using boost::dynamic_bitset;
 
@@ -465,7 +466,8 @@ void subA_index_t::update_branch(const alignment& A,const Tree& T,int b)
 
   // update the branches in order 
   for(int i=0;i<branches.size();i++)
-    update_one_branch(A,T,branches[i]);
+    if (not branch_index_valid(branches[i]))
+      update_one_branch(A,T,branches[i]);
 
 #ifdef DEBUG_INDEXING
   check_footprint(A,T);
@@ -719,6 +721,7 @@ subA_index_leaf::subA_index_leaf(int s1, int s2)
 
 void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int b) 
 {
+  assert(not up_to_date[b]);
   ublas::matrix<int>& I = *this;
 
   // lazy resizing
@@ -735,13 +738,15 @@ void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int
   int l=0;
   for(int c=0;c<A.length();c++) {
     if (A.character(c,node))
+    {
+      indices[b].push_back(pair<int,int>(c,l));
       I(c,b) = l++;
+    }
     else
       I(c,b) = alphabet::gap;
   }
   assert(l == A.seqlength(node));
   up_to_date[b] = true;
-  indices[b].resize(l);
 }
 
 void subA_index_internal::check_footprint_for_branch(const alignment& A, const Tree& T, int b) const
