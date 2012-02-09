@@ -128,11 +128,6 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, boo
 /// Select rows for branches \a branches, removing columns with all entries == -1
 ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, const alignment& A,const Tree& T, bool with_columns)
 {
-  const ublas::matrix<int>& I = *this;
-
-  // the alignment of sub alignments
-  ublas::matrix<int> subA(A.length(),branches.size());
-
   // copy sub-A indices for each branch
   for(int j=0;j<branches.size();j++) 
   {
@@ -590,7 +585,6 @@ vector<int> indices_to_present_columns(const vector<pair<int,int> >& p1, const v
   int I2 = 0;
   while(I1 < p1.size() or I2 < p2.size())
   {
-    int c = -1;
     if (I2 >= p2.size())
     {
       I1++;
