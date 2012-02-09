@@ -353,7 +353,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_aligned(const vector<int>& b,con
 
 /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
 ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,const alignment& A,const Tree& T,
-							const vector<int>& ordered_columns) 
+							const vector<int>& index_to_columns) 
 {
   // the alignment of sub alignments
   ublas::matrix<int> subA = get_subA_index(b,A,T,true);
@@ -363,10 +363,56 @@ ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,con
   for(int c=0;c<subA.size1();c++) 
     subA(c,B) = alphabet::gap;
 
-  for(int i=0;i<ordered_columns.size();i++) 
-    subA(ordered_columns[i],B) = i;
+  for(int i=0;i<index_to_columns.size();i++) 
+    subA(index_to_columns[i],B) = i;
 
-  return subA_select(subA);
+  ublas::matrix<int> subA3 = subA_select(subA);
+
+
+  // Create the sorted column order
+  vector<int> order = iota((int)index_to_columns.size());
+  std::sort(order.begin(), order.end(), sequence_order<int>(index_to_columns));
+  vector<pair<int,int> > columns(index_to_columns.size());
+  for(int i=0;i<columns.size();i++)
+  {
+    columns[i].first = index_to_columns[order[i]];
+    columns[i].second = order[i];
+  }
+
+  // The alignment of non-empty columns in b
+  ublas::matrix<int> subA1 = get_subA_index_sparse(b,A,T,true);
+
+  // The alignment of indices from branches \a b from columns in the order 
+  ublas::matrix<int> subA2(columns.size(), b.size());
+  for(int i=0;i<subA2.size1();i++)
+    for(int j=0;j<subA2.size2();j++)
+      subA2(i,j) = -2;
+
+  // Fill in the entries of the columns in sorted order
+  for(int i=0,k=0;i<columns.size();i++)
+  {
+    int column = columns[i].first;
+    int index = columns[i].second;
+    
+    while (k<subA1.size1() and subA1(k, b.size()) < column)
+      k++;
+
+    if (k<subA1.size1() and column == subA1(k, b.size()))
+      for(int j=0;j<b.size();j++)
+	subA2(index,j) = subA1(k,j);
+    else
+      for(int j=0;j<b.size();j++)
+	subA2(index,j) = -1;
+  }
+
+  // The alignment of indices from branches \a b from columns in the order 
+  for(int i=0;i<subA2.size1();i++)
+    for(int j=0;j<subA2.size2();j++)
+      assert( subA2(i,j) != -2 );
+
+  assert(subA_identical(subA3, subA2));
+
+  return subA2;
 }
 
 
