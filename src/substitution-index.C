@@ -109,46 +109,6 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, boo
   const int L = I.size1();
   ublas::matrix<int> subA(L, branches.size() + (with_columns?1:0));
 
-  // copy sub-A indices for each branch
-  for(int j=0;j<branches.size();j++) 
-  {
-    assert(branch_index_valid(branches[j]));
-
-    for(int c=0;c<L;c++)
-      subA(c,j) = I(c,branches[j]);
-  }
-
-  if (with_columns)
-    for(int c=0;c<L;c++)
-      subA(c,branches.size()) = c;
-
-  return subA;
-}
-
-/// Select rows for branches \a branches, removing columns with all entries == -1
-ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, const alignment& A,const Tree& T, bool with_columns)
-{
-  // copy sub-A indices for each branch
-  for(int j=0;j<branches.size();j++) 
-  {
-    IF_DEBUG_I( check_footprint_for_branch(A,T,branches[j]) );
-
-    if (not branch_index_valid(branches[j]))
-      update_branch(A,T,branches[j]);
-  }
-
-  return get_subA_index(branches, with_columns);
-}
-
-/// Select rows for branches \a branches, removing columns with all entries == -1
-ublas::matrix<int> subA_index_t::get_subA_index_sparse(const vector<int>& branches, bool with_columns) const
-{
-  const ublas::matrix<int>& I = *this;
-
-  // the alignment of sub alignments
-  const int L = I.size1();
-  ublas::matrix<int> subA(L, branches.size() + (with_columns?1:0));
-
   // check that all the branches are valid
   for(int j=0;j<branches.size();j++) 
     assert(branch_index_valid(branches[j]));
@@ -179,7 +139,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_sparse(const vector<int>& branch
 }
 
 /// Select rows for branches \a branches, removing columns with all entries == -1
-ublas::matrix<int> subA_index_t::get_subA_index_sparse(const vector<int>& branches, const alignment& A,const Tree& T, bool with_columns)
+ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, const alignment& A,const Tree& T, bool with_columns)
 {
   // copy sub-A indices for each branch
   for(int j=0;j<branches.size();j++) 
@@ -190,7 +150,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_sparse(const vector<int>& branch
       update_branch(A,T,branches[j]);
   }
 
-  return get_subA_index_sparse(branches, with_columns);
+  return get_subA_index(branches, with_columns);
 }
 
 /// Compute subA index for branches point to \a node.
@@ -264,7 +224,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b,cons
 ublas::matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b,const alignment& A,const Tree& T) 
 {
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index_sparse(b,A,T);
+  ublas::matrix<int> subA = get_subA_index(b,A,T);
 
   const int B = b.size()-1;
   int l=0;
@@ -291,7 +251,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const a
 						    const vector<int>& nodes) 
 {
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index_sparse(b,A,T,true);
+  ublas::matrix<int> subA = get_subA_index(b,A,T,true);
 
   // select and order the columns we want to keep
   const int B = b.size();
@@ -313,7 +273,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b,const 
 						     const vector<int>& nodes) 
 {
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index_sparse(b,A,T,true);
+  ublas::matrix<int> subA = get_subA_index(b,A,T,true);
 
   // select and order the columns we want to keep
   const int B = b.size();
@@ -345,7 +305,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_aligned(const vector<int>& b,con
     nodes.push_back(T.directed_branch(b[i]).source());
 
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index_sparse(b,A,T,true);
+  ublas::matrix<int> subA = get_subA_index(b,A,T,true);
 
   // select and order the columns we want to keep
   const int B = b.size();
@@ -383,7 +343,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,con
   }
 
   // The alignment of non-empty columns in b
-  ublas::matrix<int> subA1 = get_subA_index_sparse(b,A,T,true);
+  ublas::matrix<int> subA1 = get_subA_index(b,A,T,true);
 
   // The alignment of indices from branches \a b from columns in the order 
   ublas::matrix<int> subA2(columns.size(), B);
