@@ -1118,7 +1118,7 @@ namespace substitution {
   /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
   vector<Matrix>
   get_column_likelihoods(const data_partition& P, const vector<int>& b,
-			 const vector<int>& required_nodes,const vector<int>& ordered_columns,int delta)
+			 const vector<int>& ordered_columns,int delta)
   {
     // FIXME - this now handles only internal sequences.  But see get_leaf_seq_likelihoods( ).
     default_timer_stack.push_timer("substitution");
@@ -1145,7 +1145,7 @@ namespace substitution {
     LC.root = root;
 
     // select columns with at least one node in 'required_nodes', and re-order them according to the permutation 'ordered_columns'
-    ublas::matrix<int> index = I.get_subA_index_any(b,A,T,required_nodes,ordered_columns);
+    ublas::matrix<int> index = I.get_subA_index_columns(b,A,T,ordered_columns);
 
     IF_DEBUG_S(int n_br = ) calculate_caches_for_node(LC.root, P);
 

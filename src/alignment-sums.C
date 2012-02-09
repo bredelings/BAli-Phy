@@ -165,7 +165,7 @@ vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& s
 
   vector< Matrix > dist;
   if (branches.size())
-    dist = substitution::get_column_likelihoods(P,branches,required,seq,2);
+    dist = substitution::get_column_likelihoods(P,branches,seq,2);
   else
   // FIXME - we could easily make 2-leaf trees work here (halfway) by just special-casing get_column_likelihoods when
   //         branches.size() == 0.

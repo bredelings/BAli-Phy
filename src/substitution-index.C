@@ -246,6 +246,29 @@ ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const a
   return subA_select(subA);
 }
 
+/// Select rows for branches \a b, but exclude columns in which nodes \a nodes are present.
+ublas::matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b,const alignment& A,const Tree& T,
+						     const vector<int>& nodes) 
+{
+  vector<int> b2 = b;
+  b2.push_back(-1);
+
+  // the alignment of sub alignments
+  ublas::matrix<int> subA = get_subA_index(b2,A,T);
+
+  // select and order the columns we want to keep
+  const int B = b.size();
+  int l=0;
+  for(int c=0;c<subA.size1();c++)
+    if (any_present(A,c,nodes))
+      subA(c,B) = alphabet::gap;
+    else
+      subA(c,B) = l++;
+
+  // return processed indices
+  return subA_select(subA);
+}
+
 // Idea is that columns which are (+,+,+) in terms of having leaves, but (+,+,-) in terms of having
 // present characters should get separated into (+,+,-) and (-,-,+), and we should use calc_root( )
 // on the first one, and a new calc_root_unaligned( ) on the second one.
@@ -280,8 +303,8 @@ ublas::matrix<int> subA_index_t::get_subA_index_aligned(const vector<int>& b,con
 
 
 /// Select rows for branches \a b and columns present at nodes, but ordered according to the list of columns \a seq
-ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const alignment& A,const Tree& T,
-						    const vector<int>& IF_DEBUG_I(nodes), const vector<int>& seq) 
+ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,const alignment& A,const Tree& T,
+							const vector<int>& ordered_columns) 
 {
   vector<int> b2 = b;
   b2.push_back(-1);
@@ -294,44 +317,12 @@ ublas::matrix<int> subA_index_t::get_subA_index_any(const vector<int>& b,const a
   for(int c=0;c<subA.size1();c++) 
     subA(c,B) = alphabet::gap;
 
-  for(int i=0;i<seq.size();i++) 
-    subA(seq[i],B) = i;
-
-#ifdef DEBUG_INDEXING
-  // check reqs...
-  for(int c=0;c<subA.size1();c++)
-    if (any_present(A,c,nodes))
-      assert(subA(c,B)!=alphabet::gap);
-    else
-      assert(subA(c,B)==alphabet::gap);
-#endif
+  for(int i=0;i<ordered_columns.size();i++) 
+    subA(ordered_columns[i],B) = i;
 
   return subA_select(subA);
 }
 
-
-/// Select rows for branches \a b, but exclude columns in which nodes \a nodes are present.
-ublas::matrix<int> subA_index_t::get_subA_index_none(const vector<int>& b,const alignment& A,const Tree& T,
-						     const vector<int>& nodes) 
-{
-  vector<int> b2 = b;
-  b2.push_back(-1);
-
-  // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b2,A,T);
-
-  // select and order the columns we want to keep
-  const int B = b.size();
-  int l=0;
-  for(int c=0;c<subA.size1();c++)
-    if (any_present(A,c,nodes))
-      subA(c,B) = alphabet::gap;
-    else
-      subA(c,B) = l++;
-
-  // return processed indices
-  return subA_select(subA);
-}
 
 std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I)
 {

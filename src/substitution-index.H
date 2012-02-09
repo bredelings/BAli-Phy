@@ -246,13 +246,13 @@ public:
   /// align sub-alignments corresponding to branches in b, and select columns with a node in \a nodes
   ublas::matrix<int> get_subA_index_any(const std::vector<int>& b,const alignment& A,const Tree& T,const std::vector<int>& nodes);
 
-  /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
-  ublas::matrix<int> get_subA_index_any(const std::vector<int>& b,const alignment& A, const Tree& T,
-					const std::vector<int>& nodes, const std::vector<int>& seq);
-
   /// align sub-alignments corresponding to branches in b, and reject columns with a node in \a nodes
   ublas::matrix<int> get_subA_index_none(const std::vector<int>& b,const alignment& A, const Tree& T,
 					 const std::vector<int>& nodes);
+
+  /// align sub-alignments corresponding to branches in b, and select columns in 'seq'
+  ublas::matrix<int> get_subA_index_columns(const std::vector<int>& b,const alignment& A, const Tree& T,
+					    const std::vector<int>& seq);
 
   void invalidate_one_branch(int b);
   void invalidate_all_branches();

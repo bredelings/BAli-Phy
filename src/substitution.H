@@ -67,7 +67,7 @@ namespace substitution {
   /// Find the likelihood matrix for data behind branches 'b', for columns with a character in at least one node in 'req'.  Reorder the columns according to permutation 'seq', and add 'delta' padding matrices at the beginning.
   std::vector<Matrix>
   get_column_likelihoods(const data_partition&, const std::vector<int>& b,
-			 const std::vector<int>& req, const std::vector<int>& seq,int delta=0);
+			 const std::vector<int>& seq,int delta=0);
 
   /// Full likelihood - all columns, all rates
   efloat_t Pr(const data_partition&);
