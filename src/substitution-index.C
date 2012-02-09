@@ -106,7 +106,7 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches) con
   const ublas::matrix<int>& I = *this;
 
   // the alignment of sub alignments
-  const int L = I.size1() - 1;
+  const int L = I.size1();
   ublas::matrix<int> subA(L, branches.size());
 
   // copy sub-A indices for each branch
@@ -114,13 +114,13 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches) con
   {
     if (branches[j] == -1)
       for(int c=0;c<L;c++)
-	subA(c,j) = -1;
+	subA(c,j) = c;
     else 
     {
       assert(branch_index_valid(branches[j]));
 
       for(int c=0;c<L;c++)
-	subA(c,j) = I(c+1,branches[j]);
+	subA(c,j) = I(c,branches[j]);
     }
   }
 
@@ -138,21 +138,16 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, con
   // copy sub-A indices for each branch
   for(int j=0;j<branches.size();j++) 
   {
-    if (branches[j] == -1)
-      for(int c=0;c<A.length();c++)
-	subA(c,j) = -1;
-    else 
+    if (branches[j] != -1)
     {
       IF_DEBUG_I( check_footprint_for_branch(A,T,branches[j]) );
 
       if (not branch_index_valid(branches[j]))
 	update_branch(A,T,branches[j]);
-      for(int c=0;c<A.length();c++)
-	subA(c,j) = I(c,branches[j]);
     }
   }
 
-  return subA;
+  return get_subA_index(branches);
 }
 
 /// Compute subA index for branches point to \a node.
