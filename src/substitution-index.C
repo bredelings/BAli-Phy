@@ -412,7 +412,7 @@ void subA_index_t::invalidate_one_branch(int b)
 
 void subA_index_t::invalidate_all_branches()
 {
-  for(int i=0;i<size2();i++)
+  for(int i=0;i<n_rows();i++)
     invalidate_one_branch(i);
 }
 
@@ -501,7 +501,7 @@ void subA_index_t::allow_invalid_branches(bool allowed)
 
 void check_consistent(const subA_index_t& I1, const subA_index_t& IF_DEBUG(I2), const vector<int>& branch_names)
 {
-  assert(I1.size2() == I2.size2());
+  assert(I1.n_rows() == I2.n_rows());
 
   for(int i=0;i<branch_names.size();i++) 
   {
@@ -521,7 +521,7 @@ void check_consistent(const subA_index_t& I1, const subA_index_t& IF_DEBUG(I2), 
 
 void check_consistent(const subA_index_t& I1, const subA_index_t& I2)
 {
-  check_consistent(I1, I2, iota<int>(I1.size2()));
+  check_consistent(I1, I2, iota<int>(I1.n_rows()));
 }
 
 void check_regenerate(const subA_index_t& I1, const alignment& A,const Tree& T) 
@@ -604,9 +604,9 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
   // lazy resizing
   if (size1() != A.length() + 1)
   {
-    for(int i=0;i<size2();i++)
+    for(int i=0;i<n_rows();i++)
       assert(not branch_index_valid(i));
-    resize(A.length(), size2());
+    resize(A.length(), n_rows());
   }
 
   // notes for leaf sequences
@@ -724,9 +724,9 @@ void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int
   // lazy resizing
   if (size1() != A.length() + 1)
   {
-    for(int i=0;i<size2();i++)
+    for(int i=0;i<n_rows();i++)
       assert(not branch_index_valid(i));
-    resize(A.length()+1, size2());
+    resize(A.length()+1, n_rows());
   }
 
   // Actually update the index
