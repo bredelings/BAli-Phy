@@ -226,6 +226,18 @@ ublas::matrix<int> subA_select(const ublas::matrix<int>& subA1) {
   return subA2;
 }
 
+/// Sort columns according to value in last row, removing columns with -1 in last row
+ublas::matrix<int> subA_remove_last_row(const ublas::matrix<int>& subA1) 
+{
+  ublas::matrix<int> subA2(subA1.size1(), (int)subA1.size2() - 1);
+
+  for(int i=0;i<subA2.size1();i++) 
+    for(int j=0;j<subA2.size2();j++)
+      subA2(i,j) = subA1(i,j);
+
+  return subA2;
+}
+
 /// Select rows for branches \a b, and toss columns where the last branch has entry -1
 ublas::matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b) const
 {
@@ -333,21 +345,23 @@ ublas::matrix<int> subA_index_t::get_subA_index_aligned(const vector<int>& b,con
     nodes.push_back(T.directed_branch(b[i]).source());
 
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b,A,T);
+  ublas::matrix<int> subA = get_subA_index_sparse(b,A,T,true);
 
   // select and order the columns we want to keep
-  for(int c=0;c<subA.size1();c++)
+  const int B = b.size();
+  for(int i=0;i<subA.size1();i++)
   {
-    for(int i=0;i<nodes.size();i++)
+    int c = subA(i,B);
+    for(int j=0;j<nodes.size();j++)
     {
       // zero out entries if the character is absent (if present==true) or present (if present==false)
-      if ((not A.character(c,nodes[i])) xor (not present))
-	subA(c, i) = alphabet::gap;
+      if ((not A.character(c,nodes[j])) xor (not present))
+	subA(i, j) = alphabet::gap;
     }
   }
 
   // return processed indices
-  return subA;
+  return subA_remove_last_row(subA);
 }
 
 
