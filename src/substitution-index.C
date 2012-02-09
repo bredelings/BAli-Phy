@@ -355,19 +355,8 @@ ublas::matrix<int> subA_index_t::get_subA_index_aligned(const vector<int>& b,con
 ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,const alignment& A,const Tree& T,
 							const vector<int>& index_to_columns) 
 {
-  // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b,A,T,true);
-
   // select and order the columns we want to keep
   const int B = b.size();
-  for(int c=0;c<subA.size1();c++) 
-    subA(c,B) = alphabet::gap;
-
-  for(int i=0;i<index_to_columns.size();i++) 
-    subA(index_to_columns[i],B) = i;
-
-  ublas::matrix<int> subA3 = subA_select(subA);
-
 
   // Create the sorted column order
   vector<int> order = iota((int)index_to_columns.size());
@@ -383,7 +372,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,con
   ublas::matrix<int> subA1 = get_subA_index_sparse(b,A,T,true);
 
   // The alignment of indices from branches \a b from columns in the order 
-  ublas::matrix<int> subA2(columns.size(), b.size());
+  ublas::matrix<int> subA2(columns.size(), B);
   for(int i=0;i<subA2.size1();i++)
     for(int j=0;j<subA2.size2();j++)
       subA2(i,j) = -2;
@@ -394,14 +383,15 @@ ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,con
     int column = columns[i].first;
     int index = columns[i].second;
     
-    while (k<subA1.size1() and subA1(k, b.size()) < column)
+    // Skip unsed columns in subA1.
+    while (k<subA1.size1() and subA1(k, B) < column)
       k++;
 
-    if (k<subA1.size1() and column == subA1(k, b.size()))
-      for(int j=0;j<b.size();j++)
+    if (k<subA1.size1() and column == subA1(k, B))
+      for(int j=0;j<B;j++)
 	subA2(index,j) = subA1(k,j);
     else
-      for(int j=0;j<b.size();j++)
+      for(int j=0;j<B;j++)
 	subA2(index,j) = -1;
   }
 
@@ -409,8 +399,6 @@ ublas::matrix<int> subA_index_t::get_subA_index_columns(const vector<int>& b,con
   for(int i=0;i<subA2.size1();i++)
     for(int j=0;j<subA2.size2();j++)
       assert( subA2(i,j) != -2 );
-
-  assert(subA_identical(subA3, subA2));
 
   return subA2;
 }
