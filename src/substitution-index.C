@@ -252,7 +252,7 @@ ublas::matrix<int> subA_index_t::get_subA_index_select(const vector<int>& b,cons
 ublas::matrix<int> subA_index_t::get_subA_index_vanishing(const vector<int>& b,const alignment& A,const Tree& T) 
 {
   // the alignment of sub alignments
-  ublas::matrix<int> subA = get_subA_index(b,A,T);
+  ublas::matrix<int> subA = get_subA_index_sparse(b,A,T);
 
   const int B = b.size()-1;
   int l=0;
