@@ -602,7 +602,7 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
   ublas::matrix<int>& I = *this;
 
   // lazy resizing
-  if (size1() != A.length() + 1)
+  if (size1() != A.length())
   {
     for(int i=0;i<n_rows();i++)
       assert(not branch_index_valid(i));
@@ -722,11 +722,11 @@ void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int
   ublas::matrix<int>& I = *this;
 
   // lazy resizing
-  if (size1() != A.length() + 1)
+  if (size1() != A.length())
   {
     for(int i=0;i<n_rows();i++)
       assert(not branch_index_valid(i));
-    resize(A.length()+1, n_rows());
+    resize(A.length(), n_rows());
   }
 
   // Actually update the index
