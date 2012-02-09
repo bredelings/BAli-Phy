@@ -193,6 +193,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 struct subA_index_t: public ublas::matrix<int>
 {
 protected:
+  std::vector< std::vector< std::pair<int,int> > > indices;
+
+  std::vector<bool> up_to_date;
+
   virtual void update_one_branch(const alignment& A,const Tree& T,int b)=0;
 
   /* This is for SPR all, where we only need branches pointing towards the
@@ -205,15 +209,17 @@ public:
   
   subA_index_t(int s1, int s2);
 
+  int n_rows() const;
+
   bool branch_index_valid(int b) const {
-    return operator()(0,b) != -1;
+    up_to_date[b];
   }
 
   int branch_index_length(int b) const 
   {
-    assert(0 <= b and b < size2());
+    assert(0 <= b and b < n_rows());
     assert(branch_index_valid(b));
-    return operator()(0,b);
+    return indices[b].size();
   }
 
   /// align sub-alignments corresponding to branches in b

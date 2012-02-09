@@ -71,6 +71,11 @@ int n_non_empty_columns(const ublas::matrix<int>& m)
   return total;
 }
 
+int subA_index_t::n_rows() const
+{
+  return indices.size();
+}
+
 /// Select rows for branches \a branches, removing columns with all entries == -1
 ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches) const
 {
@@ -119,7 +124,7 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, con
       if (not branch_index_valid(branches[j]))
 	update_branch(A,T,branches[j]);
       for(int c=0;c<A.length();c++)
-	subA(c,j) = I(c+1,branches[j]);
+	subA(c,j) = I(c,branches[j]);
     }
   }
 
@@ -401,7 +406,8 @@ void check_subA(const subA_index_t& I1_, const alignment& A1,const subA_index_t&
 
 void subA_index_t::invalidate_one_branch(int b) 
 {
-  operator()(0,b) = -1;
+  up_to_date[b] = false;
+  indices[b].clear();
 }
 
 void subA_index_t::invalidate_all_branches()
@@ -508,7 +514,7 @@ void check_consistent(const subA_index_t& I1, const subA_index_t& IF_DEBUG(I2), 
       const int L = I1.branch_index_length(b);
       assert(L == I2.branch_index_length(b));
       for(int c=0;c<L;c++)
-	assert(I1(c+1,b) == I2(c+1,b));
+	assert(I1(c,b) == I2(c,b));
     }
   }
 }
@@ -584,6 +590,8 @@ vector<int> subA_index_t::characters_to_indices(int branch, const alignment& A, 
 
 subA_index_t::subA_index_t(int s1, int s2)
   :ublas::matrix<int>(s1,s2),
+   indices(s2),
+   up_to_date(s2),
    allow_invalid_branches_(false)
 {
   invalidate_all_branches();
@@ -598,7 +606,7 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
   {
     for(int i=0;i<size2();i++)
       assert(not branch_index_valid(i));
-    resize(A.length()+1, size2());
+    resize(A.length(), size2());
   }
 
   // notes for leaf sequences
@@ -606,11 +614,12 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
     int l=0;
     for(int c=0;c<A.length();c++) {
       if (A.gap(c,b))
-	I(c+1,b) = alphabet::gap;
+	I(c,b) = alphabet::gap;
       else
-	I(c+1,b) = l++;
+	I(c,b) = l++;
     }
-    I(0,b) = l;
+    up_to_date[b] = true;
+    indices[b].resize(l);
   }
   else {
     // get 2 branches leading into this one
@@ -633,7 +642,7 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
     for(int c=0;c<A.length();c++) {
       bool present = false;
       for(int i=0;i<mappings.size();i++) {
-	int index = I(c+1,prev[i]);
+	int index = I(c,prev[i]);
 	assert(index < (int)mappings[i].size());
 
 	if (index != -1) {
@@ -643,14 +652,15 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
       }
       if (present) {
 	l++;
-	I(c+1,b) = -2;
+	I(c,b) = -2;
       }
       else
-	I(c+1,b) = -1;
+	I(c,b) = -1;
     }
 
     // create subA index for this branch
-    I(0,b) = l;
+    up_to_date[b] = true;
+    indices[b].resize(l);
     l = 0;
     for(int i=0;i<mappings.size();i++) {
       for(int j=0;j<mappings[i].size();j++) {
@@ -660,13 +670,13 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
 	assert(c != -1);
 
 	// subA for b should be present here
-	assert(I(c+1,b) != -1);
+	assert(I(c,b) != -1);
 
-	if (I(c+1,b) == -2)
-	  I(c+1,b) = l++;
+	if (I(c,b) == -2)
+	  I(c,b) = l++;
       }
     }
-    assert(l == I(0,b));
+    assert(l == indices[b].size());
   }
 }
 
@@ -694,10 +704,10 @@ void subA_index_leaf::check_footprint_for_branch(const alignment& A, const Tree&
     
     // If so, then this column should have a non-null (null==-1) index for this branch.
     if (leaf_present)
-      assert(I(c+1,b) != -1);
+      assert(I(c,b) != -1);
     // Otherwise, this column should how have an index for this branch.
     else
-      assert(I(c+1,b) == -1);
+      assert(I(c,b) == -1);
   }
 }
 
@@ -725,12 +735,13 @@ void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int
   int l=0;
   for(int c=0;c<A.length();c++) {
     if (A.character(c,node))
-      I(c+1,b) = l++;
+      I(c,b) = l++;
     else
-      I(c+1,b) = alphabet::gap;
+      I(c,b) = alphabet::gap;
   }
   assert(l == A.seqlength(node));
-  I(0,b) = l;
+  up_to_date[b] = true;
+  indices[b].resize(l);
 }
 
 void subA_index_internal::check_footprint_for_branch(const alignment& A, const Tree& T, int b) const
@@ -753,10 +764,10 @@ void subA_index_internal::check_footprint_for_branch(const alignment& A, const T
 
     // If so, then this column should have a non-null (null==-1) index for this branch.
     if (internal_node_present)
-      assert(I(c+1,b) != -1);
+      assert(I(c,b) != -1);
     // Otherwise, this column should how have an index for this branch.
     else
-      assert(I(c+1,b) == -1);
+      assert(I(c,b) == -1);
   }
 }
 
