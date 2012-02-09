@@ -87,6 +87,19 @@ int subA_index_t::n_rows() const
   return indices.size();
 }
 
+bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2) {
+  bool error = false;
+  if (I1.size1() != I2.size1()) error=true;
+  if (I1.size2() != I2.size2()) error=true;
+    
+  if (not error) 
+    for(int i=0;i<I1.size1() and not error;i++)
+      for(int j=0;j<I1.size2() and not error;j++)
+	error = (I1(i,j) != I2(i,j));
+    
+  return not error;
+}
+
 /// Select rows for branches \a branches, removing columns with all entries == -1
 ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches) const
 {
@@ -341,19 +354,6 @@ std::ostream& print_subA(std::ostream& o,const ublas::matrix<int>& I)
     }
   }
   return o;
-}
-
-bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2) {
-  bool error = false;
-  if (I1.size1() != I2.size1()) error=true;
-  if (I1.size2() != I2.size2()) error=true;
-    
-  if (not error) 
-    for(int i=0;i<I1.size1() and not error;i++)
-      for(int j=0;j<I1.size2() and not error;j++)
-	error = (I1(i,j) != I2(i,j));
-    
-  return not error;
 }
 
 // Check that all valid sub-alignments are identical?
