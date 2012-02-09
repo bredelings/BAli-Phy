@@ -223,10 +223,10 @@ public:
   }
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A,const Tree& T);
+  ublas::matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A,const Tree& T,bool=false);
 
   /// align sub-alignments corresponding to branches in b
-  ublas::matrix<int> get_subA_index(const std::vector<int>& b) const;
+  ublas::matrix<int> get_subA_index(const std::vector<int>& b,bool=false) const;
 
   /// align sub-alignments corresponding to branches in b, but only keep entries corresponding to present/absent characters
   ublas::matrix<int> get_subA_index_aligned(const std::vector<int>& b,const alignment& A,const Tree& T, bool present);
