@@ -609,42 +609,46 @@ subA_index_t::subA_index_t(int s1, int s2)
   invalidate_all_branches();
 }
 
-
-vector<pair<int,int> > subtract(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
+/// Map the indices in p1 to the array indices of p2 which contain the same columns.
+vector<int> indices_to_present_columns(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
 {
-  vector<pair<int,int> > p3;
+  vector<int> indices_map(p1.size(), -1);
 
   int I1 = 0;
   int I2 = 0;
   while(I1 < p1.size() or I2 < p2.size())
   {
-    if (I1 < p1.size() and I2 >= p2.size())
-      I1++;
-    else if (I2 < p2.size() and I1 >= p1.size())
+    int c = -1;
+    if (I2 >= p2.size())
     {
-      p3.push_back(p2[I2]);
+      I1++;
+    }
+    else if (I1 >= p1.size())
+    {
       I2++;
     }
-    else if (I1 < p1.size() and I2 < p2.size())
+    else if (p1[I1].first < p2[I2].first)
     {
-      if (p1[I1].first < p2[I2].first)
-	I1++;
-      else if (p1[I1].first == p2[I2].first)
-      {
-	I1++;
-	I2++;
-      }
-      else // p1[I1].first > p2[I2].first
-      {
-	p3.push_back(p2[I2]);
-	I2++;
-      }
+      I1++;
+    }
+    else if (p1[I1].first > p2[I2].first)
+    {
+      I2++;
+    }
+    else  // p1[I1].first == p2[I2].first)
+    {
+      int index = p1[I1].second;
+      indices_map[index] = I2;
+      I1++;
+      I2++;
     }
   }
-  return p3;
+
+  return indices_map;
 }
 
-vector<pair<int,int> > combine_non_overlapping(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
+/// Get the sorted list of columns present in either p1 or p2, with -1 for each index.
+vector<pair<int,int> > combine_columns(const vector<pair<int,int> >& p1, const vector<pair<int,int> >& p2)
 {
   vector<pair<int,int> > p3;
 
@@ -652,33 +656,35 @@ vector<pair<int,int> > combine_non_overlapping(const vector<pair<int,int> >& p1,
   int I2 = 0;
   while(I1 < p1.size() or I2 < p2.size())
   {
-    if (I1 < p1.size() and I2 >= p2.size())
+    int c = -1;
+    if (I2 >= p2.size())
     {
-      p3.push_back(p1[I1]);
+      c = p1[I1].first;
       I1++;
     }
-    else if (I2 < p2.size() and I1 >= p1.size())
+    else if (I1 >= p1.size())
     {
-      p3.push_back(p2[I2]);
+      c = p2[I2].first;
       I2++;
     }
-    else if (I1 < p1.size() and I2 < p2.size())
+    else if (p1[I1].first < p2[I2].first)
     {
-      if (p1[I1].first < p2[I2].first)
-      {
-	p3.push_back(p1[I1]);
-	I1++;
-      }
-      else if (p1[I1].first == p2[I2].first)
-      {
-	throw myexception()<<"Index collections are overlapping!";
-      }
-      else // p1[I1].first > p2[I2].first
-      {
-	p3.push_back(p2[I2]);
-	I2++;
-      }
+      c = p1[I1].first;
+      I1++;
     }
+    else if (p1[I1].first > p2[I2].first)
+    {
+      c = p2[I2].first;
+      I2++;
+    }
+    else  // p1[I1].first == p2[I2].first)
+    {
+      c = p1[I1].first;
+      I1++;
+      I2++;
+    }
+
+    p3.push_back(pair<int,int>(c,-1));
   }
   return p3;
 }
@@ -716,29 +722,22 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
     if (rank(T,prev[0]) > rank(T,prev[1]))
       std::swap(prev[0],prev[1]);
 
-    // find the columns and indices that are in the 2nd, but NOT the first branch index collection
-    vector<pair<int,int> > new_2nd = subtract(indices[prev[0]], indices[prev[1]]);
+    // get the sorted list of present columns
+    indices[b] = combine_columns(indices[prev[0]], indices[prev[1]]);
 
-    // construct the sorted +/- map
-    vector<int> mapping_2nd(indices[prev[1]].size(), 0);
-    for(int i=0;i<new_2nd.size();i++)
-      mapping_2nd[new_2nd[i].second] = 1;
+    int l=0;
+    for(int i=0;i<prev.size();i++)
+    {
+      vector<int> index_to_present_columns = indices_to_present_columns(indices[prev[i]], indices[b]);
 
-    // construct the mapping from old to new indices
-    for(int i=0,k=indices[prev[0]].size();i<mapping_2nd.size();i++)
-      if (mapping_2nd[i])
-	mapping_2nd[i] = k++;
-      else
-	mapping_2nd[i] = -1;
-
-    // map the new_2nd columns to their new indices.
-    for(int i=0;i<new_2nd.size();i++) {
-      new_2nd[i].second = mapping_2nd[new_2nd[i].second];
-      assert(new_2nd[i].second != -1);
+      for(int j=0;j<index_to_present_columns.size();j++)
+      {
+	int k = index_to_present_columns[j];
+	if (indices[b][k].second == -1)
+	  indices[b][k].second = l++;
+      }
     }
-
-    // construct the index with correctly sorted list of columns
-    indices[b] = combine_non_overlapping(indices[prev[0]], new_2nd);
+    assert(l == indices[b].size());
   }
 
   // notes for leaf sequences
