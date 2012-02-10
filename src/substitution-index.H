@@ -190,7 +190,7 @@ along with BAli-Phy; see the file COPYING.  If not see
  * augmented alignments, we could define update_one_branch( ) in terms of the pairwise
  * alignments for the previous branches...*/
 
-struct subA_index_t: public ublas::matrix<int>
+struct subA_index_t
 {
 protected:
   std::vector< std::vector< std::pair<int,int> > > indices;
@@ -221,6 +221,8 @@ public:
     assert(branch_index_valid(b));
     return indices[b].size();
   }
+
+  const std::vector<std::pair<int,int> > operator[](int r) const {return indices[r];}
 
   /// align sub-alignments corresponding to branches in b
   ublas::matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A,const Tree& T,bool=false);

@@ -1698,7 +1698,7 @@ namespace substitution {
     vector<const_branchview> branches = branches_toward_node(T, cache.root);
 
     IF_DEBUG_S(efloat_t other_subst1 = 1);
-
+    /*
     for(int i=0;i<branches.size();i++)
     {
       int b = branches[i];
@@ -1785,7 +1785,7 @@ namespace substitution {
 
     assert(std::abs(log(other_subst1) - log(other_subst2)) < 1.0e-9);
 #endif
-
+    */
     return likelihoods;
   }
 

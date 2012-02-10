@@ -572,16 +572,8 @@ void check_consistent(const subA_index_t& I1, const subA_index_t& IF_DEBUG(I2), 
   for(int i=0;i<branch_names.size();i++) 
   {
     int b = branch_names[i];
-    if (I1.branch_index_valid(b)) 
-    {
-      // These lengths need be valid only if there is at least one valid branch
-      assert(I1.size1() == I2.size1());
-
-      const int L = I1.branch_index_length(b);
-      assert(L == I2.branch_index_length(b));
-      for(int c=0;c<L;c++)
-	assert(I1(c,b) == I2(c,b));
-    }
+    if (I1.branch_index_valid(b))
+      assert(I1[b] == I2[b]);
   }
 }
 
@@ -641,22 +633,23 @@ vector<int> subA_index_t::characters_to_indices(int branch, const alignment& A, 
   vector<int> suba_for_character(A.seqlength(node), -1);
 
   // walk the alignment row and the subA-index row simultaneously
-  for(int c=0,k=0;c<A.length();c++)
+  for(int c=0,i=0,k=0;c<A.length();c++)
   {
     if (not A.character(c,node)) continue;
 
-    int index = (*this)(c,branch);
-    assert(index != -1);
+    while(i<indices[branch].size() and indices[branch][i].first < c)
+      i++;
 
-    suba_for_character[k++] = index;
+    assert(i != -1);
+
+    suba_for_character[k++] = indices[branch][i].second;
   }
 
   return suba_for_character;
 }
 
-subA_index_t::subA_index_t(int s1, int s2)
-  :ublas::matrix<int>(s1,s2),
-   indices(s2),
+subA_index_t::subA_index_t(int, int s2)
+  :indices(s2),
    up_to_date(s2),
    allow_invalid_branches_(false)
 {
