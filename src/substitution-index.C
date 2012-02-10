@@ -38,16 +38,6 @@ using std::pair;
 using boost::dynamic_bitset;
 
 
-vector<pair<int,int> > sparsify_row(const ublas::matrix<int>& M, int r)
-{
-  vector<pair<int,int> > columns;
-  for(int c=0;c<M.size1();c++)
-    if (M(c,r) != -1)
-      columns.push_back(pair<int,int>(c,M(c,r)));
-
-  return columns;
-}
-
 /// Are there characters present in column c of the alignment A at any of the nodes?
 static inline bool any_present(const alignment& A,int c, const vector<int>& nodes) {
   for(int i=0;i<nodes.size();i++)
@@ -121,40 +111,6 @@ int next_column(const vector< vector<pair<int,int> > >& indices, const vector<in
 /// Select rows for branches \a branches, removing columns with all entries == -1
 ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, bool with_columns) const
 {
-  const ublas::matrix<int>& II = *this;
-
-  // the alignment of sub alignments
-  const int LL = II.size1();
-  ublas::matrix<int> subA(LL, branches.size() + (with_columns?1:0));
-
-  // check that all the branches are valid
-  for(int j=0;j<branches.size();j++) 
-    assert(branch_index_valid(branches[j]));
-
-  // copy sub-A indices for each branch
-  int l=0;
-  for(int c=0;c<LL;c++)
-  {
-    bool empty = true;
-    for(int j=0;j<branches.size();j++) 
-    {
-      subA(l,j) = II(c,branches[j]);
-      if (II(c,branches[j]) != -1)
-	empty = false;
-    }
-    if (with_columns)
-      subA(l,branches.size()) = c;
-
-    if (not empty) l++;
-  }
-
-  ublas::matrix<int> subA2(l, subA.size2());
-  for(int i=0;i<subA2.size1();i++)
-    for(int j=0;j<subA2.size2();j++)
-      subA2(i,j) = subA(i,j);
-
-  //return subA2;
-  /*******************************************************************************/
   // Compute the total length of branch indices.
   // Also check that the indices are up-to-date.
 
@@ -200,8 +156,6 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, boo
   for(int i=0;i<subA4.size1();i++)
     for(int j=0;j<subA4.size2();j++)
       subA4(i,j) = subA3(i,j);
-
-  assert(subA_identical(subA4, subA2));
 
   return subA4;
 }
@@ -790,18 +744,7 @@ vector<pair<int,int> > combine_columns(const vector<pair<int,int> >& p1, const v
 
 void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b) 
 {
-  ublas::matrix<int>& I = *this;
-
-  // lazy resizing
-  if (size1() != A.length())
-  {
-    for(int i=0;i<n_rows();i++)
-      assert(not branch_index_valid(i));
-    resize(A.length(), n_rows());
-  }
-
-  // Reset to have no characters
-  indices[b].clear();
+  assert(not branch_index_valid(b));
 
   // notes for leaf sequences
   if (b < T.n_leaves()) 
@@ -839,77 +782,6 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
     assert(l == indices[b].size());
   }
 
-  // notes for leaf sequences
-  if (b < T.n_leaves()) {
-    int l=0;
-    for(int c=0;c<A.length();c++) {
-      if (A.gap(c,b))
-	I(c,b) = alphabet::gap;
-      else
-	I(c,b) = l++;
-    }
-    up_to_date[b] = true;
-    assert(l == indices[b].size());
-  }
-  else {
-    // get 2 branches leading into this one
-    vector<const_branchview> prev;
-    append(T.directed_branch(b).branches_before(),prev);
-    assert(prev.size() == 2);
-
-    // sort branches by rank
-    if (rank(T,prev[0]) > rank(T,prev[1]))
-      std::swap(prev[0],prev[1]);
-
-    // get mappings of previous subA indices into alignment
-    vector<vector<int> > mappings;
-    for(int i=0;i<prev.size();i++) {
-      assert(branch_index_valid(prev[i]));
-      mappings.push_back(vector<int>(branch_index_length(prev[i]),-1));
-    }
-
-    int l=0;
-    for(int c=0;c<A.length();c++) {
-      bool present = false;
-      for(int i=0;i<mappings.size();i++) {
-	int index = I(c,prev[i]);
-	assert(index < (int)mappings[i].size());
-
-	if (index != -1) {
-	  mappings[i][index] = c;
-	  present = true;
-	}
-      }
-      if (present) {
-	l++;
-	I(c,b) = -2;
-      }
-      else
-	I(c,b) = -1;
-    }
-
-    // create subA index for this branch
-    assert(l == indices[b].size());
-    l = 0;
-    for(int i=0;i<mappings.size();i++) {
-      for(int j=0;j<mappings[i].size();j++) {
-	int c = mappings[i][j];
-
-	// all the subA columns should map to an existing, unique columns of A
-	assert(c != -1);
-
-	// subA for b should be present here
-	assert(I(c,b) != -1);
-
-	if (I(c,b) == -2)
-	  I(c,b) = l++;
-      }
-    }
-    assert(l == indices[b].size());
-  }
-
-  assert(indices[b] == sparsify_row(*this,b));
-
   up_to_date[b] = true;
 }
 
@@ -922,25 +794,22 @@ void subA_index_leaf::check_footprint_for_branch(const alignment& A, const Tree&
   // Don't check here if we're temporarily messing with things, and allowing a funny state.
   if (not branch_index_valid(b)) return;
 
-#ifndef NDEBUG
-  const ublas::matrix<int>& I = *this;
-#endif
-
-  for(int c=0;c<A.length();c++) 
+  for(int c=0,i=0;c<A.length();c++) 
   {
     // Determine if there are any leaf characters behind branch b in column c
     bool leaf_present = false;
     const dynamic_bitset<>& leaves = T.partition(T.directed_branch(b).reverse());
-    for(int i=0;i<T.n_leaves();i++)
-      if (leaves[i] and not A.gap(c,i))
+    for(int j=0;j<T.n_leaves();j++)
+      if (leaves[j] and not A.gap(c,j))
 	leaf_present=true;
     
-    // If so, then this column should have a non-null (null==-1) index for this branch.
-    if (leaf_present)
-      assert(I(c,b) != -1);
-    // Otherwise, this column should how have an index for this branch.
+    if (i<indices[b].size() and indices[b][i].first == c)
+    {
+      assert(leaf_present);
+      i++;
+    }
     else
-      assert(I(c,b) == -1);
+      assert(not leaf_present);
   }
 }
 
@@ -953,15 +822,6 @@ subA_index_leaf::subA_index_leaf(int s1, int s2)
 void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int b) 
 {
   assert(not up_to_date[b]);
-  ublas::matrix<int>& I = *this;
-
-  // lazy resizing
-  if (size1() != A.length())
-  {
-    for(int i=0;i<n_rows();i++)
-      assert(not branch_index_valid(i));
-    resize(A.length(), n_rows());
-  }
 
   // Actually update the index
   int node = T.directed_branch(b).source();
@@ -969,16 +829,9 @@ void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int
   int l=0;
   for(int c=0;c<A.length();c++) {
     if (A.character(c,node))
-    {
-      indices[b].push_back(pair<int,int>(c,l));
-      I(c,b) = l++;
-    }
-    else
-      I(c,b) = alphabet::gap;
+      indices[b].push_back(pair<int,int>(c,l++));
   }
   assert(l == A.seqlength(node));
-
-  assert(indices[b] == sparsify_row(*this,b));
 
   up_to_date[b] = true;
 }
@@ -990,23 +843,20 @@ void subA_index_internal::check_footprint_for_branch(const alignment& A, const T
   // Don't check here if we're temporarily messing with things, and allowing a funny state.
   if (not branch_index_valid(b)) return;
 
-#ifndef NDEBUG
-  const ublas::matrix<int>& I = *this;
-#endif
-
   int node = T.directed_branch(b).source();
 
-  for(int c=0;c<A.length();c++) 
+  for(int c=0,i=0;c<A.length();c++) 
   {
     // Determine if there is an internal node character present at the base of this branch
     bool internal_node_present = A.character(c,node);
 
-    // If so, then this column should have a non-null (null==-1) index for this branch.
-    if (internal_node_present)
-      assert(I(c,b) != -1);
-    // Otherwise, this column should how have an index for this branch.
+    if (i<indices[b].size() and indices[b][i].first == c)
+    {
+      assert(internal_node_present);
+      i++;
+    }
     else
-      assert(I(c,b) == -1);
+      assert(not internal_node_present);
   }
 }
 
