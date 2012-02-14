@@ -92,3 +92,34 @@ shared_ptr<const Object> Case::operator()(OperationArgs& Args) const
 std::string Case::name() const {
   return "case";
 }
+
+shared_ptr<const Object> MkArray::operator()(OperationArgs& Args) const
+{
+  int n = *Args.evaluate_as<Int>(0);
+  shared_ptr<const Object> f = Args.reference(1);
+
+  // We can't do negative-sized arrays
+  assert(n >= 0);
+  // The function should be represented as a reg_var...
+  assert(dynamic_pointer_cast<const reg_var>(f));
+
+  shared_ptr<expression> a ( new expression );
+  a->sub.resize(n+1);
+  a->sub[0] = constructor("Array",n);
+  for(int i=0;i<n;i++)
+  {
+    expression_ref ai; // here, we need to allocate a reg containing the expression: (@ f Int(i));
+    // question: can we plug i in here direction, or do we need to add a reg_var?
+    a->sub[i+1] = ai;
+  }
+  
+  return a;
+}
+
+shared_ptr<const Object> GetIndex::operator()(OperationArgs& Args) const
+{
+  shared_ptr<const expression> A = convert<const expression>( Args.lazy_evaluate(0) );
+  int n = *Args.evaluate_as<Int>(1);
+
+  return A->sub[1+n];
+}

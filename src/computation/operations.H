@@ -10,10 +10,12 @@
 #include "expression.H"
 
 
+// In general, these operations simply ask for the value of each input
+// from the OperationArgs object.  They therefore need have no knowledge of
+// how these values are arrived at.
+
 struct Apply: public Operation
 {
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Apply* clone() const {return new Apply(*this);}
 
   tribool compare(const Object& o) const 
@@ -35,8 +37,6 @@ struct Apply: public Operation
 
 struct Case: public Operation
 {
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Case* clone() const {return new Case(*this);}
 
   tribool compare(const Object& o) const 
@@ -54,8 +54,6 @@ struct Case: public Operation
 
 struct Print: public Operation
 {
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Print* clone() const {return new Print(*this);}
 
   tribool compare(const Object& o) const 
@@ -78,8 +76,6 @@ struct Print: public Operation
 
 struct Seq: public Operation
 {
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Seq* clone() const {return new Seq(*this);}
 
   tribool compare(const Object& o) const 
@@ -98,8 +94,6 @@ struct Seq: public Operation
 
 struct Concat: public Operation
 {
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Concat* clone() const {return new Concat(*this);}
 
   tribool compare(const Object& o) const 
@@ -127,6 +121,51 @@ struct Concat: public Operation
   std::string name() const {return "++";}
 
   Concat():Operation(2) {}
+};
+
+struct MkArray: public Operation
+{
+  virtual MkArray* clone() const {return new MkArray(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const MkArray* E = dynamic_cast<const MkArray*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "mkArray";}
+  
+  MkArray():Operation(2) {}
+};
+
+
+struct GetIndex: public Operation
+{
+  virtual GetIndex* clone() const {return new GetIndex(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const GetIndex* E = dynamic_cast<const GetIndex*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "!";}
+  
+  GetIndex():Operation(2) {}
 };
 
 
