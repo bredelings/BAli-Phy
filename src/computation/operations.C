@@ -13,6 +13,8 @@ shared_ptr<const Object> Seq::operator()(OperationArgs& Args) const
   return Args.lazy_evaluate(1);
 }
 
+expression_ref seq = lambda_expression( Seq() );
+
 shared_ptr<const Object> Apply::operator()(OperationArgs& Args) const
 {
   //FIXME - should this be lazy_evaluate?  Perhaps which a lambda function it doesn't matter.

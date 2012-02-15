@@ -91,6 +91,7 @@ struct Seq: public Operation
   Seq():Operation(2) {}
 };
 
+extern expression_ref seq;
 
 struct Concat: public Operation
 {
