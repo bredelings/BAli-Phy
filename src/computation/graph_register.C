@@ -1899,10 +1899,12 @@ public:
     std::abort();
   }
 
-  int allocate()
+  int allocate(const expression_ref& R)
   {
+    int r = *M.push_temp_head(t);
+    M.set_E(r, R);
     n_allocated++;
-    return *M.push_temp_head(t);
+    return r;
   }
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}

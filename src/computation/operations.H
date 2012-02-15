@@ -136,16 +136,12 @@ struct MkArray: public Operation
 
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
   std::string name() const {return "mkArray";}
   
   MkArray():Operation(2) {}
 };
 
+extern expression_ref mkArray;
 
 struct GetIndex: public Operation
 {
@@ -168,6 +164,8 @@ struct GetIndex: public Operation
   
   GetIndex():Operation(2) {}
 };
+
+extern expression_ref getIndex;
 
 
 template <typename T>

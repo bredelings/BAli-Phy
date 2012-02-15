@@ -98,7 +98,7 @@ std::string Case::name() const {
 shared_ptr<const Object> MkArray::operator()(OperationArgs& Args) const
 {
   int n = *Args.evaluate_as<Int>(0);
-  shared_ptr<const Object> f = Args.reference(1);
+  expression_ref f = Args.reference(1);
 
   // We can't do negative-sized arrays
   assert(n >= 0);
@@ -110,13 +110,15 @@ shared_ptr<const Object> MkArray::operator()(OperationArgs& Args) const
   a->sub[0] = constructor("Array",n);
   for(int i=0;i<n;i++)
   {
-    expression_ref ai; // here, we need to allocate a reg containing the expression: (@ f Int(i));
-    // question: can we plug i in here direction, or do we need to add a reg_var?
-    a->sub[i+1] = ai;
+    int r = Args.allocate((f,n));
+    
+    a->sub[i+1] = reg_var(r);
   }
   
   return a;
 }
+
+expression_ref mkArray = lambda_expression( MkArray() );
 
 shared_ptr<const Object> GetIndex::operator()(OperationArgs& Args) const
 {
@@ -125,3 +127,5 @@ shared_ptr<const Object> GetIndex::operator()(OperationArgs& Args) const
 
   return A->sub[1+n];
 }
+
+expression_ref getIndex = lambda_expression( GetIndex() );

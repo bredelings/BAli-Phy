@@ -29,7 +29,7 @@ struct OperationArgs: virtual public Object
     return convert<const T>( evaluate(slot) );
   }
 
-  int allocate() 
+  virtual int allocate(const expression_ref&) 
   { 
     std::abort();
   }
