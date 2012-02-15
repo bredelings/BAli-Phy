@@ -283,6 +283,19 @@ int main()
   cout<<test11<<"\n";
 
   context C;
+
+
+  expression_ref myArray = var("myArray");
+  expression_ref square = var("square");
+  {
+    Program P;
+    P += Def( (square,v1),(typed_expression_ref<Int>(v1)*v1) );
+
+    P += Def( myArray, (mkArray, 10, square) );
+
+    C += P;
+  }
+
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<C.evaluate_expression(6)<<"\n";
 
@@ -428,4 +441,9 @@ int main()
   D.set_parameter_value("Y",4);
   cout<<"D.evaluate(3) = "<<D.evaluate(3)<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
+
+
+  expression_ref test18 = (getIndex,myArray,5);
+  cout<<"Evaluating "<<test18<<std::endl;
+  cout<<"  result = "<<C.evaluate_expression( (getIndex,myArray,5) )<<std::endl;
 }
