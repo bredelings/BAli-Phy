@@ -29,7 +29,14 @@ struct OperationArgs: virtual public Object
     return convert<const T>( evaluate(slot) );
   }
 
+  int allocate() 
+  { 
+    std::abort();
+  }
+
   virtual boost::shared_ptr<const Object> evaluate_expression(const expression_ref&);
+
+  virtual ~OperationArgs() {}
 };
 
 #endif

@@ -1780,6 +1780,8 @@ class RegOperationArgs: public OperationArgs
 
   const int t;
 
+  int n_allocated;
+
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int lazy_evaluate_reg(int R2)
   {
@@ -1897,12 +1899,24 @@ public:
     std::abort();
   }
 
+  int allocate()
+  {
+    n_allocated++;
+    return *M.push_temp_head(t);
+  }
+
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
   RegOperationArgs(int r, reg_heap& m, int T)
-    :R(r),M(m),t(T)
+    :R(r),M(m),t(T),n_allocated(0)
   { 
     M.clear_used_inputs(R);
+  }
+
+  ~RegOperationArgs()
+  {
+    for(int i=0;i<n_allocated;i++)
+      M.pop_temp_head(t);
   }
 };
 
