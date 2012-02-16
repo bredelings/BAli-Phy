@@ -221,8 +221,15 @@ public:
 
   /// Allocate a reg in context t and put it on the top of the temporary-head stack.
   root_t push_temp_head(int t);
+
+  /// Allocate a reg in contexts tokens and put it on the top of the temporary-head stacks.
+  root_t push_temp_head(const std::set<int>& tokens);
+
   /// Deallocate the temporary head on the top of the temporary-head stack.
   void pop_temp_head(int t);
+
+  /// Deallocate the temporary head on the top of the temporary-head stacks for context tokens.
+  void pop_temp_head(const std::set<int>& tokens);
 
   /// Add a new identifier, pointing to a newly allocated location
   root_t add_identifier_to_context(int, const std::string&);

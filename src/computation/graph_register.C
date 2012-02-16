@@ -862,20 +862,43 @@ void reg_heap::pop_root(reg_heap::root_t r)
 
 reg_heap::root_t reg_heap::push_temp_head(int t)
 {
+  set<int> tokens;
+  tokens.insert(t);
+  return push_temp_head(tokens);
+}
+
+reg_heap::root_t reg_heap::push_temp_head(const std::set<int>& tokens)
+{
   root_t r = allocate_reg();
-  access(*r).owners.insert(t);
-  token_roots[t].temp.push_back(r);
+  access(*r).owners = tokens;
+  foreach(t,tokens)
+  {
+    token_roots[*t].temp.push_back(r);
+  }
   return r;
 }
 
 void reg_heap::pop_temp_head(int t)
 {
-  root_t r = token_roots[t].temp.back();
+  set<int> tokens;
+  tokens.insert(t);
+  pop_temp_head(tokens);
+}
 
-  assert( includes( access(*r).owners, t) );
+void reg_heap::pop_temp_head(const std::set<int>& tokens)
+{
+  int t0 = *tokens.begin();
+  root_t r0 = token_roots[t0].temp.back();
 
-  token_roots[t].temp.pop_back();
-  pop_root(r);
+  foreach(t,tokens)
+  {
+    root_t r = token_roots[*t].temp.back();
+    assert( r == r0 );
+    assert( includes( access(*r).owners, *t) );
+    token_roots[*t].temp.pop_back();
+  }
+
+  pop_root(r0);
 }
 
 void reg_heap::expand_memory(int s)
