@@ -633,9 +633,10 @@ vector<int> subA_index_t::characters_to_indices(int branch, const alignment& A, 
   vector<int> suba_for_character(A.seqlength(node), -1);
 
   // walk the alignment row and the subA-index row simultaneously
-  for(int c=0,i=0,k=0;c<A.length();c++)
+  vector<int> columns = A.get_columns_for_characters(node);
+  for(int i=0,j=0,k=0;j<columns.size();j++)
   {
-    if (not A.character(c,node)) continue;
+    int c = columns[j];
 
     while(i<indices[branch].size() and indices[branch][i].first < c)
       i++;
@@ -742,10 +743,7 @@ void subA_index_leaf::update_one_branch(const alignment& A,const Tree& T,int b)
   // notes for leaf sequences
   if (b < T.n_leaves()) 
   {
-    int k=0;
-    for(int c=0;c<A.length();c++)
-      if (A.character(c,b))
-	indices[b].push_back(std::pair<int,int>(c,k++));
+    indices[b] = convert_to_column_index_list(A.get_columns_for_characters(b));
   }
   else {
     // get 2 branches leading into this one
@@ -819,12 +817,9 @@ void subA_index_internal::update_one_branch(const alignment& A,const Tree& T,int
   // Actually update the index
   int node = T.directed_branch(b).source();
 
-  int l=0;
-  for(int c=0;c<A.length();c++) {
-    if (A.character(c,node))
-      indices[b].push_back(pair<int,int>(c,l++));
-  }
-  assert(l == A.seqlength(node));
+  indices[b] = convert_to_column_index_list( A.get_columns_for_characters(node) );
+
+  assert(indices[b].size() == A.seqlength(node));
 
   up_to_date[b] = true;
 }
