@@ -287,11 +287,16 @@ int main()
 
   expression_ref myArray = var("myArray");
   expression_ref square = var("square");
+  expression_ref myFib = var("myFib");
   {
     Program P;
     P += Def( (square,v1),(typed_expression_ref<Int>(v1)*v1) );
 
-    P += Def( myArray, (mkArray, 10, square) );
+    P += Def( (myFib, 0), 1 )
+            ( (myFib, 1), 1 )
+            ( (myFib,v1), typed_expression_ref<Int>((getIndex,myArray,v1-2)) + (getIndex,myArray,v1-1) );
+
+    P += Def( myArray, (mkArray, 10, myFib) );
 
     C += P;
   }
