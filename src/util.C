@@ -500,6 +500,7 @@ string demangle(const string& s)
 }
 #endif
 
+/// Take a list of [(column,index)] sorted by column and extract the sorted list of columns.
 vector<int> convert_to_column_list(const vector<pair<int,int> >& column_indices)
 {
   vector<int> order(column_indices.size(),-1);
@@ -507,5 +508,15 @@ vector<int> convert_to_column_list(const vector<pair<int,int> >& column_indices)
     order[column_indices[i].second] = column_indices[i].first;
   
   return order;
+}
+
+/// Take a sorted list of [column] and convert it to [(column,index)]
+vector<pair<int,int> > convert_to_column_index_list(const vector<int>& column_indices)
+{
+  vector<pair<int,int> > indices;
+  for(int i=0;i<column_indices.size();i++)
+    indices.push_back(std::pair<int,int>(column_indices[i],i));
+  
+  return indices;
 }
 

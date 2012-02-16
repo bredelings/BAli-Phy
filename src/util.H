@@ -635,7 +635,11 @@ void remove_elements(std::vector<int>& v, const std::vector<int>& e);
 
 void check_supplied_filenames(int n, const std::vector<std::string>& files, bool exact=true);
 
+/// Take a list of [(column,index)] sorted by column and extract the sorted list of columns.
 std::vector<int> convert_to_column_list(const std::vector<std::pair<int,int> >& column_indices);
+
+/// Take a sorted list of [column] and convert it to [(column,index)]
+std::vector<std::pair<int,int> > convert_to_column_index_list(const std::vector<int>& column_indices);
 
 extern int log_verbose;
 
