@@ -89,6 +89,17 @@ int alignment::index(const string& s) const {
   return -1;
 }
 
+vector<int> alignment::get_columns_for_characters(int row) const
+{
+  vector<int> columns;
+
+  for(int c=0;c<length();c++)
+    if (character(c,row))
+      columns.push_back(c);
+
+  return columns;
+}
+
 void alignment::changelength(int l) 
 {
   array.resize(l,array.size2());
