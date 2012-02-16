@@ -443,7 +443,11 @@ int main()
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
 
 
-  expression_ref test18 = (getIndex,myArray,5);
+  expression_ref test18 = (getIndex,myArray,9);
   cout<<"Evaluating "<<test18<<std::endl;
-  cout<<"  result = "<<C.evaluate_expression( (getIndex,myArray,5) )<<std::endl;
+  cout<<"  result = "<<C.evaluate_expression( test18 )<<std::endl;
+  cout<<"  result = "<<C.evaluate_expression( test18 )<<std::endl;
+  cout<<"  result = "<<C.evaluate_expression( (bnds,myArray) )<<std::endl;
+  cout<<"  result = "<<C.evaluate_expression( myArray )<<std::endl;
+  cout<<"  result = "<<C.evaluate_expression( myArray )<<std::endl;
 }
