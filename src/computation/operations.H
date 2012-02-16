@@ -143,6 +143,25 @@ struct MkArray: public Operation
 
 extern expression_ref mkArray;
 
+struct ArrayBounds: public Operation
+{
+  virtual ArrayBounds* clone() const {return new ArrayBounds(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const ArrayBounds* E = dynamic_cast<const ArrayBounds*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "bnds";}
+  
+  ArrayBounds():Operation(1) {}
+};
+
+extern expression_ref bnds;
+
 struct GetIndex: public Operation
 {
   virtual GetIndex* clone() const {return new GetIndex(*this);}

@@ -126,9 +126,19 @@ shared_ptr<const Object> GetIndex::operator()(OperationArgs& Args) const
   int n = *Args.evaluate_as<Int>(1);
   int N = A->sub.size()-1;
   if (n < 0 or n >= N)
-      throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";
-
+    throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";
+      
   return A->sub[1+n];
 }
 
 expression_ref getIndex = lambda_expression( GetIndex() );
+
+shared_ptr<const Object> ArrayBounds::operator()(OperationArgs& Args) const
+{
+  shared_ptr<const expression> A = convert<const expression>( Args.lazy_evaluate(0) );
+  int N = A->sub.size()-1;
+
+  return graph_normalize(Tuple(0,N-1));
+}
+
+expression_ref bnds = lambda_expression( ArrayBounds() );
