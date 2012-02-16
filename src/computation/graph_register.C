@@ -1803,6 +1803,8 @@ class RegOperationArgs: public OperationArgs
 
   const int t;
 
+  std::set<int> owners;
+
   int n_allocated;
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
@@ -1924,7 +1926,7 @@ public:
 
   int allocate(const expression_ref& R)
   {
-    int r = *M.push_temp_head(t);
+    int r = *M.push_temp_head( owners );
     M.set_E(r, R);
     n_allocated++;
     return r;
@@ -1933,7 +1935,7 @@ public:
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
   RegOperationArgs(int r, reg_heap& m, int T)
-    :R(r),M(m),t(T),n_allocated(0)
+    :R(r),M(m),t(T),owners(M.access(R).owners), n_allocated(0)
   { 
     M.clear_used_inputs(R);
   }
@@ -1941,7 +1943,7 @@ public:
   ~RegOperationArgs()
   {
     for(int i=0;i<n_allocated;i++)
-      M.pop_temp_head(t);
+      M.pop_temp_head( owners );
   }
 };
 
@@ -2086,10 +2088,12 @@ int reg_heap::incremental_evaluate(int R, int t)
     // Reduction: let expression
     else if (parse_let_expression(access(R).E, vars, bodies, T))
     {
+      set<int> owners = access(R).owners;
+
       vector<shared_ptr<reg_var> > new_reg_vars;
       for(int i=0;i<vars.size();i++)
       {
-	int V = *push_temp_head(t);
+	int V = *push_temp_head(owners);
 	// Don't set ownership here, where it could be cleared by further allocate()s.
 	new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(V)) );
       }
@@ -2110,14 +2114,6 @@ int reg_heap::incremental_evaluate(int R, int t)
       
       assert(not access(R).changeable);
 
-      // Set ownership here, where it will not be cleared by futher allocate calls.
-      for(int i=0;i<vars.size();i++) 
-      {
-	int V = new_reg_vars[i]->target;
-
-	access(V).owners = access(R).owners;
-      }
-
       // Set the bodies of the new reg_vars
       for(int i=0;i<vars.size();i++) 
       {
@@ -2130,7 +2126,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
       // Remove the new heap vars from the list of temp heads in reverse order.
       for(int i=0;i<new_reg_vars.size(); i++)
-	pop_temp_head(t);
+	pop_temp_head(owners);
       
       assert(access(R).call == -1);
       assert(not access(R).result);
