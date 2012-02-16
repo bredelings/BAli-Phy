@@ -110,7 +110,7 @@ shared_ptr<const Object> MkArray::operator()(OperationArgs& Args) const
   a->sub[0] = constructor("Array",n);
   for(int i=0;i<n;i++)
   {
-    int r = Args.allocate((f,n));
+    int r = Args.allocate((f,i));
     
     a->sub[i+1] = reg_var(r);
   }
