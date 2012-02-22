@@ -347,10 +347,13 @@ void sample_branch_length_(owned_ptr<Probability_Model>& P,  MoveStats& Stats, i
 
   // FIXME - this might move the accumulator off of the current branch (?)
   // TEST and Check Scaling of # of branches peeled
-  if (myrandomf() < 0.5)
-    slide_node(P,Stats,bv);
-  else 
-    change_3_branch_lengths(P,Stats,bv.target());
+  if (P.as<Parameters>()->T->n_nodes() > 2)
+  {
+    if (myrandomf() < 0.5)
+      slide_node(P,Stats,bv);
+    else 
+      change_3_branch_lengths(P,Stats,bv.target());
+  }
 
   if (not do_slice) {
     change_branch_length(P,Stats,b);
