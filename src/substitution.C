@@ -1081,7 +1081,7 @@ namespace substitution {
 
   /// Get the likelihood matrix for each letter l of sequence n, where the likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
   vector<Matrix>
-  get_leaf_seq_likelihoods(const data_partition& P, int n)
+  get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
   {
     const vector<int>& sequence = (*P.sequences)[n];
     const alignment& A = *P.A;
@@ -1103,6 +1103,13 @@ namespace substitution {
 
     // Compute the likelihood matrices for each letter in the sequence
     vector<Matrix> likelihoods(L, Matrix(n_models,n_states));
+
+    //Add the padding matrices
+    {
+      for(int i=0;i<delta;i++)
+	likelihoods.push_back(Matrix(0,0));
+    }
+
     for(int i=0;i<L;i++)
     {
       int letter = sequence[i];

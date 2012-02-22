@@ -165,12 +165,9 @@ vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& s
 
   vector< Matrix > dist;
   if (branches.size())
-    dist = substitution::get_column_likelihoods(P,branches,seq,2);
+    dist = substitution::get_column_likelihoods(P, branches, seq, 2);
   else
-  // FIXME - we could easily make 2-leaf trees work here (halfway) by just special-casing get_column_likelihoods when
-  //         branches.size() == 0.
-  //       - essentially we would need to write a copy of peel_leaf_branch that uses identity matrices for all transition probabilities.
-    ;
+    dist = substitution::get_leaf_seq_likelihoods(P, root, 2);
 
   // note: we could normalize frequencies to sum to 1
   assert(dist.size() == seq.size()+2);

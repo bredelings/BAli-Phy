@@ -69,6 +69,10 @@ namespace substitution {
   get_column_likelihoods(const data_partition&, const std::vector<int>& b,
 			 const std::vector<int>& seq,int delta=0);
 
+  /// Find the likelihood matrices for data at leaf node n.
+  std::vector<Matrix>
+  get_leaf_seq_likelihoods(const data_partition& P, int n, int delta);
+
   /// Full likelihood - all columns, all rates
   efloat_t Pr(const data_partition&);
 
