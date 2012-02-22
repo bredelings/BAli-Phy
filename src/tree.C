@@ -2350,7 +2350,14 @@ Tree star_tree(int n)
 {
   BranchNode* center = get_first_node(1);
 
-  if (n > 1)
+  if (n == 1)
+    ;
+  else if (n == 2)
+  {
+    center->node_attributes->name = 0;
+    add_leaf_node(center,1,0)->node_attributes->name = 1;
+  }
+  else
     for(int i=0;i<n;i++)
       add_leaf_node(center,1,0)->node_attributes->name = i;
 
