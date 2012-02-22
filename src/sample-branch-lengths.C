@@ -329,6 +329,7 @@ void slide_node(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b0)
   if (b[0].target().is_leaf_node())
     b[0] = b[0].reverse();
   append(b[0].branches_after(),b);
+  assert(b.size() == 3);
 
   b0 = b[0].name();
   int b1 = b[1].undirected_name();
