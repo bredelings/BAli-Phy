@@ -1253,8 +1253,8 @@ int main(int argc,char* argv[])
     sanitize_branch_lengths(T);
 
     //--------- Do we have enough sequences? ------//
-    if (T.n_leaves() < 3)
-      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".";
+    //    if (T.n_leaves() < 3)
+    //      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".";
 
     //--------- Set up the substitution model --------//
     shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);

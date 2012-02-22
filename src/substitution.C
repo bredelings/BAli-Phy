@@ -309,6 +309,98 @@ namespace substitution {
     return total;
   }
 
+  efloat_t calc_root_probability2(const alignment&, const Tree& T,Likelihood_Cache& cache,
+			       const MultiModelObject& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
+  {
+    total_calc_root_prob++;
+    default_timer_stack.push_timer("substitution::calc_root");
+
+    assert(index.size2() == rb.size());
+
+    for(int i=0;i<rb.size();i++)
+      assert(cache.up_to_date(rb[i]));
+
+    const int root = cache.root;
+
+    assert(T.directed_branch(rb[0]).target().name() == root);
+
+    assert(rb.size() == 2);
+
+    // scratch matrix 
+    Matrix & S = cache.scratch(0);
+    const int n_models = cache.n_models();
+    const int n_states = cache.n_states();
+
+    // cache matrix F(m,s) of p(m)*freq(m,l)
+    Matrix F(n_models,n_states);
+    WeightedFrequencyMatrix(F, MModel);
+
+    // look up the cache rows now, once, instead of for each column
+    vector< vector<Matrix>* > branch_cache;
+    for(int i=0;i<rb.size();i++)
+      branch_cache.push_back(&cache[rb[i]]);
+    
+    efloat_t total = 1;
+    for(int i=0;i<index.size1();i++)
+    {
+      double p_col = 1;
+
+      int i0 = index(i,0);
+      int i1 = index(i,1);
+
+      Matrix* m[2];
+      int mi=0;
+
+      if (i0 != -1)
+	m[mi++] = &((*branch_cache[0])[i0]);
+      if (i1 != -1)
+	m[mi++] = &((*branch_cache[1])[i1]);
+
+      if (mi==2)
+	p_col = element_prod_sum(F, *m[0], *m[1]);
+      else if (mi==1)
+	p_col = element_prod_sum(F, *m[0]);
+
+#ifndef DEBUG_SUBSTITUTION
+      //-------------- Set letter & model prior probabilities  ---------------//
+      element_assign(S,F);
+
+      //-------------- Propagate and collect information at 'root' -----------//
+      for(int j=0;j<rb.size();j++) {
+	int i0 = index(i,j);
+	if (i0 != alphabet::gap)
+	  element_prod_modify(S,(*branch_cache[j])[i0]);
+      }
+
+      //------------ Check that individual models are not crazy -------------//
+      for(int m=0;m<n_models;m++) {
+	double p_model=0;
+	for(int s=0;s<n_states;s++)
+	  p_model += S(m,s);
+	// A specific model (e.g. the INV model) could be impossible
+	assert(0 <= p_model and p_model <= 1.00000000001);
+      }
+
+      double p_col2 = element_sum(S);
+
+      assert((p_col - p_col2)/std::max(p_col,p_col2) < 1.0e-9);
+#endif
+
+      // SOME model must be possible
+      assert(0 <= p_col and p_col <= 1.00000000001);
+
+      // This does a log( ) operation.
+      total *= p_col;
+      //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+    }
+
+    for(int i=0;i<rb.size();i++)
+      total *= cache[rb[i]].other_subst;
+
+    default_timer_stack.pop_timer();
+    return total;
+  }
+
   efloat_t calc_root_probability_unaligned(const alignment&,const Tree& T,Likelihood_Cache& cache,
 					   const MultiModelObject& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
@@ -919,6 +1011,8 @@ namespace substitution {
     default_timer_stack.pop_timer();
   }
 
+  vector<Matrix>
+  get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const MultiModelObject& MM, int n, int delta);
 
 
   void peel_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, 
@@ -933,7 +1027,22 @@ namespace substitution {
 
     int B0 = T.directed_branch(b0).undirected_name();
 
-    if (bb == 0) {
+    if (T.n_nodes() == 2 and b0 == 1)
+    {
+      assert(bb == 0);
+      if (not I.branch_index_valid(b0))
+	I.update_branch(A,T,b0);
+
+      cache.prepare_branch(b0);
+      cache.set_length(I.branch_index_length(b0), b0);
+
+      vector<Matrix> L = get_leaf_seq_likelihoods(sequences[1], A.get_alphabet(), MModel, 1, 0);
+
+      for(int i=0;i<I.branch_index_length(b0);i++)
+	cache(i,b0) = L[i];
+      cache[b0].other_subst = 1;
+    }
+    else if (bb == 0) {
       int n_states = cache.scratch(0).size2();
       int n_letters = A.get_alphabet().n_letters();
       if (n_states == n_letters) {
@@ -1003,6 +1112,12 @@ namespace substitution {
   {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_node(n, T, cache);
+
+    if (T.n_nodes() == 2)
+    {
+      assert(n == 1);
+      ops.push_back(1);
+    }
 
     // FIXME? Currently we require that ALL branches towards this node are up-to-date.
     // This is used in e.g. get_likelihoods_by_alignment_column( ) but isn't necessary for
@@ -1081,16 +1196,12 @@ namespace substitution {
 
   /// Get the likelihood matrix for each letter l of sequence n, where the likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
   vector<Matrix>
-  get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
+  get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const MultiModelObject& MM, int n, int delta)
   {
-    const vector<int>& sequence = (*P.sequences)[n];
-    const alignment& A = *P.A;
     int L = sequence.size();
 
-    const alphabet& a = P.get_alphabet();
     const int n_letters = a.size();
 
-    const MultiModelObject& MM = P.SModel();
     const int n_models = MM.n_base_models();
     const int n_states = MM.n_states();
 
@@ -1120,6 +1231,16 @@ namespace substitution {
     }
 
     return likelihoods;
+  }
+
+  vector<Matrix>
+  get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
+  {
+    const vector<int>& sequence = (*P.sequences)[n];
+    const alignment& A = *P.A;
+    const alphabet& a = P.get_alphabet();
+    const MultiModelObject& MM = P.SModel();
+    return get_leaf_seq_likelihoods(sequence, a, MM, n, delta);
   }
 
   /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
@@ -1581,14 +1702,27 @@ namespace substitution {
 
     // compute root branches
     vector<int> rb;
-    for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
-      rb.push_back(*i);
+    if (T.n_nodes() == 2)
+    {
+      // This is the 
+      rb.push_back(0);
+      rb.push_back(1);
+    }
+    else
+    {
+      for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
+	rb.push_back(*i);
+    }
 
     // get the relationships with the sub-alignments
     ublas::matrix<int> index = I.get_subA_index(rb,A,T);
 
     // get the probability
-    efloat_t Pr = calc_root_probability(A,T,LC,MModel,rb,index);
+    efloat_t Pr = 1;
+    if (T.n_nodes() == 2)
+      Pr = calc_root_probability2(A,T,LC,MModel,rb,index);
+    else
+      Pr = calc_root_probability(A,T,LC,MModel,rb,index);
 
     LC.cached_value = Pr;
     LC.cv_up_to_date() = true;
@@ -1598,9 +1732,8 @@ namespace substitution {
     return Pr;
   }
 
-
-
-  efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) {
+  efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) 
+  {
     return Pr(*P.sequences, *P.A, *P.subA, P, *P.T, LC, P.SModel());
   }
 
@@ -1631,8 +1764,6 @@ namespace substitution {
 
     return Pr(*P.sequences, *P.A, subA, P, *P.T, LC, P.SModel());
   }
-
-
 
   efloat_t Pr(const data_partition& P) {
     efloat_t result = Pr(P, P.LC);
