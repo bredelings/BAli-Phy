@@ -114,7 +114,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   
   if (not cached_transition_P[b].is_valid())
   {
-    double l = T->branch(b).length() * branch_mean() / SModel().rate();
+    double l = P->get_branch_subst_length(partition_index,b) / SModel().rate();
     assert(l >= 0);
 
     vector< Matrix >& TP = cached_transition_P[b].modify_value();
@@ -139,7 +139,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
   if (not HMM.is_valid())
   {
     // use the length, unless we are unaligned
-    double t = T->branch(b).length();
+    double D = P->get_branch_indel_length(partition_index, b);
 
     double indel_scale_by = 1.0;
     int indel_scale_branch = -1;
@@ -153,9 +153,9 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
     if (branch_HMM_type[b] == 1)
       HMM = IModel_->get_branch_HMM(-1);
     else if (b == indel_scale_branch)
-      HMM = IModel_->get_branch_HMM(t*branch_mean()*indel_scale_by);
+      HMM = IModel_->get_branch_HMM(D*indel_scale_by);
     else
-      HMM = IModel_->get_branch_HMM(t*branch_mean());
+      HMM = IModel_->get_branch_HMM(D);
   }
 
   return HMM;
@@ -453,10 +453,10 @@ efloat_t data_partition::prior_no_alignment() const
     double indel_scale_by = get_parameter_value_as<Double>(0);
     Pr *= laplace_pdf(indel_scale_by, 0, 1);
 
-    bool indel_scale_on = get_parameter_value_as<Bool>(1);
+    //    bool indel_scale_on = get_parameter_value_as<Bool>(1);
     Pr *= 0.5;
 
-    int indel_scale_branch = get_parameter_value_as<Int>(2);
+    //    int indel_scale_branch = get_parameter_value_as<Int>(2);
     Pr *= 1.0/(T->n_branches());
   }
 
@@ -552,7 +552,7 @@ const substitution::MultiModelObject& data_partition::SModel() const
 }
 
 data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
-			       const substitution::MultiModelObject& SM,const IndelModel& IM)
+			       const substitution::MultiModelObject&,const IndelModel& IM)
   :P(p),
    partition_index(i),
    IModel_(IM),
@@ -595,7 +595,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
 }
 
 data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
-			       const substitution::MultiModelObject& SM)
+			       const substitution::MultiModelObject&)
   :P(p),
    partition_index(i),
    partition_name(n),
@@ -1011,6 +1011,54 @@ void Parameters::branch_mean_tricky(int i,double x)
       data_partitions[j]->branch_mean_tricky(x);
 }
 
+double Parameters::get_branch_duration(int b) const
+{
+  b = T->directed_branch(b).undirected_name();
+
+  return T->branch(b).length();
+}
+
+double Parameters::get_branch_duration(int /* p */, int b) const
+{
+  return get_branch_duration(b);
+}
+
+double Parameters::get_branch_subst_rate(int p, int /* b */) const
+{
+  int s = scale_for_partition[p];
+  return get_parameter_value_as<Double>(branch_mean_index(s));
+}
+
+double Parameters::get_branch_subst_length(int p, int b) const
+{
+  double length1 = get_branch_duration(p,b) * get_branch_subst_rate(p,b);
+
+  b = T->directed_branch(b).undirected_name();
+  //  int s = scale_for_partition[p];
+  //  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
+  //  assert(std::abs(length1 - length2) < 1.0e-8);
+
+  return length1;
+}
+
+double Parameters::get_branch_indel_rate(int p, int /* b */) const
+{
+  int s = scale_for_partition[p];
+  return get_parameter_value_as<Double>(branch_mean_index(s));
+}
+
+double Parameters::get_branch_indel_length(int p, int b) const
+{
+  double length1 = get_branch_duration(p,b) * get_branch_subst_rate(p,b);
+
+  b = T->directed_branch(b).undirected_name();
+  //  int s = scale_for_partition[p];
+  //  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
+  //  assert(std::abs(length1 - length2) < 1.0e-8);
+
+  return length1;
+}
+
 Parameters& Parameters::operator=(const Parameters& P)
 {
   Model::operator=(P);
@@ -1029,6 +1077,8 @@ Parameters& Parameters::operator=(const Parameters& P)
   n_scales = P.n_scales;
 
   branch_prior_type = P.branch_prior_type;
+
+  branch_length_indices = P.branch_length_indices;
 
   data_partitions = P.data_partitions;
 
@@ -1151,6 +1201,18 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     // register data partition as sub-model
     register_submodel(name);
   }
+
+  for(int i=0;i<n_scales;i++)
+  {
+    string prefix= "scale" + convertToString(i+1);
+    branch_length_indices.push_back(vector<int>());
+    for(int j=0;j<T->n_branches();j++)
+    {
+      string name = "D" + convertToString(j+1);
+      int index = add_parameter(Parameter(prefix+"::"+name, Double(0.0)));
+      branch_length_indices[i].push_back(index);
+    }
+  }
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
@@ -1218,6 +1280,18 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
     // register data partition as sub-model
     register_submodel(name);
+  }
+
+  for(int i=0;i<n_scales;i++)
+  {
+    string prefix= "scale" + convertToString(i+1);
+    branch_length_indices.push_back(vector<int>());
+    for(int j=0;j<T->n_branches();j++)
+    {
+      string name = "D" + convertToString(j+1);
+      int index = add_parameter(Parameter(prefix+"::"+name, Double(0.0)));
+      branch_length_indices[i].push_back(index);
+    }
   }
 }
 

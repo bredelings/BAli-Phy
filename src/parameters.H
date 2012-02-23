@@ -287,6 +287,8 @@ class Parameters: public SuperModel, public Probability_Model
 
   void recalc(const std::vector<int>&);
 
+  std::vector< std::vector<int> > branch_length_indices;
+
 public:
 
   /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
@@ -411,6 +413,18 @@ public:
   void branch_mean(int i,double); 
 
   void branch_mean_tricky(int i,double); 
+
+  double get_branch_duration(int b) const;
+
+  double get_branch_duration(int p, int b) const;
+
+  double get_branch_subst_rate(int p, int b) const;
+
+  double get_branch_subst_length(int p, int b) const;
+
+  double get_branch_indel_rate(int p, int b) const;
+
+  double get_branch_indel_length(int p, int b) const;
 
   Parameters* clone() const {return new Parameters(*this);}
 
