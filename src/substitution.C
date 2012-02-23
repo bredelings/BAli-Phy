@@ -1213,21 +1213,15 @@ namespace substitution {
       letter_likelihoods.push_back( get_letter_likelihoods(l, a, MM) );
 
     // Compute the likelihood matrices for each letter in the sequence
-    vector<Matrix> likelihoods(L, Matrix(n_models,n_states));
-
-    //Add the padding matrices
-    {
-      for(int i=0;i<delta;i++)
-	likelihoods.push_back(Matrix(0,0));
-    }
+    vector<Matrix> likelihoods(L+delta, Matrix(n_models,n_states));
 
     for(int i=0;i<L;i++)
     {
       int letter = sequence[i];
       if (a.is_letter(letter))
-	likelihoods[i] = letter_likelihoods[letter];
+	likelihoods[i+delta] = letter_likelihoods[letter];
       else
-	likelihoods[i] = get_letter_likelihoods(letter, a, MM);
+	likelihoods[i+delta] = get_letter_likelihoods(letter, a, MM);
     }
 
     return likelihoods;
