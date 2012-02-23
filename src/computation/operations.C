@@ -141,4 +141,4 @@ shared_ptr<const Object> ArrayBounds::operator()(OperationArgs& Args) const
   return graph_normalize(Tuple(0,N-1));
 }
 
-expression_ref bnds = lambda_expression( ArrayBounds() );
+expression_ref bounds = lambda_expression( ArrayBounds() );
