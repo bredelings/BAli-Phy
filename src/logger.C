@@ -292,7 +292,7 @@ string Get_Tree_Length_Function::operator()(const owned_ptr<Probability_Model>& 
 
   const SequenceTree& T = *PP.T;
 
-  return convertToString( mu_scale(PP) * length(T) );
+  return convertToString( mu_scale(PP) * tree_length(T) );
 }
 
 string TreeFunction::operator()(const owned_ptr<Probability_Model>& P, long)

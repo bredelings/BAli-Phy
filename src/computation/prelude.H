@@ -14,6 +14,9 @@ extern const expression_ref ExtendDiscreteDistribution;
 extern const expression_ref MultiParameter;
 extern const expression_ref fst;
 extern const expression_ref snd;
+extern const expression_ref get_list_index;
+extern const expression_ref listArray;
+extern const expression_ref length;
 
 extern const Program Prelude;
 

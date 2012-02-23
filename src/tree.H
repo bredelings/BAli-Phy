@@ -664,7 +664,7 @@ Tree RandomTree(int n,double=1.0);
 boost::dynamic_bitset<> branch_partition(const Tree& T,int b);
 
 /// Sum of the lengths of all branches
-double length(const Tree& T);
+double tree_length(const Tree& T);
 
 /// Return the maximum distance from T.branch(b).target() to nodes after b.
 int subtree_height(const Tree& T,int b);

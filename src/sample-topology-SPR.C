@@ -599,7 +599,7 @@ struct spr_attachment_probabilities: public map<tree_edge,efloat_t>
 ///  and choose the point on the branch specified in \a locations.
 int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_points& locations, int branch_to_move = -1)
 {
-  double total_length_before = length(T);
+  double total_length_before = tree_length(T);
 
   // unbroken target branch
   /// \todo Correctly handle moving to the same topology -- but allow branch lengths to change.
@@ -635,7 +635,7 @@ int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_p
   T.directed_branch(b1).set_length(L1);
   T.directed_branch(b2).set_length(L2);
 
-  double total_length_after = length(T);
+  double total_length_after = tree_length(T);
   assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
 
   // Return the branch name that moved to the new attachment location.

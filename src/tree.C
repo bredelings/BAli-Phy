@@ -2376,7 +2376,7 @@ boost::dynamic_bitset<> branch_partition(const Tree& T,int b)
 }
 
 
-double length(const Tree& T) {
+double tree_length(const Tree& T) {
   double total = 0;
   for(int i=0;i<T.n_branches();i++)
     total += T.branch(i).length();
