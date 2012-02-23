@@ -311,7 +311,7 @@ Model::Model(const vector<expression_ref>& N)
   {
     expression_ref var = parameter(parameter_name(i));
     vector<expression_ref> results;
-    expression_ref query = ::bounds(var,match(0));
+    expression_ref query = var_bounds(var,match(0));
     int found = C.find_match_notes(query, results, 0);
     if (found != -1)
     {
@@ -365,7 +365,7 @@ formula_expression_ref model_formula(const Model& M)
   for(int i=0;i<M.n_parameters();i++)
   {
     expression_ref var = parameter(M.parameter_name(i));
-    N.push_back(bounds(var, M.get_bounds(i)));
+    N.push_back(var_bounds(var, M.get_bounds(i)));
 
     if (M.get_parameter_value(i))
       N.push_back(default_value(var, M.get_parameter_value(i)));
