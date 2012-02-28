@@ -474,7 +474,7 @@ namespace substitution {
   efloat_t calc_root_probability(const data_partition& P,const vector<int>& rb,
 			       const ublas::matrix<int>& index) 
   {
-    return calc_root_probability(*P.A, *P.T, P.LC, P.SModel(), rb, index);
+    return calc_root_probability(*P.A, *P.T_, P.LC, P.SModel(), rb, index);
   }
 
   inline double sum(const Matrix& Q, const vector<unsigned>& smap, int n_letters, 
@@ -1132,7 +1132,7 @@ namespace substitution {
   }
 
   int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, *P.sequences, *P.A, *P.subA, P, *P.T, P.LC, P.SModel());
+    return calculate_caches_for_node(n, *P.sequences, *P.A, *P.subA, P, *P.T_, P.LC, P.SModel());
   }
 
   static 
@@ -1249,7 +1249,7 @@ namespace substitution {
     const alphabet& a = P.get_alphabet();
 
     const alignment& A = *P.A;
-    const Tree& T = *P.T;
+    const Tree& T = *P.T_;
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
     const MultiModelObject& MM = P.SModel();
@@ -1377,7 +1377,7 @@ namespace substitution {
   {
     const vector< vector<int> >& sequences = *P.sequences;
     const alignment& A = *P.A;
-    const SequenceTree& T = *P.T;
+    const SequenceTree& T = *P.T_;
     const Mat_Cache& MC = P;
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
@@ -1658,7 +1658,7 @@ namespace substitution {
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr_unaligned_root(*P.sequences, *P.A, *P.subA, P, *P.T, LC, P.SModel());
+    return Pr_unaligned_root(*P.sequences, *P.A, *P.subA, P, *P.T_, LC, P.SModel());
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P) {
@@ -1728,19 +1728,19 @@ namespace substitution {
 
   efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) 
   {
-    return Pr(*P.sequences, *P.A, *P.subA, P, *P.T, LC, P.SModel());
+    return Pr(*P.sequences, *P.A, *P.subA, P, *P.T_, LC, P.SModel());
   }
 
 
 
   efloat_t Pr_from_scratch_leaf(data_partition P)
   {
-    subA_index_leaf subA(P.A->length()+1, P.T->n_branches()*2);
+    subA_index_leaf subA(P.A->length()+1, P.T_->n_branches()*2);
 
-    Likelihood_Cache LC(*P.T, P.SModel());
+    Likelihood_Cache LC(*P.T_, P.SModel());
     LC.root = P.LC.root;
 
-    return Pr(*P.sequences, *P.A, subA, P, *P.T, LC, P.SModel());
+    return Pr(*P.sequences, *P.A, subA, P, *P.T_, LC, P.SModel());
   }
 
 
@@ -1749,14 +1749,14 @@ namespace substitution {
   {
     assert(P.variable_alignment());
 
-    subA_index_internal subA(P.A->length()+1, P.T->n_branches()*2);
+    subA_index_internal subA(P.A->length()+1, P.T_->n_branches()*2);
 
-    Likelihood_Cache LC(*P.T, P.SModel());
+    Likelihood_Cache LC(*P.T_, P.SModel());
     LC.root = P.LC.root;
 
-    check_internal_nodes_connected(*P.A,*P.T,vector<int>(1,LC.root));
+    check_internal_nodes_connected(*P.A,*P.T_,vector<int>(1,LC.root));
 
-    return Pr(*P.sequences, *P.A, subA, P, *P.T, LC, P.SModel());
+    return Pr(*P.sequences, *P.A, subA, P, *P.T_, LC, P.SModel());
   }
 
   efloat_t Pr(const data_partition& P) {
@@ -1772,7 +1772,7 @@ namespace substitution {
 
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
-      compare_caches(*P.subA, *P2.subA, P.LC, P2.LC, *P.T);
+      compare_caches(*P.subA, *P2.subA, P.LC, P2.LC, *P.T_);
       std::abort();
     }
 #endif
@@ -1784,7 +1784,7 @@ namespace substitution {
     {
       efloat_t result4 = Pr_from_scratch_internal(P);
 
-      compare_branch_totals(subA3,subA4,LC3,LC4, *P.T, *P.A, P.SModel());
+      compare_branch_totals(subA3,subA4,LC3,LC4, *P.T_, *P.A, P.SModel());
       assert(std::abs(log(result3) - log(result4)) < 1.0e-9);
     }
 
@@ -1925,7 +1925,7 @@ namespace substitution {
 
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition& P)
   {
-    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, *P.A, *P.subA, P, *P.T, P.LC, P.SModel());
+    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, *P.A, *P.subA, P, *P.T_, P.LC, P.SModel());
 
 #ifdef DEBUG_SUBSTITUTION
     efloat_t L1 = combine_likelihoods(likelihoods);

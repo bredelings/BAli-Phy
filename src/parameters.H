@@ -179,7 +179,7 @@ public:
   cow_ptr<alignment> A;
 
   /// Tree pushed down from above
-  cow_ptr<SequenceTree> T;
+  cow_ptr<SequenceTree> T_;
 
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;

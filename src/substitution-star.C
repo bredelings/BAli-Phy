@@ -93,10 +93,10 @@ namespace substitution {
 
   efloat_t Pr_star(const data_partition& P) 
   {
-    if (P.T->n_leaves() == 2)
+    if (P.T_->n_leaves() == 2)
       return Pr(P);
 
-    return Pr_star(*P.A, *P.T, P.SModel(), P);
+    return Pr_star(*P.A, *P.T_, P.SModel(), P);
   }
 
   efloat_t Pr_unaligned(const data_partition& P) 

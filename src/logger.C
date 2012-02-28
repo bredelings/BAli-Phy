@@ -215,19 +215,19 @@ string Get_Alignment_Length_Function::operator()(const owned_ptr<Probability_Mod
 string Get_Num_Substitutions_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
-  return convertToString(n_mutations(*PP[p].A, *PP[p].T, cost_matrix));
+  return convertToString(n_mutations(*PP[p].A, *PP[p].T_, cost_matrix));
 }
 
 string Get_Num_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
-  return convertToString(n_indels(*PP[p].A, *PP[p].T));
+  return convertToString(n_indels(*PP[p].A, *PP[p].T_));
 }
 
 string Get_Total_Length_Indels_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
-  return convertToString(total_length_indels(*PP[p].A, *PP[p].T));
+  return convertToString(total_length_indels(*PP[p].A, *PP[p].T_));
 }
 //
 string Get_Total_Alignment_Length_Function::operator()(const owned_ptr<Probability_Model>& P, long)
@@ -246,7 +246,7 @@ string Get_Total_Num_Substitutions_Function::operator()(const owned_ptr<Probabil
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
-    total += n_mutations(*PP[p].A, *PP[p].T);
+    total += n_mutations(*PP[p].A, *PP[p].T_);
   return convertToString(total);
 }
 
@@ -256,7 +256,7 @@ string Get_Total_Num_Indels_Function::operator()(const owned_ptr<Probability_Mod
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
-    total += n_indels(*PP[p].A, *PP[p].T);
+    total += n_indels(*PP[p].A, *PP[p].T_);
   return convertToString(total);
 }
 
@@ -266,7 +266,7 @@ string Get_Total_Total_Length_Indels_Function::operator()(const owned_ptr<Probab
 
   int total = 0;
   for(int p=0;p<PP.n_data_partitions();p++)
-    total += total_length_indels(*PP[p].A, *PP[p].T);
+    total += total_length_indels(*PP[p].A, *PP[p].T_);
   return convertToString(total);
 }
 
