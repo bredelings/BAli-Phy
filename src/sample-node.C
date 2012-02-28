@@ -64,7 +64,7 @@ using namespace A3;
 boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
 {
   default_timer_stack.push_timer("alignment::DP1/3-way");
-  const Tree& T = *P.T_;
+  const Tree& T = P.T();
 
   assert(P.variable_alignment());
 

@@ -181,6 +181,8 @@ public:
   /// Tree pushed down from above
   cow_ptr<SequenceTree> T_;
 
+  const SequenceTree& T() const;
+
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;
   

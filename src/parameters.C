@@ -49,6 +49,18 @@ void data_partition::set_beta(double b)
   recalc_imodel();
 }
 
+const SequenceTree& data_partition::T() const
+{
+  for(int b=0;b<2*T_->n_branches();b++)
+  {
+    double L1 = T_->directed_branch(b).length();
+    double L2 = P->T->directed_branch(b).length();
+    assert(std::abs(L1 - L2) < 1.0e-9);
+  }
+  return *P->T;
+}
+
+
 double data_partition::get_beta() const
 {
   return beta[0];
@@ -59,18 +71,18 @@ void data_partition::variable_alignment(bool b)
   variable_alignment_ = b;
 
   // Ignore requests to turn on alignment variation when there is no imodel or internal nodes
-  if (not has_IModel() or A->n_sequences() != T_->n_nodes())
+  if (not has_IModel() or A->n_sequences() != T().n_nodes())
     variable_alignment_ = false;
 
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
-    subA = subA_index_leaf(A->length()+1, T_->n_branches()*2);
+    subA = subA_index_leaf(A->length()+1, T().n_branches()*2);
 
     // We just changed the subA index type
     LC.invalidate_all();
 
-    if (A->n_sequences() == T_->n_nodes())
+    if (A->n_sequences() == T().n_nodes())
       if (not check_leaf_characters_minimally_connected(*A,*T_))
 	throw myexception()<<"Failing to turn off alignment variability: non-default internal node states";
   }
@@ -218,6 +230,10 @@ void data_partition::recalc_smodel()
 
 void data_partition::setlength_no_invalidate_LC(int b, double l)
 {
+  double L1 = T_->directed_branch(b).length();
+  double L2 = P->T->directed_branch(b).length();
+  assert(std::abs(L1 - L2) < 1.0e-9);
+
   default_timer_stack.push_timer("setlength_no_invalidate_LC( )");
   b = T_->directed_branch(b).undirected_name();
 
@@ -966,16 +982,16 @@ void Parameters::variable_alignment(bool b)
 
 void Parameters::setlength_no_invalidate_LC(int b,double l) 
 {
-  T->directed_branch(b).set_length(l);
   for(int i=0;i<data_partitions.size();i++) 
     data_partitions[i]->setlength_no_invalidate_LC(b,l);
+  T->directed_branch(b).set_length(l);
 }
 
 void Parameters::setlength(int b,double l) 
 {
-  T->directed_branch(b).set_length(l);
   for(int i=0;i<data_partitions.size();i++) 
     data_partitions[i]->setlength(b,l);
+  T->directed_branch(b).set_length(l);
 }
 
 double Parameters::branch_mean() const 
@@ -1018,8 +1034,14 @@ double Parameters::get_branch_duration(int b) const
   return T->branch(b).length();
 }
 
-double Parameters::get_branch_duration(int /* p */, int b) const
+double Parameters::get_branch_duration(int p, int b) const
 {
+  double t1 = data_partitions[p]->T_->directed_branch(b).length();
+  double t2 = data_partitions[p]->P->T->directed_branch(b).length();
+  double t3 = T->directed_branch(b).length();
+  assert(std::abs(t1 - t2) < 1.0e-9);
+  assert(std::abs(t1 - t3) < 1.0e-9);
+
   return get_branch_duration(b);
 }
 
