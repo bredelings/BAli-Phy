@@ -29,6 +29,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 #include "util.H"
 
+#define DEBUG_SUBSTITUTION 1
+
 #ifdef NDEBUG
 #define IF_DEBUG(x)
 #else
