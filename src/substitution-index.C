@@ -20,16 +20,18 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution-index.H"
 #include "util.H"
 
+#define DEBUG_INDEXING 1
+
 #ifdef NDEBUG
 #define IF_DEBUG(x)
 #else
 #define IF_DEBUG(x) x
 #endif
 
-#ifdef NDEBUG_INDEXING
-#define IF_DEBUG_I(x)
-#else
+#ifdef DEBUG_INDEXING
 #define IF_DEBUG_I(x) x
+#else
+#define IF_DEBUG_I(x)
 #endif
 
 using std::vector;
