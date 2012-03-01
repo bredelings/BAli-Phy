@@ -30,6 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 
 #define DEBUG_SUBSTITUTION 1
+#define DEBUG_CACHING 1
 
 #ifdef NDEBUG
 #define IF_DEBUG(x)
@@ -476,7 +477,7 @@ namespace substitution {
   efloat_t calc_root_probability(const data_partition& P,const vector<int>& rb,
 			       const ublas::matrix<int>& index) 
   {
-    return calc_root_probability(*P.A, *P.T_, P.LC, P.SModel(), rb, index);
+    return calc_root_probability(*P.A, P.T(), P.LC, P.SModel(), rb, index);
   }
 
   inline double sum(const Matrix& Q, const vector<unsigned>& smap, int n_letters, 
@@ -1134,7 +1135,7 @@ namespace substitution {
   }
 
   int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, *P.sequences, *P.A, *P.subA, P, *P.T_, P.LC, P.SModel());
+    return calculate_caches_for_node(n, *P.sequences, *P.A, *P.subA, P, P.T(), P.LC, P.SModel());
   }
 
   static 
@@ -1251,7 +1252,7 @@ namespace substitution {
     const alphabet& a = P.get_alphabet();
 
     const alignment& A = *P.A;
-    const Tree& T = *P.T_;
+    const Tree& T = P.T();
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
     const MultiModelObject& MM = P.SModel();
@@ -1720,6 +1721,12 @@ namespace substitution {
     else
       Pr = calc_root_probability(A,T,LC,MModel,rb,index);
 
+#ifdef DEBUG_CACHING
+    if (LC.cv_up_to_date())
+    {
+      assert(std::abs(LC.cached_value.log() - Pr.log()) < 1.0e-9);
+    }
+#endif
     LC.cached_value = Pr;
     LC.cv_up_to_date() = true;
 
@@ -1764,10 +1771,12 @@ namespace substitution {
   efloat_t Pr(const data_partition& P) {
     efloat_t result = Pr(P, P.LC);
 
-#ifdef DEBUG_CACHING
     data_partition P2 = P;
     P2.LC.invalidate_all();
     P2.invalidate_subA_index_all();
+    for(int i=0;i<P2.T_->n_branches();i++)
+      P2.T_->branch(i).set_length(P2.T_->branch(i).length());
+#ifdef DEBUG_CACHING_F
     for(int i=0;i<P2.T_->n_branches();i++)
       P2.setlength(i,P2.T_->branch(i).length());
     efloat_t result2 = Pr(P2, P2.LC);
