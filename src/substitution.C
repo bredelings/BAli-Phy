@@ -1380,7 +1380,7 @@ namespace substitution {
   {
     const vector< vector<int> >& sequences = *P.sequences;
     const alignment& A = *P.A;
-    const SequenceTree& T = *P.T_;
+    const SequenceTree& T = P.T();
     const Mat_Cache& MC = P;
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
@@ -1661,7 +1661,7 @@ namespace substitution {
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr_unaligned_root(*P.sequences, *P.A, *P.subA, P, *P.T_, LC, P.SModel());
+    return Pr_unaligned_root(*P.sequences, *P.A, *P.subA, P, P.T(), LC, P.SModel());
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P) {
@@ -1776,6 +1776,7 @@ namespace substitution {
     P2.invalidate_subA_index_all();
     for(int i=0;i<P2.T_->n_branches();i++)
       P2.T_->branch(i).set_length(P2.T_->branch(i).length());
+    // FIXME - what OTHER thing in setlength is changing the outcome?
 #ifdef DEBUG_CACHING_F
     for(int i=0;i<P2.T_->n_branches();i++)
       P2.setlength(i,P2.T_->branch(i).length());
