@@ -269,7 +269,7 @@ namespace substitution {
       else if (mi==1)
 	p_col = element_prod_sum(F, *m[0]);
 
-#ifndef DEBUG_SUBSTITUTION
+#ifdef DEBUG_SUBSTITUTION
       //-------------- Set letter & model prior probabilities  ---------------//
       element_assign(S,F);
 
@@ -361,7 +361,7 @@ namespace substitution {
       else if (mi==1)
 	p_col = element_prod_sum(F, *m[0]);
 
-#ifndef DEBUG_SUBSTITUTION
+#ifdef DEBUG_SUBSTITUTION
       //-------------- Set letter & model prior probabilities  ---------------//
       element_assign(S,F);
 
