@@ -51,13 +51,6 @@ void data_partition::set_beta(double b)
 
 const SequenceTree& data_partition::T() const
 {
-  assert( same_topology_and_node_and_branch_numbers(*T_, *P->T) );
-  for(int b=0;b<2*T_->n_branches();b++)
-  {
-    double L1 = T_->directed_branch(b).length();
-    double L2 = P->T->directed_branch(b).length();
-    assert(std::abs(L1 - L2) < 1.0e-9);
-  }
   return *P->T;
 }
 
@@ -84,7 +77,7 @@ void data_partition::variable_alignment(bool b)
     LC.invalidate_all();
 
     if (A->n_sequences() == T().n_nodes())
-      if (not check_leaf_characters_minimally_connected(*A,*T_))
+      if (not check_leaf_characters_minimally_connected(*A,T()))
 	throw myexception()<<"Failing to turn off alignment variability: non-default internal node states";
   }
   // turning ON alignment variation
@@ -96,7 +89,7 @@ void data_partition::variable_alignment(bool b)
       subA = subA_index_leaf(A->length()+1, T_->n_branches()*2);
 
     assert(has_IModel() and A->n_sequences() == T_->n_nodes());
-    minimally_connect_leaf_characters(*A,*T_);
+    minimally_connect_leaf_characters(*A,T());
     note_alignment_changed();
 
     // we need to calculate the branch_HMMs
@@ -250,7 +243,7 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
 void data_partition::setlength(int b, double l)
 {
   setlength_no_invalidate_LC(b,l);
-  LC.invalidate_branch(*T_,b);
+  LC.invalidate_branch(T(),b);
 }
 
 int data_partition::seqlength(int n) const
@@ -266,7 +259,7 @@ int data_partition::seqlength(int n) const
 void data_partition::invalidate_subA_index_branch(int b)
 {
   // propagates outward in both directions
-  subA->invalidate_branch(*T_,b);
+  subA->invalidate_branch(T(),b);
 }
 
 void data_partition::invalidate_subA_index_one_branch(int b)
@@ -286,8 +279,8 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 #ifndef NDEBUG
   if (subA->may_have_invalid_branches())
   {
-    subA->check_footprint(*A, *T_);
-    check_regenerate(*subA, *A, *T_);
+    subA->check_footprint(*A, T());
+    check_regenerate(*subA, *A, T());
   }  
 #endif
 
@@ -296,8 +289,8 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 #ifndef NDEBUG
   if (not subA->may_have_invalid_branches())
   {
-    subA->check_footprint(*A, *T_);
-    check_regenerate(*subA, *A, *T_);
+    subA->check_footprint(*A, T());
+    check_regenerate(*subA, *A, T());
   }  
 #endif
 }
@@ -380,7 +373,7 @@ void data_partition::note_alignment_changed_on_branch(int b)
   pairwise_alignment_for_branch[b].invalidate();
   pairwise_alignment_for_branch[B].invalidate();
 
-  const Tree& TT = *T_;
+  const Tree& TT = T();
   int target = TT.branch(b).target();
   int source = TT.branch(b).source();
 
@@ -400,7 +393,7 @@ void data_partition::note_alignment_changed_on_branch(int b)
   // get_subA_index( ) will not change if we are using subA_index_leaf.
   //
   if (subA.as<subA_index_internal>())
-    LC.invalidate_branch_alignment(*T_,b);
+    LC.invalidate_branch_alignment(T(),b);
 }
 
 void data_partition::note_alignment_changed()
@@ -493,7 +486,7 @@ efloat_t data_partition::prior_alignment() const
   if (not cached_alignment_prior.is_valid()) 
   {
     const alignment& AA = *A;
-    const SequenceTree& TT = *T_;
+    const SequenceTree& TT = T();
 
     for(int b=0;b<TT.n_branches();b++) {
       if (not cached_alignment_counts_for_branch[b].is_valid()) {
