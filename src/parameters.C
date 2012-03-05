@@ -51,6 +51,7 @@ void data_partition::set_beta(double b)
 
 const SequenceTree& data_partition::T() const
 {
+  assert( same_topology_and_node_and_branch_numbers(*T_, *P->T) );
   for(int b=0;b<2*T_->n_branches();b++)
   {
     double L1 = T_->directed_branch(b).length();
