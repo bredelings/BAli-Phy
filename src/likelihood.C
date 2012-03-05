@@ -207,7 +207,7 @@ int source)
 efloat_t prior_HMM_nogiven(const data_partition& P) 
 {
   const alignment& A = *P.A;
-  const Tree& T = *P.T_;
+  const Tree& T = P.T();
 
 #ifndef NDEBUG
   assert(P.has_IModel());
@@ -228,7 +228,7 @@ efloat_t prior_HMM_nogiven(const data_partition& P)
 
 efloat_t prior_HMM_rootless_scale(const data_partition& P)
 {
-  const Tree& T = *P.T_;
+  const Tree& T = P.T();
 
 #ifndef NDEBUG
   assert(P.has_IModel());
