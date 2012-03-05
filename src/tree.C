@@ -2452,3 +2452,18 @@ bool has_polytomy(const Tree& T)
   return false;
 }
 
+bool same_topology_and_node_and_branch_numbers(const Tree& T1, const Tree& T2)
+{
+  if (T1.n_nodes() != T2.n_nodes()) return false;
+
+  if (T1.n_branches() != T2.n_branches()) std::abort();
+
+  for(int i=0;i<T1.n_branches();i++)
+  {
+    if (T1.branch(i).source().name() != T2.branch(i).source().name()) return false;
+
+    if (T1.branch(i).target().name() != T2.branch(i).target().name()) return false;
+  }
+
+  return true;
+}

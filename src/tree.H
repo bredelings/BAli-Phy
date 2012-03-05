@@ -687,4 +687,6 @@ bool has_polytomy(const Tree& T);
 /// Remove nodes of degree 2 and merge the resulting branches.
 void remove_sub_branches(Tree& T);
 
+bool same_topology_and_node_and_branch_numbers(const Tree& T1, const Tree& T2);
+
 #endif
