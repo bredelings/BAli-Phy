@@ -1737,19 +1737,19 @@ namespace substitution {
 
   efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) 
   {
-    return Pr(*P.sequences, *P.A, *P.subA, P, *P.T_, LC, P.SModel());
+    return Pr(*P.sequences, *P.A, *P.subA, P, P.T(), LC, P.SModel());
   }
 
 
 
   efloat_t Pr_from_scratch_leaf(data_partition P)
   {
-    subA_index_leaf subA(P.A->length()+1, P.T_->n_branches()*2);
+    subA_index_leaf subA(P.A->length()+1, P.T().n_branches()*2);
 
-    Likelihood_Cache LC(*P.T_, P.SModel());
+    Likelihood_Cache LC(P.T(), P.SModel());
     LC.root = P.LC.root;
 
-    return Pr(*P.sequences, *P.A, subA, P, *P.T_, LC, P.SModel());
+    return Pr(*P.sequences, *P.A, subA, P, P.T(), LC, P.SModel());
   }
 
 
@@ -1758,33 +1758,30 @@ namespace substitution {
   {
     assert(P.variable_alignment());
 
-    subA_index_internal subA(P.A->length()+1, P.T_->n_branches()*2);
+    subA_index_internal subA(P.A->length()+1, P.T().n_branches()*2);
 
-    Likelihood_Cache LC(*P.T_, P.SModel());
+    Likelihood_Cache LC(P.T(), P.SModel());
     LC.root = P.LC.root;
 
-    check_internal_nodes_connected(*P.A,*P.T_,vector<int>(1,LC.root));
+    check_internal_nodes_connected(*P.A,P.T(),vector<int>(1,LC.root));
 
-    return Pr(*P.sequences, *P.A, subA, P, *P.T_, LC, P.SModel());
+    return Pr(*P.sequences, *P.A, subA, P, P.T(), LC, P.SModel());
   }
 
   efloat_t Pr(const data_partition& P) {
     efloat_t result = Pr(P, P.LC);
 
+#ifdef DEBUG_CACHING
     data_partition P2 = P;
     P2.LC.invalidate_all();
     P2.invalidate_subA_index_all();
-    for(int i=0;i<P2.T_->n_branches();i++)
-      P2.T_->branch(i).set_length(P2.T_->branch(i).length());
-    // FIXME - what OTHER thing in setlength is changing the outcome?
-#ifdef DEBUG_CACHING_F
-    for(int i=0;i<P2.T_->n_branches();i++)
-      P2.setlength(i,P2.T_->branch(i).length());
+    for(int i=0;i<P2.T().n_branches();i++)
+      P2.setlength(i,P2.T().branch(i).length());
     efloat_t result2 = Pr(P2, P2.LC);
 
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
-      compare_caches(*P.subA, *P2.subA, P.LC, P2.LC, *P.T_);
+      compare_caches(*P.subA, *P2.subA, P.LC, P2.LC, P.T());
       std::abort();
     }
 #endif
@@ -1796,7 +1793,7 @@ namespace substitution {
     {
       efloat_t result4 = Pr_from_scratch_internal(P);
 
-      compare_branch_totals(subA3,subA4,LC3,LC4, *P.T_, *P.A, P.SModel());
+      compare_branch_totals(subA3,subA4,LC3,LC4, P.T(), *P.A, P.SModel());
       assert(std::abs(log(result3) - log(result4)) < 1.0e-9);
     }
 
@@ -1937,7 +1934,7 @@ namespace substitution {
 
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition& P)
   {
-    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, *P.A, *P.subA, P, *P.T_, P.LC, P.SModel());
+    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, *P.A, *P.subA, P, P.T(), P.LC, P.SModel());
 
 #ifdef DEBUG_SUBSTITUTION
     efloat_t L1 = combine_likelihoods(likelihoods);
