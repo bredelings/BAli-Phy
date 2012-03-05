@@ -783,7 +783,7 @@ void Parameters::recalc_smodel(int m)
 void Parameters::select_root(int b)
 {
   for(int i=0;i<data_partitions.size();i++)
-    ::select_root(*data_partitions[i]->T_, b, data_partitions[i]->LC);
+    ::select_root(*T, b, data_partitions[i]->LC);
 }
 
 void Parameters::set_root(int node)
@@ -801,7 +801,7 @@ void Parameters::tree_propagate()
 void Parameters::LC_invalidate_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->LC.invalidate_branch(*data_partitions[i]->T_,b);
+    data_partitions[i]->LC.invalidate_branch(*T,b);
 }
 
 void Parameters::LC_invalidate_one_branch(int b)
