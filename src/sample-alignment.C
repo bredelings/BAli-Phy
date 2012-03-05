@@ -42,7 +42,7 @@ using namespace A2;
 vector< Matrix > distributions_star(const data_partition& P,const vector<int>& seq,int b,bool up) 
 {
   //--------------- Find our branch, and orientation ----------------//
-  const SequenceTree& T = *P.T_;
+  const SequenceTree& T = P.T();
   int root = T.branch(b).target();      //this is an arbitrary choice
 
   int node1 = T.branch(b).source();
@@ -57,7 +57,7 @@ vector< Matrix > distributions_star(const data_partition& P,const vector<int>& s
 vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int b,bool up)
 {
   //--------------- Find our branch, and orientation ----------------//
-  const SequenceTree& T = *P.T_;
+  const SequenceTree& T = P.T();
   int root = T.branch(b).target();      //this is an arbitrary choice
 
   int node1 = T.branch(b).source();
@@ -79,7 +79,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, *P.A);
 
-  const Tree& T = *P.T_;
+  const Tree& T = P.T();
   alignment& A = *P.A;
 
   const Matrix frequency = substitution::frequency_matrix(P.SModel());
@@ -172,7 +172,7 @@ void sample_alignment(Parameters& P,int b)
     s1[i].resize(P[i].alignment_constraint.size1());
     s1[i] = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
 #ifndef NDEBUG
-    check_alignment(*P[i].A, *P[i].T_, "tri_sample_alignment:in");
+    check_alignment(*P[i].A, P[i].T(), "tri_sample_alignment:in");
 #endif
   }
 
@@ -291,7 +291,7 @@ void sample_alignment(Parameters& P,int b)
   for(int i=0;i<P.n_data_partitions();i++) 
   {
 #ifndef NDEBUG
-    check_alignment(*P[i].A, *P[i].T_,"tri_sample_alignment:out");
+    check_alignment(*P[i].A, P[i].T(),"tri_sample_alignment:out");
 #endif
 
     dynamic_bitset<> s2 = constraint_satisfied(P[i].alignment_constraint, *P[i].A);
