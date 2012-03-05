@@ -224,10 +224,6 @@ void data_partition::recalc_smodel()
 
 void data_partition::setlength_no_invalidate_LC(int b, double l)
 {
-  double L1 = T_->directed_branch(b).length();
-  double L2 = P->T->directed_branch(b).length();
-  assert(std::abs(L1 - L2) < 1.0e-9);
-
   default_timer_stack.push_timer("setlength_no_invalidate_LC( )");
   b = T_->directed_branch(b).undirected_name();
 
