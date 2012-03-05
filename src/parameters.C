@@ -138,7 +138,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 {
   assert(variable_alignment());
 
-  b = T_->directed_branch(b).undirected_name();
+  b = T().directed_branch(b).undirected_name();
 
   cached_value<indel::PairHMM>& HMM = cached_branch_HMMs[b];
 
@@ -187,7 +187,7 @@ void data_partition::recalc_imodel_for_branch(int b)
   // FIXME #2 - IModel_ should be branch-specific.
   IModel_->set_heat( get_beta() );
 
-  b = T_->directed_branch(b).undirected_name();
+  b = T().directed_branch(b).undirected_name();
 
   cached_branch_HMMs[b].invalidate();
   cached_alignment_prior.invalidate();
@@ -264,7 +264,7 @@ void data_partition::invalidate_subA_index_branch(int b)
 
 void data_partition::invalidate_subA_index_one_branch(int b)
 {
-  int b2 = T_->directed_branch(b).reverse();
+  int b2 = T().directed_branch(b).reverse();
   subA->invalidate_one_branch(b);
   subA->invalidate_one_branch(b2);
 }
@@ -300,7 +300,7 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
 
-  int B = T_->directed_branch(b).reverse();
+  int B = T().directed_branch(b).reverse();
 
   if (pairwise_alignment_for_branch[b].is_valid())
   {
@@ -323,12 +323,12 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: what pairwise alignment are you referring to?";
 
-  int B = T_->directed_branch(b).reverse();
+  int B = T().directed_branch(b).reverse();
 
   if (pairwise_alignment_for_branch[b].is_valid())
   {
-    int n1 = T_->directed_branch(b).source();
-    int n2 = T_->directed_branch(b).target();
+    int n1 = T().directed_branch(b).source();
+    int n2 = T().directed_branch(b).target();
     assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
     assert(pairwise_alignment_for_branch[B].is_valid());
     assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
@@ -336,8 +336,8 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
   else
   {
     assert(not pairwise_alignment_for_branch[B].is_valid());
-    int n1 = T_->directed_branch(b).source();
-    int n2 = T_->directed_branch(b).target();
+    int n1 = T().directed_branch(b).source();
+    int n2 = T().directed_branch(b).target();
     set_pairwise_alignment_(b, A2::get_pairwise_alignment(*A,n1,n2));
   }
 
@@ -363,13 +363,13 @@ void data_partition::note_alignment_changed_on_branch(int b)
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
 
-  b = T_->directed_branch(b).undirected_name();
+  b = T().directed_branch(b).undirected_name();
 
   cached_alignment_prior.invalidate();
   cached_alignment_prior_for_branch[b].invalidate();
   cached_alignment_counts_for_branch[b].invalidate();
 
-  int B = T_->directed_branch(b).reverse();
+  int B = T().directed_branch(b).reverse();
   pairwise_alignment_for_branch[b].invalidate();
   pairwise_alignment_for_branch[B].invalidate();
 
@@ -398,7 +398,7 @@ void data_partition::note_alignment_changed_on_branch(int b)
 
 void data_partition::note_alignment_changed()
 {
-  for(int b=0;b<T_->n_branches();b++)
+  for(int b=0;b<T().n_branches();b++)
     note_alignment_changed_on_branch(b);
 
   // this automatically marks all non-leaf sequence lengths for recomputation.
@@ -467,7 +467,7 @@ efloat_t data_partition::prior_no_alignment() const
     Pr *= 0.5;
 
     //    int indel_scale_branch = get_parameter_value_as<Int>(2);
-    Pr *= 1.0/(T_->n_branches());
+    Pr *= 1.0/(T().n_branches());
   }
 
   return Pr;
@@ -600,7 +600,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   {
     add_parameter(Parameter("lambda_scale", Double(0.0)));
     add_parameter(Parameter("lambda_scale_on", Bool(false)));
-    add_parameter(Parameter("lambda_scale_branch", Int(-1), between(0,T_->n_branches()-1)));
+    add_parameter(Parameter("lambda_scale_branch", Int(-1), between(0,T().n_branches()-1)));
   }
 }
 
