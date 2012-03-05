@@ -1030,12 +1030,6 @@ double Parameters::get_branch_duration(int b) const
 
 double Parameters::get_branch_duration(int p, int b) const
 {
-  double t1 = data_partitions[p]->T_->directed_branch(b).length();
-  double t2 = data_partitions[p]->P->T->directed_branch(b).length();
-  double t3 = T->directed_branch(b).length();
-  assert(std::abs(t1 - t2) < 1.0e-9);
-  assert(std::abs(t1 - t3) < 1.0e-9);
-
   return get_branch_duration(b);
 }
 
