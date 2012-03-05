@@ -121,7 +121,12 @@ class data_partition: public Probability_Model, public Mat_Cache
 {
   friend class Parameters;
 
-  Parameters* P;
+  // Letting this be non-const means that sometimes, accessing cow_ptr members of P
+  // could be treated as a non-const access.  This could trigger member to be copied.
+  // If this was a tree, this apparently changed something - probably the circular order
+  // or neighbor nodes around a node.  That then changed (I think) the outcome of walk_tree_path( )
+  // in walk_tree_sample_branch_lengths( ), which changed the outcome of the MCMC.
+  const Parameters* P;
 
   int partition_index;
 
