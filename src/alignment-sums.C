@@ -43,7 +43,7 @@ efloat_t other_prior(const data_partition& P,const vector<int>& nodes)
   if (not P.variable_alignment()) 
     return 1;
 
-  const SequenceTree& T = *P.T_;
+  const SequenceTree& T = P.T();
 
   efloat_t p = 1;
 
@@ -89,7 +89,7 @@ vector< Matrix > distributions_star(const data_partition& P,
   const alignment& A = *P.A;
   const alphabet& a = A.get_alphabet();
   const substitution::MultiModelObject& MModel = P.SModel();
-  const SequenceTree& T = *P.T_;
+  const SequenceTree& T = P.T();
 
   //FIXME modify this to add a shift of 2
 
@@ -146,7 +146,7 @@ vector< Matrix > distributions_star(const data_partition& P,
 /// Distributions function for a full tree
 vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int root,const dynamic_bitset<>& group)
 {
-  const Tree& T = *P.T_;
+  const Tree& T = P.T();
 
   vector<int> branches;
   vector<const_nodeview> neighbors;
