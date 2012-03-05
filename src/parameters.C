@@ -84,11 +84,11 @@ void data_partition::variable_alignment(bool b)
   else 
   {
     if (use_internal_index)
-      subA = subA_index_internal(A->length()+1, T_->n_branches()*2);
+      subA = subA_index_internal(A->length()+1, T().n_branches()*2);
     else
-      subA = subA_index_leaf(A->length()+1, T_->n_branches()*2);
+      subA = subA_index_leaf(A->length()+1, T().n_branches()*2);
 
-    assert(has_IModel() and A->n_sequences() == T_->n_nodes());
+    assert(has_IModel() and A->n_sequences() == T().n_nodes());
     minimally_connect_leaf_characters(*A,T());
     note_alignment_changed();
 
@@ -115,8 +115,8 @@ IndelModel& data_partition::IModel()
 
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
-  b = T_->directed_branch(b).undirected_name();
-  assert(b >= 0 and b < T_->n_branches());
+  b = T().directed_branch(b).undirected_name();
+  assert(b >= 0 and b < T().n_branches());
   
   if (not cached_transition_P[b].is_valid())
   {
