@@ -887,7 +887,7 @@ void do_sampling(const variables_map& args,
 
   if (has_imodel) {
     for(int i=0;i<PP.n_data_partitions();i++)
-      check_internal_nodes_connected(*PP[i].A,*PP[i].T_);
+      check_internal_nodes_connected(*PP[i].A,PP[i].T());
   }
 
   //----------------------- alignment -------------------------//
