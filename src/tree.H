@@ -667,6 +667,10 @@ std::vector<const_branchview> sorted_neighbors(const_nodeview n);
 /// list of all outgoing branches, sorted by branch name
 std::vector<const_branchview> sorted_branches_after(const_branchview b);
 
+std::vector<const_branchview> randomized_branches_after(const const_branchview& b);
+
+std::vector<const_branchview> randomized_branches_out(const const_nodeview& b);
+
 /// Construct a star tree with 'n' leaves.
 Tree star_tree(int n);
 

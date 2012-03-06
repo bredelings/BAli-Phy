@@ -518,8 +518,7 @@ void change_3_branch_lengths(owned_ptr<Probability_Model>& P,MoveStats& Stats,in
   if (not T[n].is_internal_node()) return;
 
   //-------------- Find branches ------------------//
-  vector<const_branchview> branches;
-  append(T[n].branches_out(),branches);
+  vector<const_branchview> branches = randomized_branches_out(T.node(n));
   int b1 = branches[0].undirected_name();
   int b2 = branches[1].undirected_name();
   int b3 = branches[2].undirected_name();

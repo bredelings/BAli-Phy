@@ -19,6 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "sequencetree.H"
 #include "rng.H"
+#include "util-random.H"
 
 using std::vector;
 using std::string;
@@ -131,4 +132,20 @@ SequenceTree RandomTree(const vector<string>& s,double branch_mean)
   SequenceTree T = star_tree(s);
   RandomTree(T,branch_mean);
   return T;
+}
+
+vector<const_branchview> randomized_branches_after(const const_branchview& b)
+{
+  vector<const_branchview> branches;
+  append(b.branches_after(), branches);
+  sort(branches.begin(), branches.end());
+  return randomize(branches);
+}
+
+vector<const_branchview> randomized_branches_out(const const_nodeview& n)
+{
+  vector<const_branchview> branches;
+  append(n.branches_out(), branches);
+  sort(branches.begin(), branches.end());
+  return randomize(branches);
 }
