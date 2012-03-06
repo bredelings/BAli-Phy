@@ -190,11 +190,20 @@ struct tree_edge
   tree_edge():node1(-1),node2(-1) { }
   tree_edge(int s, int t):node1(s), node2(t) { }
   tree_edge(const BranchNode* BN):node1(BN->node_attributes->name), node2(BN->out->node_attributes->name) { }
+  // The "explicit" is in order to avoid ambiguous conversions between 'const_branchview -> int' or 'const_branchview -> tree_edge'
+  explicit tree_edge(const const_branchview& b):node1(b.source()), node2(b.target()) { }
 };
 
 inline tree_edge tree_edge::reverse() const
 {
   return tree_edge(node2, node1);
+}
+
+inline bool operator<(const const_branchview& b1, const const_branchview& b2)
+{
+  tree_edge e1(b1);
+  tree_edge e2(b2);
+  return (e1<e2);
 }
 
 /**

@@ -297,6 +297,7 @@ vector<int> walk_tree_path(const Tree& T,int root) {
     // get children of the result
     children.clear();
     append(branches.back().branches_after(),children);
+    sort(children.begin(), children.end());
     children = randomize(children);
 
     // sort children in decrease order of cost
