@@ -182,7 +182,7 @@ ublas::matrix<int> subA_index_t::get_subA_index(int node,const alignment& A,cons
 {
   // compute node branches
   vector<int> b;
-  for(const_in_edges_iterator i = T[node].branches_in();i;i++)
+  for(const_in_edges_iterator i = T.node(node).branches_in();i;i++)
     b.push_back(*i);
 
   return get_subA_index(b,A,T);

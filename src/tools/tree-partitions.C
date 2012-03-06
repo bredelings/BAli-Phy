@@ -82,7 +82,7 @@ void describe_tree(const SequenceTree& T)
   int N13 = 0;
   for(int i=0;i<T.n_nodes();i++)
   {
-    int d = T[i].degree();
+    int d = T.node(i).degree();
     if (d == 2)
       D2++;
     if (d != 1 and d != 3)

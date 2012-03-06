@@ -154,10 +154,10 @@ vector<int> extends_map(const Tree& T,const Tree& Q)
 
   // compute degree of each node
   for(int i=0;i<Q.n_nodes();i++)
-    nodes_Q[i].degree = Q[i].degree();
+    nodes_Q[i].degree = Q.node(i).degree();
 
   for(int i=0;i<T.n_nodes();i++)
-    nodes_T[i].degree = T[i].degree();
+    nodes_T[i].degree = T.node(i).degree();
 
   // compute leaf degree and leaf neighbors of each node
   for(int i=0;i<Q.n_leaves();i++) 

@@ -225,7 +225,7 @@ namespace substitution {
 
     assert(T.directed_branch(rb[0]).target().name() == root);
 
-    if (T[root].is_leaf_node())
+    if (T.node(root).is_leaf_node())
       throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
     assert(rb.size() == 3);
 
@@ -412,7 +412,7 @@ namespace substitution {
     for(int i=0;i<rb.size();i++)
       assert(cache.up_to_date(rb[i]));
 
-    if (T[cache.root].is_leaf_node())
+    if (T.node(cache.root).is_leaf_node())
       throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
     assert(rb.size() == 3);
 
@@ -1100,7 +1100,7 @@ namespace substitution {
   inline peeling_info get_branches_for_node(int n, const Tree& T, const Likelihood_Cache& LC) 
   {
     vector<const_branchview> branches; branches.reserve(T.n_branches());
-    append(T[n].branches_in(),branches);
+    append(T.node(n).branches_in(),branches);
 
     return get_branches(T, LC, branches);
   }
@@ -1320,7 +1320,7 @@ namespace substitution {
     {
       const int n = nodes[i];
       vector<const_branchview> node_branches;
-      append(T[n].branches_out(), node_branches);
+      append(T.node(n).branches_out(), node_branches);
 
       if (node_branches.size() == 1) {
 	branch_list.push_back(node_branches[0]);
@@ -1387,7 +1387,7 @@ namespace substitution {
 
     // compute root branches
     vector<int> rb;
-    for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
+    for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
       rb.push_back(*i);
 
     const MultiModelObject& MModel= P.SModel();
@@ -1500,7 +1500,7 @@ namespace substitution {
     assert(LC1.root == LC2.root);
     
     vector<const_branchview> branches; branches.reserve(T.n_branches());
-    append(T[LC1.root].branches_in(),branches);
+    append(T.node(LC1.root).branches_in(),branches);
 
     for(int i=0;i<branches.size();i++)
     {
@@ -1608,7 +1608,7 @@ namespace substitution {
 
     // compute root branches
     vector<int> rb;
-    for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
+    for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
       rb.push_back(*i);
 
     // Combine the likelihoods from present nodes
@@ -1704,7 +1704,7 @@ namespace substitution {
     }
     else
     {
-      for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
+      for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
 	rb.push_back(*i);
     }
 
@@ -1884,7 +1884,7 @@ namespace substitution {
     // 3. Record likelihoods for columns that survive to the root.
 
     vector<int> root_branches;
-    for(const_in_edges_iterator i = T[cache.root].branches_in();i;i++)
+    for(const_in_edges_iterator i = T.node(cache.root).branches_in();i;i++)
     {
       // update conditional likelihoods
       calculate_caches_for_branch(*i, sequences, A, I, MC, T, cache, MModel);

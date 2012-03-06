@@ -206,7 +206,7 @@ void sample_two_nodes_move(owned_ptr<Probability_Model>& P, MoveStats&,int n0)
   vector<int> nodes = A3::get_nodes_random(*PP->T,n0);
   int n1 = -1;
   for(int i=1;i<nodes.size();i++)
-    if ((*PP->T)[ nodes[i] ].is_internal_node()) {
+    if ((*PP->T).node( nodes[i] ).is_internal_node()) {
       n1 = nodes[i];
       break;
     }

@@ -226,7 +226,7 @@ void connect_all_characters(const Tree& T,dynamic_bitset<>& present)
 
     //------- if it is '-' and not ignored ... -------//
     vector<const_nodeview> neighbors;
-    append(T[n1].neighbors(),neighbors);
+    append(T.node(n1).neighbors(),neighbors);
     assert(neighbors.size() == 3);
 
     //---- check the three attatched subtrees ... ----//
@@ -263,7 +263,7 @@ bool all_characters_connected(const Tree& T,dynamic_bitset<> present,const vecto
       
     //------- if it is '-' and not ignored ... -------//
     vector<const_nodeview> neighbors;
-    append(T[n1].neighbors(),neighbors);
+    append(T.node(n1).neighbors(),neighbors);
     assert(neighbors.size() == 3);
 
     //---- check the three attatched subtrees ... ----//

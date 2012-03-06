@@ -1002,7 +1002,7 @@ vector<const_branchview> branches_from_node(const Tree& T,int n) {
   vector<const_branchview> branch_list;
   branch_list.reserve(T.n_branches());
 
-  append(T[n].branches_out(),branch_list);
+  append(T.node(n).branches_out(),branch_list);
 
   get_branches_after(branch_list);
 
@@ -1014,7 +1014,7 @@ vector<const_branchview> branches_toward_node(const Tree& T,int n) {
   vector<const_branchview> branch_list;
   branch_list.reserve(T.n_branches());
 
-  append(T[n].branches_in(),branch_list);
+  append(T.node(n).branches_in(),branch_list);
 
   for(int i=0;i<branch_list.size();i++)
     append(branch_list[i].branches_before(), branch_list);
@@ -1150,7 +1150,7 @@ void remove_sub_branches(Tree& T)
   {
     // find first node of degree 2
     int n=0;
-    while(n<T.n_nodes() and T[n].degree() != 2)
+    while(n<T.n_nodes() and T.node(n).degree() != 2)
       n++;
 
     // if no nodes of degree 2, we are done
@@ -1235,7 +1235,7 @@ int SPR(Tree& T, int br1,int br2, int branch_to_move)
 
   // Reconnect (m1,x) to m2, making x a degree-2 node
   // This leaves m1 connected to its branch, so m1 can be a leaf.
-  assert(not T[m2].is_leaf_node());
+  assert(not T.node(m2).is_leaf_node());
   T.reconnect_branch(tree_edge(m1,x1), m2);
 
   // Reconnect (x,m2) to n2, leaving x a degree-2 node
@@ -1243,7 +1243,7 @@ int SPR(Tree& T, int br1,int br2, int branch_to_move)
 
   // Reconnect (n1,n2) to x, making x a degree-3 node again.
   // This leaves n1 connected to its branch, so n1 can be a leaf.
-  assert(not T[n2].is_leaf_node());
+  assert(not T.node(n2).is_leaf_node());
   T.reconnect_branch(tree_edge(n1,n2), x1);
 
   return dead_branch;
@@ -2451,7 +2451,7 @@ bool is_Cayley(const Tree& T)
 {
   for(int i=0;i<T.n_nodes();i++)
   {
-    int d = T[i].degree();
+    int d = T.node(i).degree();
     if (d != 1 and d != 3)
       return false;
   }
@@ -2462,7 +2462,7 @@ bool has_sub_branches(const Tree& T)
 {
   for(int i=0;i<T.n_nodes();i++)
   {
-    if (T[i].degree() == 2)
+    if (T.node(i).degree() == 2)
       return true;
   }
   return false;
@@ -2472,7 +2472,7 @@ bool has_polytomy(const Tree& T)
 {
   for(int i=0;i<T.n_nodes();i++)
   {
-    if (T[i].degree() > 3)
+    if (T.node(i).degree() > 3)
       return true;
   }
   return false;

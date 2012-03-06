@@ -86,12 +86,12 @@ BranchNode* randomly_split_node(Tree& T, BranchNode* n1)
     T.reconnect_branch(n3_index, n1_index, n2_index);
   }
 
-  assert(T[n1_index].degree() < D0);
-  assert(T[n1_index].degree() >= 3);
+  assert(T.node(n1_index).degree() < D0);
+  assert(T.node(n1_index).degree() >= 3);
   assert(n1->node_attributes->name == n1_index);
 
-  assert(T[n2_index].degree() < D0);
-  assert(T[n2_index].degree() >= 3);
+  assert(T.node(n2_index).degree() < D0);
+  assert(T.node(n2_index).degree() >= 3);
   assert(n2->node_attributes->name == n2_index);
 
   return n1;
@@ -99,7 +99,7 @@ BranchNode* randomly_split_node(Tree& T, BranchNode* n1)
 
 void RandomTree(Tree& T) 
 {
-  for(BN_iterator BN(T[0]);BN;BN++) 
+  for(BN_iterator BN(T.node(0));BN;BN++) 
   {
     while(nodeview(*BN).degree() > 3) {
       BranchNode * start = *BN;

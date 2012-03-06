@@ -464,11 +464,6 @@ public:
   /// Get a reference to the 'i'-th node
   const_nodeview node(int i) const {return nodes_[i];}
 
-  /// Get a reference to the 'i'-th node
-        nodeview operator[](int i)       {return nodes_[i];}
-  /// Get a reference to the 'i'-th node
-  const_nodeview operator[](int i) const {return nodes_[i];}
-
   /// Precidate: are node1 and node2 connected by a branch?
   bool is_connected(int node1,int node2) const {
     return find_branch_pointer(node1,node2) != NULL;

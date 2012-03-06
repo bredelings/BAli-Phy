@@ -91,7 +91,7 @@ int split_branch(Tree& T,int b)
 
   // even the lengths here.
   vector<branchview> branches;
-  append(T[n].branches_out(),branches);
+  append(T.node(n).branches_out(),branches);
   
   (branches[0]).set_length(L/2);
   (branches[1]).set_length(L/2);

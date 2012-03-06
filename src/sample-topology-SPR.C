@@ -1281,7 +1281,7 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
   int A = 1+myrandom(N);
 
   b1 = -1;
-  for(const_neighbors_iterator i=T[path[A]].neighbors();i;i++) {
+  for(const_neighbors_iterator i=T.node(path[A]).neighbors();i;i++) {
     if (*i == path[A-1]) continue;
     if (*i == path[A+1]) continue;
 

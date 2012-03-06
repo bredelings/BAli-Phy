@@ -61,12 +61,12 @@ efloat_t other_prior(const data_partition& P,const vector<int>& nodes)
 
   // Add in the node length corrections
   for(int n=0;n<T.n_nodes();n++) {
-    if (T[n].is_leaf_node())
+    if (T.node(n).is_leaf_node())
       continue;
 
     if (includes(nodes,n)) {
       vector<const_nodeview> neighbors_NV;
-      append(T[n].neighbors(),neighbors_NV);
+      append(T.node(n).neighbors(),neighbors_NV);
       vector<int> neighbors(neighbors_NV.size());
       for(int i=0;i<neighbors.size();i++)
 	neighbors[i] = neighbors_NV[i];
@@ -150,7 +150,7 @@ vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& s
 
   vector<int> branches;
   vector<const_nodeview> neighbors;
-  append(T[root].neighbors(),neighbors);
+  append(T.node(root).neighbors(),neighbors);
   for(int i=0;i<neighbors.size();i++)
     if (group[neighbors[i]])
       branches.push_back(T.directed_branch(neighbors[i],root));

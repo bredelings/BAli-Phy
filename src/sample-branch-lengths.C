@@ -515,7 +515,7 @@ void change_3_branch_lengths(owned_ptr<Probability_Model>& P,MoveStats& Stats,in
   MCMC::Result result(2);
 
   const Tree& T = *PP->T;
-  if (not T[n].is_internal_node()) return;
+  if (not T.node(n).is_internal_node()) return;
 
   //-------------- Find branches ------------------//
   vector<const_branchview> branches = randomized_branches_out(T.node(n));

@@ -99,13 +99,13 @@ namespace A3 {
   vector<int> states_list = construct_states();
 
   vector<int> get_nodes(const Tree& T,int n0) {
-    assert(T[n0].is_internal_node());
+    assert(T.node(n0).is_internal_node());
     
     vector<int> nodes(4);
     nodes[0] = n0;
     
     vector<const_nodeview> neighbors;
-    append(T[n0].neighbors(),neighbors);
+    append(T.node(n0).neighbors(),neighbors);
     nodes[1] = neighbors[0];
     nodes[2] = neighbors[1];
     nodes[3] = neighbors[2];
