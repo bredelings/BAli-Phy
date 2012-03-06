@@ -571,7 +571,6 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    variable_alignment_(true),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
-   T_(t),
    LC(t,SModel()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
@@ -612,7 +611,6 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    variable_alignment_(false),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
-   T_(t),
    LC(t,SModel()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)

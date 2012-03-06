@@ -183,9 +183,6 @@ public:
   /// The alignment data of this partition
   cow_ptr<alignment> A;
 
-  /// Tree pushed down from above
-  cow_ptr<SequenceTree> T_;
-
   const SequenceTree& T() const;
 
   /// Cached Transition Probabilities
