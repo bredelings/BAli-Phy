@@ -1575,6 +1575,28 @@ int Tree::induce_partition(const dynamic_bitset<>& partition)
   throw myexception()<<"induce_partition: partition conflicts with tree!";
 }
 
+/// This routines assumes that branches_ is a valid index for all BranchNode's in the tree.
+/// It then sets nodes_ to select the same BranchNode (by index) within each node as old_nodes.
+/// This ensures that list of branches or nodes connected to a specific node have the same order.
+void Tree::set_equivalent_node_pointers(const vector<BranchNode*>& old_nodes)
+{
+  // Assign the nodes to the same branch they were on the other tree!
+  assert(nodes_.size() == old_nodes.size());
+  for(int n=0;n<nodes_.size();n++)
+  {
+    int b = old_nodes[n]->directed_branch_attributes->name;
+    nodes_[n] = branches_[b];
+    assert(nodes_[n]->node_attributes->name == n);
+    assert(nodes_[n]->out->node_attributes->name == old_nodes[n]->out->node_attributes->name);
+  }
+}
+
+void Tree::inc_node_pointers()
+{
+  for(int n=0;n<nodes_.size();n++)
+    nodes_[n] = nodes_[n]->next;
+}
+
 Tree& Tree::operator=(const Tree& T) 
 {
   assert(&T != this);
@@ -1610,6 +1632,9 @@ Tree& Tree::operator=(const Tree& T)
   // recalculate pointer indices
   BranchNode* start = T.copy();
   recompute(start,false);
+
+  // Assign the nodes to the same branch they were on the other tree!
+  set_equivalent_node_pointers(T.nodes_);
   
   return *this;
 }
@@ -2140,6 +2165,7 @@ Tree::Tree(const Tree& T)
     // recalculate pointer indices
     BranchNode* start = T.copy();
     recompute(start,false);
+    set_equivalent_node_pointers(T.nodes_);
 }
 
 Tree::~Tree() 

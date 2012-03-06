@@ -274,9 +274,13 @@ protected:
       compute_partitions();
   }
 
+  void set_equivalent_node_pointers(const std::vector<BranchNode*>&);
+
 public:
   /// re-compute all caches
   virtual void recompute(BranchNode*,bool=true);
+
+  void inc_node_pointers();
 
 protected:
   /// check caches, linked lists, and naming conventions
