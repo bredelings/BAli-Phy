@@ -1487,6 +1487,8 @@ void Tree::reconnect_branch(int source_index, int target_index, int new_target_i
   if (nodes_[target_index] == target)
     nodes_[target_index] = target->prev;
     
+  // NOTE: This makes the circular order at the target node dependent on nodes_.
+  // The result is thus alterable by inc_node_pointers()
   BranchNode* new_target = nodes_[new_target_index];
 
   ::reconnect_branch(branch, new_target);

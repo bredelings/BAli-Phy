@@ -738,7 +738,7 @@ public:
 spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
   :T(T_),b_parent(b),B1(-1),BM(-1), branch_to_index_(T.n_branches()*2, -1)
 {
-  append(T.directed_branch(b_parent).branches_after(), child_branches);
+  child_branches = randomized_branches_after(T.directed_branch(b_parent));
   assert(child_branches.size() == 2);
   B1 = child_branches[0].undirected_name();
   BM = child_branches[1].undirected_name();
@@ -758,6 +758,9 @@ spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
   /*----------- get the list of possible attachment points, with [0] being the current one.------- */
   // \todo - With tree constraints, or with a variable alignment and alignment constraints,
   //          we really should eliminate branches that we couldn't attach to, here.
+
+  // FIXME - in order to make this independent of the circular order, we should make
+  // a randomized_all_branches_after, or a sorted_all_branches_after.
   attachment_branches = branches_after(T,b_parent);
 
   // remove the moving branch name (BM) from the list of attachment branches
