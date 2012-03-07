@@ -790,8 +790,6 @@ void Parameters::set_root(int node)
 
 void Parameters::tree_propagate()
 {
-  for(int i=0;i<n_data_partitions();i++) 
-    data_partitions[i]->T_ = T;
 }
 
 void Parameters::LC_invalidate_branch(int b)
