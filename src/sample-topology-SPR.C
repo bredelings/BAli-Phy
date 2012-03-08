@@ -241,7 +241,7 @@ vector<double> effective_lengths_min(const Tree& T)
     {
       double min_prev = pre_b[0].length();
       for(int j=1;j<pre_b.size();j++)
-	min_prev = std::min(min_prev, pre_b[i].length());
+	min_prev = std::min(min_prev, pre_b[j].length());
 
       lengths[branches[i]] += min_prev;
     }
