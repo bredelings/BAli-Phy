@@ -413,34 +413,14 @@ void data_partition::recalc(const vector<int>& indices)
   }
 }
 
-/// Get the mean branch length
-double data_partition::branch_mean() const 
-{
-  return branch_mean_;
-}
-
 /// Set the mean branch length to \a mu
-void data_partition::branch_mean(double mu)
+void data_partition::branch_mean_changed()
 {
-  // unsafe!  Must then read this value into parent.
-  branch_mean_ = mu;
-
   // the scale of the substitution tree changed
   recalc_smodel();
 
   // the scale of the indel tree changed also
   recalc_imodel();
-}
-
-/// \brief Set the mean branch length to \a mu without invalidating cached values
-///
-/// This model rescales the substitution model, but does not
-/// invalidate any cached values.  This is because we assume branch
-/// lengths have changed so that mu*T remains constant.
-///
-void data_partition::branch_mean_tricky(double mu)
-{
-  branch_mean_ = mu;
 }
 
 string data_partition::name() const 
@@ -567,7 +547,6 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
    cached_transition_P(t.n_branches()),
-   branch_mean_(1.0),
    variable_alignment_(true),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
@@ -607,7 +586,6 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
    cached_transition_P(t.n_branches()),
-   branch_mean_(1.0),
    variable_alignment_(false),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
@@ -874,7 +852,7 @@ void Parameters::recalc(const vector<int>& indices)
       
       for(int j=0;j<scale_for_partition.size();j++)
 	if (scale_for_partition[j] == p)
-	  data_partitions[j]->branch_mean(mu);
+	  data_partitions[j]->branch_mean_changed();
     }
   }
 
@@ -1000,14 +978,10 @@ void Parameters::branch_mean(int i, double x)
 
 // Change the branch_mean for the i-th scale (and all partitions using it) without
 // invalidating anything. How do we do this?
-// I think we do it by not going through set_parameter_value( ).
+// I think we do it by not going through set_parameter_value( ) as above.
 void Parameters::branch_mean_tricky(int i,double x)
 {
   C.set_parameter_value(branch_mean_index(i), Double(x) );
-  
-  for(int j=0;j<scale_for_partition.size();j++)
-    if (scale_for_partition[j] == i)
-      data_partitions[j]->branch_mean_tricky(x);
 }
 
 double Parameters::get_branch_duration(int b) const

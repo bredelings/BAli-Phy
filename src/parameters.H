@@ -162,8 +162,7 @@ class data_partition: public Probability_Model, public Mat_Cache
 
   double branch_mean_;
 
-  void branch_mean(double);
-  void branch_mean_tricky(double);
+  void branch_mean_changed();
 
   bool variable_alignment_;
 
@@ -251,9 +250,6 @@ public:
   void note_alignment_changed();
 
   void note_sequence_length_changed(int n);
-
-  /// parameter for exponential prior on branch length
-  double branch_mean() const; 
 
   // The prior, likelihood, and probability
   efloat_t prior_no_alignment() const;

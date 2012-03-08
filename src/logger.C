@@ -279,9 +279,10 @@ double mu_scale(const Parameters& P)
     weights[i] = max(sequence_lengths(*P[i].A, P.T->n_leaves()));
   weights /= weights.sum();
   
+  // FIXME - we are just looking at branch 0!
   double mu_scale=0;
   for(int i=0;i<P.n_data_partitions();i++)
-    mu_scale += P[i].branch_mean()*weights[i];
+    mu_scale += P.get_branch_subst_rate(i,0)*weights[i];
 
   return mu_scale;
 }
