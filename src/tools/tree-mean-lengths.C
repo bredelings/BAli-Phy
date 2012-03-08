@@ -355,7 +355,7 @@ int main(int argc,char* argv[])
       scan_trees(std::cin,skip,subsample,max,prune,Q.get_leaf_labels(), A);
       for(int b=0;b<B;b++)
 	Q.branch(b).set_length(A.m1[b]);
-      cout<<Q.write_with_bootstrap_fraction(bf,true)<<endl;
+      cout<<Q<<endl;
       exit(0);
     }
 
@@ -396,7 +396,7 @@ int main(int argc,char* argv[])
       }
 
       //------- Print Tree and branch lengths -------//
-      cout<<Q.write_with_bootstrap_fraction(bf,true)<<endl;
+      cout<<Q<<endl;
 
       //------------ Print node lengths -------------//
       if (args.count("show-node-lengths"))
