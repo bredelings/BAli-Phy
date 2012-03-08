@@ -222,7 +222,7 @@ void data_partition::recalc_smodel()
   default_timer_stack.pop_timer();
 }
 
-void data_partition::setlength_no_invalidate_LC(int b, double l)
+void data_partition::setlength_no_invalidate_LC(int b)
 {
   default_timer_stack.push_timer("setlength_no_invalidate_LC( )");
   b = T().directed_branch(b).undirected_name();
@@ -234,9 +234,9 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
   default_timer_stack.pop_timer();
 }
 
-void data_partition::setlength(int b, double l)
+void data_partition::setlength(int b)
 {
-  setlength_no_invalidate_LC(b,l);
+  setlength_no_invalidate_LC(b);
   LC.invalidate_branch(T(),b);
 }
 
@@ -963,14 +963,14 @@ void Parameters::variable_alignment(bool b)
 void Parameters::setlength_no_invalidate_LC(int b,double l) 
 {
   for(int i=0;i<data_partitions.size();i++) 
-    data_partitions[i]->setlength_no_invalidate_LC(b,l);
+    data_partitions[i]->setlength_no_invalidate_LC(b);
   T->directed_branch(b).set_length(l);
 }
 
 void Parameters::setlength(int b,double l) 
 {
   for(int i=0;i<data_partitions.size();i++) 
-    data_partitions[i]->setlength(b,l);
+    data_partitions[i]->setlength(b);
   T->directed_branch(b).set_length(l);
 }
 

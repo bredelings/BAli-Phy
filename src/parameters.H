@@ -228,8 +228,8 @@ public:
   /// Get the substitution::Model
   const substitution::MultiModelObject& SModel() const;
 
-  void setlength(int b, double l);
-  void setlength_no_invalidate_LC(int b, double l);
+  void setlength(int b);
+  void setlength_no_invalidate_LC(int b);
 
   int seqlength(int n) const;
 
