@@ -534,21 +534,6 @@ void sample_SPR_flat_one(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b1
   }
 }
 
-void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
-{
-  Parameters& PP = *P.as<Parameters>();
-  int n = n_SPR_moves(PP);
-
-  double p = loadvalue(P->keys,"SPR_slice_fraction",-0.25);
-
-  for(int i=0;i<n;i++) 
-  {
-    int b1 = choose_subtree_branch_uniform(*PP.T);
-
-    sample_SPR_flat_one(P, Stats, b1);
-  }
-}
-
 efloat_t likelihood_unaligned_root(const Parameters& P)
 {
   efloat_t Pr = 1;
@@ -1185,6 +1170,14 @@ void sample_SPR_all(owned_ptr<Probability_Model>& P,MoveStats& Stats)
 
     sample_SPR_search_one(PP, Stats, b1);
   }
+
+  if (loadvalue(P->keys, "SPR_longest", 1.0) > 0.5)
+  {
+    // Try moving the longest or least-determined branch every time.
+    int least_informed_branch = argmax(effective_lengths_min(*PP.T));
+    sample_SPR_flat_one(P, Stats, least_informed_branch);
+    sample_SPR_search_one(PP, Stats, least_informed_branch);
+  }
 }
 
 void sample_SPR_search_all(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
@@ -1312,6 +1305,29 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
   b2 = T.branch(path[C2],path[C3]);
 }
 
+void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
+{
+  Parameters& PP = *P.as<Parameters>();
+  int n = n_SPR_moves(PP);
+
+  //  double p = loadvalue(P->keys,"SPR_slice_fraction",-0.25);
+
+  for(int i=0;i<n;i++) 
+  {
+    int b1 = choose_subtree_branch_uniform(*PP.T);
+
+    sample_SPR_flat_one(P, Stats, b1);
+  }
+
+  if (loadvalue(P->keys, "SPR_longest", 1.0) > 0.5)
+  {
+    // Try moving the longest or least-determined branch every time.
+    int least_informed_branch = argmax(effective_lengths_min(*PP.T));
+    sample_SPR_flat_one(P, Stats, least_informed_branch);
+    sample_SPR_search_one(PP, Stats, least_informed_branch);
+  }
+}
+
 void sample_SPR_nodes(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
@@ -1334,5 +1350,13 @@ void sample_SPR_nodes(owned_ptr<Probability_Model>& P,MoveStats& Stats)
       MCMC::Result result = sample_SPR(*P.as<Parameters>(),b1,b2);
       SPR_inc(Stats,result,"SPR (path)", L_effective);
     }
+  }
+
+  if (loadvalue(P->keys, "SPR_longest", 1.0) > 0.5)
+  {
+    // Try moving the longest or least-determined branch every time.
+    int least_informed_branch = argmax(effective_lengths_min(*PP.T));
+    sample_SPR_flat_one(P, Stats, least_informed_branch);
+    sample_SPR_search_one(PP, Stats, least_informed_branch);
   }
 }
