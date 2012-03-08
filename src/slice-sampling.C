@@ -187,7 +187,6 @@ double scale_means_only_slice_function::operator()(double t)
     const double L = T.branch(b).length();
     T.branch(b).set_length(L/scale);
   }
-  P.tree_propagate();
 
   return operator()();
 }

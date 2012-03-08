@@ -379,7 +379,6 @@ public:
   void recalc_imodel(int i);
   void recalc_smodels();
   void recalc_smodel(int i);
-  void tree_propagate();
 
   void select_root(int b);
   void set_root(int b);

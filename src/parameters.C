@@ -788,10 +788,6 @@ void Parameters::set_root(int node)
     data_partitions[i]->LC.root = node;
 }
 
-void Parameters::tree_propagate()
-{
-}
-
 void Parameters::LC_invalidate_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)

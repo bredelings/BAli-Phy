@@ -461,7 +461,6 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
     const double length = T2.branch(b).length();
     T2.branch(b).set_length(length/scale);
   }
-  P2->tree_propagate();
 
   for(int i=0;i<PP->n_branch_means();i++) 
     P2->branch_mean_tricky(i, P2->get_parameter_value_as<Double>(P2->branch_mean_index(i)) * scale);

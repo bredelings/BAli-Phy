@@ -190,7 +190,6 @@ double do_SPR(SequenceTree& T1, int b1_,int b2)
 double do_SPR(Parameters& P, int b1, int b2)
 {
   double ratio = do_SPR(*P.T, b1, b2);
-  P.tree_propagate();
   return ratio;
 }
 
@@ -876,7 +875,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     *P.T = T0;
     int BM2 = SPR_at_location(*P.T, b1, b2, locations, I.BM);
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
-    P.tree_propagate();
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
     assert(std::abs(P.T->branch(I.B1).length() - L[0]) < 1.0e-9);
@@ -1120,7 +1118,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   *(p[1].T) = T0; 
   if (C != 0)
     SPR_at_location(*p[1].T, b1, branch_names[C], locations);
-  p[1].tree_propagate();
 
   // enforce tree constraints
   if (not extends(*p[1].T, *P.TC))
