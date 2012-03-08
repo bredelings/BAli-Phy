@@ -998,6 +998,9 @@ void Parameters::branch_mean(int i, double x)
   set_parameter_value(branch_mean_index(i),x);
 }
 
+// Change the branch_mean for the i-th scale (and all partitions using it) without
+// invalidating anything. How do we do this?
+// I think we do it by not going through set_parameter_value( ).
 void Parameters::branch_mean_tricky(int i,double x)
 {
   C.set_parameter_value(branch_mean_index(i), Double(x) );
