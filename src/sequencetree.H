@@ -58,6 +58,9 @@ public:
   /// add a degree 0 , linking to node 'n'.  However, the index will not be a leaf index
   virtual nodeview add_leaf_node(int n);
 
+  /// Add a node onto a branch 'b', splitting it into two sub-neighbors
+  virtual nodeview create_node_on_branch(int b);
+
   /// load this tree from the string \a s
   virtual int parse(const std::string& s);
   virtual int parse_nexus(const std::string& s,const std::vector<std::string>& names);

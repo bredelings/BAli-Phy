@@ -79,6 +79,13 @@ nodeview SequenceTree::add_leaf_node(int n)
   return nv;
 }
 
+nodeview SequenceTree::create_node_on_branch(int b)
+{
+  nodeview nv = Tree::create_node_on_branch(b);
+  set_label(nv, "");
+  return nv;
+}
+
 void SequenceTree::read(const string& filename) {
   checked_ifstream file(filename, "NEWICK tree file");
   read(file);

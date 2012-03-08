@@ -508,7 +508,7 @@ public:
 
 
   /// Add a node onto a branch 'b', splitting it into two sub-neighbors
-  nodeview create_node_on_branch(int b);
+  virtual nodeview create_node_on_branch(int b);
 
   /// Remove a node 'n' with exactly two neighbors, merging its two adjacent branches
   virtual void remove_node_from_branch(int n);
