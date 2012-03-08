@@ -89,7 +89,6 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1
   nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);     // Using two random orders can lead to different total
   nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
 
-  int C = -1;
   try {
     return sample_tri_multi(p,nodes,rho,true,true);
   }
@@ -126,8 +125,6 @@ int topology_sample_SPR_slice_connecting_branch(vector<Parameters>& p,int b)
 
 int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b) 
 {
-  int b_ = p[0].T->directed_branch(b).undirected_name();
-
   slide_node_slice_function logp1(p[0],b);
   slide_node_slice_function logp2(p[1],b);
 
@@ -417,7 +414,9 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     branches.push_back((*i).undirected_name());
   //  std::cerr<<"before = "<<p[1].T<<endl;
 
+  // FIXME - do we need to USE the ratio anywhere?
   double ratio = do_SPR(p[1],b1,b2);
+
   // enforce tree constraints
   if (not extends(*p[1].T, *P.TC))
     return MCMC::Result(2+bins,0);
@@ -908,7 +907,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 #ifdef DEBUG_SPR_ALL
     efloat_t PR2 = heated_likelihood_unaligned_root(P);
     Pr.LLL[B2] = PR2;
-    efloat_t PR1 = P.heated_likelihood();
+    //    efloat_t PR1 = P.heated_likelihood();
     //    cerr<<"  PR1 = "<<PR1.log()<<"  PR2 = "<<PR2.log()<<"   diff = "<<PR2.log() - PR1.log()<<endl;
 #endif
 
