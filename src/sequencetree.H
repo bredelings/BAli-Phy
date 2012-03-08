@@ -43,12 +43,6 @@ public:
   /// find the index for a particular sequence
   int index(const std::string&) const;
 
-  /// generate standard internal node and internal branch names given current leaf names
-  virtual std::vector<int> standardize();
-
-  /// generate standard internal node and internal branch names given specified leaf names
-  virtual std::vector<int> standardize(const std::vector<int>& mapping);
-
   /// compute a string representing the tree, w/ or w/o branch lengths
   virtual std::string write(bool print_lengths=true) const;
 
