@@ -1040,6 +1040,7 @@ double Parameters::get_branch_subst_length(int p, int b) const
 double Parameters::get_branch_indel_rate(int p, int /* b */) const
 {
   int s = scale_for_partition[p];
+  // FIXME - move lambda out of the model and make it a scaling parameter that multiples mu.
   return get_parameter_value_as<Double>(branch_mean_index(s));
 }
 
