@@ -95,7 +95,7 @@ formula_expression_ref def_parameter(const std::string& name, const expression_r
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b)
 {
   formula_expression_ref Var = def_parameter(name, def_value);
-  Var.add_expression( bounds(Var.exp(), b) );
+  Var.add_expression( var_bounds(Var.exp(), b) );
   return Var;
 }
 

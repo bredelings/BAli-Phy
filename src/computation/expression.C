@@ -1200,7 +1200,7 @@ expression_ref _4 = match(3);
 
 expression_ref default_value = lambda_expression(constructor("default_value",2));
 
-expression_ref bounds = lambda_expression(constructor("bounds",2));
+expression_ref var_bounds = lambda_expression(constructor("var_bounds",2));
 
 // Fields: (prob_density) (random vars) (parameter expressions)
 expression_ref distributed = lambda_expression( constructor("~",2) );

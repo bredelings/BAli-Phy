@@ -515,7 +515,7 @@ namespace trees_format
   bool Fixroot::next_tree_(Tree& T,int& r)
   {
     if (wrapped_reader_t::next_tree_(T,r)) {
-      if (T[r].degree() == 2) {
+      if (T.node(r).degree() == 2) {
 	T.remove_node_from_branch(r);
 	r = T.n_nodes()-1;
       }

@@ -75,11 +75,11 @@ vector<int> get_nodes_map(const SequenceTree& Q,const SequenceTree& T,
   // map the rest of the nodes from T -> Q
   for(int i=Q.n_leaves();i<Q.n_nodes();i++) 
   {
-    unsigned D = Q[i].degree();
+    unsigned D = Q.node(i).degree();
     if (D <= 3) continue;
 
     // get a branch of Q pointing into the node
-    const_branchview outside = *(Q[i].branches_in());
+    const_branchview outside = *(Q.node(i).branches_in());
     // get a branch of T pointing into the node
     outside = T.directed_branch(branches_map[outside.name()]);
 
@@ -355,7 +355,7 @@ int main(int argc,char* argv[])
       scan_trees(std::cin,skip,subsample,max,prune,Q.get_leaf_labels(), A);
       for(int b=0;b<B;b++)
 	Q.branch(b).set_length(A.m1[b]);
-      cout<<Q.write_with_bootstrap_fraction(bf,true)<<endl;
+      cout<<Q<<endl;
       exit(0);
     }
 
@@ -389,21 +389,21 @@ int main(int argc,char* argv[])
       if (not args.count("no-node-lengths") and 
 	  not args.count("show-node-lengths")) {
 	for(int n=0;n<N;n++) {
-	  int degree = Q[n].neighbors().size();
-	  for(out_edges_iterator b = Q[n].branches_out();b;b++)
+	  int degree = Q.node(n).neighbors().size();
+	  for(out_edges_iterator b = Q.node(n).branches_out();b;b++)
 	    (*b).set_length((*b).length() + A.n1[n]/degree);
 	}
       }
 
       //------- Print Tree and branch lengths -------//
-      cout<<Q.write_with_bootstrap_fraction(bf,true)<<endl;
+      cout<<Q<<endl;
 
       //------------ Print node lengths -------------//
       if (args.count("show-node-lengths"))
 	for(int n=0;n<Q.n_nodes();n++) {
 	  if (A.n1[n] > 0) {
 	    cout<<"node "<<A.n1[n]<<endl;
-	    int b = (*Q[n].branches_in()).name();
+	    int b = (*Q.node(n).branches_in()).name();
 	    cout<<partition_from_branch(Q,b)<<endl;
 	  }
 	}

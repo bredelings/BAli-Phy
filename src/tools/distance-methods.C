@@ -292,7 +292,7 @@ Matrix EdgesDistanceMatrix(const Tree& T)
 
   assert(points.size() == T.n_leaves());
   foreach(p,points)
-    assert(T[*p].is_leaf_node());
+    assert(T.node(*p).is_leaf_node());
 
 
   // Create the final matrix from the larger matrix
@@ -377,7 +377,7 @@ Matrix DistanceMatrix(const Tree& T)
 
   assert(points.size() == T.n_leaves());
   foreach(p,points)
-    assert(T[*p].is_leaf_node());
+    assert(T.node(*p).is_leaf_node());
 
 
   // Create the final matrix from the larger matrix

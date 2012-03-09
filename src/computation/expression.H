@@ -362,7 +362,7 @@ extern expression_ref ListEnd;
 extern expression_ref default_value;
 
 // 2 Fields: parameter, Bounds<double>
-extern expression_ref bounds;
+extern expression_ref var_bounds;
 
 // 2 Fields: (random vars) (prob_density (parameter expressions))
 extern expression_ref distributed;

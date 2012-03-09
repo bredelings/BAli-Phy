@@ -233,7 +233,7 @@ alignment remap_A_indices(alignment& A, const SequenceTree& T)
 void add_internal_labels(SequenceTree& T)
 {
   for(int i=0;i<T.n_nodes();i++)
-    if (T[i].is_internal_node())
+    if (T.node(i).is_internal_node())
     {
       if (T.get_label(i) == "")
 	T.set_label(i, string("A") + convertToString(i));

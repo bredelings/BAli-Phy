@@ -89,7 +89,6 @@ int topology_sample_SPR(vector<Parameters>& p,const vector<efloat_t>& rho,int n1
   nodes[0] = A3::get_nodes_branch_random(*p[0].T, n1, n2);     // Using two random orders can lead to different total
   nodes[1] = A3::get_nodes_branch_random(*p[1].T, n1, n2);     //  probabilities for p[i] and p[j] when p[i] == p[j].
 
-  int C = -1;
   try {
     return sample_tri_multi(p,nodes,rho,true,true);
   }
@@ -126,8 +125,6 @@ int topology_sample_SPR_slice_connecting_branch(vector<Parameters>& p,int b)
 
 int topology_sample_SPR_slice_slide_node(vector<Parameters>& p,int b) 
 {
-  int b_ = p[0].T->directed_branch(b).undirected_name();
-
   slide_node_slice_function logp1(p[0],b);
   slide_node_slice_function logp2(p[1],b);
 
@@ -190,7 +187,6 @@ double do_SPR(SequenceTree& T1, int b1_,int b2)
 double do_SPR(Parameters& P, int b1, int b2)
 {
   double ratio = do_SPR(*P.T, b1, b2);
-  P.tree_propagate();
   return ratio;
 }
 
@@ -245,7 +241,7 @@ vector<double> effective_lengths_min(const Tree& T)
     {
       double min_prev = pre_b[0].length();
       for(int j=1;j<pre_b.size();j++)
-	min_prev = std::min(min_prev, pre_b[i].length());
+	min_prev = std::min(min_prev, pre_b[j].length());
 
       lengths[branches[i]] += min_prev;
     }
@@ -418,7 +414,9 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     branches.push_back((*i).undirected_name());
   //  std::cerr<<"before = "<<p[1].T<<endl;
 
+  // FIXME - do we need to USE the ratio anywhere?
   double ratio = do_SPR(p[1],b1,b2);
+
   // enforce tree constraints
   if (not extends(*p[1].T, *P.TC))
     return MCMC::Result(2+bins,0);
@@ -536,21 +534,6 @@ void sample_SPR_flat_one(owned_ptr<Probability_Model>& P,MoveStats& Stats,int b1
   }
 }
 
-void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
-{
-  Parameters& PP = *P.as<Parameters>();
-  int n = n_SPR_moves(PP);
-
-  double p = loadvalue(P->keys,"SPR_slice_fraction",-0.25);
-
-  for(int i=0;i<n;i++) 
-  {
-    int b1 = choose_subtree_branch_uniform(*PP.T);
-
-    sample_SPR_flat_one(P, Stats, b1);
-  }
-}
-
 efloat_t likelihood_unaligned_root(const Parameters& P)
 {
   efloat_t Pr = 1;
@@ -599,7 +582,7 @@ struct spr_attachment_probabilities: public map<tree_edge,efloat_t>
 ///  and choose the point on the branch specified in \a locations.
 int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_points& locations, int branch_to_move = -1)
 {
-  double total_length_before = length(T);
+  double total_length_before = tree_length(T);
 
   // unbroken target branch
   /// \todo Correctly handle moving to the same topology -- but allow branch lengths to change.
@@ -635,7 +618,7 @@ int SPR_at_location(Tree& T, int b_subtree, int b_target, const spr_attachment_p
   T.directed_branch(b1).set_length(L1);
   T.directed_branch(b2).set_length(L2);
 
-  double total_length_after = length(T);
+  double total_length_after = tree_length(T);
   assert(std::abs(total_length_after - total_length_before) < 1.0e-9);
 
   // Return the branch name that moved to the new attachment location.
@@ -738,7 +721,7 @@ public:
 spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
   :T(T_),b_parent(b),B1(-1),BM(-1), branch_to_index_(T.n_branches()*2, -1)
 {
-  append(T.directed_branch(b_parent).branches_after(), child_branches);
+  child_branches = randomized_branches_after(T.directed_branch(b_parent));
   assert(child_branches.size() == 2);
   B1 = child_branches[0].undirected_name();
   BM = child_branches[1].undirected_name();
@@ -758,6 +741,9 @@ spr_info::spr_info(const Tree& T_, int b, int branch_to_move)
   /*----------- get the list of possible attachment points, with [0] being the current one.------- */
   // \todo - With tree constraints, or with a variable alignment and alignment constraints,
   //          we really should eliminate branches that we couldn't attach to, here.
+
+  // FIXME - in order to make this independent of the circular order, we should make
+  // a randomized_all_branches_after, or a sorted_all_branches_after.
   attachment_branches = branches_after(T,b_parent);
 
   // remove the moving branch name (BM) from the list of attachment branches
@@ -873,7 +859,6 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     *P.T = T0;
     int BM2 = SPR_at_location(*P.T, b1, b2, locations, I.BM);
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
-    P.tree_propagate();
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
     assert(std::abs(P.T->branch(I.B1).length() - L[0]) < 1.0e-9);
@@ -907,7 +892,7 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
 #ifdef DEBUG_SPR_ALL
     efloat_t PR2 = heated_likelihood_unaligned_root(P);
     Pr.LLL[B2] = PR2;
-    efloat_t PR1 = P.heated_likelihood();
+    //    efloat_t PR1 = P.heated_likelihood();
     //    cerr<<"  PR1 = "<<PR1.log()<<"  PR2 = "<<PR2.log()<<"   diff = "<<PR2.log() - PR1.log()<<endl;
 #endif
 
@@ -1117,7 +1102,6 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
   *(p[1].T) = T0; 
   if (C != 0)
     SPR_at_location(*p[1].T, b1, branch_names[C], locations);
-  p[1].tree_propagate();
 
   // enforce tree constraints
   if (not extends(*p[1].T, *P.TC))
@@ -1185,6 +1169,14 @@ void sample_SPR_all(owned_ptr<Probability_Model>& P,MoveStats& Stats)
     int b1 = choose_subtree_branch_uniform2(*PP.T);
 
     sample_SPR_search_one(PP, Stats, b1);
+  }
+
+  if (loadvalue(P->keys, "SPR_longest", 1.0) > 0.5)
+  {
+    // Try moving the longest or least-determined branch every time.
+    int least_informed_branch = argmax(effective_lengths_min(*PP.T));
+    sample_SPR_flat_one(P, Stats, least_informed_branch);
+    sample_SPR_search_one(PP, Stats, least_informed_branch);
   }
 }
 
@@ -1281,7 +1273,7 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
   int A = 1+myrandom(N);
 
   b1 = -1;
-  for(const_neighbors_iterator i=T[path[A]].neighbors();i;i++) {
+  for(const_neighbors_iterator i=T.node(path[A]).neighbors();i;i++) {
     if (*i == path[A-1]) continue;
     if (*i == path[A+1]) continue;
 
@@ -1313,6 +1305,29 @@ void choose_subtree_branch_nodes(const Tree& T,int & b1, int& b2)
   b2 = T.branch(path[C2],path[C3]);
 }
 
+void sample_SPR_flat(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
+{
+  Parameters& PP = *P.as<Parameters>();
+  int n = n_SPR_moves(PP);
+
+  //  double p = loadvalue(P->keys,"SPR_slice_fraction",-0.25);
+
+  for(int i=0;i<n;i++) 
+  {
+    int b1 = choose_subtree_branch_uniform(*PP.T);
+
+    sample_SPR_flat_one(P, Stats, b1);
+  }
+
+  if (loadvalue(P->keys, "SPR_longest", 1.0) > 0.5)
+  {
+    // Try moving the longest or least-determined branch every time.
+    int least_informed_branch = argmax(effective_lengths_min(*PP.T));
+    sample_SPR_flat_one(P, Stats, least_informed_branch);
+    sample_SPR_search_one(PP, Stats, least_informed_branch);
+  }
+}
+
 void sample_SPR_nodes(owned_ptr<Probability_Model>& P,MoveStats& Stats) 
 {
   Parameters& PP = *P.as<Parameters>();
@@ -1335,5 +1350,13 @@ void sample_SPR_nodes(owned_ptr<Probability_Model>& P,MoveStats& Stats)
       MCMC::Result result = sample_SPR(*P.as<Parameters>(),b1,b2);
       SPR_inc(Stats,result,"SPR (path)", L_effective);
     }
+  }
+
+  if (loadvalue(P->keys, "SPR_longest", 1.0) > 0.5)
+  {
+    // Try moving the longest or least-determined branch every time.
+    int least_informed_branch = argmax(effective_lengths_min(*PP.T));
+    sample_SPR_flat_one(P, Stats, least_informed_branch);
+    sample_SPR_search_one(PP, Stats, least_informed_branch);
   }
 }

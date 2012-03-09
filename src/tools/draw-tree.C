@@ -834,7 +834,7 @@ tree_layout equal_angle_layout(SequenceTree MF,vector<double> node_radius)
 
   vector<nodeview> nodes;
   for(int i=0;i<MF.n_nodes();i++)
-    nodes.push_back(MF[i]);
+    nodes.push_back(MF.node(i));
 
   vector<branchview> branches;
 
@@ -886,7 +886,7 @@ tree_layout equal_angle_layout(SequenceTree MF,vector<double> node_radius)
   L.node_radius = node_radius;
 
   double a1 = 0;
-  for(out_edges_iterator b = MF[root].branches_out();b;b++) 
+  for(out_edges_iterator b = MF.node(root).branches_out();b;b++) 
   {
     double a2 = a1 + 2.0 * M_PI * n_children(MF,*b)/MF.n_leaves();
     double a = (a1+a2)/2.0;
@@ -923,7 +923,7 @@ tree_layout equal_angle_layout(const MC_tree_with_lengths& MC)
       throw myexception()<<"Hey!  This procedure only works for full partitions!";
 
     int mf_n = MF.directed_branch(b).target();
-    int d = MF[mf_n].degree();
+    int d = MF.node(mf_n).degree();
     node_radius[mf_n] = 0;
 
     // The degree could be zero is this node is at the end of a branch that
@@ -1222,7 +1222,7 @@ bool subtrees_of_node_overlap(tree_layout& L,int n)
 
   // get outwards branches - which point to subtrees
   vector<const_branchview> branches;
-  for(const_out_edges_iterator i = T[n].branches_out();i;i++)
+  for(const_out_edges_iterator i = T.node(n).branches_out();i;i++)
     branches.push_back(*i);
   
   vector<circular_range> angles;
@@ -1252,7 +1252,7 @@ void equalize_daylight(tree_layout& L,int n)
 
   // get outwards branches - which point to subtrees
   vector<int> branches;
-  for(const_out_edges_iterator i = T[n].branches_out();i;i++)
+  for(const_out_edges_iterator i = T.node(n).branches_out();i;i++)
     branches.push_back(*i);
   
 
@@ -1290,7 +1290,7 @@ void equalize_daylight_greedy(tree_layout& L,int n)
 
   // get outwards branches - which point to subtrees
   vector<const_branchview> branches;
-  for(const_out_edges_iterator i = T[n].branches_out();i;i++) {
+  for(const_out_edges_iterator i = T.node(n).branches_out();i;i++) {
     branches.push_back(*i);
     if ((*i).is_leaf_branch()) {
       cout<<"";
@@ -1333,7 +1333,7 @@ int node_size(const Tree& T,int n)
   if (n < 2) std::abort();
 
   vector<int> S;
-  for(const_out_edges_iterator i = T[n].branches_out();i;i++)
+  for(const_out_edges_iterator i = T.node(n).branches_out();i;i++)
     S.push_back(n_children(T,*i));
 
   std::sort(S.begin(),S.end());
@@ -1398,7 +1398,7 @@ tree_layout equal_daylight_layout(const MC_tree_with_lengths& MC,  bool greedy=f
       throw myexception()<<"Hey!  This procedure only works for full partitions!";
 
     int mf_n = MF.directed_branch(b).target();
-    int d = MF[mf_n].degree();
+    int d = MF.node(mf_n).degree();
     node_radius[mf_n] = 0;
 
     // The degree could be zero is this node is at the end of a branch that

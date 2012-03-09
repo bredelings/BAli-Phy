@@ -206,7 +206,7 @@ void sample_two_nodes_move(owned_ptr<Probability_Model>& P, MoveStats&,int n0)
   vector<int> nodes = A3::get_nodes_random(*PP->T,n0);
   int n1 = -1;
   for(int i=1;i<nodes.size();i++)
-    if ((*PP->T)[ nodes[i] ].is_internal_node()) {
+    if ((*PP->T).node( nodes[i] ).is_internal_node()) {
       n1 = nodes[i];
       break;
     }
@@ -295,9 +295,7 @@ vector<int> walk_tree_path(const Tree& T,int root) {
     b_stack.pop_back();
 
     // get children of the result
-    children.clear();
-    append(branches.back().branches_after(),children);
-    children = randomize(children);
+    children = randomized_branches_after(branches.back());
 
     // sort children in decrease order of cost
     if (children.size() < 2)
@@ -326,9 +324,11 @@ vector<int> walk_tree_path(const Tree& T,int root) {
 
 void sample_branch_length_(owned_ptr<Probability_Model>& P,  MoveStats& Stats, int b)
 {
-  //    std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+  //std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
+  std::clog<<"Processing branch "<<b<<"."<<std::endl;
 
   double slice_fraction = loadvalue(P->keys,"branch_slice_fraction",0.9);
+  std::cerr<<P->probability()<<" = "<<P->likelihood()<<" + "<<P->prior()<<std::endl;
 
   bool do_slice = (uniform() < slice_fraction);
   if (do_slice)
@@ -347,10 +347,13 @@ void sample_branch_length_(owned_ptr<Probability_Model>& P,  MoveStats& Stats, i
 
   // FIXME - this might move the accumulator off of the current branch (?)
   // TEST and Check Scaling of # of branches peeled
-  if (myrandomf() < 0.5)
-    slide_node(P,Stats,bv);
-  else 
-    change_3_branch_lengths(P,Stats,bv.target());
+  if (P.as<Parameters>()->T->n_nodes() > 2)
+  {
+    if (myrandomf() < 0.5)
+      slide_node(P,Stats,bv);
+    else 
+      change_3_branch_lengths(P,Stats,bv.target());
+  }
 
   if (not do_slice) {
     change_branch_length(P,Stats,b);

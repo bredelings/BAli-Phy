@@ -121,7 +121,12 @@ class data_partition: public Probability_Model, public Mat_Cache
 {
   friend class Parameters;
 
-  Parameters* P;
+  // Letting this be non-const means that sometimes, accessing cow_ptr members of P
+  // could be treated as a non-const access.  This could trigger member to be copied.
+  // If this was a tree, this apparently changed something - probably the circular order
+  // or neighbor nodes around a node.  That then changed (I think) the outcome of walk_tree_path( )
+  // in walk_tree_sample_branch_lengths( ), which changed the outcome of the MCMC.
+  const Parameters* P;
 
   int partition_index;
 
@@ -157,8 +162,7 @@ class data_partition: public Probability_Model, public Mat_Cache
 
   double branch_mean_;
 
-  void branch_mean(double);
-  void branch_mean_tricky(double);
+  void branch_mean_changed();
 
   bool variable_alignment_;
 
@@ -178,8 +182,7 @@ public:
   /// The alignment data of this partition
   cow_ptr<alignment> A;
 
-  /// Tree pushed down from above
-  cow_ptr<SequenceTree> T;
+  const SequenceTree& T() const;
 
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;
@@ -224,8 +227,8 @@ public:
   /// Get the substitution::Model
   const substitution::MultiModelObject& SModel() const;
 
-  void setlength(int b, double l);
-  void setlength_no_invalidate_LC(int b, double l);
+  void setlength(int b);
+  void setlength_no_invalidate_LC(int b);
 
   int seqlength(int n) const;
 
@@ -247,9 +250,6 @@ public:
   void note_alignment_changed();
 
   void note_sequence_length_changed(int n);
-
-  /// parameter for exponential prior on branch length
-  double branch_mean() const; 
 
   // The prior, likelihood, and probability
   efloat_t prior_no_alignment() const;
@@ -286,6 +286,8 @@ class Parameters: public SuperModel, public Probability_Model
   int n_scales;
 
   void recalc(const std::vector<int>&);
+
+  std::vector< std::vector<int> > branch_length_indices;
 
 public:
 
@@ -373,7 +375,6 @@ public:
   void recalc_imodel(int i);
   void recalc_smodels();
   void recalc_smodel(int i);
-  void tree_propagate();
 
   void select_root(int b);
   void set_root(int b);
@@ -411,6 +412,18 @@ public:
   void branch_mean(int i,double); 
 
   void branch_mean_tricky(int i,double); 
+
+  double get_branch_duration(int b) const;
+
+  double get_branch_duration(int p, int b) const;
+
+  double get_branch_subst_rate(int p, int b) const;
+
+  double get_branch_subst_length(int p, int b) const;
+
+  double get_branch_indel_rate(int p, int b) const;
+
+  double get_branch_indel_length(int p, int b) const;
 
   Parameters* clone() const {return new Parameters(*this);}
 

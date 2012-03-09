@@ -19,6 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "sequencetree.H"
 #include "rng.H"
+#include "util-random.H"
 
 using std::vector;
 using std::string;
@@ -85,12 +86,12 @@ BranchNode* randomly_split_node(Tree& T, BranchNode* n1)
     T.reconnect_branch(n3_index, n1_index, n2_index);
   }
 
-  assert(T[n1_index].degree() < D0);
-  assert(T[n1_index].degree() >= 3);
+  assert(T.node(n1_index).degree() < D0);
+  assert(T.node(n1_index).degree() >= 3);
   assert(n1->node_attributes->name == n1_index);
 
-  assert(T[n2_index].degree() < D0);
-  assert(T[n2_index].degree() >= 3);
+  assert(T.node(n2_index).degree() < D0);
+  assert(T.node(n2_index).degree() >= 3);
   assert(n2->node_attributes->name == n2_index);
 
   return n1;
@@ -98,7 +99,7 @@ BranchNode* randomly_split_node(Tree& T, BranchNode* n1)
 
 void RandomTree(Tree& T) 
 {
-  for(BN_iterator BN(T[0]);BN;BN++) 
+  for(BN_iterator BN(T.node(0));BN;BN++) 
   {
     while(nodeview(*BN).degree() > 3) {
       BranchNode * start = *BN;
@@ -131,4 +132,20 @@ SequenceTree RandomTree(const vector<string>& s,double branch_mean)
   SequenceTree T = star_tree(s);
   RandomTree(T,branch_mean);
   return T;
+}
+
+vector<const_branchview> randomized_branches_after(const const_branchview& b)
+{
+  vector<const_branchview> branches;
+  append(b.branches_after(), branches);
+  sort(branches.begin(), branches.end());
+  return randomize(branches);
+}
+
+vector<const_branchview> randomized_branches_out(const const_nodeview& n)
+{
+  vector<const_branchview> branches;
+  append(n.branches_out(), branches);
+  sort(branches.begin(), branches.end());
+  return randomize(branches);
 }

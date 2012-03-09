@@ -155,12 +155,12 @@ struct ArrayBounds: public Operation
 
   boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
-  std::string name() const {return "bnds";}
+  std::string name() const {return "bounds";}
   
   ArrayBounds():Operation(1) {}
 };
 
-extern expression_ref bnds;
+extern expression_ref bounds;
 
 struct GetIndex: public Operation
 {

@@ -190,11 +190,20 @@ struct tree_edge
   tree_edge():node1(-1),node2(-1) { }
   tree_edge(int s, int t):node1(s), node2(t) { }
   tree_edge(const BranchNode* BN):node1(BN->node_attributes->name), node2(BN->out->node_attributes->name) { }
+  // The "explicit" is in order to avoid ambiguous conversions between 'const_branchview -> int' or 'const_branchview -> tree_edge'
+  explicit tree_edge(const const_branchview& b):node1(b.source()), node2(b.target()) { }
 };
 
 inline tree_edge tree_edge::reverse() const
 {
   return tree_edge(node2, node1);
+}
+
+inline bool operator<(const const_branchview& b1, const const_branchview& b2)
+{
+  tree_edge e1(b1);
+  tree_edge e2(b2);
+  return (e1<e2);
 }
 
 /**
@@ -265,9 +274,13 @@ protected:
       compute_partitions();
   }
 
+  void set_equivalent_node_pointers(const std::vector<BranchNode*>&);
+
 public:
   /// re-compute all caches
   virtual void recompute(BranchNode*,bool=true);
+
+  void inc_node_pointers();
 
 protected:
   /// check caches, linked lists, and naming conventions
@@ -451,11 +464,6 @@ public:
   /// Get a reference to the 'i'-th node
   const_nodeview node(int i) const {return nodes_[i];}
 
-  /// Get a reference to the 'i'-th node
-        nodeview operator[](int i)       {return nodes_[i];}
-  /// Get a reference to the 'i'-th node
-  const_nodeview operator[](int i) const {return nodes_[i];}
-
   /// Precidate: are node1 and node2 connected by a branch?
   bool is_connected(int node1,int node2) const {
     return find_branch_pointer(node1,node2) != NULL;
@@ -500,7 +508,7 @@ public:
 
 
   /// Add a node onto a branch 'b', splitting it into two sub-neighbors
-  nodeview create_node_on_branch(int b);
+  virtual nodeview create_node_on_branch(int b);
 
   /// Remove a node 'n' with exactly two neighbors, merging its two adjacent branches
   virtual void remove_node_from_branch(int n);
@@ -654,6 +662,10 @@ std::vector<const_branchview> sorted_neighbors(const_nodeview n);
 /// list of all outgoing branches, sorted by branch name
 std::vector<const_branchview> sorted_branches_after(const_branchview b);
 
+std::vector<const_branchview> randomized_branches_after(const const_branchview& b);
+
+std::vector<const_branchview> randomized_branches_out(const const_nodeview& b);
+
 /// Construct a star tree with 'n' leaves.
 Tree star_tree(int n);
 
@@ -664,7 +676,7 @@ Tree RandomTree(int n,double=1.0);
 boost::dynamic_bitset<> branch_partition(const Tree& T,int b);
 
 /// Sum of the lengths of all branches
-double length(const Tree& T);
+double tree_length(const Tree& T);
 
 /// Return the maximum distance from T.branch(b).target() to nodes after b.
 int subtree_height(const Tree& T,int b);
@@ -686,5 +698,7 @@ bool has_polytomy(const Tree& T);
 
 /// Remove nodes of degree 2 and merge the resulting branches.
 void remove_sub_branches(Tree& T);
+
+bool same_topology_and_node_and_branch_numbers(const Tree& T1, const Tree& T2);
 
 #endif

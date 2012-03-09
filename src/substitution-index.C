@@ -20,16 +20,18 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution-index.H"
 #include "util.H"
 
+#define DEBUG_INDEXING 1
+
 #ifdef NDEBUG
 #define IF_DEBUG(x)
 #else
 #define IF_DEBUG(x) x
 #endif
 
-#ifdef NDEBUG_INDEXING
-#define IF_DEBUG_I(x)
-#else
+#ifdef DEBUG_INDEXING
 #define IF_DEBUG_I(x) x
+#else
+#define IF_DEBUG_I(x)
 #endif
 
 using std::vector;
@@ -180,7 +182,7 @@ ublas::matrix<int> subA_index_t::get_subA_index(int node,const alignment& A,cons
 {
   // compute node branches
   vector<int> b;
-  for(const_in_edges_iterator i = T[node].branches_in();i;i++)
+  for(const_in_edges_iterator i = T.node(node).branches_in();i;i++)
     b.push_back(*i);
 
   return get_subA_index(b,A,T);

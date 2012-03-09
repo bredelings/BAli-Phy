@@ -24,6 +24,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///        for the MCMC.
 ///
 
+/*********** Recalculating things when branch lengths change **********/
+/* 1. First, lets make ONLY exp(Q[b]*D[b]*t) depend on D */
+/*   (a) Therefore we only need to worry about changes that affect cached_transition_p[b] */
+/*   (b) That INCLUDES the substitution model! */
+
+
 #include "parameters.H"
 #include "smodel/smodel.H"
 #include "rng.H"
@@ -49,6 +55,12 @@ void data_partition::set_beta(double b)
   recalc_imodel();
 }
 
+const SequenceTree& data_partition::T() const
+{
+  return *P->T;
+}
+
+
 double data_partition::get_beta() const
 {
   return beta[0];
@@ -59,31 +71,31 @@ void data_partition::variable_alignment(bool b)
   variable_alignment_ = b;
 
   // Ignore requests to turn on alignment variation when there is no imodel or internal nodes
-  if (not has_IModel() or A->n_sequences() != T->n_nodes())
+  if (not has_IModel() or A->n_sequences() != T().n_nodes())
     variable_alignment_ = false;
 
   // turning OFF alignment variation
   if (not variable_alignment()) 
   {
-    subA = subA_index_leaf(A->length()+1, T->n_branches()*2);
+    subA = subA_index_leaf(A->length()+1, T().n_branches()*2);
 
     // We just changed the subA index type
     LC.invalidate_all();
 
-    if (A->n_sequences() == T->n_nodes())
-      if (not check_leaf_characters_minimally_connected(*A,*T))
+    if (A->n_sequences() == T().n_nodes())
+      if (not check_leaf_characters_minimally_connected(*A,T()))
 	throw myexception()<<"Failing to turn off alignment variability: non-default internal node states";
   }
   // turning ON alignment variation
   else 
   {
     if (use_internal_index)
-      subA = subA_index_internal(A->length()+1, T->n_branches()*2);
+      subA = subA_index_internal(A->length()+1, T().n_branches()*2);
     else
-      subA = subA_index_leaf(A->length()+1, T->n_branches()*2);
+      subA = subA_index_leaf(A->length()+1, T().n_branches()*2);
 
-    assert(has_IModel() and A->n_sequences() == T->n_nodes());
-    minimally_connect_leaf_characters(*A,*T);
+    assert(has_IModel() and A->n_sequences() == T().n_nodes());
+    minimally_connect_leaf_characters(*A,T());
     note_alignment_changed();
 
     // we need to calculate the branch_HMMs
@@ -109,12 +121,12 @@ IndelModel& data_partition::IModel()
 
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
-  b = T->directed_branch(b).undirected_name();
-  assert(b >= 0 and b < T->n_branches());
+  b = T().directed_branch(b).undirected_name();
+  assert(b >= 0 and b < T().n_branches());
   
   if (not cached_transition_P[b].is_valid())
   {
-    double l = T->branch(b).length() * branch_mean() / SModel().rate();
+    double l = P->get_branch_subst_length(partition_index,b) / SModel().rate();
     assert(l >= 0);
 
     vector< Matrix >& TP = cached_transition_P[b].modify_value();
@@ -132,14 +144,14 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 {
   assert(variable_alignment());
 
-  b = T->directed_branch(b).undirected_name();
+  b = T().directed_branch(b).undirected_name();
 
   cached_value<indel::PairHMM>& HMM = cached_branch_HMMs[b];
 
   if (not HMM.is_valid())
   {
     // use the length, unless we are unaligned
-    double t = T->branch(b).length();
+    double D = P->get_branch_indel_length(partition_index, b);
 
     double indel_scale_by = 1.0;
     int indel_scale_branch = -1;
@@ -153,9 +165,9 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
     if (branch_HMM_type[b] == 1)
       HMM = IModel_->get_branch_HMM(-1);
     else if (b == indel_scale_branch)
-      HMM = IModel_->get_branch_HMM(t*branch_mean()*indel_scale_by);
+      HMM = IModel_->get_branch_HMM(D*indel_scale_by);
     else
-      HMM = IModel_->get_branch_HMM(t*branch_mean());
+      HMM = IModel_->get_branch_HMM(D);
   }
 
   return HMM;
@@ -181,7 +193,7 @@ void data_partition::recalc_imodel_for_branch(int b)
   // FIXME #2 - IModel_ should be branch-specific.
   IModel_->set_heat( get_beta() );
 
-  b = T->directed_branch(b).undirected_name();
+  b = T().directed_branch(b).undirected_name();
 
   cached_branch_HMMs[b].invalidate();
   cached_alignment_prior.invalidate();
@@ -216,12 +228,10 @@ void data_partition::recalc_smodel()
   default_timer_stack.pop_timer();
 }
 
-void data_partition::setlength_no_invalidate_LC(int b, double l)
+void data_partition::setlength_no_invalidate_LC(int b)
 {
   default_timer_stack.push_timer("setlength_no_invalidate_LC( )");
-  b = T->directed_branch(b).undirected_name();
-
-  T->branch(b).set_length(l);
+  b = T().directed_branch(b).undirected_name();
 
   cached_transition_P[b].invalidate();
 
@@ -230,10 +240,10 @@ void data_partition::setlength_no_invalidate_LC(int b, double l)
   default_timer_stack.pop_timer();
 }
 
-void data_partition::setlength(int b, double l)
+void data_partition::setlength(int b)
 {
-  setlength_no_invalidate_LC(b,l);
-  LC.invalidate_branch(*T,b);
+  setlength_no_invalidate_LC(b);
+  LC.invalidate_branch(T(),b);
 }
 
 int data_partition::seqlength(int n) const
@@ -249,12 +259,12 @@ int data_partition::seqlength(int n) const
 void data_partition::invalidate_subA_index_branch(int b)
 {
   // propagates outward in both directions
-  subA->invalidate_branch(*T,b);
+  subA->invalidate_branch(T(),b);
 }
 
 void data_partition::invalidate_subA_index_one_branch(int b)
 {
-  int b2 = T->directed_branch(b).reverse();
+  int b2 = T().directed_branch(b).reverse();
   subA->invalidate_one_branch(b);
   subA->invalidate_one_branch(b2);
 }
@@ -269,8 +279,8 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 #ifndef NDEBUG
   if (subA->may_have_invalid_branches())
   {
-    subA->check_footprint(*A, *T);
-    check_regenerate(*subA, *A, *T);
+    subA->check_footprint(*A, T());
+    check_regenerate(*subA, *A, T());
   }  
 #endif
 
@@ -279,8 +289,8 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 #ifndef NDEBUG
   if (not subA->may_have_invalid_branches())
   {
-    subA->check_footprint(*A, *T);
-    check_regenerate(*subA, *A, *T);
+    subA->check_footprint(*A, T());
+    check_regenerate(*subA, *A, T());
   }  
 #endif
 }
@@ -290,7 +300,7 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
 
-  int B = T->directed_branch(b).reverse();
+  int B = T().directed_branch(b).reverse();
 
   if (pairwise_alignment_for_branch[b].is_valid())
   {
@@ -313,12 +323,12 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: what pairwise alignment are you referring to?";
 
-  int B = T->directed_branch(b).reverse();
+  int B = T().directed_branch(b).reverse();
 
   if (pairwise_alignment_for_branch[b].is_valid())
   {
-    int n1 = T->directed_branch(b).source();
-    int n2 = T->directed_branch(b).target();
+    int n1 = T().directed_branch(b).source();
+    int n2 = T().directed_branch(b).target();
     assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
     assert(pairwise_alignment_for_branch[B].is_valid());
     assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
@@ -326,8 +336,8 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
   else
   {
     assert(not pairwise_alignment_for_branch[B].is_valid());
-    int n1 = T->directed_branch(b).source();
-    int n2 = T->directed_branch(b).target();
+    int n1 = T().directed_branch(b).source();
+    int n2 = T().directed_branch(b).target();
     set_pairwise_alignment_(b, A2::get_pairwise_alignment(*A,n1,n2));
   }
 
@@ -353,17 +363,17 @@ void data_partition::note_alignment_changed_on_branch(int b)
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
 
-  b = T->directed_branch(b).undirected_name();
+  b = T().directed_branch(b).undirected_name();
 
   cached_alignment_prior.invalidate();
   cached_alignment_prior_for_branch[b].invalidate();
   cached_alignment_counts_for_branch[b].invalidate();
 
-  int B = T->directed_branch(b).reverse();
+  int B = T().directed_branch(b).reverse();
   pairwise_alignment_for_branch[b].invalidate();
   pairwise_alignment_for_branch[B].invalidate();
 
-  const Tree& TT = *T;
+  const Tree& TT = T();
   int target = TT.branch(b).target();
   int source = TT.branch(b).source();
 
@@ -383,12 +393,12 @@ void data_partition::note_alignment_changed_on_branch(int b)
   // get_subA_index( ) will not change if we are using subA_index_leaf.
   //
   if (subA.as<subA_index_internal>())
-    LC.invalidate_branch_alignment(*T,b);
+    LC.invalidate_branch_alignment(T(),b);
 }
 
 void data_partition::note_alignment_changed()
 {
-  for(int b=0;b<T->n_branches();b++)
+  for(int b=0;b<T().n_branches();b++)
     note_alignment_changed_on_branch(b);
 
   // this automatically marks all non-leaf sequence lengths for recomputation.
@@ -409,34 +419,14 @@ void data_partition::recalc(const vector<int>& indices)
   }
 }
 
-/// Get the mean branch length
-double data_partition::branch_mean() const 
-{
-  return branch_mean_;
-}
-
 /// Set the mean branch length to \a mu
-void data_partition::branch_mean(double mu)
+void data_partition::branch_mean_changed()
 {
-  // unsafe!  Must then read this value into parent.
-  branch_mean_ = mu;
-
   // the scale of the substitution tree changed
   recalc_smodel();
 
   // the scale of the indel tree changed also
   recalc_imodel();
-}
-
-/// \brief Set the mean branch length to \a mu without invalidating cached values
-///
-/// This model rescales the substitution model, but does not
-/// invalidate any cached values.  This is because we assume branch
-/// lengths have changed so that mu*T remains constant.
-///
-void data_partition::branch_mean_tricky(double mu)
-{
-  branch_mean_ = mu;
 }
 
 string data_partition::name() const 
@@ -453,11 +443,11 @@ efloat_t data_partition::prior_no_alignment() const
     double indel_scale_by = get_parameter_value_as<Double>(0);
     Pr *= laplace_pdf(indel_scale_by, 0, 1);
 
-    bool indel_scale_on = get_parameter_value_as<Bool>(1);
+    //    bool indel_scale_on = get_parameter_value_as<Bool>(1);
     Pr *= 0.5;
 
-    int indel_scale_branch = get_parameter_value_as<Int>(2);
-    Pr *= 1.0/(T->n_branches());
+    //    int indel_scale_branch = get_parameter_value_as<Int>(2);
+    Pr *= 1.0/(T().n_branches());
   }
 
   return Pr;
@@ -476,7 +466,7 @@ efloat_t data_partition::prior_alignment() const
   if (not cached_alignment_prior.is_valid()) 
   {
     const alignment& AA = *A;
-    const SequenceTree& TT = *T;
+    const SequenceTree& TT = T();
 
     for(int b=0;b<TT.n_branches();b++) {
       if (not cached_alignment_counts_for_branch[b].is_valid()) {
@@ -552,7 +542,7 @@ const substitution::MultiModelObject& data_partition::SModel() const
 }
 
 data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
-			       const substitution::MultiModelObject& SM,const IndelModel& IM)
+			       const substitution::MultiModelObject&,const IndelModel& IM)
   :P(p),
    partition_index(i),
    IModel_(IM),
@@ -563,11 +553,9 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
    cached_transition_P(t.n_branches()),
-   branch_mean_(1.0),
    variable_alignment_(true),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
-   T(t),
    LC(t,SModel()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
@@ -590,12 +578,12 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   {
     add_parameter(Parameter("lambda_scale", Double(0.0)));
     add_parameter(Parameter("lambda_scale_on", Bool(false)));
-    add_parameter(Parameter("lambda_scale_branch", Int(-1), between(0,T->n_branches()-1)));
+    add_parameter(Parameter("lambda_scale_branch", Int(-1), between(0,T().n_branches()-1)));
   }
 }
 
 data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
-			       const substitution::MultiModelObject& SM)
+			       const substitution::MultiModelObject&)
   :P(p),
    partition_index(i),
    partition_name(n),
@@ -604,11 +592,9 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
    cached_transition_P(t.n_branches()),
-   branch_mean_(1.0),
    variable_alignment_(false),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
-   T(t),
    LC(t,SModel()),
    branch_HMM_type(t.n_branches(),0),
    beta(2, 1.0)
@@ -777,7 +763,7 @@ void Parameters::recalc_smodel(int m)
 void Parameters::select_root(int b)
 {
   for(int i=0;i<data_partitions.size();i++)
-    ::select_root(*data_partitions[i]->T, b, data_partitions[i]->LC);
+    ::select_root(*T, b, data_partitions[i]->LC);
 }
 
 void Parameters::set_root(int node)
@@ -786,16 +772,10 @@ void Parameters::set_root(int node)
     data_partitions[i]->LC.root = node;
 }
 
-void Parameters::tree_propagate()
-{
-  for(int i=0;i<n_data_partitions();i++) 
-    data_partitions[i]->T = T;
-}
-
 void Parameters::LC_invalidate_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->LC.invalidate_branch(*data_partitions[i]->T,b);
+    data_partitions[i]->LC.invalidate_branch(*T,b);
 }
 
 void Parameters::LC_invalidate_one_branch(int b)
@@ -870,15 +850,26 @@ void Parameters::recalc(const vector<int>& indices)
 	data_partitions[j]->set_beta(get_beta());    
     else
     {
-      double mu = get_parameter_value_as<Double>(index);
+      int s = index - 1;
       
-      int p = index - 1;
+      assert(0 <= s and s < n_scales);
       
-      assert(0 <= p and p < n_scales);
-      
-      for(int j=0;j<scale_for_partition.size();j++)
-	if (scale_for_partition[j] == p)
-	  data_partitions[j]->branch_mean(mu);
+      // Change branch lengths for the s-th scale
+      assert(branch_length_indices[s].size() == T->n_branches());
+      for(int b=0;b<T->n_branches();b++)
+      {
+	double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+	double delta_t = T->branch(b).length();
+
+	C.set_parameter_value(branch_length_indices[s][b], Double(rate*delta_t));
+      }
+
+      // notify partitions with scale 'p' that their branch mean changed
+      for(int p=0;p<scale_for_partition.size();p++)
+      {
+	if (scale_for_partition[p] == s)
+	  data_partitions[p]->branch_mean_changed();
+      }
     }
   }
 
@@ -966,16 +957,38 @@ void Parameters::variable_alignment(bool b)
 
 void Parameters::setlength_no_invalidate_LC(int b,double l) 
 {
+  b = T->directed_branch(b).undirected_name();
   T->directed_branch(b).set_length(l);
+
+  // Update D parameters
+  for(int s=0; s<n_scales; s++) 
+  {
+    double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+    double delta_t = T->branch(b).length();
+    
+    C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
+  }
+
   for(int i=0;i<data_partitions.size();i++) 
-    data_partitions[i]->setlength_no_invalidate_LC(b,l);
+    data_partitions[i]->setlength_no_invalidate_LC(b);
 }
 
 void Parameters::setlength(int b,double l) 
 {
+  b = T->directed_branch(b).undirected_name();
   T->directed_branch(b).set_length(l);
-  for(int i=0;i<data_partitions.size();i++) 
-    data_partitions[i]->setlength(b,l);
+
+  // Update D parameters
+  for(int s=0; s<n_scales; s++) 
+  {
+    double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+    double delta_t = T->branch(b).length();
+    
+    C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
+  }
+
+  for(int p=0;p<data_partitions.size();p++) 
+    data_partitions[p]->setlength(b);
 }
 
 double Parameters::branch_mean() const 
@@ -1002,13 +1015,66 @@ void Parameters::branch_mean(int i, double x)
   set_parameter_value(branch_mean_index(i),x);
 }
 
+// Change the branch_mean for the i-th scale (and all partitions using it) without
+// invalidating anything. How do we do this?
+// I think we do it by not going through set_parameter_value( ) as above.
 void Parameters::branch_mean_tricky(int i,double x)
 {
   C.set_parameter_value(branch_mean_index(i), Double(x) );
-  
-  for(int j=0;j<scale_for_partition.size();j++)
-    if (scale_for_partition[j] == i)
-      data_partitions[j]->branch_mean_tricky(x);
+}
+
+double Parameters::get_branch_duration(int b) const
+{
+  b = T->directed_branch(b).undirected_name();
+
+  return T->branch(b).length();
+}
+
+double Parameters::get_branch_duration(int /* p */, int b) const
+{
+  // This would only depend on p if we allowed (say) different branch lengths in different partitions.
+  // Which we do not.
+  return get_branch_duration(b);
+}
+
+double Parameters::get_branch_subst_rate(int p, int /* b */) const
+{
+  int s = scale_for_partition[p];
+  return get_parameter_value_as<Double>(branch_mean_index(s));
+}
+
+double Parameters::get_branch_subst_length(int p, int b) const
+{
+  double length1 = get_branch_duration(p,b) * get_branch_subst_rate(p,b);
+
+  b = T->directed_branch(b).undirected_name();
+
+#ifndef NDEBUG
+  int s = scale_for_partition[p];
+  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
+  assert(std::abs(length1 - length2) < 1.0e-8);
+#endif
+
+  return length1;
+}
+
+double Parameters::get_branch_indel_rate(int p, int /* b */) const
+{
+  int s = scale_for_partition[p];
+  // FIXME - move lambda out of the model and make it a scaling parameter that multiples mu.
+  return get_parameter_value_as<Double>(branch_mean_index(s));
+}
+
+double Parameters::get_branch_indel_length(int p, int b) const
+{
+  double length1 = get_branch_duration(p,b) * get_branch_subst_rate(p,b);
+
+  b = T->directed_branch(b).undirected_name();
+  //  int s = scale_for_partition[p];
+  //  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
+  //  assert(std::abs(length1 - length2) < 1.0e-8);
+
+  return length1;
 }
 
 Parameters& Parameters::operator=(const Parameters& P)
@@ -1029,6 +1095,8 @@ Parameters& Parameters::operator=(const Parameters& P)
   n_scales = P.n_scales;
 
   branch_prior_type = P.branch_prior_type;
+
+  branch_length_indices = P.branch_length_indices;
 
   data_partitions = P.data_partitions;
 
@@ -1151,6 +1219,22 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     // register data partition as sub-model
     register_submodel(name);
   }
+
+  // Add and initialize variables for branch *length*.
+  for(int s=0;s<n_scales;s++)
+  {
+    string prefix= "scale" + convertToString(s+1);
+    branch_length_indices.push_back(vector<int>());
+    for(int b=0;b<T->n_branches();b++)
+    {
+      double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+      double delta_t = T->branch(b).length();
+
+      string name = "D" + convertToString(b+1);
+      int index = add_parameter(Parameter(prefix+"::"+name, Double(rate * delta_t)));
+      branch_length_indices[s].push_back(index);
+    }
+  }
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
@@ -1218,6 +1302,22 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
     // register data partition as sub-model
     register_submodel(name);
+  }
+
+  // Add and initialize variables for branch *length*.
+  for(int s=0;s<n_scales;s++)
+  {
+    string prefix= "scale" + convertToString(s+1);
+    branch_length_indices.push_back(vector<int>());
+    for(int b=0;b<T->n_branches();b++)
+    {
+      double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+      double delta_t = T->branch(b).length();
+
+      string name = "D" + convertToString(b+1);
+      int index = add_parameter(Parameter(prefix+"::"+name, Double(rate * delta_t)));
+      branch_length_indices[s].push_back(index);
+    }
   }
 }
 

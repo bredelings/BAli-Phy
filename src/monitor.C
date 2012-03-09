@@ -91,7 +91,7 @@ void show_smodels(std::ostream& o, const Parameters& P)
   }
 }
 
-void print_stats(std::ostream& o, const Parameters& P, bool print_alignment) 
+void print_stats(std::ostream& o, const Parameters& P, bool /* print_alignment */) 
 {
   efloat_t Pr_prior = P.prior();
   efloat_t Pr_likelihood = P.likelihood();

@@ -74,7 +74,7 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
 			   DParrayConstrained*& Matrices)
 {
   default_timer_stack.push_timer("alignment::DP1/5-way");
-  const Tree& T = *P.T;
+  const Tree& T = P.T();
   alignment& A = *P.A;
   alignment old = A;
 

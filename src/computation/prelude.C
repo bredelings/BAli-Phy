@@ -13,6 +13,9 @@ const expression_ref ExtendDiscreteDistribution = var("ExtendDiscreteDistributio
 const expression_ref MultiParameter = var("MultiParameter");
 const expression_ref fst = var("fst");
 const expression_ref snd = var("snd");
+const expression_ref get_list_index = var("!!");
+const expression_ref listArray = var("listArray");
+const expression_ref length = var("length");
 
 const expression_ref v0 = dummy(0);
 const expression_ref v1 = dummy(1);
@@ -82,6 +85,19 @@ Program get_Prelude()
 
   // snd (x,y) = y
   P += Def( (snd,Tuple(v1,v2)), v2);
+
+  // !! h:t 0 = h
+  // !! h:t i = !! t (i-1)
+  P += Def( (get_list_index,v1&v2,0), v1)
+          ( (get_list_index,v1&v2,v3), (get_list_index,v2,(v3-1)) );
+
+  // listArray b l = mkArray b \i -> l!!i
+  P += Def( (listArray,v1,v2),(mkArray,v1,lambda_quantify(v3,(get_list_index,v2,v3))) );
+
+  // length [] = 0
+  // length h:t = 1 + (length t)
+  P += Def( (length,ListEnd),0 )
+          ( (length,v1&v2),1 + (length,v2) );
 
   return P;
 }

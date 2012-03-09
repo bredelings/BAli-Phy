@@ -329,6 +329,7 @@ void slide_node(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b0)
   if (b[0].target().is_leaf_node())
     b[0] = b[0].reverse();
   append(b[0].branches_after(),b);
+  assert(b.size() == 3);
 
   b0 = b[0].name();
   int b1 = b[1].undirected_name();
@@ -460,7 +461,6 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
     const double length = T2.branch(b).length();
     T2.branch(b).set_length(length/scale);
   }
-  P2->tree_propagate();
 
   for(int i=0;i<PP->n_branch_means();i++) 
     P2->branch_mean_tricky(i, P2->get_parameter_value_as<Double>(P2->branch_mean_index(i)) * scale);
@@ -514,11 +514,10 @@ void change_3_branch_lengths(owned_ptr<Probability_Model>& P,MoveStats& Stats,in
   MCMC::Result result(2);
 
   const Tree& T = *PP->T;
-  if (not T[n].is_internal_node()) return;
+  if (not T.node(n).is_internal_node()) return;
 
   //-------------- Find branches ------------------//
-  vector<const_branchview> branches;
-  append(T[n].branches_out(),branches);
+  vector<const_branchview> branches = randomized_branches_out(T.node(n));
   int b1 = branches[0].undirected_name();
   int b2 = branches[1].undirected_name();
   int b3 = branches[2].undirected_name();

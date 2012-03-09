@@ -43,7 +43,7 @@ efloat_t other_prior(const data_partition& P,const vector<int>& nodes)
   if (not P.variable_alignment()) 
     return 1;
 
-  const SequenceTree& T = *P.T;
+  const SequenceTree& T = P.T();
 
   efloat_t p = 1;
 
@@ -61,12 +61,12 @@ efloat_t other_prior(const data_partition& P,const vector<int>& nodes)
 
   // Add in the node length corrections
   for(int n=0;n<T.n_nodes();n++) {
-    if (T[n].is_leaf_node())
+    if (T.node(n).is_leaf_node())
       continue;
 
     if (includes(nodes,n)) {
       vector<const_nodeview> neighbors_NV;
-      append(T[n].neighbors(),neighbors_NV);
+      append(T.node(n).neighbors(),neighbors_NV);
       vector<int> neighbors(neighbors_NV.size());
       for(int i=0;i<neighbors.size();i++)
 	neighbors[i] = neighbors_NV[i];
@@ -89,7 +89,7 @@ vector< Matrix > distributions_star(const data_partition& P,
   const alignment& A = *P.A;
   const alphabet& a = A.get_alphabet();
   const substitution::MultiModelObject& MModel = P.SModel();
-  const SequenceTree& T = *P.T;
+  const SequenceTree& T = P.T();
 
   //FIXME modify this to add a shift of 2
 
@@ -146,11 +146,11 @@ vector< Matrix > distributions_star(const data_partition& P,
 /// Distributions function for a full tree
 vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& seq,int root,const dynamic_bitset<>& group)
 {
-  const Tree& T = *P.T;
+  const Tree& T = P.T();
 
   vector<int> branches;
   vector<const_nodeview> neighbors;
-  append(T[root].neighbors(),neighbors);
+  append(T.node(root).neighbors(),neighbors);
   for(int i=0;i<neighbors.size();i++)
     if (group[neighbors[i]])
       branches.push_back(T.directed_branch(neighbors[i],root));
@@ -165,12 +165,9 @@ vector< Matrix > distributions_tree(const data_partition& P,const vector<int>& s
 
   vector< Matrix > dist;
   if (branches.size())
-    dist = substitution::get_column_likelihoods(P,branches,seq,2);
+    dist = substitution::get_column_likelihoods(P, branches, seq, 2);
   else
-  // FIXME - we could easily make 2-leaf trees work here (halfway) by just special-casing get_column_likelihoods when
-  //         branches.size() == 0.
-  //       - essentially we would need to write a copy of peel_leaf_branch that uses identity matrices for all transition probabilities.
-    ;
+    dist = substitution::get_leaf_seq_likelihoods(P, root, 2);
 
   // note: we could normalize frequencies to sum to 1
   assert(dist.size() == seq.size()+2);

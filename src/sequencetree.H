@@ -43,12 +43,6 @@ public:
   /// find the index for a particular sequence
   int index(const std::string&) const;
 
-  /// generate standard internal node and internal branch names given current leaf names
-  virtual std::vector<int> standardize();
-
-  /// generate standard internal node and internal branch names given specified leaf names
-  virtual std::vector<int> standardize(const std::vector<int>& mapping);
-
   /// compute a string representing the tree, w/ or w/o branch lengths
   virtual std::string write(bool print_lengths=true) const;
 
@@ -57,6 +51,9 @@ public:
 
   /// add a degree 0 , linking to node 'n'.  However, the index will not be a leaf index
   virtual nodeview add_leaf_node(int n);
+
+  /// Add a node onto a branch 'b', splitting it into two sub-neighbors
+  virtual nodeview create_node_on_branch(int b);
 
   /// load this tree from the string \a s
   virtual int parse(const std::string& s);

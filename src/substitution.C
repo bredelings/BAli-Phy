@@ -225,7 +225,7 @@ namespace substitution {
 
     assert(T.directed_branch(rb[0]).target().name() == root);
 
-    if (T[root].is_leaf_node())
+    if (T.node(root).is_leaf_node())
       throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
     assert(rb.size() == 3);
 
@@ -269,7 +269,99 @@ namespace substitution {
       else if (mi==1)
 	p_col = element_prod_sum(F, *m[0]);
 
-#ifndef DEBUG_SUBSTITUTION
+#ifdef DEBUG_SUBSTITUTION
+      //-------------- Set letter & model prior probabilities  ---------------//
+      element_assign(S,F);
+
+      //-------------- Propagate and collect information at 'root' -----------//
+      for(int j=0;j<rb.size();j++) {
+	int i0 = index(i,j);
+	if (i0 != alphabet::gap)
+	  element_prod_modify(S,(*branch_cache[j])[i0]);
+      }
+
+      //------------ Check that individual models are not crazy -------------//
+      for(int m=0;m<n_models;m++) {
+	double p_model=0;
+	for(int s=0;s<n_states;s++)
+	  p_model += S(m,s);
+	// A specific model (e.g. the INV model) could be impossible
+	assert(0 <= p_model and p_model <= 1.00000000001);
+      }
+
+      double p_col2 = element_sum(S);
+
+      assert((p_col - p_col2)/std::max(p_col,p_col2) < 1.0e-9);
+#endif
+
+      // SOME model must be possible
+      assert(0 <= p_col and p_col <= 1.00000000001);
+
+      // This does a log( ) operation.
+      total *= p_col;
+      //      std::clog<<" i = "<<i<<"   p = "<<p_col<<"  total = "<<total<<"\n";
+    }
+
+    for(int i=0;i<rb.size();i++)
+      total *= cache[rb[i]].other_subst;
+
+    default_timer_stack.pop_timer();
+    return total;
+  }
+
+  efloat_t calc_root_probability2(const alignment&, const Tree& T,Likelihood_Cache& cache,
+			       const MultiModelObject& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
+  {
+    total_calc_root_prob++;
+    default_timer_stack.push_timer("substitution::calc_root");
+
+    assert(index.size2() == rb.size());
+
+    for(int i=0;i<rb.size();i++)
+      assert(cache.up_to_date(rb[i]));
+
+    const int root = cache.root;
+
+    assert(T.directed_branch(rb[0]).target().name() == root);
+
+    assert(rb.size() == 2);
+
+    // scratch matrix 
+    Matrix & S = cache.scratch(0);
+    const int n_models = cache.n_models();
+    const int n_states = cache.n_states();
+
+    // cache matrix F(m,s) of p(m)*freq(m,l)
+    Matrix F(n_models,n_states);
+    WeightedFrequencyMatrix(F, MModel);
+
+    // look up the cache rows now, once, instead of for each column
+    vector< vector<Matrix>* > branch_cache;
+    for(int i=0;i<rb.size();i++)
+      branch_cache.push_back(&cache[rb[i]]);
+    
+    efloat_t total = 1;
+    for(int i=0;i<index.size1();i++)
+    {
+      double p_col = 1;
+
+      int i0 = index(i,0);
+      int i1 = index(i,1);
+
+      Matrix* m[2];
+      int mi=0;
+
+      if (i0 != -1)
+	m[mi++] = &((*branch_cache[0])[i0]);
+      if (i1 != -1)
+	m[mi++] = &((*branch_cache[1])[i1]);
+
+      if (mi==2)
+	p_col = element_prod_sum(F, *m[0], *m[1]);
+      else if (mi==1)
+	p_col = element_prod_sum(F, *m[0]);
+
+#ifdef DEBUG_SUBSTITUTION
       //-------------- Set letter & model prior probabilities  ---------------//
       element_assign(S,F);
 
@@ -320,7 +412,7 @@ namespace substitution {
     for(int i=0;i<rb.size();i++)
       assert(cache.up_to_date(rb[i]));
 
-    if (T[cache.root].is_leaf_node())
+    if (T.node(cache.root).is_leaf_node())
       throw myexception()<<"Trying to accumulate conditional likelihoods at a leaf node is not allowed.";
     assert(rb.size() == 3);
 
@@ -382,7 +474,7 @@ namespace substitution {
   efloat_t calc_root_probability(const data_partition& P,const vector<int>& rb,
 			       const ublas::matrix<int>& index) 
   {
-    return calc_root_probability(*P.A, *P.T, P.LC, P.SModel(), rb, index);
+    return calc_root_probability(*P.A, P.T(), P.LC, P.SModel(), rb, index);
   }
 
   inline double sum(const Matrix& Q, const vector<unsigned>& smap, int n_letters, 
@@ -919,6 +1011,8 @@ namespace substitution {
     default_timer_stack.pop_timer();
   }
 
+  vector<Matrix>
+  get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const MultiModelObject& MM, int n, int delta);
 
 
   void peel_branch(int b0,subA_index_t& I, Likelihood_Cache& cache, 
@@ -933,7 +1027,22 @@ namespace substitution {
 
     int B0 = T.directed_branch(b0).undirected_name();
 
-    if (bb == 0) {
+    if (T.n_nodes() == 2 and b0 == 1)
+    {
+      assert(bb == 0);
+      if (not I.branch_index_valid(b0))
+	I.update_branch(A,T,b0);
+
+      cache.prepare_branch(b0);
+      cache.set_length(I.branch_index_length(b0), b0);
+
+      vector<Matrix> L = get_leaf_seq_likelihoods(sequences[1], A.get_alphabet(), MModel, 1, 0);
+
+      for(int i=0;i<I.branch_index_length(b0);i++)
+	cache(i,b0) = L[i];
+      cache[b0].other_subst = 1;
+    }
+    else if (bb == 0) {
       int n_states = cache.scratch(0).size2();
       int n_letters = A.get_alphabet().n_letters();
       if (n_states == n_letters) {
@@ -991,7 +1100,7 @@ namespace substitution {
   inline peeling_info get_branches_for_node(int n, const Tree& T, const Likelihood_Cache& LC) 
   {
     vector<const_branchview> branches; branches.reserve(T.n_branches());
-    append(T[n].branches_in(),branches);
+    append(T.node(n).branches_in(),branches);
 
     return get_branches(T, LC, branches);
   }
@@ -1003,6 +1112,12 @@ namespace substitution {
   {
     //---------- determine the operations to perform ----------------//
     peeling_info ops = get_branches_for_node(n, T, cache);
+
+    if (T.n_nodes() == 2)
+    {
+      assert(n == 1);
+      ops.push_back(1);
+    }
 
     // FIXME? Currently we require that ALL branches towards this node are up-to-date.
     // This is used in e.g. get_likelihoods_by_alignment_column( ) but isn't necessary for
@@ -1017,7 +1132,7 @@ namespace substitution {
   }
 
   int calculate_caches_for_node(int n, const data_partition& P) {
-    return calculate_caches_for_node(n, *P.sequences, *P.A, *P.subA, P, *P.T, P.LC, P.SModel());
+    return calculate_caches_for_node(n, *P.sequences, *P.A, *P.subA, P, P.T(), P.LC, P.SModel());
   }
 
   static 
@@ -1081,16 +1196,12 @@ namespace substitution {
 
   /// Get the likelihood matrix for each letter l of sequence n, where the likelihood matrix R(m,s) = Pr(observe letter l | model = m, state = 2)
   vector<Matrix>
-  get_leaf_seq_likelihoods(const data_partition& P, int n)
+  get_leaf_seq_likelihoods(const vector<int>& sequence, const alphabet& a, const MultiModelObject& MM, int n, int delta)
   {
-    const vector<int>& sequence = (*P.sequences)[n];
-    const alignment& A = *P.A;
     int L = sequence.size();
 
-    const alphabet& a = P.get_alphabet();
     const int n_letters = a.size();
 
-    const MultiModelObject& MM = P.SModel();
     const int n_models = MM.n_base_models();
     const int n_states = MM.n_states();
 
@@ -1102,17 +1213,28 @@ namespace substitution {
       letter_likelihoods.push_back( get_letter_likelihoods(l, a, MM) );
 
     // Compute the likelihood matrices for each letter in the sequence
-    vector<Matrix> likelihoods(L, Matrix(n_models,n_states));
+    vector<Matrix> likelihoods(L+delta, Matrix(n_models,n_states));
+
     for(int i=0;i<L;i++)
     {
       int letter = sequence[i];
       if (a.is_letter(letter))
-	likelihoods[i] = letter_likelihoods[letter];
+	likelihoods[i+delta] = letter_likelihoods[letter];
       else
-	likelihoods[i] = get_letter_likelihoods(letter, a, MM);
+	likelihoods[i+delta] = get_letter_likelihoods(letter, a, MM);
     }
 
     return likelihoods;
+  }
+
+  vector<Matrix>
+  get_leaf_seq_likelihoods(const data_partition& P, int n, int delta)
+  {
+    const vector<int>& sequence = (*P.sequences)[n];
+    const alignment& A = *P.A;
+    const alphabet& a = P.get_alphabet();
+    const MultiModelObject& MM = P.SModel();
+    return get_leaf_seq_likelihoods(sequence, a, MM, n, delta);
   }
 
   /// Find the probabilities of each PRESENT letter at the root, given the data at the nodes in 'group'
@@ -1127,7 +1249,7 @@ namespace substitution {
     const alphabet& a = P.get_alphabet();
 
     const alignment& A = *P.A;
-    const Tree& T = *P.T;
+    const Tree& T = P.T();
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
     const MultiModelObject& MM = P.SModel();
@@ -1198,7 +1320,7 @@ namespace substitution {
     {
       const int n = nodes[i];
       vector<const_branchview> node_branches;
-      append(T[n].branches_out(), node_branches);
+      append(T.node(n).branches_out(), node_branches);
 
       if (node_branches.size() == 1) {
 	branch_list.push_back(node_branches[0]);
@@ -1255,7 +1377,7 @@ namespace substitution {
   {
     const vector< vector<int> >& sequences = *P.sequences;
     const alignment& A = *P.A;
-    const SequenceTree& T = *P.T;
+    const SequenceTree& T = P.T();
     const Mat_Cache& MC = P;
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
@@ -1265,7 +1387,7 @@ namespace substitution {
 
     // compute root branches
     vector<int> rb;
-    for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
+    for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
       rb.push_back(*i);
 
     const MultiModelObject& MModel= P.SModel();
@@ -1378,7 +1500,7 @@ namespace substitution {
     assert(LC1.root == LC2.root);
     
     vector<const_branchview> branches; branches.reserve(T.n_branches());
-    append(T[LC1.root].branches_in(),branches);
+    append(T.node(LC1.root).branches_in(),branches);
 
     for(int i=0;i<branches.size();i++)
     {
@@ -1486,7 +1608,7 @@ namespace substitution {
 
     // compute root branches
     vector<int> rb;
-    for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
+    for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
       rb.push_back(*i);
 
     // Combine the likelihoods from present nodes
@@ -1536,7 +1658,7 @@ namespace substitution {
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr_unaligned_root(*P.sequences, *P.A, *P.subA, P, *P.T, LC, P.SModel());
+    return Pr_unaligned_root(*P.sequences, *P.A, *P.subA, P, P.T(), LC, P.SModel());
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P) {
@@ -1574,15 +1696,34 @@ namespace substitution {
 
     // compute root branches
     vector<int> rb;
-    for(const_in_edges_iterator i = T[LC.root].branches_in();i;i++)
-      rb.push_back(*i);
+    if (T.n_nodes() == 2)
+    {
+      // This is the 
+      rb.push_back(0);
+      rb.push_back(1);
+    }
+    else
+    {
+      for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
+	rb.push_back(*i);
+    }
 
     // get the relationships with the sub-alignments
     ublas::matrix<int> index = I.get_subA_index(rb,A,T);
 
     // get the probability
-    efloat_t Pr = calc_root_probability(A,T,LC,MModel,rb,index);
+    efloat_t Pr = 1;
+    if (T.n_nodes() == 2)
+      Pr = calc_root_probability2(A,T,LC,MModel,rb,index);
+    else
+      Pr = calc_root_probability(A,T,LC,MModel,rb,index);
 
+#ifdef DEBUG_CACHING
+    if (LC.cv_up_to_date())
+    {
+      assert(std::abs(LC.cached_value.log() - Pr.log()) < 1.0e-9);
+    }
+#endif
     LC.cached_value = Pr;
     LC.cv_up_to_date() = true;
 
@@ -1591,22 +1732,21 @@ namespace substitution {
     return Pr;
   }
 
-
-
-  efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr(*P.sequences, *P.A, *P.subA, P, *P.T, LC, P.SModel());
+  efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) 
+  {
+    return Pr(*P.sequences, *P.A, *P.subA, P, P.T(), LC, P.SModel());
   }
 
 
 
   efloat_t Pr_from_scratch_leaf(data_partition P)
   {
-    subA_index_leaf subA(P.A->length()+1, P.T->n_branches()*2);
+    subA_index_leaf subA(P.A->length()+1, P.T().n_branches()*2);
 
-    Likelihood_Cache LC(*P.T, P.SModel());
+    Likelihood_Cache LC(P.T(), P.SModel());
     LC.root = P.LC.root;
 
-    return Pr(*P.sequences, *P.A, subA, P, *P.T, LC, P.SModel());
+    return Pr(*P.sequences, *P.A, subA, P, P.T(), LC, P.SModel());
   }
 
 
@@ -1615,17 +1755,15 @@ namespace substitution {
   {
     assert(P.variable_alignment());
 
-    subA_index_internal subA(P.A->length()+1, P.T->n_branches()*2);
+    subA_index_internal subA(P.A->length()+1, P.T().n_branches()*2);
 
-    Likelihood_Cache LC(*P.T, P.SModel());
+    Likelihood_Cache LC(P.T(), P.SModel());
     LC.root = P.LC.root;
 
-    check_internal_nodes_connected(*P.A,*P.T,vector<int>(1,LC.root));
+    check_internal_nodes_connected(*P.A,P.T(),vector<int>(1,LC.root));
 
-    return Pr(*P.sequences, *P.A, subA, P, *P.T, LC, P.SModel());
+    return Pr(*P.sequences, *P.A, subA, P, P.T(), LC, P.SModel());
   }
-
-
 
   efloat_t Pr(const data_partition& P) {
     efloat_t result = Pr(P, P.LC);
@@ -1634,13 +1772,13 @@ namespace substitution {
     data_partition P2 = P;
     P2.LC.invalidate_all();
     P2.invalidate_subA_index_all();
-    for(int i=0;i<P2.T->n_branches();i++)
-      P2.setlength(i,P2.T->branch(i).length());
+    for(int i=0;i<P2.T().n_branches();i++)
+      P2.setlength(i,P2.T().branch(i).length());
     efloat_t result2 = Pr(P2, P2.LC);
 
     if (std::abs(log(result) - log(result2))  > 1.0e-9) {
       std::cerr<<"Pr: diff = "<<log(result)-log(result2)<<std::endl;
-      compare_caches(*P.subA, *P2.subA, P.LC, P2.LC, *P.T);
+      compare_caches(*P.subA, *P2.subA, P.LC, P2.LC, P.T());
       std::abort();
     }
 #endif
@@ -1652,7 +1790,7 @@ namespace substitution {
     {
       efloat_t result4 = Pr_from_scratch_internal(P);
 
-      compare_branch_totals(subA3,subA4,LC3,LC4, *P.T, *P.A, P.SModel());
+      compare_branch_totals(subA3,subA4,LC3,LC4, P.T(), *P.A, P.SModel());
       assert(std::abs(log(result3) - log(result4)) < 1.0e-9);
     }
 
@@ -1746,7 +1884,7 @@ namespace substitution {
     // 3. Record likelihoods for columns that survive to the root.
 
     vector<int> root_branches;
-    for(const_in_edges_iterator i = T[cache.root].branches_in();i;i++)
+    for(const_in_edges_iterator i = T.node(cache.root).branches_in();i;i++)
     {
       // update conditional likelihoods
       calculate_caches_for_branch(*i, sequences, A, I, MC, T, cache, MModel);
@@ -1793,7 +1931,7 @@ namespace substitution {
 
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition& P)
   {
-    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, *P.A, *P.subA, P, *P.T, P.LC, P.SModel());
+    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, *P.A, *P.subA, P, P.T(), P.LC, P.SModel());
 
 #ifdef DEBUG_SUBSTITUTION
     efloat_t L1 = combine_likelihoods(likelihoods);

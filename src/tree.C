@@ -1002,7 +1002,7 @@ vector<const_branchview> branches_from_node(const Tree& T,int n) {
   vector<const_branchview> branch_list;
   branch_list.reserve(T.n_branches());
 
-  append(T[n].branches_out(),branch_list);
+  append(T.node(n).branches_out(),branch_list);
 
   get_branches_after(branch_list);
 
@@ -1014,7 +1014,7 @@ vector<const_branchview> branches_toward_node(const Tree& T,int n) {
   vector<const_branchview> branch_list;
   branch_list.reserve(T.n_branches());
 
-  append(T[n].branches_in(),branch_list);
+  append(T.node(n).branches_in(),branch_list);
 
   for(int i=0;i<branch_list.size();i++)
     append(branch_list[i].branches_before(), branch_list);
@@ -1150,7 +1150,7 @@ void remove_sub_branches(Tree& T)
   {
     // find first node of degree 2
     int n=0;
-    while(n<T.n_nodes() and T[n].degree() != 2)
+    while(n<T.n_nodes() and T.node(n).degree() != 2)
       n++;
 
     // if no nodes of degree 2, we are done
@@ -1235,7 +1235,7 @@ int SPR(Tree& T, int br1,int br2, int branch_to_move)
 
   // Reconnect (m1,x) to m2, making x a degree-2 node
   // This leaves m1 connected to its branch, so m1 can be a leaf.
-  assert(not T[m2].is_leaf_node());
+  assert(not T.node(m2).is_leaf_node());
   T.reconnect_branch(tree_edge(m1,x1), m2);
 
   // Reconnect (x,m2) to n2, leaving x a degree-2 node
@@ -1243,7 +1243,7 @@ int SPR(Tree& T, int br1,int br2, int branch_to_move)
 
   // Reconnect (n1,n2) to x, making x a degree-3 node again.
   // This leaves n1 connected to its branch, so n1 can be a leaf.
-  assert(not T[n2].is_leaf_node());
+  assert(not T.node(n2).is_leaf_node());
   T.reconnect_branch(tree_edge(n1,n2), x1);
 
   return dead_branch;
@@ -1487,6 +1487,8 @@ void Tree::reconnect_branch(int source_index, int target_index, int new_target_i
   if (nodes_[target_index] == target)
     nodes_[target_index] = target->prev;
     
+  // NOTE: This makes the circular order at the target node dependent on nodes_.
+  // The result is thus alterable by inc_node_pointers()
   BranchNode* new_target = nodes_[new_target_index];
 
   ::reconnect_branch(branch, new_target);
@@ -1575,6 +1577,28 @@ int Tree::induce_partition(const dynamic_bitset<>& partition)
   throw myexception()<<"induce_partition: partition conflicts with tree!";
 }
 
+/// This routines assumes that branches_ is a valid index for all BranchNode's in the tree.
+/// It then sets nodes_ to select the same BranchNode (by index) within each node as old_nodes.
+/// This ensures that list of branches or nodes connected to a specific node have the same order.
+void Tree::set_equivalent_node_pointers(const vector<BranchNode*>& old_nodes)
+{
+  // Assign the nodes to the same branch they were on the other tree!
+  assert(nodes_.size() == old_nodes.size());
+  for(int n=0;n<nodes_.size();n++)
+  {
+    int b = old_nodes[n]->directed_branch_attributes->name;
+    nodes_[n] = branches_[b];
+    assert(nodes_[n]->node_attributes->name == n);
+    assert(nodes_[n]->out->node_attributes->name == old_nodes[n]->out->node_attributes->name);
+  }
+}
+
+void Tree::inc_node_pointers()
+{
+  for(int n=0;n<nodes_.size();n++)
+    nodes_[n] = nodes_[n]->next;
+}
+
 Tree& Tree::operator=(const Tree& T) 
 {
   assert(&T != this);
@@ -1610,6 +1634,9 @@ Tree& Tree::operator=(const Tree& T)
   // recalculate pointer indices
   BranchNode* start = T.copy();
   recompute(start,false);
+
+  // Assign the nodes to the same branch they were on the other tree!
+  set_equivalent_node_pointers(T.nodes_);
   
   return *this;
 }
@@ -2140,6 +2167,7 @@ Tree::Tree(const Tree& T)
     // recalculate pointer indices
     BranchNode* start = T.copy();
     recompute(start,false);
+    set_equivalent_node_pointers(T.nodes_);
 }
 
 Tree::~Tree() 
@@ -2350,7 +2378,14 @@ Tree star_tree(int n)
 {
   BranchNode* center = get_first_node(1);
 
-  if (n > 1)
+  if (n == 1)
+    ;
+  else if (n == 2)
+  {
+    center->node_attributes->name = 0;
+    add_leaf_node(center,1,0)->node_attributes->name = 1;
+  }
+  else
     for(int i=0;i<n;i++)
       add_leaf_node(center,1,0)->node_attributes->name = i;
 
@@ -2369,7 +2404,7 @@ boost::dynamic_bitset<> branch_partition(const Tree& T,int b)
 }
 
 
-double length(const Tree& T) {
+double tree_length(const Tree& T) {
   double total = 0;
   for(int i=0;i<T.n_branches();i++)
     total += T.branch(i).length();
@@ -2418,7 +2453,7 @@ bool is_Cayley(const Tree& T)
 {
   for(int i=0;i<T.n_nodes();i++)
   {
-    int d = T[i].degree();
+    int d = T.node(i).degree();
     if (d != 1 and d != 3)
       return false;
   }
@@ -2429,7 +2464,7 @@ bool has_sub_branches(const Tree& T)
 {
   for(int i=0;i<T.n_nodes();i++)
   {
-    if (T[i].degree() == 2)
+    if (T.node(i).degree() == 2)
       return true;
   }
   return false;
@@ -2439,9 +2474,24 @@ bool has_polytomy(const Tree& T)
 {
   for(int i=0;i<T.n_nodes();i++)
   {
-    if (T[i].degree() > 3)
+    if (T.node(i).degree() > 3)
       return true;
   }
   return false;
 }
 
+bool same_topology_and_node_and_branch_numbers(const Tree& T1, const Tree& T2)
+{
+  if (T1.n_nodes() != T2.n_nodes()) return false;
+
+  if (T1.n_branches() != T2.n_branches()) std::abort();
+
+  for(int i=0;i<T1.n_branches();i++)
+  {
+    if (T1.branch(i).source().name() != T2.branch(i).source().name()) return false;
+
+    if (T1.branch(i).target().name() != T2.branch(i).target().name()) return false;
+  }
+
+  return true;
+}

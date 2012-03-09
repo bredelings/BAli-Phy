@@ -39,6 +39,7 @@ void SequenceTree::set_label(int i, const string& s)
 
 const string& SequenceTree::get_label(int i) const 
 {
+  // There should be no empty labels!  Only "" is allowed.
   const boost::any& label = (*nodes_[i]->node_attributes)[node_label_index];
   const string* label_p = boost::any_cast<const string>(&label);
   assert(label_p);
@@ -47,6 +48,7 @@ const string& SequenceTree::get_label(int i) const
 
 vector<string> SequenceTree::get_labels() const
 {
+  // There should be no empty labels!  Only "" is allowed.
   vector<string> node_labels(n_nodes());
 
   for(int i=0;i<node_labels.size();i++)
@@ -79,6 +81,13 @@ nodeview SequenceTree::add_leaf_node(int n)
   return nv;
 }
 
+nodeview SequenceTree::create_node_on_branch(int b)
+{
+  nodeview nv = Tree::create_node_on_branch(b);
+  set_label(nv, "");
+  return nv;
+}
+
 void SequenceTree::read(const string& filename) {
   checked_ifstream file(filename, "NEWICK tree file");
   read(file);
@@ -104,22 +113,6 @@ string SequenceTree::write_with_bootstrap_fraction(const vector<double>& bf, boo
 {
   RootedSequenceTree RT(*this,directed_branch(0).target());
   return RT.write_with_bootstrap_fraction(bf, print_lengths);
-}
-
-vector<int> SequenceTree::standardize() {
-  return Tree::standardize();
-}
-
-
-vector<int> SequenceTree::standardize(const vector<int>& lnames) 
-{
-  assert(lnames.size() == n_leaves());
-
-  vector<string> old = get_labels();
-  for(int i=0;i<n_leaves();i++)
-    set_label(lnames[i], old[i] );
-
-  return Tree::standardize(lnames);
 }
 
 // count depth -> if we are at depth 0, and have
