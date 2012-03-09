@@ -1146,6 +1146,13 @@ void write_initial_alignments(const vector<alignment>& A, int proc_id, string di
   }
 }
 
+/* 
+ * 1. Add a PRANK-like initial algorithm.
+ * 2. Add some kind of constraint.
+ * 3. Improve the method for proposing new SPR attachment sites.
+ *  3a. Can we walk along the tree making characters present?
+ */
+
 int main(int argc,char* argv[])
 { 
   int n_procs = 1;
