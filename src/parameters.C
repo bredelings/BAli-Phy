@@ -24,6 +24,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///        for the MCMC.
 ///
 
+/*********** Recalculating things when branch lengths change **********/
+/* 1. First, lets make ONLY exp(Q[b]*D[b]*t) depend on D */
+/*   (a) Therefore we only need to worry about changes that affect cached_transition_p[b] */
+/*   (b) That INCLUDES the substitution model! */
+
+
 #include "parameters.H"
 #include "smodel/smodel.H"
 #include "rng.H"
@@ -844,15 +850,26 @@ void Parameters::recalc(const vector<int>& indices)
 	data_partitions[j]->set_beta(get_beta());    
     else
     {
-      double mu = get_parameter_value_as<Double>(index);
+      int s = index - 1;
       
-      int p = index - 1;
+      assert(0 <= s and s < n_scales);
       
-      assert(0 <= p and p < n_scales);
-      
-      for(int j=0;j<scale_for_partition.size();j++)
-	if (scale_for_partition[j] == p)
-	  data_partitions[j]->branch_mean_changed();
+      // Change branch lengths for the s-th scale
+      assert(branch_length_indices[s].size() == T->n_branches());
+      for(int b=0;b<T->n_branches();b++)
+      {
+	double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+	double delta_t = T->branch(b).length();
+
+	C.set_parameter_value(branch_length_indices[s][b], Double(rate*delta_t));
+      }
+
+      // notify partitions with scale 'p' that their branch mean changed
+      for(int p=0;p<scale_for_partition.size();p++)
+      {
+	if (scale_for_partition[p] == s)
+	  data_partitions[p]->branch_mean_changed();
+      }
     }
   }
 
@@ -940,16 +957,38 @@ void Parameters::variable_alignment(bool b)
 
 void Parameters::setlength_no_invalidate_LC(int b,double l) 
 {
+  b = T->directed_branch(b).undirected_name();
+  T->directed_branch(b).set_length(l);
+
+  // Update D parameters
+  for(int s=0; s<n_scales; s++) 
+  {
+    double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+    double delta_t = T->branch(b).length();
+    
+    C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
+  }
+
   for(int i=0;i<data_partitions.size();i++) 
     data_partitions[i]->setlength_no_invalidate_LC(b);
-  T->directed_branch(b).set_length(l);
 }
 
 void Parameters::setlength(int b,double l) 
 {
-  for(int i=0;i<data_partitions.size();i++) 
-    data_partitions[i]->setlength(b);
+  b = T->directed_branch(b).undirected_name();
   T->directed_branch(b).set_length(l);
+
+  // Update D parameters
+  for(int s=0; s<n_scales; s++) 
+  {
+    double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+    double delta_t = T->branch(b).length();
+    
+    C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
+  }
+
+  for(int p=0;p<data_partitions.size();p++) 
+    data_partitions[p]->setlength(b);
 }
 
 double Parameters::branch_mean() const 
@@ -991,8 +1030,10 @@ double Parameters::get_branch_duration(int b) const
   return T->branch(b).length();
 }
 
-double Parameters::get_branch_duration(int p, int b) const
+double Parameters::get_branch_duration(int /* p */, int b) const
 {
+  // This would only depend on p if we allowed (say) different branch lengths in different partitions.
+  // Which we do not.
   return get_branch_duration(b);
 }
 
@@ -1007,9 +1048,12 @@ double Parameters::get_branch_subst_length(int p, int b) const
   double length1 = get_branch_duration(p,b) * get_branch_subst_rate(p,b);
 
   b = T->directed_branch(b).undirected_name();
-  //  int s = scale_for_partition[p];
-  //  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
-  //  assert(std::abs(length1 - length2) < 1.0e-8);
+
+#ifndef NDEBUG
+  int s = scale_for_partition[p];
+  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
+  assert(std::abs(length1 - length2) < 1.0e-8);
+#endif
 
   return length1;
 }
@@ -1176,15 +1220,19 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     register_submodel(name);
   }
 
-  for(int i=0;i<n_scales;i++)
+  // Add and initialize variables for branch *length*.
+  for(int s=0;s<n_scales;s++)
   {
-    string prefix= "scale" + convertToString(i+1);
+    string prefix= "scale" + convertToString(s+1);
     branch_length_indices.push_back(vector<int>());
-    for(int j=0;j<T->n_branches();j++)
+    for(int b=0;b<T->n_branches();b++)
     {
-      string name = "D" + convertToString(j+1);
-      int index = add_parameter(Parameter(prefix+"::"+name, Double(0.0)));
-      branch_length_indices[i].push_back(index);
+      double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+      double delta_t = T->branch(b).length();
+
+      string name = "D" + convertToString(b+1);
+      int index = add_parameter(Parameter(prefix+"::"+name, Double(rate * delta_t)));
+      branch_length_indices[s].push_back(index);
     }
   }
 }
@@ -1256,15 +1304,19 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     register_submodel(name);
   }
 
-  for(int i=0;i<n_scales;i++)
+  // Add and initialize variables for branch *length*.
+  for(int s=0;s<n_scales;s++)
   {
-    string prefix= "scale" + convertToString(i+1);
+    string prefix= "scale" + convertToString(s+1);
     branch_length_indices.push_back(vector<int>());
-    for(int j=0;j<T->n_branches();j++)
+    for(int b=0;b<T->n_branches();b++)
     {
-      string name = "D" + convertToString(j+1);
-      int index = add_parameter(Parameter(prefix+"::"+name, Double(0.0)));
-      branch_length_indices[i].push_back(index);
+      double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
+      double delta_t = T->branch(b).length();
+
+      string name = "D" + convertToString(b+1);
+      int index = add_parameter(Parameter(prefix+"::"+name, Double(rate * delta_t)));
+      branch_length_indices[s].push_back(index);
     }
   }
 }
