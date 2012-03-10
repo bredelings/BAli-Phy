@@ -36,7 +36,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "imodel.H"
 #include "alignment.H"
 #include "matcache.H"
-#include "clone.H"
 #include "substitution-cache.H"
 #include "substitution-index.H"
 

@@ -33,7 +33,7 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            substitution-index.H alignment-util.H likelihood.H proposals.H \
            tree-branchnode.H alphabet.H log-double.H rates.H tree.H \
            bits.H logsum.H tree-util.H choose.H matcache.H  \
-           rng.H util.H clone.H mcmc.H sample.H util-random.H \
+           rng.H util.H object.H mcmc.H sample.H util-random.H \
            model.H sequence-format.H dp-array.H monitor.H sequence.H \
            tools/bootstrap.H tools/inverse.H tools/statistics.H \
            tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
@@ -300,19 +300,19 @@ cut_range_SOURCES = tools/cut-range.C util.C
 
 #---------------------------------------------------------------
 
-analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
-	sequence.C tools/distance-methods.C \
-	util.C sequencetree.C substitution.C eigenvalue.C tree.C \
-	exponential.C smodel/setup.C smodel/smodel.C imodel.C rng.C likelihood.C \
-	choose.C tools/optimize.C setup.C rates.C alignment-util.C \
-	sequence-format.C randomtree.C model.C computation/graph_register.C  probability.C \
-	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
-	alignment-random.C parameters.C myexception.C monitor.C \
-	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
-	timer_stack.C io.C computation/operator.C computation/expression.C smodel/objects.C \
-	computation/computation.C computation/formula_expression.C smodel/operations.C \
-	distribution-operations.C 2way.C computation/operations.C computation/program.C \
-	computation/prelude.C computation/context.C
+#analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
+#	sequence.C tools/distance-methods.C \
+#	util.C sequencetree.C substitution.C eigenvalue.C tree.C \
+#	exponential.C smodel/setup.C smodel/smodel.C imodel.C rng.C likelihood.C \
+#	choose.C tools/optimize.C setup.C rates.C alignment-util.C \
+#	sequence-format.C randomtree.C model.C computation/graph_register.C  probability.C \
+#	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
+#	alignment-random.C parameters.C myexception.C monitor.C \
+#	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
+#	timer_stack.C io.C computation/operator.C computation/expression.C smodel/objects.C \
+#	computation/computation.C computation/formula_expression.C smodel/operations.C \
+#	distribution-operations.C 2way.C computation/operations.C computation/program.C \
+#	computation/prelude.C computation/context.C
 
 #---------------------------------------------------------------
 

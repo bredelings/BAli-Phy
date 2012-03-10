@@ -28,7 +28,7 @@ double scale_gaussian(double& x,double sigma);
 
 #include "parameters.H"
 
-class Proposal: public Cloneable {
+class Proposal: public Object {
 public:
   Proposal* clone() const =0;
   virtual double operator()(Probability_Model& P) const=0;

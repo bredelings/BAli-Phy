@@ -36,7 +36,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment.H"
 #include "alphabet.H"
 #include "sequencetree.H"
-#include "clone.H"
 
 // Remove sequences to \a A corresponding to internal nodes in \a T
 alignment chop_internal(alignment A,bool keep_empty_columns=false);

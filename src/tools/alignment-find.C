@@ -23,7 +23,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alphabet.H"
 #include "alignment.H"
 #include "alignment-util.H"
-#include "clone.H"
 
 #include <boost/program_options.hpp>
 

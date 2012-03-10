@@ -299,7 +299,7 @@ public:
   {}
 };
 
-class ColorScheme: public Cloneable {
+class ColorScheme: public Object {
   Scale scale;
   owned_ptr<ColorMap> color_map;
 public:

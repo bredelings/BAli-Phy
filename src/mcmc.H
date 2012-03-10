@@ -86,7 +86,7 @@ namespace MCMC {
   typedef void (*atomic_move_arg)(owned_ptr<Probability_Model>&,MoveStats&,int);
 
   //---------------- Move's w/ sub-moves --------------------//
-  class Move: public Cloneable 
+  class Move: public Object
   {
     bool enabled_;
 

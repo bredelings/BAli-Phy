@@ -24,9 +24,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tnt/tnt_array2d.h"
 #include "tnt/jama_eig.h"
 #include <boost/numeric/ublas/banded.hpp>
-#include "clone.H"
+#include "object.H"
 
-class EigenValues: public Cloneable {
+class EigenValues: public Object {
   Matrix O;
   std::vector<double> D;
 
