@@ -49,12 +49,6 @@ using std::endl;
 
 bool use_internal_index = true;
 
-void data_partition::set_beta(double b)
-{
-  beta[0] = b;
-  recalc_imodel();
-}
-
 const SequenceTree& data_partition::T() const
 {
   return *P->T;
@@ -63,7 +57,7 @@ const SequenceTree& data_partition::T() const
 
 double data_partition::get_beta() const
 {
-  return beta[0];
+  return P->get_beta();
 }
 
 void data_partition::variable_alignment(bool b)
@@ -557,8 +551,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
    LC(t,SModel()),
-   branch_HMM_type(t.n_branches(),0),
-   beta(2, 1.0)
+   branch_HMM_type(t.n_branches(),0)
 {
   if (variable_alignment() and use_internal_index)
     subA = subA_index_internal(a.length()+1, t.n_branches()*2);
@@ -596,8 +589,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
    LC(t,SModel()),
-   branch_HMM_type(t.n_branches(),0),
-   beta(2, 1.0)
+   branch_HMM_type(t.n_branches(),0)
 {
   if (variable_alignment() and use_internal_index)
     subA = subA_index_internal(a.length()+1, t.n_branches()*2);
@@ -846,8 +838,8 @@ void Parameters::recalc(const vector<int>& indices)
     if (not is_super_parameter(index)) continue;
 
     if (index == 0) // beta
-      for(int j=0;j<n_data_partitions();j++)
-	data_partitions[j]->set_beta(get_beta());    
+      for(int p=0;p<n_data_partitions();p++)
+	data_partitions[p]->recalc_imodel();
     else
     {
       int s = index - 1;

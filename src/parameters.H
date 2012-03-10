@@ -201,10 +201,6 @@ public:
   /// Alignment constraint
   ublas::matrix<int> alignment_constraint;
 
-  /// Temperatures -    0:likelihood     1:prior?
-  std::vector<double> beta;
-
-  void set_beta(double b);
   double get_beta() const;
 
   // get the alphabet for partition i

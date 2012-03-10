@@ -317,7 +317,7 @@ sample_tri_multi_calculation::sample_tri_multi_calculation(vector<Parameters>& p
     for(int j=0;j<p[i].n_data_partitions();j++)
       if (p[i][j].variable_alignment()) {
 	Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
-	Pr[i] *= pow(OS[i][j], p[i][j].beta[0]);
+	Pr[i] *= pow(OS[i][j], p[i][j].get_beta());
 	Pr[i] *= OP[i][j];
       }
       else

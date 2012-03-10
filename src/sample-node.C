@@ -282,7 +282,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
       if (p[i][j].variable_alignment())
       {
 	Pr[i] *= Matrices[i][j]->Pr_sum_all_paths();
-	Pr[i] *= pow(OS[i][j], p[i][j].beta[0]);
+	Pr[i] *= pow(OS[i][j], p[i][j].get_beta());
 	Pr[i] *= OP[i][j];
       }
       else
