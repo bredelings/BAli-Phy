@@ -923,11 +923,11 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
   }
 }
 
-vector<polymorphic_cow_ptr<Model> > 
+vector<formula_expression_ref>
 get_smodels(const variables_map& args, const vector<alignment>& A,
 	    const shared_items<string>& smodel_names_mapping)
 {
-  vector<polymorphic_cow_ptr<Model> > smodels;
+  vector<formula_expression_ref> smodels;
   for(int i=0;i<smodel_names_mapping.n_unique_items();i++) 
   {
     vector<alignment> alignments;
@@ -937,9 +937,7 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
     formula_expression_ref full_smodel = get_smodel(args,
 						    smodel_names_mapping.unique(i),
 						    alignments);
-    FormulaModel FM(full_smodel);
-    polymorphic_cow_ptr<Model> temp(FM);
-    smodels.push_back(temp);
+    smodels.push_back(full_smodel);
     //    cout<<"SModel "<<i+1<<": prior = "<<log(smodels.back()->prior())<<"\n";
   }
   return smodels;
@@ -1268,8 +1266,7 @@ int main(int argc,char* argv[])
     
     vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
 
-    vector<polymorphic_cow_ptr<Model> > 
-      full_smodels = get_smodels(args,A,smodel_names_mapping);
+    vector<formula_expression_ref> full_smodels = get_smodels(args,A,smodel_names_mapping);
 
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());

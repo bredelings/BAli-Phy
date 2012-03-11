@@ -41,6 +41,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "proposals.H"
 #include "probability.H"
 #include "timer_stack.H"
+#include "computation/formula_expression.H"
 
 using std::vector;
 using std::string;
@@ -1128,13 +1129,12 @@ Parameters::Parameters(const Parameters& P)
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
-		       const vector<polymorphic_cow_ptr<Model> >& SMs,
+		       const vector<formula_expression_ref>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<polymorphic_cow_ptr<IndelModel> >& IMs,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
-  :SModels(SMs),
-   smodel_for_partition(s_mapping),
+  :smodel_for_partition(s_mapping),
    IModels(IMs),
    imodel_for_partition(i_mapping),
    scale_for_partition(scale_mapping),
@@ -1148,6 +1148,9 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    branch_length_max(-1)
 {
   constants.push_back(-1);
+
+  for(int i=0;i<SMs.size();i++)
+    SModels.push_back( polymorphic_cow_ptr<Model>( FormulaModel(SMs[i]) ) );
 
   add_super_parameter(Parameter("Heat:beta", Double(1.0), between(0,1)));
 
@@ -1230,11 +1233,10 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
-		       const vector<polymorphic_cow_ptr<Model> >& SMs,
+		       const vector<formula_expression_ref>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<int>& scale_mapping)
-  :SModels(SMs),
-   smodel_for_partition(s_mapping),
+  :smodel_for_partition(s_mapping),
    scale_for_partition(scale_mapping),
    branch_prior_type(0),
    T(t),
@@ -1245,6 +1247,9 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    branch_length_max(-1)
 {
   constants.push_back(-1);
+
+  for(int i=0;i<SMs.size();i++)
+    SModels.push_back( polymorphic_cow_ptr<Model>( FormulaModel(SMs[i]) ) );
 
   add_super_parameter(Parameter("Heat:beta", Double(1.0), between(0,1)));
 
