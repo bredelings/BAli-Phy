@@ -78,7 +78,7 @@ namespace substitution {
 
   const double alpha_beta_min = 0.5;
 
-  void Beta::recalc(const vector<int>& indices)
+  void Beta::recalc(const vector<int>& /* indices */)
   {
     double mu = get_parameter_value_as<Double>(0);      // E(x)
     double gamma = get_parameter_value_as<Double>(1);   // Var(x)/E(x)
@@ -148,7 +148,7 @@ namespace substitution {
     double lVar = log1p(Var);
 
     vector<Double> p(2);
-    double lm = p[0] = -0.5 * lVar;
+    //    double lm = p[0] = -0.5 * lVar;
     double ls = p[1] = sqrt(lVar);
 
     // don't go crazy
