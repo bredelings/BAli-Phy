@@ -318,15 +318,19 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: what pairwise alignment are you referring to?";
 
+#ifndef NDEBUG
   int B = T().directed_branch(b).reverse();
+#endif
 
   if (pairwise_alignment_for_branch[b].is_valid())
   {
+#ifndef NDEBUG
     int n1 = T().directed_branch(b).source();
     int n2 = T().directed_branch(b).target();
     assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
     assert(pairwise_alignment_for_branch[B].is_valid());
     assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
+#endif
   }
   else
   {
