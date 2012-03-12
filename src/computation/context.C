@@ -230,6 +230,7 @@ int context::find_parameter(const string& s) const
 int context::add_parameter(const string& name)
 {
   assert(name.size() != 0);
+  assert(find_parameter(name) == -1);
 
   int index = n_parameters();
 
