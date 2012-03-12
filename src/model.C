@@ -297,10 +297,10 @@ Model::Model()
 
 int add_probability_expression(context& C);
 
-Model::Model(const vector<expression_ref>& N)
+Model::Model(const vector<expression_ref>& notes)
   :Operation(0),
    valid(false),
-   C(N),
+   C(notes),
    changed(C.n_parameters(), true),
    bounds(C.n_parameters()),
    fixed(C.n_parameters(),false)
