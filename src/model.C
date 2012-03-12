@@ -532,7 +532,7 @@ efloat_t SuperModel::prior() const {
 
 vector<string> SuperModel::show_priors() const 
 {
-  vector<string> pr_exp;
+  vector<string> pr_exp = Model::show_priors();
   for(int i=0;i<n_submodels();i++)
   {
     vector<string> pe = SubModels(i).show_priors();
