@@ -1094,7 +1094,8 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
   out_cache<<endl;
 
   for(int i=0;i<P.n_smodels();i++)
-    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
+    //    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
+    out_cache<<"subst model"<<i+1<<" = ???"<<endl<<endl;
 
   for(int i=0;i<P.n_imodels();i++)
     out_cache<<"indel model"<<i+1<<" = "<<P.IModel(i).name()<<endl<<endl;
@@ -1102,7 +1103,8 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
   out_screen<<"\n";
   for(int i=0;i<P.n_data_partitions();i++) {
     int s_index = P.get_smodel_index_for_partition(i);
-    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
+    //    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
+    out_screen<<"#"<<i+1<<": subst ~ ??? ("<<s_index+1<<")    ";
 
     int i_index = P.get_imodel_index_for_partition(i);
     string i_name = "none";
