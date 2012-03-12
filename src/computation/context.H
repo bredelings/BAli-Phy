@@ -74,6 +74,12 @@ public:
 
   context* clone() const {return new context(*this);}
 
+  /// Check if a parameter has a value.
+  bool parameter_is_set(int i) const;
+
+  /// Check if a compute expression is computed.
+  bool compute_expression_is_up_to_date(int i) const;
+
   /// Return the value of a particular index, computing it if necessary
   boost::shared_ptr<const Object> lazy_evaluate(int index) const;
 

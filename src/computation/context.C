@@ -59,6 +59,13 @@ void context::rename_parameter(int i, const string& new_name)
   set_E(R, parameter(new_name) );
 }
 
+bool context::compute_expression_is_up_to_date(int index) const
+{
+  int& H = *heads()[index];
+
+  return (access(H).result);
+}
+
 // Is there a way to generalize the updating of reg_var elements of structures,
 // when incremental evaluation walks a reg_var chain?
 
@@ -149,6 +156,15 @@ shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) c
     pop_temp_head();
     throw e;
   }
+}
+
+bool context::parameter_is_set(int index) const
+{
+  int P = *parameters()[index];
+
+  if (not access(P).result and access(P).call == -1) return false;
+
+  return true;
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
