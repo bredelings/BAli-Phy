@@ -557,6 +557,7 @@ vector<string> SuperModel::show_priors() const
 
 void SuperModel::check() const
 {
+#ifndef NDEBUG
   for(int m=0;m<n_submodels(); m++)
   {
     // Read the current argument lists for each sub-model
@@ -573,6 +574,7 @@ void SuperModel::check() const
 	assert(SubModels(m).get_parameter_value(i)->equals( *arg_expressions[i].constant_value ) );
     }
   }
+#endif
 }
 
 void SuperModel::update()
