@@ -453,7 +453,9 @@ shared_ptr<const Object> context::default_parameter_value(int i) const
   if (found != -1)
   {
     assert(results.size());
-    return results[0];
+    expression_ref value = results[0];
+    //    assert(find_match_notes(query, results, found+1) == -1);
+    return value;
   }
   else
     return shared_ptr<const Object>();
