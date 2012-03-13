@@ -1132,6 +1132,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    features(0),
    branch_length_max(-1)
 {
+  // Don't call set_parameter_value here, because recalc( ) depends on branch_lenth_indices, which is not ready.
+
   constants.push_back(-1);
 
   add_super_parameter(Parameter("Heat:beta", Double(1.0), between(0,1)));
@@ -1150,15 +1152,24 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string name = "S" + convertToString(i+1);
     formula_expression_ref S = prefix_formula(name,SMs[i]);
 
-    for(int j=0;j<S.notes.size();j++)
-      C.add_note(S.notes[j]);
-
     std::set<string> names = find_named_parameters(S.notes);
     foreach(i,names)
     {
       if (find_parameter(*i) == -1)
 	add_super_parameter(*i);
     }
+
+    for(int j=0;j<S.notes.size();j++)
+      add_note(S.notes[j]);
+
+    // Set default values.
+    foreach(i,names)
+    {
+      int index = find_parameter(*i);
+      //      if (not C.parameter_is_set(index))
+      C.set_parameter_value(index, C.default_parameter_value(index));
+    }
+    
 
     SModels.push_back( C.add_compute_expression( S.exp() ) );
   }
