@@ -219,6 +219,7 @@ public:
   void rename_parameter(int i, const std::string& s);
   int find_parameter(const std::string& s) const;
 
+  int add_note(const expression_ref&);
 
   bool is_fixed(int i) const;
   void set_fixed(int i,bool f);

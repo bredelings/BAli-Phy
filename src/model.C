@@ -201,6 +201,29 @@ int Model::find_parameter(const string& s) const
   return C.find_parameter(s);
 }
 
+int Model::add_note(const expression_ref& E)
+{
+  int index = C.add_note(E);
+
+  // 1. Check to see if this expression adds a bound.
+  expression_ref query = var_bounds(match(0), match(1));
+
+  vector<expression_ref> results;
+  if (find_match(query, C.get_note(index), results))
+  {
+    shared_ptr<const parameter> var = dynamic_pointer_cast<const parameter>(results[0]);
+    shared_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[1]);
+    int param_index = find_parameter(var->parameter_name);
+    if (param_index == -1)
+      throw myexception()<<"Cannot add bound '"<<E<<"' on missing variable '"<<var->parameter_name<<"'";
+    set_bounds(param_index , *b);
+  }
+
+  // 2. Check to see if this expression adds a prior
+
+  return index;
+}
+
 bool Model::is_fixed(int i) const
 {
   return fixed[i];
