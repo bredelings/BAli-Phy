@@ -196,6 +196,11 @@ void Model::rename_parameter(int i, const std::string& s)
   C.rename_parameter(i,s);
 }
 
+int Model::find_parameter(const string& s) const
+{
+  return C.find_parameter(s);
+}
+
 bool Model::is_fixed(int i) const
 {
   return fixed[i];
@@ -223,7 +228,7 @@ boost::shared_ptr<const Object> Model::get_parameter_value(int i) const
 
 boost::shared_ptr<const Object> Model::get_parameter_value(const std::string& p_name) const 
 {
-  return get_parameter_value(find_parameter(*this,p_name));
+  return C.get_parameter_value(p_name);
 }
 
 void Model::write_value(int i,const shared_ptr<const Object>& value)
@@ -239,6 +244,15 @@ void Model::set_parameter_value(int i,Double value)
 
 void Model::set_parameter_value(int i,const shared_ptr<const Object>& value) 
 {
+  set_parameter_values(vector<int>(1,i), vector< shared_ptr<const Object> >(1, value) );
+}
+
+void Model::set_parameter_value(const string& p_name,const shared_ptr<const Object>& value) 
+{
+  int i = find_parameter(p_name);
+  if (i == -1)
+    throw myexception()<<"Cannot find parameter called '"<<p_name<<"'";
+    
   set_parameter_values(vector<int>(1,i), vector< shared_ptr<const Object> >(1, value) );
 }
 
@@ -572,13 +586,6 @@ void SuperModel::update()
 SuperModel::SuperModel()
 { }
 
-int find_parameter(const Model& M,const string& name) {
-  for(int i=0;i<M.n_parameters();i++) 
-    if (M.parameter_name(i) == name)
-      return i;
-  return -1;
-}
- 
 void show_parameters(std::ostream& o,const Model& M) {
   for(int i=0;i<M.n_parameters();i++) {
     o<<"    ";

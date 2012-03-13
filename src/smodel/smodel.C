@@ -393,7 +393,7 @@ namespace substitution {
     //    codon_parameters[0] = SubModels(0).get_parameter_value_as<Double>(0);
     //    set_varray(codon_parameters,1,pi);
     SimpleFrequencyModel CM(C,get_varray<double>(R->pi) );
-    CM.set_parameter_value(find_parameter(CM,"f"), SubModels(0).get_parameter_value("f"));
+    CM.set_parameter_value("f", SubModels(0).get_parameter_value("f"));
       
     shared_ptr<const ReversibleFrequencyModelObject> codons = CM.result_as<ReversibleFrequencyModelObject>();
     //    (copy the "f" from the amino-acid model)

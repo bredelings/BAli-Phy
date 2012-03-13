@@ -44,8 +44,6 @@ class Model;
 
 std::string parameter_name(const std::string& prefix,int i,int n);
 
-int find_parameter(const Model& M,const std::string& name);
-
 struct Parameter
 {
   std::string name;
@@ -219,6 +217,8 @@ public:
   /// Names of the parameters
   std::string parameter_name(int i) const;
   void rename_parameter(int i, const std::string& s);
+  int find_parameter(const std::string& s) const;
+
 
   bool is_fixed(int i) const;
   void set_fixed(int i,bool f);

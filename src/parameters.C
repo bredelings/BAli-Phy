@@ -1156,7 +1156,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     std::set<string> names = find_named_parameters(S.notes);
     foreach(i,names)
     {
-      if (C.find_parameter(*i) == -1)
+      if (find_parameter(*i) == -1)
 	add_super_parameter(*i);
     }
 
