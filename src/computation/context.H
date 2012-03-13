@@ -54,6 +54,7 @@ public:
   expression_ref get_note(int i) {return notes[i];}
 
   int add_note(const expression_ref&);
+  void add_notes(const std::vector<expression_ref>&);
 
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
 

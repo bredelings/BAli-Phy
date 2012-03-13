@@ -21,10 +21,38 @@ string context::parameter_name(int i) const
   throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
 }
 
+int add_one_note(vector<expression_ref>& N1, const expression_ref& N2)
+{
+  for(int i=0;i<N1.size();i++)
+    if (N1[i] == N2)
+      return i;
+
+  N1.push_back(N2);
+  return N1.size() -1;
+}
+
+void add_some_notes(vector<expression_ref>& N1, const vector<expression_ref>& N2)
+{
+  for(int i=0;i<N1.size();i++)
+    for(int j=0;j<i;j++)
+      assert(N1[i] != N1[j]);
+
+  for(int i=0;i<N2.size();i++)
+    for(int j=0;j<i;j++)
+      assert(N2[i] != N2[j]);
+
+  for(int i=0;i<N2.size();i++)
+    add_one_note(N1,N2[i]);
+}
+
 int context::add_note(const expression_ref& E)
 {
-  notes.push_back(E);
-  return notes.size()-1;
+  return add_one_note(notes, E);
+}
+
+void context::add_notes(const vector<expression_ref>& N)
+{
+  add_some_notes(notes, N);
 }
 
 reg_heap::root_t reg_heap::add_identifier_to_context(int t, const string& name)
@@ -418,9 +446,10 @@ context::context()
 context::context(const vector<expression_ref>& N)
   :memory(new reg_heap()),
    P(new Program()),
-   token(memory->get_unused_token()),
-   notes(N)
+   token(memory->get_unused_token())
 {
+  add_notes(N);
+
   (*this) += Prelude;
 
   std::set<string> names = find_named_parameters(notes);
@@ -554,7 +583,11 @@ vector<expression_ref> add_prefix(const string& prefix, const vector<expression_
 vector<expression_ref> combine(const vector<expression_ref>& N1, const vector<expression_ref>& N2)
 {
   vector<expression_ref> N3 = N1;
+
   N3.insert(N3.end(), N2.begin(), N2.end());
+
+  //  add_some_notes(N3, N2);
+
   return N3;
 }
 
