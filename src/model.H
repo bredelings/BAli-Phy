@@ -275,6 +275,8 @@ public:
           void set_parameter_value(int p,Double value);
   /// Set A model parameter value
           void set_parameter_value(int p, const boost::shared_ptr<const Object>& value);
+  /// Set A model parameter value
+          void set_parameter_value(const std::string& p, const boost::shared_ptr<const Object>& value);
   /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
   /// Set SOME of the model parameter values
