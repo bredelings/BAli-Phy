@@ -1152,15 +1152,15 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string name = "S" + convertToString(i+1);
     formula_expression_ref S = prefix_formula(name,SMs[i]);
 
-    std::set<string> names = find_named_parameters(S.notes);
+    std::set<string> names = find_named_parameters(S.get_notes());
     foreach(i,names)
     {
       if (find_parameter(*i) == -1)
 	add_super_parameter(*i);
     }
 
-    for(int j=0;j<S.notes.size();j++)
-      add_note(S.notes[j]);
+    for(int j=0;j<S.n_notes();j++)
+      add_note(S.get_note(j));
 
     // Set default values.
     foreach(i,names)
@@ -1267,8 +1267,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   for(int i=0;i<SMs.size();i++) {
     string name = "S" + convertToString(i+1);
     formula_expression_ref S = prefix_formula(name,SMs[i]);
-    for(int j=0;j<S.notes.size();j++)
-      C.add_note(S.notes[j]);
+    for(int j=0;j<S.n_notes();j++)
+      C.add_note(S.get_note(j));
     SModels.push_back( C.add_compute_expression( S.exp() ) );
   }
 

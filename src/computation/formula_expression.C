@@ -5,18 +5,34 @@
 using boost::shared_ptr;
 using std::vector;
 
+int formula_expression_ref::add_note(const expression_ref& E)
+{
+  for(int i=0;i<notes.size();i++)
+    if (notes[i] == E)
+      return i;
+
+  notes.push_back(E);
+  return notes.size()-1;
+}
+
+void formula_expression_ref::set_note(int i, const expression_ref& E)
+{
+  // how would we process changes to notes, when those notes have effects?
+  notes[i] = E;
+}
+
 formula_expression_ref formula_expression_ref::operator()(const formula_expression_ref& R2) const
 {
   // Perhaps I should take out the expression that is the argument... we perhaps not.
-  formula_expression_ref R3(combine(notes, R2.notes), I);
-  R3.notes[I] = R3.notes[I](R2.exp());
+  formula_expression_ref R3(combine(notes, R2.get_notes()), I);
+  R3.set_note(I, R3.get_note(I)(R2.exp()) );
   return R3;
 }
 
 formula_expression_ref formula_expression_ref::operator()(const expression_ref& R2) const
 {
   formula_expression_ref R3(*this);
-  R3.notes[I] = R3.notes[I](R2);
+  R3.set_note(I, R3.get_note(I)(R2) );
   return R3;
 }
 
@@ -67,14 +83,14 @@ formula_expression_ref::formula_expression_ref(const vector<expression_ref>& N, 
 
 formula_expression_ref prefix_formula(const std::string& prefix,const formula_expression_ref& R)
 {
-  return formula_expression_ref(add_prefix(prefix, R.notes), R.index());
+  return formula_expression_ref(add_prefix(prefix, R.get_notes()), R.index());
 }
 
 int formula_expression_ref::add_expression(const formula_expression_ref& R)
 {
   // The indices of the first argument are (currently) not altered, so 'index' is unchanged.
   int i = notes.size() + R.index();
-  notes.insert(notes.end(), R.notes.begin(), R.notes.end());
+  notes.insert(notes.end(), R.get_notes().begin(), R.get_notes().end());
   return i;
 }
 
@@ -122,7 +138,7 @@ formula_expression_ref lambda_quantify(const expression_ref& d, const formula_ex
 {
   // Perhaps I should take out the expression that is the argument... we perhaps not.
   formula_expression_ref F2 = F;
-  F2.notes[F2.index()] = lambda_quantify(d,F.exp());
+  F2.set_note(F2.index(), lambda_quantify(d,F.exp()) );
   return F2;
 }
 

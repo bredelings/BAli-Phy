@@ -945,7 +945,7 @@ FormulaModel::FormulaModel(const vector<expression_ref>& N,int i)
 { }
 
 FormulaModel::FormulaModel(const formula_expression_ref& r)
-  :Model( r.notes ),
+  :Model( r.get_notes() ),
    I( r.index() ),
    result_index( C.add_compute_expression(C.get_note(I)) )
 { }
