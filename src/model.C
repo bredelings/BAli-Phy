@@ -336,14 +336,25 @@ int add_probability_expression(context& C);
 
 Model::Model(const vector<expression_ref>& notes)
   :Operation(0),
-   valid(false),
-   C(notes),
-   changed(C.n_parameters(), true),
-   bounds(C.n_parameters()),
-   fixed(C.n_parameters(),false)
+   valid(false)
 {
+  // 1. Create the parameters
+  std::set<string> names = find_named_parameters(notes);
+  
+  foreach(i,names)
+    add_parameter(*i);
+
   C.alphabetize_parameters();
 
+  // 2. Add the notes refering to the parameters.
+  for(int i=0;i<notes.size();i++)
+    add_note(notes[i]);
+
+  // 3. Then set all default values.
+  for(int i=0;i<n_parameters();i++)
+    set_parameter_value(i, C.default_parameter_value(i));
+
+  // 4. Set bounds.
   for(int i=0;i<n_parameters();i++)
   {
     expression_ref var = parameter(parameter_name(i));
@@ -358,6 +369,7 @@ Model::Model(const vector<expression_ref>& notes)
     }
   }
 
+  // 5. Create the prior
   prior_index = add_probability_expression(C);
 
 #ifndef NDEBUG

@@ -268,8 +268,6 @@ int context::add_parameter(const string& name)
   access(*r).changeable = true;
   set_E(*r, parameter(name) );
 
-  set_parameter_value(index, default_parameter_value(index) );
-  
   return index;
 }
 
@@ -448,15 +446,20 @@ context::context(const vector<expression_ref>& N)
    P(new Program()),
    token(memory->get_unused_token())
 {
-  add_notes(N);
-
   (*this) += Prelude;
 
-  std::set<string> names = find_named_parameters(notes);
+  // 1. Create the parameters
+  std::set<string> names = find_named_parameters(N);
   
-  // Then set all default values.
   foreach(i,names)
     add_parameter(*i);
+
+  // 2. Add the notes refering to the parameters.
+  add_notes(N);
+
+  // 3. Then set all default values.
+  for(int i=0;i<n_parameters();i++)
+    set_parameter_value(i, default_parameter_value(i));
 }
 
 context::context(const context& C)
