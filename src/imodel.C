@@ -1011,7 +1011,7 @@ efloat_t FS_Transducer::prior() const
 //  it either choose to terminate OR sees a letter of another type.
 //  Thus, the rate of deletions depends on how close other types are.)
 
-indel::PairTransducer get_FS_Transducer(double t,double delta_s,double delta_f, double r, double Rsf, double Rfs)
+indel::PairTransducer get_FS_Transducer(double /* t */,double delta_s,double delta_f, double r, double Rsf, double Rfs)
 {
   double Rss = 1.0-Rsf;
   double Rff = 1.0-Rfs;
@@ -1201,7 +1201,7 @@ indel::PairTransducer FS_Transducer::get_branch_Transducer(double t) const
   double r             = exp(get_parameter_value_as<Double>(2));
   double mean_length_s = get_parameter_value_as<Double>(3);
   double mean_length_f = get_parameter_value_as<Double>(4);
-  double tau           = get_parameter_value_as<Double>(5);
+  //  double tau           = get_parameter_value_as<Double>(5);
 
   double sigma_s = mean_length_s/(1.0 + mean_length_s); // E L = s/(1-s)
   double mu_s = lambda_s/sigma_s;                       // s = lambda/mu
@@ -1224,7 +1224,7 @@ indel::PairTransducer FS_Transducer::get_branch_Transducer(double t) const
   double Rfs = -1;
   {
     Matrix R = root_chain();
-    int start = 0;
+    //    int start = 0;
     int S     = 1;
     int F     = 2;
     int end   = 3;

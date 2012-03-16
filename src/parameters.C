@@ -330,15 +330,19 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: what pairwise alignment are you referring to?";
 
+#ifndef NDEBUG
   int B = T().directed_branch(b).reverse();
+#endif
 
   if (pairwise_alignment_for_branch[b].is_valid())
   {
+#ifndef NDEBUG
     int n1 = T().directed_branch(b).source();
     int n2 = T().directed_branch(b).target();
     assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
     assert(pairwise_alignment_for_branch[B].is_valid());
     assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
+#endif
   }
   else
   {
@@ -544,12 +548,12 @@ efloat_t data_partition::heated_likelihood() const
 /// Get the substitution::Model
 const substitution::MultiModelObject& data_partition::SModel() const 
 {
-  int m = P->smodel_for_partition[partition_index];
-  return *(P->SModels[m]->result_as<substitution::MultiModelObject>());
+  int s = P->smodel_for_partition[partition_index];
+  return P->SModel(s);
 }
 
 data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
-			       const substitution::MultiModelObject&,const IndelModel& IM)
+			       const IndelModel& IM)
   :P(p),
    partition_index(i),
    IModel_(IM),
@@ -588,8 +592,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   }
 }
 
-data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
-			       const substitution::MultiModelObject&)
+data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t)
   :P(p),
    partition_index(i),
    partition_name(n),
@@ -633,7 +636,7 @@ double Parameters::get_beta() const
 
 efloat_t Parameters::prior_no_alignment() const 
 {
-  efloat_t Pr = 1.0;
+  efloat_t Pr = Model::prior();
 
   // prior on the topology and branch lengths
   Pr *= ::prior(*this, *T, 1.0);
@@ -651,10 +654,6 @@ efloat_t Parameters::prior_no_alignment() const
     Pr *= gamma_pdf(get_parameter_value_as<Double>(branch_mean_index(i)), 0.5, 2.0);
   }
     
-  // prior on the substitution model
-  for(int i=0;i<SModels.size();i++)
-    Pr *= SModel(i).prior();
-
   // prior on the insertion/deletion model
   for(int i=0;i<IModels.size();i++)
     Pr *= IModel(i).prior();
@@ -716,16 +715,11 @@ efloat_t Parameters::heated_likelihood() const
 }
 
   /// Get the substitution::Model
-const Model& Parameters::SModel(int i) const 
+const substitution::MultiModelObject& Parameters::SModel(int s) const 
 {
-  return *SModels[i];
+  boost::shared_ptr<const Object> O = C.evaluate(SModels[s]);
+  return *convert<const substitution::MultiModelObject>(O);
 }
-  /// Get the substitution::Model
-      Model& Parameters::SModel(int i)
-{
-  return *SModels[i];
-}
-
 
 void Parameters::recalc_imodels() 
 {
@@ -853,7 +847,7 @@ void Parameters::recalc(const vector<int>& indices)
     if (index == 0) // beta
       for(int p=0;p<n_data_partitions();p++)
 	data_partitions[p]->recalc_imodel();
-    else
+    else if (index < n_scales+1)
     {
       int s = index - 1;
       
@@ -890,10 +884,6 @@ void Parameters::recalc(const vector<int>& indices)
     if (not submodel_changed[m]) continue;
 
     int M = m;
-    if (M < n_smodels())
-      recalc_smodel(M);
-    else
-      M -= n_smodels();
 
     if (M < n_imodels())
       recalc_imodel(M);
@@ -908,17 +898,17 @@ void Parameters::recalc(const vector<int>& indices)
     // (b) first recalcing submodels, then recalcing ourselves (via 'update'). (post-order)
     // So, we don't need to involve recalc on submodels from here.
   }
+
+  // Check if any substitution models have changed.
+  for(int s=0;s<n_smodels();s++)
+    if (not C.compute_expression_is_up_to_date(SModels[s]))
+      recalc_smodel(s);
 }
 
 Model& Parameters::SubModels(int i)
 {
   if (i>=n_submodels())
     throw myexception()<<"Parameters: There is no sub-model #"<<i<<"!";
-
-  if (i<SModels.size()) 
-    return SModel(i);
-  else
-    i -= SModels.size();
 
   if (i<IModels.size()) 
     return IModel(i);
@@ -932,11 +922,6 @@ const Model& Parameters::SubModels(int i) const
 {
   if (i>=n_submodels())
     throw myexception()<<"Parameters: There is no sub-model #"<<i<<"!";
-
-  if (i<SModels.size()) 
-    return SModel(i);
-  else
-    i -= SModels.size();
 
   if (i<IModels.size()) 
     return IModel(i);
@@ -1159,10 +1144,9 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    features(0),
    branch_length_max(-1)
 {
-  constants.push_back(-1);
+  // Don't call set_parameter_value here, because recalc( ) depends on branch_lenth_indices, which is not ready.
 
-  for(int i=0;i<SMs.size();i++)
-    SModels.push_back( polymorphic_cow_ptr<Model>( FormulaModel(SMs[i]) ) );
+  constants.push_back(-1);
 
   add_super_parameter(Parameter("Heat:beta", Double(1.0), between(0,1)));
 
@@ -1176,9 +1160,30 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       <<smodel_for_partition.size();
 
   // register the substitution models as sub-models
-  for(int i=0;i<SModels.size();i++) {
+  for(int i=0;i<SMs.size();i++) {
     string name = "S" + convertToString(i+1);
-    register_submodel(name);
+    formula_expression_ref S = prefix_formula(name,SMs[i]);
+
+    std::set<string> names = find_named_parameters(S.get_notes());
+    foreach(i,names)
+    {
+      if (find_parameter(*i) == -1)
+	add_super_parameter(*i);
+    }
+
+    for(int j=0;j<S.n_notes();j++)
+      add_note(S.get_note(j));
+
+    // Set default values.
+    foreach(i,names)
+    {
+      int index = find_parameter(*i);
+      //      if (not C.parameter_is_set(index))
+      C.set_parameter_value(index, C.default_parameter_value(index));
+    }
+    
+
+    SModels.push_back( C.add_compute_expression( S.exp() ) );
   }
 
   // register the indel models as sub-models
@@ -1208,17 +1213,14 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     // compute name for data-partition
     string name = string("part") + convertToString(i+1);
 
-    // get reference to smodel for data-partition
-    const Model& SM = SModel(smodel_for_partition[i]);
-
     // create a data partition
     cow_ptr<data_partition> dp;
     if (imodel_for_partition[i] != -1) {
       const IndelModel& IM = IModel(imodel_for_partition[i]);
-      dp = cow_ptr<data_partition>(data_partition(name, this, i, A[i], *T, *SM.result_as<substitution::MultiModelObject>(), IM));
+      dp = cow_ptr<data_partition>(data_partition(name, this, i, A[i], *T, IM));
     }
     else 
-      dp = cow_ptr<data_partition>(data_partition(name, this, i, A[i], *T, *SM.result_as<substitution::MultiModelObject>()));
+      dp = cow_ptr<data_partition>(data_partition(name, this, i, A[i], *T));
 
     // add the data partition
     data_partitions.push_back(dp);
@@ -1242,6 +1244,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       branch_length_indices[s].push_back(index);
     }
   }
+
+  prior_index = add_probability_expression(C);
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
@@ -1260,9 +1264,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 {
   constants.push_back(-1);
 
-  for(int i=0;i<SMs.size();i++)
-    SModels.push_back( polymorphic_cow_ptr<Model>( FormulaModel(SMs[i]) ) );
-
   add_super_parameter(Parameter("Heat:beta", Double(1.0), between(0,1)));
 
   for(int i=0;i<n_scales;i++)
@@ -1275,9 +1276,12 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       <<smodel_for_partition.size();
 
   // register the substitution models as sub-models
-  for(int i=0;i<SModels.size();i++) {
+  for(int i=0;i<SMs.size();i++) {
     string name = "S" + convertToString(i+1);
-    register_submodel(name);
+    formula_expression_ref S = prefix_formula(name,SMs[i]);
+    for(int j=0;j<S.n_notes();j++)
+      C.add_note(S.get_note(j));
+    SModels.push_back( C.add_compute_expression( S.exp() ) );
   }
 
   // NO indel model (in this constructor)
@@ -1303,11 +1307,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     // compute name for data-partition
     string name = string("part") + convertToString(i+1);
 
-    // get reference to smodel for data-partition
-    const Model& SM = SModel(smodel_for_partition[i]);
-
     // create data partition
-    data_partitions.push_back(cow_ptr<data_partition>(data_partition(name, this, i, A[i],*T,*SM.result_as<substitution::MultiModelObject>())));
+    data_partitions.push_back(cow_ptr<data_partition>(data_partition(name, this, i, A[i],*T)));
 
     // register data partition as sub-model
     register_submodel(name);

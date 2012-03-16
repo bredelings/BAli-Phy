@@ -54,6 +54,7 @@ public:
   expression_ref get_note(int i) {return notes[i];}
 
   int add_note(const expression_ref&);
+  void add_notes(const std::vector<expression_ref>&);
 
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
 
@@ -73,6 +74,12 @@ public:
   reg& operator[](int i) const {return memory->access(i);}
 
   context* clone() const {return new context(*this);}
+
+  /// Check if a parameter has a value.
+  bool parameter_is_set(int i) const;
+
+  /// Check if a compute expression is computed.
+  bool compute_expression_is_up_to_date(int i) const;
 
   /// Return the value of a particular index, computing it if necessary
   boost::shared_ptr<const Object> lazy_evaluate(int index) const;

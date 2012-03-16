@@ -26,7 +26,6 @@ using boost::dynamic_bitset;
 
 void pairwise_alignment_t::flip()
 {
-  
   for(int i=0;i<size();i++)
     (*this)[i] = A2::flip((*this)[i]);
 }
@@ -36,6 +35,24 @@ pairwise_alignment_t pairwise_alignment_t::flipped() const
   pairwise_alignment_t pi (*this);
   pi.flip();
   return pi;
+}
+
+int pairwise_alignment_t::length1() const
+{
+  int total = 0;
+  for(int i=0;i<size();i++)
+    if ((*this)[i] == A2::states::M or (*this)[i] == A2::states::G2)
+      total++;
+  return total;
+}
+
+int pairwise_alignment_t::length2() const
+{
+  int total = 0;
+  for(int i=0;i<size();i++)
+    if ((*this)[i] == A2::states::M or (*this)[i] == A2::states::G1)
+      total++;
+  return total;
 }
 
 pairwise_alignment_t::pairwise_alignment_t()

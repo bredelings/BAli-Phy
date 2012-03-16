@@ -329,7 +329,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     if (s >= P.n_smodels()) continue;
 
     // Handle multi-frequency models
-    boost::shared_ptr<const alphabet> a = P.SModel(s).result_as<substitution::MultiModelObject>()->get_alphabet();
+    boost::shared_ptr<const alphabet> a = P.SModel(s).get_alphabet();
     const int asize = a->size();
 
     for(int l=0;l<asize;l++) {
@@ -605,7 +605,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     // Handle multi-frequency models
     set_if_undef(P.keys,"MF::dirichlet_N",10.0);
 
-    boost::shared_ptr<const alphabet> a = P.SModel(s).result_as<substitution::MultiModelObject>()->get_alphabet();
+    boost::shared_ptr<const alphabet> a = P.SModel(s).get_alphabet();
     const int asize = a->size();
 
     for(int l=0;l<asize;l++) {
@@ -669,7 +669,7 @@ void set_min_branch_length(Parameters& P, double min_branch)
       P.setlength(b, min_branch);
 }
 
-void avoid_zero_likelihood(owned_ptr<Probability_Model>& P, ostream& out_log,ostream& out_both)
+void avoid_zero_likelihood(owned_ptr<Probability_Model>& P, ostream& out_log,ostream& /* out_both */)
 {
   Parameters& PP = *P.as<Parameters>();
 

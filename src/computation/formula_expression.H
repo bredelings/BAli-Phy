@@ -8,8 +8,21 @@
 class formula_expression_ref
 {
   int I;
-public:
+
+  // I should probably make a note_collection class that is shared
+  // between formula_expression_ref and class context.
   std::vector<expression_ref> notes;
+public:
+
+  int add_note(const expression_ref&);
+
+  expression_ref get_note(int i) const {return notes[i];}
+
+  const std::vector<expression_ref>& get_notes() const {return notes;}
+
+  int n_notes() const {return notes.size();}
+
+  void set_note(int i, const expression_ref&);
 
   formula_expression_ref operator()(const formula_expression_ref&) const;
 

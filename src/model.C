@@ -206,6 +206,34 @@ void Model::rename_parameter(int i, const std::string& s)
   C.rename_parameter(i,s);
 }
 
+int Model::find_parameter(const string& s) const
+{
+  return C.find_parameter(s);
+}
+
+int Model::add_note(const expression_ref& E)
+{
+  int index = C.add_note(E);
+
+  // 1. Check to see if this expression adds a bound.
+  expression_ref query = var_bounds(match(0), match(1));
+
+  vector<expression_ref> results;
+  if (find_match(query, C.get_note(index), results))
+  {
+    shared_ptr<const parameter> var = dynamic_pointer_cast<const parameter>(results[0]);
+    shared_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[1]);
+    int param_index = find_parameter(var->parameter_name);
+    if (param_index == -1)
+      throw myexception()<<"Cannot add bound '"<<E<<"' on missing variable '"<<var->parameter_name<<"'";
+    set_bounds(param_index , *b);
+  }
+
+  // 2. Check to see if this expression adds a prior
+
+  return index;
+}
+
 bool Model::is_fixed(int i) const
 {
   return fixed[i];
@@ -233,7 +261,7 @@ boost::shared_ptr<const Object> Model::get_parameter_value(int i) const
 
 boost::shared_ptr<const Object> Model::get_parameter_value(const std::string& p_name) const 
 {
-  return get_parameter_value(find_parameter(*this,p_name));
+  return C.get_parameter_value(p_name);
 }
 
 void Model::write_value(int i,const shared_ptr<const Object>& value)
@@ -249,6 +277,15 @@ void Model::set_parameter_value(int i,Double value)
 
 void Model::set_parameter_value(int i,const shared_ptr<const Object>& value) 
 {
+  set_parameter_values(vector<int>(1,i), vector< shared_ptr<const Object> >(1, value) );
+}
+
+void Model::set_parameter_value(const string& p_name,const shared_ptr<const Object>& value) 
+{
+  int i = find_parameter(p_name);
+  if (i == -1)
+    throw myexception()<<"Cannot find parameter called '"<<p_name<<"'";
+    
   set_parameter_values(vector<int>(1,i), vector< shared_ptr<const Object> >(1, value) );
 }
 
@@ -307,16 +344,27 @@ Model::Model()
 
 int add_probability_expression(context& C);
 
-Model::Model(const vector<expression_ref>& N)
+Model::Model(const vector<expression_ref>& notes)
   :Operation(0),
-   valid(false),
-   C(N),
-   changed(C.n_parameters(), true),
-   bounds(C.n_parameters()),
-   fixed(C.n_parameters(),false)
+   valid(false)
 {
+  // 1. Create the parameters
+  std::set<string> names = find_named_parameters(notes);
+  
+  foreach(i,names)
+    add_parameter(*i);
+
   C.alphabetize_parameters();
 
+  // 2. Add the notes refering to the parameters.
+  for(int i=0;i<notes.size();i++)
+    add_note(notes[i]);
+
+  // 3. Then set all default values.
+  for(int i=0;i<n_parameters();i++)
+    set_parameter_value(i, C.default_parameter_value(i));
+
+  // 4. Set bounds.
   for(int i=0;i<n_parameters();i++)
   {
     expression_ref var = parameter(parameter_name(i));
@@ -331,6 +379,7 @@ Model::Model(const vector<expression_ref>& N)
     }
   }
 
+  // 5. Create the prior
   prior_index = add_probability_expression(C);
 
 #ifndef NDEBUG
@@ -542,7 +591,7 @@ efloat_t SuperModel::prior() const {
 
 vector<string> SuperModel::show_priors() const 
 {
-  vector<string> pr_exp;
+  vector<string> pr_exp = Model::show_priors();
   for(int i=0;i<n_submodels();i++)
   {
     vector<string> pe = SubModels(i).show_priors();
@@ -553,6 +602,7 @@ vector<string> SuperModel::show_priors() const
 
 void SuperModel::check() const
 {
+#ifndef NDEBUG
   for(int m=0;m<n_submodels(); m++)
   {
     // Read the current argument lists for each sub-model
@@ -569,6 +619,7 @@ void SuperModel::check() const
 	assert(SubModels(m).get_parameter_value(i)->equals( *arg_expressions[i].constant_value ) );
     }
   }
+#endif
 }
 
 void SuperModel::update()
@@ -582,13 +633,6 @@ void SuperModel::update()
 SuperModel::SuperModel()
 { }
 
-int find_parameter(const Model& M,const string& name) {
-  for(int i=0;i<M.n_parameters();i++) 
-    if (M.parameter_name(i) == name)
-      return i;
-  return -1;
-}
- 
 void show_parameters(std::ostream& o,const Model& M) {
   for(int i=0;i<M.n_parameters();i++) {
     o<<"    ";
@@ -923,7 +967,7 @@ FormulaModel::FormulaModel(const vector<expression_ref>& N,int i)
 { }
 
 FormulaModel::FormulaModel(const formula_expression_ref& r)
-  :Model( r.notes ),
+  :Model( r.get_notes() ),
    I( r.index() ),
    result_index( C.add_compute_expression(C.get_note(I)) )
 { }

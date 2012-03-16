@@ -87,7 +87,7 @@ void show_smodels(std::ostream& o, const Parameters& P)
 {
   for(int m=0;m<P.n_smodels();m++) {
     o<<"smodel"<<m+1<<endl;
-    show_smodel(o,*P.SModel(m).result_as<substitution::MultiModelObject>());
+    show_smodel(o,P.SModel(m));
   }
 }
 

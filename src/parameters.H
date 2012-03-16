@@ -257,10 +257,9 @@ public:
 
   std::string name() const;
 
+  data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&);
   data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&,
-		 const substitution::MultiModelObject&);
-  data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&,
-		 const substitution::MultiModelObject&, const IndelModel&);
+		 const IndelModel&);
 };
 
 /// A class to contain all the MCMC state except the alignment
@@ -269,7 +268,7 @@ class Parameters: public SuperModel, public Probability_Model
   friend class data_partition;
 
   /// The substitution::Model
-  std::vector<polymorphic_cow_ptr<Model> >SModels;
+  std::vector<int> SModels;
   std::vector<int> smodel_for_partition;
 
   /// The IndelModel
@@ -350,9 +349,7 @@ public:
   /// How many substitution models?
   int n_smodels() const {return SModels.size();}
   /// Get the substitution::Model
-  const Model& SModel(int i) const;
-  /// Get the substitution::Model
-        Model& SModel(int i);
+  const substitution::MultiModelObject& SModel(int i) const;
   
   /// How many substitution models?
   int n_imodels() const {return IModels.size();}

@@ -21,10 +21,38 @@ string context::parameter_name(int i) const
   throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
 }
 
+int add_one_note(vector<expression_ref>& N1, const expression_ref& N2)
+{
+  for(int i=0;i<N1.size();i++)
+    if (N1[i] == N2)
+      return i;
+
+  N1.push_back(N2);
+  return N1.size() -1;
+}
+
+void add_some_notes(vector<expression_ref>& N1, const vector<expression_ref>& N2)
+{
+  for(int i=0;i<N1.size();i++)
+    for(int j=0;j<i;j++)
+      assert(N1[i] != N1[j]);
+
+  for(int i=0;i<N2.size();i++)
+    for(int j=0;j<i;j++)
+      assert(N2[i] != N2[j]);
+
+  for(int i=0;i<N2.size();i++)
+    add_one_note(N1,N2[i]);
+}
+
 int context::add_note(const expression_ref& E)
 {
-  notes.push_back(E);
-  return notes.size()-1;
+  return add_one_note(notes, E);
+}
+
+void context::add_notes(const vector<expression_ref>& N)
+{
+  add_some_notes(notes, N);
 }
 
 reg_heap::root_t reg_heap::add_identifier_to_context(int t, const string& name)
@@ -57,6 +85,13 @@ void context::rename_parameter(int i, const string& new_name)
 
   assert( access(R).changeable == true );
   set_E(R, parameter(new_name) );
+}
+
+bool context::compute_expression_is_up_to_date(int index) const
+{
+  int& H = *heads()[index];
+
+  return (access(H).result);
 }
 
 // Is there a way to generalize the updating of reg_var elements of structures,
@@ -151,6 +186,15 @@ shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) c
   }
 }
 
+bool context::parameter_is_set(int index) const
+{
+  int P = *parameters()[index];
+
+  if (not access(P).result and access(P).call == -1) return false;
+
+  return true;
+}
+
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 shared_ptr<const Object> context::get_parameter_value(int index) const
 {
@@ -214,6 +258,7 @@ int context::find_parameter(const string& s) const
 int context::add_parameter(const string& name)
 {
   assert(name.size() != 0);
+  assert(find_parameter(name) == -1);
 
   int index = n_parameters();
 
@@ -223,8 +268,6 @@ int context::add_parameter(const string& name)
   access(*r).changeable = true;
   set_E(*r, parameter(name) );
 
-  set_parameter_value(index, default_parameter_value(index) );
-  
   return index;
 }
 
@@ -401,16 +444,22 @@ context::context()
 context::context(const vector<expression_ref>& N)
   :memory(new reg_heap()),
    P(new Program()),
-   token(memory->get_unused_token()),
-   notes(N)
+   token(memory->get_unused_token())
 {
   (*this) += Prelude;
 
-  std::set<string> names = find_named_parameters(notes);
+  // 1. Create the parameters
+  std::set<string> names = find_named_parameters(N);
   
-  // Then set all default values.
   foreach(i,names)
     add_parameter(*i);
+
+  // 2. Add the notes refering to the parameters.
+  add_notes(N);
+
+  // 3. Then set all default values.
+  for(int i=0;i<n_parameters();i++)
+    set_parameter_value(i, default_parameter_value(i));
 }
 
 context::context(const context& C)
@@ -436,7 +485,9 @@ shared_ptr<const Object> context::default_parameter_value(int i) const
   if (found != -1)
   {
     assert(results.size());
-    return results[0];
+    expression_ref value = results[0];
+    //    assert(find_match_notes(query, results, found+1) == -1);
+    return value;
   }
   else
     return shared_ptr<const Object>();
@@ -535,7 +586,11 @@ vector<expression_ref> add_prefix(const string& prefix, const vector<expression_
 vector<expression_ref> combine(const vector<expression_ref>& N1, const vector<expression_ref>& N2)
 {
   vector<expression_ref> N3 = N1;
+
   N3.insert(N3.end(), N2.begin(), N2.end());
+
+  //  add_some_notes(N3, N2);
+
   return N3;
 }
 
