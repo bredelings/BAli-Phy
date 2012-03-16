@@ -28,7 +28,19 @@ along with BAli-Phy; see the file COPYING.  If not see
 /* 1. First, lets make ONLY exp(Q[b]*D[b]*t) depend on D */
 /*   (a) Therefore we only need to worry about changes that affect cached_transition_p[b] */
 /*   (b) That INCLUDES the substitution model! */
+/* 2. Second, lets make Q[s] for substitution model s into a computed member. */
+/*   (a) This requires handling parameters that aren't submodels or anything. */
+/*   2.1 This would be a lot easier if we could just eliminate SuperModel's! */
+/*
+  How do we add things without screwing up the SuperModel?
+  * I don't remember how the SuperModel works...
+  * Do we need to change add_parameter( ) to add_super_parameter( ) for D1-n ?
+  * Can we change Model and SuperModel to allow adding a Formula expression?
+    - How does FormulaModel add a formula expression?
+  * Do we need to do something specific to register the parameters of a newly
+    add formula_expression?
 
+ */
 
 #include "parameters.H"
 #include "smodel/smodel.H"
