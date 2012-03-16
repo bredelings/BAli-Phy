@@ -60,6 +60,8 @@ namespace A2 {
 
 
   ublas::matrix<int> construct(const Tree& T, const std::vector<pairwise_alignment_t>& A);
+
+  pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path);
 }
 
 #endif

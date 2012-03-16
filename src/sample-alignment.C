@@ -145,8 +145,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   *P.A = construct(A,path,node1,node2,T,seq1,seq2);
   P.LC.invalidate_branch_alignment(T,b);
-  // wait!  We need to add a Start and End state to the path before adding it here.
-  P.set_pairwise_alignment(T.directed_branch(node1,node2), path);
+  P.set_pairwise_alignment(T.directed_branch(node1,node2), A2::get_pairwise_alignment_from_path(path));
 
 #ifndef NDEBUG_DP
   assert(valid(*P.A));

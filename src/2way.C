@@ -130,6 +130,18 @@ namespace A2 {
     return pi;
   }
 
+  pairwise_alignment_t get_pairwise_alignment_from_path(const vector<int>& path)
+  {
+    pairwise_alignment_t pi;
+    pi.reserve(path.size() + 2);
+    pi.push_back(A2::states::S);
+    for(int c=0;c<path.size();c++)
+      pi.push_back(path[c]);
+    pi.push_back(A2::states::E);
+
+    return pi;
+  }
+
 alignment construct(const alignment& old, const vector<int>& path, int n1,int n2,
 		    const Tree& T, const vector<int>& seq1,const vector<int>& seq2) {
 
