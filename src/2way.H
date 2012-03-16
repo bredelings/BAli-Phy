@@ -29,6 +29,9 @@ struct pairwise_alignment_t: public std::vector<int>
   void flip();
   pairwise_alignment_t flipped() const;
 
+  int length1() const;
+  int length2() const;
+
   pairwise_alignment_t(const std::vector<int>&);
   pairwise_alignment_t(const pairwise_alignment_t&);
   pairwise_alignment_t();
