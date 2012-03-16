@@ -367,13 +367,15 @@ ublas::matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& 
 
   // Add the first sequence
   {
-    int b0 = (*T.node(0).branches_in()).name();
+    int b0 = (*T.node(0).branches_out()).name();
     int L0 = A[b0].length1();
     for(int i=0;i<L0;i++)
       a.add_row_character_to_new_column(0);
   }
 
   vector<const_branchview> branches = branches_from_node(T, 0);
+  // FIXME - we shouldn't have to reverse this!
+  std::reverse(branches.begin(), branches.end());
   for(int i=0;i<branches.size();i++)
   {
     int b = branches[i];
