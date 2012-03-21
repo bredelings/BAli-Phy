@@ -59,7 +59,7 @@ namespace A2 {
 
 
 
-
+  ublas::matrix<int> construct(const Tree& T, const std::vector<pairwise_alignment_t>& A);
 }
 
 #endif
