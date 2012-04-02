@@ -38,7 +38,7 @@ namespace ublas = boost::numeric::ublas;
 //namespace atlas = boost::numeric::bindings::atlas;
 
 typedef ublas::matrix<double> Matrix;
-typedef POD<Matrix> MatrixObject;
+typedef Box<Matrix> MatrixObject;
 
 // template <typename T>
 // using Vector<T> = typedef POD<std::vector<T> >
