@@ -144,7 +144,7 @@ namespace substitution
   void ReversibleMarkovModelObject::recalc_eigensystem() const
   {
     //---------------- Compute eigensystem ------------------//
-    eigensystem = *get_eigensystem_function(Q,pi);
+    eigensystem = *Get_Eigensystem_Function(Q,pi);
   }
 
   Matrix ReversibleMarkovModelObject::transition_p(double t) const 

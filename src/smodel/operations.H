@@ -510,7 +510,32 @@ namespace substitution {
 
   formula_expression_ref Mixture_Model(const std::vector<formula_expression_ref>& models);
 
-  boost::shared_ptr<const EigenValues> get_eigensystem_function(const Matrix& Q, const std::vector<double>& pi);
+  boost::shared_ptr<const EigenValues> Get_Eigensystem_Function(const Matrix& Q, const std::vector<double>& pi);
+
+  // Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);x
+  struct Get_Eigensystem_Op: public Operation
+  {
+    Get_Eigensystem_Op* clone() const {return new Get_Eigensystem_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+ 
+    std::string name() const {return "Get_Eigensystem";}
+
+    Get_Eigensystem_Op(): Operation(2) { }
+  };
+
+  extern expression_ref Get_Eigensystem;
+
 }
 
 #endif

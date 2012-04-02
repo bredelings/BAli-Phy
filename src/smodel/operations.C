@@ -740,7 +740,7 @@ namespace substitution
    *           = pi^-1.2 * exp(S2) * pi^1/2
    */
 
-  boost::shared_ptr<const EigenValues> get_eigensystem_function(const Matrix& Q, const vector<double>& pi)
+  boost::shared_ptr<const EigenValues> Get_Eigensystem_Function(const Matrix& Q, const vector<double>& pi)
   {
     const unsigned n = Q.size1();
     assert(Q.size2() == Q.size1());
@@ -788,7 +788,20 @@ namespace substitution
     return shared_ptr<const EigenValues>(new EigenValues(S));
   }
 
+  boost::shared_ptr<const Object> Get_Eigensystem_Op::operator()(OperationArgs& Args) const
+  {
+    Matrix Q = *Args.evaluate_as<MatrixObject>(0);
+    vector<double> pi = *Args.evaluate_as<POD<vector<double> > >(1);
+    
+    return Get_Eigensystem_Function(Q, pi);
+  }
+
+  expression_ref Get_Eigensystem = lambda_expression(Get_Eigensystem_Op());
+  //---------------------------------------------------------------------------------------//
+
+  expression_ref RateMatrix = lambda_expression( constructor("RateMatrix", 4) );
   // Q_from_R_and_S(R,S) = let Q = S*R in (RateMatrix, Q, (frequencies, R), (get_eigensystem, Q, pi), 1.0)
 
+  expression_ref ReversibleMarkovMarkov = lambda_expression( constructor("ReversibleMarkovModel", 2) );
   // 
 }
