@@ -16,11 +16,11 @@ namespace substitution
   shared_ptr<const Object> Plus_gwF_Op::operator()(OperationArgs& Args) const
   {
     double f = *Args.evaluate_as<Double>(0);
-    
-    expression_ref pi_E = Args.evaluate_as<expression>(1);
-    
+
+    expression_ref pi_E = Args.evaluate(1);
+
     std::vector<double> pi = get_vector<double,Double>(pi_E);
-    
+
     return Plus_gwF_Function(*a,f,pi);
   }
 
