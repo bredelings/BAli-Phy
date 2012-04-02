@@ -1,0 +1,1141 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options false
+\maintain_unincluded_children false
+\begin_local_layout
+
+\end_local_layout
+\language english
+\language_package none
+\inputencoding auto
+\fontencoding default
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 0
+\use_mathdots 0
+\cite_engine natbib_authoryear
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Multi-branch HMMs in BAli-Phy
+\end_layout
+
+\begin_layout Section
+First thoughts on HMMs
+\end_layout
+
+\begin_layout Standard
+We consider left-insertion HMMs and right-insertion HMMs.
+ Both of these HMMs are based on the concept of in-ticks and out-ticks.
+ Specifically, HMMs on lower branches of the tree only advance when they
+ receive an in-tick from a parent branch HMM.
+ This occurs, when the parent branch HMM has an active I or M state, which
+ send out-ticks.
+\end_layout
+
+\begin_layout Standard
+In a left-insertion HMM, a branch HMM receiving an in-tick emits an optional
+ insertion before it either matches or deletes the input letter.
+ In a right-insertion HMM, a branch HMM receiving an in-tick emits an optional
+ insertion after matching or deleting the input letter.
+ Ultimately, we seek to allow left-right insertion HMMs.
+ These HMMs allow both left and right insertions to depend on the specific
+ match or delete state used to absorb the input letter.
+ However, left-right-insertion HMMs do not impose a unique ordering on unordered
+ states in an alignment.
+ To impose such an ordering in a left-right-I context, we would need to
+ decide which of the insertions between two in-ticks came from the left
+ tick (is a right insertion) and which insertions came from the right tick
+ (is a left insertion).
+ Thus these alignments much be augmented with left-right status for each
+ insertion.
+ However, conditional on such an assignment, each insertion depends only
+ on its left neighbor or its right neighbor, not on both.
+\end_layout
+
+\begin_layout Standard
+The new approach to HMMs is that unordered states will no longer be ordered
+ by an arbitrary sort relation on the states.
+ Instead, we will restrict the number of states so that only a single path
+ through the HMM is possible for each alignment.
+ Whereas the previous approach assumed that inactive branch HMM states always
+ represented memory of a previously active states, the new approach assumes
+ that inactive HMM states can either be r-inactive (if they 
+\series bold
+r
+\series default
+emember a previous states) or c-inactive (if they are 
+\series bold
+c
+\series default
+ommitted to a future state).
+ Here, c-inactive states are analogous to wait states in Ian Holmes transducer
+ framework.
+ By restricting the type of states that can be remembered or committed,
+ we can enforce left- or right- insertion behavior.
+\end_layout
+
+\begin_layout Subsection
+Vertically stacked HMMs
+\end_layout
+
+\begin_layout Standard
+Consider two vertically stacked HMMs.
+ The valid states are:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\begin{array}{c}
+\mathbf{S}\\
+\mathbf{S}
+\end{array}$
+\end_inset
+
+, 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{M}
+\end{array}$
+\end_inset
+
+, 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{D}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{M}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{D}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+\cdot
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{\cdot}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{E}\\
+\mathbf{E}
+\end{array}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Here we mark active states in bold to distinguish them from inactive states.
+ An S or E is active if it actually starts or ends the entire sequence.
+ An M + D, or I is active if it emits letters in the column that the full
+ state corresponds to.
+\end_layout
+
+\begin_layout Subsubsection
+Left insertions
+\end_layout
+
+\begin_layout Standard
+If we have left-insertions, then when we transition to an I or M state in
+ the top HMM, then the top HMM sends an out-tick and the bottom HMM receives
+ an in-tick.
+ If the bottom HMM chooses to emit some insertions before the tick, then
+ we keep the (already chosen) top state as a c-inactive state.
+ Transitions 
+\emph on
+from
+\emph default
+ a c-inactive state must keep the state unchanged.
+\end_layout
+
+\begin_layout Standard
+Thus the 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{\cdot}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ pattern can have only three possible values: 
+\begin_inset Formula $\begin{array}{c}
+M_{c}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+, 
+\begin_inset Formula $\begin{array}{c}
+I_{c}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+, and 
+\begin_inset Formula $\begin{array}{c}
+E_{c}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+.
+ Likewise, with the top HMM in a D state, the bottom HMM does not experience
+ a tick.
+ We thus record the previous value for the bottom HMM as an r-inactive state.
+ Transitions 
+\emph on
+to
+\emph default
+ an r-inactive state must keep the state unchanged.
+ Thus the 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+\cdot
+\end{array}$
+\end_inset
+
+ pattern can only have the three values: 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+M_{r}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+D_{r}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+S_{r}
+\end{array}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+These restrictions prevent the occurrence of 
+\begin_inset Formula $ $
+\end_inset
+
+ 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{\cdot}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ columns occurring before 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+\cdot
+\end{array}$
+\end_inset
+
+ columns for two reasons.
+ First, 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{\cdot}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ is not allowed to commit to a future D on the top level.
+ Second, 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+\cdot
+\end{array}$
+\end_inset
+
+ is not allowed to remember a previous 
+\begin_inset Formula $I$
+\end_inset
+
+ on the bottom level.
+\end_layout
+
+\begin_layout Subsubsection
+Right insertions
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\begin{array}{c}
+\mathbf{S}\\
+\mathbf{S}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{M}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{D}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{M}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{D}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+M_{c}
+\end{array}$
+\end_inset
+
++ 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+D_{c}
+\end{array}$
+\end_inset
+
++ 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+E_{c}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+M_{r}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+I_{r}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+S_{r}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{E}\\
+\mathbf{E}
+\end{array}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+(DP# = 9 states)
+\end_layout
+
+\begin_layout Standard
+If we have right-insertions, then immediately after receiving an in-tick
+ and emitting an active 
+\begin_inset Formula $M$
+\end_inset
+
+ or 
+\begin_inset Formula $D$
+\end_inset
+
+, we may emit a number of insertions.
+ Thus, the 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{\cdot}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ pattern can have only three possible values: 
+\begin_inset Formula $\begin{array}{c}
+M_{r}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+, 
+\begin_inset Formula $\begin{array}{c}
+I_{r}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ + and 
+\begin_inset Formula $\begin{array}{c}
+S_{r}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+.
+ In contrast, when pairwise alignment receives no in-tick, it chooses in
+ advance what state it will enter when it does receive an in-tick.
+ Thus the 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+\cdot
+\end{array}$
+\end_inset
+
+ pattern can only have the three values: 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+M_{c}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+D_{c}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+E_{c}
+\end{array}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+These restrictions prevent the occurrence of 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+\cdot
+\end{array}$
+\end_inset
+
+ columns occurring before 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{\cdot}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ columns for two reasons.
+ First, 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+\cdot
+\end{array}$
+\end_inset
+
+ is not allowed to commit to a future I on the bottom level.
+ Second, 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{\cdot}\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ is not allowed to commit a future D on the top level.
+\end_layout
+
+\begin_layout Subsubsection
+More than two levels of stacking.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\begin{array}{c}
+\mathbf{S}\\
+\mathbf{S}\\
+\mathbf{S}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{M}\\
+\mathbf{M}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{M}\\
+\mathbf{D}
+\end{array}$
+\end_inset
+
+,
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{D}\\
+\cdot
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{M}\\
+\mathbf{M}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{M}\\
+\mathbf{D}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{D}\\
+\cdot
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+\cdot\\
+\cdot
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{\cdot}\\
+\mathbf{I}\\
+\mathbf{M}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{\cdot}\\
+\mathbf{I}\\
+\mathbf{D}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{\cdot}\\
+\cdot\\
+\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{E}\\
+\mathbf{E}\\
+\mathbf{E}
+\end{array}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We can construct a three (or more) level HMM by chaining the HMMs.
+ That is we can construct an 
+\begin_inset Formula $n$
+\end_inset
+
+-level HMM by constructing a two-level HMM with a 1-level HMM as the top
+ level, and an 
+\begin_inset Formula $n-1$
+\end_inset
+
+ level HMM below.
+ This raises the question, though, of how we generalize the constraint requireme
+nts.
+ 
+\end_layout
+
+\begin_layout Subsection
+Forked HMMs
+\end_layout
+
+\begin_layout Standard
+We can construct forked HMMs with the following states:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\mathbf{SS}$
+\end_inset
+
+ + 
+\begin_inset Formula $\mathbf{MM}$
+\end_inset
+
+ + 
+\begin_inset Formula $\mathbf{MD}$
+\end_inset
+
+ + 
+\begin_inset Formula $\mathbf{DM}$
+\end_inset
+
+ + 
+\begin_inset Formula $\mathbf{DD}$
+\end_inset
+
+ + 
+\begin_inset Formula $\mathbf{I}M_{r}$
+\end_inset
+
+ + 
+\begin_inset Formula $\mathbf{I}D_{r}$
+\end_inset
+
+ + 
+\begin_inset Formula $\mathbf{I}S_{r}$
+\end_inset
+
+ + 
+\begin_inset Formula $M_{c}\mathbf{I}$
+\end_inset
+
+ + 
+\begin_inset Formula $D_{c}\mathbf{I}$
+\end_inset
+
+ + 
+\begin_inset Formula $E_{c}\mathbf{I}$
+\end_inset
+
+ + 
+\begin_inset Formula $\mathbf{EE}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+As above for the stacked HMMs, the states remembered and committed-to enforce
+ an order of 
+\begin_inset Formula $\mathbf{I}\cdot$
+\end_inset
+
+ and 
+\begin_inset Formula $\cdot\mathbf{I}$
+\end_inset
+
+.
+ In this case the order is 
+\begin_inset Formula $\mathbf{I}\cdot$
+\end_inset
+
+ before 
+\begin_inset Formula $\cdot\mathbf{I}$
+\end_inset
+
+, but this order could be switched by interchanging which of the 
+\begin_inset Formula $\mathbf{I}$
+\end_inset
+
+ states is paired with r-inactive versus c-inactive nodes.
+\end_layout
+
+\begin_layout Section
+Examples
+\end_layout
+
+\begin_layout Standard
+We can use the simple left-right forked HMM as the lower level of a stacked
+ HMM with right insertions by classifying the forked HMM states as 
+\begin_inset Formula $S$
+\end_inset
+
+, 
+\begin_inset Formula $M$
+\end_inset
+
+, 
+\begin_inset Formula $D$
+\end_inset
+
+, 
+\begin_inset Formula $I$
+\end_inset
+
+, and 
+\begin_inset Formula $E$
+\end_inset
+
+.
+ (There are no 
+\begin_inset Formula $N$
+\end_inset
+
+ -- null -- states.
+ These would be silent states that are neither 
+\begin_inset Formula $S$
+\end_inset
+
+ nor 
+\begin_inset Formula $E$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\begin{array}{c}
+\mathbf{S}\\
+\mathbf{SS}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{MM}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{MD}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{DM}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{M}\\
+\mathbf{DD}
+\end{array}$
+\end_inset
+
+ + (4)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{MM}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{MD}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{DM}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{I}\\
+\mathbf{DD}
+\end{array}$
+\end_inset
+
+ + (4)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+MM_{c}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+MD_{c}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+DM_{c}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+DD_{c}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+EE_{c}
+\end{array}$
+\end_inset
+
+ + (5)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\begin{array}{c}
+M_{r}\\
+\mathbf{I}M_{r}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+M_{r}\\
+\mathbf{I}D_{r}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+M_{r}\\
+\mathbf{I}S_{r}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+I_{r}\\
+\mathbf{I}M_{r}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+I_{r}\\
+\mathbf{I}D_{r}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+I_{r}\\
+\mathbf{I}S_{r}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+S_{r}\\
+\mathbf{I}M_{r}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+S_{r}\\
+\mathbf{I}D_{r}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+S_{r}\\
+\mathbf{I}S_{r}
+\end{array}$
+\end_inset
+
+ + (4)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\begin{array}{c}
+M_{r}\\
+M_{c}\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+M_{r}\\
+D_{c}\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+M_{r}\\
+E_{c}\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+I_{r}\\
+M_{c}\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+I_{r}\\
+D_{c}\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+I_{r}\\
+E_{c}\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+S_{r}\\
+M_{c}\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+S_{r}\\
+D_{c}\mathbf{I}
+\end{array}$
+\end_inset
+
+ + 
+\begin_inset Formula $\begin{array}{c}
+S_{r}\\
+E_{c}\mathbf{I}
+\end{array}$
+\end_inset
+
+ (6)
+\end_layout
+
+\begin_layout Standard
++ 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{E}\\
+\mathbf{EE}
+\end{array}$
+\end_inset
+
+ .
+ 
+\end_layout
+
+\begin_layout Standard
+That's 23 states total, ignore the end state, and state with any S anywhere
+ in them.
+ Thats a nice improvement over 35 for the other case.
+ Part of it results from the fact the the committed 
+\begin_inset Formula $EE_{c}$
+\end_inset
+
+ states in 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+EE_{c}
+\end{array}$
+\end_inset
+
+ must be synchronized, which rules out 
+\begin_inset Formula $\begin{array}{c}
+\mathbf{D}\\
+M_{c}E_{c}
+\end{array}$
+\end_inset
+
+, for example.
+ 
+\end_layout
+
+\begin_layout Standard
+The committed states 
+\begin_inset Formula $M_{c}$
+\end_inset
+
+, 
+\begin_inset Formula $D_{c}$
+\end_inset
+
+ , and 
+\begin_inset Formula $E_{c}$
+\end_inset
+
+ can be thought of as wait states introduced in front of 
+\begin_inset Formula $M$
+\end_inset
+
+, 
+\begin_inset Formula $D$
+\end_inset
+
+, and 
+\begin_inset Formula $E$
+\end_inset
+
+.
+ If this HMM were normalized, so that 
+\begin_inset Formula $ $
+\end_inset
+
+these wait states all allowed transition to 
+\begin_inset Formula $E$
+\end_inset
+
+ with weight 
+\begin_inset Formula $1$
+\end_inset
+
+, then there would be no need for 
+\begin_inset Formula $E_{c}$
+\end_inset
+
+, and we would need only commit to 
+\begin_inset Formula $M$
+\end_inset
+
+ or 
+\begin_inset Formula $D$
+\end_inset
+
+.
+ The interpretation would then be we are committing to an 
+\begin_inset Formula $M$
+\end_inset
+
+ or 
+\begin_inset Formula $D$
+\end_inset
+
+ only if a letter is read next, instead of an
+\emph on
+ 
+\begin_inset Formula $E$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+5-way HMM
+\end_layout
+
+\begin_layout Standard
+The 5-way HMM should have 158 states.
+ I obtained this by classifying the 3-way HMM into M (4), D (5), and I (14)
+ states.
+ I then substituted the 3-way HMM for the right child of the 3way HMM.
+ This yielded M(9), D(29), and I (120).
+\end_layout
+
+\begin_layout Standard
+How many of these are silent?
+\end_layout
+
+\end_body
+\end_document
