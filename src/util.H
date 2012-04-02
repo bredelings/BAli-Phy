@@ -515,7 +515,7 @@ T sum(const std::vector<T>& v)
 }
 
 template<typename T,typename U>
-void scale(std::vector<T>& v, const U& S)
+void scale_by(std::vector<T>& v, const U& S)
 {
   for(int i=0;i<v.size();i++)
     v[i] *= S;
@@ -523,7 +523,7 @@ void scale(std::vector<T>& v, const U& S)
 
 inline void normalize(std::vector<double>& v)
 {
-  scale(v, 1.0/sum(v));
+  scale_by(v, 1.0/sum(v));
 }
 
 template<typename T>
