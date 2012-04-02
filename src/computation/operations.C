@@ -1,5 +1,6 @@
 #include "operations.H"
 #include "graph_register.H"
+#include "exponential.H"
 
 using std::vector;
 using std::string;
@@ -142,3 +143,17 @@ shared_ptr<const Object> ArrayBounds::operator()(OperationArgs& Args) const
 }
 
 expression_ref bounds = lambda_expression( ArrayBounds() );
+
+boost::shared_ptr<const Object> LExp_Op::operator()(OperationArgs& Args) const
+{
+  shared_ptr<const EigenValues> L = Args.evaluate_as<EigenValues>(0);
+  shared_ptr<const POD<vector<double> > > pi = Args.evaluate_as<POD<vector<double> > >(1);
+  double t = *Args.evaluate_as<Double>(2);
+  
+  return shared_ptr<const Object>(new MatrixObject( exp(*L, *pi, t) ) );
+}
+
+expression_ref LExp = lambda_expression( LExp_Op() );
+
+//---------------------------------------------------------------------------------------//
+
