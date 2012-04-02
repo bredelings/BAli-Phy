@@ -509,6 +509,8 @@ namespace substitution {
   extern expression_ref Mixture_E;
 
   formula_expression_ref Mixture_Model(const std::vector<formula_expression_ref>& models);
+
+  boost::shared_ptr<const EigenValues> get_eigensystem_function(const Matrix& Q, const std::vector<double>& pi);
 }
 
 #endif
