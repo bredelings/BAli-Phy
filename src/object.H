@@ -78,6 +78,31 @@ struct object_ref: public polymorphic_cow_ptr<Object>
 };
 
 template<typename T>
+class Box: virtual public Object 
+{
+protected:
+  T t;
+public:
+  Box<T>* clone() const {return new Box<T>(*this);}
+
+  operator T() const {return t;}
+
+  //  template <typename U>
+  //  operator Box<U>() const {return t;}
+
+  Box<T>& operator=(const Box<T>& p2) {t = p2.t; return *this;}
+
+  Box<T>& operator=(const T& t2) {t = t2; return *this;}
+
+  Box() {}
+  Box(const T& t2):t(t2) {}
+
+  // Doesn't seem to do ANYTHING?  Why not?
+  //  template <typename U>
+  //  Box(const boost::enable_if_c<boost::is_convertible<U,T>::type,U>& u):t(u) { }
+};
+
+template<typename T>
 class POD: virtual public Object 
 {
 protected:
