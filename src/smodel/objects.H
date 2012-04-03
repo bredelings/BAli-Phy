@@ -251,8 +251,6 @@ namespace substitution
 
     const std::vector<unsigned>& state_letters() const {return base_model(0).state_letters();}
 
-    std::valarray<double> frequencies() const;
-
     unsigned n_states() const {return state_letters().size();}
 
     /// Get a transition probability matrix for time 't', averaging over models

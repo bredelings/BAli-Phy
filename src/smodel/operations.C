@@ -593,7 +593,8 @@ namespace substitution
     const int n_models = M.n_base_models();
 
 
-    const valarray<double>& M_pi = M.frequencies();
+    // The submodels had better all have equal frequencies!
+    const valarray<double>& M_pi = M.base_models[0]->frequencies();
     const vector<double>&   M_f  = M.distribution();
 
     // calculate pi[ ] for each state

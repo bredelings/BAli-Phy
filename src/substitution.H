@@ -87,17 +87,8 @@ namespace substitution {
 
   std::vector<std::vector<double> > get_model_probabilities_by_alignment_column(const data_partition&);
 
-  // Full likelihood - all columns, all rates (star tree)
-  efloat_t Pr_star(const data_partition&);
-
   // Full likelihood - if some seemingly aligned sequences at the root have + -> - -> +
   efloat_t Pr_unaligned_root(const data_partition&);
-
-  // Full likelihood - if everything is unaligned....
-  efloat_t Pr_unaligned(const data_partition&);
-
-  // Full likelihood of the single sequence with the lowest likelihood
-  efloat_t Pr_single_sequence(const data_partition&);
 
   extern int total_peel_leaf_branches;
   extern int total_peel_internal_branches;

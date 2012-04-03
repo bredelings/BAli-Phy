@@ -233,17 +233,6 @@ namespace substitution
     return base_model(0).get_alphabet();
   }
 
-  valarray<double> MultiModelObject::frequencies() const
-  {
-    valarray<double> pi(0.0, Alphabet().size());
-
-    //recalculate pi
-    for(int i=0; i < n_base_models(); i++)
-      pi += fraction[i] * base_models[i]->frequencies();
-
-    return pi;
-  }
-
   void MultiModelObject::resize(int s)
   {
     fraction.resize(s);

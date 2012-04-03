@@ -96,7 +96,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  setup.C rates.C sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C smodel/setup.C sample-topology-SPR.C \
 	  alignment-sums.C alignment-util.C probability.C model.C \
-	  alignment-constraint.C substitution-cache.C substitution-star.C \
+	  alignment-constraint.C substitution-cache.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/partition.C proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C timer_stack.C \
