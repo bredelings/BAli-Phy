@@ -211,7 +211,7 @@ namespace substitution {
   }
 
   efloat_t calc_root_probability(const alignment&, const Tree& T,Likelihood_Cache& cache,
-			       const MultiModelObject& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
+				 const Mat_Cache& MC,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
     default_timer_stack.push_timer("substitution::calc_root");
@@ -236,7 +236,7 @@ namespace substitution {
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
-    WeightedFrequencyMatrix(F, MModel);
+    MC.WeightedFrequencyMatrix(F);
 
     // look up the cache rows now, once, instead of for each column
     vector< vector<Matrix>* > branch_cache;
@@ -474,7 +474,7 @@ namespace substitution {
   efloat_t calc_root_probability(const data_partition& P,const vector<int>& rb,
 			       const ublas::matrix<int>& index) 
   {
-    return calc_root_probability(*P.A, P.T(), P.LC, P.SModel(), rb, index);
+    return calc_root_probability(*P.A, P.T(), P.LC, P, rb, index);
   }
 
   inline double sum(const Matrix& Q, const vector<unsigned>& smap, int n_letters, 
@@ -1613,7 +1613,7 @@ namespace substitution {
 
     // Combine the likelihoods from present nodes
     ublas::matrix<int> index_aligned   = I.get_subA_index_aligned(rb,A,T,true);
-    efloat_t Pr = calc_root_probability(A,T,LC,MModel,rb,index_aligned);
+    efloat_t Pr = calc_root_probability(A,T,LC,MC,rb,index_aligned);
 
     // FIXME - The problem is that this includes other_subst TWICE
     // Probably we need to factor other_subst collection out of calc_root_probability.
@@ -1647,7 +1647,7 @@ namespace substitution {
 
     if (unaligned == 0) 
     {
-      efloat_t Pr2 = calc_root_probability(A,T,LC,MModel,rb,index);
+      efloat_t Pr2 = calc_root_probability(A,T,LC,MC,rb,index);
       assert(std::abs(Pr.log() - Pr2.log()) < 1.0e-9);
     }
 #endif
@@ -1716,7 +1716,7 @@ namespace substitution {
     if (T.n_nodes() == 2)
       Pr = calc_root_probability2(A,T,LC,MModel,rb,index);
     else
-      Pr = calc_root_probability(A,T,LC,MModel,rb,index);
+      Pr = calc_root_probability(A,T,LC,MC,rb,index);
 
 #ifdef DEBUG_CACHING
     if (LC.cv_up_to_date())
