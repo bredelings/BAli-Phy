@@ -681,6 +681,7 @@ namespace substitution
     return DiscreteDistribution( get_list(pairs) );
   }
 
+  // FIXME: this shouldn't be done in C++!
   shared_ptr<const MultiModelObject> Mixture_Function(const expression_ref& DL, const expression_ref& ML)
   {
     vector<expression_ref> D = get_ref_vector_from_list(DL);
