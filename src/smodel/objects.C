@@ -1,4 +1,5 @@
 #include "smodel/objects.H"
+#include "smodel/operations.H"
 
 #include "exponential.H"
 
@@ -140,59 +141,10 @@ namespace substitution
     }
   }
 
-  /*
-   * 1. pi[i]*Q(i,j) = pi[j]*Q(j,i)         - Because Q is reversible
-   * 2. Q(i,j)/pi[j] = Q(j,i)/pi[i] = S1(i,j)
-   * 3. pi[i]^1/2 * Q(j,i) / pi[j]^1/2 = S2(i,j)
-   * 4. exp(Q) = pi^-1.2 * exp(pi^1/2 * Q * pi^-1/2) * pi^1/2
-   *           = pi^-1.2 * exp(S2) * pi^1/2
-   */
-
   void ReversibleMarkovModelObject::recalc_eigensystem() const
   {
-    const unsigned n = n_states();
-
-#ifdef DEBUG_RATE_MATRIX
-    cerr<<"scale = "<<rate()<<endl;
-
-    assert(std::abs(frequencies().sum()-1.0) < 1.0e-6);
-    for(int i=0;i<n;i++) {
-      double sum = 0;
-      for(int j=0;j<n;j++)
-	sum += Q(i,j);
-      assert(abs(sum) < 1.0e-6);
-    }
-#endif
-
-    //--------- Compute pi[i]**0.5 and pi[i]**-0.5 ----------//
-    vector<double> sqrt_pi(n);
-    vector<double> inverse_sqrt_pi(n);
-    for(int i=0;i<n;i++) {
-      sqrt_pi[i] = sqrt(frequencies()[i]);
-      inverse_sqrt_pi[i] = 1.0/sqrt_pi[i];
-    }
-
-    //--------------- Calculate eigensystem -----------------//
-    ublas::symmetric_matrix<double> S(n,n);
-    for(int i=0;i<n;i++)
-      for(int j=0;j<=i;j++) {
-	S(i,j) = Q(i,j) * sqrt_pi[i] * inverse_sqrt_pi[j];
-
-#ifdef DEBUG_RATE_MATRIX
-	// check reversibility of rate matrix
-	if (i != j) {
-	  assert (S(i,j) >= 0);
-	  double p12 = Q(i,j)*frequencies()[i];
-	  double p21 = Q(j,i)*frequencies()[j];
-	  assert (abs(p12-p21) < 1.0e-12*(1.0+abs(p12)));
-	}
-	else
-	  assert (Q(i,j) <= 0);
-#endif
-      }
-
     //---------------- Compute eigensystem ------------------//
-    eigensystem = EigenValues(S);
+    eigensystem = *Get_Eigensystem_Function(Q,pi);
   }
 
   Matrix ReversibleMarkovModelObject::transition_p(double t) const 

@@ -186,6 +186,28 @@ struct GetIndex: public Operation
 
 extern expression_ref getIndex;
 
+struct LExp_Op: public Operation
+{
+  LExp_Op* clone() const {return new LExp_Op(*this);}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+    
+    if (typeid(*this) != typeid(O)) return false;
+    
+    return true;
+  }
+  
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  
+  std::string name() const {return "LExp";}
+  
+  LExp_Op(): Operation(3) { }
+};
+
+extern expression_ref LExp;
 
 template <typename T>
 struct Multiply: public Operation

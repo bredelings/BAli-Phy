@@ -234,11 +234,11 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
 
   A = construct(old,path,nodes,T,seqs,A5::states_list);
 
-  P.set_pairwise_alignment(T.branch(nodes[0],nodes[4]), A5::get_pairwise_alignment_from_path(path, 0, 4));
-  P.set_pairwise_alignment(T.branch(nodes[1],nodes[4]), A5::get_pairwise_alignment_from_path(path, 1, 4));
-  P.set_pairwise_alignment(T.branch(nodes[2],nodes[5]), A5::get_pairwise_alignment_from_path(path, 2, 5));
-  P.set_pairwise_alignment(T.branch(nodes[3],nodes[5]), A5::get_pairwise_alignment_from_path(path, 3, 5));
-  P.set_pairwise_alignment(T.branch(nodes[4],nodes[5]), A5::get_pairwise_alignment_from_path(path, 4, 5));
+  P.set_pairwise_alignment(T.directed_branch(nodes[0],nodes[4]), A5::get_pairwise_alignment_from_path(path, 0, 4));
+  P.set_pairwise_alignment(T.directed_branch(nodes[1],nodes[4]), A5::get_pairwise_alignment_from_path(path, 1, 4));
+  P.set_pairwise_alignment(T.directed_branch(nodes[2],nodes[5]), A5::get_pairwise_alignment_from_path(path, 2, 5));
+  P.set_pairwise_alignment(T.directed_branch(nodes[3],nodes[5]), A5::get_pairwise_alignment_from_path(path, 3, 5));
+  P.set_pairwise_alignment(T.directed_branch(nodes[4],nodes[5]), A5::get_pairwise_alignment_from_path(path, 4, 5));
 
   //  std::cerr<<"A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
 

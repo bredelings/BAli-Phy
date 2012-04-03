@@ -33,10 +33,15 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <boost/numeric/ublas/matrix.hpp>
 
+#include "object.H"
 namespace ublas = boost::numeric::ublas;
 //namespace atlas = boost::numeric::bindings::atlas;
 
 typedef ublas::matrix<double> Matrix;
+typedef Box<Matrix> MatrixObject;
+
+// template <typename T>
+// using Vector<T> = typedef POD<std::vector<T> >
 
 #include "log-double.H"
 

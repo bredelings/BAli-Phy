@@ -17,6 +17,9 @@ extern const expression_ref snd;
 extern const expression_ref get_list_index;
 extern const expression_ref listArray;
 extern const expression_ref length;
+extern const expression_ref scale;
+extern const expression_ref QExp;
+extern const expression_ref RateMatrix;
 
 extern const Program Prelude;
 

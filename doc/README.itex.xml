@@ -153,13 +153,13 @@
 	extract the source code archive, using a graphical archive
 	manager, or the command-line tool <command>tar</command>:
 	
-	<screen><prompt>%</prompt> tar -zxf bali-phy-2.1.0.tgz</screen>
+	<screen><prompt>%</prompt> tar -zxf bali-phy-2.1.1.tgz</screen>
 	Then create a <emphasis>separate</emphasis> build directory, enter it, and run the
 	configure command:
 
 	<screen><prompt>%</prompt> mkdir build
 <prompt>%</prompt> cd build
-<prompt>%</prompt> ../bali-phy-2.1.0/configure</screen>
+<prompt>%</prompt> ../bali-phy-2.1.1/configure</screen>
 	
 	If this command succeeds, then you can simply type
 
@@ -190,7 +190,7 @@
 	  <application>BAli-Phy</application> under
 	  <filename>~/local</filename>, you can enter:
 
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure --prefix=&#36;HOME/local</screen>
+	  <screen><prompt>%</prompt> ../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</screen>
           This is recommended if you do not have permission to install
 	  to <filename>/usr/local/</filename>.
 	</para>
@@ -220,11 +220,11 @@
 	<para>The default C++ compiler is <command>g++</command>.  On
 	  some systems, <command>g++</command> invokes GCC version 3.3,
 	  and the correct compiler is called something else, such as
-	  <command>g++-4.2</command>.  To use
-	  <command>g++-4.2</command> as the C++ compiler when compiling
+	  <command>g++-4.5</command>.  To use
+	  <command>g++-4.5</command> as the C++ compiler when compiling
 	  <application>BAli-Phy</application>, you would set the CXX
 	  environment variable as follows:
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure CXX=g++-4.2</screen>
+	  <screen><prompt>%</prompt> ../bali-phy-2.1.1/configure CXX=g++-4.5</screen>
 	</para>
       </section>
 
@@ -233,7 +233,7 @@
 	<para>You can specify optimizing for a specific brand of CPU,
 	  by specifying the <userinput>CHIP</userinput> variable to
 	  <command>configure</command>, as follows:
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure CHIP=<replaceable>cpu</replaceable></screen>
+	  <screen><prompt>%</prompt> ../bali-phy-2.1.1/configure CHIP=<replaceable>cpu</replaceable></screen>
 	  You can set CHIP to any of <userinput>pentium3</userinput>,
 	  <userinput>pentium4</userinput>,
 	  <userinput>nocona</userinput>, <userinput>core2</userinput>,
@@ -262,7 +262,7 @@
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.0/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.5 CHIP=pentium4</screen>
+	  <screen><prompt>%</prompt> ../bali-phy-2.1.1/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.5 CHIP=pentium4</screen>
           This example uses <command>g++-4.5</command> to build a
 	  pentium4-optimized version of <command>bali-phy</command> with
 	  static linkage.

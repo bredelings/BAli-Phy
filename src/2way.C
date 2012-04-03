@@ -130,6 +130,18 @@ namespace A2 {
     return pi;
   }
 
+  pairwise_alignment_t get_pairwise_alignment_from_path(const vector<int>& path)
+  {
+    pairwise_alignment_t pi;
+    pi.reserve(path.size() + 2);
+    pi.push_back(A2::states::S);
+    for(int c=0;c<path.size();c++)
+      pi.push_back(path[c]);
+    pi.push_back(A2::states::E);
+
+    return pi;
+  }
+
 alignment construct(const alignment& old, const vector<int>& path, int n1,int n2,
 		    const Tree& T, const vector<int>& seq1,const vector<int>& seq2) {
 
@@ -355,13 +367,15 @@ ublas::matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& 
 
   // Add the first sequence
   {
-    int b0 = (*T.node(0).branches_in()).name();
+    int b0 = (*T.node(0).branches_out()).name();
     int L0 = A[b0].length1();
     for(int i=0;i<L0;i++)
       a.add_row_character_to_new_column(0);
   }
 
   vector<const_branchview> branches = branches_from_node(T, 0);
+  // FIXME - we shouldn't have to reverse this!
+  std::reverse(branches.begin(), branches.end());
   for(int i=0;i<branches.size();i++)
   {
     int b = branches[i];

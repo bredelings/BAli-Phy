@@ -16,12 +16,19 @@ const expression_ref snd = var("snd");
 const expression_ref get_list_index = var("!!");
 const expression_ref listArray = var("listArray");
 const expression_ref length = var("length");
+const expression_ref scale = var("scale");
+const expression_ref QExp = var("QExp");
+
+  // (RateMatrix q pi l t)
+const expression_ref RateMatrix = lambda_expression( constructor("RateMatrix", 4) );
+
 
 const expression_ref v0 = dummy(0);
 const expression_ref v1 = dummy(1);
 const expression_ref v2 = dummy(2);
 const expression_ref v3 = dummy(3);
 const expression_ref v4 = dummy(4);
+const expression_ref v5 = dummy(5);
 
 expression_ref operator^(const expression_ref& x, const expression_ref& T)
 {
@@ -94,10 +101,11 @@ Program get_Prelude()
   // listArray b l = mkArray b \i -> l!!i
   P += Def( (listArray,v1,v2),(mkArray,v1,lambda_quantify(v3,(get_list_index,v2,v3))) );
 
-  // length [] = 0
-  // length h:t = 1 + (length t)
-  P += Def( (length,ListEnd),0 )
-          ( (length,v1&v2),1 + (length,v2) );
+  // scale (RateMatrix q pi l t) s = (RateMatrix q pi l (s*t))
+  P += Def( (scale,(RateMatrix,v1,v2,v3,v4),v5),(RateMatrix,v1,v2,v3,(times,v4,v5)));
+
+  // QExp (RateMatrix q pi l t) = (LExp l pi t)
+  P += Def( (QExp, (RateMatrix,v1,v2,v3,v4)), (LExp,v3,v2,v4));
 
   return P;
 }
