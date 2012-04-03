@@ -445,37 +445,6 @@ namespace substitution {
 
   extern expression_ref Modulated_Markov_E;
 
-  expression_ref M2_Function(Double f1, Double f2, Double f3, Double omega);
-
-  struct M2_Op: public Operation
-  {
-    M2_Op* clone() const {return new M2_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      boost::shared_ptr<const Double> f1 = Args.evaluate_as<Double>(0);
-      boost::shared_ptr<const Double> f2 = Args.evaluate_as<Double>(1);
-      boost::shared_ptr<const Double> f3 = Args.evaluate_as<Double>(2);
-      boost::shared_ptr<const Double> omega = Args.evaluate_as<Double>(3);
-
-      return M2_Function(*f1, *f2, *f3, *omega);
-    }
-
-    std::string name() const {return "M2";}
-
-    M2_Op(): Operation(4) { }
-  };
-
   // Mixture_Function [Double] [MultiModelObject] -> MultiModelObject
   boost::shared_ptr<const MultiModelObject> Mixture_Function(const expression_ref&, const expression_ref&);
 

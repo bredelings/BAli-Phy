@@ -671,16 +671,6 @@ namespace substitution
 
   expression_ref Modulated_Markov_E = lambda_expression( Modulated_Markov_Op() );
 
-  expression_ref M2_Function(Double f1, Double f2, Double f3, Double omega)
-  {
-    vector<expression_ref> pairs;
-    pairs.push_back( Tuple( f1, Double(0) ) );
-    pairs.push_back( Tuple( f2, Double(1) ) );
-    pairs.push_back( Tuple( f3, omega ) );
-
-    return DiscreteDistribution( get_list(pairs) );
-  }
-
   // FIXME: this shouldn't be done in C++!
   shared_ptr<const MultiModelObject> Mixture_Function(const expression_ref& DL, const expression_ref& ML)
   {
