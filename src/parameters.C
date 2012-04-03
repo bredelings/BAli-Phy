@@ -1183,8 +1183,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     foreach(i,names)
     {
       int index = find_parameter(*i);
-      //      if (not C.parameter_is_set(index))
-      C.set_parameter_value(index, C.default_parameter_value(index));
+      if (not C.parameter_is_set(index))
+	C.set_parameter_value(index, C.default_parameter_value(index));
     }
     
 
