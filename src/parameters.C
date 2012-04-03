@@ -603,7 +603,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    variable_alignment_(true),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
-   LC(t,SModel()),
+   LC(t, *this),
    branch_HMM_type(t.n_branches(),0)
 {
   if (variable_alignment() and use_internal_index)
@@ -640,7 +640,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    variable_alignment_(false),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
-   LC(t,SModel()),
+   LC(t, *this),
    branch_HMM_type(t.n_branches(),0)
 {
   if (variable_alignment() and use_internal_index)

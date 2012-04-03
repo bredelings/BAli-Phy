@@ -82,7 +82,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   const Tree& T = P.T();
   alignment& A = *P.A;
 
-  const Matrix frequency = substitution::frequency_matrix(P.SModel());
+  Matrix frequency = P.FrequencyMatrix();
 
   int node1 = T.branch(b).target();
   int node2 = T.branch(b).source();
@@ -122,7 +122,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   boost::shared_ptr<DPmatrixSimple> 
     Matrices( new DPmatrixSimple(state_emit, P.get_branch_HMM(b).start_pi(),
 				 P.get_branch_HMM(b), P.get_beta(),
-				 P.SModel().distribution(), dists1, dists2, frequency)
+				 P.distribution(), dists1, dists2, frequency)
 	      );
 
   //------------------ Compute the DP matrix ---------------------//

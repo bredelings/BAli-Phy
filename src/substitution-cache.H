@@ -24,13 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "mytypes.H"
 #include "tree.H"
-#include "smodel/objects.H"
-
-namespace substitution
-{
-  class MultiModelObject;
-}
-
+#include "matcache.H"
 
 /// An object to store cached conditional likelihoods for a single branch
 struct Likelihood_Cache_Branch: public std::vector< Matrix >
@@ -147,7 +141,7 @@ public:
   /// Release token and mark unused.
   void release_token(int token);
   
-  Multi_Likelihood_Cache(const substitution::MultiModelObject& M);
+  Multi_Likelihood_Cache(const Mat_Cache&);
 };
 
 /// A single view into the shared Multi_Likelihood_Cache
@@ -266,7 +260,7 @@ public:
   Likelihood_Cache& operator=(const Likelihood_Cache&);
 
   Likelihood_Cache(const Likelihood_Cache& LC);
-  Likelihood_Cache(const Tree& T, const substitution::MultiModelObject& M,int l=0);
+  Likelihood_Cache(const Tree& T, const Mat_Cache& M,int l=0);
 
   ~Likelihood_Cache();
 };

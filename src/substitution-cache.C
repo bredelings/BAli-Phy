@@ -276,10 +276,10 @@ void Multi_Likelihood_Cache::release_token(int token) {
 }
 
 
-Multi_Likelihood_Cache::Multi_Likelihood_Cache(const substitution::MultiModelObject& MM)
+Multi_Likelihood_Cache::Multi_Likelihood_Cache(const Mat_Cache& MC)
   :C(0),
-   M(MM.n_base_models()),
-   S(MM.n_states()),
+   M(MC.n_base_models()),
+   S(MC.n_states()),
    iterations_too_long(0)
 { }
 
@@ -365,8 +365,8 @@ Likelihood_Cache::Likelihood_Cache(const Likelihood_Cache& LC)
   cache->copy_token(token,LC.token);
 }
 
-Likelihood_Cache::Likelihood_Cache(const Tree& T, const substitution::MultiModelObject& M,int C)
-  :cache(new Multi_Likelihood_Cache(M)),
+Likelihood_Cache::Likelihood_Cache(const Tree& T, const Mat_Cache& MC,int C)
+  :cache(new Multi_Likelihood_Cache(MC)),
    B(T.n_branches()*2),
    token(cache->claim_token(C,B)),
    scratch_matrices(10,Matrix(cache->n_models(),cache->n_states())),

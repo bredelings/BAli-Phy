@@ -59,7 +59,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   assert(T.is_connected(nodes[0],nodes[2]));
   assert(T.is_connected(nodes[0],nodes[3]));
 
-  const Matrix frequency = substitution::frequency_matrix(P.SModel());
+  Matrix frequency = P.FrequencyMatrix();
 
   // std::cerr<<"A = "<<A<<endl;
 
@@ -138,7 +138,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   // Actually create the Matrices & Chain
   boost::shared_ptr<DPmatrixConstrained> 
     Matrices(new DPmatrixConstrained(get_state_emit(), start_P, Q, P.get_beta(),
-				     P.SModel().distribution(), dists1, dists23, frequency)
+				     P.distribution(), dists1, dists23, frequency)
 	     );
 
   // Determine which states are allowed to match (,c2)

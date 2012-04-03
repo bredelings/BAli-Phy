@@ -19,7 +19,12 @@ void Mat_Cache::WeightedFrequencyMatrix(Matrix& F) const
   }
 }
 
-// frequencies(m) = base_model(m).frequencies(); ?
+Matrix Mat_Cache::WeightedFrequencyMatrix() const
+{
+  Matrix M;
+  WeightedFrequencyMatrix(M);
+  return M;
+}
 
 void Mat_Cache::FrequencyMatrix(Matrix& F) const
 {
@@ -33,4 +38,11 @@ void Mat_Cache::FrequencyMatrix(Matrix& F) const
     for(int s=0;s<S;s++) 
       F(m,s) = f[s];
   }
+}
+
+Matrix Mat_Cache::FrequencyMatrix() const
+{
+  Matrix M;
+  WeightedFrequencyMatrix(M);
+  return M;
 }

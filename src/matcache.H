@@ -44,7 +44,11 @@ struct Mat_Cache
 
   void WeightedFrequencyMatrix(Matrix&) const;
 
+  Matrix WeightedFrequencyMatrix() const;
+
   void FrequencyMatrix(Matrix&) const;
+
+  Matrix FrequencyMatrix() const;
 };
 
 #endif
