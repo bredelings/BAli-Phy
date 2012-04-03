@@ -29,6 +29,10 @@
      - Currently, it contains any parameters mentioned anywhere.
      - If the expression is reduced a parameters might be eliminated.
        For example (@,\x->2,y) reduces to 2, which then no longer contains 'y'.
+
+   7. Q1: Do I want to separate the expression from the notes, again?
+      Q2: Can I combine subsets of notes incrementally without 
+          expression syntax for formula_expression_ref?
  */
 
 using boost::shared_ptr;
