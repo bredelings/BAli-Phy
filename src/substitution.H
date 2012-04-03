@@ -79,8 +79,8 @@ namespace substitution {
   efloat_t other_subst(const data_partition&, const std::vector<int>& nodes);
   
   efloat_t Pr(const std::vector< std::vector<int> >& sequences, const alignment& A, subA_index_t& I,
-	      const Mat_Cache& MC,const Tree& T,::Likelihood_Cache& cache,
-	      const MultiModelObject& MModel);
+	      const Mat_Cache& MC,const Tree& T,::Likelihood_Cache& cache);
+
   efloat_t Pr(const data_partition&,Likelihood_Cache& LC);
 
   std::vector<std::vector<double> > get_model_likelihoods_by_alignment_column(const data_partition&);

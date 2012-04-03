@@ -1255,7 +1255,7 @@ namespace substitution {
 	L.push_back(S);
     }
 
-    const vector<unsigned>& smap = P.SModel().state_letters();
+    const vector<unsigned>& smap = P.state_letters();
 
     // For each column in the index (e.g. for each present character at node 'root')
     for(int i=0;i<index.size1();i++) 
@@ -1554,8 +1554,7 @@ namespace substitution {
   /// the SPR_all routines, but may not make sense otherwise.
   ///
   efloat_t Pr_unaligned_root(const vector< vector<int> >& sequences, const alignment& A,
-			     subA_index_t& I, const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC,
-			     const MultiModelObject& MModel)
+			     subA_index_t& I, const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC)
   {
     total_likelihood++;
     default_timer_stack.push_timer("substitution");
@@ -1624,7 +1623,7 @@ namespace substitution {
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P,Likelihood_Cache& LC) {
-    return Pr_unaligned_root(*P.sequences, *P.A, *P.subA, P, P.T(), LC, P.SModel());
+    return Pr_unaligned_root(*P.sequences, *P.A, *P.subA, P, P.T(), LC);
   }
 
   efloat_t Pr_unaligned_root(const data_partition& P) {
@@ -1632,8 +1631,7 @@ namespace substitution {
   }
 
   efloat_t Pr(const vector< vector<int> >& sequences, const alignment& A,subA_index_t& I, 
-	      const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC,
-	      const MultiModelObject& MModel)
+	      const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC)
   {
     total_likelihood++;
     default_timer_stack.push_timer("substitution");
@@ -1700,7 +1698,7 @@ namespace substitution {
 
   efloat_t Pr(const data_partition& P,Likelihood_Cache& LC) 
   {
-    return Pr(*P.sequences, *P.A, *P.subA, P, P.T(), LC, P.SModel());
+    return Pr(*P.sequences, *P.A, *P.subA, P, P.T(), LC);
   }
 
 
@@ -1712,7 +1710,7 @@ namespace substitution {
     Likelihood_Cache LC(P.T(), P.SModel());
     LC.root = P.LC.root;
 
-    return Pr(*P.sequences, *P.A, subA, P, P.T(), LC, P.SModel());
+    return Pr(*P.sequences, *P.A, subA, P, P.T(), LC);
   }
 
 
@@ -1728,7 +1726,7 @@ namespace substitution {
 
     check_internal_nodes_connected(*P.A,P.T(),vector<int>(1,LC.root));
 
-    return Pr(*P.sequences, *P.A, subA, P, P.T(), LC, P.SModel());
+    return Pr(*P.sequences, *P.A, subA, P, P.T(), LC);
   }
 
   efloat_t Pr(const data_partition& P) {
@@ -1778,7 +1776,7 @@ namespace substitution {
   vector<Matrix> 
   get_likelihoods_by_alignment_column(const vector< vector<int> >& sequences, const alignment& A,
 				      subA_index_t& I, const Mat_Cache& MC,
-				      const Tree& T,Likelihood_Cache& cache,const MultiModelObject& MModel)
+				      const Tree& T,Likelihood_Cache& cache)
   {
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
@@ -1812,7 +1810,7 @@ namespace substitution {
       for(const_in_edges_iterator j = branches[i].branches_before();j;j++)
       {
 	// update conditional likelihoods
-	calculate_caches_for_branch(*j, sequences, A, I, MC, T, cache, MModel);
+	calculate_caches_for_branch(*j, sequences, A, I, MC, T, cache);
 
 	// update substitution indices
 	if (not I.branch_index_valid(*j))
@@ -1853,7 +1851,7 @@ namespace substitution {
     for(const_in_edges_iterator i = T.node(cache.root).branches_in();i;i++)
     {
       // update conditional likelihoods
-      calculate_caches_for_branch(*i, sequences, A, I, MC, T, cache, MModel);
+      calculate_caches_for_branch(*i, sequences, A, I, MC, T, cache);
 
       // update substitution indices
       if (not I.branch_index_valid(*i))
@@ -1897,7 +1895,7 @@ namespace substitution {
 
   vector<Matrix> get_likelihoods_by_alignment_column(const data_partition& P)
   {
-    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, *P.A, *P.subA, P, P.T(), P.LC, P.SModel());
+    vector<Matrix> likelihoods = get_likelihoods_by_alignment_column(*P.sequences, *P.A, *P.subA, P, P.T(), P.LC);
 
 #ifdef DEBUG_SUBSTITUTION
     efloat_t L1 = combine_likelihoods(likelihoods);
