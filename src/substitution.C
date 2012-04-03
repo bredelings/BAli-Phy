@@ -310,7 +310,7 @@ namespace substitution {
   }
 
   efloat_t calc_root_probability2(const alignment&, const Tree& T,Likelihood_Cache& cache,
-			       const MultiModelObject& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
+				  const Mat_Cache& MC,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
     default_timer_stack.push_timer("substitution::calc_root");
@@ -333,7 +333,7 @@ namespace substitution {
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
-    WeightedFrequencyMatrix(F, MModel);
+    MC.WeightedFrequencyMatrix(F);
 
     // look up the cache rows now, once, instead of for each column
     vector< vector<Matrix>* > branch_cache;
@@ -1714,7 +1714,7 @@ namespace substitution {
     // get the probability
     efloat_t Pr = 1;
     if (T.n_nodes() == 2)
-      Pr = calc_root_probability2(A,T,LC,MModel,rb,index);
+      Pr = calc_root_probability2(A,T,LC,MC,rb,index);
     else
       Pr = calc_root_probability(A,T,LC,MC,rb,index);
 
