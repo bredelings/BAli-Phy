@@ -402,7 +402,7 @@ namespace substitution {
   }
 
   efloat_t calc_root_probability_unaligned(const alignment&,const Tree& T,Likelihood_Cache& cache,
-					   const MultiModelObject& MModel,const vector<int>& rb,const ublas::matrix<int>& index) 
+					   const Mat_Cache& MC,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
     default_timer_stack.push_timer("substitution::calc_root_unaligned");
@@ -423,7 +423,7 @@ namespace substitution {
 
     // cache matrix F(m,s) of p(m)*freq(m,l)
     Matrix F(n_models,n_states);
-    WeightedFrequencyMatrix(F, MModel);
+    MC.WeightedFrequencyMatrix(F);
 
     // look up the cache rows now, once, instead of for each column
     vector< vector<Matrix>* > branch_cache;
@@ -513,7 +513,7 @@ namespace substitution {
 
   void peel_leaf_branch(int b0,subA_index_t& I, Likelihood_Cache& cache,
 			const vector<int>& sequence, const alignment& A, const Tree& T, 
-			const vector<Matrix>& transition_P,const MultiModelObject& MModel)
+			const vector<Matrix>& transition_P,const Mat_Cache& MC)
   {
     total_peel_leaf_branches++;
     default_timer_stack.push_timer("substitution::peel_leaf_branch");
@@ -523,7 +523,7 @@ namespace substitution {
     if (not I.branch_index_valid(b0))
       I.update_branch(A,T,b0);
 
-    //    const vector<unsigned>& smap = MModel.state_letters();
+    //    const vector<unsigned>& smap = MC.state_letters();
 
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
@@ -533,7 +533,7 @@ namespace substitution {
     const int n_models  = cache.n_models();
     const int n_states  = cache.n_states();
 
-    assert(MModel.n_states() == n_states);
+    assert(MC.n_states() == n_states);
 
     for(int i=0;i<I.branch_index_length(b0);i++)
     {
@@ -602,7 +602,7 @@ namespace substitution {
 
     vector<const F81_Object*> SubModels(n_models);
     for(int m=0;m<n_models;m++) {
-      SubModels[m] = static_cast<const F81_Object*>(&MModel.base_model(m));
+      SubModels[m] = dynamic_cast<const F81_Object*>(&MModel.base_model(m));
       assert(SubModels[m]);
     }
     const double t = T.directed_branch(b0).length();
@@ -654,7 +654,7 @@ namespace substitution {
 
   void peel_leaf_branch_modulated(int b0,subA_index_t& I, Likelihood_Cache& cache, 
 				  const vector<int>& sequence, const alignment& A, const Tree& T, 
-				  const vector<Matrix>& transition_P,const MultiModelObject& MModel)
+				  const vector<Matrix>& transition_P,const Mat_Cache& MC)
   {
     total_peel_leaf_branches++;
     default_timer_stack.push_timer("substitution::peel_leaf_branch");
@@ -672,12 +672,12 @@ namespace substitution {
 
     assert(n_states >= n_letters and n_states%n_letters == 0);
 
-    assert(MModel.n_states() == n_states);
+    assert(MC.n_states() == n_states);
 
     if (not I.branch_index_valid(b0))
       I.update_branch(A,T,b0);
 
-    const vector<unsigned>& smap = MModel.state_letters();
+    const vector<unsigned>& smap = MC.state_letters();
 
     for(int i=0;i<I.branch_index_length(b0);i++)
     {
@@ -1049,10 +1049,10 @@ namespace substitution {
 	if (dynamic_cast<const F81_Object*>(&MModel.base_model(0)))
 	  peel_leaf_branch_F81(b0, I, cache, sequences[b0], A, T, MModel);
 	else
-	  peel_leaf_branch(b0, I, cache, sequences[b0], A, T, MC.transition_P(B0), MModel);
+	  peel_leaf_branch(b0, I, cache, sequences[b0], A, T, MC.transition_P(B0), MC);
       }
       else
-	peel_leaf_branch_modulated(b0, I, cache, sequences[b0], A, T, MC.transition_P(B0), MModel);
+	peel_leaf_branch_modulated(b0, I, cache, sequences[b0], A, T, MC.transition_P(B0), MC);
     }
     else if (bb == 2) {
       if (dynamic_cast<const F81_Object*>(&MModel.base_model(0)))
@@ -1621,7 +1621,7 @@ namespace substitution {
     if (dynamic_cast<subA_index_leaf*>(&I))
     {
       // Combine the likelihoods from absent nodes
-      Pr *= calc_root_probability_unaligned(A,T,LC,MModel,rb,index_unaligned);
+      Pr *= calc_root_probability_unaligned(A,T,LC,MC,rb,index_unaligned);
     }
     
 #ifdef DEBUG_INDEXING
