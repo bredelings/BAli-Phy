@@ -4,23 +4,15 @@
 #include <boost/shared_ptr.hpp>
 #include "expression.H"
 #include <iostream>
+#include "model_notes.H"
 
-class formula_expression_ref
+class formula_expression_ref: public Model_Notes
 {
   int I;
 
   // I should probably make a note_collection class that is shared
   // between formula_expression_ref and class context.
-  std::vector<expression_ref> notes;
 public:
-
-  int add_note(const expression_ref&);
-
-  expression_ref get_note(int i) const {return notes[i];}
-
-  const std::vector<expression_ref>& get_notes() const {return notes;}
-
-  int n_notes() const {return notes.size();}
 
   void set_note(int i, const expression_ref&);
 
@@ -30,7 +22,7 @@ public:
 
   int index() const {return I;}
 
-  expression_ref exp() const {return notes[I];}
+  expression_ref exp() const {return get_note(I);}
 
   int add_expression(const formula_expression_ref&);
 

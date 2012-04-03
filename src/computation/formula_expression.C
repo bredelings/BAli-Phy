@@ -34,16 +34,6 @@
 using boost::shared_ptr;
 using std::vector;
 
-int formula_expression_ref::add_note(const expression_ref& E)
-{
-  for(int i=0;i<notes.size();i++)
-    if (notes[i] == E)
-      return i;
-
-  notes.push_back(E);
-  return notes.size()-1;
-}
-
 void formula_expression_ref::set_note(int i, const expression_ref& E)
 {
   // how would we process changes to notes, when those notes have effects?
@@ -96,18 +86,19 @@ formula_expression_ref::formula_expression_ref()
 { }
 
 formula_expression_ref::formula_expression_ref(const expression_ref& R)
-  :I(0),notes(1,R)
-{ }
+  :I(0)
+{ 
+  add_note(R);
+}
 
 formula_expression_ref::formula_expression_ref(const vector<expression_ref>& N, int i)
-  :I(i),notes(N)
+  :Model_Notes(N),I(i)
 { }
 
 formula_expression_ref::formula_expression_ref(const vector<expression_ref>& N, const expression_ref& R)
-  :notes(N)
+  :Model_Notes(N)
 { 
-  I = N.size();
-  notes.push_back(R);
+  I = add_note(R);
 }
 
 formula_expression_ref prefix_formula(const std::string& prefix,const formula_expression_ref& R)
@@ -125,7 +116,7 @@ int formula_expression_ref::add_expression(const formula_expression_ref& R)
 
 boost::shared_ptr<const Object> formula_expression_ref::result() const
 {
-  context C(notes);
+  context C(get_notes());
   return C.evaluate_expression(exp());
 }
 
