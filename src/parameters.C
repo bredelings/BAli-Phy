@@ -1186,7 +1186,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       if (not C.parameter_is_set(index))
 	C.set_parameter_value(index, C.default_parameter_value(index));
     }
-    
 
     SModels.push_back( C.add_compute_expression( S.exp() ) );
   }

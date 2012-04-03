@@ -33,8 +33,8 @@ public:
 
   formula_expression_ref();
   formula_expression_ref(const expression_ref&);
-  formula_expression_ref(const std::vector<expression_ref>&, int);
-  formula_expression_ref(const std::vector<expression_ref>&, const expression_ref&);
+  formula_expression_ref(const Model_Notes&, int);
+  formula_expression_ref(const Model_Notes&, const expression_ref&);
 };
 
 formula_expression_ref prefix_formula(const std::string&,const formula_expression_ref&);
@@ -47,6 +47,11 @@ formula_expression_ref def_parameter(const std::string& name, const expression_r
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b);
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&);
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&, const expression_ref&);
+
+expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value);
+expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b);
+expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&);
+expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&, const expression_ref&);
 
 formula_expression_ref lambda_quantify(const expression_ref&, const formula_expression_ref&);
 

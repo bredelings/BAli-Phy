@@ -91,11 +91,11 @@ formula_expression_ref::formula_expression_ref(const expression_ref& R)
   add_note(R);
 }
 
-formula_expression_ref::formula_expression_ref(const vector<expression_ref>& N, int i)
+formula_expression_ref::formula_expression_ref(const Model_Notes& N, int i)
   :Model_Notes(N),I(i)
 { }
 
-formula_expression_ref::formula_expression_ref(const vector<expression_ref>& N, const expression_ref& R)
+formula_expression_ref::formula_expression_ref(const Model_Notes& N, const expression_ref& R)
   :Model_Notes(N)
 { 
   I = add_note(R);
@@ -120,12 +120,18 @@ boost::shared_ptr<const Object> formula_expression_ref::result() const
   return C.evaluate_expression(exp());
 }
 
-formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value)
+expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value)
 {
   expression_ref var = parameter(name);
-  formula_expression_ref Var (var);
-  Var.add_expression( default_value(var, def_value) );
-  return Var;
+  N.add_note( default_value(var, def_value) );
+  return var;
+}
+
+formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value)
+{
+  Model_Notes N;
+  expression_ref E = def_parameter(N, name, def_value);
+  return formula_expression_ref(N,E);
 }
 
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b)
