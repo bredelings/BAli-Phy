@@ -147,6 +147,37 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   return cached_transition_P[b];
 }
 
+int data_partition::n_base_models() const
+{
+  return SModel().n_base_models();
+}
+
+int data_partition::n_states() const
+{
+  return SModel().n_states();
+}
+
+vector<double> data_partition::distribution() const
+{
+  return SModel().distribution();
+}
+
+vector<unsigned> data_partition::state_letters() const
+{
+  return SModel().state_letters();
+}
+
+vector<double> data_partition::frequencies(int m) const
+{
+  return get_vector<double,double>(SModel().base_model(m).frequencies());
+}
+
+boost::shared_ptr<const Object> data_partition::base_model(int m) const
+{
+  boost::shared_ptr<const substitution::ReversibleAdditiveObject> O = SModel().base_models[m];
+  return O;
+}
+
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 {
   assert(variable_alignment());

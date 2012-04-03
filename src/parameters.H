@@ -186,6 +186,20 @@ public:
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;
   
+  int n_base_models() const;
+
+  // Perhaps this should really be per-mixture-component.
+  int n_states() const;
+
+  // Perhaps this should also be per-mixture-component.
+  std::vector<unsigned> state_letters() const;
+  
+  std::vector<double> distribution() const;
+
+  boost::shared_ptr<const Object> base_model(int m) const;
+
+  std::vector<double> frequencies(int m) const;
+
   /// Cached Conditional Likelihoods
   mutable Likelihood_Cache LC;
 

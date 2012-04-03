@@ -21,13 +21,30 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define MATCACHE_H
 
 #include <vector>
-#include "tree.H"
+#include <boost/shared_ptr.hpp>
 #include "mytypes.H"
-#include "smodel/objects.H"
 
 struct Mat_Cache
 {
   virtual const std::vector< Matrix>& transition_P(int b) const=0;
+
+  virtual int n_base_models() const = 0;
+
+  // Perhaps this should really be per-mixture-component.
+  virtual int n_states() const = 0;
+
+  // Perhaps this should also be per-mixture-component.
+  virtual std::vector<unsigned> state_letters() const = 0;
+
+  virtual std::vector<double> distribution() const = 0;
+
+  virtual boost::shared_ptr<const Object> base_model(int m) const = 0;
+
+  virtual std::vector<double> frequencies(int m) const = 0;
+
+  void WeightedFrequencyMatrix(Matrix&) const;
+
+  void FrequencyMatrix(Matrix&) const;
 };
 
 #endif

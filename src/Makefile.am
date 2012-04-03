@@ -82,7 +82,7 @@ TOOLS = model_P statreport alignment-gild \
 bin_PROGRAMS = bali-phy ${TOOLS}
 
 if HAVE_CAIRO
-bin_PROGRAMS += draw-tree
+bin_PROGRAMS += draw-tree	
 endif
 
 #-----------------------------------------------------------------
@@ -104,7 +104,8 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  setup-imodel.C smodel/objects.C computation/computation.C \
 	  computation/graph_register.C computation/program.C \
 	  computation/formula_expression.C smodel/operations.C distribution-operations.C \
-	  computation/operations.C computation/prelude.C computation/context.C computation/model_notes.C
+	  computation/operations.C computation/prelude.C computation/context.C \
+	  computation/model_notes.C matcache.C
 
 nodist_bali_phy_SOURCES = git_version.h
 
