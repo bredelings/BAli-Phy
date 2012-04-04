@@ -85,7 +85,7 @@ protected:
 public:
   Box<T>* clone() const {return new Box<T>(*this);}
 
-  operator T() const {return t;}
+  operator const T&() const {return t;}
 
   //  template <typename U>
   //  operator Box<U>() const {return t;}
