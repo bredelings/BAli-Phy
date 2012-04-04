@@ -186,6 +186,38 @@ struct GetIndex: public Operation
 
 extern expression_ref getIndex;
 
+template<typename T>
+struct VectorSizeOp: public Operation
+{
+  virtual VectorSizeOp* clone() const {return new VectorSizeOp(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const VectorSizeOp* E = dynamic_cast<const VectorSizeOp<T>*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    boost::shared_ptr<const Box<std::vector<T> > > v = Args.evaluate_as<Box<std::vector<T> > >(0);
+
+    const std::vector<T>& v2 = *v;
+    boost::shared_ptr<const Int> r ( new Int(v2.size() ) );
+
+    return r;
+  }
+
+  std::string name() const {return "VectorSize";}
+  
+  VectorSizeOp():Operation(1) {}
+};
+
+template <typename T>
+expression_ref VectorSize()
+{
+  return lambda_expression(VectorSizeOp<T>());
+}
+
 struct LExp_Op: public Operation
 {
   LExp_Op* clone() const {return new LExp_Op(*this);}
