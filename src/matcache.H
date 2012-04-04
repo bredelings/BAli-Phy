@@ -22,6 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include "alphabet.H"
 #include "mytypes.H"
 
 struct Mat_Cache
@@ -41,6 +42,8 @@ struct Mat_Cache
   virtual boost::shared_ptr<const Object> base_model(int m) const = 0;
 
   virtual std::vector<double> frequencies(int m) const = 0;
+
+  virtual const alphabet& get_alphabet() const = 0;
 
   void WeightedFrequencyMatrix(Matrix&) const;
 

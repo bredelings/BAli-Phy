@@ -40,6 +40,7 @@ extern "C" {
 #include "smodel/smodel.H"
 
 using std::valarray;
+using std::vector;
 using std::endl;
 
 void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<double>& f) {
@@ -47,11 +48,12 @@ void show_frequencies(std::ostream& o,const alphabet& a,const std::valarray<doub
       o<<"f"<<a.lookup(i)<<" = "<<f[i]<<"\n";
 }
 
-void show_frequencies(std::ostream& o,const substitution::MultiModelObject& MModel) {
-  const alphabet& a = MModel.Alphabet();
+void show_frequencies(std::ostream& o,const Mat_Cache& MC)
+{
+  const alphabet& a = MC.get_alphabet();
 
-  if (MModel.n_base_models() == 1) {
-    const valarray<double>& f = MModel.base_model(0).frequencies();
+  if (MC.n_base_models() == 1) {
+    vector<double> f = MC.frequencies(0);
     for(int i=0;i<a.size();i++)
       o<<"f"<<a.lookup(i)<<" = "<<f[i]<<"\n";
   }
@@ -59,35 +61,35 @@ void show_frequencies(std::ostream& o,const substitution::MultiModelObject& MMod
 
     for(int i=0;i<a.size();i++) {
       double total = 0;
-      for(int m=0;m<MModel.n_base_models();m++) {
-	const valarray<double>& f = MModel.base_model(m).frequencies();
+      for(int m=0;m<MC.n_base_models();m++) {
+	vector<double> f = MC.frequencies(m);
 	o<<"f"<<a.lookup(i)<<m+1<<" = "<<f[i]<<"     ";
-	total += MModel.distribution()[m] * f[i];
+	total += MC.distribution()[m] * f[i];
       }
       o<<"f"<<a.lookup(i)<<" = "<<total<<"\n";
     }
   }
 }
 
-void show_smodel(std::ostream& o, const substitution::MultiModelObject& MModel)
+void show_smodel(std::ostream& o, const Mat_Cache& MC)
 {
-  for(int i=0;i<MModel.n_base_models();i++)
-    o<<"    rate"<<i<<" = "<<MModel.base_model(i).rate();
+  for(int i=0;i<MC.n_base_models();i++)
+    o<<"    rate"<<i<<" = "<<convert<const substitution::ReversibleAdditiveObject>(MC.base_model(i))->rate();
   o<<"\n\n";
   
-  for(int i=0;i<MModel.n_base_models();i++)
-    o<<"    fraction"<<i<<" = "<<MModel.distribution()[i];
+  for(int i=0;i<MC.n_base_models();i++)
+    o<<"    fraction"<<i<<" = "<<MC.distribution()[i];
   o<<"\n\n";
-  
+
   o<<"frequencies = "<<"\n";
-  show_frequencies(o,MModel);
+  show_frequencies(o,MC);
 }
 
 void show_smodels(std::ostream& o, const Parameters& P)
 {
-  for(int m=0;m<P.n_smodels();m++) {
-    o<<"smodel"<<m+1<<endl;
-    show_smodel(o,P.SModel(m));
+  for(int m=0;m<P.n_data_partitions();m++) {
+    o<<"data partition"<<m+1<<endl;
+    show_smodel(o,P[m]);
   }
 }
 
