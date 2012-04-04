@@ -1170,15 +1170,6 @@ A C D E F G H I K L M N P Q R S T V W Y\n\
 
   //---------------------------- class MultiModel --------------------------//
 
-
-  /*
-  shared_ptr<MultiModel> MixtureModelFunction(const DiscreteDistribution& D)
-  {
-  How should I handle an expression with a variable number of arguments?
-  How should I handle an op with a variable number of arguments?
-  Should I create a Vector<Object> so that the number of arguments is fixed?
-  }
-  */
   shared_ptr<const Object> MixtureModel::result() const
   {
     shared_ptr<MultiModelObject> R;
