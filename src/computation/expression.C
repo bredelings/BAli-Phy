@@ -1388,7 +1388,7 @@ vector<T> skip(int n, const vector<T>& v)
 
   vector<T> v2(v.size() - n);
   for(int i=0;i<v2.size();i++)
-    v2[i] = v2[i+n];
+    v2[i] = v[i+n];
 
   return v2;
 }
