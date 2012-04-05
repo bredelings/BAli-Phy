@@ -285,6 +285,8 @@ struct expression_ref: public polymorphic_cow_ptr<Object>
   expression_ref(const char* s):polymorphic_cow_ptr<Object>(new String(s)) {}
 };
 
+boost::shared_ptr<const expression> is_a(const expression_ref&, const std::string&);
+
 template <typename T>
 struct typed_expression_ref: public expression_ref
 {

@@ -444,6 +444,8 @@ tribool constructor::compare(const Object& o) const
   if (not E) 
     return false;
 
+  // Should we check that the arity matches also?
+
   return f_name == E->f_name;
 }
 
@@ -1934,5 +1936,17 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
 
   std::cerr<<"I don't recognize expression '"+ R->print() + "'\n";
   return R;
+}
 
+shared_ptr<const expression> is_a(const expression_ref& E, const string& s)
+{
+  shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E);
+  if (E2)
+  {
+    if (E2->sub[0]->compare(constructor(s,-1)))
+      ;
+    else
+      E2.reset();
+  }
+  return E2;
 }
