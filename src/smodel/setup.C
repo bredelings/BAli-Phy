@@ -457,6 +457,9 @@ get_MM(const formula_expression_ref& M, const string& name, const shared_ptr< co
   if (M.result_as<MultiModelObject>())
     return M;
 
+  if (is_a(M.exp(), "MixtureModel"))
+    return M;
+
   try { 
     return Unit_Model( get_RA(M,name,frequencies) ) ; 
   }
@@ -917,6 +920,9 @@ get_smodel(const string& smodel_name, const shared_ptr<const alphabet>& a, const
 
   // --------- Convert smodel to MultiModel ------------//
   formula_expression_ref full_smodel = get_MM(smodel,"Final",frequencies);
+
+  if (is_a(full_smodel.exp(), "MixtureModel"))
+    full_smodel = ::CreateMMO(full_smodel);
 
   return full_smodel;
 }
