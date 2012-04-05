@@ -987,24 +987,6 @@ namespace substitution {
     insert_submodel("1",N);
   }
 
-  //--------------- MultiRate Models ----------------//
-
-  shared_ptr<const Object> UnitModel::result() const
-  {
-    shared_ptr<const ReversibleAdditiveObject> sub = SubModel().result_as<const ReversibleAdditiveObject>();
-
-    return Unit_Mixture_Function(sub);
-  }
-
-  string UnitModel::name() const {
-    return string("[") + SubModels(0).name() + "]";
-  }
-
-  UnitModel::UnitModel(const ::Model& M)
-  {
-    insert_submodel("0",M);
-  }
-
   //---------------------- CAT_FixedFrequencyModel -----------------------//
   const alphabet& CAT_FixedFrequencyModel::Alphabet() const
   {

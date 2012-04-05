@@ -624,30 +624,6 @@ namespace substitution {
     ~MultiModel() {}
   };
 
-  /// A MultiRate Model with a single rate
-  class UnitModel: public MultiModel,
-		   public SuperModelOver< ::Model >
-  {
-    void recalc(const std::vector<int>&) {std::abort();}
-  public:
-    UnitModel* clone() const {return new UnitModel(*this);}
-    
-          ::Model& SubModel() {return SuperModelOver< ::Model>::SubModels(0); }
-
-    const ::Model& SubModel() const {return SuperModelOver< ::Model>::SubModels(0); }
-
-    string name() const;
-
-    void update() { }
-
-    boost::shared_ptr<const Object> result() const;
-
-    UnitModel(const ::Model& M);
-
-    ~UnitModel() {};
-  };
-
-
   /// A substitution model based on running identical copies of an input model with different frequencies.
   class CAT_FixedFrequencyModel: public MultiModel
   {
