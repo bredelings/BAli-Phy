@@ -54,11 +54,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "probability.H"
 #include "timer_stack.H"
 #include "computation/formula_expression.H"
+#include "smodel/operations.H"
 
 using std::vector;
 using std::string;
 using std::cerr;
 using std::endl;
+using boost::shared_ptr;
 
 bool use_internal_index = true;
 
@@ -753,8 +755,14 @@ efloat_t Parameters::heated_likelihood() const
   /// Get the substitution::Model
 boost::shared_ptr<const substitution::MultiModelObject> Parameters::SModel(int s) const 
 {
-  boost::shared_ptr<const Object> O = C.evaluate(SModels[s]);
-  return convert<const substitution::MultiModelObject>(O);
+  expression_ref E = C.evaluate(SModels[s]);
+
+  shared_ptr<const substitution::MultiModelObject> MMO = dynamic_pointer_cast<const substitution::MultiModelObject>(E);
+
+  if (not MMO)
+    MMO = substitution::CreateMMOFunction(E);
+
+  return MMO;
 }
 
 void Parameters::recalc_imodels() 
