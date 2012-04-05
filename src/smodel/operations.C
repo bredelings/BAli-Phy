@@ -450,7 +450,7 @@ namespace substitution
   {
     vector<expression_ref> DV;
     {
-      shared_ptr<const expression> DE = dynamic_pointer_cast<const expression>(D);
+      shared_ptr<const expression> DE = is_a(D,"DiscreteDistribution");
       DV = get_ref_vector_from_list(DE->sub[1]);
     }
 
