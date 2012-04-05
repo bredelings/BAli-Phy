@@ -234,7 +234,7 @@ public:
   IndelModel& IModel();
 
   /// Get the substitution::Model
-  const substitution::MultiModelObject& SModel() const;
+  boost::shared_ptr<const substitution::MultiModelObject> SModel() const;
 
   void setlength(int b);
   void setlength_no_invalidate_LC(int b);
@@ -363,7 +363,7 @@ public:
   /// How many substitution models?
   int n_smodels() const {return SModels.size();}
   /// Get the substitution::Model
-  const substitution::MultiModelObject& SModel(int i) const;
+  boost::shared_ptr<const substitution::MultiModelObject> SModel(int i) const;
   
   /// How many substitution models?
   int n_imodels() const {return IModels.size();}

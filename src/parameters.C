@@ -133,14 +133,14 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   
   if (not cached_transition_P[b].is_valid())
   {
-    double l = P->get_branch_subst_length(partition_index,b) / SModel().rate();
+    double l = P->get_branch_subst_length(partition_index,b) / SModel()->rate();
     assert(l >= 0);
 
     vector< Matrix >& TP = cached_transition_P[b].modify_value();
-    const int n_models = SModel().n_base_models();
+    const int n_models = SModel()->n_base_models();
     for(int m=0;m<n_models;m++)
     {
-      TP[m] = SModel().transition_p(l,m);
+      TP[m] = SModel()->transition_p(l,m);
     }
     cached_transition_P[b].validate();
   }
@@ -149,32 +149,32 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
 
 int data_partition::n_base_models() const
 {
-  return SModel().n_base_models();
+  return SModel()->n_base_models();
 }
 
 int data_partition::n_states() const
 {
-  return SModel().n_states();
+  return SModel()->n_states();
 }
 
 vector<double> data_partition::distribution() const
 {
-  return SModel().distribution();
+  return SModel()->distribution();
 }
 
 vector<unsigned> data_partition::state_letters() const
 {
-  return SModel().state_letters();
+  return SModel()->state_letters();
 }
 
 vector<double> data_partition::frequencies(int m) const
 {
-  return get_vector<double,double>(SModel().base_model(m).frequencies());
+  return get_vector<double,double>(SModel()->base_model(m).frequencies());
 }
 
 boost::shared_ptr<const Object> data_partition::base_model(int m) const
 {
-  boost::shared_ptr<const substitution::ReversibleAdditiveObject> O = SModel().base_models[m];
+  boost::shared_ptr<const substitution::ReversibleAdditiveObject> O = SModel()->base_models[m];
   return O;
 }
 
@@ -582,7 +582,7 @@ efloat_t data_partition::heated_likelihood() const
 }
 
 /// Get the substitution::Model
-const substitution::MultiModelObject& data_partition::SModel() const 
+boost::shared_ptr<const substitution::MultiModelObject> data_partition::SModel() const 
 {
   int s = P->smodel_for_partition[partition_index];
   return P->SModel(s);
@@ -614,8 +614,8 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
-  const int n_models = SModel().n_base_models();
-  const int n_states = SModel().state_letters().size();
+  const int n_models = SModel()->n_base_models();
+  const int n_states = SModel()->state_letters().size();
   for(int b=0;b<cached_transition_P.size();b++)
     cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
 							   Matrix(n_states, n_states));
@@ -651,8 +651,8 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
-  const int n_models = SModel().n_base_models();
-  const int n_states = SModel().state_letters().size();
+  const int n_models = SModel()->n_base_models();
+  const int n_states = SModel()->state_letters().size();
   for(int b=0;b<cached_transition_P.size();b++)
     cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
 							   Matrix(n_states, n_states));
@@ -751,10 +751,10 @@ efloat_t Parameters::heated_likelihood() const
 }
 
   /// Get the substitution::Model
-const substitution::MultiModelObject& Parameters::SModel(int s) const 
+boost::shared_ptr<const substitution::MultiModelObject> Parameters::SModel(int s) const 
 {
   boost::shared_ptr<const Object> O = C.evaluate(SModels[s]);
-  return *convert<const substitution::MultiModelObject>(O);
+  return convert<const substitution::MultiModelObject>(O);
 }
 
 void Parameters::recalc_imodels() 
