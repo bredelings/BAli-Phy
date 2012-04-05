@@ -680,21 +680,6 @@ namespace substitution {
 
     C20_CAT_FixedFrequencyModel();
   };
-
-  class MixtureModel: public MultiModel, public SuperModelOver< ::Model> 
-  {
-    efloat_t super_prior() const;
-    void recalc(const std::vector<int>&) {std::abort();}
-    void update() { }
-  public:
-    virtual MixtureModel* clone() const {return new MixtureModel(*this);}
-
-    boost::shared_ptr<const Object> result() const;
-
-    string name() const;
-
-    MixtureModel(const std::vector<owned_ptr< ::Model> >& models);
-  };
 }
 
 #endif
