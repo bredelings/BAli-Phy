@@ -181,10 +181,6 @@ namespace substitution {
     INV_for_Mixture_Op():Operation(1) { }
   };
 
-  extern expression_ref INV_for_Mixture;
-
-  formula_expression_ref WithINV_Model(const formula_expression_ref&);
-
   boost::shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
 
   boost::shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2);
