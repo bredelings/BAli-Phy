@@ -223,8 +223,6 @@ namespace substitution
   class MultiModelObject: virtual public Object
   {
   public:
-    boost::shared_ptr<const alphabet> a;
-
     std::vector< polymorphic_cow_ptr<ReversibleAdditiveObject> > base_models;
 
     std::vector< double > fraction;
