@@ -103,8 +103,8 @@ Program get_Prelude()
           ( (If, v3, v1, v2), v2);
 
   expression_ref MultiParameter = var("MultiParameter");
-  // MultiParameter f (DiscreteDistribution d) = DiscreteDistribution (fmap2 f d)
-  P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (DiscreteDistribution,(fmap2,v1,v2)));
+  // MultiParameter f (DiscreteDistribution d) = MixtureModel(DiscreteDistribution (fmap2 f d))
+  P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(fmap2,v1,v2))));
 
   // fst (x,y) = x
   P += Def( (fst,Tuple(v1,v2)), v1);

@@ -3,6 +3,7 @@
 #include "distribution-operations.H"
 #include "computation/operations.H"
 #include "computation/expression.H"
+#include "computation/prelude.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -418,7 +419,7 @@ namespace substitution
   {
     formula_expression_ref R2 = R;
 
-    R2 = CreateMMO(DiscreteDistribution(Cons(Tuple(expression_ref(1.0),R), ListEnd)));
+    R2 = CreateMMO(MixtureModel(DiscreteDistribution(Cons(Tuple(expression_ref(1.0),R), ListEnd))));
 
     return R2;
   }
@@ -450,7 +451,7 @@ namespace substitution
   {
     vector<expression_ref> DV;
     {
-      shared_ptr<const expression> DE = is_a(D,"DiscreteDistribution");
+      shared_ptr<const expression> DE = is_a(is_a(D,"MixtureModel")->sub[1],"DiscreteDistribution");
       DV = get_ref_vector_from_list(DE->sub[1]);
     }
 
