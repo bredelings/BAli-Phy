@@ -324,11 +324,11 @@ namespace substitution {
 
   extern expression_ref Discretize;
 
-  boost::shared_ptr<const MultiModelObject> MixtureModelFunction(const expression_ref& D);
+  boost::shared_ptr<const MultiModelObject> CreateMMOFunction(const expression_ref& D);
 
-  struct MixtureModelOp: public Operation
+  struct CreateMMOOp: public Operation
   {
-    MixtureModelOp* clone() const {return new MixtureModelOp(*this);}
+    CreateMMOOp* clone() const {return new CreateMMOOp(*this);}
 
     tribool compare(const Object& O) const
     {
@@ -342,12 +342,12 @@ namespace substitution {
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
-    std::string name() const {return "MixtureModel";}
+    std::string name() const {return "CreateMMO";}
 
-    MixtureModelOp():Operation(1) { }
+    CreateMMOOp():Operation(1) { }
   };
 
-  extern expression_ref MixtureModel;
+  extern expression_ref CreateMMO;
 
   MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D);
 

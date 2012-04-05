@@ -620,7 +620,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref R = Plus_gwF_Model(*a);
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
-    model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
+    model_stack.push_back( ::CreateMMO(MultiParameter(M0,D)) );
   }
   else if (match(string_stack,"M3",arg)) 
   {
@@ -652,7 +652,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref R = Plus_gwF_Model(*a);
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
-    model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
+    model_stack.push_back( ::CreateMMO(MultiParameter(M0,D)) );
   }
   else if (match(string_stack,"M2a",arg)) 
   {
@@ -682,7 +682,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref R = Plus_gwF_Model(*a);
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
-    model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
+    model_stack.push_back( ::CreateMMO(MultiParameter(M0,D)) );
   }
   else if (match(string_stack,"M8b",arg))
   {
@@ -816,7 +816,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref R = Plus_gwF_Model(*a);
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
-    model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
+    model_stack.push_back( ::CreateMMO(MultiParameter(M0,D)) );
   }
   else if (match(string_stack,"M7",arg))
   {
@@ -833,7 +833,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref R = Plus_gwF_Model(*a);
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
-    model_stack.push_back( ::MixtureModel(MultiParameter(M0,D)) );
+    model_stack.push_back( ::CreateMMO(MultiParameter(M0,D)) );
   }
   else
     return false;

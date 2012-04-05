@@ -418,7 +418,7 @@ namespace substitution
   {
     formula_expression_ref R2 = R;
 
-    R2 = MixtureModel(DiscreteDistribution(Cons(Tuple(expression_ref(1.0),R), ListEnd)));
+    R2 = CreateMMO(DiscreteDistribution(Cons(Tuple(expression_ref(1.0),R), ListEnd)));
 
     return R2;
   }
@@ -446,7 +446,7 @@ namespace substitution
 
   expression_ref Discretize = lambda_expression( DiscretizationOp() );
 
-  shared_ptr<const MultiModelObject> MixtureModelFunction(const expression_ref& D)
+  shared_ptr<const MultiModelObject> CreateMMOFunction(const expression_ref& D)
   {
     vector<expression_ref> DV;
     {
@@ -466,12 +466,12 @@ namespace substitution
     return shared_ptr<const MultiModelObject>(M);
   }
 
-  boost::shared_ptr<const Object> MixtureModelOp::operator()(OperationArgs& Args) const
+  boost::shared_ptr<const Object> CreateMMOOp::operator()(OperationArgs& Args) const
   {
-    return MixtureModelFunction(Args.evaluate(0));
+    return CreateMMOFunction(Args.evaluate(0));
   }
 
-  expression_ref MixtureModel = lambda_expression( MixtureModelOp() );
+  expression_ref CreateMMO = lambda_expression( CreateMMOOp() );
 
   MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D)
   {
