@@ -326,29 +326,6 @@ namespace substitution {
 
   boost::shared_ptr<const MultiModelObject> CreateMMOFunction(const expression_ref& D);
 
-  struct CreateMMOOp: public Operation
-  {
-    CreateMMOOp* clone() const {return new CreateMMOOp(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "CreateMMO";}
-
-    CreateMMOOp():Operation(1) { }
-  };
-
-  extern expression_ref CreateMMO;
-
   MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D);
 
   struct MultiRateOp: public Operation

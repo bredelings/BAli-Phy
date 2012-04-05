@@ -467,13 +467,6 @@ namespace substitution
     return shared_ptr<const MultiModelObject>(M);
   }
 
-  boost::shared_ptr<const Object> CreateMMOOp::operator()(OperationArgs& Args) const
-  {
-    return CreateMMOFunction(Args.evaluate(0));
-  }
-
-  expression_ref CreateMMO = lambda_expression( CreateMMOOp() );
-
   MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D)
   {
     vector<expression_ref> pairs;
