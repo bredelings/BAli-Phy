@@ -38,8 +38,8 @@ const expression_ref ReversibleMarkovM = lambda_expression( constructor("Reversi
 // (F81 alpha state_letters a pi)
 const expression_ref F81M = lambda_expression( constructor("F81", 4) );
 
-// (MixtureM alpha state_letters (DiscreteDistribution [(Double,RMM|F81)]))
-const expression_ref MixtureM = lambda_expression( constructor("MixtureM", 3) );
+// (MixtureModel (DiscreteDistribution [(Double,RMM|F81)]))
+const expression_ref MixtureModel = lambda_expression( constructor("MixtureModel", 1) );
 
 
 const expression_ref v0 = dummy(0);
@@ -125,56 +125,54 @@ Program get_Prelude()
   P += Def( (length,ListEnd),0)
           ( (length,v1&v2),1+(length,v2));
 
-  // scale (RateMatrix q pi l t) s = (RateMatrix q pi l (s*t))
-  // scale (ReversibleMarkovM a s q) = (ReversibleMarkovM a s (scale q))
-  // scale (F81 a s a' pi) s = (F81 a s a'*s pi) ??
-  // scale (MixtureM a s (DiscreteDistribution l)) s= (MixtureM a s (DiscreteDistribution (fmap2,times(s),l))) ??
-  P += Def( (scale,(RateMatrix,v1,v2,v3,v4),v5),(RateMatrix,v1,v2,v3,(times,v4,v5)));
+  // scale x (RateMatrix q pi l t) = (RateMatrix q pi l (x*t))
+  // scale x (ReversibleMarkovM a s q) = (ReversibleMarkovM a s (scale x q))
+  // scale x (F81 a s a' pi)= (F81 a s a'*x pi) ??
+  // scale x (MixtureModel (DiscreteDistribution l)) s= (MixtureModel (DiscreteDistribution (fmap2,scale(s),l))) ??
+  P += Def( (scale,v5,(RateMatrix,v1,v2,v3,v4)),(RateMatrix,v1,v2,v3,(times,v4,v5)));
 
   // rate (RateMatrix q pi l t) = t
-  // rate (MixtureM ?)
+  // rate (MixtureModel ?)
   P += Def( (rate,(RateMatrix,v1,v2,v3,v4)),v4);
 
   // QExp (RateMatrix q pi l t) = (LExp l pi t)
   P += Def( (QExp, (RateMatrix,v1,v2,v3,v4)), (LExp,v3,v2,v4));
 
-  // n_base_models (MixtureM a state_letters (DiscreteDistribution l)) = length l
-  P += Def( (n_base_models, (MixtureM,v1,v2,(DiscreteDistribution,v3))), (length,v3));
+  // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
+  P += Def( (n_base_models, (MixtureModel,(DiscreteDistribution,v1))), (length,v1));
   
   // state_letters (ReversibleMarkovM alpha s q) = s
   // state_letters (F81 alpha s a pi) = s
-  // state_letters (MixtureM alpha s d) = state_letters (base_model (MixtureM alpha s d) 0)
+  // state_letters (MixtureModel alpha s d) = state_letters (base_model (MixtureModel alpha s d) 0)
   P += Def( (state_letters, (ReversibleMarkovM,v1,v2,v3)), v2)
           ( (state_letters, (F81M,v1,v2,v3,v4)), v2)
-          ( (state_letters, (MixtureM,v1,v2,v3)), (state_letters,(base_model,(MixtureM,v1,v2,v3),0)));
+          ( (state_letters, (MixtureModel,v1)), (state_letters,(base_model,(MixtureModel,v1),0)));
 
   // n_states m = vector_size (state_letters m)
   P += Def( (n_states,v1), (VectorSize<unsigned>(),(state_letters,v1)));
   
   // get_alphabet (ReversibleMarkovM alpha s q) = alpha
   // get_alphabet (F81 alpha s a pi) = alpha
-  // get_alphabet (MixtureM alpha s d) = alpha
+  // get_alphabet (MixtureModel alpha s d) = alpha
   P += Def( (get_alphabet, (ReversibleMarkovM,v1,v2,v3)), v1)
           ( (get_alphabet, (F81M,v1,v2,v3,v4)), v1)
-          ( (get_alphabet, (MixtureM,v1,v2,v3)), v1);
+          ( (get_alphabet, (MixtureModel,v1)), (get_alphabet,(base_model,(MixtureModel,v1),0)));
 
   // get_frequencies (RateMatrix q pi l t) = pi
   // get_frequencies (ReversibleMarkovM alpha s q) = get_frequencies q
   // get_frequencies (F81 alpha s a pi) = pi
   P += Def( (get_frequencies, (RateMatrix,v1,v2,v3,v4)), v4)
           ( (get_frequencies, (ReversibleMarkovM,v1,v2,v3)), (get_frequencies,v1))
-        ( (get_frequencies, (F81M,v1,v2,v3,v4)), v4);
+          ( (get_frequencies, (F81M,v1,v2,v3,v4)), v4);
 
-  // get_component_frequencies (MixtureM alpha s d)  i = get_frequencies (base_model (MixtureM alpha s d) i)
-  P += Def( (get_component_frequencies, (MixtureM,v1,v2,v3), v4), (get_frequencies(base_model,(MixtureM,v1,v2,v3),v4)));
+  // get_component_frequencies (MixtureModel alpha s d)  i = get_frequencies (base_model (MixtureModel alpha s d) i)
+  P += Def( (get_component_frequencies, (MixtureModel,v1), v4), (get_frequencies(base_model,(MixtureModel,v1),v4)));
 
-  // base_model (MixtureM alpha s (DiscreteDistribution l)) i = get_list_index l i
-  P += Def( (base_model, (MixtureM,v1,v2,(DiscreteDistribution,v3)),v4), (get_list_index,v3,v4));
+  // base_model (MixtureModel alpha s (DiscreteDistribution l)) i = get_list_index l i
+  P += Def( (base_model, (MixtureModel,(DiscreteDistribution,v1)),v2), (snd,(get_list_index,v1,v2)));
 
-  // distribution (MixtureM alpha s (DiscreteDistribution l)) = fmap fst l
-  P += Def( (distribution, (MixtureM,v1,v2,(DiscreteDistribution,v3))), (fmap,fst,v3));
-
-  
+  // distribution (MixtureModel alpha s (DiscreteDistribution l)) = fmap fst l
+  P += Def( (distribution, (MixtureModel,(DiscreteDistribution,v1))), (fmap,fst,v1));
 
   return P;
 }
