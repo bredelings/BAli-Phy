@@ -172,7 +172,7 @@ Program get_Prelude()
   P += Def( (base_model, (MixtureM,v1,v2,(DiscreteDistribution,v3)),v4), (get_list_index,v3,v4));
 
   // distribution (MixtureM alpha s (DiscreteDistribution l)) = fmap fst l
-  P += Def( (base_model, (MixtureM,v1,v2,(DiscreteDistribution,v3))), (fmap,fst,v3));
+  P += Def( (distribution, (MixtureM,v1,v2,(DiscreteDistribution,v3))), (fmap,fst,v3));
 
   
 
