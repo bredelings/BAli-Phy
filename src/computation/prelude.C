@@ -80,7 +80,8 @@ Program get_Prelude()
   // fmap1 f []  = []
   // fmap1 f (p,x):t = (f p,x):(fmap1 f t)
   P += Def( (fmap1, v1, ListEnd)    , ListEnd)
-          ( (fmap1, v1, Tuple(v2,v3)&v4), Tuple((v1,v2),v3) & (fmap1, v1, v4) );
+          ( (fmap1, v1, Tuple(v2,v3)&v4), Tuple((v1,v2),v3) & (fmap1, v1, v4) )
+          ( (fmap1, v1, (DiscreteDistribution,v2)), (DiscreteDistribution,(fmap1,v1,v2)));
 
   // fmap2 f []  = []
   // fmap2 f (p,x):t = (p,f x):(fmap2 f t)
