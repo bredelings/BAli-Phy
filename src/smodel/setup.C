@@ -921,9 +921,6 @@ get_smodel(const string& smodel_name, const shared_ptr<const alphabet>& a, const
   // --------- Convert smodel to MultiModel ------------//
   formula_expression_ref full_smodel = get_MM(smodel,"Final",frequencies);
 
-  if (is_a(full_smodel.exp(), "MixtureModel"))
-    full_smodel = ::CreateMMO(full_smodel);
-
   return full_smodel;
 }
 
