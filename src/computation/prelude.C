@@ -58,6 +58,8 @@ Program get_Prelude()
 {
   Program P;
 
+  expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
+
   // take 0 x   = []
   // take n []  = []
   // take n h:t = h:(take (n-1) t)
@@ -82,8 +84,10 @@ Program get_Prelude()
 
   // fmap2 f []  = []
   // fmap2 f (p,x):t = (p,f x):(fmap2 f t)
+  // fmap2 f (DiscreteDistribution d) = (DiscreteDistribution (fmap2 f d))
   P += Def( (fmap2, v1, ListEnd)    , ListEnd)
-          ( (fmap2, v1, Tuple(v2,v3)&v4), Tuple(v2,(v1,v3)) & (fmap2, v1, v4) );
+          ( (fmap2, v1, Tuple(v2,v3)&v4), Tuple(v2,(v1,v3)) & (fmap2, v1, v4) )
+          ( (fmap2, v1, (DiscreteDistribution,v2)), (DiscreteDistribution,(fmap2,v1,v2)));
 
   // sum [] = 0
   // sum h:t = h+(sum t)
@@ -94,7 +98,6 @@ Program get_Prelude()
   expression_ref times = lambda_expression(Multiply<Double>());
 
   // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
-  expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
   P += Def( ExtendDiscreteDistribution(DiscreteDistribution(v0),v1,v2), DiscreteDistribution(Tuple(v1,v2)&(fmap1, v4^v4*(1.0-v1), v0)) );
 
   // If True  y z = y
