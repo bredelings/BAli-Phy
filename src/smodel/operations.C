@@ -419,7 +419,7 @@ namespace substitution
   {
     formula_expression_ref R2 = R;
 
-    R2 = CreateMMO(MixtureModel(DiscreteDistribution(Cons(Tuple(expression_ref(1.0),R), ListEnd))));
+    R2 = MixtureModel(DiscreteDistribution(Cons(Tuple(expression_ref(1.0),R), ListEnd)));
 
     return R2;
   }
