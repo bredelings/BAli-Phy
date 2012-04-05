@@ -43,6 +43,9 @@ private:
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
   expression_ref translate_refs(const expression_ref& R) const;
 
+  /// Check if a compute expression is computed.
+  bool reg_is_fully_up_to_date(int r) const;
+
 public:
 
   int n_notes() const {return notes.size();}

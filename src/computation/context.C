@@ -87,11 +87,43 @@ void context::rename_parameter(int i, const string& new_name)
   set_E(R, parameter(new_name) );
 }
 
+bool context::reg_is_fully_up_to_date(int R) const
+{
+  expression_ref result = access(R).result;
+
+  if (not result) return false;
+
+  // NOTE! result cannot be a reg_var.
+
+  // Therefore, if the result is atomic, then R is up-to-date.
+  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
+  if (not E) return true;
+
+  // If the result is a lambda function, then R is up-to-date.
+  if (not dynamic_pointer_cast<const constructor>(E->sub[0])) return true;
+
+  // If we get here, this had better be a constructor!
+  assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
+
+  // Check each component that is a reg_var to see if its out of date.
+  for(int i=1;i<E->size();i++)
+  {
+    shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
+    assert(RV);
+    int R2 = RV->target;
+    
+    if (not reg_is_fully_up_to_date(R2)) return false;
+  }
+
+  // All the components must be fully up-to-date, so R is fully up-to-date.
+  return true;
+}
+
 bool context::compute_expression_is_up_to_date(int index) const
 {
   int& H = *heads()[index];
 
-  return (access(H).result);
+  return reg_is_fully_up_to_date(H);
 }
 
 // Is there a way to generalize the updating of reg_var elements of structures,
@@ -103,7 +135,9 @@ expression_ref context::full_evaluate(int& R) const
   expression_ref result = access(R).result;
 
   {
-    // If the result is atomic, then we are done.
+    // NOTE! result cannot be a reg_var.
+    
+    // Therefore, if the result is atomic, then we are done.
     shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
     if (not E) return result;
 
