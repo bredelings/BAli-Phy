@@ -2,6 +2,9 @@
 #include "computation/operations.H"
 #include "computation/graph_register.H"
 
+const expression_ref foldr = var("foldr");
+const expression_ref foldl = var("foldl");
+const expression_ref foldl_ = var("foldl'");
 const expression_ref fmap = var("fmap");
 const expression_ref fmap1 = var("fmap1");
 const expression_ref fmap2 = var("fmap2");
@@ -59,6 +62,21 @@ Program get_Prelude()
   Program P;
 
   expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
+
+  // foldr f z []  = z
+  // foldr f z x:xs = (f x (foldr f z xs))
+  P += Def( (foldr, v1, v2, ListEnd)    , v2)
+          ( (foldr, v1, v2, v3&v4), (v1,v3,(foldr,v1,v2,v4) ) );
+
+  // foldl f z []  = z
+  // foldl f z x:xs = foldl f (f z x) xs
+  P += Def( (foldl, v1, v2, ListEnd)    , v2)
+    ( (foldl, v1, v2, v3&v4), (foldl, v1, (v1, v2, v3), v4) );
+
+  // foldl' f z []  = z
+  // foldl' f z x:xs = foldl f (seq (f z x)) xs
+  P += Def( (foldl_, v1, v2, ListEnd)    , v2)
+          ( (foldl_, v1, v2, v3&v4), (foldl_, v1, (seq, (v1, v2, v3) ), v4) );
 
   // take 0 x   = []
   // take n []  = []
@@ -124,10 +142,8 @@ Program get_Prelude()
   // listArray b l = mkArray b \i -> l!!i
   P += Def( (listArray,v1,v2),(mkArray,v1,lambda_quantify(v3,(get_list_index,v2,v3))) );
 
-  // length [] = 0
-  // length h:t = 1+length(t);
-  P += Def( (length,ListEnd),0)
-          ( (length,v1&v2),1+(length,v2));
+  // length l = foldl_ (+) 0 l
+  P += Def( (length, v1), (foldl_,plus_i, 0, v1) );
 
   // scale x (RateMatrix q pi l t) = (RateMatrix q pi l (x*t))
   // scale x (ReversibleMarkovM a s q) = (ReversibleMarkovM a s (scale x q))
