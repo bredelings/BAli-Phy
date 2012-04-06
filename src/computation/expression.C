@@ -1219,7 +1219,7 @@ vector<expression_ref> get_ref_vector_from_list(const expression_ref& R)
 {
   expression_ref R2 = R;
   vector<expression_ref> V;
-  while(boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R2))
+  while(boost::shared_ptr<const expression> E = is_a(R2,":"))
   {
     assert(E->size() == 3);
     V.push_back(E->sub[1]);
