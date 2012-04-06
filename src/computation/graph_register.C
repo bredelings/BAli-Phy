@@ -1947,7 +1947,7 @@ public:
   }
 };
 
-expression_ref compact_graph_expression(const reg_heap& C, int R);
+expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>&);
 
   /*
    * eval r: p[r] = E
@@ -2146,7 +2146,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
 #ifndef NDEBUG
       string SS = "";
-      SS = compact_graph_expression(*this, R)->print();
+      SS = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
 #endif
 
       RegOperationArgs Args(R, *this, t);
@@ -2216,7 +2216,7 @@ expression_ref subst_referenced_vars(const expression_ref& R, const map<int, exp
     return R;
 }
 
-void discover_graph_vars(const reg_heap& C, int R, map<int,expression_ref>& names)
+void discover_graph_vars(const reg_heap& C, int R, map<int,expression_ref>& names, const map<string, reg_heap::root_t>& id)
 {
   expression_ref E = C.access(R).E;
   set<int> refs = get_exp_refs(E);
@@ -2242,16 +2242,22 @@ void discover_graph_vars(const reg_heap& C, int R, map<int,expression_ref>& name
   // find the names for each referenced var.
   foreach(i, refs)
   {
-    discover_graph_vars(C, *i, names);
+    discover_graph_vars(C, *i, names, id);
   }
 
   names[R] = subst_referenced_vars(E, names);
 }
 
-expression_ref compact_graph_expression(const reg_heap& C, int R)
+expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>& ids)
 {
   map< int, expression_ref> names;
-  discover_graph_vars(C, R, names);
+  foreach(id,ids)
+  {
+    int R = *(id->second);
+    string name = id->first;
+    names[R] = expression_ref(new var(name) );
+  }
+  discover_graph_vars(C, R, names, ids);
 
   return launchbury_unnormalize(names[R]);
 }
