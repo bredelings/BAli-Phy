@@ -195,45 +195,6 @@ namespace statistics {
   // Would it be faster to simply compute \sum x[i]*x[i+k]/(N-k) - mu^2?>
   // Well, the problem with this is that you never stop when rho[k] gets negative.
 
-  vector<double> autocovariance(const valarray<double>& x,unsigned max)
-  {
-    const int N = x.size();
-
-    // specify sample size if unspecified
-    if (max==0) 
-      max = std::max(1+N/4,N-15);
-
-    if (max >= N) 
-      max = N-1;
-
-    // compute mean of X
-    double mean = 0;
-    for(int i=0;i<N;i++)
-      mean += x[i];
-    mean /= N;
-
-    // allocate covariances
-    vector<double> rho(max);
-
-    // compute each autocorrelation rho[k]
-    double limit = 0.01/N;
-    for(int k=0;k<max;k++) 
-    {
-      double total = 0;
-      for(int i=0;i<N-k;i++)
-	total += (x[i]-mean)*(x[i+k]-mean);
-
-      rho[k] = total/(N-k);
-
-      if (rho[k] < limit and k>0) {
-	rho.resize(k);
-	break;
-      }
-    }
-
-    return rho;
-  }
-
   vector<double> autocovariance(const vector<double>& x,unsigned max)
   {
     const int N = x.size();
@@ -291,15 +252,6 @@ namespace statistics {
     return rho;
   }
 
-  vector<double> autocorrelation(const valarray<double>& x,unsigned N)
-  {
-    vector<double> rho = autocovariance(x,N);
-    const double V = rho[0];
-    for(int i=0;i<rho.size();i++)
-      rho[i] /= V;
-    return rho;
-  }
-
   vector<double> autocorrelation(const vector<double>& x,unsigned N)
   {
     vector<double> rho = autocovariance(x,N);
@@ -307,21 +259,6 @@ namespace statistics {
     for(int i=0;i<rho.size();i++)
       rho[i] /= V;
     return rho;
-  }
-
-  double autocorrelation_time(const valarray<double>& x,unsigned max)
-  {
-    if (x.size() < 2) return 1.0;
-
-    vector<double> cv = autocovariance(x,max);
-
-    double V = cv[0];
-
-    double sum = 0;
-    for(int i=1;i<cv.size();i++)
-      sum += cv[i];
-
-    return (1.0 + 2.0*sum/V);
   }
 
   double autocorrelation_time(const vector<double>& x,unsigned max)

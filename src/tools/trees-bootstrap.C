@@ -296,7 +296,7 @@ void var_stats::calculate(double pseudocount, double confidence)
   // Ne = P*(1.0-P)/Var_bootstrap;
   
   //---------- Autocorrelation times ----------//
-  valarray<double> scratch(N);
+  vector<double> scratch(N);
   for(int j=0;j<scratch.size();j++)
     if (results[j])
       scratch[j]=1.0;
