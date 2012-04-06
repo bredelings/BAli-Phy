@@ -140,10 +140,10 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
     assert(l >= 0);
 
     vector< Matrix >& TP = cached_transition_P[b].modify_value();
-    const int n_models = SModel()->n_base_models();
+    const int n_models = n_base_models();
     for(int m=0;m<n_models;m++)
     {
-      TP[m] = SModel()->transition_p(l,m);
+      TP[m] = convert<const substitution::ReversibleAdditiveObject>(base_model(m))->transition_p(l);
     }
     cached_transition_P[b].validate();
   }
@@ -159,7 +159,7 @@ int data_partition::n_base_models() const
 
 int data_partition::n_states() const
 {
-  return SModel()->n_states();
+  return convert<const substitution::ReversibleAdditiveObject>(base_model(0))->n_states();
 }
 
 vector<double> data_partition::distribution() const
@@ -175,12 +175,12 @@ vector<double> data_partition::distribution() const
 
 vector<unsigned> data_partition::state_letters() const
 {
-  return SModel()->state_letters();
+  return convert<const substitution::ReversibleAdditiveObject>(base_model(0))->state_letters();
 }
 
 vector<double> data_partition::frequencies(int m) const
 {
-  return get_vector<double,double>(SModel()->base_model(m).frequencies());
+  return get_vector<double,double>(convert<const substitution::ReversibleAdditiveObject>(base_model(m))->frequencies());
 }
 
 boost::shared_ptr<const Object> data_partition::base_model(int m) const
@@ -627,8 +627,8 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
-  const int n_models = SModel()->n_base_models();
-  const int n_states = SModel()->state_letters().size();
+  const int n_models = n_base_models();
+  const int n_states = state_letters().size();
   for(int b=0;b<cached_transition_P.size();b++)
     cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
 							   Matrix(n_states, n_states));
@@ -664,8 +664,8 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
-  const int n_models = SModel()->n_base_models();
-  const int n_states = SModel()->state_letters().size();
+  const int n_models = n_base_models();
+  const int n_states = state_letters().size();
   for(int b=0;b<cached_transition_P.size();b++)
     cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
 							   Matrix(n_states, n_states));
@@ -680,6 +680,7 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   n_base_models = C.add_compute_expression((::n_base_models, S));
   n_states =  C.add_compute_expression((::n_states, S));
   distribution =  C.add_compute_expression((::distribution, S));
+  get_alphabet = C.add_compute_expression((::get_alphabet, S));
 
   base_model = C.add_compute_expression((::base_model, S));
 }

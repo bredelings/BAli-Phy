@@ -1041,7 +1041,7 @@ void mcmc_init(Parameters& P, ostream& s_out)
 	//      FIXME!
 	//
 	//	s_out<<"current nucleotide frequencies = "<<endl;
-	//	valarray<double> fT = P[i].SModel().frequencies();
+	//	valarray<double> fT = ... convert to valarray .. P[i].frequencies();
 	//	valarray<double> fN = get_nucleotide_counts_from_codon_counts(*T,fT);
 	//	fN /= fN.sum();
 	
