@@ -185,8 +185,10 @@ vector<double> data_partition::frequencies(int m) const
 
 boost::shared_ptr<const Object> data_partition::base_model(int m) const
 {
-  boost::shared_ptr<const substitution::ReversibleAdditiveObject> O = SModel()->base_models[m];
-  return O;
+  int s = P->smodel_for_partition[partition_index];
+  expression_ref Q = P->C.get_expression(P->SModels[s].base_model);
+  expression_ref E = P->C.evaluate_expression((Q,m));
+  return E;
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -678,6 +680,8 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   n_base_models = C.add_compute_expression((::n_base_models, S));
   n_states =  C.add_compute_expression((::n_states, S));
   distribution =  C.add_compute_expression((::distribution, S));
+
+  base_model = C.add_compute_expression((::base_model, S));
 }
 
 void Parameters::set_beta(double b)
