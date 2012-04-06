@@ -3,6 +3,9 @@
 
 #include "computation/program.H"
 
+extern const expression_ref foldr;
+extern const expression_ref foldl;
+extern const expression_ref foldl_;
 extern const expression_ref fmap;
 extern const expression_ref fmap1;
 extern const expression_ref fmap2;
@@ -22,7 +25,9 @@ extern const expression_ref QExp;
 extern const expression_ref RateMatrix;
 
 extern const expression_ref MixtureModel;
+extern const expression_ref n_base_models;
 
 extern const Program Prelude;
+
 
 #endif
