@@ -55,6 +55,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "timer_stack.H"
 #include "computation/formula_expression.H"
 #include "smodel/operations.H"
+#include "computation/prelude.H"
 
 using std::vector;
 using std::string;
@@ -151,7 +152,9 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
 
 int data_partition::n_base_models() const
 {
-  return SModel()->n_base_models();
+  int s = P->smodel_for_partition[partition_index];
+  expression_ref E = P->C.evaluate(P->SModels[s].n_base_models);
+  return *convert<const Int>(E);
 }
 
 int data_partition::n_states() const
@@ -664,6 +667,9 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
 smodel_methods::smodel_methods(const expression_ref& E, context& C)
 {
   main = C.add_compute_expression( E );
+  expression_ref S = C.get_expression(main);
+
+  n_base_models = C.add_compute_expression((::n_base_models, S));
 }
 
 void Parameters::set_beta(double b)
