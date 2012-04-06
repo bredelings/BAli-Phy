@@ -276,13 +276,35 @@ public:
 		 const IndelModel&);
 };
 
+
+struct smodel_methods
+{
+  int main;
+  int n_base_models;
+  int n_states;
+  int state_letters;
+  int distribution;
+  int get_alphabet;
+
+  // but these ones take an argument!
+  int transition_p; // int branch
+  int base_model; // int index
+  int frequencies; // int 
+  
+  // also:
+  // Q1: can we use evaluate_expression( ) to pass in arguments?  what are the pitfalls?
+  // Q2: how could we control the peeling from haskell?
+  // 
+  smodel_methods(const expression_ref&, context&);
+};
+
 /// A class to contain all the MCMC state except the alignment
 class Parameters: public SuperModel, public Probability_Model
 {
   friend class data_partition;
 
   /// The substitution::Model
-  std::vector<int> SModels;
+  std::vector<smodel_methods> SModels;
   std::vector<int> smodel_for_partition;
 
   /// The IndelModel

@@ -661,6 +661,10 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
 }
 
 //-----------------------------------------------------------------------------//
+smodel_methods::smodel_methods(const expression_ref& E, context& C)
+{
+  main = C.add_compute_expression( E );
+}
 
 void Parameters::set_beta(double b)
 {
@@ -755,7 +759,7 @@ efloat_t Parameters::heated_likelihood() const
   /// Get the substitution::Model
 boost::shared_ptr<const substitution::MultiModelObject> Parameters::SModel(int s) const 
 {
-  expression_ref E = C.evaluate(SModels[s]);
+  expression_ref E = C.evaluate(SModels[s].main);
 
   shared_ptr<const substitution::MultiModelObject> MMO = dynamic_pointer_cast<const substitution::MultiModelObject>(E);
 
@@ -945,7 +949,7 @@ void Parameters::recalc(const vector<int>& indices)
 
   // Check if any substitution models have changed.
   for(int s=0;s<n_smodels();s++)
-    if (not C.compute_expression_is_up_to_date(SModels[s]))
+    if (not C.compute_expression_is_up_to_date(SModels[s].main))
       recalc_smodel(s);
 }
 
@@ -1226,7 +1230,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 	C.set_parameter_value(index, C.default_parameter_value(index));
     }
 
-    SModels.push_back( C.add_compute_expression( S.exp() ) );
+    SModels.push_back( smodel_methods(S.exp(), C) );
   }
 
   // register the indel models as sub-models
@@ -1324,7 +1328,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     formula_expression_ref S = prefix_formula(name,SMs[i]);
     for(int j=0;j<S.n_notes();j++)
       C.add_note(S.get_note(j));
-    SModels.push_back( C.add_compute_expression( S.exp() ) );
+    SModels.push_back( smodel_methods(S.exp(), C) );
   }
 
   // NO indel model (in this constructor)
