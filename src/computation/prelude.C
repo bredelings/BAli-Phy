@@ -93,7 +93,7 @@ Program get_Prelude()
   // fmap f []  = []
   // fmap f h:t = (f h):(fmap f t)
   P += Def( (fmap, v1, ListEnd)    , ListEnd)
-          ( (fmap, v1, v2&v3), Tuple(v1,v2) & (fmap, v1, v3) );
+          ( (fmap, v1, v2&v3), (v1,v2) & (fmap, v1, v3) );
 
   // fmap1 f []  = []
   // fmap1 f (p,x):t = (f p,x):(fmap1 f t)
