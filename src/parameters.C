@@ -164,7 +164,13 @@ int data_partition::n_states() const
 
 vector<double> data_partition::distribution() const
 {
-  return SModel()->distribution();
+  int s = P->smodel_for_partition[partition_index];
+  expression_ref E = P->C.evaluate(P->SModels[s].distribution);
+  vector<expression_ref> V = get_ref_vector_from_list(E);
+  vector<double> v;
+  for(int i=0;i<V.size();i++)
+    v.push_back(*convert<const Double>(V[i]));
+  return v;
 }
 
 vector<unsigned> data_partition::state_letters() const
@@ -670,6 +676,8 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   expression_ref S = C.get_expression(main);
 
   n_base_models = C.add_compute_expression((::n_base_models, S));
+  n_states =  C.add_compute_expression((::n_states, S));
+  distribution =  C.add_compute_expression((::distribution, S));
 }
 
 void Parameters::set_beta(double b)
