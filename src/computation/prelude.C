@@ -74,9 +74,9 @@ Program get_Prelude()
     ( (foldl, v1, v2, v3&v4), (foldl, v1, (v1, v2, v3), v4) );
 
   // foldl' f z []  = z
-  // foldl' f z x:xs = foldl f (seq (f z x)) xs
+  // foldl' f z x:xs = let z' = (f z x) in seq z' $ foldl f z' xs
   P += Def( (foldl_, v1, v2, ListEnd)    , v2)
-          ( (foldl_, v1, v2, v3&v4), (foldl_, v1, (seq, (v1, v2, v3) ), v4) );
+          ( (foldl_, v1, v2, v3&v4), let_expression(v5,(v1,v2,v3),(seq,v5,(foldl_, v1, v5, v4) ) ) );
 
   // take 0 x   = []
   // take n []  = []
@@ -143,7 +143,7 @@ Program get_Prelude()
   P += Def( (listArray,v1,v2),(mkArray,v1,lambda_quantify(v3,(get_list_index,v2,v3))) );
 
   // length l = foldl_ (+) 0 l
-  P += Def( (length, v1), (foldl_,plus_i, 0, v1) );
+  P += Def( (length, v1), (foldl_,lambda_quantify(v2,lambda_quantify(v3,v2+1)), 0, v1) );
 
   // scale x (RateMatrix q pi l t) = (RateMatrix q pi l (x*t))
   // scale x (ReversibleMarkovM a s q) = (ReversibleMarkovM a s (scale x q))
