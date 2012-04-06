@@ -338,7 +338,8 @@ int context::n_expressions() const
 
 expression_ref context::get_expression(int i) const
 {
-  return access(*heads()[i]).E;
+  int H = *heads()[i];
+  return expression_ref(new reg_var(H) );
 }
 
 void context::pop_temp_head() const
