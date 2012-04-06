@@ -46,66 +46,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 //------------------------------- parameter-containing class --------------------------//
 
-// Switching to branch-dependent smodels & imodels
-// 
-// Steps: for data_partition: 
-// 1. Replace IModel_ with IModels_ .
-// 2. Replace SModel_ with SModels_ .
-// 3. Add an imodel_for_branch[] vector<>.
-// 4. Initialize everything to 0.
-// 5. Add an smodel_for_branch[] vector<>.
-// 6. Initialize it to 0.
-// 7. Update IModel() to IModel(int b)
-// 8. Update SModel() to SModel(int b)
-// 9. Update get_branch_HMM to use IModel(imodel_for_branch[b])->get_branch_HMM(t*branch_mean)
-// 10. Update transition_P(int b) to use SModel(smodel_for_branch[b]).transition_p(l,m)
-// 11. Update get_branch_HMM( ) and branch_hmm_type to actually use a
-//     different IModel for disconnected b ranches.  BTW, what is our real
-//     distribution on this? 
-// • Perhaps this project is a "just publish, and make the count-the-papers people happy."
-// 12. Update has_IModel to check if IModels_.size() == 0.
-// 13. Add a procedure for manipulating/changing the imodel / smodel
-// for a branch.
-// 
-// Steps: for Parameters:
-// 1. Change smodel_for_partition to vector< vector<int> > smodels_for_partition.
-// 2. Change imodel_for_partition to vector< vector<int> > imodels_for_partition.
-// 3. ...
-// 
-// Logical issues
-//
-// 0. We need to store the state somewhere it can be manipulated.
-//  • Does this mean we need the static flow framework?
-//
-// 1. All the branch smodels on the same tree must (currently) be related in some way.
-// • They must have the same equilibrium frequencies.
-// • They must have the same alphabet
-// • They must have the same number of states.
-// • They must have the same number of base models.
-// 
-// 2. We might want two smodels with e.g. different rates to have
-//    correlated priors.  For example, we might want to put a
-//    distribution on the geometric mean of the rates, and another
-//    distribution on how different the two rates are. 
-// 
-// 3. All the branch imodels on the same tree must (currently) be related in some way
-// • They must have the same equilibrium distribution for sequence lengths.
-// 
-// 4. We might also want imodels on the same tree to have
-//    correlated priors.
-//
-// So: Should we make the current smodels and imodels into
-// branch_smodels and branch_imodels, and make a higher level smodel
-// and higher level imodel that can contain multiple branch models?
-//
-// So: we can store the imodel_for_branch[] and smodel_for_branch[] in
-// the data_partitions.  Its just a way of storing things.  And then I
-// don't have to write it down into the data_partitions( )
-//
-// So: unless we want different smodels to have different frequency parameters
-// we should probably make a multi-branch model out of a single frequencymodel
-// and multiple exchange models.
-
 namespace substitution
 {
   class MultiModelObject;
