@@ -13,27 +13,14 @@ extern const expression_ref take;
 extern const expression_ref iterate;
 extern const expression_ref sum_i;
 extern const expression_ref If;
-extern const expression_ref ExtendDiscreteDistribution;
-extern const expression_ref MultiParameter;
 extern const expression_ref fst;
 extern const expression_ref snd;
 extern const expression_ref get_list_index;
 extern const expression_ref listArray;
 extern const expression_ref length;
-extern const expression_ref scale;
-extern const expression_ref QExp;
-extern const expression_ref RateMatrix;
+extern const expression_ref ExtendDiscreteDistribution;
 
-extern const expression_ref MixtureModel;
-extern const expression_ref n_base_models;
-extern const expression_ref state_letters;
-extern const expression_ref n_states;
-extern const expression_ref get_alphabet;
-extern const expression_ref get_frequencies;
-extern const expression_ref get_component_frequencies;
-extern const expression_ref base_model;
-extern const expression_ref distribution;
-extern const expression_ref MultiRate;
+extern const expression_ref DiscreteDistribution;
 
 extern const Program Prelude;
 

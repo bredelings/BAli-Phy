@@ -186,8 +186,6 @@ namespace substitution
     F81_Object(const alphabet& a, const std::valarray<double>&);
   };
   
-  extern expression_ref DiscreteDistribution;
-
   //Hmmm [FIXME] ... The peeling algorithm assumes independence across branches
   //                 and a reversible markov chain across each branch.
   //

@@ -1950,3 +1950,18 @@ shared_ptr<const expression> is_a(const expression_ref& E, const string& s)
   }
   return E2;
 }
+
+const expression_ref v0 = dummy(0);
+const expression_ref v1 = dummy(1);
+const expression_ref v2 = dummy(2);
+const expression_ref v3 = dummy(3);
+const expression_ref v4 = dummy(4);
+const expression_ref v5 = dummy(5);
+const expression_ref v6 = dummy(6);
+
+expression_ref operator^(const expression_ref& x, const expression_ref& T)
+{
+  return lambda_quantify(x,T);
+}
+
+

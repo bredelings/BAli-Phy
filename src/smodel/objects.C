@@ -165,8 +165,6 @@ namespace substitution
 	Q(i,j) = (pi[j] - ((i==j)?1:0))*alpha_;
   }
 
-  expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
-
   shared_ptr<const alphabet> MultiModelObject::get_alphabet() const 
   {
     return base_model(0).get_alphabet();

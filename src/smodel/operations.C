@@ -4,6 +4,7 @@
 #include "computation/operations.H"
 #include "computation/expression.H"
 #include "computation/prelude.H"
+#include "smodel/functions.H"
 
 using boost::shared_ptr;
 using std::vector;
@@ -783,8 +784,6 @@ namespace substitution
 
   expression_ref RateMatrix = lambda_expression( constructor("RateMatrix", 4) );
   // Q_from_R_and_S(R,S) = let Q = S*R in (RateMatrix, Q, (frequencies, R), (get_eigensystem, Q, pi), 1.0)
-
-  expression_ref ReversibleMarkovMarkov = lambda_expression( constructor("ReversibleMarkovModel", 2) );
 
   // 
   boost::shared_ptr<const Double> 

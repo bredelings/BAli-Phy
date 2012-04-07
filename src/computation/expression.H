@@ -482,4 +482,14 @@ void parse_alternatives(const expression_ref& R, std::vector<expression_ref>& ca
 bool is_WHNF(const expression_ref& R);
 
 int get_safe_binder_index(const expression_ref& R);
+
+extern const expression_ref v0;
+extern const expression_ref v1;
+extern const expression_ref v2;
+extern const expression_ref v3;
+extern const expression_ref v4;
+extern const expression_ref v5;
+extern const expression_ref v6;
+
+expression_ref operator^(const expression_ref& x, const expression_ref& T);
 #endif
