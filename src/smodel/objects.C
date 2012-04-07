@@ -53,14 +53,12 @@ namespace substitution
 
   ReversibleMarkovModelObject::ReversibleMarkovModelObject(const alphabet& A)
     :ReversibleAdditiveObject(A),
-     eigensystem(A.size()),
      Q(A.size(), A.size()),
      pi(A.size())
   { }
 
   ReversibleMarkovModelObject::ReversibleMarkovModelObject(const alphabet& A,int n)
     :ReversibleAdditiveObject(A,n),
-     eigensystem(n),
      Q(A.size(), A.size()),
      pi(n)
   { }
@@ -102,23 +100,6 @@ namespace substitution
     return scale/Alphabet().width();
   }
 
-  void ReversibleMarkovModelObject::invalidate_eigensystem() 
-  {
-    eigensystem.invalidate();
-    // UNCOMMENT - to test savings from lazy eigensystem calculation.
-    // recalc_eigensystem();
-  }
-
-  const EigenValues& ReversibleMarkovModelObject::get_eigensystem() const
-  {
-    if (not eigensystem.is_valid())
-      recalc_eigensystem();
-
-    assert(eigensystem.is_valid());
-
-    return eigensystem;
-  }
-
   void ReversibleMarkovModelObject::set_rate(double r)  
   {
     if (r == rate()) return;
@@ -128,23 +109,6 @@ namespace substitution
 
     double scale = r/rate();
     Q *= scale;
-
-    if (eigensystem.is_valid())
-    {
-      EigenValues& E = eigensystem.modify_value();
-
-      for(int i=0;i<E.Diagonal().size();i++)
-	E.Diagonal()[i] *= scale ;
-
-      // We changed it, but now its up-to-date.
-      eigensystem.validate();
-    }
-  }
-
-  void ReversibleMarkovModelObject::recalc_eigensystem() const
-  {
-    //---------------- Compute eigensystem ------------------//
-    eigensystem = *Get_Eigensystem_Function(Q,pi);
   }
 
   Matrix ReversibleMarkovModelObject::transition_p(double t) const 
@@ -154,7 +118,7 @@ namespace substitution
     assert(pi2.size() == f.size());
     for(int i=0;i<pi2.size();i++)
       pi2[i] = f[i];
-    return exp(get_eigensystem(), pi2,t);
+    return exp(*Get_Eigensystem_Function(Q,pi), pi2,t);
   }
 
   //------------------------ F81 Model -------------------------//

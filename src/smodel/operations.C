@@ -401,8 +401,6 @@ namespace substitution
       Q(i,i) = -sum;
     }
 
-    R->invalidate_eigensystem();
-    
     R->pi = F.pi;
 
     return R;
@@ -665,8 +663,6 @@ namespace substitution
 	  sum += R->Q(i,j);
       R->Q(i,i) = -sum;
     }
-
-    R->invalidate_eigensystem();
 
     return R;
   }

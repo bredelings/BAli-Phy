@@ -151,11 +151,6 @@ namespace substitution
 
   class ReversibleMarkovModelObject: public ReversibleAdditiveObject
   {
-  protected:
-    mutable cached_value<EigenValues> eigensystem;
-
-    void recalc_eigensystem() const;
-
   public:
     /// Rate matrix
     Matrix Q;
@@ -169,10 +164,6 @@ namespace substitution
     double rate() const;
 
     void set_rate(double);
-
-    void invalidate_eigensystem();
-
-    const EigenValues& get_eigensystem() const;
 
     /// The transition probability matrix - which we can now compute
     Matrix transition_p(double t) const;
