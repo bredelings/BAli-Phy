@@ -478,6 +478,33 @@ namespace substitution {
 
   extern expression_ref Get_Eigensystem;
 
+  boost::shared_ptr<const Object> 
+  Get_Equilibrium_Rate_Function(const alphabet&, const std::vector<unsigned>&, const Matrix&, const expression_ref&);
+
+  // Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);x
+  struct Get_Equilibrium_Rate_Op: public Operation
+  {
+    Get_Equilibrium_Rate_Op* clone() const {return new Get_Equilibrium_Rate_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+ 
+    std::string name() const {return "Get_Eigensystem";}
+
+    Get_Equilibrium_Rate_Op(): Operation(4) { }
+  };
+
+  extern expression_ref Get_Equilibrium_Rate;
+
 }
 
 #endif
