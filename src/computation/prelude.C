@@ -33,10 +33,7 @@ const expression_ref base_model = var("base_model");
 const expression_ref distribution = var("distribution");
 const expression_ref MultiRate = var("MultiRate");
 
-  // (RateMatrix q pi l t)
-const expression_ref RateMatrix = lambda_expression( constructor("RateMatrix", 4) );
-
-// (ReversibleMarkovModel alpha state_letters (RateMatrix q pi l t))
+// (ReversibleMarkovModel alpha state_letters q pi l t)
 const expression_ref ReversibleMarkov = lambda_expression( constructor("ReversibleMarkov", 6) );
 
 // (F81 alpha state_letters a pi)
@@ -150,13 +147,13 @@ Program get_Prelude()
   // scale x (ReversibleMarkov a s q pi l t) = (ReversibleMarkov a s q p l (x * t))
   // scale x (F81 a s a' pi)= (F81 a s a'*x pi) ??
   // scale x (MixtureModel (DiscreteDistribution l)) s= (MixtureModel (DiscreteDistribution (fmap2,scale(s),l))) ??
-  P += Def( (scale,v0,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(RateMatrix,v1,v2,v3,v4,v5,(times,v0,v6)) );
+  P += Def( (scale,v0,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(ReversibleMarkov,v1,v2,v3,v4,v5,(times,v0,v6)) );
 
-  // rate (ReversibleMarkov RateMatrix a smapq pi l t) = t
+  // rate (ReversibleMarkovModel a smap q pi l t) = t*(get_equilibrium_rate a smap q pi)
   // rate (MixtureModel (DiscreteDistribution (p,m):t) ) = p*(rate m)+(rate MixtureModel (DiscreteDistribution t) )
-  //  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5)),(Get_Equilibrium_Rate ) );
+  //  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5)),(Get_Equilibrium_Rate,v1,v2,v3,v4) );
 
-  // QExp (RateMatrix a smap q pi l t) = (LExp l pi t)
+  // QExp (ReversibleMarkov a smap q pi l t) = (LExp l pi t)
   P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), (LExp,v5,v4,v6));
 
   // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
