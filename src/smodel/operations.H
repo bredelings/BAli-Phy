@@ -195,6 +195,29 @@ namespace substitution {
 
   boost::shared_ptr<ReversibleMarkovModelObject> Q_from_S_and_R_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F);
 
+  struct Q_Op: public Operation
+  {
+    Q_Op* clone() const {return new Q_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+    std::string name() const {return "Q";}
+
+    Q_Op():Operation(2) { }
+  };
+
+  extern expression_ref Q;
+
   struct Q_from_S_and_R_Op: public Operation
   {
     Q_from_S_and_R_Op* clone() const {return new Q_from_S_and_R_Op(*this);}

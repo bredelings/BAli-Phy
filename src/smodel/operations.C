@@ -344,6 +344,37 @@ namespace substitution
     return Plus_gwF_Model(a,pi);
   }
 
+  shared_ptr<const MatrixObject> Q_Function(const SymmetricMatrix& S, const Matrix& R)
+  {
+    const unsigned N = S.size1();
+    assert(S.size1() == R.size1());
+    assert(S.size1() == R.size2());
+
+    Matrix Q(N,N);
+
+    for(int i=0;i<N;i++) {
+      double sum=0;
+      for(int j=0;j<N;j++) {
+	if (i==j) continue;
+	Q(i,j) = S(i,j) * R(i,j);
+	sum += Q(i,j);
+      }
+      Q(i,i) = -sum;
+    }
+
+    return shared_ptr<const MatrixObject>(new MatrixObject(Q));
+  }
+
+  shared_ptr<const Object> Q_Op::operator()(OperationArgs& Args) const
+  {
+    shared_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(0);
+    shared_ptr<const MatrixObject> F = Args.evaluate_as<MatrixObject>(1);
+    
+    return Q_Function(*S, *F);
+  }
+
+  expression_ref Q = lambda_expression( Q_Op() );
+
   shared_ptr<ReversibleMarkovModelObject> Q_from_S_and_R_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
   {
     shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(F.Alphabet()) );
