@@ -193,8 +193,6 @@ namespace substitution {
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a);
 
-  boost::shared_ptr<ReversibleMarkovModelObject> Q_from_S_and_R_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F);
-
   struct Q_Op: public Operation
   {
     Q_Op* clone() const {return new Q_Op(*this);}
@@ -232,13 +230,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      boost::shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(0);
-      boost::shared_ptr<const ReversibleFrequencyModelObject> F = Args.evaluate_as<ReversibleFrequencyModelObject>(1);
-      
-      return Q_from_S_and_R_Function(*S, *F);
-    }
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "Q_from_S_and_R";}
 

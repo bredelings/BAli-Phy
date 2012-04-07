@@ -329,7 +329,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     if (s >= P.n_smodels()) continue;
 
     // Handle multi-frequency models
-    boost::shared_ptr<const alphabet> a = P.SModel(s)->get_alphabet();
+    boost::shared_ptr<const alphabet> a = P.get_alphabet_for_smodel(s);
     const int asize = a->size();
 
     for(int l=0;l<asize;l++) {
@@ -605,7 +605,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     // Handle multi-frequency models
     set_if_undef(P.keys,"MF::dirichlet_N",10.0);
 
-    boost::shared_ptr<const alphabet> a = P.SModel(s)->get_alphabet();
+    boost::shared_ptr<const alphabet> a = P.get_alphabet_for_smodel(s);
     const int asize = a->size();
 
     for(int l=0;l<asize;l++) {

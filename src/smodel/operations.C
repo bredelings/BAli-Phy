@@ -375,35 +375,26 @@ namespace substitution
 
   expression_ref Q = lambda_expression( Q_Op() );
 
-  shared_ptr<ReversibleMarkovModelObject> Q_from_S_and_R_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
+  expression_ref Q_from_S_and_R_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
   {
-    shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(F.Alphabet()) );
+    vector<expression_ref> E(7);
+    E[0] = constructor("ReversibleMarkov",6);
+    E[1] = F.Alphabet();
+    E[2] = Box<vector<unsigned> >(F.state_letters());
+    E[3] = Q_Function(S.S, F.R);
+    E[4] = get_tuple(F.pi);
+    E[5] = 0;
+    E[6] = 1.0;
 
-    R->Alphabet();
-    // This doesn't work for Modulated markov models
-    assert(F.n_states() == F.Alphabet().size());
+    return graph_normalize(expression(E));
+  }
 
-    // The exchange model and the frequency model should have the same number of states, if not the same alphabet
-    assert(S.size() == F.n_states());
-
-    const unsigned N = F.n_states();
-
-    // recompute rate matrix
-    Matrix& Q = R->Q;
-
-    for(int i=0;i<N;i++) {
-      double sum=0;
-      for(int j=0;j<N;j++) {
-	if (i==j) continue;
-	Q(i,j) = S(i,j) * F(i,j);
-	sum += Q(i,j);
-      }
-      Q(i,i) = -sum;
-    }
-
-    R->pi = F.pi;
-
-    return R;
+  boost::shared_ptr<const Object> Q_from_S_and_R_Op::operator()(OperationArgs& Args) const
+  {
+    boost::shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(0);
+    boost::shared_ptr<const ReversibleFrequencyModelObject> F = Args.evaluate_as<ReversibleFrequencyModelObject>(1);
+    
+    return Q_from_S_and_R_Function(*S, *F);
   }
 
   expression_ref Q_from_S_and_R = lambda_expression( Q_from_S_and_R_Op() );

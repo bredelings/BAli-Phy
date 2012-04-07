@@ -126,6 +126,8 @@ public:
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;
   
+  double rate() const;
+
   int n_base_models() const;
 
   // Perhaps this should really be per-mixture-component.
@@ -333,6 +335,8 @@ public:
   const IndelModel& IModel(int i) const {return *IModels[i];}
   /// Get the substitution::Model
         IndelModel& IModel(int i)       {return *IModels[i];}
+
+  boost::shared_ptr<const alphabet> get_alphabet_for_smodel(int i) const;
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 

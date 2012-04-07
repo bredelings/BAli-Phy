@@ -73,9 +73,9 @@ void show_frequencies(std::ostream& o,const Mat_Cache& MC)
 
 void show_smodel(std::ostream& o, const Mat_Cache& MC)
 {
-  for(int i=0;i<MC.n_base_models();i++)
-    o<<"    rate"<<i<<" = "<<convert<const substitution::ReversibleAdditiveObject>(MC.base_model(i))->rate();
-  o<<"\n\n";
+  //  for(int i=0;i<MC.n_base_models();i++)
+  //    o<<"    rate"<<i<<" = "<<convert<const substitution::ReversibleAdditiveObject>(MC.base_model(i))->rate();
+  //  o<<"\n\n";
   
   for(int i=0;i<MC.n_base_models();i++)
     o<<"    fraction"<<i<<" = "<<MC.distribution()[i];

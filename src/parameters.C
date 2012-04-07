@@ -56,6 +56,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/formula_expression.H"
 #include "smodel/operations.H"
 #include "computation/prelude.H"
+#include "exponential.H"
 
 using std::vector;
 using std::string;
@@ -129,6 +130,22 @@ IndelModel& data_partition::IModel()
   std::abort();
 }
 
+double data_partition::rate() const
+{
+  double r = 0;
+  vector<double> D = distribution();
+  for(int m=0;m<D.size();m++)
+  {
+    shared_ptr<const expression> E = is_a(base_model(m),"ReversibleMarkov");
+    shared_ptr<const alphabet> a = convert<const alphabet>(E->sub[1]);
+    shared_ptr<const Box< vector<unsigned> > > smap = convert<const Box< vector<unsigned> > >(E->sub[2]);
+    Matrix Q = *convert<const MatrixObject>(E->sub[3]);
+
+    r += D[m] * *substitution::Get_Equilibrium_Rate_Function(*a, *smap ,Q, E->sub[4]);
+  }
+  return r;
+}
+
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
   b = T().directed_branch(b).undirected_name();
@@ -136,14 +153,19 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   
   if (not cached_transition_P[b].is_valid())
   {
-    double l = P->get_branch_subst_length(partition_index,b) / SModel()->rate();
+    double l = P->get_branch_subst_length(partition_index,b) / rate();
     assert(l >= 0);
 
     vector< Matrix >& TP = cached_transition_P[b].modify_value();
     const int n_models = n_base_models();
     for(int m=0;m<n_models;m++)
     {
-      TP[m] = convert<const substitution::ReversibleAdditiveObject>(base_model(m))->transition_p(l);
+      shared_ptr<const expression> E = is_a(base_model(m),"ReversibleMarkov");
+
+      Matrix Q = *convert<const MatrixObject>(E->sub[3]);
+      vector<double> pi = get_vector<double,Double>(E->sub[4]);
+
+      TP[m] = exp(*substitution::Get_Eigensystem_Function(Q,pi), pi, l);
     }
     cached_transition_P[b].validate();
   }
@@ -159,7 +181,7 @@ int data_partition::n_base_models() const
 
 int data_partition::n_states() const
 {
-  return convert<const substitution::ReversibleAdditiveObject>(base_model(0))->n_states();
+  return state_letters().size();
 }
 
 vector<double> data_partition::distribution() const
@@ -175,12 +197,15 @@ vector<double> data_partition::distribution() const
 
 vector<unsigned> data_partition::state_letters() const
 {
-  return convert<const substitution::ReversibleAdditiveObject>(base_model(0))->state_letters();
+  shared_ptr<const expression> E = is_a(base_model(0),"ReversibleMarkov");
+
+  return *convert<const Box< vector<unsigned> > >(E->sub[2]);
 }
 
 vector<double> data_partition::frequencies(int m) const
 {
-  return get_vector<double,double>(convert<const substitution::ReversibleAdditiveObject>(base_model(m))->frequencies());
+  expression_ref pi = is_a(base_model(0),"ReversibleMarkov")->sub[4];
+  return get_vector<double,Double>(pi);
 }
 
 boost::shared_ptr<const Object> data_partition::base_model(int m) const
@@ -970,6 +995,11 @@ void Parameters::recalc(const vector<int>& indices)
   for(int s=0;s<n_smodels();s++)
     if (not C.compute_expression_is_up_to_date(SModels[s].main))
       recalc_smodel(s);
+}
+
+shared_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
+{
+  return convert<const alphabet>(C.evaluate(SModels[s].get_alphabet));
 }
 
 Model& Parameters::SubModels(int i)
