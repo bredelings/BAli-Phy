@@ -181,11 +181,11 @@ Program get_Prelude()
 
   // get_frequencies (ReversibleMarkov alpha s q) = get_frequencies q
   // get_frequencies (F81 alpha s a pi) = pi
-  P += Def( (get_frequencies, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), v2)
+  P += Def( (get_frequencies, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), v4)
           ( (get_frequencies, (F81M,v1,v2,v3,v4)), v4);
 
   // get_component_frequencies (MixtureModel alpha s d)  i = get_frequencies (base_model (MixtureModel alpha s d) i)
-  P += Def( (get_component_frequencies, (MixtureModel,v1), v4), (get_frequencies(base_model,(MixtureModel,v1),v4)));
+  P += Def( (get_component_frequencies, (MixtureModel,v1), v4), (get_frequencies,(base_model,(MixtureModel,v1),v4)));
 
   // base_model (MixtureModel alpha s (DiscreteDistribution l)) i = get_list_index l i
   P += Def( (base_model, (MixtureModel,(DiscreteDistribution,v1)),v2), (snd,(get_list_index,v1,v2)));

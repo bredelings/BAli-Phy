@@ -181,7 +181,9 @@ int data_partition::n_base_models() const
 
 int data_partition::n_states() const
 {
-  return state_letters().size();
+  int s = P->smodel_for_partition[partition_index];
+  expression_ref E = P->C.evaluate(P->SModels[s].n_states);
+  return *convert<const Int>(E);
 }
 
 vector<double> data_partition::distribution() const
@@ -197,15 +199,17 @@ vector<double> data_partition::distribution() const
 
 vector<unsigned> data_partition::state_letters() const
 {
-  shared_ptr<const expression> E = is_a(base_model(0),"ReversibleMarkov");
-
-  return *convert<const Box< vector<unsigned> > >(E->sub[2]);
+  int s = P->smodel_for_partition[partition_index];
+  expression_ref E = P->C.evaluate(P->SModels[s].state_letters);
+  return *convert<const Box<vector<unsigned> > >(E);
 }
 
 vector<double> data_partition::frequencies(int m) const
 {
-  expression_ref pi = is_a(base_model(0),"ReversibleMarkov")->sub[4];
-  return get_vector<double,Double>(pi);
+  int s = P->smodel_for_partition[partition_index];
+  expression_ref Q = P->C.get_expression(P->SModels[s].frequencies);
+  expression_ref E = P->C.evaluate_expression((Q,m));
+  return get_vector<double,Double>(E);
 }
 
 boost::shared_ptr<const Object> data_partition::base_model(int m) const
@@ -706,8 +710,11 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   n_states =  C.add_compute_expression((::n_states, S));
   distribution =  C.add_compute_expression((::distribution, S));
   get_alphabet = C.add_compute_expression((::get_alphabet, S));
+  state_letters = C.add_compute_expression((::state_letters, S));
+  n_states = C.add_compute_expression((::n_states, S));
 
   base_model = C.add_compute_expression((::base_model, S));
+  frequencies = C.add_compute_expression((::get_component_frequencies, S));
 }
 
 void Parameters::set_beta(double b)
