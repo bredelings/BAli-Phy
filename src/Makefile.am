@@ -105,7 +105,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  computation/graph_register.C computation/program.C \
 	  computation/formula_expression.C smodel/operations.C distribution-operations.C \
 	  computation/operations.C computation/prelude.C computation/context.C \
-	  computation/model_notes.C matcache.C
+	  computation/model_notes.C matcache.C smodel/functions.C
 
 nodist_bali_phy_SOURCES = git_version.h
 

@@ -57,6 +57,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "smodel/operations.H"
 #include "computation/prelude.H"
 #include "exponential.H"
+#include "smodel/functions.H"
 
 using std::vector;
 using std::string;
@@ -1248,6 +1249,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    features(0),
    branch_length_max(-1)
 {
+  C += SModel_Functions();
   // Don't call set_parameter_value here, because recalc( ) depends on branch_lenth_indices, which is not ready.
 
   constants.push_back(-1);
@@ -1365,6 +1367,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    features(0),
    branch_length_max(-1)
 {
+  C += SModel_Functions();
+
   constants.push_back(-1);
 
   add_super_parameter(Parameter("Heat:beta", Double(1.0), between(0,1)));
