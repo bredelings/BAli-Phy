@@ -496,6 +496,7 @@ namespace substitution
     return shared_ptr<const MultiModelObject>(M);
   }
 
+  /*
   MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D)
   {
     vector<expression_ref> pairs;
@@ -532,8 +533,7 @@ namespace substitution
 
     return R;
   }
-
-  expression_ref MultiRate = lambda_expression( MultiRateOp() );
+  */
 
   // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
   //         Q(mi -> ni) = R(m->n)        for model exchange
@@ -565,7 +565,8 @@ namespace substitution
   shared_ptr<ReversibleMarkovModelObject> Modulated_Markov_Function(const ExchangeModelObject& S,MultiModelObject M)
   {
     // Make a copy and use this.
-    M.set_rate(1);
+
+    // FIXME - how do we do this? M.set_rate(1);
 
     unsigned T = 0;
     for(int m=0; m < M.n_base_models(); m++) 

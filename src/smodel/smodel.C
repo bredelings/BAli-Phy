@@ -1061,7 +1061,7 @@ namespace substitution {
       M->fraction.push_back(prior_fraction[i]);
       M->base_models.push_back(F81_Model(a,f_ordered).result_as<const ReversibleAdditiveObject>() );
 
-      M->base_models.back()->set_rate(1);
+      // FIXME! M->base_models.back()->set_rate(1);
     }
     add_parameter(Parameter("CAT_frequencies",M));
 

@@ -138,8 +138,6 @@ namespace substitution
 
     virtual double rate() const =0;
 
-    virtual void set_rate(double) =0;
-
     virtual Matrix transition_p(double t) const = 0;
 
     virtual std::valarray<double> frequencies() const =0;
@@ -163,8 +161,6 @@ namespace substitution
 
     double rate() const;
 
-    void set_rate(double);
-
     /// The transition probability matrix - which we can now compute
     Matrix transition_p(double t) const;
 
@@ -182,7 +178,6 @@ namespace substitution
     virtual F81_Object* clone() const {return new F81_Object(*this);}
 
     double rate() const;
-    void set_rate(double);
 
     /// The transition probability matrix - which we can now compute
     Matrix transition_p(double t) const;
@@ -225,7 +220,6 @@ namespace substitution
     virtual MultiModelObject* clone() const {return new MultiModelObject(*this);}
 
     double rate() const;
-    void set_rate(double);
 
     /// The number of components
     int n_base_models() const {return base_models.size();}

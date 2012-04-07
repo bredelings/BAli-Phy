@@ -349,40 +349,6 @@ namespace substitution {
 
   boost::shared_ptr<const MultiModelObject> CreateMMOFunction(const expression_ref& D);
 
-  MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D);
-
-  struct MultiRateOp: public Operation
-  {
-    MultiRateOp* clone() const {return new MultiRateOp(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      // The input-model should really be a lambda function taking the single value (or first value) p_change
-      boost::shared_ptr<const MultiModelObject> M = Args.evaluate_as<MultiModelObject>(0);
-      expression_ref D = Args.evaluate(1);
-      
-      boost::shared_ptr< MultiModelObject > R ( MultiRateFunction(*M, *D).clone() );
-
-      return R;
-    }
-
-    std::string name() const {return "MultiRate";}
-
-    MultiRateOp():Operation(2) { }
-  };
-
-  extern expression_ref MultiRate;
-
   // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
   //         Q(mi -> ni) = R(m->n)        for model exchange
   // and     Q(mi -> nj) = 0              for all other pairs

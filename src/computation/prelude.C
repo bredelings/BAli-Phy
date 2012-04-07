@@ -31,6 +31,7 @@ const expression_ref get_frequencies = var("frequencies");
 const expression_ref get_component_frequencies = var("component_frequencies");
 const expression_ref base_model = var("base_model");
 const expression_ref distribution = var("distribution");
+const expression_ref MultiRate = var("MultiRate");
 
   // (RateMatrix q pi l t)
 const expression_ref RateMatrix = lambda_expression( constructor("RateMatrix", 4) );

@@ -100,17 +100,6 @@ namespace substitution
     return scale/Alphabet().width();
   }
 
-  void ReversibleMarkovModelObject::set_rate(double r)  
-  {
-    if (r == rate()) return;
-
-    if (rate() == 0 and r != 0)
-      throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
-
-    double scale = r/rate();
-    Q *= scale;
-  }
-
   Matrix ReversibleMarkovModelObject::transition_p(double t) const 
   {
     vector<double> pi2(n_states());
@@ -147,20 +136,6 @@ namespace substitution
       sum += pi[i]*(1.0-pi[i]);
 
     return sum*alpha_;
-  }
-
-  void F81_Object::set_rate(double r)
-  {
-    if (r == rate()) return;
-
-    if (rate() == 0 and r != 0)
-      throw myexception()<<"Model rate is 0, can't set it to "<<r<<".";
-
-    double scale = r/rate();
-
-    Q *= scale;
-
-    alpha_ *= scale;
   }
 
   F81_Object::F81_Object(const alphabet& a)
@@ -208,13 +183,6 @@ namespace substitution
     for(int m=0;m<n_base_models();m++)
       r += distribution()[m]*base_model(m).rate();
     return r;
-  }
-
-  void MultiModelObject::set_rate(double r)  {
-    double scale = r/rate();
-    for(int m=0;m<n_base_models();m++) {
-      base_model(m).set_rate(base_model(m).rate()*scale);
-    }
   }
 
   // This is per-branch, per-column - doesn't pool info about each branches across columns

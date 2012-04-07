@@ -33,6 +33,7 @@ extern const expression_ref get_frequencies;
 extern const expression_ref get_component_frequencies;
 extern const expression_ref base_model;
 extern const expression_ref distribution;
+extern const expression_ref MultiRate;
 
 extern const Program Prelude;
 
