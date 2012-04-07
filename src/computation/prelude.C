@@ -127,6 +127,9 @@ Program get_Prelude()
   // MultiParameter f (DiscreteDistribution d) = MixtureModel(DiscreteDistribution (fmap2 f d))
   P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(fmap2,v1,v2))));
 
+  // MultiRate (MixtureModel (DiscreteDistribution l)) D = MixtureModel(DiscreteDistribution (fmap2 f d))
+  P += Def( (MultiRate,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(fmap2,v1,v2))));
+
   // fst (x,y) = x
   P += Def( (fst,Tuple(v1,v2)), v1);
 
