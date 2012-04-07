@@ -280,6 +280,9 @@ formula_expression_ref get_EM(const formula_expression_ref& R, const string& nam
   if (R.result_as<AlphabetExchangeModelObject>())
     return R;
 
+  if (R.result_as<SymmetricMatrixObject>())
+    return R;
+
   throw myexception()<<name<<": '"<<R.exp()<<"' is not an exchange model.";
 }
 
@@ -409,6 +412,12 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
 			      const shared_ptr< const valarray<double> >& frequencies)
 {
   if (M.result_as<ReversibleMarkovModelObject>())
+    return M;
+
+  if (is_a(M.exp(), "F81"))
+    return M;
+
+  if (is_a(M.exp(), "ReversibleMarkov"))
     return M;
 
   try {
