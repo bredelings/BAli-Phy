@@ -796,12 +796,11 @@ namespace substitution
   expression_ref ReversibleMarkovMarkov = lambda_expression( constructor("ReversibleMarkovModel", 2) );
 
   // 
-  boost::shared_ptr<const Object> 
+  boost::shared_ptr<const Double> 
   Get_Equilibrium_Rate_Function(const alphabet& a, const vector<unsigned>& smap, const Matrix& Q, const expression_ref& pi_E)
   {
     std::vector<double> pi = get_vector<double,Double>(pi_E);
 
-    const unsigned n = Q.size1();
     assert(Q.size2() == Q.size1());
     const unsigned N = smap.size();
     
@@ -825,7 +824,7 @@ namespace substitution
       }
     }
 
-    return expression_ref(scale/a.width());
+    return shared_ptr<const Double>(new Double(scale/a.width()));
   }
 
   boost::shared_ptr<const Object> Get_Equilibrium_Rate_Op::operator()(OperationArgs& Args) const

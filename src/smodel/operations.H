@@ -467,7 +467,7 @@ namespace substitution {
 
   extern expression_ref Get_Eigensystem;
 
-  boost::shared_ptr<const Object> 
+  boost::shared_ptr<const Double> 
   Get_Equilibrium_Rate_Function(const alphabet&, const std::vector<unsigned>&, const Matrix&, const expression_ref&);
 
   // Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);x
