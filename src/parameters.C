@@ -615,13 +615,6 @@ efloat_t data_partition::heated_likelihood() const
     return pow(likelihood(),get_beta());
 }
 
-/// Get the substitution::Model
-boost::shared_ptr<const substitution::MultiModelObject> data_partition::SModel() const 
-{
-  int s = P->smodel_for_partition[partition_index];
-  return P->SModel(s);
-}
-
 data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
 			       const IndelModel& IM)
   :P(p),
@@ -798,19 +791,6 @@ efloat_t Parameters::heated_likelihood() const
     Pr *= data_partitions[i]->heated_likelihood();
 
   return Pr;
-}
-
-  /// Get the substitution::Model
-boost::shared_ptr<const substitution::MultiModelObject> Parameters::SModel(int s) const 
-{
-  expression_ref E = C.evaluate(SModels[s].main);
-
-  shared_ptr<const substitution::MultiModelObject> MMO = dynamic_pointer_cast<const substitution::MultiModelObject>(E);
-
-  if (not MMO)
-    MMO = substitution::CreateMMOFunction(E);
-
-  return MMO;
 }
 
 void Parameters::recalc_imodels() 
