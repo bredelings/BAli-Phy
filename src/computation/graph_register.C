@@ -1831,6 +1831,8 @@ class RegOperationArgs: public OperationArgs
     return R2;
   }
 
+  // Note: see note below on evaluate_structure( ) on the issue of returning lambdas.
+
   /// Reduce the WHNF expression to either a lambda or a constructor, but evaluating a reg_var if passed.
   expression_ref lazy_evaluate_structure(const expression_ref& S)
   {
@@ -1870,6 +1872,8 @@ class RegOperationArgs: public OperationArgs
    *       and lazy_evaluate( ) below to handle arguments not being reg_vars.
    *
    *       But I'm not sure we want to preserve that, and I'm not sure it works!
+   *
+   * We could also define evaluate_structure as a wrapper for another routine that takes a reg index.
    */
   
   expression_ref evaluate_structure(const expression_ref& S)
@@ -1890,7 +1894,9 @@ class RegOperationArgs: public OperationArgs
       // If the "structure" is a lambda function, then we are done.
       // (a) if we were going to USE this, we should just call lazy evaluate! (which return a heap variable)
       // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
+      // See note above on returning lambdas as reg_vars.
       if (dynamic_pointer_cast<const lambda>(E->sub[0])) return S;
+
       assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
       // If the result is a constructor expression, then evaluate its fields also.
