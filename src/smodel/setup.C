@@ -464,9 +464,6 @@ formula_expression_ref get_RA_default(vector<formula_expression_ref >& model_sta
 formula_expression_ref
 get_MM(const formula_expression_ref& M, const string& name, const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (M.result_as<MultiModelObject>())
-    return M;
-
   if (is_a(M.exp(), "MixtureModel"))
     return M;
 
@@ -596,8 +593,8 @@ bool process_stack_Multi(vector<string>& string_stack,
   {
     formula_expression_ref MM = get_MM_default(model_stack,"Modulated",a,frequencies);
 
-    int n = MM.result_as<MultiModelObject>()->n_base_models();
-    model_stack.back() = Modulated_Markov_E(MM, SimpleExchangeModel(n));
+    //    int n = ... n_base_models();
+    //    model_stack.back() = Modulated_Markov_E(MM, SimpleExchangeModel(n));
   }
   else if (match(string_stack,"Mixture",args)) 
   {
