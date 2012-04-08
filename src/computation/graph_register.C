@@ -517,10 +517,9 @@ void reg_heap::set_used_input(int R1, int R2)
   assert(access(R1).E);
   assert(access(R2).E);
 
-  // Only add a new used inputs if it is not already present
-  assert(not includes(access(R1).used_inputs, R2));
-  // Only add a new used inputs if it is not already present
-  assert(not includes(access(R2).outputs, R1));
+  // It IS possible to add an input that's already used.
+  // This happens if we evaluate a new used input R2' to an already used input R2
+  //   through regvar chains that are not changeable.
 
   // R1 shouldn't have any used inputs if it isn't changeable.
   assert(access(R1).changeable);
@@ -1816,15 +1815,16 @@ class RegOperationArgs: public OperationArgs
     if (loc == M[R].used_inputs.end())
     {
       // Compute the result, and follow non-changeable call chains.
-      R2 = M.incremental_evaluate(R2, t);
+      int R3 = M.incremental_evaluate(R2, t);
 
-      if (M[R2].changeable) 
+      if (M[R3].changeable) 
       {
 	// If R2 -> result was changeable, then R -> result will be changeable as well.
 	M[R].changeable = true;
 
-	// Mark R2 used by R only if R2 was a changeable computation.
-	M.set_used_input(R, R2);
+	// Note that although R2 is newly used, R3 might be already used if it was 
+	// found from R2 through a non-changeable reg_var chain.
+	M.set_used_input(R, R3);
       }
     }
 
