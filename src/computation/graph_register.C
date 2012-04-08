@@ -1864,12 +1864,24 @@ class RegOperationArgs: public OperationArgs
    * NOTE: When fully evaluating a structure, we must record uses for all of the regs that we
    *       access, including constructor fields.
    */
+
+  /*
+   * NOTE: It is probably the case that taking structures like this allows evaluate( )
+   *       and lazy_evaluate( ) below to handle arguments not being reg_vars.
+   *
+   *       But I'm not sure we want to preserve that, and I'm not sure it works!
+   */
   
   expression_ref evaluate_structure(const expression_ref& S)
   {
     if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( S ))
     {
       int R2 = lazy_evaluate_reg(RV->target);
+
+      /* IDEA: only allow evaluation of reg_vars, constants, and constructors 
+	       any reg_var that evaluates to a lambda stays a reg_var.
+	       that is the only use way of using the result.
+       */
 
       return evaluate_structure( M.access(R2).result );
     }
