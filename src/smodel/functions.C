@@ -28,6 +28,10 @@ const expression_ref F81M = lambda_expression( constructor("F81", 4) );
 // (MixtureModel (DiscreteDistribution [(Double,RMM|F81)]))
 const expression_ref MixtureModel = lambda_expression( constructor("MixtureModel", 1) );
 
+// TODO: MultiRate .... (and fix MultiParameter?)
+// TODO: transition_p
+// After we get transition_p right, then it SHOULD be fast.  Benchmark!
+
 
 Program SModel_Functions()
 {
