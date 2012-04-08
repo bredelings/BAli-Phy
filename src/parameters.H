@@ -227,6 +227,7 @@ struct smodel_methods
   int state_letters;
   int distribution;
   int get_alphabet;
+  int rate;
 
   // but these ones take an argument!
   int transition_p; // int branch

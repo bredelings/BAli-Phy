@@ -2,12 +2,12 @@
 #include "computation/operations.H"
 #include "smodel/functions.H"
 #include "computation/graph_register.H"
+#include "smodel/operations.H"
 
 const expression_ref MultiParameter = var("MultiParameter");
 const expression_ref rate = var("rate");
-const expression_ref QExp = var("QExp");
-
 const expression_ref scale = var("scale");
+const expression_ref QExp = var("QExp");
 
 const expression_ref n_base_models = var("n_base_models");
 const expression_ref state_letters = var("state_letters");
@@ -34,6 +34,10 @@ Program SModel_Functions()
   Program P;
 
   expression_ref times = lambda_expression(Multiply<Double>());
+  expression_ref plus = lambda_expression( Add<Double>() );
+  expression_ref plus_i = lambda_expression( Add<Int>() );
+
+  typed_expression_ref<Double> x1 ( v1 );
 
   // MultiParameter f (DiscreteDistribution d) = MixtureModel(DiscreteDistribution (fmap2 f d))
   P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(fmap2,v1,v2))));
@@ -47,9 +51,10 @@ Program SModel_Functions()
   P += Def( (scale,v0,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(ReversibleMarkov,v1,v2,v3,v4,v5,(times,v0,v6)) );
 
   // rate (ReversibleMarkovModel a smap q pi l t) = t*(get_equilibrium_rate a smap q pi)
-  // rate (MixtureModel (DiscreteDistribution (p,m):t) ) = p*(rate m)+(rate MixtureModel (DiscreteDistribution t) )
-  //  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5)),(Get_Equilibrium_Rate,v1,v2,v3,v4) );
-
+  // rate (MixtureModel (DiscreteDistribution l) ) = average (fmap2 rate l)
+  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(times,v6,(substitution::Get_Equilibrium_Rate,v1,v2,v3,v4) ) )
+          ( (rate,(MixtureModel, v1) ), (average,(fmap2, rate, v1) ) );
+     
   // QExp (ReversibleMarkov a smap q pi l t) = (LExp l pi t)
   P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), (LExp,v5,v4,v6));
 

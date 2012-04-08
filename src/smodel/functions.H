@@ -4,6 +4,7 @@
 #include "computation/prelude.H"
 
 extern const expression_ref MultiParameter;
+extern const expression_ref rate;
 extern const expression_ref scale;
 extern const expression_ref QExp;
 extern const expression_ref ReversibleMarkov;

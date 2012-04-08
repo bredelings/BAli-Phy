@@ -18,6 +18,8 @@ const expression_ref get_list_index = var("!!");
 const expression_ref listArray = var("listArray");
 const expression_ref ExtendDiscreteDistribution = var("ExtendDiscreteDistribution");
 const expression_ref length = var("length");
+const expression_ref average = var("average");
+
 
 const expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
 
@@ -78,9 +80,13 @@ Program get_Prelude()
           ( (sum_i, v1&v2), (plus_i, v1, (sum_i, v2)) );
 
   expression_ref times = lambda_expression(Multiply<Double>());
+  expression_ref plus = lambda_expression( Add<Double>() );
 
   // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
   P += Def( ExtendDiscreteDistribution(DiscreteDistribution(v0),v1,v2), DiscreteDistribution(Tuple(v1,v2)&(fmap1, v4^v4*(1.0-v1), v0)) );
+
+  // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
+  P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(plus,v1,(times,(fst,v2),(snd,v2)))), 0.0, v3) );
 
   // If True  y z = y
   // If False y z = z

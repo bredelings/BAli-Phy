@@ -55,10 +55,10 @@ void parse_alternatives(const expression_ref& R, vector<expression_ref>& cases, 
   }
 }
 
-//case T [(patterns[i],E[i])]
-bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<expression_ref>& vars, vector<expression_ref>& bodies)
+/// R = case T of {patterns[i] -> bodies[i]}
+bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
 {
-  vars.clear();
+  patterns.clear();
   bodies.clear();
 
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
@@ -70,7 +70,7 @@ bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<ex
   for(int i=0;i<pairs.size();i++)
   {
     shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(pairs[i]);
-    vars.push_back(E2->sub[1]);
+    patterns.push_back(E2->sub[1]);
     bodies.push_back(E2->sub[2]);
   }
 
@@ -1345,13 +1345,15 @@ bool is_irrefutable_pattern(const expression_ref& R)
   return dynamic_pointer_cast<const dummy>(R);
 }
 
+/// Is this either (a) irrefutable, (b) a constant, or (c) a constructor whose arguments are irrefutable patterns?
 bool is_simple_pattern(const expression_ref& R)
 {
+  // (a) Is this irrefutable?
   if (is_irrefutable_pattern(R)) return true;
 
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>( R );
 
-  //  0-arg constructor, since we've already bailed on dummy variables
+  // (b) Is this a constant with no arguments? (This can't be an irrefutable pattern, since we've already bailed on dummy variables.)
   if (not E) return true;
 
   assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
@@ -1361,6 +1363,7 @@ bool is_simple_pattern(const expression_ref& R)
     if (not is_irrefutable_pattern(E->sub[j]))
       return false;
 
+  // (c) Is this a constructor who arguments are irrefutable patterns?
   return true;
 }
 
@@ -1368,6 +1371,7 @@ bool is_simple_pattern(const expression_ref& R)
 
 expression_ref case_expression(bool decompose, const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies);
 
+/// Create the expression case T of {patterns[i] -> bodies[i]} --- AND all patterns are just C[i] v1 v2 ... vn
 expression_ref simple_case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
   expression_ref R = case_expression(false, T, patterns, bodies);
@@ -1393,10 +1397,19 @@ vector<T> skip(int n, const vector<T>& v)
   return v2;
 }
 
+// Create the expression 'case T of {patterns[i] -> bodies[i]'
 expression_ref case_expression(bool decompose, const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
   using std::max;
 
+  // if we have 'case T of _ -> bodies[i]' then just return bodies[0].
+  if (patterns.size() == 1)
+  {
+    shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(patterns[0]);
+    if (D and not includes(get_free_indices(bodies[0]),*D))
+      return bodies[0];
+  }
+  
   if (not decompose)
   {
     expression* E = new expression( Case() );
@@ -1433,6 +1446,8 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ve
     // 2. we don't have to decompose this if its a simple branch: n-arg constructor with all variable arguments.
     if (complex_patterns.empty()) continue;
 
+    // NOTE: This pattern (index i) must be the first one that isn't simple.
+    // NOTE: we're going to bail here
 
     // 3a. Construct the expression to match if this pattern doesn't match.
     expression_ref otherwise;
@@ -1453,7 +1468,15 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ve
       PE->sub[index] = new_var;
     }
 
+    // If ALL of the ADDITIONAL conditions are true, then return bodies[i].  If ANY of them fail, return 'otherwise'.
     ok_bodies.back() = multi_case_expression(true, sub_terms, sub_patterns, ok_bodies.back(), otherwise);
+
+    // We still need to handle the case where the SIMPLE condition fails.
+    if (otherwise)
+    {
+      ok_patterns.push_back(dummy(-1));
+      ok_bodies.push_back(otherwise);
+    }
 
     return simple_case_expression(T, ok_patterns, ok_bodies);
   }
@@ -1479,6 +1502,7 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ex
  * by introducing sharing with a let construct?
  */
 
+// case ALL of terms[i] match patterns[i], return body.  Else return otherwise.
 expression_ref multi_case_expression(bool decompose, const vector<expression_ref>& terms, const vector<expression_ref>& patterns, 
 				     const expression_ref& body, const expression_ref& otherwise)
 {

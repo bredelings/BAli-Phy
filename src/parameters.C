@@ -133,18 +133,9 @@ IndelModel& data_partition::IModel()
 
 double data_partition::rate() const
 {
-  double r = 0;
-  vector<double> D = distribution();
-  for(int m=0;m<D.size();m++)
-  {
-    shared_ptr<const expression> E = is_a(base_model(m),"ReversibleMarkov");
-    shared_ptr<const alphabet> a = convert<const alphabet>(E->sub[1]);
-    shared_ptr<const Box< vector<unsigned> > > smap = convert<const Box< vector<unsigned> > >(E->sub[2]);
-    Matrix Q = *convert<const MatrixObject>(E->sub[3]);
-
-    r += D[m] * *substitution::Get_Equilibrium_Rate_Function(*a, *smap ,Q, E->sub[4]);
-  }
-  return r;
+  int s = P->smodel_for_partition[partition_index];
+  expression_ref E = P->C.evaluate(P->SModels[s].rate);
+  return *convert<const Double>(E);
 }
 
 const std::vector<Matrix>& data_partition::transition_P(int b) const
@@ -713,6 +704,7 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   get_alphabet = C.add_compute_expression((::get_alphabet, S));
   state_letters = C.add_compute_expression((::state_letters, S));
   n_states = C.add_compute_expression((::n_states, S));
+  rate = C.add_compute_expression((::rate, S));
 
   base_model = C.add_compute_expression((::base_model, S));
   frequencies = C.add_compute_expression((::get_component_frequencies, S));
