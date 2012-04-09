@@ -477,6 +477,7 @@ namespace substitution
   // when the discrete approximation to the continuous distribution has
   // low resolution.
 
+  /*
   shared_ptr<ReversibleMarkovModelObject> Modulated_Markov_Function(const ExchangeModelObject& S,MultiModelObject M)
   {
     // Make a copy and use this.
@@ -582,10 +583,12 @@ namespace substitution
 
     return R;
   }
+  */
 
-  expression_ref Modulated_Markov_E = lambda_expression( Modulated_Markov_Op() );
+  expression_ref Modulated_Markov_E;
 
   // FIXME: this shouldn't be done in C++!
+  /*
   shared_ptr<const MultiModelObject> Mixture_Function(const expression_ref& DL, const expression_ref& ML)
   {
     vector<expression_ref> D = get_ref_vector_from_list(DL);
@@ -609,8 +612,9 @@ namespace substitution
 
     return R;
   }
+  */
 
-  expression_ref Mixture_E = lambda_expression(Mixture_Op());
+  expression_ref Mixture_E; // = lambda_expression(Mixture_Op());
 
   formula_expression_ref Mixture_Model(const vector<formula_expression_ref>& models)
   {

@@ -282,8 +282,6 @@ namespace substitution {
 
   extern expression_ref Discretize;
 
-  boost::shared_ptr<const MultiModelObject> CreateMMOFunction(const expression_ref& D);
-
   // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
   //         Q(mi -> ni) = R(m->n)        for model exchange
   // and     Q(mi -> nj) = 0              for all other pairs
@@ -311,66 +309,7 @@ namespace substitution {
   // when the discrete approximation to the continuous distribution has
   // low resolution.
 
-  boost::shared_ptr<ReversibleMarkovModelObject> Modulated_Markov_Function(const ExchangeModelObject& S,MultiModelObject M);
-
-  struct Modulated_Markov_Op: public Operation
-  {
-    Modulated_Markov_Op* clone() const {return new Modulated_Markov_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      boost::shared_ptr<const MultiModelObject> M = Args.evaluate_as<MultiModelObject>(0);
-      boost::shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(1);
-
-      return Modulated_Markov_Function(*S, *M);
-    }
-
-    std::string name() const {return "Modulated_Markov";}
-
-    Modulated_Markov_Op():Operation(2) { }
-  };
-
   extern expression_ref Modulated_Markov_E;
-
-  // Mixture_Function [Double] [MultiModelObject] -> MultiModelObject
-  boost::shared_ptr<const MultiModelObject> Mixture_Function(const expression_ref&, const expression_ref&);
-
-  struct Mixture_Op: public Operation
-  {
-    Mixture_Op* clone() const {return new Mixture_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      expression_ref DL = Args.evaluate(0);
-      expression_ref ML = Args.evaluate(1);
-
-      return Mixture_Function(DL, ML);
-    }
-
-    std::string name() const {return "Mixture";}
-
-    Mixture_Op(): Operation(2) { }
-  };
 
   extern expression_ref Mixture_E;
 

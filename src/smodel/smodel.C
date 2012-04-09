@@ -1005,16 +1005,19 @@ namespace substitution {
 
   shared_ptr<const Object> CAT_FixedFrequencyModel::result() const
   {
+    /*
     shared_ptr<MultiModelObject> R = ptr( get_parameter_value_as<MultiModelObject>(1) );
 
     for(int i=0;i<prior_fraction.size();i++)
       R->fraction[i] = get_parameter_value_as<Double>(2+i);
 
     return R;
+    */
   }
 
   void CAT_FixedFrequencyModel::load_file(std::istream& file)
   {
+    /*
     const alphabet& a = Alphabet();
     string line;
 
@@ -1073,6 +1076,7 @@ namespace substitution {
     }
 
     recalc_all();
+    */
   }
 
   void CAT_FixedFrequencyModel::load_file(const string& filename)
