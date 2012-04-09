@@ -513,7 +513,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    formula_expression_ref base = get_MM_default(model_stack,"gamma",a,frequencies);
+    formula_expression_ref base = get_RA_default(model_stack,"gamma",a,frequencies);
     formula_expression_ref dist = Discretize(model_formula(Gamma()), expression_ref(n));
     model_stack.back() = MultiRate(base,  dist);
   }
