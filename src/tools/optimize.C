@@ -17,12 +17,17 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#include <cmath>
 #include <cassert>
 #include <iostream>
 #include <valarray>
+#include <vector>
 #include "optimize.H"
 
-using namespace std;
+using std::vector;
+using std::cerr;
+using std::endl;
+using std::ostream;
 
 namespace optimize {
 

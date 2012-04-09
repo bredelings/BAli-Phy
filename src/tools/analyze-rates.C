@@ -30,7 +30,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <boost/program_options.hpp>
 
-using namespace std;
+using std::vector;
+using std::valarray;
+using std::string;
+using std::cin;
+using std::cout;
+using std::cerr;
+using std::endl;
 
 namespace po = boost::program_options;
 using po::variables_map;
@@ -113,7 +119,7 @@ void discrete_distribution::sort()
     
   vector<int> order = iota<int>(size());
 
-  ::sort(order.begin(), order.end(), sequence_order<double>(rates));
+  std::sort(order.begin(), order.end(), sequence_order<double>(rates));
 
   valarray<double> f2 = f;
   valarray<double> r2 = r;
@@ -265,11 +271,11 @@ int main(int argc,char* argv[])
 	for(int r=0;r<pdf.size();r++) 
         {
 	  double left  = (double(r))/pdf.size()*R;
-	  double center  = (double(r)+0.5)/pdf.size()*R;
+	  //	  double center  = (double(r)+0.5)/pdf.size()*R;
 	  double right  = (double(r)+1.0)/pdf.size()*R;
 
-	  double ll = max(r1,left);
-	  double rr = min(r2,right);
+	  double ll = std::max(r1,left);
+	  double rr = std::min(r2,right);
 	  if (ll < rr) 
 	    pdf[r] += density*(rr-ll)/(right-left);
 	}

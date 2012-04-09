@@ -24,6 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
  */
 
 #include <cmath>
+
 #include <climits>
 #include "dp-matrix.H"
 #include "pow2.H"
@@ -35,7 +36,6 @@ using std::vector;
 using std::valarray;
 using std::max;
 using std::endl;
-using std::isnan;
 using std::isfinite;
 using std::pair;
 
