@@ -23,8 +23,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "io.H"
 
-using namespace std;
 using boost::shared_ptr;
+using std::vector;
+using std::string;
+using std::valarray;
+using std::istream;
 
 namespace {
 string sanitize(const string& s1)
