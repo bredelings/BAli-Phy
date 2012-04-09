@@ -412,10 +412,10 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 formula_expression_ref get_RA(const formula_expression_ref& M, const string& name,
 			      const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (is_a(M.exp(), "F81"))
+  if (is_a(M.result(SModel_Functions()), "F81"))
     return M;
 
-  if (is_a(M.exp(), "ReversibleMarkov"))
+  if (is_a(M.result(SModel_Functions()), "ReversibleMarkov"))
     return M;
 
   try {
@@ -522,7 +522,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    formula_expression_ref base = get_MM_default(model_stack,"gamma",a,frequencies);
+    formula_expression_ref base = get_RA_default(model_stack,"gamma",a,frequencies);
     formula_expression_ref dist = Discretize(model_formula(Gamma()), expression_ref(n));
     formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(2)(1.0, 2.0) );
     dist = (ExtendDiscreteDistribution, dist, p, 0.0);
@@ -533,7 +533,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    formula_expression_ref base = get_MM_default(model_stack,"log-normal",a,frequencies);
+    formula_expression_ref base = get_RA_default(model_stack,"log-normal",a,frequencies);
     formula_expression_ref dist = Discretize(model_formula(LogNormal()), expression_ref(n));
     model_stack.back() = MultiRate(base,  dist);
   }
@@ -542,7 +542,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    formula_expression_ref base = get_MM_default(model_stack,"log-normal_inv",a,frequencies);
+    formula_expression_ref base = get_RA_default(model_stack,"log-normal_inv",a,frequencies);
     formula_expression_ref dist = Discretize(model_formula(LogNormal()), expression_ref(n));
     formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(2)(1.0, 2.0) );
     dist = ExtendDiscreteDistribution(dist)(0.0)(p);
@@ -583,7 +583,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     dist.add_expression( distributed( get_tuple(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );
     dist.add_expression( distributed( get_tuple(rates), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,2.0))) ) );
 
-    formula_expression_ref base = get_MM_default(model_stack,"DP",a,frequencies);
+    formula_expression_ref base = get_RA_default(model_stack,"DP",a,frequencies);
     model_stack.back() = MultiRate(base,  dist);
   }
   else if (match(string_stack,"Modulated",arg))
