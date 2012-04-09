@@ -5,6 +5,7 @@
 #include "expression.H"
 #include <iostream>
 #include "model_notes.H"
+#include "computation/program.H"
 
 class formula_expression_ref: public Model_Notes
 {
@@ -27,6 +28,8 @@ public:
   int add_expression(const formula_expression_ref&);
 
   boost::shared_ptr<const Object> result() const;
+
+  boost::shared_ptr<const Object> result(const Program&) const;
 
   template <typename T>
   boost::shared_ptr<const T> result_as() const {return boost::dynamic_pointer_cast<const T>(result());}

@@ -124,6 +124,13 @@ boost::shared_ptr<const Object> formula_expression_ref::result() const
   return C.evaluate_expression(exp());
 }
 
+boost::shared_ptr<const Object> formula_expression_ref::result(const Program& P) const
+{
+  context C(get_notes());
+  C += P;
+  return C.evaluate_expression(exp());
+}
+
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value)
 {
   expression_ref var = parameter(name);
