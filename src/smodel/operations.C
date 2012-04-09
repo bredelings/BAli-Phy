@@ -468,45 +468,6 @@ namespace substitution
 
   expression_ref Discretize = lambda_expression( DiscretizationOp() );
 
-  /*
-  MultiModelObject MultiRateFunction(const MultiModelObject& M_, const expression_ref& D)
-  {
-    vector<expression_ref> pairs;
-    {
-      shared_ptr<const expression> DE = is_a(D, "DiscreteDistribution");
-      assert(DE);
-      pairs = get_ref_vector_from_list(DE->sub[1]);
-    }
-    int n_base_models = M_.n_base_models();
-    int N = n_base_models * pairs.size();
-
-    MultiModelObject R;
-
-    // recalc fractions and base models
-    R.resize(N);
-
-    for(int m=0;m<R.n_base_models();m++) 
-    {
-      int i = m / n_base_models;
-      int j = m % n_base_models;
-
-      vector<double> T = get_vector<double,Double>(pairs[i]);
-      double p = T[0];
-      double value = T[1];
-      
-      R.fraction[m] = p*M_.distribution()[j];
-
-      shared_ptr<MultiModelObject> M = ptr(M_);
-
-      M->set_rate( value );
-
-      R.base_models[m] = ptr( M->base_model(j) );
-    }
-
-    return R;
-  }
-  */
-
   // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
   //         Q(mi -> ni) = R(m->n)        for model exchange
   // and     Q(mi -> nj) = 0              for all other pairs
