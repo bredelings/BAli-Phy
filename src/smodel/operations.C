@@ -418,24 +418,6 @@ namespace substitution
     return Reversible_Markov_Model(S,Plus_gwF_Model(a,pi));
   }
 
-  shared_ptr<MultiModelObject>
-  Unit_Mixture_Function(const shared_ptr<const ReversibleAdditiveObject>& O)
-  {
-    shared_ptr<MultiModelObject> R (new MultiModelObject);
-
-    // set the distribution to 1.0
-    R->fraction.resize(1);
-    R->fraction[0] = 1;
-
-    // make a copy of the submodel
-    R->base_models.resize(1);
-    R->base_models[0] = O;
-
-    return R;
-  }
-
-  expression_ref Unit_Mixture = lambda_expression( Unit_Mixture_Op() );
-
   formula_expression_ref Unit_Model(const formula_expression_ref& R)
   {
     formula_expression_ref R2 = R;

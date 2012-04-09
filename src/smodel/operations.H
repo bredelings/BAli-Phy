@@ -249,37 +249,6 @@ namespace substitution {
 
   formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a, const std::valarray<double>& pi);
 
-  boost::shared_ptr<MultiModelObject>
-  Unit_Mixture_Function(const boost::shared_ptr<const ReversibleAdditiveObject>& O);
-
-  struct Unit_Mixture_Op: public Operation
-  {
-    Unit_Mixture_Op* clone() const {return new Unit_Mixture_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      boost::shared_ptr<const ReversibleAdditiveObject> O = Args.evaluate_as<const ReversibleAdditiveObject>(0);
-      
-      return Unit_Mixture_Function(O);
-    }
-
-    std::string name() const {return "Unit_Mixture";}
-
-    Unit_Mixture_Op():Operation(1) { }
-  };
-
-  extern expression_ref Unit_Mixture;
-
   formula_expression_ref Unit_Model(const formula_expression_ref&);
 
   expression_ref DiscretizationFunction(const probability::Distribution& D, Int n);
