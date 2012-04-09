@@ -155,32 +155,6 @@ namespace substitution {
   
   boost::shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a,int n);
 
-  boost::shared_ptr<AlphabetExchangeModelObject> INV_for_Mixture_Function(const boost::shared_ptr<const MultiModelObject>& M);
-
-  struct INV_for_Mixture_Op: public Operation
-  {
-    INV_for_Mixture_Op* clone() const {return new INV_for_Mixture_Op;}
-    
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      return INV_for_Mixture_Function( Args.evaluate_as<MultiModelObject>(0) );
-    }
-
-    std::string name() const {return "INV_for_Mixture";}
-    
-    INV_for_Mixture_Op():Operation(1) { }
-  };
-
   boost::shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
 
   boost::shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2);
