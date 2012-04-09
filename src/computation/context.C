@@ -186,10 +186,10 @@ shared_ptr<const Object> context::evaluate(int index) const
 
 shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref& E) const
 {
-  int R = *push_temp_head();
-  set_E(R, let_float(graph_normalize(translate_refs(E)) ));
-
   try {
+    int R = *push_temp_head();
+    set_E(R, let_float(graph_normalize(translate_refs(E)) ));
+
     R = incremental_evaluate(R);
     shared_ptr<const Object> result = access(R).result;
     
@@ -205,10 +205,10 @@ shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref&
 
 shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) const
 {
-  int R = *push_temp_head();
-  set_E(R, let_float(graph_normalize(translate_refs(E)) ));
-
   try {
+    int R = *push_temp_head();
+    set_E(R, let_float(graph_normalize(translate_refs(E)) ));
+
     expression_ref result = full_evaluate(R);
     pop_temp_head();
     return result;
