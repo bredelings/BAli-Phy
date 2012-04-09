@@ -164,48 +164,4 @@ namespace substitution
       for(int j=0;j<N;j++)
 	Q(i,j) = (pi[j] - ((i==j)?1:0))*alpha_;
   }
-
-  shared_ptr<const alphabet> MultiModelObject::get_alphabet() const 
-  {
-    return base_model(0).get_alphabet();
-  }
-
-  void MultiModelObject::resize(int s)
-  {
-    fraction.resize(s);
-    base_models.resize(s);
-  }
-
-  double MultiModelObject::rate() const {
-    double r=0;
-    for(int m=0;m<n_base_models();m++)
-      r += distribution()[m]*base_model(m).rate();
-    return r;
-  }
-
-  // This is per-branch, per-column - doesn't pool info about each branches across columns
-  Matrix MultiModelObject::transition_p(double t) const {
-    Matrix P = distribution()[0] * transition_p(t,0);
-    for(int m=1;m<n_base_models();m++)
-      P += distribution()[m] * transition_p(t,m);
-    return P;
-  }
-
-  MultiModelObject::MultiModelObject()
-  { }
-
-  MultiModelObject::MultiModelObject(int n)
-    :base_models(n),
-     fraction(n)
-  { }
-
-  Matrix frequency_matrix(const MultiModelObject& M) {
-    Matrix f(M.n_base_models(),M.n_states());
-    for(int m=0;m<f.size1();m++)
-      for(int l=0;l<f.size2();l++)
-	f(m,l) = M.base_model(m).frequencies()[l];
-    return f;
-  }
-
-
 }
