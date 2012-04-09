@@ -46,8 +46,8 @@ Program SModel_Functions()
   // MultiParameter f (DiscreteDistribution d) = MixtureModel(DiscreteDistribution (fmap2 f d))
   P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(fmap2,v1,v2))));
 
-  // MultiRate (MixtureModel (DiscreteDistribution l)) D = MixtureModel(DiscreteDistribution (fmap2 f d))
-  P += Def( (MultiRate,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(fmap2,v1,v2))));
+  // MultiRate m D = MultiParameter \x.(scale x m) D
+  P += Def( (MultiRate,v1,v2), (MultiParameter,v3^(scale,v3,v1), v2) );
 
   // scale x (ReversibleMarkov a s q pi l t) = (ReversibleMarkov a s q p l (x * t))
   // scale x (F81 a s a' pi)= (F81 a s a'*x pi) ??
