@@ -463,7 +463,7 @@ namespace substitution
     for(int i=0;i<n;i++)
       pairs.push_back( Tuple( d.f[i], d.r[i] ) );
 
-    return DiscreteDistribution( get_list(pairs) );
+    return graph_normalize(DiscreteDistribution( get_list(pairs) ));
   }
 
   expression_ref Discretize = lambda_expression( DiscretizationOp() );
