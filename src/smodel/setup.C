@@ -412,9 +412,6 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 formula_expression_ref get_RA(const formula_expression_ref& M, const string& name,
 			      const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (M.result_as<ReversibleMarkovModelObject>())
-    return M;
-
   if (is_a(M.exp(), "F81"))
     return M;
 
@@ -464,7 +461,7 @@ formula_expression_ref get_RA_default(vector<formula_expression_ref >& model_sta
 formula_expression_ref
 get_MM(const formula_expression_ref& M, const string& name, const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (is_a(M.exp(), "MixtureModel"))
+  if (is_a(M.result(SModel_Functions()), "MixtureModel"))
     return M;
 
   try { 
