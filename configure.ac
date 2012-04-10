@@ -384,7 +384,7 @@ echo " * Looking for the system BOOST libraries... (suffix = '${BOOST_SUFFIX}')"
 AC_CHECK_LIB(boost_program_options${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_program_options library! (-lboost_program_options${BOOST_SUFFIX})" ; exit 1])
 AC_CHECK_LIB(boost_system${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_system library! (-lboost_system${BOOST_SUFFIX})" ; exit 1])
 AC_CHECK_LIB(boost_filesystem${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_filesystem library! (-lboost_filesystem${BOOST_SUFFIX})" ; exit 1])
-AC_CHECK_LIB(boost_chrono${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_filesystem library! (-lboost_chrono${BOOST_SUFFIX})" ; exit 1])
+AC_CHECK_LIB(boost_chrono${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_chrono library! (-lboost_chrono${BOOST_SUFFIX})" ; exit 1])
 if test "$use_mpi" != no ; then
    AC_CHECK_LIB(boost_serialization${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_serialization library! (-lboost_serialization${BOOST_SUFFIX})" ; exit 1])
    AC_CHECK_LIB(boost_mpi${BOOST_SUFFIX},main,[],[echo "Error: I can't find the boost_serialization library! (-lboost_mpi${BOOST_SUFFIX})" ; exit 1])
