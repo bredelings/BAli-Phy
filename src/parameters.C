@@ -161,7 +161,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
 
     expression_ref S = P->C.get_expression(P->SModels[m].main);
     expression_ref V = Vector_From_List<Matrix,MatrixObject>();
-    expression_ref E = (V,(branch_transition_p, S, (get_list_index, DL, b)));
+    expression_ref E = (v1^(V,(branch_transition_p, S, (get_list_index, DL, v1))), b);
     E = P->C.evaluate_expression(E);
     //    expression_ref Q2 = P->C.get_expression(P->branch_transition_p_indices(s,m));
     //    expression_ref E2 = P->C.evaluate_expression((getIndex,Q2,b));
