@@ -178,6 +178,7 @@ public:
   void clear_used_input(int R1, int R2);
   void clear_used_inputs(int R);
   void set_call(int R1, int R2);
+  void set_call_unsafe(int R1, int R2);
   void clear_call(int R);
   void clear(int);
   void clear_E(int R);

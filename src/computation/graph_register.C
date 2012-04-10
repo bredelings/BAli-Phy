@@ -561,7 +561,7 @@ void reg_heap::clear_used_inputs(int R)
   assert(access(R).used_inputs.empty());
 }
 
-void reg_heap::set_call(int R1, int R2)
+void reg_heap::set_call_unsafe(int R1, int R2)
 {
   // Check that R1 is legal
   assert(0 <= R1 and R1 < n_regs());
@@ -573,14 +573,20 @@ void reg_heap::set_call(int R1, int R2)
 
   // Check that we aren't overriding an existing *call*
   assert(access(R1).call == -1);
-  // Check that we aren't overriding an existing *result*
-  assert(not access(R1).result);
 
   access(R1).call = R2;
   access(R2).call_outputs.insert(R1);
 
   // check that all of the owners of R are also owners of R.call;
   assert(includes(access(R2).owners, access(R1).owners));
+}
+
+void reg_heap::set_call(int R1, int R2)
+{
+  set_call_unsafe(R1, R2);
+
+  // Check that we aren't overriding an existing *result*
+  assert(not access(R1).result);
 }
 
 void reg_heap::clear_call(int R)
@@ -1443,7 +1449,7 @@ int reg_heap::uniquify_reg(int R, int t)
     }
   }
   
-  // Remap the unsplit parents.
+  // Remap the unsplit parents. (The parents don't move, but they reference children that do.)
   for(int i=0;i<unsplit_parents.size();i++)
   {
     int Q1 = unsplit_parents[i];
@@ -1460,7 +1466,7 @@ int reg_heap::uniquify_reg(int R, int t)
       if (old_call != new_call)
       {
 	clear_call(Q1);
-	set_call(Q1, new_call);
+	set_call_unsafe(Q1, new_call);
       }
     }
     
