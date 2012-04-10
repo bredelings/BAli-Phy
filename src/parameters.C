@@ -145,23 +145,15 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   
   if (not cached_transition_P[b].is_valid())
   {
-    double l = P->get_branch_subst_length(partition_index,b) / rate();
+    double l = P->get_branch_subst_length(partition_index,b);
     assert(l >= 0);
 
-    vector< Matrix >& TP = cached_transition_P[b].modify_value();
-    const int n_models = n_base_models();
-    for(int m=0;m<n_models;m++)
-    {
-      shared_ptr<const expression> E = is_a(base_model(m),"ReversibleMarkov");
+    int s = P->smodel_for_partition[partition_index];
+    expression_ref Q = P->C.get_expression(P->SModels[s].transition_p);
+    expression_ref E = P->C.evaluate_expression((Q,l));
 
-      Matrix Q = *convert<const MatrixObject>(E->sub[3]);
-      vector<double> pi = get_vector<double,Double>(E->sub[4]);
-      shared_ptr<const EigenValues> L = convert<const EigenValues>(E->sub[5]);
-      shared_ptr<const Double> r = convert<const Double>(E->sub[6]);
-
-      TP[m] = exp(*L, pi, l* *r);
-    }
-    cached_transition_P[b].validate();
+    cached_transition_P[b] = get_vector_from_list<Matrix,MatrixObject>(E);
+    assert(cached_transition_P[b].size() == n_base_models());
   }
   return cached_transition_P[b];
 }
@@ -703,6 +695,7 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
 
   base_model = C.add_compute_expression((::base_model, S));
   frequencies = C.add_compute_expression((::get_component_frequencies, S));
+  transition_p = C.add_compute_expression((::branch_transition_p, S));
 }
 
 void Parameters::set_beta(double b)
