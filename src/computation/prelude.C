@@ -28,6 +28,8 @@ Program get_Prelude()
 {
   Program P;
 
+  typed_expression_ref<Double> x1 (v1);
+
   // foldr f z []  = z
   // foldr f z x:xs = (f x (foldr f z xs))
   P += Def( (foldr, v1, v2, ListEnd)    , v2)
@@ -36,7 +38,7 @@ Program get_Prelude()
   // foldl f z []  = z
   // foldl f z x:xs = foldl f (f z x) xs
   P += Def( (foldl, v1, v2, ListEnd)    , v2)
-    ( (foldl, v1, v2, v3&v4), (foldl, v1, (v1, v2, v3), v4) );
+          ( (foldl, v1, v2, v3&v4), (foldl, v1, (v1, v2, v3), v4) );
 
   // foldl' f z []  = z
   // foldl' f z x:xs = let z' = (f z x) in seq z' $ foldl f z' xs
@@ -86,7 +88,7 @@ Program get_Prelude()
   P += Def( ExtendDiscreteDistribution(DiscreteDistribution(v0),v1,v2), DiscreteDistribution(Tuple(v1,v2)&(fmap1, v4^v4*(1.0-v1), v0)) );
 
   // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
-  P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(plus,v1,(times,(fst,v2),(snd,v2)))), 0.0, v3) );
+  P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(x1+(times,(fst,v2),(snd,v2)))), 0.0, v3) );
 
   // If True  y z = y
   // If False y z = z
