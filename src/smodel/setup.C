@@ -273,7 +273,7 @@ bool process_stack_Markov(vector<string>& string_stack,
   else
     return false;
 
-  if (R.index() != -1)
+  if (R.exp())
     model_stack.push_back(R);
   return true;
 }

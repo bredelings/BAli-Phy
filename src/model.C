@@ -952,7 +952,7 @@ vector<string> show_probability_expressions(const context& C)
 
 std::string FormulaModel::name() const
 {
-  return C.get_note(I)->print();
+  return E->print();
 }
 
 boost::shared_ptr<const Object> FormulaModel::result() const
@@ -960,20 +960,14 @@ boost::shared_ptr<const Object> FormulaModel::result() const
   return C.evaluate(result_index);
 }
 
-FormulaModel::FormulaModel(const vector<expression_ref>& N,int i)
-  :Model(N),
-   I(i),
-   result_index( C.add_compute_expression(C.get_note(I)) )
-{ }
-
 FormulaModel::FormulaModel(const formula_expression_ref& r)
-  :Model( r.get_notes() ),
-   I( r.index() ),
-   result_index( C.add_compute_expression(C.get_note(I)) )
+  :Model( r.get_notes_plus_exp() ),
+   E( r.exp() ),
+   result_index( C.add_compute_expression(E ) )
 { }
 
 FormulaModel::operator formula_expression_ref() const
 {
-  return formula_expression_ref(C.get_notes(), I);
+  return formula_expression_ref(C.get_notes(), E);
 }
 

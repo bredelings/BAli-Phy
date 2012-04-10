@@ -38,24 +38,26 @@
 using boost::shared_ptr;
 using std::vector;
 
-void formula_expression_ref::set_note(int i, const expression_ref& E)
+std::vector<expression_ref> formula_expression_ref::get_notes_plus_exp() const
 {
-  // how would we process changes to notes, when those notes have effects?
-  notes[i] = E;
+  Model_Notes M = *this;
+  M.add_note( exp() );
+  return M.get_notes();
 }
 
 formula_expression_ref formula_expression_ref::operator()(const formula_expression_ref& R2) const
 {
   // Perhaps I should take out the expression that is the argument... we perhaps not.
-  formula_expression_ref R3(combine(notes, R2.get_notes()), I);
-  R3.set_note(I, R3.get_note(I)(R2.exp()) );
+  formula_expression_ref R3(*this);
+  R3.add_notes(R2.get_notes());
+  R3.set_exp((exp(), R2.exp()));
   return R3;
 }
 
 formula_expression_ref formula_expression_ref::operator()(const expression_ref& R2) const
 {
   formula_expression_ref R3(*this);
-  R3.set_note(I, R3.get_note(I)(R2) );
+  R3.set_exp((R3.exp(), R2));
   return R3;
 }
 
@@ -86,47 +88,40 @@ formula_expression_ref expression_ref::operator()(const formula_expression_ref& 
 }
 
 formula_expression_ref::formula_expression_ref()
-  :I(-1)
 { }
 
 formula_expression_ref::formula_expression_ref(const expression_ref& R)
-  :I(0)
-{ 
-  add_note(R);
-}
+  :E(R)
+{ }
 
 formula_expression_ref::formula_expression_ref(const Model_Notes& N, int i)
-  :Model_Notes(N),I(i)
+  :Model_Notes(N),E(N.get_note(i))
 { }
 
 formula_expression_ref::formula_expression_ref(const Model_Notes& N, const expression_ref& R)
-  :Model_Notes(N)
-{ 
-  I = add_note(R);
-}
+  :Model_Notes(N),E(R)
+{  }
 
 formula_expression_ref prefix_formula(const std::string& prefix,const formula_expression_ref& R)
 {
-  return formula_expression_ref(add_prefix(prefix, R.get_notes()), R.index());
+  return formula_expression_ref( add_prefix(prefix, R), add_prefix(prefix, R.exp() ) );
 }
 
 int formula_expression_ref::add_expression(const formula_expression_ref& R)
 {
-  // The indices of the first argument are (currently) not altered, so 'index' is unchanged.
-  int i = notes.size() + R.index();
-  notes.insert(notes.end(), R.get_notes().begin(), R.get_notes().end());
-  return i;
+  add_notes(R.get_notes());
+  return add_note(R.exp());
 }
 
 boost::shared_ptr<const Object> formula_expression_ref::result() const
 {
-  context C(get_notes());
-  return C.evaluate_expression(exp());
+  Program P;
+  return result(P);
 }
 
 boost::shared_ptr<const Object> formula_expression_ref::result(const Program& P) const
 {
-  context C(get_notes());
+  context C(get_notes_plus_exp());
   C += P;
   return C.evaluate_expression(exp());
 }
@@ -196,7 +191,7 @@ formula_expression_ref lambda_quantify(const expression_ref& d, const formula_ex
 {
   // Perhaps I should take out the expression that is the argument... we perhaps not.
   formula_expression_ref F2 = F;
-  F2.set_note(F2.index(), lambda_quantify(d,F.exp()) );
+  F2.set_exp(lambda_quantify(d,F.exp()) );
   return F2;
 }
 

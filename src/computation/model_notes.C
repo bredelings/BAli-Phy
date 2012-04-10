@@ -12,10 +12,6 @@ int Model_Notes::add_note(const expression_ref& E)
 
 void Model_Notes::add_notes(const std::vector<expression_ref>& N)
 {
-  for(int i=0;i<notes.size();i++)
-    for(int j=0;j<i;j++)
-      assert(notes[i] != N[j]);
-
   for(int i=0;i<N.size();i++)
     for(int j=0;j<i;j++)
       assert(N[i] != N[j]);

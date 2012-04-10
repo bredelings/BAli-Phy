@@ -1242,7 +1242,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string name = "S" + convertToString(i+1);
     formula_expression_ref S = prefix_formula(name,SMs[i]);
 
-    std::set<string> names = find_named_parameters(S.get_notes());
+    std::set<string> names = find_named_parameters(S.get_notes_plus_exp());
     foreach(i,names)
     {
       if (find_parameter(*i) == -1)

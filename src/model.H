@@ -476,7 +476,7 @@ struct expression_ref;
 
 struct FormulaModel: public Model
 {
-  int I;
+  expression_ref E;
 
   int result_index;
 
@@ -488,7 +488,6 @@ struct FormulaModel: public Model
 
   operator formula_expression_ref() const;
 
-  FormulaModel(const std::vector<expression_ref>&,int);
   FormulaModel(const formula_expression_ref&);
 };
 

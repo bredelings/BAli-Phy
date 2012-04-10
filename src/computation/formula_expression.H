@@ -9,23 +9,23 @@
 
 class formula_expression_ref: public Model_Notes
 {
-  int I;
+  expression_ref E;
 
   // I should probably make a note_collection class that is shared
   // between formula_expression_ref and class context.
 public:
 
-  void set_note(int i, const expression_ref&);
-
   formula_expression_ref operator()(const formula_expression_ref&) const;
 
   formula_expression_ref operator()(const expression_ref&) const;
 
-  int index() const {return I;}
+  void set_exp(const expression_ref& E2) {E = E2;}
 
-  expression_ref exp() const {return get_note(I);}
+  expression_ref exp() const {return E;}
 
   int add_expression(const formula_expression_ref&);
+
+  std::vector<expression_ref> get_notes_plus_exp() const;
 
   boost::shared_ptr<const Object> result() const;
 
