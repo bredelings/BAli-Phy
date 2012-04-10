@@ -1345,10 +1345,10 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
        D.push_back(parameter(prefix+"::"+name));
      }
      expression_ref DL = get_list(D);
-     expression_ref S = C.get_expression(SModels[s].main);
 
      for(int m=0;m < n_smodels(); m++)
      {
+       expression_ref S = C.get_expression(SModels[m].main);
        expression_ref V = Vector_From_List<Matrix,MatrixObject>();
        expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, S, (get_list_index, DL, v1) ) ) );
        branch_transition_p_indices(s,m) = C.add_compute_expression(E);
