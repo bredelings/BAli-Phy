@@ -149,15 +149,18 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
     int s = P->scale_for_partition[partition_index];
     int m = P->smodel_for_partition[partition_index];
 
-    double l = P->get_branch_subst_length(partition_index,b);
-    assert(l >= 0);
     string prefix= "scale" + convertToString(s+1);
-    string name = prefix + "::D" + convertToString(b+1);
-    expression_ref D = parameter(name);
+    vector<expression_ref> D;
+    for(int b=0;b<T().n_branches();b++)
+    {
+      string name = "D" + convertToString(b+1);
+      D.push_back(parameter(prefix+"::"+name));
+    }
+    expression_ref DL = get_list(D);
 
     expression_ref S = P->C.get_expression(P->SModels[m].main);
     expression_ref V = Vector_From_List<Matrix,MatrixObject>();
-    expression_ref E = P->C.evaluate_expression((V,(branch_transition_p,S,D)));
+    expression_ref E = P->C.evaluate_expression((V,(branch_transition_p, S, (get_list_index, DL, b))));
     expression_ref Q2 = P->C.get_expression(P->branch_transition_p_indices(s,m));
     //    expression_ref E2 = P->C.evaluate_expression((getIndex,Q2,b));
 
