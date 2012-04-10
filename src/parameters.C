@@ -155,11 +155,11 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
     string name = prefix + "::D" + convertToString(b+1);
     expression_ref D = parameter(name);
 
-    expression_ref Q = P->C.get_expression(P->SModels[m].transition_p);
-    expression_ref C = Vector_From_List<Matrix,MatrixObject>();
-    expression_ref E = P->C.evaluate_expression((C,(Q,D)));
+    expression_ref S = P->C.get_expression(P->SModels[m].main);
+    expression_ref V = Vector_From_List<Matrix,MatrixObject>();
+    expression_ref E = P->C.evaluate_expression((V,(branch_transition_p,S,D)));
     expression_ref Q2 = P->C.get_expression(P->branch_transition_p_indices(s,m));
-    expression_ref E2 = P->C.evaluate_expression((getIndex,Q2,b));
+    //    expression_ref E2 = P->C.evaluate_expression((getIndex,Q2,b));
 
     cached_transition_P[b] = *convert<const Box<vector<Matrix> > >(E);
     assert(cached_transition_P[b].value().size() == n_base_models());
