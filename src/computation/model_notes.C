@@ -40,5 +40,6 @@ Model_Notes::Model_Notes()
 { }
 
 Model_Notes::Model_Notes(const std::vector<expression_ref>& N)
-  :notes(N)
-{ }
+{
+  add_notes(N);
+ }
