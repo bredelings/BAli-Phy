@@ -186,6 +186,41 @@ struct GetIndex: public Operation
 
 extern expression_ref getIndex;
 
+template<typename T, typename U>
+struct Vector_From_List_Op: public Operation
+{
+  virtual Vector_From_List_Op* clone() const {return new Vector_From_List_Op(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Vector_From_List_Op* E = dynamic_cast<const Vector_From_List_Op<T,U>*>(&o);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    expression_ref E = Args.evaluate(0);
+
+    boost::shared_ptr<Box<std::vector<T> > > v (new Box<std::vector<T> >);
+
+    v->t = get_vector_from_list<T,U>(E);
+
+    return v;
+  }
+
+  std::string name() const {return "Vector_From_List";}
+  
+  Vector_From_List_Op():Operation(1) {}
+};
+
+template <typename T,typename U>
+expression_ref Vector_From_List()
+{
+  return lambda_expression(Vector_From_List_Op<T,U>());
+}
+
+
+
 template<typename T>
 struct VectorSizeOp: public Operation
 {

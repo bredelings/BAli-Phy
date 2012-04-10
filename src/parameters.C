@@ -56,6 +56,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/formula_expression.H"
 #include "smodel/operations.H"
 #include "computation/prelude.H"
+#include "computation/operations.H"
 #include "exponential.H"
 #include "smodel/functions.H"
 
@@ -142,7 +143,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
   b = T().directed_branch(b).undirected_name();
   assert(b >= 0 and b < T().n_branches());
-  
+
   if (not cached_transition_P[b].is_valid())
   {
     double l = P->get_branch_subst_length(partition_index,b);
@@ -150,9 +151,10 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
 
     int s = P->smodel_for_partition[partition_index];
     expression_ref Q = P->C.get_expression(P->SModels[s].transition_p);
-    expression_ref E = P->C.evaluate_expression((Q,l));
+    expression_ref C = Vector_From_List<Matrix,MatrixObject>();
+    expression_ref E = P->C.evaluate_expression((C,(Q,l)));
 
-    cached_transition_P[b] = get_vector_from_list<Matrix,MatrixObject>(E);
+    cached_transition_P[b] = *convert<const Box<vector<Matrix> > >(E);
     assert(cached_transition_P[b].size() == n_base_models());
   }
   return cached_transition_P[b];
