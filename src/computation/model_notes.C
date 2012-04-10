@@ -42,4 +42,13 @@ Model_Notes::Model_Notes()
 Model_Notes::Model_Notes(const std::vector<expression_ref>& N)
 {
   add_notes(N);
- }
+}
+
+Model_Notes add_prefix(const std::string& prefix, const Model_Notes& M1)
+{
+  Model_Notes M2;
+  for(int i=0;i<M1.n_notes();i++)
+    M2.add_note(add_prefix(prefix, M1.get_note(i)));
+
+  return M2;
+}

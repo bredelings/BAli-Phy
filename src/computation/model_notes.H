@@ -32,4 +32,6 @@ public:
   Model_Notes(const std::vector<expression_ref>&);
 };
 
+Model_Notes add_prefix(const std::string& prefix, const Model_Notes& M);
+
 #endif
