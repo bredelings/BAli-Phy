@@ -427,6 +427,16 @@ std::vector<expression_ref> get_ref_vector_from_list(const expression_ref& R);
 
 std::vector<expression_ref> get_ref_vector_from_tuple(const expression_ref& R);
 
+template <typename T,typename U>
+std::vector<T> get_vector_from_list(const expression_ref& R)
+{
+  std::vector<expression_ref> v1 = get_ref_vector_from_list(R);
+  std::vector<T> v2;
+  for(int i=0;i<v1.size();i++)
+    v2.push_back(*convert<const U>(v1[i]));
+  return v2;
+}
+
 template <typename T>
 expression_ref get_tuple(const std::vector<T>& v)
 {
