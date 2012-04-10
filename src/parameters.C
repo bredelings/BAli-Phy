@@ -155,7 +155,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
     expression_ref E = P->C.evaluate_expression((C,(Q,l)));
 
     cached_transition_P[b] = *convert<const Box<vector<Matrix> > >(E);
-    assert(cached_transition_P[b].size() == n_base_models());
+    assert(cached_transition_P[b].value().size() == n_base_models());
   }
   return cached_transition_P[b];
 }
