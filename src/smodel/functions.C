@@ -34,8 +34,7 @@ const expression_ref MixtureModel = lambda_expression( constructor("MixtureModel
 
 // TODO: transition_p
 // After we get transition_p right, then it SHOULD be fast.  Benchmark!
-// TODO: convert ReversibleFrequencyModel and AlphabetExchangeModel to H.
-//       This will allow expressing the MarkovModel as an object with a thunk to get_eigensystem.
+// 
 
 Program SModel_Functions()
 {

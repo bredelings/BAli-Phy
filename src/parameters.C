@@ -156,8 +156,10 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
 
       Matrix Q = *convert<const MatrixObject>(E->sub[3]);
       vector<double> pi = get_vector<double,Double>(E->sub[4]);
+      shared_ptr<const EigenValues> L = convert<const EigenValues>(E->sub[5]);
+      shared_ptr<const Double> r = convert<const Double>(E->sub[6]);
 
-      TP[m] = exp(*substitution::Get_Eigensystem_Function(Q,pi), pi, l);
+      TP[m] = exp(*L, pi, l* *r);
     }
     cached_transition_P[b].validate();
   }
