@@ -487,20 +487,6 @@ reg_heap::root_t context::push_temp_head() const
   return memory->push_temp_head( token );
 }
 
-boost::shared_ptr<context> prefix_formula(const std::string& prefix, const boost::shared_ptr<const context>& C)
-{
-  shared_ptr<context> C2(C->clone());
-  // prefix the parameter names
-  for(int i=0;i<C2->n_parameters();i++)
-    C2->rename_parameter(i, prefix + "::" + C2->parameter_name(i));
-
-  // Let's NOT prefix the variable names, since they could be "globally scoped", like fmap
-
-  // prefix the names in the model
-  C2->get_notes() = add_prefix(prefix, C2->get_notes());
-  return C2;
-}
-
 std::ostream& operator<<(std::ostream& o, const context& C)
 {
   for(int index = 0;index < C.n_expressions(); index++)
@@ -562,24 +548,5 @@ int add_probability_expression(context& C)
   }
   else
     return -1;
-}
-
-vector<expression_ref> add_prefix(const string& prefix, const vector<expression_ref>& notes)
-{
-  vector<expression_ref> notes2(notes.size());
-  for(int i=0;i<notes.size();i++)
-    notes2[i] = add_prefix(prefix, notes[i]);
-  return notes2;
-}
-
-vector<expression_ref> combine(const vector<expression_ref>& N1, const vector<expression_ref>& N2)
-{
-  vector<expression_ref> N3 = N1;
-
-  N3.insert(N3.end(), N2.begin(), N2.end());
-
-  //  add_some_notes(N3, N2);
-
-  return N3;
 }
 

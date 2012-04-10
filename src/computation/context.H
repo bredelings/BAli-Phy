@@ -166,12 +166,6 @@ public:
   ~context();
 };
 
-std::vector<expression_ref> add_prefix(const std::string&, const std::vector<expression_ref>&);
-
-boost::shared_ptr<context> prefix_formula(const std::string&, const boost::shared_ptr<const context>&);
-
-std::vector<expression_ref> combine(const std::vector<expression_ref>& N1, const std::vector<expression_ref>& N2);
-
 std::ostream& operator<<(std::ostream&, const context& C);
 
 int add_probability_expression(context& C);
