@@ -259,6 +259,8 @@ class Parameters: public SuperModel, public Probability_Model
 
   std::vector< std::vector<int> > branch_length_indices;
 
+  ublas::matrix<int> branch_transition_p_indices;
+
 public:
 
   /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?

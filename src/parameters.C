@@ -149,10 +149,13 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
     double l = P->get_branch_subst_length(partition_index,b);
     assert(l >= 0);
 
-    int s = P->smodel_for_partition[partition_index];
-    expression_ref Q = P->C.get_expression(P->SModels[s].transition_p);
+    int s = P->scale_for_partition[partition_index];
+    int m = P->smodel_for_partition[partition_index];
+    expression_ref Q = P->C.get_expression(P->SModels[m].transition_p);
     expression_ref C = Vector_From_List<Matrix,MatrixObject>();
     expression_ref E = P->C.evaluate_expression((C,(Q,l)));
+    expression_ref Q2 = P->C.get_expression(P->branch_transition_p_indices(s,m));
+    expression_ref E2 = P->C.evaluate_expression((getIndex,Q2,b));
 
     cached_transition_P[b] = *convert<const Box<vector<Matrix> > >(E);
     assert(cached_transition_P[b].value().size() == n_base_models());
@@ -1162,6 +1165,9 @@ Parameters& Parameters::operator=(const Parameters& P)
 
   branch_length_indices = P.branch_length_indices;
 
+  branch_transition_p_indices.resize( P.branch_transition_p_indices.size1(), P.branch_transition_p_indices.size2());
+  branch_transition_p_indices = P.branch_transition_p_indices;
+
   data_partitions = P.data_partitions;
 
   T = P.T;
@@ -1318,6 +1324,29 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       branch_length_indices[s].push_back(index);
     }
   }
+
+   // register the cached transition_p indices
+   branch_transition_p_indices.resize(n_branch_means(), n_smodels());
+   for(int s=0;s < n_branch_means(); s++)
+   {
+     string prefix= "scale" + convertToString(s+1);
+     // Get a list of the branch LENGTH (not time) parameters
+     vector<expression_ref> D;
+     for(int b=0;b<T->n_branches();b++)
+     {
+       string name = "D" + convertToString(b+1);
+       D.push_back(parameter(prefix+"::"+name));
+     }
+     expression_ref DL = get_list(D);
+     expression_ref S = C.get_expression(SModels[s].main);
+
+     for(int m=0;m < n_smodels(); m++)
+     {
+       expression_ref V = Vector_From_List<Matrix,MatrixObject>();
+       expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, S, (get_list_index, DL, v1) ) ) );
+       branch_transition_p_indices(s,m) = C.add_compute_expression(E);
+     }
+   }
 
   prior_index = add_probability_expression(C);
 }
