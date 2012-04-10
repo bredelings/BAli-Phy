@@ -1,9 +1,10 @@
 #ifndef CONTEXT_H
 
 #include "computation/graph_register.H"
+#include "computation/model_notes.H"
 
 /// This class contains only compute expressions, parameters, and names for the compute expressions
-class context: virtual public Object
+class context: virtual public Object, public Model_Notes
 {
 public:
   typedef reg_heap::root_t root_t;
@@ -18,8 +19,6 @@ private:
   cow_ptr<Program> P;
 
   int token;
-
-  std::vector<expression_ref> notes;
 
   std::vector<root_t>& temp_heads() const {return memory->get_temp_heads_for_context(token);}
 
@@ -47,19 +46,6 @@ private:
   bool reg_is_fully_up_to_date(int r) const;
 
 public:
-
-  int n_notes() const {return notes.size();}
-
-  const std::vector<expression_ref>& get_notes() const {return notes;}
-  std::vector<expression_ref>& get_notes() {return notes;}
-
-  const expression_ref get_note(int i) const {return notes[i];}
-  expression_ref get_note(int i) {return notes[i];}
-
-  int add_note(const expression_ref&);
-  void add_notes(const std::vector<expression_ref>&);
-
-  int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
 
   boost::shared_ptr<const Object> default_parameter_value(int i) const;
 

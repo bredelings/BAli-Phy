@@ -21,40 +21,6 @@ string context::parameter_name(int i) const
   throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
 }
 
-int add_one_note(vector<expression_ref>& N1, const expression_ref& N2)
-{
-  for(int i=0;i<N1.size();i++)
-    if (N1[i] == N2)
-      return i;
-
-  N1.push_back(N2);
-  return N1.size() -1;
-}
-
-void add_some_notes(vector<expression_ref>& N1, const vector<expression_ref>& N2)
-{
-  for(int i=0;i<N1.size();i++)
-    for(int j=0;j<i;j++)
-      assert(N1[i] != N1[j]);
-
-  for(int i=0;i<N2.size();i++)
-    for(int j=0;j<i;j++)
-      assert(N2[i] != N2[j]);
-
-  for(int i=0;i<N2.size();i++)
-    add_one_note(N1,N2[i]);
-}
-
-int context::add_note(const expression_ref& E)
-{
-  return add_one_note(notes, E);
-}
-
-void context::add_notes(const vector<expression_ref>& N)
-{
-  add_some_notes(notes, N);
-}
-
 reg_heap::root_t reg_heap::add_identifier_to_context(int t, const string& name)
 {
   map<string,root_t>& identifiers = get_identifiers_for_context(t);
@@ -406,18 +372,6 @@ expression_ref context::translate_refs(const expression_ref& R) const
   return shared_ptr<const expression>(V);
 }
 
-int context::find_match_notes(const expression_ref& query, std::vector<expression_ref>& results, int start) const
-{
-  assert(start >= 0);
-  for(int i=start;i<n_notes();i++)
-  {
-    results.clear();
-    if (find_match(query, get_note(i), results))
-      return i;
-  }
-  return -1;
-}
-
 context& context::operator+=(const Def& D)
 {
   Program P2;
@@ -498,10 +452,10 @@ context::context(const vector<expression_ref>& N)
 }
 
 context::context(const context& C)
-  :memory(C.memory),
+  :Model_Notes(C),
+   memory(C.memory),
    P(C.P),
-   token(memory->copy_token(C.token)),
-   notes(C.notes)
+   token(memory->copy_token(C.token))
 { }
 
 context::~context()
