@@ -105,10 +105,10 @@ Program get_Prelude()
           ( (get_list_index,v1&v2,v3), (get_list_index,v2,(v3-1)) );
 
   // listArray b l = mkArray b \i -> l!!i
-  P += Def( (listArray,v1,v2),(mkArray,v1,lambda_quantify(v3,(get_list_index,v2,v3))) );
+  P += Def( (listArray,v1,v2),(mkArray, v1, v3^(get_list_index,v2,v3)) );
 
   // length l = foldl_ (+) 0 l
-  P += Def( (length, v1), (foldl_,lambda_quantify(v2,lambda_quantify(v3,v2+1)), 0, v1) );
+  P += Def( (length, v1), (foldl_,v2^(v3^(v2+1)), 0, v1) );
 
   return P;
 }
