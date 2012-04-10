@@ -9,6 +9,7 @@ const expression_ref rate = var("rate");
 const expression_ref scale = var("scale");
 const expression_ref QExp = var("QExp");
 const expression_ref Q_from_S_and_R = var("Q_from_S_and_R");
+const expression_ref branch_transition_p = var("branch_transition_p");
 
 const expression_ref n_base_models = var("n_base_models");
 const expression_ref state_letters = var("state_letters");
@@ -34,13 +35,13 @@ const expression_ref MixtureModel = lambda_expression( constructor("MixtureModel
 
 // TODO: transition_p
 // After we get transition_p right, then it SHOULD be fast.  Benchmark!
-// 
+//
 
 Program SModel_Functions()
 {
   Program P;
 
-  expression_ref times = lambda_expression(Multiply<Double>());
+  expression_ref times = lambda_expression( Multiply<Double>() );
   expression_ref plus = lambda_expression( Add<Double>() );
   expression_ref plus_i = lambda_expression( Add<Int>() );
 
@@ -64,6 +65,10 @@ Program SModel_Functions()
      
   // QExp (ReversibleMarkov a smap q pi l t) = (LExp l pi t)
   P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), (LExp,v5,v4,v6));
+
+  // branch_transition_p m@(MixtureModel (DiscreteDistribution l) ) t = list_to_vector (fmap \p->(QExp (scale (t/(rate m)) (snd p) ) ) l)
+  P += Def( (branch_transition_p, (MixtureModel, (DiscreteDistribution, v3) ), v1 ),
+	    (fmap,v2^(QExp, (scale, (x1/(rate, (MixtureModel, (DiscreteDistribution, v3) ) ) ), (snd, v2) ) ), v3 ) );
 
   // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0
   P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), 
