@@ -690,7 +690,7 @@ namespace substitution
   boost::shared_ptr<const Object> Get_Eigensystem_Op::operator()(OperationArgs& Args) const
   {
     Matrix Q = *Args.evaluate_as<MatrixObject>(0);
-    vector<double> pi = *Args.evaluate_as<POD<vector<double> > >(1);
+    vector<double> pi = get_vector<double,Double>( Args.evaluate(1) );
     
     return Get_Eigensystem_Function(Q, pi);
   }

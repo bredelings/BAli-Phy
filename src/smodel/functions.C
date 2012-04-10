@@ -67,7 +67,8 @@ Program SModel_Functions()
   P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), (LExp,v5,v4,v6));
 
   // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0
-  P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), (ReversibleMarkov, v2, v3, (substitution::Q,v1,v5), v4, 0, 1.0) );
+  P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), 
+	    let_expression(v6,(substitution::Q,v1,v5),(ReversibleMarkov, v2, v3, v6, v4, (substitution::Get_Eigensystem,v6,v4), 1.0) ) );
 
   // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
   P += Def( (n_base_models, (MixtureModel,(DiscreteDistribution,v1))), (length,v1));
@@ -108,20 +109,7 @@ Program SModel_Functions()
 
 
 /*
- * SModelObject a smap
- *
- * ExchangeModelObject S            // SymmetricMatrixObject ?
- *
- * AlphabetExchangeModelObject (SModelObject a smap) (ExchangeModelObject S)
- *
- * ReversibleFrequencyModelObject (SModelObject a smap) R pi
- *
- * ReversibleMarkovModelObject (SModelObject a smap) Q pi Lambda
- * 
- * 
- *
- *
- *
+
  *
  * OK, so Q_from_R_and_S should take an "S" and a (ReversibleFrequencyModelObject a smap R pi) and return:
  *
