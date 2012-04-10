@@ -165,29 +165,6 @@ namespace substitution {
     virtual ~ExchangeModel() {};
   };
 
-  class SimpleExchangeModel: public ExchangeModel
-  {
-  public:
-
-    SimpleExchangeModel* clone() const {return new SimpleExchangeModel(*this);}
-
-    /// Get the parameter 'rho' (model switching rate)
-    double rho() const {return get_parameter_value_as<Double>(0);}
-    /// Set the parameter 'rho' (model switching rate)
-    void   rho(double r) {set_parameter_value(0,r);}
-
-    virtual efloat_t prior() const;
-
-    string name() const;
-
-    boost::shared_ptr<const Object> result() const;
-
-    SimpleExchangeModel(unsigned n);
-
-    ~SimpleExchangeModel() {}
-  };
-
-
   inline boost::shared_ptr<const alphabet> get_alphabet(const ::Model& M)
   {
     return dynamic_cast<const SModelObject&>(*M.result()).get_alphabet();
@@ -202,38 +179,7 @@ namespace substitution {
   };
 
   
-  class INV_Model: public AlphabetExchangeModel
-  {
-  public:
-    INV_Model* clone() const {return new INV_Model(*this);}
-
-    boost::shared_ptr<const Object> result() const;
-
-    string name() const;
-      
-    INV_Model(const alphabet& a);
-  };
-
   //--------------------- EQU Substitution Model ------------------------/
-
-  /// The EQU model for any alphabet - all letters are treated the same
-  /// This model has no parameters
-  class EQU: public AlphabetExchangeModel
-  {
-  public:
-
-    virtual EQU* clone() const {return new EQU(*this);}
-
-    boost::shared_ptr<const Object> result() const;
-
-    string name() const;
-
-    EQU(const alphabet& a);
-
-    virtual ~EQU() {}
-  };
-
-  //------------------ Empirical Substitution Model ---------------------//
 
   /// A generic model for any alphabet - the exchangeability matrix is loaded from a file
   class Empirical: public AlphabetExchangeModel
@@ -298,73 +244,6 @@ namespace substitution {
   public:
     NucleotideExchangeModel* clone() const=0;
   };
-
-  /// The Hasegawa, Kishino, Yano (1985)
-  class HKY: public NucleotideExchangeModel
-  {
-  public:
-
-    virtual HKY* clone() const {return new HKY(*this);}
-
-    /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa() const {return get_parameter_value_as<Double>(1);}
-    /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa(double k) {set_parameter_value(1,k);}
-
-    virtual efloat_t prior() const;
-
-    string name() const;
-
-    boost::shared_ptr<const Object> result() const;
-
-    /// Construct an HKY model on alphabet 'a'
-    HKY(const Nucleotides& N);
-  };
-
-  /// The Tamura-Nei (1993) model
-  class TN: public NucleotideExchangeModel 
-  {
-  public:
-
-    virtual TN* clone() const {return new TN(*this);}
-
-    /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa1() const {return get_parameter_value_as<Double>(1);}
-    /// Get the parameter 'kappa' (transition/transversion ratio)
-    double kappa2() const {return get_parameter_value_as<Double>(2);}
-
-    /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa1(double k) {set_parameter_value(1,k);}
-    /// Set the parameter 'kappa' (transition/transversion ratio)
-    void kappa2(double k) {set_parameter_value(2,k);}
-
-    virtual efloat_t prior() const;
-
-    string name() const;
-
-    boost::shared_ptr<const Object> result() const;
-
-    /// Construct an HKY model on alphabet 'a'
-    TN(const Nucleotides& N);
-  };
-
-  /// The General Time Reversible model
-  class GTR: public NucleotideExchangeModel 
-  {
-  public:
-    
-    virtual GTR* clone() const {return new GTR(*this);}
-
-    virtual efloat_t prior() const;
-
-    string name() const;
-
-    boost::shared_ptr<const Object> result() const;
-
-    /// Construct a GTR model on alphabet 'a'
-    GTR(const Nucleotides& N);
-  };
-    
 
   class TripletExchangeModel: public AlphabetExchangeModel
   {

@@ -8,6 +8,7 @@ const expression_ref MultiParameter = var("MultiParameter");
 const expression_ref rate = var("rate");
 const expression_ref scale = var("scale");
 const expression_ref QExp = var("QExp");
+const expression_ref Q_from_S_and_R = var("Q_from_S_and_R");
 
 const expression_ref n_base_models = var("n_base_models");
 const expression_ref state_letters = var("state_letters");
@@ -19,8 +20,11 @@ const expression_ref base_model = var("base_model");
 const expression_ref distribution = var("distribution");
 const expression_ref MultiRate = var("MultiRate");
 
-// (ReversibleMarkovModel alpha state_letters q pi l t)
+// (ReversibleMarkov alpha state_letters q pi l t)
 const expression_ref ReversibleMarkov = lambda_expression( constructor("ReversibleMarkov", 6) );
+
+// (ReversibleFrequency alpha state_letters pi R)
+const expression_ref ReversibleFrequency = lambda_expression( constructor("ReversibleMarkov", 4) );
 
 // (F81 alpha state_letters a pi)
 const expression_ref F81M = lambda_expression( constructor("F81", 4) );
@@ -61,6 +65,9 @@ Program SModel_Functions()
      
   // QExp (ReversibleMarkov a smap q pi l t) = (LExp l pi t)
   P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), (LExp,v5,v4,v6));
+
+  // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0
+  P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), (ReversibleMarkov, v2, v3, (substitution::Q,v1,v5), v4, 0, 1.0) );
 
   // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
   P += Def( (n_base_models, (MixtureModel,(DiscreteDistribution,v1))), (length,v1));

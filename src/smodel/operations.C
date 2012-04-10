@@ -15,61 +15,107 @@ using boost::dynamic_pointer_cast;
 
 namespace substitution
 {
+  shared_ptr<const Object> Plus_gwF_Function(const alphabet& a, double f, const expression_ref& pi_E)
+  {
+    shared_ptr<MatrixObject> R( new MatrixObject );
+
+    const int n = a.size();
+
+    R->t.resize(n, n);
+
+    // compute frequencies
+    vector<double> pi = get_vector<double,Double>(pi_E);
+    assert(a.size() == pi.size());
+
+    normalize(pi);
+    
+    // compute transition rates
+    valarray<double> pi_f(n);
+    for(int i=0;i<n;i++)
+      pi_f[i] = pow(pi[i],f);
+
+    for(int i=0;i<n;i++)
+      for(int j=0;j<n;j++)
+	R->t(i,j) = pi_f[i]/pi[i] * pi_f[j];
+
+    // diagonal entries should have no effect
+    for(int i=0;i<n;i++)
+      R->t(i,i) = 0;
+
+    return R;
+  }
+
   shared_ptr<const Object> Plus_gwF_Op::operator()(OperationArgs& Args) const
   {
-    double f = *Args.evaluate_as<Double>(0);
+    const alphabet& a = *Args.evaluate_as<alphabet>(0);
 
-    expression_ref pi_E = Args.evaluate(1);
+    double f = *Args.evaluate_as<Double>(1);
 
-    std::vector<double> pi = get_vector<double,Double>(pi_E);
+    expression_ref pi = Args.evaluate(2);
 
-    return Plus_gwF_Function(*a,f,pi);
+    return Plus_gwF_Function(a,f,pi);
   }
+
+  const expression_ref Plus_gwF = lambda_expression( Plus_gwF_Op() );
 
   using namespace probability;
 
-  shared_ptr<ExchangeModelObject> SimpleExchangeFunction(double rho, int n)
+  shared_ptr<Object> SimpleExchangeFunction(double rho, int n)
   {
-    shared_ptr<ExchangeModelObject> R (new ExchangeModelObject(n));
+    shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+
+    R->t.resize(n);
 
     for(int i=0;i<n;i++) {
       for(int j=0;j<n;j++)
-	R->S(i,j) = rho;
+	R->t(i,j) = rho;
 
-      R->S(i,i) = 0;       // this is NOT a rate away.
+      R->t(i,i) = 0;       // this is NOT a rate away.
     }
 
     return R;
   }
 
-  shared_ptr<ExchangeModelObject> EQU_Exchange_Function(const alphabet& a)
+  shared_ptr<const Object> EQU_Exchange_Function(const alphabet& a)
   {
-    shared_ptr<ExchangeModelObject> R ( new ExchangeModelObject(a.size()) );
+    shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+
+    R->t.resize(a.size());
 
     // Calculate S matrix
     for(int i=0;i<a.size();i++)
       for(int j=0;j<a.size();j++)
-	R->S(i,j) = 1;
+	R->t(i,j) = 1;
 
     return R;
   }
 
-  shared_ptr<AlphabetExchangeModelObject> HKY_Function(const Nucleotides& a, double kappa)
+  shared_ptr<const Object> HKY_Function(const Nucleotides& a, double kappa)
   {
     assert(a.size()==4);
 
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
+    shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+
+    R->t.resize(a.size());
 
     for(int i=0;i<a.size();i++)
       for(int j=0;j<a.size();j++) {
 	if (i==j) continue;
 	if (a.transversion(i,j))
-	  R->S(i,j) = 1;
+	  R->t(i,j) = 1;
 	else
-	  R->S(i,j) = kappa;
+	  R->t(i,j) = kappa;
       }
 
     return R;
+  }
+
+  shared_ptr<const Object> HKY_Op::operator()(OperationArgs& Args) const
+  {
+    shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+    double kappa = *Args.evaluate_as<Double>(1);
+    
+    return HKY_Function(*N,kappa);
   }
 
   formula_expression_ref HKY_Model(const alphabet& a)
@@ -81,24 +127,35 @@ namespace substitution
     return HKY(a)(kappa);
   }
   
-  shared_ptr<ExchangeModelObject> TN_Function(const Nucleotides& a, double kappa1, double kappa2)
+  shared_ptr<const Object> TN_Function(const Nucleotides& a, double kappa1, double kappa2)
   {
     assert(a.size()==4);
   
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
+    shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+
+    R->t.resize(a.size());
   
     for(int i=0;i<a.size();i++)
       for(int j=0;j<a.size();j++) {
 	if (i==j) continue;
 	if (a.transversion(i,j))
-	  R->S(i,j) = 1;
+	  R->t(i,j) = 1;
 	else if (a.purine(i))
-	  R->S(i,j) = kappa1;
+	  R->t(i,j) = kappa1;
 	else
-	  R->S(i,j) = kappa2;
+	  R->t(i,j) = kappa2;
       }
   
     return R;
+  }
+
+  shared_ptr<const Object> TN_Op::operator()(OperationArgs& Args) const
+  {
+    shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+    double kappa1 = *Args.evaluate_as<Double>(1);
+    double kappa2 = *Args.evaluate_as<Double>(2);
+    
+    return TN_Function(*N,kappa1,kappa2);
   }
 
   formula_expression_ref TN_Model(const alphabet& a)
@@ -111,51 +168,42 @@ namespace substitution
     return TN(a)(kappa1)(kappa2);
   }
   
-  /*
-   * OK, so an INV model can be see as one of two things.  It can be an additional rate (e.g. 0) to run
-   * an underlying model at. Or, it can be seen as an additional rate to run every model in a mixture at.
-   * 
-   * Finally, we note that the ability to use + expressions to specify models is in fact a a problem
-   * for a different sub-language.  We are really interested in how to specify models in the real
-   * sub-language - the more expressive one.  For that, we need to make the handling of discrete distributions
-   * more accurate.  That is, we need to (for example) easily be able to add categories to discrete distributions.
-   * We can then take a "Gamma()" distribution, and add an extra category 0 to that w/ weight p.
-   *   For the + expressions in setup-smodel its OK to hack in a gammaINV model, temporarily.
-   */
-
-  shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a,int n)
+  shared_ptr<const Object> GTR_Function(const Nucleotides& a, 
+					double AG, double AT, double AC,
+					double GT, double GC, 
+					double TC)
   {
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a,n) );
+    assert(a.size()==4);
 
-    // Calculate S matrix
-    for(int i=0;i<R->n_states();i++)
-      for(int j=0;j<R->n_states();j++)
-	R->S(i,j) = 0;
+    shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+
+    R->t.resize(a.size());
+  
+    double total = AG + AT + AC + GT + GC + TC;
+
+    R->t(0,1) = AG/total;
+    R->t(0,2) = AT/total;
+    R->t(0,3) = AC/total;
+
+    R->t(1,2) = GT/total;
+    R->t(1,3) = GC/total;
+
+    R->t(2,3) = TC/total;
 
     return R;
   }
 
-  shared_ptr<AlphabetExchangeModelObject> GTR_Function(const Nucleotides& a, 
-						       double AG, double AT, double AC,
-						       double GT, double GC, 
-						       double TC)
+  boost::shared_ptr<const Object> GTR_Op::operator()(OperationArgs& Args) const
   {
-    assert(a.size()==4);
-
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(a) );
-
-    double total = AG + AT + AC + GT + GC + TC;
-
-    R->S(0,1) = AG/total;
-    R->S(0,2) = AT/total;
-    R->S(0,3) = AC/total;
-
-    R->S(1,2) = GT/total;
-    R->S(1,3) = GC/total;
-
-    R->S(2,3) = TC/total;
-
-    return R;
+    boost::shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+    double AG = *Args.evaluate_as<Double>(1);
+    double AT = *Args.evaluate_as<Double>(2);
+    double AC = *Args.evaluate_as<Double>(3);
+    double GT = *Args.evaluate_as<Double>(4);
+    double GC = *Args.evaluate_as<Double>(5);
+    double TC = *Args.evaluate_as<Double>(6);
+    
+    return GTR_Function(*N,AG,AT,AC,GT,GC,TC);
   }
 
   formula_expression_ref GTR_Model(const alphabet& a)
@@ -258,37 +306,6 @@ namespace substitution
     return R;
   }
 
-  shared_ptr<ReversibleFrequencyModelObject> Plus_gwF_Function(const alphabet& a, double f, const vector<double>& pi)
-  {
-    assert(a.size() == pi.size());
-
-    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
-
-    // compute frequencies
-    R->pi = pi;
-    normalize(R->pi);
-    
-    // compute transition rates
-    valarray<double> pi_f(a.size());
-    for(int i=0;i<a.size();i++)
-      pi_f[i] = pow(R->pi[i],f);
-
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++)
-	R->R(i,j) = pi_f[i]/R->pi[i] * pi_f[j];
-
-    // diagonal entries should have no effect
-    for(int i=0;i<a.size();i++)
-      R->R(i,i) = 0;
-
-    return R;
-  }
-
-  expression_ref Plus_gwF(const alphabet& a)
-  {
-    return lambda_expression( Plus_gwF_Op(a) );
-  }
-
   formula_expression_ref Frequencies_Model(const alphabet& a, const valarray<double>& pi)
   {
     formula_expression_ref F = Tuple(a.size());
@@ -312,13 +329,11 @@ namespace substitution
   }
 
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
-  formula_expression_ref Plus_F_Model(const alphabet& a, const valarray<double>& pi)
+  formula_expression_ref Plus_F_Model(const alphabet& a, const valarray<double>& pi0)
   {
-    assert(a.size() == pi.size());
-    
-    formula_expression_ref Vars = Frequencies_Model(a,pi);
+    formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return Plus_gwF(a)(1.0)(Vars);
+    return (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), pi, (Plus_gwF, a, 1.0, pi));
   }
 
   formula_expression_ref Plus_F_Model(const alphabet& a)
@@ -328,15 +343,13 @@ namespace substitution
   }
 
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
-  formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi)
+  formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi0)
   {
-    assert(a.size() == pi.size());
-    
     formula_expression_ref f = def_parameter("f", 1.0, between(0,1), uniform_dist, Tuple(0.0, 1.0));
 
-    formula_expression_ref Vars = Frequencies_Model(a,pi);
+    formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return Plus_gwF(a)(f)(Vars);
+    return (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), pi, (Plus_gwF, a, f, pi));
   }
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a)
@@ -374,31 +387,7 @@ namespace substitution
     return Q_Function(*S, *F);
   }
 
-  expression_ref Q = lambda_expression( Q_Op() );
-
-  expression_ref Q_from_S_and_R_Function(const ExchangeModelObject& S, const ReversibleFrequencyModelObject& F)
-  {
-    vector<expression_ref> E(7);
-    E[0] = constructor("ReversibleMarkov",6);
-    E[1] = F.Alphabet();
-    E[2] = Box<vector<unsigned> >(F.state_letters());
-    E[3] = Q_Function(S.S, F.R);
-    E[4] = get_tuple(F.pi);
-    E[5] = 0;
-    E[6] = 1.0;
-
-    return graph_normalize(expression(E));
-  }
-
-  boost::shared_ptr<const Object> Q_from_S_and_R_Op::operator()(OperationArgs& Args) const
-  {
-    boost::shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(0);
-    boost::shared_ptr<const ReversibleFrequencyModelObject> F = Args.evaluate_as<ReversibleFrequencyModelObject>(1);
-    
-    return Q_from_S_and_R_Function(*S, *F);
-  }
-
-  expression_ref Q_from_S_and_R = lambda_expression( Q_from_S_and_R_Op() );
+  const expression_ref Q = lambda_expression( Q_Op() );
 
   formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& FS, const formula_expression_ref& FR)
   {

@@ -80,9 +80,9 @@ struct object_ref: public polymorphic_cow_ptr<Object>
 template<typename T>
 class Box: virtual public Object 
 {
-protected:
-  T t;
 public:
+  T t;
+
   Box<T>* clone() const {return new Box<T>(*this);}
 
   operator const T&() const {return t;}

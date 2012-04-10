@@ -218,6 +218,41 @@ expression_ref VectorSize()
   return lambda_expression(VectorSizeOp<T>());
 }
 
+template <typename T>
+struct Iota_Op: public Operation
+{
+  Iota_Op* clone() const {return new Iota_Op(*this);}
+
+  tribool compare(const Object& O) const
+  {
+    const Iota_Op* E = dynamic_cast<const Iota_Op<T>*>(&O);
+    return E;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    unsigned n = *Args.evaluate_as<Int>(0);
+
+    boost::shared_ptr<Box<std::vector<T> > > V(new Box<std::vector<T> >() );
+
+    V->t.resize(n);
+    for(unsigned i=0;i<n;i++)
+      V->t[i] = i;
+
+    return V;
+  }
+ 
+  std::string name() const {return "Iota";}
+
+  Iota_Op(): Operation(1) { }
+};
+ 
+template <typename T>
+expression_ref Iota()
+{
+  return lambda_expression(Iota_Op<T>());
+}
+
 struct LExp_Op: public Operation
 {
   LExp_Op* clone() const {return new LExp_Op(*this);}

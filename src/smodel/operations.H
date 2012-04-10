@@ -16,12 +16,8 @@
 
 namespace substitution {
 
-  boost::shared_ptr<ReversibleFrequencyModelObject> Plus_gwF_Function(const alphabet& a, double f, const std::vector<double>& pi);
-
   struct Plus_gwF_Op: public Operation
   {
-    boost::shared_ptr<const alphabet> a;
-
     Plus_gwF_Op* clone() const {return new Plus_gwF_Op(*this);}
 
     tribool compare(const Object& O) const
@@ -30,10 +26,6 @@ namespace substitution {
 	return true;
       
       if (typeid(*this) != typeid(O)) return false;
-
-      const Plus_gwF_Op* O2 = dynamic_cast<const Plus_gwF_Op*>(&O);
-
-      if (a != O2->a) return false;
       
       return true;
     }
@@ -42,16 +34,10 @@ namespace substitution {
 
     std::string name() const {return "+gwF";}
 
-    Plus_gwF_Op(const alphabet& A):Operation(2),a(A.clone()) { }
+    Plus_gwF_Op():Operation(3) { }
   };
 
-  expression_ref Plus_gwF(const alphabet& a);
-
-  boost::shared_ptr<ExchangeModelObject> SimpleExchangeFunction(double rho, int n);
-
-  boost::shared_ptr<ExchangeModelObject> EQU_Exchange_Function(const alphabet& a);
-
-  boost::shared_ptr<AlphabetExchangeModelObject> HKY_Function(const Nucleotides& a, double kappa);
+  extern const expression_ref Plus_gwF;
 
   struct HKY_Op: public Operation
   {
@@ -67,13 +53,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      boost::shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
-      double kappa = *Args.evaluate_as<Double>(1);
-
-      return HKY_Function(*N,kappa);
-    }
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "HKY";}
     
@@ -82,8 +62,6 @@ namespace substitution {
 
   formula_expression_ref HKY_Model(const alphabet& a);
   
-  boost::shared_ptr<ExchangeModelObject> TN_Function(const Nucleotides& a, double kappa1, double kappa2);
-
   struct TN_Op: public Operation
   {
     TN_Op* clone() const {return new TN_Op;}
@@ -98,14 +76,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      boost::shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
-      double kappa1 = *Args.evaluate_as<Double>(1);
-      double kappa2 = *Args.evaluate_as<Double>(2);
-
-      return TN_Function(*N,kappa1,kappa2);
-    }
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "TN";}
     
@@ -114,11 +85,6 @@ namespace substitution {
 
   formula_expression_ref TN_Model(const alphabet& a);
   
-  boost::shared_ptr<AlphabetExchangeModelObject> GTR_Function(const Nucleotides& a, 
-							      double AG, double AT, double AC,
-							      double GT, double GC, 
-							      double TC);
-
   struct GTR_Op: public Operation
   {
     GTR_Op* clone() const {return new GTR_Op;}
@@ -133,18 +99,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
-    {
-      boost::shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
-      double AG = *Args.evaluate_as<Double>(1);
-      double AT = *Args.evaluate_as<Double>(2);
-      double AC = *Args.evaluate_as<Double>(3);
-      double GT = *Args.evaluate_as<Double>(4);
-      double GC = *Args.evaluate_as<Double>(5);
-      double TC = *Args.evaluate_as<Double>(6);
-
-      return GTR_Function(*N,AG,AT,AC,GT,GC,TC);
-    }
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "GTR";}
     
@@ -153,8 +108,6 @@ namespace substitution {
 
   formula_expression_ref GTR_Model(const alphabet& a);
   
-  boost::shared_ptr<AlphabetExchangeModelObject> INV_Exchange_Function(const alphabet& a,int n);
-
   boost::shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
 
   boost::shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2);
@@ -188,30 +141,7 @@ namespace substitution {
     Q_Op():Operation(2) { }
   };
 
-  extern expression_ref Q;
-
-  struct Q_from_S_and_R_Op: public Operation
-  {
-    Q_from_S_and_R_Op* clone() const {return new Q_from_S_and_R_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "Q_from_S_and_R";}
-
-    Q_from_S_and_R_Op():Operation(2) { }
-  };
-
-  extern expression_ref Q_from_S_and_R;
+  extern const expression_ref Q;
 
   struct M0_Op: public Operation
   {

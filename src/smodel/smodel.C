@@ -67,33 +67,6 @@ namespace substitution {
     return ::dirichlet_pdf(p2,N);
   }
 
-  efloat_t SimpleExchangeModel::prior() const 
-  {
-    if (is_fixed(0))
-      return 1;
-    else
-      return laplace_pdf(log(rho()), -3, 1)/rho();
-  }
-
-  shared_ptr<const Object> SimpleExchangeModel::result() const
-  {
-    Double rho = get_parameter_value_as<Double>(0);
-    Int n = get_parameter_value_as<Int>(1);
-
-    return SimpleExchangeFunction(rho, n);
-  }
-
-  string SimpleExchangeModel::name() const 
-  {
-    return "SimpleExchangeModel";
-  }
-
-  SimpleExchangeModel::SimpleExchangeModel(unsigned n)
-  {
-    add_parameter(Parameter("rho",Double(exp(-4)),lower_bound(0)));
-    add_parameter(Parameter("n_states",Int(n)));
-  }
-
   //----------------------- Frequency Models ------------------------//
 
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
@@ -145,7 +118,8 @@ namespace substitution {
     double f = get_parameter_value_as<Double>(1);
     vector<double> pi = get_vector<double>( get_parameter_values_as<Double>( range<int>(2,a.size()) ) );
 
-    return Plus_gwF_Function(a,f,pi);
+    std::abort();
+    //    return Plus_gwF_Function(a,f,pi);
   }
 
   efloat_t SimpleFrequencyModel::prior() const 
@@ -649,39 +623,6 @@ namespace substitution {
     recalc_all();
   }
 
-  //---------------------- INV_Model --------------------------//
-
-  shared_ptr<const Object> INV_Model::result() const
-  {
-    return INV_Exchange_Function(get_parameter_value_as<alphabet>(0), get_parameter_value_as<alphabet>(0).size());
-  }
-
-  string INV_Model::name() const 
-  {
-    return "INV";
-  }
-
-  INV_Model::INV_Model(const alphabet& a)
-  {
-    add_parameter(Parameter("alphabet",a));
-  }
-      
-  //----------------------- EQU -------------------------//
-
-  shared_ptr<const Object> EQU::result() const
-  {
-    return EQU_Exchange_Function(get_parameter_value_as<alphabet>(0));
-  }
-
-  string EQU::name() const {
-    return "EQU";
-  }
-
-  EQU::EQU(const alphabet& a) 
-  {
-    add_parameter(Parameter("alphabet",a));
-  }
-
   //----------------------- Empirical -------------------------//
 
   shared_ptr<const Object> Empirical::result() const
@@ -844,123 +785,6 @@ namespace substitution {
   // mtzoa Rota Stabelli 2009
   // mtart Rota Stabelli 2009
 
-
-  //------------------------- HKY -----------------------------//
-  string HKY::name() const {
-    return "HKY";
-  }
-
-  efloat_t HKY::prior() const 
-  {
-    if (is_fixed(1))
-      return 1;
-    else
-      return laplace_pdf(log(kappa()), log(2), 0.25)/kappa();
-  }
-
-  shared_ptr<const Object> HKY::result() const
-  {
-    const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
-    Double kappa = get_parameter_value_as<Double>(1);
-
-    return HKY_Function(N, kappa);
-  }
-
-  /// Construct an HKY model on alphabet 'a'
-  HKY::HKY(const Nucleotides& N)
-  { 
-    add_parameter(Parameter("alphabet",N));
-    add_parameter(Parameter("HKY::kappa", Double(2), lower_bound(0)));
-  }
-
-  //------------------------- TN -----------------------------//
-  string TN::name() const {
-    return "TN";
-  }
-
-
-  efloat_t TN::prior() const 
-  {
-    efloat_t P = 1;
-    if (not is_fixed(1))
-      P *= laplace_pdf(log(kappa1()), log(2), 0.25)/kappa1();
-    if (not is_fixed(2))
-      P *= laplace_pdf(log(kappa2()), log(2), 0.25)/kappa2();
-    return P;
-  }
-
-  shared_ptr<const Object> TN::result() const
-  {
-    const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
-    Double kappa1 = get_parameter_value_as<Double>(1);
-    Double kappa2 = get_parameter_value_as<Double>(2);
-    
-    return TN_Function(N, kappa1, kappa2);
-  }
-  
-  /// Construct a TN model on alphabet 'a'
-  TN::TN(const Nucleotides& N)
-  { 
-    add_parameter(Parameter("alphabet",N));
-    add_parameter(Parameter("TN::kappa(pur)",Double(2), lower_bound(0)));
-    add_parameter(Parameter("TN::kappa(pyr)",Double(2), lower_bound(0)));
-  }
-
-  string GTR::name() const {
-    return "GTR";
-  }
-
-  // This should be OK - the increments are linear combinations of gaussians...
-
-  /// return the LOG of the prior
-  efloat_t GTR::prior() const 
-  {
-    valarray<double> n(6);
-
-    n[0] = 2; // AG - transition
-
-    n[1] = 1; // AT - transversion
-
-    n[2] = 1; // AC - transversion
-
-    n[3] = 1; // GT - transversion
-
-    n[4] = 1; // GC - transversion
-
-    n[5] = 2; // TC - transition
-
-    n *= 4;
-
-    return dirichlet_pdf( get_parameter_values_as<Double>( range<int>(1,6) ), n);
-  }
-
-
-  shared_ptr<const Object> GTR::result() const
-  {
-    const Nucleotides& N = get_parameter_value_as<Nucleotides>(0);
-
-    Double AG = get_parameter_value_as<Double>(1);
-    Double AT = get_parameter_value_as<Double>(2);
-    Double AC = get_parameter_value_as<Double>(3);
-
-    Double GT = get_parameter_value_as<Double>(4);
-    Double GC = get_parameter_value_as<Double>(5);
-
-    Double TC = get_parameter_value_as<Double>(6);
-
-    return GTR_Function(N, AG, AT, AC, GT, GC, TC);
-  }
-
-  GTR::GTR(const Nucleotides& N)
-  { 
-    add_parameter(Parameter("alphabet",N));
-    add_parameter(Parameter("GTR::AG", Double(2.0/8), between(0, 1)));
-    add_parameter(Parameter("GTR::AT", Double(1.0/8), between(0, 1)));
-    add_parameter(Parameter("GTR::AC", Double(1.0/8), between(0, 1)));
-    add_parameter(Parameter("GTR::GT", Double(1.0/8), between(0, 1)));
-    add_parameter(Parameter("GTR::GC", Double(1.0/8), between(0, 1)));
-    add_parameter(Parameter("GTR::TC", Double(2.0/8), between(0, 1)));
-  }
 
   //------------------------ Triplet Models -------------------//
 

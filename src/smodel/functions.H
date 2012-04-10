@@ -8,6 +8,8 @@ extern const expression_ref rate;
 extern const expression_ref scale;
 extern const expression_ref QExp;
 extern const expression_ref ReversibleMarkov;
+extern const expression_ref ReversibleFrequency;
+extern const expression_ref Q_from_S_and_R;
 
 extern const expression_ref MixtureModel;
 extern const expression_ref n_base_models;

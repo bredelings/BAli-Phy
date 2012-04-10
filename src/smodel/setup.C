@@ -127,10 +127,11 @@ bool process_stack_Markov(vector<string>& string_stack,
   formula_expression_ref R;
 
   //------ Get the base markov model (Reversible Markov) ------//
+  /*
   if (match(string_stack,"EQU",arg))
     model_stack.push_back(EQU(*a));
-
-  else if (match(string_stack,"F81",arg))
+  */
+  if (match(string_stack,"F81",arg))
   {
     if (frequencies)
       model_stack.push_back(F81_Model(*a,*frequencies));
@@ -173,6 +174,7 @@ bool process_stack_Markov(vector<string>& string_stack,
       throw myexception()<<"EQUx3:: '"<<a->name<<"' is not a triplet alphabet.";
   }
   */      
+  /*
   else if (match(string_stack,"HKYx3",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
@@ -197,6 +199,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     else
       throw myexception()<<"GTRx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
+  */
   else if (match(string_stack,"PAM",arg)) {
     if (*a != AminoAcids())
       throw myexception()<<"PAM: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
@@ -248,7 +251,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     if (not C)
       throw myexception()<<"M0: '"<<a->name<<"' is not a 'Codons' alphabet";
 
-    formula_expression_ref N_submodel = HKY(C->getNucleotides());
+    formula_expression_ref N_submodel = HKY_Model(C->getNucleotides());
 
     if (not arg.empty()) 
     {
@@ -410,7 +413,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
 /// \brief Construct a ReversibleMarkovModel from model \a M
 formula_expression_ref get_RA(const formula_expression_ref& M, const string& name,
-			      const shared_ptr< const valarray<double> >& frequencies)
+			      const shared_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
 {
   if (is_a(M.result(SModel_Functions()), "F81"))
     return M;
@@ -420,7 +423,6 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
 
   try {
     formula_expression_ref top = get_EM(M,name);
-    shared_ptr<const alphabet> a = top.result_as<SModelObject>()->get_alphabet();
     // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
     if (frequencies)
       return Simple_gwF_Model(top, *a, *frequencies); 
@@ -435,12 +437,12 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
 /// \brief Construct a ReversibleMarkovModel from the top of the model stack
 formula_expression_ref get_RA(vector<formula_expression_ref >& model_stack, 
 			      const string& name,
-			      const shared_ptr< const valarray<double> >& frequencies)
+			      const shared_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": couldn't find any model to use.";
   
-  return get_RA(model_stack.back(), name, frequencies);
+  return get_RA(model_stack.back(), name, a, frequencies);
 }
 
 
@@ -453,19 +455,20 @@ formula_expression_ref get_RA_default(vector<formula_expression_ref >& model_sta
   if (model_stack.empty())
     model_stack.push_back( get_smodel_(default_markov_model(*a), a, frequencies));
   
-  return get_RA(model_stack.back(), name, frequencies);
+  return get_RA(model_stack.back(), name, a, frequencies);
 }
 
 
 /// \brief Construct a MultiModel from model \a M
 formula_expression_ref
-get_MM(const formula_expression_ref& M, const string& name, const shared_ptr< const valarray<double> >& frequencies)
+get_MM(const formula_expression_ref& M, const string& name, 
+       const shared_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
 {
   if (is_a(M.result(SModel_Functions()), "MixtureModel"))
     return M;
 
   try { 
-    return Unit_Model( get_RA(M,name,frequencies) ) ; 
+    return Unit_Model( get_RA(M,name,a, frequencies) ) ; 
   }
   catch (std::exception& e) { 
     throw myexception()<<name<<": Can't construct a UnitModel from '"<<M.exp()<<"':\n"<<e.what();
@@ -474,12 +477,13 @@ get_MM(const formula_expression_ref& M, const string& name, const shared_ptr< co
 
 /// \brief Construct a MultiModel from the top of the model stack.
 formula_expression_ref
-get_MM(vector<formula_expression_ref >& model_stack, const string& name,const shared_ptr< const valarray<double> >& frequencies)
+get_MM(vector<formula_expression_ref >& model_stack, const string& name, 
+       const shared_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": Trying to construct a MultiModel, but no model was given.";
 
-  return get_MM(model_stack.back(), name, frequencies);
+  return get_MM(model_stack.back(), name, a, frequencies);
 }
 
 /// \brief Construct a MultiModel from the top of the model stack.
@@ -491,7 +495,7 @@ get_MM_default(vector<formula_expression_ref >& model_stack, const string& name,
   if (model_stack.empty())
     model_stack.push_back( get_smodel_(default_markov_model(*a), a, frequencies));
 
-  return get_MM(model_stack.back(), name, frequencies);
+  return get_MM(model_stack.back(), name, a, frequencies);
 }
 
 #include "operations.H"
@@ -597,7 +601,7 @@ bool process_stack_Multi(vector<string>& string_stack,
   {
     vector <formula_expression_ref> models;
     for(int i=0;i<args.size();i++)
-      models.push_back( get_MM (get_smodel_(args[i], a, frequencies),"Mixture",frequencies ) );
+      models.push_back( get_MM (get_smodel_(args[i], a, frequencies),"Mixture",a,frequencies ) );
 
     model_stack.push_back(Mixture_Model(models));
     std::cout<<"Mixture formula = "<<model_stack.back()<<std::endl;
@@ -923,7 +927,7 @@ get_smodel(const string& smodel_name, const shared_ptr<const alphabet>& a, const
   // check if the model actually fits alphabet a...
 
   // --------- Convert smodel to MultiModel ------------//
-  formula_expression_ref full_smodel = get_MM(smodel,"Final",frequencies);
+  formula_expression_ref full_smodel = get_MM(smodel,"Final",a,frequencies);
 
   return full_smodel;
 }
