@@ -54,6 +54,7 @@ if test "${host_os_noversion}" = darwin ; then
 
 fi
 
+CXXFLAGS="-std=c++11 $CXXFLAGS"
 AC_SUBST(extra_includes)
 AC_SUBST(extra_libs2)
 
