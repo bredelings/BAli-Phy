@@ -59,9 +59,14 @@ extern "C" {
 namespace po = boost::program_options;
 using po::variables_map;
 
-using namespace std;
-
 const double inch = 72.0;
+
+using std::vector;
+using std::string;
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::ostream;
 
 class cairo_plotter
 {
@@ -589,7 +594,7 @@ double common_layout::xmin() const
 {
   double m = node_positions[0].x;
   for(int i=0;i<node_positions.size();i++)
-    m = min(m,node_positions[i].x);
+    m = std::min(m,node_positions[i].x);
   return m;
 }
 
@@ -597,7 +602,7 @@ double common_layout::xmax() const
 {
   double m = node_positions[0].x;
   for(int i=0;i<node_positions.size();i++)
-    m = max(m,node_positions[i].x);
+    m = std::max(m,node_positions[i].x);
   return m;
 }
 
@@ -605,7 +610,7 @@ double common_layout::ymin() const
 {
   double m = node_positions[0].y;
   for(int i=0;i<node_positions.size();i++)
-    m = min(m,node_positions[i].y);
+    m = std::min(m,node_positions[i].y);
   return m;
 }
 
@@ -613,7 +618,7 @@ double common_layout::ymax() const
 {
   double m = node_positions[0].y;
   for(int i=0;i<node_positions.size();i++)
-    m = max(m,node_positions[i].y);
+    m = std::max(m,node_positions[i].y);
   return m;
 }
 
@@ -655,7 +660,7 @@ void common_layout::rotate_for_aspect_ratio(double xw,double yw)
     double alpha = M_PI/n_parts * i;
     common_layout L = *this;
     L.rotate(alpha,xc,yc);
-    double l_scale = min(xw/L.x_width(),yw/L.y_width());
+    double l_scale = std::min(xw/L.x_width(),yw/L.y_width());
     if (l_scale > scale) {
       angle = alpha;
       scale = l_scale;
@@ -1270,8 +1275,8 @@ void equalize_daylight(tree_layout& L,int n)
       for(int j=0;j<branches.size();j++) 
 	if (i!=j) {
 	  double delta = angles[j] - angles[i];
-	  daylight_after[i] = min(daylight_after[i],delta);
-	  daylight_before[j] = min(daylight_before[j],delta);
+	  daylight_after[i] = std::min(daylight_after[i],delta);
+	  daylight_before[j] = std::min(daylight_before[j],delta);
 	}
     }
 
@@ -1951,7 +1956,7 @@ double angle_difference(double a1, double a2)
 
   if (a1 > a2) std::swap(a1,a2);
 
-  return min (a2-a1,a1+M_PI*2-a2);
+  return std::min (a2-a1,a1+M_PI*2-a2);
 }
 
 double get_angle_derivative(double x11, double x12,
@@ -1971,13 +1976,13 @@ double get_angle_derivative(double x11, double x12,
   double D = H/L;
 
   //  cerr<<"D = "<<D<<"  L = "<<L<<"H = "<<H<<"  A = "<<A<<" B = "<<B<<endl;
-  assert(not isnan(x21) and isfinite(x21));
-  assert(not isnan(x22) and isfinite(x22));
-  assert(not isnan(D) and isfinite(D));
-  D = max(D,-1.0);
-  D = min(D,1.0);
+  assert(not isnan(x21) and std::isfinite(x21));
+  assert(not isnan(x22) and std::isfinite(x22));
+  assert(not isnan(D) and std::isfinite(D));
+  D = std::max(D,-1.0);
+  D = std::min(D,1.0);
   double a = acos(D);
-  assert(not isnan(a) and isfinite(a));
+  assert(not isnan(a) and std::isfinite(a));
 
   double dA_dx11 = 2*(x11 - x31), dA_dx12 = 2*(x12 - x32);
   double dA_dx21 = 0            , dA_dx22 = 0;
@@ -2071,8 +2076,8 @@ double angle_energy(const graph_layout& GL,vector<point_position>& D,
 				  da_dx31,da_dx32);
 
   //  cerr<<"a = "<<a<<"   isnan(a) = "<<isnan(a)<<"   isnormal(a) = "<<isnormal(a)<<endl;
-  assert(isnormal(a));
-  if (not isnormal(a))
+  assert(std::isnormal(a));
+  if (not std::isnormal(a))
     std::abort();
   assert(abs(a-theta) < 1.0e-5);
 
@@ -2428,10 +2433,10 @@ vector<point_position> energy_derivative_2D(const graph_layout& GL1, const graph
 
 double max_delta(const vector<point_position>& p)
 {
-  double m = max(abs(p[0].x),abs(p[0].y));
+  double m = std::max(std::abs(p[0].x),std::abs(p[0].y));
   for(int i=1;i<p.size();i++) {
-    m = max(m,abs(p[i].x));
-    m = max(m,abs(p[i].y));
+    m = std::max(m,std::abs(p[i].x));
+    m = std::max(m,std::abs(p[i].y));
   }
   return m;
 }
@@ -2617,7 +2622,7 @@ void energy_layout(graph_layout& GL, const graph_energy_function& E,int n=1000)
       }
 
       // actually, we need an estimate of the CURVATURE to know when to stop!
-      if (max_delta(GL.node_positions)/min(GL.x_width(),GL.y_width()) < 0.00001)
+      if (max_delta(GL.node_positions)/std::min(GL.x_width(),GL.y_width()) < 0.00001)
 	return;
 
       // (how to go from 'energy near bottom' to 'position near position at lowest energy',
