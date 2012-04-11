@@ -542,10 +542,8 @@ void reg_heap::clear_used_input(int R1, int R2)
 void reg_heap::clear_used_inputs(int R)
 {
   set<int> used_inputs = access(R).used_inputs;
-  foreach(i, used_inputs)
-  {
-    clear_used_input(R, *i);
-  }
+  for(auto i: used_inputs)
+    clear_used_input(R, i);
 
   assert(access(R).used_inputs.empty());
 }
