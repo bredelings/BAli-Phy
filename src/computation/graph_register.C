@@ -1502,8 +1502,11 @@ int reg_heap::uniquify_reg(int R, int t)
       int S = regs[j];
       access(S).result = result;
 
+      // In general, the owners of a parent (S) should all be owners of a child (S).
+      // This allows S to have no owners, which could happen if S became unreachable.
+
       // Any call ancestors of E-ancestors of p should be E-ancestors of p, and therefore should be in t.
-      assert(reg_is_owned_by(S,t));
+      assert(access(S).owners.empty() or reg_is_owned_by(S,t));
 
       // Any call ancestors of E-ancestors of p should be E-ancestors of p, and therefore should be uniquified.
       assert(not reg_is_shared(S));
