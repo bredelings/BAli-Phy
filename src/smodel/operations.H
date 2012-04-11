@@ -291,7 +291,7 @@ namespace substitution {
 
     boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
  
-    std::string name() const {return "Get_Eigensystem";}
+    std::string name() const {return "Get_Equilbrium_Rate";}
 
     Get_Equilibrium_Rate_Op(): Operation(4) { }
   };
