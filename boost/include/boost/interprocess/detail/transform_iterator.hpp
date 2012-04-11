@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009.
+// (C) Copyright Ion Gaztanaga 2005-2011.
 // (C) Copyright Gennaro Prota 2003 - 2004.
 //
 // Distributed under the Boost Software License, Version 1.0.
@@ -62,7 +62,7 @@ class transform_iterator
    : public UnaryFunction
    , public std::iterator
       < typename Iterator::iterator_category
-      , typename detail::remove_reference<typename UnaryFunction::result_type>::type
+      , typename ipcdetail::remove_reference<typename UnaryFunction::result_type>::type
       , typename Iterator::difference_type
       , operator_arrow_proxy<typename UnaryFunction::result_type>
       , typename UnaryFunction::result_type>

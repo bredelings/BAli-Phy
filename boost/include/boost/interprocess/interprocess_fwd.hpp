@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -35,21 +35,11 @@ namespace interprocess{
 namespace bi = boost::intrusive;
 }}
 
-namespace std {
-
-template <class T>
-class allocator;
-
-template <class T>
-struct less;
-
-template <class T1, class T2>
-struct pair;
-
-template <class CharType> 
-struct char_traits;
-
-}  //namespace std {
+#include <utility>
+#include <memory>
+#include <functional>
+#include <iosfwd>
+#include <string>
 
 /// @endcond
 
@@ -158,7 +148,9 @@ class cached_adaptive_pool;
 //                            offset_ptr
 //////////////////////////////////////////////////////////////////////////////
 
-template <class T>
+static const std::size_t offset_type_alignment = 0;
+
+template <class T, class DifferenceType = std::ptrdiff_t, class OffsetType = std::size_t, std::size_t Alignment = offset_type_alignment>
 class offset_ptr;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -410,7 +402,10 @@ class weak_ptr;
 //                                  IPC
 //////////////////////////////////////////////////////////////////////////////
 
-class message_queue;
+template<class VoidPointer>
+class message_queue_t;
+
+typedef message_queue_t<offset_ptr<void> > message_queue;
 
 }}  //namespace boost { namespace interprocess {
 

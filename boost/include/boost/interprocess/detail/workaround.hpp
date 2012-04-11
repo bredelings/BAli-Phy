@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
 //
-// (C) Copyright Ion Gaztanaga 2005-2009. Distributed under the Boost
+// (C) Copyright Ion Gaztanaga 2005-2011. Distributed under the Boost
 // Software License, Version 1.0. (See accompanying file
 // LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 //
@@ -25,7 +25,7 @@
 
 #endif
 
-#if !(defined BOOST_INTERPROCESS_WINDOWS)
+#if !defined(BOOST_INTERPROCESS_WINDOWS)
 
    #include <unistd.h>
 
@@ -136,6 +136,11 @@
 #define BOOST_INTERPROCESS_NAMED_MUTEX_USES_POSIX_SEMAPHORES
 #define BOOST_INTERPROCESS_NAMED_SEMAPHORE_USES_POSIX_SEMAPHORES
 
+#endif
+
+// Timeout duration use if BOOST_INTERPROCESS_ENABLE_TIMEOUT_WHEN_LOCKING is set
+#ifndef BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS
+#define BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS 10000
 #endif
 
 #include <boost/interprocess/detail/config_end.hpp>
