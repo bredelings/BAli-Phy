@@ -385,18 +385,7 @@ expression_ref graph_normalize(const expression_ref& R)
       return let_expression(x_, x, apply_expression(f,x_));
     }
     else
-    {
-      vector<expression_ref> vars;
-      vector<expression_ref> bodies;
-
-      vars.push_back(f_);
-      vars.push_back(x_);
-
-      bodies.push_back(f);
-      bodies.push_back(x);
-
-      return let_expression(vars, bodies, apply_expression(f_,x_));
-    }
+      return let_expression({f_, x_}, {f, x}, apply_expression(f_,x_));
   }
 
   // 6. Case
@@ -1127,8 +1116,7 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
 
 vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
 {
-  vector<int> scan;
-  scan.push_back(R);
+  vector<int> scan = {R};
   assert(reg_is_owned_by(R,t));
 
   vector<int> unique;
