@@ -2,6 +2,7 @@
 #include "graph_register.H"
 #include "operations.H"
 #include <algorithm>
+#include <fstream>
 
 using boost::shared_ptr;
 using std::string;
@@ -9,6 +10,7 @@ using std::vector;
 using std::map;
 using std::pair;
 using std::set;
+using std::ofstream;
 
 using std::cerr;
 using std::endl;
@@ -2160,6 +2162,11 @@ int reg_heap::incremental_evaluate(int R, int t)
 #ifndef NDEBUG
       string SS = "";
       SS = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
+      {
+	std::ofstream f("token.dot");
+	dot_graph_for_token(*this, t, f);
+	f.close();
+      }
 #endif
 
       RegOperationArgs Args(R, *this, t);
@@ -2261,6 +2268,33 @@ void discover_graph_vars(const reg_heap& C, int R, map<int,expression_ref>& name
   names[R] = subst_referenced_vars(E, names);
 }
 
+string wrap(const string& s, int w)
+{
+  string s2 = s;
+  string result;
+  while (s2.size())
+  {
+    int pos = -1;
+    if (s2.size() > w)
+      pos = s2.find(' ',w);
+
+    if (result.size())
+      result += "\\n";
+
+    if (pos == -1)
+    {
+      result += s2;
+      s2 = "";
+    }
+    else
+    {
+      result += s2.substr(0,pos);
+      s2 = s2.substr(pos+1);
+    }
+  }
+  return result;
+}
+
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>& ids)
 {
   map< int, expression_ref> names;
@@ -2289,10 +2323,14 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // node name
     o<<name<<" ";
     o<<"[";
-    o<<"label = \""<<R<<": "<<C.access(R).E->print()<<"\"";
-    o<<",shape=box";
+    string label = wrap(C.access(R).E->print(), 40);
+    o<<"label = \""<<R<<": "<<label<<"\"";
     if (C.access(R).result)
-      o<<",fillcolor = green,fontcolor=white";
+      o<<",fillcolor=\"#007700\",fontcolor=white";
+    if (C.access(R).changeable)
+      o<<",shape=doubleoctagon,color=red";
+    else
+      o<<",shape=box";
     o<<"];\n";
 
     // out-edges
@@ -2308,7 +2346,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       string name2 = "n" + convertToString(C.access(R).call);
       o<<name<<" -> "<<name2<<" ";
       o<<"[";
-      o<<"color = green";
+      o<<"color=\"#007700\"";
       o<<"];\n";
     }
   }
