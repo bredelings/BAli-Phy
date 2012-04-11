@@ -2275,3 +2275,42 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
   return launchbury_unnormalize(names[R]);
 }
 
+void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
+{
+  vector<int> regs = C.find_all_regs_in_context(t);
+
+  o<<"digraph \"token"<<t<<"\" {\n";
+  o<<"graph [ranksep=0.25, fontname=Arial, nodesep=0.125];\n";
+  o<<"node [fontname=Arial, style=filled, height=0, width=0, shape=box];\n";
+  o<<"edge [fontname=Arial];\n";
+  for(int R:regs)
+  {
+    string name = "n" + convertToString(R);
+    // node name
+    o<<name<<" ";
+    o<<"[";
+    o<<"label = \""<<R<<": "<<C.access(R).E->print()<<"\"";
+    o<<",shape=box";
+    if (C.access(R).result)
+      o<<",fillcolor = green,fontcolor=white";
+    o<<"];\n";
+
+    // out-edges
+    for(int R2: C.access(R).references)
+    {
+     string name2 = "n" + convertToString(R2);
+     o<<name<<" -> "<<name2<<";\n";
+    }
+
+    // call-edges
+    if (C.access(R).call != -1)
+    {
+      string name2 = "n" + convertToString(C.access(R).call);
+      o<<name<<" -> "<<name2<<" ";
+      o<<"[";
+      o<<"color = green";
+      o<<"];\n";
+    }
+  }
+  o<<"}"<<std::endl;
+}
