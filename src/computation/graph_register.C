@@ -2055,7 +2055,8 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
    *     --> p[r] = F    / restart
    */
 
-/// Evaluate R and return a reg containing the results that looks through unchangeable redirections = reg_var chains
+/// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
+/// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
 int reg_heap::incremental_evaluate(int R, int t)
 {
   assert(R >= 0 and R < n_regs());
@@ -2097,15 +2098,37 @@ int reg_heap::incremental_evaluate(int R, int t)
       access(R).result = access(call).result;
 
       // However, we can only update R to refer to S if R itself isn't changeable.
-      if (not access(R).changeable)
-	R = call;
+
+      // Does that ONLY happen if R is an indirection node?
+      //      if (not access(R).changeable)
+      //	R = call;
+
+      // This should only be an Operation or a Parameter.
+      assert(access(R).changeable);
     }
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
-    // Check if E is a reference to a heap variable
     else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(access(R).E))
-      set_call(R, RV->target);
+    {
+      assert( access(R).call == -1);
+
+      int C = incremental_evaluate(RV->target, t);
+
+      set_call(R, C);
+
+      assert(not access(R).changeable);
+
+      access(R).changeable = access(C).changeable;
+
+      access(R).result = access(C).result;
+
+      // If we point to C through an intermediate reg_var chain, then change us to point to the end
+      if (C != RV->target)
+	set_E(R, reg_var(C));
+
+      return C;
+    }
 
     // Check for WHNF *OR* heap variables
     else if (is_WHNF(access(R).E))
