@@ -1982,77 +1982,43 @@ public:
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>&);
 
   /*
-   * eval r: p[r] = E
+   * incremental_eval R1
    * 
-   *   if p[r] = E => F then
-   *      return r.
+   *   If R1.E = <R2>
+   *      R3 = incremental_evaluate(R2)
+   *      R1.changeable = R3.call.changeable (assert R2.changeable = R3.changeable)
+   *      if (R3 != R2)
+   *         R1.E = <R3>
+   *      R1.call = R3
+   *      R1.result = R1.call.result
+   *      return R1.call
    *  
-   *   else if p[r] = E has a call to p[s] then
-   *      s = eval s
-   *      p[r] = E => (result of p[s])
-   *      if p[r] is not changeable
-   *         r = s
-   *      return r;
+   *   If R1.E = parameter
+   *      R1.call = incremental_evaluate(R1.call)
+   *      R1.result = R1.call.result;
+   *      R1.changeable = true;
+   *      return R1.call;
    *  
-   *   else if E is WHNF then
-   *      p[r] = E => E
+   *   If R1.E = Op args (no call)
+   *      R1.changeable = reduction changeable
+   *      If (changeable)
+   *         R1.call = new reg (reduction result)
+   *      Else
+   *         R1.E = reduction result
    *
-   *   else if E is a variable p[s] then
-   *      p[r] = p[s] => p[s]
+   *   If R1.E = (Op or parameter) with call
+   *      R1.call = incremental_evaluate(R1.call)
+   *      R1.changeable = true;
+   *      R1.result = R1.call.result
+   *   
+   *   If R1.E = let expression
+   *      R1.E = reduction result
+   *      assert(not changeable)
+   *      assert(no call)
+   *      assert(no result)
    *
-   *   else if E is a parameter then the result must already be set
-   *      p[r] = parameter => R
-   *     
-   *   else
-   *      assert(E is not a parameter)
-   *      reduce E -> (F,changable)         [operations + let expression]
-   *      if E->F is unchangeable
-   *         p[r] = F
-   *         restart
-   *      else
-   *         if (F is a variable p[s])
-   *            p[r] = E => p[s]
-   *         else if (F is WHNF)
-   *            p[r] = E => F
-   *         else
-   *            s = allocate new reg
-   *            p[r] = E => p[s]
-   *         end if
-   *   end if
-   *
-   *   Cases at this point:
-   *   - NOT p[r] = parameter => E
-   *   - NOT p[r] = parameter => p[s]
-   *   -     p[r] = E => E
-   *   -     p[r] = p[s] => p[s]
-   *   -     p[r] = E => p[s] @ changeable
-   *   -     p[r] = E => F    @ changeable
-   *   - NOT p[r] = E => p[s] 
-   *     --> p[r] = p[s] / restart
-   *   - NOT p[r] = E => F 
-   *     --> p[r] = F    / restart
-   *
-   *   if p[r] = E => p[s] then
-   *      if (not changeable)
-   *         r = s
-   *      else
-   *         set_call(r,s)
-   *         restart
-   *
-   *   Cases at this point:
-   *
-   *   - NOT p[r] = parameter => E
-   *   - NOT p[r] = parameter => p[s]
-   *   -     p[r] = E => E
-   *   - NOT p[r] = p[s] => p[s]
-   *     --> p[r] = p[s] -> call s
-   *   - NOT p[r] = E => p[s] @ changeable
-   *     --> p[r] = p[s] -> call s
-   *   -     p[r] = E => F    @ changeable
-   *   - NOT p[r] = E => p[s] 
-   *     --> p[r] = p[s] / restart
-   *   - NOT p[r] = E => F 
-   *     --> p[r] = F    / restart
+   *   assert(return is WHNF)
+   *   assert(return is not <*>)
    */
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
