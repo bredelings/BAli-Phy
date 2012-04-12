@@ -550,6 +550,22 @@ void reg_heap::clear_used_inputs(int R)
   assert(access(R).used_inputs.empty());
 }
 
+// set_call (or set_call_unsafe) is only called when
+// 1. uniquify_reg( ): A  call is being remapped
+// 2. incremental_evaluate( ):
+// - an existing call is being remapping to the end of an unchangeable indirection chain.
+// - access(R).E is a reg_var
+// * a CHANGEABLE operation was performed (see set_reduction_result)
+// 3. set_reduction_result( )
+// - a parameter value is being set.
+// - an operation was just performed AND
+
+// Q: OK, so why is it OK to not create a new node with a redirection when we 
+// CHANGEABLY evaluate to a reg_var?
+// A: Well, it seems that the answer is that when we changably call <a>, and <a>
+//    *unchangeably* redirects to <b>, then we can call directly to <b>, although we
+//    have to invalidate this when the reduction result is invalidated.
+
 void reg_heap::set_call_unsafe(int R1, int R2)
 {
   // Check that R1 is legal
@@ -569,6 +585,7 @@ void reg_heap::set_call_unsafe(int R1, int R2)
   // check that all of the owners of R are also owners of R.call;
   assert(includes(access(R2).owners, access(R1).owners));
 }
+
 
 void reg_heap::set_call(int R1, int R2)
 {
@@ -2316,7 +2333,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
   o<<"digraph \"token"<<t<<"\" {\n";
   o<<"graph [ranksep=0.25, fontname=Arial, nodesep=0.125];\n";
   o<<"node [fontname=Arial, style=filled, height=0, width=0, shape=box];\n";
-  o<<"edge [fontname=Arial];\n";
+  o<<"edge [style=\"setlinewidth(2)\"];\n";
   for(int R:regs)
   {
     string name = "n" + convertToString(R);
@@ -2325,12 +2342,13 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     o<<"[";
     string label = wrap(C.access(R).E->print(), 40);
     o<<"label = \""<<R<<": "<<label<<"\"";
+    if (C.access(R).changeable)
+      o<<",style=\"dashed,filled\",color=red";
+
     if (C.access(R).result)
       o<<",fillcolor=\"#007700\",fontcolor=white";
-    if (C.access(R).changeable)
-      o<<",shape=doubleoctagon,color=red";
-    else
-      o<<",shape=box";
+    else if (C.access(R).changeable)
+      o<<",fillcolor=\"#770000\",fontcolor=white";
     o<<"];\n";
 
     // out-edges
@@ -2349,6 +2367,18 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       o<<"color=\"#007700\"";
       o<<"];\n";
     }
+
+    // used_inputs
+    for(int R2: C.access(R).used_inputs)
+    {
+     string name2 = "n" + convertToString(R2);
+      o<<name<<" -> "<<name2<<" ";
+      o<<"[";
+      o<<"color=\"#007777\"";
+      o<<",style=dashed";
+      o<<"];\n";
+    }
+
   }
   o<<"}"<<std::endl;
 }
