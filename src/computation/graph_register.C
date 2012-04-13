@@ -639,23 +639,23 @@ void reg_heap::set_E(int R, const expression_ref& e)
 
   access(R).E = e;
   access(R).references = get_exp_refs(e);
-  foreach(r, access(R).references)
+  for(int r: access(R).references)
   {
     // check that all of the owners of R are also owners of *r.
-    assert(includes(access(*r).owners, access(R).owners) );
+    assert(includes(access(r).owners, access(R).owners) );
 
     // check that *r is not already marked as being referenced by R
-    assert(not includes( access(*r).referenced_by_in_E, R) );
+    assert(not includes( access(r).referenced_by_in_E, R) );
 
     // mark *r as being referenced by R
-    access(*r).referenced_by_in_E.insert(R);
+    access(r).referenced_by_in_E.insert(R);
   }
 }
 
 void reg_heap::clear_E(int R)
 {
-  foreach(r,access(R).references)
-    access(*r).referenced_by_in_E.erase(R);
+  for(int r: access(R).references)
+    access(r).referenced_by_in_E.erase(R);
 
   access(R).references.clear();
 
@@ -730,10 +730,8 @@ void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
 
     // ... consider each downstream index2 that has index1 in slot2 of its computation (possibly unused).
     set<int> outputs = access(R1).outputs;
-    foreach(j,outputs)
+    for(int R2: outputs)
     {
-      int R2 = *j;
-
       // This one already marked NOT known_value_unchanged
       if (includes(visited, R2)) continue;
 
@@ -751,10 +749,8 @@ void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
     }
     assert(access(R1).outputs.empty());
 
-    foreach(j,access(R1).call_outputs)
+    for(int R2: access(R1).call_outputs)
     {
-      int R2 = *j;
-
       // This one already marked NOT known_value_unchanged
       if (includes(visited, R2)) continue;
 
@@ -882,10 +878,9 @@ reg_heap::root_t reg_heap::push_temp_head(const std::set<int>& tokens)
 {
   root_t r = allocate_reg();
   access(*r).owners = tokens;
-  foreach(t,tokens)
-  {
-    token_roots[*t].temp.push_back(r);
-  }
+  for(int t: tokens)
+    token_roots[t].temp.push_back(r);
+
   return r;
 }
 
@@ -901,12 +896,12 @@ void reg_heap::pop_temp_head(const std::set<int>& tokens)
   int t0 = *tokens.begin();
   root_t r0 = token_roots[t0].temp.back();
 
-  foreach(t,tokens)
+  for(int t: tokens)
   {
-    root_t r = token_roots[*t].temp.back();
+    root_t r = token_roots[t].temp.back();
     assert( r == r0 );
-    assert( includes( access(*r).owners, *t) );
-    token_roots[*t].temp.pop_back();
+    assert( includes( access(*r).owners, t) );
+    token_roots[t].temp.pop_back();
   }
 
   pop_root(r0);
@@ -1006,8 +1001,8 @@ void reg_heap::collect_garbage()
   assert(n_regs() == n_used_regs() + n_free_regs());
 
   vector<int> scan;
-  foreach(i,roots)
-    scan.push_back(*i);
+  for(int i: roots)
+    scan.push_back(i);
 
   while (not scan.empty())
   {
@@ -1984,41 +1979,53 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
   /*
    * incremental_eval R1
    * 
+   *   while(not R1.result) do:
+   *
+   *   If R1.E = (Op or parameter) with call
+   *      assert(R1.changeable == true)
+   *      R1.call = incremental_evaluate(R1.call)
+   *      R1.result = R1.call.result
+   *      <break>
+   *   
    *   If R1.E = <R2>
+   *      assert(R1.changeable == false)
    *      R3 = incremental_evaluate(R2)
-   *      R1.changeable = R3.call.changeable (assert R2.changeable = R3.changeable)
+   *      (assert R2.changeable = R3.changeable)
+   *      R1.changeable = R3.call.changeable
    *      if (R3 != R2)
    *         R1.E = <R3>
    *      R1.call = R3
    *      R1.result = R1.call.result
-   *      return R1.call
+   *      R1 = R1.call                 // This returns R1.call
+   *      <break>
    *  
-   *   If R1.E = parameter
-   *      R1.call = incremental_evaluate(R1.call)
-   *      R1.result = R1.call.result;
-   *      R1.changeable = true;
-   *      return R1.call;
+   *   If (R1.E is WHNF)
+   *      R1.result = R1.E
+   *      <break>
+   *
+   *   If R1.E = parameter and no call
+   *      Complain: parameters should always have a call!
    *  
    *   If R1.E = Op args (no call)
+   *      **Execute reduction**
    *      R1.changeable = reduction changeable
    *      If (changeable)
    *         R1.call = new reg (reduction result)
    *      Else
    *         R1.E = reduction result
+   *      <continue>
    *
-   *   If R1.E = (Op or parameter) with call
-   *      R1.call = incremental_evaluate(R1.call)
-   *      R1.changeable = true;
-   *      R1.result = R1.call.result
-   *   
    *   If R1.E = let expression
    *      R1.E = reduction result
    *      assert(not changeable)
    *      assert(no call)
    *      assert(no result)
+   *      <continue>
    *
-   *   assert(return is WHNF)
-   *   assert(return is not <*>)
+   *   assert(R1 has a result)
+   *   assert(R1.result is WHNF)
+   *   assert(R1.result is not a reg_var <*>)
+   *   return R1
    */
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
@@ -2049,6 +2056,9 @@ int reg_heap::incremental_evaluate(int R, int t)
     // If we know what to call, then call it and use it to set the result
     if (access(R).call != -1)
     {
+      // This should only be an Operation or a Parameter.
+      assert(access(R).changeable);
+
       // Evaluate S, looking through unchangeable redirections
       int call = incremental_evaluate(access(R).call, t);
 
@@ -2062,15 +2072,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 
       // R gets its result from S.
       access(R).result = access(call).result;
-
-      // However, we can only update R to refer to S if R itself isn't changeable.
-
-      // Does that ONLY happen if R is an indirection node?
-      //      if (not access(R).changeable)
-      //	R = call;
-
-      // This should only be an Operation or a Parameter.
-      assert(access(R).changeable);
     }
 
     /*---------- Below here, there is no call, and no result. ------------*/
