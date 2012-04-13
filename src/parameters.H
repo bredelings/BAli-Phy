@@ -212,7 +212,7 @@ public:
 
   data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&);
   data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&,
-		 const IndelModel&);
+		 const boost::shared_ptr<const IndelModel>&);
 };
 
 

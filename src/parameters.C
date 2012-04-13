@@ -626,7 +626,7 @@ efloat_t data_partition::heated_likelihood() const
 }
 
 data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
-			       const IndelModel& IM)
+			       const boost::shared_ptr<const IndelModel>& IM)
   :P(p),
    partition_index(i),
    IModel_(IM),
@@ -637,7 +637,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
    cached_transition_P(t.n_branches()),
-   variable_alignment_(true),
+   variable_alignment_( IM ),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
    LC(t, *this),
@@ -666,34 +666,8 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
 }
 
 data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t)
-  :P(p),
-   partition_index(i),
-   partition_name(n),
-   cached_alignment_prior_for_branch(t.n_branches()),
-   cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
-   cached_sequence_lengths(a.n_sequences()),
-   cached_branch_HMMs(t.n_branches()),
-   cached_transition_P(t.n_branches()),
-   variable_alignment_(false),
-   sequences( alignment_letters(a,t.n_leaves()) ),
-   A(a),
-   LC(t, *this),
-   branch_HMM_type(t.n_branches(),0)
-{
-  if (variable_alignment() and use_internal_index)
-    subA = subA_index_internal(a.length()+1, t.n_branches()*2);
-  else
-    subA = subA_index_leaf(a.length()+1, t.n_branches()*2);
-
-  for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
-    cached_alignment_counts_for_branch[b].invalidate();
-
-  const int n_models = n_base_models();
-  const int n_states = state_letters().size();
-  for(int b=0;b<cached_transition_P.size();b++)
-    cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
-							   Matrix(n_states, n_states));
-}
+  :data_partition(n,p,i,a,t,shared_ptr<const IndelModel>())
+{ }
 
 //-----------------------------------------------------------------------------//
 smodel_methods::smodel_methods(const expression_ref& E, context& C)
@@ -1305,13 +1279,11 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string name = string("part") + convertToString(i+1);
 
     // create a data partition
-    cow_ptr<data_partition> dp;
-    if (imodel_for_partition[i] != -1) {
-      const IndelModel& IM = IModel(imodel_for_partition[i]);
-      dp = cow_ptr<data_partition>(data_partition(name, this, i, A[i], *T, IM));
-    }
-    else 
-      dp = cow_ptr<data_partition>(data_partition(name, this, i, A[i], *T));
+    shared_ptr<const IndelModel> IM;
+    if (imodel_for_partition[i] != -1)
+      IM = IModels[imodel_for_partition[i]];
+
+    cow_ptr<data_partition> dp (new data_partition(name, this, i, A[i], *T, IM));
 
     // add the data partition
     data_partitions.push_back(dp);
@@ -1366,86 +1338,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       const vector<formula_expression_ref>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<int>& scale_mapping)
-  :smodel_for_partition(s_mapping),
-   scale_for_partition(scale_mapping),
-   branch_prior_type(0),
-   T(t),
-   TC(star_tree(t.get_leaf_labels())),
-   branch_HMM_type(t.n_branches(),0),
-   updown(-1),
-   features(0),
-   branch_length_max(-1)
-{
-  C += SModel_Functions();
-
-  constants.push_back(-1);
-
-  add_super_parameter(Parameter("Heat:beta", Double(1.0), between(0,1)));
-
-  for(int i=0;i<n_scales;i++)
-    add_super_parameter(Parameter("mu"+convertToString(i+1), Double(1.0), lower_bound(0.0)));
-
-  // check that smodel mapping has correct size.
-  if (smodel_for_partition.size() != A.size())
-    throw myexception()<<"There are "<<A.size()
-		       <<" data partitions, but you mapped smodels onto "
-		       <<smodel_for_partition.size();
-
-  // register the substitution models as sub-models
-  for(int i=0;i<SMs.size();i++) {
-    string name = "S" + convertToString(i+1);
-    formula_expression_ref S = prefix_formula(name,SMs[i]);
-    for(int j=0;j<S.n_notes();j++)
-      C.add_note(S.get_note(j));
-    SModels.push_back( smodel_methods(S.exp(), C) );
-  }
-
-  // NO indel model (in this constructor)
-
-  // check that we only mapping existing smodels to data partitions
-  for(int i=0;i<smodel_for_partition.size();i++) {
-    int m = smodel_for_partition[i];
-    if (m >= SModels.size())
-      throw myexception()<<"You can't use smodel "<<m+1<<" for data partition "<<i+1
-			 <<" because there are only "<<SModels.size()<<" smodels.";
-  }
-
-  // load values from sub-models (smodels/imodel)
-  check();
-
-  // don't constrain any branch lengths
-  for(int b=0;b<TC->n_branches();b++)
-    TC->branch(b).set_length(-1);
-
-  // create data partitions and register as sub-models
-  for(int i=0;i<A.size();i++) 
-  {
-    // compute name for data-partition
-    string name = string("part") + convertToString(i+1);
-
-    // create data partition
-    data_partitions.push_back(cow_ptr<data_partition>(data_partition(name, this, i, A[i],*T)));
-
-    // register data partition as sub-model
-    register_submodel(name);
-  }
-
-  // Add and initialize variables for branch *length*.
-  for(int s=0;s<n_scales;s++)
-  {
-    string prefix= "scale" + convertToString(s+1);
-    branch_length_indices.push_back(vector<int>());
-    for(int b=0;b<T->n_branches();b++)
-    {
-      double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
-      double delta_t = T->branch(b).length();
-
-      string name = "D" + convertToString(b+1);
-      int index = add_parameter(Parameter(prefix+"::"+name, Double(rate * delta_t)));
-      branch_length_indices[s].push_back(index);
-    }
-  }
-}
+  :Parameters(A, t, SMs, s_mapping, {}, {}, scale_mapping)
+{ }
 
 bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho)
 {
