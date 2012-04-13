@@ -1713,13 +1713,6 @@ void reg_heap::release_token(int t)
   // We shouldn't have any temporary heads still on the stack, here!
   assert(token_roots[t].temp.empty());
 
-  // remove the roots for the temporary heads of graph t
-  foreach(i,token_roots[t].temp)
-  {
-    pop_root(*i);
-  }
-  token_roots[t].temp.clear();
-
   // remove the roots for the heads of graph t
   foreach(i,token_roots[t].heads)
   {
@@ -1733,6 +1726,12 @@ void reg_heap::release_token(int t)
     pop_root(*i);
   }
   token_roots[t].parameters.clear();
+
+  foreach(i,token_roots[t].identifiers)
+  {
+    pop_root(i->second);
+  }
+  token_roots[t].identifiers.clear();
 
   // mark unused
   unused_tokens.push_back(t);
