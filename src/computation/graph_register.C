@@ -1381,19 +1381,17 @@ int reg_heap::uniquify_reg(int R, int t)
   // 5. Find the unsplit parents of split regs
   //    These will be the only parents of the old regs that have context t.
   vector<int> unsplit_parents;
-  foreach(i,new_regs)
+  for(const auto& i: new_regs)
   {
-    int R1 = i->first;
+    int R1 = i.first;
 
     set<int> parents = access(R1).referenced_by_in_E;
     add(parents, access(R1).outputs);
     // A node can only call another node if ... ??
     add(parents, access(R1).call_outputs);
 
-    foreach(j,parents)
+    for(int Q1: parents)
     {
-      int Q1 = *j;
-
       // Skip regs that we've handled already.
       if (access(Q1).state == reg::checked) continue;
 
@@ -1418,10 +1416,10 @@ int reg_heap::uniquify_reg(int R, int t)
     access(unsplit_parents[i]).state = reg::used;
 
   // Check that marks were removed.
-  foreach(i,new_regs)
+  for(const auto& i: new_regs)
   {
-    int R1 = i->first;
-    int R2 = i->second;
+    int R1 = i.first;
+    int R2 = i.second;
 
     // Original nodes should never have been marked.
     assert( access(R1).state == reg::used );
@@ -1430,23 +1428,17 @@ int reg_heap::uniquify_reg(int R, int t)
     assert( access(R2).state == reg::used );
 
     // The split nodes should now be E-ancestors in t
-    foreach(j,access(R2).referenced_by_in_E)
-    {
-      assert( access(R2).state == reg::used );
-    }
+    for(int j: access(R2).referenced_by_in_E)
+      assert( access(j).state == reg::used );
 
     // The split nodes should now be E-ancestors in t
-    foreach(j,access(R1).referenced_by_in_E)
-    {
-      assert( access(R2).state == reg::used );
-    }
+    for(int j: access(R1).referenced_by_in_E)
+      assert( access(j).state == reg::used );
   }
   
   // Remap the unsplit parents. (The parents don't move, but they reference children that do.)
-  for(int i=0;i<unsplit_parents.size();i++)
+  for(int Q1: unsplit_parents)
   {
-    int Q1 = unsplit_parents[i];
-
     // a. Remap E
     set_E(Q1, remap_regs(access(Q1).E, new_regs) );
     
@@ -1466,9 +1458,9 @@ int reg_heap::uniquify_reg(int R, int t)
     // c. Adjust use edges
     set<int> old_used_inputs = access(Q1).used_inputs;
     clear_used_inputs(Q1);
-    foreach(j, old_used_inputs)
+    for(int j: old_used_inputs)
     {
-      set_used_input(Q1, remap(*j, new_regs));
+      set_used_input(Q1, remap(j, new_regs));
     }
     
     // d. Remap result if E is in WHNF
