@@ -1083,9 +1083,8 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
   vector<int> ancestors;
 
   // Add the call parents of R
-  foreach (i, access(R).call_outputs)
+  for(int Q: access(R).call_outputs)
   {
-    int Q = *i;
     assert(access(Q).state == reg::used);
 
     // Skip ancestors not in this context
@@ -1096,16 +1095,12 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
   }
 
   // Recursively add the call parents
-  for(int i=0;i<ancestors.size();i++)
+  for(int Q1: ancestors)
   {
-    int Q1 = ancestors[i];
-
     assert(access(Q1).state == reg::checked);
 
-    foreach(j, access(Q1).call_outputs)
+    for(int Q2: access(Q1).call_outputs)
     {
-      int Q2 = *j;
-
       // Skip regs that have been seen before.
       if (access(Q2).state == reg::checked) continue;
 
@@ -1315,10 +1310,10 @@ int reg_heap::uniquify_reg(int R, int t)
 
   // 2a. Copy the over and remap E
   //     This is separate to that avoid linking to regs with no E.
-  foreach(i, new_regs)
+  for(const auto& i: new_regs)
   {
-    int R1 = i->first;
-    int R2 = i->second;
+    int R1 = i.first;
+    int R2 = i.second;
 
     // Check no mark on R2
     assert(access(R1).state == reg::used);
@@ -1334,20 +1329,18 @@ int reg_heap::uniquify_reg(int R, int t)
 
   // 2b.  Copy over and remap the call, used_inputs, and result
   //      This is after copying E to avoid linking to regs with no E.
-  foreach(i, new_regs)
+  for(const auto& i: new_regs)
   {
-    int R1 = i->first;
-    int R2 = i->second;
+    int R1 = i.first;
+    int R2 = i.second;
 
     // 4b. Initialize/Remap call
     if (access(R1).call != -1)
       set_call(R2, remap(access(R1).call, new_regs) );
 
     // 4c. Initialize/Remap used_inputs
-    foreach(j, access(R1).used_inputs)
-    {
-      set_used_input(R2, remap(*j, new_regs) );
-    }
+    for(int j: access(R1).used_inputs)
+      set_used_input(R2, remap(j, new_regs) );
 
     // 4d. Initialize/Remap result if E is in WHNF.
     if (access(R2).call == -1 and access(R1).result)
@@ -1377,12 +1370,12 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
   // 4c. Adjust identifiers to point to the new regs
-  foreach(j, token_roots[t].identifiers)
+  for(const auto& j: token_roots[t].identifiers)
   {
     // Hmmm.... this could be a lot of identifiers to scan...
-    int R1 = *(j->second);
+    int R1 = *j.second;
     if (includes(new_regs, R1))
-      *(j->second) = new_regs[R1];
+      *j.second = new_regs[R1];
   }
 
   // 5. Find the unsplit parents of split regs
