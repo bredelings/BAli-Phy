@@ -1095,8 +1095,10 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
   }
 
   // Recursively add the call parents
-  for(int Q1: ancestors)
+  for(int i=0;i<ancestors.size();i++)
   {
+    int Q1 = ancestors[i];
+
     assert(access(Q1).state == reg::checked);
 
     for(int Q2: access(Q1).call_outputs)
