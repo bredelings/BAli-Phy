@@ -565,25 +565,44 @@ void alpha_rename(shared_ptr<expression>& E, const expression_ref& x, const expr
     E->sub[2] = substitute(E->sub[2], x, y);
 
     // This is kind of an awkward way to simultaneously walk/modify an expression
-    expression_ref* R2 = &E->sub[1];
+    expression_ref* tail = &(E->sub[1]);
     bool found = false;
-    while(shared_ptr<expression> E2 = dynamic_pointer_cast<expression>(*R2))
+    // This is the (:,def,tail) or []
+    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
     {
-      shared_ptr<expression> E3 = dynamic_pointer_cast<expression>(E2->sub[1]);
-      assert(E3);
+      // This is the def (=,Var,Body)
+      shared_ptr<const expression> def = dynamic_pointer_cast<const expression>(cons->sub[1]);
 
-      // substitute in the body of v = expression
-      E3->sub[2] = substitute(E3->sub[2], x, y);
+      expression_ref Var = def->sub[1];
+      expression_ref Body = def->sub[2];
+
+      expression_ref Var2 = Var;
+      expression_ref Body2 = substitute(Body, x, y);
 
       // substitute for the bound variable
-      if (x->compare(*E3->sub[1]))
+      if (x->compare(*Var))
       {
-	E3->sub[1] = y;
+	Var2 = y;
 	found = true;
       }
 
+      expression_ref new_def = def;
+      if (Var != Var2 or Body != Body2)
+      {
+	shared_ptr<expression> new_def_E( def->clone() );
+	new_def_E->sub[1] = Var2;
+	new_def_E->sub[2] = Body2;
+	new_def = shared_ptr<const expression>(new_def_E);
+      }
+
+      // Here we create (:, new_R3, tail)
+      shared_ptr<expression> new_cons ( cons->clone() );
+      new_cons->sub[1] = new_def;
+
+      // Make the previous tail pointer -> new cons
+      (*tail) = shared_ptr<const Object>(new_cons);
       // Go to the next definition
-      R2 = &E2->sub[2];
+      tail = &(new_cons->sub[2]);
     }
     assert(found);
   }
@@ -671,33 +690,33 @@ int get_safe_binder_index(const expression_ref& R)
 // Idea: switch to de bruijn indices for bound variables only.  Makes substitution much simpler!
 // Question: how would I encode names?
 
-void do_substitute(expression_ref& R1, const expression_ref& D, const expression_ref& R2)
+bool do_substitute(expression_ref& R1, const expression_ref& D, const expression_ref& R2)
 {
+  expression_ref orig = R1;
   assert(not is_wildcard(D));
 
   // If this is the relevant dummy, then substitute
   if (D->compare(*R1))
   {
     R1 = R2;
-    return;
+    return true;
   }
 
   // FIXME: If we modify R1 later, will this modification show up in E1?
-  shared_ptr<expression> E1 = dynamic_pointer_cast<expression>(R1);
+  shared_ptr<const expression> E1 = dynamic_pointer_cast<const expression>(R1);
 
   // If this is any other constant, then it doesn't contain the dummy
-  if (not E1) return;
+  if (not E1) return false;
 
   // What indices are bound at the top level?
   std::set<dummy> bound = get_bound_indices(R1);
 
+  bool changed = false;
   if (not bound.empty())
   {
     // Don't substitute into local variables
-    foreach(i,bound)
-    {
-      if (D->compare(dummy(*i))) return;
-    }
+    for(const auto& i: bound)
+      if (D->compare(dummy(i))) return false;
     
     std::set<dummy> fv2 = get_free_indices(R2);
     std::set<dummy> overlap = intersection(bound,fv2);
@@ -711,7 +730,7 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
       // If R1 does not contain D, then we won't do any substitution anyway, so avoid alpha renaming.
       if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(D))
       {
-	if (fv1.find(*D2) == fv1.end()) return;
+	if (fv1.find(*D2) == fv1.end()) return false;
       }
 
       // Compute the total set of free variables to avoid clashes with when alpha renaming.
@@ -721,10 +740,14 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
       int new_index = std::max(max_index(fv2),max_index(bound))+1;
 
       // Do the alpha renaming
-      foreach(i,overlap)
-	alpha_rename(E1, dummy(*i), dummy(new_index++));
+      shared_ptr<expression> E2 (E1->clone());
+      for(const auto& i:overlap)
+	alpha_rename(E2, dummy(i), dummy(new_index++));
+      E1 = shared_ptr<const expression>(E2);
+      R1 = shared_ptr<const Object>(E1);
+      changed = true;
 
-      // We rename a bound variable dummy(*i) in R1 that is free in R2 to a new variable dummy(new_index)
+      // We rename a bound variable dummy(i) in R1 that is free in R2 to a new variable dummy(new_index)
       //   that is not bound or free in the initial version of R1 and free in R2.
 
       // The conditions are therefore:
@@ -735,8 +758,15 @@ void do_substitute(expression_ref& R1, const expression_ref& D, const expression
   }
 
   // Since this is an expression, substitute into sub-expressions
-  for(int i=0;i<E1->size();i++)
-    do_substitute(E1->sub[i], D, R2);
+  shared_ptr<expression> E2 (E1->clone());
+  for(int i=0;i<E2->size();i++)
+    changed = (do_substitute(E2->sub[i], D, R2) or changed);
+
+  if (changed)
+    R1 = shared_ptr<const Object>(E2);
+
+  assert((R1 != orig) == changed);
+  return changed;
 }
 
 bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars, const vector<expression_ref>& let_bodies,
@@ -1432,19 +1462,21 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ve
     // 1. we don't have to decompose this if its an irrefutable pattern
     if (is_irrefutable_pattern((patterns[i]))) continue;
 
-    shared_ptr<expression> PE = dynamic_pointer_cast<expression>( ok_patterns.back() );
+    shared_ptr<const expression> PEC = dynamic_pointer_cast<const expression>( ok_patterns.back() );
 
     // 2. we don't have to decompose this if its a simple branch: 0-arg constructor
-    if (not PE) continue;
+    if (not PEC) continue;
 
-    assert(dynamic_pointer_cast<const constructor>(PE->sub[0]));
+    assert(dynamic_pointer_cast<const constructor>(PEC->sub[0]));
     vector<int> complex_patterns;
-    for(int j=1;j<PE->size();j++)
-      if (not is_irrefutable_pattern(PE->sub[j]))
+    for(int j=1;j<PEC->size();j++)
+      if (not is_irrefutable_pattern(PEC->sub[j]))
 	complex_patterns.push_back(j);
 
     // 2. we don't have to decompose this if its a simple branch: n-arg constructor with all variable arguments.
     if (complex_patterns.empty()) continue;
+
+    shared_ptr<expression> PE (PEC->clone());
 
     // NOTE: This pattern (index i) must be the first one that isn't simple.
     // NOTE: we're going to bail here
@@ -1467,6 +1499,7 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ve
       sub_patterns.push_back(PE->sub[index]);
       PE->sub[index] = new_var;
     }
+    ok_patterns.back() = shared_ptr<const Object>(PE);
 
     // If ALL of the ADDITIONAL conditions are true, then return bodies[i].  If ANY of them fail, return 'otherwise'.
     ok_bodies.back() = multi_case_expression(true, sub_terms, sub_patterns, ok_bodies.back(), otherwise);
@@ -1759,14 +1792,25 @@ expression_ref launchbury_normalize(const expression_ref& R)
 
     V->sub[1] = launchbury_normalize(V->sub[1]);
 
-    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
-    while(bodies)
+    expression_ref* tail = &(V->sub[2]);
+    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
     {
-      assert(bodies->size() == 3);
-      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
-      assert(alternative);
-      alternative->sub[2] = launchbury_normalize(alternative->sub[2]);
-      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+      // Create a new Cons
+      assert(cons->size() == 3);
+      shared_ptr<expression> new_cons ( cons->clone() );
+
+      // Create a new alternative
+      shared_ptr<expression> new_alternative ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
+      new_alternative->sub[2] = launchbury_normalize(new_alternative->sub[2]);
+
+      // Make the new Cons point to the new alternative
+      new_cons->sub[1] = shared_ptr<const Object>(new_alternative);
+
+      // Make the level higher up point to the new cons
+      (*tail) = shared_ptr<const Object>(new_cons);
+
+      // Go to the next alternative
+      tail = &(new_cons->sub[2]);
     }
     
     return V;
@@ -1816,14 +1860,25 @@ expression_ref launchbury_normalize(const expression_ref& R)
   {
     expression* V = new expression(*E);
 
-    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[1]);
-    while(bodies)
+    expression_ref* tail = &(V->sub[1]);
+    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
     {
-      assert(bodies->size() == 3);
-      shared_ptr<expression> let_group = dynamic_pointer_cast<expression>(bodies->sub[1]);
-      assert(let_group);
-      let_group->sub[2] = launchbury_normalize(let_group->sub[2]);
-      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+      // Create a new Cons
+      assert(cons->size() == 3);
+      shared_ptr<expression> new_cons ( cons->clone() );
+
+      // Create a new definition
+      shared_ptr<expression> new_def ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
+      new_def->sub[2] = launchbury_normalize(new_def->sub[2]);
+
+      // Make the new Cons point to the new alternative
+      new_cons->sub[1] = shared_ptr<const Object>(new_def);
+
+      // Make the level higher up point to the new cons
+      (*tail) = shared_ptr<const Object>(new_cons);
+
+      // Go to the next alternative
+      tail = &(new_cons->sub[2]);
     }
     
     V->sub[2] = launchbury_normalize(V->sub[2]);
@@ -1877,14 +1932,25 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
 
     V->sub[1] = launchbury_unnormalize(V->sub[1]);
 
-    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
-    while(bodies)
+    expression_ref* tail = &(V->sub[2]);
+    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
     {
-      assert(bodies->size() == 3);
-      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
-      assert(alternative);
-      alternative->sub[2] = launchbury_unnormalize(alternative->sub[2]);
-      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+      // Create a new Cons
+      assert(cons->size() == 3);
+      shared_ptr<expression> new_cons ( cons->clone() );
+
+      // Create a new alternative
+      shared_ptr<expression> new_alternative ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
+      new_alternative->sub[2] = launchbury_unnormalize(new_alternative->sub[2]);
+
+      // Make the new Cons point to the new alternative
+      new_cons->sub[1] = shared_ptr<const Object>(new_alternative);
+
+      // Make the level higher up point to the new cons
+      (*tail) = shared_ptr<const Object>(new_cons);
+
+      // Go to the next alternative
+      tail = &(new_cons->sub[2]);
     }
     
     return V;

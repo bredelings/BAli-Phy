@@ -115,7 +115,7 @@ expression_ref context::full_evaluate(int& R) const
 
   // If the result is a structure, then evaluate its fields and substitute them.
   {
-    shared_ptr<expression> E = dynamic_pointer_cast<expression>(result);
+    shared_ptr<expression> E ( dynamic_pointer_cast<const expression>(result)->clone() );
     assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
     for(int i=1;i<E->size();i++)
@@ -126,7 +126,7 @@ expression_ref context::full_evaluate(int& R) const
 
       E->sub[i] = full_evaluate(R2);
     }
-    return result;
+    return shared_ptr<const Object>(E);
   }
 }
 

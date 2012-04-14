@@ -6,7 +6,6 @@
 #include <valarray>
 #include <set>
 #include <string>
-#include "cow-ptr.H"
 #include "object.H"
 #include "computation/operation.H"
 
@@ -205,7 +204,7 @@ struct lambda: public Object
 
 struct formula_expression_ref;
 
-struct expression_ref: public polymorphic_cow_ptr<Object>
+struct expression_ref: public object_ref
 {
   expression_ref operator()(const expression_ref& arg) const
   {
@@ -254,35 +253,35 @@ struct expression_ref: public polymorphic_cow_ptr<Object>
   expression_ref() {}
 
   expression_ref(Object* v)
-    :polymorphic_cow_ptr<Object>(v) 
+  :object_ref(v)
   {}
 
   expression_ref(const boost::shared_ptr<const Object>& v)
-    :polymorphic_cow_ptr<Object>(v) 
+    :object_ref(v) 
   {}
 
   explicit expression_ref(const boost::shared_ptr<Object>& v)
-    :polymorphic_cow_ptr<Object>(v) 
+    :object_ref(v) 
   {}
 
   template <typename T>
   expression_ref(const boost::shared_ptr<const T>& v)
-    :polymorphic_cow_ptr<Object>(boost::static_pointer_cast<const Object>(v)) 
+    :object_ref(v)
   {}
 
   expression_ref(const Object& o)
-    :polymorphic_cow_ptr<Object>(o.clone())
+  :object_ref(o)
   {}
 
-  expression_ref(const polymorphic_cow_ptr<Object>& o)
-    :polymorphic_cow_ptr<Object>(o)
+  expression_ref(const object_ref& o)
+  :object_ref(o)
   {}
 
-  expression_ref(const int& i):polymorphic_cow_ptr<Object>(new Int(i)) {}
-  expression_ref(const double& d):polymorphic_cow_ptr<Object>(new Double(d)) {}
-  expression_ref(const bool& b):polymorphic_cow_ptr<Object>(new Bool(b)) {}
-  expression_ref(const std::string& s):polymorphic_cow_ptr<Object>(new String(s)) {}
-  expression_ref(const char* s):polymorphic_cow_ptr<Object>(new String(s)) {}
+  expression_ref(const int& i):object_ref(new Int(i)) {}
+  expression_ref(const double& d):object_ref(new Double(d)) {}
+  expression_ref(const bool& b):object_ref(new Bool(b)) {}
+  expression_ref(const std::string& s):object_ref(new String(s)) {}
+  expression_ref(const char* s):object_ref(new String(s)) {}
 };
 
 boost::shared_ptr<const expression> is_a(const expression_ref&, const std::string&);

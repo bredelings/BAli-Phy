@@ -111,9 +111,11 @@ double scale_gaussian2(vector< object_ref >& x, const vector<double>& p)
   if (p.size() != 1) 
     throw myexception()<<"scale_gaussian: expected one parameter, got "<<p.size()<<".";
 
-  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
+  Double x0 = *dynamic_pointer_cast<const Double>(x[0]);
 
-  double ratio = scale_gaussian(*x0,p[0]);
+  double ratio = scale_gaussian(x0,p[0]);
+
+  x[0] = x0;
 
   return ratio;
 }
@@ -126,10 +128,12 @@ double shift_gaussian(vector< object_ref >& x, const vector<double>& p)
   if (p.size() != 1) 
     throw myexception()<<"shift_gaussian: expected one parameter, got "<<p.size()<<".";
 
-  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
-  double  sigma = p[0];
+  Double x0 = *dynamic_pointer_cast<const Double>(x[0]);
+  double sigma = p[0];
 
-  *x0 += gaussian(0,sigma);
+  x0 += gaussian(0,sigma);
+
+  x[0] = x0;
 
   return 1.0;
 }
@@ -142,10 +146,12 @@ double shift_laplace(vector< object_ref >& x, const vector<double>& p)
   if (p.size() != 1) 
     throw myexception()<<"shift_laplace: expected one parameter, got "<<p.size()<<".";
 
-  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
+  Double x0 = *dynamic_pointer_cast<const Double>(x[0]);
   double  s = p[0];
 
-  *x0 += laplace(0,s);
+  x0 += laplace(0,s);
+
+  x[0] = x0;
 
   return 1.0;
 }
@@ -157,10 +163,12 @@ double shift_cauchy(vector< object_ref >& x, const vector<double>& p)
   if (p.size() != 1) 
     throw myexception()<<"shift_cauchy: expected one parameter, got "<<p.size()<<".";
 
-  shared_ptr<Double> x0 = dynamic_pointer_cast<Double>(x[0]);
+  Double x0 = *dynamic_pointer_cast<const Double>(x[0]);
   double  s = p[0];
 
-  *x0 += cauchy(0,s);
+  x0 += cauchy(0,s);
+
+  x[0] = x0;
 
   return 1.0;
 }
@@ -172,15 +180,17 @@ double shift_delta(vector< object_ref >& x, const vector<double>& p)
   if (p.size() != 1) 
     throw myexception()<<"shift_delta: expected one parameter, got "<<p.size()<<".";
 
-  shared_ptr<Double> lambda_O = dynamic_pointer_cast<Double>(x[0]);
+  Double lambda_O = *dynamic_pointer_cast<const Double>(x[0]);
   double  sigma = p[0];
 
-  double pdel =  *lambda_O-logdiff(0, *lambda_O);
+  double pdel =  lambda_O-logdiff(0, lambda_O);
   double rate =  log(-logdiff(0,pdel));
 
   rate        += gaussian(0,sigma);
   pdel        =  logdiff(0,-exp(rate));
-  *lambda_O    =  pdel - logsum(0,pdel);
+  lambda_O    =  pdel - logsum(0,pdel);
+
+  x[0] = lambda_O;
 
   return 1;
 }
@@ -192,12 +202,14 @@ double shift_epsilon(vector< object_ref >& x, const vector<double>& p)
   if (p.size() != 1) 
     throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
 
-  shared_ptr<Double> lambda_E = dynamic_pointer_cast<Double>(x[0]);
+  Double lambda_E = *dynamic_pointer_cast<const Double>(x[0]);
   double  sigma = p[0];
 
-  double E_length = *lambda_E - logdiff(0,*lambda_E);
+  double E_length = lambda_E - logdiff(0,lambda_E);
   E_length += cauchy(0,sigma);
-  *lambda_E = E_length - logsum(0,E_length);
+  lambda_E = E_length - logsum(0,E_length);
+
+  x[0] = lambda_E;
 
   return 1;
 }
@@ -210,8 +222,11 @@ double bit_flip(vector< object_ref >& x, const vector<double>&)
   //  if (p.size() != 1) 
   //    throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
 
-  shared_ptr<Bool> B = dynamic_pointer_cast<Bool>(x[0]);
-  *B = not *B;
+  Bool B = *dynamic_pointer_cast<const Bool>(x[0]);
+
+  B = not B;
+
+  x[0] = B;
 
   return 1;
 }
@@ -320,8 +335,9 @@ double less_than::operator()(std::vector< object_ref >& x,const std::vector<doub
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++) 
   {
-    shared_ptr<Double> X = dynamic_pointer_cast<Double>(x[i]);
-    *X = reflect_less_than(double(*X),max);
+    Double X = *dynamic_pointer_cast<const Double>(x[i]);
+    X = reflect_less_than(double(X),max);
+    x[i] = X;
   }
   return ratio;
 }
@@ -336,8 +352,9 @@ double more_than::operator()(std::vector< object_ref >& x,const std::vector<doub
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++) 
   {
-    shared_ptr<Double> X = dynamic_pointer_cast<Double>(x[i]);
-    *X = reflect_more_than(double(*X),min);
+    Double X = *dynamic_pointer_cast<const Double>(x[i]);
+    X = reflect_more_than(double(X),min);
+    x[i] = X;
   }
   return ratio;
 }
@@ -352,8 +369,9 @@ double Between::operator()(std::vector< object_ref >& x,const std::vector<double
   double ratio = (*proposal)(x,p);
   for(int i=0;i<x.size();i++)
   {
-    shared_ptr<Double> X = dynamic_pointer_cast<Double>(x[i]);
-    *X = wrap(double(*X),min,max);
+    Double X = *dynamic_pointer_cast<const Double>(x[i]);
+    X = wrap(double(X),min,max);
+    x[i] = X;
   }
   return ratio;
 }
@@ -369,27 +387,27 @@ double log_scaled::operator()(std::vector< object_ref >& x,const std::vector<dou
   if (x.size() != 1) 
     throw myexception()<<"log_scaled: expected one dimension, got "<<x.size()<<".";
 
-  shared_ptr<Double> x0;
-
-  x0 = dynamic_pointer_cast<Double>(x[0]);
-  double x1 = *x0;
+  double x1 = *dynamic_pointer_cast<const Double>(x[0]);
 
   if (x1 < 0.0) 
     throw myexception()<<"log_scaled: x[0] is negative!";
   if (x1 == 0.0) 
     throw myexception()<<"log_scaled: x[0] is zero!";
 
-  *x0 = log(*x0);
-  x0.reset();
+  // log-transform x[0], but not x1
+  x[0] = Double( log(x1) );
 
+  // perform the proposal on the log-scale
   double r = (*proposal)(x,p);
 
-  x0 = dynamic_pointer_cast<Double>(x[0]);
-  *x0 = wrap<double>(*x0,-500,500);
-  *x0 = exp(*x0);
+  // inverse-transform
+  double x2 = *dynamic_pointer_cast<const Double>(x[0]);
+  x2 = wrap<double>(x2,-500,500);
+  x2 = exp(x2);
 
-  double x2 = *x0;
+  x[0] = Double( x2 );
 
+  // return the scaled proposal ratio
   return r * x2/x1;
 }
 
@@ -403,26 +421,26 @@ double LOD_scaled::operator()(std::vector< object_ref >& x,const std::vector<dou
   if (x.size() != 1) 
     throw myexception()<<"LOD_scaled: expected one dimension, got "<<x.size()<<".";
 
-  shared_ptr<Double> x0;
-
-  x0 = dynamic_pointer_cast<Double>(x[0]);
-  double x1 = *x0;
+  double x1 = *dynamic_pointer_cast<const Double>(x[0]);
 
   if (x1 < 0.0) 
     throw myexception()<<"LOD_scaled: x[0] is negative!";
   if (x1 == 0.0) 
     throw myexception()<<"LOD_scaled: x[0] is zero!";
 
-  *x0 = log(*x0/(1-*x0));
-  x0.reset();
+  // LOD-transform x[0], but not x1
+  x[0] = Double( log(x1/(1-x1)) );
 
+  // perform the proposal on the LOD-scale
   double r = (*proposal)(x,p);
 
-  x0 = dynamic_pointer_cast<Double>(x[0]);
-  *x0 = exp(*x0)/(1+exp(*x0));
+  // inverse-transform
+  double x2 = *dynamic_pointer_cast<const Double>(x[0]);
+  x2 = exp(x2)/(1+exp(x2));
 
-  double x2 = *x0;
+  x[0] = Double( x2 );
 
+  // return the scaled proposal ratio
   return r * x2*(1.0-x2)/(x1*(1.0-x1));
 }
 

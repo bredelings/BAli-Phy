@@ -5,6 +5,7 @@
 #include <fstream>
 
 using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
 using std::map;
@@ -398,14 +399,25 @@ expression_ref graph_normalize(const expression_ref& R)
 
     V->sub[1] = graph_normalize(V->sub[1]);
 
-    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[2]);
-    while(bodies)
+    expression_ref* tail = &(V->sub[2]);
+    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
     {
-      assert(bodies->size() == 3);
-      shared_ptr<expression> alternative = dynamic_pointer_cast<expression>(bodies->sub[1]);
-      assert(alternative);
-      alternative->sub[2] = graph_normalize(alternative->sub[2]);
-      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+      // Create a new Cons
+      assert(cons->size() == 3);
+      shared_ptr<expression> new_cons ( cons->clone() );
+
+      // Create a new alternative
+      shared_ptr<expression> new_alternative ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
+      new_alternative->sub[2] = launchbury_normalize(new_alternative->sub[2]);
+
+      // Make the new Cons point to the new alternative
+      new_cons->sub[1] = shared_ptr<const Object>(new_alternative);
+
+      // Make the level higher up point to the new cons
+      (*tail) = shared_ptr<const Object>(new_cons);
+
+      // Go to the next alternative
+      tail = &(new_cons->sub[2]);
     }
     
     if (is_reglike(V->sub[1]))
@@ -457,16 +469,27 @@ expression_ref graph_normalize(const expression_ref& R)
   {
     shared_ptr<expression> V ( new expression(*E) );
 
-    shared_ptr<expression> bodies = dynamic_pointer_cast<expression>(V->sub[1]);
-    while(bodies)
+    expression_ref* tail = &(V->sub[1]);
+    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
     {
-      assert(bodies->size() == 3);
-      shared_ptr<expression> let_group = dynamic_pointer_cast<expression>(bodies->sub[1]);
-      assert(let_group);
-      let_group->sub[2] = graph_normalize(let_group->sub[2]);
-      bodies = dynamic_pointer_cast<expression>(bodies->sub[2]);
+      // Create a new Cons
+      assert(cons->size() == 3);
+      shared_ptr<expression> new_cons ( cons->clone() );
+
+      // Create a new definition
+      shared_ptr<expression> new_def ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
+      new_def->sub[2] = launchbury_normalize(new_def->sub[2]);
+
+      // Make the new Cons point to the new alternative
+      new_cons->sub[1] = shared_ptr<const Object>(new_def);
+
+      // Make the level higher up point to the new cons
+      (*tail) = shared_ptr<const Object>(new_cons);
+
+      // Go to the next alternative
+      tail = &(new_cons->sub[2]);
     }
-    
+
     V->sub[2] = graph_normalize(V->sub[2]);
 
     return shared_ptr<const expression>(V);
@@ -1895,8 +1918,7 @@ class RegOperationArgs: public OperationArgs
       assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
       // If the result is a constructor expression, then evaluate its fields also.
-      expression_ref S2 = S;
-      shared_ptr<expression> E2 = dynamic_pointer_cast<expression>(S2);
+      shared_ptr<expression> E2 ( dynamic_pointer_cast<const expression>(S)->clone() );
       
       bool different = false;
       for(int i=1;i<E2->size();i++)
@@ -1907,7 +1929,7 @@ class RegOperationArgs: public OperationArgs
       }
 
       if (different)
-	return S2;
+	return shared_ptr<const Object>(E2);
       else
 	return S;
     }

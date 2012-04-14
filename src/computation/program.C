@@ -8,6 +8,7 @@ using std::map;
 using std::string;
 using std::vector;
 using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 
 // Unknown type
 expression_ref unknown_type = constructor("?",0);

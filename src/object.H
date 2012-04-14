@@ -5,7 +5,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/logic/tribool.hpp>
 #include <iostream>
-#include "cow-ptr.H"
 #include "util.H"
 
 #include "log-double.H"
@@ -54,26 +53,26 @@ public:
   virtual ~Object() {}
 };
 
-struct object_ref: public polymorphic_cow_ptr<Object>
+struct object_ref: public boost::shared_ptr<const Object>
 {
   object_ref()
   { }
 
-  explicit object_ref(Object *o)
-    :polymorphic_cow_ptr<Object>(o)
+  object_ref(Object *o)
+  : boost::shared_ptr<const Object>(o)
   { }
 
   object_ref(const boost::shared_ptr<const Object>& o)
-    :polymorphic_cow_ptr<Object>(o)
+    :boost::shared_ptr<const Object>(o)
   { }
 
   template <typename T>
   object_ref(const boost::shared_ptr<const T>& o)
-    :polymorphic_cow_ptr<Object>(boost::static_pointer_cast<const Object>(o))
+    :boost::shared_ptr<const Object>(boost::static_pointer_cast<const Object>(o))
   { }
 
   object_ref(const Object& o)
-    :polymorphic_cow_ptr<Object>(o.clone())
+    :boost::shared_ptr<const Object>(o.clone())
   { }
 };
 
@@ -250,15 +249,6 @@ boost::shared_ptr<const T> const_ptr(const T& t) {return boost::shared_ptr<const
 
 template<typename T>
 inline std::ostream& operator<<(std::ostream& o,const boost::shared_ptr<T>& R)
-{
-  if (R)
-    return o<<R->print();
-  else
-    return o<<"[NULL]";
-}
-
-template<typename T>
-inline std::ostream& operator<<(std::ostream& o,const polymorphic_cow_ptr<T>& R)
 {
   if (R)
     return o<<R->print();
