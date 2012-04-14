@@ -387,7 +387,7 @@ std::valarray<T> get_varray(const expression_ref& R)
   if (not R)
     return std::valarray<T>();
 
-  boost::shared_ptr<const expression> E = dynamic_pointer_cast<expression>(R);
+  boost::shared_ptr<const expression> E = boost::dynamic_pointer_cast<const expression>(R);
 
   if (not E)
   {
@@ -408,7 +408,7 @@ std::vector<T> get_vector(const expression_ref& R)
   if (not R)
     return std::vector<T>();
 
-  boost::shared_ptr<const expression> E = dynamic_pointer_cast<expression>(R);
+  boost::shared_ptr<const expression> E = boost::dynamic_pointer_cast<const expression>(R);
 
   if (not E)
   {
