@@ -246,8 +246,6 @@ int Model::add_note(const expression_ref& E)
     expression_ref args = dummy(1);
     expression_ref _ = dummy(-1);
 
-    std::cout<<"prior A: '"<<C.get_note(index)<<"'\n";
-
     // Create an expression for calculating the density of these random variables given their inputs
     expression_ref Pr_new = case_expression(true, D, Tuple((prob_density,_,density),args), (density, x, args));
     

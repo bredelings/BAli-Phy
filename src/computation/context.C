@@ -538,8 +538,6 @@ int add_probability_expression(context& C)
     // If its a probability expression, then...
     if (not find_match(query, C.get_note(i), results)) continue;
 
-    std::cout<<"prior B: '"<<C.get_note(i)<<"'\n";
-
     // Extract the density operation
     expression_ref x = results[0];
     expression_ref D = results[1];
