@@ -149,24 +149,9 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
     int s = P->scale_for_partition[partition_index];
     int m = P->smodel_for_partition[partition_index];
 
-    string prefix= "scale" + convertToString(s+1);
-    // Get a list of the branch LENGTH (not time) parameters
-    vector<expression_ref> D;
-    for(int b=0;b < T().n_branches();b++)
-    {
-      string name = "D" + convertToString(b+1);
-      D.push_back(parameter(prefix+"::"+name));
-    }
-    expression_ref DL = get_list(D);
-
-    expression_ref S = P->C.get_expression(P->SModels[m].main);
-    expression_ref V = Vector_From_List<Matrix,MatrixObject>();
-    expression_ref E = (mkArray, T().n_branches(), v1^(V,(branch_transition_p, S, (get_list_index, DL, v1) ) ) );
-    E = P->C.get_expression(P->branch_transition_p_indices(s,m));
+    expression_ref E = P->C.get_expression(P->branch_transition_p_indices(s,m));
     E = (getIndex, E, b);
     E = P->C.evaluate_expression(E);
-    //    expression_ref Q2 = P->C.get_expression(P->branch_transition_p_indices(s,m));
-    //    expression_ref E2 = P->C.evaluate_expression((getIndex,Q2,b));
 
     cached_transition_P[b] = *convert<const Box<vector<Matrix> > >(E);
     assert(cached_transition_P[b].value().size() == n_base_models());
