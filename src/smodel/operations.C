@@ -171,8 +171,6 @@ namespace substitution
     formula_expression_ref kappa1 = def_parameter("TN::kappa(pur)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
     formula_expression_ref kappa2 = def_parameter("TN::kappa(pyr)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
 
-    expression_ref TN = lambda_expression(TN_Op());
-
     return TN(a)(kappa1)(kappa2);
   }
   
@@ -223,8 +221,6 @@ namespace substitution
     formula_expression_ref GC = def_parameter("GTR::GC", 1.0/8, between(0.0,1.0));
     formula_expression_ref TC = def_parameter("GTR::TC", 2.0/8, between(0.0,1.0));
 
-    expression_ref GTR = lambda_expression(GTR_Op());
-    
     formula_expression_ref R = GTR(a)(AG)(AT)(AC)(GT)(GC)(TC);
 
     // I should generalize this...
