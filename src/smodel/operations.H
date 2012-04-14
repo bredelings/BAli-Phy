@@ -14,7 +14,9 @@
 #include "computation/operation.H"
 #include "computation/computation.H"
 
+extern const expression_ref TN;
 extern const expression_ref HKY;
+extern const expression_ref GTR;
 extern const expression_ref Singlet_to_Triplet_Exchange;
 
 namespace substitution {

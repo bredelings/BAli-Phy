@@ -165,41 +165,42 @@ bool process_stack_Markov(vector<string>& string_stack,
 
     R = GTR_Model(*a);
   }
-  /* THINKO - Must tripletmodels be constructed from nucleotide-specific models?
+  /*
   else if (match(string_stack,"EQUx3",arg)) {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (T) 
-      model_stack.push_back(SingletToTripletExchangeModel(*T,EQU(T->getNucleotides())));
+      model_stack.push_back(Singlet_to_Triplet_Exchange(*T,EQU(T->getNucleotides())));
     else
       throw myexception()<<"EQUx3:: '"<<a->name<<"' is not a triplet alphabet.";
   }
-  */      
-  /*
+  */
   else if (match(string_stack,"HKYx3",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
+    formula_expression_ref nuc_S = prefix_formula("nuc",HKY_Model(T->getNucleotides()));
     if (T) 
-      model_stack.push_back(SingletToTripletExchangeModel(*T,HKY(T->getNucleotides())));
+      model_stack.push_back(Singlet_to_Triplet_Exchange(*T)(nuc_S));
     else
       throw myexception()<<"HKYx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   else if (match(string_stack,"TNx3",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
+    formula_expression_ref nuc_S = prefix_formula("nuc",TN_Model(T->getNucleotides()));
     if (T) 
-      model_stack.push_back(SingletToTripletExchangeModel(*T,TN(T->getNucleotides())));
+      model_stack.push_back(Singlet_to_Triplet_Exchange(*T)(nuc_S));
     else
       throw myexception()<<"TNx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   else if (match(string_stack,"GTRx3",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
+    formula_expression_ref nuc_S = prefix_formula("nuc",GTR_Model(T->getNucleotides()));
     if (T) 
-      model_stack.push_back(SingletToTripletExchangeModel(*T,GTR(T->getNucleotides())));
+      model_stack.push_back(Singlet_to_Triplet_Exchange(*T)(nuc_S));
     else
       throw myexception()<<"GTRx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
-  */
   else if (match(string_stack,"PAM",arg)) {
     if (*a != AminoAcids())
       throw myexception()<<"PAM: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";

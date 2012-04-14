@@ -18,6 +18,8 @@ using std::istringstream;
 using std::istream;
 
 const expression_ref HKY = lambda_expression( substitution::HKY_Op());
+const expression_ref TN = lambda_expression( substitution::TN_Op());
+const expression_ref GTR = lambda_expression( substitution::GTR_Op());
 const expression_ref Singlet_to_Triplet_Exchange = lambda_expression( substitution::Singlet_to_Triplet_Exchange_Op() );
 
 
