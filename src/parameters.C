@@ -1216,19 +1216,17 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     formula_expression_ref S = prefix_formula(name,SMs[i]);
 
     std::set<string> names = find_named_parameters(S.get_notes_plus_exp());
-    foreach(i,names)
-    {
-      if (find_parameter(*i) == -1)
-	add_super_parameter(*i);
-    }
+    for(const auto& name: names)
+      if (find_parameter(name) == -1)
+	add_super_parameter(name);
 
     for(int j=0;j<S.n_notes();j++)
       add_note(S.get_note(j));
 
     // Set default values.
-    foreach(i,names)
+    for(const auto& name: names)
     {
-      int index = find_parameter(*i);
+      int index = find_parameter(name);
       if (not C.parameter_is_set(index))
 	C.set_parameter_value(index, C.default_parameter_value(index));
     }
