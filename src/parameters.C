@@ -24,24 +24,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///        for the MCMC.
 ///
 
-/*********** Recalculating things when branch lengths change **********/
-/* 1. First, lets make ONLY exp(Q[b]*D[b]*t) depend on D */
-/*   (a) Therefore we only need to worry about changes that affect cached_transition_p[b] */
-/*   (b) That INCLUDES the substitution model! */
-/* 2. Second, lets make Q[s] for substitution model s into a computed member. */
-/*   (a) This requires handling parameters that aren't submodels or anything. */
-/*   2.1 This would be a lot easier if we could just eliminate SuperModel's! */
-/*
-  How do we add things without screwing up the SuperModel?
-  * I don't remember how the SuperModel works...
-  * Do we need to change add_parameter( ) to add_super_parameter( ) for D1-n ?
-  * Can we change Model and SuperModel to allow adding a Formula expression?
-    - How does FormulaModel add a formula expression?
-  * Do we need to do something specific to register the parameters of a newly
-    add formula_expression?
-
- */
-
 #include "parameters.H"
 #include "smodel/smodel.H"
 #include "rng.H"
@@ -278,8 +260,6 @@ void data_partition::recalc_smodel()
   LC.invalidate_all();
 
   //invalidate the cached transition probabilities in case the model has changed
-  for(int i=0;i<cached_transition_P.size();i++)
-    cached_transition_P[i].invalidate();
   default_timer_stack.pop_timer();
 }
 
@@ -287,8 +267,6 @@ void data_partition::setlength_no_invalidate_LC(int b)
 {
   default_timer_stack.push_timer("setlength_no_invalidate_LC( )");
   b = T().directed_branch(b).undirected_name();
-
-  cached_transition_P[b].invalidate();
 
   recalc_imodel_for_branch(b);
 
@@ -609,7 +587,6 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
-   cached_transition_P(t.n_branches()),
    transition_p_method_indices(t.n_branches(),-1),
    variable_alignment_( IM ),
    sequences( alignment_letters(a,t.n_leaves()) ),
@@ -625,12 +602,11 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
+  // Add method indices for calculating transition matrices.
   const int n_models = n_base_models();
   const int n_states = state_letters().size();
-  for(int b=0;b<cached_transition_P.size();b++)
+  for(int b=0;b<t.n_branches();b++)
   {
-    cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
-							   Matrix(n_states, n_states));
     int s = P->scale_for_partition[partition_index];
     int m = P->smodel_for_partition[partition_index];
 

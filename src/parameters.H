@@ -96,9 +96,6 @@ class data_partition: public Probability_Model, public Mat_Cache
   /// Cached HMMs for each branch -- accessed through get_branch_HMM( )
   mutable std::vector<cached_value<indel::PairHMM> > cached_branch_HMMs;
 
-  /// Cached transition probability matrices -- accessed through transition_P( )
-  mutable std::vector< cached_value< std::vector< Matrix> > > cached_transition_P;
-
   std::vector<int> transition_p_method_indices;
 
   double branch_mean_;
