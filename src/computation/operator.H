@@ -7,7 +7,7 @@
 
 enum assoc_type {assoc_none=0,assoc_left=1, assoc_right=2};
 
-struct Operator: virtual public Object
+struct Operator: public Object
 {
   // -1 is left associativity
   virtual assoc_type associativity() const {return assoc_none;}

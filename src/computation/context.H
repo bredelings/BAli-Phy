@@ -5,7 +5,7 @@
 #include "cow-ptr.H"
 
 /// This class contains only compute expressions, parameters, and names for the compute expressions
-class context: virtual public Object, public Model_Notes
+class context: public Object, public Model_Notes
 {
 public:
   typedef reg_heap::root_t root_t;

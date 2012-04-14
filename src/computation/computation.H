@@ -10,7 +10,7 @@
 
 struct expression_ref;
 
-struct OperationArgs: virtual public Object
+struct OperationArgs: public Object
 {
   virtual OperationArgs* clone() const = 0;
 
