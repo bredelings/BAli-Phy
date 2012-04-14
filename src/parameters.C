@@ -46,6 +46,7 @@ using std::vector;
 using std::string;
 using std::cerr;
 using std::endl;
+using std::ostream;
 using boost::shared_ptr;
 
 bool use_internal_index = true;
@@ -119,6 +120,26 @@ double data_partition::rate() const
   int s = P->smodel_for_partition[partition_index];
   expression_ref E = P->C.evaluate(P->SModels[s].rate);
   return *convert<const Double>(E);
+}
+
+ostream& operator<<(ostream& o, const Matrix& M)
+{
+  for(int i=0;i<M.size1();i++)
+  {
+    for(int j=0;j<M.size2();j++)
+      std::cerr<<M(i,j)<<" ";
+    std::cerr<<"\n";
+  }
+  return o;
+}
+
+ostream& operator<<(ostream& o, const std::vector<double>& v)
+{
+  for(int i=0;i<v.size();i++)
+    std::cerr<<v[i]<<" ";
+  std::cerr<<"\n";
+  
+  return o;
 }
 
 const std::vector<Matrix>& data_partition::transition_P(int b) const
