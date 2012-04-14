@@ -300,4 +300,31 @@ namespace substitution {
 
 }
 
+/*
+template <const char* s, template <typename R_t, typename ...Args_t> R_t F(Args_t)>
+struct FunctionOp
+{
+  FunctionOp* clone() const {return new Function_Op(*this);}
+
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+    
+    if (typeid(*this) != typeid(O)) return false;
+    
+    return true;
+  }
+
+  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  {
+    R_t result = F(convert<const Args_t>(Args.evaluate(#))...);
+    return boost::shared_ptr<const Object>(result);
+  }
+ 
+  std::string name() const {return s;}
+  
+  Function_Op(): Operation(sizeof...(Args_t)) { }
+};
+*/
 #endif
