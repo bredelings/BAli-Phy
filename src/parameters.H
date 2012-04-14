@@ -99,6 +99,8 @@ class data_partition: public Probability_Model, public Mat_Cache
   /// Cached transition probability matrices -- accessed through transition_P( )
   mutable std::vector< cached_value< std::vector< Matrix> > > cached_transition_P;
 
+  std::vector<int> transition_p_method_indices;
+
   double branch_mean_;
 
   void branch_mean_changed();
