@@ -2177,6 +2177,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 #ifndef NDEBUG
       string SS = "";
       SS = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
+      if (false)
       {
 	std::ofstream f("token.dot");
 	dot_graph_for_token(*this, t, f);
