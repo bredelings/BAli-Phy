@@ -274,11 +274,7 @@ int context::add_parameter(const string& name)
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const expression_ref& E)
 {
-  std::cerr<<"add: "<<E<<"\n";
-
   expression_ref T = let_float(graph_normalize(translate_refs(E) ));
-
-  std::cerr<<"add [compiled]: "<<T<<"\n";
 
   root_t r;
   if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
@@ -296,6 +292,30 @@ int context::add_compute_expression(const expression_ref& E)
   heads().push_back(r);
   return heads().size()-1;
 }
+
+/// Change the i-th compute expression to e
+void context::set_compute_expression(int i, const expression_ref& E)
+{
+  expression_ref T = let_float(graph_normalize(translate_refs(E) ));
+
+  root_t r2;
+  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
+  {
+    assert( includes(access(RV->target).owners, token) );
+    
+    r2 = push_root( RV->target );
+  }
+  else
+  {
+    r2 = allocate_reg();
+    set_E( *r2, T );
+  }
+
+  root_t r1 = heads()[i];
+  heads()[i] = r2;
+  pop_root(r1);
+}
+
 
 int context::n_expressions() const
 {
@@ -517,6 +537,8 @@ int add_probability_expression(context& C)
 
     // If its a probability expression, then...
     if (not find_match(query, C.get_note(i), results)) continue;
+
+    std::cout<<"prior B: '"<<C.get_note(i)<<"'\n";
 
     // Extract the density operation
     expression_ref x = results[0];
