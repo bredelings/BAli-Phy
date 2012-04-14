@@ -17,6 +17,10 @@ using boost::dynamic_pointer_cast;
 using std::istringstream;
 using std::istream;
 
+const expression_ref HKY = lambda_expression( substitution::HKY_Op());
+const expression_ref Singlet_to_Triplet_Exchange = lambda_expression( substitution::Singlet_to_Triplet_Exchange_Op() );
+
+
 namespace substitution
 {
   shared_ptr<const Object> Plus_gwF_Function(const alphabet& a, double f, const expression_ref& pi_E)
@@ -124,8 +128,6 @@ namespace substitution
 
   formula_expression_ref HKY_Model(const alphabet& a)
   {
-    expression_ref HKY = lambda_expression(HKY_Op());
-
     formula_expression_ref kappa = def_parameter("HKY::kappa", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
 
     return HKY(a)(kappa);
@@ -277,10 +279,14 @@ namespace substitution
 
   expression_ref M0E = lambda_expression( M0_Op() );
 
-  shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2)
+  shared_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& R2)
   {
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(T) );
-    ublas::symmetric_matrix<double>& S = R->S;
+    int N = T.size();
+
+    shared_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject(N) );
+
+    SymmetricMatrix& S = R->t;
+    const SymmetricMatrix& S2 = R2.t;
 
     for(int i=0;i<T.size();i++)
       for(int j=0;j<i;j++) 
@@ -308,6 +314,14 @@ namespace substitution
       }
 
     return R;
+  }
+
+  shared_ptr<const Object> Singlet_to_Triplet_Exchange_Op::operator()(OperationArgs& Args) const
+  {
+    shared_ptr<const Triplets> T = Args.evaluate_as<Triplets>(0);
+    shared_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(1);
+    
+    return SingletToTripletExchangeFunction(*T,*S);
   }
 
   formula_expression_ref Frequencies_Model(const alphabet& a, const valarray<double>& pi)

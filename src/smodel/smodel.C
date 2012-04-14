@@ -793,24 +793,6 @@ namespace substitution {
     add_parameter(Parameter("alphabet",T));
   }
 
-  shared_ptr<const Object> SingletToTripletExchangeModel::result() const
-  {
-    return SingletToTripletExchangeFunction(get_parameter_value_as<Triplets>(0), *SubModels(0).result_as<ExchangeModelObject>() );
-  }
-
-  string SingletToTripletExchangeModel::name() const {
-    string n = SubModels(0).name();
-    n += "x3";
-    return n;
-  }
-  
-  SingletToTripletExchangeModel::SingletToTripletExchangeModel(const Triplets& T,const ::Model& N)
-    :TripletExchangeModel(T)
-  { 
-    add_parameter(Parameter("alphabet",T));
-    insert_submodel("1",N);
-  }
-
   //---------------------- CAT_FixedFrequencyModel -----------------------//
   const alphabet& CAT_FixedFrequencyModel::Alphabet() const
   {

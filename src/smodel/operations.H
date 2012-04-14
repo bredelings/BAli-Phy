@@ -14,6 +14,9 @@
 #include "computation/operation.H"
 #include "computation/computation.H"
 
+extern const expression_ref HKY;
+extern const expression_ref Singlet_to_Triplet_Exchange;
+
 namespace substitution {
 
   struct Plus_gwF_Op: public Operation
@@ -110,7 +113,28 @@ namespace substitution {
   
   boost::shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
 
-  boost::shared_ptr<AlphabetExchangeModelObject> SingletToTripletExchangeFunction(const Triplets& T, const ExchangeModelObject& S2);
+  struct Singlet_to_Triplet_Exchange_Op: public Operation
+  {
+    Singlet_to_Triplet_Exchange_Op* clone() const {return new Singlet_to_Triplet_Exchange_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+
+    std::string name() const {return "Singlet_to_Triplet_Exchange";}
+
+    Singlet_to_Triplet_Exchange_Op():Operation(2) { }
+  };
+
+  boost::shared_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& S2);
 
   formula_expression_ref Plus_F_Model(const alphabet& a, const std::valarray<double>& pi);
 

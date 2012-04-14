@@ -255,25 +255,6 @@ namespace substitution {
     ~TripletExchangeModel() {}
   };
 
-  class SingletToTripletExchangeModel: public TripletExchangeModel,
-				       public SuperModelOver< ::Model>
-  {
-  public:
-
-    efloat_t prior() const { return SuperModelOver< ::Model>::prior(); }
-
-    SingletToTripletExchangeModel* clone() const {return new SingletToTripletExchangeModel(*this);}
-
-    string name() const;
-
-    boost::shared_ptr<const Object> result() const;
-
-    SingletToTripletExchangeModel(const Triplets& T,const ::Model& M);
-
-    ~SingletToTripletExchangeModel() {}
-  };
-
-
 
   //------------------------ Reversible frequency model --------------------//
 
