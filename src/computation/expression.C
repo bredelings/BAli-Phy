@@ -23,7 +23,7 @@ bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars,
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return false;
 
-  if (not dynamic_pointer_cast<let_obj>(E->sub[0])) return false;
+  if (not dynamic_pointer_cast<const let_obj>(E->sub[0])) return false;
 
   vector<expression_ref> pairs = get_ref_vector_from_list(E->sub[1]);
   for(int i=0;i<pairs.size();i++)
@@ -64,7 +64,7 @@ bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<ex
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return false;
 
-  if (not dynamic_pointer_cast<Case>(E->sub[0])) return false;
+  if (not dynamic_pointer_cast<const Case>(E->sub[0])) return false;
 
   vector<expression_ref> pairs = get_ref_vector_from_list(E->sub[2]);
   for(int i=0;i<pairs.size();i++)
