@@ -78,7 +78,7 @@ struct object_ref: public polymorphic_cow_ptr<Object>
 };
 
 template<typename T>
-class Box: virtual public Object 
+class Box: public Object 
 {
 public:
   T t;
@@ -103,7 +103,7 @@ public:
 };
 
 template<typename T>
-class POD: virtual public Object 
+class POD: public Object 
 {
 protected:
   T t;
@@ -160,7 +160,7 @@ namespace boost
 }
 
 template <typename T>
-class POD_math: virtual public Object
+class POD_math: public Object
 {
 protected:
   T t;

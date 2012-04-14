@@ -19,7 +19,7 @@ expression_ref operator,(const expression_ref&, const expression_ref&);
 expression_ref operator&(const expression_ref&, const expression_ref&);
 
 /// An array of Objects.
-struct expression: virtual public Object
+struct expression: public Object
 {
   // An expression may or may not have sub-expressions
   std::vector< expression_ref > sub;
