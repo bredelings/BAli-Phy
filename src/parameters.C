@@ -144,19 +144,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   b = T().directed_branch(b).undirected_name();
   assert(b >= 0 and b < T().n_branches());
 
-  if (not cached_transition_P[b].is_valid())
-  {
-    int s = P->scale_for_partition[partition_index];
-    int m = P->smodel_for_partition[partition_index];
-
-    expression_ref E = P->C.get_expression(P->branch_transition_p_indices(s,m));
-    E = (getIndex, E, b);
-    E = P->C.evaluate( transition_p_method_indices[b] );
-
-    cached_transition_P[b] = *convert<const Box<vector<Matrix> > >(E);
-    assert(cached_transition_P[b].value().size() == n_base_models());
-  }
-  return cached_transition_P[b];
+  return *convert<const Box<vector<Matrix>>>( P->C.evaluate( transition_p_method_indices[b] ) );
 }
 
 int data_partition::n_base_models() const
