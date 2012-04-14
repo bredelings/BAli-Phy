@@ -151,7 +151,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
 
     expression_ref E = P->C.get_expression(P->branch_transition_p_indices(s,m));
     E = (getIndex, E, b);
-    E = P->C.evaluate_expression(E);
+    E = P->C.evaluate( transition_p_method_indices[b] );
 
     cached_transition_P[b] = *convert<const Box<vector<Matrix> > >(E);
     assert(cached_transition_P[b].value().size() == n_base_models());
@@ -622,6 +622,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
    cached_transition_P(t.n_branches()),
+   transition_p_method_indices(t.n_branches(),-1),
    variable_alignment_( IM ),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
@@ -639,8 +640,17 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   const int n_models = n_base_models();
   const int n_states = state_letters().size();
   for(int b=0;b<cached_transition_P.size();b++)
+  {
     cached_transition_P[b].modify_value() = vector<Matrix>(n_models,
 							   Matrix(n_states, n_states));
+    int s = P->scale_for_partition[partition_index];
+    int m = P->smodel_for_partition[partition_index];
+
+    expression_ref E = P->C.get_expression(P->branch_transition_p_indices(s,m));
+    E = (getIndex, E, b);
+
+    transition_p_method_indices[b] = p->C.add_compute_expression(E);
+  }
 
   if (has_IModel())
   {
@@ -1255,26 +1265,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   for(int b=0;b<TC->n_branches();b++)
     TC->branch(b).set_length(-1);
 
-  // create data partitions and register as sub-models
-  for(int i=0;i<A.size();i++) 
-  {
-    // compute name for data-partition
-    string name = string("part") + convertToString(i+1);
-
-    // create a data partition
-    shared_ptr<const IndelModel> IM;
-    if (imodel_for_partition[i] != -1)
-      IM = IModels[imodel_for_partition[i]];
-
-    cow_ptr<data_partition> dp (new data_partition(name, this, i, A[i], *T, IM));
-
-    // add the data partition
-    data_partitions.push_back(dp);
-
-    // register data partition as sub-model
-    register_submodel(name);
-  }
-
   // Add and initialize variables for branch *length*.
   for(int s=0;s<n_scales;s++)
   {
@@ -1313,6 +1303,26 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
        branch_transition_p_indices(s,m) = C.add_compute_expression(E);
      }
    }
+
+  // create data partitions and register as sub-models
+  for(int i=0;i<A.size();i++) 
+  {
+    // compute name for data-partition
+    string name = string("part") + convertToString(i+1);
+
+    // create a data partition
+    shared_ptr<const IndelModel> IM;
+    if (imodel_for_partition[i] != -1)
+      IM = IModels[imodel_for_partition[i]];
+
+    cow_ptr<data_partition> dp (new data_partition(name, this, i, A[i], *T, IM));
+
+    // add the data partition
+    data_partitions.push_back(dp);
+
+    // register data partition as sub-model
+    register_submodel(name);
+  }
 
   prior_index = add_probability_expression(C);
 }
