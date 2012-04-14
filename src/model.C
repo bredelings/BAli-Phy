@@ -170,6 +170,7 @@ int Model::add_parameter(const Parameter& P)
   changed.push_back(true);
   bounds.push_back(P.bounds);
   fixed.push_back(P.fixed);
+  prior_note_index.push_back(-1);
 
   if (P.value)
     C.set_parameter_value(index, *P.value);
@@ -215,6 +216,9 @@ int Model::add_note(const expression_ref& E)
 {
   int index = C.add_note(E);
 
+  // Quit if we've seen this already
+  if (index != C.n_notes()-1) return index;
+
   // 1. Check to see if this expression adds a bound.
   expression_ref query = var_bounds(match(0), match(1));
 
@@ -230,6 +234,47 @@ int Model::add_note(const expression_ref& E)
   }
 
   // 2. Check to see if this expression adds a prior
+  results.clear();
+  query = (distributed, _1,_2);
+  if (find_match(query, C.get_note(index), results))
+  {
+    // Extract the density operation
+    expression_ref x = results[0];
+    expression_ref D = results[1];
+
+    expression_ref density = dummy(0);
+    expression_ref args = dummy(1);
+    expression_ref _ = dummy(-1);
+
+    std::cout<<"prior A: '"<<C.get_note(index)<<"'\n";
+
+    // Create an expression for calculating the density of these random variables given their inputs
+    expression_ref Pr_new = case_expression(true, D, Tuple((prob_density,_,density),args), (density, x, args));
+    
+    // Record that this variable is random, and has this prior.
+    // THIS would be the right place to determine what other random variables and parameters are being depended on.
+    // THIS would be the right place to check that dependencies are not cyclic.
+    for(const auto& name : find_named_parameters(x) )
+    {
+      int p_index = find_parameter(name);
+
+      if (prior_note_index[p_index] != -1)
+	throw myexception()<<"Variable '"<<name<<"': new prior '"<<C.get_note(index)
+			   <<"' on top of original prior '"<<C.get_note(prior_note_index[p_index])<<"'?";
+      else
+	prior_note_index[p_index] = p_index;
+    }
+
+    // Extend the probability expression to include this term also.
+    // (FIXME: a balanced tree could save computation time)
+    if (prior_index == -1)
+      prior_index = C.add_compute_expression( Pr_new );
+    else
+    {
+      typed_expression_ref<Log_Double> Pr ( C.get_expression(prior_index));
+      C.set_compute_expression(prior_index, Pr_new * Pr);
+    }
+  }
 
   return index;
 }

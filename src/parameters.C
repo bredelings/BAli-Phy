@@ -1287,8 +1287,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     // register data partition as sub-model
     register_submodel(name);
   }
-
-  prior_index = add_probability_expression(C);
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,

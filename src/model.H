@@ -181,6 +181,7 @@ protected:
   mutable std::vector<bool> changed;
   std::vector< Bounds<double> > bounds;
   std::vector< bool > fixed;
+  std::vector< int> prior_note_index;
 
   int prior_index;
 
