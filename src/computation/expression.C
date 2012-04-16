@@ -692,7 +692,9 @@ int get_safe_binder_index(const expression_ref& R)
 
 bool do_substitute(expression_ref& R1, const expression_ref& D, const expression_ref& R2)
 {
+#ifndef NDEBUG
   expression_ref orig = R1;
+#endif
   assert(not is_wildcard(D));
 
   // If this is the relevant dummy, then substitute
@@ -734,7 +736,7 @@ bool do_substitute(expression_ref& R1, const expression_ref& D, const expression
       }
 
       // Compute the total set of free variables to avoid clashes with when alpha renaming.
-      add(fv2, get_free_indices(R1));
+      add(fv2, fv1);
 
       // we don't want to rename on top of any other variables bound here
       int new_index = std::max(max_index(fv2),max_index(bound))+1;
