@@ -1115,7 +1115,7 @@ Parameters& Parameters::operator=(const Parameters& P)
 
   SuperModel::operator=(P);
 
-  Probability_Model::operator=(P);
+  keys = P.keys;
 
   SModels = P.SModels;
   smodel_for_partition = P.smodel_for_partition;
