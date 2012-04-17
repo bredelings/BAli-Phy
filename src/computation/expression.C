@@ -1440,26 +1440,6 @@ expression_ref make_case_expression(const expression_ref& T, const vector<expres
   return E;
 }
 
-expression_ref block_case(const vector<expression_ref>& x, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b);
-
-// Create the expression 'case T of {patterns[i] -> bodies[i]'
-expression_ref case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
-{
-  return block_case({T}, {patterns}, {bodies});
-}
-
-expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
-{
-  vector<expression_ref> patterns(1, pattern);
-  vector<expression_ref> bodies(1, body);
-  if (otherwise and not dynamic_pointer_cast<const dummy>(pattern))
-  {
-    patterns.push_back(dummy(-1));
-    bodies.push_back(otherwise);
-  }
-  return case_expression(T,patterns, bodies);
-}
-
 int find_object(const vector<expression_ref>& v, const expression_ref& E)
 {
   for(int i=0;i<v.size();i++)
@@ -1481,23 +1461,13 @@ expression_ref get_constructor(const expression_ref& R)
  
 
 /*
- * Currently we handle case {x[i]} of {p[j][i] -> b[j]} as
- *                     case x[1] of {p[1][i] -> b[1], _ -> case {x[i]} of {p[2..m][i] -> b[2..m]}}
+ * case (x[0],..,x[N-1]) of (p[0...M-1][0...N-1] -> b[0..M-1])
  *
- * This could be improved, because we could group rules j whose pattern p[j][1] for x[1] starts with the same constant.
+ * 1. Categorize each rule according to the type of its top-level pattern.
+ * 2. Substitute for the irrefutable rules to find the 'otherwise' branch.
+ * 3. Find the bodies for what happens after we match the various constants.
  *
- * If p[j][1] is irrefutable for all [j], then we may simply substitute p[j][1] -> x[1] into b[j].
- * If p[j][1] is _, then this substitution should not occur.
- *
- * We should also separate out the case x[i] of patterns[j][i] -> bodies[j] function from construction of
- * lambda arguments in def_function( ).
- *
- * 1. Find the constructors c[1]...c[n] that are used in top-level patterns p[j][1] on x[1].
- * 2. Find the rules r[1]..r[n] that are used to the the constructors.
- * 3. Find the rules r[n+1] for which p[j][1] is irrefutable.
- * 4. If all rules are irrefutable, then
- *   (a) we must have the number n of x[i] > 1.
- * 5. 
+ * If the otherwise branch is used twice, then construct a let-expression for it.
  *
  */
 expression_ref block_case(const vector<expression_ref>& x, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b)
@@ -1729,6 +1699,23 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
   return CE;
 }
 
+// Create the expression 'case T of {patterns[i] -> bodies[i]'
+expression_ref case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+{
+  return block_case({T}, {patterns}, {bodies});
+}
+
+expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
+{
+  vector<expression_ref> patterns = {pattern};
+  vector<expression_ref> bodies = {body};
+  if (otherwise and not dynamic_pointer_cast<const dummy>(pattern))
+  {
+    patterns.push_back(dummy(-1));
+    bodies.push_back(otherwise);
+  }
+  return case_expression(T,patterns, bodies);
+}
 
 expression_ref def_function(const vector< vector<expression_ref> >& patterns, const vector<expression_ref>& bodies)
 {
