@@ -397,28 +397,13 @@ expression_ref graph_normalize(const expression_ref& R)
   {
     shared_ptr<expression> V ( new expression(*E) );
 
+    // Normalize the object
     V->sub[1] = graph_normalize(V->sub[1]);
 
-    expression_ref* tail = &(V->sub[2]);
-    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
-    {
-      // Create a new Cons
-      assert(cons->size() == 3);
-      shared_ptr<expression> new_cons ( cons->clone() );
-
-      // Create a new alternative
-      shared_ptr<expression> new_alternative ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
-      new_alternative->sub[2] = graph_normalize(new_alternative->sub[2]);
-
-      // Make the new Cons point to the new alternative
-      new_cons->sub[1] = object_ref(new_alternative);
-
-      // Make the level higher up point to the new cons
-      (*tail) = object_ref(new_cons);
-
-      // Go to the next alternative
-      tail = &(new_cons->sub[2]);
-    }
+    const int L = V->sub.size()/2 - 1;
+    // Just unnormalize the bodies
+    for(int i=0;i<L;i++)
+      V->sub[3+2*i] = launchbury_unnormalize(V->sub[3+2*i]);
     
     if (is_reglike(V->sub[1]))
       return shared_ptr<const expression>(V);
@@ -1810,6 +1795,8 @@ class RegOperationArgs: public OperationArgs
 
   int n_allocated;
 
+  const expression& get_E() const {return *dynamic_pointer_cast<const expression>(M[R].E);}
+
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int lazy_evaluate_reg(int R2)
   {
@@ -1927,7 +1914,7 @@ public:
 
   object_ref reference(int slot) const
   {
-    return dynamic_pointer_cast<const expression>(M[R].E)->sub[slot+1];
+    return get_E().sub[slot+1];
   }
 
   object_ref evaluate(int slot)
@@ -1952,6 +1939,8 @@ public:
     n_allocated++;
     return r;
   }
+
+  int n_args() const {return get_E().sub.size()-1;}
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 

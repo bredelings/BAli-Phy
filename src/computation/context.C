@@ -126,12 +126,12 @@ expression_ref context::full_evaluate(int& R) const
 
       E->sub[i] = full_evaluate(R2);
     }
-    return shared_ptr<const Object>(E);
+    return object_ref(E);
   }
 }
 
 /// Return the value of a particular index, computing it if necessary
-shared_ptr<const Object> context::lazy_evaluate(int index) const
+object_ref context::lazy_evaluate(int index) const
 {
   int& H = *heads()[index];
 
@@ -141,7 +141,7 @@ shared_ptr<const Object> context::lazy_evaluate(int index) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-shared_ptr<const Object> context::evaluate(int index) const
+object_ref context::evaluate(int index) const
 {
   int& H = *heads()[index];
 
@@ -150,14 +150,14 @@ shared_ptr<const Object> context::evaluate(int index) const
   return full_evaluate(H);
 }
 
-shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref& E) const
+object_ref context::lazy_evaluate_expression(const expression_ref& E) const
 {
   try {
     int R = *push_temp_head();
     set_E(R, let_float(graph_normalize(translate_refs(E)) ));
 
     R = incremental_evaluate(R);
-    shared_ptr<const Object> result = access(R).result;
+    object_ref result = access(R).result;
     
     pop_temp_head();
     return result;
@@ -169,7 +169,7 @@ shared_ptr<const Object> context::lazy_evaluate_expression(const expression_ref&
   }
 }
 
-shared_ptr<const Object> context::evaluate_expression(const expression_ref& E) const
+object_ref context::evaluate_expression(const expression_ref& E) const
 {
   try {
     int R = *push_temp_head();
@@ -196,14 +196,14 @@ bool context::parameter_is_set(int index) const
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-shared_ptr<const Object> context::get_parameter_value(int index) const
+object_ref context::get_parameter_value(int index) const
 {
   int P = *parameters()[index];
 
   if (not access(P).result)
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (access(P).call == -1) return shared_ptr<const Object>();
+    if (access(P).call == -1) return object_ref();
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
     incremental_evaluate(P);
@@ -213,7 +213,7 @@ shared_ptr<const Object> context::get_parameter_value(int index) const
 }
 
 /// Get the value of a non-constant, non-computed index
-shared_ptr<const Object> context::get_parameter_value(const std::string& name) const
+object_ref context::get_parameter_value(const std::string& name) const
 {
   int index = find_parameter(name);
   if (index == -1)
@@ -483,7 +483,7 @@ context::~context()
   memory->release_token(token);
 }
 
-shared_ptr<const Object> context::default_parameter_value(int i) const
+object_ref context::default_parameter_value(int i) const
 {
   expression_ref default_value = lambda_expression(constructor("default_value",2));
 
@@ -499,7 +499,7 @@ shared_ptr<const Object> context::default_parameter_value(int i) const
     return value;
   }
   else
-    return shared_ptr<const Object>();
+    return object_ref();
 }
 
 reg_heap::root_t context::push_temp_head() const

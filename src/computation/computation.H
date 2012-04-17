@@ -18,6 +18,8 @@ struct OperationArgs: public Object
 
   virtual object_ref evaluate(int slot) = 0;
 
+  virtual int n_args() const = 0;
+
   virtual object_ref lazy_evaluate(int)
   {
     std::abort();

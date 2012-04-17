@@ -39,20 +39,6 @@ bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars,
   return true;
 }
 
-void parse_alternatives(const expression_ref& R, vector<expression_ref>& cases, vector<expression_ref>& results)
-{
-  cases.clear();
-  results.clear();
-
-  vector<expression_ref> pairs = get_ref_vector_from_list(R);
-  for(int i=0;i<pairs.size();i++)
-  {
-    shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(pairs[i]);
-    cases.push_back(E2->sub[1]);
-    results.push_back(E2->sub[2]);
-  }
-}
-
 /// R = case T of {patterns[i] -> bodies[i]}
 bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<expression_ref>& patterns, vector<expression_ref>& bodies)
 {
@@ -64,15 +50,13 @@ bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<ex
 
   if (not dynamic_pointer_cast<const Case>(E->sub[0])) return false;
 
-  vector<expression_ref> pairs = get_ref_vector_from_list(E->sub[2]);
-  for(int i=0;i<pairs.size();i++)
-  {
-    shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(pairs[i]);
-    patterns.push_back(E2->sub[1]);
-    bodies.push_back(E2->sub[2]);
-  }
-
   T = E->sub[1];
+  const int L = E->sub.size()/2 - 1;
+  for(int i=0;i<L;i++)
+  {
+    patterns.push_back(E->sub[2 + 2*i]);
+    bodies.push_back(E->sub[3 + 2*i]);
+  }
 
   return true;
 }
@@ -1381,12 +1365,16 @@ vector<T> skip(int n, const vector<T>& v)
 
 expression_ref make_case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
+  assert(patterns.size() == bodies.size());
+
   expression* E = new expression( Case() );
   E->sub.push_back(T);
-  E->sub.push_back(ListEnd);
   
-  for(int i=patterns.size()-1;i>=0;i--)
-    E->sub[2] = Cons(Alt(patterns[i],bodies[i]), E->sub[2]);
+  for(int i=0;i<patterns.size();i++)
+  {
+    E->sub.push_back( patterns[i] );
+    E->sub.push_back( bodies[i] );
+  }
   return E;
 }
 
@@ -1858,29 +1846,13 @@ expression_ref launchbury_normalize(const expression_ref& R)
   if (IsCase)
   {
     expression* V = new expression(*E);
-
+    // Normalize the object
     V->sub[1] = launchbury_normalize(V->sub[1]);
 
-    expression_ref* tail = &(V->sub[2]);
-    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
-    {
-      // Create a new Cons
-      assert(cons->size() == 3);
-      shared_ptr<expression> new_cons ( cons->clone() );
-
-      // Create a new alternative
-      shared_ptr<expression> new_alternative ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
-      new_alternative->sub[2] = launchbury_normalize(new_alternative->sub[2]);
-
-      // Make the new Cons point to the new alternative
-      new_cons->sub[1] = object_ref(new_alternative);
-
-      // Make the level higher up point to the new cons
-      (*tail) = object_ref(new_cons);
-
-      // Go to the next alternative
-      tail = &(new_cons->sub[2]);
-    }
+    const int L = V->sub.size()/2 - 1;
+    // Just normalize the bodies
+    for(int i=0;i<L;i++)
+      V->sub[3+2*i] = launchbury_normalize(V->sub[3+2*i]);
     
     return V;
   }
@@ -1983,28 +1955,13 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
   {
     expression* V = new expression(*E);
 
+    // Unormalize the object
     V->sub[1] = launchbury_unnormalize(V->sub[1]);
 
-    expression_ref* tail = &(V->sub[2]);
-    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
-    {
-      // Create a new Cons
-      assert(cons->size() == 3);
-      shared_ptr<expression> new_cons ( cons->clone() );
-
-      // Create a new alternative
-      shared_ptr<expression> new_alternative ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
-      new_alternative->sub[2] = launchbury_unnormalize(new_alternative->sub[2]);
-
-      // Make the new Cons point to the new alternative
-      new_cons->sub[1] = object_ref(new_alternative);
-
-      // Make the level higher up point to the new cons
-      (*tail) = object_ref(new_cons);
-
-      // Go to the next alternative
-      tail = &(new_cons->sub[2]);
-    }
+    const int L = V->sub.size()/2 - 1;
+    // Just unnormalize the bodies
+    for(int i=0;i<L;i++)
+      V->sub[3+2*i] = launchbury_unnormalize(V->sub[3+2*i]);
     
     return V;
   }

@@ -40,15 +40,21 @@ shared_ptr<const Object> Case::operator()(OperationArgs& Args) const
   shared_ptr<const Object> obj = Args.lazy_evaluate(0);
   shared_ptr<const Object> alts = Args.reference(1);
 
-  vector<expression_ref> cases;
-  vector<expression_ref> results;
-  parse_alternatives(alts, cases, results);
+  int L = (Args.n_args() - 1)/2;
+
+  vector<expression_ref> cases(L);
+  vector<expression_ref> results(L);
+  for(int i=0;i<L;i++)
+  {
+    cases[i] = Args.reference(1 + 2*i);
+    results[i] = Args.reference(2 + 2*i);
+  }
 
   shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(obj);
   assert(not E or not dynamic_pointer_cast<const lambda>(E->sub[0]));
 
   expression_ref result;
-  for(int i=0;i<cases.size() and not result;i++)
+  for(int i=0;i<L and not result;i++)
   {
     // If its a dummy, then match it.
     if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(cases[i]))
