@@ -464,12 +464,14 @@ expression_ref let_expression(const std::vector<expression_ref>& vars, const std
 
 expression_ref let_expression(const expression_ref& var, const expression_ref& body, const expression_ref& T);
 
-expression_ref case_expression(bool decompose, const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise = expression_ref());
+expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise = expression_ref());
 
-expression_ref case_expression(bool decompose, const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
+expression_ref case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
-expression_ref multi_case_expression(bool decompose, const std::vector<expression_ref>& terms, const std::vector<expression_ref>& patterns, 
+expression_ref multi_case_expression(const std::vector<expression_ref>& terms, const std::vector<expression_ref>& patterns, 
 				     const expression_ref& body, const expression_ref& otherwise = expression_ref());
+
+expression_ref make_case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
 expression_ref def_function(const expression_ref& pattern, const expression_ref& body);
 

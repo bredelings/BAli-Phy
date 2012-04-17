@@ -1029,7 +1029,7 @@ expression_ref let_float(const expression_ref& R)
       bodies[i] = move_lets(true, bodies[i], let_vars, let_bodies, bound, free_in_R);
     }
 
-    R2 = let_expression(let_vars, let_bodies, case_expression(false, T, vars, bodies));
+    R2 = let_expression(let_vars, let_bodies, make_case_expression(T, vars, bodies));
   }
 
   // 5. Let expressions
@@ -1401,12 +1401,12 @@ bool is_simple_pattern(const expression_ref& R)
 
 // This function currently assumes that all the patterns are just variables.
 
-expression_ref case_expression(bool decompose, const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies);
+expression_ref case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies);
 
 /// Create the expression case T of {patterns[i] -> bodies[i]} --- AND all patterns are just C[i] v1 v2 ... vn
 expression_ref simple_case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
-  expression_ref R = case_expression(false, T, patterns, bodies);
+  expression_ref R = make_case_expression(T, patterns, bodies);
 
   for(int i=patterns.size()-1;i>=0;i--)
   {
@@ -1429,8 +1429,19 @@ vector<T> skip(int n, const vector<T>& v)
   return v2;
 }
 
+expression_ref make_case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+{
+  expression* E = new expression( Case() );
+  E->sub.push_back(T);
+  E->sub.push_back(ListEnd);
+  
+  for(int i=patterns.size()-1;i>=0;i--)
+    E->sub[2] = Cons(Alt(patterns[i],bodies[i]), E->sub[2]);
+  return E;
+}
+
 // Create the expression 'case T of {patterns[i] -> bodies[i]'
-expression_ref case_expression(bool decompose, const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+expression_ref case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
   using std::max;
 
@@ -1442,17 +1453,6 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ve
       return bodies[0];
   }
   
-  if (not decompose)
-  {
-    expression* E = new expression( Case() );
-    E->sub.push_back(T);
-    E->sub.push_back(ListEnd);
-
-    for(int i=patterns.size()-1;i>=0;i--)
-      E->sub[2] = Cons(Alt(patterns[i],bodies[i]), E->sub[2]);
-    return E;
-  }
-
   vector<expression_ref> ok_patterns;
   vector<expression_ref> ok_bodies;
   for(int i=0;i<patterns.size();i++)
@@ -1486,7 +1486,7 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ve
     // 3a. Construct the expression to match if this pattern doesn't match.
     expression_ref otherwise;
     if (i < patterns.size()-1)
-      otherwise = case_expression(true, T, skip(i+1, patterns), skip(i+1,bodies));
+      otherwise = case_expression(T, skip(i+1, patterns), skip(i+1,bodies));
     
     // 3b. Construct the simple case expression and modified body for this expression.
     vector<expression_ref> sub_terms;
@@ -1504,7 +1504,7 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ve
     ok_patterns.back() = shared_ptr<const Object>(PE);
 
     // If ALL of the ADDITIONAL conditions are true, then return bodies[i].  If ANY of them fail, return 'otherwise'.
-    ok_bodies.back() = multi_case_expression(true, sub_terms, sub_patterns, ok_bodies.back(), otherwise);
+    ok_bodies.back() = multi_case_expression(sub_terms, sub_patterns, ok_bodies.back(), otherwise);
 
     // We still need to handle the case where the SIMPLE condition fails.
     if (otherwise)
@@ -1519,7 +1519,7 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ve
   return simple_case_expression(T, patterns, bodies);
 }
 
-expression_ref case_expression(bool decompose, const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
+expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
 {
   vector<expression_ref> patterns(1, pattern);
   vector<expression_ref> bodies(1, body);
@@ -1528,7 +1528,7 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ex
     patterns.push_back(dummy(-1));
     bodies.push_back(otherwise);
   }
-  return case_expression(decompose, T,patterns, bodies);
+  return case_expression(T,patterns, bodies);
 }
 
 /*
@@ -1538,7 +1538,7 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const ex
  */
 
 // case ALL of terms[i] match patterns[i], return body.  Else return otherwise.
-expression_ref multi_case_expression(bool decompose, const vector<expression_ref>& terms, const vector<expression_ref>& patterns, 
+expression_ref multi_case_expression(const vector<expression_ref>& terms, const vector<expression_ref>& patterns, 
 				     const expression_ref& body, const expression_ref& otherwise)
 {
   assert(terms.size() == patterns.size());
@@ -1556,7 +1556,7 @@ expression_ref multi_case_expression(bool decompose, const vector<expression_ref
 
   expression_ref R = body;
   for(int i=patterns.size()-1; i>=0; i--)
-    R = case_expression(decompose, terms[i],patterns[i],R,otherwise);
+    R = case_expression(terms[i],patterns[i],R,otherwise);
 
   return R;
 }
@@ -1822,13 +1822,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
   }
 
   // Construct final case expression
-  expression* E = new expression( Case() );
-  E->sub.push_back(x[0]);
-  E->sub.push_back(ListEnd);
-  
-  for(int i=simple_patterns.size()-1;i>=0;i--)
-    E->sub[2] = Cons(Alt(simple_patterns[i],simple_bodies[i]), E->sub[2]);
-  expression_ref CE = E;
+  expression_ref CE = make_case_expression(x[0], simple_patterns, simple_bodies);
 
   if (otherwise and not all_simple_followed_by_irrefutable)
     CE = let_expression(O, otherwise, CE);

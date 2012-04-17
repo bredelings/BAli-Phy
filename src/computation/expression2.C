@@ -116,10 +116,9 @@ int main()
       lambda_quantify(dummy(0),
 		      lambda_quantify(dummy(1),
 				      lambda_quantify(dummy(2),
-						      case_expression(false,
-								      dummy(0),
-								      patterns,
-								      bodies)
+						      make_case_expression(dummy(0),
+									   patterns,
+									   bodies)
 						      )
 				      )
 		      );
@@ -254,7 +253,7 @@ int main()
   test8 = CTX1.evaluate_expression(test8);
   cout<<test8<<"\n";
 
-  expression_ref test9 = case_expression(true, Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
+  expression_ref test9 = case_expression(Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
 
   cout<<"\n";
   cout<<"Eval test:     "<<test9<<" = \n";
@@ -315,7 +314,7 @@ int main()
   test12.reset();
   cout<<"A:C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test13 = case_expression(true, Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
+  expression_ref test13 = case_expression(Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
 
   cout<<"\n";
   cout<<"Eval test:     "<<test13<<" = \n";

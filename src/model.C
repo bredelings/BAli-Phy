@@ -247,7 +247,7 @@ int Model::add_note(const expression_ref& E)
     expression_ref _ = dummy(-1);
 
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_new = case_expression(true, D, Tuple((prob_density,_,density),args), (density, x, args));
+    expression_ref Pr_new = case_expression(D, Tuple((prob_density,_,density),args), (density, x, args));
     
     // Record that this variable is random, and has this prior.
     // THIS would be the right place to determine what other random variables and parameters are being depended on.

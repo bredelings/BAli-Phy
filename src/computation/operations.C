@@ -87,7 +87,7 @@ shared_ptr<const Object> Case::operator()(OperationArgs& Args) const
   }
 
   if (not result)
-    throw myexception()<<"Case: no valid alternative in '"<<case_expression(false, obj, cases, results)<<"'";
+    throw myexception()<<"Case: no valid alternative in '"<<make_case_expression(obj, cases, results)<<"'";
 
   return result;
 }
