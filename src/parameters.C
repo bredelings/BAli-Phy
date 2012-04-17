@@ -1113,8 +1113,11 @@ Parameters& Parameters::operator=(const Parameters& P)
 {
   Model::operator=(P);
 
-  SuperModel::operator=(P);
+  // SuperModel
+  slot_expressions_for_submodel = P.slot_expressions_for_submodel;
+  model_slots_for_index = P.model_slots_for_index;
 
+  // ProbabilityModel::operator=( )
   keys = P.keys;
 
   SModels = P.SModels;
