@@ -1460,36 +1460,6 @@ expression_ref case_expression(const expression_ref& T, const expression_ref& pa
   return case_expression(T,patterns, bodies);
 }
 
-/*
- * \todo FIXME
- * Can we avoid repeating the same sub-expression on several else-branches of a multi-case expression
- * by introducing sharing with a let construct?
- */
-
-// case ALL of terms[i] match patterns[i], return body.  Else return otherwise.
-expression_ref multi_case_expression(const vector<expression_ref>& terms, const vector<expression_ref>& patterns, 
-				     const expression_ref& body, const expression_ref& otherwise)
-{
-  assert(terms.size() == patterns.size());
-  std::set<dummy> free;
-  for(int i=0;i<terms.size();i++)
-    add(free, get_free_indices(terms[i]));
-
-  std::set<dummy> free_patterns;
-  for(int i=0;i<patterns.size();i++)
-    add(free_patterns, get_free_indices(patterns[i]));
-
-  assert(intersection(free, free_patterns).empty());
-  std::set<dummy> free_body = get_free_indices(body);
-  remove(free_body, free_patterns);
-
-  expression_ref R = body;
-  for(int i=patterns.size()-1; i>=0; i--)
-    R = case_expression(terms[i],patterns[i],R,otherwise);
-
-  return R;
-}
-
 int find_object(const vector<expression_ref>& v, const expression_ref& E)
 {
   for(int i=0;i<v.size();i++)
