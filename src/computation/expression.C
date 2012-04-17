@@ -1561,6 +1561,19 @@ expression_ref multi_case_expression(bool decompose, const vector<expression_ref
   return R;
 }
 
+/*
+ * Currently we handle case {x[i]} of {p[j][i] -> b[j]} as
+ *                     case x[1] of {p[1][i] -> b[1], _ -> case {x[i]} of {p[2..m][i] -> b[2..m]}}
+ *
+ * This could be improved, because we could group rules j whose pattern p[j][1] for x[1] starts with the same constant.
+ *
+ * If p[j][1] is irrefutable for all [j], then we may simply substitute p[j][1] -> x[1] into b[j].
+ * If p[j][1] is _, then this substitution should not occur.
+ *
+ * We should also separate out the case x[i] of patterns[j][i] -> bodies[j] function from construction of
+ * lambda arguments in def_function( ).
+ *
+ */
 expression_ref def_function(bool decompose, const vector< vector<expression_ref> >& patterns, const vector<expression_ref>& bodies, const expression_ref& otherwise)
 {
   // Find the first safe var index
