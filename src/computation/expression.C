@@ -1561,6 +1561,26 @@ expression_ref multi_case_expression(bool decompose, const vector<expression_ref
   return R;
 }
 
+int find_object(const vector<expression_ref>& v, const expression_ref& E)
+{
+  for(int i=0;i<v.size();i++)
+    if (E->compare(*v[i]))
+      return i;
+  return -1;
+}
+
+expression_ref get_constructor(const expression_ref& R)
+{
+  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  {
+    assert( dynamic_pointer_cast<const constructor>(E->sub[0]) );
+    return E->sub[0];
+  }
+  else
+    return R;
+}
+ 
+
 /*
  * Currently we handle case {x[i]} of {p[j][i] -> b[j]} as
  *                     case x[1] of {p[1][i] -> b[1], _ -> case {x[i]} of {p[2..m][i] -> b[2..m]}}
@@ -1573,13 +1593,246 @@ expression_ref multi_case_expression(bool decompose, const vector<expression_ref
  * We should also separate out the case x[i] of patterns[j][i] -> bodies[j] function from construction of
  * lambda arguments in def_function( ).
  *
+ * 1. Find the constructors c[1]...c[n] that are used in top-level patterns p[j][1] on x[1].
+ * 2. Find the rules r[1]..r[n] that are used to the the constructors.
+ * 3. Find the rules r[n+1] for which p[j][1] is irrefutable.
+ * 4. If all rules are irrefutable, then
+ *   (a) we must have the number n of x[i] > 1.
+ * 5. 
+ *
  */
-expression_ref def_function(bool decompose, const vector< vector<expression_ref> >& patterns, const vector<expression_ref>& bodies, const expression_ref& otherwise)
+expression_ref block_case(const vector<expression_ref>& x, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b)
+{
+  assert(x.size() > 0);
+
+  const int N = x.size();
+  const int M = p.size();
+
+  assert(p.size() == b.size());
+
+  // Each pattern must have N components.
+  for(int j=0;j<M;j++)
+    assert(p[j].size() == N);
+
+  // 1. Categorize each rule according to the type of its top-level pattern
+  vector<expression_ref> constants;
+  vector< vector<int> > rules;
+  vector<int> irrefutable_rules;
+  for(int j=0;j<M;j++)
+  {
+    if (dynamic_pointer_cast<const dummy>(p[j][0]))
+    {
+      irrefutable_rules.push_back(j);
+      continue;
+    }
+
+    expression_ref C = get_constructor(p[j][0]);
+    int which = find_object(constants, C);
+
+    if (which == -1)
+    {
+      which = constants.size();
+      constants.push_back(C);
+      rules.push_back({});
+    }
+
+    rules[which].push_back(j);
+  }
+
+  // 2. Substitute for the irrefutable rules to find the 'otherwise' branch
+  // This is substitute(x[1],p[2..m][1], case x2...xN of p[2..M][i] -> b[2..M] )
+  expression_ref otherwise;
+  if (irrefutable_rules.empty())
+    ; // otherwise = NULL
+  else
+  {
+    vector<expression_ref> x2 = x;
+    x2.erase(x2.begin());
+
+    vector<vector<expression_ref>> p2;
+    vector<expression_ref> b2;
+    for(int i=0;i<irrefutable_rules.size();i++)
+    {
+      int r = irrefutable_rules[i];
+      p2.push_back(p[r]);
+      p2.back().erase(p2.back().begin());
+
+      b2.push_back(b[r]);
+
+      shared_ptr<const dummy> d = dynamic_pointer_cast<const dummy>(p[r][0]);
+      if (d->index == -1)
+	assert(d->name.size() == 0);
+      else
+	b2[i] = substitute(b2[i], *d, x[0]);
+    }
+      
+    if (x2.empty())
+    {
+      if (b2.size() > 1)
+	throw myexception()<<"You may not have duplicate irrefutable rules!";
+      otherwise = b2[0];
+    }
+    else
+      otherwise = block_case(x2, p2, b2);
+  }
+      
+  // If there are no conditions on x[0], then we are done.
+  if (constants.empty())
+  {
+    assert(otherwise);
+    return otherwise;
+  }
+
+  // Find the first safe var index
+  std::set<dummy> free;
+
+  for(int i=0;i<x.size();i++)
+    add(free, get_free_indices(x[i]));
+
+  for(int i=0;i<p.size();i++)
+  {
+    add(free, get_free_indices(b[i]));
+  
+    for(int j=0; j<p[i].size(); j++)
+      add(free, get_free_indices(p[i][j]));
+  }
+  
+  int var_index = 0;
+  if (not free.empty()) var_index = max_index(free)+1;
+
+  // WHEN should we put the otherwise expression into a LET variable?
+  expression_ref O;
+  if (otherwise) O = dummy(var_index++);
+
+  // 3. Find the modified bodies for the various constants
+  vector<expression_ref> simple_patterns;
+  vector<expression_ref> simple_bodies;
+  bool all_simple_followed_by_irrefutable = true;
+
+  for(int c=0;c<constants.size();c++)
+  {
+    // Find the arity of the constructor
+    int arity = 0;
+    if (shared_ptr<const constructor> C = dynamic_pointer_cast<const constructor>(constants[c]))
+      arity = C->n_args();
+
+    vector<expression_ref> V(arity+1);
+    V[0] = constants[c];
+
+    int r0 = rules[c][0];
+
+    simple_patterns.push_back({});
+    simple_bodies.push_back({});
+    
+    // Construct the simple pattern for constant C
+    if (arity == 0)
+      simple_patterns.back() = constants[c];
+    else
+    {
+      for(int j=0;j<arity;j++)
+	V[1+j] = dummy(var_index+j);
+      
+      simple_patterns.back() = expression_ref(new expression(V));
+    }
+
+    // Construct the objects for the sub-case expression: x2[i] = v1...v[arity], x[2]...x[N]
+    vector<expression_ref> x2;
+    for(int j=1;j<=arity;j++)
+      x2.push_back(V[j]);
+    x2.insert(x2.end(), x.begin()+1, x.end());
+
+    // Are all refutable patterns on x[1] simple and followed by irrefutable patterns on x[2]...x[N]?
+    bool future_patterns_all_irrefutable = true;
+
+    // Construct the various modified bodies and patterns
+    vector<expression_ref> b2;
+    vector<vector<expression_ref> > p2;
+    for(int i=0;i<rules[c].size();i++)
+    {
+      int r = rules[c][i];
+
+      // Add the pattern
+      p2.push_back({});
+      if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(p[r][0]))
+      {
+	// Add sub-patterns of p[r][1]
+	assert(E->size() == arity+1);
+	for(int k=1;k<=arity;k++)
+	  p2.back().push_back(E->sub[k]);
+      }
+      p2.back().insert(p2.back().end(), p[r].begin()+1, p[r].end());
+
+      // Add the body
+      b2.push_back(b[r]);
+
+      // Check if p2[i] are all irrefutable
+      for(int i=0;i<p2.back().size();i++)
+	if (not is_irrefutable_pattern(p2.back()[i]))
+	{
+	  future_patterns_all_irrefutable = false;
+	  all_simple_followed_by_irrefutable = false;
+	}
+    }
+
+    if (future_patterns_all_irrefutable)
+    {
+      assert(rules[c].size() == 1);
+      simple_patterns.back() = p[r0][0];
+
+      // case x[1] of p[r0][1] -> case (x[2],..,x[N]) of (p[r0][2]....p[r0][N]) -> b[r0]
+      x2 = x;
+      x2.erase(x2.begin());
+
+      p2.back() = p[r0];
+      p2.back().erase( p2.back().begin() );
+
+      if (x2.size())
+	simple_bodies.back() = block_case(x2, p2, b2);
+      else
+	simple_bodies.back() = b[r0];
+    }
+    else
+    {
+      if (otherwise)
+      {
+	p2.push_back(vector<expression_ref>(arity+p[r0].size()-1,dummy(-1)));
+	// Since we could backtrack, use the dummy.  It will point to otherwise
+	b2.push_back(O);
+      }
+      simple_bodies.back() = block_case(x2, p2, b2);
+    }
+  }
+
+  if (otherwise)
+  {
+    simple_patterns.push_back(dummy(-1));
+    // If we have any backtracking, then use the otherwise dummy, like the bodies.
+    if (not all_simple_followed_by_irrefutable)
+      simple_bodies.push_back(O);
+    else
+      simple_bodies.push_back(otherwise);
+  }
+
+  // Construct final case expression
+  expression* E = new expression( Case() );
+  E->sub.push_back(x[0]);
+  E->sub.push_back(ListEnd);
+  
+  for(int i=simple_patterns.size()-1;i>=0;i--)
+    E->sub[2] = Cons(Alt(simple_patterns[i],simple_bodies[i]), E->sub[2]);
+  expression_ref CE = E;
+
+  if (otherwise and not all_simple_followed_by_irrefutable)
+    CE = let_expression(O, otherwise, CE);
+
+  return CE;
+}
+
+
+expression_ref def_function(const vector< vector<expression_ref> >& patterns, const vector<expression_ref>& bodies)
 {
   // Find the first safe var index
   std::set<dummy> free;
-  if (otherwise)
-    free = get_free_indices(otherwise);
 
   for(int i=0;i<patterns.size();i++)
   {
@@ -1603,44 +1856,7 @@ expression_ref def_function(bool decompose, const vector< vector<expression_ref>
     args.push_back(dummy(var_index+i));
     
   // Construct the case expression
-  expression_ref R = otherwise;
-  for(int i=patterns.size()-1; i>=0; i--)
-  {
-    vector<expression_ref> test_args;
-    vector<expression_ref> test_patterns;
-    expression_ref body = bodies[i];
-
-    for(int j=0;j<patterns[i].size();j++)
-    {
-      const expression_ref& P = patterns[i][j];
-
-      // If the pattern is irrefutable, then just substitute in the corresponding arg[]
-      if (is_irrefutable_pattern(P))
-      {
-	if (not is_wildcard(P))
-	  body = substitute(body, P, args[j]);
-      }
-      // If the pattern involves a test, record the test.
-      else
-      {
-	test_args.push_back(args[j]);
-	test_patterns.push_back(P);
-      }
-    }
-
-    // Only add tests if there are any tests.
-    if (test_args.size())
-      R = multi_case_expression(decompose, test_args, test_patterns, body, R);
-
-    // If there are no tests, then the 'otherwise' condition cannot occur.  This should only happen on the last pattern.
-    else
-    {
-      R = body;
-      assert(i==patterns.size()-1);
-    }
-  }
-
-  assert(R);
+  expression_ref R = block_case(args, patterns, bodies);
 
   // Turn it into a function
   for(int i=patterns[0].size()-1;i>=0;i--)
@@ -1649,12 +1865,12 @@ expression_ref def_function(bool decompose, const vector< vector<expression_ref>
   return R;
 }
 
-expression_ref def_function(bool decompose, const vector<expression_ref>& patterns, const expression_ref& body, const expression_ref& otherwise)
+expression_ref def_function(const vector<expression_ref>& patterns, const expression_ref& body)
 {
-  return def_function(decompose, vector< vector<expression_ref> >(1,patterns), vector<expression_ref>(1,body), otherwise);
+  return def_function(vector< vector<expression_ref> >(1,patterns), vector<expression_ref>(1,body));
 }
 
-expression_ref def_function(bool decompose, const vector<expression_ref>& pattern, const vector<expression_ref>& bodies, const expression_ref& otherwise)
+expression_ref def_function(const vector<expression_ref>& pattern, const vector<expression_ref>& bodies)
 {
   vector< vector<expression_ref> > patterns;
 
@@ -1670,12 +1886,12 @@ expression_ref def_function(bool decompose, const vector<expression_ref>& patter
 	patterns.back().push_back(E->sub[i]);
   }
 
-  return def_function(decompose, patterns, bodies, otherwise);
+  return def_function(patterns, bodies);
 }
 
-expression_ref def_function(bool decompose, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
+expression_ref def_function(const expression_ref& pattern, const expression_ref& body)
 {
-  return def_function(decompose, vector<expression_ref>(1,pattern), vector<expression_ref>(1,body), otherwise);
+  return def_function(vector<expression_ref>(1,pattern), vector<expression_ref>(1,body));
 }
 
 // Def: a redex is an expression that matches the LHS of a reduction rule.

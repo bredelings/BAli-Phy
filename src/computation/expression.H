@@ -471,11 +471,11 @@ expression_ref case_expression(bool decompose, const expression_ref& T, const st
 expression_ref multi_case_expression(bool decompose, const std::vector<expression_ref>& terms, const std::vector<expression_ref>& patterns, 
 				     const expression_ref& body, const expression_ref& otherwise = expression_ref());
 
-expression_ref def_function(bool decompose, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise = expression_ref());
+expression_ref def_function(const expression_ref& pattern, const expression_ref& body);
 
-expression_ref def_function(bool decompose, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies, const expression_ref& otherwise = expression_ref());
+expression_ref def_function(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
-expression_ref def_function(bool decompose, const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies, const expression_ref& otherwise = expression_ref());
+expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies);
 
 expression_ref launchbury_normalize(const expression_ref& R);
 expression_ref launchbury_unnormalize(const expression_ref& R);

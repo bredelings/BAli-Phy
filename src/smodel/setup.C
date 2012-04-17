@@ -747,7 +747,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       patterns.push_back( Tuple(p, Cons(Tuple(q,x),t) ) );
       bodies.push_back( Cons( Tuple(lambda_expression( Multiply<Double>() )(p,q),x), scale(p,t) ) );
 
-      expression_ref def_scale = def_function(true, patterns, bodies);
+      expression_ref def_scale = def_function(patterns, bodies);
 
       Scale = let_expression(scale, def_scale, scale);
     }
@@ -768,7 +768,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       patterns.push_back( Tuple(1)( DiscreteDistribution( dummy(0) ) ) );
       bodies.push_back( dummy(0) );
 
-      expression_ref def_unwrap = def_function(true, patterns, bodies);
+      expression_ref def_unwrap = def_function(patterns, bodies);
 
       Unwrap = let_expression(unwrap, def_unwrap, unwrap);
     }

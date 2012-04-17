@@ -135,7 +135,7 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
     assert(name == name2);
   }
 
-  expression_ref E = ::def_function(true, sub_patterns, bodies);
+  expression_ref E = ::def_function(sub_patterns, bodies);
   def_function(name, E);
 }
 
