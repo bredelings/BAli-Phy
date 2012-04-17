@@ -1440,83 +1440,12 @@ expression_ref make_case_expression(const expression_ref& T, const vector<expres
   return E;
 }
 
+expression_ref block_case(const vector<expression_ref>& x, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b);
+
 // Create the expression 'case T of {patterns[i] -> bodies[i]'
 expression_ref case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
-  using std::max;
-
-  // if we have 'case T of _ -> bodies[i]' then just return bodies[0].
-  if (patterns.size() == 1)
-  {
-    shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(patterns[0]);
-    if (D and not includes(get_free_indices(bodies[0]),*D))
-      return bodies[0];
-  }
-  
-  vector<expression_ref> ok_patterns;
-  vector<expression_ref> ok_bodies;
-  for(int i=0;i<patterns.size();i++)
-  {
-    ok_patterns.push_back(patterns[i]);
-    ok_bodies.push_back(bodies[i]);
-    int var_index = max(get_safe_binder_index(T), max(get_safe_binder_index(patterns[i]), get_safe_binder_index(bodies[i])));
-
-    // 1. we don't have to decompose this if its an irrefutable pattern
-    if (is_irrefutable_pattern((patterns[i]))) continue;
-
-    shared_ptr<const expression> PEC = dynamic_pointer_cast<const expression>( ok_patterns.back() );
-
-    // 2. we don't have to decompose this if its a simple branch: 0-arg constructor
-    if (not PEC) continue;
-
-    assert(dynamic_pointer_cast<const constructor>(PEC->sub[0]));
-    vector<int> complex_patterns;
-    for(int j=1;j<PEC->size();j++)
-      if (not is_irrefutable_pattern(PEC->sub[j]))
-	complex_patterns.push_back(j);
-
-    // 2. we don't have to decompose this if its a simple branch: n-arg constructor with all variable arguments.
-    if (complex_patterns.empty()) continue;
-
-    shared_ptr<expression> PE (PEC->clone());
-
-    // NOTE: This pattern (index i) must be the first one that isn't simple.
-    // NOTE: we're going to bail here
-
-    // 3a. Construct the expression to match if this pattern doesn't match.
-    expression_ref otherwise;
-    if (i < patterns.size()-1)
-      otherwise = case_expression(T, skip(i+1, patterns), skip(i+1,bodies));
-    
-    // 3b. Construct the simple case expression and modified body for this expression.
-    vector<expression_ref> sub_terms;
-    vector<expression_ref> sub_patterns;
-    for(int j=0;j<complex_patterns.size();j++)
-    {
-      int index = complex_patterns[j];
-
-      // y ~ PE->sub[index]
-      expression_ref new_var = dummy(var_index++);
-      sub_terms.push_back(new_var);
-      sub_patterns.push_back(PE->sub[index]);
-      PE->sub[index] = new_var;
-    }
-    ok_patterns.back() = shared_ptr<const Object>(PE);
-
-    // If ALL of the ADDITIONAL conditions are true, then return bodies[i].  If ANY of them fail, return 'otherwise'.
-    ok_bodies.back() = multi_case_expression(sub_terms, sub_patterns, ok_bodies.back(), otherwise);
-
-    // We still need to handle the case where the SIMPLE condition fails.
-    if (otherwise)
-    {
-      ok_patterns.push_back(dummy(-1));
-      ok_bodies.push_back(otherwise);
-    }
-
-    return simple_case_expression(T, ok_patterns, ok_bodies);
-  }
-
-  return simple_case_expression(T, patterns, bodies);
+  return block_case({T}, {patterns}, {bodies});
 }
 
 expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
