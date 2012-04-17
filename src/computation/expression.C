@@ -1367,9 +1367,7 @@ expression_ref let_expression(const vector<expression_ref>& vars, const vector<e
 
 expression_ref let_expression(const expression_ref& var, const expression_ref& body, const expression_ref& T)
 {
-  vector<expression_ref> vars(1,var);
-  vector<expression_ref> bodies(1,body);
-  return let_expression(vars, bodies, T);
+  return let_expression(vector<expression_ref>{var}, vector<expression_ref>{body}, T);
 }
 
 bool is_irrefutable_pattern(const expression_ref& R)
