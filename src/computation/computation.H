@@ -14,11 +14,11 @@ struct OperationArgs: public Object
 {
   virtual OperationArgs* clone() const = 0;
 
-  virtual boost::shared_ptr<const Object> reference(int slot) const = 0;
+  virtual object_ref reference(int slot) const = 0;
 
-  virtual boost::shared_ptr<const Object> evaluate(int slot) = 0;
+  virtual object_ref evaluate(int slot) = 0;
 
-  virtual boost::shared_ptr<const Object> lazy_evaluate(int)
+  virtual object_ref lazy_evaluate(int)
   {
     std::abort();
   }
@@ -34,7 +34,7 @@ struct OperationArgs: public Object
     std::abort();
   }
 
-  virtual boost::shared_ptr<const Object> evaluate_expression(const expression_ref&);
+  virtual object_ref evaluate_expression(const expression_ref&);
 
   virtual ~OperationArgs() {}
 };

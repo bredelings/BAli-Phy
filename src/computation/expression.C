@@ -699,7 +699,7 @@ bool do_substitute(expression_ref& R1, const expression_ref& D, const expression
       for(const auto& i:overlap)
 	alpha_rename(E2, dummy(i), dummy(new_index++));
       E1 = shared_ptr<const expression>(E2);
-      R1 = shared_ptr<const Object>(E1);
+      R1 = object_ref(E1);
       changed = true;
 
       // We rename a bound variable dummy(i) in R1 that is free in R2 to a new variable dummy(new_index)
@@ -718,7 +718,7 @@ bool do_substitute(expression_ref& R1, const expression_ref& D, const expression
     changed = (do_substitute(E2->sub[i], D, R2) or changed);
 
   if (changed)
-    R1 = shared_ptr<const Object>(E2);
+    R1 = object_ref(E2);
 
   assert((R1 != orig) == changed);
   return changed;
@@ -1873,10 +1873,10 @@ expression_ref launchbury_normalize(const expression_ref& R)
       new_alternative->sub[2] = launchbury_normalize(new_alternative->sub[2]);
 
       // Make the new Cons point to the new alternative
-      new_cons->sub[1] = shared_ptr<const Object>(new_alternative);
+      new_cons->sub[1] = object_ref(new_alternative);
 
       // Make the level higher up point to the new cons
-      (*tail) = shared_ptr<const Object>(new_cons);
+      (*tail) = object_ref(new_cons);
 
       // Go to the next alternative
       tail = &(new_cons->sub[2]);
@@ -1997,10 +1997,10 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
       new_alternative->sub[2] = launchbury_unnormalize(new_alternative->sub[2]);
 
       // Make the new Cons point to the new alternative
-      new_cons->sub[1] = shared_ptr<const Object>(new_alternative);
+      new_cons->sub[1] = object_ref(new_alternative);
 
       // Make the level higher up point to the new cons
-      (*tail) = shared_ptr<const Object>(new_cons);
+      (*tail) = object_ref(new_cons);
 
       // Go to the next alternative
       tail = &(new_cons->sub[2]);

@@ -42,7 +42,7 @@ struct expression: public Object
 // a constant expression
 struct constant: public Object
 {
-  boost::shared_ptr<const Object> value;
+  object_ref value;
   constant* clone() const {return new constant(*this);}
 
   std::string print() const {return value->print();}
@@ -50,7 +50,7 @@ struct constant: public Object
   tribool compare(const Object& o) const;
   
   explicit constant(const Object& o): value(o.clone()) {}
-  explicit constant(boost::shared_ptr<const Object> v): value(v) {}
+  explicit constant(object_ref v): value(v) {}
 };
 
 struct parameter: public Object
@@ -295,6 +295,7 @@ public:
   explicit typed_expression_ref() {}
   explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   explicit typed_expression_ref(expression* v): expression_ref(v) {}
+  explicit typed_expression_ref(const object_ref& v): expression_ref(v) {}
   explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
   explicit typed_expression_ref(const Object& o):expression_ref(o) {}
 };
@@ -306,6 +307,7 @@ public:
   explicit typed_expression_ref() {}
   explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   explicit typed_expression_ref(expression* v): expression_ref(v) {}
+  explicit typed_expression_ref(const object_ref& v): expression_ref(v) {}
   explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
   explicit typed_expression_ref(const Object& o):expression_ref(o) {}
   typed_expression_ref(const T& t):expression_ref(POD<T>(t)) {}
@@ -318,6 +320,7 @@ public:
   explicit typed_expression_ref() {}
   explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   explicit typed_expression_ref(expression* v): expression_ref(v) {}
+  explicit typed_expression_ref(const object_ref& v): expression_ref(v) {}
   explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
   explicit typed_expression_ref(const Object& o):expression_ref(o) {}
   typed_expression_ref(const T& t):expression_ref(POD_math<T>(t)) {}

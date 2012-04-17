@@ -48,7 +48,7 @@ private:
 
 public:
 
-  boost::shared_ptr<const Object> default_parameter_value(int i) const;
+  object_ref default_parameter_value(int i) const;
 
   /// Remove a stack-allocated reg from the stack.
   root_t push_root(int R) const {return memory->push_root(R);}
@@ -72,16 +72,16 @@ public:
   bool compute_expression_is_up_to_date(int i) const;
 
   /// Return the value of a particular index, computing it if necessary
-  boost::shared_ptr<const Object> lazy_evaluate(int index) const;
+  object_ref lazy_evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
-  boost::shared_ptr<const Object> lazy_evaluate_expression(const expression_ref&) const;
+  object_ref lazy_evaluate_expression(const expression_ref&) const;
 
   /// Return the value of a particular index, computing it if necessary
-  boost::shared_ptr<const Object> evaluate(int index) const;
+  object_ref evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
-  boost::shared_ptr<const Object> evaluate_expression(const expression_ref&) const;
+  object_ref evaluate_expression(const expression_ref&) const;
 
   template <typename T>
   boost::shared_ptr<const T> evaluate_as(int index) const
@@ -102,10 +102,10 @@ public:
   void rename_parameter(int i, const std::string& s);
 
   /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-  boost::shared_ptr<const Object> get_parameter_value(int index) const;
+  object_ref get_parameter_value(int index) const;
 
   /// Get the value of a non-constant, non-computed index
-  boost::shared_ptr<const Object> get_parameter_value(const std::string&) const;
+  object_ref get_parameter_value(const std::string&) const;
 
   /// Update the value of a non-constant, non-computed index
   void set_reg_value(int index, const expression_ref&);

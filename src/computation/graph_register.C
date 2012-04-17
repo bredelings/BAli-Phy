@@ -411,10 +411,10 @@ expression_ref graph_normalize(const expression_ref& R)
       new_alternative->sub[2] = graph_normalize(new_alternative->sub[2]);
 
       // Make the new Cons point to the new alternative
-      new_cons->sub[1] = shared_ptr<const Object>(new_alternative);
+      new_cons->sub[1] = object_ref(new_alternative);
 
       // Make the level higher up point to the new cons
-      (*tail) = shared_ptr<const Object>(new_cons);
+      (*tail) = object_ref(new_cons);
 
       // Go to the next alternative
       tail = &(new_cons->sub[2]);
@@ -1915,7 +1915,7 @@ class RegOperationArgs: public OperationArgs
       }
 
       if (different)
-	return shared_ptr<const Object>(E2);
+	return object_ref(E2);
       else
 	return S;
     }
@@ -1925,22 +1925,22 @@ class RegOperationArgs: public OperationArgs
 
 public:
 
-  boost::shared_ptr<const Object> reference(int slot) const
+  object_ref reference(int slot) const
   {
     return dynamic_pointer_cast<const expression>(M[R].E)->sub[slot+1];
   }
 
-  boost::shared_ptr<const Object> evaluate(int slot)
+  object_ref evaluate(int slot)
   {
     return evaluate_structure(reference(slot));
   }
 
-  boost::shared_ptr<const Object> lazy_evaluate(int slot)
+  object_ref lazy_evaluate(int slot)
   {
     return lazy_evaluate_structure(reference(slot));
   }
 
-  shared_ptr<const Object> evaluate_expression(const expression_ref&)
+  object_ref evaluate_expression(const expression_ref&)
   {
     std::abort();
   }
