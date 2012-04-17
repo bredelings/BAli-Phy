@@ -1795,6 +1795,7 @@ class RegOperationArgs: public OperationArgs
 
   int n_allocated;
 
+  // Removing this dynamic_cast doesn't seem to speed things up very much.
   const expression& get_E() const {return *dynamic_pointer_cast<const expression>(M[R].E);}
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
