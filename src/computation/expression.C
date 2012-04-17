@@ -25,18 +25,16 @@ bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars,
 
   if (not dynamic_pointer_cast<const let_obj>(E->sub[0])) return false;
 
-  vector<expression_ref> pairs = get_ref_vector_from_list(E->sub[1]);
-  for(int i=0;i<pairs.size();i++)
+  // There should be an even number of arguments.
+  assert(E->sub.size()%2 == 0);
+
+  T = E->sub[1];
+  const int L = E->sub.size()/2 - 1;
+  for(int i=0;i<L;i++)
   {
-    shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(pairs[i]);
-    assert(is_dummy(E2->sub[1]));
-    vars.push_back(E2->sub[1]);
-    bodies.push_back(E2->sub[2]);
+    vars.push_back(E->sub[2+2*i]);
+    bodies.push_back(E->sub[3+2*i]);
   }
-
-  T = E->sub[2];
-
-  assert(vars.size() == bodies.size());
 
   return true;
 }
@@ -312,12 +310,7 @@ tribool alt_obj::compare(const Object& O) const
   
   return true;
 }
-
-string equal_obj::name() const 
-{
-  return "=";
-}
-
+/*
 tribool equal_obj::compare(const Object& O) const
 {
   if (this == &O) 
@@ -327,6 +320,7 @@ tribool equal_obj::compare(const Object& O) const
   
   return true;
 }
+*/
 
 expression_ref Alt(const expression_ref& pattern, const expression_ref& body)
 {
@@ -562,49 +556,8 @@ void alpha_rename(shared_ptr<expression>& E, const expression_ref& x, const expr
   }
   else if (dynamic_pointer_cast<const let_obj>(E->sub[0]))
   {
-    E->sub[2] = substitute(E->sub[2], x, y);
-
-    // This is kind of an awkward way to simultaneously walk/modify an expression
-    expression_ref* tail = &(E->sub[1]);
-    bool found = false;
-    // This is the (:,def,tail) or []
-    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
-    {
-      // This is the def (=,Var,Body)
-      shared_ptr<const expression> def = dynamic_pointer_cast<const expression>(cons->sub[1]);
-
-      expression_ref Var = def->sub[1];
-      expression_ref Body = def->sub[2];
-
-      expression_ref Var2 = Var;
-      expression_ref Body2 = substitute(Body, x, y);
-
-      // substitute for the bound variable
-      if (x->compare(*Var))
-      {
-	Var2 = y;
-	found = true;
-      }
-
-      expression_ref new_def = def;
-      if (Var != Var2 or Body != Body2)
-      {
-	shared_ptr<expression> new_def_E( def->clone() );
-	new_def_E->sub[1] = Var2;
-	new_def_E->sub[2] = Body2;
-	new_def = shared_ptr<const expression>(new_def_E);
-      }
-
-      // Here we create (:, new_R3, tail)
-      shared_ptr<expression> new_cons ( cons->clone() );
-      new_cons->sub[1] = new_def;
-
-      // Make the previous tail pointer -> new cons
-      (*tail) = shared_ptr<const Object>(new_cons);
-      // Go to the next definition
-      tail = &(new_cons->sub[2]);
-    }
-    assert(found);
+    for(int i=1;i<E->sub.size();i++)
+      E->sub[i] = substitute(E->sub[i], x, y);
   }
   else
     assert(false);
@@ -1353,13 +1306,12 @@ expression_ref let_expression(const vector<expression_ref>& vars, const vector<e
   }
 
   expression* E = new expression( let_obj() );
-  E->sub.push_back(ListEnd);
   E->sub.push_back(T);
 
   for(int i=0;i<vars.size();i++)
   {
-    expression_ref t = lambda_expression( equal_obj() )(vars[i], bodies[i]);
-    E->sub[1] = Cons(t, E->sub[1]);
+    E->sub.push_back(vars[i]);
+    E->sub.push_back(bodies[i]);
   }
 
   return E;
@@ -1976,29 +1928,13 @@ expression_ref launchbury_normalize(const expression_ref& R)
   if (Let)
   {
     expression* V = new expression(*E);
+    // Normalize the object
+    V->sub[1] = launchbury_normalize(V->sub[1]);
 
-    expression_ref* tail = &(V->sub[1]);
-    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
-    {
-      // Create a new Cons
-      assert(cons->size() == 3);
-      shared_ptr<expression> new_cons ( cons->clone() );
-
-      // Create a new definition
-      shared_ptr<expression> new_def ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
-      new_def->sub[2] = launchbury_normalize(new_def->sub[2]);
-
-      // Make the new Cons point to the new alternative
-      new_cons->sub[1] = shared_ptr<const Object>(new_def);
-
-      // Make the level higher up point to the new cons
-      (*tail) = shared_ptr<const Object>(new_cons);
-
-      // Go to the next alternative
-      tail = &(new_cons->sub[2]);
-    }
-    
-    V->sub[2] = launchbury_normalize(V->sub[2]);
+    const int L = V->sub.size()/2 - 1;
+    // Just normalize the bodies
+    for(int i=0;i<L;i++)
+      V->sub[3+2*i] = launchbury_normalize(V->sub[3+2*i]);
 
     return V;
   }

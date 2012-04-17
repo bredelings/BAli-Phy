@@ -408,7 +408,7 @@ expression_ref graph_normalize(const expression_ref& R)
 
       // Create a new alternative
       shared_ptr<expression> new_alternative ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
-      new_alternative->sub[2] = launchbury_normalize(new_alternative->sub[2]);
+      new_alternative->sub[2] = graph_normalize(new_alternative->sub[2]);
 
       // Make the new Cons point to the new alternative
       new_cons->sub[1] = shared_ptr<const Object>(new_alternative);
@@ -469,28 +469,14 @@ expression_ref graph_normalize(const expression_ref& R)
   {
     shared_ptr<expression> V ( new expression(*E) );
 
-    expression_ref* tail = &(V->sub[1]);
-    while(shared_ptr<const expression> cons = dynamic_pointer_cast<const expression>(*tail))
-    {
-      // Create a new Cons
-      assert(cons->size() == 3);
-      shared_ptr<expression> new_cons ( cons->clone() );
+    // Normalize the object
+    V->sub[1] = graph_normalize(V->sub[1]);
 
-      // Create a new definition
-      shared_ptr<expression> new_def ( dynamic_pointer_cast<const expression>(cons->sub[1])->clone());
-      new_def->sub[2] = launchbury_normalize(new_def->sub[2]);
+    const int L = V->sub.size()/2 - 1;
 
-      // Make the new Cons point to the new alternative
-      new_cons->sub[1] = shared_ptr<const Object>(new_def);
-
-      // Make the level higher up point to the new cons
-      (*tail) = shared_ptr<const Object>(new_cons);
-
-      // Go to the next alternative
-      tail = &(new_cons->sub[2]);
-    }
-
-    V->sub[2] = graph_normalize(V->sub[2]);
+    // Just normalize the bodies, not the vars
+    for(int i=0;i<L;i++)
+      V->sub[3 + 2*i] = graph_normalize(V->sub[3 + 2*i]);
 
     return shared_ptr<const expression>(V);
   }

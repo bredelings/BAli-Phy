@@ -123,6 +123,7 @@ struct alt_obj: public Operator
   int n_args() const {return 2;}
 };
 
+/*
 struct equal_obj: public Operator
 {
   equal_obj* clone() const {return new equal_obj(*this);}
@@ -134,6 +135,7 @@ struct equal_obj: public Operator
 
   int n_args() const {return 2;}
 };
+*/
 
 // This no longer needs to be a virtual member function, because we can now walk the expression from outside.
 int n_match_results(const expression_ref&);
