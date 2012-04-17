@@ -1774,9 +1774,10 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 	}
     }
 
-    if (future_patterns_all_irrefutable)
+    // If x[1] matches a simple pattern in the only alternative, we may as well
+    // not change the variable names for the match slots in this pattern.
+    if (rules[c].size() == 1 and is_simple_pattern(p[r0][0]))
     {
-      assert(rules[c].size() == 1);
       simple_patterns.back() = p[r0][0];
 
       // case x[1] of p[r0][1] -> case (x[2],..,x[N]) of (p[r0][2]....p[r0][N]) -> b[r0]
@@ -1785,6 +1786,13 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
       p2.back() = p[r0];
       p2.back().erase( p2.back().begin() );
+    }
+
+    // If all future patterns are irrefutable, then we won't need to backtrack to the otherwise case.
+    if (future_patterns_all_irrefutable)
+    {
+      // There can be only one alternative.
+      assert(rules[c].size() == 1);
 
       if (x2.size())
 	simple_bodies.back() = block_case(x2, p2, b2);
