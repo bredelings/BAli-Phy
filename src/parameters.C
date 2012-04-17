@@ -1109,8 +1109,10 @@ double Parameters::get_branch_indel_length(int p, int b) const
   return length1;
 }
 
+// We have to write this all out so because we need to set data_partitions[i]->P = this afterward.
 Parameters& Parameters::operator=(const Parameters& P)
 {
+  // Model
   Model::operator=(P);
 
   // SuperModel
