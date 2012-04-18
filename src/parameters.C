@@ -622,6 +622,18 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   transition_p = C.add_compute_expression((::branch_transition_p, S));
 }
 
+const data_partition& Parameters::get_data_partition(int i) const
+{
+  data_partitions[i].P = this;
+  return data_partitions[i];
+}
+
+data_partition& Parameters::get_data_partition(int i)
+{
+  data_partitions[i].P = this;
+  return data_partitions[i];
+}
+
 void Parameters::set_beta(double b)
 {
   set_parameter_value(0,b);
@@ -673,8 +685,8 @@ efloat_t Parameters::prior_no_alignment() const
   }
 
   // prior on parameters in data partitions
-  for(int i=0;i<data_partitions.size();i++)
-    Pr *= data_partitions[i]->prior_no_alignment();
+  for(int i=0;i<n_data_partitions();i++)
+    Pr *= get_data_partition(i).prior_no_alignment();
 
   return Pr;
 }
@@ -683,8 +695,8 @@ efloat_t Parameters::prior_alignment() const
 {
   efloat_t Pr = 1;
 
-  for(int i=0;i<data_partitions.size();i++) 
-    Pr *= data_partitions[i]->prior_alignment();
+  for(int i=0;i<n_data_partitions();i++) 
+    Pr *= get_data_partition(i).prior_alignment();
 
   return Pr;
 }
@@ -697,8 +709,8 @@ efloat_t Parameters::prior() const
 efloat_t Parameters::likelihood() const 
 {
   efloat_t Pr = 1;
-  for(int i=0;i<data_partitions.size();i++) 
-    Pr *= data_partitions[i]->likelihood();
+  for(int i=0;i<n_data_partitions();i++) 
+    Pr *= get_data_partition(i).likelihood();
   return Pr;
 }
 
@@ -706,8 +718,8 @@ efloat_t Parameters::heated_likelihood() const
 {
   efloat_t Pr = 1;
 
-  for(int i=0;i<data_partitions.size();i++) 
-    Pr *= data_partitions[i]->heated_likelihood();
+  for(int i=0;i<n_data_partitions();i++) 
+    Pr *= get_data_partition(i).heated_likelihood();
 
   return Pr;
 }
@@ -720,14 +732,14 @@ void Parameters::recalc_imodels()
 
 void Parameters::recalc_imodel(int m) 
 {
-  for(int i=0;i<data_partitions.size();i++) 
+  for(int i=0;i<n_data_partitions();i++) 
   {
     if (imodel_for_partition[i] == m) {
       // copy our IModel down into the data partition
-      data_partitions[i]->IModel_ = IModels[m];
+      get_data_partition(i).IModel_ = IModels[m];
 
       // recompute cached computations
-      data_partitions[i]->recalc_imodel();
+      get_data_partition(i).recalc_imodel();
     }
   }
 }
@@ -740,89 +752,89 @@ void Parameters::recalc_smodels()
 
 void Parameters::recalc_smodel(int m) 
 {
-  for(int i=0;i<data_partitions.size();i++) 
+  for(int i=0;i<n_data_partitions();i++) 
   {
     if (smodel_for_partition[i] == m) 
     {
       // recompute cached computations
-      data_partitions[i]->recalc_smodel();
+      get_data_partition(i).recalc_smodel();
     }
   }
 }
 
 void Parameters::select_root(int b)
 {
-  for(int i=0;i<data_partitions.size();i++)
-    ::select_root(*T, b, data_partitions[i]->LC);
+  for(int i=0;i<n_data_partitions();i++)
+    ::select_root(*T, b, get_data_partition(i).LC);
 }
 
 void Parameters::set_root(int node)
 {
-  for(int i=0;i<data_partitions.size();i++)
-    data_partitions[i]->LC.root = node;
+  for(int i=0;i<n_data_partitions();i++)
+    get_data_partition(i).LC.root = node;
 }
 
 void Parameters::LC_invalidate_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->LC.invalidate_branch(*T,b);
+    get_data_partition(i).LC.invalidate_branch(*T,b);
 }
 
 void Parameters::LC_invalidate_one_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->LC.invalidate_one_branch(b);
+    get_data_partition(i).LC.invalidate_one_branch(b);
 }
 
 void Parameters::LC_invalidate_all()
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->LC.invalidate_all();
+    get_data_partition(i).LC.invalidate_all();
 }
 
 void Parameters::invalidate_subA_index_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->invalidate_subA_index_branch(b);
+    get_data_partition(i).invalidate_subA_index_branch(b);
 }
 
 void Parameters::invalidate_subA_index_one_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->invalidate_subA_index_one_branch(b);
+    get_data_partition(i).invalidate_subA_index_one_branch(b);
 }
 
 void Parameters::invalidate_subA_index_all()
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->invalidate_subA_index_all();
+    get_data_partition(i).invalidate_subA_index_all();
 }
 
 void Parameters::subA_index_allow_invalid_branches(bool b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->subA_index_allow_invalid_branches(b);
+    get_data_partition(i).subA_index_allow_invalid_branches(b);
 }
 
 void Parameters::note_alignment_changed_on_branch(int b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    if (data_partitions[i]->variable_alignment())
-      data_partitions[i]->note_alignment_changed_on_branch(b);
+    if (get_data_partition(i).variable_alignment())
+      get_data_partition(i).note_alignment_changed_on_branch(b);
 }
 
 void Parameters::note_alignment_changed()
 {
   for(int i=0;i<n_data_partitions();i++)
-    if (data_partitions[i]->variable_alignment())
-      data_partitions[i]->note_alignment_changed();
+    if (get_data_partition(i).variable_alignment())
+      get_data_partition(i).note_alignment_changed();
 }
 
 void Parameters::note_sequence_length_changed(int n)
 {
   for(int i=0;i<n_data_partitions();i++)
-    if (data_partitions[i]->variable_alignment())
-      data_partitions[i]->note_sequence_length_changed(n);
+    if (get_data_partition(i).variable_alignment())
+      get_data_partition(i).note_sequence_length_changed(n);
 }
 
 void Parameters::recalc(const vector<int>& indices)
@@ -837,7 +849,7 @@ void Parameters::recalc(const vector<int>& indices)
 
     if (index == 0) // beta
       for(int p=0;p<n_data_partitions();p++)
-	data_partitions[p]->recalc_imodel();
+	get_data_partition(p).recalc_imodel();
     else if (index < n_scales+1)
     {
       int s = index - 1;
@@ -858,7 +870,7 @@ void Parameters::recalc(const vector<int>& indices)
       for(int p=0;p<scale_for_partition.size();p++)
       {
 	if (scale_for_partition[p] == s)
-	  data_partitions[p]->branch_mean_changed();
+	  get_data_partition(p).branch_mean_changed();
       }
     }
     else if (n_imodels() and index < n_scales+4)
@@ -929,7 +941,7 @@ const Model& Parameters::SubModels(int i) const
 bool Parameters::variable_alignment() const
 {
   for(int i=0;i<n_data_partitions();i++)
-    if (data_partitions[i]->variable_alignment())
+    if (get_data_partition(i).variable_alignment())
       return true;
   return false;
 }
@@ -937,7 +949,7 @@ bool Parameters::variable_alignment() const
 void Parameters::variable_alignment(bool b)
 {
   for(int i=0;i<n_data_partitions();i++)
-    data_partitions[i]->variable_alignment(b);
+    get_data_partition(i).variable_alignment(b);
 }
 
 void Parameters::setlength_no_invalidate_LC(int b,double l) 
@@ -954,8 +966,8 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
     C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
   }
 
-  for(int i=0;i<data_partitions.size();i++) 
-    data_partitions[i]->setlength_no_invalidate_LC(b);
+  for(int i=0;i<n_data_partitions();i++) 
+    get_data_partition(i).setlength_no_invalidate_LC(b);
 }
 
 void Parameters::setlength(int b,double l) 
@@ -972,8 +984,8 @@ void Parameters::setlength(int b,double l)
     C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
   }
 
-  for(int p=0;p<data_partitions.size();p++) 
-    data_partitions[p]->setlength(b);
+  for(int p=0;p<n_data_partitions();p++) 
+    get_data_partition(p).setlength(b);
 }
 
 double Parameters::branch_mean() const 
@@ -1074,72 +1086,6 @@ double Parameters::get_branch_indel_length(int p, int b) const
   //  assert(std::abs(length1 - length2) < 1.0e-8);
 
   return length1;
-}
-
-// We have to write this all out so because we need to set data_partitions[i]->P = this afterward.
-Parameters& Parameters::operator=(const Parameters& P)
-{
-  // Model
-  Model::operator=(P);
-
-  // SuperModel
-  slot_expressions_for_submodel = P.slot_expressions_for_submodel;
-  model_slots_for_index = P.model_slots_for_index;
-
-  // ProbabilityModel::operator=( )
-  keys = P.keys;
-
-  SModels = P.SModels;
-  smodel_for_partition = P.smodel_for_partition;
-
-  IModels = P.IModels;
-  imodel_for_partition = P.imodel_for_partition;
-
-  scale_for_partition = P.scale_for_partition;
-  n_scales = P.n_scales;
-
-  branch_prior_type = P.branch_prior_type;
-
-  branch_length_indices = P.branch_length_indices;
-
-  branch_transition_p_indices.resize( P.branch_transition_p_indices.size1(), P.branch_transition_p_indices.size2());
-  branch_transition_p_indices = P.branch_transition_p_indices;
-
-  data_partitions = P.data_partitions;
-
-  T = P.T;
-
-  TC = P.TC;
-
-  AC = P.AC;
-
-  branch_HMM_type = P.branch_HMM_type;
-
-  beta_series = P.beta_series;
-
-  all_betas = P.all_betas;
-  beta_index = P.beta_index;
-
-  updown = P.updown;
-
-  partitions = P.partitions;
-  partition_weights = P.partition_weights;
-
-  constants = P.constants;
-  features = P.features;
-
-  branch_length_max = P.branch_length_max;
-
-  for(int i=0;i<data_partitions.size();i++)
-    data_partitions[i]->P = this;
-
-  return *this;
-}
-
-Parameters::Parameters(const Parameters& P)
-  :Model(P),SuperModel(P), Probability_Model(P)
-{
-  operator=(P);
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
@@ -1286,10 +1232,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     if (imodel_for_partition[i] != -1)
       IM = IModels[imodel_for_partition[i]];
 
-    cow_ptr<data_partition> dp (new data_partition(name, this, i, A[i], *T, IM));
-
     // add the data partition
-    data_partitions.push_back(dp);
+    data_partitions.push_back( data_partition(name, this, i, A[i], *T, IM) );
   }
 }
 

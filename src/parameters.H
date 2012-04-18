@@ -258,6 +258,9 @@ class Parameters: public SuperModel, public Probability_Model
 
   ublas::matrix<int> branch_transition_p_indices;
 
+  /// The alignments and cached computations
+  mutable std::vector<data_partition> data_partitions;
+
 public:
 
   /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?
@@ -267,13 +270,13 @@ public:
 
   void variable_alignment(bool b);
 
-  /// The alignments and cached computations
-  std::vector<cow_ptr<data_partition> > data_partitions;
+  const data_partition& get_data_partition(int i) const;
+        data_partition& get_data_partition(int i);
 
   int n_data_partitions() const {return data_partitions.size();}
 
-  const data_partition& operator[](int i) const {return *data_partitions[i];}
-        data_partition& operator[](int i)       {return *data_partitions[i];}
+  const data_partition& operator[](int i) const {return get_data_partition(i);}
+        data_partition& operator[](int i)       {return get_data_partition(i);}
 
   int get_smodel_index_for_partition(int i) const {return smodel_for_partition[i];}
 
@@ -398,10 +401,6 @@ public:
 
   const Model& SubModels(int) const;
   Model& SubModels(int);
-
-  Parameters& operator=(const Parameters&);
-
-  Parameters(const Parameters&);
 
   Parameters(const std::vector<alignment>& A, const SequenceTree&, 
 	     const std::vector<formula_expression_ref>&,
