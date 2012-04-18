@@ -74,8 +74,6 @@ class data_partition: public Probability_Model, public Mat_Cache
 
   std::string partition_name;
 
-  void recalc(const std::vector<int>&);
-
   /// Cached prior for just the alignment -- accessed through alignment_prior( )
   mutable cached_value<efloat_t> cached_alignment_prior;
 

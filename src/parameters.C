@@ -467,21 +467,6 @@ void data_partition::note_alignment_changed()
   // this automatically marks all non-leaf sequence lengths for recomputation.
 }
 
-void data_partition::recalc(const vector<int>& indices)
-{
-  // If there is no indel model, we have no parameters
-  if (indices.size() and not has_IModel()) throw myexception()<<"What parameter is this???";
-
-  for(int i=0;i<indices.size();i++)
-  {
-    int index = indices[i];
-    if (index > 2) throw myexception()<<"What parameter is this???";
-    
-    // invalidate cached imodels and cached Pr(alignment_for_branch[b]) for each branch b.
-    recalc_imodel();
-  }
-}
-
 /// Set the mean branch length to \a mu
 void data_partition::branch_mean_changed()
 {
