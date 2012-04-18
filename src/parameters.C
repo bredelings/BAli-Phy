@@ -41,6 +41,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/operations.H"
 #include "exponential.H"
 #include "smodel/functions.H"
+#include "distribution-operations.H"
 
 using std::vector;
 using std::string;
@@ -211,19 +212,9 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
     // use the length, unless we are unaligned
     double D = P->get_branch_indel_length(partition_index, b);
 
-    double indel_scale_by = 1.0;
-    int indel_scale_branch = -1;
-    if (get_parameter_value_as<Bool>(1))
-    {
-      indel_scale_by = exp( get_parameter_value_as<Double>(0) );
-      indel_scale_branch = get_parameter_value_as<Int>(2);
-    }
-
     // compute and cache the branch HMM
     if (branch_HMM_type[b] == 1)
       HMM = IModel_->get_branch_HMM(-1);
-    else if (b == indel_scale_branch)
-      HMM = IModel_->get_branch_HMM(D*indel_scale_by);
     else
       HMM = IModel_->get_branch_HMM(D);
   }
@@ -484,21 +475,7 @@ string data_partition::name() const
 
 efloat_t data_partition::prior_no_alignment() const 
 {
-  efloat_t Pr = 1.0;
-
-  if (has_IModel())
-  {
-    double indel_scale_by = get_parameter_value_as<Double>(0);
-    Pr *= laplace_pdf(indel_scale_by, 0, 1);
-
-    //    bool indel_scale_on = get_parameter_value_as<Bool>(1);
-    Pr *= 0.5;
-
-    //    int indel_scale_branch = get_parameter_value_as<Int>(2);
-    Pr *= 1.0/(T().n_branches());
-  }
-
-  return Pr;
+  return 1.0;
 }
 
 // We want to decrease 
@@ -563,7 +540,6 @@ efloat_t data_partition::prior_alignment() const
 
 efloat_t data_partition::prior() const 
 {
-  
   return prior_alignment() * prior_no_alignment();
 }
 
@@ -620,13 +596,6 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
     E = (getIndex, E, b);
 
     transition_p_method_indices[b] = p->C.add_compute_expression(E);
-  }
-
-  if (has_IModel())
-  {
-    add_parameter(Parameter("lambda_scale", Double(0.0)));
-    add_parameter(Parameter("lambda_scale_on", Bool(false)));
-    add_parameter(Parameter("lambda_scale_branch", Int(-1), between(0,T().n_branches()-1)));
   }
 }
 
@@ -892,6 +861,9 @@ void Parameters::recalc(const vector<int>& indices)
 	  data_partitions[p]->branch_mean_changed();
       }
     }
+    else if (n_imodels() and index < n_scales+4)
+      for(int m=0;m<n_imodels();m++) 
+	recalc_imodel(m);
   }
 
   // Check if any submodels are affected.
@@ -939,10 +911,8 @@ Model& Parameters::SubModels(int i)
 
   if (i<IModels.size()) 
     return IModel(i);
-  else
-    i -= IModels.size();
 
-  return *data_partitions[i];
+  std::abort();
 }
 
 const Model& Parameters::SubModels(int i) const
@@ -952,10 +922,8 @@ const Model& Parameters::SubModels(int i) const
 
   if (i<IModels.size()) 
     return IModel(i);
-  else
-    i -= IModels.size();
 
-  return *data_partitions[i];
+  std::abort();
 }
 
 bool Parameters::variable_alignment() const
@@ -1075,18 +1043,32 @@ double Parameters::get_branch_subst_length(int p, int b) const
   return length1;
 }
 
-double Parameters::get_branch_indel_rate(int p, int /* b */) const
+double Parameters::get_branch_indel_rate(int p, int b) const
 {
-  int s = scale_for_partition[p];
-  // FIXME - move lambda out of the model and make it a scaling parameter that multiples mu.
-  return get_parameter_value_as<Double>(branch_mean_index(s));
+  assert(n_imodels() > 0);
+
+  double r = get_branch_subst_rate(p, b);
+
+  double indel_scale_by = 1.0;
+
+  /*
+  int indel_scale_branch = -1;
+  if (get_parameter_value_as<Bool>(1))
+  {
+    indel_scale_by = exp( get_parameter_value_as<Double>(0) );
+    indel_scale_branch = get_parameter_value_as<Int>(2);
+  }
+  */
+
+  return r * indel_scale_by;
 }
 
 double Parameters::get_branch_indel_length(int p, int b) const
 {
-  double length1 = get_branch_duration(p,b) * get_branch_subst_rate(p,b);
+  double length1 = get_branch_duration(p,b) * get_branch_indel_rate(p,b);
 
   b = T->directed_branch(b).undirected_name();
+
   //  int s = scale_for_partition[p];
   //  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
   //  assert(std::abs(length1 - length2) < 1.0e-8);
@@ -1188,6 +1170,20 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   for(int i=0;i<n_scales;i++)
     add_super_parameter(Parameter("mu"+convertToString(i+1), Double(0.25), lower_bound(0)));
+
+  // create parameters for scaling indel model on a specific branch
+  if (IMs.size())
+  {
+    add_super_parameter(Parameter("lambda_scale", Double(0.0)));
+    // lambda_scale ~ Laplace(0, 1)
+    add_note(distributed(parameter("lambda_scale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
+
+    add_super_parameter(Parameter("lambda_scale_on", Bool(false)));
+    // lambda_scale_on ~ Uniform on T,F
+
+    add_super_parameter(Parameter("lambda_scale_branch", Int(-1), between(0,T->n_branches()-1)));
+    //lambda_scale_branch ~ Uniform on 0 .. T.n_branches()-1
+  }
 
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
@@ -1294,9 +1290,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
     // add the data partition
     data_partitions.push_back(dp);
-
-    // register data partition as sub-model
-    register_submodel(name);
   }
 }
 
