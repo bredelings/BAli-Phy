@@ -92,7 +92,7 @@ void data_partition::variable_alignment(bool b)
       subA = subA_index_leaf(A->length()+1, T().n_branches()*2);
 
     assert(has_IModel() and A->n_sequences() == T().n_nodes());
-    minimally_connect_leaf_characters(*A,T());
+    minimally_connect_leaf_characters(*A.modify(), T());
     note_alignment_changed();
 
     // we need to calculate the branch_HMMs
@@ -112,7 +112,7 @@ const IndelModel& data_partition::IModel() const
 
 IndelModel& data_partition::IModel()
 {
-  if (has_IModel()) return *IModel_;
+  if (has_IModel()) return *IModel_.modify();
   std::abort();
 }
 
@@ -240,7 +240,7 @@ void data_partition::recalc_imodel_for_branch(int b)
   // Is it OK to move it here?
   //
   // FIXME #2 - IModel_ should be branch-specific.
-  IModel_->set_heat( get_beta() );
+  IModel_.modify()->set_heat( get_beta() );
 
   b = T().directed_branch(b).undirected_name();
 
@@ -955,7 +955,7 @@ void Parameters::variable_alignment(bool b)
 void Parameters::setlength_no_invalidate_LC(int b,double l) 
 {
   b = T->directed_branch(b).undirected_name();
-  T->directed_branch(b).set_length(l);
+  T.modify()->directed_branch(b).set_length(l);
 
   // Update D parameters
   for(int s=0; s<n_scales; s++) 
@@ -973,7 +973,7 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
 void Parameters::setlength(int b,double l) 
 {
   b = T->directed_branch(b).undirected_name();
-  T->directed_branch(b).set_length(l);
+  T.modify()->directed_branch(b).set_length(l);
 
   // Update D parameters
   for(int s=0; s<n_scales; s++) 
@@ -1180,7 +1180,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   // don't constrain any branch lengths
   for(int b=0;b<TC->n_branches();b++)
-    TC->branch(b).set_length(-1);
+    TC.modify()->branch(b).set_length(-1);
 
   // Add and initialize variables for branch *length*.
   for(int s=0;s<n_scales;s++)

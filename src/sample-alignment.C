@@ -80,7 +80,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   dynamic_bitset<> s1 = constraint_satisfied(P.alignment_constraint, *P.A);
 
   const Tree& T = P.T();
-  alignment& A = *P.A;
+  alignment& A = *P.A.modify();
 
   Matrix frequency = P.FrequencyMatrix();
 
@@ -143,7 +143,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
 
   path.erase(path.begin()+path.size()-1);
 
-  *P.A = construct(A,path,node1,node2,T,seq1,seq2);
+  *P.A.modify() = construct(A,path,node1,node2,T,seq1,seq2);
   P.LC.invalidate_branch_alignment(T,b);
   P.set_pairwise_alignment(T.directed_branch(node1,node2), A2::get_pairwise_alignment_from_path(path));
 

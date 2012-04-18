@@ -190,7 +190,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   vector<int> path_g = Matrices->sample_path();
   vector<int> path = Matrices->ungeneralize(path_g);
 
-  *P.A = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
+  *P.A.modify() = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
   for(int i=1;i<4;i++) {
     int b = T.directed_branch(nodes[0],nodes[i]);
     P.set_pairwise_alignment(b, A3::get_pairwise_alignment_from_path(path, 0, i));

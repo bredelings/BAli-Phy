@@ -180,7 +180,7 @@ double scale_means_only_slice_function::operator()(double t)
   double scale = set_sum_of_means_tricky(P, initial_sum_of_means * exp(t));
 
   // Scale the tree in the opposite direction
-  SequenceTree& T = *P.T;
+  SequenceTree& T = *P.T.modify();
 
   for(int b=0;b<T.n_branches();b++) 
   {
@@ -195,7 +195,7 @@ double scale_means_only_slice_function::operator()()
 {
   count++;
 
-  SequenceTree& T = *P.T;
+  SequenceTree& T = *P.T.modify();
   const int B = T.n_branches();
   const int n = P.n_branch_means();
 

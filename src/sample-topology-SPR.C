@@ -186,7 +186,7 @@ double do_SPR(SequenceTree& T1, int b1_,int b2)
 
 double do_SPR(Parameters& P, int b1, int b2)
 {
-  double ratio = do_SPR(*P.T, b1, b2);
+  double ratio = do_SPR(*P.T.modify(), b1, b2);
   return ratio;
 }
 
@@ -251,7 +251,7 @@ vector<double> effective_lengths_min(const Tree& T)
 }
 
 
-int choose_SPR_target(SequenceTree& T1, int b1_) 
+int choose_SPR_target(const SequenceTree& T1, int b1_) 
 {
   const_branchview b1 = T1.directed_branch(b1_);
 
@@ -304,7 +304,7 @@ void remove_duplicates(vector<int>& v) {
   }
 }
 
-MCMC::Result SPR_stats(const Tree& T1, Tree& T2, bool success, int bins, int b1 = -1)
+MCMC::Result SPR_stats(const Tree& T1, const Tree& T2, bool success, int bins, int b1 = -1)
 {
   MCMC::Result result(2+bins,0);
 
@@ -410,7 +410,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
 
   //---------------- find the changed branches ------------------//
   vector<int> branches;
-  for(edges_after_iterator i=p[1].T->directed_branch(n2,n1).branches_after();i;i++)
+  for(const_edges_after_iterator i=p[1].T->directed_branch(n2,n1).branches_after();i;i++)
     branches.push_back((*i).undirected_name());
   //  std::cerr<<"before = "<<p[1].T<<endl;
 
@@ -422,7 +422,7 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
     return MCMC::Result(2+bins,0);
 
   //  std::cerr<<"after = "<<p[1].T<<endl;
-  for(edges_after_iterator i=p[1].T->directed_branch(n2,n1).branches_after();i;i++)
+  for(const_edges_after_iterator i=p[1].T->directed_branch(n2,n1).branches_after();i;i++)
     branches.push_back((*i).undirected_name());
 
   remove_duplicates(branches);
@@ -856,8 +856,8 @@ spr_attachment_probabilities SPR_search_attachment_points(Parameters& P, int b1,
     tree_edge B2 = I.get_tree_edge(b2);
 
     // ** 1. SPR ** : alter the tree.
-    *P.T = T0;
-    int BM2 = SPR_at_location(*P.T, b1, b2, locations, I.BM);
+    *P.T.modify() = T0;
+    int BM2 = SPR_at_location(*P.T.modify(), b1, b2, locations, I.BM);
     assert(BM2 == I.BM); // Due to the way the current implementation of SPR works, BM (not B1) should be moved.
 
     // The length of B1 should already be L0, but we need to reset the transition probabilities (MatCache)
@@ -1099,9 +1099,9 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // Step N-1: ATTACH to that point
 
-  *(p[1].T) = T0; 
+  *(p[1].T.modify()) = T0; 
   if (C != 0)
-    SPR_at_location(*p[1].T, b1, branch_names[C], locations);
+    SPR_at_location(*p[1].T.modify(), b1, branch_names[C], locations);
 
   // enforce tree constraints
   if (not extends(*p[1].T, *P.TC))

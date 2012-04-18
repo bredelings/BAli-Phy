@@ -51,7 +51,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 {
   default_timer_stack.push_timer("alignment::DP2/3-way");
   const Tree& T = P.T();
-  alignment& A = *P.A;
+  alignment& A = *P.A.modify();
 
   assert(P.variable_alignment());
 

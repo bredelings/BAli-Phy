@@ -651,7 +651,7 @@ void enable_disable_transition_kernels(MCMC::MoveAll& sampler, const variables_m
 }
 
 /// Find the minimum branch length
-double min_branch_length(SequenceTree& T)
+double min_branch_length(const SequenceTree& T)
 {
   double min_branch = T.branch(0).length();
   for(int i=1;i<T.n_branches();i++)

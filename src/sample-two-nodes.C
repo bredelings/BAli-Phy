@@ -75,7 +75,7 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
 {
   default_timer_stack.push_timer("alignment::DP1/5-way");
   const Tree& T = P.T();
-  alignment& A = *P.A;
+  alignment& A = *P.A.modify();
   alignment old = A;
 
   //  std::cerr<<"old = "<<old<<endl;

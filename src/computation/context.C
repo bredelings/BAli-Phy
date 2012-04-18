@@ -426,7 +426,7 @@ context& context::operator+=(const Program& P2)
     set_E(R, let_float(graph_normalize(translate_refs(F))));
   }
 
-  (*P) += P2;
+  (*P.modify()) += P2;
   return *this;
 }
 

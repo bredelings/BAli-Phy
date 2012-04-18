@@ -232,7 +232,7 @@ void change_branch_length_and_T(owned_ptr<Probability_Model>& P,MoveStats& Stats
     //----- Generate the Different Topologies ------//
     vector<Parameters> p(2,PP);
     
-    SequenceTree& T2 = *p[1].T;
+    SequenceTree& T2 = *p[1].T.modify();
     
     vector<int> nodes = A5::get_nodes_random(T2,b);
     int b1 = T2.directed_branch(nodes[4],nodes[1]);
@@ -456,7 +456,7 @@ void scale_means_only(owned_ptr<Probability_Model>& P,MoveStats& Stats)
   }
 #endif
 
-  SequenceTree& T2 = *P2->T;
+  SequenceTree& T2 = *P2->T.modify();
   for(int b=0;b<T2.n_branches();b++) {
     const double length = T2.branch(b).length();
     T2.branch(b).set_length(length/scale);

@@ -332,7 +332,7 @@ public:
   /// Get the substitution::Model
   const IndelModel& IModel(int i) const {return *IModels[i];}
   /// Get the substitution::Model
-        IndelModel& IModel(int i)       {return *IModels[i];}
+        IndelModel& IModel(int i)       {return *IModels[i].modify();}
 
   boost::shared_ptr<const alphabet> get_alphabet_for_smodel(int i) const;
 
