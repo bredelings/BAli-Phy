@@ -63,7 +63,7 @@ formula_expression_ref operator,(const formula_expression_ref&, const expression
 formula_expression_ref operator,(const formula_expression_ref&, const formula_expression_ref&);
 
 formula_expression_ref operator&(const expression_ref&, const formula_expression_ref&);
-formula_expression_ref operator&(const formula_expression_ref, const expression_ref&);
+formula_expression_ref operator&(const formula_expression_ref&, const expression_ref&);
 formula_expression_ref operator&(const formula_expression_ref&, const formula_expression_ref&);
 
 formula_expression_ref Tuple(const formula_expression_ref&, const formula_expression_ref&);
