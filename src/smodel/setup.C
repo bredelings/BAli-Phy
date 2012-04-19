@@ -582,7 +582,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       rates.push_back(rate.exp());
 
       // dist = (f,rate):dist
-      dist = Cons(Tuple(f, rate), dist);
+      dist = Tuple(f, rate) & dist;
     }
     dist = DiscreteDistribution(dist);
     dist.add_expression( distributed( get_tuple(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );

@@ -58,13 +58,13 @@ expression_ref def_parameter(Model_Notes&, const std::string& name, const expres
 
 formula_expression_ref lambda_quantify(const expression_ref&, const formula_expression_ref&);
 
-formula_expression_ref operator,(const expression_ref, const formula_expression_ref);
-formula_expression_ref operator,(const formula_expression_ref, const expression_ref);
-formula_expression_ref operator,(const formula_expression_ref, const formula_expression_ref);
+formula_expression_ref operator,(const expression_ref&, const formula_expression_ref&);
+formula_expression_ref operator,(const formula_expression_ref&, const expression_ref&);
+formula_expression_ref operator,(const formula_expression_ref&, const formula_expression_ref&);
 
-formula_expression_ref operator&(const expression_ref, const formula_expression_ref);
-formula_expression_ref operator&(const formula_expression_ref, const expression_ref);
-formula_expression_ref operator&(const formula_expression_ref, const formula_expression_ref);
+formula_expression_ref operator&(const expression_ref&, const formula_expression_ref&);
+formula_expression_ref operator&(const formula_expression_ref, const expression_ref&);
+formula_expression_ref operator&(const formula_expression_ref&, const formula_expression_ref&);
 
 formula_expression_ref Tuple(const formula_expression_ref&, const formula_expression_ref&);
 formula_expression_ref Tuple(const formula_expression_ref&, const formula_expression_ref&, const formula_expression_ref&);

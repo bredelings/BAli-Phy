@@ -195,17 +195,17 @@ formula_expression_ref lambda_quantify(const expression_ref& d, const formula_ex
   return F2;
 }
 
-formula_expression_ref operator,(const expression_ref E1, const formula_expression_ref F2)
+formula_expression_ref operator,(const expression_ref& E1, const formula_expression_ref& F2)
 {
   return E1(F2);
 }
 
-formula_expression_ref operator,(const formula_expression_ref F1, const expression_ref E2)
+formula_expression_ref operator,(const formula_expression_ref& F1, const expression_ref& E2)
 {
   return F1(E2);
 }
 
-formula_expression_ref operator,(const formula_expression_ref F1, const formula_expression_ref F2)
+formula_expression_ref operator,(const formula_expression_ref& F1, const formula_expression_ref& F2)
 {
   return F1(F2);
 }
