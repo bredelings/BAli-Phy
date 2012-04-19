@@ -568,8 +568,8 @@ std::set<dummy> get_free_indices(const expression_ref& R)
   for(int i=0;i<E->size();i++)
     add(S, get_free_indices(E->sub[i]));
 
-  foreach(i,bound)
-    S.erase(*i);
+  for(const auto& b: bound)
+    S.erase(b);
 
   return S;
 }
@@ -579,8 +579,8 @@ template<typename T>
 T max(const std::set<T>& v)
 {
   T t = *v.begin();
-  foreach(i,v)
-    t = std::max(t,*i);
+  for(const auto& i: v)
+    t = std::max(t,i);
 
   return t;
 }
@@ -596,7 +596,7 @@ template<typename T>
 T min(const std::set<T>& v)
 {
   T t = *v.begin();
-  foreach(i,v)
+  for(const auto& i: v)
     t = std::min(t,*i);
 
   return t;
@@ -718,8 +718,8 @@ bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars,
 
   // Find the set of bound variables that could be free in let_bodies
   set<dummy> visible_bound = bound;
-  foreach(i, let_bound)
-    visible_bound.erase(*i);
+  for(const auto& i: let_bound)
+    visible_bound.erase(i);
 
   vector< set<dummy> > free_vars;
   for(int i=0;i<let_bodies.size();i++)
@@ -1127,8 +1127,8 @@ expression_ref add_prefix(const string& prefix, const expression_ref& R)
   std::set<string> names = find_named_parameters(R);
 
   expression_ref R2 = R;
-  foreach(i,names)
-    R2 = substitute(R2, parameter(*i), parameter(prefix+"::"+*i));
+  for(const auto& name: names)
+    R2 = substitute(R2, parameter(name), parameter(prefix+"::"+name));
 
   return R2;
 }
