@@ -88,10 +88,9 @@ Program& Program::operator+=(const Def& D)
 
 Program& Program::operator+=(const Program& P)
 {
-  foreach(f, P.functions)
-  {
-    def_function(f->first, f->second.first, f->second.second);
-  }
+  for(const auto& f: P.functions)
+    def_function(f.first, f.second.first, f.second.second);
+
   return *this;
 }
 
@@ -159,10 +158,10 @@ expression_ref Program::get_function(const std::string& name) const
 
 std::ostream& operator<<(std::ostream& o, const Program& D)
 {
-  foreach(f, D.functions)
+  for(const auto& f: D.functions)
   {
-    o<<f->first<<" = "<<f->second.first<<"  ("<<f->second.second<<")\n";
-    o<<f->first<<" = "<<let_float(f->second.first)<<"  ("<<f->second.second<<")";
+    o<<f.first<<" = "<<f.second.first<<"  ("<<f.second.second<<")\n";
+    o<<f.first<<" = "<<let_float(f.second.first)<<"  ("<<f.second.second<<")";
     o<<"\n";
   }
   return o;

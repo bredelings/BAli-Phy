@@ -394,8 +394,8 @@ Model::Model(const vector<expression_ref>& notes)
   // 1. Create the parameters
   std::set<string> names = find_named_parameters(notes);
   
-  foreach(i,names)
-    add_parameter(*i);
+  for(const auto& name: names)
+    add_parameter(name);
 
   C.alphabetize_parameters();
 

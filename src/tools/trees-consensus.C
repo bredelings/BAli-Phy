@@ -906,14 +906,14 @@ void write_greedy_consensus(const tree_sample& tree_dist,
   typedef const map<dynamic_bitset<>,count_and_length> container_t;
 
   multiset< pair<dynamic_bitset<>,count_and_length>, count_more2 > sorted_splits;
-  foreach(i,full_partitions)
-    sorted_splits.insert(*i);
+  for(const auto& i: full_partitions)
+    sorted_splits.insert(i);
 
   vector<dynamic_bitset<> > S;
-  foreach(i, sorted_splits)
+  for(const auto& i: sorted_splits)
   {
-    if (compatible(S, i->first))
-      S.push_back(i->first);
+    if (compatible(S, i.first))
+      S.push_back(i.first);
 
     if (S.size() >= 2*L-3) break;
   }
