@@ -404,17 +404,17 @@ context& context::operator+=(const Def& D)
 context& context::operator+=(const Program& P2)
 {
   // Give each identifier a pointer to an unused location
-  foreach(D, P2.functions)
+  for(const auto &D: P2.functions)
   {
-    if (not identifiers().count(D->first))
-      add_identifier(D->first);
+    if (not identifiers().count(D.first))
+      add_identifier(D.first);
   }
 
   // Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-  foreach(D, P2.functions)
+  for(const auto& D: P2.functions)
   {
     // get the root for each identifier
-    string name = D->first;
+    string name = D.first;
     map<string, root_t>::iterator loc = identifiers().find(name);
     assert(loc != identifiers().end());
     root_t r = loc->second;
@@ -460,8 +460,8 @@ context::context(const vector<expression_ref>& N)
   // 1. Create the parameters
   std::set<string> names = find_named_parameters(N);
   
-  foreach(i,names)
-    add_parameter(*i);
+  for(const auto& name: names)
+    add_parameter(name);
 
   // 2. Add the notes refering to the parameters.
   add_notes(N);
