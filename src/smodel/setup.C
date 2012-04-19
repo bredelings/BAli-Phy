@@ -613,10 +613,10 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref p2 = def_parameter("M2::f[Neutral]", Double(1.0/3), between(0,1));
     formula_expression_ref p3 = def_parameter("M2::f[Selected]", Double(1.0/3), between(0,1));
     formula_expression_ref m2_omega = def_parameter("M2::omega", Double(1.0), lower_bound(0));
-    formula_expression_ref D = DiscreteDistribution(Cons(Tuple(p1,expression_ref(0.0)),
-							 Cons(Tuple(p2,expression_ref(1.0)),
-							      Cons(Tuple(p3,m2_omega),ListEnd)))
-						     );
+    formula_expression_ref D = DiscreteDistribution(Tuple(p1,expression_ref(0.0))&
+						    Tuple(p2,expression_ref(1.0))&
+						    Tuple(p3,m2_omega)&ListEnd
+						    );
     vector<Double> n(3);
     n[0] = 1;
     n[1] = 98;
@@ -652,7 +652,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       // P *= ((1-f)*exponential_pdf(-log(w),0.05)/w + f*exponential_pdf(log(w),0.05)/w);
       w.add_expression( distributed( w, Tuple(log_exponential_dist, 0.05) ) );
 
-      D = Cons(Tuple(f,w),D);
+      D = Tuple(f,w)&D;
     }
     D = DiscreteDistribution(D);
     D.add_expression(distributed( get_tuple(fraction), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
@@ -673,10 +673,11 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref p3 = def_parameter("M2a::f[Selected]", Double(1.0/3), between(0,1));
     formula_expression_ref w1 = def_parameter("M2a::omega1", Double(1.0), between(0,1));
     formula_expression_ref w3 = def_parameter("M2a::omega3", Double(1.0), lower_bound(1));
-    formula_expression_ref D = DiscreteDistribution(Cons(Tuple(p1,w1),
-							 Cons(Tuple(p2,expression_ref(1.0)),
-							      Cons(Tuple(p3,w3),ListEnd)))
-						     );
+    formula_expression_ref D = DiscreteDistribution(Tuple(p1,w1)&
+						    Tuple(p2,expression_ref(1.0))&
+						    Tuple(p3,w3)&
+						    ListEnd
+						    );
     vector<Double> n(3);
     n[0] = 1;
     n[1] = 98;
@@ -744,8 +745,8 @@ bool process_stack_Multi(vector<string>& string_stack,
       bodies.push_back( ListEnd );
 
       // scale p (q,x):t = (p*q,x):(scale p t)
-      patterns.push_back( Tuple(p, Cons(Tuple(q,x),t) ) );
-      bodies.push_back( Cons( Tuple(lambda_expression( Multiply<Double>() )(p,q),x), scale(p,t) ) );
+      patterns.push_back( Tuple(p, Tuple(q,x)&t ) );
+      bodies.push_back(  Tuple(lambda_expression( Multiply<Double>() )(p,q),x) & scale(p,t) );
 
       expression_ref def_scale = def_function(patterns, bodies);
 
@@ -803,13 +804,9 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref w3 = (If, I, w, 1.0);
     //    formula_expression_ref w3b = case_expression(
 
-    formula_expression_ref D = Cons(Tuple(p3,w3),
-				    Cons(Tuple(p2,expression_ref(1.0)),
-					 Scale(p1,
-					       Unwrap(Discretize(model_formula(Beta()),expression_ref(n)))
-					       )
-					 )
-				    );
+    formula_expression_ref D = Tuple(p3,w3) &
+                               Tuple(p2,expression_ref(1.0)) &
+                               (Scale, p1, Unwrap(Discretize(model_formula(Beta()),expression_ref(n))));
 
     D = DiscreteDistribution(D);
 
