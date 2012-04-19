@@ -52,8 +52,8 @@ struct Parameter
   bool fixed;
 
   Parameter(const std::string&);
-  Parameter(const std::string&, boost::shared_ptr<const Object>);
-  Parameter(const std::string&, boost::shared_ptr<const Object>, const Bounds<double>&, bool=false);
+  Parameter(const std::string&, object_ptr<const Object>);
+  Parameter(const std::string&, object_ptr<const Object>, const Bounds<double>&, bool=false);
 
   Parameter(const std::string&, const Object&);
   Parameter(const std::string&, const Object&, bool);
@@ -229,8 +229,8 @@ public:
   void set_bounds(int i,const Bounds<double>& b);
 
   /// Get A model parameter value
-  boost::shared_ptr<const Object> get_parameter_value(int i) const;
-  boost::shared_ptr<const Object> get_parameter_value(const std::string& p_name) const;
+  object_ptr<const Object> get_parameter_value(int i) const;
+  object_ptr<const Object> get_parameter_value(const std::string& p_name) const;
 
   template <typename T>
   bool parameter_has_type(int index) const {return boost::dynamic_pointer_cast<const T>(get_parameter_value(index));}
@@ -254,7 +254,7 @@ public:
   }
 
   /// Get SOME model parameter values
-  std::vector<boost::shared_ptr<const Object> > get_parameter_values(const std::vector<int>&) const;
+  std::vector<object_ptr<const Object> > get_parameter_values(const std::vector<int>&) const;
 
   /// Get ALL model parameter values
   template <typename T>
@@ -268,25 +268,25 @@ public:
     return values;  
   }
   /// Get ALL model parameter values
-  std::vector<boost::shared_ptr<const Object> > get_parameter_values() const;
+  std::vector<object_ptr<const Object> > get_parameter_values() const;
 
   /// Store ONE parameter value down into submodels
-  virtual void write_value(int i, const boost::shared_ptr<const Object>& p);
+  virtual void write_value(int i, const object_ptr<const Object>& p);
 
   /// Set A model parameter value
           void set_parameter_value(int p,Double value);
   /// Set A model parameter value
-          void set_parameter_value(int p, const boost::shared_ptr<const Object>& value);
+          void set_parameter_value(int p, const object_ptr<const Object>& value);
   /// Set A model parameter value
-          void set_parameter_value(const std::string& p, const boost::shared_ptr<const Object>& value);
+          void set_parameter_value(const std::string& p, const object_ptr<const Object>& value);
   /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
   /// Set SOME of the model parameter values
-          void set_parameter_values(const std::vector<int>& indices,const std::vector<boost::shared_ptr<const Object> >& p);
+          void set_parameter_values(const std::vector<int>& indices,const std::vector<object_ptr<const Object> >& p);
   /// Set ALL model parameter values
           void set_parameter_values(const std::vector<Double>& p);
   /// Set ALL model parameter values
-          void set_parameter_values(const std::vector<boost::shared_ptr<const Object> >& p);
+          void set_parameter_values(const std::vector<object_ptr<const Object> >& p);
 
   unsigned n_parameters() const;
 
@@ -300,8 +300,8 @@ public:
   virtual void check() const {}
 
   // Evaluate the model and return the result
-  virtual boost::shared_ptr<const Object> result() const;
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  virtual object_ptr<const Object> result() const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   // Evaluate the model and return the result
   template <typename T>
@@ -328,7 +328,7 @@ struct model_prior: public Operation
 
   model_prior* clone() const {return new model_prior(*this);}
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "model_prior["+M->name()+"]";}
 
@@ -361,7 +361,7 @@ struct arg_expression
 {
   int parent_index;
   int sub_model_index;
-  boost::shared_ptr<const Object> constant_value;
+  object_ptr<const Object> constant_value;
 
   bool is_constant() const {return parent_index == -1 and sub_model_index == -1;}
   bool is_term_ref() const {return parent_index != -1;}
@@ -408,7 +408,7 @@ protected:
   /// Propagate changes to child model parameters down to child Model objects.
   void write();
   /// Store ONE parameter value down into submodels
-  void write_value(int i, const boost::shared_ptr<const Object>& p);
+  void write_value(int i, const object_ptr<const Object>& p);
 
 public:
   /// Make a copy of ourselves
@@ -483,7 +483,7 @@ struct FormulaModel: public Model
 
   FormulaModel* clone() const {return new FormulaModel(*this);}
 
-  boost::shared_ptr<const Object> result() const;
+  object_ptr<const Object> result() const;
 
   std::string name() const;
 

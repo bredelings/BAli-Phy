@@ -25,9 +25,9 @@ const expression_ref Singlet_to_Triplet_Exchange = lambda_expression( substituti
 
 namespace substitution
 {
-  shared_ptr<const Object> Plus_gwF_Function(const alphabet& a, double f, const expression_ref& pi_E)
+  object_ptr<const Object> Plus_gwF_Function(const alphabet& a, double f, const expression_ref& pi_E)
   {
-    shared_ptr<MatrixObject> R( new MatrixObject );
+    object_ptr<MatrixObject> R( new MatrixObject );
 
     const int n = a.size();
 
@@ -55,7 +55,7 @@ namespace substitution
     return R;
   }
 
-  shared_ptr<const Object> Plus_gwF_Op::operator()(OperationArgs& Args) const
+  object_ptr<const Object> Plus_gwF_Op::operator()(OperationArgs& Args) const
   {
     const alphabet& a = *Args.evaluate_as<alphabet>(0);
 
@@ -70,9 +70,9 @@ namespace substitution
 
   using namespace probability;
 
-  shared_ptr<Object> SimpleExchangeFunction(double rho, int n)
+  object_ptr<Object> SimpleExchangeFunction(double rho, int n)
   {
-    shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+    object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
 
     R->t.resize(n);
 
@@ -86,9 +86,9 @@ namespace substitution
     return R;
   }
 
-  shared_ptr<const Object> EQU_Exchange_Function(const alphabet& a)
+  object_ptr<const Object> EQU_Exchange_Function(const alphabet& a)
   {
-    shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+    object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
 
     R->t.resize(a.size());
 
@@ -100,11 +100,11 @@ namespace substitution
     return R;
   }
 
-  shared_ptr<const Object> HKY_Function(const Nucleotides& a, double kappa)
+  object_ptr<const Object> HKY_Function(const Nucleotides& a, double kappa)
   {
     assert(a.size()==4);
 
-    shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+    object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
 
     R->t.resize(a.size());
 
@@ -120,9 +120,9 @@ namespace substitution
     return R;
   }
 
-  shared_ptr<const Object> HKY_Op::operator()(OperationArgs& Args) const
+  object_ptr<const Object> HKY_Op::operator()(OperationArgs& Args) const
   {
-    shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+    object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
     double kappa = *Args.evaluate_as<Double>(1);
     
     return HKY_Function(*N,kappa);
@@ -135,11 +135,11 @@ namespace substitution
     return HKY(a)(kappa);
   }
   
-  shared_ptr<const Object> TN_Function(const Nucleotides& a, double kappa1, double kappa2)
+  object_ptr<const Object> TN_Function(const Nucleotides& a, double kappa1, double kappa2)
   {
     assert(a.size()==4);
   
-    shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+    object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
 
     R->t.resize(a.size());
   
@@ -157,9 +157,9 @@ namespace substitution
     return R;
   }
 
-  shared_ptr<const Object> TN_Op::operator()(OperationArgs& Args) const
+  object_ptr<const Object> TN_Op::operator()(OperationArgs& Args) const
   {
-    shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+    object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
     double kappa1 = *Args.evaluate_as<Double>(1);
     double kappa2 = *Args.evaluate_as<Double>(2);
     
@@ -174,14 +174,14 @@ namespace substitution
     return TN(a)(kappa1)(kappa2);
   }
   
-  shared_ptr<const Object> GTR_Function(const Nucleotides& a, 
+  object_ptr<const Object> GTR_Function(const Nucleotides& a, 
 					double AG, double AT, double AC,
 					double GT, double GC, 
 					double TC)
   {
     assert(a.size()==4);
 
-    shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+    object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
 
     R->t.resize(a.size());
   
@@ -199,9 +199,9 @@ namespace substitution
     return R;
   }
 
-  boost::shared_ptr<const Object> GTR_Op::operator()(OperationArgs& Args) const
+  object_ptr<const Object> GTR_Op::operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
+    object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
     double AG = *Args.evaluate_as<Double>(1);
     double AT = *Args.evaluate_as<Double>(2);
     double AC = *Args.evaluate_as<Double>(3);
@@ -235,9 +235,9 @@ namespace substitution
     return R;
   }
   
-  shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
+  object_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
   {
-    shared_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(C) );
+    object_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(C) );
     ublas::symmetric_matrix<double>& S = R->S;
 
     for(int i=0;i<C.size();i++) 
@@ -277,11 +277,11 @@ namespace substitution
 
   expression_ref M0E = lambda_expression( M0_Op() );
 
-  shared_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& R2)
+  object_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& R2)
   {
     int N = T.size();
 
-    shared_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject(N) );
+    object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject(N) );
 
     SymmetricMatrix& S = R->t;
     const SymmetricMatrix& S2 = R2.t;
@@ -314,10 +314,10 @@ namespace substitution
     return R;
   }
 
-  shared_ptr<const Object> Singlet_to_Triplet_Exchange_Op::operator()(OperationArgs& Args) const
+  object_ptr<const Object> Singlet_to_Triplet_Exchange_Op::operator()(OperationArgs& Args) const
   {
-    shared_ptr<const Triplets> T = Args.evaluate_as<Triplets>(0);
-    shared_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(1);
+    object_ptr<const Triplets> T = Args.evaluate_as<Triplets>(0);
+    object_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(1);
     
     return SingletToTripletExchangeFunction(*T,*S);
   }
@@ -374,7 +374,7 @@ namespace substitution
     return Plus_gwF_Model(a,pi);
   }
 
-  shared_ptr<const MatrixObject> Q_Function(const SymmetricMatrix& S, const Matrix& R)
+  object_ptr<const MatrixObject> Q_Function(const SymmetricMatrix& S, const Matrix& R)
   {
     const unsigned N = S.size1();
     assert(S.size1() == R.size1());
@@ -392,13 +392,13 @@ namespace substitution
       Q(i,i) = -sum;
     }
 
-    return shared_ptr<const MatrixObject>(new MatrixObject(Q));
+    return object_ptr<const MatrixObject>(new MatrixObject(Q));
   }
 
-  shared_ptr<const Object> Q_Op::operator()(OperationArgs& Args) const
+  object_ptr<const Object> Q_Op::operator()(OperationArgs& Args) const
   {
-    shared_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(0);
-    shared_ptr<const MatrixObject> F = Args.evaluate_as<MatrixObject>(1);
+    object_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(0);
+    object_ptr<const MatrixObject> F = Args.evaluate_as<MatrixObject>(1);
     
     return Q_Function(*S, *F);
   }
@@ -483,7 +483,7 @@ namespace substitution
   // low resolution.
 
   /*
-  shared_ptr<ReversibleMarkovModelObject> Modulated_Markov_Function(const ExchangeModelObject& S,MultiModelObject M)
+  object_ptr<ReversibleMarkovModelObject> Modulated_Markov_Function(const ExchangeModelObject& S,MultiModelObject M)
   {
     // Make a copy and use this.
 
@@ -498,7 +498,7 @@ namespace substitution
       T += RM->n_states();
     }
 
-    shared_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(*M.get_alphabet(), T) );
+    object_ptr<ReversibleMarkovModelObject> R ( new ReversibleMarkovModelObject(*M.get_alphabet(), T) );
 
     // calculate the state_letters() map here!
 
@@ -594,17 +594,17 @@ namespace substitution
 
   // FIXME: this shouldn't be done in C++!
   /*
-  shared_ptr<const MultiModelObject> Mixture_Function(const expression_ref& DL, const expression_ref& ML)
+  object_ptr<const MultiModelObject> Mixture_Function(const expression_ref& DL, const expression_ref& ML)
   {
     vector<expression_ref> D = get_ref_vector_from_list(DL);
     vector<expression_ref> M = get_ref_vector_from_list(ML);
     assert(D.size() == M.size());
 
-    shared_ptr<MultiModelObject> R (new MultiModelObject);
+    object_ptr<MultiModelObject> R (new MultiModelObject);
 
     for(int m=0;m<M.size();m++)
     {
-      shared_ptr<const MultiModelObject> MM = dynamic_pointer_cast<const MultiModelObject>(M[m]);
+      object_ptr<const MultiModelObject> MM = dynamic_pointer_cast<const MultiModelObject>(M[m]);
 
       double w = dynamic_cast<const Double&>(*D[m]);
 
@@ -655,7 +655,7 @@ namespace substitution
    *           = pi^-1.2 * exp(S2) * pi^1/2
    */
 
-  boost::shared_ptr<const EigenValues> Get_Eigensystem_Function(const Matrix& Q, const vector<double>& pi)
+  object_ptr<const EigenValues> Get_Eigensystem_Function(const Matrix& Q, const vector<double>& pi)
   {
     const unsigned n = Q.size1();
     assert(Q.size2() == Q.size1());
@@ -700,10 +700,10 @@ namespace substitution
       }
 
     //---------------- Compute eigensystem ------------------//
-    return shared_ptr<const EigenValues>(new EigenValues(S));
+    return object_ptr<const EigenValues>(new EigenValues(S));
   }
 
-  boost::shared_ptr<const Object> Get_Eigensystem_Op::operator()(OperationArgs& Args) const
+  object_ptr<const Object> Get_Eigensystem_Op::operator()(OperationArgs& Args) const
   {
     Matrix Q = *Args.evaluate_as<MatrixObject>(0);
     vector<double> pi = get_vector<double,Double>( Args.evaluate(1) );
@@ -718,7 +718,7 @@ namespace substitution
   // Q_from_R_and_S(R,S) = let Q = S*R in (RateMatrix, Q, (frequencies, R), (get_eigensystem, Q, pi), 1.0)
 
   // 
-  boost::shared_ptr<const Double> 
+  object_ptr<const Double> 
   Get_Equilibrium_Rate_Function(const alphabet& a, const vector<unsigned>& smap, const Matrix& Q, const expression_ref& pi_E)
   {
     std::vector<double> pi = get_vector<double,Double>(pi_E);
@@ -746,14 +746,14 @@ namespace substitution
       }
     }
 
-    return shared_ptr<const Double>(new Double(scale/a.width()));
+    return object_ptr<const Double>(new Double(scale/a.width()));
   }
 
-  boost::shared_ptr<const Object> Get_Equilibrium_Rate_Op::operator()(OperationArgs& Args) const
+  object_ptr<const Object> Get_Equilibrium_Rate_Op::operator()(OperationArgs& Args) const
   {
-    shared_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
-    shared_ptr<const Box<vector<unsigned> > > smap = Args.evaluate_as< Box<vector<unsigned> > >(1);
-    shared_ptr<const MatrixObject > Q = Args.evaluate_as< MatrixObject >(2);
+    object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
+    object_ptr<const Box<vector<unsigned> > > smap = Args.evaluate_as< Box<vector<unsigned> > >(1);
+    object_ptr<const MatrixObject > Q = Args.evaluate_as< MatrixObject >(2);
     expression_ref E = Args.evaluate(3);
     
     return Get_Equilibrium_Rate_Function(*a, *smap, *Q, E);
@@ -764,7 +764,7 @@ namespace substitution
 
 object_ref Empirical_Exchange_Function(const alphabet& a, istream& ifile)
 {
-  shared_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+  object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
 
   int n = a.size();
 

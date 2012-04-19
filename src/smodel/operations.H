@@ -35,7 +35,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+    object_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "+gwF";}
 
@@ -58,7 +58,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+    object_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "HKY";}
     
@@ -81,7 +81,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+    object_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "TN";}
     
@@ -104,7 +104,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+    object_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "GTR";}
     
@@ -113,7 +113,7 @@ namespace substitution {
 
   formula_expression_ref GTR_Model(const alphabet& a);
   
-  boost::shared_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
+  object_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
 
   struct Singlet_to_Triplet_Exchange_Op: public Operation
   {
@@ -129,14 +129,14 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+    object_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "Singlet_to_Triplet_Exchange";}
 
     Singlet_to_Triplet_Exchange_Op():Operation(2) { }
   };
 
-  boost::shared_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& S2);
+  object_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& S2);
 
   formula_expression_ref Plus_F_Model(const alphabet& a, const std::valarray<double>& pi);
 
@@ -160,7 +160,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+    object_ptr<const Object> operator()(OperationArgs& Args) const;
 
     std::string name() const {return "Q";}
 
@@ -183,11 +183,11 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    object_ptr<const Object> operator()(OperationArgs& Args) const
     {
-      boost::shared_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
-      boost::shared_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(1);
-      boost::shared_ptr<const Double> omega = Args.evaluate_as<Double>(2);
+      object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
+      object_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(1);
+      object_ptr<const Double> omega = Args.evaluate_as<Double>(2);
 
       return M0_Function(*C, *S, *omega);
     }
@@ -223,10 +223,10 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+    object_ptr<const Object> operator()(OperationArgs& Args) const
     {
-      boost::shared_ptr<const probability::Distribution> D = Args.evaluate_as<probability::Distribution>(0);
-      boost::shared_ptr<const Int> n = Args.evaluate_as<Int>(1);
+      object_ptr<const probability::Distribution> D = Args.evaluate_as<probability::Distribution>(0);
+      object_ptr<const Int> n = Args.evaluate_as<Int>(1);
       
       return DiscretizationFunction(*D, *n);
     }
@@ -271,7 +271,7 @@ namespace substitution {
 
   formula_expression_ref Mixture_Model(const std::vector<formula_expression_ref>& models);
 
-  boost::shared_ptr<const EigenValues> Get_Eigensystem_Function(const Matrix& Q, const std::vector<double>& pi);
+  object_ptr<const EigenValues> Get_Eigensystem_Function(const Matrix& Q, const std::vector<double>& pi);
 
   // Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);x
   struct Get_Eigensystem_Op: public Operation
@@ -288,7 +288,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+    object_ptr<const Object> operator()(OperationArgs& Args) const;
  
     std::string name() const {return "Get_Eigensystem";}
 
@@ -297,7 +297,7 @@ namespace substitution {
 
   extern expression_ref Get_Eigensystem;
 
-  boost::shared_ptr<const Double> 
+  object_ptr<const Double> 
   Get_Equilibrium_Rate_Function(const alphabet&, const std::vector<unsigned>&, const Matrix&, const expression_ref&);
 
   // Matrix exp(const EigenValues& eigensystem,const std::vector<double>& D,double t);x
@@ -315,7 +315,7 @@ namespace substitution {
       return true;
     }
 
-    boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+    object_ptr<const Object> operator()(OperationArgs& Args) const;
  
     std::string name() const {return "Get_Equilbrium_Rate";}
 
@@ -342,10 +342,10 @@ struct FunctionOp
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
     R_t result = F(convert<const Args_t>(Args.evaluate(#))...);
-    return boost::shared_ptr<const Object>(result);
+    return object_ptr<const Object>(result);
   }
  
   std::string name() const {return s;}

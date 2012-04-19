@@ -198,7 +198,7 @@ namespace substitution {
 
     string name() const {return name_;}
 
-    boost::shared_ptr<const Object> result() const;
+    object_ptr<const Object> result() const;
 
     Empirical(const alphabet& a); 
 
@@ -277,7 +277,7 @@ namespace substitution {
     void update() { }
   public:
 
-    boost::shared_ptr<const Object> result() const;
+    object_ptr<const Object> result() const;
 
     SimpleFrequencyModel* clone() const {return new SimpleFrequencyModel(*this);}
 
@@ -297,7 +297,7 @@ namespace substitution {
 
   public:
     
-    boost::shared_ptr<const Object> result() const;
+    object_ptr<const Object> result() const;
 
     UniformFrequencyModel* clone() const {return new UniformFrequencyModel(*this);}
 
@@ -322,7 +322,7 @@ namespace substitution {
     void recalc(const std::vector<int>&) {std::abort();}
 
   public:
-    boost::shared_ptr<const Object> result() const;
+    object_ptr<const Object> result() const;
 
     IndependentNucleotideFrequencyModel* clone() const {return new IndependentNucleotideFrequencyModel(*this);}
 
@@ -339,7 +339,7 @@ namespace substitution {
     void recalc(const std::vector<int>&) {std::abort();}
 
   public:
-    boost::shared_ptr<const Object> result() const;
+    object_ptr<const Object> result() const;
 
     TripletsFrequencyModel* clone() const {return new TripletsFrequencyModel(*this);}
 
@@ -364,7 +364,7 @@ namespace substitution {
   protected:
     void recalc(const std::vector<int>&) {std::abort();}
   public:
-    boost::shared_ptr<const Object> result() const;
+    object_ptr<const Object> result() const;
 
     AACodonFrequencyModel* clone() const {return new AACodonFrequencyModel(*this);}
 
@@ -380,7 +380,7 @@ namespace substitution {
     void recalc(const std::vector<int>&) {std::abort();}
 
   public:
-    boost::shared_ptr<const Object> result() const;
+    object_ptr<const Object> result() const;
 
     CodonsFrequencyModel* clone() const {return new CodonsFrequencyModel(*this);}
 
@@ -399,7 +399,7 @@ namespace substitution {
     void recalc(const std::vector<int>&) {std::abort();}
 
   public:
-    boost::shared_ptr<const Object> result() const;
+    object_ptr<const Object> result() const;
 
     CodonsFrequencyModel2* clone() const {return new CodonsFrequencyModel2(*this);}
 
@@ -446,7 +446,7 @@ namespace substitution {
 
     string name() const;
 
-    boost::shared_ptr<const Object> result() const;
+    object_ptr<const Object> result() const;
 
     F81_Model(const alphabet& a);
     F81_Model(const alphabet& a,const valarray<double>&);
@@ -513,7 +513,7 @@ namespace substitution {
 
     string name() const {return name_;}
 
-    boost::shared_ptr<const Object> result() const;
+    object_ptr<const Object> result() const;
 
     /// Create a CAT_FixedFrequencyModel with alphabet \a a.
     CAT_FixedFrequencyModel(const alphabet& a);

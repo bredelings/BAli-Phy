@@ -56,12 +56,12 @@ Parameter::Parameter(const string& n)
 {
 }
 
-Parameter::Parameter(const string& n, shared_ptr<const Object> v)
+Parameter::Parameter(const string& n, object_ptr<const Object> v)
   :name(n), value(v), fixed(false)
 {
 }
 
-Parameter::Parameter(const string& n, shared_ptr<const Object> v, const Bounds<double>& b, bool f)
+Parameter::Parameter(const string& n, object_ptr<const Object> v, const Bounds<double>& b, bool f)
   :name(n), value(v), bounds(b), fixed(f)
 {
 }
@@ -177,9 +177,9 @@ int Model::add_parameter(const Parameter& P)
   return index;
 }
 
-std::vector< shared_ptr<const Object> > Model::get_parameter_values() const
+std::vector< object_ptr<const Object> > Model::get_parameter_values() const
 {
-  std::vector< shared_ptr<const Object> > values(n_parameters());
+  std::vector< object_ptr<const Object> > values(n_parameters());
 
   for(int i=0;i<values.size();i++)
     values[i] = get_parameter_value(i);
@@ -187,9 +187,9 @@ std::vector< shared_ptr<const Object> > Model::get_parameter_values() const
   return values;  
 }
 
-std::vector< shared_ptr<const Object> > Model::get_parameter_values(const std::vector<int>& indices) const
+std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::vector<int>& indices) const
 {
-  std::vector< shared_ptr<const Object> > values(indices.size());
+  std::vector< object_ptr<const Object> > values(indices.size());
     
   for(int i=0;i<values.size();i++)
     values[i] = get_parameter_value(indices[i]);
@@ -297,17 +297,17 @@ void Model::set_bounds(int i,const Bounds<double>& b)
   bounds[i] = b;
 }
 
-boost::shared_ptr<const Object> Model::get_parameter_value(int i) const
+object_ptr<const Object> Model::get_parameter_value(int i) const
 {
   return C.get_parameter_value(i);
 }
 
-boost::shared_ptr<const Object> Model::get_parameter_value(const std::string& p_name) const 
+object_ptr<const Object> Model::get_parameter_value(const std::string& p_name) const 
 {
   return C.get_parameter_value(p_name);
 }
 
-void Model::write_value(int i,const shared_ptr<const Object>& value)
+void Model::write_value(int i,const object_ptr<const Object>& value)
 {
   C.set_parameter_value(i,value);
   modify_parameter(i);
@@ -315,33 +315,33 @@ void Model::write_value(int i,const shared_ptr<const Object>& value)
 
 void Model::set_parameter_value(int i,Double value) 
 {
-  set_parameter_value(i, shared_ptr<const Object>( value.clone()) );
+  set_parameter_value(i, object_ptr<const Object>( value.clone()) );
 }
 
-void Model::set_parameter_value(int i,const shared_ptr<const Object>& value) 
+void Model::set_parameter_value(int i,const object_ptr<const Object>& value) 
 {
-  set_parameter_values(vector<int>(1,i), vector< shared_ptr<const Object> >(1, value) );
+  set_parameter_values(vector<int>(1,i), vector< object_ptr<const Object> >(1, value) );
 }
 
-void Model::set_parameter_value(const string& p_name,const shared_ptr<const Object>& value) 
+void Model::set_parameter_value(const string& p_name,const object_ptr<const Object>& value) 
 {
   int i = find_parameter(p_name);
   if (i == -1)
     throw myexception()<<"Cannot find parameter called '"<<p_name<<"'";
     
-  set_parameter_values(vector<int>(1,i), vector< shared_ptr<const Object> >(1, value) );
+  set_parameter_values(vector<int>(1,i), vector< object_ptr<const Object> >(1, value) );
 }
 
 void Model::set_parameter_values(const vector<int>& indices,const vector<Double>& p)
 {
-  vector< shared_ptr<const Object> > p2(p.size());
+  vector< object_ptr<const Object> > p2(p.size());
   for(int i=0;i<p.size();i++)
-    p2[i] = shared_ptr<const Object>( p[i].clone() );
+    p2[i] = object_ptr<const Object>( p[i].clone() );
 
   set_parameter_values(indices,p2);
 }
 
-void Model::set_parameter_values(const vector<int>& indices,const vector<shared_ptr<const Object> >& p)
+void Model::set_parameter_values(const vector<int>& indices,const vector<object_ptr<const Object> >& p)
 {
   assert(indices.size() == p.size());
 
@@ -357,7 +357,7 @@ void Model::set_parameter_values(const vector<Double>& p)
   set_parameter_values(iota<int>(n_parameters()), p);
 }
 
-void Model::set_parameter_values(const vector<shared_ptr<const Object> >& p) 
+void Model::set_parameter_values(const vector<object_ptr<const Object> >& p) 
 {
   assert(p.size() == n_parameters());
   set_parameter_values(iota<int>(n_parameters()), p);
@@ -433,14 +433,14 @@ Model::Model(const vector<expression_ref>& notes)
 #endif
 }
 
-boost::shared_ptr<const Object> Model::result() const
+object_ptr<const Object> Model::result() const
 {
   shared_ptr<Model> M (clone());
   M->update();
   return M;
 }
 
-shared_ptr<const Object> Model::operator()(OperationArgs& Args) const
+object_ptr<const Object> Model::operator()(OperationArgs& Args) const
 {
   shared_ptr<Model> M (clone());
   for(int i=0;i<n_parameters();i++)
@@ -448,7 +448,7 @@ shared_ptr<const Object> Model::operator()(OperationArgs& Args) const
   return M->result();
 }
 
-boost::shared_ptr<const Object> model_prior::operator()(OperationArgs& Args) const
+object_ptr<const Object> model_prior::operator()(OperationArgs& Args) const
 {
   expression_ref R = Args.evaluate(0);
 
@@ -458,7 +458,7 @@ boost::shared_ptr<const Object> model_prior::operator()(OperationArgs& Args) con
   for(int i=0;i<M2->n_parameters();i++)
     M2->set_parameter_value(i,v[i]);
 
-  return shared_ptr<const Object>(new Log_Double(M2->prior()));
+  return object_ptr<const Object>(new Log_Double(M2->prior()));
 }
 
 formula_expression_ref model_formula(const Model& M)
@@ -587,7 +587,7 @@ int SuperModel::register_submodel(const string& prefix)
   for(int i=0;i<M.n_parameters();i++)
   {
     string name = prefix + "::" + M.parameter_name(i);
-    object_ref value = M.get_parameter_value(i);
+    object_ptr<const Object> value = M.get_parameter_value(i);
     Bounds<double> bounds = M.get_bounds(i);
     bool fixed = M.is_fixed(i);
 
@@ -599,7 +599,7 @@ int SuperModel::register_submodel(const string& prefix)
 }
 
 // can I write the supermodel so that it actually SHARES the values of the sub-models?
-void SuperModel::write_value(int index, const shared_ptr<const Object>& p)
+void SuperModel::write_value(int index, const object_ptr<const Object>& p)
 {
   assert(index < n_parameters());
 
@@ -998,7 +998,7 @@ std::string FormulaModel::name() const
   return E->print();
 }
 
-boost::shared_ptr<const Object> FormulaModel::result() const
+object_ptr<const Object> FormulaModel::result() const
 {
   return C.evaluate(result_index);
 }

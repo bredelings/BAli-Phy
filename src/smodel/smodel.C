@@ -74,7 +74,7 @@ namespace substitution {
     add_parameter(Parameter("alphabet",a));
   }
 
-  boost::shared_ptr<const Object>  UniformFrequencyModel::result() const
+  object_ptr<const Object> UniformFrequencyModel::result() const
   {
     const alphabet& a = get_parameter_value_as<alphabet>(0);
 
@@ -112,7 +112,7 @@ namespace substitution {
     recalc_all();
   }
 
-  shared_ptr<const Object> SimpleFrequencyModel::result() const
+  object_ptr<const Object> SimpleFrequencyModel::result() const
   {
     const alphabet& a = get_parameter_value_as<alphabet>(0);
     double f = get_parameter_value_as<Double>(1);
@@ -203,7 +203,7 @@ namespace substitution {
   }
 
 
-  shared_ptr<const Object> IndependentNucleotideFrequencyModel::result() const
+  object_ptr<const Object> IndependentNucleotideFrequencyModel::result() const
   {
     const Triplets& T = get_parameter_value_as<Triplets>(0);
 
@@ -246,7 +246,7 @@ namespace substitution {
   }
 
 
-  shared_ptr<const Object> TripletsFrequencyModel::result() const
+  object_ptr<const Object> TripletsFrequencyModel::result() const
   {
     const Triplets& T = get_parameter_value_as<Triplets>(0);
 
@@ -340,7 +340,7 @@ namespace substitution {
   //  - I would not need a submodel anymore.
   // (iii) I should 
 
-  shared_ptr<const Object> AACodonFrequencyModel::result() const
+  object_ptr<const Object> AACodonFrequencyModel::result() const
   {
     const Codons& C = get_parameter_value_as<Codons>(0);
 
@@ -401,7 +401,7 @@ namespace substitution {
 
   //------------------- Codons Frequency Model -----------------//
 
-  shared_ptr<const Object> CodonsFrequencyModel::result() const
+  object_ptr<const Object> CodonsFrequencyModel::result() const
   {
     const Codons& C = get_parameter_value_as<Codons>(0);
     int aa_size = C.getAminoAcids().size();
@@ -488,7 +488,7 @@ namespace substitution {
 
   //------------------- Codons Frequency Model 2 -----------------//
 
-  shared_ptr<const Object>  CodonsFrequencyModel2::result() const
+  object_ptr<const Object>  CodonsFrequencyModel2::result() const
   {
     const Codons& C = get_parameter_value_as<Codons>(0);
 
@@ -561,7 +561,7 @@ namespace substitution {
 
   //----------------------- ReversibleMarkovModel --------------------------//
 
-  shared_ptr<const Object> F81_Model::result() const
+  object_ptr<const Object> F81_Model::result() const
   {
     const alphabet& a = get_parameter_value_as<alphabet>(0);
 
@@ -625,7 +625,7 @@ namespace substitution {
 
   //----------------------- Empirical -------------------------//
 
-  shared_ptr<const Object> Empirical::result() const
+  object_ptr<const Object> Empirical::result() const
   {
     return get_parameter_value(1);
   }
@@ -809,7 +809,7 @@ namespace substitution {
     return ::dirichlet_pdf(x,safe_count(f*10.0));
   }
 
-  shared_ptr<const Object> CAT_FixedFrequencyModel::result() const
+  object_ptr<const Object> CAT_FixedFrequencyModel::result() const
   {
     /*
     shared_ptr<MultiModelObject> R = ptr( get_parameter_value_as<MultiModelObject>(1) );

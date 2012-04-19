@@ -53,26 +53,30 @@ public:
   virtual ~Object() {}
 };
 
-struct object_ref: public boost::shared_ptr<const Object>
+// What type of smart pointer are we using to point to Objects?
+template <typename T>
+using object_ptr = boost::shared_ptr<T>;
+
+struct object_ref: public object_ptr<const Object>
 {
   object_ref()
   { }
 
   object_ref(Object *o)
-  : boost::shared_ptr<const Object>(o)
+  : object_ptr<const Object>(o)
   { }
 
-  object_ref(const boost::shared_ptr<const Object>& o)
-    :boost::shared_ptr<const Object>(o)
+  object_ref(const object_ptr<const Object>& o)
+    :object_ptr<const Object>(o)
   { }
 
   template <typename T>
-  object_ref(const boost::shared_ptr<const T>& o)
-    :boost::shared_ptr<const Object>(boost::static_pointer_cast<const Object>(o))
+  object_ref(const object_ptr<const T>& o)
+    :object_ptr<const Object>(boost::static_pointer_cast<const Object>(o))
   { }
 
   object_ref(const Object& o)
-    :boost::shared_ptr<const Object>(o.clone())
+    :object_ptr<const Object>(o.clone())
   { }
 };
 
@@ -226,11 +230,11 @@ public:
 };
 
 template <typename T>
-bool unshare(boost::shared_ptr<T>& ptr)
+bool unshare(object_ptr<T>& ptr)
 {
   if (ptr.unique()) return false;
 
-  ptr = boost::shared_ptr<T>(ptr->clone());
+  ptr = object_ptr<T>(ptr->clone());
 
   return true;
 }
@@ -243,12 +247,15 @@ typedef POD<std::string> String;
 typedef POD_math<log_double_t> Log_Double;
 
 template <typename T>
-boost::shared_ptr<T> ptr(const T& t) {return boost::shared_ptr<T>(t.clone());}
+using Vector = Box<std::vector<T>>;
+
 template <typename T>
-boost::shared_ptr<const T> const_ptr(const T& t) {return boost::shared_ptr<const T>(t.clone());}
+object_ptr<T> ptr(const T& t) {return object_ptr<T>(t.clone());}
+template <typename T>
+object_ptr<const T> const_ptr(const T& t) {return object_ptr<const T>(t.clone());}
 
 template<typename T>
-inline std::ostream& operator<<(std::ostream& o,const boost::shared_ptr<T>& R)
+inline std::ostream& operator<<(std::ostream& o,const object_ptr<T>& R)
 {
   if (R)
     return o<<R->print();
@@ -262,10 +269,10 @@ inline std::ostream& operator<<(std::ostream& o,const Object& R)
 }
 
 template <typename T>
-boost::shared_ptr<T> convert(const boost::shared_ptr<const Object>& o)
+object_ptr<T> convert(const object_ptr<const Object>& o)
 {
   assert(o);
-  boost::shared_ptr<T> converted =  boost::dynamic_pointer_cast<const T>(o);
+  object_ptr<T> converted =  boost::dynamic_pointer_cast<const T>(o);
   if (not converted)
     throw myexception()<<"Cannot convert '"<<o->print()<<"' from type "<<demangle(typeid(*o.get()).name())<<" to type "<<demangle(typeid(T).name());
   return converted;
