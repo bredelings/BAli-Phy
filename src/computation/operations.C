@@ -6,7 +6,6 @@ using std::vector;
 using std::string;
 
 using boost::dynamic_pointer_cast;
-using boost::shared_ptr;
 
 object_ptr<const Object> Seq::operator()(OperationArgs& Args) const
 {

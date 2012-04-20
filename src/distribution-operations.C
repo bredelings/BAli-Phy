@@ -1,6 +1,5 @@
 #include "distribution-operations.H"
 
-using boost::shared_ptr;
 using std::vector;
 using std::valarray;
 

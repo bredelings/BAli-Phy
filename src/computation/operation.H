@@ -1,7 +1,6 @@
 #ifndef OPERATION_H
 #define OPERATION_H
 
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include <string>
 

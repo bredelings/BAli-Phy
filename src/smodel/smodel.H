@@ -75,7 +75,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include <vector>
 #include <string>
-#include <boost/shared_ptr.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include "mytypes.H"
 #include "alphabet.H"

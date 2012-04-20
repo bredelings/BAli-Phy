@@ -31,7 +31,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 using std::vector;
 using std::string;
 
-using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 
 /* IDEA: Make the function we use to create FormulaModel( ) -- that is
@@ -225,8 +224,8 @@ int Model::add_note(const expression_ref& E)
   vector<expression_ref> results;
   if (find_match(query, C.get_note(index), results))
   {
-    shared_ptr<const parameter> var = dynamic_pointer_cast<const parameter>(results[0]);
-    shared_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[1]);
+    object_ptr<const parameter> var = dynamic_pointer_cast<const parameter>(results[0]);
+    object_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[1]);
     int param_index = find_parameter(var->parameter_name);
     if (param_index == -1)
       throw myexception()<<"Cannot add bound '"<<E<<"' on missing variable '"<<var->parameter_name<<"'";
@@ -372,7 +371,7 @@ efloat_t Model::prior() const
 {
   if (prior_index == -1) return 1.0;
 
-  shared_ptr<const Log_Double> R = C.evaluate_as<Log_Double>(prior_index);
+  object_ptr<const Log_Double> R = C.evaluate_as<Log_Double>(prior_index);
   return *R;
 }
 
@@ -417,7 +416,7 @@ Model::Model(const vector<expression_ref>& notes)
     if (found != -1)
     {
       assert(results.size());
-      shared_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[0]);
+      object_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[0]);
       set_bounds(i,*b);
     }
   }
@@ -435,14 +434,14 @@ Model::Model(const vector<expression_ref>& notes)
 
 object_ptr<const Object> Model::result() const
 {
-  shared_ptr<Model> M (clone());
+  object_ptr<Model> M (clone());
   M->update();
   return M;
 }
 
 object_ptr<const Object> Model::operator()(OperationArgs& Args) const
 {
-  shared_ptr<Model> M (clone());
+  object_ptr<Model> M (clone());
   for(int i=0;i<n_parameters();i++)
     M->set_parameter_value(i,Args.evaluate(i));
   return M->result();
@@ -454,7 +453,7 @@ object_ptr<const Object> model_prior::operator()(OperationArgs& Args) const
 
   vector<expression_ref> v = get_ref_vector_from_tuple(R);
 
-  shared_ptr<Model> M2 (M->clone());
+  object_ptr<Model> M2 (M->clone());
   for(int i=0;i<M2->n_parameters();i++)
     M2->set_parameter_value(i,v[i]);
 
@@ -952,9 +951,9 @@ vector<int> parameters_with_extension(const Model& M, string name)
   return indices;
 }
 
-shared_ptr<Model> prefix_model(const Model& M, const string& prefix)
+object_ptr<Model> prefix_model(const Model& M, const string& prefix)
 {
-  shared_ptr<Model> M2 (M.clone());
+  object_ptr<Model> M2 (M.clone());
 
   for(int i=0;i<M2->n_parameters();i++)
   {
@@ -979,7 +978,7 @@ vector<string> show_probability_expressions(const context& C)
     if (not find_match(query, C.get_note(i), results)) continue;
 
     // Extract the density operation
-    shared_ptr<const String> name = dynamic_pointer_cast<const String>(results[0]);
+    object_ptr<const String> name = dynamic_pointer_cast<const String>(results[0]);
 
     string prob_exp = results[1]->print() + " ~ " + string(*name);
     if (dynamic_pointer_cast<const expression>(results[2]))

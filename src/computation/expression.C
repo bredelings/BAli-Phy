@@ -7,7 +7,6 @@
 #include <map>
 #include "graph_register.H"
 
-using boost::shared_ptr;
 using std::vector;
 using std::string;
 using std::set;

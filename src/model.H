@@ -305,7 +305,7 @@ public:
 
   // Evaluate the model and return the result
   template <typename T>
-  boost::shared_ptr<const T> result_as() const {return boost::dynamic_pointer_cast<const T>(result());}
+  object_ptr<const T> result_as() const {return boost::dynamic_pointer_cast<const T>(result());}
 
   bool is_valid() const {return valid;}
   virtual void update();
@@ -505,7 +505,7 @@ std::vector<std::string> short_parameter_names(std::vector<std::string> names);
 
 std::vector<int> parameters_with_extension(const Model& M, std::string name);
 
-boost::shared_ptr<Model> prefix_model(const Model&, const std::string& prefix);
+object_ptr<Model> prefix_model(const Model&, const std::string& prefix);
 
 std::vector< expression_ref > model_args(const Model& M);
 

@@ -29,7 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <string>
 #include <cassert>
-#include <boost/shared_ptr.hpp>
 #include "myexception.H"
 #include "object.H"
 #include "owned-ptr.H"

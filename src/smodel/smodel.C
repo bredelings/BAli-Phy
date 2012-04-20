@@ -40,7 +40,6 @@ using std::cerr;
 using std::endl;
 using std::istringstream;
 
-using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 
 namespace substitution {

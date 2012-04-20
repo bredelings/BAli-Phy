@@ -2,7 +2,6 @@
 #include <string>
 #include <iostream>
 
-#include <boost/shared_ptr.hpp>
 #include "util.H"
 
 #include "operation.H"
@@ -11,7 +10,6 @@
 #include "context.H"
 #include "prelude.H"
 
-using boost::shared_ptr;
 using std::vector;
 using std::string;
 using std::ostream;
@@ -20,7 +18,7 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-/* 1. To do a series of operations on a parameter, obtained a shared_ptr to the value and mark it uncomputed.
+/* 1. To do a series of operations on a parameter, obtained a object_ptr to the value and mark it uncomputed.
  * We think of this as obtaining a 'lock' on the value.  Any attempts to obtain the variable's
  *   value will then throw an exception.
  * After we are finished modifying the value, we can mark it up-to-date again.
@@ -190,7 +188,7 @@ int main()
 
   cout<<"\n\n";
   cout<<"Evaluating expressions in CTX1: results should be visible in CTX2 also.\n";
-  shared_ptr<const Object> result = CTX1.evaluate(x_times_y_plus_one_);
+  object_ptr<const Object> result = CTX1.evaluate(x_times_y_plus_one_);
   CTX1.evaluate(cond);
   CTX1.evaluate(defv);
   CTX1.evaluate(z_gt);

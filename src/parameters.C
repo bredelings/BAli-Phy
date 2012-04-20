@@ -48,7 +48,6 @@ using std::string;
 using std::cerr;
 using std::endl;
 using std::ostream;
-using boost::shared_ptr;
 
 bool use_internal_index = true;
 

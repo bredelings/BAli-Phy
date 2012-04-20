@@ -1,7 +1,6 @@
 #ifndef FORMULA_EXPRESSION_H
 #define FORMULA_EXPRESSION_H
 
-#include <boost/shared_ptr.hpp>
 #include "expression.H"
 #include <iostream>
 #include "model_notes.H"

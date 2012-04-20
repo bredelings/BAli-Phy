@@ -27,7 +27,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 using std::string;
 using std::vector;
 using std::endl;
-using boost::shared_ptr;
 
 namespace ublas = boost::numeric::ublas;
 

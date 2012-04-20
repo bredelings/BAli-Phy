@@ -1,7 +1,6 @@
 #ifndef OPERATIONS_H
 #define OPERATIONS_H
 
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include <string>
 #include "myexception.H"

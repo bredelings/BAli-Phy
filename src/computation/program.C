@@ -7,7 +7,6 @@ using std::pair;
 using std::map;
 using std::string;
 using std::vector;
-using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 
 // Unknown type
@@ -27,7 +26,7 @@ void parse_combinator_application(const expression_ref& R, string& name, vector<
   expression_ref R2 = R;
 
   // Look through the arguments
-  while( shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R2) )
+  while( object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R2) )
   {
     assert( dynamic_pointer_cast<const Apply>(E->sub[0]) );
     patterns.insert(patterns.begin(), E->sub[2]);
@@ -35,7 +34,7 @@ void parse_combinator_application(const expression_ref& R, string& name, vector<
   }
 
   // Find the name
-  shared_ptr<const var> V = dynamic_pointer_cast<const var>(R2);
+  object_ptr<const var> V = dynamic_pointer_cast<const var>(R2);
   assert(V);
   name = V->name;
 }

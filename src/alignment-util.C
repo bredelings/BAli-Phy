@@ -40,7 +40,6 @@ using std::istream;
 using boost::dynamic_bitset;
 
 using boost::program_options::variables_map;
-using boost::shared_ptr;
 
 alignment chop_internal(alignment A, bool keep_empty_columns) 
 {

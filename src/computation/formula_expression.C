@@ -35,7 +35,6 @@
           expression syntax for formula_expression_ref?
  */
 
-using boost::shared_ptr;
 using std::vector;
 
 std::vector<expression_ref> formula_expression_ref::get_notes_plus_exp() const
@@ -113,13 +112,13 @@ int formula_expression_ref::add_expression(const formula_expression_ref& R)
   return add_note(R.exp());
 }
 
-boost::shared_ptr<const Object> formula_expression_ref::result() const
+object_ptr<const Object> formula_expression_ref::result() const
 {
   Program P;
   return result(P);
 }
 
-boost::shared_ptr<const Object> formula_expression_ref::result(const Program& P) const
+object_ptr<const Object> formula_expression_ref::result(const Program& P) const
 {
   context C(get_notes_plus_exp());
   C += P;

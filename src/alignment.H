@@ -29,7 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequence-format.H"
 #include <iostream>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 

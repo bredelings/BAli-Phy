@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define MATCACHE_H
 
 #include <vector>
-#include <boost/shared_ptr.hpp>
+#include "object.H"
 #include "alphabet.H"
 #include "mytypes.H"
 

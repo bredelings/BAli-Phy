@@ -1,10 +1,8 @@
 #ifndef GRAPH_REGISTER_H
 #define GRAPH_REGISTER_H
-// a dummy variable expression
 
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 #include <set>
 #include "object.H"
 #include "expression.H"

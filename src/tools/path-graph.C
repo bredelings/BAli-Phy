@@ -27,7 +27,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 #include "util.H"
 #include <boost/program_options.hpp>
-#include <boost/shared_ptr.hpp>
 
 namespace po = boost::program_options;
 using po::variables_map;

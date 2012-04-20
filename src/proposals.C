@@ -27,7 +27,6 @@ using std::valarray;
 using std::vector;
 using std::string;
 
-using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 
 valarray<double> convert_to_valarray(const vector<Double>& v1)
