@@ -2,7 +2,7 @@
 #define OBJECT_H
 
 #include <string>
-#include <boost/shared_ptr.hpp>
+#include <boost/intrusive_ptr.hpp>
 #include <boost/logic/tribool.hpp>
 #include <iostream>
 #include "util.H"
@@ -12,8 +12,36 @@
 using boost::logic::tribool;
 using boost::logic::indeterminate;
 
-class Object {
+class Object 
+{
+  int _refs = 0; 
+
+  friend inline void intrusive_ptr_release(Object* pThis)
+  {
+    if (--pThis->_refs == 0 ) { 
+      delete pThis;
+    }
+  }
+  
+  friend inline void intrusive_ptr_add_ref(Object* pThis)
+  {
+    pThis->_refs++;
+  }
+  
+  friend inline void intrusive_ptr_release(const Object* pThis)
+  {
+    if(--const_cast<Object*>(pThis)->_refs == 0 ) { 
+      delete const_cast<Object*>(pThis);
+    }
+  }
+  
+  friend inline void intrusive_ptr_add_ref(const Object* pThis)
+  {
+    const_cast<Object*>(pThis)->_refs++;
+  }
+
 public:
+
   virtual Object* clone() const =0;
 
   virtual tribool compare(const Object& O) const
@@ -55,7 +83,7 @@ public:
 
 // What type of smart pointer are we using to point to Objects?
 template <typename T>
-using object_ptr = boost::shared_ptr<T>;
+using object_ptr = boost::intrusive_ptr<T>;
 
 struct object_ref: public object_ptr<const Object>
 {

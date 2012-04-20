@@ -69,9 +69,6 @@ class data_partition: public Probability_Model, public Mat_Cache
 
   int partition_index;
 
-  /// The IndelModel
-  polymorphic_cow_ptr<IndelModel> IModel_;
-
   std::string partition_name;
 
   /// Cached prior for just the alignment -- accessed through alignment_prior( )
@@ -166,11 +163,9 @@ public:
   void recalc_imodel();
   void recalc_smodel();
 
-  bool has_IModel() const {return IModel_;}
+  bool has_IModel() const;
   /// The IndelModel
   const IndelModel& IModel() const;
-  /// The IndelModel
-  IndelModel& IModel();
 
   void setlength(int b);
   void setlength_no_invalidate_LC(int b);
@@ -208,8 +203,6 @@ public:
   std::string name() const;
 
   data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&);
-  data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&,
-		 const object_ptr<const IndelModel>&);
 };
 
 

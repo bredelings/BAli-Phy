@@ -47,7 +47,7 @@ std::string parameter_name(const std::string& prefix,int i,int n);
 struct Parameter
 {
   std::string name;
-  polymorphic_cow_ptr<Object> value;
+  object_ref value;
   Bounds<double> bounds;
   bool fixed;
 

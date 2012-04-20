@@ -103,16 +103,19 @@ void data_partition::variable_alignment(bool b)
   }
 }
 
-const IndelModel& data_partition::IModel() const
+bool data_partition::has_IModel() const
 {
-  if (has_IModel()) return *IModel_;
-  std::abort();
+  int m = P->imodel_for_partition[partition_index];
+  return (m != -1);
 }
 
-IndelModel& data_partition::IModel()
+const IndelModel& data_partition::IModel() const
 {
-  if (has_IModel()) return *IModel_.modify();
-  std::abort();
+  int m = P->imodel_for_partition[partition_index];
+  if (m == -1)
+    std::abort();
+  else
+    return P->IModel(m);
 }
 
 double data_partition::rate() const
@@ -213,9 +216,9 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 
     // compute and cache the branch HMM
     if (branch_HMM_type[b] == 1)
-      HMM = IModel_->get_branch_HMM(-1);
+      HMM = IModel().get_branch_HMM(-1);
     else
-      HMM = IModel_->get_branch_HMM(D);
+      HMM = IModel().get_branch_HMM(D);
   }
 
   return HMM;
@@ -239,7 +242,7 @@ void data_partition::recalc_imodel_for_branch(int b)
   // Is it OK to move it here?
   //
   // FIXME #2 - IModel_ should be branch-specific.
-  IModel_.modify()->set_heat( get_beta() );
+  //  IModel_.modify()->set_heat( get_beta() );
 
   b = T().directed_branch(b).undirected_name();
 
@@ -557,11 +560,9 @@ efloat_t data_partition::heated_likelihood() const
     return pow(likelihood(),get_beta());
 }
 
-data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
-			       const object_ptr<const IndelModel>& IM)
+data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t)
   :P(p),
    partition_index(i),
-   IModel_(IM),
    partition_name(n),
    cached_alignment_prior_for_branch(t.n_branches()),
    pairwise_alignment_for_branch(2*t.n_branches()),
@@ -569,7 +570,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    cached_sequence_lengths(a.n_sequences()),
    cached_branch_HMMs(t.n_branches()),
    transition_p_method_indices(t.n_branches(),-1),
-   variable_alignment_( IM ),
+   variable_alignment_( has_IModel() ),
    sequences( alignment_letters(a,t.n_leaves()) ),
    A(a),
    LC(t, *this),
@@ -597,10 +598,6 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
     transition_p_method_indices[b] = p->C.add_compute_expression(E);
   }
 }
-
-data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t)
-  :data_partition(n,p,i,a,t,object_ptr<const IndelModel>())
-{ }
 
 //-----------------------------------------------------------------------------//
 smodel_methods::smodel_methods(const expression_ref& E, context& C)
@@ -734,9 +731,6 @@ void Parameters::recalc_imodel(int m)
   for(int i=0;i<n_data_partitions();i++) 
   {
     if (imodel_for_partition[i] == m) {
-      // copy our IModel down into the data partition
-      get_data_partition(i).IModel_ = IModels[m];
-
       // recompute cached computations
       get_data_partition(i).recalc_imodel();
     }
@@ -847,8 +841,12 @@ void Parameters::recalc(const vector<int>& indices)
     if (not is_super_parameter(index)) continue;
 
     if (index == 0) // beta
+    {
+      for(int m=0;m<n_imodels();m++)
+	IModel(m).set_heat( get_beta() );
       for(int p=0;p<n_data_partitions();p++)
 	get_data_partition(p).recalc_imodel();
+    }
     else if (index < n_scales+1)
     {
       int s = index - 1;
@@ -1226,13 +1224,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     // compute name for data-partition
     string name = string("part") + convertToString(i+1);
 
-    // create a data partition
-    object_ptr<const IndelModel> IM;
-    if (imodel_for_partition[i] != -1)
-      IM = IModels[imodel_for_partition[i]];
-
     // add the data partition
-    data_partitions.push_back( data_partition(name, this, i, A[i], *T, IM) );
+    data_partitions.push_back( data_partition(name, this, i, A[i], *T) );
   }
 }
 
