@@ -1,7 +1,6 @@
 #include "computation/context.H"
 #include "prelude.H"
 
-using boost::shared_ptr;
 using std::string;
 using std::vector;
 using std::map;
@@ -14,7 +13,7 @@ using std::endl;
 string context::parameter_name(int i) const
 {
   expression_ref E = access(*parameters()[i]).E;
-  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
+  if (object_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
   {
     return P->parameter_name;
   }
@@ -62,7 +61,7 @@ bool context::reg_is_fully_up_to_date(int R) const
   // NOTE! result cannot be a reg_var.
 
   // Therefore, if the result is atomic, then R is up-to-date.
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
   if (not E) return true;
 
   // If the result is a lambda function, then R is up-to-date.
@@ -74,7 +73,7 @@ bool context::reg_is_fully_up_to_date(int R) const
   // Check each component that is a reg_var to see if its out of date.
   for(int i=1;i<E->size();i++)
   {
-    shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
+    object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
     assert(RV);
     int R2 = RV->target;
     
@@ -104,7 +103,7 @@ expression_ref context::full_evaluate(int& R) const
     // NOTE! result cannot be a reg_var.
     
     // Therefore, if the result is atomic, then we are done.
-    shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
+    object_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
     if (not E) return result;
 
     // If the result is a lambda function, then we are done.
@@ -115,12 +114,12 @@ expression_ref context::full_evaluate(int& R) const
 
   // If the result is a structure, then evaluate its fields and substitute them.
   {
-    shared_ptr<expression> E ( dynamic_pointer_cast<const expression>(result)->clone() );
+    object_ptr<expression> E ( dynamic_pointer_cast<const expression>(result)->clone() );
     assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
     for(int i=1;i<E->size();i++)
     {
-      shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
+      object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
       assert(RV);
       int R2 = RV->target;
 
@@ -277,7 +276,7 @@ int context::add_compute_expression(const expression_ref& E)
   expression_ref T = let_float(graph_normalize(translate_refs(E) ));
 
   root_t r;
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
+  if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
   {
     assert( includes(access(RV->target).owners, token) );
     
@@ -299,7 +298,7 @@ void context::set_compute_expression(int i, const expression_ref& E)
   expression_ref T = let_float(graph_normalize(translate_refs(E) ));
 
   root_t r2;
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
+  if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
   {
     assert( includes(access(RV->target).owners, token) );
     
@@ -355,7 +354,7 @@ void context::collect_garbage() const
 expression_ref context::translate_refs(const expression_ref& R) const
 {
   // Replace parameters with the appropriate reg_var: of value parameter( )
-  if (shared_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
+  if (object_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
   {
     int param_index = find_parameter(P->parameter_name);
     
@@ -368,7 +367,7 @@ expression_ref context::translate_refs(const expression_ref& R) const
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (shared_ptr<const var> V = dynamic_pointer_cast<const var>(R))
+  if (object_ptr<const var> V = dynamic_pointer_cast<const var>(R))
   {
     map<string,root_t>::const_iterator loc = identifiers().find(V->name);
     if (loc == identifiers().end())
@@ -380,16 +379,16 @@ expression_ref context::translate_refs(const expression_ref& R) const
   }
 
   // Other constants have no parts, and don't need to be translated
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return R;
 
   // Translate the parts of the expression
   expression_ref R2 = R;
-  shared_ptr<expression> V ( new expression(*E) );
+  object_ptr<expression> V ( new expression(*E) );
   for(int i=0;i<V->size();i++)
     V->sub[i] = translate_refs(V->sub[i]);
 
-  return shared_ptr<const expression>(V);
+  return object_ptr<const expression>(V);
 }
 
 context& context::operator+=(const Def& D)

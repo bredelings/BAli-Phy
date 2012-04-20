@@ -84,13 +84,13 @@ public:
   object_ref evaluate_expression(const expression_ref&) const;
 
   template <typename T>
-  boost::shared_ptr<const T> evaluate_as(int index) const
+  object_ptr<const T> evaluate_as(int index) const
   {
     return convert<const T>( evaluate(index) );
   }
 
   template <typename T>
-  boost::shared_ptr<const T> evaluate_expression_as(const expression_ref& E) const
+  object_ptr<const T> evaluate_expression_as(const expression_ref& E) const
   {
     return convert<const T>( evaluate_expression(E) );
   }

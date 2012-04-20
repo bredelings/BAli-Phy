@@ -1,7 +1,6 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
-#include <boost/shared_ptr.hpp>
 #include <vector>
 #include <valarray>
 #include <set>

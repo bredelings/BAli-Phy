@@ -132,7 +132,7 @@ int main(int argc,char* argv[])
       A1 = reverse_complement(A1);
 
     //------- Construct the alphabets that we are using  --------//
-    boost::object_ptr<const Genetic_Code> G = get_genetic_code(args["genetic-code"].as<string>());
+    object_ptr<const Genetic_Code> G = get_genetic_code(args["genetic-code"].as<string>());
 
     AminoAcidsWithStop AA;
 

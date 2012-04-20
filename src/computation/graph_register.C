@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <fstream>
 
-using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
@@ -347,23 +346,23 @@ expression_ref graph_normalize(const expression_ref& R)
   if (is_reglike(R))
     return R;
   
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
   if (not E) return R;
   
   // 2. Lambda
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
   if (L)
   {
     assert(E->size() == 3);
-    shared_ptr<expression> V ( new expression(*E) );
+    object_ptr<expression> V ( new expression(*E) );
     V->sub[2] = graph_normalize(E->sub[2]);
 
     if (V->sub[2] == E->sub[2])
       return R;
     else
-      return shared_ptr<const expression>(V);
+      return object_ptr<const expression>(V);
   }
 
   // 3. Application
@@ -392,10 +391,10 @@ expression_ref graph_normalize(const expression_ref& R)
   }
 
   // 6. Case
-  shared_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
+  object_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
   if (IsCase)
   {
-    shared_ptr<expression> V ( new expression(*E) );
+    object_ptr<expression> V ( new expression(*E) );
 
     // Normalize the object
     V->sub[1] = graph_normalize(V->sub[1]);
@@ -406,7 +405,7 @@ expression_ref graph_normalize(const expression_ref& R)
       V->sub[3+2*i] = launchbury_unnormalize(V->sub[3+2*i]);
     
     if (is_reglike(V->sub[1]))
-      return shared_ptr<const expression>(V);
+      return object_ptr<const expression>(V);
     else
     {
       int var_index = get_safe_binder_index(R);
@@ -414,7 +413,7 @@ expression_ref graph_normalize(const expression_ref& R)
       expression_ref obj = V->sub[1];
       V->sub[1] = x;
 
-      return let_expression(x,obj,shared_ptr<const expression>(V));
+      return let_expression(x,obj,object_ptr<const expression>(V));
     }
   }
 
@@ -424,7 +423,7 @@ expression_ref graph_normalize(const expression_ref& R)
   {
     int var_index = get_safe_binder_index(R);
 
-    shared_ptr<expression> Con ( new expression );
+    object_ptr<expression> Con ( new expression );
     Con->sub.push_back(E->sub[0]);
 
     // Actually we probably just need x[i] not to be free in E->sub[i]
@@ -445,14 +444,14 @@ expression_ref graph_normalize(const expression_ref& R)
       }
     }
 
-    return let_expression(vars, bodies, shared_ptr<const expression>(Con));
+    return let_expression(vars, bodies, object_ptr<const expression>(Con));
   }
 
   // 5. Let 
-  shared_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
+  object_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
   if (Let)
   {
-    shared_ptr<expression> V ( new expression(*E) );
+    object_ptr<expression> V ( new expression(*E) );
 
     // Normalize the object
     V->sub[1] = graph_normalize(V->sub[1]);
@@ -463,7 +462,7 @@ expression_ref graph_normalize(const expression_ref& R)
     for(int i=0;i<L;i++)
       V->sub[3 + 2*i] = graph_normalize(V->sub[3 + 2*i]);
 
-    return shared_ptr<const expression>(V);
+    return object_ptr<const expression>(V);
   }
 
   throw myexception()<<"graph_normalize: I don't recognize expression '"+ R->print() + "'";
@@ -607,11 +606,11 @@ void reg_heap::clear_call(int R)
 
 void get_exp_refs(const expression_ref& R, set<int>& refs)
 {
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( R ))
+  if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( R ))
   {
     refs.insert(RV->target);
   }
-  else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  else if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
     for(int i=0;i<E->size();i++)
       get_exp_refs(E->sub[i],refs);
@@ -668,7 +667,7 @@ void reg_heap::set_reduction_result(int R, const expression_ref& result)
   if (not result) return;
 
   // If the value is a pre-existing reg_var, then call it.
-  if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
+  if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
   {
     int Q = RV->target;
     
@@ -1162,10 +1161,10 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
 
 expression_ref remap_regs(const expression_ref R, const map<int, int>& new_regs)
 {
-  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
     bool different = false;
-    shared_ptr<expression> E2 ( new expression );
+    object_ptr<expression> E2 ( new expression );
     E2->sub.resize(E->size());
     for(int i=0;i<E->size();i++)
     {
@@ -1174,11 +1173,11 @@ expression_ref remap_regs(const expression_ref R, const map<int, int>& new_regs)
 	different = true;
     }
     if (different)
-      return shared_ptr<const expression>(E2);
+      return object_ptr<const expression>(E2);
     else
       return R;
   }
-  else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
+  else if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
   {
     map<int, int>::const_iterator loc = new_regs.find(RV->target);
     if (loc == new_regs.end())
@@ -1829,7 +1828,7 @@ class RegOperationArgs: public OperationArgs
   expression_ref lazy_evaluate_structure(const expression_ref& S)
   {
     // Any slot that we are going to evaluate needs to point to another node
-    if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( S ))
+    if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( S ))
     {
 
       int R2 = RV->target;
@@ -1870,7 +1869,7 @@ class RegOperationArgs: public OperationArgs
   
   expression_ref evaluate_structure(const expression_ref& S)
   {
-    if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( S ))
+    if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( S ))
     {
       int R2 = lazy_evaluate_reg(RV->target);
 
@@ -1881,7 +1880,7 @@ class RegOperationArgs: public OperationArgs
 
       return evaluate_structure( M.access(R2).result );
     }
-    else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(S))
+    else if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(S))
     {
       // If the "structure" is a lambda function, then we are done.
       // (a) if we were going to USE this, we should just call lazy evaluate! (which return a heap variable)
@@ -1892,7 +1891,7 @@ class RegOperationArgs: public OperationArgs
       assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
       // If the result is a constructor expression, then evaluate its fields also.
-      shared_ptr<expression> E2 ( dynamic_pointer_cast<const expression>(S)->clone() );
+      object_ptr<expression> E2 ( dynamic_pointer_cast<const expression>(S)->clone() );
       
       bool different = false;
       for(int i=1;i<E2->size();i++)
@@ -2060,7 +2059,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
-    else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(access(R).E))
+    else if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(access(R).E))
     {
       assert( access(R).call == -1);
 
@@ -2087,7 +2086,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
-    else if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(access(R).E))
+    else if (object_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(access(R).E))
       throw myexception()<<"Parameter with no result?! (Changeable = "<<access(R).changeable<<")";
 
     
@@ -2096,12 +2095,12 @@ int reg_heap::incremental_evaluate(int R, int t)
     {
       set<int> owners = access(R).owners;
 
-      vector<shared_ptr<reg_var> > new_reg_vars;
+      vector<object_ptr<reg_var> > new_reg_vars;
       for(int i=0;i<vars.size();i++)
       {
 	int V = *push_temp_head(owners);
 	// Don't set ownership here, where it could be cleared by further allocate()s.
-	new_reg_vars.push_back( shared_ptr<reg_var>(new reg_var(V)) );
+	new_reg_vars.push_back( object_ptr<reg_var>(new reg_var(V)) );
       }
       
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
@@ -2109,7 +2108,7 @@ int reg_heap::incremental_evaluate(int R, int t)
       {
 	// if the body is already a reg_var, let's not add a new reg_var just to point to it!
 	expression_ref replacement_reg_var = new_reg_vars[i]->clone();
-	if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(bodies[i]))
+	if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(bodies[i]))
 	  replacement_reg_var = bodies[i];
 
 	for(int j=0;j<vars.size();j++)
@@ -2141,10 +2140,10 @@ int reg_heap::incremental_evaluate(int R, int t)
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
-      shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(access(R).E);
+      object_ptr<const expression> E = dynamic_pointer_cast<const expression>(access(R).E);
       assert(E);
       
-      shared_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]);
+      object_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]);
       assert(O);
 
       // Although the reg itself is not a parameter, it will stay changeable if it ever computes a changeable result.
@@ -2196,10 +2195,10 @@ int reg_heap::incremental_evaluate(int R, int t)
 
 expression_ref subst_referenced_vars(const expression_ref& R, const map<int, expression_ref>& names)
 {
-  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
     bool different = false;
-    shared_ptr<expression> E2 ( new expression );
+    object_ptr<expression> E2 ( new expression );
     E2->sub.resize(E->size());
     for(int i=0;i<E->size();i++)
     {
@@ -2208,11 +2207,11 @@ expression_ref subst_referenced_vars(const expression_ref& R, const map<int, exp
 	different = true;
     }
     if (different)
-      return shared_ptr<const expression>(E2);
+      return object_ptr<const expression>(E2);
     else
       return R;
   }
-  else if (shared_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
+  else if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
   {
     map<int, expression_ref>::const_iterator loc = names.find(RV->target);
     if (loc == names.end())

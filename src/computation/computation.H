@@ -2,7 +2,6 @@
 #define COMPUTATION_H
 
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
 #include "object.H"
 #include "myexception.H"
@@ -26,7 +25,7 @@ struct OperationArgs: public Object
   }
 
   template <typename T>
-  boost::shared_ptr<const T> evaluate_as(int slot)
+  object_ptr<const T> evaluate_as(int slot)
   {
     return convert<const T>( evaluate(slot) );
   }
