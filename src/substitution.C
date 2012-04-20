@@ -571,7 +571,7 @@ namespace substitution {
 
     //    const vector<unsigned>& smap = MC.state_letters();
 
-    vector<boost::shared_ptr<const F81_Object> > SubModels(n_models);
+    vector<object_ptr<const F81_Object> > SubModels(n_models);
     for(int m=0;m<n_models;m++) {
       SubModels[m] = dynamic_pointer_cast<const F81_Object>(MC.base_model(m));
       assert(SubModels[m]);
@@ -916,7 +916,7 @@ namespace substitution {
     for(int i=0;i<b.size();i++)
       branch_cache.push_back(&cache[b[i]]);
     
-    vector<boost::shared_ptr<const F81_Object> > SubModels(n_models);
+    vector<object_ptr<const F81_Object> > SubModels(n_models);
     for(int m=0;m<n_models;m++) {
       SubModels[m] = dynamic_pointer_cast<const F81_Object>(MC.base_model(m));
       assert(SubModels[m]);

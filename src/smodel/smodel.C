@@ -78,7 +78,7 @@ namespace substitution {
   {
     const alphabet& a = get_parameter_value_as<alphabet>(0);
 
-    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
+    object_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
 
     R->pi = std::vector<double>(a.size(), 1.0/a.size());
     
@@ -207,19 +207,19 @@ namespace substitution {
   {
     const Triplets& T = get_parameter_value_as<Triplets>(0);
 
-    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(T) );
+    object_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(T) );
 
     //------------------ compute triplet frequencies ------------------//
 
     // 1. Get the nucleotide frequencies
-    shared_ptr<const ReversibleFrequencyModelObject> nucs = SubModels(0).result_as<ReversibleFrequencyModelObject>();
+    object_ptr<const ReversibleFrequencyModelObject> nucs = SubModels(0).result_as<ReversibleFrequencyModelObject>();
 
     // 2. Then get the corresponding triplet frequencies
     R->pi = get_vector<double>( triplet_from_singlet_frequencies(T, *nucs) );
 
     // 3. Then construct a +F triplets model from them
     //    (?? hey, shouldn't I need to specify e.g. Muse&Gaut or Yang-type here?)
-    shared_ptr<const ReversibleFrequencyModelObject> triplets;
+    object_ptr<const ReversibleFrequencyModelObject> triplets;
     triplets = SimpleFrequencyModel(T,get_varray<double>(R->pi) ).result_as<ReversibleFrequencyModelObject>();
 
     for(int i=0;i<T.size();i++)
@@ -250,14 +250,14 @@ namespace substitution {
   {
     const Triplets& T = get_parameter_value_as<Triplets>(0);
 
-    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(T) );
+    object_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(T) );
 
     valarray<double> nu = get_varray<double>( get_parameter_values_as<Double>( range<int>(1,T.size()) ) );
 
     //------------- compute frequencies ------------------//
 
     // 1. Get the nucleotide frequencies
-    shared_ptr<const ReversibleFrequencyModelObject> nucs = SubModels(0).result_as<ReversibleFrequencyModelObject>();
+    object_ptr<const ReversibleFrequencyModelObject> nucs = SubModels(0).result_as<ReversibleFrequencyModelObject>();
 
     // 2. Then get the corresponding triplet frequencies
     R->pi = get_vector<double>( triplet_from_singlet_frequencies(T, *nucs) );
@@ -344,11 +344,11 @@ namespace substitution {
   {
     const Codons& C = get_parameter_value_as<Codons>(0);
 
-    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(C) );
+    object_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(C) );
 
     //----------- get amino acid frequencies and counts ------------//
     // 1. Get unweighted codon frequencies
-    shared_ptr<const ReversibleFrequencyModelObject> amino_acids = SubModels(0).result_as<ReversibleFrequencyModelObject>();
+    object_ptr<const ReversibleFrequencyModelObject> amino_acids = SubModels(0).result_as<ReversibleFrequencyModelObject>();
 
     vector<double> f_aa = amino_acids->pi;
     vector<int> n_aa(f_aa.size(),0);
@@ -369,7 +369,7 @@ namespace substitution {
     SimpleFrequencyModel CM(C,get_varray<double>(R->pi) );
     CM.set_parameter_value("f", SubModels(0).get_parameter_value("f"));
       
-    shared_ptr<const ReversibleFrequencyModelObject> codons = CM.result_as<ReversibleFrequencyModelObject>();
+    object_ptr<const ReversibleFrequencyModelObject> codons = CM.result_as<ReversibleFrequencyModelObject>();
     //    (copy the "f" from the amino-acid model)
 
     for(int i=0;i<C.size();i++)
@@ -406,7 +406,7 @@ namespace substitution {
     const Codons& C = get_parameter_value_as<Codons>(0);
     int aa_size = C.getAminoAcids().size();
 
-    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(C) );
+    object_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(C) );
 
     double c = get_parameter_value_as<Double>(1);
 
@@ -414,7 +414,7 @@ namespace substitution {
     valarray<double> aa_pi = get_varray<double>(get_parameter_values_as<Double>( range<int>(2,aa_size) ) );
 
     // get codon frequencies of sub-alphabet
-    shared_ptr<const ReversibleFrequencyModelObject> M = SubModels(0).result_as<ReversibleFrequencyModelObject>();
+    object_ptr<const ReversibleFrequencyModelObject> M = SubModels(0).result_as<ReversibleFrequencyModelObject>();
     valarray<double> sub_pi = get_varray<double>( M->pi );
 
     // get aa frequencies of sub-alphabet
@@ -492,7 +492,7 @@ namespace substitution {
   {
     const Codons& C = get_parameter_value_as<Codons>(0);
 
-    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(C) );
+    object_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(C) );
 
     //------------- compute frequencies ------------------//
     valarray<double> aa_pref_ = get_varray<double>(get_parameter_values_as<Double>( range<int>(1,C.getAminoAcids().size()) ) );
@@ -502,7 +502,7 @@ namespace substitution {
       aa_pref[i] = aa_pref_[C.translate(i)];
 
     // get codon frequencies of sub-alphabet
-    shared_ptr<const ReversibleFrequencyModelObject> M = SubModels(0).result_as<ReversibleFrequencyModelObject>();
+    object_ptr<const ReversibleFrequencyModelObject> M = SubModels(0).result_as<ReversibleFrequencyModelObject>();
     valarray<double> sub_pi = get_varray<double>( M->pi );
 
     // scale triplet frequencies by aa prefs
@@ -565,14 +565,14 @@ namespace substitution {
   {
     const alphabet& a = get_parameter_value_as<alphabet>(0);
 
-    shared_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
+    object_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(a) );
 
     const int N = a.size();
 
     valarray<double> pi = get_varray<double>( get_parameter_values_as<Double>( range<int>(1,N) ) );
     pi /= pi.sum();
 
-    return shared_ptr<const F81_Object>(new F81_Object(a, pi) );
+    return object_ptr<const F81_Object>(new F81_Object(a, pi) );
   }
 
   efloat_t F81_Model::prior() const
@@ -645,7 +645,7 @@ namespace substitution {
   {
     const alphabet& a = get_parameter_value_as<alphabet>(0);
 
-    shared_ptr<ExchangeModelObject> R (new AlphabetExchangeModelObject(a));
+    object_ptr<ExchangeModelObject> R (new AlphabetExchangeModelObject(a));
 
     for(int i=0;i<a.size();i++)
       for(int j=0;j<i;j++) {
@@ -812,7 +812,7 @@ namespace substitution {
   object_ptr<const Object> CAT_FixedFrequencyModel::result() const
   {
     /*
-    shared_ptr<MultiModelObject> R = ptr( get_parameter_value_as<MultiModelObject>(1) );
+    object_ptr<MultiModelObject> R = ptr( get_parameter_value_as<MultiModelObject>(1) );
 
     for(int i=0;i<prior_fraction.size();i++)
       R->fraction[i] = get_parameter_value_as<Double>(2+i);
@@ -852,7 +852,7 @@ namespace substitution {
       letter[i] = a[unordered_letters[i]];
 
     //------- 5-end: frequencies of the actual classes ----//
-    shared_ptr<MultiModelObject> M(new MultiModelObject);
+    object_ptr<MultiModelObject> M(new MultiModelObject);
 
     for(int i=0;i<n_cat;i++)
     {

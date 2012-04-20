@@ -43,7 +43,7 @@ valarray<double> convert_to_valarray(const vector< object_ref >& v1)
   valarray<double> v2(v1.size());
   for(int i=0;i<v1.size();i++)
   {
-    shared_ptr<const Double> D = dynamic_pointer_cast<const Double>(v1[i]);
+    object_ptr<const Double> D = dynamic_pointer_cast<const Double>(v1[i]);
     v2[i] = *D;
   }
   return v2;
@@ -456,7 +456,7 @@ double sorted::operator()(std::vector< object_ref >& x,const std::vector<double>
   vector<double> x2(x.size());
   for(int i=0;i<x2.size();i++)
   {
-    shared_ptr<const Double> D = dynamic_pointer_cast<const Double>(x[i]);
+    object_ptr<const Double> D = dynamic_pointer_cast<const Double>(x[i]);
     x2[i] = *D;
   }
 
@@ -491,7 +491,7 @@ double Proposal2::operator()(Probability_Model& P) const
     p[i] = loadvalue(P.keys, pnames[i]);
 
   // read, alter, and write parameter values
-  vector< shared_ptr<const Object> > y = P.get_parameter_values(indices);
+  vector< object_ptr<const Object> > y = P.get_parameter_values(indices);
   vector< object_ref > x(y.size());
   for(int i=0;i<x.size();i++)
     x[i] = y[i];
