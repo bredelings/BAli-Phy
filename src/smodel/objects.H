@@ -69,7 +69,7 @@ namespace substitution
   struct SModelObject: virtual public Object
   {
   protected:
-    boost::shared_ptr<const alphabet> a;
+    object_ptr<const alphabet> a;
 
   public:
     std::vector<unsigned> state_letters_;
@@ -80,7 +80,7 @@ namespace substitution
 
     const alphabet& Alphabet() const {return *a;}
 
-    boost::shared_ptr<const alphabet> get_alphabet() const {return a;}
+    object_ptr<const alphabet> get_alphabet() const {return a;}
 
     int n_letters() const {return a->size();}
 

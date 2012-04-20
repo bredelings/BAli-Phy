@@ -165,7 +165,7 @@ namespace substitution {
     virtual ~ExchangeModel() {};
   };
 
-  inline boost::shared_ptr<const alphabet> get_alphabet(const ::Model& M)
+  inline object_ptr<const alphabet> get_alphabet(const ::Model& M)
   {
     return dynamic_cast<const SModelObject&>(*M.result()).get_alphabet();
   }

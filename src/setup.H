@@ -96,7 +96,7 @@ class Model;
 
 /// Return a substitution::Model specified by args
 formula_expression_ref get_smodel(const boost::program_options::variables_map& args,
-				  const boost::shared_ptr<const alphabet>& a,
+				  const object_ptr<const alphabet>& a,
 				  const boost::shared_ptr<const std::valarray<double> >& default_frequencies);
 
 /// Return a substitution::Model specified by name

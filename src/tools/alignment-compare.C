@@ -50,7 +50,7 @@ using namespace std;
 
 void load_alignments(vector<alignment>& alignments,
 		     const string& filename, 
-		     const vector<boost::shared_ptr<const alphabet> >& alphabets,
+		     const vector<object_ptr<const alphabet> >& alphabets,
 		     int maxalignments,
 		     string what)
 {

@@ -106,9 +106,9 @@ int main(int argc,char* argv[])
     
     //--------- Load alignment & determine RNA or DNA ----------//
     alignment A1;
-    vector<shared_ptr<const alphabet> > alphabets;
-    alphabets.push_back(shared_ptr<const alphabet>(new DNA));
-    alphabets.push_back(shared_ptr<const alphabet>(new RNA));
+    vector<object_ptr<const alphabet> > alphabets;
+    alphabets.push_back(object_ptr<const alphabet>(new DNA));
+    alphabets.push_back(object_ptr<const alphabet>(new RNA));
     A1.load(alphabets, sequences);
 
     owned_ptr<Nucleotides> N(dynamic_cast<const Nucleotides&>(A1.get_alphabet()));
@@ -132,7 +132,7 @@ int main(int argc,char* argv[])
       A1 = reverse_complement(A1);
 
     //------- Construct the alphabets that we are using  --------//
-    boost::shared_ptr<const Genetic_Code> G = get_genetic_code(args["genetic-code"].as<string>());
+    boost::object_ptr<const Genetic_Code> G = get_genetic_code(args["genetic-code"].as<string>());
 
     AminoAcidsWithStop AA;
 

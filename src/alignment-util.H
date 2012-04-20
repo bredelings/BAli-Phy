@@ -47,11 +47,11 @@ alignment add_internal(alignment A,const SequenceTree& T);
 alignment load_A(const boost::program_options::variables_map& args,bool keep_internal=true);
 
 /// Load an alignment from command line args align=filename
-alignment load_alignment(const std::string& filename, const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
+alignment load_alignment(const std::string& filename, const std::vector<object_ptr<const alphabet> >& alphabets);
 
 /// Load alignments from command line args align=filename
 std::vector<alignment> load_alignments(const std::vector<std::string>& filenames,
-				       const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
+				       const std::vector<object_ptr<const alphabet> >& alphabets);
 
 /// Construct a mapping of letters to columns for each leaf sequence
 std::vector< std::vector<int> > column_lookup(const alignment& A,int nleaves = -1);
@@ -134,16 +134,16 @@ long int splits_distance2(const ublas::matrix<int>& M1,const std::vector<std::ve
 std::list<alignment> load_alignments(std::istream& ifile, const std::vector<std::string>& names, const alphabet& a,
 				     int skip, int maxalignments);
 
-std::list<alignment> load_alignments(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets, 
+std::list<alignment> load_alignments(std::istream& ifile, const std::vector<object_ptr<const alphabet> >& alphabets, 
 				     int skip, int maxalignments);
 
-std::vector<alignment> load_alignments(std::istream&, const std::vector<boost::shared_ptr<const alphabet> >&);
+std::vector<alignment> load_alignments(std::istream&, const std::vector<object_ptr<const alphabet> >&);
 
-alignment find_last_alignment(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
+alignment find_last_alignment(std::istream& ifile, const std::vector<object_ptr<const alphabet> >& alphabets);
 
-alignment find_first_alignment(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets);
+alignment find_first_alignment(std::istream& ifile, const std::vector<object_ptr<const alphabet> >& alphabets);
 
-std::vector<boost::shared_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args);
+std::vector<object_ptr<const alphabet> > load_alphabets(const boost::program_options::variables_map& args);
 
 void check_disconnected(const alignment& A, const Tree& T, const std::vector<int>& disconnected);
 

@@ -102,10 +102,10 @@ string default_markov_model(const alphabet& a)
 }
 
 formula_expression_ref
-get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >&);
+get_smodel_(const string& smodel,const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >&);
 
 formula_expression_ref
-get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a);
+get_smodel_(const string& smodel,const object_ptr<const alphabet>& a);
 
 formula_expression_ref
 get_smodel_(const string& smodel);
@@ -119,7 +119,7 @@ get_smodel_(const string& smodel);
 ///
 bool process_stack_Markov(vector<string>& string_stack,
 			  vector<formula_expression_ref >& model_stack,
-			  const shared_ptr<const alphabet>& a,
+			  const object_ptr<const alphabet>& a,
 			  const shared_ptr<const valarray<double> >& frequencies)
 {
   string arg;
@@ -304,7 +304,7 @@ formula_expression_ref get_EM(vector<formula_expression_ref>& model_stack, const
 /// \brief Construct an AlphabetExchangeModel from the top of the model stack
 formula_expression_ref get_EM_default(vector<formula_expression_ref>& model_stack, 
 				      const string& name,
-				      const shared_ptr<const alphabet>& a, 
+				      const object_ptr<const alphabet>& a, 
 				      const shared_ptr< const valarray<double> >& frequencies)
 {
   if (model_stack.empty())
@@ -323,7 +323,7 @@ formula_expression_ref get_EM_default(vector<formula_expression_ref>& model_stac
 ///
 bool process_stack_Frequencies(vector<string>& string_stack,
 			       vector<formula_expression_ref >& model_stack,
-			       const shared_ptr<const alphabet>& a,
+			       const object_ptr<const alphabet>& a,
 			       const shared_ptr<const valarray<double> >& frequencies)
 {
   string arg;
@@ -414,7 +414,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
 /// \brief Construct a ReversibleMarkovModel from model \a M
 formula_expression_ref get_RA(const formula_expression_ref& M, const string& name,
-			      const shared_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
+			      const object_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
 {
   if (is_a(M.result(SModel_Functions()), "F81"))
     return M;
@@ -438,7 +438,7 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
 /// \brief Construct a ReversibleMarkovModel from the top of the model stack
 formula_expression_ref get_RA(vector<formula_expression_ref >& model_stack, 
 			      const string& name,
-			      const shared_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
+			      const object_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": couldn't find any model to use.";
@@ -450,7 +450,7 @@ formula_expression_ref get_RA(vector<formula_expression_ref >& model_stack,
 /// \brief Construct a ReversibleMarkovModel from the top of the model stack
 formula_expression_ref get_RA_default(vector<formula_expression_ref >& model_stack, 
 				      const string& name,
-				      const shared_ptr<const alphabet>& a,
+				      const object_ptr<const alphabet>& a,
 				      const shared_ptr< const valarray<double> >& frequencies)
 {
   if (model_stack.empty())
@@ -463,7 +463,7 @@ formula_expression_ref get_RA_default(vector<formula_expression_ref >& model_sta
 /// \brief Construct a MultiModel from model \a M
 formula_expression_ref
 get_MM(const formula_expression_ref& M, const string& name, 
-       const shared_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
+       const object_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
 {
   if (is_a(M.result(SModel_Functions()), "MixtureModel"))
     return M;
@@ -479,7 +479,7 @@ get_MM(const formula_expression_ref& M, const string& name,
 /// \brief Construct a MultiModel from the top of the model stack.
 formula_expression_ref
 get_MM(vector<formula_expression_ref >& model_stack, const string& name, 
-       const shared_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
+       const object_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
 {
   if (model_stack.empty())
     throw myexception()<<name<<": Trying to construct a MultiModel, but no model was given.";
@@ -490,7 +490,7 @@ get_MM(vector<formula_expression_ref >& model_stack, const string& name,
 /// \brief Construct a MultiModel from the top of the model stack.
 formula_expression_ref
 get_MM_default(vector<formula_expression_ref >& model_stack, const string& name, 
-	       const shared_ptr<const alphabet>& a, 
+	       const object_ptr<const alphabet>& a, 
 	       const shared_ptr< const valarray<double> >& frequencies)
 {
   if (model_stack.empty())
@@ -503,7 +503,7 @@ get_MM_default(vector<formula_expression_ref >& model_stack, const string& name,
 
 bool process_stack_Multi(vector<string>& string_stack,  
 			 vector<formula_expression_ref >& model_stack,
-			  const shared_ptr<const alphabet>& a,
+			  const object_ptr<const alphabet>& a,
 			 const shared_ptr< const valarray<double> >& frequencies)
 {
   string arg;
@@ -850,7 +850,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 }
 
 formula_expression_ref 
-get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a,const shared_ptr<const valarray<double> >& frequencies) 
+get_smodel_(const string& smodel,const object_ptr<const alphabet>& a,const shared_ptr<const valarray<double> >& frequencies) 
 {
   // Initialize the string stack from the model name
   vector<string> string_stack;
@@ -896,7 +896,7 @@ get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a,const share
 }
 
 formula_expression_ref
-get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a)
+get_smodel_(const string& smodel,const object_ptr<const alphabet>& a)
 {
   return get_smodel_(smodel, a, shared_ptr<const valarray<double> >());
 }
@@ -904,7 +904,7 @@ get_smodel_(const string& smodel,const shared_ptr<const alphabet>& a)
 formula_expression_ref
 get_smodel_(const string& smodel)
 {
-  return get_smodel_(smodel, shared_ptr<const alphabet>(),shared_ptr<const valarray<double> >());
+  return get_smodel_(smodel, object_ptr<const alphabet>(),shared_ptr<const valarray<double> >());
 }
 
 
@@ -915,7 +915,7 @@ get_smodel_(const string& smodel)
 /// \param frequencies The initial letter frequencies in the model.
 ///
 formula_expression_ref
-get_smodel(const string& smodel_name, const shared_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >& frequencies) 
+get_smodel(const string& smodel_name, const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >& frequencies) 
 {
   assert(frequencies->size() == a->size());
 
