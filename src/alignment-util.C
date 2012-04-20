@@ -737,9 +737,9 @@ long int splits_distance2(const ublas::matrix<int>& M1,const vector< vector<int>
 }
 
 
-vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args) 
+vector<object_ptr<const alphabet> > load_alphabets(const variables_map& args) 
 {
-  vector<shared_ptr<const alphabet> > alphabets; 
+  vector<object_ptr<const alphabet> > alphabets; 
 
   if (not args.count("alphabet"))
     return load_alphabets();
@@ -749,7 +749,7 @@ vector<shared_ptr<const alphabet> > load_alphabets(const variables_map& args)
   return load_alphabets(name);
 }
 
-alignment load_alignment(const string& filename,const vector<shared_ptr<const alphabet> >& alphabets)
+alignment load_alignment(const string& filename,const vector<object_ptr<const alphabet> >& alphabets)
 {
   alignment A;
 
@@ -768,7 +768,7 @@ alignment load_alignment(const string& filename,const vector<shared_ptr<const al
 
 }
 
-vector<alignment> load_alignments(const vector<string>& filenames,const vector<shared_ptr<const alphabet> >& alphabets)
+vector<alignment> load_alignments(const vector<string>& filenames,const vector<object_ptr<const alphabet> >& alphabets)
 {
   vector<alignment> alignments;
 
@@ -782,7 +782,7 @@ vector<alignment> load_alignments(const vector<string>& filenames,const vector<s
 /// Load an alignment from command line args "--align filename"
 alignment load_A(const variables_map& args,bool keep_internal) 
 {
-  vector<shared_ptr<const alphabet> > alphabets = load_alphabets(args);
+  vector<object_ptr<const alphabet> > alphabets = load_alphabets(args);
   
   // ----- Try to load alignment ------ //
   if (not args.count("align")) 
@@ -837,7 +837,7 @@ istream& find_and_skip_alignments(istream& ifile, int n)
   return ifile;
 }
 
-alignment load_next_alignment(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets)
+alignment load_next_alignment(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets)
 {
   string line;
 
@@ -863,16 +863,16 @@ alignment load_next_alignment(istream& ifile, const vector<shared_ptr<const alph
   }
 }
 
-alignment load_next_alignment(istream& ifile, shared_ptr<const alphabet> a)
+alignment load_next_alignment(istream& ifile, object_ptr<const alphabet> a)
 {
-  vector<shared_ptr<const alphabet> > alphabets;
+  vector<object_ptr<const alphabet> > alphabets;
   alphabets.push_back(a);
   return load_next_alignment(ifile,alphabets);
 }
 
 alignment load_next_alignment(istream& ifile, const alphabet& a)
 {
-  shared_ptr<const alphabet> aa ( a.clone() );
+  object_ptr<const alphabet> aa ( a.clone() );
   return load_next_alignment(ifile,aa);
 }
 
@@ -910,7 +910,7 @@ alignment reorder_sequences(const alignment& A, const vector<string>& names)
 
 alignment load_next_alignment(istream& ifile, const alphabet& a, const vector<string>& names)
 {
-  shared_ptr<const alphabet> aa ( a.clone() );
+  object_ptr<const alphabet> aa ( a.clone() );
   alignment A = load_next_alignment(ifile,aa);
   return reorder_sequences(A,names);
 }
@@ -1030,7 +1030,7 @@ list<alignment> load_alignments(istream& ifile, const vector<string>& names, con
   return alignments;
 }
 
-std::list<alignment> load_alignments(std::istream& ifile, const std::vector<boost::shared_ptr<const alphabet> >& alphabets, 
+std::list<alignment> load_alignments(std::istream& ifile, const std::vector<object_ptr<const alphabet> >& alphabets, 
 				     int skip, int maxalignments)
 {
   list<alignment> alignments;
@@ -1060,7 +1060,7 @@ std::list<alignment> load_alignments(std::istream& ifile, const std::vector<boos
 
 
 
-vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets) {
+vector<alignment> load_alignments(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) {
   vector<alignment> alignments;
   
   vector<string> n1;
@@ -1115,7 +1115,7 @@ vector<alignment> load_alignments(istream& ifile, const vector<shared_ptr<const 
   return alignments;
 }
 
-alignment find_first_alignment(std::istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets) 
+alignment find_first_alignment(std::istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) 
 {
   alignment A;
 
@@ -1154,7 +1154,7 @@ alignment find_first_alignment(std::istream& ifile, const vector<shared_ptr<cons
   return A;
 }
 
-alignment find_last_alignment(std::istream& ifile, const vector<shared_ptr<const alphabet> >& alphabets) 
+alignment find_last_alignment(std::istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) 
 {
   alignment A;
 

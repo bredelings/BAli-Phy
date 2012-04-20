@@ -191,7 +191,7 @@ vector<double> data_partition::frequencies(int m) const
   return get_vector<double,Double>(E);
 }
 
-boost::shared_ptr<const Object> data_partition::base_model(int m) const
+object_ptr<const Object> data_partition::base_model(int m) const
 {
   int s = P->smodel_for_partition[partition_index];
   expression_ref Q = P->C.get_expression(P->SModels[s].base_model);
@@ -559,7 +559,7 @@ efloat_t data_partition::heated_likelihood() const
 }
 
 data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t,
-			       const boost::shared_ptr<const IndelModel>& IM)
+			       const object_ptr<const IndelModel>& IM)
   :P(p),
    partition_index(i),
    IModel_(IM),
@@ -600,7 +600,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
 }
 
 data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t)
-  :data_partition(n,p,i,a,t,shared_ptr<const IndelModel>())
+  :data_partition(n,p,i,a,t,object_ptr<const IndelModel>())
 { }
 
 //-----------------------------------------------------------------------------//
@@ -911,7 +911,7 @@ void Parameters::recalc(const vector<int>& indices)
       recalc_smodel(s);
 }
 
-shared_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
+object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
 {
   return convert<const alphabet>(C.evaluate(SModels[s].get_alphabet));
 }
@@ -1228,7 +1228,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string name = string("part") + convertToString(i+1);
 
     // create a data partition
-    shared_ptr<const IndelModel> IM;
+    object_ptr<const IndelModel> IM;
     if (imodel_for_partition[i] != -1)
       IM = IModels[imodel_for_partition[i]];
 

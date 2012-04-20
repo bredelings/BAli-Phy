@@ -20,7 +20,7 @@ bool parse_let_expression(const expression_ref& R, vector<expression_ref>& vars,
   vars.clear();
   bodies.clear();
 
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return false;
 
   if (not dynamic_pointer_cast<const let_obj>(E->sub[0])) return false;
@@ -45,7 +45,7 @@ bool parse_case_expression(const expression_ref& R, expression_ref& T, vector<ex
   patterns.clear();
   bodies.clear();
 
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return false;
 
   if (not dynamic_pointer_cast<const Case>(E->sub[0])) return false;
@@ -319,7 +319,7 @@ expression_ref Alt(const expression_ref& pattern, const expression_ref& body)
 bool find_match(const expression_ref& pattern, const expression_ref& E, vector< expression_ref >& results)
 {
   // if this is a match expression, then succeed, and store E as the result of the match
-  shared_ptr<const match> M = dynamic_pointer_cast<const match>(pattern);
+  object_ptr<const match> M = dynamic_pointer_cast<const match>(pattern);
   if (M) 
   {
     if (M->index >= 0)
@@ -334,14 +334,14 @@ bool find_match(const expression_ref& pattern, const expression_ref& E, vector< 
     return true;
   }
 
-  shared_ptr<const expression> pattern_exp = dynamic_pointer_cast<const expression>(pattern);
+  object_ptr<const expression> pattern_exp = dynamic_pointer_cast<const expression>(pattern);
 
   // If this is a leaf constant, then check if E is equal to it.
   if (not pattern_exp)
     return (pattern->compare(*E) == true);
 
   // If pattern is an expression but E is not, then there is no match.
-  shared_ptr<const expression> E_exp = dynamic_pointer_cast<const expression>(E);
+  object_ptr<const expression> E_exp = dynamic_pointer_cast<const expression>(E);
   if (not E_exp) return false;
 
   // Expressions must have the same number of arguments
@@ -490,13 +490,13 @@ std::set<dummy> get_bound_indices(const expression_ref& R)
 {
   std::set<dummy> bound;
 
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return bound;
 
   // Make sure we don't try to substitute for lambda-quantified dummies
-  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+  if (object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
   {
-    if (shared_ptr<const dummy> D  = dynamic_pointer_cast<const dummy>(E->sub[1]))
+    if (object_ptr<const dummy> D  = dynamic_pointer_cast<const dummy>(E->sub[1]))
       bound.insert(*D);
   }
   else if (dynamic_pointer_cast<const alt_obj>(E->sub[0]))
@@ -510,7 +510,7 @@ std::set<dummy> get_bound_indices(const expression_ref& R)
     {
       // Don't substitute into local variables.
       for(int i=0;i<vars.size();i++)
-	if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]))
+	if (object_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(vars[i]))
 	  bound.insert(*D);
     }
   }
@@ -519,14 +519,14 @@ std::set<dummy> get_bound_indices(const expression_ref& R)
 }
 
 // Return the list of dummy variable indices that are bound at the top level of the expression
-void alpha_rename(shared_ptr<expression>& E, const expression_ref& x, const expression_ref& y)
+void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expression_ref& y)
 {
   // assert: x is bound in E
   // assert: y is neither bound in E nor free in E
 
   // std::cout<<" replacing "<<x<<" with "<<y<<" in "<<E->print()<<":\n";
   // Make sure we don't try to substitute for lambda-quantified dummies
-  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+  if (object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
   {
     assert(E->sub[1]->compare(*x));
     E->sub[1] = y;
@@ -553,14 +553,14 @@ std::set<dummy> get_free_indices(const expression_ref& R)
   std::set<dummy> S;
 
   // fv x = { x }
-  if (shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R)) 
+  if (object_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R)) 
   {
     S.insert(*D);
     return S;
   }
 
   // fv c = { }
-  shared_ptr< const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr< const expression> E = dynamic_pointer_cast<const expression>(R);
   if (not E) return S;
 
   std::set<dummy> bound = get_bound_indices(R);
@@ -642,7 +642,7 @@ bool do_substitute(expression_ref& R1, const expression_ref& D, const expression
   }
 
   // FIXME: If we modify R1 later, will this modification show up in E1?
-  shared_ptr<const expression> E1 = dynamic_pointer_cast<const expression>(R1);
+  object_ptr<const expression> E1 = dynamic_pointer_cast<const expression>(R1);
 
   // If this is any other constant, then it doesn't contain the dummy
   if (not E1) return false;
@@ -667,7 +667,7 @@ bool do_substitute(expression_ref& R1, const expression_ref& D, const expression
       std::set<dummy> fv1 = get_free_indices(R1);
 
       // If R1 does not contain D, then we won't do any substitution anyway, so avoid alpha renaming.
-      if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(D))
+      if (object_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(D))
       {
 	if (fv1.find(*D2) == fv1.end()) return false;
       }
@@ -679,10 +679,10 @@ bool do_substitute(expression_ref& R1, const expression_ref& D, const expression
       int new_index = std::max(max_index(fv2),max_index(bound))+1;
 
       // Do the alpha renaming
-      shared_ptr<expression> E2 (E1->clone());
+      object_ptr<expression> E2 (E1->clone());
       for(const auto& i:overlap)
 	alpha_rename(E2, dummy(i), dummy(new_index++));
-      E1 = shared_ptr<const expression>(E2);
+      E1 = object_ptr<const expression>(E2);
       R1 = object_ref(E1);
       changed = true;
 
@@ -697,7 +697,7 @@ bool do_substitute(expression_ref& R1, const expression_ref& D, const expression
   }
 
   // Since this is an expression, substitute into sub-expressions
-  shared_ptr<expression> E2 (E1->clone());
+  object_ptr<expression> E2 (E1->clone());
   for(int i=0;i<E2->size();i++)
     changed = (do_substitute(E2->sub[i], D, R2) or changed);
 
@@ -800,7 +800,7 @@ expression_ref move_lets(bool scope, const expression_ref R,
     new_index = max_index(avoid) + 1;
     
     
-    shared_ptr<expression> RR ( dynamic_pointer_cast<const expression>(R)->clone() );
+    object_ptr<expression> RR ( dynamic_pointer_cast<const expression>(R)->clone() );
     
     for(int i=0;i<unbound_indices.size();i++)
     {
@@ -812,7 +812,7 @@ expression_ref move_lets(bool scope, const expression_ref R,
   
     R_vars.clear();
     R_bodies.clear();
-    parse_let_expression(shared_ptr<const expression>(RR), R_vars, R_bodies, R2);
+    parse_let_expression(object_ptr<const expression>(RR), R_vars, R_bodies, R2);
     
     // Add the alpha-renamed versions of the unbound vars/bodies to the higher-level environment
     for(int i=0;i<unbound_indices.size();i++)
@@ -904,7 +904,7 @@ expression_ref let_float(const expression_ref& R)
   if (is_dummy(R))
     return R;
   
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
   // 2. Literal constants.  Treat as 0-arg constructor.
   if (not E) return R;
@@ -917,7 +917,7 @@ expression_ref let_float(const expression_ref& R)
   expression_ref R2;
 
   // 3. Lambda expressions
-  if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+  if (object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
   {
     // Find the new let-bound set.
     dummy D = *dynamic_pointer_cast<const dummy>(E->sub[1]);
@@ -950,7 +950,7 @@ expression_ref let_float(const expression_ref& R)
     {
       // Find the bound variables in the i-th constructor
       set<dummy> bound;
-      if (shared_ptr<const expression> C = dynamic_pointer_cast<const expression>(vars[i]))
+      if (object_ptr<const expression> C = dynamic_pointer_cast<const expression>(vars[i]))
       {
 	assert(dynamic_pointer_cast<const constructor>(C->sub[0]));
 	for(int j=1;j<C->size();j++)
@@ -997,10 +997,10 @@ expression_ref let_float(const expression_ref& R)
   }
 
   // 6. Handle application, constructors, and operations.
-  else if (shared_ptr<const Operator> O =  dynamic_pointer_cast<const Operator>(E->sub[0]))
+  else if (object_ptr<const Operator> O =  dynamic_pointer_cast<const Operator>(E->sub[0]))
   {
     // First float lets in sub-expressions
-    shared_ptr<expression> V ( E->clone() );
+    object_ptr<expression> V ( E->clone() );
     
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -1012,7 +1012,7 @@ expression_ref let_float(const expression_ref& R)
       V->sub[i] = move_lets(true, V->sub[i], vars, bodies, set<dummy>(), free_in_R);
     }
       
-    R2 = let_expression(vars, bodies, shared_ptr<const expression>(V));
+    R2 = let_expression(vars, bodies, object_ptr<const expression>(V));
   }
   else
     throw myexception()<<"let_float: I don't understand expression '"<<R<<"'";
@@ -1059,9 +1059,9 @@ expression_ref apply(const expression_ref& R,const expression_ref& arg)
 {
   assert(R);
 
-  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
-    if (shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+    if (object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
       return substitute(E->sub[2], E->sub[1], arg);
   }
 
@@ -1093,14 +1093,14 @@ void find_named_parameters(const expression_ref& R, std::set<string>& names)
 {
   assert(R);
   // If this is a parameter, then makes sure we've got its name.
-  if (shared_ptr<const parameter> n = dynamic_pointer_cast<const parameter>(R))
+  if (object_ptr<const parameter> n = dynamic_pointer_cast<const parameter>(R))
   {
     if (names.find(n->parameter_name) == names.end())
       names.insert(n->parameter_name);
   }
 
   // If this is an expression, check its sub-objects
-  else if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  else if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
     for(int i=0;i<E->size();i++)
       find_named_parameters(E->sub[i], names);
@@ -1188,7 +1188,7 @@ vector<expression_ref> get_ref_vector_from_list(const expression_ref& R)
 {
   expression_ref R2 = R;
   vector<expression_ref> V;
-  while(boost::shared_ptr<const expression> E = is_a(R2,":"))
+  while(object_ptr<const expression> E = is_a(R2,":"))
   {
     assert(E->size() == 3);
     V.push_back(E->sub[1]);
@@ -1200,7 +1200,7 @@ vector<expression_ref> get_ref_vector_from_list(const expression_ref& R)
 
 std::vector<expression_ref> get_ref_vector_from_tuple(const expression_ref& R)
 {
-  boost::shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
   if (not E)
     return std::vector<expression_ref>(1,R);
@@ -1317,7 +1317,7 @@ bool is_simple_pattern(const expression_ref& R)
   // (a) Is this irrefutable?
   if (is_irrefutable_pattern(R)) return true;
 
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>( R );
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>( R );
 
   // (b) Is this a constant with no arguments? (This can't be an irrefutable pattern, since we've already bailed on dummy variables.)
   if (not E) return true;
@@ -1388,7 +1388,7 @@ int find_object(const vector<expression_ref>& v, const expression_ref& E)
 
 expression_ref get_constructor(const expression_ref& R)
 {
-  if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
     assert( dynamic_pointer_cast<const constructor>(E->sub[0]) );
     return E->sub[0];
@@ -1466,7 +1466,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
       b2.push_back(b[r]);
 
-      shared_ptr<const dummy> d = dynamic_pointer_cast<const dummy>(p[r][0]);
+      object_ptr<const dummy> d = dynamic_pointer_cast<const dummy>(p[r][0]);
       if (d->index == -1)
 	assert(d->name.size() == 0);
       else
@@ -1520,7 +1520,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
   {
     // Find the arity of the constructor
     int arity = 0;
-    if (shared_ptr<const constructor> C = dynamic_pointer_cast<const constructor>(constants[c]))
+    if (object_ptr<const constructor> C = dynamic_pointer_cast<const constructor>(constants[c]))
       arity = C->n_args();
 
     vector<expression_ref> V(arity+1);
@@ -1560,7 +1560,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
 
       // Add the pattern
       p2.push_back({});
-      if (shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(p[r][0]))
+      if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(p[r][0]))
       {
 	// Add sub-patterns of p[r][1]
 	assert(E->size() == arity+1);
@@ -1704,7 +1704,7 @@ expression_ref def_function(const vector<expression_ref>& pattern, const vector<
   {
     patterns.push_back( vector<expression_ref>() );
 
-    shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(pattern[i]);
+    object_ptr<const expression> E = dynamic_pointer_cast<const expression>(pattern[i]);
     if (not E)
       patterns.back().push_back(pattern[i]);
     else
@@ -1746,7 +1746,7 @@ expression_ref def_function(const expression_ref& pattern, const expression_ref&
 
 bool is_WHNF(const expression_ref& R)
 {
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
   if (E)
   {
@@ -1754,18 +1754,18 @@ bool is_WHNF(const expression_ref& R)
     // Neither case is allowed, currently.
 
     // 4. Lambda
-    shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+    object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
     if (L) return true;
 
     // 5. Constructor
-    shared_ptr<const constructor> RF = dynamic_pointer_cast<const constructor>(E->sub[0]);
+    object_ptr<const constructor> RF = dynamic_pointer_cast<const constructor>(E->sub[0]);
     if (RF) return true;
 
     return false;
   }
   else
   {
-    if (shared_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(R))
+    if (object_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(R))
       return false;
 
     // 1. a (dummy) variable.
@@ -1790,7 +1790,7 @@ bool is_parameter(const expression_ref& R)
 
 bool is_wildcard(const expression_ref& R)
 {
-  shared_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R);
+  object_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R);
   if (not D) return false;
   if (D->name.size()) return false;
 
@@ -1803,13 +1803,13 @@ expression_ref launchbury_normalize(const expression_ref& R)
   if (is_dummy(R))
     return R;
   
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
   if (not E) return R;
   
   // 2. Lambda
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
   if (L)
   {
     assert(E->size() == 3);
@@ -1842,7 +1842,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
   }
 
   // 6. Case
-  shared_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
+  object_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
   if (IsCase)
   {
     expression* V = new expression(*E);
@@ -1896,7 +1896,7 @@ expression_ref launchbury_normalize(const expression_ref& R)
   }
 
   // 5. Let 
-  shared_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
+  object_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
   if (Let)
   {
     expression* V = new expression(*E);
@@ -1921,13 +1921,13 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
   if (is_dummy(R))
     return R;
   
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
 
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
   if (not E) return R;
   
   // 2. Lambda
-  shared_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
   if (L)
   {
     assert(E->size() == 3);
@@ -1950,7 +1950,7 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
   }
   
   // 6. Case
-  shared_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
+  object_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
   if (IsCase)
   {
     expression* V = new expression(*E);
@@ -1977,7 +1977,7 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
   }
 
   // 5. Let 
-  shared_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
+  object_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
   if (Let)
   {
     vector<expression_ref> vars;
@@ -2011,7 +2011,7 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
 
       for(int i=vars.size()-1; i>=0; i--)
       {
-	shared_ptr<const dummy> V = dynamic_pointer_cast<const dummy>(vars[i]);
+	object_ptr<const dummy> V = dynamic_pointer_cast<const dummy>(vars[i]);
 	assert(V);
 	std::set<dummy> free = get_free_indices(bodies[i]);
 	if (free.find(*V) != free.end()) continue;
@@ -2038,9 +2038,9 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
   return R;
 }
 
-shared_ptr<const expression> is_a(const expression_ref& E, const string& s)
+object_ptr<const expression> is_a(const expression_ref& E, const string& s)
 {
-  shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E);
+  object_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E);
   if (E2)
   {
     if (E2->sub[0]->compare(constructor(s,-1)))

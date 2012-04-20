@@ -27,12 +27,12 @@ public:
 
   std::vector<expression_ref> get_notes_plus_exp() const;
 
-  boost::shared_ptr<const Object> result() const;
+  object_ptr<const Object> result() const;
 
-  boost::shared_ptr<const Object> result(const Program&) const;
+  object_ptr<const Object> result(const Program&) const;
 
   template <typename T>
-  boost::shared_ptr<const T> result_as() const {return boost::dynamic_pointer_cast<const T>(result());}
+  object_ptr<const T> result_as() const {return boost::dynamic_pointer_cast<const T>(result());}
 
   formula_expression_ref();
   formula_expression_ref(const expression_ref&);

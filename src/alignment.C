@@ -239,7 +239,7 @@ void alignment::load(const vector<sequence>& seqs)
 
 }
 
-void alignment::load(const vector<shared_ptr<const alphabet> >& alphabets,const vector<sequence>& seqs) {
+void alignment::load(const vector<object_ptr<const alphabet> >& alphabets,const vector<sequence>& seqs) {
   string errors = "Sequences don't fit any of the alphabets:";
   for(int i=0;i<alphabets.size();i++) {
     try {
@@ -269,7 +269,7 @@ void alignment::load(sequence_format::loader_t loader,std::istream& file)
 }
 
 
-void alignment::load(const vector<shared_ptr<const alphabet> >& alphabets, sequence_format::loader_t loader,
+void alignment::load(const vector<object_ptr<const alphabet> >& alphabets, sequence_format::loader_t loader,
 			       std::istream& file) 
 {
   // read file
@@ -297,7 +297,7 @@ void alignment::load(const string& filename)
   load(seqs);
 }
 
-void alignment::load(const vector<shared_ptr<const alphabet> >& alphabets,const string& filename) {
+void alignment::load(const vector<object_ptr<const alphabet> >& alphabets,const string& filename) {
   // read from file
   vector<sequence> seqs = sequence_format::load_from_file(filename);
 

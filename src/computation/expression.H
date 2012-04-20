@@ -258,16 +258,16 @@ struct expression_ref: public object_ref
   :object_ref(v)
   {}
 
-  expression_ref(const boost::shared_ptr<const Object>& v)
+  expression_ref(const object_ptr<const Object>& v)
     :object_ref(v) 
   {}
 
-  explicit expression_ref(const boost::shared_ptr<Object>& v)
+  explicit expression_ref(const object_ptr<Object>& v)
     :object_ref(v) 
   {}
 
   template <typename T>
-  expression_ref(const boost::shared_ptr<const T>& v)
+  expression_ref(const object_ptr<const T>& v)
     :object_ref(v)
   {}
 
@@ -286,7 +286,7 @@ struct expression_ref: public object_ref
   expression_ref(const char* s):object_ref(new String(s)) {}
 };
 
-boost::shared_ptr<const expression> is_a(const expression_ref&, const std::string&);
+object_ptr<const expression> is_a(const expression_ref&, const std::string&);
 
 template <typename T>
 struct typed_expression_ref: public expression_ref
@@ -296,7 +296,7 @@ public:
   explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   explicit typed_expression_ref(expression* v): expression_ref(v) {}
   explicit typed_expression_ref(const object_ref& v): expression_ref(v) {}
-  explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  explicit typed_expression_ref(const object_ptr<const Object>& v): expression_ref(v) {}
   explicit typed_expression_ref(const Object& o):expression_ref(o) {}
 };
 
@@ -308,7 +308,7 @@ public:
   explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   explicit typed_expression_ref(expression* v): expression_ref(v) {}
   explicit typed_expression_ref(const object_ref& v): expression_ref(v) {}
-  explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  explicit typed_expression_ref(const object_ptr<const Object>& v): expression_ref(v) {}
   explicit typed_expression_ref(const Object& o):expression_ref(o) {}
   typed_expression_ref(const T& t):expression_ref(POD<T>(t)) {}
 };
@@ -321,7 +321,7 @@ public:
   explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
   explicit typed_expression_ref(expression* v): expression_ref(v) {}
   explicit typed_expression_ref(const object_ref& v): expression_ref(v) {}
-  explicit typed_expression_ref(const boost::shared_ptr<const Object>& v): expression_ref(v) {}
+  explicit typed_expression_ref(const object_ptr<const Object>& v): expression_ref(v) {}
   explicit typed_expression_ref(const Object& o):expression_ref(o) {}
   typed_expression_ref(const T& t):expression_ref(POD_math<T>(t)) {}
 };
@@ -391,7 +391,7 @@ std::valarray<T> get_varray(const expression_ref& R)
   if (not R)
     return std::valarray<T>();
 
-  boost::shared_ptr<const expression> E = boost::dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = boost::dynamic_pointer_cast<const expression>(R);
 
   if (not E)
   {
@@ -412,7 +412,7 @@ std::vector<T> get_vector(const expression_ref& R)
   if (not R)
     return std::vector<T>();
 
-  boost::shared_ptr<const expression> E = boost::dynamic_pointer_cast<const expression>(R);
+  object_ptr<const expression> E = boost::dynamic_pointer_cast<const expression>(R);
 
   if (not E)
   {

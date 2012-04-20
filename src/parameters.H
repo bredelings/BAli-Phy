@@ -135,7 +135,7 @@ public:
   
   std::vector<double> distribution() const;
 
-  boost::shared_ptr<const Object> base_model(int m) const;
+  object_ptr<const Object> base_model(int m) const;
 
   std::vector<double> frequencies(int m) const;
 
@@ -209,7 +209,7 @@ public:
 
   data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&);
   data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&,
-		 const boost::shared_ptr<const IndelModel>&);
+		 const object_ptr<const IndelModel>&);
 };
 
 
@@ -334,7 +334,7 @@ public:
   /// Get the substitution::Model
         IndelModel& IModel(int i)       {return *IModels[i].modify();}
 
-  boost::shared_ptr<const alphabet> get_alphabet_for_smodel(int i) const;
+  object_ptr<const alphabet> get_alphabet_for_smodel(int i) const;
 
   /// Set branch 'b' to have length 'l', and compute the transition matrices
   void setlength(int b,double l); 

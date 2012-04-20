@@ -58,7 +58,7 @@ class alignment
   void add_row(const std::vector<int>&);
 
   /// The alphabet that translates integers back to letters.
-  boost::shared_ptr<const alphabet> a;
+  object_ptr<const alphabet> a;
   
 public:
 
@@ -88,17 +88,17 @@ public:
   /// Add sequences sequences to the alignment.
   void load(const std::vector<sequence>& sequences);
   /// Add sequences sequences to the alignment.
-  void load(const std::vector<boost::shared_ptr<const alphabet> >& alphabets,const std::vector<sequence>& sequences);
+  void load(const std::vector<object_ptr<const alphabet> >& alphabets,const std::vector<sequence>& sequences);
 
   /// Parse the file file using loader, and add the resulting sequences.
   void load(sequence_format::loader_t loader,std::istream& file);
   /// Parse the file file using loader, and add the resulting sequences.
-  void load(const std::vector<boost::shared_ptr<const alphabet> >& alphabets,sequence_format::loader_t,std::istream&);
+  void load(const std::vector<object_ptr<const alphabet> >& alphabets,sequence_format::loader_t,std::istream&);
 
   /// Load PHYLIP or FASTA file 'filename', depending on extention
   void load(const std::string& filename);
   /// Load PHYLIP or FASTA file 'filename', depending on extention
-  void load(const std::vector<boost::shared_ptr<const alphabet> >& alphabets,const std::string& filename);
+  void load(const std::vector<object_ptr<const alphabet> >& alphabets,const std::string& filename);
 
   /// Get a list of sequences (with gaps) that represent the current alignment.
   std::vector<sequence> convert_to_sequences() const;
