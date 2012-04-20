@@ -28,7 +28,7 @@ struct Apply: public Operation
 
   assoc_type associativity() const {return assoc_left;}
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const;
 
@@ -45,7 +45,7 @@ struct Case: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const;
 
@@ -62,11 +62,11 @@ struct Print: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const Object> x = Args.evaluate(0);
+    object_ptr<const Object> x = Args.evaluate(0);
 
-    return boost::shared_ptr<String> ( new String(x->print() ) );
+    return object_ptr<String> ( new String(x->print() ) );
   }
 
   std::string name() const {return "sys_print";}
@@ -84,7 +84,7 @@ struct Seq: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "seq";}
 
@@ -103,15 +103,15 @@ struct Concat: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const String> x = Args.evaluate_as<String>(0);
-    boost::shared_ptr<const String> y = Args.evaluate_as<String>(1);
+    object_ptr<const String> x = Args.evaluate_as<String>(0);
+    object_ptr<const String> y = Args.evaluate_as<String>(1);
 
     const std::string& X = *x;
     const std::string& Y = *y;
 
-    return boost::shared_ptr<String> ( new String(X+Y) );
+    return object_ptr<String> ( new String(X+Y) );
   }
 
   std::string print_expression(const std::vector<std::string>& inputs) const
@@ -134,7 +134,7 @@ struct MkArray: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "mkArray";}
   
@@ -153,7 +153,7 @@ struct ArrayBounds: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "bounds";}
   
@@ -172,7 +172,7 @@ struct GetIndex: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
@@ -197,11 +197,11 @@ struct Vector_From_List_Op: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
     expression_ref E = Args.evaluate(0);
 
-    boost::shared_ptr<Box<std::vector<T> > > v (new Box<std::vector<T> >);
+    object_ptr<Box<std::vector<T> > > v (new Box<std::vector<T> >);
 
     v->t = get_vector_from_list<T,U>(E);
 
@@ -232,12 +232,12 @@ struct VectorSizeOp: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const Box<std::vector<T> > > v = Args.evaluate_as<Box<std::vector<T> > >(0);
+    object_ptr<const Box<std::vector<T> > > v = Args.evaluate_as<Box<std::vector<T> > >(0);
 
     const std::vector<T>& v2 = *v;
-    boost::shared_ptr<const Int> r ( new Int(v2.size() ) );
+    object_ptr<const Int> r ( new Int(v2.size() ) );
 
     return r;
   }
@@ -264,11 +264,11 @@ struct Iota_Op: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
     unsigned n = *Args.evaluate_as<Int>(0);
 
-    boost::shared_ptr<Box<std::vector<T> > > V(new Box<std::vector<T> >() );
+    object_ptr<Box<std::vector<T> > > V(new Box<std::vector<T> >() );
 
     V->t.resize(n);
     for(unsigned i=0;i<n;i++)
@@ -302,7 +302,7 @@ struct LExp_Op: public Operation
     return true;
   }
   
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
   
   std::string name() const {return "LExp";}
   
@@ -324,12 +324,12 @@ struct Multiply: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
-    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+    object_ptr<const T> x = Args.evaluate_as<T>(0);
+    object_ptr<const T> y = Args.evaluate_as<T>(1);
 
-    boost::shared_ptr<T> r ( new T );
+    object_ptr<T> r ( new T );
 
     *r = (*x) * (*y);
 
@@ -358,9 +358,9 @@ struct IfThenElse: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const Bool> condition = Args.evaluate_as<Bool>(0);
+    object_ptr<const Bool> condition = Args.evaluate_as<Bool>(0);
     if (*condition)
       return Args.evaluate(1);
     else
@@ -387,14 +387,14 @@ struct GreaterThan: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
-    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+    object_ptr<const T> x = Args.evaluate_as<T>(0);
+    object_ptr<const T> y = Args.evaluate_as<T>(1);
 
     Bool condition = (*x > *y);
 
-    return boost::shared_ptr<const Bool>(new Bool(condition));
+    return object_ptr<const Bool>(new Bool(condition));
   }
 
   std::string print_expression(const std::vector<std::string>& inputs) const
@@ -420,14 +420,14 @@ struct LessThan: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
-    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+    object_ptr<const T> x = Args.evaluate_as<T>(0);
+    object_ptr<const T> y = Args.evaluate_as<T>(1);
 
     Bool condition = (*x < *y);
 
-    return boost::shared_ptr<const Bool>(new Bool(condition));
+    return object_ptr<const Bool>(new Bool(condition));
   }
 
   std::string print_expression(const std::vector<std::string>& inputs) const
@@ -453,14 +453,14 @@ struct Equals: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
-    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+    object_ptr<const T> x = Args.evaluate_as<T>(0);
+    object_ptr<const T> y = Args.evaluate_as<T>(1);
 
     Bool condition = (*x == *y);
 
-    return boost::shared_ptr<const Bool>(new Bool(condition));
+    return object_ptr<const Bool>(new Bool(condition));
   }
 
   std::string print_expression(const std::vector<std::string>& inputs) const
@@ -486,12 +486,12 @@ struct Conversion: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const X> x = Args.evaluate_as<X>(0);
+    object_ptr<const X> x = Args.evaluate_as<X>(0);
     Y y = *x;
 
-    return boost::shared_ptr<const Y>(new Y(y));
+    return object_ptr<const Y>(new Y(y));
   }
 
   std::string name() const {return "Conversion";}
@@ -512,12 +512,12 @@ struct Add: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
-    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+    object_ptr<const T> x = Args.evaluate_as<T>(0);
+    object_ptr<const T> y = Args.evaluate_as<T>(1);
 
-    boost::shared_ptr<T> r ( new T );
+    object_ptr<T> r ( new T );
 
     *r = (*x) + (*y);
 
@@ -552,12 +552,12 @@ struct Minus: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
-    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+    object_ptr<const T> x = Args.evaluate_as<T>(0);
+    object_ptr<const T> y = Args.evaluate_as<T>(1);
 
-    boost::shared_ptr<T> r ( new T );
+    object_ptr<T> r ( new T );
 
     *r = (*x) - (*y);
 
@@ -587,12 +587,12 @@ struct Divide: public Operation
     return E;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const
+  object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    boost::shared_ptr<const T> x = Args.evaluate_as<T>(0);
-    boost::shared_ptr<const T> y = Args.evaluate_as<T>(1);
+    object_ptr<const T> x = Args.evaluate_as<T>(0);
+    object_ptr<const T> y = Args.evaluate_as<T>(1);
 
-    boost::shared_ptr<T> r ( new T );
+    object_ptr<T> r ( new T );
 
     *r = (*x) / (*y);
 

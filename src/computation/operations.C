@@ -8,7 +8,7 @@ using std::string;
 using boost::dynamic_pointer_cast;
 using boost::shared_ptr;
 
-shared_ptr<const Object> Seq::operator()(OperationArgs& Args) const
+object_ptr<const Object> Seq::operator()(OperationArgs& Args) const
 {
   Args.lazy_evaluate(0);
   return Args.lazy_evaluate(1);
@@ -16,15 +16,15 @@ shared_ptr<const Object> Seq::operator()(OperationArgs& Args) const
 
 expression_ref seq = lambda_expression( Seq() );
 
-shared_ptr<const Object> Apply::operator()(OperationArgs& Args) const
+object_ptr<const Object> Apply::operator()(OperationArgs& Args) const
 {
   //FIXME - should this be lazy_evaluate?  Perhaps which a lambda function it doesn't matter.
-  shared_ptr<const Object> f = Args.evaluate(0);
-  shared_ptr<const Object> arg = Args.reference(1);
+  object_ptr<const Object> f = Args.evaluate(0);
+  object_ptr<const Object> arg = Args.reference(1);
 
-  if (shared_ptr<const expression> fE = dynamic_pointer_cast<const expression>(f))
+  if (object_ptr<const expression> fE = dynamic_pointer_cast<const expression>(f))
   {
-    if (shared_ptr<const lambda> fL = dynamic_pointer_cast<const lambda>(fE->sub[0]))
+    if (object_ptr<const lambda> fL = dynamic_pointer_cast<const lambda>(fE->sub[0]))
       return substitute(fE->sub[2], fE->sub[1], arg);
   }
 
@@ -35,10 +35,10 @@ std::string Apply::name() const {
   return "@";
 }
 
-shared_ptr<const Object> Case::operator()(OperationArgs& Args) const
+object_ptr<const Object> Case::operator()(OperationArgs& Args) const
 {
-  shared_ptr<const Object> obj = Args.lazy_evaluate(0);
-  shared_ptr<const Object> alts = Args.reference(1);
+  object_ptr<const Object> obj = Args.lazy_evaluate(0);
+  object_ptr<const Object> alts = Args.reference(1);
 
   int L = (Args.n_args() - 1)/2;
 
@@ -50,14 +50,14 @@ shared_ptr<const Object> Case::operator()(OperationArgs& Args) const
     results[i] = Args.reference(2 + 2*i);
   }
 
-  shared_ptr<const expression> E = dynamic_pointer_cast<const expression>(obj);
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(obj);
   assert(not E or not dynamic_pointer_cast<const lambda>(E->sub[0]));
 
   expression_ref result;
   for(int i=0;i<L and not result;i++)
   {
     // If its a dummy, then match it.
-    if (shared_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(cases[i]))
+    if (object_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(cases[i]))
     {
       result = results[i];
 
@@ -74,7 +74,7 @@ shared_ptr<const Object> Case::operator()(OperationArgs& Args) const
     // If we are an n-arg constructor, then match iff the case is an expression and the head matches.
     else if (E)
     {
-      if (shared_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(cases[i]))
+      if (object_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(cases[i]))
       {
 	if (E->sub[0]->compare(*E2->sub[0]))
 	{
@@ -102,7 +102,7 @@ std::string Case::name() const {
   return "case";
 }
 
-shared_ptr<const Object> MkArray::operator()(OperationArgs& Args) const
+object_ptr<const Object> MkArray::operator()(OperationArgs& Args) const
 {
   int n = *Args.evaluate_as<Int>(0);
   expression_ref f = Args.reference(1);
@@ -112,7 +112,7 @@ shared_ptr<const Object> MkArray::operator()(OperationArgs& Args) const
   // The function should be represented as a reg_var...
   assert(dynamic_pointer_cast<const reg_var>(f));
 
-  shared_ptr<expression> a ( new expression );
+  object_ptr<expression> a ( new expression );
   a->sub.resize(n+1);
   a->sub[0] = constructor("Array",n);
   for(int i=0;i<n;i++)
@@ -127,9 +127,9 @@ shared_ptr<const Object> MkArray::operator()(OperationArgs& Args) const
 
 expression_ref mkArray = lambda_expression( MkArray() );
 
-shared_ptr<const Object> GetIndex::operator()(OperationArgs& Args) const
+object_ptr<const Object> GetIndex::operator()(OperationArgs& Args) const
 {
-  shared_ptr<const expression> A = convert<const expression>( Args.lazy_evaluate(0) );
+  object_ptr<const expression> A = convert<const expression>( Args.lazy_evaluate(0) );
   int n = *Args.evaluate_as<Int>(1);
   int N = A->sub.size()-1;
   if (n < 0 or n >= N)
@@ -140,9 +140,9 @@ shared_ptr<const Object> GetIndex::operator()(OperationArgs& Args) const
 
 expression_ref getIndex = lambda_expression( GetIndex() );
 
-shared_ptr<const Object> ArrayBounds::operator()(OperationArgs& Args) const
+object_ptr<const Object> ArrayBounds::operator()(OperationArgs& Args) const
 {
-  shared_ptr<const expression> A = convert<const expression>( Args.lazy_evaluate(0) );
+  object_ptr<const expression> A = convert<const expression>( Args.lazy_evaluate(0) );
   int N = A->sub.size()-1;
 
   return graph_normalize(Tuple(0,N-1));
@@ -150,15 +150,15 @@ shared_ptr<const Object> ArrayBounds::operator()(OperationArgs& Args) const
 
 expression_ref bounds = lambda_expression( ArrayBounds() );
 
-boost::shared_ptr<const Object> LExp_Op::operator()(OperationArgs& Args) const
+object_ptr<const Object> LExp_Op::operator()(OperationArgs& Args) const
 {
-  shared_ptr<const EigenValues> L = Args.evaluate_as<EigenValues>(0);
+  object_ptr<const EigenValues> L = Args.evaluate_as<EigenValues>(0);
   expression_ref pi_E = Args.evaluate(1);
   double t = *Args.evaluate_as<Double>(2);
 
   std::vector<double> pi = get_vector<double,Double>(pi_E);
   
-  return shared_ptr<const Object>(new MatrixObject( exp(*L, pi, t) ) );
+  return object_ptr<const Object>(new MatrixObject( exp(*L, pi, t) ) );
 }
 
 expression_ref LExp = lambda_expression( LExp_Op() );

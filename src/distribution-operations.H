@@ -23,7 +23,7 @@ struct exponential_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "exponential_density";}
 
@@ -46,7 +46,7 @@ struct log_exponential_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "log_exponential_density";}
 
@@ -69,7 +69,7 @@ struct gamma_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "gamma_density";}
 
@@ -92,7 +92,7 @@ struct beta_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "beta_density";}
 
@@ -115,7 +115,7 @@ struct normal_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "normal_density";}
 
@@ -138,7 +138,7 @@ struct log_normal_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
  
   std::string name() const {return "log_normal_density";}
 
@@ -161,7 +161,7 @@ struct cauchy_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "cauchy_density";}
 
@@ -184,7 +184,7 @@ struct dirichlet_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "dirichlet_density";}
     
@@ -207,7 +207,7 @@ struct laplace_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "laplace_density";}
     
@@ -230,7 +230,7 @@ struct log_laplace_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "log_laplace_density";}
     
@@ -253,7 +253,7 @@ struct uniform_density: public Operation
     return true;
   }
 
-  boost::shared_ptr<const Object> operator()(OperationArgs& Args) const;
+  object_ptr<const Object> operator()(OperationArgs& Args) const;
 
   std::string name() const {return "uniform_density";}
     
