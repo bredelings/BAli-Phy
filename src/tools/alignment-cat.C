@@ -174,6 +174,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("columns,c", value<string>(),"Ranges of columns to keep, like: 1-10,30-")
     ("taxa,t", value<string>(),"Taxa to keep, comma-separated")
     ("pad,p", "Add gaps to make sequence lengths identical")
+    ("reverse,r", "Reverse the sequences")
     ("erase-empty-columns,e","Remove columns with no characters (all gaps).")
     ("missing",value<string>()->default_value("-?"),"What letters are not characters (e.g. gaps)?")
     ("strip-gaps","Remove all non-character letters from sequences.")
@@ -468,6 +469,11 @@ int main(int argc,char* argv[])
 	s.resize(L);
       }
     }
+
+    // Reverse each sequence, if asked.
+    if (args.count("reverse"))
+      for(sequence& s: S)
+	std::reverse(s.begin(), s.end());
 
     if (args["output"].as<string>() == "phylip")
       write_phylip(cout,S);
