@@ -133,9 +133,22 @@ vector<sequence> select(const vector<sequence>& s,const string& range)
   return select(s,columns);
 }
 
+void check_all_same_length(const vector<sequence>& s, const string& reason)
+{
+  for(int i=1;i<s.size();i++)
+    if (s[i].size() != s[0].size())
+    {
+      myexception e;
+      e<<"All sequences in an alignment must have the same length "<<reason<<"\n";
+      e<<"Alignment file: sequence #"<<i+1<<" '"<<s[i].name<<"' has length "<<s[i].size()<<" != "<<s[0].size()<<"\n";
+      e<<"Consider option -p to pad them to the same length.";
+      throw e;
+    }
+}
+
 vector<sequence> remove_empty_columns(const vector<sequence>& s,const vector<char>& missing)
 {
-  assert(all_same_length(s));
+  check_all_same_length(s, "in order to remove empty columns.");
 
   // cache length of longest sequences
   int L = s[0].size();
@@ -239,10 +252,6 @@ vector<sequence> load_file(istream& file,bool pad)
   if (pad)
     pad_to_same_length(s);
 
-  for(int i=1;i<s.size();i++)
-    if (s[i].size() != s[0].size())
-      throw myexception()<<"Alignment file: sequence #"<<i+1<<" '"<<s[i].name<<"' has length "
-                         <<s[i].size()<<" != "<<s[0].size();
   return s;
 }
 
@@ -257,10 +266,6 @@ vector<sequence> load_file(const string& filename,bool pad)
   if (pad)
     pad_to_same_length(s);
 
-  for(int i=1;i<s.size();i++)
-    if (s[i].size() != s[0].size())
-      throw myexception()<<"Alignment file '"<<filename<<"': sequence #"<<i+1<<" '"<<s[i].name<<"' has length "
-			 <<s[i].size()<<" != "<<s[0].size();
   return s;
 }
 
@@ -417,30 +422,43 @@ int main(int argc,char* argv[])
 	names.push_back(s.name);
     }
 
+    //------- Determine filenames --------//
+    vector<string> filenames;
+    if (args.count("file"))
+      filenames = args["file"].as<vector<string> >();
+    else
+      filenames = {"-"};
+
     //------- Try to load sequences --------//
-    vector <sequence> S;
-    if (not args.count("file")) {
-      S = load_file(cin,pad);
-
-      // If we're selecting or reordering by names
-      if (names.size())
-	S = select_taxa(S,names);
-    }
-    else 
+    vector<sequence> S;
+    vector<sequence> s_in;
+    bool cin_read = false;
+    for(int i=0;i<filenames.size();i++) 
     {
-      vector<string> filenames = args["file"].as<vector<string> >();
-
-      for(int i=0;i<filenames.size();i++) 
+      // Read the sequences
+      vector<sequence> s;
+      if (filenames[i] == "-")
       {
-	vector<sequence> s = load_file(filenames[i],pad);
-	try {
-	  if (names.size())
-	    s = select_taxa(s,names);
-	  S = concatenate(S,s);
+	if (not cin_read) {
+	  s_in = load_file(cin,pad);
+	  cin_read = true;
 	}
-	catch (std::exception& e) {
-	  throw myexception()<<"File '"<<filenames[i]<<"': "<<e.what();
-	}
+	s = s_in;
+      }
+      else
+	s = load_file(filenames[i],pad);
+
+      // Add the sequences to what we have so far
+      try {
+	if (filenames.size() > 1)
+	  check_all_same_length(s, "in order to concatenate two or more alignments.");
+	
+	if (names.size())
+	  s = select_taxa(s,names);
+	S = concatenate(S,s);
+      }
+      catch (std::exception& e) {
+	throw myexception()<<"File '"<<filenames[i]<<"': "<<e.what();
       }
     }
       
