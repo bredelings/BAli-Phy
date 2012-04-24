@@ -65,7 +65,7 @@ endif
 #-----------------------------------------------------------------
 
 TOOLS = model_P statreport alignment-gild \
-	alignment-reorder alignment-draw alignment-find \
+	alignment-draw alignment-find \
 	trees-to-SRQ tree-reroot alignment-chop-internal \
 	alignment-convert alignment-thin \
 	trees-consensus cut-range alignment-translate \
@@ -184,13 +184,6 @@ alignment_compare_SOURCES = tools/alignment-compare.C alignment.C alphabet.C seq
 alignment_identity_SOURCES = tools/alignment-identity.C alignment.C alphabet.C sequence.C util.C rng.C \
 	tree.C sequencetree.C util-random.C tools/statistics.C \
 	sequence-format.C alignment-util.C tools/index-matrix.C io.C
-
-#---------------------------------------------------------------
-
-alignment_reorder_SOURCES = tools/alignment-reorder.C alignment.C alphabet.C sequence.C util.C rng.C \
-	tree.C sequencetree.C tools/optimize.C tools/findroot.C setup.C \
-	sequence-format.C randomtree.C alignment-util.C alignment-random.C \
-	tree-util.C io.C
 
 #---------------------------------------------------------------
 

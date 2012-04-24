@@ -1331,7 +1331,7 @@ sub draw_alignments
     {
 	if (! more_recent_than("Results/$alignment.fasta","Results/Work/$alignment-unordered.fasta") ||
 	    ! more_recent_than("Results/$alignment.fasta","Results/c50.tree")) {
-	    `alignment-reorder Results/Work/$alignment-unordered.fasta Results/c50.tree > Results/$alignment.fasta`;
+	    `alignment-cat Results/Work/$alignment-unordered.fasta --reorder-by-tree=Results/c50.tree > Results/$alignment.fasta`;
 	}
 	
 	if (! more_recent_than("Results/$alignment.html","Results/$alignment.fasta")) {
