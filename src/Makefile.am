@@ -233,7 +233,8 @@ alignment_info_SOURCES = tools/alignment-info.C alignment.C alphabet.C sequence.
 
 #---------------------------------------------------------------
 
-alignment_cat_SOURCES = tools/alignment-cat.C alphabet.C sequence.C util.C sequence-format.C io.C
+alignment_cat_SOURCES = tools/alignment-cat.C alphabet.C sequence.C util.C sequence-format.C io.C \
+	tree.C sequencetree.C tools/optimize.C tools/findroot.C 
 
 #---------------------------------------------------------------
 

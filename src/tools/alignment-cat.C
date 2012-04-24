@@ -26,6 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequence-format.H"
 #include <boost/program_options.hpp>
 #include "io.H"
+#include "findroot.H"
 
 using namespace sequence_format;
 namespace po = boost::program_options;
@@ -176,6 +177,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("remove-empty-columns,r","Remove columns with no characters (all gaps).")
     ("missing",value<string>()->default_value("-?"),"What letters are not characters (e.g. gaps)?")
     ("strip-gaps","Remove all non-character letters from sequences.")
+    ("reorder-by-tree",value<string>(),"Reorder the sequences given a tree")
+    ("use-root","use the root specified in the tree file to reorder")
+    ("reorder-by-alignment",value<string>(),"Reorder the sequences following an alignment")
     ;
 
   options_description all("All options");
@@ -289,6 +293,103 @@ vector<sequence> select_taxa(const vector<sequence>& S,const vector<string>& nam
 }
 
 
+struct branch_order {
+  const Tree& T;
+
+  bool operator()(int b1,int b2) const {
+    if (subtree_height(T,b1) < subtree_height(T,b2))
+      return true;
+    if (subtree_height(T,b1) > subtree_height(T,b2))
+      return false;
+    return T.partition(b1).find_first() < T.partition(b2).find_first();
+  }
+
+  branch_order(const Tree& T_): T(T_) {}
+};
+
+
+/// get an ordered list of leaves under T[n]
+vector<int> get_leaf_order(const Tree& T,int b) 
+{
+  vector<int> mapping;
+
+  if (T.directed_branch(b).target().is_leaf_node()) {
+    mapping.push_back( T.directed_branch(b).target() );
+    return mapping;
+  }
+
+  // get sorted list of branches
+  vector<const_branchview> branches;
+  append(T.directed_branch(b).branches_after(),branches);
+  std::sort(branches.begin(),branches.end(),branch_order(T));
+
+  // accumulate results
+  for(int i=0;i<branches.size();i++) {
+    vector<int> sub_mapping = get_leaf_order(T,branches[i]);
+    mapping.insert(mapping.end(),sub_mapping.begin(),sub_mapping.end());
+  }
+
+  return mapping;
+}
+
+/// get an ordered list of the leaves of T
+vector<int> get_leaf_order(const RootedTree& RT) 
+{
+  vector<int> mapping;
+
+  // get sorted list of branches
+  vector<const_branchview> branches;
+  append(RT.root().branches_out(),branches);
+  std::sort(branches.begin(),branches.end(),branch_order(RT));
+
+  // accumulate results
+  for(int i=0;i<branches.size();i++) {
+    vector<int> sub_mapping = get_leaf_order(RT,branches[i]);
+    mapping.insert(mapping.end(),sub_mapping.begin(),sub_mapping.end());
+  }
+
+  assert(mapping.size() == RT.n_leaves());
+  return mapping;
+}
+
+vector<string> get_names_from_tree(RootedSequenceTree T, bool use_root)
+{
+  //------- Re-root the tree appropriately  --------//
+  if (not use_root)
+  {
+    int rootb=-1;
+    double rootd = -1;
+    find_root(T,rootb,rootd);
+    if (log_verbose) {
+      std::cerr<<"alignment-reorder: root branch = "<<rootb<<std::endl;
+      std::cerr<<"alignment-reorder: x = "<<rootd<<std::endl;
+      for(int i=0;i<T.n_leaves();i++)
+	std::cerr<<"alignment-reorder: "<<T.get_label(i)<<"  "<<rootdistance(T,i,rootb,rootd)<<std::endl;
+    }
+    
+    T = add_root((SequenceTree)T,rootb);  // we don't care about the lengths anymore
+  }
+  
+  //----- Standardize initial leaf order by alphabetical order of names ----//
+  vector<string> names = T.get_leaf_labels();
+  
+  std::sort(names.begin(),names.end());
+  
+  vector<int> mapping1 = compute_mapping(T.get_leaf_labels(),names);
+  
+  T.standardize(mapping1);
+  
+  //-------- Compute the mapping  -------//
+  vector<int> order = get_leaf_order(T);
+
+  //-------- Compute the ordered list of names ------//
+  names.clear();
+  for(int l: order)
+    names.push_back(T.get_label(l));
+
+  return names;
+}
+
 int main(int argc,char* argv[]) 
 { 
 
@@ -296,19 +397,32 @@ int main(int argc,char* argv[])
     //---------- Parse command line  -------//
     variables_map args = parse_cmd_line(argc,argv);
 
-    assert(args.count("file"));
-
     bool pad = (args.count("pad")>0);
 
     vector<string> names;
     if (args.count("taxa"))
       names = split(args["taxa"].as<string>(),',');
+    else if (args.count("reorder-by-tree"))
+    {
+      RootedSequenceTree RT;
+      RT.read(args["reorder-by-tree"].as<string>());
+      bool use_root = args.count("use-root");
+      names = get_names_from_tree(RT, use_root);
+    }
+    else if (args.count("reorder-by-alignment"))
+    {
+      vector<sequence> sequences = load_file(args["reorder-by-alignment"].as<string>(), false);
+      for(const auto& s: sequences)
+	names.push_back(s.name);
+    }
 
     //------- Try to load sequences --------//
     vector <sequence> S;
     if (not args.count("file")) {
       S = load_file(cin,pad);
-      if (args.count("taxa"))
+
+      // If we're selecting or reordering by names
+      if (names.size())
 	S = select_taxa(S,names);
     }
     else 
@@ -316,10 +430,10 @@ int main(int argc,char* argv[])
       vector<string> filenames = args["file"].as<vector<string> >();
 
       for(int i=0;i<filenames.size();i++) 
-	{
+      {
 	vector<sequence> s = load_file(filenames[i],pad);
 	try {
-	  if (args.count("taxa"))
+	  if (names.size())
 	    s = select_taxa(s,names);
 	  S = concatenate(S,s);
 	}
