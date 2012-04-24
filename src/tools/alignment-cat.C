@@ -174,7 +174,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("columns,c", value<string>(),"Ranges of columns to keep, like: 1-10,30-")
     ("taxa,t", value<string>(),"Taxa to keep, comma-separated")
     ("pad", "Add gaps to make sequence lengths identical")
-    ("remove-empty-columns,r","Remove columns with no characters (all gaps).")
+    ("erase-empty-columns,e","Remove columns with no characters (all gaps).")
     ("missing",value<string>()->default_value("-?"),"What letters are not characters (e.g. gaps)?")
     ("strip-gaps","Remove all non-character letters from sequences.")
     ("reorder-by-tree",value<string>(),"Reorder the sequences given a tree")
@@ -454,7 +454,7 @@ int main(int argc,char* argv[])
 	missing.push_back(missing2[i]);
     }
 
-    if (args.count("remove-empty-columns")) 
+    if (args.count("erase-empty-columns")) 
       S = remove_empty_columns(S,missing);
 
     if (args.count("strip-gaps"))
