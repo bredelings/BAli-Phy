@@ -519,7 +519,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(arg);
 
     formula_expression_ref base = get_RA_default(model_stack,"gamma",a,frequencies);
-    formula_expression_ref dist = Discretize(model_formula(Gamma()), expression_ref(n));
+    formula_expression_ref dist = (Discretize, model_formula(Gamma()), n);
     model_stack.back() = MultiRate(base,  dist);
   }
   else if (match(string_stack,"gamma_inv",arg)) {
@@ -528,8 +528,8 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(arg);
 
     formula_expression_ref base = get_RA_default(model_stack,"gamma",a,frequencies);
-    formula_expression_ref dist = Discretize(model_formula(Gamma()), expression_ref(n));
-    formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(2)(1.0, 2.0) );
+    formula_expression_ref dist = (Discretize, model_formula(Gamma()), n);
+    formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
     dist = (ExtendDiscreteDistribution, dist, p, 0.0);
     model_stack.back() = MultiRate(base,  dist);
   }
@@ -539,7 +539,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(arg);
 
     formula_expression_ref base = get_RA_default(model_stack,"log-normal",a,frequencies);
-    formula_expression_ref dist = Discretize(model_formula(LogNormal()), expression_ref(n));
+    formula_expression_ref dist = (Discretize, model_formula(LogNormal()), n);
     model_stack.back() = MultiRate(base,  dist);
   }
   else if (match(string_stack,"log-normal_inv",arg)) {
@@ -548,7 +548,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(arg);
 
     formula_expression_ref base = get_RA_default(model_stack,"log-normal_inv",a,frequencies);
-    formula_expression_ref dist = Discretize(model_formula(LogNormal()), expression_ref(n));
+    formula_expression_ref dist = (Discretize, model_formula(LogNormal()), n);
     formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(2)(1.0, 2.0) );
     dist = ExtendDiscreteDistribution(dist)(0.0)(p);
     model_stack.back() = MultiRate(base,  dist);
@@ -613,9 +613,10 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref p2 = def_parameter("M2::f[Neutral]", Double(1.0/3), between(0,1));
     formula_expression_ref p3 = def_parameter("M2::f[Selected]", Double(1.0/3), between(0,1));
     formula_expression_ref m2_omega = def_parameter("M2::omega", Double(1.0), lower_bound(0));
-    formula_expression_ref D = DiscreteDistribution(Tuple(p1,expression_ref(0.0))&
-						    Tuple(p2,expression_ref(1.0))&
-						    Tuple(p3,m2_omega)&ListEnd
+    formula_expression_ref D = DiscreteDistribution(Tuple(p1,0.0)&
+						    Tuple(p2,1.0)&
+						    Tuple(p3,m2_omega)&
+						    ListEnd
 						    );
     vector<Double> n(3);
     n[0] = 1;
@@ -674,7 +675,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref w1 = def_parameter("M2a::omega1", Double(1.0), between(0,1));
     formula_expression_ref w3 = def_parameter("M2a::omega3", Double(1.0), lower_bound(1));
     formula_expression_ref D = DiscreteDistribution(Tuple(p1,w1)&
-						    Tuple(p2,expression_ref(1.0))&
+						    Tuple(p2,1.0)&
 						    Tuple(p3,w3)&
 						    ListEnd
 						    );
@@ -805,8 +806,8 @@ bool process_stack_Multi(vector<string>& string_stack,
     //    formula_expression_ref w3b = case_expression(
 
     formula_expression_ref D = Tuple(p3,w3) &
-                               Tuple(p2,expression_ref(1.0)) &
-                               (Scale, p1, Unwrap(Discretize(model_formula(Beta()),expression_ref(n))));
+                               Tuple(p2,1.0) &
+                               (Scale, p1, (Unwrap,(Discretize,model_formula(Beta()),n)));
 
     D = DiscreteDistribution(D);
 
@@ -833,7 +834,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    formula_expression_ref D = Discretize(model_formula(Beta()),expression_ref(n));
+    formula_expression_ref D = (Discretize, model_formula(Beta()), n);
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
