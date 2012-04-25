@@ -1513,9 +1513,9 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
   // Remove ownership from the old regs.
-  foreach(i,new_regs)
+  for(const auto& i:new_regs)
   {
-    int Q = i->first;
+    int Q = i.first;
 
     // These regs should be shared.
     assert(reg_is_shared(Q));
@@ -1561,10 +1561,10 @@ int reg_heap::uniquify_reg(int R, int t)
 #endif
 
 #ifndef NDEBUG
-  foreach(i,new_regs)
+  for(const auto& i:new_regs)
   {
-    int R1 = i->first;
-    int R2 = i->second;
+    int R1 = i.first;
+    int R2 = i.second;
 
     // Check that ownership has been properly split
     assert(not access(R1).is_owned_by(t) );
@@ -1602,22 +1602,22 @@ void reg_heap::check_used_reg(int index) const
   // Check that we have already correctly recorded all the references!
   assert(get_exp_refs(R.E) == R.references);
 
-  foreach(r, R.references)
+  for(int r: R.references)
   {
     // Check that referenced regs are owned by the owners of R
-    assert(access(*r).is_owned_by_all_of( R.get_owners()) );
+    assert(access(r).is_owned_by_all_of( R.get_owners()) );
     
     // Check that referenced regs are have back-references to R
-    assert(includes( access(*r).referenced_by_in_E, index) );
+    assert(includes( access(r).referenced_by_in_E, index) );
   }
   
-  foreach(r, R.used_inputs)
+  for(int r: R.used_inputs)
   {
     // Check that used regs are owned by the owners of R
-    assert(access(*r).is_owned_by_all_of( R.get_owners()) );
+    assert(access(r).is_owned_by_all_of( R.get_owners()) );
 
     // Check that used regs are have back-references to R
-    assert(includes( access(*r).outputs, index) );
+    assert(includes( access(r).outputs, index) );
   }
 
   if (R.call != -1)
@@ -1643,27 +1643,27 @@ void reg_heap::check_used_regs() const
 vector<int> reg_heap::find_all_regs_in_context(int t) const
 {
   vector<int> scan;
-  foreach(i,token_roots[t].temp)
+  for(const auto& i: token_roots[t].temp)
   {
-    assert(reg_is_owned_by(**i, t));
-    scan.push_back(**i);
+    assert(reg_is_owned_by(*i, t));
+    scan.push_back(*i);
   }
-  foreach(i,token_roots[t].heads)
+  for(const auto& i: token_roots[t].heads)
   {
-    assert(reg_is_owned_by(**i, t));
-    scan.push_back(**i);
-  }
-
-  foreach(i,token_roots[t].parameters)
-  {
-    assert(reg_is_owned_by(**i, t));
-    scan.push_back(**i);
+    assert(reg_is_owned_by(*i, t));
+    scan.push_back(*i);
   }
 
-  foreach(i,token_roots[t].identifiers)
+  for(const auto& i: token_roots[t].parameters)
   {
-    assert(reg_is_owned_by(*(i->second), t));
-    scan.push_back(*(i->second));
+    assert(reg_is_owned_by(*i, t));
+    scan.push_back(*i);
+  }
+
+  for(const auto& i: token_roots[t].identifiers)
+  {
+    assert(reg_is_owned_by(*(i.second), t));
+    scan.push_back(*(i.second));
   }
 
   vector<int> unique;
@@ -1702,18 +1702,15 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 {
   vector<int> scan;
-  foreach(i,token_roots[t].temp)
-    scan.push_back(**i);
-  foreach(i,token_roots[t].heads)
-    scan.push_back(**i);
+  for(const auto& i: token_roots[t].temp)
+    scan.push_back(*i);
+  for(const auto& i: token_roots[t].heads)
+    scan.push_back(*i);
 
-  foreach(i,token_roots[t].parameters)
-    scan.push_back(**i);
-  foreach(i,token_roots[t].identifiers)
-  {
-    scan.push_back(*(i->second));
-  }
-
+  for(const auto& i: token_roots[t].parameters)
+    scan.push_back(*i);
+  for(const auto& i: token_roots[t].identifiers)
+    scan.push_back(*i.second);
 
   vector<int> unique;
   for(int i=0;i<scan.size();i++)
@@ -1755,23 +1752,17 @@ void reg_heap::release_token(int t)
   assert(token_roots[t].temp.empty());
 
   // remove the roots for the heads of graph t
-  foreach(i,token_roots[t].heads)
-  {
-    pop_root(*i);
-  }
+  for(const auto& i: token_roots[t].heads)
+    pop_root(i);
   token_roots[t].heads.clear();
 
   // remove the roots for the parameters of graph t
-  foreach(i,token_roots[t].parameters)
-  {
-    pop_root(*i);
-  }
+  for(const auto&i: token_roots[t].parameters)
+    pop_root(i);
   token_roots[t].parameters.clear();
 
-  foreach(i,token_roots[t].identifiers)
-  {
-    pop_root(i->second);
-  }
+  for(const auto& i: token_roots[t].identifiers)
+    pop_root(i.second);
   token_roots[t].identifiers.clear();
 
   // mark unused
@@ -1793,21 +1784,15 @@ int reg_heap::copy_token(int t)
 
   assert(token_roots[t].temp.empty());
 
-  foreach(i,token_roots[t].heads)
-  {
-    token_roots[t2].heads.insert( token_roots[t2].heads.end(), push_root(**i) );
-  }
+  for(const auto& i: token_roots[t].heads)
+    token_roots[t2].heads.insert( token_roots[t2].heads.end(), push_root(*i) );
 
-  foreach(i,token_roots[t].parameters)
-  {
-    token_roots[t2].parameters.insert( token_roots[t2].parameters.end(), push_root(**i) );
-  }
+  for(const auto& i: token_roots[t].parameters)
+    token_roots[t2].parameters.insert( token_roots[t2].parameters.end(), push_root(*i) );
 
   token_roots[t2].identifiers = token_roots[t].identifiers;
-  foreach(i,token_roots[t2].identifiers)
-  {
-    i->second = push_root(*(i->second));
-  }
+  for(auto& i: token_roots[t2].identifiers)
+    i.second = push_root(*i.second);
 
   // remove ownership mark from used regs in this context
   vector<int> token_regs = find_all_regs_in_context_no_check(t2);
@@ -2294,10 +2279,8 @@ void discover_graph_vars(const reg_heap& C, int R, map<int,expression_ref>& name
   names[R] = expression_ref();
 
   // find the names for each referenced var.
-  foreach(i, refs)
-  {
-    discover_graph_vars(C, *i, names, id);
-  }
+  for(int i: refs)
+    discover_graph_vars(C, i, names, id);
 
   names[R] = subst_referenced_vars(E, names);
 }
@@ -2332,10 +2315,10 @@ string wrap(const string& s, int w)
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>& ids)
 {
   map< int, expression_ref> names;
-  foreach(id,ids)
+  for(const auto& id: ids)
   {
-    int R = *(id->second);
-    string name = id->first;
+    int R = *(id.second);
+    string name = id.first;
     names[R] = expression_ref(new var(name) );
   }
   discover_graph_vars(C, R, names, ids);
