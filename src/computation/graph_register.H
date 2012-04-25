@@ -11,8 +11,15 @@
 #include <utility>
 #include "program.H"
 
+typedef std::set<int> owner_set_t;
+
 struct reg
 {
+private:
+  /* 5. Which sub-graphs are we in for sub-graph sharing? */
+  owner_set_t owners;
+
+public:
   /* 1. The computation. */
 
   /// The expression
@@ -53,11 +60,19 @@ struct reg
   int next_reg;
   mutable States state;
 
-  /* 5. Which sub-graphs are we in for sub-graph sharing? */
-  std::set<int> owners;
+  const owner_set_t& get_owners() const;
+  void set_owners(const owner_set_t&);
+  void add_owner(int);
+  void clear_owner(int);
+  void clear_owners();
+  bool is_owned_by(int) const;
+  bool is_owned_by_all_of(const owner_set_t&) const;
+  int n_owners() const;
+  bool is_unowned() const;
+  bool is_shared() const;
 
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
-  std::set<int> temp_owners;
+  owner_set_t temp_owners;
 
   reg();
 };
@@ -222,13 +237,13 @@ public:
   root_t push_temp_head(int t);
 
   /// Allocate a reg in contexts tokens and put it on the top of the temporary-head stacks.
-  root_t push_temp_head(const std::set<int>& tokens);
+  root_t push_temp_head(const owner_set_t& tokens);
 
   /// Deallocate the temporary head on the top of the temporary-head stack.
   void pop_temp_head(int t);
 
   /// Deallocate the temporary head on the top of the temporary-head stacks for context tokens.
-  void pop_temp_head(const std::set<int>& tokens);
+  void pop_temp_head(const owner_set_t& tokens);
 
   /// Add a new identifier, pointing to a newly allocated location
   root_t add_identifier_to_context(int, const std::string&);

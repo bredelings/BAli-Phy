@@ -468,6 +468,62 @@ expression_ref graph_normalize(const expression_ref& R)
   throw myexception()<<"graph_normalize: I don't recognize expression '"+ R->print() + "'";
 }
 
+const owner_set_t& reg::get_owners() const
+{
+  return owners;
+}
+
+void reg::set_owners(const owner_set_t& T)
+{
+  owners = T;
+}
+
+void reg::add_owner(int t)
+{
+  owners.insert(t);
+}
+
+void reg::clear_owner(int t)
+{
+  owners.erase(t);
+}
+
+void reg::clear_owners()
+{
+  owners.clear();
+}
+
+bool reg::is_owned_by(int t) const
+{
+  return includes(owners,t);
+}
+
+bool reg::is_owned_by_all_of(const owner_set_t& O) const
+{
+  return includes(owners,O);
+}
+
+int reg::n_owners() const
+{
+  return owners.size();
+}
+
+bool reg::is_unowned() const
+{
+  return owners.empty();
+}
+
+bool reg::is_shared() const
+{
+  std::set<int>::const_iterator loc = owners.begin();
+
+  if (loc == owners.end()) return false;
+
+  loc++;
+
+  return (loc != owners.end());
+}
+
 reg::reg()
  :changeable(false),
   call(-1),
@@ -490,7 +546,7 @@ void reg_heap::clear(int R)
   access(R).outputs.clear();
   access(R).call_outputs.clear();
 
-  access(R).owners.clear();
+  access(R).clear_owners();
 }
 
 void reg_heap::set_used_input(int R1, int R2)
@@ -576,7 +632,7 @@ void reg_heap::set_call_unsafe(int R1, int R2)
   access(R2).call_outputs.insert(R1);
 
   // check that all of the owners of R are also owners of R.call;
-  assert(includes(access(R2).owners, access(R1).owners));
+  assert(includes(access(R2).get_owners(), access(R1).get_owners()));
 }
 
 
@@ -627,7 +683,7 @@ set<int> get_exp_refs(const expression_ref& R)
 void reg_heap::set_E(int R, const expression_ref& e)
 {
   assert(e);
-  assert(not access(R).owners.empty());
+  assert(not access(R).is_unowned());
   clear_E(R);
 
   access(R).E = e;
@@ -635,7 +691,7 @@ void reg_heap::set_E(int R, const expression_ref& e)
   for(int r: access(R).references)
   {
     // check that all of the owners of R are also owners of *r.
-    assert(includes(access(r).owners, access(R).owners) );
+    assert(includes(access(r).get_owners(), access(R).get_owners()) );
 
     // check that *r is not already marked as being referenced by R
     assert(not includes( access(r).referenced_by_in_E, R) );
@@ -680,7 +736,7 @@ void reg_heap::set_reduction_result(int R, const expression_ref& result)
   else
   {
     root_t r = allocate_reg();
-    access(*r).owners = access(R).owners;
+    access(*r).set_owners( access(R).get_owners() );
     set_E(*r, result );
     set_call(R, *r);
     pop_root(r);
@@ -867,10 +923,10 @@ reg_heap::root_t reg_heap::push_temp_head(int t)
   return push_temp_head(tokens);
 }
 
-reg_heap::root_t reg_heap::push_temp_head(const std::set<int>& tokens)
+reg_heap::root_t reg_heap::push_temp_head(const owner_set_t& tokens)
 {
   root_t r = allocate_reg();
-  access(*r).owners = tokens;
+  access(*r).set_owners( tokens );
   for(int t: tokens)
     token_roots[t].temp.push_back(r);
 
@@ -884,7 +940,7 @@ void reg_heap::pop_temp_head(int t)
   pop_temp_head(tokens);
 }
 
-void reg_heap::pop_temp_head(const std::set<int>& tokens)
+void reg_heap::pop_temp_head(const owner_set_t& tokens)
 {
   int t0 = *tokens.begin();
   root_t r0 = token_roots[t0].temp.back();
@@ -893,7 +949,7 @@ void reg_heap::pop_temp_head(const std::set<int>& tokens)
   {
     root_t r = token_roots[t].temp.back();
     assert( r == r0 );
-    assert( includes( access(*r).owners, t) );
+    assert( access(*r).is_owned_by(t) );
     token_roots[t].temp.pop_back();
   }
 
@@ -947,9 +1003,9 @@ void reg_heap::remove_unused_ownership_marks()
   {
     reg& R = access(here);
 #ifndef NDEBUG
-    R.temp_owners = R.owners;
+    R.temp_owners = R.get_owners();
 #endif
-    R.owners.clear();
+    R.clear_owners();
 
     here = R.next_reg;
   }
@@ -967,7 +1023,7 @@ void reg_heap::remove_unused_ownership_marks()
     for(int i=0;i<regs.size();i++)
     {
       int R = regs[i];
-      access(R).owners.insert(t);
+      access(R).add_owner(t);
     }
   }
 
@@ -977,7 +1033,7 @@ void reg_heap::remove_unused_ownership_marks()
   for(;here != -1;)
   {
     reg& R = access(here);
-    assert(includes(R.temp_owners, R.owners) );
+    assert(includes(R.temp_owners, R.get_owners()) );
     R.temp_owners.clear();
 
     here = R.next_reg;
@@ -1047,7 +1103,7 @@ void reg_heap::collect_garbage()
   for(;here != -1;)
   {
     reg& R = access(here);
-    assert(not R.owners.empty());
+    assert(not R.is_unowned() );
 
     here = R.next_reg;
   }
@@ -1192,22 +1248,12 @@ expression_ref remap_regs(const expression_ref R, const map<int, int>& new_regs)
 
 bool reg_heap::reg_is_shared(int R) const
 {
-  const std::set<int>& owners = access(R).owners;
-
-  std::set<int>::const_iterator loc = owners.begin();
-
-  if (loc == owners.end()) return false;
-
-  loc++;
-
-  return (loc != owners.end());
+  return access(R).is_shared();
 }
 
 bool reg_heap::reg_is_owned_by(int R, int t) const
 {
-  const std::set<int>& owners = access(R).owners;
-
-  return includes(owners, t);
+  return access(R).is_owned_by(t);
 }
 
 int remap(int R, const map<int,int>& new_regs)
@@ -1314,7 +1360,7 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(access(R1).state == reg::used);
     assert(access(R2).state == reg::used);
     
-    assert( not access(R1).owners.empty() );
+    assert( not access(R1).is_unowned() );
 
     // 4. Initialize fields in the new node
 
@@ -1475,10 +1521,10 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(reg_is_shared(Q));
 
     // These regs should have originally contained t.
-    assert(includes(access(Q).owners, t) );
+    assert(includes(access(Q).get_owners(), t) );
 
     // But now remove membership in t from these regs.
-    access(Q).owners.erase(t);
+    access(Q).clear_owner(t);
   }
     
 
@@ -1500,7 +1546,7 @@ int reg_heap::uniquify_reg(int R, int t)
       // This allows S to have no owners, which could happen if S became unreachable.
 
       // Any call ancestors of E-ancestors of p should be E-ancestors of p, and therefore should be in t.
-      assert(access(S).owners.empty() or reg_is_owned_by(S,t));
+      assert(access(S).is_unowned() or reg_is_owned_by(S,t));
 
       // Any call ancestors of E-ancestors of p should be E-ancestors of p, and therefore should be uniquified.
       assert(not reg_is_shared(S));
@@ -1521,8 +1567,8 @@ int reg_heap::uniquify_reg(int R, int t)
     int R2 = i->second;
 
     // Check that ownership has been properly split
-    assert(not includes(access(R1).owners, t) );
-    assert(includes(access(R2).owners, t) );
+    assert(not includes(access(R1).get_owners(), t) );
+    assert(includes(access(R2).get_owners(), t) );
     assert(not reg_is_shared(R2));
 
     // R2 should have a result IFF R1 has a result
@@ -1559,7 +1605,7 @@ void reg_heap::check_used_reg(int index) const
   foreach(r, R.references)
   {
     // Check that referenced regs are owned by the owners of R
-    assert(includes(access(*r).owners, R.owners) );
+    assert(includes(access(*r).get_owners(), R.get_owners()) );
     
     // Check that referenced regs are have back-references to R
     assert(includes( access(*r).referenced_by_in_E, index) );
@@ -1568,7 +1614,7 @@ void reg_heap::check_used_reg(int index) const
   foreach(r, R.used_inputs)
   {
     // Check that used regs are owned by the owners of R
-    assert(includes(access(*r).owners, R.owners) );
+    assert(includes(access(*r).get_owners(), R.get_owners()) );
 
     // Check that used regs are have back-references to R
     assert(includes( access(*r).outputs, index) );
@@ -1577,7 +1623,7 @@ void reg_heap::check_used_reg(int index) const
   if (R.call != -1)
   {
     // Check that the call-used reg is owned by owners of R
-    assert(includes(access(R.call).owners, R.owners) );
+    assert(includes(access(R.call).get_owners(), R.get_owners()) );
 
     // Check that the call-used reg has back-references to R
     assert(includes(access(R.call).call_outputs, index) );
@@ -1643,7 +1689,7 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
   {
     const reg& R = access(unique[i]);
     assert(R.state == reg::checked);
-    assert(includes(R.owners, t) );
+    assert(R.is_owned_by(t));
 
     R.state = reg::used;
 
@@ -1766,10 +1812,7 @@ int reg_heap::copy_token(int t)
   // remove ownership mark from used regs in this context
   vector<int> token_regs = find_all_regs_in_context_no_check(t2);
   for(int i=0;i<token_regs.size();i++)
-  {
-    std::set<int>& owners = access(token_regs[i]).owners;
-    owners.insert(t2);
-  }
+    access(token_regs[i]).add_owner(t2);
 
   return t2;
 }
@@ -1790,7 +1833,7 @@ class RegOperationArgs: public OperationArgs
 
   const int t;
 
-  std::set<int> owners;
+  owner_set_t owners;
 
   int n_allocated;
 
@@ -1945,7 +1988,7 @@ public:
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
   RegOperationArgs(int r, reg_heap& m, int T)
-    :R(r),M(m),t(T),owners(M.access(R).owners), n_allocated(0)
+    :R(r),M(m),t(T),owners(M.access(R).get_owners()), n_allocated(0)
   { 
     M.clear_used_inputs(R);
   }
@@ -2018,7 +2061,7 @@ int reg_heap::incremental_evaluate(int R, int t)
   assert(R >= 0 and R < n_regs());
   assert(access(R).state == reg::used);
   assert(get_exp_refs(access(R).E) == access(R).references);
-  assert(includes(access(R).owners, t));
+  assert(access(R).is_owned_by(t));
   assert(is_WHNF(access(R).result));
 
 #ifndef NDEBUG
@@ -2093,7 +2136,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     // Reduction: let expression
     else if (parse_let_expression(access(R).E, vars, bodies, T))
     {
-      set<int> owners = access(R).owners;
+      owner_set_t owners = access(R).get_owners();
 
       vector<object_ptr<reg_var> > new_reg_vars;
       for(int i=0;i<vars.size();i++)

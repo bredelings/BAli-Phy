@@ -29,7 +29,7 @@ reg_heap::root_t reg_heap::add_identifier_to_context(int t, const string& name)
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
 
   root_t r = allocate_reg();
-  access(*r).owners.insert(t);
+  access(*r).add_owner(t);
   identifiers[name] = r;
   return r;
 }
@@ -278,7 +278,7 @@ int context::add_compute_expression(const expression_ref& E)
   root_t r;
   if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
   {
-    assert( includes(access(RV->target).owners, token) );
+    assert( access(RV->target).is_owned_by(token) );
     
     r = push_root( RV->target );
   }
@@ -300,7 +300,7 @@ void context::set_compute_expression(int i, const expression_ref& E)
   root_t r2;
   if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
   {
-    assert( includes(access(RV->target).owners, token) );
+    assert( access(RV->target).is_owned_by(token) );
     
     r2 = push_root( RV->target );
   }
