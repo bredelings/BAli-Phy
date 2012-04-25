@@ -632,7 +632,7 @@ void reg_heap::set_call_unsafe(int R1, int R2)
   access(R2).call_outputs.insert(R1);
 
   // check that all of the owners of R are also owners of R.call;
-  assert(includes(access(R2).get_owners(), access(R1).get_owners()));
+  assert( access(R2).is_owned_by_all_of( access(R1).get_owners() ) );
 }
 
 
@@ -691,7 +691,7 @@ void reg_heap::set_E(int R, const expression_ref& e)
   for(int r: access(R).references)
   {
     // check that all of the owners of R are also owners of *r.
-    assert(includes(access(r).get_owners(), access(R).get_owners()) );
+    assert(access(r).is_owned_by_all_of( access(R).get_owners()) );
 
     // check that *r is not already marked as being referenced by R
     assert(not includes( access(r).referenced_by_in_E, R) );
@@ -1521,7 +1521,7 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(reg_is_shared(Q));
 
     // These regs should have originally contained t.
-    assert(includes(access(Q).get_owners(), t) );
+    assert( access(Q).is_owned_by(t) );
 
     // But now remove membership in t from these regs.
     access(Q).clear_owner(t);
@@ -1567,8 +1567,8 @@ int reg_heap::uniquify_reg(int R, int t)
     int R2 = i->second;
 
     // Check that ownership has been properly split
-    assert(not includes(access(R1).get_owners(), t) );
-    assert(includes(access(R2).get_owners(), t) );
+    assert(not access(R1).is_owned_by(t) );
+    assert(access(R2).is_owned_by(t));
     assert(not reg_is_shared(R2));
 
     // R2 should have a result IFF R1 has a result
@@ -1605,7 +1605,7 @@ void reg_heap::check_used_reg(int index) const
   foreach(r, R.references)
   {
     // Check that referenced regs are owned by the owners of R
-    assert(includes(access(*r).get_owners(), R.get_owners()) );
+    assert(access(*r).is_owned_by_all_of( R.get_owners()) );
     
     // Check that referenced regs are have back-references to R
     assert(includes( access(*r).referenced_by_in_E, index) );
@@ -1614,7 +1614,7 @@ void reg_heap::check_used_reg(int index) const
   foreach(r, R.used_inputs)
   {
     // Check that used regs are owned by the owners of R
-    assert(includes(access(*r).get_owners(), R.get_owners()) );
+    assert(access(*r).is_owned_by_all_of( R.get_owners()) );
 
     // Check that used regs are have back-references to R
     assert(includes( access(*r).outputs, index) );
@@ -1623,7 +1623,7 @@ void reg_heap::check_used_reg(int index) const
   if (R.call != -1)
   {
     // Check that the call-used reg is owned by owners of R
-    assert(includes(access(R.call).get_owners(), R.get_owners()) );
+    assert( access(R.call).is_owned_by_all_of( R.get_owners()) );
 
     // Check that the call-used reg has back-references to R
     assert(includes(access(R.call).call_outputs, index) );
