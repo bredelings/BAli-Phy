@@ -203,7 +203,7 @@ struct lambda: public Object
   std::string print() const;
 };
 
-struct formula_expression_ref;
+class formula_expression_ref;
 
 struct expression_ref: public object_ref
 {
