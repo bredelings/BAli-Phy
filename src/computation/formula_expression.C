@@ -46,18 +46,12 @@ std::vector<expression_ref> formula_expression_ref::get_notes_plus_exp() const
 
 formula_expression_ref formula_expression_ref::operator()(const formula_expression_ref& R2) const
 {
-  // Perhaps I should take out the expression that is the argument... we perhaps not.
-  formula_expression_ref R3(*this);
-  R3.add_notes(R2.get_notes());
-  R3.set_exp((exp(), R2.exp()));
-  return R3;
+  return apply(*this, R2);
 }
 
 formula_expression_ref formula_expression_ref::operator()(const expression_ref& R2) const
 {
-  formula_expression_ref R3(*this);
-  R3.set_exp((R3.exp(), R2));
-  return R3;
+  return apply(*this, R2);
 }
 
 formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1) const
@@ -123,6 +117,21 @@ object_ptr<const Object> formula_expression_ref::result(const Program& P) const
   context C(get_notes_plus_exp());
   C += P;
   return C.evaluate_expression(exp());
+}
+
+formula_expression_ref apply(const formula_expression_ref& F1, const expression_ref& E2)
+{
+  formula_expression_ref F3(F1);
+  F3.set_exp(apply(F3.exp(), E2));
+  return F3;
+}
+
+formula_expression_ref apply(const formula_expression_ref& F1, const formula_expression_ref& F2)
+{
+  formula_expression_ref F3(F1);
+  F3.add_notes(F2.get_notes());
+  F3.set_exp(apply(F1.exp(), F2.exp()));
+  return F3;
 }
 
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value)
