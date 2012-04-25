@@ -340,11 +340,6 @@ inline typed_expression_ref<Bool> Constant(const bool& b)
   return typed_expression_ref<Bool>(Bool(b));
 }
 
-#ifdef STDCXXOX
-// create an Op automatically from a function... using E(?)
-// how does boost::bind work? boost::spirit?
-#endif
-
 extern expression_ref _;
 extern expression_ref _1;
 extern expression_ref _2;
