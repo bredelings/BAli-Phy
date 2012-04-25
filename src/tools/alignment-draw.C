@@ -762,7 +762,10 @@ BODY {\n\
 }\n\
 \n\
 .sequences TD { \n\
-   padding: 0.01em;\n\
+   padding-left: 0.005em;\n\
+   padding-right: 0.005em;\n\
+   padding-top: 0.1em;\n\
+   padding-bottom: 0.1em;\n\
    margin: 0;\n\
 \n\
    font-size: 10pt; \n\
