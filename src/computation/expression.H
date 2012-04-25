@@ -346,11 +346,20 @@ extern expression_ref _2;
 extern expression_ref _3;
 extern expression_ref _4;
 
-expression_ref Tuple(int);
-expression_ref Tuple(const expression_ref&, const expression_ref&);
-expression_ref Tuple(const expression_ref&, const expression_ref&, const expression_ref&);
-expression_ref Tuple(const expression_ref&, const expression_ref&, const expression_ref&, const expression_ref&);
-expression_ref Tuple(const expression_ref&, const expression_ref&, const expression_ref&, const expression_ref&, const expression_ref&);
+// Create a constructor for n-tuples.
+expression_ref Tuple(int n);
+
+template <typename First, typename Second, typename Third, typename... Rest>
+auto apply(const First& first, const Second& second, const Third& third, const Rest&... rest) -> decltype(  apply(apply(first,second), third, rest...) )
+{
+  return apply(apply(first,second), third, rest...);
+}
+
+template <typename First, typename Second, typename... Rest>
+auto Tuple(const First& first, const Second& second, const Rest&... rest) -> decltype( apply(Tuple(2+sizeof...(rest)) ,first,second,rest...) )
+{
+  return apply(Tuple(2+sizeof...(rest)) ,first,second,rest...);
+}
 
 // 2 Fields, a value, and a Cons or a ListEnd
 extern expression_ref Cons;

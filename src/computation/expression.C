@@ -1134,29 +1134,9 @@ expression_ref add_prefix(const string& prefix, const expression_ref& R)
 
 expression_ref Tuple(int n)
 {
+  assert(n >= 0);
   return lambda_expression( constructor("()",n) );
 }
-
-expression_ref Tuple(const expression_ref& R1,const expression_ref& R2)
-{
-  return Tuple(2)(R1)(R2);
-}
-
-expression_ref Tuple(const expression_ref& R1,const expression_ref& R2,const expression_ref& R3)
-{
-  return Tuple(3)(R1)(R2)(R3);
-}
-
-expression_ref Tuple(const expression_ref& R1,const expression_ref& R2,const expression_ref& R3,const expression_ref& R4)
-{
-  return Tuple(4)(R1)(R2)(R3)(R4);
-}
-
-expression_ref Tuple(const expression_ref& R1,const expression_ref& R2,const expression_ref& R3,const expression_ref& R4,const expression_ref& R5)
-{
-  return Tuple(5)(R1)(R2)(R3)(R4)(R5);
-}
-
 
 expression_ref Cons = lambda_expression( right_assoc_constructor(":",2) );
 
