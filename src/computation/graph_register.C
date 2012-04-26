@@ -303,6 +303,10 @@ using std::endl;
  *                     any regs in context t that still refer to the old regs.
  */
 
+bool includes(const owner_set_t& S1, const owner_set_t& S2)
+{
+  return (S2 & ~S1).none();
+}
 
 bool is_reg_var(const expression_ref& R)
 {
@@ -480,48 +484,47 @@ void reg::set_owners(const owner_set_t& T)
 
 void reg::add_owner(int t)
 {
-  owners.insert(t);
+  assert(t >= 0 and t < owners.size());
+  owners.set(t,true);
 }
 
 void reg::clear_owner(int t)
 {
-  owners.erase(t);
+  assert(t >= 0 and t < owners.size());
+  owners.set(t,false);
 }
 
 void reg::clear_owners()
 {
-  owners.clear();
+  owners.reset();
 }
 
 bool reg::is_owned_by(int t) const
 {
-  return includes(owners,t);
+  assert(t >= 0 and t < owners.size());
+  return owners.test(t);
 }
 
 bool reg::is_owned_by_all_of(const owner_set_t& O) const
 {
+  assert(owners.size() == O.size());
+
   return includes(owners,O);
 }
 
 int reg::n_owners() const
 {
-  return owners.size();
+  return owners.count();
 }
 
 bool reg::is_unowned() const
 {
-  return owners.empty();
+  return owners.none();
 }
 
 bool reg::is_shared() const
 {
-  std::set<int>::const_iterator loc = owners.begin();
-
-  if (loc == owners.end()) return false;
-
-  loc++;
-
-  return (loc != owners.end());
+  return (n_owners() > 1);
 }
 
 reg::reg()
@@ -918,8 +921,8 @@ void reg_heap::pop_root(reg_heap::root_t r)
 
 reg_heap::root_t reg_heap::push_temp_head(int t)
 {
-  set<int> tokens;
-  tokens.insert(t);
+  owner_set_t tokens;
+  tokens.set(t,true);
   return push_temp_head(tokens);
 }
 
@@ -927,28 +930,43 @@ reg_heap::root_t reg_heap::push_temp_head(const owner_set_t& tokens)
 {
   root_t r = allocate_reg();
   access(*r).set_owners( tokens );
-  for(int t: tokens)
+  for(int t=0;t< tokens.size();t++)
+  {
+    if (not tokens.test(t)) continue;
+
     token_roots[t].temp.push_back(r);
+  }
 
   return r;
 }
 
 void reg_heap::pop_temp_head(int t)
 {
-  set<int> tokens;
-  tokens.insert(t);
+  owner_set_t tokens;
+  tokens.set(t,true);
   pop_temp_head(tokens);
 }
 
+
+
 void reg_heap::pop_temp_head(const owner_set_t& tokens)
 {
-  int t0 = *tokens.begin();
-  root_t r0 = token_roots[t0].temp.back();
+  int t0 = -1;
+  root_t r0;
 
-  for(int t: tokens)
+  for(int t=0;t< tokens.size();t++)
   {
+    if (not tokens.test(t)) continue;
     root_t r = token_roots[t].temp.back();
-    assert( r == r0 );
+
+    if (t0 == -1)
+    {
+      t0 = t;
+      r0 = r;
+    }
+    else
+      assert( r == r0 );
+
     assert( access(*r).is_owned_by(t) );
     token_roots[t].temp.pop_back();
   }
@@ -1034,7 +1052,7 @@ void reg_heap::remove_unused_ownership_marks()
   {
     reg& R = access(here);
     assert(includes(R.temp_owners, R.get_owners()) );
-    R.temp_owners.clear();
+    R.temp_owners.reset();
 
     here = R.next_reg;
   }

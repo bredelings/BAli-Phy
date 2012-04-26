@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <bitset>
 #include "object.H"
 #include "expression.H"
 #include "util.H"
@@ -11,7 +12,7 @@
 #include <utility>
 #include "program.H"
 
-typedef std::set<int> owner_set_t;
+typedef std::bitset<64> owner_set_t;
 
 struct reg
 {
