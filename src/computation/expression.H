@@ -63,6 +63,18 @@ struct parameter: public Object
   parameter(const std::string& s):parameter_name(s) { }
 };
 
+/// a de Bruijn indexed variable 
+struct index_var: public Object
+{
+  int index;
+
+  index_var* clone() const {return new index_var(*this);}
+  std::string print() const;
+  tribool compare(const Object& o) const;
+  
+  index_var(int i):index(i) {}
+};
+
 // a dummy variable expression
 struct dummy: public Object
 {
@@ -70,6 +82,7 @@ struct dummy: public Object
 
   std::string name;
 
+  bool operator==(const dummy&) const;
   dummy* clone() const {return new dummy(*this);}
   std::string print() const;
   tribool compare(const Object& o) const;
@@ -105,7 +118,13 @@ struct match: public Object
 struct let_obj: public Object
 {
   let_obj* clone() const {return new let_obj(*this);}
-  tribool compare(const Object& o) const;
+
+  std::string print() const;
+};
+
+struct let2_obj: public Object
+{
+  let2_obj* clone() const {return new let2_obj(*this);}
 
   std::string print() const;
 };
@@ -194,12 +213,17 @@ expression_ref lambda_expression(const Operator& O);
 expression_ref lambda_quantify(int dummy_index, const expression_ref& R);
 expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& R);
 
-// FIXME - If we're substituting a lambda expression we have to rename its dummys to make sure
-//         there is no overlap.
+expression_ref indexify(const expression_ref&);
+
 struct lambda: public Object
 {
   lambda* clone() const {return new lambda(*this);}
-  tribool compare(const Object& o) const;
+  std::string print() const;
+};
+
+struct lambda2: public Object
+{
+  lambda2* clone() const {return new lambda2(*this);}
   std::string print() const;
 };
 
