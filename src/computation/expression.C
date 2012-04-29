@@ -780,9 +780,161 @@ vector<int> get_free_index_vars(const expression_ref& R)
       vars = merge_vars(vars, get_free_index_vars(E->sub[i]) );
   }
 
-  std::cerr<<"fv("<<R<<"): "<<join(vars,",")<<"\n";
+  //  std::cerr<<"fv("<<R<<"): "<<join(vars,",")<<"\n";
   
   return vars;
+}
+
+expression_ref trim_normalize(const expression_ref& R)
+{
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
+  // Already normalized (though not trimmed)
+  if (not E) return R;
+
+  vector<expression_ref> bodies;
+  vector<expression_ref> patterns;
+  expression_ref T;
+
+  vector<int> vars;
+  
+  // Lambda expression - /\x.e - Already normalized.
+  if (dynamic_pointer_cast<const lambda2>(E->sub[0])) return R;
+
+  // Let expressions need to be normalized
+  else if (parse_indexed_let_expression(R, bodies, T))
+  {
+    T = trim(trim_normalize(T));
+
+    for(auto& body: bodies)
+      body = trim(trim_normalize(body));
+
+    return indexed_let_expression(bodies,T);
+  }
+
+  // case expression
+  else if (parse_case_expression(R, T, patterns, bodies))
+  {
+    // T should already be a variable, so don't bother about it.
+    assert(dynamic_pointer_cast<const index_var>(T));
+
+    for(auto& body: bodies)
+      body = trim(trim_normalize(body));
+
+    return make_case_expression(T, patterns, bodies);
+  }
+  else
+  {
+    expression* V = new expression(*E);
+    for(int i=0;i<E->size();i++)
+      V->sub[i] = trim_normalize(V->sub[i]);
+
+    return V;
+  }
+}
+
+expression_ref do_trim(const expression_ref& R, const vector<int>& mapping, int depth)
+{
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
+  if (not E) 
+  {
+    // Variable
+    if (object_ptr<const index_var> D = dynamic_pointer_cast<const index_var>(R))
+    {
+      assert(D->index != -1);
+      int delta = D->index - depth;
+      if (delta >= 0)
+      {
+	assert(delta < mapping.size());
+	assert(mapping[delta] != -1);
+
+	return index_var(depth + mapping[delta]);
+      }
+      else
+	// Var that is to new to be remapped.
+	return R;
+    }
+    // Constant
+    else
+      return R;
+  }
+
+  vector<expression_ref> bodies;
+  vector<expression_ref> patterns;
+  expression_ref T;
+
+  vector<int> vars;
+  
+  // Lambda expression - /\x.e
+  if (object_ptr<const lambda2> L = dynamic_pointer_cast<const lambda2>(E->sub[0]))
+  {
+    expression* V = new expression;
+    V->sub.push_back(lambda2());
+    V->sub.push_back(do_trim(E->sub[1], mapping, depth+1));
+    return V;
+  }
+
+  // Let expression
+  else if (parse_indexed_let_expression(R, bodies, T))
+  {
+    int n = bodies.size();
+    T = do_trim(T, mapping, depth + n);
+
+    for(auto& body: bodies)
+      body = do_trim(T, mapping, depth + n);
+
+    return indexed_let_expression(bodies, T);
+  }
+  
+  // case expression
+  else if (parse_case_expression(R, T, patterns, bodies))
+  {
+    // T should already be a variable, so don't bother about it.
+    assert(dynamic_pointer_cast<const index_var>(T));
+
+    for(int i=0;i<bodies.size();i++)
+    {
+      int n = 0;
+
+      // Handle c[i] x[i][1..n] -> body[i]
+      if (object_ptr<const constructor> C = dynamic_pointer_cast<const constructor>(patterns[i]))
+	n = C->n_args();
+
+      bodies[i] = do_trim(bodies[i], mapping, depth + n);
+    }
+
+    return make_case_expression(T, patterns, bodies);
+  }
+  else
+  {
+    expression* V = new expression(*E);
+    for(int i=0;i<E->size();i++)
+      V->sub[i] = do_trim(V->sub[i], mapping, depth);
+    return V;
+  }
+}
+
+expression_ref trim(const expression_ref& R)
+{
+  // Well, it would seem that the relevant matter is that we are at depth n.
+  vector<int> indices = get_free_index_vars(R);
+
+  vector<int> mapping;
+
+  if (indices.size())
+  {
+    mapping = vector<int>(indices.back()+1, -1);
+    for(int i=0;i<indices.size();i++)
+      mapping[indices[i]] = i;
+  }
+
+  expression* V = new expression;
+  V->sub.push_back(Trim());
+  V->sub.push_back(Vector<int>(indices));
+  V->sub.push_back(do_trim(R, mapping, 0));
+
+  return V;
 }
 
 /// 1. Hey, could we solve the problem of needing to rename dummies by doing capture-avoiding substitution?
