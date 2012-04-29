@@ -96,9 +96,6 @@ bool parse_indexed_let_expression(const expression_ref& R, vector<expression_ref
 
   if (not dynamic_pointer_cast<const let2_obj>(E->sub[0])) return false;
 
-  // There should be an even number of arguments.
-  assert(E->sub.size()%2 == 0);
-
   T = E->sub[1];
   const int L = E->sub.size();
   for(int i=2;i<L;i++)
@@ -157,8 +154,26 @@ string expression::print() const
     if (parse_indexed_let_expression(*this, bodies, T))
     {
       result = "let {";
-      result += join(bodies,', ');
+      result += join(bodies,", ");
       result += "} in " + T->print();
+      return result;
+    }
+
+    if (object_ptr<const Closure> C = dynamic_pointer_cast<const Closure>(sub[0]))
+    {
+      vector<string> parts;
+      for(int i=2;i<size();i++)
+	parts.push_back(sub[i]->print());
+
+      result = "["+sub[1]->print()+" {"+join(parts,",")+"}]";
+      return result;
+    }
+
+    if (object_ptr<const Trim> T = dynamic_pointer_cast<const Trim>(sub[0]))
+    {
+      object_ptr<const Vector<int>> V = dynamic_pointer_cast<const Vector<int>>(sub[1]);
+
+      result = "Trim {"+join(V->t,",")+"} " + sub[2]->print();
       return result;
     }
 
@@ -318,6 +333,16 @@ tribool dummy::compare(const Object& o) const
     return false;
 
   return (*this) == *D;
+}
+
+string Closure::print() const
+{
+  return "[{}]";
+}
+
+string Trim::print() const
+{
+  return "Trim";
 }
 
 string dummy::print() const {
@@ -655,6 +680,109 @@ expression_ref indexify(const expression_ref& R, const vector<dummy>& variables)
 expression_ref indexify(const expression_ref& E)
 {
   return indexify(E,{});
+}
+
+vector<int> pop_vars(int n, vector<int> vars)
+{
+  assert(n >= 0);
+  if (n == 0) return vars;
+
+  for(int& var: vars)
+    var -= n;
+  while(vars.size() and vars[0] < 0)
+    vars.erase(vars.begin());
+  return vars;
+}
+
+vector<int> merge_vars(const vector<int>& v1, const vector<int>& v2)
+{
+  int i=0;
+  int j=0;
+  vector<int> v3;
+  while(i<v1.size() or j<v2.size())
+  {
+    if (i >= v1.size())
+      v3.push_back(v2[j++]);
+    else if (j >= v2.size())
+      v3.push_back(v1[i++]);
+    else if (v1[i] < v2[j])
+      v3.push_back(v1[i++]);
+    else if (v1[i] > v2[j])
+      v3.push_back(v2[j++]);
+    else {
+      assert(v1[i] == v2[j]);
+      v3.push_back(v1[i]);
+      i++; j++;
+    }
+  }
+  assert(v3.size() >= v1.size());
+  assert(v3.size() >= v2.size());
+  return v3;
+}
+
+vector<int> get_free_index_vars(const expression_ref& R)
+{
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
+
+  if (not E) 
+  {
+    // Variable
+    if (object_ptr<const index_var> D = dynamic_pointer_cast<const index_var>(R))
+    {
+      assert(D->index != -1);
+      return {D->index};
+    }
+    // Constant
+    else
+      return {};
+  }
+
+  vector<expression_ref> bodies;
+  vector<expression_ref> patterns;
+  expression_ref T;
+
+  vector<int> vars;
+  
+  // Lambda expression - /\x.e
+  if (object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+    vars = pop_vars(1, get_free_index_vars(E->sub[1]));
+
+  // Let expression
+  else if (parse_indexed_let_expression(R, bodies, T))
+  {
+    vars = get_free_index_vars(T);
+
+    for(const auto& body: bodies)
+      vars = merge_vars(vars, get_free_index_vars(body));
+
+    vars = pop_vars(bodies.size(), vars);
+  }
+
+  // case expression
+  else if (parse_case_expression(R, T, patterns, bodies))
+  {
+    vars = get_free_index_vars(T);
+
+    for(int i=0;i<bodies.size();i++)
+    {
+      int n = 0;
+
+      // Handle c[i] x[i][1..n] -> body[i]
+      if (object_ptr<const constructor> C = dynamic_pointer_cast<const constructor>(patterns[i]))
+	n = C->n_args();
+
+      vars = merge_vars(vars, pop_vars(n, get_free_index_vars(bodies[i])) );
+    }
+  }
+  else
+  {
+    for(int i=0;i<E->size();i++)
+      vars = merge_vars(vars, get_free_index_vars(E->sub[i]) );
+  }
+
+  std::cerr<<"fv("<<R<<"): "<<join(vars,",")<<"\n";
+  
+  return vars;
 }
 
 /// 1. Hey, could we solve the problem of needing to rename dummies by doing capture-avoiding substitution?
