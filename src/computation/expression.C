@@ -744,7 +744,7 @@ vector<int> get_free_index_vars(const expression_ref& R)
   vector<int> vars;
   
   // Lambda expression - /\x.e
-  if (object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]))
+  if (object_ptr<const lambda2> L = dynamic_pointer_cast<const lambda2>(E->sub[0]))
     vars = pop_vars(1, get_free_index_vars(E->sub[1]));
 
   // Let expression
