@@ -2189,6 +2189,9 @@ bool is_WHNF(const expression_ref& R)
     object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
     if (L) return true;
 
+    object_ptr<const lambda2> L2 = dynamic_pointer_cast<const lambda2>(E->sub[0]);
+    if (L2) return true;
+
     // 5. Constructor
     object_ptr<const constructor> RF = dynamic_pointer_cast<const constructor>(E->sub[0]);
     if (RF) return true;
