@@ -237,12 +237,14 @@ std::vector<int> get_free_index_vars(const expression_ref&);
 struct lambda: public Object
 {
   lambda* clone() const {return new lambda(*this);}
+  tribool compare(const Object& o) const;
   std::string print() const;
 };
 
 struct lambda2: public Object
 {
   lambda2* clone() const {return new lambda2(*this);}
+  tribool compare(const Object& o) const;
   std::string print() const;
 };
 
