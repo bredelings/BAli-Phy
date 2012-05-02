@@ -30,11 +30,12 @@ closure get_trimmed(const closure& C)
     for(int i: keep)
       C2.Env.push_back(C.Env[keep[i]]);
 
-    assert(is_a(C2.exp, Trim()));
+    // Should this ever happen?
+    assert(not is_a(C2.exp, Trim()));
 
     // For safety... 
     C2 = get_trimmed(C2);
   }
   
-  return C;
+  return C2;
 }
