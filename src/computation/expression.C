@@ -678,9 +678,8 @@ expression_ref indexify(const expression_ref& R, const vector<dummy>& variables)
 	bodies[i] = indexify(bodies[i], variables);
       }
       // Handle a constant as a 0-arg constructor
-      // ** Hmm... do we really want to allow matching arbitrary objects?  Can we convert them all to integers? **
       else
-      { } // no need to do anything
+	bodies[i] = indexify(bodies[i], variables);
     }
 
     return make_case_expression(T, patterns, bodies);
