@@ -908,8 +908,37 @@ expression_ref do_trim(const expression_ref& R, const vector<int>& mapping, int 
 
   vector<int> vars;
   
+  if (dynamic_pointer_cast<const Trim>(E->sub[0]))
+  {
+    // Which vars are we not throwing away?
+    // This should also be an assert.
+    vars = dynamic_pointer_cast<const Vector<int>>(E->sub[1])->t;
+
+    // remap free vars
+    for(auto& var:vars)
+    {
+      int delta = var - depth;
+      if (delta >= 0)
+      {
+	assert(delta < mapping.size());
+	assert(mapping[delta] != -1);
+
+	var = depth + mapping[delta];
+      }
+    }
+    
+#ifndef NDEBUG
+    vector<int> vars2 = get_free_index_vars(E->sub[2]);
+    assert(vars.size() == vars2.size());
+    for(int i=0;i<vars.size();i++)
+      assert(vars2[i] == i);
+#endif
+
+    return make_trim(E->sub[2], vars);
+
+  }
   // Lambda expression - /\x.e
-  if (object_ptr<const lambda2> L = dynamic_pointer_cast<const lambda2>(E->sub[0]))
+  else if (object_ptr<const lambda2> L = dynamic_pointer_cast<const lambda2>(E->sub[0]))
   {
     expression* V = new expression;
     V->sub.push_back(lambda2());
