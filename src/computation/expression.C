@@ -917,8 +917,7 @@ expression_ref do_trim(const expression_ref& R, const vector<int>& mapping, int 
   // case expression
   else if (parse_case_expression(R, T, patterns, bodies))
   {
-    // T should already be a variable, so don't bother about it.
-    assert(dynamic_pointer_cast<const index_var>(T));
+    T = do_trim(T, mapping, depth);
 
     for(int i=0;i<bodies.size();i++)
     {
