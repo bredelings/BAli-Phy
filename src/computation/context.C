@@ -36,7 +36,7 @@ closure trim_normalize(closure C)
 
 closure context::preprocess(const closure& C) const
 {
-  return translate_refs( trim_normalize( indexify( graph_normalize( let_float( C ) ) ) ) );
+  return trim_normalize( indexify( graph_normalize( let_float( translate_refs( C ) ) ) ) );
 }
 
 string context::parameter_name(int i) const
@@ -385,6 +385,7 @@ void context::collect_garbage() const
   memory->collect_garbage();
 }
 
+// FIXME! This will use multiple names for objects if they occur twice.
 expression_ref context::translate_refs(const expression_ref& R, vector<int>& Env) const
 {
   int reg = -1;
