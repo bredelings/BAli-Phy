@@ -597,6 +597,15 @@ int find_index_backward(const vector<T>& v,const T& t)
   return -1;
 }
 
+expression_ref make_indexed_lambda(const expression_ref& R)
+{
+  expression* V = new expression;
+  V->sub.resize(2);
+  V->sub[0] = lambda2();
+  V->sub[1] = R;
+  return V;
+}
+
 /// Convert to using de Bruijn indices.
 expression_ref indexify(const expression_ref& R, const vector<dummy>& variables)
 {
@@ -629,11 +638,7 @@ expression_ref indexify(const expression_ref& R, const vector<dummy>& variables)
   {
     vector<dummy> variables2 = variables;
     variables2.push_back(*dynamic_pointer_cast<const dummy>(E->sub[1]));
-    expression* V = new expression;
-    V->sub.resize(2);
-    V->sub[0] = lambda2();
-    V->sub[1] = indexify(E->sub[2], variables2);
-    return V;
+    return make_indexed_lambda( indexify(E->sub[2], variables2) );
   }
 
   // Let expression
