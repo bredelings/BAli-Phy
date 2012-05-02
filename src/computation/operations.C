@@ -21,7 +21,7 @@ closure Apply::operator()(OperationArgs& Args) const
 
   // We should assert this.
   object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(Args.reference(1));
-  int arg = C.lookup_in_env( V->index );
+  int arg = Args.current_closure().lookup_in_env( V->index );
 
   // We could actually change this to a static_cast.  C.exp MUST be an expression.  C.exp[0] MUST be a lambda.
   if (object_ptr<const expression> E = is_a(C.exp, lambda2()))
