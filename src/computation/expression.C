@@ -864,6 +864,17 @@ expression_ref trim_normalize(const expression_ref& R)
   }
 }
 
+expression_ref make_trim(const expression_ref& R, const vector<int>& indices)
+{
+  expression* V = new expression;
+  V->sub.push_back(Trim());
+  V->sub.push_back(Vector<int>(indices));
+  V->sub.push_back(R);
+
+  return V;
+}
+
+// This compresses free variables according to the supplied mapping.
 expression_ref do_trim(const expression_ref& R, const vector<int>& mapping, int depth)
 {
   object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
@@ -959,12 +970,7 @@ expression_ref trim(const expression_ref& R)
       mapping[indices[i]] = i;
   }
 
-  expression* V = new expression;
-  V->sub.push_back(Trim());
-  V->sub.push_back(Vector<int>(indices));
-  V->sub.push_back(do_trim(R, mapping, 0));
-
-  return V;
+  return make_trim( do_trim(R, mapping, 0), indices);
 }
 
 /// 1. Hey, could we solve the problem of needing to rename dummies by doing capture-avoiding substitution?
