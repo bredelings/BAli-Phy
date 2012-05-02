@@ -159,16 +159,6 @@ string expression::print() const
       return result;
     }
 
-    if (object_ptr<const Closure> C = dynamic_pointer_cast<const Closure>(sub[0]))
-    {
-      vector<string> parts;
-      for(int i=2;i<size();i++)
-	parts.push_back(sub[i]->print());
-
-      result = "["+sub[1]->print()+" {"+join(parts,",")+"}]";
-      return result;
-    }
-
     if (object_ptr<const Trim> T = dynamic_pointer_cast<const Trim>(sub[0]))
     {
       object_ptr<const Vector<int>> V = dynamic_pointer_cast<const Vector<int>>(sub[1]);
@@ -335,14 +325,15 @@ tribool dummy::compare(const Object& o) const
   return (*this) == *D;
 }
 
-string Closure::print() const
-{
-  return "[{}]";
-}
-
 string Trim::print() const
 {
   return "Trim";
+}
+
+tribool Trim::compare(const Object& o) const 
+{
+  const Trim* T = dynamic_cast<const Trim*>(&o);
+  return T;
 }
 
 string dummy::print() const {
@@ -385,9 +376,21 @@ string match::print() const
     return string("_")+convertToString(index);
 }
 
+tribool let_obj::compare(const Object& o) const 
+{
+  const let_obj* T = dynamic_cast<const let_obj*>(&o);
+  return T;
+}
+
 string let_obj::print() const 
 {
   return "let";
+}
+
+tribool let2_obj::compare(const Object& o) const 
+{
+  const let2_obj* T = dynamic_cast<const let2_obj*>(&o);
+  return T;
 }
 
 string let2_obj::print() const 
@@ -798,11 +801,8 @@ expression_ref trim_normalize(const expression_ref& R)
 
   vector<int> vars;
   
-  // Lambda expression - /\x.e - Already normalized.
-  if (dynamic_pointer_cast<const lambda2>(E->sub[0])) return R;
-
   // Let expressions need to be normalized
-  else if (parse_indexed_let_expression(R, bodies, T))
+  if (parse_indexed_let_expression(R, bodies, T))
   {
     T = trim(trim_normalize(T));
 
@@ -1327,7 +1327,7 @@ expression_ref move_lets(bool scope, const expression_ref R,
   }
 
   // Since we only substitute reg_vars into dummy's (for let, lambda, and case) these are all OK.
-  if (is_parameter(R2) or is_reg_var(R2) or is_var(R2) or is_dummy(R2))
+  if (is_parameter(R2) or is_index_var(R2) or is_var(R2) or is_dummy(R2))
   {
     assert(R2);
     return R2;
@@ -2192,6 +2192,13 @@ bool is_WHNF(const expression_ref& R)
   }
 }
 
+bool is_index_var(const expression_ref& R)
+{
+  if (dynamic_cast<const index_var*>(&*R)) return true;
+
+  return false;
+}
+
 bool is_dummy(const expression_ref& R)
 {
   if (dynamic_cast<const dummy*>(&*R)) return true;
@@ -2456,17 +2463,22 @@ expression_ref launchbury_unnormalize(const expression_ref& R)
   return R;
 }
 
-object_ptr<const expression> is_a(const expression_ref& E, const string& s)
+object_ptr<const expression> is_a(const expression_ref& E, const Object& O)
 {
   object_ptr<const expression> E2 = dynamic_pointer_cast<const expression>(E);
   if (E2)
   {
-    if (E2->sub[0]->compare(constructor(s,-1)))
+    if (E2->sub[0]->compare(O))
       ;
     else
       E2.reset();
   }
   return E2;
+}
+
+object_ptr<const expression> is_a(const expression_ref& E, const string& s)
+{
+  return is_a(E, constructor(s,-1));
 }
 
 const expression_ref v0 = dummy(0);

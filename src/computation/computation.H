@@ -6,6 +6,7 @@
 #include "object.H"
 #include "myexception.H"
 #include "util.H"
+#include "closure.H"
 
 struct expression_ref;
 
@@ -19,7 +20,9 @@ struct OperationArgs: public Object
 
   virtual int n_args() const = 0;
 
-  virtual object_ref lazy_evaluate(int)
+  virtual const closure& current_closure() const = 0;
+
+  virtual closure lazy_evaluate(int)
   {
     std::abort();
   }
@@ -30,7 +33,7 @@ struct OperationArgs: public Object
     return convert<const T>( evaluate(slot) );
   }
 
-  virtual int allocate(const expression_ref&) 
+  virtual int allocate(const closure&) 
   { 
     std::abort();
   }

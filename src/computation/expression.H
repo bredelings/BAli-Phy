@@ -93,19 +93,15 @@ struct dummy: public Object
   dummy(const std::string& s):index(-1),name(s) {}
 };
 
-struct Closure: public Object
-{
-  Closure* clone() const {return new Closure(*this);}
-
-  std::string print() const;
-};
-
 struct Trim: public Object
 {
   Trim* clone() const {return new Trim(*this);}
+  tribool compare(const Object& o) const;
 
   std::string print() const;
 };
+
+bool is_index_var(const expression_ref& R);
 
 bool is_dummy(const expression_ref&);
 
@@ -132,12 +128,16 @@ struct let_obj: public Object
 {
   let_obj* clone() const {return new let_obj(*this);}
 
+  tribool compare(const Object& o) const;
+
   std::string print() const;
 };
 
 struct let2_obj: public Object
 {
   let2_obj* clone() const {return new let2_obj(*this);}
+
+  tribool compare(const Object& o) const;
 
   std::string print() const;
 };
@@ -329,6 +329,8 @@ struct expression_ref: public object_ref
 };
 
 object_ptr<const expression> is_a(const expression_ref&, const std::string&);
+
+object_ptr<const expression> is_a(const expression_ref&, const Object& O);
 
 template <typename T>
 struct typed_expression_ref: public expression_ref
@@ -535,6 +537,8 @@ expression_ref let_float(const expression_ref&);
 expression_ref add_prefix(const std::string&, const expression_ref& R);
 
 bool parse_let_expression(const expression_ref& R, std::vector<expression_ref>& vars, std::vector<expression_ref>& bodies, expression_ref& T);
+
+bool parse_indexed_let_expression(const expression_ref& R, std::vector<expression_ref>& bodies, expression_ref& T);
 
 void parse_alternatives(const expression_ref& R, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
 

@@ -35,7 +35,7 @@ namespace substitution {
       return true;
     }
 
-    object_ptr<const Object> operator()(OperationArgs& Args) const;
+    closure operator()(OperationArgs& Args) const;
 
     std::string name() const {return "+gwF";}
 
@@ -58,7 +58,7 @@ namespace substitution {
       return true;
     }
 
-    object_ptr<const Object> operator()(OperationArgs& Args) const;
+    closure operator()(OperationArgs& Args) const;
 
     std::string name() const {return "HKY";}
     
@@ -81,7 +81,7 @@ namespace substitution {
       return true;
     }
 
-    object_ptr<const Object> operator()(OperationArgs& Args) const;
+    closure operator()(OperationArgs& Args) const;
 
     std::string name() const {return "TN";}
     
@@ -104,7 +104,7 @@ namespace substitution {
       return true;
     }
 
-    object_ptr<const Object> operator()(OperationArgs& Args) const;
+    closure operator()(OperationArgs& Args) const;
 
     std::string name() const {return "GTR";}
     
@@ -129,7 +129,7 @@ namespace substitution {
       return true;
     }
 
-    object_ptr<const Object> operator()(OperationArgs& Args) const;
+    closure operator()(OperationArgs& Args) const;
 
     std::string name() const {return "Singlet_to_Triplet_Exchange";}
 
@@ -160,7 +160,7 @@ namespace substitution {
       return true;
     }
 
-    object_ptr<const Object> operator()(OperationArgs& Args) const;
+    closure operator()(OperationArgs& Args) const;
 
     std::string name() const {return "Q";}
 
@@ -183,7 +183,7 @@ namespace substitution {
       return true;
     }
 
-    object_ptr<const Object> operator()(OperationArgs& Args) const
+    closure operator()(OperationArgs& Args) const
     {
       object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
       object_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(1);
@@ -223,7 +223,7 @@ namespace substitution {
       return true;
     }
 
-    object_ptr<const Object> operator()(OperationArgs& Args) const
+    closure operator()(OperationArgs& Args) const
     {
       object_ptr<const probability::Distribution> D = Args.evaluate_as<probability::Distribution>(0);
       object_ptr<const Int> n = Args.evaluate_as<Int>(1);
@@ -288,7 +288,7 @@ namespace substitution {
       return true;
     }
 
-    object_ptr<const Object> operator()(OperationArgs& Args) const;
+    closure operator()(OperationArgs& Args) const;
  
     std::string name() const {return "Get_Eigensystem";}
 
@@ -315,7 +315,7 @@ namespace substitution {
       return true;
     }
 
-    object_ptr<const Object> operator()(OperationArgs& Args) const;
+    closure operator()(OperationArgs& Args) const;
  
     std::string name() const {return "Get_Equilbrium_Rate";}
 

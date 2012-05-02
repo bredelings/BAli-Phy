@@ -27,7 +27,7 @@ struct Apply: public Operation
 
   assoc_type associativity() const {return assoc_left;}
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const;
+  closure operator()(OperationArgs& Args) const;
 
   std::string name() const;
 
@@ -44,7 +44,7 @@ struct Case: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const;
+  closure operator()(OperationArgs& Args) const;
 
   std::string name() const;
 
@@ -61,11 +61,11 @@ struct Print: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const Object> x = Args.evaluate(0);
 
-    return object_ptr<String> ( new String(x->print() ) );
+    return closure(object_ref( new String(x->print() ) ));
   }
 
   std::string name() const {return "sys_print";}
@@ -83,7 +83,7 @@ struct Seq: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const;
+  closure operator()(OperationArgs& Args) const;
 
   std::string name() const {return "seq";}
 
@@ -102,7 +102,7 @@ struct Concat: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const String> x = Args.evaluate_as<String>(0);
     object_ptr<const String> y = Args.evaluate_as<String>(1);
@@ -110,7 +110,7 @@ struct Concat: public Operation
     const std::string& X = *x;
     const std::string& Y = *y;
 
-    return object_ptr<String> ( new String(X+Y) );
+    return closure(object_ref ( new String(X+Y) ) );
   }
 
   std::string print_expression(const std::vector<std::string>& inputs) const
@@ -133,7 +133,7 @@ struct MkArray: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const;
+  closure operator()(OperationArgs& Args) const;
 
   std::string name() const {return "mkArray";}
   
@@ -152,7 +152,7 @@ struct ArrayBounds: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const;
+  closure operator()(OperationArgs& Args) const;
 
   std::string name() const {return "bounds";}
   
@@ -171,7 +171,7 @@ struct GetIndex: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const;
+  closure operator()(OperationArgs& Args) const;
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
@@ -196,7 +196,7 @@ struct Vector_From_List_Op: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     expression_ref E = Args.evaluate(0);
 
@@ -231,7 +231,7 @@ struct VectorSizeOp: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const Box<std::vector<T> > > v = Args.evaluate_as<Box<std::vector<T> > >(0);
 
@@ -263,7 +263,7 @@ struct Iota_Op: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     unsigned n = *Args.evaluate_as<Int>(0);
 
@@ -301,7 +301,7 @@ struct LExp_Op: public Operation
     return true;
   }
   
-  object_ptr<const Object> operator()(OperationArgs& Args) const;
+  closure operator()(OperationArgs& Args) const;
   
   std::string name() const {return "LExp";}
   
@@ -323,7 +323,7 @@ struct Multiply: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const T> x = Args.evaluate_as<T>(0);
     object_ptr<const T> y = Args.evaluate_as<T>(1);
@@ -345,6 +345,7 @@ struct Multiply: public Operation
   Multiply():Operation(2) {}
 };
 
+// \todo Fixme - this is hacky: remove.
 struct IfThenElse: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -357,13 +358,13 @@ struct IfThenElse: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const Bool> condition = Args.evaluate_as<Bool>(0);
     if (*condition)
-      return Args.evaluate(1);
+      return Args.lazy_evaluate(1);
     else
-      return Args.evaluate(2);
+      return Args.lazy_evaluate(2);
   }
 
   std::string expression(const std::vector<std::string>& inputs) const;
@@ -386,7 +387,7 @@ struct GreaterThan: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const T> x = Args.evaluate_as<T>(0);
     object_ptr<const T> y = Args.evaluate_as<T>(1);
@@ -419,7 +420,7 @@ struct LessThan: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const T> x = Args.evaluate_as<T>(0);
     object_ptr<const T> y = Args.evaluate_as<T>(1);
@@ -452,7 +453,7 @@ struct Equals: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const T> x = Args.evaluate_as<T>(0);
     object_ptr<const T> y = Args.evaluate_as<T>(1);
@@ -485,7 +486,7 @@ struct Conversion: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const X> x = Args.evaluate_as<X>(0);
     Y y = *x;
@@ -511,7 +512,7 @@ struct Add: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const T> x = Args.evaluate_as<T>(0);
     object_ptr<const T> y = Args.evaluate_as<T>(1);
@@ -551,7 +552,7 @@ struct Minus: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const T> x = Args.evaluate_as<T>(0);
     object_ptr<const T> y = Args.evaluate_as<T>(1);
@@ -586,7 +587,7 @@ struct Divide: public Operation
     return E;
   }
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const
+  closure operator()(OperationArgs& Args) const
   {
     object_ptr<const T> x = Args.evaluate_as<T>(0);
     object_ptr<const T> y = Args.evaluate_as<T>(1);

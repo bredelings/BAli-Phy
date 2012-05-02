@@ -308,13 +308,6 @@ bool includes(const owner_set_t& S1, const owner_set_t& S2)
   return (S2 & ~S1).none();
 }
 
-bool is_reg_var(const expression_ref& R)
-{
-  if (dynamic_cast<const reg_var*>(&*R)) return true;
-
-  return false;
-}
-
 bool is_var(const expression_ref& R)
 {
   if (dynamic_cast<const var*>(&*R)) return true;
@@ -322,9 +315,16 @@ bool is_var(const expression_ref& R)
   return false;
 }
 
+bool is_reg_var(const expression_ref& R)
+{
+  if (dynamic_cast<const reg_var*>(&*R)) return true;
+
+  return false;
+}
+
 bool is_reglike(const expression_ref& R)
 {
-  return is_dummy(R) or is_parameter(R) or is_reg_var(R) or is_var(R);
+  return is_dummy(R) or is_parameter(R) or is_reg_var(R) or is_index_var(R) or is_var(R);
 }
 
 /*
@@ -406,7 +406,7 @@ expression_ref graph_normalize(const expression_ref& R)
     const int L = V->sub.size()/2 - 1;
     // Just unnormalize the bodies
     for(int i=0;i<L;i++)
-      V->sub[3+2*i] = launchbury_unnormalize(V->sub[3+2*i]);
+      V->sub[3+2*i] = graph_normalize(V->sub[3+2*i]);
     
     if (is_reglike(V->sub[1]))
       return object_ptr<const expression>(V);
@@ -538,9 +538,9 @@ reg::reg()
 
 void reg_heap::clear(int R)
 {
-  access(R).E = expression_ref();
+  access(R).C.clear();
   access(R).changeable = false;
-  access(R).result = expression_ref(); // enforce unsharing
+  access(R).result.clear(); // enforce unsharing
 
   access(R).used_inputs.clear();
   access(R).call = -1;
@@ -557,8 +557,8 @@ void reg_heap::set_used_input(int R1, int R2)
   assert(R1 >= 0 and R1 < n_regs());
   assert(R2 >= 0 and R2 < n_regs());
 
-  assert(access(R1).E);
-  assert(access(R2).E);
+  assert(access(R1).C);
+  assert(access(R2).C);
 
   // It IS possible to add an input that's already used.
   // This happens if we evaluate a new used input R2' to an already used input R2
@@ -606,7 +606,7 @@ void reg_heap::clear_used_inputs(int R)
 // 1. uniquify_reg( ): A  call is being remapped
 // 2. incremental_evaluate( ):
 // - an existing call is being remapping to the end of an unchangeable indirection chain.
-// - access(R).E is a reg_var
+// - access(R).C is a reg_var
 // * a CHANGEABLE operation was performed (see set_reduction_result)
 // 3. set_reduction_result( )
 // - a parameter value is being set.
@@ -663,58 +663,38 @@ void reg_heap::clear_call(int R)
   access(R2).call_outputs.erase(R);
 }
 
-void get_exp_refs(const expression_ref& R, set<int>& refs)
+void reg_heap::set_C(int R, const closure& C)
 {
-  if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( R ))
-  {
-    refs.insert(RV->target);
-  }
-  else if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
-  {
-    for(int i=0;i<E->size();i++)
-      get_exp_refs(E->sub[i],refs);
-  }
-}
-
-set<int> get_exp_refs(const expression_ref& R)
-{
-  set<int> regs;
-  get_exp_refs(R,regs);
-  return regs;
-}
-
-void reg_heap::set_E(int R, const expression_ref& e)
-{
-  assert(e);
+  assert(C);
   assert(not access(R).is_unowned());
-  clear_E(R);
+  clear_C(R);
 
-  access(R).E = e;
-  access(R).references = get_exp_refs(e);
-  for(int r: access(R).references)
+  access(R).C = C;
+#ifndef NDEBUG
+  for(int r: access(R).C.Env)
   {
     // check that all of the owners of R are also owners of *r.
     assert(access(r).is_owned_by_all_of( access(R).get_owners()) );
 
     // check that *r is not already marked as being referenced by R
     assert(not includes( access(r).referenced_by_in_E, R) );
-
-    // mark *r as being referenced by R
-    access(r).referenced_by_in_E.insert(R);
   }
+#endif
+
+  // mark r as being referenced by R
+  for(int r: access(R).C.Env)
+    access(r).referenced_by_in_E.insert(R);
 }
 
-void reg_heap::clear_E(int R)
+void reg_heap::clear_C(int R)
 {
-  for(int r: access(R).references)
+  for(int r: access(R).C.Env)
     access(r).referenced_by_in_E.erase(R);
 
-  access(R).references.clear();
-
-  access(R).E = expression_ref();
+  access(R).C.clear();
 }
 
-void reg_heap::set_reduction_result(int R, const expression_ref& result)
+void reg_heap::set_reduction_result(int R, const closure& result)
 {
   // Check that there is no result we are overriding
   assert(not access(R).result );
@@ -726,9 +706,9 @@ void reg_heap::set_reduction_result(int R, const expression_ref& result)
   if (not result) return;
 
   // If the value is a pre-existing reg_var, then call it.
-  if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(result))
+  if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(result.exp))
   {
-    int Q = RV->target;
+    int Q = result.lookup_in_env( V->index );
     
     assert(0 <= Q and Q < n_regs());
     assert(access(Q).state == reg::used);
@@ -740,33 +720,30 @@ void reg_heap::set_reduction_result(int R, const expression_ref& result)
   {
     root_t r = allocate_reg();
     access(*r).set_owners( access(R).get_owners() );
-    set_E(*r, result );
+    set_C(*r, result );
     set_call(R, *r);
     pop_root(r);
   }
 }
 
 /// Update the value of a non-constant, non-computed index
-void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
+void reg_heap::set_reg_value(int P, const closure& C, int token)
 {
   // Check that reg P is owned by context token.
   assert(reg_is_owned_by(P,token));
-
-  // Normalize the inputs expression
-  expression_ref O = let_float(graph_normalize(OO));
 
   // Split this reg and its E-ancestors out from other graphs, if its shared.
   P = uniquify_reg(P,token);
 
   // Check that this reg is indeed settable
-  assert(dynamic_pointer_cast<const parameter>(access(P).E));
+  assert(dynamic_pointer_cast<const parameter>(access(P).C.exp));
   assert(access(P).changeable);
 
   // Clear the call, clear the result, and set the value
   assert(access(P).used_inputs.empty());
   clear_call(P);
-  access(P).result.reset();
-  set_reduction_result(P, O);
+  access(P).result.clear();
+  set_reduction_result(P, C);
 
   vector< int > NOT_known_value_unchanged;
   std::set< int > visited;
@@ -793,7 +770,7 @@ void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
       visited.insert(R2);
 
       // Since the computation may be different, we don't know if the value has changed.
-      access(R2).result.reset();
+      access(R2).result.clear();
       // We don't know what the reduction result is, so invalidate the call.
       clear_call(R2);
       // Remember to clear the used inputs.
@@ -812,7 +789,7 @@ void reg_heap::set_reg_value(int P, const expression_ref& OO,int token)
       visited.insert(R2);
 
       // Since the computation may be different, we don't know if the value has changed.
-      access(R2).result.reset();
+      access(R2).result.clear();
     }
   }
 }
@@ -903,7 +880,7 @@ void reg_heap::reclaim_used_reg(int r)
   // Downstream objects could still exist
   clear_used_inputs(r);
   clear_call(r);
-  clear_E(r);
+  clear_C(r);
 
   add_reg_to_free_list(r);
 }
@@ -916,7 +893,8 @@ reg_heap::root_t reg_heap::push_root(int R)
 
 void reg_heap::pop_root(reg_heap::root_t r)
 {
-  roots.erase(r);
+  if (r != roots.end())
+    roots.erase(r);
 }
 
 reg_heap::root_t reg_heap::push_temp_head(int t)
@@ -1082,11 +1060,8 @@ void reg_heap::collect_garbage()
 
       R.state = reg::checked;
 
-      // Make sure that we have already correctly got all the references!
-      assert(get_exp_refs(R.E) == R.references);
-   
       // Count the references from E
-      next_scan.insert(next_scan.end(), R.references.begin(), R.references.end());
+      next_scan.insert(next_scan.end(), R.C.Env.begin(), R.C.Env.end());
 
       // Count also the references from the call
       if (R.call != -1) 
@@ -1233,35 +1208,21 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
   return unique;
 }
 
-expression_ref remap_regs(const expression_ref R, const map<int, int>& new_regs)
+int remap_reg(int R,const map<int, int>& new_regs)
 {
-  if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
-  {
-    bool different = false;
-    object_ptr<expression> E2 ( new expression );
-    E2->sub.resize(E->size());
-    for(int i=0;i<E->size();i++)
-    {
-      E2->sub[i] = remap_regs(E->sub[i], new_regs);
-      if (E2->sub[i] != E->sub[i])
-	different = true;
-    }
-    if (different)
-      return object_ptr<const expression>(E2);
-    else
-      return R;
-  }
-  else if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
-  {
-    map<int, int>::const_iterator loc = new_regs.find(RV->target);
+    map<int, int>::const_iterator loc = new_regs.find(R);
     if (loc == new_regs.end())
       return R;
     else
-      return new reg_var(loc->second);
-  }
-  // This case handles NULL in addition to atomic objects.
-  else
-    return R;
+      return loc->second;
+}
+
+closure remap_regs(closure C, const map<int, int>& new_regs)
+{
+  for(int& R: C.Env)
+    R = remap_reg(R,new_regs);
+
+  return C;
 }
 
 bool reg_heap::reg_is_shared(int R) const
@@ -1292,7 +1253,7 @@ void reg_heap::check_results_in_context(int t) const
     int Q = regs[i];
     if (access(Q).result and access(Q).call == -1)
     {
-      assert(access(Q).E->maybe_equals( *access(Q).result) );
+      assert(access(Q).C == access(Q).result);
       WHNF_results.push_back(Q);
     }
   }
@@ -1302,7 +1263,7 @@ void reg_heap::check_results_in_context(int t) const
   {
     int Q = WHNF_results[i];
 
-    expression_ref result = access(Q).result;
+    const closure& result = access(Q).result;
 
     vector<int> regs = find_call_ancestors_in_context( Q, t);
 
@@ -1383,7 +1344,7 @@ int reg_heap::uniquify_reg(int R, int t)
     // 4. Initialize fields in the new node
 
     // 4a. Initialize/Remap E
-    set_E(R2, remap_regs( access(R1).E, new_regs) );
+    set_C(R2, remap_regs( access(R1).C, new_regs) );
   }
 
   // 2b.  Copy over and remap the call, used_inputs, and result
@@ -1404,7 +1365,7 @@ int reg_heap::uniquify_reg(int R, int t)
     // 4d. Initialize/Remap result if E is in WHNF.
     if (access(R2).call == -1 and access(R1).result)
     {
-      access(R2).result = access(R2).E;
+      access(R2).result = access(R2).C;
       changed_results.push_back(R2);
     }
     // 4d. Initialize/Copy result otherwise.
@@ -1499,7 +1460,7 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int Q1: unsplit_parents)
   {
     // a. Remap E
-    set_E(Q1, remap_regs(access(Q1).E, new_regs) );
+    set_C(Q1, remap_regs(access(Q1).C, new_regs) );
     
     // b. Remap call
     if (access(Q1).call != -1)
@@ -1525,7 +1486,7 @@ int reg_heap::uniquify_reg(int R, int t)
     // d. Remap result if E is in WHNF
     if (access(Q1).call == -1 and access(Q1).result)
     {
-      access(Q1).result = access(Q1).E;
+      access(Q1).result = access(Q1).C;
       changed_results.push_back(Q1);
     }
   }
@@ -1551,7 +1512,7 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     int Q = changed_results[i];
 
-    expression_ref result = access(Q).result;
+    const closure& result = access(Q).result;
 
     vector<int> regs = find_call_ancestors_in_context( Q, t);
 
@@ -1617,10 +1578,7 @@ void reg_heap::check_used_reg(int index) const
 {
   const reg& R = access(index);
 
-  // Check that we have already correctly recorded all the references!
-  assert(get_exp_refs(R.E) == R.references);
-
-  for(int r: R.references)
+  for(int r: R.C.Env)
   {
     // Check that referenced regs are owned by the owners of R
     assert(access(r).is_owned_by_all_of( R.get_owners()) );
@@ -1696,7 +1654,7 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
     unique.push_back(scan[i]);
 
     // Count the references from E
-    scan.insert(scan.end(), R.references.begin(), R.references.end());
+    scan.insert(scan.end(), R.C.Env.begin(), R.C.Env.end());
 
     // Count also the references from the call
     if (R.call != -1)
@@ -1740,11 +1698,8 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
     R.state = reg::checked;
     unique.push_back(scan[i]);
 
-    // Make sure that we have already correctly got all the references!
-    assert(get_exp_refs(R.E) == R.references);
-    
     // Count the references from E
-    scan.insert(scan.end(), R.references.begin(), R.references.end());
+    scan.insert(scan.end(), R.C.Env.begin(), R.C.Env.end());
 
     // Count also the references from the call
     if (R.call != -1) 
@@ -1840,8 +1795,10 @@ class RegOperationArgs: public OperationArgs
 
   int n_allocated;
 
+  const closure& current_closure() const {return M[R].C;}
+
   // Removing this dynamic_cast doesn't seem to speed things up very much.
-  const expression& get_E() const {return *dynamic_pointer_cast<const expression>(M[R].E);}
+  const expression& get_E() const {return *dynamic_pointer_cast<const expression>(M[R].C.exp);}
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int lazy_evaluate_reg(int R2)
@@ -1871,13 +1828,12 @@ class RegOperationArgs: public OperationArgs
   // Note: see note below on evaluate_structure( ) on the issue of returning lambdas.
 
   /// Reduce the WHNF expression to either a lambda or a constructor, but evaluating a reg_var if passed.
-  expression_ref lazy_evaluate_structure(const expression_ref& S)
+  closure lazy_evaluate_structure(const expression_ref& E, const vector<int>& Env)
   {
     // Any slot that we are going to evaluate needs to point to another node
-    if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( S ))
+    if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>( E ))
     {
-
-      int R2 = RV->target;
+      int R2 = lookup_in_env(Env, V->index);
 
       R2 = lazy_evaluate_reg(R2);
 
@@ -1896,7 +1852,7 @@ class RegOperationArgs: public OperationArgs
       return M.access(R2).result;
     }
     else
-      return S;
+      return {E,Env};
   }
 
   /*
@@ -1913,36 +1869,39 @@ class RegOperationArgs: public OperationArgs
    * We could also define evaluate_structure as a wrapper for another routine that takes a reg index.
    */
   
-  expression_ref evaluate_structure(const expression_ref& S)
+  expression_ref evaluate_structure(const expression_ref& R, const vector<int>& Env)
   {
-    if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>( S ))
+    if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>( R ))
     {
-      int R2 = lazy_evaluate_reg(RV->target);
+      int R2 = lookup_in_env(Env, V->index);
+      int R3 = lazy_evaluate_reg(R2);
 
       /* IDEA: only allow evaluation of reg_vars, constants, and constructors 
 	       any reg_var that evaluates to a lambda stays a reg_var.
 	       that is the only use way of using the result.
        */
 
-      return evaluate_structure( M.access(R2).result );
+      const closure& C = M.access(R3).result;
+
+      return evaluate_structure( C.exp, C.Env );
     }
-    else if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(S))
+    else if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
     {
       // If the "structure" is a lambda function, then we are done.
       // (a) if we were going to USE this, we should just call lazy evaluate! (which return a heap variable)
       // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
       // See note above on returning lambdas as reg_vars.
-      if (dynamic_pointer_cast<const lambda>(E->sub[0])) return S;
+      if (dynamic_pointer_cast<const lambda2>(E->sub[0])) return R;
 
       assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
       // If the result is a constructor expression, then evaluate its fields also.
-      object_ptr<expression> E2 ( dynamic_pointer_cast<const expression>(S)->clone() );
+      object_ptr<expression> E2 ( dynamic_pointer_cast<const expression>(R)->clone() );
       
       bool different = false;
       for(int i=1;i<E2->size();i++)
       {
-	E2->sub[i] = evaluate_structure(E->sub[i]);
+	E2->sub[i] = evaluate_structure(E->sub[i],Env);
 	if (E2->sub[i] != E->sub[i])
 	  different = true;
       }
@@ -1950,10 +1909,10 @@ class RegOperationArgs: public OperationArgs
       if (different)
 	return object_ref(E2);
       else
-	return S;
+	return R;
     }
     else
-      return S;
+      return R;
   }
 
 public:
@@ -1965,12 +1924,12 @@ public:
 
   object_ref evaluate(int slot)
   {
-    return evaluate_structure(reference(slot));
+    return evaluate_structure(reference(slot), M[R].C.Env);
   }
 
-  object_ref lazy_evaluate(int slot)
+  closure lazy_evaluate(int slot)
   {
-    return lazy_evaluate_structure(reference(slot));
+    return lazy_evaluate_structure(reference(slot), M[R].C.Env);
   }
 
   object_ref evaluate_expression(const expression_ref&)
@@ -1978,10 +1937,10 @@ public:
     std::abort();
   }
 
-  int allocate(const expression_ref& R)
+  int allocate(const closure& C)
   {
     int r = *M.push_temp_head( owners );
-    M.set_E(r, R);
+    M.set_C(r, C);
     n_allocated++;
     return r;
   }
@@ -2002,6 +1961,7 @@ public:
       M.pop_temp_head( owners );
   }
 };
+
 
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>&);
 
@@ -2057,15 +2017,21 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
    *   return R1
    */
 
+// Perhaps rewrite the expression system to
+// (a) Separate the head (object_ref) from the other args (expression_ref)
+// (b) Make a constructor take some number of arguments.
+// (c) Change the interpretation of closure constructors so that they are always C n n-1 ... 1 0.
+//     I guess if we don't then we have to actually look into the constructor expression.
+// (d) Remove Operation::evaluate( ) and just use lazy_evaluate( ).
+
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
 int reg_heap::incremental_evaluate(int R, int t)
 {
   assert(R >= 0 and R < n_regs());
   assert(access(R).state == reg::used);
-  assert(get_exp_refs(access(R).E) == access(R).references);
   assert(access(R).is_owned_by(t));
-  assert(is_WHNF(access(R).result));
+  assert(is_WHNF(access(R).result.exp));
 
 #ifndef NDEBUG
   //  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
@@ -2080,7 +2046,6 @@ int reg_heap::incremental_evaluate(int R, int t)
 #ifndef NDEBUG
     //    std::cerr<<"   statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
-    assert(get_exp_refs(access(R).E) == access(R).references);
 
     // If we know what to call, then call it and use it to set the result
     if (access(R).call != -1)
@@ -2105,11 +2070,13 @@ int reg_heap::incremental_evaluate(int R, int t)
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
-    else if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(access(R).E))
+    else if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(access(R).C.exp))
     {
       assert( access(R).call == -1);
 
-      int C = incremental_evaluate(RV->target, t);
+      int R2 = access(R).C.lookup_in_env( V->index );
+
+      int C = incremental_evaluate(R2, t);
 
       set_call(R, C);
 
@@ -2120,63 +2087,53 @@ int reg_heap::incremental_evaluate(int R, int t)
       access(R).result = access(C).result;
 
       // If we point to C through an intermediate reg_var chain, then change us to point to the end
-      if (C != RV->target)
-	set_E(R, reg_var(C));
+      if (C != R2) {
+	// FIXME - eventually 
+	set_C(R, closure(index_var(0),{C}));
+      }
 
       return C;
     }
 
     // Check for WHNF *OR* heap variables
-    else if (is_WHNF(access(R).E))
-      access(R).result = access(R).E;
+    else if (is_WHNF(access(R).C.exp))
+      access(R).result = access(R).C;
 
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
-    else if (object_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(access(R).E))
+    else if (object_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(access(R).C.exp))
       throw myexception()<<"Parameter with no result?! (Changeable = "<<access(R).changeable<<")";
 
-    
     // Reduction: let expression
-    else if (parse_let_expression(access(R).E, vars, bodies, T))
+    else if (parse_indexed_let_expression(access(R).C.exp, bodies, T))
     {
       owner_set_t owners = access(R).get_owners();
 
-      vector<object_ptr<reg_var> > new_reg_vars;
-      for(int i=0;i<vars.size();i++)
-      {
-	int V = *push_temp_head(owners);
-	// Don't set ownership here, where it could be cleared by further allocate()s.
-	new_reg_vars.push_back( object_ptr<reg_var>(new reg_var(V)) );
-      }
-      
-      // Substitute the new heap vars for the dummy vars in expression T and in the bodies
-      for(int i=0;i<vars.size();i++) 
-      {
-	// if the body is already a reg_var, let's not add a new reg_var just to point to it!
-	expression_ref replacement_reg_var = new_reg_vars[i]->clone();
-	if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(bodies[i]))
-	  replacement_reg_var = bodies[i];
+      vector<int> local_env = access(R).C.Env;
 
-	for(int j=0;j<vars.size();j++)
-	  bodies[j] = substitute(bodies[j], vars[i], *replacement_reg_var);
-	
-	T = substitute(T, vars[i], *replacement_reg_var);
+      vector<int> new_heap_vars;
+      for(int i=0;i<bodies.size();i++)
+      {
+	// FIXME - do we really want to add a new heap var to point to indirection nodes?
+	// And, what would this mean, anyway?
+
+	// Hmm... should this happen at all?  How?
+
+	int V = *push_temp_head(owners);
+	new_heap_vars.push_back( V );
+	local_env.push_back( V );
       }
       
+      set_C(R, get_trimmed({T, local_env}));
+
+      // Substitute the new heap vars for the dummy vars in expression T and in the bodies
+      for(int i=0;i<bodies.size();i++) 
+	set_C(new_heap_vars[i], get_trimmed({bodies[i],local_env}));
+
       assert(not access(R).changeable);
 
-      // Set the bodies of the new reg_vars
-      for(int i=0;i<vars.size();i++) 
-      {
-	int V = new_reg_vars[i]->target;
-
-	set_E(V , bodies[i]);
-      }
-
-      set_E(R, T);
-
       // Remove the new heap vars from the list of temp heads in reverse order.
-      for(int i=0;i<new_reg_vars.size(); i++)
+      for(int i=0;i<new_heap_vars.size(); i++)
 	pop_temp_head(owners);
       
       assert(access(R).call == -1);
@@ -2186,7 +2143,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
-      object_ptr<const expression> E = dynamic_pointer_cast<const expression>(access(R).E);
+      object_ptr<const expression> E = dynamic_pointer_cast<const expression>(access(R).C.exp);
       assert(E);
       
       object_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]);
@@ -2207,7 +2164,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 #endif
 
       RegOperationArgs Args(R, *this, t);
-      expression_ref result = (*O)(Args);
+      closure result = (*O)(Args);
 
       // NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
       //       How could we assert that?
@@ -2219,7 +2176,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 	assert(access(R).call == -1);
 	assert(not access(R).result);
 	clear_used_inputs(R);
-	set_E(R, result);
+	set_C(R, result);
       }
       // Otherwise, set the reduction result.
       else
@@ -2233,13 +2190,13 @@ int reg_heap::incremental_evaluate(int R, int t)
   }
 
   assert(access(R).result);
-  assert(is_WHNF(access(R).result));
-  assert(not dynamic_pointer_cast<const reg_var>(access(R).result));
+  assert(is_WHNF(access(R).result.exp));
+  assert(not dynamic_pointer_cast<const index_var>(access(R).result.exp));
 
   return R;
 }
 
-expression_ref subst_referenced_vars(const expression_ref& R, const map<int, expression_ref>& names)
+expression_ref subst_referenced_vars(const expression_ref& R, const vector<int>& Env, const map<int, expression_ref>& names)
 {
   if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
   {
@@ -2248,7 +2205,7 @@ expression_ref subst_referenced_vars(const expression_ref& R, const map<int, exp
     E2->sub.resize(E->size());
     for(int i=0;i<E->size();i++)
     {
-      E2->sub[i] = subst_referenced_vars(E->sub[i], names);
+      E2->sub[i] = subst_referenced_vars(E->sub[i], Env, names);
       if (E2->sub[i] != E->sub[i])
 	different = true;
     }
@@ -2257,9 +2214,9 @@ expression_ref subst_referenced_vars(const expression_ref& R, const map<int, exp
     else
       return R;
   }
-  else if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
+  else if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(R))
   {
-    map<int, expression_ref>::const_iterator loc = names.find(RV->target);
+    const auto loc = names.find( lookup_in_env(Env, V->index) );
     if (loc == names.end())
       return R;
     else
@@ -2273,15 +2230,14 @@ expression_ref subst_referenced_vars(const expression_ref& R, const map<int, exp
     return R;
 }
 
-void discover_graph_vars(const reg_heap& C, int R, map<int,expression_ref>& names, const map<string, reg_heap::root_t>& id)
+void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& names, const map<string, reg_heap::root_t>& id)
 {
-  expression_ref E = C.access(R).E;
-  set<int> refs = get_exp_refs(E);
+  const closure& C = H.access(R).C;
 
   // If there are no references, then we are done.
-  if (refs.empty()) 
+  if (C.Env.empty()) 
   {
-    names[R] = E;
+    names[R] = C.exp;
     return;
   }
 
@@ -2289,18 +2245,18 @@ void discover_graph_vars(const reg_heap& C, int R, map<int,expression_ref>& name
   if (includes(names, R))
   {
     if (not names[R])
-      names[R] = E;
+      names[R] = C.exp;
     return;
   }
 
-  // avoid infinite loops because of re-entering R
+  // Add R to the hash in order to avoid infinite loops because of re-entering R
   names[R] = expression_ref();
 
   // find the names for each referenced var.
-  for(int i: refs)
-    discover_graph_vars(C, i, names, id);
+  for(int i: C.Env)
+    discover_graph_vars(H, i, names, id);
 
-  names[R] = subst_referenced_vars(E, names);
+  names[R] = subst_referenced_vars(C.exp, C.Env, names);
 }
 
 string wrap(const string& s, int w)
@@ -2358,7 +2314,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // node name
     o<<name<<" ";
     o<<"[";
-    string label = wrap(C.access(R).E->print(), 40);
+    string label = wrap(C.access(R).C.print(), 40);
     o<<"label = \""<<R<<": "<<label<<"\"";
     if (C.access(R).changeable)
       o<<",style=\"dashed,filled\",color=red";
@@ -2370,7 +2326,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     o<<"];\n";
 
     // out-edges
-    for(int R2: C.access(R).references)
+    for(int R2: C.access(R).C.Env)
     {
      string name2 = "n" + convertToString(R2);
      o<<name<<" -> "<<name2<<";\n";
@@ -2400,3 +2356,54 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
   }
   o<<"}"<<std::endl;
 }
+
+/*
+ * To evaluate a reg with a closure, we have to know
+ * (a) how to save, modify and trim environments.
+ * (b) how to report the final answer back to calling program with all the
+ *     free variables removed, and also fully evaluated.
+ *
+ * Eval R -> (e,E)
+ *
+ * If e is a free variable x AND E[x]=p AND p->(e', E') then
+ * - Execute it (This resolves it to either a lambda or a constructor, and updates it).
+ * - Set our result to (e', E')
+ * - Set the *call* to R2.
+ * - 
+ *
+ * + Push an update marker to p onto the stack
+ * + Set e=e', E=E', throwing away the current expression, and environment.
+ *
+ * If e is a lambda (\x->e') , then
+ * - Do we only stop if there are no args on the stack?
+ * - If there are args on the stack, then
+ * + Take an arg (from stack to E top)
+ * + e = e'
+ *
+ * - If we run out of args, then rebind [e,args+E]
+ * 
+ * If e is an application (x y) then
+ * - Push y
+ * - e = x
+ * 
+ * If e is a let expression, then
+ * - 
+ *
+ * If e is a constructor, then 
+ * - stop.
+ *
+
+f x y {} : | f -> [/\/\.(1+0)+3,{z}]
+f x {} : y | f -> [/\/\.(1+0)+3,{z}]
+f {} : x y | f -> [/\/\.(1+0)+3,{z}]
+
+So, when we ENTER f, how do we know to UPDATE f?
+			      - Hmm.. well, there were
+			        some update marker things.
+
+f {} : y x | f -> [/\/\.(1+0)+3,{z}]
+/\/\.(1+0)+3 {z} : y x | f -> [/\/\.(1+0)+3,{z}]
+/\/\.(1+0)+3 {z,y} : x | f -> [/\/\.(1+0)+3,{z}]
+/\/\.(1+0)+3 {z,y,x} : | f -> [/\/\.(1+0)+3,{z}]
+
+*/

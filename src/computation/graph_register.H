@@ -21,18 +21,17 @@ private:
   owner_set_t owners;
 
 public:
-  /* 1. The computation. */
+  /* The closure */
+  closure C;
 
-  /// The expression
-  expression_ref E;
-
-  /// Is E a parameter, or is the result dependent on a parameter value?
+  /// Is C a parameter, or is the result dependent on a parameter value?
   bool changeable;
 
-  /// What does E reduce to eventually? (WHNF, but not a heap variable.)
-  expression_ref result;
+  /// What does C reduce to eventually? (WHNF, but not a heap variable.)
+  // {This should probably just become a point to a reg...}
+  closure result;
 
-  /// Does E reduce to another reg that we need to evaluate to get the true result?
+  /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call;
 
   /* 2. The computations we used */
@@ -42,7 +41,7 @@ public:
 
   /* 3. The computations that use or reference us. */
 
-  /// Which pairs (reg,slot) USED the reduction result of E (via an operation)?
+  /// Which pairs (reg,slot) USED the reduction result of C (via an operation)?
   std::set< int > outputs;
 
   /// Which reduction results made use of the value of this expression (via call)
@@ -50,9 +49,6 @@ public:
 
   /// The nodes that directly reference us (not via a call)
   std::set< int > referenced_by_in_E;
-
-  /// The nodes that we directly reference from E
-  std::set< int > references;
 
   /* 4. Fields used by the memory manager */
   enum States {none=0,free=1,used=2,checked=3};
@@ -102,7 +98,6 @@ struct var: public Object
     :name(s)
   { }
 };
-
 
 struct reg_var: public Object
 {
@@ -195,9 +190,9 @@ public:
   void set_call_unsafe(int R1, int R2);
   void clear_call(int R);
   void clear(int);
-  void clear_E(int R);
-  void set_E(int R, const expression_ref& e);
-  void set_reduction_result(int R, const expression_ref& E);
+  void clear_C(int R);
+  void set_C(int R, const closure& C);
+  void set_reduction_result(int R, const closure& C);
 
   /*----- Token manager ------*/
 
@@ -286,14 +281,12 @@ public:
   /*----- Graph splitting -----*/
   int uniquify_reg(int reg, int t);
   /// Update the value of a non-constant, non-computed index
-  void set_reg_value(int index, const expression_ref&, int t);
+  void set_reg_value(int index, const closure&, int t);
 
   int incremental_evaluate(int R, int t);
 };
 
 expression_ref graph_normalize(const expression_ref& R);
-
-bool is_reg_var(const expression_ref& R);
 
 bool is_var(const expression_ref& R);
 

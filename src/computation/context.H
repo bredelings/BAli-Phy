@@ -41,10 +41,14 @@ private:
   void add_identifier(const std::string& name, int R);
 
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
-  expression_ref translate_refs(const expression_ref& R) const;
+  expression_ref translate_refs(const expression_ref& R, std::vector<int>&) const;
+  /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
+  closure translate_refs(const closure& C) const;
 
   /// Check if a compute expression is computed.
   bool reg_is_fully_up_to_date(int r) const;
+
+  closure preprocess(const closure& C) const;
 
 public:
 
@@ -72,16 +76,22 @@ public:
   bool compute_expression_is_up_to_date(int i) const;
 
   /// Return the value of a particular index, computing it if necessary
-  object_ref lazy_evaluate(int index) const;
+  closure lazy_evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
-  object_ref lazy_evaluate_expression(const expression_ref&) const;
+  closure lazy_evaluate_expression(const expression_ref&) const;
+
+  /// Return the value of a particular index, computing it if necessary
+  closure lazy_evaluate_expression_(const closure&) const;
 
   /// Return the value of a particular index, computing it if necessary
   object_ref evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
   object_ref evaluate_expression(const expression_ref&) const;
+
+  /// Return the value of a particular index, computing it if necessary
+  object_ref evaluate_expression_(const closure&) const;
 
   template <typename T>
   object_ptr<const T> evaluate_as(int index) const
@@ -108,10 +118,13 @@ public:
   object_ref get_parameter_value(const std::string&) const;
 
   /// Update the value of a non-constant, non-computed index
-  void set_reg_value(int index, const expression_ref&);
+  void set_reg_value(int index, const closure&);
 
   /// Update the value of a non-constant, non-computed index
   void set_parameter_value(int index, const expression_ref&);
+
+  /// Update the value of a non-constant, non-computed index
+  void set_parameter_value_(int index, const closure&);
 
   /// Update the value of a non-constant, non-computed index
   void set_parameter_value(const std::string& var, const expression_ref&);
@@ -129,8 +142,12 @@ public:
 
   /// Add a literal expression that MAY be reduced
   int add_compute_expression(const expression_ref& e);
+  /// Add a literal expression that MAY be reduced
+  int add_compute_expression_(const closure& e);
   /// Change the i-th compute expression to e
   void set_compute_expression(int i, const expression_ref& e);
+  /// Change the i-th compute expression to e
+  void set_compute_expression_(int i, const closure& e);
 
   int n_expressions() const;
   expression_ref get_expression(int i) const;
@@ -138,8 +155,8 @@ public:
   void alphabetize_parameters();
 
 protected:  
-  void set_E(int R, const expression_ref& e) const {memory->set_E(R,e);}
-  void set_reduction_result(int R, const expression_ref& result) const {memory->set_reduction_result(R, result);}
+  void set_C(int R, const closure& c) const {memory->set_C(R,c);}
+  void set_reduction_result(int R, const closure& result) const {memory->set_reduction_result(R, result);}
   int incremental_evaluate(int R) const {return memory->incremental_evaluate(R,token);}
   expression_ref full_evaluate(int& R) const;
 

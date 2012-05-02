@@ -301,7 +301,7 @@ public:
 
   // Evaluate the model and return the result
   virtual object_ptr<const Object> result() const;
-  object_ptr<const Object> operator()(OperationArgs& Args) const;
+  closure operator()(OperationArgs& Args) const;
 
   // Evaluate the model and return the result
   template <typename T>
@@ -328,7 +328,7 @@ struct model_prior: public Operation
 
   model_prior* clone() const {return new model_prior(*this);}
 
-  object_ptr<const Object> operator()(OperationArgs& Args) const;
+  closure operator()(OperationArgs& Args) const;
 
   std::string name() const {return "model_prior["+M->name()+"]";}
 

@@ -228,14 +228,7 @@ int main()
   // I guess the current framework could not evaluate X:Y to X:Y.  It would simply return value(X):value(Y).
   // I could introduce a QUOTE expression to prevent this... that sounds rather LISP-y.
 
-  for(int i=0;i<CTX1.n_expressions();i++)
-  {
-    expression_ref R = CTX1.get_expression(i);
-    cout<<i<<"  "<<R->print()<<"\n";
-
-    expression_ref N = launchbury_normalize(R);
-    cout<<"     "<<N->print()<<"\n";
-  }
+  cout<<CTX1<<"\n";
 
   expression_ref v0 = dummy(0);
   expression_ref v1 = dummy(1);

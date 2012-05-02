@@ -439,7 +439,7 @@ object_ptr<const Object> Model::result() const
   return M;
 }
 
-object_ptr<const Object> Model::operator()(OperationArgs& Args) const
+closure Model::operator()(OperationArgs& Args) const
 {
   object_ptr<Model> M (clone());
   for(int i=0;i<n_parameters();i++)
@@ -447,7 +447,7 @@ object_ptr<const Object> Model::operator()(OperationArgs& Args) const
   return M->result();
 }
 
-object_ptr<const Object> model_prior::operator()(OperationArgs& Args) const
+closure model_prior::operator()(OperationArgs& Args) const
 {
   expression_ref R = Args.evaluate(0);
 

@@ -9,6 +9,7 @@
 struct OperationArgs;
 
 #include "operator.H"
+#include "closure.H"
 
 struct Operation: public Operator
 {
@@ -16,7 +17,7 @@ struct Operation: public Operator
   int n_args() const {return n_args_;}
 
   virtual Operation* clone() const=0;
-  virtual object_ptr<const Object> operator()(OperationArgs& Args) const =0;
+  virtual closure operator()(OperationArgs& Args) const = 0;
 
   Operation(int n):n_args_(n) { }
 };

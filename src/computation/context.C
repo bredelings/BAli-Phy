@@ -10,10 +10,39 @@ using std::set;
 using std::cerr;
 using std::endl;
 
+closure let_float(closure C)
+{
+  C.exp = let_float(expression_ref(C.exp));
+  return C;
+}
+
+closure graph_normalize(closure C)
+{
+  C.exp = graph_normalize(expression_ref(C.exp));
+  return C;
+}
+
+closure indexify(closure C)
+{
+  C.exp = indexify(expression_ref(C.exp));
+  return C;
+}
+
+closure trim_normalize(closure C)
+{
+  C.exp = trim_normalize(expression_ref(C.exp));
+  return C;
+}
+
+closure context::preprocess(const closure& C) const
+{
+  return translate_refs( trim_normalize( indexify( graph_normalize( let_float( C ) ) ) ) );
+}
+
 string context::parameter_name(int i) const
 {
-  expression_ref E = access(*parameters()[i]).E;
-  if (object_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(E))
+  const closure& C = access(*parameters()[i]).C;
+  if (object_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(C.exp))
   {
     return P->parameter_name;
   }
@@ -49,19 +78,19 @@ void context::rename_parameter(int i, const string& new_name)
   int R = *parameters()[i];
 
   assert( access(R).changeable == true );
-  set_E(R, parameter(new_name) );
+  set_C(R, parameter(new_name) );
 }
 
 bool context::reg_is_fully_up_to_date(int R) const
 {
-  expression_ref result = access(R).result;
+  const closure& result = access(R).result;
 
   if (not result) return false;
 
-  // NOTE! result cannot be a reg_var.
+  // NOTE! result cannot be an index_var.
+  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(result.exp);
 
   // Therefore, if the result is atomic, then R is up-to-date.
-  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
   if (not E) return true;
 
   // If the result is a lambda function, then R is up-to-date.
@@ -70,12 +99,13 @@ bool context::reg_is_fully_up_to_date(int R) const
   // If we get here, this had better be a constructor!
   assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
-  // Check each component that is a reg_var to see if its out of date.
+  // Check each component that is a index_var to see if its out of date.
   for(int i=1;i<E->size();i++)
   {
-    object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
-    assert(RV);
-    int R2 = RV->target;
+    // assert_cast
+    object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(E->sub[i]);
+    assert(V);
+    int R2 = result.lookup_in_env( V->index );
     
     if (not reg_is_fully_up_to_date(R2)) return false;
   }
@@ -97,31 +127,31 @@ bool context::compute_expression_is_up_to_date(int index) const
 expression_ref context::full_evaluate(int& R) const
 {
   R = incremental_evaluate(R);
-  expression_ref result = access(R).result;
+  const closure& result = access(R).result;
 
   {
-    // NOTE! result cannot be a reg_var.
+    // NOTE! result cannot be a index_var.
     
     // Therefore, if the result is atomic, then we are done.
-    object_ptr<const expression> E = dynamic_pointer_cast<const expression>(result);
-    if (not E) return result;
+    object_ptr<const expression> E = dynamic_pointer_cast<const expression>(result.exp);
+    if (not E) return result.exp;
 
     // If the result is a lambda function, then we are done.
     // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
     // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
-    if (not dynamic_pointer_cast<const constructor>(E->sub[0])) return result;
+    if (not dynamic_pointer_cast<const constructor>(E->sub[0])) return result.exp;
   }
 
   // If the result is a structure, then evaluate its fields and substitute them.
   {
-    object_ptr<expression> E ( dynamic_pointer_cast<const expression>(result)->clone() );
+    object_ptr<expression> E ( dynamic_pointer_cast<const expression>(result.exp)->clone() );
     assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
     for(int i=1;i<E->size();i++)
     {
-      object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(E->sub[i]);
-      assert(RV);
-      int R2 = RV->target;
+      object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(E->sub[i]);
+      assert(V);
+      int R2 = result.lookup_in_env( V->index );
 
       E->sub[i] = full_evaluate(R2);
     }
@@ -130,7 +160,7 @@ expression_ref context::full_evaluate(int& R) const
 }
 
 /// Return the value of a particular index, computing it if necessary
-object_ref context::lazy_evaluate(int index) const
+closure context::lazy_evaluate(int index) const
 {
   int& H = *heads()[index];
 
@@ -149,14 +179,19 @@ object_ref context::evaluate(int index) const
   return full_evaluate(H);
 }
 
-object_ref context::lazy_evaluate_expression(const expression_ref& E) const
+closure context::lazy_evaluate_expression(const expression_ref& E) const
+{
+  return lazy_evaluate_expression_( preprocess(E) );
+}
+
+closure context::lazy_evaluate_expression_(const closure& C) const
 {
   try {
     int R = *push_temp_head();
-    set_E(R, let_float(graph_normalize(translate_refs(E)) ));
+    set_C(R, C);
 
     R = incremental_evaluate(R);
-    object_ref result = access(R).result;
+    const closure& result = access(R).result;
     
     pop_temp_head();
     return result;
@@ -170,9 +205,14 @@ object_ref context::lazy_evaluate_expression(const expression_ref& E) const
 
 object_ref context::evaluate_expression(const expression_ref& E) const
 {
+  return evaluate_expression_( preprocess(E) );
+}
+
+object_ref context::evaluate_expression_(const closure& C) const
+{
   try {
     int R = *push_temp_head();
-    set_E(R, let_float(graph_normalize(translate_refs(E)) ));
+    set_C(R, C);
 
     expression_ref result = full_evaluate(R);
     pop_temp_head();
@@ -208,7 +248,7 @@ object_ref context::get_parameter_value(int index) const
     incremental_evaluate(P);
   }
 
-  return access(P).result;
+  return access(P).result.exp;
 }
 
 /// Get the value of a non-constant, non-computed index
@@ -221,17 +261,23 @@ object_ref context::get_parameter_value(const std::string& name) const
   return get_parameter_value(index);
 }
 
+// FIXME - change argument to closure?
 void context::set_parameter_value(int index, const expression_ref& O)
+{
+  set_parameter_value_(index, preprocess(O) );
+}
+
+// FIXME - change argument to closure?
+void context::set_parameter_value_(int index, const closure& C)
 {
   int P = *parameters()[index];
 
-  set_reg_value(P, O);
+  set_reg_value(P, C);
 }
 
-/// Update the value of a non-constant, non-computed index
-void context::set_reg_value(int P, const expression_ref& O)
+void context::set_reg_value(int P, const closure& C)
 {
-  return memory->set_reg_value(P, translate_refs(O), token);
+  return memory->set_reg_value(P, C, token);
 }
 
 /// Update the value of a non-constant, non-computed index
@@ -265,7 +311,7 @@ int context::add_parameter(const string& name)
   parameters().push_back( r );
 
   access(*r).changeable = true;
-  set_E(*r, parameter(name) );
+  set_C(*r, parameter(name) );
 
   return index;
 }
@@ -273,45 +319,30 @@ int context::add_parameter(const string& name)
 /// Add an expression that may be replaced by its reduced form
 int context::add_compute_expression(const expression_ref& E)
 {
-  expression_ref T = let_float(graph_normalize(translate_refs(E) ));
+  return add_compute_expression_( preprocess(E) );
+}
 
-  cerr<<"E = "<<E<<"\n";
-  cerr<<"E' = "<<indexify(E)<<"\n\n";
+/// Add an expression that may be replaced by its reduced form
+int context::add_compute_expression_(const closure& C)
+{
+  root_t r = allocate_reg();
+  set_C( *r, C );
 
-  root_t r;
-  if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
-  {
-    assert( access(RV->target).is_owned_by(token) );
-    
-    r = push_root( RV->target );
-  }
-  else
-  {
-    r = allocate_reg();
-    set_E( *r, T );
-  }
-
-  heads().push_back(r);
-  return heads().size()-1;
+  heads().push_back( r );
+  return heads().size() - 1;
 }
 
 /// Change the i-th compute expression to e
 void context::set_compute_expression(int i, const expression_ref& E)
 {
-  expression_ref T = let_float(graph_normalize(translate_refs(E) ));
+  set_compute_expression_( i, preprocess(E) );
+}
 
-  root_t r2;
-  if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(T))
-  {
-    assert( access(RV->target).is_owned_by(token) );
-    
-    r2 = push_root( RV->target );
-  }
-  else
-  {
-    r2 = allocate_reg();
-    set_E( *r2, T );
-  }
+/// Change the i-th compute expression to e
+void context::set_compute_expression_(int i, const closure& C)
+{
+  root_t r2 = allocate_reg();
+  set_C( *r2, C );
 
   root_t r1 = heads()[i];
   heads()[i] = r2;
@@ -327,7 +358,7 @@ int context::n_expressions() const
 expression_ref context::get_expression(int i) const
 {
   int H = *heads()[i];
-  return expression_ref(new reg_var(H) );
+  return reg_var(H);
 }
 
 void context::pop_temp_head() const
@@ -354,8 +385,10 @@ void context::collect_garbage() const
   memory->collect_garbage();
 }
 
-expression_ref context::translate_refs(const expression_ref& R) const
+expression_ref context::translate_refs(const expression_ref& R, vector<int>& Env) const
 {
+  int reg = -1;
+
   // Replace parameters with the appropriate reg_var: of value parameter( )
   if (object_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
   {
@@ -364,9 +397,7 @@ expression_ref context::translate_refs(const expression_ref& R) const
     if (param_index == -1)
       throw myexception()<<"Can't translate undefined parameter '"<<P->parameter_name<<"' in expression!";
 
-    int param_location = *parameters()[param_index];
-
-    return expression_ref(new reg_var(param_location) );
+    reg = *parameters()[param_index];
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
@@ -376,9 +407,19 @@ expression_ref context::translate_refs(const expression_ref& R) const
     if (loc == identifiers().end())
       throw myexception()<<"Can't translate undefined identifier '"<<V->name<<"' in expression!";
 
-    int R = *(loc->second);
+    reg = *(loc->second);
+  }
 
-    return expression_ref(new reg_var(R) );
+  // Replace parameters with the appropriate reg_var: of value whatever
+  if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
+    reg = RV->target;
+
+  if (reg != -1)
+  {
+    int index = Env.size();
+    Env.insert(Env.begin(), reg);
+
+    return expression_ref(new index_var(index) );
   }
 
   // Other constants have no parts, and don't need to be translated
@@ -389,9 +430,16 @@ expression_ref context::translate_refs(const expression_ref& R) const
   expression_ref R2 = R;
   object_ptr<expression> V ( new expression(*E) );
   for(int i=0;i<V->size();i++)
-    V->sub[i] = translate_refs(V->sub[i]);
+    V->sub[i] = translate_refs(V->sub[i], Env);
 
   return object_ptr<const expression>(V);
+}
+
+closure context::translate_refs(const closure& C) const
+{
+  closure C2 = C;
+  C2.exp = translate_refs(C2.exp, C2.Env);
+  return C2;
 }
 
 context& context::operator+=(const Def& D)
@@ -425,7 +473,7 @@ context& context::operator+=(const Program& P2)
     expression_ref F = P2.get_function(name);
 
     assert(R != -1);
-    set_E(R, let_float(graph_normalize(translate_refs(F))));
+    set_C(R, preprocess(F) );
   }
 
   (*P.modify()) += P2;

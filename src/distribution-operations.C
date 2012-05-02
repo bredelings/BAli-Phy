@@ -3,7 +3,7 @@
 using std::vector;
 using std::valarray;
 
-object_ptr<const Object> exponential_density::operator()(OperationArgs& Args) const
+closure exponential_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
   object_ptr<const Double> mu = Args.evaluate_as<Double>(1);
@@ -12,7 +12,7 @@ object_ptr<const Object> exponential_density::operator()(OperationArgs& Args) co
   return object_ptr<const Object>(result.clone());
 }
 
-object_ptr<const Object> log_exponential_density::operator()(OperationArgs& Args) const
+closure log_exponential_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
   double mu = *Args.evaluate_as<Double>(1);
@@ -21,7 +21,7 @@ object_ptr<const Object> log_exponential_density::operator()(OperationArgs& Args
   return object_ptr<const Object>(result.clone());
 }
 
-object_ptr<const Object> gamma_density::operator()(OperationArgs& Args) const
+closure gamma_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
   expression_ref a = Args.evaluate(1);
@@ -31,7 +31,7 @@ object_ptr<const Object> gamma_density::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
-object_ptr<const Object> beta_density::operator()(OperationArgs& Args) const
+closure beta_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
   expression_ref a = Args.evaluate(1);
@@ -41,7 +41,7 @@ object_ptr<const Object> beta_density::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
-object_ptr<const Object> normal_density::operator()(OperationArgs& Args) const
+closure normal_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
   expression_ref a = Args.evaluate(1);
@@ -51,7 +51,7 @@ object_ptr<const Object> normal_density::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
-object_ptr<const Object> log_normal_density::operator()(OperationArgs& Args) const
+closure log_normal_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
   expression_ref a = Args.evaluate(1);
@@ -61,7 +61,7 @@ object_ptr<const Object> log_normal_density::operator()(OperationArgs& Args) con
   return object_ptr<const Object>(result.clone());
 }
 
-object_ptr<const Object> cauchy_density::operator()(OperationArgs& Args) const
+closure cauchy_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
   expression_ref a = Args.evaluate(1);
@@ -71,7 +71,7 @@ object_ptr<const Object> cauchy_density::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
-object_ptr<const Object> dirichlet_density::operator()(OperationArgs& Args) const
+closure dirichlet_density::operator()(OperationArgs& Args) const
 {
   expression_ref X = Args.evaluate(0);
   expression_ref N = Args.evaluate(1);
@@ -84,7 +84,7 @@ object_ptr<const Object> dirichlet_density::operator()(OperationArgs& Args) cons
   return R;
 }
 
-object_ptr<const Object> laplace_density::operator()(OperationArgs& Args) const
+closure laplace_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
   expression_ref A = Args.evaluate(1);
@@ -94,7 +94,7 @@ object_ptr<const Object> laplace_density::operator()(OperationArgs& Args) const
   return object_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x,a[0],a[1]) ) );
 }
 
-object_ptr<const Object> log_laplace_density::operator()(OperationArgs& Args) const
+closure log_laplace_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
   expression_ref A = Args.evaluate(1);
@@ -104,7 +104,7 @@ object_ptr<const Object> log_laplace_density::operator()(OperationArgs& Args) co
   return object_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a[0],a[1])/x ) );
 }
 
-object_ptr<const Object> uniform_density::operator()(OperationArgs& Args) const
+closure uniform_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
   expression_ref A = Args.evaluate(1);

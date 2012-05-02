@@ -55,7 +55,7 @@ namespace substitution
     return R;
   }
 
-  object_ptr<const Object> Plus_gwF_Op::operator()(OperationArgs& Args) const
+  closure Plus_gwF_Op::operator()(OperationArgs& Args) const
   {
     const alphabet& a = *Args.evaluate_as<alphabet>(0);
 
@@ -120,7 +120,7 @@ namespace substitution
     return R;
   }
 
-  object_ptr<const Object> HKY_Op::operator()(OperationArgs& Args) const
+  closure HKY_Op::operator()(OperationArgs& Args) const
   {
     object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
     double kappa = *Args.evaluate_as<Double>(1);
@@ -157,7 +157,7 @@ namespace substitution
     return R;
   }
 
-  object_ptr<const Object> TN_Op::operator()(OperationArgs& Args) const
+  closure TN_Op::operator()(OperationArgs& Args) const
   {
     object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
     double kappa1 = *Args.evaluate_as<Double>(1);
@@ -199,7 +199,7 @@ namespace substitution
     return R;
   }
 
-  object_ptr<const Object> GTR_Op::operator()(OperationArgs& Args) const
+  closure GTR_Op::operator()(OperationArgs& Args) const
   {
     object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
     double AG = *Args.evaluate_as<Double>(1);
@@ -314,7 +314,7 @@ namespace substitution
     return R;
   }
 
-  object_ptr<const Object> Singlet_to_Triplet_Exchange_Op::operator()(OperationArgs& Args) const
+  closure Singlet_to_Triplet_Exchange_Op::operator()(OperationArgs& Args) const
   {
     object_ptr<const Triplets> T = Args.evaluate_as<Triplets>(0);
     object_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(1);
@@ -395,7 +395,7 @@ namespace substitution
     return object_ptr<const MatrixObject>(new MatrixObject(Q));
   }
 
-  object_ptr<const Object> Q_Op::operator()(OperationArgs& Args) const
+  closure Q_Op::operator()(OperationArgs& Args) const
   {
     object_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(0);
     object_ptr<const MatrixObject> F = Args.evaluate_as<MatrixObject>(1);
@@ -703,7 +703,7 @@ namespace substitution
     return object_ptr<const EigenValues>(new EigenValues(S));
   }
 
-  object_ptr<const Object> Get_Eigensystem_Op::operator()(OperationArgs& Args) const
+  closure Get_Eigensystem_Op::operator()(OperationArgs& Args) const
   {
     Matrix Q = *Args.evaluate_as<MatrixObject>(0);
     vector<double> pi = get_vector<double,Double>( Args.evaluate(1) );
@@ -749,7 +749,7 @@ namespace substitution
     return object_ptr<const Double>(new Double(scale/a.width()));
   }
 
-  object_ptr<const Object> Get_Equilibrium_Rate_Op::operator()(OperationArgs& Args) const
+  closure Get_Equilibrium_Rate_Op::operator()(OperationArgs& Args) const
   {
     object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
     object_ptr<const Box<vector<unsigned> > > smap = Args.evaluate_as< Box<vector<unsigned> > >(1);
