@@ -594,8 +594,12 @@ expression_ref indexify(const expression_ref& R, const vector<dummy>& variables)
 
   if (not E) 
   {
+    // Indexed Variable - This is assumed to be a free variable, so just shift it.
+    if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(R))
+      return index_var(V->index + variables.size());
+
     // Variable
-    if (object_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R))
+    else if (object_ptr<const dummy> D = dynamic_pointer_cast<const dummy>(R))
     {
       assert(D->index != -1);
 
