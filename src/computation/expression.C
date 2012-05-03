@@ -866,6 +866,13 @@ expression_ref trim_normalize(const expression_ref& R)
 
 expression_ref make_trim(const expression_ref& R, const vector<int>& indices)
 {
+#ifndef NDEBUG
+  vector<int> vars = get_free_index_vars(R);
+  for(int i=0;i<vars.size();i++)
+    assert(vars[i] == i);
+  assert(indices.size() == vars.size());
+#endif
+
   expression* V = new expression;
   V->sub.push_back(Trim());
   V->sub.push_back(Vector<int>(indices));
@@ -953,7 +960,7 @@ expression_ref do_trim(const expression_ref& R, const vector<int>& mapping, int 
     T = do_trim(T, mapping, depth + n);
 
     for(auto& body: bodies)
-      body = do_trim(T, mapping, depth + n);
+      body = do_trim(body, mapping, depth + n);
 
     return indexed_let_expression(bodies, T);
   }
