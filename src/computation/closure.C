@@ -27,9 +27,9 @@ closure get_trimmed(const closure& C)
     const vector<int>& keep = dynamic_pointer_cast<const Vector<int>>(E->sub[1])->t;
     
     // Since environments are indexed backwards
-    C2.Env.reserve(keep.size());
-    for(int i=keep.size()-1;i>=0;i--)
-      C2.Env.push_back(C.Env[keep[i]]);
+    C2.Env.resize(keep.size());
+    for(int i=0;i<keep.size();i++)
+      C2.Env[i] = C.lookup_in_env(keep[keep.size() - 1 - i]);
 
     // Should this ever happen?
     assert(not is_a(C2.exp, Trim()));
