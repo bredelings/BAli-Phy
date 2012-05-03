@@ -1830,12 +1830,12 @@ class RegOperationArgs: public OperationArgs
   // Note: see note below on evaluate_structure( ) on the issue of returning lambdas.
 
   /// Reduce the WHNF expression to either a lambda or a constructor, but evaluating a reg_var if passed.
-  closure lazy_evaluate_structure(const expression_ref& E, const vector<int>& Env)
+  closure lazy_evaluate_structure(const closure C)
   {
     // Any slot that we are going to evaluate needs to point to another node
-    if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>( E ))
+    if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>( C.exp ))
     {
-      int R2 = lookup_in_env(Env, V->index);
+      int R2 = C.lookup_in_env(V->index);
 
       R2 = lazy_evaluate_reg(R2);
 
@@ -1854,7 +1854,7 @@ class RegOperationArgs: public OperationArgs
       return M.access(R2).result;
     }
     else
-      return {E,Env};
+      return C;
   }
 
   /*
@@ -1871,11 +1871,11 @@ class RegOperationArgs: public OperationArgs
    * We could also define evaluate_structure as a wrapper for another routine that takes a reg index.
    */
   
-  expression_ref evaluate_structure(const expression_ref& R, const vector<int>& Env)
+  expression_ref evaluate_structure(closure C)
   {
-    if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>( R ))
+    if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>( C.exp ))
     {
-      int R2 = lookup_in_env(Env, V->index);
+      int R2 = C.lookup_in_env(V->index);
       int R3 = lazy_evaluate_reg(R2);
 
       /* IDEA: only allow evaluation of reg_vars, constants, and constructors 
@@ -1883,38 +1883,28 @@ class RegOperationArgs: public OperationArgs
 	       that is the only use way of using the result.
        */
 
-      const closure& C = M.access(R3).result;
-
-      return evaluate_structure( C.exp, C.Env );
+      return evaluate_structure( M.access(R3).result );
     }
-    else if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+    else if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(C.exp))
     {
       // If the "structure" is a lambda function, then we are done.
       // (a) if we were going to USE this, we should just call lazy evaluate! (which return a heap variable)
       // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
       // See note above on returning lambdas as reg_vars.
-      if (dynamic_pointer_cast<const lambda2>(E->sub[0])) return R;
+      if (dynamic_pointer_cast<const lambda2>(E->sub[0])) return C.exp;
 
       assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
 
       // If the result is a constructor expression, then evaluate its fields also.
-      object_ptr<expression> E2 ( dynamic_pointer_cast<const expression>(R)->clone() );
+      expression* V = E->clone();
       
-      bool different = false;
-      for(int i=1;i<E2->size();i++)
-      {
-	E2->sub[i] = evaluate_structure(E->sub[i],Env);
-	if (E2->sub[i] != E->sub[i])
-	  different = true;
-      }
+      for(int i=1;i<V->size();i++)
+	V->sub[i] = evaluate_structure({E->sub[i],C.Env});
 
-      if (different)
-	return object_ref(E2);
-      else
-	return R;
+      return V;
     }
     else
-      return R;
+      return C.exp;
   }
 
 public:
@@ -1926,12 +1916,12 @@ public:
 
   object_ref evaluate(int slot)
   {
-    return evaluate_structure(reference(slot), M[R].C.Env);
+    return evaluate_structure({reference(slot), M[R].C.Env});
   }
 
   closure lazy_evaluate(int slot)
   {
-    return lazy_evaluate_structure(reference(slot), M[R].C.Env);
+    return lazy_evaluate_structure({reference(slot), M[R].C.Env});
   }
 
   object_ref evaluate_expression(const expression_ref&)
