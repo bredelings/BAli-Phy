@@ -2198,6 +2198,8 @@ int reg_heap::incremental_evaluate(int R, int t)
   return R;
 }
 
+// Fixme!
+// Here we have handled neither depths, nor trim.
 expression_ref subst_referenced_vars(const expression_ref& R, const vector<int>& Env, const map<int, expression_ref>& names)
 {
   if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
@@ -2290,6 +2292,8 @@ string wrap(const string& s, int w)
 
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>& ids)
 {
+  return C[R].C.exp;
+
   map< int, expression_ref> names;
   for(const auto& id: ids)
   {
