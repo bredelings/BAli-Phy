@@ -673,6 +673,8 @@ void reg_heap::set_C(int R, const closure& C)
 #ifndef NDEBUG
   for(int r: access(R).C.Env)
   {
+    assert(0 <= r and r < n_regs());
+
     // check that all of the owners of R are also owners of *r.
     assert(access(r).is_owned_by_all_of( access(R).get_owners()) );
 
@@ -2100,6 +2102,11 @@ int reg_heap::incremental_evaluate(int R, int t)
     // Check for WHNF *OR* heap variables
     else if (is_WHNF(access(R).C.exp))
       access(R).result = access(R).C;
+
+#ifndef NDEBUG
+    else if (is_a(access(R).C.exp, Trim()))
+      std::abort();
+#endif
 
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
