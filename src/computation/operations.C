@@ -118,20 +118,39 @@ closure MkArray::operator()(OperationArgs& Args) const
   int n = *Args.evaluate_as<Int>(0);
   expression_ref f = Args.reference(1);
 
+  closure C = Args.current_closure();
+
   // We can't do negative-sized arrays
   assert(n >= 0);
   // The function should be represented as a heap variable...
-  assert(dynamic_pointer_cast<const index_var>(f));
-
+  object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(f);
+  int f_reg = C.lookup_in_env(V->index);
+  
   object_ptr<expression> exp = new expression;
-  closure C;
+  closure result;
   exp->sub.resize(n+1);
   exp->sub[0] = constructor("Array",n);
+  expression_ref apply_E;
+  {
+    expression_ref fE = index_var(1);
+    expression_ref argE = index_var(0);
+    apply_E = (fE, argE);
+  }
+
+  C.clear();
   for(int i=0;i<n;i++)
   {
+    // i
+    int i_reg = Args.allocate(expression_ref(i));
+
+    // %1 %0 {f,i}
+    int apply_reg = Args.allocate({apply_E,{f_reg, i_reg}});
+
     // change to C.exp <<= index_var(i)
-    exp->sub.push_back(index_var(n - 1 - i));
-    C.Env.push_back( Args.allocate((f,i)) );
+    exp->sub[i+1] = index_var(n - 1 - i);
+
+    // Add the var to the environment
+    C.Env.push_back( apply_reg );
   }
   C.exp = exp;
   
