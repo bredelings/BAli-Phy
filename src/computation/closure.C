@@ -26,8 +26,9 @@ closure get_trimmed(const closure& C)
     
     const vector<int>& keep = dynamic_pointer_cast<const Vector<int>>(E->sub[1])->t;
     
+    // Since environments are indexed backwards
     C2.Env.reserve(keep.size());
-    for(int i: keep)
+    for(int i=keep.size()-1;i>=0;i--)
       C2.Env.push_back(C.Env[keep[i]]);
 
     // Should this ever happen?

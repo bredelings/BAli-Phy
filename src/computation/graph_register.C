@@ -2024,6 +2024,7 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
 //     I guess if we don't then we have to actually look into the constructor expression.
 // (d) Remove Operation::evaluate( ) and just use lazy_evaluate( ).
 // (e) Make translate_refs use only one names for refs that occur twice.
+// (f) Make a pretty printer for expression_ref?
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
