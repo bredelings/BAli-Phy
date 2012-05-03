@@ -40,7 +40,7 @@ std::string Apply::name() const {
 
 closure Case::operator()(OperationArgs& Args) const
 {
-  const closure& C = Args.current_closure();
+  closure C = Args.current_closure();
 
   closure obj = Args.lazy_evaluate(0);
 
@@ -80,23 +80,22 @@ closure Case::operator()(OperationArgs& Args) const
     // If we are an n-arg constructor, then match iff the case is an expression and the head matches.
     else if (obj_E)
     {
-      if (object_ptr<const expression> case_E = dynamic_pointer_cast<const expression>(cases[i]))
+      if (obj_E->sub[0]->compare(*cases[i]))
       {
-	if (obj_E->sub[0]->compare(*case_E->sub[0]))
+	object_ptr<const constructor> C = dynamic_pointer_cast<const constructor>(obj_E->sub[0]);
+	assert(C);
+	// The number of constructor fields is the same the for case pattern and the case object.
+	assert(obj_E->size() == 1 + C->n_args());
+	// The number of entries in the environment is the same as the number of constructor fields.
+	assert(obj_E->size() == 1+obj.Env.size());
+	
+	result.exp = bodies[i];
+	
+	for(int j=1;j<obj_E->size();j++)
 	{
-	  // The number of constructor fields is the same the for case pattern and the case object.
-	  assert(obj_E->size() == case_E->size());
-	  // The number of entries in the environment is the same as the number of constructor fields.
-	  assert(obj_E->size() == 1+obj.Env.size());
-
-	  result.exp = bodies[i];
-
-	  for(int j=1;j<obj_E->size();j++)
-	  {
-	    int index = dynamic_pointer_cast<const index_var>(obj_E->sub[j])->index;
-
-	    result.Env.push_back( obj.lookup_in_env( index ) );
-	  }
+	  int index = dynamic_pointer_cast<const index_var>(obj_E->sub[j])->index;
+	  
+	  result.Env.push_back( obj.lookup_in_env( index ) );
 	}
       }
     }
