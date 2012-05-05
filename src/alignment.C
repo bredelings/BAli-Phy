@@ -92,9 +92,12 @@ vector<int> alignment::get_columns_for_characters(int row) const
 {
   vector<int> columns;
 
+  columns.resize(length());
+  int l=0;
   for(int c=0;c<length();c++)
     if (character(c,row))
-      columns.push_back(c);
+      columns[l++] = c;
+  columns.resize(l);
 
   return columns;
 }
