@@ -70,8 +70,7 @@ using namespace A5;
 // We can choose between them with the total_sum (I mean, sum_all_paths).
 // Then, we can just debug one routine, basically.
 
-void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
-			   DParrayConstrained*& Matrices)
+void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayConstrained*& Matrices)
 {
   default_timer_stack.push_timer("alignment::DP1/5-way");
   const Tree& T = P.T();
@@ -173,6 +172,9 @@ void sample_two_nodes_base(data_partition& P,const vector<int>& nodes,
 
   // collect the silent-or-correct-emissions for each type columns
   vector< vector<int> > allowed_states_for_mask(16);
+  for(auto& m: allowed_states_for_mask)
+    m.reserve(Matrices->nstates());
+
   for(int i=0;i<Matrices->nstates();i++) 
   {
     int S2 = Matrices->order(i);
