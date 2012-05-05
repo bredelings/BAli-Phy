@@ -1621,6 +1621,7 @@ void reg_heap::check_used_regs() const
 vector<int> reg_heap::find_all_regs_in_context(int t) const
 {
   vector<int> scan;
+  scan.reserve(roots.size());
   for(const auto& i: token_roots[t].temp)
   {
     assert(reg_is_owned_by(*i, t));
@@ -1645,6 +1646,7 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
   }
 
   vector<int> unique;
+  unique.reserve(n_regs());
   for(int i=0;i<scan.size();i++)
   {
     const reg& R = access(scan[i]);
@@ -1680,6 +1682,7 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 {
   vector<int> scan;
+  scan.reserve(roots.size());
   for(const auto& i: token_roots[t].temp)
     scan.push_back(*i);
   for(const auto& i: token_roots[t].heads)
@@ -1691,6 +1694,7 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
     scan.push_back(*i.second);
 
   vector<int> unique;
+  unique.reserve(n_regs());
   for(int i=0;i<scan.size();i++)
   {
     const reg& R = access(scan[i]);
