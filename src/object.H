@@ -99,7 +99,7 @@ struct object_ref: public object_ptr<const Object>
   { }
 
   template <typename T>
-  object_ref(const object_ptr<const T>& o)
+  object_ref(const object_ptr<T>& o)
     :object_ptr<const Object>(boost::static_pointer_cast<const Object>(o))
   { }
 
