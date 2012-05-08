@@ -140,6 +140,16 @@ string expression::print() const
     vector<expression_ref> bodies;
     expression_ref T;
 
+    if (is_a<lambda2>())
+    {
+      result = sub[0]->print();
+      if (sub[0]->is_a<lambda2>())
+	result = "/\\" + result;
+      else
+	result = "/\\." + result;
+      return result;
+    }
+
     if (parse_let_expression(this, vars, bodies, T))
     {
       result = "let {";
