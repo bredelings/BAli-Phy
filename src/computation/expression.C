@@ -2303,30 +2303,19 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
       return V;
   }
 
-  // 3. Application
-  if (E->size() or is_dummy(E->head))
-  {
-    // this should never happen!
-    std::abort();
-    expression* V = new expression(*E);
-    V->sub[0] = launchbury_unnormalize(E->sub[0]);
-    V->sub[1] = launchbury_unnormalize(E->sub[1]);
-    return V;
-  }
-  
   // 6. Case
   object_ptr<const Case> IsCase = is_a<Case>(E);
   if (IsCase)
   {
-    expression* V = new expression(*E);
+    expression* V = E->clone();
 
     // Unormalize the object
-    V->sub[1] = launchbury_unnormalize(V->sub[1]);
+    V->sub[0] = launchbury_unnormalize(V->sub[0]);
 
     const int L = V->sub.size()/2 - 1;
     // Just unnormalize the bodies
     for(int i=0;i<L;i++)
-      V->sub[3+2*i] = launchbury_unnormalize(V->sub[3+2*i]);
+      V->sub[2+2*i] = launchbury_unnormalize(V->sub[2+2*i]);
     
     return V;
   }
@@ -2334,7 +2323,7 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
   // 4. Constructor
   if (is_a<constructor>(E) or is_a<Operation>(E))
   {
-    expression* V = new expression(*E);
+    expression* V = E->clone();
     for(int i=0;i<E->size();i++)
       V->sub[i] = launchbury_unnormalize(E->sub[i]);
     return V;
