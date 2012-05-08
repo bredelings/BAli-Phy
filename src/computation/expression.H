@@ -210,6 +210,10 @@ expression_ref trim_normalize(const expression_ref&);
 
 expression_ref trim(const expression_ref&);
 
+expression_ref trim_unnormalize(const expression_ref&);
+
+expression_ref untrim(const expression_ref&);
+
 std::vector<int> get_free_index_vars(const expression_ref&);
 
 struct lambda: public Object

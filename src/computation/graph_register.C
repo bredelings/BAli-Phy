@@ -302,6 +302,13 @@ using std::endl;
  *                     any regs in context t that still refer to the old regs.
  */
 
+
+closure trim_unnormalize(closure C)
+{
+  C.exp = trim_unnormalize(C.exp);
+  return C;
+}
+
 bool includes(const owner_set_t& S1, const owner_set_t& S2)
 {
   return (S2 & ~S1).none();
@@ -2338,7 +2345,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // node name
     o<<name<<" ";
     o<<"[";
-    string label = wrap(escape(C.access(R).C.print()), 40);
+    string label = wrap(escape(trim_unnormalize(C.access(R).C).print()), 40);
     o<<"label = \""<<R<<": "<<label<<"\"";
     if (C.access(R).changeable)
       o<<",style=\"dashed,filled\",color=red";

@@ -950,6 +950,64 @@ expression_ref trim(const expression_ref& E)
   return make_trim( remap_free_indices(E, mapping, 0), indices);
 }
 
+expression_ref untrim(const expression_ref& E)
+{
+  if (object_ptr<const Trim> T = is_a<Trim>(E))
+  {
+    object_ptr<const Vector<int>> V = ::is_a<Vector<int>>(E->sub[0]);
+
+    return remap_free_indices(E->sub[1], V->t, 0);
+  }
+  else
+    return E;
+}
+
+// This only removes trimmers from the places that trim_normalize puts them.
+// (Since remap_free_indices( ) doesn't enter trimmers, this should be relatively efficient,
+//  just like trim_normalize( ))
+expression_ref trim_unnormalize(const expression_ref& E)
+{
+  // Already normalized (though not trimmed)
+  if (not E->size()) return E;
+
+  vector<expression_ref> bodies;
+  vector<expression_ref> patterns;
+  expression_ref T;
+
+  vector<int> vars;
+  
+  // Let expressions need to be normalized
+  if (parse_indexed_let_expression(E, bodies, T))
+  {
+    T = trim_unnormalize(untrim(T));
+
+    for(auto& body: bodies)
+      body = trim_unnormalize(untrim(body));
+
+    return indexed_let_expression(bodies,T);
+  }
+
+  // case expression
+  else if (parse_case_expression(E, T, patterns, bodies))
+  {
+    // T should already be a variable, so don't bother about it.
+    assert(is_a<index_var>(T));
+
+    for(auto& body: bodies)
+      body = trim_unnormalize(untrim(body));
+
+    return make_case_expression(T, patterns, bodies);
+  }
+  else
+  {
+    expression* V = new expression(*E);
+    for(int i=0;i<E->size();i++)
+      V->sub[i] = trim_unnormalize(untrim(V->sub[i]));
+
+    return V;
+  }
+}
+
 /// 1. Hey, could we solve the problem of needing to rename dummies by doing capture-avoiding substitution?
 /// I think we could!
 ///
