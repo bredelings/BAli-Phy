@@ -232,12 +232,12 @@ closure context::lazy_evaluate_expression(const expression_ref& E) const
 
 object_ref context::evaluate_expression(const expression_ref& E) const
 {
-  return lazy_evaluate_expression(E).exp->head;
+  return evaluate_expression_( preprocess(E) );
 }
 
 expression_ref context::evaluate_structure_expression(const expression_ref& E) const
 {
-  return evaluate_expression_( preprocess(E) );
+  return evaluate_structure_expression_( preprocess(E) );
 }
 
 bool context::parameter_is_set(int index) const
