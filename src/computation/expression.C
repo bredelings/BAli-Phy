@@ -826,7 +826,7 @@ expression_ref make_trim(const expression_ref& E, const vector<int>& indices)
 }
 
 // This compresses free variables according to the supplied mapping.
-expression_ref do_trim(const expression_ref& E, const vector<int>& mapping, int depth)
+expression_ref remap_free_indices(const expression_ref& E, const vector<int>& mapping, int depth)
 {
   if (not E->size())
   {
@@ -890,7 +890,7 @@ expression_ref do_trim(const expression_ref& E, const vector<int>& mapping, int 
   else if (object_ptr<const lambda2> L = is_a<lambda2>(E))
   {
     expression* V = new expression(lambda2());
-    V->sub.push_back(do_trim(E->sub[0], mapping, depth+1));
+    V->sub.push_back(remap_free_indices(E->sub[0], mapping, depth+1));
     return V;
   }
 
@@ -898,10 +898,10 @@ expression_ref do_trim(const expression_ref& E, const vector<int>& mapping, int 
   else if (parse_indexed_let_expression(E, bodies, T))
   {
     int n = bodies.size();
-    T = do_trim(T, mapping, depth + n);
+    T = remap_free_indices(T, mapping, depth + n);
 
     for(auto& body: bodies)
-      body = do_trim(body, mapping, depth + n);
+      body = remap_free_indices(body, mapping, depth + n);
 
     return indexed_let_expression(bodies, T);
   }
@@ -909,7 +909,7 @@ expression_ref do_trim(const expression_ref& E, const vector<int>& mapping, int 
   // case expression
   else if (parse_case_expression(E, T, patterns, bodies))
   {
-    T = do_trim(T, mapping, depth);
+    T = remap_free_indices(T, mapping, depth);
 
     for(int i=0;i<bodies.size();i++)
     {
@@ -919,7 +919,7 @@ expression_ref do_trim(const expression_ref& E, const vector<int>& mapping, int 
       if (object_ptr<const constructor> C = is_a<constructor>(patterns[i]))
 	n = C->n_args();
 
-      bodies[i] = do_trim(bodies[i], mapping, depth + n);
+      bodies[i] = remap_free_indices(bodies[i], mapping, depth + n);
     }
 
     return make_case_expression(T, patterns, bodies);
@@ -928,7 +928,7 @@ expression_ref do_trim(const expression_ref& E, const vector<int>& mapping, int 
   {
     expression* V = new expression(*E);
     for(int i=0;i<E->size();i++)
-      V->sub[i] = do_trim(V->sub[i], mapping, depth);
+      V->sub[i] = remap_free_indices(V->sub[i], mapping, depth);
     return V;
   }
 }
@@ -947,7 +947,7 @@ expression_ref trim(const expression_ref& E)
       mapping[indices[i]] = i;
   }
 
-  return make_trim( do_trim(E, mapping, 0), indices);
+  return make_trim( remap_free_indices(E, mapping, 0), indices);
 }
 
 /// 1. Hey, could we solve the problem of needing to rename dummies by doing capture-avoiding substitution?
