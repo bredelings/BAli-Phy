@@ -150,6 +150,12 @@ string expression::print() const
       return result;
     }
 
+    if (is_a<lambda>())
+    {
+      result = "/\\" + sub[0]->print()+"."+sub[1]->print();
+      return result;
+    }
+
     if (parse_let_expression(this, vars, bodies, T))
     {
       result = "let {";
