@@ -1966,6 +1966,7 @@ public:
 
 
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>&);
+expression_ref untranslate_vars(const expression_ref& E, const map<string, reg_heap::root_t>& ids);
 
   /*
    * incremental_eval R1
@@ -2165,7 +2166,8 @@ int reg_heap::incremental_evaluate(int R, int t)
 #ifndef NDEBUG
       string SS = "";
       SS = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
-      string SSS = deindexify(trim_unnormalize(access(R).C))->print();
+      string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
+				    get_identifiers_for_context(t))->print();
       if (true)
       {
 	std::ofstream f("token.dot");
@@ -2279,9 +2281,16 @@ string escape(const string& s)
   int l=0;
   for(int i=0;i<s.size();i++)
   {
-    bool escape = (s[i] == '\\') or (s[i] == '\n');
+    if (s[i] == '\n')
+    {
+      s2[l++] = '\\';
+      s2[l++] = 'n';
+      continue;
+    }
 
-    if (escape)
+    bool escape_next = (s[i] == '\\') or (s[i] == '\n') or (s[i] == '"');
+
+    if (escape_next)
       s2[l++] = '\\';
     s2[l++] = s[i];
   }
@@ -2300,7 +2309,7 @@ string wrap(const string& s, int w)
       pos = s2.find(' ',w);
 
     if (result.size())
-      result += "\\n";
+      result += "\n";
 
     if (pos == -1)
     {
@@ -2314,6 +2323,41 @@ string wrap(const string& s, int w)
     }
   }
   return result;
+}
+
+expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids)
+{
+  if (not E->size())
+  {
+    if (object_ptr<const reg_var> RV = is_a<reg_var>(E))
+    {
+      auto loc = ids.find(RV->target);
+      if (loc != ids.end())
+	return var(loc->second);
+      else
+	return E;
+    }
+    else
+      return E;
+  }
+
+  object_ptr<expression> V = E->clone();
+  for(int i=0;i<E->size();i++)
+    V->sub[i] = untranslate_vars(V->sub[i], ids);
+  return V;
+}
+
+map<int,string> get_register_names(const map<string, reg_heap::root_t>& ids)
+{
+  map<int,string> ids2;
+  for(const auto i:ids)
+    ids2[*i.second] = i.first;
+  return ids2;
+}
+
+expression_ref untranslate_vars(const expression_ref& E, const map<string, reg_heap::root_t>& ids)
+{
+  return untranslate_vars(E, get_register_names(ids));
 }
 
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>& ids)
@@ -2334,6 +2378,8 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
 
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 {
+  map<int,string> reg_names = get_register_names(C.get_identifiers_for_context(t));
+
   vector<int> regs = C.find_all_regs_in_context(t);
 
   o<<"digraph \"token"<<t<<"\" {\n";
@@ -2346,9 +2392,17 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // node name
     o<<name<<" ";
     o<<"[";
-    expression_ref E = deindexify(trim_unnormalize(C.access(R).C));
-    string label = wrap(escape(E->print()), 40);
-    o<<"label = \""<<R<<": "<<label<<"\"";
+
+    // node label = R/name: expression
+    string label = convertToString(R);
+    if (reg_names.count(R))
+      label += "/" + reg_names[R];
+    label += ": ";
+    expression_ref E = untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names);
+
+    label += E->print();
+    label = escape(wrap(label,40));
+    o<<"label = \""<<label<<"\"";
     if (C.access(R).changeable)
       o<<",style=\"dashed,filled\",color=red";
 
