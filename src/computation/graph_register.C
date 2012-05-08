@@ -2165,7 +2165,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 #ifndef NDEBUG
       string SS = "";
       SS = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
-      string SSS = deindexify(trim_unnormalize(access(R).C.exp))->print();
+      string SSS = deindexify(trim_unnormalize(access(R).C))->print();
       if (true)
       {
 	std::ofstream f("token.dot");
@@ -2346,7 +2346,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // node name
     o<<name<<" ";
     o<<"[";
-    string label = wrap(escape(trim_unnormalize(C.access(R).C).print()), 40);
+    expression_ref E = deindexify(trim_unnormalize(C.access(R).C));
+    string label = wrap(escape(E->print()), 40);
     o<<"label = \""<<R<<": "<<label<<"\"";
     if (C.access(R).changeable)
       o<<",style=\"dashed,filled\",color=red";

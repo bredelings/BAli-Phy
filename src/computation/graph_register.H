@@ -75,60 +75,6 @@ public:
   reg();
 };
 
-struct var: public Object
-{
-  std::string name;
-
-  var* clone() const {return new var(*this);}
-
-  std::string print() const
-  {
-    return name;
-  }
-
-  tribool compare(const Object& o) const
-  {
-    const var* V = dynamic_cast<const var*>(&o);
-    if (not V)
-      return false;
-
-    return name == V->name;
-  }
-
-  var(const std::string& s)
-    :name(s)
-  { }
-};
-
-struct reg_var: public Object
-{
-  int target;
-
-  reg_var* clone() const {return new reg_var(*this);}
-
-  std::string print() const 
-  {
-    return "<" + convertToString(target) + ">";
-  }
-
-  tribool compare(const Object& o) const
-  {
-    const reg_var* E = dynamic_cast<const reg_var*>(&o);
-    if (not E) 
-      return false;
-
-    return target == E->target;
-  }
-
-  reg_var():
-    target(-1)
-  { }
-
-  reg_var(int t):
-    target(t)
-  { }
-};
-
 // How do we handle parameters?
 // * well, parameters could be reg's, so that a separate reg must be a separate parameter.
 // * how, then, do we handle reg NAME's, if reg's are not uniquely identified by their names?

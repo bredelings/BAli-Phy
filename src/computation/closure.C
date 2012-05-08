@@ -43,3 +43,13 @@ closure get_trimmed(const closure& C)
   
   return C2;
 }
+
+expression_ref deindexify(const closure& C)
+{
+  vector<object_ref> variables;
+  for(int R: C.Env)
+    variables.push_back(reg_var(R));
+  
+  return deindexify(C.exp, variables);
+}
+

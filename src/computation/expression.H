@@ -97,6 +97,60 @@ struct dummy: public Object
   dummy(const std::string& s):index(-1),name(s) {}
 };
 
+struct reg_var: public Object
+{
+  int target;
+
+  reg_var* clone() const {return new reg_var(*this);}
+
+  std::string print() const 
+  {
+    return "<" + convertToString(target) + ">";
+  }
+
+  tribool compare(const Object& o) const
+  {
+    const reg_var* E = dynamic_cast<const reg_var*>(&o);
+    if (not E) 
+      return false;
+
+    return target == E->target;
+  }
+
+  reg_var():
+    target(-1)
+  { }
+
+  reg_var(int t):
+    target(t)
+  { }
+};
+
+struct var: public Object
+{
+  std::string name;
+
+  var* clone() const {return new var(*this);}
+
+  std::string print() const
+  {
+    return name;
+  }
+
+  tribool compare(const Object& o) const
+  {
+    const var* V = dynamic_cast<const var*>(&o);
+    if (not V)
+      return false;
+
+    return name == V->name;
+  }
+
+  var(const std::string& s)
+    :name(s)
+  { }
+};
+
 struct Trim: public Object
 {
   Trim* clone() const {return new Trim(*this);}
@@ -206,6 +260,7 @@ expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref
 
 expression_ref indexify(const expression_ref&);
 
+expression_ref deindexify(const expression_ref&, const std::vector<object_ref>&);
 expression_ref deindexify(const expression_ref&);
 
 expression_ref trim_normalize(const expression_ref&);

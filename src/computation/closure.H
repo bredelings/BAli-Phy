@@ -78,4 +78,6 @@ struct closure
 
 closure get_trimmed(const closure& C);
 
+expression_ref deindexify(const closure& C);
+
 #endif

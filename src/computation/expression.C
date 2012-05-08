@@ -671,7 +671,7 @@ dummy get_named_dummy(int n)
 }
 
 /// Convert to using de Bruijn indices.
-expression_ref deindexify(const expression_ref& E, const vector<dummy>& variables)
+expression_ref deindexify(const expression_ref& E, const vector<object_ref>& variables)
 {
   if (not E->size())
   {
@@ -702,7 +702,7 @@ expression_ref deindexify(const expression_ref& E, const vector<dummy>& variable
   expression_ref T;
   if (parse_indexed_let_expression(E, bodies, T))
   {
-    vector<dummy> variables2 = variables;
+    vector<object_ref> variables2 = variables;
     vector<expression_ref> vars;
     for(int i=0;i<bodies.size();i++)
     {
@@ -738,7 +738,7 @@ expression_ref deindexify(const expression_ref& E, const vector<dummy>& variable
 	n_args = C->n_args();
 
       // Add n_arg variables to the stack and to the pattern
-      vector<dummy> variables2 = variables;
+      vector<object_ref> variables2 = variables;
       for(int j=0;j<n_args;j++)
       {
 	dummy d = get_named_dummy(variables2.size());
