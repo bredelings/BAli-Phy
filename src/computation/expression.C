@@ -662,6 +662,118 @@ expression_ref indexify(const expression_ref& E)
   return indexify(E,{});
 }
 
+dummy get_named_dummy(int n)
+{
+  if (n<26) 
+    return dummy(string{char(97+n)});
+  else
+    return dummy(n-26);
+}
+
+/// Convert to using de Bruijn indices.
+expression_ref deindexify(const expression_ref& E, const vector<dummy>& variables)
+{
+  if (not E->size())
+  {
+    // Indexed Variable - This is assumed to be a free variable, so just shift it.
+    if (object_ptr<const index_var> V = is_a<index_var>(E))
+    {
+      if (V->index >= variables.size())
+	return new index_var(V->index - variables.size());
+
+      return variables[variables.size()-1 - V->index];
+    }
+    // Constant
+    else
+      return E;
+  }
+  
+  // Lambda expression - /\x.e
+  if (object_ptr<const lambda2> L = is_a<lambda2>(E))
+  {
+    vector<object_ref> variables2 = variables;
+    dummy d = get_named_dummy(variables.size());
+    variables2.push_back(d);
+    return lambda_quantify(d,deindexify(E->sub[0],variables2));
+  }
+
+  // Let expression
+  vector<expression_ref> bodies;
+  expression_ref T;
+  if (parse_indexed_let_expression(E, bodies, T))
+  {
+    vector<dummy> variables2 = variables;
+    vector<expression_ref> vars;
+    for(int i=0;i<bodies.size();i++)
+    {
+      dummy d = get_named_dummy(variables2.size());
+      vars.push_back( d );
+      variables2.push_back( d );
+    }
+
+    for(auto& body: bodies)
+      body = deindexify(body, variables2);
+
+    T = deindexify(T, variables2);
+
+    return let_expression(vars, bodies,T);
+  }
+
+  // case expression
+  vector<expression_ref> patterns;
+  if (parse_case_expression(E, T, patterns, bodies))
+  {
+    T = deindexify(T, variables);
+
+    for(int i=0;i<bodies.size();i++)
+    {
+      assert(not patterns[i]->size());
+      // Make a new expression so we can add variables to the pattern if its a constructor
+      object_ptr<expression> P = patterns[i]->clone();
+      expression_ref& B = bodies[i];
+
+      // Find the number of arguments in the constructor
+      int n_args = 0;
+      if (object_ptr<const constructor> C = is_a<constructor>(P))
+	n_args = C->n_args();
+
+      // Add n_arg variables to the stack and to the pattern
+      vector<dummy> variables2 = variables;
+      for(int j=0;j<n_args;j++)
+      {
+	dummy d = get_named_dummy(variables2.size());
+	variables2.push_back( d );
+	P->sub.push_back( d );
+      }
+
+#ifndef NDEBUG
+      if (object_ptr<const dummy> D = is_a<dummy>(P))
+      {
+	assert(D->index == -1);
+	assert(P->size() == 0);
+      }
+#endif
+
+      patterns[i] = P;
+      B = deindexify(B, variables2);
+    }
+
+    return make_case_expression(T, patterns, bodies);
+  }
+
+  // If we've gotten this far, just transform the sub-expressions.
+  // (This could be: Op, constructor, 
+  expression* V = new expression(*E);
+  for(int i=0;i<V->size();i++)
+    V->sub[i] = deindexify(V->sub[i], variables);
+  return V;
+}
+
+expression_ref deindexify(const expression_ref& E)
+{
+  return deindexify(E,{});
+}
+
 vector<int> pop_vars(int n, vector<int> vars)
 {
   assert(n >= 0);

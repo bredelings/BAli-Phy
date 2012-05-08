@@ -206,6 +206,8 @@ expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref
 
 expression_ref indexify(const expression_ref&);
 
+expression_ref deindexify(const expression_ref&);
+
 expression_ref trim_normalize(const expression_ref&);
 
 expression_ref trim(const expression_ref&);
