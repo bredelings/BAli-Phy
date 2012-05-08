@@ -1349,10 +1349,13 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
       {
 	// don't substitute into subtree where this variable is bound
 	std::set<dummy> bound = get_free_indices(patterns[i]);
-	for(const auto& b: bound)
-	  if (D->is_exactly(b)) continue;
 
-	changed = do_substitute(bodies[i], D, E2) or changed;
+	bool D_is_bound = false;
+	for(const auto& b: bound)
+	  if (D->is_exactly(b)) D_is_bound=true;
+
+	if (not D_is_bound)
+	  changed = do_substitute(bodies[i], D, E2) or changed;
       }
 
       if (changed)
