@@ -1,5 +1,6 @@
 #include "computation/context.H"
 #include "prelude.H"
+#include "let-float.H"
 
 using std::string;
 using std::vector;

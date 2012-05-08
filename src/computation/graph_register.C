@@ -314,21 +314,6 @@ bool includes(const owner_set_t& S1, const owner_set_t& S2)
   return (S2 & ~S1).none();
 }
 
-bool is_var(const expression_ref& E)
-{
-  return is_a<var>(E);
-}
-
-bool is_reg_var(const expression_ref& E)
-{
-  return is_a<reg_var>(E);
-}
-
-bool is_reglike(const expression_ref& E)
-{
-  return is_dummy(E) or is_parameter(E) or is_reg_var(E) or is_index_var(E) or is_var(E);
-}
-
 /*
  * Issue: How can we share eigensystems between Q matrices that differ only by rate?
  *

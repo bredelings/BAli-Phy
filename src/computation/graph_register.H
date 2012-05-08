@@ -235,10 +235,6 @@ public:
 
 expression_ref graph_normalize(const expression_ref& R);
 
-bool is_var(const expression_ref& R);
-
-bool is_reg_like(const expression_ref& R);
-
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o);
 
 #endif

@@ -2,6 +2,7 @@
 #include "myexception.H"
 #include "computation/graph_register.H"
 #include "computation/operations.H"
+#include "let-float.H"
 
 using std::pair;
 using std::map;

@@ -165,6 +165,10 @@ bool is_dummy(const expression_ref&);
 
 bool is_parameter(const expression_ref&);
 
+bool is_var(const expression_ref& R);
+
+bool is_reglike(const expression_ref& R);
+
 bool is_wildcard(const expression_ref&);
 
 bool is_irrefutable_pattern(const expression_ref& E);
@@ -270,6 +274,10 @@ expression_ref trim(const expression_ref&);
 expression_ref trim_unnormalize(const expression_ref&);
 
 expression_ref untrim(const expression_ref&);
+
+void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expression_ref& y);
+
+int max_index(const std::set<dummy>& s);
 
 std::vector<int> get_free_index_vars(const expression_ref&);
 
@@ -607,9 +615,9 @@ expression_ref def_function(const std::vector< std::vector<expression_ref> >& pa
 expression_ref launchbury_normalize(const expression_ref& E);
 expression_ref launchbury_unnormalize(const expression_ref& E);
 
-expression_ref let_float(const expression_ref&);
-
 expression_ref add_prefix(const std::string&, const expression_ref& E);
+
+bool parse_case_expression(const expression_ref& E, expression_ref& T, std::vector<expression_ref>& patterns, std::vector<expression_ref>& bodies);
 
 bool parse_let_expression(const expression_ref& E, std::vector<expression_ref>& vars, std::vector<expression_ref>& bodies, expression_ref& T);
 

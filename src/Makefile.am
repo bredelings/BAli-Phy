@@ -105,7 +105,8 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
 	  computation/graph_register.C computation/program.C \
 	  computation/formula_expression.C smodel/operations.C distribution-operations.C \
 	  computation/operations.C computation/prelude.C computation/context.C \
-	  computation/model_notes.C matcache.C smodel/functions.C computation/closure.C
+	  computation/model_notes.C matcache.C smodel/functions.C computation/closure.C \
+	  computation/let-float.C
 
 nodist_bali_phy_SOURCES = git_version.h
 
@@ -333,7 +334,7 @@ expression2_SOURCES = computation/expression2.C util.C computation/computation.C
 	computation/operator.C computation/expression.C probability.C distribution-operations.C \
 	computation/operations.C computation/graph_register.C computation/program.C \
 	computation/prelude.C computation/context.C eigenvalue.C exponential.C computation/model_notes.C \
-	computation/closure.C
+	computation/closure.C computation/let-float.C
 
 #---------------------------------------------------------------
 
