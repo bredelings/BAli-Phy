@@ -7,7 +7,6 @@ using std::pair;
 using std::map;
 using std::string;
 using std::vector;
-using boost::dynamic_pointer_cast;
 
 // Unknown type
 expression_ref unknown_type = constructor("?",0);
@@ -21,20 +20,20 @@ expression_ref function = lambda_expression( right_assoc_constructor("->",2) );
 // Type constructor.  Kind = *->*
 expression_ref list_constructor = constructor("[]",1);
 
-void parse_combinator_application(const expression_ref& R, string& name, vector<expression_ref>& patterns)
+void parse_combinator_application(const expression_ref& E, string& name, vector<expression_ref>& patterns)
 {
-  expression_ref R2 = R;
+  expression_ref E2 = E;
 
   // Look through the arguments
-  while( object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R2) )
+  while( E2->size() )
   {
-    assert( dynamic_pointer_cast<const Apply>(E->sub[0]) );
-    patterns.insert(patterns.begin(), E->sub[2]);
-    R2 = E->sub[1];
+    assert( is_a<Apply>(E2) );
+    patterns.insert(patterns.begin(), E2->sub[1]);
+    E2 = E2->sub[0];
   }
 
   // Find the name
-  object_ptr<const var> V = dynamic_pointer_cast<const var>(R2);
+  object_ptr<const var> V = is_a<var>(E2);
   assert(V);
   name = V->name;
 }

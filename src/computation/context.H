@@ -52,7 +52,7 @@ private:
 
 public:
 
-  object_ref default_parameter_value(int i) const;
+  expression_ref default_parameter_value(int i) const;
 
   /// Remove a stack-allocated reg from the stack.
   root_t push_root(int R) const {return memory->push_root(R);}
@@ -79,19 +79,28 @@ public:
   closure lazy_evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
-  closure lazy_evaluate_expression(const expression_ref&) const;
+  object_ref evaluate(int index) const;
+
+  /// Return the value of a particular index, computing it if necessary
+  expression_ref evaluate_structure(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
   closure lazy_evaluate_expression_(const closure&) const;
 
   /// Return the value of a particular index, computing it if necessary
-  object_ref evaluate(int index) const;
+  object_ref evaluate_expression_(const closure&) const;
+
+  /// Return the value of a particular index, computing it if necessary
+  expression_ref evaluate_structure_expression_(const closure&) const;
+
+  /// Return the value of a particular index, computing it if necessary
+  closure lazy_evaluate_expression(const expression_ref&) const;
 
   /// Return the value of a particular index, computing it if necessary
   object_ref evaluate_expression(const expression_ref&) const;
 
   /// Return the value of a particular index, computing it if necessary
-  object_ref evaluate_expression_(const closure&) const;
+  expression_ref evaluate_structure_expression(const expression_ref&) const;
 
   template <typename T>
   object_ptr<const T> evaluate_as(int index) const

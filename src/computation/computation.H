@@ -14,18 +14,17 @@ struct OperationArgs: public Object
 {
   virtual OperationArgs* clone() const = 0;
 
-  virtual object_ref reference(int slot) const = 0;
-
-  virtual object_ref evaluate(int slot) = 0;
+  virtual const closure& current_closure() const = 0;
 
   virtual int n_args() const = 0;
 
-  virtual const closure& current_closure() const = 0;
+  virtual expression_ref reference(int slot) const = 0;
 
-  virtual closure lazy_evaluate(int)
-  {
-    std::abort();
-  }
+  virtual expression_ref evaluate_structure(int slot) = 0;
+
+  virtual object_ref evaluate(int slot) = 0;
+
+  virtual closure lazy_evaluate(int) = 0;
 
   template <typename T>
   object_ptr<const T> evaluate_as(int slot)

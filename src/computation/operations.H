@@ -198,7 +198,7 @@ struct Vector_From_List_Op: public Operation
 
   closure operator()(OperationArgs& Args) const
   {
-    expression_ref E = Args.evaluate(0);
+    expression_ref E = Args.evaluate_structure(0);
 
     object_ptr<Box<std::vector<T> > > v (new Box<std::vector<T> >);
 
@@ -343,35 +343,6 @@ struct Multiply: public Operation
   std::string name() const {return "*";}
 
   Multiply():Operation(2) {}
-};
-
-// \todo Fixme - this is hacky: remove.
-struct IfThenElse: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual IfThenElse* clone() const {return new IfThenElse(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const IfThenElse* E = dynamic_cast<const IfThenElse*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const Bool> condition = Args.evaluate_as<Bool>(0);
-    if (*condition)
-      return Args.lazy_evaluate(1);
-    else
-      return Args.lazy_evaluate(2);
-  }
-
-  std::string expression(const std::vector<std::string>& inputs) const;
-
-  std::string name() const {return "if";}
-
-  IfThenElse():Operation(3) {}
 };
 
 template<typename T>

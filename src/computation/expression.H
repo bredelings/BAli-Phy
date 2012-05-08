@@ -6,7 +6,7 @@
 #include <set>
 #include <string>
 #include "object.H"
-#include "computation/operation.H"
+#include "computation/operator.H"
 
 /// An S-expression: An Object, and possibly an array of Objects.
 struct expression_ref;
@@ -16,9 +16,17 @@ expression_ref operator,(const expression_ref&, const expression_ref&);
 /// This represents the Cons constructor: a&b = Cons a b = a:b.  The precedence is 3 (high).
 expression_ref operator&(const expression_ref&, const expression_ref&);
 
+/*
+ *  By separating out the head from the children, each expression now represents
+ *  a node in a directed acyclic graph, where each node has an Object on in.
+ */
+
 /// An array of Objects.
 struct expression: public Object
 {
+  // The head of the expression.
+  object_ptr<const Object> head;
+
   // An expression may or may not have sub-expressions
   std::vector< expression_ref > sub;
 
@@ -30,26 +38,22 @@ struct expression: public Object
   tribool compare(const Object& o) const;
   std::string print() const;
   
+  tribool operator==(const expression& E) const;
+
+  template <typename T>
+  object_ptr<const T> is_a() const
+  {
+    return boost::dynamic_pointer_cast<const T>(head);
+  }
+
+  bool is_exactly(const Object& O) const;
+
   expression() {}
-  explicit expression(const expression_ref&);
-  explicit expression(const expression_ref&, const expression_ref&);
-  expression(const std::vector< expression_ref >& V);
+  expression(const object_ref&);
+
+  expression(const object_ref&, const std::vector< expression_ref >& S);
 
   virtual ~expression() {}
-};
-
-// a constant expression
-struct constant: public Object
-{
-  object_ref value;
-  constant* clone() const {return new constant(*this);}
-
-  std::string print() const {return value->print();}
-
-  tribool compare(const Object& o) const;
-  
-  explicit constant(const Object& o): value(o.clone()) {}
-  explicit constant(object_ref v): value(v) {}
 };
 
 struct parameter: public Object
@@ -101,7 +105,7 @@ struct Trim: public Object
   std::string print() const;
 };
 
-bool is_index_var(const expression_ref& R);
+bool is_index_var(const expression_ref& E);
 
 bool is_dummy(const expression_ref&);
 
@@ -109,7 +113,7 @@ bool is_parameter(const expression_ref&);
 
 bool is_wildcard(const expression_ref&);
 
-bool is_irrefutable_pattern(const expression_ref& R);
+bool is_irrefutable_pattern(const expression_ref& E);
 
 struct match: public Object
 {
@@ -141,32 +145,6 @@ struct let2_obj: public Object
 
   std::string print() const;
 };
-
-struct alt_obj: public Operator
-{
-  alt_obj* clone() const {return new alt_obj(*this);}
-  tribool compare(const Object& o) const;
-
-  std::string name() const;
-
-  int precedence() const {return 0;}
-
-  int n_args() const {return 2;}
-};
-
-/*
-struct equal_obj: public Operator
-{
-  equal_obj* clone() const {return new equal_obj(*this);}
-  tribool compare(const Object& o) const;
-
-  std::string name() const;
-
-  int precedence() const {return 0;}
-
-  int n_args() const {return 2;}
-};
-*/
 
 // This no longer needs to be a virtual member function, because we can now walk the expression from outside.
 int n_match_results(const expression_ref&);
@@ -208,7 +186,7 @@ expression_ref substitute(const expression_ref& E1, int dummy, const expression_
 expression_ref substitute(const expression_ref& E1, const expression_ref& D, const expression_ref& E2);
 
 /// Substitute for all matches found
-expression_ref substitute(const expression_ref& R, const std::vector<expression_ref>& replace);
+expression_ref substitute(const expression_ref& E, const std::vector<expression_ref>& replace);
 
 // Single-arg version  (Is this a function at all?)";
 expression_ref apply(const expression_ref& E,const expression_ref& arg);
@@ -223,8 +201,8 @@ expression_ref apply_expression(const expression_ref& E,const expression_ref& ar
 expression_ref apply_expression(const expression_ref& E, const std::vector< expression_ref > args);
 
 expression_ref lambda_expression(const Operator& O);
-expression_ref lambda_quantify(int dummy_index, const expression_ref& R);
-expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& R);
+expression_ref lambda_quantify(int dummy_index, const expression_ref& E);
+expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& E);
 
 expression_ref indexify(const expression_ref&);
 
@@ -250,8 +228,9 @@ struct lambda2: public Object
 
 class formula_expression_ref;
 
-struct expression_ref: public object_ref
+struct expression_ref: public object_ptr<const expression>
 {
+  // FIXME - eliminate operator() in favor of operator,()
   expression_ref operator()(const expression_ref& arg) const
   {
     return apply(*this,arg);
@@ -296,43 +275,76 @@ struct expression_ref: public object_ref
     return apply(*this,args);
   }
 
+  template <typename T>
+  object_ptr<const T> is_a() const
+  {
+    return boost::dynamic_pointer_cast<const T>((*this)->head);
+  }
+
+  bool is_exactly(const Object& O) const
+  {
+    return (*this)->is_exactly(O);
+  }
+
+  // Default
   expression_ref() {}
 
-  expression_ref(Object* v)
-  :object_ref(v)
-  {}
+  // Expression arguments
+  expression_ref(expression* e):object_ptr<const expression>(e) { }
 
-  expression_ref(const object_ptr<const Object>& v)
-    :object_ref(v) 
-  {}
+  expression_ref(const expression* e):object_ptr<const expression>(e) { }
 
-  explicit expression_ref(const object_ptr<Object>& v)
-    :object_ref(v) 
+  expression_ref(const object_ptr<const expression>& e):object_ptr<const expression>(e) { }
+
+  expression_ref(const object_ptr<expression>& e):object_ptr<const expression>(e) { }
+
+  // Object arguments
+  expression_ref(Object* v):expression_ref(new expression(v)) { }
+
+  expression_ref(const object_ptr<const Object>& v):expression_ref(new expression(v)) { }
+
+  expression_ref(const object_ptr<Object>& v)
+    :expression_ref(new expression(object_ref(v)))
   {}
 
   template <typename T>
-  expression_ref(const object_ptr<const T>& v)
-    :object_ref(v)
+  expression_ref(const object_ptr<T>& v)
+    :expression_ref(new expression(v))
   {}
 
   expression_ref(const Object& o)
-  :object_ref(o)
+  :expression_ref(new expression(o))
   {}
 
   expression_ref(const object_ref& o)
-  :object_ref(o)
+  :expression_ref(new expression(o))
   {}
 
-  expression_ref(const int& i):object_ref(new Int(i)) {}
-  expression_ref(const double& d):object_ref(new Double(d)) {}
-  expression_ref(const bool& b):object_ref(new Bool(b)) {}
-  expression_ref(const std::string& s):object_ref(new String(s)) {}
-  expression_ref(const char* s):object_ref(new String(s)) {}
+  // Builin-type arguments
+  expression_ref(const int& i):expression_ref(new Int(i)) {}
+  expression_ref(const double& d):expression_ref(new Double(d)) {}
+  expression_ref(const bool& b):expression_ref(new Bool(b)) {}
+  expression_ref(const std::string& s):expression_ref(new String(s)) {}
+  expression_ref(const char* s):expression_ref(new String(s)) {}
 };
 
-object_ptr<const expression> is_a(const expression_ref&, const std::string&);
+template <typename T>
+object_ptr<const T> is_a(const expression& E)
+{ 
+  return E.is_a<T>();
+}
 
-object_ptr<const expression> is_a(const expression_ref&, const Object& O);
+template <typename T>
+object_ptr<const T> is_a(const expression_ref& E)
+{ 
+  return E.is_a<T>();
+}
+
+bool is_exactly(const expression_ref&, const std::string&);
+
+bool is_exactly(const expression_ref&, const Object& O);
+
+bool same_head(const expression_ref&, const expression_ref&);
 
 template <typename T>
 struct typed_expression_ref: public expression_ref
@@ -393,6 +405,10 @@ extern expression_ref _2;
 extern expression_ref _3;
 extern expression_ref _4;
 
+std::string tuple_name(int n);
+bool is_tuple_name(const std::string&);
+constructor tuple_head(int n);
+
 // Create a constructor for n-tuples.
 expression_ref Tuple(int n);
 
@@ -436,58 +452,54 @@ extern expression_ref prob;
 extern expression_ref defun;
 
 template <typename T,typename U>
-std::valarray<T> get_varray(const expression_ref& R)
+std::valarray<T> get_varray(const expression_ref& E)
 {
-  if (not R)
+  if (not E)
     return std::valarray<T>();
 
-  object_ptr<const expression> E = boost::dynamic_pointer_cast<const expression>(R);
-
-  if (not E)
+  if (not E->size())
   {
     std::valarray<T> v2(1);
-    v2[0] = *convert<const U>(R);
+    v2[0] = *convert<const U>(E->head);
     return v2;
   }
 
-  std::valarray<T> v2(E->size()-1);
+  std::valarray<T> v2(E->size());
   for(int i=0;i<v2.size();i++)
-    v2[i] = *convert<const U>(E->sub[i+1]);
+    v2[i] = *convert<const U>(E->sub[i]->head);
   return v2;
 }
 
 template <typename T,typename U>
-std::vector<T> get_vector(const expression_ref& R) 
+std::vector<T> get_vector(const expression_ref& E) 
 {
-  if (not R)
+  if (not E)
     return std::vector<T>();
 
-  object_ptr<const expression> E = boost::dynamic_pointer_cast<const expression>(R);
-
-  if (not E)
+  if (not E->size())
   {
     std::vector<T> v2(1);
-    v2[0] = *convert<const U>(R);
+    v2[0] = *convert<const U>(E->head);
     return v2;
   }
     
-  std::vector<T> v2(E->size()-1);
+  std::vector<T> v2(E->size());
   for(int i=0;i<v2.size();i++)
-    v2[i] = *convert<const U>(E->sub[i+1]);
+    v2[i] = *convert<const U>(E->sub[i]->head);
   return v2;
 }
 
-std::vector<expression_ref> get_ref_vector_from_list(const expression_ref& R);
+std::vector<expression_ref> get_ref_vector_from_list(const expression_ref& E);
 
-std::vector<expression_ref> get_ref_vector_from_tuple(const expression_ref& R);
+std::vector<expression_ref> get_ref_vector_from_tuple(const expression_ref& E);
 
 template <typename T,typename U>
-std::vector<T> get_vector_from_list(const expression_ref& R)
+std::vector<T> get_vector_from_list(const expression_ref& E)
 {
-  std::vector<expression_ref> v1 = get_ref_vector_from_list(R);
+  std::vector<expression_ref> v1 = get_ref_vector_from_list(E);
   std::vector<T> v2;
   for(int i=0;i<v1.size();i++)
-    v2.push_back(*convert<const U>(v1[i]));
+    v2.push_back(*convert<const U>(v1[i]->head));
   return v2;
 }
 
@@ -525,28 +537,28 @@ expression_ref case_expression(const expression_ref& T, const std::vector<expres
 
 expression_ref make_case_expression(const expression_ref& T, const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
-expression_ref def_function(const expression_ref& pattern, const expression_ref& body);
+//expression_ref def_function(const expression_ref& pattern, const expression_ref& body);
 
-expression_ref def_function(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
+//expression_ref def_function(const std::vector<expression_ref>& patterns, const std::vector<expression_ref>& bodies);
 
 expression_ref def_function(const std::vector< std::vector<expression_ref> >& patterns, const std::vector<expression_ref>& bodies);
 
-expression_ref launchbury_normalize(const expression_ref& R);
-expression_ref launchbury_unnormalize(const expression_ref& R);
+expression_ref launchbury_normalize(const expression_ref& E);
+expression_ref launchbury_unnormalize(const expression_ref& E);
 
 expression_ref let_float(const expression_ref&);
 
-expression_ref add_prefix(const std::string&, const expression_ref& R);
+expression_ref add_prefix(const std::string&, const expression_ref& E);
 
-bool parse_let_expression(const expression_ref& R, std::vector<expression_ref>& vars, std::vector<expression_ref>& bodies, expression_ref& T);
+bool parse_let_expression(const expression_ref& E, std::vector<expression_ref>& vars, std::vector<expression_ref>& bodies, expression_ref& T);
 
-bool parse_indexed_let_expression(const expression_ref& R, std::vector<expression_ref>& bodies, expression_ref& T);
+bool parse_indexed_let_expression(const expression_ref& E, std::vector<expression_ref>& bodies, expression_ref& T);
 
-void parse_alternatives(const expression_ref& R, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
+void parse_alternatives(const expression_ref& E, std::vector<expression_ref>& cases, std::vector<expression_ref>& results);
 
-bool is_WHNF(const expression_ref& R);
+bool is_WHNF(const expression_ref& E);
 
-int get_safe_binder_index(const expression_ref& R);
+int get_safe_binder_index(const expression_ref& E);
 
 extern const expression_ref v0;
 extern const expression_ref v1;

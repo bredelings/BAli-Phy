@@ -416,10 +416,10 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 formula_expression_ref get_RA(const formula_expression_ref& M, const string& name,
 			      const object_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (is_a(M.result(SModel_Functions()), "F81"))
+  if (is_exactly(M.result(SModel_Functions()), "F81"))
     return M;
 
-  if (is_a(M.result(SModel_Functions()), "ReversibleMarkov"))
+  if (is_exactly(M.result(SModel_Functions()), "ReversibleMarkov"))
     return M;
 
   try {
@@ -465,7 +465,7 @@ formula_expression_ref
 get_MM(const formula_expression_ref& M, const string& name, 
        const object_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (is_a(M.result(SModel_Functions()), "MixtureModel"))
+  if (is_exactly(M.result(SModel_Functions()), "MixtureModel"))
     return M;
 
   try { 
@@ -749,7 +749,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       patterns.push_back( Tuple(p, Tuple(q,x)&t ) );
       bodies.push_back(  Tuple(lambda_expression( Multiply<Double>() )(p,q),x) & scale(p,t) );
 
-      expression_ref def_scale = def_function(patterns, bodies);
+      expression_ref def_scale;// = def_function(patterns, bodies);
 
       Scale = let_expression(scale, def_scale, scale);
     }
@@ -770,7 +770,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       patterns.push_back( Tuple(1)( DiscreteDistribution( dummy(0) ) ) );
       bodies.push_back( dummy(0) );
 
-      expression_ref def_unwrap = def_function(patterns, bodies);
+      expression_ref def_unwrap;// = def_function(patterns, bodies);
 
       Unwrap = let_expression(unwrap, def_unwrap, unwrap);
     }

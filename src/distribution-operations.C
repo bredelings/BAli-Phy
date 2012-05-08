@@ -24,7 +24,7 @@ closure log_exponential_density::operator()(OperationArgs& Args) const
 closure gamma_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  expression_ref a = Args.evaluate(1);
+  expression_ref a = Args.evaluate_structure(1);
   
   std::valarray<double> A = get_varray<double,Double>(a);
   Log_Double result = gamma_pdf(*x, A[0], A[1]);
@@ -34,7 +34,7 @@ closure gamma_density::operator()(OperationArgs& Args) const
 closure beta_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  expression_ref a = Args.evaluate(1);
+  expression_ref a = Args.evaluate_structure(1);
   
   std::valarray<double> A = get_varray<double,Double>(a);
   Log_Double result = beta_pdf(*x, A[0], A[1]);
@@ -44,7 +44,7 @@ closure beta_density::operator()(OperationArgs& Args) const
 closure normal_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  expression_ref a = Args.evaluate(1);
+  expression_ref a = Args.evaluate_structure(1);
   
   std::valarray<double> A = get_varray<double,Double>(a);
   Log_Double result = normal_pdf(*x, A[0], A[1]);
@@ -54,7 +54,7 @@ closure normal_density::operator()(OperationArgs& Args) const
 closure log_normal_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  expression_ref a = Args.evaluate(1);
+  expression_ref a = Args.evaluate_structure(1);
   
   std::valarray<double> A = get_varray<double,Double>(a);
   Log_Double result = log_normal_pdf(*x, A[0], A[1]);
@@ -64,7 +64,7 @@ closure log_normal_density::operator()(OperationArgs& Args) const
 closure cauchy_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
-  expression_ref a = Args.evaluate(1);
+  expression_ref a = Args.evaluate_structure(1);
   
   std::valarray<double> A = get_varray<double,Double>(a);
   Log_Double result = cauchy_pdf(*x, A[0], A[1]);
@@ -74,7 +74,7 @@ closure cauchy_density::operator()(OperationArgs& Args) const
 closure dirichlet_density::operator()(OperationArgs& Args) const
 {
   expression_ref X = Args.evaluate(0);
-  expression_ref N = Args.evaluate(1);
+  expression_ref N = Args.evaluate_structure(1);
   
   std::valarray<double> x = get_varray<double,Double>(X);
   std::valarray<double> n = get_varray<double,Double>(N);
@@ -87,7 +87,7 @@ closure dirichlet_density::operator()(OperationArgs& Args) const
 closure laplace_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
-  expression_ref A = Args.evaluate(1);
+  expression_ref A = Args.evaluate_structure(1);
 
   vector<double> a = get_vector<double,Double>(A);
   
@@ -97,7 +97,7 @@ closure laplace_density::operator()(OperationArgs& Args) const
 closure log_laplace_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
-  expression_ref A = Args.evaluate(1);
+  expression_ref A = Args.evaluate_structure(1);
 
   vector<double> a = get_vector<double,Double>(A);
   
@@ -107,7 +107,7 @@ closure log_laplace_density::operator()(OperationArgs& Args) const
 closure uniform_density::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
-  expression_ref A = Args.evaluate(1);
+  expression_ref A = Args.evaluate_structure(1);
 
   vector<double> a = get_vector<double,Double>(A);
   

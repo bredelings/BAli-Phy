@@ -91,11 +91,10 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
 expression_ref model_result_expression(const Model& M)
 {
   vector< expression_ref > sub;
-  sub.push_back( M );
   for(int i=0;i<M.n_parameters();i++) 
     sub.push_back( parameter(M.parameter_name(i)) );
   
-  return new expression(sub);
+  return new expression(M, sub);
 }
 
 expression_ref model_prior_expression(const Model& M)
@@ -224,8 +223,8 @@ int Model::add_note(const expression_ref& E)
   vector<expression_ref> results;
   if (find_match(query, C.get_note(index), results))
   {
-    object_ptr<const parameter> var = dynamic_pointer_cast<const parameter>(results[0]);
-    object_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[1]);
+    object_ptr<const parameter> var = is_a<parameter>(results[0]);
+    object_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[1]->head);
     int param_index = find_parameter(var->parameter_name);
     if (param_index == -1)
       throw myexception()<<"Cannot add bound '"<<E<<"' on missing variable '"<<var->parameter_name<<"'";
@@ -978,10 +977,10 @@ vector<string> show_probability_expressions(const context& C)
     if (not find_match(query, C.get_note(i), results)) continue;
 
     // Extract the density operation
-    object_ptr<const String> name = dynamic_pointer_cast<const String>(results[0]);
+    object_ptr<const String> name = is_a<String>(results[0]);
 
     string prob_exp = results[1]->print() + " ~ " + string(*name);
-    if (dynamic_pointer_cast<const expression>(results[2]))
+    if (results[2]->size())
       prob_exp += results[2]->print();
     else
       prob_exp += "(" + results[2]->print() + ")";

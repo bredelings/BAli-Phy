@@ -5,8 +5,6 @@
 using std::vector;
 using std::string;
 
-using boost::dynamic_pointer_cast;
-
 closure Seq::operator()(OperationArgs& Args) const
 {
   Args.lazy_evaluate(0);
@@ -20,13 +18,13 @@ closure Apply::operator()(OperationArgs& Args) const
   closure C = Args.lazy_evaluate(0);
 
   // We should assert this.
-  object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(Args.reference(1));
+  object_ptr<const index_var> V = is_a<index_var>(Args.reference(1));
   int arg = Args.current_closure().lookup_in_env( V->index );
 
   // We could actually change this to a static_cast.  C.exp MUST be an expression.  C.exp[0] MUST be a lambda.
-  if (object_ptr<const expression> E = is_a(C.exp, lambda2()))
+  if (is_a<lambda2>(C.exp))
   {
-    C.exp = E->sub[1];
+    C.exp = C.exp->sub[0];
     C.Env.push_back(arg);
     return C;
   }
@@ -46,6 +44,8 @@ closure Case::operator()(OperationArgs& Args) const
 
   int L = (Args.n_args() - 1)/2;
 
+  // FIXME - we really shouldn't be allocating memory here!
+  // But this IS easier not to break.
   vector<expression_ref> cases(L);
   vector<expression_ref> bodies(L);
   for(int i=0;i<L;i++)
@@ -54,8 +54,7 @@ closure Case::operator()(OperationArgs& Args) const
     bodies[i] = Args.reference(2 + 2*i);
   }
 
-  object_ptr<const expression> obj_E = dynamic_pointer_cast<const expression>(obj.exp);
-  assert(not obj_E or not dynamic_pointer_cast<const lambda2>(obj_E->sub[0]));
+  assert(not is_a<lambda2>(obj.exp));
 
   closure result;
   result.Env = C.Env;
@@ -63,37 +62,37 @@ closure Case::operator()(OperationArgs& Args) const
   for(int i=0;i<L and not result;i++)
   {
     // If its _, then match it.
-    if (object_ptr<const dummy> D2 = dynamic_pointer_cast<const dummy>(cases[i]))
+    if (object_ptr<const dummy> D2 = is_a<dummy>(cases[i]))
     {
       // We standardize to avoid case x of v -> f(v) so that f cannot reference v.
       assert(D2->index == -1);
       assert(i == L-1);
-
+      
       result.exp = bodies[i];
     }
-    // If obj is a 0-arg literal constant constructor, then match iff obj==cases[i]
-    else if (not obj_E)
+    else
     {
-      if (obj.exp->compare(*cases[i]))
-	result.exp = bodies[i];
-    }
-    // If we are an n-arg constructor, then match iff the case is an expression and the head matches.
-    else if (obj_E)
-    {
-      if (obj_E->sub[0]->compare(*cases[i]))
+      // FIXME! Convert every pattern head to an integer...
+
+      // If we are a constructor, then match iff the the head matches.
+      if (obj.exp->head->compare(*cases[i]->head))
       {
-	object_ptr<const constructor> C = dynamic_pointer_cast<const constructor>(obj_E->sub[0]);
-	assert(C);
-	// The number of constructor fields is the same the for case pattern and the case object.
-	assert(obj_E->size() == 1 + C->n_args());
-	// The number of entries in the environment is the same as the number of constructor fields.
-	assert(obj_E->size() == 1+obj.Env.size());
+	if (obj.exp->size())
+	{
+	  object_ptr<const constructor> C = is_a<constructor>(obj.exp);
+	  assert(C);
+	  // The number of constructor fields is the same the for case pattern and the case object.
+	  assert(obj.exp->size() == C->n_args());
+	  // The number of entries in the environment is the same as the number of constructor fields.
+	  assert(obj.exp->size() == obj.Env.size());
+	}
 	
 	result.exp = bodies[i];
 	
-	for(int j=1;j<obj_E->size();j++)
+	for(int j=0;j<obj.exp->size();j++)
 	{
-	  int index = dynamic_pointer_cast<const index_var>(obj_E->sub[j])->index;
+	  // FIXME! Don't do a dynamic cast here.
+	  int index = is_a<index_var>(obj.exp->sub[j])->index;
 	  
 	  result.Env.push_back( obj.lookup_in_env( index ) );
 	}
@@ -123,13 +122,12 @@ closure MkArray::operator()(OperationArgs& Args) const
   // We can't do negative-sized arrays
   assert(n >= 0);
   // The function should be represented as a heap variable...
-  object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(f);
+  object_ptr<const index_var> V = is_a<index_var>(f);
   int f_reg = C.lookup_in_env(V->index);
   
-  object_ptr<expression> exp = new expression;
-  closure result;
-  exp->sub.resize(n+1);
-  exp->sub[0] = constructor("Array",n);
+  object_ptr<expression> exp = new expression(constructor("Array",n));
+  exp->sub.resize(n);
+
   expression_ref apply_E;
   {
     expression_ref fE = index_var(1);
@@ -137,7 +135,8 @@ closure MkArray::operator()(OperationArgs& Args) const
     apply_E = (fE, argE);
   }
 
-  C.clear();
+  closure result;
+  result.Env.resize(n);
   for(int i=0;i<n;i++)
   {
     // i
@@ -146,15 +145,15 @@ closure MkArray::operator()(OperationArgs& Args) const
     // %1 %0 {f,i}
     int apply_reg = Args.allocate({apply_E,{f_reg, i_reg}});
 
-    // change to C.exp <<= index_var(i)
-    exp->sub[i+1] = index_var(n - 1 - i);
+    // change to result.exp <<= index_var(i)
+    exp->sub[i] = index_var(n - 1 - i);
 
     // Add the var to the environment
-    C.Env.push_back( apply_reg );
+    result.Env[i] = apply_reg;
   }
-  C.exp = exp;
+  result.exp = exp;
   
-  return C;
+  return result;
 }
 
 expression_ref mkArray = lambda_expression( MkArray() );
@@ -164,8 +163,7 @@ closure GetIndex::operator()(OperationArgs& Args) const
   closure C = Args.lazy_evaluate(0);
   int n = *Args.evaluate_as<Int>(1);
 
-  object_ptr<const expression> A = dynamic_pointer_cast<const expression>(C.exp);
-  int N = A->sub.size()-1;
+  int N = C.exp->size();
 
   if (n < 0 or n >= N)
     throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";
@@ -191,7 +189,7 @@ closure LExp_Op::operator()(OperationArgs& Args) const
   object_ptr<const EigenValues> L = Args.evaluate_as<EigenValues>(0);
   // FIXME - Vector_from_Tuple_Op
 
-  expression_ref pi_E = Args.evaluate(1);
+  expression_ref pi_E = Args.evaluate_structure(1);
   double t = *Args.evaluate_as<Double>(2);
 
   std::vector<double> pi = get_vector<double,Double>(pi_E);

@@ -4,13 +4,14 @@
 #include <vector>
 #include <string>
 #include "object.H"
+#include "computation/expression.H"
 
 inline int lookup_in_env(const std::vector<int>& Env, int i) {return Env[Env.size() - 1 - i];}
 
 struct closure
 {
   /// The expression
-  object_ptr<const Object> exp;
+  expression_ref exp;
   /// The environment (regs bound to free variables of E).
   std::vector<int> Env;
 
@@ -29,38 +30,47 @@ struct closure
   // Default
   closure() {}
 
+  // Constructing from an expression_ref
+  closure(const expression_ref& e)
+    :exp(e)
+  { }
+
+  closure(const expression_ref& e, const std::vector<int>& E)
+    :exp(e), Env(E)
+  { }
+
   // Constructing w/ an environment
   closure(Object* o, const std::vector<int>& E)
-    :exp(o), Env(E)
+    :closure(expression_ref(o),E)
   { }
 
   closure(const object_ptr<const Object>& o, const std::vector<int>& E)
-    :exp(o), Env(E)
+    :closure(expression_ref(o),E)
   { }
 
   template <typename T>
   closure(const object_ptr<T>& o, const std::vector<int>& E)
-    :exp(boost::static_pointer_cast<const Object>(o)), Env(E)
+    :closure(expression_ref(o),E)
   { }
 
-  closure(const Object& O, const std::vector<int>& E):exp(O.clone()), Env(E) { }
+  closure(const Object& O, const std::vector<int>& E):closure(expression_ref(O),E) { }
 
-  // Constructing w/ an environment
+  // Constructing w/o an environment
   closure(Object* o)
-    :closure(o,{})
+  :closure(expression_ref(o))
   { }
 
   closure(const object_ptr<const Object>& o)
-    :closure(o,{})
+    :closure(expression_ref(o))
   { }
 
   template <typename T>
   closure(const object_ptr<T>& o)
-    :closure(o,{})
+    :closure(expression_ref(o))
   { }
 
   closure(const Object& O)
-    :closure(O,{})
+  :closure(expression_ref(O))
   { }
 
 

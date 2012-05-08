@@ -121,8 +121,8 @@ const IndelModel& data_partition::IModel() const
 double data_partition::rate() const
 {
   int s = P->smodel_for_partition[partition_index];
-  expression_ref E = P->C.evaluate(P->SModels[s].rate);
-  return *convert<const Double>(E);
+  object_ref O = P->C.evaluate(P->SModels[s].rate);
+  return *convert<const Double>(O);
 }
 
 ostream& operator<<(ostream& o, const Matrix& M)
@@ -156,21 +156,22 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
 int data_partition::n_base_models() const
 {
   int s = P->smodel_for_partition[partition_index];
-  expression_ref E = P->C.evaluate(P->SModels[s].n_base_models);
-  return *convert<const Int>(E);
+  object_ref O = P->C.evaluate(P->SModels[s].n_base_models);
+  return *convert<const Int>(O);
 }
 
 int data_partition::n_states() const
 {
   int s = P->smodel_for_partition[partition_index];
-  expression_ref E = P->C.evaluate(P->SModels[s].n_states);
-  return *convert<const Int>(E);
+  object_ref O = P->C.evaluate(P->SModels[s].n_states);
+  return *convert<const Int>(O);
 }
 
 vector<double> data_partition::distribution() const
 {
+  // Add Op to convert list to vector<Double>
   int s = P->smodel_for_partition[partition_index];
-  expression_ref E = P->C.evaluate(P->SModels[s].distribution);
+  expression_ref E = P->C.evaluate_structure(P->SModels[s].distribution);
   vector<expression_ref> V = get_ref_vector_from_list(E);
   vector<double> v;
   for(int i=0;i<V.size();i++)
@@ -181,8 +182,8 @@ vector<double> data_partition::distribution() const
 vector<unsigned> data_partition::state_letters() const
 {
   int s = P->smodel_for_partition[partition_index];
-  expression_ref E = P->C.evaluate(P->SModels[s].state_letters);
-  return *convert<const Box<vector<unsigned> > >(E);
+  object_ref O = P->C.evaluate(P->SModels[s].state_letters);
+  return *convert<const Box<vector<unsigned> > >(O);
 }
 
 vector<double> data_partition::frequencies(int m) const

@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <fstream>
 
-using boost::dynamic_pointer_cast;
 using std::string;
 using std::vector;
 using std::map;
@@ -308,23 +307,19 @@ bool includes(const owner_set_t& S1, const owner_set_t& S2)
   return (S2 & ~S1).none();
 }
 
-bool is_var(const expression_ref& R)
+bool is_var(const expression_ref& E)
 {
-  if (dynamic_cast<const var*>(&*R)) return true;
-
-  return false;
+  return is_a<var>(E);
 }
 
-bool is_reg_var(const expression_ref& R)
+bool is_reg_var(const expression_ref& E)
 {
-  if (dynamic_cast<const reg_var*>(&*R)) return true;
-
-  return false;
+  return is_a<reg_var>(E);
 }
 
-bool is_reglike(const expression_ref& R)
+bool is_reglike(const expression_ref& E)
 {
-  return is_dummy(R) or is_parameter(R) or is_reg_var(R) or is_index_var(R) or is_var(R);
+  return is_dummy(E) or is_parameter(E) or is_reg_var(E) or is_index_var(E) or is_var(E);
 }
 
 /*
@@ -342,41 +337,36 @@ bool is_reglike(const expression_ref& R)
  * Perhaps there is a simple way to compute this as just GetRMM(Q), as opposed to RMM(Q,pi).
  */
 
-expression_ref graph_normalize(const expression_ref& R)
+expression_ref graph_normalize(const expression_ref& E)
 {
-  if (not R) return R;
+  if (not E) return E;
 
   // 1. Var
-  if (is_reglike(R))
-    return R;
-  
-  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-
   // 5. (partial) Literal constant.  Treat as 0-arg constructor.
-  if (not E) return R;
+  if (not E->size()) return E;
   
   // 2. Lambda
-  object_ptr<const lambda> L = dynamic_pointer_cast<const lambda>(E->sub[0]);
+  object_ptr<const lambda> L = is_a<lambda>(E);
   if (L)
   {
-    assert(E->size() == 3);
+    assert(E->size() == 2);
     object_ptr<expression> V ( new expression(*E) );
-    V->sub[2] = graph_normalize(E->sub[2]);
+    V->sub[1] = graph_normalize(E->sub[1]);
 
-    if (V->sub[2] == E->sub[2])
-      return R;
+    if (V->sub[1] == E->sub[1])
+      return E;
     else
-      return object_ptr<const expression>(V);
+      return V;
   }
 
   // 3. Application
-  if (dynamic_pointer_cast<const Apply>(E->sub[0]))
+  if (is_a<Apply>(E))
   {
-    assert(E->size() == 3);
-    expression_ref f = graph_normalize(E->sub[1]);
-    expression_ref x = graph_normalize(E->sub[2]);
+    assert(E->size() == 2);
+    expression_ref f = graph_normalize(E->sub[0]);
+    expression_ref x = graph_normalize(E->sub[1]);
 
-    int var_index = get_safe_binder_index(R);
+    int var_index = get_safe_binder_index(E);
     expression_ref f_ = dummy(var_index++);
     expression_ref x_ = dummy(var_index++);
 
@@ -395,45 +385,44 @@ expression_ref graph_normalize(const expression_ref& R)
   }
 
   // 6. Case
-  object_ptr<const Case> IsCase = dynamic_pointer_cast<const Case>(E->sub[0]);
+  object_ptr<const Case> IsCase = is_a<Case>(E);
   if (IsCase)
   {
-    object_ptr<expression> V ( new expression(*E) );
+    object_ptr<expression> V ( E->clone() );
 
     // Normalize the object
-    V->sub[1] = graph_normalize(V->sub[1]);
+    V->sub[0] = graph_normalize(V->sub[0]);
 
-    const int L = V->sub.size()/2 - 1;
-    // Just unnormalize the bodies
+    const int L = (V->sub.size()-1)/2;
+    // Just normalize the bodies
     for(int i=0;i<L;i++)
-      V->sub[3+2*i] = graph_normalize(V->sub[3+2*i]);
+      V->sub[2+2*i] = graph_normalize(V->sub[2+2*i]);
     
-    if (is_reglike(V->sub[1]))
+    if (is_reglike(V->sub[0]))
       return object_ptr<const expression>(V);
     else
     {
-      int var_index = get_safe_binder_index(R);
+      int var_index = get_safe_binder_index(E);
       expression_ref x = dummy(var_index);
-      expression_ref obj = V->sub[1];
-      V->sub[1] = x;
+      expression_ref obj = V->sub[0];
+      V->sub[0] = x;
 
-      return let_expression(x,obj,object_ptr<const expression>(V));
+      return let_expression(x,obj,V);
     }
   }
 
   // 4. Constructor
-  if (dynamic_pointer_cast<const constructor>(E->sub[0]) or 
-      dynamic_pointer_cast<const Operation>(E->sub[0]))
+  if (is_a<constructor>(E) or is_a<Operation>(E))
   {
-    int var_index = get_safe_binder_index(R);
+    int var_index = get_safe_binder_index(E);
 
     object_ptr<expression> Con ( new expression );
-    Con->sub.push_back(E->sub[0]);
+    Con->head = E->head;
 
     // Actually we probably just need x[i] not to be free in E->sub[i]
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
-    for(int i=1;i<E->size();i++)
+    for(int i=0;i<E->size();i++)
     {
       if (is_reglike(E->sub[i]))
       {
@@ -452,24 +441,24 @@ expression_ref graph_normalize(const expression_ref& R)
   }
 
   // 5. Let 
-  object_ptr<const let_obj> Let = dynamic_pointer_cast<const let_obj>(E->sub[0]);
+  object_ptr<const let_obj> Let = is_a<let_obj>(E);
   if (Let)
   {
     object_ptr<expression> V ( new expression(*E) );
 
     // Normalize the object
-    V->sub[1] = graph_normalize(V->sub[1]);
+    V->sub[0] = graph_normalize(V->sub[0]);
 
-    const int L = V->sub.size()/2 - 1;
+    const int L = (V->sub.size()-1)/2;
 
     // Just normalize the bodies, not the vars
     for(int i=0;i<L;i++)
-      V->sub[3 + 2*i] = graph_normalize(V->sub[3 + 2*i]);
+      V->sub[2 + 2*i] = graph_normalize(V->sub[2 + 2*i]);
 
-    return object_ptr<const expression>(V);
+    return V;
   }
 
-  throw myexception()<<"graph_normalize: I don't recognize expression '"+ R->print() + "'";
+  throw myexception()<<"graph_normalize: I don't recognize expression '"+ E->print() + "'";
 }
 
 const owner_set_t& reg::get_owners() const
@@ -666,6 +655,7 @@ void reg_heap::clear_call(int R)
 void reg_heap::set_C(int R, const closure& C)
 {
   assert(C);
+  assert(not is_a<expression>(C.exp));
   assert(not access(R).is_unowned());
   clear_C(R);
 
@@ -708,7 +698,7 @@ void reg_heap::set_reduction_result(int R, const closure& result)
   if (not result) return;
 
   // If the value is a pre-existing reg_var, then call it.
-  if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(result.exp))
+  if (object_ptr<const index_var> V = is_a<index_var>(result.exp))
   {
     int Q = result.lookup_in_env( V->index );
     
@@ -738,7 +728,7 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
   P = uniquify_reg(P,token);
 
   // Check that this reg is indeed settable
-  assert(dynamic_pointer_cast<const parameter>(access(P).C.exp));
+  assert(is_parameter(access(P).C.exp));
   assert(access(P).changeable);
 
   // Clear the call, clear the result, and set the value
@@ -1803,8 +1793,7 @@ class RegOperationArgs: public OperationArgs
 
   const closure& current_closure() const {return M[R].C;}
 
-  // Removing this dynamic_cast doesn't seem to speed things up very much.
-  const expression& get_E() const {return *dynamic_pointer_cast<const expression>(M[R].C.exp);}
+  const expression& get_E() const {return *current_closure().exp;}
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int lazy_evaluate_reg(int R2)
@@ -1837,14 +1826,14 @@ class RegOperationArgs: public OperationArgs
   closure lazy_evaluate_structure(const closure C)
   {
     // Any slot that we are going to evaluate needs to point to another node
-    if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>( C.exp ))
+    if (object_ptr<const index_var> V = is_a<index_var>( C.exp ))
     {
       int R2 = C.lookup_in_env(V->index);
 
       R2 = lazy_evaluate_reg(R2);
 
       /*
-       * We could update E1->sub[slot+1] = new reg_var(R2) if R2 != RV->target.  However:
+       * We could update E1->sub[slot] = new reg_var(R2) if R2 != RV->target.  However:
        *
        * - Updating WHNF regs is problematic because it could make the old reg unused
        *   although it was still used in the result and the results of call-ancestors.
@@ -1875,9 +1864,9 @@ class RegOperationArgs: public OperationArgs
    * We could also define evaluate_structure as a wrapper for another routine that takes a reg index.
    */
   
-  expression_ref evaluate_structure(closure C)
+  expression_ref evaluate_structure_(closure C)
   {
-    if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>( C.exp ))
+    if (object_ptr<const index_var> V = is_a<index_var>(C.exp) )
     {
       int R2 = C.lookup_in_env(V->index);
       int R3 = lazy_evaluate_reg(R2);
@@ -1887,23 +1876,23 @@ class RegOperationArgs: public OperationArgs
 	       that is the only use way of using the result.
        */
 
-      return evaluate_structure( M.access(R3).result );
+      return evaluate_structure_( M.access(R3).result );
     }
-    else if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(C.exp))
+    else if (C.exp->size())
     {
       // If the "structure" is a lambda function, then we are done.
       // (a) if we were going to USE this, we should just call lazy evaluate! (which return a heap variable)
       // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
       // See note above on returning lambdas as reg_vars.
-      if (dynamic_pointer_cast<const lambda2>(E->sub[0])) return C.exp;
+      if (is_a<lambda2>(C.exp)) return C.exp;
 
-      assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
+      assert(is_a<constructor>(C.exp));
 
       // If the result is a constructor expression, then evaluate its fields also.
-      expression* V = E->clone();
+      object_ptr<expression> V = C.exp->clone();
       
-      for(int i=1;i<V->size();i++)
-	V->sub[i] = evaluate_structure({E->sub[i],C.Env});
+      for(int i=0;i<V->size();i++)
+	V->sub[i] = evaluate_structure_({C.exp->sub[i], C.Env});
 
       return V;
     }
@@ -1913,19 +1902,29 @@ class RegOperationArgs: public OperationArgs
 
 public:
 
-  object_ref reference(int slot) const
+  expression_ref reference(int slot) const
   {
-    return get_E().sub[slot+1];
+    return get_E().sub[slot];
   }
 
-  object_ref evaluate(int slot)
-  {
-    return evaluate_structure({reference(slot), M[R].C.Env});
-  }
-
+  // This computes everything
   closure lazy_evaluate(int slot)
   {
     return lazy_evaluate_structure({reference(slot), M[R].C.Env});
+  }
+
+  // This fills out an entire structure!
+  expression_ref evaluate_structure(int slot)
+  {
+    return evaluate_structure_(lazy_evaluate(slot));
+  }
+
+  // This just returns the head of the structure.
+  object_ref evaluate(int slot)
+  {
+    expression_ref result = lazy_evaluate(slot).exp;
+    assert(not is_a<lambda2>(result));
+    return result->head;
   }
 
   object_ref evaluate_expression(const expression_ref&)
@@ -1941,7 +1940,7 @@ public:
     return r;
   }
 
-  int n_args() const {return get_E().sub.size()-1;}
+  int n_args() const {return get_E().sub.size();}
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
@@ -2029,7 +2028,9 @@ int reg_heap::incremental_evaluate(int R, int t)
   assert(R >= 0 and R < n_regs());
   assert(access(R).state == reg::used);
   assert(access(R).is_owned_by(t));
-  assert(is_WHNF(access(R).result.exp));
+  assert(not is_a<expression>(access(R).C.exp));
+  assert(not access(R).result or is_WHNF(access(R).result.exp));
+  assert(not access(R).result or not is_a<expression>(access(R).result.exp));
 
 #ifndef NDEBUG
   //  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
@@ -2040,6 +2041,8 @@ int reg_heap::incremental_evaluate(int R, int t)
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
     expression_ref T;
+
+    assert(access(R).C.exp);
 
 #ifndef NDEBUG
     //    std::cerr<<"   statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
@@ -2068,7 +2071,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
-    else if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(access(R).C.exp))
+    else if (object_ptr<const index_var> V = is_a<index_var>(access(R).C.exp))
     {
       assert( access(R).call == -1);
 
@@ -2098,13 +2101,13 @@ int reg_heap::incremental_evaluate(int R, int t)
       access(R).result = access(R).C;
 
 #ifndef NDEBUG
-    else if (is_a(access(R).C.exp, Trim()))
+    else if (is_a<Trim>(access(R).C.exp))
       std::abort();
 #endif
 
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
-    else if (object_ptr<const parameter> p = dynamic_pointer_cast<const parameter>(access(R).C.exp))
+    else if (is_parameter(access(R).C.exp))
       throw myexception()<<"Parameter with no result?! (Changeable = "<<access(R).changeable<<")";
 
     // Reduction: let expression
@@ -2146,10 +2149,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
-      object_ptr<const expression> E = dynamic_pointer_cast<const expression>(access(R).C.exp);
-      assert(E);
-      
-      object_ptr<const Operation> O = dynamic_pointer_cast<const Operation>(E->sub[0]);
+      object_ptr<const Operation> O = is_a<Operation>( access(R).C.exp );
       assert(O);
 
       // Although the reg itself is not a parameter, it will stay changeable if it ever computes a changeable result.
@@ -2158,7 +2158,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 #ifndef NDEBUG
       string SS = "";
       SS = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
-      if (false)
+      if (true)
       {
 	std::ofstream f("token.dot");
 	dot_graph_for_token(*this, t, f);
@@ -2194,19 +2194,19 @@ int reg_heap::incremental_evaluate(int R, int t)
 
   assert(access(R).result);
   assert(is_WHNF(access(R).result.exp));
-  assert(not dynamic_pointer_cast<const index_var>(access(R).result.exp));
+  assert(not is_a<index_var>(access(R).result.exp));
 
   return R;
 }
 
 // Fixme!
 // Here we have handled neither depths, nor trim.
-expression_ref subst_referenced_vars(const expression_ref& R, const vector<int>& Env, const map<int, expression_ref>& names)
+expression_ref subst_referenced_vars(const expression_ref& E, const vector<int>& Env, const map<int, expression_ref>& names)
 {
-  if (object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R))
+  if (E->size())
   {
     bool different = false;
-    object_ptr<expression> E2 ( new expression );
+    object_ptr<expression> E2 ( new expression(E->head) );
     E2->sub.resize(E->size());
     for(int i=0;i<E->size();i++)
     {
@@ -2217,13 +2217,13 @@ expression_ref subst_referenced_vars(const expression_ref& R, const vector<int>&
     if (different)
       return object_ptr<const expression>(E2);
     else
-      return R;
+      return E;
   }
-  else if (object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(R))
+  else if (object_ptr<const index_var> V = is_a<index_var>(E) )
   {
     const auto loc = names.find( lookup_in_env(Env, V->index) );
     if (loc == names.end())
-      return R;
+      return E;
     else
     {
       //      assert(get_free_indices(loc->second).empty());
@@ -2232,7 +2232,7 @@ expression_ref subst_referenced_vars(const expression_ref& R, const vector<int>&
   }
   // This case handles NULL in addition to atomic objects.
   else
-    return R;
+    return E;
 }
 
 void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& names, const map<string, reg_heap::root_t>& id)
@@ -2262,6 +2262,23 @@ void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& name
     discover_graph_vars(H, i, names, id);
 
   names[R] = subst_referenced_vars(C.exp, C.Env, names);
+}
+
+string escape(const string& s)
+{
+  string s2;
+  s2.resize(s.size()*2);
+  int l=0;
+  for(int i=0;i<s.size();i++)
+  {
+    bool escape = (s[i] == '\\') or (s[i] == '\n');
+
+    if (escape)
+      s2[l++] = '\\';
+    s2[l++] = s[i];
+  }
+  s2.resize(l);
+  return s2;
 }
 
 string wrap(const string& s, int w)
@@ -2321,7 +2338,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     // node name
     o<<name<<" ";
     o<<"[";
-    string label = wrap(C.access(R).C.print(), 40);
+    string label = wrap(escape(C.access(R).C.print()), 40);
     o<<"label = \""<<R<<": "<<label<<"\"";
     if (C.access(R).changeable)
       o<<",style=\"dashed,filled\",color=red";

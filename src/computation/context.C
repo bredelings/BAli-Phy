@@ -42,7 +42,7 @@ closure context::preprocess(const closure& C) const
 string context::parameter_name(int i) const
 {
   const closure& C = access(*parameters()[i]).C;
-  if (object_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(C.exp))
+  if (object_ptr<const parameter> P = is_a<parameter>(C.exp))
   {
     return P->parameter_name;
   }
@@ -88,22 +88,22 @@ bool context::reg_is_fully_up_to_date(int R) const
   if (not result) return false;
 
   // NOTE! result cannot be an index_var.
-  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(result.exp);
+  const expression_ref& E = result.exp;
 
   // Therefore, if the result is atomic, then R is up-to-date.
-  if (not E) return true;
+  if (not E->size()) return true;
 
   // If the result is a lambda function, then R is up-to-date.
-  if (not dynamic_pointer_cast<const constructor>(E->sub[0])) return true;
+  if (not is_a<constructor>(E)) return true;
 
   // If we get here, this had better be a constructor!
-  assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
+  assert(is_a<constructor>(E));
 
   // Check each component that is a index_var to see if its out of date.
-  for(int i=1;i<E->size();i++)
+  for(int i=0;i<E->size();i++)
   {
     // assert_cast
-    object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(E->sub[i]);
+    object_ptr<const index_var> V = is_a<index_var>(E->sub[i]);
     assert(V);
     int R2 = result.lookup_in_env( V->index );
     
@@ -133,29 +133,29 @@ expression_ref context::full_evaluate(int& R) const
     // NOTE! result cannot be a index_var.
     
     // Therefore, if the result is atomic, then we are done.
-    object_ptr<const expression> E = dynamic_pointer_cast<const expression>(result.exp);
-    if (not E) return result.exp;
+    if (not result.exp->size()) return result.exp;
 
     // If the result is a lambda function, then we are done.
     // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
     // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
-    if (not dynamic_pointer_cast<const constructor>(E->sub[0])) return result.exp;
+    if (not is_a<constructor>(result.exp)) return result.exp;
+    // FIXME - change to is_a<lambda2>?
   }
 
   // If the result is a structure, then evaluate its fields and substitute them.
   {
-    object_ptr<expression> E ( dynamic_pointer_cast<const expression>(result.exp)->clone() );
-    assert(dynamic_pointer_cast<const constructor>(E->sub[0]));
+    object_ptr<expression> E ( result.exp->clone() );
+    assert(is_a<constructor>(E));
 
-    for(int i=1;i<E->size();i++)
+    for(int i=0;i<E->size();i++)
     {
-      object_ptr<const index_var> V = dynamic_pointer_cast<const index_var>(E->sub[i]);
+      object_ptr<const index_var> V = is_a<index_var>(E->sub[i]);
       assert(V);
       int R2 = result.lookup_in_env( V->index );
 
       E->sub[i] = full_evaluate(R2);
     }
-    return object_ref(E);
+    return E;
   }
 }
 
@@ -172,16 +172,16 @@ closure context::lazy_evaluate(int index) const
 /// Return the value of a particular index, computing it if necessary
 object_ref context::evaluate(int index) const
 {
+  return lazy_evaluate(index).exp->head;
+}
+
+expression_ref context::evaluate_structure(int index) const
+{
   int& H = *heads()[index];
 
   H = incremental_evaluate(H);
 
   return full_evaluate(H);
-}
-
-closure context::lazy_evaluate_expression(const expression_ref& E) const
-{
-  return lazy_evaluate_expression_( preprocess(E) );
 }
 
 closure context::lazy_evaluate_expression_(const closure& C) const
@@ -203,12 +203,12 @@ closure context::lazy_evaluate_expression_(const closure& C) const
   }
 }
 
-object_ref context::evaluate_expression(const expression_ref& E) const
+object_ref context::evaluate_expression_(const closure& C) const
 {
-  return evaluate_expression_( preprocess(E) );
+  return lazy_evaluate_expression_(C).exp->head;
 }
 
-object_ref context::evaluate_expression_(const closure& C) const
+expression_ref context::evaluate_structure_expression_(const closure& C) const
 {
   try {
     int R = *push_temp_head();
@@ -223,6 +223,21 @@ object_ref context::evaluate_expression_(const closure& C) const
     pop_temp_head();
     throw e;
   }
+}
+
+closure context::lazy_evaluate_expression(const expression_ref& E) const
+{
+  return lazy_evaluate_expression_( preprocess(E) );
+}
+
+object_ref context::evaluate_expression(const expression_ref& E) const
+{
+  return lazy_evaluate_expression(E).exp->head;
+}
+
+expression_ref context::evaluate_structure_expression(const expression_ref& E) const
+{
+  return evaluate_expression_( preprocess(E) );
 }
 
 bool context::parameter_is_set(int index) const
@@ -248,7 +263,7 @@ object_ref context::get_parameter_value(int index) const
     incremental_evaluate(P);
   }
 
-  return access(P).result.exp;
+  return access(P).result.exp->head;
 }
 
 /// Get the value of a non-constant, non-computed index
@@ -386,12 +401,12 @@ void context::collect_garbage() const
 }
 
 // FIXME! This will use multiple names for objects if they occur twice.
-expression_ref context::translate_refs(const expression_ref& R, vector<int>& Env) const
+expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env) const
 {
   int reg = -1;
 
   // Replace parameters with the appropriate reg_var: of value parameter( )
-  if (object_ptr<const parameter> P = dynamic_pointer_cast<const parameter>(R))
+  if (object_ptr<const parameter> P = is_a<parameter>(E))
   {
     int param_index = find_parameter(P->parameter_name);
     
@@ -402,7 +417,7 @@ expression_ref context::translate_refs(const expression_ref& R, vector<int>& Env
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (object_ptr<const var> V = dynamic_pointer_cast<const var>(R))
+  if (object_ptr<const var> V = is_a<var>(E))
   {
     map<string,root_t>::const_iterator loc = identifiers().find(V->name);
     if (loc == identifiers().end())
@@ -412,7 +427,7 @@ expression_ref context::translate_refs(const expression_ref& R, vector<int>& Env
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (object_ptr<const reg_var> RV = dynamic_pointer_cast<const reg_var>(R))
+  if (object_ptr<const reg_var> RV = is_a<reg_var>(E))
     reg = RV->target;
 
   if (reg != -1)
@@ -420,20 +435,18 @@ expression_ref context::translate_refs(const expression_ref& R, vector<int>& Env
     int index = Env.size();
     Env.insert(Env.begin(), reg);
 
-    return expression_ref(new index_var(index) );
+    return new index_var(index);
   }
 
   // Other constants have no parts, and don't need to be translated
-  object_ptr<const expression> E = dynamic_pointer_cast<const expression>(R);
-  if (not E) return R;
+  if (not E->size()) return E;
 
   // Translate the parts of the expression
-  expression_ref R2 = R;
   object_ptr<expression> V ( new expression(*E) );
   for(int i=0;i<V->size();i++)
     V->sub[i] = translate_refs(V->sub[i], Env);
 
-  return object_ptr<const expression>(V);
+  return V;
 }
 
 closure context::translate_refs(const closure& C) const
@@ -534,7 +547,7 @@ context::~context()
   memory->release_token(token);
 }
 
-object_ref context::default_parameter_value(int i) const
+expression_ref context::default_parameter_value(int i) const
 {
   expression_ref default_value = lambda_expression(constructor("default_value",2));
 

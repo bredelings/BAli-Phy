@@ -3,7 +3,7 @@
 #include "computation/expression.H"
 
 using std::vector;
-using boost::dynamic_pointer_cast;
+using std::string;
 
 void closure::clear()
 {
@@ -11,20 +11,23 @@ void closure::clear()
   Env.clear();
 }
 
-std::string closure::print() const
+string closure::print() const
 {
-  return exp->print()+ "{" + join(Env,",")+"}";
+  string result = exp->print();
+  if (Env.size())
+    result += " {" + join(Env,", ") + "}";
+  return result;
 }
 
 closure get_trimmed(const closure& C)
 {
   closure C2 = C;
 
-  if (object_ptr<const expression> E = is_a(C.exp ,Trim()))
+  if (is_a<Trim>(C.exp))
   {
-    C2.exp = E->sub[2];
+    C2.exp = C.exp->sub[1];
     
-    const vector<int>& keep = dynamic_pointer_cast<const Vector<int>>(E->sub[1])->t;
+    const vector<int>& keep = is_a<Vector<int>>(C.exp->sub[0])->t;
     
     // Since environments are indexed backwards
     C2.Env.resize(keep.size());
@@ -32,7 +35,7 @@ closure get_trimmed(const closure& C)
       C2.Env[i] = C.lookup_in_env(keep[keep.size() - 1 - i]);
 
     // Should this ever happen?
-    assert(not is_a(C2.exp, Trim()));
+    assert(not is_a<Trim>(C2.exp));
 
     // For safety... 
     C2 = get_trimmed(C2);

@@ -11,6 +11,7 @@
 #include <list>
 #include <utility>
 #include "program.H"
+#include "closure.H"
 
 typedef std::bitset<64> owner_set_t;
 

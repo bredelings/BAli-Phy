@@ -61,7 +61,7 @@ namespace substitution
 
     double f = *Args.evaluate_as<Double>(1);
 
-    expression_ref pi = Args.evaluate(2);
+    expression_ref pi = Args.evaluate_structure(2);
 
     return Plus_gwF_Function(a,f,pi);
   }
@@ -706,7 +706,7 @@ namespace substitution
   closure Get_Eigensystem_Op::operator()(OperationArgs& Args) const
   {
     Matrix Q = *Args.evaluate_as<MatrixObject>(0);
-    vector<double> pi = get_vector<double,Double>( Args.evaluate(1) );
+    vector<double> pi = get_vector<double,Double>( Args.evaluate_structure(1) );
     
     return Get_Eigensystem_Function(Q, pi);
   }
@@ -754,7 +754,7 @@ namespace substitution
     object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
     object_ptr<const Box<vector<unsigned> > > smap = Args.evaluate_as< Box<vector<unsigned> > >(1);
     object_ptr<const MatrixObject > Q = Args.evaluate_as< MatrixObject >(2);
-    expression_ref E = Args.evaluate(3);
+    expression_ref E = Args.evaluate_structure(3);
     
     return Get_Equilibrium_Rate_Function(*a, *smap, *Q, E);
   }
