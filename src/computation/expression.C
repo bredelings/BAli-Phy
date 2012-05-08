@@ -156,7 +156,7 @@ string expression::print() const
       vector<string> parts;
       for(int i=0;i<vars.size();i++)
 	parts.push_back(vars[i]->print() + " = " + bodies[i]->print());
-      result += join(parts,',');
+      result += join(parts,", ");
       result += "} in " + T->print();
       return result;
     }
