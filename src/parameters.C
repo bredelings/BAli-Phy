@@ -175,7 +175,7 @@ vector<double> data_partition::distribution() const
   vector<expression_ref> V = get_ref_vector_from_list(E);
   vector<double> v;
   for(int i=0;i<V.size();i++)
-    v.push_back(*convert<const Double>(V[i]));
+    v.push_back(*is_a<Double>(V[i]));
   return v;
 }
 

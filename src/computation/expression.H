@@ -521,13 +521,13 @@ std::valarray<T> get_varray(const expression_ref& E)
   if (not E->size())
   {
     std::valarray<T> v2(1);
-    v2[0] = *convert<const U>(E->head);
+    v2[0] = *is_a<U>(E);
     return v2;
   }
 
   std::valarray<T> v2(E->size());
   for(int i=0;i<v2.size();i++)
-    v2[i] = *convert<const U>(E->sub[i]->head);
+    v2[i] = *is_a<U>(E->sub[i]);
   return v2;
 }
 
@@ -540,13 +540,13 @@ std::vector<T> get_vector(const expression_ref& E)
   if (not E->size())
   {
     std::vector<T> v2(1);
-    v2[0] = *convert<const U>(E->head);
+    v2[0] = *is_a<U>(E);
     return v2;
   }
     
   std::vector<T> v2(E->size());
   for(int i=0;i<v2.size();i++)
-    v2[i] = *convert<const U>(E->sub[i]->head);
+    v2[i] = *is_a<U>(E->sub[i]);
   return v2;
 }
 
@@ -560,7 +560,7 @@ std::vector<T> get_vector_from_list(const expression_ref& E)
   std::vector<expression_ref> v1 = get_ref_vector_from_list(E);
   std::vector<T> v2;
   for(int i=0;i<v1.size();i++)
-    v2.push_back(*convert<const U>(v1[i]->head));
+    v2.push_back(*is_a<U>(v1[i]));
   return v2;
 }
 
