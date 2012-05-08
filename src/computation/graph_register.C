@@ -303,12 +303,6 @@ using std::endl;
  */
 
 
-closure trim_unnormalize(closure C)
-{
-  C.exp = trim_unnormalize(C.exp);
-  return C;
-}
-
 bool includes(const owner_set_t& S1, const owner_set_t& S2)
 {
   return (S2 & ~S1).none();

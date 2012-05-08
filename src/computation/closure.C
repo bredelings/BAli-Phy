@@ -53,3 +53,9 @@ expression_ref deindexify(const closure& C)
   return deindexify(C.exp, variables);
 }
 
+closure trim_unnormalize(closure C)
+{
+  C.exp = trim_unnormalize(C.exp);
+  return C;
+}
+
