@@ -73,7 +73,7 @@ closure cauchy_density::operator()(OperationArgs& Args) const
 
 closure dirichlet_density::operator()(OperationArgs& Args) const
 {
-  expression_ref X = Args.evaluate(0);
+  expression_ref X = Args.evaluate_structure(0);
   expression_ref N = Args.evaluate_structure(1);
   
   std::valarray<double> x = get_varray<double,Double>(X);
