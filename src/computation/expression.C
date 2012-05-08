@@ -1227,9 +1227,9 @@ std::set<dummy> get_free_indices(const expression_ref& E)
   // for case expressions get_bound_indices doesn't work correctly.
   if (is_a<Case>(E))
   {
-    const int L = (E->size()-1)/2;
-
     S = get_free_indices(E->sub[0]);
+
+    const int L = (E->size()-1)/2;
 
     for(int i=0;i<L;i++)
     {
@@ -2370,7 +2370,9 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 	object_ptr<const dummy> V = is_a<dummy>(vars[i]);
 	assert(V);
 	std::set<dummy> free = get_free_indices(bodies[i]);
-	if (free.find(*V) != free.end()) continue;
+
+	// if V references itself then don't substitute it.
+	if (free.count(*V)) continue;
 	
 	changed = true;
 	
