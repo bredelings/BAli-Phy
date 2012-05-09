@@ -235,10 +235,11 @@ namespace substitution
     return R;
   }
   
-  object_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega)
+  object_ptr<const Object> M0_Function(const Codons& C, const SymmetricMatrixObject& S2,double omega)
   {
-    object_ptr<AlphabetExchangeModelObject> R ( new AlphabetExchangeModelObject(C) );
-    ublas::symmetric_matrix<double>& S = R->S;
+    object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject );
+
+    R->t.resize(C.size());
 
     for(int i=0;i<C.size();i++) 
     {
@@ -261,19 +262,28 @@ namespace substitution
 	  int l2 = C.sub_nuc(j,pos);
 	  assert(l1 != l2);
 
-	  rate = S2(l1,l2);
+	  rate = S2.t(l1,l2);
 
 	  if (C.translate(i) != C.translate(j))
 	    rate *= omega;	
 	}
 
-	S(i,j) = S(j,i) = rate;
+	R->t(i,j) = R->t(j,i) = rate;
       }
     }
 
     return R;
   }
 
+
+  closure M0_Op::operator()(OperationArgs& Args) const
+  {
+    object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
+    object_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(1);
+    object_ptr<const Double> omega = Args.evaluate_as<Double>(2);
+    
+    return M0_Function(*C, *S, *omega);
+  }
 
   expression_ref M0E = lambda_expression( M0_Op() );
 

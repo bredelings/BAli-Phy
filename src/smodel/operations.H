@@ -113,8 +113,6 @@ namespace substitution {
 
   formula_expression_ref GTR_Model(const alphabet& a);
   
-  object_ptr<AlphabetExchangeModelObject> M0_Function(const Codons& C, const ExchangeModelObject& S2,double omega);
-
   struct Singlet_to_Triplet_Exchange_Op: public Operation
   {
     Singlet_to_Triplet_Exchange_Op* clone() const {return new Singlet_to_Triplet_Exchange_Op(*this);}
@@ -183,14 +181,7 @@ namespace substitution {
       return true;
     }
 
-    closure operator()(OperationArgs& Args) const
-    {
-      object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
-      object_ptr<const ExchangeModelObject> S = Args.evaluate_as<ExchangeModelObject>(1);
-      object_ptr<const Double> omega = Args.evaluate_as<Double>(2);
-
-      return M0_Function(*C, *S, *omega);
-    }
+    closure operator()(OperationArgs& Args) const;
 
     std::string name() const {return "M0";}
 
