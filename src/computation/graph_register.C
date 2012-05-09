@@ -1594,7 +1594,7 @@ void reg_heap::check_used_regs() const
   }
 }
 
-vector<int> reg_heap::find_all_regs_in_context(int t) const
+vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 {
   vector<int> scan;
   scan.reserve(roots.size());
@@ -1632,14 +1632,35 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
 
     R.state = reg::checked;
     unique.push_back(scan[i]);
+  }
 
-    // Count the references from E
-    scan.insert(scan.end(), R.C.Env.begin(), R.C.Env.end());
+  for(int i=0;i<unique.size();i++)
+  {
+    const reg& R = access(unique[i]);
+    assert(reg_is_owned_by(unique[i], t));
+    assert(R.state != reg::free and R.state != reg::none);
+    assert(R.state == reg::checked);
+
+    for(int j:R.C.Env)
+    {
+      const reg& R2 = access(j);
+      if (R2.state == reg::used)
+      {
+	R2.state = reg::checked;
+	unique.push_back(j);
+      }
+    }
 
     // Count also the references from the call
-    if (R.call != -1)
-      scan.insert(scan.end(), R.call);
+    if (R.call != -1 and access(R.call).state == reg::used)
+      unique.push_back(R.call);
   }
+
+#ifndef NDEBUG
+  for(int i=0;i<unique.size();i++)
+    for(int j=0;j<i;j++)
+      assert(unique[i] != unique[j]);
+#endif
 
   for(int i=0;i<unique.size();i++)
   {
@@ -1648,53 +1669,17 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
     assert(R.is_owned_by(t));
 
     R.state = reg::used;
-
-    check_used_reg(unique[i]);
   }
 
   return unique;
 }
 
-vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
+vector<int> reg_heap::find_all_regs_in_context(int t) const
 {
-  vector<int> scan;
-  scan.reserve(roots.size());
-  for(const auto& i: token_roots[t].temp)
-    scan.push_back(*i);
-  for(const auto& i: token_roots[t].heads)
-    scan.push_back(*i);
+  vector<int> unique = find_all_regs_in_context_no_check(t);
 
-  for(const auto& i: token_roots[t].parameters)
-    scan.push_back(*i);
-  for(const auto& i: token_roots[t].identifiers)
-    scan.push_back(*i.second);
-
-  vector<int> unique;
-  unique.reserve(n_regs());
-  for(int i=0;i<scan.size();i++)
-  {
-    const reg& R = access(scan[i]);
-    assert(R.state != reg::free and R.state != reg::none);
-    if (R.state == reg::checked) continue;
-
-    R.state = reg::checked;
-    unique.push_back(scan[i]);
-
-    // Count the references from E
-    scan.insert(scan.end(), R.C.Env.begin(), R.C.Env.end());
-
-    // Count also the references from the call
-    if (R.call != -1) 
-      scan.insert(scan.end(), R.call);
-  }
-
-  for(int i=0;i<unique.size();i++)
-  {
-    const reg& R = access(unique[i]);
-    assert(R.state == reg::checked);
-
-    R.state = reg::used;
-  }
+  for(int R: unique)
+    check_used_reg(R);
 
   return unique;
 }
