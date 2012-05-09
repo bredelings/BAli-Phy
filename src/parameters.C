@@ -198,8 +198,7 @@ object_ptr<const Object> data_partition::base_model(int m) const
 {
   int s = P->smodel_for_partition[partition_index];
   expression_ref Q = P->C.get_expression(P->SModels[s].base_model);
-  expression_ref E = P->C.evaluate_structure_expression((Q,m));
-  return E;
+  return P->C.evaluate_expression((Q,m));
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
