@@ -95,7 +95,6 @@ expression_ref move_lets(bool scope, const expression_ref E,
     for(int i=0;i<E_vars.size();i++)
     {
       dummy D = *is_a<dummy>(E_vars[i]);
-      avoid.insert(D);
       new_index = std::max(new_index, D.index + 1);
     }
 
