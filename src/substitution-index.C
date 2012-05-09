@@ -20,8 +20,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "substitution-index.H"
 #include "util.H"
 
-#define DEBUG_INDEXING 1
-
 #ifdef NDEBUG
 #define IF_DEBUG(x)
 #else
