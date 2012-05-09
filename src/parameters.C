@@ -184,6 +184,7 @@ vector<unsigned> data_partition::state_letters() const
 
 vector<double> data_partition::frequencies(int m) const
 {
+  // This is actually a tuple, not a list as it should be.
   int s = P->smodel_for_partition[partition_index];
   expression_ref Q = P->C.get_expression(P->SModels[s].frequencies);
   expression_ref E = P->C.evaluate_structure_expression((Q,m));
