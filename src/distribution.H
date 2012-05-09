@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 namespace probability {
 
-  class Distribution: virtual public ::Model
+  class Distribution: public ::Model
   {
   public:
     /// Make a copy of this object
