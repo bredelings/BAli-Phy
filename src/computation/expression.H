@@ -46,6 +46,12 @@ struct expression: public Object
     return boost::dynamic_pointer_cast<const T>(head);
   }
 
+  template <typename T>
+  object_ptr<const T> assert_is_a() const
+  {
+    return convert<const T>(head);
+  }
+
   bool is_exactly(const Object& O) const;
 
   expression() {}
@@ -350,6 +356,12 @@ struct expression_ref: public object_ptr<const expression>
     return boost::dynamic_pointer_cast<const T>((*this)->head);
   }
 
+  template <typename T>
+  object_ptr<const T> assert_is_a() const
+  {
+    return convert<const T>((*this)->head);
+  }
+
   bool is_exactly(const Object& O) const
   {
     return (*this)->is_exactly(O);
@@ -407,6 +419,18 @@ template <typename T>
 object_ptr<const T> is_a(const expression_ref& E)
 { 
   return E.is_a<T>();
+}
+
+template <typename T>
+object_ptr<const T> assert_is_a(const expression& E)
+{ 
+  return E.assert_is_a<T>();
+}
+
+template <typename T>
+object_ptr<const T> assert_is_a(const expression_ref& E)
+{ 
+  return E.assert_is_a<T>();
 }
 
 bool is_exactly(const expression_ref&, const std::string&);
