@@ -18,18 +18,15 @@ closure Apply::operator()(OperationArgs& Args) const
   closure C = Args.lazy_evaluate(0);
 
   // We should assert this.
-  object_ptr<const index_var> V = is_a<index_var>(Args.reference(1));
+  object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(1));
   int arg = Args.current_closure().lookup_in_env( V->index );
 
   // We could actually change this to a static_cast.  C.exp MUST be an expression.  C.exp[0] MUST be a lambda.
-  if (is_a<lambda2>(C.exp))
-  {
-    C.exp = C.exp->sub[0];
-    C.Env.push_back(arg);
-    return C;
-  }
+  assert_is_a<lambda2>(C.exp);
 
-  throw myexception()<<"Can't apply non-lambda object '"<<C.exp->print()<<"' to argument.'";
+  C.exp = C.exp->sub[0];
+  C.Env.push_back(arg);
+  return C;
 }
 
 std::string Apply::name() const {
