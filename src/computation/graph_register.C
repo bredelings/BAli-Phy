@@ -1761,10 +1761,8 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int lazy_evaluate_reg(int R2)
   {
-    set<int>::const_iterator loc = M[R].used_inputs.find(R2);
-
     // We only need to record the usage, adjust the reference, or mark R as changeable if we haven't already.
-    if (loc == M[R].used_inputs.end())
+    if (not M[R].used_inputs.count(R2))
     {
       // Compute the result, and follow non-changeable call chains.
       int R3 = M.incremental_evaluate(R2, t);
