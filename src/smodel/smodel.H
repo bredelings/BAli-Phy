@@ -154,107 +154,11 @@ namespace substitution {
     virtual Independant_Additive_Reversible_Model* clone() const=0;
   };
 
-
-  class ExchangeModel: virtual public ::Model
-  {
-  public:
-    
-    ExchangeModel* clone() const =0;
-    
-    virtual ~ExchangeModel() {};
-  };
-
   inline object_ptr<const alphabet> get_alphabet(const ::Model& M)
   {
     return dynamic_cast<const SModelObject&>(*M.result()).get_alphabet();
   }
     
-  class AlphabetExchangeModel: public ExchangeModel
-  {
-  public:
-    AlphabetExchangeModel* clone() const =0;
-    
-    virtual ~AlphabetExchangeModel() {};
-  };
-
-  
-  //--------------------- EQU Substitution Model ------------------------/
-
-  /// A generic model for any alphabet - the exchangeability matrix is loaded from a file
-  class Empirical: public AlphabetExchangeModel
-  {
-    /// Specificy this model based on the matrix that was loaded
-    string name_;
-
-  public:
-    /// Load the exhangeability matrix from file 'filename'
-    void load_file(std::istream&);
-
-    /// Load the exhangeability matrix from file 'filename'
-    void load_file(const string& filename);
-
-    virtual Empirical* clone() const {return new Empirical(*this);}
-
-    string name() const {return name_;}
-
-    object_ptr<const Object> result() const;
-
-    Empirical(const alphabet& a); 
-
-    Empirical(const alphabet& a, const string& n); 
-
-    ~Empirical() {}
-  };
-
-  class PAM: public Empirical
-  {
-  public:
-    virtual PAM* clone() const {return new PAM(*this);}
-
-    PAM();
-  };
-
-  class JTT: public Empirical
-  {
-  public:
-    virtual JTT* clone() const {return new JTT(*this);}
-
-    JTT();
-  };
-
-  class WAG: public Empirical
-  {
-  public:
-    virtual WAG* clone() const {return new WAG(*this);}
-
-    WAG();
-  };
-
-  class LG: public Empirical
-  {
-  public:
-    virtual LG* clone() const {return new LG(*this);}
-
-    LG();
-  };
-
-  class NucleotideExchangeModel: public AlphabetExchangeModel
-  {
-  public:
-    NucleotideExchangeModel* clone() const=0;
-  };
-
-  class TripletExchangeModel: public AlphabetExchangeModel
-  {
-  public:
-    TripletExchangeModel* clone() const=0;
-
-    TripletExchangeModel(const Triplets& T);
-
-    ~TripletExchangeModel() {}
-  };
-
-
   //------------------------ Reversible frequency model --------------------//
 
   class ReversibleFrequencyModel: virtual public ::Model

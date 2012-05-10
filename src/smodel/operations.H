@@ -315,12 +315,171 @@ namespace substitution {
 
   extern expression_ref Get_Equilibrium_Rate;
 
+  // Generate a Empirical exchangeability matrix.
+  struct Empirical_Op: public Operation
+  {
+    Empirical_Op* clone() const {return new Empirical_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    closure operator()(OperationArgs& Args) const;
+ 
+    std::string name() const {return "Empirical";}
+
+    Empirical_Op(): Operation(2) { }
+  };
+
+  extern const expression_ref Empirical;
+
+  // Generate a PAM exchangeability matrix.
+  struct PAM_Op: public Operation
+  {
+    PAM_Op* clone() const {return new PAM_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    closure operator()(OperationArgs& Args) const;
+ 
+    std::string name() const {return "PAM";}
+
+    PAM_Op(): Operation(1) { }
+  };
+
+  extern const expression_ref PAM;
+
+  // Generate a JTT exchangeability matrix.
+  struct JTT_Op: public Operation
+  {
+    JTT_Op* clone() const {return new JTT_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    closure operator()(OperationArgs& Args) const;
+ 
+    std::string name() const {return "JTT";}
+
+    JTT_Op(): Operation(1) { }
+  };
+
+  extern const expression_ref JTT;
+
+  // Generate a PAM exchangeability matrix.
+  struct WAG_Op: public Operation
+  {
+    WAG_Op* clone() const {return new WAG_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    closure operator()(OperationArgs& Args) const;
+ 
+    std::string name() const {return "WAG";}
+
+    WAG_Op(): Operation(1) { }
+  };
+
+  extern const expression_ref WAG;
+
+  // Generate a LG exchangeability matrix.
+  struct LG_Op: public Operation
+  {
+    LG_Op* clone() const {return new LG_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    closure operator()(OperationArgs& Args) const;
+ 
+    std::string name() const {return "LG";}
+
+    LG_Op(): Operation(1) { }
+  };
+
+  extern const expression_ref LG;
+
 }
 
+// PROBLEMS!
+// - To do FunctionOp<"PAM",PAM_Exchange_Function>(), we'd have to allow templates that take
+//   generic function pointers.  (That is, function pointers whose type isn't known a priori.)
+//
+// - Converting Args_t... to 0, 1, ... n_args-1 is not supported by the language.  We have to
+//   perform various hacks to accomplish this.
+//
+// - Probably I could to GenericFunctionOp("PAM","PAM_Exchange_Function"), but that would be using
+//   run-time lookups to call the function pointer.
+//
+
+
+// http://stackoverflow.com/questions/7858817/unpacking-a-tuple-to-call-a-matching-function-pointer
+// http://stackoverflow.com/questions/10254289/apply-function-from-stdtuple
+// http://stackoverflow.com/questions/4763736/vs2010-c-variadic-template-example
+// Ask question: "Template Template parameters in function pointer template arguments"
+//  -> See suggestions.
+
 /*
+
+template<int ...>
+struct seq { };
+
+template<int N, int ...S>
+struct gens : gens<N-1, N-1, S...> { };
+
+template<int ...S>
+struct gens<0, S...> {
+  typedef seq<S...> type;
+};
+
 template <const char* s, template <typename R_t, typename ...Args_t> R_t F(Args_t)>
-struct FunctionOp
+class FunctionOp
 {
+  template<int... Indices>
+  object_ptr<const Object> call_func(OperationArgs& Args) const
+  {
+    // the issue here is that we need to convert Args_t = type0, type1, type2 to 0, 1, 2, ...
+    // it should be possible to make a parameter pack of integers..
+    return F( convert<const Args_t>(Args.evaluate(Indices))... );
+  }
+
+public:
   FunctionOp* clone() const {return new Function_Op(*this);}
 
   tribool compare(const Object& O) const
@@ -335,13 +494,14 @@ struct FunctionOp
 
   object_ptr<const Object> operator()(OperationArgs& Args) const
   {
-    R_t result = F(convert<const Args_t>(Args.evaluate(#))...);
-    return object_ptr<const Object>(result);
+    return call_func<gens<sizeof...(Args_t)>::type >(Args);
   }
  
   std::string name() const {return s;}
   
   Function_Op(): Operation(sizeof...(Args_t)) { }
 };
+
+expression_ref PAM = lambda_expresion( FunctionOp<"PAM",PAM_Exchange_Function>() );
 */
 #endif

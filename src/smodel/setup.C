@@ -204,27 +204,25 @@ bool process_stack_Markov(vector<string>& string_stack,
   else if (match(string_stack,"PAM",arg)) {
     if (*a != AminoAcids())
       throw myexception()<<"PAM: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-    model_stack.push_back(PAM());
+    model_stack.push_back((PAM,a));
   }
   else if (match(string_stack,"JTT",arg)) {
     if (*a != AminoAcids())
       throw myexception()<<"JTT: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-    model_stack.push_back(JTT());
+    model_stack.push_back((JTT,a));
   }
   else if (match(string_stack,"WAG",arg)) {
     if (*a != AminoAcids())
       throw myexception()<<"WAG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-    model_stack.push_back(WAG());
+    model_stack.push_back((WAG,a));
   }
   else if (match(string_stack,"LG",arg)) {
     if (*a != AminoAcids())
       throw myexception()<<"LG: '"<<a->name<<"' is not an 'Amino-Acids' alphabet.";
-    model_stack.push_back(LG());
+    model_stack.push_back((LG,a));
   }
   else if (match(string_stack,"Empirical",arg)) {
-    Empirical M(*a);
-    M.load_file(arg);
-    model_stack.push_back(M);
+    model_stack.push_back((Empirical,a,arg));
   }
   else if (match(string_stack,"C10",arg))
   {

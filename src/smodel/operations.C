@@ -22,7 +22,6 @@ const expression_ref TN = lambda_expression( substitution::TN_Op());
 const expression_ref GTR = lambda_expression( substitution::GTR_Op());
 const expression_ref Singlet_to_Triplet_Exchange = lambda_expression( substitution::Singlet_to_Triplet_Exchange_Op() );
 
-
 namespace substitution
 {
   object_ptr<const Object> Plus_gwF_Function(const alphabet& a, double f, const expression_ref& pi_E)
@@ -770,35 +769,41 @@ namespace substitution
   }
 
   expression_ref Get_Equilibrium_Rate = lambda_expression(Get_Equilibrium_Rate_Op());
-}
 
-object_ref Empirical_Exchange_Function(const alphabet& a, istream& ifile)
-{
-  object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
+  object_ref Empirical_Exchange_Function(const alphabet& a, istream& ifile)
+  {
+    object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
 
-  int n = a.size();
+    int n = a.size();
 
-  R->t.resize(n);
+    R->t.resize(n);
   
-  for(int i=0;i<n;i++)
-    for(int j=0;j<i;j++) {
-      ifile>>R->t(i,j);
-      R->t(j,i) = R->t(i,j);
-    }
+    for(int i=0;i<n;i++)
+      for(int j=0;j<i;j++) {
+	ifile>>R->t(i,j);
+	R->t(j,i) = R->t(i,j);
+      }
 
-  return object_ref(R);
-}
+    return object_ref(R);
+  }
 
-object_ref Empirical_Exchange_Function(const alphabet& a, const String& filename)
-{
-  checked_ifstream ifile(filename, "empirical rate matrix file");
-  return Empirical_Exchange_Function(a,ifile);
-}
+  object_ref Empirical_Exchange_Function(const alphabet& a, const String& filename)
+  {
+    checked_ifstream ifile(filename, "empirical rate matrix file");
+    return Empirical_Exchange_Function(a,ifile);
+  }
 
-object_ref PAM_Exchange_Function(const alphabet& a)
-{
-  istringstream file(
-"27                                                                         \
+  closure Empirical_Op::operator()(OperationArgs& Args) const
+  {
+    object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
+    object_ptr<const String> S = Args.evaluate_as<String>(1);
+    return Empirical_Exchange_Function(*a, *S);
+  }
+
+  object_ref PAM_Exchange_Function(const alphabet& a)
+  {
+    istringstream file(
+		       "27                                                                         \
  98  32                                                                     \
 120   0 905                                                                 \
  36  23   0   0                                                             \
@@ -818,13 +823,19 @@ object_ref PAM_Exchange_Function(const alphabet& a)
  24   8  95   0  96   0  22   0 127  37  28  13   0 698   0  34  42  61     \
 208  24  15  18  49  35  37  54  44 889 175  10 258  12  48  30 157   0  28 \
 ");
-  return Empirical_Exchange_Function(a, file);
-}
+    return Empirical_Exchange_Function(a, file);
+  }
 
-object_ref JTT_Exchange_Function(const alphabet& a)
-{
-  istringstream file(
-" 58                                                                        \
+  closure PAM_Op::operator()(OperationArgs& Args) const
+  {
+    object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
+    return PAM_Exchange_Function(*a);
+  }
+
+  object_ref JTT_Exchange_Function(const alphabet& a)
+  {
+    istringstream file(
+		       " 58                                                                        \
  54  45                                                                    \
  81  16 528                                                                \
  56 113  34  10                                                            \
@@ -844,13 +855,19 @@ object_ref JTT_Exchange_Function(const alphabet& a)
  11  20  70  46 209  24   7   8 573  32  24   8  18 536  10  63  21  71    \
 298  17  16  31  62  20  45  47  11 961 180  14 323  62  23  38 112  25  16 \
 ");
-  return Empirical_Exchange_Function(a, file);
-}
+    return Empirical_Exchange_Function(a, file);
+  }
 
-object_ref WAG_Exchange_Function(const alphabet& a)
-{
-  istringstream file(
-"0.551571 \
+  closure JTT_Op::operator()(OperationArgs& Args) const
+  {
+    object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
+    return JTT_Exchange_Function(*a);
+  }
+
+  object_ref WAG_Exchange_Function(const alphabet& a)
+  {
+    istringstream file(
+		       "0.551571 \
 0.509848  0.635346 \
 0.738998  0.147304  5.429420 \
 1.027040  0.528191  0.265256  0.0302949 \
@@ -870,13 +887,19 @@ object_ref WAG_Exchange_Function(const alphabet& a)
 0.240735  0.381533  1.086000  0.325711  0.543833  0.227710  0.196303  0.103604  3.873440  0.420170  0.398618  0.133264  0.428437  6.454280  0.216046  0.786993  0.291148  2.485390 \
 2.006010  0.251849  0.196246  0.152335  1.002140  0.301281  0.588731  0.187247  0.118358  7.821300  1.800340  0.305434  2.058450  0.649892  0.314887  0.232739  1.388230  0.365369  0.314730 \
 ");
-  return Empirical_Exchange_Function(a, file);
-}
+    return Empirical_Exchange_Function(a, file);
+  }
 
-object_ref LG_Exchange_Function(const alphabet& a)
-{
-  istringstream file(
-"0.425093 \
+  closure WAG_Op::operator()(OperationArgs& Args) const
+  {
+    object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
+    return WAG_Exchange_Function(*a);
+  }
+
+  object_ref LG_Exchange_Function(const alphabet& a)
+  {
+    istringstream file(
+		       "0.425093 \
 0.276818 0.751878 \
 0.395144 0.123954 5.076149 \
 2.489084 0.534551 0.528768 0.062556 \
@@ -896,5 +919,17 @@ object_ref LG_Exchange_Function(const alphabet& a)
 0.218959 0.314440 0.612025 0.135107 1.165532 0.257336 0.120037 0.054679 5.306834 0.232523 0.299648 0.131932 0.481306 7.803902 0.089613 0.400547 0.245841 3.151815 \
 2.547870 0.170887 0.083688 0.037967 1.959291 0.210332 0.245034 0.076701 0.119013 10.649107 1.702745 0.185202 1.898718 0.654683 0.296501 0.098369 2.188158 0.189510 0.249313 \
 ");
-  return Empirical_Exchange_Function(a, file);
+    return Empirical_Exchange_Function(a, file);
+  }
+
+  closure LG_Op::operator()(OperationArgs& Args) const
+  {
+    object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
+    return WAG_Exchange_Function(*a);
+  }
+  const expression_ref Empirical = lambda_expression( substitution::Empirical_Op());
+  const expression_ref PAM = lambda_expression( substitution::PAM_Op());
+  const expression_ref JTT = lambda_expression( substitution::JTT_Op());
+  const expression_ref WAG = lambda_expression( substitution::WAG_Op());
+  const expression_ref LG = lambda_expression( substitution::LG_Op());
 }
