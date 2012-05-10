@@ -502,15 +502,6 @@ bool reg::is_shared() const
   return (n_owners() > 1);
 }
 
-reg::reg()
- :changeable(false),
-  call(-1),
-  // initialize result to NULL, so that inserting copies of a single reg() doesn't result in sharing.
-  prev_reg(-1),
-  next_reg(-1),
-  state(none)
-{}
-
 void reg_heap::clear(int R)
 {
   access(R).C.clear();

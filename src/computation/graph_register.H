@@ -26,14 +26,14 @@ public:
   closure C;
 
   /// Is C a parameter, or is the result dependent on a parameter value?
-  bool changeable;
+  bool changeable = false;
 
   /// What does C reduce to eventually? (WHNF, but not a heap variable.)
   // {This should probably just become a point to a reg...}
   closure result;
 
   /// Does C reduce to another reg that we need to evaluate to get the true result?
-  int call;
+  int call = -1;
 
   /* 2. The computations we used */
   /// Which reg's were used to reduce this expression?
@@ -54,9 +54,9 @@ public:
   /* 4. Fields used by the memory manager */
   enum States {none=0,free=1,used=2,checked=3};
 
-  int prev_reg;
-  int next_reg;
-  mutable States state;
+  int prev_reg = -1;
+  int next_reg = -1;
+  mutable States state = none;
 
   const owner_set_t& get_owners() const;
   void set_owners(const owner_set_t&);
@@ -72,7 +72,6 @@ public:
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
   owner_set_t temp_owners;
 
-  reg();
 };
 
 // How do we handle parameters?
