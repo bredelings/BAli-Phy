@@ -44,42 +44,6 @@ std::vector<expression_ref> formula_expression_ref::get_notes_plus_exp() const
   return M.get_notes();
 }
 
-formula_expression_ref formula_expression_ref::operator()(const formula_expression_ref& R2) const
-{
-  return apply(*this, R2);
-}
-
-formula_expression_ref formula_expression_ref::operator()(const expression_ref& R2) const
-{
-  return apply(*this, R2);
-}
-
-formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1) const
-{
-  return formula_expression_ref(*this)(arg1);
-}
-
-formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1,
-						  const formula_expression_ref& arg2) const
-{
-  return (*this)(arg1)(arg2);
-}
-
-formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1,
-						  const formula_expression_ref& arg2,
-						  const formula_expression_ref& arg3) const						  
-{
-  return (*this)(arg1)(arg2)(arg3);
-}
-
-formula_expression_ref expression_ref::operator()(const formula_expression_ref& arg1,
-						  const formula_expression_ref& arg2,
-						  const formula_expression_ref& arg3,
-						  const formula_expression_ref& arg4) const						  
-{
-  return (*this)(arg1)(arg2)(arg3)(arg4);
-}
-
 formula_expression_ref::formula_expression_ref()
 { }
 
@@ -137,27 +101,27 @@ formula_expression_ref apply(const formula_expression_ref& F1, const formula_exp
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value)
 {
   expression_ref var = parameter(name);
-  N.add_note( default_value(var, def_value) );
+  N.add_note( (default_value, var, def_value) );
   return var;
 }
 
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, const Bounds<double>& b)
 {
   expression_ref var = def_parameter(N, name, def_value);
-  N.add_note( var_bounds(var, b) );
+  N.add_note( (var_bounds, var, b) );
   return var;
 }
 
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref& D)
 {
   expression_ref var = def_parameter(N, name, def_value, b);
-  N.add_note( distributed(var, D));
+  N.add_note( (distributed, var, D));
   return var;
 }
 
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref& F, const expression_ref& A)
 {
-  expression_ref D = Tuple(2)(F,A);
+  expression_ref D = Tuple(F,A);
   return def_parameter(N, name, def_value, b, D);
 }
 
@@ -203,19 +167,20 @@ formula_expression_ref lambda_quantify(const expression_ref& d, const formula_ex
   return F2;
 }
 
+
 formula_expression_ref operator,(const expression_ref& E1, const formula_expression_ref& F2)
 {
-  return E1(F2);
+  return apply(E1,F2);
 }
 
 formula_expression_ref operator,(const formula_expression_ref& F1, const expression_ref& E2)
 {
-  return F1(E2);
+  return apply(F1,E2);
 }
 
 formula_expression_ref operator,(const formula_expression_ref& F1, const formula_expression_ref& F2)
 {
-  return F1(F2);
+  return apply(F1,F2);
 }
 
 formula_expression_ref operator&(const expression_ref& E1, const formula_expression_ref& F2)
@@ -232,24 +197,3 @@ formula_expression_ref operator&(const formula_expression_ref& F1, const formula
 {
   return (Cons,F1,F2);
 }
-
-formula_expression_ref Tuple(const formula_expression_ref& R1,const formula_expression_ref& R2)
-{
-  return Tuple(2)(R1)(R2);
-}
-
-formula_expression_ref Tuple(const formula_expression_ref& R1,const formula_expression_ref& R2,const formula_expression_ref& R3)
-{
-  return Tuple(3)(R1)(R2)(R3);
-}
-
-formula_expression_ref Tuple(const formula_expression_ref& R1,const formula_expression_ref& R2,const formula_expression_ref& R3,const formula_expression_ref& R4)
-{
-  return Tuple(4)(R1)(R2)(R3)(R4);
-}
-
-formula_expression_ref Tuple(const formula_expression_ref& R1,const formula_expression_ref& R2,const formula_expression_ref& R3,const formula_expression_ref& R4,const formula_expression_ref& R5)
-{
-  return Tuple(5)(R1)(R2)(R3)(R4)(R5);
-}
-

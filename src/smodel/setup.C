@@ -179,7 +179,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     formula_expression_ref nuc_S = prefix_formula("nuc",HKY_Model(T->getNucleotides()));
     if (T) 
-      model_stack.push_back(Singlet_to_Triplet_Exchange(*T)(nuc_S));
+      model_stack.push_back((Singlet_to_Triplet_Exchange, *T,nuc_S));
     else
       throw myexception()<<"HKYx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
@@ -188,7 +188,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     formula_expression_ref nuc_S = prefix_formula("nuc",TN_Model(T->getNucleotides()));
     if (T) 
-      model_stack.push_back(Singlet_to_Triplet_Exchange(*T)(nuc_S));
+      model_stack.push_back((Singlet_to_Triplet_Exchange, *T, nuc_S));
     else
       throw myexception()<<"TNx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
@@ -197,7 +197,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     formula_expression_ref nuc_S = prefix_formula("nuc",GTR_Model(T->getNucleotides()));
     if (T) 
-      model_stack.push_back(Singlet_to_Triplet_Exchange(*T)(nuc_S));
+      model_stack.push_back((Singlet_to_Triplet_Exchange, *T, nuc_S));
     else
       throw myexception()<<"GTRx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
@@ -265,7 +265,7 @@ bool process_stack_Markov(vector<string>& string_stack,
 
     formula_expression_ref S1 = TN_Model(C->getNucleotides());
     formula_expression_ref w = def_parameter("M0::omega", Double(1), lower_bound(0), log_laplace_dist, Tuple(0.0,0.1));
-    formula_expression_ref M0 = M0E(a)(S1)(w);
+    formula_expression_ref M0 = (M0E, a, S1, w);
 
     model_stack.push_back( M0 );
   }
@@ -330,7 +330,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
   {
     formula_expression_ref EM = get_EM_default(model_stack,"+F=constant", a, frequencies);
 
-    formula_expression_ref F = Plus_gwF(*a)(1.0)( get_tuple(*frequencies) );
+    formula_expression_ref F = (Plus_gwF, *a, 1.0, get_tuple(*frequencies) );
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
@@ -351,7 +351,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     vector<double> pi(a->size(),1.0/a->size() );
 
-    formula_expression_ref F = Plus_gwF(*a)(1.0)( get_tuple( pi ) );
+    formula_expression_ref F = (Plus_gwF, *a, 1.0, get_tuple( pi ) );
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
@@ -518,7 +518,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     formula_expression_ref base = get_RA_default(model_stack,"gamma",a,frequencies);
     formula_expression_ref dist = (Discretize, model_formula(Gamma()), n);
-    model_stack.back() = MultiRate(base,  dist);
+    model_stack.back() = (MultiRate, base,  dist);
   }
   else if (match(string_stack,"gamma_inv",arg)) {
     int n=4;
@@ -529,7 +529,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref dist = (Discretize, model_formula(Gamma()), n);
     formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
     dist = (ExtendDiscreteDistribution, dist, p, 0.0);
-    model_stack.back() = MultiRate(base,  dist);
+    model_stack.back() = (MultiRate, base,  dist);
   }
   else if (match(string_stack,"log-normal",arg)) {
     int n=4;
@@ -538,7 +538,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     formula_expression_ref base = get_RA_default(model_stack,"log-normal",a,frequencies);
     formula_expression_ref dist = (Discretize, model_formula(LogNormal()), n);
-    model_stack.back() = MultiRate(base,  dist);
+    model_stack.back() = (MultiRate, base,  dist);
   }
   else if (match(string_stack,"log-normal_inv",arg)) {
     int n=4;
@@ -547,9 +547,9 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     formula_expression_ref base = get_RA_default(model_stack,"log-normal_inv",a,frequencies);
     formula_expression_ref dist = (Discretize, model_formula(LogNormal()), n);
-    formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(2)(1.0, 2.0) );
-    dist = ExtendDiscreteDistribution(dist)(0.0)(p);
-    model_stack.back() = MultiRate(base,  dist);
+    formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
+    dist = (ExtendDiscreteDistribution, dist, p, 0.0);
+    model_stack.back() = (MultiRate, base,  dist);
   }
   else if (match(string_stack,"multi_freq",arg)) {
     // Pr(l|m) = Pr(m|l)*Pr(l)/Pr(m)
@@ -582,12 +582,12 @@ bool process_stack_Multi(vector<string>& string_stack,
       // dist = (f,rate):dist
       dist = Tuple(f, rate) & dist;
     }
-    dist = DiscreteDistribution(dist);
-    dist.add_expression( distributed( get_tuple(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );
-    dist.add_expression( distributed( get_tuple(rates), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,2.0))) ) );
+    dist = (DiscreteDistribution, dist);
+    dist.add_expression( (distributed, get_tuple(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );
+    dist.add_expression( (distributed, get_tuple(rates), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,2.0))) ) );
 
     formula_expression_ref base = get_RA_default(model_stack,"DP",a,frequencies);
-    model_stack.back() = MultiRate(base,  dist);
+    model_stack.back() = (MultiRate, base,  dist);
   }
   else if (match(string_stack,"Modulated",arg))
   {
@@ -611,7 +611,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref p2 = def_parameter("M2::f[Neutral]", Double(1.0/3), between(0,1));
     formula_expression_ref p3 = def_parameter("M2::f[Selected]", Double(1.0/3), between(0,1));
     formula_expression_ref m2_omega = def_parameter("M2::omega", Double(1.0), lower_bound(0));
-    formula_expression_ref D = DiscreteDistribution(Tuple(p1,0.0)&
+    formula_expression_ref D = (DiscreteDistribution, Tuple(p1,0.0)&
 						    Tuple(p2,1.0)&
 						    Tuple(p3,m2_omega)&
 						    ListEnd
@@ -621,17 +621,17 @@ bool process_stack_Multi(vector<string>& string_stack,
     n[1] = 98;
     n[2] = 1;
     expression_ref N = get_tuple(n);
-    D.add_expression( distributed( Tuple(p1,p2,p3),   Tuple(dirichlet_dist, N) ) );
-    D.add_expression( distributed( m2_omega, Tuple(log_exponential_dist, 0.05) ) );
+    D.add_expression( (distributed, Tuple(p1,p2,p3),   Tuple(dirichlet_dist, N) ) );
+    D.add_expression( (distributed, m2_omega, Tuple(log_exponential_dist, 0.05) ) );
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
     formula_expression_ref S1 = TN_Model(C->getNucleotides());
-    formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
+    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
     formula_expression_ref R = Plus_gwF_Model(*a);
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
-    model_stack.push_back( MultiParameter(M0,D) );
+    model_stack.push_back( (MultiParameter,M0,D) );
   }
   else if (match(string_stack,"M3",arg)) 
   {
@@ -649,21 +649,21 @@ bool process_stack_Multi(vector<string>& string_stack,
       fraction.insert(fraction.begin(), f.exp());
       formula_expression_ref w = def_parameter("M3::omega" + convertToString(i+1), Double(1.0), lower_bound(0));
       // P *= ((1-f)*exponential_pdf(-log(w),0.05)/w + f*exponential_pdf(log(w),0.05)/w);
-      w.add_expression( distributed( w, Tuple(log_exponential_dist, 0.05) ) );
+      w.add_expression( (distributed, w, Tuple(log_exponential_dist, 0.05) ) );
 
       D = Tuple(f,w)&D;
     }
-    D = DiscreteDistribution(D);
-    D.add_expression(distributed( get_tuple(fraction), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
+    D = (DiscreteDistribution, D);
+    D.add_expression((distributed, get_tuple(fraction), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
     formula_expression_ref S1 = TN_Model(C->getNucleotides());
-    formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
+    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
     formula_expression_ref R = Plus_gwF_Model(*a);
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
-    model_stack.push_back( MultiParameter(M0,D) );
+    model_stack.push_back( (MultiParameter, M0, D) );
   }
   else if (match(string_stack,"M2a",arg)) 
   {
@@ -672,29 +672,26 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref p3 = def_parameter("M2a::f[Selected]", Double(1.0/3), between(0,1));
     formula_expression_ref w1 = def_parameter("M2a::omega1", Double(1.0), between(0,1));
     formula_expression_ref w3 = def_parameter("M2a::omega3", Double(1.0), lower_bound(1));
-    formula_expression_ref D = DiscreteDistribution(Tuple(p1,w1)&
-						    Tuple(p2,1.0)&
-						    Tuple(p3,w3)&
-						    ListEnd
-						    );
+    formula_expression_ref D = (DiscreteDistribution,Tuple(p1,w1)&Tuple(p2,1.0)&Tuple(p3,w3)&ListEnd);
+
     vector<Double> n(3);
     n[0] = 1;
     n[1] = 98;
     n[2] = 1;
     expression_ref N = get_tuple(n);
-    D.add_expression( distributed( Tuple(p1,p2,p3),   Tuple(dirichlet_dist, N) ) );
+    D.add_expression( (distributed, Tuple(p1,p2,p3),   Tuple(dirichlet_dist, N) ) );
     expression_ref divide = lambda_expression( Divide<Double>() );
-    D.add_expression( distributed( divide(1.0)(w1), Tuple(log_exponential_dist, 0.05) ) );
-    D.add_expression( distributed( w3, Tuple(log_exponential_dist, 0.05) ) );
+    D.add_expression( (distributed, (divide, 1.0, w1), Tuple(log_exponential_dist, 0.05) ) );
+    D.add_expression( (distributed, w3, Tuple(log_exponential_dist, 0.05) ) );
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
-    formula_expression_ref S1 = TN_Model(C->getNucleotides());
-    formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
+    formula_expression_ref S1 = TN_Model( C->getNucleotides());
+    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
     formula_expression_ref R = Plus_gwF_Model(*a);
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
-    model_stack.push_back( MultiParameter(M0,D) );
+    model_stack.push_back( (MultiParameter,M0,D) );
   }
   else if (match(string_stack,"M8b",arg))
   {
@@ -745,7 +742,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
       // scale p (q,x):t = (p*q,x):(scale p t)
       patterns.push_back( Tuple(p, Tuple(q,x)&t ) );
-      bodies.push_back(  Tuple(lambda_expression( Multiply<Double>() )(p,q),x) & scale(p,t) );
+      bodies.push_back(  Tuple((lambda_expression( Multiply<Double>() ), p,q),x) & (scale, p, t) );
 
       expression_ref def_scale;// = def_function(patterns, bodies);
 
@@ -765,7 +762,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       vector<expression_ref> bodies;
 
       // unwrap DiscreteDistribution x = x
-      patterns.push_back( Tuple(1)( DiscreteDistribution( dummy(0) ) ) );
+      patterns.push_back( (DiscreteDistribution, dummy(0) ) );
       bodies.push_back( dummy(0) );
 
       expression_ref def_unwrap;// = def_function(patterns, bodies);
@@ -807,24 +804,24 @@ bool process_stack_Multi(vector<string>& string_stack,
                                Tuple(p2,1.0) &
                                (Scale, p1, (Unwrap,(Discretize,model_formula(Beta()),n)));
 
-    D = DiscreteDistribution(D);
+    D = (DiscreteDistribution, D);
 
     vector<Double> N(3);
     N[0] = 10;
     N[1] = 10;
     N[2] = 1;
 
-    D.add_expression( distributed( Tuple(p1,p2,p3),   Tuple(dirichlet_dist, get_tuple(N)) ) );
-    D.add_expression( distributed( w, Tuple(log_exponential_dist, 0.05) ) );
+    D.add_expression( (distributed, Tuple(p1,p2,p3),   Tuple(dirichlet_dist, get_tuple(N)) ) );
+    D.add_expression( (distributed, w, Tuple(log_exponential_dist, 0.05) ) );
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
-    formula_expression_ref S1 = TN_Model(C->getNucleotides());
-    formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
+    formula_expression_ref S1 = TN_Model( C->getNucleotides());
+    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
     formula_expression_ref R = Plus_gwF_Model(*a);
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
-    model_stack.push_back( MultiParameter(M0,D) );
+    model_stack.push_back( (MultiParameter, M0, D) );
   }
   else if (match(string_stack,"M7",arg))
   {
@@ -836,12 +833,12 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
-    formula_expression_ref S1 = TN_Model(C->getNucleotides());
-    formula_expression_ref S2 = M0E(a)(S1)(dummy(0));
+    formula_expression_ref S1 = TN_Model( C->getNucleotides());
+    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
     formula_expression_ref R = Plus_gwF_Model(*a);
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
-    model_stack.push_back( MultiParameter(M0,D) );
+    model_stack.push_back( (MultiParameter, M0, D) );
   }
   else
     return false;

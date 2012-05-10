@@ -14,10 +14,6 @@ class formula_expression_ref: public Model_Notes
   // between formula_expression_ref and class context.
 public:
 
-  formula_expression_ref operator()(const formula_expression_ref&) const;
-
-  formula_expression_ref operator()(const expression_ref&) const;
-
   void set_exp(const expression_ref& E2) {E = E2;}
 
   expression_ref exp() const {return E;}
@@ -67,10 +63,5 @@ formula_expression_ref operator,(const formula_expression_ref&, const formula_ex
 formula_expression_ref operator&(const expression_ref&, const formula_expression_ref&);
 formula_expression_ref operator&(const formula_expression_ref&, const expression_ref&);
 formula_expression_ref operator&(const formula_expression_ref&, const formula_expression_ref&);
-
-formula_expression_ref Tuple(const formula_expression_ref&, const formula_expression_ref&);
-formula_expression_ref Tuple(const formula_expression_ref&, const formula_expression_ref&, const formula_expression_ref&);
-formula_expression_ref Tuple(const formula_expression_ref&, const formula_expression_ref&, const formula_expression_ref&, const formula_expression_ref&);
-formula_expression_ref Tuple(const formula_expression_ref&, const formula_expression_ref&, const formula_expression_ref&, const formula_expression_ref&, const formula_expression_ref&);
 
 #endif

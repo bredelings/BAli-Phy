@@ -131,7 +131,7 @@ namespace substitution
   {
     formula_expression_ref kappa = def_parameter("HKY::kappa", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
 
-    return HKY(a)(kappa);
+    return (HKY, a, kappa);
   }
   
   object_ptr<const Object> TN_Function(const Nucleotides& a, double kappa1, double kappa2)
@@ -170,7 +170,7 @@ namespace substitution
     formula_expression_ref kappa1 = def_parameter("TN::kappa(pur)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
     formula_expression_ref kappa2 = def_parameter("TN::kappa(pyr)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
 
-    return TN(a)(kappa1)(kappa2);
+    return (TN, a, kappa1, kappa2);
   }
   
   object_ptr<const Object> GTR_Function(const Nucleotides& a, 
@@ -220,15 +220,14 @@ namespace substitution
     formula_expression_ref GC = def_parameter("GTR::GC", 1.0/8, between(0.0,1.0));
     formula_expression_ref TC = def_parameter("GTR::TC", 2.0/8, between(0.0,1.0));
 
-    formula_expression_ref R = GTR(a)(AG)(AT)(AC)(GT)(GC)(TC);
+    formula_expression_ref R = (GTR, a, AG, AT, AC, GT, GC, TC);
 
     // I should generalize this...
     // Should I make a tuple of tuples?
-    R.add_expression(distributed(Tuple(6)(AG)(AT)(AC)(GT)(GC)(TC),
-				 Tuple(dirichlet_dist, 
-				       Tuple(6)(8.0)(4.0)(4.0)(4.0)(4.0)(8.0)
-				       )
-				 )
+    R.add_expression((distributed, 
+		      Tuple(AG, AT, AC, GT, GC, TC),
+		      Tuple(dirichlet_dist, Tuple(8.0, 4.0, 4.0, 4.0, 4.0, 8.0) )
+		      )
 		     );
 
     return R;
@@ -342,7 +341,7 @@ namespace substitution
     }
 
     expression_ref N = get_tuple(vector<double>(a.size(), 1.0) );
-    F.add_expression( distributed( F, Tuple(dirichlet_dist,N ) ) );
+    F.add_expression( (distributed, F, Tuple(dirichlet_dist,N ) ) );
 
     return F;
   }
@@ -419,7 +418,7 @@ namespace substitution
     formula_expression_ref S = prefix_formula("S",FS);
     formula_expression_ref R = prefix_formula("R",FR);
     
-    return Q_from_S_and_R(S)(R);
+    return (Q_from_S_and_R, S, R);
   }
 
   formula_expression_ref Simple_gwF_Model(const formula_expression_ref& S, const alphabet& a)
@@ -436,11 +435,12 @@ namespace substitution
   {
     formula_expression_ref R2 = R;
 
-    R2 = MixtureModel(DiscreteDistribution(Cons(Tuple(expression_ref(1.0),R), ListEnd)));
+    R2 = (MixtureModel, (DiscreteDistribution, List(Tuple(1.0,R))));
 
     return R2;
   }
 
+  //FIXME!
   expression_ref DiscretizationFunction(const Distribution& D, Int n)
   {
     // Make a discretization - not uniform.
@@ -459,7 +459,7 @@ namespace substitution
     for(int i=0;i<n;i++)
       pairs.push_back( Tuple( d.f[i], d.r[i] ) );
 
-    return graph_normalize(DiscreteDistribution( get_list(pairs) ));
+    return graph_normalize((DiscreteDistribution, get_list(pairs) ));
   }
 
   expression_ref Discretize = lambda_expression( DiscretizationOp() );
@@ -644,14 +644,14 @@ namespace substitution
       parameter var(var_name);
       formula_expression_ref Var = def_parameter(var_name, 1.0/N, between(0,1)); 
 
-      models_list = Cons(models[i], models_list);
-      vars_list = Cons(Var, vars_list);
-      vars_tuple = vars_tuple(var);
-      n_tuple = n_tuple(1.0);
+      models_list = models[i] & models_list;
+      vars_list = Var & vars_list;
+      vars_tuple = (vars_tuple, var);
+      n_tuple = (n_tuple, 1.0);
     }
-    formula_expression_ref R= Mixture_E(vars_list, models_list);
+    formula_expression_ref R = (Mixture_E, vars_list, models_list);
 
-    R.add_expression(distributed(vars_tuple, Tuple(dirichlet_dist, n_tuple ) ) );
+    R.add_expression((distributed, vars_tuple, Tuple(dirichlet_dist, n_tuple ) ) );
 
     return R;
   }

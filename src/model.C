@@ -101,8 +101,8 @@ expression_ref model_prior_expression(const Model& M)
 {
   vector< expression_ref > sub;
 
-  return distributed( get_tuple( model_parameter_expressions( M ) ),
-		      Tuple(prob_density(model_prior(M).name(), lambda_expression(model_prior(M))), 
+  return (distributed, get_tuple( model_parameter_expressions( M ) ),
+		      Tuple((prob_density, model_prior(M).name(), lambda_expression(model_prior(M))), 
 			       Tuple(0) 
 			       )
 		      );
@@ -218,7 +218,7 @@ int Model::add_note(const expression_ref& E)
   if (index != C.n_notes()-1) return index;
 
   // 1. Check to see if this expression adds a bound.
-  expression_ref query = var_bounds(match(0), match(1));
+  expression_ref query = (var_bounds, match(0), match(1));
 
   vector<expression_ref> results;
   if (find_match(query, C.get_note(index), results))
@@ -410,7 +410,7 @@ Model::Model(const vector<expression_ref>& notes)
   {
     expression_ref var = parameter(parameter_name(i));
     vector<expression_ref> results;
-    expression_ref query = var_bounds(var,match(0));
+    expression_ref query = (var_bounds, var, match(0));
     int found = C.find_match_notes(query, results, 0);
     if (found != -1)
     {
@@ -465,10 +465,10 @@ formula_expression_ref model_formula(const Model& M)
   for(int i=0;i<M.n_parameters();i++)
   {
     expression_ref var = parameter(M.parameter_name(i));
-    N.push_back(var_bounds(var, M.get_bounds(i)));
+    N.push_back((var_bounds, var, M.get_bounds(i)));
 
     if (M.get_parameter_value(i))
-      N.push_back(default_value(var, M.get_parameter_value(i)));
+      N.push_back((default_value, var, M.get_parameter_value(i)));
   }
 
   N.push_back( model_prior_expression(M) );
@@ -964,7 +964,7 @@ object_ptr<Model> prefix_model(const Model& M, const string& prefix)
 
 vector<string> show_probability_expressions(const context& C)
 {
-  expression_ref query = distributed(_2,Tuple(prob_density(_1,_), _3));
+  expression_ref query = (distributed, _2, Tuple((prob_density, _1 , _), _3));
 
   vector<string> expressions;
 

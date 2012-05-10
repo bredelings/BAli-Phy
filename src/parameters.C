@@ -1124,7 +1124,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   {
     add_super_parameter(Parameter("lambda_scale", Double(0.0)));
     // lambda_scale ~ Laplace(0, 1)
-    add_note(distributed(parameter("lambda_scale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
+    add_note((distributed,parameter("lambda_scale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
 
     add_super_parameter(Parameter("lambda_scale_on", Bool(false)));
     // lambda_scale_on ~ Uniform on T,F

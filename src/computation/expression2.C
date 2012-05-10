@@ -88,10 +88,10 @@ int main()
 
   cout<<"Demonstrate lambda functions\n";
   cout<<"mul = "<<mul<<"\n";
-  cout<<"mul(x) = "<<mul(x)<<"\n";
-  cout<<"mul(x)(y) = "<<mul(x)(y)<<"\n";
-  cout<<"mul(#1) = "<<mul(dummy(1))<<"\n";
-  cout<<"mul(x,y) = "<<mul(x,y)<<"\n\n\n";
+  cout<<"mul(x) = "<<(mul,x)<<"\n";
+  cout<<"mul(x)(y) = "<<(mul,x,y)<<"\n";
+  cout<<"mul(#1) = "<<(mul,dummy(1))<<"\n";
+  cout<<"mul(x,y) = "<<(mul,x,y)<<"\n\n\n";
 
   // This doesn't work!  Therefore, let_float objects out of IF statements doesn't work either.
   cout<<lambda_quantify(dummy("x"),lambda_quantify(dummy("y"),dummy("x")))<<"\n";
@@ -123,13 +123,13 @@ int main()
 		      );
   }
 
-  expression_ref let_cons = mul(1)(2);
+  expression_ref let_cons = (mul, 1, 2);
   cout<<let_cons<<"\n";
   cout<<graph_normalize(let_cons)<<"\n";
   cout<<let_float(graph_normalize(let_cons))<<"\n";
-  cout<<"graph normalize: "<<graph_normalize(case_if(Z>1.0,X*Y,W))<<"\n";
-  cout<<"let_float: "<<let_float(case_if(Z>1.0,X*Y,W))<<"\n";
-  cout<<"let_float & graph_normalize: "<<let_float(graph_normalize(case_if(Z>1.0,X*Y,W)))<<"\n";
+  cout<<"graph normalize: "<<graph_normalize((case_if,Z>1.0,X*Y,W))<<"\n";
+  cout<<"let_float: "<<let_float((case_if,Z>1.0,X*Y,W))<<"\n";
+  cout<<"let_float & graph_normalize: "<<let_float(graph_normalize((case_if,Z>1.0,X*Y,W)))<<"\n";
 
 
   cout<<"\nPrelude = \n"<<Prelude<<"\n\n";
@@ -142,34 +142,32 @@ int main()
   CTX1.add_parameter("Z");
   CTX1.add_parameter("W");
 
-  expression_ref x_times_y_plus_one = plus(mul(x)(y))(one);
+  expression_ref x_times_y_plus_one = (plus, (mul, x, y), one);
   int x_times_y_plus_one_ = CTX1.add_compute_expression(x_times_y_plus_one);
 
-  expression_ref z_gt_1 = gt(z)(one);
+  expression_ref z_gt_1 = (gt, z, one);
 
-  int z_gt = CTX1.add_compute_expression(gt(z));
+  int z_gt = CTX1.add_compute_expression( (gt, z ) );
 
-  CTX1.add_compute_expression(plus(x)(y));
+  CTX1.add_compute_expression( (plus, x, y) );
 
-  int w_2 = CTX1.add_compute_expression( muli(w)(w) );
+  int w_2 = CTX1.add_compute_expression( (muli, w, w) );
 
-  int cond = CTX1.add_compute_expression( If(z_gt_1, x_times_y_plus_one, w_2));
+  int cond = CTX1.add_compute_expression( (If, z_gt_1, x_times_y_plus_one, w_2));
 
-  // this should be a dup and do nothing
-  CTX1.add_compute_expression( If( gt(z)(one) ) ( plus( mul(x)(y))(one) ) ( muli(w)(w) ) );
-  // -- using multiple arguments instead of one at a time.  This works up to 3 arguments
-  CTX1.add_compute_expression( If( gt(z, one) , plus( mul(x, y), one) , muli(w,w) ) );
+  // -- using multiple arguments instead of one at a time.
+  CTX1.add_compute_expression( (If, (gt, z, one) , (plus, (mul, x, y), one) , (muli,w,w) ) );
   // -- using automatic creation of operators based on typed references
-  CTX1.add_compute_expression( If( Z > One , X*Y+One , W*W ) );
+  CTX1.add_compute_expression( (If, Z > One , X*Y+One , W*W ) );
   // -- can we create constants easily?
-  CTX1.add_compute_expression( If( Z > 1.0, X*Y+1.0, W*W ) );
+  CTX1.add_compute_expression( (If, Z > 1.0, X*Y+1.0, W*W ) );
 
-  int defv = CTX1.add_compute_expression(  default_value(parameter("X"), 2.0) );
-  int list_x_y = CTX1.add_compute_expression(Cons(X,Cons(Y,ListEnd)));
+  int defv = CTX1.add_compute_expression(  (default_value, parameter("X"), 2.0) );
+  int list_x_y = CTX1.add_compute_expression( List(X,Y) );
   int tuple_x_y = CTX1.add_compute_expression(Tuple(X,Y));
 
-  int prior_x_y = CTX1.add_note(distributed(parameter("X"),Tuple(exponential_dist,Y+One)));
-  CTX1.add_note(distributed(parameter("Y"),Tuple(exponential_dist,Z+One)));
+  int prior_x_y = CTX1.add_note( (distributed, parameter("X"),Tuple(exponential_dist,Y+One)));
+  CTX1.add_note((distributed,parameter("Y"),Tuple(exponential_dist,Z+One)));
   int probability_expression = add_probability_expression(CTX1);
 
   cout<<"Setting a few variables...\n";
@@ -245,7 +243,7 @@ int main()
   test8 = CTX1.evaluate_expression(test8);
   cout<<test8<<"\n";
 
-  expression_ref test9 = case_expression(Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
+  expression_ref test9 = case_expression( List(1,2), List(v1,v2), v2);
 
   cout<<"\n";
   cout<<"Eval test:     "<<test9<<" = \n";
@@ -255,7 +253,7 @@ int main()
   cout<<test9<<"\n";
 
 
-  expression_ref test10 = take(2)(Cons(1,Cons(2,Cons(3,ListEnd))));
+  expression_ref test10 = (take, 2, List(1,2,3) );
 
   cout<<"\n";
   cout<<"Eval test:     "<<test10<<" = \n";
@@ -265,7 +263,7 @@ int main()
   cout<<test10<<"\n";
 
   // We might actually have to print the result to calculate the whole thing.
-  expression_ref test11 = take(3)(iterate(plus_i(1),1));
+  expression_ref test11 = (take, 3, (iterate, (plus_i,1), 1));
   cout<<"\n";
   cout<<"Eval test:     "<<test11<<" = \n";
   test11 = launchbury_normalize(test11);
@@ -306,7 +304,7 @@ int main()
   test12.reset();
   cout<<"A:C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test13 = case_expression(Cons(1,Cons(2,ListEnd)), Cons(v1,v2), v2);
+  expression_ref test13 = case_expression(List(1,2), List(v1,v2), v2);
 
   cout<<"\n";
   cout<<"Eval test:     "<<test13<<" = \n";
@@ -317,7 +315,7 @@ int main()
   test13.reset();
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test14 = take(3)(iterate(plus_i(1),1));
+  expression_ref test14 = (take,3,(iterate,(plus_i,1),1));
 
   cout<<"\n";
   cout<<"Eval test:     "<<test14<<" = \n";
@@ -330,7 +328,7 @@ int main()
 
 
   //print(take(3,fmap(square,iterate(plus(1.0),1.0))));
-  expression_ref test15 = take(3)(iterate(plus_i(1),1));
+  expression_ref test15 = (take,3,(iterate, (plus_i,1),1));
 
   cout<<"\n";
   cout<<"Eval test:     "<<test15<<" = \n";
@@ -387,7 +385,7 @@ int main()
   C.set_parameter_value("Z",4);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test16 = take(y)(iterate(plus_i(x),z));
+  expression_ref test16 = (take,y,(iterate,(plus_i,x),z));
 
   C.add_compute_expression( test16 );
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
@@ -398,7 +396,7 @@ int main()
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test17 =  sum_i(take(y)(iterate(plus_i(x),z)));
+  expression_ref test17 =  (sum_i,(take,y,(iterate,(plus_i,x),z)));
 
   C.add_compute_expression( test17 );
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";

@@ -1635,7 +1635,7 @@ template<> expression_ref get_list<>(const vector<expression_ref>& v)
   expression_ref E = ListEnd;
 
   for(int i=v.size()-1;i>=0;i--)
-    E = Cons(v[i],E);
+    E = v[i]&E;
 
   return E;
 }

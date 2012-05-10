@@ -305,46 +305,6 @@ class formula_expression_ref;
 
 struct expression_ref: public object_ptr<const expression>
 {
-  // FIXME - eliminate operator() in favor of operator,()
-  expression_ref operator()(const expression_ref& arg) const
-  {
-    return apply(*this,arg);
-  }
-
-  formula_expression_ref operator()(const formula_expression_ref& arg1) const;
-
-  formula_expression_ref operator()(const formula_expression_ref& arg1,
-				    const formula_expression_ref& arg2) const;
-
-  formula_expression_ref operator()(const formula_expression_ref& arg1,
-				    const formula_expression_ref& arg2,
-				    const formula_expression_ref& arg3) const;
-
-  formula_expression_ref operator()(const formula_expression_ref& arg1,
-				    const formula_expression_ref& arg2,
-				    const formula_expression_ref& arg3,
-				    const formula_expression_ref& arg4) const;
-
-  expression_ref operator()(const expression_ref& arg1, const expression_ref& arg2) const
-  {
-    return apply(apply(*this,arg1),arg2);
-  }
-
-  expression_ref operator()(const expression_ref& arg1, 
-			    const expression_ref& arg2,
-			    const expression_ref& arg3) const
-  {
-    return apply(apply(apply(*this,arg1),arg2),arg3);
-  }
-
-  expression_ref operator()(const expression_ref& arg1, 
-			    const expression_ref& arg2,
-			    const expression_ref& arg3,
-			    const expression_ref& arg4) const
-  {
-    return apply(apply(apply(apply(*this,arg1),arg2),arg3),arg4);
-  }
-
   expression_ref operator()(const std::vector<expression_ref>& args) const
   {
     return apply(*this,args);

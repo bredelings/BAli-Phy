@@ -85,7 +85,7 @@ Program get_Prelude()
   expression_ref plus = lambda_expression( Add<Double>() );
 
   // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
-  P += Def( ExtendDiscreteDistribution(DiscreteDistribution(v0),v1,v2), DiscreteDistribution(Tuple(v1,v2)&(fmap1, v4^v4*(1.0-v1), v0)) );
+  P += Def( (ExtendDiscreteDistribution, (DiscreteDistribution, v0), v1, v2), (DiscreteDistribution, Tuple(v1,v2)&(fmap1, v4^v4*(1.0-v1), v0)) );
 
   // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
   P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(x1+(times,(fst,v2),(snd,v2)))), 0.0, v3) );

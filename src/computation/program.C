@@ -62,23 +62,6 @@ std::ostream& operator<<(std::ostream& o, const Def& D)
   return o;
 }
 
-void f()
-{
-  expression_ref v0 = dummy(0);
-  expression_ref v1 = dummy(1);
-  expression_ref v2 = dummy(2);
-  expression_ref v3 = dummy(3);
-  expression_ref v4 = dummy(4);
-
-  typed_expression_ref<Int> I1 ( v1 );
-
-  expression_ref take = var("take");
-  Program P;
-  P += Def( take(0, v1), ListEnd )
-    ( take(v1, ListEnd), ListEnd)
-    ( take(v1, Cons(v2,v3)), Cons(v2, take(I1 - 1)(v3)) );
-}
-
 Program& Program::operator+=(const Def& D)
 {
   def_function(D.patterns, D.bodies);
