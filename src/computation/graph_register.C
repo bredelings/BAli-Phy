@@ -1599,34 +1599,22 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
   vector<int> scan;
   scan.reserve(roots.size());
   for(const auto& i: token_roots[t].temp)
-  {
-    assert(reg_is_owned_by(*i, t));
     scan.push_back(*i);
-  }
+
   for(const auto& i: token_roots[t].heads)
-  {
-    assert(reg_is_owned_by(*i, t));
     scan.push_back(*i);
-  }
 
   for(const auto& i: token_roots[t].parameters)
-  {
-    assert(reg_is_owned_by(*i, t));
     scan.push_back(*i);
-  }
 
   for(const auto& i: token_roots[t].identifiers)
-  {
-    assert(reg_is_owned_by(*(i.second), t));
     scan.push_back(*(i.second));
-  }
 
   vector<int> unique;
   unique.reserve(n_regs());
   for(int i=0;i<scan.size();i++)
   {
     const reg& R = access(scan[i]);
-    assert(reg_is_owned_by(scan[i], t));
     assert(R.state != reg::free and R.state != reg::none);
     if (R.state == reg::checked) continue;
 
@@ -1637,7 +1625,6 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
   for(int i=0;i<unique.size();i++)
   {
     const reg& R = access(unique[i]);
-    assert(reg_is_owned_by(unique[i], t));
     assert(R.state != reg::free and R.state != reg::none);
     assert(R.state == reg::checked);
 
@@ -1653,7 +1640,10 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 
     // Count also the references from the call
     if (R.call != -1 and access(R.call).state == reg::used)
+    {
+      access(R.call).state = reg::checked;
       unique.push_back(R.call);
+    }
   }
 
 #ifndef NDEBUG
@@ -1666,7 +1656,6 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
   {
     const reg& R = access(unique[i]);
     assert(R.state == reg::checked);
-    assert(R.is_owned_by(t));
 
     R.state = reg::used;
   }
@@ -1679,7 +1668,10 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
   vector<int> unique = find_all_regs_in_context_no_check(t);
 
   for(int R: unique)
+  {
+    assert(access(R).is_owned_by(t));
     check_used_reg(R);
+  }
 
   return unique;
 }
