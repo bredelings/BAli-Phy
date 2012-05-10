@@ -1630,7 +1630,7 @@ template<> expression_ref get_tuple<>(const vector<expression_ref>& S)
   return new expression(H,S);
 }
 
-expression_ref get_list(const vector<expression_ref>& v)
+template<> expression_ref get_list<>(const vector<expression_ref>& v)
 {
   expression_ref E = ListEnd;
 

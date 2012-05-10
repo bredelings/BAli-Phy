@@ -544,6 +544,49 @@ extern expression_ref prob;
 // 3 Fields: definition, guard, body
 extern expression_ref defun;
 
+inline expression_ref List()
+{
+  return ListEnd;
+}
+
+template <typename First>
+auto List(const First& first) -> decltype(apply(Cons,first,List()))
+{
+  return apply(Cons,first,List());
+}
+
+template <typename First, typename T2>
+auto List(const First& first, const T2& t2) -> decltype(apply(Cons,first,List(t2)))
+{
+  return apply(Cons,first,List(t2));
+}
+
+template <typename First, typename T2, typename T3>
+auto List(const First& first, const T2& t2, const T3& t3) -> decltype(apply(Cons,first,List(t2,t3)))
+{
+  return apply(Cons,first,List(t2,t3));
+}
+
+template <typename First, typename T2, typename T3, typename T4>
+auto List(const First& first, const T2& t2, const T3& t3, const T4& t4) -> decltype(apply(Cons,first,List(t2,t3,t4)))
+{
+  return apply(Cons,first,List(t2,t3,t4));
+}
+
+template <typename First, typename T2, typename T3, typename T4, typename T5>
+auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5) -> decltype(apply(Cons,first,List(t2,t3,t4,t5)))
+{
+  return apply(Cons,first,List(t2,t3,t4,t5));
+}
+
+
+template <typename First, typename T2, typename T3, typename T4, typename T5, typename T6>
+auto List(const First& first, const T2& t2, const T3& t3, const T4& t4, const T5& t5,const T6& t6) -> decltype(apply(Cons,first,List(t2,t3,t4,t5,t6)))
+{
+  return apply(Cons,first,List(t2,t3,t4,t5,t6));
+}
+
+
 template <typename T,typename U>
 std::valarray<T> get_varray(const expression_ref& E)
 {
@@ -618,7 +661,17 @@ expression_ref get_tuple(const std::valarray<T>& v)
   return get_tuple(v2);
 }
 
-expression_ref get_list(const std::vector<expression_ref>& v);
+template <typename T>
+expression_ref get_list(const std::vector<T>& v)
+{
+  std::vector<expression_ref> v2;
+  for(int i=0;i<v.size();i++)
+    v2.push_back(v[i]);
+
+  return get_list(v2);
+}
+
+template<> expression_ref get_list<>(const std::vector<expression_ref>& v);
 
 expression_ref let_expression(const std::vector<expression_ref>& vars, const std::vector<expression_ref>& bodies, const expression_ref& T);
 
