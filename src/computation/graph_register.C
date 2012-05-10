@@ -718,11 +718,11 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
   set_reduction_result(P, C);
 
   vector< int > NOT_known_value_unchanged;
-  std::set< int > visited;
 
   // The index that we just altered cannot be known to be unchanged.
   NOT_known_value_unchanged.push_back(P);
-  visited.insert(P);
+  const int mark = 1;
+  access(P).temp = mark;
 
   // For each reg R1 that cannot (w/o recomputing) be known to be unchanged...
   for(int i=0;i<NOT_known_value_unchanged.size();i++)
@@ -734,12 +734,12 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
     for(int R2: outputs)
     {
       // This one already marked NOT known_value_unchanged
-      if (includes(visited, R2)) continue;
+      if (access(R2).temp == mark) continue;
 
       // Since R2 is not known to have identical results for its USED inputs ...
       // ... then it is not known to have identical outputs
       NOT_known_value_unchanged.push_back(R2);
-      visited.insert(R2);
+      access(R2).temp = mark;
 
       // Since the computation may be different, we don't know if the value has changed.
       access(R2).result.clear();
@@ -753,16 +753,23 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
     for(int R2: access(R1).call_outputs)
     {
       // This one already marked NOT known_value_unchanged
-      if (includes(visited, R2)) continue;
+      if (access(R2).temp == mark) continue;
 
       // Since R2 is not known to have identical USED inputs ...
       // ... then it is not known to have identical outputs
       NOT_known_value_unchanged.push_back(R2);
-      visited.insert(R2);
+      access(R2).temp = mark;
 
       // Since the computation may be different, we don't know if the value has changed.
       access(R2).result.clear();
     }
+  }
+
+  // Clear the marks
+  for(int R: NOT_known_value_unchanged)
+  {
+    assert(access(R).temp == mark);
+    access(R).temp = -1;
   }
 }
 
@@ -1712,7 +1719,6 @@ void reg_heap::release_token(int t)
   unused_tokens.push_back(t);
   token_roots[t].used = false;
 
-  // 
   remove_unused_ownership_marks();
 }
 
