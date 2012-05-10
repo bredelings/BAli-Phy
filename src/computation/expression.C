@@ -91,9 +91,10 @@ bool parse_indexed_let_expression(const expression_ref& E, vector<expression_ref
   if (not is_a<let2_obj>(E)) return false;
 
   T = E->sub[0];
-  const int L = E->sub.size();
-  for(int i=1;i<L;i++)
-    bodies.push_back(E->sub[i]);
+  const int L = E->sub.size()-1;
+  bodies.resize(L);
+  for(int i=0;i<L;i++)
+    bodies[i] = E->sub[i+1];
 
   return true;
 }
@@ -108,10 +109,12 @@ bool parse_case_expression(const expression_ref& E, expression_ref& T, vector<ex
 
   T = E->sub[0];
   const int L = (E->sub.size()-1)/2;
+  patterns.resize(L);
+  bodies.resize(L);
   for(int i=0;i<L;i++)
   {
-    patterns.push_back(E->sub[1 + 2*i]);
-    bodies.push_back(E->sub[2 + 2*i]);
+    patterns[i] = E->sub[1 + 2*i];
+    bodies[i] = E->sub[2 + 2*i];
   }
 
   return true;
