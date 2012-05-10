@@ -544,31 +544,25 @@ void reg_heap::set_used_input(int R1, int R2)
   access(R2).outputs.insert(R1);
 }
 
-void reg_heap::clear_used_input(int R1, int R2)
+void reg_heap::clear_used_inputs(int R1)
 {
   assert(R1 >= 0 and R1 < n_regs());
-  assert(R2 >= 0 and R2 < n_regs());
-  set<int>& used_inputs = access(R1).used_inputs;
+  // Remove the 
+  for(int R2: access(R1).used_inputs)
+  {
+    assert(R2 >= 0 and R2 < n_regs());
 
-  set<int>::iterator loc = used_inputs.find(R2);
-  assert(loc != used_inputs.end());
-  used_inputs.erase(loc);
+    // If this reg is unused, then upstream regs are in the process of being destroyed.
+    // However, if this reg is used, then upstream regs may be live, and so should have
+    //  correct edges.
+    assert( access(R1).state != reg::used or access(R2).outputs.count(R1) );
 
-  // If this reg is unused, then upstream regs are in the process of being destroyed.
-  // However, if this reg is used, then upstream regs may be live, and so should have
-  //  correct edges.
-  assert( access(R1).state != reg::used or includes( access(R2).outputs, R1) );
+    access(R2).outputs.erase(R1);
+  }
 
-  access(R2).outputs.erase(R1);
-}
+  access(R1).used_inputs.clear();
 
-void reg_heap::clear_used_inputs(int R)
-{
-  set<int> used_inputs = access(R).used_inputs;
-  for(auto i: used_inputs)
-    clear_used_input(R, i);
-
-  assert(access(R).used_inputs.empty());
+  assert(access(R1).used_inputs.empty());
 }
 
 // set_call (or set_call_unsafe) is only called when
@@ -1719,7 +1713,7 @@ void reg_heap::release_token(int t)
   unused_tokens.push_back(t);
   token_roots[t].used = false;
 
-  remove_unused_ownership_marks();
+  //  remove_unused_ownership_marks();
 }
 
 bool reg_heap::token_is_used(int t) const
