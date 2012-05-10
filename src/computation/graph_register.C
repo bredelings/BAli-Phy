@@ -1306,6 +1306,24 @@ int reg_heap::uniquify_reg(int R, int t)
       new_regs.erase(i++);
   }
 
+
+  // NOTE: We HAVE to quite now since R has been removed from new_regs.
+  // If for some reason the reg is no longer shared, then we can quit now.
+  assert(access(R).is_owned_by(t));
+  if (not reg_is_shared(R)) 
+  {
+    for(int i=0;i<n_new_regs;i++)
+      pop_temp_head(t);
+
+    assert(token_roots[t].temp.empty());
+
+#ifndef NDEBUG
+    check_results_in_context(t);
+#endif  
+    
+    return R;
+  }
+
   // 2a. Copy the over and remap E
   //     This is separate to that avoid linking to regs with no E.
   for(const auto& i: new_regs)
@@ -1355,7 +1373,7 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int j=0;j<token_roots[t].heads.size();j++)
   {
     int R1 = *token_roots[t].heads[j];
-    if (includes(new_regs, R1))
+    if (new_regs.count(R1))
       *token_roots[t].heads[j] = new_regs[R1];
   }
 
@@ -1363,7 +1381,7 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int j=0;j<token_roots[t].parameters.size();j++)
   {
     int R1 = *token_roots[t].parameters[j];
-    if (includes(new_regs, R1))
+    if (new_regs.count(R1))
       *token_roots[t].parameters[j] = new_regs[R1];
   }
 
@@ -1372,7 +1390,7 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     // Hmmm.... this could be a lot of identifiers to scan...
     int R1 = *j.second;
-    if (includes(new_regs, R1))
+    if (new_regs.count(R1))
       *j.second = new_regs[R1];
   }
 
@@ -1510,8 +1528,6 @@ int reg_heap::uniquify_reg(int R, int t)
     }
   }
 
-  int R2 = new_regs[R];
-
 #ifndef NDEBUG
   // This checks that ownership and references are consistent
   find_all_regs_in_context(t);
@@ -1549,7 +1565,8 @@ int reg_heap::uniquify_reg(int R, int t)
   check_results_in_context(t);
 #endif  
 
-  return R2;
+  assert(new_regs.count(R));
+  return new_regs[R];
 }
 
 void reg_heap::check_used_reg(int index) const
@@ -2201,7 +2218,7 @@ void discover_graph_vars(const reg_heap& H, int R, map<int,expression_ref>& name
   }
 
   // If R references R, then terminate the recursion.
-  if (includes(names, R))
+  if (names.count(R))
   {
     if (not names[R])
       names[R] = C.exp;
