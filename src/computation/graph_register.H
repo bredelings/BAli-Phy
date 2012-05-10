@@ -72,6 +72,7 @@ public:
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
   owner_set_t temp_owners;
 
+  int temp = -1;
 };
 
 // How do we handle parameters?
