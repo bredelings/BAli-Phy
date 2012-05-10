@@ -184,18 +184,12 @@ vector<unsigned> data_partition::state_letters() const
 
 vector<double> data_partition::frequencies(int m) const
 {
-  // This is actually a tuple, not a list as it should be.
-  int s = P->smodel_for_partition[partition_index];
-  expression_ref Q = P->C.get_expression(P->SModels[s].frequencies);
-  expression_ref E = P->C.evaluate_structure_expression((Q,m));
-  return get_vector_from_list<double,Double>(E);
+  return *P->C.evaluate_as<Vector<double>>( frequencies_indices[m] );
 }
 
 object_ptr<const Object> data_partition::base_model(int m) const
 {
-  int s = P->smodel_for_partition[partition_index];
-  expression_ref Q = P->C.get_expression(P->SModels[s].base_model);
-  return P->C.evaluate_expression((Q,m));
+  return P->C.evaluate( base_model_indices[m] );
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -593,6 +587,18 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
     E = (getIndex, E, b);
 
     transition_p_method_indices[b] = p->C.add_compute_expression(E);
+  }
+
+  // Add method indices for calculating base models and frequencies
+  for(int m=0;m<n_models;m++)
+  {
+    int s = P->smodel_for_partition[partition_index];
+    expression_ref F = P->C.get_expression(P->SModels[s].frequencies);
+    expression_ref V = Vector_From_List<double,Double>();
+    frequencies_indices.push_back( p->C.add_compute_expression( (V,(F,m))) );
+
+    expression_ref BM = P->C.get_expression(P->SModels[s].base_model);
+    base_model_indices.push_back( p->C.add_compute_expression((BM,m)) );
   }
 }
 

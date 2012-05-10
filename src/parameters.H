@@ -93,6 +93,10 @@ class data_partition: public Probability_Model, public Mat_Cache
 
   std::vector<int> transition_p_method_indices;
 
+  std::vector<int> frequencies_indices;
+
+  std::vector<int> base_model_indices;
+
   double branch_mean_;
 
   void branch_mean_changed();
