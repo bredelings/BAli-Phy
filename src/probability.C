@@ -23,8 +23,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 
 #include "logsum.H"
+#include "util.H"
 
 using std::valarray;
+using std::vector;
 
 log_double_t double_factorial(int n) 
 {
@@ -64,6 +66,22 @@ log_double_t dirichlet_pdf(const valarray<double>& p,const valarray<double>& n)
 
   // This term is constant in p
   Pr.log() += log_gamma(n.sum());
+  for(int i=0;i<p.size();i++)
+    Pr.log() -= log_gamma(n[i]);
+
+  return Pr;
+}
+
+log_double_t dirichlet_pdf(const vector<double>& p,const vector<double>& n) 
+{
+  assert(p.size() == n.size());
+
+  log_double_t Pr = 1;
+  for(int i=0;i<p.size();i++) 
+    Pr *= pow(log_double_t(p[i]),n[i]-1.0);
+
+  // This term is constant in p
+  Pr.log() += log_gamma(sum(n));
   for(int i=0;i<p.size();i++)
     Pr.log() -= log_gamma(n[i]);
 

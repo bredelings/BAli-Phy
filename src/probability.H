@@ -20,8 +20,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef PROBABILITY_H
 #define PROBABILITY_H
 
+#include <vector>
 #include <valarray>
 #include "log-double.H"
+
+log_double_t dirichlet_pdf(const std::vector<double>& p,const std::vector<double>& n);
 
 log_double_t dirichlet_pdf(const std::valarray<double>& p,const std::valarray<double>& n);
 log_double_t dirichlet_pdf(const std::valarray<double>& p,double N,const std::valarray<double>& q);
