@@ -1785,34 +1785,6 @@ class RegOperationArgs: public OperationArgs
 
   // Note: see note below on evaluate_structure( ) on the issue of returning lambdas.
 
-  /// Reduce the WHNF expression to either a lambda or a constructor, but evaluating a reg_var if passed.
-  closure lazy_evaluate_structure(const closure C)
-  {
-    // Any slot that we are going to evaluate needs to point to another node
-    if (object_ptr<const index_var> V = is_a<index_var>( C.exp ))
-    {
-      int R2 = C.lookup_in_env(V->index);
-
-      R2 = lazy_evaluate_reg(R2);
-
-      /*
-       * We could update E1->sub[slot] = new reg_var(R2) if R2 != RV->target.  However:
-       *
-       * - Updating WHNF regs is problematic because it could make the old reg unused
-       *   although it was still used in the result and the results of call-ancestors.
-       *   Therefore all call-ancestors would need to be updated.
-       *
-       * - Updating non-WHNF regs is problematic because we might need to update the used_inputs
-       *   to refer to the new reg.  This is because the old one might become unused
-       *   (and therefore be garbage-collected.)
-       */
-
-      return M.access(R2).result;
-    }
-    else
-      return C;
-  }
-
   /*
    * NOTE: When fully evaluating a structure, we must record uses for all of the regs that we
    *       access, including constructor fields.
@@ -1873,7 +1845,25 @@ public:
   // This computes everything
   closure lazy_evaluate(int slot)
   {
-    return lazy_evaluate_structure({reference(slot), M[R].C.Env});
+    int index = assert_is_a<index_var>(reference(slot))->index;
+
+    int R2 = M[R].C.lookup_in_env(index);
+
+    R2 = lazy_evaluate_reg(R2);
+
+    /*
+     * We could update E1->sub[slot] = new reg_var(R2) if R2 != RV->target.  However:
+     *
+     * - Updating WHNF regs is problematic because it could make the old reg unused
+     *   although it was still used in the result and the results of call-ancestors.
+     *   Therefore all call-ancestors would need to be updated.
+     *
+     * - Updating non-WHNF regs is problematic because we might need to update the used_inputs
+     *   to refer to the new reg.  This is because the old one might become unused
+     *   (and therefore be garbage-collected.)
+     */
+    
+    return M.access(R2).result;
   }
 
   // This fills out an entire structure!
