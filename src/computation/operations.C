@@ -189,7 +189,7 @@ closure LExp_Op::operator()(OperationArgs& Args) const
   expression_ref pi_E = Args.evaluate_structure(1);
   double t = *Args.evaluate_as<Double>(2);
 
-  std::vector<double> pi = get_vector<double,Double>(pi_E);
+  std::vector<double> pi = get_vector_from_list<double,Double>(pi_E);
   
   return object_ptr<const Object>(new MatrixObject( exp(*L, pi, t) ) );
 }

@@ -188,7 +188,7 @@ vector<double> data_partition::frequencies(int m) const
   int s = P->smodel_for_partition[partition_index];
   expression_ref Q = P->C.get_expression(P->SModels[s].frequencies);
   expression_ref E = P->C.evaluate_structure_expression((Q,m));
-  return get_vector<double,Double>(E);
+  return get_vector_from_list<double,Double>(E);
 }
 
 object_ptr<const Object> data_partition::base_model(int m) const
