@@ -117,25 +117,25 @@ closure uniform_density::operator()(OperationArgs& Args) const
 // Fields: n_random, n_parameters, string, density op
 expression_ref prob_density = lambda_expression( constructor("prob_density",2) );
 
-expression_ref exponential_dist = prob_density("Exponential", lambda_expression(exponential_density()));
+expression_ref exponential_dist = (prob_density, "Exponential", lambda_expression(exponential_density()));
 
-expression_ref log_exponential_dist = prob_density("LogExponential", lambda_expression(log_exponential_density()));
+expression_ref log_exponential_dist = (prob_density, "LogExponential", lambda_expression(log_exponential_density()));
 
-expression_ref gamma_dist       = prob_density("Gamma", lambda_expression(gamma_density()));
+expression_ref gamma_dist       = (prob_density, "Gamma", lambda_expression(gamma_density()));
 
-expression_ref beta_dist        = prob_density("Beta", lambda_expression(beta_density()));
+expression_ref beta_dist        = (prob_density, "Beta", lambda_expression(beta_density()));
 
-expression_ref normal_dist      = prob_density("Normal", lambda_expression(normal_density()));
+expression_ref normal_dist      = (prob_density, "Normal", lambda_expression(normal_density()));
 
-expression_ref log_normal_dist  = prob_density("LogNormal", lambda_expression(log_normal_density()));
+expression_ref log_normal_dist  = (prob_density, "LogNormal", lambda_expression(log_normal_density()));
 
-expression_ref cauchy_dist      = prob_density("Cauchy", lambda_expression(cauchy_density()));
+expression_ref cauchy_dist      = (prob_density, "Cauchy", lambda_expression(cauchy_density()));
 
-expression_ref dirichlet_dist   = prob_density("Dirichlet", lambda_expression(dirichlet_density()));
+expression_ref dirichlet_dist   = (prob_density, "Dirichlet", lambda_expression(dirichlet_density()));
 
-expression_ref laplace_dist     = prob_density("Laplace", lambda_expression(laplace_density()));
+expression_ref laplace_dist     = (prob_density, "Laplace", lambda_expression(laplace_density()));
 
-expression_ref log_laplace_dist = prob_density("LogLaplace", lambda_expression(log_laplace_density()));
+expression_ref log_laplace_dist = (prob_density, "LogLaplace", lambda_expression(log_laplace_density()));
 
-expression_ref uniform_dist     = prob_density("Uniform", lambda_expression(uniform_density()));
+expression_ref uniform_dist     = (prob_density, "Uniform", lambda_expression(uniform_density()));
 
