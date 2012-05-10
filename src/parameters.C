@@ -150,7 +150,7 @@ const std::vector<Matrix>& data_partition::transition_P(int b) const
   b = T().directed_branch(b).undirected_name();
   assert(b >= 0 and b < T().n_branches());
 
-  return *convert<const Box<vector<Matrix>>>( P->C.evaluate( transition_p_method_indices[b] ) );
+  return *P->C.evaluate_as<Box<vector<Matrix>>>( transition_p_method_indices[b] );
 }
 
 int data_partition::n_base_models() const
