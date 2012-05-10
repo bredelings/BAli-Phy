@@ -1779,21 +1779,17 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int lazy_evaluate_reg(int R2)
   {
-    // We only need to record the usage, adjust the reference, or mark R as changeable if we haven't already.
-    if (not M[R].used_inputs.count(R2))
+    // Compute the result, and follow non-changeable call chains.
+    int R3 = M.incremental_evaluate(R2, t);
+
+    if (M[R3].changeable) 
     {
-      // Compute the result, and follow non-changeable call chains.
-      int R3 = M.incremental_evaluate(R2, t);
+      // If R2 -> result was changeable, then R -> result will be changeable as well.
+      M[R].changeable = true;
 
-      if (M[R3].changeable) 
-      {
-	// If R2 -> result was changeable, then R -> result will be changeable as well.
-	M[R].changeable = true;
-
-	// Note that although R2 is newly used, R3 might be already used if it was 
-	// found from R2 through a non-changeable reg_var chain.
-	M.set_used_input(R, R3);
-      }
+      // Note that although R2 is newly used, R3 might be already used if it was 
+      // found from R2 through a non-changeable reg_var chain.
+      M.set_used_input(R, R3);
     }
 
     return R2;
