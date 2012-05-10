@@ -932,19 +932,19 @@ void reg_heap::pop_temp_head(const owner_set_t& tokens)
 
 void reg_heap::expand_memory(int s)
 {
-  assert(n_regs() == n_used_regs() + n_free_regs());
+  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
 
   int k = memory.size();
   memory.resize(memory.size()+s);
   for(int i=k;i<memory.size();i++)
     add_reg_to_free_list(i);
 
-  assert(n_regs() == n_used_regs() + n_free_regs());
+  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
 }
 
 reg_heap::root_t reg_heap::allocate_reg()
 {
-  assert(n_regs() == n_used_regs() + n_free_regs());
+  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
 
   int r = get_free_reg();
 
@@ -952,7 +952,7 @@ reg_heap::root_t reg_heap::allocate_reg()
   if (r == -1)
   {
     collect_garbage();
-    assert(n_used_regs() + n_free_regs() == n_regs());
+    assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
     if (memory.size() < n_used_regs()*2+10)
       expand_memory(memory.size()*2+10);
     r = get_free_reg();
@@ -961,7 +961,7 @@ reg_heap::root_t reg_heap::allocate_reg()
 
   add_reg_to_used_list(r);
 
-  assert(n_regs() == n_used_regs() + n_free_regs());
+  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
   assert(access(r).state == reg::used);
 
   root_t root = roots.insert(roots.end(), r);
@@ -1021,7 +1021,7 @@ void reg_heap::collect_garbage()
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
   check_used_regs();
 #endif
-  assert(n_regs() == n_used_regs() + n_free_regs());
+  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
 
   vector<int> scan;
   for(int i: roots)
@@ -1751,10 +1751,17 @@ int reg_heap::copy_token(int t)
   return t2;
 }
 
+int reg_heap::n_null_regs() const
+{
+  return 1;
+}
+
 reg_heap::reg_heap()
   :first_free_reg(-1),
    first_used_reg(-1)
-{ }
+{ 
+  memory.resize(1);
+}
 
 #include "computation.H"
 

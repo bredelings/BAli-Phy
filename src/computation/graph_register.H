@@ -122,6 +122,7 @@ public:
   int n_regs() const;
   int n_free_regs() const;
   int n_used_regs() const;
+  int n_null_regs() const;
 
   root_t push_root(int);
   void pop_root(root_t);
