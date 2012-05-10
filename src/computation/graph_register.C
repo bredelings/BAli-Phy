@@ -516,6 +516,9 @@ void reg_heap::clear(int R)
   access(R).call_outputs.clear();
 
   access(R).clear_owners();
+
+  // This should already be cleared.
+  assert( access(R).temp == -1);
 }
 
 void reg_heap::set_used_input(int R1, int R2)
@@ -1177,19 +1180,23 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
   return unique;
 }
 
-int remap_reg(int R,const map<int, int>& new_regs)
+int reg_heap::remap_reg(int R) const
 {
-    map<int, int>::const_iterator loc = new_regs.find(R);
-    if (loc == new_regs.end())
-      return R;
-    else
-      return loc->second;
+  int R2 = access(R).temp;
+  if (R2 == -1)
+    return R;
+  else
+  {
+    assert(R2 > 0 and R2 < n_regs());
+    assert(access(R2).state == reg::used);
+    return R2;
+  }
 }
 
-closure remap_regs(closure C, const map<int, int>& new_regs)
+closure reg_heap::remap_regs(closure C) const
 {
   for(int& R: C.Env)
-    R = remap_reg(R,new_regs);
+    R = remap_reg(R);
 
   return C;
 }
@@ -1202,15 +1209,6 @@ bool reg_heap::reg_is_shared(int R) const
 bool reg_heap::reg_is_owned_by(int R, int t) const
 {
   return access(R).is_owned_by(t);
-}
-
-int remap(int R, const map<int,int>& new_regs)
-{
-  map<int,int>::const_iterator loc = new_regs.find(R);
-  if (loc == new_regs.end())
-    return R;
-  else
-    return loc->second;
 }
 
 void reg_heap::check_results_in_context(int t) const
@@ -1269,32 +1267,33 @@ int reg_heap::uniquify_reg(int R, int t)
   int n_new_regs = 0;
 
   // 2. Allocate new regs for each *shared* ancestor reg in context t
-  map<int,int> new_regs;
   for(int i=0;i<shared_ancestors.size();i++)
   {
     int R1 = shared_ancestors[i];
     int R2 = *push_temp_head(t);
     n_new_regs++;
     
-    new_regs[R1] = R2;
+    assert(access(R1).temp == -1);
+    access(R1).temp = R2;
   }
 
 
   // 4e. Initialize/Copy changeable
   // 2. Remove regs that got deallocated from the list.
   // Alternatively, I could LOCK them in place.
-  for(map<int,int>::iterator i = new_regs.begin(); i!= new_regs.end();)
+  vector<int> split;
+  split.reserve(shared_ancestors.size());
+  for(int R1: shared_ancestors)
   {
-    int R1 = i->first;
-    int R2 = i->second;
+    int R2 = remap_reg(R1);
+
     if (access(R1).state == reg::used and reg_is_shared(R1))
     {
       access(R2).changeable = access(R1).changeable;
-
-      i++;
+      split.push_back(R1);
     }
     else
-      new_regs.erase(i++);
+      access(R1).temp = -1;
   }
 
 
@@ -1307,8 +1306,14 @@ int reg_heap::uniquify_reg(int R, int t)
       pop_temp_head(t);
 
     assert(token_roots[t].temp.empty());
-
+    
+    for(int R1: split)
+      access(R1).temp = -1;
+    
 #ifndef NDEBUG
+    for(int R1: shared_ancestors)
+      assert( access(R1).temp == -1);
+    
     check_results_in_context(t);
 #endif  
     
@@ -1317,10 +1322,9 @@ int reg_heap::uniquify_reg(int R, int t)
 
   // 2a. Copy the over and remap E
   //     This is separate to that avoid linking to regs with no E.
-  for(const auto& i: new_regs)
+  for(int R1: split)
   {
-    int R1 = i.first;
-    int R2 = i.second;
+    int R2 = remap_reg(R1);
 
     // Check no mark on R2
     assert(access(R1).state == reg::used);
@@ -1331,23 +1335,22 @@ int reg_heap::uniquify_reg(int R, int t)
     // 4. Initialize fields in the new node
 
     // 4a. Initialize/Remap E
-    set_C(R2, remap_regs( access(R1).C, new_regs) );
+    set_C(R2, remap_regs( access(R1).C ) );
   }
 
   // 2b.  Copy over and remap the call, used_inputs, and result
   //      This is after copying E to avoid linking to regs with no E.
-  for(const auto& i: new_regs)
+  for(int R1: split)
   {
-    int R1 = i.first;
-    int R2 = i.second;
+    int R2 = remap_reg(R1);
 
     // 4b. Initialize/Remap call
     if (access(R1).call != -1)
-      set_call(R2, remap(access(R1).call, new_regs) );
+      set_call(R2, remap_reg(access(R1).call ) );
 
     // 4c. Initialize/Remap used_inputs
     for(int j: access(R1).used_inputs)
-      set_used_input(R2, remap(j, new_regs) );
+      set_used_input(R2, remap_reg(j) );
 
     // 4d. Initialize/Remap result if E is in WHNF.
     if (access(R2).call == -1 and access(R1).result)
@@ -1364,16 +1367,14 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int j=0;j<token_roots[t].heads.size();j++)
   {
     int R1 = *token_roots[t].heads[j];
-    if (new_regs.count(R1))
-      *token_roots[t].heads[j] = new_regs[R1];
+    *token_roots[t].heads[j] = remap_reg(R1);
   }
 
   // 4b. Adjust parameters to point to the new regs
   for(int j=0;j<token_roots[t].parameters.size();j++)
   {
     int R1 = *token_roots[t].parameters[j];
-    if (new_regs.count(R1))
-      *token_roots[t].parameters[j] = new_regs[R1];
+    *token_roots[t].parameters[j] = remap_reg(R1);
   }
 
   // 4c. Adjust identifiers to point to the new regs
@@ -1381,17 +1382,14 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     // Hmmm.... this could be a lot of identifiers to scan...
     int R1 = *j.second;
-    if (new_regs.count(R1))
-      *j.second = new_regs[R1];
+    *j.second = remap_reg(R1);
   }
 
   // 5. Find the unsplit parents of split regs
   //    These will be the only parents of the old regs that have context t.
   vector<int> unsplit_parents;
-  for(const auto& i: new_regs)
+  for(int R1: split)
   {
-    int R1 = i.first;
-
     set<int> parents = access(R1).referenced_by_in_E;
     add(parents, access(R1).outputs);
     // A node can only call another node if ... ??
@@ -1423,10 +1421,9 @@ int reg_heap::uniquify_reg(int R, int t)
     access(unsplit_parents[i]).state = reg::used;
 
   // Check that marks were removed.
-  for(const auto& i: new_regs)
+  for(int R1: split)
   {
-    int R1 = i.first;
-    int R2 = i.second;
+    int R2 = remap_reg(R1);
 
     // Original nodes should never have been marked.
     assert( access(R1).state == reg::used );
@@ -1447,13 +1444,13 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int Q1: unsplit_parents)
   {
     // a. Remap E
-    set_C(Q1, remap_regs(access(Q1).C, new_regs) );
+    set_C(Q1, remap_regs(access(Q1).C ) );
     
     // b. Remap call
     if (access(Q1).call != -1)
     {
       int old_call = access(Q1).call;
-      int new_call = remap( old_call , new_regs);
+      int new_call = remap_reg( old_call );
 
       if (old_call != new_call)
       {
@@ -1467,7 +1464,7 @@ int reg_heap::uniquify_reg(int R, int t)
     clear_used_inputs(Q1);
     for(int j: old_used_inputs)
     {
-      set_used_input(Q1, remap(j, new_regs));
+      set_used_input(Q1, remap_reg(j));
     }
     
     // d. Remap result if E is in WHNF
@@ -1479,10 +1476,8 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
   // Remove ownership from the old regs.
-  for(const auto& i:new_regs)
+  for(int Q: split)
   {
-    int Q = i.first;
-
     // These regs should be shared.
     assert(reg_is_shared(Q));
 
@@ -1525,10 +1520,9 @@ int reg_heap::uniquify_reg(int R, int t)
 #endif
 
 #ifndef NDEBUG
-  for(const auto& i:new_regs)
+  for(int R1: split)
   {
-    int R1 = i.first;
-    int R2 = i.second;
+    int R2 = remap_reg(R1);
 
     // Check that ownership has been properly split
     assert(not access(R1).is_owned_by(t) );
@@ -1547,17 +1541,26 @@ int reg_heap::uniquify_reg(int R, int t)
 
   // 5. Remove root references to new regs.
   //    Remove t-ownership from old regs.
+  //    Remove remapping info from regs.
   for(int i=0;i<n_new_regs;i++)
     pop_temp_head(t);
 
   assert(token_roots[t].temp.empty());
 
+  int R2 = remap_reg(R);
+
+  for(int R1: split)
+    access(R1).temp = -1;
+
 #ifndef NDEBUG
+  for(int R1: shared_ancestors)
+    assert( access(R1).temp == -1);
+
   check_results_in_context(t);
 #endif  
 
-  assert(new_regs.count(R));
-  return new_regs[R];
+  assert(R2 != R);
+  return R2;
 }
 
 void reg_heap::check_used_reg(int index) const
