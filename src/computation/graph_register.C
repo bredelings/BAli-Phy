@@ -1062,6 +1062,7 @@ void reg_heap::collect_garbage()
   check_used_regs();
 #endif
 
+  // Currently called only from garbage collector.
   remove_unused_ownership_marks();
 
   // Check that we have no un-owned objects that are used
@@ -1692,6 +1693,8 @@ void reg_heap::release_token(int t)
 {
   assert(token_is_used(t));
 
+  vector<int> used_regs = find_all_regs_in_context(t);
+
   // We shouldn't have any temporary heads still on the stack, here!
   assert(token_roots[t].temp.empty());
 
@@ -1709,11 +1712,23 @@ void reg_heap::release_token(int t)
     pop_root(i.second);
   token_roots[t].identifiers.clear();
 
-  // mark unused
+  // mark token for this context unused
   unused_tokens.push_back(t);
   token_roots[t].used = false;
 
-  //  remove_unused_ownership_marks();
+  // NOTE: Don't spent more than O(used_regs) time clearing ownership.
+  //       This strategy allows us to be on the same order of magnitude
+  //       as copying and de-allocating the structure instead of sharing.
+
+  // NOTE: Clearing ownership is not NECESSARY but it avoid updating
+  //       unused ancestors when we changed parameters.
+
+  // remove ownership marks on all of our used regs.
+  for(int R: used_regs)
+    access(R).clear_owner(t);
+
+  // This is a good tradeoff between clearing ALL unused ownership (which is too expensive)
+  // and clearing no unused ownership (which makes uniquify reg do too much extra work)
 }
 
 bool reg_heap::token_is_used(int t) const
