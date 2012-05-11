@@ -1676,15 +1676,19 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
   return unique;
 }
 
+// This routine is separate from the *_no_check variant because the
+// checks don't hold in all cases.
 vector<int> reg_heap::find_all_regs_in_context(int t) const
 {
   vector<int> unique = find_all_regs_in_context_no_check(t);
 
+#ifndef NDEBUG
   for(int R: unique)
   {
     assert(access(R).is_owned_by(t));
     check_used_reg(R);
   }
+#endif
 
   return unique;
 }
