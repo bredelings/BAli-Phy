@@ -37,13 +37,12 @@ public:
 
   /* 2. The computations we used */
   /// Which reg's were used to reduce this expression?
-  std::set< int > used_inputs;
-
+  std::vector< int > used_inputs;
 
   /* 3. The computations that use or reference us. */
 
   /// Which pairs (reg,slot) USED the reduction result of C (via an operation)?
-  std::set< int > outputs;
+  std::multiset< int > outputs;
 
   /// Which reduction results made use of the value of this expression (via call)
   std::set< int > call_outputs;

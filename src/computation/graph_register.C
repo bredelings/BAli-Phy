@@ -9,6 +9,7 @@ using std::vector;
 using std::map;
 using std::pair;
 using std::set;
+using std::multiset;
 using std::ofstream;
 
 using std::cerr;
@@ -540,22 +541,37 @@ void reg_heap::set_used_input(int R1, int R2)
   // Don't add a reg as input if no reduction has been performed.
   // assert(access(R2).result or access(R2).call != -1);
 
-  access(R1).used_inputs.insert(R2);
+  access(R1).used_inputs.push_back(R2);
   access(R2).outputs.insert(R1);
+}
+
+int count(const std::vector<int>& v, int I)
+{
+  int c = 0;
+  for(int i: v)
+    if (i == I)
+      c++;
+  return c;
 }
 
 void reg_heap::clear_used_inputs(int R1)
 {
   assert(R1 >= 0 and R1 < n_regs());
-  // Remove the 
+
+#ifndef NDEBUG
+  // If this reg is unused, then upstream regs are in the process of being destroyed.
+  // However, if this reg is used, then upstream regs may be live, and so should have
+  //  correct edges.
+
+  if (access(R1).state == reg::used)
+    for(int R2: access(R1).used_inputs)
+      assert(count(access(R1).used_inputs, R2) == access(R2).outputs.count(R1));
+#endif
+
+  // Remove the back edges from used inputs
   for(int R2: access(R1).used_inputs)
   {
     assert(R2 >= 0 and R2 < n_regs());
-
-    // If this reg is unused, then upstream regs are in the process of being destroyed.
-    // However, if this reg is used, then upstream regs may be live, and so should have
-    //  correct edges.
-    assert( access(R1).state != reg::used or access(R2).outputs.count(R1) );
 
     access(R2).outputs.erase(R1);
   }
@@ -724,7 +740,7 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
     int R1 = NOT_known_value_unchanged[i];
 
     // ... consider each downstream index2 that has index1 in slot2 of its computation (possibly unused).
-    set<int> outputs = access(R1).outputs;
+    multiset<int> outputs = access(R1).outputs;
     for(int R2: outputs)
     {
       // This one already marked NOT known_value_unchanged
@@ -1457,7 +1473,7 @@ int reg_heap::uniquify_reg(int R, int t)
     }
     
     // c. Adjust use edges
-    set<int> old_used_inputs = access(Q1).used_inputs;
+    vector<int> old_used_inputs = access(Q1).used_inputs;
     clear_used_inputs(Q1);
     for(int j: old_used_inputs)
     {
