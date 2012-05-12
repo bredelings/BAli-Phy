@@ -481,6 +481,11 @@ bool reg::is_owned_by(int t) const
   return owners.test(t);
 }
 
+bool reg::is_owned_by_only(int t) const
+{
+  return is_owned_by(t) and (n_owners() == 1);
+}
+
 bool reg::is_owned_by_all_of(const owner_set_t& O) const
 {
   assert(owners.size() == O.size());
@@ -1264,6 +1269,11 @@ bool reg_heap::reg_is_owned_by(int R, int t) const
   return access(R).is_owned_by(t);
 }
 
+bool reg_heap::reg_is_owned_by_only(int R, int t) const
+{
+  return access(R).is_owned_by_only(t);
+}
+
 void reg_heap::check_results_in_context(int t) const
 {
   vector<int> WHNF_results;
@@ -1437,24 +1447,46 @@ int reg_heap::uniquify_reg(int R, int t)
   vector<int> unsplit_parents;
   for(int R1: split)
   {
-    set<int> parents = access(R1).referenced_by_in_E;
-    add(parents, access(R1).outputs);
-    // A node can only call another node if ... ??
-    add(parents, access(R1).call_outputs);
+    // parents are: (a) referenced_by_in_E + (b) outputs + (c) call_outputs
 
-    for(int Q1: parents)
+    // NOTE: we could have parent that are in t that are shared, but these
+    // should be original regs that will eventually be removed from t.
+
+    for(int Q1: access(R1).referenced_by_in_E)
     {
       // Skip regs that we've handled already.
       if (access(Q1).state == reg::checked) continue;
 
-      // NOTE: we could have parent that are in t that are shared, but these
-      // should be original regs that will eventually be removed from t.
+      // We are only interested in the unshared E-ancestors in t.
+      if (not reg_is_owned_by_only(Q1, t)) continue;
+
+      // Mark Q1
+      assert(access(Q1).state == reg::used);
+      access(Q1).state = reg::checked;
+      unsplit_parents.push_back(Q1);
+    }
+
+    for(int Q1: access(R1).outputs)
+    {
+      // Skip regs that we've handled already.
+      if (access(Q1).state == reg::checked) continue;
 
       // We are only interested in the unshared E-ancestors in t.
-      if (reg_is_shared(Q1)) continue;
+      if (not reg_is_owned_by_only(Q1, t)) continue;
+
+      // Mark Q1
+      assert(access(Q1).state == reg::used);
+      access(Q1).state = reg::checked;
+      unsplit_parents.push_back(Q1);
+    }
+
+    for(int Q1: access(R1).call_outputs)
+    {
+      // Skip regs that we've handled already.
+      if (access(Q1).state == reg::checked) continue;
 
       // We are only interested in the unshared E-ancestors in t.
-      if (not reg_is_owned_by(Q1, t)) continue;
+      if (not reg_is_owned_by_only(Q1, t)) continue;
 
       // Mark Q1
       assert(access(Q1).state == reg::used);

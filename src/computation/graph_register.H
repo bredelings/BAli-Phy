@@ -63,6 +63,7 @@ public:
   void clear_owner(int);
   void clear_owners();
   bool is_owned_by(int) const;
+  bool is_owned_by_only(int) const;
   bool is_owned_by_all_of(const owner_set_t&) const;
   int n_owners() const;
   bool is_unowned() const;
@@ -211,6 +212,8 @@ public:
   bool reg_is_shared(int) const;
 
   bool reg_is_owned_by(int,int) const;
+
+  bool reg_is_owned_by_only(int,int) const;
 
   reg_heap();
 
