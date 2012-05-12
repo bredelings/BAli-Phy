@@ -1333,7 +1333,6 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int i=0;i<shared_ancestors.size();i++)
   {
     int R1 = shared_ancestors[i];
-    int R2 = remap_reg(R1);
 
     if (access(R1).state == reg::used and reg_is_shared(R1))
     {
