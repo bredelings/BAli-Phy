@@ -1584,7 +1584,7 @@ void reg_heap::check_used_reg(int index) const
     assert(access(r).is_owned_by_all_of( R.get_owners()) );
 
     // Check that used regs are have back-references to R
-    assert(includes( access(r).outputs, index) );
+    assert( access(r).outputs.count(index) );
   }
 
   if (R.call != -1)
@@ -1593,7 +1593,7 @@ void reg_heap::check_used_reg(int index) const
     assert( access(R.call).is_owned_by_all_of( R.get_owners()) );
 
     // Check that the call-used reg has back-references to R
-    assert(includes(access(R.call).call_outputs, index) );
+    assert( access(R.call).call_outputs.count(index) == 1 );
   }
 }
 
