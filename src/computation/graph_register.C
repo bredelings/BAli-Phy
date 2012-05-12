@@ -1976,7 +1976,8 @@ public:
   RegOperationArgs(int r, reg_heap& m, int T)
     :R(r),M(m),t(T),owners(M.access(R).get_owners()), n_allocated(0)
   { 
-    M.clear_used_inputs(R);
+    // I think these should already be cleared.
+    assert(M.access(R).used_inputs.empty());
   }
 
   ~RegOperationArgs()
