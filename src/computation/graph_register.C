@@ -714,8 +714,8 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
   vector< int > NOT_known_value_unchanged;
 
   // The index that we just altered cannot be known to be unchanged.
-  NOT_known_value_unchanged.push_back(P);
   const int mark = 1;
+  NOT_known_value_unchanged.push_back(P);
   access(P).temp = mark;
 
   // For each reg R1 that cannot (w/o recomputing) be known to be unchanged...
