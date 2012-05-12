@@ -227,8 +227,7 @@ public:
   const_iterator end() const {return before_free;}
   iterator end() {return before_free;}
 
-  // the whole list is ACTUALLY a list of 
-  // move to true end of list
+  /// Remove an element from the list. (Place it in the free area.)
   void erase(iterator loc) 
   {
     list_node* node = loc.ptr;
