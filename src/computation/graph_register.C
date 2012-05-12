@@ -725,62 +725,97 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
   assert(access(P).used_inputs.empty());
   clear_call(P);
   access(P).result.clear();
-  set_reduction_result(P, C);
 
-  vector< int > NOT_known_value_unchanged;
+  const int mark_call_result = 1;
+  const int mark_result = 2;
+
+  vector< int > call_and_result_may_be_changed;
+  vector< int > result_may_be_changed;
 
   // The index that we just altered cannot be known to be unchanged.
-  const int mark = 1;
-  NOT_known_value_unchanged.push_back(P);
-  access(P).temp = mark;
+  call_and_result_may_be_changed.push_back(P);
+  access(P).temp = mark_call_result;
+  result_may_be_changed.push_back(P);
 
-  // For each reg R1 that cannot (w/o recomputing) be known to be unchanged...
-  for(int i=0;i<NOT_known_value_unchanged.size();i++)
+  int i=0;
+  int j=0;
+  while(i < call_and_result_may_be_changed.size() or j < result_may_be_changed.size())
   {
-    int R1 = NOT_known_value_unchanged[i];
-
-    // ... consider each downstream index2 that has index1 in slot2 of its computation (possibly unused).
-    multiset<int> outputs = access(R1).outputs;
-    for(int R2: outputs)
+    // First find all users or callers of regs where the result is out of date.
+    for(;j<result_may_be_changed.size();j++)
     {
-      // This one already marked NOT known_value_unchanged
-      if (access(R2).temp == mark) continue;
-
-      // Since R2 is not known to have identical results for its USED inputs ...
-      // ... then it is not known to have identical outputs
-      NOT_known_value_unchanged.push_back(R2);
-      access(R2).temp = mark;
+      int R1 = result_may_be_changed[j];
+      assert(access(R1).temp == mark_call_result or access(R1).temp == mark_result);
 
       // Since the computation may be different, we don't know if the value has changed.
-      access(R2).result.clear();
-      // We don't know what the reduction result is, so invalidate the call.
-      clear_call(R2);
-      // Remember to clear the used inputs.
-      clear_used_inputs(R2);
+      access(R1).result.clear();
+
+      // Scan regs that used R2 directly and put them on the invalid-call/result list.
+      for(int R2: access(R1).outputs)
+      {
+	if (access(R2).temp == mark_call_result) continue;
+	access(R2).temp = mark_call_result;
+	call_and_result_may_be_changed.push_back(R2);
+      }
+
+      // Scan regs that call R2 directly and put them on the invalid-result list.
+      for(int R2: access(R1).call_outputs)
+      {
+	if (access(R2).temp != -1) continue;
+	access(R2).temp = mark_result;
+	result_may_be_changed.push_back(R2);
+      }
     }
-    assert(access(R1).outputs.empty());
 
-    for(int R2: access(R1).call_outputs)
+    // Second find all users or callers of regs where the result AND CALL are out of date.
+    for(;i<call_and_result_may_be_changed.size();i++)
     {
-      // This one already marked NOT known_value_unchanged
-      if (access(R2).temp == mark) continue;
-
-      // Since R2 is not known to have identical USED inputs ...
-      // ... then it is not known to have identical outputs
-      NOT_known_value_unchanged.push_back(R2);
-      access(R2).temp = mark;
+      int R1 = call_and_result_may_be_changed[i];
+      assert(access(R1).temp == mark_call_result);
 
       // Since the computation may be different, we don't know if the value has changed.
-      access(R2).result.clear();
+      access(R1).result.clear();
+      // We don't know what the reduction result is, so invalidate the call.
+      clear_call(R1);
+      // Remember to clear the used inputs.
+      clear_used_inputs(R1);
+
+      // Scan regs that used R2 directly and put them on the invalid-call/result list.
+      for(int R2: access(R1).outputs)
+      {
+	if (access(R2).temp == mark_call_result) continue;
+	access(R2).temp = mark_call_result;
+	call_and_result_may_be_changed.push_back(R2);
+      }
+
+      // Scan regs that call R2 directly and put them on the invalid-result list.
+      for(int R2: access(R1).call_outputs)
+      {
+	if (access(R2).temp != -1) continue;
+	access(R2).temp = mark_result;
+	result_may_be_changed.push_back(R2);
+      }
     }
   }
+
+#ifndef NDEBUG
+  for(int R: result_may_be_changed)
+    assert(access(R).temp == mark_result or access(R).temp == mark_call_result);
+
+  for(int R: call_and_result_may_be_changed)
+    assert(access(R).temp == mark_call_result);
+#endif
 
   // Clear the marks
-  for(int R: NOT_known_value_unchanged)
-  {
-    assert(access(R).temp == mark);
+  for(int R: result_may_be_changed)
     access(R).temp = -1;
-  }
+
+  // Clear the marks
+  for(int R: call_and_result_may_be_changed)
+    access(R).temp = -1;
+
+  // Finally set the new value.
+  set_reduction_result(P, C);
 }
 
 int reg_heap::n_regs() const
