@@ -1778,6 +1778,12 @@ void reg_heap::release_token(int t)
 
   // This is a good tradeoff between clearing ALL unused ownership (which is too expensive)
   // and clearing no unused ownership (which makes uniquify reg do too much extra work)
+
+#ifndef NDEBUG
+  // ISSUE!  Now parents of the regs whose ownership we cleared may still
+  //         reference children they don't own.
+  check_used_regs();
+#endif
 }
 
 bool reg_heap::token_is_used(int t) const
