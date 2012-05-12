@@ -1266,36 +1266,31 @@ int reg_heap::uniquify_reg(int R, int t)
   // 1. Find all ancestors with name 't' that are *shared*
   // (Some of these could be unreachable!)
   vector<int> shared_ancestors = find_shared_ancestor_regs_in_context(R,t);
-  int n_new_regs = 0;
+  int n_new_regs = shared_ancestors.size();
 
   // 2. Allocate new regs for each *shared* ancestor reg in context t
-  for(int i=0;i<shared_ancestors.size();i++)
-  {
-    int R1 = shared_ancestors[i];
-    int R2 = *push_temp_head(t);
-    n_new_regs++;
-    
-    assert(access(R1).temp == -1);
-    access(R1).temp = R2;
-  }
+  for(int R1:shared_ancestors)
+    push_temp_head(t);
 
+  const std::vector<root_t>& temp_heads = get_temp_heads_for_context(t);
 
   // 4e. Initialize/Copy changeable
   // 2. Remove regs that got deallocated from the list.
   // Alternatively, I could LOCK them in place.
   vector<int> split;
   split.reserve(shared_ancestors.size());
-  for(int R1: shared_ancestors)
+  for(int i=0;i<shared_ancestors.size();i++)
   {
+    int R1 = shared_ancestors[i];
     int R2 = remap_reg(R1);
 
     if (access(R1).state == reg::used and reg_is_shared(R1))
     {
+      int R2 = *temp_heads[temp_heads.size()-1-i];
+      access(R1).temp = R2;
       access(R2).changeable = access(R1).changeable;
       split.push_back(R1);
     }
-    else
-      access(R1).temp = -1;
   }
 
 
