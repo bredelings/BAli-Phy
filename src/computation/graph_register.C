@@ -1805,8 +1805,10 @@ void reg_heap::release_token(int t)
   //       unused ancestors when we changed parameters.
 
   // remove ownership marks on all of our used regs.
+#ifdef NDEBUG
   for(int R: used_regs)
     access(R).clear_owner(t);
+#endif
 
   // This is a good tradeoff between clearing ALL unused ownership (which is too expensive)
   // and clearing no unused ownership (which makes uniquify reg do too much extra work)

@@ -12,6 +12,7 @@
 #include <utility>
 #include "program.H"
 #include "closure.H"
+#include "CacheList.H"
 
 typedef std::bitset<64> owner_set_t;
 
@@ -82,7 +83,7 @@ public:
 class reg_heap
 {
   std::vector<reg> memory;
-  std::list<int> roots;
+  CacheList<int> roots;
 
   /// Start of free list 
   int first_free_reg;
@@ -110,8 +111,8 @@ class reg_heap
   void check_used_regs() const;
 
 public:
-  typedef std::list<int>::iterator root_t;
-  typedef std::list<int>::const_iterator const_root_t;
+  typedef CacheList<int>::iterator root_t;
+  typedef CacheList<int>::const_iterator const_root_t;
 
   const reg& access(int i) const {return memory[i];}
         reg& access(int i)       {return memory[i];}
