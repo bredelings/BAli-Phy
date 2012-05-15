@@ -117,6 +117,17 @@ public:
   const reg& access(int i) const {return memory[i];}
         reg& access(int i)       {return memory[i];}
 
+  const closure& access_result(int R1) const
+  {
+    assert( access(R1).result );
+    return access(R1).result;
+  }
+
+  void clear_result(int R)
+  {
+    access(R).result.clear();
+  }
+
   const reg& operator[](int i) const {return access(i);}
         reg& operator[](int i)       {return access(i);}
 

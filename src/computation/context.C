@@ -85,9 +85,9 @@ void context::rename_parameter(int i, const string& new_name)
 
 bool context::reg_is_fully_up_to_date(int R) const
 {
-  const closure& result = access(R).result;
+  if (not access(R).result) return false;
 
-  if (not result) return false;
+  const closure& result = access_result(R);
 
   // NOTE! result cannot be an index_var.
   const expression_ref& E = result.exp;
@@ -129,7 +129,7 @@ bool context::compute_expression_is_up_to_date(int index) const
 expression_ref context::full_evaluate(int& R) const
 {
   R = incremental_evaluate(R);
-  const closure& result = access(R).result;
+  const closure& result = access_result(R);
 
   {
     // NOTE! result cannot be a index_var.
@@ -168,7 +168,7 @@ closure context::lazy_evaluate(int index) const
 
   H = incremental_evaluate(H);
 
-  return access(H).result;
+  return access_result(H);
 }
 
 /// Return the value of a particular index, computing it if necessary
@@ -193,7 +193,7 @@ closure context::lazy_evaluate_expression_(const closure& C) const
     set_C(R, C);
 
     R = incremental_evaluate(R);
-    const closure& result = access(R).result;
+    const closure& result = access_result(R);
     
     pop_temp_head();
     return result;
@@ -265,7 +265,7 @@ object_ref context::get_parameter_value(int index) const
     incremental_evaluate(P);
   }
 
-  return access(P).result.exp->head;
+  return access_result(P).exp->head;
 }
 
 /// Get the value of a non-constant, non-computed index

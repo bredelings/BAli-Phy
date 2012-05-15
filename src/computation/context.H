@@ -65,6 +65,8 @@ public:
 
   reg& access(int i) const {return memory->access(i);}
 
+  const closure& access_result(int i) const {return memory->access_result(i);}
+
   reg& operator[](int i) const {return memory->access(i);}
 
   context* clone() const {return new context(*this);}

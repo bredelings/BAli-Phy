@@ -512,7 +512,7 @@ void reg_heap::clear(int R)
 {
   access(R).C.clear();
   access(R).changeable = false;
-  access(R).result.clear(); // enforce unsharing
+  clear_result(R);
 
   access(R).used_inputs.clear();
   access(R).call = -1;
@@ -729,7 +729,7 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
   // Clear the call, clear the result, and set the value
   assert(access(P).used_inputs.empty());
   clear_call(P);
-  access(P).result.clear();
+  clear_result(P);
 
   const int mark_call_result = 1;
   const int mark_result = 2;
@@ -753,7 +753,7 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
       assert(access(R1).temp == mark_call_result or access(R1).temp == mark_result);
 
       // Since the computation may be different, we don't know if the value has changed.
-      access(R1).result.clear();
+      clear_result(R1);
 
       // Scan regs that used R2 directly and put them on the invalid-call/result list.
       for(int R2: access(R1).outputs)
@@ -779,7 +779,7 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
       assert(access(R1).temp == mark_call_result);
 
       // Since the computation may be different, we don't know if the value has changed.
-      access(R1).result.clear();
+      clear_result(R1);
       // We don't know what the reduction result is, so invalidate the call.
       clear_call(R1);
       // Remember to clear the used inputs.
@@ -1927,7 +1927,7 @@ class RegOperationArgs: public OperationArgs
 	       that is the only use way of using the result.
        */
 
-      return evaluate_structure_( M.access(R3).result );
+      return evaluate_structure_( M.access_result(R3) );
     }
     else if (C.exp->size())
     {
@@ -1979,7 +1979,7 @@ public:
      *   (and therefore be garbage-collected.)
      */
     
-    return M.access(R2).result;
+    return M.access_result(R2);
   }
 
   // This fills out an entire structure!
@@ -2100,8 +2100,9 @@ int reg_heap::incremental_evaluate(int R, int t)
   assert(access(R).state == reg::used);
   assert(access(R).is_owned_by(t));
   assert(not is_a<expression>(access(R).C.exp));
-  assert(not access(R).result or is_WHNF(access(R).result.exp));
-  assert(not access(R).result or not is_a<expression>(access(R).result.exp));
+  assert(not access(R).result or is_WHNF(access_result(R).exp));
+  assert(not access(R).result or not is_a<expression>(access_result(R).exp));
+  assert(not access(R).result or not is_a<index_var>(access_result(R).exp));
 
 #ifndef NDEBUG
   //  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
@@ -2266,8 +2267,9 @@ int reg_heap::incremental_evaluate(int R, int t)
   }
 
   assert(access(R).result);
-  assert(is_WHNF(access(R).result.exp));
-  assert(not is_a<index_var>(access(R).result.exp));
+  assert(is_WHNF(access_result(R).exp));
+  assert(not is_a<index_var>(access_result(R).exp));
+  assert(not is_a<expression>(access_result(R).exp));
 
   return R;
 }
