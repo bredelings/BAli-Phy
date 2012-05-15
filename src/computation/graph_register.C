@@ -529,8 +529,8 @@ void reg_heap::clear(int R)
 
 void reg_heap::set_used_input(int R1, int R2)
 {
-  assert(R1 >= 0 and R1 < n_regs());
-  assert(R2 >= 0 and R2 < n_regs());
+  assert(R1 > 0 and R1 < n_regs());
+  assert(R2 > 0 and R2 < n_regs());
 
   assert(access(R1).C);
   assert(access(R2).C);
@@ -561,7 +561,7 @@ int count(const std::vector<int>& v, int I)
 
 void reg_heap::clear_used_inputs(int R1)
 {
-  assert(R1 >= 0 and R1 < n_regs());
+  assert(R1 > 0 and R1 < n_regs());
 
 #ifndef NDEBUG
   // If this reg is unused, then upstream regs are in the process of being destroyed.
@@ -576,7 +576,7 @@ void reg_heap::clear_used_inputs(int R1)
   // Remove the back edges from used inputs
   for(int R2: access(R1).used_inputs)
   {
-    assert(R2 >= 0 and R2 < n_regs());
+    assert(R2 > 0 and R2 < n_regs());
 
     access(R2).outputs.erase(R1);
   }
@@ -635,7 +635,7 @@ void reg_heap::clear_call(int R)
 {
   int R2 = access(R).call;
   if (R2 == -1) return;
-  assert(R2 >= 0 and R2 < n_regs());
+  assert(R2 > 0 and R2 < n_regs());
   
   access(R).call = -1;
 
@@ -2096,7 +2096,7 @@ expression_ref untranslate_vars(const expression_ref& E, const map<string, reg_h
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
 int reg_heap::incremental_evaluate(int R, int t)
 {
-  assert(R >= 0 and R < n_regs());
+  assert(R > 0 and R < n_regs());
   assert(access(R).state == reg::used);
   assert(access(R).is_owned_by(t));
   assert(not is_a<expression>(access(R).C.exp));
