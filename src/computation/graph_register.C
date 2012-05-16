@@ -569,6 +569,7 @@ void reg_heap::clear(int R)
   // Upstream objects can NOT still exist - otherwise this object would be used :-)
   access(R).outputs.clear();
   access(R).call_outputs.clear();
+  access(R).referenced_by_in_E.clear();
 
   access(R).clear_owners();
 
