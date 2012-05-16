@@ -33,18 +33,20 @@ public:
   // {This should probably just become a point to a reg...}
   int result;
 
+  typedef CacheList<int>::iterator back_edge_deleter;
+
   /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call = -1;
-  CacheList<int>::iterator call_reverse;
+  back_edge_deleter call_reverse;
 
   /* 2. The computations we used */
   /// Which reg's were used to reduce this expression?
-  std::vector< int > used_inputs;
+  std::vector< std::pair<int,back_edge_deleter> > used_inputs;
 
   /* 3. The computations that use or reference us. */
 
   /// Which pairs (reg,slot) USED the reduction result of C (via an operation)?
-  std::multiset< int > outputs;
+  CacheList< int > outputs;
 
   /// Which reduction results made use of the value of this expression (via call)
   CacheList<int> call_outputs;

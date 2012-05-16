@@ -564,7 +564,7 @@ void reg_heap::clear(int R)
 
   access(R).used_inputs.clear();
   access(R).call = -1;
-  access(R).call_reverse = CacheList<int>::iterator();
+  access(R).call_reverse = reg::back_edge_deleter();
 
   // Upstream objects can NOT still exist - otherwise this object would be used :-)
   access(R).outputs.clear();
@@ -595,8 +595,8 @@ void reg_heap::set_used_input(int R1, int R2)
   // Don't add a reg as input if no reduction has been performed.
   // assert(access(R2).result or access(R2).call != -1);
 
-  access(R1).used_inputs.push_back(R2);
-  access(R2).outputs.insert(R1);
+  reg::back_edge_deleter D = access(R2).outputs.insert(access(R2).outputs.end(), R1);
+  access(R1).used_inputs.emplace_back(R2,D);
 }
 
 int count(const std::vector<int>& v, int I)
@@ -608,28 +608,40 @@ int count(const std::vector<int>& v, int I)
   return c;
 }
 
+
+// Called from: set_reg_value( ), reclaim_used_reg( ), uniquify_reg( ), incremental_evaluate( ).
+
 void reg_heap::clear_used_inputs(int R1)
 {
   assert(R1 > 0 and R1 < n_regs());
 
-#ifndef NDEBUG
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
   //  correct edges.
 
-  if (access(R1).state == reg::used)
-    for(int R2: access(R1).used_inputs)
-      assert(count(access(R1).used_inputs, R2) == access(R2).outputs.count(R1));
-#endif
+  // We shouldn't need to call this on regs that are already on the free list.
+  assert( access(R1).state != reg::free );
 
-  // Remove the back edges from used inputs
-  for(int R2: access(R1).used_inputs)
+  // Remove the back edges from each used_input reg that is not on the free list.
+  for(const auto& i: access(R1).used_inputs)
   {
+    int R2 = i.first;
     assert(R2 > 0 and R2 < n_regs());
 
-    access(R2).outputs.erase(R1);
+    if (access(R2).state == reg::free)
+      assert( access(R2).outputs.empty() );
+    else
+    {
+      assert( not access(R2).outputs.empty() );
+
+      reg::back_edge_deleter D = i.second;
+      assert( *D == R1 );
+
+      access(R2).outputs.erase(D);
+    }
   }
 
+  // Remove the forward edges.
   access(R1).used_inputs.clear();
 
   assert(access(R1).used_inputs.empty());
@@ -705,7 +717,7 @@ void reg_heap::clear_call(int R)
     access(R2).call_outputs.erase( access(R).call_reverse );
   }
 
-  access(R).call_reverse = CacheList<int>::iterator();
+  access(R).call_reverse = reg::back_edge_deleter();
 }
 
 void reg_heap::set_C(int R, const closure& C)
@@ -1552,8 +1564,8 @@ int reg_heap::uniquify_reg(int R, int t)
       set_call(R2, remap_reg(access(R1).call ) );
 
     // 4c. Initialize/Remap used_inputs
-    for(int j: access(R1).used_inputs)
-      set_used_input(R2, remap_reg(j) );
+    for(const auto& i: access(R1).used_inputs)
+      set_used_input(R2, remap_reg(i.first) );
 
     // 4d. Initialize/Remap result if E is in WHNF.
     if (access(R2).call == -1 and access(R1).result)
@@ -1619,10 +1631,10 @@ int reg_heap::uniquify_reg(int R, int t)
     }
     
     // c. Adjust use edges
-    vector<int> old_used_inputs = access(Q1).used_inputs;
+    vector< pair<int,reg::back_edge_deleter> > old_used_inputs = access(Q1).used_inputs;
     clear_used_inputs(Q1);
-    for(int j: old_used_inputs)
-      set_used_input(Q1, remap_reg(j));
+    for(const auto& i: old_used_inputs)
+      set_used_input(Q1, remap_reg(i.first));
   }
 
   // Remove ownership from the old regs.
@@ -1721,8 +1733,10 @@ void reg_heap::check_used_reg(int index) const
     assert(includes( access(r).referenced_by_in_E, index) );
   }
   
-  for(int r: R.used_inputs)
+  for(const auto& i: R.used_inputs)
   {
+    int r = i.first;
+
     // Check that used regs are owned by the owners of R
     assert(access(r).is_owned_by_all_of( R.get_owners()) );
 
@@ -2564,9 +2578,11 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     // used_inputs
-    for(int R2: C.access(R).used_inputs)
+    for(const auto& i: C.access(R).used_inputs)
     {
-     string name2 = "n" + convertToString(R2);
+      int R2 = i.first;
+
+      string name2 = "n" + convertToString(R2);
       o<<name<<" -> "<<name2<<" ";
       o<<"[";
       o<<"color=\"#007777\"";
