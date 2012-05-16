@@ -1278,30 +1278,24 @@ void reg_heap::check_results_in_context(int t) const
 {
   vector<int> WHNF_results;
   vector<int> regs = find_all_regs_in_context(t);
-  for(int i=0;i<regs.size();i++)
+  for(int Q: regs)
   {
-    int Q = regs[i];
     if (access(Q).result and access(Q).call == -1)
     {
-      assert(access(Q).C == access(Q).result);
+      assert(access(Q).result == Q);
       WHNF_results.push_back(Q);
     }
   }
 
   // Update the call outputs
-  for(int i=0;i<WHNF_results.size();i++)
+  for(int Q: WHNF_results)
   {
-    int Q = WHNF_results[i];
-
-    const closure& result = access(Q).result;
-
     vector<int> regs = find_call_ancestors_in_context( Q, t);
 
     for(int j=0;j<regs.size();j++)
       if (access(regs[j]).result)
-	assert( access(regs[j]).result == result );
+	assert( access(regs[j]).result == Q );
   }
-
 }
 
 int reg_heap::uniquify_reg(int R, int t)
@@ -1412,12 +1406,19 @@ int reg_heap::uniquify_reg(int R, int t)
     // 4d. Initialize/Remap result if E is in WHNF.
     if (access(R2).call == -1 and access(R1).result)
     {
-      access(R2).result = access(R2).C;
+      assert( access(R1).result == R1);
+      access(R2).result = R2;
       changed_results.push_back(R2);
     }
     // 4d. Initialize/Copy result otherwise.
     else
+    {
+      assert( access(R1).result != R1);
+      // Q: Why is it OK to use the un-remapped result?
+      // A: Because we remap calls here; later we trace backwards along these
+      //    remapped call chains to set any results to the proper WHNF expression.
       access(R2).result = access(R1).result;
+    }
   }
 
   // 4a. Adjust heads to point to the new regs
@@ -1549,7 +1550,7 @@ int reg_heap::uniquify_reg(int R, int t)
     // d. Remap result if E is in WHNF
     if (access(Q1).call == -1 and access(Q1).result)
     {
-      access(Q1).result = access(Q1).C;
+      assert(access(Q1).result == Q1);
       changed_results.push_back(Q1);
     }
   }
@@ -1568,19 +1569,17 @@ int reg_heap::uniquify_reg(int R, int t)
   }
     
 
-  // Update the call outputs
-  for(int i=0;i<changed_results.size();i++)
+  // Update regs that indirectly call WHNF regs that have moved.
+  for(int Q: changed_results)
   {
-    int Q = changed_results[i];
+    assert(access(Q).result == Q);
 
-    const closure& result = access(Q).result;
+    const closure& result = access(Q).C;
 
     vector<int> regs = find_call_ancestors_in_context( Q, t);
-
-    for(int j=0;j<regs.size();j++)
+    for(int S: regs)
     {
-      int S = regs[j];
-      access(S).result = result;
+      access(S).result = Q;
 
       // In general, the owners of a parent (S) should all be owners of a child (S).
       // This allows S to have no owners, which could happen if S became unreachable.
@@ -2170,7 +2169,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
     // Check for WHNF *OR* heap variables
     else if (is_WHNF(access(R).C.exp))
-      access(R).result = access(R).C;
+      access(R).result = R;
 
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))

@@ -31,7 +31,7 @@ public:
 
   /// What does C reduce to eventually? (WHNF, but not a heap variable.)
   // {This should probably just become a point to a reg...}
-  closure result;
+  int result;
 
   /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call = -1;
@@ -117,19 +117,18 @@ public:
   const reg& access(int i) const {return memory[i];}
         reg& access(int i)       {return memory[i];}
 
-  const closure& access_result(int R1) const
-  {
-    assert( access(R1).result );
-    return access(R1).result;
-  }
-
-  void clear_result(int R)
-  {
-    access(R).result.clear();
-  }
-
   const reg& operator[](int i) const {return access(i);}
         reg& operator[](int i)       {return access(i);}
+
+
+  const closure& access_result(int R1) const
+  {
+    int R2 = access(R1).result;
+    assert(R2);
+    return access(R2).C;
+  }
+
+  void clear_result(int R) {access(R).result = 0;}
 
   int n_regs() const;
   int n_free_regs() const;
