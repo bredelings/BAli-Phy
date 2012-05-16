@@ -1575,8 +1575,6 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     assert(access(Q).result == Q);
 
-    const closure& result = access(Q).C;
-
     vector<int> regs = find_call_ancestors_in_context( Q, t);
     for(int S: regs)
     {
