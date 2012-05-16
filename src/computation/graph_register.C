@@ -1399,6 +1399,7 @@ int reg_heap::uniquify_reg(int R, int t)
     return R;
   }
 
+  // Track WHNF regs that have moved.
   vector<int> changed_results;
 
   // 1. Find all ancestors with name 't' that are *shared*
@@ -1552,16 +1553,7 @@ int reg_heap::uniquify_reg(int R, int t)
     vector<int> old_used_inputs = access(Q1).used_inputs;
     clear_used_inputs(Q1);
     for(int j: old_used_inputs)
-    {
       set_used_input(Q1, remap_reg(j));
-    }
-    
-    // d. Remap result if E is in WHNF
-    if (access(Q1).call == -1 and access(Q1).result)
-    {
-      assert(access(Q1).result == Q1);
-      changed_results.push_back(Q1);
-    }
   }
 
   // Remove ownership from the old regs.
@@ -1576,7 +1568,6 @@ int reg_heap::uniquify_reg(int R, int t)
     // But now remove membership in t from these regs.
     access(Q).clear_owner(t);
   }
-    
 
   // Update regs that indirectly call WHNF regs that have moved.
   for(int Q: changed_results)
