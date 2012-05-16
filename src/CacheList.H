@@ -220,7 +220,7 @@ public:
     operator=(L);
   }
 
-  CacheList(const CacheList<T>&& L) noexcept
+  CacheList(CacheList<T>&& L) noexcept
     :CacheList()
   { 
     swap(L);
