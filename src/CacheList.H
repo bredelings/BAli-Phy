@@ -105,9 +105,9 @@ public:
     erase(last);
   }
 
-  void push_back(const T& t)
+  iterator push_back(const T& t)
   {
-    insert(end(), t);
+    return insert(end(), t);
   }
 
   void pop_front()
@@ -117,9 +117,9 @@ public:
     erase(begin());
   }
 
-  void push_front(const T& t)
+  iterator push_front(const T& t)
   {
-    insert(begin(), t);
+    return insert(begin(), t);
   }
 
   bool empty() const
