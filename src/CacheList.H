@@ -143,7 +143,7 @@ public:
     return L.size();
   }
 
-  void swap(CacheList<T>& CL2)
+  void swap(CacheList<T>& CL2) noexcept
   {
     bool bf_is_end = (begin_free == L.end());
     bool CL2_bf_is_end = (CL2.begin_free == CL2.L.end());
@@ -173,7 +173,7 @@ public:
     return *this;
   }
 
-  CacheList<T>& operator=(CacheList<T>&& CL2)
+  CacheList<T>& operator=(CacheList<T>&& CL2) noexcept
   {
     swap(CL2);
 
@@ -211,7 +211,7 @@ public:
     operator=(L);
   }
 
-  CacheList(const CacheList<T>&& L)
+  CacheList(const CacheList<T>&& L) noexcept
     :CacheList()
   { 
     swap(L);
