@@ -127,6 +127,15 @@ public:
     return not n_used;
   }
 
+  int count(const T& t) const
+  {
+    int total = 0;
+    for(const auto& i: *this)
+      if (i == t)
+	total++;
+    return total;
+  }
+
   void clear() 
   {
     n_free += n_used;
