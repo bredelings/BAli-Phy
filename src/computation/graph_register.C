@@ -690,6 +690,7 @@ void reg_heap::set_reduction_result(int R, const closure& result)
   assert(access(R).call == -1);
 
   // if the result is NULL, just leave the result and call both unset.
+  //  (this could happen if we set a parameter value to null.)
   if (not result) return;
 
   // If the value is a pre-existing reg_var, then call it.
