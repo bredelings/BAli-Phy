@@ -74,6 +74,14 @@ public:
   owner_set_t temp_owners;
 
   int temp = -1;
+
+  reg& operator=(const reg&) = delete;
+  reg& operator=(reg&&) noexcept;
+
+  reg() = default;
+
+  reg(const reg&) = delete;
+  reg(reg&&) noexcept;
 };
 
 // How do we handle parameters?

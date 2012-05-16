@@ -448,6 +448,52 @@ expression_ref graph_normalize(const expression_ref& E)
   throw myexception()<<"graph_normalize: I don't recognize expression '"+ E->print() + "'";
 }
 
+
+reg& reg::operator=(reg&& R) noexcept
+{
+  owners = std::move( R.owners );
+  C = std::move(R.C);
+  changeable = R.changeable;
+  result = R.result;
+  call = R.call;
+  used_inputs  = std::move( R.used_inputs );
+  outputs = std::move( R.outputs );
+  call_outputs = std::move( R.call_outputs );
+  referenced_by_in_E = std::move( R.referenced_by_in_E );
+  prev_reg = R.prev_reg;
+  next_reg = R.next_reg;
+  state = R.state;
+  temp_owners = std::move( R.temp_owners );
+  temp = R.temp;
+
+  R.prev_reg = -1;
+  R.next_reg = -1;
+  R.state = reg::none;
+
+  return *this;
+}
+
+reg::reg(reg&& R) noexcept
+ :owners( std::move( R.owners ) ),
+  C( std::move(R.C) ),
+  changeable( R.changeable ),
+  result( R.result ),
+  call ( R.call ),
+  used_inputs ( std::move(R.used_inputs) ),
+  outputs ( std::move( R.outputs) ),
+  call_outputs ( std::move( R.call_outputs) ),
+  referenced_by_in_E ( std::move( R.referenced_by_in_E) ),
+  prev_reg( R.prev_reg ),
+  next_reg ( R.next_reg ),
+  state ( R.state ),
+  temp_owners ( std::move( R.temp_owners ) ),
+  temp ( R.temp )
+{ 
+  R.prev_reg = -1;
+  R.next_reg = -1;
+  R.state = reg::none;
+}
+
 const owner_set_t& reg::get_owners() const
 {
   return owners;
