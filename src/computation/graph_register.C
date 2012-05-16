@@ -1298,6 +1298,87 @@ void reg_heap::check_results_in_context(int t) const
   }
 }
 
+vector<int> reg_heap::find_unsplit_parents(const vector<int>& split, int t) const
+{
+  vector<int> unsplit_parents;
+
+  for(int R1: split)
+  {
+    // parents are: (a) referenced_by_in_E + (b) outputs + (c) call_outputs
+
+    // NOTE: we could have parent that are in t that are shared, but these
+    // should be original regs that will eventually be removed from t.
+
+    for(int Q1: access(R1).referenced_by_in_E)
+    {
+      // Skip regs that we've handled already.
+      if (access(Q1).state == reg::checked) continue;
+
+      // We are only interested in the unshared E-ancestors in t.
+      if (not reg_is_owned_by_only(Q1, t)) continue;
+
+      // Mark Q1
+      assert(access(Q1).state == reg::used);
+      access(Q1).state = reg::checked;
+      unsplit_parents.push_back(Q1);
+    }
+
+    for(int Q1: access(R1).outputs)
+    {
+      // Skip regs that we've handled already.
+      if (access(Q1).state == reg::checked) continue;
+
+      // We are only interested in the unshared E-ancestors in t.
+      if (not reg_is_owned_by_only(Q1, t)) continue;
+
+      // Mark Q1
+      assert(access(Q1).state == reg::used);
+      access(Q1).state = reg::checked;
+      unsplit_parents.push_back(Q1);
+    }
+
+    for(int Q1: access(R1).call_outputs)
+    {
+      // Skip regs that we've handled already.
+      if (access(Q1).state == reg::checked) continue;
+
+      // We are only interested in the unshared E-ancestors in t.
+      if (not reg_is_owned_by_only(Q1, t)) continue;
+
+      // Mark Q1
+      assert(access(Q1).state == reg::used);
+      access(Q1).state = reg::checked;
+      unsplit_parents.push_back(Q1);
+    }
+  }
+
+  // Unmark the unsplit parents;
+  for(int i=0;i<unsplit_parents.size();i++)
+    access(unsplit_parents[i]).state = reg::used;
+
+  // Check that marks were removed.
+  for(int R1: split)
+  {
+    int R2 = remap_reg(R1);
+
+    // Original nodes should never have been marked.
+    assert( access(R1).state == reg::used );
+
+    // Split nodes should not have been marked.
+    assert( access(R2).state == reg::used );
+
+    // The split nodes should now be E-ancestors in t
+    for(int j: access(R2).referenced_by_in_E)
+      assert( access(j).state == reg::used );
+
+    // The split nodes should now be E-ancestors in t
+    for(int j: access(R1).referenced_by_in_E)
+      assert( access(j).state == reg::used );
+  }
+
+  return unsplit_parents;
+}
+
 int reg_heap::uniquify_reg(int R, int t)
 {
 #ifndef NDEBUG
@@ -1445,80 +1526,7 @@ int reg_heap::uniquify_reg(int R, int t)
 
   // 5. Find the unsplit parents of split regs
   //    These will be the only parents of the old regs that have context t.
-  vector<int> unsplit_parents;
-  for(int R1: split)
-  {
-    // parents are: (a) referenced_by_in_E + (b) outputs + (c) call_outputs
-
-    // NOTE: we could have parent that are in t that are shared, but these
-    // should be original regs that will eventually be removed from t.
-
-    for(int Q1: access(R1).referenced_by_in_E)
-    {
-      // Skip regs that we've handled already.
-      if (access(Q1).state == reg::checked) continue;
-
-      // We are only interested in the unshared E-ancestors in t.
-      if (not reg_is_owned_by_only(Q1, t)) continue;
-
-      // Mark Q1
-      assert(access(Q1).state == reg::used);
-      access(Q1).state = reg::checked;
-      unsplit_parents.push_back(Q1);
-    }
-
-    for(int Q1: access(R1).outputs)
-    {
-      // Skip regs that we've handled already.
-      if (access(Q1).state == reg::checked) continue;
-
-      // We are only interested in the unshared E-ancestors in t.
-      if (not reg_is_owned_by_only(Q1, t)) continue;
-
-      // Mark Q1
-      assert(access(Q1).state == reg::used);
-      access(Q1).state = reg::checked;
-      unsplit_parents.push_back(Q1);
-    }
-
-    for(int Q1: access(R1).call_outputs)
-    {
-      // Skip regs that we've handled already.
-      if (access(Q1).state == reg::checked) continue;
-
-      // We are only interested in the unshared E-ancestors in t.
-      if (not reg_is_owned_by_only(Q1, t)) continue;
-
-      // Mark Q1
-      assert(access(Q1).state == reg::used);
-      access(Q1).state = reg::checked;
-      unsplit_parents.push_back(Q1);
-    }
-  }
-
-  // Unmark the unsplit parents;
-  for(int i=0;i<unsplit_parents.size();i++)
-    access(unsplit_parents[i]).state = reg::used;
-
-  // Check that marks were removed.
-  for(int R1: split)
-  {
-    int R2 = remap_reg(R1);
-
-    // Original nodes should never have been marked.
-    assert( access(R1).state == reg::used );
-
-    // Split nodes should not have been marked.
-    assert( access(R2).state == reg::used );
-
-    // The split nodes should now be E-ancestors in t
-    for(int j: access(R2).referenced_by_in_E)
-      assert( access(j).state == reg::used );
-
-    // The split nodes should now be E-ancestors in t
-    for(int j: access(R1).referenced_by_in_E)
-      assert( access(j).state == reg::used );
-  }
+  vector<int> unsplit_parents = find_unsplit_parents(split, t);
   
   // Remap the unsplit parents. (The parents don't move, but they reference children that do.)
   for(int Q1: unsplit_parents)
