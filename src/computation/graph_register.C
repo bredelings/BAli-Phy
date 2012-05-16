@@ -456,6 +456,7 @@ reg& reg::operator=(reg&& R) noexcept
   changeable = R.changeable;
   result = R.result;
   call = R.call;
+  call_reverse = std::move( R.call_reverse );
   used_inputs  = std::move( R.used_inputs );
   outputs = std::move( R.outputs );
   call_outputs = std::move( R.call_outputs );
@@ -479,6 +480,7 @@ reg::reg(reg&& R) noexcept
   changeable( R.changeable ),
   result( R.result ),
   call ( R.call ),
+  call_reverse ( std::move( R.call_reverse) ),
   used_inputs ( std::move(R.used_inputs) ),
   outputs ( std::move( R.outputs) ),
   call_outputs ( std::move( R.call_outputs) ),
@@ -562,6 +564,7 @@ void reg_heap::clear(int R)
 
   access(R).used_inputs.clear();
   access(R).call = -1;
+  access(R).call_reverse = CacheList<int>::iterator();
 
   // Upstream objects can NOT still exist - otherwise this object would be used :-)
   access(R).outputs.clear();
@@ -662,7 +665,8 @@ void reg_heap::set_call_unsafe(int R1, int R2)
   assert(access(R1).call == -1);
 
   access(R1).call = R2;
-  access(R2).call_outputs.insert(R1);
+  access(R1).call_reverse = access(R2).call_outputs.insert(access(R2).call_outputs.end(), R1);
+  assert( *access(R1).call_reverse == R1 );
 
   // check that all of the owners of R are also owners of R.call;
   assert( access(R2).is_owned_by_all_of( access(R1).get_owners() ) );
@@ -683,14 +687,25 @@ void reg_heap::clear_call(int R)
   if (R2 == -1) return;
   assert(R2 > 0 and R2 < n_regs());
   
+  assert( *access(R).call_reverse == R );
   access(R).call = -1;
 
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
   //  correct edges.
-  assert( access(R).state != reg::used or includes(access(R2).call_outputs, R) );
+  assert( access(R).state != reg::used or access(R2).call_outputs.count(R) );
 
-  access(R2).call_outputs.erase(R);
+  // If the call points to a freed reg, then its call_outputs list should already be cleared.
+  if (access(R2).state == reg::free)
+    assert( access(R2).call_outputs.empty() );
+  // If the call points to a used reg, then we need to notify it that the incoming call edge is being removed.
+  else {
+    assert( access(R2).state == reg::used or access(R2).state == reg::checked );
+    assert( not access(R2).call_outputs.empty() );
+    access(R2).call_outputs.erase( access(R).call_reverse );
+  }
+
+  access(R).call_reverse = CacheList<int>::iterator();
 }
 
 void reg_heap::set_C(int R, const closure& C)
@@ -953,7 +968,11 @@ void reg_heap::reclaim_used_reg(int r)
   // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
   remove_reg_from_used_list(r);
 
-  // Downstream objects could still exist
+  // Upstream regs must also be dead, since if they were live, this reg would be live as well.
+  // Therefore, we do not need to update upstream regs even when we destroy incoming edges.
+
+  // However, downstream regs may be live, and therefore when we destroy outgoing edges, we
+  // need to notify downstream regs of the absence of these incoming edges.
   clear_used_inputs(r);
   clear_call(r);
   clear_C(r);
@@ -1327,6 +1346,9 @@ void reg_heap::check_results_in_context(int t) const
   vector<int> regs = find_all_regs_in_context(t);
   for(int Q: regs)
   {
+    if (access(Q).call != -1)
+      assert( *access(Q).call_reverse == Q );
+      
     if (access(Q).result and access(Q).call == -1)
     {
       assert(access(Q).result == Q);
@@ -1334,7 +1356,7 @@ void reg_heap::check_results_in_context(int t) const
     }
   }
 
-  // Update the call outputs
+  // Check the call outputs
   for(int Q: WHNF_results)
   {
     vector<int> regs = find_call_ancestors_in_context( Q, t);
@@ -1710,6 +1732,9 @@ void reg_heap::check_used_reg(int index) const
 
   if (R.call != -1)
   {
+    // Check that the pointer to the reverse edge iterator is intact.
+    assert( *R.call_reverse == index );
+
     // Check that the call-used reg is owned by owners of R
     assert( access(R.call).is_owned_by_all_of( R.get_owners()) );
 

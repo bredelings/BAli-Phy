@@ -35,6 +35,7 @@ public:
 
   /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call = -1;
+  CacheList<int>::iterator call_reverse;
 
   /* 2. The computations we used */
   /// Which reg's were used to reduce this expression?
@@ -46,7 +47,7 @@ public:
   std::multiset< int > outputs;
 
   /// Which reduction results made use of the value of this expression (via call)
-  std::set< int > call_outputs;
+  CacheList<int> call_outputs;
 
   /// The nodes that directly reference us (not via a call)
   std::set< int > referenced_by_in_E;
