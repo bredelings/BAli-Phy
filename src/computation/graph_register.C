@@ -453,6 +453,7 @@ reg& reg::operator=(reg&& R) noexcept
 {
   owners = std::move( R.owners );
   C = std::move(R.C);
+  referenced_by_in_E_reverse = std::move( R.referenced_by_in_E_reverse );
   changeable = R.changeable;
   result = R.result;
   call = R.call;
@@ -477,6 +478,7 @@ reg& reg::operator=(reg&& R) noexcept
 reg::reg(reg&& R) noexcept
  :owners( std::move( R.owners ) ),
   C( std::move(R.C) ),
+  referenced_by_in_E_reverse ( std::move( R.referenced_by_in_E_reverse ) ),
   changeable( R.changeable ),
   result( R.result ),
   call ( R.call ),
@@ -738,21 +740,35 @@ void reg_heap::set_C(int R, const closure& C)
     assert(access(r).is_owned_by_all_of( access(R).get_owners()) );
 
     // check that *r is not already marked as being referenced by R
-    assert(not includes( access(r).referenced_by_in_E, R) );
+    assert(not access(r).referenced_by_in_E.count(R) );
   }
 #endif
 
-  // mark r as being referenced by R
-  for(int r: access(R).C.Env)
-    access(r).referenced_by_in_E.insert(R);
+  // mark R2 as being referenced by R
+  for(int R2: access(R).C.Env)
+  {
+    reg::back_edge_deleter D = access(R2).referenced_by_in_E.push_back(R);
+    access(R).referenced_by_in_E_reverse.push_back(D);
+  }
 }
 
 void reg_heap::clear_C(int R)
 {
-  for(int r: access(R).C.Env)
-    access(r).referenced_by_in_E.erase(R);
+  for(int i=0;i<access(R).C.Env.size();i++)
+  {
+    int R2 = access(R).C.Env[i];
+    reg::back_edge_deleter& D = access(R).referenced_by_in_E_reverse[i];
+    if (access(R2).state != reg::free)
+    {
+      assert( not access(R2).referenced_by_in_E.empty() );
+      access(R2).referenced_by_in_E.erase(D);
+    }
+    else
+      assert( access(R2).referenced_by_in_E.empty() );
+  }
 
   access(R).C.clear();
+  access(R).referenced_by_in_E_reverse.clear();
 }
 
 void reg_heap::set_reduction_result(int R, const closure& result)
@@ -1731,7 +1747,7 @@ void reg_heap::check_used_reg(int index) const
     assert(access(r).is_owned_by_all_of( R.get_owners()) );
     
     // Check that referenced regs are have back-references to R
-    assert(includes( access(r).referenced_by_in_E, index) );
+    assert(access(r).referenced_by_in_E.count(index) );
   }
   
   for(const auto& i: R.used_inputs)

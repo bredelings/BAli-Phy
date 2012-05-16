@@ -23,8 +23,11 @@ private:
   owner_set_t owners;
 
 public:
+  typedef CacheList<int>::iterator back_edge_deleter;
+
   /* The closure */
   closure C;
+  std::vector<back_edge_deleter> referenced_by_in_E_reverse;
 
   /// Is C a parameter, or is the result dependent on a parameter value?
   bool changeable = false;
@@ -32,8 +35,6 @@ public:
   /// What does C reduce to eventually? (WHNF, but not a heap variable.)
   // {This should probably just become a point to a reg...}
   int result;
-
-  typedef CacheList<int>::iterator back_edge_deleter;
 
   /// Does C reduce to another reg that we need to evaluate to get the true result?
   int call = -1;
@@ -52,7 +53,7 @@ public:
   CacheList<int> call_outputs;
 
   /// The nodes that directly reference us (not via a call)
-  std::set< int > referenced_by_in_E;
+  CacheList<int> referenced_by_in_E;
 
   /* 4. Fields used by the memory manager */
   enum States {none=0,free=1,used=2,checked=3};
