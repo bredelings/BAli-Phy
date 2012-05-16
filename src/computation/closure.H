@@ -73,7 +73,21 @@ struct closure
   :closure(expression_ref(O))
   { }
 
+  closure(const closure&) = default;
 
+  closure(closure&& C)
+  :exp(C.exp),
+   Env( std::move(C.Env) )
+  { }
+
+  closure& operator=(const closure&) = default;
+
+  closure& operator=(closure&& C)
+  {
+    exp = C.exp;
+    Env = std::move(C.Env);
+    return *this;
+  }
 };
 
 closure get_trimmed(const closure& C);
