@@ -1431,7 +1431,7 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
 
-  // NOTE: We HAVE to quite now since R has been removed from new_regs.
+  // NOTE: We HAVE to quit now since R has been removed from new_regs.
   // If for some reason the reg is no longer shared, then we can quit now.
   assert(access(R).is_owned_by(t));
   if (not reg_is_shared(R)) 
@@ -1454,8 +1454,7 @@ int reg_heap::uniquify_reg(int R, int t)
     return R;
   }
 
-  // 2a. Copy the over and remap E
-  //     This is separate to that avoid linking to regs with no E.
+  // 2a. Copy the over and remap C
   for(int R1: split)
   {
     int R2 = remap_reg(R1);
@@ -1468,12 +1467,12 @@ int reg_heap::uniquify_reg(int R, int t)
 
     // 4. Initialize fields in the new node
 
-    // 4a. Initialize/Remap E
+    // 4a. Initialize/Remap C
     set_C(R2, remap_regs( access(R1).C ) );
   }
 
   // 2b.  Copy over and remap the call, used_inputs, and result
-  //      This is after copying E to avoid linking to regs with no E.
+  //      This is after copying C to avoid linking to regs with no C
   for(int R1: split)
   {
     int R2 = remap_reg(R1);
