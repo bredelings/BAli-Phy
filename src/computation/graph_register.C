@@ -1356,6 +1356,7 @@ vector<int> reg_heap::find_unsplit_parents(const vector<int>& split, int t) cons
   for(int i=0;i<unsplit_parents.size();i++)
     access(unsplit_parents[i]).state = reg::used;
 
+#ifndef NDEBUG
   // Check that marks were removed.
   for(int R1: split)
   {
@@ -1375,6 +1376,7 @@ vector<int> reg_heap::find_unsplit_parents(const vector<int>& split, int t) cons
     for(int j: access(R1).referenced_by_in_E)
       assert( access(j).state == reg::used );
   }
+#endif
 
   return unsplit_parents;
 }
