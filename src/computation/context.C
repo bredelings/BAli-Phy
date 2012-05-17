@@ -11,25 +11,25 @@ using std::set;
 using std::cerr;
 using std::endl;
 
-closure let_float(closure C)
+closure let_float(closure&& C)
 {
   C.exp = let_float(expression_ref(C.exp));
   return C;
 }
 
-closure graph_normalize(closure C)
+closure graph_normalize(closure&& C)
 {
   C.exp = graph_normalize(expression_ref(C.exp));
   return C;
 }
 
-closure indexify(closure C)
+closure indexify(closure&& C)
 {
   C.exp = indexify(expression_ref(C.exp));
   return C;
 }
 
-closure trim_normalize(closure C)
+closure trim_normalize(closure&& C)
 {
   C.exp = trim_normalize(expression_ref(C.exp));
   return C;
@@ -38,7 +38,7 @@ closure trim_normalize(closure C)
 closure context::preprocess(const closure& C) const
 {
   assert(let_float(C.exp)->print() == let_float(let_float(C.exp))->print());
-  return trim_normalize( indexify( graph_normalize( let_float( translate_refs( C ) ) ) ) );
+  return trim_normalize( indexify( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) );
 }
 
 string context::parameter_name(int i) const
@@ -186,11 +186,11 @@ expression_ref context::evaluate_structure(int index) const
   return full_evaluate(H);
 }
 
-closure context::lazy_evaluate_expression_(const closure& C) const
+closure context::lazy_evaluate_expression_(closure&& C) const
 {
   try {
     int R = *push_temp_head();
-    set_C(R, C);
+    set_C(R, std::move(C) );
 
     R = incremental_evaluate(R);
     const closure& result = access_result(R);
@@ -205,16 +205,16 @@ closure context::lazy_evaluate_expression_(const closure& C) const
   }
 }
 
-object_ref context::evaluate_expression_(const closure& C) const
+object_ref context::evaluate_expression_(closure&& C) const
 {
-  return lazy_evaluate_expression_(C).exp->head;
+  return lazy_evaluate_expression_(std::move(C)).exp->head;
 }
 
-expression_ref context::evaluate_structure_expression_(const closure& C) const
+expression_ref context::evaluate_structure_expression_(closure&& C) const
 {
   try {
     int R = *push_temp_head();
-    set_C(R, C);
+    set_C(R, std::move(C) );
 
     expression_ref result = full_evaluate(R);
     pop_temp_head();
@@ -285,16 +285,16 @@ void context::set_parameter_value(int index, const expression_ref& O)
 }
 
 // FIXME - change argument to closure?
-void context::set_parameter_value_(int index, const closure& C)
+void context::set_parameter_value_(int index, closure&& C)
 {
   int P = *parameters()[index];
 
-  set_reg_value(P, C);
+  set_reg_value(P, std::move(C) );
 }
 
-void context::set_reg_value(int P, const closure& C)
+void context::set_reg_value(int P, closure&& C)
 {
-  return memory->set_reg_value(P, C, token);
+  return memory->set_reg_value(P, std::move(C), token);
 }
 
 /// Update the value of a non-constant, non-computed index
@@ -340,10 +340,10 @@ int context::add_compute_expression(const expression_ref& E)
 }
 
 /// Add an expression that may be replaced by its reduced form
-int context::add_compute_expression_(const closure& C)
+int context::add_compute_expression_(closure&& C)
 {
   root_t r = allocate_reg();
-  set_C( *r, C );
+  set_C( *r, std::move(C) );
 
   heads().push_back( r );
   return heads().size() - 1;
@@ -356,10 +356,10 @@ void context::set_compute_expression(int i, const expression_ref& E)
 }
 
 /// Change the i-th compute expression to e
-void context::set_compute_expression_(int i, const closure& C)
+void context::set_compute_expression_(int i, closure&& C)
 {
   root_t r2 = allocate_reg();
-  set_C( *r2, C );
+  set_C( *r2, std::move(C) );
 
   root_t r1 = heads()[i];
   heads()[i] = r2;
@@ -451,7 +451,7 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
   return V;
 }
 
-closure context::translate_refs(const closure& C) const
+closure context::translate_refs(closure&& C) const
 {
   closure C2 = C;
   C2.exp = translate_refs(C2.exp, C2.Env);

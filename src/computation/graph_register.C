@@ -723,7 +723,7 @@ void reg_heap::clear_call(int R)
   access(R).call_reverse = reg::back_edge_deleter();
 }
 
-void reg_heap::set_C(int R, const closure& C)
+void reg_heap::set_C(int R, closure&& C)
 {
   assert(C);
   assert(not is_a<expression>(C.exp));
@@ -771,7 +771,7 @@ void reg_heap::clear_C(int R)
   access(R).referenced_by_in_E_reverse.clear();
 }
 
-void reg_heap::set_reduction_result(int R, const closure& result)
+void reg_heap::set_reduction_result(int R, closure&& result)
 {
   // Check that there is no result we are overriding
   assert(not access(R).result );
@@ -798,14 +798,14 @@ void reg_heap::set_reduction_result(int R, const closure& result)
   {
     root_t r = allocate_reg();
     access(*r).set_owners( access(R).get_owners() );
-    set_C(*r, result );
+    set_C(*r, std::move( result ) );
     set_call(R, *r);
     pop_root(r);
   }
 }
 
 /// Update the value of a non-constant, non-computed index
-void reg_heap::set_reg_value(int P, const closure& C, int token)
+void reg_heap::set_reg_value(int P, closure&& C, int token)
 {
   // Check that reg P is owned by context token.
   assert(reg_is_owned_by(P,token));
@@ -911,7 +911,7 @@ void reg_heap::set_reg_value(int P, const closure& C, int token)
     access(R).temp = -1;
 
   // Finally set the new value.
-  set_reduction_result(P, C);
+  set_reduction_result(P, std::move(C) );
 }
 
 int reg_heap::n_regs() const
@@ -2101,10 +2101,10 @@ public:
     std::abort();
   }
 
-  int allocate(const closure& C)
+  int allocate(closure&& C)
   {
     int r = *M.push_temp_head( owners );
-    M.set_C(r, C);
+    M.set_C(r, std::move(C) );
     n_allocated++;
     return r;
   }
@@ -2353,11 +2353,11 @@ int reg_heap::incremental_evaluate(int R, int t)
 	assert(access(R).call == -1);
 	assert(not access(R).result);
 	clear_used_inputs(R);
-	set_C(R, result);
+	set_C(R, std::move(result) );
       }
       // Otherwise, set the reduction result.
       else
-	set_reduction_result(R, result );
+	set_reduction_result(R, std::move(result) );
 
 #ifndef NDEBUG
       //      std::cerr<<"   + recomputing "<<SS<<"\n\n";

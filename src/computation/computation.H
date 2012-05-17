@@ -32,7 +32,7 @@ struct OperationArgs: public Object
     return convert<const T>( evaluate(slot) );
   }
 
-  virtual int allocate(const closure&) 
+  virtual int allocate(closure&&) 
   { 
     std::abort();
   }

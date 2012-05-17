@@ -161,8 +161,8 @@ public:
   void clear_call(int R);
   void clear(int);
   void clear_C(int R);
-  void set_C(int R, const closure& C);
-  void set_reduction_result(int R, const closure& C);
+  void set_C(int R, closure&& C);
+  void set_reduction_result(int R, closure&& C);
 
   /*----- Token manager ------*/
 
@@ -259,7 +259,7 @@ public:
   /*----- Graph splitting -----*/
   int uniquify_reg(int reg, int t);
   /// Update the value of a non-constant, non-computed index
-  void set_reg_value(int index, const closure&, int t);
+  void set_reg_value(int index, closure&&, int t);
 
   int incremental_evaluate(int R, int t);
 };
