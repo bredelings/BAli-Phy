@@ -699,6 +699,7 @@ namespace probability {
       double M = a*b;
       double V = a*b*b;
 
+      // Isn't this the same as log1p(1.0/a)?
       double sigma2 =  log1p(V/(M*M));
       double mu = log(M) - sigma2/2.0;
       double sigma = sqrt(sigma2);
