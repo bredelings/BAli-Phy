@@ -2059,7 +2059,7 @@ public:
   }
 
   // This computes everything
-  closure lazy_evaluate(int slot)
+  const closure& lazy_evaluate(int slot)
   {
     int index = assert_is_a<index_var>(reference(slot))->index;
 
