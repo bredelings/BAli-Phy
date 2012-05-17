@@ -1296,6 +1296,7 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
   assert(reg_is_owned_by(R,t));
 
   vector<int> unique;
+  unique.reserve(n_regs());
   for(int i=0;i<scan.size();i++)
   {
     const reg& R = access(scan[i]);
