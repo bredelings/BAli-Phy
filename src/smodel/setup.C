@@ -507,6 +507,10 @@ bool process_stack_Multi(vector<string>& string_stack,
   string arg;
   vector<string> args;
 
+  expression_ref plus = lambda_expression(Add<Double>());
+  expression_ref times = lambda_expression(Multiply<Double>());
+  expression_ref divide = lambda_expression(Divide<Double>());
+
   if (match(string_stack,"single",arg)) 
     model_stack.back() = get_MM_default(model_stack,"single",a,frequencies);
 
@@ -516,14 +520,12 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    expression_ref times = lambda_expression(Multiply<Double>());
-    expression_ref divide = lambda_expression(Divide<Double>());
     formula_expression_ref base = get_RA_default(model_stack,"gamma",a,frequencies);
+
     formula_expression_ref W = def_parameter("gamma::sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
     formula_expression_ref dist = (UniformDiscretize, (lambda_expression(gamma_quantile_op()), Tuple(a,b)) , n);
-    //    formula_expression_ref dist = (Discretize, model_formula(Gamma()), n);
 
     model_stack.back() = (MultiRate, base,  dist);
   }
@@ -533,7 +535,12 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(arg);
 
     formula_expression_ref base = get_RA_default(model_stack,"gamma",a,frequencies);
-    formula_expression_ref dist = (Discretize, model_formula(Gamma()), n);
+
+    formula_expression_ref W = def_parameter("gamma::sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
+    formula_expression_ref b = (times, W, W);
+    formula_expression_ref a = (divide, 1.0, b);
+    formula_expression_ref dist = (UniformDiscretize, (lambda_expression(gamma_quantile_op()), Tuple(a,b)) , n);
+
     formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
     dist = (ExtendDiscreteDistribution, dist, p, 0.0);
     model_stack.back() = (MultiRate, base,  dist);
@@ -544,7 +551,14 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(arg);
 
     formula_expression_ref base = get_RA_default(model_stack,"log-normal",a,frequencies);
-    formula_expression_ref dist = (Discretize, model_formula(LogNormal()), n);
+
+    formula_expression_ref W = def_parameter("log-normal::sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
+    formula_expression_ref Var = (times, W, W);
+    formula_expression_ref lVar = (Log, (plus, 1.0, Var ) );
+    formula_expression_ref lmu = (times, -0.5, lVar);
+    formula_expression_ref lsigma = (Sqrt, lVar);
+    formula_expression_ref dist = (UniformDiscretize, (lambda_expression(log_normal_quantile_op()), Tuple(lmu,lsigma)) , n);
+
     model_stack.back() = (MultiRate, base,  dist);
   }
   else if (match(string_stack,"log-normal_inv",arg)) {
@@ -929,6 +943,8 @@ get_smodel(const string& smodel_name, const object_ptr<const alphabet>& a, const
 
   // --------- Convert smodel to MultiModel ------------//
   formula_expression_ref full_smodel = get_MM(smodel,"Final",a,frequencies);
+
+  std::cerr<<"smodel = "<<full_smodel.exp()<<"\n";
 
   return full_smodel;
 }
