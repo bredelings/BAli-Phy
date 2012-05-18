@@ -710,7 +710,7 @@ struct Sqrt_Op: public Operation
 
   closure operator()(OperationArgs& Args) const;
 
-  std::string name() const {return "log";}
+  std::string name() const {return "sqrt";}
 
   Sqrt_Op():Operation(1) {}
 };
