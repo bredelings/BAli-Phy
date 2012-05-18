@@ -516,8 +516,15 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
+    expression_ref times = lambda_expression(Multiply<Double>());
+    expression_ref divide = lambda_expression(Divide<Double>());
     formula_expression_ref base = get_RA_default(model_stack,"gamma",a,frequencies);
-    formula_expression_ref dist = (Discretize, model_formula(Gamma()), n);
+    formula_expression_ref W = def_parameter("gamma::sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
+    formula_expression_ref b = (times, W, W);
+    formula_expression_ref a = (divide, 1.0, b);
+    formula_expression_ref dist = (UniformDiscretize, (lambda_expression(gamma_quantile_op()), Tuple(a,b)) , n);
+    //    formula_expression_ref dist = (Discretize, model_formula(Gamma()), n);
+
     model_stack.back() = (MultiRate, base,  dist);
   }
   else if (match(string_stack,"gamma_inv",arg)) {
