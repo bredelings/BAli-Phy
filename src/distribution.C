@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_sf_gamma.h>
 #include "util.H"
+#include "probability.H"
 
 using std::string;
 

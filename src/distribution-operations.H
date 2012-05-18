@@ -76,6 +76,27 @@ struct gamma_density: public Operation
   gamma_density():Operation(2) { }
 };
 
+struct gamma_quantile_op: public Operation
+{
+  gamma_quantile_op* clone() const {return new gamma_quantile_op;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "gamma_quantile";}
+
+  gamma_quantile_op():Operation(2) { }
+};
+
 extern expression_ref gamma_dist;
 
 struct beta_density: public Operation
@@ -143,6 +164,27 @@ struct log_normal_density: public Operation
   std::string name() const {return "log_normal_density";}
 
   log_normal_density():Operation(2) { }
+};
+
+struct log_normal_quantile_op: public Operation
+{
+  log_normal_quantile_op* clone() const {return new log_normal_quantile_op;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+ 
+  std::string name() const {return "log_normal_quantile";}
+
+  log_normal_quantile_op():Operation(2) { }
 };
 
 extern expression_ref log_normal_dist;

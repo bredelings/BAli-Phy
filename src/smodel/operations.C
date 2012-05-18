@@ -440,14 +440,6 @@ namespace substitution
     return R2;
   }
 
-  // family = (prob_density, name, density, quantile) 
-  // + /\x.(density x args)
-  // + /\x.(quantile x args)
-  //
-  // UniformDiscretize q n = fmap2 q (fmap /\i.(1/n, (2*i+1)/n) (take n (iterate (+1) 0) ) )
-  // UniformDiscretize q n = fmap /\i.(1/n, q ((2*i+1)/n) ) (take n (iterate (+1) 0) )
-  // 
-
   //FIXME!
   expression_ref DiscretizationFunction(const Distribution& D, Int n)
   {

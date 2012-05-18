@@ -587,7 +587,7 @@ std::ostream& operator<<(std::ostream& o, const context& C)
 #include "computation/operations.H"
 
 // note = (~ x D)
-// Pr_i = case D of ((prob_density _ density_op), args) -> (density_op x args)
+// Pr_i = case D of ((prob_density _ density_op quantile_op), args) -> (density_op x args)
 
 int add_probability_expression(context& C)
 {
@@ -617,7 +617,7 @@ int add_probability_expression(context& C)
     prior_expressions[x->print()] = D->print();
     
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_i = case_expression(D, Tuple((prob_density,_,density),args), (density, x, args));
+    expression_ref Pr_i = case_expression(D, Tuple((prob_density,_,density,_),args), (density, x, args));
     
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)

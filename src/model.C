@@ -102,7 +102,7 @@ expression_ref model_prior_expression(const Model& M)
   vector< expression_ref > sub;
 
   return (distributed, get_tuple( model_parameter_expressions( M ) ),
-		      Tuple((prob_density, model_prior(M).name(), lambda_expression(model_prior(M))), 
+	  Tuple((prob_density, model_prior(M).name(), lambda_expression(model_prior(M)),0), 
 			       Tuple(0) 
 			       )
 		      );
@@ -245,7 +245,7 @@ int Model::add_note(const expression_ref& E)
     expression_ref _ = dummy(-1);
 
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_new = case_expression(D, Tuple((prob_density,_,density),args), (density, x, args));
+    expression_ref Pr_new = case_expression(D, Tuple((prob_density,_,density,_),args), (density, x, args));
     
     // Record that this variable is random, and has this prior.
     // THIS would be the right place to determine what other random variables and parameters are being depended on.
@@ -964,7 +964,7 @@ object_ptr<Model> prefix_model(const Model& M, const string& prefix)
 
 vector<string> show_probability_expressions(const context& C)
 {
-  expression_ref query = (distributed, _2, Tuple((prob_density, _1 , _), _3));
+  expression_ref query = (distributed, _2, Tuple((prob_density, _1 , _, _), _3));
 
   vector<string> expressions;
 
