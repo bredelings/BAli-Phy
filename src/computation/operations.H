@@ -459,10 +459,9 @@ struct Conversion: public Operation
 
   closure operator()(OperationArgs& Args) const
   {
-    object_ptr<const X> x = Args.evaluate_as<X>(0);
-    Y y = *x;
+    object_ptr<const POD_math<X> > x = Args.evaluate_as<POD_math<X> >(0);
 
-    return object_ptr<const Y>(new Y(y));
+    return object_ptr<const POD_math<Y>>(new POD_math<Y>(*x));
   }
 
   std::string name() const {return "Conversion";}

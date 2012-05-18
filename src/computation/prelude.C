@@ -17,6 +17,7 @@ const expression_ref snd = var("snd");
 const expression_ref get_list_index = var("!!");
 const expression_ref listArray = var("listArray");
 const expression_ref ExtendDiscreteDistribution = var("ExtendDiscreteDistribution");
+const expression_ref UniformDiscretize = var("UniformDiscretize");
 const expression_ref length = var("length");
 const expression_ref average = var("average");
 
@@ -83,12 +84,18 @@ Program get_Prelude()
 
   expression_ref times = lambda_expression(Multiply<Double>());
   expression_ref plus = lambda_expression( Add<Double>() );
+  expression_ref to_double = lambda_expression( Conversion<int,double>() );
 
   // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
   P += Def( (ExtendDiscreteDistribution, (DiscreteDistribution, v0), v1, v2), (DiscreteDistribution, Tuple(v1,v2)&(fmap1, v4^v4*(1.0-v1), v0)) );
 
   // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
   P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(x1+(times,(fst,v2),(snd,v2)))), 0.0, v3) );
+
+  // UniformDiscretize q n = fmap /\i.(1/n, q ((2*i+1)/n) ) (take n (iterate (+1) 0) )
+  // [ We could do this as two nested fmaps, instead. ]
+  // [ We could factor out to_double(v2), and 1.0/to_double(v2)
+  P += Def( (UniformDiscretize, v1, v2), (fmap, lambda_quantify(v3,let_expression(v4,(to_double,v2), Tuple(1.0/v4, (v1,((2.0*v3+1.0)/v4))))), (take, v2, (iterate, (plus,1.0), 0.0) ) ) );
 
   // If True  y z = y
   // If False y z = z
