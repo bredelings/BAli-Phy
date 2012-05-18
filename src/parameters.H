@@ -56,7 +56,7 @@ extern bool use_internal_index;
 class Parameters;
 
 /// Each data_partition is a model with one parameter: mu (the branch mean)
-class data_partition: public Probability_Model, public Mat_Cache
+class data_partition: public Mat_Cache
 {
   friend class Parameters;
 
@@ -203,6 +203,9 @@ public:
   efloat_t likelihood() const;
 
   efloat_t heated_likelihood() const;
+
+  efloat_t heated_prior() const {return prior();}
+  efloat_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
   std::string name() const;
 
