@@ -198,3 +198,37 @@ expression_ref LExp = lambda_expression( LExp_Op() );
 
 //---------------------------------------------------------------------------------------//
 
+tribool Log_Op::compare(const Object& o) const 
+{
+  return dynamic_cast<const Log_Op*>(&o);
+}
+
+closure Log_Op::operator()(OperationArgs& Args) const
+{
+  object_ptr<const Double> x = Args.evaluate_as<Double>(0);
+  assert(*x > 0.0);
+
+  return new Double(log(*x));
+}
+
+const expression_ref Log = lambda_expression( Log_Op() );
+
+//---------------------------------------------------------------------------------------//
+
+tribool Sqrt_Op::compare(const Object& o) const 
+{
+  return dynamic_cast<const Sqrt_Op*>(&o);
+}
+
+closure Sqrt_Op::operator()(OperationArgs& Args) const
+{
+  object_ptr<const Double> x = Args.evaluate_as<Double>(0);
+  assert(*x >= 0.0);
+
+  return new Double(sqrt(*x));
+}
+
+const expression_ref Sqrt = lambda_expression( Sqrt_Op() );
+
+//---------------------------------------------------------------------------------------//
+

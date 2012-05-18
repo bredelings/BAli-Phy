@@ -683,4 +683,38 @@ def_binary_operator2(==,Equals)
 #undef check_arithmetic
 #undef check_arithmetic2
 
+struct Log_Op: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Log_Op* clone() const {return new Log_Op(*this);}
+
+  tribool compare(const Object& o) const;
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "log";}
+
+  Log_Op():Operation(1) {}
+};
+
+extern const expression_ref Log;
+
+struct Sqrt_Op: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Sqrt_Op* clone() const {return new Sqrt_Op(*this);}
+
+  tribool compare(const Object& o) const;
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "log";}
+
+  Sqrt_Op():Operation(1) {}
+};
+
+extern const expression_ref Sqrt;
+
 #endif
