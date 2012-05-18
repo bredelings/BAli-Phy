@@ -95,7 +95,7 @@ Program get_Prelude()
   // UniformDiscretize q n = fmap /\i.(1/n, q ((2*i+1)/n) ) (take n (iterate (+1) 0) )
   // [ We could do this as two nested fmaps, instead. ]
   // [ We could factor out to_double(v2), and 1.0/to_double(v2)
-  P += Def( (UniformDiscretize, v1, v2), (fmap, lambda_quantify(v3,let_expression(v4,(to_double,v2), Tuple(1.0/v4, (v1,((2.0*v3+1.0)/v4))))), (take, v2, (iterate, (plus,1.0), 0.0) ) ) );
+  P += Def( (UniformDiscretize, v1, v2), (DiscreteDistribution, (fmap, lambda_quantify(v3,let_expression(v4,(to_double,v2), Tuple(1.0/v4, (v1,((2.0*v3+1.0)/v4))))), (take, v2, (iterate, (plus,1.0), 0.0) ) ) ) );
 
   // If True  y z = y
   // If False y z = z
