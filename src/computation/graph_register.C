@@ -731,7 +731,7 @@ void reg_heap::set_C(int R, closure&& C)
   assert(not access(R).is_unowned());
   clear_C(R);
 
-  access(R).C = C;
+  access(R).C = std::move(C);
 #ifndef NDEBUG
   for(int r: access(R).C.Env)
   {
