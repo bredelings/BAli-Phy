@@ -176,6 +176,8 @@ log_double_t gamma_pdf(double x,double a, double b)
 
 log_double_t normal_pdf(double x, double mu, double sigma)
 {
+  assert(sigma >= 0);
+
   log_double_t Pr = 1;
   double sigma2 = sigma * sigma;
   x -= mu;
@@ -187,11 +189,16 @@ log_double_t normal_pdf(double x, double mu, double sigma)
 
 double normal_quantile(double p, double mu, double sigma)
 {
+  assert(p >= 0);
+  assert(p <= 1);
+  assert(sigma >= 0);
   return mu+gsl_cdf_gaussian_Pinv(p,sigma);
 }
 
 log_double_t log_normal_pdf(double x, double mu, double sigma)
 {
+  assert(sigma >= 0);
+
   log_double_t Pr = 1;
   Pr.log() = normal_pdf(log(x),mu,sigma)-log(x);
   return Pr;
@@ -199,6 +206,10 @@ log_double_t log_normal_pdf(double x, double mu, double sigma)
 
 double log_normal_quantile(double p, double lmu, double lsigma)
 {
+  assert(p >= 0);
+  assert(p <= 1);
+  assert(lsigma >= 0);
+
   // don't go crazy
   lsigma = minmax(lsigma, 1.0e-5, 1.0e5);
 
