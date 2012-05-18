@@ -34,8 +34,8 @@ closure gamma_density::operator()(OperationArgs& Args) const
 
 closure gamma_quantile_op::operator()(OperationArgs& Args) const
 {
-  object_ptr<const Double> p = Args.evaluate_as<Double>(0);
-  expression_ref a = Args.evaluate_structure(1);
+  expression_ref a = Args.evaluate_structure(0);
+  object_ptr<const Double> p = Args.evaluate_as<Double>(1);
 
   std::valarray<double> A = get_varray<double,Double>(a);
   Double result = gamma_quantile(*p, A[0], A[1]);
@@ -74,8 +74,8 @@ closure log_normal_density::operator()(OperationArgs& Args) const
 
 closure log_normal_quantile_op::operator()(OperationArgs& Args) const
 {
-  object_ptr<const Double> p = Args.evaluate_as<Double>(0);
-  expression_ref a = Args.evaluate_structure(1);
+  expression_ref a = Args.evaluate_structure(0);
+  object_ptr<const Double> p = Args.evaluate_as<Double>(1);
 
   std::valarray<double> A = get_varray<double,Double>(a);
   Double result = log_normal_quantile(*p, A[0], A[1]);
