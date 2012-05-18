@@ -148,7 +148,8 @@ namespace substitution {
     double lVar = log1p(Var);
 
     vector<Double> p(2);
-    //    double lm = p[0] = -0.5 * lVar;
+    //    double lm = 
+    p[0] = -0.5 * lVar;
     double ls = p[1] = sqrt(lVar);
 
     // don't go crazy
