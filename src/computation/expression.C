@@ -605,7 +605,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   if (object_ptr<const lambda> L = is_a<lambda>(E))
   {
     vector<dummy> variables2 = variables;
-    variables2.push_back(*is_a<dummy>(E->sub[0]));
+    variables2.push_back(*assert_is_a<dummy>(E->sub[0]));
     return make_indexed_lambda( indexify(E->sub[1], variables2) );
   }
 
@@ -617,7 +617,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
   {
     vector<dummy> variables2 = variables;
     for(const auto& var: vars)
-      variables2.push_back(*is_a<dummy>(var));
+      variables2.push_back(*assert_is_a<dummy>(var));
 
     for(auto& body: bodies)
       body = indexify(body, variables2);
@@ -641,7 +641,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 
       vector<dummy> variables2 = variables;
       for(int j=0;j<P->size();j++)
-	variables2.push_back(*is_a<dummy>(P->sub[j]));
+	variables2.push_back(*assert_is_a<dummy>(P->sub[j]));
 
 #ifndef NDEBUG
       if (object_ptr<const dummy> D = is_a<dummy>(P))
