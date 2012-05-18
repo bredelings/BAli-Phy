@@ -3,6 +3,7 @@
 #include "operations.H"
 #include <algorithm>
 #include <fstream>
+#include "util.H"
 
 using std::string;
 using std::vector;
@@ -2333,7 +2334,7 @@ int reg_heap::incremental_evaluate(int R, int t)
       SS = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
       string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
 				    get_identifiers_for_context(t))->print();
-      if (false)
+      if (log_verbose)
       {
 	std::ofstream f("token.dot");
 	dot_graph_for_token(*this, t, f);
