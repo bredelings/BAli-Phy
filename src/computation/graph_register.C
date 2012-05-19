@@ -1905,8 +1905,9 @@ void reg_heap::release_token(int t)
   vector<int> used_regs = find_all_regs_in_context(t);
 
 #ifdef NDEBUG
-  for(int R: used_regs)
-    access(R).clear_owner(t);
+  remove_ownership_mark(t);
+#else
+  find_all_regs_in_context(t);
 #endif
 
 
@@ -1963,9 +1964,7 @@ int reg_heap::copy_token(int t)
     i.second = push_root(*i.second);
 
   // remove ownership mark from used regs in this context
-  vector<int> token_regs = find_all_regs_in_context_no_check(t2);
-  for(int i=0;i<token_regs.size();i++)
-    access(token_regs[i]).add_owner(t2);
+  duplicate_ownership_mark(t, t2);
 
   return t2;
 }
