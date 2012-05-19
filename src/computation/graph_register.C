@@ -1876,7 +1876,21 @@ void reg_heap::release_token(int t)
 {
   assert(token_is_used(t));
 
+  // NOTE: Don't spent more than O(used_regs) time clearing ownership.
+  //       This strategy allows us to be on the same order of magnitude
+  //       as copying and de-allocating the structure instead of sharing.
+
+  // NOTE: Clearing ownership is not NECESSARY but it avoid updating
+  //       unused ancestors when we changed parameters.
+
+  // remove ownership marks on all of our used regs.
   vector<int> used_regs = find_all_regs_in_context(t);
+
+#ifdef NDEBUG
+  for(int R: used_regs)
+    access(R).clear_owner(t);
+#endif
+
 
   // We shouldn't have any temporary heads still on the stack, here!
   assert(token_roots[t].temp.empty());
@@ -1898,19 +1912,6 @@ void reg_heap::release_token(int t)
   // mark token for this context unused
   unused_tokens.push_back(t);
   token_roots[t].used = false;
-
-  // NOTE: Don't spent more than O(used_regs) time clearing ownership.
-  //       This strategy allows us to be on the same order of magnitude
-  //       as copying and de-allocating the structure instead of sharing.
-
-  // NOTE: Clearing ownership is not NECESSARY but it avoid updating
-  //       unused ancestors when we changed parameters.
-
-  // remove ownership marks on all of our used regs.
-#ifdef NDEBUG
-  for(int R: used_regs)
-    access(R).clear_owner(t);
-#endif
 
   // This is a good tradeoff between clearing ALL unused ownership (which is too expensive)
   // and clearing no unused ownership (which makes uniquify reg do too much extra work)
