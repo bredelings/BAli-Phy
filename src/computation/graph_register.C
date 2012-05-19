@@ -1786,6 +1786,24 @@ void reg_heap::check_used_regs() const
   }
 }
 
+// TODO - search: shared memory garbage collection.
+
+void reg_heap::remove_ownership_mark(int t)
+{
+  // trace from t roots
+  vector<int> used_regs = find_all_regs_in_context(t);
+
+  for(int R: used_regs)
+    access(R).clear_owner(t);
+}
+
+void reg_heap::duplicate_ownership_mark(int t1, int t2)
+{
+  vector<int> used_regs = find_all_regs_in_context(t1);
+  for(int R: used_regs)
+    access(R).add_owner(t2);
+}
+
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 {
   vector<int> scan;

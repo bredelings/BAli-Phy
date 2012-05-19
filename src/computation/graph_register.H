@@ -241,6 +241,10 @@ public:
   reg_heap();
 
   /*----- Graph walking ------*/
+  void remove_ownership_mark(int);
+  /*----- Graph walking ------*/
+  void duplicate_ownership_mark(int,int);
+  /*----- Graph walking ------*/
   std::vector<int> find_all_regs_in_context(int) const;
   /*----- Graph walking ------*/
   std::vector<int> find_all_regs_in_context_no_check(int) const;
