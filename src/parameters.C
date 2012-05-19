@@ -34,7 +34,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "proposals.H"
 #include "probability.H"
-#include "timer_stack.H"
 #include "computation/formula_expression.H"
 #include "smodel/operations.H"
 #include "computation/prelude.H"
@@ -259,23 +258,15 @@ void data_partition::recalc_imodel()
 ///
 void data_partition::recalc_smodel() 
 {
-  default_timer_stack.push_timer("recalc_smodel( )");
-
   //invalidate cached conditional likelihoods in case the model has changed
   LC.invalidate_all();
-
-  //invalidate the cached transition probabilities in case the model has changed
-  default_timer_stack.pop_timer();
 }
 
 void data_partition::setlength_no_invalidate_LC(int b)
 {
-  default_timer_stack.push_timer("setlength_no_invalidate_LC( )");
   b = T().directed_branch(b).undirected_name();
 
   recalc_imodel_for_branch(b);
-
-  default_timer_stack.pop_timer();
 }
 
 void data_partition::setlength(int b)

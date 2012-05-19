@@ -198,7 +198,6 @@ namespace substitution {
 				 const Mat_Cache& MC,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
-    default_timer_stack.push_timer("substitution::calc_root");
 
     assert(index.size2() == rb.size());
 
@@ -289,7 +288,6 @@ namespace substitution {
     for(int i=0;i<rb.size();i++)
       total *= cache[rb[i]].other_subst;
 
-    default_timer_stack.pop_timer();
     return total;
   }
 
@@ -297,7 +295,6 @@ namespace substitution {
 				  const Mat_Cache& MC,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
-    default_timer_stack.push_timer("substitution::calc_root");
 
     assert(index.size2() == rb.size());
 
@@ -381,7 +378,6 @@ namespace substitution {
     for(int i=0;i<rb.size();i++)
       total *= cache[rb[i]].other_subst;
 
-    default_timer_stack.pop_timer();
     return total;
   }
 
@@ -389,7 +385,6 @@ namespace substitution {
 					   const Mat_Cache& MC,const vector<int>& rb,const ublas::matrix<int>& index) 
   {
     total_calc_root_prob++;
-    default_timer_stack.push_timer("substitution::calc_root_unaligned");
 
     assert(index.size2() == rb.size());
 
@@ -451,7 +446,6 @@ namespace substitution {
     for(int i=0;i<rb.size();i++)
       total *= cache[rb[i]].other_subst;
 
-    default_timer_stack.pop_timer();
     return total;
   }
 
@@ -500,7 +494,6 @@ namespace substitution {
 			const vector<Matrix>& transition_P,const Mat_Cache& MC)
   {
     total_peel_leaf_branches++;
-    default_timer_stack.push_timer("substitution::peel_leaf_branch");
 
     const alphabet& a = A.get_alphabet();
 
@@ -543,8 +536,6 @@ namespace substitution {
     }
 
     cache[b0].other_subst = 1;
-
-    default_timer_stack.pop_timer();
   }
 
   void peel_leaf_branch_F81(int b0, subA_index_t& I, Likelihood_Cache& cache,
@@ -552,7 +543,6 @@ namespace substitution {
 			    const Mat_Cache& MC)
   {
     total_peel_leaf_branches++;
-    default_timer_stack.push_timer("substitution::peel_leaf_branch");
 
     if (not I.branch_index_valid(b0))
       I.update_branch(A,T,b0);
@@ -619,8 +609,6 @@ namespace substitution {
     }
 
     cache[b0].other_subst = 1;
-
-    default_timer_stack.pop_timer();
   }
 
   void peel_leaf_branch_modulated(int b0,subA_index_t& I, Likelihood_Cache& cache, 
@@ -628,7 +616,6 @@ namespace substitution {
 				  const vector<Matrix>& transition_P,const Mat_Cache& MC)
   {
     total_peel_leaf_branches++;
-    default_timer_stack.push_timer("substitution::peel_leaf_branch");
 
     // Do this before accessing matrices or other_subst
     cache.prepare_branch(b0);
@@ -674,8 +661,6 @@ namespace substitution {
     }
 
     cache[b0].other_subst = 1;
-
-    default_timer_stack.pop_timer();
   }
 
   /// Apply frequencies and collect probability for subA columns that go away on b.back()
@@ -847,7 +832,6 @@ namespace substitution {
 			    const vector<Matrix>& transition_P,const Mat_Cache& MC)
   {
     total_peel_internal_branches++;
-    default_timer_stack.push_timer("substitution::peel_internal_branch");
 
     // find the names of the (two) branches behind b0
     vector<int> b;
@@ -874,8 +858,6 @@ namespace substitution {
       cache[b0].other_subst = 1;
     else
       throw myexception()<<"subA_index_t is of unrecognized type!";
-
-    default_timer_stack.pop_timer();
   }
 
   void peel_internal_branch_F81(int b0,subA_index_t& I, Likelihood_Cache& cache, const alignment& A, const Tree& T, 
@@ -883,7 +865,6 @@ namespace substitution {
   {
     //    std::cerr<<"got here! (internal)"<<endl;
     total_peel_internal_branches++;
-    default_timer_stack.push_timer("substitution::peel_internal_branch");
 
     // find the names of the (two) branches behind b0
     vector<int> b;
@@ -978,8 +959,6 @@ namespace substitution {
       cache[b0].other_subst = 1;
     else
       throw myexception()<<"subA_index_t is of unrecognized type!";
-
-    default_timer_stack.pop_timer();
   }
 
   vector<Matrix>
@@ -991,7 +970,6 @@ namespace substitution {
 		   const Mat_Cache& MC)
   {
     total_peel_branches++;
-    default_timer_stack.push_timer("substitution::peel_branch");
 
     // compute branches-in
     int bb = T.directed_branch(b0).branches_before().size();
@@ -1035,7 +1013,6 @@ namespace substitution {
       std::abort();
 
     cache.validate_branch(b0);
-    default_timer_stack.pop_timer();
   }
 
 
@@ -1211,9 +1188,6 @@ namespace substitution {
 			 const vector<int>& ordered_columns,int delta)
   {
     // FIXME - this now handles only internal sequences.  But see get_leaf_seq_likelihoods( ).
-    default_timer_stack.push_timer("substitution");
-    default_timer_stack.push_timer("substitution::column_likelihoods");
-
     const alphabet& a = P.get_alphabet();
 
     const alignment& A = *P.A;
@@ -1273,8 +1247,6 @@ namespace substitution {
       
       L.push_back(S);
     }
-    default_timer_stack.pop_timer();
-    default_timer_stack.pop_timer();
 
     return L;
   }
@@ -1349,9 +1321,6 @@ namespace substitution {
     Likelihood_Cache& LC = P.LC;
     subA_index_t& I = *P.subA;
 
-    default_timer_stack.push_timer("substitution");
-    default_timer_stack.push_timer("substitution::other_subst");
-
     // compute root branches
     vector<int> rb;
     for(const_in_edges_iterator i = T.node(LC.root).branches_in();i;i++)
@@ -1410,9 +1379,6 @@ namespace substitution {
       assert(std::abs(log(Pr1 * Pr2) - log(Pr) ) < 1.0e-9);
     }
 #endif
-
-    default_timer_stack.pop_timer();
-    default_timer_stack.pop_timer();
 
     return Pr3;
   }
@@ -1557,8 +1523,6 @@ namespace substitution {
 			     subA_index_t& I, const Mat_Cache& MC,const Tree& T,Likelihood_Cache& LC)
   {
     total_likelihood++;
-    default_timer_stack.push_timer("substitution");
-    default_timer_stack.push_timer("substitution::likelihood_unaligned");
 
 #ifdef DEBUG_INDEXING
     I.check_footprint(A, T);
@@ -1617,8 +1581,6 @@ namespace substitution {
     }
 #endif
 
-    default_timer_stack.pop_timer();
-    default_timer_stack.pop_timer();
     return Pr;
   }
 
