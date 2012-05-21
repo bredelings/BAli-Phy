@@ -803,7 +803,7 @@ void reg_heap::set_reduction_result(int R, closure&& result)
   else
   {
     root_t r = allocate_reg();
-    access(*r).set_owners( access(R).get_owners() );
+    set_reg_owners(*r, access(R).get_owners());
     set_C(*r, std::move( result ) );
     set_call(R, *r);
     pop_root(r);
@@ -1052,7 +1052,7 @@ reg_heap::root_t reg_heap::push_temp_head(int t)
 reg_heap::root_t reg_heap::push_temp_head(const owner_set_t& tokens)
 {
   root_t r = allocate_reg();
-  access(*r).set_owners( tokens );
+  set_reg_owners( *r, tokens );
   for(int t=0;t< tokens.size();t++)
   {
     if (not tokens.test(t)) continue;
@@ -1239,11 +1239,7 @@ void reg_heap::compute_ownership_categories()
     reg& R = access(here);
     const owner_set_t& owners = R.get_owners();
 
-    // Make sure we've got a pointer to use here.
-    if (not canonical_ownership_categories.count(owners))
-      canonical_ownership_categories[owners] = ownership_categories.push_back(owners);
-
-    R.set_owners( canonical_ownership_categories[owners] );
+    set_reg_owners(here, owners);
 
     here = R.next_reg;
   }
