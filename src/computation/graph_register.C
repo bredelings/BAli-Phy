@@ -952,15 +952,30 @@ int reg_heap::add_reg_to_free_list(int r)
 
 int reg_heap::get_free_reg()
 {
+  if (first_free_reg == -1) return -1;
+
   int r = first_free_reg;
-  if (r != -1)
+
+#ifndef NDEBUG
   {
-    assert(access(r).state == reg::free);
-    first_free_reg = access(r).next_reg;
-    access(r).prev_reg = -1;
-    access(r).next_reg = -1;
-    access(r).state = reg::none;
+    const reg& R = access(r);
+    
+    assert(not R.C);
+    assert(R. referenced_by_in_E_reverse.empty());
+    assert(not R.result);
+    assert(R.call == -1);
+    assert(R.used_inputs.empty());
+    assert(R.call_outputs.empty());
+    assert(R.referenced_by_in_E.empty());
   }
+#endif
+
+  assert(access(r).state == reg::free);
+  first_free_reg = access(r).next_reg;
+  access(r).prev_reg = -1;
+  access(r).next_reg = -1;
+  access(r).state = reg::none;
+
   return r;
 }
 
