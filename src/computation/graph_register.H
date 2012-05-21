@@ -13,15 +13,20 @@
 #include "program.H"
 #include "closure.H"
 #include "CacheList.H"
+#include <unordered_map>
 
 // Type for ownership sets
 typedef std::bitset<64> owner_set_t;
+typedef CacheList<owner_set_t>::iterator ownership_category_t;
 
 struct reg
 {
 private:
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
   owner_set_t owners;
+
+  /// Pointer to the current ownership set
+  ownership_category_t ownership_category;
 
 public:
   typedef CacheList<int>::iterator back_edge_deleter;
@@ -64,6 +69,7 @@ public:
 
   const owner_set_t& get_owners() const;
   void set_owners(const owner_set_t&);
+  void set_owners(const ownership_category_t&);
   void add_owner(int);
   void clear_owner(int);
   void clear_owners();
@@ -96,6 +102,9 @@ class reg_heap
 {
   std::vector<reg> memory;
   CacheList<int> roots;
+
+  CacheList<owner_set_t> ownership_categories;
+  std::unordered_map< owner_set_t, ownership_category_t> canonical_ownership_categories;
 
   /// Start of free list 
   int first_free_reg;
@@ -154,6 +163,7 @@ public:
 
   void collect_garbage();
   void trace_and_reclaim_unreachable();
+  void compute_ownership_categories();
 
   void set_used_input(int R1, int R2);
   void clear_used_inputs(int R);
@@ -238,6 +248,11 @@ public:
   bool reg_is_owned_by(int,int) const;
 
   bool reg_is_owned_by_only(int,int) const;
+
+  void set_reg_owners(int, const owner_set_t& o);
+
+  void set_reg_owners(int, const ownership_category_t&);
+
 
   reg_heap();
 

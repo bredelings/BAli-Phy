@@ -509,6 +509,11 @@ void reg::set_owners(const owner_set_t& T)
   owners = T;
 }
 
+void reg::set_owners(const ownership_category_t& category)
+{
+  ownership_category = category;
+}
+
 void reg::add_owner(int t)
 {
   assert(t >= 0 and t < owners.size());
@@ -1219,6 +1224,30 @@ void reg_heap::trace_and_reclaim_unreachable()
 
 }
 
+void reg_heap::compute_ownership_categories()
+{
+  // Compute ownership types
+  ownership_categories.clear();
+  {
+    owner_set_t empty;
+    canonical_ownership_categories[empty] = ownership_categories.push_back(empty);
+  }
+
+  int here = first_used_reg;
+  for(;here != -1;)
+  {
+    reg& R = access(here);
+    const owner_set_t& owners = R.get_owners();
+
+    // Make sure we've got a pointer to use here.
+    if (not canonical_ownership_categories.count(owners))
+      canonical_ownership_categories[owners] = ownership_categories.push_back(owners);
+
+    R.set_owners( canonical_ownership_categories[owners] );
+
+    here = R.next_reg;
+  }
+}
 
 void reg_heap::collect_garbage()
 {
@@ -1391,6 +1420,22 @@ bool reg_heap::reg_is_owned_by(int R, int t) const
 bool reg_heap::reg_is_owned_by_only(int R, int t) const
 {
   return access(R).is_owned_by_only(t);
+}
+
+void reg_heap::set_reg_owners(int r, const owner_set_t& owners)
+{
+  if (not canonical_ownership_categories.count(owners))
+    canonical_ownership_categories[owners] = ownership_categories.push_back(owners);
+  reg& R = access(r);
+  R.set_owners(owners);
+  R.set_owners(canonical_ownership_categories[owners]);
+}
+
+void reg_heap::set_reg_owners(int r, const ownership_category_t& c)
+{
+  reg& R = access(r);
+  R.set_owners(c);
+  R.set_owners(*c);
 }
 
 void reg_heap::check_results_in_context(int t) const
