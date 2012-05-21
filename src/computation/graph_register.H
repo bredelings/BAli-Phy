@@ -14,6 +14,7 @@
 #include "closure.H"
 #include "CacheList.H"
 
+// Type for ownership sets
 typedef std::bitset<64> owner_set_t;
 
 struct reg
@@ -32,8 +33,7 @@ public:
   /// Is C a parameter, or is the result dependent on a parameter value?
   bool changeable = false;
 
-  /// What does C reduce to eventually? (WHNF, but not a heap variable.)
-  // {This should probably just become a point to a reg...}
+  /// What does C reduce to eventually? (WHNF, but not an index_var.)
   int result;
 
   /// Does C reduce to another reg that we need to evaluate to get the true result?
