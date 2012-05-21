@@ -1913,8 +1913,8 @@ void reg_heap::release_token(int t)
   //       This strategy allows us to be on the same order of magnitude
   //       as copying and de-allocating the structure instead of sharing.
 
-  // NOTE: Clearing ownership is not NECESSARY but it avoid updating
-  //       unused ancestors when we changed parameters.
+  // NOTE: Clearing ownership is not NECESSARY but it avoids updating
+  //       unused ancestors when we change parameters.
 
   // remove ownership marks on all of our used regs.
   vector<int> used_regs = find_all_regs_in_context(t);
