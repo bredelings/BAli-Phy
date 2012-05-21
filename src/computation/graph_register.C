@@ -1177,14 +1177,8 @@ void reg_heap::remove_unused_ownership_marks()
 #endif
 }
 
-void reg_heap::collect_garbage()
+void reg_heap::trace_and_reclaim_unreachable()
 {
-#ifndef NDEBUG
-  std::cerr<<"***********Garbage Collection******************"<<std::endl;
-  check_used_regs();
-#endif
-  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
-
   vector<int> scan;
   for(int i: roots)
     scan.push_back(i);
@@ -1223,6 +1217,19 @@ void reg_heap::collect_garbage()
     here = next;
   }
 
+}
+
+
+void reg_heap::collect_garbage()
+{
+#ifndef NDEBUG
+  std::cerr<<"***********Garbage Collection******************"<<std::endl;
+  check_used_regs();
+#endif
+  assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
+
+  trace_and_reclaim_unreachable();
+
 #ifndef NDEBUG
   cerr<<"Regs: "<<n_used_regs()<<"/"<<n_regs()<<endl;
   cerr<<"#roots = "<<roots.size()<<endl;
@@ -1233,7 +1240,7 @@ void reg_heap::collect_garbage()
   remove_unused_ownership_marks();
 
   // Check that we have no un-owned objects that are used
-  here = first_used_reg;
+  int here = first_used_reg;
   for(;here != -1;)
   {
     reg& R = access(here);

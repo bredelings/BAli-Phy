@@ -153,6 +153,7 @@ public:
   root_t allocate_reg();
 
   void collect_garbage();
+  void trace_and_reclaim_unreachable();
 
   void set_used_input(int R1, int R2);
   void clear_used_inputs(int R);
