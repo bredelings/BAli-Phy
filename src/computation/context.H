@@ -174,7 +174,7 @@ protected:
   /// Allocate a reg which will be a root for garbage-collection
   root_t allocate_reg() const {
     root_t r = memory->allocate_reg();
-    access(*r).add_owner(token);
+    memory->reg_add_owner(*r, token);
     return r;
   }
 

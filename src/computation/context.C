@@ -51,20 +51,6 @@ string context::parameter_name(int i) const
   throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
 }
 
-reg_heap::root_t reg_heap::add_identifier_to_context(int t, const string& name)
-{
-  map<string,root_t>& identifiers = get_identifiers_for_context(t);
-
-  // if there's already an 's', then complain
-  if (identifiers.count(name))
-    throw myexception()<<"Cannot add identifier '"<<name<<"': there is already an identifier with that name.";
-
-  root_t r = allocate_reg();
-  access(*r).add_owner(t);
-  identifiers[name] = r;
-  return r;
-}
-
 reg_heap::root_t context::add_identifier(const string& name)
 {
   if (find_parameter(name) != -1)

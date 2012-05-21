@@ -21,14 +21,13 @@ typedef CacheList<owner_set_t>::iterator ownership_category_t;
 
 struct reg
 {
-private:
+public:
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
   owner_set_t owners;
 
   /// Pointer to the current ownership set
   ownership_category_t ownership_category;
 
-public:
   typedef CacheList<int>::iterator back_edge_deleter;
 
   /* The closure */
@@ -66,19 +65,6 @@ public:
   int prev_reg = -1;
   int next_reg = -1;
   mutable States state = none;
-
-  const owner_set_t& get_owners() const;
-  void set_owners(const owner_set_t&);
-  void set_owners(const ownership_category_t&);
-  void add_owner(int);
-  void clear_owner(int);
-  void clear_owners();
-  bool is_owned_by(int) const;
-  bool is_owned_by_only(int) const;
-  bool is_owned_by_all_of(const owner_set_t&) const;
-  int n_owners() const;
-  bool is_unowned() const;
-  bool is_shared() const;
 
   /* 5. Which sub-graphs are we in for sub-graph sharing? */
   owner_set_t temp_owners;
@@ -243,15 +229,31 @@ public:
   /// Acquire a copy of a token
   int copy_token(int);
 
-  bool reg_is_shared(int) const;
+  const owner_set_t& get_reg_owners(int) const;
+  
+  const ownership_category_t& get_reg_ownership_category(int) const;
+  
+  void set_reg_owners(int, const owner_set_t& o);
+
+  void set_reg_ownership_category(int, const ownership_category_t&);
+
+  void reg_add_owner(int, int);
+
+  void reg_clear_owner(int, int);
+
+  void reg_clear_owners(int);
 
   bool reg_is_owned_by(int,int) const;
 
   bool reg_is_owned_by_only(int,int) const;
 
-  void set_reg_owners(int, const owner_set_t& o);
+  bool reg_is_owned_by_all_of(int,const owner_set_t&) const;
 
-  void set_reg_owners(int, const ownership_category_t&);
+  int n_reg_owners(int) const;
+
+  bool reg_is_unowned(int) const;
+
+  bool reg_is_shared(int) const;
 
 
   reg_heap();
