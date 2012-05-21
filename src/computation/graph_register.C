@@ -2088,15 +2088,15 @@ public:
     R2 = lazy_evaluate_reg(R2);
 
     /*
-     * We could update E1->sub[slot] = new reg_var(R2) if R2 != RV->target.  However:
+     * We could update 'index' in Env to R2' if R2' != R2.  However:
      *
-     * - Updating WHNF regs is problematic because it could make the old reg unused
-     *   although it was still used in the result and the results of call-ancestors.
-     *   Therefore all call-ancestors would need to be updated.
+     * - Updating WHNF regs is problematic because ... we never evaluate them :-)
      *
      * - Updating non-WHNF regs is problematic because we might need to update the used_inputs
      *   to refer to the new reg.  This is because the old one might become unused
      *   (and therefore be garbage-collected.)
+     *
+     * Therefore, we might consider updating index_var chains during garbage collection.
      */
     
     return M.access_result(R2);
