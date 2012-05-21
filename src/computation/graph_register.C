@@ -1917,7 +1917,6 @@ void reg_heap::release_token(int t)
   //       unused ancestors when we change parameters.
 
   // remove ownership marks on all of our used regs.
-  vector<int> used_regs = find_all_regs_in_context(t);
 
 #ifdef NDEBUG
   remove_ownership_mark(t);
