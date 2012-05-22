@@ -155,7 +155,7 @@ expression_ref move_lets(bool scope, const expression_ref E,
 
   // Since we only substitute reg_vars into dummy's (for let, lambda, and case) these are all OK.
   // change to is_reg_like
-  if (is_parameter(E2) or is_index_var(E2) or is_var(E2) or is_dummy(E2))
+  if (is_reglike(E2))
   {
     assert(E2);
     return E2;
