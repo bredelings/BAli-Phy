@@ -60,7 +60,7 @@ Program SModel_Functions()
 
   // rate (ReversibleMarkovModel a smap q pi l t) = t*(get_equilibrium_rate a smap q pi)
   // rate (MixtureModel (DiscreteDistribution l) ) = average (fmap2 rate l)
-  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(times,v6,(substitution::Get_Equilibrium_Rate,v1,v2,v3,v4) ) )
+  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(times,v6,(substitution::Get_Equilibrium_Rate,v1,v2,v3,(Vector_From_List<double,Double>(),v4)) ) )
           ( (rate,(MixtureModel, v1) ), (average,(fmap2, rate, v1) ) );
      
   // QExp (ReversibleMarkov a smap q pi l t) = (LExp l pi t)

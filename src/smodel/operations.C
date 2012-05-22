@@ -728,10 +728,8 @@ namespace substitution
 
   // 
   object_ptr<const Double> 
-  Get_Equilibrium_Rate_Function(const alphabet& a, const vector<unsigned>& smap, const Matrix& Q, const expression_ref& pi_E)
+  Get_Equilibrium_Rate_Function(const alphabet& a, const vector<unsigned>& smap, const Matrix& Q, const vector<double>& pi)
   {
-    std::vector<double> pi = get_vector_from_list<double,Double>(pi_E);
-
     assert(Q.size2() == Q.size1());
     const unsigned N = smap.size();
     
@@ -763,9 +761,9 @@ namespace substitution
     object_ptr<const alphabet> a = Args.evaluate_as<alphabet>(0);
     object_ptr<const Box<vector<unsigned> > > smap = Args.evaluate_as< Box<vector<unsigned> > >(1);
     object_ptr<const MatrixObject > Q = Args.evaluate_as< MatrixObject >(2);
-    expression_ref E = Args.evaluate_structure(3);
+    object_ptr<const Vector<double> > pi = Args.evaluate_as< Vector<double> >(3);
     
-    return Get_Equilibrium_Rate_Function(*a, *smap, *Q, E);
+    return Get_Equilibrium_Rate_Function(*a, *smap, *Q, pi->t);
   }
 
   expression_ref Get_Equilibrium_Rate = lambda_expression(Get_Equilibrium_Rate_Op());
