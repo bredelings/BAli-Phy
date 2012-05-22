@@ -2425,11 +2425,7 @@ int reg_heap::incremental_evaluate(int R, int t)
       string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
 				    get_identifiers_for_context(t))->print();
       if (log_verbose)
-      {
-	std::ofstream f("token.dot");
-	dot_graph_for_token(*this, t, f);
-	f.close();
-      }
+	dot_graph_for_token(*this, t);
 #endif
 
       RegOperationArgs Args(R, *this, t);
@@ -2631,6 +2627,13 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
   discover_graph_vars(C, R, names, ids);
 
   return launchbury_unnormalize(names[R]);
+}
+
+void dot_graph_for_token(const reg_heap& C, int t)
+{
+  std::ofstream f("token.dot");
+  dot_graph_for_token(C, t, f);
+  f.close();
 }
 
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)

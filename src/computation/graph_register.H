@@ -290,4 +290,6 @@ expression_ref graph_normalize(const expression_ref& R);
 
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o);
 
+void dot_graph_for_token(const reg_heap& C, int t);
+
 #endif
