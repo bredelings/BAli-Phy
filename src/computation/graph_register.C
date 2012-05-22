@@ -740,7 +740,7 @@ void reg_heap::set_reduction_result(int R, closure&& result)
   else
   {
     root_t r = allocate_reg();
-    set_reg_owners(*r, get_reg_owners(R));
+    set_reg_ownership_category(*r, get_reg_ownership_category(R));
     set_C(*r, std::move( result ) );
     set_call(R, *r);
     pop_root(r);
@@ -1347,13 +1347,13 @@ closure reg_heap::remap_regs(closure C) const
 
 const owner_set_t& reg_heap::get_reg_owners(int R) const
 {
-  assert(access(R).ownership_category != ownership_categories.end());
-  assert(access(R).owners == *access(R).ownership_category);
-  return access(R).owners;
+  return *get_reg_ownership_category(R);
 }
 
 const ownership_category_t& reg_heap::get_reg_ownership_category(int R) const
 {
+  assert(access(R).ownership_category != ownership_categories.end());
+  assert(access(R).owners == *access(R).ownership_category);
   return access(R).ownership_category;
 }
 
