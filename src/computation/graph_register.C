@@ -16,53 +16,42 @@ using std::ofstream;
 using std::cerr;
 using std::endl;
 /*
- * 1. Q: When can we allow sharing of partially-evaluated expressions between contexts?
- *    A: If the memories for the two contexts are completely separate, then only when
- *       the WHNF reduced result doesn't (directly or indirectly) reference a var newly
- *       allocated in only one of the contexts.
+ * Goal: Share computation of WHNF structures between contexts, even when those
+ *       stuctures are uncomputed at the time the contexts are split.
  *
- * 2. Q: Therefore, we seek to put the contexts BACK into a single machine!  How can we handle
- *       nodes that are in only SOME of the graphs?
- *    A:
- *      (i) Give each graph a unique name.
- *     (ii) Allowing each node and edge to list the names of the graphs that contain it.
- *    (iii) When initializing a graph, we need to walk all its nodes and edges in order to name them.
- *     (iv) When destroying a graph, we also need to walk all its nodes and edges in order to un-name them.
- *      (v) When modifying a node in a graph with name N, we first check if that node is in any other graphs.
- *          - If the node is in a unique graph, then just modify it.
- *          - If the node is NOT is a unique graph, then
- *            (a) duplicate the node n1->n2, and move the name N to the new node n2.
- *            (b) update all edges to n1 to point to the new node n2.
- *            (c) modify the new node n2 that is now unique to graph N.
- *     (vi) If the out-edges from a node are part of its VALUE, then modifying any single node n1 entails
- *          walking up the tree toward the heads in order to split the nodes.
- *    (vii) If we split a node pointed to by a head, then we need to modify the head, but only for the graph
+ * In order to share partially evaluated expressions between contexts, we need
+ * this contexts to share a memory, since constructor expressions reference other
+ * entries in the memory.
+ *
+ * Each memory location (reg) has a pointer to a bitmask with bits set for each context
+ * that owns that location.  By having many regs point to the same bitmask, we can
+ * change the ownership of many regs at once by changing the common bitmask.
+ * We also use a hash of bitmasks back to canonical bitmask locations to know when we
+ * need to allocate a new common bitmap.
+ *
+ * (i) Therefore, we only need to walk the list of common bitmask (ownership categories)
+ *     to duplicate a context, or to release a context.
+ * (ii) When modifying a shared node, we must first split that node and all nodes that
+ *      reference it so that other contexts won't see the modified value.
+ * (iii) If we split a node pointed to by a head, then we need to modify the head, but only for the graph
  *          that is being modified.
  *
- * 3. How do we succeed in clearing a node if we need to update the nodes that connect to it?
- *    We need to do this clearing from inside the machine!
- *    Move the set_*( ) and clear_*( ) routines into reg_heap!(?)
+ * Only regs are marked with ownership, edges are not marked.  Instead, edges between two
+ * regs on a context are part of that context.
  *
- * 4. The ultimate goal of the root re-work was ACTUALLY to enable a pointer that also prevents the reg
- *    it points to from being garbage-collected.
- *    
- *    (i) We convert to expression_ref only by COMPLETELY (e.g. not partially) evaluating the object,
- *        including any of its constructor fields, if they exist.  (This is involves creating a copy of the
- *        object, if any fields are unevaluated.)
- *      
- *   (ii) We would like to have a type T that can reference partially-evaluate structures.  Referencing a
- *        field and a head type evaluates the structure, and returns a reference of type T to that field. 
- *        However, to convert to expression_ref, we COMPLETELY evaluate.  If the field is already an
- *        atomic (i.e. non-expression) object, this is quite simple.  If not, then it would trigger more
- *        evaluation.
- *        
- */
-
-
+ * For each node that is in context t, all its children must be in context t.  Therefore,
+ * ownership bitmasks monotonically increase as we go forward along graph edges.  This is
+ * true for the true ownership, which is based on reachability.  However, the MARKED ownership
+ * of a reg may exceed the true ownership if a call-parent in some context has stopped calling
+ * this reg. Then the MARKED ownership of its children, may be less than the marked ownership
+ * for the parent reg.
+ *
+ * Forward edges consist of
+ * - E edges / reference edges (forward: C.Env) (backward: referenced_by_in_E)
+ * - call edges (forward: call, call_outputs)
+ * - used edges (forward: used_inputs, outputs)
+ *
 /* ------------------------------------ Shared subgraphs ---------------------------------------------
- *
- * Goal: Share computation of WHNF structures between contexts, even when those stuctures are uncomputed
- *       at the time the contexts are split.
  *
  * If a reg is shared, then all of its E-descendants must be shared as well.  (Here, "descendants" means
  * transitively reachable through node.E's.)  Therefore, we have a single version of edges in
@@ -72,60 +61,46 @@ using std::endl;
  * - changeable
  * Since these terms describe the computation that a node represents.
  *
- * Instead of annotating each edge with a graph number, we can simply assume that
- * (a) if a node is in graph N, then out-edges are in graph N.
+ * PROBLEM: When dereferencing, how do we 
  *
  * 1. Setting ownership
- * We need to set ownership for new heads.
- * When we analyze a let expression, we need to set ownership for the newly created heap vars.
- * - we COULD set this ownership in set_E.  (Does this ownership setting PROPAGATE?)
+ * We need to set ownership for new heads, newly allocate let-bound vars, new reduction results.
+ *
  * When we reduce an expression
  * (a) the reduced expression cannot reference (transitively) any regs the original expression didn't reference.
  * (b) the exception is when we create a call reg.  Then we need to set ownership on the call reg.
  *
  * 2. Removing ownership
- * If we remove a head, then we would remove ownership for all its descendant.
- * Not all the let vars may end up being substituted into the resulting expression.
- * When reducing an expression:
- * (a) We might replace the original expression, using set_E.  This might reference fewer vars.
- * (b) We might create a call reg.  No dereferencing here.
+ * This happens automatically by tracing from the heads of each context.
+ * During garbage collection we find which regs are reachable.
  *
- * Now, previous when dereferencing, we didn't worry about the cost of invalidating unreachable
+ * Now, previously when dereferencing, we didn't worry about the cost of invalidating unreachable
  * from roots) regs that reference a parameter.  Let's worry about this later.
  *
- * Also, note that we would invalidate them only if they had ever been computed, and USED the 
- * parameter.  After being invalidated once, they would never be walked again.  How about the cost
- * of "splitting" such regs, if they are not garbage collected first?  Let's worry about that later.
+ * PROBLEM: Regs that are not forward reachable may still be backward reachable.  Therefore
+ *          we will end up doing some extra work splitting such regs, until garbage collection
+ *          removes them.
+ * SOLUTION: ?
  *
- * See: let a=X+X, b=Y+Y in b.  Here, 
+ * 3. Uniquifying a reg
  *
- * 3. Uniquifying a heap variable
+ * When splitting a reg, we need to split anything that references it, or calls it.
+ * Applying these conditions recursively, we need to split anything that can
+ *  transitively reach it through either reference-edges or call-edges.
+ * See below for more info on whether we need to split things that directly use a reg.
  *
- * When splitting a heap variable p:
- *
- *  NOTE: We only need to split E-ancestors of p that are not already unique!
- *
- *  I. We must uniquify any heap variable q which references p through E.
- *  This is because we must alter q.E to update references to p.  
- *   - q: This entails updating q.E, q.references, and q.used_inputs
- *        It also involves updating q.result if its non-NULL.  The result might not change.
- *   - p: This entails updating p.referenced_by and q.outputs
- *
- *  II. We must also uniquify any heap variable q which calls p.
- *   - q: This entails updating q.call.  It also involves updating
- *   - p: This entails updating p.call_outputs
- *
- *  (Note: if we split just a head h, we would NOT need to update h.result, h.E, h.call, etc.)
+ * To solve the problem of whether we need to split results or call, we just make results
+ * into their own variables.  Then these variables reference the split reg, or not.
  *
  *---------------------------------------------------------------------------------------------------
  *  THEOREM: For a node p, the reduction of p.E could reference any node q that is an E-descendant of p.
  *           This is because it can certain reference its E-children, and it may also use their results,
- *            and so it may reference the E-descendants of its children. (rephrase induction.)
+ *            and so it may reference the E-descendants of its children. (rephrase induction.)  Using
+ *           a result means using call-children.
  *
- *  THEOREM: For a node p, p.result can reference a node that is not an E-descendant of p only if
- *           E generates a new call reg q such that
- *           (i) q.E is a let expression, or
- *          (ii) q.result contains a node that is not an E-descendant of q.E.
+ *  THEOREM: For a node p, p.result can reference only regs that are transitively reachable through
+ *           reference-edges and call-edges of p.  For example, p.result can reference p.call, which
+ *           may or may not be E-reachable from p.
  *
  *  We don't have to consider the case where p.E is a let expression, since in that case p.E
  *  is replaced with the reduced expression, and so there is no result, and p.E references the created
@@ -159,57 +134,39 @@ using std::endl;
  * 
  * (1) Find and split all the *shared* E-ancestors of p.
  * 
- * (2) Initialize each split reg with
- *       set_E
- *       set_used_inputs
- *       set_call
- *       copy the result
+ * (2) For each split reg with parent q, such that remap(q)=q2
+ *       q2.E = q.E // remap
+ *       q2.used_inputs = q.used_inputs // remap
+ *       q2.call = q.call // remap
+ *       q2.result = q.result  [But update so that q2.result == q2 iff WHNF]
  *
- * (3) For each split reg with parent q, such that remap(q)=q2
- *       q2.E // remap
- *       q2.used_inputs // remap
- *       q2.call // remap
- *       q2.result = q2.E  [*IF* q2.result and there is NOT a call.]
+ * (3) Also, we can find the parents on the periphery, because they are the only E-ancestors
+ *     of the original nodes that are still in t. By remapping them, they should STOP being
+ *     E-ancestors of the original nodes.
  *
- * Practically, though, doesn't this include EVERY split node, except the original one?
- * Because a node is split only if it has an E-child that is split.  I think so.
- * Therefore, We may as well initialize them to remapped values.
- *
- * Also, we can find the parents on the periphery, because they are the only E-ancestors
- * of the original nodes that are still in t. By remapping them, they should STOP being
- * E-ancestors of the original nodes.
- *
- * (4) For each reg q that has an updated E and an updated result,
- *       i. find all the call ancestors of q
- *      ii. set their result to q.result
+ * (4) i. Find the split WHNF regs.
+ *    ii. Find the call ancestors of each split WNF reg q.
+ *   iii. Set its result = q.
  *
  * Check that a compute expression of IF(2>1,X,0) simplifies to just X.
  *
  * Check that we correctly compute the result and also split the graph when computing X*Y with Y=2 and X=Y.
  *
  * Note that, if a call is not to an E-ancestor of p, then the result should be unchanged.
- *  Idea: For any node whose call is unadjusted, keep the result.
- *        For any node whose call is adjusted by splitting, set that node's result to NULL, and 
- *          find any node that (transitively) calls that node and set its result to NULL. (Sharing, anyone? :-P)
- *        These heap variables can follow call chains and re-add their result
- *        in a forward evaluation, if they want to.
- *        (Result: we don't have to re-run any Ops: the op results have already been updated 
  *
- *        If a node has no call, then it is the end of a (possibly trivial) call chain.
- *        In that case, remap the result.
- *         Q: Will that influence anything else?
- *         A: No.  If the result is used as an argument to an operation, the operation should still
- *            be correct, up to the renaming of reg_vars.
- *
- *        Result: no heap variables that are not split need to have their result adjusted.
+ * To handle results, remember that 
+ * (a) They can be fully computed by walking call chains.
+ * (b) The walk always terminates in the first WHNF reg.
+ * Therefore, we can just walk split WHNF backwards and update results, if the call chain is right.
+ * This works well, since these regs could be arbitrarily deep into the already-split ancestors.
  *
  *  Q: What kind of expressions will be split because they reference a split node, but do
  *     not use it? (I'm thinking of If(Z>1,2*X,Y+1).)
  *
  *  Q: Can't we just leave the old results, on the theory that (until something is invalidated)
  *     the old registers are OK - they have the same values?
- *  A: No, because they will reference the wrong parameter values.  Constructors don't change
- *     when the parameters they reference change.
+ *  A: No, because they will reference the wrong parameter values.  Constructors aren't updated
+ *     when the parameters they reference change.  So, they must reference the right regs.
  */
 
 /*
@@ -223,87 +180,29 @@ using std::endl;
  * Question: how shall we share sub-expressions between different compute expressions?
  * Question: how shall we (or, should we) pre-execute non-recursive let expressions?
  *
- * 1. How can I make M8 models using the new model framework?
- *
- * 2. How do we share computations between heads?
+ * 1. How do we share sub-computations between heads?
  *
  *   - First, float unbound let-expressions up as high as they can go. (let_float)
  *     + This allows us to share case results, as well as the results of e.g. \x->5 and \x->2*y).
  *     + To share computations between different branches of execution DYNAMICALLY, though, we need arrays.
  *
- *   - Second, we can let-evaluate all top-level expressions once.  Whenever adding a new heap var,
- *     we can check to see if its sub-expressions already have heap vars for them.
+ *   - Second, introduce the shared expressions as their own compute_expression( ), and then
+ *     reference them from other expressions.
  *
- * 3. [POSTPONE indefinitely!] How can we benefit from partial evaluation, by e.g. changing
+ *   - We, *could* scan expressions for common elements...
+ *
+ * 2. [POSTPONE indefinitely!] How can we benefit from partial evaluation, by e.g. changing
  *    \n.\x.case n of {...} to \n.case n of \x.{...}?
  *
- * 4. [POSTPONE] How could we benefit from switching to the rho-calculus?
+ * 3. [POSTPONE indefiniately] How could we benefit from switching to the rho-calculus?
  *
- * 5. How can we make the model expressions PRINT more clearly?
+ * 4. How can we print model expressions?
  *
- *    - Suppress printing of mere conversion functions, on the theory
- *      that functions which convey no information should not be printed?
- *
- *    - Suppress "uniform discretization", or develope a stylized form
- *      of output for it?
- *
- *    - show all the {\pi[i]} as just \pi?
- *
- *    - *? Allow actual greek letters - i.e. use unicode?
- *
- * 6. Could I switch to thunks?
- *
- *    - If so, could I keep the Mark 1 machine around?
- *
- * 8. I also need to be able to NOT recompute things when the change
+ * 5. I also need to be able to NOT recompute things when the change
  *    in value is small!
  *
- * 9. Finally, implement the Hindley-Milner type system?
- *
- *
- * TODO
- *  (a) Make M8 evaluate function calls via the \-calculus  -> (c)
- *  (b) Eliminate the old Context -> (d),(h), (i)
- *  (c) Turn smodel objects into algebraic data types.
- *      - DiscreteDistribution [(Double,a)] & ExtendDiscreteDistribution 
- *      - SModelObject
- *  (d) (DONE) let-floating.  (POSTPONE: Completely lazy evaluation=2)
- *  (e) Sharing of sub-expressions=2 (d)
- *  (f) Efficient evaluation of if statements=2 (d)
- *  (g) Move eigensystem computation and caching to the new model framework. (e)
- *  (h) share sub-expressions between heads.
- *  (i) avoid recalculating some expressions.
+ * 6. Finally, implement the Hindley-Milner type system.
  */ 
-
-/*
- * Perhaps entering a meta-variable triggers a substitution - or pushes arguments
- * onto the stack!
- */
-
-
-/*
- * Issue: Regs that are reachable by back-references from reachable regs stil need to be in a
- *        consistent state.  That is because these regs are reachable in backward walks, such as
- *        in uniquify and set_reg_value( ).
- * 
- * Answer: If we are going to remove ONLY ownership token t, then we need to 
- *         (a) remove it from ALL used regs, or
- *         (b) remove it from unused regs that reference used regs.
- *
- * The only routines that clear ownership now should be:
- *
- * - clear( ).  This is OK because we only clear regs that are not in state reg::used.  Any references
- *              to these regs is a different problem, and can be caught by finding references to unused
- *              regs.
- *
- * - remove_unused_ownership_marks( ).  This is OK, because we construct the minimal
- *              and correct ownership marking.
- * 
- * - uniquify_reg( ).  Here, we only remove ownership from the regs we split.  We remap any (unsplit) 
- *                     parents of these regs to refer to the new regs.  Therefore, there should not be
- *                     any regs in context t that still refer to the old regs.
- */
-
 
 bool includes(const owner_set_t& S1, const owner_set_t& S2)
 {
@@ -311,18 +210,14 @@ bool includes(const owner_set_t& S1, const owner_set_t& S2)
 }
 
 /*
- * Issue: How can we share eigensystems between Q matrices that differ only by rate?
+ * Q: How can we share eigensystems between Q matrices that differ only by rate?
  *
- * Issue: How can we share eigensystems between Q matrices that are identical by are at separate
+ * Q: How can we share eigensystems between Q matrices that are identical by are at separate
  *        positions in the list?
  *
- * Issue: I guess we want to want Q matrices to carry their eigensystem with them, although it will
- *        be computed lazily...
- *
- * OK, so we pass around (ReversibleMarkovModel q pi Eigen(Q,pi) t).  Then any copy of this will copy
- * the node for the (uncomputed) Eigen(Q,pi).
- *
- * Perhaps there is a simple way to compute this as just GetRMM(Q), as opposed to RMM(Q,pi).
+ * A: I guess we want to want Q matrices to carry their eigensystem with them, although it will
+ *    be computed lazily.  We also carry around a scaling factor, and scale that number instead of
+ *    the eigensystem.
  */
 
 expression_ref graph_normalize(const expression_ref& E)
