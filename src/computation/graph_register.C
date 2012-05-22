@@ -1163,8 +1163,8 @@ void reg_heap::trace_and_reclaim_unreachable()
 
 void reg_heap::compute_ownership_categories()
 {
-  // Compute ownership types
   ownership_categories.clear();
+  canonical_ownership_categories.clear();
   {
     owner_set_t empty;
     canonical_ownership_categories[empty] = ownership_categories.push_back(empty);
