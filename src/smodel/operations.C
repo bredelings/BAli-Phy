@@ -24,7 +24,7 @@ const expression_ref Singlet_to_Triplet_Exchange = lambda_expression( substituti
 
 namespace substitution
 {
-  object_ptr<const Object> Plus_gwF_Function(const alphabet& a, double f, const expression_ref& pi_E)
+  object_ptr<const Object> Plus_gwF_Function(const alphabet& a, double f, const vector<double>& pi_)
   {
     object_ptr<MatrixObject> R( new MatrixObject );
 
@@ -33,10 +33,9 @@ namespace substitution
     R->t.resize(n, n);
 
     // compute frequencies
-    vector<double> pi = get_vector_from_list<double,Double>(pi_E);
-    assert(a.size() == pi.size());
-
+    vector<double> pi = pi_;
     normalize(pi);
+    assert(a.size() == pi.size());
     
     // compute transition rates
     valarray<double> pi_f(n);
@@ -60,9 +59,9 @@ namespace substitution
 
     double f = *Args.evaluate_as<Double>(1);
 
-    expression_ref pi = Args.evaluate_structure(2);
+    object_ptr< const Vector<double> > pi = Args.evaluate_as< Vector<double> >(2);
 
-    return Plus_gwF_Function(a,f,pi);
+    return Plus_gwF_Function(a,f,*pi);
   }
 
   const expression_ref Plus_gwF = lambda_expression( Plus_gwF_Op() );
@@ -357,7 +356,7 @@ namespace substitution
   {
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), pi, (Plus_gwF, a, 1.0, pi));
+    return (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), pi, (Plus_gwF, a, 1.0, (Vector_From_List<double,Double>(),pi)));
   }
 
   formula_expression_ref Plus_F_Model(const alphabet& a)
@@ -373,7 +372,7 @@ namespace substitution
 
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), pi, (Plus_gwF, a, f, pi));
+    return (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), pi, (Plus_gwF, a, f, (Vector_From_List<double,Double>(),pi)));
   }
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a)

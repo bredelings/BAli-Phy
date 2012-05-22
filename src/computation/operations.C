@@ -182,14 +182,10 @@ expression_ref bounds = lambda_expression( ArrayBounds() );
 closure LExp_Op::operator()(OperationArgs& Args) const
 {
   object_ptr<const EigenValues> L = Args.evaluate_as<EigenValues>(0);
-  // FIXME - Vector_from_Tuple_Op
-
-  expression_ref pi_E = Args.evaluate_structure(1);
+  object_ptr<const Vector<double> > pi = Args.evaluate_as< Vector<double> >(1);
   double t = *Args.evaluate_as<Double>(2);
 
-  std::vector<double> pi = get_vector_from_list<double,Double>(pi_E);
-  
-  return object_ptr<const Object>(new MatrixObject( exp(*L, pi, t) ) );
+  return object_ptr<const Object>(new MatrixObject( exp(*L, *pi, t) ) );
 }
 
 expression_ref LExp = lambda_expression( LExp_Op() );
