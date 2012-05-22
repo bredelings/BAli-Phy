@@ -72,7 +72,7 @@ Program SModel_Functions()
 
   // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0
   P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), 
-	    let_expression(v6,(substitution::Q,v1,v5),(ReversibleMarkov, v2, v3, v6, v4, (substitution::Get_Eigensystem,v6,v4), 1.0) ) );
+	    let_expression(v6,(substitution::Q,v1,v5),(ReversibleMarkov, v2, v3, v6, v4, (substitution::Get_Eigensystem,v6,(Vector_From_List<double,Double>(),v4)), 1.0) ) );
 
   // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
   P += Def( (n_base_models, (MixtureModel,(DiscreteDistribution,v1))), (length,v1));

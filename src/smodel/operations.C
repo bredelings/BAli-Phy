@@ -713,8 +713,8 @@ namespace substitution
 
   closure Get_Eigensystem_Op::operator()(OperationArgs& Args) const
   {
-    Matrix Q = *Args.evaluate_as<MatrixObject>(0);
-    vector<double> pi = get_vector_from_list<double,Double>( Args.evaluate_structure(1) );
+    const Matrix& Q = *Args.evaluate_as<MatrixObject>(0);
+    const Vector<double>& pi = *Args.evaluate_as< Vector<double> >(1);
     
     return Get_Eigensystem_Function(Q, pi);
   }
