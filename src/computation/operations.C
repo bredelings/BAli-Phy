@@ -17,11 +17,9 @@ closure Apply::operator()(OperationArgs& Args) const
 {
   closure C = Args.lazy_evaluate(0);
 
-  // We should assert this.
   object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(1));
   int arg = Args.current_closure().lookup_in_env( V->index );
 
-  // We could actually change this to a static_cast.  C.exp MUST be an expression.  C.exp[0] MUST be a lambda.
   assert_is_a<lambda2>(C.exp);
 
   C.exp = C.exp->sub[0];
@@ -89,7 +87,7 @@ closure Case::operator()(OperationArgs& Args) const
 	for(int j=0;j<obj.exp->size();j++)
 	{
 	  // FIXME! Don't do a dynamic cast here.
-	  int index = is_a<index_var>(obj.exp->sub[j])->index;
+	  int index = assert_is_a<index_var>(obj.exp->sub[j])->index;
 	  
 	  result.Env.push_back( obj.lookup_in_env( index ) );
 	}
