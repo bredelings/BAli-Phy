@@ -1066,8 +1066,7 @@ reg_heap::root_t reg_heap::allocate_reg()
   add_reg_to_used_list(r);
   access(r).ownership_category = ownership_categories.begin();
 
-  assert(access(r).owners.none() );
-  assert(access(r).owners == *access(r).ownership_category);
+  assert( reg_is_unowned(r) );
 
   assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
   assert(access(r).state == reg::used);
@@ -1115,7 +1114,7 @@ void reg_heap::remove_unused_ownership_marks()
   for(;here != -1;)
   {
     reg& R = access(here);
-    assert(includes(R.temp_owners, R.owners ) );
+    assert( includes(R.temp_owners, R.owners) );
     R.temp_owners.reset();
 
     here = R.next_reg;
@@ -1353,7 +1352,7 @@ const owner_set_t& reg_heap::get_reg_owners(int R) const
 const ownership_category_t& reg_heap::get_reg_ownership_category(int R) const
 {
   assert(access(R).ownership_category != ownership_categories.end());
-  assert(access(R).owners == *access(R).ownership_category);
+  //  assert(access(R).owners == *access(R).ownership_category);
   return access(R).ownership_category;
 }
 
@@ -1370,10 +1369,10 @@ void reg_heap::set_reg_ownership_category(int r, const ownership_category_t& c)
 {
   reg& R = access(r);
   R.ownership_category = c;
-  R.owners = *c;
+  //  R.owners = *c;
 
   assert(R.ownership_category != ownership_categories.end());
-  assert(R.owners == *R.ownership_category);
+  //  assert(R.owners == *R.ownership_category);
 }
 
 void reg_heap::reg_add_owner(int r, int t)
@@ -1392,8 +1391,8 @@ void reg_heap::reg_clear_owner(int r, int t)
 
 void reg_heap::reg_clear_owners(int r)
 {
-  owner_set_t empty;
-  set_reg_owners(r, empty);
+  set_reg_ownership_category(r, ownership_categories.begin() );
+  assert( access(r).ownership_category->none());
 }
 
 bool reg_heap::reg_is_owned_by(int r, int t) const
@@ -1800,8 +1799,9 @@ void reg_heap::check_used_reg(int index) const
 {
   const reg& R = access(index);
 
-  assert( R.ownership_category != ownership_categories.end() );
-  assert( R.owners == *R.ownership_category );
+  // This should check the ownership is working correctly.
+  // (i.e. Does the bitmap match the category bitmap?  It might not need too.)
+  get_reg_owners(index);
 
   for(int r: R.C.Env)
   {
@@ -1864,10 +1864,11 @@ void reg_heap::remove_ownership_mark(int t)
     if (not canonical_ownership_categories.count(*i))
       canonical_ownership_categories[*i] = i;
   }
-
+  /*
   int here = first_used_reg;
   for(;here != -1;here = access(here).next_reg)
     access(here).owners.set(t,false);
+  */
 
 #ifndef NDEBUG
   for(const auto& i: canonical_ownership_categories)
@@ -1894,10 +1895,12 @@ void reg_heap::duplicate_ownership_mark(int t1, int t2)
       canonical_ownership_categories[*i] = i;
   }
 
+  /*
   int here = first_used_reg;
   for(;here != -1;here = access(here).next_reg)
     if (access(here).owners.test(t1))
       access(here).owners.set(t2,true);
+  */
 
 #ifndef NDEBUG
   for(const auto& i: canonical_ownership_categories)
