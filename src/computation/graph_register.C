@@ -1789,6 +1789,9 @@ void reg_heap::check_used_reg(int index) const
 {
   const reg& R = access(index);
 
+  assert( R.ownership_category != ownership_categories.end() );
+  assert( R.owners == *R.ownership_category );
+
   for(int r: R.C.Env)
   {
     // Check that referenced regs are owned by the owners of R
