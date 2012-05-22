@@ -1776,8 +1776,6 @@ object_ref get_constructor(const expression_ref& E)
  */
 expression_ref block_case(const vector<expression_ref>& x, const vector<vector<expression_ref>>& p, const vector<expression_ref>& b)
 {
-  assert(x.size() > 0);
-
   const int N = x.size();
   const int M = p.size();
 
@@ -1786,6 +1784,9 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
   // Each pattern must have N components.
   for(int j=0;j<M;j++)
     assert(p[j].size() == N);
+
+  if (not x.size())
+    return b[0];
 
   // 1. Categorize each rule according to the type of its top-level pattern
   vector<object_ref> constants;
