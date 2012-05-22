@@ -1854,18 +1854,60 @@ void reg_heap::check_used_regs() const
 
 void reg_heap::remove_ownership_mark(int t)
 {
-  // trace from t roots
-  vector<int> used_regs = find_all_regs_in_context(t);
+#ifndef NDEBUG
+  for(const auto& i: canonical_ownership_categories)
+    assert(i.first == *i.second);
+  check_used_regs();
+#endif
 
-  for(int R: used_regs)
-    access(R).owners.set(t,false);
+  // Clear ownership marks for token t and recompute the canonical reverse hashes.
+  canonical_ownership_categories.clear();
+  for(auto i = ownership_categories.begin(); i != ownership_categories.end(); i++)
+  {
+    i->set(t,false);
+    if (not canonical_ownership_categories.count(*i))
+      canonical_ownership_categories[*i] = i;
+  }
+
+  int here = first_used_reg;
+  for(;here != -1;here = access(here).next_reg)
+    access(here).owners.set(t,false);
+
+#ifndef NDEBUG
+  for(const auto& i: canonical_ownership_categories)
+    assert(i.first == *i.second);
+  check_used_regs();
+#endif
 }
 
 void reg_heap::duplicate_ownership_mark(int t1, int t2)
 {
-  vector<int> used_regs = find_all_regs_in_context(t1);
-  for(int R: used_regs)
-    access(R).owners.set(t2,true);
+#ifndef NDEBUG
+  for(const auto& i: canonical_ownership_categories)
+    assert(i.first == *i.second);
+  check_used_regs();
+#endif
+
+  // Clear ownership marks for token t and recompute the canonical reverse hashes.
+  canonical_ownership_categories.clear();
+  for(auto i = ownership_categories.begin(); i != ownership_categories.end(); i++)
+  {
+    if (i->test(t1))
+      i->set(t2,true);
+    if (not canonical_ownership_categories.count(*i))
+      canonical_ownership_categories[*i] = i;
+  }
+
+  int here = first_used_reg;
+  for(;here != -1;here = access(here).next_reg)
+    if (access(here).owners.test(t1))
+      access(here).owners.set(t2,true);
+
+#ifndef NDEBUG
+  for(const auto& i: canonical_ownership_categories)
+    assert(i.first == *i.second);
+  check_used_regs();
+#endif
 }
 
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
