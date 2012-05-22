@@ -1064,6 +1064,10 @@ reg_heap::root_t reg_heap::allocate_reg()
   }
 
   add_reg_to_used_list(r);
+  access(r).ownership_category = ownership_categories.begin();
+
+  assert(access(r).owners.none() );
+  assert(access(r).owners == *access(r).ownership_category);
 
   assert(n_regs() == n_used_regs() + n_free_regs() + n_null_regs());
   assert(access(r).state == reg::used);
@@ -2052,6 +2056,9 @@ reg_heap::reg_heap()
    first_used_reg(-1)
 { 
   memory.resize(1);
+
+  owner_set_t empty;
+  canonical_ownership_categories[empty] = ownership_categories.push_back(empty);
 }
 
 #include "computation.H"
