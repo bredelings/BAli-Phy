@@ -403,7 +403,7 @@ void reg_heap::clear(int R)
   clear_result(R);
 
   access(R).used_inputs.clear();
-  access(R).call = -1;
+  access(R).call = 0;
   access(R).call_reverse = reg::back_edge_deleter();
 
   // Upstream objects can NOT still exist - otherwise this object would be used :-)
@@ -434,7 +434,7 @@ void reg_heap::set_used_input(int R1, int R2)
   // Don't add unchangeable results as inputs
   assert(access(R2).changeable);
   // Don't add a reg as input if no reduction has been performed.
-  // assert(access(R2).result or access(R2).call != -1);
+  // assert(access(R2).result or access(R2).call);
 
   reg::back_edge_deleter D = access(R2).outputs.insert(access(R2).outputs.end(), R1);
   access(R1).used_inputs.emplace_back(R2,D);
@@ -515,7 +515,7 @@ void reg_heap::set_call_unsafe(int R1, int R2)
   assert(access(R2).state == reg::used);
 
   // Check that we aren't overriding an existing *call*
-  assert(access(R1).call == -1);
+  assert(not access(R1).call);
 
   access(R1).call = R2;
   access(R1).call_reverse = access(R2).call_outputs.insert(access(R2).call_outputs.end(), R1);
@@ -537,11 +537,11 @@ void reg_heap::set_call(int R1, int R2)
 void reg_heap::clear_call(int R)
 {
   int R2 = access(R).call;
-  if (R2 == -1) return;
+  if (not R2) return;
   assert(R2 > 0 and R2 < n_regs());
   
   assert( *access(R).call_reverse == R );
-  access(R).call = -1;
+  access(R).call = 0;
 
   // If this reg is unused, then upstream regs are in the process of being destroyed.
   // However, if this reg is used, then upstream regs may be live, and so should have
@@ -615,7 +615,7 @@ void reg_heap::set_reduction_result(int R, closure&& result)
   assert(not access(R).result );
 
   // Check that there is no previous call we are overriding.
-  assert(access(R).call == -1);
+  assert(not access(R).call);
 
   // if the result is NULL, just leave the result and call both unset.
   //  (this could happen if we set a parameter value to null.)
@@ -802,7 +802,7 @@ int reg_heap::get_free_reg()
     assert(not R.C);
     assert(R. referenced_by_in_E_reverse.empty());
     assert(not R.result);
-    assert(R.call == -1);
+    assert(not R.call);
     assert(R.used_inputs.empty());
     assert(R.call_outputs.empty());
     assert(R.referenced_by_in_E.empty());
@@ -1042,7 +1042,7 @@ void reg_heap::trace_and_reclaim_unreachable()
       next_scan.insert(next_scan.end(), R.C.Env.begin(), R.C.Env.end());
 
       // Count also the references from the call
-      if (R.call != -1) 
+      if (R.call) 
 	next_scan.insert(next_scan.end(), R.call);
     }
     scan = next_scan;
@@ -1348,12 +1348,12 @@ void reg_heap::check_results_in_context(int t) const
   vector<int> regs = find_all_regs_in_context(t);
   for(int Q: regs)
   {
-    if (access(Q).call != -1)
+    if (access(Q).call)
       assert( *access(Q).call_reverse == Q );
       
-    if (access(Q).result and access(Q).call == -1)
+    if (access(Q).result == Q)
     {
-      assert(access(Q).result == Q);
+      assert(not access(Q).call);
       WHNF_results.push_back(Q);
     }
   }
@@ -1574,7 +1574,7 @@ int reg_heap::uniquify_reg(int R, int t)
     int R2 = remap_reg(R1);
 
     // 4b. Initialize/Remap call
-    if (access(R1).call != -1)
+    if (access(R1).call)
       set_call(R2, remap_reg(access(R1).call ) );
 
     // 4c. Initialize/Remap used_inputs
@@ -1582,7 +1582,7 @@ int reg_heap::uniquify_reg(int R, int t)
       set_used_input(R2, remap_reg(i.first) );
 
     // 4d. Initialize/Remap result if E is in WHNF.
-    if (access(R2).call == -1 and access(R1).result)
+    if (not access(R2).call and access(R1).result)
     {
       assert( access(R1).result == R1);
       access(R2).result = R2;
@@ -1632,7 +1632,7 @@ int reg_heap::uniquify_reg(int R, int t)
     set_C(Q1, remap_regs(access(Q1).C ) );
     
     // b. Remap call
-    if (access(Q1).call != -1)
+    if (access(Q1).call)
     {
       int old_call = access(Q1).call;
       int new_call = remap_reg( old_call );
@@ -1705,8 +1705,8 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(not access(R2).result or access(R1).result);
 
     // R2 should have a call IFF R1 has a call
-    assert(access(R1).call == -1 or access(R2).call != -1);
-    assert(access(R2).call == -1 or access(R1).call != -1);
+    assert(not access(R1).call or access(R2).call);
+    assert(not access(R2).call or access(R1).call);
   }
 #endif
 
@@ -1762,7 +1762,7 @@ void reg_heap::check_used_reg(int index) const
     assert( access(r).outputs.count(index) );
   }
 
-  if (R.call != -1)
+  if (R.call)
   {
     // Check that the pointer to the reverse edge iterator is intact.
     assert( *R.call_reverse == index );
@@ -1893,7 +1893,7 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
     }
 
     // Count also the references from the call
-    if (R.call != -1 and access(R.call).state == reg::used)
+    if (R.call and access(R.call).state == reg::used)
     {
       access(R.call).state = reg::checked;
       unique.push_back(R.call);
@@ -2313,7 +2313,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 #endif
 
     // If we know what to call, then call it and use it to set the result
-    if (access(R).call != -1)
+    if (access(R).call)
     {
       // This should only be an Operation or a Parameter.
       assert(access(R).changeable);
@@ -2337,7 +2337,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 
     else if (object_ptr<const index_var> V = is_a<index_var>(access(R).C.exp))
     {
-      assert( access(R).call == -1);
+      assert( not access(R).call );
 
       int R2 = access(R).C.lookup_in_env( V->index );
 
@@ -2406,7 +2406,7 @@ int reg_heap::incremental_evaluate(int R, int t)
       for(int i=0;i<new_heap_vars.size(); i++)
 	pop_temp_head(owners);
       
-      assert(access(R).call == -1);
+      assert(not access(R).call);
       assert(not access(R).result);
     }
     
@@ -2438,7 +2438,7 @@ int reg_heap::incremental_evaluate(int R, int t)
       if (not access(R).changeable)
       {
 	// The old used_input slots are not invalid, which is OK since none of them are changeable.
-	assert(access(R).call == -1);
+	assert(not access(R).call);
 	assert(not access(R).result);
 	clear_used_inputs(R);
 	set_C(R, std::move(result) );
@@ -2680,7 +2680,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     // call-edges
-    if (C.access(R).call != -1)
+    if (C.access(R).call)
     {
       string name2 = "n" + convertToString(C.access(R).call);
       o<<name<<" -> "<<name2<<" ";

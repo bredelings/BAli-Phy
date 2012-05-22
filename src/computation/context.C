@@ -236,7 +236,7 @@ bool context::parameter_is_set(int index) const
 {
   int P = *parameters()[index];
 
-  if (not access(P).result and access(P).call == -1) return false;
+  if (not access(P).result and not access(P).call) return false;
 
   return true;
 }
@@ -249,7 +249,7 @@ object_ref context::get_parameter_value(int index) const
   if (not access(P).result)
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (access(P).call == -1) return object_ref();
+    if (not access(P).call) return object_ref();
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
     incremental_evaluate(P);
