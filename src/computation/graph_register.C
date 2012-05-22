@@ -769,7 +769,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   const int mark_result = 2;
 
   vector< int > call_and_result_may_be_changed;
+  call_and_result_may_be_changed.reserve(n_regs());
   vector< int > result_may_be_changed;
+  result_may_be_changed.reserve(n_regs());
 
   // The index that we just altered cannot be known to be unchanged.
   call_and_result_may_be_changed.push_back(P);
@@ -1125,6 +1127,8 @@ void reg_heap::remove_unused_ownership_marks()
 void reg_heap::trace_and_reclaim_unreachable()
 {
   vector<int> scan;
+  scan.reserve(n_regs());
+
   for(int i: roots)
     scan.push_back(i);
 
