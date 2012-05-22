@@ -1341,6 +1341,8 @@ closure reg_heap::remap_regs(closure C) const
 
 const owner_set_t& reg_heap::get_reg_owners(int R) const
 {
+  assert(access(R).ownership_category != ownership_categories.end());
+  assert(access(R).owners == *access(R).ownership_category);
   return access(R).owners;
 }
 
@@ -1353,9 +1355,13 @@ void reg_heap::set_reg_owners(int r, const owner_set_t& owners)
 {
   if (not canonical_ownership_categories.count(owners))
     canonical_ownership_categories[owners] = ownership_categories.push_back(owners);
+
   reg& R = access(r);
   R.owners = owners;
   R.ownership_category = canonical_ownership_categories[owners];
+
+  assert(R.ownership_category != ownership_categories.end());
+  assert(R.owners == *R.ownership_category);
 }
 
 void reg_heap::set_reg_ownership_category(int r, const ownership_category_t& c)
@@ -1363,6 +1369,9 @@ void reg_heap::set_reg_ownership_category(int r, const ownership_category_t& c)
   reg& R = access(r);
   R.ownership_category = c;
   R.owners = *c;
+
+  assert(R.ownership_category != ownership_categories.end());
+  assert(R.owners == *R.ownership_category);
 }
 
 void reg_heap::reg_add_owner(int r, int t)
