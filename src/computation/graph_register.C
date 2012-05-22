@@ -1085,7 +1085,7 @@ void reg_heap::remove_unused_ownership_marks()
   {
     reg& R = access(here);
 #ifndef NDEBUG
-    R.temp_owners = R.owners;
+    R.temp_owners = get_reg_owners(here);
 #endif
     R.owners.reset();
 
