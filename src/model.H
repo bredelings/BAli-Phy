@@ -238,8 +238,7 @@ public:
   /// Get A model parameter value
   template <typename T>
   const T& get_parameter_value_as(int i) const {
-    const Object& O = *get_parameter_value(i);
-    return dynamic_cast<const T&>(O);
+    return *convert<const T>(get_parameter_value(i));
   }
   /// Get SOME model parameter values
   template <typename T>
