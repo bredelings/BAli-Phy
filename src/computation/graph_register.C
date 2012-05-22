@@ -1101,7 +1101,7 @@ void reg_heap::remove_unused_ownership_marks()
     for(int i=0;i<regs.size();i++)
     {
       int R = regs[i];
-      reg_add_owner(R,t);
+      access(R).owners.set(t,true);
     }
   }
 
@@ -1111,7 +1111,7 @@ void reg_heap::remove_unused_ownership_marks()
   for(;here != -1;)
   {
     reg& R = access(here);
-    assert(includes(R.temp_owners, get_reg_owners(here) ) );
+    assert(includes(R.temp_owners, R.owners ) );
     R.temp_owners.reset();
 
     here = R.next_reg;
