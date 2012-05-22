@@ -51,7 +51,7 @@ using std::endl;
  * - call edges (forward: call, call_outputs)
  * - used edges (forward: used_inputs, outputs)
  *
-/* ------------------------------------ Shared subgraphs ---------------------------------------------
+ * ------------------------------------ Shared subgraphs ---------------------------------------------
  *
  * If a reg is shared, then all of its E-descendants must be shared as well.  (Here, "descendants" means
  * transitively reachable through node.E's.)  Therefore, we have a single version of edges in
