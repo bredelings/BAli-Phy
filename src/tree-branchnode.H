@@ -538,7 +538,7 @@ public:
   bool has_length() const {return not (*b->undirected_branch_attributes)[0].empty(); }
 
   /// Return this branch's length
-  double length() const { return boost::any_cast<double>((*b->undirected_branch_attributes)[0]); }
+  double length() const { return *boost::unsafe_any_cast<double>(&(*b->undirected_branch_attributes)[0]); }
 
   /// Alter this branch's length
   void set_length(double d) const {(*b->undirected_branch_attributes)[0] = d;}
