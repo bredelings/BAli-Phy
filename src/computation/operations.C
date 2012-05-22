@@ -185,7 +185,10 @@ closure LExp_Op::operator()(OperationArgs& Args) const
   const Vector<double>& pi = *Args.evaluate_as< Vector<double> >(1);
   double t = *Args.evaluate_as<Double>(2);
 
-  return object_ptr<const Object>(new MatrixObject( exp(L, pi, t) ) );
+  Matrix E = exp(L, pi, t);
+  MatrixObject* M = new MatrixObject;
+  M->t.assign_temporary(E);
+  return M;
 }
 
 expression_ref LExp = lambda_expression( LExp_Op() );
