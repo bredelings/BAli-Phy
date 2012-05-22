@@ -1175,7 +1175,7 @@ void reg_heap::compute_ownership_categories()
   {
     reg& R = access(here);
 
-    set_reg_owners(here, get_reg_owners(here) );
+    set_reg_owners(here, access(here).owners );
 
     here = R.next_reg;
   }
