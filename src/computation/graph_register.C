@@ -1200,6 +1200,8 @@ void reg_heap::collect_garbage()
   // Currently called only from garbage collector.
   remove_unused_ownership_marks();
 
+  compute_ownership_categories();
+
   // Check that we have no un-owned objects that are used
   int here = first_used_reg;
   for(;here != -1;)
