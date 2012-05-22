@@ -453,6 +453,7 @@ expression_ref graph_normalize(const expression_ref& E)
 reg& reg::operator=(reg&& R) noexcept
 {
   owners = std::move( R.owners );
+  ownership_category = std::move( R.ownership_category );
   C = std::move(R.C);
   referenced_by_in_E_reverse = std::move( R.referenced_by_in_E_reverse );
   changeable = R.changeable;
@@ -478,6 +479,7 @@ reg& reg::operator=(reg&& R) noexcept
 
 reg::reg(reg&& R) noexcept
  :owners( std::move( R.owners ) ),
+  ownership_category( std::move( R.ownership_category) ),
   C( std::move(R.C) ),
   referenced_by_in_E_reverse ( std::move( R.referenced_by_in_E_reverse ) ),
   changeable( R.changeable ),
