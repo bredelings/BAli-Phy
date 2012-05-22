@@ -744,7 +744,7 @@ namespace substitution {
     for(const_in_edges_iterator i = T.directed_branch(b0).branches_before();i;i++)
       b.push_back(*i);
 
-    if (dynamic_cast<subA_index_leaf*>(&I))
+    if (I.kind() == subA_index_t::leaf_index)
     {
       // Get an alignment of subA indices on branches b[0] and b[1] where b0.source is not present
       int node = T.directed_branch(b0).source();
@@ -754,7 +754,7 @@ namespace substitution {
       b.push_back(b0);
       return collect_vanishing_internal(b, index_vanishing, cache, MC);
     }
-    else if (dynamic_cast<subA_index_internal*>(&I))
+    else if (I.kind() == subA_index_t::internal_index)
     {
       b.push_back(b0);
       ublas::matrix<int> index_vanishing = I.get_subA_index_vanishing(b,A,T);
@@ -849,12 +849,12 @@ namespace substitution {
     peel_internal_branch(b, index, cache, transition_P, MC);
 
     /*-------------------- Do the other_subst collection part -------------------*/
-    if (dynamic_cast<subA_index_internal*>(&I))
+    if (I.kind() == subA_index_t::internal_index)
     {
       ublas::matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
       cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
     }
-    else if (dynamic_cast<subA_index_leaf*>(&I))
+    else if (I.kind() == subA_index_t::leaf_index)
       cache[b0].other_subst = 1;
     else
       throw myexception()<<"subA_index_t is of unrecognized type!";
@@ -950,12 +950,12 @@ namespace substitution {
     }
 
     /*-------------------- Do the other_subst collection part -------------b-------*/
-    if (dynamic_cast<subA_index_internal*>(&I))
+    if (I.kind() == subA_index_t::internal_index)
     {
       ublas::matrix<int> index_collect = I.get_subA_index_vanishing(b,A,T);
       cache[b[2]].other_subst = collect_vanishing_internal(b, index_collect, cache, MC);
     }
-    else if (dynamic_cast<subA_index_leaf*>(&I))
+    else if (I.kind() == subA_index_t::leaf_index)
       cache[b0].other_subst = 1;
     else
       throw myexception()<<"subA_index_t is of unrecognized type!";
@@ -1295,7 +1295,7 @@ namespace substitution {
 				     subA_index_t& I, Likelihood_Cache& LC,
 				     const Mat_Cache& MC)
   {
-    if (LC.up_to_date(b0) and dynamic_cast<subA_index_internal*>(&I))
+    if (LC.up_to_date(b0) and I.kind() == subA_index_t::internal_index)
       return LC[b0].other_subst;
 
     for(const_in_edges_iterator j = T.directed_branch(b0).branches_before();j;j++)
@@ -1547,7 +1547,7 @@ namespace substitution {
     // FIXME - The problem is that this includes other_subst TWICE
     // Probably we need to factor other_subst collection out of calc_root_probability.
     ublas::matrix<int> index_unaligned = I.get_subA_index_aligned(rb,A,T,false);
-    if (dynamic_cast<subA_index_leaf*>(&I))
+    if (I.kind() == subA_index_t::leaf_index)
     {
       // Combine the likelihoods from absent nodes
       Pr *= calc_root_probability_unaligned(A,T,LC,MC,rb,index_unaligned);

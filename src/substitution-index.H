@@ -192,7 +192,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 struct subA_index_t
 {
+  enum subA_index_kind {leaf_index=1, internal_index=2};
+
 protected:
+  subA_index_kind kind_;
+
   std::vector< std::vector< std::pair<int,int> > > indices;
 
   std::vector<bool> up_to_date;
@@ -207,7 +211,7 @@ protected:
 public:
   virtual subA_index_t* clone() const=0;
   
-  subA_index_t(int s1, int s2);
+  subA_index_t(subA_index_kind k, int s1, int s2);
 
   int n_rows() const;
 
@@ -271,6 +275,8 @@ public:
   void check_footprint(const alignment& A1,const Tree& T) const;
 
   virtual std::vector<int> characters_to_indices(int branch, const alignment& A, const Tree& T);
+
+  int kind() const {return kind_;}
 
   virtual ~subA_index_t() {}
 };
