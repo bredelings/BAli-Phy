@@ -2144,6 +2144,18 @@ class RegOperationArgs: public OperationArgs
     return R2;
   }
 
+  /// Evaluate the reg R2, record dependencies, and return the result.
+  const closure& lazy_evaluate_reg_closure(int R2)
+  {
+    return M.access_result( lazy_evaluate_reg(R2) );
+  }
+
+  /// Evaluate the reg R2, record dependencies, and return the result.
+  const object_ref evaluate_reg(int R2)
+  {
+    return M.access_result( lazy_evaluate_reg(R2) ).exp->head;
+  }
+
   // Note: see note below on evaluate_structure( ) on the issue of returning lambdas.
 
   /*

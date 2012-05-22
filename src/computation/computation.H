@@ -26,6 +26,10 @@ struct OperationArgs: public Object
 
   virtual const closure& lazy_evaluate(int) = 0;
 
+  virtual const closure& lazy_evaluate_reg_closure(int) = 0;
+
+  virtual const object_ref evaluate_reg(int) = 0;
+
   template <typename T>
   object_ptr<const T> evaluate_as(int slot)
   {
