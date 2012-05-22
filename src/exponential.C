@@ -57,7 +57,7 @@ using std::vector;
 // compute the exponential of a matrix that is given in terms of its SVD
 Matrix exp(const EigenValues& solution,double t) 
 {
-  Matrix O = solution.Rotation();
+  const Matrix& O = solution.Rotation();
   std::vector<double> D = solution.Diagonal();
 
   // Exponentiate Eigenvalues
