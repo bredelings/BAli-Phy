@@ -160,7 +160,11 @@ closure context::lazy_evaluate(int index) const
 /// Return the value of a particular index, computing it if necessary
 object_ref context::evaluate(int index) const
 {
-  return lazy_evaluate(index).exp->head;
+  int& H = *heads()[index];
+
+  H = incremental_evaluate(H);
+
+  return access_result(H).exp->head;
 }
 
 expression_ref context::evaluate_structure(int index) const
