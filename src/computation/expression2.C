@@ -238,7 +238,7 @@ int main()
   expression_ref test8 = let_expression(v0,1,v0);
   cout<<"\n";
   cout<<"Eval test:     "<<test8<<" = \n";
-  test8 = launchbury_normalize(test8);
+  test8 = graph_normalize(test8);
   cout<<"   normalized: "<<test8<<" = \n";
   test8 = CTX1.evaluate_expression(test8);
   cout<<test8<<"\n";
@@ -247,7 +247,7 @@ int main()
 
   cout<<"\n";
   cout<<"Eval test:     "<<test9<<" = \n";
-  test9 = launchbury_normalize(test9);
+  test9 = graph_normalize(test9);
   cout<<"   normalized: "<<test9<<" = \n";
   test9 = CTX1.evaluate_expression(test9);
   cout<<test9<<"\n";
@@ -257,7 +257,7 @@ int main()
 
   cout<<"\n";
   cout<<"Eval test:     "<<test10<<" = \n";
-  test10 = launchbury_normalize(test10);
+  test10 = graph_normalize(test10);
   cout<<"   normalized: "<<test10<<" = \n";
   test10 = CTX1.evaluate_expression(test10);
   cout<<test10<<"\n";
@@ -266,7 +266,7 @@ int main()
   expression_ref test11 = (take, 3, (iterate, (plus_i,1), 1));
   cout<<"\n";
   cout<<"Eval test:     "<<test11<<" = \n";
-  test11 = launchbury_normalize(test11);
+  test11 = graph_normalize(test11);
   cout<<"   normalized: "<<test11<<" = \n";
   test11 = CTX1.evaluate_expression(test11);
   cout<<test11<<"\n";
@@ -297,7 +297,7 @@ int main()
 
   cout<<"\n";
   cout<<"Eval test:     "<<test12<<" = \n";
-  test12 = launchbury_normalize(test12);
+  test12 = graph_normalize(test12);
   cout<<"   normalized: "<<test12<<" = \n";
   test12 = C.evaluate_expression(test12);
   cout<<test12<<"\n";
@@ -308,7 +308,7 @@ int main()
 
   cout<<"\n";
   cout<<"Eval test:     "<<test13<<" = \n";
-  test13 = launchbury_normalize(test13);
+  test13 = graph_normalize(test13);
   cout<<"   normalized: "<<test13<<" = \n";
   test13 = C.evaluate_expression(test13);
   cout<<test13<<"\n";
@@ -319,7 +319,7 @@ int main()
 
   cout<<"\n";
   cout<<"Eval test:     "<<test14<<" = \n";
-  test14 = launchbury_normalize(test14);
+  test14 = graph_normalize(test14);
   cout<<"   normalized: "<<test14<<" = \n";
   test14 = C.evaluate_expression(test14);
   cout<<test14<<"\n";
@@ -332,7 +332,7 @@ int main()
 
   cout<<"\n";
   cout<<"Eval test:     "<<test15<<" = \n";
-  test15 = launchbury_normalize(test15);
+  test15 = graph_normalize(test15);
   cout<<"   normalized: "<<test15<<" = \n";
   test15 = C.evaluate_expression(test15);
   cout<<test15<<"\n";
