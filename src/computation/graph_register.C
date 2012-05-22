@@ -1378,11 +1378,17 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
 
 vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
 {
-  vector<int> scan = {R};
   assert(reg_is_owned_by(R,t));
 
   vector<int> unique;
   unique.reserve(n_regs());
+
+  vector<int> scan;
+  scan.reserve(n_regs());
+  scan = {R};
+
+  // Here, scan contains reference-parents and call-parents to split regs.
+  // However, these may be unshared, and may also be from any context.
   for(int i=0;i<scan.size();i++)
   {
     const reg& R = access(scan[i]);
@@ -1390,14 +1396,15 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
     // Regs should be on the used list
     assert(R.state != reg::free and R.state != reg::none);
 
-    // Only consider each reg at most once
+    // Only add each reg at most once
     if (R.state == reg::checked) continue;
 
-    // Skip this node if its not in context t
+    // Skip this reg if its not in context t
     if (not reg_is_owned_by(scan[i],t)) continue;
 
-    // Skip this node if its already unique
+    // Put this reg on the unsplit list if its already split
     if (not reg_is_shared(scan[i])) continue;
+    // We could add this reg to the unsplit list here, if we didn't have to trim the split list later.  Grrr.
 
     R.state = reg::checked;
     unique.push_back(scan[i]);
@@ -1409,12 +1416,11 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
     scan.insert(scan.end(), R.call_outputs.begin(), R.call_outputs.end());
   }
 
-  for(int i=0;i<unique.size();i++)
+  for(int R: unique)
   {
-    const reg& R = access(unique[i]);
-    assert(R.state == reg::checked);
+    assert(access(R).state == reg::checked);
 
-    R.state = reg::used;
+    access(R).state = reg::used;
   }
 
   return unique;
@@ -1510,6 +1516,12 @@ vector<int> reg_heap::find_unsplit_parents(const vector<int>& split, int t) cons
 	This situation only occurs in C++ operators, since native operators only
 	directly used their E-children.  However, C++ operators can use their
 	E-grandchildren or E-children of their call-children.
+
+      Ignoring these might seem to work since set_reg_value is about to invalidate
+      many of the shared inputs.  However, it is not necessarily the case that anything
+      that is split will be invalidated, since we split regs that COULD depend on
+      the changed reg, but we only invalidate thing that CURRENTLY depend on the
+      changed reg.
     */
     for(int Q1: access(R1).outputs)
     {
@@ -1610,7 +1622,7 @@ int reg_heap::uniquify_reg(int R, int t)
   {
     int R1 = shared_ancestors[i];
 
-    if (access(R1).state == reg::used and reg_is_shared(R1))
+    if (access(R1).state == reg::used and reg_is_shared(R1) and reg_is_owned_by(R1,t))
     {
       int R2 = *temp_heads[temp_heads.size()-1-i];
       access(R1).temp = R2;
@@ -1620,7 +1632,7 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
 
-  // NOTE: We HAVE to quit now since R has been removed from new_regs.
+  // NOTE: We HAVE to quit now if R has been removed from new_regs.
   // If for some reason the reg is no longer shared, then we can quit now.
   assert( reg_is_owned_by(R, t) );
   if (not reg_is_shared(R)) 
