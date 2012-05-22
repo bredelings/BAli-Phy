@@ -1238,6 +1238,89 @@ int reg_heap::get_unused_token()
   return t;
 }
 
+const owner_set_t& reg_heap::get_reg_owners(int R) const
+{
+  return *get_reg_ownership_category(R);
+}
+
+const ownership_category_t& reg_heap::get_reg_ownership_category(int R) const
+{
+  assert(access(R).ownership_category != ownership_categories.end());
+  //  assert(access(R).owners == *access(R).ownership_category);
+  return access(R).ownership_category;
+}
+
+void reg_heap::set_reg_owners(int r, const owner_set_t& owners)
+{
+  // Find or create the category for this specific bitmask.
+  if (not canonical_ownership_categories.count(owners))
+    canonical_ownership_categories[owners] = ownership_categories.push_back(owners);
+
+  set_reg_ownership_category(r, canonical_ownership_categories[owners] );
+}
+
+void reg_heap::set_reg_ownership_category(int r, const ownership_category_t& c)
+{
+  reg& R = access(r);
+  R.ownership_category = c;
+  //  R.owners = *c;
+
+  assert(R.ownership_category != ownership_categories.end());
+  //  assert(R.owners == *R.ownership_category);
+}
+
+void reg_heap::reg_add_owner(int r, int t)
+{
+  owner_set_t owners = get_reg_owners(r);
+  owners.set(t, true);
+  set_reg_owners(r, owners);
+}
+
+void reg_heap::reg_clear_owner(int r, int t)
+{
+  owner_set_t owners = get_reg_owners(r);
+  owners.set(t, false);
+  set_reg_owners(r, owners);
+}
+
+void reg_heap::reg_clear_owners(int r)
+{
+  set_reg_ownership_category(r, ownership_categories.begin() );
+  assert( access(r).ownership_category->none());
+}
+
+bool reg_heap::reg_is_owned_by(int r, int t) const
+{
+  return get_reg_owners(r).test(t);
+}
+
+bool reg_heap::reg_is_owned_by_only(int r, int t) const
+{
+  owner_set_t owners;
+  owners.set(t,true);
+  return owners == get_reg_owners(r);
+}
+
+bool reg_heap::reg_is_owned_by_all_of(int r, const owner_set_t& owners) const
+{
+  return includes(get_reg_owners(r), owners);
+}
+
+int reg_heap::n_reg_owners(int r) const
+{
+  return get_reg_owners(r).count();
+}
+
+bool reg_heap::reg_is_unowned(int r) const
+{
+  return get_reg_owners(r).none();
+}
+
+bool reg_heap::reg_is_shared(int r) const
+{
+  return n_reg_owners(r) > 1;
+}
+
 vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
 {
   vector<int> ancestors;
@@ -1346,89 +1429,6 @@ closure reg_heap::remap_regs(closure C) const
     R = remap_reg(R);
 
   return C;
-}
-
-const owner_set_t& reg_heap::get_reg_owners(int R) const
-{
-  return *get_reg_ownership_category(R);
-}
-
-const ownership_category_t& reg_heap::get_reg_ownership_category(int R) const
-{
-  assert(access(R).ownership_category != ownership_categories.end());
-  //  assert(access(R).owners == *access(R).ownership_category);
-  return access(R).ownership_category;
-}
-
-void reg_heap::set_reg_owners(int r, const owner_set_t& owners)
-{
-  // Find or create the category for this specific bitmask.
-  if (not canonical_ownership_categories.count(owners))
-    canonical_ownership_categories[owners] = ownership_categories.push_back(owners);
-
-  set_reg_ownership_category(r, canonical_ownership_categories[owners] );
-}
-
-void reg_heap::set_reg_ownership_category(int r, const ownership_category_t& c)
-{
-  reg& R = access(r);
-  R.ownership_category = c;
-  //  R.owners = *c;
-
-  assert(R.ownership_category != ownership_categories.end());
-  //  assert(R.owners == *R.ownership_category);
-}
-
-void reg_heap::reg_add_owner(int r, int t)
-{
-  owner_set_t owners = get_reg_owners(r);
-  owners.set(t, true);
-  set_reg_owners(r, owners);
-}
-
-void reg_heap::reg_clear_owner(int r, int t)
-{
-  owner_set_t owners = get_reg_owners(r);
-  owners.set(t, false);
-  set_reg_owners(r, owners);
-}
-
-void reg_heap::reg_clear_owners(int r)
-{
-  set_reg_ownership_category(r, ownership_categories.begin() );
-  assert( access(r).ownership_category->none());
-}
-
-bool reg_heap::reg_is_owned_by(int r, int t) const
-{
-  return get_reg_owners(r).test(t);
-}
-
-bool reg_heap::reg_is_owned_by_only(int r, int t) const
-{
-  owner_set_t owners;
-  owners.set(t,true);
-  return owners == get_reg_owners(r);
-}
-
-bool reg_heap::reg_is_owned_by_all_of(int r, const owner_set_t& owners) const
-{
-  return includes(get_reg_owners(r), owners);
-}
-
-int reg_heap::n_reg_owners(int r) const
-{
-  return get_reg_owners(r).count();
-}
-
-bool reg_heap::reg_is_unowned(int r) const
-{
-  return get_reg_owners(r).none();
-}
-
-bool reg_heap::reg_is_shared(int r) const
-{
-  return n_reg_owners(r) > 1;
 }
 
 void reg_heap::check_results_in_context(int t) const
