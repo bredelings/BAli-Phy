@@ -1366,6 +1366,16 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
   return ancestors;
 }
 
+/* We only need to split shared regs that can reg another split reg through
+   either forward E- or call- edges.  Since ownership can only decrease
+   going backwards, we can stop looking for regs to split as soon as we find
+   an unshared reg, since its E- or call- parents cannot be shared.
+
+   We do not need to separately consider use-edges here, since the rules for
+   direct use are also transitive reachability along forward E- or call- edges,
+   just as for indirect use (i.e. dependence).
+ */
+
 vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
 {
   vector<int> scan = {R};
@@ -1464,10 +1474,12 @@ vector<int> reg_heap::find_unsplit_parents(const vector<int>& split, int t) cons
 
   for(int R1: split)
   {
-    // parents are: (a) referenced_by_in_E + (b) outputs + (c) call_outputs
+    // Parents are: (a) referenced_by_in_E + (b) call_outputs + (c) outputs
+    //  See note below about why output (use-parents) are included.
 
-    // NOTE: we could have parent that are in t that are shared, but these
-    // should be original regs that will eventually be removed from t.
+    // CLAIM: we could have parents that are in t and are marked shared, but these
+    // should be regs that are no longer reachable in t, and will be eventually 
+    // reclaimed.
 
     for(int Q1: access(R1).referenced_by_in_E)
     {
@@ -1483,6 +1495,22 @@ vector<int> reg_heap::find_unsplit_parents(const vector<int>& split, int t) cons
       unsplit_parents.push_back(Q1);
     }
 
+    /* NOTE: When splitting regs, we only look backwards along E or call edges.
+
+       Q: Why then do we look backwards along outputs edges, here?
+       A: The answer is that, although a reg R1 can only use a reg R2 if it
+        is reachable along E- or call- edges, it might not be reachable this
+        way in a single step.
+
+        Since we stop back-tracing for split regs as soon as we find an unsplit
+        reg, looking only one step further back along E- and call- edges
+	might not this might not find an unsplit grandparent reg that needs its
+	used_inputs (but not its C.exp) adjusted.
+
+	This situation only occurs in C++ operators, since native operators only
+	directly used their E-children.  However, C++ operators can use their
+	E-grandchildren or E-children of their call-children.
+    */
     for(int Q1: access(R1).outputs)
     {
       // Skip regs that we've handled already.
