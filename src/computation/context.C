@@ -91,8 +91,7 @@ bool context::reg_is_fully_up_to_date(int R) const
   for(int i=0;i<E->size();i++)
   {
     // assert_cast
-    object_ptr<const index_var> V = is_a<index_var>(E->sub[i]);
-    assert(V);
+    object_ptr<const index_var> V = assert_is_a<index_var>(E->sub[i]);
     int R2 = result.lookup_in_env( V->index );
     
     if (not reg_is_fully_up_to_date(R2)) return false;
@@ -137,8 +136,7 @@ expression_ref context::full_evaluate(int& R) const
 
     for(int i=0;i<E->size();i++)
     {
-      object_ptr<const index_var> V = is_a<index_var>(E->sub[i]);
-      assert(V);
+      object_ptr<const index_var> V = assert_is_a<index_var>(E->sub[i]);
       int R2 = result.lookup_in_env( V->index );
 
       E->sub[i] = full_evaluate(R2);
