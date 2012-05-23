@@ -615,7 +615,7 @@ public:
   bool has_length() const {return not (*b->undirected_branch_attributes)[0].empty(); }
 
   /// Return this branch's length
-  double length() const { return boost::any_cast<double>((*b->undirected_branch_attributes)[0]); }
+  double length() const { return *boost::unsafe_any_cast<double>(&(*b->undirected_branch_attributes)[0]); }
 
   const tree_attributes& undirected_attributes() const {return *b->undirected_branch_attributes;}
   const boost::any& undirected_attribute(int i) const {return undirected_attributes()[i];}
