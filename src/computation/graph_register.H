@@ -89,6 +89,9 @@ class reg_heap
   std::vector<reg> memory;
   CacheList<int> roots;
 
+  mutable int n_active_scratch_lists = 0;
+  mutable std::vector< object_ptr<Vector<int> > > scratch_lists;
+
   CacheList<owner_set_t> ownership_categories;
   std::unordered_map< owner_set_t, ownership_category_t> canonical_ownership_categories;
 
@@ -255,9 +258,6 @@ public:
 
   bool reg_is_shared(int) const;
 
-
-  reg_heap();
-
   /*----- Graph walking ------*/
   void remove_ownership_mark(int);
   /*----- Graph walking ------*/
@@ -284,6 +284,11 @@ public:
   void set_reg_value(int index, closure&&, int t);
 
   int incremental_evaluate(int R, int t);
+
+  std::vector<int>& get_scratch_list() const;
+  void release_scratch_list() const;
+
+  reg_heap();
 };
 
 expression_ref graph_normalize(const expression_ref& R);

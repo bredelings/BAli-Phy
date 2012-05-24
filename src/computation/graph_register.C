@@ -663,10 +663,8 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   const int mark_call_result = 1;
   const int mark_result = 2;
 
-  vector< int > call_and_result_may_be_changed;
-  call_and_result_may_be_changed.reserve(n_regs());
-  vector< int > result_may_be_changed;
-  result_may_be_changed.reserve(n_regs());
+  vector< int >& call_and_result_may_be_changed = get_scratch_list();
+  vector< int >& result_may_be_changed = get_scratch_list();
 
   // The index that we just altered cannot be known to be unchanged.
   call_and_result_may_be_changed.push_back(P);
@@ -752,6 +750,9 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   // Finally set the new value.
   set_reduction_result(P, std::move(C) );
+
+  release_scratch_list();
+  release_scratch_list();
 }
 
 int reg_heap::n_regs() const
@@ -1021,8 +1022,7 @@ void reg_heap::remove_unused_ownership_marks()
 
 void reg_heap::trace_and_reclaim_unreachable()
 {
-  vector<int> scan;
-  scan.reserve(n_regs());
+  vector<int>& scan = get_scratch_list();
 
   for(int i: roots)
     scan.push_back(i);
@@ -1061,6 +1061,7 @@ void reg_heap::trace_and_reclaim_unreachable()
     here = next;
   }
 
+  release_scratch_list();
 }
 
 void reg_heap::compute_ownership_categories()
@@ -1275,11 +1276,9 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
 {
   assert(reg_is_owned_by(R,t));
 
-  vector<int> unique;
-  unique.reserve(n_regs());
+  vector<int>& unique = get_scratch_list();
 
-  vector<int> scan;
-  scan.reserve(n_regs());
+  vector<int>& scan = get_scratch_list();
   scan = {R};
 
   // Here, scan contains reference-parents and call-parents to split regs.
@@ -1317,6 +1316,9 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
 
     access(R).state = reg::used;
   }
+
+  release_scratch_list();
+  release_scratch_list();
 
   return unique;
 }
@@ -1511,8 +1513,7 @@ int reg_heap::uniquify_reg(int R, int t)
   // 4e. Initialize/Copy changeable
   // 2. Remove regs that got deallocated from the list.
   // Alternatively, I could LOCK them in place.
-  vector<int> split;
-  split.reserve(shared_ancestors.size());
+  vector<int>& split = get_scratch_list();
   for(int i=0;i<shared_ancestors.size();i++)
   {
     int R1 = shared_ancestors[i];
@@ -1547,6 +1548,8 @@ int reg_heap::uniquify_reg(int R, int t)
     check_results_in_context(t);
 #endif  
     
+    release_scratch_list();
+    assert(n_active_scratch_lists == 0);
     return R;
   }
 
@@ -1730,6 +1733,9 @@ int reg_heap::uniquify_reg(int R, int t)
   check_results_in_context(t);
 #endif  
 
+  release_scratch_list();
+  assert(n_active_scratch_lists == 0);
+
   assert(R2 != R);
   return R2;
 }
@@ -1850,8 +1856,7 @@ void reg_heap::duplicate_ownership_mark(int t1, int t2)
 
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 {
-  vector<int> scan;
-  scan.reserve(roots.size());
+  vector<int>& scan = get_scratch_list();
   for(const auto& i: token_roots[t].temp)
     scan.push_back(*i);
 
@@ -1913,6 +1918,8 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 
     R.state = reg::used;
   }
+
+  release_scratch_list();
 
   return unique;
 }
@@ -2460,6 +2467,23 @@ int reg_heap::incremental_evaluate(int R, int t)
   assert(not is_a<expression>(access_result(R).exp));
 
   return R;
+}
+
+void reg_heap::release_scratch_list() const
+{
+  n_active_scratch_lists--;
+}
+
+vector<int>& reg_heap::get_scratch_list() const
+{
+  while(n_active_scratch_lists >= scratch_lists.size())
+    scratch_lists.push_back( new Vector<int> );
+
+  vector<int>& v = scratch_lists[ n_active_scratch_lists++ ]->t;
+
+  v.clear();
+
+  return v;
 }
 
 // Fixme!
