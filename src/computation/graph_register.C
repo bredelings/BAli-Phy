@@ -1538,6 +1538,7 @@ int reg_heap::uniquify_reg(int R, int t)
 #endif  
     
     release_scratch_list();
+    release_scratch_list();
     assert(n_active_scratch_lists == 0);
     return R;
   }
