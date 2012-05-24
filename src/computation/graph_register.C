@@ -1272,11 +1272,9 @@ vector<int> reg_heap::find_call_ancestors_in_context(int R,int t) const
    just as for indirect use (i.e. dependence).
  */
 
-vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
+void reg_heap::find_shared_ancestor_regs_in_context(int R, int t, vector<int>& unique) const
 {
   assert(reg_is_owned_by(R,t));
-
-  vector<int>& unique = get_scratch_list();
 
   vector<int>& scan = get_scratch_list();
   scan = {R};
@@ -1318,9 +1316,6 @@ vector<int> reg_heap::find_shared_ancestor_regs_in_context(int R, int t) const
   }
 
   release_scratch_list();
-  release_scratch_list();
-
-  return unique;
 }
 
 int reg_heap::remap_reg(int R) const
@@ -1371,10 +1366,8 @@ void reg_heap::check_results_in_context(int t) const
   }
 }
 
-vector<int> reg_heap::find_unsplit_parents(const vector<int>& split, int t) const
+void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>& unsplit_parents) const
 {
-  vector<int> unsplit_parents;
-
   for(int R1: split)
   {
     // Parents are: (a) referenced_by_in_E + (b) call_outputs + (c) outputs
@@ -1474,8 +1467,6 @@ vector<int> reg_heap::find_unsplit_parents(const vector<int>& split, int t) cons
       assert( access(j).state == reg::used );
   }
 #endif
-
-  return unsplit_parents;
 }
 
 int reg_heap::uniquify_reg(int R, int t)
@@ -1496,12 +1487,10 @@ int reg_heap::uniquify_reg(int R, int t)
     return R;
   }
 
-  // Track WHNF regs that have moved.
-  vector<int> changed_results;
-
   // 1. Find all ancestors with name 't' that are *shared*
   // (Some of these could be unreachable!)
-  vector<int> shared_ancestors = find_shared_ancestor_regs_in_context(R,t);
+  vector<int>& shared_ancestors = get_scratch_list();
+  find_shared_ancestor_regs_in_context(R,t,shared_ancestors);
   int n_new_regs = shared_ancestors.size();
 
   // 2. Allocate new regs for each *shared* ancestor reg in context t
@@ -1552,6 +1541,9 @@ int reg_heap::uniquify_reg(int R, int t)
     assert(n_active_scratch_lists == 0);
     return R;
   }
+
+  // Track WHNF regs that have moved.
+  vector<int> changed_results = get_scratch_list();
 
   // 2a. Copy the over and remap C
   for(int R1: split)
@@ -1626,7 +1618,8 @@ int reg_heap::uniquify_reg(int R, int t)
 
   // 5. Find the unsplit parents of split regs
   //    These will be the only parents of the old regs that have context t.
-  vector<int> unsplit_parents = find_unsplit_parents(split, t);
+  vector<int> unsplit_parents = get_scratch_list();
+  find_unsplit_parents(split, t, unsplit_parents);
   
   // Remap the unsplit parents. (The parents don't move, but they reference children that do.)
   for(int Q1: unsplit_parents)
@@ -1733,6 +1726,9 @@ int reg_heap::uniquify_reg(int R, int t)
   check_results_in_context(t);
 #endif  
 
+  release_scratch_list();
+  release_scratch_list();
+  release_scratch_list();
   release_scratch_list();
   assert(n_active_scratch_lists == 0);
 
