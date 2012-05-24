@@ -753,6 +753,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
 
   release_scratch_list();
   release_scratch_list();
+  assert(n_active_scratch_lists == 0);
 }
 
 int reg_heap::n_regs() const
@@ -976,6 +977,8 @@ reg_heap::root_t reg_heap::allocate_reg()
 
 void reg_heap::remove_unused_ownership_marks()
 {
+  int n0 = n_active_scratch_lists;
+
   // Clear ownership marks
   int here = first_used_reg;
   for(;here != -1;)
@@ -996,7 +999,8 @@ void reg_heap::remove_unused_ownership_marks()
     if (not token_is_used(t)) continue;
 
     // Find the all the regs reachable from heads in t
-    vector<int> regs = find_all_regs_in_context_no_check(t);
+    vector<int>& regs = get_scratch_list();
+    find_all_regs_in_context_no_check(t, regs);
 
     // Mark regs reachable in t as being owned by t
     for(int i=0;i<regs.size();i++)
@@ -1004,6 +1008,9 @@ void reg_heap::remove_unused_ownership_marks()
       int R = regs[i];
       access(R).owners.set(t,true);
     }
+
+    release_scratch_list();
+    assert(n0 == n_active_scratch_lists);
   }
 
 #ifndef NDEBUG
@@ -1853,6 +1860,20 @@ void reg_heap::duplicate_ownership_mark(int t1, int t2)
 
 vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
 {
+  vector<int> unique;
+  find_all_regs_in_context_no_check(t, unique);
+  return unique;
+}
+
+vector<int> reg_heap::find_all_regs_in_context(int t) const
+{
+  vector<int> unique;
+  find_all_regs_in_context(t, unique);
+  return unique;
+}
+
+void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& unique) const
+{
   vector<int>& scan = get_scratch_list();
   for(const auto& i: token_roots[t].temp)
     scan.push_back(*i);
@@ -1866,8 +1887,6 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
   for(const auto& i: token_roots[t].identifiers)
     scan.push_back(*(i.second));
 
-  vector<int> unique;
-  unique.reserve(n_regs());
   for(int i=0;i<scan.size();i++)
   {
     const reg& R = access(scan[i]);
@@ -1917,15 +1936,13 @@ vector<int> reg_heap::find_all_regs_in_context_no_check(int t) const
   }
 
   release_scratch_list();
-
-  return unique;
 }
 
 // This routine is separate from the *_no_check variant because the
 // checks don't hold in all cases.
-vector<int> reg_heap::find_all_regs_in_context(int t) const
+void reg_heap::find_all_regs_in_context(int t, vector<int>& unique) const
 {
-  vector<int> unique = find_all_regs_in_context_no_check(t);
+  find_all_regs_in_context_no_check(t, unique);
 
 #ifndef NDEBUG
   for(int R: unique)
@@ -1934,8 +1951,6 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
     check_used_reg(R);
   }
 #endif
-
-  return unique;
 }
 
 void reg_heap::release_token(int t)

@@ -263,6 +263,10 @@ public:
   /*----- Graph walking ------*/
   void duplicate_ownership_mark(int,int);
   /*----- Graph walking ------*/
+  void find_all_regs_in_context(int, std::vector<int>&) const;
+  /*----- Graph walking ------*/
+  void find_all_regs_in_context_no_check(int, std::vector<int>&) const;
+  /*----- Graph walking ------*/
   std::vector<int> find_all_regs_in_context(int) const;
   /*----- Graph walking ------*/
   std::vector<int> find_all_regs_in_context_no_check(int) const;
