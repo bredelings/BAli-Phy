@@ -1551,7 +1551,7 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
   // Track WHNF regs that have moved.
-  vector<int> changed_results = get_scratch_list();
+  vector<int>& changed_results = get_scratch_list();
 
   // 2a. Copy the over and remap C
   for(int R1: split)
@@ -1626,7 +1626,7 @@ int reg_heap::uniquify_reg(int R, int t)
 
   // 5. Find the unsplit parents of split regs
   //    These will be the only parents of the old regs that have context t.
-  vector<int> unsplit_parents = get_scratch_list();
+  vector<int>& unsplit_parents = get_scratch_list();
   find_unsplit_parents(split, t, unsplit_parents);
   
   // Remap the unsplit parents. (The parents don't move, but they reference children that do.)
