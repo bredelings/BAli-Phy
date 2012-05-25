@@ -1649,10 +1649,29 @@ int reg_heap::uniquify_reg(int R, int t)
     }
     
     // c. Adjust use edges
-    vector< pair<int,reg::back_edge_deleter> > old_used_inputs = access(Q1).used_inputs;
-    clear_used_inputs(Q1);
-    for(const auto& i: old_used_inputs)
-      set_used_input(Q1, remap_reg(i.first));
+    for(auto& i: access(Q1).used_inputs)
+    {
+      int& I1 = i.first;
+
+      int I2 = remap_reg(I1);
+      assert( access(I1).state != reg::free);
+      assert( access(I2).state != reg::free);
+
+      if (I2 != I1)
+      {
+	// Remove the edge to I1
+	assert( not access(I1).outputs.empty() );
+
+	reg::back_edge_deleter& D = i.second;
+	assert( *D == Q1 );
+
+	access(I1).outputs.erase(D);
+
+	// Add the edge to I2
+	D = access(I2).outputs.push_back(Q1);
+	I1 = I2;
+      }
+    }
   }
 
   // Remove ownership from the old regs.
