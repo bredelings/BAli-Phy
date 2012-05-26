@@ -622,9 +622,11 @@ void reg_heap::set_reduction_result(int R, closure&& result)
   if (not result) return;
 
   // If the value is a pre-existing reg_var, then call it.
-  if (object_ptr<const index_var> V = is_a<index_var>(result.exp))
+  if (result.exp->head->type() == index_var_type)
   {
-    int Q = result.lookup_in_env( V->index );
+    int index = convert<const index_var>(result.exp)->index;
+
+    int Q = result.lookup_in_env( index );
     
     assert(0 <= Q and Q < n_regs());
     assert(access(Q).state == reg::used);
@@ -2373,11 +2375,13 @@ int reg_heap::incremental_evaluate(int R, int t)
 
     /*---------- Below here, there is no call, and no result. ------------*/
 
-    else if (object_ptr<const index_var> V = is_a<index_var>(access(R).C.exp))
+    else if (access(R).C.exp->head->type() == index_var_type)
     {
       assert( not access(R).call );
 
-      int R2 = access(R).C.lookup_in_env( V->index );
+      int index = convert<const index_var>(access(R).C.exp->head)->index;
+
+      int R2 = access(R).C.lookup_in_env( index );
 
       int C = incremental_evaluate(R2, t);
 
@@ -2405,12 +2409,12 @@ int reg_heap::incremental_evaluate(int R, int t)
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))
       std::abort();
-#endif
 
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
     else if (is_parameter(access(R).C.exp))
       throw myexception()<<"Parameter with no result?! (Changeable = "<<access(R).changeable<<")";
+#endif
 
     // Reduction: let expression
     else if (parse_indexed_let_expression(access(R).C.exp, bodies, T))
@@ -2451,8 +2455,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     // 3. Reduction: Operation (includes @, case, +, etc.)
     else
     {
-      object_ptr<const Operation> O = is_a<Operation>( access(R).C.exp );
-      assert(O);
+      object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
 
       // Although the reg itself is not a parameter, it will stay changeable if it ever computes a changeable result.
       // Therefore, we cannot do "assert(not access(R).changeable);" here.

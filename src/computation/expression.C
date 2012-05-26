@@ -88,7 +88,7 @@ bool parse_indexed_let_expression(const expression_ref& E, vector<expression_ref
 {
   bodies.clear();
 
-  if (not is_a<let2_obj>(E)) return false;
+  if (E->head->type() != let2_type) return false;
 
   T = E->sub[0];
   const int L = E->sub.size()-1;
@@ -2109,32 +2109,22 @@ expression_ref def_function(const expression_ref& pattern, const expression_ref&
 
 bool is_WHNF(const expression_ref& E)
 {
+  int type = E->head->type();
   if (E->size())
   {
-    // 3. An Operation whose arguments cannot be evaluated, or that does not have all its arguments?
-    // Neither case is allowed, currently.
+    assert(not is_a<lambda>(E));
 
-    // 4. Lambda
-    object_ptr<const lambda> L = is_a<lambda>(E);
-    if (L) return true;
-
-    object_ptr<const lambda2> L2 = is_a<lambda2>(E);
-    if (L2) return true;
-
-    // 5. Constructor
-    object_ptr<const constructor> C = is_a<constructor>(E);
-    if (C) return true;
-
-    return false;
+    if (type == lambda2_type or type == constructor_type) 
+      return true;
+    else
+      return false;
   }
   else
   {
-    if (object_ptr<const parameter> p = is_a<parameter>(E))
+    if (type == parameter_type) 
       return false;
-
-    // 1. a (dummy) variable.
-    // 2. Literal constant.  Treat as 0-arg constructor.
-    return true;
+    else
+      return true;
   }
 }
 
