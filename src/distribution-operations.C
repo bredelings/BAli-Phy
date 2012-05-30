@@ -54,8 +54,8 @@ closure beta_density::operator()(OperationArgs& Args) const
 
 closure beta_quantile_op::operator()(OperationArgs& Args) const
 {
-  double p = *Args.evaluate_as<Double>(0);
-  expression_ref a = Args.evaluate_structure(1);
+  expression_ref a = Args.evaluate_structure(0);
+  double p = *Args.evaluate_as<Double>(1);
   
   std::valarray<double> A = get_varray<double,Double>(a);
   Double result = beta_quantile(p, A[0], A[1]);
