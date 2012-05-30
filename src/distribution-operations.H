@@ -122,6 +122,27 @@ struct beta_density: public Operation
 
 extern expression_ref beta_dist;
 
+struct beta_quantile_op: public Operation
+{
+  beta_quantile_op* clone() const {return new beta_quantile_op;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "beta_quantile_op";}
+
+  beta_quantile_op():Operation(2) { }
+};
+
 struct normal_density: public Operation
 {
   normal_density* clone() const {return new normal_density;}

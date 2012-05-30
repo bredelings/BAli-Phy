@@ -47,6 +47,8 @@ log_double_t cauchy_pdf(double x, double l=0.0, double s=1.0);
 
 log_double_t beta_pdf(double p,double a, double b);
 
+double beta_quantile(double p, double a, double b);
+
 log_double_t gamma_pdf(double y, double a, double b);
 
 double gamma_quantile(double p, double a, double b);
