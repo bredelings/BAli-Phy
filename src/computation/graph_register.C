@@ -624,7 +624,7 @@ void reg_heap::set_reduction_result(int R, closure&& result)
   // If the value is a pre-existing reg_var, then call it.
   if (result.exp->head->type() == index_var_type)
   {
-    int index = convert<const index_var>(result.exp)->index;
+    int index = convert<const index_var>(result.exp->head)->index;
 
     int Q = result.lookup_in_env( index );
     
