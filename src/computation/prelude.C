@@ -23,6 +23,7 @@ const expression_ref average = var("average");
 
 
 const expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
+const expression_ref UnwrapDD = var("UnwrapDD");
 
 
 Program get_Prelude()
@@ -118,6 +119,9 @@ Program get_Prelude()
 
   // length l = foldl_ (+) 0 l
   P += Def( (length, v1), (foldl_,v2^(v3^(v2+1)), 0, v1) );
+
+  // UnwrapDD (DiscreteDistribution l) = l
+  P += Def( (UnwrapDD, (DiscreteDistribution, v1)), v1 );
 
   return P;
 }

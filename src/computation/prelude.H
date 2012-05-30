@@ -23,6 +23,7 @@ extern const expression_ref ExtendDiscreteDistribution;
 extern const expression_ref UniformDiscretize;
 
 extern const expression_ref DiscreteDistribution;
+extern const expression_ref UnwrapDD;
 
 extern const Program Prelude;
 
