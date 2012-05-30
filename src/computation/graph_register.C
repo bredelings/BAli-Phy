@@ -2469,24 +2469,39 @@ int reg_heap::incremental_evaluate(int R, int t)
 	dot_graph_for_token(*this, t);
 #endif
 
-      RegOperationArgs Args(R, *this, t);
-      closure result = (*O)(Args);
-
-      // NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
-      //       How could we assert that?
-
-      // If the reduction doesn't depend on parameters, then replace E with the result.
-      if (not access(R).changeable)
+      try
       {
-	// The old used_input slots are not invalid, which is OK since none of them are changeable.
-	assert(not access(R).call);
-	assert(not access(R).result);
-	clear_used_inputs(R);
-	set_C(R, std::move(result) );
+	RegOperationArgs Args(R, *this, t);
+	closure result = (*O)(Args);
+	
+	// NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
+	//       How could we assert that?
+	
+	// If the reduction doesn't depend on parameters, then replace E with the result.
+	if (not access(R).changeable)
+	{
+	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
+	  assert(not access(R).call);
+	  assert(not access(R).result);
+	  clear_used_inputs(R);
+	  set_C(R, std::move(result) );
+	}
+	// Otherwise, set the reduction result.
+	else
+	  set_reduction_result(R, std::move(result) );
       }
-      // Otherwise, set the reduction result.
-      else
-	set_reduction_result(R, std::move(result) );
+      catch (const myexception& e)
+      {
+	std::cerr<<"evaluating reg # "<<R<<std::endl;
+	dot_graph_for_token(*this, t);
+	throw e;
+      }
+      catch (const std::exception& e)
+      {
+	std::cerr<<"evaluating reg # "<<R<<std::endl;
+	dot_graph_for_token(*this, t);
+	throw e;
+      }
 
 #ifndef NDEBUG
       //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
