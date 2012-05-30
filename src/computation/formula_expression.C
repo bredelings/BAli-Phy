@@ -167,6 +167,10 @@ formula_expression_ref lambda_quantify(const expression_ref& d, const formula_ex
   return F2;
 }
 
+formula_expression_ref operator^(const expression_ref& d, const formula_expression_ref& F)
+{
+  return lambda_quantify(d, F);
+}
 
 formula_expression_ref operator,(const expression_ref& E1, const formula_expression_ref& F2)
 {
