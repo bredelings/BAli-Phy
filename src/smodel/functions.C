@@ -25,7 +25,7 @@ const expression_ref MultiRate = var("MultiRate");
 const expression_ref ReversibleMarkov = lambda_expression( constructor("ReversibleMarkov", 6) );
 
 // (ReversibleFrequency alpha state_letters pi R)
-const expression_ref ReversibleFrequency = lambda_expression( constructor("ReversibleMarkov", 4) );
+const expression_ref ReversibleFrequency = lambda_expression( constructor("ReversibleFrequency", 4) );
 
 // (F81 alpha state_letters a pi)
 const expression_ref F81M = lambda_expression( constructor("F81", 4) );
