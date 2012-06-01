@@ -1272,6 +1272,8 @@ public:
 
   Matrix Q;
 
+  vector<double> start_P;
+
   bitmask_t all_bits;
 
   int n_characters() const
@@ -1417,7 +1419,9 @@ mhmm Glue(const mhmm& top, int out, mhmm bottom, int in)
   G.state_emit.push_back(bitmask_t());
   state_parts.push_back({top.start, active, bottom.start, active});
 
-  // The D/* -> */I transition is forbidded by the fact that D is never remembered and I is never committed.
+  // The D/* -> */I transition is forbidden by the fact that D is never remembered and I is never committed.
+  // Being committed to M, D, or E is basically equivalent to entering a wait state. Here, we add a separate
+  //  wait states M_c, D_c, and E_c which always go to M, D, and E with probability 1.
 
   // 5. Compute transition matrix
   G.Q.resize( G.state_emit.size(), G.state_emit.size() );
@@ -1443,7 +1447,7 @@ mhmm Glue(const mhmm& top, int out, mhmm bottom, int in)
     }
 
   // 6. Find compute the start_pi
-  G.start_pi.resize( G.state_emit.size() );
+  G.start_P.resize( G.state_emit.size() );
   for(int i=0;i<G.state_emit.size();i++)
   {  
     double p = 0;
