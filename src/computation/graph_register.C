@@ -2101,6 +2101,22 @@ class RegOperationArgs: public OperationArgs
   const expression& get_E() const {return *current_closure().exp;}
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
+  int evaluate_reg_no_record(int R2)
+  {
+    return M.incremental_evaluate(R2, t);
+  }
+
+  /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
+  int evaluate_slot_no_record(int slot)
+  {
+    int index = assert_is_a<index_var>(reference(slot))->index;
+
+    int R2 = M[R].C.lookup_in_env(index);
+
+    return evaluate_reg_no_record(R2);
+  }
+
+  /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int lazy_evaluate_reg(int R2)
   {
     // Compute the result, and follow non-changeable call chains.

@@ -24,6 +24,8 @@ struct OperationArgs: public Object
 
   virtual object_ref evaluate(int slot) = 0;
 
+  virtual int evaluate_slot_no_record(int) = 0;
+
   virtual const closure& lazy_evaluate(int) = 0;
 
   virtual const closure& lazy_evaluate_reg_closure(int) = 0;
