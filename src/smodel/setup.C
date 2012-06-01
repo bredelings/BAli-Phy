@@ -757,7 +757,12 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref I  = def_parameter("M8b::omega3_non_zero", Bool(true));
     formula_expression_ref w3 = (If, I, w, 1.0);
 
-    // Determine the a and b parameters of the beta distribution
+    // ------------ Determine the a and b parameters of the beta distribution ---------- //
+    // mu    = E(X)
+    // gamma = Var(X)/[ mu * (1-mu)] = 1/(1 + a + b)  \in (0,1]
+    //
+    // N = a + b = 1/gamma - 1
+
     formula_expression_ref mu = def_parameter("beta::mu", Double(0.5), between(0,1), beta_dist, Tuple(10.0, 1.0));
     formula_expression_ref gamma = def_parameter("beta::Var/mu", Double(0.1), between(0,1), exponential_dist, 0.1);
     formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
