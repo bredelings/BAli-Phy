@@ -233,7 +233,7 @@ int Model::add_note(const expression_ref& E)
 
   // 2. Check to see if this expression adds a prior
   results.clear();
-  query = (distributed, _1,_2);
+  query = (distributed, _1, _2);
   if (find_match(query, C.get_note(index), results))
   {
     // Extract the density operation
@@ -258,7 +258,7 @@ int Model::add_note(const expression_ref& E)
 	throw myexception()<<"Variable '"<<name<<"': new prior '"<<C.get_note(index)
 			   <<"' on top of original prior '"<<C.get_note(prior_note_index[p_index])<<"'?";
       else
-	prior_note_index[p_index] = p_index;
+	prior_note_index[p_index] = index;
     }
 
     // Extend the probability expression to include this term also.

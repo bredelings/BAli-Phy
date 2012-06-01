@@ -52,6 +52,16 @@ closure beta_density::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
+closure beta_quantile_op::operator()(OperationArgs& Args) const
+{
+  expression_ref a = Args.evaluate_structure(0);
+  double p = *Args.evaluate_as<Double>(1);
+  
+  std::valarray<double> A = get_varray<double,Double>(a);
+  Double result = beta_quantile(p, A[0], A[1]);
+  return object_ptr<const Object>(result.clone());
+}
+
 closure normal_density::operator()(OperationArgs& Args) const
 {
   object_ptr<const Double> x = Args.evaluate_as<Double>(0);
@@ -144,7 +154,7 @@ expression_ref log_exponential_dist = (prob_density, "LogExponential", lambda_ex
 
 expression_ref gamma_dist       = (prob_density, "Gamma", lambda_expression(gamma_density()), lambda_expression(gamma_quantile_op()));
 
-expression_ref beta_dist        = (prob_density, "Beta", lambda_expression(beta_density()), 0);
+expression_ref beta_dist        = (prob_density, "Beta", lambda_expression(beta_density()), lambda_expression(beta_quantile_op()));
 
 expression_ref normal_dist      = (prob_density, "Normal", lambda_expression(normal_density()), 0);
 

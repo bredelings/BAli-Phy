@@ -21,6 +21,16 @@ expression_ref operator&(const expression_ref&, const expression_ref&);
  *  a node in a directed acyclic graph, where each node has an Object on in.
  */
 
+enum type_number {none=0,
+		  parameter_type, 
+		  index_var_type,
+		  trim_type,
+		  let2_type,
+		  constructor_type,
+		  lambda_type,
+		  lambda2_type
+};
+
 /// An array of Objects.
 struct expression: public Object
 {
@@ -70,6 +80,8 @@ struct parameter: public Object
   std::string print() const {return parameter_name;}
   tribool compare(const Object& o) const;
   
+  int type() const {return parameter_type;}
+
   parameter(const std::string& s):parameter_name(s) { }
 };
 
@@ -82,6 +94,8 @@ struct index_var: public Object
   std::string print() const;
   tribool compare(const Object& o) const;
   
+  int type() const {return index_var_type;}
+
   index_var(int i):index(i) {}
 };
 
@@ -162,6 +176,8 @@ struct Trim: public Object
   Trim* clone() const {return new Trim(*this);}
   tribool compare(const Object& o) const;
 
+  int type() const {return trim_type;}
+
   std::string print() const;
 };
 
@@ -207,6 +223,8 @@ struct let2_obj: public Object
 
   tribool compare(const Object& o) const;
 
+  int type() const {return let2_type;}
+
   std::string print() const;
 };
 
@@ -234,6 +252,9 @@ struct constructor: public Operator
   virtual int precedence() const {return prec;}
 
   std::string name() const {return f_name;}
+
+  int type() const {return constructor_type;}
+
   constructor(const std::string&, int n);
 };
 
@@ -291,6 +312,7 @@ struct lambda: public Object
 {
   lambda* clone() const {return new lambda(*this);}
   tribool compare(const Object& o) const;
+  int type() const {return lambda_type;}
   std::string print() const;
 };
 
@@ -298,6 +320,8 @@ struct lambda2: public Object
 {
   lambda2* clone() const {return new lambda2(*this);}
   tribool compare(const Object& o) const;
+
+  int type() const {return lambda2_type;}
   std::string print() const;
 };
 

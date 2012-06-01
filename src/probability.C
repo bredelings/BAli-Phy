@@ -162,6 +162,20 @@ log_double_t beta_pdf(double p,double a, double b)
       return gsl_ran_beta_pdf(p,a,b);
 }
 
+double beta_quantile(double p, double a, double b)
+{
+  if (a<0 or b<0)
+    a=b=1;
+
+  double r = 100.0/std::max(a,b);
+  if (r < 1) {
+    a *= r;
+    b *= r;
+  }
+
+  return gsl_cdf_beta_Pinv(p,a,b);
+}
+
 log_double_t gamma_pdf(double x,double a, double b) 
 {
   if (x < 0) 

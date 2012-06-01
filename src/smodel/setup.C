@@ -508,6 +508,7 @@ bool process_stack_Multi(vector<string>& string_stack,
   vector<string> args;
 
   expression_ref plus = lambda_expression(Add<Double>());
+  expression_ref minus = lambda_expression(Minus<Double>());
   expression_ref times = lambda_expression(Multiply<Double>());
   expression_ref divide = lambda_expression(Divide<Double>());
 
@@ -743,97 +744,32 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(arg);
 
 
-    expression_ref Scale;
-    {
-      // FIXME - There's GOT to be a quicker way to create a function expression than this!
-      // How about making a "program"?
-      // - It would be a managed list of equality statements.
-      expression_ref scale = dummy("scale");
-
-      expression_ref p = dummy(0);
-      expression_ref q = dummy(1);
-      expression_ref x = dummy(2);
-      expression_ref t = dummy(3);
-
-      vector<expression_ref> patterns;
-      vector<expression_ref> bodies;
-      // scale p [] = []
-      patterns.push_back( Tuple(p, ListEnd) );
-      bodies.push_back( ListEnd );
-
-      // scale p (q,x):t = (p*q,x):(scale p t)
-      patterns.push_back( Tuple(p, Tuple(q,x)&t ) );
-      bodies.push_back(  Tuple((lambda_expression( Multiply<Double>() ), p,q),x) & (scale, p, t) );
-
-      expression_ref def_scale;// = def_function(patterns, bodies);
-
-      Scale = let_expression(scale, def_scale, scale);
-    }
-							   
     expression_ref Unwrap;
-    {
-      expression_ref unwrap = dummy("unwrap");
-
-      expression_ref p = dummy(0);
-      expression_ref q = dummy(1);
-      expression_ref x = dummy(2);
-      expression_ref t = dummy(3);
-
-      vector<expression_ref> patterns;
-      vector<expression_ref> bodies;
-
-      // unwrap DiscreteDistribution x = x
-      patterns.push_back( (DiscreteDistribution, dummy(0) ) );
-      bodies.push_back( dummy(0) );
-
-      expression_ref def_unwrap;// = def_function(patterns, bodies);
-
-      Unwrap = let_expression(unwrap, def_unwrap, unwrap);
-    }
 							   
-    // UnitMixture p x = DiscreteDistribution [(p,x)]
-    // [] ++ l2 = l2
-    // h:t ++ l2 = h:(t ++ l2)
-    // (DiscreteDistribution l1) ++ (DiscreteDistribution l2) = DiscreteDistribution (l1++l2)
-    // fmap1 f [] = []
-    // fmap1 f (p,x):t = (f p,x):(fmap1 f t)
-    // Scale p (DiscreteDistribution l) = DiscreteDistribution (fmap1 \q->q*p l)
-    // ExtendDiscreteDistribution p x d = (UnitMixure p x) ++ (Scale (1-p) d)
-    // if T y z = y
-    // if F y z = z
-    // w3 = if I w 1
-    // D = (Scale p1 (Discretize Beta n)) ++ (UnitMixture p2 1.0) ++ (UnitMixture p3 w3)
-    //
     // *Question*: How much does D simplify with "completely lazy" evaluation?
     // - can we simplify case x of (DiscreteDistribution l) -> case x of (DiscreteDistribution l) -> l
-    // - can the rho-calculus help here?
-
-    // How do I add definitions to the available functions, instead of simply constructing them here?
-    // Can I load these into a "program", that finally reduces to a single expression?
-    // - Can I ALSO remove the unreferenced variables in the program?
-    // - Can I ALSO transform the program to make it faster?
 
     formula_expression_ref p1 = def_parameter("M8b::f[Purifying]", Double(0.6), between(0,1));
     formula_expression_ref p2 = def_parameter("M8b::f[Neutral]", Double(0.3), between(0,1));
     formula_expression_ref p3 = def_parameter("M8b::f[Positive]", Double(0.1), between(0,1));
+    // [positive selection, if it exists] w ~ log_exponential(0.05)
     formula_expression_ref w = def_parameter("M8b::omega3", Double(1.0), lower_bound(1), log_exponential_dist, 0.05);
     formula_expression_ref I  = def_parameter("M8b::omega3_non_zero", Bool(true));
     formula_expression_ref w3 = (If, I, w, 1.0);
-    //    formula_expression_ref w3b = case_expression(
 
-    formula_expression_ref D = Tuple(p3,w3) &
-                               Tuple(p2,1.0) &
-                               (Scale, p1, (Unwrap,(Discretize,model_formula(Beta()),n)));
+    // Determine the a and b parameters of the beta distribution
+    formula_expression_ref mu = def_parameter("beta::mu", Double(0.5), between(0,1), beta_dist, Tuple(10.0, 1.0));
+    formula_expression_ref gamma = def_parameter("beta::Var/mu", Double(0.1), between(0,1), exponential_dist, 0.1);
+    formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
+    formula_expression_ref alpha = (times, N, mu); // a = N * mu;
+    formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
 
-    D = (DiscreteDistribution, D);
+    // Create the discrete distribution for omega
+    formula_expression_ref D = (UniformDiscretize, (lambda_expression(beta_quantile_op()), Tuple(alpha,beta)), n);
+    D = (DiscreteDistribution,Tuple(p3,w3) & (Tuple(p2,1.0) & (fmap1, (v4^(times,v4,p1)), (UnwrapDD, D))));
 
-    vector<Double> N(3);
-    N[0] = 10;
-    N[1] = 10;
-    N[2] = 1;
-
-    D.add_expression( (distributed, Tuple(p1,p2,p3),   Tuple(dirichlet_dist, get_tuple(N)) ) );
-    D.add_expression( (distributed, w, Tuple(log_exponential_dist, 0.05) ) );
+    // (p1,p2,p3) ~ Dirichlet(10, 10, 1)
+    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, Tuple(10.0, 10.0, 1.0)) ) );
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
