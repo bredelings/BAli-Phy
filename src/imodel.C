@@ -1438,9 +1438,22 @@ mhmm Glue(const mhmm& top, int out, mhmm bottom, int in)
 	p *= bottom.Q(state_parts[i].state2,state_parts[j].state2);
       else if (si2 == committed and state_parts[i].state2 != state_parts[j].state2)
 	p *= 0;
+
+      G.Q(i,j) = p;
     }
 
-  // 6. Find a 
+  // 6. Find compute the start_pi
+  G.start_pi.resize( G.state_emit.size() );
+  for(int i=0;i<G.state_emit.size();i++)
+  {  
+    double p = 0;
+    G.start_P[i] = top.start_P[state_parts[i].state1] * bottom.start_P[state_parts[i].state2];
+
+    // The idea here is to find some collection of states such that starting in distribution start_P on 
+    // those states leads to the same result as starting in S.  In practice, this is problematic, because
+    // when we sample backwards the only way to know when we've gotten to the "start" is if we hit an emitting
+    // state before the first character.
+  }
 
   return G;
 }
