@@ -43,7 +43,7 @@ Program get_Prelude()
           ( (foldl, v1, v2, v3&v4), (foldl, v1, (v1, v2, v3), v4) );
 
   // foldl' f z []  = z
-  // foldl' f z x:xs = let z' = (f z x) in seq z' $ foldl f z' xs
+  // foldl' f z x:xs = let z' = (f z x) in seq z' $ foldl' f z' xs
   P += Def( (foldl_, v1, v2, ListEnd)    , v2)
           ( (foldl_, v1, v2, v3&v4), let_expression(v5,(v1,v2,v3),(seq,v5,(foldl_, v1, v5, v4) ) ) );
 
