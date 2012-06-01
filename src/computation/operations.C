@@ -5,10 +5,40 @@
 using std::vector;
 using std::string;
 
+// Q: When is there a benefit to preserving the seq operation, instead of just
+//    returning a reference to arg #2?
+// A: Firstly, the benefit we are talking about is entirely a space benefit.
+//    This only occurs when pre-evaluating arg#1 decreases the size of the
+//    expression tree stored in memory.
+//
+//    Now, if we are re-running the computation because arg#2 is changeable,
+//    then we might simplify some subtree of arg#1 that was an unevaluated
+//    branch the first time around, *if* arg#1 is changeable and arg#2 is
+//    changeable.
+//
+//    However, in order to allow chains of seq to be eliminated, lets make
+//    seq x y just evaluate to y, instead of copying y's result.  (The cost
+//    of this is that any additional space cost that could be eliminated
+//    during a *second* evaluate of x (from a second evaluation of seq x y)
+//    will not be eliminated through a seq.
+//
+//    So, basically, seqs will always be unchangeable, and therefore will
+//    always be eliminated in favor of index_var references to y.
+//
+
+// NOTE: (a) Both seq and $ need to look up the memory location of one of their arguments.
+//       (b) Both seq and $ avoid evaluating the reg at this location. 
+// Thus: Every instead of reference(slot) actually looks up the relevant reg, except for
+//       the case operation, which instead uses reference to determine the branches.
+
 closure Seq::operator()(OperationArgs& Args) const
 {
-  Args.lazy_evaluate(0);
-  return Args.lazy_evaluate(1);
+  Args.evaluate_slot_no_record(0);
+
+  int index = assert_is_a<index_var>(Args.reference(1))->index;
+  int R = Args.current_closure().lookup_in_env( index);
+
+  return {index_var(0),{R}};
 }
 
 expression_ref seq = lambda_expression( Seq() );
