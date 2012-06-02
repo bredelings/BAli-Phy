@@ -1978,24 +1978,13 @@ void reg_heap::release_token(int t)
 {
   assert(token_is_used(t));
 
-  // NOTE: Don't spent more than O(used_regs) time clearing ownership.
-  //       This strategy allows us to be on the same order of magnitude
-  //       as copying and de-allocating the structure instead of sharing.
-
-  // NOTE: Clearing ownership is not NECESSARY but it avoids updating
-  //       unused ancestors when we change parameters.
-
-  // remove ownership marks on all of our used regs.
-
-#ifdef NDEBUG
-  remove_ownership_mark(t);
-#else
-  find_all_regs_in_context(t);
-#endif
-
-
   // We shouldn't have any temporary heads still on the stack, here!
+  // (This should be fast now, no longer proportional to the number of regs in context t.)
+  // (But how fast is it?)
   assert(token_roots[t].temp.empty());
+
+  // remove ownership marks on all of our regs - used and unused.
+  remove_ownership_mark(t);
 
   // remove the roots for the heads of graph t
   for(const auto& i: token_roots[t].heads)
@@ -2015,12 +2004,7 @@ void reg_heap::release_token(int t)
   unused_tokens.push_back(t);
   token_roots[t].used = false;
 
-  // This is a good tradeoff between clearing ALL unused ownership (which is too expensive)
-  // and clearing no unused ownership (which makes uniquify reg do too much extra work)
-
 #ifndef NDEBUG
-  // ISSUE!  Now parents of the regs whose ownership we cleared may still
-  //         reference children they don't own.
   check_used_regs();
 #endif
 }
