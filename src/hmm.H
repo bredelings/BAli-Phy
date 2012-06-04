@@ -108,4 +108,33 @@ public:
   virtual ~HMM() {}
 };
 
+#include <bitset>
+// Question: can we still fake start states?
+// We need a collection of non-silent states such that
+// \sum_i P(i,j) = P(Start,j)
+
+// multiple hidden-markov model
+class mhmm
+{
+public:
+  typedef std::bitset<64> bitmask_t;
+
+  std::vector<bitmask_t> state_emit;
+  int start;
+  int end;
+
+  Matrix Q;
+
+  std::vector<double> start_P;
+
+  bitmask_t all_bits;
+
+  int n_characters() const;
+
+  void remap_bits(const std::vector<int>& map);
+  //  mhmm(const vector<bitmask_t>&, const vector<double>&, const Matrix&, double);
+};
+
+mhmm Glue(const mhmm& top, int out, mhmm bottom, int in);
+
 #endif
