@@ -1602,26 +1602,6 @@ vector<expression_ref> get_ref_vector_from_list(const expression_ref& E)
   return V;
 }
 
-//FIXME - try to eliminate this!
-std::vector<expression_ref> get_ref_vector_from_tuple(const expression_ref& E)
-{
-  // FIXME - this doesn't handle 1-tuples very well!
-  // REMOVE -- only used in model_prior::operator()
-  //   We should convert model parameters to a list, since we
-  //   don't know in advance how many there will be.
-
-  // Tuples only work when you know in advance how many there will be.
-  //   -> REPLACE - get_ref_vector_from_tuple(E,n)
-
-  if (not E->size())
-    return {E};
-
-  std::vector<expression_ref> v2(E->size());
-  for(int i=0;i<v2.size();i++)
-    v2[i] = E->sub[i];
-  return v2;
-}
-
 template<> expression_ref get_tuple<>(const vector<expression_ref>& S)
 {
   if (S.size() == 1) return S[0]->head;

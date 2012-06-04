@@ -611,8 +611,6 @@ std::vector<T> get_vector(const expression_ref& E)
 
 std::vector<expression_ref> get_ref_vector_from_list(const expression_ref& E);
 
-std::vector<expression_ref> get_ref_vector_from_tuple(const expression_ref& E);
-
 template <typename T,typename U>
 std::vector<T> get_vector_from_list(const expression_ref& E)
 {
