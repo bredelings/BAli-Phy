@@ -585,8 +585,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   {
     int s = P->smodel_for_partition[partition_index];
     expression_ref F = P->C.get_expression(P->SModels[s].frequencies);
-    expression_ref V = Vector_From_List<double,Double>();
-    frequencies_indices.push_back( p->C.add_compute_expression( (V,(F,m))) );
+    frequencies_indices.push_back( p->C.add_compute_expression( (F,m) ) );
 
     expression_ref BM = P->C.get_expression(P->SModels[s].base_model);
     base_model_indices.push_back( p->C.add_compute_expression((BM,m)) );

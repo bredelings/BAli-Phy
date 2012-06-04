@@ -58,13 +58,13 @@ Program SModel_Functions()
   // scale x (MixtureModel (DiscreteDistribution l)) s= (MixtureModel (DiscreteDistribution (fmap2,scale(s),l))) ??
   P += Def( (scale,v0,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(ReversibleMarkov,v1,v2,v3,v4,v5,(times,v0,v6)) );
 
-  // rate (ReversibleMarkovModel a smap q pi l t) = t*(get_equilibrium_rate a smap q pi)
+  // rate (ReversibleMarkovModel a smap q vector<pi> l t) = t*(get_equilibrium_rate a smap q pi)
   // rate (MixtureModel (DiscreteDistribution l) ) = average (fmap2 rate l)
-  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(times,v6,(substitution::Get_Equilibrium_Rate,v1,v2,v3,(Vector_From_List<double,Double>(),v4)) ) )
+  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(times,v6,(substitution::Get_Equilibrium_Rate,v1,v2,v3,v4) ) )
           ( (rate,(MixtureModel, v1) ), (average,(fmap2, rate, v1) ) );
      
   // QExp (ReversibleMarkov a smap q pi l t) = (LExp l pi t)
-  P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), (LExp,v5,(Vector_From_List<double,Double>(),v4),v6));
+  P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), (LExp,v5,v4,v6));
 
   // branch_transition_p m@(MixtureModel (DiscreteDistribution l) ) t = list_to_vector (fmap \p->(QExp (scale (t/(rate m)) (snd p) ) ) l)
   P += Def( (branch_transition_p, (MixtureModel, (DiscreteDistribution, v3) ), v1 ),
@@ -72,7 +72,7 @@ Program SModel_Functions()
 
   // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0
   P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), 
-	    let_expression(v6,(substitution::Q,v1,v5),(ReversibleMarkov, v2, v3, v6, v4, (substitution::Get_Eigensystem,v6,(Vector_From_List<double,Double>(),v4)), 1.0) ) );
+	    let_expression(v6,(substitution::Q,v1,v5),(ReversibleMarkov, v2, v3, v6, v4, (substitution::Get_Eigensystem,v6,v4), 1.0) ) );
 
   // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
   P += Def( (n_base_models, (MixtureModel,(DiscreteDistribution,v1))), (length,v1));
