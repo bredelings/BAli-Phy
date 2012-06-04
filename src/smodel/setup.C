@@ -133,10 +133,12 @@ bool process_stack_Markov(vector<string>& string_stack,
   */
   if (match(string_stack,"F81",arg))
   {
+    /*
     if (frequencies)
       model_stack.push_back(F81_Model(*a,*frequencies));
     else
       model_stack.push_back(F81_Model(*a));
+    */
   }
 
   else if (match(string_stack,"HKY",arg)) 
@@ -224,6 +226,7 @@ bool process_stack_Markov(vector<string>& string_stack,
   else if (match(string_stack,"Empirical",arg)) {
     model_stack.push_back((Empirical,a,arg));
   }
+  /*
   else if (match(string_stack,"C10",arg))
   {
     if (*a != AminoAcids())
@@ -243,7 +246,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     M.load_file(arg);
     model_stack.push_back(M);
   }
-
+  */
   else if (match(string_stack,"M0",arg)) 
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
@@ -355,6 +358,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
+  /*
   else if (match(string_stack,"F=nucleotides",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
@@ -405,6 +409,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     model_stack.back() = Reversible_Markov_Model(EM,CodonsFrequencyModel2(*C));
   }
+  */
   else
     return false;
   return true;

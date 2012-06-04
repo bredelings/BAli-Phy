@@ -200,35 +200,6 @@ namespace substitution {
 
   expression_ref DiscretizationFunction(const probability::Distribution& D, Int n);
 
-  struct DiscretizationOp: public Operation
-  {
-    DiscretizationOp* clone() const {return new DiscretizationOp(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const
-    {
-      object_ptr<const probability::Distribution> D = Args.evaluate_as<probability::Distribution>(0);
-      object_ptr<const Int> n = Args.evaluate_as<Int>(1);
-      
-      return DiscretizationFunction(*D, *n);
-    }
-
-    std::string name() const {return "DiscretizedDistribution";}
-
-    DiscretizationOp():Operation(2) { }
-  };
-
-  extern expression_ref Discretize;
-
   // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
   //         Q(mi -> ni) = R(m->n)        for model exchange
   // and     Q(mi -> nj) = 0              for all other pairs

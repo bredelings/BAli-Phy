@@ -465,8 +465,6 @@ namespace substitution
     return graph_normalize((DiscreteDistribution, get_list(pairs) ));
   }
 
-  expression_ref Discretize = lambda_expression( DiscretizationOp() );
-
   // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
   //         Q(mi -> ni) = R(m->n)        for model exchange
   // and     Q(mi -> nj) = 0              for all other pairs

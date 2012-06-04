@@ -88,26 +88,6 @@ vector<expression_ref> model_parameter_expressions(const Model& M)
   return sub;
 }
 
-expression_ref model_result_expression(const Model& M)
-{
-  vector< expression_ref > sub;
-  for(int i=0;i<M.n_parameters();i++) 
-    sub.push_back( parameter(M.parameter_name(i)) );
-  
-  return new expression(M, sub);
-}
-
-expression_ref model_prior_expression(const Model& M)
-{
-  vector< expression_ref > sub;
-
-  return (distributed, get_tuple( model_parameter_expressions( M ) ),
-	  Tuple((prob_density, model_prior(M).name(), lambda_expression(model_prior(M)),0), 
-			       Tuple(0) 
-			       )
-		      );
-}
-
 void Model::validate() const
 {
   valid = true;
@@ -380,14 +360,13 @@ vector<string> Model::show_priors() const
 }
 
 Model::Model()
-  :Operation(0),valid(false),prior_index(-1)
+  :valid(false),prior_index(-1)
 { }
 
 int add_probability_expression(context& C);
 
 Model::Model(const vector<expression_ref>& notes)
-  :Operation(0),
-   valid(false)
+  :valid(false)
 {
   // 1. Create the parameters
   std::set<string> names = find_named_parameters(notes);
@@ -433,49 +412,8 @@ Model::Model(const vector<expression_ref>& notes)
 
 object_ptr<const Object> Model::result() const
 {
-  object_ptr<Model> M (clone());
-  M->update();
-  return M;
+  std::abort();
 }
-
-closure Model::operator()(OperationArgs& Args) const
-{
-  object_ptr<Model> M (clone());
-  for(int i=0;i<n_parameters();i++)
-    M->set_parameter_value(i,Args.evaluate(i));
-  return M->result();
-}
-
-closure model_prior::operator()(OperationArgs& Args) const
-{
-  expression_ref R = Args.evaluate(0);
-
-  vector<expression_ref> v = get_ref_vector_from_tuple(R);
-
-  object_ptr<Model> M2 (M->clone());
-  for(int i=0;i<M2->n_parameters();i++)
-    M2->set_parameter_value(i,v[i]);
-
-  return object_ptr<const Object>(new Log_Double(M2->prior()));
-}
-
-formula_expression_ref model_formula(const Model& M)
-{
-  vector<expression_ref> N;
-  for(int i=0;i<M.n_parameters();i++)
-  {
-    expression_ref var = parameter(M.parameter_name(i));
-    N.push_back((var_bounds, var, M.get_bounds(i)));
-
-    if (M.get_parameter_value(i))
-      N.push_back((default_value, var, M.get_parameter_value(i)));
-  }
-
-  N.push_back( model_prior_expression(M) );
-
-  return formula_expression_ref(N, model_result_expression(M) );
-}
-
 
 void Model::update()
 {
@@ -484,11 +422,6 @@ void Model::update()
     recalc(modified_parameters());
     validate();
   }
-}
-
-Model::operator formula_expression_ref() const
-{
-  return model_formula(*this);
 }
 
 int SuperModel::add_parameter(const Parameter& P)
@@ -948,18 +881,6 @@ vector<int> parameters_with_extension(const Model& M, string name)
   }
 
   return indices;
-}
-
-object_ptr<Model> prefix_model(const Model& M, const string& prefix)
-{
-  object_ptr<Model> M2 (M.clone());
-
-  for(int i=0;i<M2->n_parameters();i++)
-  {
-    M2->rename_parameter(i,prefix + "::" + M2->parameter_name(i));
-  }
-
-  return M2;
 }
 
 vector<string> show_probability_expressions(const context& C)
