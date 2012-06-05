@@ -113,6 +113,8 @@ public:
 // We need a collection of non-silent states such that
 // \sum_i P(i,j) = P(Start,j)
 
+namespace indel { class PairHMM; }
+
 // multiple hidden-markov model
 class mhmm
 {
@@ -132,9 +134,13 @@ public:
   int n_characters() const;
 
   void remap_bits(const std::vector<int>& map);
+
+  mhmm() = default;
+
+  mhmm(const indel::PairHMM&);
   //  mhmm(const vector<bitmask_t>&, const vector<double>&, const Matrix&, double);
 };
 
-mhmm Glue(const mhmm& top, int out, mhmm bottom, int in);
+mhmm Glue(const mhmm& top, const mhmm& bottom);
 
 #endif

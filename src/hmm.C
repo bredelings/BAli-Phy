@@ -339,15 +339,30 @@ void mhmm::remap_bits(const vector<int>& map)
   int B = map.size();
   
   vector<bitmask_t> state_emit2(state_emit.size());
+  all_bits.reset();
   for(int i=0;i<state_emit.size();i++)
   {
     bitmask_t mask;
     for(int j=0;j<B;j++)
       mask.set(map[j],state_emit[i].test(j));
     state_emit2[i] = mask;
+    all_bits |= mask;
   }
 
   std::swap(state_emit, state_emit2);
+}
+
+#include "2way.H"
+#include "imodel.H"
+
+mhmm::mhmm(const indel::PairHMM& P)
+  :state_emit({3,2,1,0,0}),
+   start(A2::states::S),
+   end(A2::states::E),
+   Q(P),
+   start_P(P.start_pi()),
+   all_bits(3)
+{
 }
 
 
@@ -359,8 +374,16 @@ mhmm remap_bits(const mhmm& m1, const vector<int>& map)
 }
 
 // s:s (m/i):(m/d) (m,i,s)_r:I D:(m,d,e)_c e:e
-mhmm Glue(const mhmm& top, int out, mhmm bottom, int in)
+mhmm Glue(const mhmm& top, const mhmm& bottom)
 {
+  int glue_bit = -1;
+  for(int i=0;i<64;i++)
+    if (top.all_bits.test(i) and bottom.all_bits.test(i))
+    {
+      assert(glue_bit == -1);
+      glue_bit = i;
+    }
+
   // 1. Classify top states into S, E, M/I, and D
   vector<int> m_or_i1;
   vector<int> d1;
@@ -371,7 +394,7 @@ mhmm Glue(const mhmm& top, int out, mhmm bottom, int in)
 
     assert(top.state_emit[i].any());
 
-    if (top.state_emit[i].test(out))
+    if (top.state_emit[i].test(glue_bit))
       m_or_i1.push_back(i);
     else
       d1.push_back(i);
@@ -387,23 +410,11 @@ mhmm Glue(const mhmm& top, int out, mhmm bottom, int in)
 
     assert(bottom.state_emit[i].any());
 
-    if (bottom.state_emit[i].test(in))
+    if (bottom.state_emit[i].test(glue_bit))
       m_or_d2.push_back(i);
     else
       i2.push_back(i);
   }
-
-  // 3. Map top & bottom bits onto the bits of the output mhmm
-  vector<int> map (bottom.n_characters());
-  int temp = top.n_characters();
-  for(int i=0;i<map.size();i++)
-  {
-    if (i == in)
-      map[i] = out;
-    else
-      map[i] = temp++;
-  }
-  bottom.remap_bits(map);
 
   // 4. Construct states for the new HMM
   enum status_t {active, remembered, committed};
@@ -417,6 +428,7 @@ mhmm Glue(const mhmm& top, int out, mhmm bottom, int in)
   };
 
   mhmm G;
+  G.all_bits = top.all_bits | bottom.all_bits;
   vector<parts> state_parts;
 
   // M/I:M/D
@@ -430,7 +442,6 @@ mhmm Glue(const mhmm& top, int out, mhmm bottom, int in)
   // How do we record the info on the hidden states?
   // Actually, this is the hardest part of the whole thing!
 
-  /*
   // (M,I,S)_r:I
   for(int s1: m_or_i1)
     for(int s2: i2)
@@ -438,13 +449,14 @@ mhmm Glue(const mhmm& top, int out, mhmm bottom, int in)
       G.state_emit.push_back(bottom.state_emit[s2]);
       state_parts.push_back({s1,remembered,s2,active});
     }
-  */
 
+  /*
   for(int s2: i2)
   {
     G.state_emit.push_back(bottom.state_emit[s2]);
     state_parts.push_back({top.start, remembered,s2,active});
   }
+  */
 
   for(int s1: d1)
     for(int s2: m_or_d2)
