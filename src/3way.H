@@ -70,7 +70,7 @@ namespace A3 {
 
   std::vector<double> get_start_P(const std::vector<indel::PairHMM>& P);
 
-  int bits_to_states(int bits);
+  int bits_to_states(bitmask_t bits);
 
   int getstates(int S);
 
