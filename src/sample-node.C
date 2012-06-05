@@ -123,18 +123,23 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   /*-------------- Create alignment matrices ---------------*/
 
   // Cache which states emit which sequences
-  vector<int> state_emit(nstates+1);
-  for(int S2=0;S2<state_emit.size();S2++) {
-    state_emit[S2] = 0;
-
+  vector<bitmask_t> state_emit(nstates+1);
+  for(int S2=0;S2<state_emit.size();S2++)
     if (di(S2) or dj(S2) or dk(S2)) 
       state_emit[S2] |= (1<<0);
-  }
-
 
   vector<int> branches;
   for(int i=1;i<nodes.size();i++)
     branches.push_back(T.branch(nodes[0],nodes[i]) );
+
+  mhmm m1 = P.get_branch_HMM(T.branch(nodes[1],nodes[0]));
+  m1.remap_bits({1,0});
+  mhmm m2 = P.get_branch_HMM(T.branch(nodes[2],nodes[0]));
+  m2.remap_bits({0,2});
+  mhmm m3 = P.get_branch_HMM(T.branch(nodes[3],nodes[0]));
+  m3.remap_bits({0,3});
+
+  mhmm m123 = Glue(m1,Glue(m2,m3));
 
   const Matrix Q = createQ( P.get_branch_HMMs(branches) );
   vector<double> start_P = get_start_P( P.get_branch_HMMs(branches) );

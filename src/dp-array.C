@@ -150,7 +150,7 @@ void DParray::set_length(int l)
   Pr_total = 0;
 }
 
-DParray::DParray(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Beta)
+DParray::DParray(int l,const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
   :DPengine(v1,v2,M,Beta)
 { 
   set_length(l);
@@ -379,7 +379,7 @@ void DParrayConstrained::set_length(int l)
   allowed_states.resize(size());
 }
 
-DParrayConstrained::DParrayConstrained(int l,const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Beta)
+DParrayConstrained::DParrayConstrained(int l,const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
   :DParray(l,v1,v2,M,Beta)
 { 
   allowed_states.resize(size());

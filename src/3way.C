@@ -151,16 +151,16 @@ namespace A3 {
   }
   
 
-  vector<int> get_state_emit() {
-    vector<int> state_emit(nstates+1);
+  vector<bitmask_t> get_state_emit() {
+    vector<bitmask_t> state_emit(nstates+1);
     for(int S2=0;S2<state_emit.size();S2++) {
-      state_emit[S2] = 0;
+      state_emit[S2];
       
       if (di(S2)) 
-	state_emit[S2] |= (1<<0);
+	state_emit[S2].set(0);
       
       if (dc(S2)) 
-	state_emit[S2] |= (1<<1);
+	state_emit[S2].set(1);
     }
     return state_emit;
   }

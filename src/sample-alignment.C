@@ -113,7 +113,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   vector< Matrix > dists1 = distributions(P,seq1,b,true);
   vector< Matrix > dists2 = distributions(P,seq2,b,false);
 
-  vector<int> state_emit(4,0);
+  vector<HMM::bitmask_t> state_emit(4,0);
   state_emit[0] |= (1<<1)|(1<<0);
   state_emit[1] |= (1<<1);
   state_emit[2] |= (1<<0);

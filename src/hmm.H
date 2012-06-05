@@ -73,10 +73,10 @@ public:
   std::vector<double> start_P;
 
   /// bitmasks of whether states emit features in each sequence
-  std::vector<int> state_emit;
+  std::vector<bitmask_t> state_emit;
 
   /// Is state S a silent state?
-  bool silent(int S) const {return not state_emit[S];}
+  bool silent(int S) const {return state_emit[S].none();}
 
   /// Is state S part of a loop of silent states?  FIXME: s/network/cycle/...
   bool silent_network(int S) const;
@@ -106,7 +106,7 @@ public:
   efloat_t path_GQ_path(const std::vector<int>& g_path) const;
 
   /// Construct an HMM from the emission characteristics of the states, the start probabilities, and the transition matrix
-  HMM(const std::vector<int>&,const std::vector<double>&,const Matrix&,double);
+  HMM(const std::vector<bitmask_t>&,const std::vector<double>&,const Matrix&,double);
 
   virtual ~HMM() {}
 };

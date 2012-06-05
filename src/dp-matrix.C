@@ -398,7 +398,7 @@ vector<int> DPmatrix::sample_path() const
 
 DPmatrix::DPmatrix(int i1,
 		   int i2,
-		   const vector<int>& v1,
+		   const vector<bitmask_t>& v1,
 		   const vector<double>& v2,
 		   const Matrix& M,
 		   double Beta)
@@ -534,7 +534,7 @@ void DPmatrixEmit::prepare_cell(int i,int j)
   s12_sub(i,j) = total;
 }
 
-DPmatrixEmit::DPmatrixEmit(const vector<int>& v1,
+DPmatrixEmit::DPmatrixEmit(const vector<bitmask_t>& v1,
 			   const vector<double>& v2,
 			   const Matrix& M,
 			   double Beta,

@@ -66,7 +66,7 @@ namespace A3 {
   /// The name of the E (end) state
   const int endstate = nstates;
 
-  std::vector<int> get_state_emit();
+  std::vector<bitmask_t> get_state_emit();
 
   std::vector<double> get_start_P(const std::vector<indel::PairHMM>& P);
 

@@ -259,7 +259,7 @@ void HMM::update_GQ()
 }
 
 // Don't scale Q and GQ until the end???
-HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Beta)
+HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
   :silent_network_(v1.size()),
    B(Beta),
    Q(M),GQ(M.size1(),M.size2()),
