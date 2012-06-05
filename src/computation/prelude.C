@@ -26,7 +26,7 @@ const expression_ref DiscreteDistribution = lambda_expression(constructor("Discr
 const expression_ref UnwrapDD = var("UnwrapDD");
 
 
-Program get_Prelude()
+Program make_Prelude()
 {
   Program P;
 
@@ -126,4 +126,8 @@ Program get_Prelude()
   return P;
 }
 
-const Program Prelude = get_Prelude();
+const Program& get_Prelude()
+{
+  static const Program P = make_Prelude();
+  return P;
+}

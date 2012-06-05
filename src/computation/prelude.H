@@ -25,7 +25,7 @@ extern const expression_ref UniformDiscretize;
 extern const expression_ref DiscreteDistribution;
 extern const expression_ref UnwrapDD;
 
-extern const Program Prelude;
+const Program& get_Prelude();
 
 
 #endif
