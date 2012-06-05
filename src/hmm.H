@@ -28,6 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "mytypes.H"
 #include "logsum.H"
+#include <bitset>
 
 // Can I make Q into a general function, backed by a matrix in some cases?
 
@@ -51,6 +52,8 @@ class HMM {
   void find_and_index_silent_network_states();
 
 public:
+  typedef std::bitset<64> bitmask_t;
+
   /// The 'temperature' parameter - e.g. scale log(P) => log(P)/T
   double B;
 
@@ -108,7 +111,6 @@ public:
   virtual ~HMM() {}
 };
 
-#include <bitset>
 // Question: can we still fake start states?
 // We need a collection of non-silent states such that
 // \sum_i P(i,j) = P(Start,j)
