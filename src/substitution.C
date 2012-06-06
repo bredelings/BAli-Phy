@@ -47,6 +47,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::valarray;
 using std::vector;
+using std::pair;
 
 // This file assumes that 
 // * the matrix is reversible.  This means that we evaluate
@@ -180,6 +181,22 @@ inline double element_prod_sum(Matrix& M1,const Matrix& M2,const Matrix& M3,cons
     sum += m1[i] * m2[i] * m3[i] * m4[i];
 
   return sum;
+}
+
+pair<int,int> sample(const Matrix& M)
+{
+  double total = element_sum(M);
+  double r = uniform()*total;
+
+  double sum = 0;
+  for(int m=0;m<M.size1();m++)
+    for(int l=0;l<M.size2();l++)
+    {
+      sum += M(m,l);
+      if (total < sum)
+	return {m,l};
+    }
+  return {-1,-1};
 }
 
 namespace substitution {
@@ -1734,6 +1751,147 @@ namespace substitution {
     return Pr;
   }
 
+  vector<vector<pair<int,int>>> 
+  sample_subst_history(const vector< vector<int> >& sequences, const alignment& A,
+		       subA_index_t& I, const Mat_Cache& MC,
+		       const Tree& T,Likelihood_Cache& cache)
+  {
+#ifdef DEBUG_INDEXING
+    I.check_footprint(A, T);
+    check_regenerate(I, A, T, cache.root);
+#endif
+
+    // Make sure that all conditional likelihoods have been calculated.
+    IF_DEBUG_S(int n_br =) calculate_caches_for_node(cache.root, sequences, A,I,MC,T,cache);
+#ifdef DEBUG_SUBSTITUTION
+    std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
+#endif
+
+    // scratch matrix 
+    Matrix & S = cache.scratch(0);
+    const int n_models = cache.n_models();
+    const int n_states = cache.n_states();
+
+    int root = cache.root;
+
+    // Compute matrix F(m,s) = Pr(m)*Pr(s|m) = p(m)*freq(m,s) 
+    Matrix F(n_models, n_states);
+    MC.WeightedFrequencyMatrix(F);
+
+    // 1. Allocate arrays for storing results and temporary results.
+    vector<vector<pair<int,int> > > ancestral_characters (A.n_sequences());
+    vector<vector<pair<int,int> > > subA_index_parent_characters (T.n_branches()*2);
+    
+    // compute root branches
+    vector<int> rb;
+    for(const_in_edges_iterator i = T.node(root).branches_in();i;i++)
+      rb.push_back(*i);
+
+    // All the (-1,-1)'s should be overwritten with the sampled character.
+    for(int i=0;i<A.n_sequences();i++)
+      ancestral_characters[i] = vector<pair<int,int>>(A.seqlength(i), {-1,-1});
+
+    // Some suba-indices don't HAVE parent characters, so the (-1,-1)'s will indicate something.
+    for(int b=0;b<T.n_branches()*2;b++)
+      subA_index_parent_characters[b] = vector<pair<int,int>>(I.branch_index_length(b), {-1,-1});
+
+    // FIXME - this needs to get indices for the branch rb and the node root!
+    ublas::matrix<int> index = I.get_subA_index(rb, A, T);
+    // FIXME - this doesn't handle case where tree has only 2 leaves.
+    for(int i=0;i<index.size1();i++)
+    {
+      int i0 = index(i,0);
+      int i1 = index(i,1);
+      int i2 = index(i,2);
+      int ii = index(i,3);
+
+      S = F;
+
+      if (i0 != -1)
+	element_prod_modify(S, cache[rb[0]][i0]);
+      if (i1 != -1)
+	element_prod_modify(S, cache[rb[1]][i1]);
+      if (i2 != -1)
+	element_prod_modify(S, cache[rb[2]][i2]);
+
+      pair<int,int> letter_model = sample(S);
+
+      if (ii != -1)
+	ancestral_characters[root][ii] = letter_model;
+
+      if (i0 != -1)
+	subA_index_parent_characters[rb[0]][i0] = letter_model;
+      if (i1 != -1)
+	subA_index_parent_characters[rb[0]][i1] = letter_model;
+      if (i2 != -1)
+	subA_index_parent_characters[rb[0]][i2] = letter_model;
+    }
+
+    vector<const_branchview> branches = branches_toward_node(T, cache.root);
+    std::reverse(branches.begin(), branches.end());
+
+    for(const_branchview b: branches)
+    {
+      const vector<Matrix>& transition_P = MC.transition_P(b);
+
+      vector<const_branchview> local_branches = {b};
+      for(const_in_edges_iterator i = b.branches_before();i;i++)
+	local_branches.push_back(*i);
+
+      if (local_branches.size() == 1)
+      {
+	
+      }
+      else
+      {
+	assert(local_branches.size() == 3);
+
+	// FIXME - this needs to get indices for the branch rb and the node root!
+	ublas::matrix<int> index = I.get_subA_index(rb, A, T);
+
+	for(int i=0;i<index.size1();i++)
+	{
+	  int i0 = index(i,0);
+	  int i1 = index(i,1);
+	  int i2 = index(i,2);
+	  int ii = index(i,3);
+	
+	  if (i0 != -1)
+	  {
+	    pair<int,int> letter_model_parent = subA_index_parent_characters[b][i0];
+	    int mp = letter_model_parent.first;
+	    int lp = letter_model_parent.second;
+	    element_assign(S,0);
+
+	    const Matrix& Q = transition_P[mp];
+
+	    for(int l=0;l<n_states;l++)
+	      S(mp,l) = Q(lp,l);
+	  }
+	  else
+	    S = F;
+	
+	  if (i1 != -1)
+	    element_prod_modify(S, cache[rb[1]][i1]);
+	  if (i2 != -1)
+	    element_prod_modify(S, cache[rb[2]][i2]);
+	
+	  pair<int,int> letter_model = sample(S);
+	
+	  if (ii != -1)
+	    ancestral_characters[root][ii] = letter_model;
+	
+	  if (i1 != -1)
+	    subA_index_parent_characters[rb[0]][i1] = letter_model;
+	  if (i2 != -1)
+	    subA_index_parent_characters[rb[0]][i2] = letter_model;
+	}
+      }
+    }
+
+    return ancestral_characters;
+  }
+
   /* 1. It seems that we should be able to select (l,m) pairs for
      columns that have substitution indices for directed branches
      pointing to the root (since, in the context of a given root,
@@ -1777,7 +1935,7 @@ namespace substitution {
 
      2b. The source node for that branch may have two incoming edges.
      
-     
+     If there is no parent letter, then we can just multiple the 
      
   */     
 
