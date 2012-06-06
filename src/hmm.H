@@ -32,8 +32,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 // Can I make Q into a general function, backed by a matrix in some cases?
 
-/// A Hidden Markov Model - represented by the transition matrix and accessory functions
+namespace indel { class PairHMM; }
 
+/// A Hidden Markov Model - represented by the transition matrix and accessory functions
 class HMM {
   /// Is each state part of the silent network?
   std::vector<int> silent_network_;
@@ -75,6 +76,8 @@ public:
   /// bitmasks of whether states emit features in each sequence
   std::vector<bitmask_t> state_emit;
 
+  bitmask_t all_bits() const;
+
   /// Is state S a silent state?
   bool silent(int S) const {return state_emit[S].none();}
 
@@ -105,6 +108,8 @@ public:
   /// Calculates the (log) product of each move, according to the generalized HMM
   efloat_t path_GQ_path(const std::vector<int>& g_path) const;
 
+  HMM(const indel::PairHMM&);
+
   /// Construct an HMM from the emission characteristics of the states, the start probabilities, and the transition matrix
   HMM(const std::vector<bitmask_t>&,const std::vector<double>&,const Matrix&,double);
 
@@ -114,8 +119,6 @@ public:
 // Question: can we still fake start states?
 // We need a collection of non-silent states such that
 // \sum_i P(i,j) = P(Start,j)
-
-namespace indel { class PairHMM; }
 
 // multiple hidden-markov model
 class mhmm

@@ -27,6 +27,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "hmm.H"
 #include "logsum.H"
 #include "choose.H"
+#include "2way.H"
+#include "imodel.H"
 
 using std::abs;
 using std::vector;
@@ -258,6 +260,18 @@ void HMM::update_GQ()
   GQ_exit(GQ, silent_network_states, non_silent_network);
 }
 
+HMM::HMM(const indel::PairHMM& P)
+  :HMM({3,2,1,0},P.start_pi(), P, 1.0)
+{ }
+
+HMM::bitmask_t HMM::all_bits() const
+{
+  bitmask_t mask;
+  for(bitmask_t m: state_emit)
+    mask |= m;
+  return mask;
+}
+
 // Don't scale Q and GQ until the end???
 HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
   :silent_network_(v1.size()),
@@ -265,7 +279,6 @@ HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,do
    Q(M),GQ(M.size1(),M.size2()),
    start_P(v2),state_emit(v1) 
 {
-
   //--------------- Find and index nodes in silent networks ---------------//
   find_and_index_silent_network_states();
 
@@ -351,9 +364,6 @@ void mhmm::remap_bits(const vector<int>& map)
 
   std::swap(state_emit, state_emit2);
 }
-
-#include "2way.H"
-#include "imodel.H"
 
 mhmm::mhmm(const indel::PairHMM& P)
   :state_emit({3,2,1,0,0}),
