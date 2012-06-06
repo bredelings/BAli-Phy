@@ -1734,6 +1734,53 @@ namespace substitution {
     return Pr;
   }
 
+  /* 1. It seems that we should be able to select (l,m) pairs for
+     columns that have substitution indices for directed branches
+     pointing to the root (since, in the context of a given root,
+     there are no out-going edges). Such edges are "incoming-present"
+     in the substitution index matrix, even if they are not
+     "outgoing-present".  And this presence (in the substitution index
+     matrix) is different than whether there is actually an internal
+     node character there in the alignment. 
+
+     We can then map columns that are incoming-present to present
+     internal node characters. If the alignment is fixed, we could
+     either (a) skip this step, or (b) assume that internal node
+     characters are always present, or (c) assume the minimal
+     arrangement of internal node characters necessary to connect the
+     observed leaf characters. 
+
+     IF we have a variable alignment, then we know which internal node
+     characters are present and which are not.  Some present internal
+     node characters at the root may not be incoming-present in the
+     substitution indices.  We sample these characters from F, since
+     no data applies to them.  
+
+     2. We then consider directed edges pointing to the root.
+
+     2a. The source node for that branch may have no incoming edges.
+     In this case, the source node is a leaf node.  The substitution
+     index for this branch is the same as the index of letters in the
+     leaf sequence (for both subA-indices we have currently, at
+     least).  Therefore, we are done, unless the leaf character is an
+     ambiguous letter.  
+
+     Assume the letter is ambiguous.  If the branch points to an
+     outgoing edge (or root) with a (l,m) pair, then we look at
+     \Pr(data,l',m') = \Pr(l,m -> l',m') which is just the Q matrix
+     from model m.
+
+     If the branch has no (l,m) pair, then we have
+     \Pr(data,l',m') = \Pr(l,m) \times \Pr(l,m -> l',m')
+     Thus, we use the Q matrix, but multiplied by the corresponding
+     values from the frequency matrix F.
+
+     2b. The source node for that branch may have two incoming edges.
+     
+     
+     
+  */     
+
 
   vector<Matrix> 
   get_likelihoods_by_alignment_column(const vector< vector<int> >& sequences, const alignment& A,
