@@ -1782,11 +1782,6 @@ namespace substitution {
     vector<vector<pair<int,int> > > ancestral_characters (A.n_sequences());
     vector<vector<pair<int,int> > > subA_index_parent_characters (T.n_branches()*2);
     
-    // compute root branches
-    vector<int> rb;
-    for(const_in_edges_iterator i = T.node(root).branches_in();i;i++)
-      rb.push_back(*i);
-
     // All the (-1,-1)'s should be overwritten with the sampled character.
     for(int i=0;i<A.n_sequences();i++)
       ancestral_characters[i] = vector<pair<int,int>>(A.seqlength(i), {-1,-1});
@@ -1795,36 +1790,42 @@ namespace substitution {
     for(int b=0;b<T.n_branches()*2;b++)
       subA_index_parent_characters[b] = vector<pair<int,int>>(I.branch_index_length(b), {-1,-1});
 
-    // FIXME - this needs to get indices for the branch rb and the node root!
-    ublas::matrix<int> index = I.get_subA_index(rb, A, T);
-    // FIXME - this doesn't handle case where tree has only 2 leaves.
-    for(int i=0;i<index.size1();i++)
     {
-      int i0 = index(i,0);
-      int i1 = index(i,1);
-      int i2 = index(i,2);
-      int ii = index(i,3);
+      // compute root branches
+      vector<int> rb;
+      for(const_in_edges_iterator i = T.node(root).branches_in();i;i++)
+	rb.push_back(*i);
 
-      S = F;
+      ublas::matrix<int> index = I.get_subA_index_with_nodes(rb, {root}, A, T);
+      // FIXME - this doesn't handle case where tree has only 2 leaves.
+      for(int i=0;i<index.size1();i++)
+      {
+	int i0 = index(i,0);
+	int i1 = index(i,1);
+	int i2 = index(i,2);
+	int ii = index(i,3);
 
-      if (i0 != -1)
-	element_prod_modify(S, cache[rb[0]][i0]);
-      if (i1 != -1)
-	element_prod_modify(S, cache[rb[1]][i1]);
-      if (i2 != -1)
-	element_prod_modify(S, cache[rb[2]][i2]);
+	S = F;
 
-      pair<int,int> letter_model = sample(S);
+	if (i0 != -1)
+	  element_prod_modify(S, cache[rb[0]][i0]);
+	if (i1 != -1)
+	  element_prod_modify(S, cache[rb[1]][i1]);
+	if (i2 != -1)
+	  element_prod_modify(S, cache[rb[2]][i2]);
 
-      if (ii != -1)
-	ancestral_characters[root][ii] = letter_model;
+	pair<int,int> letter_model = sample(S);
 
-      if (i0 != -1)
-	subA_index_parent_characters[rb[0]][i0] = letter_model;
-      if (i1 != -1)
-	subA_index_parent_characters[rb[0]][i1] = letter_model;
-      if (i2 != -1)
-	subA_index_parent_characters[rb[0]][i2] = letter_model;
+	if (ii != -1)
+	  ancestral_characters[root][ii] = letter_model;
+
+	if (i0 != -1)
+	  subA_index_parent_characters[rb[0]][i0] = letter_model;
+	if (i1 != -1)
+	  subA_index_parent_characters[rb[1]][i1] = letter_model;
+	if (i2 != -1)
+	  subA_index_parent_characters[rb[2]][i2] = letter_model;
+      }
     }
 
     vector<const_branchview> branches = branches_toward_node(T, cache.root);
@@ -1832,60 +1833,66 @@ namespace substitution {
 
     for(const_branchview b: branches)
     {
+      int node = b.source();
+
       const vector<Matrix>& transition_P = MC.transition_P(b);
 
-      vector<const_branchview> local_branches = {b};
+      vector<int> local_branches = {b};
       for(const_in_edges_iterator i = b.branches_before();i;i++)
 	local_branches.push_back(*i);
 
-      if (local_branches.size() == 1)
-      {
-	
-      }
-      else
-      {
-	assert(local_branches.size() == 3);
+      assert(local_branches.size() == 3 or local_branches.size() == 1);
 
-	// FIXME - this needs to get indices for the branch rb and the node root!
-	ublas::matrix<int> index = I.get_subA_index(rb, A, T);
+      // FIXME - this needs to get indices for the branch rb and node!
+      ublas::matrix<int> index = I.get_subA_index_with_nodes(local_branches, {node}, A, T);
+      
+      for(int i=0;i<index.size1();i++)
+      {
+	int i0 = index(i,0);
+	int ii = index(i,index.size2()-1);
 
-	for(int i=0;i<index.size1();i++)
+	int i1 = -1;
+	int i2 = -1;
+
+	if (local_branches.size() == 3)
 	{
-	  int i0 = index(i,0);
-	  int i1 = index(i,1);
-	  int i2 = index(i,2);
-	  int ii = index(i,3);
-	
-	  if (i0 != -1)
-	  {
-	    pair<int,int> letter_model_parent = subA_index_parent_characters[b][i0];
-	    int mp = letter_model_parent.first;
-	    int lp = letter_model_parent.second;
-	    element_assign(S,0);
-
-	    const Matrix& Q = transition_P[mp];
-
-	    for(int l=0;l<n_states;l++)
-	      S(mp,l) = Q(lp,l);
-	  }
-	  else
-	    S = F;
-	
-	  if (i1 != -1)
-	    element_prod_modify(S, cache[rb[1]][i1]);
-	  if (i2 != -1)
-	    element_prod_modify(S, cache[rb[2]][i2]);
-	
-	  pair<int,int> letter_model = sample(S);
-	
-	  if (ii != -1)
-	    ancestral_characters[root][ii] = letter_model;
-	
-	  if (i1 != -1)
-	    subA_index_parent_characters[rb[0]][i1] = letter_model;
-	  if (i2 != -1)
-	    subA_index_parent_characters[rb[0]][i2] = letter_model;
+	  i1 = index(i,1);
+	  i2 = index(i,2);
 	}
+
+	// If there IS no parent character, then we can sample from F
+	if (i0 == -1)
+	  S = F;
+	// If there is a parent character, then it MUST have an (l,m) pair.
+	// This is because it was incoming-present
+	else
+	{
+	  pair<int,int> letter_model_parent = subA_index_parent_characters[b][i0];
+	  int mp = letter_model_parent.first;
+	  int lp = letter_model_parent.second;
+	  assert(mp != -1);
+	  element_assign(S,0);
+
+	  const Matrix& Q = transition_P[mp];
+
+	  for(int l=0;l<n_states;l++)
+	    S(mp,l) = Q(lp,l);
+	}
+	
+	if (i1 != -1)
+	  element_prod_modify(S, cache[local_branches[1]][i1]);
+	if (i2 != -1)
+	  element_prod_modify(S, cache[local_branches[2]][i2]);
+	
+	pair<int,int> letter_model = sample(S);
+	
+	if (ii != -1)
+	  ancestral_characters[node][ii] = letter_model;
+	
+	if (i1 != -1)
+	  subA_index_parent_characters[local_branches[1]][i1] = letter_model;
+	if (i2 != -1)
+	  subA_index_parent_characters[local_branches[2]][i2] = letter_model;
       }
     }
 

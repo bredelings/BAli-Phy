@@ -175,6 +175,21 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, con
   return get_subA_index(branches, with_columns);
 }
 
+/// align sub-alignments corresponding to branches in b
+ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& branches,const std::vector<int>& nodes, const alignment& A,const Tree& T, bool with_columns)
+{
+  // copy sub-A indices for each branch
+  for(int j=0;j<branches.size();j++) 
+  {
+    IF_DEBUG_I( check_footprint_for_branch(A,T,branches[j]) );
+    
+    if (not branch_index_valid(branches[j]))
+      update_branch(A,T,branches[j]);
+  }
+
+
+}
+
 /// Compute subA index for branches point to \a node.
 ublas::matrix<int> subA_index_t::get_subA_index(int node,const alignment& A,const Tree& T) 
 {
