@@ -2726,15 +2726,43 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     o<<name<<" ";
     o<<"[";
 
+    bool print_record = false;
+    if (C.access(R).C.exp->head->type() == operation_type or C.access(R).C.exp->head->type() == constructor_type)
+    {
+      print_record = true;
+      o<<"shape = record, ";
+    }
+
     // node label = R/name: expression
     string label = convertToString(R);
     if (reg_names.count(R))
       label += "/" + reg_names[R];
     label += ": ";
-    expression_ref E = untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names);
 
-    label += E->print();
-    label = escape(wrap(label,40));
+    vector<int> targets;
+    if (print_record)
+    {
+      label += " |";
+      label += C.access(R).C.exp->head->print();
+      for(const expression_ref& E: C.access(R).C.exp->sub)
+      {
+	int index = assert_is_a<index_var>(E)->index;
+	int R2 = C.access(R).C.lookup_in_env( index );
+	targets.push_back(R2);
+	string reg_name = "\\<" + convertToString(R2) + "\\>";
+	if (reg_names.count(R2))
+	  reg_name = reg_names[R2];
+	label += "| <" + convertToString(R2) + "> " + reg_name + " ";
+      }
+    }
+    else
+    {
+      expression_ref E = untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names);
+
+      label += E->print();
+      label = escape(wrap(label,40));
+    }
+
     o<<"label = \""<<label<<"\"";
     if (C.access(R).changeable)
       o<<",style=\"dashed,filled\",color=red";
@@ -2746,17 +2774,35 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     o<<"];\n";
 
     // out-edges
-    for(int R2: C.access(R).C.Env)
+    if (print_record)
     {
-     string name2 = "n" + convertToString(R2);
-     bool used = false;
-     for(const auto& i: C.access(R).used_inputs)
-       if (i.first == R2) used = true;
+      for(int R2: targets)
+      {
+	string name2 = "n" + convertToString(R2);
+	bool used = false;
+	for(const auto& i: C.access(R).used_inputs)
+	  if (i.first == R2) used = true;
 
-     if (not used)
-       o<<name<<":s -> "<<name2<<":n;\n";
-     else
-       o<<name<<":s -> "<<name2<<":n [color=\"#007777\"];\n";
+	if (not used)
+	  o<<name<<":<"<<R2<<">:s -> "<<name2<<":n;\n";
+	else
+	  o<<name<<":<"<<R2<<">:s -> "<<name2<<":n [color=\"#007777\"];\n";
+      }
+    }
+    else
+    {
+      for(int R2: C.access(R).C.Env)
+      {
+	string name2 = "n" + convertToString(R2);
+	bool used = false;
+	for(const auto& i: C.access(R).used_inputs)
+	  if (i.first == R2) used = true;
+	
+	if (not used)
+	  o<<name<<":s -> "<<name2<<":n;\n";
+	else
+	  o<<name<<":s -> "<<name2<<":n [color=\"#007777\"];\n";
+      }
     }
 
     // call-edges
