@@ -274,7 +274,6 @@ ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int
       subA4(i,j) = subA3(i,j);
 
   return subA4;
- 
 }
 
 /// align sub-alignments corresponding to branches in b
