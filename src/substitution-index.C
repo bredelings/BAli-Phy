@@ -90,6 +90,7 @@ bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2) {
   return not error;
 }
 
+/// Find the current active (e.g. smallest) column - w/o incrementing I at all.  We could perhaps call this current_column( ).
 int next_column(const vector< vector<pair<int,int> > >& indices, const vector<int>& branches, const vector<int>& I)
 {
   int m = -1;
@@ -108,7 +109,8 @@ int next_column(const vector< vector<pair<int,int> > >& indices, const vector<in
   return m;
 }
 
-int next_column(const vector< vector<pair<int,int> > >& indices, const vector<int>& branches, const vector< vector<int> >& indices2, const vector<int>& I)
+/// Find the current active (e.g. smallest) column - w/o incrementing I at all.  We could perhaps call this current_column( ).
+int next_column(const vector< vector<pair<int,int> > >& indices, const vector<int>& branches, const vector< vector<int> >& sequence_indices, const vector<int>& I)
 {
   int m = -1;
   for(int i=0;i<branches.size();i++)
@@ -123,6 +125,20 @@ int next_column(const vector< vector<pair<int,int> > >& indices, const vector<in
     else
       m = std::min(m, indices[B][ii].first);
   }
+
+  for(int n=0;n<sequence_indices.size();n++)
+  {
+    int i = n + branches.size();
+
+    int ii = I[i];
+    if (ii > sequence_indices[n].size()) continue;
+
+    if (m == -1)
+      m = sequence_indices[n][ii];
+    else
+      m = std::min(m, sequence_indices[n][ii]);
+  }
+
   return m;
 }
 
