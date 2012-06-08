@@ -232,6 +232,9 @@ public:
   ublas::matrix<int> get_subA_index(const std::vector<int>& b,const alignment& A,const Tree& T,bool=false);
 
   /// align sub-alignments corresponding to branches in b
+  ublas::matrix<int> get_subA_index_with_nodes(const std::vector<int>& b,const std::vector<std::vector<int>>& s,bool=false);
+
+  /// align sub-alignments corresponding to branches in b
   ublas::matrix<int> get_subA_index_with_nodes(const std::vector<int>& b,const std::vector<int>& n, const alignment& A,const Tree& T,bool=false);
 
   /// align sub-alignments corresponding to branches in b
