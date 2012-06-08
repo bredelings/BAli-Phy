@@ -1767,6 +1767,8 @@ namespace substitution {
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
 
+    const vector<unsigned>& smap = MC.state_letters();
+
     // scratch matrix 
     Matrix & S = cache.scratch(0);
     const int n_models = cache.n_models();
@@ -1877,6 +1879,33 @@ namespace substitution {
 
 	  for(int l=0;l<n_states;l++)
 	    S(mp,l) = Q(lp,l);
+	}
+
+	if (local_branches.size() == 1)
+	{
+	  int l = sequences[node][ii];
+	  const alphabet& a = A.get_alphabet();
+	  if (l == alphabet::not_gap)
+	    ;
+	  else if (a.is_letter(l))
+	  {
+	    // Clear S(m,s) for every state s that doesn't map to the observed letter l
+	    for(int s=0;s<n_states;s++)
+	      if (smap[s] != l)
+		for(int m=0;m<n_models;m++)
+		  S(m,s) = 0;
+	  }
+	  else
+	  {
+	    assert(a.is_letter_class(l));
+	    vector<bool> letters = a.letter_mask(l);
+	    for(int l=0;l<letters.size();l++)
+	      if (letters[l])
+		for(int s=0;s<n_states;s++)
+		  if (smap[s] != l)
+		    for(int m=0;m<n_models;m++)
+		      S(m,s) = 0;
+	  }
 	}
 	
 	if (i1 != -1)
