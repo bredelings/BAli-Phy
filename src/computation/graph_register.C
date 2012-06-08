@@ -2749,14 +2749,14 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     for(int R2: C.access(R).C.Env)
     {
      string name2 = "n" + convertToString(R2);
-     o<<name<<" -> "<<name2<<";\n";
+     o<<name<<":s -> "<<name2<<":n;\n";
     }
 
     // call-edges
     if (C.access(R).call)
     {
       string name2 = "n" + convertToString(C.access(R).call);
-      o<<name<<" -> "<<name2<<" ";
+      o<<name<<":e -> "<<name2<<":n ";
       o<<"[";
       o<<"color=\"#007700\"";
       o<<"];\n";
@@ -2768,7 +2768,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       int R2 = i.first;
 
       string name2 = "n" + convertToString(R2);
-      o<<name<<" -> "<<name2<<" ";
+      o<<name<<":s -> "<<name2<<":n ";
       o<<"[";
       o<<"color=\"#007777\"";
       o<<",style=dashed";
