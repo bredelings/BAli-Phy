@@ -193,7 +193,7 @@ pair<int,int> sample(const Matrix& M)
     for(int l=0;l<M.size2();l++)
     {
       sum += M(m,l);
-      if (total < sum)
+      if (r <= sum)
 	return {m,l};
     }
   return {-1,-1};
