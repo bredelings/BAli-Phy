@@ -22,13 +22,14 @@ expression_ref operator&(const expression_ref&, const expression_ref&);
  */
 
 enum type_number {none=0,
+		  operation_type=1,
 		  parameter_type, 
 		  index_var_type,
 		  trim_type,
 		  let2_type,
 		  constructor_type,
 		  lambda_type,
-		  lambda2_type
+		  lambda2_type,
 };
 
 /// An array of Objects.
