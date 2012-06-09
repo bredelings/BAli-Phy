@@ -1788,15 +1788,14 @@ namespace substitution {
     for(int i=0;i<A.n_sequences();i++)
       ancestral_characters[i] = vector<pair<int,int>>(A.seqlength(i), {-1,-1});
 
-    // Some suba-indices don't HAVE parent characters, so the (-1,-1)'s will indicate something.
-    for(int b=0;b<T.n_branches()*2;b++)
-      subA_index_parent_characters[b] = vector<pair<int,int>>(I.branch_index_length(b), {-1,-1});
-
     {
       // compute root branches
       vector<int> rb;
       for(const_in_edges_iterator i = T.node(root).branches_in();i;i++)
+      {
 	rb.push_back(*i);
+	subA_index_parent_characters[rb.back()] = vector<pair<int,int>>(I.branch_index_length(rb.back()), {-1,-1});
+      }
 
       ublas::matrix<int> index = I.get_subA_index_with_nodes(rb, {root}, A, T);
       // FIXME - this doesn't handle case where tree has only 2 leaves.
@@ -1841,7 +1840,10 @@ namespace substitution {
 
       vector<int> local_branches = {b};
       for(const_in_edges_iterator i = b.branches_before();i;i++)
+      {
+	subA_index_parent_characters[local_branches.back()] = vector<pair<int,int>>(I.branch_index_length(local_branches.back()), {-1,-1});
 	local_branches.push_back(*i);
+      }
 
       assert(local_branches.size() == 3 or local_branches.size() == 1);
 
@@ -1928,53 +1930,10 @@ namespace substitution {
     return ancestral_characters;
   }
 
-  /* 1. It seems that we should be able to select (l,m) pairs for
-     columns that have substitution indices for directed branches
-     pointing to the root (since, in the context of a given root,
-     there are no out-going edges). Such edges are "incoming-present"
-     in the substitution index matrix, even if they are not
-     "outgoing-present".  And this presence (in the substitution index
-     matrix) is different than whether there is actually an internal
-     node character there in the alignment. 
-
-     We can then map columns that are incoming-present to present
-     internal node characters. If the alignment is fixed, we could
-     either (a) skip this step, or (b) assume that internal node
-     characters are always present, or (c) assume the minimal
-     arrangement of internal node characters necessary to connect the
-     observed leaf characters. 
-
-     IF we have a variable alignment, then we know which internal node
-     characters are present and which are not.  Some present internal
-     node characters at the root may not be incoming-present in the
-     substitution indices.  We sample these characters from F, since
-     no data applies to them.  
-
-     2. We then consider directed edges pointing to the root.
-
-     2a. The source node for that branch may have no incoming edges.
-     In this case, the source node is a leaf node.  The substitution
-     index for this branch is the same as the index of letters in the
-     leaf sequence (for both subA-indices we have currently, at
-     least).  Therefore, we are done, unless the leaf character is an
-     ambiguous letter.  
-
-     Assume the letter is ambiguous.  If the branch points to an
-     outgoing edge (or root) with a (l,m) pair, then we look at
-     \Pr(data,l',m') = \Pr(l,m -> l',m') which is just the Q matrix
-     from model m.
-
-     If the branch has no (l,m) pair, then we have
-     \Pr(data,l',m') = \Pr(l,m) \times \Pr(l,m -> l',m')
-     Thus, we use the Q matrix, but multiplied by the corresponding
-     values from the frequency matrix F.
-
-     2b. The source node for that branch may have two incoming edges.
-     
-     If there is no parent letter, then we can just multiple the 
-     
-  */     
-
+  vector<vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
+  {
+    return sample_subst_history(*P.sequences, *P.A, *P.subA, P, P.T(), P.LC);
+  }
 
   vector<Matrix> 
   get_likelihoods_by_alignment_column(const vector< vector<int> >& sequences, const alignment& A,

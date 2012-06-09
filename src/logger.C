@@ -42,6 +42,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 
 using std::endl;
+using std::pair;
 
 namespace MCMC {
   using std::vector;
@@ -361,6 +362,28 @@ string Mixture_Components_Function::operator()(const owned_ptr<Probability_Model
   vector<vector<double> > model_pr = substitution::get_model_probabilities_by_alignment_column(PP[p]);
   for(int i=0;i<model_pr.size();i++)
     output<<join(model_pr[i],' ')<<"\n";
+
+  output<<endl;
+
+  return output.str();
+}
+
+string Ancestral_Sequences_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+{
+  std::ostringstream output;
+
+  const Parameters& PP = *P.as<Parameters>();
+
+  const alphabet& a = PP[p].get_alphabet();
+
+  vector<vector<pair<int,int> > > states = substitution::sample_ancestral_states(PP[p]);
+    
+  for(const auto& v: states)
+  {
+    for(const auto& p: v)
+      output<<a.lookup(p.second);
+    output<<"\n";
+  }
 
   output<<endl;
 
