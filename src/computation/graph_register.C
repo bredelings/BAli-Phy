@@ -2811,7 +2811,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     if (C.access(R).call)
     {
       string name2 = "n" + convertToString(C.access(R).call);
-      o<<name<<":e -> "<<name2<<":n ";
+      o<<name<<":e -> "<<name2<<":w ";
       o<<"[";
       o<<"color=\"#007700\"";
       o<<"];\n";
