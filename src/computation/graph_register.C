@@ -2767,7 +2767,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     if (C.access(R).changeable)
       o<<",style=\"dashed,filled\",color=red";
 
-    if (C.access(R).result)
+    if (C.access(R).result and C.access(R).changeable)
       o<<",fillcolor=\"#007700\",fontcolor=white";
     else if (C.access(R).changeable)
       o<<",fillcolor=\"#770000\",fontcolor=white";
