@@ -1841,8 +1841,8 @@ namespace substitution {
       vector<int> local_branches = {b};
       for(const_in_edges_iterator i = b.branches_before();i;i++)
       {
-	subA_index_parent_characters[local_branches.back()] = vector<pair<int,int>>(I.branch_index_length(local_branches.back()), {-1,-1});
 	local_branches.push_back(*i);
+	subA_index_parent_characters[local_branches.back()] = vector<pair<int,int>>(I.branch_index_length(local_branches.back()), {-1,-1});
       }
 
       assert(local_branches.size() == 3 or local_branches.size() == 1);
