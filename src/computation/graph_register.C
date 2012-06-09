@@ -2806,6 +2806,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
 
     // call-edges
+    // FIXME - how can allow these to go to the right, but not above, if no ref edges?
+    // FIXME - doing :w and {rank=same; n -> n} makes the edge drawn over the node icon.
     if (C.access(R).call)
     {
       string name2 = "n" + convertToString(C.access(R).call);
