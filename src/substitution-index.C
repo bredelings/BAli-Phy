@@ -131,7 +131,7 @@ int next_column(const vector< vector<pair<int,int> > >& indices, const vector<in
     int i = n + branches.size();
 
     int ii = I[i];
-    if (ii > sequence_indices[n].size()) continue;
+    if (ii >= sequence_indices[n].size()) continue;
 
     if (m == -1)
       m = sequence_indices[n][ii];
@@ -255,8 +255,8 @@ ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int
 
       if (j < sequence_indices[i].size() and sequence_indices[i][j] == c)
       {
-	subA3(L,n) = sequence_indices[i][j];
-	I[i+branches.size()]++;
+	subA3(L,n) = j;
+	I[n]++;
       }
       else
 	subA3(L,n) = -1;
