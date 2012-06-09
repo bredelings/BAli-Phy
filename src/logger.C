@@ -376,15 +376,26 @@ string Ancestral_Sequences_Function::operator()(const owned_ptr<Probability_Mode
 
   const alphabet& a = PP[p].get_alphabet();
 
+  alignment A = *PP[p].A;
+
   vector<vector<pair<int,int> > > states = substitution::sample_ancestral_states(PP[p]);
     
-  for(const auto& v: states)
+  for(int i=0;i<A.n_sequences();i++)
   {
-    for(const auto& p: v)
-      output<<a.lookup(p.second);
-    output<<"\n";
+    vector<int> columns = A.get_columns_for_characters(i);
+    assert(columns.size() == states[i].size());
+    for(int j=0;j<columns.size();j++)
+    {
+      int c = columns[j];
+      assert(A.character(c,i));
+      if (a.is_letter(A(c,i)))
+	assert( A(c,i) == states[i][j].second );
+      else
+	A.set_value(c,i, states[i][j].second);
+    }
   }
 
+  A.print_fasta(output);
   output<<endl;
 
   return output.str();
