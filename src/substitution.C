@@ -1797,7 +1797,9 @@ namespace substitution {
 	subA_index_parent_characters[rb.back()] = vector<pair<int,int>>(I.branch_index_length(rb.back()), {-1,-1});
       }
 
+      // FIXME - but what if root is internal and A doesn't have internal sequences?
       ublas::matrix<int> index = I.get_subA_index_with_nodes(rb, {root}, A, T);
+
       // FIXME - this doesn't handle case where tree has only 2 leaves.
       for(int i=0;i<index.size1();i++)
       {
@@ -1847,7 +1849,7 @@ namespace substitution {
 
       assert(local_branches.size() == 3 or local_branches.size() == 1);
 
-      // FIXME - this needs to get indices for the branch rb and node!
+      // FIXME - but what if node is internal and A doesn't have internal sequences?
       ublas::matrix<int> index = I.get_subA_index_with_nodes(local_branches, {node}, A, T);
       
       for(int i=0;i<index.size1();i++)
