@@ -1761,8 +1761,6 @@ namespace substitution {
     check_regenerate(I, A, T, cache.root);
 #endif
 
-    // Make sure that all conditional likelihoods have been calculated.
-    IF_DEBUG_S(int n_br =) calculate_caches_for_node(cache.root, sequences, A,I,MC,T,cache);
 #ifdef DEBUG_SUBSTITUTION
     std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
 #endif
@@ -1796,8 +1794,15 @@ namespace substitution {
       vector<int> rb;
       for(const_in_edges_iterator i = T.node(root).branches_in();i;i++)
       {
-	rb.push_back(*i);
-	subA_index_parent_characters[rb.back()] = vector<pair<int,int>>(I.branch_index_length(rb.back()), {-1,-1});
+	int b = *i;
+
+	calculate_caches_for_branch(b, sequences, A,I,MC,T,cache);
+	if (not I.branch_index_valid(b))
+	  I.update_branch(A,T,b);
+
+	rb.push_back(b);
+
+	subA_index_parent_characters[b] = vector<pair<int,int>>(I.branch_index_length(b), {-1,-1});
       }
 
       // FIXME - but what if root is internal and A doesn't have internal sequences?
@@ -1852,8 +1857,16 @@ namespace substitution {
       vector<int> local_branches = {b};
       for(const_in_edges_iterator i = b.branches_before();i;i++)
       {
-	local_branches.push_back(*i);
-	subA_index_parent_characters[local_branches.back()] = vector<pair<int,int>>(I.branch_index_length(local_branches.back()), {-1,-1});
+	int b = *i;
+
+	calculate_caches_for_branch(b, sequences, A,I,MC,T,cache);
+
+	if (not I.branch_index_valid(b))
+	  I.update_branch(A,T,b);
+
+	local_branches.push_back(b);
+
+	subA_index_parent_characters[b] = vector<pair<int,int>>(I.branch_index_length(b), {-1,-1});
       }
 
       assert(local_branches.size() == 3 or local_branches.size() == 1);
