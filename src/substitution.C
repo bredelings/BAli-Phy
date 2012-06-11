@@ -1780,6 +1780,9 @@ namespace substitution {
     Matrix F(n_models, n_states);
     MC.WeightedFrequencyMatrix(F);
 
+    bool has_internal_nodes = (A.n_sequences() == T.n_nodes());
+    if (not has_internal_nodes) assert(A.n_sequences() == T.n_leaves());
+
     // 1. Allocate arrays for storing results and temporary results.
     vector<vector<pair<int,int> > > ancestral_characters (A.n_sequences());
     vector<vector<pair<int,int> > > subA_index_parent_characters (T.n_branches()*2);
@@ -1798,7 +1801,10 @@ namespace substitution {
       }
 
       // FIXME - but what if root is internal and A doesn't have internal sequences?
-      ublas::matrix<int> index = I.get_subA_index_with_nodes(rb, {root}, A, T);
+      vector<int> nodes;
+      if (has_internal_nodes)
+	nodes = {root};
+      ublas::matrix<int> index = I.get_subA_index_with_nodes(rb, nodes, A, T);
 
       // FIXME - this doesn't handle case where tree has only 2 leaves.
       for(int i=0;i<index.size1();i++)
@@ -1806,7 +1812,6 @@ namespace substitution {
 	int i0 = index(i,0);
 	int i1 = index(i,1);
 	int i2 = index(i,2);
-	int ii = index(i,3);
 
 	S = F;
 
@@ -1817,17 +1822,21 @@ namespace substitution {
 	if (i2 != -1)
 	  element_prod_modify(S, cache[rb[2]][i2]);
 
-	pair<int,int> letter_model = sample(S);
+	pair<int,int> state_model = sample(S);
 
-	if (ii != -1)
-	  ancestral_characters[root][ii] = letter_model;
+	if (has_internal_nodes)
+	{
+	  int ii = index(i,3);
+	  if(ii != -1)
+	    ancestral_characters[root][ii] = state_model;
+	}
 
 	if (i0 != -1)
-	  subA_index_parent_characters[rb[0]][i0] = letter_model;
+	  subA_index_parent_characters[rb[0]][i0] = state_model;
 	if (i1 != -1)
-	  subA_index_parent_characters[rb[1]][i1] = letter_model;
+	  subA_index_parent_characters[rb[1]][i1] = state_model;
 	if (i2 != -1)
-	  subA_index_parent_characters[rb[2]][i2] = letter_model;
+	  subA_index_parent_characters[rb[2]][i2] = state_model;
       }
     }
 
@@ -1849,13 +1858,16 @@ namespace substitution {
 
       assert(local_branches.size() == 3 or local_branches.size() == 1);
 
+      vector<int> nodes;
+      if (T.node(node).is_leaf_node() or has_internal_nodes)
+	nodes = {node};
+
       // FIXME - but what if node is internal and A doesn't have internal sequences?
-      ublas::matrix<int> index = I.get_subA_index_with_nodes(local_branches, {node}, A, T);
+      ublas::matrix<int> index = I.get_subA_index_with_nodes(local_branches, nodes, A, T);
       
       for(int i=0;i<index.size1();i++)
       {
 	int i0 = index(i,0);
-	int ii = index(i,index.size2()-1);
 
 	int i1 = -1;
 	int i2 = -1;
@@ -1873,9 +1885,9 @@ namespace substitution {
 	// This is because it was incoming-present
 	else
 	{
-	  pair<int,int> letter_model_parent = subA_index_parent_characters[b][i0];
-	  int mp = letter_model_parent.first;
-	  int lp = letter_model_parent.second;
+	  pair<int,int> state_model_parent = subA_index_parent_characters[b][i0];
+	  int mp = state_model_parent.first;
+	  int lp = state_model_parent.second;
 	  assert(mp != -1);
 	  element_assign(S,0);
 
@@ -1887,6 +1899,7 @@ namespace substitution {
 
 	if (local_branches.size() == 1)
 	{
+	  int ii = index(i,index.size2()-1);
 	  int l = sequences[node][ii];
 	  const alphabet& a = A.get_alphabet();
 	  if (l == alphabet::not_gap)
@@ -1917,15 +1930,19 @@ namespace substitution {
 	if (i2 != -1)
 	  element_prod_modify(S, cache[local_branches[2]][i2]);
 	
-	pair<int,int> letter_model = sample(S);
+	pair<int,int> state_model = sample(S);
 	
-	if (ii != -1)
-	  ancestral_characters[node][ii] = letter_model;
+	if (T.node(node).is_leaf_node() or (has_internal_nodes))
+	{
+	  int ii = index(i,index.size2()-1);
+	  if (ii != -1)
+	    ancestral_characters[node][ii] = state_model;
+	}
 	
 	if (i1 != -1)
-	  subA_index_parent_characters[local_branches[1]][i1] = letter_model;
+	  subA_index_parent_characters[local_branches[1]][i1] = state_model;
 	if (i2 != -1)
-	  subA_index_parent_characters[local_branches[2]][i2] = letter_model;
+	  subA_index_parent_characters[local_branches[2]][i2] = state_model;
       }
     }
 
