@@ -124,26 +124,6 @@ double data_partition::rate() const
   return *convert<const Double>(O);
 }
 
-ostream& operator<<(ostream& o, const Matrix& M)
-{
-  for(int i=0;i<M.size1();i++)
-  {
-    for(int j=0;j<M.size2();j++)
-      std::cerr<<M(i,j)<<" ";
-    std::cerr<<"\n";
-  }
-  return o;
-}
-
-ostream& operator<<(ostream& o, const std::vector<double>& v)
-{
-  for(int i=0;i<v.size();i++)
-    std::cerr<<v[i]<<" ";
-  std::cerr<<"\n";
-  
-  return o;
-}
-
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
   b = T().directed_branch(b).undirected_name();
