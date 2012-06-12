@@ -343,7 +343,7 @@ void slide_node(owned_ptr<Probability_Model>& P, MoveStats& Stats,int b0)
   if (uniform() < p)
   {
     slide_node_slice_function logp(*PP,b0);
-    double w = logp.total * loadvalue(P->keys,"slide_branch_slice_window",0.3);
+    double w = (logp.x0 + logp.y0) * loadvalue(P->keys,"slide_branch_slice_window",0.3);
     double L1b = slice_sample(logp,w,100);
     
     MCMC::Result result(2);
