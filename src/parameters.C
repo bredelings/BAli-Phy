@@ -1014,17 +1014,16 @@ double Parameters::get_branch_subst_rate(int p, int /* b */) const
 
 double Parameters::get_branch_subst_length(int p, int b) const
 {
-  double length1 = get_branch_duration(p,b) * get_branch_subst_rate(p,b);
-
+  int s = scale_for_partition[p];
   b = T->directed_branch(b).undirected_name();
+  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
 
 #ifndef NDEBUG
-  int s = scale_for_partition[p];
-  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
-  assert(std::abs(length1 - length2) < 1.0e-8);
+  double length1 = get_branch_duration(p,b) * get_branch_subst_rate(p,b);
+  assert(std::abs(length1 - length2) < 1.0e-10);
 #endif
 
-  return length1;
+  return length2;
 }
 
 double Parameters::get_branch_indel_rate(int p, int b) const
