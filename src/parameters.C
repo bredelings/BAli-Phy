@@ -1036,12 +1036,11 @@ double Parameters::get_branch_indel_rate(int p, int b) const
 
   // determine scaling factor.
   int offset = n_scales+1;
-  int indel_scale_branch = -1;
-  if (get_parameter_value_as<Bool>(offset+1))
-  {
+
+  bool indel_scale_on = get_parameter_value_as<Bool>(offset+1);
+  int indel_scale_branch = get_parameter_value_as<Int>(offset+2);
+  if (indel_scale_on and indel_scale_branch == b)
     indel_scale_by = exp( get_parameter_value_as<Double>(offset+0) );
-    indel_scale_branch = get_parameter_value_as<Int>(offset+2);
-  }
 
   return r * indel_scale_by;
 }
