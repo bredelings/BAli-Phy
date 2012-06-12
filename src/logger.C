@@ -378,6 +378,8 @@ string Ancestral_Sequences_Function::operator()(const owned_ptr<Probability_Mode
 
   alignment A = *PP[p].A;
 
+  const vector<unsigned> smap = PP[p].state_letters();
+
   vector<vector<pair<int,int> > > states = substitution::sample_ancestral_states(PP[p]);
     
   for(int i=0;i<A.n_sequences();i++)
@@ -388,10 +390,12 @@ string Ancestral_Sequences_Function::operator()(const owned_ptr<Probability_Mode
     {
       int c = columns[j];
       assert(A.character(c,i));
+      int state = states[i][j].second;
+      int letter = smap[state];
       if (a.is_letter(A(c,i)))
-	assert( A(c,i) == states[i][j].second );
+	assert( A(c,i) == letter );
       else
-	A.set_value(c,i, states[i][j].second);
+	A.set_value(c,i, letter);
     }
   }
 
