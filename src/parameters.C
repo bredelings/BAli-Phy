@@ -1078,7 +1078,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    branch_length_max(-1)
 {
   C += SModel_Functions();
-  // Don't call set_parameter_value here, because recalc( ) depends on branch_lenth_indices, which is not ready.
+  // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
   constants.push_back(-1);
 
