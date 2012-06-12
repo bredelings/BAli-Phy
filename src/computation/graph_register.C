@@ -1409,7 +1409,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
         Since we stop back-tracing for split regs as soon as we find an unsplit
         reg, looking only one step further back along E- and call- edges
-	might not this might not find an unsplit grandparent reg that needs its
+	might not find an unsplit grandparent reg that needs its
 	used_inputs (but not its C.exp) adjusted.
 
 	This situation only occurs in C++ operators, since native operators only
