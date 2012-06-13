@@ -2758,8 +2758,11 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     bool print_record = false;
     if (C.access(R).C.exp->head->type() == operation_type or C.access(R).C.exp->head->type() == constructor_type)
     {
-      print_record = true;
-      o<<"shape = record, ";
+      if (not is_a<Case>(C.access(R).C.exp) and not is_a<Apply>(C.access(R).C.exp))
+      {
+	print_record = true;
+	o<<"shape = record, ";
+      }
     }
 
     // node label = R/name: expression
