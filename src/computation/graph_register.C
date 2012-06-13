@@ -2727,6 +2727,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
   vector<int> regs = C.find_all_regs_in_context(t);
 
+  // Record some regs as being constants worthy of substituting into regs that reference them.
   for(int R: regs)
   {
     if (reg_names.count(R)) continue;
