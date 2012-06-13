@@ -2709,6 +2709,18 @@ void dot_graph_for_token(const reg_heap& C, int t)
   f.close();
 }
 
+/* TODO - to make graph more readable:
+
+   1. Substitute simple results, especially, 1.0, 0.0, and [].  Do not draw reference edges to these regs.
+
+   2. Do not draw reference edges to regs that have a name.
+
+   3. Handle indirection nodes, somehow.
+
+   Do I want to somehow differentiate between cases like fmap (where fmap actually refers to the reg) and cases
+   like 1.0 where there could be multiple 1.0 regs?
+ */
+
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 {
   map<int,string> reg_names = get_register_names(C.get_identifiers_for_context(t));
@@ -2797,6 +2809,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	bool used = false;
 	for(const auto& i: C.access(R).used_inputs)
 	  if (i.first == R2) used = true;
+
+	// Don't draw edges to things like fmap.
+	if (reg_names.count(R2)) continue;
 	
 	if (not used)
 	  o<<name<<":s -> "<<name2<<":n;\n";
