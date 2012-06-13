@@ -697,6 +697,8 @@ extern const expression_ref v3;
 extern const expression_ref v4;
 extern const expression_ref v5;
 extern const expression_ref v6;
+extern const expression_ref v7;
+extern const expression_ref v8;
 
 expression_ref operator^(const expression_ref& x, const expression_ref& T);
 #endif
