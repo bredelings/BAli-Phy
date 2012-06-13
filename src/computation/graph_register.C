@@ -2757,7 +2757,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
     else
     {
-      expression_ref E = untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names);
+      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names));
 
       label += E->print();
       label = escape(wrap(label,40));
