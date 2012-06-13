@@ -674,6 +674,7 @@ expression_ref def_function(const std::vector< std::vector<expression_ref> >& pa
 
 expression_ref launchbury_normalize(const expression_ref& E);
 expression_ref launchbury_unnormalize(const expression_ref& E);
+expression_ref unlet(const expression_ref& E);
 
 expression_ref add_prefix(const std::string&, const expression_ref& E);
 

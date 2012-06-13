@@ -1428,6 +1428,63 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
   return changed;
 }
 
+int n_free_occurrences(const expression_ref& E1, const expression_ref& D)
+{
+  assert(not is_wildcard(D));
+
+  // If this is the relevant dummy, then substitute
+  if (E1->size() == 0)
+  {
+    if (same_head(E1,D))
+      return 1;
+    // If this is any other constant, then it doesn't contain the dummy
+    else
+      return 0;
+  }
+
+  // Handle case expressions differently
+  {
+    expression_ref T;
+    vector<expression_ref> patterns;
+    vector<expression_ref> bodies;
+    if (parse_case_expression(E1,T,patterns,bodies))
+    {
+      int count = n_free_occurrences(T, D);
+
+      const int L = (E1->size()-1)/2;
+
+      for(int i=0;i<L;i++)
+      {
+	// don't substitute into subtree where this variable is bound
+	std::set<dummy> bound = get_free_indices(patterns[i]);
+
+	bool D_is_bound = false;
+	for(const auto& b: bound)
+	  if (D->is_exactly(b)) D_is_bound=true;
+
+	if (not D_is_bound)
+	  count += n_free_occurrences(bodies[i], D);
+      }
+
+      return count;
+    }
+  }
+
+  // What indices are bound at the top level?
+  std::set<dummy> bound = get_bound_indices(E1);
+
+  // Don't substitute into local variables
+  for(const auto& b: bound)
+    if (D->is_exactly(b)) return 0;
+    
+  // Since this is an expression, count occurrences in sub-expressions
+  int count = 0;
+  for(int i=0;i<E1->size();i++)
+    count += n_free_occurrences(E1->sub[i], D);
+
+  return count;
+}
+
 expression_ref substitute(const expression_ref& R1, const expression_ref& D, const expression_ref& R2)
 {
   expression_ref R1b = R1;
@@ -2237,6 +2294,108 @@ expression_ref launchbury_unnormalize(const expression_ref& E)
 	// if V references itself then don't substitute it.
 	if (free.count(*V)) continue;
 	
+	changed = true;
+	
+	expression_ref var = vars[i];
+	expression_ref body = bodies[i];
+	
+	vars.erase(vars.begin() + i);
+	bodies.erase(bodies.begin() + i);
+	
+	// substitute for the value of this variable in T and in the remaining bodies;
+	for(int j=0;j<vars.size();j++)
+	  bodies[j] = substitute(bodies[j], var, body);
+	T = substitute(T, var, body);
+      }
+    }
+
+    return let_expression(vars, bodies, T);
+  }
+
+  std::cerr<<"I don't recognize expression '"+ E->print() + "'\n";
+  return E;
+}
+
+expression_ref unlet(const expression_ref& E)
+{
+  // 1. Var
+  // 5. (partial) Literal constant.  Treat as 0-arg constructor.
+  if (not E->size())
+    return E;
+  
+  // 2. Lambda
+  object_ptr<const lambda> L = is_a<lambda>(E);
+  if (L)
+  {
+    assert(E->size() == 2);
+    expression* V = new expression(*E);
+    V->sub[1] = unlet(E->sub[1]);
+
+    if (V->sub[1] == E->sub[1])
+      return E;
+    else
+      return V;
+  }
+
+  // 6. Case
+  object_ptr<const Case> IsCase = is_a<Case>(E);
+  if (IsCase)
+  {
+    expression* V = E->clone();
+
+    // Unormalize the object
+    V->sub[0] = unlet(V->sub[0]);
+
+    const int L = (V->sub.size() - 1)/2;
+    // Just unnormalize the bodies
+    for(int i=0;i<L;i++)
+      V->sub[2+2*i] = unlet(V->sub[2+2*i]);
+    
+    return V;
+  }
+
+  // 4. Constructor
+  if (is_a<constructor>(E) or is_a<Operation>(E))
+  {
+    expression* V = E->clone();
+    for(int i=0;i<E->size();i++)
+      V->sub[i] = unlet(E->sub[i]);
+    return V;
+  }
+
+  // 5. Let 
+  object_ptr<const let_obj> Let = is_a<let_obj>(E);
+  if (Let)
+  {
+    vector<expression_ref> vars;
+    vector<expression_ref> bodies;
+    expression_ref T;
+    parse_let_expression(E, vars, bodies, T);
+
+    // unnormalize T and the bodies
+    T = unlet(T);
+    for(int i=0; i<vars.size(); i++)
+      bodies[i] = unlet(bodies[i]);
+
+    // substitute for non-recursive lets
+    bool changed = true;
+    while(changed)
+    {
+      changed = false;
+
+      for(int i=vars.size()-1; i>=0; i--)
+      {
+	object_ptr<const dummy> V = is_a<dummy>(vars[i]);
+	assert(V);
+
+	if (n_free_occurrences(bodies[i],vars[i])) continue;
+
+	int count = n_free_occurrences(T, vars[i]);
+	for(const auto& b: bodies)
+	  count += n_free_occurrences(b, vars[i]);
+
+	if (count != 1) continue;
+
 	changed = true;
 	
 	expression_ref var = vars[i];
