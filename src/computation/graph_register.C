@@ -2716,7 +2716,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
   vector<int> regs = C.find_all_regs_in_context(t);
 
   o<<"digraph \"token"<<t<<"\" {\n";
-  o<<"graph [ranksep=0.25, fontname=Arial, nodesep=0.125];\n";
+  o<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
   o<<"node [fontname=Arial, style=filled, height=0, width=0, shape=box];\n";
   o<<"edge [style=\"setlinewidth(2)\"];\n";
   for(int R:regs)
