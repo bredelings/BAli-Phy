@@ -2711,19 +2711,11 @@ void dot_graph_for_token(const reg_heap& C, int t)
 
 /* TODO - to make graph more readable:
 
-   1. Substitute simple results, especially, 1.0, 0.0, and [].  Do not draw reference edges to these regs.
-
-     Do I want to somehow differentiate between cases like fmap (where
-     fmap actually refers to the reg) and cases  like 1.0 where there
-     could be multiple 1.0 regs? 
-
-   2. Do not draw reference edges to regs that have a name.
-
-   3. Handle indirection nodes, somehow.
+   1. Handle indirection nodes, somehow.
       (a) First, check WHY we are getting indirection nodes.
       (b) Then Consider eliminating them somehow during garbage collection.
 
-   4. Allow reduction result (call result) on the same level as redex.
+   2. Allow reduction result (call result) on the same level as redex.
 
  */
 
@@ -2731,7 +2723,25 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 {
   map<int,string> reg_names = get_register_names(C.get_identifiers_for_context(t));
 
+  map<int,string> constants;
+
   vector<int> regs = C.find_all_regs_in_context(t);
+
+  for(int R: regs)
+  {
+    if (reg_names.count(R)) continue;
+
+    if (is_a<index_var>(C.access(R).C.exp)) continue;
+
+    if (is_a<parameter>(C.access(R).C.exp)) continue;
+
+    if (C.access(R).C.exp->size() == 0)
+    {
+      string name = C.access(R).C.exp->print();
+      if (name.size() < 20)
+	constants[R] = name;
+    }
+  }
 
   o<<"digraph \"token"<<t<<"\" {\n";
   o<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
@@ -2767,15 +2777,25 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	int index = assert_is_a<index_var>(E)->index;
 	int R2 = C.access(R).C.lookup_in_env( index );
 	targets.push_back(R2);
+
 	string reg_name = "\\<" + convertToString(R2) + "\\>";
 	if (reg_names.count(R2))
 	  reg_name = reg_names[R2];
+	else if (constants.count(R2))
+	  reg_name = constants[R2] + " " + reg_name;
 	label += "| <" + convertToString(R2) + "> " + reg_name + " ";
       }
     }
-    else
+    else if (C.access(R).C.exp->head->type() == index_var_type)
     {
       expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names));
+
+      label += E->print();
+      label = escape(wrap(label,40));
+    }
+    else
+    {
+      expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names),constants));
 
       label += E->print();
       label = escape(wrap(label,40));
@@ -2803,7 +2823,10 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
 	// Don't draw ref edges to things like fmap.
 	if (reg_names.count(R2) and not used) continue;
-	
+
+	// Don't draw ref edges to things like fmap.
+	if (constants.count(R2) and not used) continue;
+
 	if (not used)
 	  o<<name<<":<"<<R2<<">:s -> "<<name2<<":n;\n";
 	else
@@ -2822,6 +2845,9 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	// Don't draw ref edges to things like fmap.
 	if (reg_names.count(R2) and not used) continue;
 	
+	// Don't draw ref edges to things like fmap.
+	if (constants.count(R2) and not used) continue;
+
 	if (not used)
 	  o<<name<<":s -> "<<name2<<":n;\n";
 	else
