@@ -2716,6 +2716,8 @@ void dot_graph_for_token(const reg_heap& C, int t)
    2. Do not draw reference edges to regs that have a name.
 
    3. Handle indirection nodes, somehow.
+      (a) First, check WHY we are getting indirection nodes.
+      (b) Then Consider eliminating them somehow during garbage collection.
 
    Do I want to somehow differentiate between cases like fmap (where fmap actually refers to the reg) and cases
    like 1.0 where there could be multiple 1.0 regs?
@@ -2810,8 +2812,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	for(const auto& i: C.access(R).used_inputs)
 	  if (i.first == R2) used = true;
 
-	// Don't draw edges to things like fmap.
-	if (reg_names.count(R2)) continue;
+	// Don't draw ref edges to things like fmap.
+	if (reg_names.count(R2) and not used) continue;
 	
 	if (not used)
 	  o<<name<<":s -> "<<name2<<":n;\n";
