@@ -90,6 +90,7 @@ bool subA_identical(const ublas::matrix<int>& I1,const ublas::matrix<int>& I2) {
   return not error;
 }
 
+/// Find the current active (e.g. smallest) column - w/o incrementing I at all.  We could perhaps call this current_column( ).
 int next_column(const vector< vector<pair<int,int> > >& indices, const vector<int>& branches, const vector<int>& I)
 {
   int m = -1;
@@ -105,6 +106,39 @@ int next_column(const vector< vector<pair<int,int> > >& indices, const vector<in
     else
       m = std::min(m, indices[B][ii].first);
   }
+  return m;
+}
+
+/// Find the current active (e.g. smallest) column - w/o incrementing I at all.  We could perhaps call this current_column( ).
+int next_column(const vector< vector<pair<int,int> > >& indices, const vector<int>& branches, const vector< vector<int> >& sequence_indices, const vector<int>& I)
+{
+  int m = -1;
+  for(int i=0;i<branches.size();i++)
+  {
+    int B = branches[i];
+
+    int ii = I[i];
+    if (ii >= indices[B].size()) continue;
+
+    if (m == -1)
+      m = indices[B][ii].first;
+    else
+      m = std::min(m, indices[B][ii].first);
+  }
+
+  for(int n=0;n<sequence_indices.size();n++)
+  {
+    int i = n + branches.size();
+
+    int ii = I[i];
+    if (ii >= sequence_indices[n].size()) continue;
+
+    if (m == -1)
+      m = sequence_indices[n][ii];
+    else
+      m = std::min(m, sequence_indices[n][ii]);
+  }
+
   return m;
 }
 
@@ -173,6 +207,92 @@ ublas::matrix<int> subA_index_t::get_subA_index(const vector<int>& branches, con
   }
 
   return get_subA_index(branches, with_columns);
+}
+
+/// align sub-alignments corresponding to branches in b
+ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& branches,const vector<vector<int>>& sequence_indices, bool with_columns)
+{
+   // Compute the total length of branch indices.
+  // Also check that the indices are up-to-date.
+
+  int total_length = 0;
+  for(int B: branches)
+    total_length += branch_index_length(B);
+
+  for(const auto& v: sequence_indices)
+    total_length += v.size();
+
+  // The alignment of sub alignments
+  int C = sequence_indices.size() + branches.size();
+  ublas::matrix<int> subA3(total_length, branches.size() + sequence_indices.size() + (with_columns?1:0));
+
+  vector<int> I(branches.size()+sequence_indices.size(),0);
+  int L = 0;
+  while(true)
+  {
+    int c = next_column(indices, branches, sequence_indices, I);
+    if (c == -1) break;
+
+    for(int i=0;i<branches.size();i++)
+    {
+      int b = branches[i];
+
+      int j = I[i];
+
+      if (j < indices[b].size() and indices[b][j].first == c) 
+      {
+	subA3(L,i) = indices[b][j].second;
+	I[i]++;
+      }
+      else
+	subA3(L,i) = -1;
+    }
+
+    for(int i=0;i<sequence_indices.size();i++)
+    {
+      int n = i + branches.size();
+      int j = I[n];
+
+      if (j < sequence_indices[i].size() and sequence_indices[i][j] == c)
+      {
+	subA3(L,n) = j;
+	I[n]++;
+      }
+      else
+	subA3(L,n) = -1;
+    }
+
+    if (with_columns)
+      subA3(L,C) = c;
+
+    L++;
+  }
+
+  ublas::matrix<int> subA4(L, subA3.size2() );
+  for(int i=0;i<subA4.size1();i++)
+    for(int j=0;j<subA4.size2();j++)
+      subA4(i,j) = subA3(i,j);
+
+  return subA4;
+}
+
+/// align sub-alignments corresponding to branches in b
+ublas::matrix<int> subA_index_t::get_subA_index_with_nodes(const std::vector<int>& branches,const std::vector<int>& nodes, const alignment& A,const Tree& T, bool with_columns)
+{
+  // copy sub-A indices for each branch
+  for(int j=0;j<branches.size();j++) 
+  {
+    IF_DEBUG_I( check_footprint_for_branch(A,T,branches[j]) );
+    
+    if (not branch_index_valid(branches[j]))
+      update_branch(A,T,branches[j]);
+  }
+
+  vector< vector<int> > sequence_indices;
+  for(int n: nodes)
+    sequence_indices.push_back(A.get_columns_for_characters(n));
+
+  return get_subA_index_with_nodes(branches, sequence_indices, with_columns);
 }
 
 /// Compute subA index for branches point to \a node.

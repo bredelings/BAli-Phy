@@ -159,5 +159,6 @@ double shift_epsilon(std::vector< object_ref >& x, const std::vector<double>& p)
 
 double bit_flip(std::vector< object_ref >& x, const std::vector<double>& p);
 
+double move_scale_branch(Probability_Model& P);
 
 #endif

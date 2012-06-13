@@ -47,6 +47,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 using std::valarray;
 using std::vector;
+using std::pair;
 
 // This file assumes that 
 // * the matrix is reversible.  This means that we evaluate
@@ -180,6 +181,22 @@ inline double element_prod_sum(Matrix& M1,const Matrix& M2,const Matrix& M3,cons
     sum += m1[i] * m2[i] * m3[i] * m4[i];
 
   return sum;
+}
+
+pair<int,int> sample(const Matrix& M)
+{
+  double total = element_sum(M);
+  double r = uniform()*total;
+
+  double sum = 0;
+  for(int m=0;m<M.size1();m++)
+    for(int l=0;l<M.size2();l++)
+    {
+      sum += M(m,l);
+      if (r <= sum)
+	return {m,l};
+    }
+  return {-1,-1};
 }
 
 namespace substitution {
@@ -1734,53 +1751,221 @@ namespace substitution {
     return Pr;
   }
 
-  /* 1. It seems that we should be able to select (l,m) pairs for
-     columns that have substitution indices for directed branches
-     pointing to the root (since, in the context of a given root,
-     there are no out-going edges). Such edges are "incoming-present"
-     in the substitution index matrix, even if they are not
-     "outgoing-present".  And this presence (in the substitution index
-     matrix) is different than whether there is actually an internal
-     node character there in the alignment. 
+  vector<vector<pair<int,int>>> 
+  sample_subst_history(const vector< vector<int> >& sequences, const alignment& A,
+		       subA_index_t& I, const Mat_Cache& MC,
+		       const Tree& T,Likelihood_Cache& cache)
+  {
+#ifdef DEBUG_INDEXING
+    I.check_footprint(A, T);
+    check_regenerate(I, A, T, cache.root);
+#endif
 
-     We can then map columns that are incoming-present to present
-     internal node characters. If the alignment is fixed, we could
-     either (a) skip this step, or (b) assume that internal node
-     characters are always present, or (c) assume the minimal
-     arrangement of internal node characters necessary to connect the
-     observed leaf characters. 
+#ifdef DEBUG_SUBSTITUTION
+    std::clog<<"Pr: Peeled on "<<n_br<<" branches.\n";
+#endif
 
-     IF we have a variable alignment, then we know which internal node
-     characters are present and which are not.  Some present internal
-     node characters at the root may not be incoming-present in the
-     substitution indices.  We sample these characters from F, since
-     no data applies to them.  
+    const vector<unsigned>& smap = MC.state_letters();
 
-     2. We then consider directed edges pointing to the root.
+    // scratch matrix 
+    Matrix & S = cache.scratch(0);
+    const int n_models = cache.n_models();
+    const int n_states = cache.n_states();
 
-     2a. The source node for that branch may have no incoming edges.
-     In this case, the source node is a leaf node.  The substitution
-     index for this branch is the same as the index of letters in the
-     leaf sequence (for both subA-indices we have currently, at
-     least).  Therefore, we are done, unless the leaf character is an
-     ambiguous letter.  
+    int root = cache.root;
 
-     Assume the letter is ambiguous.  If the branch points to an
-     outgoing edge (or root) with a (l,m) pair, then we look at
-     \Pr(data,l',m') = \Pr(l,m -> l',m') which is just the Q matrix
-     from model m.
+    // Compute matrix F(m,s) = Pr(m)*Pr(s|m) = p(m)*freq(m,s) 
+    Matrix F(n_models, n_states);
+    MC.WeightedFrequencyMatrix(F);
 
-     If the branch has no (l,m) pair, then we have
-     \Pr(data,l',m') = \Pr(l,m) \times \Pr(l,m -> l',m')
-     Thus, we use the Q matrix, but multiplied by the corresponding
-     values from the frequency matrix F.
+    bool has_internal_nodes = (A.n_sequences() == T.n_nodes());
+    if (not has_internal_nodes) assert(A.n_sequences() == T.n_leaves());
 
-     2b. The source node for that branch may have two incoming edges.
-     
-     
-     
-  */     
+    // 1. Allocate arrays for storing results and temporary results.
+    vector<vector<pair<int,int> > > ancestral_characters (A.n_sequences());
+    vector<vector<pair<int,int> > > subA_index_parent_characters (T.n_branches()*2);
+    
+    // All the (-1,-1)'s should be overwritten with the sampled character.
+    for(int i=0;i<A.n_sequences();i++)
+      ancestral_characters[i] = vector<pair<int,int>>(A.seqlength(i), {-1,-1});
 
+    {
+      // compute root branches
+      vector<int> rb;
+      for(const_in_edges_iterator i = T.node(root).branches_in();i;i++)
+      {
+	int b = *i;
+
+	calculate_caches_for_branch(b, sequences, A,I,MC,T,cache);
+	if (not I.branch_index_valid(b))
+	  I.update_branch(A,T,b);
+
+	rb.push_back(b);
+
+	subA_index_parent_characters[b] = vector<pair<int,int>>(I.branch_index_length(b), {-1,-1});
+      }
+
+      // FIXME - but what if root is internal and A doesn't have internal sequences?
+      vector<int> nodes;
+      if (has_internal_nodes)
+	nodes = {root};
+      ublas::matrix<int> index = I.get_subA_index_with_nodes(rb, nodes, A, T);
+
+      // FIXME - this doesn't handle case where tree has only 2 leaves.
+      for(int i=0;i<index.size1();i++)
+      {
+	int i0 = index(i,0);
+	int i1 = index(i,1);
+	int i2 = index(i,2);
+
+	S = F;
+
+	if (i0 != -1)
+	  element_prod_modify(S, cache[rb[0]][i0]);
+	if (i1 != -1)
+	  element_prod_modify(S, cache[rb[1]][i1]);
+	if (i2 != -1)
+	  element_prod_modify(S, cache[rb[2]][i2]);
+
+	pair<int,int> state_model = sample(S);
+
+	if (has_internal_nodes)
+	{
+	  int ii = index(i,3);
+	  if(ii != -1)
+	    ancestral_characters[root][ii] = state_model;
+	}
+
+	if (i0 != -1)
+	  subA_index_parent_characters[rb[0]][i0] = state_model;
+	if (i1 != -1)
+	  subA_index_parent_characters[rb[1]][i1] = state_model;
+	if (i2 != -1)
+	  subA_index_parent_characters[rb[2]][i2] = state_model;
+      }
+    }
+
+    vector<const_branchview> branches = branches_toward_node(T, cache.root);
+    std::reverse(branches.begin(), branches.end());
+
+    for(const_branchview b: branches)
+    {
+      int node = b.source();
+
+      const vector<Matrix>& transition_P = MC.transition_P(b);
+
+      vector<int> local_branches = {b};
+      for(const_in_edges_iterator i = b.branches_before();i;i++)
+      {
+	int b = *i;
+
+	calculate_caches_for_branch(b, sequences, A,I,MC,T,cache);
+
+	if (not I.branch_index_valid(b))
+	  I.update_branch(A,T,b);
+
+	local_branches.push_back(b);
+
+	subA_index_parent_characters[b] = vector<pair<int,int>>(I.branch_index_length(b), {-1,-1});
+      }
+
+      assert(local_branches.size() == 3 or local_branches.size() == 1);
+
+      vector<int> nodes;
+      if (T.node(node).is_leaf_node() or has_internal_nodes)
+	nodes = {node};
+
+      // FIXME - but what if node is internal and A doesn't have internal sequences?
+      ublas::matrix<int> index = I.get_subA_index_with_nodes(local_branches, nodes, A, T);
+      
+      for(int i=0;i<index.size1();i++)
+      {
+	int i0 = index(i,0);
+
+	int i1 = -1;
+	int i2 = -1;
+
+	if (local_branches.size() == 3)
+	{
+	  i1 = index(i,1);
+	  i2 = index(i,2);
+	}
+
+	// If there IS no parent character, then we can sample from F
+	if (i0 == -1)
+	  S = F;
+	// If there is a parent character, then it MUST have an (l,m) pair.
+	// This is because it was incoming-present
+	else
+	{
+	  pair<int,int> state_model_parent = subA_index_parent_characters[b][i0];
+	  int mp = state_model_parent.first;
+	  int lp = state_model_parent.second;
+	  assert(mp != -1);
+	  element_assign(S,0);
+
+	  const Matrix& Q = transition_P[mp];
+
+	  for(int l=0;l<n_states;l++)
+	    S(mp,l) = Q(lp,l);
+	}
+
+	if (local_branches.size() == 1)
+	{
+	  int ii = index(i,index.size2()-1);
+	  int l = sequences[node][ii];
+	  const alphabet& a = A.get_alphabet();
+	  if (l == alphabet::not_gap)
+	    ;
+	  else if (a.is_letter(l))
+	  {
+	    // Clear S(m,s) for every state s that doesn't map to the observed letter l
+	    for(int s=0;s<n_states;s++)
+	      if (smap[s] != l)
+		for(int m=0;m<n_models;m++)
+		  S(m,s) = 0;
+	  }
+	  else
+	  {
+	    assert(a.is_letter_class(l));
+	    vector<bool> letters = a.letter_mask(l);
+	    for(int l=0;l<letters.size();l++)
+	      if (letters[l])
+		for(int s=0;s<n_states;s++)
+		  if (smap[s] != l)
+		    for(int m=0;m<n_models;m++)
+		      S(m,s) = 0;
+	  }
+	}
+	
+	if (i1 != -1)
+	  element_prod_modify(S, cache[local_branches[1]][i1]);
+	if (i2 != -1)
+	  element_prod_modify(S, cache[local_branches[2]][i2]);
+	
+	pair<int,int> state_model = sample(S);
+	
+	if (T.node(node).is_leaf_node() or (has_internal_nodes))
+	{
+	  int ii = index(i,index.size2()-1);
+	  if (ii != -1)
+	    ancestral_characters[node][ii] = state_model;
+	}
+	
+	if (i1 != -1)
+	  subA_index_parent_characters[local_branches[1]][i1] = state_model;
+	if (i2 != -1)
+	  subA_index_parent_characters[local_branches[2]][i2] = state_model;
+      }
+    }
+
+    return ancestral_characters;
+  }
+
+  vector<vector<pair<int,int>>> sample_ancestral_states(const data_partition& P)
+  {
+    return sample_subst_history(*P.sequences, *P.A, *P.subA, P, P.T(), P.LC);
+  }
 
   vector<Matrix> 
   get_likelihoods_by_alignment_column(const vector< vector<int> >& sequences, const alignment& A,

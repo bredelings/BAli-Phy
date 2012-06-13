@@ -42,6 +42,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 
 using std::endl;
+using std::pair;
 
 namespace MCMC {
   using std::vector;
@@ -362,6 +363,43 @@ string Mixture_Components_Function::operator()(const owned_ptr<Probability_Model
   for(int i=0;i<model_pr.size();i++)
     output<<join(model_pr[i],' ')<<"\n";
 
+  output<<endl;
+
+  return output.str();
+}
+
+string Ancestral_Sequences_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+{
+  std::ostringstream output;
+
+  const Parameters& PP = *P.as<Parameters>();
+
+  const alphabet& a = PP[p].get_alphabet();
+
+  alignment A = *PP[p].A;
+
+  const vector<unsigned> smap = PP[p].state_letters();
+
+  vector<vector<pair<int,int> > > states = substitution::sample_ancestral_states(PP[p]);
+    
+  for(int i=0;i<A.n_sequences();i++)
+  {
+    vector<int> columns = A.get_columns_for_characters(i);
+    assert(columns.size() == states[i].size());
+    for(int j=0;j<columns.size();j++)
+    {
+      int c = columns[j];
+      assert(A.character(c,i));
+      int state = states[i][j].second;
+      int letter = smap[state];
+      if (a.is_letter(A(c,i)))
+	assert( A(c,i) == letter );
+      else
+	A.set_value(c,i, letter);
+    }
+  }
+
+  A.print_fasta(output);
   output<<endl;
 
   return output.str();

@@ -124,26 +124,6 @@ double data_partition::rate() const
   return *convert<const Double>(O);
 }
 
-ostream& operator<<(ostream& o, const Matrix& M)
-{
-  for(int i=0;i<M.size1();i++)
-  {
-    for(int j=0;j<M.size2();j++)
-      std::cerr<<M(i,j)<<" ";
-    std::cerr<<"\n";
-  }
-  return o;
-}
-
-ostream& operator<<(ostream& o, const std::vector<double>& v)
-{
-  for(int i=0;i<v.size();i++)
-    std::cerr<<v[i]<<" ";
-  std::cerr<<"\n";
-  
-  return o;
-}
-
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
   b = T().directed_branch(b).undirected_name();
@@ -1034,17 +1014,16 @@ double Parameters::get_branch_subst_rate(int p, int /* b */) const
 
 double Parameters::get_branch_subst_length(int p, int b) const
 {
-  double length1 = get_branch_duration(p,b) * get_branch_subst_rate(p,b);
-
+  int s = scale_for_partition[p];
   b = T->directed_branch(b).undirected_name();
+  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
 
 #ifndef NDEBUG
-  int s = scale_for_partition[p];
-  double length2 = get_parameter_value_as<Double>(branch_length_indices[s][b]);
-  assert(std::abs(length1 - length2) < 1.0e-8);
+  double length1 = get_branch_duration(p,b) * get_branch_subst_rate(p,b);
+  assert(std::abs(length1 - length2) < 1.0e-10);
 #endif
 
-  return length1;
+  return length2;
 }
 
 double Parameters::get_branch_indel_rate(int p, int b) const
@@ -1057,12 +1036,11 @@ double Parameters::get_branch_indel_rate(int p, int b) const
 
   // determine scaling factor.
   int offset = n_scales+1;
-  int indel_scale_branch = -1;
-  if (get_parameter_value_as<Bool>(offset+1))
-  {
+
+  bool indel_scale_on = get_parameter_value_as<Bool>(offset+1);
+  int indel_scale_branch = get_parameter_value_as<Int>(offset+2);
+  if (indel_scale_on and indel_scale_branch == b)
     indel_scale_by = exp( get_parameter_value_as<Double>(offset+0) );
-    indel_scale_branch = get_parameter_value_as<Int>(offset+2);
-  }
 
   return r * indel_scale_by;
 }
@@ -1100,7 +1078,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    branch_length_max(-1)
 {
   C += SModel_Functions();
-  // Don't call set_parameter_value here, because recalc( ) depends on branch_lenth_indices, which is not ready.
+  // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
   constants.push_back(-1);
 
