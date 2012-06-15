@@ -580,7 +580,7 @@ namespace substitution {
 
     vector<object_ptr<const F81_Object> > SubModels(n_models);
     for(int m=0;m<n_models;m++) {
-      SubModels[m] = dynamic_pointer_cast<const F81_Object>(MC.base_model(m));
+      SubModels[m] = dynamic_pointer_cast<const F81_Object>(MC.base_model(m,b0));
       assert(SubModels[m]);
     }
     const double t = T.directed_branch(b0).length();
@@ -916,7 +916,7 @@ namespace substitution {
     
     vector<object_ptr<const F81_Object> > SubModels(n_models);
     for(int m=0;m<n_models;m++) {
-      SubModels[m] = dynamic_pointer_cast<const F81_Object>(MC.base_model(m));
+      SubModels[m] = dynamic_pointer_cast<const F81_Object>(MC.base_model(m,b0));
       assert(SubModels[m]);
     }
     const double t = T.directed_branch(b0).length();
@@ -1012,7 +1012,7 @@ namespace substitution {
       int n_states = cache.scratch(0).size2();
       int n_letters = A.get_alphabet().n_letters();
       if (n_states == n_letters) {
-	if (dynamic_pointer_cast<const F81_Object>(MC.base_model(0)))
+	if (dynamic_pointer_cast<const F81_Object>(MC.base_model(0,0)))
 	  peel_leaf_branch_F81(b0, I, cache, sequences[b0], A, T, MC);
 	else
 	  peel_leaf_branch(b0, I, cache, sequences[b0], A, T, MC.transition_P(B0), MC);
@@ -1021,7 +1021,7 @@ namespace substitution {
 	peel_leaf_branch_modulated(b0, I, cache, sequences[b0], A, T, MC.transition_P(B0), MC);
     }
     else if (bb == 2) {
-      if (dynamic_pointer_cast<const F81_Object>(MC.base_model(0)))
+      if (dynamic_pointer_cast<const F81_Object>(MC.base_model(0,0)))
 	peel_internal_branch_F81(b0, I, cache, A, T, MC);
       else
 	peel_internal_branch(b0, I, cache, A, T, MC.transition_P(B0), MC);

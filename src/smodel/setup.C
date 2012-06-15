@@ -900,7 +900,7 @@ get_smodel(const string& smodel_name, const object_ptr<const alphabet>& a, const
   // check if the model actually fits alphabet a...
 
   // --------- Convert smodel to MultiModel ------------//
-  formula_expression_ref full_smodel = get_MM(smodel,"Final",a,frequencies);
+  formula_expression_ref full_smodel = get_MMM(smodel,"Final",a,frequencies);
 
   std::cerr<<"smodel = "<<full_smodel.exp()<<"\n";
 

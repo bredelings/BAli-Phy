@@ -159,9 +159,11 @@ vector<double> data_partition::frequencies(int m) const
   return *P->C.evaluate_as<Vector<double>>( frequencies_indices[m] );
 }
 
-object_ptr<const Object> data_partition::base_model(int m) const
+object_ptr<const Object> data_partition::base_model(int m, int b) const
 {
-  return P->C.evaluate( base_model_indices[m] );
+  b = T().directed_branch(b).undirected_name();
+
+  return P->C.evaluate( base_model_indices(m,0) );
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -554,6 +556,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   }
 
   // Add method indices for calculating base models and frequencies
+  base_model_indices.resize(n_models, t.n_branches());
   for(int m=0;m<n_models;m++)
   {
     int s = P->smodel_for_partition[partition_index];
@@ -561,7 +564,8 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
     frequencies_indices.push_back( p->C.add_compute_expression( (F,m) ) );
 
     expression_ref BM = P->C.get_expression(P->SModels[s].base_model);
-    base_model_indices.push_back( p->C.add_compute_expression((BM,m)) );
+    for(int b=0;b<t.n_branches();b++)
+      base_model_indices(m,b) = p->C.add_compute_expression((BM,m,b));
   }
 }
 
@@ -581,7 +585,7 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   n_states = C.add_compute_expression((::n_states, S));
   rate = C.add_compute_expression((::rate, S));
 
-  base_model = C.add_compute_expression((::base_model, S));
+  base_model = C.add_compute_expression( v1^(v2^(::base_model, (get_nth_mixture,S,v2), v1) ) );
   frequencies = C.add_compute_expression((::get_component_frequencies, S));
   transition_p = C.add_compute_expression((::branch_transition_p, S));
 }
@@ -1175,12 +1179,14 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
      }
      expression_ref DL = get_list(D);
 
+     expression_ref I = 0;
+
      // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
      for(int m=0;m < n_smodels(); m++)
      {
        expression_ref S = C.get_expression(SModels[m].main);
        expression_ref V = Vector_From_List<Matrix,MatrixObject>();
-       expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, S, (get_list_index, DL, v1) ) ) );
+       expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, (get_nth_mixture,S,I), (get_list_index, DL, v1) ) ) );
        branch_transition_p_indices(s,m) = C.add_compute_expression(E);
      }
    }

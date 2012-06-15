@@ -95,7 +95,7 @@ class data_partition: public Mat_Cache
 
   std::vector<int> frequencies_indices;
 
-  std::vector<int> base_model_indices;
+  ublas::matrix<int> base_model_indices;
 
   double branch_mean_;
 
@@ -134,7 +134,7 @@ public:
   
   std::vector<double> distribution() const;
 
-  object_ptr<const Object> base_model(int m) const;
+  object_ptr<const Object> base_model(int m, int b) const;
 
   std::vector<double> frequencies(int m) const;
 
