@@ -124,8 +124,6 @@ public:
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;
   
-  double rate() const;
-
   int n_base_models() const;
 
   // Perhaps this should really be per-mixture-component.

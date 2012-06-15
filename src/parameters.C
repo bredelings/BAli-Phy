@@ -117,13 +117,6 @@ const IndelModel& data_partition::IModel() const
     return P->IModel(m);
 }
 
-double data_partition::rate() const
-{
-  int s = P->smodel_for_partition[partition_index];
-  object_ref O = P->C.evaluate(P->SModels[s].rate);
-  return *convert<const Double>(O);
-}
-
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
   b = T().directed_branch(b).undirected_name();
@@ -1182,6 +1175,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
      }
      expression_ref DL = get_list(D);
 
+     // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
      for(int m=0;m < n_smodels(); m++)
      {
        expression_ref S = C.get_expression(SModels[m].main);
