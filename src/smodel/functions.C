@@ -20,6 +20,7 @@ const expression_ref get_component_frequencies = var("component_frequencies");
 const expression_ref base_model = var("base_model");
 const expression_ref distribution = var("distribution");
 const expression_ref MultiRate = var("MultiRate");
+const expression_ref get_nth_mixture = var("get_nth_mixture");
 
 // (ReversibleMarkov alpha state_letters q pi l t)
 const expression_ref ReversibleMarkov = lambda_expression( constructor("ReversibleMarkov", 7) );
@@ -83,14 +84,18 @@ Program SModel_Functions()
 	  );
 
   // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
-  P += Def( (n_base_models, (MixtureModel,(DiscreteDistribution,v1))), (length,v1));
-  
+  // n_base_models (MixtureModels h:t) = n_base_models h
+  P += Def( (n_base_models, (MixtureModel,(DiscreteDistribution,v1))), (length,v1))
+          ( (n_base_models, (MixtureModels,v1&v2)), (n_base_models,v1) );
+
   // state_letters (ReversibleMarkov alpha smap q pi l t r) = smap
   // state_letters (F81 alpha s a pi) = s
   // state_letters (MixtureModel alpha s d) = state_letters (base_model (MixtureModel alpha s d) 0)
+  // state_letters (MixtureModels h:t) = state_letters h
   P += Def( (state_letters, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v2)
           ( (state_letters, (F81M,v1,v2,v3,v4)), v2)
-          ( (state_letters, (MixtureModel,v1)), (state_letters,(base_model,(MixtureModel,v1),0)));
+          ( (state_letters, (MixtureModel,v1)), (state_letters,(base_model,(MixtureModel,v1),0)))
+          ( (state_letters, (MixtureModels,v1&v2)), (state_letters,v1) );
 
   // n_states m = vector_size (state_letters m)
   P += Def( (n_states,v1), (VectorSize<unsigned>(),(state_letters,v1)));
@@ -98,9 +103,11 @@ Program SModel_Functions()
   // get_alphabet (ReversibleMarkov a smap q pi l t r) = alpha
   // get_alphabet (F81 alpha s a pi) = alpha
   // get_alphabet (MixtureModel alpha s d) = alpha
+  // get_alphabet (MixtureModels h:t) = get_alphabet h
   P += Def( (get_alphabet, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v1)
           ( (get_alphabet, (F81M,v1,v2,v3,v4)), v1)
-          ( (get_alphabet, (MixtureModel,v1)), (get_alphabet,(base_model,(MixtureModel,v1),0)));
+          ( (get_alphabet, (MixtureModel,v1)), (get_alphabet,(base_model,(MixtureModel,v1),0)))
+          ( (get_alphabet, (MixtureModels,v1&v2)), (get_alphabet,v1) );
 
   // get_frequencies (ReversibleMarkov alpha s q) = get_frequencies q
   // get_frequencies (F81 alpha s a pi) = pi
@@ -108,13 +115,20 @@ Program SModel_Functions()
           ( (get_frequencies, (F81M,v1,v2,v3,v4)), v4);
 
   // get_component_frequencies (MixtureModel alpha s d)  i = get_frequencies (base_model (MixtureModel alpha s d) i)
-  P += Def( (get_component_frequencies, (MixtureModel,v1), v4), (get_frequencies,(base_model,(MixtureModel,v1),v4)));
+  // get_component_frequencies (MixtureModels h:t)       i = get_component_frequencies h i
+  P += Def( (get_component_frequencies, (MixtureModel,v1), v4), (get_frequencies,(base_model,(MixtureModel,v1),v4)))
+          ( (get_component_frequencies, (MixtureModels,v1&v2), v4), (get_component_frequencies,v1,v4));
 
   // base_model (MixtureModel alpha s (DiscreteDistribution l)) i = get_list_index l i
   P += Def( (base_model, (MixtureModel,(DiscreteDistribution,v1)),v2), (snd,(get_list_index,v1,v2)));
 
   // distribution (MixtureModel alpha s (DiscreteDistribution l)) = fmap fst l
-  P += Def( (distribution, (MixtureModel,(DiscreteDistribution,v1))), (fmap,fst,v1));
+  // distribution (MixtureModels h:t) = distribution h
+  P += Def( (distribution, (MixtureModel,(DiscreteDistribution,v1))), (fmap,fst,v1))
+          ( (distribution, (MixtureModels,v1&v2)), (distribution, v1) );
+
+  // get_nth_mixture (MixtureModels l) b = l !! b
+  P += Def( (get_nth_mixture, (MixtureModels, v1), v2), (get_list_index,v1,v2) );
 
   return P;
 }
