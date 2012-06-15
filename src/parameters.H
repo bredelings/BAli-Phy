@@ -207,7 +207,7 @@ public:
 
   std::string name() const;
 
-  data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&);
+  data_partition(const std::string& n, Parameters* P, int i, const alignment&);
 };
 
 

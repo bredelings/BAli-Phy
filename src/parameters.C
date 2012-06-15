@@ -163,7 +163,7 @@ object_ptr<const Object> data_partition::base_model(int m, int b) const
 {
   b = T().directed_branch(b).undirected_name();
 
-  return P->C.evaluate( base_model_indices(m,0) );
+  return P->C.evaluate( base_model_indices(m,b) );
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -517,7 +517,7 @@ efloat_t data_partition::heated_likelihood() const
     return pow(likelihood(),get_beta());
 }
 
-data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree&)
+data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a)
   :P(p),
    partition_index(i),
    partition_name(n),
@@ -1200,7 +1200,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string name = string("part") + convertToString(i+1);
 
     // add the data partition
-    data_partitions.push_back( data_partition(name, this, i, A[i], *T) );
+    data_partitions.push_back( data_partition(name, this, i, A[i]) );
   }
 }
 
