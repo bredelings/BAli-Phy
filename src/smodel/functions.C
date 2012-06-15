@@ -33,6 +33,9 @@ const expression_ref F81M = lambda_expression( constructor("F81", 4) );
 // (MixtureModel (DiscreteDistribution [(Double,RMM|F81)]))
 const expression_ref MixtureModel = lambda_expression( constructor("MixtureModel", 1) );
 
+// (MixtureModels [MixtureModel])
+const expression_ref MixtureModels = lambda_expression( constructor("MixtureModels", 1) );
+
 // TODO: transition_p
 // After we get transition_p right, then it SHOULD be fast.  Benchmark!
 //

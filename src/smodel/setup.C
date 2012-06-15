@@ -479,6 +479,22 @@ get_MM(const formula_expression_ref& M, const string& name,
   }
 }
 
+/// \brief Construct a MultiModel from model \a M
+formula_expression_ref
+get_MMM(const formula_expression_ref& M, const string& name, 
+	const object_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
+{
+  if (is_exactly(M.result(SModel_Functions()), "MixtureModels"))
+    return M;
+
+  try { 
+    return (MixtureModels, (get_MM(M,name,a,frequencies)&ListEnd));
+  }
+  catch (std::exception& e) { 
+    throw myexception()<<name<<": Can't construct a MixtureModels from '"<<M.exp()<<"':\n"<<e.what();
+  }
+}
+
 /// \brief Construct a MultiModel from the top of the model stack.
 formula_expression_ref
 get_MM(vector<formula_expression_ref >& model_stack, const string& name, 

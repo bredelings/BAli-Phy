@@ -13,6 +13,7 @@ extern const expression_ref Q_from_S_and_R;
 extern const expression_ref branch_transition_p;
 
 extern const expression_ref MixtureModel;
+extern const expression_ref MixtureModels;
 extern const expression_ref n_base_models;
 extern const expression_ref state_letters;
 extern const expression_ref n_states;
