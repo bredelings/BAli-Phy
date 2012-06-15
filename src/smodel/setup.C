@@ -475,7 +475,7 @@ get_MM(const formula_expression_ref& M, const string& name,
     return Unit_Model( get_RA(M,name,a, frequencies) ) ; 
   }
   catch (std::exception& e) { 
-    throw myexception()<<name<<": Can't construct a UnitModel from '"<<M.exp()<<"':\n"<<e.what();
+    throw myexception()<<name<<": Can't construct a MixtureModel from '"<<M.exp()<<"':\n"<<e.what();
   }
 }
 
