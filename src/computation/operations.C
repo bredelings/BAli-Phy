@@ -63,9 +63,14 @@ std::string Apply::name() const {
 
 closure Case::operator()(OperationArgs& Args) const
 {
-  const closure& C = Args.current_closure();
-
+  // Resizing of the memory can occur here, invalidating previously computed pointers
+  // to closures.  The *index* within the memory shouldn't change, though.
   const closure& obj = Args.lazy_evaluate(0);
+
+  // Therefore, we must compute this *after* we do the computation above, since
+  // we're going to hold on to it.  Otherwise the held reference would become
+  // *invalid* after the call above!
+  const closure& C = Args.current_closure();
 
   int L = (Args.n_args() - 1)/2;
 
