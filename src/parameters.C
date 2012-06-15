@@ -517,34 +517,36 @@ efloat_t data_partition::heated_likelihood() const
     return pow(likelihood(),get_beta());
 }
 
-data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t)
+data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree&)
   :P(p),
    partition_index(i),
    partition_name(n),
-   cached_alignment_prior_for_branch(t.n_branches()),
-   pairwise_alignment_for_branch(2*t.n_branches()),
-   cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
+   cached_alignment_prior_for_branch(T().n_branches()),
+   pairwise_alignment_for_branch(2*T().n_branches()),
+   cached_alignment_counts_for_branch(T().n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
-   cached_branch_HMMs(t.n_branches()),
-   transition_p_method_indices(t.n_branches(),-1),
+   cached_branch_HMMs(T().n_branches()),
+   transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
-   sequences( alignment_letters(a,t.n_leaves()) ),
+   sequences( alignment_letters(a,T().n_leaves()) ),
    A(a),
-   LC(t, *this),
-   branch_HMM_type(t.n_branches(),0)
+   LC(T(), *this),
+   branch_HMM_type(T().n_branches(),0)
 {
+  int B = T().n_branches();
+
   if (variable_alignment() and use_internal_index)
-    subA = subA_index_internal(a.length()+1, t.n_branches()*2);
+    subA = subA_index_internal(a.length()+1, B*2);
   else
-    subA = subA_index_leaf(a.length()+1, t.n_branches()*2);
+    subA = subA_index_leaf(a.length()+1, B*2);
 
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
   // Add method indices for calculating transition matrices.
   const int n_models = n_base_models();
-  const int n_states = state_letters().size();
-  for(int b=0;b<t.n_branches();b++)
+  //  const int n_states = state_letters().size();
+  for(int b=0;b<B;b++)
   {
     int s = P->scale_for_partition[partition_index];
     int m = P->smodel_for_partition[partition_index];
@@ -556,7 +558,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   }
 
   // Add method indices for calculating base models and frequencies
-  base_model_indices.resize(n_models, t.n_branches());
+  base_model_indices.resize(n_models, B);
   for(int m=0;m<n_models;m++)
   {
     int s = P->smodel_for_partition[partition_index];
@@ -564,7 +566,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
     frequencies_indices.push_back( p->C.add_compute_expression( (F,m) ) );
 
     expression_ref BM = P->C.get_expression(P->SModels[s].base_model);
-    for(int b=0;b<t.n_branches();b++)
+    for(int b=0;b<B;b++)
       base_model_indices(m,b) = p->C.add_compute_expression((BM,m,b));
   }
 }
