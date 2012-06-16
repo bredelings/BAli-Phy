@@ -167,13 +167,20 @@ double beta_quantile(double p, double a, double b)
   if (a<0 or b<0)
     a=b=1;
 
+  // Avoid values GSL can't handle: could we approximate with e.g. normal here?
   double r = 100.0/std::max(a,b);
   if (r < 1) {
     a *= r;
     b *= r;
   }
 
-  return gsl_cdf_beta_Pinv(p,a,b);
+  // Avoid values GSL can't handle.
+  a = std::max(a,0.1);
+  b = std::max(b,0.1);
+
+  double x = gsl_cdf_beta_Pinv(p,a,b);
+  std::cerr<<"x = "<<x<<" p = "<<p<<" a = "<<a<<" b = "<<b<<std::endl;
+  return x;
 }
 
 log_double_t gamma_pdf(double x,double a, double b) 
