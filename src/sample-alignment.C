@@ -82,7 +82,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
 
-  Matrix frequency = P.FrequencyMatrix();
+  Matrix frequency = P.WeightedFrequencyMatrix();
 
   int node1 = T.branch(b).target();
   int node2 = T.branch(b).source();

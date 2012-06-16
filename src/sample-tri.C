@@ -59,7 +59,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   assert(T.is_connected(nodes[0],nodes[2]));
   assert(T.is_connected(nodes[0],nodes[3]));
 
-  Matrix frequency = P.FrequencyMatrix();
+  Matrix frequency = P.WeightedFrequencyMatrix();
 
   // std::cerr<<"A = "<<A<<endl;
 
