@@ -318,7 +318,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     add_dirichlet_slice_moves(P, prefix + "DP::rate*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "INV::pi*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "v*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "b*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "b*$", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "M2::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "M2a::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "M3::f*", slice_moves, 3);
