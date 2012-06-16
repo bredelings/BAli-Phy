@@ -179,8 +179,7 @@ public:
   std::vector< Matrix > dists1;
   /// Emission probabilities for second sequence
   std::vector< Matrix > dists2;
-  /// Frequencies at the root node - and equilibrium frequencies
-  Matrix frequency;
+
   /// The number of different rates
   int nrates() const {return dists1[0].size1();}
 

@@ -540,11 +540,11 @@ DPmatrixEmit::DPmatrixEmit(const vector<bitmask_t>& v1,
 			   double Beta,
 			   const vector< Matrix >& d1,
 			   const vector< Matrix >& d2, 
-			   const Matrix& f)
+			   const Matrix& weighted_frequencies)
   :DPmatrix(d1.size(),d2.size(),v1,v2,M,Beta),
    s12_sub(d1.size(),d2.size()),
    s1_sub(d1.size()),s2_sub(d2.size()),
-   dists1(d1),dists2(d2),frequency(f)
+   dists1(d1),dists2(d2)
 {
   //----- cache G1,G2 emission probabilities -----//
   for(int i=0;i<dists1.size();i++) {
@@ -552,7 +552,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<bitmask_t>& v1,
     for(int m=0;m<nrates();m++) {
       double temp=0;
       for(int l=0;l<dists1[i].size2();l++)
-	temp += frequency(m,l)*dists1[i](m,l);
+	temp += weighted_frequencies(m,l)*dists1[i](m,l);
       total += temp;
     }
     s1_sub[i] = pow(total,B);
@@ -564,7 +564,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<bitmask_t>& v1,
     for(int m=0;m<nrates();m++) {
       double temp=0;
       for(int l=0;l<dists2[i].size2();l++)
-	temp += frequency(m,l)*dists2[i](m,l);
+	temp += weighted_frequencies(m,l)*dists2[i](m,l);
       total += temp;
     }
     s2_sub[i] = pow(total,B);
@@ -575,7 +575,7 @@ DPmatrixEmit::DPmatrixEmit(const vector<bitmask_t>& v1,
   for(int i=0;i<dists2.size();i++) {
     for(int m=0;m<nrates();m++)
       for(int l=0;l<dists2[i].size2();l++)
-	dists2[i](m,l) *= frequency(m,l);
+	dists2[i](m,l) *= weighted_frequencies(m,l);
   }
 }
 
