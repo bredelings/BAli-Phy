@@ -224,7 +224,7 @@ namespace substitution
     // I should generalize this...
     // Should I make a tuple of tuples?
     R.add_expression((distributed, 
-		      Tuple(AG, AT, AC, GT, GC, TC),
+		      AG&(AT&(AC&(GT&(GC&(TC&ListEnd))))),
 		      Tuple(dirichlet_dist, Tuple(8.0, 4.0, 4.0, 4.0, 4.0, 8.0) )
 		      )
 		     );
@@ -637,7 +637,6 @@ namespace substitution
 
     formula_expression_ref models_list = ListEnd;
     formula_expression_ref vars_list = ListEnd;
-    expression_ref vars_tuple = Tuple(models.size());
     expression_ref n_tuple = Tuple(models.size());
     for(int i=0;i<N;i++)
     {
@@ -647,12 +646,11 @@ namespace substitution
 
       models_list = models[i] & models_list;
       vars_list = Var & vars_list;
-      vars_tuple = (vars_tuple, var);
       n_tuple = (n_tuple, 1.0);
     }
     formula_expression_ref R = (Mixture_E, vars_list, models_list);
 
-    R.add_expression((distributed, vars_tuple, Tuple(dirichlet_dist, n_tuple ) ) );
+    R.add_expression((distributed, vars_list, Tuple(dirichlet_dist, n_tuple ) ) );
 
     return R;
   }

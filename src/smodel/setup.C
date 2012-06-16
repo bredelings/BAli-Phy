@@ -635,8 +635,8 @@ bool process_stack_Multi(vector<string>& string_stack,
       dist = Tuple(f, rate) & dist;
     }
     dist = (DiscreteDistribution, dist);
-    dist.add_expression( (distributed, get_tuple(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );
-    dist.add_expression( (distributed, get_tuple(rates), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,2.0))) ) );
+    dist.add_expression( (distributed, get_list(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );
+    dist.add_expression( (distributed, get_list(rates), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,2.0))) ) );
 
     formula_expression_ref base = get_RA_default(model_stack,"DP",a,frequencies);
     model_stack.back() = (MultiRate, base,  dist);
@@ -702,7 +702,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       D = Tuple(f,w)&D;
     }
     D = (DiscreteDistribution, D);
-    D.add_expression((distributed, get_tuple(fraction), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
+    D.add_expression((distributed, get_list(fraction), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
