@@ -356,7 +356,9 @@ namespace substitution
   {
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), pi, (Plus_gwF, a, 1.0, (Vector_From_List<double,Double>(),pi)));
+    return let_expression(v1,(Vector_From_List<double,Double>(),pi),
+			  (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), v1, (Plus_gwF, a, 1.0, v1))
+			  );
   }
 
   formula_expression_ref Plus_F_Model(const alphabet& a)
@@ -372,7 +374,9 @@ namespace substitution
 
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), pi, (Plus_gwF, a, f, (Vector_From_List<double,Double>(),pi)));
+    return let_expression(v1,(Vector_From_List<double,Double>(),pi),
+			  (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), v1, (Plus_gwF, a, f, v1))
+			  );
   }
 
   formula_expression_ref Plus_gwF_Model(const alphabet& a)
@@ -460,8 +464,6 @@ namespace substitution
 
     return graph_normalize((DiscreteDistribution, get_list(pairs) ));
   }
-
-  expression_ref Discretize = lambda_expression( DiscretizationOp() );
 
   // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
   //         Q(mi -> ni) = R(m->n)        for model exchange

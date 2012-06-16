@@ -93,7 +93,7 @@ public:
   efloat_t path_Q_subst(const std::vector<int>&) const {return 1;}
 
   /// Does state S emit?
-  bool di(int S) const {bool e = false; if (state_emit[S]&(1<<0)) e=true;return e;}
+  bool di(int S) const {return state_emit[S].test(0);}
 
   /// Return the size of the array
   unsigned size() const {return length;}
@@ -116,7 +116,7 @@ public:
   virtual void set_length(int l);
 
   /// Construct an 1D DP matrix from a length, and an HMM
-  DParray(int,const std::vector<int>&,const std::vector<double>&,const Matrix&,double Beta);
+  DParray(int,const std::vector<bitmask_t>&,const std::vector<double>&,const Matrix&,double Beta);
 
   virtual ~DParray() {}
 };
@@ -154,7 +154,7 @@ public:
   void set_length(int l);
 
   /// Construct an 1D DP matrix from a length, and an HMM
-  DParrayConstrained(int,const std::vector<int>&,const std::vector<double>&,const Matrix&, double Beta);
+  DParrayConstrained(int,const std::vector<bitmask_t>&,const std::vector<double>&,const Matrix&, double Beta);
 
   virtual ~DParrayConstrained() {}
 };

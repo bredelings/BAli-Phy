@@ -64,6 +64,9 @@ namespace substitution {
     return total;
   }
 
+
+  std::vector<std::vector<std::pair<int,int>>> sample_ancestral_states(const data_partition& P);
+
   /// Find the likelihood matrix for data behind branches 'b', for columns with a character in at least one node in 'req'.  Reorder the columns according to permutation 'seq', and add 'delta' padding matrices at the beginning.
   std::vector<Matrix>
   get_column_likelihoods(const data_partition&, const std::vector<int>& b,

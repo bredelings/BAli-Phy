@@ -159,6 +159,28 @@ std::ostream& operator<<(std::ostream& o, const formula_expression_ref& F)
   return o;
 }
 
+formula_expression_ref let_expression(const expression_ref& var, const expression_ref& body, const formula_expression_ref& T)
+{
+  formula_expression_ref F3(T);
+  F3.set_exp(let_expression(var, body, T.exp() ));
+  return F3;
+}
+
+formula_expression_ref let_expression(const expression_ref& var, const formula_expression_ref& body, const expression_ref& T)
+{
+  formula_expression_ref F3(T);
+  F3.set_exp(let_expression(var, body.exp(), T ));
+  return F3;
+}
+
+formula_expression_ref let_expression(const expression_ref& var, const formula_expression_ref& body, const formula_expression_ref& T)
+{
+  formula_expression_ref F3(body);
+  F3.add_notes(T.get_notes());
+  F3.set_exp(let_expression(var, body.exp(), T.exp() ));
+  return F3;
+}
+
 formula_expression_ref lambda_quantify(const expression_ref& d, const formula_expression_ref& F)
 {
   // Perhaps I should take out the expression that is the argument... we perhaps not.

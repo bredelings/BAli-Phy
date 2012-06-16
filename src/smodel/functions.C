@@ -22,7 +22,7 @@ const expression_ref distribution = var("distribution");
 const expression_ref MultiRate = var("MultiRate");
 
 // (ReversibleMarkov alpha state_letters q pi l t)
-const expression_ref ReversibleMarkov = lambda_expression( constructor("ReversibleMarkov", 6) );
+const expression_ref ReversibleMarkov = lambda_expression( constructor("ReversibleMarkov", 7) );
 
 // (ReversibleFrequency alpha state_letters pi R)
 const expression_ref ReversibleFrequency = lambda_expression( constructor("ReversibleFrequency", 4) );
@@ -56,47 +56,52 @@ Program SModel_Functions()
   // scale x (ReversibleMarkov a s q pi l t) = (ReversibleMarkov a s q p l (x * t))
   // scale x (F81 a s a' pi)= (F81 a s a'*x pi) ??
   // scale x (MixtureModel (DiscreteDistribution l)) s= (MixtureModel (DiscreteDistribution (fmap2,scale(s),l))) ??
-  P += Def( (scale,v0,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(ReversibleMarkov,v1,v2,v3,v4,v5,(times,v0,v6)) );
+  P += Def( (scale,v0,(ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)),(ReversibleMarkov,v1,v2,v3,v4,v5,(times,v0,v6),(times,v0,v7)) );
 
-  // rate (ReversibleMarkovModel a smap q pi l t) = t*(get_equilibrium_rate a smap q pi)
+  // rate (ReversibleMarkovModel a smap q vector<pi> l t) = t*(get_equilibrium_rate a smap q pi)
   // rate (MixtureModel (DiscreteDistribution l) ) = average (fmap2 rate l)
-  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5,v6)),(times,v6,(substitution::Get_Equilibrium_Rate,v1,v2,v3,(Vector_From_List<double,Double>(),v4)) ) )
+  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v7 )
           ( (rate,(MixtureModel, v1) ), (average,(fmap2, rate, v1) ) );
      
-  // QExp (ReversibleMarkov a smap q pi l t) = (LExp l pi t)
-  P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), (LExp,v5,(Vector_From_List<double,Double>(),v4),v6));
+  // QExp (ReversibleMarkov a smap q pi l t r) = (LExp l pi t)
+  P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), (LExp,v5,v4,v6));
 
   // branch_transition_p m@(MixtureModel (DiscreteDistribution l) ) t = list_to_vector (fmap \p->(QExp (scale (t/(rate m)) (snd p) ) ) l)
   P += Def( (branch_transition_p, (MixtureModel, (DiscreteDistribution, v3) ), v1 ),
 	    (fmap,v2^(QExp, (scale, (x1/(rate, (MixtureModel, (DiscreteDistribution, v3) ) ) ), (snd, v2) ) ), v3 ) );
 
-  // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0
+  // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0 (Get_Equilibrium_Rate a smap Q pi)
   P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), 
-	    let_expression(v6,(substitution::Q,v1,v5),(ReversibleMarkov, v2, v3, v6, v4, (substitution::Get_Eigensystem,v6,(Vector_From_List<double,Double>(),v4)), 1.0) ) );
+	      let_expression(v6,(substitution::Q,v1,v5),
+			   (ReversibleMarkov, v2, v3, v6, v4, (substitution::Get_Eigensystem,v6,v4), 1.0,
+			    (substitution::Get_Equilibrium_Rate, v2, v3, v6, v4)
+			   )
+	      )
+	  );
 
   // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
   P += Def( (n_base_models, (MixtureModel,(DiscreteDistribution,v1))), (length,v1));
   
-  // state_letters (ReversibleMarkov alpha smap q pi l t) = smap
+  // state_letters (ReversibleMarkov alpha smap q pi l t r) = smap
   // state_letters (F81 alpha s a pi) = s
   // state_letters (MixtureModel alpha s d) = state_letters (base_model (MixtureModel alpha s d) 0)
-  P += Def( (state_letters, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), v2)
+  P += Def( (state_letters, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v2)
           ( (state_letters, (F81M,v1,v2,v3,v4)), v2)
           ( (state_letters, (MixtureModel,v1)), (state_letters,(base_model,(MixtureModel,v1),0)));
 
   // n_states m = vector_size (state_letters m)
   P += Def( (n_states,v1), (VectorSize<unsigned>(),(state_letters,v1)));
   
-  // get_alphabet (ReversibleMarkov a smap q pi l t) = alpha
+  // get_alphabet (ReversibleMarkov a smap q pi l t r) = alpha
   // get_alphabet (F81 alpha s a pi) = alpha
   // get_alphabet (MixtureModel alpha s d) = alpha
-  P += Def( (get_alphabet, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), v1)
+  P += Def( (get_alphabet, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v1)
           ( (get_alphabet, (F81M,v1,v2,v3,v4)), v1)
           ( (get_alphabet, (MixtureModel,v1)), (get_alphabet,(base_model,(MixtureModel,v1),0)));
 
   // get_frequencies (ReversibleMarkov alpha s q) = get_frequencies q
   // get_frequencies (F81 alpha s a pi) = pi
-  P += Def( (get_frequencies, (ReversibleMarkov,v1,v2,v3,v4,v5,v6)), v4)
+  P += Def( (get_frequencies, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v4)
           ( (get_frequencies, (F81M,v1,v2,v3,v4)), v4);
 
   // get_component_frequencies (MixtureModel alpha s d)  i = get_frequencies (base_model (MixtureModel alpha s d) i)
@@ -110,18 +115,3 @@ Program SModel_Functions()
 
   return P;
 }
-
-
-/*
-
- *
- * OK, so Q_from_R_and_S should take an "S" and a (ReversibleFrequencyModelObject a smap R pi) and return:
- *
- *     let q = (Q,S,R) in ReversibleMarkovModelObject a smap Q pi (get_eigensystem Q pi) 1.0
- *
- * rate (ReversibleMarkov a smap Q pi lambda t) = (Get_Equilibrium_Rate a smap Q pi)
- *
- * QExp (ReversibleMarkov a smap Q pi lambda t) = (LExp lambda pi t)
- *
- * rate (MixtureModel (DiscreteDistribution (p,m):t) ) = p*(rate m)+(rate MixtureModel (DiscreteDistribution t) )
- */

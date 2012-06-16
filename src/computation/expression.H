@@ -22,13 +22,14 @@ expression_ref operator&(const expression_ref&, const expression_ref&);
  */
 
 enum type_number {none=0,
+		  operation_type=1,
 		  parameter_type, 
 		  index_var_type,
 		  trim_type,
 		  let2_type,
 		  constructor_type,
 		  lambda_type,
-		  lambda2_type
+		  lambda2_type,
 };
 
 /// An array of Objects.
@@ -611,8 +612,6 @@ std::vector<T> get_vector(const expression_ref& E)
 
 std::vector<expression_ref> get_ref_vector_from_list(const expression_ref& E);
 
-std::vector<expression_ref> get_ref_vector_from_tuple(const expression_ref& E);
-
 template <typename T,typename U>
 std::vector<T> get_vector_from_list(const expression_ref& E)
 {
@@ -675,6 +674,7 @@ expression_ref def_function(const std::vector< std::vector<expression_ref> >& pa
 
 expression_ref launchbury_normalize(const expression_ref& E);
 expression_ref launchbury_unnormalize(const expression_ref& E);
+expression_ref unlet(const expression_ref& E);
 
 expression_ref add_prefix(const std::string&, const expression_ref& E);
 
@@ -697,6 +697,8 @@ extern const expression_ref v3;
 extern const expression_ref v4;
 extern const expression_ref v5;
 extern const expression_ref v6;
+extern const expression_ref v7;
+extern const expression_ref v8;
 
 expression_ref operator^(const expression_ref& x, const expression_ref& T);
 #endif

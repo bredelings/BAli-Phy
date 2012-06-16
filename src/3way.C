@@ -50,17 +50,17 @@ vector<int> get_path_3way(const alignment& A,const vector<int>& nodes) {
 vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
 
   //----- Store whether or not characters are present -----//
-  vector<int> present;
+  vector<bitmask_t> present;
   for(int column=0;column<A.length();column++) {
-    int bits=0;
+    bitmask_t bits;
     if (not A.gap(column,n0))
-      bits |= (1<<0);
+      bits.set(0);
     if (not A.gap(column,n1))
-      bits |= (1<<1);
+      bits.set(1);
     if (not A.gap(column,n2))
-      bits |= (1<<2);
+      bits.set(2);
     if (not A.gap(column,n3))
-      bits |= (1<<3);
+      bits.set(3);
     present.push_back(bits);
   }
 
@@ -71,9 +71,9 @@ vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
   vector<int> path;
   path.reserve(A.length()+1);
   for(int column=0;column<A.length();column++) {
-    int bits = present[column];
+    bitmask_t bits = present[column];
 
-    if (not bits) 
+    if (bits.none()) 
       continue;
 
     int states = bits_to_states(bits);
@@ -85,7 +85,7 @@ vector<int> get_path_3way(const alignment& A,int n0,int n1,int n2,int n3) {
       A30 = (states>>4)&3;
 
     states |= (A30<<4)|(A20<<2)|(A10<<0);
-    states = (states<<4)|bits;
+    states = (states<<4)|bits.to_ulong();
     int S = findstate(states);
     path.push_back(S);
   }
@@ -151,16 +151,16 @@ namespace A3 {
   }
   
 
-  vector<int> get_state_emit() {
-    vector<int> state_emit(nstates+1);
+  vector<bitmask_t> get_state_emit() {
+    vector<bitmask_t> state_emit(nstates+1);
     for(int S2=0;S2<state_emit.size();S2++) {
-      state_emit[S2] = 0;
+      state_emit[S2];
       
       if (di(S2)) 
-	state_emit[S2] |= (1<<0);
+	state_emit[S2].set(0);
       
       if (dc(S2)) 
-	state_emit[S2] |= (1<<1);
+	state_emit[S2].set(1);
     }
     return state_emit;
   }
@@ -215,36 +215,36 @@ namespace A3 {
   }
 
   /// Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
-  int bits_to_states(int bits) {
-    int S=(1<<6)|(1<<7)|(1<<8);
-    if (not bitset(bits,0)) {
-      if (bitset(bits,1))
+  int bits_to_states(bitmask_t bits) {
+    int S = (1<<6)|(1<<7)|(1<<8);
+    if (not bits.test(0)) {
+      if (bits.test(1))
 	S |= (states::G1<<0);
       else
 	S = clearbit(S,6);
 
-      if (bitset(bits,2))
+      if (bits.test(2))
 	S |= (states::G1<<2);
       else
 	S = clearbit(S,7);
 
-      if (bitset(bits,3))
+      if (bits.test(3))
 	S |= (states::G1<<4);
       else
 	S = clearbit(S,8);
     }
     else {
-      if (bitset(bits,1))
+      if (bits.test(1))
 	S |= (states::M<<0);
       else
 	S |= (states::G2<<0);
       
-      if (bitset(bits,2))
+      if (bits.test(2))
 	S |= (states::M<<2);
       else
 	S |= (states::G2<<2);
 
-      if (bitset(bits,3))
+      if (bits.test(3))
 	S |= (states::M<<4);
       else
 	S |= (states::G2<<4);
@@ -424,7 +424,7 @@ namespace A3 {
       if (done) continue;
       
       //----------------- Insert a column corresponding to path[l] -------------------//
-      int bits = states_list[path[l]] & bitsmask;
+      bitmask_t bits = states_list[path[l]] & bitsmask;
       for(int s=0;s<A.n_sequences();s++) 
 	A.set_value(column,s, alphabet::gap );
       
@@ -444,13 +444,13 @@ namespace A3 {
 	  assert(j != -1);
 
 	  // copy from the  correct column, based on the group 'j'
-	  if (bitset(bits,1+j))
+	  if (bits.test(1+j))
 	    A.set_value(column,s, old(seq[j][cS[j]],s) );
 	}
       }
 
       for(int i=0;i<seq.size();i++) {
-	if (bitset(bits,1+i)) {
+	if (bits.test(1+i)) {
 	  cS[i]++;
 	  cA[i]++;
 	}

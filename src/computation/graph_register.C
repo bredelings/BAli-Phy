@@ -1409,7 +1409,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
         Since we stop back-tracing for split regs as soon as we find an unsplit
         reg, looking only one step further back along E- and call- edges
-	might not this might not find an unsplit grandparent reg that needs its
+	might not find an unsplit grandparent reg that needs its
 	used_inputs (but not its C.exp) adjusted.
 
 	This situation only occurs in C++ operators, since native operators only
@@ -1978,24 +1978,13 @@ void reg_heap::release_token(int t)
 {
   assert(token_is_used(t));
 
-  // NOTE: Don't spent more than O(used_regs) time clearing ownership.
-  //       This strategy allows us to be on the same order of magnitude
-  //       as copying and de-allocating the structure instead of sharing.
-
-  // NOTE: Clearing ownership is not NECESSARY but it avoids updating
-  //       unused ancestors when we change parameters.
-
-  // remove ownership marks on all of our used regs.
-
-#ifdef NDEBUG
-  remove_ownership_mark(t);
-#else
-  find_all_regs_in_context(t);
-#endif
-
-
   // We shouldn't have any temporary heads still on the stack, here!
+  // (This should be fast now, no longer proportional to the number of regs in context t.)
+  // (But how fast is it?)
   assert(token_roots[t].temp.empty());
+
+  // remove ownership marks on all of our regs - used and unused.
+  remove_ownership_mark(t);
 
   // remove the roots for the heads of graph t
   for(const auto& i: token_roots[t].heads)
@@ -2015,12 +2004,7 @@ void reg_heap::release_token(int t)
   unused_tokens.push_back(t);
   token_roots[t].used = false;
 
-  // This is a good tradeoff between clearing ALL unused ownership (which is too expensive)
-  // and clearing no unused ownership (which makes uniquify reg do too much extra work)
-
 #ifndef NDEBUG
-  // ISSUE!  Now parents of the regs whose ownership we cleared may still
-  //         reference children they don't own.
   check_used_regs();
 #endif
 }
@@ -2725,14 +2709,43 @@ void dot_graph_for_token(const reg_heap& C, int t)
   f.close();
 }
 
+/* TODO - to make graph more readable:
+
+   1. Handle indirection nodes, somehow.
+      (a) First, check WHY we are getting indirection nodes.
+      (b) Then Consider eliminating them somehow during garbage collection.
+
+   2. Allow reduction result (call result) on the same level as redex.
+
+ */
+
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 {
   map<int,string> reg_names = get_register_names(C.get_identifiers_for_context(t));
 
+  map<int,string> constants;
+
   vector<int> regs = C.find_all_regs_in_context(t);
 
+  // Record some regs as being constants worthy of substituting into regs that reference them.
+  for(int R: regs)
+  {
+    if (reg_names.count(R)) continue;
+
+    if (is_a<index_var>(C.access(R).C.exp)) continue;
+
+    if (is_a<parameter>(C.access(R).C.exp)) continue;
+
+    if (C.access(R).C.exp->size() == 0)
+    {
+      string name = C.access(R).C.exp->print();
+      if (name.size() < 20)
+	constants[R] = name;
+    }
+  }
+
   o<<"digraph \"token"<<t<<"\" {\n";
-  o<<"graph [ranksep=0.25, fontname=Arial, nodesep=0.125];\n";
+  o<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
   o<<"node [fontname=Arial, style=filled, height=0, width=0, shape=box];\n";
   o<<"edge [style=\"setlinewidth(2)\"];\n";
   for(int R:regs)
@@ -2742,37 +2755,117 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     o<<name<<" ";
     o<<"[";
 
+    bool print_record = false;
+    if (C.access(R).C.exp->head->type() == operation_type or C.access(R).C.exp->head->type() == constructor_type)
+    {
+      if (not is_a<Case>(C.access(R).C.exp) and not is_a<Apply>(C.access(R).C.exp))
+      {
+	print_record = true;
+	o<<"shape = record, ";
+      }
+    }
+
     // node label = R/name: expression
     string label = convertToString(R);
     if (reg_names.count(R))
       label += "/" + reg_names[R];
     label += ": ";
-    expression_ref E = untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names);
 
-    label += E->print();
-    label = escape(wrap(label,40));
+    vector<int> targets;
+    if (print_record)
+    {
+      label += " |";
+      label += C.access(R).C.exp->head->print();
+      for(const expression_ref& E: C.access(R).C.exp->sub)
+      {
+	int index = assert_is_a<index_var>(E)->index;
+	int R2 = C.access(R).C.lookup_in_env( index );
+	targets.push_back(R2);
+
+	string reg_name = "\\<" + convertToString(R2) + "\\>";
+	if (reg_names.count(R2))
+	  reg_name = reg_names[R2];
+	else if (constants.count(R2))
+	  reg_name = constants[R2] + " " + reg_name;
+	label += "| <" + convertToString(R2) + "> " + reg_name + " ";
+      }
+    }
+    else if (C.access(R).C.exp->head->type() == index_var_type)
+    {
+      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names));
+
+      label += E->print();
+      label = escape(wrap(label,40));
+    }
+    else
+    {
+      expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names),constants));
+
+      label += E->print();
+      label = escape(wrap(label,40));
+    }
+
     o<<"label = \""<<label<<"\"";
     if (C.access(R).changeable)
       o<<",style=\"dashed,filled\",color=red";
 
-    if (C.access(R).result)
+    if (C.access(R).result and C.access(R).changeable)
       o<<",fillcolor=\"#007700\",fontcolor=white";
     else if (C.access(R).changeable)
       o<<",fillcolor=\"#770000\",fontcolor=white";
     o<<"];\n";
 
     // out-edges
-    for(int R2: C.access(R).C.Env)
+    if (print_record)
     {
-     string name2 = "n" + convertToString(R2);
-     o<<name<<" -> "<<name2<<";\n";
+      for(int R2: targets)
+      {
+	string name2 = "n" + convertToString(R2);
+	bool used = false;
+	for(const auto& i: C.access(R).used_inputs)
+	  if (i.first == R2) used = true;
+
+	// Don't draw ref edges to things like fmap.
+	if (reg_names.count(R2) and not used) continue;
+
+	// Don't draw ref edges to things like fmap.
+	if (constants.count(R2) and not used) continue;
+
+	if (not used)
+	  o<<name<<":<"<<R2<<">:s -> "<<name2<<":n;\n";
+	else
+	  o<<name<<":<"<<R2<<">:s -> "<<name2<<":n [color=\"#007777\"];\n";
+      }
+    }
+    else
+    {
+      for(int R2: C.access(R).C.Env)
+      {
+	string name2 = "n" + convertToString(R2);
+	bool used = false;
+	for(const auto& i: C.access(R).used_inputs)
+	  if (i.first == R2) used = true;
+
+	// Don't draw ref edges to things like fmap.
+	if (reg_names.count(R2) and not used) continue;
+	
+	// Don't draw ref edges to things like fmap.
+	if (constants.count(R2) and not used) continue;
+
+	if (not used)
+	  o<<name<<":s -> "<<name2<<":n;\n";
+	else
+	  o<<name<<":s -> "<<name2<<":n [color=\"#007777\"];\n";
+      }
     }
 
     // call-edges
+    // FIXME - how can allow these to go to the right, but not above, if no ref edges?
+    // FIXME - doing :w and {rank=same; n -> n} makes the edge drawn over the node icon.
     if (C.access(R).call)
     {
       string name2 = "n" + convertToString(C.access(R).call);
-      o<<name<<" -> "<<name2<<" ";
+      o<<name<<":e -> "<<name2<<":w ";
       o<<"[";
       o<<"color=\"#007700\"";
       o<<"];\n";
@@ -2783,8 +2876,15 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     {
       int R2 = i.first;
 
+      bool is_ref_edge_also = false;
+      for(int R3: C.access(R).C.Env)
+	if (R2 == R3)
+	  is_ref_edge_also = true;
+
+      if (is_ref_edge_also) continue;
+
       string name2 = "n" + convertToString(R2);
-      o<<name<<" -> "<<name2<<" ";
+      o<<name<<":s -> "<<name2<<":n ";
       o<<"[";
       o<<"color=\"#007777\"";
       o<<",style=dashed";

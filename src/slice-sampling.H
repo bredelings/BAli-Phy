@@ -109,7 +109,8 @@ struct slide_node_slice_function: public slice_function {
   int count;
   int b1;
   int b2;
-  double total;
+  double x0;
+  double y0;
 
   Parameters& P;
 

@@ -134,10 +134,9 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   /*-------------- Create alignment matrices ---------------*/
 
   // Construct the 1D state-emit matrix from the 6D one
-  vector<int> state_emit_1D = A5::states_list;
+  vector<bitmask_t> state_emit_1D( A5::states_list.size() );
   for(int S2=0;S2<state_emit_1D.size();S2++) {
-    int state_emit = state_emit_1D[S2]&leafbitsmask;
-    if (state_emit)
+    if (A5::states_list[S2]&leafbitsmask)
       state_emit_1D[S2] = 1;
     else
       state_emit_1D[S2] = 0;

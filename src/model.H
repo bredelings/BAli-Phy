@@ -170,7 +170,7 @@ struct Parameter
 ///
 /// Next: make models out-of-date unless we call model.update();
 ///
-class Model: public Operation
+class Model
 {
 protected:
   mutable bool valid;
@@ -300,7 +300,6 @@ public:
 
   // Evaluate the model and return the result
   virtual object_ptr<const Object> result() const;
-  closure operator()(OperationArgs& Args) const;
 
   // Evaluate the model and return the result
   template <typename T>
@@ -308,8 +307,6 @@ public:
 
   bool is_valid() const {return valid;}
   virtual void update();
-
-  virtual operator formula_expression_ref() const;
 
   virtual std::vector<std::string> show_priors() const;
 
@@ -320,22 +317,6 @@ public:
 
   virtual ~Model() {};
 };
-
-struct model_prior: public Operation
-{
-  polymorphic_cow_ptr<Model> M;
-
-  model_prior* clone() const {return new model_prior(*this);}
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "model_prior["+M->name()+"]";}
-
-  std::string print() const {return name();}
-
-  model_prior(const Model& M_):Operation(2),M(M_) { }
-};
-
 
 /// \brief Abstract class for Model objects that are built out of other Model objects.
 ///
@@ -504,13 +485,7 @@ std::vector<std::string> short_parameter_names(std::vector<std::string> names);
 
 std::vector<int> parameters_with_extension(const Model& M, std::string name);
 
-object_ptr<Model> prefix_model(const Model&, const std::string& prefix);
-
 std::vector< expression_ref > model_args(const Model& M);
 
-expression_ref model_result_expression(const Model& M);
-
 std::vector< std::string > show_probability_expressions(const context& C);
-
-formula_expression_ref model_formula(const Model& M);
 #endif

@@ -19,6 +19,7 @@ struct Operation: public Operator
   virtual Operation* clone() const=0;
   virtual closure operator()(OperationArgs& Args) const = 0;
 
+  int type() const {return 1;} // See expression.H to change this
   Operation(int n):n_args_(n) { }
 };
 

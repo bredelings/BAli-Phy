@@ -132,7 +132,7 @@ int main()
   cout<<"let_float & graph_normalize: "<<let_float(graph_normalize((case_if,Z>1.0,X*Y,W)))<<"\n";
 
 
-  cout<<"\nPrelude = \n"<<Prelude<<"\n\n";
+  cout<<"\nPrelude = \n"<<get_Prelude()<<"\n\n";
 
   cout<<"Creating an Context...\n";
   context CTX1;

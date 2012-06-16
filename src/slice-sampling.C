@@ -107,9 +107,14 @@ double slide_node_slice_function::operator()() {
 
 double slide_node_slice_function::operator()(double x) 
 {
-  assert(0 <= x and x <= total);
+  /* Problem: If y << x, then we may not be able to recover y = (x+y)-x.
+     This occurs, for example, when x = 1 and y = 1.0e-9.
+
+     Solution: Store x0 and y0 separately, and compute y = y0 + (x0-x).
+  */
+  assert(0 <= x and x <= (x0+y0));
   P.setlength(b1,x);
-  P.setlength(b2,total-x);
+  P.setlength(b2,y0+(x0-x));
   return operator()();
 }
 
@@ -133,19 +138,21 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P_,int b0)
   b1 = b[1].undirected_name();
   b2 = b[2].undirected_name();
 
-  total = P.T->branch(b1).length() + P.T->branch(b2).length();
+  x0 = P.T->branch(b1).length();
+  y0 = P.T->branch(b2).length();
 
   set_lower_bound(0);
-  set_upper_bound(total);
+  set_upper_bound(x0+y0);
 }
 
 slide_node_slice_function::slide_node_slice_function(Parameters& P_,int i1,int i2)
   :count(0),b1(i1),b2(i2),P(P_)
 {
-  total = P.T->branch(b1).length() + P.T->branch(b2).length();
+  x0 = P.T->branch(b1).length();
+  y0 = P.T->branch(b2).length();
 
   set_lower_bound(0);
-  set_upper_bound(total);
+  set_upper_bound(x0+y0);
 }
 
 /// \brief Compute the sum of the branch mean parameters for \a P
@@ -386,8 +393,8 @@ double slice_sample(double x0, slice_function& g,double w, int m)
   assert(g.in_range(x0));
 
   double gx0 = g();
-
-  assert(std::abs(gx0 - g(x0)) < 1.0e-9);
+  volatile double diff = gx0 - g(x0);
+  assert(std::abs(diff) < 1.0e-9);
 
   // Determine the slice level, in log terms.
 

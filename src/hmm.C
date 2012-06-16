@@ -27,6 +27,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "hmm.H"
 #include "logsum.H"
 #include "choose.H"
+#include "2way.H"
+#include "imodel.H"
 
 using std::abs;
 using std::vector;
@@ -258,14 +260,25 @@ void HMM::update_GQ()
   GQ_exit(GQ, silent_network_states, non_silent_network);
 }
 
+HMM::HMM(const indel::PairHMM& P)
+  :HMM({3,2,1,0},P.start_pi(), P, 1.0)
+{ }
+
+HMM::bitmask_t HMM::all_bits() const
+{
+  bitmask_t mask;
+  for(bitmask_t m: state_emit)
+    mask |= m;
+  return mask;
+}
+
 // Don't scale Q and GQ until the end???
-HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double Beta)
+HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
   :silent_network_(v1.size()),
    B(Beta),
    Q(M),GQ(M.size1(),M.size2()),
    start_P(v2),state_emit(v1) 
 {
-
   //--------------- Find and index nodes in silent networks ---------------//
   find_and_index_silent_network_states();
 
@@ -325,5 +338,197 @@ HMM::HMM(const vector<int>& v1,const vector<double>& v2,const Matrix& M,double B
     }
   }
 #endif
+}
+
+
+int mhmm::n_characters() const
+{
+  return all_bits.count();
+}
+
+void mhmm::remap_bits(const vector<int>& map)
+{
+  assert(map.size() == n_characters());
+  int B = map.size();
   
+  vector<bitmask_t> state_emit2(state_emit.size());
+  all_bits.reset();
+  for(int i=0;i<state_emit.size();i++)
+  {
+    bitmask_t mask;
+    for(int j=0;j<B;j++)
+      mask.set(map[j],state_emit[i].test(j));
+    state_emit2[i] = mask;
+    all_bits |= mask;
+  }
+
+  std::swap(state_emit, state_emit2);
+}
+
+mhmm::mhmm(const indel::PairHMM& P)
+  :state_emit({3,2,1,0,0}),
+   start(A2::states::S),
+   end(A2::states::E),
+   Q(P),
+   start_P(P.start_pi()),
+   all_bits(3)
+{
+}
+
+
+mhmm remap_bits(const mhmm& m1, const vector<int>& map)
+{
+  mhmm m2 = m1;
+  m2.remap_bits(map);
+  return m2;
+}
+
+// s:s (m/i):(m/d) (m,i,s)_r:I D:(m,d,e)_c e:e
+mhmm Glue(const mhmm& top, const mhmm& bottom)
+{
+  int glue_bit = -1;
+  for(int i=0;i<64;i++)
+    if (top.all_bits.test(i) and bottom.all_bits.test(i))
+    {
+      assert(glue_bit == -1);
+      glue_bit = i;
+    }
+
+  // 1. Classify top states into S, E, M/I, and D
+  vector<int> m_or_i1;
+  vector<int> d1;
+
+  for(int i=0;i<top.state_emit.size();i++)
+  {
+    if (i == top.start or i == top.end) continue;
+
+    assert(top.state_emit[i].any());
+
+    if (top.state_emit[i].test(glue_bit))
+      m_or_i1.push_back(i);
+    else
+      d1.push_back(i);
+  }
+
+  // 2. Classify bottom states into S, E, M/I, and D
+  vector<int> m_or_d2;
+  vector<int> i2;
+
+  for(int i=0;i<bottom.state_emit.size();i++)
+  {
+    if (i == bottom.start or i == bottom.end) continue;
+
+    assert(bottom.state_emit[i].any());
+
+    if (bottom.state_emit[i].test(glue_bit))
+      m_or_d2.push_back(i);
+    else
+      i2.push_back(i);
+  }
+
+  // 4. Construct states for the new HMM
+  enum status_t {active, remembered, committed};
+
+  struct parts
+  {
+    int state1;
+    status_t status1;
+    int state2;
+    status_t status2;
+  };
+
+  mhmm G;
+  G.all_bits = top.all_bits | bottom.all_bits;
+  vector<parts> state_parts;
+
+  // M/I:M/D
+  for(int s1: m_or_i1)
+    for(int s2: m_or_d2)
+    {
+      G.state_emit.push_back(top.state_emit[s1] | bottom.state_emit[s2]);
+      state_parts.push_back({s1,active,s2,active});
+    }
+
+  // How do we record the info on the hidden states?
+  // Actually, this is the hardest part of the whole thing!
+
+  // (M,I,S)_r:I
+  for(int s1: m_or_i1)
+    for(int s2: i2)
+    {
+      G.state_emit.push_back(bottom.state_emit[s2]);
+      state_parts.push_back({s1,remembered,s2,active});
+    }
+
+  /*
+  for(int s2: i2)
+  {
+    G.state_emit.push_back(bottom.state_emit[s2]);
+    state_parts.push_back({top.start, remembered,s2,active});
+  }
+  */
+
+  for(int s1: d1)
+    for(int s2: m_or_d2)
+    {
+      G.state_emit.push_back(top.state_emit[s1]);
+      state_parts.push_back({s1, active,s2,committed});
+    }
+
+  for(int s1: d1)
+  {
+    G.state_emit.push_back(top.state_emit[s1]);
+    state_parts.push_back({s1, active, bottom.end, committed});
+  }
+
+  // e:e
+  G.end = G.state_emit.size();
+  G.state_emit.push_back(mhmm::bitmask_t());
+  state_parts.push_back({top.end, active, bottom.end, active});
+
+  // s:s
+  G.start = G.state_emit.size();
+  G.state_emit.push_back(mhmm::bitmask_t());
+  state_parts.push_back({top.start, active, bottom.start, active});
+
+  // The D/* -> */I transition is forbidden by the fact that D is never remembered and I is never committed.
+  // Being committed to M, D, or E is basically equivalent to entering a wait state. Here, we add a separate
+  //  wait states M_c, D_c, and E_c which always go to M, D, and E with probability 1.
+
+  // 5. Compute transition matrix
+  G.Q.resize( G.state_emit.size(), G.state_emit.size() );
+  for(int i=0;i<G.state_emit.size();i++)
+    for(int j=0;j<G.state_emit.size();j++)
+    {
+      double p = 1;
+      //      status_t si1 = state_parts[i].status1;
+      status_t si2 = state_parts[i].status2;
+      status_t sj1 = state_parts[j].status1;
+      //      status_t sj2 = state_parts[j].status2;
+      if (sj1 == active)
+	p = top.Q(state_parts[i].state1,state_parts[j].state1);
+      else if (sj1 == remembered and state_parts[i].state1 != state_parts[j].state1)
+	p = 0;
+
+      if (si2 == active)
+	p *= bottom.Q(state_parts[i].state2,state_parts[j].state2);
+      else if (si2 == committed and state_parts[i].state2 != state_parts[j].state2)
+	p = 0;
+
+      G.Q(i,j) = p;
+    }
+
+  // 6. Find compute the start_pi
+  G.start_P.resize( G.state_emit.size() );
+  for(int i=0;i<G.state_emit.size();i++)
+  {  
+    G.start_P[i] = top.start_P[state_parts[i].state1] * bottom.start_P[state_parts[i].state2];
+
+    // The idea here is to find some collection of states such that starting in distribution start_P on 
+    // those states leads to the same result as starting in S.  In practice, this is problematic, because
+    // when we sample backwards the only way to know when we've gotten to the "start" is if we hit an emitting
+    // state before the first character.
+  }
+
+  return G;
 }

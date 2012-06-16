@@ -63,9 +63,14 @@ std::string Apply::name() const {
 
 closure Case::operator()(OperationArgs& Args) const
 {
-  closure C = Args.current_closure();
+  // Resizing of the memory can occur here, invalidating previously computed pointers
+  // to closures.  The *index* within the memory shouldn't change, though.
+  const closure& obj = Args.lazy_evaluate(0);
 
-  closure obj = Args.lazy_evaluate(0);
+  // Therefore, we must compute this *after* we do the computation above, since
+  // we're going to hold on to it.  Otherwise the held reference would become
+  // *invalid* after the call above!
+  const closure& C = Args.current_closure();
 
   int L = (Args.n_args() - 1)/2;
 
@@ -102,16 +107,16 @@ closure Case::operator()(OperationArgs& Args) const
       // If we are a constructor, then match iff the the head matches.
       if (obj.exp->head->compare(*cases[i]->head))
       {
+#ifndef NDEBUG
 	if (obj.exp->size())
 	{
-	  object_ptr<const constructor> C = is_a<constructor>(obj.exp);
-	  assert(C);
+	  object_ptr<const constructor> C = assert_is_a<constructor>(obj.exp);
 	  // The number of constructor fields is the same the for case pattern and the case object.
 	  assert(obj.exp->size() == C->n_args());
 	  // The number of entries in the environment is the same as the number of constructor fields.
 	  assert(obj.exp->size() == obj.Env.size());
 	}
-	
+#endif	
 	result.exp = bodies[i];
 	
 	for(int j=0;j<obj.exp->size();j++)
@@ -142,7 +147,7 @@ closure MkArray::operator()(OperationArgs& Args) const
   int n = *Args.evaluate_as<Int>(0);
   expression_ref f = Args.reference(1);
 
-  closure C = Args.current_closure();
+  const closure& C = Args.current_closure();
 
   // We can't do negative-sized arrays
   assert(n >= 0);
@@ -185,7 +190,7 @@ expression_ref mkArray = lambda_expression( MkArray() );
 
 closure GetIndex::operator()(OperationArgs& Args) const
 {
-  closure C = Args.lazy_evaluate(0);
+  const closure& C = Args.lazy_evaluate(0);
   int n = *Args.evaluate_as<Int>(1);
 
   int N = C.exp->size();

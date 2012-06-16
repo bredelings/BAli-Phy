@@ -26,7 +26,7 @@ const expression_ref DiscreteDistribution = lambda_expression(constructor("Discr
 const expression_ref UnwrapDD = var("UnwrapDD");
 
 
-Program get_Prelude()
+Program make_Prelude()
 {
   Program P;
 
@@ -99,7 +99,7 @@ Program get_Prelude()
   P += Def( (UniformDiscretize, v1, v2), (DiscreteDistribution, (fmap, lambda_quantify(v3,let_expression(v4,(to_double,v2), Tuple(1.0/v4, (v1,((2.0*v3+1.0)/(2.0*v4)))))), (take, v2, (iterate, (plus,1.0), 0.0) ) ) ) );
 
   // If True  y z = y
-  // If False y z = z
+  // If _     y z = z
   P += Def( (If, true , v1, v2), v1)
           ( (If, v3, v1, v2), v2);
 
@@ -126,4 +126,8 @@ Program get_Prelude()
   return P;
 }
 
-const Program Prelude = get_Prelude();
+const Program& get_Prelude()
+{
+  static const Program P = make_Prelude();
+  return P;
+}

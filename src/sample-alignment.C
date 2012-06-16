@@ -82,8 +82,6 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   const Tree& T = P.T();
   alignment& A = *P.A.modify();
 
-  Matrix frequency = P.FrequencyMatrix();
-
   int node1 = T.branch(b).target();
   int node2 = T.branch(b).source();
 
@@ -113,7 +111,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   vector< Matrix > dists1 = distributions(P,seq1,b,true);
   vector< Matrix > dists2 = distributions(P,seq2,b,false);
 
-  vector<int> state_emit(4,0);
+  vector<HMM::bitmask_t> state_emit(4,0);
   state_emit[0] |= (1<<1)|(1<<0);
   state_emit[1] |= (1<<1);
   state_emit[2] |= (1<<0);
@@ -122,7 +120,7 @@ boost::shared_ptr<DPmatrixSimple> sample_alignment_base(data_partition& P,int b)
   boost::shared_ptr<DPmatrixSimple> 
     Matrices( new DPmatrixSimple(state_emit, P.get_branch_HMM(b).start_pi(),
 				 P.get_branch_HMM(b), P.get_beta(),
-				 P.distribution(), dists1, dists2, frequency)
+				 dists1, dists2, P.WeightedFrequencyMatrix())
 	      );
 
   //------------------ Compute the DP matrix ---------------------//

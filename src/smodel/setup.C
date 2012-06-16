@@ -133,10 +133,12 @@ bool process_stack_Markov(vector<string>& string_stack,
   */
   if (match(string_stack,"F81",arg))
   {
+    /*
     if (frequencies)
       model_stack.push_back(F81_Model(*a,*frequencies));
     else
       model_stack.push_back(F81_Model(*a));
+    */
   }
 
   else if (match(string_stack,"HKY",arg)) 
@@ -224,6 +226,7 @@ bool process_stack_Markov(vector<string>& string_stack,
   else if (match(string_stack,"Empirical",arg)) {
     model_stack.push_back((Empirical,a,arg));
   }
+  /*
   else if (match(string_stack,"C10",arg))
   {
     if (*a != AminoAcids())
@@ -243,7 +246,7 @@ bool process_stack_Markov(vector<string>& string_stack,
     M.load_file(arg);
     model_stack.push_back(M);
   }
-
+  */
   else if (match(string_stack,"M0",arg)) 
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
@@ -355,6 +358,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
+  /*
   else if (match(string_stack,"F=nucleotides",arg)) 
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
@@ -405,6 +409,7 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     model_stack.back() = Reversible_Markov_Model(EM,CodonsFrequencyModel2(*C));
   }
+  */
   else
     return false;
   return true;
@@ -544,6 +549,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
     dist = (ExtendDiscreteDistribution, dist, p, 0.0);
+
     model_stack.back() = (MultiRate, base,  dist);
   }
   else if (match(string_stack,"log-normal",arg)) {
@@ -568,9 +574,17 @@ bool process_stack_Multi(vector<string>& string_stack,
       n = convertTo<int>(arg);
 
     formula_expression_ref base = get_RA_default(model_stack,"log-normal_inv",a,frequencies);
-    formula_expression_ref dist = (Discretize, model_formula(LogNormal()), n);
+
+    formula_expression_ref W = def_parameter("log-normal::sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
+    formula_expression_ref Var = (times, W, W);
+    formula_expression_ref lVar = (Log, (plus, 1.0, Var ) );
+    formula_expression_ref lmu = (times, -0.5, lVar);
+    formula_expression_ref lsigma = (Sqrt, lVar);
+    formula_expression_ref dist = (UniformDiscretize, (lambda_expression(log_normal_quantile_op()), Tuple(lmu,lsigma)) , n);
+
     formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
     dist = (ExtendDiscreteDistribution, dist, p, 0.0);
+
     model_stack.back() = (MultiRate, base,  dist);
   }
   else if (match(string_stack,"multi_freq",arg)) {
@@ -638,12 +652,8 @@ bool process_stack_Multi(vector<string>& string_stack,
 						    Tuple(p3,m2_omega)&
 						    ListEnd
 						    );
-    vector<Double> n(3);
-    n[0] = 1;
-    n[1] = 98;
-    n[2] = 1;
-    expression_ref N = get_tuple(n);
-    D.add_expression( (distributed, Tuple(p1,p2,p3),   Tuple(dirichlet_dist, N) ) );
+
+    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, Tuple(1.0, 98.0, 1.0)) ) );
     D.add_expression( (distributed, m2_omega, Tuple(log_exponential_dist, 0.05) ) );
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
@@ -696,13 +706,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref w3 = def_parameter("M2a::omega3", Double(1.0), lower_bound(1));
     formula_expression_ref D = (DiscreteDistribution,Tuple(p1,w1)&Tuple(p2,1.0)&Tuple(p3,w3)&ListEnd);
 
-    vector<Double> n(3);
-    n[0] = 1;
-    n[1] = 98;
-    n[2] = 1;
-    expression_ref N = get_tuple(n);
-    D.add_expression( (distributed, Tuple(p1,p2,p3),   Tuple(dirichlet_dist, N) ) );
-    expression_ref divide = lambda_expression( Divide<Double>() );
+    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, Tuple(1.0, 98.0, 1.0)) ) );
     D.add_expression( (distributed, (divide, 1.0, w1), Tuple(log_exponential_dist, 0.05) ) );
     D.add_expression( (distributed, w3, Tuple(log_exponential_dist, 0.05) ) );
 
@@ -743,12 +747,16 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
+    // Determine the a and b parameters of the beta distribution
+    formula_expression_ref mu = def_parameter("beta::mu", Double(0.5), between(0,1), beta_dist, Tuple(10.0, 1.0));
+    formula_expression_ref gamma = def_parameter("beta::Var/mu", Double(0.1), between(0,1), exponential_dist, 0.1);
+    formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
+    formula_expression_ref alpha = (times, N, mu); // a = N * mu;
+    formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
+    // Create the discrete distribution for omega
+    formula_expression_ref D = (UniformDiscretize, (lambda_expression(beta_quantile_op()), Tuple(alpha,beta)), n);
 
-    expression_ref Unwrap;
-							   
     // *Question*: How much does D simplify with "completely lazy" evaluation?
-    // - can we simplify case x of (DiscreteDistribution l) -> case x of (DiscreteDistribution l) -> l
-
     formula_expression_ref p1 = def_parameter("M8b::f[Purifying]", Double(0.6), between(0,1));
     formula_expression_ref p2 = def_parameter("M8b::f[Neutral]", Double(0.3), between(0,1));
     formula_expression_ref p3 = def_parameter("M8b::f[Positive]", Double(0.1), between(0,1));
@@ -757,22 +765,13 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref I  = def_parameter("M8b::omega3_non_zero", Bool(true));
     formula_expression_ref w3 = (If, I, w, 1.0);
 
-    // ------------ Determine the a and b parameters of the beta distribution ---------- //
+    // Add the neutral and (possibility) positive selection categories
     // mu    = E(X)
     // gamma = Var(X)/[ mu * (1-mu)] = 1/(1 + a + b)  \in (0,1]
     //
     // N = a + b = 1/gamma - 1
 
-    formula_expression_ref mu = def_parameter("beta::mu", Double(0.5), between(0,1), beta_dist, Tuple(10.0, 1.0));
-    formula_expression_ref gamma = def_parameter("beta::Var/mu", Double(0.1), between(0,1), exponential_dist, 0.1);
-    formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
-    formula_expression_ref alpha = (times, N, mu); // a = N * mu;
-    formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
-
-    // Create the discrete distribution for omega
-    formula_expression_ref D = (UniformDiscretize, (lambda_expression(beta_quantile_op()), Tuple(alpha,beta)), n);
     D = (DiscreteDistribution,Tuple(p3,w3) & (Tuple(p2,1.0) & (fmap1, (v4^(times,v4,p1)), (UnwrapDD, D))));
-
     // (p1,p2,p3) ~ Dirichlet(10, 10, 1)
     D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, Tuple(10.0, 10.0, 1.0)) ) );
 
@@ -791,7 +790,14 @@ bool process_stack_Multi(vector<string>& string_stack,
     if (not arg.empty())
       n = convertTo<int>(arg);
 
-    formula_expression_ref D = (Discretize, model_formula(Beta()), n);
+    // Determine the a and b parameters of the beta distribution
+    formula_expression_ref mu = def_parameter("beta::mu", Double(0.5), between(0,1), beta_dist, Tuple(10.0, 1.0));
+    formula_expression_ref gamma = def_parameter("beta::Var/mu", Double(0.1), between(0,1), exponential_dist, 0.1);
+    formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
+    formula_expression_ref alpha = (times, N, mu); // a = N * mu;
+    formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
+    // Create the discrete distribution for omega
+    formula_expression_ref D = (UniformDiscretize, (lambda_expression(beta_quantile_op()), Tuple(alpha,beta)), n);
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);

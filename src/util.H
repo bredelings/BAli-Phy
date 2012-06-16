@@ -654,4 +654,27 @@ std::vector<std::pair<int,int> > convert_to_column_index_list(const std::vector<
 
 extern int log_verbose;
 
+#include <boost/numeric/ublas/matrix.hpp>
+
+template <typename T>
+std::ostream& operator<<(std::ostream& o, const boost::numeric::ublas::matrix<T>& M)
+{
+  for(int i=0;i<M.size1();i++)
+  {
+    for(int j=0;j<M.size2();j++)
+      o<<M(i,j)<<" ";
+    o<<"\n";
+  }
+  return o;
+}
+
+template <typename T>
+std::ostream& operator<<(std::ostream& o, const std::vector<T>& v)
+{
+  for(int i=0;i<v.size();i++)
+    o<<v[i]<<" ";
+  o<<"\n";
+  
+  return o;
+}
 #endif

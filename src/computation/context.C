@@ -511,7 +511,7 @@ context::context()
    P(new Program()),
    token(memory->get_unused_token())
 { 
-  (*this) += Prelude;
+  (*this) += get_Prelude();
 }
 
 context::context(const vector<expression_ref>& N)
@@ -519,7 +519,7 @@ context::context(const vector<expression_ref>& N)
    P(new Program()),
    token(memory->get_unused_token())
 {
-  (*this) += Prelude;
+  (*this) += get_Prelude();
 
   // 1. Create the parameters
   std::set<string> names = find_named_parameters(N);

@@ -357,25 +357,6 @@ namespace substitution {
   };
 
 
-  //--------------------------- Implement the underlying alphabet -------------------------//
-
-
-  template <class T>
-  class ReversibleWrapperOver: virtual public ReversibleModel,
-			       public SuperModelOver< ::Model>
-  {
-  public:
-    T& SubModel() {return SubModelAs<T>(0); }
-
-    const T& SubModel() const { return SubModelAs<T>(0); }
-
-    virtual ReversibleWrapperOver* clone() const=0;
-
-    ReversibleWrapperOver(const T& M) {
-      insert_submodel("BASE",M);
-    }
-  };
-
   //----------------------- MultiModel ---------------------------*/
 
   class MultiModel: public ReversibleAdditiveModel

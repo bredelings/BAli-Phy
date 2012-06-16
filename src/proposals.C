@@ -531,3 +531,38 @@ Proposal2::Proposal2(const Proposal_Fn& p,const vector<std::string>& s, const st
   }
 }
 
+double move_scale_branch(Probability_Model& P)
+{
+  Parameters& PP = dynamic_cast<Parameters&>(P);
+
+  int index = PP.find_parameter("lambda_scale_branch");
+
+  Int scale_branch = PP.get_parameter_value_as<Int>(index);
+
+  assert( scale_branch != -1);
+
+  if (P.keys.count("lambda_search_all"))
+    scale_branch = uniform()*PP.T->n_branches();
+  else
+  {
+    int attribute_index = PP.T->find_undirected_branch_attribute_index_by_name("lambda-scale-branch");  
+    
+    assert(attribute_index != -1);
+    
+    vector<int> branches;
+    for(int b=0;b<PP.T->n_branches();b++)
+    {
+      boost::any value = PP.T->branch(b).undirected_attribute(attribute_index);
+      if (not value.empty())
+	branches.push_back(b);
+    }
+    
+    int i = uniform()*branches.size();
+    scale_branch = branches[i];
+  }
+
+  PP.set_parameter_value(index, object_ref(scale_branch));
+
+  return 1.0;
+}
+

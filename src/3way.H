@@ -30,7 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment.H"
 #include "parameters.H"
 #include "2way.H"
-
+#include "hmm.H"
 
 // Returns the state, with the validity of sub-alignments 1,2,3 marked in bits 6,7,8
 
@@ -38,6 +38,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 namespace A3 {
 
   namespace states = A2::states;
+  typedef HMM::bitmask_t bitmask_t;
 
   // std::vector<int> get_nodes(const Tree& T,int n0);
   std::vector<int> get_nodes_random(const Tree& T,int n0);
@@ -65,11 +66,11 @@ namespace A3 {
   /// The name of the E (end) state
   const int endstate = nstates;
 
-  std::vector<int> get_state_emit();
+  std::vector<bitmask_t> get_state_emit();
 
   std::vector<double> get_start_P(const std::vector<indel::PairHMM>& P);
 
-  int bits_to_states(int bits);
+  int bits_to_states(bitmask_t bits);
 
   int getstates(int S);
 

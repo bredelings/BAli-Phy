@@ -29,8 +29,10 @@ Matrix Mat_Cache::WeightedFrequencyMatrix() const
 void Mat_Cache::FrequencyMatrix(Matrix& F) const
 {
     // cache matrix of frequencies
-  const int M = F.size1(); // n_models
-  const int S = F.size2(); // n_states
+  const int M = n_base_models(); // n_models
+  const int S = n_states();      // n_states
+
+  F.resize(M, S);
   
   for(int m=0;m<M;m++) 
   {
@@ -43,6 +45,6 @@ void Mat_Cache::FrequencyMatrix(Matrix& F) const
 Matrix Mat_Cache::FrequencyMatrix() const
 {
   Matrix M;
-  WeightedFrequencyMatrix(M);
+  FrequencyMatrix(M);
   return M;
 }

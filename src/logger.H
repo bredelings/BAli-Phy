@@ -413,6 +413,15 @@ namespace MCMC {
     Mixture_Components_Function(int i):p(i) {}
   };
 
+  class Ancestral_Sequences_Function: public LoggerFunction<std::string>
+  {
+    int p;
+  public:
+    Ancestral_Sequences_Function* clone() const {return new Ancestral_Sequences_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
+    Ancestral_Sequences_Function(int i):p(i) {}
+  };
+
   class String_Function: public LoggerFunction<std::string>
   {
     std::string s;

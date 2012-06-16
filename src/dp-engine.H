@@ -55,7 +55,7 @@ public:
 
   void check_sampling_probability(const std::vector<int>& g_path) const;
 
-  DPengine(const std::vector<int>&,const std::vector<double>&,const Matrix&,double Temp);
+  DPengine(const std::vector<bitmask_t>&,const std::vector<double>&,const Matrix&,double Temp);
 };
 
 #endif
