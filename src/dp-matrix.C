@@ -538,17 +538,14 @@ DPmatrixEmit::DPmatrixEmit(const vector<bitmask_t>& v1,
 			   const vector<double>& v2,
 			   const Matrix& M,
 			   double Beta,
-			   const vector< double >& d0,
 			   const vector< Matrix >& d1,
 			   const vector< Matrix >& d2, 
 			   const Matrix& f)
   :DPmatrix(d1.size(),d2.size(),v1,v2,M,Beta),
    s12_sub(d1.size(),d2.size()),
    s1_sub(d1.size()),s2_sub(d2.size()),
-   distribution(d0),
    dists1(d1),dists2(d2),frequency(f)
 {
-  
   //----- cache G1,G2 emission probabilities -----//
   for(int i=0;i<dists1.size();i++) {
     double total=0;

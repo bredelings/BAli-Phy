@@ -175,8 +175,6 @@ protected:
   inline void prepare_cell(int i,int j);
 
 public:
-  /// Probabilities of the different rates
-  std::vector<double> distribution;
   /// Emission probabilities for first sequence
   std::vector< Matrix > dists1;
   /// Emission probabilities for second sequence
@@ -202,7 +200,6 @@ public:
 	       const std::vector<double>& start_pi,
 	       const Matrix& HMM,
 	       double Beta,
-	       const std::vector< double >& distribution,
 	       const std::vector< Matrix >& dists1,
 	       const std::vector< Matrix >& dists2, 
 	       const Matrix& frequency);
@@ -221,11 +218,10 @@ public:
 		 const std::vector<double> & v2,
 		 const Matrix& M,
 		 double Beta,
-		 const std::vector< double >& d0,
 		 const std::vector< Matrix >& d1,
 		 const std::vector< Matrix >& d2, 
 		 const Matrix& f):
-    DPmatrixEmit(v1,v2,M,Beta,d0,d1,d2,f)
+    DPmatrixEmit(v1,v2,M,Beta,d1,d2,f)
   { }
 
   virtual ~DPmatrixSimple() {}
@@ -260,11 +256,10 @@ public:
 		      const std::vector<double> & v2,
 		      const Matrix& M,
 		      double Beta,
-		      const std::vector< double >& d0,
 		      const std::vector< Matrix >& d1,
 		      const std::vector< Matrix >& d2, 
 		      const Matrix& f):
-    DPmatrixEmit(v1,v2,M,Beta,d0,d1,d2,f), allowed_states(d2.size())
+    DPmatrixEmit(v1,v2,M,Beta,d1,d2,f), allowed_states(d2.size())
   { }
 
   virtual ~DPmatrixConstrained() {}
