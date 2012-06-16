@@ -550,10 +550,8 @@ DPmatrixEmit::DPmatrixEmit(const vector<bitmask_t>& v1,
   for(int i=0;i<dists1.size();i++) {
     double total=0;
     for(int m=0;m<nrates();m++) {
-      double temp=0;
       for(int l=0;l<dists1[i].size2();l++)
-	temp += weighted_frequencies(m,l)*dists1[i](m,l);
-      total += temp;
+	total += weighted_frequencies(m,l)*dists1[i](m,l);
     }
     s1_sub[i] = pow(total,B);
     //    s1_sub[i] = pow(s1_sub[i],1.0/T);
@@ -562,10 +560,8 @@ DPmatrixEmit::DPmatrixEmit(const vector<bitmask_t>& v1,
   for(int i=0;i<dists2.size();i++) {
     double total=0;
     for(int m=0;m<nrates();m++) {
-      double temp=0;
       for(int l=0;l<dists2[i].size2();l++)
-	temp += weighted_frequencies(m,l)*dists2[i](m,l);
-      total += temp;
+	total += weighted_frequencies(m,l)*dists2[i](m,l);
     }
     s2_sub[i] = pow(total,B);
     //    s2_sub[i] = pow(s2_sub[i],1.0/T);
