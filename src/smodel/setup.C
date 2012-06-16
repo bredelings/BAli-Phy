@@ -819,6 +819,39 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     model_stack.push_back( (MultiParameter, M0, D) );
   }
+  else if (match(string_stack,"branch-site",arg))
+  {
+    formula_expression_ref f0 = def_parameter("branch-site::f0",Double(0.5));
+    formula_expression_ref f1 = def_parameter("branch-site::f1",Double(0.5));
+    formula_expression_ref f2 = def_parameter("branch-site::f2",Double(0.1),between(0,1),beta_dist,Tuple(10.0,1.0));
+    formula_expression_ref I  = def_parameter("branch-site::pos_selection", Bool(true));
+
+    formula_expression_ref p2 = (If, I, f2, 0.0);
+    formula_expression_ref p0 = (times, f0, (minus,1.0,p2));
+    formula_expression_ref p1 = (times, f1, (minus,1.0,p2));
+    formula_expression_ref p2a = (times, f0, p2);
+    formula_expression_ref p2b = (times, f1, p2);
+
+    formula_expression_ref w0 = def_parameter("branch-site::w0",Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
+    formula_expression_ref w2 = def_parameter("branch-site::w2",Double(1.5), lower_bound(1), log_exponential_dist, 0.2);
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    assert(C);
+    formula_expression_ref S1 = TN_Model( C->getNucleotides());
+    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
+    formula_expression_ref R = Plus_gwF_Model(*a);
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+
+    formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
+    mixture1 = (MultiParameter, M0, mixture1);
+    formula_expression_ref mixture2 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2)&(Tuple(p2b,w2)&ListEnd))));
+    mixture2 = (MultiParameter, M0, mixture2);
+    formula_expression_ref branch_site = (MixtureModels,mixture1&(mixture2&ListEnd));
+
+    branch_site.add_expression( (distributed, f0&(f1&ListEnd), Tuple(dirichlet_dist, Tuple(1.0, 1.0)) ) );
+
+    model_stack.push_back(branch_site);
+  }
   else
     return false;
   return true;

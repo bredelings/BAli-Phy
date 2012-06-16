@@ -166,17 +166,16 @@ void add_slice_moves(Probability_Model& P, const string& name,
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
-void add_dirichlet_slice_moves(Probability_Model& P, const string& name, 
+void add_dirichlet_slice_moves(Probability_Model& P, const string& move_name, 
+			       const vector<int>& indices,
 			       MCMC::MoveAll& M,
 			       double weight = 1
 			       )
 {
-  vector<int> indices = parameters_with_extension(P,name);
-  
-  if (not indices.size()) return;
+  if (indices.empty()) return;
 
   /// Create a parent move that will choose one child each time it is called
-  MCMC::MoveOne M2(string("slice_sample_")+name);
+  MCMC::MoveOne M2(move_name);
 
   /// Add the moves for individual components of the vector as child moves of M2
   for(int i=0;i<indices.size();i++)
@@ -191,6 +190,52 @@ void add_dirichlet_slice_moves(Probability_Model& P, const string& name,
 
   /// Add the move to resample one of the components at random to M
   M.add(weight,M2);
+}
+
+
+/// \brief Add a 1-D slice-sampling sub-move for a collection of parameters that sum to 1.
+///
+/// \param P             The model that contains the parameters
+/// \param name          The name of the parameter to create a move for
+/// \param pname         The name of the slice window width for this move
+/// \param W             The default window size, if not specified in P.keys
+/// \param M             The group of moves to which to add the newly-created sub-move
+/// \param weight        How often to run this move.
+///
+void add_dirichlet_slice_moves(Probability_Model& P, const string& name,
+			       const vector<string>& parameter_names,
+			       MCMC::MoveAll& M,
+			       double weight = 1
+			       )
+{
+  vector<int> indices;
+  for(const string& p: parameter_names)
+  {
+    int index = P.find_parameter(p);
+    if (index == -1) return;
+    indices.push_back(index);
+  }
+
+  add_dirichlet_slice_moves(P,string("slice_sample_")+name, indices, M, weight);
+}
+
+/// \brief Add a 1-D slice-sampling sub-move for a collection of parameters that sum to 1.
+///
+/// \param P             The model that contains the parameters
+/// \param name          The name of the parameter to create a move for
+/// \param pname         The name of the slice window width for this move
+/// \param W             The default window size, if not specified in P.keys
+/// \param M             The group of moves to which to add the newly-created sub-move
+/// \param weight        How often to run this move.
+///
+void add_dirichlet_slice_moves(Probability_Model& P, const string& name, 
+			       MCMC::MoveAll& M,
+			       double weight = 1
+			       )
+{
+  vector<int> indices = parameters_with_extension(P,name);
+  
+  add_dirichlet_slice_moves(P,string("slice_sample_")+name, indices, M, weight);
 }
 
 MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
@@ -252,6 +297,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 
   add_MH_move(P, Between(-20,20,shift_cauchy), "lambda_scale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
   add_MH_move(P, bit_flip,   "lambda_scale_on", "M8b::f_dirichlet_N",     1,  MH_moves, 10);
+  add_MH_move(P, bit_flip,   "pos_selection", "M8b::f_dirichlet_N",     1,  MH_moves, 10);
 
   return MH_moves;
 }
@@ -287,6 +333,9 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "M2a::omega1",     "omega_slice_window",    0.3, slice_moves);
   add_slice_moves(P, "M2a::omega3",     "omega_slice_window",    0.3, slice_moves);
   add_slice_moves(P, "M8b::omega3",     "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "branch-site::w0", "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "branch-site::w2", "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "branch-site::f2", "omega_fraction_slice_window",    0.1, slice_moves);
   add_slice_moves(P, "INV::p",         "INV::p_slice_window", 0.1, slice_moves);
   add_slice_moves(P, "f",      "f_slice_window",    0.1, slice_moves);
   add_slice_moves(P, "g",      "g_slice_window",    0.1, slice_moves);
@@ -325,6 +374,11 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     add_dirichlet_slice_moves(P, prefix + "M8b::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "multi::p*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "Mixture::p*", slice_moves, 3);
+
+    {
+      vector<string> pnames = {"S"+index+"::branch-site::f0", "S"+index+"::branch-site::f1"};
+      add_dirichlet_slice_moves(P, "S" + index + "::branch-site::f0/f1", pnames, slice_moves, 3);
+    }
 
     if (s >= P.n_smodels()) continue;
 
