@@ -822,6 +822,8 @@ vector<string> short_parameter_names(const Model& M)
 
 bool path_match(const vector<string>& key, const vector<string>& pattern)
 {
+  assert(not key.empty());
+
   int active_piece = 0;
 
   // require key[0] to match pattern[0] if key[0] starts w/ ^
@@ -838,8 +840,23 @@ bool path_match(const vector<string>& key, const vector<string>& pattern)
     active_piece = 1;
   }
 
+  // require key.back() to match pattern.back() if key.back() ends w/ $
+  int last_piece = key.size()-1;
+  if (key.back().size() and key.back()[key.back().size()-1] == '$')
+  {
+    int L = key.back().size()-1;
+
+    if (not pattern.size())
+      return false;
+
+    if (not match(pattern.back(), key.back().substr(0,L)))
+      return false;
+
+    last_piece--;
+  }
+
   // otherwise look for the pieces in sequential order
-  for(int i=0;i<pattern.size() and active_piece < key.size();i++)
+  for(int i=0;i<pattern.size() and active_piece <= last_piece;i++)
     if (match(pattern[i], key[active_piece]))
       active_piece++;
 
