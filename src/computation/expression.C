@@ -1655,6 +1655,7 @@ vector<expression_ref> get_ref_vector_from_list(const expression_ref& E)
     V.push_back(E2->sub[0]);
     E2 = E2->sub[1];
   }
+  assert(is_exactly(E2,"[]"));
 
   return V;
 }
