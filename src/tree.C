@@ -514,7 +514,7 @@ string write(const_nodeview root, const vector<string>& names,
 	     bool print_lengths) 
 {
   const int node_label_index = 0;
-  const int branch_length_index = 0;
+  //  const int branch_length_index = 0;
 
   string output;
 
