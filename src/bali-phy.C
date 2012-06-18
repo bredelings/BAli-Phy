@@ -40,7 +40,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// 
 /// \section mcmc MCMC
 /// The Markov Chain Monte Carlo (MCMC) routines are all called from
-/// the file mcmc.C.  Markov chains are constructed in setup-mcmc.C.
+/// the file mcmc.C.  Markov chains are constructed in mcmc/setup.C.
 /// Proposals for Metropolis-Hastings moves are defined in
 /// proposals.C . Slice sampling routines are defined in
 /// slice-sampling.C. 
@@ -146,7 +146,7 @@ namespace mpi = boost::mpi;
 #include "alignment.H"
 #include "rng.H"
 #include "parameters.H"
-#include "mcmc.H"
+#include "mcmc/mcmc.H"
 #include "likelihood.H"
 #include "util.H"
 #include "setup.H"
@@ -157,7 +157,7 @@ namespace mpi = boost::mpi;
 #include "pow2.H"
 #include "tree-util.H" //extends
 #include "version.H"
-#include "setup-mcmc.H"
+#include "mcmc/setup.H"
 #include "io.H"
 #include "tools/parsimony.H"
 #include "smodel/smodel.H"

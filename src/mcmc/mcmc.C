@@ -39,7 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "util-random.H"
 
-#include "setup.H"           // for letter_counts( )
+#include "../setup.H"           // for letter_counts( )
 
 #include "monitor.H"
 #include "proposals.H"

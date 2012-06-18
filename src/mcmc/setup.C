@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 ///
-/// \file   setup-mcmc.C
+/// \file   mcmc/setup.C
 /// \brief  Provides routines to create default transition kernels and start a Markov chain.
 ///
 /// The function do_sampling( ) creates transition kernel for known parameter names.
@@ -29,7 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// 
 
 #include "smodel/smodel.H"
-#include "setup-mcmc.H"
+#include "mcmc/setup.H"
 #include "util.H"
 #include "sample.H"
 #include "alignment-util.H"
