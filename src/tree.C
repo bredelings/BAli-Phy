@@ -365,6 +365,9 @@ int TreeView::remove_node_from_branch(BranchNode* n1, int branch_to_move)
   b1->out = b2;
   b2->out = b1;
 
+  // Issue! If we remove a root node, we arbitrarily the attributes (such as they are
+  // from one child, while ignoring the other.
+
   if (not (*b1->undirected_branch_attributes)[0].empty())
     (*b1->undirected_branch_attributes)[0] = 
       boost::any_cast<double>((*b1->undirected_branch_attributes)[0]) +
