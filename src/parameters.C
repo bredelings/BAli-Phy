@@ -1166,6 +1166,16 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       branch_length_indices[s].push_back(index);
     }
   }
+
+  // Add and initialize variables for branch *categories*: branch_cat<b>
+  vector<expression_ref> branch_categories;
+  for(int b=0;b<T->n_branches();b++)
+  {
+    string name = "branch_cat" + convertToString(b+1);
+    add_parameter(Parameter(name, Int(0)));
+    branch_categories.push_back(parameter(name));
+  }
+  expression_ref branch_cat_list = C.get_expression( C.add_compute_expression( (get_list(branch_categories) ) ) );
   
   // register the cached transition_p indices
   branch_transition_p_indices.resize(n_branch_means(), n_smodels());
@@ -1181,13 +1191,13 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     }
     expression_ref DL = get_list(D);
 
-    expression_ref I = 0;
-
     // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
     for(int m=0;m < n_smodels(); m++)
     {
       expression_ref S = C.get_expression(SModels[m].main);
       expression_ref V = Vector_From_List<Matrix,MatrixObject>();
+      //expression_ref I = 0;
+      expression_ref I = (get_list_index,branch_cat_list,v1);
       expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, (get_nth_mixture,S,I), (get_list_index, DL, v1) ) ) );
       branch_transition_p_indices(s,m) = C.add_compute_expression(E);
     }
