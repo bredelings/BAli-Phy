@@ -700,6 +700,12 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     }
   }
 
+  if (P.keys.count("sample_foreground_branch"))
+  {
+    Generic_Proposal m(move_subst_type_branch);
+    parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_foreground_branch"));
+  }
+
   return parameter_moves;
 }
 
