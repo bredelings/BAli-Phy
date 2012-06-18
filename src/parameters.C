@@ -1166,32 +1166,32 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       branch_length_indices[s].push_back(index);
     }
   }
+  
+  // register the cached transition_p indices
+  branch_transition_p_indices.resize(n_branch_means(), n_smodels());
+  for(int s=0;s < n_branch_means(); s++)
+  {
+    string prefix= "scale" + convertToString(s+1);
+    // Get a list of the branch LENGTH (not time) parameters
+    vector<expression_ref> D;
+    for(int b=0;b<T->n_branches();b++)
+    {
+      string name = "D" + convertToString(b+1);
+      D.push_back(parameter(prefix+"::"+name));
+    }
+    expression_ref DL = get_list(D);
 
-   // register the cached transition_p indices
-   branch_transition_p_indices.resize(n_branch_means(), n_smodels());
-   for(int s=0;s < n_branch_means(); s++)
-   {
-     string prefix= "scale" + convertToString(s+1);
-     // Get a list of the branch LENGTH (not time) parameters
-     vector<expression_ref> D;
-     for(int b=0;b<T->n_branches();b++)
-     {
-       string name = "D" + convertToString(b+1);
-       D.push_back(parameter(prefix+"::"+name));
-     }
-     expression_ref DL = get_list(D);
+    expression_ref I = 0;
 
-     expression_ref I = 0;
-
-     // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
-     for(int m=0;m < n_smodels(); m++)
-     {
-       expression_ref S = C.get_expression(SModels[m].main);
-       expression_ref V = Vector_From_List<Matrix,MatrixObject>();
-       expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, (get_nth_mixture,S,I), (get_list_index, DL, v1) ) ) );
-       branch_transition_p_indices(s,m) = C.add_compute_expression(E);
-     }
-   }
+    // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
+    for(int m=0;m < n_smodels(); m++)
+    {
+      expression_ref S = C.get_expression(SModels[m].main);
+      expression_ref V = Vector_From_List<Matrix,MatrixObject>();
+      expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, (get_nth_mixture,S,I), (get_list_index, DL, v1) ) ) );
+      branch_transition_p_indices(s,m) = C.add_compute_expression(E);
+    }
+  }
 
   // create data partitions and register as sub-models
   for(int i=0;i<A.size();i++) 
