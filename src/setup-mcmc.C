@@ -296,8 +296,6 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
 
   add_MH_move(P, Between(-20,20,shift_cauchy), "lambda_scale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
-  add_MH_move(P, bit_flip,   "lambda_scale_on", "M8b::f_dirichlet_N",     1,  MH_moves, 10);
-  add_MH_move(P, bit_flip,   "pos-selection", "M8b::f_dirichlet_N",     1,  MH_moves, 10);
 
   return MH_moves;
 }
@@ -586,6 +584,13 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   using namespace MCMC;
 
   MoveAll parameter_moves("parameters");
+
+  // There's sum danger here that we could flip in a periodic fashion, and only observe variable when its True (or only if its False).
+  //  - It seems to be OK, though.  Why?
+  //  - Note that this should only be an issue when this does not affect the likelihood.
+  // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
+  add_MH_move(P, bit_flip,   "pos-selection", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
+  add_MH_move(P, bit_flip,   "lambda_scale_on", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
 
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
   unsigned total_length = 0;
