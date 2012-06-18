@@ -979,7 +979,11 @@ void do_sampling(const variables_map& args,
   for(int i=0;i<loggers.size();i++)
     sampler.add_logger(loggers[i]);
   if (has_imodel)
-    sampler.add(1,alignment_moves);
+  {
+    double factor = loadvalue(P->keys,"alignment_sampling_factor",1.0);
+    std::cerr<<"alignment sampling factor = "<<factor<<"\n";
+    sampler.add(factor,alignment_moves);
+  }
   sampler.add(2,tree_moves);
 
   // FIXME - We certainly don't want to do MH_sample_mu[i] O(branches) times
