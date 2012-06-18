@@ -1214,6 +1214,29 @@ void set_lambda_scale_branch_parameters(Parameters& P, const variables_map& args
   }
 }
 
+
+/// If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
+void set_foreground_branches(Parameters& P)
+{
+  const SequenceTree& T = *P.T;
+
+  if (T.find_undirected_branch_attribute_index_by_name("foreground") != -1)
+  {
+    int attribute_index = T.find_undirected_branch_attribute_index_by_name("foreground");
+
+    for(int b=0;b<T.n_branches();b++)
+    {
+      boost::any value = T.branch(b).undirected_attribute(attribute_index);
+      if (value.empty()) continue;
+
+      int foreground_level = convertTo<int>( boost::any_cast<string>( value) );
+
+      P.set_parameter_value( P.find_parameter("branch_cat"+convertToString(b+1)), object_ref(Int(foreground_level)));
+      std::cerr<<"Setting branch '"<<b<<"' to foreground level "<<foreground_level<<"\n";;
+    }
+  }
+}
+
 /* 
  * 1. Add a PRANK-like initial algorithm.
  * 2. Add some kind of constraint.
@@ -1349,6 +1372,9 @@ int main(int argc,char* argv[])
     set_parameters(P,args);
 
     set_lambda_scale_branch_parameters(P,args);
+
+    // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
+    set_foreground_branches(P);
 
     //------------- Set the branch prior type --------------//
     string branch_prior = args["branch-prior"].as<string>();
