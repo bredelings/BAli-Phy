@@ -917,7 +917,19 @@ vector<string> show_probability_expressions(const context& C)
     // Extract the density operation
     object_ptr<const String> name = is_a<String>(results[0]);
 
-    string prob_exp = results[1]->print() + " ~ " + string(*name);
+    string prob_exp;
+    {
+      expression_ref rand_var = results[1];
+      if (is_exactly(rand_var->head,":"))
+      {
+	vector<expression_ref> rand_vars = get_ref_vector_from_list(rand_var);
+	prob_exp += get_tuple(rand_vars)->print();
+      }
+      else
+	prob_exp += rand_var->print();
+    }
+
+    prob_exp += " ~ " + string(*name);
     if (results[2]->size())
       prob_exp += results[2]->print();
     else
