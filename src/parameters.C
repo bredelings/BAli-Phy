@@ -1193,7 +1193,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     }
   }
 
-  // create data partitions and register as sub-models
+  // create data partitions
   for(int i=0;i<A.size();i++) 
   {
     // compute name for data-partition
