@@ -1151,7 +1151,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   for(int b=0;b<TC->n_branches();b++)
     TC.modify()->branch(b).set_length(-1);
 
-  // Add and initialize variables for branch *length*.
+  // Add and initialize variables for branch *lengths*: scale<s>::D<b>
   for(int s=0;s<n_scales;s++)
   {
     string prefix= "scale" + convertToString(s+1);
