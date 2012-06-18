@@ -161,4 +161,6 @@ double bit_flip(std::vector< object_ref >& x, const std::vector<double>& p);
 
 double move_scale_branch(Probability_Model& P);
 
+double move_subst_type_branch(Probability_Model& P);
+
 #endif
