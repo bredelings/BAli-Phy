@@ -85,6 +85,24 @@ vector<int> get_mapping(const vector<sequence>& S1, const vector<sequence>& S2)
   return mapping;
 }
 
+sequence strip_gaps(const sequence& s1, const vector<char>& missing)
+{
+  sequence s2 = s1;
+  int L=0;
+  for(int c=0;c<s2.size();c++)
+    if (not includes(missing,s2[c]))
+      s2[L++] = s2[c];
+  s2.resize(L);
+  return s2;
+}
+
+vector<sequence> strip_gaps(const vector<sequence>& S1, const vector<char>& missing)
+{
+  vector<sequence> S2 = S1;
+  for(int i=0;i<S2.size();i++)
+    S2[i] = strip_gaps(S2[i], missing);
+  return S2;
+}
 
 vector<sequence> concatenate(const vector<sequence>& S1, const vector<sequence>& S2)
 {
@@ -194,6 +212,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("reorder-by-tree",value<string>(),"Reorder the sequences given a tree")
     ("use-root","use the root specified in the tree file to reorder")
     ("reorder-by-alignment",value<string>(),"Reorder the sequences following an alignment")
+    ("align-by-amino",value<string>(),"Arrange nucleotides into codon alignment")
     ;
 
   options_description all("All options");
@@ -396,6 +415,62 @@ vector<string> get_names_from_tree(RootedSequenceTree T, bool use_root)
   return names;
 }
 
+vector<string> get_names(const vector<sequence>& S)
+{
+  vector<string> names;
+  for(const auto& s: S)
+    names.push_back(s.name);
+  return names;
+}
+
+vector<sequence> align_by_amino_acids(const vector<sequence>& S1, const string& filename, const vector<char>& missing)
+{
+  // 1. Check that codon sequences are a multiple of 3 nucleotides.
+  for(const auto& S: S1)
+    if (S.size() % 3)
+      throw myexception()<<"Sequence '"<<S.name<<"' has length "<<S.size()<<" which is not a multiple of 3!";
+
+  // 2. Load the amino acid sequence alignment, and pad it.
+  vector<sequence> aminos = load_file(filename,true);
+
+  // 3. Check that there are the same number of amino and nucleotide sequence.
+  if (S1.size() != aminos.size())
+    throw myexception()<<"Amino acid alignment has "<<aminos.size()<<" sequences, but there are "<<S1.size()<<" nucleotide sequences.";
+
+  // 4. Rearrange nucleotide sequences in the same order as the amino acid sequences.
+  vector<sequence> S2 = select_taxa(S1, get_names(aminos));
+
+  for(int i=0;i<S2.size();i++)
+  {
+    sequence nuc = strip_gaps(S2[i],missing);
+    const sequence& aa = aminos[i];
+    assert(nuc.name == aa.name);
+    int aa_length = strip_gaps(aa,missing).size();
+    if (nuc.size()/3 != aa_length)
+      throw myexception()<<"Sequence '"<<nuc.name<<"' has "<<nuc.size()<<" nucleotides - cannot match 3*"<<aa_length<<"="<<3*aa_length<<" amino acids.";
+
+    S2[i].resize(3*aa.size());
+    for(int j=0,k=0,l=0;j<aa.size();j++)
+    {
+      if (includes(missing,aa[j]))
+      {
+	S2[i][k++] = aa[j];
+	S2[i][k++] = aa[j];
+	S2[i][k++] = aa[j];
+      }
+      else
+      {
+	S2[i][k++] = nuc[l++];
+	S2[i][k++] = nuc[l++];
+	S2[i][k++] = nuc[l++];
+      }
+    }
+  }
+
+  return S2;
+}
+
+
 int main(int argc,char* argv[]) 
 { 
 
@@ -461,10 +536,7 @@ int main(int argc,char* argv[])
 	throw myexception()<<"File '"<<filenames[i]<<"': "<<e.what();
       }
     }
-      
-    if (args.count("columns"))
-      S = select(S,args["columns"].as<string>());
-    
+
     // determine which chars are not characters
     vector<char> missing;
     {
@@ -473,20 +545,20 @@ int main(int argc,char* argv[])
 	missing.push_back(missing2[i]);
     }
 
+    if (args.count("align-by-amino"))
+    {
+      const string& filename = args["align-by-amino"].as<string>();
+      S = align_by_amino_acids(S,filename,missing);
+    }
+      
+    if (args.count("columns"))
+      S = select(S,args["columns"].as<string>());
+    
     if (args.count("erase-empty-columns")) 
       S = remove_empty_columns(S,missing);
 
     if (args.count("strip-gaps"))
-    {
-      for(int i=0;i<S.size();i++) {
-	sequence& s = S[i];
-	int L=0;
-	for(int c=0;c<S[i].size();c++)
-	  if (not includes(missing,s[c]))
-	    s[L++] = s[c];
-	s.resize(L);
-      }
-    }
+      S = strip_gaps(S, missing);
 
     // Reverse each sequence, if asked.
     if (args.count("reverse"))
