@@ -833,7 +833,10 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref p2b = (times, f1, p2);
 
     formula_expression_ref w0 = def_parameter("branch-site::w0", Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
-    formula_expression_ref w2 = def_parameter("branch-site::w2", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(1.0, 0.5));
+    // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
+    formula_expression_ref w2 = def_parameter("branch-site::w2", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(4.0, 0.25));
+    // FIXME - look at the effect on power of using various different priors for w2 here!
+    // FIXME - allow specifying the prior on the command line?
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
