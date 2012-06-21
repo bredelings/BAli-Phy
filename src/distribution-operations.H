@@ -99,6 +99,29 @@ struct gamma_quantile_op: public Operation
 
 extern expression_ref gamma_dist;
 
+struct log_gamma_density: public Operation
+{
+  log_gamma_density* clone() const {return new log_gamma_density;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "log_gamma_density";}
+
+  log_gamma_density():Operation(2) { }
+};
+
+extern expression_ref log_gamma_dist;
+
 struct beta_density: public Operation
 {
   beta_density* clone() const {return new beta_density;}

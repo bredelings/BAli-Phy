@@ -24,21 +24,31 @@ closure log_exponential_density::operator()(OperationArgs& Args) const
 
 closure gamma_density::operator()(OperationArgs& Args) const
 {
-  object_ptr<const Double> x = Args.evaluate_as<Double>(0);
+  double x = *Args.evaluate_as<Double>(0);
   expression_ref a = Args.evaluate_structure(1);
   
   std::valarray<double> A = get_varray<double,Double>(a);
-  Log_Double result = gamma_pdf(*x, A[0], A[1]);
+  Log_Double result = gamma_pdf(x, A[0], A[1]);
   return object_ptr<const Object>(result.clone());
 }
 
 closure gamma_quantile_op::operator()(OperationArgs& Args) const
 {
   expression_ref a = Args.evaluate_structure(0);
-  object_ptr<const Double> p = Args.evaluate_as<Double>(1);
+  double p = *Args.evaluate_as<Double>(1);
 
   std::valarray<double> A = get_varray<double,Double>(a);
-  Double result = gamma_quantile(*p, A[0], A[1]);
+  Double result = gamma_quantile(p, A[0], A[1]);
+  return object_ptr<const Object>(result.clone());
+}
+
+closure log_gamma_density::operator()(OperationArgs& Args) const
+{
+  double x = *Args.evaluate_as<Double>(0);
+  expression_ref a = Args.evaluate_structure(1);
+  
+  std::valarray<double> A = get_varray<double,Double>(a);
+  Log_Double result = gamma_pdf(log(x), A[0], A[1])/x;
   return object_ptr<const Object>(result.clone());
 }
 
@@ -153,6 +163,8 @@ expression_ref exponential_dist = (prob_density, "Exponential", lambda_expressio
 expression_ref log_exponential_dist = (prob_density, "LogExponential", lambda_expression(log_exponential_density()), 0);
 
 expression_ref gamma_dist       = (prob_density, "Gamma", lambda_expression(gamma_density()), lambda_expression(gamma_quantile_op()));
+
+expression_ref log_gamma_dist   = (prob_density, "LogGamma", lambda_expression(log_gamma_density()), 0);
 
 expression_ref beta_dist        = (prob_density, "Beta", lambda_expression(beta_density()), lambda_expression(beta_quantile_op()));
 
