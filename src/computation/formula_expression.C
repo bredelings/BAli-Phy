@@ -168,7 +168,7 @@ formula_expression_ref let_expression(const expression_ref& var, const expressio
 
 formula_expression_ref let_expression(const expression_ref& var, const formula_expression_ref& body, const expression_ref& T)
 {
-  formula_expression_ref F3(T);
+  formula_expression_ref F3(body);
   F3.set_exp(let_expression(var, body.exp(), T ));
   return F3;
 }
