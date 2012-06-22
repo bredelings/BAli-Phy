@@ -16,7 +16,7 @@ struct closure
   std::vector<int> Env;
 
   /// Is the closure not empty
-  operator bool() const {return exp;}
+  operator bool() const {return exp and exp->head;}
 
   bool operator==(const closure& C2) const {return exp->maybe_equals(*C2.exp) and Env == C2.Env;}
 
