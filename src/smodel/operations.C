@@ -66,6 +66,89 @@ namespace substitution
 
   const expression_ref Plus_gwF = lambda_expression( Plus_gwF_Op() );
 
+
+  closure F3x4_Frequencies_Op::operator()(OperationArgs& Args) const
+  {
+    const Triplets& T = *Args.evaluate_as<Triplets>(0);
+    // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
+
+    const vector<double>& pi1 = Args.evaluate_as<Vector<double>>(1)->t;
+    const vector<double>& pi2 = Args.evaluate_as<Vector<double>>(2)->t;
+    const vector<double>& pi3 = Args.evaluate_as<Vector<double>>(3)->t;
+
+    Vector<double> pi;
+    pi.t.resize(T.size());
+    for(int i=0;i<T.size();i++)
+      pi.t[i] = pi1[T.sub_nuc(i,0)] * pi2[T.sub_nuc(i,1)] * pi3[T.sub_nuc(i,2)];
+
+    // Some triplets may be missing from the triplet alphabet (e.g. stop codons).  So renormalize.
+
+    double scale = 1.0/sum(pi.t);
+    for(double& d : pi.t)
+      d *= scale;
+
+    assert(std::abs(sum(pi.t) - 1.0) < 1.0e-9);
+
+    return pi;
+  }
+
+  const expression_ref F3x4_Frequencies = lambda_expression( F3x4_Frequencies_Op() );
+
+  closure F3x4_Matrix_Op::operator()(OperationArgs& Args) const
+  {
+    const Triplets& T = *Args.evaluate_as<Triplets>(0);
+  
+    const Matrix& R1 = Args.evaluate_as<MatrixObject>(1)->t; 
+    const Matrix& R2 = Args.evaluate_as<MatrixObject>(2)->t;
+    const Matrix& R3 = Args.evaluate_as<MatrixObject>(3)->t;
+
+    // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
+    assert(R1.size1() == 4);
+    assert(R1.size2() == 4);
+    assert(R2.size1() == 4);
+    assert(R2.size2() == 4);
+    assert(R3.size1() == 4);
+    assert(R3.size2() == 4);
+
+    object_ptr<MatrixObject> R( new MatrixObject );
+
+    const int n = T.size();
+
+    R->t.resize(n, n);
+    for(int i=0;i<n;i++)
+      for(int j=0;j<n;j++)
+      {
+	int nmuts=0;
+	int from=-1;
+	int to=-1;
+	int pos=-1;
+	for(int p=0;p<3;p++)
+	  if (T.sub_nuc(i,p) != T.sub_nuc(j,p)) {
+	    nmuts++;
+	    pos = p;
+	    from = T.sub_nuc(i,p);
+	    to = T.sub_nuc(j,p);
+	  }
+
+	double r = 0;
+	if (nmuts == 1)
+	{
+	  if (pos == 0)
+	    r = R1(from,to);
+	  else if (pos == 1)
+	    r = R2(from,to);
+	  else if (pos == 2)
+	    r = R3(from,to);
+	}
+	R->t(i,j) = r;
+      }
+
+    return R;
+  }
+
+  const expression_ref F3x4_Matrix = lambda_expression( F3x4_Matrix_Op() );
+
+
   using namespace probability;
 
   object_ptr<Object> SimpleExchangeFunction(double rho, int n)
@@ -365,6 +448,40 @@ namespace substitution
   {
     valarray<double> pi (1.0/a.size(), a.size());
     return Plus_gwF_Model(a,pi);
+  }
+
+  // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
+  formula_expression_ref F1x4_Model(const Triplets& T)
+  {
+    const Nucleotides& N = T.getNucleotides();
+    formula_expression_ref pi = Frequencies_Model(N);
+
+    return let(v2,(Vector_From_List<double,Double>(),pi),
+	       v1,(F3x4_Frequencies,T,v2,v2,v2),
+	       v3,(Plus_gwF, N, 1.0, v2),
+	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
+	       );
+  }
+
+  // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
+  formula_expression_ref F3x4_Model(const Triplets& T)
+  {
+    const Nucleotides& N = T.getNucleotides();
+    formula_expression_ref pi1 = Frequencies_Model(N);
+    pi1 = prefix_formula("1",pi1);
+    formula_expression_ref pi2 = Frequencies_Model(N);
+    pi2 = prefix_formula("2",pi2);
+    formula_expression_ref pi3 = Frequencies_Model(N);
+    pi3 = prefix_formula("3",pi3);
+
+    return let(v1, (Vector_From_List<double,Double>(),pi1),
+	       v2, (Vector_From_List<double,Double>(),pi2),
+	       v3, (Vector_From_List<double,Double>(),pi3),
+	       v4, (Plus_gwF, N, 1.0, v1),
+	       v5, (Plus_gwF, N, 1.0, v2),
+	       v6, (Plus_gwF, N, 1.0, v3),
+	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), (F3x4_Frequencies,T,v1,v2,v3), (F3x4_Matrix, T, v4, v5, v6))
+	       );
   }
 
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
