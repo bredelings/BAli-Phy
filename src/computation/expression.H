@@ -502,6 +502,18 @@ auto Tuple(const First& first, const Second& second, const Rest&... rest) -> dec
   return apply(Tuple(2+sizeof...(rest)) ,first,second,rest...);
 }
 
+template <typename First>
+First let(const First& first)
+{
+  return first;
+}
+
+template <typename First, typename Second, typename... Rest>
+auto let(const First& first, const Second& second, const Rest&... rest) -> decltype( let_expression(first,second,let(rest...)) )
+{
+  return let_expression(first,second,let(rest...));
+}
+
 // 2 Fields, a value, and a Cons or a ListEnd
 extern expression_ref Cons;
 
