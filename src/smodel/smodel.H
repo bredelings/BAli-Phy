@@ -219,22 +219,6 @@ namespace substitution {
     explicit TripletFrequencyModel(const Triplets& T);
   };
 
-  class IndependentNucleotideFrequencyModel: public TripletFrequencyModel,
-					     public SuperModelOver<SimpleFrequencyModel>
-  {
-    void recalc(const std::vector<int>&) {std::abort();}
-
-  public:
-    object_ptr<const Object> result() const;
-
-    IndependentNucleotideFrequencyModel* clone() const {return new IndependentNucleotideFrequencyModel(*this);}
-
-    string name() const;
-
-    IndependentNucleotideFrequencyModel(const Triplets& T);
-  };
-
-
   class TripletsFrequencyModel: public TripletFrequencyModel,
 				public SuperModelOver<SimpleFrequencyModel>
   {
