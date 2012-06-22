@@ -120,7 +120,7 @@ get_smodel_(const string& smodel);
 bool process_stack_Markov(vector<string>& string_stack,
 			  vector<formula_expression_ref >& model_stack,
 			  const object_ptr<const alphabet>& a,
-			  const shared_ptr<const valarray<double> >& frequencies)
+			  const shared_ptr<const valarray<double> >& /* frequencies */)
 {
   string arg;
 
@@ -358,17 +358,31 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
-  /*
-  else if (match(string_stack,"F=nucleotides",arg)) 
+  else if (match(string_stack,"F1x4",arg))
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"+F=nucleotides:: '"<<a->name<<"' is not a triplet alphabet.";
+      throw myexception()<<"+F1x4:: '"<<a->name<<"' is not a triplet alphabet.";
 
-    formula_expression_ref EM = get_EM_default(model_stack,"+F=nucleotides", a, frequencies);
+    formula_expression_ref S = get_EM_default(model_stack,"+F1x4", a, frequencies);
 
-    model_stack.back() = Reversible_Markov_Model(EM, IndependentNucleotideFrequencyModel(*T));
+    formula_expression_ref F = F1x4_Model(*T);
+
+    model_stack.back() = Reversible_Markov_Model(S, F);
   }
+  else if (match(string_stack,"F3x4",arg)) 
+  {
+    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
+    if (not T)
+      throw myexception()<<"+F3x4:: '"<<a->name<<"' is not a triplet alphabet.";
+
+    formula_expression_ref S = get_EM_default(model_stack,"+F3x4", a, frequencies);
+
+    formula_expression_ref F = F3x4_Model(*T);
+
+    model_stack.back() = Reversible_Markov_Model(S, F);
+  }
+  /*
   else if (match(string_stack,"F=amino-acids",arg)) 
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
