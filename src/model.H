@@ -224,6 +224,7 @@ public:
 
   bool is_fixed(int i) const;
   void set_fixed(int i,bool f);
+  bool is_random_variable(int i) const;
 
   const Bounds<double>& get_bounds(int i) const;
   void set_bounds(int i,const Bounds<double>& b);

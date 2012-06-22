@@ -255,6 +255,11 @@ int Model::add_note(const expression_ref& E)
   return index;
 }
 
+bool Model::is_random_variable(int i) const
+{
+  return prior_note_index[i] != -1;
+}
+
 bool Model::is_fixed(int i) const
 {
   return fixed[i];
