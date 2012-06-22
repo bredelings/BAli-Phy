@@ -348,6 +348,29 @@ struct uniform_density: public Operation
 
 extern expression_ref uniform_dist;
 
+struct bernoulli_prob: public Operation
+{
+  bernoulli_prob* clone() const {return new bernoulli_prob;}
+    
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "bernoulli_prob";}
+    
+  bernoulli_prob():Operation(2) { }
+};
+
+extern expression_ref bernoulli_dist;
+
 // 2 Fields: string, density op
 extern expression_ref prob_density;
 

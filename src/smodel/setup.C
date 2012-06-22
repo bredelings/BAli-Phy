@@ -792,7 +792,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref p3 = def_parameter("M8b::f[Positive]", Double(0.1), between(0,1));
     // [positive selection, if it exists] w ~ log_exponential(0.05)
     formula_expression_ref w = def_parameter("M8b::omega3", Double(1.0), lower_bound(1), log_exponential_dist, 0.05);
-    formula_expression_ref I  = def_parameter("M8b::omega3_non_zero", Bool(true));
+    formula_expression_ref I  = def_parameter("M8b::omega3_non_zero", Bool(true), nullptr, bernoulli_dist, 0.5);
     formula_expression_ref w3 = (If, I, w, 1.0);
 
     // Add the neutral and (possibility) positive selection categories
@@ -838,7 +838,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref f0 = def_parameter("branch-site::f0",Double(0.5));
     formula_expression_ref f1 = def_parameter("branch-site::f1",Double(0.5));
     formula_expression_ref f2 = def_parameter("branch-site::f2",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
-    formula_expression_ref I  = def_parameter("branch-site::pos-selection", Bool(true));
+    formula_expression_ref I  = def_parameter("branch-site::pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
 
     formula_expression_ref p2 = (If, I, f2, 0.0);
     formula_expression_ref p0 = (times, f0, (minus,1.0,p2));

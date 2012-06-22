@@ -155,6 +155,17 @@ closure uniform_density::operator()(OperationArgs& Args) const
   return object_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a[0],a[1]) ) );
 }
 
+closure bernoulli_prob::operator()(OperationArgs& Args) const
+{
+  bool b = *Args.evaluate_as<Bool>(0);
+  double p = *Args.evaluate_as<Double>(1);
+
+  if (not b)
+    p = 1.0 - p;
+
+  return object_ptr<Log_Double> (new Log_Double( p ) );
+}
+
 // Fields: n_random, n_parameters, string, density op
 expression_ref prob_density = lambda_expression( constructor("prob_density",3) );
 
@@ -182,3 +193,4 @@ expression_ref log_laplace_dist = (prob_density, "LogLaplace", lambda_expression
 
 expression_ref uniform_dist     = (prob_density, "Uniform", lambda_expression(uniform_density()), 0);
 
+expression_ref bernoulli_dist   = (prob_density, "Bernoulli", lambda_expression(bernoulli_prob()), 0);
