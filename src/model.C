@@ -824,48 +824,59 @@ vector<string> short_parameter_names(const Model& M)
   return short_parameter_names( parameter_names( M ) );
 }
 
+// The key may have '*', '?', 'text*', and 'text'.  Here
+// - '?' matches exactly one element.
+// - '*' matches 0 or more elements
+// - text* matches 1 element beginning with 'text'
+// - test matches 1 element that is exactly 'text'.
+bool path_match(const vector<string>& key, int i, const vector<string>& pattern, int j)
+{
+  assert(i <= key.size());
+
+  assert(j <= pattern.size());
+
+  // 1. If the key is empty
+  if (i==key.size())
+  {
+    // nothing ~ nothing
+    if(j==pattern.size()) return true;
+
+    // nothing !~ something
+    if (j<pattern.size()) return false;
+  }
+
+  assert(i<key.size());
+
+  // 2. If the key is '*'
+  if (key[i] == "*") 
+  {
+    // (* x y z ~ [nothing]) only (if x y z ~ [nothing])
+    if (j == pattern.size())
+      return path_match(key,i+1,pattern,j);
+
+    // (* matches 0 components of j) or (* matches 1 or more components of j)
+    return path_match(key,i+1,pattern,j) or path_match(key,i,pattern,j+1);
+  }
+
+  // For anything else, FAIL if we are matching against [nothing], and key != '*' only.
+  if (j == pattern.size()) return false;
+
+  assert(j<pattern.size());
+
+  // 3. If the key is '?'
+  if (key[i] == "?")
+    return path_match(key,i+1,pattern,j+1);
+
+  // 4. If the key is 'text*' or 'text'
+  if (match(pattern[j],key[i]))
+    return path_match(key,i+1,pattern,j+1);
+  else
+    return false;
+}
 
 bool path_match(const vector<string>& key, const vector<string>& pattern)
 {
-  assert(not key.empty());
-
-  int active_piece = 0;
-
-  // require key[0] to match pattern[0] if key[0] starts w/ ^
-  if (key[0].size() and key[0][0] == '^')
-  { 
-    int L = key[0].size()-1;
-      
-    if (not pattern.size())
-      return false;
-    
-    if (not match(pattern[0], key[0].substr(1,L) ))
-      return false;
-
-    active_piece = 1;
-  }
-
-  // require key.back() to match pattern.back() if key.back() ends w/ $
-  int last_piece = key.size()-1;
-  if (key.back().size() and key.back()[key.back().size()-1] == '$')
-  {
-    int L = key.back().size()-1;
-
-    if (not pattern.size())
-      return false;
-
-    if (not match(pattern.back(), key.back().substr(0,L)))
-      return false;
-
-    last_piece--;
-  }
-
-  // otherwise look for the pieces in sequential order
-  for(int i=0;i<pattern.size() and active_piece <= last_piece;i++)
-    if (match(pattern[i], key[active_piece]))
-      active_piece++;
-
-  return active_piece == key.size();
+  return path_match(key,0,pattern,0);
 }
 
 /// \brief Find the index of model parameters that match the pattern name
@@ -897,7 +908,6 @@ vector<int> parameters_with_extension(const Model& M, string name)
       skeleton = this_skeleton;
     else if (skeleton != this_skeleton)
       throw myexception()<<"Key '"<<name<<"' matches both "<<join(skeleton,"::")<<" and "<<join(this_skeleton,"::")<<".";
-    
 
     indices.push_back(i);
   }
