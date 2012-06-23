@@ -945,25 +945,3 @@ vector<string> show_probability_expressions(const context& C)
 
   return expressions;
 }
-
-std::string FormulaModel::name() const
-{
-  return E->print();
-}
-
-object_ptr<const Object> FormulaModel::result() const
-{
-  return C.evaluate(result_index);
-}
-
-FormulaModel::FormulaModel(const formula_expression_ref& r)
-  :Model( r.get_notes_plus_exp() ),
-   E( r.exp() ),
-   result_index( C.add_compute_expression(E ) )
-{ }
-
-FormulaModel::operator formula_expression_ref() const
-{
-  return formula_expression_ref(C.get_notes(), E);
-}
-

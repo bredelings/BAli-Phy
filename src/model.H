@@ -454,26 +454,6 @@ public:
   SuperModelOver<SubModel_t>* clone() const =0;
 };
 
-struct expression_ref;
-
-struct FormulaModel: public Model
-{
-  expression_ref E;
-
-  int result_index;
-
-  FormulaModel* clone() const {return new FormulaModel(*this);}
-
-  object_ptr<const Object> result() const;
-
-  std::string name() const;
-
-  operator formula_expression_ref() const;
-
-  FormulaModel(const formula_expression_ref&);
-};
-
-
 void show_parameters(std::ostream& o,const Model& M);
 
 bool has_parameter(const Model& M, const std::string& name);
