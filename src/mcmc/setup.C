@@ -592,7 +592,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   //  - It seems to be OK, though.  Why?
   //  - Note that this should only be an issue when this does not affect the likelihood.
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
-  add_MH_move(P, bit_flip,   "pos-selection", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
+  add_MH_move(P, bit_flip,   "*::pos-selection", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
   add_MH_move(P, bit_flip,   "lambda_scale_on", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
 
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
