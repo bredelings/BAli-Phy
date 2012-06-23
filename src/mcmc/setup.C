@@ -359,6 +359,9 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     if (s == P.n_smodels()) prefix = "";
 
     add_dirichlet_slice_moves(P, prefix + "R::pi*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "R::1::pi*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "R::2::pi*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "R::3::pi*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "CAT::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "S::GTR::?", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "DP::f*", slice_moves, 3);
@@ -607,6 +610,9 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
       prefix = "";
 
     add_MH_move(P, dirichlet_proposal,  prefix + "R::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "R::1::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "R::2::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "R::3::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
     
     add_MH_move(P, dirichlet_proposal,  prefix + "INV::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
     add_MH_move(P, dirichlet_proposal,  prefix + "VAR::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
