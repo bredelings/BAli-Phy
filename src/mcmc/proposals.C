@@ -504,6 +504,14 @@ double Proposal2::operator()(Probability_Model& P) const
   return ratio;
 }
 
+std::set<int> Proposal2::get_affected_parameters(const owned_ptr<Probability_Model>&) const
+{
+  std::set<int> affected_parameters;
+  for(int i: indices)
+    affected_parameters.insert(i);
+  return affected_parameters;
+}
+
 Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
 	  const Probability_Model& P)
   :proposal(p),
