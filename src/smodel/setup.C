@@ -889,10 +889,9 @@ bool process_stack_Multi(vector<string>& string_stack,
   {
     formula_expression_ref f0 = def_parameter("branch-site::f0",Double(0.5));
     formula_expression_ref f1 = def_parameter("branch-site::f1",Double(0.5));
-    formula_expression_ref f2 = def_parameter("branch-site::f2",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
     formula_expression_ref I  = def_parameter("branch-site::pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
 
-    formula_expression_ref p2 = f0;
+    formula_expression_ref p2 = def_parameter("branch-site::p2",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
     formula_expression_ref p0 = (times, f0, (minus,1.0,p2));
     formula_expression_ref p1 = (times, f1, (minus,1.0,p2));
     formula_expression_ref p2a = (times, f0, p2);
