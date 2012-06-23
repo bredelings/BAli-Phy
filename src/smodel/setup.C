@@ -830,7 +830,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     model_stack.push_back( (MultiParameter, M0, D) );
   }
-  else if (match(string_stack,"branch-site",args))
+  else if (match(string_stack,"branch-site-test1",args))
   {
     formula_expression_ref f0 = def_parameter("branch-site::f0",Double(0.5));
     formula_expression_ref f1 = def_parameter("branch-site::f1",Double(0.5));
@@ -861,6 +861,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     formula_expression_ref S2 = (M0E, a, S1, dummy(0));
     formula_expression_ref R = Plus_F_Model(*a);
+    // FIXME - we need to be able to return a frequency model in order to be able to do this!
     if (args.size() >= 2 and args[1] == "F")
       R = Plus_F_Model(*C);
     else if (args.size() >= 2 and args[1] == "gwF")
@@ -877,6 +878,62 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
     mixture1 = (MultiParameter, M0, mixture1);
     formula_expression_ref mixture2 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2)&(Tuple(p2b,w2)&ListEnd))));
+    mixture2 = (MultiParameter, M0, mixture2);
+    formula_expression_ref branch_site = (MixtureModels,mixture1&(mixture2&ListEnd));
+
+    branch_site.add_expression( (distributed, f0&(f1&ListEnd), Tuple(dirichlet_dist, Tuple(1.0, 1.0)) ) );
+
+    model_stack.push_back(branch_site);
+  }
+  else if (match(string_stack,"branch-site",args))
+  {
+    formula_expression_ref f0 = def_parameter("branch-site::f0",Double(0.5));
+    formula_expression_ref f1 = def_parameter("branch-site::f1",Double(0.5));
+    formula_expression_ref f2 = def_parameter("branch-site::f2",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
+    formula_expression_ref I  = def_parameter("branch-site::pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
+
+    formula_expression_ref p2 = f0;
+    formula_expression_ref p0 = (times, f0, (minus,1.0,p2));
+    formula_expression_ref p1 = (times, f1, (minus,1.0,p2));
+    formula_expression_ref p2a = (times, f0, p2);
+    formula_expression_ref p2b = (times, f1, p2);
+
+    formula_expression_ref w0 = def_parameter("branch-site::w0", Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
+    // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
+    formula_expression_ref w2 = def_parameter("branch-site::w2", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(4.0, 0.25));
+    formula_expression_ref w2effective = (If, I, w2, 1.0);
+    // FIXME - look at the effect on power of using various different priors for w2 here!
+    // FIXME - allow specifying the prior on the command line?
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    assert(C);
+    formula_expression_ref S1 = HKY_Model( C->getNucleotides());
+    if (args.size() >= 1)
+    {
+      S1 = get_smodel_(args[0], const_ptr(C->getNucleotides()));
+      if (not S1.result_as<SymmetricMatrixObject>())
+	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide exchange model.";
+    }
+
+    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
+    formula_expression_ref R = Plus_F_Model(*a);
+    // FIXME - we need to be able to return a frequency model in order to be able to do this!
+    if (args.size() >= 2 and args[1] == "F")
+      R = Plus_F_Model(*C);
+    else if (args.size() >= 2 and args[1] == "gwF")
+      R = Plus_gwF_Model(*C);
+    else if (args.size() >= 2 and args[1] == "F1x4")
+      R = F1x4_Model(*C);
+    else if (args.size() >= 2 and args[1] == "F3x4")
+      R = F3x4_Model(*C);
+    else if (args.size() >= 2)
+      throw myexception()<<"branch-site: I don't understand '"<<args[1]<<"' as a codon frequencies model.";
+
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+
+    formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
+    mixture1 = (MultiParameter, M0, mixture1);
+    formula_expression_ref mixture2 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2)&(Tuple(p2b,w2effective)&ListEnd))));
     mixture2 = (MultiParameter, M0, mixture2);
     formula_expression_ref branch_site = (MixtureModels,mixture1&(mixture2&ListEnd));
 
