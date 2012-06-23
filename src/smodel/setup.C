@@ -830,7 +830,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     model_stack.push_back( (MultiParameter, M0, D) );
   }
-  else if (match(string_stack,"branch-site",arg))
+  else if (match(string_stack,"branch-site",args))
   {
     formula_expression_ref f0 = def_parameter("branch-site::f0",Double(0.5));
     formula_expression_ref f1 = def_parameter("branch-site::f1",Double(0.5));
@@ -851,9 +851,27 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
-    formula_expression_ref S1 = TN_Model( C->getNucleotides());
+    formula_expression_ref S1 = HKY_Model( C->getNucleotides());
+    if (args.size() >= 1)
+    {
+      S1 = get_smodel_(args[0], const_ptr(C->getNucleotides()));
+      if (not S1.result_as<SymmetricMatrixObject>())
+	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide exchange model.";
+    }
+
     formula_expression_ref S2 = (M0E, a, S1, dummy(0));
-    formula_expression_ref R = Plus_gwF_Model(*a);
+    formula_expression_ref R = Plus_F_Model(*a);
+    if (args.size() >= 2 and args[1] == "F")
+      R = Plus_F_Model(*C);
+    else if (args.size() >= 2 and args[1] == "gwF")
+      R = Plus_gwF_Model(*C);
+    else if (args.size() >= 2 and args[1] == "F1x4")
+      R = F1x4_Model(*C);
+    else if (args.size() >= 2 and args[1] == "F3x4")
+      R = F3x4_Model(*C);
+    else if (args.size() >= 2)
+      throw myexception()<<"branch-site: I don't understand '"<<args[1]<<"' as a codon frequencies model.";
+
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
     formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
