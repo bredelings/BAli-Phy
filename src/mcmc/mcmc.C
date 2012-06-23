@@ -1139,13 +1139,15 @@ void Sampler::check_moves(const owned_ptr<Probability_Model>& P) const
 {
   std::set<int> affected = get_affected_parameters(P);
 
+  std::cerr<<"\n";
   for(int p=0;p<P->n_parameters();p++)
   {
     if (P->is_random_variable(p) and not affected.count(p))
-      std::cerr<<"Parameter '"<<P->parameter_name(p)<<"' is random, but is not affected by MCMC.";
+      std::cerr<<"Parameter '"<<P->parameter_name(p)<<"' is random, but is not affected by MCMC.\n";
     if (not P->is_random_variable(p) and affected.count(p))
-      std::cerr<<"Parameter '"<<P->parameter_name(p)<<"' is affected by MCMC, but is not random.";
+      std::cerr<<"Parameter '"<<P->parameter_name(p)<<"' is affected by MCMC, but is not random.\n";
   }
+  std::cerr<<"\n";
 }
 
 void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter, ostream& s_out)
