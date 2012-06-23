@@ -933,7 +933,7 @@ bool process_stack_Multi(vector<string>& string_stack,
 
     formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
     mixture1 = (MultiParameter, M0, mixture1);
-    formula_expression_ref mixture2 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2)&(Tuple(p2b,w2effective)&ListEnd))));
+    formula_expression_ref mixture2 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2effective)&(Tuple(p2b,w2effective)&ListEnd))));
     mixture2 = (MultiParameter, M0, mixture2);
     formula_expression_ref branch_site = (MixtureModels,mixture1&(mixture2&ListEnd));
 
