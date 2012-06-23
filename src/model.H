@@ -468,5 +468,7 @@ std::vector<int> parameters_with_extension(const Model& M, std::string name);
 
 std::vector< expression_ref > model_args(const Model& M);
 
+std::string show_probability_expression(const expression_ref&);
+
 std::vector< std::string > show_probability_expressions(const context& C);
 #endif

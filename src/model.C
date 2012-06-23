@@ -235,8 +235,8 @@ int Model::add_note(const expression_ref& E)
       int p_index = find_parameter(name);
 
       if (prior_note_index[p_index] != -1)
-	throw myexception()<<"Variable '"<<name<<"': new prior '"<<C.get_note(index)
-			   <<"' on top of original prior '"<<C.get_note(prior_note_index[p_index])<<"'?";
+	throw myexception()<<"Variable '"<<name<<"': new prior '"<<show_probability_expression(C.get_note(index))
+			   <<"' on top of original prior '"<<show_probability_expression(C.get_note(prior_note_index[p_index]))<<"'?";
       else
 	prior_note_index[p_index] = index;
     }
@@ -905,43 +905,47 @@ vector<int> parameters_with_extension(const Model& M, string name)
   return indices;
 }
 
-vector<string> show_probability_expressions(const context& C)
+string show_probability_expression(const expression_ref& E)
 {
   expression_ref query = (distributed, _2, Tuple((prob_density, _1 , _, _), _3));
 
+  // If its a probability expression, then...
+  vector<expression_ref> results; 
+  if (not find_match(query, E, results))
+    throw myexception()<<"Expression '"<<E<<"' is not a probability expression.";
+  
+  // Extract the density operation
+  object_ptr<const String> name = is_a<String>(results[0]);
+  
+  string prob_exp;
+  {
+    expression_ref rand_var = results[1];
+    if (is_exactly(rand_var->head,":"))
+    {
+      vector<expression_ref> rand_vars = get_ref_vector_from_list(rand_var);
+      prob_exp += get_tuple(rand_vars)->print();
+    }
+    else
+      prob_exp += rand_var->print();
+  }
+  
+  prob_exp += " ~ " + string(*name);
+  if (results[2]->size())
+    prob_exp += results[2]->print();
+  else
+    prob_exp += "(" + results[2]->print() + ")";
+  
+  return prob_exp;
+}
+
+vector<string> show_probability_expressions(const context& C)
+{
   vector<string> expressions;
 
   // Check each expression in the Formula
   for(int i=0;i<C.n_notes();i++)
-  {
-    vector<expression_ref> results; 
-
-    // If its a probability expression, then...
-    if (not find_match(query, C.get_note(i), results)) continue;
-
-    // Extract the density operation
-    object_ptr<const String> name = is_a<String>(results[0]);
-
-    string prob_exp;
-    {
-      expression_ref rand_var = results[1];
-      if (is_exactly(rand_var->head,":"))
-      {
-	vector<expression_ref> rand_vars = get_ref_vector_from_list(rand_var);
-	prob_exp += get_tuple(rand_vars)->print();
-      }
-      else
-	prob_exp += rand_var->print();
-    }
-
-    prob_exp += " ~ " + string(*name);
-    if (results[2]->size())
-      prob_exp += results[2]->print();
-    else
-      prob_exp += "(" + results[2]->print() + ")";
-
-    expressions.push_back( prob_exp );
-  }
+    if (is_exactly(C.get_note(i),"~"))
+      expressions.push_back( show_probability_expression(C.get_note(i)) );
 
   return expressions;
 }
