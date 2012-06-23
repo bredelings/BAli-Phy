@@ -257,13 +257,10 @@ bool process_stack_Markov(vector<string>& string_stack,
 
     if (not arg.empty()) 
     {
-      formula_expression_ref submodel = get_smodel_(arg, const_ptr( C->getNucleotides() ) );
+      N_submodel = get_smodel_(arg, const_ptr( C->getNucleotides() ) );
 
-      if (not submodel.result_as<AlphabetExchangeModelObject>() or 
-	  not dynamic_pointer_cast<const Nucleotides>(submodel.result_as<AlphabetExchangeModelObject>()->get_alphabet()))
-	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide replacement model.";
-
-      N_submodel = submodel;
+      if (not N_submodel.result_as<SymmetricMatrixObject>())
+	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide exchange model.";
     }
 
     formula_expression_ref S1 = TN_Model(C->getNucleotides());
