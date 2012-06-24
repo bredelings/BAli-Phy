@@ -334,6 +334,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "*::branch-site::w0", "omega_slice_window",    0.3, slice_moves);
   add_slice_moves(P, "*::branch-site::w2", "omega_slice_window",    0.3, slice_moves);
   add_slice_moves(P, "*::branch-site::f2", "omega_fraction_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "*::branch-site::p2", "omega_fraction_slice_window",    0.1, slice_moves);
   add_slice_moves(P, "*::INV::p",         "INV::p_slice_window", 0.1, slice_moves);
   add_slice_moves(P, "*::f",      "f_slice_window",    0.1, slice_moves);
   add_slice_moves(P, "*::g",      "g_slice_window",    0.1, slice_moves);
