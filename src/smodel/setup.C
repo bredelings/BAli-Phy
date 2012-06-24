@@ -889,8 +889,6 @@ bool process_stack_Multi(vector<string>& string_stack,
   {
     formula_expression_ref f0 = def_parameter("branch-site::f0",Double(0.5));
     formula_expression_ref f1 = def_parameter("branch-site::f1",Double(0.5));
-    formula_expression_ref I  = def_parameter("branch-site::pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
-
     formula_expression_ref p2 = def_parameter("branch-site::p2",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
     formula_expression_ref p0 = (times, f0, (minus,1.0,p2));
     formula_expression_ref p1 = (times, f1, (minus,1.0,p2));
@@ -900,6 +898,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref w0 = def_parameter("branch-site::w0", Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
     // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
     formula_expression_ref w2 = def_parameter("branch-site::w2", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(4.0, 0.25));
+    formula_expression_ref I  = def_parameter("branch-site::pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
     formula_expression_ref w2effective = (If, I, w2, 1.0);
     // FIXME - look at the effect on power of using various different priors for w2 here!
     // FIXME - allow specifying the prior on the command line?
