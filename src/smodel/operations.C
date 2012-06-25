@@ -450,16 +450,50 @@ namespace substitution
     return Plus_gwF_Model(a,pi);
   }
 
+  // FIXME** - Below I first coded something where 
+  //
+  //             F1x4 -> Muse&Gaut  (MG94)    if nuc R matrix is +F
+  //             F3x4 -> Muse&Gautw9 (MG94w9)  if nuc R matrices are all +F.
+  //
+  //           This raises the question about whether the codon +F model can be modified to have
+  //           60 degrees of freedom like the Codon +F model, while still retaining the nice properties of the
+  //           MG94 models.
+  //
+  //           One way of doing this would be to try and make a completely general codon model with
+  //              R[ijk -> ijl] = R_nuc[k->l] * R_aa[aa(ijk)->aa(ijl)] * R_codon_bias[ijk -> ijl]
+  //           This raises the question about what equilibrium codon frequencies would result from such a
+  //           matrix (when combined with S to yield Q = R ** S).
+  //
+  //           Also, would it be possible to put this in the context of 2Ns for all of the different values?
+  //           And, could they be independently estimated? (i.e. are the identifiable?)
+  //            (a) from frequencies alone?
+  //            (b) from a pair of aligned sequences? (i.e. from counts of changes)
+  //           Finally, how do these models relate to the +gwF model?
+  //
+  //           The challenge would be make a generic way to fix what is currently called F3x4_Matrix to take 3 
+  //           R matrices (one for each codon position) and combine them in some kind of most-general way.
+  //
+  //           A1: We can replace pi[ijk] with pi[ijk]/pi[ij*] in the +gwF formulation.  This has the benefical
+  //               property of NOT claiming that mutations between two infrequent codons happen infrequently
+  //               relative to changes between two frequent codons.
+
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
   formula_expression_ref F1x4_Model(const Triplets& T)
   {
     const Nucleotides& N = T.getNucleotides();
     formula_expression_ref pi = Frequencies_Model(N);
 
+    /*
+      See FIXME** - above!
     return let(v2,(Vector_From_List<double,Double>(),pi),
 	       v1,(F3x4_Frequencies,T,v2,v2,v2),
 	       v3,(Plus_gwF, N, 1.0, v2),
 	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
+	       );
+    */
+    return let(v2,(Vector_From_List<double,Double>(),pi),
+	       v1,(F3x4_Frequencies,T,v2,v2,v2),
+	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v1, (Plus_gwF, T, 1.0, v1))
 	       );
   }
 
@@ -474,6 +508,8 @@ namespace substitution
     formula_expression_ref pi3 = Frequencies_Model(N);
     pi3 = prefix_formula("3",pi3);
 
+    /*
+      See FIXME** - above!
     return let(v1, (Vector_From_List<double,Double>(),pi1),
 	       v2, (Vector_From_List<double,Double>(),pi2),
 	       v3, (Vector_From_List<double,Double>(),pi3),
@@ -481,6 +517,13 @@ namespace substitution
 	       v5, (Plus_gwF, N, 1.0, v2),
 	       v6, (Plus_gwF, N, 1.0, v3),
 	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), (F3x4_Frequencies,T,v1,v2,v3), (F3x4_Matrix, T, v4, v5, v6))
+	       );
+    */
+    return let(v1, (Vector_From_List<double,Double>(),pi1),
+	       v2, (Vector_From_List<double,Double>(),pi2),
+	       v3, (Vector_From_List<double,Double>(),pi3),
+	       v4, (F3x4_Frequencies,T,v1,v2,v3),
+	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v4, (Plus_gwF, T, 1.0, v4))
 	       );
   }
 
