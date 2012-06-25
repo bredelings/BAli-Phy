@@ -457,7 +457,8 @@ namespace substitution
   //
   //           This raises the question about whether the codon +F model can be modified to have
   //           60 degrees of freedom like the Codon +F model, while still retaining the nice properties of the
-  //           MG94 models.
+  //           MG94 models.  Can we do something where some codon positions have high nuc frequencies because
+  //           of conservation (low f) and some have high nuc frequencies becase of mutation pressuve (high f)?
   //
   //           One way of doing this would be to try and make a completely general codon model with
   //              R[ijk -> ijl] = R_nuc[k->l] * R_aa[aa(ijk)->aa(ijl)] * R_codon_bias[ijk -> ijl]
@@ -470,12 +471,25 @@ namespace substitution
   //            (b) from a pair of aligned sequences? (i.e. from counts of changes)
   //           Finally, how do these models relate to the +gwF model?
   //
-  //           The challenge would be make a generic way to fix what is currently called F3x4_Matrix to take 3 
-  //           R matrices (one for each codon position) and combine them in some kind of most-general way.
+  //           The challenge would be to make a generic way to fix what is currently called F3x4_Matrix to take
+  //           3 R matrices (one for each codon position) and combine them in some kind of most-general way.
   //
   //           A1: We can replace pi[ijk] with pi[ijk]/pi[ij*] in the +gwF formulation.  This has the benefical
   //               property of NOT claiming that mutations between two infrequent codons happen infrequently
-  //               relative to changes between two frequent codons.
+  //               relative to changes between two frequent codons.  The resulting matrix is then:
+  //
+  //                 R[ijk->ijl] = pi[ijl]^f / (pi[ijk]^(1-f)) * pi[ij*]^(1-2f)
+  //
+  //               Clearly this is the same as the straight-forward +gwF model with 1-2f=0 and f=1/2.
+  //
+  //           A2: For a general way to combine three R matrices, we can consider both:
+  //
+  //               * MG94: select the matrix for the codon position that changed.
+  //               * Yang: multiply the R matrices.
+  //
+  //               The MG94 way seems better -- that is, it matches nucleotide models without setting
+  //               f=1/2.
+  //
 
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
   formula_expression_ref F1x4_Model(const Triplets& T)
