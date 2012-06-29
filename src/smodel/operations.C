@@ -598,16 +598,6 @@ namespace substitution
     return (Q_from_S_and_R, S, R);
   }
 
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& S, const alphabet& a)
-  {
-    return Reversible_Markov_Model(S,Plus_gwF_Model(a));
-  }
-
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& S, const alphabet& a, const valarray<double>& pi)
-  {
-    return Reversible_Markov_Model(S,Plus_gwF_Model(a,pi));
-  }
-
   formula_expression_ref Unit_Model(const formula_expression_ref& R)
   {
     formula_expression_ref R2 = R;

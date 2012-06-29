@@ -242,10 +242,6 @@ namespace substitution {
 
   formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& S, const formula_expression_ref& R);
 
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& S, const alphabet& a);
-
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& S, const alphabet& a, const std::valarray<double>& pi);
-
   formula_expression_ref Unit_Model(const formula_expression_ref&);
 
   expression_ref DiscretizationFunction(const probability::Distribution& D, Int n);

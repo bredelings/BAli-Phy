@@ -280,9 +280,6 @@ bool process_stack_Markov(vector<string>& string_stack,
 /// \brief Construct an AlphabetExchangeModel from model \a M
 formula_expression_ref get_EM(const formula_expression_ref& R, const string& name)
 {
-  if (R.result_as<AlphabetExchangeModelObject>())
-    return R;
-
   if (R.result_as<SymmetricMatrixObject>())
     return R;
 
@@ -440,9 +437,9 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
     formula_expression_ref top = get_EM(M,name);
     // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
     if (frequencies)
-      return Simple_gwF_Model(top, *a, *frequencies); 
+      return Reversible_Markov_Model(top, Plus_gwF_Model(*a, *frequencies));
     else
-      return Simple_gwF_Model(top, *a); 
+      return Reversible_Markov_Model(top, Plus_gwF_Model(*a));
   }
   catch (std::exception& e) { 
     throw myexception()<<name<<": Can't construct a SimpleReversibleMarkovModel from '"<<M.exp()<<"':\n "<<e.what();
