@@ -290,7 +290,7 @@ namespace trees_format
       }
       NEXUS_skip_ws(pos,line);
       
-      string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos));
+      string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos)) + ";";
 
       // if we have no leaf names, for some reason, numbers will be allowed.
       r = T.parse_with_names_or_numbers(t, leaf_names);
@@ -373,7 +373,7 @@ namespace trees_format
 	  NEXUS_skip_ws(pos,line);
 
 	  SequenceTree T;
-	  string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos));
+	  string t = strip_NEXUS_comments(line.substr(pos,line.size()-pos)) + ";";
 	  T.parse(t);
 	  leaf_names = T.get_leaf_labels();
 	  std::sort(leaf_names.begin(),leaf_names.end());
