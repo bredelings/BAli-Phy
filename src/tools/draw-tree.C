@@ -2275,7 +2275,12 @@ struct energy2: public graph_energy_function
       E += node_node_attraction(GL, D, n1, n2, w, L);
     }
 
-
+    /// node_distances
+    // O(n*n)
+    for(int n1=0;n1<GL.MC.n_nodes();n1++) 
+      for(int n2=0;n2<n1;n2++) 
+	E += node_node_repulsion(GL, D, n1, n2, repulsion_weight);
+    
     /// edge length energies (type 2)
     // consider - find the closest edge OR NODE (with radius!) - may be smoother/better
     for(int b = 0;b<GL.MC.n_branches()*2;b++) 
@@ -2316,12 +2321,6 @@ struct energy2: public graph_energy_function
       E += node_edge_attraction(GL, D, n1, n2, n3, w);
     }
 
-    /// node_distances
-    // O(n*n)
-    for(int n1=0;n1<GL.MC.n_nodes();n1++) 
-      for(int n2=0;n2<n1;n2++) 
-	E += node_node_repulsion(GL, D, n1, n2, repulsion_weight);
-    
     // angular resolution
     if (angle_weight > 0)
     for(int i=0;i<GL.MC.n_nodes();i++) {
