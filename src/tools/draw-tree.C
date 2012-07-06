@@ -67,6 +67,7 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using std::ostream;
+using std::abs;
 
 class cairo_plotter
 {
