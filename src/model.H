@@ -224,6 +224,7 @@ public:
 
   bool is_fixed(int i) const;
   void set_fixed(int i,bool f);
+  bool is_random_variable(int i) const;
 
   const Bounds<double>& get_bounds(int i) const;
   void set_bounds(int i,const Bounds<double>& b);
@@ -453,26 +454,6 @@ public:
   SuperModelOver<SubModel_t>* clone() const =0;
 };
 
-struct expression_ref;
-
-struct FormulaModel: public Model
-{
-  expression_ref E;
-
-  int result_index;
-
-  FormulaModel* clone() const {return new FormulaModel(*this);}
-
-  object_ptr<const Object> result() const;
-
-  std::string name() const;
-
-  operator formula_expression_ref() const;
-
-  FormulaModel(const formula_expression_ref&);
-};
-
-
 void show_parameters(std::ostream& o,const Model& M);
 
 bool has_parameter(const Model& M, const std::string& name);
@@ -486,6 +467,8 @@ std::vector<std::string> short_parameter_names(std::vector<std::string> names);
 std::vector<int> parameters_with_extension(const Model& M, std::string name);
 
 std::vector< expression_ref > model_args(const Model& M);
+
+std::string show_probability_expression(const expression_ref&);
 
 std::vector< std::string > show_probability_expressions(const context& C);
 #endif

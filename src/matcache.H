@@ -39,7 +39,7 @@ struct Mat_Cache
 
   virtual std::vector<double> distribution() const = 0;
 
-  virtual object_ptr<const Object> base_model(int m) const = 0;
+  virtual object_ptr<const Object> base_model(int m, int b) const = 0;
 
   virtual std::vector<double> frequencies(int m) const = 0;
 

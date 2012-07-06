@@ -30,10 +30,10 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            n_indels.H smodel/smodel.H alignment-constraint.H exponential.H \
            parameters.H substitution-cache.H alignment.H hmm.H pow2.H \
            substitution.H alignment-sums.H imodel.H probability.H \
-           substitution-index.H alignment-util.H likelihood.H proposals.H \
+           substitution-index.H alignment-util.H likelihood.H mcmc/proposals.H \
            tree-branchnode.H alphabet.H log-double.H rates.H tree.H \
            bits.H logsum.H tree-util.H choose.H matcache.H  \
-           rng.H util.H object.H mcmc.H sample.H util-random.H \
+           rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
            model.H sequence-format.H dp-array.H monitor.H sequence.H \
            tools/bootstrap.H tools/inverse.H tools/statistics.H \
            tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
@@ -41,7 +41,7 @@ noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
            tools/findroot.H tools/parsimony.H distribution.H tools/mctree.H \
            version.H cow-ptr.H tools/index-matrix.H cached_value.H \
 	   tools/consensus-tree.H tools/partition.H slice-sampling.H \
-	   timer_stack.H setup-mcmc.H probability-model.H owned-ptr.H \
+	   timer_stack.H mcmc/setup.H probability-model.H owned-ptr.H \
 	   bounds.H io.H smodel/objects.H smodel/operations.H
 
 LDFLAGS = @ldflags@
@@ -87,20 +87,20 @@ endif
 
 #-----------------------------------------------------------------
 
-bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C moves.C \
-          rng.C exponential.C eigenvalue.C parameters.C likelihood.C mcmc.C \
-	  choose.C sequencetree.C sample-branch-lengths.C \
+bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C mcmc/moves.C \
+          rng.C exponential.C eigenvalue.C parameters.C likelihood.C mcmc/mcmc.C \
+	  choose.C sequencetree.C mcmc/sample-branch-lengths.C \
 	  util.C randomtree.C alphabet.C smodel/smodel.C bali-phy.C \
-	  hmm.C dp-engine.C dp-array.C dp-matrix.C 3way.C 2way.C sample-alignment.C \
-	  sample-tri.C sample-node.C imodel.C 5way.C sample-topology-NNI.C \
-	  setup.C rates.C sample-two-nodes.C sequence-format.C \
-	  util-random.C alignment-random.C smodel/setup.C sample-topology-SPR.C \
+	  hmm.C dp-engine.C dp-array.C dp-matrix.C 3way.C 2way.C mcmc/sample-alignment.C \
+	  mcmc/sample-tri.C mcmc/sample-node.C imodel.C 5way.C mcmc/sample-topology-NNI.C \
+	  setup.C rates.C mcmc/sample-two-nodes.C sequence-format.C \
+	  util-random.C alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
 	  alignment-sums.C alignment-util.C probability.C model.C \
 	  alignment-constraint.C substitution-cache.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
-	  tools/partition.C proposals.C n_indels.C distribution.C \
+	  tools/partition.C mcmc/proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C timer_stack.C \
-	  setup-mcmc.C io.C logger.C AIS.C computation/operator.C computation/expression.C \
+	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  setup-imodel.C smodel/objects.C computation/computation.C \
 	  computation/graph_register.C computation/program.C \
 	  computation/formula_expression.C smodel/operations.C distribution-operations.C \

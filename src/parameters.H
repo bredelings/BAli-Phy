@@ -95,7 +95,7 @@ class data_partition: public Mat_Cache
 
   std::vector<int> frequencies_indices;
 
-  std::vector<int> base_model_indices;
+  ublas::matrix<int> base_model_indices;
 
   double branch_mean_;
 
@@ -124,8 +124,6 @@ public:
   /// Cached Transition Probabilities
   const std::vector<Matrix>& transition_P(int b) const;
   
-  double rate() const;
-
   int n_base_models() const;
 
   // Perhaps this should really be per-mixture-component.
@@ -136,7 +134,7 @@ public:
   
   std::vector<double> distribution() const;
 
-  object_ptr<const Object> base_model(int m) const;
+  object_ptr<const Object> base_model(int m, int b) const;
 
   std::vector<double> frequencies(int m) const;
 
@@ -209,7 +207,7 @@ public:
 
   std::string name() const;
 
-  data_partition(const std::string& n, Parameters* P, int i, const alignment&, const SequenceTree&);
+  data_partition(const std::string& n, Parameters* P, int i, const alignment&);
 };
 
 

@@ -125,6 +125,19 @@ expression_ref def_parameter(Model_Notes& N, const std::string& name, const expr
   return def_parameter(N, name, def_value, b, D);
 }
 
+expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref& D)
+{
+  expression_ref var = def_parameter(N, name, def_value);
+  N.add_note( (distributed, var, D));
+  return var;
+}
+
+expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref& F, const expression_ref& A)
+{
+  expression_ref D = Tuple(F,A);
+  return def_parameter(N, name, def_value, nullptr, D);
+}
+
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value)
 {
   Model_Notes N;
@@ -153,6 +166,20 @@ formula_expression_ref def_parameter(const std::string& name, const expression_r
   return formula_expression_ref(N,E);
 }
 
+formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref& D)
+{
+  Model_Notes N;
+  expression_ref E = def_parameter(N, name, def_value, nullptr, D);
+  return formula_expression_ref(N,E);
+}
+
+formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref& F, const expression_ref& A)
+{
+  Model_Notes N;
+  expression_ref E = def_parameter(N, name, def_value, nullptr, F, A);
+  return formula_expression_ref(N,E);
+}
+
 std::ostream& operator<<(std::ostream& o, const formula_expression_ref& F)
 {
   o<<F.exp();
@@ -168,7 +195,7 @@ formula_expression_ref let_expression(const expression_ref& var, const expressio
 
 formula_expression_ref let_expression(const expression_ref& var, const formula_expression_ref& body, const expression_ref& T)
 {
-  formula_expression_ref F3(T);
+  formula_expression_ref F3(body);
   F3.set_exp(let_expression(var, body.exp(), T ));
   return F3;
 }

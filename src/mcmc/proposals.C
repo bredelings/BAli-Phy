@@ -504,6 +504,14 @@ double Proposal2::operator()(Probability_Model& P) const
   return ratio;
 }
 
+std::set<int> Proposal2::get_affected_parameters(const owned_ptr<Probability_Model>&) const
+{
+  std::set<int> affected_parameters;
+  for(int i: indices)
+    affected_parameters.insert(i);
+  return affected_parameters;
+}
+
 Proposal2::Proposal2(const Proposal_Fn& p,const std::string& s, const std::vector<string>& v,
 	  const Probability_Model& P)
   :proposal(p),
@@ -566,3 +574,36 @@ double move_scale_branch(Probability_Model& P)
   return 1.0;
 }
 
+double move_subst_type_branch(Probability_Model& P)
+{
+  Parameters& PP = dynamic_cast<Parameters&>(P);
+
+  int which_branch = -1;
+  int B = PP.T->n_branches();
+  for(int b=0;b<B;b++)
+  {
+    int index = P.find_parameter("branch_cat" + convertToString(b+1));
+    int cat = P.get_parameter_value_as<Int>(index);
+    if (cat == 1)
+    {
+      assert(which_branch == -1);
+      which_branch = b;
+    }
+  }
+
+  if (which_branch != -1)
+  {
+    int new_branch = uniform()*(B-1);
+    if (new_branch >= which_branch)
+      new_branch++;
+
+    int index1 = P.find_parameter("branch_cat" + convertToString(which_branch+1));
+    int index2 = P.find_parameter("branch_cat" + convertToString(new_branch+1));
+
+    P.set_parameter_value(index1, object_ref(Int(0)));
+    P.set_parameter_value(index2, object_ref(Int(1)));
+    std::cerr<<"Moved subst type 1 from branch "<<which_branch<<" to branch "<<new_branch<<"\n";
+  }
+
+  return 1.0;
+}

@@ -120,7 +120,7 @@ get_smodel_(const string& smodel);
 bool process_stack_Markov(vector<string>& string_stack,
 			  vector<formula_expression_ref >& model_stack,
 			  const object_ptr<const alphabet>& a,
-			  const shared_ptr<const valarray<double> >& frequencies)
+			  const shared_ptr<const valarray<double> >& /* frequencies */)
 {
   string arg;
 
@@ -257,13 +257,10 @@ bool process_stack_Markov(vector<string>& string_stack,
 
     if (not arg.empty()) 
     {
-      formula_expression_ref submodel = get_smodel_(arg, const_ptr( C->getNucleotides() ) );
+      N_submodel = get_smodel_(arg, const_ptr( C->getNucleotides() ) );
 
-      if (not submodel.result_as<AlphabetExchangeModelObject>() or 
-	  not dynamic_pointer_cast<const Nucleotides>(submodel.result_as<AlphabetExchangeModelObject>()->get_alphabet()))
-	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide replacement model.";
-
-      N_submodel = submodel;
+      if (not N_submodel.result_as<SymmetricMatrixObject>())
+	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide exchange model.";
     }
 
     formula_expression_ref S1 = TN_Model(C->getNucleotides());
@@ -283,9 +280,6 @@ bool process_stack_Markov(vector<string>& string_stack,
 /// \brief Construct an AlphabetExchangeModel from model \a M
 formula_expression_ref get_EM(const formula_expression_ref& R, const string& name)
 {
-  if (R.result_as<AlphabetExchangeModelObject>())
-    return R;
-
   if (R.result_as<SymmetricMatrixObject>())
     return R;
 
@@ -358,17 +352,31 @@ bool process_stack_Frequencies(vector<string>& string_stack,
 
     model_stack.back() = Reversible_Markov_Model(EM,F);
   }
-  /*
-  else if (match(string_stack,"F=nucleotides",arg)) 
+  else if (match(string_stack,"F1x4",arg))
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"+F=nucleotides:: '"<<a->name<<"' is not a triplet alphabet.";
+      throw myexception()<<"+F1x4:: '"<<a->name<<"' is not a triplet alphabet.";
 
-    formula_expression_ref EM = get_EM_default(model_stack,"+F=nucleotides", a, frequencies);
+    formula_expression_ref S = get_EM_default(model_stack,"+F1x4", a, frequencies);
 
-    model_stack.back() = Reversible_Markov_Model(EM, IndependentNucleotideFrequencyModel(*T));
+    formula_expression_ref F = F1x4_Model(*T);
+
+    model_stack.back() = Reversible_Markov_Model(S, F);
   }
+  else if (match(string_stack,"F3x4",arg)) 
+  {
+    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
+    if (not T)
+      throw myexception()<<"+F3x4:: '"<<a->name<<"' is not a triplet alphabet.";
+
+    formula_expression_ref S = get_EM_default(model_stack,"+F3x4", a, frequencies);
+
+    formula_expression_ref F = F3x4_Model(*T);
+
+    model_stack.back() = Reversible_Markov_Model(S, F);
+  }
+  /*
   else if (match(string_stack,"F=amino-acids",arg)) 
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
@@ -429,9 +437,9 @@ formula_expression_ref get_RA(const formula_expression_ref& M, const string& nam
     formula_expression_ref top = get_EM(M,name);
     // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
     if (frequencies)
-      return Simple_gwF_Model(top, *a, *frequencies); 
+      return Reversible_Markov_Model(top, Plus_gwF_Model(*a, *frequencies));
     else
-      return Simple_gwF_Model(top, *a); 
+      return Reversible_Markov_Model(top, Plus_gwF_Model(*a));
   }
   catch (std::exception& e) { 
     throw myexception()<<name<<": Can't construct a SimpleReversibleMarkovModel from '"<<M.exp()<<"':\n "<<e.what();
@@ -475,7 +483,23 @@ get_MM(const formula_expression_ref& M, const string& name,
     return Unit_Model( get_RA(M,name,a, frequencies) ) ; 
   }
   catch (std::exception& e) { 
-    throw myexception()<<name<<": Can't construct a UnitModel from '"<<M.exp()<<"':\n"<<e.what();
+    throw myexception()<<name<<": Can't construct a MixtureModel from '"<<M.exp()<<"':\n"<<e.what();
+  }
+}
+
+/// \brief Construct a MultiModel from model \a M
+formula_expression_ref
+get_MMM(const formula_expression_ref& M, const string& name, 
+	const object_ptr<const alphabet>& a, const shared_ptr< const valarray<double> >& frequencies)
+{
+  if (is_exactly(M.result(SModel_Functions()), "MixtureModels"))
+    return M;
+
+  try { 
+    return (MixtureModels, (get_MM(M,name,a,frequencies)&ListEnd));
+  }
+  catch (std::exception& e) { 
+    throw myexception()<<name<<": Can't construct a MixtureModels from '"<<M.exp()<<"':\n"<<e.what();
   }
 }
 
@@ -619,8 +643,8 @@ bool process_stack_Multi(vector<string>& string_stack,
       dist = Tuple(f, rate) & dist;
     }
     dist = (DiscreteDistribution, dist);
-    dist.add_expression( (distributed, get_tuple(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );
-    dist.add_expression( (distributed, get_tuple(rates), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,2.0))) ) );
+    dist.add_expression( (distributed, get_list(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );
+    dist.add_expression( (distributed, get_list(rates), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,2.0))) ) );
 
     formula_expression_ref base = get_RA_default(model_stack,"DP",a,frequencies);
     model_stack.back() = (MultiRate, base,  dist);
@@ -686,7 +710,7 @@ bool process_stack_Multi(vector<string>& string_stack,
       D = Tuple(f,w)&D;
     }
     D = (DiscreteDistribution, D);
-    D.add_expression((distributed, get_tuple(fraction), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
+    D.add_expression((distributed, get_list(fraction), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     assert(C);
@@ -762,7 +786,7 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref p3 = def_parameter("M8b::f[Positive]", Double(0.1), between(0,1));
     // [positive selection, if it exists] w ~ log_exponential(0.05)
     formula_expression_ref w = def_parameter("M8b::omega3", Double(1.0), lower_bound(1), log_exponential_dist, 0.05);
-    formula_expression_ref I  = def_parameter("M8b::omega3_non_zero", Bool(true));
+    formula_expression_ref I  = def_parameter("M8b::omega3_non_zero", Bool(true), nullptr, bernoulli_dist, 0.5);
     formula_expression_ref w3 = (If, I, w, 1.0);
 
     // Add the neutral and (possibility) positive selection categories
@@ -807,6 +831,115 @@ bool process_stack_Multi(vector<string>& string_stack,
     formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
     model_stack.push_back( (MultiParameter, M0, D) );
+  }
+  else if (match(string_stack,"branch-site-test1",args))
+  {
+    formula_expression_ref f0 = def_parameter("branch-site::f0",Double(0.5));
+    formula_expression_ref f1 = def_parameter("branch-site::f1",Double(0.5));
+    formula_expression_ref f2 = def_parameter("branch-site::f2",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
+    formula_expression_ref I  = def_parameter("branch-site::pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
+
+    formula_expression_ref p2 = (If, I, f2, 0.0);
+    formula_expression_ref p0 = (times, f0, (minus,1.0,p2));
+    formula_expression_ref p1 = (times, f1, (minus,1.0,p2));
+    formula_expression_ref p2a = (times, f0, p2);
+    formula_expression_ref p2b = (times, f1, p2);
+
+    formula_expression_ref w0 = def_parameter("branch-site::w0", Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
+    // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
+    formula_expression_ref w2 = def_parameter("branch-site::w2", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(4.0, 0.25));
+    // FIXME - look at the effect on power of using various different priors for w2 here!
+    // FIXME - allow specifying the prior on the command line?
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    assert(C);
+    formula_expression_ref S1 = HKY_Model( C->getNucleotides());
+    if (args.size() >= 1)
+    {
+      S1 = get_smodel_(args[0], const_ptr(C->getNucleotides()));
+      if (not S1.result_as<SymmetricMatrixObject>())
+	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide exchange model.";
+    }
+
+    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
+    formula_expression_ref R = Plus_F_Model(*a);
+    // FIXME - we need to be able to return a frequency model in order to be able to do this!
+    if (args.size() >= 2 and args[1] == "F")
+      R = Plus_F_Model(*C);
+    else if (args.size() >= 2 and args[1] == "gwF")
+      R = Plus_gwF_Model(*C);
+    else if (args.size() >= 2 and args[1] == "F1x4")
+      R = F1x4_Model(*C);
+    else if (args.size() >= 2 and args[1] == "F3x4")
+      R = F3x4_Model(*C);
+    else if (args.size() >= 2)
+      throw myexception()<<"branch-site: I don't understand '"<<args[1]<<"' as a codon frequencies model.";
+
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+
+    formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
+    mixture1 = (MultiParameter, M0, mixture1);
+    formula_expression_ref mixture2 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2)&(Tuple(p2b,w2)&ListEnd))));
+    mixture2 = (MultiParameter, M0, mixture2);
+    formula_expression_ref branch_site = (MixtureModels,mixture1&(mixture2&ListEnd));
+
+    branch_site.add_expression( (distributed, f0&(f1&ListEnd), Tuple(dirichlet_dist, Tuple(1.0, 1.0)) ) );
+
+    model_stack.push_back(branch_site);
+  }
+  else if (match(string_stack,"branch-site",args))
+  {
+    formula_expression_ref f0 = def_parameter("branch-site::f0",Double(0.5));
+    formula_expression_ref f1 = def_parameter("branch-site::f1",Double(0.5));
+    formula_expression_ref p2 = def_parameter("branch-site::p2",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
+    formula_expression_ref p0 = (times, f0, (minus,1.0,p2));
+    formula_expression_ref p1 = (times, f1, (minus,1.0,p2));
+    formula_expression_ref p2a = (times, f0, p2);
+    formula_expression_ref p2b = (times, f1, p2);
+
+    formula_expression_ref w0 = def_parameter("branch-site::w0", Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
+    // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
+    formula_expression_ref w2 = def_parameter("branch-site::w2", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(4.0, 0.25));
+    formula_expression_ref I  = def_parameter("branch-site::pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
+    formula_expression_ref w2effective = (If, I, w2, 1.0);
+    // FIXME - look at the effect on power of using various different priors for w2 here!
+    // FIXME - allow specifying the prior on the command line?
+
+    const Codons* C = dynamic_cast<const Codons*>(&*a);
+    assert(C);
+    formula_expression_ref S1 = HKY_Model( C->getNucleotides());
+    if (args.size() >= 1)
+    {
+      S1 = get_smodel_(args[0], const_ptr(C->getNucleotides()));
+      if (not S1.result_as<SymmetricMatrixObject>())
+	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide exchange model.";
+    }
+
+    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
+    formula_expression_ref R = Plus_F_Model(*a);
+    // FIXME - we need to be able to return a frequency model in order to be able to do this!
+    if (args.size() >= 2 and args[1] == "F")
+      R = Plus_F_Model(*C);
+    else if (args.size() >= 2 and args[1] == "gwF")
+      R = Plus_gwF_Model(*C);
+    else if (args.size() >= 2 and args[1] == "F1x4")
+      R = F1x4_Model(*C);
+    else if (args.size() >= 2 and args[1] == "F3x4")
+      R = F3x4_Model(*C);
+    else if (args.size() >= 2)
+      throw myexception()<<"branch-site: I don't understand '"<<args[1]<<"' as a codon frequencies model.";
+
+    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+
+    formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
+    mixture1 = (MultiParameter, M0, mixture1);
+    formula_expression_ref mixture2 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2effective)&(Tuple(p2b,w2effective)&ListEnd))));
+    mixture2 = (MultiParameter, M0, mixture2);
+    formula_expression_ref branch_site = (MixtureModels,mixture1&(mixture2&ListEnd));
+
+    branch_site.add_expression( (distributed, f0&(f1&ListEnd), Tuple(dirichlet_dist, Tuple(1.0, 1.0)) ) );
+
+    model_stack.push_back(branch_site);
   }
   else
     return false;
@@ -889,7 +1022,7 @@ get_smodel(const string& smodel_name, const object_ptr<const alphabet>& a, const
   // check if the model actually fits alphabet a...
 
   // --------- Convert smodel to MultiModel ------------//
-  formula_expression_ref full_smodel = get_MM(smodel,"Final",a,frequencies);
+  formula_expression_ref full_smodel = get_MMM(smodel,"Final",a,frequencies);
 
   std::cerr<<"smodel = "<<full_smodel.exp()<<"\n";
 

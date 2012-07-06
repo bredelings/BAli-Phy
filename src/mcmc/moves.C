@@ -325,10 +325,8 @@ vector<int> walk_tree_path(const Tree& T,int root) {
 void sample_branch_length_(owned_ptr<Probability_Model>& P,  MoveStats& Stats, int b)
 {
   //std::clog<<"Processing branch "<<b<<" with root "<<P.LC.root<<endl;
-  std::clog<<"Processing branch "<<b<<"."<<std::endl;
 
   double slice_fraction = loadvalue(P->keys,"branch_slice_fraction",0.9);
-  std::cerr<<P->probability()<<" = "<<P->likelihood()<<" + "<<P->prior()<<std::endl;
 
   bool do_slice = (uniform() < slice_fraction);
   if (do_slice)

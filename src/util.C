@@ -230,7 +230,6 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
   int start_comment = -1;
   bool in_word = false;
   bool in_quote = false;
-  bool in_delimiter = false;
   bool in_comment = false;
   word.clear();
   comments.clear();
@@ -238,8 +237,6 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
   for(;i<s.size();i++)
   {
     char c = s[i];
-
-    if (in_delimiter) return true;
 
     if (not in_word)
     {
@@ -256,11 +253,12 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 
       if (contains_char(whitespace, c)) continue;
 
+      // If we are parsing a delimiter, then take the char, advance the position, and return true.
       if (contains_char(delimiters, c))
       {
 	word = s.substr(i,1);
-	in_delimiter = true;
-	continue;
+	i++;
+	return true;
       }
 
       if (c == '\'')
@@ -313,8 +311,10 @@ bool get_word(string& word, int& i, vector<string>& comments,const string& s,
 	continue;
       }
 
+      // Keep the position here, but don't add this char to the current word.
       if (contains_char(whitespace, c)) break;
 
+      // Keep the position here, but don't add this char to the current word.
       if (contains_char(delimiters, c)) break;
 
       if (not in_comment and c == '[')

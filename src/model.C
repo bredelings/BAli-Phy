@@ -235,8 +235,8 @@ int Model::add_note(const expression_ref& E)
       int p_index = find_parameter(name);
 
       if (prior_note_index[p_index] != -1)
-	throw myexception()<<"Variable '"<<name<<"': new prior '"<<C.get_note(index)
-			   <<"' on top of original prior '"<<C.get_note(prior_note_index[p_index])<<"'?";
+	throw myexception()<<"Variable '"<<name<<"': new prior '"<<show_probability_expression(C.get_note(index))
+			   <<"' on top of original prior '"<<show_probability_expression(C.get_note(prior_note_index[p_index]))<<"'?";
       else
 	prior_note_index[p_index] = index;
     }
@@ -253,6 +253,11 @@ int Model::add_note(const expression_ref& E)
   }
 
   return index;
+}
+
+bool Model::is_random_variable(int i) const
+{
+  return prior_note_index[i] != -1;
 }
 
 bool Model::is_fixed(int i) const
@@ -819,31 +824,59 @@ vector<string> short_parameter_names(const Model& M)
   return short_parameter_names( parameter_names( M ) );
 }
 
+// The key may have '*', '?', 'text*', and 'text'.  Here
+// - '?' matches exactly one element.
+// - '*' matches 0 or more elements
+// - text* matches 1 element beginning with 'text'
+// - test matches 1 element that is exactly 'text'.
+bool path_match(const vector<string>& key, int i, const vector<string>& pattern, int j)
+{
+  assert(i <= key.size());
+
+  assert(j <= pattern.size());
+
+  // 1. If the key is empty
+  if (i==key.size())
+  {
+    // nothing ~ nothing
+    if(j==pattern.size()) return true;
+
+    // nothing !~ something
+    if (j<pattern.size()) return false;
+  }
+
+  assert(i<key.size());
+
+  // 2. If the key is '*'
+  if (key[i] == "*") 
+  {
+    // (* x y z ~ [nothing]) only (if x y z ~ [nothing])
+    if (j == pattern.size())
+      return path_match(key,i+1,pattern,j);
+
+    // (* matches 0 components of j) or (* matches 1 or more components of j)
+    return path_match(key,i+1,pattern,j) or path_match(key,i,pattern,j+1);
+  }
+
+  // For anything else, FAIL if we are matching against [nothing], and key != '*' only.
+  if (j == pattern.size()) return false;
+
+  assert(j<pattern.size());
+
+  // 3. If the key is '?'
+  if (key[i] == "?")
+    return path_match(key,i+1,pattern,j+1);
+
+  // 4. If the key is 'text*' or 'text'
+  if (match(pattern[j],key[i]))
+    return path_match(key,i+1,pattern,j+1);
+  else
+    return false;
+}
 
 bool path_match(const vector<string>& key, const vector<string>& pattern)
 {
-  int active_piece = 0;
-
-  // require key[0] to match pattern[0] if key[0] starts w/ ^
-  if (key[0].size() and key[0][0] == '^')
-  { 
-    int L = key[0].size()-1;
-      
-    if (not pattern.size())
-      return false;
-    
-    if (not match(pattern[0], key[0].substr(1,L) ))
-      return false;
-
-    active_piece = 1;
-  }
-
-  // otherwise look for the pieces in sequential order
-  for(int i=0;i<pattern.size() and active_piece < key.size();i++)
-    if (match(pattern[i], key[active_piece]))
-      active_piece++;
-
-  return active_piece == key.size();
+  return path_match(key,0,pattern,0);
 }
 
 /// \brief Find the index of model parameters that match the pattern name
@@ -875,7 +908,6 @@ vector<int> parameters_with_extension(const Model& M, string name)
       skeleton = this_skeleton;
     else if (skeleton != this_skeleton)
       throw myexception()<<"Key '"<<name<<"' matches both "<<join(skeleton,"::")<<" and "<<join(this_skeleton,"::")<<".";
-    
 
     indices.push_back(i);
   }
@@ -883,53 +915,47 @@ vector<int> parameters_with_extension(const Model& M, string name)
   return indices;
 }
 
-vector<string> show_probability_expressions(const context& C)
+string show_probability_expression(const expression_ref& E)
 {
   expression_ref query = (distributed, _2, Tuple((prob_density, _1 , _, _), _3));
 
+  // If its a probability expression, then...
+  vector<expression_ref> results; 
+  if (not find_match(query, E, results))
+    throw myexception()<<"Expression '"<<E<<"' is not a probability expression.";
+  
+  // Extract the density operation
+  object_ptr<const String> name = is_a<String>(results[0]);
+  
+  string prob_exp;
+  {
+    expression_ref rand_var = results[1];
+    if (is_exactly(rand_var->head,":"))
+    {
+      vector<expression_ref> rand_vars = get_ref_vector_from_list(rand_var);
+      prob_exp += get_tuple(rand_vars)->print();
+    }
+    else
+      prob_exp += rand_var->print();
+  }
+  
+  prob_exp += " ~ " + string(*name);
+  if (results[2]->size())
+    prob_exp += results[2]->print();
+  else
+    prob_exp += "(" + results[2]->print() + ")";
+  
+  return prob_exp;
+}
+
+vector<string> show_probability_expressions(const context& C)
+{
   vector<string> expressions;
 
   // Check each expression in the Formula
   for(int i=0;i<C.n_notes();i++)
-  {
-    vector<expression_ref> results; 
-
-    // If its a probability expression, then...
-    if (not find_match(query, C.get_note(i), results)) continue;
-
-    // Extract the density operation
-    object_ptr<const String> name = is_a<String>(results[0]);
-
-    string prob_exp = results[1]->print() + " ~ " + string(*name);
-    if (results[2]->size())
-      prob_exp += results[2]->print();
-    else
-      prob_exp += "(" + results[2]->print() + ")";
-
-    expressions.push_back( prob_exp );
-  }
+    if (is_exactly(C.get_note(i),"~"))
+      expressions.push_back( show_probability_expression(C.get_note(i)) );
 
   return expressions;
 }
-
-std::string FormulaModel::name() const
-{
-  return E->print();
-}
-
-object_ptr<const Object> FormulaModel::result() const
-{
-  return C.evaluate(result_index);
-}
-
-FormulaModel::FormulaModel(const formula_expression_ref& r)
-  :Model( r.get_notes_plus_exp() ),
-   E( r.exp() ),
-   result_index( C.add_compute_expression(E ) )
-{ }
-
-FormulaModel::operator formula_expression_ref() const
-{
-  return formula_expression_ref(C.get_notes(), E);
-}
-

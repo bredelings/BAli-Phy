@@ -29,20 +29,10 @@ expression_ref let_expression(const vector<expression_ref>& vars, const vector<e
 {
   if (vars.size() == 0) return T;
 
-  // merge with existing let expression...
-  {
-    vector<expression_ref> vars2;
-    vector<expression_ref> bodies2;
-    expression_ref T2;
-    if (parse_let_expression(T, vars2, bodies2, T2))
-    {
-      vector<expression_ref> vars12 = vars;
-      vector<expression_ref> bodies12 = bodies;
-      vars12.insert(vars12.end(),vars2.begin(), vars2.end());
-      bodies12.insert(bodies12.end(), bodies2.begin(), bodies2.end());
-      return let_expression(vars12, bodies12, T2);
-    }
-  }
+  // We COULD merge with T if it is already a let expression, but
+  // (a) We'd have to check that no variables overlap, and
+  // (b) Sometimes sequential let's execute faster.
+  // (c) Let's will probably be merged anyway during let-float.
 
   expression* E = new expression( let_obj() );
   E->sub.push_back(T);
@@ -1655,6 +1645,7 @@ vector<expression_ref> get_ref_vector_from_list(const expression_ref& E)
     V.push_back(E2->sub[0]);
     E2 = E2->sub[1];
   }
+  assert(is_exactly(E2,"[]"));
 
   return V;
 }

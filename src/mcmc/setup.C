@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 ///
-/// \file   setup-mcmc.C
+/// \file   mcmc/setup.C
 /// \brief  Provides routines to create default transition kernels and start a Markov chain.
 ///
 /// The function do_sampling( ) creates transition kernel for known parameter names.
@@ -29,7 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// 
 
 #include "smodel/smodel.H"
-#include "setup-mcmc.H"
+#include "mcmc/setup.H"
 #include "util.H"
 #include "sample.H"
 #include "alignment-util.H"
@@ -166,17 +166,16 @@ void add_slice_moves(Probability_Model& P, const string& name,
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
-void add_dirichlet_slice_moves(Probability_Model& P, const string& name, 
+void add_dirichlet_slice_moves(Probability_Model& P, const string& move_name, 
+			       const vector<int>& indices,
 			       MCMC::MoveAll& M,
 			       double weight = 1
 			       )
 {
-  vector<int> indices = parameters_with_extension(P,name);
-  
-  if (not indices.size()) return;
+  if (indices.empty()) return;
 
   /// Create a parent move that will choose one child each time it is called
-  MCMC::MoveOne M2(string("slice_sample_")+name);
+  MCMC::MoveOne M2(move_name);
 
   /// Add the moves for individual components of the vector as child moves of M2
   for(int i=0;i<indices.size();i++)
@@ -191,6 +190,52 @@ void add_dirichlet_slice_moves(Probability_Model& P, const string& name,
 
   /// Add the move to resample one of the components at random to M
   M.add(weight,M2);
+}
+
+
+/// \brief Add a 1-D slice-sampling sub-move for a collection of parameters that sum to 1.
+///
+/// \param P             The model that contains the parameters
+/// \param name          The name of the parameter to create a move for
+/// \param pname         The name of the slice window width for this move
+/// \param W             The default window size, if not specified in P.keys
+/// \param M             The group of moves to which to add the newly-created sub-move
+/// \param weight        How often to run this move.
+///
+void add_dirichlet_slice_moves(Probability_Model& P, const string& name,
+			       const vector<string>& parameter_names,
+			       MCMC::MoveAll& M,
+			       double weight = 1
+			       )
+{
+  vector<int> indices;
+  for(const string& p: parameter_names)
+  {
+    int index = P.find_parameter(p);
+    if (index == -1) return;
+    indices.push_back(index);
+  }
+
+  add_dirichlet_slice_moves(P,string("slice_sample_")+name, indices, M, weight);
+}
+
+/// \brief Add a 1-D slice-sampling sub-move for a collection of parameters that sum to 1.
+///
+/// \param P             The model that contains the parameters
+/// \param name          The name of the parameter to create a move for
+/// \param pname         The name of the slice window width for this move
+/// \param W             The default window size, if not specified in P.keys
+/// \param M             The group of moves to which to add the newly-created sub-move
+/// \param weight        How often to run this move.
+///
+void add_dirichlet_slice_moves(Probability_Model& P, const string& name, 
+			       MCMC::MoveAll& M,
+			       double weight = 1
+			       )
+{
+  vector<int> indices = parameters_with_extension(P,name);
+  
+  add_dirichlet_slice_moves(P,string("slice_sample_")+name, indices, M, weight);
 }
 
 MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
@@ -218,40 +263,39 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   for(int i=0;i<P.n_branch_means();i++)
     add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
 
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "HKY::kappa",     "kappa_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "rho",     "rho_scale_sigma",  0.2,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "TN::kappa(pur)", "kappa_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "M0::omega",  "omega_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::HKY::kappa",     "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::rho",     "rho_scale_sigma",  0.2,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::TN::kappa(pur)", "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::M0::omega",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
-	                                        "M2::omega",  "omega_scale_sigma",  0.3,  MH_moves);
+	                                        "*::M2::omega",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
-	                                        "M2a::omega1",  "omega_scale_sigma",  0.3,  MH_moves);
+	                                        "*::M2a::omega1",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
-	                                        "M2a::omega3",  "omega_scale_sigma",  0.3,  MH_moves);
+	                                        "*::M2a::omega3",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
-	                                        "M8b::omega1",  "omega_scale_sigma",  0.3,  MH_moves);
+	                                        "*::M8b::omega1",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
-	                                        "M8b::omega3",  "omega_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "INV::p",         "INV::p_shift_sigma", 0.03, MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "beta::mu",         "beta::mu_shift_sigma", 0.03, MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "f",              "f_shift_sigma",      0.1,  MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "g",              "g_shift_sigma",      0.1,  MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "h",              "h_shift_sigma",      0.1,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "beta::Var/mu", "beta::Var_scale_sigma",  0.25, MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);
+	                                        "*::M8b::omega3",  "omega_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*::INV::p",         "INV::p_shift_sigma", 0.03, MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*::beta::mu",         "beta::mu_shift_sigma", 0.03, MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*::f",              "f_shift_sigma",      0.1,  MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*::g",              "g_shift_sigma",      0.1,  MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*::h",              "h_shift_sigma",      0.1,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "*::beta::Var/mu", "beta::Var_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);
   MH_moves.add(4,MCMC::SingleMove(scale_means_only,
-				   "scale_means_only","mean")
+				  "scale_means_only", {/*FIXME*/}, "mean")
 		      );
 
   
-  add_MH_move(P, shift_delta,                 "delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
-  add_MH_move(P, Between(-40,0,shift_cauchy), "lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
-  add_MH_move(P, shift_epsilon,               "epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
+  add_MH_move(P, shift_delta,                 "*::delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
+  add_MH_move(P, Between(-40,0,shift_cauchy), "*::lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+  add_MH_move(P, shift_epsilon,               "*::epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
 
   add_MH_move(P, Between(-20,20,shift_cauchy), "lambda_scale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
-  add_MH_move(P, bit_flip,   "lambda_scale_on", "M8b::f_dirichlet_N",     1,  MH_moves, 10);
 
   return MH_moves;
 }
@@ -273,33 +317,37 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   MCMC::MoveAll slice_moves("parameters:slice");
 
   // scale parameters
-  add_slice_moves(P, "mu",      "mu_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::mu",      "mu_slice_window",    0.3, slice_moves);
   for(int i=0;i<P.n_branch_means();i++)
-    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, slice_moves);
+    add_slice_moves(P, "*::mu"+convertToString(i+1),      "mu_slice_window",    0.3, slice_moves);
 
   // smodel parameters
-  add_slice_moves(P, "HKY::kappa",      "kappa_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "rho",      "rho_slice_window",    0.2, slice_moves);
-  add_slice_moves(P, "TN::kappa(pur)",      "kappa_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "TN::kappa(pyr)",      "kappa_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "M0::omega",      "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "M2::omega",      "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "M2a::omega1",     "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "M2a::omega3",     "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "M8b::omega3",     "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "INV::p",         "INV::p_slice_window", 0.1, slice_moves);
-  add_slice_moves(P, "f",      "f_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "g",      "g_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "h",      "h_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "beta::Var/mu",      "beta::mu_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, slice_moves);
-  add_slice_moves(P, "beta::sigma/mu",      "beta::sigma_slice_window",    1.0, slice_moves);
-  add_slice_moves(P, "log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, slice_moves);
+  add_slice_moves(P, "*::HKY::kappa",      "kappa_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::rho",      "rho_slice_window",    0.2, slice_moves);
+  add_slice_moves(P, "*::TN::kappa(pur)",      "kappa_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::TN::kappa(pyr)",      "kappa_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::M0::omega",      "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::M2::omega",      "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::M2a::omega1",     "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::M2a::omega3",     "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::M8b::omega3",     "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::branch-site::w0", "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::branch-site::w2", "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::branch-site::f2", "omega_fraction_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "*::branch-site::p2", "omega_fraction_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "*::INV::p",         "INV::p_slice_window", 0.1, slice_moves);
+  add_slice_moves(P, "*::f",      "f_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "*::g",      "g_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "*::h",      "h_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "*::beta::Var/mu",      "beta::mu_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "*::gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, slice_moves);
+  add_slice_moves(P, "*::beta::sigma/mu",      "beta::sigma_slice_window",    1.0, slice_moves);
+  add_slice_moves(P, "*::log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, slice_moves);
 
   // imodel parameters
-  add_slice_moves(P, "delta",      "lambda_slice_window",    1.0, slice_moves, 10);
-  add_slice_moves(P, "lambda",      "lambda_slice_window",    1.0, slice_moves, 10);
-  add_slice_moves(P, "epsilon",     "epsilon_slice_window",   1.0,
+  add_slice_moves(P, "*::delta",      "lambda_slice_window",    1.0, slice_moves, 10);
+  add_slice_moves(P, "*::lambda",      "lambda_slice_window",    1.0, slice_moves, 10);
+  add_slice_moves(P, "*::epsilon",     "epsilon_slice_window",   1.0,
 		  slice_moves,transform_epsilon,inverse_epsilon, 10);
 
   add_slice_moves(P, "lambda_scale", "lambda_slice_window", 1.0, slice_moves, 10);
@@ -307,24 +355,32 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   for(int s=0;s<=P.n_smodels();s++) 
   {
     string index = convertToString(s+1);
-    string prefix = "^S" + index + "::";
+    string prefix = "S" + index + "::";
 
-    if (s==P.n_smodels()) prefix = "^";
+    if (s == P.n_smodels()) prefix = "";
 
-    add_dirichlet_slice_moves(P, prefix + "pi*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "R::pi*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "R::1::pi*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "R::2::pi*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "R::3::pi*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "CAT::f*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "GTR::*", slice_moves, 3);
+    add_dirichlet_slice_moves(P, prefix + "S::GTR::?", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "DP::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "DP::rate*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "INV::pi*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "v*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "b*", slice_moves, 3);
+    //    add_dirichlet_slice_moves(P, prefix + "b*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "M2::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "M2a::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "M3::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "M8b::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "multi::p*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "Mixture::p*", slice_moves, 3);
+
+    {
+      vector<string> pnames = {"S"+index+"::branch-site::f0", "S"+index+"::branch-site::f1"};
+      add_dirichlet_slice_moves(P, "S" + index + "::branch-site::f0/f1", pnames, slice_moves, 3);
+    }
 
     if (s >= P.n_smodels()) continue;
 
@@ -396,7 +452,7 @@ MCMC::MoveAll get_alignment_moves(Parameters& P)
 			       ,false);
   }
   alignment_moves.add(1, alignment_branch_moves, false);
-  alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments","alignment:alignment_branch:nodes") );
+  alignment_moves.add(1, SingleMove(walk_tree_sample_alignments, "walk_tree_sample_alignments",{},"alignment:alignment_branch:nodes") );
 
   //---------- alignment::nodes_master (nodes_moves) ----------//
   MoveEach nodes_moves("nodes_master","alignment:nodes");
@@ -471,14 +527,14 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
 
 
   if (has_imodel) {
-    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat","topology:lengths:nodes:alignment:alignment_branch"));
-    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes","topology:lengths:nodes:alignment:alignment_branch"));
-    SPR_move.add(5,SingleMove(sample_SPR_all,"SPR_and_A_all","topology:lengths:nodes:alignment:alignment_branch"));
+    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_and_A_flat",{}, "topology:lengths:nodes:alignment:alignment_branch"));
+    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_and_A_nodes",{}, "topology:lengths:nodes:alignment:alignment_branch"));
+    SPR_move.add(5,SingleMove(sample_SPR_all,"SPR_and_A_all",{}, "topology:lengths:nodes:alignment:alignment_branch"));
   }
   else {
-    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat","topology:lengths"));
-    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_nodes","topology:lengths"));
-    SPR_move.add(10,SingleMove(sample_SPR_all,"SPR_all","topology:lengths"));
+    SPR_move.add(1,SingleMove(sample_SPR_flat,"SPR_flat",{}, "topology:lengths"));
+    SPR_move.add(1,SingleMove(sample_SPR_nodes,"SPR_nodes",{}, "topology:lengths"));
+    SPR_move.add(10,SingleMove(sample_SPR_all,"SPR_all",{}, "topology:lengths"));
   }
 
   topology_move.add(1,NNI_move,false);
@@ -506,19 +562,19 @@ MCMC::MoveAll get_tree_moves(Parameters& P)
   length_moves.add(1,length_moves1,false);
   // FIXME - Do we really want to do this, under slice sampling?
   length_moves.add(1,SingleMove(walk_tree_sample_branch_lengths,
-				"walk_tree_sample_branch_lengths","lengths")
+				"walk_tree_sample_branch_lengths",{},"lengths")
 		   );
 
   tree_moves.add(1,length_moves);
-  tree_moves.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,"walk_tree_NNI_and_lengths","topology:lengths"));
+  tree_moves.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,"walk_tree_NNI_and_lengths",{}, "topology:lengths"));
 
   if (has_imodel)
-    tree_moves.add(2,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI","topology:lengths"));
+    tree_moves.add(2,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI", {}, "topology:lengths"));
   else  // w/o integrating over 5way alignments, this move is REALLY cheap!
-    tree_moves.add(4,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI","topology:lengths"));
+    tree_moves.add(4,SingleMove(walk_tree_sample_NNI,"walk_tree_NNI", {}, "topology:lengths"));
 
   if (has_imodel)
-    tree_moves.add(0.5,SingleMove(walk_tree_sample_NNI_and_A,"walk_tree_NNI_and_A","topology:lengths:nodes:alignment:alignment_branch"));
+    tree_moves.add(0.5,SingleMove(walk_tree_sample_NNI_and_A,"walk_tree_NNI_and_A",{},"topology:lengths:nodes:alignment:alignment_branch"));
 
   return tree_moves;
 }
@@ -533,6 +589,13 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
 
   MoveAll parameter_moves("parameters");
 
+  // There's sum danger here that we could flip in a periodic fashion, and only observe variable when its True (or only if its False).
+  //  - It seems to be OK, though.  Why?
+  //  - Note that this should only be an issue when this does not affect the likelihood.
+  // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
+  add_MH_move(P, bit_flip,   "*::pos-selection", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
+  add_MH_move(P, bit_flip,   "lambda_scale_on", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
+
   set_if_undef(P.keys,"pi_dirichlet_N",1.0);
   unsigned total_length = 0;
   for(int i=0;i<P.n_data_partitions();i++)
@@ -542,19 +605,22 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   for(int s=0;s<=P.n_smodels();s++) 
   {
     string index = convertToString(s+1);
-    string prefix = "^S" + index + "::";
+    string prefix = "S" + index + "::";
 
     if (s==P.n_smodels())
-      prefix = "^";
+      prefix = "";
 
-    add_MH_move(P, dirichlet_proposal,  prefix + "pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "R::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "R::1::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "R::2::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "R::3::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
     
     add_MH_move(P, dirichlet_proposal,  prefix + "INV::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
     add_MH_move(P, dirichlet_proposal,  prefix + "VAR::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
 
     set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
     if (s==0) P.keys["GTR_dirichlet_N"] *= 100;
-    add_MH_move(P, dirichlet_proposal,  prefix + "GTR::*", "GTR_dirichlet_N",     1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "S::GTR::?", "GTR_dirichlet_N",     1,  parameter_moves);
 
     set_if_undef(P.keys,"v_dirichlet_N",1.0);
     if (s==0) P.keys["v_dirichlet_N"] *= total_length;
@@ -636,9 +702,15 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     if (index != -1 and (P.get_parameter_value_as<Int>(index) != -1 or P.keys.count("lambda_search_all")))
     {
       P.set_parameter_value(index, object_ref(Int(0)));
-      Generic_Proposal m(move_scale_branch);
+      Generic_Proposal m(move_scale_branch,{index});
       parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_lambda_scale_branch"));
     }
+  }
+
+  if (P.keys.count("sample_foreground_branch"))
+  {
+    Generic_Proposal m(move_subst_type_branch);
+    parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_foreground_branch"));
   }
 
   return parameter_moves;
@@ -755,10 +827,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     MoveAll pre_burnin("pre-burnin");
     pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
-				      "scale_means_only","mean"));
+				      "scale_means_only",{},"mean"));
     pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths,
-				"walk_tree_sample_branch_lengths","tree:lengths"));
-    pre_burnin.add(1,SingleMove(sample_SPR_search_all,"SPR_search_all",
+				"walk_tree_sample_branch_lengths",{},"tree:lengths"));
+    pre_burnin.add(1,SingleMove(sample_SPR_search_all,"SPR_search_all", {},
 				"tree:topology:lengths"));
 
     // enable and disable moves
@@ -787,9 +859,9 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
 
     pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
-				      "scale_means_only","mean"));
+				      "scale_means_only",{/*FIXME*/},"mean"));
     pre_burnin.add(1,SingleMove(walk_tree_sample_NNI_and_branch_lengths,
-				"NNI_and_lengths","tree:topology:lengths"));
+				"NNI_and_lengths",{},"tree:topology:lengths"));
 
     // enable and disable moves
     enable_disable_transition_kernels(pre_burnin,args);
@@ -829,10 +901,10 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     MoveAll pre_burnin("pre-burnin+A");
     pre_burnin.add(4,get_scale_slice_moves(*P.as<Parameters>()));
     pre_burnin.add(4,MCMC::SingleMove(scale_means_only,
-				      "scale_means_only","mean"));
+				      "scale_means_only",{/*FIXME*/}, "mean"));
     pre_burnin.add(1,SingleMove(walk_tree_sample_branch_lengths,
-				"walk_tree_sample_branch_lengths","tree:lengths"));
-    pre_burnin.add(1,SingleMove(sample_SPR_A_search_all,"SPR_search_all",
+				"walk_tree_sample_branch_lengths",{}, "tree:lengths"));
+    pre_burnin.add(1,SingleMove(sample_SPR_A_search_all,"SPR_search_all", {},
 				"tree:topology:lengths"));
 
     // enable and disable moves
@@ -920,7 +992,11 @@ void do_sampling(const variables_map& args,
   for(int i=0;i<loggers.size();i++)
     sampler.add_logger(loggers[i]);
   if (has_imodel)
-    sampler.add(1,alignment_moves);
+  {
+    double factor = loadvalue(P->keys,"alignment_sampling_factor",1.0);
+    std::cerr<<"alignment sampling factor = "<<factor<<"\n";
+    sampler.add(factor,alignment_moves);
+  }
   sampler.add(2,tree_moves);
 
   // FIXME - We certainly don't want to do MH_sample_mu[i] O(branches) times
@@ -956,6 +1032,7 @@ void do_sampling(const variables_map& args,
     report_constraints(s1,s2,i);
   } 
 
+  sampler.check_moves(P);
   if (PP.keys["AIS"] > 0.5) 
   {
     // before we do this, just run 20 iterations of a sampler that keeps the alignment fixed

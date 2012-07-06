@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment-util.H"
 #include "likelihood.H"
 #include "util.H"
-#include "proposals.H"
+#include "mcmc/proposals.H"
 #include "probability.H"
 #include "computation/formula_expression.H"
 #include "smodel/operations.H"
@@ -117,13 +117,6 @@ const IndelModel& data_partition::IModel() const
     return P->IModel(m);
 }
 
-double data_partition::rate() const
-{
-  int s = P->smodel_for_partition[partition_index];
-  object_ref O = P->C.evaluate(P->SModels[s].rate);
-  return *convert<const Double>(O);
-}
-
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
   b = T().directed_branch(b).undirected_name();
@@ -166,9 +159,11 @@ vector<double> data_partition::frequencies(int m) const
   return *P->C.evaluate_as<Vector<double>>( frequencies_indices[m] );
 }
 
-object_ptr<const Object> data_partition::base_model(int m) const
+object_ptr<const Object> data_partition::base_model(int m, int b) const
 {
-  return P->C.evaluate( base_model_indices[m] );
+  b = T().directed_branch(b).undirected_name();
+
+  return P->C.evaluate( base_model_indices(m,b) );
 }
 
 const indel::PairHMM& data_partition::get_branch_HMM(int b) const
@@ -522,34 +517,36 @@ efloat_t data_partition::heated_likelihood() const
     return pow(likelihood(),get_beta());
 }
 
-data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a,const SequenceTree& t)
+data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a)
   :P(p),
    partition_index(i),
    partition_name(n),
-   cached_alignment_prior_for_branch(t.n_branches()),
-   pairwise_alignment_for_branch(2*t.n_branches()),
-   cached_alignment_counts_for_branch(t.n_branches(),ublas::matrix<int>(5,5)),
+   cached_alignment_prior_for_branch(T().n_branches()),
+   pairwise_alignment_for_branch(2*T().n_branches()),
+   cached_alignment_counts_for_branch(T().n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
-   cached_branch_HMMs(t.n_branches()),
-   transition_p_method_indices(t.n_branches(),-1),
+   cached_branch_HMMs(T().n_branches()),
+   transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
-   sequences( alignment_letters(a,t.n_leaves()) ),
+   sequences( alignment_letters(a,T().n_leaves()) ),
    A(a),
-   LC(t, *this),
-   branch_HMM_type(t.n_branches(),0)
+   LC(T(), *this),
+   branch_HMM_type(T().n_branches(),0)
 {
+  int B = T().n_branches();
+
   if (variable_alignment() and use_internal_index)
-    subA = subA_index_internal(a.length()+1, t.n_branches()*2);
+    subA = subA_index_internal(a.length()+1, B*2);
   else
-    subA = subA_index_leaf(a.length()+1, t.n_branches()*2);
+    subA = subA_index_leaf(a.length()+1, B*2);
 
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
   // Add method indices for calculating transition matrices.
   const int n_models = n_base_models();
-  const int n_states = state_letters().size();
-  for(int b=0;b<t.n_branches();b++)
+  //  const int n_states = state_letters().size();
+  for(int b=0;b<B;b++)
   {
     int s = P->scale_for_partition[partition_index];
     int m = P->smodel_for_partition[partition_index];
@@ -561,6 +558,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   }
 
   // Add method indices for calculating base models and frequencies
+  base_model_indices.resize(n_models, B);
   for(int m=0;m<n_models;m++)
   {
     int s = P->smodel_for_partition[partition_index];
@@ -568,7 +566,8 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
     frequencies_indices.push_back( p->C.add_compute_expression( (F,m) ) );
 
     expression_ref BM = P->C.get_expression(P->SModels[s].base_model);
-    base_model_indices.push_back( p->C.add_compute_expression((BM,m)) );
+    for(int b=0;b<B;b++)
+      base_model_indices(m,b) = p->C.add_compute_expression((BM,m,b));
   }
 }
 
@@ -588,7 +587,7 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   n_states = C.add_compute_expression((::n_states, S));
   rate = C.add_compute_expression((::rate, S));
 
-  base_model = C.add_compute_expression((::base_model, S));
+  base_model = C.add_compute_expression( v1^(v2^(::base_model, (get_nth_mixture,S,v2), v1) ) );
   frequencies = C.add_compute_expression((::get_component_frequencies, S));
   transition_p = C.add_compute_expression((::branch_transition_p, S));
 }
@@ -1095,6 +1094,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     add_note((distributed,parameter("lambda_scale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
 
     add_super_parameter(Parameter("lambda_scale_on", Bool(false)));
+    add_note((distributed,parameter("lambda_scale_on"),Tuple(bernoulli_dist,0.5)));
     // lambda_scale_on ~ Uniform on T,F
 
     add_super_parameter(Parameter("lambda_scale_branch", Int(-1), between(0,T->n_branches()-1)));
@@ -1152,7 +1152,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   for(int b=0;b<TC->n_branches();b++)
     TC.modify()->branch(b).set_length(-1);
 
-  // Add and initialize variables for branch *length*.
+  // Add and initialize variables for branch *lengths*: scale<s>::D<b>
   for(int s=0;s<n_scales;s++)
   {
     string prefix= "scale" + convertToString(s+1);
@@ -1168,37 +1168,50 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     }
   }
 
-   // register the cached transition_p indices
-   branch_transition_p_indices.resize(n_branch_means(), n_smodels());
-   for(int s=0;s < n_branch_means(); s++)
-   {
-     string prefix= "scale" + convertToString(s+1);
-     // Get a list of the branch LENGTH (not time) parameters
-     vector<expression_ref> D;
-     for(int b=0;b<T->n_branches();b++)
-     {
-       string name = "D" + convertToString(b+1);
-       D.push_back(parameter(prefix+"::"+name));
-     }
-     expression_ref DL = get_list(D);
+  // Add and initialize variables for branch *categories*: branch_cat<b>
+  vector<expression_ref> branch_categories;
+  for(int b=0;b<T->n_branches();b++)
+  {
+    string name = "branch_cat" + convertToString(b+1);
+    add_parameter(Parameter(name, Int(0)));
+    branch_categories.push_back(parameter(name));
+  }
+  expression_ref branch_cat_list = C.get_expression( C.add_compute_expression( (get_list(branch_categories) ) ) );
+  
+  // register the cached transition_p indices
+  branch_transition_p_indices.resize(n_branch_means(), n_smodels());
+  for(int s=0;s < n_branch_means(); s++)
+  {
+    string prefix= "scale" + convertToString(s+1);
+    // Get a list of the branch LENGTH (not time) parameters
+    vector<expression_ref> D;
+    for(int b=0;b<T->n_branches();b++)
+    {
+      string name = "D" + convertToString(b+1);
+      D.push_back(parameter(prefix+"::"+name));
+    }
+    expression_ref DL = get_list(D);
 
-     for(int m=0;m < n_smodels(); m++)
-     {
-       expression_ref S = C.get_expression(SModels[m].main);
-       expression_ref V = Vector_From_List<Matrix,MatrixObject>();
-       expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, S, (get_list_index, DL, v1) ) ) );
-       branch_transition_p_indices(s,m) = C.add_compute_expression(E);
-     }
-   }
+    // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
+    for(int m=0;m < n_smodels(); m++)
+    {
+      expression_ref S = C.get_expression(SModels[m].main);
+      expression_ref V = Vector_From_List<Matrix,MatrixObject>();
+      //expression_ref I = 0;
+      expression_ref I = (get_list_index,branch_cat_list,v1);
+      expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, (get_nth_mixture,S,I), (get_list_index, DL, v1) ) ) );
+      branch_transition_p_indices(s,m) = C.add_compute_expression(E);
+    }
+  }
 
-  // create data partitions and register as sub-models
+  // create data partitions
   for(int i=0;i<A.size();i++) 
   {
     // compute name for data-partition
     string name = string("part") + convertToString(i+1);
 
     // add the data partition
-    data_partitions.push_back( data_partition(name, this, i, A[i], *T) );
+    data_partitions.push_back( data_partition(name, this, i, A[i]) );
   }
 }
 

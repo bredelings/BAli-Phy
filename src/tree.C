@@ -365,6 +365,9 @@ int TreeView::remove_node_from_branch(BranchNode* n1, int branch_to_move)
   b1->out = b2;
   b2->out = b1;
 
+  // Issue! If we remove a root node, we arbitrarily the attributes (such as they are
+  // from one child, while ignoring the other.
+
   if (not (*b1->undirected_branch_attributes)[0].empty())
     (*b1->undirected_branch_attributes)[0] = 
       boost::any_cast<double>((*b1->undirected_branch_attributes)[0]) +
@@ -511,7 +514,7 @@ string write(const_nodeview root, const vector<string>& names,
 	     bool print_lengths) 
 {
   const int node_label_index = 0;
-  const int branch_length_index = 0;
+  //  const int branch_length_index = 0;
 
   string output;
 
@@ -2005,13 +2008,38 @@ int Tree::parse_and_discover_names(const string& line)
   return root_->node_attributes->name;
 }
 
+int get_leaf_index(const string& word, bool allow_numbers, const vector<string>& names)
+{
+  int leaf_index = -1;
+  if (allow_numbers and can_be_converted_to<int>(word,leaf_index)) {
+    leaf_index = convertTo<int>(word)-1;
+    if (leaf_index < 0)
+      throw myexception()<<"Leaf index '"<<word<<"' is negative: not allowed!";
+    if (leaf_index >= names.size())
+      throw myexception()<<"Leaf index '"<<word<<"' is too high: the taxon set contains only "<<names.size()<<" taxa.";
+  }
+  else if (names.size() == 0)
+    throw myexception()<<"Leaf name '"<<word<<"' is not an integer!";
+  else 
+  {
+    leaf_index = find_index(names,word);
+    if (leaf_index == -1)
+      throw myexception()<<"Leaf name '"<<word<<"' is not in the specified taxon set!";
+  }
+  return leaf_index;
+}
+
 int Tree::parse_with_names(const string& line,const vector<string>& names)
 {
   return parse_with_names_or_numbers(line,names,false);
 }
 
+// FIXME - don't we need to destroy the current tree?
 int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& names,bool allow_numbers)
 {
+  if (names.size() == 0 and not allow_numbers)
+    throw myexception()<<"Tree::parse_with_names_or_numbers( ): must supply leaf names if integers are not allowed.";
+
   node_attribute_names.clear();
   if (node_label_index != -1)
     node_attribute_names.resize(node_label_index+1);
@@ -2022,80 +2050,121 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
   if (branch_length_index != -1)
     undirected_branch_attribute_names.resize(branch_length_index+1);
 
-  if (names.size() == 0 and not allow_numbers)
-    throw myexception()<<"Tree::parse_with_names_or_numbers( ): must supply leaf names if integers are not allowed.";
-
-  vector< vector<BranchNode*> > tree_stack(1);
-
   const string delimiters = "(),:;";
   const string whitespace = "\t\n ";
 
   string prev;
   string word;
-  for(int i=0;get_word(word,i,line,delimiters,whitespace);prev=word) 
+
+  if (line.empty()) 
+    throw myexception()<<"Trying to parse tree from empty string";
+
+  vector< vector<BranchNode*> > tree_stack;
+  vector< string > comments;
+  int N = 0;
+  push_empty_node(tree_stack, N, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+  int pos = 0;
+    
+  for(int i=0;get_word(word,i,comments,line,delimiters,whitespace);prev=word) 
   {
+    vector< pair<string, any> > tags;
+    add_comments(tags, comments, "&&NHX:", ":");
+    add_comments(tags, comments, "&!", ",!");
+
     //std::cerr<<"word = '"<<word<<"'    depth = "<<tree_stack.size()<<"   stack size = "<<tree_stack.back().size()<<std::endl;
 
-    if (word == ";") break;
+    if (word == ";")
+    {
+      BranchNode* BN = tree_stack.back().back()->out;
+      if (pos == 0 or pos == 1 or pos == 2)
+	set_attributes(tags, node_attribute_names, *BN->node_attributes);
+      else if (pos == 3 or pos == 4)
+	assert( tags.empty() );
+
+      break;
+    }
 
     //------ Process the data given the current state ------//
-    if (word == "(") {
-      tree_stack.push_back(vector<BranchNode*>());
-      if (not (prev == "(" or prev == "," or prev == ""))
+    if (word == "(") 
+    {
+      assert( tags.empty() );
+
+      if (pos != 0)
 	throw myexception()<<"In tree file, found '(' in the middle of word \""<<prev<<"\"";
+
+      push_empty_node(tree_stack, N, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+      pos = 0;
     }
-    else if (word == ")") {
+    else if (word == ",")
+    {
+      BranchNode* BN = tree_stack.back().back()->out;
+
+      if (pos == 0 or pos == 1 or pos == 2)
+	set_attributes(tags, node_attribute_names, *BN->node_attributes);
+      else if (pos == 3 or pos == 4)
+	set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
+
+      append_empty_node(tree_stack, N, n_node_attributes(), n_undirected_branch_attributes(), n_directed_branch_attributes());
+      pos = 0;
+    }
+    else if (word == ")") 
+    {
+      BranchNode* BN = tree_stack.back().back()->out;
+
+      if (pos == 0 or pos == 1 or pos == 2)
+	set_attributes(tags, node_attribute_names, *BN->node_attributes);
+      else if (pos == 3 or pos == 4)
+	set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
+
       // We need at least 2 levels of trees
       if (tree_stack.size() < 2)
 	throw myexception()<<"In tree file, too many end parenthesis.";
 
-      // merge the trees in the top level
-      BranchNode* BN = tree_stack.back()[0];
-      for(int i=1;i<tree_stack.back().size();i++)
-	insert_after(BN,tree_stack.back()[i]);
-
       // destroy the top level
       tree_stack.pop_back();
-
-      // insert merged trees into the next level down
-      BN = ::add_leaf_node(BN, n_undirected_branch_attributes(), n_directed_branch_attributes());
-
-
-      tree_stack.back().push_back(BN);
+      pos = 1;
     }
-    else if (prev == "(" or prev == "," or prev == "") 
+    else if (word == ":")
     {
-      int leaf_index = -1;
-      if (allow_numbers and can_be_converted_to<int>(word,leaf_index)) {
-	leaf_index = convertTo<int>(word)-1;
-	if (leaf_index < 0)
-	  throw myexception()<<"Leaf index '"<<word<<"' is negative: not allowed!";
-	if (leaf_index >= names.size())
-	  throw myexception()<<"Leaf index '"<<word<<"' is too high: the taxon set contains only "<<names.size()<<" taxa.";
-      }
-      else if (names.size() == 0)
-	  throw myexception()<<"Leaf name '"<<word<<"' is not an integer!";
-      else 
-      {
-	leaf_index = find_index(names,word);
-	if (leaf_index == -1)
-	  throw myexception()<<"Leaf name '"<<word<<"' is not in the specified taxon set!";
-      }
+      BranchNode* BN = tree_stack.back().back()->out;
 
-      BranchNode* BN = new BranchNode;
-      BN->node_attributes = new tree_attributes(n_node_attributes());
-      BN->node_attributes->name = leaf_index;
-      BN->out = BN->next = BN->prev = BN;
+      set_attributes(tags, node_attribute_names, *BN->node_attributes);
 
-      BN = ::add_leaf_node(BN,n_undirected_branch_attributes(), n_directed_branch_attributes());
-      tree_stack.back().push_back(BN);
+      if (pos > 2)
+	throw myexception()<<"Cannot have a ':' here! (pos == "<<pos<<")";
+      pos = 3;
     }
-    else if (prev == ":") {
-      BranchNode* BN = tree_stack.back().back();
-      (*BN->undirected_branch_attributes)[0] = convertTo<double>(word);	
+    else
+    {
+      BranchNode* BN = tree_stack.back().back()->out;
+
+      if (pos == 0 or pos == 1) 
+      {
+	set_attributes(tags, node_attribute_names, *BN->node_attributes);
+
+	// Set the index the node name (an integer) -- possibly to -1.
+	BN->node_attributes->name = get_leaf_index(word, allow_numbers, names);
+
+	// Set the node label, if we are in the names list.
+	if (node_label_index != -1 and BN->node_attributes->name != -1)
+	  (*BN->node_attributes)[node_label_index] = names[BN->node_attributes->name];
+
+	pos = 2;
+      }
+      else if (pos == 2)
+	throw myexception()<<"Node name '"<<word<<"' comes directly after '"<<prev<<"'";
+      else if (pos == 3)
+      {
+	set_attributes(tags, undirected_branch_attribute_names, *BN->undirected_branch_attributes);
+
+	if (branch_length_index != -1)
+	  (*BN->undirected_branch_attributes)[branch_length_index] = convertTo<double>(word);	
+	pos = 4;
+      }
+      else if (pos == 4)
+	throw myexception()<<"Word name '"<<word<<"' comes directly after branch length '"<<prev<<"'";
     }
   }
-
 
   if (tree_stack.size() != 1)
     throw myexception()<<"Attempted to read w/o enough left parenthesis";
@@ -2104,18 +2173,38 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
 
   BranchNode* remainder = tree_stack.back()[0];
   BranchNode* root_ = TreeView::unlink_subtree(remainder->out);
-  TreeView(remainder).destroy();
 
   // Handle root_ being a leaf
-  if (::is_leaf_node(root_)) {
-    root_->node_attributes->name = names.size();
-    throw myexception()<<"Tree has an unnamed leaf node at the root.  Please remove the useless branch to the root.";
-  }
+  //  if (::is_leaf_node(root_) and )
+  //    throw myexception()<<"Tree has an unnamed leaf node at the root.  Please remove the useless branch to the root.";
+
+  TreeView(remainder).destroy();
 
   // destroy old tree structure
   if (nodes_.size()) TreeView(nodes_[0]).destroy();
 
+  // determine nodes_[]
+  nodes_.clear();
+  leaf_nodes_.invalidate();
+  internal_nodes_.invalidate();
+
   // switch to new tree structure
+  for(BN_iterator BN(root_);BN;BN++)
+  {
+    if (is_leaf_node(*BN))
+      //      (*BN)->node_attributes->name = n_leaves_++;
+      ;
+    else
+      (*BN)->node_attributes->name = -1;
+
+    // set the number of attributes to the correct number
+    (*BN)->node_attributes->resize(n_node_attributes());
+    if ((*BN)->undirected_branch_attributes)
+      (*BN)->undirected_branch_attributes->resize(n_undirected_branch_attributes());
+    if ((*BN)->directed_branch_attributes)
+      (*BN)->directed_branch_attributes->resize(n_directed_branch_attributes());
+  }
+
   reanalyze(root_);
 
   return root_->node_attributes->name;

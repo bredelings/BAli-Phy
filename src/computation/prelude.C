@@ -117,7 +117,7 @@ Program make_Prelude()
   // listArray b l = mkArray b \i -> l!!i
   P += Def( (listArray,v1,v2),(mkArray, v1, v3^(get_list_index,v2,v3)) );
 
-  // length l = foldl_ (+) 0 l
+  // length l = foldl' \x->\y->(x+1) 0 l
   P += Def( (length, v1), (foldl_,v2^(v3^(v2+1)), 0, v1) );
 
   // UnwrapDD (DiscreteDistribution l) = l

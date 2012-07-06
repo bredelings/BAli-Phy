@@ -40,7 +40,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// 
 /// \section mcmc MCMC
 /// The Markov Chain Monte Carlo (MCMC) routines are all called from
-/// the file mcmc.C.  Markov chains are constructed in setup-mcmc.C.
+/// the file mcmc.C.  Markov chains are constructed in mcmc/setup.C.
 /// Proposals for Metropolis-Hastings moves are defined in
 /// proposals.C . Slice sampling routines are defined in
 /// slice-sampling.C. 
@@ -146,7 +146,7 @@ namespace mpi = boost::mpi;
 #include "alignment.H"
 #include "rng.H"
 #include "parameters.H"
-#include "mcmc.H"
+#include "mcmc/mcmc.H"
 #include "likelihood.H"
 #include "util.H"
 #include "setup.H"
@@ -157,7 +157,7 @@ namespace mpi = boost::mpi;
 #include "pow2.H"
 #include "tree-util.H" //extends
 #include "version.H"
-#include "setup-mcmc.H"
+#include "mcmc/setup.H"
 #include "io.H"
 #include "tools/parsimony.H"
 #include "smodel/smodel.H"
@@ -1152,6 +1152,91 @@ void write_initial_alignments(const vector<alignment>& A, int proc_id, string di
   }
 }
 
+void set_lambda_scale_branch_parameters(Parameters& P, const variables_map& args)
+{
+  const SequenceTree& T = *P.T;
+
+  // Set the initial value of the branch to (optionally) scale the indel rate by.
+  if (args.count("lambda-scale-branch"))
+  {
+    // Currently this code doesn't make sense of the topology can change so the partition 
+    //  described in the partition file is not longer a part of the tree.
+    // Therefore, you should supply an initial tree using --tree=<treefile> and also
+    //  add "--disable topology " or "--disable topology,alignment_branch".
+
+    // Find the name of the file containing the partition describing the branch to set.
+    string filename = args["lambda-scale-branch"].as<string>();
+    // Format is e.g "taxon1 taxon2 taxon3 | taxon4 taxon 5".
+
+    // Open the file
+    checked_ifstream partition(filename,"partition file for specifying which branch may have a different indel rate");
+
+    // Read the first line
+    string line;
+    portable_getline(partition, line);
+
+    // Create the partition from the line
+    Partition p(T.get_leaf_labels(), line);
+
+    // Get the integer name of the branch on the current tree.
+    int b = which_branch(T, p);
+    if (b == -1)
+      throw myexception()<<"Partition '"<<p<<"' is not in the starting tree '"<<*P.T<<"'";
+    b = T.directed_branch(b).undirected_name();
+      
+    // Get a list of all parameters with names ending in lambda_scale_branch
+    vector<int> indices = parameters_with_extension(P,"lambda_scale_branch");
+
+    // Set the parameters to the  correct value.
+    object_ref B = Int(b);
+    for(int i=0;i<indices.size();i++)
+      P.set_parameter_value(indices[i], B);
+  }
+  else if (T.find_undirected_branch_attribute_index_by_name("lambda-scale-branch") != -1)
+  {
+    int attribute_index = T.find_undirected_branch_attribute_index_by_name("lambda-scale-branch");
+
+    int bb = -1;
+    for(int b=0;b<T.n_branches();b++)
+    {
+      boost::any value = T.branch(b).undirected_attribute(attribute_index);
+      if (not value.empty())
+	bb = b;
+    }
+
+    // Get a list of all parameters with names ending in lambda_scale_branch
+    vector<int> indices = parameters_with_extension(P,"lambda_scale_branch");
+
+    // Set the parameters to the  correct value.
+    object_ref B = Int(bb);
+    for(int i=0;i<indices.size();i++)
+      P.set_parameter_value(indices[i], B);
+  }
+}
+
+
+/// If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
+void set_foreground_branches(Parameters& P)
+{
+  const SequenceTree& T = *P.T;
+
+  if (T.find_undirected_branch_attribute_index_by_name("foreground") != -1)
+  {
+    int attribute_index = T.find_undirected_branch_attribute_index_by_name("foreground");
+
+    for(int b=0;b<T.n_branches();b++)
+    {
+      boost::any value = T.branch(b).undirected_attribute(attribute_index);
+      if (value.empty()) continue;
+
+      int foreground_level = convertTo<int>( boost::any_cast<string>( value) );
+
+      P.set_parameter_value( P.find_parameter("branch_cat"+convertToString(b+1)), object_ref(Int(foreground_level)));
+      std::cerr<<"Setting branch '"<<b<<"' to foreground level "<<foreground_level<<"\n";;
+    }
+  }
+}
+
 /* 
  * 1. Add a PRANK-like initial algorithm.
  * 2. Add some kind of constraint.
@@ -1286,61 +1371,10 @@ int main(int argc,char* argv[])
 
     set_parameters(P,args);
 
-    // Set the initial value of the branch to (optionally) scale the indel rate by.
-    if (args.count("lambda-scale-branch"))
-    {
-      // Currently this code doesn't make sense of the topology can change so the partition 
-      //  described in the partition file is not longer a part of the tree.
-      // Therefore, you should supply an initial tree using --tree=<treefile> and also
-      //  add "--disable topology " or "--disable topology,alignment_branch".
+    set_lambda_scale_branch_parameters(P,args);
 
-      // Find the name of the file containing the partition describing the branch to set.
-      string filename = args["lambda-scale-branch"].as<string>();
-      // Format is e.g "taxon1 taxon2 taxon3 | taxon4 taxon 5".
-
-      // Open the file
-      checked_ifstream partition(filename,"partition file for specifying which branch may have a different indel rate");
-
-      // Read the first line
-      string line;
-      portable_getline(partition, line);
-
-      // Create the partition from the line
-      Partition p(P.T->get_leaf_labels(), line);
-
-      // Get the integer name of the branch on the current tree.
-      int b = which_branch(*P.T, p);
-      if (b == -1)
-	throw myexception()<<"Partition '"<<p<<"' is not in the starting tree '"<<*P.T<<"'";
-      b = T.directed_branch(b).undirected_name();
-      
-      // Get a list of all parameters with names ending in lambda_scale_branch
-      vector<int> indices = parameters_with_extension(P,"lambda_scale_branch");
-
-      // Set the parameters to the  correct value.
-      object_ref B = Int(b);
-      for(int i=0;i<indices.size();i++)
-	P.set_parameter_value(indices[i], B);
-    }
-    else if (P.T->find_undirected_branch_attribute_index_by_name("lambda-scale-branch") != -1)
-    {
-      int attribute_index = P.T->find_undirected_branch_attribute_index_by_name("lambda-scale-branch");
-
-      int bb = -1;
-      for(int b=0;b<P.T->n_branches();b++)
-      {
-	boost::any value = P.T->branch(b).undirected_attribute(attribute_index);
-	if (not value.empty())
-	  bb = b;
-      }
-      // Get a list of all parameters with names ending in lambda_scale_branch
-      vector<int> indices = parameters_with_extension(P,"lambda_scale_branch");
-
-      // Set the parameters to the  correct value.
-      object_ref B = Int(bb);
-      for(int i=0;i<indices.size();i++)
-	P.set_parameter_value(indices[i], B);
-    }
+    // If the tree has any foreground branch attributes, then set the corresponding branch to foreground, here.
+    set_foreground_branches(P);
 
     //------------- Set the branch prior type --------------//
     string branch_prior = args["branch-prior"].as<string>();

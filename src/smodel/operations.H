@@ -44,6 +44,56 @@ namespace substitution {
 
   extern const expression_ref Plus_gwF;
 
+  struct F3x4_Frequencies_Op: public Operation
+  {
+    F3x4_Frequencies_Op* clone() const {return new F3x4_Frequencies_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    closure operator()(OperationArgs& Args) const;
+
+    std::string name() const {return "F3x4_Frequencies";}
+
+    F3x4_Frequencies_Op():Operation(4) { }
+  };
+
+  extern const expression_ref F3x4_Frequencies;
+
+  struct F3x4_Matrix_Op: public Operation
+  {
+    F3x4_Matrix_Op* clone() const {return new F3x4_Matrix_Op(*this);}
+
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    closure operator()(OperationArgs& Args) const;
+
+    std::string name() const {return "F3x4_Matrix";}
+
+    F3x4_Matrix_Op():Operation(4) { }
+  };
+
+  extern const expression_ref F3x4_Matrix;
+
+  formula_expression_ref F1x4_Model(const Triplets& T);
+
+  formula_expression_ref F3x4_Model(const Triplets& T);
+
   struct HKY_Op: public Operation
   {
     HKY_Op* clone() const {return new HKY_Op;}
@@ -190,11 +240,7 @@ namespace substitution {
 
   extern expression_ref M0E;
 
-  formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& FR, const formula_expression_ref& FS);
-
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a);
-
-  formula_expression_ref Simple_gwF_Model(const formula_expression_ref& FR, const alphabet& a, const std::valarray<double>& pi);
+  formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& S, const formula_expression_ref& R);
 
   formula_expression_ref Unit_Model(const formula_expression_ref&);
 

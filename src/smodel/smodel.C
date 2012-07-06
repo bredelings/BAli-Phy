@@ -202,49 +202,6 @@ namespace substitution {
   }
 
 
-  object_ptr<const Object> IndependentNucleotideFrequencyModel::result() const
-  {
-    const Triplets& T = get_parameter_value_as<Triplets>(0);
-
-    object_ptr<ReversibleFrequencyModelObject> R( new ReversibleFrequencyModelObject(T) );
-
-    //------------------ compute triplet frequencies ------------------//
-
-    // 1. Get the nucleotide frequencies
-    object_ptr<const ReversibleFrequencyModelObject> nucs = SubModels(0).result_as<ReversibleFrequencyModelObject>();
-
-    // 2. Then get the corresponding triplet frequencies
-    R->pi = get_vector<double>( triplet_from_singlet_frequencies(T, *nucs) );
-
-    // 3. Then construct a +F triplets model from them
-    //    (?? hey, shouldn't I need to specify e.g. Muse&Gaut or Yang-type here?)
-    object_ptr<const ReversibleFrequencyModelObject> triplets;
-    triplets = SimpleFrequencyModel(T,get_varray<double>(R->pi) ).result_as<ReversibleFrequencyModelObject>();
-
-    for(int i=0;i<T.size();i++)
-      for(int j=0;j<T.size();j++)
-	R->R(i,j) = (*triplets)(i,j);
-
-    return R;
-  }
-
-  string IndependentNucleotideFrequencyModel::name() const
-  {
-    return "F1x4";
-  }
-
-  
-  IndependentNucleotideFrequencyModel::IndependentNucleotideFrequencyModel(const Triplets& T) 
-    : TripletFrequencyModel(T)
-  {
-    // problem: TripletFrequency model won't have done this for its alphabet parameter
-    model_slots_for_index.push_back(vector<model_slot>());
-
-    insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
-    recalc_all();
-  }
-
-
   object_ptr<const Object> TripletsFrequencyModel::result() const
   {
     const Triplets& T = get_parameter_value_as<Triplets>(0);
