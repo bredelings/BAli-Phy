@@ -983,6 +983,9 @@ istream& load_more_alignments(list<alignment>& alignments, istream& ifile, const
       total++;
     }
     catch (std::exception& e) {
+      if (alignments.empty())
+	throw e;
+
       cerr<<"Warning: Error loading alignments, Ignoring unread alignments."<<endl;
       cerr<<"  Exception: "<<e.what()<<endl;
       break;

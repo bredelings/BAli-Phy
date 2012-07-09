@@ -228,13 +228,17 @@ void do_setup(const variables_map& args,list<alignment>& alignments,alignment& A
 
   // Instead of reordering the tree, just specify the names, here.
 
-  alignments = load_alignments(std::cin, T.get_leaf_labels(), A.get_alphabet(), skip, maxalignments);
-
-  if (alignments.size() == 0)
+  try
   {
-    std::cerr<<"retrying...\n";
-    add_internal_labels(T);
-    alignments = load_alignments(std::cin, T.get_labels(), A.get_alphabet(), skip, maxalignments);
+    alignments = load_alignments(std::cin, T.get_leaf_labels(), A.get_alphabet(), skip, maxalignments);
+  }
+  catch (std::exception& e)
+  {
+    if (alignments.size() == 0)
+    {
+      add_internal_labels(T);
+      alignments = load_alignments(std::cin, T.get_labels(), A.get_alphabet(), skip, maxalignments);
+    }
   }
 
   if (log_verbose) std::cerr<<"done. ("<<alignments.size()<<" alignments)"<<std::endl;
