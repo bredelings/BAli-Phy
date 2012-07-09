@@ -2143,9 +2143,12 @@ int Tree::parse_with_names_or_numbers(const string& line,const vector<string>& n
 	set_attributes(tags, node_attribute_names, *BN->node_attributes);
 
 	// Set the index the node name (an integer) -- possibly to -1.
-	BN->node_attributes->name = get_leaf_index(word, allow_numbers, names);
+	if (is_leaf_node(BN))
+	  BN->node_attributes->name = get_leaf_index(word, allow_numbers, names);
+	else
+	  BN->node_attributes->name = -1;
 
-	// Set the node label, if we are in the names list.
+	// Set the node label, if we are in the names list and this is a leaf node.
 	if (node_label_index != -1 and BN->node_attributes->name != -1)
 	  (*BN->node_attributes)[node_label_index] = names[BN->node_attributes->name];
 
