@@ -1213,7 +1213,7 @@ void set_lambda_scale_branch_parameters(Parameters& P, const variables_map& args
       P.set_parameter_value(indices[i], B);
 
     // Write out a tree 
-    cout.unsetf(ios::floatfield);
+    cout.unsetf(std::ios::floatfield);
     SequenceTree T2 = T;
     for(int b=0;b<T2.n_branches();b++)
       T2.branch(b).set_length(b);
