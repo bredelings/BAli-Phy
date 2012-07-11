@@ -1,0 +1,20 @@
+
+#1: subst ~ [HKY+gwF] (1)     indel ~ RS07 (1)
+
+Prior on branch lengths T[b]:
+ T[b] ~ Gamma(alpha=0.5, beta=2*mu)   [mean=mu, variance=2*mu^2]
+ mu ~ Gamma(alpha=0.5, beta=2)   [mean=1, variance=2]
+
+    prior = -34.9855   prior_A1 = -31.0506    likelihood = -910.294    logp = -945.28    beta = 1
+
+    Heat:beta = 1    mu1 = 1    S1::0::0::S::HKY::kappa = 2    S1::0::0::R::f = 1    S1::0::0::R::piA = 0.1    S1::0::0::R::piG = 0.4    S1::0::0::R::piT = 0.3    S1::0::0::R::piC = 0.2    I1::lambda = -4    I1::epsilon = -0.25    I1::lambda:prior_median = -4    I1::lambda:prior_stddev = 1    I1::epsilon:prior_length = 10
+smodel1
+    rate0 = 0.9
+
+    fraction0 = 1
+
+frequencies = 
+fA = 0.1
+fG = 0.4
+fT = 0.3
+fC = 0.2

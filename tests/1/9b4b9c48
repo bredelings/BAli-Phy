@@ -1,0 +1,40 @@
+command: bali-phy 5d.fasta --tree=1.tree --show-only --set mu1=1 --set S1::R::piA=0.1 --set S1::R::piG=0.4 --set S1::R::piT=0.3 --set S1::R::piC=0.2
+
+VERSION: 2.2.0-pre-alpha  [master commit 9b4b9c48]  (Jul 11 2012 11:21:50)
+BUILD: Jul 11 2012 11:21:55
+ARCH: x86_64-unknown-linux-gnu
+COMPILER: GCC 4.7.1
+FLAGS: -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -fweb -std=c++11 -g -finline-limit=1000 -fno-omit-frame-pointer   -pipe -O3 -isystem /usr/lib/openmpi/include -isystem /usr/lib/openmpi/include/openmpi -pthread
+
+smodel = MixtureModels ((MixtureModel (DiscreteDistribution ((1.000000, Q_from_S_and_R (TN 'DNA nucleotides' S::TN::kappa(pur) S::TN::kappa(pyr)) (let {#1 = Vector_From_List (R::piA:R::piG:R::piT:R::piC:[])} in ReversibleFrequency 'DNA nucleotides' (Iota 4) #1 (+gwF 'DNA nucleotides' R::f #1))):[]))):[])
+
+#1: subst ~ ??? (1)     indel ~ RS07 (1)
+
+Prior on branch lengths T[b]:
+ T[b] ~ Gamma(alpha=0.5, beta=2*mu)   [mean=mu, variance=2*mu^2]
+ mu ~ Gamma(alpha=0.5, beta=2)   [mean=1, variance=2]
+
+lambda_scale ~ Laplace(0.000000, 1.000000)
+
+lambda_scale_on ~ Bernoulli(0.500000)
+
+S1::S::TN::kappa(pur) ~ LogLaplace(0.693147, 0.250000)
+
+S1::S::TN::kappa(pyr) ~ LogLaplace(0.693147, 0.250000)
+
+(S1::R::piA, S1::R::piG, S1::R::piT, S1::R::piC) ~ Dirichlet(1.000000, 1.000000, 1.000000, 1.000000)
+
+S1::R::f ~ Uniform(0.000000, 1.000000)
+
+
+    prior = -35.6787   prior_A1 = -31.0506    likelihood = -910.294    logp = -945.973    beta = 1
+
+    Heat:beta = 1.000000    mu1 = 1.000000    lambda_scale = 0.000000    lambda_scale_on = false    lambda_scale_branch = -1    S1::R::f = 1.000000    S1::R::piA = 0.100000    S1::R::piC = 0.200000    S1::R::piG = 0.400000    S1::R::piT = 0.300000    S1::S::TN::kappa(pur) = 2.000000    S1::S::TN::kappa(pyr) = 2.000000    I1::lambda = -4.000000    I1::epsilon = -0.250000    I1::lambda:prior_median = -4.000000    I1::lambda:prior_stddev = 1.000000    I1::epsilon:prior_length = 10.000000    scale1::D1 = 0.041715    scale1::D2 = 0.122842    scale1::D3 = 0.105224    scale1::D4 = 0.004169    scale1::D5 = 1.597380    scale1::D6 = 0.065663    scale1::D7 = 0.933936    branch_cat1 = 0    branch_cat2 = 0    branch_cat3 = 0    branch_cat4 = 0    branch_cat5 = 0    branch_cat6 = 0    branch_cat7 = 0
+data partition1
+    fraction0 = 1
+
+frequencies = 
+fA = 0.1
+fG = 0.4
+fT = 0.3
+fC = 0.2
