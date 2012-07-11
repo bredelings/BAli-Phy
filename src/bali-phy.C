@@ -1312,6 +1312,7 @@ int main(int argc,char* argv[])
 	if (i != argc-1) cout<<" ";
       }
       cout<<endl;
+      print_version_info(cout);
     }
 
     //---------- Initialize random seed -----------//
