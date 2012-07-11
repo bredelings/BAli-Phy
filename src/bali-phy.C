@@ -498,7 +498,7 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
   vector<string> filenames;
   filenames.push_back("out");
   filenames.push_back("err");
-    
+
   vector<ofstream*> files2 = open_files(proc_id, dirname+"/",filenames);
   files.clear();
   for(int i=0;i<files2.size();i++)
