@@ -1305,6 +1305,13 @@ int main(int argc,char* argv[])
     }
     else {
       if (proc_id) return 0;
+
+      cout<<"command: ";
+      for(int i=0;i<argc;i++) {
+	cout<<argv[i];
+	if (i != argc-1) cout<<" ";
+      }
+      cout<<endl;
     }
 
     //---------- Initialize random seed -----------//
