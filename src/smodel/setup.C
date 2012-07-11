@@ -620,6 +620,32 @@ formula_expression_ref coerce_to_MMM(string smodel,
   return coerce_to_MMM(M, a, frequencies);
 }
 
+formula_expression_ref get_M0_omega_function(const object_ptr<const alphabet>& a,
+					     const shared_ptr< const valarray<double> >& frequencies,
+					     vector<string> model_args,
+					     int where)
+{
+  const Codons& C = dynamic_cast<const Codons&>(*a);
+  const Nucleotides& N = C.getNucleotides();
+
+  if (model_args.size() < where+2)
+    model_args.resize(where+2);
+
+  formula_expression_ref S1 = HKY_Model( N );
+  if (model_args[where] != "")
+    S1 = coerce_to_EM(model_args[where], const_ptr(N), {});
+  formula_expression_ref S2 = (M0E, a, S1, dummy(0));
+
+  formula_expression_ref R = Plus_F_Model(*a);
+  if (model_args[where+1] != "")
+    R = coerce_to_frequency_model(model_args[where+1], a, frequencies);
+  
+  formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+
+  return M0;
+}
+
+
 #include "operations.H"
 
 formula_expression_ref process_stack_Multi(vector<string>& model_args,
@@ -640,7 +666,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     check_n_args(model_args, 1, 2);
 
     int n=4;
-    if (model_args.size() > 2)
+    if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
     formula_expression_ref base = coerce_to_RA(model_args[1],a,frequencies);
@@ -657,7 +683,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     check_n_args(model_args, 1, 2);
 
     int n=4;
-    if (model_args.size() > 2)
+    if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
     formula_expression_ref base = coerce_to_RA(model_args[1],a,frequencies);
@@ -674,7 +700,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
   }
   else if (model_args[0] == "log-normal") {
     int n=4;
-    if (model_args.size() > 2)
+    if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
     formula_expression_ref base = coerce_to_RA(model_args[1],a,frequencies);
@@ -690,7 +716,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
   }
   else if (model_args[0] == "log-normal_inv") {
     int n=4;
-    if (model_args.size() > 2)
+    if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
     formula_expression_ref base = coerce_to_RA(model_args[1],a,frequencies);
@@ -720,7 +746,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
 
   else if (model_args[0] == "DP") {
     int n=4;
-    if (model_args.size() > 2)
+    if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
     vector<expression_ref> fs;
@@ -775,19 +801,14 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, Tuple(1.0, 98.0, 1.0)) ) );
     D.add_expression( (distributed, m2_omega, Tuple(log_exponential_dist, 0.05) ) );
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    assert(C);
-    formula_expression_ref S1 = TN_Model(C->getNucleotides());
-    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
-    formula_expression_ref R = Plus_gwF_Model(*a);
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+    formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,2);
 
     return (MultiParameter,M0,D);
   }
-  else if (model_args[0] == "M3") 
+  else if (model_args[0] == "M3") // M2a[0,n,S,F]
   {
     int n=3;
-    if (model_args.size() > 2)
+    if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
     formula_expression_ref D = ListEnd;
@@ -807,16 +828,11 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     D = (DiscreteDistribution, D);
     D.add_expression((distributed, get_list(fraction), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    assert(C);
-    formula_expression_ref S1 = TN_Model(C->getNucleotides());
-    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
-    formula_expression_ref R = Plus_gwF_Model(*a);
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+    formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,3);
 
     return (MultiParameter, M0, D);
   }
-  else if (model_args[0] == "M2a") 
+  else if (model_args[0] == "M2a") // M2a[0,S,F]
   {
     formula_expression_ref p1 = def_parameter("M2a::f[AA INV]", Double(1.0/3), between(0,1));
     formula_expression_ref p2 = def_parameter("M2a::f[Neutral]", Double(1.0/3), between(0,1));
@@ -829,16 +845,11 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     D.add_expression( (distributed, (divide, 1.0, w1), Tuple(log_exponential_dist, 0.05) ) );
     D.add_expression( (distributed, w3, Tuple(log_exponential_dist, 0.05) ) );
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    assert(C);
-    formula_expression_ref S1 = TN_Model( C->getNucleotides());
-    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
-    formula_expression_ref R = Plus_gwF_Model(*a);
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+    formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,2);
 
     return (MultiParameter,M0,D);
   }
-  else if (model_args[0] == "M8b")
+  else if (model_args[0] == "M8b") // M8b[0,n,S,+F]
   {
     // FIXME: Conditional on one omega being small, the probability of the other ones being
     //        small too should be higher.
@@ -863,7 +874,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     //        (The Uniform seems like a good analogue of the dirichlet.)
 
     int n=3;
-    if (model_args.size() > 2)
+    if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
     // Determine the a and b parameters of the beta distribution
@@ -894,19 +905,14 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     // (p1,p2,p3) ~ Dirichlet(10, 10, 1)
     D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, Tuple(10.0, 10.0, 1.0)) ) );
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    assert(C);
-    formula_expression_ref S1 = TN_Model( C->getNucleotides());
-    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
-    formula_expression_ref R = Plus_gwF_Model(*a);
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+    formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,3);
 
     return (MultiParameter, M0, D);
   }
   else if (model_args[0] == "M7")
   {
     int n=4;
-    if (model_args.size() > 2)
+    if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
     // Determine the a and b parameters of the beta distribution
@@ -918,16 +924,11 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     // Create the discrete distribution for omega
     formula_expression_ref D = (UniformDiscretize, (lambda_expression(beta_quantile_op()), Tuple(alpha,beta)), n);
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    assert(C);
-    formula_expression_ref S1 = TN_Model( C->getNucleotides());
-    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
-    formula_expression_ref R = Plus_gwF_Model(*a);
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+    formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,3);
 
     return (MultiParameter, M0, D);
   }
-  else if (model_args[0] == "branch-site-test1")
+  else if (model_args[0] == "branch-site-test1") // branch-site-test1[0,S,F]
   {
     check_n_args(model_args, 0, 3);
 
@@ -948,18 +949,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     // FIXME - look at the effect on power of using various different priors for w2 here!
     // FIXME - allow specifying the prior on the command line?
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    assert(C);
-    formula_expression_ref S1 = HKY_Model( C->getNucleotides());
-    if (model_args.size() > 2)
-      S1 = coerce_to_EM(model_args[2], const_ptr(C->getNucleotides()), {});
-
-    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
-    formula_expression_ref R = Plus_F_Model(*a);
-    if (model_args.size() > 3)
-      R = coerce_to_frequency_model(model_args[3], a, frequencies);
-
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+    formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,2);
 
     formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
     mixture1 = (MultiParameter, M0, mixture1);
@@ -989,18 +979,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     // FIXME - look at the effect on power of using various different priors for w2 here!
     // FIXME - allow specifying the prior on the command line?
 
-    const Codons* C = dynamic_cast<const Codons*>(&*a);
-    assert(C);
-    formula_expression_ref S1 = HKY_Model( C->getNucleotides());
-    if (model_args.size() > 2)
-      S1 = coerce_to_EM(model_args[2], const_ptr(C->getNucleotides()), {});
-
-    formula_expression_ref S2 = (M0E, a, S1, dummy(0));
-    formula_expression_ref R = Plus_F_Model(*a);
-    if (model_args.size() > 3)
-      R = coerce_to_frequency_model(model_args[3], a, frequencies);
-
-    formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
+    formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,2);
 
     formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
     mixture1 = (MultiParameter, M0, mixture1);
