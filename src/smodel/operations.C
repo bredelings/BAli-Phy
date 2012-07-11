@@ -139,6 +139,8 @@ namespace substitution
 	    r = R2(from,to);
 	  else if (pos == 2)
 	    r = R3(from,to);
+	  else
+	    std::abort();
 	}
 	R->t(i,j) = r;
       }
