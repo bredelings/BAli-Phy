@@ -311,6 +311,8 @@ public:
 
   virtual std::vector<std::string> show_priors() const;
 
+  int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
+
   /// Construct an empty model
   Model();
 

@@ -364,6 +364,11 @@ vector<string> Model::show_priors() const
   return show_probability_expressions(C);
 }
 
+int Model::find_match_notes(const expression_ref& e, std::vector<expression_ref>& results, int start) const
+{
+  return C.find_match_notes(e, results, start);
+}
+
 Model::Model()
   :valid(false),prior_index(-1)
 { }
