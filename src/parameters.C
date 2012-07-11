@@ -1145,6 +1145,11 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 			 <<" because there are only "<<SModels.size()<<" smodels.";
   }
 
+  // Add commands to log everything.
+  expression_ref make_logger = constructor("make_logger",1);
+  for(int i=0;i<n_parameters();i++)
+    add_note( (make_logger,parameter_name(i)) );
+
   // load values from sub-models (smodels/imodel)
   check();
 

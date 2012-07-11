@@ -552,7 +552,7 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, cons
       prefix = string("S")+convertToString(i) + "::";
 
     vector< vector<int> > DP;
-    if (parameters_with_extension(M, prefix + "DP::rate*").size()  )
+    if (parameters_with_extension(names, prefix + "DP::rate*").size()  )
     {
       DP.push_back( parameters_with_extension(names, prefix + "DP::rate*") );
       DP.push_back( parameters_with_extension(names, prefix + "DP::f*") );
@@ -560,7 +560,7 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, cons
     }
 
     vector< vector<int> > M3;
-    if (parameters_with_extension(M, prefix + "M3::omega*").size() )
+    if (parameters_with_extension(names, prefix + "M3::omega*").size() )
     {
       M3.push_back( parameters_with_extension(names, prefix + "M3::omega*") );
       M3.push_back( parameters_with_extension(names, prefix + "M3::f*") );
@@ -589,12 +589,26 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
 
   {
     vector<string> short_names = short_parameter_names(P);
+    vector<string> long_names = parameter_names(P);
+    vector<int> logged_params;
+    vector<string> logged_names;
+
+    for(int i=0;i<long_names.size();i++)
+    {
+      expression_ref make_logger = constructor("make_logger",1);
+      expression_ref query = (make_logger, long_names[i]);
+      vector<expression_ref> results;
+      if (P.find_match_notes(query, results, 0) == -1) continue;
+
+      logged_params.push_back(i);
+      logged_names.push_back(long_names[i]);
+    }
 
     TableGroupFunction<double> T1;
-    for(int i=0;i<P.n_parameters();i++)
-      T1.add_field(short_names[i], GetParameterFunction(i) );
+    for(int p: logged_params)
+      T1.add_field(short_names[p], GetParameterFunction(p) );
 
-    SortedTableFunction T2(T1, get_un_identifiable_indices(P, parameter_names(P)));
+    SortedTableFunction T2(T1, get_un_identifiable_indices(P, logged_names));
 
     TL->add_fields( ConvertTableToStringFunction<double>( T2 ) );
   }
