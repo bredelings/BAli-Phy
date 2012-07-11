@@ -351,6 +351,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 		  slice_moves,transform_epsilon,inverse_epsilon, 10);
 
   add_slice_moves(P, "lambda_scale", "lambda_slice_window", 1.0, slice_moves, 10);
+  add_slice_moves(P, "*::M3::omega*", "M3::omega_slice_window", 1.0, slice_moves);
 
   for(int s=0;s<=P.n_smodels();s++) 
   {
@@ -395,14 +396,6 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   }
 
-  for(int i=0;;i++) 
-  {
-    string name = "M3::omega" + convertToString(i+1);
-    if (not has_parameter(P,name))
-      break;
-    
-    add_slice_moves(P,name, "M3::omega_slice_window", 1.0, slice_moves);
-  }
 
   slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
 
