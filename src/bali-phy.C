@@ -539,7 +539,7 @@ vector<ostream*> init_files(int proc_id, const string& dirname,
 }
 
 /// Determine the parameters of model \a M that must be sorted in order to enforce identifiability.
-vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M)
+vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, const vector<string>& names)
 {
   vector< vector< vector<int> > > indices;
 
@@ -554,16 +554,16 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M)
     vector< vector<int> > DP;
     if (parameters_with_extension(M, prefix + "DP::rate*").size()  )
     {
-      DP.push_back( parameters_with_extension(M, prefix + "DP::rate*") );
-      DP.push_back( parameters_with_extension(M, prefix + "DP::f*") );
+      DP.push_back( parameters_with_extension(names, prefix + "DP::rate*") );
+      DP.push_back( parameters_with_extension(names, prefix + "DP::f*") );
       indices.push_back( DP );
     }
 
     vector< vector<int> > M3;
     if (parameters_with_extension(M, prefix + "M3::omega*").size() )
     {
-      M3.push_back( parameters_with_extension(M, prefix + "M3::omega*") );
-      M3.push_back( parameters_with_extension(M, prefix + "M3::f*") );
+      M3.push_back( parameters_with_extension(names, prefix + "M3::omega*") );
+      M3.push_back( parameters_with_extension(names, prefix + "M3::f*") );
       indices.push_back( M3 );
     }
   }
@@ -585,16 +585,16 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
   TL->add_field("likelihood", GetLikelihoodFunction() );
   TL->add_field("logp", GetProbabilityFunction() );
   
-  vector< vector< vector<int> > > indices = get_un_identifiable_indices(P);
+  vector< vector< vector<int> > > indices = get_un_identifiable_indices(P, parameter_names(P));
 
   {
-    vector<string> parameter_names = short_parameter_names(P);
+    vector<string> short_names = short_parameter_names(P);
 
     TableGroupFunction<double> T1;
     for(int i=0;i<P.n_parameters();i++)
-      T1.add_field(parameter_names[i], GetParameterFunction(i) );
+      T1.add_field(short_names[i], GetParameterFunction(i) );
 
-    SortedTableFunction T2(T1, get_un_identifiable_indices(P));
+    SortedTableFunction T2(T1, get_un_identifiable_indices(P, parameter_names(P)));
 
     TL->add_fields( ConvertTableToStringFunction<double>( T2 ) );
   }
