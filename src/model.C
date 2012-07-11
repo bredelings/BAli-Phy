@@ -889,7 +889,7 @@ bool path_match(const vector<string>& key, const vector<string>& pattern)
 /// \param M      The model
 /// \param name   The pattern
 ///
-vector<int> parameters_with_extension(const Model& M, string name)
+vector<int> parameters_with_extension(const vector<string>& M, string name)
 {
   vector<int> indices;
 
@@ -899,9 +899,9 @@ vector<int> parameters_with_extension(const Model& M, string name)
 
   vector<string> skeleton;
 
-  for(int i=0;i<M.n_parameters();i++)
+  for(int i=0;i<M.size();i++)
   {
-    vector<string> pattern = split(M.parameter_name(i),"::");
+    vector<string> pattern = split(M[i],"::");
 
     if (not path_match(key, pattern)) continue;
 
@@ -918,6 +918,16 @@ vector<int> parameters_with_extension(const Model& M, string name)
   }
 
   return indices;
+}
+
+/// \brief Find the index of model parameters that match the pattern name
+///
+/// \param M      The model
+/// \param name   The pattern
+///
+vector<int> parameters_with_extension(const Model& M, string name)
+{
+  return parameters_with_extension(parameter_names(M), name);
 }
 
 string show_probability_expression(const expression_ref& E)
