@@ -429,6 +429,22 @@ formula_expression_ref process_stack_Frequencies(vector<string>& model_args,
 
     R = F3x4_Model(*T);
   }
+  else if (model_args[0] == "MG94") 
+  {
+    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
+    if (not T)
+      throw myexception()<<"+MG94:: '"<<a->name<<"' is not a triplet alphabet.";
+
+    R = MG94_Model(*T);
+  }
+  else if (model_args[0] == "MG94w9") 
+  {
+    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
+    if (not T)
+      throw myexception()<<"+MG94w9:: '"<<a->name<<"' is not a triplet alphabet.";
+
+    R = MG94w9_Model(*T);
+  }
   /*
   else if (model_args[0] == "F=amino-acids") 
   {

@@ -497,14 +497,6 @@ namespace substitution
     const Nucleotides& N = T.getNucleotides();
     formula_expression_ref pi = Frequencies_Model(N);
 
-    /*
-      See FIXME** - above!
-    return let(v2,(Vector_From_List<double,Double>(),pi),
-	       v1,(F3x4_Frequencies,T,v2,v2,v2),
-	       v3,(Plus_gwF, N, 1.0, v2),
-	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
-	       );
-    */
     return let(v2,(Vector_From_List<double,Double>(),pi),
 	       v1,(F3x4_Frequencies,T,v2,v2,v2),
 	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v1, (Plus_gwF, T, 1.0, v1))
@@ -512,6 +504,18 @@ namespace substitution
   }
 
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
+  formula_expression_ref MG94_Model(const Triplets& T)
+  {
+    const Nucleotides& N = T.getNucleotides();
+    formula_expression_ref pi = Frequencies_Model(N);
+
+    return let(v2,(Vector_From_List<double,Double>(),pi),
+	       v1,(F3x4_Frequencies,T,v2,v2,v2),
+	       v3,(Plus_gwF, N, 1.0, v2),
+	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
+	       );
+  }
+
   formula_expression_ref F3x4_Model(const Triplets& T)
   {
     const Nucleotides& N = T.getNucleotides();
@@ -522,8 +526,24 @@ namespace substitution
     formula_expression_ref pi3 = Frequencies_Model(N);
     pi3 = prefix_formula("3",pi3);
 
-    /*
-      See FIXME** - above!
+    return let(v1, (Vector_From_List<double,Double>(),pi1),
+	       v2, (Vector_From_List<double,Double>(),pi2),
+	       v3, (Vector_From_List<double,Double>(),pi3),
+	       v4, (F3x4_Frequencies,T,v1,v2,v3),
+	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v4, (Plus_gwF, T, 1.0, v4))
+	       );
+  }
+
+  formula_expression_ref MG94w9_Model(const Triplets& T)
+  {
+    const Nucleotides& N = T.getNucleotides();
+    formula_expression_ref pi1 = Frequencies_Model(N);
+    pi1 = prefix_formula("1",pi1);
+    formula_expression_ref pi2 = Frequencies_Model(N);
+    pi2 = prefix_formula("2",pi2);
+    formula_expression_ref pi3 = Frequencies_Model(N);
+    pi3 = prefix_formula("3",pi3);
+
     return let(v1, (Vector_From_List<double,Double>(),pi1),
 	       v2, (Vector_From_List<double,Double>(),pi2),
 	       v3, (Vector_From_List<double,Double>(),pi3),
@@ -531,13 +551,6 @@ namespace substitution
 	       v5, (Plus_gwF, N, 1.0, v2),
 	       v6, (Plus_gwF, N, 1.0, v3),
 	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), (F3x4_Frequencies,T,v1,v2,v3), (F3x4_Matrix, T, v4, v5, v6))
-	       );
-    */
-    return let(v1, (Vector_From_List<double,Double>(),pi1),
-	       v2, (Vector_From_List<double,Double>(),pi2),
-	       v3, (Vector_From_List<double,Double>(),pi3),
-	       v4, (F3x4_Frequencies,T,v1,v2,v3),
-	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v4, (Plus_gwF, T, 1.0, v4))
 	       );
   }
 

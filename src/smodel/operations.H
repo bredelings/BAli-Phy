@@ -94,6 +94,10 @@ namespace substitution {
 
   formula_expression_ref F3x4_Model(const Triplets& T);
 
+  formula_expression_ref MG94_Model(const Triplets& T);
+
+  formula_expression_ref MG94w9_Model(const Triplets& T);
+
   struct HKY_Op: public Operation
   {
     HKY_Op* clone() const {return new HKY_Op;}
