@@ -147,11 +147,13 @@ get_smodel_(const string& smodel,const object_ptr<const alphabet>& a);
 formula_expression_ref
 get_smodel_(const string& smodel);
 
-void check_n_args(const vector<string>& model_args, int m, int n = -1)
+void check_n_args(vector<string>& model_args, int m, int n = -1)
 {
   if (n == -1) n = m;
 
   int n_args = model_args.size() - 1;
+  if (model_args.size() < n+1)
+    model_args.resize(n+1);
 
   if (n_args == 1 and model_args[1] == "")
     n_args = 0;
@@ -170,6 +172,27 @@ void check_n_args(const vector<string>& model_args, int m, int n = -1)
   }
 }
 
+/// \brief Construct an AlphabetExchangeModel from string \a smodel.
+formula_expression_ref coerce_to_EM(string smodel,
+				    const object_ptr<const alphabet>& a, 
+				    const shared_ptr< const valarray<double> >& frequencies)
+
+{
+  if (smodel == "")
+  {
+    smodel = default_markov_model(*a);
+    if (smodel == "")
+      throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a->name<<"'";
+  }
+
+  formula_expression_ref S = get_smodel_(smodel, a, frequencies);
+
+  if (S.exp() and S.result_as<SymmetricMatrixObject>())
+    return S;
+
+  throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
+}
+
 /// \brief Construct a model from the top of the string stack
 ///
 /// \param string_stack The list of strings representing the substitution model.
@@ -180,8 +203,6 @@ formula_expression_ref process_stack_Markov(vector<string>& model_args,
 					    const object_ptr<const alphabet>& a,
 					    const shared_ptr<const valarray<double> >& /* frequencies */)
 {
-  string arg;
-
   //------ Get the base markov model (Reversible Markov) ------//
   /*
   if (match(string_stack,"EQU",arg))
@@ -305,8 +326,8 @@ formula_expression_ref process_stack_Markov(vector<string>& model_args,
   }
   else if (model_args[0] == "Empirical") 
   {
-    check_n_args(model_args,1,1);
-    return (Empirical,a,arg);
+    check_n_args(model_args,0,2);
+    return (Empirical,a,model_args[2]);
   }
   /*
   else if (model_args[0] == "C10")
@@ -329,52 +350,28 @@ formula_expression_ref process_stack_Markov(vector<string>& model_args,
     return M;
   }
   */
-  else if (model_args[0] == "M0") 
+  else if (model_args[0] == "M0") //M0[0,S]
   {
-    check_n_args(model_args,0,1);
+    check_n_args(model_args,0,2);
 
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
       throw myexception()<<"M0: '"<<a->name<<"' is not a 'Codons' alphabet";
+    const Nucleotides& N = C->getNucleotides();
 
-    formula_expression_ref N_submodel = HKY_Model(C->getNucleotides());
-
-    if (not arg.empty()) 
+    formula_expression_ref S1 = HKY_Model( N );
+    if (model_args[2] != "")
     {
-      N_submodel = get_smodel_(arg, const_ptr( C->getNucleotides() ) );
-
-      if (not N_submodel.result_as<SymmetricMatrixObject>())
-	throw myexception()<<"Submodel '"<<arg<<"' for M0 is not a nucleotide exchange model.";
+      S1 = coerce_to_EM(model_args[2], const_ptr(N), {});
+      if (not S1.result_as<SymmetricMatrixObject>())
+	throw myexception()<<"Submodel '"<<model_args[2]<<"' for M0 is not a (nucleotide) exchange model.";
     }
-
-    formula_expression_ref S1 = TN_Model(C->getNucleotides());
     formula_expression_ref w = def_parameter("M0::omega", Double(1), lower_bound(0), log_laplace_dist, Tuple(0.0,0.1));
 
     return (M0E, a, S1, w);
   }
 
   return formula_expression_ref();
-}
-
-/// \brief Construct an AlphabetExchangeModel from model \a M
-formula_expression_ref coerce_to_EM(string smodel,
-				    const object_ptr<const alphabet>& a, 
-				    const shared_ptr< const valarray<double> >& frequencies)
-
-{
-  if (smodel == "")
-  {
-    smodel = default_markov_model(*a);
-    if (smodel == "")
-      throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a->name<<"'";
-  }
-
-  formula_expression_ref S = get_smodel_(smodel, a, frequencies);
-
-  if (S.exp() and S.result_as<SymmetricMatrixObject>())
-    return S;
-
-  throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
 }
 
 /// \brief Construct a model from the top of the string stack
@@ -625,15 +622,21 @@ formula_expression_ref get_M0_omega_function(const object_ptr<const alphabet>& a
 					     vector<string> model_args,
 					     int where)
 {
-  const Codons& C = dynamic_cast<const Codons&>(*a);
-  const Nucleotides& N = C.getNucleotides();
+  const Codons* C = dynamic_cast<const Codons*>(&*a);
+  if (not C)
+    throw myexception()<<a->name<<"' is not a 'Codons' alphabet";
+  const Nucleotides& N = C->getNucleotides();
 
   if (model_args.size() < where+2)
     model_args.resize(where+2);
 
   formula_expression_ref S1 = HKY_Model( N );
   if (model_args[where] != "")
+  {
     S1 = coerce_to_EM(model_args[where], const_ptr(N), {});
+    if (not S1.result_as<SymmetricMatrixObject>())
+      throw myexception()<<"Submodel '"<<model_args[where]<<"' for M0 is not a (nucleotide) exchange model.";
+  }
   formula_expression_ref S2 = (M0E, a, S1, dummy(0));
 
   formula_expression_ref R = Plus_F_Model(*a);
@@ -952,8 +955,8 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,2);
 
     formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
-    mixture1 = (MultiParameter, M0, mixture1);
     formula_expression_ref mixture2 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2)&(Tuple(p2b,w2)&ListEnd))));
+    mixture1 = (MultiParameter, M0, mixture1);
     mixture2 = (MultiParameter, M0, mixture2);
     formula_expression_ref branch_site = (MixtureModels,mixture1&(mixture2&ListEnd));
 
@@ -982,8 +985,8 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,2);
 
     formula_expression_ref mixture1 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
-    mixture1 = (MultiParameter, M0, mixture1);
     formula_expression_ref mixture2 = (DiscreteDistribution,Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2effective)&(Tuple(p2b,w2effective)&ListEnd))));
+    mixture1 = (MultiParameter, M0, mixture1);
     mixture2 = (MultiParameter, M0, mixture2);
     formula_expression_ref branch_site = (MixtureModels,mixture1&(mixture2&ListEnd));
 
