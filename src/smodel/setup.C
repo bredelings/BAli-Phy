@@ -808,8 +808,35 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
 
     return (MultiParameter,M0,D);
   }
-  else if (model_args[0] == "M3") // M2a[0,n,S,F]
+  else if (model_args[0] == "M3u") // M3u[0,n,S,F]
   {
+    int n=3;
+    if (model_args.size() > 2 and model_args[2] != "")
+      n = convertTo<int>(model_args[2]);
+
+    formula_expression_ref D = ListEnd;
+    formula_expression_ref F = ListEnd;
+    for(int i=n-1;i>=0;i--)
+    {
+      string pname_f = "M3::f" + convertToString(i+1);
+      string pname_w = "M3::omega" + convertToString(i+1);
+      formula_expression_ref f = def_parameter("M3::f"     + convertToString(i+1), Double(1.0/n), between(0,1));
+      formula_expression_ref w = def_parameter("M3::omega" + convertToString(i+1), Double(1.0), lower_bound(0), uniform_dist, Tuple(0.0, 1.0));
+
+      D = Tuple(f,w)&D;
+      F = f&F;
+    }
+    D = (DiscreteDistribution, D);
+    D.add_expression((distributed, F, Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
+
+    formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,3);
+
+    return (MultiParameter, M0, D);
+  }
+  else if (model_args[0] == "M3") // M3[0,n,S,F]
+  {
+    throw myexception()<<"The M3 model is not working right now.  Try M3u, with only stabilizing selection.";
+
     int n=3;
     if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
