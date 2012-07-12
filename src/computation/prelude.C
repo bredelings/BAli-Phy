@@ -17,6 +17,7 @@ const expression_ref snd = var("snd");
 const expression_ref get_list_index = var("!!");
 const expression_ref listArray = var("listArray");
 const expression_ref ExtendDiscreteDistribution = var("ExtendDiscreteDistribution");
+const expression_ref MixDiscreteDistributions = var("MixDiscreteDistributions");
 const expression_ref UniformDiscretize = var("UniformDiscretize");
 const expression_ref length = var("length");
 const expression_ref plusplus = var("++");
@@ -32,6 +33,7 @@ Program make_Prelude()
   Program P;
 
   typed_expression_ref<Double> x1 (v1);
+  typed_expression_ref<Double> x4 (v4);
 
   // foldr f z []  = z
   // foldr f z x:xs = (f x (foldr f z xs))
@@ -90,6 +92,12 @@ Program make_Prelude()
 
   // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
   P += Def( (ExtendDiscreteDistribution, (DiscreteDistribution, v0), v1, v2), (DiscreteDistribution, Tuple(v1,v2)&(fmap1, v4^v4*(1.0-v1), v0)) );
+
+  // MixDiscreteDistributions p (DiscreteDistribution d1) (DiscreteDistribution d2) = 
+  //                                         DiscreteDistribution (fmap1 \q -> q*p d1)++(fmap1 \q -> q*(1.0-p) d2)
+  P += Def( (MixDiscreteDistributions, v0, (DiscreteDistribution, v1), (DiscreteDistribution, v2)), 
+	    (DiscreteDistribution, (plusplus,(fmap1, v4^x4*v0, v1),(fmap1, v4^x4*(1.0-v0), v2) ) )
+	    );
 
   // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
   P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(x1+(times,(fst,v2),(snd,v2)))), 0.0, v3) );

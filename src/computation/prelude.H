@@ -21,6 +21,7 @@ extern const expression_ref listArray;
 extern const expression_ref length;
 extern const expression_ref plusplus;
 extern const expression_ref ExtendDiscreteDistribution;
+extern const expression_ref MixDiscreteDistributions;
 extern const expression_ref UniformDiscretize;
 
 extern const expression_ref DiscreteDistribution;
