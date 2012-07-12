@@ -331,10 +331,9 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "*::M2a::omega1",     "omega_slice_window",    0.3, slice_moves);
   add_slice_moves(P, "*::M2a::omega3",     "omega_slice_window",    0.3, slice_moves);
   add_slice_moves(P, "*::M8b::omega3",     "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::branch-site::w0", "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::branch-site::w2", "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::branch-site::f2", "omega_fraction_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "*::branch-site::p2", "omega_fraction_slice_window",    0.1, slice_moves);
+  add_slice_moves(P, "*::branch-site::w*", "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::branch-site::pos-w", "omega_slice_window",    0.3, slice_moves);
+  add_slice_moves(P, "*::branch-site::pos-p", "omega_fraction_slice_window",    0.1, slice_moves);
   add_slice_moves(P, "*::INV::p",         "INV::p_slice_window", 0.1, slice_moves);
   add_slice_moves(P, "*::f",      "f_slice_window",    0.1, slice_moves);
   add_slice_moves(P, "*::g",      "g_slice_window",    0.1, slice_moves);
@@ -377,11 +376,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     add_dirichlet_slice_moves(P, prefix + "M8b::f*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "multi::p*", slice_moves, 3);
     add_dirichlet_slice_moves(P, prefix + "Mixture::p*", slice_moves, 3);
-
-    {
-      vector<string> pnames = {"S"+index+"::branch-site::f0", "S"+index+"::branch-site::f1"};
-      add_dirichlet_slice_moves(P, "S" + index + "::branch-site::f0/f1", pnames, slice_moves, 3);
-    }
+    add_dirichlet_slice_moves(P, prefix + "branch-site::f*", slice_moves, 3);
 
     if (s >= P.n_smodels()) continue;
 
