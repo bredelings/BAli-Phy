@@ -19,6 +19,7 @@ const expression_ref listArray = var("listArray");
 const expression_ref ExtendDiscreteDistribution = var("ExtendDiscreteDistribution");
 const expression_ref UniformDiscretize = var("UniformDiscretize");
 const expression_ref length = var("length");
+const expression_ref plusplus = var("++");
 const expression_ref average = var("average");
 
 
@@ -119,6 +120,11 @@ Program make_Prelude()
 
   // length l = foldl' \x->\y->(x+1) 0 l
   P += Def( (length, v1), (foldl_,v2^(v3^(v2+1)), 0, v1) );
+
+  // plusplus [] y = y
+  // plusplus h:t y = h:(plusplus t y)
+  P += Def( (plusplus, ListEnd, v0), v0)
+          ( (plusplus, v0&v1, v2),v0&(plusplus,v1,v2));
 
   // UnwrapDD (DiscreteDistribution l) = l
   P += Def( (UnwrapDD, (DiscreteDistribution, v1)), v1 );
