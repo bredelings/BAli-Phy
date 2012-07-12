@@ -92,37 +92,6 @@ struct Seq: public Operation
 
 extern expression_ref seq;
 
-struct Concat: public Operation
-{
-  virtual Concat* clone() const {return new Concat(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const Concat* E = dynamic_cast<const Concat*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const String> x = Args.evaluate_as<String>(0);
-    object_ptr<const String> y = Args.evaluate_as<String>(1);
-
-    const std::string& X = *x;
-    const std::string& Y = *y;
-
-    return closure(object_ref ( new String(X+Y) ) );
-  }
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return "++";}
-
-  Concat():Operation(2) {}
-};
-
 struct MkArray: public Operation
 {
   virtual MkArray* clone() const {return new MkArray(*this);}

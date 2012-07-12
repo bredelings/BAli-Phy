@@ -1628,8 +1628,6 @@ expression_ref distributed = lambda_expression( constructor("~",2) );
 
 expression_ref sys_print = lambda_expression( Print() );
 
-expression_ref concat = lambda_expression( Concat() );
-
 expression_ref prob = lambda_expression( constructor("probability",1) );
 
 expression_ref defun = lambda_expression( constructor("defun",3) );
