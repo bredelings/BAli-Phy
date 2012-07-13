@@ -28,14 +28,15 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
   // Look through the arguments
   while( E2->size() )
   {
-    assert( is_a<Apply>(E2) );
+    if (not is_a<Apply>(E2) ) throw myexception()<<" Combinator definition '"<<E<<"' contains non-apply expression '"<<E2<<"'";
     patterns.insert(patterns.begin(), E2->sub[1]);
     E2 = E2->sub[0];
   }
 
   // Find the name
   object_ptr<const var> V = is_a<var>(E2);
-  assert(V);
+  if (not V)
+    throw myexception()<<"Combinator definition '"<<E<<"' does not start with variable!";
   name = V->name;
 }
 
@@ -113,7 +114,8 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
   {
     string name2;
     parse_combinator_application(patterns[i], name2, sub_patterns[i]);
-    assert(name == name2);
+
+    if (name != name2) throw myexception()<<"In definition of function '"<<name<<"', incorrect function name '"<<name2<<"' found as well.";
   }
 
   expression_ref E = ::def_function(sub_patterns, bodies);
