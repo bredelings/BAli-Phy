@@ -783,9 +783,14 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
   }
   else if (model_args[0] == "Mixture")
   {
+    if (model_args.size() < 4)
+      throw myexception()<<"Mixture[..] requires at least two sub-models!";
+    if (model_args[1] != "")
+      throw myexception()<<"Mixture[..] does not take a submodel (i.e. with '+')";
+
     vector <formula_expression_ref> models;
-    for(int i=0;i<model_args.size()-1;i++)
-      models.push_back( coerce_to_MM(model_args[i+1], a, frequencies) );
+    for(int i=0;i<model_args.size()-2;i++)
+      models.push_back( coerce_to_MM(model_args[i+2], a, frequencies) );
 
     return Mixture_Model(models);
   }
