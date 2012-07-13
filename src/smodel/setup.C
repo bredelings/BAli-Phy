@@ -1014,7 +1014,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     for(int i=n-1;i>=0;i--)
     {
       string n_ = convertToString(i);
-      formula_expression_ref f = def_parameter("branch-site::f"+n_, Double(0.5));
+      formula_expression_ref f = def_parameter("branch-site::f"+n_, Double(1.0/n));
       formula_expression_ref w = def_parameter("branch-site::w"+n_, Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
       if (i == n-1) w = expression_ref(1.0);
 
