@@ -279,8 +279,6 @@ namespace substitution {
 
   extern expression_ref Modulated_Markov_E;
 
-  extern expression_ref Mixture_E;
-
   formula_expression_ref Mixture_Model(const std::vector<formula_expression_ref>& models);
 
   object_ptr<const EigenValues> Get_Eigensystem_Function(const Matrix& Q, const std::vector<double>& pi);
