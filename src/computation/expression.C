@@ -237,7 +237,7 @@ string expression::print() const
     if (dynamic_pointer_cast<const Apply>(O))
       O_name = " ";
 
-    if (O->name() == ":")
+    if (O->name() == ":" and size() == 2)
     {
       return print_list(this);
     }
