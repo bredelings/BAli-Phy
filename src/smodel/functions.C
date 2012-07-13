@@ -21,6 +21,8 @@ const expression_ref base_model = var("base_model");
 const expression_ref distribution = var("distribution");
 const expression_ref MultiRate = var("MultiRate");
 const expression_ref get_nth_mixture = var("get_nth_mixture");
+const expression_ref UnwrapMM = var("UnwrapMM");
+const expression_ref MixMixtureModels = var("MixMixtureModels");
 
 // (ReversibleMarkov alpha state_letters q pi l t)
 const expression_ref ReversibleMarkov = lambda_expression( constructor("ReversibleMarkov", 7) );
@@ -129,6 +131,12 @@ Program SModel_Functions()
 
   // get_nth_mixture (MixtureModels l) b = l !! b
   P += Def( (get_nth_mixture, (MixtureModels, v1), v2), (get_list_index,v1,v2) );
+
+  // UnwrapMM (MixtureModel dd) = dd
+  P += Def( (UnwrapMM, (MixtureModel, v0)), v0 );
+
+  // MixMixtureModels l dd = MixtureModel (MixDiscreteDistributions l (fmap UnwrapMM dd))
+  P += Def( (MixMixtureModels, v0, v1), (MixtureModel, (MixDiscreteDistributions, v0, (fmap, UnwrapMM, v1) ) ) );
 
   return P;
 }

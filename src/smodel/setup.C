@@ -1032,8 +1032,8 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     // FIXME - allow specifying the prior on the command line?
 
     formula_expression_ref M0 = get_M0_omega_function(a, frequencies, model_args, 3);
-    formula_expression_ref mixture1 = (MultiParameter, M0, (MixDiscreteDistributions, p_pos, D1, D1) );
-    formula_expression_ref mixture2 = (MultiParameter, M0, (MixDiscreteDistributions, p_pos, D2, D1) );
+    formula_expression_ref mixture1 = (MultiParameter, M0, (MixDiscreteDistributions, List(p_pos, (minus, 1.0, p_pos)), List(D1,D1) ) );
+    formula_expression_ref mixture2 = (MultiParameter, M0, (MixDiscreteDistributions, List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
 
     formula_expression_ref branch_site = (MixtureModels, mixture1&(mixture2&ListEnd) );
     branch_site.add_expression( (distributed, F, Tuple(dirichlet_dist,get_tuple(vector<Double>(n,1.0) ) ) ) );

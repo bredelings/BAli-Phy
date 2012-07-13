@@ -785,21 +785,22 @@ namespace substitution
   {
     const int N = models.size();
 
-    formula_expression_ref D = ListEnd;
-    formula_expression_ref V = ListEnd;
+    formula_expression_ref M = ListEnd;
+    formula_expression_ref P = ListEnd;
 
-    for(int i=0;i<N;i++)
+    for(int i=N-1;i>=0;i--)
     {
       string I = convertToString(i+1);
+
       formula_expression_ref p = def_parameter( "Mixture::p"+I, 1.0/N, between(0,1)); 
       formula_expression_ref m = prefix_formula(I, models[i]);
 
-      D = Tuple(p,m)&D;
-      V = p & V;
+      M = m & M;
+      P = p & P;
     }
-    formula_expression_ref R = (MixtureModel, (DiscreteDistribution,D));
+    formula_expression_ref R = (MixMixtureModels,P,M);
 
-    R.add_expression((distributed, V, Tuple(dirichlet_dist, get_tuple(vector<Double>(N,1.0) ) ) )) ;
+    R.add_expression((distributed, P, Tuple(dirichlet_dist, get_tuple(vector<Double>(N,1.0) ) ) )) ;
 
     return R;
   }

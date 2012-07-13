@@ -24,6 +24,8 @@ extern const expression_ref base_model;
 extern const expression_ref distribution;
 extern const expression_ref MultiRate;
 extern const expression_ref get_nth_mixture;
+extern const expression_ref UnwrapMM;
+extern const expression_ref MixMixtureModels;
 
 Program SModel_Functions();
 
