@@ -117,6 +117,27 @@ bool is_tuple_name(const string& s)
   return s == tuple_name(s.size()-1);
 }
 
+string print_list(const expression_ref& E)
+{
+  vector<string> V;
+  if (not is_exactly(E,":")) std::abort();
+
+  expression_ref E2 = E;
+  while(is_exactly(E2,":"))
+  {
+    assert(E2->size() == 2);
+    V.push_back(E2->sub[0]->print());
+    E2 = E2->sub[1];
+  }
+  if (is_exactly(E2,"[]"))
+    return "["+join(V,", ")+"]";
+  else {
+    V.push_back(E2->print());
+    return join(V,":");
+  }
+
+}
+
 // How do I make constructor-specific methods of printing data expressions?
 // Can I move to defining the print function using an expression?
 string expression::print() const 
@@ -201,7 +222,11 @@ string expression::print() const
 
     object_ptr<const Operator> O = ::is_a<Operator>(sub[i-1]);
 
+    // Don't parenthesize tuples
     if (O and is_tuple_name(O->name()) and sub[i-1]->size() == O->n_args()) continue;
+
+    // Don't parenthesize lists
+    if (O and O->name() == ":") continue;
 
     pargs[i] = "(" + args[i] + ")";
   }
@@ -212,7 +237,11 @@ string expression::print() const
     if (dynamic_pointer_cast<const Apply>(O))
       O_name = " ";
 
-    if (O->precedence() > -1 and size() == 2)
+    if (O->name() == ":")
+    {
+      return print_list(this);
+    }
+    else if (O->precedence() > -1 and size() == 2)
     {
       assert(O->n_args() == 2);
       if (sub[0]->size())
