@@ -220,8 +220,6 @@ public:
   void rename_parameter(int i, const std::string& s);
   int find_parameter(const std::string& s) const;
 
-  int add_note(const expression_ref&);
-
   bool is_fixed(int i) const;
   void set_fixed(int i,bool f);
   bool is_random_variable(int i) const;
@@ -310,6 +308,14 @@ public:
   virtual void update();
 
   virtual std::vector<std::string> show_priors() const;
+
+  int n_notes() const;
+
+  const std::vector<expression_ref>& get_notes() const;
+
+  const expression_ref get_note(int i) const;
+
+  int add_note(const expression_ref&);
 
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
 

@@ -59,33 +59,14 @@ using std::ostream;
 void add_MH_move(Probability_Model& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, 
 		 MCMC::MoveAll& M,double weight=1)
 {
-  if (name.size() and name[name.size()-1] == '*')
-  {
-    vector<int> indices = parameters_with_extension(P,name);
-    vector<string> names;
-    for(int i=0;i<indices.size();i++)
-      names.push_back(P.parameter_name(indices[i]));
-
-    if (names.empty()) return;
-
-    set_if_undef(P.keys, pname, sigma);
-    Proposal2 move_mu(p, names, vector<string>(1,pname), P);
-
-    if (move_mu.get_indices().size() > 0) {
-      string move_name = string("MH_sample_")+name;
+  vector<int> indices = parameters_with_extension(P,name);
+  for(int i=0;i<indices.size();i++) 
+    if (not P.is_fixed(indices[i])) {
+      set_if_undef(P.keys, pname, sigma);
+      Proposal2 move_mu(p, P.parameter_name(indices[i]), vector<string>(1,pname), P);
+      string move_name = string("MH_sample_")+P.parameter_name(indices[i]);
       M.add(weight, MCMC::MH_Move(move_mu, move_name));
     }
-  }
-  else {
-    vector<int> indices = parameters_with_extension(P,name);
-    for(int i=0;i<indices.size();i++) 
-      if (not P.is_fixed(indices[i])) {
-	set_if_undef(P.keys, pname, sigma);
-	Proposal2 move_mu(p, P.parameter_name(indices[i]), vector<string>(1,pname), P);
-	string move_name = string("MH_sample_")+P.parameter_name(indices[i]);
-	M.add(weight, MCMC::MH_Move(move_mu, move_name));
-      }
-  }
 }
 
 
@@ -154,6 +135,39 @@ void add_slice_moves(Probability_Model& P, const string& name,
 				     W,f1,f2)
 	  );
   }
+}
+
+#include "distribution-operations.H" // for prob_density
+
+vector<vector<string> > get_dirichlet_parameters(const Probability_Model& P)
+{
+  vector<vector<string> > names;
+
+  expression_ref query = (distributed, _2, Tuple((prob_density, _1 , _, _), _3));
+  for(int i=0;i<P.n_notes();i++)
+    if (is_exactly(P.get_note(i),"~"))
+    {
+      // If its a probability expression, then...
+      vector<expression_ref> results; 
+      if (not find_match(query, P.get_note(i), results))
+	throw myexception()<<"Expression '"<<P.get_note(i)<<"' is not a probability expression.";
+
+      string dist_name = *assert_is_a<String>(results[0]);
+      if (dist_name != "Dirichlet") continue;
+
+      expression_ref rand_var = results[1];
+      if (is_exactly(rand_var->head,":"))
+      {
+	vector<expression_ref> rand_vars = get_ref_vector_from_list(rand_var);
+	vector<string> var_names;
+	for(const auto& v: rand_vars)
+	  var_names.push_back(v->print());
+	names.push_back(var_names);
+      }
+      names.push_back({rand_var->print()});
+    }
+
+  return names;
 }
 
 
@@ -352,43 +366,13 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "lambda_scale", "lambda_slice_window", 1.0, slice_moves, 10);
   add_slice_moves(P, "*::M3::omega*", "M3::omega_slice_window", 1.0, slice_moves);
 
-  for(int s=0;s<=P.n_smodels();s++) 
+  vector<vector<string>> dirichlet_parameters = get_dirichlet_parameters(P);
+
+  int i=1;
+  for(const auto& p: dirichlet_parameters)
   {
-    string index = convertToString(s+1);
-    string prefix = "S" + index + "::";
-
-    if (s == P.n_smodels()) prefix = "";
-
-    add_dirichlet_slice_moves(P, prefix + "R::pi*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "R::1::pi*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "R::2::pi*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "R::3::pi*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "CAT::f*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "S::GTR::?", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "DP::f*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "DP::rate*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "INV::pi*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "v*", slice_moves, 3);
-    //    add_dirichlet_slice_moves(P, prefix + "b*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "M2::f*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "M2a::f*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "M3::f*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "M8b::f*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "multi::p*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "Mixture::p*", slice_moves, 3);
-    add_dirichlet_slice_moves(P, prefix + "branch-site::f*", slice_moves, 3);
-
-    if (s >= P.n_smodels()) continue;
-
-    // Handle multi-frequency models
-    object_ptr<const alphabet> a = P.get_alphabet_for_smodel(s);
-    const int asize = a->size();
-
-    for(int l=0;l<asize;l++) {
-      string pname = prefix+ "a" + a->lookup(l) + "*";
-      add_dirichlet_slice_moves(P, pname, slice_moves, 3);
-    }
-
+    string name = "dirichlet"+convertToString(i++);
+    add_dirichlet_slice_moves(P, name, p, slice_moves);
   }
 
 

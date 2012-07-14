@@ -364,6 +364,18 @@ vector<string> Model::show_priors() const
   return show_probability_expressions(C);
 }
 
+int Model::n_notes() const {return C.n_notes();}
+
+const std::vector<expression_ref>& Model::get_notes() const 
+{
+  return C.get_notes();
+}
+
+const expression_ref Model::get_note(int i) const 
+{
+  return C.get_note(i);
+}
+
 int Model::find_match_notes(const expression_ref& e, std::vector<expression_ref>& results, int start) const
 {
   return C.find_match_notes(e, results, start);
@@ -904,15 +916,6 @@ vector<int> parameters_with_extension(const vector<string>& M, string name)
     vector<string> pattern = split(M[i],"::");
 
     if (not path_match(key, pattern)) continue;
-
-    // check that all matching parameters have the same basename
-    vector<string> this_skeleton = pattern;
-    this_skeleton.pop_back();
-
-    if (not indices.size())
-      skeleton = this_skeleton;
-    else if (skeleton != this_skeleton)
-      throw myexception()<<"Key '"<<name<<"' matches both "<<join(skeleton,"::")<<" and "<<join(this_skeleton,"::")<<".";
 
     indices.push_back(i);
   }

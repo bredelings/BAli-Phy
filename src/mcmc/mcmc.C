@@ -1142,6 +1142,9 @@ void Sampler::check_moves(const owned_ptr<Probability_Model>& P) const
   std::cerr<<"\n";
   for(int p=0;p<P->n_parameters();p++)
   {
+    // FIXME - also warn if a TK affects a variable, but not that variable's co-distributed variables.
+    // Problem: that is a property of individual TKs, not aggregated TKs.
+
     if (P->is_random_variable(p) and not affected.count(p))
       std::cerr<<"Parameter '"<<P->parameter_name(p)<<"' is random, but is not affected by MCMC.\n";
     if (not P->is_random_variable(p) and affected.count(p))
