@@ -56,6 +56,30 @@ using std::ostream;
 /// \param M       The group of moves to which to add the newly-created sub-move
 /// \param weight  How often to run this move.
 ///
+void add_multi_param_MH_move(Probability_Model& P,const Proposal_Fn& p, const vector<string>& names, const string& mname, const string& pname,double sigma, 
+			     MCMC::MoveAll& M,double weight=1)
+{
+  if (not names.size()) std::abort();
+
+  set_if_undef(P.keys, pname, sigma);
+  Proposal2 move_mu(p, names, vector<string>(1,pname), P);
+
+  if (not move_mu.get_indices().size()) std::abort();
+
+  string move_name = string("MH_sample_")+mname;
+  M.add(weight, MCMC::MH_Move(move_mu, move_name));
+}
+
+/// \brief Add a Metropolis-Hastings sub-move for parameter name to M
+///
+/// \param P       The model that contains the parameters
+/// \param p       The proposal function
+/// \param name    The name of the parameter to create a move for
+/// \param pname   The name of the proposal width for this move
+/// \param sigma   A default proposal width, in case the user didn't specify one
+/// \param M       The group of moves to which to add the newly-created sub-move
+/// \param weight  How often to run this move.
+///
 void add_MH_move(Probability_Model& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, 
 		 MCMC::MoveAll& M,double weight=1)
 {
@@ -164,7 +188,8 @@ vector<vector<string> > get_dirichlet_parameters(const Probability_Model& P)
 	  var_names.push_back(v->print());
 	names.push_back(var_names);
       }
-      names.push_back({rand_var->print()});
+      else
+	throw myexception()<<"Dirichlet prior in '"<<P.get_note(i)<<"' appears malformed!.  No list of parameters?";
     }
 
   return names;
@@ -187,6 +212,8 @@ void add_dirichlet_slice_moves(Probability_Model& P, const string& move_name,
 			       )
 {
   if (indices.empty()) return;
+
+  if (indices.size() == 1) throw myexception()<<"Dirichlet move with only 1 parameter?";
 
   /// Create a parent move that will choose one child each time it is called
   MCMC::MoveOne M2(move_name);
@@ -230,25 +257,6 @@ void add_dirichlet_slice_moves(Probability_Model& P, const string& name,
     indices.push_back(index);
   }
 
-  add_dirichlet_slice_moves(P,string("slice_sample_")+name, indices, M, weight);
-}
-
-/// \brief Add a 1-D slice-sampling sub-move for a collection of parameters that sum to 1.
-///
-/// \param P             The model that contains the parameters
-/// \param name          The name of the parameter to create a move for
-/// \param pname         The name of the slice window width for this move
-/// \param W             The default window size, if not specified in P.keys
-/// \param M             The group of moves to which to add the newly-created sub-move
-/// \param weight        How often to run this move.
-///
-void add_dirichlet_slice_moves(Probability_Model& P, const string& name, 
-			       MCMC::MoveAll& M,
-			       double weight = 1
-			       )
-{
-  vector<int> indices = parameters_with_extension(P,name);
-  
   add_dirichlet_slice_moves(P,string("slice_sample_")+name, indices, M, weight);
 }
 
@@ -561,34 +569,31 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
 
   MoveAll parameter_moves("parameters");
 
-  // There's sum danger here that we could flip in a periodic fashion, and only observe variable when its True (or only if its False).
+  // Why 1.5?
+  // Well, there's sum danger here that we could flip in a periodic fashion, and only observe variable when its True (or only if its False).
   //  - It seems to be OK, though.  Why?
   //  - Note that this should only be an issue when this does not affect the likelihood.
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
-  add_MH_move(P, bit_flip,   "*::pos-selection", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
-  add_MH_move(P, bit_flip,   "lambda_scale_on", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
+  add_MH_move(P, bit_flip, "*::pos-selection", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
+  add_MH_move(P, bit_flip, "lambda_scale_on", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
+  add_MH_move(P, bit_flip, "*::M8b::omega3_non_zero", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
 
-  set_if_undef(P.keys,"pi_dirichlet_N",1.0);
-  unsigned total_length = 0;
-  for(int i=0;i<P.n_data_partitions();i++)
-    total_length += max(sequence_lengths(*P[i].A, P.T->n_leaves()));
-  P.keys["pi_dirichlet_N"] *= total_length;
-
-  for(int s=0;s<=P.n_smodels();s++) 
+  // FIXME - this might not work very well until I make these auto-tuning
+  vector<vector<string>> dirichlet_parameters = get_dirichlet_parameters(P);
+  int i=1;
+  for(const auto& p: dirichlet_parameters)
   {
-    string index = convertToString(s+1);
-    string prefix = "S" + index + "::";
+    string mname = "dirichlet"+convertToString(i);
+    string pname = "sigma"+convertToString(i++);
+    add_multi_param_MH_move(P, dirichlet_proposal, p, mname, pname, 1.0, parameter_moves);
+  }
 
-    if (s==P.n_smodels())
-      prefix = "";
-
-    add_MH_move(P, dirichlet_proposal,  prefix + "R::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-    add_MH_move(P, dirichlet_proposal,  prefix + "R::1::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-    add_MH_move(P, dirichlet_proposal,  prefix + "R::2::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-    add_MH_move(P, dirichlet_proposal,  prefix + "R::3::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-    
-    add_MH_move(P, dirichlet_proposal,  prefix + "INV::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
-    add_MH_move(P, dirichlet_proposal,  prefix + "VAR::pi*",    "pi_dirichlet_N",      1,  parameter_moves);
+  /*
+    set_if_undef(P.keys,"pi_dirichlet_N",1.0);
+    unsigned total_length = 0;
+    for(int i=0;i<P.n_data_partitions();i++)
+    total_length += max(sequence_lengths(*P[i].A, P.T->n_leaves()));
+    P.keys["pi_dirichlet_N"] *= total_length;
 
     set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
     if (s==0) P.keys["GTR_dirichlet_N"] *= 100;
@@ -618,8 +623,6 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     if (s==0) P.keys["M8b::f_dirichlet_N"] *= 10;
     add_MH_move(P, dirichlet_proposal,   prefix + "M8b::f*", "M8b::f_dirichlet_N",     1,  parameter_moves);
 
-    add_MH_move(P, bit_flip,   prefix + "M8b::omega3_non_zero", "M8b::f_dirichlet_N",     1,  parameter_moves);
-
     set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
     if (s==0) P.keys["multi::p_dirichlet_N"] *= 10;
     add_MH_move(P, dirichlet_proposal,   prefix + "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);
@@ -637,20 +640,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
     set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
     if (s==0) P.keys["Mixture::p_dirichlet_N"] *= 10*10;
     add_MH_move(P, dirichlet_proposal,         prefix + "Mixture::p*", "Mixture::p_dirichlet_N",     1,  parameter_moves);
-
-    if (s >= P.n_smodels()) continue;
-
-    // Handle multi-frequency models
-    set_if_undef(P.keys,"MF::dirichlet_N",10.0);
-
-    object_ptr<const alphabet> a = P.get_alphabet_for_smodel(s);
-    const int asize = a->size();
-
-    for(int l=0;l<asize;l++) {
-      string pname = prefix+ "a" + a->lookup(l) + "*";
-      add_MH_move(P, dirichlet_proposal, pname, "MF::dirichlet_N",     1,  parameter_moves);
-    }
-  }
+  */
 
   // FIXME - we need a proposal that sorts after changing
   //         then we can un-hack the recalc function in smodel.C
