@@ -70,6 +70,33 @@ void add_multi_param_MH_move(Probability_Model& P,const Proposal_Fn& p, const ve
   M.add(weight, MCMC::MH_Move(move_mu, move_name));
 }
 
+/// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
+void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector<string>& names, 
+		 const vector<string>& pnames, const vector<double>& pvalues,
+		 MCMC::MoveAll& M, double weight=1)
+{
+  // FIXME - Change names to vector<vector<string>>, and deduce a move name from pathname shared by all parameters.
+  // FIXME - then replace the routine above with this one!
+
+  // 1. Set the parameter values to their defaults, if they are not set yet.
+  if (pnames.size() != pvalues.size()) std::abort();
+
+  for(int i=0;i<pnames.size();i++)
+    set_if_undef(P.keys, pnames[i], pvalues[i]);
+
+  // 2. For each MCMC parameter, create a move for it.
+  for(const auto& parameter_name: names) 
+  {
+    int index = P.find_parameter(parameter_name);
+    assert(index != -1);
+    if (P.is_fixed(index)) continue;
+
+    Proposal2 proposal2(proposal, parameter_name, pnames, P);
+
+    M.add(weight, MCMC::MH_Move(proposal2, "MH_sample_"+parameter_name));
+  }
+}
+
 /// \brief Add a Metropolis-Hastings sub-move for parameter name to M
 ///
 /// \param P       The model that contains the parameters
@@ -80,17 +107,15 @@ void add_multi_param_MH_move(Probability_Model& P,const Proposal_Fn& p, const ve
 /// \param M       The group of moves to which to add the newly-created sub-move
 /// \param weight  How often to run this move.
 ///
-void add_MH_move(Probability_Model& P,const Proposal_Fn& p, const string& name, const string& pname,double sigma, 
+void add_MH_move(Probability_Model& P,const Proposal_Fn& proposal, const string& name, const string& pname,double sigma, 
 		 MCMC::MoveAll& M,double weight=1)
 {
   vector<int> indices = parameters_with_extension(P,name);
-  for(int i=0;i<indices.size();i++) 
-    if (not P.is_fixed(indices[i])) {
-      set_if_undef(P.keys, pname, sigma);
-      Proposal2 move_mu(p, P.parameter_name(indices[i]), vector<string>(1,pname), P);
-      string move_name = string("MH_sample_")+P.parameter_name(indices[i]);
-      M.add(weight, MCMC::MH_Move(move_mu, move_name));
-    }
+  vector<string> names;
+  for(int i: indices)
+    names.push_back(P.parameter_name(i));
+
+  add_MH_move(P, proposal, names, {pname}, {sigma}, M, weight);
 }
 
 
@@ -163,7 +188,7 @@ void add_slice_moves(Probability_Model& P, const string& name,
 
 #include "distribution-operations.H" // for prob_density
 
-vector<vector<string> > get_dirichlet_parameters(const Probability_Model& P)
+vector<vector<string> > get_distributed_parameters(const Probability_Model& P, const string& Dist)
 {
   vector<vector<string> > names;
 
@@ -177,7 +202,7 @@ vector<vector<string> > get_dirichlet_parameters(const Probability_Model& P)
 	throw myexception()<<"Expression '"<<P.get_note(i)<<"' is not a probability expression.";
 
       string dist_name = *assert_is_a<String>(results[0]);
-      if (dist_name != "Dirichlet") continue;
+      if (dist_name != Dist) continue;
 
       expression_ref rand_var = results[1];
       if (is_exactly(rand_var->head,":"))
@@ -189,7 +214,7 @@ vector<vector<string> > get_dirichlet_parameters(const Probability_Model& P)
 	names.push_back(var_names);
       }
       else
-	throw myexception()<<"Dirichlet prior in '"<<P.get_note(i)<<"' appears malformed!.  No list of parameters?";
+	names.push_back({rand_var->print()});
     }
 
   return names;
@@ -319,6 +344,73 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 
   add_MH_move(P, Between(-20,20,shift_cauchy), "lambda_scale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
 
+  // FIXME - this might not work very well until I make these auto-tuning
+  vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Dirichlet");
+  int i=1;
+  for(const auto& p: dirichlet_parameters)
+  {
+    string mname = "dirichlet"+convertToString(i);
+    string pname = "sigma"+convertToString(i++);
+    add_multi_param_MH_move(P, dirichlet_proposal, p, mname, pname, 1.0, MH_moves,0.1);
+  }
+
+  /*
+    Here are my hacky estimates of the jump size that is appropriate.
+    We should probably move this out of no-slice.
+
+    set_if_undef(P.keys,"pi_dirichlet_N",1.0);
+    unsigned total_length = 0;
+    for(int i=0;i<P.n_data_partitions();i++)
+    total_length += max(sequence_lengths(*P[i].A, P.T->n_leaves()));
+    P.keys["pi_dirichlet_N"] *= total_length;
+
+    set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
+    if (s==0) P.keys["GTR_dirichlet_N"] *= 100;
+    add_MH_move(P, dirichlet_proposal,  prefix + "S::GTR::?", "GTR_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"v_dirichlet_N",1.0);
+    if (s==0) P.keys["v_dirichlet_N"] *= total_length;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "v*", "v_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"b_dirichlet_N",1.0);
+    if (s==0) P.keys["b_dirichlet_N"] *= total_length;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "b_*", "b_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
+    if (s==0) P.keys["M2::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "M2::f*", "M2::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"M2a::f_dirichlet_N",1.0);
+    if (s==0) P.keys["M2a::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "M2a::f*", "M2a::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"M3::f_dirichlet_N",1.0);
+    if (s==0) P.keys["M3::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"M8b::f_dirichlet_N",1.0);
+    if (s==0) P.keys["M8b::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "M8b::f*", "M8b::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
+    if (s==0) P.keys["multi::p_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"DP::f_dirichlet_N",1.0);
+    if (s==0) P.keys["DP::f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
+    //FIXME - this should probably be 20*#rate_categories...
+    if (s==0) P.keys["DP::rate_dirichlet_N"] *= 10*10;
+    // add_MH_move(P, sorted(dirichlet_proposal), prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal, prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
+
+    set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
+    if (s==0) P.keys["Mixture::p_dirichlet_N"] *= 10*10;
+    add_MH_move(P, dirichlet_proposal,         prefix + "Mixture::p*", "Mixture::p_dirichlet_N",     1,  parameter_moves);
+  */
+
   return MH_moves;
 }
 
@@ -374,7 +466,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "lambda_scale", "lambda_slice_window", 1.0, slice_moves, 10);
   add_slice_moves(P, "*::M3::omega*", "M3::omega_slice_window", 1.0, slice_moves);
 
-  vector<vector<string>> dirichlet_parameters = get_dirichlet_parameters(P);
+  vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Dirichlet");
 
   int i=1;
   for(const auto& p: dirichlet_parameters)
@@ -570,77 +662,17 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   MoveAll parameter_moves("parameters");
 
   // Why 1.5?
-  // Well, there's sum danger here that we could flip in a periodic fashion, and only observe variable when its True (or only if its False).
+  // Well, there's some danger here that we could flip in a periodic fashion, and only observe variable when its True (or only if its False).
   //  - It seems to be OK, though.  Why?
   //  - Note that this should only be an issue when this does not affect the likelihood.
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
-  add_MH_move(P, bit_flip, "*::pos-selection", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
-  add_MH_move(P, bit_flip, "lambda_scale_on", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
-  add_MH_move(P, bit_flip, "*::M8b::omega3_non_zero", "M8b::f_dirichlet_N",     1,  parameter_moves, 1.5);
 
-  // FIXME - this might not work very well until I make these auto-tuning
-  vector<vector<string>> dirichlet_parameters = get_dirichlet_parameters(P);
-  int i=1;
-  for(const auto& p: dirichlet_parameters)
+  vector<vector<string>> bernoulli_parameters = get_distributed_parameters(P,"Bernoulli");
+  for(const auto& parameters: bernoulli_parameters)
   {
-    string mname = "dirichlet"+convertToString(i);
-    string pname = "sigma"+convertToString(i++);
-    add_multi_param_MH_move(P, dirichlet_proposal, p, mname, pname, 1.0, parameter_moves);
+    assert(parameters.size() == 1);
+    add_MH_move(P, bit_flip, parameters, {}, {}, parameter_moves, 1.5);
   }
-
-  /*
-    set_if_undef(P.keys,"pi_dirichlet_N",1.0);
-    unsigned total_length = 0;
-    for(int i=0;i<P.n_data_partitions();i++)
-    total_length += max(sequence_lengths(*P[i].A, P.T->n_leaves()));
-    P.keys["pi_dirichlet_N"] *= total_length;
-
-    set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
-    if (s==0) P.keys["GTR_dirichlet_N"] *= 100;
-    add_MH_move(P, dirichlet_proposal,  prefix + "S::GTR::?", "GTR_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"v_dirichlet_N",1.0);
-    if (s==0) P.keys["v_dirichlet_N"] *= total_length;
-    add_MH_move(P, dirichlet_proposal,  prefix +  "v*", "v_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"b_dirichlet_N",1.0);
-    if (s==0) P.keys["b_dirichlet_N"] *= total_length;
-    add_MH_move(P, dirichlet_proposal,  prefix +  "b_*", "b_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
-    if (s==0) P.keys["M2::f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,  prefix +  "M2::f*", "M2::f_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"M2a::f_dirichlet_N",1.0);
-    if (s==0) P.keys["M2a::f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,  prefix +  "M2a::f*", "M2a::f_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"M3::f_dirichlet_N",1.0);
-    if (s==0) P.keys["M3::f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"M8b::f_dirichlet_N",1.0);
-    if (s==0) P.keys["M8b::f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "M8b::f*", "M8b::f_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
-    if (s==0) P.keys["multi::p_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"DP::f_dirichlet_N",1.0);
-    if (s==0) P.keys["DP::f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
-    //FIXME - this should probably be 20*#rate_categories...
-    if (s==0) P.keys["DP::rate_dirichlet_N"] *= 10*10;
-    // add_MH_move(P, sorted(dirichlet_proposal), prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
-    add_MH_move(P, dirichlet_proposal, prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
-
-    set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
-    if (s==0) P.keys["Mixture::p_dirichlet_N"] *= 10*10;
-    add_MH_move(P, dirichlet_proposal,         prefix + "Mixture::p*", "Mixture::p_dirichlet_N",     1,  parameter_moves);
-  */
 
   // FIXME - we need a proposal that sorts after changing
   //         then we can un-hack the recalc function in smodel.C
