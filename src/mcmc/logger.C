@@ -193,7 +193,7 @@ string GetPriorFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 
 string GetAlignmentPriorFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
-  Parameters* PP = P.as<Parameters>();
+  Parameters& PP = *P.as<Parameters>();
   return convertToString(log(PP[p].prior_alignment()));
 }
 
