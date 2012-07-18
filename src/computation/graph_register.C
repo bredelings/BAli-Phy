@@ -344,6 +344,115 @@ expression_ref graph_normalize(const expression_ref& E)
   throw myexception()<<"graph_normalize: I don't recognize expression '"+ E->print() + "'";
 }
 
+expression_ref Fun_normalize_2(const expression_ref& E);
+expression_ref Fun_normalize(const expression_ref& E);
+
+expression_ref Fun_normalize_1(const expression_ref& E)
+{
+  // Constructor, Operator, or Literal constant (treated as 0-arg constructor).
+  // N' ( C x[i] ) = C x[i]
+  // N' ( O x[i] ) = O x[i]
+  if (is_a<constructor>(E) or is_a<Operation>(E) or (not E->size() and not is_a<dummy>(E)))
+    return E;
+  // N' ( e ) = N'' ( e )
+  else
+    return Fun_normalize_2(E);
+}
+
+expression_ref Fun_normalize_2(const expression_ref& E)
+{
+  // Lambda. N''( /\x.e ) = /\x.N''( e )
+  if (is_a<lambda>(E))
+  {
+    assert(E->size() == 2);
+    object_ptr<expression> V ( new expression(*E) );
+    V->sub[0] = Fun_normalize_2(E->sub[0]);
+    return V;
+  }
+  // Otherwise. N''( e ) = N( e )
+  else
+    return Fun_normalize(E);
+}
+
+/// Translate from language Basic to language Fun by introducing letrec expressions.  (arguments are already vars)
+expression_ref Fun_normalize(const expression_ref& E)
+{
+  // See "From Natural Semantics to C: A Formal Derivation of two STG machines."
+  //      by Alberto de la Encina and Ricardo Pena.
+
+  // 1. Var    N( x ) = x
+  if (is_a<dummy>(E)) return E;
+
+  // 2. Application: N (e x) = (N e) x                 if e is an application to anothe variable.
+  // 3. Application: N (e x) = let y = (N' e) in y x
+  if (is_a<Apply>(E))
+  {
+    if (is_a<Apply>(E->sub[0]))
+    {
+      object_ptr<expression> V ( new expression(*E) );
+      V->sub[0] = Fun_normalize( V->sub[0] );
+    }
+    else
+    {
+      int var_index = get_safe_binder_index(E->sub[0]);
+      expression_ref y = dummy(var_index++);
+      return let_expression(y, Fun_normalize_1(E->sub[0]), apply_expression(y, E->sub[1]) );
+    }
+  }
+
+  // 4. Lambda: N( /\x.e ) = let y=N'( /\x.e ) in y
+  if (object_ptr<const lambda> L = is_a<lambda>(E))
+  {
+    int var_index = get_safe_binder_index(E);
+    expression_ref y = dummy(var_index++);
+    return let_expression(y,Fun_normalize_1(E),y);
+  }
+
+  // 5. Constructor : N( C x[i] ) = let y=C x[i] in y
+  // 5ext: (partial) Literal constant.  Treat as 0-arg constructor. (We're assuming dummy's don't reach here.)
+  // 5ext: 
+  if (is_a<constructor>(E) or is_a<Operation>(E) or not E->size())
+  {
+    int var_index = get_safe_binder_index(E);
+    expression_ref y = dummy(var_index++);
+    return let_expression(y,Fun_normalize_1(E),y);
+  }
+
+  // 6. Let: N( let x[i] = e[i] in e ) = let x[i]=N'(e[i]) in N(e)
+  if (is_a<let_obj>(E))
+  {
+    object_ptr<expression> V ( new expression(*E) );
+
+    // Normalize the object
+    V->sub[0] = Fun_normalize(V->sub[0]);
+
+    const int L = (V->sub.size()-1)/2;
+
+    // Just normalize the bodies, not the vars
+    for(int i=0;i<L;i++)
+      V->sub[2 + 2*i] = Fun_normalize_1(V->sub[2 + 2*i]);
+
+    return V;
+  }
+
+  // 7. Case
+  object_ptr<const Case> IsCase = is_a<Case>(E);
+  if (IsCase)
+  {
+    object_ptr<expression> V ( E->clone() );
+
+    // Normalize the object
+    V->sub[0] = Fun_normalize(V->sub[0]);
+
+    const int L = (V->sub.size()-1)/2;
+    // Just normalize the bodies
+    for(int i=0;i<L;i++)
+      V->sub[2+2*i] = Fun_normalize(V->sub[2+2*i]);
+  }
+
+  throw myexception()<<"Fun_normalize: I don't recognize expression '"+ E->print() + "'";
+}
+
 
 reg& reg::operator=(reg&& R) noexcept
 {
