@@ -2399,6 +2399,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 	set_C(R, closure(index_var(0),{C}));
       }
 
+      // We don't return R, but instead return the first var after the reg-var chain.
       return C;
     }
 
