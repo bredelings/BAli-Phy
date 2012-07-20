@@ -383,11 +383,14 @@ expression_ref Fun_normalize(const expression_ref& E)
   // 1. Var    N( x ) = x
   if (is_reglike(E)) return E;
 
-  // 2. Application: N (e x) = (N e) x                 if e is an application to anothe variable.
+  // 2. Application: N (e x) = (N e) x                 if e is an application to another variable.
+  // 2. [missing!?]: N (y x) = y x
   // 3. Application: N (e x) = let y=(N' e) in y x
   if (is_a<Apply>(E))
   {
     assert(is_reglike(E->sub[1]));
+
+    if (is_reglike(E->sub[0])) return E;
 
     if (is_a<Apply>(E->sub[0]))
     {
@@ -413,7 +416,7 @@ expression_ref Fun_normalize(const expression_ref& E)
   // 5. Constructor : N( C x[i] ) = let y=C x[i] in y
   // 5ext: (partial) Literal constant.  Treat as 0-arg constructor. (We're assuming dummy's don't reach here.)
   // 5ext: 
-  if (is_a<constructor>(E) or is_a<Operation>(E) or not E->size())
+  if (is_a<constructor>(E) or is_a<Operation>(E) or (not E->size() and not is_reglike(E)))
   {
     int var_index = get_safe_binder_index(E);
     expression_ref y = dummy(var_index++);
