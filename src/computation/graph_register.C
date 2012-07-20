@@ -352,7 +352,7 @@ expression_ref Fun_normalize_1(const expression_ref& E)
   // Constructor, Operator, or Literal constant (treated as 0-arg constructor).
   // N' ( C x[i] ) = C x[i]
   // N' ( O x[i] ) = O x[i]
-  if (is_a<constructor>(E) or is_a<Operation>(E) or (not E->size() and not is_a<dummy>(E)))
+  if (is_a<constructor>(E) or is_a<Operation>(E) or (not E->size() and not is_reglike(E)))
     return E;
   // N' ( e ) = N'' ( e )
   else
@@ -381,12 +381,14 @@ expression_ref Fun_normalize(const expression_ref& E)
   //      by Alberto de la Encina and Ricardo Pena.
 
   // 1. Var    N( x ) = x
-  if (is_a<dummy>(E)) return E;
+  if (is_reglike(E)) return E;
 
   // 2. Application: N (e x) = (N e) x                 if e is an application to anothe variable.
-  // 3. Application: N (e x) = let y = (N' e) in y x
+  // 3. Application: N (e x) = let y=(N' e) in y x
   if (is_a<Apply>(E))
   {
+    assert(is_reglike(E->sub[1]));
+
     if (is_a<Apply>(E->sub[0]))
     {
       object_ptr<expression> V ( new expression(*E) );
@@ -401,7 +403,7 @@ expression_ref Fun_normalize(const expression_ref& E)
   }
 
   // 4. Lambda: N( /\x.e ) = let y=N'( /\x.e ) in y
-  if (object_ptr<const lambda> L = is_a<lambda>(E))
+  if (is_a<lambda>(E))
   {
     int var_index = get_safe_binder_index(E);
     expression_ref y = dummy(var_index++);
@@ -436,8 +438,7 @@ expression_ref Fun_normalize(const expression_ref& E)
   }
 
   // 7. Case
-  object_ptr<const Case> IsCase = is_a<Case>(E);
-  if (IsCase)
+  if (is_a<Case>(E))
   {
     object_ptr<expression> V ( E->clone() );
 
