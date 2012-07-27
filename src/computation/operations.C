@@ -61,6 +61,67 @@ std::string Apply::name() const {
   return "@";
 }
 
+// Multi-argument lambda-calculus reduction rules.
+//
+// 1.   /\x[1]...x[n].A             =>   /\x[1]...x[n].A
+// 2. @ /\x[1]...x[n].A p[1]...p[m] => @ /\x[1]...x[2].A p[1]...p[m]            if 1<=m<n
+// 3. @ /\x[1]...x[n].A p[1]...p[m] => A{x[i]->p[i]}                            if 1<=m=n
+// 4. @ /\x[1]...x[n].A p[1]...p[m] => let y=A{x[i]->p[i]} in y p[n+1] ... p[m] if 1<=n<m
+//
+// 5. @ (@ /\x[1]...x[n].A p[1]...p[m]) q[1]...q[o] => @ /\x[1]...x[n].A p[1]...p[m] ++ q[1]...q[o]
+//
+// 6. @ B p[1]...p[m] => B' [1]...p[m]  (if B => B').
+
+/*
+
+// Goal here: every closure should know the types of its arguments!
+closure MultiApply::operator()(OperationArgs& Args) const
+{
+  // Always start by evaluating the head.
+  closure C = Args.lazy_evaluate(0);
+
+  // Determine the arity of the lambda.
+  int lambda_arity = assert_is_a<multi_lambda>(C.exp)->n_args;
+
+  // 2. Not enough arguments evaluates to a partial application
+  if (is_a<multi_lambda>(C.exp))
+  {
+    if (n_args < lambda_arity)
+    {
+      C.exp = PAP(f,args);
+    }
+    // 3. Exactly enough arguments executes the code... that returns a closure?  Or what?
+    else if (n_args == lambda_arity)
+    {
+      C = ; // execute the function code.
+      // ??? But this needs to call back into the interpreter... right?
+    }
+    // 4. Too many arguments: let y = @ f p[1]...p[n] in @ y p[n+1] ... p[m]
+    else
+    {
+    }
+  }
+  // 5. Partial application applied to more arguments.
+  else if (is_a<pap>(C.exp))
+  {
+    
+  }
+
+  object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(1));
+  int arg = Args.current_closure().lookup_in_env( V->index );
+
+
+  C.exp = C.exp->sub[0];
+  C.Env.push_back(arg);
+  return C;
+}
+
+std::string MultiApply::name() const {
+  return "@";
+}
+
+*/
+
 closure Case::operator()(OperationArgs& Args) const
 {
   // Resizing of the memory can occur here, invalidating previously computed pointers
