@@ -238,7 +238,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("set",value<vector<string> >()->composing(),"Set parameter=<initial value>")
     ("fix",value<vector<string> >()->composing(),"Fix parameter[=<value>]")
     ("unfix",value<vector<string> >()->composing(),"Un-fix parameter[=<initial value>]")
-    ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.") 
+    ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
+    ("BUGS",value<string>(),"File containing heirarchical model description.")
     ;
 
   options_description model("Model options");
@@ -1258,6 +1259,19 @@ void set_foreground_branches(Parameters& P)
   }
 }
 
+
+void add_BUGS(const Parameters& P, const string& filename)
+{
+  checked_ifstream file(filename,"BUGS file");
+  vector<string> lines;
+
+  string line;
+  while(getline(file,line))
+    lines.push_back(line);
+
+  std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'";
+}
+
 /* 
  * 1. Add a PRANK-like initial algorithm.
  * 2. Add some kind of constraint.
@@ -1418,6 +1432,10 @@ int main(int argc,char* argv[])
     else
       throw myexception()<<"I don't understand --branch-prior argument '"<<branch_prior<<"'.\n  Only 'Exponential' and 'Gamma' are allowed.";
 
+    //------------- Parse the Hierarchical Model description -----------//
+    if (args.count("BUGS"))
+      add_BUGS(P,args["BUGS"].as<string>());
+      
     //-------------------- Log model -------------------------//
     log_summary(out_cache,out_screen,out_both,P,args);
 
