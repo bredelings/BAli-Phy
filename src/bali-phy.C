@@ -1293,7 +1293,11 @@ void add_BUGS(const Parameters& P, const string& filename)
     vector<string> tokens = tokenize(line);
     std::cerr<<join(tokens," : ")<<"\n";
 
-    // here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(prob_density,name,density,quantile),args)
+    // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
+    //  D is of the form (prob_density,name,density,quantile)
+    // The line should look like "x ~ name(args).
+    // - x should be a parameter or a tuple of parameters.
+    // - args should be a comma-separated list of haskell expressions.
   }
 }
 
