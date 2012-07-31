@@ -130,7 +130,6 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& proposal, const string&
 /// \param weight        How often to run this move.
 ///
 void add_slice_moves(Probability_Model& P, const string& name, 
-		     const string& pname, double W,
 		     MCMC::MoveAll& M,
 		     double weight = 1)
 {
@@ -139,13 +138,9 @@ void add_slice_moves(Probability_Model& P, const string& name,
   {
     if (P.is_fixed(indices[i])) continue;
 
-    // Use W as default window size of "pname" is not set.
-    set_if_undef(P.keys, pname, W);
-    W = P.keys[pname];
-
     M.add(weight, 
 	  MCMC::Parameter_Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
-				     indices[i],W)
+				     indices[i], 1.0)
 	  );
   }
 }
@@ -162,7 +157,6 @@ void add_slice_moves(Probability_Model& P, const string& name,
 /// \param weight        How often to run this move.
 ///
 void add_slice_moves(Probability_Model& P, const string& name, 
-		     const string& pname, double W,
 		     MCMC::MoveAll& M,
 		     double(&f1)(double),
 		     double(&f2)(double),
@@ -174,14 +168,10 @@ void add_slice_moves(Probability_Model& P, const string& name,
   {
     if (P.is_fixed(indices[i])) continue;
 
-    // Use W as default window size of "pname" is not set.
-    set_if_undef(P.keys, pname, W);
-    W = P.keys[pname];
-
     M.add(weight, 
 	  MCMC::Parameter_Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
 				     indices[i],
-				     W,f1,f2)
+				     1.0,f1,f2)
 	  );
   }
 }
@@ -417,7 +407,7 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 {
   MCMC::MoveAll slice_moves("parameters:scale:MH");
   for(int i=0;i<P.n_branch_means();i++)
-    add_slice_moves(P, "mu"+convertToString(i+1),      "mu_slice_window",    0.3, slice_moves);
+    add_slice_moves(P, "mu"+convertToString(i+1), slice_moves);
   return slice_moves;
 }
 
@@ -430,40 +420,38 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   MCMC::MoveAll slice_moves("parameters:slice");
 
   // scale parameters
-  add_slice_moves(P, "*::mu",      "mu_slice_window",    0.3, slice_moves);
   for(int i=0;i<P.n_branch_means();i++)
-    add_slice_moves(P, "*::mu"+convertToString(i+1),      "mu_slice_window",    0.3, slice_moves);
+    add_slice_moves(P, "*::mu"+convertToString(i+1), slice_moves);
 
   // smodel parameters
-  add_slice_moves(P, "*::HKY::kappa",      "kappa_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::rho",      "rho_slice_window",    0.2, slice_moves);
-  add_slice_moves(P, "*::TN::kappa(pur)",      "kappa_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::TN::kappa(pyr)",      "kappa_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::M0::omega",      "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::M2::omega",      "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::M2a::omega1",     "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::M2a::omega3",     "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::M8b::omega3",     "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::branch-site::w*", "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::branch-site::pos-w", "omega_slice_window",    0.3, slice_moves);
-  add_slice_moves(P, "*::branch-site::pos-p", "omega_fraction_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "*::INV::p",         "INV::p_slice_window", 0.1, slice_moves);
-  add_slice_moves(P, "*::f",      "f_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "*::g",      "g_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "*::h",      "h_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "*::beta::Var/mu",      "beta::mu_slice_window",    0.1, slice_moves);
-  add_slice_moves(P, "*::gamma::sigma/mu",      "gamma::sigma_slice_window",    1.0, slice_moves);
-  add_slice_moves(P, "*::beta::sigma/mu",      "beta::sigma_slice_window",    1.0, slice_moves);
-  add_slice_moves(P, "*::log-normal::sigma/mu",      "log-normal::sigma_slice_window",    1.0, slice_moves);
+  add_slice_moves(P, "*::HKY::kappa", slice_moves);
+  add_slice_moves(P, "*::rho", slice_moves);
+  add_slice_moves(P, "*::TN::kappa(pur)", slice_moves);
+  add_slice_moves(P, "*::TN::kappa(pyr)", slice_moves);
+  add_slice_moves(P, "*::M0::omega", slice_moves);
+  add_slice_moves(P, "*::M2::omega", slice_moves);
+  add_slice_moves(P, "*::M2a::omega1", slice_moves);
+  add_slice_moves(P, "*::M2a::omega3", slice_moves);
+  add_slice_moves(P, "*::M8b::omega3", slice_moves);
+  add_slice_moves(P, "*::branch-site::w*", slice_moves);
+  add_slice_moves(P, "*::branch-site::pos-w", slice_moves);
+  add_slice_moves(P, "*::branch-site::pos-p", slice_moves);
+  add_slice_moves(P, "*::INV::p", slice_moves);
+  add_slice_moves(P, "*::f", slice_moves);
+  add_slice_moves(P, "*::g", slice_moves);
+  add_slice_moves(P, "*::h", slice_moves);
+  add_slice_moves(P, "*::beta::Var/mu", slice_moves);
+  add_slice_moves(P, "*::gamma::sigma/mu", slice_moves);
+  add_slice_moves(P, "*::beta::sigma/mu", slice_moves);
+  add_slice_moves(P, "*::log-normal::sigma/mu", slice_moves);
 
   // imodel parameters
-  add_slice_moves(P, "*::delta",      "lambda_slice_window",    1.0, slice_moves, 10);
-  add_slice_moves(P, "*::lambda",      "lambda_slice_window",    1.0, slice_moves, 10);
-  add_slice_moves(P, "*::epsilon",     "epsilon_slice_window",   1.0,
-		  slice_moves,transform_epsilon,inverse_epsilon, 10);
+  add_slice_moves(P, "*::delta", slice_moves, 10);
+  add_slice_moves(P, "*::lambda", slice_moves, 10);
+  add_slice_moves(P, "*::epsilon", slice_moves,transform_epsilon,inverse_epsilon, 10);
 
-  add_slice_moves(P, "lambda_scale", "lambda_slice_window", 1.0, slice_moves, 10);
-  add_slice_moves(P, "*::M3::omega*", "M3::omega_slice_window", 1.0, slice_moves);
+  add_slice_moves(P, "lambda_scale", slice_moves, 10);
+  add_slice_moves(P, "*::M3::omega*", slice_moves);
 
   vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Dirichlet");
 
