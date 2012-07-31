@@ -1292,6 +1292,8 @@ void add_BUGS(const Parameters& P, const string& filename)
   {
     vector<string> tokens = tokenize(line);
     std::cerr<<join(tokens," : ")<<"\n";
+
+    // here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(prob_density,name,density,quantile),args)
   }
 }
 
