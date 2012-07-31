@@ -1259,17 +1259,40 @@ void set_foreground_branches(Parameters& P)
   }
 }
 
+vector<string> tokenize(const string& line)
+{
+  const string delimiters = "!#$%&*~|^@.?()[]{}/\\,;:=*`'\"+-<>";
+  const string whitespace = " \t\n\r";
+
+  vector<string> tokens;
+
+  int i=0;
+  string token;
+  while(get_word(token,i,line,delimiters,whitespace))
+    tokens.push_back(token);
+
+  return tokens;
+}
+
 
 void add_BUGS(const Parameters& P, const string& filename)
 {
   checked_ifstream file(filename,"BUGS file");
   vector<string> lines;
 
-  string line;
-  while(getline(file,line))
-    lines.push_back(line);
+  {
+    string line;
+    while(getline(file,line))
+      lines.push_back(line);
+  }
 
-  std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'";
+  std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
+
+  for(const auto& line: lines)
+  {
+    vector<string> tokens = tokenize(line);
+    std::cerr<<join(tokens," : ")<<"\n";
+  }
 }
 
 /* 
