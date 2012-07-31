@@ -123,9 +123,6 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& proposal, const string&
 ///
 /// \param P             The model that contains the parameters.
 /// \param name          The name of the parameter to create a move for.
-/// \param pname         The name of the slice window width for this move.
-/// \param W             The default window size, if not specified in P.keys
-/// \param b             Upper and lower bounds (if any)
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
@@ -149,8 +146,6 @@ void add_slice_moves(Probability_Model& P, const string& name,
 ///
 /// \param P             The model that contains the parameters
 /// \param name          The name of the parameter to create a move for
-/// \param pname         The name of the slice window width for this move
-/// \param W             The default window size, if not specified in P.keys
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param f1            The function from the parameter's scale to the transformed scale.
 /// \param f2            The inverse of f1.
