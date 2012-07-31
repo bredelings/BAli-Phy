@@ -126,6 +126,21 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& proposal, const string&
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
+void add_slice_move(Probability_Model& P, const string& parameter_name, MCMC::MoveAll& M, double weight = 1)
+{
+  int index = P.find_parameter(parameter_name);
+
+  M.add(weight, MCMC::Parameter_Slice_Move(string("slice_sample_")+parameter_name, index, 1.0) );
+}
+
+
+/// \brief Add a 1-D slice-sampling sub-move for parameter name to M
+///
+/// \param P             The model that contains the parameters.
+/// \param name          The name of the parameter to create a move for.
+/// \param M             The group of moves to which to add the newly-created sub-move
+/// \param weight        How often to run this move.
+///
 void add_slice_moves(Probability_Model& P, const string& name, 
 		     MCMC::MoveAll& M,
 		     double weight = 1)
@@ -406,6 +421,18 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
   return slice_moves;
 }
 
+void add_1D_slice_moves_for_distribution(Parameters& P, const string& dist_name, MCMC::MoveAll& M)
+{
+  vector<vector<string>> dist_parameters = get_distributed_parameters(P,dist_name);
+  for(const auto& p: dist_parameters)
+  {
+    if (p.size() != 1)
+      throw myexception()<<join(p,"&")<<" should not be jointly distributed!";
+    
+    add_slice_move(P, p[0], M);
+  }
+}
+
 /// \brief Construct 1-D slice-sampling moves for (some) scalar numeric parameters
 ///
 /// \param P   The model and state.
@@ -418,7 +445,20 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   for(int i=0;i<P.n_branch_means();i++)
     add_slice_moves(P, "*::mu"+convertToString(i+1), slice_moves);
 
-  // smodel parameters
+  // Add slice moves for continuous 1D distributions
+  add_1D_slice_moves_for_distribution(P, "LogLaplace", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "Uniform", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "Laplace", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "Cauchy", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "LogNormal", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "Normal", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "Beta", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "Gamma", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "LogGamma", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "Exponential", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "LogExponential", slice_moves);
+
+  /*    
   add_slice_moves(P, "*::HKY::kappa", slice_moves);
   add_slice_moves(P, "*::rho", slice_moves);
   add_slice_moves(P, "*::TN::kappa(pur)", slice_moves);
@@ -439,6 +479,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "*::gamma::sigma/mu", slice_moves);
   add_slice_moves(P, "*::beta::sigma/mu", slice_moves);
   add_slice_moves(P, "*::log-normal::sigma/mu", slice_moves);
+  */
 
   // imodel parameters
   add_slice_moves(P, "*::delta", slice_moves, 10);
