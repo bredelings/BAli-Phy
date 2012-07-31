@@ -163,12 +163,12 @@ void check_n_args(vector<string>& model_args, int m, int n = -1)
     if (n == 0)
       throw myexception()<<model_args[0]<<" does not take any arguments.";
     else
-      throw myexception()<<model_args[0]<<" only takes "<<n<<" arguments, but you supplied "<<model_args.size()-1<<".";
+      throw myexception()<<model_args[0]<<" only takes "<<n<<" arguments, but you supplied "<<n_args<<".";
   }
 
   if (n_args < m)
   {
-    throw myexception()<<model_args[0]<<" requires "<<n<<" arguments, but you only supplied "<<model_args.size()-1<<".";
+    throw myexception()<<model_args[0]<<" requires "<<m<<" arguments, but you only supplied "<<n_args<<".";
   }
 }
 
