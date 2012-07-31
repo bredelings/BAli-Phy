@@ -356,7 +356,6 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 
   /*
     Here are my hacky estimates of the jump size that is appropriate.
-    We should probably move this out of no-slice.
 
     set_if_undef(P.keys,"pi_dirichlet_N",1.0);
     unsigned total_length = 0;
