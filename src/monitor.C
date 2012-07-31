@@ -110,8 +110,9 @@ void print_stats(std::ostream& o, const Parameters& P, bool /* print_alignment *
   show_parameters(o,P);
   o.flush();
 
-  show_smodels(o,P);
-  o.flush();
+  //  This takes too much disk space!
+  //  show_smodels(o,P);
+  //  o.flush();
 
   // The leaf sequences should NOT change during alignment
 #ifndef NDEBUG
