@@ -32,12 +32,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "likelihood.H"
 #include "probability.H"
 
-#include "3way.H"
+#include "dp/3way.H"
 #include "tree-util.H"
-#include "alignment-sums.H"
+#include "dp/alignment-sums.H"
 #include "alignment-constraint.H"
-#include "substitution-index.H"
-#include "substitution.H"
+#include "substitution/substitution-index.H"
+#include "substitution/substitution.H"
 
 using MCMC::MoveStats;
 

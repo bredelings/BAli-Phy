@@ -30,7 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "util-random.H"
 #include "rng.H"
-#include "substitution-index.H"
+#include "substitution/substitution-index.H"
 
 using boost::dynamic_bitset;
 using std::vector;

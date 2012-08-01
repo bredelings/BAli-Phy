@@ -139,7 +139,7 @@ namespace mpi = boost::mpi;
 #include <boost/filesystem/operations.hpp>
 #include <boost/chrono.hpp>
 
-#include "substitution.H"
+#include "substitution/substitution.H"
 #include "myexception.H"
 #include "mytypes.H"
 #include "sequencetree.H"
@@ -152,7 +152,7 @@ namespace mpi = boost::mpi;
 #include "setup.H"
 #include "alignment-constraint.H"
 #include "alignment-util.H"
-#include "substitution-index.H"
+#include "substitution/substitution-index.H"
 #include "monitor.H"
 #include "pow2.H"
 #include "tree-util.H" //extends
@@ -161,6 +161,7 @@ namespace mpi = boost::mpi;
 #include "io.H"
 #include "tools/parsimony.H"
 #include "smodel/smodel.H"
+#include "BUGS.H"
 
 namespace fs = boost::filesystem;
 namespace chrono = boost::chrono;
@@ -238,7 +239,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("set",value<vector<string> >()->composing(),"Set parameter=<initial value>")
     ("fix",value<vector<string> >()->composing(),"Fix parameter[=<value>]")
     ("unfix",value<vector<string> >()->composing(),"Un-fix parameter[=<initial value>]")
-    ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.") 
+    ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
+    ("BUGS",value<string>(),"File containing heirarchical model description.")
     ;
 
   options_description model("Model options");
@@ -1418,6 +1420,10 @@ int main(int argc,char* argv[])
     else
       throw myexception()<<"I don't understand --branch-prior argument '"<<branch_prior<<"'.\n  Only 'Exponential' and 'Gamma' are allowed.";
 
+    //------------- Parse the Hierarchical Model description -----------//
+    if (args.count("BUGS"))
+      add_BUGS(P,args["BUGS"].as<string>());
+      
     //-------------------- Log model -------------------------//
     log_summary(out_cache,out_screen,out_both,P,args);
 

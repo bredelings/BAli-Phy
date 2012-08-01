@@ -34,7 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "logger.H"
 #include "util.H"
 
-#include "substitution.H"    // for get_model_probabilitiesby_alignment_column( )
+#include "substitution/substitution.H"    // for get_model_probabilitiesby_alignment_column( )
 
 #include "monitor.H"         // for show_smodel( )
 #include "n_indels.H"

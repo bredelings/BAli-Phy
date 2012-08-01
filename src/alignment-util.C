@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///
 
 #include "alignment-util.H"
-#include "substitution-index.H"
+#include "substitution/substitution-index.H"
 #include "util.H"
 #include "setup.H"
 #include "io.H"

@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "2way.H"
 #include "alignment-util.H"
-#include "substitution-index.H"
+#include "substitution/substitution-index.H"
 
 using namespace std;
 using boost::dynamic_bitset;

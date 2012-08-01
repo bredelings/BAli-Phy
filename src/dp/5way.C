@@ -29,7 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "logsum.H"
 #include "rng.H"
 #include "alignment-util.H"
-#include "substitution-index.H"
+#include "substitution/substitution-index.H"
 
 using boost::dynamic_bitset;
 using std::vector;

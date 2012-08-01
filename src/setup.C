@@ -35,7 +35,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alphabet.H"
 #include "alignment-util.H"
 #include "tree-util.H"
-#include "substitution-index.H"
+#include "substitution/substitution-index.H"
 #include "io.H"
 
 using std::ifstream;

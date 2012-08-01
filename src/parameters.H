@@ -36,13 +36,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "imodel.H"
 #include "alignment.H"
 #include "matcache.H"
-#include "substitution-cache.H"
-#include "substitution-index.H"
+#include "substitution/substitution-cache.H"
+#include "substitution/substitution-index.H"
 
 #include "tools/partition.H"
 #include "cow-ptr.H"
 #include "cached_value.H"
-#include "2way.H"
+#include "dp/2way.H"
 
 //------------------------------- parameter-containing class --------------------------//
 
