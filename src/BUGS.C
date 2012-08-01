@@ -28,8 +28,7 @@ bool parse_numbers(Iterator first, Iterator last, vector<double>& v)
 
     bool r = phrase_parse(first,last,
 			  (
-			   double_[push_back(phoenix::ref(v), _1)]
-			   >> *(',' >> double_[push_back(phoenix::ref(v), _1)])
+			   double_[push_back(phoenix::ref(v), _1)] % ','
 			   ),
 
         space
@@ -88,5 +87,6 @@ void add_BUGS(const Parameters& P, const string& filename)
     // - x should be a parameter or a tuple of parameters.
     // - args should be empty, or a comma-separated list of haskell expressions.
   }
+  exit(0);
 }
 
