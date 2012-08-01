@@ -161,6 +161,7 @@ namespace mpi = boost::mpi;
 #include "io.H"
 #include "tools/parsimony.H"
 #include "smodel/smodel.H"
+#include "BUGS.H"
 
 namespace fs = boost::filesystem;
 namespace chrono = boost::chrono;
@@ -1272,33 +1273,6 @@ vector<string> tokenize(const string& line)
     tokens.push_back(token);
 
   return tokens;
-}
-
-
-void add_BUGS(const Parameters& P, const string& filename)
-{
-  checked_ifstream file(filename,"BUGS file");
-  vector<string> lines;
-
-  {
-    string line;
-    while(getline(file,line))
-      lines.push_back(line);
-  }
-
-  std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
-
-  for(const auto& line: lines)
-  {
-    vector<string> tokens = tokenize(line);
-    std::cerr<<join(tokens," : ")<<"\n";
-
-    // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
-    //  D is of the form (prob_density,name,density,quantile)
-    // The line should look like "x ~ name(args).
-    // - x should be a parameter or a tuple of parameters.
-    // - args should be a comma-separated list of haskell expressions.
-  }
 }
 
 /* 
