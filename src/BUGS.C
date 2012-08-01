@@ -12,10 +12,58 @@ using std::string;
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_stl.hpp>
+#include <boost/fusion/include/adapt_struct.hpp>
+#include <boost/fusion/include/io.hpp>
 
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
 namespace phoenix = boost::phoenix;
+
+struct employee
+{
+    int age;
+    std::string surname;
+    std::string forename;
+    double salary;
+};
+
+BOOST_FUSION_ADAPT_STRUCT(
+    employee,
+    (int, age)
+    (std::string, surname)
+    (std::string, forename)
+    (double, salary)
+)
+
+template <typename Iterator>
+struct employee_parser : qi::grammar<Iterator, employee(), ascii::space_type>
+{
+    employee_parser() : employee_parser::base_type(start)
+    {
+        using qi::int_;
+        using qi::lit;
+        using qi::double_;
+        using qi::lexeme;
+        using ascii::char_;
+
+        quoted_string %= lexeme['"' >> +(char_ - '"') >> '"'];
+
+        start %=
+            lit("employee")
+            >> '{'
+            >>  int_ >> ','
+            >>  quoted_string >> ','
+            >>  quoted_string >> ','
+            >>  double_
+            >>  '}'
+            ;
+    }
+
+    qi::rule<Iterator, std::string(), ascii::space_type> quoted_string;
+    qi::rule<Iterator, employee(), ascii::space_type> start;
+};
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //  roman (numerals) grammar
@@ -110,6 +158,14 @@ void add_BUGS(const Parameters& P, const string& filename)
     else
       std::cerr<<"Parsing failed!\n";
 
+    employee_parser<string::const_iterator> g;
+    employee E;
+    string::const_iterator iter = line.begin();
+    using boost::spirit::ascii::space;
+    if (phrase_parse(iter, line.end(), g, space, E) and iter == line.end())
+    {
+      std::cerr<<"Employee phrase parse: "<<boost::fusion::as_vector(E)<<std::endl;
+    }
     
 
     // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
