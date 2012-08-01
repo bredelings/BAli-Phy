@@ -9,25 +9,35 @@ using std::string;
 
 #include <boost/config/warning_disable.hpp>
 #include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/phoenix_stl.hpp>
 
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
+namespace phoenix = boost::phoenix;
 
 template <typename Iterator>
-bool parse_numbers(Iterator first, Iterator last)
+bool parse_numbers(Iterator first, Iterator last, vector<double>& v)
 {
     using qi::double_;
     using qi::phrase_parse;
+    using qi::_1;
     using ascii::space;
+    using phoenix::push_back;
 
-    bool r = phrase_parse(
-        first,
-        last,
-        double_ >> *(',' >> double_),
+    bool r = phrase_parse(first,last,
+			  (
+			   double_[push_back(phoenix::ref(v), _1)]
+			   >> *(',' >> double_[push_back(phoenix::ref(v), _1)])
+			   ),
+
         space
     );
+
     if (first != last) // fail if we did not get a full match
         return false;
+
     return r;
 }
 
@@ -64,8 +74,9 @@ void add_BUGS(const Parameters& P, const string& filename)
   {
     vector<string> tokens = tokenize(line);
     std::cerr<<join(tokens," : ")<<"\n";
-    if (parse_numbers(line.begin(), line.end()))
-      std::cerr<<"Parsing succeeded!\n";
+    vector<double> v;
+    if (parse_numbers(line.begin(), line.end(), v))
+      std::cerr<<"Parsing succeeded: "<<join(v,",")<<"\n";
     else
       std::cerr<<"Parsing failed!\n";
 
