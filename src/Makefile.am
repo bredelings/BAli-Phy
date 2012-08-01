@@ -25,16 +25,16 @@ dist-hook: git_version.stamp
 
 #-----------------------------------------------------------------
 
-noinst_HEADERS = 2way.H dp-engine.H myexception.H sequencetree.H 3way.H \
-           dp-matrix.H mytypes.H setup.H 5way.H eigenvalue.H \
+noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H sequencetree.H dp/3way.H \
+           dp/dp-matrix.H mytypes.H setup.H dp/5way.H eigenvalue.H \
            n_indels.H smodel/smodel.H alignment-constraint.H exponential.H \
-           parameters.H substitution-cache.H alignment.H hmm.H pow2.H \
-           substitution.H alignment-sums.H imodel.H probability.H \
+           parameters.H substitution-cache.H alignment.H dp/hmm.H pow2.H \
+           substitution.H dp/alignment-sums.H imodel.H probability.H \
            substitution-index.H alignment-util.H likelihood.H mcmc/proposals.H \
            tree-branchnode.H alphabet.H log-double.H rates.H tree.H \
            bits.H logsum.H tree-util.H choose.H matcache.H  \
            rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
-           model.H sequence-format.H dp-array.H monitor.H sequence.H \
+           model.H sequence-format.H dp/dp-array.H monitor.H sequence.H \
            tools/bootstrap.H tools/inverse.H tools/statistics.H \
            tools/colors.H tools/joint-A-T.H  tools/stats-table.H \
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
@@ -91,11 +91,11 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C mcmc/moves.C \
           rng.C exponential.C eigenvalue.C parameters.C likelihood.C mcmc/mcmc.C \
 	  choose.C sequencetree.C mcmc/sample-branch-lengths.C \
 	  util.C randomtree.C alphabet.C smodel/smodel.C bali-phy.C \
-	  hmm.C dp-engine.C dp-array.C dp-matrix.C 3way.C 2way.C mcmc/sample-alignment.C \
-	  mcmc/sample-tri.C mcmc/sample-node.C imodel.C 5way.C mcmc/sample-topology-NNI.C \
+	  dp/hmm.C dp/dp-engine.C dp/dp-array.C dp/dp-matrix.C dp/3way.C dp/2way.C mcmc/sample-alignment.C \
+	  mcmc/sample-tri.C mcmc/sample-node.C imodel.C dp/5way.C mcmc/sample-topology-NNI.C \
 	  setup.C rates.C mcmc/sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
-	  alignment-sums.C alignment-util.C probability.C model.C \
+	  dp/alignment-sums.C alignment-util.C probability.C model.C \
 	  alignment-constraint.C substitution-cache.C \
 	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/partition.C mcmc/proposals.C n_indels.C distribution.C \

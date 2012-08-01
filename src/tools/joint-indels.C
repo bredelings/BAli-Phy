@@ -33,7 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "distance-methods.H"
 #include "joint-A-T.H"
 #include "partition.H"
-#include "2way.H"
+#include "dp/2way.H"
 
 using std::cin;
 using std::cout;

@@ -21,13 +21,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <cmath>
 #include "sample.H"
-#include "2way.H"
-#include "alignment-sums.H"
+#include "dp/2way.H"
+#include "dp/alignment-sums.H"
 #include "alignment-constraint.H"
 #include "alignment-util.H"
 #include "substitution.H"
 #include "substitution-index.H"
-#include "dp-matrix.H"
+#include "dp/dp-matrix.H"
 #include <boost/shared_ptr.hpp>
 #include "timer_stack.H"
 

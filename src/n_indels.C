@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "n_indels.H"
-#include "2way.H"
+#include "dp/2way.H"
 #include "util.H"
 
 using std::vector;

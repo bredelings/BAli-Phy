@@ -39,7 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "joint-A-T.H"
 #include "n_indels.H"
 
-#include "2way.H"
+#include "dp/2way.H"
 using namespace A2;
 
 using std::cin;

@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rng.H"
 #include <algorithm>
 #include "mcmc.H"
-#include "3way.H"
+#include "dp/3way.H"
 #include "likelihood.H"
 #include "util-random.H"
 #include "monitor.H"

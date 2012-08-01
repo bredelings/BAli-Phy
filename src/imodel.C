@@ -31,7 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "myexception.H"
 #include "probability.H"
 #include "util.H"
-#include "2way.H"
+#include "dp/2way.H"
 #include "logsum.H"
 
 using std::vector;

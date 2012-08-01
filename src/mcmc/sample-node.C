@@ -31,14 +31,14 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "bits.H"
 #include "util.H"
 #include "rng.H"
-#include "3way.H"
-#include "alignment-sums.H"
+#include "dp/3way.H"
+#include "dp/alignment-sums.H"
 #include "alignment-util.H"
 #include "alignment-constraint.H"
 #include "likelihood.H"    // for prior()
 #include "substitution-index.H"
 #include <boost/shared_ptr.hpp>
-#include "dp-array.H"
+#include "dp/dp-array.H"
 #include "timer_stack.H"
 
 //TODO - 1. calculate the probability of 

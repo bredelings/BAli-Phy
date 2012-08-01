@@ -26,7 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "probability.H"
 #include "alignment-util.H"
 #include "util.H"
-#include "2way.H"
+#include "dp/2way.H"
 
 efloat_t topology_weight(const Parameters& P, const SequenceTree& T) 
 {

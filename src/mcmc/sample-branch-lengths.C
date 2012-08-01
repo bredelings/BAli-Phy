@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sample.H"
 #include "mcmc.H"
 #include "util.H"
-#include "5way.H"
+#include "dp/5way.H"
 #include "substitution-cache.H"
 #include "substitution-index.H"
 #include "substitution.H"
