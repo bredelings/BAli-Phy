@@ -27,12 +27,14 @@ bool parse_numbers(Iterator first, Iterator last, vector<double>& v)
     using phoenix::push_back;
 
     bool r = phrase_parse(first,last,
+			  // Begin grammar
 			  (
-			   double_[push_back(phoenix::ref(v), _1)] % ','
+			   double_ % ','
 			   ),
+			  // End grammar
 
-        space
-    );
+			  space, v);
+
 
     if (first != last) // fail if we did not get a full match
         return false;
