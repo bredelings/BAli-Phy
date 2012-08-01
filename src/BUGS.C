@@ -17,6 +17,34 @@ namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
 namespace phoenix = boost::phoenix;
 
+///////////////////////////////////////////////////////////////////////////////
+//  roman (numerals) grammar
+//
+//      Note the use of the || operator. The expression
+//      a || b reads match a or b and in sequence. Try
+//      defining the roman numerals grammar in YACC or
+//      PCCTS. Spirit rules! :-)
+///////////////////////////////////////////////////////////////////////////////
+//[tutorial_roman_grammar
+template <typename Iterator>
+struct summer : qi::grammar<Iterator, double()>
+{
+  summer() : summer::base_type(start)
+  {
+    using qi::eps;
+    using qi::double_;
+    using qi::lit;
+    using qi::_val;
+    using qi::_1;
+    using ascii::char_;
+
+    start = eps[_val = 0.0] >> double_ [ _val += _1 ] % ',';
+  }
+
+  qi::rule<Iterator, double()> start;
+};
+
+
 template <typename Iterator>
 bool parse_numbers(Iterator first, Iterator last, vector<double>& v)
 {
@@ -75,9 +103,10 @@ void add_BUGS(const Parameters& P, const string& filename)
   {
     vector<string> tokens = tokenize(line);
     std::cerr<<join(tokens," : ")<<"\n";
-    vector<double> v;
-    if (parse_numbers(line.begin(), line.end(), v))
-      std::cerr<<"Parsing succeeded: "<<join(v,",")<<"\n";
+    double sum;
+    summer<string::const_iterator> sum_parser;
+    if (qi::parse(line.begin(), line.end(), sum_parser, sum))
+      std::cerr<<"Parsing succeeded: sum = "<<sum<<"\n";
     else
       std::cerr<<"Parsing failed!\n";
 
