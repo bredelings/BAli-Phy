@@ -1260,21 +1260,6 @@ void set_foreground_branches(Parameters& P)
   }
 }
 
-vector<string> tokenize(const string& line)
-{
-  const string delimiters = "!#$%&*~|^@.?()[]{}/\\,;:=*`'\"+-<>";
-  const string whitespace = " \t\n\r";
-
-  vector<string> tokens;
-
-  int i=0;
-  string token;
-  while(get_word(token,i,line,delimiters,whitespace))
-    tokens.push_back(token);
-
-  return tokens;
-}
-
 /* 
  * 1. Add a PRANK-like initial algorithm.
  * 2. Add some kind of constraint.
