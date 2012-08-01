@@ -44,6 +44,7 @@ closure Fun_normalize(closure&& C)
 closure context::preprocess(const closure& C) const
 {
   assert(let_float(C.exp)->print() == let_float(let_float(C.exp))->print());
+  //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
   return trim_normalize( indexify( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) );
 }
 
