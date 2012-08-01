@@ -40,7 +40,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H sequencetree.H dp/3way.H
            tools/distance-methods.H tools/optimize.H tools/tree-dist.H \
            tools/findroot.H tools/parsimony.H distribution.H tools/mctree.H \
            version.H cow-ptr.H tools/index-matrix.H cached_value.H \
-	   tools/consensus-tree.H tools/partition.H slice-sampling.H \
+	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
 	   timer_stack.H mcmc/setup.H probability-model.H owned-ptr.H \
 	   bounds.H io.H smodel/objects.H smodel/operations.H
 
@@ -99,7 +99,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution/substitution.C mcm
 	  alignment-constraint.C substitution/substitution-cache.C \
 	  monitor.C substitution/substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/partition.C mcmc/proposals.C n_indels.C distribution.C \
-	  tools/parsimony.C version.C slice-sampling.C timer_stack.C \
+	  tools/parsimony.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  setup-imodel.C smodel/objects.C computation/computation.C \
 	  computation/graph_register.C computation/program.C \
