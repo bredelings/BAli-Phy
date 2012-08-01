@@ -139,7 +139,7 @@ namespace mpi = boost::mpi;
 #include <boost/filesystem/operations.hpp>
 #include <boost/chrono.hpp>
 
-#include "substitution.H"
+#include "substitution/substitution.H"
 #include "myexception.H"
 #include "mytypes.H"
 #include "sequencetree.H"
@@ -152,7 +152,7 @@ namespace mpi = boost::mpi;
 #include "setup.H"
 #include "alignment-constraint.H"
 #include "alignment-util.H"
-#include "substitution-index.H"
+#include "substitution/substitution-index.H"
 #include "monitor.H"
 #include "pow2.H"
 #include "tree-util.H" //extends

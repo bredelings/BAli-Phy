@@ -36,7 +36,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/alignment-sums.H"
 #include "alignment-util.H"
 #include "alignment-constraint.H"
-#include "substitution-index.H"
+#include "substitution/substitution-index.H"
 #include <boost/numeric/ublas/io.hpp>
 #include "dp/dp-array.H"
 #include "timer_stack.H"

@@ -28,9 +28,9 @@ dist-hook: git_version.stamp
 noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H sequencetree.H dp/3way.H \
            dp/dp-matrix.H mytypes.H setup.H dp/5way.H eigenvalue.H \
            n_indels.H smodel/smodel.H alignment-constraint.H exponential.H \
-           parameters.H substitution-cache.H alignment.H dp/hmm.H pow2.H \
-           substitution.H dp/alignment-sums.H imodel.H probability.H \
-           substitution-index.H alignment-util.H likelihood.H mcmc/proposals.H \
+           parameters.H substitution/substitution-cache.H alignment.H dp/hmm.H pow2.H \
+           substitution/substitution.H dp/alignment-sums.H imodel.H probability.H \
+           substitution/substitution-index.H alignment-util.H likelihood.H mcmc/proposals.H \
            tree-branchnode.H alphabet.H log-double.H rates.H tree.H \
            bits.H logsum.H tree-util.H choose.H matcache.H  \
            rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
@@ -87,7 +87,7 @@ endif
 
 #-----------------------------------------------------------------
 
-bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C mcmc/moves.C \
+bali_phy_SOURCES = sequence.C tree.C alignment.C substitution/substitution.C mcmc/moves.C \
           rng.C exponential.C eigenvalue.C parameters.C likelihood.C mcmc/mcmc.C \
 	  choose.C sequencetree.C mcmc/sample-branch-lengths.C \
 	  util.C randomtree.C alphabet.C smodel/smodel.C bali-phy.C \
@@ -96,8 +96,8 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution.C mcmc/moves.C \
 	  setup.C rates.C mcmc/sample-two-nodes.C sequence-format.C \
 	  util-random.C alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
 	  dp/alignment-sums.C alignment-util.C probability.C model.C \
-	  alignment-constraint.C substitution-cache.C \
-	  monitor.C substitution-index.C tree-util.C myexception.C pow2.C \
+	  alignment-constraint.C substitution/substitution-cache.C \
+	  monitor.C substitution/substitution-index.C tree-util.C myexception.C pow2.C \
 	  tools/partition.C mcmc/proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
@@ -298,11 +298,11 @@ cut_range_SOURCES = tools/cut-range.C util.C
 
 #analyze_distances_SOURCES = tools/analyze_distances.C alignment.C alphabet.C \
 #	sequence.C tools/distance-methods.C \
-#	util.C sequencetree.C substitution.C eigenvalue.C tree.C \
+#	util.C sequencetree.C substitution/substitution.C eigenvalue.C tree.C \
 #	exponential.C smodel/setup.C smodel/smodel.C imodel.C rng.C likelihood.C \
 #	choose.C tools/optimize.C setup.C rates.C alignment-util.C \
 #	sequence-format.C randomtree.C model.C computation/graph_register.C  probability.C \
-#	substitution-cache.C substitution-index.C substitution-star.C tree-util.C \
+#	substitution/substitution-cache.C substitution/substitution-index.C substitution/substitution-star.C tree-util.C \
 #	alignment-random.C parameters.C myexception.C monitor.C \
 #	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
 #	timer_stack.C io.C computation/operator.C computation/expression.C smodel/objects.C \

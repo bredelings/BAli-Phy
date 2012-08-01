@@ -25,8 +25,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/alignment-sums.H"
 #include "alignment-constraint.H"
 #include "alignment-util.H"
-#include "substitution.H"
-#include "substitution-index.H"
+#include "substitution/substitution.H"
+#include "substitution/substitution-index.H"
 #include "dp/dp-matrix.H"
 #include <boost/shared_ptr.hpp>
 #include "timer_stack.H"

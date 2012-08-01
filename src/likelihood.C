@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "likelihood.H"
 #include "logsum.H"
-#include "substitution.H"
+#include "substitution/substitution.H"
 #include "setup.H"
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>

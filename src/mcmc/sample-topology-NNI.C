@@ -31,7 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/alignment-sums.H"
 #include "alignment-util.H"
 #include "tree-util.H"
-#include "substitution-index.H"
+#include "substitution/substitution-index.H"
 
 #include "dp/3way.H"
 #include "sample.H"

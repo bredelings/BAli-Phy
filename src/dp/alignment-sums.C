@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "alignment-sums.H"
 #include "likelihood.H"
-#include "substitution.H"
+#include "substitution/substitution.H"
 #include "util.H"
 
 using boost::dynamic_bitset;
