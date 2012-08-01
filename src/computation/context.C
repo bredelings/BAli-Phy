@@ -35,6 +35,12 @@ closure trim_normalize(closure&& C)
   return C;
 }
 
+closure Fun_normalize(closure&& C)
+{
+  C.exp = Fun_normalize(expression_ref(C.exp));
+  return C;
+}
+
 closure context::preprocess(const closure& C) const
 {
   assert(let_float(C.exp)->print() == let_float(let_float(C.exp))->print());
