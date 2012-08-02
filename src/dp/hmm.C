@@ -320,8 +320,13 @@ HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,do
   vector<int> temp;
   temp.reserve(nstates());
   order_.reserve(nstates()+1);
-  for(int S1=0;S1<nstates()+1;S1++) {
-    // FIXME - handle silent states that aren't in a network, and aren't the end state.
+  for(int S1=0;S1<nstates()+1;S1++) 
+  {
+    // FIXME - Handle silent states that aren't in a network, and aren't the end state.
+    //
+    //         They could go after all the emitting states, but might have particular ordering
+    //         constraints relative to other silent-cycle states and silent-non-cycle states.
+
     if (silent(S1))
       assert(silent_network(S1) or S1 == endstate());
 
