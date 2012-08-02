@@ -78,6 +78,10 @@ public:
 
   bitmask_t all_bits() const;
 
+  int n_characters() const;
+
+  void remap_bits(const std::vector<int>& map);
+
   /// Is state S a silent state?
   bool silent(int S) const {return state_emit[S].none();}
 

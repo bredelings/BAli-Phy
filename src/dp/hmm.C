@@ -272,6 +272,28 @@ HMM::bitmask_t HMM::all_bits() const
   return mask;
 }
 
+int HMM::n_characters() const
+{
+  return all_bits().count();
+}
+
+void HMM::remap_bits(const vector<int>& map)
+{
+  assert(map.size() == n_characters());
+  int B = map.size();
+  
+  vector<bitmask_t> state_emit2(state_emit.size());
+  for(int i=0;i<state_emit.size();i++)
+  {
+    bitmask_t mask;
+    for(int j=0;j<B;j++)
+      mask.set(map[j],state_emit[i].test(j));
+    state_emit2[i] = mask;
+  }
+
+  std::swap(state_emit, state_emit2);
+}
+
 // Don't scale Q and GQ until the end???
 HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
   :silent_network_(v1.size()),
