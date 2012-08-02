@@ -27,10 +27,10 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef DPMATRIX_H
 #define DPMATRIX_H
 
-#include "hmm.H"
+#include "dp_hmm.H"
 
 /// A generic class for performing dynamic programming computations with an HMM
-class DPengine: public HMM 
+class DPengine: public dp_HMM 
 {
 protected:
   efloat_t Pr_total;
@@ -55,6 +55,7 @@ public:
 
   void check_sampling_probability(const std::vector<int>& g_path) const;
 
+  DPengine(const HMM&);
   DPengine(const std::vector<bitmask_t>&,const std::vector<double>&,const Matrix&,double Temp);
 };
 

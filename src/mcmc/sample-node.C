@@ -132,14 +132,17 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   for(int i=1;i<nodes.size();i++)
     branches.push_back(T.branch(nodes[0],nodes[i]) );
 
-  mhmm m1 = P.get_branch_HMM(T.branch(nodes[1],nodes[0]));
+  HMM m1 = P.get_branch_HMM(T.branch(nodes[1],nodes[0]));
   m1.remap_bits({1,0});
-  mhmm m2 = P.get_branch_HMM(T.branch(nodes[2],nodes[0]));
+  HMM m2 = P.get_branch_HMM(T.branch(nodes[2],nodes[0]));
   m2.remap_bits({0,2});
-  mhmm m3 = P.get_branch_HMM(T.branch(nodes[3],nodes[0]));
+  HMM m3 = P.get_branch_HMM(T.branch(nodes[3],nodes[0]));
   m3.remap_bits({0,3});
 
-  mhmm m123 = Glue(m1,Glue(m2,m3));
+  HMM m123 = Glue(m1,Glue(m2,m3));
+  m123.hidden_bits.set(0);
+
+  // FIXME: Now we just need to construct seq123 and icol, jcol, and kcol
 
   const Matrix Q = createQ( P.get_branch_HMMs(branches) );
   vector<double> start_P = get_start_P( P.get_branch_HMMs(branches) );
@@ -154,9 +157,9 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
     int i2 = icol[c2];
     int j2 = jcol[c2];
     int k2 = kcol[c2];
-    Matrices->states(c2).reserve(Matrices->nstates());
-    for(int i=0;i<Matrices->nstates();i++) {
-      int S2 = Matrices->order(i);
+    Matrices->states(c2).reserve(Matrices->n_dp_states());
+    for(int i=0;i<Matrices->n_dp_states();i++) {
+      int S2 = Matrices->dp_order(i);
 
       //---------- Get (i1,j1,k1) ----------
       int i1 = i2;

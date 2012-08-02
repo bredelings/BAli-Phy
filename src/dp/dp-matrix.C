@@ -56,11 +56,11 @@ state_matrix::~state_matrix()
 inline void DPmatrix::clear_cell(int i2,int j2) 
 {
   scale(i2,j2) = INT_MIN;
-  for(int S=0;S<nstates();S++)
+  for(int S=0;S<n_dp_states();S++)
     (*this)(i2,j2,S) = 0;
 }
 
-// 1. order( ) must be considered here, because the 3-way HMM has
+// 1. dp_order( ) must be considered here, because the 3-way HMM has
 //     a silent state at 7.  
 // 2. Alternatively, we could just ignore S1==S2, since both the
 //     3-way and 1-way HMMs have no more than 1 silent state
@@ -76,11 +76,11 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
 
   double maximum = 0;
 
-  for(int s2=0;s2<nstates();s2++) 
+  for(int s2=0;s2<n_dp_states();s2++) 
   {
     double temp;
 
-    int S2 = order(s2);
+    int S2 = dp_order(s2);
     if (di(S2) or dj(S2))
       temp = start_P[S2];
     else {
@@ -88,7 +88,7 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
       temp = 0;
       // bound is s2, since this is only for silent states
       for(int s1=0;s1<s2;s1++)  {
-	int S1 = order(s1);
+	int S1 = dp_order(s1);
 
 	temp += (*this)(i2,j2,S1) * GQ(S1,S2);
       }
@@ -105,7 +105,7 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
   if (maximum > 0 and maximum < fp_scale::cutoff) {
     int logs = -(int)log2(maximum);
     double scale_ = pow2(logs);
-    for(int S2=0;S2<nstates();S2++) 
+    for(int S2=0;S2<n_dp_states();S2++) 
       (*this)(i2,j2,S2) *= scale_;
     scale(i2,j2) -= logs;
   }
@@ -232,7 +232,7 @@ void DPmatrix::compute_Pr_sum_all_paths()
   const int J = size2()-1;
 
   double total = 0.0;
-  for(int state1=0;state1<nstates();state1++)
+  for(int state1=0;state1<n_dp_states();state1++)
     total += (*this)(I,J,state1)*GQ(state1,endstate());
 
   Pr_total = pow(efloat_t(2.0),scale(I,J)) * total;
@@ -294,7 +294,7 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const
   int l = path.size()-1;
   int state2 = path[l];
 
-  vector<double> transition(nstates());
+  vector<double> transition(n_dp_states());
 
   //We should really stop when we reach the Start state.
   // - since the start state is simulated by a non-silent state
@@ -305,7 +305,7 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const
   //   is at path[-1]
   while (l>0) {
 
-    for(int state1=0;state1<nstates();state1++)
+    for(int state1=0;state1<n_dp_states();state1++)
       transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
 
     int state1 = path[l-1];
@@ -323,12 +323,12 @@ efloat_t DPmatrix::path_P(const vector<int>& path) const
   assert(i == 1 and j == 1);
 
   // include probability of choosing 'Start' vs ---+ !
-  for(int state1=0;state1<nstates();state1++)
+  for(int state1=0;state1<n_dp_states();state1++)
     transition[state1] = (*this)(1,1,state1) * GQ(state1,state2);
 
   // Get the probability that the previous state was 'Start'
   double p=0.0;
-  for(int state1=0;state1<nstates();state1++)  
+  for(int state1=0;state1<n_dp_states();state1++)  
     if (not silent(state1))
       p += choose_P(state1,transition);
 
@@ -352,7 +352,7 @@ vector<int> DPmatrix::sample_path() const
 
   int state2 = endstate();
 
-  vector<double> transition(nstates());
+  vector<double> transition(n_dp_states());
 
   //We should really stop when we reach the Start state.
   // - since the start state is simulated by a non-silent state
@@ -362,7 +362,7 @@ vector<int> DPmatrix::sample_path() const
   {
     path.push_back(state2);
 
-    for(int state1=0;state1<nstates();state1++)
+    for(int state1=0;state1<n_dp_states();state1++)
       transition[state1] = (*this)(i,j,state1)*GQ(state1,state2);
 
     int state1 = -1;
@@ -373,7 +373,7 @@ vector<int> DPmatrix::sample_path() const
     {
       std::cerr<<"(I,J) = ("<<I<<","<<J<<")\n";
       std::cerr<<"(i,i) = ("<<i<<","<<i<<")\n";
-      for(int state1=0;state1<nstates();state1++)
+      for(int state1=0;state1<n_dp_states();state1++)
 	std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
 
       c.prepend(__PRETTY_FUNCTION__);
@@ -403,12 +403,12 @@ DPmatrix::DPmatrix(int i1,
 		   const Matrix& M,
 		   double Beta)
   :DPengine(v1,v2,M,Beta),
-   state_matrix(i1,i2,nstates())
+   state_matrix(i1,i2,n_dp_states())
 {
   const int I = size1()-1;
   const int J = size2()-1;
 
-  for(int state1=0;state1<nstates();state1++)
+  for(int state1=0;state1<n_dp_states();state1++)
     (*this)(I,J,state1) = 0;
 }
 
@@ -422,9 +422,9 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2)
 
   double maximum = 0;
 
-  for(int s2=0;s2<nstates();s2++) 
+  for(int s2=0;s2<n_dp_states();s2++) 
   {
-    int S2 = order(s2);
+    int S2 = dp_order(s2);
 
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
@@ -434,12 +434,12 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2)
     if (dj(S2)) j1--;
 
     //--- compute arrival probability ----
-    int MAX = nstates();
+    int MAX = n_dp_states();
     if (not di(S2) and not dj(S2)) MAX = s2;
 
     double temp  = 0;
     for(int s1=0;s1<MAX;s1++) {
-      int S1 = order(s1);
+      int S1 = dp_order(s1);
 
       temp += (*this)(i1,j1,S1) * GQ(S1,S2);
     }
@@ -459,7 +459,7 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2)
   if (maximum > 0 and maximum < fp_scale::cutoff) {
     int logs = -(int)log2(maximum);
     double scale_ = pow2(logs);
-    for(int S2=0;S2<nstates();S2++) 
+    for(int S2=0;S2<n_dp_states();S2++) 
       (*this)(i2,j2,S2) *= scale_;
     scale(i2,j2) -= logs;
   }
@@ -591,9 +591,9 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
   // If we have silent states, then we have to process them in
   // the correct order: after all non-silent states and maybe
   // after some silent states.
-  assert(not silent(order(nstates()-1)));
+  assert(not silent(dp_order(n_dp_states()-1)));
 
-  for(int S2=0;S2<nstates();S2++) 
+  for(int S2=0;S2<n_dp_states();S2++) 
   {
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
@@ -604,7 +604,7 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 
     //--- Compute Arrival Probability ----
     double temp  = 0;
-    for(int S1=0;S1<nstates();S1++)
+    for(int S1=0;S1<n_dp_states();S1++)
       temp += (*this)(i1,j1,S1) * GQ(S1,S2);
 
     //--- Include Emission Probability----
@@ -636,7 +636,7 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
   if (maximum > 0 and maximum < fp_scale::cutoff) {
     int logs = -(int)log2(maximum);
     double scale_ = pow2(logs);
-    for(int S2=0;S2<nstates();S2++) 
+    for(int S2=0;S2<n_dp_states();S2++) 
       (*this)(i2,j2,S2) *= scale_;
     scale(i2,j2) -= logs;
   }
@@ -649,7 +649,7 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
 inline void DPmatrixConstrained::clear_cell(int i2,int j2) 
 {
   scale(i2,j2) = INT_MIN;
-  for(int S=0;S<nstates();S++)
+  for(int S=0;S<n_dp_states();S++)
     (*this)(i2,j2,S) = 0;
 }
 
@@ -752,7 +752,7 @@ efloat_t DPmatrixConstrained::path_P(const vector<int>& path) const
 
   efloat_t Pr=1.0;
 
-  vector<double> transition(nstates());
+  vector<double> transition(n_dp_states());
 
   //We should really stop when we reach the Start state.
   // - since the start state is simulated by a non-silent state
@@ -787,13 +787,13 @@ efloat_t DPmatrixConstrained::path_P(const vector<int>& path) const
   assert(i == 1 and j == 1);
 
   // include probability of choosing 'Start' vs ---+ !
-  transition.resize(nstates());
-  for(int S1=0;S1<nstates();S1++)
+  transition.resize(n_dp_states());
+  for(int S1=0;S1<n_dp_states();S1++)
     transition[S1] = (*this)(1,1,S1) * GQ(S1,S2);
 
   // Get the probability that the previous state was 'Start'
   double p=0.0;
-  for(int S1=0;S1<nstates();S1++)  
+  for(int S1=0;S1<n_dp_states();S1++)  
     if (not silent(S1))
       p += choose_P(S1,transition);
 
@@ -816,7 +816,7 @@ vector<int> DPmatrixConstrained::sample_path() const
   int i = I;
   int j = J;
 
-  vector<double> transition(nstates());
+  vector<double> transition(n_dp_states());
 
   //We should really stop when we reach the Start state.
   // - since the start state is simulated by a non-silent state
@@ -841,7 +841,7 @@ vector<int> DPmatrixConstrained::sample_path() const
     {
       std::cerr<<"(I,J) = ("<<I<<","<<J<<")\n";
       std::cerr<<"(i,i) = ("<<i<<","<<i<<")\n";
-      for(int state1=0;state1<nstates();state1++)
+      for(int state1=0;state1<n_dp_states();state1++)
 	std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
 
       c.prepend(__PRETTY_FUNCTION__);
