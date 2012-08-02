@@ -73,6 +73,9 @@ public:
   /// Probabilities of starting in each state
   std::vector<double> start_P;
 
+  /// Which bits are not considered emitted?
+  bitmask_t hidden_bits;
+
   /// bitmasks of whether states emit features in each sequence
   std::vector<bitmask_t> state_emit;
 
@@ -83,7 +86,7 @@ public:
   void remap_bits(const std::vector<int>& map);
 
   /// Is state S a silent state?
-  bool silent(int S) const {return state_emit[S].none();}
+  bool silent(int S) const {return (state_emit[S]&~hidden_bits).none();}
 
   /// Is state S part of a loop of silent states?  FIXME: s/network/cycle/...
   bool silent_network(int S) const;
