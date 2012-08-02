@@ -39,12 +39,12 @@ efloat_t DParray::path_P(const vector<int>& g_path) const
   int l=g_path.size()-1;
   int state2 = g_path[l];
 
-  vector<double> transition(nstates());
+  vector<double> transition(n_dp_states());
 
   efloat_t Pr=1.0;
   while (l>0) 
   {
-    for(int state1=0;state1<nstates();state1++)
+    for(int state1=0;state1<n_dp_states();state1++)
       transition[state1] = (*this)(i,state1)*GQ(state1,state2);
 
     int state1 = g_path[l-1];
@@ -59,12 +59,12 @@ efloat_t DParray::path_P(const vector<int>& g_path) const
   }
 
   // include probability of choosing 'Start' vs ---+ !
-  for(int state1=0;state1<nstates();state1++)
+  for(int state1=0;state1<n_dp_states();state1++)
     transition[state1] = (*this)(0,state1) * GQ(state1,state2);
 
   // Get the probability that the previous state was 'Start'
   double p=0.0;
-  for(int state1=0;state1<nstates();state1++)  
+  for(int state1=0;state1<n_dp_states();state1++)  
     if (not silent(state1))
       p += choose_P(state1,transition);
 
@@ -88,12 +88,12 @@ vector<int> DParray::sample_path() const {
 
   int state2 = endstate();
 
-  vector<double> transition(nstates());
+  vector<double> transition(n_dp_states());
 
   while(i >= 0) 
   {
     path.push_back(state2);
-    for(int state1=0;state1<nstates();state1++)
+    for(int state1=0;state1<n_dp_states();state1++)
       transition[state1] = (*this)(i,state1)*GQ(state1,state2);
 
     int state1 = -1;
@@ -104,7 +104,7 @@ vector<int> DParray::sample_path() const {
     {
       std::cerr<<"I = "<<I<<"\n";
       std::cerr<<"i = "<<i<<"\n";
-      for(int state1=0;state1<nstates();state1++)
+      for(int state1=0;state1<n_dp_states();state1++)
 	std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
 
       c.prepend(__PRETTY_FUNCTION__);
@@ -130,7 +130,7 @@ efloat_t DParray::Pr_sum_all_paths() const {
   const int I = size()-1;
 
   double total = 0.0;
-  for(int state1=0;state1<nstates();state1++)
+  for(int state1=0;state1<n_dp_states();state1++)
     total += (*this)(I,state1) * GQ(state1,endstate());
 
   return pow(efloat_t(2.0),scale(I)) * total;
@@ -141,7 +141,7 @@ efloat_t DParray::Pr_sum_all_paths() const {
 void DParray::set_length(int l)
 {
   length = l+1;
-  state_array::resize(length, nstates());
+  state_array::resize(length, n_dp_states());
 
   // clear the beginning of the array
   for(int s=0;s<start_P.size();s++)
@@ -167,7 +167,7 @@ efloat_t DParrayConstrained::path_P(const vector<int>& g_path) const
   int l=g_path.size()-1;
   int state2 = g_path[l];
 
-  vector<double> transition(nstates());
+  vector<double> transition(n_dp_states());
 
   efloat_t Pr=1.0;
   while (l>0) 
@@ -198,12 +198,12 @@ efloat_t DParrayConstrained::path_P(const vector<int>& g_path) const
   transition.resize(states(0).size());
 
   // include probability of choosing 'Start' vs ---+ !
-  for(int state1=0;state1<nstates();state1++)
+  for(int state1=0;state1<n_dp_states();state1++)
     transition[state1] = (*this)(0,state1) * GQ(state1,state2);
 
   // Get the probability that the previous state was 'Start'
   double p=0.0;
-  for(int state1=0;state1<nstates();state1++)  
+  for(int state1=0;state1<n_dp_states();state1++)  
     if (not silent(state1))
       p += choose_P(state1,transition);
 
@@ -221,7 +221,7 @@ vector<int> DParrayConstrained::sample_path() const {
 
   int state2 = endstate();
 
-  vector<double> transition(nstates());
+  vector<double> transition(n_dp_states());
 
   while(i >= 0) {
     path.push_back(state2);
@@ -239,7 +239,7 @@ vector<int> DParrayConstrained::sample_path() const {
     {
       std::cerr<<"I = "<<I<<"\n";
       std::cerr<<"i = "<<i<<"\n";
-      for(int state1=0;state1<nstates();state1++)
+      for(int state1=0;state1<n_dp_states();state1++)
 	std::cerr<<"transition["<<state1<<"] = "<<transition[state1]<<std::endl;
 
       c.prepend(__PRETTY_FUNCTION__);

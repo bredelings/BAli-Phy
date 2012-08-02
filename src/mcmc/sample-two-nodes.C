@@ -172,9 +172,9 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   // collect the silent-or-correct-emissions for each type columns
   vector< vector<int> > allowed_states_for_mask(16);
   for(auto& m: allowed_states_for_mask)
-    m.reserve(Matrices->nstates());
+    m.reserve(Matrices->n_dp_states());
 
-  for(int i=0;i<Matrices->nstates();i++) 
+  for(int i=0;i<Matrices->n_dp_states();i++) 
   {
     int S2 = Matrices->order(i);
     int state2 = A5::states_list[S2] & 15; // 4 bits = 1+2+4+8
@@ -192,8 +192,8 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
     allowed_states.clear();
 
     if (c2 == 0) {
-      allowed_states.reserve(Matrices->nstates());
-      for(int i=0;i<Matrices->nstates();i++)
+      allowed_states.reserve(Matrices->n_dp_states());
+      for(int i=0;i<Matrices->n_dp_states();i++)
 	allowed_states.push_back(Matrices->order(i));
     }
     else {

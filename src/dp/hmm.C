@@ -1,3 +1,4 @@
+#undef NDEBUG
 /*
    Copyright (C) 2004-2007 Benjamin Redelings
 
@@ -368,11 +369,11 @@ HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,do
 #endif
 
 #ifndef NDEBUG
-  for(int s1=0;s1<nstates();s1++) {
+  for(int s1=0;s1<n_dp_states();s1++) {
     int S1 = order(s1);
     if (not silent(S1)) continue;
 
-    for(int s2=s1;s2<nstates();s2++) {
+    for(int s2=s1;s2<n_dp_states();s2++) {
       int S2 = order(s2);
       assert(not connected(S1,S2));
     }
@@ -579,3 +580,20 @@ mhmm Glue(const mhmm& top, const mhmm& bottom)
 
   return G;
 }
+
+
+/*
+  OK, to how are the state indices used?
+  - we need to store their emission patterns
+  - we need to index into the DP table
+  - 
+
+  Q: When would the start state be part of the DP table?
+  A: It must be part of the DP table if it exists and any other state transitions to it. 
+  A: Determining reachable states might depend on whether you start from (a) start or (b) start_p.
+     Perhaps it should.
+  A: OK, lets go with the theory that the states in order_ should be the DP states.
+  A: Thus, End should be in order iff End is in the DP table.
+  A: However, End should always be ALLOWED to be in the DP table.  Hence we put End in order_,
+     check order_, and then remove end_.
+ */

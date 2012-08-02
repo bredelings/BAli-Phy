@@ -94,6 +94,8 @@ public:
   /// What is the n-th state, in the correct order for DP?
   int order(int i) const {assert(i <= nstates()+1);  return order_[i];}
 
+  int n_dp_states() const {assert(state_emit.size()-1 == order_.size()); return order_.size();}
+
   /// Number of states, minus the end state
   int nstates() const {return state_emit.size()-1;}
 
