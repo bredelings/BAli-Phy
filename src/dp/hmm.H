@@ -54,7 +54,7 @@ public:
   /// The transition matrix for the HMM
   Matrix Q;
 
-  /// The 'temperature' parameter - e.g. scale log(P) => log(P)/T
+  /// The inverse temperature parameter - it is applied only to emission likelihoods.
   double B;
 
   /// Which bits are not considered emitted?
