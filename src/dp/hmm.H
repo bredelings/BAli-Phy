@@ -91,19 +91,19 @@ public:
   /// Is state S part of a loop of silent states?  FIXME: s/network/cycle/...
   bool silent_network(int S) const;
 
-  /// What is the n-th state, in the correct order for DP?
-  int order(int i) const {assert(i <= nstates()+1);  return order_[i];}
+  int n_dp_states() const {return order_.size();}
 
-  int n_dp_states() const {assert(state_emit.size()-1 == order_.size()); return order_.size();}
+  /// What is the n-th state, in the correct order for DP?
+  int order(int i) const {assert(i < order_.size());  return order_[i];}
 
   /// Number of states, minus the end state
-  int nstates() const {return state_emit.size()-1;}
+  int n_states() const {return state_emit.size();}
 
   /// The index of the start state
   int startstate() const {return -1;}
 
   /// The index of the end state
-  int endstate() const {return nstates();}
+  int endstate() const {return n_states()-1;}
 
   /// Convert a path to a generalized path
   std::vector<int> generalize(const std::vector<int>& path) const;

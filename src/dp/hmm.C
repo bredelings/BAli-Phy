@@ -37,7 +37,7 @@ using std::valarray;
 
 // Is this state silent and in a loop of silent states?
 bool HMM::silent_network(int S) const {
-  assert(S <= nstates()+1);
+  assert(S <= n_states());
   return (silent_network_[S] != -1);
 }
 
@@ -153,7 +153,7 @@ efloat_t HMM::generalize_P(const vector<int>& path) const {
 efloat_t HMM::path_Q_path(const vector<int>& path) const {
 
   efloat_t Pr = 0.0;
-  for(int S=0;S<nstates();S++)
+  for(int S=0;S<n_states()-1;S++)
     if (not silent(S))
       Pr += start_P[S] * Q(S,path[0]);
 
@@ -166,7 +166,7 @@ efloat_t HMM::path_Q_path(const vector<int>& path) const {
 efloat_t HMM::path_GQ_path(const vector<int>& g_path) const {
 
   efloat_t Pr = 0.0;
-  for(int S=0;S<nstates();S++)
+  for(int S=0;S<n_states()-1;S++)
     if (not silent(S))
       Pr += start_P[S] * GQ(S,g_path[0]);
 
@@ -220,7 +220,7 @@ void HMM::find_and_index_silent_network_states()
 
   //--------------------- Find silent states ------------------------//
   S.clear();
-  for(int i=0;i<nstates();i++)
+  for(int i=0;i<n_states()-1;i++)
     if (silent(i))
       S.push_back(i);
 
@@ -319,9 +319,9 @@ HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,do
   //----------------------  Compute the state order -----------------------//
   // FIXME - I think that perhaps the endstate must be last?  If so, why?
   vector<int> temp;
-  temp.reserve(nstates());
-  order_.reserve(nstates()+1);
-  for(int S1=0;S1<nstates()+1;S1++) 
+  temp.reserve(n_states()-1);
+  order_.reserve(n_states());
+  for(int S1=0;S1<n_states();S1++) 
   {
     // FIXME - Handle silent states that aren't in a network, and aren't the end state.
     //
@@ -343,8 +343,8 @@ HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,do
   //------------ Compute the Generalized Transition Matrix, if we've got silent_network states
 
   //index the non silent network states
-  non_silent_network.reserve(nstates()+1);
-  for(int S=0;S<nstates()+1;S++)
+  non_silent_network.reserve(n_states());
+  for(int S=0;S<n_states();S++)
     if (not silent_network(S))
       non_silent_network.push_back(S);
 
