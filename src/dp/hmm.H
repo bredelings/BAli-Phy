@@ -94,6 +94,8 @@ public:
   /// Number of states, minus the end state
   int nstates() const {return state_emit.size()-1;}
 
+  int startstate() const {return -1;}
+
   /// The index of the end state
   int endstate() const {return nstates();}
 
