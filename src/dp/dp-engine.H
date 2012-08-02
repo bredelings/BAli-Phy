@@ -30,7 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "hmm.H"
 
 /// A generic class for performing dynamic programming computations with an HMM
-class DPengine: public HMM 
+class DPengine: public dp_HMM 
 {
 protected:
   efloat_t Pr_total;

@@ -36,7 +36,7 @@ using std::vector;
 using std::valarray;
 
 // Is this state silent and in a loop of silent states?
-bool HMM::silent_network(int S) const {
+bool dp_HMM::silent_network(int S) const {
   assert(S <= n_states());
   return (silent_network_[S] != -1);
 }
@@ -44,7 +44,7 @@ bool HMM::silent_network(int S) const {
 /// Replace a sequence of silent_network states with just
 /// the first state in the sequence, producing a path that
 /// would be emitted from the generalized HMM.
-vector<int> HMM::generalize(const vector<int>& path) const {
+vector<int> dp_HMM::generalize(const vector<int>& path) const {
   vector<int> g_path = path;
   for(int i=g_path.size()-1;i>0;i--) {
     int S1 = g_path[i-1];
@@ -61,7 +61,7 @@ vector<int> HMM::generalize(const vector<int>& path) const {
 /// and the distribution is chosen so that sampling from the generalized
 /// HMM and then ungeneralizing is like sampling from the ungeneralized
 /// HMM. (But we can't sample from the ungeneralized HMM using DP)
-vector<int> HMM::ungeneralize(const vector<int>& g_path) const {
+vector<int> dp_HMM::ungeneralize(const vector<int>& g_path) const {
   vector<int> path = g_path;
 
   // Go backwards along the path, expanding silent states
@@ -103,7 +103,7 @@ vector<int> HMM::ungeneralize(const vector<int>& g_path) const {
   return path;
 }
 
-efloat_t HMM::generalize_P_one(vector<int>::const_iterator s1,int n) const 
+efloat_t dp_HMM::generalize_P_one(vector<int>::const_iterator s1,int n) const 
 {
   efloat_t Pr = 1;
 
@@ -131,7 +131,7 @@ efloat_t HMM::generalize_P_one(vector<int>::const_iterator s1,int n) const
 
 /// What is the probability that the generalized path corresponding to this
 /// path would emit this ungeneralized path?
-efloat_t HMM::generalize_P(const vector<int>& path) const {
+efloat_t dp_HMM::generalize_P(const vector<int>& path) const {
   efloat_t Pr = 1;
   for(int i=0; i<path.size()-1; i++) {
     if (silent_network(path[i])) {
@@ -150,8 +150,8 @@ efloat_t HMM::generalize_P(const vector<int>& path) const {
 //      else
 //	Pr += log(1.0-exp(Q(S1,S1)));
 
-efloat_t HMM::path_Q_path(const vector<int>& path) const {
-
+efloat_t HMM::path_Q_path(const vector<int>& path) const 
+{
   efloat_t Pr = 0.0;
   for(int S=0;S<n_states()-1;S++)
     if (not silent(S))
@@ -163,7 +163,7 @@ efloat_t HMM::path_Q_path(const vector<int>& path) const {
   return Pr;
 }
 
-efloat_t HMM::path_GQ_path(const vector<int>& g_path) const {
+efloat_t dp_HMM::path_GQ_path(const vector<int>& g_path) const {
 
   efloat_t Pr = 0.0;
   for(int S=0;S<n_states()-1;S++)
@@ -213,7 +213,7 @@ void GQ_exit(Matrix& G,const vector<int>& silent,const vector<int>& non_silent)
 
 // The start state could be in this list, but only if its reachable from itself.
 // The end state should never be, because it is not reachable from itself.  Therefore it can't be in a cycle.
-void HMM::find_and_index_silent_network_states() 
+void dp_HMM::find_and_index_silent_network_states() 
 {
   vector<int>& S = silent_network_states;
   vector<int>& s = silent_network_;
@@ -257,7 +257,7 @@ void HMM::find_and_index_silent_network_states()
 }
 
 
-void HMM::update_GQ()
+void dp_HMM::update_GQ()
 {
   GQ = Q;
 
@@ -313,13 +313,22 @@ HMM::HMM(const vector<bitmask_t>& bitmasks, const vector<double>& start_p,const 
 
 // Don't scale Q and GQ until the end???
 HMM::HMM(const vector<bitmask_t>& bitmasks, int start_index, int end_index, const vector<double>& start_p,const Matrix& M,double Beta)
-  :silent_network_(bitmasks.size()),
-   state_emit(bitmasks),
+  :state_emit(bitmasks),
    start(start_index),
    end(end_index),
    start_P(start_p),
-   Q(M),GQ(M.size1(),M.size2()),
+   Q(M),
    B(Beta)
+{
+  assert(Q.size1() >= n_states());
+  assert(Q.size2() >= n_states());
+}
+
+// Don't scale Q and GQ until the end???
+dp_HMM::dp_HMM(const HMM& H)
+  :HMM(H),
+   silent_network_(n_states()),
+   GQ(n_states(),n_states())
 {
   //--------------- Find and index nodes in silent networks ---------------//
   find_and_index_silent_network_states();
