@@ -325,7 +325,9 @@ HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,do
     if (silent(S1))
       assert(silent_network(S1) or S1 == endstate());
 
-    if (silent(S1))
+    if (S1 == endstate())
+      ;
+    else if (silent(S1))
       temp.push_back(S1);
     else
       order_.push_back(S1);
@@ -371,6 +373,13 @@ HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,do
     }
   }
 #endif
+
+  // At the moment, the DP table state (in dp_order) are not allowed to contain the start or end state.
+  for(int i: order_)
+  {
+    assert(i != startstate());
+    assert(i != endstate());
+  }
 }
 
 
