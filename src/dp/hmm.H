@@ -46,7 +46,7 @@ class HMM {
   std::vector<int> non_silent_network;
 
   /// An ordered list of states, for DP
-  std::vector<int> order_;
+  std::vector<int> dp_order_;
 
   efloat_t generalize_P_one(std::vector<int>::const_iterator,int) const;
 
@@ -97,10 +97,10 @@ public:
   /// Is state S part of a loop of silent states?  FIXME: s/network/cycle/...
   bool silent_network(int S) const;
 
-  int n_dp_states() const {return order_.size();}
+  int n_dp_states() const {return dp_order_.size();}
 
   /// What is the n-th state, in the correct order for DP?
-  int order(int i) const {assert(i < order_.size());  return order_[i];}
+  int dp_order(int i) const {assert(i < dp_order_.size());  return dp_order_[i];}
 
   /// Number of states, minus the end state
   int n_states() const {return state_emit.size();}
@@ -128,8 +128,11 @@ public:
 
   HMM(const indel::PairHMM&);
 
-  /// Construct an HMM from the emission characteristics of the states, the start probabilities, and the transition matrix
+  /// Construct an HMM from the states emit bitmasks, the start probabilities, and the transition matrix
   HMM(const std::vector<bitmask_t>&,const std::vector<double>&,const Matrix&,double);
+
+  /// Construct an HMM from the states emit bitmasks, the start and end states, the start probabilities, and the transition matrix
+  HMM(const std::vector<bitmask_t>&, int, int, const std::vector<double>&,const Matrix&,double);
 
   virtual ~HMM() {}
 };

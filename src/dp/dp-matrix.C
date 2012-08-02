@@ -60,7 +60,7 @@ inline void DPmatrix::clear_cell(int i2,int j2)
     (*this)(i2,j2,S) = 0;
 }
 
-// 1. order( ) must be considered here, because the 3-way HMM has
+// 1. dp_order( ) must be considered here, because the 3-way HMM has
 //     a silent state at 7.  
 // 2. Alternatively, we could just ignore S1==S2, since both the
 //     3-way and 1-way HMMs have no more than 1 silent state
@@ -80,7 +80,7 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
   {
     double temp;
 
-    int S2 = order(s2);
+    int S2 = dp_order(s2);
     if (di(S2) or dj(S2))
       temp = start_P[S2];
     else {
@@ -88,7 +88,7 @@ inline void DPmatrix::forward_first_cell(int i2,int j2)
       temp = 0;
       // bound is s2, since this is only for silent states
       for(int s1=0;s1<s2;s1++)  {
-	int S1 = order(s1);
+	int S1 = dp_order(s1);
 
 	temp += (*this)(i2,j2,S1) * GQ(S1,S2);
       }
@@ -424,7 +424,7 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2)
 
   for(int s2=0;s2<n_dp_states();s2++) 
   {
-    int S2 = order(s2);
+    int S2 = dp_order(s2);
 
     //--- Get (i1,j1) from (i2,j2) and S2
     int i1 = i2;
@@ -439,7 +439,7 @@ inline void DPmatrixNoEmit::forward_cell(int i2,int j2)
 
     double temp  = 0;
     for(int s1=0;s1<MAX;s1++) {
-      int S1 = order(s1);
+      int S1 = dp_order(s1);
 
       temp += (*this)(i1,j1,S1) * GQ(S1,S2);
     }
@@ -591,7 +591,7 @@ void DPmatrixSimple::forward_cell(int i2,int j2)
   // If we have silent states, then we have to process them in
   // the correct order: after all non-silent states and maybe
   // after some silent states.
-  assert(not silent(order(n_dp_states()-1)));
+  assert(not silent(dp_order(n_dp_states()-1)));
 
   for(int S2=0;S2<n_dp_states();S2++) 
   {

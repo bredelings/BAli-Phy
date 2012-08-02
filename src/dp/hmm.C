@@ -1,4 +1,3 @@
-#undef NDEBUG
 /*
    Copyright (C) 2004-2007 Benjamin Redelings
 
@@ -307,22 +306,28 @@ void HMM::remap_bits(const vector<int>& map)
 }
 
 // Don't scale Q and GQ until the end???
-HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
-  :silent_network_(v1.size()),
-   state_emit(v1),
-   end(state_emit.size()-1),
-   start_P(v2),
+HMM::HMM(const vector<bitmask_t>& bitmasks, const vector<double>& start_p,const Matrix& M,double Beta)
+  :HMM(bitmasks, -1, bitmasks.size()-1, start_p, M,  Beta)
+{ }
+
+// Don't scale Q and GQ until the end???
+HMM::HMM(const vector<bitmask_t>& bitmasks, int start_index, int end_index, const vector<double>& start_p,const Matrix& M,double Beta)
+  :silent_network_(bitmasks.size()),
+   state_emit(bitmasks),
+   start(start_index),
+   end(end_index),
+   start_P(start_p),
    Q(M),GQ(M.size1(),M.size2()),
    B(Beta)
 {
   //--------------- Find and index nodes in silent networks ---------------//
   find_and_index_silent_network_states();
 
-  //----------------------  Compute the state order -----------------------//
+  //----------------------  Compute the state order for DP-----------------------//
   // FIXME - I think that perhaps the endstate must be last?  If so, why?
   vector<int> temp;
   temp.reserve(n_states()-1);
-  order_.reserve(n_states());
+  dp_order_.reserve(n_states());
   for(int S1=0;S1<n_states();S1++) 
   {
     // FIXME - Handle silent states that aren't in a network, and aren't the end state.
@@ -338,9 +343,9 @@ HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,do
     else if (silent(S1))
       temp.push_back(S1);
     else
-      order_.push_back(S1);
+      dp_order_.push_back(S1);
   }
-  order_.insert(order_.end(),temp.begin(),temp.end());
+  dp_order_.insert(dp_order_.end(),temp.begin(),temp.end());
 
   //------------ Compute the Generalized Transition Matrix, if we've got silent_network states
 
@@ -372,18 +377,18 @@ HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,do
 
 #ifndef NDEBUG
   for(int s1=0;s1<n_dp_states();s1++) {
-    int S1 = order(s1);
+    int S1 = dp_order(s1);
     if (not silent(S1)) continue;
 
     for(int s2=s1;s2<n_dp_states();s2++) {
-      int S2 = order(s2);
+      int S2 = dp_order(s2);
       assert(not connected(S1,S2));
     }
   }
 #endif
 
   // At the moment, the DP table state (in dp_order) are not allowed to contain the start or end state.
-  for(int i: order_)
+  for(int i: dp_order_)
   {
     assert(i != startstate());
     assert(i != endstate());

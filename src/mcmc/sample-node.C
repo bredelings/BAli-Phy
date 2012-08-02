@@ -156,7 +156,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
     int k2 = kcol[c2];
     Matrices->states(c2).reserve(Matrices->n_dp_states());
     for(int i=0;i<Matrices->n_dp_states();i++) {
-      int S2 = Matrices->order(i);
+      int S2 = Matrices->dp_order(i);
 
       //---------- Get (i1,j1,k1) ----------
       int i1 = i2;
