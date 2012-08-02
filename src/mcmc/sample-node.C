@@ -142,6 +142,8 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   HMM m123 = Glue(m1,Glue(m2,m3));
   m123.hidden_bits.set(0);
 
+  // FIXME: Now we just need to construct seq123 and icol, jcol, and kcol
+
   const Matrix Q = createQ( P.get_branch_HMMs(branches) );
   vector<double> start_P = get_start_P( P.get_branch_HMMs(branches) );
 
