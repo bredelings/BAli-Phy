@@ -132,14 +132,14 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   for(int i=1;i<nodes.size();i++)
     branches.push_back(T.branch(nodes[0],nodes[i]) );
 
-  mhmm m1 = P.get_branch_HMM(T.branch(nodes[1],nodes[0]));
+  HMM m1 = P.get_branch_HMM(T.branch(nodes[1],nodes[0]));
   m1.remap_bits({1,0});
-  mhmm m2 = P.get_branch_HMM(T.branch(nodes[2],nodes[0]));
+  HMM m2 = P.get_branch_HMM(T.branch(nodes[2],nodes[0]));
   m2.remap_bits({0,2});
-  mhmm m3 = P.get_branch_HMM(T.branch(nodes[3],nodes[0]));
+  HMM m3 = P.get_branch_HMM(T.branch(nodes[3],nodes[0]));
   m3.remap_bits({0,3});
 
-  mhmm m123 = Glue(m1,Glue(m2,m3));
+  HMM m123 = Glue(m1,Glue(m2,m3));
 
   const Matrix Q = createQ( P.get_branch_HMMs(branches) );
   vector<double> start_P = get_start_P( P.get_branch_HMMs(branches) );

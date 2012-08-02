@@ -419,12 +419,8 @@ namespace A5 {
 	return 0.0;
     }
 
-    if (S1==endstate) {
-      if (S2==endstate)
-	assert(Pr==1.0);
-      else
-	assert(Pr==0.0);
-    }
+    if (S1==endstate)
+      assert(Pr==0.0);
 
     return Pr;
   }

@@ -322,7 +322,7 @@ string i_parameter_name(int i,int n) {
   return string("pI") + convertToString(i);
 }
 
-/// Only continue from S1 if we don't go to S2
+/// Add an edge from S1 to S2 with probability t, and scale back other outgoing edges (including any existing edge from S1 to S2).
 void exitize(Matrix& Q,double t,int S1,int S2)
 {
   for(int i=0;i<5;i++)
@@ -432,8 +432,6 @@ indel::PairHMM SimpleIndelModel::get_branch_HMM(double) const
   Q(M ,S ) = 1;
   Q(G1,S ) = 1;
   Q(G2,S ) = 1;
-
-  Q(E,E)   = 1;
 
   // For the states G1, G2 fragment lengths are Geometric(e)
   fragmentize(Q,e,G1);
@@ -583,8 +581,6 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   Q(G1,S ) = 1;
   Q(G2,S ) = 1;
 
-  Q(E ,E ) = 1;
-
   // unless this branch is disconnected...
   if (t < -0.5) 
     ;
@@ -687,7 +683,6 @@ indel::PairHMM get_TKF1_HMM(double t,double lambda, double mu)
   Q(E ,M ) = 0;
   Q(E ,G1) = 0;
   Q(E ,G2) = 0;
-  Q(E ,E ) = 1;
 
   Q.start_pi(S)  = 0;
   Q.start_pi(M)  = 1;

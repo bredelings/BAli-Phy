@@ -1,3 +1,4 @@
+#undef NDEBUG
 /*
    Copyright (C) 2004-2007 Benjamin Redelings
 
@@ -266,7 +267,7 @@ void HMM::update_GQ()
 }
 
 HMM::HMM(const indel::PairHMM& P)
-  :HMM({3,2,1,0},P.start_pi(), P, 1.0)
+  :HMM({3,2,1,0,0}, A2::states::S, A2::states::E, P.start_pi(), P, 1.0)
 { }
 
 HMM::bitmask_t HMM::all_bits() const
@@ -336,9 +337,11 @@ HMM::HMM(const vector<bitmask_t>& bitmasks, int start_index, int end_index, cons
     //         constraints relative to other silent-cycle states and silent-non-cycle states.
 
     if (silent(S1))
-      assert(silent_network(S1) or S1 == endstate());
+      assert(silent_network(S1) or S1 == startstate() or S1 == endstate());
 
-    if (S1 == endstate())
+    if (S1 == startstate())
+      ;
+    else if (S1 == endstate())
       ;
     else if (silent(S1))
       temp.push_back(S1);
@@ -396,54 +399,12 @@ HMM::HMM(const vector<bitmask_t>& bitmasks, int start_index, int end_index, cons
 }
 
 
-int mhmm::n_characters() const
-{
-  return all_bits.count();
-}
-
-void mhmm::remap_bits(const vector<int>& map)
-{
-  assert(map.size() == n_characters());
-  int B = map.size();
-  
-  vector<bitmask_t> state_emit2(state_emit.size());
-  all_bits.reset();
-  for(int i=0;i<state_emit.size();i++)
-  {
-    bitmask_t mask;
-    for(int j=0;j<B;j++)
-      mask.set(map[j],state_emit[i].test(j));
-    state_emit2[i] = mask;
-    all_bits |= mask;
-  }
-
-  std::swap(state_emit, state_emit2);
-}
-
-mhmm::mhmm(const indel::PairHMM& P)
-  :state_emit({3,2,1,0,0}),
-   start(A2::states::S),
-   end(A2::states::E),
-   Q(P),
-   start_P(P.start_pi()),
-   all_bits(3)
-{
-}
-
-
-mhmm remap_bits(const mhmm& m1, const vector<int>& map)
-{
-  mhmm m2 = m1;
-  m2.remap_bits(map);
-  return m2;
-}
-
 // s:s (m/i):(m/d) (m,i,s)_r:I D:(m,d,e)_c e:e
-mhmm Glue(const mhmm& top, const mhmm& bottom)
+HMM Glue(const HMM& top, const HMM& bottom)
 {
   int glue_bit = -1;
   for(int i=0;i<64;i++)
-    if (top.all_bits.test(i) and bottom.all_bits.test(i))
+    if (top.all_bits().test(i) and bottom.all_bits().test(i))
     {
       assert(glue_bit == -1);
       glue_bit = i;
@@ -492,8 +453,7 @@ mhmm Glue(const mhmm& top, const mhmm& bottom)
     status_t status2;
   };
 
-  mhmm G;
-  G.all_bits = top.all_bits | bottom.all_bits;
+  HMM G;
   vector<parts> state_parts;
 
   // M/I:M/D
@@ -538,12 +498,12 @@ mhmm Glue(const mhmm& top, const mhmm& bottom)
 
   // e:e
   G.end = G.state_emit.size();
-  G.state_emit.push_back(mhmm::bitmask_t());
+  G.state_emit.push_back(HMM::bitmask_t());
   state_parts.push_back({top.end, active, bottom.end, active});
 
   // s:s
   G.start = G.state_emit.size();
-  G.state_emit.push_back(mhmm::bitmask_t());
+  G.state_emit.push_back(HMM::bitmask_t());
   state_parts.push_back({top.start, active, bottom.start, active});
 
   // The D/* -> */I transition is forbidden by the fact that D is never remembered and I is never committed.
@@ -590,17 +550,19 @@ mhmm Glue(const mhmm& top, const mhmm& bottom)
 
 
 /*
-  OK, to how are the state indices used?
-  - we need to store their emission patterns
-  - we need to index into the DP table
-  - 
+  Should I move some computation to another class: DP_HMM?
 
-  Q: When would the start state be part of the DP table?
-  A: It must be part of the DP table if it exists and any other state transitions to it. 
-  A: Determining reachable states might depend on whether you start from (a) start or (b) start_p.
-     Perhaps it should.
-  A: OK, lets go with the theory that the states in order_ should be the DP states.
-  A: Thus, End should be in order iff End is in the DP table.
-  A: However, End should always be ALLOWED to be in the DP table.  Hence we put End in order_,
-     check order_, and then remove end_.
+  This some include
+  * silent_network_
+  * silent_network_states
+  * non_silent_network
+  * dp_order_
+  * generalize_P_one
+  * find_and index_silent_network_states()
+  * GQ
+  * B???
+  * update_GQ
+  * generalize( )
+  * ungeneralize( )
+  * path_GQ_path( )
  */

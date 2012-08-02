@@ -126,6 +126,8 @@ public:
   /// Calculates the (log) product of each move, according to the generalized HMM
   efloat_t path_GQ_path(const std::vector<int>& g_path) const;
 
+  HMM() = default;
+
   HMM(const indel::PairHMM&);
 
   /// Construct an HMM from the states emit bitmasks, the start probabilities, and the transition matrix
@@ -137,36 +139,6 @@ public:
   virtual ~HMM() {}
 };
 
-// Question: can we still fake start states?
-// We need a collection of non-silent states such that
-// \sum_i P(i,j) = P(Start,j)
-
-// multiple hidden-markov model
-class mhmm
-{
-public:
-  typedef std::bitset<64> bitmask_t;
-
-  std::vector<bitmask_t> state_emit;
-  int start;
-  int end;
-
-  Matrix Q;
-
-  std::vector<double> start_P;
-
-  bitmask_t all_bits;
-
-  int n_characters() const;
-
-  void remap_bits(const std::vector<int>& map);
-
-  mhmm() = default;
-
-  mhmm(const indel::PairHMM&);
-  //  mhmm(const vector<bitmask_t>&, const vector<double>&, const Matrix&, double);
-};
-
-mhmm Glue(const mhmm& top, const mhmm& bottom);
+HMM Glue(const HMM& top, const HMM& bottom);
 
 #endif
