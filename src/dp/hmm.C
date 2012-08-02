@@ -210,8 +210,10 @@ void GQ_exit(Matrix& G,const vector<int>& silent,const vector<int>& non_silent)
 
 
 
-void HMM::find_and_index_silent_network_states() {
-
+// The start state could be in this list, but only if its reachable from itself.
+// The end state should never be, because it is not reachable from itself.  Therefore it can't be in a cycle.
+void HMM::find_and_index_silent_network_states() 
+{
   vector<int>& S = silent_network_states;
   vector<int>& s = silent_network_;
 
@@ -247,7 +249,10 @@ void HMM::find_and_index_silent_network_states() {
   for(int i=0;i<s.size();i++)
     s[i] = -1;
   for(int i=0;i<S.size();i++)
+  {
+    assert(S[i] != endstate());
     s[S[i]] = i;
+  }
 }
 
 

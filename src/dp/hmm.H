@@ -36,7 +36,7 @@ namespace indel { class PairHMM; }
 
 /// A Hidden Markov Model - represented by the transition matrix and accessory functions
 class HMM {
-  /// Is each state part of the silent network?
+  /// Is each state part of the silent network?  (S: maybe.  E: no) If so, where is it in the order of such states?
   std::vector<int> silent_network_;
 
   /// Ordered list of states that are part of silent networks
