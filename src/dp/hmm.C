@@ -277,21 +277,27 @@ int HMM::n_characters() const
   return all_bits().count();
 }
 
+using std::bitset;
+
+bitset<64> remap_bits(const bitset<64>& bits, const vector<int>& map)
+{
+  bitset<64> mask;
+
+  int B = map.size();
+  for(int j=0;j<B;j++)
+    mask.set(map[j], bits.test(j));
+
+  return mask;
+}
+
 void HMM::remap_bits(const vector<int>& map)
 {
   assert(map.size() == n_characters());
-  int B = map.size();
   
-  vector<bitmask_t> state_emit2(state_emit.size());
-  for(int i=0;i<state_emit.size();i++)
-  {
-    bitmask_t mask;
-    for(int j=0;j<B;j++)
-      mask.set(map[j],state_emit[i].test(j));
-    state_emit2[i] = mask;
-  }
+  for(auto& mask: state_emit)
+    mask = ::remap_bits(mask, map);
 
-  std::swap(state_emit, state_emit2);
+  hidden_bits = ::remap_bits(hidden_bits, map);
 }
 
 // Don't scale Q and GQ until the end???
