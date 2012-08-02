@@ -116,6 +116,9 @@ public:
   virtual void set_length(int l);
 
   /// Construct an 1D DP matrix from a length, and an HMM
+  DParray(int, const HMM&);
+
+  /// Construct an 1D DP matrix from a length, and an HMM
   DParray(int,const std::vector<bitmask_t>&,const std::vector<double>&,const Matrix&,double Beta);
 
   virtual ~DParray() {}
@@ -152,6 +155,9 @@ public:
 
   /// Change length
   void set_length(int l);
+
+  /// Construct an 1D DP matrix from a length, and an HMM
+  DParrayConstrained(int,const HMM&);
 
   /// Construct an 1D DP matrix from a length, and an HMM
   DParrayConstrained(int,const std::vector<bitmask_t>&,const std::vector<double>&,const Matrix&, double Beta);

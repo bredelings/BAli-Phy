@@ -48,9 +48,12 @@ void DPengine::check_sampling_probability(const vector<int>& g_path) const
   }
 }
 
+DPengine::DPengine(const HMM& H)
+  :dp_HMM(H),
+   Pr_total(0)
+{ }
+
 DPengine::DPengine(const vector<bitmask_t>& v1,const vector<double>& v2, const Matrix&M, double Beta)
   :dp_HMM(HMM(v1,v2,M,Beta)),
    Pr_total(0)
 { }
-
-

@@ -150,7 +150,16 @@ void DParray::set_length(int l)
   Pr_total = 0;
 }
 
-DParray::DParray(int l,const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
+DParray::DParray(int l, const HMM& H)
+  :DPengine(H)
+{
+  set_length(l);
+
+  for(int s=0;s<start_P.size();s++)
+    (*this)(0,s) = start_P[s];
+}
+
+DParray::DParray(int l, const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
   :DPengine(v1,v2,M,Beta)
 { 
   set_length(l);
@@ -376,6 +385,12 @@ efloat_t DParrayConstrained::Pr_sum_all_paths() const
 void DParrayConstrained::set_length(int l)
 {
   DParray::set_length(l);
+  allowed_states.resize(size());
+}
+
+DParrayConstrained::DParrayConstrained(int l, const HMM& H)
+  :DParray(l,H)
+{ 
   allowed_states.resize(size());
 }
 
