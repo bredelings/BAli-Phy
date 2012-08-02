@@ -55,8 +55,20 @@ class HMM {
 public:
   typedef std::bitset<64> bitmask_t;
 
-  /// The 'temperature' parameter - e.g. scale log(P) => log(P)/T
-  double B;
+  /// bitmasks of whether states emit features in each sequence
+  std::vector<bitmask_t> state_emit;
+
+  /// Which state is the start state?
+  int start = -1;
+
+  /// Which state is the end state?
+  int end;
+
+  /// Which bits are not considered emitted?
+  bitmask_t hidden_bits;
+
+  /// Probabilities of starting in each state
+  std::vector<double> start_P;
 
   /// The transition matrix for the HMM
   Matrix Q;
@@ -64,20 +76,14 @@ public:
   /// The 'generalized' transition matrix - silent loops removed
   Matrix GQ;
 
+  /// The 'temperature' parameter - e.g. scale log(P) => log(P)/T
+  double B;
+
   void update_GQ();
 
   bool connected_Q(int S1,int S2) const {return Q(S1,S2) != 0.0;}
 
   bool connected(int S1,int S2) const {return GQ(S1,S2) != 0.0;}
-
-  /// Probabilities of starting in each state
-  std::vector<double> start_P;
-
-  /// Which bits are not considered emitted?
-  bitmask_t hidden_bits;
-
-  /// bitmasks of whether states emit features in each sequence
-  std::vector<bitmask_t> state_emit;
 
   bitmask_t all_bits() const;
 
@@ -100,10 +106,10 @@ public:
   int n_states() const {return state_emit.size();}
 
   /// The index of the start state
-  int startstate() const {return -1;}
+  int startstate() const {return start;}
 
   /// The index of the end state
-  int endstate() const {return n_states()-1;}
+  int endstate() const {return end;}
 
   /// Convert a path to a generalized path
   std::vector<int> generalize(const std::vector<int>& path) const;

@@ -309,9 +309,11 @@ void HMM::remap_bits(const vector<int>& map)
 // Don't scale Q and GQ until the end???
 HMM::HMM(const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
   :silent_network_(v1.size()),
-   B(Beta),
+   state_emit(v1),
+   end(state_emit.size()-1),
+   start_P(v2),
    Q(M),GQ(M.size1(),M.size2()),
-   start_P(v2),state_emit(v1) 
+   B(Beta)
 {
   //--------------- Find and index nodes in silent networks ---------------//
   find_and_index_silent_network_states();
