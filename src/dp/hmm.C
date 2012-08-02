@@ -487,9 +487,15 @@ mhmm Glue(const mhmm& top, const mhmm& bottom)
   state_parts.push_back({top.end, active, bottom.end, active});
 
   // s:s
-  G.start = G.state_emit.size();
-  G.state_emit.push_back(mhmm::bitmask_t());
-  state_parts.push_back({top.start, active, bottom.start, active});
+  if (top.start != -1 or bottom.start != -1)
+  {
+    assert(top.start != -1 and bottom.start != -1);
+    G.start = G.state_emit.size();
+    G.state_emit.push_back(mhmm::bitmask_t());
+    state_parts.push_back({top.start, active, bottom.start, active});
+  }
+  else
+    G.start = -1;
 
   // The D/* -> */I transition is forbidden by the fact that D is never remembered and I is never committed.
   // Being committed to M, D, or E is basically equivalent to entering a wait state. Here, we add a separate
