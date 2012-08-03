@@ -233,6 +233,15 @@ void add_BUGS(const Parameters& P, const string& filename)
     {
       std::cerr<<"Employee phrase parse: "<<boost::fusion::as_vector(E)<<std::endl;
     }
+
+    iter = line.begin();
+    mini_xml_grammar<string::const_iterator> xml_parser;
+    mini_xml ast;
+    if (phrase_parse(iter, line.end(), xml_parser, space, ast) and iter == line.end())
+    {
+      std::cerr<<"XML phrase parse: "<<boost::fusion::as_vector(E)<<std::endl;
+    }
+   
     
 
     // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
