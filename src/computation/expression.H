@@ -477,12 +477,6 @@ inline typed_expression_ref<Bool> Constant(const bool& b)
   return typed_expression_ref<Bool>(Bool(b));
 }
 
-extern expression_ref _;
-extern expression_ref _1;
-extern expression_ref _2;
-extern expression_ref _3;
-extern expression_ref _4;
-
 std::string tuple_name(int n);
 bool is_tuple_name(const std::string&);
 constructor tuple_head(int n);

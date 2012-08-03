@@ -596,7 +596,7 @@ std::ostream& operator<<(std::ostream& o, const context& C)
 
 int add_probability_expression(context& C)
 {
-  expression_ref query = (distributed, _1,_2);
+  expression_ref query = (distributed, match(0), match(1));
 
   typed_expression_ref<Log_Double> Pr;
 

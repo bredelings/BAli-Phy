@@ -213,7 +213,7 @@ int Model::add_note(const expression_ref& E)
 
   // 2. Check to see if this expression adds a prior
   results.clear();
-  query = (distributed, _1, _2);
+  query = (distributed, match(0), match(1));
   if (find_match(query, C.get_note(index), results))
   {
     // Extract the density operation
@@ -665,7 +665,7 @@ bool has_parameter(const Model& M, const string& name)
 /// \param s1   The string
 /// \param s2   The pattern
 ///
-bool match(const string& s1, const string& s2)
+bool pattern_match(const string& s1, const string& s2)
 {
   if (s2.size() and s2[s2.size()-1] == '*') {
     int L = s2.size() - 1;
@@ -885,7 +885,7 @@ bool path_match(const vector<string>& key, int i, const vector<string>& pattern,
     return path_match(key,i+1,pattern,j+1);
 
   // 4. If the key is 'text*' or 'text'
-  if (match(pattern[j],key[i]))
+  if (pattern_match(pattern[j],key[i]))
     return path_match(key,i+1,pattern,j+1);
   else
     return false;
@@ -935,7 +935,8 @@ vector<int> parameters_with_extension(const Model& M, string name)
 
 string show_probability_expression(const expression_ref& E)
 {
-  expression_ref query = (distributed, _2, Tuple((prob_density, _1 , _, _), _3));
+  match m(1);
+  expression_ref query = (distributed, match(1), Tuple((prob_density, match(0) , match(-1), match(-1)), match(2)));
 
   // If its a probability expression, then...
   vector<expression_ref> results; 

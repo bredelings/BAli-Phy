@@ -1642,12 +1642,6 @@ expression_ref Cons = lambda_expression( right_assoc_constructor(":",2) );
 
 expression_ref ListEnd = lambda_expression( constructor("[]",0) );
 
-expression_ref _ = match(-1);
-expression_ref _1 = match(0);
-expression_ref _2 = match(1);
-expression_ref _3 = match(2);
-expression_ref _4 = match(3);
-
 expression_ref default_value = lambda_expression(constructor("default_value",2));
 
 expression_ref var_bounds = lambda_expression(constructor("var_bounds",2));

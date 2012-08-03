@@ -192,7 +192,7 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
 {
   vector<vector<string> > names;
 
-  expression_ref query = (distributed, _2, Tuple((prob_density, _1 , _, _), _3));
+  expression_ref query = (distributed, match(1), Tuple((prob_density, match(0) , match(-1), match(-1)), match(2)));
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),"~"))
     {
