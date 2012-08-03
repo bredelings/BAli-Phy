@@ -29,7 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sample.H"
 #include "logsum.H"
 #include "choose.H"
-#include "bits.H"
 #include "util.H"
 #include "rng.H"
 #include "dp/5way.H"
