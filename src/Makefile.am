@@ -31,7 +31,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H sequencetree.H dp/3way.H
            parameters.H substitution/substitution-cache.H alignment/alignment.H dp/hmm.H pow2.H \
            substitution/substitution.H dp/alignment-sums.H imodel.H probability.H \
            substitution/substitution-index.H alignment/alignment-util.H likelihood.H mcmc/proposals.H \
-           tree-branchnode.H sequence/alphabet.H log-double.H rates.H tree.H \
+           tree-branchnode.H sequence/alphabet.H log-double.H smodel/rates.H tree.H \
            bits.H logsum.H tree-util.H choose.H substitution/matcache.H  \
            rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
            model.H sequence/sequence-format.H dp/dp-array.H monitor.H sequence/sequence.H \
@@ -93,7 +93,7 @@ bali_phy_SOURCES = sequence/sequence.C tree.C alignment/alignment.C substitution
 	  util.C randomtree.C sequence/alphabet.C smodel/smodel.C bali-phy.C \
 	  dp/hmm.C dp/dp-engine.C dp/dp-array.C dp/dp-matrix.C dp/3way.C dp/2way.C mcmc/sample-alignment.C \
 	  mcmc/sample-tri.C mcmc/sample-node.C imodel.C dp/5way.C mcmc/sample-topology-NNI.C \
-	  setup.C rates.C mcmc/sample-two-nodes.C sequence/sequence-format.C \
+	  setup.C smodel/rates.C mcmc/sample-two-nodes.C sequence/sequence-format.C \
 	  util-random.C alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
 	  dp/alignment-sums.C alignment/alignment-util.C probability.C model.C \
 	  alignment-constraint.C substitution/substitution-cache.C \
@@ -300,7 +300,7 @@ cut_range_SOURCES = tools/cut-range.C util.C
 #	sequence/sequence.C tools/distance-methods.C \
 #	util.C sequencetree.C substitution/substitution.C eigenvalue.C tree.C \
 #	exponential.C smodel/setup.C smodel/smodel.C imodel.C rng.C likelihood.C \
-#	choose.C tools/optimize.C setup.C rates.C alignment/alignment-util.C \
+#	choose.C tools/optimize.C setup.C smodel/rates.C alignment/alignment-util.C \
 #	sequence/sequence-format.C randomtree.C model.C computation/graph_register.C  probability.C \
 #	substitution/substitution-cache.C substitution/substitution-index.C substitution/substitution-star.C tree-util.C \
 #	alignment-random.C parameters.C myexception.C monitor.C \
@@ -364,7 +364,7 @@ test: tools/optimize.o
 #---------------------------------------------------------------
 
 test_smodel: alignment.o sequence/alphabet.o sequence.o tree.o sequencetree.o util.o \
-	setup-smodel.o smodel.o randomtree.o model.o sequence-format.o rates.o \
+	setup-smodel.o smodel.o randomtree.o model.o sequence-format.o smodel/rates.o \
 	probability.o rng.o setup-smodel.o exponential.o eigenvalue.o \
 	alignment-util.o setup.o imodel.o alignment-random.o ${LIBS}
 
