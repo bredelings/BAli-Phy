@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include "mytypes.H"
-#include "alphabet.H"
+#include "sequence/alphabet.H"
 #include "alignment.H"
 #include "sequencetree.H"
 

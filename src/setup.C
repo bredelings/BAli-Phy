@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "setup.H"
 #include "util.H"
-#include "alphabet.H"
+#include "sequence/alphabet.H"
 #include "alignment-util.H"
 #include "tree-util.H"
 #include "substitution/substitution-index.H"

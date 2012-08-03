@@ -29,7 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <string>
 #include <valarray>
-#include "alphabet.H"
+#include "sequence/alphabet.H"
 #include "mytypes.H"
 #include "sequencetree.H"
 #include "probability-model.H"

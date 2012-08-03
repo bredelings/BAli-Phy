@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include "myexception.H"
 #include "alignment.H"
-#include "sequence-format.H"
+#include "sequence/sequence-format.H"
 #include "sequencetree.H"
 #include "setup.H"
 #include "alignment-util.H"

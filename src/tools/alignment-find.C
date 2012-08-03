@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <vector>
 #include <string>
-#include "alphabet.H"
+#include "sequence/alphabet.H"
 #include "alignment.H"
 #include "alignment-util.H"
 

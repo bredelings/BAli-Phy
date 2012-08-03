@@ -77,7 +77,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include "mytypes.H"
-#include "alphabet.H"
+#include "sequence/alphabet.H"
 #include "rates.H"
 #include "model.H"
 #include "eigenvalue.H"

@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <valarray>
-#include "alphabet.H"
+#include "sequence/alphabet.H"
 #include "smodel/objects.H"
 #include "object.H"
 #include "probability.H"

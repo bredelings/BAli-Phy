@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment.H"
 #include "alignment-util.H"
 #include "util.H"
-#include "sequence-format.H"
+#include "sequence/sequence-format.H"
 #include <boost/program_options.hpp>
 #include "io.H"
 #include "findroot.H"

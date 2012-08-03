@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include "object.H"
-#include "alphabet.H"
+#include "sequence/alphabet.H"
 #include "mytypes.H"
 
 struct Mat_Cache

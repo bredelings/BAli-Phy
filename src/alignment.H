@@ -24,9 +24,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef ALIGNMENT_H
 #define ALIGNMENT_H
 
-#include "alphabet.H"
-#include "sequence.H"
-#include "sequence-format.H"
+#include "sequence/alphabet.H"
+#include "sequence/sequence.H"
+#include "sequence/sequence-format.H"
 #include <iostream>
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
