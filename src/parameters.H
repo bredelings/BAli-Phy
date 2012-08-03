@@ -35,7 +35,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "probability-model.H"
 #include "imodel.H"
 #include "alignment.H"
-#include "matcache.H"
+#include "substitution/matcache.H"
 #include "substitution/substitution-cache.H"
 #include "substitution/substitution-index.H"
 

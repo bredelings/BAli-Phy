@@ -32,7 +32,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H sequencetree.H dp/3way.H
            substitution/substitution.H dp/alignment-sums.H imodel.H probability.H \
            substitution/substitution-index.H alignment-util.H likelihood.H mcmc/proposals.H \
            tree-branchnode.H alphabet.H log-double.H rates.H tree.H \
-           bits.H logsum.H tree-util.H choose.H matcache.H  \
+           bits.H logsum.H tree-util.H choose.H substitution/matcache.H  \
            rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
            model.H sequence-format.H dp/dp-array.H monitor.H sequence.H \
            tools/bootstrap.H tools/inverse.H tools/statistics.H \
@@ -105,7 +105,7 @@ bali_phy_SOURCES = sequence.C tree.C alignment.C substitution/substitution.C mcm
 	  computation/graph_register.C computation/program.C \
 	  computation/formula_expression.C smodel/operations.C distribution-operations.C \
 	  computation/operations.C computation/prelude.C computation/context.C \
-	  computation/model_notes.C matcache.C smodel/functions.C computation/closure.C \
+	  computation/model_notes.C substitution/matcache.C smodel/functions.C computation/closure.C \
 	  computation/let-float.C BUGS.C dp/dp_hmm.C
 
 nodist_bali_phy_SOURCES = git_version.h
