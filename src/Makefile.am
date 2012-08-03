@@ -32,7 +32,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H sequencetree.H dp/3way.H
            substitution/substitution.H dp/alignment-sums.H imodel.H probability.H \
            substitution/substitution-index.H alignment/alignment-util.H likelihood.H mcmc/proposals.H \
            tree-branchnode.H sequence/alphabet.H log-double.H smodel/rates.H tree.H \
-           bits.H logsum.H tree-util.H choose.H substitution/matcache.H  \
+           dp/bits.H logsum.H tree-util.H choose.H substitution/matcache.H  \
            rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
            model.H sequence/sequence-format.H dp/dp-array.H monitor.H sequence/sequence.H \
            tools/bootstrap.H tools/inverse.H tools/statistics.H \
