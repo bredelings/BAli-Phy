@@ -107,16 +107,39 @@ HMM::HMM(const vector<bitmask_t>& bitmasks, int start_index, int end_index, cons
   assert(Q.size2() >= n_states());
 }
 
-// s:s (m/i):(m/d) (m,i,s)_r:I D:(m,d,e)_c e:e
+int find_first_set_bit(const HMM::bitmask_t& mask)
+{
+  for(int i=0;i<64;i++)
+    if (mask.test(i))
+      return i;
+  return -1;
+}
+
+int find_only_set_bit(const HMM::bitmask_t& mask)
+{
+  if (mask.count() > 1)
+    throw myexception()<<"bitmask has more than 1 bit set!";
+  return find_first_set_bit(mask);
+}
+
+/*
+  The general idea:
+
+  start  M  M  I  I  0  D  end
+  start  M  D  M  D  I  0  end
+
+  I think we that every time the bottom HMM gets a tick we do M or D and then all following I's until
+  the next time we would require a tick.  We then return to the top level to wait for it.
+
+  The start state should, I think, be as if we have just recieved a tick.  That is, we start by emitting
+  any possible I residues before our first read where we wait for an input tick.
+
+  With augmentation, we have:
+     s:s (m/i):(m/d) (m,i,s)_r:I D:(m,d,e)_c e:e
+*/
 HMM Glue(const HMM& top, const HMM& bottom)
 {
-  int glue_bit = -1;
-  for(int i=0;i<64;i++)
-    if (top.all_bits().test(i) and bottom.all_bits().test(i))
-    {
-      assert(glue_bit == -1);
-      glue_bit = i;
-    }
+  int glue_bit = find_only_set_bit( top.all_bits() & bottom.all_bits() );
 
   // 1. Classify top states into S, E, M/I, and D
   vector<int> m_or_i1;
@@ -262,3 +285,40 @@ HMM Glue(const HMM& top, const HMM& bottom)
   return G;
 }
 
+HMM::bitmask_t get_all_bits(const std::vector<HMM::bitmask_t>& a)
+{
+  HMM::bitmask_t bits;
+  for(const auto& b: a)
+    bits |= b;
+  return bits;
+}
+
+/*
+ * Take two emission patterns and glue them together based on their overlapping bit.
+ */
+std::vector<HMM::bitmask_t> Glue_Alignments(const std::vector<HMM::bitmask_t>& top, const std::vector<HMM::bitmask_t>& bottom)
+{
+
+  HMM::bitmask_t top_mask = get_all_bits(top);
+  HMM::bitmask_t bottom_mask = get_all_bits(bottom);
+
+  int glue_bit = find_only_set_bit(top_mask & bottom_mask);
+
+  vector<HMM::bitmask_t> a;
+  a.reserve(top.size() + bottom.size());
+
+  // It seems possible that the glue sequence could be empty.  In this case we just emit the entire bottom sequence first?
+  if (glue_bit == -1)
+  {
+    a.insert(a.end(),bottom.begin(), bottom.end());
+    a.insert(a.end(),top.begin(), top.end());
+    return a;
+  }
+
+  int i=0;
+  int j=0;
+  while (i<top.size() or j < bottom.size())
+  {
+  }
+  return a;
+}
