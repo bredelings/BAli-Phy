@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/program_options.hpp>
 
 #include "myexception.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 
 #include "mytypes.H"
 #include "logsum.H"
@@ -33,7 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "setup.H"
 
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 #include "tree-util.H"
 #include "parsimony.H"
 #include "joint-A-T.H"

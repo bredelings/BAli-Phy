@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/2way.H"
 #include "dp/alignment-sums.H"
 #include "alignment-constraint.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 #include "substitution/substitution.H"
 #include "substitution/substitution-index.H"
 #include "dp/dp-matrix.H"

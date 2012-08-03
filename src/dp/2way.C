@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "2way.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 #include "substitution/substitution-index.H"
 
 using namespace std;

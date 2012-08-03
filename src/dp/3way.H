@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define THREEWAY_H
 
 #include "mytypes.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "parameters.H"
 #include "2way.H"
 #include "hmm.H"

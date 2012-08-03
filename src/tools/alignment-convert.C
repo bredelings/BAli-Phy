@@ -19,9 +19,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <string>
 #include "myexception.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "sequence/sequence-format.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 
 #include <boost/program_options.hpp>
 

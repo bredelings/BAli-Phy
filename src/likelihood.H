@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define LIKELIHOOD_H
 
 #include "imodel.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "parameters.H"
 
 //-------------- Alignment Priors -----------------//

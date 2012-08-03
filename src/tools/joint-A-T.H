@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/program_options.hpp>
 
 #include "sequencetree.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 
 
 //--------------------------- Class joint_A_T ----------------------------//

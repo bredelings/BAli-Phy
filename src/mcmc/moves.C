@@ -26,7 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "likelihood.H"
 #include "util-random.H"
 #include "monitor.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 
 using MCMC::MoveStats;
 

@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>
 #include "probability.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 #include "util.H"
 #include "dp/2way.H"
 

@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <utility>
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "sequencetree.H"
 #include "io.H"
 

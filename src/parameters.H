@@ -34,7 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequencetree.H"
 #include "probability-model.H"
 #include "imodel.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "substitution/matcache.H"
 #include "substitution/substitution-cache.H"
 #include "substitution/substitution-index.H"

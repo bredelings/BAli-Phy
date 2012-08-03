@@ -29,7 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rng.H"
 #include "substitution/substitution.H"
 #include "substitution/substitution-index.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 #include "likelihood.H"
 #include "util.H"
 #include "mcmc/proposals.H"

@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mytypes.H"
 #include <iostream>
 #include <vector>
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "tree.H"
 
 /* The algorithms in this file provide each column in a sub-alignment

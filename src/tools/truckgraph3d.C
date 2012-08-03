@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include <map>
 #include "myexception.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "arguments.H"
 #include "mytypes.H"
 

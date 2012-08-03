@@ -43,7 +43,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "monitor.H"
 #include "proposals.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 
 #include "slice-sampling.H"
 #include "timer_stack.H"

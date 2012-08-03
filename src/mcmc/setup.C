@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mcmc/setup.H"
 #include "util.H"
 #include "sample.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 #include "alignment-constraint.H"
 #include "timer_stack.H"
 #include "bounds.H"

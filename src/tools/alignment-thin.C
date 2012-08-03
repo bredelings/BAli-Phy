@@ -21,8 +21,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include <string>
 #include "tree.H"
-#include "alignment.H"
-#include "alignment-util.H"
+#include "alignment/alignment.H"
+#include "alignment/alignment-util.H"
 #include "tree-util.H"
 #include "util.H"
 #include "setup.H"

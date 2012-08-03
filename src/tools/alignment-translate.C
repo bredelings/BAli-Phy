@@ -20,8 +20,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "alignment.H"
-#include "alignment-util.H"
+#include "alignment/alignment.H"
+#include "alignment/alignment-util.H"
 #include "util.H"
 #include "setup.H"
 #include <boost/program_options.hpp>

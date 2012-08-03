@@ -35,8 +35,8 @@ extern "C" {
 #include "likelihood.H"
 #include "util.H"
 #include "setup.H"
-#include "alignment.H"
-#include "alignment-util.H"
+#include "alignment/alignment.H"
+#include "alignment/alignment-util.H"
 #include "smodel/smodel.H"
 
 using std::valarray;

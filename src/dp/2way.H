@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define TWOWAY_H
 
 #include <vector>
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "tree.H"
 
 struct pairwise_alignment_t: public std::vector<int>

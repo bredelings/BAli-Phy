@@ -25,13 +25,13 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <numeric>
 #include <set>
 #include "myexception.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "mytypes.H"
 #include "logsum.H"
 #include "optimize.H"
 #include "findroot.H"
 #include "util.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 #include "distance-methods.H"
 #include "rng.H"
 

@@ -39,7 +39,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "monitor.H"         // for show_smodel( )
 #include "n_indels.H"
 #include "tools/parsimony.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 
 using std::endl;
 using std::pair;

@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include "mytypes.H"
 #include "sequence/alphabet.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "sequencetree.H"
 
 ublas::matrix<int> unit_cost_matrix(unsigned size);

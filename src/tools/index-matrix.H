@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <set>
 #include <vector>
 #include "mytypes.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 
 struct Edge 
 {

@@ -33,7 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rng.H"
 #include "dp/3way.H"
 #include "dp/alignment-sums.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 #include "alignment-constraint.H"
 #include "likelihood.H"    // for prior()
 #include "substitution/substitution-index.H"

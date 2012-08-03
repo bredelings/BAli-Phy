@@ -22,9 +22,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <map>
 #include <list>
 #include "myexception.H"
-#include "alignment.H"
+#include "alignment/alignment.H"
 #include "mytypes.H"
-#include "alignment-util.H"
+#include "alignment/alignment-util.H"
 #include "util.H"
 #include <boost/program_options.hpp>
 
