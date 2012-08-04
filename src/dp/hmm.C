@@ -293,6 +293,14 @@ int bitlength(const vector<HMM::bitmask_t>& bits, int b)
   return count;
 }
 
+int bitslength(const vector<HMM::bitmask_t>& bits, HMM::bitmask_t m)
+{
+  int count = 0;
+  for(const auto& mask: bits)
+    if ((mask&m).any()) count++;
+  return count;
+}
+
 HMM::bitmask_t get_all_bits(const std::vector<HMM::bitmask_t>& a)
 {
   HMM::bitmask_t bits;
