@@ -76,6 +76,30 @@ bool operator==(const pairwise_alignment_t& pi1, const pairwise_alignment_t& pi2
   return true;
 }
 
+vector<bitset<64>> convert_to_bits(const pairwise_alignment_t& A, int b1, int b2)
+{
+  vector<bitset<64>> a;
+  a.reserve(A.size());
+
+  for(int s:A)
+  {
+    bitset<64> bits;
+    if (s == A2::states::M)
+    {
+      bits.set(b1);
+      bits.set(b2);
+    }
+    else if (s == A2::states::G1)
+      bits.set(b2);
+    else if (s == A2::states::G2)
+      bits.set(b1);
+
+    if (bits.any())
+      a.push_back(bits);
+  }
+  return a;
+}
+
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/topological_sort.hpp>

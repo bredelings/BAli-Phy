@@ -131,15 +131,25 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   for(int i=1;i<nodes.size();i++)
     branches.push_back(T.branch(nodes[0],nodes[i]) );
 
-  HMM m1 = P.get_branch_HMM(T.branch(nodes[1],nodes[0]));
+  int b1 = T.directed_branch(nodes[1],nodes[0]);
+  int b2 = T.directed_branch(nodes[0],nodes[2]);
+  int b3 = T.directed_branch(nodes[0],nodes[3]);
+
+  HMM m1 = P.get_branch_HMM(b1);
   m1.remap_bits({1,0});
-  HMM m2 = P.get_branch_HMM(T.branch(nodes[2],nodes[0]));
+  HMM m2 = P.get_branch_HMM(b2);
   m2.remap_bits({0,2});
-  HMM m3 = P.get_branch_HMM(T.branch(nodes[3],nodes[0]));
+  HMM m3 = P.get_branch_HMM(b3);
   m3.remap_bits({0,3});
 
   HMM m123 = Glue(m1,Glue(m2,m3));
   m123.hidden_bits.set(0);
+
+  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),1,0);
+  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),0,2);
+  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),0,3);
+
+  vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
 
   // FIXME: Now we just need to construct seq123 and icol, jcol, and kcol
 

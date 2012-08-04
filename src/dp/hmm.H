@@ -98,5 +98,5 @@ public:
 
 HMM Glue(const HMM& top, const HMM& bottom);
 
-std::vector<HMM::bitmask_t> Glue_Alignments(const std::vector<HMM::bitmask_t>&, const std::vector<HMM::bitmask_t>&);
+std::vector<HMM::bitmask_t> Glue_A(const std::vector<HMM::bitmask_t>&, const std::vector<HMM::bitmask_t>&);
 #endif

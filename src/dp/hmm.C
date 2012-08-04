@@ -285,6 +285,14 @@ HMM Glue(const HMM& top, const HMM& bottom)
   return G;
 }
 
+int bitlength(const vector<HMM::bitmask_t>& bits, int b)
+{
+  int count = 0;
+  for(const auto& mask: bits)
+    if (mask.test(b)) count++;
+  return count;
+}
+
 HMM::bitmask_t get_all_bits(const std::vector<HMM::bitmask_t>& a)
 {
   HMM::bitmask_t bits;
@@ -296,7 +304,7 @@ HMM::bitmask_t get_all_bits(const std::vector<HMM::bitmask_t>& a)
 /*
  * Take two emission patterns and glue them together based on their overlapping bit.
  */
-std::vector<HMM::bitmask_t> Glue_Alignments(const std::vector<HMM::bitmask_t>& top, const std::vector<HMM::bitmask_t>& bottom)
+std::vector<HMM::bitmask_t> Glue_A(const std::vector<HMM::bitmask_t>& top, const std::vector<HMM::bitmask_t>& bottom)
 {
 
   HMM::bitmask_t top_mask = get_all_bits(top);
@@ -307,7 +315,8 @@ std::vector<HMM::bitmask_t> Glue_Alignments(const std::vector<HMM::bitmask_t>& t
   vector<HMM::bitmask_t> a;
   a.reserve(top.size() + bottom.size());
 
-  // It seems possible that the glue sequence could be empty.  In this case we just emit the entire bottom sequence first?
+  // It seems possible that the glue sequence could be empty.
+  // In this case we just emit the entire bottom sequence first?
   if (glue_bit == -1)
   {
     a.insert(a.end(),bottom.begin(), bottom.end());
@@ -315,10 +324,36 @@ std::vector<HMM::bitmask_t> Glue_Alignments(const std::vector<HMM::bitmask_t>& t
     return a;
   }
 
+  assert(bitlength(top, glue_bit) == bitlength(bottom, glue_bit));
+
   int i=0;
   int j=0;
-  while (i<top.size() or j < bottom.size())
+
+  while(true)
   {
+    // Add insertions
+    while (j < bottom.size() and not bottom[j].test(glue_bit))
+      a.push_back(bottom[j++]);
+    // Now bottom[j] is either past the end or at the next input site.
+    
+    // Add deletions:
+    while( i< top.size() and not top[i].test(glue_bit))
+      a.push_back(top[i++]);
+    // Now top[i] is either past the end or at the next output site.
+    
+    // We are done if there is nothing left to read
+    if (i == top.size() and j == bottom.size()) break;
+
+    // If we are looking for a top state to emit a tick, but top is too short, then abort.
+    if (i == top.size()) std::abort();
+
+    // If we are looking for a bottom state to absorb a tick, but bottom is too short, then abort.
+    if (j == bottom.size()) std::abort();
+    
+    // Emit (M/I):(M/D)
+    assert(top[i].test(glue_bit) and bottom[j].test(glue_bit));
+    a.push_back(top[i++] & bottom[j++]);
   }
+
   return a;
 }
