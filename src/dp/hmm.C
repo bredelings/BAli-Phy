@@ -360,7 +360,7 @@ std::vector<HMM::bitmask_t> Glue_A(const std::vector<HMM::bitmask_t>& top, const
     
     // Emit (M/I):(M/D)
     assert(top[i].test(glue_bit) and bottom[j].test(glue_bit));
-    a.push_back(top[i++] & bottom[j++]);
+    a.push_back(top[i++] | bottom[j++]);
   }
 
   return a;

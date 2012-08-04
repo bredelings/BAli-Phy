@@ -151,6 +151,8 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 
   vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
 
+  assert(bitslength(a123,2|4|8) == seq123.size());
+
   // FIXME: Now we just need to construct seq123 and icol, jcol, and kcol
 
   const Matrix Q = createQ( P.get_branch_HMMs(branches) );
