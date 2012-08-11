@@ -143,9 +143,20 @@ void DParray::set_length(int l)
   length = l+1;
   state_array::resize(length, n_dp_states());
 
-  // clear the beginning of the array
-  for(int s=0;s<start_P.size();s++)
-    (*this)(0,s) = start_P[s];
+  for(int i=0;i<n_dp_states();i++)
+    (*this)(0,i) = start_P[i];
+
+#if 0
+  // Set the start probabilities.
+  for(int i=0;i<n_dp_states();i++)
+  {
+    int s = dp_order(i);
+    if (s < start_P.size())
+      (*this)(0,i) = start_P[s];
+    else
+      (*this)(0,i) = 0;
+  }
+#endif
 
   Pr_total = 0;
 }
@@ -154,18 +165,12 @@ DParray::DParray(int l, const HMM& H)
   :DPengine(H)
 {
   set_length(l);
-
-  for(int s=0;s<start_P.size();s++)
-    (*this)(0,s) = start_P[s];
 }
 
 DParray::DParray(int l, const vector<bitmask_t>& v1,const vector<double>& v2,const Matrix& M,double Beta)
   :DPengine(v1,v2,M,Beta)
 { 
   set_length(l);
-
-  for(int s=0;s<start_P.size();s++)
-    (*this)(0,s) = start_P[s];
 }
 
 // We can ignore scale(i) here, because it factors out.
