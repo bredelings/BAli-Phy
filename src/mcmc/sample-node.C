@@ -136,23 +136,38 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   int b3 = T.directed_branch(nodes[0],nodes[3]);
 
   HMM m1 = P.get_branch_HMM(b1);
-  m1.remap_bits({1,0});
+  m1.remap_bits({0,3});
   HMM m2 = P.get_branch_HMM(b2);
-  m2.remap_bits({0,2});
+  m2.remap_bits({3,1});
   HMM m3 = P.get_branch_HMM(b3);
-  m3.remap_bits({0,3});
+  m3.remap_bits({3,2});
 
   HMM m123 = Glue(m1,Glue(m2,m3));
-  m123.hidden_bits.set(0);
+  m123.hidden_bits.set(3);
+  m123.B = P.get_beta();
 
-  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),1,0);
-  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),0,2);
-  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),0,3);
+  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,3);
+  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),3,1);
+  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),3,2);
 
   vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
 
-  assert(bitslength(a123,2|4|8) == seq123.size());
+  const int L = bitslength(a123,~(1<<3));
+  assert(L == seq123.size());
 
+#ifndef NDEBUG
+  {
+    boost::shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(L, m123) );
+
+    for(int c2=0;c2<Matrices->size();c2++)
+    {
+      Matrices->states(c2).reserve(Matrices->n_dp_states());
+      for(int i=0;i<Matrices->n_dp_states();i++) {
+	int S2 = Matrices->dp_order(i);
+      }
+    }
+  }
+#endif
   // FIXME: Now we just need to construct seq123 and icol, jcol, and kcol
 
   const Matrix Q = createQ( P.get_branch_HMMs(branches) );
