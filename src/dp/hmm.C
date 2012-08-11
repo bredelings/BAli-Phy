@@ -105,6 +105,16 @@ HMM::HMM(const vector<bitmask_t>& bitmasks, int start_index, int end_index, cons
 {
   assert(Q.size1() >= n_states());
   assert(Q.size2() >= n_states());
+
+  // The idea with start_P is that all of these states are emitting states.
+  // We can therefore discern, when moving back to one of these states in back-sampling
+  //  that we have emitted too many letters, and stop the back-sampling.
+  // Q: Could we allow the Start state to be one of the DP states?
+  // A: Yes, we could.
+  //  assert(start_P.size() <= bitmasks.size());
+
+  // Q: Can we, in general, compute a non-silent start_P in the Glue code?
+  // A: ... ?
 }
 
 int find_first_set_bit(const HMM::bitmask_t& mask)
