@@ -311,6 +311,16 @@ int bitslength(const vector<HMM::bitmask_t>& bits, HMM::bitmask_t m)
   return count;
 }
 
+vector<HMM::bitmask_t> remove_silent(const vector<HMM::bitmask_t>& bits, HMM::bitmask_t emit)
+{
+  vector<HMM::bitmask_t> new_bits;
+  new_bits.reserve(bits.size());
+  for(const auto& b: bits)
+    if ((b & emit).any())
+      new_bits.push_back(b);
+  return new_bits;
+}
+
 HMM::bitmask_t get_all_bits(const std::vector<HMM::bitmask_t>& a)
 {
   HMM::bitmask_t bits;

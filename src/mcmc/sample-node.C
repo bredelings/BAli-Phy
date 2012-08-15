@@ -151,6 +151,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),3,2);
 
   vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
+  vector<HMM::bitmask_t> a123_emit = remove_silent(a123, m123.all_bits() & ~m123.hidden_bits);
 
   const int L = bitslength(a123,~(1<<3));
   assert(L == seq123.size());
@@ -159,11 +160,42 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   {
     boost::shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(L, m123) );
 
-    for(int c2=0;c2<Matrices->size();c2++)
+    // collect the silent-or-correct-emissions for each type columns
+    vector< vector<int> > allowed_states_for_mask(8);
+    for(auto& m: allowed_states_for_mask)
+      m.reserve(Matrices->n_dp_states());
+
+    // Construct the states that are allowed for each emission pattern.
+    for(int i=0;i<Matrices->n_dp_states();i++) 
     {
-      Matrices->states(c2).reserve(Matrices->n_dp_states());
-      for(int i=0;i<Matrices->n_dp_states();i++) {
-	int S2 = Matrices->dp_order(i);
+      int S2 = Matrices->dp_order(i);
+      unsigned int state2 = (m123.state_emit[S2] & ~m123.hidden_bits).to_ulong();
+
+      // Hidden states never contradict an emission pattern.
+      if (state2 == 0)
+	for(int j=0;j<16;j++)
+	  allowed_states_for_mask[j].push_back(S2);
+      else
+	allowed_states_for_mask[state2].push_back(S2);
+    }
+
+    // Determine which states are allowed to match (c2)
+    for(int c2=0;c2<Matrices->size();c2++) 
+    {
+      vector<int>& allowed_states = Matrices->states(c2);
+      allowed_states.clear();
+      
+      if (c2 == 0) {
+	allowed_states.reserve(Matrices->n_dp_states());
+	for(int i=0;i<Matrices->n_dp_states();i++)
+	  allowed_states.push_back(Matrices->dp_order(i));
+      }
+      else {
+	unsigned int mask=(a123_emit[c2]&~m123.hidden_bits).to_ulong();
+	
+	assert(mask);
+	
+	allowed_states = allowed_states_for_mask[mask];
       }
     }
   }

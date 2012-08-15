@@ -100,6 +100,8 @@ int bitlength(const std::vector<HMM::bitmask_t>& bits, int b);
 
 int bitslength(const std::vector<HMM::bitmask_t>& bits, HMM::bitmask_t m);
 
+std::vector<HMM::bitmask_t> remove_silent(const std::vector<HMM::bitmask_t>& bits, HMM::bitmask_t m);
+
 HMM Glue(const HMM& top, const HMM& bottom);
 
 std::vector<HMM::bitmask_t> Glue_A(const std::vector<HMM::bitmask_t>&, const std::vector<HMM::bitmask_t>&);
