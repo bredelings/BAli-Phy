@@ -173,7 +173,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 
       // Hidden states never contradict an emission pattern.
       if (state2 == 0)
-	for(int j=0;j<16;j++)
+	for(int j=0;j<8;j++)
 	  allowed_states_for_mask[j].push_back(S2);
       else
 	allowed_states_for_mask[state2].push_back(S2);
