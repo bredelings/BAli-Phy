@@ -194,7 +194,19 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
       Matrices->states(c2+1) = allowed_states_for_mask[mask];
     }
 
+    //------------------ Compute the DP matrix ----------------------//
+    Matrices->forward();
+    
+    //------------- Sample a path from the matrix -------------------//
+    
+    // If the DP matrix ended up having probability 0, don't try to sample a path through it!
+    if (Matrices->Pr_sum_all_paths() <= 0.0)
+    {
+      std::cerr<<"sample_node_base( ) ?? new HMM: All paths have probability 0!"<<std::endl;
     }
+    vector<int> path_g = Matrices->sample_path();
+    vector<int> path = Matrices->ungeneralize(path_g);
+
   }
 #endif
   // FIXME: Now we just need to construct seq123 and icol, jcol, and kcol
