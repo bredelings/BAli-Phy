@@ -179,24 +179,21 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 	allowed_states_for_mask[state2].push_back(S2);
     }
 
-    // Determine which states are allowed to match (c2)
-    for(int c2=0;c2<Matrices->size();c2++) 
+    // All states are allowed to match column 0
+    Matrices->states(0).clear();
+    Matrices->states(0).reserve(Matrices->n_dp_states());
+    for(int i=0;i<Matrices->n_dp_states();i++)
+      Matrices->states(0).push_back(Matrices->dp_order(i));
+
+    // Determine which states are allowed to match other columns (c2)
+    for(int c2=0;c2<a123_emit.size();c2++) 
     {
-      vector<int>& allowed_states = Matrices->states(c2);
-      allowed_states.clear();
-      
-      if (c2 == 0) {
-	allowed_states.reserve(Matrices->n_dp_states());
-	for(int i=0;i<Matrices->n_dp_states();i++)
-	  allowed_states.push_back(Matrices->dp_order(i));
-      }
-      else {
-	unsigned int mask=(a123_emit[c2]&~m123.hidden_bits).to_ulong();
+      unsigned int mask=(a123_emit[c2]&~m123.hidden_bits).to_ulong();
+      assert(mask);
 	
-	assert(mask);
-	
-	allowed_states = allowed_states_for_mask[mask];
-      }
+      Matrices->states(c2+1) = allowed_states_for_mask[mask];
+    }
+
     }
   }
 #endif
