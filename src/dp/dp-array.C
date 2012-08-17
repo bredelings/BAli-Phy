@@ -293,7 +293,7 @@ inline void DParrayConstrained::forward(int i2)
     int S2 = states(i2)[s2];
 
     int i1 = i2;
-    if (di(S2))
+    if (di(S2)) // we need to change this to (state_emit[S2]&~hidden).any()
       i1--;
 
     //----- don't go off the boundary -----//

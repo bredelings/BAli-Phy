@@ -203,6 +203,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
     if (Matrices->Pr_sum_all_paths() <= 0.0)
     {
       std::cerr<<"sample_node_base( ) ?? new HMM: All paths have probability 0!"<<std::endl;
+      std::abort();
     }
     vector<int> path_g = Matrices->sample_path();
     vector<int> path = Matrices->ungeneralize(path_g);
