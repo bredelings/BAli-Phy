@@ -337,29 +337,34 @@ void graph_alignment::add_pairwise_alignment(int node1, int node2, const pairwis
 {
   using namespace A2;
 
+  // What is the next character to match in the sequence with index 'node1'?
   int index1 = 0;
-  int index2 = 0;
 
+  int prev_column = -1;
   for(int i=0;i<pi.size();i++)
   {
+    int column = -1;
     if (pi[i] == states::M)
     {
-      int column = get_column(node1, index1);
+      column = get_column(node1, index1++);
       add_row_character_to_column(node2, column);
-      index1++;
-      index2++;
     }
     else if (pi[i] == states::G1)
     {
-      add_row_character_to_new_column(node2);
-      index2++;
+      column = add_row_character_to_new_column(node2);
     }
     else if (pi[i] == states::G2)
     {
-      // No character in seq2 to process
-      index1++;
+      column = get_column(node1, index1++);
     }
+
+    // Add edge from previous column to this column
+    if (prev_column != -1 and column != -1)
+      add_edge(prev_column,column);
+
+    prev_column = column;
   }
+  assert(index1 == seq_length(node1));
 }
 
 void graph_alignment::link_all_columns()
