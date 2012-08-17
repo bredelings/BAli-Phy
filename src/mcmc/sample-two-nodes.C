@@ -134,12 +134,8 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
 
   // Construct the 1D state-emit matrix from the 6D one
   vector<bitmask_t> state_emit_1D( A5::states_list.size() );
-  for(int S2=0;S2<state_emit_1D.size();S2++) {
-    if (A5::states_list[S2]&leafbitsmask)
-      state_emit_1D[S2] = 1;
-    else
-      state_emit_1D[S2] = 0;
-  }
+  for(int S2=0;S2<state_emit_1D.size();S2++)
+    state_emit_1D[S2] = A5::states_list[S2]&bitsmask;
   
   // Create the transition matrix first using just the current, fixed ordering
   vector<int> branches(5);
@@ -158,6 +154,8 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
     Matrices = new DParrayConstrained(seqall.size(), state_emit_1D, 
 				      start_P, Q, 
 				      P.get_beta());
+
+    Matrices->hidden_bits = bitsmask&~leafbitsmask;
   }
   else 
   {
