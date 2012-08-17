@@ -75,7 +75,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   // project(A,...) is shorter.
 
   // However, the NUMBER of columns should be the same. 
-  vector<int> columns2 = getorder(project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
+  vector<int> columns2 = A3::getorder(A3::project(A,nodes[0],nodes[1],nodes[2],nodes[3]),0,1,2,3);
   assert(columns.size() == columns2.size());
 #endif
 

@@ -243,8 +243,8 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   for(int i=0;i<6;i++)
     newnodes.push_back(i);
 
-  vector<int> path_new = get_path(project(A,nodes),newnodes,A5::states_list);
-  vector<int> path_new2 = get_path(A,nodes,A5::states_list);
+  vector<int> path_new = A5::get_path(A5::project(A,nodes),newnodes,A5::states_list);
+  vector<int> path_new2 = A5::get_path(A,nodes,A5::states_list);
   assert(path_new == path_new2); // <- current implementation probably guarantees this
                                  //    but its not a NECESSARY effect of the routine.
 
