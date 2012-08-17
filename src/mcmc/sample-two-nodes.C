@@ -132,11 +132,6 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
 
   /*-------------- Create alignment matrices ---------------*/
 
-  // Construct the 1D state-emit matrix from the 6D one
-  vector<bitmask_t> state_emit_1D( A5::states_list.size() );
-  for(int S2=0;S2<state_emit_1D.size();S2++)
-    state_emit_1D[S2] = A5::states_list[S2]&bitsmask;
-  
   // Create the transition matrix first using just the current, fixed ordering
   vector<int> branches(5);
   branches[0] = T.branch(nodes[0],nodes[4]);
@@ -149,9 +144,14 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   // Actually create the Matrices & Chain
   if (not Matrices) 
   {
+    // Construct the 1D state-emit matrix from the 6D one
+    vector<bitmask_t> state_emit( A5::states_list.size() );
+    for(int S2=0;S2<state_emit.size();S2++)
+      state_emit[S2] = A5::states_list[S2]&bitsmask;
+  
     const Matrix Q = createQ( P.get_branch_HMMs(branches),A5::states_list);
 
-    Matrices = new DParrayConstrained(seqall.size(), state_emit_1D, 
+    Matrices = new DParrayConstrained(seqall.size(), state_emit, 
 				      start_P, Q, 
 				      P.get_beta());
 
