@@ -58,8 +58,6 @@ using std::endl;
 
 using boost::dynamic_bitset;
 
-using namespace A3;
-
 boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
 {
   default_timer_stack.push_timer("alignment::DP1/3-way");
@@ -76,7 +74,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   int n1 = nodes[1];
   int n2 = nodes[2];
   int n3 = nodes[3];
-  vector<int> columns = getorder(old,n0,n1,n2,n3);
+  vector<int> columns = A3::getorder(old,n0,n1,n2,n3);
 
   //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
   //  std::cerr<<"old (reordered) = "<<project(old,n0,n1,n2,n3)<<endl;
@@ -122,9 +120,9 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   /*-------------- Create alignment matrices ---------------*/
 
   // Cache which states emit which sequences
-  vector<bitmask_t> state_emit(nstates+1);
+  vector<HMM::bitmask_t> state_emit(A3::nstates+1);
   for(int S2=0;S2<state_emit.size();S2++)
-    if (di(S2) or dj(S2) or dk(S2)) 
+    if (A3::di(S2) or A3::dj(S2) or A3::dk(S2)) 
       state_emit[S2] |= (1<<0);
 
   vector<int> branches;
@@ -209,8 +207,8 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 #endif
   // FIXME: Now we just need to construct seq123 and icol, jcol, and kcol
 
-  const Matrix Q = createQ( P.get_branch_HMMs(branches) );
-  vector<double> start_P = get_start_P( P.get_branch_HMMs(branches) );
+  const Matrix Q = A3::createQ( P.get_branch_HMMs(branches) );
+  vector<double> start_P = A3::get_start_P( P.get_branch_HMMs(branches) );
 
   // Actually create the Matrices & Chain
   boost::shared_ptr<DParrayConstrained> 
@@ -228,13 +226,13 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 
       //---------- Get (i1,j1,k1) ----------
       int i1 = i2;
-      if (di(S2)) i1--;
+      if (A3::di(S2)) i1--;
 
       int j1 = j2;
-      if (dj(S2)) j1--;
+      if (A3::dj(S2)) j1--;
 
       int k1 = k2;
-      if (dk(S2)) k1--;
+      if (A3::dk(S2)) k1--;
       
       //------ Get c1, check if valid ------
       if (c2==0 
@@ -263,7 +261,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   vector<int> path_g = Matrices->sample_path();
   vector<int> path = Matrices->ungeneralize(path_g);
 
-  *P.A.modify() = construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
+  *P.A.modify() = A3::construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
   for(int i=1;i<4;i++) {
     int b = T.directed_branch(nodes[0],nodes[i]);
     P.set_pairwise_alignment(b, A3::get_pairwise_alignment_from_path(path, 0, i));
@@ -476,7 +474,7 @@ void sample_node(Parameters& P,int node)
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
-  nodes[0] = get_nodes_random(T,node);
+  nodes[0] = A3::get_nodes_random(T,node);
 
   vector<efloat_t> rho(1,1);
 
