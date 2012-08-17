@@ -153,12 +153,9 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
   vector<HMM::bitmask_t> a123_emit = remove_silent(a123, m123.all_bits() & ~m123.hidden_bits);
 
-  const int L = bitslength(a123,~(1<<3));
-  assert(L == seq123.size());
-
 #ifndef NDEBUG
   {
-    boost::shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(L, m123) );
+    boost::shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a123_emit.size(), m123) );
 
     // collect the silent-or-correct-emissions for each type columns
     vector< vector<int> > allowed_states_for_mask(8);
