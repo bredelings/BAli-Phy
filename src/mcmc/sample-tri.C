@@ -137,6 +137,9 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
     Matrices(new DPmatrixConstrained(get_state_emit(), start_P, Q, P.get_beta(),
 				     dists1, dists23, P.WeightedFrequencyMatrix())
 	     );
+  Matrices->emit1 = 2;
+  Matrices->emit2 = 4|8;
+  Matrices->hidden_bits = 1;
 
   // Determine which states are allowed to match (,c2)
   for(int c2=0;c2<dists23.size()-1;c2++) 
