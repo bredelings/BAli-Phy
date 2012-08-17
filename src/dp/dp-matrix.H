@@ -100,10 +100,13 @@ protected:
   virtual void compute_Pr_sum_all_paths();
 
 public:
+  bitmask_t emit1 = 1;
+  bitmask_t emit2 = 2;
+
   /// Does state S emit in dimension 1?
-  bool di(int S) const {return state_emit[S].test(0);}
+  bool di(int S) const {return (state_emit[S]&emit1).any();}
   /// Does state S emit in dimension 2?
-  bool dj(int S) const {return state_emit[S].test(1);}
+  bool dj(int S) const {return (state_emit[S]&emit2).any();}
 
   /// Zero out all (relevant) probabilities for a cell
   virtual void clear_cell(int,int);
