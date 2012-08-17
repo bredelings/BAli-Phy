@@ -264,11 +264,19 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   vector<int> path_g = Matrices->sample_path();
   vector<int> path = Matrices->ungeneralize(path_g);
 
+  vector<pairwise_alignment_t> As;
+  for(int b=0;b<2*T.n_branches();b++)
+    As.push_back(P.get_pairwise_alignment(b));
+
   *P.A.modify() = A3::construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
   for(int i=1;i<4;i++) {
     int b = T.directed_branch(nodes[0],nodes[i]);
     P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 0, i));
   }
+
+  for(int b=0;b<2*T.n_branches();b++)
+    As[b] = P.get_pairwise_alignment(b);
+  *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
 
 #ifndef NDEBUG
   vector<int> path_new = get_path_3way(A3::project(*P.A,n0,n1,n2,n3),0,1,2,3);

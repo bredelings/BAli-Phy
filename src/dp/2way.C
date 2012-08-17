@@ -126,6 +126,34 @@ namespace A2 {
     else return s;
   }
 
+  pairwise_alignment_t get_pairwise_alignment(const ublas::matrix<int>& M, int n1, int n2)
+  {
+    pairwise_alignment_t pi;
+    pi.reserve(M.size1()+2);
+    pi.push_back(A2::states::S);
+    for(int c=0;c<M.size1();c++)
+    {
+      int S = -1;
+      if (M(c,n1) >=0 or M(c,n1) == -2)
+      {
+	if (M(c,n2) >=0 or M(c,n2) == -2)
+	  S = A2::states::M;
+	else
+	  S = A2::states::G2;
+      }
+      else
+      {
+	if (M(c,n2) >=0 or M(c,n2) == -2)
+	  S = A2::states::G1;
+      }
+      if (S != -1)
+	pi.push_back(S);
+    }
+    pi.push_back(A2::states::E);
+
+    return pi;
+  }
+
   pairwise_alignment_t get_pairwise_alignment(const alignment& A, int n1, int n2)
   {
     pairwise_alignment_t pi;
@@ -264,6 +292,7 @@ alignment construct(const alignment& old, const vector<int>& path, int n1,int n2
   assert(valid(A));
 
   return A;
+}
 }
 
 class graph_alignment
@@ -436,6 +465,38 @@ ublas::matrix<int> construct(const Tree& T, const vector<pairwise_alignment_t>& 
       M(column,r) = i;
     }
 
+  for(int b=0;b<2*T.n_branches();b++)
+  {
+    pairwise_alignment_t a = A2::get_pairwise_alignment(M, T.directed_branch(b).source(), T.directed_branch(b).target());
+    assert(A[b] == a);
+  }
+
   return M;
 }
+
+alignment get_alignment(const alignment& A1, const vector< vector<int>>& sequences, const ublas::matrix<int>& M)
+{
+  assert(A1.n_sequences() == M.size2());
+
+  alignment A2 = A1;
+  A2.changelength(M.size1());
+
+  // Overwrite the values in A2
+  for(int i=0;i<M.size1();i++)
+    for(int j=0;j<M.size2();j++)
+      A2.set_value(i,j,M(i,j));
+
+  // Set the leaf sequences
+  for(int i=0;i<sequences.size();i++)
+    for(int c=0;c<A2.length();c++)
+      if (A2(c,i) >= 0)
+	A2.set_value(c, i, sequences[i][A2(c, i)]);
+
+  // Set the internal node sequences
+  for(int i=sequences.size();i<A2.n_sequences();i++)
+    for(int c=0;c<A2.length();c++)
+      if (A2(c,i) >= 0)
+	A2.set_value(c, i, alphabet::not_gap);
+
+  return A2;
 }

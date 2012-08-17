@@ -42,6 +42,10 @@ bool operator==(const pairwise_alignment_t&, const pairwise_alignment_t&);
 
 std::vector<std::bitset<64>> convert_to_bits(const pairwise_alignment_t&, int ,int );
 
+ublas::matrix<int> construct(const Tree& T, const std::vector<pairwise_alignment_t>& A);
+
+alignment get_alignment(const alignment& A1, const std::vector< std::vector<int>>& sequences, const ublas::matrix<int>& M);
+
 namespace A2 {
 
   namespace states {
@@ -56,13 +60,13 @@ namespace A2 {
 
   pairwise_alignment_t get_pairwise_alignment(const alignment& A, int n1, int n2);
 
+  pairwise_alignment_t get_pairwise_alignment(const ublas::matrix<int>& A, int n1, int n2);
+
 
   alignment construct(const alignment& old, const std::vector<int>& path, int n1,int n2, 
 		      const Tree& T, const std::vector<int>& seq1,const std::vector<int>& seq2);
 
 
-
-  ublas::matrix<int> construct(const Tree& T, const std::vector<pairwise_alignment_t>& A);
 
   pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path);
 }
