@@ -133,8 +133,6 @@ namespace A3 {
 		      int n0,int n1,int n2,int n3,const Tree& T,
 		      const std::vector<int>& seq1,const std::vector<int>& seq2, const std::vector<int>& seq3);
 
-  pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>&,int n1, int n2);
-
   std::vector<int> getorder(const alignment& A,int n0,int n1,int n2,int n3);
   alignment project(const alignment& A1,int n0,int n1,int n2,int n3);
   alignment project(const alignment& A1,const std::vector<int>&);

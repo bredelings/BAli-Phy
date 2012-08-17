@@ -469,37 +469,6 @@ namespace A3 {
     return A;
   }
 
-  /// Construct a pairwise alignment path from specific nodes in the range [0..3]
-  pairwise_alignment_t get_pairwise_alignment_from_path(const vector<int>& path, int n1, int n2)
-  {
-    assert(0 <= n1 and n1 < 4);
-    assert(0 <= n2 and n2 < 4);
-
-    assert(n1 != n2);
-
-    pairwise_alignment_t pi;
-    pi.reserve(path.size());
-    pi.push_back(A2::states::S);
-
-    for(int i=0;i<path.size();i++)
-    {
-      int S = states_list[path[i]];
-      bool d1 = (S & (1<<n1));
-      bool d2 = (S & (1<<n2));
-
-      if (d1 and d2)
-	pi.push_back(A2::states::M);
-      else if (d1 and not d2)
-	pi.push_back(A2::states::G2);
-      else if (not d1 and d2)
-	pi.push_back(A2::states::G1);
-    }
-
-    pi.push_back(A2::states::E);
-
-    return pi;
-  }
-
   // If we are just getting the order of the columns in the 3-way alignment
   // the this shouldn't affect anything else, should it??
 

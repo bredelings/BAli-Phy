@@ -78,8 +78,6 @@ namespace A5 {
 		      const std::vector< std::vector<int> >& seqs,
 		      const std::vector<int>& states_list);
 
-  pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>&,int n1, int n2);
-
   /// Get the ordered list of columns present in 5way alignment of 'nodes'
   std::vector<int> getorder(const alignment& A,const std::vector<int>& nodes);
 
