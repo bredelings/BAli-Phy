@@ -119,12 +119,6 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 
   /*-------------- Create alignment matrices ---------------*/
 
-  // Cache which states emit which sequences
-  vector<HMM::bitmask_t> state_emit(A3::nstates+1);
-  for(int S2=0;S2<state_emit.size();S2++)
-    if (A3::di(S2) or A3::dj(S2) or A3::dk(S2)) 
-      state_emit[S2] |= (1<<0);
-
   vector<int> branches;
   for(int i=1;i<nodes.size();i++)
     branches.push_back(T.branch(nodes[0],nodes[i]) );
@@ -207,13 +201,18 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 #endif
   // FIXME: Now we just need to construct seq123 and icol, jcol, and kcol
 
+  // Cache which states emit which sequences
+  vector<HMM::bitmask_t> state_emit(A3::nstates+1);
+  for(int S2=0;S2<state_emit.size();S2++)
+    state_emit[S2] = A3::states_list[S2] & A3::bitsmask;
+
   const Matrix Q = A3::createQ( P.get_branch_HMMs(branches) );
   vector<double> start_P = A3::get_start_P( P.get_branch_HMMs(branches) );
 
   // Actually create the Matrices & Chain
   boost::shared_ptr<DParrayConstrained> 
-    Matrices( new DParrayConstrained(seq123.size(),state_emit,start_P,Q, P.get_beta())
-	      );
+    Matrices( new DParrayConstrained(seq123.size(),state_emit,start_P,Q, P.get_beta()) );
+  Matrices->hidden_bits = 1;
 
   // Determine which states are allowed to match (c2)
   for(int c2=0;c2<Matrices->size();c2++) {
