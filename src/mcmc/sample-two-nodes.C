@@ -62,8 +62,6 @@ using std::endl;
 
 using boost::dynamic_bitset;
 
-using namespace A5;
-
 // IDEA: make a routine which encapsulates this sampling, and passes back
 //  the total_sum.  Then we can just call sample_two_nodes w/ each of the 3 trees.
 // We can choose between them with the total_sum (I mean, sum_all_paths).
@@ -79,7 +77,7 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   //  std::cerr<<"old = "<<old<<endl;
 
   //------------- Compute sequence properties --------------//
-  vector<int> columns = getorder(old,nodes);
+  vector<int> columns = A5::getorder(old,nodes);
 
   //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
   //  std::cerr<<"old (reordered) = "<<project(old,nodes)<<endl;
@@ -139,23 +137,23 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   branches[2] = T.branch(nodes[2],nodes[5]);
   branches[3] = T.branch(nodes[3],nodes[5]);
   branches[4] = T.branch(nodes[4],nodes[5]);
-  vector<double> start_P = get_start_P( P.get_branch_HMMs(branches) );
+  vector<double> start_P = A5::get_start_P( P.get_branch_HMMs(branches) );
 
   // Actually create the Matrices & Chain
   if (not Matrices) 
   {
     // Construct the 1D state-emit matrix from the 6D one
-    vector<bitmask_t> state_emit( A5::states_list.size() );
+    vector<HMM::bitmask_t> state_emit( A5::states_list.size() );
     for(int S2=0;S2<state_emit.size();S2++)
-      state_emit[S2] = A5::states_list[S2]&bitsmask;
+      state_emit[S2] = A5::states_list[S2]&A5::bitsmask;
   
-    const Matrix Q = createQ( P.get_branch_HMMs(branches),A5::states_list);
+    const Matrix Q = A5::createQ( P.get_branch_HMMs(branches),A5::states_list);
 
     Matrices = new DParrayConstrained(seqall.size(), state_emit, 
 				      start_P, Q, 
 				      P.get_beta());
 
-    Matrices->hidden_bits = bitsmask&~leafbitsmask;
+    Matrices->hidden_bits = A5::bitsmask&~A5::leafbitsmask;
   }
   else 
   {
@@ -230,7 +228,7 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   //  std::cerr<<"generalized A = \n"<<construct(old,path_g,nodes,T,seqs,A5::states_list)<<endl;
   //  std::cerr<<"ungeneralized A = \n"<<construct(old,path,nodes,T,seqs,A5::states_list)<<endl;
 
-  A = construct(old,path,nodes,T,seqs,A5::states_list);
+  A = A5::construct(old,path,nodes,T,seqs,A5::states_list);
 
   P.set_pairwise_alignment(T.directed_branch(nodes[0],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 0, 4));
   P.set_pairwise_alignment(T.directed_branch(nodes[1],nodes[4]), get_pairwise_alignment_from_path(path, *Matrices, 1, 4));
