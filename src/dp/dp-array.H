@@ -93,7 +93,7 @@ public:
   efloat_t path_Q_subst(const std::vector<int>&) const {return 1;}
 
   /// Does state S emit?
-  bool di(int S) const {return state_emit[S].test(0);}
+  bool di(int S) const {return (state_emit[S]&~hidden_bits).any();}
 
   /// Return the size of the array
   unsigned size() const {return length;}
