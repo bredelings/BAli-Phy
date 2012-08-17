@@ -42,8 +42,6 @@ using std::pair;
 using std::endl;
 using boost::dynamic_bitset;
 
-using namespace A3;
-
 // FIXME - resample the path multiple times - pick one on opposite side of the middle 
 
 boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition& P,const vector<int>& nodes, int bandwidth)
@@ -68,7 +66,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
   //  std::clog<<"n0 = "<<nodes[0]<<"   n1 = "<<nodes[1]<<"    n2 = "<<nodes[2]<<"    n3 = "<<nodes[3]<<std::endl;
   //  std::clog<<"A (reordered) = "<<project(A,nodes[0],nodes[1],nodes[2],nodes[3])<<endl;
-  vector<int> columns = getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
+  vector<int> columns = A3::getorder(A,nodes[0],nodes[1],nodes[2],nodes[3]);
 
 #ifndef NDEBUG
 
@@ -129,12 +127,12 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   for(int i=0;i<3;i++)
     branches[i] = T.branch(nodes[0],nodes[i+1]);
 
-  const Matrix Q = createQ( P.get_branch_HMMs(branches) );
-  vector<double> start_P = get_start_P( P.get_branch_HMMs(branches) );
+  const Matrix Q = A3::createQ( P.get_branch_HMMs(branches) );
+  vector<double> start_P = A3::get_start_P( P.get_branch_HMMs(branches) );
 
   // Actually create the Matrices & Chain
   boost::shared_ptr<DPmatrixConstrained> 
-    Matrices(new DPmatrixConstrained(get_state_emit(), start_P, Q, P.get_beta(),
+    Matrices(new DPmatrixConstrained(A3::get_state_emit(), start_P, Q, P.get_beta(),
 				     dists1, dists23, P.WeightedFrequencyMatrix())
 	     );
   Matrices->emit1 = 2;
@@ -152,11 +150,11 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
       //---------- Get (,j1,k1) ----------
       int j1 = j2;
-      if (dj(S2)) 
+      if (A3::dj(S2)) 
 	j1--;
 
       int k1 = k2;
-      if (dk(S2)) 
+      if (A3::dk(S2)) 
 	k1--;
       
       //------ Get c1, check if valid ------
@@ -206,7 +204,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
   vector<int> path = Matrices->ungeneralize(path_g);
 
-  A = construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
+  A = A3::construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
   for(int i=1;i<4;i++) {
     int b = T.directed_branch(nodes[0],nodes[i]);
     P.set_pairwise_alignment(b, A3::get_pairwise_alignment_from_path(path, 0, i));
@@ -569,7 +567,7 @@ void tri_sample_alignment(Parameters& P,int node1,int node2)
   vector<Parameters> p(1,P);
 
   vector< vector<int> > nodes(1);
-  nodes[0] = get_nodes_branch_random(*P.T,node1,node2);
+  nodes[0] = A3::get_nodes_branch_random(*P.T,node1,node2);
 
   vector<efloat_t> rho(1,1);
 
@@ -607,7 +605,7 @@ bool tri_sample_alignment_branch(Parameters& P,
   vector<Parameters> p(2,P);
   p[1].setlength(b,length2);
 
-  vector< vector<int> > nodes (2, get_nodes_branch_random(*P.T,node1,node2) );
+  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(*P.T,node1,node2) );
 
   vector<efloat_t> rho(2);
   rho[0] = 1;
@@ -630,7 +628,7 @@ bool tri_sample_alignment_and_parameter(Parameters& P,
   vector<Parameters> p(2,P);
   p[1].set_parameter_value(p_index,v2);
 
-  vector< vector<int> > nodes (2, get_nodes_branch_random(*P.T,node1,node2) );
+  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(*P.T,node1,node2) );
 
   vector<efloat_t> rho(2);
   rho[0] = 1;
@@ -655,7 +653,7 @@ bool tri_sample_alignment_branch_model(Parameters& P,int node1,int node2)
   p[1].branch_HMM_type[b] = 1 - p[1].branch_HMM_type[b];
   p[1].recalc_imodels();
 
-  vector< vector<int> > nodes (2, get_nodes_branch_random(*P.T, node1,node2) );
+  vector< vector<int> > nodes (2, A3::get_nodes_branch_random(*P.T, node1,node2) );
 
   vector<efloat_t> rho(2,1.0);
 
