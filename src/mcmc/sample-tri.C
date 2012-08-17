@@ -207,7 +207,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
   A = A3::construct(A,path,nodes[0],nodes[1],nodes[2],nodes[3],T,seq1,seq2,seq3);
   for(int i=1;i<4;i++) {
     int b = T.directed_branch(nodes[0],nodes[i]);
-    P.set_pairwise_alignment(b, A3::get_pairwise_alignment_from_path(path, 0, i));
+    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 0, i));
   }
 
 #ifndef NDEBUG_DP
