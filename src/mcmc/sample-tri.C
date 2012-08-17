@@ -212,7 +212,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
 
 #ifndef NDEBUG_DP
   //--------------- Check alignment construction ------------------//
-  vector<int> path_new = get_path_3way(project(A,nodes),0,1,2,3);
+  vector<int> path_new = get_path_3way(A3::project(A,nodes),0,1,2,3);
 
   vector<int> path_new2 = get_path_3way(A,nodes);
   assert(path_new == path_new2); // <- current implementation probably guarantees this
@@ -221,7 +221,7 @@ boost::shared_ptr<DPmatrixConstrained> tri_sample_alignment_base(data_partition&
                                  //    not store in the alignment A.
   vector<int> path_new_g = Matrices->generalize(path_new);
   if (path_new_g != path_g) {
-    std::clog<<"A' (reordered) = "<<project(A,nodes)<<endl;
+    std::clog<<"A' (reordered) = "<<A3::project(A,nodes)<<endl;
     std::clog<<"A' = "<<A<<endl;
     std::abort();
   }

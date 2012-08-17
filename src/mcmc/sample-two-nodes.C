@@ -404,7 +404,7 @@ int sample_two_nodes_multi(vector<Parameters>& p,const vector< vector<int> >& no
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
       {
-	paths[i].push_back( get_path(A5::project(*p[i][j].A, nodes[i]),newnodes,A5::states_list) );
+	paths[i].push_back( A5::get_path(A5::project(*p[i][j].A, nodes[i]),newnodes,A5::states_list) );
     
 	OS[i][j] = p[i][j].likelihood();
 	OP[i][j] = other_prior(p[i][j],nodes[i]);

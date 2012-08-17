@@ -267,8 +267,8 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   }
 
 #ifndef NDEBUG
-  vector<int> path_new = A3::get_path_3way(A3::project(*P.A,n0,n1,n2,n3),0,1,2,3);
-  vector<int> path_new2 = A3::get_path_3way(*P.A,n0,n1,n2,n3);
+  vector<int> path_new = get_path_3way(A3::project(*P.A,n0,n1,n2,n3),0,1,2,3);
+  vector<int> path_new2 = get_path_3way(*P.A,n0,n1,n2,n3);
   assert(path_new == path_new2); // <- current implementation probably guarantees this
                                  //    but its not a NECESSARY effect of the routine.
 
