@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mytypes.H"
 #include "logsum.H"
 #include <bitset>
+#include "2way.H"
 
 // Can I make Q into a general function, backed by a matrix in some cases?
 
@@ -105,4 +106,6 @@ std::vector<HMM::bitmask_t> remove_silent(const std::vector<HMM::bitmask_t>& bit
 HMM Glue(const HMM& top, const HMM& bottom);
 
 std::vector<HMM::bitmask_t> Glue_A(const std::vector<HMM::bitmask_t>&, const std::vector<HMM::bitmask_t>&);
+
+pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path, const HMM&, int n1, int n2);
 #endif
