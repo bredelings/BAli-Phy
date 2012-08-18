@@ -93,6 +93,8 @@ vector<HMM::bitmask_t> get_bitpath_3way(const data_partition& P, const vector<in
  * is an emitting state?  When we transition to it, should be emit anything?
  */
 
+//Question: should we move this to HMM.C, and add a get_unique_path( ) option?
+
 /// This path should have an end state, but no start state! (Its going to be evaluated using start_P)
 vector<int> get_path(const vector<HMM::bitmask_t>& path1, const HMM& H)
 {
