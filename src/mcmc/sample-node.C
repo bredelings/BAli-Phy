@@ -273,7 +273,6 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   for(int b=0;b<2*T.n_branches();b++)
     As.push_back(P.get_pairwise_alignment(b));
 
-  *P.A.modify() = A3::construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
   for(int i=1;i<4;i++) {
     int b = T.directed_branch(nodes[0],nodes[i]);
     P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 0, i), false);
