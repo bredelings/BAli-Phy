@@ -299,7 +299,7 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 #endif
 }
 
-void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& pi) const
+void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& pi,bool require_match_A) const
 {
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: how can the alignment change?";
@@ -321,13 +321,16 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
   pairwise_alignment_for_branch[b] = pi;
   pairwise_alignment_for_branch[B] = pi.flipped();
 
-  int n1 = T().directed_branch(b).source();
-  int n2 = T().directed_branch(b).target();
-  assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
-  assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
+  if (require_match_A)
+  {
+    int n1 = T().directed_branch(b).source();
+    int n2 = T().directed_branch(b).target();
+    assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
+    assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
+  }
 }
 
-const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
+const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b, bool require_match_A) const
 {
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: what pairwise alignment are you referring to?";
@@ -339,11 +342,14 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
   if (pairwise_alignment_for_branch[b].is_valid())
   {
 #ifndef NDEBUG
-    int n1 = T().directed_branch(b).source();
-    int n2 = T().directed_branch(b).target();
-    assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
-    assert(pairwise_alignment_for_branch[B].is_valid());
-    assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
+    if (require_match_A)
+    {
+      int n1 = T().directed_branch(b).source();
+      int n2 = T().directed_branch(b).target();
+      assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
+      assert(pairwise_alignment_for_branch[B].is_valid());
+      assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
+    }
 #endif
   }
   else
@@ -357,10 +363,10 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b) const
   return pairwise_alignment_for_branch[b];
 }
 
-void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi)
+void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi, bool require_match_A)
 {
   note_alignment_changed_on_branch(b);
-  set_pairwise_alignment_(b,pi);
+  set_pairwise_alignment_(b,pi,require_match_A);
 }
 
 void data_partition::note_sequence_length_changed(int n)

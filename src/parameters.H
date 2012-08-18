@@ -80,7 +80,7 @@ class data_partition: public Mat_Cache
   /// The pairwise alignment for each branch
   mutable std::vector< cached_value< pairwise_alignment_t > > pairwise_alignment_for_branch;
 
-  void set_pairwise_alignment_(int b, const pairwise_alignment_t&) const;
+  void set_pairwise_alignment_(int b, const pairwise_alignment_t&,bool=true) const;
 
   /// Cached transition counts for the pair-HMM on each branch.
   mutable std::vector<cached_value<ublas::matrix<int> > > cached_alignment_counts_for_branch;
@@ -181,9 +181,9 @@ public:
   // invalidate subA indices for all branches
   void invalidate_subA_index_all();
 
-  const pairwise_alignment_t& get_pairwise_alignment(int b) const;
+  const pairwise_alignment_t& get_pairwise_alignment(int b,bool=true) const;
 
-  void set_pairwise_alignment(int b, const pairwise_alignment_t&);
+  void set_pairwise_alignment(int b, const pairwise_alignment_t&, bool=true);
 
   void subA_index_allow_invalid_branches(bool);
 
