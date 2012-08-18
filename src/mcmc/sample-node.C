@@ -201,6 +201,11 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
       int b = T.directed_branch(nodes[0],nodes[i+1]);
       P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
     }
+
+    vector<pairwise_alignment_t> As;
+    for(int b=0;b<2*T.n_branches();b++)
+      As.push_back(P.get_pairwise_alignment(b,false));
+    *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
   }
 #endif
   // FIXME: Now we just need to construct seq123 and icol, jcol, and kcol
