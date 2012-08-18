@@ -93,6 +93,7 @@ vector<HMM::bitmask_t> get_bitpath_3way(const data_partition& P, const vector<in
  * is an emitting state?  When we transition to it, should be emit anything?
  */
 
+/// This path should have an end state, but no start state! (Its going to be evaluated using start_P)
 vector<int> get_path(const vector<HMM::bitmask_t>& path1, const HMM& H)
 {
   // How do I convert this to a path???
@@ -105,12 +106,26 @@ vector<int> get_path(const vector<HMM::bitmask_t>& path1, const HMM& H)
 
   // Issue: we basically need to make the start-state M/M/M.
 
+  // Another issue: we actually DO need to look ahead, because only some states
+  //                are remembered - some are committed!
+
   vector<int> path2;
   path2.reserve(path1.size()+2);
   path2.push_back(H.startstate());
+  int last_state = -1;
+  for(int i=0;i<H.start_P.size();i++)
+    if (H.start_P[i] > 0)
+    {
+      assert(last_state == -1);
+      last_state = i;
+    }
+
   for(int i=0;i<path1.size();i++)
   {
-    
+    for(int j=0;j<H.n_states();j++)
+    {
+      
+    }
   }
 }
 
@@ -344,7 +359,7 @@ int sample_node_multi(vector<Parameters>& p,const vector< vector<int> >& nodes_,
     for(int j=0;j<p[i].n_data_partitions();j++) 
       if (p[i][j].variable_alignment())
       {
-	paths[i].push_back( get_path_3way(A3::project(*p[i][j].A,nodes[i]),0,1,2,3) );
+	paths[i].push_back( get_path(get_bitpath_3way(p[i][j], nodes[i]), *Matrices[i][j] ) );
 	
 	OS[i][j] = p[i][j].likelihood();
 	OP[i][j] = other_prior(p[i][j],nodes[i]);
