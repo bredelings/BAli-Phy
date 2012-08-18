@@ -199,7 +199,7 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 
     for(int i=0;i<3;i++) {
       int b = T.directed_branch(nodes[0],nodes[i+1]);
-      P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i));
+      P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
     }
   }
 #endif
@@ -271,17 +271,17 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   *P.A.modify() = A3::construct(old,path,n0,n1,n2,n3,T,seq1,seq2,seq3);
   for(int i=1;i<4;i++) {
     int b = T.directed_branch(nodes[0],nodes[i]);
-    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 0, i));
+    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 0, i), false);
   }
 
   for(int b=0;b<2*T.n_branches();b++)
-    As[b] = P.get_pairwise_alignment(b);
+    As[b] = P.get_pairwise_alignment(b, false);
   *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
 
 #ifndef NDEBUG
   vector<int> path_new = get_path_3way(A3::project(*P.A,n0,n1,n2,n3),0,1,2,3);
   vector<int> path_new2 = get_path_3way(*P.A,n0,n1,n2,n3);
-  assert(path_new == path_new2); // <- current implementation probably guarantees this
+  //  assert(path_new == path_new2); // <- current implementation probably guarantees this
                                  //    but its not a NECESSARY effect of the routine.
 
   // get the generalized paths - no sequential silent states that can loop
