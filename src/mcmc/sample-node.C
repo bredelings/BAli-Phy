@@ -58,6 +58,62 @@ using std::endl;
 
 using boost::dynamic_bitset;
 
+vector<HMM::bitmask_t> get_bitpath_3way(const data_partition& P, const vector<int>& nodes)
+{
+  const Tree& T = P.T();
+
+  int b1 = T.directed_branch(nodes[1],nodes[0]);
+  int b2 = T.directed_branch(nodes[0],nodes[2]);
+  int b3 = T.directed_branch(nodes[0],nodes[3]);
+
+  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,3);
+  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),3,1);
+  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),3,2);
+
+  vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
+
+  return a123;
+}
+
+/*
+ * This raises the question of how to generally handle start states, if the start
+ * state isn't a silent state that is unreachable from itself.
+ * (1) How shall we decide to end the back-sampling?  Could we probabilistically decide
+ *     that the next previous character doesn't exist?
+ * (2) What if the start state is an emitting state?
+ * (3) What is the start state is a silent state, but is reachable from itself?
+ * (3a) What if the start state forms a silent loop?
+ * (4) Do we need a level in the DP matrix for the start state?  Just like the end state
+ *     state, it would seem not.
+ * (5) If the start state is an emitting state, how could we tell if we began a path with
+ *     the start state, or not?
+ *     
+ *
+ * We could ask similar questions about the end state.  For example, what if the end state
+ * is an emitting state?  When we transition to it, should be emit anything?
+ */
+
+vector<int> get_path(const vector<HMM::bitmask_t>& path1, const HMM& H)
+{
+  // How do I convert this to a path???
+  // We I guess we could convert it to a path by Gluing, just like we do everything else by gluing!
+  // Well, if we glue two paths, there really should be only 1 way of getting doing things.  This
+  //   shouldn't require any look-ahead, to disambiguate, I *think*!
+
+  // Issue: by allowing a distribution of start states, we lose this nice property!
+  // Possible solution: 
+
+  // Issue: we basically need to make the start-state M/M/M.
+
+  vector<int> path2;
+  path2.reserve(path1.size()+2);
+  path2.push_back(H.startstate());
+  for(int i=0;i<path1.size();i++)
+  {
+    
+  }
+}
+
 boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const vector<int>& nodes)
 {
   default_timer_stack.push_timer("alignment::DP1/3-way");
@@ -70,55 +126,6 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   //  std::cerr<<"old = "<<old<<endl;
 
   /*------------- Compute sequence properties --------------*/
-  int n0 = nodes[0];
-  int n1 = nodes[1];
-  int n2 = nodes[2];
-  int n3 = nodes[3];
-  vector<int> columns = A3::getorder(old,n0,n1,n2,n3);
-
-  //  std::cerr<<"n0 = "<<n0<<"   n1 = "<<n1<<"    n2 = "<<n2<<"    n3 = "<<n3<<std::endl;
-  //  std::cerr<<"old (reordered) = "<<project(old,n0,n1,n2,n3)<<endl;
-
-  // Find sub-alignments and sequences
-  vector<int> seq1;
-  vector<int> seq2;
-  vector<int> seq3;
-  vector<int> seq123;
-  for(int i=0;i<columns.size();i++) {
-    int column = columns[i];
-    if (not old.gap(column,n1))
-      seq1.push_back(column);
-    if (not old.gap(column,n2))
-      seq2.push_back(column);
-    if (not old.gap(column,n3))
-      seq3.push_back(column);
-    if (not old.gap(column,n1) or not old.gap(column,n2) or not old.gap(column,n3))
-      seq123.push_back(column);
-  }
-
-  // Map columns with n2 or n3 to single index 'c'
-  vector<int> icol(seq123.size()+1);
-  vector<int> jcol(seq123.size()+1);
-  vector<int> kcol(seq123.size()+1);
-
-  icol[0] = 0;
-  jcol[0] = 0;
-  kcol[0] = 0;
-  for(int c=1,i=0,j=0,k=0;c<seq123.size()+1;c++) {
-    if (not old.gap(seq123[c-1],n1))
-      i++;    
-    if (not old.gap(seq123[c-1],n2))
-      j++;    
-    if (not old.gap(seq123[c-1],n3))
-      k++;
-    icol[c] = i;
-    jcol[c] = j;
-    kcol[c] = k;
-  }
-
-
-  /*-------------- Create alignment matrices ---------------*/
-
   vector<int> branches;
   for(int i=1;i<nodes.size();i++)
     branches.push_back(T.branch(nodes[0],nodes[i]) );
@@ -145,117 +152,46 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   vector<HMM::bitmask_t> a123 = Glue_A(a1, Glue_A(a2, a3));
   vector<HMM::bitmask_t> a123_emit = remove_silent(a123, m123.all_bits() & ~m123.hidden_bits);
 
-#ifndef NDEBUG
+
+  boost::shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a123_emit.size(), m123) );
+  
+  // collect the silent-or-correct-emissions for each type columns
+  vector< vector<int> > allowed_states_for_mask(8);
+  for(auto& m: allowed_states_for_mask)
+    m.reserve(Matrices->n_dp_states());
+  
+  // Construct the states that are allowed for each emission pattern.
+  for(int i=0;i<Matrices->n_dp_states();i++) 
   {
-    boost::shared_ptr<DParrayConstrained> Matrices ( new DParrayConstrained(a123_emit.size(), m123) );
-
-    // collect the silent-or-correct-emissions for each type columns
-    vector< vector<int> > allowed_states_for_mask(8);
-    for(auto& m: allowed_states_for_mask)
-      m.reserve(Matrices->n_dp_states());
-
-    // Construct the states that are allowed for each emission pattern.
-    for(int i=0;i<Matrices->n_dp_states();i++) 
-    {
-      int S2 = Matrices->dp_order(i);
-      unsigned int state2 = (m123.state_emit[S2] & ~m123.hidden_bits).to_ulong();
-
-      // Hidden states never contradict an emission pattern.
-      if (state2 == 0)
-	for(int j=0;j<8;j++)
-	  allowed_states_for_mask[j].push_back(S2);
-      else
-	allowed_states_for_mask[state2].push_back(S2);
-    }
-
-    // All states are allowed to match column 0
-    Matrices->states(0).clear();
-    Matrices->states(0).reserve(Matrices->n_dp_states());
-    for(int i=0;i<Matrices->n_dp_states();i++)
-      Matrices->states(0).push_back(Matrices->dp_order(i));
-
-    // Determine which states are allowed to match other columns (c2)
-    for(int c2=0;c2<a123_emit.size();c2++) 
-    {
-      unsigned int mask=(a123_emit[c2]&~m123.hidden_bits).to_ulong();
-      assert(mask);
-	
-      Matrices->states(c2+1) = allowed_states_for_mask[mask];
-    }
-
-    //------------------ Compute the DP matrix ----------------------//
-    Matrices->forward();
+    int S2 = Matrices->dp_order(i);
+    unsigned int state2 = (m123.state_emit[S2] & ~m123.hidden_bits).to_ulong();
     
-    //------------- Sample a path from the matrix -------------------//
+    // Hidden states never contradict an emission pattern.
+    if (state2 == 0)
+      for(int j=0;j<8;j++)
+	allowed_states_for_mask[j].push_back(S2);
+    else
+      allowed_states_for_mask[state2].push_back(S2);
+  }
+  
+  // All states are allowed to match column 0
+  Matrices->states(0).clear();
+  Matrices->states(0).reserve(Matrices->n_dp_states());
+  for(int i=0;i<Matrices->n_dp_states();i++)
+    Matrices->states(0).push_back(Matrices->dp_order(i));
+  
+  // Determine which states are allowed to match other columns (c2)
+  for(int c2=0;c2<a123_emit.size();c2++) 
+  {
+    unsigned int mask=(a123_emit[c2]&~m123.hidden_bits).to_ulong();
+    assert(mask);
     
-    // If the DP matrix ended up having probability 0, don't try to sample a path through it!
-    if (Matrices->Pr_sum_all_paths() <= 0.0)
-    {
-      std::cerr<<"sample_node_base( ) ?? new HMM: All paths have probability 0!"<<std::endl;
-      std::abort();
-    }
-    vector<int> path_g = Matrices->sample_path();
-    vector<int> path = Matrices->ungeneralize(path_g);
-
-    for(int i=0;i<3;i++) {
-      int b = T.directed_branch(nodes[0],nodes[i+1]);
-      P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
-    }
-
-    vector<pairwise_alignment_t> As;
-    for(int b=0;b<2*T.n_branches();b++)
-      As.push_back(P.get_pairwise_alignment(b,false));
-    *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
+    Matrices->states(c2+1) = allowed_states_for_mask[mask];
   }
-#endif
-  // FIXME: Now we just need to construct seq123 and icol, jcol, and kcol
-
-  // Cache which states emit which sequences
-  vector<HMM::bitmask_t> state_emit(A3::nstates+1);
-  for(int S2=0;S2<state_emit.size();S2++)
-    state_emit[S2] = A3::states_list[S2] & A3::bitsmask;
-
-  const Matrix Q = A3::createQ( P.get_branch_HMMs(branches) );
-  vector<double> start_P = A3::get_start_P( P.get_branch_HMMs(branches) );
-
-  // Actually create the Matrices & Chain
-  boost::shared_ptr<DParrayConstrained> 
-    Matrices( new DParrayConstrained(seq123.size(),state_emit,start_P,Q, P.get_beta()) );
-  Matrices->hidden_bits = 1;
-
-  // Determine which states are allowed to match (c2)
-  for(int c2=0;c2<Matrices->size();c2++) {
-    int i2 = icol[c2];
-    int j2 = jcol[c2];
-    int k2 = kcol[c2];
-    Matrices->states(c2).reserve(Matrices->n_dp_states());
-    for(int i=0;i<Matrices->n_dp_states();i++) {
-      int S2 = Matrices->dp_order(i);
-
-      //---------- Get (i1,j1,k1) ----------
-      int i1 = i2;
-      if (A3::di(S2)) i1--;
-
-      int j1 = j2;
-      if (A3::dj(S2)) j1--;
-
-      int k1 = k2;
-      if (A3::dk(S2)) k1--;
-      
-      //------ Get c1, check if valid ------
-      if (c2==0 
-	  or (i1 == i2 and j1 == j2 and k1 == k2) 
-	  or (i1 == icol[c2-1] and j1 == jcol[c2-1] and k1 == kcol[c2-1]) )
-	Matrices->states(c2).push_back(S2);
-      else
-	{ } // this state not allowed here
-    }
-  }
-
-
+  
   //------------------ Compute the DP matrix ----------------------//
   Matrices->forward();
-
+  
   //------------- Sample a path from the matrix -------------------//
 
   // If the DP matrix ended up having probability 0, don't try to sample a path through it!
@@ -269,32 +205,17 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   vector<int> path_g = Matrices->sample_path();
   vector<int> path = Matrices->ungeneralize(path_g);
 
-  vector<pairwise_alignment_t> As;
-  for(int b=0;b<2*T.n_branches();b++)
-    As.push_back(P.get_pairwise_alignment(b));
-
-  for(int i=1;i<4;i++) {
-    int b = T.directed_branch(nodes[0],nodes[i]);
-    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 0, i), false);
+  for(int i=0;i<3;i++) {
+    int b = T.directed_branch(nodes[0],nodes[i+1]);
+    P.set_pairwise_alignment(b, get_pairwise_alignment_from_path(path, *Matrices, 3, i), false);
   }
 
+  vector<pairwise_alignment_t> As;
   for(int b=0;b<2*T.n_branches();b++)
-    As[b] = P.get_pairwise_alignment(b, false);
+    As.push_back(P.get_pairwise_alignment(b,false));
   *P.A.modify() = get_alignment(old, *P.sequences, construct(T, As));
 
-#ifndef NDEBUG
-  vector<int> path_new = get_path_3way(A3::project(*P.A,n0,n1,n2,n3),0,1,2,3);
-  vector<int> path_new2 = get_path_3way(*P.A,n0,n1,n2,n3);
-  //  assert(path_new == path_new2); // <- current implementation probably guarantees this
-                                 //    but its not a NECESSARY effect of the routine.
-
-  // get the generalized paths - no sequential silent states that can loop
-  vector<int> path_new_g = Matrices->generalize(path_new);
-  assert(path_new_g == path_g);
   assert(valid(*P.A));
-
-
-#endif
 
   default_timer_stack.pop_timer();
   return Matrices;
