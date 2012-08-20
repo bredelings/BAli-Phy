@@ -108,4 +108,6 @@ HMM Glue(const HMM& top, const HMM& bottom);
 std::vector<HMM::bitmask_t> Glue_A(const std::vector<HMM::bitmask_t>&, const std::vector<HMM::bitmask_t>&);
 
 pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& path, const HMM&, int n1, int n2);
+
+std::vector<int> get_path_unique(const std::vector<HMM::bitmask_t>& path1, const HMM& H);
 #endif

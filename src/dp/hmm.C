@@ -414,3 +414,98 @@ pairwise_alignment_t get_pairwise_alignment_from_path(const std::vector<int>& pa
   
   return pi;
 }
+
+/*
+ * This raises the question of how to generally handle start states, if the start
+ * state isn't a silent state that is unreachable from itself.
+ * (1) How shall we decide to end the back-sampling?  Could we probabilistically decide
+ *     that the next previous character doesn't exist?
+ * (2) What if the start state is an emitting state?
+ * (3) What is the start state is a silent state, but is reachable from itself?
+ * (3a) What if the start state forms a silent loop?
+ * (4) Do we need a level in the DP matrix for the start state?  Just like the end state
+ *     state, it would seem not.
+ * (5) If the start state is an emitting state, how could we tell if we began a path with
+ *     the start state, or not?
+ *     
+ *
+ * We could ask similar questions about the end state.  For example, what if the end state
+ * is an emitting state?  When we transition to it, should be emit anything?
+ */
+
+//Question: should we move this to HMM.C, and add a get_unique_path( ) option?
+
+/// This path should have an end state, but no start state! (Its going to be evaluated using start_P)
+vector<int> get_path_unique(const vector<HMM::bitmask_t>& path1, const HMM& H)
+{
+  // How do I convert this to a path???
+  // We I guess we could convert it to a path by Gluing, just like we do everything else by gluing!
+  // Well, if we glue two paths, there really should be only 1 way of getting doing things.  This
+  //   shouldn't require any look-ahead, to disambiguate, I *think*!
+
+  // Issue: by allowing a distribution of start states, we lose this nice property!
+  // Possible solution: 
+
+  // Issue: we basically need to make the start-state M/M/M.
+
+  // Another issue: we actually DO need to look ahead, because only some states
+  //                are remembered - some are committed!
+
+  // 0. Here we treat all bits as non-silent.  Thus we use H.Q instead of H.QG.
+
+  // 1. Find the only allowed start_P state
+  int before_state = -1;
+  for(int i=0;i<H.start_P.size();i++)
+    if (H.start_P[i] > 0)
+    {
+      assert(before_state == -1);
+      before_state = i;
+    }
+
+  // 2. Forward pass: find possible states at each (non-silent) location for path1
+  vector< vector<int> > possible_states(path1.size());
+  for(int i=0;i<path1.size();i++)
+  {
+    for(int j=0;j<H.n_states();j++)
+    {
+      if (H.state_emit[j] != path1[i]) continue;
+
+      if (i==0)
+      {
+	if (H.connected_Q(before_state, j))
+	  possible_states[i].push_back(j);
+      }
+      else
+      {
+	bool ok = false;
+	for(int last_state: possible_states[i-1])
+	  if (H.connected_Q(last_state,j))
+	    ok = true;
+	if (ok)
+	  possible_states[i].push_back(j);
+      }
+    }
+    assert(not possible_states[i].empty());
+  }
+
+  // 3. Backward pass: resolve possible states to a single state at each location of path1
+  vector<int> path2;
+  path2.reserve(path1.size()+2);
+  path2.push_back(H.endstate());
+  int last_state = H.endstate();
+  for(int i=path1.size()-1; i>=0; i--)
+  {
+    int next_state = -1;
+    for(int S:possible_states[i])
+      if (H.connected_Q(S,last_state))
+      {
+	assert(next_state == -1);
+	next_state = S;
+      }
+    assert(next_state != -1);
+    path2.push_back(next_state);
+  }
+  std::reverse(path2.begin(), path2.end());
+  return path2;
+}
+
