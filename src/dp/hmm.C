@@ -504,6 +504,7 @@ vector<int> get_path_unique(const vector<HMM::bitmask_t>& path1, const HMM& H)
       }
     assert(next_state != -1);
     path2.push_back(next_state);
+    last_state = path2.back();
   }
   std::reverse(path2.begin(), path2.end());
   return path2;
