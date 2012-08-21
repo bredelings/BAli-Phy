@@ -335,7 +335,7 @@ namespace sequence_format {
     const int length = sequences[0].size();
 
     // Write header
-    file<<sequences.size()<<" "<<length<<"\n";
+    file<<sequences.size()<<" "<<length<<" I\n";
 
     for(int pos=0;pos<length;pos += letters_length) {
 
