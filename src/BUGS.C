@@ -66,6 +66,86 @@ struct employee_parser : qi::grammar<Iterator, employee(), ascii::space_type>
     qi::rule<Iterator, employee(), ascii::space_type> start;
 };
 
+//-----------------------------------------------------------------------//
+
+// Make a more interpretable program structure:
+//   It should contain an UNTRANSLATED and unsimplified representation of the program source.
+//     It should contain (for example) readable function bodies.
+//        ... perhaps a notes collection?
+//   It should contain a list of identifiers and parameters.
+
+// A symbol table for parameters and vars.
+qi::symbols<char,expression_ref> identifiers;
+
+struct bugs_cmd
+{
+  string var;
+  string dist;
+  vector<expression_ref> arguments;
+};
+
+BOOST_FUSION_ADAPT_STRUCT(
+    bugs_cmd,
+    (std::string, var)
+    (std::string, dist)
+    (std::vector<expression_ref>, arguments)
+)
+
+template <typename Iterator>
+struct bugs_grammar : qi::grammar<Iterator, string(), ascii::space_type>
+{
+    bugs_grammar() : bugs_grammar::base_type(bugs_line)
+    {
+        using qi::lit;
+        using qi::lexeme;
+        using ascii::char_;
+        using ascii::string;
+        using namespace qi::labels;
+
+        using phoenix::at_c;
+        using phoenix::push_back;
+
+        text = lexeme[+(char_ - '(')        [_val += _1]];
+
+	//	bugs_line = text<<'~'<<text;
+
+	/*
+        node = (xml | text)                 [_val = _1];
+
+        start_tag =
+                '<'
+            >>  !lit('/')
+            >>  lexeme[+(char_ - '>')       [_val += _1]]
+            >>  '>'
+        ;
+
+        end_tag =
+                "</"
+            >>  string(_r1)
+            >>  '>'
+        ;
+
+        xml =
+                start_tag                   [at_c<0>(_val) = _1]
+            >>  *node                       [push_back(at_c<1>(_val), _1)]
+            >>  end_tag(at_c<0>(_val))
+        ;
+	*/
+    }
+
+    qi::rule<Iterator, string(), ascii::space_type> bugs_line;
+    qi::rule<Iterator, std::string(), ascii::space_type> text;
+
+  /*
+    qi::rule<Iterator, mini_xml(), ascii::space_type> xml;
+    qi::rule<Iterator, mini_xml_node(), ascii::space_type> node;
+    qi::rule<Iterator, std::string(), ascii::space_type> start_tag;
+    qi::rule<Iterator, void(std::string), ascii::space_type> end_tag;
+  */
+};
+
+//-----------------------------------------------------------------------//
+
 struct mini_xml;
 
 typedef
@@ -203,6 +283,12 @@ vector<string> tokenize(const string& line)
 
 void add_BUGS(const Parameters& P, const string& filename)
 {
+  // Um, so what is the current program?
+  // 1. Well, its got a collection of identifiers.
+  //   (a) Some of these are functions
+  //   (b) Some of these are parameters
+  // 2. We've got a collection of heads.
+
   checked_ifstream file(filename,"BUGS file");
   vector<string> lines;
 
@@ -222,8 +308,6 @@ void add_BUGS(const Parameters& P, const string& filename)
     summer<string::const_iterator> sum_parser;
     if (qi::parse(line.begin(), line.end(), sum_parser, sum))
       std::cerr<<"Parsing succeeded: sum = "<<sum<<"\n";
-    else
-      std::cerr<<"Parsing failed!\n";
 
     employee_parser<string::const_iterator> g;
     employee E;
@@ -239,7 +323,16 @@ void add_BUGS(const Parameters& P, const string& filename)
     mini_xml ast;
     if (phrase_parse(iter, line.end(), xml_parser, space, ast) and iter == line.end())
     {
-      std::cerr<<"XML phrase parse: "<<boost::fusion::as_vector(E)<<std::endl;
+      //      std::cerr<<"XML phrase parse: "<<boost::fusion::as_vector(ast)<<std::endl;
+    }
+   
+    
+    iter = line.begin();
+    bugs_grammar<string::const_iterator> bugs_parser;
+    bugs_cmd cmd;
+    //    if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
+    {
+      //     std::cerr<<"BUGS phrase parse: "<<boost::fusion::as_vector(cmd)<<std::endl;
     }
    
     
