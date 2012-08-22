@@ -100,17 +100,18 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
         using qi::lexeme;
         using ascii::char_;
         using qi::double_;
+	using qi::eps;
         using ascii::string;
         using namespace qi::labels;
 
         using phoenix::at_c;
         using phoenix::push_back;
 
-        text = lexeme[+(char_ - '(')        [_val += _1]];
-	bugs_line = text[at_c<0>(_val) = _1] >> '~' >> text[at_c<1>(_val) = _1] >> arguments;
-	arguments %= lit('(')>>h_expression%','>>lit(')');
+        text = lexeme[+(char_ - ' ' -'(')        [_val += _1]];
+	bugs_line %= text >> '~' >> text >> arguments;
+	arguments %= eps | lit('(')>>h_expression%','>>lit(')');
 	h_expression %= double_;
-	//	bugs_line = text<<'~'<<text;
+	//	bugs_line = text[at_c<0>(_val) = _1] >> '~' >> text[at_c<1>(_val) = _1];
 
 	/*
         node = (xml | text)                 [_val = _1];
