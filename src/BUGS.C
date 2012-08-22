@@ -92,7 +92,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 template <typename Iterator>
-struct bugs_grammar : qi::grammar<Iterator, string(), ascii::space_type>
+struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 {
     bugs_grammar() : bugs_grammar::base_type(bugs_line)
     {
@@ -133,7 +133,7 @@ struct bugs_grammar : qi::grammar<Iterator, string(), ascii::space_type>
 	*/
     }
 
-    qi::rule<Iterator, string(), ascii::space_type> bugs_line;
+    qi::rule<Iterator, bugs_cmd(), ascii::space_type> bugs_line;
     qi::rule<Iterator, std::string(), ascii::space_type> text;
 
   /*
@@ -330,7 +330,7 @@ void add_BUGS(const Parameters& P, const string& filename)
     iter = line.begin();
     bugs_grammar<string::const_iterator> bugs_parser;
     bugs_cmd cmd;
-    //    if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
+    if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
     {
       //     std::cerr<<"BUGS phrase parse: "<<boost::fusion::as_vector(cmd)<<std::endl;
     }
