@@ -106,7 +106,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
         using phoenix::push_back;
 
         text = lexeme[+(char_ - '(')        [_val += _1]];
-
+	bugs_line = text[at_c<0>(_val) = _1];
 	//	bugs_line = text<<'~'<<text;
 
 	/*
