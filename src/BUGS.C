@@ -323,7 +323,7 @@ void add_BUGS(const Parameters& P, const string& filename)
     mini_xml ast;
     if (phrase_parse(iter, line.end(), xml_parser, space, ast) and iter == line.end())
     {
-      //      std::cerr<<"XML phrase parse: "<<boost::fusion::as_vector(ast)<<std::endl;
+      std::cerr<<"XML phrase parse: "<<std::endl; //boost::fusion::as_vector(ast)<<std::endl;
     }
    
     
@@ -332,7 +332,7 @@ void add_BUGS(const Parameters& P, const string& filename)
     bugs_cmd cmd;
     if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
     {
-      //     std::cerr<<"BUGS phrase parse: "<<boost::fusion::as_vector(cmd)<<std::endl;
+      std::cerr<<"BUGS phrase parse: "<<boost::fusion::as_vector(cmd)<<std::endl;
     }
    
     
