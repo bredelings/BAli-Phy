@@ -99,6 +99,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
         using qi::lit;
         using qi::lexeme;
         using ascii::char_;
+        using qi::double_;
         using ascii::string;
         using namespace qi::labels;
 
@@ -106,7 +107,9 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
         using phoenix::push_back;
 
         text = lexeme[+(char_ - '(')        [_val += _1]];
-	bugs_line = text[at_c<0>(_val) = _1];
+	bugs_line = text[at_c<0>(_val) = _1] >> '~' >> text[at_c<1>(_val) = _1] >> arguments;
+	arguments %= lit('(')>>h_expression%','>>lit(')');
+	h_expression %= double_;
 	//	bugs_line = text<<'~'<<text;
 
 	/*
@@ -135,6 +138,9 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
     qi::rule<Iterator, bugs_cmd(), ascii::space_type> bugs_line;
     qi::rule<Iterator, std::string(), ascii::space_type> text;
+    qi::rule<Iterator, expression_ref(), ascii::space_type> h_expression;
+    qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> arguments;
+
 
   /*
     qi::rule<Iterator, mini_xml(), ascii::space_type> xml;
@@ -334,7 +340,6 @@ void add_BUGS(const Parameters& P, const string& filename)
     {
       std::cerr<<"BUGS phrase parse: "<<boost::fusion::as_vector(cmd)<<std::endl;
     }
-   
     
 
     // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
