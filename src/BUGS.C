@@ -117,7 +117,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
         text %= lexeme[+(char_ - ' ' -'(')];
 	h_expression %= double_;
 	//	arguments %= eps | lit('(')>>h_expression%','>>lit(')');
-	arguments %= lit('(')>>h_expression%','>>lit(')');
+	arguments %= lit('(')>>h_expression%','>>lit(')')|lit("()");
 	bugs_line %= text > '~' > text > arguments >> eoi ;
 	//	bugs_line = text[at_c<0>(_val) = _1] >> '~' >> text[at_c<1>(_val) = _1];
 
