@@ -116,10 +116,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
         text %= lexeme[+(char_ - ' ' -'(')];
 	h_expression %= double_;
-	//	arguments %= eps | lit('(')>>h_expression%','>>lit(')');
 	arguments %= lit('(')>>h_expression%','>>lit(')')|lit("()");
 	bugs_line %= text > '~' > text > arguments >> eoi ;
-	//	bugs_line = text[at_c<0>(_val) = _1] >> '~' >> text[at_c<1>(_val) = _1];
 
 	on_error<fail>
 	  (
@@ -375,37 +373,21 @@ void add_BUGS(const Parameters& P, const string& filename)
 
   for(const auto& line: lines)
   {
-    vector<string> tokens = tokenize(line);
-    std::cerr<<join(tokens," : ")<<"\n";
-    double sum;
-    summer<string::const_iterator> sum_parser;
-    if (qi::parse(line.begin(), line.end(), sum_parser, sum))
-      std::cerr<<"Parsing succeeded: sum = "<<sum<<"\n";
-
-    employee_parser<string::const_iterator> g;
-    employee E;
-    string::const_iterator iter = line.begin();
     using boost::spirit::ascii::space;
-    if (phrase_parse(iter, line.end(), g, space, E) and iter == line.end())
-    {
-      std::cerr<<"Employee phrase parse: "<<boost::fusion::as_vector(E)<<std::endl;
-    }
 
-    iter = line.begin();
-    mini_xml_grammar<string::const_iterator> xml_parser;
-    mini_xml ast;
-    if (phrase_parse(iter, line.end(), xml_parser, space, ast) and iter == line.end())
-    {
-      std::cerr<<"XML phrase parse: "<<std::endl; //boost::fusion::as_vector(ast)<<std::endl;
-    }
-   
-    
-    iter = line.begin();
+    string::const_iterator iter = line.begin();
     bugs_grammar<string::const_iterator> bugs_parser;
     bugs_cmd cmd;
     if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
     {
-      std::cerr<<"BUGS phrase parse: "<<boost::fusion::as_vector(cmd)<<std::endl;
+      std::cerr<<"BUGS phrase parse: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
+      for(int i=0;i<cmd.arguments.size();i++)
+      {
+	std::cerr<<cmd.arguments[i];
+	if (i != cmd.arguments.size()-1)
+	  std::cerr<<",";
+      }
+      std::cerr<<")\n";
     }
     else
       std::cerr<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin())<<endl;
