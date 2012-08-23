@@ -6,6 +6,7 @@
 
 using std::vector;
 using std::string;
+using std::endl;
 
 #include <boost/config/warning_disable.hpp>
 #include <boost/spirit/include/qi.hpp>
@@ -13,6 +14,7 @@ using std::string;
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_fusion.hpp>
 #include <boost/spirit/include/phoenix_stl.hpp>
+#include <boost/spirit/include/phoenix_object.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/fusion/include/io.hpp>
 #include <boost/variant/recursive_variant.hpp>
@@ -98,20 +100,79 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
     {
         using qi::lit;
         using qi::lexeme;
+	using qi::on_error;
+	using qi::fail;
         using ascii::char_;
         using qi::double_;
 	using qi::eps;
+	using qi::eoi;
         using ascii::string;
         using namespace qi::labels;
 
         using phoenix::at_c;
         using phoenix::push_back;
+	using phoenix::construct;
+	using phoenix::val;
 
-        text = lexeme[+(char_ - ' ' -'(')        [_val += _1]];
+        text %= lexeme[+(char_ - ' ' -'(')];
 	h_expression %= double_;
-	arguments %= eps | lit("()") | lit('(')>>h_expression%','>>lit(')');
-	bugs_line %= text >> '~' >> text >> arguments ;
+	//	arguments %= eps | lit('(')>>h_expression%','>>lit(')');
+	arguments %= lit('(')>>h_expression%','>>lit(')');
+	bugs_line %= text > '~' > text > arguments >> eoi ;
 	//	bugs_line = text[at_c<0>(_val) = _1] >> '~' >> text[at_c<1>(_val) = _1];
+
+	on_error<fail>
+	  (
+	   bugs_line
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	// Add some error messages to see what's failing!
+	on_error<fail>
+	  (
+	   arguments
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   text
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   h_expression
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+
+
+	// Add some error messages to see what's failing!
 
 	/*
         node = (xml | text)                 [_val = _1];
@@ -135,12 +196,17 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
             >>  end_tag(at_c<0>(_val))
         ;
 	*/
+	bugs_line.name("bugs_line");
+	text.name("text");
+	h_expression.name("h_expression");
+	arguments.name("arguments");
+
     }
 
-    qi::rule<Iterator, bugs_cmd(), ascii::space_type> bugs_line;
-    qi::rule<Iterator, std::string(), ascii::space_type> text;
-    qi::rule<Iterator, expression_ref(), ascii::space_type> h_expression;
-    qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> arguments;
+  qi::rule<Iterator, bugs_cmd(), ascii::space_type> bugs_line;
+  qi::rule<Iterator, std::string(), ascii::space_type> text;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> h_expression;
+  qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> arguments;
 
 
   /*
@@ -341,6 +407,8 @@ void add_BUGS(const Parameters& P, const string& filename)
     {
       std::cerr<<"BUGS phrase parse: "<<boost::fusion::as_vector(cmd)<<std::endl;
     }
+    else
+      std::cerr<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin())<<endl;
     
 
     // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
