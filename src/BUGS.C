@@ -141,13 +141,26 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  "(" >> exp >> +(','>>exp) >> ")" |  // tuple, k >= 2
 	  "[" >> (exp%',') >> "]" | // list
 	  "[" >> exp >> -(','>>exp) >>".." >> -exp >> "]" | // arithmetic sequence
-	  "[" >> exp >>"|" >> +qual >> "]";/* | // list comprehension
+	  "[" >> exp >>"|" >> +qual >> "]" | // list comprehension
 	  "(" >> infixexp >> qop >> ")" | // left section
 	  "(" >> ((qop - "-") >> infixexp) >> ")" | // right section
-	  qcon >> "{" >> *fbind >> "}" |
-	  (aexp - qcon) >> "{" +fbind >> "}";
-	*/
+	  qcon >> "{" >> *fbind >> "}" | // labeled construction (?)
+	  (aexp - qcon) >> "{">> +fbind >> "}"; // labeled update
 	  
+	/*----- Section 3.2 -------*/
+	gcon %= lit("()") | "[]" | "(," >> *lit(',')>>")" | qcon;
+
+	var  %= varid  | "(" >> varsym >> ")";    // variable
+	qvar %= qvarid | "(" >> qvarsym >> ")";   // qualified variable
+	con  %= conid  | "(" >> consym >> ")";    // constructor
+	qcon %= qconid | "(" >> gconsym >> ")";   // qualified constructor
+	varop %= varsym | "`" >> varid >> "`";    // variable operator
+	qvarop %= qvarsym | "`" >> qvarid >> "`"; // qualified variable operator
+	conop %= consym | "`" >> conid >> "`";    // constructor operator
+	qconop %= gconsym | "`" >> qconid >> "`"; // qualified constructor operator
+	op %= varop | conop;                      // operator
+	qop %= qvarop | qconop;                   // qualified operator
+	gconsym %= ":" | qconsym;
 
 	on_error<fail>
 	  (
@@ -256,6 +269,20 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> fexp;
   qi::rule<Iterator, std::string(), ascii::space_type> aexp;
 
+  /*----- Section 3.2 -------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> gcon;
+  qi::rule<Iterator, std::string(), ascii::space_type> var;
+  qi::rule<Iterator, std::string(), ascii::space_type> qvar;
+  qi::rule<Iterator, std::string(), ascii::space_type> con;
+  qi::rule<Iterator, std::string(), ascii::space_type> qcon;
+  qi::rule<Iterator, std::string(), ascii::space_type> varop;
+  qi::rule<Iterator, std::string(), ascii::space_type> qvarop;
+  qi::rule<Iterator, std::string(), ascii::space_type> conop;
+  qi::rule<Iterator, std::string(), ascii::space_type> qconop;
+  qi::rule<Iterator, std::string(), ascii::space_type> op;
+  qi::rule<Iterator, std::string(), ascii::space_type> qop;
+  qi::rule<Iterator, std::string(), ascii::space_type> gconsym;
+
   qi::rule<Iterator, std::string(), ascii::space_type> context;  
   qi::rule<Iterator, std::string(), ascii::space_type> type;  
   qi::rule<Iterator, std::string(), ascii::space_type> apat;  
@@ -263,10 +290,6 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> stmts;  
   qi::rule<Iterator, std::string(), ascii::space_type> decls;  
 
-  qi::rule<Iterator, std::string(), ascii::space_type> qop;  
-  qi::rule<Iterator, std::string(), ascii::space_type> qvar;  
-  qi::rule<Iterator, std::string(), ascii::space_type> qcon;  
-  qi::rule<Iterator, std::string(), ascii::space_type> gcon;  
   qi::rule<Iterator, std::string(), ascii::space_type> literal;  
   qi::rule<Iterator, std::string(), ascii::space_type> qual;  
   qi::rule<Iterator, std::string(), ascii::space_type> fbind;  
