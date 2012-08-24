@@ -75,6 +75,18 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	arguments %= lit('(')>>h_expression%','>>lit(')')|lit("()");
 	bugs_line %= text > '~' > text > arguments >> eoi ;
 
+	small %= char_("a-z");
+	large %= char_("A-Z");
+	digit %= char_("0-9");
+	varid %= (small>>(+(small|large|digit|"'"))) - reservedid;
+	conid %= large>>(+(small|large|digit|"'"));
+	symbol %= lit('!') | '#' | '$' | '%' | '&' | '*' | '+' | '.' | '/' | '<' | '=' | '>' | '?' | '@' | '\\' | '^' | '|' | '-' | '~' | ':';
+	special %= lit('(') | ')' | ',' | ';' | '[' | ']' | '`' | '{' | '}';
+	graphic %= small | large | symbol | digit | special | '"' | '\'';
+	//	varid %= lexeme[(small>>*(small|large|digit))-reservedid];
+
+	reservedid %= lit("case") | "class" | "data" | "default" | "deriving" | "do" | "else" |	"foreign" | "if" | "import" | "in" | "infix" | "infixl" | 	"infixr" | "instance" | "let" | "module" | "newtype" | "of" | 	"then" | "type" | "where" | "_";
+
 	on_error<fail>
 	  (
 	   bugs_line
@@ -154,6 +166,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	text.name("text");
 	h_expression.name("h_expression");
 	arguments.name("arguments");
+	reservedid.name("reserved_id");
 
     }
 
@@ -162,6 +175,15 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, expression_ref(), ascii::space_type> h_expression;
   qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> arguments;
 
+  qi::rule<Iterator, std::string(), ascii::space_type> reservedid;
+  qi::rule<Iterator, std::string(), ascii::space_type> varid;
+  qi::rule<Iterator, std::string(), ascii::space_type> conid;
+  qi::rule<Iterator, char(), ascii::space_type> small;
+  qi::rule<Iterator, char(), ascii::space_type> large;
+  qi::rule<Iterator, char(), ascii::space_type> digit;
+  qi::rule<Iterator, char(), ascii::space_type> symbol;
+  qi::rule<Iterator, char(), ascii::space_type> special;
+  qi::rule<Iterator, char(), ascii::space_type> graphic;
 
   /*
     qi::rule<Iterator, mini_xml(), ascii::space_type> xml;
