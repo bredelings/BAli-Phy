@@ -123,6 +123,9 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  lit("\\\"") [_val = '"'] |
 	  lit("'") [_val = '\''];
 
+	literal %= h_float | h_integer | h_char | h_string;
+
+	/*----- Section 3 ------*/
 	exp %= infixexp >> "::" >> -(context >> "=>") >> type | infixexp;
 	infixexp %= lexp >> qop >> infixexp | "-" >> infixexp | lexp;
 	lexp %= lit("\\") >> +apat >> lit("->") >> exp |
@@ -162,6 +165,42 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	qop %= qvarop | qconop;                   // qualified operator
 	gconsym %= ":" | qconsym;
 
+	/*----- Section 3.11 -----*/
+	qual %= pat >> "<-" >> exp | lit("let") >> decls | exp;
+
+	/*----- Section 3.13 -----*/
+	alts %= +alt;
+	alt %= pat >> "->" >> exp >> -("where" >> decls) |
+	  pat >> gdpat >> -("where" >> decls) |
+	  eps;
+
+	gdpat %= guards >> "->" >> exp >> -gdpat;
+	guards %= "|" >> +guard;
+	guard %= pat >> "<-" >> infixexp // pattern guard
+	  | "let" >> decls // local declaration
+	  | infixexp;      // boolean guard
+
+	/*----- Section 3.14 -----*/
+	stmts %= *stmt >> exp >> -lit(';');
+	stmt %= exp >> ";" | pat >> "<-" >> exp >> ";" | "let" >> decls >> ";" | ";";
+
+	/*----- Section 3.15 -----*/
+	fbind %= qvar >> "=" >> exp;
+
+	/*----- Section 3.17 -----*/
+	pat %= lpat >> qconop >> pat | lpat;
+	lpat %= apat | lit('-') >> (h_integer|h_float) | gcon >> +apat;
+	apat %= var >> -(lit('@')>>apat) 
+	  | gcon
+	  | qcon >> "{" >> *fpat >> "}"
+	  | literal
+	  | lit('_')
+	  | lit('(') >> pat >> ')'
+	  | lit('(') >> pat >> *(lit(',') >> pat) >> ')'
+	  | lit('[') >> pat % ',' >> ']'
+	  | lit('~') >> apat;
+	  
+	
 	on_error<fail>
 	  (
 	   bugs_line
@@ -263,6 +302,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> h_string;
   qi::rule<Iterator, std::string(), ascii::space_type> charesc;
 
+  qi::rule<Iterator, std::string(), ascii::space_type> literal;  
+
   qi::rule<Iterator, std::string(), ascii::space_type> exp;
   qi::rule<Iterator, std::string(), ascii::space_type> infixexp;
   qi::rule<Iterator, std::string(), ascii::space_type> lexp;
@@ -283,16 +324,32 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> qop;
   qi::rule<Iterator, std::string(), ascii::space_type> gconsym;
 
+  /*----- Section 3.11 -----*/
+  qi::rule<Iterator, std::string(), ascii::space_type> qual;  
+
+  /*----- Section 3.13 -----*/
+  qi::rule<Iterator, std::string(), ascii::space_type> alts;  
+  qi::rule<Iterator, std::string(), ascii::space_type> alt;
+  qi::rule<Iterator, std::string(), ascii::space_type> gdpat;
+  qi::rule<Iterator, std::string(), ascii::space_type> guards;
+  qi::rule<Iterator, std::string(), ascii::space_type> guard;
+
+  /*----- Section 3.14 -----*/
+  qi::rule<Iterator, std::string(), ascii::space_type> stmts;
+  qi::rule<Iterator, std::string(), ascii::space_type> stmt;
+
+  /*----- Section 3.15 -----*/
+  qi::rule<Iterator, std::string(), ascii::space_type> fbind;  
+
+  /*----- Section 3.17 -----*/
+  qi::rule<Iterator, std::string(), ascii::space_type> pat;  
+  qi::rule<Iterator, std::string(), ascii::space_type> lpat;  
+  qi::rule<Iterator, std::string(), ascii::space_type> apat;  
+  qi::rule<Iterator, std::string(), ascii::space_type> fpat;  
+
   qi::rule<Iterator, std::string(), ascii::space_type> context;  
   qi::rule<Iterator, std::string(), ascii::space_type> type;  
-  qi::rule<Iterator, std::string(), ascii::space_type> apat;  
-  qi::rule<Iterator, std::string(), ascii::space_type> alts;  
-  qi::rule<Iterator, std::string(), ascii::space_type> stmts;  
   qi::rule<Iterator, std::string(), ascii::space_type> decls;  
-
-  qi::rule<Iterator, std::string(), ascii::space_type> literal;  
-  qi::rule<Iterator, std::string(), ascii::space_type> qual;  
-  qi::rule<Iterator, std::string(), ascii::space_type> fbind;  
 };
 
 //-----------------------------------------------------------------------//
