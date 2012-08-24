@@ -199,8 +199,26 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  | lit('(') >> pat >> *(lit(',') >> pat) >> ')'
 	  | lit('[') >> pat % ',' >> ']'
 	  | lit('~') >> apat;
+
+	/*------ Section 4 -------*/
+	decls %= lit('{') >> *decl >> '}';
+	decl  %= gendecl | (funlhs | pat) >> rhs;
+	gendecl %= vars >> "::" >>  -(context >> "=>") >> type | fixity >> -h_integer >> ops | eps;
+	ops %= +op;
+	vars %= +var;
+	fixity %= lit("infixl") | "infixr" | "infix";
+
+	/*------ Section 4.4.3 -----*/
+	funlhs %= var >> +apat
+	  | pat >> varop >> pat
+	  | "(" >> funlhs >> ")" >> +apat;
+
+	rhs %= lit('=') >> exp >> -(lit("where") >> decls) 
+	  | gdrhs >> -(lit("where") >> decls);
+
+	gdrhs %= guards >> "=" >> exp >> -gdrhs;
 	  
-	
+
 	on_error<fail>
 	  (
 	   bugs_line
@@ -347,9 +365,22 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> apat;  
   qi::rule<Iterator, std::string(), ascii::space_type> fpat;  
 
+  /*----- Section 4 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> decls;
+  qi::rule<Iterator, std::string(), ascii::space_type> decl;
+  qi::rule<Iterator, std::string(), ascii::space_type> gendecl;
+  qi::rule<Iterator, std::string(), ascii::space_type> ops;
+  qi::rule<Iterator, std::string(), ascii::space_type> vars;
+  qi::rule<Iterator, std::string(), ascii::space_type> fixity;
+  
+  /*----- Section 4.4.3 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> funlhs;
+  qi::rule<Iterator, std::string(), ascii::space_type> rhs;
+  qi::rule<Iterator, std::string(), ascii::space_type> gdrhs;
+  
+
   qi::rule<Iterator, std::string(), ascii::space_type> context;  
   qi::rule<Iterator, std::string(), ascii::space_type> type;  
-  qi::rule<Iterator, std::string(), ascii::space_type> decls;  
 };
 
 //-----------------------------------------------------------------------//
