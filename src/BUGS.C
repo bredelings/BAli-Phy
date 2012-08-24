@@ -131,18 +131,17 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  lit("case") >> exp >> "of" >> "{" >> alts >> "}" |
 	  lit("do") >> "{" >> stmts >> "}" |
 	  fexp;
-	/*
 
-	fexp %= -fexp >> aexp;
+	fexp %= -fexp >> aexp; // function application
 
 	aexp %= qvar |  // variable
 	  gcon |        // general constructor
-	  literal |     
+	  literal 	|     
 	  "(" >> exp >> ")" | // parenthesized expression
 	  "(" >> exp >> +(','>>exp) >> ")" |  // tuple, k >= 2
 	  "[" >> (exp%',') >> "]" | // list
 	  "[" >> exp >> -(','>>exp) >>".." >> -exp >> "]" | // arithmetic sequence
-	  "[" >> exp >>"|" >> +qual >> "]" | // list comprehension
+	  "[" >> exp >>"|" >> +qual >> "]";/* | // list comprehension
 	  "(" >> infixexp >> qop >> ")" | // left section
 	  "(" >> ((qop - "-") >> infixexp) >> ")" | // right section
 	  qcon >> "{" >> *fbind >> "}" |
