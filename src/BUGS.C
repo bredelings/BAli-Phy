@@ -92,6 +92,18 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	consym %= (lit(':')>>*symbol)-reservedop;
 	reservedop %= lit("..") | ":" | "::" | "=" | "\\" | "|" | "<-" | "->" | "@" | "~" | "=>";
 
+	tyvar %= varid;
+	tycon %= conid;
+	tycls %= conid;
+	modid %= *(conid >> ".") >> conid;
+
+	qvarid %= -(modid>>".") >> varid;
+	qconid %= -(modid>>".") >> conid;
+	qtycon %= -(modid>>".") >> tycon;
+	qtycls %= -(modid>>".") >> tycls;
+	qvarsym %= -(modid>>".") >> qvarsym;
+	qconsym %= -(modid>>".") >> qconsym;
+
 	on_error<fail>
 	  (
 	   bugs_line
@@ -180,6 +192,13 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, expression_ref(), ascii::space_type> h_expression;
   qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> arguments;
 
+  qi::rule<Iterator, char(), ascii::space_type> small;
+  qi::rule<Iterator, char(), ascii::space_type> large;
+  qi::rule<Iterator, char(), ascii::space_type> digit;
+  qi::rule<Iterator, char(), ascii::space_type> symbol;
+  qi::rule<Iterator, char(), ascii::space_type> special;
+  qi::rule<Iterator, char(), ascii::space_type> graphic;
+
   qi::rule<Iterator, std::string(), ascii::space_type> dashes;
 
   qi::rule<Iterator, std::string(), ascii::space_type> varid;
@@ -188,14 +207,20 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
   qi::rule<Iterator, std::string(), ascii::space_type> varsym;
   qi::rule<Iterator, std::string(), ascii::space_type> consym;
-  qi::rule<Iterator, std::string(), ascii::space_type> reservedop;
+  qi::rule<Iterator, std::string(), ascii::space_type> reservedop; // reserved operator
 
-  qi::rule<Iterator, char(), ascii::space_type> small;
-  qi::rule<Iterator, char(), ascii::space_type> large;
-  qi::rule<Iterator, char(), ascii::space_type> digit;
-  qi::rule<Iterator, char(), ascii::space_type> symbol;
-  qi::rule<Iterator, char(), ascii::space_type> special;
-  qi::rule<Iterator, char(), ascii::space_type> graphic;
+  qi::rule<Iterator, std::string(), ascii::space_type> tyvar;
+  qi::rule<Iterator, std::string(), ascii::space_type> tycon;
+  qi::rule<Iterator, std::string(), ascii::space_type> tycls;
+  qi::rule<Iterator, std::string(), ascii::space_type> modid; // module id
+
+  qi::rule<Iterator, std::string(), ascii::space_type> qvarid; // qualified variable id
+  qi::rule<Iterator, std::string(), ascii::space_type> qconid; // qualified constructor id
+  qi::rule<Iterator, std::string(), ascii::space_type> qtycon; // qualified type constructor
+  qi::rule<Iterator, std::string(), ascii::space_type> qtycls; // qualified type class
+  qi::rule<Iterator, std::string(), ascii::space_type> qvarsym;
+  qi::rule<Iterator, std::string(), ascii::space_type> qconsym;
+  
 };
 
 //-----------------------------------------------------------------------//
