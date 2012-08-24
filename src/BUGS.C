@@ -125,13 +125,13 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	exp %= infixexp >> "::" >> -(context >> "=>") >> type | infixexp;
 	infixexp %= lexp >> qop >> infixexp | "-" >> infixexp | lexp;
-	/*
 	lexp %= lit("\\") >> +apat >> lit("->") >> exp |
 	  lit("let") >> decls >> "in" >> exp |
 	  lit("if") >> exp >> -lit(';') >> "then" >> exp >> -lit(';') >> "else" >> exp |
 	  lit("case") >> exp >> "of" >> "{" >> alts >> "}" |
 	  lit("do") >> "{" >> stmts >> "}" |
 	  fexp;
+	/*
 
 	fexp %= -fexp >> aexp;
 
