@@ -104,6 +104,25 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	qvarsym %= -(modid>>".") >> qvarsym;
 	qconsym %= -(modid>>".") >> qconsym;
 
+	decimal %= +digit;
+	h_integer %= decimal;
+
+	h_float %= decimal >> "." >> decimal >> -exponent | decimal >> exponent;
+	exponent %= ( lit('\'') | "E" ) >> -(lit("+")|"-") >> decimal;
+
+	h_char %= lit('\'') >> ((graphic - '\'' - '\\')|char_(' ')|escape) >> lit('\'');
+	h_string %= lit('\"') >> *((graphic - '\'' - '\\')|char_(' ')|escape) >> lit('\"');
+	escape = lit("\\a") [_val = '\a'] |
+	  lit("\\b") [_val = '\b'] |
+	  lit("\\f") [_val = '\f'] |
+	  lit("\\n") [_val = '\n'] |
+	  lit("\\r") [_val = '\r'] |
+	  lit("\\t") [_val = '\t'] |
+	  lit("\\v") [_val = '\v'] |
+	  lit("\\\\") [_val = '\\'] |
+	  lit("\\\"") [_val = '"'] |
+	  lit("'") [_val = '\''];
+
 	on_error<fail>
 	  (
 	   bugs_line
@@ -220,7 +239,16 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> qtycls; // qualified type class
   qi::rule<Iterator, std::string(), ascii::space_type> qvarsym;
   qi::rule<Iterator, std::string(), ascii::space_type> qconsym;
-  
+
+  qi::rule<Iterator, std::string(), ascii::space_type> decimal;
+  qi::rule<Iterator, std::string(), ascii::space_type> h_integer;
+  qi::rule<Iterator, std::string(), ascii::space_type> h_float;
+  qi::rule<Iterator, std::string(), ascii::space_type> exponent;
+
+  qi::rule<Iterator, char(), ascii::space_type> h_char;
+  qi::rule<Iterator, char(), ascii::space_type> escape;
+  qi::rule<Iterator, std::string(), ascii::space_type> h_string;
+  qi::rule<Iterator, std::string(), ascii::space_type> charesc;
 };
 
 //-----------------------------------------------------------------------//
