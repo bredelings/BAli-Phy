@@ -208,6 +208,24 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	vars %= +var;
 	fixity %= lit("infixl") | "infixr" | "infix";
 
+	/*----- Section 4.1.2 ------*/
+	type %= btype >> -( lit("->") >> type );
+	btype %= -btype >> atype;
+	atype %= gtycon
+	  | tyvar
+	  | lit('(') >> type >> +(lit(',')>>type) >> ')' // tuple type, k >= 2
+	  | lit('[') >> type >> ']'                      // list type
+	  | lit('(') >> type >> ')';                      // parenthesized constructor
+	gtycon %= qtycon 
+	  | lit("()")
+	  | lit("[]")
+	  | lit("(") >> lit("->") >> lit(")")
+	  | lit("(,")>>+lit(',') >> lit(')');
+
+	/*----- Section 4.1.3 ------*/
+	context %= h_class | lit('(') >> *h_class >> lit(')');
+	h_class %= qtycls >> tyvar | qtycls >> lit('(') >> tyvar >> +atype >> lit(')');
+
 	/*------ Section 4.4.3 -----*/
 	funlhs %= var >> +apat
 	  | pat >> varop >> pat
@@ -217,7 +235,6 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  | gdrhs >> -(lit("where") >> decls);
 
 	gdrhs %= guards >> "=" >> exp >> -gdrhs;
-	  
 
 	on_error<fail>
 	  (
@@ -273,7 +290,6 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	h_expression.name("h_expression");
 	arguments.name("arguments");
 	reservedid.name("reserved_id");
-
     }
 
   qi::rule<Iterator, bugs_cmd(), ascii::space_type> bugs_line;
@@ -372,15 +388,23 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> ops;
   qi::rule<Iterator, std::string(), ascii::space_type> vars;
   qi::rule<Iterator, std::string(), ascii::space_type> fixity;
-  
+
+  /*----- Section 4.1.2 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> type;
+  qi::rule<Iterator, std::string(), ascii::space_type> btype;
+  qi::rule<Iterator, std::string(), ascii::space_type> atype;
+  qi::rule<Iterator, std::string(), ascii::space_type> gtype;
+  qi::rule<Iterator, std::string(), ascii::space_type> gtycon;
+
+  /*----- Section 4.1.3 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> context;
+  qi::rule<Iterator, std::string(), ascii::space_type> h_class;
+
+
   /*----- Section 4.4.3 ------*/
   qi::rule<Iterator, std::string(), ascii::space_type> funlhs;
   qi::rule<Iterator, std::string(), ascii::space_type> rhs;
   qi::rule<Iterator, std::string(), ascii::space_type> gdrhs;
-  
-
-  qi::rule<Iterator, std::string(), ascii::space_type> context;  
-  qi::rule<Iterator, std::string(), ascii::space_type> type;  
 };
 
 //-----------------------------------------------------------------------//
