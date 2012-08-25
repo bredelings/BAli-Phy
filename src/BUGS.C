@@ -82,7 +82,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	special %= lit('(') | ')' | ',' | ';' | '[' | ']' | '`' | '{' | '}';
 	graphic %= small | large | symbol | digit | special | '"' | '\'';
 
-	dashes %= lit("--")>>*lit("-");
+	dashes %= lexeme[lit("--")>>*lit("-")];
 
 	varid %= (small>>(+(small|large|digit|"'"))) - reservedid;
 	conid %= large>>(+(small|large|digit|"'"));
