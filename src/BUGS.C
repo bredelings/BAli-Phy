@@ -73,7 +73,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
         text %= lexeme[+(char_ - ' ' -'(')];
 	h_expression %= double_;
-	arguments %= lit('(')>>h_expression%','>>lit(')')|lit("()");
+	arguments %= lit('(')>>exp%','>>lit(')')|lit("()");
 	bugs_line %= text > '~' > text > arguments >> eoi ;
 
 	small %= char_("a-z");
