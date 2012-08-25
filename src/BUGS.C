@@ -107,8 +107,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	decimal %= +digit;
 	h_integer %= decimal;
 
-	h_float %= decimal >> "." >> decimal >> -exponent | decimal >> exponent;
-	exponent %= ( lit('\'') | "E" ) >> -(lit("+")|"-") >> decimal;
+	h_float %= decimal >> char_('.') >> decimal >> -exponent | decimal >> exponent;
+	exponent %= ( char_('e') | char_('E') ) >> -(char_('+')|char_('-')) >> decimal;
 
 	h_char %= lit('\'') >> ((graphic - '\'' - '\\')|char_(' ')|escape) >> lit('\'');
 	h_string %= lit('\"') >> *((graphic - '\'' - '\\')|char_(' ')|escape) >> lit('\"');
