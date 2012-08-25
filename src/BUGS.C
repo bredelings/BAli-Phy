@@ -104,7 +104,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	qvarsym %= -(modid>>".") >> qvarsym;
 	qconsym %= -(modid>>".") >> qconsym;
 
-	decimal %= +digit;
+	decimal %= lexeme[+char_("0-9")];
 	h_integer %= decimal;
 
 	h_float %= decimal >> char_('.') >> decimal >> -exponent | decimal >> exponent;
