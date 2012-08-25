@@ -201,7 +201,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  | lit('~') >> apat;
 
 	/*------ Section 4 -------*/
-	decls %= lit('{') >> *decl >> '}';
+	decls %= lit('{') >> decl % ';' >> '}';
 	decl  %= gendecl | (funlhs | pat) >> rhs;
 	gendecl %= vars >> "::" >>  -(context >> "=>") >> type | fixity >> -h_integer >> ops | eps;
 	ops %= +op;
