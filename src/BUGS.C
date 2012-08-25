@@ -128,27 +128,27 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	/*----- Section 3 ------*/
 	exp %= infixexp >> "::" >> -(context >> "=>") >> type | infixexp;
 	infixexp %= lexp >> qop >> infixexp | "-" >> infixexp | lexp;
-	lexp %= lit("\\") >> +apat >> lit("->") >> exp |
-	  lit("let") >> decls >> "in" >> exp |
-	  lit("if") >> exp >> -lit(';') >> "then" >> exp >> -lit(';') >> "else" >> exp |
-	  lit("case") >> exp >> "of" >> "{" >> alts >> "}" |
-	  lit("do") >> "{" >> stmts >> "}" |
+	lexp %= // lit("\\") >> +apat >> lit("->") >> exp |
+	  //	  lit("let") >> decls >> "in" >> exp |
+	  //	  lit("if") >> exp >> -lit(';') >> "then" >> exp >> -lit(';') >> "else" >> exp |
+	  //	  lit("case") >> exp >> "of" >> "{" >> alts >> "}" |
+	  //	  lit("do") >> "{" >> stmts >> "}" |
 	  fexp;
 
 	fexp %= -fexp >> aexp; // function application
 
-	aexp %= qvar |  // variable
-	  gcon |        // general constructor
-	  literal 	|     
-	  "(" >> exp >> ")" | // parenthesized expression
-	  "(" >> exp >> +(','>>exp) >> ")" |  // tuple, k >= 2
-	  "[" >> (exp%',') >> "]" | // list
-	  "[" >> exp >> -(','>>exp) >>".." >> -exp >> "]" | // arithmetic sequence
-	  "[" >> exp >>"|" >> +qual >> "]" | // list comprehension
-	  "(" >> infixexp >> qop >> ")" | // left section
-	  "(" >> ((qop - "-") >> infixexp) >> ")" | // right section
-	  qcon >> "{" >> *fbind >> "}" | // labeled construction (?)
-	  (aexp - qcon) >> "{">> +fbind >> "}"; // labeled update
+	aexp %= qvar   // variable
+	  | gcon         // general constructor
+	  | literal     
+	  | "(" >> exp >> ")" ; // parenthesized expression
+	//	  | "(" >> exp >> +(','>>exp) >> ")"   // tuple, k >= 2
+	//	  | "[" >> (exp%',') >> "]"  // list
+	//	  | "[" >> exp >> -(','>>exp) >>".." >> -exp >> "]"  // arithmetic sequence
+	//	  | "[" >> exp >>"|" >> +qual >> "]"  // list comprehension
+	//	  | "(" >> infixexp >> qop >> ")"  // left section
+	//	  | "(" >> ((qop - "-") >> infixexp) >> ")"  // right section
+	//	  | qcon >> "{" >> *fbind >> "}"  // labeled construction (?)
+	//	  | (aexp - qcon) >> "{">> +fbind >> "}"; // labeled update
 	  
 	/*----- Section 3.2 -------*/
 	gcon %= lit("()") | "[]" | "(," >> *lit(',')>>")" | qcon;
@@ -166,26 +166,26 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	gconsym %= ":" | qconsym;
 
 	/*----- Section 3.11 -----*/
-	qual %= pat >> "<-" >> exp | lit("let") >> decls | exp;
+	//	qual %= pat >> "<-" >> exp | lit("let") >> decls | exp;
 
 	/*----- Section 3.13 -----*/
-	alts %= +alt;
-	alt %= pat >> "->" >> exp >> -("where" >> decls) |
-	  pat >> gdpat >> -("where" >> decls) |
-	  eps;
+	//	alts %= +alt;
+	//	alt %= pat >> "->" >> exp >> -("where" >> decls)
+	//	  | pat >> gdpat >> -("where" >> decls) 
+	//	  | eps;
 
-	gdpat %= guards >> "->" >> exp >> -gdpat;
-	guards %= "|" >> +guard;
-	guard %= pat >> "<-" >> infixexp // pattern guard
-	  | "let" >> decls // local declaration
-	  | infixexp;      // boolean guard
+	//	gdpat %= guards >> "->" >> exp >> -gdpat;
+	//	guards %= "|" >> +guard;
+	//	guard %= pat >> "<-" >> infixexp // pattern guard
+	//	  | "let" >> decls // local declaration
+	//	  | infixexp;      // boolean guard
 
 	/*----- Section 3.14 -----*/
-	stmts %= *stmt >> exp >> -lit(';');
-	stmt %= exp >> ";" | pat >> "<-" >> exp >> ";" | "let" >> decls >> ";" | ";";
+	//	stmts %= *stmt >> exp >> -lit(';');
+	//	stmt %= exp >> ";" | pat >> "<-" >> exp >> ";" | "let" >> decls >> ";" | ";";
 
 	/*----- Section 3.15 -----*/
-	fbind %= qvar >> "=" >> exp;
+	//	fbind %= qvar >> "=" >> exp;
 
 	/*----- Section 3.17 -----*/
 	pat %= lpat >> qconop >> pat | lpat;
@@ -227,14 +227,14 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	h_class %= qtycls >> tyvar | qtycls >> lit('(') >> tyvar >> +atype >> lit(')');
 
 	/*------ Section 4.4.3 -----*/
-	funlhs %= var >> +apat
-	  | pat >> varop >> pat
-	  | "(" >> funlhs >> ")" >> +apat;
+	//	funlhs %= var >> +apat
+	//	  | pat >> varop >> pat
+	//	  | "(" >> funlhs >> ")" >> +apat;
 
-	rhs %= lit('=') >> exp >> -(lit("where") >> decls) 
-	  | gdrhs >> -(lit("where") >> decls);
+	//	rhs %= lit('=') >> exp >> -(lit("where") >> decls) 
+	//	  | gdrhs >> -(lit("where") >> decls);
 
-	gdrhs %= guards >> "=" >> exp >> -gdrhs;
+	//	gdrhs %= guards >> "=" >> exp >> -gdrhs;
 
 	on_error<fail>
 	  (
@@ -338,11 +338,11 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
   qi::rule<Iterator, std::string(), ascii::space_type> literal;  
 
-  qi::rule<Iterator, std::string(), ascii::space_type> exp;
-  qi::rule<Iterator, std::string(), ascii::space_type> infixexp;
-  qi::rule<Iterator, std::string(), ascii::space_type> lexp;
-  qi::rule<Iterator, std::string(), ascii::space_type> fexp;
-  qi::rule<Iterator, std::string(), ascii::space_type> aexp;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> infixexp;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> lexp;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> fexp;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> aexp;
 
   /*----- Section 3.2 -------*/
   qi::rule<Iterator, std::string(), ascii::space_type> gcon;
@@ -362,8 +362,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> qual;  
 
   /*----- Section 3.13 -----*/
-  qi::rule<Iterator, std::string(), ascii::space_type> alts;  
-  qi::rule<Iterator, std::string(), ascii::space_type> alt;
+  qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> alts;  
+  qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> alt;
   qi::rule<Iterator, std::string(), ascii::space_type> gdpat;
   qi::rule<Iterator, std::string(), ascii::space_type> guards;
   qi::rule<Iterator, std::string(), ascii::space_type> guard;
