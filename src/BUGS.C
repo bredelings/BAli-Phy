@@ -8,6 +8,7 @@ using std::vector;
 using std::string;
 using std::endl;
 
+#include <boost/spirit/include/phoenix_bind.hpp>
 #include <boost/config/warning_disable.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
@@ -135,7 +136,9 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  //	  lit("do") >> "{" >> stmts >> "}" |
 	  fexp;
 
-	fexp %= -fexp >> aexp; // function application
+	expression_ref (*temp)(const expression_ref&,const expression_ref&);
+	temp = &apply_expression;
+	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(temp,_val,_1) ]; // function application
 
 	aexp %= qvar   // variable
 	  | gcon         // general constructor
