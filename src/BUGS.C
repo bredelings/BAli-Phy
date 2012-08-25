@@ -128,6 +128,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	/*----- Section 3 ------*/
 	exp %= infixexp >> "::" >> -(context >> "=>") >> type | infixexp;
+	exp %= fexp;
 	infixexp %= lexp >> qop >> infixexp | "-" >> infixexp | lexp;
 	lexp %= // lit("\\") >> +apat >> lit("->") >> exp |
 	  //	  lit("let") >> decls >> "in" >> exp |
