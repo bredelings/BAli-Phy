@@ -85,8 +85,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	dashes %= lexeme[lit("--")>>*lit("-")];
 
-	varid %= (small>>(+(small|large|digit|"'"))) - reservedid;
-	conid %= large>>(+(small|large|digit|"'"));
+	varid %= (small>>(*(small|large|digit|"'"))) - reservedid;
+	conid %= large>>(*(small|large|digit|"'"));
 	reservedid %= lit("case") | "class" | "data" | "default" | "deriving" | "do" | "else" |	"foreign" | "if" | "import" | "in" | "infix" | "infixl" | 	"infixr" | "instance" | "let" | "module" | "newtype" | "of" | 	"then" | "type" | "where" | "_";
 
 	varsym %= ((symbol-lit(':'))>>*symbol)-reservedop-dashes;
