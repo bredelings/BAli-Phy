@@ -2476,12 +2476,12 @@ graph_layout kamada_kawai_layout(graph_layout GL)
   //--------- Package weights as property ---------//
   vector<double> weights(num_edges(g));
 
-  typedef vector<double> WeightVec;
-  typedef iterator_property_map<WeightVec::iterator, 
-    property_map<Graph, edge_index_t>::type>
-    WeightMap;
+  //  typedef vector<double> WeightVec;
+  //  typedef iterator_property_map<WeightVec::iterator, 
+  //    property_map<Graph, edge_index_t>::type>
+  //    WeightMap;
 
-  WeightMap weight(weights.begin(), get(edge_index,g));
+  //  WeightMap weight(weights.begin(), get(edge_index,g));
 
   // kamada_kawai_spring_layout(g, position, weight, boost::side_length(1.0) );
 

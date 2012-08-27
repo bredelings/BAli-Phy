@@ -2,14 +2,14 @@ noinst_LTLIBRARIES = libboost_filesystem.la
 
 INCLUDES = -I$(top_srcdir)/boost/
 
-libboost_filesystem_la_SOURCES = v3/src/operations.cpp \
-				v3/src/path.cpp \
-				v3/src/path_traits.cpp \
-				v3/src/portability.cpp \
-				v3/src/unique_path.cpp \
-				v3/src/utf8_codecvt_facet.cpp \
-				v3/src/windows_file_codecvt.cpp \
-				v3/src/codecvt_error_category.cpp
+libboost_filesystem_la_SOURCES = src/operations.cpp \
+				src/path.cpp \
+				src/path_traits.cpp \
+				src/portability.cpp \
+				src/unique_path.cpp \
+				src/utf8_codecvt_facet.cpp \
+				src/windows_file_codecvt.cpp \
+				src/codecvt_error_category.cpp
 
 if HOST_CYGWIN
 CPPFLAGS += -DBOOST_POSIX
