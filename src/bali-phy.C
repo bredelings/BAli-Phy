@@ -241,6 +241,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("unfix",value<vector<string> >()->composing(),"Un-fix parameter[=<initial value>]")
     ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
     ("BUGS",value<string>(),"File containing heirarchical model description.")
+    ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
     ;
 
   options_description model("Model options");
@@ -574,7 +575,7 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, cons
 }
 
 
-owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameters& P)
+owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameters& P, const vector<string>& Rao_Blackwellize)
 {
   using namespace MCMC;
   owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
@@ -641,17 +642,27 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
   
   TL->add_field("|T|", Get_Tree_Length_Function() );
 
+  for(const auto& p: Rao_Blackwellize)
+  {
+    int p_index = P.find_parameter(p);
+    if (p_index == -1)
+      throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
+
+    vector<object_ref> values = {Bool(false),Bool(true)};
+    TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(p_index, values));
+  }
+
   return TL;
 }
 
-vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, int proc_id, const string& dir_name)
+vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
 {
   using namespace MCMC;
   vector<owned_ptr<Logger> > loggers;
 
   string base = dir_name + "/" + "C" + convertToString(proc_id+1);
 
-  owned_ptr<TableFunction<string> > TF = construct_table_function(P);
+  owned_ptr<TableFunction<string> > TF = construct_table_function(P, Rao_Blackwellize);
 
   // Write out scalar numerical variables (and functions of them) to C<>.p
   loggers.push_back( TableLogger(base +".p", TF) );
@@ -1508,7 +1519,12 @@ int main(int argc,char* argv[])
 	dir_name = init_dir(args);
 #endif
 	files = init_files(proc_id, dir_name, argc, argv);
-	loggers = construct_loggers(P,proc_id,dir_name);
+	{
+	  vector<string> Rao_Blackwellize;
+	  if (args.count("Rao-Blackwellize"))
+	      Rao_Blackwellize = split(args["Rao-Blackwellize"].as<string>(),',');
+	  loggers = construct_loggers(P,Rao_Blackwellize,proc_id,dir_name);
+	}
 	write_initial_alignments(A,proc_id, dir_name);
       }
       else {
