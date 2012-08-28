@@ -213,6 +213,16 @@ namespace MCMC {
     std::string operator()(const owned_ptr<Probability_Model>& P, long t);
   };
 
+  struct Get_Rao_Blackwellized_Parameter_Function: public LoggerFunction<std::string>
+  {
+    int parameter;
+    std::vector<object_ref> values;
+
+    Get_Rao_Blackwellized_Parameter_Function* clone() const {return new Get_Rao_Blackwellized_Parameter_Function(*this);}
+    std::string operator()(const owned_ptr<Probability_Model>& P, long t);
+    Get_Rao_Blackwellized_Parameter_Function(int p, const std::vector<object_ref>& v);
+  };
+
   struct Get_Tree_Length_Function: public LoggerFunction<std::string>
   {
     Get_Tree_Length_Function* clone() const {return new Get_Tree_Length_Function(*this);}

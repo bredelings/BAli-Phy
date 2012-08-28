@@ -288,6 +288,52 @@ double mu_scale(const Parameters& P)
   return mu_scale;
 }
 
+  string Get_Rao_Blackwellized_Parameter_Function::operator()(const owned_ptr<Probability_Model>& P, long)
+  {
+    if (parameter == -1) std::abort();
+
+    owned_ptr<Probability_Model> P2 = P;
+    vector<efloat_t> Prs;
+    efloat_t total = 0;
+
+    // Record probabilities
+    for(const auto& v: values)
+    {
+      P2->set_parameter_value(parameter,v);
+      efloat_t Pr = P2->probability();
+      total += Pr;
+      Prs.push_back(Pr);
+    }
+
+    // Rescale probabilities
+    for(auto& Pr: Prs)
+      Pr /= total;
+
+    // Compute expectation
+    double result = 0;
+    for(int i=0;i<values.size();i++)
+    {
+      const auto& v = values[i];
+      efloat_t Pr = Prs[i];
+      double value = 0;
+      if (object_ptr<const Bool> b = dynamic_pointer_cast<const Bool>(v))
+	value = int(*b);
+      else if (object_ptr<const Int> i = dynamic_pointer_cast<const Int>(v))
+	value = *i;
+      else if (object_ptr<const Double> d = dynamic_pointer_cast<const Double>(v))
+	value = *d;
+
+      result += Pr*value;
+      std::cerr<<"v = "<<v->print()<<" Pr = "<<Pr<<"   value = "<<value<<" result = "<<result<<"\n";
+    }
+
+    return convertToString( result );
+  }
+
+  Get_Rao_Blackwellized_Parameter_Function::Get_Rao_Blackwellized_Parameter_Function(int p, const vector<object_ref>& v)
+    :parameter(p), values(v)
+  { }
+
 string Get_Tree_Length_Function::operator()(const owned_ptr<Probability_Model>& P, long)
 {
   Parameters& PP = *P.as<Parameters>();
