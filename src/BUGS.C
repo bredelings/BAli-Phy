@@ -20,18 +20,71 @@ using std::endl;
 #include <boost/fusion/include/io.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/foreach.hpp>
+#include <boost/spirit/include/lex_lexertl.hpp>
+#include <functional>
 
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
+namespace lex = boost::spirit::lex;
+
 namespace phoenix = boost::phoenix;
-
 //-----------------------------------------------------------------------//
-
+// http://stackoverflow.com/questions/8100050/boost-spirit-dynamic-lexer-with-column-numbers
 // Make a more interpretable program structure:
 //   It should contain an UNTRANSLATED and unsimplified representation of the program source.
 //     It should contain (for example) readable function bodies.
 //        ... perhaps a notes collection?
 //   It should contain a list of identifiers and parameters.
+
+enum token_ids {ID_WORD=4, ID_EOL=7, ID_CHAR=11};
+
+template <typename Lexer>
+struct word_count_tokens : lex::lexer<Lexer>
+{
+    word_count_tokens()
+    {
+        // define tokens (the regular expression to match and the corresponding
+        // token id) and add them to the lexer 
+        this->self.add
+            ("[^ \t\n]+", ID_WORD) // words (anything except ' ', '\t' or '\n')
+            ("\n", ID_EOL)         // newline characters
+            (".", ID_CHAR)         // anything else is a plain character
+        ;
+    }
+};
+
+struct counter
+{
+  std::size_t& c;
+  std::size_t& w;
+  std::size_t& l;
+
+  // the function operator gets called for each of the matched tokens
+  // c, l, w are references to the counters used to keep track of the numbers
+  template <typename Token>
+  bool operator()(Token const& t)
+  {
+    switch (t.id()) {
+    case ID_WORD:       // matched a word
+      // since we're using a default token type in this example, every 
+      // token instance contains a `iterator_range<BaseIterator>` as its token
+      // attribute pointing to the matched character sequence in the input 
+      ++w; c += t.value().size();
+      break;
+    case ID_EOL:        // matched a newline character
+      ++l; ++c;
+      break;
+    case ID_CHAR:       // matched something else
+      ++c;
+      break;
+    }
+    return true;        // always continue to tokenize
+  }
+
+  counter(std::size_t& s1, std::size_t& s2, std::size_t& s3)
+   :  c(s1),w(s2),l(s3)
+  { }
+};
 
 // A symbol table for parameters and vars.
 qi::symbols<char,expression_ref> identifiers;
@@ -450,6 +503,24 @@ void add_BUGS(const Parameters& P, const string& filename)
 
   for(const auto& line: lines)
   {
+    // create the token definition instance needed to invoke the lexical analyzer
+    word_count_tokens<lex::lexertl::lexer<> > word_count_functor;
+
+    char const* first = &line[0];
+    char const* last = &first[line.size()];
+    std::size_t c=0, w=0, l=0;
+    counter C(c,w,l);
+    bool r = lex::tokenize(first, last, word_count_functor, C);
+    // print results
+    if (r) {
+        std::cout << "lines: " << C.l << ", words: " << C.w
+                  << ", characters: " << C.c << "\n";
+    }
+    else {
+        std::string rest(first, last);
+        std::cout << "Lexical analysis failed\n" << "stopped at: \""
+                  << rest << "\"\n";
+    }
     using boost::spirit::ascii::space;
 
     string::const_iterator iter = line.begin();
