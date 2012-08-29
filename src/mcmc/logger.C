@@ -324,7 +324,6 @@ double mu_scale(const Parameters& P)
 	value = *d;
 
       result += Pr*value;
-      std::cerr<<"v = "<<v->print()<<" Pr = "<<Pr<<"   value = "<<value<<" result = "<<result<<"\n";
     }
 
     return convertToString( result );
