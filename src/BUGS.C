@@ -8,7 +8,6 @@ using std::vector;
 using std::string;
 using std::endl;
 
-#include <boost/spirit/include/phoenix_bind.hpp>
 #include <boost/config/warning_disable.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
@@ -16,7 +15,10 @@ using std::endl;
 #include <boost/spirit/include/phoenix_fusion.hpp>
 #include <boost/spirit/include/phoenix_stl.hpp>
 #include <boost/spirit/include/phoenix_object.hpp>
+#include <boost/spirit/include/phoenix_statement.hpp>
+#include <boost/spirit/include/phoenix_algorithm.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
+#include <boost/spirit/include/phoenix_bind.hpp>
 #include <boost/fusion/include/io.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/foreach.hpp>
@@ -36,54 +38,43 @@ namespace phoenix = boost::phoenix;
 //        ... perhaps a notes collection?
 //   It should contain a list of identifiers and parameters.
 
-enum token_ids {ID_WORD=4, ID_EOL=7, ID_CHAR=11};
+struct distance_func
+{
+    template <typename Iterator1, typename Iterator2>
+    struct result : boost::iterator_difference<Iterator1> {};
+
+    template <typename Iterator1, typename Iterator2>
+    typename result<Iterator1, Iterator2>::type 
+    operator()(Iterator1& begin, Iterator2& end) const
+    {
+        return std::distance(begin, end);
+    }
+};
+boost::phoenix::function<distance_func> const distance = distance_func();
 
 template <typename Lexer>
 struct word_count_tokens : lex::lexer<Lexer>
 {
     word_count_tokens()
+      : c(0), w(0), l(0)
+      , word("[^ \t\n]+")     // define tokens
+      , eol("\n")
+      , any(".")
     {
-        // define tokens (the regular expression to match and the corresponding
-        // token id) and add them to the lexer 
-        this->self.add
-            ("[^ \t\n]+", ID_WORD) // words (anything except ' ', '\t' or '\n')
-            ("\n", ID_EOL)         // newline characters
-            (".", ID_CHAR)         // anything else is a plain character
-        ;
+        using boost::spirit::lex::_start;
+        using boost::spirit::lex::_end;
+        using boost::phoenix::ref;
+
+        // associate tokens with the lexer
+        this->self
+            =   word  [++ref(w), ref(c) += distance(_start, _end)]
+            |   eol   [++ref(c), ++ref(l)]
+            |   any   [++ref(c)]
+            ;
     }
-};
 
-struct counter
-{
-  std::size_t& c;
-  std::size_t& w;
-  std::size_t& l;
-
-  // the function operator gets called for each of the matched tokens
-  // c, l, w are references to the counters used to keep track of the numbers
-  template <typename Token>
-  bool operator()(Token const& t)
-  {
-    switch (t.id()) {
-    case ID_WORD:       // matched a word
-      // since we're using a default token type in this example, every 
-      // token instance contains a `iterator_range<BaseIterator>` as its token
-      // attribute pointing to the matched character sequence in the input 
-      ++w; c += t.value().size();
-      break;
-    case ID_EOL:        // matched a newline character
-      ++l; ++c;
-      break;
-    case ID_CHAR:       // matched something else
-      ++c;
-      break;
-    }
-    return true;        // always continue to tokenize
-  }
-
-  counter(std::size_t& s1, std::size_t& s2, std::size_t& s3)
-   :  c(s1),w(s2),l(s3)
-  { }
+    std::size_t c, w, l;
+    lex::token_def<> word, eol, any;
 };
 
 // A symbol table for parameters and vars.
@@ -503,23 +494,31 @@ void add_BUGS(const Parameters& P, const string& filename)
 
   for(const auto& line: lines)
   {
-    // create the token definition instance needed to invoke the lexical analyzer
-    word_count_tokens<lex::lexertl::lexer<> > word_count_functor;
+    {
+      typedef lex::lexertl::token<char const*, lex::omit, boost::mpl::false_> token_type;
+      typedef lex::lexertl::actor_lexer<token_type> lexer_type;
+      word_count_tokens<lexer_type> word_count_lexer;
 
-    char const* first = &line[0];
-    char const* last = &first[line.size()];
-    std::size_t c=0, w=0, l=0;
-    counter C(c,w,l);
-    bool r = lex::tokenize(first, last, word_count_functor, C);
-    // print results
-    if (r) {
-        std::cout << "lines: " << C.l << ", words: " << C.w
-                  << ", characters: " << C.c << "\n";
-    }
-    else {
+      char const* first = &line[0];
+      char const* last = &first[line.size()];
+
+      lexer_type::iterator_type iter = word_count_lexer.begin(first, last);
+      lexer_type::iterator_type end = word_count_lexer.end();
+
+      while (iter != end && token_is_valid(*iter))
+        ++iter;
+
+      if (iter == end) {
+        std::cout << "lines: " << word_count_lexer.l
+                  << ", words: " << word_count_lexer.w
+                  << ", characters: " << word_count_lexer.c
+                  << "\n";
+      }
+      else {
         std::string rest(first, last);
         std::cout << "Lexical analysis failed\n" << "stopped at: \""
                   << rest << "\"\n";
+      }
     }
     using boost::spirit::ascii::space;
 
