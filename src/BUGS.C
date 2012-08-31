@@ -23,12 +23,10 @@ using std::endl;
 #include <boost/fusion/include/io.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/foreach.hpp>
-#include <boost/spirit/include/lex_lexertl.hpp>
 #include <functional>
 
 namespace qi = boost::spirit::qi;
 namespace ascii = boost::spirit::ascii;
-namespace lex = boost::spirit::lex;
 
 namespace phoenix = boost::phoenix;
 //-----------------------------------------------------------------------//
@@ -38,64 +36,6 @@ namespace phoenix = boost::phoenix;
 //     It should contain (for example) readable function bodies.
 //        ... perhaps a notes collection?
 //   It should contain a list of identifiers and parameters.
-
-struct distance_func
-{
-    template <typename Iterator1, typename Iterator2>
-    struct result : boost::iterator_difference<Iterator1> {};
-
-    template <typename Iterator1, typename Iterator2>
-    typename result<Iterator1, Iterator2>::type 
-    operator()(Iterator1& begin, Iterator2& end) const
-    {
-        return std::distance(begin, end);
-    }
-};
-
-const int IDANY = 10;
-
-boost::phoenix::function<distance_func> const distance = distance_func();
-
-template <typename Lexer>
-struct word_count_tokens : lex::lexer<Lexer>
-{
-  word_count_tokens()
-  {
-    this->self.add_pattern("WORD", "[^ \t\n]+");
-    
-    word = "{WORD}";
-    
-    this->self.add
-      (word)
-      ('\n')
-      (".", IDANY);
-  }
-  
-  lex::token_def<> word;
-};
-
-template <typename Iterator>
-struct word_count_grammar : qi::grammar<Iterator>
-{
-  template <typename TokenDef>
-  word_count_grammar(TokenDef const& tok)
-  :word_count_grammar::base_type(start)
-  ,c(0),w(0),l(0)
-  {
-    using boost::phoenix::ref;
-    using boost::phoenix::size;
-    using namespace boost::spirit;
-
-    start = *( tok.word [++ref(w), ref(c) += size(_1)]
-	       | lit('\n') [++ref(c), ++ref(l)]
-	       | boost::spirit::qi::token(IDANY) [++ref(c)]
-	       );
-  }
-  std::size_t c, w, l;
-  qi::rule<Iterator> start;
-};
-
-
 
 // A symbol table for parameters and vars.
 qi::symbols<char,expression_ref> identifiers;
@@ -149,8 +89,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	dashes %= lexeme[lit("--")>>*lit("-")];
 
-	varid %= (small>>(*(small|large|digit|"'"))) - reservedid;
-	conid %= large>>(*(small|large|digit|"'"));
+	varid %= (small>>(*(small|large|digit|'\''))) - reservedid;
+	conid %= large>>(*(small|large|digit|'\''));
 	reservedid %= lit("case") | "class" | "data" | "default" | "deriving" | "do" | "else" |	"foreign" | "if" | "import" | "in" | "infix" | "infixl" | 	"infixr" | "instance" | "let" | "module" | "newtype" | "of" | 	"then" | "type" | "where" | "_";
 
 	varsym %= ((symbol-lit(':'))>>*symbol)-reservedop-dashes;
@@ -365,46 +305,46 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, expression_ref(), ascii::space_type> h_expression;
   qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> arguments;
 
-  qi::rule<Iterator, char(), ascii::space_type> small;
-  qi::rule<Iterator, char(), ascii::space_type> large;
-  qi::rule<Iterator, char(), ascii::space_type> digit;
-  qi::rule<Iterator, char(), ascii::space_type> symbol;
-  qi::rule<Iterator, char(), ascii::space_type> special;
-  qi::rule<Iterator, char(), ascii::space_type> graphic;
+  qi::rule<Iterator, char()> small;
+  qi::rule<Iterator, char()> large;
+  qi::rule<Iterator, char()> digit;
+  qi::rule<Iterator, char()> symbol;
+  qi::rule<Iterator, char()> special;
+  qi::rule<Iterator, char()> graphic;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> dashes;
+  qi::rule<Iterator, std::string()> dashes;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> varid;
-  qi::rule<Iterator, std::string(), ascii::space_type> conid;
-  qi::rule<Iterator, std::string(), ascii::space_type> reservedid;
+  qi::rule<Iterator, std::string()> varid;
+  qi::rule<Iterator, std::string()> conid;
+  qi::rule<Iterator, std::string()> reservedid;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> varsym;
-  qi::rule<Iterator, std::string(), ascii::space_type> consym;
-  qi::rule<Iterator, std::string(), ascii::space_type> reservedop; // reserved operator
+  qi::rule<Iterator, std::string()> varsym;
+  qi::rule<Iterator, std::string()> consym;
+  qi::rule<Iterator, std::string()> reservedop; // reserved operator
 
-  qi::rule<Iterator, std::string(), ascii::space_type> tyvar;
-  qi::rule<Iterator, std::string(), ascii::space_type> tycon;
-  qi::rule<Iterator, std::string(), ascii::space_type> tycls;
-  qi::rule<Iterator, std::string(), ascii::space_type> modid; // module id
+  qi::rule<Iterator, std::string()> tyvar;
+  qi::rule<Iterator, std::string()> tycon;
+  qi::rule<Iterator, std::string()> tycls;
+  qi::rule<Iterator, std::string()> modid; // module id
 
-  qi::rule<Iterator, std::string(), ascii::space_type> qvarid; // qualified variable id
-  qi::rule<Iterator, std::string(), ascii::space_type> qconid; // qualified constructor id
-  qi::rule<Iterator, std::string(), ascii::space_type> qtycon; // qualified type constructor
-  qi::rule<Iterator, std::string(), ascii::space_type> qtycls; // qualified type class
-  qi::rule<Iterator, std::string(), ascii::space_type> qvarsym;
-  qi::rule<Iterator, std::string(), ascii::space_type> qconsym;
+  qi::rule<Iterator, std::string()> qvarid; // qualified variable id
+  qi::rule<Iterator, std::string()> qconid; // qualified constructor id
+  qi::rule<Iterator, std::string()> qtycon; // qualified type constructor
+  qi::rule<Iterator, std::string()> qtycls; // qualified type class
+  qi::rule<Iterator, std::string()> qvarsym;
+  qi::rule<Iterator, std::string()> qconsym;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> decimal;
-  qi::rule<Iterator, std::string(), ascii::space_type> h_integer;
-  qi::rule<Iterator, std::string(), ascii::space_type> h_float;
-  qi::rule<Iterator, std::string(), ascii::space_type> exponent;
+  qi::rule<Iterator, std::string()> decimal;
+  qi::rule<Iterator, std::string()> h_integer;
+  qi::rule<Iterator, std::string()> h_float;
+  qi::rule<Iterator, std::string()> exponent;
 
-  qi::rule<Iterator, char(), ascii::space_type> h_char;
-  qi::rule<Iterator, char(), ascii::space_type> escape;
-  qi::rule<Iterator, std::string(), ascii::space_type> h_string;
-  qi::rule<Iterator, std::string(), ascii::space_type> charesc;
+  qi::rule<Iterator, char()> h_char;
+  qi::rule<Iterator, char()> escape;
+  qi::rule<Iterator, std::string()> h_string;
+  qi::rule<Iterator, std::string()> charesc;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> literal;  
+  qi::rule<Iterator, std::string()> literal;  
 
   qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> infixexp;
@@ -514,28 +454,6 @@ void add_BUGS(const Parameters& P, const string& filename)
 
   for(const auto& line: lines)
   {
-    {
-      typedef lex::lexertl::token<char const*, boost::mpl::vector<std::string>> token_type;
-      typedef lex::lexertl::lexer<token_type> lexer_type;
-      typedef word_count_tokens<lexer_type>::iterator_type iterator_type;
-      word_count_tokens<lexer_type> word_count;          // Our lexer
-      word_count_grammar<iterator_type> g (word_count);  // Our parser 
-      
-      char const* first = &line[0];
-      char const* last = &first[line.size()];
-
-      bool r = lex::tokenize_and_parse(first, last, word_count, g);
-      if (r) {
-        std::cout << "lines: " << g.l << ", words: " << g.w 
-                  << ", characters: " << g.c << "\n";
-      }
-      else {
-        std::string rest(first, last);
-        std::cerr << "Parsing failed\n" << "stopped at: \"" 
-                  << rest << "\"\n";
-      }
-    }
-
     using boost::spirit::ascii::space;
 
     string::const_iterator iter = line.begin();
