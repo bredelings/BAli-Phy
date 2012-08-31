@@ -116,7 +116,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	exponent %= ( char_('e') | char_('E') ) >> -(char_('+')|char_('-')) >> decimal;
 
 	h_char %= lit('\'') >> ((graphic - '\'' - '\\')|char_(' ')|escape) >> lit('\'');
-	h_string %= lit('"') >> *((graphic - '\'' - '\\')|char_(' ')|escape) >> lit('"');
+	h_string %= lit('"') >> *((graphic - '"' - '\\')|char_(' ')|escape) >> lit('"');
 	escape = lit("\\a") [_val = '\a'] |
 	  lit("\\b") [_val = '\b'] |
 	  lit("\\f") [_val = '\f'] |
