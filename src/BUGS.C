@@ -139,7 +139,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	/*----- Section 3 ------*/
 	exp %= infixexp >> "::" >> -(context >> "=>") >> type | infixexp;
-	exp = literal [ _val = _1 ];
+	exp = aexp [ _val = _1 ];
 	infixexp %= lexp >> qop >> infixexp | "-" >> infixexp | lexp;
 	lexp %= // lit("\\") >> +apat >> lit("->") >> exp |
 	  //	  lit("let") >> decls >> "in" >> exp |
@@ -152,10 +152,11 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	temp = &apply_expression;
 	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(temp,_val,_1) ]; // function application
 
-	aexp %= qvar   // variable
-	  | gcon         // general constructor
-	  | literal     
-	  | "(" >> exp >> ")" ; // parenthesized expression
+	//	aexp = qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
+	aexp = varid [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
+	  //	  | gcon [_val = _1]         // general constructor
+	  | literal [_val = _1 ]    
+	  | "(" >> exp [_val = _1] >> ")" ; // parenthesized expression
 	//	  | "(" >> exp >> +(','>>exp) >> ")"   // tuple, k >= 2
 	//	  | "[" >> (exp%',') >> "]"  // list
 	//	  | "[" >> exp >> -(','>>exp) >>".." >> -exp >> "]"  // arithmetic sequence
