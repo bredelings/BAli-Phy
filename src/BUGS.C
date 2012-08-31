@@ -87,7 +87,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	special %= lit('(') | ')' | ',' | ';' | '[' | ']' | '`' | '{' | '}';
 	graphic %= small | large | symbol | digit | special | '"' | '\'';
 
-	dashes %= lexeme[lit("--")>>*lit("-")];
+	dashes %= lit("--")>>*lit("-");
 
 	varid %= (small>>(*(small|large|digit|'\''))) - reservedid;
 	conid %= large>>(*(small|large|digit|'\''));
@@ -109,7 +109,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	qvarsym %= -(modid>>".") >> qvarsym;
 	qconsym %= -(modid>>".") >> qconsym;
 
-	decimal %= lexeme[+char_("0-9")];
+	decimal %= +char_("0-9");
 	h_integer %= decimal;
 
 	h_float %= decimal >> char_('.') >> decimal >> -exponent | decimal >> exponent;
