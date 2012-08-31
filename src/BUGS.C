@@ -82,9 +82,9 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	small %= char_("a-z");
 	large %= char_("A-Z");
 	digit %= char_("0-9");
-	symbol %= lit('!') | '#' | '$' | '%' | '&' | '*' | '+' | '.' | '/' | '<' | '=' | '>' | '?' | '@' | '\\' | '^' | '|' | '-' | '~' | ':';
-	special %= lit('(') | ')' | ',' | ';' | '[' | ']' | '`' | '{' | '}';
-	graphic %= small | large | symbol | digit | special | '"' | '\'';
+	symbol %= char_('!') | char_('#') | char_('$') | char_('%') | char_('&') | char_('*') | char_('+') | char_('.') | char_('/') | char_('<') | char_('=') | char_('>') | char_('?') | char_('@') | char_('\\') | char_('^') | char_('|') | char_('-') | char_('~') | char_(':');
+	special %= char_('(') | char_(')') | char_(',') | char_(';') | char_('[') | char_(']') | char_('`') | char_('{') | char_('}');
+	graphic %= small | large | symbol | digit | special | char_('"') | char_('\'');
 
 	dashes %= lit("--")>>*lit("-");
 
@@ -101,12 +101,18 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	tycls %= conid;
 	modid %= *(conid >> ".") >> conid;
 
-	qvarid %= -(modid>>".") >> varid;
-	qconid %= -(modid>>".") >> conid;
-	qtycon %= -(modid>>".") >> tycon;
-	qtycls %= -(modid>>".") >> tycls;
-	qvarsym %= -(modid>>".") >> qvarsym;
-	qconsym %= -(modid>>".") >> qconsym;
+	//	qvarid %= -(modid>>char_('.')) >> varid;
+	qvarid %= *(conid>>char_('.'))>>varid;
+	//	qconid %= -(modid>>char_('.')) >> conid;
+	qconid %= *(conid>>char_('.')) >> conid;
+	//	qtycon %= -(modid>>char_('.')) >> tycon;
+	qtycon %= *(conid>>char_('.')) >> tycon;
+	//	qtycls %= -(modid>>char_('.')) >> tycls;
+	qtycls %= *(conid>>char_('.')) >> tycls;
+	//	qvarsym %= -(modid>>char_('.')) >> varsym;
+	qvarsym %= *(conid>>char_('.')) >> varsym;
+	//	qconsym %= -(modid>>char_('.')) >> consym;
+	qconsym %= *(conid>>char_('.')) >> consym;
 
 	decimal %= +char_("0-9");
 	h_integer %= decimal;
@@ -153,8 +159,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(temp,_val,_1) ]; // function application
 
 	//	aexp = qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
-	aexp = varid [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
-	  //	  | gcon [_val = _1]         // general constructor
+	aexp = qvarid [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
+	  //| gcon [_val = _1]         // general constructor
 	  | literal [_val = _1 ]    
 	  | "(" >> exp [_val = _1] >> ")" ; // parenthesized expression
 	//	  | "(" >> exp >> +(','>>exp) >> ")"   // tuple, k >= 2
