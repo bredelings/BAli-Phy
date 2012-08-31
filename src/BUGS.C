@@ -128,10 +128,11 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  lit("'") [_val = '\''];
 
 	literal %= h_float | h_integer | h_char | h_string;
-
+	double (*temp2)(const std::string&);
+	temp2 = convertTo<double>;
 	/*----- Section 3 ------*/
 	exp %= infixexp >> "::" >> -(context >> "=>") >> type | infixexp;
-	exp %= fexp;
+	exp = h_float [ _val = phoenix::bind(temp2, _1) ] | h_string [ _val = _1 ] | h_char [ _val = _1 ];
 	infixexp %= lexp >> qop >> infixexp | "-" >> infixexp | lexp;
 	lexp %= // lit("\\") >> +apat >> lit("->") >> exp |
 	  //	  lit("let") >> decls >> "in" >> exp |
