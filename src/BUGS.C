@@ -75,8 +75,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	using phoenix::construct;
 	using phoenix::val;
 
-        text %= lexeme[+(char_ - ' ' -'(')];
-	h_expression %= double_;
+	text %= +(char_ - ' ' -'(');
 	arguments %= lit('(')>>exp%','>>lit(')')|lit("()");
 	bugs_line %= text > '~' > text > arguments >> eoi ;
 
@@ -283,7 +282,43 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	on_error<fail>
 	  (
-	   h_expression
+	   exp
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   h_integer
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   h_string
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   literal
 	   , std::cout
 	   << val("Error! Expecting ")
 	   << _4
@@ -295,14 +330,15 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	bugs_line.name("bugs_line");
 	text.name("text");
-	h_expression.name("h_expression");
+	exp.name("exp");
+	literal.name("literal");
+	h_string.name("h_string");
 	arguments.name("arguments");
 	reservedid.name("reserved_id");
     }
 
   qi::rule<Iterator, bugs_cmd(), ascii::space_type> bugs_line;
-  qi::rule<Iterator, std::string(), ascii::space_type> text;
-  qi::rule<Iterator, expression_ref(), ascii::space_type> h_expression;
+  qi::rule<Iterator, std::string()> text;
   qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> arguments;
 
   qi::rule<Iterator, char()> small;
