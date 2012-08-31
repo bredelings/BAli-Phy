@@ -160,7 +160,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	//	aexp = qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
 	aexp = qvarid [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
-	  //| gcon [_val = _1]         // general constructor
+	  | gcon [_val = _1]         // general constructor
 	  | literal [_val = _1 ]    
 	  | "(" >> exp [_val = _1] >> ")" ; // parenthesized expression
 	//	  | "(" >> exp >> +(','>>exp) >> ")"   // tuple, k >= 2
@@ -173,7 +173,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	//	  | (aexp - qcon) >> "{">> +fbind >> "}"; // labeled update
 	  
 	/*----- Section 3.2 -------*/
-	gcon %= lit("()") | "[]" | "(," >> *lit(',')>>")" | qcon;
+	gcon %= string("()") | string("[]") | string("(,") >> *char_(',')>>string(")") | qcon;
 
 	var  %= varid  | "(" >> varsym >> ")";    // variable
 	qvar %= qvarid | "(" >> qvarsym >> ")";   // qualified variable
