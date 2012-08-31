@@ -517,7 +517,7 @@ void add_BUGS(const Parameters& P, const string& filename)
       {
 	std::cerr<<cmd.arguments[i];
 	if (i != cmd.arguments.size()-1)
-	  std::cerr<<",";
+	  std::cerr<<", ";
       }
       std::cerr<<")\n";
     }
