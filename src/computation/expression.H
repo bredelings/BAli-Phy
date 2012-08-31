@@ -392,6 +392,7 @@ struct expression_ref: public object_ptr<const expression>
   expression_ref(const bool& b):expression_ref(new Bool(b)) {}
   expression_ref(const std::string& s):expression_ref(new String(s)) {}
   expression_ref(const char* s):expression_ref(new String(s)) {}
+  expression_ref(const char& c):expression_ref(new Char(c)) {}
 };
 
 template <typename T>

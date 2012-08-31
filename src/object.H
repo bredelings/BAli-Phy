@@ -180,6 +180,11 @@ inline std::string POD<std::string>::print() const
 {
   return "\""+t+"\"";
 }
+template<> 
+inline std::string POD<char>::print() const
+{
+  return std::string("'")+t+"'";
+}
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/utility/enable_if.hpp>
 
@@ -273,6 +278,7 @@ typedef POD_math<double> Double;
 typedef POD_math<int> Int;
 typedef POD_math<unsigned> Unsigned;
 typedef POD<bool> Bool;
+typedef POD<char> Char;
 typedef POD<std::string> String;
 typedef POD_math<log_double_t> Log_Double;
 
