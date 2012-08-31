@@ -127,12 +127,19 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  lit("\\\"") [_val = '"'] |
 	  lit("'") [_val = '\''];
 
-	literal %= h_float | h_integer | h_char | h_string;
 	double (*temp2)(const std::string&);
 	temp2 = convertTo<double>;
+	int (*temp3)(const std::string&);
+	temp3 = convertTo<int>;
+
+	literal = h_float [ _val = phoenix::bind(temp2, _1) ]
+	  | h_integer [ _val =  phoenix::bind(temp3, _1) ]
+	  | h_char [ _val = _1 ]
+	  | h_string [ _val = _1 ];
+
 	/*----- Section 3 ------*/
 	exp %= infixexp >> "::" >> -(context >> "=>") >> type | infixexp;
-	exp = h_float [ _val = phoenix::bind(temp2, _1) ] | h_string [ _val = _1 ] | h_char [ _val = _1 ];
+	exp = literal [ _val = _1 ];
 	infixexp %= lexp >> qop >> infixexp | "-" >> infixexp | lexp;
 	lexp %= // lit("\\") >> +apat >> lit("->") >> exp |
 	  //	  lit("let") >> decls >> "in" >> exp |
@@ -201,7 +208,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	apat %= var >> -(lit('@')>>apat) 
 	  | gcon
 	  | qcon >> "{" >> *fpat >> "}"
-	  | literal
+	  //	  | literal
 	  | lit('_')
 	  | lit('(') >> pat >> ')'
 	  | lit('(') >> pat >> *(lit(',') >> pat) >> ')'
@@ -381,7 +388,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string()> h_string;
   qi::rule<Iterator, std::string()> charesc;
 
-  qi::rule<Iterator, std::string()> literal;  
+  qi::rule<Iterator, expression_ref()> literal;  
 
   qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> infixexp;
