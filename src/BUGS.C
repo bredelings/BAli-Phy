@@ -170,9 +170,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	temp = &apply_expression;
 	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(temp,_val,_1) ]; // function application
 
-	//	aexp = qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
-	aexp = qvarid [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
-	  | gcon [_val = _1]         // general constructor
+	aexp = qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]     // variable
+	  | gcon [ qi::_val = phoenix::construct< ::var>(qi::_1) ]        // general constructor
 	  | literal [_val = _1 ]    
 	  | "(" >> exp [_val = _1] >> ")" ; // parenthesized expression
 	//	  | "(" >> exp >> +(','>>exp) >> ")"   // tuple, k >= 2
