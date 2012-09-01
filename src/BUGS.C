@@ -30,12 +30,24 @@ namespace ascii = boost::spirit::ascii;
 
 namespace phoenix = boost::phoenix;
 //-----------------------------------------------------------------------//
-// http://stackoverflow.com/questions/8100050/boost-spirit-dynamic-lexer-with-column-numbers
+// Handle column numbers
+//    - http://stackoverflow.com/questions/8100050/boost-spirit-dynamic-lexer-with-column-numbers
+//
 // Make a more interpretable program structure:
-//   It should contain an UNTRANSLATED and unsimplified representation of the program source.
-//     It should contain (for example) readable function bodies.
-//        ... perhaps a notes collection?
-//   It should contain a list of identifiers and parameters.
+//    - For parsing
+//       + Keep track of the list of operators, and their precedence, to use in resolving infix expressions.
+//       + Keep track of how polymorphic functions map to instances.
+//    - Try to keep the original ASTs around in a representation that maps back to original source.
+//       + It should contain an UNTRANSLATED and unsimplified (e.g. readable) representation of the program source.
+//       + It should contain (for example) readable function bodies.
+//    - For use as a program object
+//       + Perhaps it should be a notes collection?
+//       + It should contain a list of identifiers and parameters.
+//    - Perhaps add a "parameter name :: type" declaration (top level).
+//
+// Unify mathematical operators -- at least for now.
+//   - We should have only 1 function each for +,*,-,/,neg, etc.
+//   
 
 // A symbol table for parameters and vars.
 qi::symbols<char,expression_ref> identifiers;
