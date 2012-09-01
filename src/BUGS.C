@@ -37,6 +37,7 @@ namespace phoenix = boost::phoenix;
 //    - For parsing
 //       + Keep track of the list of operators, and their precedence, to use in resolving infix expressions.
 //       + Keep track of how polymorphic functions map to instances.
+//       + Keep track of each ADT, and the mapping from constructors -> integers
 //    - Try to keep the original ASTs around in a representation that maps back to original source.
 //       + It should contain an UNTRANSLATED and unsimplified (e.g. readable) representation of the program source.
 //       + It should contain (for example) readable function bodies.
@@ -105,8 +106,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	reservedid %= lit("case") | "class" | "data" | "default" | "deriving" | "do" | "else" |	"foreign" | "if" | "import" | "in" | "infix" | "infixl" | 	"infixr" | "instance" | "let" | "module" | "newtype" | "of" | 	"then" | "type" | "where" | "_";
 
 	varsym %= ((symbol-lit(':'))>>*symbol)-reservedop-dashes;
-	consym %= (lit(':')>>*symbol)-reservedop;
-	reservedop %= lit("..") | ":" | "::" | "=" | "\\" | "|" | "<-" | "->" | "@" | "~" | "=>";
+	consym %= (char_(':')>>*symbol)-reservedop;
+	reservedop %= string("..") | string(":") | string("::") | string("=") | string("\\") | string("|") | string("<-") | string("->") | string("@") | string("~") | string("=>");
 
 	tyvar %= varid;
 	tycon %= conid;
