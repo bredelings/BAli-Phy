@@ -86,6 +86,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
         using phoenix::at_c;
         using phoenix::push_back;
 	using phoenix::construct;
+	using phoenix::new_;
 	using phoenix::val;
 
 	text %= +(char_ - ' ' -'(');
@@ -157,9 +158,14 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  | h_string [ _val = _1 ];
 
 	/*----- Section 3 ------*/
-	exp %= infixexp >> "::" >> -(context >> "=>") >> type | infixexp;
-	exp = fexp [ _val = _1 ];
-	infixexp %= lexp >> qop >> infixexp | "-" >> infixexp | lexp;
+	exp %= infixexp >> "::" >> -(context >> "=>") >> type 
+	       | infixexp;
+	exp = infixexp [ _val = _1 ];
+
+	infixexp = lexp [push_back(_a,_1)] >> +(qop [push_back(_a,_1)] >> lexp [push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("infixexp"), _a) ]
+	  | "-" >> infixexp [ _val = _1 ]
+	  | lexp [ _val = _1 ];
+
 	lexp %= // lit("\\") >> +apat >> lit("->") >> exp |
 	  //	  lit("let") >> decls >> "in" >> exp |
 	  //	  lit("if") >> exp >> -lit(';') >> "then" >> exp >> -lit(';') >> "else" >> exp |
@@ -196,8 +202,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	conop %= consym | "`" >> conid >> "`";    // constructor operator
 	qconop %= gconsym | "`" >> qconid >> "`"; // qualified constructor operator
 	op %= varop | conop;                      // operator
-	qop %= qvarop | qconop;                   // qualified operator
-	gconsym %= ":" | qconsym;
+	qop %= qvarop [ _val = construct<AST_node>("qvarop",_1) ] | qconop [ _val = construct<AST_node>("qconop",_1) ];  // qualified operator
+	gconsym %= string(":") | qconsym;
 
 	/*----- Section 3.11 -----*/
 	//	qual %= pat >> "<-" >> exp | lit("let") >> decls | exp;
@@ -410,7 +416,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, expression_ref()> literal;  
 
   qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
-  qi::rule<Iterator, expression_ref(), ascii::space_type> infixexp;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> infixexp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> lexp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> fexp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> aexp;
@@ -426,8 +432,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> conop;
   qi::rule<Iterator, std::string(), ascii::space_type> qconop;
   qi::rule<Iterator, std::string(), ascii::space_type> op;
-  qi::rule<Iterator, std::string(), ascii::space_type> qop;
   qi::rule<Iterator, std::string(), ascii::space_type> gconsym;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> qop;
 
   /*----- Section 3.11 -----*/
   qi::rule<Iterator, std::string(), ascii::space_type> qual;  
