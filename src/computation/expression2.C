@@ -73,11 +73,11 @@ int main()
   expression_ref w = parameter("W");
   expression_ref one = Double(1);
 
-  typed_expression_ref<Double> X ( x );
-  typed_expression_ref<Double> Y ( y );
-  typed_expression_ref<Int> W ( w );
-  typed_expression_ref<Double> Z ( z );
-  typed_expression_ref<Double> One(1.0);
+  expression_ref X ( x );
+  expression_ref Y ( y );
+  expression_ref W ( w );
+  expression_ref Z ( z );
+  expression_ref One(1.0);
 
   expression_ref mul = lambda_expression( Multiply() );
   expression_ref plus = lambda_expression( Add() );
@@ -277,11 +277,11 @@ int main()
   expression_ref myFib = var("myFib");
   {
     Program P;
-    P += Def( (square,v1),(typed_expression_ref<Int>(v1)*v1) );
+    P += Def( (square,v1),(v1*v1) );
 
     P += Def( (myFib, 0), 1 )
             ( (myFib, 1), 1 )
-            ( (myFib,v1), typed_expression_ref<Int>((getIndex,myArray,v1-2)) + (getIndex,myArray,v1-1) );
+            ( (myFib,v1), (getIndex,myArray,v1-2) + (getIndex,myArray,v1-1) );
 
     P += Def( myArray, (mkArray, 10, myFib) );
 

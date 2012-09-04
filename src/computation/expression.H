@@ -425,59 +425,6 @@ bool is_exactly(const expression_ref&, const Object& O);
 
 bool same_head(const expression_ref&, const expression_ref&);
 
-template <typename T>
-struct typed_expression_ref: public expression_ref
-{
-public:
-  explicit typed_expression_ref() {}
-  explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
-  explicit typed_expression_ref(expression* v): expression_ref(v) {}
-  explicit typed_expression_ref(const object_ref& v): expression_ref(v) {}
-  explicit typed_expression_ref(const object_ptr<const Object>& v): expression_ref(v) {}
-  explicit typed_expression_ref(const Object& o):expression_ref(o) {}
-};
-
-template <typename T>
-struct typed_expression_ref<POD<T> >: public expression_ref
-{
-public:
-  explicit typed_expression_ref() {}
-  explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
-  explicit typed_expression_ref(expression* v): expression_ref(v) {}
-  explicit typed_expression_ref(const object_ref& v): expression_ref(v) {}
-  explicit typed_expression_ref(const object_ptr<const Object>& v): expression_ref(v) {}
-  explicit typed_expression_ref(const Object& o):expression_ref(o) {}
-  typed_expression_ref(const T& t):expression_ref(POD<T>(t)) {}
-};
-
-template <typename T>
-struct typed_expression_ref<POD_math<T> >: public expression_ref
-{
-public:
-  explicit typed_expression_ref() {}
-  explicit typed_expression_ref(const expression_ref& e):expression_ref(e) {}
-  explicit typed_expression_ref(expression* v): expression_ref(v) {}
-  explicit typed_expression_ref(const object_ref& v): expression_ref(v) {}
-  explicit typed_expression_ref(const object_ptr<const Object>& v): expression_ref(v) {}
-  explicit typed_expression_ref(const Object& o):expression_ref(o) {}
-  typed_expression_ref(const T& t):expression_ref(POD_math<T>(t)) {}
-};
-
-inline typed_expression_ref<Double> Constant(const double& d)
-{
-  return typed_expression_ref<Double>(Double(d));
-}
-
-inline typed_expression_ref<Int> Constant(const int& i)
-{
-  return typed_expression_ref<Int>(Int(i));
-}
-
-inline typed_expression_ref<Bool> Constant(const bool& b)
-{
-  return typed_expression_ref<Bool>(Bool(b));
-}
-
 std::string tuple_name(int n);
 bool is_tuple_name(const std::string&);
 constructor tuple_head(int n);
