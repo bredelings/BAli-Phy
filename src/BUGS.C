@@ -30,12 +30,25 @@ namespace ascii = boost::spirit::ascii;
 
 namespace phoenix = boost::phoenix;
 //-----------------------------------------------------------------------//
-// http://stackoverflow.com/questions/8100050/boost-spirit-dynamic-lexer-with-column-numbers
+// Handle column numbers
+//    - http://stackoverflow.com/questions/8100050/boost-spirit-dynamic-lexer-with-column-numbers
+//
 // Make a more interpretable program structure:
-//   It should contain an UNTRANSLATED and unsimplified representation of the program source.
-//     It should contain (for example) readable function bodies.
-//        ... perhaps a notes collection?
-//   It should contain a list of identifiers and parameters.
+//    - For parsing
+//       + Keep track of the list of operators, and their precedence, to use in resolving infix expressions.
+//       + Keep track of how polymorphic functions map to instances.
+//       + Keep track of each ADT, and the mapping from constructors -> integers
+//    - Try to keep the original ASTs around in a representation that maps back to original source.
+//       + It should contain an UNTRANSLATED and unsimplified (e.g. readable) representation of the program source.
+//       + It should contain (for example) readable function bodies.
+//    - For use as a program object
+//       + Perhaps it should be a notes collection?
+//       + It should contain a list of identifiers and parameters.
+//    - Perhaps add a "parameter name :: type" declaration (top level).
+//
+// Unify mathematical operators -- at least for now.
+//   - We should have only 1 function each for +,*,-,/,neg, etc.
+//   
 
 // A symbol table for parameters and vars.
 qi::symbols<char,expression_ref> identifiers;
@@ -93,8 +106,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	reservedid %= lit("case") | "class" | "data" | "default" | "deriving" | "do" | "else" |	"foreign" | "if" | "import" | "in" | "infix" | "infixl" | 	"infixr" | "instance" | "let" | "module" | "newtype" | "of" | 	"then" | "type" | "where" | "_";
 
 	varsym %= ((symbol-lit(':'))>>*symbol)-reservedop-dashes;
-	consym %= (lit(':')>>*symbol)-reservedop;
-	reservedop %= lit("..") | ":" | "::" | "=" | "\\" | "|" | "<-" | "->" | "@" | "~" | "=>";
+	consym %= (char_(':')>>*symbol)-reservedop;
+	reservedop %= string("..") | string(":") | string("::") | string("=") | string("\\") | string("|") | string("<-") | string("->") | string("@") | string("~") | string("=>");
 
 	tyvar %= varid;
 	tycon %= conid;
@@ -158,9 +171,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	temp = &apply_expression;
 	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(temp,_val,_1) ]; // function application
 
-	//	aexp = qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
-	aexp = qvarid [ qi::_val = phoenix::construct< ::var>(qi::_1) ]   // variable
-	  | gcon [_val = _1]         // general constructor
+	aexp = qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]     // variable
+	  | gcon [ qi::_val = phoenix::construct< ::var>(qi::_1) ]        // general constructor
 	  | literal [_val = _1 ]    
 	  | "(" >> exp [_val = _1] >> ")" ; // parenthesized expression
 	//	  | "(" >> exp >> +(','>>exp) >> ")"   // tuple, k >= 2
