@@ -79,12 +79,10 @@ int main()
   typed_expression_ref<Double> Z ( z );
   typed_expression_ref<Double> One(1.0);
 
-  expression_ref mul = lambda_expression( Multiply<Double>() );
-  expression_ref muli = lambda_expression( Multiply<Int>() );
-  expression_ref plus = lambda_expression( Add<Double>() );
-  expression_ref plus_i = lambda_expression( Add<Int>() );
-  expression_ref minusi = lambda_expression( Minus<Int>() );
-  expression_ref gt = lambda_expression( GreaterThan<Double>() );
+  expression_ref mul = lambda_expression( Multiply() );
+  expression_ref plus = lambda_expression( Add() );
+  expression_ref minus = lambda_expression( Minus() );
+  expression_ref gt = lambda_expression( GreaterThan() );
 
   cout<<"Demonstrate lambda functions\n";
   cout<<"mul = "<<mul<<"\n";
@@ -151,12 +149,12 @@ int main()
 
   CTX1.add_compute_expression( (plus, x, y) );
 
-  int w_2 = CTX1.add_compute_expression( (muli, w, w) );
+  int w_2 = CTX1.add_compute_expression( (mul, w, w) );
 
   int cond = CTX1.add_compute_expression( (If, z_gt_1, x_times_y_plus_one, w_2));
 
   // -- using multiple arguments instead of one at a time.
-  CTX1.add_compute_expression( (If, (gt, z, one) , (plus, (mul, x, y), one) , (muli,w,w) ) );
+  CTX1.add_compute_expression( (If, (gt, z, one) , (plus, (mul, x, y), one) , (mul,w,w) ) );
   // -- using automatic creation of operators based on typed references
   CTX1.add_compute_expression( (If, Z > One , X*Y+One , W*W ) );
   // -- can we create constants easily?
@@ -263,7 +261,7 @@ int main()
   cout<<test10<<"\n";
 
   // We might actually have to print the result to calculate the whole thing.
-  expression_ref test11 = (take, 3, (iterate, (plus_i,1), 1));
+  expression_ref test11 = (take, 3, (iterate, (plus,1), 1));
   cout<<"\n";
   cout<<"Eval test:     "<<test11<<" = \n";
   test11 = graph_normalize(test11);
@@ -315,7 +313,7 @@ int main()
   test13.reset();
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test14 = (take,3,(iterate,(plus_i,1),1));
+  expression_ref test14 = (take,3,(iterate,(plus,1),1));
 
   cout<<"\n";
   cout<<"Eval test:     "<<test14<<" = \n";
@@ -328,7 +326,7 @@ int main()
 
 
   //print(take(3,fmap(square,iterate(plus(1.0),1.0))));
-  expression_ref test15 = (take,3,(iterate, (plus_i,1),1));
+  expression_ref test15 = (take,3,(iterate, (plus,1),1));
 
   cout<<"\n";
   cout<<"Eval test:     "<<test15<<" = \n";
@@ -385,7 +383,7 @@ int main()
   C.set_parameter_value("Z",4);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test16 = (take,y,(iterate,(plus_i,x),z));
+  expression_ref test16 = (take,y,(iterate,(plus,x),z));
 
   C.add_compute_expression( test16 );
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
@@ -396,7 +394,7 @@ int main()
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test17 =  (sum_i,(take,y,(iterate,(plus_i,x),z)));
+  expression_ref test17 =  (sum_i,(take,y,(iterate,(plus,x),z)));
 
   C.add_compute_expression( test17 );
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";

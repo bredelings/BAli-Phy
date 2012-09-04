@@ -247,7 +247,7 @@ int Model::add_note(const expression_ref& E)
       prior_index = C.add_compute_expression( Pr_new );
     else
     {
-      typed_expression_ref<Log_Double> Pr ( C.get_expression(prior_index));
+      expression_ref Pr = C.get_expression(prior_index);
       C.set_compute_expression(prior_index, Pr_new * Pr);
     }
   }

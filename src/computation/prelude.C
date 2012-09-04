@@ -33,9 +33,6 @@ Program make_Prelude()
 {
   Program P;
 
-  typed_expression_ref<Double> x1 (v1);
-  typed_expression_ref<Double> x4 (v4);
-
   // foldr f z []  = z
   // foldr f z x:xs = (f x (foldr f z xs))
   P += Def( (foldr, v1, v2, ListEnd)    , v2)
@@ -83,12 +80,11 @@ Program make_Prelude()
 
   // sum [] = 0
   // sum h:t = h+(sum t)
-  expression_ref plus_i = lambda_expression( Add<Int>() );
+  expression_ref plus = lambda_expression( Add() );
   P += Def( (sum_i, ListEnd), 0)
-          ( (sum_i, v1&v2), (plus_i, v1, (sum_i, v2)) );
+          ( (sum_i, v1&v2), v1 + (sum_i, v2) );
 
-  expression_ref times = lambda_expression(Multiply<Double>());
-  expression_ref plus = lambda_expression( Add<Double>() );
+  expression_ref times = lambda_expression(Multiply());
   expression_ref to_double = lambda_expression( Conversion<int,double>() );
 
   // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
@@ -96,14 +92,14 @@ Program make_Prelude()
 
   // MixDiscreteDistributions_ h:t h2:t2 = DiscreteDistribution (fmap1 \q->q*h h2)++(MixDiscreteDistributions_ t t2)
   // MixDiscreteDistributions_ []  []    = []
-  P += Def( (MixDiscreteDistributions_, v0&v1, v2&v3) , (plusplus,(fmap1, v4^x4*v0, v2),(MixDiscreteDistributions_,v1,v3)))
+  P += Def( (MixDiscreteDistributions_, v0&v1, v2&v3) , (plusplus,(fmap1, v4^v4*v0, v2),(MixDiscreteDistributions_,v1,v3)))
           ( (MixDiscreteDistributions_, ListEnd, ListEnd) , ListEnd );
 
   // MixDiscreteDistributions l1 l2 = DiscreteDistribution (MixDiscreteDistributions l1 (fmap UnwrapDD l2))
   P += Def( (MixDiscreteDistributions, v0, v1) , (DiscreteDistribution, (MixDiscreteDistributions_, v0, (fmap,UnwrapDD,v1))));
 
   // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
-  P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(x1+(times,(fst,v2),(snd,v2)))), 0.0, v3) );
+  P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(v1+(times,(fst,v2),(snd,v2)))), 0.0, v3) );
 
   // UniformDiscretize q n = fmap /\i.(1/n, q ((2*i+1)/n) ) (take n (iterate (+1) 0) )
   // [ We could do this as two nested fmaps, instead. ]

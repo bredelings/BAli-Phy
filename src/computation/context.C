@@ -598,7 +598,7 @@ int add_probability_expression(context& C)
 {
   expression_ref query = (distributed, match(0), match(1));
 
-  typed_expression_ref<Log_Double> Pr;
+  expression_ref Pr;
 
   // Check each expression in the Formula
   map<string,string> prior_expressions;
@@ -627,7 +627,7 @@ int add_probability_expression(context& C)
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)
     if (not Pr)
-      Pr = typed_expression_ref<Log_Double>(Pr_i);
+      Pr = Pr_i;
     else
       Pr = Pr_i * Pr;
   }

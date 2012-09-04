@@ -655,10 +655,10 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
 					   const object_ptr<const alphabet>& a,
 					   const shared_ptr< const valarray<double> >& frequencies)
 {
-  expression_ref plus = lambda_expression(Add<Double>());
-  expression_ref minus = lambda_expression(Minus<Double>());
-  expression_ref times = lambda_expression(Multiply<Double>());
-  expression_ref divide = lambda_expression(Divide<Double>());
+  expression_ref plus = lambda_expression(Add());
+  expression_ref minus = lambda_expression(Minus());
+  expression_ref times = lambda_expression(Multiply());
+  expression_ref divide = lambda_expression(Divide());
 
   if (model_args[0] == "single") 
     return coerce_to_MM(coerce_to_RA(model_args[1],a,frequencies),a,frequencies);

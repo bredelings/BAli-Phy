@@ -31,6 +31,8 @@ using std::string;
 // Thus: Every instead of reference(slot) actually looks up the relevant reg, except for
 //       the case operation, which instead uses reference to determine the branches.
 
+using boost::dynamic_pointer_cast;
+
 closure Seq::operator()(OperationArgs& Args) const
 {
   Args.evaluate_slot_no_record(0);
@@ -289,6 +291,214 @@ closure LExp_Op::operator()(OperationArgs& Args) const
 
 expression_ref LExp = lambda_expression( LExp_Op() );
 
+closure Add::operator()(OperationArgs& Args) const
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return (*xd) + (*yd);
+  }
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return (*xi) + (*yi);
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return (*xld) + (*yld);
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return (*xc) + (*yc);
+  }
+  else
+    throw myexception()<<"Add: object '"<<x->print()<<"' is not Double, Int, Log_Double, or Char'";
+}
+
+closure Minus::operator()(OperationArgs& Args) const
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return (*xd) - (*yd);
+  }
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return (*xi) - (*yi);
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return (*xld) - (*yld);
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return (*xc) - (*yc);
+  }
+  else
+    throw myexception()<<"Minus: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+closure Divide::operator()(OperationArgs& Args) const
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return (*xd) / (*yd);
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return (*xi) / (*yi);
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return (*xld) / (*yld);
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return (*xc) / (*yc);
+  }
+  else
+    throw myexception()<<"Divide: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+closure Multiply::operator()(OperationArgs& Args) const
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return (*xd) * (*yd);
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return (*xi) * (*yi);
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return (*xld) * (*yld);
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return (*xc) * (*yc);
+  }
+  else
+    throw myexception()<<"Multiply: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+closure LessThan::operator()(OperationArgs& Args) const
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return (*xd) < (*yd);
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return (*xi) < (*yi);
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return (*xld) < (*yld);
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return (*xc) < (*yc);
+  }
+  else
+    throw myexception()<<"LessThan: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+closure Equals::operator()(OperationArgs& Args) const
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return (*xd) == (*yd);
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return (*xi) == (*yi);
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return (*xld) == (*yld);
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return (*xc) == (*yc);
+  }
+  else
+    throw myexception()<<"Equals: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
+closure GreaterThan::operator()(OperationArgs& Args) const
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return (*xd) > (*yd);
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return (*xi) > (*yi);
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return (*xld) > (*yld);
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return (*xc) > (*yc);
+  }
+  else
+    throw myexception()<<"GreaterThan: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
 //---------------------------------------------------------------------------------------//
 
 tribool Log_Op::compare(const Object& o) const 
@@ -324,4 +534,13 @@ closure Sqrt_Op::operator()(OperationArgs& Args) const
 const expression_ref Sqrt = lambda_expression( Sqrt_Op() );
 
 //---------------------------------------------------------------------------------------//
+
+def_binary_operator2(-,Minus)
+def_binary_operator2(+,Add)
+def_binary_operator2(*,Multiply)
+def_binary_operator2(/,Divide)
+def_binary_operator2(<,LessThan)
+def_binary_operator2(>,GreaterThan)
+def_binary_operator2(==,Equals)
+#undef def_binary_operator2
 

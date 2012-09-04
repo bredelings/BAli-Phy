@@ -189,13 +189,9 @@ inline std::string POD<char>::print() const
 #include <boost/utility/enable_if.hpp>
 
 /***************** Make log_double_t count as an arithmetic type **************/
-#include <boost/mpl/integral_c.hpp>
-namespace boost 
-{
-  template<>
-  struct is_arithmetic<log_double_t>: public mpl::integral_c<bool,true>
-  { };
-}
+
+typedef POD<bool> Bool;
+typedef POD<std::string> String;
 
 template <typename T>
 class POD_math: public Object
@@ -203,8 +199,6 @@ class POD_math: public Object
 protected:
   T t;
 public:
-  typedef typename boost::enable_if<boost::is_arithmetic<T>,T>::type base_type;
-
   POD_math<T>* clone() const {return new POD_math<T>(*this);}
 
   operator T() const {return t;}
@@ -252,16 +246,16 @@ public:
   POD_math<T> operator/(const POD_math<T>& t2) const {POD_math<T> t3 = *this; t3/= t2; return t3;}
   POD_math<T> operator/(const T& t2)           const {POD_math<T> t3 = *this; t3/= t2; return t3;}
 
-  bool operator==(const POD_math<T>& t2) const {return t == t2;}
-  bool operator==(const T& t2)           const {return t == t2;}
-  bool operator>(const POD_math<T>& t2)  const {return t > t2;}
-  bool operator>(const T& t2)            const {return t > t2;}
-  bool operator>=(const POD_math<T>& t2) const {return t >= t2;}
-  bool operator>=(const T& t2)           const {return t >= t2;}
-  bool operator<(const POD_math<T>& t2)  const {return t < t2;}
-  bool operator<(const T& t2)            const {return t < t2;}
-  bool operator<=(const POD_math<T>& t2) const {return t <= t2;}
-  bool operator<=(const T& t2)           const {return t <= t2;}
+  Bool operator==(const POD_math<T>& t2) const {return t == T(t2);}
+  Bool operator==(const T& t2)           const {return t == T(t2);}
+  Bool operator>(const POD_math<T>& t2)  const {return t > T(t2);}
+  Bool operator>(const T& t2)            const {return t > T(t2);}
+  Bool operator>=(const POD_math<T>& t2) const {return t >= T(t2);}
+  Bool operator>=(const T& t2)           const {return t >= T(t2);}
+  Bool operator<(const POD_math<T>& t2)  const {return t < T(t2);}
+  Bool operator<(const T& t2)            const {return t < T(t2);}
+  Bool operator<=(const POD_math<T>& t2) const {return t <= T(t2);}
+  Bool operator<=(const T& t2)           const {return t <= T(t2);}
 };
 
 template <typename T>
@@ -277,9 +271,7 @@ bool unshare(object_ptr<T>& ptr)
 typedef POD_math<double> Double;
 typedef POD_math<int> Int;
 typedef POD_math<unsigned> Unsigned;
-typedef POD<bool> Bool;
-typedef POD<char> Char;
-typedef POD<std::string> String;
+typedef POD_math<char> Char;
 typedef POD_math<log_double_t> Log_Double;
 
 template <typename T>

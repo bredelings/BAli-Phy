@@ -47,11 +47,8 @@ Program SModel_Functions()
 {
   Program P;
 
-  expression_ref times = lambda_expression( Multiply<Double>() );
-  expression_ref plus = lambda_expression( Add<Double>() );
-  expression_ref plus_i = lambda_expression( Add<Int>() );
-
-  typed_expression_ref<Double> x1 ( v1 );
+  expression_ref times = lambda_expression( Multiply() );
+  expression_ref plus = lambda_expression( Add() );
 
   // MultiParameter f (DiscreteDistribution d) = MixtureModel(DiscreteDistribution (fmap2 f d))
   P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(fmap2,v1,v2))));
@@ -74,7 +71,7 @@ Program SModel_Functions()
 
   // branch_transition_p m@(MixtureModel (DiscreteDistribution l) ) t = list_to_vector (fmap \p->(QExp (scale (t/(rate m)) (snd p) ) ) l)
   P += Def( (branch_transition_p, (MixtureModel, (DiscreteDistribution, v3) ), v1 ),
-	    (fmap,v2^(QExp, (scale, (x1/(rate, (MixtureModel, (DiscreteDistribution, v3) ) ) ), (snd, v2) ) ), v3 ) );
+	    (fmap,v2^(QExp, (scale, (v1/(rate, (MixtureModel, (DiscreteDistribution, v3) ) ) ), (snd, v2) ) ), v3 ) );
 
   // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0 (Get_Equilibrium_Rate a smap Q pi)
   P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), 

@@ -294,7 +294,6 @@ struct LExp_Op: public Operation
 
 extern expression_ref LExp;
 
-template <typename T>
 struct Multiply: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -303,21 +302,11 @@ struct Multiply: public Operation
 
   tribool compare(const Object& o) const 
   {
-    const Multiply<T>* E = dynamic_cast<const Multiply<T>*>(&o);
+    const Multiply* E = dynamic_cast<const Multiply*>(&o);
     return E;
   }
 
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const T> x = Args.evaluate_as<T>(0);
-    object_ptr<const T> y = Args.evaluate_as<T>(1);
-
-    object_ptr<T> r ( new T );
-
-    *r = (*x) * (*y);
-
-    return r;
-  }
+  closure operator()(OperationArgs& Args) const;
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
@@ -329,7 +318,6 @@ struct Multiply: public Operation
   Multiply():Operation(2) {}
 };
 
-template<typename T>
 struct GreaterThan: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -338,19 +326,11 @@ struct GreaterThan: public Operation
 
   tribool compare(const Object& o) const 
   {
-    const GreaterThan<T>* E = dynamic_cast<const GreaterThan<T>*>(&o);
+    const GreaterThan* E = dynamic_cast<const GreaterThan*>(&o);
     return E;
   }
 
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const T> x = Args.evaluate_as<T>(0);
-    object_ptr<const T> y = Args.evaluate_as<T>(1);
-
-    Bool condition = (*x > *y);
-
-    return object_ptr<const Bool>(new Bool(condition));
-  }
+  closure operator()(OperationArgs& Args) const;
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
@@ -362,7 +342,6 @@ struct GreaterThan: public Operation
   GreaterThan():Operation(2) {}
 };
 
-template<typename T>
 struct LessThan: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -371,19 +350,11 @@ struct LessThan: public Operation
 
   tribool compare(const Object& o) const 
   {
-    const LessThan<T>* E = dynamic_cast<const LessThan<T>*>(&o);
+    const LessThan* E = dynamic_cast<const LessThan*>(&o);
     return E;
   }
 
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const T> x = Args.evaluate_as<T>(0);
-    object_ptr<const T> y = Args.evaluate_as<T>(1);
-
-    Bool condition = (*x < *y);
-
-    return object_ptr<const Bool>(new Bool(condition));
-  }
+  closure operator()(OperationArgs& Args) const;
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
@@ -395,7 +366,6 @@ struct LessThan: public Operation
   LessThan():Operation(2) {}
 };
 
-template<typename T>
 struct Equals: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -404,19 +374,11 @@ struct Equals: public Operation
 
   tribool compare(const Object& o) const 
   {
-    const Equals<T>* E = dynamic_cast<const Equals<T>*>(&o);
+    const Equals* E = dynamic_cast<const Equals*>(&o);
     return E;
   }
 
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const T> x = Args.evaluate_as<T>(0);
-    object_ptr<const T> y = Args.evaluate_as<T>(1);
-
-    Bool condition = (*x == *y);
-
-    return object_ptr<const Bool>(new Bool(condition));
-  }
+  closure operator()(OperationArgs& Args) const;
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
@@ -453,7 +415,6 @@ struct Conversion: public Operation
   Conversion():Operation(1) {}
 };
 
-template<typename T>
 struct Add: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -462,21 +423,11 @@ struct Add: public Operation
 
   tribool compare(const Object& o) const 
   {
-    const Add<T>* E = dynamic_cast<const Add<T>*>(&o);
+    const Add* E = dynamic_cast<const Add*>(&o);
     return E;
   }
 
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const T> x = Args.evaluate_as<T>(0);
-    object_ptr<const T> y = Args.evaluate_as<T>(1);
-
-    object_ptr<T> r ( new T );
-
-    *r = (*x) + (*y);
-
-    return r;
-  }
+  closure operator()(OperationArgs& Args) const;
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
@@ -491,32 +442,19 @@ struct Add: public Operation
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/utility/enable_if.hpp>
 
-template<typename T >
 struct Minus: public Operation
 {
-  typedef typename T::base_type base_type;
-
   // The 'context' should include the knowledge of the input slots
   // so that the computation doesn't need to know what input slots it is connecting to what output slot.
   virtual Minus* clone() const {return new Minus(*this);}
 
   tribool compare(const Object& o) const 
   {
-    const Minus<T>* E = dynamic_cast<const Minus<T>*>(&o);
+    const Minus* E = dynamic_cast<const Minus*>(&o);
     return E;
   }
 
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const T> x = Args.evaluate_as<T>(0);
-    object_ptr<const T> y = Args.evaluate_as<T>(1);
-
-    object_ptr<T> r ( new T );
-
-    *r = (*x) - (*y);
-
-    return r;
-  }
+  closure operator()(OperationArgs& Args) const;
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
@@ -528,7 +466,6 @@ struct Minus: public Operation
   Minus():Operation(2) {}
 };
 
-template<typename T>
 struct Divide: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -537,21 +474,11 @@ struct Divide: public Operation
 
   tribool compare(const Object& o) const 
   {
-    const Divide<T>* E = dynamic_cast<const Divide<T>*>(&o);
+    const Divide* E = dynamic_cast<const Divide*>(&o);
     return E;
   }
 
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const T> x = Args.evaluate_as<T>(0);
-    object_ptr<const T> y = Args.evaluate_as<T>(1);
-
-    object_ptr<T> r ( new T );
-
-    *r = (*x) / (*y);
-
-    return r;
-  }
+  closure operator()(OperationArgs& Args) const;
 
   std::string print_expression(const std::vector<std::string>& inputs) const
   {
@@ -568,104 +495,33 @@ struct Divide: public Operation
 
 #define def_binary_operator1(Op,M) \
 template <typename T> \
-typed_expression_ref<POD_math<check_arithmetic(T) > > operator Op(const expression_ref& E, const T& t) \
+check_arithmetic2(T,expression_ref) operator Op(const expression_ref& E, const T& t) \
 { \
-  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),E,t)); \
+  return (lambda_expression(M()),E,t); \
 } \
  \
 template <typename T> \
-typed_expression_ref<POD_math<check_arithmetic(T)> > operator Op(const T& t, const expression_ref& E) \
+check_arithmetic2(T,expression_ref) operator Op(const T& t, const expression_ref& E) \
 { \
-  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),t,E)); \
+  return (lambda_expression(M()),t,E); \
 } \
- \
-template <typename T> \
-typed_expression_ref<POD_math<T> > operator Op(const expression_ref& E1, const typed_expression_ref<POD_math<T> >& E2) \
+expression_ref operator Op(const expression_ref& E1, const expression_ref& E2);
+
+
+#define def_binary_operator2(Op,M) \
+expression_ref operator Op(const expression_ref& E1, const expression_ref& E2) \
 { \
-  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),E1,E2)); \
-} \
-\
-template <typename T> \
-typed_expression_ref<POD_math<T> > operator Op(const typed_expression_ref<POD_math<T> >& E1, const expression_ref& E2) \
-{ \
-  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),E1,E2)); \
-} \
- \
-template <typename T> \
-typed_expression_ref<POD_math<T> > operator Op(const T& t, const typed_expression_ref<POD_math<T> >& E2) \
-{ \
-  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),t,E2)); \
-} \
-\
-template <typename T> \
-typed_expression_ref<POD_math<T> > operator Op(const typed_expression_ref<POD_math<T> >& E1, const T& t) \
-{ \
-  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),E1,t)); \
-} \
- \
-template <typename T> \
-typed_expression_ref<POD_math<T> > operator Op(const typed_expression_ref<POD_math<T> >& E1, const typed_expression_ref<POD_math<T> >& E2) \
-{ \
-  return typed_expression_ref<POD_math<T> >((lambda_expression(M<POD_math<T> >()),E1,E2)); \
+  return (lambda_expression(M()),E1,E2); \
 }
 
 def_binary_operator1(-,Minus)
 def_binary_operator1(+,Add)
 def_binary_operator1(*,Multiply)
 def_binary_operator1(/,Divide)
-
+def_binary_operator1(<,LessThan)
+def_binary_operator1(>,GreaterThan)
+def_binary_operator1(==,Equals)
 #undef def_binary_operator1
-
-#define def_binary_operator2(Op,M) \
-template <typename T> \
- typed_expression_ref<check_arithmetic2(T,Bool)> operator Op(const expression_ref& E1, const T& t) \
-{\
-  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),E1,t)); \
-} \
-\
-template <typename T> \
-typed_expression_ref<check_arithmetic2(T,Bool)> operator Op(const T& t, const expression_ref& E2) \
-{\
-  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),t,E2)); \
-}\
-\
-template <typename T> \
-typed_expression_ref<Bool> operator Op(const expression_ref& E1, const typed_expression_ref<POD_math<T> >& E2) \
-{\
-  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),E1,E2)); \
-}\
-\
-template <typename T> \
-typed_expression_ref<Bool> operator Op(const typed_expression_ref<POD_math<T> >& E1, const expression_ref& E2) \
-{\
-  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),E1,E2)); \
-}\
-\
-template <typename T> \
-typed_expression_ref<Bool> operator Op(const T& t, const typed_expression_ref<POD_math<T> >& E2) \
-{\
-  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),t,E2)); \
-}\
-\
-template <typename T> \
-typed_expression_ref<Bool> operator Op(const typed_expression_ref<POD_math<T> >& E1, const T& t) \
-{\
-  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),E1,t)); \
-}\
-\
-template <typename T> \
-typed_expression_ref<Bool> operator Op(const typed_expression_ref<POD_math<T> >& E1, const typed_expression_ref<POD_math<T> >& E2) \
-{\
-  return typed_expression_ref<Bool>((lambda_expression(M<POD_math<T> >()),E1,E2)); \
-}
-
-def_binary_operator2(<,LessThan)
-def_binary_operator2(>,GreaterThan)
-def_binary_operator2(==,Equals)
-#undef def_binary_operator2
-
-#undef check_arithmetic
-#undef check_arithmetic2
 
 struct Log_Op: public Operation
 {
