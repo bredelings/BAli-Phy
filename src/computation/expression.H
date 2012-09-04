@@ -238,6 +238,7 @@ struct AST_node: public Object
 
   std::string print() const;
 
+  AST_node(const std::string&);
   AST_node(const std::string& t, const std::string& v);
 };
 

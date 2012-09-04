@@ -451,8 +451,17 @@ tribool AST_node::compare(const Object& o) const
 
 string AST_node::print() const 
 {
-  return string("AST[") + type + "," + value + "]";
+  string result = "AST[";
+  result += type;
+  if (value.size())
+    result += "," + value;
+  result += "]";
+  return result;
 }
+
+AST_node::AST_node(const string& t)
+  :type(t)
+{ }
 
 AST_node::AST_node(const string& t, const string& v)
   :type(t), value(v)
