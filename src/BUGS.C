@@ -177,12 +177,20 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	temp = &apply_expression;
 	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(temp,_val,_1) ]; // function application
 
-	aexp = qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]     // variable
-	  | gcon [ qi::_val = phoenix::construct< ::var>(qi::_1) ]        // general constructor
+	aexp = 
+	  // variable
+	  qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]     
+	  // general constructor
+	  | gcon [ qi::_val = phoenix::construct< ::var>(qi::_1) ]        
+	  // literal
 	  | literal [_val = _1 ]    
-	  | "(" >> exp [_val = _1] >> ")" ; // parenthesized expression
-	//	  | "(" >> exp >> +(','>>exp) >> ")"   // tuple, k >= 2
-	//	  | "[" >> (exp%',') >> "]"  // list
+	  // parenthesized expression
+	  | "(" >> exp [_val = _1] >> ")"  
+	  // tuple, k >= 2
+	  | "(" >> exp [push_back(_a,_1)] >> +(','>>exp [push_back(_a,_1)]) >> ")" >> eps [ _val = new_<expression>(AST_node("Tuple"), _a) ]
+	  // list
+	  | "[" >> (exp[push_back(_a,_1)]%',') >> "]" >> eps [ _val = new_<expression>(AST_node("List"), _a) ]
+	  ;
 	//	  | "[" >> exp >> -(','>>exp) >>".." >> -exp >> "]"  // arithmetic sequence
 	//	  | "[" >> exp >>"|" >> +qual >> "]"  // list comprehension
 	//	  | "(" >> infixexp >> qop >> ")"  // left section
@@ -419,7 +427,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> infixexp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> lexp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> fexp;
-  qi::rule<Iterator, expression_ref(), ascii::space_type> aexp;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> aexp;
 
   /*----- Section 3.2 -------*/
   qi::rule<Iterator, std::string(), ascii::space_type> gcon;
