@@ -437,6 +437,27 @@ string let2_obj::print() const
 }
 
 
+tribool AST_node::compare(const Object& o) const 
+{
+  const AST_node* T = dynamic_cast<const AST_node*>(&o);
+  if (not T)
+    return false;
+  if (T->type != type)
+    return false;
+  if (T->value != value)
+    return false;
+  return true;
+}
+
+string AST_node::print() const 
+{
+  return string("AST[") + type + "," + value + "]";
+}
+
+AST_node::AST_node(const string& t, const string& v)
+  :type(t), value(v)
+{ }
+
 // How would we handle lambda expressions, here?
 bool find_match(const expression_ref& pattern, const expression_ref& E, vector< expression_ref >& results)
 {
