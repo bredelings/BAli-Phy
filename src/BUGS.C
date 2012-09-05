@@ -249,8 +249,37 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  | lit('~') >> apat;
 
 	/*------ Section 4 -------*/
+	module = 
+	  lit("module") >> modid >> -exports >> "where" >> body
+	  | body;
+	body = 
+	  lit('{') >> impdecls >> ';' >> topdecls >> '}'
+	  | lit('{') >> impdecls >> '}'
+	  | lit('{') >> topdecls >> '}';
+
+	topdecls = topdecl % ';';
+	topdecl = 
+	  lit("type") >> simpletype >> '=' >> type
+	  | "data" >> -(context >> "=>") >> simpletype >> -('=' >> constrs) >> -deriving
+	  | "newtype" >> -(context >> "=>") >> simpletype >> '=' >> newconstr >> -deriving
+	  | "class" >> -(scontext >> "=>") >> tycls >> tyvar >> -("where" >> cdecls)
+	  | "instance" >> -(scontext >> "=>") >> qtycls >> inst >> -("where" >> idecls)
+	  | "default" >> *type
+	  //	  | "foreign" >> fdecl
+	  | decl 
+	  ;
+
 	decls %= lit('{') >> decl % ';' >> '}';
 	decl  %= gendecl | (funlhs | pat) >> rhs;
+
+	// class declarations
+	cdecls %= lit('{') >> cdecl % ';' >> '}';
+	cdecl  %= gendecl | (funlhs | var) >> rhs;
+
+	// instance declarations
+	idecls %= lit('{') >> idecl % ';' >> '}';
+	idecl  %= (funlhs | var) >> rhs | eps;
+
 	gendecl %= vars >> "::" >>  -(context >> "=>") >> type | fixity >> -h_integer >> ops | eps;
 	ops %= +op;
 	vars %= +var;
@@ -274,6 +303,32 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	context %= h_class | lit('(') >> *h_class >> lit(')');
 	h_class %= qtycls >> tyvar | qtycls >> lit('(') >> tyvar >> +atype >> lit(')');
 
+	/*----- Section 4.2.1 ------*/
+	newconstr = con >> atype | con >> '{' >> var >> "::" >> type >> '}';
+	simpletype = tycon >> *tyvar;
+	constrs = +constr;
+	constr = 
+	  con >> *(-lit('!') >> atype) 
+	  | (btype | '!' >> atype) >> conop >> (btype | '!' >> atype)
+	  | con >> '{' >> *fielddecl >> '}';
+
+	fielddecl = vars >> "::" >> (type | '!' >> atype);
+	//	deriving = lit("deriving") >> (dclass | lit("()") | '(' >> dclass%',' >> ')');
+	dclass = qtycls;
+
+	/*------ Section 4.3.1 -----*/
+	scontext %= simpleclass | "()" | '(' >> simpleclass%',' >> ')';
+	simpleclass %= qtycls >> tyvar;
+	
+	/*------ Section 4.3.2 -----*/
+	inst %= 
+	  gtycon 
+	  | '(' >> gtycon >> *tyvar >>')' 
+	  | '(' >> tyvar >> ',' >> tyvar %',' >> ')'
+	  | '[' >> tyvar >> ']'
+	  | tyvar >> "->" >> tyvar
+	  ;
+
 	/*------ Section 4.4.3 -----*/
 	//	funlhs %= var >> +apat
 	//	  | pat >> varop >> pat
@@ -284,6 +339,34 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	//	gdrhs %= guards >> "=" >> exp >> -gdrhs;
 
+	/*------ Section 5.1 -------*/
+	impdecls = impdecl % ';';
+	
+	/*------ Section 5.2 -------*/
+	/*
+	exports = lit("()") | '('>> h_export % ',' >> -lit(',') >> ')';
+	h_export = 
+	  qvar
+	  | qtycon >> -("(..)" | lit("()") | "(" >> cname %',' >> ")")
+	  | qtycls >> -("(..)" | lit("()") | "(" >> var %',' >> ")")
+	  | "module" >> modid
+	  ;
+	*/
+	cname = var | con;
+	
+	/*------ Section 5.3 -------*/
+	/*
+	impdecl = "import" >> -lit("qualified") >> modid >> -("as" >> modid) >> -impspec;
+	impspec = 
+	  lit("()")
+	  | '(' >> import%',' >> ')'
+	  | lit("hiding") >> '(' >> import%',' >> ')';
+
+	import = 
+	  var
+	  | tycon >> -("(..)" | lit("()") | "(" >> cname %"," >> ")")
+	  | tycls >> -("(..)" | lit("()") | "(" >> var %"," >> ")");
+	*/
 	on_error<fail>
 	  (
 	   bugs_line
@@ -467,9 +550,23 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> fpat;  
 
   /*----- Section 4 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> module;
+  qi::rule<Iterator, std::string(), ascii::space_type> body;
+
+  qi::rule<Iterator, std::string(), ascii::space_type> topdecls;
+  qi::rule<Iterator, std::string(), ascii::space_type> topdecl;
+
   qi::rule<Iterator, std::string(), ascii::space_type> decls;
   qi::rule<Iterator, std::string(), ascii::space_type> decl;
+
+  qi::rule<Iterator, std::string(), ascii::space_type> cdecls;
+  qi::rule<Iterator, std::string(), ascii::space_type> cdecl;
+
+  qi::rule<Iterator, std::string(), ascii::space_type> idecls;
+  qi::rule<Iterator, std::string(), ascii::space_type> idecl;
+
   qi::rule<Iterator, std::string(), ascii::space_type> gendecl;
+
   qi::rule<Iterator, std::string(), ascii::space_type> ops;
   qi::rule<Iterator, std::string(), ascii::space_type> vars;
   qi::rule<Iterator, std::string(), ascii::space_type> fixity;
@@ -485,11 +582,40 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> context;
   qi::rule<Iterator, std::string(), ascii::space_type> h_class;
 
+  /*----- Section 4.2.1 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> newconstr;
+  qi::rule<Iterator, std::string(), ascii::space_type> simpletype;
+  qi::rule<Iterator, std::string(), ascii::space_type> constrs;
+  qi::rule<Iterator, std::string(), ascii::space_type> constr;
+  qi::rule<Iterator, std::string(), ascii::space_type> fielddecl;
+  qi::rule<Iterator, std::string(), ascii::space_type> deriving;
+  qi::rule<Iterator, std::string(), ascii::space_type> dclass;
+
+  /*----- Section 4.3.1 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> scontext;
+  qi::rule<Iterator, std::string(), ascii::space_type> simpleclass;
+
+  /*----- Section 4.3.2 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> inst;
 
   /*----- Section 4.4.3 ------*/
   qi::rule<Iterator, std::string(), ascii::space_type> funlhs;
   qi::rule<Iterator, std::string(), ascii::space_type> rhs;
   qi::rule<Iterator, std::string(), ascii::space_type> gdrhs;
+
+  /*----- Section 5.1 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> impdecls;
+
+  /*----- Section 5.2 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> exports;
+  qi::rule<Iterator, std::string(), ascii::space_type> h_export;
+  qi::rule<Iterator, std::string(), ascii::space_type> cname;
+
+  /*----- Section 5.3 ------*/
+  qi::rule<Iterator, std::string(), ascii::space_type> impdecl;
+  qi::rule<Iterator, std::string(), ascii::space_type> impspec;
+  qi::rule<Iterator, std::string(), ascii::space_type> import;
+  
 };
 
 //-----------------------------------------------------------------------//
