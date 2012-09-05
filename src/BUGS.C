@@ -355,12 +355,12 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	cname = var | con;
 	
 	/*------ Section 5.3 -------*/
-	/*
 	impdecl = "import" >> -lit("qualified") >> modid >> -("as" >> modid) >> -impspec;
 	impspec = 
 	  lit("()")
 	  | '(' >> import%',' >> ')'
 	  | lit("hiding") >> '(' >> import%',' >> ')';
+	/*
 
 	import = 
 	  var
