@@ -5,13 +5,15 @@
 #include <map>
 #include "parameters.H"
 
+enum fixity_t {non_fix=1, left_fix=2, right_fix=3};
+
 struct symbol_info
 {
   std::string name;
   int type = -1; // variable = 0, constructor = 1, parameter = 2
   int arity = -1;
   int precedence = -1;
-  int fixity = -1; // 0 = none, 1 = left, 2 = right
+  fixity_t fixity;
 };
 
 struct module

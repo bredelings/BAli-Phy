@@ -28,11 +28,11 @@ expression_ref parse_infix(const module& m, expression_ref E1, string op1, deque
     symbol_info S2 = m.get_operator(op2);
 
     // illegal expressions
-    if (S1.precedence == S2.precedence and (S1.fixity != S2.fixity or S1.fixity == 0))
+    if (S1.precedence == S2.precedence and (S1.fixity != S2.fixity or S1.fixity == non_fix))
       throw myexception()<<"Must use parenthesis to order operators '"<<op1<<"' and '"<<op2<<"'";
 
     // left association: (E1 op1 E2)@E1' op2 ...
-    if (S1.precedence > S2.precedence or (S1.precedence == S2.precedence and S1.fixity == 1))
+    if (S1.precedence > S2.precedence or (S1.precedence == S2.precedence and S1.fixity == left_fix))
     {
       E1 = (var(op1), E1, E2);
       op1 = op2;
