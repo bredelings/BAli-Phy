@@ -360,10 +360,11 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  lit("()")
 	  | '(' >> import%',' >> ')'
 	  | lit("hiding") >> '(' >> import%',' >> ')';
-	/*
 
+	// FIXME! Parsing problems //
+	/*
 	import = 
-	  var
+	   var
 	  | tycon >> -("(..)" | lit("()") | "(" >> cname %"," >> ")")
 	  | tycls >> -("(..)" | lit("()") | "(" >> var %"," >> ")");
 	*/
@@ -636,6 +637,24 @@ vector<string> tokenize(const string& line)
   return tokens;
 }
 
+expression_ref postprocess(const Parameters& P, const expression_ref& E)
+{
+  if (E->head->compare(AST_node("infix_exp")))
+  {
+    return E;
+  }
+  else
+    return E;
+}
+
+struct symbol_info
+{
+  int type; // variable, constructor
+  int arity = -1;
+  int precedence = -1;
+  int assoc; // 0 = none, 1 = left, 2 = right
+};
+
 void add_BUGS(const Parameters& P, const string& filename)
 {
   // Um, so what is the current program?
@@ -665,6 +684,16 @@ void add_BUGS(const Parameters& P, const string& filename)
     if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
     {
       std::cerr<<"BUGS phrase parse: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
+      for(int i=0;i<cmd.arguments.size();i++)
+      {
+	std::cerr<<cmd.arguments[i];
+	if (i != cmd.arguments.size()-1)
+	  std::cerr<<", ";
+      }
+      std::cerr<<")\n";
+      for(auto& e: cmd.arguments)
+	e = postprocess(P,e);
+      std::cerr<<"        processed: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
       for(int i=0;i<cmd.arguments.size();i++)
       {
 	std::cerr<<cmd.arguments[i];
