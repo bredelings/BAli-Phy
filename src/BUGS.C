@@ -659,6 +659,48 @@ void add_BUGS(const Parameters& P, const string& filename)
   std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
 
   module m;
+  /*
+  m.symbols["!!"] = symbol_info{string("!!"),0,2,9,left_fix};
+
+  m.symbols["^"] = {"^",0,2,8,right_fix};
+  m.symbols["^^"] = {"^^",0,2,8,right_fix};
+  m.symbols["**"] = {"**",0,2,8,right_fix};
+
+  m.symbols["*"] = {"*",0,2,7,left_fix};
+  m.symbols["/"] = {"/",0,2,7,left_fix};
+  m.symbols["div"] = {"div",0,2,7,left_fix};
+  m.symbols["mod"] = {"mod",0,2,7,left_fix};
+  m.symbols["rem"] = {"rem",0,2,7,left_fix};
+  m.symbols["quot"] = {"quot",0,2,7,left_fix};
+
+  m.symbols["+"] = {"+",0,2,6,left_fix};
+  m.symbols["-"] = {"-",0,2,6,left_fix};
+
+  m.symbols[":"] = {"-",1,2,5,right_fix};
+  m.symbols["++"] = {"++",0,2,5,right_fix};
+
+  m.symbols["=="] = {"==",0,2,5,non_fix};
+  m.symbols["/="] = {"/=",0,2,5,non_fix};
+  m.symbols["<"] = {"<=",0,2,5,non_fix};
+  m.symbols["<="] = {"<=",0,2,5,non_fix};
+  m.symbols[">"] = {">=",0,2,5,non_fix};
+  m.symbols[">="] = {">=",0,2,5,non_fix};
+
+  m.symbols["elem"] = {"elem",0,2,4,non_fix};
+  m.symbols["notElem"] = {"notElem",0,2,4,non_fix};
+
+  m.symbols["&&"] = {"&&",0,2,3,right_fix};
+
+  m.symbols["||"] = {"&&",0,2,2,right_fix};
+
+  m.symbols[">>"] = {">>",0,2,1,left_fix};
+  m.symbols[">>="] = {">>=",0,2,1,left_fix};
+
+  m.symbols["$"] = {"$",0,2,0,right_fix};
+  m.symbols["$!"] = {"$!",0,2,0,right_fix};
+  m.symbols["seq"] = {"seq",0,2,0,right_fix};
+  */  
+
   for(const auto& line: lines)
   {
     using boost::spirit::ascii::space;
