@@ -1,13 +1,11 @@
 #include "BUGS.H"
 
 #include <vector>
-#include <deque>
 #include <map>
 #include "io.H"
 #include "util.H"
 
 using std::vector;
-using std::deque;
 using std::map;
 using std::string;
 using std::endl;
@@ -214,7 +212,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	conop %= consym | "`" >> conid >> "`";    // constructor operator
 	qconop %= gconsym | "`" >> qconid >> "`"; // qualified constructor operator
 	op %= varop | conop;                      // operator
-	qop %= qvarop [ _val = construct<AST_node>("qvarop",_1) ] | qconop [ _val = construct<AST_node>("qconop",_1) ];  // qualified operator
+	qop = qvarop [ _val = construct< ::var>(_1) ] | qconop [ _val = construct< ::var>(_1) ];  // qualified operator
 	gconsym %= string(":") | qconsym;
 
 	/*----- Section 3.11 -----*/

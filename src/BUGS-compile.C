@@ -24,7 +24,7 @@ expression_ref parse_infix(const module& m, expression_ref E1, string op1, deque
   {
     symbol_info S1 = m.get_operator(op1);
     expression_ref E2 = T.front(); T.pop_front();
-    const string op2 = convert<const var>(T.front())->name; T.pop_front();
+    const string op2 = assert_is_a<const var>(T.front())->name; T.pop_front();
     symbol_info S2 = m.get_operator(op2);
 
     // illegal expressions
@@ -57,7 +57,7 @@ expression_ref postprocess_infix(const module& m, const vector<expression_ref>& 
 
   expression_ref E1 = T2.front();
   T2.pop_front();
-  string op1 = convert<const var>(T2.front())->name; T2.pop_front();
+  string op1 = assert_is_a<const var>(T2.front())->name; T2.pop_front();
 
   return parse_infix(m, E1, op1, T2);
 }
