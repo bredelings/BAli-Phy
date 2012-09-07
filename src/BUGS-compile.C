@@ -5,6 +5,10 @@ using std::string;
 using std::vector;
 using std::deque;
 
+symbol_info::symbol_info(const std::string& s, int i1, int i2, int i3, fixity_t f)
+  :name(s), type(i1), arity(i2), precedence(i3), fixity(f)
+{ }
+
 symbol_info module::get_operator(const string& name) const
 {
   auto s = symbols.find(name);

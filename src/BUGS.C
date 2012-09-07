@@ -659,7 +659,7 @@ void add_BUGS(const Parameters& P, const string& filename)
   std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
 
   module m;
-  /*
+
   m.symbols["!!"] = symbol_info{string("!!"),0,2,9,left_fix};
 
   m.symbols["^"] = {"^",0,2,8,right_fix};
@@ -699,7 +699,6 @@ void add_BUGS(const Parameters& P, const string& filename)
   m.symbols["$"] = {"$",0,2,0,right_fix};
   m.symbols["$!"] = {"$!",0,2,0,right_fix};
   m.symbols["seq"] = {"seq",0,2,0,right_fix};
-  */  
 
   for(const auto& line: lines)
   {

@@ -14,6 +14,8 @@ struct symbol_info
   int arity = -1;
   int precedence = -1;
   fixity_t fixity;
+  symbol_info() {};
+  symbol_info(const std::string&, int, int, int, fixity_t);
 };
 
 struct module
