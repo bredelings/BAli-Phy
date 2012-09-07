@@ -259,6 +259,8 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  | lit('[') >> pat % ',' >> ']'    // list pattern
 	  | lit('~') >> apat;               // irrefutable pattern
 
+	fpat %= qvar >> "=" >> pat;         // field pattern
+
 	/*------ Section 4 -------*/
 	module = 
 	  lit("module") >> modid >> -exports >> "where" >> body
