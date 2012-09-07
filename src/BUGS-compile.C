@@ -21,37 +21,53 @@ symbol_info module::get_operator(const string& name) const
   return s->second;
 }
 
-/// Expression is of the form {E1 op1} E2 [op2 E3 ... ].  Get 
-expression_ref parse_infix(const module& m, expression_ref E1, string op1, deque<expression_ref>& T)
+expression_ref infix_parse(const module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
+
+/// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
+expression_ref infix_parse_neg(const module& m, const symbol_info& op1, deque<expression_ref>& T)
 {
-  while (T.size() > 1)
-  {
-    symbol_info S1 = m.get_operator(op1);
-    expression_ref E2 = T.front(); T.pop_front();
-    const string op2 = assert_is_a<const var>(T.front())->name; T.pop_front();
-    symbol_info S2 = m.get_operator(op2);
+  assert(not T.empty());
 
-    // illegal expressions
-    if (S1.precedence == S2.precedence and (S1.fixity != S2.fixity or S1.fixity == non_fix))
-      throw myexception()<<"Must use parenthesis to order operators '"<<op1<<"' and '"<<op2<<"'";
-
-    // left association: (E1 op1 E2)@E1' op2 ...
-    if (S1.precedence > S2.precedence or (S1.precedence == S2.precedence and S1.fixity == left_fix))
-    {
-      E1 = (var(op1), E1, E2);
-      op1 = op2;
-    }
-    // right association: E1 op1 (E2 op2 ... )@E3 op3 ...
-    else
-    {
-      expression_ref E3 = parse_infix(m, E2, op2, T);
-      T.push_front( E3 );
-    }
-  }
-
-  E1 = (var(op1), E1, T.front());
+  expression_ref E1 = T.front();
   T.pop_front();
-  return E1;
+
+  // We are starting with a Neg
+  if (is_a<var>(E1) and is_a<var>(E1)->name == "-")
+  {
+    if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
+
+    E1 = infix_parse_neg(m, symbol_info("-",0,2,6,left_fix), T);
+
+    return infix_parse(m, op1, (var("negate"),E1), T);
+  }
+  // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
+  else
+    return infix_parse(m, op1, E1, T);
+}
+
+/// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
+expression_ref infix_parse(const module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
+{
+  if (T.empty())
+    return E1;
+
+  symbol_info op2 = m.get_operator( assert_is_a<const var>(T.front())->name );
+
+  // illegal expressions
+  if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
+    throw myexception()<<"Must use parenthesis to order operators '"<<op1.name<<"' and '"<<op2.name<<"'";
+
+  // left association: ... op1 E1) op2 ...
+  if (op1.precedence > op2.precedence or (op1.precedence == op2.precedence and op1.fixity == left_fix))
+    return E1;
+
+  // right association: .. op1 (E1 op2 {...E3...}) ...
+  else
+  {
+    T.pop_front();
+    expression_ref E3 = infix_parse_neg(m, op2, T);
+    return infix_parse(m, op1, (var(op2.name), E1, E3), T);
+  }
 }
 
 expression_ref postprocess_infix(const module& m, const vector<expression_ref>& T)
@@ -59,11 +75,7 @@ expression_ref postprocess_infix(const module& m, const vector<expression_ref>& 
   deque<expression_ref> T2;
   T2.insert(T2.begin(), T.begin(), T.end());
 
-  expression_ref E1 = T2.front();
-  T2.pop_front();
-  string op1 = assert_is_a<const var>(T2.front())->name; T2.pop_front();
-
-  return parse_infix(m, E1, op1, T2);
+  return infix_parse_neg(m, {"",0,2,-1,non_fix}, T2);
 }
 
 expression_ref postprocess(const module& m, const expression_ref& E)
@@ -76,7 +88,14 @@ expression_ref postprocess(const module& m, const expression_ref& E)
       
     return postprocess_infix(m, v);
   }
-  else
-    return E;
+  else if (E->size())
+  {
+    vector<expression_ref> v = E->sub;
+    for(auto& e: v)
+      e = postprocess(m, e);
+
+    return new expression(E->head,v);
+  }
+  return E;
 }
 
