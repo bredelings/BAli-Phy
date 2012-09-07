@@ -159,13 +159,16 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  | h_char [ _val = _1 ]
 	  | h_string [ _val = _1 ];
 
+	expression_ref (*apply_expression_ptr)(const expression_ref&,const expression_ref&);
+	apply_expression_ptr = &apply_expression;
 	/*----- Section 3 ------*/
-	exp %= infixexp >> "::" >> -(context >> "=>") >> type 
-	       | infixexp;
-	exp = infixexp [ _val = _1 ];
+	exp = 
+	  infixexp [ _val = _1] >> "::" >> -(context >> "=>") >> type 
+	  | infixexp [_val = _1 ];
 
-	infixexp = lexp [push_back(_a,_1)] >> +(qop [push_back(_a,_1)] >> lexp [push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("infixexp"), _a) ]
-	  | "-" >> infixexp [ _val = _1 ]
+	infixexp = 
+	  lexp [push_back(_a,_1)] >> +(qop [push_back(_a,_1)] >> lexp [push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("infixexp"), _a) ]
+	  | lit("-") >> infixexp [ _val = _1 ] >> eps [ _val = phoenix::bind(apply_expression_ptr, ::var("negate"), _val) ]
 	  | lexp [ _val = _1 ];
 
 	lexp %= // lit("\\") >> +apat >> lit("->") >> exp |
@@ -175,9 +178,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  //	  lit("do") >> "{" >> stmts >> "}" |
 	  fexp;
 
-	expression_ref (*temp)(const expression_ref&,const expression_ref&);
-	temp = &apply_expression;
-	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(temp,_val,_1) ]; // function application
+	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(apply_expression_ptr,_val,_1) ]; // function application
 
 	aexp = 
 	  // variable
