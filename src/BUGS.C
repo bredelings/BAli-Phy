@@ -87,6 +87,10 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
         using phoenix::at_c;
         using phoenix::push_back;
+	using phoenix::begin;
+	using phoenix::end;
+	using phoenix::insert;
+	using phoenix::clear;
 	using phoenix::construct;
 	using phoenix::new_;
 	using phoenix::val;
@@ -163,14 +167,14 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	apply_expression_ptr = &apply_expression;
 	/*----- Section 3 ------*/
 	exp = 
-	  infixexp [ _val = _1] >> "::" >> -(context >> "=>") >> type 
-	  | infixexp [_val = _1 ];
+	  infixexp [ _val = new_<expression>(AST_node("infixexp"),_1) ] >> "::" >> -(context >> "=>") >> type 
+	  | infixexp [_val = new_<expression>(AST_node("infixexp"),_1) ];
 
 	infixexp = 
-	  lexp [push_back(_a,_1)] >> +(qop [push_back(_a,_1)] >> lexp [push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("infixexp"), _a) ]
-	  | lit("-") >> infixexp [ _val = _1 ] >> eps [ _val = phoenix::bind(apply_expression_ptr, ::var("negate"), _val) ]
-	  | lexp [ _val = _1 ];
-
+	  lexp [push_back(_val,_1)] >> qop [push_back(_val,_1)] >> infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
+	  | lit("-") [push_back(_val, ::var("-"))] >> infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
+	  | lexp [ clear(_val), push_back(_val,_1) ]
+	  ;
 	lexp %= // lit("\\") >> +apat >> lit("->") >> exp |
 	  //	  lit("let") >> decls >> "in" >> exp |
 	  //	  lit("if") >> exp >> -lit(';') >> "then" >> exp >> -lit(';') >> "else" >> exp |
@@ -182,13 +186,13 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	aexp = 
 	  // variable
-	  qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]     
+	  qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]
 	  // general constructor
-	  | gcon [ qi::_val = phoenix::construct< ::var>(qi::_1) ]        
+	  | gcon [ qi::_val = phoenix::construct< ::var>(qi::_1) ]
 	  // literal
-	  | literal [_val = _1 ]    
+	  | literal [_val = _1 ]
 	  // parenthesized expression
-	  | "(" >> exp [_val = _1] >> ")"  
+	  | "(" >> exp [_val = _1] >> ")"
 	  // tuple, k >= 2
 	  | "(" >> exp [push_back(_a,_1)] >> +(','>>exp [push_back(_a,_1)]) >> ")" >> eps [ _val = new_<expression>(AST_node("Tuple"), _a) ]
 	  // list
@@ -521,7 +525,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, expression_ref()> literal;  
 
   qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> infixexp;
+  qi::rule<Iterator, vector<expression_ref>(), qi::locals<vector<expression_ref>>, ascii::space_type> infixexp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> lexp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> fexp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> aexp;
