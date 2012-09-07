@@ -80,22 +80,18 @@ expression_ref postprocess_infix(const module& m, const vector<expression_ref>& 
 
 expression_ref postprocess(const module& m, const expression_ref& E)
 {
-  if (E->head->compare(AST_node("infixexp")))
-  {
-    vector<expression_ref> v = E->sub;
-    for(auto& e: v)
-      e = postprocess(m, e);
+  vector<expression_ref> v = E->sub;
+  for(auto& e: v)
+    e = postprocess(m, e);
       
+  if (E->head->compare(AST_node("infixexp")))
     return postprocess_infix(m, v);
-  }
+  else if (E->head->compare(AST_node("Tuple")))
+    return get_tuple(v);
+  else if (E->head->compare(AST_node("List")))
+    return get_list(v);
   else if (E->size())
-  {
-    vector<expression_ref> v = E->sub;
-    for(auto& e: v)
-      e = postprocess(m, e);
-
     return new expression(E->head,v);
-  }
   return E;
 }
 
