@@ -296,7 +296,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	gendecl %= vars >> "::" >>  -(context >> "=>") >> type | fixity >> -h_integer >> ops | eps;
 	ops %= +op;
 	vars %= +var;
-	fixity %= lit("infixl") | "infixr" | "infix";
+	fixity %= string("infixl") | string("infixr") | string("infix");
 
 	/*----- Section 4.1.2 ------*/
 	type %= btype >> -( lit("->") >> type );
