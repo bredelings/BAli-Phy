@@ -239,17 +239,25 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	//	fbind %= qvar >> "=" >> exp;
 
 	/*----- Section 3.17 -----*/
-	pat %= lpat >> qconop >> pat | lpat;
-	lpat %= apat | lit('-') >> (h_integer|h_float) | gcon >> +apat;
-	apat %= var >> -(lit('@')>>apat) 
-	  | gcon
-	  | qcon >> "{" >> *fpat >> "}"
+	pat %= 
+	  lpat >> qconop >> pat // infix constructor
+	  | lpat;
+
+	lpat %= 
+	  apat 
+	  | lit('-') >> (h_integer|h_float) // negative literal
+	  | gcon >> +apat;                  // here the number of apat's must match the constructor arity
+
+	apat %= 
+	  var >> -(lit('@')>>apat)          // as pattern
+	  | gcon                            // arity gcon = 0
+	  | qcon >> "{" >> *fpat >> "}"     // labelled pattern
 	  //	  | literal
-	  | lit('_')
-	  | lit('(') >> pat >> ')'
-	  | lit('(') >> pat >> *(lit(',') >> pat) >> ')'
-	  | lit('[') >> pat % ',' >> ']'
-	  | lit('~') >> apat;
+	  | lit('_')                        // wildcard
+	  | lit('(') >> pat >> ')'          // parenthesized pattern
+	  | lit('(') >> pat >> +(lit(',') >> pat) >> ')' // tuple patten
+	  | lit('[') >> pat % ',' >> ']'    // list pattern
+	  | lit('~') >> apat;               // irrefutable pattern
 
 	/*------ Section 4 -------*/
 	module = 
