@@ -57,14 +57,14 @@ qi::symbols<char,expression_ref> identifiers;
 
 struct bugs_cmd
 {
-  string var;
+  expression_ref var;
   string dist;
   vector<expression_ref> arguments;
 };
 
 BOOST_FUSION_ADAPT_STRUCT(
     bugs_cmd,
-    (std::string, var)
+    (expression_ref, var)
     (std::string, dist)
     (std::vector<expression_ref>, arguments)
 )
@@ -97,7 +97,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	text %= +(char_ - ' ' -'(');
 	arguments %= lit('(')>>exp%','>>lit(')')|lit("()");
-	bugs_line %= text > '~' > text > arguments >> eoi ;
+	bugs_line %= exp > '~' > text > arguments >> eoi ;
 
 	small %= char_("a-z");
 	large %= char_("A-Z");
@@ -525,7 +525,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, expression_ref()> literal;  
 
   qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
-  qi::rule<Iterator, vector<expression_ref>(), qi::locals<vector<expression_ref>>, ascii::space_type> infixexp;
+  qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> infixexp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> lexp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> fexp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> aexp;
@@ -732,6 +732,7 @@ void add_BUGS(const Parameters& P, const string& filename)
 	  std::cerr<<", ";
       }
       std::cerr<<")\n";
+      cmd.var = postprocess(m, cmd.var);
       for(auto& e: cmd.arguments)
 	e = postprocess(m,e);
       std::cerr<<"        processed: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
