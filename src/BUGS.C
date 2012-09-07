@@ -691,14 +691,14 @@ void add_BUGS(const Parameters& P, const string& filename)
   m.symbols["+"] = {"+",0,2,6,left_fix};
   m.symbols["-"] = {"-",0,2,6,left_fix};
 
-  m.symbols[":"] = {"-",1,2,5,right_fix};
+  m.symbols[":"] = {":",1,2,5,right_fix};
   m.symbols["++"] = {"++",0,2,5,right_fix};
 
   m.symbols["=="] = {"==",0,2,5,non_fix};
   m.symbols["/="] = {"/=",0,2,5,non_fix};
-  m.symbols["<"] = {"<=",0,2,5,non_fix};
+  m.symbols["<"] = {"<",0,2,5,non_fix};
   m.symbols["<="] = {"<=",0,2,5,non_fix};
-  m.symbols[">"] = {">=",0,2,5,non_fix};
+  m.symbols[">"] = {">",0,2,5,non_fix};
   m.symbols[">="] = {">=",0,2,5,non_fix};
 
   m.symbols["elem"] = {"elem",0,2,4,non_fix};
