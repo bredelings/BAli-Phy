@@ -676,6 +676,7 @@ void add_BUGS(const Parameters& P, const string& filename)
   module m;
 
   m.symbols["!!"] = symbol_info{string("!!"),0,2,9,left_fix};
+  m.symbols["."] = symbol_info{string("."),0,2,9,right_fix};
 
   m.symbols["^"] = {"^",0,2,8,right_fix};
   m.symbols["^^"] = {"^^",0,2,8,right_fix};
