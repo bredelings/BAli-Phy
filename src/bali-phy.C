@@ -552,21 +552,21 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, cons
   {
     string prefix = "^";
     if (i>0)
-      prefix = string("S")+convertToString(i) + "::";
+      prefix = string("S")+convertToString(i) + ".";
 
     vector< vector<int> > DP;
-    if (parameters_with_extension(names, prefix + "DP::rate*").size()  )
+    if (parameters_with_extension(names, prefix + "DP.rate*").size()  )
     {
-      DP.push_back( parameters_with_extension(names, prefix + "DP::rate*") );
-      DP.push_back( parameters_with_extension(names, prefix + "DP::f*") );
+      DP.push_back( parameters_with_extension(names, prefix + "DP.rate*") );
+      DP.push_back( parameters_with_extension(names, prefix + "DP.f*") );
       indices.push_back( DP );
     }
 
     vector< vector<int> > M3;
-    if (parameters_with_extension(names, prefix + "M3::omega*").size() )
+    if (parameters_with_extension(names, prefix + "M3.omega*").size() )
     {
-      M3.push_back( parameters_with_extension(names, prefix + "M3::omega*") );
-      M3.push_back( parameters_with_extension(names, prefix + "M3::f*") );
+      M3.push_back( parameters_with_extension(names, prefix + "M3.omega*") );
+      M3.push_back( parameters_with_extension(names, prefix + "M3.f*") );
       indices.push_back( M3 );
     }
   }

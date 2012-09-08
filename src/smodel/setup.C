@@ -260,7 +260,7 @@ formula_expression_ref process_stack_Markov(vector<string>& model_args,
     if (T) 
       return Singlet_to_Triplet_Exchange(*T,EQU(T->getNucleotides()));
     else
-      throw myexception()<<"EQUx3:: '"<<a->name<<"' is not a triplet alphabet.";
+      throw myexception()<<"EQUx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
   */
   else if (model_args[0] == "HKYx3")
@@ -366,7 +366,7 @@ formula_expression_ref process_stack_Markov(vector<string>& model_args,
       if (not S1.result_as<SymmetricMatrixObject>())
 	throw myexception()<<"Submodel '"<<model_args[2]<<"' for M0 is not a (nucleotide) exchange model.";
     }
-    formula_expression_ref w = def_parameter("M0::omega", Double(1), lower_bound(0), log_laplace_dist, Tuple(0.0,0.1));
+    formula_expression_ref w = def_parameter("M0.omega", Double(1), lower_bound(0), log_laplace_dist, Tuple(0.0,0.1));
 
     return (M0E, a, S1, w);
   }
@@ -414,7 +414,7 @@ formula_expression_ref process_stack_Frequencies(vector<string>& model_args,
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"+F1x4:: '"<<a->name<<"' is not a triplet alphabet.";
+      throw myexception()<<"+F1x4: '"<<a->name<<"' is not a triplet alphabet.";
 
     R = F1x4_Model(*T);
   }
@@ -422,7 +422,7 @@ formula_expression_ref process_stack_Frequencies(vector<string>& model_args,
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"+F3x4:: '"<<a->name<<"' is not a triplet alphabet.";
+      throw myexception()<<"+F3x4: '"<<a->name<<"' is not a triplet alphabet.";
 
     R = F3x4_Model(*T);
   }
@@ -430,7 +430,7 @@ formula_expression_ref process_stack_Frequencies(vector<string>& model_args,
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"+MG94:: '"<<a->name<<"' is not a triplet alphabet.";
+      throw myexception()<<"+MG94: '"<<a->name<<"' is not a triplet alphabet.";
 
     R = MG94_Model(*T);
   }
@@ -438,7 +438,7 @@ formula_expression_ref process_stack_Frequencies(vector<string>& model_args,
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"+MG94w9:: '"<<a->name<<"' is not a triplet alphabet.";
+      throw myexception()<<"+MG94w9: '"<<a->name<<"' is not a triplet alphabet.";
 
     R = MG94w9_Model(*T);
   }
@@ -447,7 +447,7 @@ formula_expression_ref process_stack_Frequencies(vector<string>& model_args,
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
-      throw myexception()<<"+F=amino-acids:: '"<<a->name<<"' is not a codon alphabet.";
+      throw myexception()<<"+F=amino-acids: '"<<a->name<<"' is not a codon alphabet.";
 
     return AACodonFrequencyModel(*C);
   }
@@ -455,7 +455,7 @@ formula_expression_ref process_stack_Frequencies(vector<string>& model_args,
   {
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     if (not T)
-      throw myexception()<<"+F=triplets:: '"<<a->name<<"' is not a triplet alphabet.";
+      throw myexception()<<"+F=triplets: '"<<a->name<<"' is not a triplet alphabet.";
 
     return TripletsFrequencyModel(*T);
   }
@@ -463,7 +463,7 @@ formula_expression_ref process_stack_Frequencies(vector<string>& model_args,
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
-      throw myexception()<<"+F=codons:: '"<<a->name<<"' is not a codon alphabet.";
+      throw myexception()<<"+F=codons: '"<<a->name<<"' is not a codon alphabet.";
 
     return CodonsFrequencyModel(*C);
   }
@@ -471,7 +471,7 @@ formula_expression_ref process_stack_Frequencies(vector<string>& model_args,
   {
     const Codons* C = dynamic_cast<const Codons*>(&*a);
     if (not C)
-      throw myexception()<<"+F=codons2:: '"<<a->name<<"' is not a codon alphabet.";
+      throw myexception()<<"+F=codons2: '"<<a->name<<"' is not a codon alphabet.";
 
     return CodonsFrequencyModel2(*C);
   }
@@ -674,7 +674,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
 
     formula_expression_ref base = coerce_to_RA(model_args[1],a,frequencies);
 
-    formula_expression_ref W = def_parameter("gamma::sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
+    formula_expression_ref W = def_parameter("gamma.sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
     formula_expression_ref dist = (UniformDiscretize, (lambda_expression(gamma_quantile_op()), Tuple(a,b)) , n);
@@ -691,12 +691,12 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
 
     formula_expression_ref base = coerce_to_RA(model_args[1],a,frequencies);
 
-    formula_expression_ref W = def_parameter("gamma::sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
+    formula_expression_ref W = def_parameter("gamma.sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
     formula_expression_ref dist = (UniformDiscretize, (lambda_expression(gamma_quantile_op()), Tuple(a,b)) , n);
 
-    formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
+    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
     dist = (ExtendDiscreteDistribution, dist, p, 0.0);
 
     return (MultiRate, base,  dist);
@@ -708,7 +708,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
 
     formula_expression_ref base = coerce_to_RA(model_args[1],a,frequencies);
 
-    formula_expression_ref W = def_parameter("log-normal::sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
+    formula_expression_ref W = def_parameter("log-normal.sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
     formula_expression_ref Var = (times, W, W);
     formula_expression_ref lVar = (Log, (plus, 1.0, Var ) );
     formula_expression_ref lmu = (times, -0.5, lVar);
@@ -724,14 +724,14 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
 
     formula_expression_ref base = coerce_to_RA(model_args[1],a,frequencies);
 
-    formula_expression_ref W = def_parameter("log-normal::sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
+    formula_expression_ref W = def_parameter("log-normal.sigma/mu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
     formula_expression_ref Var = (times, W, W);
     formula_expression_ref lVar = (Log, (plus, 1.0, Var ) );
     formula_expression_ref lmu = (times, -0.5, lVar);
     formula_expression_ref lsigma = (Sqrt, lVar);
     formula_expression_ref dist = (UniformDiscretize, (lambda_expression(log_normal_quantile_op()), Tuple(lmu,lsigma)) , n);
 
-    formula_expression_ref p = def_parameter("INV::p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
+    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
     dist = (ExtendDiscreteDistribution, dist, p, 0.0);
 
     return (MultiRate, base,  dist);
@@ -758,8 +758,8 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref dist = ListEnd;
     for(int i=0;i<n;i++)
     {
-      formula_expression_ref f = def_parameter("DP::f"+convertToString(i+1), Double(1.0/n), between(0,1));
-      formula_expression_ref rate = def_parameter("DP::rate"+convertToString(i+1), Double(1.0), between(0,n));
+      formula_expression_ref f = def_parameter("DP.f"+convertToString(i+1), Double(1.0/n), between(0,1));
+      formula_expression_ref rate = def_parameter("DP.rate"+convertToString(i+1), Double(1.0), between(0,n));
       
       fs.push_back(f.exp());
       rates.push_back(rate.exp());
@@ -796,10 +796,10 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
   }
   else if (model_args[0] == "M2") 
   {
-    formula_expression_ref p1 = def_parameter("M2::f[AA INV]", Double(1.0/3), between(0,1));
-    formula_expression_ref p2 = def_parameter("M2::f[Neutral]", Double(1.0/3), between(0,1));
-    formula_expression_ref p3 = def_parameter("M2::f[Selected]", Double(1.0/3), between(0,1));
-    formula_expression_ref m2_omega = def_parameter("M2::omega", Double(1.0), lower_bound(0));
+    formula_expression_ref p1 = def_parameter("M2.f[AA INV]", Double(1.0/3), between(0,1));
+    formula_expression_ref p2 = def_parameter("M2.f[Neutral]", Double(1.0/3), between(0,1));
+    formula_expression_ref p3 = def_parameter("M2.f[Selected]", Double(1.0/3), between(0,1));
+    formula_expression_ref m2_omega = def_parameter("M2.omega", Double(1.0), lower_bound(0));
     formula_expression_ref D = (DiscreteDistribution, Tuple(p1,0.0)&
 						    Tuple(p2,1.0)&
 						    Tuple(p3,m2_omega)&
@@ -823,10 +823,10 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref F = ListEnd;
     for(int i=n-1;i>=0;i--)
     {
-      string pname_f = "M3::f" + convertToString(i+1);
-      string pname_w = "M3::omega" + convertToString(i+1);
-      formula_expression_ref f = def_parameter("M3::f"     + convertToString(i+1), Double(1.0/n), between(0,1));
-      formula_expression_ref w = def_parameter("M3::omega" + convertToString(i+1), Double(1.0), lower_bound(0), uniform_dist, Tuple(0.0, 1.0));
+      string pname_f = "M3.f" + convertToString(i+1);
+      string pname_w = "M3.omega" + convertToString(i+1);
+      formula_expression_ref f = def_parameter("M3.f"     + convertToString(i+1), Double(1.0/n), between(0,1));
+      formula_expression_ref w = def_parameter("M3.omega" + convertToString(i+1), Double(1.0), lower_bound(0), uniform_dist, Tuple(0.0, 1.0));
 
       D = Tuple(f,w)&D;
       F = f&F;
@@ -850,11 +850,11 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     vector<expression_ref> fraction;
     for(int i=n-1;i>=0;i--)
     {
-      string pname_f = "M3::f" + convertToString(i+1);
-      string pname_w = "M3::omega" + convertToString(i+1);
-      formula_expression_ref f = def_parameter("M3::f"     + convertToString(i+1), Double(1.0/n), between(0,1));
+      string pname_f = "M3.f" + convertToString(i+1);
+      string pname_w = "M3.omega" + convertToString(i+1);
+      formula_expression_ref f = def_parameter("M3.f"     + convertToString(i+1), Double(1.0/n), between(0,1));
       fraction.insert(fraction.begin(), f.exp());
-      formula_expression_ref w = def_parameter("M3::omega" + convertToString(i+1), Double(1.0), lower_bound(0));
+      formula_expression_ref w = def_parameter("M3.omega" + convertToString(i+1), Double(1.0), lower_bound(0));
       // P *= ((1-f)*exponential_pdf(-log(w),0.05)/w + f*exponential_pdf(log(w),0.05)/w);
       w.add_expression( (distributed, w, Tuple(log_exponential_dist, 0.05) ) );
 
@@ -869,11 +869,11 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
   }
   else if (model_args[0] == "M2a") // M2a[0,S,F]
   {
-    formula_expression_ref p1 = def_parameter("M2a::f[AA INV]", Double(1.0/3), between(0,1));
-    formula_expression_ref p2 = def_parameter("M2a::f[Neutral]", Double(1.0/3), between(0,1));
-    formula_expression_ref p3 = def_parameter("M2a::f[Selected]", Double(1.0/3), between(0,1));
-    formula_expression_ref w1 = def_parameter("M2a::omega1", Double(1.0), between(0,1));
-    formula_expression_ref w3 = def_parameter("M2a::omega3", Double(1.0), lower_bound(1));
+    formula_expression_ref p1 = def_parameter("M2a.f[AA INV]", Double(1.0/3), between(0,1));
+    formula_expression_ref p2 = def_parameter("M2a.f[Neutral]", Double(1.0/3), between(0,1));
+    formula_expression_ref p3 = def_parameter("M2a.f[Selected]", Double(1.0/3), between(0,1));
+    formula_expression_ref w1 = def_parameter("M2a.omega1", Double(1.0), between(0,1));
+    formula_expression_ref w3 = def_parameter("M2a.omega3", Double(1.0), lower_bound(1));
     formula_expression_ref D = (DiscreteDistribution,Tuple(p1,w1)&Tuple(p2,1.0)&Tuple(p3,w3)&ListEnd);
 
     D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, Tuple(1.0, 98.0, 1.0)) ) );
@@ -913,8 +913,8 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
       n = convertTo<int>(model_args[2]);
 
     // Determine the a and b parameters of the beta distribution
-    formula_expression_ref mu = def_parameter("beta::mu", Double(0.5), between(0,1), beta_dist, Tuple(10.0, 1.0));
-    formula_expression_ref gamma = def_parameter("beta::Var/mu", Double(0.1), between(0,1), exponential_dist, 0.1);
+    formula_expression_ref mu = def_parameter("beta.mu", Double(0.5), between(0,1), beta_dist, Tuple(10.0, 1.0));
+    formula_expression_ref gamma = def_parameter("beta.Var/mu", Double(0.1), between(0,1), exponential_dist, 0.1);
     formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
@@ -922,12 +922,12 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref D = (UniformDiscretize, (lambda_expression(beta_quantile_op()), Tuple(alpha,beta)), n);
 
     // *Question*: How much does D simplify with "completely lazy" evaluation?
-    formula_expression_ref p1 = def_parameter("M8b::f[Purifying]", Double(0.6), between(0,1));
-    formula_expression_ref p2 = def_parameter("M8b::f[Neutral]", Double(0.3), between(0,1));
-    formula_expression_ref p3 = def_parameter("M8b::f[Positive]", Double(0.1), between(0,1));
+    formula_expression_ref p1 = def_parameter("M8b.f[Purifying]", Double(0.6), between(0,1));
+    formula_expression_ref p2 = def_parameter("M8b.f[Neutral]", Double(0.3), between(0,1));
+    formula_expression_ref p3 = def_parameter("M8b.f[Positive]", Double(0.1), between(0,1));
     // [positive selection, if it exists] w ~ log_exponential(0.05)
-    formula_expression_ref w = def_parameter("M8b::omega3", Double(1.0), lower_bound(1), log_exponential_dist, 0.05);
-    formula_expression_ref I  = def_parameter("M8b::omega3_non_zero", Bool(true), nullptr, bernoulli_dist, 0.5);
+    formula_expression_ref w = def_parameter("M8b.omega3", Double(1.0), lower_bound(1), log_exponential_dist, 0.05);
+    formula_expression_ref I  = def_parameter("M8b.omega3_non_zero", Bool(true), nullptr, bernoulli_dist, 0.5);
     formula_expression_ref w3 = (If, I, w, 1.0);
 
     // Add the neutral and (possibility) positive selection categories
@@ -951,8 +951,8 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
       n = convertTo<int>(model_args[2]);
 
     // Determine the a and b parameters of the beta distribution
-    formula_expression_ref mu = def_parameter("beta::mu", Double(0.5), between(0,1), beta_dist, Tuple(10.0, 1.0));
-    formula_expression_ref gamma = def_parameter("beta::Var/mu", Double(0.1), between(0,1), exponential_dist, 0.1);
+    formula_expression_ref mu = def_parameter("beta.mu", Double(0.5), between(0,1), beta_dist, Tuple(10.0, 1.0));
+    formula_expression_ref gamma = def_parameter("beta.Var/mu", Double(0.1), between(0,1), exponential_dist, 0.1);
     formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
@@ -967,10 +967,10 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
   {
     check_n_args(model_args, 0, 3);
 
-    formula_expression_ref f0 = def_parameter("branch-site::f0",Double(0.5));
-    formula_expression_ref f1 = def_parameter("branch-site::f1",Double(0.5));
-    formula_expression_ref f2 = def_parameter("branch-site::pos-p",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
-    formula_expression_ref I  = def_parameter("branch-site::pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
+    formula_expression_ref f0 = def_parameter("branch-site.f0",Double(0.5));
+    formula_expression_ref f1 = def_parameter("branch-site.f1",Double(0.5));
+    formula_expression_ref f2 = def_parameter("branch-site.pos-p",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
+    formula_expression_ref I  = def_parameter("branch-site.pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
 
     formula_expression_ref p2 = (If, I, f2, 0.0);
     formula_expression_ref p0 = (times, f0, (minus,1.0,p2));
@@ -978,9 +978,9 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref p2a = (times, f0, p2);
     formula_expression_ref p2b = (times, f1, p2);
 
-    formula_expression_ref w0 = def_parameter("branch-site::w0", Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
+    formula_expression_ref w0 = def_parameter("branch-site.w0", Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
     // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
-    formula_expression_ref w2 = def_parameter("branch-site::pos-w", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(4.0, 0.25));
+    formula_expression_ref w2 = def_parameter("branch-site.pos-w", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(4.0, 0.25));
     // FIXME - look at the effect on power of using various different priors for w2 here!
     // FIXME - allow specifying the prior on the command line?
 
@@ -1007,8 +1007,8 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     if (n < 2) throw myexception()<<"The branch-site model needs at least two categories.";
 
     // Create the parameter for degree of positive selection, if it exists.
-    formula_expression_ref w_pos = def_parameter("branch-site::pos-w", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(4.0, 0.25));
-    formula_expression_ref I  = def_parameter("branch-site::pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
+    formula_expression_ref w_pos = def_parameter("branch-site.pos-w", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(4.0, 0.25));
+    formula_expression_ref I  = def_parameter("branch-site.pos-selection", Bool(true), nullptr, bernoulli_dist, 0.5);
     formula_expression_ref w_pos_effective = (If, I, w_pos, 1.0);
 
     // Create the partial distributions, and their parameters.
@@ -1019,8 +1019,8 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     for(int i=n-1;i>=0;i--)
     {
       string n_ = convertToString(i);
-      formula_expression_ref f = def_parameter("branch-site::f"+n_, Double(1.0/n));
-      formula_expression_ref w = def_parameter("branch-site::w"+n_, Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
+      formula_expression_ref f = def_parameter("branch-site.f"+n_, Double(1.0/n));
+      formula_expression_ref w = def_parameter("branch-site.w"+n_, Double(0.5), between(0,1), uniform_dist, Tuple(0.0, 1.0));
       if (i == n-1) w = expression_ref(1.0);
 
       D1 = Tuple(f,w)&D1;
@@ -1030,7 +1030,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     D1 = (DiscreteDistribution, D1);
     D2 = (DiscreteDistribution, D2);
 
-    formula_expression_ref p_pos = def_parameter("branch-site::pos-p",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
+    formula_expression_ref p_pos = def_parameter("branch-site.pos-p",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
 
     // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
     // FIXME - look at the effect on power of using various different priors for w2 here!

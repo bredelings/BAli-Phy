@@ -1632,7 +1632,7 @@ expression_ref add_prefix(const string& prefix, const expression_ref& E)
 
   expression_ref E2 = E;
   for(const auto& name: names)
-    E2 = substitute(E2, parameter(name), parameter(prefix+"::"+name));
+    E2 = substitute(E2, parameter(name), parameter(prefix+"."+name));
 
   return E2;
 }

@@ -66,7 +66,7 @@ namespace substitution {
   }
 
   Gamma::Gamma() {
-    add_parameter(Parameter("gamma::sigma/mu", Double(0.1), lower_bound(0)));
+    add_parameter(Parameter("gamma.sigma/mu", Double(0.1), lower_bound(0)));
   }
 
   //--------------- Beta RateDistribution -----------------//
@@ -123,8 +123,8 @@ namespace substitution {
 
   Beta::Beta()
   {
-    add_parameter(Parameter("beta::mu", Double(0.5), between(0, 1)));
-    add_parameter(Parameter("beta::Var/mu", Double(0.1), between(0,1)));
+    add_parameter(Parameter("beta.mu", Double(0.5), between(0, 1)));
+    add_parameter(Parameter("beta.Var/mu", Double(0.1), between(0,1)));
   }
 
   //-------------- LogNormal Distribution ----------------//
@@ -160,7 +160,7 @@ namespace substitution {
 
   LogNormal::LogNormal() 
   {
-    add_parameter(Parameter("log-normal::sigma/mu", Double(0.1), lower_bound(0)));
+    add_parameter(Parameter("log-normal.sigma/mu", Double(0.1), lower_bound(0)));
   }
     
 

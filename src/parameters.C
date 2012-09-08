@@ -1174,7 +1174,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       double delta_t = T->branch(b).length();
 
       string name = "D" + convertToString(b+1);
-      int index = add_parameter(Parameter(prefix+"::"+name, Double(rate * delta_t)));
+      int index = add_parameter(Parameter(prefix+"."+name, Double(rate * delta_t)));
       branch_length_indices[s].push_back(index);
     }
   }
@@ -1199,7 +1199,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     for(int b=0;b<T->n_branches();b++)
     {
       string name = "D" + convertToString(b+1);
-      D.push_back(parameter(prefix+"::"+name));
+      D.push_back(parameter(prefix+"."+name));
     }
     expression_ref DL = get_list(D);
 

@@ -663,7 +663,7 @@ namespace substitution {
     //------- 6: Create the parameters for fiddling --------//
     for(int i=0;i<n_cat;i++)
     {
-      string name = "CAT::f"+convertToString(i+1);
+      string name = "CAT.f"+convertToString(i+1);
       add_parameter(Parameter(name,Double(prior_fraction[i]),between(0,1)));
     }
 

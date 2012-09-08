@@ -1010,9 +1010,9 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
 
 	
 
-    Stats.inc("MC^3::Exchange",exchange);
-    Stats.inc("MC^3::Frac_recent_high",f_recent_high);
-    Stats.inc("MC^3::Beta_regeneration_times",regeneration);
+    Stats.inc("MC^3.Exchange",exchange);
+    Stats.inc("MC^3.Frac_recent_high",f_recent_high);
+    Stats.inc("MC^3.Beta_regeneration_times",regeneration);
   }
 
   // recompute the chain_to_beta mapping
@@ -1186,9 +1186,9 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 
   if (alignment_burnin_iterations > 0)
   {
-    add_at_end(restore_bounds, change_bound(P, "I*::lambda",  ::upper_bound(-4.0)  ) );
-    add_at_end(restore_bounds, change_bound(P, "I*::delta",  ::upper_bound(-5.0)  ) );
-    add_at_end(restore_bounds, change_bound(P, "I*::epsilon",  ::upper_bound(-0.25)  ) );
+    add_at_end(restore_bounds, change_bound(P, "I*.lambda",  ::upper_bound(-4.0)  ) );
+    add_at_end(restore_bounds, change_bound(P, "I*.delta",  ::upper_bound(-5.0)  ) );
+    add_at_end(restore_bounds, change_bound(P, "I*.epsilon",  ::upper_bound(-0.25)  ) );
     add_at_end(restore_bounds, change_bound(P, "^mu*",  ::upper_bound(0.5)  ) );
   }
 

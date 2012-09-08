@@ -310,37 +310,37 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   for(int i=0;i<P.n_branch_means();i++)
     add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
 
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::HKY::kappa",     "kappa_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::rho",     "rho_scale_sigma",  0.2,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::TN::kappa(pur)", "kappa_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::TN::kappa(pyr)", "kappa_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::M0::omega",  "omega_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.HKY.kappa",     "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.rho",     "rho_scale_sigma",  0.2,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.TN.kappa(pur)", "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.TN.kappa(pyr)", "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.M0.omega",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
-	                                        "*::M2::omega",  "omega_scale_sigma",  0.3,  MH_moves);
+	                                        "*.M2.omega",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
-	                                        "*::M2a::omega1",  "omega_scale_sigma",  0.3,  MH_moves);
+	                                        "*.M2a.omega1",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
-	                                        "*::M2a::omega3",  "omega_scale_sigma",  0.3,  MH_moves);
+	                                        "*.M2a.omega3",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
-	                                        "*::M8b::omega1",  "omega_scale_sigma",  0.3,  MH_moves);
+	                                        "*.M8b.omega1",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
-	                                        "*::M8b::omega3",  "omega_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "*::INV::p",         "INV::p_shift_sigma", 0.03, MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "*::beta::mu",         "beta::mu_shift_sigma", 0.03, MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "*::f",              "f_shift_sigma",      0.1,  MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "*::g",              "g_shift_sigma",      0.1,  MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "*::h",              "h_shift_sigma",      0.1,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::gamma::sigma/mu","gamma::sigma_scale_sigma",  0.25, MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "*::beta::Var/mu", "beta::Var_scale_sigma",  0.25, MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*::log-normal::sigma/mu","log-normal::sigma_scale_sigma",  0.25, MH_moves);
+	                                        "*.M8b.omega3",  "omega_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*.INV.p",         "INV.p_shift_sigma", 0.03, MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*.beta.mu",         "beta.mu_shift_sigma", 0.03, MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*.f",              "f_shift_sigma",      0.1,  MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*.g",              "g_shift_sigma",      0.1,  MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*.h",              "h_shift_sigma",      0.1,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.gamma.sigma/mu","gamma.sigma_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "*.beta.Var/mu", "beta.Var_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.log-normal.sigma/mu","log-normal.sigma_scale_sigma",  0.25, MH_moves);
   MH_moves.add(4,MCMC::SingleMove(scale_means_only,
 				  "scale_means_only", {/*FIXME*/}, "mean")
 		      );
 
   
-  add_MH_move(P, shift_delta,                 "*::delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
-  add_MH_move(P, Between(-40,0,shift_cauchy), "*::lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
-  add_MH_move(P, shift_epsilon,               "*::epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
+  add_MH_move(P, shift_delta,                 "*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
+  add_MH_move(P, Between(-40,0,shift_cauchy), "*.lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+  add_MH_move(P, shift_epsilon,               "*.epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
 
   add_MH_move(P, Between(-20,20,shift_cauchy), "lambda_scale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
 
@@ -365,7 +365,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 
     set_if_undef(P.keys,"GTR_dirichlet_N",1.0);
     if (s==0) P.keys["GTR_dirichlet_N"] *= 100;
-    add_MH_move(P, dirichlet_proposal,  prefix + "S::GTR::?", "GTR_dirichlet_N",     1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal,  prefix + "S.GTR.?", "GTR_dirichlet_N",     1,  parameter_moves);
 
     set_if_undef(P.keys,"v_dirichlet_N",1.0);
     if (s==0) P.keys["v_dirichlet_N"] *= total_length;
@@ -375,39 +375,39 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
     if (s==0) P.keys["b_dirichlet_N"] *= total_length;
     add_MH_move(P, dirichlet_proposal,  prefix +  "b_*", "b_dirichlet_N",     1,  parameter_moves);
 
-    set_if_undef(P.keys,"M2::f_dirichlet_N",1.0);
-    if (s==0) P.keys["M2::f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,  prefix +  "M2::f*", "M2::f_dirichlet_N",     1,  parameter_moves);
+    set_if_undef(P.keys,"M2.f_dirichlet_N",1.0);
+    if (s==0) P.keys["M2.f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "M2.f*", "M2.f_dirichlet_N",     1,  parameter_moves);
 
-    set_if_undef(P.keys,"M2a::f_dirichlet_N",1.0);
-    if (s==0) P.keys["M2a::f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,  prefix +  "M2a::f*", "M2a::f_dirichlet_N",     1,  parameter_moves);
+    set_if_undef(P.keys,"M2a.f_dirichlet_N",1.0);
+    if (s==0) P.keys["M2a.f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,  prefix +  "M2a.f*", "M2a.f_dirichlet_N",     1,  parameter_moves);
 
-    set_if_undef(P.keys,"M3::f_dirichlet_N",1.0);
-    if (s==0) P.keys["M3::f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "M3::f*", "M3::f_dirichlet_N",     1,  parameter_moves);
+    set_if_undef(P.keys,"M3.f_dirichlet_N",1.0);
+    if (s==0) P.keys["M3.f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "M3.f*", "M3.f_dirichlet_N",     1,  parameter_moves);
 
-    set_if_undef(P.keys,"M8b::f_dirichlet_N",1.0);
-    if (s==0) P.keys["M8b::f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "M8b::f*", "M8b::f_dirichlet_N",     1,  parameter_moves);
+    set_if_undef(P.keys,"M8b.f_dirichlet_N",1.0);
+    if (s==0) P.keys["M8b.f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "M8b.f*", "M8b.f_dirichlet_N",     1,  parameter_moves);
 
-    set_if_undef(P.keys,"multi::p_dirichlet_N",1.0);
-    if (s==0) P.keys["multi::p_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "multi::p*", "multi:p_dirichlet_N",     1,  parameter_moves);
+    set_if_undef(P.keys,"multi.p_dirichlet_N",1.0);
+    if (s==0) P.keys["multi.p_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "multi.p*", "multi:p_dirichlet_N",     1,  parameter_moves);
 
-    set_if_undef(P.keys,"DP::f_dirichlet_N",1.0);
-    if (s==0) P.keys["DP::f_dirichlet_N"] *= 10;
-    add_MH_move(P, dirichlet_proposal,   prefix + "DP::f*", "DP::f_dirichlet_N",     1,  parameter_moves);
+    set_if_undef(P.keys,"DP.f_dirichlet_N",1.0);
+    if (s==0) P.keys["DP.f_dirichlet_N"] *= 10;
+    add_MH_move(P, dirichlet_proposal,   prefix + "DP.f*", "DP.f_dirichlet_N",     1,  parameter_moves);
 
-    set_if_undef(P.keys,"DP::rate_dirichlet_N",1.0);
+    set_if_undef(P.keys,"DP.rate_dirichlet_N",1.0);
     //FIXME - this should probably be 20*#rate_categories...
-    if (s==0) P.keys["DP::rate_dirichlet_N"] *= 10*10;
-    // add_MH_move(P, sorted(dirichlet_proposal), prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
-    add_MH_move(P, dirichlet_proposal, prefix + "DP::rate*", "DP::rate_dirichlet_N",     1,  parameter_moves);
+    if (s==0) P.keys["DP.rate_dirichlet_N"] *= 10*10;
+    // add_MH_move(P, sorted(dirichlet_proposal), prefix + "DP.rate*", "DP.rate_dirichlet_N",     1,  parameter_moves);
+    add_MH_move(P, dirichlet_proposal, prefix + "DP.rate*", "DP.rate_dirichlet_N",     1,  parameter_moves);
 
-    set_if_undef(P.keys,"Mixture::p_dirichlet_N",1.0);
-    if (s==0) P.keys["Mixture::p_dirichlet_N"] *= 10*10;
-    add_MH_move(P, dirichlet_proposal,         prefix + "Mixture::p*", "Mixture::p_dirichlet_N",     1,  parameter_moves);
+    set_if_undef(P.keys,"Mixture.p_dirichlet_N",1.0);
+    if (s==0) P.keys["Mixture.p_dirichlet_N"] *= 10*10;
+    add_MH_move(P, dirichlet_proposal,         prefix + "Mixture.p*", "Mixture.p_dirichlet_N",     1,  parameter_moves);
   */
 
   return MH_moves;
@@ -443,7 +443,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   // scale parameters
   for(int i=0;i<P.n_branch_means();i++)
-    add_slice_moves(P, "*::mu"+convertToString(i+1), slice_moves);
+    add_slice_moves(P, "*.mu"+convertToString(i+1), slice_moves);
 
   // Add slice moves for continuous 1D distributions
   add_1D_slice_moves_for_distribution(P, "LogLaplace", slice_moves);
@@ -459,35 +459,35 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_1D_slice_moves_for_distribution(P, "LogExponential", slice_moves);
 
   /*    
-  add_slice_moves(P, "*::HKY::kappa", slice_moves);
-  add_slice_moves(P, "*::rho", slice_moves);
-  add_slice_moves(P, "*::TN::kappa(pur)", slice_moves);
-  add_slice_moves(P, "*::TN::kappa(pyr)", slice_moves);
-  add_slice_moves(P, "*::M0::omega", slice_moves);
-  add_slice_moves(P, "*::M2::omega", slice_moves);
-  add_slice_moves(P, "*::M2a::omega1", slice_moves);
-  add_slice_moves(P, "*::M2a::omega3", slice_moves);
-  add_slice_moves(P, "*::M8b::omega3", slice_moves);
-  add_slice_moves(P, "*::branch-site::w*", slice_moves);
-  add_slice_moves(P, "*::branch-site::pos-w", slice_moves);
-  add_slice_moves(P, "*::branch-site::pos-p", slice_moves);
-  add_slice_moves(P, "*::INV::p", slice_moves);
-  add_slice_moves(P, "*::f", slice_moves);
-  add_slice_moves(P, "*::g", slice_moves);
-  add_slice_moves(P, "*::h", slice_moves);
-  add_slice_moves(P, "*::beta::Var/mu", slice_moves);
-  add_slice_moves(P, "*::gamma::sigma/mu", slice_moves);
-  add_slice_moves(P, "*::beta::sigma/mu", slice_moves);
-  add_slice_moves(P, "*::log-normal::sigma/mu", slice_moves);
+  add_slice_moves(P, "*.HKY.kappa", slice_moves);
+  add_slice_moves(P, "*.rho", slice_moves);
+  add_slice_moves(P, "*.TN.kappa(pur)", slice_moves);
+  add_slice_moves(P, "*.TN.kappa(pyr)", slice_moves);
+  add_slice_moves(P, "*.M0.omega", slice_moves);
+  add_slice_moves(P, "*.M2.omega", slice_moves);
+  add_slice_moves(P, "*.M2a.omega1", slice_moves);
+  add_slice_moves(P, "*.M2a.omega3", slice_moves);
+  add_slice_moves(P, "*.M8b.omega3", slice_moves);
+  add_slice_moves(P, "*.branch-site.w*", slice_moves);
+  add_slice_moves(P, "*.branch-site.pos-w", slice_moves);
+  add_slice_moves(P, "*.branch-site.pos-p", slice_moves);
+  add_slice_moves(P, "*.INV.p", slice_moves);
+  add_slice_moves(P, "*.f", slice_moves);
+  add_slice_moves(P, "*.g", slice_moves);
+  add_slice_moves(P, "*.h", slice_moves);
+  add_slice_moves(P, "*.beta.Var/mu", slice_moves);
+  add_slice_moves(P, "*.gamma.sigma/mu", slice_moves);
+  add_slice_moves(P, "*.beta.sigma/mu", slice_moves);
+  add_slice_moves(P, "*.log-normal.sigma/mu", slice_moves);
   */
 
   // imodel parameters
-  add_slice_moves(P, "*::delta", slice_moves, 10);
-  add_slice_moves(P, "*::lambda", slice_moves, 10);
-  add_slice_moves(P, "*::epsilon", slice_moves,transform_epsilon,inverse_epsilon, 10);
+  add_slice_moves(P, "*.delta", slice_moves, 10);
+  add_slice_moves(P, "*.lambda", slice_moves, 10);
+  add_slice_moves(P, "*.epsilon", slice_moves,transform_epsilon,inverse_epsilon, 10);
 
   add_slice_moves(P, "lambda_scale", slice_moves, 10);
-  add_slice_moves(P, "*::M3::omega*", slice_moves);
+  add_slice_moves(P, "*.M3.omega*", slice_moves);
 
   vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Dirichlet");
 
@@ -705,13 +705,13 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
 
 
   for(int i=0;;i++) {
-    string name = "M3::omega" + convertToString(i+1);
+    string name = "M3.omega" + convertToString(i+1);
     if (not has_parameter(P,name))
       break;
     
     add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)), name, "omega_scale_sigma", 1, parameter_moves);
     //    Proposal2 m(log_scaled(shift_cauchy), name, vector<string>(1,"omega_scale_sigma"), P);
-    //    parameter_moves.add(1, MCMC::MH_Move(m,"sample_M3::omega"));
+    //    parameter_moves.add(1, MCMC::MH_Move(m,"sample_M3.omega"));
   }
 
   {

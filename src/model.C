@@ -539,7 +539,7 @@ int SuperModel::register_submodel(const string& prefix)
 
   for(int i=0;i<M.n_parameters();i++)
   {
-    string name = prefix + "::" + M.parameter_name(i);
+    string name = prefix + "." + M.parameter_name(i);
     object_ptr<const Object> value = M.get_parameter_value(i);
     Bounds<double> bounds = M.get_bounds(i);
     bool fixed = M.is_fixed(i);
@@ -809,7 +809,7 @@ vector<string> short_parameter_names(vector<string> names)
   // construct the name paths
   vector< vector<string> > paths;
   for(int i=0;i<names.size();i++)
-    paths.push_back(split(names[i],"::"));
+    paths.push_back(split(names[i],"."));
 
   for(int i=0;i<paths.size();i++)
   {
@@ -822,7 +822,7 @@ vector<string> short_parameter_names(vector<string> names)
   }
   
   for(int i=0;i<names.size();i++)
-    names[i] = join(paths[i],"::");
+    names[i] = join(paths[i],".");
 
   return names;
 }
@@ -905,7 +905,7 @@ vector<int> parameters_with_extension(const vector<string>& M, string name)
 {
   vector<int> indices;
 
-  const vector<string> key = split(name,"::");
+  const vector<string> key = split(name,".");
 
   if (not key.size()) return indices;
 
@@ -913,7 +913,7 @@ vector<int> parameters_with_extension(const vector<string>& M, string name)
 
   for(int i=0;i<M.size();i++)
   {
-    vector<string> pattern = split(M[i],"::");
+    vector<string> pattern = split(M[i],".");
 
     if (not path_match(key, pattern)) continue;
 
