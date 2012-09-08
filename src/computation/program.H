@@ -21,16 +21,10 @@ std::ostream& operator<<(std::ostream&, const Def&);
 
 struct Program
 {
-  std::map<std::string, std::pair<expression_ref,expression_ref> > functions;
-
-  /// Add a function called 'name', with body 'E', and type 'T'
-  void def_function(const std::string& name, const expression_ref& E, const expression_ref& T);
+  std::map<std::string, expression_ref > functions;
 
   /// Add a function called 'name', with body 'E', and type *
   void def_function(const std::string& name, const expression_ref& E);
-  
-  /// Add a function called 'name' with body parameter(name) and type 'T'
-  void def_parameter(const std::string&, const expression_ref& T);
   
   /// Add a function called 'name' with body parameter(name).
   void def_parameter(const std::string&);
