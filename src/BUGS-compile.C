@@ -5,6 +5,12 @@ using std::string;
 using std::vector;
 using std::deque;
 
+// 1. TODO: move symbol definitions into the Program
+// 2. Define bodies for these operators in the Prelude
+// 3. Move grammar into a separate file somehow.
+// 4. Add ability to change the prior on variables.
+// 5. Add ability to add new variables.
+
 symbol_info::symbol_info(const std::string& s, int i1, int i2, int i3, fixity_t f)
   :name(s), type(i1), arity(i2), precedence(i3), fixity(f)
 { }
