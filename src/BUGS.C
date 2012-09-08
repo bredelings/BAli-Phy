@@ -119,16 +119,16 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	tyvar %= varid;
 	tycon %= conid;
 	tycls %= conid;
-	modid %= *(conid >> ".") >> conid;
+	modid %= conid>>*(string(".")>>conid);
 
 	//	qvarid %= -(modid>>char_('.')) >> varid;
 	qvarid %= *(conid>>char_('.'))>>varid;
 	//	qconid %= -(modid>>char_('.')) >> conid;
-	qconid %= *(conid>>char_('.')) >> conid;
+	qconid %= conid>>*(char_('.')>>conid);
 	//	qtycon %= -(modid>>char_('.')) >> tycon;
-	qtycon %= *(conid>>char_('.')) >> tycon;
+	qtycon %= conid>>*(char_('.')>>conid);
 	//	qtycls %= -(modid>>char_('.')) >> tycls;
-	qtycls %= *(conid>>char_('.')) >> tycls;
+	qtycls %= conid>>*(char_('.')>>conid);
 	//	qvarsym %= -(modid>>char_('.')) >> varsym;
 	qvarsym %= *(conid>>char_('.')) >> varsym;
 	//	qconsym %= -(modid>>char_('.')) >> consym;
@@ -184,11 +184,13 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(apply_expression_ptr,_val,_1) ]; // function application
 
+	// con >> conid >> qconid >qcon >> gcon
+
 	aexp = 
 	  // variable
 	  qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]
 	  // general constructor
-	  | gcon [ qi::_val = phoenix::construct< ::var>(qi::_1) ]
+	  | qconid [ qi::_val = phoenix::construct< ::var>(qi::_1) ]
 	  // literal
 	  | literal [_val = _1 ]
 	  // parenthesized expression
