@@ -668,4 +668,10 @@ extern const expression_ref v7;
 extern const expression_ref v8;
 
 expression_ref operator^(const expression_ref& x, const expression_ref& T);
+
+bool is_haskell_varid(const std::string& s);
+bool is_haskell_conid(const std::string& s);
+bool is_haskell_var_name(const std::string& s);
+bool is_haskell_con_name(const std::string& s);
+
 #endif
