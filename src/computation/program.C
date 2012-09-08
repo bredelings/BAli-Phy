@@ -12,15 +12,6 @@ using std::vector;
 // Unknown type
 expression_ref unknown_type = constructor("?",0);
 
-// Kind of Types with 0 arguments.  E.g. 
-expression_ref simple_kind = constructor("*",0);
-
-// A type constructor, and also a kind (?) constructor?
-expression_ref function = lambda_expression( right_assoc_constructor("->",2) );
-
-// Type constructor.  Kind = *->*
-expression_ref list_constructor = constructor("[]",1);
-
 void parse_combinator_application(const expression_ref& E, string& name, vector<expression_ref>& patterns)
 {
   expression_ref E2 = E;
