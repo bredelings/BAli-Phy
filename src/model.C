@@ -187,6 +187,9 @@ void Model::rename_parameter(int i, const std::string& s)
 
 int Model::find_parameter(const string& s) const
 {
+  // This check cannot be in Context:: because there we check if operators are already defined as parameters.
+  assert(is_haskell_var_name(s));
+
   return C.find_parameter(s);
 }
 
