@@ -1087,7 +1087,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   constants.push_back(-1);
 
-  add_super_parameter(Parameter("Heat:beta", Double(1.0), between(0,1)));
+  add_super_parameter(Parameter("Heat.beta", Double(1.0), between(0,1)));
 
   for(int i=0;i<n_scales;i++)
     add_super_parameter(Parameter("mu"+convertToString(i+1), Double(0.25), lower_bound(0)));
@@ -1095,15 +1095,15 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   // create parameters for scaling indel model on a specific branch
   if (IMs.size())
   {
-    add_super_parameter(Parameter("lambda_scale", Double(0.0)));
+    add_super_parameter(Parameter("lambdaScale", Double(0.0)));
     // lambda_scale ~ Laplace(0, 1)
-    add_note((distributed,parameter("lambda_scale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
+    add_note((distributed,parameter("lambdaScale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
 
-    add_super_parameter(Parameter("lambda_scale_on", Bool(false)));
-    add_note((distributed,parameter("lambda_scale_on"),Tuple(bernoulli_dist,0.5)));
+    add_super_parameter(Parameter("lambdaScaleOn", Bool(false)));
+    add_note((distributed,parameter("lambdaScaleOn"),Tuple(bernoulli_dist,0.5)));
     // lambda_scale_on ~ Uniform on T,F
 
-    add_super_parameter(Parameter("lambda_scale_branch", Int(-1), between(0,T->n_branches()-1)));
+    add_super_parameter(Parameter("lambdaScaleBranch", Int(-1), between(0,T->n_branches()-1)));
     //lambda_scale_branch ~ Uniform on 0 .. T.n_branches()-1
   }
 
@@ -1166,14 +1166,14 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   // Add and initialize variables for branch *lengths*: scale<s>::D<b>
   for(int s=0;s<n_scales;s++)
   {
-    string prefix= "scale" + convertToString(s+1);
+    string prefix= "Scale" + convertToString(s+1);
     branch_length_indices.push_back(vector<int>());
     for(int b=0;b<T->n_branches();b++)
     {
       double rate = *convert<const Double>(C.get_parameter_value(branch_mean_index(s)));
       double delta_t = T->branch(b).length();
 
-      string name = "D" + convertToString(b+1);
+      string name = "d" + convertToString(b+1);
       int index = add_parameter(Parameter(prefix+"."+name, Double(rate * delta_t)));
       branch_length_indices[s].push_back(index);
     }
@@ -1183,7 +1183,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   vector<expression_ref> branch_categories;
   for(int b=0;b<T->n_branches();b++)
   {
-    string name = "branch_cat" + convertToString(b+1);
+    string name = "branchCat" + convertToString(b+1);
     add_parameter(Parameter(name, Int(0)));
     branch_categories.push_back(parameter(name));
   }
@@ -1193,12 +1193,12 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   branch_transition_p_indices.resize(n_branch_means(), n_smodels());
   for(int s=0;s < n_branch_means(); s++)
   {
-    string prefix= "scale" + convertToString(s+1);
+    string prefix= "Scale" + convertToString(s+1);
     // Get a list of the branch LENGTH (not time) parameters
     vector<expression_ref> D;
     for(int b=0;b<T->n_branches();b++)
     {
-      string name = "D" + convertToString(b+1);
+      string name = "d" + convertToString(b+1);
       D.push_back(parameter(prefix+"."+name));
     }
     expression_ref DL = get_list(D);

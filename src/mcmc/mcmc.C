@@ -1010,9 +1010,9 @@ void exchange_adjacent_pairs(int /*iterations*/, Parameters& P, MCMC::MoveStats&
 
 	
 
-    Stats.inc("MC^3.Exchange",exchange);
-    Stats.inc("MC^3.Frac_recent_high",f_recent_high);
-    Stats.inc("MC^3.Beta_regeneration_times",regeneration);
+    Stats.inc("MC3.exchange",exchange);
+    Stats.inc("MC3.fracRecentHigh",f_recent_high);
+    Stats.inc("MC3.betaRegenerationTimes",regeneration);
   }
 
   // recompute the chain_to_beta mapping

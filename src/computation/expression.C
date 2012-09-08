@@ -6,12 +6,61 @@
 #include <iterator>
 #include <map>
 #include "graph_register.H"
+#include <cctype>
 
 using std::vector;
 using std::string;
 using std::set;
 
 using boost::dynamic_pointer_cast;
+
+bool is_haskell_varid(const std::string& s)
+{
+  if (s.empty()) return false;
+
+  if (not islower(s[0])) return false;
+  for(int i=1;i<s.size();i++)
+  {
+    char c = s[i];
+    if (not (isupper(c) or islower(c) or isdigit(c) or c=='\''))
+      return false;
+  }
+  return true;
+}
+
+bool is_haskell_conid(const std::string& s)
+{
+  if (s.empty()) return false;
+
+  if (not isupper(s[0])) return false;
+  for(int i=1;i<s.size();i++)
+  {
+    char c = s[i];
+    if (not (isupper(c) or islower(c) or isdigit(c) or c=='\''))
+      return false;
+  }
+  return true;
+}
+
+bool is_haskell_var_name(const std::string& s)
+{
+  vector<string> path = split(s,'.');
+  if (path.empty()) return false;
+  if (not is_haskell_varid(path.back())) return false;
+  for(int i=0;i<path.size()-1;i++)
+    if (not is_haskell_conid(path[i])) return false;
+  return true;
+}
+
+bool is_haskell_con_name(const std::string& s)
+{
+  vector<string> path = split(s,'.');
+  if (path.empty()) return false;
+  if (not is_haskell_varid(path.back())) return false;
+  for(int i=0;i<path.size()-1;i++)
+    if (not is_haskell_conid(path[i])) return false;
+  return true;
+}
 
 expression_ref indexed_let_expression(const vector<expression_ref>& bodies, const expression_ref& T)
 {
@@ -509,6 +558,12 @@ tribool parameter::compare(const Object& o) const
     return false;
 
   return parameter_name == E->parameter_name;
+}
+
+parameter::parameter(const std::string& s)
+ :parameter_name(s)
+{
+  assert(is_haskell_var_name(s));
 }
 
 string lambda::print() const {

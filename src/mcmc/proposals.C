@@ -543,7 +543,7 @@ double move_scale_branch(Probability_Model& P)
 {
   Parameters& PP = dynamic_cast<Parameters&>(P);
 
-  int index = PP.find_parameter("lambda_scale_branch");
+  int index = PP.find_parameter("lambdaScaleBranch");
 
   Int scale_branch = PP.get_parameter_value_as<Int>(index);
 
@@ -582,7 +582,7 @@ double move_subst_type_branch(Probability_Model& P)
   int B = PP.T->n_branches();
   for(int b=0;b<B;b++)
   {
-    int index = P.find_parameter("branch_cat" + convertToString(b+1));
+    int index = P.find_parameter("branchCat" + convertToString(b+1));
     int cat = P.get_parameter_value_as<Int>(index);
     if (cat == 1)
     {
@@ -597,8 +597,8 @@ double move_subst_type_branch(Probability_Model& P)
     if (new_branch >= which_branch)
       new_branch++;
 
-    int index1 = P.find_parameter("branch_cat" + convertToString(which_branch+1));
-    int index2 = P.find_parameter("branch_cat" + convertToString(new_branch+1));
+    int index1 = P.find_parameter("branchCat" + convertToString(which_branch+1));
+    int index2 = P.find_parameter("branchCat" + convertToString(new_branch+1));
 
     P.set_parameter_value(index1, object_ref(Int(0)));
     P.set_parameter_value(index2, object_ref(Int(1)));

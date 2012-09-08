@@ -1212,7 +1212,7 @@ void set_lambda_scale_branch_parameters(Parameters& P, const variables_map& args
     b = T.directed_branch(b).undirected_name();
       
     // Get a list of all parameters with names ending in lambda_scale_branch
-    vector<int> indices = parameters_with_extension(P,"lambda_scale_branch");
+    vector<int> indices = parameters_with_extension(P,"lambdaScaleBranch");
 
     // Set the parameters to the  correct value.
     object_ref B = Int(b);
@@ -1232,7 +1232,7 @@ void set_lambda_scale_branch_parameters(Parameters& P, const variables_map& args
     }
 
     // Get a list of all parameters with names ending in lambda_scale_branch
-    vector<int> indices = parameters_with_extension(P,"lambda_scale_branch");
+    vector<int> indices = parameters_with_extension(P,"lambdaScaleBranch");
 
     // Set the parameters to the  correct value.
     object_ref B = Int(bb);
@@ -1265,7 +1265,7 @@ void set_foreground_branches(Parameters& P)
 
       int foreground_level = convertTo<int>( boost::any_cast<string>( value) );
 
-      P.set_parameter_value( P.find_parameter("branch_cat"+convertToString(b+1)), object_ref(Int(foreground_level)));
+      P.set_parameter_value( P.find_parameter("branchCat"+convertToString(b+1)), object_ref(Int(foreground_level)));
       std::cerr<<"Setting branch '"<<b<<"' to foreground level "<<foreground_level<<"\n";;
     }
   }

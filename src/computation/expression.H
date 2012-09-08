@@ -83,7 +83,7 @@ struct parameter: public Object
   
   int type() const {return parameter_type;}
 
-  parameter(const std::string& s):parameter_name(s) { }
+  parameter(const std::string& s);
 };
 
 /// a de Bruijn indexed variable 

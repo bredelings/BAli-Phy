@@ -251,8 +251,8 @@ namespace substitution
 
   formula_expression_ref TN_Model(const alphabet& a)
   {
-    formula_expression_ref kappa1 = def_parameter("TN.kappa(pur)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
-    formula_expression_ref kappa2 = def_parameter("TN.kappa(pyr)", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
+    formula_expression_ref kappa1 = def_parameter("TN.kappaPur", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
+    formula_expression_ref kappa2 = def_parameter("TN.kappaPyr", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
 
     return (TN, a, kappa1, kappa2);
   }
@@ -297,12 +297,12 @@ namespace substitution
 
   formula_expression_ref GTR_Model(const alphabet& a)
   {
-    formula_expression_ref AG = def_parameter("GTR.AG", 2.0/8, between(0.0,1.0));
-    formula_expression_ref AT = def_parameter("GTR.AT", 1.0/8, between(0.0,1.0));
-    formula_expression_ref AC = def_parameter("GTR.AC", 1.0/8, between(0.0,1.0));
-    formula_expression_ref GT = def_parameter("GTR.GT", 1.0/8, between(0.0,1.0));
-    formula_expression_ref GC = def_parameter("GTR.GC", 1.0/8, between(0.0,1.0));
-    formula_expression_ref TC = def_parameter("GTR.TC", 2.0/8, between(0.0,1.0));
+    formula_expression_ref AG = def_parameter("GTR.ag", 2.0/8, between(0.0,1.0));
+    formula_expression_ref AT = def_parameter("GTR.at", 1.0/8, between(0.0,1.0));
+    formula_expression_ref AC = def_parameter("GTR.ac", 1.0/8, between(0.0,1.0));
+    formula_expression_ref GT = def_parameter("GTR.gt", 1.0/8, between(0.0,1.0));
+    formula_expression_ref GC = def_parameter("GTR.gc", 1.0/8, between(0.0,1.0));
+    formula_expression_ref TC = def_parameter("GTR.tc", 2.0/8, between(0.0,1.0));
 
     formula_expression_ref R = (GTR, a, AG, AT, AC, GT, GC, TC);
 

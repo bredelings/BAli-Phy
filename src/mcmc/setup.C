@@ -312,8 +312,8 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.HKY.kappa",     "kappa_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.rho",     "rho_scale_sigma",  0.2,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.TN.kappa(pur)", "kappa_scale_sigma",  0.3,  MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.TN.kappa(pyr)", "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.TN.kappaPur", "kappa_scale_sigma",  0.3,  MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.TN.kappaPyr", "kappa_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.M0.omega",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
 	                                        "*.M2.omega",  "omega_scale_sigma",  0.3,  MH_moves);
@@ -326,13 +326,13 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, log_scaled(Between(0,20,shift_cauchy)),
 	                                        "*.M8b.omega3",  "omega_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, Between(0,1,shift_cauchy),   "*.INV.p",         "INV.p_shift_sigma", 0.03, MH_moves);
-  add_MH_move(P, Between(0,1,shift_cauchy),   "*.beta.mu",         "beta.mu_shift_sigma", 0.03, MH_moves);
+  add_MH_move(P, Between(0,1,shift_cauchy),   "*.Beta.mu",         "beta.mu_shift_sigma", 0.03, MH_moves);
   add_MH_move(P, Between(0,1,shift_cauchy),   "*.f",              "f_shift_sigma",      0.1,  MH_moves);
   add_MH_move(P, Between(0,1,shift_cauchy),   "*.g",              "g_shift_sigma",      0.1,  MH_moves);
   add_MH_move(P, Between(0,1,shift_cauchy),   "*.h",              "h_shift_sigma",      0.1,  MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.gamma.sigma/mu","gamma.sigma_scale_sigma",  0.25, MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "*.beta.Var/mu", "beta.Var_scale_sigma",  0.25, MH_moves);
-  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.log-normal.sigma/mu","log-normal.sigma_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,0,shift_cauchy)),    "*.Beta.varOverMu", "beta.Var_scale_sigma",  0.25, MH_moves);
+  add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.LogNormal.sigma_over_mu","log-normal.sigma_scale_sigma",  0.25, MH_moves);
   MH_moves.add(4,MCMC::SingleMove(scale_means_only,
 				  "scale_means_only", {/*FIXME*/}, "mean")
 		      );
@@ -342,7 +342,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, Between(-40,0,shift_cauchy), "*.lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
   add_MH_move(P, shift_epsilon,               "*.epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
 
-  add_MH_move(P, Between(-20,20,shift_cauchy), "lambda_scale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+  add_MH_move(P, Between(-20,20,shift_cauchy), "lambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
 
   // FIXME - this might not work very well until I make these auto-tuning
   vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Dirichlet");
@@ -475,10 +475,10 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "*.f", slice_moves);
   add_slice_moves(P, "*.g", slice_moves);
   add_slice_moves(P, "*.h", slice_moves);
-  add_slice_moves(P, "*.beta.Var/mu", slice_moves);
-  add_slice_moves(P, "*.gamma.sigma/mu", slice_moves);
-  add_slice_moves(P, "*.beta.sigma/mu", slice_moves);
-  add_slice_moves(P, "*.log-normal.sigma/mu", slice_moves);
+  add_slice_moves(P, "*.Beta.varOverMu", slice_moves);
+  add_slice_moves(P, "*.Gamma.sigmaOverMu", slice_moves);
+  add_slice_moves(P, "*.Beta.sigmaOverMu", slice_moves);
+  add_slice_moves(P, "*.LogNormal.sigmaOverMu", slice_moves);
   */
 
   // imodel parameters
@@ -486,7 +486,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "*.lambda", slice_moves, 10);
   add_slice_moves(P, "*.epsilon", slice_moves,transform_epsilon,inverse_epsilon, 10);
 
-  add_slice_moves(P, "lambda_scale", slice_moves, 10);
+  add_slice_moves(P, "lambdaScale", slice_moves, 10);
   add_slice_moves(P, "*.M3.omega*", slice_moves);
 
   vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Dirichlet");
@@ -715,12 +715,12 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   }
 
   {
-    int index = P.find_parameter("lambda_scale_branch");
+    int index = P.find_parameter("lambdaScaleBranch");
     if (index != -1 and (P.get_parameter_value_as<Int>(index) != -1 or P.keys.count("lambda_search_all")))
     {
       P.set_parameter_value(index, object_ref(Int(0)));
       Generic_Proposal m(move_scale_branch,{index});
-      parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_lambda_scale_branch"));
+      parameter_moves.add(1.0, MCMC::MH_Move(m,"sample_lambdaScaleBranch"));
     }
   }
 
