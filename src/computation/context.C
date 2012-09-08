@@ -1,3 +1,4 @@
+#undef NDEBUG
 #include "computation/context.H"
 #include "prelude.H"
 #include "let-float.H"
@@ -324,6 +325,9 @@ int context::find_parameter(const string& s) const
 
 int context::add_parameter(const string& name)
 {
+  if (not is_haskell_var_name(name))
+    throw myexception()<<"Parameter name '"<<name<<"' is not a Haskell qualified variable name";
+
   assert(name.size() != 0);
   assert(find_parameter(name) == -1);
 
