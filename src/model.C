@@ -952,13 +952,7 @@ string show_probability_expression(const expression_ref& E)
   string prob_exp;
   {
     expression_ref rand_var = results[1];
-    if (is_exactly(rand_var->head,":"))
-    {
-      vector<expression_ref> rand_vars = get_ref_vector_from_list(rand_var);
-      prob_exp += get_tuple(rand_vars)->print();
-    }
-    else
-      prob_exp += rand_var->print();
+    prob_exp += rand_var->print();
   }
   
   prob_exp += " ~ " + string(*name);
