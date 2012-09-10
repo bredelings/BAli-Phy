@@ -215,6 +215,8 @@ public:
   /// the prior for the model, on the same scale as proposal densities
   virtual efloat_t prior() const;
 
+  const Program& get_Program() const {return C.get_Program();}
+
   /// Names of the parameters
   std::string parameter_name(int i) const;
   void rename_parameter(int i, const std::string& s);

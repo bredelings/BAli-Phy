@@ -9,8 +9,36 @@ using std::map;
 using std::string;
 using std::vector;
 
-// Unknown type
-expression_ref unknown_type = constructor("?",0);
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, int i2, int i3, fixity_t f)
+  :name(s), symbol_type(st), arity(i2), precedence(i3), fixity(f)
+{ }
+
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, int i2, int i3, fixity_t f, const expression_ref& b)
+  :name(s), symbol_type(st), arity(i2), precedence(i3), fixity(f), body(b)
+{ }
+
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, int i2, int i3, fixity_t f, const expression_ref& b, const expression_ref& t)
+  :name(s), symbol_type(st), arity(i2), precedence(i3), fixity(f), body(b), type(t)
+{ }
+
+symbol_info Program::get_operator(const string& name) const
+{
+  auto s = symbols.find(name);
+  if (s == symbols.end()) throw myexception()<<"Cannot find symbol '"<<name<<"'";
+
+  if (s->second.arity != 2) throw myexception()<<"Operator '"<<name<<"' does not have arity 2!";
+
+  symbol_info S = s->second;
+
+  // An operator of undefined precedence is treated as if it has the highest precedence
+  if (S.precedence == -1) 
+  {
+    S.precedence = 9;
+    S.fixity = non_fix;
+  }
+
+  return S;
+}
 
 void parse_combinator_application(const expression_ref& E, string& name, vector<expression_ref>& patterns)
 {
@@ -60,26 +88,41 @@ Program& Program::operator+=(const Def& D)
   return *this;
 }
 
+Program& Program::operator+=(const symbol_info& S)
+{
+  auto loc = symbols.find(S.name);
+  if (loc != symbols.end())
+    throw myexception()<<"Can't add symbol with name '"<<S.name<<"': that name is already used!";
+
+  symbols[S.name] = S;
+  return *this;
+}
+
 Program& Program::operator+=(const Program& P)
 {
-  for(const auto& f: P.functions)
-    def_function(f.first, f.second);
+  for(const auto& s: P.symbols)
+    (*this) += s.second;
 
   return *this;
 }
 
-void Program::def_function(const string& name, const expression_ref& E)
+void Program::def_function(const std::string& name, int arity, int precedence, fixity_t f, const expression_ref& body, const expression_ref& type)
 {
-  auto loc = functions.find(name);
-  if (loc != functions.end())
+  auto loc = symbols.find(name);
+  if (loc != symbols.end())
     throw myexception()<<"Can't add function with name '"<<name<<"': that name is already used!";
 
-  functions[name] = E;
+  (*this) += symbol_info{name, variable_symbol, arity, precedence, f, body, type};
 }
 
-void Program::def_parameter(const string& name)
+void Program::def_function(const std::string& name, int arity, int precedence, fixity_t f, const expression_ref& body)
 {
-  def_function(name, parameter(name));
+  def_function(name, arity, precedence, f, body, {});
+}
+
+void Program::def_function(const std::string& name, const expression_ref& body)
+{
+  def_function(name, -1, -1, unknown_fix, body, {});
 }
 
 void Program::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
@@ -105,8 +148,8 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
 
 bool Program::is_declared(const std::string& name) const
 {
-  auto loc = functions.find(name);
-  if (loc == functions.end())
+  auto loc = symbols.find(name);
+  if (loc == symbols.end())
     return false;
   else
     return true;
@@ -114,20 +157,24 @@ bool Program::is_declared(const std::string& name) const
 
 expression_ref Program::get_function(const std::string& name) const
 {
-  auto loc = functions.find(name);
-  if (loc == functions.end())
+  auto loc = symbols.find(name);
+  if (loc == symbols.end())
     throw myexception()<<"Can't find function of name '"<<name<<"'";
 
-  return loc->second;
+  return loc->second.body;
 }
 
 std::ostream& operator<<(std::ostream& o, const Program& D)
 {
-  for(const auto& f: D.functions)
+  for(const auto& s: D.symbols)
   {
-    o<<f.first<<" = "<<f.second<<")\n";
-    o<<f.first<<" = "<<let_float(f.second)<<")";
-    o<<"\n";
+    const symbol_info& S = s.second;
+    if (S.body)
+    {
+      o<<S.name<<" = "<<S.body<<")\n";
+      o<<S.name<<" = "<<let_float(S.body)<<")\n";
+      o<<"\n";
+    }
   }
   return o;
 }

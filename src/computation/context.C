@@ -328,6 +328,8 @@ int context::add_parameter(const string& name)
   if (not is_haskell_var_name(name))
     throw myexception()<<"Parameter name '"<<name<<"' is not a Haskell qualified variable name";
 
+  (*P.modify()) += symbol_info{name, parameter_symbol, -1, -1, unknown_fix, parameter(name)};
+
   assert(name.size() != 0);
   assert(find_parameter(name) == -1);
 
@@ -479,23 +481,30 @@ context& context::operator+=(const Def& D)
 context& context::operator+=(const Program& P2)
 {
   // Give each identifier a pointer to an unused location
-  for(const auto &D: P2.functions)
+  for(const auto& s: P2.symbols)
   {
-    if (not identifiers().count(D.first))
-      add_identifier(D.first);
+    const symbol_info& S = s.second;
+
+    if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+
+    if (not identifiers().count(S.name))
+      add_identifier(S.name);
   }
 
   // Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-  for(const auto& D: P2.functions)
+  for(const auto& s: P2.symbols)
   {
+    const symbol_info& S = s.second;
+
+    if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+
     // get the root for each identifier
-    string name = D.first;
-    map<string, root_t>::iterator loc = identifiers().find(name);
+    map<string, root_t>::iterator loc = identifiers().find(S.name);
     assert(loc != identifiers().end());
     root_t r = loc->second;
     int R = *r;
 
-    expression_ref F = P2.get_function(name);
+    expression_ref F = P2.get_function(S.name);
 
     assert(R != -1);
     set_C(R, preprocess(F) );

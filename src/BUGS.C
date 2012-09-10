@@ -675,48 +675,48 @@ void add_BUGS(const Parameters& P, const string& filename)
 
   std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
 
-  module m;
+  Program p;
 
-  m.symbols["!!"] = symbol_info{string("!!"),0,2,9,left_fix};
-  m.symbols["."] = symbol_info{string("."),0,2,9,right_fix};
+  p.symbols["!!"] = symbol_info{string("!!"), variable_symbol,2,9,left_fix};
+  p.symbols["."] = symbol_info{string("."), variable_symbol,2,9,right_fix};
 
-  m.symbols["^"] = {"^",0,2,8,right_fix};
-  m.symbols["^^"] = {"^^",0,2,8,right_fix};
-  m.symbols["**"] = {"**",0,2,8,right_fix};
+  p.symbols["^"] = {"^", variable_symbol,2,8,right_fix};
+  p.symbols["^^"] = {"^^", variable_symbol,2,8,right_fix};
+  p.symbols["**"] = {"**", variable_symbol,2,8,right_fix};
 
-  m.symbols["*"] = {"*",0,2,7,left_fix};
-  m.symbols["/"] = {"/",0,2,7,left_fix};
-  m.symbols["div"] = {"div",0,2,7,left_fix};
-  m.symbols["mod"] = {"mod",0,2,7,left_fix};
-  m.symbols["rem"] = {"rem",0,2,7,left_fix};
-  m.symbols["quot"] = {"quot",0,2,7,left_fix};
+  p.symbols["*"] = {"*", variable_symbol,2,7,left_fix};
+  p.symbols["/"] = {"/", variable_symbol,2,7,left_fix};
+  p.symbols["div"] = {"div", variable_symbol,2,7,left_fix};
+  p.symbols["mod"] = {"mod", variable_symbol,2,7,left_fix};
+  p.symbols["rem"] = {"rem", variable_symbol,2,7,left_fix};
+  p.symbols["quot"] = {"quot", variable_symbol,2,7,left_fix};
 
-  m.symbols["+"] = {"+",0,2,6,left_fix};
-  m.symbols["-"] = {"-",0,2,6,left_fix};
+  p.symbols["+"] = {"+", variable_symbol,2,6,left_fix};
+  p.symbols["-"] = {"-", variable_symbol,2,6,left_fix};
 
-  m.symbols[":"] = {":",1,2,5,right_fix};
-  m.symbols["++"] = {"++",0,2,5,right_fix};
+  p.symbols[":"] = {":", constructor_symbol ,2,5,right_fix};
+  p.symbols["++"] = {"++", variable_symbol,2,5,right_fix};
 
-  m.symbols["=="] = {"==",0,2,5,non_fix};
-  m.symbols["/="] = {"/=",0,2,5,non_fix};
-  m.symbols["<"] = {"<",0,2,5,non_fix};
-  m.symbols["<="] = {"<=",0,2,5,non_fix};
-  m.symbols[">"] = {">",0,2,5,non_fix};
-  m.symbols[">="] = {">=",0,2,5,non_fix};
+  p.symbols["=="] = {"==", variable_symbol,2,5,non_fix};
+  p.symbols["/="] = {"/=", variable_symbol,2,5,non_fix};
+  p.symbols["<"] = {"<", variable_symbol,2,5,non_fix};
+  p.symbols["<="] = {"<=", variable_symbol,2,5,non_fix};
+  p.symbols[">"] = {">", variable_symbol,2,5,non_fix};
+  p.symbols[">="] = {">=", variable_symbol,2,5,non_fix};
 
-  m.symbols["elem"] = {"elem",0,2,4,non_fix};
-  m.symbols["notElem"] = {"notElem",0,2,4,non_fix};
+  p.symbols["elem"] = {"elem", variable_symbol,2,4,non_fix};
+  p.symbols["notElem"] = {"notElem", variable_symbol,2,4,non_fix};
 
-  m.symbols["&&"] = {"&&",0,2,3,right_fix};
+  p.symbols["&&"] = {"&&", variable_symbol,2,3,right_fix};
 
-  m.symbols["||"] = {"&&",0,2,2,right_fix};
+  p.symbols["||"] = {"&&", variable_symbol,2,2,right_fix};
 
-  m.symbols[">>"] = {">>",0,2,1,left_fix};
-  m.symbols[">>="] = {">>=",0,2,1,left_fix};
+  p.symbols[">>"] = {">>", variable_symbol,2,1,left_fix};
+  p.symbols[">>="] = {">>=", variable_symbol,2,1,left_fix};
 
-  m.symbols["$"] = {"$",0,2,0,right_fix};
-  m.symbols["$!"] = {"$!",0,2,0,right_fix};
-  m.symbols["seq"] = {"seq",0,2,0,right_fix};
+  p.symbols["$"] = {"$", variable_symbol,2,0,right_fix};
+  p.symbols["$!"] = {"$!", variable_symbol,2,0,right_fix};
+  p.symbols["seq"] = {"seq", variable_symbol,2,0,right_fix};
 
   for(const auto& line: lines)
   {
@@ -735,9 +735,9 @@ void add_BUGS(const Parameters& P, const string& filename)
 	  std::cerr<<", ";
       }
       std::cerr<<")\n";
-      cmd.var = postprocess(m, cmd.var);
+      cmd.var = postprocess(p, cmd.var);
       for(auto& e: cmd.arguments)
-	e = postprocess(m,e);
+	e = postprocess(p,e);
       std::cerr<<"        processed: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
       for(int i=0;i<cmd.arguments.size();i++)
       {

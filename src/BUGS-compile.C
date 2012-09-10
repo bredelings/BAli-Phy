@@ -1,4 +1,4 @@
-#include "BUGS.H"
+#include "computation/program.H"
 #include <deque>
 
 using std::string;
@@ -11,26 +11,10 @@ using std::deque;
 // 4. Add ability to change the prior on variables.
 // 5. Add ability to add new variables.
 
-symbol_info::symbol_info(const std::string& s, int i1, int i2, int i3, fixity_t f)
-  :name(s), type(i1), arity(i2), precedence(i3), fixity(f)
-{ }
-
-symbol_info module::get_operator(const string& name) const
-{
-  auto s = symbols.find(name);
-  if (s == symbols.end()) throw myexception()<<"Cannot find symbol '"<<name<<"'";
-
-  if (s->second.precedence == -1) throw myexception()<<"Symbol '"<<name<<"' is not an operator.";
-
-  if (s->second.arity != 2) throw myexception()<<"Operator '"<<name<<"' does not have arity 2!";
-
-  return s->second;
-}
-
-expression_ref infix_parse(const module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
+expression_ref infix_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
-expression_ref infix_parse_neg(const module& m, const symbol_info& op1, deque<expression_ref>& T)
+expression_ref infix_parse_neg(const Program& m, const symbol_info& op1, deque<expression_ref>& T)
 {
   assert(not T.empty());
 
@@ -42,7 +26,7 @@ expression_ref infix_parse_neg(const module& m, const symbol_info& op1, deque<ex
   {
     if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
-    E1 = infix_parse_neg(m, symbol_info("-",0,2,6,left_fix), T);
+    E1 = infix_parse_neg(m, symbol_info("-",variable_symbol,2,6,left_fix), T);
 
     return infix_parse(m, op1, (var("negate"),E1), T);
   }
@@ -52,7 +36,7 @@ expression_ref infix_parse_neg(const module& m, const symbol_info& op1, deque<ex
 }
 
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
-expression_ref infix_parse(const module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
+expression_ref infix_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
 {
   if (T.empty())
     return E1;
@@ -76,15 +60,15 @@ expression_ref infix_parse(const module& m, const symbol_info& op1, const expres
   }
 }
 
-expression_ref postprocess_infix(const module& m, const vector<expression_ref>& T)
+expression_ref postprocess_infix(const Program& m, const vector<expression_ref>& T)
 {
   deque<expression_ref> T2;
   T2.insert(T2.begin(), T.begin(), T.end());
 
-  return infix_parse_neg(m, {"",0,2,-1,non_fix}, T2);
+  return infix_parse_neg(m, {"",variable_symbol,2,-1,non_fix}, T2);
 }
 
-expression_ref postprocess(const module& m, const expression_ref& E)
+expression_ref postprocess(const Program& m, const expression_ref& E)
 {
   vector<expression_ref> v = E->sub;
   for(auto& e: v)
