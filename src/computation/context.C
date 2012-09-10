@@ -471,7 +471,9 @@ closure context::translate_refs(closure&& C) const
 
 context& context::operator+=(const Def& D)
 {
-  Program P2;
+  // FIXME .. this allows adding symbols outside of any module, I guess...
+  //          It seems somewhat dubious.
+  Program P2("");
   P2 += D;
   (*this) += P2;
 
@@ -528,7 +530,7 @@ context& context::operator=(const context& C)
 
 context::context()
   :memory(new reg_heap()),
-   P(new Program()),
+   P(new Program("")),
    token(memory->get_unused_token())
 { 
   (*this) += get_Prelude();
@@ -536,7 +538,7 @@ context::context()
 
 context::context(const vector<expression_ref>& N)
   :memory(new reg_heap()),
-   P(new Program()),
+   P(new Program("")),
    token(memory->get_unused_token())
 {
   (*this) += get_Prelude();

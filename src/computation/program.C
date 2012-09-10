@@ -164,6 +164,11 @@ expression_ref Program::get_function(const std::string& name) const
   return loc->second.body;
 }
 
+// A name of "" means that we are defining a top-level program, or a piece of a top-level program.
+Program::Program(const std::string& n)
+  :name(n)
+{ }
+
 std::ostream& operator<<(std::ostream& o, const Program& D)
 {
   for(const auto& s: D.symbols)

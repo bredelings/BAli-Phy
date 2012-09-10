@@ -31,7 +31,7 @@ const expression_ref UnwrapDD = var("UnwrapDD");
 
 Program make_Prelude()
 {
-  Program P;
+  Program P("Prelude");
 
   // foldr f z []  = z
   // foldr f z x:xs = (f x (foldr f z xs))

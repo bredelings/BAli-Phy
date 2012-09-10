@@ -675,7 +675,7 @@ void add_BUGS(const Parameters& P, const string& filename)
 
   std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
 
-  Program p;
+  Program p("");
 
   p.symbols["!!"] = symbol_info{string("!!"), variable_symbol,2,9,left_fix};
   p.symbols["."] = symbol_info{string("."), variable_symbol,2,9,right_fix};

@@ -45,7 +45,7 @@ const expression_ref MixtureModels = lambda_expression( constructor("MixtureMode
 
 Program SModel_Functions()
 {
-  Program P;
+  Program P("");
 
   expression_ref times = lambda_expression( Multiply() );
   expression_ref plus = lambda_expression( Add() );

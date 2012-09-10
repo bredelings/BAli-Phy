@@ -40,7 +40,11 @@ std::ostream& operator<<(std::ostream&, const Def&);
 
 struct Program
 {
+  std::string name;
+
   std::map<std::string, symbol_info> symbols;
+
+  std::map<std::string, std::string> aliases;
 
   /// Add a function
   void def_function(const std::string& name, int arity, int precedence, fixity_t f, const expression_ref& b, const expression_ref& type);
@@ -60,11 +64,15 @@ struct Program
 
   Program& operator+=(const Program&);
 
+  // void import(const std::string&);
+
   bool is_declared(const std::string&) const;
   
   expression_ref get_function(const std::string&) const;
 
   symbol_info get_operator(const std::string& name) const;
+
+  Program(const std::string&);
 };
 
 std::ostream& operator<<(std::ostream&, const Program&);
