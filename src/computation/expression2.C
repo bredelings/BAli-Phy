@@ -394,7 +394,7 @@ int main()
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  expression_ref test17 =  (sum_i,(take,y,(iterate,(plus,x),z)));
+  expression_ref test17 =  (sum_,(take,y,(iterate,(plus,x),z)));
 
   C.add_compute_expression( test17 );
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";

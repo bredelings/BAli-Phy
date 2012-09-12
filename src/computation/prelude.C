@@ -10,7 +10,7 @@ const expression_ref fmap1 = var("fmap1");
 const expression_ref fmap2 = var("fmap2");
 const expression_ref take = var("take");
 const expression_ref iterate = var("iterate");
-const expression_ref sum_i = var("sumi");
+const expression_ref sum_ = var("sum");
 const expression_ref If = var("If");
 const expression_ref fst = var("fst");
 const expression_ref snd = var("snd");
@@ -81,8 +81,8 @@ Program make_Prelude()
   // sum [] = 0
   // sum h:t = h+(sum t)
   expression_ref plus = lambda_expression( Add() );
-  P += Def( (sum_i, ListEnd), 0)
-          ( (sum_i, v1&v2), v1 + (sum_i, v2) );
+  P += Def( (sum_, ListEnd), 0)
+          ( (sum_, v1&v2), v1 + (sum_, v2) );
 
   expression_ref times = lambda_expression(Multiply());
   expression_ref to_double = lambda_expression( Conversion<int,double>() );

@@ -12,7 +12,7 @@ extern const expression_ref fmap2;
 extern const expression_ref average;
 extern const expression_ref take;
 extern const expression_ref iterate;
-extern const expression_ref sum_i;
+extern const expression_ref sum_;
 extern const expression_ref If;
 extern const expression_ref fst;
 extern const expression_ref snd;

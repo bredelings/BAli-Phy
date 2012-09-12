@@ -47,9 +47,6 @@ Program SModel_Functions()
 {
   Program P("SModel");
 
-  expression_ref times = lambda_expression( Multiply() );
-  expression_ref plus = lambda_expression( Add() );
-
   // MultiParameter f (DiscreteDistribution d) = MixtureModel(DiscreteDistribution (fmap2 f d))
   P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(fmap2,v1,v2))));
 
@@ -59,7 +56,7 @@ Program SModel_Functions()
   // scale x (ReversibleMarkov a s q pi l t) = (ReversibleMarkov a s q p l (x * t))
   // scale x (F81 a s a' pi)= (F81 a s a'*x pi) ??
   // scale x (MixtureModel (DiscreteDistribution l)) s= (MixtureModel (DiscreteDistribution (fmap2,scale(s),l))) ??
-  P += Def( (scale,v0,(ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)),(ReversibleMarkov,v1,v2,v3,v4,v5,(times,v0,v6),(times,v0,v7)) );
+  P += Def( (scale,v0,(ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)),(ReversibleMarkov,v1,v2,v3,v4,v5, v0*v6,v0*v7) );
 
   // rate (ReversibleMarkovModel a smap q vector<pi> l t) = t*(get_equilibrium_rate a smap q pi)
   // rate (MixtureModel (DiscreteDistribution l) ) = average (fmap2 rate l)
