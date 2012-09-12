@@ -4,6 +4,7 @@
 #include <map>
 #include "io.H"
 #include "util.H"
+#include "computation/program.H"
 
 using std::vector;
 using std::map;

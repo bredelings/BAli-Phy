@@ -4,6 +4,8 @@
 #include "computation/model_notes.H"
 #include "cow-ptr.H"
 
+class Program;
+
 /// This class contains only compute expressions, parameters, and names for the compute expressions
 class context: public Object, public Model_Notes
 {
