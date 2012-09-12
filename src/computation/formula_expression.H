@@ -4,7 +4,8 @@
 #include "expression.H"
 #include <iostream>
 #include "model_notes.H"
-#include "computation/program.H"
+
+class Program;
 
 class formula_expression_ref: public Model_Notes
 {
