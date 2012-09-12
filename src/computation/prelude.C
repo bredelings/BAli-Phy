@@ -84,7 +84,6 @@ Program make_Prelude()
   P += Def( (sum_, ListEnd), 0)
           ( (sum_, v1&v2), v1 + (sum_, v2) );
 
-  expression_ref times = lambda_expression(Multiply());
   expression_ref to_double = lambda_expression( Conversion<int,double>() );
 
   // ExtendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 \q -> q*(1.0-p) d)
@@ -99,7 +98,7 @@ Program make_Prelude()
   P += Def( (MixDiscreteDistributions, v0, v1) , (DiscreteDistribution, (MixDiscreteDistributions_, v0, (fmap,UnwrapDD,v1))));
 
   // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
-  P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(v1+(times,(fst,v2),(snd,v2)))), 0.0, v3) );
+  P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(v1+(fst,v2)*(snd,v2))), 0.0, v3) );
 
   // UniformDiscretize q n = fmap /\i.(1/n, q ((2*i+1)/n) ) (take n (iterate (+1) 0) )
   // [ We could do this as two nested fmaps, instead. ]
