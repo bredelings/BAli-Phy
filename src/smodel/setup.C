@@ -34,6 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/operations.H"
 #include "distribution-operations.H"
 #include "computation/prelude.H"
+#include "computation/program.H"
 #include "smodel/functions.H"
 
 using std::vector;

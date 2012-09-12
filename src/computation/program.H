@@ -54,13 +54,16 @@ struct Def
 
 std::ostream& operator<<(std::ostream&, const Def&);
 
-struct Program
+class Program
 {
-  std::string name;
-
   std::map<std::string, symbol_info> symbols;
 
   std::map<std::string, std::string> aliases;
+
+public:
+  std::string name;
+
+  const std::map<std::string, symbol_info>& get_symbols() const {return symbols;}
 
   /// Add a function
   void def_function(const std::string& name, int arity, int precedence, fixity_t f, const expression_ref& b, const expression_ref& type);

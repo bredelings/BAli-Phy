@@ -433,7 +433,7 @@ Program::Program(const std::string& n)
 
 std::ostream& operator<<(std::ostream& o, const Program& D)
 {
-  for(const auto& s: D.symbols)
+  for(const auto& s: D.get_symbols())
   {
     const symbol_info& S = s.second;
     if (S.body)

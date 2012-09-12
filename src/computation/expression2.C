@@ -9,6 +9,7 @@
 #include "distribution-operations.H"
 #include "context.H"
 #include "prelude.H"
+#include "program.H"
 #include "let-float.H"
 
 using std::vector;

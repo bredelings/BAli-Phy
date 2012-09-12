@@ -1,6 +1,7 @@
 #undef NDEBUG
 #include "computation/context.H"
 #include "prelude.H"
+#include "program.H"
 #include "let-float.H"
 
 using std::string;
@@ -476,7 +477,7 @@ context& context::operator+=(const Program& P2)
   P.modify()->import_module(P2, P2.name, false);
 
   // Give each identifier a pointer to an unused location
-  for(const auto& s: P2.symbols)
+  for(const auto& s: P2.get_symbols())
   {
     const symbol_info& S = s.second;
 
@@ -487,7 +488,7 @@ context& context::operator+=(const Program& P2)
   }
 
   // Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-  for(const auto& s: P2.symbols)
+  for(const auto& s: P2.get_symbols())
   {
     const symbol_info& S = s.second;
 

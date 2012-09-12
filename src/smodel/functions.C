@@ -1,4 +1,5 @@
 #include "computation/prelude.H"
+#include "computation/program.H"
 #include "computation/operations.H"
 #include "smodel/functions.H"
 #include "computation/graph_register.H"

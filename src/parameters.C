@@ -37,6 +37,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/formula_expression.H"
 #include "smodel/operations.H"
 #include "computation/prelude.H"
+#include "computation/program.H"
 #include "computation/operations.H"
 #include "exponential.H"
 #include "smodel/functions.H"

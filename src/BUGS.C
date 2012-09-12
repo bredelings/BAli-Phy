@@ -4,6 +4,7 @@
 #include <map>
 #include "io.H"
 #include "util.H"
+#include "computation/prelude.H"
 #include "computation/program.H"
 
 using std::vector;
@@ -676,48 +677,7 @@ void add_BUGS(const Parameters& P, const string& filename)
 
   std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
 
-  Program p("Test");
-
-  p.symbols["!!"] = symbol_info{string("!!"), variable_symbol, global_scope,2,9,left_fix};
-  p.symbols["."] = symbol_info{string("."), variable_symbol, global_scope,2,9,right_fix};
-
-  p.symbols["^"] = {"^", variable_symbol, global_scope,2,8,right_fix};
-  p.symbols["^^"] = {"^^", variable_symbol, global_scope,2,8,right_fix};
-  p.symbols["**"] = {"**", variable_symbol, global_scope,2,8,right_fix};
-
-  p.symbols["*"] = {"*", variable_symbol, global_scope,2,7,left_fix};
-  p.symbols["/"] = {"/", variable_symbol, global_scope,2,7,left_fix};
-  p.symbols["div"] = {"div", variable_symbol, global_scope,2,7,left_fix};
-  p.symbols["mod"] = {"mod", variable_symbol, global_scope,2,7,left_fix};
-  p.symbols["rem"] = {"rem", variable_symbol, global_scope,2,7,left_fix};
-  p.symbols["quot"] = {"quot", variable_symbol, global_scope,2,7,left_fix};
-
-  p.symbols["+"] = {"+", variable_symbol, global_scope,2,6,left_fix};
-  p.symbols["-"] = {"-", variable_symbol, global_scope,2,6,left_fix};
-
-  p.symbols[":"] = {":", constructor_symbol, global_scope,2,5,right_fix};
-  p.symbols["++"] = {"++", variable_symbol, global_scope,2,5,right_fix};
-
-  p.symbols["=="] = {"==", variable_symbol, global_scope,2,5,non_fix};
-  p.symbols["/="] = {"/=", variable_symbol, global_scope,2,5,non_fix};
-  p.symbols["<"] = {"<", variable_symbol, global_scope,2,5,non_fix};
-  p.symbols["<="] = {"<=", variable_symbol, global_scope,2,5,non_fix};
-  p.symbols[">"] = {">", variable_symbol, global_scope,2,5,non_fix};
-  p.symbols[">="] = {">=", variable_symbol, global_scope,2,5,non_fix};
-
-  p.symbols["elem"] = {"elem", variable_symbol, global_scope,2,4,non_fix};
-  p.symbols["notElem"] = {"notElem", variable_symbol, global_scope,2,4,non_fix};
-
-  p.symbols["&&"] = {"&&", variable_symbol, global_scope,2,3,right_fix};
-
-  p.symbols["||"] = {"&&", variable_symbol, global_scope,2,2,right_fix};
-
-  p.symbols[">>"] = {">>", variable_symbol, global_scope,2,1,left_fix};
-  p.symbols[">>="] = {">>=", variable_symbol, global_scope,2,1,left_fix};
-
-  p.symbols["$"] = {"$", variable_symbol, global_scope,2,0,right_fix};
-  p.symbols["$!"] = {"$!", variable_symbol, global_scope,2,0,right_fix};
-  p.symbols["seq"] = {"seq", variable_symbol, global_scope,2,0,right_fix};
+  Program p = get_Prelude();
 
   for(const auto& line: lines)
   {

@@ -1,7 +1,9 @@
 #ifndef PRELUDE_H
 #define PRELUDE_H
 
-#include "computation/program.H"
+#include "computation/expression.H"
+
+class Program;
 
 extern const expression_ref foldr;
 extern const expression_ref foldl;
