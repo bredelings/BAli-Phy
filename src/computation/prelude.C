@@ -136,6 +136,21 @@ Program make_Prelude()
   // UnwrapDD (DiscreteDistribution l) = l
   P += Def( (UnwrapDD, (DiscreteDistribution, v1)), v1 );
 
+  P.def_function("*", 2, 7, left_fix, lambda_expression( Multiply() ) );
+  P.def_function("/", 2, 7, left_fix, lambda_expression( Divide() ) );
+
+  P.def_function("+", 2, 6, left_fix, lambda_expression( Add() ) ); 
+  P.def_function("-", 2, 6, left_fix, lambda_expression( Minus() ) );
+
+  // this needs to be added as a constructor expression
+  P.def_function(":", 2, 5, right_fix, lambda_expression( right_assoc_constructor(":",2) ) );
+
+  P.def_function("==", 2, 5, non_fix, lambda_expression( Equals() ) );
+  P.def_function("<", 2, 5, non_fix, lambda_expression( LessThan() ) );
+  P.def_function(">", 2, 5, non_fix, lambda_expression( GreaterThan() ) );
+  
+  // We also a need a "set_fixity" command.
+
   /*
   p.symbols["!!"] = symbol_info{string("!!"), variable_symbol, global_scope,2,9,left_fix};
   p.symbols["."] = symbol_info{string("."), variable_symbol, global_scope,2,9,right_fix};
