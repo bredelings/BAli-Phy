@@ -4,25 +4,25 @@
 #include "computation/graph_register.H"
 #include "smodel/operations.H"
 
-const expression_ref MultiParameter = var("MultiParameter");
+const expression_ref MultiParameter = var("multiParameter");
 const expression_ref rate = var("rate");
 const expression_ref scale = var("scale");
-const expression_ref QExp = var("QExp");
-const expression_ref Q_from_S_and_R = var("Q_from_S_and_R");
-const expression_ref branch_transition_p = var("branch_transition_p");
+const expression_ref QExp = var("qExp");
+const expression_ref Q_from_S_and_R = var("qFromSandR");
+const expression_ref branch_transition_p = var("branchTransitionP");
 
-const expression_ref n_base_models = var("n_base_models");
-const expression_ref state_letters = var("state_letters");
-const expression_ref n_states = var("n_states");
-const expression_ref get_alphabet = var("get_alphabet");
+const expression_ref n_base_models = var("nBaseModels");
+const expression_ref state_letters = var("stateLetters");
+const expression_ref n_states = var("nStates");
+const expression_ref get_alphabet = var("getAlphabet");
 const expression_ref get_frequencies = var("frequencies");
-const expression_ref get_component_frequencies = var("component_frequencies");
-const expression_ref base_model = var("base_model");
+const expression_ref get_component_frequencies = var("componentFrequencies");
+const expression_ref base_model = var("baseModel");
 const expression_ref distribution = var("distribution");
 const expression_ref MultiRate = var("MultiRate");
-const expression_ref get_nth_mixture = var("get_nth_mixture");
-const expression_ref UnwrapMM = var("UnwrapMM");
-const expression_ref MixMixtureModels = var("MixMixtureModels");
+const expression_ref get_nth_mixture = var("getNthMixture");
+const expression_ref UnwrapMM = var("unwrapMM");
+const expression_ref MixMixtureModels = var("mixMixtureModels");
 
 // (ReversibleMarkov alpha state_letters q pi l t)
 const expression_ref ReversibleMarkov = lambda_expression( constructor("ReversibleMarkov", 7) );
@@ -45,7 +45,7 @@ const expression_ref MixtureModels = lambda_expression( constructor("MixtureMode
 
 Program SModel_Functions()
 {
-  Program P("");
+  Program P("SModel");
 
   expression_ref times = lambda_expression( Multiply() );
   expression_ref plus = lambda_expression( Add() );

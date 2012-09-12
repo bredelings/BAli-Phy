@@ -328,7 +328,7 @@ int context::add_parameter(const string& name)
   if (not is_haskell_var_name(name))
     throw myexception()<<"Parameter name '"<<name<<"' is not a Haskell qualified variable name";
 
-  (*P.modify()) += symbol_info{name, parameter_symbol, -1, -1, unknown_fix, parameter(name)};
+  P.modify()->declare_parameter(name);
 
   assert(name.size() != 0);
   assert(find_parameter(name) == -1);
@@ -432,7 +432,8 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
   // Replace parameters with the appropriate reg_var: of value whatever
   if (object_ptr<const var> V = is_a<var>(E))
   {
-    map<string,root_t>::const_iterator loc = identifiers().find(V->name);
+    string qualified_name = P->lookup_symbol(V->name).name;
+    auto loc = identifiers().find( qualified_name );
     if (loc == identifiers().end())
       throw myexception()<<"Can't translate undefined identifier '"<<V->name<<"' in expression!";
 
@@ -469,19 +470,11 @@ closure context::translate_refs(closure&& C) const
   return C2;
 }
 
-context& context::operator+=(const Def& D)
-{
-  // FIXME .. this allows adding symbols outside of any module, I guess...
-  //          It seems somewhat dubious.
-  Program P2("");
-  P2 += D;
-  (*this) += P2;
-
-  return *this;
-}
-
 context& context::operator+=(const Program& P2)
 {
+  // Import the symbols in P2 into our symbol table, and add aliases.
+  P.modify()->import_module(P2, P2.name, false);
+
   // Give each identifier a pointer to an unused location
   for(const auto& s: P2.symbols)
   {
@@ -512,7 +505,6 @@ context& context::operator+=(const Program& P2)
     set_C(R, preprocess(F) );
   }
 
-  (*P.modify()) += P2;
   return *this;
 }
 
@@ -530,7 +522,7 @@ context& context::operator=(const context& C)
 
 context::context()
   :memory(new reg_heap()),
-   P(new Program("")),
+   P(new Program("Main")),
    token(memory->get_unused_token())
 { 
   (*this) += get_Prelude();
@@ -538,7 +530,7 @@ context::context()
 
 context::context(const vector<expression_ref>& N)
   :memory(new reg_heap()),
-   P(new Program("")),
+   P(new Program("Main")),
    token(memory->get_unused_token())
 {
   (*this) += get_Prelude();

@@ -73,7 +73,7 @@ int formula_expression_ref::add_expression(const formula_expression_ref& R)
 
 object_ptr<const Object> formula_expression_ref::result() const
 {
-  Program P("");
+  Program P("Empty");
   return result(P);
 }
 

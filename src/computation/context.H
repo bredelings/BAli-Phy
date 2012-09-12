@@ -185,8 +185,6 @@ protected:
 
   void collect_garbage() const;
 public:
-  context& operator+=(const Def& D);
-
   context& operator+=(const Program& D);
 
   context& operator=(const context& c);

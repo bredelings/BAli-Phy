@@ -276,7 +276,7 @@ int main()
   expression_ref square = var("square");
   expression_ref myFib = var("myFib");
   {
-    Program P("");
+    Program P("Main");
     P += Def( (square,v1),(v1*v1) );
 
     P += Def( (myFib, 0), 1 )
