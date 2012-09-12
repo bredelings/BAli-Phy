@@ -378,14 +378,6 @@ Program& Program::operator+=(const Def& D)
   return *this;
 }
 
-Program& Program::operator+=(const Program& P)
-{
-  for(const auto& s: P.symbols)
-    add_symbol(s.second);
-
-  return *this;
-}
-
 void Program::def_function(const std::string& name, int arity, int precedence, fixity_t f, const expression_ref& body, const expression_ref& type)
 {
   auto loc = symbols.find(name);

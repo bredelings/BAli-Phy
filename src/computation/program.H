@@ -76,8 +76,6 @@ struct Program
 
   Program& operator+=(const Def&);
 
-  Program& operator+=(const Program&);
-
   void add_alias(const std::string&);
 
   void add_symbol(const symbol_info&, scope_t);
