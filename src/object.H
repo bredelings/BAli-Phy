@@ -237,6 +237,8 @@ public:
   POD_math<T>& operator/=(const POD_math<T>& t2) {t /= t2; return *this;}
   POD_math<T>& operator/=(const T& t2)           {t /= t2; return *this;}
 
+  POD_math<T> operator-() const {POD_math<T> t3 = *this; t3.t = -t3.t; return t3;}
+
   POD_math<T> operator+(const POD_math<T>& t2) const {POD_math<T> t3 = *this; t3+= t2; return t3;}
   POD_math<T> operator+(const T& t2)           const {POD_math<T> t3 = *this; t3+= t2; return t3;}
   POD_math<T> operator-(const POD_math<T>& t2) const {POD_math<T> t3 = *this; t3-= t2; return t3;}
