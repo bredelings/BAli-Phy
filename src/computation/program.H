@@ -103,11 +103,11 @@ public:
 
   bool is_declared(const std::string&) const;
   
-  symbol_info lookup_qualified_symbol(const std::string&) const;
+  const symbol_info& lookup_qualified_symbol(const std::string&) const;
 
-  symbol_info lookup_unqualified_symbol(const std::string&) const;
+  const symbol_info& lookup_unqualified_symbol(const std::string&) const;
 
-  symbol_info lookup_symbol(const std::string&) const;
+  const symbol_info& lookup_symbol(const std::string&) const;
 
   expression_ref get_function(const std::string&) const;
 

@@ -179,7 +179,7 @@ bool Program::is_declared(const std::string& name) const
   return is_declared_qualified(name) or is_declared_unqualified(name);
 }
 
-symbol_info Program::lookup_qualified_symbol(const std::string& name) const
+const symbol_info& Program::lookup_qualified_symbol(const std::string& name) const
 {
   if (is_declared_qualified(name))
     return symbols.find(name)->second;
@@ -187,7 +187,7 @@ symbol_info Program::lookup_qualified_symbol(const std::string& name) const
     throw myexception()<<"Qualified name '"<<name<<"' not declared.";
 }
 
-symbol_info Program::lookup_unqualified_symbol(const std::string& name) const
+const symbol_info& Program::lookup_unqualified_symbol(const std::string& name) const
 {
   if (is_qualified_symbol(name))
     throw myexception()<<"Lookup up qualified symbol '"<<name<<"' as unqualified!";
@@ -202,7 +202,7 @@ symbol_info Program::lookup_unqualified_symbol(const std::string& name) const
   return lookup_qualified_symbol(name2);
 }
 
-symbol_info Program::lookup_symbol(const std::string& name) const
+const symbol_info& Program::lookup_symbol(const std::string& name) const
 {
   if (is_qualified_symbol(name))
     return lookup_qualified_symbol(name);
