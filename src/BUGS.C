@@ -5,7 +5,6 @@
 #include "io.H"
 #include "util.H"
 #include "computation/prelude.H"
-#include "computation/program.H"
 
 using std::vector;
 using std::map;
@@ -677,8 +676,6 @@ void add_BUGS(const Parameters& P, const string& filename)
 
   std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
 
-  Program p = get_Prelude();
-
   for(const auto& line: lines)
   {
     using boost::spirit::ascii::space;
@@ -696,9 +693,9 @@ void add_BUGS(const Parameters& P, const string& filename)
 	  std::cerr<<", ";
       }
       std::cerr<<")\n";
-      cmd.var = postprocess(p, cmd.var);
+      cmd.var = postprocess(P.get_Program(), cmd.var);
       for(auto& e: cmd.arguments)
-	e = postprocess(p,e);
+	e = postprocess(P.get_Program(), e);
       std::cerr<<"        processed: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
       for(int i=0;i<cmd.arguments.size();i++)
       {
