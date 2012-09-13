@@ -415,6 +415,25 @@ struct Conversion: public Operation
   Conversion():Operation(1) {}
 };
 
+struct Negate: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Negate* clone() const {return new Negate(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Negate* E = dynamic_cast<const Negate*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "negate";}
+
+  Negate():Operation(1) {}
+};
+
 struct Add: public Operation
 {
   // The 'context' should include the knowledge of the input slots
