@@ -28,7 +28,7 @@ expression_ref infix_parse_neg(const Program& m, const symbol_info& op1, deque<e
 
     E1 = infix_parse_neg(m, symbol_info("-",variable_symbol,unknown_scope, 2,6,left_fix), T);
 
-    return infix_parse(m, op1, (var("negate"),E1), T);
+    return infix_parse(m, op1, (var("Prelude.negate"),E1), T);
   }
   // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
   else
