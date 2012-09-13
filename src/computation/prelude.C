@@ -136,7 +136,10 @@ Program make_Prelude()
   // UnwrapDD (DiscreteDistribution l) = l
   P += Def( (UnwrapDD, (DiscreteDistribution, v1)), v1 );
 
-  //  P.def_function("negate", 2, lambda_expression( Negate() ) );
+  // Not a legal operator name! P.def_constructor("()", 0);
+  // Not a legal operator name! P.def_constructor("[]", 0);
+
+  P.def_function("negate", 1, lambda_expression( Negate() ) );
 
   P.declare_fixity("!!", 9, left_fix);
   /*
