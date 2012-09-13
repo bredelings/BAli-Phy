@@ -167,6 +167,8 @@ bool Program::is_declared_qualified(const std::string& name) const
 
 bool Program::is_declared_unqualified(const std::string& name) const
 {
+  if (is_tuple_name(name)) { std::abort(); }
+
   auto loc = aliases.find(name);
   if (loc == aliases.end())
     return false;
@@ -189,6 +191,8 @@ const symbol_info& Program::lookup_qualified_symbol(const std::string& name) con
 
 const symbol_info& Program::lookup_unqualified_symbol(const std::string& name) const
 {
+  if (is_tuple_name(name)) { std::abort(); }
+
   if (is_qualified_symbol(name))
     throw myexception()<<"Lookup up qualified symbol '"<<name<<"' as unqualified!";
 
