@@ -71,11 +71,11 @@ public:
   /// Add a function
   void def_function(const std::string& name, int arity, const expression_ref& b);
 
-  /// Add a function
-  void def_function(const std::string& name, const expression_ref& b);
-
   // Add a function
   void def_function(const std::vector<expression_ref>&, const std::vector<expression_ref>&);
+
+  /// Add a constructor
+  void def_constructor(const std::string& name, int arity);
 
   Program& operator+=(const Def&);
 

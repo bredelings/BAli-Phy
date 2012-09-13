@@ -417,11 +417,6 @@ void Program::def_function(const std::string& name, int arity, const expression_
   def_function(name, arity, body, {});
 }
 
-void Program::def_function(const std::string& name, const expression_ref& body)
-{
-  def_function(name, -1, body);
-}
-
 void Program::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
   assert(patterns.size());
@@ -442,6 +437,13 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
 
   expression_ref E = ::def_function(sub_patterns, bodies);
   def_function(name, arity, E);
+}
+
+void Program::def_constructor(const std::string& s, int arity)
+{
+  symbol_info S(name+"."+s, constructor_symbol, local_scope, arity, -1, unknown_fix);
+  S.body = lambda_expression( constructor(s, arity) );
+  add_symbol( S );
 }
 
 expression_ref Program::get_function(const std::string& name) const
