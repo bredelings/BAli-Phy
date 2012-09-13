@@ -5,11 +5,26 @@ using std::string;
 using std::vector;
 using std::deque;
 
-// 1. TODO: move symbol definitions into the Program
-// 2. Define bodies for these operators in the Prelude
-// 3. Move grammar into a separate file somehow.
-// 4. Add ability to change the prior on variables.
-// 5. Add ability to add new variables.
+// 1. Add ability to change the prior on variables.
+// 2. Add ability to add new variables.
+
+// 3. Add operators for: &&, ||, not, 
+//   - Then define /= as "not x == y"
+// 4. Handle (), [], :, and (,,,,) which are not valid is_haskell_op.
+//    These should not be Prelude.{sym}.
+// 5. Change expression_refs to just define to a var("name").  (For example, seq)
+
+// 6. Run lookup_symbol on ALL names.
+// 7. Add EnumFrom, EnumFromTo, EnumFromToBy to enable parsing [1..n]
+//  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
+// 8. Enable left sections.
+// 9. Enable right sections.
+// 10. Enable list comprehensions...
+// 11. Add constructors to programs!
+// 12. Add the ability to store newtype definitions.
+// 13. Define patterns for case expressions...
+// 14. Define patterns for let expressions..
+// 15. Allow declarations...
 
 expression_ref infix_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
