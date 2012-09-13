@@ -5,6 +5,7 @@
 #include "io.H"
 #include "util.H"
 #include "computation/prelude.H"
+#include "parameters.H"
 
 using std::vector;
 using std::map;
