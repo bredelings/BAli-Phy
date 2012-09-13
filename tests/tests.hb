@@ -11,7 +11,7 @@ x ~ Normal(0:0:[],1)
 x ~ Normal(0+(0+0),1)
 x ~ Normal(0,"1")
 x ~ Normal(0+0-0,1)
-x ~ Normal(0+0-(-0),1) -- sdf
+x ~ Normal(0+0-(-0),1)
 x ~ Normal(x*y+z*w,1)
 x ~ Normal(0 0,1)
 y ~ Normal(x,1)
