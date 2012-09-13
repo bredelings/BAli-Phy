@@ -66,10 +66,10 @@ public:
   const std::map<std::string, symbol_info>& get_symbols() const {return symbols;}
 
   /// Add a function
-  void def_function(const std::string& name, int arity, int precedence, fixity_t f, const expression_ref& b, const expression_ref& type);
+  void def_function(const std::string& name, int arity, const expression_ref& b, const expression_ref& type);
 
   /// Add a function
-  void def_function(const std::string& name, int arity, int precedence, fixity_t f, const expression_ref& b);
+  void def_function(const std::string& name, int arity, const expression_ref& b);
 
   /// Add a function
   void def_function(const std::string& name, const expression_ref& b);
@@ -84,6 +84,8 @@ public:
   void add_symbol(const symbol_info&, scope_t);
 
   void add_symbol(const symbol_info&);
+
+  void declare_fixity(const std::string&, int precedence, fixity_t f);
 
   void declare_symbol(const symbol_info&);
 

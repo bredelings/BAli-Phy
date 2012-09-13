@@ -136,63 +136,67 @@ Program make_Prelude()
   // UnwrapDD (DiscreteDistribution l) = l
   P += Def( (UnwrapDD, (DiscreteDistribution, v1)), v1 );
 
-  P.def_function("*", 2, 7, left_fix, lambda_expression( Multiply() ) );
-  P.def_function("/", 2, 7, left_fix, lambda_expression( Divide() ) );
 
-  P.def_function("+", 2, 6, left_fix, lambda_expression( Add() ) ); 
-  P.def_function("-", 2, 6, left_fix, lambda_expression( Minus() ) );
+  P.declare_fixity("!!", 9, left_fix);
+  /*
+infixr 9 .
+(.) :: (b -> c) -> (a -> b) -> (a -> c)
+(f . g) x = f (g x)
+  */
+  //  P.declare_fixity(".", 9, left_fix);
+
+  //  P.declare_fixity("^", 8, right_fix);
+  //  P.declare_fixity("^^", 8, right_fix);
+  //  P.declare_fixity("**", 8, right_fix);
+
+  P.def_function("*", 2, lambda_expression( Multiply() ) );
+  P.declare_fixity("*", 7, left_fix);
+  P.def_function("/", 2, lambda_expression( Divide() ) );
+  P.declare_fixity("/", 7, left_fix);
+
+  //  P.declare_fixity("div", 7, left_fix);
+  //  P.declare_fixity("mod", 7, left_fix);
+  //  P.declare_fixity("rem", 7, left_fix);
+  //  P.declare_fixity("quot", 7, left_fix);
+
+  P.def_function("+", 2, lambda_expression( Add() ) ); 
+  P.declare_fixity("+", 6, left_fix);
+  P.def_function("-", 2, lambda_expression( Minus() ) );
+  P.declare_fixity("-", 6, left_fix);
 
   // this needs to be added as a constructor expression
-  P.def_function(":", 2, 5, right_fix, lambda_expression( right_assoc_constructor(":",2) ) );
+  P.def_function(":", 2, lambda_expression( right_assoc_constructor(":",2) ) );
+  P.declare_fixity(":", 5, right_fix);
+  P.declare_fixity("++", 5, right_fix);
 
-  P.def_function("==", 2, 5, non_fix, lambda_expression( Equals() ) );
-  P.def_function("<", 2, 5, non_fix, lambda_expression( LessThan() ) );
-  P.def_function(">", 2, 5, non_fix, lambda_expression( GreaterThan() ) );
+  P.def_function("==", 2, lambda_expression( Equals() ) );
+  P.declare_fixity("==", 5, non_fix);
+  //  P.declare_fixity("/=", 5, non_fix);
+  P.def_function("<", 2, lambda_expression( LessThan() ) );
+  P.declare_fixity("<", 5, non_fix);
+  //  P.declare_fixity("<=", 5, non_fix);
+  P.def_function(">", 2, lambda_expression( GreaterThan() ) );
+  P.declare_fixity(">", 5, non_fix);
+  //  P.declare_fixity(">=", 5, non_fix);
   
-  // We also a need a "set_fixity" command.
+  //  P.declare_fixity("elem", 4, non_fix);
+  //  P.declare_fixity("notElem", 4, non_fix);
+
+  //  P.declare_fixity("&&", 3, right_fix);
+  //  P.declare_fixity("||", 2, right_fix);
+
+  //  P.declare_fixity(">>", 1, left_fix);
+  //  P.declare_fixity(">>=", 1, left_fix);
 
   /*
-  p.symbols["!!"] = symbol_info{string("!!"), variable_symbol, global_scope,2,9,left_fix};
-  p.symbols["."] = symbol_info{string("."), variable_symbol, global_scope,2,9,right_fix};
-
-  p.symbols["^"] = {"^", variable_symbol, global_scope,2,8,right_fix};
-  p.symbols["^^"] = {"^^", variable_symbol, global_scope,2,8,right_fix};
-  p.symbols["**"] = {"**", variable_symbol, global_scope,2,8,right_fix};
-
-  p.symbols["*"] = {"*", variable_symbol, global_scope,2,7,left_fix};
-  p.symbols["/"] = {"/", variable_symbol, global_scope,2,7,left_fix};
-  p.symbols["div"] = {"div", variable_symbol, global_scope,2,7,left_fix};
-  p.symbols["mod"] = {"mod", variable_symbol, global_scope,2,7,left_fix};
-  p.symbols["rem"] = {"rem", variable_symbol, global_scope,2,7,left_fix};
-  p.symbols["quot"] = {"quot", variable_symbol, global_scope,2,7,left_fix};
-
-  p.symbols["+"] = {"+", variable_symbol, global_scope,2,6,left_fix};
-  p.symbols["-"] = {"-", variable_symbol, global_scope,2,6,left_fix};
-
-  p.symbols[":"] = {":", constructor_symbol, global_scope,2,5,right_fix};
-  p.symbols["++"] = {"++", variable_symbol, global_scope,2,5,right_fix};
-
-  p.symbols["=="] = {"==", variable_symbol, global_scope,2,5,non_fix};
-  p.symbols["/="] = {"/=", variable_symbol, global_scope,2,5,non_fix};
-  p.symbols["<"] = {"<", variable_symbol, global_scope,2,5,non_fix};
-  p.symbols["<="] = {"<=", variable_symbol, global_scope,2,5,non_fix};
-  p.symbols[">"] = {">", variable_symbol, global_scope,2,5,non_fix};
-  p.symbols[">="] = {">=", variable_symbol, global_scope,2,5,non_fix};
-
-  p.symbols["elem"] = {"elem", variable_symbol, global_scope,2,4,non_fix};
-  p.symbols["notElem"] = {"notElem", variable_symbol, global_scope,2,4,non_fix};
-
-  p.symbols["&&"] = {"&&", variable_symbol, global_scope,2,3,right_fix};
-
-  p.symbols["||"] = {"&&", variable_symbol, global_scope,2,2,right_fix};
-
-  p.symbols[">>"] = {">>", variable_symbol, global_scope,2,1,left_fix};
-  p.symbols[">>="] = {">>=", variable_symbol, global_scope,2,1,left_fix};
-
-  p.symbols["$"] = {"$", variable_symbol, global_scope,2,0,right_fix};
-  p.symbols["$!"] = {"$!", variable_symbol, global_scope,2,0,right_fix};
-  p.symbols["seq"] = {"seq", variable_symbol, global_scope,2,0,right_fix};
+infixr 0 $
+($) :: (a -> b) -> a -> b
+f $ x = f x
   */
+  //  P.declare_fixity("$", 0, right_fix);
+  //  P.declare_fixity("$!", 0, right_fix);
+  P.def_function("seq", 2, lambda_expression( Seq() ) );
+  P.declare_fixity("seq", 0, right_fix);
 
   return P;
 }

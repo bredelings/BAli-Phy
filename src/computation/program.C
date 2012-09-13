@@ -94,6 +94,29 @@ void Program::declare_symbol(const symbol_info& S)
     add_alias(S2.name);
 }
 
+// "Also like a type signature, a fixity declaration can only occur in the same sequence of declarations as the declaration of the operator itself, and at most one fixity declaration may be given for any operator."
+
+// "Fixity is a property of a particular entity (constructor or variable), just like its type; fixity is not a property of that entity’s name."
+void Program::declare_fixity(const std::string& s, int precedence, fixity_t fixity)
+{
+  if (is_qualified_symbol(s))
+    throw myexception()<<"Trying to declare fixity of qualified symbol '"<<s<<"'.  Use its unqualified name.";
+
+  string s2 = name + "." + s;
+
+  if (not is_declared_qualified(s2))
+    throw myexception()<<"Identifier '"<<s2<<"' not declared.  Cannot set fixity.";
+
+  symbol_info& S = symbols.find(s2)->second;
+  if (precedence < 0 or precedence > 9)
+    throw myexception()<<"Precedence level "<<precedence<<" not allowed.";
+  if (fixity == unknown_fix)
+    throw myexception()<<"Cannot set fixity to unknown!";
+
+  S.precedence = precedence;
+  S.fixity = fixity;
+}
+
 void Program::declare_parameter(const std::string& pname)
 {
   declare_parameter(pname, {});
@@ -197,10 +220,12 @@ symbol_info Program::get_operator(const string& name) const
   if (S.arity < 2) throw myexception()<<"Operator '"<<S.name<<"' does not have arity at least 2!";
 
   // An operator of undefined precedence is treated as if it has the highest precedence
-  if (S.precedence == -1) 
+  if (S.precedence == -1 or S.fixity == unknown_fix) 
   {
+    // If either is unset, then both must be unset!
+    assert(S.precedence == -1 and S.fixity == unknown_fix);
     S.precedence = 9;
-    S.fixity = non_fix;
+    S.fixity = left_fix;
   }
 
   return S;
@@ -378,23 +403,23 @@ Program& Program::operator+=(const Def& D)
   return *this;
 }
 
-void Program::def_function(const std::string& name, int arity, int precedence, fixity_t f, const expression_ref& body, const expression_ref& type)
+void Program::def_function(const std::string& name, int arity, const expression_ref& body, const expression_ref& type)
 {
   auto loc = symbols.find(name);
   if (loc != symbols.end())
     throw myexception()<<"Can't add function with name '"<<name<<"': that name is already used!";
 
-  declare_symbol({name, variable_symbol, local_scope, arity, precedence, f, body, type});
+  declare_symbol({name, variable_symbol, local_scope, arity, -1, unknown_fix, body, type});
 }
 
-void Program::def_function(const std::string& name, int arity, int precedence, fixity_t f, const expression_ref& body)
+void Program::def_function(const std::string& name, int arity, const expression_ref& body)
 {
-  def_function(name, arity, precedence, f, body, {});
+  def_function(name, arity, body, {});
 }
 
 void Program::def_function(const std::string& name, const expression_ref& body)
 {
-  def_function(name, -1, -1, unknown_fix, body, {});
+  def_function(name, -1, body);
 }
 
 void Program::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
@@ -405,6 +430,7 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
   string name;
   vector< vector<expression_ref> > sub_patterns(patterns.size());
   parse_combinator_application(patterns[0], name, sub_patterns[0]);
+  int arity = sub_patterns[0].size();
 
   for(int i=1;i<patterns.size();i++)
   {
@@ -415,7 +441,7 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
   }
 
   expression_ref E = ::def_function(sub_patterns, bodies);
-  def_function(name, E);
+  def_function(name, arity, E);
 }
 
 expression_ref Program::get_function(const std::string& name) const
