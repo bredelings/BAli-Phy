@@ -34,10 +34,10 @@ symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int
 void Program::add_alias(const string& s)
 {
   if (not is_qualified_symbol(s))
-    throw myexception()<<"Can't add alias for unqualified identifier '"<<s<<"' to module '"<<name<<"'";
+    throw myexception()<<"Can't add alias for unqualified identifier '"<<s<<"' to module '"<<module_name<<"'";
 
   if (not is_declared_qualified(s))
-    throw myexception()<<"Can't add alias for undeclared identifier '"<<s<<"' to module '"<<name<<"'";
+    throw myexception()<<"Can't add alias for undeclared identifier '"<<s<<"' to module '"<<module_name<<"'";
 
   if (symbols[s].symbol_type == parameter_symbol)
     throw myexception()<<"Can't add alias for parameter! (Parameters must be fully qualified).";
@@ -45,7 +45,7 @@ void Program::add_alias(const string& s)
   string s2 = get_unqualified_name(s);
 
   if (is_declared_unqualified(s2))
-    throw myexception()<<"Trying to add duplicate alias '"<<s2<<"' for identifier '"<<s<<"' to module '"<<name<<"'";
+    throw myexception()<<"Trying to add duplicate alias '"<<s2<<"' for identifier '"<<s<<"' to module '"<<module_name<<"'";
 
   // Mapping from name -> module.name
   aliases[s2] = s;
@@ -53,17 +53,14 @@ void Program::add_alias(const string& s)
 
 void Program::add_symbol(const symbol_info& S)
 {
-  if (name.size() and not is_qualified_symbol(S.name) and S.symbol_type != parameter_symbol)
-    throw myexception()<<"Can't add unqualified identifier '"<<S.name<<"' to module '"<<name<<"'";
+  if (not is_qualified_symbol(S.name) and S.symbol_type != parameter_symbol)
+    throw myexception()<<"Can't add unqualified identifier '"<<S.name<<"' to module '"<<module_name<<"'";
 
   if (is_declared_qualified(S.name))
-    throw myexception()<<"Trying to add identifier '"<<S.name<<"' twice to module '"<<name<<"'";
+    throw myexception()<<"Trying to add identifier '"<<S.name<<"' twice to module '"<<module_name<<"'";
 
   if (S.scope == unknown_scope)
     throw myexception()<<"Can't add symbol with unknown scope!";
-
-  if (not name.size() and S.scope != global_scope)
-    throw myexception()<<"Unnamed module: cannot add symbol '"<<S.name<<"' with non-global scope";
 
   symbols[S.name] = S;
 }
@@ -86,7 +83,7 @@ void Program::declare_symbol(const symbol_info& S)
     throw myexception()<<"Declare parameters through declare_parameter(): "<<S.name;
 
   symbol_info S2 = S;
-  S2.name = name + "." + S.name;
+  S2.name = module_name + "." + S.name;
   add_symbol(S2, local_scope);
   
   // Add the alias for S.name -> S2.name;
@@ -102,7 +99,7 @@ void Program::declare_fixity(const std::string& s, int precedence, fixity_t fixi
   if (is_qualified_symbol(s))
     throw myexception()<<"Trying to declare fixity of qualified symbol '"<<s<<"'.  Use its unqualified name.";
 
-  string s2 = name + "." + s;
+  string s2 = module_name + "." + s;
 
   if (not is_declared_qualified(s2))
     throw myexception()<<"Identifier '"<<s2<<"' not declared.  Cannot set fixity.";
@@ -148,13 +145,13 @@ void Program::import_symbol(const symbol_info& S, bool qualified)
     add_alias(S2.name);
 }
 
-void Program::import_module(const Program& P2, const string& module_name, bool qualified)
+void Program::import_module(const Program& P2, const string& module_name2, bool qualified)
 {
   for(const auto& p: P2.symbols)
   {
     const symbol_info& S = p.second;
 
-    if (get_module_name(S.name) == module_name)
+    if (get_module_name(S.name) == module_name2)
       import_symbol(S, qualified);
   }
 }
@@ -441,7 +438,7 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
 
 void Program::def_constructor(const std::string& s, int arity)
 {
-  symbol_info S(name+"."+s, constructor_symbol, local_scope, arity, -1, unknown_fix);
+  symbol_info S(module_name+"."+s, constructor_symbol, local_scope, arity, -1, unknown_fix);
   S.body = lambda_expression( constructor(s, arity) );
   add_symbol( S );
 }
@@ -453,7 +450,7 @@ expression_ref Program::get_function(const std::string& name) const
 
 // A name of "" means that we are defining a top-level program, or a piece of a top-level program.
 Program::Program(const std::string& n)
-  :name(n)
+  :module_name(n)
 { 
   if (not n.size())
     throw myexception()<<"Program name may not be empty!";

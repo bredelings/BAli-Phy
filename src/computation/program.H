@@ -61,7 +61,7 @@ class Program
   std::map<std::string, std::string> aliases;
 
 public:
-  std::string name;
+  std::string module_name;
 
   const std::map<std::string, symbol_info>& get_symbols() const {return symbols;}
 

@@ -474,7 +474,7 @@ closure context::translate_refs(closure&& C) const
 context& context::operator+=(const Program& P2)
 {
   // Import the symbols in P2 into our symbol table, and add aliases.
-  P.modify()->import_module(P2, P2.name, false);
+  P.modify()->import_module(P2, P2.module_name, false);
 
   // Give each identifier a pointer to an unused location
   for(const auto& s: P2.get_symbols())
