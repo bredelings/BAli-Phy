@@ -192,7 +192,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  // variable
 	  qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]
 	  // general constructor
-	  | qconid [ qi::_val = phoenix::construct< ::var>(qi::_1) ]
+	  | gcon [ qi::_val = phoenix::construct< ::var>(qi::_1) ]
 	  // literal
 	  | literal [_val = _1 ]
 	  // parenthesized expression
