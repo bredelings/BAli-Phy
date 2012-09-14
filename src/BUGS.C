@@ -174,7 +174,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	infixexp = 
 	  lexp [push_back(_val,_1)] >> qop [push_back(_val,_1)] >> infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
-	  | lit("-") [push_back(_val, ::var("-"))] >> infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
+	  | lit("-") [push_back(_val, AST_node("neg"))] >> infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
 	  | lexp [ clear(_val), push_back(_val,_1) ]
 	  ;
 	lexp %= // lit("\\") >> +apat >> lit("->") >> exp |

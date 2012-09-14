@@ -37,7 +37,7 @@ expression_ref infix_parse_neg(const Program& m, const symbol_info& op1, deque<e
   T.pop_front();
 
   // We are starting with a Neg
-  if (is_a<var>(E1) and is_a<var>(E1)->name == "-")
+  if (E1->head->compare(AST_node("neg")))
   {
     if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
 
