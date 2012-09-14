@@ -92,24 +92,28 @@ expression_ref postprocess(const Program& m, const expression_ref& E)
   for(auto& e: v)
     e = postprocess(m, e);
       
-  if (E->head->compare(AST_node("infixexp")))
-    return postprocess_infix(m, v);
-  else if (E->head->compare(AST_node("Tuple")))
-    return get_tuple(v);
-  else if (E->head->compare(AST_node("List")))
-    return get_list(v);
-  else if (E->size())
-    return new expression(E->head,v);
-  else if (object_ptr<const var> V = E.is_a<var>())
+  if (object_ptr<const AST_node> n = E.is_a<AST_node>())
   {
-    if (m.is_declared(V->name))
+    if (n->type == "infixexp")
+      return postprocess_infix(m, v);
+    else if (n->type == "Tuple")
+      return get_tuple(v);
+    else if (n->type == "List")
+      return get_list(v);
+    else if (n->type == "id")
     {
-      string qualified_name = m.lookup_symbol(V->name).name;
-      return var(qualified_name);
+      if (m.is_declared(n->value))
+      {
+	string qualified_name = m.lookup_symbol(n->value).name;
+	return var(qualified_name);
+      }
     }
   }
 
-  return E;
+  if (E->size())
+    return new expression(E->head,v);
+  else
+    return E;
 }
 
 

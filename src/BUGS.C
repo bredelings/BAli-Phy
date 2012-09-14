@@ -182,9 +182,9 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	aexp = 
 	  // variable
-	  qvar [ qi::_val = phoenix::construct< ::var>(qi::_1) ]
+	  qvar [ qi::_val = phoenix::construct<AST_node>("id", qi::_1) ]
 	  // general constructor
-	  | gcon [ qi::_val = phoenix::construct< ::var>(qi::_1) ]
+	  | gcon [ qi::_val = phoenix::construct<AST_node>("id", qi::_1) ]
 	  // literal
 	  | literal [_val = _1 ]
 	  // parenthesized expression
@@ -213,7 +213,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	conop %= consym | "`" >> conid >> "`";    // constructor operator
 	qconop %= gconsym | "`" >> qconid >> "`"; // qualified constructor operator
 	op %= varop | conop;                      // operator
-	qop = qvarop [ _val = construct< ::var>(_1) ] | qconop [ _val = construct< ::var>(_1) ];  // qualified operator
+	qop = qvarop [ _val = construct<AST_node>("id", _1) ] | qconop [ _val = construct<AST_node>("id",_1) ];  // qualified operator
 	gconsym %= string(":") | qconsym;
 
 	/*----- Section 3.11 -----*/
