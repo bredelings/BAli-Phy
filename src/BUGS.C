@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <map>
-#include "io.H"
 #include "util.H"
 #include "computation/prelude.H"
 #include "parameters.H"
@@ -57,13 +56,6 @@ namespace phoenix = boost::phoenix;
 // A symbol table for parameters and vars.
 qi::symbols<char,expression_ref> identifiers;
 
-struct bugs_cmd
-{
-  expression_ref var;
-  string dist;
-  vector<expression_ref> arguments;
-};
-
 BOOST_FUSION_ADAPT_STRUCT(
     bugs_cmd,
     (expression_ref, var)
@@ -99,7 +91,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	text %= +(char_ - ' ' -'(');
 	arguments %= lit('(')>>exp%','>>lit(')')|lit("()");
-	bugs_line %= exp > '~' > text > arguments >> eoi ;
+	bugs_line %= exp >> '~' >> text >> arguments >> eoi ;
 
 	small %= char_("a-z");
 	large %= char_("A-Z");
@@ -658,64 +650,38 @@ vector<string> tokenize(const string& line)
   return tokens;
 }
 
-void add_BUGS(const Parameters& P, const string& filename)
+bugs_cmd parse_bugs_line(const Program& P, const string& line)
 {
-  // Um, so what is the current program?
-  // 1. Well, its got a collection of identifiers.
-  //   (a) Some of these are functions
-  //   (b) Some of these are parameters
-  // 2. We've got a collection of heads.
+  using boost::spirit::ascii::space;
 
-  checked_ifstream file(filename,"BUGS file");
-  vector<string> lines;
-
+  string::const_iterator iter = line.begin();
+  bugs_grammar<string::const_iterator> bugs_parser;
+  bugs_cmd cmd;
+  if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
   {
-    string line;
-    while(getline(file,line))
-      lines.push_back(line);
-  }
-
-  std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
-
-  for(const auto& line: lines)
-  {
-    using boost::spirit::ascii::space;
-
-    string::const_iterator iter = line.begin();
-    bugs_grammar<string::const_iterator> bugs_parser;
-    bugs_cmd cmd;
-    if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
+    std::cerr<<"BUGS phrase parse: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
+    for(int i=0;i<cmd.arguments.size();i++)
     {
-      std::cerr<<"BUGS phrase parse: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
-      for(int i=0;i<cmd.arguments.size();i++)
-      {
-	std::cerr<<cmd.arguments[i];
-	if (i != cmd.arguments.size()-1)
-	  std::cerr<<", ";
-      }
-      std::cerr<<")\n";
-      cmd.var = postprocess(P.get_Program(), cmd.var);
-      for(auto& e: cmd.arguments)
-	e = postprocess(P.get_Program(), e);
-      std::cerr<<"        processed: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
-      for(int i=0;i<cmd.arguments.size();i++)
-      {
-	std::cerr<<cmd.arguments[i];
-	if (i != cmd.arguments.size()-1)
-	  std::cerr<<", ";
-      }
-      std::cerr<<")\n";
+      std::cerr<<cmd.arguments[i];
+      if (i != cmd.arguments.size()-1)
+	std::cerr<<", ";
     }
-    else
-      std::cerr<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin())<<endl;
-    
-
-    // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
-    //  D is of the form (prob_density,name,density,quantile)
-    // The line should look like "x ~ name(args).
-    // - x should be a parameter or a tuple of parameters.
-    // - args should be empty, or a comma-separated list of haskell expressions.
+    std::cerr<<")\n";
+    cmd.var = postprocess(P, cmd.var);
+    for(auto& e: cmd.arguments)
+      e = postprocess(P, e);
+    std::cerr<<"        processed: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
+    for(int i=0;i<cmd.arguments.size();i++)
+    {
+      std::cerr<<cmd.arguments[i];
+      if (i != cmd.arguments.size()-1)
+	std::cerr<<", ";
+    }
+    std::cerr<<")\n";
   }
-  exit(0);
+  else
+    std::cerr<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin())<<endl;
+
+  return cmd;
 }
 

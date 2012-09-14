@@ -1,5 +1,8 @@
+#include "BUGS.H"
 #include "computation/program.H"
 #include <deque>
+#include "io.H"
+#include "parameters.H"
 
 using std::string;
 using std::vector;
@@ -107,5 +110,39 @@ expression_ref postprocess(const Program& m, const expression_ref& E)
   }
 
   return E;
+}
+
+
+void add_BUGS(const Parameters& P, const string& filename)
+{
+  // Um, so what is the current program?
+
+  // 1. Well, its got a collection of identifiers.
+  //   (a) Some of these are functions
+  //   (b) Some of these are parameters
+  // 2. We've got a collection of heads.
+
+  checked_ifstream file(filename,"BUGS file");
+  vector<string> lines;
+
+  {
+    string line;
+    while(getline(file,line))
+      lines.push_back(line);
+  }
+
+  std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
+
+  for(const auto& line: lines)
+  {
+    bugs_cmd cmd = parse_bugs_line(P.get_Program(), line);
+
+    // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
+    //  D is of the form (prob_density,name,density,quantile)
+    // The line should look like "x ~ name(args).
+    // - x should be a parameter or a tuple of parameters.
+    // - args should be empty, or a comma-separated list of haskell expressions.
+  }
+  exit(0);
 }
 
