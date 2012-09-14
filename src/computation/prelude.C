@@ -169,8 +169,7 @@ infixr 9 .
   P.declare_fixity("-", 6, left_fix);
 
   // this needs to be added as a constructor expression
-  P.def_constructor(":", 2);
-  P.declare_fixity(":", 5, right_fix);
+  // ":" is builtin, but has precedence 5 and right fixity.
   P.declare_fixity("++", 5, right_fix);
 
   P.def_function("==", 2, lambda_expression( Equals() ) );

@@ -24,6 +24,8 @@ struct symbol_info
   expression_ref type;
 
   symbol_info() {};
+  symbol_info(const std::string&, symbol_type_t, scope_t, int);
+  symbol_info(const std::string&, symbol_type_t, scope_t, int, const expression_ref&);
   symbol_info(const std::string&, symbol_type_t, scope_t, int, int, fixity_t);
   symbol_info(const std::string&, symbol_type_t, scope_t, int, int, fixity_t, const expression_ref&);
   symbol_info(const std::string&, symbol_type_t, scope_t, int, int, fixity_t, const expression_ref&, const expression_ref&);
@@ -33,6 +35,8 @@ bool is_haskell_varid(const std::string& s);
 bool is_haskell_conid(const std::string& s);
 bool is_haskell_varsym(const std::string& s);
 bool is_haskell_consym(const std::string& s);
+bool is_haskell_normal_con_name(const std::string& s);
+bool is_haskell_builtin_con_name(const std::string& s);
 
 bool is_haskell_var_name(const std::string& s);
 bool is_haskell_con_name(const std::string& s);
@@ -107,7 +111,9 @@ public:
 
   const symbol_info& lookup_unqualified_symbol(const std::string&) const;
 
-  const symbol_info& lookup_symbol(const std::string&) const;
+  symbol_info lookup_builtin_symbol(const std::string&) const;
+
+  symbol_info lookup_symbol(const std::string&) const;
 
   expression_ref get_function(const std::string&) const;
 

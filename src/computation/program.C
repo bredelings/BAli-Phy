@@ -9,6 +9,14 @@ using std::map;
 using std::string;
 using std::vector;
 
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2)
+  :name(s), symbol_type(st), scope(sc), arity(i2)
+{ }
+
+symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2, const expression_ref& b)
+  :name(s), symbol_type(st), scope(sc), arity(i2), body(b)
+{ }
+
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2, int i3, fixity_t f)
   :name(s), symbol_type(st), scope(sc), arity(i2), precedence(i3), fixity(f)
 { }
@@ -53,6 +61,9 @@ void Program::add_alias(const string& s)
 
 void Program::add_symbol(const symbol_info& S)
 {
+  if (is_haskell_builtin_con_name(S.name))
+    throw myexception()<<"Can't add builtin symbol '"<<S.name<<"'";
+
   if (not is_qualified_symbol(S.name) and S.symbol_type != parameter_symbol)
     throw myexception()<<"Can't add unqualified identifier '"<<S.name<<"' to module '"<<module_name<<"'";
 
@@ -178,7 +189,7 @@ bool Program::is_declared_unqualified(const std::string& name) const
 
 bool Program::is_declared(const std::string& name) const
 {
-  return is_declared_qualified(name) or is_declared_unqualified(name);
+  return is_declared_qualified(name) or is_declared_unqualified(name) or is_haskell_builtin_con_name(name);
 }
 
 const symbol_info& Program::lookup_qualified_symbol(const std::string& name) const
@@ -206,8 +217,27 @@ const symbol_info& Program::lookup_unqualified_symbol(const std::string& name) c
   return lookup_qualified_symbol(name2);
 }
 
-const symbol_info& Program::lookup_symbol(const std::string& name) const
+symbol_info Program::lookup_builtin_symbol(const std::string& name) const
 {
+  if (name == "()")
+    return symbol_info("()", constructor_symbol, global_scope, 0, constructor("()",0));
+  else if (name == "[]")
+    return symbol_info("[]", constructor_symbol, global_scope, 0, constructor("[]",0));
+  else if (name == ":")
+    return symbol_info(":", constructor_symbol, global_scope, 2, 5, right_fix, lambda_expression( right_assoc_constructor(":",2) ) );
+  else if (is_tuple_name(name))
+  {
+    int arity = name.size() - 2;
+    expression_ref body = lambda_expression( tuple_head(arity) );
+    return symbol_info(name, constructor_symbol, global_scope, arity, body);
+  }
+  throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
+}
+
+symbol_info Program::lookup_symbol(const std::string& name) const
+{
+  if (is_haskell_builtin_con_name(name))
+    return lookup_builtin_symbol(name);
   if (is_qualified_symbol(name))
     return lookup_qualified_symbol(name);
   else
@@ -348,6 +378,7 @@ bool is_haskell_consym(const string& s)
       return false;
 
   if (s[0] != ':') return false;
+  if (s == ":") return false;
 
   return true;
 }
@@ -362,7 +393,15 @@ bool is_haskell_var_name(const std::string& s)
   return true;
 }
 
-bool is_haskell_con_name(const std::string& s)
+bool is_haskell_builtin_con_name(const std::string& s)
+{
+  if (s == "()" or s == "[]" or s == ":" or is_tuple_name(s)) 
+    return true;
+  else
+    return false;
+}
+
+bool is_haskell_normal_con_name(const std::string& s)
 {
   vector<string> path = split(s,'.');
   if (path.empty()) return false;
@@ -372,9 +411,14 @@ bool is_haskell_con_name(const std::string& s)
   return true;
 }
 
+bool is_haskell_con_name(const std::string& s)
+{
+  return (is_haskell_builtin_con_name(s) or is_haskell_normal_con_name(s));
+}
+
 bool is_haskell_module_name(const std::string& s)
 {
-  return is_haskell_con_name(s);
+  return is_haskell_normal_con_name(s);
 }
 
 bool is_qualified_symbol(const string& s)
