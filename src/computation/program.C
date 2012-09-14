@@ -223,7 +223,7 @@ symbol_info Program::lookup_builtin_symbol(const std::string& name) const
     return symbol_info(":", constructor_symbol, global_scope, 2, 5, right_fix, lambda_expression( right_assoc_constructor(":",2) ) );
   else if (is_tuple_name(name))
   {
-    int arity = name.size() - 2;
+    int arity = name.size() - 1;
     expression_ref body = lambda_expression( tuple_head(arity) );
     return symbol_info(name, constructor_symbol, global_scope, arity, body);
   }
