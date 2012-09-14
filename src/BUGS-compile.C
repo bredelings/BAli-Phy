@@ -97,6 +97,15 @@ expression_ref postprocess(const Program& m, const expression_ref& E)
     return get_list(v);
   else if (E->size())
     return new expression(E->head,v);
+  else if (object_ptr<const var> V = E.is_a<var>())
+  {
+    if (m.is_declared(V->name))
+    {
+      string qualified_name = m.lookup_symbol(V->name).name;
+      return var(qualified_name);
+    }
+  }
+
   return E;
 }
 
