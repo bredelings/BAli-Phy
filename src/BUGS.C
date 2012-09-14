@@ -169,12 +169,15 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  | lit("-") [push_back(_val, AST_node("neg"))] >> infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
 	  | lexp [ clear(_val), push_back(_val,_1) ]
 	  ;
-	lexp %= // lit("\\") >> +apat >> lit("->") >> exp |
-	  //	  lit("let") >> decls >> "in" >> exp |
-	  //	  lit("if") >> exp >> -lit(';') >> "then" >> exp >> -lit(';') >> "else" >> exp |
-	  //	  lit("case") >> exp >> "of" >> "{" >> alts >> "}" |
-	  //	  lit("do") >> "{" >> stmts >> "}" |
-	  fexp;
+
+	lexp = 
+	  lit("\\") >> +apat[push_back(_a,_1)] >> lit("->") >> exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ]
+	  //	  | lit("let") >> decls >> "in" >> exp
+	  | lit("if")[clear(_a)] >> exp[push_back(_a,_1)] >> -lit(';') >> "then" >> exp[push_back(_a,_1)] >> -lit(';') >> "else" >> exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
+	  //	  | lit("case") >> exp >> "of" >> "{" >> alts >> "}"
+	  //	  | lit("do") >> "{" >> stmts >> "}"
+	  | fexp [_val = _1]
+	  ;
 
 	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(apply_expression_ptr,_val,_1) ]; // function application
 
@@ -247,26 +250,39 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
 	/*----- Section 3.17 -----*/
 	pat %= 
-	  lpat >> qconop >> pat // infix constructor
-	  | lpat;
+	  //	  lpat >> qconop >> pat // infix constructor
+	  lpat;
 
 	lpat %= 
 	  apat 
-	  | lit('-') >> (h_integer|h_float) // negative literal
-	  | gcon >> +apat;                  // here the number of apat's must match the constructor arity
+	  // negative literal
+	  //	  | lit('-') >> (h_integer|h_float) 
+	  // here the number of apat's must match the constructor arity
+	  //	  | gcon >> +apat
+	  ;                  
 
-	apat %= 
-	  var >> -(lit('@')>>apat)          // as pattern
-	  | gcon                            // arity gcon = 0
-	  | qcon >> "{" >> *fpat >> "}"     // labelled pattern
+	apat = 
+	  // as pattern
+	  //	  var >> lit('@')>>apat 
+	  // irrefutable var pattern
+	  var [ qi::_val = phoenix::construct<AST_node>("VarPattern", qi::_1) ]        
+	  // arity gcon = 0
+	  //	  | gcon
+	  // labelled pattern
+	  //	  | qcon >> "{" >> *fpat >> "}"     
 	  //	  | literal
-	  | lit('_')                        // wildcard
-	  | lit('(') >> pat >> ')'          // parenthesized pattern
-	  | lit('(') >> pat >> +(lit(',') >> pat) >> ')' // tuple patten
-	  | lit('[') >> pat % ',' >> ']'    // list pattern
-	  | lit('~') >> apat;               // irrefutable pattern
-
-	fpat %= qvar >> "=" >> pat;         // field pattern
+	  // wildcard
+	  //	  | lit('_')                        
+	  // parenthesized pattern
+	  //	  | lit('(') >> pat >> ')'          
+	  // tuple patten
+	  //	  | lit('(') >> pat >> +(lit(',') >> pat) >> ')' 
+	  // list pattern
+	  //	  | lit('[') >> pat % ',' >> ']'    
+	  // irrefutable pattern
+	  //	  | lit('~') >> apat                
+	  ;
+	//	fpat %= qvar >> "=" >> pat;         // field pattern
 
 	/*------ Section 4 -------*/
 	module = 
@@ -290,7 +306,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  ;
 
 	decls %= lit('{') >> decl % ';' >> '}';
-	decl  %= gendecl | (funlhs | pat) >> rhs;
+	//	decl  %= gendecl | (funlhs | pat) >> rhs;
 
 	// class declarations
 	cdecls %= lit('{') >> cdecl % ';' >> '}';
@@ -529,7 +545,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 
   qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
   qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> infixexp;
-  qi::rule<Iterator, expression_ref(), ascii::space_type> lexp;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> lexp;
   qi::rule<Iterator, expression_ref(), ascii::space_type> fexp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> aexp;
 
@@ -565,9 +581,9 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> fbind;  
 
   /*----- Section 3.17 -----*/
-  qi::rule<Iterator, std::string(), ascii::space_type> pat;  
-  qi::rule<Iterator, std::string(), ascii::space_type> lpat;  
-  qi::rule<Iterator, std::string(), ascii::space_type> apat;  
+  qi::rule<Iterator, expression_ref(), ascii::space_type> pat;  
+  qi::rule<Iterator, expression_ref(), ascii::space_type> lpat;  
+  qi::rule<Iterator, expression_ref(), ascii::space_type> apat;  
   qi::rule<Iterator, std::string(), ascii::space_type> fpat;  
 
   /*----- Section 4 ------*/
