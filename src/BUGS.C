@@ -200,8 +200,10 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  | "[" >> exp[push_back(_a,_1)] >> ','>>exp[push_back(_a,_1)] >>".." >> -exp[push_back(_a,_1)] >> "]" >> eps [ _val = new_<expression>(AST_node("enumFromThenTo"), _a) ]
 	  // list comprehension
 	  | "[" >> exp[push_back(_a,_1)] >>"|" >> +qual[push_back(_a,_1)] >> "]" >> eps [ _val = new_<expression>(AST_node("ListComprehension"), _a) ]
-	  //	  | "(" >> infixexp[insert(_a,end(_a),begin(_1),end(_1))]  >> qop[push_back(_a,_1)] >> ")"  // left section
-	  //	  | "(" >> ((qop - "-") >> infixexp) >> ")"  // right section
+	  // left section
+	  | "(" >> infixexp[insert(_a,end(_a),begin(_1),end(_1))]  >> qop[push_back(_a,_1)] >> ")" >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
+	  // right section
+	  | "(" >> ((qop[push_back(_a,_1)] - "-") >> infixexp[insert(_a,end(_a),begin(_1),end(_1))]) >> ")" >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
 	  //	  | qcon >> "{" >> *fbind >> "}"  // labeled construction (?)
 	  //	  | (aexp - qcon) >> "{">> +fbind >> "}"; // labeled update
 	  ;
