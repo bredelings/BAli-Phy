@@ -193,13 +193,18 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	  | "(" >> exp [push_back(_a,_1)] >> +(','>>exp [push_back(_a,_1)]) >> ")" >> eps [ _val = new_<expression>(AST_node("Tuple"), _a) ]
 	  // list
 	  | "[" >> (exp[push_back(_a,_1)]%',') >> "]" >> eps [ _val = new_<expression>(AST_node("List"), _a) ]
+	  // arithmetic sequence
+	  | "[" >> exp[push_back(_a,_1)] >> ".." >> "]" >> eps [ _val = new_<expression>(AST_node("enumFrom"), _a) ]
+	  | "[" >> exp[push_back(_a,_1)] >> ".." >> exp[push_back(_a,_1)] >> "]"  >> eps [ _val = new_<expression>(AST_node("enumFromTo"), _a) ]
+	  | "[" >> exp[push_back(_a,_1)] >> ','>>exp[push_back(_a,_1)] >>".." >> "]"  >> eps [ _val = new_<expression>(AST_node("enumFromThen"), _a) ]
+	  | "[" >> exp[push_back(_a,_1)] >> ','>>exp[push_back(_a,_1)] >>".." >> -exp[push_back(_a,_1)] >> "]" >> eps [ _val = new_<expression>(AST_node("enumFromThenTo"), _a) ]
+	  // list comprehension
+	  | "[" >> exp[push_back(_a,_1)] >>"|" >> +qual[push_back(_a,_1)] >> "]" >> eps [ _val = new_<expression>(AST_node("ListComprehension"), _a) ]
+	  //	  | "(" >> infixexp[insert(_a,end(_a),begin(_1),end(_1))]  >> qop[push_back(_a,_1)] >> ")"  // left section
+	  //	  | "(" >> ((qop - "-") >> infixexp) >> ")"  // right section
+	  //	  | qcon >> "{" >> *fbind >> "}"  // labeled construction (?)
+	  //	  | (aexp - qcon) >> "{">> +fbind >> "}"; // labeled update
 	  ;
-	//	  | "[" >> exp >> -(','>>exp) >>".." >> -exp >> "]"  // arithmetic sequence
-	//	  | "[" >> exp >>"|" >> +qual >> "]"  // list comprehension
-	//	  | "(" >> infixexp >> qop >> ")"  // left section
-	//	  | "(" >> ((qop - "-") >> infixexp) >> ")"  // right section
-	//	  | qcon >> "{" >> *fbind >> "}"  // labeled construction (?)
-	//	  | (aexp - qcon) >> "{">> +fbind >> "}"; // labeled update
 	  
 	/*----- Section 3.2 -------*/
 	gcon %= string("()") | string("[]") | string("(,") >> *char_(',')>>string(")") | qcon;
