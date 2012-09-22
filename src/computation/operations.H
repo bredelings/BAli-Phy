@@ -236,6 +236,77 @@ expression_ref VectorSize()
   return lambda_expression(VectorSizeOp<T>());
 }
 
+template<typename T>
+struct BuiltinNewVectorOp: public Operation
+{
+  virtual BuiltinNewVectorOp* clone() const {return new BuiltinNewVectorOp(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const BuiltinNewVectorOp* E = dynamic_cast<const BuiltinNewVectorOp<T>*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const
+  {
+    object_ptr<const Int> length = Args.evaluate_as<Int>(0);
+
+    object_ptr<Vector<T>> v (new Vector<T>);
+
+    v->t.resize(*length);
+
+    return v;
+  }
+
+  std::string name() const {return "builtinNewVector";}
+  
+  BuiltinNewVectorOp():Operation(1) {}
+};
+
+template <typename T>
+expression_ref BuiltinNewVector()
+{
+  return lambda_expression(BuiltinNewVectorOp<T>());
+}
+
+
+template<typename T>
+struct BuiltinSetVectorIndexOp: public Operation
+{
+  virtual BuiltinSetVectorIndexOp* clone() const {return new BuiltinSetVectorIndexOp(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const BuiltinSetVectorIndexOp* E = dynamic_cast<const BuiltinSetVectorIndexOp<T>*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const
+  {
+    object_ptr<const Vector<T>> v = Args.evaluate_as<Vector<T>>(0);
+    int i = *Args.evaluate_as<Int>(1);
+    T x = *Args.evaluate_as<T>(2);
+
+    const Vector<T>* vv = &(*v);
+    Vector<T>* vvv = const_cast<Vector<T>*>(vv);
+    vvv->t[i] = x;
+
+    return constructor("()",0);
+  }
+
+  std::string name() const {return "builtinSetVectorIndex";}
+  
+  BuiltinSetVectorIndexOp():Operation(3) {}
+};
+
+template <typename T>
+expression_ref BuiltinSetVectorIndex()
+{
+  return lambda_expression(BuiltinSetVectorIndexOp<T>());
+}
+
+
+
 template <typename T>
 struct Iota_Op: public Operation
 {
