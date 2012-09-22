@@ -307,6 +307,38 @@ expression_ref BuiltinSetVectorIndex()
 
 
 
+template<typename T>
+struct BuiltinGetVectorIndexOp: public Operation
+{
+  virtual BuiltinGetVectorIndexOp* clone() const {return new BuiltinGetVectorIndexOp(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const BuiltinGetVectorIndexOp* E = dynamic_cast<const BuiltinGetVectorIndexOp<T>*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const
+  {
+    object_ptr<const Vector<T>> v = Args.evaluate_as<Vector<T>>(0);
+    int i = *Args.evaluate_as<Int>(1);
+
+    return v->t[i];
+  }
+
+  std::string name() const {return "builtinGetVectorIndex";}
+  
+  BuiltinGetVectorIndexOp():Operation(2) {}
+};
+
+template <typename T>
+expression_ref BuiltinGetVectorIndex()
+{
+  return lambda_expression(BuiltinGetVectorIndexOp<T>());
+}
+
+
+
 template <typename T>
 struct Iota_Op: public Operation
 {
