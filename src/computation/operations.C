@@ -46,11 +46,6 @@ closure Seq::operator()(OperationArgs& Args) const
 
 expression_ref seq = lambda_expression( Seq() );
 
-closure BuiltinCopy::operator()(OperationArgs& Args) const
-{
-  return Args.lazy_evaluate(0);
-}
-
 closure Apply::operator()(OperationArgs& Args) const
 {
   closure C = Args.lazy_evaluate(0);
@@ -277,6 +272,8 @@ closure ArrayBounds::operator()(OperationArgs& Args) const
 {
   object_ptr<const expression> A = convert<const expression>( Args.lazy_evaluate(0).exp );
   int N = A->sub.size()-1;
+
+  //FIXME! We shouldn't be calling graph_normalize here.
 
   return graph_normalize(Tuple(0,N-1));
 }
@@ -566,3 +563,9 @@ def_binary_operator2(>,GreaterThan)
 def_binary_operator2(==,Equals)
 #undef def_binary_operator2
 
+BuiltinNewVectorOp<double> vv;
+BuiltinSetVectorIndexOp<double> vvv;
+BuiltinGetVectorIndexOp<double> vvvv;
+BuiltinNewVectorOp<Double> xvv;
+BuiltinSetVectorIndexOp<Double> xvvv;
+BuiltinGetVectorIndexOp<Double> xvvvv;

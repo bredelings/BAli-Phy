@@ -90,23 +90,6 @@ struct Seq: public Operation
   Seq():Operation(2) {}
 };
 
-struct BuiltinCopy: public Operation
-{
-  virtual BuiltinCopy* clone() const {return new BuiltinCopy(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const BuiltinCopy* E = dynamic_cast<const BuiltinCopy*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "BuiltinCopy";}
-
-  BuiltinCopy():Operation(1) {}
-};
-
 extern expression_ref seq;
 
 struct MkArray: public Operation

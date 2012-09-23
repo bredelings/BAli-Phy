@@ -24,7 +24,8 @@ const expression_ref UniformDiscretize = var("UniformDiscretize");
 const expression_ref length = var("length");
 const expression_ref plusplus = var("++");
 const expression_ref average = var("average");
-
+const expression_ref unsafePerformIO = var("unsafePerformIO");
+const expression_ref listToVectorDouble = var("listToVectorDouble");
 
 const expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
 const expression_ref UnwrapDD = var("UnwrapDD");
@@ -136,8 +137,66 @@ Program make_Prelude()
   // UnwrapDD (DiscreteDistribution l) = l
   P += Def( (UnwrapDD, (DiscreteDistribution, v1)), v1 );
 
-  // Not a legal operator name! P.def_constructor("()", 0);
-  // Not a legal operator name! P.def_constructor("[]", 0);
+  const expression_ref IOAction0 = lambda_expression(constructor("IOAction0",1));
+  const expression_ref IOAction1 = lambda_expression(constructor("IOAction1",2));
+  const expression_ref IOAction2 = lambda_expression(constructor("IOAction2",3));
+  const expression_ref IOAction3 = lambda_expression(constructor("IOAction3",4));
+  const expression_ref IOAction4 = lambda_expression(constructor("IOAction4",5));
+  const expression_ref IOReturn = lambda_expression(constructor("IOReturn",1));
+  const expression_ref IOAndPass = lambda_expression(constructor("IOAndPass",2));
+  const expression_ref IOAnd = lambda_expression(constructor("IOAnd",2));
+
+  P.def_constructor("IOAction0",1);
+  P.def_constructor("IOAction1",2);
+  P.def_constructor("IOAction2",3);
+  P.def_constructor("IOAction3",4);
+  P.def_constructor("IOAction4",5);
+
+  P.def_constructor("IOReturn1",1);
+  P.def_constructor("IOAndPass",2);
+  P.def_constructor("IOAnd",2);
+
+  // unsafePerformIO (IOAction0 x) = x
+  // unsafePerformIO (IOAction1 x y) = x y
+  // unsafePerformIO (IOAction2 x y z) = x y z
+  // unsafePerformIO (IOAction3 x y z w ) = x y z w 
+  // unsafePerformIO (IOAction4 x y z w u) = x y z w u
+  // unsafePerformIO (IOReturn a) = a
+  // unsafePerformIO (IOAndPass f g) = let x = (unsafePerformIO f) in x `seq` (unsafePerformIO (g x))
+  // unsafePerformIO (IOAnd f g) = (unsafePerformIO f) `seq` (unsafePerformIO g)
+  P += Def( (unsafePerformIO, (IOAction0, v1)), v1)
+    ( (unsafePerformIO, (IOAction1, v1, v2)), (v1,v2))
+    ( (unsafePerformIO, (IOAction2, v1, v2, v3)), (v1, v2, v3))
+    ( (unsafePerformIO, (IOAction3, v1, v2, v3, v4)), (v1, v2, v3, v4))
+    ( (unsafePerformIO, (IOAction4, v1, v2, v3, v4, v5)), (v1, v2, v3, v4, v5))
+    ( (unsafePerformIO, (IOReturn, v1)), v1)
+    ( (unsafePerformIO, (IOAndPass, v1, v2)), let_expression(v3,(unsafePerformIO, v1), (seq, v3, (unsafePerformIO, (v2, v3)))))
+    ( (unsafePerformIO, (IOAnd, v1, v2)), (seq, (unsafePerformIO, v1), (unsafePerformIO, v2)));
+
+  P.def_function("builtinNewVectorDouble", 1, lambda_expression( BuiltinNewVectorOp<double>() ) ); 
+  P.def_function("builtinSetVectorIndexDouble", 3, lambda_expression( BuiltinSetVectorIndexOp<double>() ) ); 
+
+  const expression_ref builtinNewVectorDouble = var("builtinNewVectorDouble");
+  const expression_ref builtinSetVectorIndexDouble = var("builtinSetVectorIndexDouble");
+
+  const expression_ref newVectorDouble = var("newVectorDouble");
+  P += Def( (newVectorDouble, v1), (IOAction1, builtinNewVectorDouble, v1));
+
+  const expression_ref setVectorIndexDouble = var("setVectorIndexDouble");
+  P += Def( (setVectorIndexDouble, v1, v2, v3), (IOAction3, builtinSetVectorIndexDouble, v1, v2, v3));
+
+  const expression_ref listToVectorDouble = var("listToVectorDouble");
+  const expression_ref copyListToVectorDouble = var("copyListToVectorDouble");
+  // listToVectorDouble l = do { v <- newVectorDouble (length l); copyListToVector l v 0 ; return v;}
+  // listToVectorDouble l = newVectorDouble (length l) <<= (\v -> copyListToVector l v 0 << return v;)
+  P += Def( (listToVectorDouble, v1), (IOAndPass, (newVectorDouble, (length, v1)),
+				       lambda_quantify(v2,(IOAnd,(copyListToVectorDouble, v1, v2, 0),(IOReturn, v2))) ) );
+
+  // copyListToVectorDouble [] v i = return ()
+  // copyListToVectorDouble h:t v i = do { setVectorIndexDouble v i h ; copyListToVectorDouble t v (i+1) }
+  // copyListToVectorDouble h:t v i = setVectorIndexDouble v i h << copyListToVectorDouble t v (i+1)
+  P += Def( (copyListToVectorDouble, ListEnd, v3, v4), (IOReturn, constructor("()",0)))
+    ( (copyListToVectorDouble, v1&v2  , v3, v4), (IOAnd,(setVectorIndexDouble, v3, v4, v1),(copyListToVectorDouble, v2,v3,(v4+1))));
 
   P.def_function("negate", 1, lambda_expression( Negate() ) );
 

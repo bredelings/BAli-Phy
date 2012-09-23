@@ -25,6 +25,8 @@ extern const expression_ref plusplus;
 extern const expression_ref ExtendDiscreteDistribution;
 extern const expression_ref MixDiscreteDistributions;
 extern const expression_ref UniformDiscretize;
+extern const expression_ref unsafePerformIO;
+extern const expression_ref listToVectorDouble;
 
 extern const expression_ref DiscreteDistribution;
 extern const expression_ref UnwrapDD;

@@ -67,11 +67,11 @@ using std::endl;
 
 int main()
 {
-  //  term_ref x = F->add_state_node("X");
-  expression_ref x = parameter("X");
-  expression_ref y = parameter("Y");
-  expression_ref z = parameter("Z");
-  expression_ref w = parameter("W");
+  //  term_ref x = F->add_state_node("x");
+  expression_ref x = parameter("x");
+  expression_ref y = parameter("y");
+  expression_ref z = parameter("z");
+  expression_ref w = parameter("w");
   expression_ref one = Double(1);
 
   expression_ref X ( x );
@@ -136,10 +136,10 @@ int main()
   cout<<"Creating an Context...\n";
   context CTX1;
 
-  CTX1.add_parameter("X");
-  CTX1.add_parameter("Y");
-  CTX1.add_parameter("Z");
-  CTX1.add_parameter("W");
+  CTX1.add_parameter("x");
+  CTX1.add_parameter("y");
+  CTX1.add_parameter("z");
+  CTX1.add_parameter("w");
 
   expression_ref x_times_y_plus_one = (plus, (mul, x, y), one);
   int x_times_y_plus_one_ = CTX1.add_compute_expression(x_times_y_plus_one);
@@ -161,19 +161,19 @@ int main()
   // -- can we create constants easily?
   CTX1.add_compute_expression( (If, Z > 1.0, X*Y+1.0, W*W ) );
 
-  int defv = CTX1.add_compute_expression(  (default_value, parameter("X"), 2.0) );
+  int defv = CTX1.add_compute_expression(  (default_value, parameter("x"), 2.0) );
   int list_x_y = CTX1.add_compute_expression( List(X,Y) );
   int tuple_x_y = CTX1.add_compute_expression(Tuple(X,Y));
 
-  int prior_x_y = CTX1.add_note( (distributed, parameter("X"),Tuple(exponential_dist,Y+One)));
-  CTX1.add_note((distributed,parameter("Y"),Tuple(exponential_dist,Z+One)));
+  int prior_x_y = CTX1.add_note( (distributed, parameter("x"),Tuple(exponential_dist,Y+One)));
+  CTX1.add_note((distributed,parameter("y"),Tuple(exponential_dist,Z+One)));
   int probability_expression = add_probability_expression(CTX1);
 
   cout<<"Setting a few variables...\n";
-  CTX1.set_parameter_value("X",Double(2));
-  CTX1.set_parameter_value("Y",Double(3));
-  CTX1.set_parameter_value("Z",Double(4));
-  CTX1.set_parameter_value("W",Int(5));
+  CTX1.set_parameter_value("x",Double(2));
+  CTX1.set_parameter_value("y",Double(3));
+  CTX1.set_parameter_value("z",Double(4));
+  CTX1.set_parameter_value("w",Int(5));
 
   cout<<"X should have 2 as a default value.\n";
   cout<<"CTX1 = \n"<<CTX1<<"\n";
@@ -199,8 +199,8 @@ int main()
 
   cout<<"\n\n";
   cout<<"Changing X and Y from 2,3 to 3,2 in CTX1: downstream computations should be invalidated in CTX1.\n";
-  CTX1.set_parameter_value("X",Double(3));
-  CTX1.set_parameter_value("Y",Double(2));
+  CTX1.set_parameter_value("x",Double(3));
+  CTX1.set_parameter_value("y",Double(2));
   cout<<"CTX1 = \n"<<CTX1<<"\n";
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
@@ -211,13 +211,13 @@ int main()
   cout<<"\n\n";
   CTX2.evaluate(cond);
   cout<<"Changing W in CTX2: If(Z>1,X*Y+1,W*W) is unaffected should remain valid.\n";
-  CTX2.set_parameter_value("W",Int(-1));
+  CTX2.set_parameter_value("w",Int(-1));
   CTX2.evaluate(cond);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
   cout<<"\n\n";
   cout<<"Changing Z in CTX2 and evaluating If(Z>1,X*Y+1,W*W):\n";
-  CTX2.set_parameter_value("Z",Double(0));
+  CTX2.set_parameter_value("z",Double(0));
   result = CTX2.evaluate(cond);
   cout<<"CTX2 = \n"<<CTX2<<"\n";
 
@@ -340,16 +340,16 @@ int main()
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
   cout<<"add parameters X,Y,Z\n";
-  C.add_parameter("X");
-  C.add_parameter("Y");
-  C.add_parameter("Z");
+  C.add_parameter("x");
+  C.add_parameter("y");
+  C.add_parameter("z");
   cout<<"C.n_used_regs() = "<<C.n_used_regs()<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   C.add_compute_expression((X+Y)+Z);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
-  C.set_parameter_value("X",1.0);
-  C.set_parameter_value("Y",2.0);
-  C.set_parameter_value("Z",4.0);
+  C.set_parameter_value("x",1.0);
+  C.set_parameter_value("y",2.0);
+  C.set_parameter_value("z",4.0);
   cout<<"B:C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
@@ -357,31 +357,31 @@ int main()
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
   {
-    C.set_parameter_value("Z",5.0);
+    C.set_parameter_value("z",5.0);
     context D = C;
     cout<<"D.evaluate(0) = "<<D.evaluate(0)<<"\n";
     cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
-    D.set_parameter_value("Z",6.0);
+    D.set_parameter_value("z",6.0);
     cout<<"D.evaluate(0) = "<<D.evaluate(0)<<"\n";
     cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
-    C.set_parameter_value("Z",7.0);
-    D.set_parameter_value("Z",8.0);
+    C.set_parameter_value("z",7.0);
+    D.set_parameter_value("z",8.0);
     cout<<"D.evaluate(0) = "<<D.evaluate(0)<<"\n";
     cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
-    D.set_parameter_value("X",0.0);
+    D.set_parameter_value("x",0.0);
     cout<<"D.evaluate(0) = "<<D.evaluate(0)<<"\n";
     cout<<"C.evaluate(0) = "<<C.evaluate(0)<<"\n";
   }
   C.add_compute_expression( apply_expression(apply_expression(plus,apply_expression(apply_expression(plus,X),Y)),Z) );
   cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
-  C.set_parameter_value("Z",7.0);
+  C.set_parameter_value("z",7.0);
   cout<<"C.evaluate(1) = "<<C.evaluate(1)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  C.set_parameter_value("X",1);
-  C.set_parameter_value("Y",2);
-  C.set_parameter_value("Z",4);
+  C.set_parameter_value("x",1);
+  C.set_parameter_value("y",2);
+  C.set_parameter_value("z",4);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
   expression_ref test16 = (take,y,(iterate,(plus,x),z));
@@ -390,7 +390,7 @@ int main()
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
-  C.set_parameter_value("Y",0);
+  C.set_parameter_value("y",0);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(2) = "<<C.evaluate(2)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
@@ -401,37 +401,37 @@ int main()
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
-  C.set_parameter_value("Y",2);
+  C.set_parameter_value("y",2);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
-  C.set_parameter_value("Y",1);
+  C.set_parameter_value("y",1);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
-  C.set_parameter_value("Y",3);
+  C.set_parameter_value("y",3);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
-  C.set_parameter_value("X",2);
+  C.set_parameter_value("x",2);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
-  C.set_parameter_value("Z",3);
+  C.set_parameter_value("z",3);
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
   cout<<"set Y=0\n";
 
   // Apparently we are generating new garbage each time we run this.
-  C.set_parameter_value("Y",5);
+  C.set_parameter_value("y",5);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
-  C.set_parameter_value("Y",5);
+  C.set_parameter_value("y",5);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
-  C.set_parameter_value("Y",5);
+  C.set_parameter_value("y",5);
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
   cout<<"C.n_regs() = "<<C.n_regs()<<"\n";
 
-  C.set_parameter_value("Y",5);
+  C.set_parameter_value("y",5);
   context D = C;
   cout<<"D.evaluate(3) = "<<D.evaluate(3)<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
-  D.set_parameter_value("Y",4);
+  D.set_parameter_value("y",4);
   cout<<"D.evaluate(3) = "<<D.evaluate(3)<<"\n";
   cout<<"C.evaluate(3) = "<<C.evaluate(3)<<"\n";
 
@@ -440,7 +440,22 @@ int main()
   cout<<"Evaluating "<<test18<<std::endl;
   cout<<"  result = "<<C.evaluate_expression( test18 )<<std::endl;
   cout<<"  result = "<<C.evaluate_expression( test18 )<<std::endl;
-  cout<<"  result = "<<C.evaluate_expression( (bounds,myArray) )<<std::endl;
+  // Broken! //  cout<<"  result = "<<C.evaluate_expression( (bounds,myArray) )<<std::endl;
   cout<<"  result = "<<C.evaluate_expression( myArray )<<std::endl;
   cout<<"  result = "<<C.evaluate_expression( myArray )<<std::endl;
+
+  C.set_parameter_value("x",1.0);
+  C.set_parameter_value("y",2.0);
+
+  int index19 = C.add_compute_expression( (unsafePerformIO,(listToVectorDouble,x&(y&ListEnd))));
+  object_ptr<const Vector<double>> v = C.evaluate_as<Vector<double>>(index19);
+  vector<double> vv = v->t;
+  for(int i=0;i<vv.size();i++)
+    cout<<"i = "<<i<<" v[i] = "<<vv[i]<<"\n";
+    
+  C.set_parameter_value("y",10.0);
+  v = C.evaluate_as<Vector<double>>(index19);
+  vv = v->t;
+  for(int i=0;i<vv.size();i++)
+    cout<<"i = "<<i<<" v[i] = "<<vv[i]<<"\n";
 }
