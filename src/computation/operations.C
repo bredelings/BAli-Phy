@@ -35,7 +35,8 @@ using boost::dynamic_pointer_cast;
 
 closure Seq::operator()(OperationArgs& Args) const
 {
-  Args.evaluate_slot_no_record(0);
+  Args.lazy_evaluate(0);
+  //  Args.evaluate_slot_no_record(0);
 
   int index = assert_is_a<index_var>(Args.reference(1))->index;
   int R = Args.current_closure().lookup_in_env( index);
@@ -44,6 +45,11 @@ closure Seq::operator()(OperationArgs& Args) const
 }
 
 expression_ref seq = lambda_expression( Seq() );
+
+closure BuiltinCopy::operator()(OperationArgs& Args) const
+{
+  return Args.lazy_evaluate(0);
+}
 
 closure Apply::operator()(OperationArgs& Args) const
 {
