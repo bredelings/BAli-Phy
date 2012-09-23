@@ -13,11 +13,8 @@ using std::deque;
 
 // 3. Add operators for: &&, ||, not, 
 //   - Then define /= as "not x == y"
-// 4. Handle (), [], :, and (,,,,) which are not valid is_haskell_op.
-//    These should not be Prelude.{sym}.
 // 5. Change expression_refs to just define to a var("name").  (For example, seq)
 
-// 6. Run lookup_symbol on ALL names.
 // 7. Add EnumFrom, EnumFromTo, EnumFromToBy to enable parsing [1..n]
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 // 8. Enable left sections.
