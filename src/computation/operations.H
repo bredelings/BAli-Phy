@@ -302,7 +302,7 @@ struct BuiltinSetVectorIndexOp: public Operation
   {
     object_ptr<const Vector<T>> v = Args.evaluate_as<Vector<T>>(0);
     int i = *Args.evaluate_as<Int>(1);
-    T x = *Args.evaluate_as<T>(2);
+    POD_math<T> x = *Args.evaluate_as<POD_math<T>>(2);
 
     const Vector<T>* vv = &(*v);
     Vector<T>* vvv = const_cast<Vector<T>*>(vv);
@@ -340,7 +340,7 @@ struct BuiltinGetVectorIndexOp: public Operation
     object_ptr<const Vector<T>> v = Args.evaluate_as<Vector<T>>(0);
     int i = *Args.evaluate_as<Int>(1);
 
-    return v->t[i];
+    return POD_math<T>(v->t[i]);
   }
 
   std::string name() const {return "builtinGetVectorIndex";}
