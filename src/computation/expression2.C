@@ -447,7 +447,7 @@ int main()
   C.set_parameter_value("x",1.0);
   C.set_parameter_value("y",2.0);
 
-  int index19 = C.add_compute_expression( (unsafePerformIO,(listToVectorDouble,x&(y&ListEnd))));
+  int index19 = C.add_compute_expression( (listToVectorDouble,x&(y&ListEnd)) );
   object_ptr<const Vector<double>> v = C.evaluate_as<Vector<double>>(index19);
   vector<double> vv = v->t;
   for(int i=0;i<vv.size();i++)
