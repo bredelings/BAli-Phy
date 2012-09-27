@@ -24,8 +24,11 @@ const expression_ref UniformDiscretize = var("UniformDiscretize");
 const expression_ref length = var("length");
 const expression_ref plusplus = var("++");
 const expression_ref average = var("average");
+const expression_ref reapply = var("reapply");
+const expression_ref unsafePerformIO_ = var("unsafePerformIO'");
 const expression_ref unsafePerformIO = var("unsafePerformIO");
 const expression_ref listToVectorDouble = var("listToVectorDouble");
+const expression_ref join_ = var("join");
 
 const expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
 const expression_ref UnwrapDD = var("UnwrapDD");
@@ -137,7 +140,6 @@ Program make_Prelude()
   // UnwrapDD (DiscreteDistribution l) = l
   P += Def( (UnwrapDD, (DiscreteDistribution, v1)), v1 );
 
-  const expression_ref IOAction0 = lambda_expression(constructor("IOAction0",1));
   const expression_ref IOAction1 = lambda_expression(constructor("IOAction1",2));
   const expression_ref IOAction2 = lambda_expression(constructor("IOAction2",3));
   const expression_ref IOAction3 = lambda_expression(constructor("IOAction3",4));
@@ -146,7 +148,6 @@ Program make_Prelude()
   const expression_ref IOAndPass = lambda_expression(constructor("IOAndPass",2));
   const expression_ref IOAnd = lambda_expression(constructor("IOAnd",2));
 
-  P.def_constructor("IOAction0",1);
   P.def_constructor("IOAction1",2);
   P.def_constructor("IOAction2",3);
   P.def_constructor("IOAction3",4);
@@ -156,22 +157,26 @@ Program make_Prelude()
   P.def_constructor("IOAndPass",2);
   P.def_constructor("IOAnd",2);
 
-  // unsafePerformIO (IOAction0 x) = x
-  // unsafePerformIO (IOAction1 x y) = x y
-  // unsafePerformIO (IOAction2 x y z) = x y z
-  // unsafePerformIO (IOAction3 x y z w ) = x y z w 
-  // unsafePerformIO (IOAction4 x y z w u) = x y z w u
-  // unsafePerformIO (IOReturn a) = a
-  // unsafePerformIO (IOAndPass f g) = let x = (unsafePerformIO f) in x `seq` (unsafePerformIO (g x))
-  // unsafePerformIO (IOAnd f g) = (unsafePerformIO f) `seq` (unsafePerformIO g)
-  P += Def( (unsafePerformIO, (IOAction0, v1)), v1)
-    ( (unsafePerformIO, (IOAction1, v1, v2)), (v1,v2))
-    ( (unsafePerformIO, (IOAction2, v1, v2, v3)), (v1, v2, v3))
-    ( (unsafePerformIO, (IOAction3, v1, v2, v3, v4)), (v1, v2, v3, v4))
-    ( (unsafePerformIO, (IOAction4, v1, v2, v3, v4, v5)), (v1, v2, v3, v4, v5))
-    ( (unsafePerformIO, (IOReturn, v1)), v1)
-    ( (unsafePerformIO, (IOAndPass, v1, v2)), let_expression(v3,(unsafePerformIO, v1), (seq, v3, (unsafePerformIO, (v2, v3)))))
-    ( (unsafePerformIO, (IOAnd, v1, v2)), (seq, (unsafePerformIO, v1), (unsafePerformIO, v2)));
+  // unsafePerformIO x = reapply unsafePerformIO' x
+  P += Def( (unsafePerformIO, v1), (reapply, unsafePerformIO_, v1) );
+
+  // FIXME? IOAction 0 doesn't work, because we don't get a separate cell for each application... to nothing.
+  //        Current approach: supply dummy arguments to such a builtin that are not used.
+
+  // unsafePerformIO' (IOAction1 x y) = x y
+  // unsafePerformIO' (IOAction2 x y z) = x y z
+  // unsafePerformIO' (IOAction3 x y z w ) = x y z w 
+  // unsafePerformIO' (IOAction4 x y z w u) = x y z w u
+  // unsafePerformIO' (IOReturn a) = a
+  // unsafePerformIO' (IOAndPass f g) = let x = (unsafePerformIO' f) in x `join` (unsafePerformIO' (g x))
+  // unsafePerformIO' (IOAnd f g) = (unsafePerformIO' f) `join` (unsafePerformIO' g)
+  P += Def( (unsafePerformIO_, (IOAction1, v1, v2)), (v1,v2))
+    ( (unsafePerformIO_, (IOAction2, v1, v2, v3)), (v1, v2, v3))
+    ( (unsafePerformIO_, (IOAction3, v1, v2, v3, v4)), (v1, v2, v3, v4))
+    ( (unsafePerformIO_, (IOAction4, v1, v2, v3, v4, v5)), (v1, v2, v3, v4, v5))
+    ( (unsafePerformIO_, (IOReturn, v1)), v1)
+    ( (unsafePerformIO_, (IOAndPass, v1, v2)), let_expression(v3,(unsafePerformIO_, v1), (join_, v3, (unsafePerformIO_, (v2, v3)))))
+    ( (unsafePerformIO_, (IOAnd, v1, v2)), (join_, (unsafePerformIO_, v1), (unsafePerformIO_, v2)));
 
   P.def_function("builtinNewVectorDouble", 1, lambda_expression( BuiltinNewVectorOp<double>() ) ); 
   P.def_function("builtinSetVectorIndexDouble", 3, lambda_expression( BuiltinSetVectorIndexOp<double>() ) ); 
@@ -198,6 +203,8 @@ Program make_Prelude()
   P += Def( (copyListToVectorDouble, ListEnd, v3, v4), (IOReturn, constructor("()",0)))
     ( (copyListToVectorDouble, v1&v2  , v3, v4), (IOAnd,(setVectorIndexDouble, v3, v4, v1),(copyListToVectorDouble, v2,v3,(v4+1))));
 
+  P.def_function("reapply", 2, lambda_expression( Reapply() ) );
+  P.def_function("join", 2, lambda_expression( Join() ) );
   P.def_function("negate", 1, lambda_expression( Negate() ) );
 
   P.declare_fixity("!!", 9, left_fix);

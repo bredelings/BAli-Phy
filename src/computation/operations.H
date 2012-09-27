@@ -90,6 +90,40 @@ struct Seq: public Operation
   Seq():Operation(2) {}
 };
 
+struct Join: public Operation
+{
+  virtual Join* clone() const {return new Join(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Join* E = dynamic_cast<const Join*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "join";}
+
+  Join():Operation(2) {}
+};
+
+struct Reapply: public Operation
+{
+  virtual Reapply* clone() const {return new Reapply(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Reapply* E = dynamic_cast<const Reapply*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "reapply";}
+
+  Reapply():Operation(2) {}
+};
+
 extern expression_ref seq;
 
 struct MkArray: public Operation
