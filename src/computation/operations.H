@@ -304,14 +304,14 @@ expression_ref BuiltinNewVector()
 }
 
 
-template<typename T>
+template<typename T, typename U>
 struct BuiltinSetVectorIndexOp: public Operation
 {
   virtual BuiltinSetVectorIndexOp* clone() const {return new BuiltinSetVectorIndexOp(*this);}
 
   tribool compare(const Object& o) const 
   {
-    const BuiltinSetVectorIndexOp* E = dynamic_cast<const BuiltinSetVectorIndexOp<T>*>(&o);
+    const BuiltinSetVectorIndexOp* E = dynamic_cast<const BuiltinSetVectorIndexOp<T,U>*>(&o);
     return E;
   }
 
@@ -319,7 +319,7 @@ struct BuiltinSetVectorIndexOp: public Operation
   {
     object_ptr<const Vector<T>> v = Args.evaluate_as<Vector<T>>(0);
     int i = *Args.evaluate_as<Int>(1);
-    POD_math<T> x = *Args.evaluate_as<POD_math<T>>(2);
+    U x = *Args.evaluate_as<U>(2);
 
     const Vector<T>* vv = &(*v);
     Vector<T>* vvv = const_cast<Vector<T>*>(vv);
@@ -333,22 +333,22 @@ struct BuiltinSetVectorIndexOp: public Operation
   BuiltinSetVectorIndexOp():Operation(3) {}
 };
 
-template <typename T>
+template <typename T, typename U>
 expression_ref BuiltinSetVectorIndex()
 {
-  return lambda_expression(BuiltinSetVectorIndexOp<T>());
+  return lambda_expression(BuiltinSetVectorIndexOp<T,U>());
 }
 
 
 
-template<typename T>
+template<typename T, typename U>
 struct BuiltinGetVectorIndexOp: public Operation
 {
   virtual BuiltinGetVectorIndexOp* clone() const {return new BuiltinGetVectorIndexOp(*this);}
 
   tribool compare(const Object& o) const 
   {
-    const BuiltinGetVectorIndexOp* E = dynamic_cast<const BuiltinGetVectorIndexOp<T>*>(&o);
+    const BuiltinGetVectorIndexOp* E = dynamic_cast<const BuiltinGetVectorIndexOp<T,U>*>(&o);
     return E;
   }
 
@@ -357,7 +357,7 @@ struct BuiltinGetVectorIndexOp: public Operation
     object_ptr<const Vector<T>> v = Args.evaluate_as<Vector<T>>(0);
     int i = *Args.evaluate_as<Int>(1);
 
-    return POD_math<T>(v->t[i]);
+    return U(v->t[i]);
   }
 
   std::string name() const {return "builtinGetVectorIndex";}
@@ -365,10 +365,10 @@ struct BuiltinGetVectorIndexOp: public Operation
   BuiltinGetVectorIndexOp():Operation(2) {}
 };
 
-template <typename T>
+template <typename T, typename U>
 expression_ref BuiltinGetVectorIndex()
 {
-  return lambda_expression(BuiltinGetVectorIndexOp<T>());
+  return lambda_expression(BuiltinGetVectorIndexOp<T,U>());
 }
 
 

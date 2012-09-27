@@ -2,6 +2,7 @@
 #include "computation/program.H"
 #include "computation/operations.H"
 #include "computation/graph_register.H"
+#include "mytypes.H"
 
 const expression_ref foldr = var("foldr");
 const expression_ref foldl = var("foldl");
@@ -28,6 +29,7 @@ const expression_ref reapply = var("reapply");
 const expression_ref unsafePerformIO_ = var("unsafePerformIO'");
 const expression_ref unsafePerformIO = var("unsafePerformIO");
 const expression_ref listToVectorDouble = var("listToVectorDouble");
+const expression_ref listToVectorMatrix = var("listToVectorMatrix");
 const expression_ref join_ = var("join");
 
 const expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
@@ -178,8 +180,10 @@ Program make_Prelude()
     ( (unsafePerformIO_, (IOAndPass, v1, v2)), let_expression(v3,(unsafePerformIO_, v1), (join_, v3, (unsafePerformIO_, (v2, v3)))))
     ( (unsafePerformIO_, (IOAnd, v1, v2)), (join_, (unsafePerformIO_, v1), (unsafePerformIO_, v2)));
 
+  //--------------------------------------- listToVectorDouble ---------------------------------------//
+
   P.def_function("builtinNewVectorDouble", 1, lambda_expression( BuiltinNewVectorOp<double>() ) ); 
-  P.def_function("builtinSetVectorIndexDouble", 3, lambda_expression( BuiltinSetVectorIndexOp<double>() ) ); 
+  P.def_function("builtinSetVectorIndexDouble", 3, lambda_expression( BuiltinSetVectorIndexOp<double,Double>() ) ); 
 
   const expression_ref builtinNewVectorDouble = var("builtinNewVectorDouble");
   const expression_ref builtinSetVectorIndexDouble = var("builtinSetVectorIndexDouble");
@@ -202,6 +206,35 @@ Program make_Prelude()
   // copyListToVectorDouble h:t v i = setVectorIndexDouble v i h << copyListToVectorDouble t v (i+1)
   P += Def( (copyListToVectorDouble, ListEnd, v3, v4), (IOReturn, constructor("()",0)))
     ( (copyListToVectorDouble, v1&v2  , v3, v4), (IOAnd,(setVectorIndexDouble, v3, v4, v1),(copyListToVectorDouble, v2,v3,(v4+1))));
+
+  //--------------------------------------- listToVectorMatrix ---------------------------------------//
+
+  P.def_function("builtinNewVectorMatrix", 1, lambda_expression( BuiltinNewVectorOp<Matrix>() ) ); 
+  P.def_function("builtinSetVectorIndexMatrix", 3, lambda_expression( BuiltinSetVectorIndexOp<Matrix,MatrixObject>() ) ); 
+
+  const expression_ref builtinNewVectorMatrix = var("builtinNewVectorMatrix");
+  const expression_ref builtinSetVectorIndexMatrix = var("builtinSetVectorIndexMatrix");
+
+  const expression_ref newVectorMatrix = var("newVectorMatrix");
+  P += Def( (newVectorMatrix, v1), (IOAction1, builtinNewVectorMatrix, v1));
+
+  const expression_ref setVectorIndexMatrix = var("setVectorIndexMatrix");
+  P += Def( (setVectorIndexMatrix, v1, v2, v3), (IOAction3, builtinSetVectorIndexMatrix, v1, v2, v3));
+
+  const expression_ref listToVectorMatrix = var("listToVectorMatrix");
+  const expression_ref copyListToVectorMatrix = var("copyListToVectorMatrix");
+  // listToVectorMatrix l = do { v <- newVectorMatrix (length l); copyListToVector l v 0 ; return v;}
+  // listToVectorMatrix l = newVectorMatrix (length l) <<= (\v -> copyListToVector l v 0 << return v;)
+  P += Def( (listToVectorMatrix, v1), (unsafePerformIO, (IOAndPass, (newVectorMatrix, (length, v1)),
+							 lambda_quantify(v2,(IOAnd,(copyListToVectorMatrix, v1, v2, 0),(IOReturn, v2))) ) ) );
+
+  // copyListToVectorMatrix [] v i = return ()
+  // copyListToVectorMatrix h:t v i = do { setVectorIndexMatrix v i h ; copyListToVectorMatrix t v (i+1) }
+  // copyListToVectorMatrix h:t v i = setVectorIndexMatrix v i h << copyListToVectorMatrix t v (i+1)
+  P += Def( (copyListToVectorMatrix, ListEnd, v3, v4), (IOReturn, constructor("()",0)))
+    ( (copyListToVectorMatrix, v1&v2  , v3, v4), (IOAnd,(setVectorIndexMatrix, v3, v4, v1),(copyListToVectorMatrix, v2,v3,(v4+1))));
+
+  //------------------------------------------------------------------------------------------------//
 
   P.def_function("reapply", 2, lambda_expression( Reapply() ) );
   P.def_function("join", 2, lambda_expression( Join() ) );
