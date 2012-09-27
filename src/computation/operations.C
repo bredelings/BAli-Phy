@@ -593,10 +593,3 @@ def_binary_operator2(<,LessThan)
 def_binary_operator2(>,GreaterThan)
 def_binary_operator2(==,Equals)
 #undef def_binary_operator2
-
-BuiltinNewVectorOp<double> vv;
-BuiltinSetVectorIndexOp<double> vvv;
-BuiltinGetVectorIndexOp<double> vvvv;
-BuiltinNewVectorOp<Double> xvv;
-BuiltinSetVectorIndexOp<Double> xvvv;
-BuiltinGetVectorIndexOp<Double> xvvvv;
