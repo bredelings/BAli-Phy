@@ -194,8 +194,8 @@ Program make_Prelude()
   const expression_ref copyListToVectorDouble = var("copyListToVectorDouble");
   // listToVectorDouble l = do { v <- newVectorDouble (length l); copyListToVector l v 0 ; return v;}
   // listToVectorDouble l = newVectorDouble (length l) <<= (\v -> copyListToVector l v 0 << return v;)
-  P += Def( (listToVectorDouble, v1), (IOAndPass, (newVectorDouble, (length, v1)),
-				       lambda_quantify(v2,(IOAnd,(copyListToVectorDouble, v1, v2, 0),(IOReturn, v2))) ) );
+  P += Def( (listToVectorDouble, v1), (unsafePerformIO, (IOAndPass, (newVectorDouble, (length, v1)),
+							 lambda_quantify(v2,(IOAnd,(copyListToVectorDouble, v1, v2, 0),(IOReturn, v2))) ) ) );
 
   // copyListToVectorDouble [] v i = return ()
   // copyListToVectorDouble h:t v i = do { setVectorIndexDouble v i h ; copyListToVectorDouble t v (i+1) }
