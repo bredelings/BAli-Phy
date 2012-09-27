@@ -581,7 +581,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
 //-----------------------------------------------------------------------------//
 smodel_methods::smodel_methods(const expression_ref& E, context& C)
 {
-  expression_ref V = Vector_From_List<double,Double>();
+  expression_ref V = listToVectorDouble;
 
   main = C.add_compute_expression( E );
   expression_ref S = C.get_expression(main);
