@@ -120,7 +120,7 @@ closure dirichlet_density::operator()(OperationArgs& Args) const
   expression_ref N = Args.evaluate_structure(0);
   expression_ref X = Args.evaluate_structure(1);
   
-  std::vector<double> n = get_vector<double,Double>(N);
+  std::vector<double> n = get_vector_from_list<double,Double>(N);
   std::vector<double> x = get_vector_from_list<double,Double>(X);
   
   object_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x,n) ) );

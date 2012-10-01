@@ -310,7 +310,7 @@ namespace substitution
     // Should I make a tuple of tuples?
     R.add_expression((distributed, 
 		      AG&(AT&(AC&(GT&(GC&(TC&ListEnd))))),
-		      Tuple(dirichlet_dist, Tuple(8.0, 4.0, 4.0, 4.0, 4.0, 8.0) )
+		      Tuple(dirichlet_dist, List(8.0, 4.0, 4.0, 4.0, 4.0, 8.0) )
 		      )
 		     );
 
@@ -424,7 +424,7 @@ namespace substitution
       F = Var&F;
     }
 
-    expression_ref N = get_tuple(vector<double>(a.size(), 1.0) );
+    expression_ref N = get_list(vector<double>(a.size(), 1.0) );
     F.add_expression( (distributed, F, Tuple(dirichlet_dist,N ) ) );
 
     return F;
@@ -800,7 +800,7 @@ namespace substitution
     }
     formula_expression_ref R = (MixMixtureModels,P,M);
 
-    R.add_expression((distributed, P, Tuple(dirichlet_dist, get_tuple(vector<Double>(N,1.0) ) ) )) ;
+    R.add_expression((distributed, P, Tuple(dirichlet_dist, get_list(vector<Double>(N,1.0) ) ) )) ;
 
     return R;
   }

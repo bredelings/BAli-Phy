@@ -769,8 +769,8 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
       dist = Tuple(f, rate) & dist;
     }
     dist = (DiscreteDistribution, dist);
-    dist.add_expression( (distributed, get_list(fs), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,1.0+n/2.0))) ) );
-    dist.add_expression( (distributed, get_list(rates), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,2.0))) ) );
+    dist.add_expression( (distributed, get_list(fs), Tuple(dirichlet_dist, get_list(vector<Double>(n,1.0+n/2.0))) ) );
+    dist.add_expression( (distributed, get_list(rates), Tuple(dirichlet_dist, get_list(vector<Double>(n,2.0))) ) );
 
     formula_expression_ref base = coerce_to_RA(model_args[1],a,frequencies);
     return (MultiRate, base,  dist);
@@ -807,7 +807,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
 						    ListEnd
 						    );
 
-    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, Tuple(1.0, 98.0, 1.0)) ) );
+    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, List(1.0, 98.0, 1.0)) ) );
     D.add_expression( (distributed, m2_omega, Tuple(log_exponential_dist, 0.05) ) );
 
     formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,2);
@@ -833,7 +833,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
       F = f&F;
     }
     D = (DiscreteDistribution, D);
-    D.add_expression((distributed, F, Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
+    D.add_expression((distributed, F, Tuple(dirichlet_dist, get_list(vector<Double>(n,4.0))) ) );
 
     formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,3);
 
@@ -862,7 +862,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
       D = Tuple(f,w)&D;
     }
     D = (DiscreteDistribution, D);
-    D.add_expression((distributed, get_list(fraction), Tuple(dirichlet_dist, get_tuple(vector<Double>(n,4.0))) ) );
+    D.add_expression((distributed, get_list(fraction), Tuple(dirichlet_dist, get_list(vector<Double>(n,4.0))) ) );
 
     formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,3);
 
@@ -877,7 +877,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref w3 = def_parameter("M2a.omega3", Double(1.0), lower_bound(1));
     formula_expression_ref D = (DiscreteDistribution,Tuple(p1,w1)&Tuple(p2,1.0)&Tuple(p3,w3)&ListEnd);
 
-    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, Tuple(1.0, 98.0, 1.0)) ) );
+    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, List(1.0, 98.0, 1.0)) ) );
     D.add_expression( (distributed, (divide, 1.0, w1), Tuple(log_exponential_dist, 0.05) ) );
     D.add_expression( (distributed, w3, Tuple(log_exponential_dist, 0.05) ) );
 
@@ -939,7 +939,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
 
     D = (DiscreteDistribution,Tuple(p3,w3) & (Tuple(p2,1.0) & (fmap1, (v4^(times,v4,p1)), (UnwrapDD, D))));
     // (p1,p2,p3) ~ Dirichlet(10, 10, 1)
-    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, Tuple(10.0, 10.0, 1.0)) ) );
+    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   Tuple(dirichlet_dist, List(10.0, 10.0, 1.0)) ) );
 
     formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,3);
 
@@ -993,7 +993,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     mixture2 = (MultiParameter, M0, mixture2);
     formula_expression_ref branch_site = (MixtureModels,mixture1&(mixture2&ListEnd));
 
-    branch_site.add_expression( (distributed, f0&(f1&ListEnd), Tuple(dirichlet_dist, Tuple(1.0, 1.0)) ) );
+    branch_site.add_expression( (distributed, f0&(f1&ListEnd), Tuple(dirichlet_dist, List(1.0, 1.0)) ) );
 
     return branch_site;
   }
@@ -1042,7 +1042,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref mixture2 = (MultiParameter, M0, (MixDiscreteDistributions, List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
 
     formula_expression_ref branch_site = (MixtureModels, mixture1&(mixture2&ListEnd) );
-    branch_site.add_expression( (distributed, F, Tuple(dirichlet_dist,get_tuple(vector<Double>(n,1.0) ) ) ) );
+    branch_site.add_expression( (distributed, F, Tuple(dirichlet_dist,get_list(vector<Double>(n,1.0) ) ) ) );
 
     return branch_site;
   }
