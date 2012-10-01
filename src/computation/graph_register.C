@@ -2244,58 +2244,6 @@ class RegOperationArgs: public OperationArgs
     return M.access_result( lazy_evaluate_reg(R2) ).exp->head;
   }
 
-  // Note: see note below on evaluate_structure( ) on the issue of returning lambdas.
-
-  /*
-   * NOTE: When fully evaluating a structure, we must record uses for all of the regs that we
-   *       access, including constructor fields.
-   */
-
-  /*
-   * NOTE: It is probably the case that taking structures like this allows evaluate( )
-   *       and lazy_evaluate( ) below to handle arguments not being reg_vars.
-   *
-   *       But I'm not sure we want to preserve that, and I'm not sure it works!
-   *
-   * We could also define evaluate_structure as a wrapper for another routine that takes a reg index.
-   */
-  
-  expression_ref evaluate_structure_(closure C)
-  {
-    if (object_ptr<const index_var> V = is_a<index_var>(C.exp) )
-    {
-      int R2 = C.lookup_in_env(V->index);
-      int R3 = lazy_evaluate_reg(R2);
-
-      /* IDEA: only allow evaluation of reg_vars, constants, and constructors 
-	       any reg_var that evaluates to a lambda stays a reg_var.
-	       that is the only use way of using the result.
-       */
-
-      return evaluate_structure_( M.access_result(R3) );
-    }
-    else if (C.exp->size())
-    {
-      // If the "structure" is a lambda function, then we are done.
-      // (a) if we were going to USE this, we should just call lazy evaluate! (which return a heap variable)
-      // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
-      // See note above on returning lambdas as reg_vars.
-      if (is_a<lambda2>(C.exp)) return C.exp;
-
-      assert(is_a<constructor>(C.exp));
-
-      // If the result is a constructor expression, then evaluate its fields also.
-      object_ptr<expression> V = C.exp->clone();
-      
-      for(int i=0;i<V->size();i++)
-	V->sub[i] = evaluate_structure_({C.exp->sub[i], C.Env});
-
-      return V;
-    }
-    else
-      return C.exp;
-  }
-
 public:
 
   expression_ref reference(int slot) const
@@ -2325,12 +2273,6 @@ public:
      */
     
     return M.access_result(R2);
-  }
-
-  // This fills out an entire structure!
-  expression_ref evaluate_structure(int slot)
-  {
-    return evaluate_structure_(lazy_evaluate(slot));
   }
 
   // This just returns the head of the structure.
