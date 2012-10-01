@@ -1,5 +1,6 @@
 #include "distribution-operations.H"
 #include "distribution.H"
+#include "computation/prelude.H"
 
 using std::vector;
 using std::valarray;
@@ -117,11 +118,8 @@ closure cauchy_density::operator()(OperationArgs& Args) const
 // Third convert all the expression_ref's here to "var" and use Distribution_Functions()
 closure dirichlet_density::operator()(OperationArgs& Args) const
 {
-  expression_ref N = Args.evaluate_structure(0);
-  expression_ref X = Args.evaluate_structure(1);
-  
-  std::vector<double> n = get_vector_from_list<double,Double>(N);
-  std::vector<double> x = get_vector_from_list<double,Double>(X);
+  const vector<double>& n = Args.evaluate_as<Vector<double>>(0)->t;
+  const vector<double>& x = Args.evaluate_as<Vector<double>>(1)->t;
   
   object_ptr<Log_Double> R (new Log_Double( ::dirichlet_pdf(x,n) ) );
   
@@ -196,7 +194,8 @@ expression_ref log_normal_dist  = (prob_density, "LogNormal", logNormalDensity, 
 expression_ref cauchyDensity    = var("cauchyDensity");
 expression_ref cauchy_dist      = (prob_density, "Cauchy", cauchyDensity, 0);
 
-expression_ref dirichlet_dist   = (prob_density, "Dirichlet", lambda_expression(dirichlet_density()), 0);
+expression_ref dirichletDensity   = var("dirichletDensity");
+expression_ref dirichlet_dist   = (prob_density, "Dirichlet", dirichletDensity, 0);
 
 expression_ref laplaceDensity   = var("laplaceDensity");
 expression_ref laplace_dist     = (prob_density, "Laplace", laplaceDensity, 0);
@@ -244,6 +243,9 @@ Program Distribution_Functions()
 
   P.def_function("builtinLaplaceDensity", 3, lambda_expression( laplace_density() ) );
   P += Def( (laplaceDensity, Tuple(v1,v2), v3), (var("builtinLaplaceDensity"),v1,v2,v3)); 
+
+  P.def_function("builtinDirichletDensity", 3, lambda_expression( dirichlet_density() ) );
+  P += Def( (dirichletDensity, v1, v2), (var("builtinDirichletDensity"),(listToVectorDouble,v1),(listToVectorDouble,v2))); 
 
   P.def_function("builtinLogLaplaceDensity", 3, lambda_expression( log_laplace_density() ) );
   P += Def( (logLaplaceDensity, Tuple(v1,v2), v3), (var("builtinLogLaplaceDensity"),v1,v2,v3)); 
