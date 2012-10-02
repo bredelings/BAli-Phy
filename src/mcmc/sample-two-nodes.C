@@ -98,6 +98,21 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
   m12345.hidden_bits.set(5);
   m12345.B = P.get_beta();
 
+  /*
+    We need the column order a12345_emit... but the alignment can be in an inconsistent state here.
+
+  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,4);
+  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),4,1);
+  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),4,5);
+  vector<HMM::bitmask_t> a4 = convert_to_bits(P.get_pairwise_alignment(b4),5,2);
+  vector<HMM::bitmask_t> a5 = convert_to_bits(P.get_pairwise_alignment(b5),5,3);
+
+  vector<HMM::bitmask_t> a12345 = Glue_A(a1, Glue_A(a2, Glue_A(a3, Glue_A(a4, a5))));
+  vector<HMM::bitmask_t> a12345_emit = remove_silent(a12345, m12345.all_bits() & ~m12345.hidden_bits);
+
+
+  boost::shared_ptr<DParrayConstrained> Matrices_ ( new DParrayConstrained(a12345_emit.size(), m12345) );
+  */
   //------------- Compute sequence properties --------------//
   vector<int> columns = A5::getorder(old,nodes);
 
