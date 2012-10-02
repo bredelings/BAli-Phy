@@ -48,10 +48,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 // 2. Calculate the likelihood of the reassembled matrix and the original matrix
 //     - see if the difference is the same as the difference between the path probabilities
 
-//Assumptions:
-//  a) we assume that the internal node is the parent
-//     sequence in each of the sub-alignments
-
 using std::abs;
 using std::vector;
 using std::endl;
