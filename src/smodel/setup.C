@@ -678,7 +678,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
-    formula_expression_ref dist = (UniformDiscretize, (lambda_expression(gamma_quantile_op()), Tuple(a,b)) , n);
+    formula_expression_ref dist = (UniformDiscretize, (var("gammaQuantile"), Tuple(a,b)) , n);
 
     return (MultiRate, base,  dist);
   }
@@ -695,7 +695,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
-    formula_expression_ref dist = (UniformDiscretize, (lambda_expression(gamma_quantile_op()), Tuple(a,b)) , n);
+    formula_expression_ref dist = (UniformDiscretize, (var("gammaQuantile"), Tuple(a,b)) , n);
 
     formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
     dist = (ExtendDiscreteDistribution, dist, p, 0.0);
@@ -714,7 +714,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref lVar = (Log, (plus, 1.0, Var ) );
     formula_expression_ref lmu = (times, -0.5, lVar);
     formula_expression_ref lsigma = (Sqrt, lVar);
-    formula_expression_ref dist = (UniformDiscretize, (lambda_expression(log_normal_quantile_op()), Tuple(lmu,lsigma)) , n);
+    formula_expression_ref dist = (UniformDiscretize, (var("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
 
     return (MultiRate, base,  dist);
   }
@@ -730,7 +730,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref lVar = (Log, (plus, 1.0, Var ) );
     formula_expression_ref lmu = (times, -0.5, lVar);
     formula_expression_ref lsigma = (Sqrt, lVar);
-    formula_expression_ref dist = (UniformDiscretize, (lambda_expression(log_normal_quantile_op()), Tuple(lmu,lsigma)) , n);
+    formula_expression_ref dist = (UniformDiscretize, (var("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
 
     formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), beta_dist, Tuple(1.0, 2.0) );
     dist = (ExtendDiscreteDistribution, dist, p, 0.0);
@@ -920,7 +920,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
     // Create the discrete distribution for omega
-    formula_expression_ref D = (UniformDiscretize, (lambda_expression(beta_quantile_op()), Tuple(alpha,beta)), n);
+    formula_expression_ref D = (UniformDiscretize, (var("betaQuantile"), Tuple(alpha,beta)), n);
 
     // *Question*: How much does D simplify with "completely lazy" evaluation?
     formula_expression_ref p1 = def_parameter("M8b.fPurifying", Double(0.6), between(0,1));
@@ -958,7 +958,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
     // Create the discrete distribution for omega
-    formula_expression_ref D = (UniformDiscretize, (lambda_expression(beta_quantile_op()), Tuple(alpha,beta)), n);
+    formula_expression_ref D = (UniformDiscretize, (var("betaQuantile"), Tuple(alpha,beta)), n);
 
     formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,3);
 
