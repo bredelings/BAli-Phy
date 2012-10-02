@@ -76,6 +76,28 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
 
   //  std::cerr<<"old = "<<old<<endl;
 
+  int b1 = T.directed_branch(nodes[0],nodes[4]);
+  int b2 = T.directed_branch(nodes[4],nodes[1]);
+  int b3 = T.directed_branch(nodes[4],nodes[5]);
+  int b4 = T.directed_branch(nodes[5],nodes[2]);
+  int b5 = T.directed_branch(nodes[5],nodes[3]);
+
+  HMM m1 = P.get_branch_HMM(b1);
+  m1.remap_bits({0,4});
+  HMM m2 = P.get_branch_HMM(b2);
+  m2.remap_bits({4,1});
+  HMM m3 = P.get_branch_HMM(b3);
+  m3.remap_bits({4,5});
+  HMM m4 = P.get_branch_HMM(b4);
+  m4.remap_bits({5,2});
+  HMM m5 = P.get_branch_HMM(b5);
+  m5.remap_bits({5,3});
+
+  HMM m12345 = Glue(m1,Glue(m2,Glue(m3,Glue(m4,m5))));
+  m12345.hidden_bits.set(4);
+  m12345.hidden_bits.set(5);
+  m12345.B = P.get_beta();
+
   //------------- Compute sequence properties --------------//
   vector<int> columns = A5::getorder(old,nodes);
 
