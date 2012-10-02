@@ -86,7 +86,6 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
 
   //  std::cerr<<"old = "<<old<<endl;
 
-  /*------------- Compute sequence properties --------------*/
   int b1 = T.directed_branch(nodes[1],nodes[0]);
   int b2 = T.directed_branch(nodes[0],nodes[2]);
   int b3 = T.directed_branch(nodes[0],nodes[3]);
