@@ -93,6 +93,11 @@ void do_setup(const variables_map& args,
   int maxalignments = args["max-alignments"].as<int>();
 
   // --------------------- try ---------------------- //
+  if (not args.count("file1"))
+    throw myexception()<<"File #1 not supplied!";
+  if (not args.count("file2"))
+    throw myexception()<<"File #2 not supplied!";
+
   {
     string filename = args["file1"].as<string>();
     load_alignments(alignments1,filename,load_alphabets(args),maxalignments,"#1");
@@ -144,7 +149,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     cout<<"Compare two alignment distributions.\n";
     cout<<" o label each residue by its maximum pairwise homology deviance.\n";
     cout<<" o output AU-style annotations for the alignment given by --align.\n\n";
-    cout<<all<<"\n";
+    cout<<visible<<"\n";
     exit(0);
   }
 

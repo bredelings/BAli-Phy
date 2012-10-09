@@ -841,7 +841,7 @@ alignment load_next_alignment(istream& ifile, const vector<object_ptr<const alph
   string line;
 
   if (not find_alignment(ifile))
-    throw myexception()<<"Error: no alignment found.\n";
+    throw myexception()<<"No alignment found.\n";
 
   // READ the alignment
   try {
