@@ -109,21 +109,34 @@ variables_map parse_cmd_line(int argc,char* argv[])
 { 
   using namespace po;
 
-  // named options
-  options_description all("Allowed options");
-  all.add_options()
+  // Named options
+  options_description invisible("Invisible options");
+  invisible.add_options()
+    ("file1", value<string>(),"first alignment file")
+    ("file2", value<string>(),"second alignment file");
+
+  // 
+  options_description visible("Allowed options");
+  visible.add_options()
     ("help", "produce help message")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
     ("seed", value<unsigned long>(),"random seed")
     ("align", value<string>(),"alignment to output values for.")
-    ("file1", value<string>(),"first alignment file")
-    ("file2", value<string>(),"second alignment file")
     ("max-alignments",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("verbose","Output more log messages on stderr.")
     ;
 
+  options_description all("All options");
+  all.add(invisible).add(visible);
+
+  // positional options
+  positional_options_description p;
+  p.add("file1", 1);
+  p.add("file2", 2);
+
   variables_map args;     
-  store(parse_command_line(argc, argv, all), args);
+  store(command_line_parser(argc, argv).
+	    options(all).positional(p).run(), args);
   notify(args);    
 
   if (args.count("help")) {
