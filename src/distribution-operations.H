@@ -8,6 +8,7 @@
 #include "computation/operation.H"
 #include "computation/computation.H"
 #include "probability.H"
+#include "computation/program.H"
 
 struct exponential_density: public Operation
 {
@@ -73,7 +74,7 @@ struct gamma_density: public Operation
 
   std::string name() const {return "gamma_density";}
 
-  gamma_density():Operation(2) { }
+  gamma_density():Operation(3) { }
 };
 
 struct gamma_quantile_op: public Operation
@@ -94,7 +95,7 @@ struct gamma_quantile_op: public Operation
 
   std::string name() const {return "gamma_quantile";}
 
-  gamma_quantile_op():Operation(2) { }
+  gamma_quantile_op():Operation(3) { }
 };
 
 extern expression_ref gamma_dist;
@@ -117,7 +118,7 @@ struct log_gamma_density: public Operation
 
   std::string name() const {return "log_gamma_density";}
 
-  log_gamma_density():Operation(2) { }
+  log_gamma_density():Operation(3) { }
 };
 
 extern expression_ref log_gamma_dist;
@@ -140,7 +141,7 @@ struct beta_density: public Operation
 
   std::string name() const {return "beta_density";}
 
-  beta_density():Operation(2) { }
+  beta_density():Operation(3) { }
 };
 
 extern expression_ref beta_dist;
@@ -163,7 +164,7 @@ struct beta_quantile_op: public Operation
 
   std::string name() const {return "beta_quantile_op";}
 
-  beta_quantile_op():Operation(2) { }
+  beta_quantile_op():Operation(3) { }
 };
 
 struct normal_density: public Operation
@@ -184,7 +185,7 @@ struct normal_density: public Operation
 
   std::string name() const {return "normal_density";}
 
-  normal_density():Operation(2) { }
+  normal_density():Operation(3) { }
 };
 
 extern expression_ref normal_dist;
@@ -207,7 +208,7 @@ struct log_normal_density: public Operation
  
   std::string name() const {return "log_normal_density";}
 
-  log_normal_density():Operation(2) { }
+  log_normal_density():Operation(3) { }
 };
 
 struct log_normal_quantile_op: public Operation
@@ -228,7 +229,7 @@ struct log_normal_quantile_op: public Operation
  
   std::string name() const {return "log_normal_quantile";}
 
-  log_normal_quantile_op():Operation(2) { }
+  log_normal_quantile_op():Operation(3) { }
 };
 
 extern expression_ref log_normal_dist;
@@ -251,7 +252,7 @@ struct cauchy_density: public Operation
 
   std::string name() const {return "cauchy_density";}
 
-  cauchy_density():Operation(2) { }
+  cauchy_density():Operation(3) { }
 };
 
 extern expression_ref cauchy_dist;
@@ -297,7 +298,7 @@ struct laplace_density: public Operation
 
   std::string name() const {return "laplace_density";}
     
-  laplace_density():Operation(2) { }
+  laplace_density():Operation(3) { }
 };
 
 extern expression_ref laplace_dist;
@@ -320,7 +321,7 @@ struct log_laplace_density: public Operation
 
   std::string name() const {return "log_laplace_density";}
     
-  log_laplace_density():Operation(2) { }
+  log_laplace_density():Operation(3) { }
 };
 
 extern expression_ref log_laplace_dist;
@@ -343,7 +344,7 @@ struct uniform_density: public Operation
 
   std::string name() const {return "uniform_density";}
     
-  uniform_density():Operation(2) { }
+  uniform_density():Operation(3) { }
 };
 
 extern expression_ref uniform_dist;
@@ -373,5 +374,7 @@ extern expression_ref bernoulli_dist;
 
 // 2 Fields: string, density op
 extern expression_ref prob_density;
+
+Program Distribution_Functions();
 
 #endif

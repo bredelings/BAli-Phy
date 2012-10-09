@@ -1,4 +1,3 @@
-#undef NDEBUG
 #include "computation/context.H"
 #include "prelude.H"
 #include "program.H"
@@ -630,7 +629,7 @@ int add_probability_expression(context& C)
     prior_expressions[x->print()] = D->print();
     
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_i = case_expression(D, Tuple((prob_density,_,density,_),args), (density, x, args));
+    expression_ref Pr_i = case_expression(D, Tuple((prob_density,_,density,_),args), (density, args, x));
     
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)

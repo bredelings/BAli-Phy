@@ -20,8 +20,6 @@ struct OperationArgs: public Object
 
   virtual expression_ref reference(int slot) const = 0;
 
-  virtual expression_ref evaluate_structure(int slot) = 0;
-
   virtual object_ref evaluate(int slot) = 0;
 
   virtual int evaluate_slot_no_record(int) = 0;

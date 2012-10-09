@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2007,2009 Benjamin Redelings
+   Copyright (C) 2004-2007,2009-2012 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -48,10 +48,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 // 2. Calculate the likelihood of the reassembled matrix and the original matrix
 //     - see if the difference is the same as the difference between the path probabilities
 
-//Assumptions:
-//  a) we assume that the internal node is the parent
-//     sequence in each of the sub-alignments
-
 using std::abs;
 using std::vector;
 using std::endl;
@@ -85,11 +81,6 @@ boost::shared_ptr<DParrayConstrained> sample_node_base(data_partition& P,const v
   alignment old = *P.A;
 
   //  std::cerr<<"old = "<<old<<endl;
-
-  /*------------- Compute sequence properties --------------*/
-  vector<int> branches;
-  for(int i=1;i<nodes.size();i++)
-    branches.push_back(T.branch(nodes[0],nodes[i]) );
 
   int b1 = T.directed_branch(nodes[1],nodes[0]);
   int b2 = T.directed_branch(nodes[0],nodes[2]);

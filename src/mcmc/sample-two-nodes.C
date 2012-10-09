@@ -1,5 +1,5 @@
 /*
-   Copyright (C) 2004-2007,2009 Benjamin Redelings
+   Copyright (C) 2004-2007,2009-2012 Benjamin Redelings
 
 This file is part of BAli-Phy.
 
@@ -76,6 +76,43 @@ void sample_two_nodes_base(data_partition& P, const vector<int>& nodes, DParrayC
 
   //  std::cerr<<"old = "<<old<<endl;
 
+  int b1 = T.directed_branch(nodes[0],nodes[4]);
+  int b2 = T.directed_branch(nodes[4],nodes[1]);
+  int b3 = T.directed_branch(nodes[4],nodes[5]);
+  int b4 = T.directed_branch(nodes[5],nodes[2]);
+  int b5 = T.directed_branch(nodes[5],nodes[3]);
+
+  HMM m1 = P.get_branch_HMM(b1);
+  m1.remap_bits({0,4});
+  HMM m2 = P.get_branch_HMM(b2);
+  m2.remap_bits({4,1});
+  HMM m3 = P.get_branch_HMM(b3);
+  m3.remap_bits({4,5});
+  HMM m4 = P.get_branch_HMM(b4);
+  m4.remap_bits({5,2});
+  HMM m5 = P.get_branch_HMM(b5);
+  m5.remap_bits({5,3});
+
+  HMM m12345 = Glue(m1,Glue(m2,Glue(m3,Glue(m4,m5))));
+  m12345.hidden_bits.set(4);
+  m12345.hidden_bits.set(5);
+  m12345.B = P.get_beta();
+
+  /*
+    We need the column order a12345_emit... but the alignment can be in an inconsistent state here.
+
+  vector<HMM::bitmask_t> a1 = convert_to_bits(P.get_pairwise_alignment(b1),0,4);
+  vector<HMM::bitmask_t> a2 = convert_to_bits(P.get_pairwise_alignment(b2),4,1);
+  vector<HMM::bitmask_t> a3 = convert_to_bits(P.get_pairwise_alignment(b3),4,5);
+  vector<HMM::bitmask_t> a4 = convert_to_bits(P.get_pairwise_alignment(b4),5,2);
+  vector<HMM::bitmask_t> a5 = convert_to_bits(P.get_pairwise_alignment(b5),5,3);
+
+  vector<HMM::bitmask_t> a12345 = Glue_A(a1, Glue_A(a2, Glue_A(a3, Glue_A(a4, a5))));
+  vector<HMM::bitmask_t> a12345_emit = remove_silent(a12345, m12345.all_bits() & ~m12345.hidden_bits);
+
+
+  boost::shared_ptr<DParrayConstrained> Matrices_ ( new DParrayConstrained(a12345_emit.size(), m12345) );
+  */
   //------------- Compute sequence properties --------------//
   vector<int> columns = A5::getorder(old,nodes);
 

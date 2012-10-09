@@ -1084,6 +1084,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    branch_length_max(-1)
 {
   C += SModel_Functions();
+  C += Distribution_Functions();
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
   constants.push_back(-1);
@@ -1208,7 +1209,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     for(int m=0;m < n_smodels(); m++)
     {
       expression_ref S = C.get_expression(SModels[m].main);
-      expression_ref V = listToVectorMatrix;
+      //expression_ref V = listToVectorMatrix;
+      expression_ref V = Vector_From_List<Matrix,MatrixObject>();
       //expression_ref I = 0;
       expression_ref I = (get_list_index,branch_cat_list,v1);
       expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, (get_nth_mixture,S,I), (get_list_index, DL, v1) ) ) );
