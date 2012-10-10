@@ -1060,6 +1060,39 @@ std::list<alignment> load_alignments(std::istream& ifile, const std::vector<obje
   return alignments;
 }
 
+std::list<alignment> load_alignments(std::istream& ifile, const vector<string>& names, 
+				     const std::vector<object_ptr<const alphabet> >& alphabets, 
+				     int skip, int maxalignments)
+{
+  list<alignment> alignments;
+  
+  // we are using every 'skip-th' alignment
+  int total = 0;
+
+  find_and_skip_alignments(ifile,skip);
+
+  alignment A = load_next_alignment(ifile,alphabets);
+
+  {
+    vector<int> mapping = compute_mapping(names, sequence_names(A));
+
+    A = reorder_sequences(A,mapping);
+  }
+
+  alignments.push_back(A);
+
+  load_more_alignments(alignments,ifile,names,A.get_alphabet(),maxalignments);
+
+  //------------  If we have too many alignments--------------//
+  if (thin_alignments(alignments, maxalignments) and log_verbose)
+  {
+    cerr<<"Went from "<<total;
+    cerr<<" to "<<alignments.size()<<" alignments.\n";
+  }
+
+  return alignments;
+}
+
 
 
 vector<alignment> load_alignments(istream& ifile, const vector<object_ptr<const alphabet> >& alphabets) {

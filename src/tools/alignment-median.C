@@ -141,13 +141,55 @@ double diameter(const ublas::matrix<double>& D)
   return total/N;
 }
 
+/// The number of letters in sequence i that are aligned against different letters in sequence j
+int pairwise_alignment_distance_asymmetric(int i, int j, const ublas::matrix<int>& M1 ,const vector< vector<int> >& CI1,const ublas::matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+  int Li = CI1[i].size();
+  assert(Li == CI2[i].size());
+
+  int diff = 0;
+  for(int k=0; k<Li; k++)
+  {
+    int col1 = CI1[i][k];
+    int col2 = CI2[i][k];
+    if (M1(col1,j) != M2(col2,j))
+      diff++;
+  }
+  return diff;
+}
+
+double pairwise_alignment_distance(int i, int j, const ublas::matrix<int>& M1 ,const vector< vector<int> >& CI1,const ublas::matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+  int total_diff = pairwise_alignment_distance_asymmetric(i,j,M1,CI1,M2,CI2) + pairwise_alignment_distance_asymmetric(j,i,M1,CI1,M2,CI2);
+
+  int Li = CI1[i].size();
+  int Lj = CI1[j].size();
+
+  return double(total_diff)/(Li+Lj);
+}
+
+Matrix pairwise_alignment_distances(const ublas::matrix<int>& M1 ,const vector< vector<int> >& CI1,const ublas::matrix<int>& M2, const vector< vector<int> >& CI2)
+{
+  int N = CI1.size();
+  Matrix D(N,N);
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      D(i,j) = pairwise_alignment_distance(i,j,M1,CI1,M2,CI2);
+
+  return D;
+}
+
 struct alignment_sample
 {
   vector<alignment> alignments;
   vector<ublas::matrix<int> > Ms;
   vector< vector< vector<int> > >  column_indices;
 
+  void load(list<alignment>& As);
+
   void load(const variables_map& args, const string& filename);
+
+  void load(const variables_map& args, const vector<string>& seq_names, const string& filename);
 
   unsigned size() const {return alignments.size();}
 
@@ -164,7 +206,27 @@ struct alignment_sample
     if (not alignments.size())
       throw myexception()<<"Alignment sample is empty.";
   }
+
+  alignment_sample(const variables_map& args, const vector<string>& seq_names, const string& filename)
+  {
+    load(args,seq_names,filename);
+
+    if (not alignments.size())
+      throw myexception()<<"Alignment sample is empty.";
+  }
 };
+
+void alignment_sample::load(list<alignment>& As)
+{
+  for(auto& a: As)
+  {
+    // Chop off internal node sequences, if any
+    a = chop_internal(a);
+    Ms.push_back(M(a));
+    column_indices.push_back( column_lookup(a) );
+  }
+  alignments.insert(alignments.end(),As.begin(),As.end());
+}
 
 void alignment_sample::load(const variables_map& args, const string& filename)
 {
@@ -183,15 +245,27 @@ void alignment_sample::load(const variables_map& args, const string& filename)
     As = load_alignments(input, sequence_names(), get_alphabet(), skip,maxalignments);
 
   if (log_verbose) cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
+  load(As);
+}
 
-  foreach(a,As)
-  {
-    // Chop off internal node sequences, if any
-    *a = chop_internal(*a);
-    Ms.push_back(M(*a));
-    column_indices.push_back( column_lookup(*a) );
-  }
-  alignments.insert(alignments.end(),As.begin(),As.end());
+void alignment_sample::load(const variables_map& args, const vector<string>& seq_names, const string& filename)
+{
+  //------------ Try to load alignments -----------//
+  int maxalignments = args["max"].as<int>();
+  unsigned skip = args["skip"].as<unsigned>();
+
+  if (log_verbose) cerr<<"alignment-median: Loading alignments...";
+
+  istream_or_ifstream input(cin,"-",filename,"alignment file");
+
+  assert(not alignments.size());
+
+  list<alignment> As;
+  As = load_alignments(input, seq_names, load_alphabets(args),skip,maxalignments);
+
+  if (log_verbose) cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
+
+  load(As);
 }
 
 ublas::matrix<double> distances(const alignment_sample& A, distance_fn distance)
@@ -239,6 +313,38 @@ int main(int argc,char* argv[])
 	cout<<join(v,'\t')<<endl;
       }
 
+      exit(0);
+    }
+    else if (analysis == "accuracy-matrix") 
+    {
+      check_supplied_filenames(2,files,false);
+
+      alignment_sample As(args, files[0]);
+
+      alignment_sample A(args, As.sequence_names(), files[1]);
+
+      if (A.size() != 1) throw myexception()<<"The second file should only contain one alignment!";
+
+      int N = A.sequence_names().size();
+      Matrix D(N,N);
+
+      for(int i=0;i<As.size();i++) 
+      {
+	if (i == 0)
+	  D = pairwise_alignment_distances(As.Ms[i], As.column_indices[i], A.Ms[0], A.column_indices[0]);
+	else
+	  D += pairwise_alignment_distances(As.Ms[i], As.column_indices[i], A.Ms[0], A.column_indices[0]);
+      }
+      
+      D /= As.size();
+
+      for(int i=0;i<D.size1();i++) {
+	vector<double> v(D.size2());
+	for(int j=0;j<v.size();j++)
+	  v[j] = D(i,j);
+	cout<<join(v,'\t')<<endl;
+      }
+      
       exit(0);
     }
     else if (analysis == "compare")

@@ -136,6 +136,10 @@ std::list<alignment> load_alignments(std::istream& ifile, const std::vector<std:
 std::list<alignment> load_alignments(std::istream& ifile, const std::vector<object_ptr<const alphabet> >& alphabets, 
 				     int skip, int maxalignments);
 
+std::list<alignment> load_alignments(std::istream& ifile, const std::vector<std::string>& names,
+				     const std::vector<object_ptr<const alphabet> >& alphabets,
+				     int skip, int maxalignments);
+
 std::vector<alignment> load_alignments(std::istream&, const std::vector<object_ptr<const alphabet> >&);
 
 alignment find_last_alignment(std::istream& ifile, const std::vector<object_ptr<const alphabet> >& alphabets);
