@@ -335,7 +335,7 @@ int main(int argc,char* argv[])
 
       if (A.size() != 1) throw myexception()<<"The second file should only contain one alignment!";
 
-      std::cerr<<"Averaging over "<<As.size()<<" sampled alignments.";
+      std::cerr<<"Averaging over "<<As.size()<<" sampled alignments.\n";
 
       int N = A.sequence_names().size();
       Matrix D(N,N);
