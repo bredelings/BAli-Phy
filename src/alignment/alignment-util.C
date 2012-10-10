@@ -992,7 +992,7 @@ istream& load_more_alignments(list<alignment>& alignments, istream& ifile, const
     }
 
     // If there are too many alignments
-    if (total > 2*maxalignments) {
+    if (maxalignments != -1 and total > 2*maxalignments) {
       // start skipping twice as many alignments
       subsample *= 2;
 
