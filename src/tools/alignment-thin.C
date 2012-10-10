@@ -471,9 +471,15 @@ int main(int argc,char* argv[])
       }
     }
 
-    if (args.count("cutoff"))
+    if (args.count("cutoff") or args.count("down-to"))
     {
-      int cutoff = args["cutoff"].as<unsigned>();
+      int cutoff = -1;
+      if (args.count("cutoff"))
+	cutoff = args["cutoff"].as<unsigned>();
+
+      int down_to = A.n_sequences();
+      if (args.count("down-to"))
+	down_to = args["down-to"].as<int>();
 
       D = asymmetric_distance_matrix(A);
       ublas::matrix<int> DS = symmetric_distance_matrix(A);
@@ -489,7 +495,7 @@ int main(int argc,char* argv[])
 	int MD = D(p1,p2);
 	
 	// exit if this distance is larger than the cutoff.
-	if (MD >= cutoff) break;
+	if (MD >= cutoff and (A.n_sequences() - removed.size() <= down_to)) break;
 	
 	// remove the sequence with the shorter comment, if they are the same
 	if (D(p1,p2) == D(p2,p1) and keep[p2]< 2 and A.seq(p1).comment.size() > A.seq(p2).comment.size())
@@ -503,21 +509,23 @@ int main(int argc,char* argv[])
       // compute distances to those that remain
       vector<int> closest(removed.size());
       vector<int> distance(removed.size());
+
+      // Count how many we *actually* remove, after we decide to put some back!
       int n_removed=0;
 
-      for(int i=closest.size()-1; i>=0; i--) 
+      for(int i=closest.size()-1; i>=0; i--)
       {
 	closest[i]  = argmin_row(D,removed[i],keep);
 	distance[i] = D(removed[i],closest[i]);
 
 	// put item back if too far from remaining items
-	if (distance[i] >= cutoff)
+	if (cutoff != -1 and distance[i] >= cutoff and (A.n_sequences() - i - 1 - n_removed) < down_to)
 	  keep[removed[i]] = 1;
 	else
 	  n_removed++;
       }
 
-      if (log_verbose) 
+      if (log_verbose)
       {
 	vector<int> order = iota<int>(removed.size());
 	sort(order.begin(), order.end(), sequence_order<int>(distance));
