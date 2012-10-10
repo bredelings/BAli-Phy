@@ -939,7 +939,7 @@ int thin_alignments(list<alignment>& alignments)
 bool thin_alignments(list<alignment>& alignments,int max)
 {
   int total = alignments.size();
-  if (total <= max)  return false;
+  if (total <= max or max == -1)  return false;
 
   assert(total <= max*2);
 
