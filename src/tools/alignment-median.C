@@ -189,7 +189,7 @@ struct alignment_sample
 
   void load(const variables_map& args, const string& filename);
 
-  void load(const variables_map& args, const vector<string>& seq_names, const string& filename);
+  void load(const variables_map& args, const vector<string>& seq_names, const alphabet& a, const string& filename);
 
   unsigned size() const {return alignments.size();}
 
@@ -207,9 +207,9 @@ struct alignment_sample
       throw myexception()<<"Alignment sample is empty.";
   }
 
-  alignment_sample(const variables_map& args, const vector<string>& seq_names, const string& filename)
+  alignment_sample(const variables_map& args, const vector<string>& seq_names, const alphabet& a, const string& filename)
   {
-    load(args,seq_names,filename);
+    load(args,seq_names,a,filename);
 
     if (not alignments.size())
       throw myexception()<<"Alignment sample is empty.";
@@ -231,8 +231,13 @@ void alignment_sample::load(list<alignment>& As)
 void alignment_sample::load(const variables_map& args, const string& filename)
 {
   //------------ Try to load alignments -----------//
-  int maxalignments = args["max"].as<int>();
-  unsigned skip = args["skip"].as<unsigned>();
+  int maxalignments = -1;
+  if (args.count("max"))
+    maxalignments = args["max"].as<int>();
+ 
+  unsigned skip = 0;
+  if (args.count("skip"))
+    skip = args["skip"].as<unsigned>();
 
   if (log_verbose) cerr<<"alignment-median: Loading alignments...";
 
@@ -248,11 +253,16 @@ void alignment_sample::load(const variables_map& args, const string& filename)
   load(As);
 }
 
-void alignment_sample::load(const variables_map& args, const vector<string>& seq_names, const string& filename)
+void alignment_sample::load(const variables_map& args, const vector<string>& seq_names, const alphabet& a, const string& filename)
 {
   //------------ Try to load alignments -----------//
-  int maxalignments = args["max"].as<int>();
-  unsigned skip = args["skip"].as<unsigned>();
+  int maxalignments = -1;
+  if (args.count("max"))
+    maxalignments = args["max"].as<int>();
+ 
+  unsigned skip = 0;
+  if (args.count("skip"))
+    skip = args["skip"].as<unsigned>();
 
   if (log_verbose) cerr<<"alignment-median: Loading alignments...";
 
@@ -261,7 +271,7 @@ void alignment_sample::load(const variables_map& args, const vector<string>& seq
   assert(not alignments.size());
 
   list<alignment> As;
-  As = load_alignments(input, seq_names, load_alphabets(args),skip,maxalignments);
+  As = load_alignments(input, seq_names, a, skip, maxalignments);
 
   if (log_verbose) cerr<<"done. ("<<alignments.size()<<" alignments)"<<endl;
 
@@ -321,7 +331,7 @@ int main(int argc,char* argv[])
 
       alignment_sample As(args, files[0]);
 
-      alignment_sample A({}, As.sequence_names(), files[1]);
+      alignment_sample A({}, As.sequence_names(), As.get_alphabet(), files[1]);
 
       if (A.size() != 1) throw myexception()<<"The second file should only contain one alignment!";
 
