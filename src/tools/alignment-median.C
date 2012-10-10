@@ -68,7 +68,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
   options_description input("Input options");
   input.add_options()
     ("help,h", "Produce help message")
-    ("skip,s",value<unsigned>()->default_value(0),"number of tree samples to skip")
+    ("skip,s",value<unsigned>()->default_value(0),"number of alignment samples to skip")
     ("max,m",value<int>()->default_value(1000),"maximum number of alignments to analyze")
     ("verbose,v","Output more log messages on stderr.")
     ("alphabet",value<string>(),"Specify the alphabet: DNA, RNA, Amino-Acids, Amino-Acids+stop, Triplets, Codons, or Codons+stop.")
@@ -321,7 +321,7 @@ int main(int argc,char* argv[])
 
       alignment_sample As(args, files[0]);
 
-      alignment_sample A(args, As.sequence_names(), files[1]);
+      alignment_sample A({}, As.sequence_names(), files[1]);
 
       if (A.size() != 1) throw myexception()<<"The second file should only contain one alignment!";
 
