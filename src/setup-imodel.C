@@ -2,6 +2,8 @@
 #include "imodel.H"
 using std::string;
 
+// FIXME - change to return a (model,standardized name) pair.
+
 /// Return an owned_ptr (possibly NULL) to an IndelModel or type \a name.
 owned_ptr<IndelModel> get_imodel(string name) 
 {
@@ -10,7 +12,7 @@ owned_ptr<IndelModel> get_imodel(string name)
 
   // Default
   if (name == "") 
-    name = "RS07";
+    throw myexception()<<"Indel model name is empty! (A default should have been automatically set.)";
 
   if (name == "none")
     { }

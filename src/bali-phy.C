@@ -1111,7 +1111,9 @@ void die_on_signal(int sig)
   exit(3);
 }
 
-void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const Parameters& P,const variables_map& args)
+void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,
+		 const shared_items<string>& imodels, const shared_items<string>& smodels,
+		 const Parameters& P,const variables_map& args)
 {
   //-------- Log some stuff -----------//
   vector<string> filenames = args["align"].as<vector<string> >();
@@ -1128,21 +1130,21 @@ void log_summary(ostream& out_cache, ostream& out_screen,ostream& out_both,const
 
   for(int i=0;i<P.n_smodels();i++)
     //    out_cache<<"subst model"<<i+1<<" = "<<P.SModel(i).name()<<endl<<endl;
-    out_cache<<"subst model"<<i+1<<" = ???"<<endl<<endl;
+    out_cache<<"subst model"<<i+1<<" = "<<smodels[i]<<endl<<endl;
 
   for(int i=0;i<P.n_imodels();i++)
-    out_cache<<"indel model"<<i+1<<" = ???"<<endl<<endl;
+    out_cache<<"indel model"<<i+1<<" = "<<imodels[i]<<endl<<endl;
 
   out_screen<<"\n";
   for(int i=0;i<P.n_data_partitions();i++) {
     int s_index = P.get_smodel_index_for_partition(i);
     //    out_screen<<"#"<<i+1<<": subst ~ "<<P.SModel(s_index).name()<<" ("<<s_index+1<<")    ";
-    out_screen<<"#"<<i+1<<": subst ~ ??? ("<<s_index+1<<")    ";
+    out_screen<<"#"<<i+1<<": subst ~ "<<smodels[i]<<" ("<<s_index+1<<")    ";
 
     int i_index = P.get_imodel_index_for_partition(i);
     string i_name = "none";
     if (i_index != -1)
-      i_name = "???";
+      i_name = imodels[i];
     out_screen<<" indel ~ "<<i_name<<" ("<<i_index+1<<")"<<endl;;
   }
   out_screen<<"\n";
@@ -1365,10 +1367,15 @@ int main(int argc,char* argv[])
     }
     else {
       imodel_names_mapping = get_mapping(args, "imodel", n_partitions);
+
+      for(int i=0;i<imodel_names_mapping.n_unique_items();i++)
+	if (imodel_names_mapping.unique(i) == "")
+	  imodel_names_mapping.unique(i) = "RS07";
       
       imodel_mapping = imodel_names_mapping.item_for_partition;
     }
 
+    // FIXME - change to return a (model, standardized name) pair.
     vector<polymorphic_cow_ptr<IndelModel> > 
       full_imodels = get_imodels(imodel_names_mapping);
 
@@ -1403,6 +1410,7 @@ int main(int argc,char* argv[])
     
     vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
 
+    // FIXME - change to return a (model, standardized name) pair.
     vector<formula_expression_ref> full_smodels = get_smodels(args,A,smodel_names_mapping);
 
     //-------------- Which partitions share a scale? -----------//
@@ -1436,7 +1444,7 @@ int main(int argc,char* argv[])
       add_BUGS(P,args["BUGS"].as<string>());
       
     //-------------------- Log model -------------------------//
-    log_summary(out_cache,out_screen,out_both,P,args);
+    log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,P,args);
 
     //----------------- Tree-based constraints ----------------//
     if (args.count("t-constraint"))

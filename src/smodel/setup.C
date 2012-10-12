@@ -1085,6 +1085,9 @@ get_smodel_(const string& smodel)
 }
 
 
+//FIXME change to return a (model, standardized name) pair.
+
+
 /// \brief Constrict a substitution::MultiModel for a specific alphabet
 ///
 /// \param smodel_name The name of the substitution model.
