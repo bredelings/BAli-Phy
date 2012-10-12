@@ -28,6 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "mytypes.H"
 #include "model.H"
+#include "object.H"
 
 /******************************* InDel Models ***********************************/
 
@@ -36,9 +37,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 //FIXME - add a 'name' method, and names for parameters.
 
 namespace indel {
-  class PairHMM: public Matrix {
+  class PairHMM: public Matrix, public Object {
     std::vector<double> start_pi_;
   public:
+    PairHMM* clone() const {return new PairHMM(*this);}
+
     int n_states() const {return size1()-1;}
     double start(int i) const;
     double& start_pi(int i) {return start_pi_[i];}
