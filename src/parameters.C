@@ -200,6 +200,11 @@ vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) co
   return HMMs;
 }
 
+double data_partition::sequence_length_pr(int l) const
+{
+  return IModel().lengthp(l);
+}
+
 void data_partition::recalc_imodel_for_branch(int b)
 {
   if (not variable_alignment()) return;

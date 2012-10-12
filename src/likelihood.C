@@ -239,7 +239,7 @@ efloat_t prior_HMM_rootless_scale(const data_partition& P)
 
   for(int i=T.n_leaves();i<T.n_nodes();i++) {
     int l = P.seqlength(i);
-    efloat_t temp = P.IModel().lengthp(l);
+    efloat_t temp = P.sequence_length_pr(l);
     Pr /= (temp*temp);
   }
 

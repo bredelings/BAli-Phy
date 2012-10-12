@@ -609,7 +609,7 @@ namespace A5 {
       int length1 = P.A->seqlength(nodes[4]);
       int length2 = P.A->seqlength(nodes[5]);
       
-      return pow( P.IModel().lengthp(length1) * P.IModel().lengthp(length2) ,2.0);
+      return pow( P.sequence_length_pr(length1) * P.sequence_length_pr(length2), 2);
     }
     else
       return 1;

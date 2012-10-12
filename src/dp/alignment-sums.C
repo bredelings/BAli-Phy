@@ -74,7 +74,7 @@ efloat_t other_prior(const data_partition& P,const vector<int>& nodes)
 	continue;
     }
 
-    p /= pow(P.IModel().lengthp(P.A->seqlength(n)) , 2.0);
+    p /= pow(P.sequence_length_pr(P.A->seqlength(n)) , 2.0);
   }
 
   return p;

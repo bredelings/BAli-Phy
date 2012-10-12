@@ -613,7 +613,7 @@ namespace A3 {
       // get the lengths of then internal node
       int length = P.A->seqlength(nodes[0]);
 
-      return pow(P.IModel().lengthp(length),2.0);
+      return pow(P.sequence_length_pr(length), 2);
     }
     else
       return 1;

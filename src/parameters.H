@@ -148,6 +148,8 @@ public:
   const indel::PairHMM& get_branch_HMM(int b) const;
   std::vector<indel::PairHMM> get_branch_HMMs(const std::vector<int>&) const;
 
+  double sequence_length_pr(int l) const;
+
   std::vector<int> branch_HMM_type;
 
   /// Alignment constraint
