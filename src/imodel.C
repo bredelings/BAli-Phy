@@ -525,15 +525,11 @@ efloat_t NewIndelModel::prior() const
   return Pr;
 }
 
-indel::PairHMM NewIndelModel::get_branch_HMM(double t) const 
+indel::PairHMM RS07_branch_HMM_(double e, double D, double heat, bool in_training)
 {
   using namespace states;
 
-  if (not time_dependant)
-    t = 1;
-
-  double rate    = exp(get_parameter_value_as<Double>(0));
-  double e = exp(get_parameter_value_as<Double>(1));
+  // Here D = rate * t
 
   // Return a model with all probabilities zero if e==1.
   // Scaling time by 1/(1.0-e) doesn't work if e==1.
@@ -542,22 +538,20 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
 
   // (1-e) * delta / (1-delta) = P(indel)
   // But move the (1-e) into the RATE to make things work
-  double mu = rate*t/(1.0-e);
+  double mu = D/(1.0-e);
   double P_indel = 1.0 - exp(-mu);
   double A = P_indel;
 
-  if (is_training()) A = std::min(A,0.005);
+  if (in_training) A = std::min(A,0.005);
 
   double delta = A/(1+A);
 
-  if (t < -0.5)
-    delta = 0.5;
-  else
-  {
-    double f = 0.1; //unaligned fraction
-    delta = pow(delta, get_heat()) * pow(f/(1+f),1-get_heat());
-    e = 1.0 - pow(1.0 - e, get_heat());
-  }
+  // Note: If the branch is disconnected, then t < -0.5
+  //  if (t < -0.5) delta = 0.5;
+
+  double f = 0.1; //unaligned fraction
+  delta = pow(delta, heat) * pow(f/(1+f),1-heat);
+  e = 1.0 - pow(1.0 - e, heat);
 
   if (1 - 2*delta <0)
     throw myexception()<<"indel model: we need (delta <= 0.5), but delta = "<<delta;
@@ -581,12 +575,10 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   Q(G1,S ) = 1;
   Q(G2,S ) = 1;
 
-  // unless this branch is disconnected...
-  if (t < -0.5) 
-    ;
+  //  if (t < -0.5)  then don't fragmentize
+
   // turn the model into a fragment model
-  else
-    fragmentize(Q,e);
+  fragmentize(Q,e);
 
   remove_one_state(Q,S);
 
@@ -597,6 +589,40 @@ indel::PairHMM NewIndelModel::get_branch_HMM(double t) const
   Q.start_pi(E)  = 0;
 
   return Q;
+}
+
+closure RS07_branch_HMM::operator()(OperationArgs& Args) const
+{
+  double e = *Args.evaluate_as<Double>(0);
+  double D = *Args.evaluate_as<Double>(1);
+  double heat = *Args.evaluate_as<Double>(2);
+  bool in_training = *Args.evaluate_as<Bool>(3);
+
+  return RS07_branch_HMM_(e, D, heat, in_training);
+}
+
+closure RS07_lengthp::operator()(OperationArgs& Args) const
+{
+  double e = *Args.evaluate_as<Double>(0);
+  int l = *Args.evaluate_as<Int>(1);
+
+  if (l < 0)
+    return Double(0);
+  else if (l==0)
+    return Double(1.0);
+  else
+    return Double(1.0-e);
+}
+
+indel::PairHMM NewIndelModel::get_branch_HMM(double t) const 
+{
+  if (not time_dependant)
+    t = 1;
+
+  double rate    = exp(get_parameter_value_as<Double>(0));
+  double e = exp(get_parameter_value_as<Double>(1));
+
+  return RS07_branch_HMM_(e, rate * t, get_heat(), is_training());
 }
 
 string NewIndelModel::name() const 

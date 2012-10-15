@@ -29,6 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mytypes.H"
 #include "model.H"
 #include "object.H"
+#include "computation/operation.H"
 
 /******************************* InDel Models ***********************************/
 
@@ -155,6 +156,53 @@ public:
 
   SimpleIndelModel();
 };
+
+
+struct RS07_branch_HMM: public Operation
+{
+  virtual RS07_branch_HMM* clone() const {return new RS07_branch_HMM(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const RS07_branch_HMM* E = dynamic_cast<const RS07_branch_HMM*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "RS07_branch_HMM";}
+  
+  RS07_branch_HMM():Operation(4) {}
+};
+
+
+struct RS07_lengthp: public Operation
+{
+  virtual RS07_lengthp* clone() const {return new RS07_lengthp(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const RS07_lengthp* E = dynamic_cast<const RS07_lengthp*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "RS07_lengthp";}
+  
+  RS07_lengthp():Operation(1) {}
+};
+
 
 
 class NewIndelModel: public IndelModel 
