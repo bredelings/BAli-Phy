@@ -585,6 +585,21 @@ const expression_ref Sqrt = lambda_expression( Sqrt_Op() );
 
 //---------------------------------------------------------------------------------------//
 
+tribool Exp_Op::compare(const Object& o) const 
+{
+  return dynamic_cast<const Exp_Op*>(&o);
+}
+
+closure Exp_Op::operator()(OperationArgs& Args) const
+{
+  double x = *Args.evaluate_as<Double>(0);
+  assert(x >= 0.0);
+
+  return new Double(exp(x));
+}
+
+//---------------------------------------------------------------------------------------//
+
 def_binary_operator2(-,Minus)
 def_binary_operator2(+,Add)
 def_binary_operator2(*,Multiply)
