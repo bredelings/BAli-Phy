@@ -239,6 +239,7 @@ Program make_Prelude()
   P.def_function("reapply", 2, lambda_expression( Reapply() ) );
   P.def_function("join", 2, lambda_expression( Join() ) );
   P.def_function("negate", 1, lambda_expression( Negate() ) );
+  P.def_function("exp", 1, lambda_expression( Exp_Op() ) );
 
   P.declare_fixity("!!", 9, left_fix);
   /*
