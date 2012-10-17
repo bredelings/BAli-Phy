@@ -593,7 +593,6 @@ tribool Exp_Op::compare(const Object& o) const
 closure Exp_Op::operator()(OperationArgs& Args) const
 {
   double x = *Args.evaluate_as<Double>(0);
-  assert(x >= 0.0);
 
   return new Double(exp(x));
 }
