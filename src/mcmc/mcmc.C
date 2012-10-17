@@ -1207,6 +1207,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
       
       for(int i=0;i<PP.n_imodels();i++)
 	PP.IModel(i).set_training(false);
+      PP.set_parameter_value(PP.find_parameter("IModels.training"), new Bool(false));
       PP.recalc_imodels();
 
       PP.branch_length_max = -1;
