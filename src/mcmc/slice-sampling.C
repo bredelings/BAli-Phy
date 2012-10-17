@@ -308,6 +308,11 @@ constant_sum_slice_function::constant_sum_slice_function(Probability_Model& P_, 
   set_upper_bound(total);
 }
 
+// Note: In debugging slice sampling, remember that results will be different if anywhere
+//       else has sampled an extra random number.  This can occur if a parameter does not
+//       change the likelihood, but roundoff errors in the last decimal place affect whether
+//       the new state is accepted.
+
 std::pair<double,double> 
 find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, double w,int m)
 {
@@ -320,6 +325,7 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
   // Expand the interval until its ends are outside the slice, or until
   // the limit on steps is reached.
 
+  //  std::cerr<<"!!    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
   if (m>1) {
     int J = floor(uniform()*m);
     int K = (m-1)-J;
@@ -327,11 +333,15 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
     while (J>0 and (not g.below_lower_bound(L)) and g(L)>logy) {
       L -= w;
       J--;
+      //      std::cerr<<" g("<<L<<") = "<<g()<<" > "<<logy<<"\n";
+      //      std::cerr<<"<-    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
     }
 
     while (K>0 and (not g.above_upper_bound(R)) and g(R)>logy) {
       R += w;
       K--;
+      //      std::cerr<<" g("<<R<<") = "<<g()<<" > "<<logy<<"\n";
+      //      std::cerr<<"->    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
     }
   }
   else {
@@ -348,6 +358,8 @@ find_slice_boundaries_stepping_out(double x0,slice_function& g,double logy, doub
   if (g.above_upper_bound(R)) R = g.upper_bound;
 
   assert(L < R);
+
+  //  std::cerr<<"[]    L0 = "<<L<<"   x0 = "<<x0<<"   R0 = "<<R<<"\n";
 
   return std::pair<double,double>(L,R);
 }
