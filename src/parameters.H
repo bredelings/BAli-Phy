@@ -212,6 +212,15 @@ public:
   data_partition(const std::string& n, Parameters* P, int i, const alignment&);
 };
 
+struct imodel_methods
+{
+  int length_arg_param_index;
+  int length_p;
+  std::string epsilon;
+  std::string lambda;
+
+  std::vector<int> branch_hmm;
+};
 
 struct smodel_methods
 {
@@ -246,6 +255,7 @@ class Parameters: public SuperModel, public Probability_Model
 
   /// The IndelModel
   std::vector<polymorphic_cow_ptr<IndelModel> > IModels;
+  std::vector<imodel_methods> IModel_methods;
   std::vector<int> imodel_for_partition;
 
   // Scale for partition

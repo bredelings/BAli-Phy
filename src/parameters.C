@@ -1145,9 +1145,15 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
 
   // register the indel models as sub-models
-  for(int i=0;i<IModels.size();i++) {
+  for(int i=0;i<IModels.size();i++) 
+  {
     string name = "I" + convertToString(i+1);
     register_submodel(name);
+
+    imodel_methods I;
+    I.lambda = name+".lambda";
+    I.epsilon = name+".epsilon";
+    IModel_methods.push_back(I);
   }
 
   // check that we only map existing smodels to data partitions
@@ -1232,6 +1238,35 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     // add the data partition
     data_partitions.push_back( data_partition(name, this, i, A[i]) );
   }
+
+  add_parameter(Parameter("IModels.training", Bool(true)));
+  // Register compute expressions for branch HMMs and sequence length distributions
+  for(int i=0;i<IModels.size();i++) 
+  {
+    imodel_methods& I = IModel_methods[i];
+    string prefix = "I" + convertToString(i+1);
+
+    I.length_arg_param_index = add_parameter(Parameter(prefix+".lengthpArg", Int(1)));
+    expression_ref lengthp = lambda_expression( RS07_lengthp() );
+    expression_ref epsilon = (var("exp"), parameter(I.epsilon));
+    expression_ref lengthp_arg = parameter(prefix+".lengthpArg");
+    I.length_p = C.add_compute_expression( (lengthp, epsilon, lengthp_arg) );
+
+    expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
+    expression_ref lambda = (var("exp"), parameter(I.lambda));
+
+    expression_ref heat = parameter("Heat.beta");
+    expression_ref training = parameter("IModels.training");
+
+    for(int b=0;b<t.n_branches();b++)
+    {
+      // FIXME! This doesn't handle scales correctly!
+      expression_ref Db = parameter("Scale1.d" + convertToString(b+1));
+      I.branch_hmm.push_back(  C.add_compute_expression( (RS07BranchHMM, epsilon, lambda * Db, heat, training) ) );
+    }
+
+  }
+
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
