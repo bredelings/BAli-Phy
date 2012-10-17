@@ -200,7 +200,7 @@ struct RS07_lengthp: public Operation
 
   std::string name() const {return "RS07_lengthp";}
   
-  RS07_lengthp():Operation(1) {}
+  RS07_lengthp():Operation(2) {}
 };
 
 
