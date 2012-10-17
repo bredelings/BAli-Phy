@@ -202,7 +202,17 @@ vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) co
 
 double data_partition::sequence_length_pr(int l) const
 {
-  return IModel().lengthp(l);
+  int m = P->imodel_for_partition[partition_index];
+
+  int arg_param_index = P->IModel_methods[m].length_arg_param_index;
+
+  const_cast<Parameters*>(P)->set_parameter_value(arg_param_index, new Int(l) );
+
+  double pr1 = *P->C.evaluate_as<Double>( P->IModel_methods[m].length_p );
+  double pr2 = IModel().lengthp(l);
+  assert( std::abs( log(pr2) - log(pr1)) < 0.00000001 );
+
+  return pr1;
 }
 
 void data_partition::recalc_imodel_for_branch(int b)
