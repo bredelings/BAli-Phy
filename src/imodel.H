@@ -170,11 +170,6 @@ struct RS07_branch_HMM: public Operation
 
   closure operator()(OperationArgs& Args) const;
 
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
   std::string name() const {return "RS07_branch_HMM";}
   
   RS07_branch_HMM():Operation(4) {}
@@ -192,11 +187,6 @@ struct RS07_lengthp: public Operation
   }
 
   closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
 
   std::string name() const {return "RS07_lengthp";}
   
