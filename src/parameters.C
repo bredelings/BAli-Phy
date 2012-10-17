@@ -180,11 +180,19 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
     // use the length, unless we are unaligned
     double D = P->get_branch_indel_length(partition_index, b);
 
+    int m = P->imodel_for_partition[partition_index];
+
     // compute and cache the branch HMM
     if (branch_HMM_type[b] == 1)
       HMM = IModel().get_branch_HMM(-1);
     else
-      HMM = IModel().get_branch_HMM(D);
+    {
+      indel::PairHMM other = IModel().get_branch_HMM(D);
+      HMM = *P->C.evaluate_as<indel::PairHMM>( P->IModel_methods[m].branch_hmm[b] );
+      for(int i=0;i<other.size1();i++)
+	for(int j=0;j<other.size2();j++)
+	  assert(std::abs(other(i,j) - HMM.value()(i,j)) < 0.00001);
+    }
   }
 
   return HMM;
