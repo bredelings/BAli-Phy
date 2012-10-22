@@ -52,11 +52,15 @@ using std::ostream;
 /*
  * Goal: Construct a complete tree-based imodel along the lines of
  *       SingleRate[RS07] or BranchwiseRate[RS07]
+ * 0. Make get_branch_hmm properly dependent on the partition!
  * 1. Export names like substitutionBranchLengths, branchDuration
  * 2. Give the setup routine for imodels the number of branches
  *    (\b,h,t -> RS07 e lambda*sustitutionBranchLengths!b h t, \e,l -> RS07_lengthp e l)
  * 3. Allow defining things in a formula_expression
  *    (f_e is becoming more like a program!)
+ * 4. Remove code for caching and updating branch_hmms
+ * 5. Remove imodels as sub-models.
+ * 6. Remove class SuperModel?
  *
  *    indelRates = listArray B [lambda1, lambda2, lambda3 ... lambdaB]
  *    
