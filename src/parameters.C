@@ -61,6 +61,7 @@ using std::ostream;
  * 4. Remove code for caching and updating branch_hmms
  * 5. Remove imodels as sub-models.
  * 6. Remove class SuperModel?
+ * 7. Remove imodel_methods.{lambda,epsilon}
  *
  *    indelRates = listArray B [lambda1, lambda2, lambda3 ... lambdaB]
  *    
@@ -616,6 +617,25 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
     expression_ref BM = P->C.get_expression(P->SModels[s].base_model);
     for(int b=0;b<B;b++)
       base_model_indices(m,b) = p->C.add_compute_expression((BM,m,b));
+  }
+
+  // Add method indices for calculating branch HMMs
+  int i_index = P->imodel_for_partition[partition_index];
+  const imodel_methods& I = P->IModel_methods[i_index];
+
+  expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
+  expression_ref epsilon = (var("exp"), parameter(I.epsilon));
+  expression_ref lambda = (var("exp"), parameter(I.lambda));
+
+  expression_ref heat = parameter("Heat.beta");
+  expression_ref training = parameter("IModels.training");
+  
+  int scale_index = P->scale_for_partition[partition_index];
+
+  for(int b=0;b<B;b++)
+  {
+    expression_ref Db = parameter("Scale" + convertToString(scale_index+1) + ".d" + convertToString(b+1));
+    branch_hmm_indices.push_back(  p->C.add_compute_expression( (RS07BranchHMM, epsilon, lambda * Db, heat, training) ) );
   }
 }
 
@@ -1250,6 +1270,9 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       string name = "d" + convertToString(b+1);
       D.push_back(parameter(prefix+"."+name));
     }
+
+    // FIXME - give this a usable name!!
+    // Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
     expression_ref DL = get_list(D);
 
     // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
@@ -1265,6 +1288,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     }
   }
 
+  add_parameter(Parameter("IModels.training", Bool(true)));
   // create data partitions
   for(int i=0;i<A.size();i++) 
   {
@@ -1275,7 +1299,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     data_partitions.push_back( data_partition(name, this, i, A[i]) );
   }
 
-  add_parameter(Parameter("IModels.training", Bool(true)));
   // Register compute expressions for branch HMMs and sequence length distributions
   for(int i=0;i<IModels.size();i++) 
   {

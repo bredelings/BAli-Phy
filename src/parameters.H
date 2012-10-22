@@ -93,6 +93,8 @@ class data_partition: public Mat_Cache
 
   std::vector<int> transition_p_method_indices;
 
+  std::vector<int> branch_hmm_indices;
+
   std::vector<int> frequencies_indices;
 
   ublas::matrix<int> base_model_indices;
