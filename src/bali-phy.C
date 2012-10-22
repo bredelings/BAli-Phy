@@ -1375,11 +1375,7 @@ int main(int argc,char* argv[])
       imodel_mapping = imodel_names_mapping.item_for_partition;
     }
 
-    // FIXME - change to return a (model, standardized name) pair.
-    vector<polymorphic_cow_ptr<IndelModel> > 
-      full_imodels = get_imodels(imodel_names_mapping);
-
-    //----------- Load alignment and tree ---------//
+    //----------- Load alignments and tree ---------//
     vector<alignment> A;
     SequenceTree T;
     // FIXME - do I want to allow/remove internal node sequences here?
@@ -1404,6 +1400,12 @@ int main(int argc,char* argv[])
     //--------- Do we have enough sequences? ------//
     //    if (T.n_leaves() < 3)
     //      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".";
+
+    //--------- Set up the substitution model --------//
+
+    // FIXME - change to return a (model, standardized name) pair.
+    vector<polymorphic_cow_ptr<IndelModel> > 
+      full_imodels = get_imodels(imodel_names_mapping);
 
     //--------- Set up the substitution model --------//
     shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);
