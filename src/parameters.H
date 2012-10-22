@@ -93,7 +93,7 @@ class data_partition: public Mat_Cache
 
   std::vector<int> transition_p_method_indices;
 
-  std::vector<int> branch_hmm_indices;
+  std::vector<int> branch_HMM_indices;
 
   std::vector<int> frequencies_indices;
 
@@ -220,8 +220,6 @@ struct imodel_methods
   int length_p;
   std::string epsilon;
   std::string lambda;
-
-  std::vector<int> branch_hmm;
 };
 
 struct smodel_methods

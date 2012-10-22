@@ -52,7 +52,8 @@ using std::ostream;
 /*
  * Goal: Construct a complete tree-based imodel along the lines of
  *       SingleRate[RS07] or BranchwiseRate[RS07]
- * 0. Make get_branch_hmm properly dependent on the partition!
+ * 
+ * [DONE]. Make get_branch_hmm properly dependent on the scale!
  * 1. Export names like substitutionBranchLengths, branchDuration
  * 2. Give the setup routine for imodels the number of branches
  *    (\b,h,t -> RS07 e lambda*sustitutionBranchLengths!b h t, \e,l -> RS07_lengthp e l)
@@ -207,7 +208,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
     else
     {
       indel::PairHMM other = IModel().get_branch_HMM(D);
-      HMM = *P->C.evaluate_as<indel::PairHMM>( P->IModel_methods[m].branch_hmm[b] );
+      HMM = *P->C.evaluate_as<indel::PairHMM>( branch_HMM_indices[b] );
       for(int i=0;i<other.size1();i++)
 	for(int j=0;j<other.size2();j++)
 	  assert(std::abs(other(i,j) - HMM.value()(i,j)) < 0.00001);
@@ -635,7 +636,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   for(int b=0;b<B;b++)
   {
     expression_ref Db = parameter("Scale" + convertToString(scale_index+1) + ".d" + convertToString(b+1));
-    branch_hmm_indices.push_back(  p->C.add_compute_expression( (RS07BranchHMM, epsilon, lambda * Db, heat, training) ) );
+    branch_HMM_indices.push_back(  p->C.add_compute_expression( (RS07BranchHMM, epsilon, lambda * Db, heat, training) ) );
   }
 }
 
@@ -1311,19 +1312,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     expression_ref lengthp_arg = parameter(prefix+".lengthpArg");
     I.length_p = C.add_compute_expression( (lengthp, epsilon, lengthp_arg) );
 
-    expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
-    expression_ref lambda = (var("exp"), parameter(I.lambda));
-
-    expression_ref heat = parameter("Heat.beta");
-    expression_ref training = parameter("IModels.training");
-
-    for(int b=0;b<t.n_branches();b++)
-    {
-      // FIXME! This doesn't handle scales correctly!
-      expression_ref Db = parameter("Scale1.d" + convertToString(b+1));
-      I.branch_hmm.push_back(  C.add_compute_expression( (RS07BranchHMM, epsilon, lambda * Db, heat, training) ) );
-    }
-
+    // Note that branch_HMM's are per scale and per-imodel.  Construct them in the data_partition.
   }
 
 }
