@@ -54,9 +54,16 @@ using std::ostream;
  *       SingleRate[RS07] or BranchwiseRate[RS07]
  * 
  * [DONE]. Make get_branch_hmm properly dependent on the scale!
- * 1. Export names like substitutionBranchLengths, branchDuration
+ * [DONE]. Export names like substitutionBranchLengths, ...
+ *     - Export branchDuration.
  * 2. Give the setup routine for imodels the number of branches
- *    (\b,h,t -> RS07 e lambda*sustitutionBranchLengths!b h t, \e,l -> RS07_lengthp e l)
+ *    (\D,\b -> RS07_branch_HMM e lambda*D!b h t, \l -> RS07_lengthp e l)
+ *
+ *    - I guess we could actually convert this to e.g. imodels!i.
+ *      + Thus, fst imodels!i, snd imodels!i
+ *      + How would we handle the null indel model, then?
+ *        - Perhaps IndelModel hmm lengthp | NoIndelModel
+ *        - hasIModel then could return Bool(true) or Bool(false).
  * 3. Allow defining things in a formula_expression
  *    (f_e is becoming more like a program!)
  * 4. Remove code for caching and updating branch_hmms
@@ -613,6 +620,8 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
 
     transition_p_method_indices[b] = p->C.add_compute_expression(E);
   }
+
+  
 
   // Add method indices for calculating base models and frequencies
   base_model_indices.resize(n_models, B);
