@@ -57,13 +57,10 @@ using std::ostream;
  * [DONE]. Export names like substitutionBranchLengths, ...
  *     - Export branchDuration.
  * 2. Give the setup routine for imodels the number of branches
- *    (\D,\b -> RS07_branch_HMM e lambda*D!b h t, \l -> RS07_lengthp e l)
+ *    [DONE] (\D,\b -> RS07_branch_HMM e lambda*D!b h t, \l -> RS07_lengthp e l)
  *
- *    - I guess we could actually convert this to e.g. imodels!i.
- *      + Thus, fst imodels!i, snd imodels!i
- *      + How would we handle the null indel model, then?
- *        - Perhaps IndelModel hmm lengthp | NoIndelModel
- *        - hasIModel then could return Bool(true) or Bool(false).
+ *    [DONE] I guess we could actually convert this to e.g. imodels!i.
+ *      [DONE] Thus, fst imodels!i, snd imodels!i
  * 3. Allow defining things in a formula_expression
  *    (f_e is becoming more like a program!)
  * 4. Remove code for caching and updating branch_hmms
