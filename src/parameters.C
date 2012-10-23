@@ -638,21 +638,14 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
 
   // Add method indices for calculating branch HMMs
   int i_index = P->imodel_for_partition[partition_index];
-  const imodel_methods& I = P->IModel_methods[i_index];
-
-  expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
-  expression_ref epsilon = (var("exp"), parameter(I.epsilon));
-  expression_ref lambda = (var("exp"), parameter(I.lambda));
-
-  expression_ref heat = parameter("Heat.beta");
-  expression_ref training = parameter("IModels.training");
-  
   int scale_index = P->scale_for_partition[partition_index];
 
   if (i_index != -1)
     for(int b=0;b<B;b++)
     {
+      // D = Parameters.substitutionBranchLengths!scale_index
       expression_ref D = (var("!"),var("Parameters.substitutionBranchLengths"),scale_index);
+      // (fst IModels.models!i_index) D b
       branch_HMM_indices.push_back(  p->C.add_compute_expression( ((fst,(var("!"),var("IModels.models"),i_index)),D,b) ) );
     }
 }
