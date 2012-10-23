@@ -1217,7 +1217,9 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     SModels.push_back( smodel_methods(S.exp(), C) );
   }
 
+  add_parameter(Parameter("IModels.training", Bool(true)));
   // register the indel models as sub-models
+  vector<expression_ref> imodels_;
   for(int i=0;i<IModels.size();i++) 
   {
     string name = "I" + convertToString(i+1);
@@ -1227,8 +1229,21 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     I.lambda = name+".lambda";
     I.epsilon = name+".epsilon";
     IModel_methods.push_back(I);
-  }
+    expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
+    expression_ref lengthp = lambda_expression( RS07_lengthp() );
 
+    expression_ref epsilon = (var("exp"), parameter(I.epsilon));
+    expression_ref lambda = (var("exp"), parameter(I.lambda));
+    expression_ref heat = parameter("Heat.beta");
+    expression_ref training = parameter("IModels.training");
+
+    imodels_.push_back(Tuple(v1^(v2^(RS07BranchHMM, epsilon, lambda*(var("!"),v1,v2), heat, training)), 
+			    v1^(lengthp,epsilon,v1)));
+  }
+  Program imodels_program("IModels");
+  imodels_program.def_function("models", 0, (listArray_, get_list(imodels_)));
+  C += imodels_program;
+  
   // check that we only map existing smodels to data partitions
   for(int i=0;i<smodel_for_partition.size();i++) {
     int m = smodel_for_partition[i];
@@ -1320,7 +1335,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     }
   }
 
-  add_parameter(Parameter("IModels.training", Bool(true)));
   // create data partitions
   for(int i=0;i<A.size();i++) 
   {
