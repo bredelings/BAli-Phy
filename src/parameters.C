@@ -642,7 +642,7 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
 
   for(int b=0;b<B;b++)
   {
-    expression_ref Db = parameter("Scale" + convertToString(scale_index+1) + ".d" + convertToString(b+1));
+    expression_ref Db = (var("!"),(var("!"),var("Parameters.substitutionBranchLengths"),scale_index),b);
     branch_HMM_indices.push_back(  p->C.add_compute_expression( (RS07BranchHMM, epsilon, lambda * Db, heat, training) ) );
   }
 }
@@ -1240,7 +1240,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   for(int b=0;b<TC->n_branches();b++)
     TC.modify()->branch(b).set_length(-1);
 
-  // Add and initialize variables for branch *lengths*: scale<s>::D<b>
+  // Add and initialize variables for branch *lengths*: scale<s>.D<b>
   for(int s=0;s<n_scales;s++)
   {
     string prefix= "Scale" + convertToString(s+1);
