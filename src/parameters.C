@@ -1266,22 +1266,37 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
   expression_ref branch_cat_list = C.get_expression( C.add_compute_expression( (get_list(branch_categories) ) ) );
   
+  expression_ref substitutionBranchLengthsList;
+  {
+    vector<expression_ref> SBLL;
+    for(int s=0;s < n_branch_means(); s++)
+    {
+      string prefix= "Scale" + convertToString(s+1);
+      // Get a list of the branch LENGTH (not time) parameters
+      vector<expression_ref> D;
+      for(int b=0;b<T->n_branches();b++)
+      {
+	string name = "d" + convertToString(b+1);
+	D.push_back(parameter(prefix+"."+name));
+      }
+      
+      // FIXME - give this a usable name!!
+      // Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
+      SBLL.push_back(get_list(D));
+    }
+    substitutionBranchLengthsList = get_list(SBLL);
+  }
+
+  Program parameter_program("Parameters");
+  parameter_program.def_function("substitutionBranchLengths", 0, (listArray_,(fmap,listArray_,substitutionBranchLengthsList)));
+  C += parameter_program;
+
   // register the cached transition_p indices
   branch_transition_p_indices.resize(n_branch_means(), n_smodels());
   for(int s=0;s < n_branch_means(); s++)
   {
-    string prefix= "Scale" + convertToString(s+1);
-    // Get a list of the branch LENGTH (not time) parameters
-    vector<expression_ref> D;
-    for(int b=0;b<T->n_branches();b++)
-    {
-      string name = "d" + convertToString(b+1);
-      D.push_back(parameter(prefix+"."+name));
-    }
-
-    // FIXME - give this a usable name!!
     // Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
-    expression_ref DL = get_list(D);
+    expression_ref DL = (var("!"),var("Parameters.substitutionBranchLengths"),s);
 
     // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
     for(int m=0;m < n_smodels(); m++)
@@ -1291,7 +1306,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       expression_ref V = Vector_From_List<Matrix,MatrixObject>();
       //expression_ref I = 0;
       expression_ref I = (get_list_index,branch_cat_list,v1);
-      expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, (get_nth_mixture,S,I), (get_list_index, DL, v1) ) ) );
+      expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, (get_nth_mixture,S,I), (var("!"), DL, v1) ) ) );
       branch_transition_p_indices(s,m) = C.add_compute_expression(E);
     }
   }
