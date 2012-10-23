@@ -1216,18 +1216,16 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   vector<expression_ref> imodels_;
   for(int i=0;i<IModels.size();i++) 
   {
-    string name = "I" + convertToString(i+1);
-    register_submodel(name);
+    string prefix = "I" + convertToString(i+1);
+    register_submodel(prefix);
 
     imodel_methods I;
-    I.lambda = name+".lambda";
-    I.epsilon = name+".epsilon";
     IModel_methods.push_back(I);
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
     expression_ref lengthp = lambda_expression( RS07_lengthp() );
 
-    expression_ref epsilon = (var("exp"), parameter(I.epsilon));
-    expression_ref lambda = (var("exp"), parameter(I.lambda));
+    expression_ref epsilon = (var("exp"), parameter(prefix + ".epsilon"));
+    expression_ref lambda = (var("exp"), parameter(prefix + ".lambda"));
     expression_ref heat = parameter("Heat.beta");
     expression_ref training = parameter("IModels.training");
 
