@@ -649,11 +649,12 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
   
   int scale_index = P->scale_for_partition[partition_index];
 
-  for(int b=0;b<B;b++)
-  {
-    expression_ref Db = (var("!"),(var("!"),var("Parameters.substitutionBranchLengths"),scale_index),b);
-    branch_HMM_indices.push_back(  p->C.add_compute_expression( (RS07BranchHMM, epsilon, lambda * Db, heat, training) ) );
-  }
+  if (i_index != -1)
+    for(int b=0;b<B;b++)
+    {
+      expression_ref D = (var("!"),var("Parameters.substitutionBranchLengths"),scale_index);
+      branch_HMM_indices.push_back(  p->C.add_compute_expression( ((fst,(var("!"),var("IModels.models"),i_index)),D,b) ) );
+    }
 }
 
 //-----------------------------------------------------------------------------//
