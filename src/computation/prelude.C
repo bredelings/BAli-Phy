@@ -18,6 +18,7 @@ const expression_ref fst = var("fst");
 const expression_ref snd = var("snd");
 const expression_ref get_list_index = var("!!");
 const expression_ref listArray = var("listArray");
+const expression_ref listArray_ = var("listArray'");
 const expression_ref ExtendDiscreteDistribution = var("ExtendDiscreteDistribution");
 const expression_ref MixDiscreteDistributions = var("MixDiscreteDistributions");
 const expression_ref MixDiscreteDistributions_ = var("MixDiscreteDistributions'");
@@ -130,6 +131,9 @@ Program make_Prelude()
 
   // listArray b l = mkArray b \i -> l!!i
   P += Def( (listArray,v1,v2),(mkArray, v1, v3^(get_list_index,v2,v3)) );
+
+  // listArray' l = listArray (length l) l
+  P += Def( (listArray_,v1),(listArray,(length,v1),v1));
 
   // length l = foldl' \x->\y->(x+1) 0 l
   P += Def( (length, v1), (foldl_,v2^(v3^(v2+1)), 0, v1) );
