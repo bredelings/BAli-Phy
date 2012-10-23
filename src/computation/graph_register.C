@@ -1598,6 +1598,16 @@ int reg_heap::uniquify_reg(int R, int t)
 
   // This checks that ownership and references are consistent
   find_all_regs_in_context(t);
+
+  /*
+  {
+    const map<string,root_t>& identifiers = get_identifiers_for_context(t);
+    for(const auto& ident: identifiers)
+    {
+      assert(not access(*ident.second).changeable);
+    }
+  }
+  */
 #endif  
 
   assert(token_roots[t].temp.empty());
