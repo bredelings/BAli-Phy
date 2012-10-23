@@ -67,6 +67,13 @@ using std::ostream;
  *    indelRates = listArray B [lambda1, lambda2, lambda3 ... lambdaB]
  *    
  *    traditionally, we could have indelRates = mkArray B \b -> lambda
+ * 8. Do all the names we add make it into the program??
+ *   - Yes, when we do Model::add_parameter( ), or Context::add_parameter( ), something is added to the program.
+ * 9. Move the mapping from identifiers to locations from Context to reg_heap.
+ *   - No, wait, these locations may indeed change, if they depend on parameters, right?
+ *   - Thus, we could do this, but the locations would NOT be allowed to depend on parameters!
+ *   - Perhaps we could separate them into (a) dependent and (b) non-dependent vars?
+ * 10. Move the Program from Context to reg_heap.
  */
 
 bool use_internal_index = true;
