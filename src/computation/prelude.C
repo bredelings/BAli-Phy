@@ -244,8 +244,12 @@ Program make_Prelude()
   P.def_function("join", 2, lambda_expression( Join() ) );
   P.def_function("negate", 1, lambda_expression( Negate() ) );
   P.def_function("exp", 1, lambda_expression( Exp_Op() ) );
+  P.def_function("!", 2, lambda_expression( GetIndex() ) );
 
   P.declare_fixity("!!", 9, left_fix);
+  // Is this right?
+  P.declare_fixity("!", 9, left_fix);
+
   /*
 infixr 9 .
 (.) :: (b -> c) -> (a -> b) -> (a -> c)
