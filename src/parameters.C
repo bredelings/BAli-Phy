@@ -1346,10 +1346,9 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string prefix = "I" + convertToString(i+1);
 
     I.length_arg_param_index = add_parameter(Parameter(prefix+".lengthpArg", Int(1)));
-    expression_ref lengthp = lambda_expression( RS07_lengthp() );
-    expression_ref epsilon = (var("exp"), parameter(I.epsilon));
+    expression_ref lengthp = (snd,(var("!"),var("IModels.models"),i));
     expression_ref lengthp_arg = parameter(prefix+".lengthpArg");
-    I.length_p = C.add_compute_expression( (lengthp, epsilon, lengthp_arg) );
+    I.length_p = C.add_compute_expression( (lengthp, lengthp_arg) );
 
     // Note that branch_HMM's are per scale and per-imodel.  Construct them in the data_partition.
   }
