@@ -910,8 +910,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     // turn training on
     {
       Parameters& PP = *P.as<Parameters>();
-      for(int i=0;i<PP.n_imodels();i++)
-	PP.IModel(i).set_training(true);
+      PP.set_parameter_value(PP.find_parameter("IModels.training"), new Bool(true));
       PP.recalc_imodels();
     }
 
@@ -943,8 +942,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     // turn training back off
     {
       Parameters& PP = *P.as<Parameters>();
-      for(int i=0;i<PP.n_imodels();i++)
-	PP.IModel(i).set_training(false);
+      PP.set_parameter_value(PP.find_parameter("IModels.training"), new Bool(false));
       PP.recalc_imodels();
     }
   }
