@@ -1195,7 +1195,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     expression_ref stddev = def_parameter(imodel, prefix+"lambdaPriorStddev", 1.0);
     expression_ref priorlength = def_parameter(imodel, prefix+"epsilonPriorLength", 10.0);
     expression_ref lambda_ = def_parameter(imodel, prefix+"lambda", -4.0, nullptr, laplace_dist, Tuple(median, stddev));
-    expression_ref epsilon_ = def_parameter(imodel, prefix+"epsilon", -0.25, nullptr, epsilon_dist, priorlength);
+    expression_ref epsilon_ = def_parameter(imodel, prefix+"epsilon", -0.25, nullptr, var("Distributions.epsilonDist"), priorlength);
 
     expression_ref epsilon = (var("exp"), epsilon_);
     expression_ref lambda = (var("exp"), lambda_);

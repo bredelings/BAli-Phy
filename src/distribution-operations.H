@@ -326,6 +326,27 @@ struct log_laplace_density: public Operation
 
 extern expression_ref log_laplace_dist;
 
+struct epsilon_density: public Operation
+{
+  epsilon_density* clone() const {return new epsilon_density;}
+    
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "epsilon_density";}
+    
+  epsilon_density():Operation(2) { }
+};
+
 struct uniform_density: public Operation
 {
   uniform_density* clone() const {return new uniform_density;}

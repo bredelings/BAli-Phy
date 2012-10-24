@@ -144,6 +144,15 @@ closure log_laplace_density::operator()(OperationArgs& Args) const
   return object_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a1,a2)/x ) );
 }
 
+closure epsilon_density::operator()(OperationArgs& Args) const
+{
+  double E_length_mean = *Args.evaluate_as<Double>(0);
+  double log_epsilon  = *Args.evaluate_as<Double>(1);
+  double E_length = log_epsilon - logdiff(0,log_epsilon);
+
+  return object_ptr<Log_Double> (new Log_Double( exp_exponential_pdf(E_length,E_length_mean) ) );
+}
+
 closure uniform_density::operator()(OperationArgs& Args) const
 {
   double a1 = *Args.evaluate_as<Double>(0);
@@ -214,6 +223,9 @@ Program Distribution_Functions()
 {
   Program P("Distributions");
 
+  // Note: we separate the "builtin" versions (which don't do case analysis on their arguments)
+  //       from the from the real versions (which do).
+
   P.def_function("exponentialDensity", 2, lambda_expression( exponential_density() ) );
   P.def_function("logExponentialDensity", 2, lambda_expression( log_exponential_density() ) );
 
@@ -252,6 +264,9 @@ Program Distribution_Functions()
 
   P.def_function("builtinUniformDensity", 3, lambda_expression( uniform_density() ) );
   P += Def( (uniformDensity, Tuple(v1,v2), v3), (var("builtinUniformDensity"),v1,v2,v3)); 
+
+  P.def_function("epsilonDensity", 2, lambda_expression( epsilon_density() ) );
+  P.def_function("epsilonDist", 0, (prob_density,"epsilonDist", var("epsilonDensity"),0));
 
   P.def_function("bernoulliProb", 2, lambda_expression( bernoulli_prob() ) );
 
