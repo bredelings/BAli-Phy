@@ -865,8 +865,6 @@ void Parameters::note_sequence_length_changed(int n)
 
 void Parameters::recalc(const vector<int>& indices)
 {
-  vector<bool> submodel_changed(n_submodels(),false);
-
   // Check for beta (0) or mu[i] (i+1)
   for(int i=0;i<indices.size();i++)
   {
@@ -906,33 +904,11 @@ void Parameters::recalc(const vector<int>& indices)
     else if (n_imodels() and index < n_scales+4)
       for(int m=0;m<n_imodels();m++) 
 	recalc_imodel(m);
-  }
 
-  // Check if any submodels are affected.
-  for(int m=0;m<n_submodels();m++) 
-    for(int i=0;i<indices.size() and not submodel_changed[m];i++)
-      if (parameter_is_used_by_model(indices[i],m))
-	submodel_changed[m] = true;
-
-  // Recalculate smodels or imodels if they changed.
-  for(int m=0;m<n_submodels();m++) 
-  {
-    if (not submodel_changed[m]) continue;
-
-    int M = m;
-
-    if (M < n_imodels())
-      recalc_imodel(M);
-    else
-      M -= n_imodels();
-
-    // I don't think we need to update any locally cached values if things cached inside
-    // a data_partition change.
-
-    // Note that a set_parameter_value( ) leads to 
-    // (a) first setting our own value, then setting submodels (via 'write'). (pre-order)
-    // (b) first recalcing submodels, then recalcing ourselves (via 'update'). (post-order)
-    // So, we don't need to involve recalc on submodels from here.
+    // If any of the imodel parameters have changed, invalidate all branch HMMs
+    for(int i=0;i<n_imodels();i++)
+      if (includes(IModel_methods[i].parameters,index))
+	recalc_imodel(i);
   }
 
   // Check if any substitution models have changed.
@@ -1200,6 +1176,12 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     register_submodel(prefix);
 
     imodel_methods I;
+    for(int j=0;j<IModel(i).n_parameters();j++)
+    {
+      int index = find_parameter(prefix+"."+IModel(i).parameter_name(j));
+      assert(index != -1);
+      I.parameters.push_back(index);
+    }
     IModel_methods.push_back(I);
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
     expression_ref lengthp = lambda_expression( RS07_lengthp() );
