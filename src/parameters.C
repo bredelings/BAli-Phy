@@ -1116,6 +1116,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   C += SModel_Functions();
   C += Distribution_Functions();
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
+  // Change add_super_parameter( ) -> add_parameter( ).
 
   constants.push_back(-1);
 
@@ -1168,6 +1169,9 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
     SModels.push_back( smodel_methods(S.exp(), C) );
   }
+
+  //FIXME - if imodels come from the outside, how can we distinguish those that do NOT
+  //        need to be prefixed?
 
   add_parameter(Parameter("IModels.training", Bool(true)));
   // register the indel models as sub-models
