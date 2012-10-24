@@ -867,10 +867,8 @@ void Parameters::note_sequence_length_changed(int n)
 void Parameters::recalc(const vector<int>& indices)
 {
   // Check for beta (0) or mu[i] (i+1)
-  for(int i=0;i<indices.size();i++)
+  for(int index: indices)
   {
-    int index = indices[i];
-
     if (index == 0) // beta
     {
       for(int m=0;m<n_imodels();m++)
