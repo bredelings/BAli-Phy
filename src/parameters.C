@@ -1,3 +1,4 @@
+#undef NDEBUG
 /*
    Copyright (C) 2004-2012 Benjamin Redelings
 
@@ -1175,11 +1176,12 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   {
     string prefix = "I" + convertToString(i+1);
     register_submodel(prefix);
+    prefix += ".";
 
     imodel_methods I;
     for(int j=0;j<IModel(i).n_parameters();j++)
     {
-      int index = find_parameter(prefix+"."+IModel(i).parameter_name(j));
+      int index = find_parameter(prefix+IModel(i).parameter_name(j));
       assert(index != -1);
       I.parameters.push_back(index);
     }
@@ -1187,13 +1189,23 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
     expression_ref lengthp = lambda_expression( RS07_lengthp() );
 
-    expression_ref epsilon = (var("exp"), parameter(prefix + ".epsilon"));
-    expression_ref lambda = (var("exp"), parameter(prefix + ".lambda"));
+    expression_ref epsilon_dist = 1;
+    formula_expression_ref imodel;
+    expression_ref median = def_parameter(imodel, prefix+"lambdaPriorMedian", -4.0);
+    expression_ref stddev = def_parameter(imodel, prefix+"lambdaPriorStddev", 1.0);
+    expression_ref priorlength = def_parameter(imodel, prefix+"epsilonPriorLength", 10.0);
+    expression_ref lambda_ = def_parameter(imodel, prefix+"lambda", -4.0, nullptr, laplace_dist, Tuple(median, stddev));
+    expression_ref epsilon_ = def_parameter(imodel, prefix+"epsilon", -0.25, nullptr, epsilon_dist, priorlength);
+
+    expression_ref epsilon = (var("exp"), epsilon_);
+    expression_ref lambda = (var("exp"), lambda_);
     expression_ref heat = parameter("Heat.beta");
     expression_ref training = parameter("IModels.training");
 
-    imodels_.push_back(Tuple(v1^(v2^(RS07BranchHMM, epsilon, lambda*(var("!"),v1,v2), heat, training)), 
-			    v1^(lengthp,epsilon,v1)));
+    imodel.set_exp( Tuple(v1^(v2^(RS07BranchHMM, epsilon, lambda*(var("!"),v1,v2), heat, training)), 
+			  v1^(lengthp,epsilon,v1)) );
+
+    imodels_.push_back(imodel);
   }
   Program imodels_program("IModels");
   imodels_program.def_function("models", 0, (listArray_, get_list(imodels_).exp()));
