@@ -911,7 +911,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     {
       Parameters& PP = *P.as<Parameters>();
       PP.set_parameter_value(PP.find_parameter("IModels.training"), new Bool(true));
-      PP.recalc_imodels();
     }
 
     MoveAll pre_burnin("pre-burnin+A");
@@ -943,7 +942,6 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     {
       Parameters& PP = *P.as<Parameters>();
       PP.set_parameter_value(PP.find_parameter("IModels.training"), new Bool(false));
-      PP.recalc_imodels();
     }
   }
   out_both<<endl;

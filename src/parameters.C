@@ -908,6 +908,9 @@ void Parameters::recalc(const vector<int>& indices)
     for(int i=0;i<n_imodels();i++)
       if (includes(IModel_methods[i].parameters,index))
 	recalc_imodel(i);
+
+    if (parameter_name(index) == "IModels.training")
+      recalc_imodels();
   }
 
   // Check if any substitution models have changed.
