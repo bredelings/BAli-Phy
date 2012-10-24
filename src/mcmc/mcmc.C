@@ -1175,8 +1175,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
       //	if (PP.T->branch(i).length() > PP.branch_length_max)
       //	  PP.setlength(i, PP.branch_length_max);
 
-      for(int i=0;i<PP.n_imodels();i++)
-	PP.IModel(i).set_training(true);
+      PP.set_parameter_value(PP.find_parameter("IModels.training"), new Bool(true));
       PP.recalc_imodels();
     }  
   }
@@ -1205,8 +1204,6 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 	  P->set_bounds(restore_bounds[i].first, restore_bounds[i].second);
       restore_bounds.clear();
       
-      for(int i=0;i<PP.n_imodels();i++)
-	PP.IModel(i).set_training(false);
       PP.set_parameter_value(PP.find_parameter("IModels.training"), new Bool(false));
       PP.recalc_imodels();
 
