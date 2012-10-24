@@ -88,9 +88,6 @@ class data_partition: public Mat_Cache
   /// Cached sequence lengths -- accessed through seqlength( )
   mutable std::vector<cached_value<int> > cached_sequence_lengths;
 
-  /// Cached HMMs for each branch -- accessed through get_branch_HMM( )
-  mutable std::vector<cached_value<indel::PairHMM> > cached_branch_HMMs;
-
   std::vector<int> transition_p_method_indices;
 
   std::vector<int> branch_HMM_indices;

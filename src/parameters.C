@@ -61,9 +61,16 @@ using std::ostream;
  *
  *    [DONE] I guess we could actually convert this to e.g. imodels!i.
  *      [DONE] Thus, fst imodels!i, snd imodels!i
+ *
  * 3. Allow defining things in a formula_expression
  *    (f_e is becoming more like a program!)
+ *    - Could we use let-expressions instead?
+ *    - We COULD, but this wouldn't allow the names to be published!
+ *
  * 4. Remove code for caching and updating branch_hmms
+ *    [DONE] Remove code for caching branch_HMMs;
+ *    - BUT, we now need a way to invalidate things when imodel parameters change!
+ *    
  * 5. Remove imodels as sub-models.
  * 6. Remove class SuperModel?
  * 7. Remove imodel_methods.{lambda,epsilon}
@@ -204,29 +211,7 @@ const indel::PairHMM& data_partition::get_branch_HMM(int b) const
 
   b = T().directed_branch(b).undirected_name();
 
-  cached_value<indel::PairHMM>& HMM = cached_branch_HMMs[b];
-
-  if (not HMM.is_valid())
-  {
-    // use the length, unless we are unaligned
-    double D = P->get_branch_indel_length(partition_index, b);
-
-    int m = P->imodel_for_partition[partition_index];
-
-    // compute and cache the branch HMM
-    if (branch_HMM_type[b] == 1)
-      HMM = IModel().get_branch_HMM(-1);
-    else
-    {
-      indel::PairHMM other = IModel().get_branch_HMM(D);
-      HMM = *P->C.evaluate_as<indel::PairHMM>( branch_HMM_indices[b] );
-      for(int i=0;i<other.size1();i++)
-	for(int j=0;j<other.size2();j++)
-	  assert(std::abs(other(i,j) - HMM.value()(i,j)) < 0.00001);
-    }
-  }
-
-  return HMM;
+  return *P->C.evaluate_as<indel::PairHMM>( branch_HMM_indices[b] );
 }
 
 vector<indel::PairHMM> data_partition::get_branch_HMMs(const vector<int>& br) const
@@ -266,14 +251,13 @@ void data_partition::recalc_imodel_for_branch(int b)
 
   b = T().directed_branch(b).undirected_name();
 
-  cached_branch_HMMs[b].invalidate();
   cached_alignment_prior.invalidate();
   cached_alignment_prior_for_branch[b].invalidate();
 }
 
 void data_partition::recalc_imodel() 
 {
-  for(int b=0;b<cached_branch_HMMs.size();b++) 
+  for(int b=0;b<T().n_branches();b++) 
     recalc_imodel_for_branch(b);
 }
 
@@ -586,7 +570,6 @@ data_partition::data_partition(const string& n, Parameters* p, int i, const alig
    pairwise_alignment_for_branch(2*T().n_branches()),
    cached_alignment_counts_for_branch(T().n_branches(),ublas::matrix<int>(5,5)),
    cached_sequence_lengths(a.n_sequences()),
-   cached_branch_HMMs(T().n_branches()),
    transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
    sequences( alignment_letters(a,T().n_leaves()) ),
