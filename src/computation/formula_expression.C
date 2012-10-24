@@ -251,3 +251,14 @@ formula_expression_ref operator&(const formula_expression_ref& F1, const formula
 {
   return (Cons,F1,F2);
 }
+
+formula_expression_ref get_list(const vector<formula_expression_ref>& v)
+{
+  formula_expression_ref F = ListEnd;
+
+  for(int i=v.size()-1;i>=0;i--)
+    F = v[i]&F;
+
+  return F;
+}
+

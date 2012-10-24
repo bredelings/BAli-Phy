@@ -912,6 +912,7 @@ void Parameters::recalc(const vector<int>& indices)
   }
 
   // Check if any substitution models have changed.
+  // WHY does this work?  Shouldn't this be a structure that never gets out of date?
   for(int s=0;s<n_smodels();s++)
     if (not C.compute_expression_is_up_to_date(SModels[s].main))
       recalc_smodel(s);
@@ -1169,7 +1170,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   add_parameter(Parameter("IModels.training", Bool(true)));
   // register the indel models as sub-models
-  vector<expression_ref> imodels_;
+  vector<formula_expression_ref> imodels_;
   for(int i=0;i<IModels.size();i++) 
   {
     string prefix = "I" + convertToString(i+1);
@@ -1195,7 +1196,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 			    v1^(lengthp,epsilon,v1)));
   }
   Program imodels_program("IModels");
-  imodels_program.def_function("models", 0, (listArray_, get_list(imodels_)));
+  imodels_program.def_function("models", 0, (listArray_, get_list(imodels_).exp()));
   C += imodels_program;
   
   // check that we only map existing smodels to data partitions
