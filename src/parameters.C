@@ -902,6 +902,7 @@ void Parameters::recalc(const vector<int>& indices)
 	  get_data_partition(p).branch_mean_changed();
       }
     }
+    // If we change ANY scale, invalidate ALL imodels.
     else if (n_imodels() and index < n_scales+4)
       for(int m=0;m<n_imodels();m++) 
 	recalc_imodel(m);
