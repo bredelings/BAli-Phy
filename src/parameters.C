@@ -871,7 +871,6 @@ void Parameters::recalc(const vector<int>& indices)
   for(int i=0;i<indices.size();i++)
   {
     int index = indices[i];
-    if (not is_super_parameter(index)) continue;
 
     if (index == 0) // beta
     {
