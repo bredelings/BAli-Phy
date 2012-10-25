@@ -193,26 +193,20 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
 {
   vector<vector<string> > names;
 
-  expression_ref query = (distributed, match(1), Tuple((prob_density, match(0) , match(-1), match(-1)), match(2)));
+  expression_ref query = (distributed, match(0), match(-1));
+  expression_ref _ = dummy(-1);
+  expression_ref case_query_func = v1^(case_expression(v1,(distributed, _, Tuple((prob_density, v2 , _, _), _) ), v2));
+
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),"~"))
     {
-      // If its a probability expression, then...
       vector<expression_ref> results; 
-      if (not find_match(query, P.get_note(i), results))
-      {
-	std::cerr<<"Warning: Expression '"<<P.get_note(i)<<"' is not a resolved probability expression!\n";
-	std::cerr<<"Warning:  Therefore we can't currently determine the distribution name!\n\n";
-	std::cout<<"Warning: Expression '"<<P.get_note(i)<<"' is not a resolved probability expression!\n";
-	std::cout<<"Warning:  Therefore we can't currently determine the distribution name!\n\n";
-	continue;
-	//	throw myexception()<<"Expression '"<<P.get_note(i)<<"' is not a resolved probability expression!";
-      }
+      find_match(query, P.get_note(i), results);
+      expression_ref rand_var = results[0];
 
-      string dist_name = *assert_is_a<String>(results[0]);
+      string dist_name = *P.get_context().evaluate_expression_as<String>((case_query_func, P.get_note(i)));
       if (dist_name != Dist) continue;
 
-      expression_ref rand_var = results[1];
       if (is_exactly(rand_var->head,":"))
       {
 	vector<expression_ref> rand_vars = get_ref_vector_from_list(rand_var);
