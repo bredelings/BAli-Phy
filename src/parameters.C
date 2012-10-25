@@ -88,6 +88,8 @@ using std::ostream;
  * 10. Move the Program from Context to reg_heap.
  *
  * 11. Move the lambda_scale model from the old framework to the new one. (mcmc/setup.C, parameters.C)
+ *
+ * 12. Generalize the code for adding "submodels"?
  */
 
 bool use_internal_index = true;
