@@ -1117,27 +1117,26 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   C += SModel_Functions();
   C += Distribution_Functions();
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
-  // Change add_super_parameter( ) -> add_parameter( ).
 
   constants.push_back(-1);
 
-  add_super_parameter(Parameter("Heat.beta", Double(1.0), between(0,1)));
+  add_parameter(Parameter("Heat.beta", Double(1.0), between(0,1)));
 
   for(int i=0;i<n_scales;i++)
-    add_super_parameter(Parameter("mu"+convertToString(i+1), Double(0.25), lower_bound(0)));
+    add_parameter(Parameter("mu"+convertToString(i+1), Double(0.25), lower_bound(0)));
 
   // create parameters for scaling indel model on a specific branch
   if (IMs.size())
   {
-    add_super_parameter(Parameter("lambdaScale", Double(0.0)));
+    add_parameter(Parameter("lambdaScale", Double(0.0)));
     // lambda_scale ~ Laplace(0, 1)
     add_note((distributed,parameter("lambdaScale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
 
-    add_super_parameter(Parameter("lambdaScaleOn", Bool(false)));
+    add_parameter(Parameter("lambdaScaleOn", Bool(false)));
     add_note((distributed,parameter("lambdaScaleOn"),Tuple(bernoulli_dist,0.5)));
     // lambda_scale_on ~ Uniform on T,F
 
-    add_super_parameter(Parameter("lambdaScaleBranch", Int(-1), between(0,T->n_branches()-1)));
+    add_parameter(Parameter("lambdaScaleBranch", Int(-1), between(0,T->n_branches()-1)));
     //lambda_scale_branch ~ Uniform on 0 .. T.n_branches()-1
   }
 
@@ -1148,14 +1147,15 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       <<smodel_for_partition.size();
 
   // register the substitution models as sub-models
-  for(int i=0;i<SMs.size();i++) {
-    string name = "S" + convertToString(i+1);
-    formula_expression_ref S = prefix_formula(name,SMs[i]);
+  for(int i=0;i<SMs.size();i++) 
+  {
+    string prefix = "S" + convertToString(i+1);
+    formula_expression_ref S = prefix_formula(prefix,SMs[i]);
 
     std::set<string> names = find_named_parameters(S.get_notes_plus_exp());
     for(const auto& name: names)
       if (find_parameter(name) == -1)
-	add_super_parameter(name);
+	add_parameter(name);
 
     for(int j=0;j<S.n_notes();j++)
       add_note(S.get_note(j));
