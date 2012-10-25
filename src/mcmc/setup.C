@@ -119,6 +119,24 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& proposal, const string&
 }
 
 
+double default_sampling_rate(const Model& M, const string& parameter_name)
+{
+  expression_ref sampling_rate = lambda_expression(constructor("SamplingRate",2));
+
+  vector<expression_ref> results;
+  expression_ref query = (sampling_rate, parameter( parameter_name ), match(0));
+  int found = M.get_context().find_match_notes(query, results, 0);
+
+  if (found != -1)
+  {
+    assert(results.size());
+    return *assert_is_a<Double>(results[0]);
+  }
+  else
+    return 1.0;
+}
+
+
 /// \brief Add a 1-D slice-sampling sub-move for parameter name to M
 ///
 /// \param P             The model that contains the parameters.
@@ -126,11 +144,26 @@ void add_MH_move(Probability_Model& P,const Proposal_Fn& proposal, const string&
 /// \param M             The group of moves to which to add the newly-created sub-move
 /// \param weight        How often to run this move.
 ///
-void add_slice_move(Probability_Model& P, const string& parameter_name, MCMC::MoveAll& M, double weight = 1)
+void add_slice_move(Probability_Model& P, const string& parameter_name, MCMC::MoveAll& M, double rate)
 {
   int index = P.find_parameter(parameter_name);
 
-  M.add(weight, MCMC::Parameter_Slice_Move(string("slice_sample_")+parameter_name, index, 1.0) );
+  M.add(rate, MCMC::Parameter_Slice_Move(string("slice_sample_")+parameter_name, index, 1.0) );
+}
+
+
+/// \brief Add a 1-D slice-sampling sub-move for parameter name to M
+///
+/// \param P             The model that contains the parameters.
+/// \param name          The name of the parameter to create a move for.
+/// \param M             The group of moves to which to add the newly-created sub-move
+/// \param weight        How often to run this move.
+///
+void add_slice_move(Probability_Model& P, const string& parameter_name, MCMC::MoveAll& M)
+{
+  double rate = default_sampling_rate(P, parameter_name);
+
+  add_slice_move(P, parameter_name, M, rate);
 }
 
 
@@ -143,46 +176,37 @@ void add_slice_move(Probability_Model& P, const string& parameter_name, MCMC::Mo
 ///
 void add_slice_moves(Probability_Model& P, const string& name, 
 		     MCMC::MoveAll& M,
-		     double weight = 1)
+		     double weight)
 {
   vector<int> indices = parameters_with_extension(P,name);
   for(int i=0;i<indices.size();i++) 
   {
     if (P.is_fixed(indices[i])) continue;
 
-    M.add(weight, 
-	  MCMC::Parameter_Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
-				     indices[i], 1.0)
-	  );
+    string parameter_name = P.parameter_name(indices[i]);
+
+    add_slice_move(P, parameter_name, M, weight);
   }
 }
 
-/// \brief Add a 1-D slice-sampling sub-move for parameter name to M on a transformed scale
+/// \brief Add a 1-D slice-sampling sub-move for parameter name to M
 ///
-/// \param P             The model that contains the parameters
-/// \param name          The name of the parameter to create a move for
+/// \param P             The model that contains the parameters.
+/// \param name          The name of the parameter to create a move for.
 /// \param M             The group of moves to which to add the newly-created sub-move
-/// \param f1            The function from the parameter's scale to the transformed scale.
-/// \param f2            The inverse of f1.
 /// \param weight        How often to run this move.
 ///
 void add_slice_moves(Probability_Model& P, const string& name, 
-		     MCMC::MoveAll& M,
-		     double(&f1)(double),
-		     double(&f2)(double),
-		     double weight = 1
-		     )
+		     MCMC::MoveAll& M)
 {
   vector<int> indices = parameters_with_extension(P,name);
   for(int i=0;i<indices.size();i++) 
   {
     if (P.is_fixed(indices[i])) continue;
 
-    M.add(weight, 
-	  MCMC::Parameter_Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
-				     indices[i],
-				     1.0,f1,f2)
-	  );
+    string parameter_name = P.parameter_name(indices[i]);
+
+    add_slice_move(P, parameter_name, M);
   }
 }
 
@@ -485,8 +509,8 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   // imodel parameters
   add_slice_moves(P, "*.delta", slice_moves, 10);
-  add_slice_moves(P, "*.lambda", slice_moves, 10);
-  add_slice_moves(P, "*.epsilon", slice_moves,transform_epsilon,inverse_epsilon, 10);
+  //  add_slice_moves(P, "*.lambda", slice_moves, 10);
+  //  add_slice_moves(P, "*.epsilon", slice_moves,transform_epsilon,inverse_epsilon, 10);
 
   add_slice_moves(P, "lambdaScale", slice_moves, 10);
   add_slice_moves(P, "*.M3.omega*", slice_moves);
