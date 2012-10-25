@@ -365,7 +365,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 
   
   add_MH_move(P, shift_delta,                 "*.delta",       "lambda_shift_sigma",     0.35, MH_moves, 10);
-  add_MH_move(P, Between(-40,0,shift_cauchy), "*.lambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+  add_MH_move(P, Between(-40,0,shift_cauchy), "*.logLambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
   add_MH_move(P, shift_epsilon,               "*.epsilon",     "epsilon_shift_sigma",   0.30, MH_moves, 10);
 
   add_MH_move(P, Between(-20,20,shift_cauchy), "lambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
@@ -509,7 +509,6 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   // imodel parameters
   add_slice_moves(P, "*.delta", slice_moves, 10);
-  //  add_slice_moves(P, "*.lambda", slice_moves, 10);
   //  add_slice_moves(P, "*.epsilon", slice_moves,transform_epsilon,inverse_epsilon, 10);
 
   add_slice_moves(P, "lambdaScale", slice_moves, 10);

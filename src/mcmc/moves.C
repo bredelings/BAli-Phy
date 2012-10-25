@@ -123,7 +123,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, M
   double sigma = 0.5;
   if (uniform() < 0.5)
   {
-    indices = parameters_with_extension(*PP,"lambda");
+    indices = parameters_with_extension(*PP,"logLambda");
     //    sigma = 0.5;
   }
   else

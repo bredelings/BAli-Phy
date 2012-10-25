@@ -1185,7 +1185,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
 
   if (alignment_burnin_iterations > 0)
   {
-    add_at_end(restore_bounds, change_bound(P, "I*.lambda",  ::upper_bound(-4.0)  ) );
+    add_at_end(restore_bounds, change_bound(P, "I*.logLambda",  ::upper_bound(-4.0)  ) );
     add_at_end(restore_bounds, change_bound(P, "I*.delta",  ::upper_bound(-5.0)  ) );
     add_at_end(restore_bounds, change_bound(P, "I*.epsilon",  ::upper_bound(-0.25)  ) );
     add_at_end(restore_bounds, change_bound(P, "^mu*",  ::upper_bound(0.5)  ) );
