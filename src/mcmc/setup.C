@@ -205,6 +205,7 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
 	std::cerr<<"Warning:  Therefore we can't currently determine the distribution name!\n\n";
 	std::cout<<"Warning: Expression '"<<P.get_note(i)<<"' is not a resolved probability expression!\n";
 	std::cout<<"Warning:  Therefore we can't currently determine the distribution name!\n\n";
+	continue;
 	//	throw myexception()<<"Expression '"<<P.get_note(i)<<"' is not a resolved probability expression!";
       }
 
