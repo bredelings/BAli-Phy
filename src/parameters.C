@@ -702,10 +702,6 @@ efloat_t Parameters::prior_no_alignment() const
     Pr *= gamma_pdf(get_parameter_value_as<Double>(branch_mean_index(i)), 0.5, 2.0);
   }
     
-  // prior on the insertion/deletion model
-  for(int i=0;i<IModels.size();i++)
-    Pr *= IModel(i).prior();
-
   // prior for each branch being aligned/unaliged
   if (variable_alignment()) 
   {
@@ -1207,10 +1203,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     expression_ref median = def_parameter(imodel, prefix+"lambdaPriorMedian", -4.0);
     expression_ref stddev = def_parameter(imodel, prefix+"lambdaPriorStddev", 1.0);
     expression_ref priorlength = def_parameter(imodel, prefix+"epsilonPriorLength", 10.0);
-    //    expression_ref lambda_ = def_parameter(imodel, prefix+"lambda", -4.0, nullptr, laplace_dist, Tuple(median, stddev));
-    //    expression_ref epsilon_ = def_parameter(imodel, prefix+"epsilon", -0.25, nullptr, var("Distributions.epsilonDist"), priorlength);
-    expression_ref lambda_ = def_parameter(imodel, prefix+"lambda", -4.0);
-    expression_ref epsilon_ = def_parameter(imodel, prefix+"epsilon", -0.25);
+    expression_ref lambda_ = def_parameter(imodel, prefix+"lambda", -4.0, nullptr, laplace_dist, Tuple(median, stddev));
+    expression_ref epsilon_ = def_parameter(imodel, prefix+"epsilon", -0.25, nullptr, var("Distributions.epsilonDist"), priorlength);
 
     expression_ref epsilon = (var("exp"), epsilon_);
     expression_ref lambda = (var("exp"), lambda_);
