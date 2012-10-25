@@ -939,28 +939,37 @@ vector<int> parameters_with_extension(const Model& M, string name)
 
 string show_probability_expression(const expression_ref& E)
 {
-  match m(1);
-  expression_ref query = (distributed, match(1), Tuple((prob_density, match(0) , match(-1), match(-1)), match(2)));
+  expression_ref prob_expression_query = (distributed, match(0), match(1));
 
-  // If its a probability expression, then...
+  // 1. First analyze into rand_var ~ dist
   vector<expression_ref> results; 
-  if (not find_match(query, E, results))
+  if (not find_match(prob_expression_query, E, results))
     throw myexception()<<"Expression '"<<E<<"' is not a probability expression.";
+
+  expression_ref rand_var = results[0];
+  expression_ref dist = results[1];
   
-  // Extract the density operation
-  object_ptr<const String> name = is_a<String>(results[0]);
-  
-  string prob_exp;
-  {
-    expression_ref rand_var = results[1];
-    prob_exp += rand_var->print();
-  }
-  
-  prob_exp += " ~ " + string(*name);
-  if (results[2]->size())
-    prob_exp += results[2]->print();
+  // 2. Then analyze into rand_var ~ dist_family(dist_args)
+  results.clear();
+  if (not find_match(Tuple(match(0), match(1)), dist ,results))
+    return rand_var->print() + " ~ " + dist->print();
+
+  expression_ref dist_family = results[0];
+  expression_ref dist_args   = results[1];
+
+  string dist_name = dist_family->print();
+  // 3. Then analyze into rand_var ~ dist_name(dist_args)
+  results.clear();
+  if (find_match((prob_density, match(0), match(-1), match(-1)), dist_family ,results))
+    dist_name = *assert_is_a<String>(results[0]);
+
+  // 4. Finally construct rand_var ~ dist_name(dist_args)
+  string prob_exp = rand_var->print() + " ~ " + dist_name;
+
+  if (dist_args->size())
+    prob_exp += dist_args->print();
   else
-    prob_exp += "(" + results[2]->print() + ")";
+    prob_exp += "(" + dist_args->print() + ")";
   
   return prob_exp;
 }
