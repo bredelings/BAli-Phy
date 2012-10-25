@@ -90,6 +90,10 @@ using std::ostream;
  * 11. Move the lambda_scale model from the old framework to the new one. (mcmc/setup.C, parameters.C)
  *
  * 12. Generalize the code for adding "submodels"?
+ *
+ * 13. Instead of prefixing, give formula expressions module names?
+ *     (a) Then we import other names from the parameters object!
+ *     (b) That way, those names will NOT get prefixed, which is what we want.
  */
 
 bool use_internal_index = true;
