@@ -188,6 +188,7 @@ void add_slice_moves(Probability_Model& P, const string& name,
 
 #include "distribution-operations.H" // for prob_density
 
+/// Find parameters with distribution name Dist
 vector<vector<string> > get_distributed_parameters(const Probability_Model& P, const string& Dist)
 {
   vector<vector<string> > names;
@@ -199,7 +200,13 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
       // If its a probability expression, then...
       vector<expression_ref> results; 
       if (not find_match(query, P.get_note(i), results))
-	throw myexception()<<"Expression '"<<P.get_note(i)<<"' is not a probability expression.";
+      {
+	std::cerr<<"Warning: Expression '"<<P.get_note(i)<<"' is not a resolved probability expression!\n";
+	std::cerr<<"Warning:  Therefore we can't currently determine the distribution name!\n\n";
+	std::cout<<"Warning: Expression '"<<P.get_note(i)<<"' is not a resolved probability expression!\n";
+	std::cout<<"Warning:  Therefore we can't currently determine the distribution name!\n\n";
+	//	throw myexception()<<"Expression '"<<P.get_note(i)<<"' is not a resolved probability expression!";
+      }
 
       string dist_name = *assert_is_a<String>(results[0]);
       if (dist_name != Dist) continue;
