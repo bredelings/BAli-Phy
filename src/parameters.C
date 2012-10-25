@@ -1161,9 +1161,9 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     expression_ref stddev = def_parameter(imodel, prefix+"lambdaPriorStddev", 1.0);
     expression_ref priorlength = def_parameter(imodel, prefix+"epsilonPriorLength", 10.0);
     expression_ref log_lambda = def_parameter(imodel, prefix+"logLambda", -4.0, nullptr, laplace_dist, Tuple(median, stddev));
-    expression_ref epsilon_ = def_parameter(imodel, prefix+"epsilon", -0.25, nullptr, var("Distributions.epsilonDist"), priorlength);
+    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, prefix+"meanIndelLengthMinus1", 1.0, lower_bound(0), exponential_dist, priorlength);
 
-    expression_ref epsilon = (var("exp"), epsilon_);
+    expression_ref epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
     expression_ref lambda = (var("exp"), log_lambda);
     expression_ref heat = parameter("Heat.beta");
     expression_ref training = parameter("IModels.training");

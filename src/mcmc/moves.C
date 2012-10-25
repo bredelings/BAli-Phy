@@ -128,7 +128,7 @@ void sample_parameter_and_alignment_on_branch(owned_ptr<Probability_Model>& P, M
   }
   else
   {
-    indices = parameters_with_extension(*PP,"epsilon");
+    indices = parameters_with_extension(*PP,"meanIndelLengthMinus1");
     //    sigma = 0.5;
   }
   if (not indices.size()) return;
