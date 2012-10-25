@@ -70,11 +70,11 @@ using std::ostream;
  *
  * 4. Remove code for caching and updating branch_hmms
  *    [DONE] Remove code for caching branch_HMMs;
- *    - BUT, we now need a way to invalidate things when imodel parameters change!
+ *      [DONE] BUT, we now need a way to invalidate things when imodel parameters change!
  *    
  * 5. Remove imodels as sub-models.
  * 6. Remove class SuperModel?
- * 7. Remove imodel_methods.{lambda,epsilon}
+ * [DONE] Remove imodel_methods.{lambda,epsilon}
  *
  *    indelRates = listArray B [lambda1, lambda2, lambda3 ... lambdaB]
  *    
@@ -86,6 +86,8 @@ using std::ostream;
  *   - Thus, we could do this, but the locations would NOT be allowed to depend on parameters!
  *   - Perhaps we could separate them into (a) dependent and (b) non-dependent vars?
  * 10. Move the Program from Context to reg_heap.
+ *
+ * 11. Move the lambda_scale model from the old framework to the new one. (mcmc/setup.C, parameters.C)
  */
 
 bool use_internal_index = true;
