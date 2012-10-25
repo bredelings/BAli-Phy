@@ -1199,8 +1199,10 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     expression_ref median = def_parameter(imodel, prefix+"lambdaPriorMedian", -4.0);
     expression_ref stddev = def_parameter(imodel, prefix+"lambdaPriorStddev", 1.0);
     expression_ref priorlength = def_parameter(imodel, prefix+"epsilonPriorLength", 10.0);
-    expression_ref lambda_ = def_parameter(imodel, prefix+"lambda", -4.0, nullptr, laplace_dist, Tuple(median, stddev));
-    expression_ref epsilon_ = def_parameter(imodel, prefix+"epsilon", -0.25, nullptr, var("Distributions.epsilonDist"), priorlength);
+    //    expression_ref lambda_ = def_parameter(imodel, prefix+"lambda", -4.0, nullptr, laplace_dist, Tuple(median, stddev));
+    //    expression_ref epsilon_ = def_parameter(imodel, prefix+"epsilon", -0.25, nullptr, var("Distributions.epsilonDist"), priorlength);
+    expression_ref lambda_ = def_parameter(imodel, prefix+"lambda", -4.0);
+    expression_ref epsilon_ = def_parameter(imodel, prefix+"epsilon", -0.25);
 
     expression_ref epsilon = (var("exp"), epsilon_);
     expression_ref lambda = (var("exp"), lambda_);
@@ -1211,6 +1213,23 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 			  v1^(lengthp,epsilon,v1)) );
 
     imodels_.push_back(imodel);
+
+    // Add submodel represented by formula_expression
+    std::set<string> names = find_named_parameters(imodel.get_notes_plus_exp());
+    for(const auto& name: names)
+      if (find_parameter(name) == -1)
+	add_parameter(name);
+    
+    for(int j=0;j<imodel.n_notes();j++)
+      add_note(imodel.get_note(j));
+    
+    // Set default values.
+    for(const auto& name: names)
+    {
+      int index = find_parameter(name);
+      if (not C.parameter_is_set(index))
+	C.set_parameter_value(index, C.default_parameter_value(index));
+    }
   }
   Program imodels_program("IModels");
   imodels_program.def_function("models", 0, (listArray_, get_list(imodels_).exp()));
