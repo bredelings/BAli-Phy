@@ -167,8 +167,6 @@ public:
   void recalc_smodel();
 
   bool has_IModel() const;
-  /// The IndelModel
-  const IndelModel& IModel() const;
 
   void setlength(int b);
   void setlength_no_invalidate_LC(int b);
@@ -241,7 +239,7 @@ struct smodel_methods
 };
 
 /// A class to contain all the MCMC state except the alignment
-class Parameters: public SuperModel, public Probability_Model
+class Parameters: public Probability_Model
 {
   friend class data_partition;
 
@@ -250,7 +248,6 @@ class Parameters: public SuperModel, public Probability_Model
   std::vector<int> smodel_for_partition;
 
   /// The IndelModel
-  std::vector<polymorphic_cow_ptr<IndelModel> > IModels;
   std::vector<imodel_methods> IModel_methods;
   std::vector<int> imodel_for_partition;
 
@@ -334,11 +331,7 @@ public:
   int n_smodels() const {return SModels.size();}
   
   /// How many substitution models?
-  int n_imodels() const {return IModels.size();}
-  /// Get the substitution::Model
-  const IndelModel& IModel(int i) const {return *IModels[i];}
-  /// Get the substitution::Model
-        IndelModel& IModel(int i)       {return *IModels[i].modify();}
+  int n_imodels() const {return IModel_methods.size();}
 
   object_ptr<const alphabet> get_alphabet_for_smodel(int i) const;
 
@@ -404,9 +397,6 @@ public:
   Parameters* clone() const {return new Parameters(*this);}
 
   std::string name() const {return "Full Model";}
-
-  const Model& SubModels(int) const;
-  Model& SubModels(int);
 
   Parameters(const std::vector<alignment>& A, const SequenceTree&, 
 	     const std::vector<formula_expression_ref>&,

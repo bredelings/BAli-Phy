@@ -156,15 +156,6 @@ bool data_partition::has_IModel() const
   return (m != -1);
 }
 
-const IndelModel& data_partition::IModel() const
-{
-  int m = P->imodel_for_partition[partition_index];
-  if (m == -1)
-    std::abort();
-  else
-    return P->IModel(m);
-}
-
 const std::vector<Matrix>& data_partition::transition_P(int b) const
 {
   b = T().directed_branch(b).undirected_name();
@@ -241,11 +232,7 @@ double data_partition::sequence_length_pr(int l) const
 
   const_cast<Parameters*>(P)->set_parameter_value(arg_param_index, new Int(l) );
 
-  double pr1 = *P->C.evaluate_as<Double>( P->IModel_methods[m].length_p );
-  double pr2 = IModel().lengthp(l);
-  assert( std::abs( log(pr2) - log(pr1)) < 0.00000001 );
-
-  return pr1;
+  return *P->C.evaluate_as<Double>( P->IModel_methods[m].length_p );
 }
 
 void data_partition::recalc_imodel_for_branch(int b)
@@ -760,7 +747,7 @@ efloat_t Parameters::heated_likelihood() const
 
 void Parameters::recalc_imodels() 
 {
-  for(int i=0;i<IModels.size();i++)
+  for(int i=0;i<n_imodels();i++)
     recalc_imodel(i);
 }
 
@@ -875,8 +862,6 @@ void Parameters::recalc(const vector<int>& indices)
   {
     if (index == 0) // beta
     {
-      for(int m=0;m<n_imodels();m++)
-	IModel(m).set_heat( get_beta() );
       for(int p=0;p<n_data_partitions();p++)
 	get_data_partition(p).recalc_imodel();
     }
@@ -927,28 +912,6 @@ void Parameters::recalc(const vector<int>& indices)
 object_ptr<const alphabet> Parameters::get_alphabet_for_smodel(int s) const
 {
   return convert<const alphabet>(C.evaluate(SModels[s].get_alphabet));
-}
-
-Model& Parameters::SubModels(int i)
-{
-  if (i>=n_submodels())
-    throw myexception()<<"Parameters: There is no sub-model #"<<i<<"!";
-
-  if (i<IModels.size()) 
-    return IModel(i);
-
-  std::abort();
-}
-
-const Model& Parameters::SubModels(int i) const
-{
-  if (i>=n_submodels())
-    throw myexception()<<"Parameters: There is no sub-model #"<<i<<"!";
-
-  if (i<IModels.size()) 
-    return IModel(i);
-
-  std::abort();
 }
 
 bool Parameters::variable_alignment() const
@@ -1106,7 +1069,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
   :smodel_for_partition(s_mapping),
-   IModels(IMs),
+   IModel_methods(IMs.size()),
    imodel_for_partition(i_mapping),
    scale_for_partition(scale_mapping),
    n_scales(max(scale_mapping)+1),
@@ -1181,20 +1144,14 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   add_parameter(Parameter("IModels.training", Bool(true)));
   // register the indel models as sub-models
   vector<formula_expression_ref> imodels_;
-  for(int i=0;i<IModels.size();i++) 
+  for(int i=0;i<n_imodels();i++) 
   {
     string prefix = "I" + convertToString(i+1);
-    register_submodel(prefix);
+    //    register_submodel(prefix);
     prefix += ".";
 
-    imodel_methods I;
-    for(int j=0;j<IModel(i).n_parameters();j++)
-    {
-      int index = find_parameter(prefix+IModel(i).parameter_name(j));
-      assert(index != -1);
-      I.parameters.push_back(index);
-    }
-    IModel_methods.push_back(I);
+    imodel_methods& I = IModel_methods[i];
+
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
     expression_ref lengthp = lambda_expression( RS07_lengthp() );
 
@@ -1220,7 +1177,10 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     std::set<string> names = find_named_parameters(imodel.get_notes_plus_exp());
     for(const auto& name: names)
       if (find_parameter(name) == -1)
-	add_parameter(name);
+      {
+	int index = add_parameter(name);
+	I.parameters.push_back(index);
+      }
     
     for(int j=0;j<imodel.n_notes();j++)
       add_note(imodel.get_note(j));
@@ -1339,7 +1299,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
 
   // Register compute expressions for branch HMMs and sequence length distributions
-  for(int i=0;i<IModels.size();i++) 
+  for(int i=0;i<n_imodels();i++) 
   {
     imodel_methods& I = IModel_methods[i];
     string prefix = "I" + convertToString(i+1);
