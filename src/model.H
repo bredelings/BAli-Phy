@@ -321,6 +321,8 @@ public:
 
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
 
+  const context& get_context() const {return C;}
+
   /// Construct an empty model
   Model();
 
