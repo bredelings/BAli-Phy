@@ -472,11 +472,6 @@ void data_partition::branch_mean_changed()
   recalc_imodel();
 }
 
-string data_partition::name() const 
-{
-  return partition_name;
-}
-
 efloat_t data_partition::prior_no_alignment() const 
 {
   return 1.0;
@@ -562,10 +557,9 @@ efloat_t data_partition::heated_likelihood() const
     return pow(likelihood(),get_beta());
 }
 
-data_partition::data_partition(const string& n, Parameters* p, int i, const alignment& a)
+data_partition::data_partition(Parameters* p, int i, const alignment& a)
   :P(p),
    partition_index(i),
-   partition_name(n),
    cached_alignment_prior_for_branch(T().n_branches()),
    pairwise_alignment_for_branch(2*T().n_branches()),
    cached_alignment_counts_for_branch(T().n_branches(),ublas::matrix<int>(5,5)),
@@ -1242,13 +1236,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   // create data partitions
   for(int i=0;i<A.size();i++) 
-  {
-    // compute name for data-partition
-    string name = string("part") + convertToString(i+1);
-
-    // add the data partition
-    data_partitions.push_back( data_partition(name, this, i, A[i]) );
-  }
+    data_partitions.push_back( data_partition(this, i, A[i]) );
 
   // Register compute expressions for branch HMMs and sequence length distributions
   for(int i=0;i<n_imodels();i++) 

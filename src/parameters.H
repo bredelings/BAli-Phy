@@ -60,16 +60,9 @@ class data_partition: public Mat_Cache
 {
   friend class Parameters;
 
-  // Letting this be non-const means that sometimes, accessing cow_ptr members of P
-  // could be treated as a non-const access.  This could trigger member to be copied.
-  // If this was a tree, this apparently changed something - probably the circular order
-  // or neighbor nodes around a node.  That then changed (I think) the outcome of walk_tree_path( )
-  // in walk_tree_sample_branch_lengths( ), which changed the outcome of the MCMC.
   const Parameters* P;
 
   int partition_index;
-
-  std::string partition_name;
 
   /// Cached prior for just the alignment -- accessed through alignment_prior( )
   mutable cached_value<efloat_t> cached_alignment_prior;
@@ -204,9 +197,7 @@ public:
   efloat_t heated_prior() const {return prior();}
   efloat_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
-  std::string name() const;
-
-  data_partition(const std::string& n, Parameters* P, int i, const alignment&);
+  data_partition(Parameters* P, int i, const alignment&);
 };
 
 struct imodel_methods
