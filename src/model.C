@@ -178,6 +178,8 @@ vector<int> Model::add_submodel(const formula_expression_ref& R)
       int index = add_parameter(name);
       new_parameters.push_back(index);
     }
+    else
+      throw myexception()<<"Submodel declares existing parameter '"<<name<<"'!";
   
   // Add the notes from this model to the current model.
   for(const auto& n: R.get_notes())
