@@ -976,17 +976,12 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
   return smodels;
 }
 
-vector<polymorphic_cow_ptr<IndelModel> > 
+vector<formula_expression_ref> 
 get_imodels(const shared_items<string>& imodel_names_mapping)
 {
-  vector<polymorphic_cow_ptr<IndelModel> > imodels;
+  vector<formula_expression_ref> imodels;
   for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
-  {
-    owned_ptr<IndelModel> full_imodel = get_imodel(imodel_names_mapping.unique(i));
-
-    polymorphic_cow_ptr<IndelModel> temp (*full_imodel);
-    imodels.push_back(temp);
-  }
+    imodels.push_back( get_imodel(imodel_names_mapping.unique(i)) );
   return imodels;
 }
 
@@ -1404,8 +1399,7 @@ int main(int argc,char* argv[])
     //--------- Set up the substitution model --------//
 
     // FIXME - change to return a (model, standardized name) pair.
-    vector<polymorphic_cow_ptr<IndelModel> > 
-      full_imodels = get_imodels(imodel_names_mapping);
+    vector<formula_expression_ref> full_imodels = get_imodels(imodel_names_mapping);
 
     //--------- Set up the substitution model --------//
     shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);

@@ -1065,7 +1065,7 @@ double Parameters::get_branch_indel_length(int p, int b) const
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       const vector<formula_expression_ref>& SMs,
 		       const vector<int>& s_mapping,
-		       const vector<polymorphic_cow_ptr<IndelModel> >& IMs,
+		       const vector<formula_expression_ref>& IMs,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
   :smodel_for_partition(s_mapping),
@@ -1119,8 +1119,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string prefix = "S" + convertToString(i+1);
     formula_expression_ref S = prefix_formula(prefix,SMs[i]);
 
-    std::set<string> names = find_named_parameters(S.get_notes_plus_exp());
-    for(const auto& name: names)
+    std::set<string> declared_parameter_names = find_declared_parameters(S.get_notes());
+    for(const auto& name: declared_parameter_names)
       if (find_parameter(name) == -1)
 	add_parameter(name);
 
@@ -1128,7 +1128,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       add_note(S.get_note(j));
 
     // Set default values.
-    for(const auto& name: names)
+    //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
+    for(const auto& name: declared_parameter_names)
     {
       int index = find_parameter(name);
       if (not C.parameter_is_set(index))
@@ -1147,35 +1148,16 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   for(int i=0;i<n_imodels();i++) 
   {
     string prefix = "I" + convertToString(i+1);
-    //    register_submodel(prefix);
-    prefix += ".";
 
     imodel_methods& I = IModel_methods[i];
 
-    expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
-    expression_ref lengthp = lambda_expression( RS07_lengthp() );
-
-    expression_ref epsilon_dist = 1;
-    formula_expression_ref imodel;
-    expression_ref median = def_parameter(imodel, prefix+"lambdaPriorMedian", -4.0);
-    expression_ref stddev = def_parameter(imodel, prefix+"lambdaPriorStddev", 1.0);
-    expression_ref priorlength = def_parameter(imodel, prefix+"epsilonPriorLength", 10.0);
-    expression_ref log_lambda = def_parameter(imodel, prefix+"logLambda", -4.0, nullptr, laplace_dist, Tuple(median, stddev));
-    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, prefix+"meanIndelLengthMinus1", 1.0, lower_bound(0), exponential_dist, priorlength);
-
-    expression_ref epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
-    expression_ref lambda = (var("exp"), log_lambda);
-    expression_ref heat = parameter("Heat.beta");
-    expression_ref training = parameter("IModels.training");
-
-    imodel.set_exp( Tuple(v1^(v2^(RS07BranchHMM, epsilon, lambda*(var("!"),v1,v2), heat, training)), 
-			  v1^(lengthp,epsilon,v1)) );
+    formula_expression_ref imodel = prefix_formula(prefix, IMs[i]);
 
     imodels_.push_back(imodel);
 
     // Add submodel represented by formula_expression
-    std::set<string> names = find_named_parameters(imodel.get_notes_plus_exp());
-    for(const auto& name: names)
+    std::set<string> declared_parameter_names = find_declared_parameters(imodel.get_notes());
+    for(const auto& name: declared_parameter_names)
       if (find_parameter(name) == -1)
       {
 	int index = add_parameter(name);
@@ -1186,7 +1168,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       add_note(imodel.get_note(j));
     
     // Set default values.
-    for(const auto& name: names)
+    for(const auto& name: declared_parameter_names)
     {
       int index = find_parameter(name);
       if (not C.parameter_is_set(index))

@@ -37,13 +37,8 @@
  */
 
 using std::vector;
-
-std::vector<expression_ref> formula_expression_ref::get_notes_plus_exp() const
-{
-  Model_Notes M = *this;
-  M.add_note( exp() );
-  return M.get_notes();
-}
+using std::set;
+using std::string;
 
 formula_expression_ref::formula_expression_ref()
 { }
@@ -60,9 +55,22 @@ formula_expression_ref::formula_expression_ref(const Model_Notes& N, const expre
   :Model_Notes(N),E(R)
 {  }
 
+formula_expression_ref substitute(const formula_expression_ref& R, const expression_ref& E1, const expression_ref& E2)
+{
+  formula_expression_ref R2 = R;
+  for(auto& n: R2.get_notes())
+    n = substitute(n, E1, E2);
+  R2.set_exp( substitute(R2.exp(), E1, E2));
+  return R2;
+}
+
 formula_expression_ref prefix_formula(const std::string& prefix,const formula_expression_ref& R)
 {
-  return formula_expression_ref( add_prefix(prefix, R), add_prefix(prefix, R.exp() ) );
+  set<string> declared_parameter_names = find_declared_parameters(R.get_notes());
+  formula_expression_ref R2 = R;
+  for(const auto& name: declared_parameter_names)
+    R2 = substitute(R2, parameter(name), parameter(prefix+"."+name));
+  return R2;
 }
 
 int formula_expression_ref::add_expression(const formula_expression_ref& R)
@@ -79,7 +87,7 @@ object_ptr<const Object> formula_expression_ref::result() const
 
 object_ptr<const Object> formula_expression_ref::result(const Program& P) const
 {
-  context C(get_notes_plus_exp());
+  context C(get_notes());
   C += P;
   return C.evaluate_expression(exp());
 }
@@ -99,9 +107,18 @@ formula_expression_ref apply(const formula_expression_ref& F1, const formula_exp
   return F3;
 }
 
+expression_ref def_parameter(Model_Notes& N, const std::string& name)
+{
+  expression_ref declare_parameter = lambda_expression( constructor("declare_parameter",1) );
+
+  expression_ref var = parameter(name);
+  N.add_note( (declare_parameter, var) );
+  return var;
+}
+
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value)
 {
-  expression_ref var = parameter(name);
+  expression_ref var = def_parameter(N,name);
   N.add_note( (default_value, var, def_value) );
   return var;
 }
@@ -137,6 +154,13 @@ expression_ref def_parameter(Model_Notes& N, const std::string& name, const expr
 {
   expression_ref D = Tuple(F,A);
   return def_parameter(N, name, def_value, nullptr, D);
+}
+
+formula_expression_ref def_parameter(const std::string& name)
+{
+  Model_Notes N;
+  expression_ref E = def_parameter(N, name);
+  return formula_expression_ref(N,E);
 }
 
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value)
@@ -262,3 +286,19 @@ formula_expression_ref get_list(const vector<formula_expression_ref>& v)
   return F;
 }
 
+set<string> find_declared_parameters(const vector<expression_ref>& Notes)
+{
+  set<string> parameter_names;
+
+  // Check each expression in the Formula
+  for(const auto& n: Notes)
+    if (is_exactly(n,"declare_parameter"))
+      parameter_names.insert( assert_is_a<parameter>(n->sub[0])->parameter_name );
+
+  return parameter_names;
+}
+
+set<string> find_declared_parameters(const Model_Notes& Notes)
+{
+  return find_declared_parameters(Notes.get_notes());
+}

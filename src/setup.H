@@ -114,8 +114,7 @@ formula_expression_ref get_smodel(const boost::program_options::variables_map& a
 				  const std::vector<alignment>& A);
 
 //--------------------------- Indel stuff --------------------------//
-class IndelModel;
-owned_ptr<IndelModel> get_imodel(std::string);
+formula_expression_ref get_imodel(std::string);
 
 template <typename T>
 class shared_items

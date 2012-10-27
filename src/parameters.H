@@ -406,7 +406,7 @@ public:
   Parameters(const std::vector<alignment>& A, const SequenceTree&, 
 	     const std::vector<formula_expression_ref>&,
 	     const std::vector<int>&,
-	     const std::vector<polymorphic_cow_ptr<IndelModel> >&,
+	     const std::vector<formula_expression_ref>&,
 	     const std::vector<int>&,
 	     const std::vector<int>&);
 };

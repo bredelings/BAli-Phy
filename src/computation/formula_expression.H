@@ -21,8 +21,6 @@ public:
 
   int add_expression(const formula_expression_ref&);
 
-  std::vector<expression_ref> get_notes_plus_exp() const;
-
   object_ptr<const Object> result() const;
 
   object_ptr<const Object> result(const Program&) const;
@@ -45,6 +43,7 @@ std::ostream& operator<<(std::ostream&, const formula_expression_ref& F);
 
 template <typename T> struct Bounds;
 
+formula_expression_ref def_parameter(const std::string& name);
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value);
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b);
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&);
@@ -52,6 +51,7 @@ formula_expression_ref def_parameter(const std::string& name, const expression_r
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref&);
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref&, const expression_ref&);
 
+expression_ref def_parameter(Model_Notes&, const std::string& name);
 expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value);
 expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b);
 expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&);
@@ -75,5 +75,8 @@ formula_expression_ref operator&(const formula_expression_ref&, const expression
 formula_expression_ref operator&(const formula_expression_ref&, const formula_expression_ref&);
 
 formula_expression_ref get_list(const std::vector<formula_expression_ref>&);
+
+std::set<std::string> find_declared_parameters(const std::vector<expression_ref>&);
+std::set<std::string> find_declared_parameters(const Model_Notes&);
 
 #endif
