@@ -977,11 +977,11 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
 }
 
 vector<formula_expression_ref> 
-get_imodels(const shared_items<string>& imodel_names_mapping)
+get_imodels(const shared_items<string>& imodel_names_mapping, const SequenceTree& T)
 {
   vector<formula_expression_ref> imodels;
   for(int i=0;i<imodel_names_mapping.n_unique_items();i++) 
-    imodels.push_back( get_imodel(imodel_names_mapping.unique(i)) );
+    imodels.push_back( get_imodel(imodel_names_mapping.unique(i), T) );
   return imodels;
 }
 
@@ -1399,7 +1399,7 @@ int main(int argc,char* argv[])
     //--------- Set up the substitution model --------//
 
     // FIXME - change to return a (model, standardized name) pair.
-    vector<formula_expression_ref> full_imodels = get_imodels(imodel_names_mapping);
+    vector<formula_expression_ref> full_imodels = get_imodels(imodel_names_mapping, T);
 
     //--------- Set up the substitution model --------//
     shared_items<string> smodel_names_mapping = get_mapping(args, "smodel", n_partitions);

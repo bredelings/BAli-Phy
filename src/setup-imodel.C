@@ -8,7 +8,7 @@ using std::string;
 // FIXME - change to return a (model,standardized name) pair.
 
 /// Return an owned_ptr (possibly NULL) to an IndelModel or type \a name.
-formula_expression_ref get_imodel(string name) 
+formula_expression_ref get_imodel(string name, const SequenceTree& T) 
 {
   //-------------Choose an indel model--------------//
   formula_expression_ref imodel;
