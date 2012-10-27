@@ -1117,26 +1117,12 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   for(int i=0;i<SMs.size();i++) 
   {
     string prefix = "S" + convertToString(i+1);
-    formula_expression_ref S = prefix_formula(prefix,SMs[i]);
 
-    std::set<string> declared_parameter_names = find_declared_parameters(S.get_notes());
-    for(const auto& name: declared_parameter_names)
-      if (find_parameter(name) == -1)
-	add_parameter(name);
+    formula_expression_ref smodel = prefix_formula(prefix, SMs[i]);
 
-    for(int j=0;j<S.n_notes();j++)
-      add_note(S.get_note(j));
+    add_submodel(smodel);
 
-    // Set default values.
-    //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
-    for(const auto& name: declared_parameter_names)
-    {
-      int index = find_parameter(name);
-      if (not C.parameter_is_set(index))
-	C.set_parameter_value(index, C.default_parameter_value(index));
-    }
-
-    SModels.push_back( smodel_methods(S.exp(), C) );
+    SModels.push_back( smodel_methods( smodel.exp(), C) );
   }
 
   //FIXME - if imodels come from the outside, how can we distinguish those that do NOT
@@ -1149,31 +1135,11 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   {
     string prefix = "I" + convertToString(i+1);
 
-    imodel_methods& I = IModel_methods[i];
-
     formula_expression_ref imodel = prefix_formula(prefix, IMs[i]);
 
     imodels_.push_back(imodel);
 
-    // Add submodel represented by formula_expression
-    std::set<string> declared_parameter_names = find_declared_parameters(imodel.get_notes());
-    for(const auto& name: declared_parameter_names)
-      if (find_parameter(name) == -1)
-      {
-	int index = add_parameter(name);
-	I.parameters.push_back(index);
-      }
-    
-    for(int j=0;j<imodel.n_notes();j++)
-      add_note(imodel.get_note(j));
-    
-    // Set default values.
-    for(const auto& name: declared_parameter_names)
-    {
-      int index = find_parameter(name);
-      if (not C.parameter_is_set(index))
-	C.set_parameter_value(index, C.default_parameter_value(index));
-    }
+    IModel_methods[i].parameters = add_submodel(imodel);
   }
   Program imodels_program("IModels");
   imodels_program.def_function("models", 0, (listArray_, get_list(imodels_).exp()));

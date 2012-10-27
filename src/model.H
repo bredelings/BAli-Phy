@@ -42,8 +42,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 class Model;
 
-std::string parameter_name(const std::string& prefix,int i,int n);
-
 struct Parameter
 {
   std::string name;
@@ -59,89 +57,6 @@ struct Parameter
   Parameter(const std::string&, const Object&, bool);
   Parameter(const std::string&, const Object&, const Bounds<double>&, bool=false);
 };
-
-
-// TODO
-// 1. Make models take generic Object's as inputs. [DONE]
-//    o make substitution models take alphabets as arguments, and thus store them in the argument list [DONE]
-// 2. Make models into functions.
-//    o however, some objects, like Parameters, evaluate multiple different expressions
-// 3. ??
-//    o make all stored objects into models?
-//    o make supermodels into an Op plus models, as arguments? [WORKING...]
-//    o allow models to have computed objects as parts.
-//    o allow sharing between models.
-//    o pull priors out of models (or expressions).
-//    o do some caching of results?
-// 4. Make model evaluation lazy.
-//    o before: remove read(). [ DONE ] 
-//    o before: remove set_rate()
-//    o before: remove (set_)frequencies( )
-//    o before: convert all recalc() in smodel.H to result()
-//      - ReversibleFrequencyModel
-//        + SimpleFrequencyModel, UniformFrequencyModel, TripletFM, IndependentNucleotideFM, TripletsFM, CodonFM,
-//          AACodonFM, CodonsFM, CodonsFM2, 
-//      - MultiModel
-//        + 
-//    o during: make recalc() a constant function.
-//    o during: write parameters to submodels {now, simply}.  Recalc later.
-//    o why do set_rate() and frequencies() cause problems? We should just do them on copies.
-//    o call update only when calling SubModel(i), remove SuperModel::update()
-// 5. Fix multimodel to return base_model(i,m) instead of base_model(m)?
-// 6. Allow models to evaluate multiple expressions, ala class Parameters? (e.g. prior, likelihood, etc.)
-//    - When those expressions take outside arguments, (such as Exp(Q t), where t comes from outside)
-//      it might be helpful to allocate a permanent parameter for the argment of that function.  Then
-//      this parameter would be clearly marked as an 'input', and would not need to be updated if the
-//      *value* was unchanged.
-// 7. Store cached intermediate results in same array as input variable values?
-// 8. Handle various annotations, such as priors, bounds, model_names, computed variable names, transition-kernels, loggers, etc. from Formula.
-// 9. Consider the possibility of evaluating functions that DO something, and have a void return type?
-// 10. DONE: Make the model store most of its properties in a Context object and a Formula Object.
-//   - DONE: implement Formula::rename_parameter( ).
-//     + The Context will store the values, and the Formula will store the attributes.
-//   - Expose the top-level attribute for Formulae (expose top-level indices only?)
-//   - TODO: Get rid of references to parameters_
-//     + parameters_[i].changed: separate array?
-//   - How can attributes change efficiently?
-// 11. Make a FormulaModel that uses the Formula to
-//   (a) load default values
-//   (b) set bounds.
-//     and uses the context to 
-//   (c) calculate priors
-//   (d) calculate results...
-//   [The model class still stores the bounds and fixed-ness, so they can easily change]
-//   (d) How do we do things like MultiParameterModel, where an operation takes a function as an argument?
-// 12. Replace OpModels with FormulaModels:
-//   (a) Make each Model also an Operation.  
-//   (b) Make each Model also 
-//   (b) Make each Model compute priors based on the FOrmulae.
-//   (c) Wait... should I 
-
-
-// Rewrite:
-// - A supermodel is actually a function on a collection of sub-expressions.
-// - Currently models carry their own parameters, but in the future the expressions should
-//   be separate from the state. (see Context.C)
-// - When adding a submodel, we are essentially
-//   (i)  registering a sub-expression to be calculated
-//   (ii) mapping the parameters of the sub-expression onto either
-//     (ii.a) constants
-//     (ii.b) parameters of the *main* expression
-// - Therefore, to add a submodel, and also all of its parameters as separate parameters, I would:
-//   (i)  Go adding parameters with group "n", and get the resulting uniquified names.   
-//   (ii) Construct the mapping between submodel parameters and top model parameters or constants.
-//   (iii) Add the submodel with the specified mapping.
-//   (iv) This has been done.
-// - We may still need objects to have calculable attributes, like
-//   (i) bounds  [only for numeric objects?]
-//   (ii) being fixed or not fixed.
-//   (iii) type?
-//   (iv) bounds which some objects may not have...
-//   (v) priors... etc.
-//   In short, we need to have other objects which reference variables in two ways
-//   * being ABOUT a variable, or variables (as in priors)
-//   * refering to a function of the variables.
-//   * priors do both, in a sense.
 
 
 // Variable State: (i) Dirichlet Process or (ii) Augmenting and unaugmenting
@@ -161,12 +76,8 @@ struct Parameter
 ///   - depend on some number of parameters (currently, all of type double)
 ///   - update themselves when their parameters change.
 ///
-/// Two Model objects cannot (easily) share a parameter, because 
-/// each Model manages and 'owns' its own parameters.  This ownership
-/// means that a Model specifies:
-/// - a prior distribution on its parameter vector
-/// - a name (a string) for each parameter
-/// - an attribute (a boolean) that determinies whether each parameter is fixed or variable
+/// Model objects currently wrap a context object.  They add the ability to
+/// call recalc() to fixup things after changing a parameter.
 ///
 /// Next: make models out-of-date unless we call model.update();
 ///
@@ -320,6 +231,8 @@ public:
   int add_note(const expression_ref&);
 
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
+
+  std::vector<int> add_submodel(const formula_expression_ref&);
 
   const context& get_context() const {return C;}
 

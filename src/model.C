@@ -166,6 +166,35 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
   return values;  
 }
 
+vector<int> Model::add_submodel(const formula_expression_ref& R)
+{
+  vector<int> new_parameters;
+
+  // Find and add the declared names that don't exist yet.
+  std::set<string> declared_parameter_names = find_declared_parameters(R);
+  for(const auto& name: declared_parameter_names)
+    if (find_parameter(name) == -1)
+    {
+      int index = add_parameter(name);
+      new_parameters.push_back(index);
+    }
+  
+  // Add the notes from this model to the current model.
+  for(const auto& n: R.get_notes())
+    add_note(n);
+  
+  // Set default values.
+  //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
+  for(const auto& name: declared_parameter_names)
+  {
+    int index = find_parameter(name);
+    if (not C.parameter_is_set(index))
+      C.set_parameter_value(index, C.default_parameter_value(index));
+  }
+
+  return new_parameters;
+}
+
 std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::vector<int>& indices) const
 {
   std::vector< object_ptr<const Object> > values(indices.size());
