@@ -54,11 +54,24 @@ using std::ostream;
  * Goal: Construct a complete tree-based imodel along the lines of
  *       SingleRate[RS07] or BranchwiseRate[RS07]
  * 
+ * 7. Move calculation of alignment prior dependencies to the machine!
+ *    - Otherwise changing ANY imodel parameter with invalidate ALL dependencies!
+ *    
+ * 11. Move the lambda_scale model from the old framework to the new one. (mcmc/setup.C, parameters.C)
+ *
+ * 12. Add the NEW model, in which we allow each branch to have a separate lambda.
+ *
+ *    indelRates = listArray B [lambda1, lambda2, lambda3 ... lambdaB]
+ *    
+ *    traditionally, we could have indelRates = mkArray B \b -> lambda
+ *
+ *
+ *
  * [DONE]. Make get_branch_hmm properly dependent on the scale!
  * [DONE]. Export names like substitutionBranchLengths, ...
  *     - Export branchDuration.
- * 2. Give the setup routine for imodels the number of branches
- *    [DONE] (\D,\b -> RS07_branch_HMM e lambda*D!b h t, \l -> RS07_lengthp e l)
+ * 2. [DONE] Give the setup routine for imodels the number of branches
+ *      [DONE] (\D,\b -> RS07_branch_HMM e lambda*D!b h t, \l -> RS07_lengthp e l)
  *
  *    [DONE] I guess we could actually convert this to e.g. imodels!i.
  *      [DONE] Thus, fst imodels!i, snd imodels!i
@@ -68,32 +81,23 @@ using std::ostream;
  *    - Could we use let-expressions instead?
  *    - We COULD, but this wouldn't allow the names to be published!
  *
- * 4. Remove code for caching and updating branch_hmms
- *    [DONE] Remove code for caching branch_HMMs;
+ * 4. [DONE] Remove code for caching and updating branch_hmms
  *      [DONE] BUT, we now need a way to invalidate things when imodel parameters change!
- *    
- * 5. Remove imodels as sub-models.
- * 6. Remove class SuperModel?
- * [DONE] Remove imodel_methods.{lambda,epsilon}
  *
- *    indelRates = listArray B [lambda1, lambda2, lambda3 ... lambdaB]
- *    
- *    traditionally, we could have indelRates = mkArray B \b -> lambda
- * 8. Do all the names we add make it into the program??
- *   - Yes, when we do Model::add_parameter( ), or Context::add_parameter( ), something is added to the program.
+ * 5. [DONE] Remove imodels as sub-models.
+ *
+ * 6. [DONE]Remove class SuperModel?
+ *
  * 9. Move the mapping from identifiers to locations from Context to reg_heap.
  *   - No, wait, these locations may indeed change, if they depend on parameters, right?
  *   - Thus, we could do this, but the locations would NOT be allowed to depend on parameters!
  *   - Perhaps we could separate them into (a) dependent and (b) non-dependent vars?
- * 10. Move the Program from Context to reg_heap.
+ *   - Move the Program from Context to reg_heap.
  *
- * 11. Move the lambda_scale model from the old framework to the new one. (mcmc/setup.C, parameters.C)
+ * 12. [DONE] Generalize the code for adding "submodels"?
  *
- * 12. Generalize the code for adding "submodels"?
- *
- * 13. Instead of prefixing, give formula expressions module names?
- *     (a) Then we import other names from the parameters object!
- *     (b) That way, those names will NOT get prefixed, which is what we want.
+ * 13. [DONE] OK, so we want to define parameters inside the formula_expression_ref
+ *       [DONE] Then we can simply prefix only the *declared* parameters.
  */
 
 bool use_internal_index = true;
