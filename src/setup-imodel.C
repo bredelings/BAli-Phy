@@ -28,14 +28,8 @@ formula_expression_ref get_imodel(string name)
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
     expression_ref lengthp = lambda_expression( RS07_lengthp() );
 
-    expression_ref median = def_parameter(imodel, "lambdaPriorMedian", -4.0);
-    expression_ref stddev = def_parameter(imodel, "lambdaPriorStddev", 1.0);
-    expression_ref priorlength = def_parameter(imodel, "epsilonPriorLength", 10.0);
-    expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, laplace_dist, Tuple(median, stddev));
-    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0),exponential_dist, priorlength);
-
-    //    expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, laplace_dist, Tuple(-4.0, 1.0));
-    //    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), exponential_dist, 10.0);
+    expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, laplace_dist, Tuple(-4.0, 1.0));
+    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0),exponential_dist, 10.0);
 
     expression_ref epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
     expression_ref lambda = (var("exp"), log_lambda);
