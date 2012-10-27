@@ -180,6 +180,7 @@ namespace substitution {
     recalc_all();
   }
 
+  /*
   //------------------- Triplet Frequency Model -----------------//
   TripletFrequencyModel::TripletFrequencyModel(const Triplets& T)
     :ReversibleFrequencyModel(T)
@@ -514,7 +515,7 @@ namespace substitution {
 
     recalc_all();
   }
-
+  */
   //----------------------- ReversibleMarkovModel --------------------------//
 
   object_ptr<const Object> F81_Model::result() const

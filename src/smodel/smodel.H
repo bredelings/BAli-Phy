@@ -219,6 +219,7 @@ namespace substitution {
     explicit TripletFrequencyModel(const Triplets& T);
   };
 
+  /*
   class TripletsFrequencyModel: public TripletFrequencyModel,
 				public SuperModelOver<SimpleFrequencyModel>
   {
@@ -244,6 +245,7 @@ namespace substitution {
 
     explicit CodonFrequencyModel(const Codons& C);
   };
+
 
   class AACodonFrequencyModel: public CodonFrequencyModel,
 			       public SuperModelOver<SimpleFrequencyModel>
@@ -296,7 +298,7 @@ namespace substitution {
 
     explicit CodonsFrequencyModel2(const Codons& C);
   };
-
+  */
   
 
   //------------------------- Reversible Substitution Model -----------------------//
