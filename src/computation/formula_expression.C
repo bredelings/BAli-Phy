@@ -57,11 +57,8 @@ formula_expression_ref::formula_expression_ref(const Model_Notes& N, const expre
 
 formula_expression_ref substitute(const formula_expression_ref& R, const expression_ref& E1, const expression_ref& E2)
 {
-  formula_expression_ref R2 = R;
-  for(auto& n: R2.get_notes())
-    n = substitute(n, E1, E2);
-  R2.set_exp( substitute(R2.exp(), E1, E2));
-  return R2;
+  const Model_Notes& N = R;
+  return {substitute(N,E1,E2), substitute(R.exp(), E1, E2)};
 }
 
 formula_expression_ref prefix_formula(const std::string& prefix,const formula_expression_ref& R)
@@ -105,55 +102,6 @@ formula_expression_ref apply(const formula_expression_ref& F1, const formula_exp
   F3.add_notes(F2.get_notes());
   F3.set_exp(apply(F1.exp(), F2.exp()));
   return F3;
-}
-
-expression_ref def_parameter(Model_Notes& N, const std::string& name)
-{
-  expression_ref declare_parameter = lambda_expression( constructor("declare_parameter",1) );
-
-  expression_ref var = parameter(name);
-  N.add_note( (declare_parameter, var) );
-  return var;
-}
-
-expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value)
-{
-  expression_ref var = def_parameter(N,name);
-  N.add_note( (default_value, var, def_value) );
-  return var;
-}
-
-expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, const Bounds<double>& b)
-{
-  expression_ref var = def_parameter(N, name, def_value);
-  N.add_note( (var_bounds, var, b) );
-  return var;
-}
-
-expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref& D)
-{
-  expression_ref var = def_parameter(N, name, def_value, b);
-  N.add_note( (distributed, var, D));
-  return var;
-}
-
-expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref& F, const expression_ref& A)
-{
-  expression_ref D = Tuple(F,A);
-  return def_parameter(N, name, def_value, b, D);
-}
-
-expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref& D)
-{
-  expression_ref var = def_parameter(N, name, def_value);
-  N.add_note( (distributed, var, D));
-  return var;
-}
-
-expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref& F, const expression_ref& A)
-{
-  expression_ref D = Tuple(F,A);
-  return def_parameter(N, name, def_value, nullptr, D);
 }
 
 formula_expression_ref def_parameter(const std::string& name)
@@ -284,21 +232,4 @@ formula_expression_ref get_list(const vector<formula_expression_ref>& v)
     F = v[i]&F;
 
   return F;
-}
-
-set<string> find_declared_parameters(const vector<expression_ref>& Notes)
-{
-  set<string> parameter_names;
-
-  // Check each expression in the Formula
-  for(const auto& n: Notes)
-    if (is_exactly(n,"declare_parameter"))
-      parameter_names.insert( assert_is_a<parameter>(n->sub[0])->parameter_name );
-
-  return parameter_names;
-}
-
-set<string> find_declared_parameters(const Model_Notes& Notes)
-{
-  return find_declared_parameters(Notes.get_notes());
 }

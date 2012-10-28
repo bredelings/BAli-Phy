@@ -11,8 +11,6 @@ class formula_expression_ref: public Model_Notes
 {
   expression_ref E;
 
-  // I should probably make a note_collection class that is shared
-  // between formula_expression_ref and class context.
 public:
 
   void set_exp(const expression_ref& E2) {E = E2;}
@@ -51,14 +49,6 @@ formula_expression_ref def_parameter(const std::string& name, const expression_r
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref&);
 formula_expression_ref def_parameter(const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref&, const expression_ref&);
 
-expression_ref def_parameter(Model_Notes&, const std::string& name);
-expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value);
-expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b);
-expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&);
-expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&, const expression_ref&);
-expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref&);
-expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref&, const expression_ref&);
-
 formula_expression_ref let_expression(const expression_ref& var, const expression_ref& body, const formula_expression_ref& T);
 formula_expression_ref let_expression(const expression_ref& var, const formula_expression_ref& body, const expression_ref& T);
 formula_expression_ref let_expression(const expression_ref& var, const formula_expression_ref& body, const formula_expression_ref& T);
@@ -75,8 +65,5 @@ formula_expression_ref operator&(const formula_expression_ref&, const expression
 formula_expression_ref operator&(const formula_expression_ref&, const formula_expression_ref&);
 
 formula_expression_ref get_list(const std::vector<formula_expression_ref>&);
-
-std::set<std::string> find_declared_parameters(const std::vector<expression_ref>&);
-std::set<std::string> find_declared_parameters(const Model_Notes&);
 
 #endif
