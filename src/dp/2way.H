@@ -24,9 +24,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <bitset>
 #include "alignment/alignment.H"
 #include "tree.H"
+#include "object.H"
 
-struct pairwise_alignment_t: public std::vector<int>
+struct pairwise_alignment_t: public std::vector<int>, public Object
 {
+  pairwise_alignment_t* clone()  const {return new pairwise_alignment_t(*this);}
+
   void flip();
   pairwise_alignment_t flipped() const;
 
