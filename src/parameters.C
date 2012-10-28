@@ -338,6 +338,7 @@ void data_partition::subA_index_allow_invalid_branches(bool b)
 #endif
 }
 
+/// Set the pairwise alignment value, but don't mark the alignment & sequence lengths as changed.
 void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& pi,bool require_match_A) const
 {
   if (not variable_alignment())
@@ -345,27 +346,25 @@ void data_partition::set_pairwise_alignment_(int b, const pairwise_alignment_t& 
 
   int B = T().directed_branch(b).reverse();
 
-  if (pairwise_alignment_for_branch[b].is_valid())
+  if (P->get_parameter_value(pairwise_alignment_for_branch[b]))
   {
-    assert(pi == pairwise_alignment_for_branch[b]);
-    assert(pairwise_alignment_for_branch[B].is_valid());
-    assert(pairwise_alignment_for_branch[B] == pi.flipped());
+    assert(pi == get_pairwise_alignment(b,false));
+    assert(pi.flipped() == get_pairwise_alignment(B,false));
   }
   else
   {
-    assert(not pairwise_alignment_for_branch[B].is_valid());
+    assert(not P->get_parameter_value(pairwise_alignment_for_branch[B]));
   }
 
-
-  pairwise_alignment_for_branch[b] = pi;
-  pairwise_alignment_for_branch[B] = pi.flipped();
+  const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[b], new pairwise_alignment_t(pi));
+  const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[B], new pairwise_alignment_t(pi.flipped()));
 
   if (require_match_A)
   {
     int n1 = T().directed_branch(b).source();
     int n2 = T().directed_branch(b).target();
-    assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
-    assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
+    assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(*A,n1,n2));
+    assert(get_pairwise_alignment(B,false) == A2::get_pairwise_alignment(*A,n2,n1));
   }
 }
 
@@ -374,32 +373,22 @@ const pairwise_alignment_t& data_partition::get_pairwise_alignment(int b, bool r
   if (not variable_alignment())
     throw myexception()<<"Alignment variation is OFF: what pairwise alignment are you referring to?";
 
+  if (not P->get_parameter_value(pairwise_alignment_for_branch[b]))
+    std::abort();
+  //  assert(P->get_parameter_value(pairwise_alignment_for_branch[b]));
+
 #ifndef NDEBUG
   int B = T().directed_branch(b).reverse();
-#endif
-
-  if (pairwise_alignment_for_branch[b].is_valid())
+  if (require_match_A)
   {
-#ifndef NDEBUG
-    if (require_match_A)
-    {
-      int n1 = T().directed_branch(b).source();
-      int n2 = T().directed_branch(b).target();
-      assert(pairwise_alignment_for_branch[b] == A2::get_pairwise_alignment(*A,n1,n2));
-      assert(pairwise_alignment_for_branch[B].is_valid());
-      assert(pairwise_alignment_for_branch[B] == A2::get_pairwise_alignment(*A,n2,n1));
-    }
-#endif
-  }
-  else
-  {
-    assert(not pairwise_alignment_for_branch[B].is_valid());
     int n1 = T().directed_branch(b).source();
     int n2 = T().directed_branch(b).target();
-    set_pairwise_alignment_(b, A2::get_pairwise_alignment(*A,n1,n2));
+    assert(get_pairwise_alignment(b,false) == A2::get_pairwise_alignment(*A,n1,n2));
+    assert(get_pairwise_alignment(B,false) == A2::get_pairwise_alignment(*A,n2,n1));
   }
+#endif
 
-  return pairwise_alignment_for_branch[b];
+  return P->get_parameter_value_as<pairwise_alignment_t>(pairwise_alignment_for_branch[b]);
 }
 
 void data_partition::set_pairwise_alignment(int b, const pairwise_alignment_t& pi, bool require_match_A)
@@ -416,6 +405,11 @@ void data_partition::note_sequence_length_changed(int n)
   cached_sequence_lengths[n].invalidate();
 }
 
+void data_partition::invalidate_pairwise_alignment_for_branch(int b) const
+{
+  const_cast<Parameters*>(P)->set_parameter_value(pairwise_alignment_for_branch[b], object_ref());
+}
+
 void data_partition::note_alignment_changed_on_branch(int b)
 {
   if (not variable_alignment())
@@ -428,8 +422,8 @@ void data_partition::note_alignment_changed_on_branch(int b)
   cached_alignment_counts_for_branch[b].invalidate();
 
   int B = T().directed_branch(b).reverse();
-  pairwise_alignment_for_branch[b].invalidate();
-  pairwise_alignment_for_branch[B].invalidate();
+  invalidate_pairwise_alignment_for_branch(b);
+  invalidate_pairwise_alignment_for_branch(B);
 
   const Tree& TT = T();
   int target = TT.branch(b).target();
@@ -578,6 +572,18 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
   else
     subA = subA_index_leaf(a.length()+1, B*2);
 
+  string prefix = "P"+convertToString(i+1)+".";
+  for(int b=0;b<pairwise_alignment_for_branch.size();b++)
+    pairwise_alignment_for_branch[b] = p->add_parameter(Parameter(prefix+"a"+convertToString(b)));
+
+  if (variable_alignment())
+    for(int b=0;b<pairwise_alignment_for_branch.size();b++)
+    {
+      int n1 = T().directed_branch(b).source();
+      int n2 = T().directed_branch(b).target();
+      set_pairwise_alignment(b, A2::get_pairwise_alignment(*A,n1,n2));
+    }
+
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
     cached_alignment_counts_for_branch[b].invalidate();
 
@@ -594,8 +600,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
 
     transition_p_method_indices[b] = p->C.add_compute_expression(E);
   }
-
-  
 
   // Add method indices for calculating base models and frequencies
   base_model_indices.resize(n_models, B);
@@ -880,7 +884,7 @@ void Parameters::recalc(const vector<int>& indices)
       }
 
       // notify partitions with scale 'p' that their branch mean changed
-      for(int p=0;p<scale_for_partition.size();p++)
+      for(int p=0;p<n_data_partitions() and p<scale_for_partition.size();p++)
       {
 	if (scale_for_partition[p] == s)
 	  get_data_partition(p).branch_mean_changed();

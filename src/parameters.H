@@ -71,7 +71,9 @@ class data_partition: public Mat_Cache
   mutable std::vector<cached_value<efloat_t> > cached_alignment_prior_for_branch;
 
   /// The pairwise alignment for each branch
-  mutable std::vector< cached_value< pairwise_alignment_t > > pairwise_alignment_for_branch;
+  std::vector<int> pairwise_alignment_for_branch;
+
+  void invalidate_pairwise_alignment_for_branch(int b) const;
 
   void set_pairwise_alignment_(int b, const pairwise_alignment_t&,bool=true) const;
 
