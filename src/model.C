@@ -34,16 +34,6 @@ using std::string;
 
 using boost::dynamic_pointer_cast;
 
-/* IDEA: Make the function we use to create FormulaModel( ) -- that is
-   Model::Model(const vector<expression_ref>&) -- into a generic function
-   to add a formula_expression to a model.
-   
-   For a regular model (not a SuperModel) this involves just making sure that
-   The number of parameters matches the length of fixed, bounds, and changed.
-
-   
- */
-
 string parameter_name(const string& prefix, int i,int n) 
 {
   if (i>=n)
