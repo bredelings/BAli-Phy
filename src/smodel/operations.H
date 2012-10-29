@@ -98,6 +98,29 @@ namespace substitution {
 
   formula_expression_ref MG94w9_Model(const Triplets& T);
 
+  struct EQU_Op: public Operation
+  {
+    EQU_Op* clone() const {return new EQU_Op;}
+    
+    tribool compare(const Object& O) const
+    {
+      if (this == &O) 
+	return true;
+      
+      if (typeid(*this) != typeid(O)) return false;
+      
+      return true;
+    }
+
+    closure operator()(OperationArgs& Args) const;
+
+    std::string name() const {return "EQU";}
+    
+    EQU_Op():Operation(1) { }
+  };
+
+  formula_expression_ref EQU_Model(const alphabet& a);
+  
   struct HKY_Op: public Operation
   {
     HKY_Op* clone() const {return new HKY_Op;}

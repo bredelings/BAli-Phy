@@ -205,11 +205,14 @@ formula_expression_ref process_stack_Markov(vector<string>& model_args,
 					    const shared_ptr<const valarray<double> >& /* frequencies */)
 {
   //------ Get the base markov model (Reversible Markov) ------//
-  /*
-  if (match(string_stack,"EQU",arg))
-    return EQU(*a);
-  */
   if (model_args[0] == "F81")
+  {
+    check_n_args(model_args, 0);
+
+    return EQU_Model(*a);
+  }
+
+  else if (model_args[0] == "F81")
   {
     check_n_args(model_args, 0);
     /*

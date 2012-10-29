@@ -169,20 +169,32 @@ namespace substitution
     return R;
   }
 
-  object_ptr<const Object> EQU_Exchange_Function(const alphabet& a)
+  object_ptr<const Object> EQU_Exchange_Function(int n)
   {
     object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
 
-    R->t.resize(a.size());
+    R->t.resize(n);
 
     // Calculate S matrix
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++)
+    for(int i=0;i<n;i++)
+      for(int j=0;j<n;j++)
 	R->t(i,j) = 1;
 
     return R;
   }
 
+  closure EQU_Op::operator()(OperationArgs& Args) const
+  {
+    int n = *Args.evaluate_as<Int>(0);
+    
+    return EQU_Exchange_Function(n);
+  }
+
+  formula_expression_ref EQU_Model(const alphabet& a)
+  {
+    return (EQU_Op(), a.size());
+  }
+  
   object_ptr<const Object> HKY_Function(const Nucleotides& a, double kappa)
   {
     assert(a.size()==4);
