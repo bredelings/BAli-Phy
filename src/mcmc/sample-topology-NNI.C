@@ -632,7 +632,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, Mo
   p[1].LC_invalidate_branch(b);
   p[1].invalidate_subA_index_branch(b);
  
-  p[1].note_alignment_changed_on_branch(b1);
+  p[1].recompute_pairwise_alignment(b1);
   p[1].note_alignment_changed_on_branch(b2);
 
   if (not extends(*p[1].T, *PP.TC))
@@ -643,7 +643,7 @@ void three_way_topology_and_alignment_sample(owned_ptr<Probability_Model>& P, Mo
   p[2].LC_invalidate_branch(b);
   p[2].invalidate_subA_index_branch(b);
 
-  p[2].note_alignment_changed_on_branch(b1);
+  p[2].recompute_pairwise_alignment(b1);
   p[2].note_alignment_changed_on_branch(b3);
 
   if (not extends(*p[2].T, *PP.TC))

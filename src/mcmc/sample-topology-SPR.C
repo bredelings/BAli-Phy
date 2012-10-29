@@ -437,6 +437,19 @@ MCMC::Result sample_SPR(Parameters& P,int b1,int b2,bool slice=false)
       p[1].note_alignment_changed_on_branch(bi); 
   }
 
+  // If we reattach on a different branch than we pulled out of...
+  if (branches.size() != 2)
+  {
+    // ... then set the pairwise alignment of the branch we pulled out of.
+    vector<const_branchview> branches2;
+    for(auto i=p[0].T->directed_branch(n2,n1).branches_after();i;i++)
+      branches2.push_back(*i);
+    assert(branches2.size() == 2);
+    int leaving1 = branches2[0].target();
+    int leaving2 = branches2[1].target();
+    p[1].recompute_pairwise_alignment(p[1].T->directed_branch(leaving1,leaving2));
+  }
+
   int C;
   if (slice)
   {
@@ -1121,6 +1134,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
     if (p[1].variable_alignment()) 
       p[1].note_alignment_changed_on_branch(bi); 
   }
+  p[1].recompute_pairwise_alignment(I.B1);
   p[1].subA_index_allow_invalid_branches(false);
 
 #ifdef DEBUG_SPR_ALL
