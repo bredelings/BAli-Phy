@@ -489,6 +489,9 @@ efloat_t data_partition::prior_alignment() const
 {
   if (not variable_alignment()) return 1;
 
+  for(int i=0;i<T().n_branches()*2;i++)
+    assert(P->get_parameter_value(pairwise_alignment_for_branch[i]));
+
   if (not cached_alignment_prior.is_valid()) 
   {
     const alignment& AA = *A;
