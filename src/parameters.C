@@ -145,6 +145,14 @@ void data_partition::variable_alignment(bool b)
     minimally_connect_leaf_characters(*A.modify(), T());
     note_alignment_changed();
 
+    // reset the pairwise alignments.
+    for(int b=0;b<T().n_branches();b++)
+    {
+      int n1 = T().directed_branch(b).source();
+      int n2 = T().directed_branch(b).target();
+      set_pairwise_alignment(b, A2::get_pairwise_alignment(*A,n1,n2));
+    }
+
     // we need to calculate the branch_HMMs
     recalc_imodel();
 
@@ -577,7 +585,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     pairwise_alignment_for_branch[b] = p->add_parameter(Parameter(prefix+"a"+convertToString(b)));
 
   if (variable_alignment())
-    for(int b=0;b<pairwise_alignment_for_branch.size();b++)
+    for(int b=0;b<T().n_branches();b++)
     {
       int n1 = T().directed_branch(b).source();
       int n2 = T().directed_branch(b).target();
