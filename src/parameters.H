@@ -175,9 +175,13 @@ public:
   // invalidate subA indices for all branches
   void invalidate_subA_index_all();
 
+  object_ptr<const Object> get_pairwise_alignment_(int b) const;
+
   const pairwise_alignment_t& get_pairwise_alignment(int b,bool=true) const;
 
   void set_pairwise_alignment(int b, const pairwise_alignment_t&, bool=true);
+
+  void recompute_pairwise_alignment(int b, bool=true);
 
   void subA_index_allow_invalid_branches(bool);
 
@@ -360,6 +364,8 @@ public:
   void subA_index_allow_invalid_branches(bool);
 
   void note_alignment_changed_on_branch(int b);
+
+  void recompute_pairwise_alignment(int b, bool=true);
 
   void note_alignment_changed();
 
