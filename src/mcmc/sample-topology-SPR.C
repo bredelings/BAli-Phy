@@ -1111,7 +1111,7 @@ bool sample_SPR_search_one(Parameters& P,MoveStats& Stats,int b1)
 
   // Note that bi-directional invalidation of BM invalidates b1^t and similarly directed branches in the pruned subtree.
   // (BM is an undirected name, so all effects in the loop below MUST be bi-directional.)
-  vector<int> btemp; btemp.push_back(I.B1) ; btemp.push_back(I.BM) ; btemp.push_back(branch_names[C]);
+  vector<int> btemp = {I.B1, I.BM, branch_names[C]};
   // (These effects go out from the old location (the merged branch B1)
   //  and the new location (the split branches BM and branch_names[C]) )
   for(int i=0;i<btemp.size();i++) {
