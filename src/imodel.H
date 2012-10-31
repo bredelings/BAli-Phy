@@ -158,6 +158,24 @@ public:
 };
 
 
+struct get_transition_counts: public Operation
+{
+  virtual get_transition_counts* clone() const {return new get_transition_counts(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const get_transition_counts* E = dynamic_cast<const get_transition_counts*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "getTransitionCounts";}
+  
+  get_transition_counts():Operation(1) {}
+};
+
+
 struct RS07_branch_HMM: public Operation
 {
   virtual RS07_branch_HMM* clone() const {return new RS07_branch_HMM(*this);}

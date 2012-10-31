@@ -567,6 +567,24 @@ indel::PairHMM RS07_branch_HMM_(double e, double D, double heat, bool in_trainin
   return Q;
 }
 
+closure get_transition_counts::operator()(OperationArgs& Args) const
+{
+  const pairwise_alignment_t& A = *Args.evaluate_as<pairwise_alignment_t>(0);
+
+  Box<ublas::matrix<int>> result;
+  ublas::matrix<int>& counts = result.t;
+  counts.resize(5,5);
+  counts.clear();
+
+  using namespace A2;
+
+  int state1 = states::S;
+  for(int column=1;column<A.size();column++) 
+    counts(A[column-1],A[column]);
+
+  return result;
+}
+
 closure RS07_branch_HMM::operator()(OperationArgs& Args) const
 {
   double e = *Args.evaluate_as<Double>(0);
