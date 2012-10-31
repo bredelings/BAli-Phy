@@ -513,12 +513,12 @@ efloat_t data_partition::prior_alignment() const
       if (not cached_alignment_counts_for_branch[b].is_valid()) {
 	int target = TT.branch(b).target();
 	int source  = TT.branch(b).source();
-	cached_alignment_counts_for_branch[b] = get_path_counts(AA,target,source);
+	cached_alignment_counts_for_branch[b] = get_path_counts(AA,source,target);
       }
 #ifndef NDEBUG
       int target = TT.branch(b).target();
       int source  = TT.branch(b).source();
-      ublas::matrix<int> counts = get_path_counts(AA,target,source);
+      ublas::matrix<int> counts = get_path_counts(AA,source,target);
       for(int i=0;i<counts.size1();i++)
 	for(int j=0;j<counts.size2();j++)
 	  assert(cached_alignment_counts_for_branch[b].value()(i,j) == counts(i,j));
