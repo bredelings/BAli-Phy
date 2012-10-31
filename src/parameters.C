@@ -510,10 +510,8 @@ efloat_t data_partition::prior_alignment() const
 
     for(int b=0;b<TT.n_branches();b++) {
       if (not cached_alignment_prior_for_branch[b].is_valid())
-      {
-	const ublas::matrix<int>& counts = P->C.evaluate_as<Box<ublas::matrix<int>>>(alignment_counts_for_branch[b])->t;
-	cached_alignment_prior_for_branch[b] = prior_branch_from_counts(counts, get_branch_HMM(b));
-      }
+	cached_alignment_prior_for_branch[b] = *P->C.evaluate_as<Log_Double>(alignment_counts_for_branch[b]);
+
 #ifndef NDEBUG      
       int target = TT.branch(b).target();
       int source  = TT.branch(b).source();
@@ -588,10 +586,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       int n1 = T().directed_branch(b).source();
       int n2 = T().directed_branch(b).target();
       set_pairwise_alignment(b, A2::get_pairwise_alignment(*A,n1,n2));
-
-      expression_ref getTransitionCounts = lambda_expression( get_transition_counts() );
-      expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
-      alignment_counts_for_branch[b] = p->C.add_compute_expression( (getTransitionCounts,a) );
     }
 
   // Add method indices for calculating transition matrices.
@@ -631,7 +625,14 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       // D = Parameters.substitutionBranchLengths!scale_index
       expression_ref D = (var("!"),var("Parameters.substitutionBranchLengths"),scale_index);
       // (fst IModels.models!i_index) D b
-      branch_HMM_indices.push_back(  p->C.add_compute_expression( ((fst,(var("!"),var("IModels.models"),i_index)),D,b) ) );
+      int index = p->C.add_compute_expression( ((fst,(var("!"),var("IModels.models"),i_index)),D,b) );
+      branch_HMM_indices.push_back(  index );
+      expression_ref hmm = P->C.get_expression(index);
+
+      expression_ref getTransitionCounts = lambda_expression( get_transition_counts() );
+      expression_ref getPairwiseAlignmentProbabilityFromCounts = lambda_expression( pairwise_alignment_probability_from_counts() );
+      expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
+      alignment_counts_for_branch[b] = p->C.add_compute_expression( (getPairwiseAlignmentProbabilityFromCounts,(getTransitionCounts,a),hmm) );
     }
 }
 
