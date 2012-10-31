@@ -519,9 +519,13 @@ efloat_t data_partition::prior_alignment() const
       int target = TT.branch(b).target();
       int source  = TT.branch(b).source();
       ublas::matrix<int> counts = get_path_counts(AA,source,target);
+      const ublas::matrix<int>& counts2 = P->C.evaluate_as<Box<ublas::matrix<int>>>(alignment_counts_for_branch[b])->t;
       for(int i=0;i<counts.size1();i++)
 	for(int j=0;j<counts.size2();j++)
+	{
 	  assert(cached_alignment_counts_for_branch[b].value()(i,j) == counts(i,j));
+	  assert(cached_alignment_counts_for_branch[b].value()(i,j) == counts2(i,j));
+	}
 #endif
     }
 
@@ -529,7 +533,8 @@ efloat_t data_partition::prior_alignment() const
       if (not cached_alignment_prior_for_branch[b].is_valid())
       {
 	const ublas::matrix<int>& counts = cached_alignment_counts_for_branch[b];
-	cached_alignment_prior_for_branch[b] = prior_branch_from_counts(counts, get_branch_HMM(b));
+	const ublas::matrix<int>& counts2 = P->C.evaluate_as<Box<ublas::matrix<int>>>(alignment_counts_for_branch[b])->t;
+	cached_alignment_prior_for_branch[b] = prior_branch_from_counts(counts2, get_branch_HMM(b));
       }
 #ifndef NDEBUG      
       int target = TT.branch(b).target();
@@ -580,6 +585,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
    cached_alignment_prior_for_branch(T().n_branches()),
    pairwise_alignment_for_branch(2*T().n_branches()),
    cached_alignment_counts_for_branch(T().n_branches(),ublas::matrix<int>(5,5)),
+   alignment_counts_for_branch(T().n_branches()),
    cached_sequence_lengths(a.n_sequences()),
    transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
@@ -605,6 +611,10 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       int n1 = T().directed_branch(b).source();
       int n2 = T().directed_branch(b).target();
       set_pairwise_alignment(b, A2::get_pairwise_alignment(*A,n1,n2));
+
+      expression_ref getTransitionCounts = lambda_expression( get_transition_counts() );
+      expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
+      alignment_counts_for_branch[b] = p->C.add_compute_expression( (getTransitionCounts,a) );
     }
 
   for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
