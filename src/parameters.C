@@ -260,7 +260,6 @@ void data_partition::recalc_imodel_for_branch(int b)
   b = T().directed_branch(b).undirected_name();
 
   cached_alignment_prior.invalidate();
-  cached_alignment_prior_for_branch[b].invalidate();
 }
 
 void data_partition::recalc_imodel() 
@@ -438,7 +437,6 @@ void data_partition::note_alignment_changed_on_branch(int b)
   b = T().directed_branch(b).undirected_name();
 
   cached_alignment_prior.invalidate();
-  cached_alignment_prior_for_branch[b].invalidate();
 
   int B = T().directed_branch(b).reverse();
   invalidate_pairwise_alignment_for_branch(b);
@@ -508,9 +506,11 @@ efloat_t data_partition::prior_alignment() const
     const alignment& AA = *A;
     const SequenceTree& TT = T();
 
-    for(int b=0;b<TT.n_branches();b++) {
-      if (not cached_alignment_prior_for_branch[b].is_valid())
-	cached_alignment_prior_for_branch[b] = *P->C.evaluate_as<Log_Double>(alignment_counts_for_branch[b]);
+    efloat_t Pr = 1;
+    for(int b=0;b<TT.n_branches();b++)
+    {
+      efloat_t prior_for_branch_b = *P->C.evaluate_as<Log_Double>(alignment_prior_for_branch[b]);
+      Pr *= prior_for_branch_b;
 
 #ifndef NDEBUG      
       int target = TT.branch(b).target();
@@ -518,13 +518,9 @@ efloat_t data_partition::prior_alignment() const
       //efloat_t p1 = cached_alignment_prior_for_branch[b];
       //efloat_t p2 = prior_branch(AA, get_branch_HMM(b), target, source);
       //double error = log(p1) - log(p2);
-      assert(not different(cached_alignment_prior_for_branch[b], prior_branch(AA, get_branch_HMM(b), target, source)));
+      assert(not different(prior_for_branch_b, prior_branch(AA, get_branch_HMM(b), target, source)));
 #endif
     }
-
-    efloat_t Pr = 1;
-    for(int b=0;b<TT.n_branches();b++)
-      Pr *= cached_alignment_prior_for_branch[b];
 
     cached_alignment_prior = Pr * prior_HMM_rootless_scale(*this);
   }
@@ -558,9 +554,8 @@ efloat_t data_partition::heated_likelihood() const
 data_partition::data_partition(Parameters* p, int i, const alignment& a)
   :P(p),
    partition_index(i),
-   cached_alignment_prior_for_branch(T().n_branches()),
    pairwise_alignment_for_branch(2*T().n_branches()),
-   alignment_counts_for_branch(T().n_branches()),
+   alignment_prior_for_branch(T().n_branches()),
    cached_sequence_lengths(a.n_sequences()),
    transition_p_method_indices(T().n_branches(),-1),
    variable_alignment_( has_IModel() ),
@@ -632,7 +627,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       expression_ref getTransitionCounts = lambda_expression( get_transition_counts() );
       expression_ref getPairwiseAlignmentProbabilityFromCounts = lambda_expression( pairwise_alignment_probability_from_counts() );
       expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
-      alignment_counts_for_branch[b] = p->C.add_compute_expression( (getPairwiseAlignmentProbabilityFromCounts,(getTransitionCounts,a),hmm) );
+      alignment_prior_for_branch[b] = p->C.add_compute_expression( (getPairwiseAlignmentProbabilityFromCounts,(getTransitionCounts,a),hmm) );
     }
 }
 

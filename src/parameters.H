@@ -67,18 +67,15 @@ class data_partition: public Mat_Cache
   /// Cached prior for just the alignment -- accessed through alignment_prior( )
   mutable cached_value<efloat_t> cached_alignment_prior;
 
-  /// Cached prior for the pairwise alignment on each branch.
-  mutable std::vector<cached_value<efloat_t> > cached_alignment_prior_for_branch;
-
   /// The pairwise alignment for each branch
   std::vector<int> pairwise_alignment_for_branch;
+
+  /// The pairwise alignment probability for each branch
+  std::vector<int> alignment_prior_for_branch;
 
   void invalidate_pairwise_alignment_for_branch(int b) const;
 
   void set_pairwise_alignment_(int b, const pairwise_alignment_t&,bool=true) const;
-
-  /// Cached transition counts for the pair-HMM on each branch.
-  std::vector<int> alignment_counts_for_branch;
 
   /// Cached sequence lengths -- accessed through seqlength( )
   mutable std::vector<cached_value<int> > cached_sequence_lengths;
