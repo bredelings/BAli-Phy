@@ -569,12 +569,12 @@ indel::PairHMM RS07_branch_HMM_(double e, double D, double heat, bool in_trainin
 
 closure pairwise_alignment_length1::operator()(OperationArgs& Args) const
 {
-  return Args.evaluate_as<pairwise_alignment_t>(0)->length1();
+  return Int(Args.evaluate_as<pairwise_alignment_t>(0)->length1());
 }
 
 closure pairwise_alignment_length2::operator()(OperationArgs& Args) const
 {
-  return Args.evaluate_as<pairwise_alignment_t>(0)->length2();
+  return Int(Args.evaluate_as<pairwise_alignment_t>(0)->length2());
 }
 
 closure pairwise_alignment_probability_from_counts::operator()(OperationArgs& Args) const
