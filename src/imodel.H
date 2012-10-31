@@ -195,25 +195,6 @@ struct RS07_lengthp: public Operation
 
 
 
-class NewIndelModel: public IndelModel 
-{
-  bool time_dependant;
-
-public:
-  efloat_t prior() const;
-
-  NewIndelModel* clone() const {return new NewIndelModel(*this);}
-
-  efloat_t lengthp(int i) const;
-
-  indel::PairHMM get_branch_HMM(double t) const;
-
-  std::string name() const;
-
-  explicit NewIndelModel(bool);
-};
-
-
 class TKF1: public IndelModel 
 {
   bool time_dependant;

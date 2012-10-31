@@ -501,30 +501,6 @@ SimpleIndelModel::SimpleIndelModel()
   recalc_all();
 }
 
-efloat_t NewIndelModel::prior() const 
-{
-  efloat_t Pr = 1;
-
-  // Calculate prior on lambda_O
-  double rate = get_parameter_value_as<Double>(0);
-
-  Pr *= laplace_pdf(rate,get_parameter_value_as<Double>(2), get_parameter_value_as<Double>(3));
-
-  // Calculate prior on lambda_E - shouldn't depend on lambda_O
-  double log_epsilon = get_parameter_value_as<Double>(1);
-
-  // We can't scale time appropriately if e = 1.
-  // Also, the calculation below diverges if e = 1.
-  if (log_epsilon >= 0) return 0;
-
-  double E_length = log_epsilon - logdiff(0,log_epsilon);
-  double E_length_mean = get_parameter_value_as<Double>(4);
-
-  Pr *= exp_exponential_pdf(E_length,E_length_mean);
-
-  return Pr;
-}
-
 indel::PairHMM RS07_branch_HMM_(double e, double D, double heat, bool in_training)
 {
   using namespace states;
@@ -613,48 +589,6 @@ closure RS07_lengthp::operator()(OperationArgs& Args) const
   else
     return Double(1.0-e);
 }
-
-indel::PairHMM NewIndelModel::get_branch_HMM(double t) const 
-{
-  if (not time_dependant)
-    t = 1;
-
-  double rate    = exp(get_parameter_value_as<Double>(0));
-  double e = exp(get_parameter_value_as<Double>(1));
-
-  return RS07_branch_HMM_(e, rate * t, get_heat(), is_training());
-}
-
-string NewIndelModel::name() const 
-{
-  string s = "RS07";
-  
-  if (not time_dependant)
-    s += "[-T]";
-  return s;
-}
-
-efloat_t NewIndelModel::lengthp(int l) const 
-{
-  double e = exp(get_parameter_value_as<Double>(1));
-  if (l < 0)
-    return 0;
-  else if (l==0)
-    return 1.0;
-  else
-    return (1.0-e);
-}
-
-NewIndelModel::NewIndelModel(bool b)
-  :time_dependant(b)
-{
-  add_parameter(Parameter("lambda",   Double(-4)));
-  add_parameter(Parameter("epsilon",  Double(-0.25))); // no upper bound on transformed scale
-  add_parameter(Parameter("lambdaPriorMedian", Double(-4)));
-  add_parameter(Parameter("lambdaPriorStddev", Double(1)));
-  add_parameter(Parameter("epsilonPriorLength", Double(10)));
-}
-
 
 efloat_t TKF1::prior() const 
 {

@@ -1157,9 +1157,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     SModels.push_back( smodel_methods( smodel.exp(), C) );
   }
 
-  //FIXME - if imodels come from the outside, how can we distinguish those that do NOT
-  //        need to be prefixed?
-
   add_parameter(Parameter("IModels.training", Bool(true)));
   // register the indel models as sub-models
   vector<formula_expression_ref> imodels_;
