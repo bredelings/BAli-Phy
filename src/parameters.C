@@ -439,7 +439,6 @@ void data_partition::note_alignment_changed_on_branch(int b)
 
   cached_alignment_prior.invalidate();
   cached_alignment_prior_for_branch[b].invalidate();
-  cached_alignment_counts_for_branch[b].invalidate();
 
   int B = T().directed_branch(b).reverse();
   invalidate_pairwise_alignment_for_branch(b);
@@ -510,31 +509,10 @@ efloat_t data_partition::prior_alignment() const
     const SequenceTree& TT = T();
 
     for(int b=0;b<TT.n_branches();b++) {
-      if (not cached_alignment_counts_for_branch[b].is_valid()) {
-	int target = TT.branch(b).target();
-	int source  = TT.branch(b).source();
-	cached_alignment_counts_for_branch[b] = get_path_counts(AA,source,target);
-      }
-#ifndef NDEBUG
-      int target = TT.branch(b).target();
-      int source  = TT.branch(b).source();
-      ublas::matrix<int> counts = get_path_counts(AA,source,target);
-      const ublas::matrix<int>& counts2 = P->C.evaluate_as<Box<ublas::matrix<int>>>(alignment_counts_for_branch[b])->t;
-      for(int i=0;i<counts.size1();i++)
-	for(int j=0;j<counts.size2();j++)
-	{
-	  assert(cached_alignment_counts_for_branch[b].value()(i,j) == counts(i,j));
-	  assert(cached_alignment_counts_for_branch[b].value()(i,j) == counts2(i,j));
-	}
-#endif
-    }
-
-    for(int b=0;b<TT.n_branches();b++) {
       if (not cached_alignment_prior_for_branch[b].is_valid())
       {
-	const ublas::matrix<int>& counts = cached_alignment_counts_for_branch[b];
-	const ublas::matrix<int>& counts2 = P->C.evaluate_as<Box<ublas::matrix<int>>>(alignment_counts_for_branch[b])->t;
-	cached_alignment_prior_for_branch[b] = prior_branch_from_counts(counts2, get_branch_HMM(b));
+	const ublas::matrix<int>& counts = P->C.evaluate_as<Box<ublas::matrix<int>>>(alignment_counts_for_branch[b])->t;
+	cached_alignment_prior_for_branch[b] = prior_branch_from_counts(counts, get_branch_HMM(b));
       }
 #ifndef NDEBUG      
       int target = TT.branch(b).target();
@@ -584,7 +562,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
    partition_index(i),
    cached_alignment_prior_for_branch(T().n_branches()),
    pairwise_alignment_for_branch(2*T().n_branches()),
-   cached_alignment_counts_for_branch(T().n_branches(),ublas::matrix<int>(5,5)),
    alignment_counts_for_branch(T().n_branches()),
    cached_sequence_lengths(a.n_sequences()),
    transition_p_method_indices(T().n_branches(),-1),
@@ -616,9 +593,6 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       expression_ref a = parameter( P->parameter_name(pairwise_alignment_for_branch[b]) );
       alignment_counts_for_branch[b] = p->C.add_compute_expression( (getTransitionCounts,a) );
     }
-
-  for(int b=0;b<cached_alignment_counts_for_branch.size();b++)
-    cached_alignment_counts_for_branch[b].invalidate();
 
   // Add method indices for calculating transition matrices.
   const int n_models = n_base_models();

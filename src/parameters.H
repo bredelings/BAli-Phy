@@ -78,7 +78,6 @@ class data_partition: public Mat_Cache
   void set_pairwise_alignment_(int b, const pairwise_alignment_t&,bool=true) const;
 
   /// Cached transition counts for the pair-HMM on each branch.
-  mutable std::vector<cached_value<ublas::matrix<int> > > cached_alignment_counts_for_branch;
   std::vector<int> alignment_counts_for_branch;
 
   /// Cached sequence lengths -- accessed through seqlength( )
