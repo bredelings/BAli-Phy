@@ -158,6 +158,42 @@ public:
 };
 
 
+struct pairwise_alignment_length1: public Operation
+{
+  virtual pairwise_alignment_length1* clone() const {return new pairwise_alignment_length1(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const pairwise_alignment_length1* E = dynamic_cast<const pairwise_alignment_length1*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "pairwiseAlignmentLength1";}
+  
+  pairwise_alignment_length1():Operation(1) {}
+};
+
+
+struct pairwise_alignment_length2: public Operation
+{
+  virtual pairwise_alignment_length2* clone() const {return new pairwise_alignment_length2(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const pairwise_alignment_length2* E = dynamic_cast<const pairwise_alignment_length2*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "pairwiseAlignmentLength2";}
+  
+  pairwise_alignment_length2():Operation(1) {}
+};
+
+
 struct get_transition_counts: public Operation
 {
   virtual get_transition_counts* clone() const {return new get_transition_counts(*this);}
