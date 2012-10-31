@@ -176,6 +176,24 @@ struct get_transition_counts: public Operation
 };
 
 
+struct pairwise_alignment_probability_from_counts: public Operation
+{
+  virtual pairwise_alignment_probability_from_counts* clone() const {return new pairwise_alignment_probability_from_counts(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const pairwise_alignment_probability_from_counts* E = dynamic_cast<const pairwise_alignment_probability_from_counts*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "pairwiseAlignmentProbabilityFromCounts";}
+  
+  pairwise_alignment_probability_from_counts():Operation(2) {}
+};
+
+
 struct RS07_branch_HMM: public Operation
 {
   virtual RS07_branch_HMM* clone() const {return new RS07_branch_HMM(*this);}
