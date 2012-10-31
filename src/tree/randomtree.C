@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "rng.H"
 #include "util-random.H"
 

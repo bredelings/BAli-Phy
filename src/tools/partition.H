@@ -34,8 +34,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include <boost/dynamic_bitset.hpp>
 
-#include "tree.H"
-#include "sequencetree.H"
+#include "tree/tree.H"
+#include "tree/sequencetree.H"
 
 /// Represents a division of a subset of leaf taxa into 2 groups
 struct Partition {

@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/program_options.hpp>
 #include <boost/dynamic_bitset.hpp>
 
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 
 /// Load a tree from command line args --tree filename
 RootedSequenceTree load_T(const boost::program_options::variables_map& args);

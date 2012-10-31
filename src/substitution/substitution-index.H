@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <vector>
 #include "alignment/alignment.H"
-#include "tree.H"
+#include "tree/tree.H"
 
 /* The algorithms in this file provide each column in a sub-alignment
  * with a name that persists through alignment and tree changes that

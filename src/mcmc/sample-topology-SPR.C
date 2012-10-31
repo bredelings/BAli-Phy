@@ -33,7 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "probability.H"
 
 #include "dp/3way.H"
-#include "tree-util.H"
+#include "tree/tree-util.H"
 #include "dp/alignment-sums.H"
 #include "alignment-constraint.H"
 #include "substitution/substitution-index.H"

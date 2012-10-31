@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <string>
 #include <istream>
-#include "tree.H"
+#include "tree/tree.H"
 
 
 /// A Tree with leaves labelled by sequences

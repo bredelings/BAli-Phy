@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define SAMPLE_H
 
 #include "mytypes.H"
-#include "tree.H"
+#include "tree/tree.H"
 #include "parameters.H"
 #include "mcmc.H"
 

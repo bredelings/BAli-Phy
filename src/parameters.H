@@ -31,7 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include "sequence/alphabet.H"
 #include "mytypes.H"
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "probability-model.H"
 #include "imodel.H"
 #include "alignment/alignment.H"

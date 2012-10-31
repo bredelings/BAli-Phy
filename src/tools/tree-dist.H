@@ -30,8 +30,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <map>
 
 #include "partition.H"
-#include "tree.H"
-#include "sequencetree.H"
+#include "tree/tree.H"
+#include "tree/sequencetree.H"
 #include "util.H"
 #include "io.H"
 

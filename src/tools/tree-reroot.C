@@ -18,11 +18,11 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <iostream>
-#include "tree.H"
+#include "tree/tree.H"
 #include "tree-dist.H"
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "util.H"
-#include "tree-util.H"
+#include "tree/tree-util.H"
 #include "myexception.H"
 
 #include <boost/program_options.hpp>

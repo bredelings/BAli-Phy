@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <map>
 #include <list>
 #include "util.H"
-#include "tree-util.H"
+#include "tree/tree-util.H"
 #include "myexception.H"
 #include "io.H"
 

@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mytypes.H"
 #include "sequence/alphabet.H"
 #include "alignment/alignment.H"
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 
 ublas::matrix<int> unit_cost_matrix(unsigned size);
 

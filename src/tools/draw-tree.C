@@ -48,7 +48,7 @@ extern "C" {
 #endif
 
 #include "myexception.H"
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "pow2.H"
 #include "mctree.H"
 #include "util.H"

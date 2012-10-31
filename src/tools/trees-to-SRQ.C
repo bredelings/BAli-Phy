@@ -26,9 +26,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 
 #include "myexception.H"
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "tree-dist.H"
-#include "tree-util.H"
+#include "tree/tree-util.H"
 #include "statistics.H"
 
 using namespace std;

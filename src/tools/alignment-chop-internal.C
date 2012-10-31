@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "tree.H"
+#include "tree/tree.H"
 #include "alignment/alignment.H"
 #include "alignment/alignment-util.H"
 #include "util.H"

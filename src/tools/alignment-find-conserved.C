@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "myexception.H"
 #include "alignment/alignment.H"
 #include "sequence/sequence-format.H"
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "setup.H"
 #include "alignment/alignment-util.H"
 #include "util.H"

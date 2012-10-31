@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <fstream>
 #include <cmath>
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "myexception.H"
 #include "util.H"
 #include "io.H"

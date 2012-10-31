@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include <valarray>
 #include "alignment/alignment.H"
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include <boost/program_options.hpp>
 #include "computation/formula_expression.H"
 

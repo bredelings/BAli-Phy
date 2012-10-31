@@ -19,7 +19,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "alignment/alignment.H"
 #include "arguments.H"
-#include "tree.H"
+#include "tree/tree.H"
 #include "rng.H"
 #include "myexception.H"
 

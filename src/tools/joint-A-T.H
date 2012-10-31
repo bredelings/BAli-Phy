@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <boost/program_options.hpp>
 
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "alignment/alignment.H"
 
 

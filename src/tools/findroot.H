@@ -19,8 +19,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #ifndef FINDROOT_H
 #define FINDROOT_H
-#include "tree.H"
-#include "sequencetree.H"
+#include "tree/tree.H"
+#include "tree/sequencetree.H"
 
 double rootdistance(const Tree& T,int leaf,int b,double dist);
 

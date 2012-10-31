@@ -31,7 +31,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <set>
 #include <list>
 
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "util.H"
 #include "statistics.H"
 #include "bootstrap.H"

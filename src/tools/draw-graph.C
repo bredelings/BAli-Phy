@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "mytypes.H"
 #include "myexception.H"
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "util.H"
 #include "bootstrap.H"
 #include "tree-dist.H"

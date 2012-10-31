@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define SUBSTITUTION_H
 
 #include "alignment/alignment.H"
-#include "tree.H"
+#include "tree/tree.H"
 struct Mat_Cache;
 class Parameters;
 #include "parameters.H"

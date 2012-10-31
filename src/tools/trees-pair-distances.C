@@ -20,9 +20,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <list>
 #include <utility>
-#include "tree.H"
-#include "sequencetree.H"
-#include "tree-util.H"
+#include "tree/tree.H"
+#include "tree/sequencetree.H"
+#include "tree/tree-util.H"
 #include "tree-dist.H"
 #include "myexception.H"
 

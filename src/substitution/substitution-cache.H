@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include "mytypes.H"
-#include "tree.H"
+#include "tree/tree.H"
 #include "matcache.H"
 
 /// An object to store cached conditional likelihoods for a single branch

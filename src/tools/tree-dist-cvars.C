@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <cmath>
 
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "arguments.H"
 #include "util.H"
 #include "tree-dist.H"

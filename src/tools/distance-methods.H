@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef DISTANCE_METHODS_H
 #define DISTANCE_METHODS_H
 
-#include "tree.H"
+#include "tree/tree.H"
 #include "mytypes.H"
 
 Matrix C(const Matrix& M);

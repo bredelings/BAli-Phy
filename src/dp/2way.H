@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <bitset>
 #include "alignment/alignment.H"
-#include "tree.H"
+#include "tree/tree.H"
 #include "object.H"
 
 struct pairwise_alignment_t: public std::vector<int>, public Object

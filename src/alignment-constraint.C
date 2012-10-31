@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <utility>
 #include "alignment-constraint.H"
 #include "alignment/alignment-util.H"
-#include "tree-util.H"
+#include "tree/tree-util.H"
 #include "util.H"
 #include "io.H"
 

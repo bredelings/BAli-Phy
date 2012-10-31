@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/dynamic_bitset.hpp>
 #include <utility>
 #include "alignment/alignment.H"
-#include "sequencetree.H"
+#include "tree/sequencetree.H"
 #include "io.H"
 
 ublas::matrix<int> load_alignment_constraint(const std::string& filename,SequenceTree& T);

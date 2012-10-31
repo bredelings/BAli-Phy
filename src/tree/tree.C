@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "tree.H"
+#include "tree/tree.H"
 #include "util.H"
 #include <algorithm>
 #include <sstream>
