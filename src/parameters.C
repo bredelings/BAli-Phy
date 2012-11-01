@@ -1079,7 +1079,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   // create parameters for scaling indel model on a specific branch
   if (IMs.size())
   {
-    add_parameter(Parameter("lambdaScale", Double(0.0)));
+    add_parameter(Parameter("logLambdaScale", Double(0.0)));
     // lambda_scale ~ Laplace(0, 1)
     add_note((distributed,parameter("logLambdaScale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
 
