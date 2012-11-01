@@ -27,7 +27,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <boost/program_options.hpp>
 #include "setup.H"
 #include "util.H"
-#include "rates.H"
 #include "myexception.H"
 #include "smodel/operations.H"
 #include "computation/operations.H"

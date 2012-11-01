@@ -1,5 +1,4 @@
 #include <sstream>
-#include "rates.H"
 #include "smodel/operations.H"
 #include "distribution-operations.H"
 #include "computation/operations.H"
@@ -150,8 +149,6 @@ namespace substitution
 
   const expression_ref F3x4_Matrix = lambda_expression( F3x4_Matrix_Op() );
 
-
-  using namespace probability;
 
   object_ptr<Object> SimpleExchangeFunction(double rho, int n)
   {
@@ -632,28 +629,6 @@ namespace substitution
     R2 = (MixtureModel, (DiscreteDistribution, List(Tuple(1.0,R))));
 
     return R2;
-  }
-
-  //FIXME!
-  expression_ref DiscretizationFunction(const Distribution& D, Int n)
-  {
-    // Make a discretization - not uniform.
-    Discretization d(n,D);
-
-    double ratio = d.scale()/D.mean();
-    
-    // this used to affect the prior
-    //    bool good_enough = (ratio > 1.0/1.5 and ratio < 1.5);
-
-    // problem - this isn't completely general
-    d.scale(1.0/ratio);
-    
-    vector<expression_ref> pairs;
-
-    for(int i=0;i<n;i++)
-      pairs.push_back( Tuple( d.f[i], d.r[i] ) );
-
-    return graph_normalize((DiscreteDistribution, get_list(pairs) ));
   }
 
   // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange

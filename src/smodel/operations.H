@@ -7,7 +7,6 @@
 #include "smodel/objects.H"
 #include "object.H"
 #include "probability.H"
-#include "distribution.H"
 #include "model.H"
 #include "computation/formula_expression.H"
 #include "computation/expression.H"
@@ -270,35 +269,6 @@ namespace substitution {
   formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& S, const formula_expression_ref& R);
 
   formula_expression_ref Unit_Model(const formula_expression_ref&);
-
-  expression_ref DiscretizationFunction(const probability::Distribution& D, Int n);
-
-  // We want Q(mi -> mj) = Q[m](i -> j)   for letter exchange
-  //         Q(mi -> ni) = R(m->n)        for model exchange
-  // and     Q(mi -> nj) = 0              for all other pairs
-
-  // We assume that R(m->n) = S(m,n) * M->distribution()[n]
-
-  // This should result in a Markov chain where the frequencies are
-  //  frequencies()[mi] = pi[i] * f[m] 
-  // with pi = M->frequencies() 
-  // and   f = M->distribution()
-
-  // PROBLEM: I don't have a good way of defining the switching rate.
-  // Right now, I have S(m,n) = rho, S(m,m) = 0
-  // But, the S(m,n) do not correspond to switching rates exactly.
-  // Instead, the switching rate is now rho*f[n], which is going to
-  // be something like rho*(n-1)/n if there are n categories.
-  
-  // ADDITIONALLY, depending on how fine-grained the categories are,
-  // a switching rate has a different interpretation.
-
-  // HOWEVER, I think the current approach works for now, because it
-  // approximates the model that at rate 'rho' the rate is randomly
-  // re-drawn from the underlying distribution.  A lot of the time it
-  // will fall in the same bin, giving a lower observed switching rate
-  // when the discrete approximation to the continuous distribution has
-  // low resolution.
 
   extern expression_ref Modulated_Markov_E;
 

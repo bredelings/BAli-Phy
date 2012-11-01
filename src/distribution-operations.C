@@ -1,5 +1,4 @@
 #include "distribution-operations.H"
-#include "distribution.H"
 #include "computation/prelude.H"
 
 using std::vector;
