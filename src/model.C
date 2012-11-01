@@ -258,6 +258,8 @@ int Model::add_note(const expression_ref& E)
     for(const auto& name : find_named_parameters(x) )
     {
       int p_index = find_parameter(name);
+      if (p_index == -1)
+	throw myexception()<<"Trying to add prior to parameter '"<<name<<"' which doesn't exist!";
 
       if (prior_note_index[p_index] != -1)
 	throw myexception()<<"Variable '"<<name<<"': new prior '"<<show_probability_expression(C.get_note(index))
