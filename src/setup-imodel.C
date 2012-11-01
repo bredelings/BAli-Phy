@@ -74,12 +74,12 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
     expression_ref epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
 
     expression_ref lambda_sigma_over_mu = def_parameter(imodel,"lambdaSigmaOverMu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
-    expression_ref b = lambda_sigma_over_mu*lambda_sigma_over_mu;
-    expression_ref a = 1.0/b;
+    expression_ref B = lambda_sigma_over_mu*lambda_sigma_over_mu;
+    expression_ref A = 1.0/B;
 
     vector<expression_ref> branch_lambdas;
     for(int b=0;b<T.n_branches();b++)
-      branch_lambdas.push_back(def_parameter(imodel, "lambdaScale"+convertToString(b), -4.0, nullptr, gamma_dist, Tuple(a, b)));
+      branch_lambdas.push_back(def_parameter(imodel, "lambdaScale"+convertToString(b), 1.0, nullptr, gamma_dist, Tuple(A, B)));
     expression_ref lambdas_list = get_list(branch_lambdas);
 
     expression_ref log_lambda_mean = def_parameter(imodel, "logLambdaMean", -4.0, nullptr, laplace_dist, Tuple(-4.0, 1.0));
