@@ -17,8 +17,6 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
   if (name == "") 
     throw myexception()<<"Indel model name is empty! (A default should have been automatically set.)";
 
-  expression_ref sampling_rate = lambda_expression(constructor("SamplingRate",2));
-
   if (name == "none")
     { }
   else if (name == "RS05")
@@ -31,9 +29,7 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
     expression_ref lengthp = lambda_expression( RS07_lengthp() );
 
     expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, laplace_dist, Tuple(-4.0, 1.0));
-    imodel.add_note( (sampling_rate,log_lambda, 10.0) );
     expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0),exponential_dist, 10.0);
-    imodel.add_note( (sampling_rate,meanIndelLengthMinus1, 10.0) );
 
     expression_ref epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
     expression_ref lambda = (var("exp"), log_lambda);
@@ -45,6 +41,13 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
   }
   else
     throw myexception()<<"Unrecognized indel model '"<<name<<"'";
+
+  // Up the sampling rate for imodel parameters...
+  expression_ref sampling_rate = lambda_expression(constructor("SamplingRate",2));
+
+  std::set<string> declared_parameter_names = find_declared_parameters(imodel);
+  for(const auto& parameter_name: declared_parameter_names)
+    imodel.add_note( (sampling_rate, parameter(parameter_name), 10.0) );
 
   return imodel;
 }
