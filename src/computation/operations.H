@@ -723,7 +723,7 @@ struct Exp_Op: public Operation
 
   closure operator()(OperationArgs& Args) const;
 
-  std::string name() const {return "sqrt";}
+  std::string name() const {return "exp";}
 
   Exp_Op():Operation(1) {}
 };
