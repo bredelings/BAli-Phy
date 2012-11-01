@@ -1027,25 +1027,6 @@ double Parameters::get_branch_subst_rate(int p, int /* b */) const
   return get_parameter_value_as<Double>(branch_mean_index(s));
 }
 
-double Parameters::get_branch_indel_rate(int p, int b) const
-{
-  assert(n_imodels() > 0);
-
-  double r = get_branch_subst_rate(p, b);
-
-  double indel_scale_by = 1.0;
-
-  // determine scaling factor.
-  int offset = n_scales+1;
-
-  bool indel_scale_on = get_parameter_value_as<Bool>(offset+1);
-  int indel_scale_branch = get_parameter_value_as<Int>(offset+2);
-  if (indel_scale_on and indel_scale_branch == b)
-    indel_scale_by = exp( get_parameter_value_as<Double>(offset+0) );
-
-  return r * indel_scale_by;
-}
-
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 		       const vector<formula_expression_ref>& SMs,
 		       const vector<int>& s_mapping,

@@ -384,8 +384,6 @@ public:
 
   double get_branch_subst_rate(int p, int b) const;
 
-  double get_branch_indel_rate(int p, int b) const;
-
   Parameters* clone() const {return new Parameters(*this);}
 
   std::string name() const {return "Full Model";}
