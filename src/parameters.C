@@ -899,10 +899,6 @@ void Parameters::recalc(const vector<int>& indices)
 	  get_data_partition(p).branch_mean_changed();
       }
     }
-    // If we change ANY scale, invalidate ALL imodels.
-    else if (n_imodels() and index < n_scales+4)
-      for(int m=0;m<n_imodels();m++) 
-	recalc_imodel(m);
 
     // If any of the imodel parameters have changed, invalidate all branch HMMs
     for(int i=0;i<n_imodels();i++)
@@ -1048,6 +1044,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 {
   C += SModel_Functions();
   C += Distribution_Functions();
+  // FIXME: add C += IModel_Functions() instead of referencing the operations directly.  Then we could parse a text file.
+  
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
   constants.push_back(-1);
@@ -1056,21 +1054,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   for(int i=0;i<n_scales;i++)
     add_parameter(Parameter("mu"+convertToString(i+1), Double(0.25), lower_bound(0)));
-
-  // create parameters for scaling indel model on a specific branch
-  if (IMs.size())
-  {
-    add_parameter(Parameter("logLambdaScale", Double(0.0)));
-    // lambda_scale ~ Laplace(0, 1)
-    add_note((distributed,parameter("logLambdaScale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
-
-    add_parameter(Parameter("lambdaScaleOn", Bool(false)));
-    add_note((distributed,parameter("lambdaScaleOn"),Tuple(bernoulli_dist,0.5)));
-    // lambda_scale_on ~ Uniform on T,F
-
-    add_parameter(Parameter("lambdaScaleBranch", Int(-1), between(0,T->n_branches()-1)));
-    //lambda_scale_branch ~ Uniform on 0 .. T.n_branches()-1
-  }
 
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
