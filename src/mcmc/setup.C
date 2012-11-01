@@ -28,7 +28,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// \author Benjamin Redelings
 /// 
 
-#include "smodel/smodel.H"
 #include "mcmc/setup.H"
 #include "util.H"
 #include "sample.H"

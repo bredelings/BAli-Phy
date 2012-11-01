@@ -160,7 +160,6 @@ namespace mpi = boost::mpi;
 #include "mcmc/setup.H"
 #include "io.H"
 #include "tools/parsimony.H"
-#include "smodel/smodel.H"
 #include "BUGS.H"
 
 namespace fs = boost::filesystem;

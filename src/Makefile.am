@@ -27,7 +27,7 @@ dist-hook: git_version.stamp
 
 noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3way.H \
            dp/dp-matrix.H mytypes.H setup.H dp/5way.H math/eigenvalue.H \
-           n_indels.H smodel/smodel.H alignment-constraint.H math/exponential.H \
+           n_indels.H alignment-constraint.H math/exponential.H \
            parameters.H substitution/substitution-cache.H alignment/alignment.H dp/hmm.H math/pow2.H \
            substitution/substitution.H dp/alignment-sums.H imodel.H probability.H \
            substitution/substitution-index.H alignment/alignment-util.H likelihood.H mcmc/proposals.H \
@@ -90,7 +90,7 @@ endif
 bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substitution/substitution.C mcmc/moves.C \
           rng.C math/exponential.C math/eigenvalue.C parameters.C likelihood.C mcmc/mcmc.C \
 	  choose.C tree/sequencetree.C mcmc/sample-branch-lengths.C \
-	  util.C tree/randomtree.C sequence/alphabet.C smodel/smodel.C bali-phy.C \
+	  util.C tree/randomtree.C sequence/alphabet.C bali-phy.C \
 	  dp/hmm.C dp/dp-engine.C dp/dp-array.C dp/dp-matrix.C dp/3way.C dp/2way.C mcmc/sample-alignment.C \
 	  mcmc/sample-tri.C mcmc/sample-node.C imodel.C dp/5way.C mcmc/sample-topology-NNI.C \
 	  setup.C smodel/rates.C mcmc/sample-two-nodes.C sequence/sequence-format.C \

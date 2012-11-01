@@ -26,7 +26,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///
 
 #include "parameters.H"
-#include "smodel/smodel.H"
 #include "rng.H"
 #include "substitution/substitution.H"
 #include "substitution/substitution-index.H"

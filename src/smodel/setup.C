@@ -26,7 +26,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <boost/program_options.hpp>
 #include "setup.H"
-#include "smodel/smodel.H"
 #include "util.H"
 #include "rates.H"
 #include "myexception.H"
@@ -37,6 +36,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/program.H"
 #include "smodel/functions.H"
 
+using std::string;
 using std::vector;
 using std::valarray;
 using namespace substitution;
