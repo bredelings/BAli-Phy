@@ -367,7 +367,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, Between(-40,0,shift_cauchy),  "*.logLambda",      "lambda_shift_sigma",    0.35, MH_moves, 10);
   add_MH_move(P, more_than(0.0, shift_cauchy), "*.meanIndelLengthMinus1",     "epsilon_shift_sigma",   0.1, MH_moves, 10);
 
-  add_MH_move(P, Between(-20,20,shift_cauchy), "lambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
+  add_MH_move(P, Between(-20,20,shift_cauchy), "logLambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
 
   // FIXME - this might not work very well until I make these auto-tuning
   vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Dirichlet");

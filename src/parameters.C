@@ -1081,7 +1081,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   {
     add_parameter(Parameter("lambdaScale", Double(0.0)));
     // lambda_scale ~ Laplace(0, 1)
-    add_note((distributed,parameter("lambdaScale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
+    add_note((distributed,parameter("logLambdaScale"),Tuple(laplace_dist,Tuple(0.0, 1.0))));
 
     add_parameter(Parameter("lambdaScaleOn", Bool(false)));
     add_note((distributed,parameter("lambdaScaleOn"),Tuple(bernoulli_dist,0.5)));
