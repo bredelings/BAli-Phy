@@ -546,6 +546,12 @@ vector<int> compute_sorted_mapping(const vector<string>& names)
   return invert(mapping);
 }
 
+RootedSequenceTree& RootedSequenceTree::operator=(const RootedSequenceTree& T)
+{
+  RootedTree::operator=(T);
+
+  return *this;
+}
 
 //FIXME - return mapping of leaf nodes?  Of all nodes?
 void standardize(SequenceTree& T) 

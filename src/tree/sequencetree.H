@@ -105,6 +105,8 @@ public:
   int parse(const std::string& s);
   int parse_nexus(const std::string& s,const std::vector<std::string>&);
 
+  RootedSequenceTree& operator=(const RootedSequenceTree&);
+
   /// create from  \a file
   RootedSequenceTree() {}
 
