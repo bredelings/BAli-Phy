@@ -378,10 +378,6 @@ public:
 
   void branch_mean_tricky(int i,double); 
 
-  double get_branch_duration(int b) const;
-
-  double get_branch_duration(int p, int b) const;
-
   double get_branch_subst_rate(int p, int b) const;
 
   Parameters* clone() const {return new Parameters(*this);}

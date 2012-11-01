@@ -1003,20 +1003,6 @@ void Parameters::branch_mean_tricky(int i,double x)
   C.set_parameter_value(branch_mean_index(i), Double(x) );
 }
 
-double Parameters::get_branch_duration(int b) const
-{
-  b = T->directed_branch(b).undirected_name();
-
-  return T->branch(b).length();
-}
-
-double Parameters::get_branch_duration(int /* p */, int b) const
-{
-  // This would only depend on p if we allowed (say) different branch lengths in different partitions.
-  // Which we do not.
-  return get_branch_duration(b);
-}
-
 double Parameters::get_branch_subst_rate(int p, int /* b */) const
 {
   int s = scale_for_partition[p];
