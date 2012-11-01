@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "statistics.H"
 #include "bootstrap.H"
-#include "logsum.H"
+#include "math/logsum.H"
 #include "util.H"
 
 #include <boost/program_options.hpp>

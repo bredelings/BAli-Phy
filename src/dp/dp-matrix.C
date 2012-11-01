@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <climits>
 #include "dp-matrix.H"
-#include "pow2.H"
+#include "math/pow2.H"
 #include "choose.H"
 #include "util.H"
 #include "alignment-constraint.H"

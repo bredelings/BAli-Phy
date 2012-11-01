@@ -154,7 +154,7 @@ namespace mpi = boost::mpi;
 #include "alignment/alignment-util.H"
 #include "substitution/substitution-index.H"
 #include "monitor.H"
-#include "pow2.H"
+#include "math/pow2.H"
 #include "tree/tree-util.H" //extends
 #include "version.H"
 #include "mcmc/setup.H"

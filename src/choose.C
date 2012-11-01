@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cassert>
 #include "choose.H"
 #include "rng.H"
-#include "logsum.H"
+#include "math/logsum.H"
 #include "myexception.H"
 
 using std::vector;

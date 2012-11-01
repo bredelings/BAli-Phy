@@ -25,14 +25,14 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <cmath>
 #include "imodel.H"
-#include "logsum.H"
+#include "math/logsum.H"
 #include "rng.H"
 #include <gsl/gsl_randist.h>
 #include "myexception.H"
 #include "probability.H"
 #include "util.H"
 #include "dp/2way.H"
-#include "logsum.H"
+#include "math/logsum.H"
 
 using std::vector;
 using std::string;

@@ -40,7 +40,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/prelude.H"
 #include "computation/program.H"
 #include "computation/operations.H"
-#include "exponential.H"
+#include "math/exponential.H"
 #include "smodel/functions.H"
 #include "distribution-operations.H"
 

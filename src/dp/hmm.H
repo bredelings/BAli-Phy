@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define HMM_H
 
 #include "mytypes.H"
-#include "logsum.H"
+#include "math/logsum.H"
 #include <bitset>
 #include "2way.H"
 

@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "likelihood.H"
-#include "logsum.H"
+#include "math/logsum.H"
 #include "substitution/substitution.H"
 #include "setup.H"
 #include <gsl/gsl_randist.h>

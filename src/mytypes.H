@@ -46,7 +46,7 @@ typedef Box<SymmetricMatrix> SymmetricMatrixObject;
 // template <typename T>
 // using Vector<T> = typedef POD<std::vector<T> >
 
-#include "log-double.H"
+#include "math/log-double.H"
 
 typedef log_double_t efloat_t;
 

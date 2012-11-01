@@ -1,7 +1,7 @@
 #include "smodel/objects.H"
 #include "smodel/operations.H"
 
-#include "exponential.H"
+#include "math/exponential.H"
 
 using std::vector;
 using std::valarray;

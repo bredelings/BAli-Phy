@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <vector>
 #include <valarray>
-#include "log-double.H"
+#include "math/log-double.H"
 
 log_double_t dirichlet_pdf(const std::vector<double>& p,const std::vector<double>& n);
 

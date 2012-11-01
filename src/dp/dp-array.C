@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <cmath>
 #include "dp-array.H"
-#include "pow2.H"
+#include "math/pow2.H"
 #include "choose.H"
 #include "util.H"
 

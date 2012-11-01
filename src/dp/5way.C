@@ -26,7 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <algorithm>
 #include "5way.H"
 #include "bits.H"
-#include "logsum.H"
+#include "math/logsum.H"
 #include "rng.H"
 #include "alignment/alignment-util.H"
 #include "substitution/substitution-index.H"

@@ -21,12 +21,12 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <fstream>
 #include <sstream>
 #include "smodel.H"
-#include "exponential.H"
+#include "math/exponential.H"
 #include "rng.H"
 #include "util.H"
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>
-#include "logsum.H"
+#include "math/logsum.H"
 #include "probability.H"
 #include "io.H"
 #include "computation/expression.H"

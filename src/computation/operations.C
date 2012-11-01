@@ -1,6 +1,6 @@
 #include "operations.H"
 #include "graph_register.H"
-#include "exponential.H"
+#include "math/exponential.H"
 
 using std::vector;
 using std::string;

@@ -28,7 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef EXPONENTIAL_H
 #define EXPONENTIAL_H
 #include "mytypes.H"
-#include "eigenvalue.H"
+#include "math/eigenvalue.H"
 
 #include <boost/numeric/ublas/symmetric.hpp>
 typedef ublas::symmetric_matrix<double> SMatrix;

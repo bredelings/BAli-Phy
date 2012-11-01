@@ -26,13 +26,13 @@ dist-hook: git_version.stamp
 #-----------------------------------------------------------------
 
 noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3way.H \
-           dp/dp-matrix.H mytypes.H setup.H dp/5way.H eigenvalue.H \
-           n_indels.H smodel/smodel.H alignment-constraint.H exponential.H \
-           parameters.H substitution/substitution-cache.H alignment/alignment.H dp/hmm.H pow2.H \
+           dp/dp-matrix.H mytypes.H setup.H dp/5way.H math/eigenvalue.H \
+           n_indels.H smodel/smodel.H alignment-constraint.H math/exponential.H \
+           parameters.H substitution/substitution-cache.H alignment/alignment.H dp/hmm.H math/pow2.H \
            substitution/substitution.H dp/alignment-sums.H imodel.H probability.H \
            substitution/substitution-index.H alignment/alignment-util.H likelihood.H mcmc/proposals.H \
-           tree/tree-branchnode.H sequence/alphabet.H log-double.H smodel/rates.H tree/tree.H \
-           dp/bits.H logsum.H tree/tree-util.H choose.H substitution/matcache.H  \
+           tree/tree-branchnode.H sequence/alphabet.H math/log-double.H smodel/rates.H tree/tree.H \
+           dp/bits.H math/logsum.H tree/tree-util.H choose.H substitution/matcache.H  \
            rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
            model.H sequence/sequence-format.H dp/dp-array.H monitor.H sequence/sequence.H \
            tools/bootstrap.H tools/inverse.H tools/statistics.H \
@@ -88,7 +88,7 @@ endif
 #-----------------------------------------------------------------
 
 bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substitution/substitution.C mcmc/moves.C \
-          rng.C exponential.C eigenvalue.C parameters.C likelihood.C mcmc/mcmc.C \
+          rng.C math/exponential.C math/eigenvalue.C parameters.C likelihood.C mcmc/mcmc.C \
 	  choose.C tree/sequencetree.C mcmc/sample-branch-lengths.C \
 	  util.C tree/randomtree.C sequence/alphabet.C smodel/smodel.C bali-phy.C \
 	  dp/hmm.C dp/dp-engine.C dp/dp-array.C dp/dp-matrix.C dp/3way.C dp/2way.C mcmc/sample-alignment.C \
@@ -97,7 +97,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  util-random.C alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
 	  dp/alignment-sums.C alignment/alignment-util.C probability.C model.C \
 	  alignment-constraint.C substitution/substitution-cache.C \
-	  monitor.C substitution/substitution-index.C tree/tree-util.C myexception.C pow2.C \
+	  monitor.C substitution/substitution-index.C tree/tree-util.C myexception.C math/pow2.C \
 	  tools/partition.C mcmc/proposals.C n_indels.C distribution.C \
 	  tools/parsimony.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
@@ -333,46 +333,6 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 expression2_SOURCES = computation/expression2.C util.C computation/computation.C \
 	computation/operator.C computation/expression.C probability.C distribution-operations.C \
 	computation/operations.C computation/graph_register.C computation/program.C \
-	computation/prelude.C computation/context.C eigenvalue.C exponential.C computation/model_notes.C \
+	computation/prelude.C computation/context.C math/eigenvalue.C math/exponential.C computation/model_notes.C \
 	computation/closure.C computation/let-float.C
-
-#---------------------------------------------------------------
-
-alignment_cut: alignment.o alignment-util.o sequence/alphabet.o sequence.o \
-	sequence-format.o util.o tree.o ${BOOST_LIBS}
-
-#---------------------------------------------------------------
-
-tree_dist_autocorrelation: tree.o sequencetree.o tools/tree-dist.o
-
-#---------------------------------------------------------------
-
-tree_dist_cvars: tree.o sequencetree.o util.o tools/tree-dist.o
-
-#---------------------------------------------------------------
-
-srq_analyze: rng.o tools/statistics.o ${LIBS}
-
-#---------------------------------------------------------------
-
-make_random_tree: tree.o sequencetree.o util.o rng.o ${LIBS}
-
-#---------------------------------------------------------------
-
-test: tools/optimize.o
-
-#---------------------------------------------------------------
-
-test_smodel: alignment.o sequence/alphabet.o sequence.o tree.o sequencetree.o util.o \
-	setup-smodel.o smodel.o tree/randomtree.o model.o sequence-format.o smodel/rates.o \
-	probability.o rng.o setup-smodel.o exponential.o eigenvalue.o \
-	alignment-util.o setup.o imodel.o alignment-random.o ${LIBS}
-
-#---------------------------------------------------------------
-
-truckgraph: alignment.o sequence/alphabet.o sequence.o util.o rng.o ${LIBS}
-
-#---------------------------------------------------------------
-
-truckgraph3d: alignment.o sequence/alphabet.o sequence.o util.o rng.o 
 

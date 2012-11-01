@@ -6,7 +6,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include "sequence/alphabet.H"
-#include "eigenvalue.H"
+#include "math/eigenvalue.H"
 #include "cached_value.H"
 #include "cow-ptr.H"
 #include <valarray>

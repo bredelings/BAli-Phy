@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define LOG_DOUBLE_H
 
 #include <cassert>
-#include "logsum.H"
+#include "math/logsum.H"
 
 /// A class for handling positive real number in terms of their natural log.
 class log_double_t {

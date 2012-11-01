@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include <cassert>
 #include "sample.H"
-#include "logsum.H"
+#include "math/logsum.H"
 #include "choose.H"
 #include "util.H"
 #include "rng.H"

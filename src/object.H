@@ -7,7 +7,7 @@
 #include <iostream>
 #include "util.H"
 
-#include "log-double.H"
+#include "math/log-double.H"
 
 using boost::logic::tribool;
 using boost::logic::indeterminate;

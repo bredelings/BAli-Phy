@@ -21,7 +21,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define DISTRIBUTION_H
 
 #include "model.H"
-#include "log-double.H"
+#include "math/log-double.H"
 
 namespace probability {
 

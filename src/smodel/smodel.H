@@ -80,7 +80,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequence/alphabet.H"
 #include "rates.H"
 #include "model.H"
-#include "eigenvalue.H"
+#include "math/eigenvalue.H"
 #include "cached_value.H"
 
 namespace substitution {

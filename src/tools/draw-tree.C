@@ -49,7 +49,7 @@ extern "C" {
 
 #include "myexception.H"
 #include "tree/sequencetree.H"
-#include "pow2.H"
+#include "math/pow2.H"
 #include "mctree.H"
 #include "util.H"
 #include "util-random.H"

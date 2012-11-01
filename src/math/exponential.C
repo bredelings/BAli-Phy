@@ -24,8 +24,8 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///
 
 #include <vector>
-#include "exponential.H"
-#include "eigenvalue.H"
+#include "math/exponential.H"
+#include "math/eigenvalue.H"
 
 
 // The approach used in this file works because of general properties

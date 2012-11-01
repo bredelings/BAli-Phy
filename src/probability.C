@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <gsl/gsl_cdf.h>
 #include <iostream>
 
-#include "logsum.H"
+#include "math/logsum.H"
 #include "util.H"
 
 using std::valarray;
