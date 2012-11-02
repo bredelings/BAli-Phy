@@ -201,11 +201,6 @@ public:
 
   unsigned n_parameters() const;
 
-  /// The model's name
-  virtual std::string name() const {return "unnamed";}
-
-  std::string print() const {return name();}
-
   bool is_valid() const {return valid;}
   virtual void update();
 
