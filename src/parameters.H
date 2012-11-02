@@ -46,11 +46,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 //------------------------------- parameter-containing class --------------------------//
 
-namespace substitution
-{
-  class MultiModelObject;
-}
-
 extern bool use_internal_index;
 
 class Parameters;
