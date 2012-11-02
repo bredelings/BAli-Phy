@@ -216,7 +216,7 @@ public:
 
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
 
-  std::vector<int> add_submodel(const formula_expression_ref&);
+  std::vector<int> add_submodel(const Model_Notes&);
 
   const context& get_context() const {return C;}
 

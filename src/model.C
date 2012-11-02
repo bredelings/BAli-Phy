@@ -156,7 +156,7 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
   return values;  
 }
 
-vector<int> Model::add_submodel(const formula_expression_ref& R)
+vector<int> Model::add_submodel(const Model_Notes& R)
 {
   vector<int> new_parameters;
 
