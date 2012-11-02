@@ -551,6 +551,27 @@ closure GreaterThan::operator()(OperationArgs& Args) const
 
 //---------------------------------------------------------------------------------------//
 
+closure Mod::operator()(OperationArgs& Args) const
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return Int( *xi % *yi );
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return Char( *xc % *yc );
+  }
+  else
+    throw myexception()<<"Mod: object '"<<x->print()<<"' is not Int, or Char'";
+}
+
+//---------------------------------------------------------------------------------------//
+
 tribool Log_Op::compare(const Object& o) const 
 {
   return dynamic_cast<const Log_Op*>(&o);

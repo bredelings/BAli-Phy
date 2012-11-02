@@ -646,6 +646,30 @@ struct Divide: public Operation
   Divide():Operation(2) {}
 };
 
+struct Mod: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Mod* clone() const {return new Mod(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Mod* E = dynamic_cast<const Mod*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "mod";}
+
+  Mod():Operation(2) {}
+};
+
 #define check_arithmetic(T) typename boost::enable_if<boost::is_arithmetic<T>,T>::type
 #define check_arithmetic2(T1,T2) typename boost::enable_if<boost::is_arithmetic<T1>,T2>::type
 
