@@ -599,6 +599,21 @@ closure Exp_Op::operator()(OperationArgs& Args) const
 
 //---------------------------------------------------------------------------------------//
 
+tribool Get_Address::compare(const Object& o) const 
+{
+  return dynamic_cast<const Get_Address*>(&o);
+}
+
+closure Get_Address::operator()(OperationArgs& Args) const
+{
+  object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(1));
+  int arg = Args.current_closure().lookup_in_env( V->index );
+
+  return new Int(arg);
+}
+
+//---------------------------------------------------------------------------------------//
+
 def_binary_operator2(-,Minus)
 def_binary_operator2(+,Add)
 def_binary_operator2(*,Multiply)

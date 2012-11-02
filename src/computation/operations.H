@@ -728,4 +728,19 @@ struct Exp_Op: public Operation
   Exp_Op():Operation(1) {}
 };
 
+struct Get_Address: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual Get_Address* clone() const {return new Get_Address(*this);}
+
+  tribool compare(const Object& o) const;
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "getAddress";}
+
+  Get_Address():Operation(1) {}
+};
+
 #endif
