@@ -56,9 +56,9 @@ using std::ostream;
  * 7. Move calculation of alignment prior dependencies to the machine!
  *    - Otherwise changing ANY imodel parameter with invalidate ALL dependencies!
  *    
- * 11. Move the lambda_scale model from the old framework to the new one. (mcmc/setup.C, parameters.C)
+ * 11. [DONE] Move the lambda_scale model from the old framework to the new one. (mcmc/setup.C, parameters.C)
  *
- * 12. Add the NEW model, in which we allow each branch to have a separate lambda.
+ * 12. [DONE] Add the NEW model, in which we allow each branch to have a separate lambda.
  *
  *    indelRates = listArray B [lambda1, lambda2, lambda3 ... lambdaB]
  *    
