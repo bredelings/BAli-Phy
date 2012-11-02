@@ -620,6 +620,20 @@ closure Exp_Op::operator()(OperationArgs& Args) const
 
 //---------------------------------------------------------------------------------------//
 
+/*
+ * Note that does doesn't work if the structure being evaluated contains
+ * expressions that *evaluate to* parameters.  This is true even if the
+ * structures have reg_vars (or reg_var chains) pointing to parameters.
+ * The expressions would have to *actually contain* parameters.
+ *
+ * The idea here is that the only expressions that we would consider would be
+ * constructors with parameters as fields.
+ *
+ * This is somewhat problematic, since *arrays* would probably not actually
+ * have parameters as fields.  For example, if a list contains parameters as
+ * fields, the listArray' constructed from it would probably not!
+ */
+
 tribool Get_Address::compare(const Object& o) const 
 {
   return dynamic_cast<const Get_Address*>(&o);

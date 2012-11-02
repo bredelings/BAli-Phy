@@ -86,6 +86,8 @@ using std::ostream;
  *
  * 9. Define moves on the tree based on the idea that some entries are parameters.
  *
+ * 10. Compare the monadic interface with Acar's interface.
+ *
  */
 
 bool use_internal_index = true;
