@@ -71,7 +71,15 @@ using std::ostream;
  * 5. Move the Program from Context to reg_heap.
  *
  * 6. Allow calculating location of unnamed parameters hidden in structures.
-
+ *    - Problem! Things move around.
+ *    - Calculation of locations might work.  But they would change as soon as we change
+ *      their value.
+ *    - Also, the location of an anonymous parameter depends on the context.
+ *    - Still, it would be nice to be able to change only a single FIELD or PART of a
+ *      parameter's value.
+ *    - We want to be able to refer to things like "the 6th element in the array that parameter
+ *      "x" evaluates to.
+ *
  * 7. ... OR arrays!
  *
  * 8. Define a haskell tree class.
