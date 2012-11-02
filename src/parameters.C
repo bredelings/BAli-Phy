@@ -1195,6 +1195,18 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   Program tree_program("Tree");
   tree_program.def_function("tree", 0, (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
   C += tree_program;
+
+  for(int n=0; n < T->n_nodes(); n++)
+  {
+    vector<const_branchview> branch_list;
+    append(T->node(n).branches_out(),branch_list);
+  }
+
+  for(int b=0; b < 2*T->n_branches(); b++)
+  {
+    int source = T->directed_branch(b).source();
+    int target = T->directed_branch(b).source();
+  }
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
