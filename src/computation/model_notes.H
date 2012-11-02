@@ -35,6 +35,8 @@ public:
 
 Model_Notes add_prefix(const std::string& prefix, const Model_Notes& M);
 
+Model_Notes prefix_formula(const std::string&,const Model_Notes&);
+
 expression_ref def_parameter(Model_Notes&, const std::string& name);
 expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value);
 expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b);

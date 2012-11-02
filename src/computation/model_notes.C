@@ -58,6 +58,15 @@ Model_Notes add_prefix(const std::string& prefix, const Model_Notes& M1)
   return M2;
 }
 
+Model_Notes prefix_formula(const std::string& prefix,const Model_Notes& N)
+{
+  set<string> declared_parameter_names = find_declared_parameters(N);
+  Model_Notes N2 = N;
+  for(const auto& name: declared_parameter_names)
+    N2 = substitute(N2, parameter(name), parameter(prefix+"."+name));
+  return N2;
+}
+
 expression_ref def_parameter(Model_Notes& N, const std::string& name)
 {
   expression_ref declare_parameter = lambda_expression( constructor("declare_parameter",1) );
