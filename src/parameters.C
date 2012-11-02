@@ -1173,6 +1173,28 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     // Note that branch_HMM's are per scale and per-imodel.  Construct them in the data_partition.
   }
 
+  /*------------------------- Create the tree structure -----------------------*/
+  Model_Notes tree;
+
+  vector<expression_ref> node_branches;
+  for(int n=0; n < T->n_nodes(); n++)
+    node_branches.push_back( def_parameter(tree, "Tree.nodeBranches"+convertToString(n)) );
+  expression_ref node_branches_array = (listArray_,get_list(node_branches));
+
+  vector<expression_ref> branch_nodes;
+  for(int b=0; b < 2*T->n_branches(); b++)
+    branch_nodes.push_back( def_parameter(tree, "Tree.branchNodes"+convertToString(b)) );
+  expression_ref branch_nodes_array = (listArray_,get_list(branch_nodes));
+
+  expression_ref tree_con = lambda_expression( constructor("Tree",4) );
+
+  // FIXME - there should be some way to define this all and then add the prefix "Tree"!
+
+  add_submodel( tree);
+
+  Program tree_program("Tree");
+  tree_program.def_function("tree", 0, (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
+  C += tree_program;
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
