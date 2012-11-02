@@ -201,8 +201,6 @@ public:
 
   unsigned n_parameters() const;
 
-  int n_args() const {return n_parameters();}
-
   /// The model's name
   virtual std::string name() const {return "unnamed";}
 
