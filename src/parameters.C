@@ -53,50 +53,31 @@ using std::ostream;
  * Goal: Construct a complete tree-based imodel along the lines of
  *       SingleRate[RS07] or BranchwiseRate[RS07]
  * 
- * 7. Move calculation of alignment prior dependencies to the machine!
+ * 1. Move calculation of alignment prior dependencies to the machine!
  *    - Otherwise changing ANY imodel parameter with invalidate ALL dependencies!
  *    
- * 11. [DONE] Move the lambda_scale model from the old framework to the new one. (mcmc/setup.C, parameters.C)
- *
- * 12. [DONE] Add the NEW model, in which we allow each branch to have a separate lambda.
- *
- *    indelRates = listArray B [lambda1, lambda2, lambda3 ... lambdaB]
- *    
- *    traditionally, we could have indelRates = mkArray B \b -> lambda
- *
- *
- *
- * [DONE]. Make get_branch_hmm properly dependent on the scale!
- * [DONE]. Export names like substitutionBranchLengths, ...
- *     - Export branchDuration.
- * 2. [DONE] Give the setup routine for imodels the number of branches
- *      [DONE] (\D,\b -> RS07_branch_HMM e lambda*D!b h t, \l -> RS07_lengthp e l)
- *
- *    [DONE] I guess we could actually convert this to e.g. imodels!i.
- *      [DONE] Thus, fst imodels!i, snd imodels!i
- *
- * 3. Allow defining things in a formula_expression
+ * 2. Allow defining things in a formula_expression
  *    (f_e is becoming more like a program!)
  *    - Could we use let-expressions instead?
  *    - We COULD, but this wouldn't allow the names to be published!
  *
- * 4. [DONE] Remove code for caching and updating branch_hmms
- *      [DONE] BUT, we now need a way to invalidate things when imodel parameters change!
+ * 3. Eliminate any remaining cached_value< > in calculation of alignment prior.
+ *    - Eliminate cached_alignment_prior
+ *    - Eliminate cached_sequence_lengths
  *
- * 5. [DONE] Remove imodels as sub-models.
+ * 4. Move unchangeable name mappings out of context and into reg_heap.
+ *   - That is, separate name bindings into (a) dependent and (b) non-dependent vars?
  *
- * 6. [DONE]Remove class SuperModel?
+ * 5. Move the Program from Context to reg_heap.
  *
- * 9. Move the mapping from identifiers to locations from Context to reg_heap.
- *   - No, wait, these locations may indeed change, if they depend on parameters, right?
- *   - Thus, we could do this, but the locations would NOT be allowed to depend on parameters!
- *   - Perhaps we could separate them into (a) dependent and (b) non-dependent vars?
- *   - Move the Program from Context to reg_heap.
+ * 6. Allow calculating location of unnamed parameters hidden in structures.
+
+ * 7. ... OR arrays!
  *
- * 12. [DONE] Generalize the code for adding "submodels"?
+ * 8. Define a haskell tree class.
  *
- * 13. [DONE] OK, so we want to define parameters inside the formula_expression_ref
- *       [DONE] Then we can simply prefix only the *declared* parameters.
+ * 9. Define moves on the tree based on the idea that some entries are parameters.
+ *
  */
 
 bool use_internal_index = true;
