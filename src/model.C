@@ -459,11 +459,6 @@ Model::Model(const vector<expression_ref>& notes)
 #endif
 }
 
-object_ptr<const Object> Model::result() const
-{
-  std::abort();
-}
-
 void Model::update()
 {
   if (not is_valid())

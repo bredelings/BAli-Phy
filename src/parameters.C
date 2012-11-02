@@ -1080,9 +1080,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   for(int i=0;i<n_parameters();i++)
     add_note( (make_logger,parameter_name(i)) );
 
-  // load values from sub-models (smodels/imodel)
-  check();
-
   // don't constrain any branch lengths
   for(int b=0;b<TC->n_branches();b++)
     TC.modify()->branch(b).set_length(-1);
