@@ -124,6 +124,9 @@ Program make_Prelude()
   // snd (x,y) = y
   P += Def( (snd,Tuple(v1,v2)), v2);
 
+  // snd (x,y) = y
+  P += Def( (var("swap"),Tuple(v1,v2)), Tuple(v2,v1));
+
   // !! h:t 0 = h
   // !! h:t i = !! t (i-1)
   P += Def( (get_list_index,v1&v2,0), v1)
