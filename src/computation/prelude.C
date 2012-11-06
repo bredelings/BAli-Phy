@@ -184,6 +184,17 @@ Program make_Prelude()
     ( (unsafePerformIO_, (IOAndPass, v1, v2)), let_expression(v3,(unsafePerformIO_, v1), (join_, v3, (unsafePerformIO_, (v2, v3)))))
     ( (unsafePerformIO_, (IOAnd, v1, v2)), (join_, (unsafePerformIO_, v1), (unsafePerformIO_, v2)));
 
+  //--------------------------------------- listFromVectorInt ----------------------------------------//
+  P.def_function("getVectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 
+
+
+  // listFromVectorInt' v s i = if (i<s) then (getVectorIntElement v i):(listFromVectorInt v s (i+1)) else []
+  P += Def( (var("listFromVectorInt'"), v1, v2, v3), (If,(v3<v2),(var("getVectorIntElement"),v1,v3)&(var("listFromVectorInt'"),v1,v2,(v3+1)),ListEnd));
+
+  // listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0
+  P += Def( (var("listFromVectorInt"), v1), (var("listFromVectorInt'"),v1,(var("sizeOfVectorInt"),v1),0));
+
+
   //--------------------------------------- listToVectorDouble ---------------------------------------//
 
   P.def_function("builtinNewVectorDouble", 1, lambda_expression( BuiltinNewVectorOp<double>() ) ); 
