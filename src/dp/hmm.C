@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include "hmm.H"
 #include "2way.H"
-#include "imodel.H"
+#include "imodel/imodel.H"
 
 using std::vector;
 

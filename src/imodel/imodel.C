@@ -24,7 +24,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///
 
 #include <cmath>
-#include "imodel.H"
+#include "imodel/imodel.H"
 #include "math/logsum.H"
 #include "rng.H"
 #include <gsl/gsl_randist.h>

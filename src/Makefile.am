@@ -29,7 +29,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            dp/dp-matrix.H mytypes.H setup.H dp/5way.H math/eigenvalue.H \
            n_indels.H alignment/alignment-constraint.H math/exponential.H \
            models/parameters.H substitution/substitution-cache.H alignment/alignment.H dp/hmm.H math/pow2.H \
-           substitution/substitution.H dp/alignment-sums.H imodel.H probability/probability.H \
+           substitution/substitution.H dp/alignment-sums.H imodel/imodel.H probability/probability.H \
            substitution/substitution-index.H alignment/alignment-util.H likelihood.H mcmc/proposals.H \
            tree/tree-branchnode.H sequence/alphabet.H math/log-double.H tree/tree.H \
            dp/bits.H math/logsum.H tree/tree-util.H probability/choose.H substitution/matcache.H  \
@@ -93,7 +93,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  probability/choose.C tree/sequencetree.C mcmc/sample-branch-lengths.C \
 	  util.C tree/randomtree.C sequence/alphabet.C bali-phy.C \
 	  dp/hmm.C dp/dp-engine.C dp/dp-array.C dp/dp-matrix.C dp/3way.C dp/2way.C mcmc/sample-alignment.C \
-	  mcmc/sample-tri.C mcmc/sample-node.C imodel.C dp/5way.C mcmc/sample-topology-NNI.C \
+	  mcmc/sample-tri.C mcmc/sample-node.C imodel/imodel.C dp/5way.C mcmc/sample-topology-NNI.C \
 	  setup.C mcmc/sample-two-nodes.C sequence/sequence-format.C \
 	  util-random.C alignment/alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
 	  dp/alignment-sums.C alignment/alignment-util.C probability/probability.C models/model.C \
@@ -102,7 +102,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  tools/partition.C mcmc/proposals.C n_indels.C \
 	  tools/parsimony.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
-	  setup-imodel.C smodel/objects.C computation/computation.C \
+	  imodel/setup.C smodel/objects.C computation/computation.C \
 	  computation/graph_register.C computation/program.C \
 	  computation/formula_expression.C smodel/operations.C probability/distribution-operations.C \
 	  computation/operations.C computation/prelude.C computation/context.C \

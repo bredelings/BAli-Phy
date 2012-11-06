@@ -20,7 +20,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef LIKELIHOOD_H
 #define LIKELIHOOD_H
 
-#include "imodel.H"
+#include "imodel/imodel.H"
 #include "alignment/alignment.H"
 #include "models/parameters.H"
 
