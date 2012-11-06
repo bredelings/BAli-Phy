@@ -88,6 +88,7 @@ using std::ostream;
  *
  * 10. Compare the monadic interface with Acar's interface.
  *
+ * 11. Remove class Parameter that is solely used in the old way of defining parameters.
  */
 
 bool use_internal_index = true;
