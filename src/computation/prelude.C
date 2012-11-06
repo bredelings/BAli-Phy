@@ -189,6 +189,7 @@ Program make_Prelude()
 
   //--------------------------------------- listFromVectorInt ----------------------------------------//
   P.def_function("getVectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 
+  P.def_function("sizeOfVectorInt", 1, lambda_expression( VectorSizeOp<int>() ) );
 
 
   // listFromVectorInt' v s i = if (i<s) then (getVectorIntElement v i):(listFromVectorInt v s (i+1)) else []
