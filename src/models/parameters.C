@@ -1190,12 +1190,18 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   vector<expression_ref> node_branches;
   for(int n=0; n < T->n_nodes(); n++)
-    node_branches.push_back( def_parameter(tree, "Tree.nodeBranches"+convertToString(n)) );
+  {
+    expression_ref param = def_parameter(tree, "Tree.nodeBranches"+convertToString(n));
+    node_branches.push_back( (var("listFromVectorInt"),param) );
+  }
   expression_ref node_branches_array = (listArray_,get_list(node_branches));
 
   vector<expression_ref> branch_nodes;
   for(int b=0; b < 2*T->n_branches(); b++)
-    branch_nodes.push_back( def_parameter(tree, "Tree.branchNodes"+convertToString(b)) );
+  {
+    expression_ref param = def_parameter(tree, "Tree.branchNodes"+convertToString(b));
+    branch_nodes.push_back( (var("listFromVectorInt"), param) );
+  }
   expression_ref branch_nodes_array = (listArray_,get_list(branch_nodes));
 
   expression_ref tree_con = lambda_expression( constructor("Tree",4) );
@@ -1204,8 +1210,48 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   add_submodel( tree);
 
+  expression_ref _ = dummy(-1);
+
   Program tree_program("Tree");
   tree_program.def_function("tree", 0, (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
+
+  // numNodes (Tree _ _ n _) = n
+  tree_program += Def( (var("numNodes"), (tree_con, _, _, v1, _)), v1);
+
+  // numBranches (Tree _ _ _ n) = n
+  tree_program += Def( (var("numBranches"), (tree_con, _, _, _, v1)), v1);
+
+  // edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray!node
+  tree_program += Def( (var("edgesOutOfNode"), (tree_con,v1,_,_,_), v2), (var("!"),v1,v2));
+
+  // nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray!edgeIndex
+  tree_program += Def( (var("nodesForEdge"), (tree_con,_,v1,_,_), v2), (var("!"),v1,v2));
+
+  // sourceNode t edge = fst (nodesForEdge t edge)
+  tree_program += Def( (var("sourceNode"), v1, v2), (fst, (var("nodesForEdge"), v1, v2)));
+
+  // targetNode t edge = snd (nodesForEdge t edge)
+  tree_program += Def( (var("targetNode"), v1, v2), (snd, (var("nodesForEdge"), v1, v2)));
+
+  // findFirst f h:t = if (f h) then h else findFirst f t
+  tree_program += Def( (var("findFirst"),v1,v2&v3), (If,(v1,v2),v2,(var("findFirst"),v1,v3)) );
+
+  // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t s), target t b == n2]
+  tree_program += Def( (var("edgeForNodes"),v3,Tuple(v1,v2)), (var("findFirst"),(var("edgesOutOfNode"),v3,v1),v4^((var("targetNode"),v3,v4)==v2)));
+
+  // reverseEdge t b = edgeForNodes t (swap (nodesForEdge t b))
+  tree_program += Def( (var("reverseEdge"),v1,v2), (var("edgeForNodes"),v1, (var("swap"),(var("nodesForEdge"),v1, v2) ) ) );
+
+  // nodeDegree t n = length (edgesOutOfNode t n)
+  tree_program += Def( (var("nodeDegree"),v1,v2), (var("length"),(var("edgesOutOfNode"), v1, v2) ) );
+
+  // neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
+  tree_program += Def( (var("neighbors"),v1,v2), (var("fmap"),(var("targetNode"), v1), (var("edgesOutOfNode"),v1, v2) ) );
+
+  // edgesBeforeEdge t b = let (n1,n2) = nodesForEdge t b in 
+  //                            [edgeForNodes (n,n1) | n <- neighbors t n1, n /= n2 ]
+
+
   C += tree_program;
 
   for(int n=0; n < T->n_nodes(); n++)
