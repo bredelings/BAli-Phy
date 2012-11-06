@@ -7,7 +7,6 @@
 #include <boost/numeric/ublas/symmetric.hpp>
 #include "sequence/alphabet.H"
 #include "math/eigenvalue.H"
-#include "cached_value.H"
 #include "cow-ptr.H"
 #include <valarray>
 #include "computation/expression.H"

@@ -81,7 +81,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rates.H"
 #include "models/model.H"
 #include "math/eigenvalue.H"
-#include "cached_value.H"
 
 namespace substitution {
 
