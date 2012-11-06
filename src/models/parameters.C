@@ -70,17 +70,18 @@ using std::ostream;
  *
  * 5. Move the Program from Context to reg_heap.
  *
- * 6. Allow calculating location of unnamed parameters hidden in structures.
- *    - Problem! Things move around.
- *    - Calculation of locations might work.  But they would change as soon as we change
- *      their value.
- *    - Also, the location of an anonymous parameter depends on the context.
- *    - Still, it would be nice to be able to change only a single FIELD or PART of a
- *      parameter's value.
- *    - We want to be able to refer to things like "the 6th element in the array that parameter
- *      "x" evaluates to.
+ * 6. Allow calculating the location of unnamed parameters hidden in structures & arrays.
+ *    - Problem #1! Things move around.
+ *      + Calculation of locations might work.  But they would change as soon as we change
+ *        their value.
+ *      + Also, the location of an anonymous parameter depends on the context.
+ *      + Still, it would be nice to be able to change only a single FIELD or PART of a
+ *        parameter's value.
+ *      + We want to be able to refer to things like "the 6th element in the array that parameter
+ *        "x" evaluates to.
  *
- *    - Solution?
+ *    - Problem #2! Structures like arrays actually contain a reg_var pointing to the parameter.
+ *      + Possible solution: Evaluate each structure element until we come to a parameter, and return that.
  *      + Make another evaluation context, in which parameters are objects that evaluate to themselves
  *        instead of to their values.
  *      + In this context, we can e.g. evaluate list elements until a parameter is found.
@@ -91,7 +92,14 @@ using std::ostream;
  *
  *        - However, if we sometimes do not, then we have the issue that everything would need to have a consistent type.
  *
- * 7. ... OR arrays!
+ * 7. Allow addressing anonymous parameters by setting structures containing parameters to things.  For example,
+ *    setting [x,y] to [1,2] would set x to 1 and y to 2.
+ *    - But sometimes we do want to change z=[x,y] to (say) [].
+ *    - And how about setting [x=[a,b],y] to [[1,2],[3,4]]. Do we change x here, or not?
+ *    - Will we only try to set parameter values for leaves?
+ *    - Perhaps we need to be more explicit about the procedure for setting a list of parameters to a list of values.
+ *      + Perhaps we could say to walk the list and find the parameters (which works, because it evaluates each list entry
+ *        until it becomes a parameter!) and to then set each entry to the corresonding list entry.
  *
  * 8. Define a haskell tree class.
  *
