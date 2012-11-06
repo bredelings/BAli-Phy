@@ -26,7 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 double scale_gaussian(double& x,double sigma);
 
-#include "parameters.H"
+#include "models/parameters.H"
 
 class Proposal: public Object {
 public:

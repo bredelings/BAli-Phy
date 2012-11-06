@@ -37,7 +37,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <iostream>
 #include <string>
 
-#include "parameters.H"
+#include "models/parameters.H"
 #include "mcmc.H"
 #include "slice-sampling.H"
 #include "proposals.H"

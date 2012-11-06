@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "imodel.H"
 #include "alignment/alignment.H"
-#include "parameters.H"
+#include "models/parameters.H"
 
 //-------------- Alignment Priors -----------------//
 

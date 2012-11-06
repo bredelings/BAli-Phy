@@ -21,9 +21,9 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define MONITOR_H
 
 #include <iostream>
-#include "parameters.H"
+#include "models/parameters.H"
 #include <string>
-#include "model.H"
+#include "models/model.H"
 #include "substitution/matcache.H"
 
 void print_stats(std::ostream& o,const Parameters& P,bool=true);

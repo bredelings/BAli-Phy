@@ -79,7 +79,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "mytypes.H"
 #include "sequence/alphabet.H"
 #include "rates.H"
-#include "model.H"
+#include "models/model.H"
 #include "math/eigenvalue.H"
 #include "cached_value.H"
 

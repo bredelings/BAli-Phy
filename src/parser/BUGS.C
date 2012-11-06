@@ -4,7 +4,7 @@
 #include <map>
 #include "util.H"
 #include "computation/prelude.H"
-#include "parameters.H"
+#include "models/parameters.H"
 
 using std::vector;
 using std::map;

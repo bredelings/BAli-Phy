@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 ///        for the MCMC.
 ///
 
-#include "parameters.H"
+#include "models/parameters.H"
 #include "rng.H"
 #include "substitution/substitution.H"
 #include "substitution/substitution-index.H"

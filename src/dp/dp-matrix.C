@@ -30,7 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "math/pow2.H"
 #include "probability/choose.H"
 #include "util.H"
-#include "alignment-constraint.H"
+#include "alignment/alignment-constraint.H"
 
 using std::vector;
 using std::valarray;

@@ -2,7 +2,7 @@
 #include "computation/program.H"
 #include <deque>
 #include "io.H"
-#include "parameters.H"
+#include "models/parameters.H"
 
 using std::string;
 using std::vector;

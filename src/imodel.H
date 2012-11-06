@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #define IMODEL_H
 
 #include "mytypes.H"
-#include "model.H"
+#include "models/model.H"
 #include "object.H"
 #include "computation/operation.H"
 

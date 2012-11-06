@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "mytypes.H"
 #include "tree/tree.H"
-#include "parameters.H"
+#include "models/parameters.H"
 #include "mcmc.H"
 
 

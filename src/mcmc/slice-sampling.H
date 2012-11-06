@@ -26,7 +26,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #ifndef SLICE_SAMPLING_H
 #define SLICE_SAMPLING_H
 
-#include "parameters.H"
+#include "models/parameters.H"
 #include "bounds.H"
 
 namespace slice_sampling {

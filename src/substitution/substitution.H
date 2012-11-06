@@ -30,7 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "tree/tree.H"
 struct Mat_Cache;
 class Parameters;
-#include "parameters.H"
+#include "models/parameters.H"
 #include "substitution-cache.H"
 #include "substitution-index.H"
 

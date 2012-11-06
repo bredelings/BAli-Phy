@@ -7,7 +7,7 @@
 #include "smodel/objects.H"
 #include "object.H"
 #include "probability/probability.H"
-#include "model.H"
+#include "models/model.H"
 #include "computation/formula_expression.H"
 #include "computation/expression.H"
 #include "computation/operation.H"

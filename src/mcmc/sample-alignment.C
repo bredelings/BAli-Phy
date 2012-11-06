@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sample.H"
 #include "dp/2way.H"
 #include "dp/alignment-sums.H"
-#include "alignment-constraint.H"
+#include "alignment/alignment-constraint.H"
 #include "alignment/alignment-util.H"
 #include "substitution/substitution.H"
 #include "substitution/substitution-index.H"

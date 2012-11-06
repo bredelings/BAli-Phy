@@ -37,7 +37,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <string>
 #include <boost/shared_ptr.hpp>
 
-#include "parameters.H"
+#include "models/parameters.H"
 #include "io.H"
 #include "owned-ptr.H"
 

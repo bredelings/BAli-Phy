@@ -22,7 +22,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "util.H"
 #include "myexception.H"
-#include "model.H"
+#include "models/model.H"
 #include "computation/expression.H"
 #include "computation/operations.H"
 #include "computation/program.H"

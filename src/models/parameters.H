@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "sequence/alphabet.H"
 #include "mytypes.H"
 #include "tree/sequencetree.H"
-#include "probability-model.H"
+#include "models/probability-model.H"
 #include "imodel.H"
 #include "alignment/alignment.H"
 #include "substitution/matcache.H"

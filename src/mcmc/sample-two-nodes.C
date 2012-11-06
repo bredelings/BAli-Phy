@@ -34,7 +34,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "dp/5way.H"
 #include "dp/alignment-sums.H"
 #include "alignment/alignment-util.H"
-#include "alignment-constraint.H"
+#include "alignment/alignment-constraint.H"
 #include "substitution/substitution-index.H"
 #include <boost/numeric/ublas/io.hpp>
 #include "dp/dp-array.H"

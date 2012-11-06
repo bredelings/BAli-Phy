@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "sample.H"
 #include "alignment/alignment-util.H"
-#include "alignment-constraint.H"
+#include "alignment/alignment-constraint.H"
 #include "timer_stack.H"
 #include "bounds.H"
 #include "AIS.H"

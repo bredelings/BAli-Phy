@@ -36,7 +36,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <valarray>
 #include <string>
 #include <map>
-#include "parameters.H"
+#include "models/parameters.H"
 #include "rng.H"
 #include "proposals.H"
 #include "bounds.H"

@@ -28,7 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include <map>
 #include <string>
-#include "model.H"
+#include "models/model.H"
 #include "mytypes.H"
 
 // If we add a distribution class, note that we may need to have distribution EXPRESSIONS,
