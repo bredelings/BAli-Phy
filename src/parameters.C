@@ -33,7 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "likelihood.H"
 #include "util.H"
 #include "mcmc/proposals.H"
-#include "probability.H"
+#include "probability/probability.H"
 #include "computation/formula_expression.H"
 #include "smodel/operations.H"
 #include "computation/prelude.H"
@@ -41,7 +41,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/operations.H"
 #include "math/exponential.H"
 #include "smodel/functions.H"
-#include "distribution-operations.H"
+#include "probability/distribution-operations.H"
 
 using std::vector;
 using std::string;

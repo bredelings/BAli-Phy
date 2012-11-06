@@ -29,7 +29,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "rng.H"
 #include <gsl/gsl_randist.h>
 #include "myexception.H"
-#include "probability.H"
+#include "probability/probability.H"
 #include "util.H"
 #include "dp/2way.H"
 #include "math/logsum.H"

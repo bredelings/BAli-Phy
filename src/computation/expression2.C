@@ -6,7 +6,7 @@
 
 #include "operation.H"
 #include "operations.H"
-#include "distribution-operations.H"
+#include "probability/distribution-operations.H"
 #include "context.H"
 #include "prelude.H"
 #include "program.H"

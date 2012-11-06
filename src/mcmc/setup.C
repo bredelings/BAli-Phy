@@ -209,7 +209,7 @@ void add_slice_moves(Probability_Model& P, const string& name,
   }
 }
 
-#include "distribution-operations.H" // for prob_density
+#include "probability/distribution-operations.H" // for prob_density
 
 /// Find parameters with distribution name Dist
 vector<vector<string> > get_distributed_parameters(const Probability_Model& P, const string& Dist)

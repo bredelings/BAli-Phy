@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cmath>
 #include "sample.H"
 #include "math/logsum.H"
-#include "choose.H"
+#include "probability/choose.H"
 #include "util.H"
 #include "rng.H"
 #include "dp/3way.H"

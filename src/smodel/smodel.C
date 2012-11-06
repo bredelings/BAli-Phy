@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>
 #include "math/logsum.H"
-#include "probability.H"
+#include "probability/probability.H"
 #include "io.H"
 #include "computation/expression.H"
 #include "computation/formula_expression.H"

@@ -7,7 +7,7 @@
 #include "computation/expression.H"
 #include "computation/operation.H"
 #include "computation/computation.H"
-#include "probability.H"
+#include "probability/probability.H"
 #include "computation/program.H"
 
 struct exponential_density: public Operation

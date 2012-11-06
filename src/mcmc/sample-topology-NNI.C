@@ -23,7 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <cassert>
 #include "sample.H"
 #include "math/logsum.H"
-#include "choose.H"
+#include "probability/choose.H"
 #include "util.H"
 #include "rng.H"
 #include "dp/5way.H"

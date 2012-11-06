@@ -27,7 +27,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/operations.H"
 #include "computation/program.H"
 #include "computation/formula_expression.H"
-#include "distribution-operations.H"
+#include "probability/distribution-operations.H"
 
 using std::vector;
 using std::string;

@@ -1,6 +1,6 @@
 #include "setup.H"
 #include "imodel.H"
-#include "distribution-operations.H"
+#include "probability/distribution-operations.H"
 #include "computation/operations.H"
 
 using std::string;

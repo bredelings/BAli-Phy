@@ -6,7 +6,7 @@
 #include "sequence/alphabet.H"
 #include "smodel/objects.H"
 #include "object.H"
-#include "probability.H"
+#include "probability/probability.H"
 #include "model.H"
 #include "computation/formula_expression.H"
 #include "computation/expression.H"

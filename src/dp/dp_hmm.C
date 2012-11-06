@@ -25,7 +25,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 /// \brief This file implements the generic Dynamic Programin specific HMM class.
 ///
 
-#include "choose.H"
+#include "probability/choose.H"
 
 using std::vector;
 

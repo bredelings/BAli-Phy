@@ -18,7 +18,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include <cassert>
-#include "choose.H"
+#include "probability/choose.H"
 #include "rng.H"
 #include "math/logsum.H"
 #include "myexception.H"

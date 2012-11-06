@@ -29,10 +29,10 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            dp/dp-matrix.H mytypes.H setup.H dp/5way.H math/eigenvalue.H \
            n_indels.H alignment-constraint.H math/exponential.H \
            parameters.H substitution/substitution-cache.H alignment/alignment.H dp/hmm.H math/pow2.H \
-           substitution/substitution.H dp/alignment-sums.H imodel.H probability.H \
+           substitution/substitution.H dp/alignment-sums.H imodel.H probability/probability.H \
            substitution/substitution-index.H alignment/alignment-util.H likelihood.H mcmc/proposals.H \
            tree/tree-branchnode.H sequence/alphabet.H math/log-double.H tree/tree.H \
-           dp/bits.H math/logsum.H tree/tree-util.H choose.H substitution/matcache.H  \
+           dp/bits.H math/logsum.H tree/tree-util.H probability/choose.H substitution/matcache.H  \
            rng.H util.H object.H mcmc/mcmc.H mcmc/sample.H util-random.H \
            model.H sequence/sequence-format.H dp/dp-array.H monitor.H sequence/sequence.H \
            tools/bootstrap.H tools/inverse.H tools/statistics.H \
@@ -42,7 +42,8 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
            version.H cow-ptr.H tools/index-matrix.H cached_value.H \
 	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
 	   timer_stack.H mcmc/setup.H probability-model.H owned-ptr.H \
-	   bounds.H io.H smodel/objects.H smodel/operations.H parser/BUGS.H
+	   bounds.H io.H smodel/objects.H smodel/operations.H parser/BUGS.H \
+           probability/distribution-operations.H
 
 LDFLAGS = @ldflags@
 
@@ -89,13 +90,13 @@ endif
 
 bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substitution/substitution.C mcmc/moves.C \
           rng.C math/exponential.C math/eigenvalue.C parameters.C likelihood.C mcmc/mcmc.C \
-	  choose.C tree/sequencetree.C mcmc/sample-branch-lengths.C \
+	  probability/choose.C tree/sequencetree.C mcmc/sample-branch-lengths.C \
 	  util.C tree/randomtree.C sequence/alphabet.C bali-phy.C \
 	  dp/hmm.C dp/dp-engine.C dp/dp-array.C dp/dp-matrix.C dp/3way.C dp/2way.C mcmc/sample-alignment.C \
 	  mcmc/sample-tri.C mcmc/sample-node.C imodel.C dp/5way.C mcmc/sample-topology-NNI.C \
 	  setup.C mcmc/sample-two-nodes.C sequence/sequence-format.C \
 	  util-random.C alignment-random.C smodel/setup.C mcmc/sample-topology-SPR.C \
-	  dp/alignment-sums.C alignment/alignment-util.C probability.C model.C \
+	  dp/alignment-sums.C alignment/alignment-util.C probability/probability.C model.C \
 	  alignment-constraint.C substitution/substitution-cache.C \
 	  monitor.C substitution/substitution-index.C tree/tree-util.C myexception.C math/pow2.C \
 	  tools/partition.C mcmc/proposals.C n_indels.C \
@@ -103,7 +104,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  setup-imodel.C smodel/objects.C computation/computation.C \
 	  computation/graph_register.C computation/program.C \
-	  computation/formula_expression.C smodel/operations.C distribution-operations.C \
+	  computation/formula_expression.C smodel/operations.C probability/distribution-operations.C \
 	  computation/operations.C computation/prelude.C computation/context.C \
 	  computation/model_notes.C substitution/matcache.C smodel/functions.C computation/closure.C \
 	  computation/let-float.C parser/BUGS.C dp/dp_hmm.C parser/BUGS-compile.C
@@ -331,7 +332,7 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 #---------------------------------------------------------------
 
 expression2_SOURCES = computation/expression2.C util.C computation/computation.C \
-	computation/operator.C computation/expression.C probability.C distribution-operations.C \
+	computation/operator.C computation/expression.C probability/probability.C probability/distribution-operations.C \
 	computation/operations.C computation/graph_register.C computation/program.C \
 	computation/prelude.C computation/context.C math/eigenvalue.C math/exponential.C computation/model_notes.C \
 	computation/closure.C computation/let-float.C

@@ -1,4 +1,4 @@
-#include "distribution-operations.H"
+#include "probability/distribution-operations.H"
 #include "computation/prelude.H"
 
 using std::vector;

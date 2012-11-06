@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with BAli-Phy; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "probability.H"
+#include "probability/probability.H"
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_sf.h>
 #include <gsl/gsl_cdf.h>

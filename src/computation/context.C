@@ -595,7 +595,7 @@ std::ostream& operator<<(std::ostream& o, const context& C)
   return o;
 }
 
-#include "distribution-operations.H"
+#include "probability/distribution-operations.H"
 #include "computation/operations.H"
 
 // note = (~ x D)
