@@ -1258,12 +1258,22 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   {
     vector<const_branchview> branch_list;
     append(T->node(n).branches_out(),branch_list);
+    Vector<int> branch_list_;
+    for(auto b: branch_list)
+      branch_list_.t.push_back(b);
+    
+    string parameter_name = "Tree.nodeBranches"+convertToString(n);
+    C.set_parameter_value(parameter_name, branch_list_);
   }
 
   for(int b=0; b < 2*T->n_branches(); b++)
   {
     int source = T->directed_branch(b).source();
     int target = T->directed_branch(b).source();
+
+    string parameter_name = "Tree.branchNodes"+convertToString(b);
+
+    C.set_parameter_value(parameter_name, Tuple(source, target) );
   }
 }
 
