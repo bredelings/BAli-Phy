@@ -80,6 +80,17 @@ using std::ostream;
  *    - We want to be able to refer to things like "the 6th element in the array that parameter
  *      "x" evaluates to.
  *
+ *    - Solution?
+ *      + Make another evaluation context, in which parameters are objects that evaluate to themselves
+ *        instead of to their values.
+ *      + In this context, we can e.g. evaluate list elements until a parameter is found.
+ *      + What *type* do we give structures containing parameters, though?  Is [1, parameter("x"), 3] allowed?
+ *        - Perhaps it is if we always evaluate parameters to their VALUES.  It would be:
+ *              [1, (value parameter("x")), 3]
+ *          which is OK.
+ *
+ *        - However, if we sometimes do not, then we have the issue that everything would need to have a consistent type.
+ *
  * 7. ... OR arrays!
  *
  * 8. Define a haskell tree class.
