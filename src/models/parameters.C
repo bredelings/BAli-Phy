@@ -1070,7 +1070,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     SModels.push_back( smodel_methods( smodel.exp(), C) );
   }
 
-  add_parameter(Parameter("IModels.training", Bool(true)));
+  add_parameter(Parameter("IModels.training", Bool(false)));
   // register the indel models as sub-models
   vector<formula_expression_ref> imodels_;
   for(int i=0;i<n_imodels();i++) 
