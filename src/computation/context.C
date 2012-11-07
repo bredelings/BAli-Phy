@@ -278,6 +278,7 @@ object_ref context::get_parameter_value(const std::string& name) const
 void context::set_parameter_value(int index, const expression_ref& O)
 {
   object_ref v = O->head;
+  assert(not O->size());
   assert(not dynamic_pointer_cast<const index_var>(v));
   assert(not dynamic_pointer_cast<const reg_var>(v));
   assert(not dynamic_pointer_cast<const var>(v));
