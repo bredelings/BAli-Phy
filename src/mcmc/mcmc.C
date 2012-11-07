@@ -1177,7 +1177,7 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
       //	  PP.setlength(i, PP.branch_length_max);
 
       PP.set_parameter_value(PP.find_parameter("IModels.training"), new Bool(true));
-    }  
+    }
   }
 
   /// Find parameters to fix for the first 5 iterations
