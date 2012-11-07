@@ -256,7 +256,7 @@ Program Distribution_Functions()
   P += Def( (laplaceDensity, Tuple(v1,v2), v3), (var("builtinLaplaceDensity"),v1,v2,v3)); 
 
   P.def_function("builtinDirichletDensity", 3, lambda_expression( dirichlet_density() ) );
-  P += Def( (dirichletDensity, v1, v2), (var("builtinDirichletDensity"),(listToVectorDouble,v1),(listToVectorDouble,v2))); 
+  P += Def( (dirichletDensity, v1, v2), (var("builtinDirichletDensity"),(var("listToVectorDouble"),v1),(var("listToVectorDouble"),v2))); 
 
   P.def_function("builtinLogLaplaceDensity", 3, lambda_expression( log_laplace_density() ) );
   P += Def( (logLaplaceDensity, Tuple(v1,v2), v3), (var("builtinLogLaplaceDensity"),v1,v2,v3)); 

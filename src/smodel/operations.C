@@ -450,7 +450,7 @@ namespace substitution
   {
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return let_expression(v1,(listToVectorDouble,pi),
+    return let_expression(v1,(var("listToVectorDouble"),pi),
 			  (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), v1, (Plus_gwF, a, 1.0, v1))
 			  );
   }
@@ -508,7 +508,7 @@ namespace substitution
     const Nucleotides& N = T.getNucleotides();
     formula_expression_ref pi = Frequencies_Model(N);
 
-    return let(v2,(listToVectorDouble,pi),
+    return let(v2,(var("listToVectorDouble"),pi),
 	       v1,(F3x4_Frequencies,T,v2,v2,v2),
 	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v1, (Plus_gwF, T, 1.0, v1))
 	       );
@@ -520,7 +520,7 @@ namespace substitution
     const Nucleotides& N = T.getNucleotides();
     formula_expression_ref pi = Frequencies_Model(N);
 
-    return let(v2,(listToVectorDouble,pi),
+    return let(v2,(var("listToVectorDouble"),pi),
 	       v1,(F3x4_Frequencies,T,v2,v2,v2),
 	       v3,(Plus_gwF, N, 1.0, v2),
 	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
@@ -537,9 +537,9 @@ namespace substitution
     formula_expression_ref pi3 = Frequencies_Model(N);
     pi3 = prefix_formula("3",pi3);
 
-    return let(v1, (listToVectorDouble,pi1),
-	       v2, (listToVectorDouble,pi2),
-	       v3, (listToVectorDouble,pi3),
+    return let(v1, (var("listToVectorDouble"),pi1),
+	       v2, (var("listToVectorDouble"),pi2),
+	       v3, (var("listToVectorDouble"),pi3),
 	       v4, (F3x4_Frequencies,T,v1,v2,v3),
 	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v4, (Plus_gwF, T, 1.0, v4))
 	       );
@@ -555,9 +555,9 @@ namespace substitution
     formula_expression_ref pi3 = Frequencies_Model(N);
     pi3 = prefix_formula("3",pi3);
 
-    return let(v1, (listToVectorDouble,pi1),
-	       v2, (listToVectorDouble,pi2),
-	       v3, (listToVectorDouble,pi3),
+    return let(v1, (var("listToVectorDouble"),pi1),
+	       v2, (var("listToVectorDouble"),pi2),
+	       v3, (var("listToVectorDouble"),pi3),
 	       v4, (Plus_gwF, N, 1.0, v1),
 	       v5, (Plus_gwF, N, 1.0, v2),
 	       v6, (Plus_gwF, N, 1.0, v3),
@@ -572,7 +572,7 @@ namespace substitution
 
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return let_expression(v1,(listToVectorDouble,pi),
+    return let_expression(v1,(var("listToVectorDouble"),pi),
 			  (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), v1, (Plus_gwF, a, f, v1))
 			  );
   }

@@ -29,8 +29,6 @@ const expression_ref average = var("average");
 const expression_ref reapply = var("reapply");
 const expression_ref unsafePerformIO_ = var("unsafePerformIO'");
 const expression_ref unsafePerformIO = var("unsafePerformIO");
-const expression_ref listToVectorDouble = var("listToVectorDouble");
-const expression_ref listToVectorMatrix = var("listToVectorMatrix");
 const expression_ref join_ = var("join");
 
 const expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));

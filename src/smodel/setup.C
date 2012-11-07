@@ -409,7 +409,7 @@ formula_expression_ref process_stack_Frequencies(vector<string>& model_args,
     vector<double> piv(a->size(),1.0/a->size() );
     expression_ref pi = get_list(piv);
 
-    R = let_expression(v1,(listToVectorDouble,pi),
+    R = let_expression(v1,(var("listToVectorDouble"),pi),
 		       (ReversibleFrequency, *a, (Iota<unsigned>(), a->size()), v1, (Plus_gwF, *a, 1.0, v1))
 		       );
   }

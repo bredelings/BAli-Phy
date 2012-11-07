@@ -644,7 +644,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
 //-----------------------------------------------------------------------------//
 smodel_methods::smodel_methods(const expression_ref& E, context& C)
 {
-  expression_ref V = listToVectorDouble;
+  expression_ref V = var("listToVectorDouble");
 
   main = C.add_compute_expression( E );
   expression_ref S = C.get_expression(main);
@@ -1166,7 +1166,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     for(int m=0;m < n_smodels(); m++)
     {
       expression_ref S = C.get_expression(SModels[m].main);
-      //expression_ref V = listToVectorMatrix;
+      //expression_ref V = var("listToVectorMatrix");
       expression_ref V = Vector_From_List<Matrix,MatrixObject>();
       //expression_ref I = 0;
       expression_ref I = (get_list_index,branch_cat_list,v1);
