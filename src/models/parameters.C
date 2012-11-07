@@ -1207,8 +1207,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   vector<expression_ref> branch_nodes;
   for(int b=0; b < 2*T->n_branches(); b++)
   {
-    expression_ref param = def_parameter(tree, "Tree.branchNodes"+convertToString(b));
-    branch_nodes.push_back( (var("listFromVectorInt"), param) );
+    branch_nodes.push_back( def_parameter(tree, "Tree.branchNodes"+convertToString(b)) ); 
   }
   expression_ref branch_nodes_array = (listArray_,get_list(branch_nodes));
 
