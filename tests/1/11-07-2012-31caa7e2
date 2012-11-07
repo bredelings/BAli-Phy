@@ -1,0 +1,31 @@
+command: bali-phy 5d.fasta --tree=1.tree --show-only --initial mu1=1.0 --initial S1.R.piA=0.1 --initial S1.R.piG=0.4 --initial S1.R.piT=0.3 --initial S1.R.piC=0.2 --initial I1.meanIndelLengthMinus1=3.520812 --initial IModels.training=0
+
+VERSION: 2.2.0-pre-alpha  [master commit 31caa7e2+]  (Nov 07 2012 16:03:31)
+BUILD: Nov  7 2012 16:04:47
+ARCH: x86_64-unknown-linux-gnu
+COMPILER: GCC 4.8.0 20121106 (experimental) [trunk revision 193261]
+FLAGS: -isystem $(top_srcdir)/boost/include -ffast-math -DNDEBUG -DNDEBUG_DP -funroll-loops -fweb -std=c++11 -g -finline-limit=1000 -std=c++11   -pipe -O3 -isystem /usr/lib/openmpi/include -isystem /usr/lib/openmpi/include/openmpi -pthread
+
+
+#1: subst ~  (1)     indel ~ RS07 (1)
+
+Prior on branch lengths T[b]:
+ T[b] ~ Gamma(alpha=0.5, beta=2*mu)   [mean=mu, variance=2*mu^2]
+ mu ~ Gamma(alpha=0.5, beta=2)   [mean=1, variance=2]
+
+S1.S.TN.kappaPur ~ LogLaplace(0.693147, 0.250000)
+
+S1.S.TN.kappaPyr ~ LogLaplace(0.693147, 0.250000)
+
+[S1.R.piA, S1.R.piG, S1.R.piT, S1.R.piC] ~ Dirichlet[1.000000, 1.000000, 1.000000, 1.000000]
+
+S1.R.f ~ Uniform(0.000000, 1.000000)
+
+I1.logLambda ~ Laplace(-4.000000, 1.000000)
+
+I1.meanIndelLengthMinus1 ~ Exponential(10.000000)
+
+
+    prior = -35.8977   prior_A1 = -31.0506    likelihood = -910.294    logp = -946.192    beta = 1
+
+    Heat.beta = 1.000000    mu1 = 1.000000    S1.R.f = 1.000000    S1.R.piA = 0.100000    S1.R.piC = 0.200000    S1.R.piG = 0.400000    S1.R.piT = 0.300000    S1.S.TN.kappaPur = 2.000000    S1.S.TN.kappaPyr = 2.000000    IModels.training = 0    I1.logLambda = -4.000000    I1.meanIndelLengthMinus1 = 3.520812    Scale1.d1 = 0.041715    Scale1.d2 = 0.122842    Scale1.d3 = 0.105224    Scale1.d4 = 0.004169    Scale1.d5 = 1.597380    Scale1.d6 = 0.065663    Scale1.d7 = 0.933936    branchCat1 = 0    branchCat2 = 0    branchCat3 = 0    branchCat4 = 0    branchCat5 = 0    branchCat6 = 0    branchCat7 = 0    P1.a0 = unprintable[pairwise_alignment_t]    P1.a1 = unprintable[pairwise_alignment_t]    P1.a2 = unprintable[pairwise_alignment_t]    P1.a3 = unprintable[pairwise_alignment_t]    P1.a4 = unprintable[pairwise_alignment_t]    P1.a5 = unprintable[pairwise_alignment_t]    P1.a6 = unprintable[pairwise_alignment_t]    P1.a7 = unprintable[pairwise_alignment_t]    P1.a8 = unprintable[pairwise_alignment_t]    P1.a9 = unprintable[pairwise_alignment_t]    P1.a10 = unprintable[pairwise_alignment_t]    P1.a11 = unprintable[pairwise_alignment_t]    P1.a12 = unprintable[pairwise_alignment_t]    P1.a13 = unprintable[pairwise_alignment_t]    I1.lengthpArg = 124    Tree.branchNodes0 = (,)    Tree.branchNodes1 = (,)    Tree.branchNodes10 = (,)    Tree.branchNodes11 = (,)    Tree.branchNodes12 = (,)    Tree.branchNodes13 = (,)    Tree.branchNodes2 = (,)    Tree.branchNodes3 = (,)    Tree.branchNodes4 = (,)    Tree.branchNodes5 = (,)    Tree.branchNodes6 = (,)    Tree.branchNodes7 = (,)    Tree.branchNodes8 = (,)    Tree.branchNodes9 = (,)    Tree.nodeBranches0 = unprintable[Box<std::vector<int, std::allocator<int> > >]    Tree.nodeBranches1 = unprintable[Box<std::vector<int, std::allocator<int> > >]    Tree.nodeBranches2 = unprintable[Box<std::vector<int, std::allocator<int> > >]    Tree.nodeBranches3 = unprintable[Box<std::vector<int, std::allocator<int> > >]    Tree.nodeBranches4 = unprintable[Box<std::vector<int, std::allocator<int> > >]    Tree.nodeBranches5 = unprintable[Box<std::vector<int, std::allocator<int> > >]    Tree.nodeBranches6 = unprintable[Box<std::vector<int, std::allocator<int> > >]    Tree.nodeBranches7 = unprintable[Box<std::vector<int, std::allocator<int> > >]
