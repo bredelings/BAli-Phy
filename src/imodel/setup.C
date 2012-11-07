@@ -59,7 +59,7 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
     expression_ref epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
     expression_ref lambda = (var("exp"), log_lambda);
     expression_ref lambda_scale = (var("exp"), log_lambda_scale);
-    expression_ref rate = (var("If"), v2==lambda_scale_branch,lambda*lambda_scale,lambda);
+    expression_ref rate = (var("If"), (var("=="),v2,lambda_scale_branch),lambda*lambda_scale,lambda);
     expression_ref heat = parameter("Heat.beta");
     expression_ref training = parameter("IModels.training");
 
