@@ -519,6 +519,36 @@ closure Equals::operator()(OperationArgs& Args) const
     throw myexception()<<"Equals: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
 }
 
+closure NotEquals::operator()(OperationArgs& Args) const
+{
+  object_ref x = Args.evaluate(0);
+  object_ref y = Args.evaluate(1);
+  
+  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
+  {
+    object_ptr<const Double> yd = convert<const Double>(y);
+    return (*xd) != (*yd);
+  }
+
+  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
+  {
+    object_ptr<const Int> yi = convert<const Int>(y);
+    return (*xi) != (*yi);
+  }
+  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
+  {
+    object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
+    return (*xld) != (*yld);
+  }
+  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
+  {
+    object_ptr<const Char> yc = convert<const Char>(y);
+    return (*xc) != (*yc);
+  }
+  else
+    throw myexception()<<"NotEquals: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
+}
+
 closure GreaterThan::operator()(OperationArgs& Args) const
 {
   object_ref x = Args.evaluate(0);
@@ -656,4 +686,5 @@ def_binary_operator2(/,Divide)
 def_binary_operator2(<,LessThan)
 def_binary_operator2(>,GreaterThan)
 def_binary_operator2(==,Equals)
+def_binary_operator2(!=,NotEquals)
 #undef def_binary_operator2

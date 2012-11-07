@@ -527,6 +527,30 @@ struct Equals: public Operation
   Equals():Operation(2) {}
 };
 
+struct NotEquals: public Operation
+{
+  // The 'context' should include the knowledge of the input slots
+  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
+  virtual NotEquals* clone() const {return new NotEquals(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const NotEquals* E = dynamic_cast<const NotEquals*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string print_expression(const std::vector<std::string>& inputs) const
+  {
+    return print_infix_expression(inputs);
+  }
+
+  std::string name() const {return "/=";}
+
+  NotEquals():Operation(2) {}
+};
+
 template<typename X, typename Y>
 struct Conversion: public Operation
 {
@@ -701,6 +725,7 @@ def_binary_operator1(/,Divide)
 def_binary_operator1(<,LessThan)
 def_binary_operator1(>,GreaterThan)
 def_binary_operator1(==,Equals)
+def_binary_operator1(!=,NotEquals)
 #undef def_binary_operator1
 
 struct Log_Op: public Operation
