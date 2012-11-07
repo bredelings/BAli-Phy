@@ -312,4 +312,5 @@ object_ptr<T> convert(const object_ptr<const Object>& o)
 #endif
 }
 
+object_ref parse_object(const std::string& s);
 #endif

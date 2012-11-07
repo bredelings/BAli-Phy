@@ -192,6 +192,8 @@ void operator delete(void * p) throw() {
 }
 #endif
 
+// How to record that the user said e.g. "fix the alignment"?  Or, fix parameter X?  Should we?
+
 variables_map parse_cmd_line(int argc,char* argv[]) 
 { 
   using namespace po;
@@ -235,9 +237,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("randomize-alignment","Randomly realign the sequences before use.")
     ("unalign-all","Unalign all sequences sequences before use.")
     ("tree",value<string>(),"File with initial tree")
-    ("set",value<vector<string> >()->composing(),"Set parameter=<initial value>")
-    ("fix",value<vector<string> >()->composing(),"Fix parameter[=<value>]")
-    ("unfix",value<vector<string> >()->composing(),"Un-fix parameter[=<initial value>]")
+    ("initial-value",value<vector<string> >()->composing(),"Set parameter=<initial value>")
+    ("set",value<vector<string> >()->composing(),"Set key=<value>")
     ("frequencies",value<string>(),"Initial frequencies: 'uniform','nucleotides', or a comma-separated vector.")
     ("BUGS",value<string>(),"File containing heirarchical model description.")
     ("Rao-Blackwellize",value<string>(),"Parameter names to print Rao-Blackwell averages for.")
@@ -300,8 +301,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
   return args;
 }
 
-//FIXME - how to record that the user said '--fix A' ?
-
 int parameter_with_extension(const Model& M, const string& name)
 {
   vector<int> indices = parameters_with_extension(M, name);
@@ -320,74 +319,35 @@ int parameter_with_extension(const Model& M, const string& name)
 }
 
 /// Parse command line arguments of the form --fix X=x or --unfix X=x or --set X=x and modify P
-void set_parameters(Parameters& P, const variables_map& args) 
+void set_initial_parameter_values(Parameters& P, const variables_map& args) 
 {
   //-------------- Specify fixed parameters ----------------//
-  vector<string>   fix;
-  if (args.count("fix"))
-    fix = args["fix"].as<vector<string> >();
-
-  vector<string> unfix;
-  if (args.count("unfix"))
-    unfix = args["unfix"].as<vector<string> >();
-
   vector<string> doset;
-  if (args.count("set"))
-    doset = args["set"].as<vector<string> >();
-
-  // separate out 'set' operations from 'fixed'
-  for(int i=0;i<fix.size();i++) {
-    vector<string> parse = split(fix[i],'=');
-    
-    if (parse.size() > 1) {
-      doset.push_back(fix[i]);
-      fix[i] = parse[0];
-    }
-  }
-
-  // separate out 'set' operations from 'unfixed'
-  for(int i=0;i<unfix.size();i++) {
-    vector<string> parse = split(unfix[i],'=');
-    
-    if (parse.size() > 1) {
-      doset.push_back(unfix[i]);
-      unfix[i] = parse[0];
-    }
-  }
-
-  // fix parameters
-  for(int i=0;i<fix.size();i++) {
-    int p=-1;
-    if (p=parameter_with_extension(P,fix[i]),p!=-1)
-      P.set_fixed(p,true);
-    else
-      throw myexception()<<"Can't find parameter '"<<fix[i]<<"' to fix.";
-  }
-
-  // unfix parameters
-  for(int i=0;i<unfix.size();i++) {
-    int p=-1;
-    if (p=parameter_with_extension(P,unfix[i]),p!=-1)
-      P.set_fixed(p,false);
-    else
-      throw myexception()<<"Can't find parameter '"<<unfix[i]<<"' to unfix.";
-  }
+  if (args.count("initial-value"))
+    doset = args["initial-value"].as<vector<string> >();
 
   // set parameters
-  for(int i=0;i<doset.size();i++) {
+  for(const auto& arg: doset)
+  {
     //parse
-    vector<string> parse = split(doset[i],'=');
+    vector<string> parse = split(arg,'=');
     if (parse.size() != 2)
-      throw myexception()<<"Ill-formed initial condition '"<<doset[i]<<"'.";
+      throw myexception()<<"Ill-formed initial condition '"<<arg<<"'.";
 
     string name = parse[0];
-    Double value = convertTo<double>(parse[1]);
+    object_ref value;
+    try {
+      value = parse_object(parse[1]);
+    }
+    catch (myexception& e)
+    {
+      std::ostringstream o;
+      o<<"Setting parameter '"<<name<<"': ";
+      e.prepend(o.str());
+      throw e;
+    }
 
-    int p=-1;
-    if (p=parameter_with_extension(P,name),p!=-1)
-      P.set_parameter_value(p,value);
-    else
-      P.keys[name] = value;
+    P.set_parameter_value(name,value);
   }
 
   P.recalc_all();
@@ -1416,7 +1376,7 @@ int main(int argc,char* argv[])
     //-------------Create the Parameters object--------------//
     Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
 
-    set_parameters(P,args);
+    set_initial_parameter_values(P,args);
 
     set_lambda_scale_branch_parameters(P,args);
 
