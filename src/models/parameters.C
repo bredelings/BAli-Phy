@@ -1286,7 +1286,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
     string parameter_name = "Tree.branchNodes"+convertToString(b);
 
-    C.set_parameter_value(parameter_name, Tuple(source, target) );
+    C.set_parameter_value_expression(parameter_name, Tuple(source, target) );
   }
 
   for(int b=0; b < 2*T->n_branches(); b++)
