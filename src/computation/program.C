@@ -300,12 +300,25 @@ std::ostream& operator<<(std::ostream& o, const Def& D)
   return o;
 }
 
+vector<string> haskell_name_path(const std::string& s)
+{
+  if (s == ".") return {s};
+  else if (s.size() >= 2 and s.substr(s.size()-2,2) == "..")
+  {
+    vector<string> path = split(s.substr(0,s.size()-2),'.');
+    path.push_back(".");
+    return path;
+  }
+  else
+    return split(s,'.');
+}
+
 vector<string> get_haskell_identifier_path(const std::string& s)
 {
   if (not s.size())
     throw myexception()<<"Empty string is not a legal Haskell identifier!";
 
-  vector<string> path = split(s, '.');
+  vector<string> path = haskell_name_path(s);
 
   for(int i=0;i<path.size()-1;i++)
     if (not is_haskell_conid(path[i]))
@@ -381,7 +394,7 @@ bool is_haskell_consym(const string& s)
 
 bool is_haskell_var_name(const std::string& s)
 {
-  vector<string> path = split(s,'.');
+  vector<string> path = haskell_name_path(s);
   if (path.empty()) return false;
   if (not is_haskell_varid(path.back())) return false;
   for(int i=0;i<path.size()-1;i++)
@@ -399,7 +412,7 @@ bool is_haskell_builtin_con_name(const std::string& s)
 
 bool is_haskell_normal_con_name(const std::string& s)
 {
-  vector<string> path = split(s,'.');
+  vector<string> path = haskell_name_path(s);
   if (path.empty()) return false;
   if (not is_haskell_varid(path.back())) return false;
   for(int i=0;i<path.size()-1;i++)
