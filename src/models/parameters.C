@@ -1289,6 +1289,20 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
     C.set_parameter_value(parameter_name, Tuple(source, target) );
   }
+
+  for(int b=0; b < 2*T->n_branches(); b++)
+  {
+    vector<const_branchview> branch_list;
+    append(T->directed_branch(b).branches_before(),branch_list);
+    vector<int> branch_list_;
+    for(auto b: branch_list)
+      branch_list_.push_back(b);
+
+    auto b2 = convert<const Vector<int>>(C.evaluate_expression( (var("listToVectorInt"),((var("edgesBeforeEdge"),var("Tree.tree"),b)))))->t;
+    assert(b2.size() == branch_list_.size());
+    for( int i: branch_list_)
+      assert(includes(b2,i));
+  }
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
