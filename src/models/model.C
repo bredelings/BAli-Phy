@@ -345,18 +345,6 @@ void Model::set_parameter_values(const vector<int>& indices,const vector<object_
   update();
 }
 
-void Model::set_parameter_values(const vector<Double>& p) 
-{
-  assert(p.size() == n_parameters());
-  set_parameter_values(iota<int>(n_parameters()), p);
-}
-
-void Model::set_parameter_values(const vector<object_ptr<const Object> >& p) 
-{
-  assert(p.size() == n_parameters());
-  set_parameter_values(iota<int>(n_parameters()), p);
-}
-
 unsigned Model::n_parameters() const 
 {
   return C.n_parameters();

@@ -190,10 +190,6 @@ public:
           void set_parameter_values(const std::vector<int>& indices,const std::vector<Double>& p);
   /// Set SOME of the model parameter values
           void set_parameter_values(const std::vector<int>& indices,const std::vector<object_ptr<const Object> >& p);
-  /// Set ALL model parameter values
-          void set_parameter_values(const std::vector<Double>& p);
-  /// Set ALL model parameter values
-          void set_parameter_values(const std::vector<object_ptr<const Object> >& p);
 
   unsigned n_parameters() const;
 
