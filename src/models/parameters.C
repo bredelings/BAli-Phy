@@ -1282,7 +1282,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   for(int b=0; b < 2*T->n_branches(); b++)
   {
     int source = T->directed_branch(b).source();
-    int target = T->directed_branch(b).source();
+    int target = T->directed_branch(b).target();
 
     string parameter_name = "Tree.branchNodes"+convertToString(b);
 
