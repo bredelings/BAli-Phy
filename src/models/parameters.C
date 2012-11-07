@@ -1289,6 +1289,11 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     C.set_parameter_value_expression(C.find_parameter(parameter_name), Tuple(source, target) );
   }
 
+  C.evaluate_expression( (var("numNodes"), var("Tree.tree")));
+  C.evaluate_expression( (var("numBranches"), var("Tree.tree")));
+  C.evaluate_expression( (var("edgesOutOfNode"), var("Tree.tree"), 0));
+  C.evaluate_expression( (var("neighbors"), var("Tree.tree"), 0));
+  int nn = *convert<const Int>(C.evaluate_expression( (var("edgeForNodes"), var("Tree.tree"), (var("nodesForEdge"),var("Tree.tree"), 0))));
   for(int b=0; b < 2*T->n_branches(); b++)
   {
     vector<const_branchview> branch_list;
