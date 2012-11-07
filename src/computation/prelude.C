@@ -208,6 +208,31 @@ Program make_Prelude()
   P += Def( (var("listFromVectorInt"), v1), (var("listFromVectorInt'"),v1,(var("sizeOfVectorInt"),v1),0));
 
 
+  //--------------------------------------- listToVectorInt ---------------------------------------//
+
+  P.def_function("builtinNewVectorInt", 1, lambda_expression( BuiltinNewVectorOp<int>() ) ); 
+  P.def_function("builtinSetVectorIndexInt", 3, lambda_expression( BuiltinSetVectorIndexOp<int,Int>() ) ); 
+
+  const expression_ref builtinNewVectorInt = var("builtinNewVectorInt");
+  const expression_ref builtinSetVectorIndexInt = var("builtinSetVectorIndexInt");
+
+  P += Def( (var("newVectorInt"), v1), (IOAction1, builtinNewVectorInt, v1));
+
+  P += Def( (var("setVectorIndexInt"), v1, v2, v3), (IOAction3, builtinSetVectorIndexInt, v1, v2, v3));
+
+  const expression_ref listToVectorInt = var("listToVectorInt");
+  const expression_ref copyListToVectorInt = var("copyListToVectorInt");
+  // listToVectorInt l = do { v <- newVectorInt (length l); copyListToVector l v 0 ; return v;}
+  // listToVectorInt l = newVectorInt (length l) <<= (\v -> copyListToVector l v 0 << return v;)
+  P += Def( (listToVectorInt, v1), (unsafePerformIO, (IOAndPass, (var("newVectorInt"), (length, v1)),
+							 lambda_quantify(v2,(IOAnd,(copyListToVectorInt, v1, v2, 0),(IOReturn, v2))) ) ) );
+
+  // copyListToVectorInt [] v i = return ()
+  // copyListToVectorInt h:t v i = do { setVectorIndexInt v i h ; copyListToVectorInt t v (i+1) }
+  // copyListToVectorInt h:t v i = setVectorIndexInt v i h << copyListToVectorInt t v (i+1)
+  P += Def( (copyListToVectorInt, ListEnd, v3, v4), (IOReturn, constructor("()",0)))
+    ( (copyListToVectorInt, v1&v2  , v3, v4), (IOAnd,(var("setVectorIndexInt"), v3, v4, v1),(copyListToVectorInt, v2,v3,(v4+1))));
+
   //--------------------------------------- listToVectorDouble ---------------------------------------//
 
   P.def_function("builtinNewVectorDouble", 1, lambda_expression( BuiltinNewVectorOp<double>() ) ); 
