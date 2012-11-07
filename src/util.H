@@ -49,12 +49,7 @@ template <class T>
 bool can_be_converted_to(const std::string& s, T& t) 
 { 
   std::istringstream i(s);
-  i>>std::boolalpha;
-  i>>t;
-  if (i and i.eof())
-    return true;
-  else
-    return false;
+  return i>>std::boolalpha>>t and i.peek() == std::istream::traits_type::eof();
 }
 
 template <class T>
