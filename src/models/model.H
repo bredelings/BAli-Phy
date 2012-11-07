@@ -47,15 +47,14 @@ struct Parameter
   std::string name;
   object_ref value;
   Bounds<double> bounds;
-  bool fixed;
 
   Parameter(const std::string&);
+
   Parameter(const std::string&, object_ptr<const Object>);
-  Parameter(const std::string&, object_ptr<const Object>, const Bounds<double>&, bool=false);
+  Parameter(const std::string&, object_ptr<const Object>, const Bounds<double>&);
 
   Parameter(const std::string&, const Object&);
-  Parameter(const std::string&, const Object&, bool);
-  Parameter(const std::string&, const Object&, const Bounds<double>&, bool=false);
+  Parameter(const std::string&, const Object&, const Bounds<double>&);
 };
 
 
@@ -91,7 +90,6 @@ protected:
 
   mutable std::vector<bool> changed;
   std::vector< Bounds<double> > bounds;
-  std::vector< bool > fixed;
   std::vector< int> prior_note_index;
 
   int prior_index;
@@ -133,8 +131,6 @@ public:
   void rename_parameter(int i, const std::string& s);
   int find_parameter(const std::string& s) const;
 
-  bool is_fixed(int i) const;
-  void set_fixed(int i,bool f);
   bool is_random_variable(int i) const;
 
   const Bounds<double>& get_bounds(int i) const;

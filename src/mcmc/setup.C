@@ -88,7 +88,6 @@ void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector
   {
     int index = P.find_parameter(parameter_name);
     assert(index != -1);
-    if (P.is_fixed(index)) continue;
 
     Proposal2 proposal2(proposal, parameter_name, pnames, P);
 
@@ -180,8 +179,6 @@ void add_slice_moves(Probability_Model& P, const string& name,
   vector<int> indices = parameters_with_extension(P,name);
   for(int i=0;i<indices.size();i++) 
   {
-    if (P.is_fixed(indices[i])) continue;
-
     string parameter_name = P.parameter_name(indices[i]);
 
     add_slice_move(P, parameter_name, M, weight);
@@ -201,8 +198,6 @@ void add_slice_moves(Probability_Model& P, const string& name,
   vector<int> indices = parameters_with_extension(P,name);
   for(int i=0;i<indices.size();i++) 
   {
-    if (P.is_fixed(indices[i])) continue;
-
     string parameter_name = P.parameter_name(indices[i]);
 
     add_slice_move(P, parameter_name, M);

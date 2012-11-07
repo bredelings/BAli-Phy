@@ -538,8 +538,6 @@ namespace MCMC {
 
   void Parameter_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
-    if (P->is_fixed(index)) return;
-
     double v1 = P->get_parameter_value_as<Double>(index);
 
     parameter_slice_function logp(*P,index,transform,inverse);
@@ -580,9 +578,6 @@ namespace MCMC {
 
   void Dirichlet_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
-    for(int i=0;i<indices.size();i++)
-      if (P->is_fixed(indices[i])) return;
-
     double v1 = P->get_parameter_value_as<Double>(indices[n]);
     constant_sum_slice_function slice_levels_function(*P,indices,n);
 
@@ -622,9 +617,7 @@ namespace MCMC {
   void Scale_Means_Only_Slice_Move::iterate(owned_ptr<Probability_Model>& P, MoveStats& Stats,int)
   {
     Parameters& PP = *P.as<Parameters>();
-    // If any of the branch means are fixed, then bail
-    for(int i=0;i<PP.n_branch_means();i++)
-      if (PP.is_fixed(i)) return;
+    // If any of the branch means are fixed, this won't work.
 
     double v1 = 0;
     try

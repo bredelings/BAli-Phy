@@ -230,8 +230,6 @@ scale_means_only_slice_function::scale_means_only_slice_function(Parameters& P_)
   for(int i=0; i<P.n_branch_means(); i++)
   {
     Bounds<double> b2 = P.get_bounds(P.branch_mean_index(i));
-    if (P.is_fixed(P.branch_mean_index(i)))
-      throw myexception()<<"One of the means is fixed";
 
     if (b2.has_lower_bound and b2.lower_bound > 0)
     {

@@ -42,32 +42,27 @@ string parameter_name(const string& prefix, int i,int n)
 }
 
 Parameter::Parameter(const string& n)
-  :name(n), fixed(false)
+  :name(n)
 {
 }
 
 Parameter::Parameter(const string& n, object_ptr<const Object> v)
-  :name(n), value(v), fixed(false)
+  :name(n), value(v)
 {
 }
 
-Parameter::Parameter(const string& n, object_ptr<const Object> v, const Bounds<double>& b, bool f)
-  :name(n), value(v), bounds(b), fixed(f)
+Parameter::Parameter(const string& n, object_ptr<const Object> v, const Bounds<double>& b)
+  :name(n), value(v), bounds(b)
 {
 }
 
 Parameter::Parameter(const string& n, const Object& v)
-  :name(n), value(v), fixed(false)
+  :name(n), value(v)
 {
 }
 
-Parameter::Parameter(const string& n, const Object& v, bool f)
-  :name(n), value(v), fixed(f)
-{
-}
-
-Parameter::Parameter(const string& n, const Object& v, const Bounds<double>& b, bool f)
-  :name(n), value(v), bounds(b), fixed(f)
+Parameter::Parameter(const string& n, const Object& v, const Bounds<double>& b)
+  :name(n), value(v), bounds(b)
 {
 }
 
@@ -138,7 +133,6 @@ int Model::add_parameter(const Parameter& P)
   C.add_parameter(P.name);
   changed.push_back(true);
   bounds.push_back(P.bounds);
-  fixed.push_back(P.fixed);
   prior_note_index.push_back(-1);
 
   if (P.value)
@@ -285,16 +279,6 @@ int Model::add_note(const expression_ref& E)
 bool Model::is_random_variable(int i) const
 {
   return prior_note_index[i] != -1;
-}
-
-bool Model::is_fixed(int i) const
-{
-  return fixed[i];
-}
-
-void Model::set_fixed(int i,bool f)
-{
-  fixed[i] = f;
 }
 
 const Bounds<double>& Model::get_bounds(int i) const 
@@ -471,8 +455,6 @@ void Model::update()
 void show_parameters(std::ostream& o,const Model& M) {
   for(int i=0;i<M.n_parameters();i++) {
     o<<"    ";
-    if (M.is_fixed(i)) 
-      o<<"*";
     o<<M.parameter_name(i)<<" = ";
     string output="[NULL]";
     if (M.get_parameter_value(i))
