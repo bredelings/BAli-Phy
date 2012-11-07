@@ -250,6 +250,8 @@ public:
 
   Bool operator==(const POD_math<T>& t2) const {return t == T(t2);}
   Bool operator==(const T& t2)           const {return t == T(t2);}
+  Bool operator!=(const POD_math<T>& t2) const {return t != T(t2);}
+  Bool operator!=(const T& t2)           const {return t != T(t2);}
   Bool operator>(const POD_math<T>& t2)  const {return t > T(t2);}
   Bool operator>(const T& t2)            const {return t > T(t2);}
   Bool operator>=(const POD_math<T>& t2) const {return t >= T(t2);}
