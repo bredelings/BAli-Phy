@@ -685,6 +685,7 @@ def_binary_operator2(*,Multiply)
 def_binary_operator2(/,Divide)
 def_binary_operator2(<,LessThan)
 def_binary_operator2(>,GreaterThan)
-def_binary_operator2(==,Equals)
-def_binary_operator2(!=,NotEquals)
+// These operators should check equality of memory addresses, not construct a new expression_ref!
+//def_binary_operator2(==,Equals)
+//def_binary_operator2(!=,NotEquals)
 #undef def_binary_operator2

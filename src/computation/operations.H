@@ -724,8 +724,8 @@ def_binary_operator1(*,Multiply)
 def_binary_operator1(/,Divide)
 def_binary_operator1(<,LessThan)
 def_binary_operator1(>,GreaterThan)
-def_binary_operator1(==,Equals)
-def_binary_operator1(!=,NotEquals)
+//def_binary_operator1(==,Equals)
+//def_binary_operator1(!=,NotEquals)
 #undef def_binary_operator1
 
 struct Log_Op: public Operation
