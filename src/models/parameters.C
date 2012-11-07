@@ -1258,7 +1258,13 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   // edgesBeforeEdge t b = let (n1,n2) = nodesForEdge t b in 
   //                            [edgeForNodes (n,n1) | n <- neighbors t n1, n /= n2 ]
-
+  tree_program += Def( (var("edgesBeforeEdge"), v1, v2), case_expression((var("nodesForEdge"),v1,v2),Tuple(v3,v4),
+									  (var("concatMap"),
+									   v5^(If,(var("/="),v5,v4), (var("edgeForNodes"),v1,Tuple(v5,v3))&ListEnd, ListEnd),
+									   (var("neighbors"),v1,v3)
+									   )
+									  )
+		       );
 
   C += tree_program;
 
