@@ -86,6 +86,17 @@ Program make_Prelude()
           ( (fmap2, v1, Tuple(v2,v3)&v4), Tuple(v2,(v1,v3)) & (fmap2, v1, v4) )
           ( (fmap2, v1, (DiscreteDistribution,v2)), (DiscreteDistribution,(fmap2,v1,v2)));
 
+  // (f . g) x = f (g x)
+  P += Def( (var("."), v1, v2, v3)    , (v1, (v2, v3)) );
+
+  // concat xs = foldr (++) [] xs
+  P += Def( (var("concat"), v1)    , (var("foldr"),var("++"),ListEnd,v1) );
+  
+
+  // concatMap f = concat . map f
+  P += Def( (var("concatMap"), v1)    , (var("."), var("concat"), (var("fmap"), v1) ) );
+  
+
   // sum [] = 0
   // sum h:t = h+(sum t)
   expression_ref plus = lambda_expression( Add() );
@@ -271,7 +282,7 @@ infixr 9 .
 (.) :: (b -> c) -> (a -> b) -> (a -> c)
 (f . g) x = f (g x)
   */
-  //  P.declare_fixity(".", 9, left_fix);
+  P.declare_fixity(".", 9, left_fix);
 
   //  P.declare_fixity("^", 8, right_fix);
   //  P.declare_fixity("^^", 8, right_fix);
@@ -298,7 +309,8 @@ infixr 9 .
 
   P.def_function("==", 2, lambda_expression( Equals() ) );
   P.declare_fixity("==", 5, non_fix);
-  //  P.declare_fixity("/=", 5, non_fix);
+  P.def_function("/=", 2, lambda_expression( NotEquals() ) );
+  P.declare_fixity("/=", 5, non_fix);
   P.def_function("<", 2, lambda_expression( LessThan() ) );
   P.declare_fixity("<", 5, non_fix);
   //  P.declare_fixity("<=", 5, non_fix);
