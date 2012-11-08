@@ -1403,19 +1403,60 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
     {
       changed = do_substitute(T, D, E2) or changed;
 
-      const int L = (E1->size()-1)/2;
-
-      for(int i=0;i<L;i++)
+      for(int i=0;i<patterns.size();i++)
       {
 	// don't substitute into subtree where this variable is bound
 	std::set<dummy> bound = get_free_indices(patterns[i]);
 
 	bool D_is_bound = false;
 	for(const auto& b: bound)
-	  if (D->is_exactly(b)) D_is_bound=true;
+	  if (D->is_exactly(b)) continue;
 
-	if (not D_is_bound)
-	  changed = do_substitute(bodies[i], D, E2) or changed;
+	std::set<dummy> fv2 = get_free_indices(E2);
+	std::set<dummy> overlap = intersection(bound,fv2);
+    
+	// If some of the free variables in E2 are bound in patterns[i], then do 
+	// alpha-renaming on (patterns[i],bodies[i]), to avoid name capture.
+	if (not overlap.empty())
+	{
+	  // Determine the free variables of {patterns[i],bodies[i]} so that we can avoid them in alpha renaming
+	  std::set<dummy> fv1 = get_free_indices(bodies[i]);
+	  for(const auto& b: bound)
+	    fv1.erase(b);
+	  
+	  // If bodies[i] does not contain D, we won't do any substitution anyway, so avoid alpha renaming.
+	  // Since D is not bound by patterns, we just need to check if D is in fv1 = fv(body)-fv(pattern).
+	  if (object_ptr<const dummy> D2 = is_a<dummy>(D))
+	  {
+	    if (fv1.find(*D2) == fv1.end()) continue;
+	  }
+	  
+	  // Compute the total set of free variables to avoid clashes with when alpha renaming.
+	  add(fv2, fv1);
+	  
+	  // we don't want to rename on top of any other variables bound here
+	  int new_index = std::max(max_index(fv2),max_index(bound))+1;
+	  
+	  // Do the alpha renaming
+	  for(const auto& o:overlap) 
+	  {
+	    patterns[i] = substitute(patterns[i], dummy(o), dummy(new_index));
+	    bodies[i] = substitute(bodies[i], dummy(o), dummy(new_index));
+	    new_index++;
+	  }
+	  changed = true;
+	  
+	  // We rename a bound variable dummy(i) in patterns[i]/bodies[i] that is free in E2 to a new variable dummy(new_index)
+	  //   that is not bound or free in the initial version of patterns[i]/bodies[i] and free in E2.
+	  
+	  // The conditions are therefore:
+	  //   dummy(*i) must be bound in patterns[i]
+	  //   dummy(new_index) must be neither bound nor free in E1
+	  //   dummy(new_index) must not be free in E2
+	}
+
+	// assert that D contains no free variables that are bound in patterns[i]
+	changed = (do_substitute(bodies[i], D, E2) or changed);
       }
 
       if (changed)
