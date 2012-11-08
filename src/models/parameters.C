@@ -1244,7 +1244,11 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   tree_program += Def( (var("findFirst"),v1,v2&v3), (If,(v1,v2),v2,(var("findFirst"),v1,v3)) );
 
   // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t s), target t b == n2]
-  tree_program += Def( (var("edgeForNodes"),v3,Tuple(v1,v2)), (var("findFirst"),(var("edgesOutOfNode"),v3,v1),v4^(var("=="),(var("targetNode"),v3,v4),v2)));
+  tree_program += Def( (var("edgeForNodes"),v3,Tuple(v1,v2)), (var("findFirst"),
+							       v4^(var("=="),(var("targetNode"),v3,v4),v2),
+							       (var("edgesOutOfNode"),v3,v1)
+							       )
+		       );
 
   // reverseEdge t b = edgeForNodes t (swap (nodesForEdge t b))
   tree_program += Def( (var("reverseEdge"),v1,v2), (var("edgeForNodes"),v1, (var("swap"),(var("nodesForEdge"),v1, v2) ) ) );
@@ -1293,6 +1297,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   C.evaluate_expression( (var("numBranches"), var("Tree.tree")));
   C.evaluate_expression( (var("edgesOutOfNode"), var("Tree.tree"), 0));
   C.evaluate_expression( (var("neighbors"), var("Tree.tree"), 0));
+  C.evaluate_expression( (var("nodesForEdge"),var("Tree.tree"), 0));
   int nn = *convert<const Int>(C.evaluate_expression( (var("edgeForNodes"), var("Tree.tree"), (var("nodesForEdge"),var("Tree.tree"), 0))));
   for(int b=0; b < 2*T->n_branches(); b++)
   {
