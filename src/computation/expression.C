@@ -649,7 +649,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 
       int index = find_index_backward(variables, *D);
       if (index == -1)
-	throw myexception()<<"Dummy '"<<D<<"' is apparently not bound variables in '"<<E<<"'?";
+	throw myexception()<<"Dummy '"<<D<<"' is apparently not a bound variable in '"<<E<<"'?";
       else
 	return object_ptr<const index_var>(new index_var(index));
     }
