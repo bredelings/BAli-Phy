@@ -1243,10 +1243,10 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   // findFirst f h:t = if (f h) then h else findFirst f t
   tree_program += Def( (var("findFirst"),v1,v2&v3), (If,(v1,v2),v2,(var("findFirst"),v1,v3)) );
 
-  // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t s), target t b == n2]
-  tree_program += Def( (var("edgeForNodes"),v3,Tuple(v1,v2)), (var("findFirst"),
-							       v4^(var("=="),(var("targetNode"),v3,v4),v2),
-							       (var("edgesOutOfNode"),v3,v1)
+  // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
+  tree_program += Def( (var("edgeForNodes"),dummy("t"),Tuple(dummy("n1"),dummy("n2"))), (var("findFirst"),
+							       dummy("n")^(var("=="),(var("targetNode"),dummy("t"),dummy("n")),dummy("n2")),
+							       (var("edgesOutOfNode"),dummy("t"),dummy("n1"))
 							       )
 		       );
 
