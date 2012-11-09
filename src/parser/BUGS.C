@@ -63,9 +63,9 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 template <typename Iterator>
-struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
+struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 {
-    bugs_grammar() : bugs_grammar::base_type(bugs_line)
+    haskell_grammar() : haskell_grammar::base_type(exp)
     {
         using qi::lit;
         using qi::lexeme;
@@ -87,10 +87,6 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	using phoenix::construct;
 	using phoenix::new_;
 	using phoenix::val;
-
-	text %= +(char_ - ' ' -'(');
-	arguments %= lit('(')>>exp%','>>lit(')')|lit("()");
-	bugs_line %= exp >> '~' >> text >> arguments >> eoi ;
 
 	small %= char_("a-z");
 	large %= char_("A-Z");
@@ -405,43 +401,6 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	*/
 	on_error<fail>
 	  (
-	   bugs_line
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	// Add some error messages to see what's failing!
-	on_error<fail>
-	  (
-	   arguments
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   text
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
 	   exp
 	   , std::cout
 	   << val("Error! Expecting ")
@@ -652,6 +611,81 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
   qi::rule<Iterator, std::string(), ascii::space_type> impspec;
   qi::rule<Iterator, std::string(), ascii::space_type> import;
   
+};
+
+template <typename Iterator>
+struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
+{
+  qi::rule<Iterator, bugs_cmd(), ascii::space_type> bugs_line;
+  qi::rule<Iterator, std::string()> text;
+  qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> arguments;
+  haskell_grammar<Iterator> h;
+
+    bugs_grammar() : bugs_grammar::base_type(bugs_line)
+    {
+        using qi::lit;
+        using qi::lexeme;
+	using qi::on_error;
+	using qi::fail;
+        using ascii::char_;
+        using qi::double_;
+	using qi::eps;
+	using qi::eoi;
+        using ascii::string;
+        using namespace qi::labels;
+
+        using phoenix::at_c;
+        using phoenix::push_back;
+	using phoenix::begin;
+	using phoenix::end;
+	using phoenix::insert;
+	using phoenix::clear;
+	using phoenix::construct;
+	using phoenix::new_;
+	using phoenix::val;
+
+	text %= +(char_ - ' ' -'(');
+	arguments %= lit('(')>>h.exp%','>>lit(')')|lit("()");
+	bugs_line %= h.exp >> '~' >> text >> arguments >> eoi ;
+
+	on_error<fail>
+	  (
+	   bugs_line
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	// Add some error messages to see what's failing!
+	on_error<fail>
+	  (
+	   arguments
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   text
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+    }
 };
 
 //-----------------------------------------------------------------------//
