@@ -645,7 +645,7 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
     // Variable
     else if (object_ptr<const dummy> D = is_a<dummy>(E))
     {
-      assert(D->index != -1);
+      assert(not is_wildcard(E));
 
       int index = find_index_backward(variables, *D);
       if (index == -1)
@@ -701,11 +701,9 @@ expression_ref indexify(const expression_ref& E, const vector<dummy>& variables)
 	variables2.push_back(*assert_is_a<dummy>(P->sub[j]));
 
 #ifndef NDEBUG
-      if (object_ptr<const dummy> D = is_a<dummy>(P))
-      {
-	assert(D->index == -1);
-	assert(P->size() == 0);
-      }
+      // FIXME - I guess this doesn't handle case a of b -> f(b)?
+      if (is_dummy(P))
+	assert(is_wildcard(P));
 #endif
 
       P = P->head;
@@ -813,11 +811,8 @@ expression_ref deindexify(const expression_ref& E, const vector<object_ref>& var
       }
 
 #ifndef NDEBUG
-      if (object_ptr<const dummy> D = is_a<dummy>(P))
-      {
-	assert(D->index == -1);
-	assert(P->size() == 0);
-      }
+      if(is_dummy(P))
+	assert(is_wildcard(P));
 #endif
 
       patterns[i] = P;
@@ -1278,7 +1273,7 @@ std::set<dummy> get_free_indices(const expression_ref& E)
 
   // fv x = { x }
   if (object_ptr<const dummy> D = is_a<dummy>(E)) 
-    if (D->index != -1)
+    if (not is_wildcard(E))
       return {*D};
 
   // fv c = { }
@@ -1301,7 +1296,7 @@ std::set<dummy> get_free_indices(const expression_ref& E)
       add(S,free_i);
     }
     for(const auto& s: S)
-      assert(s.index != -1);
+      assert(not is_wildcard(s));
 
     return S;
   }
@@ -1313,9 +1308,8 @@ std::set<dummy> get_free_indices(const expression_ref& E)
   for(const auto& b: bound)
     S.erase(b);
 
-
   for(const auto& s: S)
-    assert(s.index != -1);
+    assert(not is_wildcard(s));
 
   return S;
 }
@@ -1962,7 +1956,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
       b2.push_back(b[r]);
 
       object_ptr<const dummy> d = is_a<dummy>(p[r][0]);
-      if (d->index == -1 and (d->name.size() == 0 or d->name == "_"))
+      if (is_wildcard(p[r][0]))
 	// This is a dummy.
 	; //assert(d->name.size() == 0);
       else
@@ -2287,14 +2281,21 @@ bool is_reglike(const expression_ref& E)
   return is_dummy(E) or is_parameter(E) or is_reg_var(E) or is_index_var(E) or is_var(E);
 }
 
+bool is_wildcard(const dummy& d)
+{
+  return (d.index < 0 and d.name.size() == -1);
+}
+
 // Remove in favor of is_dummy?
 bool is_wildcard(const expression_ref& E)
 {
-  object_ptr<const dummy> D = is_a<dummy>(E);
-  if (not D) return false;
-  if (D->name.size()) return false;
-
-  return (D->index < 0);
+  if (object_ptr<const dummy> D = is_a<dummy>(E))
+  {
+    assert(not E->size());
+    return is_wildcard(*D);
+  }
+  else
+    return false;
 }
 
 expression_ref launchbury_unnormalize(const expression_ref& E)

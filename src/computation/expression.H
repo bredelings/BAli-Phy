@@ -115,7 +115,7 @@ struct dummy: public Object
   bool operator<(const dummy&) const;
 
   dummy(int i):index(i) {}
-  dummy(const std::string& s):index(-1),name(s) {}
+  dummy(const std::string& s):index(-1),name(s) { assert(name != "_");}
 };
 
 struct reg_var: public Object
@@ -191,6 +191,8 @@ bool is_parameter(const expression_ref&);
 bool is_var(const expression_ref& R);
 
 bool is_reglike(const expression_ref& R);
+
+bool is_wildcard(const dummy& d);
 
 bool is_wildcard(const expression_ref&);
 
