@@ -706,7 +706,25 @@ vector<string> tokenize(const string& line)
   return tokens;
 }
 
-bugs_cmd parse_bugs_line(const Program& P, const string& line)
+expression_ref parse_haskell_line(const string& line)
+{
+  using boost::spirit::ascii::space;
+
+  string::const_iterator iter = line.begin();
+  haskell_grammar<string::const_iterator> haskell_parser;
+  expression_ref E;
+  if (phrase_parse(iter, line.end(), haskell_parser, space, E) and iter == line.end())
+    return E;
+
+  throw myexception()<<"Haskell pharse parse: only parsed "<<line.substr(0, iter-line.begin());
+}
+
+expression_ref parse_haskell_line(const Program& P, const string& line)
+{
+  return postprocess(P, parse_haskell_line(line));
+}
+
+bugs_cmd parse_bugs_line(const string& line)
 {
   using boost::spirit::ascii::space;
 
@@ -714,7 +732,22 @@ bugs_cmd parse_bugs_line(const Program& P, const string& line)
   bugs_grammar<string::const_iterator> bugs_parser;
   bugs_cmd cmd;
   if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
+    return cmd;
+
+  throw myexception()<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin());
+}
+
+bugs_cmd parse_bugs_line(const Program& P, const string& line)
+{
+  using boost::spirit::ascii::space;
+
+  bugs_grammar<string::const_iterator> bugs_parser;
+
+  bugs_cmd cmd;
+  try
   {
+    cmd = parse_bugs_line(line);
+
     std::cerr<<"BUGS phrase parse: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
     for(int i=0;i<cmd.arguments.size();i++)
     {
@@ -735,9 +768,10 @@ bugs_cmd parse_bugs_line(const Program& P, const string& line)
     }
     std::cerr<<")\n";
   }
-  else
-    std::cerr<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin())<<endl;
-
+  catch (const myexception& e)
+  {
+    std::cerr<<e.what()<<endl;
+  }
   return cmd;
 }
 
