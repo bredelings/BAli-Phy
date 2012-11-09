@@ -95,7 +95,7 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	small %= char_("a-z");
 	large %= char_("A-Z");
 	digit %= char_("0-9");
-	symbol %= char_("!#$%&*+./<=>?@") | char_('\\') | char_('^') | char_('|') | char_('-') | char_('~') | char_(':');
+	symbol %= char_("!#$%&*+./<=>?@\\^|~:") | char_('-');
 	special %= char_('(') | char_(')') | char_(',') | char_(';') | char_('[') | char_(']') | char_('`') | char_('{') | char_('}');
 	graphic %= small | large | symbol | digit | special | char_('"') | char_('\'');
 
