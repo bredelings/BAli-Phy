@@ -2283,7 +2283,7 @@ bool is_reglike(const expression_ref& E)
 
 bool is_wildcard(const dummy& d)
 {
-  return (d.index < 0 and d.name.size() == -1);
+  return (d.index < 0 and not d.name.size());
 }
 
 // Remove in favor of is_dummy?
