@@ -1962,8 +1962,9 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
       b2.push_back(b[r]);
 
       object_ptr<const dummy> d = is_a<dummy>(p[r][0]);
-      if (d->index == -1)
-	assert(d->name.size() == 0);
+      if (d->index == -1 and (d->name.size() == 0 or d->name == "_"))
+	// This is a dummy.
+	; //assert(d->name.size() == 0);
       else
 	// FIXME! What if x[0] isn't a var?
 	// Then if *d occurs twice, then we should use a let expression, right?
