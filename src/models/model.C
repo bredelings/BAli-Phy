@@ -390,7 +390,9 @@ Model::Model(const vector<expression_ref>& notes)
   :valid(false)
 {
   // 1. Create the parameters
-  std::set<string> names = find_named_parameters(notes);
+  std::set<string> names = find_declared_parameters(notes);
+  if (not includes(names, find_named_parameters(notes)))
+    throw myexception()<<"Some parameter is referenced, but not declared, at model creation!";
   
   for(const auto& name: names)
     add_parameter(name);
