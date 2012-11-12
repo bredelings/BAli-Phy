@@ -16,6 +16,7 @@ struct bugs_cmd
 };
 
 expression_ref parse_haskell_line(const std::string& line);
+expression_ref parse_haskell_line(const Program& P, const std::string& line);
 bugs_cmd parse_bugs_line(const std::string& line);
 bugs_cmd parse_bugs_line(const Program& P, const std::string& line);
 expression_ref postprocess(const Program& p, const expression_ref&);
