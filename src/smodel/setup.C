@@ -494,7 +494,7 @@ formula_expression_ref coerce_to_frequency_model(const formula_expression_ref& M
 						 const object_ptr<const alphabet>& /* a */,
 						 const shared_ptr< const valarray<double> >& /* frequencies */)
 {
-  if (is_exactly(M.result(SModel_Functions()), "ReversibleFrequency"))
+  if (is_exactly(M.result(SModel_Functions(),Distribution_Functions()), "ReversibleFrequency"))
     return M;
 
   throw myexception()<<": '"<<M.exp()<<"' is not an exchange model.";
@@ -515,22 +515,24 @@ formula_expression_ref coerce_to_RA(const formula_expression_ref& M,
 				    const object_ptr<const alphabet>& a,
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (is_exactly(M.result(SModel_Functions()), "F81"))
+  object_ref result = M.result(SModel_Functions(), Distribution_Functions());
+
+  if (is_exactly(result, "F81"))
     return M;
 
-  if (is_exactly(M.result(SModel_Functions()), "ReversibleMarkov"))
+  if (is_exactly(result, "ReversibleMarkov"))
     return M;
 
   try 
   {
-    if (is_exactly(M.result(SModel_Functions()), "ReversibleFrequency"))
+    if (is_exactly(result, "ReversibleFrequency"))
     {
       formula_expression_ref S = coerce_to_EM("",a,frequencies);
       
       return Reversible_Markov_Model(S,M);
     }
 
-    if (M.result_as<SymmetricMatrixObject>())
+    if (boost::dynamic_pointer_cast<const SymmetricMatrixObject>(result))
     {
       // If the frequencies.size() != alphabet.size(), this call will throw a meaningful exception.
       if (frequencies)
@@ -564,7 +566,7 @@ formula_expression_ref coerce_to_MM(const formula_expression_ref& M,
 				    const object_ptr<const alphabet>& a, 
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (M.exp() and is_exactly(M.result(SModel_Functions()), "MixtureModel"))
+  if (M.exp() and is_exactly(M.result(SModel_Functions(),Distribution_Functions()), "MixtureModel"))
     return M;
 
   try { 
@@ -594,7 +596,7 @@ formula_expression_ref coerce_to_MMM(const formula_expression_ref& M,
 				     const object_ptr<const alphabet>& a,
 				     const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (is_exactly(M.result(SModel_Functions()), "MixtureModels"))
+  if (is_exactly(M.result(SModel_Functions(),Distribution_Functions()), "MixtureModels"))
     return M;
 
   try { 

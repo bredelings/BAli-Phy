@@ -23,6 +23,8 @@ public:
 
   object_ptr<const Object> result(const Program&) const;
 
+  object_ptr<const Object> result(const Program&, const Program&) const;
+
   template <typename T>
   object_ptr<const T> result_as() const {return boost::dynamic_pointer_cast<const T>(result());}
 

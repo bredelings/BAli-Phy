@@ -89,6 +89,14 @@ object_ptr<const Object> formula_expression_ref::result(const Program& P) const
   return C.evaluate_expression(exp());
 }
 
+object_ptr<const Object> formula_expression_ref::result(const Program& P1, const Program& P2) const
+{
+  context C(get_notes());
+  C += P1;
+  C += P2;
+  return C.evaluate_expression(exp());
+}
+
 formula_expression_ref apply(const formula_expression_ref& F1, const expression_ref& E2)
 {
   formula_expression_ref F3(F1);
