@@ -99,11 +99,14 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	varid %= (small>>(*(small|large|digit|'\''))) - reservedid;
 	conid %= large>>(*(small|large|digit|'\''));
-	reservedid %= lit("case") | "class" | "data" | "default" | "deriving" | "do" | "else" |	"foreign" | "if" | "import" | "in" | "infix" | "infixl" | 	"infixr" | "instance" | "let" | "module" | "newtype" | "of" | 	"then" | "type" | "where" | "_";
+	reservedid_ %= lit("case") | "class" | "data" | "default" | "deriving" | "do" | "else" |	"foreign" | "if" | "import" | "in" | "infix" | "infixl" | 	"infixr" | "instance" | "let" | "module" | "newtype" | "of" | 	"then" | "type" | "where" | "_";
+	reservedid %= reservedid_ >> !graphic;
 
+	// here, we need to match "==", but not "="
 	varsym %= ((symbol-lit(':'))>>*symbol)-reservedop-dashes;
 	consym %= (char_(':')>>*symbol)-reservedop;
-	reservedop %= string("..") | string(":") | string("::") | string("=") | string("\\") | string("|") | string("<-") | string("->") | string("@") | string("~") | string("=>");
+	reservedop_ %= string("..") | string(":") | string("::") | string("=") | string("\\") | string("|") | string("<-") | string("->") | string("@") | string("~") | string("=>");
+	reservedop %= reservedop_ >> !graphic;
 
 	tyvar %= varid;
 	tycon %= conid;
@@ -471,10 +474,12 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
   qi::rule<Iterator, std::string()> varid;
   qi::rule<Iterator, std::string()> conid;
+  qi::rule<Iterator, std::string()> reservedid_;
   qi::rule<Iterator, std::string()> reservedid;
 
   qi::rule<Iterator, std::string()> varsym;
   qi::rule<Iterator, std::string()> consym;
+  qi::rule<Iterator, std::string()> reservedop_; // reserved operator
   qi::rule<Iterator, std::string()> reservedop; // reserved operator
 
   qi::rule<Iterator, std::string()> tyvar;
