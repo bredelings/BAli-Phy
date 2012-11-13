@@ -301,21 +301,26 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | "instance" >> -(scontext >> "=>") >> qtycls >> inst >> -("where" >> idecls)
 	  | "default" >> *type
 	  //	  | "foreign" >> fdecl
-	  | decl 
+	  //	  | decl 
 	  ;
 
-	decls %= lit('{') >> decl % ';' >> '}';
-	//	decl  %= gendecl | (funlhs | pat) >> rhs;
+	decls = lit('{') >> (decl[push_back(_a,_1)] % ';') >> '}' >> eps [ _val = new_<expression>(AST_node("Decls"), _a)  ];
+	decl  %= 
+	  //	  gendecl |
+	  (funlhs | pat) >> rhs;
 
 	// class declarations
 	cdecls %= lit('{') >> cdecl % ';' >> '}';
-	cdecl  %= gendecl | (funlhs | var) >> rhs;
+	//	cdecl  %= gendecl | (funlhs | var) >> rhs;
 
 	// instance declarations
 	idecls %= lit('{') >> idecl % ';' >> '}';
-	idecl  %= (funlhs | var) >> rhs | eps;
+	//	idecl  %= (funlhs | var) >> rhs | eps;
 
-	gendecl %= vars >> "::" >>  -(context >> "=>") >> type | fixity >> -h_integer >> ops | eps;
+	//	gendecl %= vars >> "::" >>  -(context >> "=>") >> type 
+	//	  | fixity >> -h_integer >> ops 
+	//	  | eps;
+
 	ops %= +op;
 	vars %= +var;
 	fixity %= string("infixl") | string("infixr") | string("infix");
@@ -557,8 +562,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string(), ascii::space_type> topdecls;
   qi::rule<Iterator, std::string(), ascii::space_type> topdecl;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> decls;
-  qi::rule<Iterator, std::string(), ascii::space_type> decl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> decls;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> decl;
 
   qi::rule<Iterator, std::string(), ascii::space_type> cdecls;
   qi::rule<Iterator, std::string(), ascii::space_type> cdecl;
@@ -600,9 +605,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string(), ascii::space_type> inst;
 
   /*----- Section 4.4.3 ------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> funlhs;
-  qi::rule<Iterator, std::string(), ascii::space_type> rhs;
-  qi::rule<Iterator, std::string(), ascii::space_type> gdrhs;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> funlhs;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> rhs;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> gdrhs;
 
   /*----- Section 5.1 ------*/
   qi::rule<Iterator, std::string(), ascii::space_type> impdecls;
