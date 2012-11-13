@@ -602,6 +602,8 @@ std::ostream& operator<<(std::ostream& o, const context& C)
 // note = (~ x D)
 // Pr_i = case D of ((prob_density _ density_op quantile_op), args) -> (density_op x args)
 
+// Maybe we should always just compute a new probability expression from scratch?
+// Then we would always know that our notes were consistent!
 int add_probability_expression(context& C)
 {
   expression_ref query = (distributed, match(0), match(1));
