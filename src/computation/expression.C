@@ -583,7 +583,7 @@ tribool constructor::compare(const Object& o) const
 constructor::constructor(const string& s, int n)
   :f_name(s), n_args_(n), assoc(assoc_none),prec(-1)
 {
-  
+  assert(is_haskell_con_name(s));
 }
 
 constructor left_assoc_constructor(const std::string& s,int prec)
