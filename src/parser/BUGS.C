@@ -99,13 +99,13 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	varid %= (small>>(*(small|large|digit|'\''))) - reservedid;
 	conid %= large>>(*(small|large|digit|'\''));
 	reservedid_ %= lit("case") | "class" | "data" | "default" | "deriving" | "do" | "else" |	"foreign" | "if" | "import" | "in" | "infix" | "infixl" | 	"infixr" | "instance" | "let" | "module" | "newtype" | "of" | 	"then" | "type" | "where" | "_";
-	reservedid %= reservedid_ >> !graphic;
+	reservedid %= reservedid_ >> !(small|large|digit|'\'');
 
 	// here, we need to match "==", but not "="
 	varsym %= ((symbol-lit(':'))>>*symbol)-reservedop-dashes;
 	consym %= (char_(':')>>*symbol)-reservedop;
 	reservedop_ %= string("..") | string(":") | string("::") | string("=") | string("\\") | string("|") | string("<-") | string("->") | string("@") | string("~") | string("=>");
-	reservedop %= reservedop_ >> !graphic;
+	reservedop %= reservedop_ >> !symbol;
 
 	tyvar %= varid;
 	tycon %= conid;
