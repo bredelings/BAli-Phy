@@ -173,7 +173,7 @@ closure bernoulli_prob::operator()(OperationArgs& Args) const
 }
 
 // Fields: n_random, n_parameters, string, density op
-expression_ref prob_density = lambda_expression( constructor("prob_density",3) );
+expression_ref prob_density = lambda_expression( constructor("ProbDensity",3) );
 
 expression_ref exponentialDensity = var("exponentialDensity");
 expression_ref exponential_dist = (prob_density, "Exponential", exponentialDensity, 0);
