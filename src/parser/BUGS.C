@@ -3,7 +3,6 @@
 #include <vector>
 #include <map>
 #include "util.H"
-#include "models/parameters.H"
 
 using std::vector;
 using std::map;
