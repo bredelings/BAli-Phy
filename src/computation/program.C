@@ -396,7 +396,7 @@ bool is_haskell_var_name(const std::string& s)
 {
   vector<string> path = haskell_name_path(s);
   if (path.empty()) return false;
-  if (not is_haskell_varid(path.back())) return false;
+  if (not is_haskell_varid(path.back()) and not is_haskell_varsym(path.back())) return false;
   for(int i=0;i<path.size()-1;i++)
     if (not is_haskell_conid(path[i])) return false;
   return true;
@@ -414,7 +414,7 @@ bool is_haskell_normal_con_name(const std::string& s)
 {
   vector<string> path = haskell_name_path(s);
   if (path.empty()) return false;
-  if (not is_haskell_varid(path.back())) return false;
+  if (not is_haskell_conid(path.back()) and not is_haskell_consym(path.back())) return false;
   for(int i=0;i<path.size()-1;i++)
     if (not is_haskell_conid(path[i])) return false;
   return true;
