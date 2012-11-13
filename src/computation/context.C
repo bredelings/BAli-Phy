@@ -564,7 +564,7 @@ context::~context()
 
 expression_ref context::default_parameter_value(int i) const
 {
-  expression_ref default_value = lambda_expression(constructor("default_value",2));
+  expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
 
   vector<expression_ref> results;
   expression_ref query = (default_value, parameter( parameter_name(i) ), match(0));

@@ -216,7 +216,7 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
   expression_ref case_query_func = v1^(case_expression(v1,(distributed, _, Tuple((prob_density, v2 , _, _), _) ), v2));
 
   for(int i=0;i<P.n_notes();i++)
-    if (is_exactly(P.get_note(i),"~"))
+    if (is_exactly(P.get_note(i),":~"))
     {
       vector<expression_ref> results; 
       find_match(query, P.get_note(i), results);

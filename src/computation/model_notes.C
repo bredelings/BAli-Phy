@@ -69,7 +69,7 @@ Model_Notes prefix_formula(const std::string& prefix,const Model_Notes& N)
 
 expression_ref def_parameter(Model_Notes& N, const std::string& name)
 {
-  expression_ref declare_parameter = lambda_expression( constructor("declare_parameter",1) );
+  expression_ref declare_parameter = lambda_expression( constructor("DeclareParameter",1) );
 
   expression_ref var = parameter(name);
   N.add_note( (declare_parameter, var) );
@@ -131,7 +131,7 @@ set<string> find_declared_parameters(const vector<expression_ref>& Notes)
 
   // Check each expression in the Formula
   for(const auto& n: Notes)
-    if (is_exactly(n,"declare_parameter"))
+    if (is_exactly(n,"DeclareParameter"))
       parameter_names.insert( assert_is_a<parameter>(n->sub[0])->parameter_name );
 
   return parameter_names;

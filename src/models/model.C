@@ -787,7 +787,7 @@ vector<string> show_probability_expressions(const context& C)
 
   // Check each expression in the Formula
   for(int i=0;i<C.n_notes();i++)
-    if (is_exactly(C.get_note(i),"~"))
+    if (is_exactly(C.get_note(i),":~"))
       expressions.push_back( show_probability_expression(C.get_note(i)) );
 
   return expressions;
