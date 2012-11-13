@@ -199,7 +199,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | lit("[")[clear(_a)] >> exp[push_back(_a,_1)] >> ','>>exp[push_back(_a,_1)] >>".." >> "]"  >> eps [ _val = new_<expression>(AST_node("enumFromThen"), _a) ]
 	  | lit("[")[clear(_a)] >> exp[push_back(_a,_1)] >> ','>>exp[push_back(_a,_1)] >>".." >> -exp[push_back(_a,_1)] >> "]" >> eps [ _val = new_<expression>(AST_node("enumFromThenTo"), _a) ]
 	  // list comprehension
-	  | lit("[")[clear(_a)] >> exp[push_back(_a,_1)] >>"|" >> +qual[push_back(_a,_1)] >> "]" >> eps [ _val = new_<expression>(AST_node("ListComprehension"), _a) ]
+	  | lit("[")[clear(_a)] >> exp[push_back(_a,_1)] >>"|" >> (qual[push_back(_a,_1)]%',') >> "]" >> eps [ _val = new_<expression>(AST_node("ListComprehension"), _a) ]
 	  // left section
 	  | lit("(")[clear(_a)] >> infixexp[insert(_a,end(_a),begin(_1),end(_1))]  >> qop[push_back(_a,_1)] >> ")" >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
 	  // right section
@@ -224,7 +224,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	gconsym %= string(":") | qconsym;
 
 	/*----- Section 3.11 -----*/
-	//	qual %= pat >> "<-" >> exp | lit("let") >> decls | exp;
+	qual %= pat [push_back(_a,_1)] >> "<-" >> exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
+	  //	  | lit("let") >> decls 
+	  | eps [clear(_a) ] >> exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("SimpleQual"), _a) ];
 
 	/*----- Section 3.13 -----*/
 	//	alts %= +alt;
@@ -526,7 +528,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), ascii::space_type> qop;
 
   /*----- Section 3.11 -----*/
-  qi::rule<Iterator, std::string(), ascii::space_type> qual;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> qual;  
 
   /*----- Section 3.13 -----*/
   qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> alts;  
