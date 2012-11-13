@@ -1,11 +1,13 @@
 #include "BUGS.H"
 #include "computation/program.H"
 #include <deque>
+#include <set>
 #include "io.H"
 #include "models/parameters.H"
 
 using std::string;
 using std::vector;
+using std::set;
 using std::deque;
 
 // 1. Add ability to change the prior on variables.
@@ -83,20 +85,30 @@ expression_ref postprocess_infix(const Program& m, const vector<expression_ref>&
   return infix_parse_neg(m, {"",variable_symbol,unknown_scope,2,-1,non_fix}, T2);
 }
 
-expression_ref postprocess(const Program& m, const expression_ref& E)
+expression_ref postprocess(const Program& m, const expression_ref& E, const set<string>& bound)
 {
   vector<expression_ref> v = E->sub;
-  for(auto& e: v)
-    e = postprocess(m, e);
       
   if (object_ptr<const AST_node> n = E.is_a<AST_node>())
   {
     if (n->type == "infixexp")
+    {
+      for(auto& e: v)
+	e = postprocess(m, e, bound);
       return postprocess_infix(m, v);
+    }
     else if (n->type == "Tuple")
+    {
+      for(auto& e: v)
+	e = postprocess(m, e, bound);
       return get_tuple(v);
+    }
     else if (n->type == "List")
+    {
+      for(auto& e: v)
+	e = postprocess(m, e, bound);
       return get_list(v);
+    }
     else if (n->type == "id")
     {
       if (m.is_declared(n->value))
@@ -104,15 +116,42 @@ expression_ref postprocess(const Program& m, const expression_ref& E)
 	string qualified_name = m.lookup_symbol(n->value).name;
 	return var(qualified_name);
       }
+      else if (includes(bound,n->value))
+	return dummy(n->value);
+    }
+    else if (n->type == "Lambda")
+    {
+      const int n_args = E->size()-1;
+      vector<string> arg_names;
+      set<string> bound2 = bound;
+      for(int i=0;i<n_args;i++)
+      {
+	object_ptr<const AST_node> m = E->sub[i]->is_a<AST_node>();
+	if (m->type != "VarPattern")
+	  throw myexception()<<"Lambda arguments must be irrefutable!";
+	arg_names.push_back(m->value);
+	bound2.insert(m->value);
+      }
+      expression_ref E2 = E->sub.back();
+      E2 = postprocess(m, E2, bound2);
+      for(int j=n_args-1;j>=0;j--)
+	E2 = lambda_quantify(dummy(arg_names[j]),E2);
+      return E2;;
     }
   }
 
+  for(auto& e: v)
+    e = postprocess(m, e, bound);
   if (E->size())
     return new expression(E->head,v);
   else
     return E;
 }
 
+expression_ref postprocess(const Program& m, const expression_ref& E)
+{
+  return postprocess(m,E,{});
+}
 
 void add_BUGS(const Parameters& P, const string& filename)
 {
