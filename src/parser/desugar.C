@@ -1,4 +1,4 @@
-#include "BUGS.H"
+#include "parse.H"
 #include "computation/program.H"
 #include <deque>
 #include <set>
@@ -77,7 +77,7 @@ expression_ref infix_parse(const Program& m, const symbol_info& op1, const expre
   }
 }
 
-expression_ref postprocess_infix(const Program& m, const vector<expression_ref>& T)
+expression_ref desugar_infix(const Program& m, const vector<expression_ref>& T)
 {
   deque<expression_ref> T2;
   T2.insert(T2.begin(), T.begin(), T.end());
@@ -85,7 +85,7 @@ expression_ref postprocess_infix(const Program& m, const vector<expression_ref>&
   return infix_parse_neg(m, {"",variable_symbol,unknown_scope,2,-1,non_fix}, T2);
 }
 
-expression_ref postprocess(const Program& m, const expression_ref& E, const set<string>& bound)
+expression_ref desugar(const Program& m, const expression_ref& E, const set<string>& bound)
 {
   vector<expression_ref> v = E->sub;
       
@@ -94,19 +94,19 @@ expression_ref postprocess(const Program& m, const expression_ref& E, const set<
     if (n->type == "infixexp")
     {
       for(auto& e: v)
-	e = postprocess(m, e, bound);
-      return postprocess_infix(m, v);
+	e = desugar(m, e, bound);
+      return desugar_infix(m, v);
     }
     else if (n->type == "Tuple")
     {
       for(auto& e: v)
-	e = postprocess(m, e, bound);
+	e = desugar(m, e, bound);
       return get_tuple(v);
     }
     else if (n->type == "List")
     {
       for(auto& e: v)
-	e = postprocess(m, e, bound);
+	e = desugar(m, e, bound);
       return get_list(v);
     }
     else if (n->type == "id")
@@ -133,7 +133,7 @@ expression_ref postprocess(const Program& m, const expression_ref& E, const set<
 	bound2.insert(m->value);
       }
       expression_ref E2 = E->sub.back();
-      E2 = postprocess(m, E2, bound2);
+      E2 = desugar(m, E2, bound2);
       for(int j=n_args-1;j>=0;j--)
 	E2 = lambda_quantify(dummy(arg_names[j]),E2);
       return E2;;
@@ -141,16 +141,55 @@ expression_ref postprocess(const Program& m, const expression_ref& E, const set<
   }
 
   for(auto& e: v)
-    e = postprocess(m, e, bound);
+    e = desugar(m, e, bound);
   if (E->size())
     return new expression(E->head,v);
   else
     return E;
 }
 
-expression_ref postprocess(const Program& m, const expression_ref& E)
+expression_ref desugar(const Program& m, const expression_ref& E)
 {
-  return postprocess(m,E,{});
+  return desugar(m,E,{});
+}
+
+expression_ref parse_haskell_line(const Program& P, const string& line)
+{
+  return desugar(P, parse_haskell_line(line));
+}
+
+bugs_cmd parse_bugs_line(const Program& P, const string& line)
+{
+  bugs_cmd cmd;
+  try
+  {
+    cmd = parse_bugs_line(line);
+
+    std::cerr<<"BUGS phrase parse: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
+    for(int i=0;i<cmd.arguments.size();i++)
+    {
+      std::cerr<<cmd.arguments[i];
+      if (i != cmd.arguments.size()-1)
+	std::cerr<<", ";
+    }
+    std::cerr<<")\n";
+    cmd.var = desugar(P, cmd.var);
+    for(auto& e: cmd.arguments)
+      e = desugar(P, e);
+    std::cerr<<"        processed: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
+    for(int i=0;i<cmd.arguments.size();i++)
+    {
+      std::cerr<<cmd.arguments[i];
+      if (i != cmd.arguments.size()-1)
+	std::cerr<<", ";
+    }
+    std::cerr<<")\n";
+  }
+  catch (const myexception& e)
+  {
+    std::cerr<<e.what()<<"\n";
+  }
+  return cmd;
 }
 
 void add_BUGS(const Parameters& P, const string& filename)

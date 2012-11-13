@@ -1,4 +1,4 @@
-#include "BUGS.H"
+#include "parse.H"
 
 #include <vector>
 #include <map>
@@ -725,11 +725,6 @@ expression_ref parse_haskell_line(const string& line)
   throw myexception()<<"Haskell pharse parse: only parsed "<<line.substr(0, iter-line.begin());
 }
 
-expression_ref parse_haskell_line(const Program& P, const string& line)
-{
-  return postprocess(P, parse_haskell_line(line));
-}
-
 bugs_cmd parse_bugs_line(const string& line)
 {
   using boost::spirit::ascii::space;
@@ -741,43 +736,5 @@ bugs_cmd parse_bugs_line(const string& line)
     return cmd;
 
   throw myexception()<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin());
-}
-
-bugs_cmd parse_bugs_line(const Program& P, const string& line)
-{
-  using boost::spirit::ascii::space;
-
-  bugs_grammar<string::const_iterator> bugs_parser;
-
-  bugs_cmd cmd;
-  try
-  {
-    cmd = parse_bugs_line(line);
-
-    std::cerr<<"BUGS phrase parse: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
-    for(int i=0;i<cmd.arguments.size();i++)
-    {
-      std::cerr<<cmd.arguments[i];
-      if (i != cmd.arguments.size()-1)
-	std::cerr<<", ";
-    }
-    std::cerr<<")\n";
-    cmd.var = postprocess(P, cmd.var);
-    for(auto& e: cmd.arguments)
-      e = postprocess(P, e);
-    std::cerr<<"        processed: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
-    for(int i=0;i<cmd.arguments.size();i++)
-    {
-      std::cerr<<cmd.arguments[i];
-      if (i != cmd.arguments.size()-1)
-	std::cerr<<", ";
-    }
-    std::cerr<<")\n";
-  }
-  catch (const myexception& e)
-  {
-    std::cerr<<e.what()<<endl;
-  }
-  return cmd;
 }
 
