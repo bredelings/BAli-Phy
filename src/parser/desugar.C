@@ -111,13 +111,13 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "id")
     {
-      if (m.is_declared(n->value))
+      if (includes(bound,n->value))
+	return dummy(n->value);
+      else if (m.is_declared(n->value))
       {
 	string qualified_name = m.lookup_symbol(n->value).name;
 	return var(qualified_name);
       }
-      else if (includes(bound,n->value))
-	return dummy(n->value);
     }
     else if (n->type == "Lambda")
     {
