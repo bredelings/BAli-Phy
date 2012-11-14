@@ -374,7 +374,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 		  | eps[clear(_a)] >> pat [push_back(_a,_1)] >> varop[push_back(_a,_1)] >> pat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs2"), _a)  ]
 		  | eps[clear(_a)] >> "(" >> funlhs[push_back(_a,_1)] >> ")" >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs3"), _a)  ];
 
-	//	rhs %= lit('=') >> exp >> -(lit("where") >> decls) 
+	rhs = lit('=') >> exp [push_back(_a,_1)] >> -(lit("where") >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
 	//	  | gdrhs >> -(lit("where") >> decls);
 
 	//	gdrhs %= guards >> "=" >> exp >> -gdrhs;
