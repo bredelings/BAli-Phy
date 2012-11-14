@@ -370,9 +370,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  ;
 
 	/*------ Section 4.4.3 -----*/
-	//	funlhs %= var >> +apat
-	//	  | pat >> varop >> pat
-	//	  | "(" >> funlhs >> ")" >> +apat;
+	funlhs = var [push_back(_a,_1)] >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs1"), _a)  ]
+		  | eps[clear(_a)] >> pat [push_back(_a,_1)] >> varop[push_back(_a,_1)] >> pat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs2"), _a)  ]
+		  | eps[clear(_a)] >> "(" >> funlhs[push_back(_a,_1)] >> ")" >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs3"), _a)  ];
 
 	//	rhs %= lit('=') >> exp >> -(lit("where") >> decls) 
 	//	  | gdrhs >> -(lit("where") >> decls);
@@ -605,9 +605,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string(), ascii::space_type> inst;
 
   /*----- Section 4.4.3 ------*/
-  qi::rule<Iterator, expression_ref(), ascii::space_type> funlhs;
-  qi::rule<Iterator, expression_ref(), ascii::space_type> rhs;
-  qi::rule<Iterator, expression_ref(), ascii::space_type> gdrhs;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> funlhs;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> rhs;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> gdrhs;
 
   /*----- Section 5.1 ------*/
   qi::rule<Iterator, std::string(), ascii::space_type> impdecls;
