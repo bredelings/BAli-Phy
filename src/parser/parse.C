@@ -307,7 +307,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	decls = lit('{') >> (decl[push_back(_a,_1)] % ';') >> '}' >> eps [ _val = new_<expression>(AST_node("Decls"), _a)  ];
 	decl  %= 
 	  //	  gendecl |
-	  (funlhs | pat) >> rhs;
+	  (funlhs | pat)[push_back(_a,_1)] >> rhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Decl"), _a)  ];
 
 	// class declarations
 	cdecls %= lit('{') >> cdecl % ';' >> '}';
@@ -563,7 +563,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string(), ascii::space_type> topdecl;
 
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> decls;
-  qi::rule<Iterator, expression_ref(), ascii::space_type> decl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> decl;
 
   qi::rule<Iterator, std::string(), ascii::space_type> cdecls;
   qi::rule<Iterator, std::string(), ascii::space_type> cdecl;
