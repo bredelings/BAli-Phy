@@ -229,7 +229,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | eps [clear(_a) ] >> exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("SimpleQual"), _a) ];
 
 	/*----- Section 3.13 -----*/
-	alts = +alt[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("alts"), _a) ];
+	alts = (alt % ';' )[_a = _1] >> eps [ _val = new_<expression>(AST_node("alts"), _a) ];
 	alt =  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> "->" >> exp[push_back(_a,_1)] >> -("where" >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
 	//	  | pat >> gdpat >> -("where" >> decls) 
 	  | eps;
@@ -248,16 +248,19 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	//	fbind %= qvar >> "=" >> exp;
 
 	/*----- Section 3.17 -----*/
-	pat %= 
-	  //	  lpat >> qconop >> pat // infix constructor
-	  lpat;
+	pat = 
+	  lpat [ push_back(_a,_1) ] >> qconop [ push_back(_a,_1) ] >> pat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("qconop_pattern"), _a) ]
+	  | lpat [ _val = _1];
 
-	lpat %= 
-	  apat 
-	  // negative literal
-	  //	  | lit('-') >> (h_integer|h_float) 
+	lpat = 
+	  apat [ _val = _1 ]
+	  | eps [clear(_a)] >> h_float [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("h_float"), _a) ]
+	  // negative literal integer
+	  | eps [clear(_a)] >> lit('-') >> h_integer [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
+	  // negative literal float
+	  | eps [clear(_a)] >> lit('-') >> h_float [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
 	  // here the number of apat's must match the constructor arity
-	  //	  | gcon >> +apat
+	  | eps [clear(_a)] >>  gcon[ push_back(_a,_1) ] >> +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
 	  ;                  
 
 	apat = 
@@ -266,18 +269,18 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // irrefutable var pattern
 	  var [ qi::_val = phoenix::construct<AST_node>("VarPattern", qi::_1) ]        
 	  // arity gcon = 0
-	  //	  | gcon
+	  | gcon [  _val = phoenix::construct<AST_node>("constructor_pattern", qi::_1) ]
 	  // labelled pattern
 	  //	  | qcon >> "{" >> *fpat >> "}"     
-	  //	  | literal
+	  | literal [  _val = _1 ]
 	  // wildcard
-	  //	  | lit('_')                        
+	  | lit('_') [ qi::_val = phoenix::construct<AST_node>("WildcardPattern") ]                       
 	  // parenthesized pattern
-	  //	  | lit('(') >> pat >> ')'          
+	  | lit('(') >> pat [ _val = _1 ] >> ')'          
 	  // tuple patten
-	  //	  | lit('(') >> pat >> +(lit(',') >> pat) >> ')' 
+	  | lit('(')[clear(_a)] >> pat[ push_back(_a,_1) ] >> +(lit(',') >> pat[ push_back(_a,_1) ]) >> lit(')') [ _val = new_<expression>(AST_node("Tuple"), _a) ]
 	  // list pattern
-	  //	  | lit('[') >> pat % ',' >> ']'    
+	  | lit('[')[clear(_a)] >> pat % ',' >> lit(']') [ _val = new_<expression>(AST_node("List"), _a) ]
 	  // irrefutable pattern
 	  //	  | lit('~') >> apat                
 	  ;
@@ -304,7 +307,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  //	  | decl 
 	  ;
 
-	decls = lit('{') >> (decl[push_back(_a,_1)] % ';') >> '}' >> eps [ _val = new_<expression>(AST_node("Decls"), _a)  ];
+	decls = lit('{') >> (decl % ';')[_val = new_<expression>(AST_node("Decls"), _1)] >> '}';
 	decl  %= 
 	  //	  gendecl |
 	  (funlhs | pat)[push_back(_a,_1)] >> rhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Decl"), _a)  ];
@@ -550,9 +553,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string(), ascii::space_type> fbind;  
 
   /*----- Section 3.17 -----*/
-  qi::rule<Iterator, expression_ref(), ascii::space_type> pat;  
-  qi::rule<Iterator, expression_ref(), ascii::space_type> lpat;  
-  qi::rule<Iterator, expression_ref(), ascii::space_type> apat;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> pat;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> lpat;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> apat;  
   qi::rule<Iterator, std::string(), ascii::space_type> fpat;  
 
   /*----- Section 4 ------*/
@@ -727,6 +730,18 @@ expression_ref parse_haskell_line(const string& line)
   if (phrase_parse(iter, line.end(), haskell_parser, space, E) and iter == line.end())
     return E;
 
+  throw myexception()<<"Haskell pharse parse: only parsed "<<line.substr(0, iter-line.begin());
+}
+
+expression_ref parse_haskell_decls(const string& line)
+{
+  using boost::spirit::ascii::space;
+
+  string::const_iterator iter = line.begin();
+  haskell_grammar<string::const_iterator> haskell_parser;
+  expression_ref E;
+  if (phrase_parse(iter, line.end(), haskell_parser.decls, space, E) and iter == line.end())
+    return E;
   throw myexception()<<"Haskell pharse parse: only parsed "<<line.substr(0, iter-line.begin());
 }
 
