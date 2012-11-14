@@ -168,10 +168,10 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  ;
 
 	lexp = 
-	  lit("\\") >> +apat[push_back(_a,_1)] >> lit("->") >> exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ]
-	  | lit("let")[clear(_a)] >> decls[push_back(_a,_1)] >> "in" >> exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
-	  | lit("if")[clear(_a)] >> exp[push_back(_a,_1)] >> -lit(';') >> "then" >> exp[push_back(_a,_1)] >> -lit(';') >> "else" >> exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
-	  | lit("case")[clear(_a)] >> exp[push_back(_a,_1)] >> "of" >> "{" >> alts[push_back(_a,_1)] >> "}" >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ]
+	  lit("\\") > +apat[push_back(_a,_1)] > lit("->") > exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ]
+	  | lit("let")[clear(_a)] > decls[push_back(_a,_1)] > "in" > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
+	  | lit("if")[clear(_a)] > exp[push_back(_a,_1)] > -lit(';') >> "then" > exp[push_back(_a,_1)] > -lit(';') > "else" > exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
+	  | lit("case")[clear(_a)] > exp[push_back(_a,_1)] > "of" > "{" >> alts[push_back(_a,_1)] >> "}" >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ]
 	  //	  | lit("do") >> "{" >> stmts >> "}"
 	  | fexp [_val = _1]
 	  ;
@@ -224,13 +224,13 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	gconsym %= string(":") | qconsym;
 
 	/*----- Section 3.11 -----*/
-	qual %= pat [push_back(_a,_1)] >> "<-" >> exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
+	qual %= pat [push_back(_a,_1)] >> "<-" > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
 	  //	  | lit("let") >> decls 
 	  | eps [clear(_a) ] >> exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("SimpleQual"), _a) ];
 
 	/*----- Section 3.13 -----*/
 	alts = (alt % ';' )[_a = _1] >> eps [ _val = new_<expression>(AST_node("alts"), _a) ];
-	alt =  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> "->" >> exp[push_back(_a,_1)] >> -("where" >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
+	alt =  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> "->" > exp[push_back(_a,_1)] >> -("where" >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
 	//	  | pat >> gdpat >> -("where" >> decls) 
 	  | eps;
 
@@ -253,14 +253,14 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | lpat [ _val = _1];
 
 	lpat = 
-	  apat [ _val = _1 ]
-	  | eps [clear(_a)] >> h_float [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("h_float"), _a) ]
+	  // negative literal float
+	  eps [clear(_a)] >> lit('-') >> h_float [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
 	  // negative literal integer
 	  | eps [clear(_a)] >> lit('-') >> h_integer [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
-	  // negative literal float
-	  | eps [clear(_a)] >> lit('-') >> h_float [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
 	  // here the number of apat's must match the constructor arity
-	  | eps [clear(_a)] >>  gcon[ push_back(_a,_1) ] >> +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
+	  | eps [clear(_a)] >>  gcon[ push_back(_a,_1) ] > +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
+	  // apat
+	  | apat [ _val = _1 ]
 	  ;                  
 
 	apat = 
@@ -425,6 +425,18 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	on_error<fail>
 	  (
+	   lexp
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
 	   h_integer
 	   , std::cout
 	   << val("Error! Expecting ")
@@ -462,6 +474,18 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	bugs_line.name("bugs_line");
 	text.name("text");
 	exp.name("exp");
+	infixexp.name("infixexp");
+	lexp.name("lexp");
+	fexp.name("fexp");
+	aexp.name("aexp");
+	alts.name("alts");
+	alt.name("alt");
+	apat.name("apat");
+	lpat.name("lpat");
+	pat.name("pat");
+	decls.name("decls");
+	decl.name("decl");
+	gcon.name("gcon");
 	literal.name("literal");
 	h_string.name("h_string");
 	arguments.name("arguments");
