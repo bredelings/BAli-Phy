@@ -171,7 +171,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  lit("\\") >> +apat[push_back(_a,_1)] >> lit("->") >> exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ]
 	  | lit("let")[clear(_a)] >> decls[push_back(_a,_1)] >> "in" >> exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
 	  | lit("if")[clear(_a)] >> exp[push_back(_a,_1)] >> -lit(';') >> "then" >> exp[push_back(_a,_1)] >> -lit(';') >> "else" >> exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
-	  //	  | lit("case") >> exp >> "of" >> "{" >> alts >> "}"
+	  | lit("case")[clear(_a)] >> exp[push_back(_a,_1)] >> "of" >> "{" >> alts[push_back(_a,_1)] >> "}" >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ]
 	  //	  | lit("do") >> "{" >> stmts >> "}"
 	  | fexp [_val = _1]
 	  ;
@@ -229,10 +229,10 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | eps [clear(_a) ] >> exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("SimpleQual"), _a) ];
 
 	/*----- Section 3.13 -----*/
-	//	alts %= +alt;
-	//	alt %= pat >> "->" >> exp >> -("where" >> decls)
+	alts = +alt[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("alts"), _a) ];
+	alt =  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> "->" >> exp[push_back(_a,_1)] >> -("where" >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
 	//	  | pat >> gdpat >> -("where" >> decls) 
-	//	  | eps;
+	  | eps;
 
 	//	gdpat %= guards >> "->" >> exp >> -gdpat;
 	//	guards %= "|" >> +guard;
@@ -536,8 +536,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> qual;  
 
   /*----- Section 3.13 -----*/
-  qi::rule<Iterator, expression_ref(), ascii::space_type> alts;  
-  qi::rule<Iterator, expression_ref(), ascii::space_type> alt;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> alts;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> alt;
   qi::rule<Iterator, std::string(), ascii::space_type> gdpat;
   qi::rule<Iterator, std::string(), ascii::space_type> guards;
   qi::rule<Iterator, std::string(), ascii::space_type> guard;
