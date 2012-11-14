@@ -169,7 +169,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	lexp = 
 	  lit("\\") >> +apat[push_back(_a,_1)] >> lit("->") >> exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Lambda"), _a)  ]
-	  //	  | lit("let") >> decls >> "in" >> exp
+	  | lit("let")[clear(_a)] >> decls[push_back(_a,_1)] >> "in" >> exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
 	  | lit("if")[clear(_a)] >> exp[push_back(_a,_1)] >> -lit(';') >> "then" >> exp[push_back(_a,_1)] >> -lit(';') >> "else" >> exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
 	  //	  | lit("case") >> exp >> "of" >> "{" >> alts >> "}"
 	  //	  | lit("do") >> "{" >> stmts >> "}"
@@ -536,8 +536,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> qual;  
 
   /*----- Section 3.13 -----*/
-  qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> alts;  
-  qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> alt;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> alts;  
+  qi::rule<Iterator, expression_ref(), ascii::space_type> alt;
   qi::rule<Iterator, std::string(), ascii::space_type> gdpat;
   qi::rule<Iterator, std::string(), ascii::space_type> guards;
   qi::rule<Iterator, std::string(), ascii::space_type> guard;
