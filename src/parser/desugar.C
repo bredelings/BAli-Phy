@@ -143,7 +143,13 @@ string get_func_name(const expression_ref& decl)
 
   expression_ref name = lhs->sub[0];
 
-  return name.assert_is_a<dummy>()->name;
+  if (name.is_a<dummy>())
+    return name.is_a<dummy>()->name;
+  else if (name.is_a<AST_node>())
+  {
+    assert(name.is_a<AST_node>()->type == "id");
+    return name.is_a<AST_node>()->value;
+  }
 }
 
 vector<expression_ref> get_patterns(const expression_ref& decl)
