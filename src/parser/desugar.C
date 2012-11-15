@@ -320,6 +320,22 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	E2 = lambda_quantify(dummy(arg_names[j]),E2);
       return E2;;
     }
+    else if (n->type == "Let")
+    {
+      for(auto& e: v)
+	e = desugar(m, e, bound);
+
+      vector<expression_ref> decls = v[0]->sub;
+      expression_ref body = v[1];
+      vector<expression_ref> w = {body};
+      for(const auto& decl: decls)
+      {
+	assert(decl->sub[0].is_a<dummy>());
+	w.push_back(decl->sub[0]);
+	w.push_back(decl->sub[1]);
+      }
+      return new expression{ let_obj(), w };
+    }
   }
 
   for(auto& e: v)
