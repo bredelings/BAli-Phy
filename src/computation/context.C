@@ -475,7 +475,7 @@ context& context::operator+=(const Program& P2)
 {
   // FIXME - this is really creating a combined program, not just importing aliases!
   // At this level, aliases should be overwritten with local function bodies.
-  // Aliases are really unimplemented functions!
+  // Aliases are really undefined functions!
 
   // Import the symbols in P2 into our symbol table, and add aliases.
   P.modify()->import_module(P2, P2.module_name, false);
