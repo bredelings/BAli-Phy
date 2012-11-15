@@ -483,6 +483,8 @@ context& context::operator+=(const Program& P2)
 
     if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
 
+    // FIXME - how do we want to handle aliases, here?
+
     if (not identifiers().count(S.name))
       add_identifier(S.name);
   }
