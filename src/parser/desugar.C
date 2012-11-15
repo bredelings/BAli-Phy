@@ -327,12 +327,14 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       vector<expression_ref> decls = v[0]->sub;
       expression_ref body = v[1];
       vector<expression_ref> w = {body};
+      set<string> bound2 = bound;
       for(const auto& decl: decls)
       {
-	assert(decl->sub[0].is_a<dummy>());
+	bound2.insert(decl->sub[0].assert_is_a<dummy>()->name);
 	w.push_back(decl->sub[0]);
 	w.push_back(decl->sub[1]);
       }
+      w[0] = desugar(m, w[0], bound2);
       return new expression{ let_obj(), w };
     }
   }
