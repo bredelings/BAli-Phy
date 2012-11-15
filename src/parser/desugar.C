@@ -112,6 +112,36 @@ expression_ref make_apply(const vector<expression_ref>& v)
   return E;
 }
 
+string get_func_name(const expression_ref& decl)
+{
+  assert(decl.assert_is_a<AST_node>()->type == "Decl");
+
+  expression_ref lhs = decl->sub[0];
+  assert(lhs.assert_is_a<AST_node>()->type == "funlhs1");
+
+  expression_ref name = lhs->sub[0];
+
+  return name.assert_is_a<dummy>()->name;
+}
+
+vector<expression_ref> get_patterns(const expression_ref& decl)
+{
+  assert(decl.assert_is_a<AST_node>()->type == "Decl");
+
+  expression_ref lhs = decl->sub[0];
+  assert(lhs.assert_is_a<AST_node>()->type == "funlhs1");
+
+  vector<expression_ref> patterns = lhs->sub;
+  patterns.erase(patterns.begin());
+  return patterns;
+}
+
+expression_ref get_body(const expression_ref& decl)
+{
+  expression_ref rhs = decl->sub[1];
+  return rhs->sub[0];
+}
+
 expression_ref desugar(const Program& m, const expression_ref& E, const set<string>& bound)
 {
   vector<expression_ref> v = E->sub;
@@ -142,6 +172,40 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	e = desugar(m, e, bound);
 
       // Now we go through and translate groups of FunDecls.
+      vector<expression_ref> decls;
+      for(int i=0;i<v.size();i++)
+      {
+	string lhs_type = v[i]->sub[0].assert_is_a<AST_node>()->type;
+	// If its not a function binding, accept it as is, and continue.
+	if (lhs_type == "id")
+	  decls.push_back(v[i]);
+	else if (lhs_type == "funlhs1")
+	{
+	  vector<vector<expression_ref> > patterns;
+	  vector<expression_ref> bodies;
+	  string name = get_func_name(v[i]);
+	  patterns.push_back( get_patterns(v[i]) );
+	  bodies.push_back( get_body(v[i]) );
+
+	  for(int j=i+1;j<v.size();j++)
+	  {
+	    if (v[j].assert_is_a<AST_node>()->type != "funlhs1") break;
+	    if (get_func_name(v[j]) != name) break;
+
+	    patterns.push_back( get_patterns(v[j]) );
+	    bodies.push_back( get_body(v[j]) );
+	  }
+	  decls.push_back(new expression(AST_node("Decl"),
+					 {new expression(AST_node("id",name)),
+					  new expression(AST_node("rhs"),{def_function(patterns,bodies)})
+					 }
+					)
+			  );
+
+	  // skip the other bindings for this function
+	  i += (patterns.size()-1);
+	}
+      }
     }
     else if (n->type == "Decl")
     {
@@ -165,9 +229,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	for(auto& e: v)
 	  e = desugar(m, e, bound2);
 
-	expression_ref lhs = make_apply(v[0]->sub);
-	expression_ref rhs = v[1]->sub[0];
-	return new expression(AST_node("FunDecl"),{lhs,rhs});
+	return new expression(E->head,v);
       }
 
       // Is this a set of pattern bindings?
