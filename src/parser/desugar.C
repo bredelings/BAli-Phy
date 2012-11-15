@@ -179,7 +179,13 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
     string lhs_type = v[i]->sub[0].assert_is_a<AST_node>()->type;
     // If its not a function binding, accept it as is, and continue.
     if (object_ptr<const dummy> d = v[i]->sub[0].is_a<dummy>())
-      decls.push_back(v[i]);
+      decls.push_back(new expression(v[i]->head,
+				     {
+				       v[i]->sub[0],
+					 v[i]->sub[1]->sub[0]
+					 }
+				     )
+		      );
     else if (v[i]->sub[0].assert_is_a<AST_node>()->type == "funlhs1")
     {
       vector<vector<expression_ref> > patterns;
@@ -198,7 +204,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
       }
       decls.push_back(new expression(AST_node("Decl"),
 				     {dummy(name),
-				      new expression(AST_node("rhs"),{def_function(patterns,bodies)})
+				      def_function(patterns,bodies)
 				     }
 				    )
 		      );
