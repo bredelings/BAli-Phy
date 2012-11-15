@@ -485,11 +485,9 @@ context& context::operator+=(const Program& P2)
   {
     const symbol_info& S = s.second;
 
+    if (S.scope != local_scope) continue;
+
     if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
-
-    // FIXME - how do we want to handle aliases, here?
-
-    if (S.symbol_type != local_scope) continue;
 
     if (identifiers().count(S.name))
       throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined in module '"<<P->module_name<<"'";
@@ -501,6 +499,8 @@ context& context::operator+=(const Program& P2)
   for(const auto& s: P2.get_symbols())
   {
     const symbol_info& S = s.second;
+
+    if (S.scope != local_scope) continue;
 
     if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
 
