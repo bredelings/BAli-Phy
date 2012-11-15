@@ -1255,8 +1255,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   
   // Currently we can't actually load the Prelude + Tree_Program into an actual Program!
   
-  //  std::cout<<"line = "<<desugar(tree_program, parse_haskell_line("findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1)"),{"t","n1","n2"})<<"\n";
-  std::cout<<"line = "<<desugar(tree_program, parse_haskell_decls("{edgeForNodes t (n1,n2) = findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1)}"))<<"\n";
+  std::cout<<"line = "<<desugar(tree_program, 
+				parse_haskell_decls("{edgeForNodes t (n1,n2) = findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1)}"))<<"\n";
 
   // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
   //  tree_program += Def( (var("edgeForNodes"),dummy("t"),Tuple(dummy("n1"),dummy("n2"))), 
