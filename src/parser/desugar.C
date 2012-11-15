@@ -89,7 +89,7 @@ set<string> find_bound_vars(const expression_ref& E)
 {
   if (object_ptr<const AST_node> n = E.is_a<AST_node>())
   {
-    if (n->type == "VarPattern")
+    if (n->type == "id")
     {
       assert(not E->size());
       return {n->value};
@@ -101,24 +101,6 @@ set<string> find_bound_vars(const expression_ref& E)
     add(bound, find_bound_vars(e));
 
   return bound;
-}
-
-expression_ref replace_bound_vars(const expression_ref& E)
-{
-  if (object_ptr<const AST_node> n = E.is_a<AST_node>())
-  {
-    if (n->type == "VarPattern")
-    {
-      assert(not E->size());
-      return dummy(n->value);
-    }
-  }
-
-  vector<expression_ref> v = E->sub;
-  for(auto& e:v)
-    e = replace_bound_vars(e);
-
-  return new expression(E->head,v);
 }
 
 expression_ref make_apply(const vector<expression_ref>& v)
@@ -159,7 +141,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       for(auto& e: v)
 	e = desugar(m, e, bound);
 
-      // Now what do we do?
+      // Now we go through and translate groups of FunDecls.
     }
     else if (n->type == "Decl")
     {
@@ -175,7 +157,8 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	set<string> bound2 = bound;
 	for(const auto& e: v[0]->sub)
 	  add(bound2, find_bound_vars(e));
-	v[0] = replace_bound_vars(v[0]);
+
+	// Replace bound vars in (a) the patterns and (b) the body
 	for(auto& e: v)
 	  e = desugar(m, e, bound2);
 
@@ -204,7 +187,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       for(int i=0;i<n_args;i++)
       {
 	object_ptr<const AST_node> m = E->sub[i]->is_a<AST_node>();
-	if (m->type != "VarPattern")
+	if (m->type != "id")
 	  throw myexception()<<"Lambda arguments must be irrefutable!";
 	arg_names.push_back(m->value);
 	bound2.insert(m->value);

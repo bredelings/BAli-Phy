@@ -267,7 +267,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // as pattern
 	  //	  var >> lit('@')>>apat 
 	  // irrefutable var pattern
-	  var [ qi::_val = phoenix::construct<AST_node>("VarPattern", qi::_1) ]        
+	  var [ qi::_val = phoenix::construct<AST_node>("id", qi::_1) ]        
 	  // arity gcon = 0
 	  | gcon [  _val = phoenix::construct<AST_node>("constructor_pattern", qi::_1) ]
 	  // labelled pattern
