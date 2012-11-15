@@ -112,6 +112,28 @@ expression_ref make_apply(const vector<expression_ref>& v)
   return E;
 }
 
+bool is_function_binding(const expression_ref& decl)
+{
+  assert(decl.assert_is_a<AST_node>()->type == "Decl");
+
+  expression_ref lhs = decl->sub[0];
+  return (lhs.assert_is_a<AST_node>()->type == "funlhs1");
+}
+
+bool is_pattern_binding(const expression_ref& decl)
+{
+  return not is_function_binding(decl);
+}
+
+set<string> get_pattern_bound_vars(const expression_ref& decl)
+{
+  assert(decl.assert_is_a<AST_node>()->type == "Decl");
+
+  expression_ref lhs = decl->sub[0];
+
+  return find_bound_vars(lhs);
+}
+
 string get_func_name(const expression_ref& decl)
 {
   assert(decl.assert_is_a<AST_node>()->type == "Decl");
@@ -142,6 +164,48 @@ expression_ref get_body(const expression_ref& decl)
   return rhs->sub[0];
 }
 
+vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
+{
+  // Now we go through and translate groups of FunDecls.
+  vector<expression_ref> decls;
+  for(int i=0;i<v.size();i++)
+  {
+    string lhs_type = v[i]->sub[0].assert_is_a<AST_node>()->type;
+    // If its not a function binding, accept it as is, and continue.
+    if (object_ptr<const dummy> d = v[i]->sub[0].is_a<dummy>())
+      decls.push_back(v[i]);
+    else if (v[i]->sub[0].assert_is_a<AST_node>()->type == "funlhs1")
+    {
+      vector<vector<expression_ref> > patterns;
+      vector<expression_ref> bodies;
+      string name = get_func_name(v[i]);
+      patterns.push_back( get_patterns(v[i]) );
+      bodies.push_back( get_body(v[i]) );
+
+      for(int j=i+1;j<v.size();j++)
+      {
+	if (v[j].assert_is_a<AST_node>()->type != "funlhs1") break;
+	if (get_func_name(v[j]) != name) break;
+
+	patterns.push_back( get_patterns(v[j]) );
+	bodies.push_back( get_body(v[j]) );
+      }
+      decls.push_back(new expression(AST_node("Decl"),
+				     {dummy(name),
+				      new expression(AST_node("rhs"),{def_function(patterns,bodies)})
+				     }
+				    )
+		      );
+
+      // skip the other bindings for this function
+      i += (patterns.size()-1);
+    }
+    else
+      std::abort();
+  }
+  return decls;
+}
+
 expression_ref desugar(const Program& m, const expression_ref& E, const set<string>& bound)
 {
   vector<expression_ref> v = E->sub;
@@ -168,44 +232,25 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "Decls")
     {
+      set<string> bound2 = bound;
+
+      // Find all the names bound here
       for(auto& e: v)
-	e = desugar(m, e, bound);
-
-      // Now we go through and translate groups of FunDecls.
-      vector<expression_ref> decls;
-      for(int i=0;i<v.size();i++)
       {
-	string lhs_type = v[i]->sub[0].assert_is_a<AST_node>()->type;
-	// If its not a function binding, accept it as is, and continue.
-	if (lhs_type == "id")
-	  decls.push_back(v[i]);
-	else if (lhs_type == "funlhs1")
-	{
-	  vector<vector<expression_ref> > patterns;
-	  vector<expression_ref> bodies;
-	  string name = get_func_name(v[i]);
-	  patterns.push_back( get_patterns(v[i]) );
-	  bodies.push_back( get_body(v[i]) );
-
-	  for(int j=i+1;j<v.size();j++)
-	  {
-	    if (v[j].assert_is_a<AST_node>()->type != "funlhs1") break;
-	    if (get_func_name(v[j]) != name) break;
-
-	    patterns.push_back( get_patterns(v[j]) );
-	    bodies.push_back( get_body(v[j]) );
-	  }
-	  decls.push_back(new expression(AST_node("Decl"),
-					 {new expression(AST_node("id",name)),
-					  new expression(AST_node("rhs"),{def_function(patterns,bodies)})
-					 }
-					)
-			  );
-
-	  // skip the other bindings for this function
-	  i += (patterns.size()-1);
-	}
+	if (is_function_binding(e))
+	  bound2.insert(get_func_name(e));
+	else if (is_pattern_binding(e))
+	  add(bound2, get_pattern_bound_vars(e));
       }
+
+      // Replace ids with dummies
+      for(auto& e: v)
+	e = desugar(m, e, bound2);
+
+      // Convert fundecls to normal decls
+      vector<expression_ref> decls = parse_fundecls(v);
+
+      return new expression{E->head,decls};
     }
     else if (n->type == "Decl")
     {
