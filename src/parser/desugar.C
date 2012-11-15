@@ -151,6 +151,9 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       // .. does that only happen AFTER we allocate a cell for the "f" in the top-level let expression?
       // Basically, how do we handle fixpoints?  At the top level?
 
+      // To some extent, EVERYthing is a bound variable!
+      // However, some things are bound at the top level, while some things are bound at a lower level.
+
       // Is this a set of function bindings?
       if (v[0].assert_is_a<AST_node>()->type == "funlhs1")
       {
