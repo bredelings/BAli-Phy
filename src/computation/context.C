@@ -473,6 +473,10 @@ closure context::translate_refs(closure&& C) const
 
 context& context::operator+=(const Program& P2)
 {
+  // FIXME - this is really creating a combined program, not just importing aliases!
+  // At this level, aliases should be overwritten with local function bodies.
+  // Aliases are really unimplemented functions!
+
   // Import the symbols in P2 into our symbol table, and add aliases.
   P.modify()->import_module(P2, P2.module_name, false);
 
@@ -485,8 +489,12 @@ context& context::operator+=(const Program& P2)
 
     // FIXME - how do we want to handle aliases, here?
 
-    if (not identifiers().count(S.name))
-      add_identifier(S.name);
+    if (S.symbol_type != local_scope) continue;
+
+    if (identifiers().count(S.name))
+      throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined in module '"<<P->module_name<<"'";
+
+    add_identifier(S.name);
   }
 
   // Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
