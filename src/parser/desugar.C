@@ -85,6 +85,51 @@ expression_ref desugar_infix(const Program& m, const vector<expression_ref>& T)
   return infix_parse_neg(m, {"",variable_symbol,unknown_scope,2,-1,non_fix}, T2);
 }
 
+set<string> find_bound_vars(const expression_ref& E)
+{
+  if (object_ptr<const AST_node> n = E.is_a<AST_node>())
+  {
+    if (n->type == "VarPattern")
+    {
+      assert(not E->size());
+      return {n->value};
+    }
+  }
+
+  set<string> bound;
+  for(const auto& e:E->sub)
+    add(bound, find_bound_vars(e));
+
+  return bound;
+}
+
+expression_ref replace_bound_vars(const expression_ref& E)
+{
+  if (object_ptr<const AST_node> n = E.is_a<AST_node>())
+  {
+    if (n->type == "VarPattern")
+    {
+      assert(not E->size());
+      return dummy(n->value);
+    }
+  }
+
+  vector<expression_ref> v = E->sub;
+  for(auto& e:v)
+    e = replace_bound_vars(e);
+
+  return new expression(E->head,v);
+}
+
+expression_ref make_apply(const vector<expression_ref>& v)
+{
+  assert(not v.empty());
+  expression_ref E = v[0];
+  for(int i=1;i<v.size();i++)
+    E = (E,v[i]);
+  return E;
+}
+
 expression_ref desugar(const Program& m, const expression_ref& E, const set<string>& bound)
 {
   vector<expression_ref> v = E->sub;
@@ -108,6 +153,38 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       for(auto& e: v)
 	e = desugar(m, e, bound);
       return get_list(v);
+    }
+    else if (n->type == "Decls")
+    {
+      for(auto& e: v)
+	e = desugar(m, e, bound);
+
+      // Now what do we do?
+    }
+    else if (n->type == "Decl")
+    {
+      // Issue, if we are defining functions inside a let binding, then f needs to
+      // be a dummy that also binds identifiers inside the main let body.
+      // Thus, we can't make the function be a "var".
+      // .. does that only happen AFTER we allocate a cell for the "f" in the top-level let expression?
+      // Basically, how do we handle fixpoints?  At the top level?
+
+      // Is this a set of function bindings?
+      if (v[0].assert_is_a<AST_node>()->type == "funlhs1")
+      {
+	set<string> bound2 = bound;
+	for(const auto& e: v[0]->sub)
+	  add(bound2, find_bound_vars(e));
+	v[0] = replace_bound_vars(v[0]);
+	for(auto& e: v)
+	  e = desugar(m, e, bound2);
+
+	expression_ref lhs = make_apply(v[0]->sub);
+	expression_ref rhs = v[1]->sub[0];
+	return new expression(AST_node("FunDecl"),{lhs,rhs});
+      }
+
+      // Is this a set of pattern bindings?
     }
     else if (n->type == "id")
     {
