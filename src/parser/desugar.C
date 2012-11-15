@@ -176,7 +176,6 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
   vector<expression_ref> decls;
   for(int i=0;i<v.size();i++)
   {
-    string lhs_type = v[i]->sub[0].assert_is_a<AST_node>()->type;
     // If its not a function binding, accept it as is, and continue.
     if (object_ptr<const dummy> d = v[i]->sub[0].is_a<dummy>())
       decls.push_back(new expression(v[i]->head,
