@@ -280,7 +280,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // tuple patten
 	  | lit('(')[clear(_a)] >> pat[ push_back(_a,_1) ] >> +(lit(',') >> pat[ push_back(_a,_1) ]) >> lit(')') [ _val = new_<expression>(AST_node("Tuple"), _a) ]
 	  // list pattern
-	  | lit('[')[clear(_a)] >> pat % ',' >> lit(']') [ _val = new_<expression>(AST_node("List"), _a) ]
+	  | lit('[')[clear(_a)] >> pat[ push_back(_a,_1) ] % ',' >> lit(']') [ _val = new_<expression>(AST_node("List"), _a) ]
 	  // irrefutable pattern
 	  //	  | lit('~') >> apat                
 	  ;
