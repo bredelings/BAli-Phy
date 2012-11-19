@@ -584,8 +584,9 @@ bool operator>(const tree_record& t1, const tree_record& t2)
   return cmp(t1,t2) > 0;
 }
 
-SequenceTree tree_sample::T(int i) const {
-  return get_mf_tree(leaf_names,trees[i].partitions);
+SequenceTree tree_sample::T(int i) const 
+{
+  return get_mf_tree(leaf_names,trees[i].partitions, trees[i].branch_lengths);
 }
 
 valarray<bool> tree_sample::support(const Partition& p) const 

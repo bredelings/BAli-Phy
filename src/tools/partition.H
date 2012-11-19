@@ -146,6 +146,10 @@ SequenceTree get_mf_tree(const std::vector<std::string>& names,
 SequenceTree get_mf_tree(const std::vector<std::string>& names,
 			 const std::vector<boost::dynamic_bitset<> >& partitions);
 
+SequenceTree get_mf_tree(const std::vector<std::string>& names,
+			 const std::vector<boost::dynamic_bitset<> >& partitions,
+			 const std::vector<double>& branch_lengths);
+
 void add_leaf_partitions(const std::vector<std::string>& names, std::vector<Partition>&);
 
 std::vector<Partition> get_star_partitions(std::vector<std::string>& names);

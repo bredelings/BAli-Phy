@@ -469,6 +469,27 @@ SequenceTree get_mf_tree(const std::vector<std::string>& names,
   return T;
 }
 
+SequenceTree get_mf_tree(const std::vector<std::string>& names,
+			 const std::vector<dynamic_bitset<> >& partitions,
+			 const std::vector<double>& branch_lengths) 
+{
+  SequenceTree T = star_tree(names);
+  for(int b=0;b<T.n_branches();b++)
+    T.branch(b).set_length(branch_lengths[b]);
+
+  const int LB = T.n_branches();
+
+  assert(branch_lengths.size() == LB + partitions.size());
+
+  for(int i=0;i<partitions.size();i++)
+  {
+    int b = T.induce_partition(partitions[i]);
+    T.branch(b).set_length(branch_lengths[LB+i]);
+  }
+
+  return T;
+}
+
 /// Remove uninformative branches, then add leaf branches in front
 void add_leaf_partitions(const vector<string>& names, vector<Partition>& partitions)
 {
