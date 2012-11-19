@@ -512,6 +512,10 @@ context& context::operator+=(const Program& P2)
 
     expression_ref F = P2.get_function(S.name);
 
+    // (1) find free dummies (must be named)
+    // (2) substitute for them!
+    // That should work, although it is NOT the most efficient mechanism!
+
     assert(R != -1);
     set_C(R, preprocess(F) );
   }
