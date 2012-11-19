@@ -350,6 +350,7 @@ int main(int argc,char* argv[])
       
       D /= As.size();
 
+      cout<<join(As.sequence_names(), '\t')<<"\n";
       for(int i=0;i<D.size1();i++) {
 	vector<double> v(D.size2());
 	for(int j=0;j<v.size();j++)
