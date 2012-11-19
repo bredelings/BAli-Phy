@@ -135,6 +135,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("mean", "Show mean and standard deviation")
     ("median", "Show median and confidence interval")
     ("minmax", "Show minumum and maximum distances")
+    ("leaves-only", "Show minumum and maximum distances")
+    ("topology-only", "Show minumum and maximum distances")
     ;
 
   options_description visible("All options");
@@ -550,6 +552,41 @@ double internal_branch_distance2(const tree_record& t1, const tree_record& t2)
   return topology_distance2(t1,t2);
 }
 
+void write_distance_cvars_header(const SequenceTree& T,bool leaves) {
+
+  vector<string> names;
+
+  if (leaves) {
+    for(int n1=0;n1<T.n_leaves();n1++)
+      names.push_back(string("L")+convertToString(n1));
+  }
+  else {
+    for(int n1=0;n1<T.n_nodes()-1;n1++)
+      for(int n2=0;n2<n1;n2++) {
+	string field = string("D")+convertToString(n1)+"-"+convertToString(n2);
+	names.push_back(field);
+      }
+  }
+
+  
+  std::cout<<join(names,',')<<endl;
+}
+
+void write_distance_cvars_out(const SequenceTree& T,bool leaves) {
+
+  vector<string> lengths;
+  if (leaves) {
+    for(int n1=0;n1<T.n_leaves();n1++)
+      lengths.push_back(convertToString(T.branch(n1).length()));
+  }
+  else {
+    for(int n1=0;n1<T.n_nodes()-1;n1++)
+      for(int n2=0;n2<n1;n2++)
+	lengths.push_back(convertToString(T.distance(n1,n2)));
+  }
+  std::cout<<join(lengths,',')<<endl;
+}
+
 int main(int argc,char* argv[]) 
 { 
   try 
@@ -652,6 +689,23 @@ int main(int argc,char* argv[])
       diameter(D,"1",args);
     }
 
+    else if (analysis == "node-dist-cvars") 
+    {
+      bool leaves_only = args.count("leaves-only");
+      bool topology_only = args.count("topology-only");
+
+      check_supplied_filenames(1,files);
+      tree_sample trees(files[0],skip,subsample,max);
+      write_distance_cvars_header(trees.T(0),leaves_only);
+      for(int i=0;i<trees.size();i++)
+      {
+	SequenceTree T = trees.T(i);
+	if (topology_only)
+	  for(int b=0;b<T.n_branches();b++)
+	    T.branch(b).set_length(1.0);
+	write_distance_cvars_out(T,leaves_only);
+      }
+    }
     else if (analysis == "compare") 
     {
       check_supplied_filenames(2,files);
