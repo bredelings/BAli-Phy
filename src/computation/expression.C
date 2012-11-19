@@ -168,7 +168,14 @@ string expression::print() const
 
     if (is_a<lambda>())
     {
-      result = "/\\" + sub[0]->print()+"."+sub[1]->print();
+      expression_ref body = new expression(*this);
+      vector<string> vars;
+      while (body.is_a<lambda>())
+      {
+	vars.push_back(body->sub[0]->print());
+	body = body->sub[1];
+      }
+      result = "\\" + join(vars,' ') + " -> "+ body->print();
       return result;
     }
 
