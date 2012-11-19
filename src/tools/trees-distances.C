@@ -170,6 +170,22 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
 typedef double (*tree_metric_fn)(const tree_record&,const tree_record&);
 
+ublas::matrix<double> leaf_distances(const Tree& T)
+{
+  const int n = T.n_leaves();
+  ublas::matrix<double> D(n, n);
+
+  // calculate the pairwise distances
+  for(int i=0;i<n;i++)
+  {
+    D(i,i) = 0;
+    for(int j=0;j<i;j++)
+      D(i,j) = D(j,i) = T.distance(i,j);
+  }
+
+  return D;
+}
+
 ublas::matrix<double> distances(const vector<tree_record>& trees, 
 				tree_metric_fn metric_fn
 				)
@@ -696,7 +712,9 @@ int main(int argc,char* argv[])
 
       check_supplied_filenames(1,files);
       tree_sample trees(files[0],skip,subsample,max);
+
       write_distance_cvars_header(trees.T(0),leaves_only);
+
       for(int i=0;i<trees.size();i++)
       {
 	SequenceTree T = trees.T(i);
@@ -704,6 +722,32 @@ int main(int argc,char* argv[])
 	  for(int b=0;b<T.n_branches();b++)
 	    T.branch(b).set_length(1.0);
 	write_distance_cvars_out(T,leaves_only);
+      }
+    }
+    else if (analysis == "leaf-dist-matrix") 
+    {
+      bool topology_only = args.count("topology-only");
+
+      check_supplied_filenames(1,files);
+      tree_sample trees(files[0],skip,subsample,max);
+
+      for(int i=0;i<trees.size();i++)
+      {
+	SequenceTree T = trees.T(i);
+	if (topology_only)
+	  for(int b=0;b<T.n_branches();b++)
+	    T.branch(b).set_length(1.0);
+
+	ublas::matrix<double> D = leaf_distances(T);
+	
+	cout<<join(trees.names(), '\t')<<"\n";
+	vector<double> v(D.size2());
+	for(int i=0;i<D.size1();i++) 
+	{
+	  for(int j=0;j<v.size();j++)
+	    v[j] = D(i,j);
+	  cout<<join(v,'\t')<<endl;
+	}
       }
     }
     else if (analysis == "compare") 
