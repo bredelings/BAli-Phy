@@ -307,6 +307,15 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	return var(qualified_name);
       }
     }
+    else if (n->type == "Apply")
+    {
+      for(auto& e: v)
+	e = desugar(m, e, bound);
+      expression_ref E2 = v[0];
+      for(int i=1;i<v.size();i++)
+	E2 = (E2,v[i]);
+      return E2;
+    }
     else if (n->type == "Lambda")
     {
       const int n_args = E->size()-1;

@@ -147,8 +147,6 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | h_char [ _val = _1 ]
 	  | h_string [ _val = _1 ];
 
-	expression_ref (*apply_expression_ptr)(const expression_ref&,const expression_ref&);
-	apply_expression_ptr = &apply_expression;
 	/*----- Section 3 ------*/
 	exp = 
 	  infixexp [ _val = new_<expression>(AST_node("infixexp"),_1) ] >> "::" >> -(context >> "=>") >> type 
@@ -169,9 +167,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | fexp [_val = _1]
 	  ;
 
-	fexp = aexp [ _val = _1] >> *aexp[ _val = phoenix::bind(apply_expression_ptr,_val,_1) ]; // function application
+	fexp = +aexp [ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Apply"), _a) ]  ; // function application
 
-	// con >> conid >> qconid >qcon >> gcon
+	// order: con >> conid >> qconid >qcon >> gcon
 
 	aexp = 
 	  // variable
@@ -528,7 +526,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
   qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> infixexp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> lexp;
-  qi::rule<Iterator, expression_ref(), ascii::space_type> fexp;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> fexp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> aexp;
 
   /*----- Section 3.2 -------*/
