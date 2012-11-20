@@ -1,56 +1,58 @@
 DeclareParameter x
 x = 2
+DeclareParameter y
 x ~ Normal()
-x ~ Normal("\"")
-x ~ Normal('"')
-x ~ Normal('j')
-x ~ Normal("o")
+y ~ Normal(x,1)
+y = 3
+"\""
+'"'
+'j'
+"o"
 x ~ Normal(0.0)
 x ~ Normal(0.0,0.00)
 x ~ Normal(0.0 , 0.00)
 x ~ Normal(0,1)
-x ~ Normal(0:0:[],1)
-x ~ Normal(0+(0+0),1)
-x ~ Normal(0==(0+0),1)
-x ~ Normal((==),1)
-x ~ Normal(0,"1")
-x ~ Normal(0+0-0,1)
-x ~ Normal(0+0-(-0),1)
-x ~ Normal(x*y+z*w,1)
-x ~ Normal(0 0,1)
-y ~ Normal(x,1)
-y ~ Normal([x],1)
-y ~ Normal([x,x],1)
-y ~ Normal((x,x),1)
-y ~ Normal(N.x,1)
-y ~ Normal((x),1)
-y ~ Normal(x (z y),1)
-y ~ Normal(x z y,1)
-y ~ Normal((+) + (*),1)
-y ~ Normal(fmap (+),1)
-y ~ Normal(fmap (1+),1)
-y ~ Normal(x ++ z ++ y,1)
-y ~ Normal(x `seq` z `seq` y,1)
-y ~ Normal((,,,) z (z y),1)
-y ~ Normal(Maybe.mayb2e z (z y),1)
-y ~ Normal(Mayb2e z (z y),1)
-y ~ Normal(Maybe.Mayb2e z (z y),1)
-y ~ Normal(fmap (\x->x+1) y,1)
-y ~ Normal(if x then y else z,1)
-y ~ Normal(\x->if x then y else z,1)
-y ~ Normal(\x y->if x then y else z,1)
+0:0:[]
+0+(0+0)
+0==(0+0)
+(==)
+"1"
+0+0-0
+0+0-(-0)
+x*y+z*w
+0 0
+[x]
+[x,x]
+(x,x)
+N.x
+(x)
+x (z y)
+x z y
+(+) + (*)
+fmap (+)
+fmap (1+)
+x ++ z ++ y
+x `seq` z `seq` y
+(,,,) z (z y)
+Maybe.mayb2e z (z y)
+Mayb2e z (z y)
+Maybe.Mayb2e z (z y)
+fmap (\x->x+1) y
+if x then y else z
+\x->if x then y else z
+\x y->if x then y else z
 (x,y) ~ Normal(x)
 [x,y] ~ Normal(x)
-[x,y] ~ Normal(findFirst (\n->(targetNode t n)==n2) (edgesOutOfNode t n1))
-[x,y] ~ Normal([edgeForNodes (n,n1) | n <- neighbors t n1, n /= n2])
-[x,y] ~ Normal(let {x = x; f y = y} in x)
-[x,y] ~ Normal(case x of {(y,_)-> y})
-[x,y] ~ Normal(case x of {[y,_]-> y})
-[x,y] ~ Normal(case x of {h:t-> h})
-[x,y] ~ Normal(case x of {1-> h})
-[x,y] ~ Normal(case x of {-1-> h})
-[x,y] ~ Normal(case x of {1.0 -> h})
-[x,y] ~ Normal(case x of {-1.0-> h})
-[x,y] ~ Normal(case x of {Maybe h _ -> h})
-[x,y] ~ Normal(let {edgeForNodes t (n1,n2) = findFirst (\n->(targetNode t n)==n2) (edgesOutOfNode t n1)} in x)
-[x,y] ~ Normal(let {x=2;edgeForNodes t (n1,n2) = findFirst (\n->(targetNode t n)==n2) (edgesOutOfNode t n1)} in x)
+findFirst (\n->(targetNode t n)==n2) (edgesOutOfNode t n1)
+[edgeForNodes (n,n1) | n <- neighbors t n1, n /= n2]
+let {x = x; f y = y} in x
+case x of {(y,_)-> y}
+case x of {[y,_]-> y}
+case x of {h:t-> h}
+case x of {1-> h}
+case x of {-1-> h}
+case x of {1.0 -> h}
+case x of {-1.0-> h}
+case x of {Maybe h _ -> h}
+let {edgeForNodes t (n1,n2) = findFirst (\n->(targetNode t n)==n2) (edgesOutOfNode t n1)} in x
+let {x=2;edgeForNodes t (n1,n2) = findFirst (\n->(targetNode t n)==n2) (edgesOutOfNode t n1)} in x
