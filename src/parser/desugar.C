@@ -358,7 +358,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 
       expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
 
-      return new expression((default_value, v[0], v[1]));
+      return (default_value, v[0], v[1]);
     }
     else if (n->type == "BugsDist")
     {
@@ -381,7 +381,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	throw myexception()<<"Can't translate distribution name '"<<dist_name<<"'";
       vector<expression_ref> args = v; args.erase(args.begin()); args.erase(args.begin());
       expression_ref dist_args = get_tuple(args);
-      return new expression((distributed, v[0], Tuple(dist_family,dist_args)));
+      return (distributed, v[0], Tuple(dist_family,dist_args));
     }
   }
 
