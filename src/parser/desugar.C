@@ -337,6 +337,12 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       w[0] = desugar(m, w[0], bound2);
       return new expression{ let_obj(), w };
     }
+    else if (n->type == "BugsNote")
+    {
+      for(auto& e: v)
+	e = desugar(m, e, bound);
+      return v[0];
+    }
   }
 
   for(auto& e: v)
@@ -357,32 +363,16 @@ expression_ref parse_haskell_line(const Program& P, const string& line)
   return desugar(P, parse_haskell_line(line));
 }
 
-bugs_cmd parse_bugs_line(const Program& P, const string& line)
+expression_ref parse_bugs_line(const Program& P, const string& line)
 {
-  bugs_cmd cmd;
+  expression_ref cmd;
   try
   {
     cmd = parse_bugs_line(line);
 
-    std::cerr<<"BUGS phrase parse: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
-    for(int i=0;i<cmd.arguments.size();i++)
-    {
-      std::cerr<<cmd.arguments[i];
-      if (i != cmd.arguments.size()-1)
-	std::cerr<<", ";
-    }
-    std::cerr<<")\n";
-    cmd.var = desugar(P, cmd.var);
-    for(auto& e: cmd.arguments)
-      e = desugar(P, e);
-    std::cerr<<"        processed: "<<cmd.var<<" ~ "<<cmd.dist<<"(";
-    for(int i=0;i<cmd.arguments.size();i++)
-    {
-      std::cerr<<cmd.arguments[i];
-      if (i != cmd.arguments.size()-1)
-	std::cerr<<", ";
-    }
-    std::cerr<<")\n";
+    std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
+    cmd = desugar(P, cmd);
+    std::cerr<<"        processed: "<<cmd<<"\n";
   }
   catch (const myexception& e)
   {
@@ -413,7 +403,7 @@ void add_BUGS(const Parameters& P, const string& filename)
 
   for(const auto& line: lines)
   {
-    bugs_cmd cmd = parse_bugs_line(P.get_Program(), line);
+    expression_ref cmd = parse_bugs_line(P.get_Program(), line);
 
     // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
     //  D is of the form (prob_density,name,density,quantile)

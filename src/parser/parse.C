@@ -54,13 +54,6 @@ namespace phoenix = boost::phoenix;
 // A symbol table for parameters and vars.
 qi::symbols<char,expression_ref> identifiers;
 
-BOOST_FUSION_ADAPT_STRUCT(
-    bugs_cmd,
-    (expression_ref, var)
-    (std::string, dist)
-    (std::vector<expression_ref>, arguments)
-)
-
 template <typename Iterator>
 struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 {
@@ -471,8 +464,6 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	   << std::endl
 	   );
 
-	bugs_line.name("bugs_line");
-	text.name("text");
 	exp.name("exp");
 	infixexp.name("infixexp");
 	lexp.name("lexp");
@@ -488,13 +479,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	gcon.name("gcon");
 	literal.name("literal");
 	h_string.name("h_string");
-	arguments.name("arguments");
 	reservedid.name("reserved_id");
     }
-
-  qi::rule<Iterator, bugs_cmd(), ascii::space_type> bugs_line;
-  qi::rule<Iterator, std::string()> text;
-  qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> arguments;
 
   qi::rule<Iterator, char()> small;
   qi::rule<Iterator, char()> large;
@@ -652,11 +638,13 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 };
 
 template <typename Iterator>
-struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
+struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 {
-  qi::rule<Iterator, bugs_cmd(), ascii::space_type> bugs_line;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> bugs_line;
   qi::rule<Iterator, std::string()> text;
-  qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> arguments;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_dist;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_default_value;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_note;
   haskell_grammar<Iterator> h;
 
     bugs_grammar() : bugs_grammar::base_type(bugs_line)
@@ -683,25 +671,15 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	using phoenix::val;
 
 	text %= +(char_ - ' ' -'(');
-	arguments %= lit('(')>>h.exp%','>>lit(')')|lit("()");
-	bugs_line %= h.exp >> '~' >> text >> arguments >> eoi ;
+	bugs_dist = h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,_1)] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eoi [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
+	bugs_default_value = h.exp[push_back(_a,_1)] >> '=' > h.exp[push_back(_a,_1)] > eoi [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
+	bugs_note = h.exp[push_back(_a,_1)] >> eoi [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
+
+	bugs_line %= bugs_dist | bugs_default_value | bugs_note;
 
 	on_error<fail>
 	  (
 	   bugs_line
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	// Add some error messages to see what's failing!
-	on_error<fail>
-	  (
-	   arguments
 	   , std::cout
 	   << val("Error! Expecting ")
 	   << _4
@@ -723,26 +701,34 @@ struct bugs_grammar : qi::grammar<Iterator, bugs_cmd(), ascii::space_type>
 	   << std::endl
 	   );
 
+	on_error<fail>
+	  (
+	   bugs_dist
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   bugs_default_value
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
     }
 };
 
 //-----------------------------------------------------------------------//
-
-vector<string> tokenize(const string& line)
-{
-  const string delimiters = "!#$%&*~|^@.?()[]{}/\\,;:=*`'\"+-<>";
-  const string whitespace = " \t\n\r";
-
-  vector<string> tokens;
-
-  int i=0;
-  string token;
-
-  while(get_word(token,i,line,delimiters,whitespace))
-    tokens.push_back(token);
-
-  return tokens;
-}
 
 expression_ref parse_haskell_line(const string& line)
 {
@@ -769,13 +755,13 @@ expression_ref parse_haskell_decls(const string& line)
   throw myexception()<<"Haskell pharse parse: only parsed "<<line.substr(0, iter-line.begin());
 }
 
-bugs_cmd parse_bugs_line(const string& line)
+expression_ref parse_bugs_line(const string& line)
 {
   using boost::spirit::ascii::space;
 
   string::const_iterator iter = line.begin();
   bugs_grammar<string::const_iterator> bugs_parser;
-  bugs_cmd cmd;
+  expression_ref cmd;
   if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
     return cmd;
 

@@ -1,3 +1,5 @@
+DeclareParameter x
+x = 2
 x ~ Normal()
 x ~ Normal("\"")
 x ~ Normal('"')
