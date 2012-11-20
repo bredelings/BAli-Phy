@@ -348,13 +348,40 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     {
       for(auto& e: v)
 	e = desugar(m, e, bound);
+
       return v[0];
     }
     else if (n->type == "BugsDefaultValue")
     {
+      for(auto& e: v)
+	e = desugar(m, e, bound);
+
+      expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
+
+      return new expression((default_value, v[0], v[1]));
     }
     else if (n->type == "BugsDist")
     {
+      for(auto& e: v)
+	e = desugar(m, e, bound);
+      // Fields: (prob_density) (random vars) (parameter expressions)
+      expression_ref distributed = lambda_expression( constructor(":~",2) );
+
+      string dist_name = *(v[1]->is_a<const String>());
+      expression_ref dist_family;
+      if (dist_name == "Normal")
+	dist_family = var("normalDensity");
+      else if (dist_name == "Exponential")
+	dist_family = var("exponentialDensity");
+      else if (dist_name == "Gamma")
+	dist_family = var("gammaDensity");
+      else if (dist_name == "Beta")
+	dist_family = var("betaDensity");
+      else
+	throw myexception()<<"Can't translate distribution name '"<<dist_name<<"'";
+      vector<expression_ref> args = v; args.erase(args.begin()); args.erase(args.begin());
+      expression_ref dist_args = get_tuple(args);
+      return new expression((distributed, v[0], Tuple(dist_family,dist_args)));
     }
   }
 
@@ -386,6 +413,7 @@ expression_ref parse_bugs_line(const Program& P, const string& line)
     std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
     cmd = desugar(P, cmd);
     std::cerr<<"        processed: "<<cmd<<"\n";
+    std::cerr<<"             head: "<<cmd->head<<"\n";
   }
   catch (const myexception& e)
   {
