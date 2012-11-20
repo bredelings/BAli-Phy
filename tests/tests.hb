@@ -1,6 +1,6 @@
-DeclareParameter x
+DeclareParameter "x"
 x = 2
-DeclareParameter y
+DeclareParameter "y"
 x ~ Normal()
 y ~ Normal(x,1)
 y = 3
