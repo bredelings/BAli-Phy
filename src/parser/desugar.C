@@ -27,6 +27,13 @@ using std::deque;
 // 13. Define patterns for case expressions...
 // 14. Define patterns for let expressions..
 // 15. Allow declarations...
+// 16. Move to only desugaring entire programs!
+//     - A program is a collection of modules.
+//     - We can desugar entire modules, BUT we also have the names from other modules to import.
+//     (?) How do we handle modules with non-parsed code here, like the Prelude?
+// 17. Move to only compiling entire programs, where programs are entire module collections.
+//     
+
 
 expression_ref infix_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
@@ -343,6 +350,12 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	e = desugar(m, e, bound);
       return v[0];
     }
+    else if (n->type == "BugsDefaultValue")
+    {
+    }
+    else if (n->type == "BugsDist")
+    {
+    }
   }
 
   for(auto& e: v)
@@ -403,6 +416,9 @@ void add_BUGS(const Parameters& P, const string& filename)
 
   for(const auto& line: lines)
   {
+    // FIXME: Allow blank lines and comments: parse the entire file.
+    // FIXME: How will we decide to care about line endings?
+
     expression_ref cmd = parse_bugs_line(P.get_Program(), line);
 
     // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
