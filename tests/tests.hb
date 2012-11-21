@@ -1,17 +1,17 @@
 DeclareParameter "x"
 x = 2
 DeclareParameter "y"
-x ~ Normal()
-y ~ Normal(x,1)
+x ~ Normal(0.0, 1.0)
+y ~ Normal(x, 1.0)
 y = 3
 "\""
 '"'
 'j'
 "o"
-x ~ Normal(0.0)
-x ~ Normal(0.0,0.00)
-x ~ Normal(0.0 , 0.00)
-x ~ Normal(0,1)
+0.0
+0.00
+0
+1
 0:0:[]
 0+(0+0)
 0==(0+0)
