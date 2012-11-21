@@ -312,6 +312,21 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       for(auto& e: v)
 	e = desugar(m, e, bound);
       expression_ref E2 = v[0];
+
+      // For constructors, actually substitute the body
+      if (object_ptr<const var> V = v[0]->is_a<var>())
+      {
+	if (m.is_declared(V->name))
+	{
+	  auto S = m.lookup_symbol(V->name);
+	  if (S.symbol_type == constructor_symbol)
+	    E2 = S.body;
+	}
+      }
+
+      //      / FIXME - if the first element is a known constructor, then substitute in the arguments!
+      //      / FIXME - why aren't constructor name ids being recognized?
+
       for(int i=1;i<v.size();i++)
 	E2 = (E2,v[i]);
       return E2;
