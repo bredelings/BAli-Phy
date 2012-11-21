@@ -475,6 +475,7 @@ void add_BUGS(Parameters& P, const string& filename)
 
   std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
 
+  Model_Notes N;
   for(const auto& line: lines)
   {
     // FIXME: Allow blank lines and comments: parse the entire file.
@@ -482,12 +483,22 @@ void add_BUGS(Parameters& P, const string& filename)
 
     expression_ref cmd = parse_bugs_line(P.get_Program(), line);
 
+    if (is_exactly(cmd, "DeclareParameter"))
+    {
+      string name = *(cmd->sub[0].assert_is_a<String>());
+      cmd = new expression(cmd->head,{parameter(name)});
+    }
+
+    if (is_exactly(cmd,"DeclareParameter") or is_exactly(cmd,"DefaultValue") or is_exactly(cmd, ":~"))
+      N.add_note(cmd);
+
     // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
     //  D is of the form (prob_density,name,density,quantile)
     // The line should look like "x ~ name(args).
     // - x should be a parameter or a tuple of parameters.
     // - args should be empty, or a comma-separated list of haskell expressions.
   }
+  P.add_submodel(N);
   exit(0);
 }
 
