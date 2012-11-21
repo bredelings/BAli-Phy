@@ -455,7 +455,7 @@ expression_ref parse_bugs_line(const Program& P, const string& line)
   return cmd;
 }
 
-void add_BUGS(const Parameters& P, const string& filename)
+void add_BUGS(Parameters& P, const string& filename)
 {
   // Um, so what is the current program?
 
