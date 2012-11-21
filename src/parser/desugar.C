@@ -414,13 +414,22 @@ expression_ref parse_haskell_line(const Program& P, const string& line)
 
 expression_ref parse_bugs_line(const Program& P, const string& line)
 {
+  Program P2 = P;
+  // This doesn't declare any aliases!
+  {
+    Program BUGS("BUGS");
+    BUGS.def_constructor("DeclareParameter",1);
+    BUGS.def_constructor("DefaultValue",2);
+    P2.import_module(BUGS,"BUGS",false);
+  }
+
   expression_ref cmd;
   try
   {
     cmd = parse_bugs_line(line);
 
     std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
-    cmd = desugar(P, cmd);
+    cmd = desugar(P2, cmd);
     std::cerr<<"        processed: "<<cmd<<"\n";
     std::cerr<<"             head: "<<cmd->head<<"\n";
   }
