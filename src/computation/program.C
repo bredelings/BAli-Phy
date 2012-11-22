@@ -14,7 +14,8 @@ using std::vector;
  *    (a) add_alias - yes we can add aliases for parameters!
  *    (b) add_symbol - parameters must also live in modules.
  *    (c) declare_symbol - allow declaring parameters.
- *    (d) 
+ *    (d) import_symbol - importing parameters is not only allowed, but required to use them
+ *                        if they are declared elsewhere!
  *
  * 2. How do we handle parameter namespaces? 
  *    (a) We are using those for a totally different purpose than modules!
