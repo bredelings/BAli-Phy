@@ -9,6 +9,32 @@ using std::map;
 using std::string;
 using std::vector;
 
+/*
+ * 1. If we are going to put parameter names into the same namespace as everything else, then
+ *    (a) add_alias - yes we can add aliases for parameters!
+ *    (b) add_symbol - parameters must also live in modules.
+ *    (c) declare_symbol - allow declaring parameters.
+ *    (d) 
+ *
+ * 2. How do we handle parameter namespaces? 
+ *    (a) We are using those for a totally different purpose than modules!
+ *    (b) This is really the fault of the model setup code, not of the programming framework...
+ *    (c) Specifically, if we construct mini-programs with these names, then
+ *        prefix-formula allows us to keep parameters created with the same name
+ *        separate.
+ *    (d) Maybe we can think of this more as automatic code generation!
+ *        - OK, so suppose we have Module HKY where { ... parameter kappa ... }
+ *
+ * 3. How does a BUGS file relate to the program? (This may be more a question about how
+ *     we construct MCMC samplers than a question about the underlying framework.)
+ *
+ * 4. How does Model_Notes relate to the program? (This may also not be a problem with
+ *     Context & such; it may instead be a question of programming BUGS samplers.)
+ *
+ * (a) How about notes such as logging frequency, etc.?
+ *
+ */
+
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2)
   :name(s), symbol_type(st), scope(sc), arity(i2)
 { }
