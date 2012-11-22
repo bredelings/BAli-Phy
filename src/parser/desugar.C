@@ -157,6 +157,8 @@ string get_func_name(const expression_ref& decl)
     assert(name.is_a<AST_node>()->type == "id");
     return name.is_a<AST_node>()->value;
   }
+  else
+    std::abort();
 }
 
 vector<expression_ref> get_patterns(const expression_ref& decl)
@@ -480,6 +482,7 @@ void add_BUGS(Parameters& P, const string& filename)
   {
     // FIXME: Allow blank lines and comments: parse the entire file.
     // FIXME: How will we decide to care about line endings?
+    // FIXME: For declaring things (e.g. parameters) I'd like the position in the file not to matter.
 
     expression_ref cmd = parse_bugs_line(P.get_Program(), line);
 
@@ -487,9 +490,11 @@ void add_BUGS(Parameters& P, const string& filename)
     {
       string name = *(cmd->sub[0].assert_is_a<String>());
       cmd = new expression(cmd->head,{parameter(name)});
+      Model_Notes N2;
+      N2.add_note(cmd);
+      P.add_submodel(N2);
     }
-
-    if (is_exactly(cmd,"DeclareParameter") or is_exactly(cmd,"DefaultValue") or is_exactly(cmd, ":~"))
+    else if (is_exactly(cmd,"DefaultValue") or is_exactly(cmd, ":~"))
       N.add_note(cmd);
 
     // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
@@ -499,6 +504,5 @@ void add_BUGS(Parameters& P, const string& filename)
     // - args should be empty, or a comma-separated list of haskell expressions.
   }
   P.add_submodel(N);
-  exit(0);
 }
 
