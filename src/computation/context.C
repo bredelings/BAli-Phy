@@ -551,7 +551,9 @@ context::context(const vector<expression_ref>& N)
   (*this) += get_Prelude();
 
   // 1. Create the parameters
-  std::set<string> names = find_named_parameters(N);
+  std::set<string> names = find_declared_parameters(N);
+  if (not includes(names, find_named_parameters(N)))
+    throw myexception()<<"Some parameter is referenced, but not declared, at model creation!";
   
   for(const auto& name: names)
     add_parameter(name);
