@@ -290,10 +290,14 @@ void check_internal_sequences_composition(const alignment& A,int n_leaves) {
 	;
       else if (A(column,i) == alphabet::not_gap)
 	;
-      else
-	throw myexception()<<"Found illegal index "<<A(column,i)
-			   <<" in column "<<column<<" of internal sequence '"
-			   <<A.seq(i).name<<"': only - and N/X are allowed";
+      else if (A(column,i) >= 0)
+      {
+	const alphabet& a = A.get_alphabet();
+	if (a.is_letter(A(column,i)))
+	  throw myexception()<<"Only '-' and 'N'/'X' are allowed in internal node sequences, but found illegal letter '"<<a.lookup(A(column,i))<<"' in column "<<column<<" of internal sequence '"<<A.seq(i).name<<"'.";
+	else
+	  throw myexception()<<"Only '-' and 'N'/'X' are allowed in internal node sequences, but found illegal index '"<<A(column,i)<<"' in column "<<column<<" of internal sequence '"<<A.seq(i).name<<"'.";
+      }
 }
 
 /// \brief Check if internal node characters are only present between leaf charaters.
