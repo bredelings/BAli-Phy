@@ -639,6 +639,7 @@ template <typename Iterator>
 struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 {
   qi::rule<Iterator, expression_ref(), ascii::space_type> bugs_line;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_lines;
   qi::rule<Iterator, std::string()> text;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_dist;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_default_value;
@@ -669,11 +670,12 @@ struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 	using phoenix::val;
 
 	text %= +(char_ - ' ' -'(');
-	bugs_dist = h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,_1)] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eoi [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
-	bugs_default_value = h.exp[push_back(_a,_1)] >> '=' > h.exp[push_back(_a,_1)] > eoi [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
-	bugs_note = h.exp[push_back(_a,_1)] >> eoi [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
+	bugs_dist = h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,_1)] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
+	bugs_default_value = h.exp[push_back(_a,_1)] >> '=' > h.exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
+	bugs_note = h.exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
 
 	bugs_line %= bugs_dist | bugs_default_value | bugs_note;
+	bugs_lines = bugs_line [push_back(_a,_1)] % ';' >> eoi [ _val = new_<expression>(AST_node("BugsLines"), _a)  ];
 
 	on_error<fail>
 	  (
@@ -766,3 +768,15 @@ expression_ref parse_bugs_line(const string& line)
   throw myexception()<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin());
 }
 
+expression_ref parse_bugs_file(const string& lines)
+{
+  using boost::spirit::ascii::space;
+
+  string::const_iterator iter = lines.begin();
+  bugs_grammar<string::const_iterator> bugs_parser;
+  expression_ref cmd;
+  if (phrase_parse(iter, lines.end(), bugs_parser.bugs_lines, space, cmd) and iter == lines.end())
+    return cmd;
+
+  throw myexception()<<"BUGS pharse parse: only parsed "<<lines.substr(0, iter-lines.begin());
+}
