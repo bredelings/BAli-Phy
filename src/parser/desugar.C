@@ -452,7 +452,7 @@ expression_ref parse_bugs_line(const Program& P, const string& line)
     std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
     cmd = desugar(P2, cmd);
     std::cerr<<"        processed: "<<cmd<<"\n";
-    std::cerr<<"             head: "<<cmd->head<<"\n";
+    std::cerr<<std::endl;
   }
   catch (const myexception& e)
   {
