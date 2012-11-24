@@ -32,7 +32,46 @@ using std::deque;
 //     - We can desugar entire modules, BUT we also have the names from other modules to import.
 //     (?) How do we handle modules with non-parsed code here, like the Prelude?
 // 17. Move to only compiling entire programs, where programs are entire module collections.
-//     
+// 18. Note that in add_BUGS( ) we use a program to parse the lines into a Model_Notes submodel.
+//     This submodel can then be prefixed and everything.
+//     HKY would be something like:
+//
+//     Module HKY where {
+//       DeclareParameter kappa
+//       import SModel (HKY,dna)
+//       import Distributions
+//       kappa ~ LogLaplace(log(2), 0.25)
+//       main = HKY dna kappa [piA,piT,piG,piC]
+//     }
+//
+//     Module PlusF where
+//     {
+//       import Distributions
+//       DeclareParameter piA
+//       DeclareParameter piG
+//       DeclareParameter piT
+//       DeclareParameter piC
+//       piA = 0.25
+//       piG = 0.25
+//       piT = 0.25
+//       piC = 0.25
+//       [piA, piT, piG, piC] ~ Dirichlet([1.0, 1.0, 1.0, 1.0])
+//       bounds piA (0.0, 1.0)
+//       bounds piG (0.0, 1.0)
+//       bounds piT (0.0, 1.0)
+//       bounds piC (0.0, 1.0)
+//
+//       main = [piA, piT, piG, piC]
+//     }
+/*
+ * OK, in a formula_expression_ref, how would I
+ * (a) define local variables & parse identifiers to refer to them.
+ * (b) import external variables to reference
+ * (c) 
+ * Perhaps a formula_expression_ref is just a tool for constructing a Model_Notes with a focussed expression.
+ * Two formula_expression_ref's should only be combined if they have the same module name, I would think...
+ */
+
 
 
 expression_ref infix_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
@@ -487,32 +526,35 @@ void add_BUGS(Parameters& P, const string& filename)
 
   std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
 
-  Model_Notes N;
+  Program BUGS("BUGS");
+  BUGS.import_module(P.get_Program(),"Prelude", false);
+  BUGS.import_module(P.get_Program(),"Distributions", false);
+  BUGS.import_module(P.get_Program(),"SModel", false);
+  BUGS.import_module(P.get_Program(),"Main", false);
   for(const auto& line: lines)
   {
-    // FIXME: Allow blank lines and comments: parse the entire file.
-    // FIXME: How will we decide to care about line endings?
-    // FIXME: For declaring things (e.g. parameters) I'd like the position in the file not to matter.
-
-    expression_ref cmd = parse_bugs_line(P.get_Program(), line);
+    expression_ref cmd = parse_bugs_line(BUGS, line);
 
     if (is_exactly(cmd, "DeclareParameter"))
     {
       string name = *(cmd->sub[0].assert_is_a<String>());
-      cmd = new expression(cmd->head,{parameter(name)});
-      Model_Notes N2;
-      N2.add_note(cmd);
-      P.add_submodel(N2);
+      BUGS.declare_parameter(name);
     }
-    else if (is_exactly(cmd,"DefaultValue") or is_exactly(cmd, ":~"))
-      N.add_note(cmd);
+  }
 
-    // Here, we want to convert the stream of tokens to an expression ref of the form (distributed,x,(D,args)) where
-    //  D is of the form (prob_density,name,density,quantile)
-    // The line should look like "x ~ name(args).
-    // - x should be a parameter or a tuple of parameters.
-    // - args should be empty, or a comma-separated list of haskell expressions.
+  Model_Notes N;
+  for(const auto& line: lines)
+  {
+    expression_ref cmd = parse_bugs_line(BUGS, line);
+    if (is_exactly(cmd, "DeclareParameter"))
+    {
+      string name = *(cmd->sub[0].assert_is_a<String>());
+      cmd = new expression{cmd->head,{parameter(BUGS.lookup_symbol(name).name)}};
+    }
+
+    N.add_note(cmd);
   }
   P.add_submodel(N);
+  for(int i=0;i<P.n_notes();i++)
+    std::cerr<<"note "<<i<<" = "<<P.get_note(i)->print()<<"\n\n";
 }
-
