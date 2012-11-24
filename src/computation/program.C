@@ -28,12 +28,17 @@ using std::vector;
  *        separate.
  *    (d) Maybe we can think of this more as automatic code generation!
  *        - OK, so suppose we have Module HKY where { ... parameter kappa ... }
+ *    (e) So, we have the model graph (statistics) from which we generate a program (computation).
  *
  * 3. How does a BUGS file relate to the program? (This may be more a question about how
  *     we construct MCMC samplers than a question about the underlying framework.)
  *
  * 4. How does Model_Notes relate to the program? (This may also not be a problem with
  *     Context & such; it may instead be a question of programming BUGS samplers.)
+ *    (a) The model graph in Model_Notes is logically prior to the program.
+ *    (b) Model_Notes represent (sub)models, as in formula_expression_ref.
+ *    (c) Question: should each submodel simply define a 'main'?
+ *        Or, should it define a 
  *
  * (a) How about notes such as logging frequency, etc.?
  *
