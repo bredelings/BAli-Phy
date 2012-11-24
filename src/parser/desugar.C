@@ -406,13 +406,13 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       string dist_name = *(v[1]->is_a<const String>());
       expression_ref dist_family;
       if (dist_name == "Normal")
-	dist_family = var("normalDensity");
+	dist_family = var("normalDist");
       else if (dist_name == "Exponential")
-	dist_family = var("exponentialDensity");
+	dist_family = var("exponentialDist");
       else if (dist_name == "Gamma")
-	dist_family = var("gammaDensity");
+	dist_family = var("gammaDist");
       else if (dist_name == "Beta")
-	dist_family = var("betaDensity");
+	dist_family = var("betaDist");
       else
 	throw myexception()<<"Can't translate distribution name '"<<dist_name<<"'";
       vector<expression_ref> args = v; args.erase(args.begin()); args.erase(args.begin());

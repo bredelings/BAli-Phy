@@ -269,5 +269,11 @@ Program Distribution_Functions()
 
   P.def_function("bernoulliProb", 2, lambda_expression( bernoulli_prob() ) );
 
+  //------------ Define distribution objects --------------------//
+  P.def_function("normalDist",0, normal_dist);
+  P.def_function("exponentialDist",0, exponential_dist);
+  P.def_function("gammaDist",0, gamma_dist);
+  P.def_function("betaDist",0, beta_dist);
+
   return P;
 }
