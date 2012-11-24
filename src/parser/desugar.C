@@ -399,6 +399,28 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	E2 = lambda_quantify(dummy(arg_names[j]),E2);
       return E2;;
     }
+    else if (n->type == "constructor_pattern")
+    {
+      string gcon = *v[0].assert_is_a<String>();
+      v.erase(v.begin());
+
+      // If the variable is free, then try top-level names.
+      if (not m.is_declared(gcon))
+	throw myexception()<<"Constructor pattern '"<<E<<"' has unknown constructor '"<<gcon<<"'";
+
+      const symbol_info& S = m.lookup_symbol(gcon);
+      if (S.symbol_type != constructor_symbol)
+	throw myexception()<<"Constructor pattern '"<<E<<"' has head '"<<gcon<<"' which is not a constructor!";
+
+      if (S.arity != v.size())
+	throw myexception()<<"Constructor pattern '"<<E<<"' has arity "<<v.size()<<" which does not equal "<<S.arity<<".";
+
+      // Desugar the 
+      for(auto& e: v)
+	e = desugar(m, e, bound);
+
+      return new expression{ constructor(S.name,S.arity),v };
+    }
     else if (n->type == "Let")
     {
       // parse the decls and bind declared names internally to the decls.
