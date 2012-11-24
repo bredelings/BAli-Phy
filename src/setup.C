@@ -278,9 +278,9 @@ void link(alignment& A,SequenceTree& T,bool internal_sequences)
   }
   //----- IF sequences > leaf nodes THEN maybe complain -------//
   else if (A.n_sequences() > T.n_nodes())
-    throw myexception()<<"More alignment sequences than tree nodes!";
+    throw myexception()<<"More alignment sequences ("<<A.n_sequences()<<") than tree nodes ("<<T.n_nodes()<<")!";
   else if (A.n_sequences() < T.n_nodes())
-    throw myexception()<<"Fewer alignment sequences than tree nodes!";
+    throw myexception()<<"Fewer alignment sequences ("<<A.n_sequences()<<") than tree nodes ("<<T.n_nodes()<<")!";
   else
   {
     A = remap_A_indices(A,T);
