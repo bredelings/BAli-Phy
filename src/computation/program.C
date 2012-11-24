@@ -548,11 +548,12 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
   def_function(name, arity, E);
 }
 
-void Program::def_constructor(const std::string& s, int arity)
+void Program::def_constructor(const std::string& name, int arity)
 {
-  symbol_info S(module_name+"."+s, constructor_symbol, local_scope, arity, -1, unknown_fix);
-  S.body = lambda_expression( constructor(s, arity) );
-  add_symbol( S );
+  symbol_info S(name, constructor_symbol, local_scope, arity, -1, unknown_fix);
+  string qualified_name = module_name+"."+name;
+  S.body = lambda_expression( constructor(qualified_name, arity) );
+  declare_symbol( S );
 }
 
 expression_ref Program::get_function(const std::string& name) const
