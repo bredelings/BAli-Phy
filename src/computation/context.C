@@ -327,7 +327,7 @@ int context::find_parameter(const string& s) const
 int context::add_parameter(const string& name)
 {
   if (not is_haskell_var_name(name))
-    throw myexception()<<"Parameter name '"<<name<<"' is not a Haskell qualified variable name";
+    throw myexception()<<"Parameter name '"<<name<<"' is not a Haskell variable name";
 
   P.modify()->declare_parameter(name);
 
