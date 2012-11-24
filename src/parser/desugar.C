@@ -558,6 +558,13 @@ void add_BUGS(Parameters& P, const string& filename)
 
     N.add_note(cmd);
   }
+  // OK, so adding notes here will abort if we try to change an existing prior.
+  // How do we REMOVE priors, so that we can add alternatives?
+  // I guess we could make a 'remove_priors_for_variables(<names>)' function call.
+  //  - It would have to remove ALL the priors, and then re-add one that were not changed.
+  // Then we could add the new ones.
+  //
+  // Hmm... it does seem slightly odd that the priors here could be for variables declared elsewhere.
   P.add_submodel(N);
   for(int i=0;i<P.n_notes();i++)
     std::cerr<<"note "<<i<<" = "<<P.get_note(i)->print()<<"\n\n";
