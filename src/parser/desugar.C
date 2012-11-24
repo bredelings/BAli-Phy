@@ -340,8 +340,10 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "id")
     {
+      // Local vars bind id's tighter than global vars.
       if (includes(bound,n->value))
 	return dummy(n->value);
+      // If the variable is free, then try top-level names.
       else if (m.is_declared(n->value))
       {
 	const symbol_info& S = m.lookup_symbol(n->value);
