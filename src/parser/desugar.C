@@ -351,6 +351,8 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	else
 	  return var(qualified_name);
       }
+      else
+	throw myexception()<<"Can't find id '"<<n->value<<"'";
     }
     else if (n->type == "Apply")
     {
