@@ -84,16 +84,13 @@ object_ptr<const Object> formula_expression_ref::result() const
 
 object_ptr<const Object> formula_expression_ref::result(const Program& P) const
 {
-  context C(get_notes());
-  C += P;
+  context C(get_notes(),P);
   return C.evaluate_expression(exp());
 }
 
 object_ptr<const Object> formula_expression_ref::result(const Program& P1, const Program& P2) const
 {
-  context C(get_notes());
-  C += P1;
-  C += P2;
+  context C(get_notes(),P1,P2);
   return C.evaluate_expression(exp());
 }
 
