@@ -2479,7 +2479,7 @@ int reg_heap::incremental_evaluate(int R, int t)
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
     else if (is_parameter(access(R).C.exp))
-      throw myexception()<<"Parameter with no result?! (Changeable = "<<access(R).changeable<<")";
+      throw myexception()<<"Parameter '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
 #endif
 
     // Reduction: let expression
