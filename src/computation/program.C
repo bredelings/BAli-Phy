@@ -550,3 +550,31 @@ std::ostream& operator<<(std::ostream& o, const Program& D)
   return o;
 }
 
+expression_ref resolve_refs(const Program& P, const expression_ref& E)
+{
+  // Replace parameters with the appropriate reg_var: of value parameter( )
+  if (object_ptr<const parameter> p = is_a<parameter>(E))
+  {
+    string qualified_name = P.lookup_symbol(p->parameter_name).name;
+
+    return parameter(qualified_name);
+  }
+
+  // Replace parameters with the appropriate reg_var: of value whatever
+  if (object_ptr<const var> V = is_a<var>(E))
+  {
+    string qualified_name = P.lookup_symbol(V->name).name;
+
+    return var(qualified_name);
+  }
+
+  // Other constants have no parts, and don't need to be resolved
+  if (not E->size()) return E;
+
+  // Resolve the parts of the expression
+  object_ptr<expression> V ( new expression(*E) );
+  for(int i=0;i<V->size();i++)
+    V->sub[i] = resolve_refs(P, V->sub[i]);
+
+  return V;
+}

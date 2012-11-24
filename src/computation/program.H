@@ -124,5 +124,6 @@ public:
 
 std::ostream& operator<<(std::ostream&, const Program&);
 
+expression_ref resolve_refs(const Program&, const expression_ref&);
 
 #endif
