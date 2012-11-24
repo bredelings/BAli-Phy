@@ -289,6 +289,7 @@ bool context::parameter_is_set(int index) const
 object_ref context::get_parameter_value(int index) const
 {
   assert(index >= 0 and index < parameters().size());
+
   int P = *parameters()[index];
 
   if (not access(P).result)
@@ -368,10 +369,25 @@ int context::add_parameter(const string& name)
   if (not is_haskell_var_name(name))
     throw myexception()<<"Parameter name '"<<name<<"' is not a Haskell variable name";
 
-  P.modify()->declare_parameter(name);
+  string module_name = get_module_name(name);
+  string var_name = get_unqualified_name(name);
+  string full_name = name;
+  if (module_name == "" or module_name == P->module_name)
+  {
+    module_name = P->module_name;
+    full_name = module_name + "." + var_name;
+    P.modify()->declare_parameter(var_name);
+  }
+  else
+  {
+    // FIXME: Right now the main program has a name.  What if the parameter is in that specific module?
+    Program M(get_module_name(name));
+    M.declare_parameter(get_unqualified_name(name));
+    P.modify()->import_module(M, M.module_name, false);
+  }
 
-  assert(name.size() != 0);
-  assert(find_parameter(name) == -1);
+  assert(full_name.size() != 0);
+  assert(find_parameter(full_name) == -1);
 
   int index = n_parameters();
 
@@ -379,7 +395,7 @@ int context::add_parameter(const string& name)
   parameters().push_back( r );
 
   access(*r).changeable = true;
-  set_C(*r, parameter(name) );
+  set_C(*r, parameter(full_name) );
 
   return index;
 }
@@ -459,12 +475,14 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
   int reg = -1;
 
   // Replace parameters with the appropriate reg_var: of value parameter( )
-  if (object_ptr<const parameter> P = is_a<parameter>(E))
+  if (object_ptr<const parameter> p = is_a<parameter>(E))
   {
-    int param_index = find_parameter(P->parameter_name);
+    string qualified_name = P->lookup_symbol(p->parameter_name).name;
+
+    int param_index = find_parameter(qualified_name);
     
     if (param_index == -1)
-      throw myexception()<<"Can't translate undefined parameter '"<<P->parameter_name<<"' in expression!";
+      throw myexception()<<"Can't translate undefined parameter '"<<qualified_name<<"' ('"<<p->parameter_name<<"') in expression!";
 
     reg = *parameters()[param_index];
   }

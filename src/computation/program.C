@@ -77,9 +77,6 @@ void Program::add_alias(const string& s)
   if (not is_declared_qualified(s))
     throw myexception()<<"Can't add alias for undeclared identifier '"<<s<<"' to module '"<<module_name<<"'";
 
-  if (symbols[s].symbol_type == parameter_symbol)
-    throw myexception()<<"Can't add alias for parameter! (Parameters must be fully qualified).";
-
   string s2 = get_unqualified_name(s);
 
   if (is_declared_unqualified(s2))
@@ -93,9 +90,6 @@ void Program::add_symbol(const symbol_info& S)
 {
   if (is_haskell_builtin_con_name(S.name))
     throw myexception()<<"Can't add builtin symbol '"<<S.name<<"'";
-
-  if (not is_qualified_symbol(S.name) and S.symbol_type != parameter_symbol)
-    throw myexception()<<"Can't add unqualified identifier '"<<S.name<<"' to module '"<<module_name<<"'";
 
   if (is_declared_qualified(S.name))
     throw myexception()<<"Trying to add identifier '"<<S.name<<"' twice to module '"<<module_name<<"'";
@@ -118,18 +112,14 @@ void Program::declare_symbol(const symbol_info& S)
   // FIXME - perhaps I should not declare symbols at top level, but only import them?
 
   if (is_qualified_symbol(S.name))
-    throw myexception()<<"Locally defined symbols should not be qualified.";
-
-  if (S.symbol_type == parameter_symbol)
-    throw myexception()<<"Declare parameters through declare_parameter(): "<<S.name;
+    throw myexception()<<"Locally defined symbol '"<<S.name<<"' should not be qualified.";
 
   symbol_info S2 = S;
   S2.name = module_name + "." + S.name;
   add_symbol(S2, local_scope);
   
   // Add the alias for S.name -> S2.name;
-  if (S.symbol_type != parameter_symbol)
-    add_alias(S2.name);
+  add_alias(S2.name);
 }
 
 // "Also like a type signature, a fixity declaration can only occur in the same sequence of declarations as the declaration of the operator itself, and at most one fixity declaration may be given for any operator."
@@ -162,16 +152,13 @@ void Program::declare_parameter(const std::string& pname)
 
 void Program::declare_parameter(const std::string& pname, const expression_ref& type)
 {
-  add_symbol({pname, parameter_symbol, global_scope, -1, -1, unknown_fix, parameter(pname),type});
+  declare_symbol({pname, parameter_symbol, local_scope, -1, -1, unknown_fix, parameter(pname),type});
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
 
 void Program::import_symbol(const symbol_info& S, bool qualified)
 {
-  if (S.symbol_type == parameter_symbol)
-    throw myexception()<<"May not import parameters...";
-
   if (not is_qualified_symbol(S.name))
     throw myexception()<<"Imported symbols must have qualified names.";
 
