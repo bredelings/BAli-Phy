@@ -17,6 +17,9 @@ using std::vector;
  *    (d) import_symbol - importing parameters is not only allowed, but required to use them
  *                        if they are declared elsewhere!
  *
+ *    (e) Also, we'll need to translate parameter names from model_notes!
+ *        - default_value, distributed, etc.
+ *
  * 2. How do we handle parameter namespaces? 
  *    (a) We are using those for a totally different purpose than modules!
  *    (b) This is really the fault of the model setup code, not of the programming framework...
