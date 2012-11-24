@@ -309,7 +309,7 @@ MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
 {
   MCMC::MoveAll MH_moves("parameters:scale:MH");
   for(int i=0;i<P.as<Parameters>()->n_branch_means();i++)
-    add_MH_move(*P, log_scaled(Between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),
+    add_MH_move(*P, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),
 		"mu_scale_sigma",     0.6,  MH_moves);
   return MH_moves;
 }
@@ -328,7 +328,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   MCMC::MoveAll MH_moves("parameters:MH");
 
   for(int i=0;i<P.n_branch_means();i++)
-    add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
+    add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
 
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.HKY.kappa",     "kappa_scale_sigma",  0.3,  MH_moves);
   add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "*.rho",     "rho_scale_sigma",  0.2,  MH_moves);
@@ -437,7 +437,7 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
 {
   MCMC::MoveAll slice_moves("parameters:scale:MH");
   for(int i=0;i<P.n_branch_means();i++)
-    add_slice_moves(P, "mu"+convertToString(i+1), slice_moves);
+    add_slice_moves(P, "Main.mu"+convertToString(i+1), slice_moves);
   return slice_moves;
 }
 
