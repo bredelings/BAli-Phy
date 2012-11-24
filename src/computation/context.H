@@ -56,6 +56,8 @@ public:
 
   const Program& get_Program() const {return *P;}
 
+  int add_note(const expression_ref&);
+
   expression_ref default_parameter_value(int i) const;
 
   /// Remove a stack-allocated reg from the stack.
