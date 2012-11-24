@@ -187,7 +187,7 @@ formula_expression_ref coerce_to_EM(string smodel,
 
   formula_expression_ref S = get_smodel_(smodel, a, frequencies);
 
-  if (S.exp() and S.result_as<SymmetricMatrixObject>())
+  if (S.exp() and dynamic_pointer_cast<const SymmetricMatrixObject>(S.result(Distribution_Functions())))
     return S;
 
   throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
