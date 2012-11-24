@@ -43,6 +43,8 @@ using std::vector;
  *
  * (a) How about notes such as logging frequency, etc.?
  *
+ *
+ * 5. Remove 'arity' argument from def_function?
  */
 
 symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int i2)
