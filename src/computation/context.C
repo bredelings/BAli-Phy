@@ -570,6 +570,40 @@ context::context()
   (*this) += get_Prelude();
 }
 
+// FIXME - this should be shared with Model::add_submodel( ), but we need to call Model::add_notes( ).
+// If a model were to HOOK (a) add_parameter, (b) add_note( ), and (c) set_parameter_value( )
+//  then this routine could work on both.
+vector<int> add_submodel(context& C, const vector<expression_ref>& N)
+{
+  vector<int> new_parameters;
+
+  // 1. Find and the declared parameter names
+  std::set<string> declared_parameter_names = find_declared_parameters(N);
+  if (not includes(declared_parameter_names, find_named_parameters(N)))
+    throw myexception()<<"Some parameter is referenced, but not declared, at model creation!";
+
+  // 2. Add the declared parameters
+  for(const auto& name: declared_parameter_names)
+    if (C.find_parameter(name) == -1)
+    {
+      int index = C.add_parameter(name);
+      new_parameters.push_back(index);
+    }
+    else
+      throw myexception()<<"Submodel declares existing parameter '"<<name<<"'!";
+  
+  // 3. Add the notes from this model to the current model.
+  for(const auto& n: N)
+    C.add_note(n);
+  
+  // 4. Set default values for newly declared parameters
+  for(int index: new_parameters)
+    if (not C.parameter_is_set(index))
+      C.set_parameter_value(index, C.default_parameter_value(index));
+
+  return new_parameters;
+}
+
 context::context(const vector<expression_ref>& N)
   :memory(new reg_heap()),
    P(new Program("Main")),
@@ -577,20 +611,7 @@ context::context(const vector<expression_ref>& N)
 {
   (*this) += get_Prelude();
 
-  // 1. Create the parameters
-  std::set<string> names = find_declared_parameters(N);
-  if (not includes(names, find_named_parameters(N)))
-    throw myexception()<<"Some parameter is referenced, but not declared, at model creation!";
-  
-  for(const auto& name: names)
-    add_parameter(name);
-
-  // 2. Add the notes refering to the parameters.
-  add_notes(N);
-
-  // 3. Then set all default values.
-  for(int i=0;i<n_parameters();i++)
-    set_parameter_value(i, default_parameter_value(i));
+  add_submodel(*this, N);
 }
 
 context::context(const vector<expression_ref>& N, const Program& P1)
@@ -601,20 +622,7 @@ context::context(const vector<expression_ref>& N, const Program& P1)
   (*this) += get_Prelude();
   (*this) += P1;
 
-  // 1. Create the parameters
-  std::set<string> names = find_declared_parameters(N);
-  if (not includes(names, find_named_parameters(N)))
-    throw myexception()<<"Some parameter is referenced, but not declared, at model creation!";
-  
-  for(const auto& name: names)
-    add_parameter(name);
-
-  // 2. Add the notes refering to the parameters.
-  add_notes(N);
-
-  // 3. Then set all default values.
-  for(int i=0;i<n_parameters();i++)
-    set_parameter_value(i, default_parameter_value(i));
+  add_submodel(*this, N);
 }
 
 context::context(const vector<expression_ref>& N, const Program& P1, const Program& P2)
@@ -626,20 +634,7 @@ context::context(const vector<expression_ref>& N, const Program& P1, const Progr
   (*this) += P1;
   (*this) += P2;
 
-  // 1. Create the parameters
-  std::set<string> names = find_declared_parameters(N);
-  if (not includes(names, find_named_parameters(N)))
-    throw myexception()<<"Some parameter is referenced, but not declared, at model creation!";
-  
-  for(const auto& name: names)
-    add_parameter(name);
-
-  // 2. Add the notes refering to the parameters.
-  add_notes(N);
-
-  // 3. Then set all default values.
-  for(int i=0;i<n_parameters();i++)
-    set_parameter_value(i, default_parameter_value(i));
+  add_submodel(*this, N);
 }
 
 context::context(const context& C)
