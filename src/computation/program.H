@@ -15,7 +15,7 @@ enum scope_t {local_scope, external_scope, global_scope, unknown_scope};
 struct symbol_info
 {
   std::string name;
-  int symbol_type;
+  symbol_type_t symbol_type;
   scope_t scope = unknown_scope;
   int arity = -1;
   int precedence = -1;
