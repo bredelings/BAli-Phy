@@ -78,7 +78,7 @@ TOOLS = model_P statreport alignment-gild \
 	alignment-compare tree-partitions trees-distances \
 	partitions-supported trees-pair-distances analyze-rates \
 	path-graph alignment-find-conserved alignment-max alignments-diff \
-	stats-cat expression2
+	stats-cat
 
 bin_PROGRAMS = bali-phy ${TOOLS}
 
@@ -330,10 +330,3 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 	sequence/sequence-format.C alignment/alignment-util.C tree/tree.C io.C tree/sequencetree.C
 
 #---------------------------------------------------------------
-
-expression2_SOURCES = computation/expression2.C util.C computation/computation.C \
-	computation/operator.C computation/expression.C probability/probability.C probability/distribution-operations.C \
-	computation/operations.C computation/graph_register.C computation/program.C \
-	computation/prelude.C computation/context.C math/eigenvalue.C math/exponential.C computation/model_notes.C \
-	computation/closure.C computation/let-float.C
-
