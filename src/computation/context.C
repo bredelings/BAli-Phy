@@ -569,6 +569,30 @@ context::context(const vector<expression_ref>& N)
     set_parameter_value(i, default_parameter_value(i));
 }
 
+context::context(const vector<expression_ref>& N, const Program& P1)
+  :memory(new reg_heap()),
+   P(new Program("Main")),
+   token(memory->get_unused_token())
+{
+  (*this) += get_Prelude();
+  (*this) += P1;
+
+  // 1. Create the parameters
+  std::set<string> names = find_declared_parameters(N);
+  if (not includes(names, find_named_parameters(N)))
+    throw myexception()<<"Some parameter is referenced, but not declared, at model creation!";
+  
+  for(const auto& name: names)
+    add_parameter(name);
+
+  // 2. Add the notes refering to the parameters.
+  add_notes(N);
+
+  // 3. Then set all default values.
+  for(int i=0;i<n_parameters();i++)
+    set_parameter_value(i, default_parameter_value(i));
+}
+
 context::context(const context& C)
   :Model_Notes(C),
    memory(C.memory),
