@@ -298,7 +298,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  //	  | decl 
 	  ;
 
-	decls = lit('{') >> (decl % ';')[_val = new_<expression>(AST_node("Decls"), _1)] >> '}';
+	decls = lit('{') > (decl % ';')[_val = new_<expression>(AST_node("Decls"), _1)] > '}';
 	decl  %= 
 	  //	  gendecl |
 	  (funlhs | pat)[push_back(_a,_1)] >> rhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Decl"), _a)  ];
