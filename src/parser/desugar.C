@@ -358,11 +358,13 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "Let")
     {
-      for(auto& e: v)
-	e = desugar(m, e, bound);
+      // parse the decls and bind declared names internally to the decls.
+      v[0] = desugar(m, v[0], bound);
 
       vector<expression_ref> decls = v[0]->sub;
       expression_ref body = v[1];
+
+      // find the bound var names + construct arguments to let_obj()
       vector<expression_ref> w = {body};
       set<string> bound2 = bound;
       for(const auto& decl: decls)
@@ -371,7 +373,11 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	w.push_back(decl->sub[0]);
 	w.push_back(decl->sub[1]);
       }
+
+      // finally desugar let-body, now that we know the bound vars.
       w[0] = desugar(m, w[0], bound2);
+
+      // construct the new let expression.
       return new expression{ let_obj(), w };
     }
     else if (n->type == "BugsNote")
