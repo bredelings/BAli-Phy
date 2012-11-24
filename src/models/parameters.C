@@ -699,12 +699,6 @@ efloat_t Parameters::prior_no_alignment() const
 	return 0;
     }
 
-  // prior on mu[i], the mean branch length for scale i
-  for(int i=0;i<n_branch_means();i++) {
-    //  return pow(efloat_t(branch_mean()),-1.0);
-    Pr *= gamma_pdf(get_parameter_value_as<Double>(branch_mean_index(i)), 0.5, 2.0);
-  }
-    
   // prior for each branch being aligned/unaliged
   if (variable_alignment()) 
   {
@@ -1051,7 +1045,12 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   add_parameter(Parameter("Heat.beta", Double(1.0), between(0,1)));
 
   for(int i=0;i<n_scales;i++)
-    add_parameter(Parameter("mu"+convertToString(i+1), Double(0.25), lower_bound(0)));
+  {
+    string mu_name = "Main.mu"+convertToString(i+1);
+    add_parameter(Parameter(mu_name, Double(0.25), lower_bound(0)));
+    // prior on mu[i], the mean branch length for scale i
+    add_note( (distributed, parameter(mu_name), Tuple(var("gammaDist"), Tuple(0.5, 2.0) ) ) );
+  }
 
   // check that smodel mapping has correct size.
   if (smodel_for_partition.size() != A.size())
