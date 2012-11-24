@@ -199,6 +199,8 @@ public:
 
   context(const std::vector<expression_ref>&, const Program& P1);
 
+  context(const std::vector<expression_ref>&, const Program& P1, const Program& P2);
+
   ~context();
 };
 
