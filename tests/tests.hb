@@ -41,8 +41,12 @@ fmap (\x->x+1) y
 if x then y else z
 \x->if x then y else z
 \x y->if x then y else z
-(x,y) ~ Normal(x)
-[x,y] ~ Normal(x)
+DeclareParameter "x2"
+DeclareParameter "y2"
+(x2,y2) ~ Normal(x,1.0)
+DeclareParameter "x3"
+DeclareParameter "y3"
+[x3,y3] ~ Normal(x,1.0)
 findFirst (\n->(targetNode t n)==n2) (edgesOutOfNode t n1)
 [edgeForNodes (n,n1) | n <- neighbors t n1, n /= n2]
 let {x = x; f y = y} in x
