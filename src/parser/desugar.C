@@ -305,8 +305,12 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	return dummy(n->value);
       else if (m.is_declared(n->value))
       {
-	string qualified_name = m.lookup_symbol(n->value).name;
-	return var(qualified_name);
+	const symbol_info& S = m.lookup_symbol(n->value);
+	string qualified_name = S.name;
+	if (S.symbol_type == parameter_symbol)
+	  return parameter(qualified_name);
+	else
+	  return var(qualified_name);
       }
     }
     else if (n->type == "Apply")
