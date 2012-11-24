@@ -1246,16 +1246,9 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   tree_program += Def( (var("findFirst"),v1,v2&v3), (If,(v1,v2),v2,(var("findFirst"),v1,v3)) );
 
   // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
-  tree_program += Def( (var("edgeForNodes"),dummy("t"),Tuple(dummy("n1"),dummy("n2"))), (var("findFirst"),
-  											 dummy("n")^(var("=="),(var("targetNode"),dummy("t"),dummy("n")),dummy("n2")),
- 											 (var("edgesOutOfNode"),dummy("t"),dummy("n1"))
- 											 )
-    		       );
-  
-  // Currently we can't actually load the Prelude + Tree_Program into an actual Program!
-  
-  std::cout<<"line = "<<desugar(tree_program, 
-				parse_haskell_decls("{edgeForNodes t (n1,n2) = findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1)}"))<<"\n";
+  tree_program += parse_haskell_decls("{\
+edgeForNodes t (n1,n2) = findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1)\
+}");
 
   // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
   //  tree_program += Def( (var("edgeForNodes"),dummy("t"),Tuple(dummy("n1"),dummy("n2"))), 
@@ -1305,7 +1298,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     C.set_parameter_value_expression(C.find_parameter(parameter_name), Tuple(source, target) );
   }
 
-  /*
   C.evaluate_expression( (var("numNodes"), var("Tree.tree")));
   C.evaluate_expression( (var("numBranches"), var("Tree.tree")));
   C.evaluate_expression( (var("edgesOutOfNode"), var("Tree.tree"), 0));
@@ -1325,7 +1317,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     for( int i: branch_list_)
       assert(includes(b2,i));
   }
-  */
 }
 
 Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,

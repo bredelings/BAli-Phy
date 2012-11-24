@@ -83,6 +83,8 @@ public:
 
   Program& operator+=(const Def&);
 
+  Program& operator+=(const expression_ref&);
+
   void add_alias(const std::string&);
 
   void add_symbol(const symbol_info&, scope_t);

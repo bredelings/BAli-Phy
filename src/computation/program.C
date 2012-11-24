@@ -3,6 +3,7 @@
 #include "computation/graph_register.H"
 #include "computation/operations.H"
 #include "let-float.H"
+#include "parser/desugar.H"
 
 using std::pair;
 using std::map;
@@ -476,6 +477,38 @@ string get_unqualified_name(const std::string& s)
 Program& Program::operator+=(const Def& D)
 {
   def_function(D.patterns, D.bodies);
+  return *this;
+}
+
+Program& Program::operator+=(const expression_ref& D_)
+{
+  expression_ref D = desugar(*this, D_);
+  assert(D.assert_is_a<AST_node>()->type=="Decls");
+  vector<expression_ref> decls = D->sub;
+
+  // 1. Get names that are being declared.
+  vector<string> names;
+  for(const auto& decl: decls)
+  {
+    assert(decl.assert_is_a<AST_node>()->type=="Decl");
+    names.push_back( decl->sub[0].assert_is_a<dummy>()->name );
+  }
+
+  // 2. Convert top-level dummies into global vars.
+  for(auto& decl: decls)
+    for(const auto& name: names)
+      decl = substitute(decl,dummy(name),var(name));
+
+  // 3. Define the symbols
+  for(const auto& decl: decls)
+  {
+    string name = decl->sub[0].assert_is_a<var>()->name;
+    // I think this is never used, for functions.  For constructors it does matter, though.
+    int arity = -1;
+    expression_ref E = decl->sub[1];
+    def_function(name, arity, E);
+  }
+
   return *this;
 }
 
