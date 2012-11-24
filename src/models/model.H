@@ -234,7 +234,7 @@ std::vector<int> parameters_with_extension(const Model& M, std::string name);
 
 std::vector<int> parameters_with_extension(const std::vector<std::string>& M, std::string name);
 
-std::string show_probability_expression(const expression_ref&);
+std::string show_probability_expression(const context& C, const expression_ref&);
 
 std::vector< std::string > show_probability_expressions(const context& C);
 #endif
