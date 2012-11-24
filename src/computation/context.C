@@ -240,6 +240,8 @@ expression_ref context::evaluate_structure_expression(const expression_ref& E) c
 
 bool context::parameter_is_set(int index) const
 {
+  assert(index >= 0 and index < parameters().size());
+
   int P = *parameters()[index];
 
   if (not access(P).result and not access(P).call) return false;
@@ -250,6 +252,7 @@ bool context::parameter_is_set(int index) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 object_ref context::get_parameter_value(int index) const
 {
+  assert(index >= 0 and index < parameters().size());
   int P = *parameters()[index];
 
   if (not access(P).result)
