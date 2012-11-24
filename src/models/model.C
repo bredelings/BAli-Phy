@@ -171,12 +171,9 @@ vector<int> Model::add_submodel(const Model_Notes& R)
   
   // Set default values.
   //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
-  for(const auto& name: declared_parameter_names)
-  {
-    int index = find_parameter(name);
+  for(int index: new_parameters)
     if (not C.parameter_is_set(index))
       C.set_parameter_value(index, C.default_parameter_value(index));
-  }
 
   return new_parameters;
 }
