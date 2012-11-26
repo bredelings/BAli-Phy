@@ -561,7 +561,7 @@ void add_BUGS(Parameters& P, const string& filename)
   {
     expression_ref cmd = parse_bugs_line(BUGS, line);
 
-    if (is_exactly(cmd, "DeclareParameter"))
+    if (is_exactly(cmd, "BUGS.DeclareParameter"))
     {
       string name = *(cmd->sub[0].assert_is_a<String>());
       BUGS.declare_parameter(name);
@@ -572,7 +572,7 @@ void add_BUGS(Parameters& P, const string& filename)
   for(const auto& line: lines)
   {
     expression_ref cmd = parse_bugs_line(BUGS, line);
-    if (is_exactly(cmd, "DeclareParameter"))
+    if (is_exactly(cmd, "BUGS.DeclareParameter"))
     {
       string name = *(cmd->sub[0].assert_is_a<String>());
       cmd = new expression{cmd->head,{parameter(BUGS.lookup_symbol(name).name)}};
