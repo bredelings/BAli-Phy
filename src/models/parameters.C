@@ -1211,7 +1211,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
   expression_ref branch_nodes_array = (listArray_,get_list(branch_nodes));
 
-  expression_ref tree_con = lambda_expression( constructor("Tree",4) );
+  expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
   // FIXME - there should be some way to define this all and then add the prefix "Tree"!
 
@@ -1223,9 +1223,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   tree_program.import_module(get_Prelude(),"Prelude",false);
   tree_program.def_constructor("Tree",4);
   tree_program.def_function("tree", 0, (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
-
-  // numNodes (Tree _ _ n _) = n
-  tree_program += Def( (var("numNodes"), (tree_con, _, _, v1, _)), v1);
 
   // numBranches (Tree _ _ _ n) = n
   tree_program += Def( (var("numBranches"), (tree_con, _, _, _, v1)), v1);
@@ -1250,6 +1247,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
   tree_program += parse_haskell_decls("{\
+numNodes (Tree _ _ n _) = n;\
 findFirst f (h:t) = If (f h) h (findFirst f t);\
 edgeForNodes t (n1,n2) = findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1)\
 }");
