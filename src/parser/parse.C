@@ -240,8 +240,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	/*----- Section 3.17 -----*/
 	pat = 
-	  lpat [ push_back(_a,_1) ] >> qconop [ push_back(_a,_1) ] >> pat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("qconop_pattern"), _a) ]
-	  | lpat [ _val = _1];
+	  lpat [ push_back(_a,_1) ] >> qconop [ push_back(_a,construct<AST_node>("id",_1)) ] >> pat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ]
+	  | eps [clear(_a)] >>  lpat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ];
 
 	lpat = 
 	  // negative literal float
@@ -258,7 +258,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // as pattern
 	  //	  var >> lit('@')>>apat 
 	  // irrefutable var pattern
-	  var [ qi::_val = phoenix::construct<AST_node>("id", qi::_1) ]        
+	  var [ qi::_val = phoenix::construct<AST_node>("apat_var", qi::_1) ]        
 	  // arity gcon = 0
 	  | gcon [  _val = phoenix::construct<AST_node>("constructor_pattern", qi::_1) ]
 	  // labelled pattern
@@ -672,7 +672,7 @@ struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 	text %= +(char_ - ' ' -'(');
 	bugs_dist = h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,_1)] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
 	bugs_default_value = h.exp[push_back(_a,_1)] >> '=' > h.exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
-	bugs_note = h.exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
+	bugs_note = h.conid[push_back(_a,_1)] >> *(h.exp[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
 
 	bugs_line %= bugs_dist | bugs_default_value | bugs_note;
 	bugs_lines = bugs_line [push_back(_a,_1)] % ';' >> eoi [ _val = new_<expression>(AST_node("BugsLines"), _a)  ];

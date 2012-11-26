@@ -73,7 +73,6 @@ using std::deque;
  */
 
 
-
 expression_ref infix_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
@@ -131,11 +130,86 @@ expression_ref desugar_infix(const Program& m, const vector<expression_ref>& T)
   return infix_parse_neg(m, {"",variable_symbol,unknown_scope,2,-1,non_fix}, T2);
 }
 
+expression_ref infixpat_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
+
+/// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
+expression_ref infixpat_parse_neg(const Program& m, const symbol_info& op1, deque<expression_ref>& T)
+{
+  assert(not T.empty());
+
+  expression_ref E1 = T.front();
+  T.pop_front();
+
+  // We are starting with a Neg float
+  if (E1->head->compare(AST_node("neg_h_float")))
+  {
+    if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
+
+    string d = *E1->sub[0].is_a<String>();
+    Double D = -convertTo<double>(d);
+
+    return infixpat_parse(m, op1, D, T);
+  }
+  // We are starting with a Neg integer
+  else if (E1->head->compare(AST_node("neg_h_integer")))
+  {
+    if (op1.precedence >= 6) throw myexception()<<"Cannot parse '"<<op1.name<<"' -";
+
+    string i = *E1->sub[0].is_a<String>();
+    Int I = -convertTo<int>(i);
+
+    return infixpat_parse(m, op1, I, T);
+  }
+  // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
+  else
+    return infixpat_parse(m, op1, E1, T);
+}
+
+/// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
+expression_ref infixpat_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
+{
+  if (T.empty())
+    return E1;
+
+  symbol_info op2 = m.get_operator( assert_is_a<const var>(T.front())->name );
+
+  // illegal expressions
+  if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
+    throw myexception()<<"Must use parenthesis to order operators '"<<op1.name<<"' and '"<<op2.name<<"'";
+
+  // left association: ... op1 E1) op2 ...
+  if (op1.precedence > op2.precedence or (op1.precedence == op2.precedence and op1.fixity == left_fix))
+    return E1;
+
+  // right association: .. op1 (E1 op2 {...E3...}) ...
+  else
+  {
+    T.pop_front();
+    expression_ref E3 = infixpat_parse_neg(m, op2, T);
+
+    if (op2.symbol_type != constructor_symbol)
+      throw myexception()<<"Using non-constructor operator '"<<op2.name<<"' in pattern is not allowed.";
+    if (op2.arity != 2)
+      throw myexception()<<"Using constructor operator '"<<op2.name<<"' with arity '"<<op2.arity<<"' is not allowed.";
+    expression_ref constructor_pattern = new expression{constructor(op2.name, 2),{E1,E3}};
+
+    return infixpat_parse(m, op1, constructor_pattern, T);
+  }
+}
+
+expression_ref desugar_infixpat(const Program& m, const vector<expression_ref>& T)
+{
+  deque<expression_ref> T2;
+  T2.insert(T2.begin(), T.begin(), T.end());
+
+  return infixpat_parse_neg(m, {"",variable_symbol,unknown_scope,2,-1,non_fix}, T2);
+}
+
 set<string> find_bound_vars(const expression_ref& E)
 {
   if (object_ptr<const AST_node> n = E.is_a<AST_node>())
   {
-    if (n->type == "id")
+    if (n->type == "apat_var")
     {
       assert(not E->size());
       return {n->value};
@@ -277,6 +351,23 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	e = desugar(m, e, bound);
       return desugar_infix(m, v);
     }
+    else if (n->type == "pat")
+    {
+      // 1. Collect the entire pat expression in 'args'.
+      vector<expression_ref> args = v;
+      while(args.back().is_a<AST_node>() and args.back().is_a<AST_node>()->type == "pat")
+      {
+	expression_ref rest = args.back();
+	args.pop_back();
+	args.insert(args.end(), rest->sub.begin(), rest->sub.end());
+      }
+
+      // 2. We could probably do this later.
+      for(auto& arg: args)
+	arg = desugar(m, arg, bound);
+
+      return desugar_infixpat(m, args);
+    }
     else if (n->type == "Tuple")
     {
       for(auto& e: v)
@@ -313,15 +404,6 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "Decl")
     {
-      // Issue, if we are defining functions inside a let binding, then f needs to
-      // be a dummy that also binds identifiers inside the main let body.
-      // Thus, we can't make the function be a "var".
-      // .. does that only happen AFTER we allocate a cell for the "f" in the top-level let expression?
-      // Basically, how do we handle fixpoints?  At the top level?
-
-      // To some extent, EVERYthing is a bound variable!
-      // However, some things are bound at the top level, while some things are bound at a lower level.
-
       // Is this a set of function bindings?
       if (v[0].assert_is_a<AST_node>()->type == "funlhs1")
       {
@@ -337,6 +419,15 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       }
 
       // Is this a set of pattern bindings?
+
+      /*
+       * Wait.... so we want to do a recursive de-sugaring, but we can't do that because we 
+       * don't know the set of bound variables yet.
+       */
+    }
+    else if (n->type == "apat_var")
+    {
+      return dummy(n->value);
     }
     else if (n->type == "id")
     {
@@ -388,7 +479,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       for(int i=0;i<n_args;i++)
       {
 	object_ptr<const AST_node> m = E->sub[i]->is_a<AST_node>();
-	if (m->type != "id")
+	if (m->type != "apat_var")
 	  throw myexception()<<"Lambda arguments must be irrefutable!";
 	arg_names.push_back(m->value);
 	bound2.insert(m->value);
@@ -447,10 +538,12 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "BugsNote")
     {
+      string con_name = *E->sub[0].assert_is_a<String>();
+      v.erase(v.begin());
       for(auto& e: v)
 	e = desugar(m, e, bound);
 
-      return v[0];
+      return new expression{ constructor(con_name,v.size()), v};
     }
     else if (n->type == "BugsDefaultValue")
     {
@@ -506,22 +599,13 @@ expression_ref parse_haskell_line(const Program& P, const string& line)
 
 expression_ref parse_bugs_line(const Program& P, const string& line)
 {
-  Program P2 = P;
-  // This doesn't declare any aliases!
-  {
-    Program BUGS("BUGS");
-    BUGS.def_constructor("DeclareParameter",1);
-    BUGS.def_constructor("DefaultValue",2);
-    P2.import_module(BUGS,"BUGS",false);
-  }
-
   expression_ref cmd;
   try
   {
     cmd = parse_bugs_line(line);
 
     std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
-    cmd = desugar(P2, cmd);
+    cmd = desugar(P, cmd);
     std::cerr<<"        processed: "<<cmd<<"\n";
     std::cerr<<std::endl;
   }
@@ -561,7 +645,7 @@ void add_BUGS(Parameters& P, const string& filename)
   {
     expression_ref cmd = parse_bugs_line(BUGS, line);
 
-    if (is_exactly(cmd, "BUGS.DeclareParameter"))
+    if (is_exactly(cmd, "DeclareParameter"))
     {
       string name = *(cmd->sub[0].assert_is_a<String>());
       BUGS.declare_parameter(name);
@@ -572,7 +656,7 @@ void add_BUGS(Parameters& P, const string& filename)
   for(const auto& line: lines)
   {
     expression_ref cmd = parse_bugs_line(BUGS, line);
-    if (is_exactly(cmd, "BUGS.DeclareParameter"))
+    if (is_exactly(cmd, "DeclareParameter"))
     {
       string name = *(cmd->sub[0].assert_is_a<String>());
       cmd = new expression{cmd->head,{parameter(BUGS.lookup_symbol(name).name)}};
