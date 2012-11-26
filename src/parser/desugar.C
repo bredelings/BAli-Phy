@@ -429,6 +429,10 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     {
       return dummy(n->value);
     }
+    else if (n->type == "WildcardPattern")
+    {
+      return dummy(-1);
+    }
     else if (n->type == "id")
     {
       // Local vars bind id's tighter than global vars.
