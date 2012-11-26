@@ -1242,20 +1242,15 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   // targetNode t edge = snd (nodesForEdge t edge)
   tree_program += Def( (var("targetNode"), v1, v2), (snd, (var("nodesForEdge"), v1, v2)));
 
-  // findFirst f (h:t) = if (f h) then h else findFirst f t
-  tree_program += Def( (var("findFirst"),v1,v2&v3), (If,(v1,v2),v2,(var("findFirst"),v1,v3)) );
-
   // Things to add to parse:
   // infix handling for patterns
   // - [1.. ] enumToFrom
   // - if a then b else c
-  // - h:t patters
   // - list comprehensions
-
-  //findFirst f h:t = If (f h) h (findFirst f t)	\
 
   // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
   tree_program += parse_haskell_decls("{\
+findFirst f (h:t) = If (f h) h (findFirst f t);\
 edgeForNodes t (n1,n2) = findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1)\
 }");
 
