@@ -1224,12 +1224,6 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   tree_program.def_constructor("Tree",4);
   tree_program.def_function("tree", 0, (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
 
-  // sourceNode t edge = fst (nodesForEdge t edge)
-  tree_program += Def( (var("sourceNode"), v1, v2), (fst, (var("nodesForEdge"), v1, v2)));
-
-  // targetNode t edge = snd (nodesForEdge t edge)
-  tree_program += Def( (var("targetNode"), v1, v2), (snd, (var("nodesForEdge"), v1, v2)));
-
   // Things to add to parse:
   // infix handling for patterns
   // - [1.. ] enumToFrom
@@ -1239,9 +1233,11 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
   tree_program += parse_haskell_decls("{\
 numNodes (Tree _ _ n _) = n;\
-nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex;\
 numBranches (Tree _ _ _ n) = n;\
 edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node;\
+nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex;\
+sourceNode t edge = fst (nodesForEdge t edge);\
+targetNode t edge = snd (nodesForEdge t edge);\
 findFirst f (h:t) = If (f h) h (findFirst f t);\
 edgeForNodes t (n1,n2) = findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1)\
 }");
