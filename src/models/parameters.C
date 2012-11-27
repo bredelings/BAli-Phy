@@ -1241,16 +1241,14 @@ targetNode t edge = snd (nodesForEdge t edge);\
 findFirst f (h:t) = If (f h) h (findFirst f t);\
 edgeForNodes t (n1,n2) = findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1);\
 reverseEdge t b = edgeForNodes (swap (nodesForEdge t b));\
-nodeDegree t n = length (edgesOutOfNode t n)\
+nodeDegree t n = length (edgesOutOfNode t n);\
+neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)\
 }");
 
   // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
   //  tree_program += Def( (var("edgeForNodes"),dummy("t"),Tuple(dummy("n1"),dummy("n2"))), 
   //  		       parse_haskell_line("findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1)")
   //		       );
-
-  // neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)
-  tree_program += Def( (var("neighbors"),v1,v2), (var("fmap"),(var("targetNode"), v1), (var("edgesOutOfNode"),v1, v2) ) );
 
   // edgesBeforeEdge t b = let (n1,n2) = nodesForEdge t b in 
   //                            [edgeForNodes (n,n1) | n <- neighbors t n1, n /= n2 ]
