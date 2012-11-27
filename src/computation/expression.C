@@ -357,10 +357,7 @@ string index_var::print() const
 
 bool dummy::operator==(const dummy& d) const
 {
-  if (name.size())
-    return name == d.name;
-  else
-    return index == d.index;
+  return index == d.index and name == d.name;
 }
 
 tribool dummy::compare(const Object& o) const 
