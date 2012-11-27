@@ -1239,7 +1239,7 @@ nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex;\
 sourceNode t edge = fst (nodesForEdge t edge);\
 targetNode t edge = snd (nodesForEdge t edge);\
 findFirst f (h:t) = If (f h) h (findFirst f t);\
-edgeForNodes t (n1,n2) = findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1);\
+edgeForNodes t (n1,n2) = findFirst (\\b->(targetNode t b)==n2) (edgesOutOfNode t n1);\
 reverseEdge t b = edgeForNodes (swap (nodesForEdge t b));\
 nodeDegree t n = length (edgesOutOfNode t n);\
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)\
