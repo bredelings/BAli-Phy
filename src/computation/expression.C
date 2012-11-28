@@ -2127,10 +2127,14 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
   return CE;
 }
 
-// Create the expression 'case T of {patterns[i] -> bodies[i]'
+// Create the expression 'case T of {patterns[i] -> bodies[i]}'
+// Create the expression 'case (T) of {(patterns[i]) -> bodies[i]}'
 expression_ref case_expression(const expression_ref& T, const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
-  return block_case({T}, {patterns}, {bodies});
+  vector<vector<expression_ref>> multi_patterns;
+  for(const auto& p:patterns)
+    multi_patterns.push_back({p});
+  return block_case({T}, multi_patterns, bodies);
 }
 
 expression_ref case_expression(const expression_ref& T, const expression_ref& pattern, const expression_ref& body, const expression_ref& otherwise)
