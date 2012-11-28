@@ -1245,13 +1245,12 @@ nodeDegree t n = length (edgesOutOfNode t n);\
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)\
 }");
 
-  // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
+  // edgeForNodes t (n1, n2) = (\[b] -> b) [b | b <- (edgesOutOfNode t n1), target t b == n2]
   //  tree_program += Def( (var("edgeForNodes"),dummy("t"),Tuple(dummy("n1"),dummy("n2"))), 
   //  		       parse_haskell_line("findFirst (\\n->(targetNode t n)==n2) (edgesOutOfNode t n1)")
   //		       );
 
-  // edgesBeforeEdge t b = let (n1,n2) = nodesForEdge t b in 
-  //                            [edgeForNodes (n,n1) | n <- neighbors t n1, n /= n2 ]
+  // edgesBeforeEdge t b = [edgeForNodes (n,n1) | let {(n1,n2) = nodesForEdge t b}, n <- neighbors t n1, n /= n2 ]
   tree_program += Def( (var("edgesBeforeEdge"), v1, v2), case_expression((var("nodesForEdge"),v1,v2),Tuple(v3,v4),
 									  (var("concatMap"),
 									   v5^(If,(var("/="),v5,v4), (var("edgeForNodes"),v1,Tuple(v5,v3))&ListEnd, ListEnd),
