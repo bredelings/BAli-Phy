@@ -529,6 +529,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     else if (n->type == "LeftSection")
     {
       // FIXME... probably we need to do a disambiguation on the infix expression. (x op infixexp)
+      // FIXME... the infixexp needs to parse the same as if it was parenthesized.
       std::set<dummy> free_vars;
       for(auto& e: v) {
 	e = desugar(m, e, bound);
@@ -539,6 +540,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     else if (n->type == "RightSection")
     {
       // FIXME... probably we need to do a disambiguation on the infix expression. (infixexp op x)
+      // FIXME... the infixexp needs to parse the same as if it was parenthesized.
       std::set<dummy> free_vars;
       for(auto& e: v) {
 	e = desugar(m, e, bound);
