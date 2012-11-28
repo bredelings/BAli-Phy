@@ -153,8 +153,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | infixexp [_val = new_<expression>(AST_node("infixexp"),_1) ];
 
 	infixexp = 
-	  lexp [push_back(_val,_1)] >> qop [push_back(_val,_1)] >> infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
-	  | lit("-") [push_back(_val, AST_node("neg"))] >> infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
+	  lexp [push_back(_val,_1)] >> qop [push_back(_val,_1)] > infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
+	  | lit("-") [push_back(_val, AST_node("neg"))] > infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
 	  | lexp [ clear(_val), push_back(_val,_1) ]
 	  ;
 
@@ -260,7 +260,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // irrefutable var pattern
 	  var [ qi::_val = phoenix::construct<AST_node>("apat_var", qi::_1) ]        
 	  // arity gcon = 0
-	  | gcon [  _val = phoenix::construct<AST_node>("constructor_pattern", qi::_1) ]
+	  | gcon [ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
 	  // labelled pattern
 	  //	  | qcon >> "{" >> *fpat >> "}"     
 	  | literal [  _val = _1 ]
@@ -366,9 +366,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	/*------ Section 4.4.3 -----*/
 	funlhs = var [push_back(_a,phoenix::construct<AST_node>("id", _1))] >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs1"), _a)  ]
 		  | eps[clear(_a)] >> pat [push_back(_a,_1)] >> varop[push_back(_a,_1)] >> pat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs2"), _a)  ]
-		  | eps[clear(_a)] >> "(" >> funlhs[push_back(_a,_1)] >> ")" >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs3"), _a)  ];
+		  | eps[clear(_a)] >> "(" >> funlhs[push_back(_a,_1)] >> ")" > +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs3"), _a)  ];
 
-	rhs = lit('=') >> exp [push_back(_a,_1)] >> -(lit("where") >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
+	rhs = lit('=') > exp [push_back(_a,_1)] >> -(lit("where") >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
 	//	  | gdrhs >> -(lit("where") >> decls);
 
 	//	gdrhs %= guards >> "=" >> exp >> -gdrhs;
@@ -428,6 +428,114 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	on_error<fail>
 	  (
+	   aexp
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   funlhs
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   funlhs
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   rhs
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   decls
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   decl
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   pat
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   lpat
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   apat
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
 	   h_integer
 	   , std::cout
 	   << val("Error! Expecting ")
@@ -469,6 +577,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	aexp.name("aexp");
 	alts.name("alts");
 	alt.name("alt");
+	apat.name("funlhs");
 	apat.name("apat");
 	lpat.name("lpat");
 	pat.name("pat");
