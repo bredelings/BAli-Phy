@@ -322,6 +322,8 @@ void alpha_rename(object_ptr<expression>& E, const expression_ref& x, const expr
 
 int max_index(const std::set<dummy>& s);
 
+std::set<dummy> get_free_indices(const expression_ref& E);
+
 std::vector<int> get_free_index_vars(const expression_ref&);
 
 struct lambda: public Object
