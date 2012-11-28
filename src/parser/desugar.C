@@ -526,6 +526,30 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 
       return case_expression(v[0],true,v[1],v[2]);
     }
+    else if (n->type == "LeftSection")
+    {
+      // FIXME... probably we need to do a disambiguation on the infix expression. (x op infixexp)
+      std::set<dummy> free_vars;
+      for(auto& e: v) {
+	e = desugar(m, e, bound);
+	add(free_vars, get_free_indices(e));
+      }
+      return apply_expression(v[1],v[0]);
+    }
+    else if (n->type == "RightSection")
+    {
+      // FIXME... probably we need to do a disambiguation on the infix expression. (infixexp op x)
+      std::set<dummy> free_vars;
+      for(auto& e: v) {
+	e = desugar(m, e, bound);
+	add(free_vars, get_free_indices(e));
+      }
+      int safe_dummy_index = 0;
+      if (not free_vars.empty())
+	safe_dummy_index = max_index(free_vars)+1;
+      dummy vsafe(safe_dummy_index);
+      return vsafe^apply_expression(apply_expression(v[0],vsafe),v[1]);
+    }
     else if (n->type == "Let")
     {
       // parse the decls and bind declared names internally to the decls.
