@@ -3,6 +3,7 @@
 #include "computation/graph_register.H"
 #include "computation/operations.H"
 #include "let-float.H"
+#include "parser/parse.H"
 #include "parser/desugar.H"
 
 using std::pair;
@@ -482,9 +483,9 @@ Program& Program::operator+=(const Def& D)
   return *this;
 }
 
-Program& Program::operator+=(const expression_ref& D_)
+Program& Program::operator+=(const string& s)
 {
-  expression_ref D = desugar(*this, D_);
+  expression_ref D = desugar(*this, parse_haskell_decls(s));
   assert(D.assert_is_a<AST_node>()->type=="Decls");
   vector<expression_ref> decls = D->sub;
 

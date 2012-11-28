@@ -42,7 +42,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "math/exponential.H"
 #include "smodel/functions.H"
 #include "probability/distribution-operations.H"
-#include "parser/desugar.H"
 
 using std::vector;
 using std::string;
@@ -1231,7 +1230,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   // - list comprehensions
 
   // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
-  tree_program += parse_haskell_decls("{\
+  tree_program += "{\
 numNodes (Tree _ _ n _) = n;\
 numBranches (Tree _ _ _ n) = n;\
 edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node;\
@@ -1243,7 +1242,7 @@ edgeForNodes t (n1,n2) = findFirst (\\b->(targetNode t b)==n2) (edgesOutOfNode t
 reverseEdge t b = edgeForNodes (swap (nodesForEdge t b));\
 nodeDegree t n = length (edgesOutOfNode t n);\
 neighbors t n = fmap (targetNode t) (edgesOutOfNode t n)\
-}");
+}";
 
   // edgeForNodes t (n1, n2) = (\[b] -> b) [b | b <- (edgesOutOfNode t n1), target t b == n2]
   //  tree_program += Def( (var("edgeForNodes"),dummy("t"),Tuple(dummy("n1"),dummy("n2"))), 
