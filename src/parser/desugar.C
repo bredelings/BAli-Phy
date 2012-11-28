@@ -519,6 +519,13 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 
       return new expression{ constructor(S.name,S.arity),v };
     }
+    else if (n->type == "If")
+    {
+      for(auto& e: v)
+	e = desugar(m, e, bound);
+
+      return case_expression(v[0],true,v[1],v[2]);
+    }
     else if (n->type == "Let")
     {
       // parse the decls and bind declared names internally to the decls.
@@ -557,6 +564,24 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	bodies.push_back(desugar(m, alts[i]->sub[1], bound2) );
       }
       return case_expression(case_obj, patterns, bodies);
+    }
+    else if (n->type == "EnumFrom")
+    {
+      expression_ref E2 = var("Prelude.enumFrom");
+      for(auto& e: v) {
+	e = desugar(m, e, bound);
+	E2 = (E2,e);
+      }
+      return E2;
+    }
+    else if (n->type == "EnumFromTo")
+    {
+      expression_ref E2 = var("Prelude.enumFromTo");
+      for(auto& e: v) {
+	e = desugar(m, e, bound);
+	E2 = (E2,e);
+      }
+      return E2;
     }
     else if (n->type == "BugsNote")
     {
