@@ -543,6 +543,21 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       // construct the new let expression.
       return new expression{ let_obj(), w };
     }
+    else if (n->type == "Case")
+    {
+      expression_ref case_obj = desugar(m, v[0], bound);
+      vector<expression_ref> alts = v[1]->sub;
+      vector<expression_ref> patterns;
+      vector<expression_ref> bodies;
+      for(int i=0;i<alts.size();i++)
+      {
+	set<string> bound2 = bound;
+	add(bound2, find_bound_vars(alts[i]->sub[0]));
+	patterns.push_back(desugar(m, alts[i]->sub[0], bound2) );
+	bodies.push_back(desugar(m, alts[i]->sub[1], bound2) );
+      }
+      return case_expression(case_obj, patterns, bodies);
+    }
     else if (n->type == "BugsNote")
     {
       string con_name = *E->sub[0].assert_is_a<String>();
