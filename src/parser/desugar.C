@@ -477,6 +477,9 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "Lambda")
     {
+      // FIXME: This should use def_function( ) and thus block_case( ) to handle pattern matching in the arguments.
+      // FIXME: Try to preserve argument names (in block_case( ), probably) when they are irrefutable apat_var's.
+      // FIXME: Don't use a separate code path when we have a pattern.
       const int n_args = E->size()-1;
       vector<string> arg_names;
       set<string> bound2 = bound;
