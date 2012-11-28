@@ -1591,7 +1591,7 @@ expression_ref substitute(const expression_ref& R1, const expression_ref& D, con
 
 expression_ref apply_expression(const expression_ref& R,const expression_ref& arg)
 {
-  return new expression(Apply(),{R,arg});
+  return expression_ref(Apply(),{R,arg});
 }
 
 expression_ref apply_expression(const expression_ref& E,
