@@ -382,7 +382,9 @@ struct expression_ref: public object_ptr<const expression>
   // Object arguments
   expression_ref(Object* v):expression_ref(new expression(v)) { }
 
-  expression_ref(const object_ptr<const Object>& v):expression_ref(new expression(v)) { }
+  expression_ref(const object_ref& o):expression_ref(new expression(o)) { }
+
+  expression_ref(const object_ref& o, const std::vector<expression_ref>& v):expression_ref(new expression(o,v)) { }
 
   expression_ref(const object_ptr<Object>& v)
     :expression_ref(new expression(object_ref(v)))
@@ -394,10 +396,6 @@ struct expression_ref: public object_ptr<const expression>
   {}
 
   expression_ref(const Object& o)
-  :expression_ref(new expression(o))
-  {}
-
-  expression_ref(const object_ref& o)
   :expression_ref(new expression(o))
   {}
 
