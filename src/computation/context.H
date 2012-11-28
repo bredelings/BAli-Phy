@@ -39,9 +39,6 @@ private:
 
   int get_token() const {return token;}
 
-  /// Register a variable called 'name' as having location 'R'
-  void add_identifier(const std::string& name, int R);
-
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
   expression_ref translate_refs(const expression_ref& R, std::vector<int>&) const;
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
@@ -158,7 +155,7 @@ public:
   int add_parameter(const std::string& s);
 
   /// Reserve an identifier with name s
-  root_t add_identifier(const std::string& s);
+  root_t add_identifier(const std::string& s) const;
 
   /// Add a literal expression that MAY be reduced
   int add_compute_expression(const expression_ref& e);

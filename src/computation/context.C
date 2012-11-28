@@ -59,7 +59,7 @@ string context::parameter_name(int i) const
   throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
 }
 
-reg_heap::root_t context::add_identifier(const string& name)
+reg_heap::root_t context::add_identifier(const string& name) const
 {
   if (find_parameter(name) != -1)
     throw myexception()<<"Cannot add identifier '"<<name<<"': there is already a parameter with that name.";
@@ -463,7 +463,25 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
     string qualified_name = P->lookup_symbol(V->name).name;
     auto loc = identifiers().find( qualified_name );
     if (loc == identifiers().end())
-      throw myexception()<<"Can't translate undefined identifier '"<<V->name<<"' in expression!";
+    {
+      if (is_haskell_builtin_con_name(V->name))
+      {
+	symbol_info S = P->lookup_builtin_symbol(V->name);
+	add_identifier(S.name);
+      
+	// get the root for each identifier
+	loc = identifiers().find(S.name);
+	assert(loc != identifiers().end());
+	
+	root_t r = loc->second;
+	int R = *r;
+	
+	assert(R != -1);
+	set_C(R, preprocess(S.body) );
+      }
+      else
+	throw myexception()<<"Can't translate undefined identifier '"<<V->name<<"' in expression!";
+    }
 
     reg = *(loc->second);
   }
@@ -538,10 +556,6 @@ context& context::operator+=(const Program& P2)
     int R = *r;
 
     expression_ref F = P2.get_function(S.name);
-
-    // (1) find free dummies (must be named)
-    // (2) substitute for them!
-    // That should work, although it is NOT the most efficient mechanism!
 
     assert(R != -1);
     set_C(R, preprocess(F) );
