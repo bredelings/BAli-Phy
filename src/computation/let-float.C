@@ -5,8 +5,6 @@
 using std::vector;
 using std::set;
 
-std::set<dummy> get_free_indices(const expression_ref& E);
-
 // ?- Determine which let statements have bound vars (bound_indices) and which do not (unbound_indices).
 //    (The ones with no bound vars can be floated.)
 bool find_let_statements_with_bound_vars(const vector<expression_ref>& let_vars, const vector<expression_ref>& let_bodies,
