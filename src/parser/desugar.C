@@ -317,7 +317,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 
       for(int j=i+1;j<v.size();j++)
       {
-	if (v[j].assert_is_a<AST_node>()->type != "funlhs1") break;
+	if (v[j]->sub[0].assert_is_a<AST_node>()->type != "funlhs1") break;
 	if (get_func_name(v[j]) != name) break;
 
 	patterns.push_back( get_patterns(v[j]) );
