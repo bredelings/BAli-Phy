@@ -360,6 +360,12 @@ f $ x = f x
   P.def_function("seq", 2, lambda_expression( Seq() ) );
   P.declare_fixity("seq", 0, right_fix);
 
+  // FIXME - we have an problem with types here.  This will only work for Int, as-is.
+  P += "{enumFrom x = x:(enumFrom (x+1))}";
+  P += "{enumFromTo x y = if (x==y) then [x] else x:(enumFromTo (x+1) y)}";
+  //  P += "{enumFromThen x y = ... }";
+  //  P += "{enumFromThenTo x y z = ... }";
+
   return P;
 }
 
