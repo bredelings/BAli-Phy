@@ -1395,7 +1395,10 @@ int main(int argc,char* argv[])
 
     //------------- Parse the Hierarchical Model description -----------//
     if (args.count("BUGS"))
-      add_BUGS(P,args["BUGS"].as<string>());
+    {
+      const string filename = args["BUGS"].as<string>();
+      add_BUGS(P,filename,"BUGS");
+    }
       
     //-------------------- Log model -------------------------//
     log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,P,args);

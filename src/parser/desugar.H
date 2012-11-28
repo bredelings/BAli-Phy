@@ -5,6 +5,7 @@
 #include <set>
 #include <string>
 #include "computation/expression.H"
+#include "computation/model_notes.H"
 
 class Program;
 class Parameters;
@@ -13,6 +14,7 @@ expression_ref parse_haskell_line(const Program& P, const std::string& line);
 expression_ref parse_bugs_line(const Program& P, const std::string& line);
 expression_ref desugar(const Program& p, const expression_ref&);
 expression_ref desugar(const Program& p, const expression_ref&,const std::set<std::string>&);
-void add_BUGS(Parameters& P, const std::string& filename);
+Model_Notes read_BUGS(const Parameters& P, const std::string& filename, const std::string& module_name);
+void add_BUGS(Parameters& P, const std::string& filename, const std::string& module_name);
 
 #endif

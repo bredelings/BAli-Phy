@@ -638,7 +638,7 @@ expression_ref parse_bugs_line(const Program& P, const string& line)
   return cmd;
 }
 
-void add_BUGS(Parameters& P, const string& filename)
+Model_Notes read_BUGS(const Parameters& P, const string& filename, const string& module_name)
 {
   // Um, so what is the current program?
 
@@ -658,7 +658,7 @@ void add_BUGS(Parameters& P, const string& filename)
 
   std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
 
-  Program BUGS("BUGS");
+  Program BUGS(module_name);
   BUGS.import_module(P.get_Program(),"Prelude", false);
   BUGS.import_module(P.get_Program(),"Distributions", false);
   BUGS.import_module(P.get_Program(),"SModel", false);
@@ -686,14 +686,16 @@ void add_BUGS(Parameters& P, const string& filename)
 
     N.add_note(cmd);
   }
-  // OK, so adding notes here will abort if we try to change an existing prior.
-  // How do we REMOVE priors, so that we can add alternatives?
-  // I guess we could make a 'remove_priors_for_variables(<names>)' function call.
-  //  - It would have to remove ALL the priors, and then re-add one that were not changed.
-  // Then we could add the new ones.
-  //
-  // Hmm... it does seem slightly odd that the priors here could be for variables declared elsewhere.
+
+  return N;
+}
+
+void add_BUGS(Parameters& P, const std::string& filename, const std::string& module_name)
+{
+  Model_Notes N = read_BUGS(P, filename, module_name);
+
   P.add_submodel(N);
+
   for(int i=0;i<P.n_notes();i++)
     std::cerr<<"note "<<i<<" = "<<P.get_note(i)->print()<<"\n\n";
 }
