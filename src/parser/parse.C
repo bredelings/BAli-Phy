@@ -194,7 +194,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // left section
 	  | lit("(")[clear(_a)] >> infixexp[insert(_a,end(_a),begin(_1),end(_1))]  >> qop[push_back(_a,_1)] >> ")" >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
 	  // right section
-	  | lit("(")[clear(_a)] >> ((qop[push_back(_a,_1)] - "-") >> infixexp[insert(_a,end(_a),begin(_1),end(_1))]) >> ")" >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
+	  | lit("(")[clear(_a)] >> ((qop[push_back(_a,_1)] - "-") >> infixexp[insert(_a,end(_a),begin(_1),end(_1))]) >> ")" >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
 	  //	  | qcon >> "{" >> *fbind >> "}"  // labeled construction (?)
 	  //	  | (aexp - qcon) >> "{">> +fbind >> "}"; // labeled update
 	  ;
