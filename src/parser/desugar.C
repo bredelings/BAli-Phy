@@ -118,7 +118,16 @@ expression_ref infix_parse(const Program& m, const symbol_info& op1, const expre
   {
     T.pop_front();
     expression_ref E3 = infix_parse_neg(m, op2, T);
-    return infix_parse(m, op1, (var(op2.name), E1, E3), T);
+
+    expression_ref E1_op2_E3 = (var(op2.name), E1, E3);
+
+    if (op2.symbol_type == constructor_symbol)
+    {
+      assert(op2.arity == 2);
+      E1_op2_E3 = {constructor(op2.name, 2),{E1,E3}};
+    }
+
+    return infix_parse(m, op1, E1_op2_E3, T);
   }
 }
 
@@ -191,7 +200,7 @@ expression_ref infixpat_parse(const Program& m, const symbol_info& op1, const ex
       throw myexception()<<"Using non-constructor operator '"<<op2.name<<"' in pattern is not allowed.";
     if (op2.arity != 2)
       throw myexception()<<"Using constructor operator '"<<op2.name<<"' with arity '"<<op2.arity<<"' is not allowed.";
-    expression_ref constructor_pattern = new expression{constructor(op2.name, 2),{E1,E3}};
+    expression_ref constructor_pattern = {constructor(op2.name, 2),{E1,E3}};
 
     return infixpat_parse(m, op1, constructor_pattern, T);
   }
