@@ -65,11 +65,11 @@ Program make_Prelude()
 
   // iterate f x = x:iterate f (f x)
   P += Def( (iterate, v1, v2), v2&(iterate, v1, (v1,v2)) );
+
+  P += "{map f []  = [];\
+         map f (h:t) = (f h):(map f t)}";
   
-  // fmap f []  = []
-  // fmap f h:t = (f h):(fmap f t)
-  P += Def( (fmap, v1, ListEnd)    , ListEnd)
-          ( (fmap, v1, v2&v3), (v1,v2) & (fmap, v1, v3) );
+  P += "{fmap = map}";
 
   // fmap1 f []  = []
   // fmap1 f (p,x):t = (f p,x):(fmap1 f t)
@@ -87,12 +87,6 @@ Program make_Prelude()
   // (f . g) x = f (g x)
   P += Def( (var("."), v1, v2, v3)    , (v1, (v2, v3)) );
 
-  // concat xs = foldr (++) [] xs
-  P += Def( (var("concat"), v1)    , (var("foldr"),var("++"),ListEnd,v1) );
-  
-
-  // concatMap f = concat . map f
-  P += Def( (var("concatMap"), v1)    , (var("."), var("concat"), (var("fmap"), v1) ) );
   
 
   // sum [] = 0
@@ -365,6 +359,10 @@ f $ x = f x
   P += "{enumFromTo x y = if (x==y) then [x] else x:(enumFromTo (x+1) y)}";
   //  P += "{enumFromThen x y = ... }";
   //  P += "{enumFromThenTo x y z = ... }";
+
+  P += "{concat xs = foldr (++) [] xs}";
+
+  P += {"{concatMap f = concat . map f}"};
 
   return P;
 }
