@@ -348,6 +348,18 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
   return decls;
 }
 
+/*
+ * To handle funlhs1, funlhs2, and funlhs3, we want to
+ * (a) Transform the ASTs to funlhs1 before we try to bind variables.  This is because the function names will be bound
+ *     in other decls in the same unit.
+ * (b) Can we make a 1st pass over decls that doesn't bind ids?
+ * (c) This first pass must
+ *     (i) Translate funlhs2 to funlhs1.
+ *        - Be able to complain about incorrect operator precedence at this stage.
+ *     (ii) Translate funlhs3 to funlhs1. Children are translated first.
+ * (d) A second stage translates funlhs1 to a standard let expression, I suppose.
+ */
+
 expression_ref desugar(const Program& m, const expression_ref& E, const set<string>& bound)
 {
   vector<expression_ref> v = E->sub;
