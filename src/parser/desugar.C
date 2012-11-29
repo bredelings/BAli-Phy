@@ -484,6 +484,14 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	E2 = (E2,v[i]);
       return E2;
     }
+    else if (n->type == "ListComprehension")
+    {
+      // [ e | True   ]  =  [ e ]
+      // [ e | q      ]  =  [ e | q, True ]
+      // [ e | b, Q   ]  =  if b then [ e | Q ] else []
+      // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in Prelude.concatMap ok l
+      // [ e | let decls, Q] = let decs in [ e | Q ]
+    }
     else if (n->type == "Lambda")
     {
       // FIXME: Try to preserve argument names (in block_case( ), probably) when they are irrefutable apat_var's.
