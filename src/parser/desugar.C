@@ -360,6 +360,12 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
  * (d) A second stage translates funlhs1 to a standard let expression, I suppose.
  */
 
+
+/*
+ * We probably want to move away from using dummies to represent patterns.
+ * - Dummies can't represent e.g. irrefutable patterns.
+ */
+
 expression_ref desugar(const Program& m, const expression_ref& E, const set<string>& bound)
 {
   vector<expression_ref> v = E->sub;
