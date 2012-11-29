@@ -486,25 +486,23 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "Lambda")
     {
-      // FIXME: This should use def_function( ) and thus block_case( ) to handle pattern matching in the arguments.
       // FIXME: Try to preserve argument names (in block_case( ), probably) when they are irrefutable apat_var's.
-      // FIXME: Don't use a separate code path when we have a pattern.
-      const int n_args = E->size()-1;
-      vector<string> arg_names;
+
+      // 1. Extract the lambda body
+      expression_ref body = v.back();
+      v.pop_back();
+
+      // 2. Find bound vars and convert vars to dummies.
       set<string> bound2 = bound;
-      for(int i=0;i<n_args;i++)
-      {
-	object_ptr<const AST_node> m = E->sub[i]->is_a<AST_node>();
-	if (m->type != "apat_var")
-	  throw myexception()<<"Lambda arguments must be irrefutable!";
-	arg_names.push_back(m->value);
-	bound2.insert(m->value);
+      for(auto& e: v) {
+	add(bound2, find_bound_vars(e));
+	e = desugar(m, e, bound);
       }
-      expression_ref E2 = E->sub.back();
-      E2 = desugar(m, E2, bound2);
-      for(int j=n_args-1;j>=0;j--)
-	E2 = lambda_quantify(dummy(arg_names[j]),E2);
-      return E2;;
+
+      // 3. Desugar the body, binding vars mentioned in the lambda patterns.
+      body = desugar(m, body, bound2);
+
+      return def_function({v},{body}); 
     }
     else if (n->type == "constructor_pattern")
     {

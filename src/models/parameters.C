@@ -1224,10 +1224,11 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   tree_program.def_function("tree", 0, (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
 
   // Things to add to parse:
-  // infix handling for patterns
-  // - [1.. ] enumToFrom
-  // - if a then b else c
+  // - infix handling for patterns - disambiguation in left- and right-sections also.
+  //   + however, maybe postpone the infix handling since this is only for error checking.
+  //   + allow (x op y) z = ...
   // - list comprehensions
+  // Does case x of y -> y work?
 
   // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
   tree_program += "{\
