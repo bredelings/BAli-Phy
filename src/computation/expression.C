@@ -1752,7 +1752,7 @@ template<> expression_ref get_tuple<>(const vector<expression_ref>& S)
 {
   if (S.size() == 0) return constructor("()",0);
 
-  if (S.size() == 1) return S[0]->head;
+  if (S.size() == 1) return S[0];
 
   constructor H = tuple_head(S.size());
 
