@@ -173,7 +173,7 @@ closure bernoulli_prob::operator()(OperationArgs& Args) const
 }
 
 // Fields: n_random, n_parameters, string, density op
-expression_ref prob_density = lambda_expression( constructor("ProbDensity",3) );
+expression_ref prob_density = lambda_expression( constructor("Distributions.ProbDensity",3) );
 
 expression_ref exponentialDensity = var("exponentialDensity");
 expression_ref exponential_dist = (prob_density, "Exponential", exponentialDensity, 0);
@@ -224,6 +224,8 @@ Program Distribution_Functions()
 
   // Note: we separate the "builtin" versions (which don't do case analysis on their arguments)
   //       from the from the real versions (which do).
+
+  P.def_constructor("ProbDensity",3);
 
   P.def_function("exponentialDensity", 2, lambda_expression( exponential_density() ) );
   P.def_function("logExponentialDensity", 2, lambda_expression( log_exponential_density() ) );
