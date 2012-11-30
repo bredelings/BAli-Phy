@@ -477,6 +477,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_1D_slice_moves_for_distribution(P, "LogGamma", slice_moves);
   add_1D_slice_moves_for_distribution(P, "Exponential", slice_moves);
   add_1D_slice_moves_for_distribution(P, "LogExponential", slice_moves);
+  add_1D_slice_moves_for_distribution(P, "Mixture", slice_moves);
 
   /*    
   add_slice_moves(P, "*.HKY.kappa", slice_moves);
