@@ -557,7 +557,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
 
     for(int i=0;i<long_names.size();i++)
     {
-      expression_ref make_logger = constructor("MakeLogger",1);
+      expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
       expression_ref query = (make_logger, long_names[i]);
       vector<expression_ref> results;
       if (P.find_match_notes(query, results, 0) == -1) continue;

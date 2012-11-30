@@ -1095,7 +1095,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
 
   /*------------------------- Add commands to log all parameters created before this point. ------------------------*/
-  expression_ref make_logger = constructor("MakeLogger",1);
+  expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
   for(int i=0;i<n_parameters();i++)
     add_note( (make_logger,parameter_name(i)) );
 
