@@ -221,6 +221,7 @@ expression_ref bernoulli_dist   = (prob_density, "Bernoulli", bernoulliProb, 0);
 Program Distribution_Functions()
 {
   Program P("Distributions");
+  P.import_module(get_Prelude(),"Prelude",false);
 
   // Note: we separate the "builtin" versions (which don't do case analysis on their arguments)
   //       from the from the real versions (which do).
@@ -276,6 +277,9 @@ Program Distribution_Functions()
   P.def_function("exponentialDist",0, exponential_dist);
   P.def_function("gammaDist",0, gamma_dist);
   P.def_function("betaDist",0, beta_dist);
+  P += "{mixtureDensity ((p1,((ProbDensity name1 density1 quantile1),args1)):l) x = (doubleToLogDouble p1)*(density1 args1 x)+(mixtureDensity l x);\
+         mixtureDensity [] _ = (doubleToLogDouble 0.0)}";
+  P += "{mixtureDist = ProbDensity \"Mixture\" mixtureDensity 0}";
 
   return P;
 }

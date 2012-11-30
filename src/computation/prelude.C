@@ -367,6 +367,8 @@ f $ x = f x
 
   P += {"{concatMap f = concat . map f}"};
 
+  P.def_function("doubleToLogDouble", 1, lambda_expression( Conversion<double,log_double_t>() ) );
+
   return P;
 }
 

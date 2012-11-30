@@ -735,6 +735,8 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	dist_family = var("gammaDist");
       else if (dist_name == "Beta")
 	dist_family = var("betaDist");
+      else if (dist_name == "Mixture")
+	dist_family = var("mixtureDist");
       else
 	throw myexception()<<"Can't translate distribution name '"<<dist_name<<"'";
       vector<expression_ref> args = v; args.erase(args.begin()); args.erase(args.begin());
