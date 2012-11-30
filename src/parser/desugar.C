@@ -780,6 +780,13 @@ expression_ref parse_bugs_line(const Program& P, const string& line)
   return cmd;
 }
 
+bool is_all_space(const string& line)
+{
+  for(int i=0;i<line.size();i++)
+    if (not ::isspace(line[i])) return false;
+  return true;
+}
+
 Model_Notes read_BUGS(const Parameters& P, const string& filename, const string& module_name)
 {
   // Um, so what is the current program?
@@ -795,7 +802,15 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
   {
     string line;
     while(getline(file,line))
+    {
+      // Allow comments
+      if (line.size() and line[0] == '#') continue;
+
+      // Skip blank lines
+      if (is_all_space(line)) continue;
+      
       lines.push_back(line);
+    }
   }
 
   std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
