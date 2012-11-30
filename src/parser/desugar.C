@@ -72,6 +72,16 @@ using std::deque;
  * Two formula_expression_ref's should only be combined if they have the same module name, I would think...
  */
 
+bool is_irrefutable_pat(const expression_ref& E)
+{
+  assert(E.assert_is_a<AST_node>()->type == "pat");
+
+  if (E->sub.size() == 1 and E->sub[0]->assert_is_a<AST_node>()->type == "apat_var")
+    return true;
+  else
+    return false;
+}
+
 
 expression_ref infix_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
@@ -504,11 +514,59 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "ListComprehension")
     {
+      expression_ref E2 = E;
       // [ e | True   ]  =  [ e ]
       // [ e | q      ]  =  [ e | q, True ]
       // [ e | b, Q   ]  =  if b then [ e | Q ] else []
       // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in Prelude.concatMap ok l
-      // [ e | let decls, Q] = let decs in [ e | Q ]
+      // [ e | let decls, Q] = let decls in [ e | Q ]
+
+      expression_ref True {AST_node("SimpleQual"),{Bool(true)}};
+
+      assert(v.size() >= 2);
+      if (v.size() == 2 and v[1]->compare(*True))
+	E2 = {AST_node("List"),{v[0]}};
+      else if (v.size() == 2)
+	E2 = {E->head,{v[0],v[1],True}};
+      else 
+      {
+	expression_ref B = v[1];
+	v.erase(v.begin()+1);
+	E2 = {E->head,v};
+
+	if (B->assert_is_a<AST_node>()->type == "SimpleQual")
+	  E2 = {AST_node("If"),{B->sub[0],E2,AST_node("id","[]")}};
+	else if (B->assert_is_a<AST_node>()->type == "PatQual")
+	{
+	  expression_ref p = B->sub[0];
+	  expression_ref l = B->sub[1];
+	  if (is_irrefutable_pat(p))
+	  {
+	    expression_ref f {AST_node("Lambda"),{p,E2}};
+	    E2 = {AST_node("Apply"),{AST_node("id","Prelude.concatMap"),f,l}};
+	  }
+	  else
+	  {
+	    // Problem: "ok" needs to be a fresh variable.
+
+	    expression_ref lhs1 = {AST_node("funlhs1"),{AST_node("id","ok"),p}};
+	    expression_ref rhs1 = {AST_node("rhs"),{E2}};
+	    expression_ref decl1 = {AST_node("Decl"),{lhs1,rhs1}};
+
+	    expression_ref lhs2 = {AST_node("funlhs1"),{AST_node("id","ok"),AST_node("WildcardPattern")}};
+	    expression_ref rhs2 = {AST_node("rhs"),{AST_node("id","[]")}};
+	    expression_ref decl2 = {AST_node("Decl"),{lhs2,rhs2}};
+
+	    expression_ref decls = {AST_node("Decls"),{decl1, decl2}};
+	    expression_ref body = {AST_node("Apply"),{AST_node("id","Prelude.concatMap"),AST_node("id","ok"),l}};
+
+	    E2 = {AST_node("Let"),{decls,body}};
+	  }
+	}
+	else if (B->assert_is_a<AST_node>()->type == "LetQual")
+	  E2 = {AST_node("Let"),{B->sub[0],E2}};
+      }
+      return desugar(m,E2,bound);
     }
     else if (n->type == "Lambda")
     {
