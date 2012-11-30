@@ -213,6 +213,9 @@ public:
   POD_math() {}
   POD_math(const T& t2):t(t2) {}
 
+  template <typename U>
+  POD_math(const POD_math<U>& t2):t(t2) {}
+
   std::string print() const {return convertToString(t);}
 
   virtual tribool compare(const Object& O) const 
