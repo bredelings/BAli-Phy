@@ -281,5 +281,11 @@ Program Distribution_Functions()
          mixtureDensity [] _ = (doubleToLogDouble 0.0)}";
   P += "{mixtureDist = ProbDensity \"Mixture\" mixtureDensity 0}";
 
+  P += "{normal args = (normalDist, args)}";
+  P += "{exponential args = (exponentialDist, args)}";
+  P += "{gamma args = (gammaDist, args)}";
+  //  P += "{beta args = (betaDist, args)}";
+  P += "{mixture args = (mixtureDist, args)}";
+
   return P;
 }
