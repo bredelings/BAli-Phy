@@ -141,7 +141,7 @@ Program make_Prelude()
   // listArray' l = listArray (length l) l
   P += Def( (listArray_,v1),(listArray,(length,v1),v1));
 
-  // length l = foldl' \x->\y->(x+1) 0 l
+  // length l = foldl' (\x y->(x+1)) 0 l
   P += Def( (length, v1), (foldl_,v2^(v3^(v2+1)), 0, v1) );
 
   // plusplus [] y = y
@@ -353,6 +353,9 @@ f $ x = f x
   //  P.declare_fixity("$!", 0, right_fix);
   P.def_function("seq", 2, lambda_expression( Seq() ) );
   P.declare_fixity("seq", 0, right_fix);
+
+  P += "{head (h:t) = h}";
+  P += "{tail (h:t) = t}";
 
   // FIXME - we have an problem with types here.  This will only work for Int, as-is.
   P += "{enumFrom x = x:(enumFrom (x+1))}";
