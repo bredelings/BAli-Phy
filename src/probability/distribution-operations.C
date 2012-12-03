@@ -287,5 +287,8 @@ Program Distribution_Functions()
   //  P += "{beta args = (betaDist, args)}";
   P += "{mixture args = (mixtureDist, args)}";
 
+  P += "{iidDensity (ProbDensity _ density _) args _ xs = foldl' (*) 1.0 (map (density args) xs)}";
+  P += "{iid (dist,args) = (ProbDensity \"i.i.d.\" (iidDensity dist args) 0, () )}";
+
   return P;
 }
