@@ -2100,7 +2100,7 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
     {
       if (otherwise)
       {
-	p2.push_back(vector<expression_ref>(arity+p[r0].size(), dummy(-1)));
+	p2.push_back(vector<expression_ref>(x2.size(), dummy(-1)));
 	// Since we could backtrack, use the dummy.  It will point to otherwise
 	b2.push_back(O);
       }
