@@ -89,8 +89,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	dashes %= lit("--")>>*lit("-");
 
-	varid %= (small>>(*(small|large|digit|'\''))) - reservedid;
-	conid %= large>>(*(small|large|digit|'\''));
+	varid %= (small>>(*(small|large|digit|char_('\'')))) - reservedid;
+	conid %= large>>(*(small|large|digit|char_('\'')));
 	reservedid_ %= lit("case") | "class" | "data" | "default" | "deriving" | "do" | "else" |	"foreign" | "if" | "import" | "in" | "infix" | "infixl" | 	"infixr" | "instance" | "let" | "module" | "newtype" | "of" | 	"then" | "type" | "where" | "_";
 	reservedid %= reservedid_ >> !(small|large|digit|'\'');
 
