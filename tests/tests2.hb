@@ -19,3 +19,11 @@ DeclareParameter "w"
 w ~ Mixture([( 0.5, normal(-2.0,1.0) ),(0.5, normal(2.0,1.0)) ])
 w = 0.0
 MakeLogger "BUGS.w"
+
+DeclareParameter "x1"
+DeclareParameter "x2"
+[x1,x2] ~ iid (2,normal (1.0, 1.0))
+x1 = 1.0
+x2 = 2.0
+MakeLogger "BUGS.x1"
+MakeLogger "BUGS.x2"
