@@ -1891,6 +1891,8 @@ object_ref get_constructor(const expression_ref& E)
   return C;
 }
  
+// FIXME: we perform 3 case operations in the case of zip x:xs [] because we create an 'otherwise' let-var that
+//        performs a case on y:ys that has already been done.
 
 /*
  * case (x[0],..,x[N-1]) of (p[0...M-1][0...N-1] -> b[0..M-1])
