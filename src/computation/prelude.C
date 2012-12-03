@@ -363,6 +363,10 @@ f $ x = f x
   //  P += "{enumFromThen x y = ... }";
   //  P += "{enumFromThenTo x y z = ... }";
 
+  P += "{zip (x:xs) (y:ys) = (x,y):(zip xs ys);\
+         zip []   _        = [];\
+         zip _   []        = []}";
+
   P += "{concat xs = foldr (++) [] xs}";
 
   P += {"{concatMap f = concat . map f}"};
