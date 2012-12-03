@@ -39,6 +39,8 @@ Program make_Prelude()
 {
   Program P("Prelude");
 
+  P.def_function("error", 1, lambda_expression( Error() ) ); 
+
   // foldr f z []  = z
   // foldr f z x:xs = (f x (foldr f z xs))
   P += Def( (foldr, v1, v2, ListEnd)    , v2)

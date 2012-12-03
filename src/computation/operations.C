@@ -1,6 +1,7 @@
 #include "operations.H"
 #include "graph_register.H"
 #include "math/exponential.H"
+#include "myexception.H"
 
 using std::vector;
 using std::string;
@@ -41,6 +42,20 @@ closure Seq::operator()(OperationArgs& Args) const
   int R = Args.current_closure().lookup_in_env( index);
 
   return {index_var(0),{R}};
+}
+
+closure Print::operator()(OperationArgs& Args) const
+{
+  object_ptr<const Object> x = Args.evaluate(0);
+  
+  return closure(object_ref( new String(x->print() ) ));
+}
+
+closure Error::operator()(OperationArgs& Args) const
+{
+  string message = *Args.evaluate_as<String>(0);
+  
+  throw myexception()<<message;
 }
 
 closure Join::operator()(OperationArgs& Args) const

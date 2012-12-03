@@ -61,16 +61,28 @@ struct Print: public Operation
     return E;
   }
 
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const Object> x = Args.evaluate(0);
-
-    return closure(object_ref( new String(x->print() ) ));
-  }
+  closure operator()(OperationArgs& Args) const;
 
   std::string name() const {return "sys_print";}
 
   Print():Operation(1) {}
+};
+
+struct Error: public Operation
+{
+  virtual Error* clone() const {return new Error(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const Error* E = dynamic_cast<const Error*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "error";}
+
+  Error():Operation(1) {}
 };
 
 struct Seq: public Operation
