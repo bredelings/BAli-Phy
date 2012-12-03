@@ -2680,7 +2680,7 @@ string escape(const string& s)
       continue;
     }
 
-    bool escape_next = (s[i] == '\\') or (s[i] == '\n') or (s[i] == '"');
+    bool escape_next = (s[i] == '\\') or (s[i] == '\n') or (s[i] == '"') or (s[i] == '<') or (s[i] == '>');
 
     if (escape_next)
       s2[l++] = '\\';
@@ -2840,20 +2840,22 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     vector<int> targets;
     if (print_record)
     {
+      label = escape(label);
+
       label += " |";
-      label += C.access(R).C.exp->head->print();
+      label += escape(C.access(R).C.exp->head->print());
       for(const expression_ref& E: C.access(R).C.exp->sub)
       {
 	int index = assert_is_a<index_var>(E)->index;
 	int R2 = C.access(R).C.lookup_in_env( index );
 	targets.push_back(R2);
 
-	string reg_name = "\\<" + convertToString(R2) + "\\>";
+	string reg_name = "<" + convertToString(R2) + ">";
 	if (reg_names.count(R2))
 	  reg_name = reg_names[R2];
 	else if (constants.count(R2))
 	  reg_name = constants[R2] + " " + reg_name;
-	label += "| <" + convertToString(R2) + "> " + reg_name + " ";
+	label += "| <" + convertToString(R2) + "> " + escape(reg_name) + " ";
       }
     }
     else if (C.access(R).C.exp->head->type() == index_var_type)
