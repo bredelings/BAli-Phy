@@ -682,7 +682,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       }
       return case_expression(case_obj, patterns, bodies);
     }
-    else if (n->type == "EnumFrom")
+    else if (n->type == "enumFrom")
     {
       expression_ref E2 = var("Prelude.enumFrom");
       for(auto& e: v) {
@@ -691,7 +691,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       }
       return E2;
     }
-    else if (n->type == "EnumFromTo")
+    else if (n->type == "enumFromTo")
     {
       expression_ref E2 = var("Prelude.enumFromTo");
       for(auto& e: v) {
