@@ -2475,12 +2475,12 @@ int reg_heap::incremental_evaluate(int R, int t)
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))
       std::abort();
+#endif
 
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
-    else if (is_parameter(access(R).C.exp))
+    else if (access(R).C.exp->head->type() == parameter_type)
       throw myexception()<<"Parameter '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
-#endif
 
     // Reduction: let expression
     else if (parse_indexed_let_expression(access(R).C.exp, bodies, T))
