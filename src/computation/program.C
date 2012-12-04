@@ -288,16 +288,15 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
 {
   expression_ref E2 = E;
 
-  // Look through the arguments
-  while( E2->size() )
-  {
-    if (not is_a<Apply>(E2) ) throw myexception()<<" Combinator definition '"<<E<<"' contains non-apply expression '"<<E2<<"'";
-    patterns.insert(patterns.begin(), E2->sub[1]);
-    E2 = E2->sub[0];
-  }
+  assert_is_a<Apply>(E);
+  
+  // 1. Find the head.  This should be a var, not an apply.
+  object_ptr<const var> V = assert_is_a<var>(E->sub[0]);
 
-  // Find the name
-  object_ptr<const var> V = is_a<var>(E2);
+  // 2. Look through the arguments
+  for(int i=1;i<E->size();i++)
+    patterns.push_back(E->sub[i]);
+
   if (not V)
     throw myexception()<<"Combinator definition '"<<E<<"' does not start with variable!";
   name = V->name;
