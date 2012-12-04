@@ -242,31 +242,6 @@ expression_ref graph_normalize(const expression_ref& E)
       return V;
   }
 
-  // 3. Application
-  if (is_a<Apply>(E))
-  {
-    assert(E->size() == 2);
-    expression_ref f = graph_normalize(E->sub[0]);
-    expression_ref x = graph_normalize(E->sub[1]);
-
-    int var_index = get_safe_binder_index(E);
-    expression_ref f_ = dummy(var_index++);
-    expression_ref x_ = dummy(var_index++);
-
-    if (is_reglike(x) and is_reglike(f))
-      return (f,x);
-    else if (is_reglike(x))
-    { 
-      return let_expression(f_, f, apply_expression(f_,x));
-    }
-    else if (is_reglike(f))
-    {
-      return let_expression(x_, x, apply_expression(f,x_));
-    }
-    else
-      return let_expression({f_, x_}, {f, x}, apply_expression(f_,x_));
-  }
-
   // 6. Case
   object_ptr<const Case> IsCase = is_a<Case>(E);
   if (IsCase)
@@ -299,33 +274,33 @@ expression_ref graph_normalize(const expression_ref& E)
   {
     int var_index = get_safe_binder_index(E);
 
-    object_ptr<expression> Con ( new expression );
-    Con->head = E->head;
+    object_ptr<expression> E2 ( E->clone() );
 
     // Actually we probably just need x[i] not to be free in E->sub[i]
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
-    for(int i=0;i<E->size();i++)
+    for(int i=0;i<E2->size();i++)
     {
-      if (is_reglike(E->sub[i]))
-      {
-	Con->sub.push_back(E->sub[i]);
-      }
-      else
+      E2->sub[i] = graph_normalize(E->sub[i]);
+
+      if (not is_reglike(E2->sub[i]))
       {
 	expression_ref var = dummy( var_index++ );
-	Con->sub.push_back( var );
-	vars.push_back( var );
-	bodies.push_back( graph_normalize(E->sub[i]) );
+
+	// 1. Let-bind the argument expression
+       	vars.push_back( var );
+	bodies.push_back( E->sub[i] );
+
+	// 2. Replace the argument expression with the let var.
+	E2->sub[i] = var;
       }
     }
 
-    return let_expression(vars, bodies, object_ptr<const expression>(Con));
+    return let_expression(vars, bodies, object_ptr<const expression>(E2));
   }
 
   // 5. Let 
-  object_ptr<const let_obj> Let = is_a<let_obj>(E);
-  if (Let)
+  if (object_ptr<const let_obj> Let = is_a<let_obj>(E))
   {
     object_ptr<expression> V ( new expression(*E) );
 
