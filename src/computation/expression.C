@@ -1592,6 +1592,12 @@ expression_ref substitute(const expression_ref& R1, const expression_ref& D, con
 
 expression_ref apply_expression(const expression_ref& R,const expression_ref& arg)
 {
+  if (R.is_a<Apply>())
+  {
+    expression* R2 = R->clone();
+    R2->sub.push_back(arg);
+    return R2;
+  }
   return expression_ref(Apply(),{R,arg});
 }
 
