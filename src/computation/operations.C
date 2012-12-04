@@ -133,7 +133,7 @@ closure Apply::operator()(OperationArgs& Args) const
   assert(n_args_given >= 1);
 
   int n_args_applied = std::min(n_args_given, n_args_needed);
-  C.exp = peel_n_lambdas(C.exp, n_args_given);
+  C.exp = peel_n_lambdas(C.exp, n_args_applied);
   for(int i=0;i<n_args_applied;i++)
   {
     object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(i+1));
@@ -149,16 +149,16 @@ closure Apply::operator()(OperationArgs& Args) const
   else
   {
     int new_head_ref = Args.allocate(std::move(C));
+    vector<int> Env = {new_head_ref};
+    vector<expression_ref> args = {index_var(n_args_given - n_args_needed)};
 
-    vector<expression_ref> args;
-    vector<int> Env;
     for(int i=n_args_needed;i<n_args_given;i++)
     {
       object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(i+1));
       int arg = Args.current_closure().lookup_in_env( V->index );
       Env.push_back(arg);
 
-      args.push_back(index_var(n_args_given - n_args_needed - i));
+      args.push_back(index_var(n_args_given - i -1));
     }
     expression_ref E2 = {Apply(),args};
     return {E2,Env};
