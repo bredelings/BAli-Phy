@@ -1403,18 +1403,20 @@ bool do_substitute(expression_ref& E1, const expression_ref& D, const expression
 
       for(int i=0;i<patterns.size();i++)
       {
-	// don't substitute into subtree where this variable is bound
+	// 1. don't substitute into subtree where this variable is bound
 	std::set<dummy> bound = get_free_indices(patterns[i]);
 
 	bool D_is_bound = false;
 	for(const auto& b: bound)
-	  if (D->is_exactly(b)) continue;
+	  if (D->is_exactly(b)) D_is_bound=true;
+	if (D_is_bound) continue;
+
+	// 2. If some of the free variables in E2 are bound in patterns[i], then do 
+	// alpha-renaming on (patterns[i],bodies[i]), to avoid name capture.
 
 	std::set<dummy> fv2 = get_free_indices(E2);
 	std::set<dummy> overlap = intersection(bound,fv2);
     
-	// If some of the free variables in E2 are bound in patterns[i], then do 
-	// alpha-renaming on (patterns[i],bodies[i]), to avoid name capture.
 	if (not overlap.empty())
 	{
 	  // Determine the free variables of {patterns[i],bodies[i]} so that we can avoid them in alpha renaming
