@@ -290,5 +290,12 @@ Program Distribution_Functions()
   P += "{iidDensity (ProbDensity _ density _) args n xs = let {densities = (map (density args) xs) ; pr = foldl' (*) (doubleToLogDouble 1.0) densities} in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
   P += "{iid (n,(dist,args)) = (ProbDensity \"i.i.d.\" (iidDensity dist args) 0, n )}";
 
+  P += "{\
+plateDensity (n,f) xs = let {xs' = zip [1..] xs;\
+                             densities = map (\\(i,x) -> case (f i) of {(ProbDensity _ d _, a) -> d a x}) xs';\
+                             pr = foldl (*) (doubleToLogDouble 1.0) densities}\
+                        in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
+  P += "{plate args = (ProbDensity \"Plate\" plateDensity 0, args )}";
+
   return P;
 }
