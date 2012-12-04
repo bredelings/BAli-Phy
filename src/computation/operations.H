@@ -31,7 +31,7 @@ struct Apply: public Operation
 
   std::string name() const;
 
-  Apply():Operation(2) {}
+  Apply():Operation(-1) {}
 };
 
 struct Case: public Operation

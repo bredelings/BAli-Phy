@@ -92,18 +92,77 @@ closure Reapply::operator()(OperationArgs& Args) const
 
 expression_ref seq = lambda_expression( Seq() );
 
+/* To perform a multi-argument apply in the current framework, we
+   don't need to worry about adding PAP nodes, since partially applied functions
+   are fine.  We just need to remove n levels of lambdas if there are n levels to remove.
+
+   We could in theory recognize when a function is an apply.  If it doesn't have enough arguments
+   we could then add some.  However, the simplest thing to do would just be to evaluate it,
+   thus applying any arguments that it has.  We can then add ours to the list.
+
+   @ x y1 y2 y3 ... yn
+*/
+
+int get_n_lambdas(const expression_ref& E)
+{
+  if (E->head->type() == lambda2_type)
+    return 1 + get_n_lambdas(E->sub[0]);
+  else
+    return 0;
+}
+
+expression_ref peel_n_lambdas(const expression_ref& E, int n)
+{
+  if (n == 0)
+    return E;
+  else if (E->head->type() == lambda2_type)
+    return peel_n_lambdas(E->sub[0], n-1);
+  else
+    std::abort();
+}
+      
+
 closure Apply::operator()(OperationArgs& Args) const
 {
   closure C = Args.lazy_evaluate(0);
-
-  object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(1));
-  int arg = Args.current_closure().lookup_in_env( V->index );
+  int n_args_given = Args.n_args()-1;
 
   assert_is_a<lambda2>(C.exp);
+  int n_args_needed = get_n_lambdas(C.exp);
+  assert(n_args_needed >= 1);
+  assert(n_args_given >= 1);
 
-  C.exp = C.exp->sub[0];
-  C.Env.push_back(arg);
-  return C;
+  int n_args_applied = std::min(n_args_given, n_args_needed);
+  C.exp = peel_n_lambdas(C.exp, n_args_given);
+  for(int i=0;i<n_args_applied;i++)
+  {
+    object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(i+1));
+    int arg = Args.current_closure().lookup_in_env( V->index );
+    C.Env.push_back(arg);
+  }
+
+  // 1. We can apply all the args
+  if (n_args_given <= n_args_needed)
+    return C;
+
+  // 2. We can only apply some of the args
+  else
+  {
+    int new_head_ref = Args.allocate(std::move(C));
+
+    vector<expression_ref> args;
+    vector<int> Env;
+    for(int i=n_args_needed;i<n_args_given;i++)
+    {
+      object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(i+1));
+      int arg = Args.current_closure().lookup_in_env( V->index );
+      Env.push_back(arg);
+
+      args.push_back(index_var(n_args_given - n_args_needed - i));
+    }
+    expression_ref E2 = {Apply(),args};
+    return {E2,Env};
+  }
 }
 
 std::string Apply::name() const {

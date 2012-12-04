@@ -252,7 +252,6 @@ string expression::print() const
     }
     else if (O->precedence() > -1 and size() == 2)
     {
-      assert(O->n_args() == 2);
       if (sub[0]->size())
       {
 	if (sub[0]->is_exactly(*O) and O->associativity()==assoc_left)
