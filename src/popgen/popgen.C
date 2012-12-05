@@ -194,8 +194,8 @@ log_double_t factorial(int n)
 
 closure Ewens_Sampling_Probability::operator()(OperationArgs& Args) const
 {
-  const vector<vector<int>>& afs = *Args.evaluate_as<Vector<vector<int>>>(0);
-  const double theta = *Args.evaluate_as<Double>(1);
+  const double theta = *Args.evaluate_as<Double>(0);
+  const vector<vector<int>>& afs = *Args.evaluate_as<Vector<vector<int>>>(1);
 
   log_double_t Pr = 1;
   int n_loci = afs.size();
@@ -207,7 +207,7 @@ closure Ewens_Sampling_Probability::operator()(OperationArgs& Args) const
     // 2. Compute probability
     for(int i=1;i<=n;i++)
     {
-      int a_i = afs[l][i];
+      int a_i = afs[l][i-1];
       log_double_t x = theta/i;
       Pr *= (double(i)/(theta+i-1))*pow(x,a_i)/factorial(a_i);
     }
