@@ -39,6 +39,8 @@ Program make_Prelude()
 {
   Program P("Prelude");
 
+  P.def_function("true", 0, true );
+  P.def_function("false", 0, false );
   P.def_function("error", 1, lambda_expression( Error() ) ); 
 
   // foldr f z []  = z
