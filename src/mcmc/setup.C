@@ -240,6 +240,40 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
   return names;
 }
 
+/// Find parameters with distribution name Dist
+template <typename T>
+vector<string> get_singly_distributed_parameters_by_type(const Probability_Model& P)
+{
+  vector<string> names;
+
+  expression_ref query = (distributed, match(0), match(-1));
+
+  for(int i=0;i<P.n_notes();i++)
+    if (is_exactly(P.get_note(i),":~"))
+    {
+      vector<expression_ref> results; 
+      find_match(query, P.get_note(i), results);
+      expression_ref rand_var = results[0];
+
+      object_ptr<const parameter> p = rand_var.is_a<parameter>();
+
+      if (not p) continue;
+
+      string parameter_name = p->parameter_name;
+      object_ref value = P.get_parameter_value(parameter_name);
+
+      if (not value)
+      {
+	std::cerr<<"Warning: parameter '"<<parameter_name<<"' has not initial value! Cannot determine type.";
+	continue;
+      }
+
+      if (dynamic_pointer_cast<const T>(value)) names.push_back(parameter_name);
+    }
+
+  return names;
+}
+
 
 /// \brief Add a 1-D slice-sampling sub-move for a collection of parameters that sum to 1.
 ///
@@ -441,16 +475,13 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
   return slice_moves;
 }
 
-void add_1D_slice_moves_for_distribution(Parameters& P, const string& dist_name, MCMC::MoveAll& M)
+template <typename T>
+void add_1D_slice_moves_for_type(Parameters& P, MCMC::MoveAll& M)
 {
-  vector<vector<string>> dist_parameters = get_distributed_parameters(P,dist_name);
-  for(const auto& p: dist_parameters)
-  {
-    if (p.size() != 1)
-      throw myexception()<<join(p,"&")<<" should not be jointly distributed!";
-    
-    add_slice_move(P, p[0], M);
-  }
+  vector<string> parameter_names = get_singly_distributed_parameters_by_type<T>(P);
+
+  for(const auto& name: parameter_names)
+    add_slice_move(P, name, M);
 }
 
 /// \brief Construct 1-D slice-sampling moves for (some) scalar numeric parameters
@@ -466,18 +497,8 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     add_slice_moves(P, "*.mu"+convertToString(i+1), slice_moves);
 
   // Add slice moves for continuous 1D distributions
-  add_1D_slice_moves_for_distribution(P, "LogLaplace", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "Uniform", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "Laplace", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "Cauchy", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "LogNormal", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "Normal", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "Beta", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "Gamma", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "LogGamma", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "Exponential", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "LogExponential", slice_moves);
-  add_1D_slice_moves_for_distribution(P, "Mixture", slice_moves);
+  add_1D_slice_moves_for_type<Double>(P, slice_moves);
+  add_1D_slice_moves_for_type<Double>(P, slice_moves);
 
   /*    
   add_slice_moves(P, "*.HKY.kappa", slice_moves);
