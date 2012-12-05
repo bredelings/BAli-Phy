@@ -5,6 +5,7 @@
 #include "computation/operation.H"
 #include "computation/computation.H"
 #include "computation/prelude.H"
+#include "probability/distribution-operations.H"
 #include "io.H"
 
 using std::string;
@@ -220,10 +221,13 @@ Program PopGen_Functions()
 {
   Program P("PopGen");
   P.import_module(get_Prelude(), "Prelude", false);
+  P.import_module(Distribution_Functions(), "Distributions", false);
   P.def_function("readPhaseFile", 1, lambda_expression(Read_PHASE_File()));
   P.def_function("remove2ndAllele", 1, lambda_expression(Remove_2nd_Allele()));
   P.def_function("alleleFrequencySpectrum", 1, lambda_expression(Allele_Frequency_Spectrum()));
-  P.def_function("ewensSamplingProbability", 1, lambda_expression(Ewens_Sampling_Probability()));
+  P.def_function("ewensSamplingProbability", 2, lambda_expression(Ewens_Sampling_Probability()));
+
+  P += "{afs args = (ProbDensity \"afs\" ewensSamplingProbability (error \"afs has no quantile\"),args)}";
 
   return P;
 }
