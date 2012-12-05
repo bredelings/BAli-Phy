@@ -298,7 +298,10 @@ void context::set_parameter_value(int index, const expression_ref& O)
 // FIXME - change argument to closure?
 void context::set_parameter_value_expression(int index, const expression_ref& O)
 {
-  set_parameter_value_(index, preprocess(O) );
+  if (O)
+    set_parameter_value_(index, preprocess(O) );
+  else
+    set_parameter_value_(index, {} );
 }
 
 // FIXME - change argument to closure?
@@ -613,7 +616,7 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
   // 4. Set default values for newly declared parameters
   for(int index: new_parameters)
     if (not C.parameter_is_set(index))
-      C.set_parameter_value(index, C.default_parameter_value(index));
+      C.set_parameter_value_expression(index, C.default_parameter_value(index));
 
   return new_parameters;
 }
@@ -679,7 +682,7 @@ expression_ref context::default_parameter_value(int i) const
     return value;
   }
   else
-    return object_ref();
+    return {};
 }
 
 reg_heap::root_t context::push_temp_head() const

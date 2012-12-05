@@ -173,7 +173,7 @@ vector<int> Model::add_submodel(const Model_Notes& R)
   //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
   for(int index: new_parameters)
     if (not C.parameter_is_set(index))
-      C.set_parameter_value(index, C.default_parameter_value(index));
+      C.set_parameter_value_expression(index, C.default_parameter_value(index));
 
   return new_parameters;
 }
@@ -402,7 +402,10 @@ Model::Model(const vector<expression_ref>& notes)
 
   // 3. Then set all default values.
   for(int i=0;i<n_parameters();i++)
-    set_parameter_value(i, C.default_parameter_value(i));
+  {
+    C.set_parameter_value_expression(i, C.default_parameter_value(i));
+    modify_parameter(i);
+  }
 
   // 4. Set bounds.
   for(int i=0;i<n_parameters();i++)
