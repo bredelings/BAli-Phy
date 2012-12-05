@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <map>
 #include "popgen.H"
 #include "computation/operation.H"
 #include "computation/computation.H"
@@ -8,6 +9,7 @@
 
 using std::string;
 using std::vector;
+using std::map;
 
 struct Read_PHASE_File: public Operation
 {
@@ -110,12 +112,64 @@ closure Remove_2nd_Allele::operator()(OperationArgs& Args) const
   return alleles2;
 }
 
+struct Allele_Frequency_Spectrum: public Operation
+{
+  Allele_Frequency_Spectrum* clone() const {return new Allele_Frequency_Spectrum(*this);}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+    
+    if (typeid(*this) != typeid(O)) return false;
+    
+    return true;
+  }
+  
+  closure operator()(OperationArgs& Args) const;
+  
+  std::string name() const {return "Allele_Frequency_Spectrum";}
+  
+  Allele_Frequency_Spectrum():Operation(1) { }
+};
+
+closure Allele_Frequency_Spectrum::operator()(OperationArgs& Args) const
+{
+  const vector<vector<int>>& alleles = *Args.evaluate_as<Vector<vector<int>>>(0);
+
+  int n_individuals = alleles.size();
+  assert(n_individuals > 0);
+
+  int n_loci = alleles[0].size();
+
+  Vector<vector<int>> afs_;
+  vector<vector<int>>& afs = afs_.t;
+
+  for(int l=0;l<n_loci;l++)
+  {
+    // 1. Count the alleles of each type
+    map<int,int> allele_counts;
+    for(int i=0;i<n_individuals;i++)
+      allele_counts[alleles[i][l]]++;
+
+    // 2. Determine how many alleles with each count there are.
+    vector<int> spectrum(n_individuals,0);
+    for(const auto& allele_and_count: allele_counts)
+      spectrum[allele_and_count.second]++;
+
+    afs.push_back(spectrum);
+  }
+
+  return afs_;
+}
+
 Program PopGen_Functions()
 {
   Program P("PopGen");
   P.import_module(get_Prelude(), "Prelude", false);
   P.def_function("readPhaseFile", 1, lambda_expression(Read_PHASE_File()));
   P.def_function("remove2ndAllele", 1, lambda_expression(Remove_2nd_Allele()));
+  P.def_function("remove2ndAllele", 1, lambda_expression(Allele_Frequency_Spectrum()));
 
   return P;
 }
