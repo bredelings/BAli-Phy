@@ -163,13 +163,67 @@ closure Allele_Frequency_Spectrum::operator()(OperationArgs& Args) const
   return afs_;
 }
 
+struct Ewens_Sampling_Probability: public Operation
+{
+  Ewens_Sampling_Probability* clone() const {return new Ewens_Sampling_Probability(*this);}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+    
+    if (typeid(*this) != typeid(O)) return false;
+    
+    return true;
+  }
+  
+  closure operator()(OperationArgs& Args) const;
+  
+  std::string name() const {return "Ewens_Sampling_Probability";}
+  
+  Ewens_Sampling_Probability():Operation(2) { }
+};
+
+log_double_t factorial(int n)
+{
+  log_double_t f = 1;
+  for(int i=1;i<n+1;i++)
+    f *= i;
+  return f;
+}
+
+closure Ewens_Sampling_Probability::operator()(OperationArgs& Args) const
+{
+  const vector<vector<int>>& afs = *Args.evaluate_as<Vector<vector<int>>>(0);
+  const double theta = *Args.evaluate_as<Double>(1);
+
+  log_double_t Pr = 1;
+  int n_loci = afs.size();
+  assert(n_loci > 0);
+  int n = afs[0].size();
+
+  for(int l=0;l<n_loci;l++)
+  {
+    // 2. Compute probability
+    for(int i=1;i<=n;i++)
+    {
+      int a_i = afs[l][i];
+      log_double_t x = theta/i;
+      Pr *= (double(i)/(theta+i-1))*pow(x,a_i)/factorial(a_i);
+    }
+  }
+
+  return Log_Double(Pr);
+}
+
 Program PopGen_Functions()
 {
   Program P("PopGen");
   P.import_module(get_Prelude(), "Prelude", false);
   P.def_function("readPhaseFile", 1, lambda_expression(Read_PHASE_File()));
   P.def_function("remove2ndAllele", 1, lambda_expression(Remove_2nd_Allele()));
-  P.def_function("remove2ndAllele", 1, lambda_expression(Allele_Frequency_Spectrum()));
+  P.def_function("alleleFrequencySpectrum", 1, lambda_expression(Allele_Frequency_Spectrum()));
+  P.def_function("ewensSamplingProbability", 1, lambda_expression(Ewens_Sampling_Probability()));
 
   return P;
 }
