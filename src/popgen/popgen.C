@@ -188,7 +188,7 @@ struct Ewens_Sampling_Probability: public Operation
 log_double_t factorial(int n)
 {
   log_double_t f = 1;
-  for(int i=1;i<=n;i++)
+  for(int i=2;i<=n;i++)
     f *= i;
   return f;
 }
