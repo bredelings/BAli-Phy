@@ -824,6 +824,7 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
   BUGS.import_module(P.get_Program(),"Distributions", false);
   BUGS.import_module(P.get_Program(),"SModel", false);
   BUGS.import_module(P.get_Program(),"Main", false);
+  BUGS.import_module(P.get_Program(),"PopGen", false);
   for(const auto& line: lines)
   {
     expression_ref cmd = parse_bugs_line(BUGS, line);

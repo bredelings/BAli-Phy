@@ -42,6 +42,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "math/exponential.H"
 #include "smodel/functions.H"
 #include "probability/distribution-operations.H"
+#include "popgen/popgen.H"
 
 using std::vector;
 using std::string;
@@ -1035,6 +1036,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 {
   C += SModel_Functions();
   C += Distribution_Functions();
+  C += PopGen_Functions();
   // FIXME: add C += IModel_Functions() instead of referencing the operations directly.  Then we could parse a text file.
   
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
