@@ -27,3 +27,9 @@ x1 = 1.0
 x2 = 2.0
 MakeLogger "BUGS.x1"
 MakeLogger "BUGS.x2"
+
+DeclareParameter "theta"
+theta ~ Exponential(0.1)
+theta = 1.0
+((alleleFrequencySpectrum . readPhaseFile) "/home/bredelings/Reports/Kmar/BP.phase1.infile") ~ afs (theta)
+MakeLogger "BUGS.theta"
