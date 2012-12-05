@@ -193,29 +193,74 @@ log_double_t factorial(int n)
   return f;
 }
 
+log_double_t ewens_sampling_probability(double theta, const vector<int>& a)
+{
+  const int n = a.size();
+
+  log_double_t Pr = 1;
+
+  // 2. Compute probability
+  for(int i=1;i<=n;i++)
+  {
+    int a_i = a[i-1];
+    Pr *= (double(i)/(theta+i-1));
+    if (a_i > 0) 
+    {
+      log_double_t x = theta/i;
+      Pr *= pow(x,a_i)/factorial(a_i);
+    }
+  }
+
+  return Pr;
+}
+
 closure Ewens_Sampling_Probability::operator()(OperationArgs& Args) const
 {
   const double theta = *Args.evaluate_as<Double>(0);
   const vector<vector<int>>& afs = *Args.evaluate_as<Vector<vector<int>>>(1);
 
   log_double_t Pr = 1;
-  int n_loci = afs.size();
-  assert(n_loci > 0);
-  int n = afs[0].size();
+  for(const auto& a: afs)
+    Pr *= ewens_sampling_probability(theta,a);
 
-  for(int l=0;l<n_loci;l++)
+  return Log_Double(Pr);
+}
+
+struct Ewens_Sampling_Mixture_Probability: public Operation
+{
+  Ewens_Sampling_Mixture_Probability* clone() const {return new Ewens_Sampling_Mixture_Probability(*this);}
+  
+  tribool compare(const Object& O) const
   {
-    // 2. Compute probability
-    for(int i=1;i<=n;i++)
-    {
-      int a_i = afs[l][i-1];
-      Pr *= (double(i)/(theta+i-1));
-      if (a_i > 0) 
-      {
-	log_double_t x = theta/i;
-	Pr *= pow(x,a_i)/factorial(a_i);
-      }
-    }
+    if (this == &O) 
+      return true;
+    
+    if (typeid(*this) != typeid(O)) return false;
+    
+    return true;
+  }
+  
+  closure operator()(OperationArgs& Args) const;
+  
+  std::string name() const {return "builtin_Ewens_Sampling_Mixture_Probability";}
+  
+  Ewens_Sampling_Mixture_Probability():Operation(3) { }
+};
+
+closure Ewens_Sampling_Mixture_Probability::operator()(OperationArgs& Args) const
+{
+  const vector<double>& thetas = *Args.evaluate_as<Vector<double>>(0);
+  const vector<double>& p = *Args.evaluate_as<Vector<double>>(1);
+  const vector<vector<int>>& afs = *Args.evaluate_as<Vector<vector<int>>>(2);
+
+  log_double_t Pr = 1;
+  for(const auto& a: afs)
+  {
+    double pr = 0;
+    for(int i=0;i<thetas.size();i++)
+      pr += p[i] * ewens_sampling_probability(thetas[i],a);
+
+    Pr *= pr;
   }
 
   return Log_Double(Pr);
@@ -230,8 +275,13 @@ Program PopGen_Functions()
   P.def_function("remove2ndAllele", 1, lambda_expression(Remove_2nd_Allele()));
   P.def_function("alleleFrequencySpectrum", 1, lambda_expression(Allele_Frequency_Spectrum()));
   P.def_function("ewensSamplingProbability", 2, lambda_expression(Ewens_Sampling_Probability()));
+  P.def_function("builtinEwensSamplingMixtureProbability", 2, lambda_expression(Ewens_Sampling_Mixture_Probability()));
+
+  P += "{ewensSamplingMixtureProbability (thetas,ps) x = builtinEwensSamplingMixtureProbability (listToVectorDouble thetas) (listToVectorDouble ps) x}";
 
   P += "{afs args = (ProbDensity \"afs\" ewensSamplingProbability (error \"afs has no quantile\"),args)}";
+
+  P += "{afsMixture args = (ProbDensity \"afsMixture\" ewensSamplingMixtureProbability (error \"afs has no quantile\"),args)}";
 
   return P;
 }
