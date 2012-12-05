@@ -155,7 +155,7 @@ closure Allele_Frequency_Spectrum::operator()(OperationArgs& Args) const
     // 2. Determine how many alleles with each count there are.
     vector<int> spectrum(n_individuals,0);
     for(const auto& allele_and_count: allele_counts)
-      spectrum[allele_and_count.second]++;
+      spectrum[allele_and_count.second-1]++;
 
     afs.push_back(spectrum);
   }
@@ -187,7 +187,7 @@ struct Ewens_Sampling_Probability: public Operation
 log_double_t factorial(int n)
 {
   log_double_t f = 1;
-  for(int i=1;i<n+1;i++)
+  for(int i=1;i<=n;i++)
     f *= i;
   return f;
 }
