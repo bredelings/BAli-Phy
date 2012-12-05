@@ -2356,11 +2356,11 @@ expression_ref untranslate_vars(const expression_ref& E, const map<string, reg_h
    */
 
 // Perhaps rewrite the expression system to
-// (a) Separate the head (object_ref) from the other args (expression_ref)
+// (a) DONE: Separate the head (object_ref) from the other args (expression_ref)
 // (b) Make a constructor take some number of arguments.
 // (c) Change the interpretation of closure constructors so that they are always C n n-1 ... 1 0.
 //     I guess if we don't then we have to actually look into the constructor expression.
-// (d) Remove Operation::evaluate( ) and just use lazy_evaluate( ).
+// (d) DONE: Remove Operation::evaluate( ) and just use lazy_evaluate( ).
 // (e) Make translate_refs use only one names for refs that occur twice.
 // (f) Make a pretty printer for expression_ref?
 
