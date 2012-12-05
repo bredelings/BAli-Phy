@@ -281,6 +281,8 @@ Program Distribution_Functions()
          mixtureDensity [] _ = (doubleToLogDouble 0.0)}";
   P += "{mixtureDist = ProbDensity \"Mixture\" mixtureDensity 0}";
 
+  P += "{bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p))}";
+  P += "{bernoulli args = (ProbDensity \"Bernoulli\" bernoulliDensity (error \"Bernoulli has no quantile\"), args)}";
   P += "{normal args = (normalDist, args)}";
   P += "{exponential args = (exponentialDist, args)}";
   P += "{gamma args = (gammaDist, args)}";
