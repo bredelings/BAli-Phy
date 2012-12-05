@@ -171,6 +171,17 @@ void Program::import_symbol(const symbol_info& S, bool qualified)
   if (not is_qualified_symbol(S.name))
     throw myexception()<<"Imported symbols must have qualified names.";
 
+  if (is_declared_qualified(S.name))
+  {
+    auto loc = symbols.find(S.name);
+    assert(loc != symbols.end());
+
+    if (loc->second.scope != external_scope)
+      throw myexception()<<"Trying to imported symbol '"<<S.name<<"' when that name is already defined.";
+    else
+      return;
+  }
+
   // Add the symbol
   symbol_info S2 = S;
   if (S2.scope == local_scope)
