@@ -195,6 +195,8 @@ log_double_t factorial(int n)
 
 log_double_t ewens_sampling_probability(double theta, const vector<int>& a)
 {
+  assert(theta >= 0.0);
+
   const int n = a.size();
 
   log_double_t Pr = 1;
@@ -250,15 +252,24 @@ struct Ewens_Sampling_Mixture_Probability: public Operation
 closure Ewens_Sampling_Mixture_Probability::operator()(OperationArgs& Args) const
 {
   const vector<double>& thetas = *Args.evaluate_as<Vector<double>>(0);
-  const vector<double>& p = *Args.evaluate_as<Vector<double>>(1);
+  const vector<double>& ps = *Args.evaluate_as<Vector<double>>(1);
   const vector<vector<int>>& afs = *Args.evaluate_as<Vector<vector<int>>>(2);
+
+#ifndef NDEBUG
+  for(int i=0;i<thetas.size();i++)
+  {
+    assert(thetas[i] >= 0.0);
+    assert(ps[i] >= 0.0);
+    assert(ps[i] <= 1.0);
+  }
+#endif
 
   log_double_t Pr = 1;
   for(const auto& a: afs)
   {
     double pr = 0;
     for(int i=0;i<thetas.size();i++)
-      pr += p[i] * ewens_sampling_probability(thetas[i],a);
+      pr += ps[i] * ewens_sampling_probability(thetas[i],a);
 
     Pr *= pr;
   }
