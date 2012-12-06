@@ -849,6 +849,19 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
       string name = *(cmd->sub[0].assert_is_a<String>());
       cmd = new expression{cmd->head,{parameter(BUGS.lookup_symbol(name).name)}};
     }
+    else if (is_exactly(cmd, "VarBounds"))
+    {
+      bool lower = cmd->sub[1].is_a<Double>();
+      double lowerb = 0;
+      if (lower)
+	lowerb = *(cmd->sub[1].is_a<Double>());
+
+      bool upper = cmd->sub[2].is_a<Double>();
+      double upperb = 0;
+      if (upper)
+	upperb = *(cmd->sub[2].is_a<Double>());
+      cmd = expression_ref{cmd->head,{cmd->sub[0],Bounds<double>(lower,lowerb,upper,upperb)}};
+    }
 
     N.add_note(cmd);
   }
