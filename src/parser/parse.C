@@ -781,7 +781,7 @@ struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 	text %= +(char_ - ' ' -'(');
 	bugs_dist = h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,_1)] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
 	bugs_default_value = h.exp[push_back(_a,_1)] >> '=' > h.exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
-	bugs_note = h.conid[push_back(_a,_1)] >> *(h.exp[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
+	bugs_note = h.exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
 
 	bugs_line %= bugs_dist | bugs_default_value | bugs_note;
 	bugs_lines = bugs_line [push_back(_a,_1)] % ';' >> eoi [ _val = new_<expression>(AST_node("BugsLines"), _a)  ];

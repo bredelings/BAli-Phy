@@ -702,8 +702,12 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "BugsNote")
     {
-      string con_name = *E->sub[0].assert_is_a<String>();
+      // This expression should have the form 'AST[BugsNote] (AST[infixexp] (AST[Apply] con_name arg1 arg2 ... arg_n) )'.
+      v = E->sub[0]->sub[0]->sub;
+
+      string con_name = v[0].assert_is_a<AST_node>()->value;
       v.erase(v.begin());
+
       for(auto& e: v)
 	e = desugar(m, e, bound);
 
