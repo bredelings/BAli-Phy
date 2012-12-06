@@ -288,6 +288,7 @@ Program Distribution_Functions()
   P += "{gamma args = (gammaDist, args)}";
   //  P += "{beta args = (betaDist, args)}";
   P += "{mixture args = (mixtureDist, args)}";
+  P += "{dirichlet args = (ProbDensity \"Dirichlet\" dirichletDensity (error \"Dirichlet has no quantiles\"), args)}";
 
   P += "{iidDensity (n,((ProbDensity _ density _),args)) xs = let {densities = (map (density args) xs) ; pr = foldl' (*) (doubleToLogDouble 1.0) densities} in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
   P += "{iid args = (ProbDensity \"i.i.d.\" iidDensity 0, args )}";
