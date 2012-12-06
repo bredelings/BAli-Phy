@@ -37,22 +37,45 @@ VarBounds theta 0.0 false
 MakeLogger "BUGS.theta"
 
 DeclareParameter "theta1"
-DeclareParameter "theta2"
 theta1 ~ Exponential(1.0)
 theta1 = 1.0
+VarBounds theta1 0.0 false
+
+DeclareParameter "theta2"
 theta2 ~ Exponential(1.0)
 theta2 = 1.0
-DeclareParameter "i"
-i ~ bernoulli(0.5)
-i = false
-DeclareParameter "p2"
-p2 ~ Beta(1.0, 1.0)
-p2 = 0.5
-VarBounds p2 0.0 1.0
-VarBounds theta1 0.0 false
 VarBounds theta2 0.0 false
-((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/BP.phase1.infile") ~ afsMixture ([theta1,theta2],if i then [p2,1.0-p2] else [1.0,0.0])
+
+DeclareParameter "theta3"
+theta3 ~ Exponential(1.0)
+theta3 = 1.0
+VarBounds theta3 0.0 false
+
+DeclareParameter "p1"
+p1 = 0.33
+VarBounds p1 0.0 1.0
+
+DeclareParameter "p2"
+p2 = 0.33
+VarBounds p2 0.0 1.0
+
+DeclareParameter "p3"
+p3 = 1.0 - p1 - p2
+VarBounds p3 0.0 1.0
+
+[p1,p2,p3] ~ dirichlet([10.0, 10.0, 10.0])
+
+DeclareParameter "i"
+i ~ bernoulli (0.5)
+i = false
+
+
+
+((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/BP.phase1.infile") ~ afsMixture (if i then [theta1,theta2,theta3] else [theta1,theta2],if i then [p1,p2,p3] else [p1/(p1+p2),p2/(p1+p2)])
 MakeLogger "BUGS.theta1"
 MakeLogger "BUGS.theta2"
+MakeLogger "BUGS.theta3"
+MakeLogger "BUGS.p1"
 MakeLogger "BUGS.p2"
+MakeLogger "BUGS.p3"
 MakeLogger "BUGS.i"
