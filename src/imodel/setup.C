@@ -131,14 +131,10 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
      */
 
     /*
-     * iidDensity ((probDensity _ density _),args) l = foldl' (*) 1.0 (fmap (density args) l)
-     *
-     * iid (dist,args) = ((probDensity "i.i.d." (iidDensity dist args) (error "idd has no quantile")), () )
-     *
      * logLambdaMeans = [logLambdaMean1, logLambdaMean2, logLambdaMean3, logLambdaMean4]
      *
      * logLambdaMean ~ Laplace(-4.0, 1.0)
-     * logLambdaMeans ~ iid ( normal (logLambdaMean, sigmaBetweenGroup))
+     * logLambdaMeans ~ iid (4, normal (logLambdaMean, sigmaBetweenGroup))
      *
      * a = 10.0
      * q1 ~ Beta(a, 1.0)
@@ -159,7 +155,7 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
      *
      * main = let {lambdaMean = exp logLambdaMean, logLambdaScales = listArray' logLambdasList} in 
      *            (\a b -> RS07BranchMHH epsilon (exp logLambdaScales!b))*(a!b) Heat.beta IModels.training, 
-                   \a -> lengthp epsilon a)
+     *             \a -> lengthp epsilon a)
      *
      */
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
