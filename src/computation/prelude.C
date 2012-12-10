@@ -36,6 +36,18 @@ const expression_ref join_ = var("join");
 const expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
 const expression_ref UnwrapDD = var("UnwrapDD");
 
+/*
+ * 1. Remove true/false in favor of True/False.
+ * 2. Convert strings to [Char]
+ * 3. Convert Defs to use the machine.
+ * 4. SYNTAX: replace a ~ b ( c ) with a ~ b
+ * 5. SYNTAX: external a ~ b [To not declare all parameters]
+ * 6. Allows defs or something in BUGS files.
+ * 7. Rationalize Model_Notes, formula_expression_ref, and program?
+      - Make Model_Notes into a Program with notes added?
+      - Could we parse a BUGS file in to a Model_Notes?
+ */
+
 
 Program make_Prelude()
 {
