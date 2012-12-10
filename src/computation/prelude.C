@@ -4,6 +4,8 @@
 #include "computation/graph_register.H"
 #include "mytypes.H"
 
+using std::vector;
+
 const expression_ref foldr = var("foldr");
 const expression_ref foldl = var("foldl");
 const expression_ref foldl_ = var("foldl'");
@@ -67,6 +69,8 @@ Program make_Prelude()
             ( (take, v1, v2&v3), v2&(take,(v1 - 1),v3) );
   }
 
+  P += "{repeat x = x:(repeat x)}";
+
   // iterate f x = x:iterate f (f x)
   P += Def( (iterate, v1, v2), v2&(iterate, v1, (v1,v2)) );
 
@@ -115,7 +119,9 @@ Program make_Prelude()
   // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
   P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(v1+(fst,v2)*(snd,v2))), 0.0, v3) );
 
-  // UniformDiscretize q n = fmap /\i.(1/n, q ((2*i+1)/n) ) (take n (iterate (+1) 0) )
+  P += "{uniformQuantiles q n = map (\i -> q ((2.0*(to_double i)+1.0)/(to_double n)) ) (take n [1..])}";
+
+  // UniformDiscretize q n = map (\i->(1.0/n, q ((2*i+1)/n) )) (take n (iterate (+1) 0) )
   // [ We could do this as two nested fmaps, instead. ]
   // [ We could factor out to_double(v2), and 1.0/to_double(v2)
   P += Def( (UniformDiscretize, v1, v2), (DiscreteDistribution, (fmap, lambda_quantify(v3,let_expression(v4,(to_double,v2), Tuple(1.0/v4, (v1,((2.0*v3+1.0)/(2.0*v4)))))), (take, v2, (iterate, (plus,1.0), 0.0) ) ) ) );
@@ -205,6 +211,26 @@ Program make_Prelude()
   // listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0
   P += Def( (var("listFromVectorInt"), v1), (var("listFromVectorInt'"),v1,(var("sizeOfVectorInt"),v1),0));
 
+
+  //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
+  P.def_function("getVectorVectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<Vector<int>,Vector<int>>() ) ); 
+  P.def_function("sizeOfVectorVectorInt", 1, lambda_expression( VectorSizeOp<Vector<int>>() ) );
+
+  // listFromVectorVectorInt' v s i = if (i<s) then (getVectorVectorIntElement v i):(listFromVectorVectorInt v s (i+1)) else []
+  P += Def( (var("listFromVectorVectorInt'"), v1, v2, v3), (If,(v3<v2),(var("getVectorVectorIntElement"),v1,v3)&(var("listFromVectorVectorInt'"),v1,v2,(v3+1)),ListEnd));
+
+  // listFromVectorVectorInt v = listFromVectorVectorInt' v (sizeOfVectorVectorInt v) 0
+  P += Def( (var("listFromVectorVectorInt"), v1), (var("listFromVectorVectorInt'"),v1,(var("sizeOfVectorVectorInt"),v1),0));
+
+  //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
+  P.def_function("getVectorvectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<vector<int>,Vector<int>>() ) ); 
+  P.def_function("sizeOfVectorvectorInt", 1, lambda_expression( VectorSizeOp<vector<int>>() ) );
+
+  // listFromVectorvectorInt' v s i = if (i<s) then (getVectorvectorIntElement v i):(listFromVectorvectorInt v s (i+1)) else []
+  P += Def( (var("listFromVectorvectorInt'"), v1, v2, v3), (If,(v3<v2),(var("getVectorvectorIntElement"),v1,v3)&(var("listFromVectorvectorInt'"),v1,v2,(v3+1)),ListEnd));
+
+  // listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v) 0
+  P += Def( (var("listFromVectorvectorInt"), v1), (var("listFromVectorvectorInt'"),v1,(var("sizeOfVectorvectorInt"),v1),0));
 
   //--------------------------------------- listToVectorInt ---------------------------------------//
 
