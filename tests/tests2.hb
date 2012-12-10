@@ -33,8 +33,8 @@ DeclareParameter "theta"
 theta ~ Exponential(1.0)
 theta = 1.0
 VarBounds theta 0.0 false
-((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/BP.phase1.infile") ~ afs (theta)
-MakeLogger "BUGS.theta"
+((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/BP.phase1.infile") ~ afsGroup (theta)
+MakeLogger theta
 
 DeclareParameter "theta1"
 DeclareParameter "theta2"
