@@ -44,6 +44,7 @@ Program make_Prelude()
   P.def_function("true", 0, true );
   P.def_function("false", 0, false );
   P.def_function("error", 1, lambda_expression( Error() ) ); 
+  P.def_function("intToDouble", 1, lambda_expression( Conversion<int,double>() ) ); 
 
   // foldr f z []  = z
   // foldr f z x:xs = (f x (foldr f z xs))
@@ -118,8 +119,6 @@ Program make_Prelude()
 
   // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
   P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(v1+(fst,v2)*(snd,v2))), 0.0, v3) );
-
-  P += "{uniformQuantiles q n = map (\i -> q ((2.0*(to_double i)+1.0)/(to_double n)) ) (take n [1..])}";
 
   // UniformDiscretize q n = map (\i->(1.0/n, q ((2*i+1)/n) )) (take n (iterate (+1) 0) )
   // [ We could do this as two nested fmaps, instead. ]
@@ -402,6 +401,8 @@ f $ x = f x
   P += {"{concatMap f = concat . map f}"};
 
   P.def_function("doubleToLogDouble", 1, lambda_expression( Conversion<double,log_double_t>() ) );
+
+  P += "{uniformQuantiles q n = map (\\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..])}";
 
   return P;
 }
