@@ -1099,7 +1099,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   /*------------------------- Add commands to log all parameters created before this point. ------------------------*/
   expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
   for(int i=0;i<n_parameters();i++)
-    add_note( (make_logger,parameter_name(i)) );
+    add_note( (make_logger,parameter(parameter_name(i))) );
 
   // don't constrain any branch lengths
   for(int b=0;b<TC->n_branches();b++)
