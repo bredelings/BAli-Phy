@@ -391,8 +391,6 @@ struct bernoulli_prob: public Operation
   bernoulli_prob():Operation(2) { }
 };
 
-extern expression_ref bernoulli_dist;
-
 // 2 Fields: string, density op
 extern expression_ref prob_density;
 
