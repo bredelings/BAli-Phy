@@ -50,6 +50,7 @@ const expression_ref UnwrapDD = var("UnwrapDD");
  *    - Could we parse a BUGS file in to a Model_Notes?
  * 8. Try to rewrite e.g. M8b into a BUGS module.
  * 9. All default values and Bounds to distributions.
+ * 10. Convert all of distribution-operations.H to the parser.
  */
 
 
