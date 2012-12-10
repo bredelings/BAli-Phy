@@ -48,6 +48,7 @@ const expression_ref UnwrapDD = var("UnwrapDD");
  * 7. Rationalize Model_Notes, formula_expression_ref, and program?
  *    - Make Model_Notes into a Program with notes added?
  *    - Could we parse a BUGS file in to a Model_Notes?
+ * 8. Try to rewrite e.g. M8b into a BUGS module.
  */
 
 
