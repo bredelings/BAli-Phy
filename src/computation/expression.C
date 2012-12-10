@@ -231,10 +231,10 @@ string expression::print() const
 
     object_ptr<const Operator> O = ::is_a<Operator>(sub[i-1]);
 
-    // Don't parenthesize tuples
+    // Don't parenthesize tuple arguments.
     if (O and is_tuple_name(O->name()) and sub[i-1]->size() == O->n_args()) continue;
 
-    // Don't parenthesize lists
+    // Don't parenthesize list arguments.
     if (O and O->name() == ":") continue;
 
     pargs[i] = "(" + args[i] + ")";
