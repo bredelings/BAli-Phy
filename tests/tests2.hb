@@ -3,21 +3,21 @@ x = 2.0
 DeclareParameter "y"
 y = 3.0
 
-x ~ Normal(0.0, 1.0)
-y ~ Normal(x, 1.0)
+x ~ normal(0.0, 1.0)
+y ~ normal(x, 1.0)
 
 DeclareParameter "p"
-p ~ Beta(10.0, 1.0)
+p ~ betaD(10.0, 1.0)
 VarBounds p 0.0 1.0
 p = 0.5
 MakeLogger p
 
 DeclareParameter "z"
-z ~ Mixture([( p, normal(x,1.0) ),(1.0-p, normal(y,1.0)) ])
+z ~ mixture([( p, normal(x,1.0) ),(1.0-p, normal(y,1.0)) ])
 z = 2.5
 
 DeclareParameter "w"
-w ~ Mixture([( 0.5, normal(-2.0,1.0) ),(0.5, normal(2.0,1.0)) ])
+w ~ mixture([( 0.5, normal(-2.0,1.0) ),(0.5, normal(2.0,1.0)) ])
 w = 0.0
 MakeLogger w
 
@@ -30,7 +30,7 @@ MakeLogger x1
 MakeLogger x2
 
 DeclareParameter "theta"
-theta ~ Exponential(1.0)
+theta ~ exponential(1.0)
 theta = 1.0
 VarBounds theta 0.0 False
 ((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/BP.phase1.infile") ~ afsGroup (theta)
@@ -38,15 +38,15 @@ MakeLogger theta
 
 DeclareParameter "theta1"
 DeclareParameter "theta2"
-theta1 ~ Exponential(1.0)
+theta1 ~ exponential(1.0)
 theta1 = 1.0
-theta2 ~ Exponential(1.0)
+theta2 ~ exponential(1.0)
 theta2 = 1.0
 DeclareParameter "i"
 i ~ bernoulli(0.5)
 i = False
 DeclareParameter "p2"
-p2 ~ Beta(1.0, 1.0)
+p2 ~ betaD(1.0, 1.0)
 p2 = 0.5
 VarBounds p2 0.0 1.0
 VarBounds theta1 0.0 False

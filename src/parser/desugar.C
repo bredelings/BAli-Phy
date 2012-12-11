@@ -730,24 +730,10 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       expression_ref distributed = lambda_expression( constructor(":~",2) );
 
       string dist_name = *(v[1]->is_a<const String>());
-      expression_ref dist_family;
-      if (dist_name == "Normal")
-	dist_family = var("normalDist");
-      else if (dist_name == "Exponential")
-	dist_family = var("exponentialDist");
-      else if (dist_name == "Gamma")
-	dist_family = var("gammaDist");
-      else if (dist_name == "Beta")
-	dist_family = var("betaDist");
-      else if (dist_name == "Mixture")
-	dist_family = var("mixtureDist");
 
       vector<expression_ref> args = v; args.erase(args.begin()); args.erase(args.begin());
       expression_ref dist_args = get_tuple(args);
-      if (dist_family)
-	return (distributed, v[0], Tuple(dist_family,dist_args));
-      else
-	return (distributed, v[0], (var(dist_name), dist_args));
+      return (distributed, v[0], (var(dist_name), dist_args));
     }
   }
 
