@@ -1050,7 +1050,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string mu_name = "Main.mu"+convertToString(i+1);
     add_parameter(Parameter(mu_name, Double(0.25), lower_bound(0)));
     // prior on mu[i], the mean branch length for scale i
-    add_note( (distributed, parameter(mu_name), Tuple(var("gammaDist"), Tuple(0.5, 2.0) ) ) );
+    add_note( (distributed, parameter(mu_name), (var("gamma"), Tuple(0.5, 2.0) ) ) );
   }
 
   // check that smodel mapping has correct size.
