@@ -164,45 +164,6 @@ closure uniform_density::operator()(OperationArgs& Args) const
 // Fields: n_random, n_parameters, string, density op
 expression_ref prob_density = lambda_expression( constructor("Distributions.ProbDensity",3) );
 
-expression_ref exponentialDensity = var("exponentialDensity");
-expression_ref exponential_dist = (prob_density, "Exponential", exponentialDensity, 0);
-
-expression_ref logExponentialDensity = var("logExponentialDensity");
-expression_ref log_exponential_dist = (prob_density, "LogExponential", logExponentialDensity, 0);
-
-expression_ref gammaDensity  = var("gammaDensity");
-expression_ref gammaQuantile = var("gammaQuantile");
-expression_ref gamma_dist       = (prob_density, "Gamma", gammaDensity, gammaQuantile);
-
-expression_ref logGammaDensity = var("logGammaDensity");
-expression_ref log_gamma_dist   = (prob_density, "LogGamma", logGammaDensity, 0);
-
-expression_ref betaDensity     = var("betaDensity");
-expression_ref betaQuantile    = var("betaQuantile");
-expression_ref beta_dist        = (prob_density, "Beta", betaDensity, betaQuantile);
-
-expression_ref normalDensity     = var("normalDensity");
-expression_ref normal_dist      = (prob_density, "Normal", normalDensity, 0);
-
-expression_ref logNormalDensity     = var("logNormalDensity");
-expression_ref logNormalQuantile    = var("logNormalQuantile");
-expression_ref log_normal_dist  = (prob_density, "LogNormal", logNormalDensity, logNormalQuantile);
-
-expression_ref cauchyDensity    = var("cauchyDensity");
-expression_ref cauchy_dist      = (prob_density, "Cauchy", cauchyDensity, 0);
-
-expression_ref dirichletDensity   = var("dirichletDensity");
-expression_ref dirichlet_dist   = (prob_density, "Dirichlet", dirichletDensity, 0);
-
-expression_ref laplaceDensity   = var("laplaceDensity");
-expression_ref laplace_dist     = (prob_density, "Laplace", laplaceDensity, 0);
-
-expression_ref logLaplaceDensity = var("logLaplaceDensity");
-expression_ref log_laplace_dist = (prob_density, "LogLaplace", logLaplaceDensity, 0);
-
-expression_ref uniformDensity   = var("uniformDensity");
-expression_ref uniform_dist     = (prob_density, "Uniform", uniformDensity, 0);
-
 Program Distribution_Functions()
 {
   Program P("Distributions");
@@ -230,21 +191,21 @@ Program Distribution_Functions()
   P += "{betaQuantile (a,b) p = builtinBetaQuantile a b p}";
 
   P.def_function("builtinNormalDensity", 3, lambda_expression( normal_density() ) );
-  P += Def( (normalDensity, Tuple(v1,v2), v3), (var("builtinNormalDensity"),v1,v2,v3)); 
+  P += "{normalDensity (mu,sigma) x =  builtinNormalDensity mu sigma x}";
 
   P.def_function("builtinLogNormalDensity", 3, lambda_expression( log_normal_density() ) );
-  P += Def( (logNormalDensity, Tuple(v1,v2), v3), (var("builtinLogNormalDensity"),v1,v2,v3)); 
   P.def_function("builtinLogNormalQuantile", 3, lambda_expression( log_normal_quantile_op() ) );
-  P += Def( (logNormalQuantile, Tuple(v1,v2), v3), (var("builtinLogNormalQuantile"),v1,v2,v3));
+  P += "{logNormalDensity (mu,sigma) x = builtinLogNormalDensity mu sigma x}";
+  P += "{logNormalQuantile (mu,sigma) x = builtinLogNormalQuantile mu sigma x}";
 
   P.def_function("builtinCauchyDensity", 3, lambda_expression( cauchy_density() ) );
-  P += Def( (cauchyDensity, Tuple(v1,v2), v3), (var("builtinCauchyDensity"),v1,v2,v3)); 
+  P += "{cauchyDensity (m,s) x = builtinCauchyDensity m s x}";
 
   P.def_function("builtinLaplaceDensity", 3, lambda_expression( laplace_density() ) );
-  P += Def( (laplaceDensity, Tuple(v1,v2), v3), (var("builtinLaplaceDensity"),v1,v2,v3)); 
+  P += "{laplaceDensity (m,s) x = builtinLaplaceDensity m s x}";
 
   P.def_function("builtinDirichletDensity", 3, lambda_expression( dirichlet_density() ) );
-  P += Def( (dirichletDensity, v1, v2), (var("builtinDirichletDensity"),(var("listToVectorDouble"),v1),(var("listToVectorDouble"),v2))); 
+  P += "{dirichletDensity ps xs = builtinDirichletDensity (listToVectorDouble ps) (listToVectorDouble xs)}";
 
   P.def_function("builtinLogLaplaceDensity", 3, lambda_expression( log_laplace_density() ) );
   P += "{logLaplaceDensity (m,s) x = builtinLogLaplaceDensity m s x}";
