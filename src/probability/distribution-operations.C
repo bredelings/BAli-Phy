@@ -272,6 +272,7 @@ Program Distribution_Functions()
   //  P += "{beta args = (betaDist, args)}";
   P += "{mixture args = (mixtureDist, args)}";
   P += "{dirichlet args = (ProbDensity \"Dirichlet\" dirichletDensity (error \"Dirichlet has no quantiles\"), args)}";
+  P += "{laplace args = (ProbDensity \"Laplace\" laplaceDensity 0, args)}";
   P += "{logLaplace args = (ProbDensity \"LogLaplace\" logLaplaceDensity 0, args)}";
   P += "{logExponential args = (ProbDensity \"LogExponential\" logExponentialDensity 0, args)}";
   P += "{logGamma args = (ProbDensity \"LogGamma\" logGammaDensity 0, args)}";
