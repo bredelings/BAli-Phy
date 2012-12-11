@@ -263,20 +263,23 @@ Program Distribution_Functions()
   P += "{mixtureDensity ((p1,((ProbDensity name1 density1 quantile1),args1)):l) x = (doubleToLogDouble p1)*(density1 args1 x)+(mixtureDensity l x);\
          mixtureDensity [] _ = (doubleToLogDouble 0.0)}";
   P += "{mixtureDist = ProbDensity \"Mixture\" mixtureDensity 0}";
+  P += "{exponentialQuantile mu p = gammaQuantile (1.0,mu) p}";
 
   P += "{bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p))}";
   P += "{bernoulli args = (ProbDensity \"Bernoulli\" bernoulliDensity (error \"Bernoulli has no quantile\"), args)}";
-  P += "{normal args = (normalDist, args)}";
-  P += "{exponential args = (exponentialDist, args)}";
-  P += "{gamma args = (gammaDist, args)}";
-  //  P += "{beta args = (betaDist, args)}";
-  P += "{mixture args = (mixtureDist, args)}";
+  P += "{normal args = (ProbDensity \"Normal\" normalDensity 0, args)}";
+  P += "{exponential args = (ProbDensity \"Exponential\" exponentialDensity exponentialQuantile, args)}";
+  P += "{gamma args = (ProbDensity \"Gamma\" gammaDensity gammaQuantile, args)}";
+  P += "{betaD args = (ProbDensity \"Beta\"        betaDensity        betaQuantile, args)}";
+  P += "{mixture args = (ProbDensity \"Mixture\" mixtureDensity 0, args)}";
   P += "{dirichlet args = (ProbDensity \"Dirichlet\" dirichletDensity (error \"Dirichlet has no quantiles\"), args)}";
   P += "{laplace args = (ProbDensity \"Laplace\" laplaceDensity 0, args)}";
   P += "{logLaplace args = (ProbDensity \"LogLaplace\" logLaplaceDensity 0, args)}";
   P += "{logExponential args = (ProbDensity \"LogExponential\" logExponentialDensity 0, args)}";
+  P += "{logNormal args = (ProbDensity \"LogNormal\" logNormalDensity logNormalQuantile, args)}";
   P += "{logGamma args = (ProbDensity \"LogGamma\" logGammaDensity 0, args)}";
   P += "{uniform args = (ProbDensity \"Uniform\" uniformDensity 0, args)}";
+  P += "{cauchy args = (ProbDensity \"Cauchy\" cauchyDensity 0, args)}";
 
   P += "{iidDensity (n,((ProbDensity _ density _),args)) xs = let {densities = (map (density args) xs) ; pr = foldl' (*) (doubleToLogDouble 1.0) densities} in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
   P += "{iid args = (ProbDensity \"i.i.d.\" iidDensity 0, args )}";
