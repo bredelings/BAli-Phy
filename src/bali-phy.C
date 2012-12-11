@@ -558,7 +558,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
     for(int i=0;i<long_names.size();i++)
     {
       expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
-      expression_ref query = (make_logger, long_names[i]);
+      expression_ref query = (make_logger, parameter(long_names[i]));
       vector<expression_ref> results;
       if (P.find_match_notes(query, results, 0) == -1) continue;
 
@@ -607,7 +607,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
     if (p_index == -1)
       throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
 
-    vector<object_ref> values = {Bool(false),Bool(true)};
+    vector<object_ref> values = {constructor("False",0),constructor("True",0)};
     TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(p_index, values));
   }
 

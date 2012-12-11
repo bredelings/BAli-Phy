@@ -52,7 +52,7 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
     expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0),exponential_dist, 10.0);
 
     expression_ref log_lambda_scale = def_parameter(imodel, "logLambdaScale", 0.0, nullptr, laplace_dist, Tuple(0.0, 1.0));
-    expression_ref lambda_scale_on = def_parameter(imodel, "lambdaScaleOn", false, nullptr, bernoulli_dist, 0.5);
+    expression_ref lambda_scale_on = def_parameter(imodel, "lambdaScaleOn", false, nullptr, (var("bernoulli"), 0.5));
     // FIXME!  We need a discrete uniform
     expression_ref lambda_scale_branch = def_parameter(imodel, "lambdaScaleBranch", -1, between(0,T.n_branches()));
 

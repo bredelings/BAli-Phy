@@ -164,10 +164,14 @@ closure uniform_density::operator()(OperationArgs& Args) const
 closure bernoulli_prob::operator()(OperationArgs& Args) const
 {
   double p = *Args.evaluate_as<Double>(0);
-  bool b = *Args.evaluate_as<Bool>(1);
+  constructor b = *Args.evaluate_as<constructor>(1);
 
-  if (not b)
+  if (b.f_name == "True")
+    ;
+  else if (b.f_name == "False")
     p = 1.0 - p;
+  else
+    std::abort();
 
   return object_ptr<Log_Double> (new Log_Double( p ) );
 }

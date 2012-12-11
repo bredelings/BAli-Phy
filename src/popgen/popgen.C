@@ -64,15 +64,15 @@ closure Read_PHASE_File::operator()(OperationArgs& Args) const
       throw myexception()<<"Locus "<<i+1<<" is not a microsatellite locus!";
 
   // Lines 4- for each individual.
-  Vector<vector<int>> result;
+  Vector<Vector<int>> result;
   for(int i=0;i<n_individuals;i++)
   {
     portable_getline(phase_file, line);
     vector<string> words = split(line, '\t');
     words.erase(words.begin());
-    vector<int> loci;
+    Vector<int> loci;
     for(const auto& word: words)
-      loci.push_back(convertTo<int>(word));
+      loci.t.push_back(convertTo<int>(word));
     result.t.push_back(loci);
   }
 
@@ -102,13 +102,13 @@ struct Remove_2nd_Allele: public Operation
 
 closure Remove_2nd_Allele::operator()(OperationArgs& Args) const
 {
-  object_ptr<const Vector<vector<int>>> alleles = Args.evaluate_as<Vector<vector<int>>>(0);
+  object_ptr<const Vector<Vector<int>>> alleles = Args.evaluate_as<Vector<Vector<int>>>(0);
 
-  Vector<vector<int>> alleles2 = *alleles;
+  Vector<Vector<int>> alleles2 = *alleles;
 
   for(auto& v:alleles2.t)
-    for(int i=v.size()-1;i>=0;i-=2)
-      v.erase(v.begin() + i);
+    for(int i=v.t.size()-1;i>=0;i-=2)
+      v.t.erase(v.t.begin() + i);
 
   return alleles2;
 }
@@ -136,22 +136,22 @@ struct Allele_Frequency_Spectrum: public Operation
 
 closure Allele_Frequency_Spectrum::operator()(OperationArgs& Args) const
 {
-  const vector<vector<int>>& alleles = *Args.evaluate_as<Vector<vector<int>>>(0);
+  const vector<Vector<int>>& alleles = *Args.evaluate_as<Vector<Vector<int>>>(0);
 
   int n_individuals = alleles.size();
   assert(n_individuals > 0);
 
-  int n_loci = alleles[0].size();
+  int n_loci = alleles[0].t.size();
 
-  Vector<vector<int>> afs_;
-  vector<vector<int>>& afs = afs_.t;
+  Vector<Vector<int>> afs_;
+  vector<Vector<int>>& afs = afs_.t;
 
   for(int l=0;l<n_loci;l++)
   {
     // 1. Count the alleles of each type
     map<int,int> allele_counts;
     for(int i=0;i<n_individuals;i++)
-      allele_counts[alleles[i][l]]++;
+      allele_counts[alleles[i].t[l]]++;
 
     // 2. Determine how many alleles with each count there are.
     vector<int> spectrum(n_individuals,0);
@@ -163,27 +163,6 @@ closure Allele_Frequency_Spectrum::operator()(OperationArgs& Args) const
 
   return afs_;
 }
-
-struct Ewens_Sampling_Probability: public Operation
-{
-  Ewens_Sampling_Probability* clone() const {return new Ewens_Sampling_Probability(*this);}
-  
-  tribool compare(const Object& O) const
-  {
-    if (this == &O) 
-      return true;
-    
-    if (typeid(*this) != typeid(O)) return false;
-    
-    return true;
-  }
-  
-  closure operator()(OperationArgs& Args) const;
-  
-  std::string name() const {return "Ewens_Sampling_Probability";}
-  
-  Ewens_Sampling_Probability():Operation(2) { }
-};
 
 log_double_t factorial(int n)
 {
@@ -216,14 +195,66 @@ log_double_t ewens_sampling_probability(double theta, const vector<int>& a)
   return Pr;
 }
 
-closure Ewens_Sampling_Probability::operator()(OperationArgs& Args) const
+struct Ewens_Sampling_Group_Probability: public Operation
+{
+  Ewens_Sampling_Group_Probability* clone() const {return new Ewens_Sampling_Group_Probability(*this);}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+    
+    if (typeid(*this) != typeid(O)) return false;
+    
+    return true;
+  }
+  
+  closure operator()(OperationArgs& Args) const;
+  
+  std::string name() const {return "Ewens_Sampling_Group_Probability";}
+  
+  Ewens_Sampling_Group_Probability():Operation(2) { }
+};
+
+closure Ewens_Sampling_Group_Probability::operator()(OperationArgs& Args) const
 {
   const double theta = *Args.evaluate_as<Double>(0);
-  const vector<vector<int>>& afs = *Args.evaluate_as<Vector<vector<int>>>(1);
+  const vector<Vector<int>>& afs = *Args.evaluate_as<Vector<Vector<int>>>(1);
 
   log_double_t Pr = 1;
   for(const auto& a: afs)
-    Pr *= ewens_sampling_probability(theta,a);
+    Pr *= ewens_sampling_probability(theta,a.t);
+
+  return Log_Double(Pr);
+}
+
+struct Ewens_Sampling_Probability: public Operation
+{
+  Ewens_Sampling_Probability* clone() const {return new Ewens_Sampling_Probability(*this);}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+    
+    if (typeid(*this) != typeid(O)) return false;
+    
+    return true;
+  }
+  
+  closure operator()(OperationArgs& Args) const;
+  
+  std::string name() const {return "Ewens_Sampling_Probability";}
+  
+  Ewens_Sampling_Probability():Operation(2) { }
+};
+
+closure Ewens_Sampling_Probability::operator()(OperationArgs& Args) const
+{
+  const double theta = *Args.evaluate_as<Double>(0);
+  const vector<int>& afs = *Args.evaluate_as<Vector<int>>(1);
+
+  log_double_t Pr = ewens_sampling_probability(theta,afs);
 
   return Log_Double(Pr);
 }
@@ -253,7 +284,7 @@ closure Ewens_Sampling_Mixture_Probability::operator()(OperationArgs& Args) cons
 {
   const vector<double>& thetas = *Args.evaluate_as<Vector<double>>(0);
   const vector<double>& ps = *Args.evaluate_as<Vector<double>>(1);
-  const vector<vector<int>>& afs = *Args.evaluate_as<Vector<vector<int>>>(2);
+  const vector<Vector<int>>& afs = *Args.evaluate_as<Vector<Vector<int>>>(2);
 
 #ifndef NDEBUG
   for(int i=0;i<thetas.size();i++)
@@ -269,7 +300,7 @@ closure Ewens_Sampling_Mixture_Probability::operator()(OperationArgs& Args) cons
   {
     double pr = 0;
     for(int i=0;i<thetas.size();i++)
-      pr += ps[i] * ewens_sampling_probability(thetas[i],a);
+      pr += ps[i] * ewens_sampling_probability(thetas[i],a.t);
 
     Pr *= pr;
   }
@@ -286,11 +317,14 @@ Program PopGen_Functions()
   P.def_function("remove2ndAllele", 1, lambda_expression(Remove_2nd_Allele()));
   P.def_function("alleleFrequencySpectrum", 1, lambda_expression(Allele_Frequency_Spectrum()));
   P.def_function("ewensSamplingProbability", 2, lambda_expression(Ewens_Sampling_Probability()));
+  P.def_function("ewensSamplingGroupProbability", 2, lambda_expression(Ewens_Sampling_Group_Probability()));
   P.def_function("builtinEwensSamplingMixtureProbability", 2, lambda_expression(Ewens_Sampling_Mixture_Probability()));
 
   P += "{ewensSamplingMixtureProbability (thetas,ps) x = builtinEwensSamplingMixtureProbability (listToVectorDouble thetas) (listToVectorDouble ps) x}";
 
   P += "{afs args = (ProbDensity \"afs\" ewensSamplingProbability (error \"afs has no quantile\"),args)}";
+
+  P += "{afsGroup args = (ProbDensity \"afsGroup\" ewensSamplingGroupProbability (error \"afs has no quantile\"),args)}";
 
   P += "{afsMixture args = (ProbDensity \"afsMixture\" ewensSamplingMixtureProbability (error \"afs has no quantile\"),args)}";
 

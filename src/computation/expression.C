@@ -231,10 +231,10 @@ string expression::print() const
 
     object_ptr<const Operator> O = ::is_a<Operator>(sub[i-1]);
 
-    // Don't parenthesize tuples
+    // Don't parenthesize tuple arguments.
     if (O and is_tuple_name(O->name()) and sub[i-1]->size() == O->n_args()) continue;
 
-    // Don't parenthesize lists
+    // Don't parenthesize list arguments.
     if (O and O->name() == ":") continue;
 
     pargs[i] = "(" + args[i] + ")";
@@ -539,6 +539,14 @@ tribool lambda2::compare(const Object& o) const
 {
   return dynamic_cast<const lambda2*>(&o);
 }
+
+expression_ref::expression_ref(const bool& b)
+  :expression_ref(b?new constructor("True",0):new constructor("False",0))
+{}
+
+expression_ref::expression_ref(const std::string& s)
+  :expression_ref(new String(s)) 
+{}
 
 expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& R)
 {

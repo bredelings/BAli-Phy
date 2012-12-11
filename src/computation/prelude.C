@@ -4,6 +4,8 @@
 #include "computation/graph_register.H"
 #include "mytypes.H"
 
+using std::vector;
+
 const expression_ref foldr = var("foldr");
 const expression_ref foldl = var("foldl");
 const expression_ref foldl_ = var("foldl'");
@@ -13,7 +15,6 @@ const expression_ref fmap2 = var("fmap2");
 const expression_ref take = var("take");
 const expression_ref iterate = var("iterate");
 const expression_ref sum_ = var("sum");
-const expression_ref If = var("If");
 const expression_ref fst = var("fst");
 const expression_ref snd = var("snd");
 const expression_ref get_list_index = var("!!");
@@ -34,14 +35,32 @@ const expression_ref join_ = var("join");
 const expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
 const expression_ref UnwrapDD = var("UnwrapDD");
 
+/* TODO:
+ * 1. [DONE] Remove true/false in favor of True/False.
+ * 2. Convert strings to [Char]
+ * 3. Convert Defs to use the machine.
+ * 4. SYNTAX: replace a ~ b ( c ) with a ~ b
+ * 5. SYNTAX: external a ~ b [To not declare all parameters]
+ * 6. Allows defs or something in BUGS files.
+ *    - Allow multiline commands in BUGS files.
+ *    - What then separates things?
+ * 7. Rationalize Model_Notes, formula_expression_ref, and program?
+ *    - Make Model_Notes into a Program with notes added?
+ *    - Could we parse a BUGS file in to a Model_Notes?
+ * 8. Try to rewrite e.g. M8b into a BUGS module.
+ * 9. All default values and Bounds to distributions.
+ * 10. Convert all of distribution-operations.H to the parser.
+ */
+
 
 Program make_Prelude()
 {
   Program P("Prelude");
 
-  P.def_function("true", 0, true );
-  P.def_function("false", 0, false );
   P.def_function("error", 1, lambda_expression( Error() ) ); 
+  P.def_function("intToDouble", 1, lambda_expression( Conversion<int,double>() ) ); 
+  P.def_constructor("True",0);
+  P.def_constructor("False",0);
 
   // foldr f z []  = z
   // foldr f z x:xs = (f x (foldr f z xs))
@@ -66,6 +85,8 @@ Program make_Prelude()
             ( (take, v1, ListEnd), ListEnd)
             ( (take, v1, v2&v3), v2&(take,(v1 - 1),v3) );
   }
+
+  P += "{repeat x = x:(repeat x)}";
 
   // iterate f x = x:iterate f (f x)
   P += Def( (iterate, v1, v2), v2&(iterate, v1, (v1,v2)) );
@@ -115,15 +136,10 @@ Program make_Prelude()
   // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
   P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(v1+(fst,v2)*(snd,v2))), 0.0, v3) );
 
-  // UniformDiscretize q n = fmap /\i.(1/n, q ((2*i+1)/n) ) (take n (iterate (+1) 0) )
+  // UniformDiscretize q n = map (\i->(1.0/n, q ((2*i+1)/n) )) (take n (iterate (+1) 0) )
   // [ We could do this as two nested fmaps, instead. ]
   // [ We could factor out to_double(v2), and 1.0/to_double(v2)
   P += Def( (UniformDiscretize, v1, v2), (DiscreteDistribution, (fmap, lambda_quantify(v3,let_expression(v4,(to_double,v2), Tuple(1.0/v4, (v1,((2.0*v3+1.0)/(2.0*v4)))))), (take, v2, (iterate, (plus,1.0), 0.0) ) ) ) );
-
-  // If True  y z = y
-  // If _     y z = z
-  P += Def( (If, true , v1, v2), v1)
-          ( (If, v3, v1, v2), v2);
 
   // fst (x,y) = x
   P += Def( (fst,Tuple(v1,v2)), v1);
@@ -193,18 +209,6 @@ Program make_Prelude()
     ( (unsafePerformIO_, (IOReturn, v1)), v1)
     ( (unsafePerformIO_, (IOAndPass, v1, v2)), let_expression(v3,(unsafePerformIO_, v1), (join_, v3, (unsafePerformIO_, (v2, v3)))))
     ( (unsafePerformIO_, (IOAnd, v1, v2)), (join_, (unsafePerformIO_, v1), (unsafePerformIO_, v2)));
-
-  //--------------------------------------- listFromVectorInt ----------------------------------------//
-  P.def_function("getVectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 
-  P.def_function("sizeOfVectorInt", 1, lambda_expression( VectorSizeOp<int>() ) );
-
-
-  // listFromVectorInt' v s i = if (i<s) then (getVectorIntElement v i):(listFromVectorInt v s (i+1)) else []
-  P += Def( (var("listFromVectorInt'"), v1, v2, v3), (If,(v3<v2),(var("getVectorIntElement"),v1,v3)&(var("listFromVectorInt'"),v1,v2,(v3+1)),ListEnd));
-
-  // listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0
-  P += Def( (var("listFromVectorInt"), v1), (var("listFromVectorInt'"),v1,(var("sizeOfVectorInt"),v1),0));
-
 
   //--------------------------------------- listToVectorInt ---------------------------------------//
 
@@ -376,6 +380,37 @@ f $ x = f x
   P += {"{concatMap f = concat . map f}"};
 
   P.def_function("doubleToLogDouble", 1, lambda_expression( Conversion<double,log_double_t>() ) );
+
+  P += "{uniformQuantiles q n = map (\\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..])}";
+
+  //--------------------------------------- listFromVectorInt ----------------------------------------//
+  P.def_function("getVectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 
+  P.def_function("sizeOfVectorInt", 1, lambda_expression( VectorSizeOp<int>() ) );
+
+
+  P += "{listFromVectorInt' v s i = if (i<s) then (getVectorIntElement v i):listFromVectorInt' v s (i+1) else []}";
+
+  // listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0
+  P += Def( (var("listFromVectorInt"), v1), (var("listFromVectorInt'"),v1,(var("sizeOfVectorInt"),v1),0));
+
+
+  //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
+  P.def_function("getVectorVectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<Vector<int>,Vector<int>>() ) ); 
+  P.def_function("sizeOfVectorVectorInt", 1, lambda_expression( VectorSizeOp<Vector<int>>() ) );
+
+  P += "{listFromVectorVectorInt' v s i = if (i<s) then (getVectorVectorIntElement v i):listFromVectorVectorInt' v s (i+1) else []}";
+
+  // listFromVectorVectorInt v = listFromVectorVectorInt' v (sizeOfVectorVectorInt v) 0
+  P += Def( (var("listFromVectorVectorInt"), v1), (var("listFromVectorVectorInt'"),v1,(var("sizeOfVectorVectorInt"),v1),0));
+
+  //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
+  P.def_function("getVectorvectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<vector<int>,Vector<int>>() ) ); 
+  P.def_function("sizeOfVectorvectorInt", 1, lambda_expression( VectorSizeOp<vector<int>>() ) );
+
+  P += "{listFromVectorvectorInt' v s i = if (i<s) then (getVectorvectorIntElement v i):listFromVectorvectorInt' v s (i+1) else []}";
+
+  // listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v) 0
+  P += Def( (var("listFromVectorvectorInt"), v1), (var("listFromVectorvectorInt'"),v1,(var("sizeOfVectorvectorInt"),v1),0));
 
   return P;
 }

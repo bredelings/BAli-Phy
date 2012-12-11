@@ -221,9 +221,12 @@ double bit_flip(vector< object_ref >& x, const vector<double>&)
   //  if (p.size() != 1) 
   //    throw myexception()<<"shift_epsilon: expected one parameter, got "<<p.size()<<".";
 
-  Bool B = *dynamic_pointer_cast<const Bool>(x[0]);
+  constructor B = *dynamic_pointer_cast<const constructor>(x[0]);
 
-  B = not B;
+  if (B.f_name == "True")
+    B.f_name = "False";
+  else
+    B.f_name = "True";
 
   x[0] = B;
 

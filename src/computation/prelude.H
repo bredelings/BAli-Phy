@@ -15,7 +15,6 @@ extern const expression_ref average;
 extern const expression_ref take;
 extern const expression_ref iterate;
 extern const expression_ref sum_;
-extern const expression_ref If;
 extern const expression_ref fst;
 extern const expression_ref snd;
 extern const expression_ref get_list_index;

@@ -180,8 +180,16 @@ double GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P, l
     return P->get_parameter_value_as<Double>(p);
   else if (P->parameter_has_type<Int>(p))
     return P->get_parameter_value_as<Int>(p);
-  else if (P->parameter_has_type<Bool>(p))
-    return (int)P->get_parameter_value_as<Bool>(p);
+  else if (P->parameter_has_type<constructor>(p))
+  {
+    constructor c = P->get_parameter_value_as<constructor>(p);
+    if (c.f_name == "True")
+      return 1;
+    else if (c.f_name == "False")
+      return 0;
+    else
+      return -1;
+  }
   else
     return -1;
 }
@@ -316,8 +324,13 @@ double mu_scale(const Parameters& P)
       const auto& v = values[i];
       efloat_t Pr = Prs[i];
       double value = 0;
-      if (object_ptr<const Bool> b = dynamic_pointer_cast<const Bool>(v))
-	value = int(*b);
+      if (object_ptr<const constructor> b = dynamic_pointer_cast<const constructor>(v))
+      {
+	if (b->f_name == "True")
+	  value = 1;
+	else if (b->f_name == "False")
+	  value = 0;
+      }
       else if (object_ptr<const Int> i = dynamic_pointer_cast<const Int>(v))
 	value = *i;
       else if (object_ptr<const Double> d = dynamic_pointer_cast<const Double>(v))

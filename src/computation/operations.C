@@ -541,23 +541,23 @@ closure LessThan::operator()(OperationArgs& Args) const
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
     object_ptr<const Double> yd = convert<const Double>(y);
-    return (*xd) < (*yd);
+    return {(*xd) < (*yd)};
   }
 
   else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
   {
     object_ptr<const Int> yi = convert<const Int>(y);
-    return (*xi) < (*yi);
+    return {(*xi) < (*yi)};
   }
   else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
   {
     object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
-    return (*xld) < (*yld);
+    return {(*xld) < (*yld)};
   }
   else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
   {
     object_ptr<const Char> yc = convert<const Char>(y);
-    return (*xc) < (*yc);
+    return {(*xc) < (*yc)};
   }
   else
     throw myexception()<<"LessThan: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
@@ -571,23 +571,23 @@ closure Equals::operator()(OperationArgs& Args) const
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
     object_ptr<const Double> yd = convert<const Double>(y);
-    return (*xd) == (*yd);
+    return {(*xd) == (*yd)};
   }
 
   else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
   {
     object_ptr<const Int> yi = convert<const Int>(y);
-    return (*xi) == (*yi);
+    return {(*xi) == (*yi)};
   }
   else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
   {
     object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
-    return (*xld) == (*yld);
+    return {(*xld) == (*yld)};
   }
   else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
   {
     object_ptr<const Char> yc = convert<const Char>(y);
-    return (*xc) == (*yc);
+    return {(*xc) == (*yc)};
   }
   else
     throw myexception()<<"Equals: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
@@ -601,23 +601,23 @@ closure NotEquals::operator()(OperationArgs& Args) const
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
     object_ptr<const Double> yd = convert<const Double>(y);
-    return (*xd) != (*yd);
+    return {(*xd) != (*yd)};
   }
 
   else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
   {
     object_ptr<const Int> yi = convert<const Int>(y);
-    return (*xi) != (*yi);
+    return {(*xi) != (*yi)};
   }
   else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
   {
     object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
-    return (*xld) != (*yld);
+    return {(*xld) != (*yld)};
   }
   else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
   {
     object_ptr<const Char> yc = convert<const Char>(y);
-    return (*xc) != (*yc);
+    return {(*xc) != (*yc)};
   }
   else
     throw myexception()<<"NotEquals: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";
@@ -631,23 +631,23 @@ closure GreaterThan::operator()(OperationArgs& Args) const
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
   {
     object_ptr<const Double> yd = convert<const Double>(y);
-    return (*xd) > (*yd);
+    return {(*xd) > (*yd)};
   }
 
   else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
   {
     object_ptr<const Int> yi = convert<const Int>(y);
-    return (*xi) > (*yi);
+    return {(*xi) > (*yi)};
   }
   else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
   {
     object_ptr<const Log_Double> yld = convert<const Log_Double>(y);
-    return (*xld) > (*yld);
+    return {(*xld) > (*yld)};
   }
   else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
   {
     object_ptr<const Char> yc = convert<const Char>(y);
-    return (*xc) > (*yc);
+    return {(*xc) > (*yc)};
   }
   else
     throw myexception()<<"GreaterThan: object '"<<x->print()<<"' is not Double, Int, Log_double, or Char'";

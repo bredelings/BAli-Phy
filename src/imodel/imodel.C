@@ -632,7 +632,10 @@ closure RS07_branch_HMM::operator()(OperationArgs& Args) const
   double e = *Args.evaluate_as<Double>(0);
   double D = *Args.evaluate_as<Double>(1);
   double heat = *Args.evaluate_as<Double>(2);
-  bool in_training = *Args.evaluate_as<Bool>(3);
+  constructor in_training_c = *Args.evaluate_as<constructor>(3);
+  bool in_training = true;
+  if (in_training_c.f_name == "False")
+    in_training = false;
 
   return RS07_branch_HMM_(e, D, heat, in_training);
 }
