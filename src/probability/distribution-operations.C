@@ -1,8 +1,37 @@
 #include "probability/distribution-operations.H"
+
+#include <vector>
+#include <valarray>
+#include <string>
+#include "computation/operation.H"
+#include "computation/computation.H"
+#include "probability/probability.H"
+
 #include "computation/prelude.H"
 
 using std::vector;
 using std::valarray;
+
+struct exponential_density: public Operation
+{
+  exponential_density* clone() const {return new exponential_density;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "exponential_density";}
+
+  exponential_density():Operation(2) { }
+};
 
 closure exponential_density::operator()(OperationArgs& Args) const
 {
@@ -13,6 +42,27 @@ closure exponential_density::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
+struct log_exponential_density: public Operation
+{
+  log_exponential_density* clone() const {return new log_exponential_density;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "log_exponential_density";}
+
+  log_exponential_density():Operation(2) { }
+};
+
 closure log_exponential_density::operator()(OperationArgs& Args) const
 {
   double mu = *Args.evaluate_as<Double>(0);
@@ -21,6 +71,27 @@ closure log_exponential_density::operator()(OperationArgs& Args) const
   Log_Double result = exponential_pdf(log(x),mu)/x;
   return object_ptr<const Object>(result.clone());
 }
+
+struct gamma_density: public Operation
+{
+  gamma_density* clone() const {return new gamma_density;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "gamma_density";}
+
+  gamma_density():Operation(3) { }
+};
 
 closure gamma_density::operator()(OperationArgs& Args) const
 {
@@ -32,6 +103,27 @@ closure gamma_density::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
+struct gamma_quantile_op: public Operation
+{
+  gamma_quantile_op* clone() const {return new gamma_quantile_op;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "gamma_quantile";}
+
+  gamma_quantile_op():Operation(3) { }
+};
+
 closure gamma_quantile_op::operator()(OperationArgs& Args) const
 {
   double a1 = *Args.evaluate_as<Double>(0);
@@ -41,6 +133,27 @@ closure gamma_quantile_op::operator()(OperationArgs& Args) const
   Double result = gamma_quantile(p, a1, a2);
   return object_ptr<const Object>(result.clone());
 }
+
+struct log_gamma_density: public Operation
+{
+  log_gamma_density* clone() const {return new log_gamma_density;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "log_gamma_density";}
+
+  log_gamma_density():Operation(3) { }
+};
 
 closure log_gamma_density::operator()(OperationArgs& Args) const
 {
@@ -52,6 +165,27 @@ closure log_gamma_density::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
+struct beta_density: public Operation
+{
+  beta_density* clone() const {return new beta_density;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "beta_density";}
+
+  beta_density():Operation(3) { }
+};
+
 closure beta_density::operator()(OperationArgs& Args) const
 {
   double a1 = *Args.evaluate_as<Double>(0);
@@ -61,6 +195,27 @@ closure beta_density::operator()(OperationArgs& Args) const
   Log_Double result = beta_pdf(x, a1, a2);
   return object_ptr<const Object>(result.clone());
 }
+
+struct beta_quantile_op: public Operation
+{
+  beta_quantile_op* clone() const {return new beta_quantile_op;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "beta_quantile_op";}
+
+  beta_quantile_op():Operation(3) { }
+};
 
 closure beta_quantile_op::operator()(OperationArgs& Args) const
 {
@@ -72,6 +227,27 @@ closure beta_quantile_op::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
+struct normal_density: public Operation
+{
+  normal_density* clone() const {return new normal_density;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "normal_density";}
+
+  normal_density():Operation(3) { }
+};
+
 closure normal_density::operator()(OperationArgs& Args) const
 {
   double a1 = *Args.evaluate_as<Double>(0);
@@ -81,6 +257,27 @@ closure normal_density::operator()(OperationArgs& Args) const
   Log_Double result = normal_pdf(x, a1, a2);
   return object_ptr<const Object>(result.clone());
 }
+
+struct log_normal_density: public Operation
+{
+  log_normal_density* clone() const {return new log_normal_density;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+ 
+  std::string name() const {return "log_normal_density";}
+
+  log_normal_density():Operation(3) { }
+};
 
 closure log_normal_density::operator()(OperationArgs& Args) const
 {
@@ -92,6 +289,27 @@ closure log_normal_density::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
+struct log_normal_quantile_op: public Operation
+{
+  log_normal_quantile_op* clone() const {return new log_normal_quantile_op;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+ 
+  std::string name() const {return "log_normal_quantile";}
+
+  log_normal_quantile_op():Operation(3) { }
+};
+
 closure log_normal_quantile_op::operator()(OperationArgs& Args) const
 {
   double a1 = *Args.evaluate_as<Double>(0);
@@ -102,6 +320,27 @@ closure log_normal_quantile_op::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
+struct cauchy_density: public Operation
+{
+  cauchy_density* clone() const {return new cauchy_density;}
+  
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "cauchy_density";}
+
+  cauchy_density():Operation(3) { }
+};
+
 closure cauchy_density::operator()(OperationArgs& Args) const
 {
   double a1 = *Args.evaluate_as<Double>(0);
@@ -111,6 +350,27 @@ closure cauchy_density::operator()(OperationArgs& Args) const
   Log_Double result = cauchy_pdf(x, a1, a2);
   return object_ptr<const Object>(result.clone());
 }
+
+struct dirichlet_density: public Operation
+{
+  dirichlet_density* clone() const {return new dirichlet_density;}
+    
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "dirichlet_density";}
+    
+  dirichlet_density():Operation(2) { }
+};
 
 // First convert N from tuple to list...
 // Second convert this builtin routine to just take two Vector<double> arguments.
@@ -125,6 +385,27 @@ closure dirichlet_density::operator()(OperationArgs& Args) const
   return R;
 }
 
+struct laplace_density: public Operation
+{
+  laplace_density* clone() const {return new laplace_density;}
+    
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "laplace_density";}
+    
+  laplace_density():Operation(3) { }
+};
+
 closure laplace_density::operator()(OperationArgs& Args) const
 {
   double a1 = *Args.evaluate_as<Double>(0);
@@ -133,6 +414,27 @@ closure laplace_density::operator()(OperationArgs& Args) const
   
   return object_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x, a1, a2) ) );
 }
+
+struct log_laplace_density: public Operation
+{
+  log_laplace_density* clone() const {return new log_laplace_density;}
+    
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "log_laplace_density";}
+    
+  log_laplace_density():Operation(3) { }
+};
 
 closure log_laplace_density::operator()(OperationArgs& Args) const
 {
@@ -143,14 +445,26 @@ closure log_laplace_density::operator()(OperationArgs& Args) const
   return object_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a1,a2)/x ) );
 }
 
-closure epsilon_density::operator()(OperationArgs& Args) const
+struct uniform_density: public Operation
 {
-  double E_length_mean = *Args.evaluate_as<Double>(0);
-  double log_epsilon  = *Args.evaluate_as<Double>(1);
-  double E_length = log_epsilon - logdiff(0,log_epsilon);
+  uniform_density* clone() const {return new uniform_density;}
+    
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
 
-  return object_ptr<Log_Double> (new Log_Double( exp_exponential_pdf(E_length,E_length_mean) ) );
-}
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "uniform_density";}
+    
+  uniform_density():Operation(3) { }
+};
 
 closure uniform_density::operator()(OperationArgs& Args) const
 {

@@ -48,9 +48,8 @@ const expression_ref UnwrapDD = var("UnwrapDD");
  *    - Make Model_Notes into a Program with notes added?
  *    - Could we parse a BUGS file in to a Model_Notes?
  * 8. Try to rewrite e.g. M8b into a BUGS module.
- * 9. All default values and Bounds to distributions.
- * 10. Convert all of distribution-operations.H to the parser.
- *    - Move all operation definitions distribution-operations.C.
+ * 9. Add default values and Bounds to distributions.
+ * 10. [DONE] Convert all of distribution-operations.H to the parser.
  */
 
 
