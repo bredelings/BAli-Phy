@@ -222,7 +222,7 @@ namespace substitution
 
   formula_expression_ref HKY_Model(const alphabet& a)
   {
-    formula_expression_ref kappa = def_parameter("HKY.kappa", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
+    formula_expression_ref kappa = def_parameter("HKY.kappa", 2.0, lower_bound(0.0), (var("logLaplace"), Tuple(log(2), 0.25)));
 
     return (HKY, a, kappa);
   }
@@ -260,8 +260,8 @@ namespace substitution
 
   formula_expression_ref TN_Model(const alphabet& a)
   {
-    formula_expression_ref kappa1 = def_parameter("TN.kappaPur", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
-    formula_expression_ref kappa2 = def_parameter("TN.kappaPyr", 2.0, lower_bound(0.0), log_laplace_dist, Tuple(log(2), 0.25));
+    formula_expression_ref kappa1 = def_parameter("TN.kappaPur", 2.0, lower_bound(0.0), (var("logLaplace"), Tuple(log(2), 0.25)));
+    formula_expression_ref kappa2 = def_parameter("TN.kappaPyr", 2.0, lower_bound(0.0), (var("logLaplace"), Tuple(log(2), 0.25)));
 
     return (TN, a, kappa1, kappa2);
   }
@@ -319,7 +319,7 @@ namespace substitution
     // Should I make a tuple of tuples?
     R.add_expression((distributed, 
 		      AG&(AT&(AC&(GT&(GC&(TC&ListEnd))))),
-		      Tuple(dirichlet_dist, List(8.0, 4.0, 4.0, 4.0, 4.0, 8.0) )
+		      (var("dirichlet"), List(8.0, 4.0, 4.0, 4.0, 4.0, 8.0) )
 		      )
 		     );
 
@@ -434,7 +434,7 @@ namespace substitution
     }
 
     expression_ref N = get_list(vector<double>(a.size(), 1.0) );
-    F.add_expression( (distributed, F, Tuple(dirichlet_dist,N ) ) );
+    F.add_expression( (distributed, F, (var("dirichlet"),N) ) );
 
     return F;
   }
@@ -568,7 +568,7 @@ namespace substitution
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
   formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi0)
   {
-    formula_expression_ref f = def_parameter("f", 1.0, between(0,1), uniform_dist, Tuple(0.0, 1.0));
+    formula_expression_ref f = def_parameter("f", 1.0, between(0,1), (var("uniform"), Tuple(0.0, 1.0)));
 
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
@@ -787,7 +787,7 @@ namespace substitution
     }
     formula_expression_ref R = (MixMixtureModels,P,M);
 
-    R.add_expression((distributed, P, Tuple(dirichlet_dist, get_list(vector<Double>(N,1.0) ) ) )) ;
+    R.add_expression((distributed, P, (var("dirichlet"), get_list(vector<Double>(N,1.0) ) ) )) ;
 
     return R;
   }

@@ -31,8 +31,6 @@ struct exponential_density: public Operation
   exponential_density():Operation(2) { }
 };
 
-extern expression_ref exponential_dist;
-
 struct log_exponential_density: public Operation
 {
   log_exponential_density* clone() const {return new log_exponential_density;}
@@ -53,8 +51,6 @@ struct log_exponential_density: public Operation
 
   log_exponential_density():Operation(2) { }
 };
-
-extern expression_ref log_exponential_dist;
 
 struct gamma_density: public Operation
 {
@@ -121,8 +117,6 @@ struct log_gamma_density: public Operation
   log_gamma_density():Operation(3) { }
 };
 
-extern expression_ref log_gamma_dist;
-
 struct beta_density: public Operation
 {
   beta_density* clone() const {return new beta_density;}
@@ -143,8 +137,6 @@ struct beta_density: public Operation
 
   beta_density():Operation(3) { }
 };
-
-extern expression_ref beta_dist;
 
 struct beta_quantile_op: public Operation
 {
@@ -188,8 +180,6 @@ struct normal_density: public Operation
   normal_density():Operation(3) { }
 };
 
-extern expression_ref normal_dist;
-
 struct log_normal_density: public Operation
 {
   log_normal_density* clone() const {return new log_normal_density;}
@@ -232,8 +222,6 @@ struct log_normal_quantile_op: public Operation
   log_normal_quantile_op():Operation(3) { }
 };
 
-extern expression_ref log_normal_dist;
-
 struct cauchy_density: public Operation
 {
   cauchy_density* clone() const {return new cauchy_density;}
@@ -254,8 +242,6 @@ struct cauchy_density: public Operation
 
   cauchy_density():Operation(3) { }
 };
-
-extern expression_ref cauchy_dist;
 
 struct dirichlet_density: public Operation
 {
@@ -278,8 +264,6 @@ struct dirichlet_density: public Operation
   dirichlet_density():Operation(2) { }
 };
 
-extern expression_ref dirichlet_dist;
-
 struct laplace_density: public Operation
 {
   laplace_density* clone() const {return new laplace_density;}
@@ -301,8 +285,6 @@ struct laplace_density: public Operation
   laplace_density():Operation(3) { }
 };
 
-extern expression_ref laplace_dist;
-
 struct log_laplace_density: public Operation
 {
   log_laplace_density* clone() const {return new log_laplace_density;}
@@ -323,8 +305,6 @@ struct log_laplace_density: public Operation
     
   log_laplace_density():Operation(3) { }
 };
-
-extern expression_ref log_laplace_dist;
 
 struct epsilon_density: public Operation
 {
@@ -366,29 +346,6 @@ struct uniform_density: public Operation
   std::string name() const {return "uniform_density";}
     
   uniform_density():Operation(3) { }
-};
-
-extern expression_ref uniform_dist;
-
-struct bernoulli_prob: public Operation
-{
-  bernoulli_prob* clone() const {return new bernoulli_prob;}
-    
-  tribool compare(const Object& O) const
-  {
-    if (this == &O) 
-      return true;
-
-    if (typeid(*this) != typeid(O)) return false;
-
-    return true;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "bernoulli_prob";}
-    
-  bernoulli_prob():Operation(2) { }
 };
 
 // 2 Fields: string, density op

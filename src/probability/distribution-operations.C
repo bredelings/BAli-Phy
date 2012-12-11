@@ -161,21 +161,6 @@ closure uniform_density::operator()(OperationArgs& Args) const
   return object_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a1,a2) ) );
 }
 
-closure bernoulli_prob::operator()(OperationArgs& Args) const
-{
-  double p = *Args.evaluate_as<Double>(0);
-  constructor b = *Args.evaluate_as<constructor>(1);
-
-  if (b.f_name == "True")
-    ;
-  else if (b.f_name == "False")
-    p = 1.0 - p;
-  else
-    std::abort();
-
-  return object_ptr<Log_Double> (new Log_Double( p ) );
-}
-
 // Fields: n_random, n_parameters, string, density op
 expression_ref prob_density = lambda_expression( constructor("Distributions.ProbDensity",3) );
 
@@ -217,10 +202,6 @@ expression_ref log_laplace_dist = (prob_density, "LogLaplace", logLaplaceDensity
 
 expression_ref uniformDensity   = var("uniformDensity");
 expression_ref uniform_dist     = (prob_density, "Uniform", uniformDensity, 0);
-
-expression_ref bernoulliProb    = var("bernoulliProb");
-expression_ref bernoulli_dist   = (prob_density, "Bernoulli", bernoulliProb, 0);
-
 
 Program Distribution_Functions()
 {
@@ -274,8 +255,6 @@ Program Distribution_Functions()
   P.def_function("epsilonDensity", 2, lambda_expression( epsilon_density() ) );
   P.def_function("epsilonDist", 0, (prob_density,"epsilonDist", var("epsilonDensity"),0));
 
-  P.def_function("bernoulliProb", 2, lambda_expression( bernoulli_prob() ) );
-
   //------------ Define distribution objects --------------------//
   P.def_function("normalDist",0, normal_dist);
   P.def_function("exponentialDist",0, exponential_dist);
@@ -293,6 +272,10 @@ Program Distribution_Functions()
   //  P += "{beta args = (betaDist, args)}";
   P += "{mixture args = (mixtureDist, args)}";
   P += "{dirichlet args = (ProbDensity \"Dirichlet\" dirichletDensity (error \"Dirichlet has no quantiles\"), args)}";
+  P += "{logLaplace args = (ProbDensity \"LogLaplace\" logLaplaceDensity 0, args)}";
+  P += "{logExponential args = (ProbDensity \"LogExponential\" logExponentialDensity 0, args)}";
+  P += "{logGamma args = (ProbDensity \"LogGamma\" logGammaDensity 0, args)}";
+  P += "{uniform args = (ProbDensity \"Uniform\" uniformDensity 0, args)}";
 
   P += "{iidDensity (n,((ProbDensity _ density _),args)) xs = let {densities = (map (density args) xs) ; pr = foldl' (*) (doubleToLogDouble 1.0) densities} in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
   P += "{iid args = (ProbDensity \"i.i.d.\" iidDensity 0, args )}";

@@ -32,8 +32,8 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
     expression_ref lengthp = lambda_expression( RS07_lengthp() );
 
-    expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, laplace_dist, Tuple(-4.0, 1.0));
-    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0),exponential_dist, 10.0);
+    expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, (var("laplace"), Tuple(-4.0, 1.0)));
+    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), (var("exponential"), 10.0));
 
     expression_ref epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
     expression_ref lambda = (var("exp"), log_lambda);
@@ -48,10 +48,10 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
     expression_ref lengthp = lambda_expression( RS07_lengthp() );
 
-    expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, laplace_dist, Tuple(-4.0, 1.0));
-    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0),exponential_dist, 10.0);
+    expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, (var("laplace"), Tuple(-4.0, 1.0)));
+    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), (var("exponential"), 10.0));
 
-    expression_ref log_lambda_scale = def_parameter(imodel, "logLambdaScale", 0.0, nullptr, laplace_dist, Tuple(0.0, 1.0));
+    expression_ref log_lambda_scale = def_parameter(imodel, "logLambdaScale", 0.0, nullptr, (var("laplace"), Tuple(0.0, 1.0)));
     expression_ref lambda_scale_on = def_parameter(imodel, "lambdaScaleOn", false, nullptr, (var("bernoulli"), 0.5));
     // FIXME!  We need a discrete uniform
     expression_ref lambda_scale_branch = def_parameter(imodel, "lambdaScaleBranch", -1, between(0,T.n_branches()));
@@ -84,19 +84,19 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
 
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
     expression_ref lengthp = lambda_expression( RS07_lengthp() );
-    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0),exponential_dist, 10.0);
+    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), (var("exponential"), 10.0));
     expression_ref epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
 
-    expression_ref lambda_sigma_over_mu = def_parameter(imodel,"lambdaSigmaOverMu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
+    expression_ref lambda_sigma_over_mu = def_parameter(imodel,"lambdaSigmaOverMu", 0.1, lower_bound(0), (var("logLaplace"), Tuple(-3.0, 1.0) ));
     expression_ref B = lambda_sigma_over_mu*lambda_sigma_over_mu;
     expression_ref A = 1.0/B;
 
     vector<expression_ref> branch_lambdas;
     for(int b=0;b<T.n_branches();b++)
-      branch_lambdas.push_back(def_parameter(imodel, "lambdaScale"+convertToString(b), 1.0, nullptr, gamma_dist, Tuple(A, B)));
+      branch_lambdas.push_back(def_parameter(imodel, "lambdaScale"+convertToString(b), 1.0, nullptr, (var("gamma"), Tuple(A, B))));
     expression_ref lambdas_list = get_list(branch_lambdas);
 
-    expression_ref log_lambda_mean = def_parameter(imodel, "logLambdaMean", -4.0, nullptr, laplace_dist, Tuple(-4.0, 1.0));
+    expression_ref log_lambda_mean = def_parameter(imodel, "logLambdaMean", -4.0, nullptr, (var("laplace"), Tuple(-4.0, 1.0)));
 
     expression_ref lambda_mean = (var("exp"), log_lambda_mean);
     
@@ -160,19 +160,19 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
      */
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
     expression_ref lengthp = lambda_expression( RS07_lengthp() );
-    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0),exponential_dist, 10.0);
+    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), (var("exponential"), 10.0));
     expression_ref epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1);
 
-    expression_ref lambda_sigma_over_mu = def_parameter(imodel,"lambdaSigmaOverMu", 0.1, lower_bound(0), log_laplace_dist, Tuple(-3.0, 1.0) );
+    expression_ref lambda_sigma_over_mu = def_parameter(imodel,"lambdaSigmaOverMu", 0.1, lower_bound(0), (var("logLaplace"), Tuple(-3.0, 1.0) ));
     expression_ref B = lambda_sigma_over_mu*lambda_sigma_over_mu;
     expression_ref A = 1.0/B;
 
     vector<expression_ref> branch_lambdas;
     for(int b=0;b<T.n_branches();b++)
-      branch_lambdas.push_back(def_parameter(imodel, "lambdaScale"+convertToString(b), 1.0, nullptr, gamma_dist, Tuple(A, B)));
+      branch_lambdas.push_back(def_parameter(imodel, "lambdaScale"+convertToString(b), 1.0, nullptr, (var("gamma"), Tuple(A, B))));
     expression_ref lambdas_list = get_list(branch_lambdas);
 
-    expression_ref log_lambda_mean = def_parameter(imodel, "logLambdaMean", -4.0, nullptr, laplace_dist, Tuple(-4.0, 1.0));
+    expression_ref log_lambda_mean = def_parameter(imodel, "logLambdaMean", -4.0, nullptr, (var("laplace"), Tuple(-4.0, 1.0)));
 
     expression_ref lambda_mean = (var("exp"), log_lambda_mean);
     
