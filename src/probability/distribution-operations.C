@@ -217,17 +217,17 @@ Program Distribution_Functions()
   P.def_function("logExponentialDensity", 2, lambda_expression( log_exponential_density() ) );
 
   P.def_function("builtinGammaDensity", 3, lambda_expression( gamma_density() ) );
-  P += Def( (gammaDensity, Tuple(v1,v2), v3), (var("builtinGammaDensity"),v1,v2,v3));
   P.def_function("builtinGammaQuantile", 3, lambda_expression( gamma_quantile_op() ) );
-  P += Def( (gammaQuantile, Tuple(v1,v2), v3), (var("builtinGammaQuantile"),v1,v2,v3));
+  P += "{gammaDensity (a,b) x = builtinGammaDensity a b x}";
+  P += "{gammaQuantile (a,b) p = builtinGammaQuantile a b p}";
 
   P.def_function("builtinLogGammaDensity", 3, lambda_expression( log_gamma_density() ) );
-  P += Def( (logGammaDensity, Tuple(v1,v2), v3), (var("builtinLogGammaDensity"),v1,v2,v3));
+  P += "{logGammaDensity (a,b) x = builtinLogGammaDensity (a,b) x}";
 
   P.def_function("builtinBetaDensity", 3, lambda_expression( beta_density() ) );
-  P += Def( (betaDensity, Tuple(v1,v2), v3), (var("builtinBetaDensity"),v1,v2,v3)); 
   P.def_function("builtinBetaQuantile", 3, lambda_expression( beta_quantile_op() ) );
-  P += Def( (betaQuantile, Tuple(v1,v2), v3), (var("builtinBetaQuantile"),v1,v2,v3));
+  P += "{betaDensity (a,b) x = builtinBetaDensity a b x}";
+  P += "{betaQuantile (a,b) p = builtinBetaQuantile a b p}";
 
   P.def_function("builtinNormalDensity", 3, lambda_expression( normal_density() ) );
   P += Def( (normalDensity, Tuple(v1,v2), v3), (var("builtinNormalDensity"),v1,v2,v3)); 
@@ -247,10 +247,10 @@ Program Distribution_Functions()
   P += Def( (dirichletDensity, v1, v2), (var("builtinDirichletDensity"),(var("listToVectorDouble"),v1),(var("listToVectorDouble"),v2))); 
 
   P.def_function("builtinLogLaplaceDensity", 3, lambda_expression( log_laplace_density() ) );
-  P += Def( (logLaplaceDensity, Tuple(v1,v2), v3), (var("builtinLogLaplaceDensity"),v1,v2,v3)); 
+  P += "{logLaplaceDensity (m,s) x = builtinLogLaplaceDensity m s x}";
 
   P.def_function("builtinUniformDensity", 3, lambda_expression( uniform_density() ) );
-  P += Def( (uniformDensity, Tuple(v1,v2), v3), (var("builtinUniformDensity"),v1,v2,v3)); 
+  P += "{uniformDensity (min,max) x = builtinUniformDensity min max x}";
 
   P += "{exponentialQuantile mu p = gammaQuantile (1.0,mu) p}";
 
