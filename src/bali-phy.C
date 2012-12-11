@@ -607,7 +607,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
     if (p_index == -1)
       throw myexception()<<"No such parameter '"<<p<<"' to Rao-Blackwellize";
 
-    vector<object_ref> values = {Bool(false),Bool(true)};
+    vector<object_ref> values = {constructor("False",0),constructor("True",0)};
     TL->add_field("RB-"+p, Get_Rao_Blackwellized_Parameter_Function(p_index, values));
   }
 

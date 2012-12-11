@@ -43,6 +43,7 @@ using boost::program_options::variables_map;
 using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 
+expression_ref If = dummy(0)^(dummy(1)^(dummy(2)^(case_expression(dummy(0),constructor("True",0),dummy(1),dummy(2)))));
 
 // Turn an expression of the form head[arg1, arg2, ..., argn] -> {head, arg1, arg2, ..., argn}.
 vector<string> split_args(string s)
@@ -932,7 +933,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref p3 = def_parameter("M8b.fPositive", Double(0.1), between(0,1));
     // [positive selection, if it exists] w ~ log_exponential(0.05)
     formula_expression_ref w = def_parameter("M8b.omega3", Double(1.0), lower_bound(1), log_exponential_dist, 0.05);
-    formula_expression_ref I  = def_parameter("M8b.omega3NonZero", Bool(true), nullptr, (var("bernoulli"), 0.5));
+    formula_expression_ref I  = def_parameter("M8b.omega3NonZero", true, nullptr, (var("bernoulli"), 0.5));
     formula_expression_ref w3 = (If, I, w, 1.0);
 
     // Add the neutral and (possibility) positive selection categories
@@ -975,7 +976,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref f0 = def_parameter("BranchSite.f0",Double(0.5));
     formula_expression_ref f1 = def_parameter("BranchSite.f1",Double(0.5));
     formula_expression_ref f2 = def_parameter("BranchSite.posP",Double(0.1),between(0,1),beta_dist,Tuple(1.0,10.0));
-    formula_expression_ref I  = def_parameter("BranchSite.posSelection", Bool(true), nullptr, (var("bernoulli"),0.5));
+    formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (var("bernoulli"),0.5));
 
     formula_expression_ref p2 = (If, I, f2, 0.0);
     formula_expression_ref p0 = (times, f0, (minus,1.0,p2));
@@ -1013,7 +1014,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
 
     // Create the parameter for degree of positive selection, if it exists.
     formula_expression_ref w_pos = def_parameter("BranchSite.posW", Double(1.5), lower_bound(1), log_gamma_dist, Tuple(4.0, 0.25));
-    formula_expression_ref I  = def_parameter("BranchSite.posSelection", Bool(true), nullptr, (var("bernoulli"), 0.5));
+    formula_expression_ref I  = def_parameter("BranchSite.posSelection", true, nullptr, (var("bernoulli"), 0.5));
     formula_expression_ref w_pos_effective = (If, I, w_pos, 1.0);
 
     // Create the partial distributions, and their parameters.

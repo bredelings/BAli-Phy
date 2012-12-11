@@ -540,6 +540,14 @@ tribool lambda2::compare(const Object& o) const
   return dynamic_cast<const lambda2*>(&o);
 }
 
+expression_ref::expression_ref(const bool& b)
+  :expression_ref(b?new constructor("True",0):new constructor("False",0))
+{}
+
+expression_ref::expression_ref(const std::string& s)
+  :expression_ref(new String(s)) 
+{}
+
 expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& R)
 {
   return new expression(lambda(),{dummy, R});

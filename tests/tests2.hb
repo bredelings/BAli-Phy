@@ -32,7 +32,7 @@ MakeLogger x2
 DeclareParameter "theta"
 theta ~ Exponential(1.0)
 theta = 1.0
-VarBounds theta 0.0 false
+VarBounds theta 0.0 False
 ((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/BP.phase1.infile") ~ afsGroup (theta)
 MakeLogger theta
 
@@ -44,13 +44,13 @@ theta2 ~ Exponential(1.0)
 theta2 = 1.0
 DeclareParameter "i"
 i ~ bernoulli(0.5)
-i = false
+i = False
 DeclareParameter "p2"
 p2 ~ Beta(1.0, 1.0)
 p2 = 0.5
 VarBounds p2 0.0 1.0
-VarBounds theta1 0.0 false
-VarBounds theta2 0.0 false
+VarBounds theta1 0.0 False
+VarBounds theta2 0.0 False
 ((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/BP.phase1.infile") ~ afsMixture ([theta1,theta2],if i then [p2,1.0-p2] else [1.0,0.0])
 MakeLogger theta1
 MakeLogger theta2
