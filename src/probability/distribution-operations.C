@@ -252,18 +252,13 @@ Program Distribution_Functions()
   P.def_function("builtinUniformDensity", 3, lambda_expression( uniform_density() ) );
   P += Def( (uniformDensity, Tuple(v1,v2), v3), (var("builtinUniformDensity"),v1,v2,v3)); 
 
-  P.def_function("epsilonDensity", 2, lambda_expression( epsilon_density() ) );
-  P.def_function("epsilonDist", 0, (prob_density,"epsilonDist", var("epsilonDensity"),0));
+  P += "{exponentialQuantile mu p = gammaQuantile (1.0,mu) p}";
+
+  P += "{mixtureDensity ((p1,((ProbDensity _ density1 _),args1)):l) x = (doubleToLogDouble p1)*(density1 args1 x)+(mixtureDensity l x);\
+         mixtureDensity [] _ = (doubleToLogDouble 0.0)}";
 
   //------------ Define distribution objects --------------------//
-  P.def_function("normalDist",0, normal_dist);
-  P.def_function("exponentialDist",0, exponential_dist);
-  P.def_function("gammaDist",0, gamma_dist);
-  P.def_function("betaDist",0, beta_dist);
-  P += "{mixtureDensity ((p1,((ProbDensity name1 density1 quantile1),args1)):l) x = (doubleToLogDouble p1)*(density1 args1 x)+(mixtureDensity l x);\
-         mixtureDensity [] _ = (doubleToLogDouble 0.0)}";
-  P += "{mixtureDist = ProbDensity \"Mixture\" mixtureDensity 0}";
-  P += "{exponentialQuantile mu p = gammaQuantile (1.0,mu) p}";
+  P += "{betaDist  =       (ProbDensity \"Beta\"        betaDensity        betaQuantile)}";
 
   P += "{bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p))}";
   P += "{bernoulli args = (ProbDensity \"Bernoulli\" bernoulliDensity (error \"Bernoulli has no quantile\"), args)}";
