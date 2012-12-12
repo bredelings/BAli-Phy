@@ -544,7 +544,7 @@ Program Distribution_Functions()
   P += "{mixtureDensity ((p1,(ProbDensity _ density1 _ _ _,args1)):l) x = (doubleToLogDouble p1)*(density1 args1 x)+(mixtureDensity l x);\
          mixtureDensity [] _ = (doubleToLogDouble 0.0)}";
 
-  P += "{mixtureDefault ((p1,(ProbDensity _ _ _ d _,args1)):l) = d}";
+  P += "{mixtureDefault ((p1,(ProbDensity _ _ _ d _,args1)):l) = (d args1)}";
   P += "{dirichletDefault l = let {n = length l} in (take n (repeat 1.0/(intToDouble n)))}";
   P += "{iidDefault l = let {n = length l} in (take n (repeat 1.0/(intToDouble n)))}";
 
