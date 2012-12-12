@@ -547,8 +547,6 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
   TL->add_field("likelihood", GetLikelihoodFunction() );
   TL->add_field("logp", GetProbabilityFunction() );
   
-  vector< vector< vector<int> > > indices = get_un_identifiable_indices(P, parameter_names(P));
-
   {
     vector<string> short_names = short_parameter_names(P);
     vector<string> long_names = parameter_names(P);
