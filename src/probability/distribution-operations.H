@@ -8,5 +8,6 @@
 extern expression_ref prob_density;
 
 Program Distribution_Functions();
+Program Range_Functions();
 
 #endif

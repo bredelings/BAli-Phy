@@ -476,7 +476,19 @@ closure uniform_density::operator()(OperationArgs& Args) const
 }
 
 // Fields: n_random, n_parameters, string, density op
-expression_ref prob_density = lambda_expression( constructor("Distributions.ProbDensity",3) );
+expression_ref prob_density = lambda_expression( constructor("Distributions.ProbDensity",5) );
+
+Program Range_Functions()
+{
+  Program P("Range");
+  P.def_constructor("OpenInterval",2);
+  P.def_constructor("Real",1);
+  P.def_constructor("Inf",0);
+  P.def_constructor("NegInf",0);
+
+  P += "{R1 = OpenInterval NegInf Inf}";
+  return P;
+}
 
 Program Distribution_Functions()
 {
@@ -486,7 +498,7 @@ Program Distribution_Functions()
   // Note: we separate the "builtin" versions (which don't do case analysis on their arguments)
   //       from the from the real versions (which do).
 
-  P.def_constructor("ProbDensity",3);
+  P.def_constructor("ProbDensity",5);
 
   P.def_function("exponentialDensity", 2, lambda_expression( exponential_density() ) );
   P.def_function("logExponentialDensity", 2, lambda_expression( log_exponential_density() ) );
@@ -529,37 +541,41 @@ Program Distribution_Functions()
 
   P += "{exponentialQuantile mu p = gammaQuantile (1.0,mu) p}";
 
-  P += "{mixtureDensity ((p1,((ProbDensity _ density1 _),args1)):l) x = (doubleToLogDouble p1)*(density1 args1 x)+(mixtureDensity l x);\
+  P += "{mixtureDensity ((p1,(ProbDensity _ density1 _ _ _,args1)):l) x = (doubleToLogDouble p1)*(density1 args1 x)+(mixtureDensity l x);\
          mixtureDensity [] _ = (doubleToLogDouble 0.0)}";
 
+  P += "{mixtureDefault ((p1,(ProbDensity _ _ _ d _,args1)):l) = d}";
+  P += "{dirichletDefault l = let {n = length l} in (take n (repeat 1.0/(intToDouble n)))}";
+  P += "{iidDefault l = let {n = length l} in (take n (repeat 1.0/(intToDouble n)))}";
+
   //------------ Define distribution objects --------------------//
-  P += "{betaDist  =       (ProbDensity \"Beta\"        betaDensity        betaQuantile)}";
+  P += "{betaDist  =       (ProbDensity \"Beta\"        betaDensity        betaQuantile (\\args->0.5) 0)}";
 
   P += "{bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p))}";
-  P += "{bernoulli args = (ProbDensity \"Bernoulli\" bernoulliDensity (error \"Bernoulli has no quantile\"), args)}";
-  P += "{normal args = (ProbDensity \"Normal\" normalDensity 0, args)}";
-  P += "{exponential args = (ProbDensity \"Exponential\" exponentialDensity exponentialQuantile, args)}";
-  P += "{gamma args = (ProbDensity \"Gamma\" gammaDensity gammaQuantile, args)}";
-  P += "{betaD args = (ProbDensity \"Beta\"        betaDensity        betaQuantile, args)}";
-  P += "{mixture args = (ProbDensity \"Mixture\" mixtureDensity 0, args)}";
-  P += "{dirichlet args = (ProbDensity \"Dirichlet\" dirichletDensity (error \"Dirichlet has no quantiles\"), args)}";
-  P += "{laplace args = (ProbDensity \"Laplace\" laplaceDensity 0, args)}";
-  P += "{logLaplace args = (ProbDensity \"LogLaplace\" logLaplaceDensity 0, args)}";
-  P += "{logExponential args = (ProbDensity \"LogExponential\" logExponentialDensity 0, args)}";
-  P += "{logNormal args = (ProbDensity \"LogNormal\" logNormalDensity logNormalQuantile, args)}";
-  P += "{logGamma args = (ProbDensity \"LogGamma\" logGammaDensity 0, args)}";
-  P += "{uniform args = (ProbDensity \"Uniform\" uniformDensity 0, args)}";
-  P += "{cauchy args = (ProbDensity \"Cauchy\" cauchyDensity 0, args)}";
+  P += "{bernoulli args = (ProbDensity \"Bernoulli\" bernoulliDensity (error \"Bernoulli has no quantile\") (\\_->True) (), args)}";
+  P += "{normal args = (ProbDensity \"Normal\" normalDensity () (\\_->0.0) (), args)}";
+  P += "{exponential args = (ProbDensity \"Exponential\" exponentialDensity exponentialQuantile (\\mu->mu) (), args)}";
+  P += "{gamma args = (ProbDensity \"Gamma\" gammaDensity gammaQuantile (\\(a,b)->a*b) (), args)}";
+  P += "{betaD args = (ProbDensity \"Beta\"        betaDensity        betaQuantile (\\(a,b)->a/(a+b)) (), args)}";
+  P += "{mixture args = (ProbDensity \"Mixture\" mixtureDensity () mixtureDefault (), args)}";
+  P += "{dirichlet args = (ProbDensity \"Dirichlet\" dirichletDensity (error \"Dirichlet has no quantiles\") () (), args)}";
+  P += "{laplace args = (ProbDensity \"Laplace\" laplaceDensity () (\\(m,s)->m) (), args)}";
+  P += "{logLaplace args = (ProbDensity \"LogLaplace\" logLaplaceDensity () (\\(m,s)->log m) (), args)}";
+  P += "{logExponential args = (ProbDensity \"LogExponential\" logExponentialDensity () (\\mu->log mu) (), args)}";
+  P += "{logNormal args = (ProbDensity \"LogNormal\" logNormalDensity logNormalQuantile () (), args)}";
+  P += "{logGamma args = (ProbDensity \"LogGamma\" logGammaDensity () () (), args)}";
+  P += "{uniform args = (ProbDensity \"Uniform\" uniformDensity () () (), args)}";
+  P += "{cauchy args = (ProbDensity \"Cauchy\" cauchyDensity () () (), args)}";
 
-  P += "{iidDensity (n,((ProbDensity _ density _),args)) xs = let {densities = (map (density args) xs) ; pr = foldl' (*) (doubleToLogDouble 1.0) densities} in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
-  P += "{iid args = (ProbDensity \"i.i.d.\" iidDensity 0, args )}";
+  P += "{iidDensity (n,((ProbDensity _ density _ _ _),args)) xs = let {densities = (map (density args) xs) ; pr = foldl' (*) (doubleToLogDouble 1.0) densities} in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
+  P += "{iid args = (ProbDensity \"i.i.d.\" iidDensity () () (), args )}";
 
   P += "{\
 plateDensity (n,f) xs = let {xs' = zip [1..] xs;\
-                             densities = map (\\(i,x) -> case (f i) of {(ProbDensity _ d _, a) -> d a x}) xs';\
+                             densities = map (\\(i,x) -> case (f i) of {(ProbDensity _ d _ _ _, a) -> d a x}) xs';\
                              pr = foldl' (*) (doubleToLogDouble 1.0) densities}\
                         in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
-  P += "{plate args = (ProbDensity \"Plate\" plateDensity 0, args )}";
+  P += "{plate args = (ProbDensity \"Plate\" plateDensity () () (), args )}";
 
   return P;
 }

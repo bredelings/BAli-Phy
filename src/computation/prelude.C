@@ -295,6 +295,7 @@ Program make_Prelude()
   P.def_function("join", 2, lambda_expression( Join() ) );
   P.def_function("negate", 1, lambda_expression( Negate() ) );
   P.def_function("exp", 1, lambda_expression( Exp_Op() ) );
+  P.def_function("log", 1, lambda_expression( Log_Op() ) );
   P.def_function("!", 2, lambda_expression( GetIndex() ) );
   P.def_function("getAddress", 1, lambda_expression( Get_Address() ) );
 

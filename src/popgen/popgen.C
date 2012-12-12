@@ -322,11 +322,11 @@ Program PopGen_Functions()
 
   P += "{ewensSamplingMixtureProbability (thetas,ps) x = builtinEwensSamplingMixtureProbability (listToVectorDouble thetas) (listToVectorDouble ps) x}";
 
-  P += "{afs args = (ProbDensity \"afs\" ewensSamplingProbability (error \"afs has no quantile\"),args)}";
+  P += "{afs args = (ProbDensity \"afs\" ewensSamplingProbability (error \"afs has no quantile\") () (),args)}";
 
-  P += "{afsGroup args = (ProbDensity \"afsGroup\" ewensSamplingGroupProbability (error \"afs has no quantile\"),args)}";
+  P += "{afsGroup args = (ProbDensity \"afsGroup\" ewensSamplingGroupProbability (error \"afs has no quantile\") () (),args)}";
 
-  P += "{afsMixture args = (ProbDensity \"afsMixture\" ewensSamplingMixtureProbability (error \"afs has no quantile\"),args)}";
+  P += "{afsMixture args = (ProbDensity \"afsMixture\" ewensSamplingMixtureProbability (error \"afs has no quantile\") () (),args)}";
 
   return P;
 }

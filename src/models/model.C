@@ -241,7 +241,7 @@ int Model::add_note(const expression_ref& E)
     expression_ref _ = dummy(-1);
 
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_new = case_expression(D, Tuple((prob_density,_,density,_),args), (density, args, x));
+    expression_ref Pr_new = case_expression(D, Tuple((prob_density,_,density,_,_,_),args), (density, args, x));
     
     // Record that this variable is random, and has this prior.
     // THIS would be the right place to determine what other random variables and parameters are being depended on.
@@ -766,7 +766,7 @@ string show_probability_expression(const context& C, const expression_ref& E)
 
   // 3. Then analyze into rand_var ~ dist_name(dist_args)
   expression_ref _ = dummy(-1);
-  expression_ref case_query_func = v1^(case_expression(v1,(prob_density, v2 , _, _), v2));
+  expression_ref case_query_func = v1^(case_expression(v1,(prob_density, v2 , _, _, _, _), v2));
   string dist_name = *C.evaluate_expression_as<String>((case_query_func, dist_family));
 
   // 4. Finally construct rand_var ~ dist_name(dist_args)
