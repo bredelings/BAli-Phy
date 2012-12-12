@@ -834,6 +834,9 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
     {
       string name = *(cmd->sub[0].assert_is_a<String>());
       cmd = new expression{cmd->head,{parameter(BUGS.lookup_symbol(name).name)}};
+      N.add_note(cmd);
+      expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
+      N.add_note((make_logger,parameter(name)));
     }
     else if (is_exactly(cmd, "VarBounds"))
     {
