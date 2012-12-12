@@ -29,15 +29,11 @@ VarBounds theta 0.0 False
 DeclareParameter "theta1"
 DeclareParameter "theta2"
 theta1 ~ exponential(1.0)
-theta1 = 1.0
 theta2 ~ exponential(1.0)
-theta2 = 1.0
 DeclareParameter "i"
 i ~ bernoulli(0.5)
-i = False
 DeclareParameter "p2"
 p2 ~ betaD(1.0, 1.0)
-p2 = 0.5
 VarBounds p2 0.0 1.0
 VarBounds theta1 0.0 False
 VarBounds theta2 0.0 False
