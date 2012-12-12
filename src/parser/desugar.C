@@ -740,7 +740,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 
       return (default_value, v[0], v[1]);
     }
-    else if (n->type == "BugsDist")
+    else if (n->type == "BugsDist" or n->type == "BugsExternalDist" or n->type == "BugsDataDist")
     {
       for(auto& e: v)
 	e = desugar(m, e, bound);
@@ -838,13 +838,10 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
     {
       if (n->type == "BugsDist")
       {
-	std::cerr<<"BugsDist: "<<cmd->print()<<"\n";
-	std::cerr<<"     sub[0] = "<<cmd->sub[0]->print()<<"\n";
 	set<string> ids = find_all_ids(cmd->sub[0]);
 
 	for(const auto& id: ids)
 	{
-	  std::cerr<<id<<" ";
 	  if (not BUGS.is_declared(id))
 	  {
 	    BUGS.declare_parameter(id);
@@ -852,7 +849,6 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
 	    N.add_note((declare_parameter,parameter(module_name+"."+id)));
 	  }
 	}
-	std::cerr<<"\n";
       }
     }
 
@@ -891,7 +887,8 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
     N.add_note(cmd);
   }
 
-  for(const auto& note: N.get_notes())
+  vector<expression_ref> notes = N.get_notes();
+  for(const auto& note: notes)
   {
     if (is_exactly(note, "DeclareParameter"))
     {

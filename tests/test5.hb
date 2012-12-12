@@ -9,21 +9,20 @@ z ~ mixture([( p, normal(x,1.0) ),(1.0-p, normal(y,1.0)) ])
 w ~ mixture([( 0.5, normal(-2.0,1.0) ),(0.5, normal(2.0,1.0)) ])
 
 [x1,x2] ~ iid (2,normal (1.0, 1.0))
-x1 = 1.0
-x2 = 2.0
+x1 := 1.0
+x2 := 2.0
 
 theta ~ exponential(1.0)
-theta = 1.0
 VarBounds theta 0.0 False
-((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/input4bensprogram.txt") ~ afsGroup (theta)
+data ((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/input4bensprogram.txt") ~ afsGroup (theta)
 
 theta1 ~ exponential(1.0)
 theta2 ~ exponential(1.0)
 
 i ~ bernoulli(0.5)
 
-p2 ~ betaD(1.0, 1.0)
+p2 ~ betaD(2.0, 2.0)
 VarBounds p2 0.0 1.0
 VarBounds theta1 0.0 False
 VarBounds theta2 0.0 False
-((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/input4bensprogram2.txt") ~ afsMixture ([theta1,theta2],[p2,1.0-p2])
+data ((alleleFrequencySpectrum . remove2ndAllele . readPhaseFile) "/home/bredelings/Reports/Kmar/input4phase_0.5_2_2000.txt") ~ afsMixture ([theta1,theta2],[p2,1.0-p2])
