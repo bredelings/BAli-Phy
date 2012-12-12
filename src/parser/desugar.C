@@ -226,7 +226,7 @@ expression_ref desugar_infixpat(const Program& m, const vector<expression_ref>& 
 
 set<string> find_bound_vars(const expression_ref& E)
 {
-  if (object_ptr<const AST_node> n = E.is_a<AST_node>())
+  if (auto n = E.is_a<AST_node>())
   {
     if (n->type == "apat_var")
     {
@@ -238,6 +238,24 @@ set<string> find_bound_vars(const expression_ref& E)
   set<string> bound;
   for(const auto& e:E->sub)
     add(bound, find_bound_vars(e));
+
+  return bound;
+}
+
+set<string> find_all_ids(const expression_ref& E)
+{
+  if (auto n = E.is_a<AST_node>())
+  {
+    if (n->type == "id")
+    {
+      assert(not E->size());
+      return {n->value};
+    }
+  }
+
+  set<string> bound;
+  for(const auto& e:E->sub)
+    add(bound, find_all_ids(e));
 
   return bound;
 }
@@ -757,20 +775,13 @@ expression_ref parse_haskell_line(const Program& P, const string& line)
 
 expression_ref parse_bugs_line(const Program& P, const string& line)
 {
-  expression_ref cmd;
-  try
-  {
-    cmd = parse_bugs_line(line);
+  expression_ref cmd = parse_bugs_line(line);
 
-    std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
-    cmd = desugar(P, cmd);
-    std::cerr<<"        processed: "<<cmd<<"\n";
-    std::cerr<<std::endl;
-  }
-  catch (const myexception& e)
-  {
-    std::cerr<<e.what()<<"\n";
-  }
+  std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
+  cmd = desugar(P, cmd);
+  std::cerr<<"        processed: "<<cmd<<"\n";
+  std::cerr<<std::endl;
+
   return cmd;
 }
 
@@ -815,9 +826,37 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
   BUGS.import_module(P.get_Program(),"SModel", false);
   BUGS.import_module(P.get_Program(),"Main", false);
   BUGS.import_module(P.get_Program(),"PopGen", false);
+
+  Model_Notes N;
+
   for(const auto& line: lines)
   {
-    expression_ref cmd = parse_bugs_line(BUGS, line);
+    // Separate into BugsDist and ForeignBugsDist?
+    // Then only declare params in BugsDist which would require previous (foreign) declarations for all params in ForeignBugsDist.
+    expression_ref cmd = parse_bugs_line(line);
+    if (auto n = cmd.is_a<AST_node>())
+    {
+      if (n->type == "BugsDist")
+      {
+	std::cerr<<"BugsDist: "<<cmd->print()<<"\n";
+	std::cerr<<"     sub[0] = "<<cmd->sub[0]->print()<<"\n";
+	set<string> ids = find_all_ids(cmd->sub[0]);
+
+	for(const auto& id: ids)
+	{
+	  std::cerr<<id<<" ";
+	  if (not BUGS.is_declared(id))
+	  {
+	    BUGS.declare_parameter(id);
+	    expression_ref declare_parameter = lambda_expression( constructor("DeclareParameter",1) );
+	    N.add_note((declare_parameter,parameter(module_name+"."+id)));
+	  }
+	}
+	std::cerr<<"\n";
+      }
+    }
+
+    cmd = desugar(BUGS, cmd);
 
     if (is_exactly(cmd, "DeclareParameter"))
     {
@@ -826,7 +865,6 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
     }
   }
 
-  Model_Notes N;
   for(const auto& line: lines)
   {
     expression_ref cmd = parse_bugs_line(BUGS, line);
@@ -835,8 +873,6 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
       string name = *(cmd->sub[0].assert_is_a<String>());
       cmd = new expression{cmd->head,{parameter(BUGS.lookup_symbol(name).name)}};
       N.add_note(cmd);
-      expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
-      N.add_note((make_logger,parameter(name)));
     }
     else if (is_exactly(cmd, "VarBounds"))
     {
@@ -853,6 +889,16 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
     }
 
     N.add_note(cmd);
+  }
+
+  for(const auto& note: N.get_notes())
+  {
+    if (is_exactly(note, "DeclareParameter"))
+    {
+      string name = (note->sub[0].assert_is_a<parameter>())->parameter_name;
+      expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
+      N.add_note((make_logger,parameter(name)));
+    }
   }
 
   return N;
