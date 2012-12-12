@@ -666,6 +666,9 @@ context::~context()
   memory->release_token(token);
 }
 
+#include "probability/distribution-operations.H"
+#include "computation/operations.H"
+
 expression_ref context::default_parameter_value(int i) const
 {
   expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
@@ -681,8 +684,20 @@ expression_ref context::default_parameter_value(int i) const
     //    assert(find_match_notes(query, results, found+1) == -1);
     return value;
   }
-  else
-    return {};
+
+  results.clear();
+  expression_ref query2 = (distributed, parameter( parameter_name(i) ), match(0));
+  int found2 = find_match_notes(query2, results, 0);
+
+  if (found2 != -1)
+  {
+    expression_ref _ = dummy(-1);
+    expression_ref dist = results[0];
+    expression_ref value = case_expression(results[0],Tuple((prob_density,_,_,_,v1,_),v2),(v1,v2));
+    return value;
+  }
+
+  return {};
 }
 
 reg_heap::root_t context::push_temp_head() const
@@ -699,9 +714,6 @@ std::ostream& operator<<(std::ostream& o, const context& C)
   }
   return o;
 }
-
-#include "probability/distribution-operations.H"
-#include "computation/operations.H"
 
 // note = (~ x D)
 // Pr_i = case D of ((prob_density _ density_op quantile_op _ _), args) -> (density_op x args)
