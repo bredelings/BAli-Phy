@@ -802,23 +802,11 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
   // 2. We've got a collection of heads.
 
   checked_ifstream file(filename,"BUGS file");
-  vector<string> lines;
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  string file_contents (buffer.str());
 
-  {
-    string line;
-    while(getline(file,line))
-    {
-      // Allow comments
-      if (line.size() and line[0] == '#') continue;
-
-      // Skip blank lines
-      if (is_all_space(line)) continue;
-      
-      lines.push_back(line);
-    }
-  }
-
-  std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
+  expression_ref bugs_file = parse_bugs_file(file_contents);
 
   Program BUGS(module_name);
   BUGS.import_module(P.get_Program(),"Prelude", false);
@@ -829,11 +817,10 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
 
   Model_Notes N;
 
-  for(const auto& line: lines)
+  for(const auto& cmd: bugs_file->sub)
   {
     // Separate into BugsDist and ForeignBugsDist?
     // Then only declare params in BugsDist which would require previous (foreign) declarations for all params in ForeignBugsDist.
-    expression_ref cmd = parse_bugs_line(line);
     if (auto n = cmd.is_a<AST_node>())
     {
       if (n->type == "BugsDist")
@@ -852,18 +839,18 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
       }
     }
 
-    cmd = desugar(BUGS, cmd);
+    expression_ref cmd2 = desugar(BUGS, cmd);
 
-    if (is_exactly(cmd, "DeclareParameter"))
+    if (is_exactly(cmd2, "DeclareParameter"))
     {
-      string name = *(cmd->sub[0].assert_is_a<String>());
+      string name = *(cmd2->sub[0].assert_is_a<String>());
       BUGS.declare_parameter(name);
     }
   }
 
-  for(const auto& line: lines)
+  for(const auto& cmd_: bugs_file->sub)
   {
-    expression_ref cmd = parse_bugs_line(BUGS, line);
+    expression_ref cmd = desugar(BUGS,cmd_);
     if (is_exactly(cmd, "DeclareParameter"))
     {
       string name = *(cmd->sub[0].assert_is_a<String>());
