@@ -80,7 +80,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	using phoenix::new_;
 	using phoenix::val;
 
-	small %= char_("a-z");
+	small %= char_("a-z") | char_('_');
 	large %= char_("A-Z");
 	digit %= char_("0-9");
 	symbol %= char_("!#$%&*+./<=>?@\\^|~:") | char_('-');
