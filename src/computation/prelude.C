@@ -61,6 +61,8 @@ Program make_Prelude()
   P.def_function("intToDouble", 1, lambda_expression( Conversion<int,double>() ) ); 
   P.def_constructor("True",0);
   P.def_constructor("False",0);
+  P.def_constructor("Just",1);
+  P.def_constructor("Nothing",0);
 
   // foldr f z []  = z
   // foldr f z x:xs = (f x (foldr f z xs))
