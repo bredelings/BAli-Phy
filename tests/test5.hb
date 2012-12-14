@@ -2,8 +2,11 @@ module Test where
 {
   getAFS = (alleleFrequencySpectrum . remove2ndAllele . readPhaseFile);
   filename1 = "/home/bredelings/Reports/Kmar/input4bensprogram.txt";
+  filename1a = "/home/bredelings/Reports/Kmar/input1.txt";
+  filename1b = "/home/bredelings/Reports/Kmar/input2.txt";
   
-  filename2 = "/home/bredelings/Reports/Kmar/input4phase_0.5_2_2000.txt"
+  filename2 = "/home/bredelings/Reports/Kmar/input4phase_0.5_2_2000.txt";
+  filename3 = "/home/bredelings/Reports/Kmar/input4phase_0.5_2_10000.txt"
 }  
 {
   x ~ normal(0.0, 1.0);
@@ -20,7 +23,7 @@ module Test where
   x2 := 2.0;
 
   theta ~ exponential(1.0);
-  data getAFS filename1 ~ afsGroup (theta);
+  data getAFS filename1b ~ afsGroup (theta);
 
   theta1 ~ exponential(1.0);
   theta2 ~ exponential(1.0);
@@ -28,5 +31,5 @@ module Test where
   i ~ bernoulli(0.5);
 
   p2 ~ betaD(2.0, 2.0);
-  data getAFS filename2 ~ afsMixture ([theta1,theta2],[p2,1.0-p2])
+  data getAFS filename3 ~ afsMixture ([theta1,theta2],[p2,1.0-p2])
 }
