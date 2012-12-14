@@ -70,7 +70,7 @@ namespace substitution {
 
   ReversibleFrequencyModel::ReversibleFrequencyModel(const alphabet& a)
   { 
-    add_parameter(Parameter("alphabet",a));
+    add_parameter("alphabet",a);
   }
 
   object_ptr<const Object> UniformFrequencyModel::result() const
@@ -144,12 +144,12 @@ namespace substitution {
     :ReversibleFrequencyModel(a)
   {
     // Start with *f = 1
-    add_parameter(Parameter("f",Double(1.0),between(0, 1)));
+    add_parameter("f",Double(1.0),between(0, 1));
     //    parameters_[0].fixed = true;
 
     for(int i=0;i<a.size();i++) {
       string pname = string("pi") + a.letter(i);
-      add_parameter(Parameter(pname, Double(1.0/a.size()), between(0, 1)));
+      add_parameter(pname, Double(1.0/a.size()), between(0, 1));
     }
 
     // initialize everything
@@ -162,7 +162,7 @@ namespace substitution {
     if (pi.size() != a.size())
       throw myexception()<<"Constructing a frequency model on alphabet '"<<a.name<<"' but got frequencies of "<<pi.size()<<" letters instead of the expected "<<a.size();
 
-    add_parameter(Parameter("f", Double(1.0), between(0, 1)));
+    add_parameter("f", Double(1.0), between(0, 1));
     // Start with *f = 1
     // set_fixed(0,true);
 
@@ -170,7 +170,7 @@ namespace substitution {
     f /= f.sum();
     for(int i=0;i<a.size();i++) {
       string pname = string("pi") + a.letter(i);
-      add_parameter(Parameter(pname, Double(f[i]), between(0, 1)));
+      add_parameter(pname, Double(f[i]), between(0, 1));
     }
 
     // initialize everything
@@ -268,11 +268,11 @@ namespace substitution {
     // problem: TripletFrequency model won't have done this for its alphabet parameter
     model_slots_for_index.push_back(vector<model_slot>());
 
-    add_super_parameter(Parameter("g", Double(1), between(0, 1) ));
+    add_super_parameter("g", Double(1), between(0, 1) ));
 
     for(int i=0;i<T.size();i++) {
       string pname = string("v") + T.letter(i);
-      add_super_parameter(Parameter(pname, Double(1.0/T.size()), between(0, 1) ));
+      add_super_parameter(pname, Double(1.0/T.size()), between(0, 1) ));
     }
 
     insert_submodel("1",SimpleFrequencyModel(T.getNucleotides()));
@@ -427,12 +427,12 @@ namespace substitution {
     // problem: CodonFrequency model won't have done this for its alphabet parameter
     model_slots_for_index.push_back(vector<model_slot>());
 
-    add_super_parameter(Parameter("c", Double(0.5), between(0, 1))); // 1
-    add_super_parameter(Parameter("h", Double(0.5), between(0, 1))); // 2
+    add_super_parameter("c", Double(0.5), between(0, 1))); // 1
+    add_super_parameter("h", Double(0.5), between(0, 1))); // 2
 
     for(int i=0;i<C.getAminoAcids().size();i++) {
       string pname = string("b_") + C.getAminoAcids().letter(i);
-      add_super_parameter(Parameter(pname,  Double(1.0/C.getAminoAcids().size()), between(0, 1)));
+      add_super_parameter(pname,  Double(1.0/C.getAminoAcids().size()), between(0, 1)));
     }
 
     insert_submodel("1",TripletsFrequencyModel(C));
@@ -501,11 +501,11 @@ namespace substitution {
   CodonsFrequencyModel2::CodonsFrequencyModel2(const Codons& C)
     : CodonFrequencyModel(C)
   {
-    add_super_parameter(Parameter("h", Double(0.5), between(0, 1)));
+    add_super_parameter("h", Double(0.5), between(0, 1)));
 
     for(int i=0;i<C.getAminoAcids().size();i++) {
       string pname = string("b_") + C.getAminoAcids().letter(i);
-      add_super_parameter(Parameter(pname, Double(1.0/C.getAminoAcids().size()), between(0, 1)));
+      add_super_parameter(pname, Double(1.0/C.getAminoAcids().size()), between(0, 1)));
     }
 
     insert_submodel("1",TripletsFrequencyModel(C));
@@ -549,13 +549,13 @@ namespace substitution {
 
   F81_Model::F81_Model(const alphabet& a)
   {
-    add_parameter(Parameter("alphabet",a));
+    add_parameter("alphabet",a);
 
     int N = a.size();
 
     for(int i=0;i<N;i++) {
       string pname = string("pi") + a.letter(i);
-      add_parameter(Parameter(pname, Double(1.0/N), between(0, 1)));
+      add_parameter(pname, Double(1.0/N), between(0, 1));
     }
 
     recalc_all();
@@ -563,7 +563,7 @@ namespace substitution {
 
   F81_Model::F81_Model(const alphabet& a,const valarray<double>& f)
   {
-    add_parameter(Parameter("alphabet",a));
+    add_parameter("alphabet",a);
 
     int N = a.size();
 
@@ -571,7 +571,7 @@ namespace substitution {
 
     for(int i=0;i<N;i++) {
       string pname = string("pi") + a.letter(i);
-      add_parameter(Parameter(pname, Double(f[i]), between(0, 1)));
+      add_parameter(pname, Double(f[i]), between(0, 1));
     }
 
     recalc_all();
@@ -656,13 +656,13 @@ namespace substitution {
 
       // FIXME! M->base_models.back()->set_rate(1);
     }
-    add_parameter(Parameter("CAT_frequencies",M));
+    add_parameter("CAT_frequencies",M);
 
     //------- 6: Create the parameters for fiddling --------//
     for(int i=0;i<n_cat;i++)
     {
       string name = "CAT.f"+convertToString(i+1);
-      add_parameter(Parameter(name,Double(prior_fraction[i]),between(0,1)));
+      add_parameter(name,Double(prior_fraction[i]),between(0,1));
     }
 
     recalc_all();
@@ -681,13 +681,13 @@ namespace substitution {
 
   CAT_FixedFrequencyModel::CAT_FixedFrequencyModel(const alphabet& a)
   { 
-    add_parameter(Parameter("alphabet",a));
+    add_parameter("alphabet",a);
   }
 
   CAT_FixedFrequencyModel::CAT_FixedFrequencyModel(const alphabet& a, const string& n)
     :name_(n)
   { 
-    add_parameter(Parameter("alphabet",a));
+    add_parameter("alphabet",a);
   }
 
   C20_CAT_FixedFrequencyModel::C20_CAT_FixedFrequencyModel()

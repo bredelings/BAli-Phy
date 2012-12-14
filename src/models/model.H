@@ -42,22 +42,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 class Model;
 
-struct Parameter
-{
-  std::string name;
-  object_ref value;
-  Bounds<double> bounds;
-
-  Parameter(const std::string&);
-
-  Parameter(const std::string&, object_ptr<const Object>);
-  Parameter(const std::string&, object_ptr<const Object>, const Bounds<double>&);
-
-  Parameter(const std::string&, const Object&);
-  Parameter(const std::string&, const Object&, const Bounds<double>&);
-};
-
-
 // Variable State: (i) Dirichlet Process or (ii) Augmenting and unaugmenting
 //
 // As long as we can express the probability as a fixed expression of this
@@ -71,14 +55,8 @@ struct Parameter
 
 /// \brief An object that depends on a number of parameters, and updates itself when they change.
 ///
-/// Model objects
-///   - depend on some number of parameters (currently, all of type double)
-///   - update themselves when their parameters change.
-///
 /// Model objects currently wrap a context object.  They add the ability to
 /// call recalc() to fixup things after changing a parameter.
-///
-/// Next: make models out-of-date unless we call model.update();
 ///
 class Model
 {
@@ -107,7 +85,9 @@ protected:
   /// Which parameters have been modified?
   std::vector<int> modified_parameters() const;
 
-  virtual int add_parameter(const Parameter&);
+  int add_parameter(const std::string&);
+  int add_parameter(const std::string&,const object_ref&);
+  int add_parameter(const std::string&,const object_ref&,const Bounds<double>&);
   
   /// \brief Recalculate internal data based on current parameters
   ///

@@ -41,31 +41,6 @@ string parameter_name(const string& prefix, int i,int n)
   return prefix + convertToString(i);
 }
 
-Parameter::Parameter(const string& n)
-  :name(n)
-{
-}
-
-Parameter::Parameter(const string& n, object_ptr<const Object> v)
-  :name(n), value(v)
-{
-}
-
-Parameter::Parameter(const string& n, object_ptr<const Object> v, const Bounds<double>& b)
-  :name(n), value(v), bounds(b)
-{
-}
-
-Parameter::Parameter(const string& n, const Object& v)
-  :name(n), value(v)
-{
-}
-
-Parameter::Parameter(const string& n, const Object& v, const Bounds<double>& b)
-  :name(n), value(v), bounds(b)
-{
-}
-
 vector<expression_ref> model_parameter_expressions(const Model& M)
 {
   vector< expression_ref > sub;
@@ -122,22 +97,38 @@ void Model::recalc_all()
   update();
 }
 
-int Model::add_parameter(const Parameter& P)
+int Model::add_parameter(const string& name)
 {
   for(int i=0;i<n_parameters();i++)
-    if (parameter_name(i) == P.name)
-      throw myexception()<<"A parameter with name '"<<P.name<<"' already exists - cannot add another one.";
+    if (parameter_name(i) == name)
+      throw myexception()<<"A parameter with name '"<<name<<"' already exists - cannot add another one.";
 
   int index = n_parameters();
 
-  C.add_parameter(P.name);
+  C.add_parameter(name);
   changed.push_back(true);
   bounds.push_back(-1);
-  set_bounds(index,P.bounds);
   prior_note_index.push_back(-1);
 
-  if (P.value)
-    C.set_parameter_value(index, *P.value);
+  return index;
+}
+
+int Model::add_parameter(const string& name, const object_ref& o)
+{
+  int index = add_parameter(name);
+
+  if (o)
+    C.set_parameter_value(index, o);
+
+  return index;
+}
+
+int Model::add_parameter(const string& name, const object_ref& o, const Bounds<double>& b)
+{
+  int index = add_parameter(name,o);
+
+  set_bounds(index, b);
+
   return index;
 }
 

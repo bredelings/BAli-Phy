@@ -393,6 +393,8 @@ namespace MCMC {
     for(int i=0;i<P->n_parameters();i++)
     {
       if (not P->parameter_has_type<Double>(i)) continue;
+
+      if (not P->has_bounds(i)) continue;
 	
       Bounds<double> range = P->get_bounds(i);
       if (not range.in_range(P->get_parameter_value_as<Double>(i)))

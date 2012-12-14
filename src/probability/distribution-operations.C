@@ -606,7 +606,7 @@ Program Distribution_Functions()
   P += "{exponential args = (ProbDensity \"Exponential\" exponentialDensity exponentialQuantile (\\mu->mu) (\\_->above 0.0), args)}";
   P += "{gamma args = (ProbDensity \"Gamma\" gammaDensity gammaQuantile (\\(a,b)->a*b) (\\_->above 0.0), args)}";
   P += "{betaD args = (ProbDensity \"Beta\"        betaDensity        betaQuantile (\\(a,b)->a/(a+b)) (\\_->between 0.0 1.0), args)}";
-  P += "{mixture args = (ProbDensity \"Mixture\" mixtureDensity () mixtureDefault (), args)}";
+  P += "{mixture args = (ProbDensity \"Mixture\" mixtureDensity () mixtureDefault (\\_->()), args)}";
   P += "{dirichlet args = (ProbDensity \"Dirichlet\" dirichletDensity (error \"Dirichlet has no quantiles\") () (), args)}";
   P += "{laplace args = (ProbDensity \"Laplace\" laplaceDensity () (\\(m,s)->m) (\\_->realLine), args)}";
   P += "{logLaplace args = (ProbDensity \"LogLaplace\" logLaplaceDensity () (\\(m,s)->log m) (\\_->above 0.0), args)}";
@@ -618,14 +618,14 @@ Program Distribution_Functions()
   P += "{distRange (ProbDensity _ _ _ _ r,args) = r args}";
 
   P += "{iidDensity (n,((ProbDensity _ density _ _ _),args)) xs = let {densities = (map (density args) xs) ; pr = foldl' (*) (doubleToLogDouble 1.0) densities} in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
-  P += "{iid args = (ProbDensity \"i.i.d.\" iidDensity () () (), args )}";
+  P += "{iid args = (ProbDensity \"i.i.d.\" iidDensity () () (\\_->()), args )}";
 
   P += "{\
 plateDensity (n,f) xs = let {xs' = zip [1..] xs;\
                              densities = map (\\(i,x) -> case (f i) of {(ProbDensity _ d _ _ _, a) -> d a x}) xs';\
                              pr = foldl' (*) (doubleToLogDouble 1.0) densities}\
                         in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
-  P += "{plate args = (ProbDensity \"Plate\" plateDensity () () (), args )}";
+  P += "{plate args = (ProbDensity \"Plate\" plateDensity () () (\\_->()), args )}";
 
   return P;
 }

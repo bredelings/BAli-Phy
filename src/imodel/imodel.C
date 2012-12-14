@@ -494,9 +494,9 @@ string SimpleIndelModel::name() const {return "RS05";}
 SimpleIndelModel::SimpleIndelModel()
   :QE(Q1.size1(),Q1.size2())
 {
-  add_parameter(Parameter("delta",  Double(-5), upper_bound(-log(2))));
-  add_parameter(Parameter("epsilon",Double(-0.25))); // no upper bound on transformed scale
-  add_parameter(Parameter("tau",    Double(log(0.001)), upper_bound(0)));
+  add_parameter("delta",  Double(-5), upper_bound(-log(2)));
+  add_parameter("epsilon",Double(-0.25)); // no upper bound on transformed scale
+  add_parameter("tau",    Double(log(0.001)), upper_bound(0));
 
   recalc_all();
 }
@@ -749,11 +749,11 @@ efloat_t TKF1::lengthp(int l) const
 TKF1::TKF1(bool b)
   :time_dependant(b)
 {
-  add_parameter(Parameter("lambda",Double(-5)));
-  add_parameter(Parameter("meanLength",Double(100)));
-  add_parameter(Parameter("lambdaPriorMedian", Double(-5)));
-  add_parameter(Parameter("lambdaPriorStddev", Double(1.5)));
-  add_parameter(Parameter("meanLengthPriorMean", Double(1.5)));
+  add_parameter("lambda",Double(-5));
+  add_parameter("meanLength",Double(100));
+  add_parameter("lambdaPriorMedian", Double(-5));
+  add_parameter("lambdaPriorStddev", Double(1.5));
+  add_parameter("meanLengthPriorMean", Double(1.5));
 }
 
 
@@ -816,13 +816,13 @@ efloat_t TKF2::lengthp(int l) const
 TKF2::TKF2(bool b)
   :time_dependant(b)
 {
-  add_parameter(Parameter("lambda",Double(-5)));
-  add_parameter(Parameter("epsilon",Double(-0.25), upper_bound(0)));
-  add_parameter(Parameter("mean_length",Double(100)));
-  add_parameter(Parameter("lambdaPriorMedian", Double(-5)));
-  add_parameter(Parameter("lambdaPriorStddev", Double(1.5)));
-  add_parameter(Parameter("epsilonPriorLength", Double(10)));
-  add_parameter(Parameter("meanLengthPriorMean", Double(1.5)));
+  add_parameter("lambda",Double(-5));
+  add_parameter("epsilon",Double(-0.25), upper_bound(0));
+  add_parameter("mean_length",Double(100));
+  add_parameter("lambdaPriorMedian", Double(-5));
+  add_parameter("lambdaPriorStddev", Double(1.5));
+  add_parameter("epsilonPriorLength", Double(10));
+  add_parameter("meanLengthPriorMean", Double(1.5));
 }
 
 TransducerIndelModel::~TransducerIndelModel() {}
@@ -948,11 +948,11 @@ string TKF1_Transducer::name() const
 TKF1_Transducer::TKF1_Transducer(bool b)
   :time_dependent(b)
 {
-  add_parameter(Parameter("lambda",Double(-5), upper_bound(0)));
-  add_parameter(Parameter("meanLength",Double(100)));
-  add_parameter(Parameter("lambdaPriorMedian", Double(-5)));
-  add_parameter(Parameter("lambdaPriorStddev", Double(1.5)));
-  add_parameter(Parameter("meanLengthPriorMean", Double(1.5)));
+  add_parameter("lambda",Double(-5), upper_bound(0));
+  add_parameter("meanLength",Double(100));
+  add_parameter("lambdaPriorMedian", Double(-5));
+  add_parameter("lambdaPriorStddev", Double(1.5));
+  add_parameter("meanLengthPriorMean", Double(1.5));
 }
 
 
@@ -1261,15 +1261,15 @@ string FS_Transducer::name() const
 FS_Transducer::FS_Transducer(bool b)
   :time_dependent(b)
 {
-  add_parameter(Parameter("lambdaS", Double(-5), upper_bound(0)));                  // 0
-  add_parameter(Parameter("lambdaF", Double(-3), upper_bound(0)));                  // 1
-  add_parameter(Parameter("r", Double(-0.3), upper_bound(0)));                       // 2
-  add_parameter(Parameter("meanLengthS", Double(20), lower_bound(0)));             // 3
-  add_parameter(Parameter("meanLengthF", Double(20), lower_bound(0)));             // 4
-  add_parameter(Parameter("switch", Double(0.1), between(0,1)));                   // 5
-  add_parameter(Parameter("lambdaPriorMedianS", Double(-5)));    // 6
-  add_parameter(Parameter("lambdaPriorMedianF", Double(-3)));    // 7
-  add_parameter(Parameter("lambdaPriorStddev",Double( 1.5)));     // 8
-  add_parameter(Parameter("meanLengthPriorMean", Double(1.5)));  // 9
+  add_parameter("lambdaS", Double(-5), upper_bound(0));                  // 0
+  add_parameter("lambdaF", Double(-3), upper_bound(0));                  // 1
+  add_parameter("r", Double(-0.3), upper_bound(0));                       // 2
+  add_parameter("meanLengthS", Double(20), lower_bound(0));             // 3
+  add_parameter("meanLengthF", Double(20), lower_bound(0));             // 4
+  add_parameter("switch", Double(0.1), between(0,1));                   // 5
+  add_parameter("lambdaPriorMedianS", Double(-5));    // 6
+  add_parameter("lambdaPriorMedianF", Double(-3));    // 7
+  add_parameter("lambdaPriorStddev",Double( 1.5));     // 8
+  add_parameter("meanLengthPriorMean", Double(1.5));  // 9
 }
 
