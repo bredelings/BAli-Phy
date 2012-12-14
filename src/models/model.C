@@ -266,7 +266,7 @@ int Model::add_note(const expression_ref& E)
     {
       int p_index = find_parameter(p->parameter_name);
       if (p_index != -1 and bounds[p_index] == -1)
-	set_bounds(p_index,(var("Range.getBounds"),(var("Distributions.distRange"),D)));
+	set_bounds(p_index,(var("Distributions.distRange"),D));
     }
   }
 
@@ -294,6 +294,21 @@ const Bounds<double>& Model::get_bounds(int i) const
 }
 
 void Model::set_bounds(int i,const expression_ref& b) 
+{
+  if (auto B = b.is_a<Bounds<double>>())
+  {
+    set_bounds(i,*B);
+    return;
+  }
+
+  expression_ref E = (var("Range.getBounds"),b);
+  if (bounds[i] == -1)
+    bounds[i] = C.add_compute_expression(E);
+  else
+    C.set_compute_expression(bounds[i],E);
+}
+
+void Model::set_bounds(int i,const Bounds<double>& b) 
 {
   if (bounds[i] == -1)
     bounds[i] = C.add_compute_expression(b);

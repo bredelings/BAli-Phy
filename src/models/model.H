@@ -116,6 +116,7 @@ public:
   bool has_bounds(int i) const;
   const Bounds<double>& get_bounds(int i) const;
   void set_bounds(int i,const expression_ref&);
+  void set_bounds(int i,const Bounds<double>&);
 
   /// Get A model parameter value
   object_ptr<const Object> get_parameter_value(int i) const;
