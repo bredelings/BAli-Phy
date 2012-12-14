@@ -58,7 +58,7 @@ const Program& Model_Notes::get_module(int i) const
 
 const vector<Program>& Model_Notes::get_modules() const
 {
-  return modules[i];
+  return modules;
 }
 
 void Model_Notes::add_module(const Program& m)
