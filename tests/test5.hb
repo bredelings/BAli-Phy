@@ -28,6 +28,5 @@ module Test where
   i ~ bernoulli(0.5);
 
   p2 ~ betaD(2.0, 2.0);
-  VarBounds theta1 (above 0.0);
   data getAFS filename2 ~ afsMixture ([theta1,theta2],[p2,1.0-p2])
 }
