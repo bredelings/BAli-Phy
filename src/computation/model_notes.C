@@ -56,6 +56,11 @@ const Program& Model_Notes::get_module(int i) const
   return modules[i];
 }
 
+const vector<Program>& Model_Notes::get_modules() const
+{
+  return modules[i];
+}
+
 void Model_Notes::add_module(const Program& m)
 {
   return modules.push_back(m);

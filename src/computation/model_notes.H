@@ -34,6 +34,7 @@ public:
   int n_modules() const;
   Program& get_module(int i);
   const Program& get_module(int i) const;
+  const std::vector<Program>& get_modules() const;
   void add_module(const Program& m);
 
   Model_Notes();
