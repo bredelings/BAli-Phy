@@ -132,7 +132,8 @@ int Model::add_parameter(const Parameter& P)
 
   C.add_parameter(P.name);
   changed.push_back(true);
-  bounds.push_back(P.bounds);
+  bounds.push_back(-1);
+  set_bounds(index,P.bounds);
   prior_note_index.push_back(-1);
 
   if (P.value)
@@ -280,14 +281,27 @@ bool Model::is_random_variable(int i) const
   return prior_note_index[i] != -1;
 }
 
+bool Model::has_bounds(int i) const 
+{
+  if (bounds[i] == -1) return false;
+
+  return dynamic_pointer_cast<const Bounds<double>>(C.evaluate(bounds[i]));
+}
+
 const Bounds<double>& Model::get_bounds(int i) const 
 {
-  return bounds[i];
+  if (bounds[i] == -1)
+    throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have bounds.";
+
+  return *C.evaluate_as<Bounds<double>>(bounds[i]);
 }
 
 void Model::set_bounds(int i,const Bounds<double>& b) 
 {
-  bounds[i] = b;
+  if (bounds[i] == -1)
+    bounds[i] = C.add_compute_expression(b);
+  else
+    C.set_compute_expression(bounds[i],b);
 }
 
 object_ptr<const Object> Model::get_parameter_value(int i) const

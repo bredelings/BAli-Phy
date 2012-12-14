@@ -89,7 +89,7 @@ protected:
   context C;
 
   mutable std::vector<bool> changed;
-  std::vector< Bounds<double> > bounds;
+  std::vector< int > bounds;
   std::vector< int> prior_note_index;
 
   int prior_index;
@@ -133,6 +133,7 @@ public:
 
   bool is_random_variable(int i) const;
 
+  bool has_bounds(int i) const;
   const Bounds<double>& get_bounds(int i) const;
   void set_bounds(int i,const Bounds<double>& b);
 
