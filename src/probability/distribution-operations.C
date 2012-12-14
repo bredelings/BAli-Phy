@@ -608,7 +608,7 @@ Program Distribution_Functions()
   P += "{betaD args = (ProbDensity \"Beta\"        betaDensity        betaQuantile (\\(a,b)->a/(a+b)) (\\_->between 0.0 1.0), args)}";
   P += "{mixture args = (ProbDensity \"Mixture\" mixtureDensity () mixtureDefault (), args)}";
   P += "{dirichlet args = (ProbDensity \"Dirichlet\" dirichletDensity (error \"Dirichlet has no quantiles\") () (), args)}";
-  P += "{laplace args = (ProbDensity \"Laplace\" laplaceDensity () (\\(m,s)->m) (\\_->above 0.0), args)}";
+  P += "{laplace args = (ProbDensity \"Laplace\" laplaceDensity () (\\(m,s)->m) (\\_->realLine), args)}";
   P += "{logLaplace args = (ProbDensity \"LogLaplace\" logLaplaceDensity () (\\(m,s)->log m) (\\_->above 0.0), args)}";
   P += "{logExponential args = (ProbDensity \"LogExponential\" logExponentialDensity () (\\mu->log mu) (\\_->above 0.0), args)}";
   P += "{logNormal args = (ProbDensity \"LogNormal\" logNormalDensity logNormalQuantile () (\\_->above 0.0), args)}";
