@@ -532,7 +532,8 @@ Program Range_Functions()
   P += "{getBounds (OpenInterval Nothing Nothing)   = builtinGetBounds () ();\
          getBounds (OpenInterval Nothing (Just u))  = builtinGetBounds () u;\
          getBounds (OpenInterval (Just l) Nothing)  = builtinGetBounds l ();\
-         getBounds (OpenInterval (Just l) (Just u)) = builtinGetBounds l u}";
+         getBounds (OpenInterval (Just l) (Just u)) = builtinGetBounds l u;\
+         getBounds _                                = ()}";
 
   return P;
 }
@@ -614,6 +615,7 @@ Program Distribution_Functions()
   P += "{logGamma args = (ProbDensity \"LogGamma\" logGammaDensity () () (\\_->above 0.0), args)}";
   P += "{uniform args = (ProbDensity \"Uniform\" uniformDensity () () (\\(l,u)->between l u), args)}";
   P += "{cauchy args = (ProbDensity \"Cauchy\" cauchyDensity () () realLine, args)}";
+  P += "{distRange (ProbDensity _ _ _ _ r,args) = r args}";
 
   P += "{iidDensity (n,((ProbDensity _ density _ _ _),args)) xs = let {densities = (map (density args) xs) ; pr = foldl' (*) (doubleToLogDouble 1.0) densities} in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
   P += "{iid args = (ProbDensity \"i.i.d.\" iidDensity () () (), args )}";

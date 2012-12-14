@@ -296,7 +296,7 @@ const Bounds<double>& Model::get_bounds(int i) const
   return *C.evaluate_as<Bounds<double>>(bounds[i]);
 }
 
-void Model::set_bounds(int i,const Bounds<double>& b) 
+void Model::set_bounds(int i,const expression_ref& b) 
 {
   if (bounds[i] == -1)
     bounds[i] = C.add_compute_expression(b);
