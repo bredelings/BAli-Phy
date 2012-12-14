@@ -270,6 +270,13 @@ int Model::add_note(const expression_ref& E)
       expression_ref Pr = C.get_expression(prior_index);
       C.set_compute_expression(prior_index, Pr_new * Pr);
     }
+
+    if (auto p = x.is_a<parameter>())
+    {
+      int p_index = find_parameter(p->parameter_name);
+      if (p_index != -1 and bounds[p_index] == -1)
+	set_bounds(p_index,(var("Range.getBounds"),(var("Distributions.distRange"),D)));
+    }
   }
 
   return index;
