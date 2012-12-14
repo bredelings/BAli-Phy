@@ -792,22 +792,74 @@ bool is_all_space(const string& line)
   return true;
 }
 
-Model_Notes read_BUGS(const Parameters& P, const string& filename, const string& module_name)
+string read_file(const string& filename)
 {
-  // Um, so what is the current program?
-
-  // 1. Well, its got a collection of identifiers.
-  //   (a) Some of these are functions
-  //   (b) Some of these are parameters
-  // 2. We've got a collection of heads.
-
-  checked_ifstream file(filename,"BUGS file");
+  checked_ifstream file(filename);
   std::stringstream buffer;
   buffer << file.rdbuf();
-  string file_contents (buffer.str());
+  return buffer.str();
+}
 
+string read_file(const string& filename, const string& description)
+{
+  checked_ifstream file(filename,description);
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  return buffer.str();
+}
+
+bool is_AST(const expression_ref& E, const string& type)
+{
+  auto ast = E.is_a<AST_node>();
+  return ast->type == type;
+}
+
+bool is_AST(const expression_ref& E, const string& type, const string& value)
+{
+  auto ast = E.is_a<AST_node>();
+  return ast->type == type and ast->value == value;
+}
+
+Model_Notes read_BUGS(const Parameters& P, const string& filename, const string& module_name_)
+{
+  // 1. Read file into string.
+  string file_contents = read_file(filename, "BUGS File");
+
+  // 2. bugs_file = module + notes
   expression_ref bugs_file = parse_bugs_file(file_contents);
+  assert(is_AST(bugs_file,"BugsFile"));
 
+  expression_ref module = bugs_file->sub[0];
+  assert(is_AST(module,"Module"));
+  expression_ref bugs_notes;
+  if (bugs_file->sub.size() == 2)
+  {
+    bugs_notes = bugs_file->sub[1];
+    assert(is_AST(bugs_notes,"BugsLines"));
+  }
+
+  // 3. module = [optional name] + body
+  string module_name = module_name_;
+  expression_ref body;
+  if (module->sub.size() == 1)
+    body = module->sub[0];
+  else
+  {
+    module_name = *module->sub[0].is_a<String>();
+    body = module->sub[1];
+  }
+  assert(is_AST(body,"Body"));
+
+  // 4. body = impdecls + [optional topdecls]
+  expression_ref impdecls;
+  expression_ref topdecls;
+  if (body->sub.size() == 1)
+  {
+    topdecls = body->sub[0];
+    assert(is_AST(topdecls,"TopDecls"));
+  }
+
+  // 5. Process imports
   Program BUGS(module_name);
   BUGS.import_module(P.get_Program(),"Prelude", false);
   BUGS.import_module(P.get_Program(),"Distributions", false);
@@ -817,47 +869,40 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
 
   Model_Notes N;
 
-  for(const auto& cmd: bugs_file->sub)
+  // 6a. Find explicitly and implicitly-declared parameters
+  set<string> new_parameters;
+  for(const auto& cmd: bugs_notes->sub)
   {
     // Separate into BugsDist and ForeignBugsDist?
     // Then only declare params in BugsDist which would require previous (foreign) declarations for all params in ForeignBugsDist.
-    if (auto n = cmd.is_a<AST_node>())
+    if (is_AST(cmd,"BugsDist"))
+      add(new_parameters, find_all_ids(cmd->sub[0]));
+    else if (is_AST(cmd,"Parameter"))
     {
-      if (n->type == "BugsDist")
-      {
-	set<string> ids = find_all_ids(cmd->sub[0]);
-
-	for(const auto& id: ids)
-	{
-	  if (not BUGS.is_declared(id))
-	  {
-	    BUGS.declare_parameter(id);
-	    expression_ref declare_parameter = lambda_expression( constructor("DeclareParameter",1) );
-	    N.add_note((declare_parameter,parameter(module_name+"."+id)));
-	  }
-	}
-      }
-    }
-
-    expression_ref cmd2 = desugar(BUGS, cmd);
-
-    if (is_exactly(cmd2, "DeclareParameter"))
-    {
-      string name = *(cmd2->sub[0].assert_is_a<String>());
-      BUGS.declare_parameter(name);
+      string name = *(cmd->sub[0].assert_is_a<String>());
+      new_parameters.insert(name);
     }
   }
 
-  for(const auto& cmd_: bugs_file->sub)
+  // 7. Actually declare them.
+  for(const auto& id: new_parameters)
+  {
+    if (not BUGS.is_declared(id))
+    {
+      BUGS.declare_parameter(id);
+      def_parameter(N,module_name+"."+id);
+    }
+  }
+
+  // 8. Declare objects from the Haskell module
+  if (topdecls)
+    BUGS += topdecls;
+
+  // 9. Add notes -- translating VarBounds
+  for(const auto& cmd_: bugs_notes->sub)
   {
     expression_ref cmd = desugar(BUGS,cmd_);
-    if (is_exactly(cmd, "DeclareParameter"))
-    {
-      string name = *(cmd->sub[0].assert_is_a<String>());
-      cmd = new expression{cmd->head,{parameter(BUGS.lookup_symbol(name).name)}};
-      N.add_note(cmd);
-    }
-    else if (is_exactly(cmd, "VarBounds"))
+    if (is_exactly(cmd, "VarBounds"))
     {
       bool lower = cmd->sub[1].is_a<Double>();
       double lowerb = 0;
@@ -874,16 +919,14 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
     N.add_note(cmd);
   }
 
-  vector<expression_ref> notes = N.get_notes();
-  for(const auto& note: notes)
+  // 10. Add Loggers for any locally declared parameters
+  for(const auto& name: new_parameters)
   {
-    if (is_exactly(note, "DeclareParameter"))
-    {
-      string name = (note->sub[0].assert_is_a<parameter>())->parameter_name;
-      expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
-      N.add_note((make_logger,parameter(name)));
-    }
+    expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
+    N.add_note((make_logger,parameter(name)));
   }
+
+  N.add_module(BUGS);
 
   return N;
 }

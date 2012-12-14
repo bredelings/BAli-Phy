@@ -152,6 +152,9 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
 
 vector<int> Model::add_submodel(const Model_Notes& R)
 {
+  for(int i=0;i<R.n_modules();i++)
+    C += R.get_module(i);
+
   vector<int> new_parameters;
 
   // Find and add the declared names that don't exist yet.

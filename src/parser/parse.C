@@ -804,6 +804,7 @@ struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_lines;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_file;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_parameter;
   haskell_grammar<Iterator> h;
 
     bugs_grammar() : bugs_grammar::base_type(bugs_line)
@@ -835,8 +836,9 @@ struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 	  | eps [clear(_a) ] >> h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,_1)] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
 	bugs_default_value = h.qvar [push_back(_a, phoenix::construct<AST_node>("id", _1)) ] >> ":=" > h.exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
 	bugs_note = h.exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
+	bugs_parameter = lit("parameter") >> h.varid [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
 
-	bugs_line %= bugs_default_value | bugs_dist | bugs_note;
+	bugs_line %= bugs_parameter | bugs_default_value | bugs_dist | bugs_note;
 	bugs_lines = lit('{') >> bugs_line [push_back(_a,_1)] % ';' > lit('}') [ _val = new_<expression>(AST_node("BugsLines"), _a)  ] ;
 	bugs_file = h.module[push_back(_a,_1)] >> bugs_lines[push_back(_a,_1)] >> eoi [ _val = new_<expression>(AST_node("BugsFile"), _a)  ];
 	bugs_file = h.module[push_back(_a,_1)] >> -(bugs_lines[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("BugsFile"), _a)  ];
@@ -963,7 +965,7 @@ expression_ref parse_bugs_file(const string& lines)
   string::const_iterator iter = lines.begin();
   bugs_grammar<string::const_iterator> bugs_parser;
   expression_ref cmd;
-  if (phrase_parse(iter, lines.end(), bugs_parser.bugs_lines, space, cmd) and iter == lines.end())
+  if (phrase_parse(iter, lines.end(), bugs_parser.bugs_file, space, cmd) and iter == lines.end())
     return cmd;
 
   throw myexception()<<"BUGS pharse parse: only parsed "<<lines.substr(0, iter-lines.begin());

@@ -41,6 +41,26 @@ int Model_Notes::find_match_notes(const expression_ref& query, std::vector<expre
   return -1;
 }
 
+int Model_Notes::n_modules() const
+{
+  return modules.size();
+}
+
+Program& Model_Notes::get_module(int i)
+{
+  return modules[i];
+}
+
+const Program& Model_Notes::get_module(int i) const
+{
+  return modules[i];
+}
+
+void Model_Notes::add_module(const Program& m)
+{
+  return modules.push_back(m);
+}
+
 Model_Notes::Model_Notes()
 { }
 
