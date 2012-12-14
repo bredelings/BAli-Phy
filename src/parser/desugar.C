@@ -435,7 +435,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	e = desugar(m, e, bound);
       return get_list(v);
     }
-    else if (n->type == "Decls")
+    else if (n->type == "Decls" or n->type == "TopDecls")
     {
       set<string> bound2 = bound;
 
