@@ -279,23 +279,24 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	/*------ Section 4 -------*/
 	module = 
-	  lit("module") >> modid >> -exports >> "where" >> body
-	  | body;
-	body = 
-	  lit('{') >> impdecls >> ';' >> topdecls >> '}'
-	  | lit('{') >> impdecls >> '}'
-	  | lit('{') >> topdecls >> '}';
+	  lit("module") > modid[ push_back(_a,_1) ] > /*-exports >>*/ "where" > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ]
+	  | eps[clear(_a)] >>  body[ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
 
-	topdecls = topdecl % ';';
-	topdecl = 
-	  lit("type") >> simpletype >> '=' >> type
-	  | "data" >> -(context >> "=>") >> simpletype >> -('=' >> constrs) >> -deriving
-	  | "newtype" >> -(context >> "=>") >> simpletype >> '=' >> newconstr >> -deriving
-	  | "class" >> -(scontext >> "=>") >> tycls >> tyvar >> -("where" >> cdecls)
-	  | "instance" >> -(scontext >> "=>") >> qtycls >> inst >> -("where" >> idecls)
-	  | "default" >> *type
+	body = 
+	  //	  lit('{') >> impdecls >> ';' >> topdecls >> '}'
+	  //	  | lit('{') >> impdecls >> '}'
+	  lit('{') >> topdecls [ push_back(_a,_1) ] > '}' >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
+
+	topdecls = topdecl [ push_back(_a,_1) ] % ';' >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
+	topdecl %= 
+	  //	  lit("type") >> simpletype >> '=' >> type
+	  //	  | "data" >> -(context >> "=>") >> simpletype >> -('=' >> constrs) >> -deriving
+	  //	  | "newtype" >> -(context >> "=>") >> simpletype >> '=' >> newconstr >> -deriving
+	  //	  | "class" >> -(scontext >> "=>") >> tycls >> tyvar >> -("where" >> cdecls)
+	  //	  | "instance" >> -(scontext >> "=>") >> qtycls >> inst >> -("where" >> idecls)
+	  //	  | "default" >> *type
 	  //	  | "foreign" >> fdecl
-	  //	  | decl 
+	  decl 
 	  ;
 
 	decls = lit('{') > (decl % ';')[_val = new_<expression>(AST_node("Decls"), _1)] > '}';
@@ -304,11 +305,11 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  (funlhs | pat)[push_back(_a,_1)] >> rhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Decl"), _a)  ];
 
 	// class declarations
-	cdecls %= lit('{') >> cdecl % ';' >> '}';
+	cdecls %= lit('{') >> cdecl % ';' > '}';
 	//	cdecl  %= gendecl | (funlhs | var) >> rhs;
 
 	// instance declarations
-	idecls %= lit('{') >> idecl % ';' >> '}';
+	idecls %= lit('{') >> idecl % ';' > '}';
 	//	idecl  %= (funlhs | var) >> rhs | eps;
 
 	//	gendecl %= vars >> "::" >>  -(context >> "=>") >> type 
@@ -338,13 +339,13 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	h_class %= qtycls >> tyvar | qtycls >> lit('(') >> tyvar >> +atype >> lit(')');
 
 	/*----- Section 4.2.1 ------*/
-	newconstr = con >> atype | con >> '{' >> var >> "::" >> type >> '}';
+	newconstr = con >> atype | con >> '{' >> var >> "::" >> type > '}';
 	simpletype = tycon >> *tyvar;
 	constrs = +constr;
 	constr = 
 	  con >> *(-lit('!') >> atype) 
 	  | (btype | '!' >> atype) >> conop >> (btype | '!' >> atype)
-	  | con >> '{' >> *fielddecl >> '}';
+	  | con >> '{' >> *fielddecl > '}';
 
 	fielddecl = vars >> "::" >> (type | '!' >> atype);
 	//	deriving = lit("deriving") >> (dclass | lit("()") | '(' >> dclass%',' >> ')');
@@ -489,6 +490,54 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	on_error<fail>
 	  (
 	   decl
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   topdecls
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   module
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   body
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   topdecl
 	   , std::cout
 	   << val("Error! Expecting ")
 	   << _4
@@ -676,11 +725,11 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string(), ascii::space_type> fpat;  
 
   /*----- Section 4 ------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> module;
-  qi::rule<Iterator, std::string(), ascii::space_type> body;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> module;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> body;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> topdecls;
-  qi::rule<Iterator, std::string(), ascii::space_type> topdecl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> topdecls;
+  qi::rule<Iterator, expression_ref(), ascii::space_type> topdecl;
 
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> decls;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> decl;
@@ -748,11 +797,13 @@ template <typename Iterator>
 struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 {
   qi::rule<Iterator, expression_ref(), ascii::space_type> bugs_line;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_lines;
   qi::rule<Iterator, std::string()> text;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_dist;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_default_value;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_note;
+
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_lines;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_file;
   haskell_grammar<Iterator> h;
 
     bugs_grammar() : bugs_grammar::base_type(bugs_line)
@@ -786,7 +837,33 @@ struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 	bugs_note = h.exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
 
 	bugs_line %= bugs_default_value | bugs_dist | bugs_note;
-	bugs_lines = bugs_line [push_back(_a,_1)] % ';' >> eoi [ _val = new_<expression>(AST_node("BugsLines"), _a)  ];
+	bugs_lines = lit('{') >> bugs_line [push_back(_a,_1)] % ';' > lit('}') [ _val = new_<expression>(AST_node("BugsLines"), _a)  ] ;
+	bugs_file = h.module[push_back(_a,_1)] >> bugs_lines[push_back(_a,_1)] >> eoi [ _val = new_<expression>(AST_node("BugsFile"), _a)  ];
+	bugs_file = h.module[push_back(_a,_1)] >> -(bugs_lines[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("BugsFile"), _a)  ];
+	
+	on_error<fail>
+	  (
+	   bugs_file
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   bugs_lines
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
 
 	on_error<fail>
 	  (
