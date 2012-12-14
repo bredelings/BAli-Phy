@@ -186,7 +186,7 @@ protected:
 
   void collect_garbage() const;
 public:
-  context& operator+=(const Program& D);
+  context& operator+=(const std::vector<Program>& D);
 
   context& operator=(const context& c);
 
@@ -196,9 +196,7 @@ public:
 
   context(const std::vector<expression_ref>&);
 
-  context(const std::vector<expression_ref>&, const Program& P1);
-
-  context(const std::vector<expression_ref>&, const Program& P1, const Program& P2);
+  context(const std::vector<expression_ref>&, const std::vector<Program>& P);
 
   ~context();
 };

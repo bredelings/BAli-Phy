@@ -519,50 +519,53 @@ closure context::translate_refs(closure&& C) const
   return C2;
 }
 
-context& context::operator+=(const Program& P2)
+context& context::operator+=(const std::vector<Program>& P2)
 {
   // FIXME - this is really creating a combined program, not just importing aliases!
   // At this level, aliases should be overwritten with local function bodies.
   // Aliases are really undefined functions!
 
   // Import the symbols in P2 into our symbol table, and add aliases.
-  P.modify()->import_module(P2, P2.module_name, false);
+  for(const auto p: P2)
+    P.modify()->import_module(p, p.module_name, false);
 
   // Give each identifier a pointer to an unused location
-  for(const auto& s: P2.get_symbols())
-  {
-    const symbol_info& S = s.second;
-
-    if (S.scope != local_scope) continue;
-
-    if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
-
-    if (identifiers().count(S.name))
-      throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined in module '"<<P->module_name<<"'";
-
-    add_identifier(S.name);
-  }
+  for(const auto p: P2)
+    for(const auto& s: p.get_symbols())
+    {
+      const symbol_info& S = s.second;
+      
+      if (S.scope != local_scope) continue;
+      
+      if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+      
+      if (identifiers().count(S.name))
+	throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined in module '"<<P->module_name<<"'";
+      
+      add_identifier(S.name);
+    }
 
   // Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-  for(const auto& s: P2.get_symbols())
-  {
-    const symbol_info& S = s.second;
-
-    if (S.scope != local_scope) continue;
-
-    if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
-
-    // get the root for each identifier
-    map<string, root_t>::iterator loc = identifiers().find(S.name);
-    assert(loc != identifiers().end());
-    root_t r = loc->second;
-    int R = *r;
-
-    expression_ref F = P2.get_function(S.name);
-
-    assert(R != -1);
-    set_C(R, preprocess(F) );
-  }
+  for(const auto p: P2)
+    for(const auto& s: p.get_symbols())
+    {
+      const symbol_info& S = s.second;
+      
+      if (S.scope != local_scope) continue;
+      
+      if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+      
+      // get the root for each identifier
+      map<string, root_t>::iterator loc = identifiers().find(S.name);
+      assert(loc != identifiers().end());
+      root_t r = loc->second;
+      int R = *r;
+      
+      expression_ref F = p.get_function(S.name);
+      
+      assert(R != -1);
+      set_C(R, preprocess(F) );
+    }
 
   return *this;
 }
@@ -584,7 +587,7 @@ context::context()
    P(new Program("Main")),
    token(memory->get_unused_token())
 { 
-  (*this) += get_Prelude();
+  (*this) += {get_Prelude()};
 }
 
 // FIXME - this should be shared with Model::add_submodel( ), but we need to call Model::add_notes( ).
@@ -622,34 +625,16 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
 }
 
 context::context(const vector<expression_ref>& N)
+  :context(N,{})
+{ }
+
+context::context(const vector<expression_ref>& N, const vector<Program>& Ps)
   :memory(new reg_heap()),
    P(new Program("Main")),
    token(memory->get_unused_token())
 {
-  (*this) += get_Prelude();
-
-  add_submodel(*this, N);
-}
-
-context::context(const vector<expression_ref>& N, const Program& P1)
-  :memory(new reg_heap()),
-   P(new Program("Main")),
-   token(memory->get_unused_token())
-{
-  (*this) += get_Prelude();
-  (*this) += P1;
-
-  add_submodel(*this, N);
-}
-
-context::context(const vector<expression_ref>& N, const Program& P1, const Program& P2)
-  :memory(new reg_heap()),
-   P(new Program("Main")),
-   token(memory->get_unused_token())
-{
-  (*this) += get_Prelude();
-  (*this) += P1;
-  (*this) += P2;
+  (*this) += {get_Prelude()};
+  (*this) += Ps;
 
   add_submodel(*this, N);
 }

@@ -1034,9 +1034,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    features(0),
    branch_length_max(-1)
 {
-  C += SModel_Functions();
-  C += Distribution_Functions();
-  C += PopGen_Functions();
+  C += { SModel_Functions(), Distribution_Functions(), Range_Functions(), PopGen_Functions() };
   // FIXME: add C += IModel_Functions() instead of referencing the operations directly.  Then we could parse a text file.
   
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
@@ -1086,7 +1084,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
   Program imodels_program("IModels");
   imodels_program.def_function("models", 0, (listArray_, get_list(imodels_).exp()));
-  C += imodels_program;
+  C += { imodels_program };
   
   // check that we only map existing smodels to data partitions
   for(int i=0;i<smodel_for_partition.size();i++) {
@@ -1154,7 +1152,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   Program parameter_program("Parameters");
   parameter_program.def_function("substitutionBranchLengths", 0, (listArray_,(fmap,listArray_,substitutionBranchLengthsList)));
-  C += parameter_program;
+  C += {parameter_program};
 
   // register the cached transition_p indices
   branch_transition_p_indices.resize(n_branch_means(), n_smodels());
@@ -1247,7 +1245,7 @@ neighbors t n = fmap (targetNode t) (edgesOutOfNode t n);\
 edgesBeforeEdge t b = case (nodesForEdge t b) of {(n1,n2) -> [edgeForNodes t (n,n1) | n <- neighbors t n1, n /= n2 ]}\
 }";
 
-  C += tree_program;
+  C += {tree_program};
 
   for(int n=0; n < T->n_nodes(); n++)
   {

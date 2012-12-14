@@ -188,7 +188,7 @@ formula_expression_ref coerce_to_EM(string smodel,
 
   formula_expression_ref S = get_smodel_(smodel, a, frequencies);
 
-  if (S.exp() and dynamic_pointer_cast<const SymmetricMatrixObject>(S.result(Distribution_Functions())))
+  if (S.exp() and dynamic_pointer_cast<const SymmetricMatrixObject>(S.result({Distribution_Functions(),Range_Functions()})))
     return S;
 
   throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
@@ -495,7 +495,7 @@ formula_expression_ref coerce_to_frequency_model(const formula_expression_ref& M
 						 const object_ptr<const alphabet>& /* a */,
 						 const shared_ptr< const valarray<double> >& /* frequencies */)
 {
-  if (is_exactly(M.result(SModel_Functions(),Distribution_Functions()), "ReversibleFrequency"))
+  if (is_exactly(M.result({SModel_Functions(),Distribution_Functions(),Range_Functions()}), "ReversibleFrequency"))
     return M;
 
   throw myexception()<<": '"<<M.exp()<<"' is not an exchange model.";
@@ -516,7 +516,7 @@ formula_expression_ref coerce_to_RA(const formula_expression_ref& M,
 				    const object_ptr<const alphabet>& a,
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
-  object_ref result = M.result(SModel_Functions(), Distribution_Functions());
+  object_ref result = M.result({SModel_Functions(), Distribution_Functions(),Range_Functions()});
 
   if (is_exactly(result, "F81"))
     return M;
@@ -567,7 +567,7 @@ formula_expression_ref coerce_to_MM(const formula_expression_ref& M,
 				    const object_ptr<const alphabet>& a, 
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (M.exp() and is_exactly(M.result(SModel_Functions(),Distribution_Functions()), "MixtureModel"))
+  if (M.exp() and is_exactly(M.result({SModel_Functions(),Distribution_Functions(),Range_Functions()}), "MixtureModel"))
     return M;
 
   try { 
@@ -597,7 +597,7 @@ formula_expression_ref coerce_to_MMM(const formula_expression_ref& M,
 				     const object_ptr<const alphabet>& a,
 				     const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (is_exactly(M.result(SModel_Functions(),Distribution_Functions()), "MixtureModels"))
+  if (is_exactly(M.result({SModel_Functions(),Distribution_Functions(),Range_Functions()}), "MixtureModels"))
     return M;
 
   try { 

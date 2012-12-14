@@ -863,6 +863,7 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
   Program BUGS(module_name);
   BUGS.import_module(P.get_Program(),"Prelude", false);
   BUGS.import_module(P.get_Program(),"Distributions", false);
+  BUGS.import_module(P.get_Program(),"Range", false);
   BUGS.import_module(P.get_Program(),"SModel", false);
   BUGS.import_module(P.get_Program(),"Main", false);
   BUGS.import_module(P.get_Program(),"PopGen", false);
