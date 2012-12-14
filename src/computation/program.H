@@ -83,7 +83,11 @@ public:
 
   Program& operator+=(const Def&);
 
+  Program& operator+=(const char*);
+
   Program& operator+=(const std::string&);
+
+  Program& operator+=(const expression_ref&);
 
   void add_alias(const std::string&);
 
