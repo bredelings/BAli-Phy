@@ -223,11 +223,10 @@ int Model::add_note(const expression_ref& E)
   if (find_match(query, C.get_note(index), results))
   {
     object_ptr<const parameter> var = is_a<parameter>(results[0]);
-    object_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[1]->head);
     int param_index = find_parameter(var->parameter_name);
     if (param_index == -1)
       throw myexception()<<"Cannot add bound '"<<E<<"' on missing variable '"<<var->parameter_name<<"'";
-    set_bounds(param_index , *b);
+    set_bounds(param_index , results[1]);
   }
 
   // 2. Check to see if this expression adds a prior
@@ -433,8 +432,7 @@ Model::Model(const vector<expression_ref>& notes)
     if (found != -1)
     {
       assert(results.size());
-      object_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[0]);
-      set_bounds(i,*b);
+      set_bounds(i,results[0]);
     }
   }
 

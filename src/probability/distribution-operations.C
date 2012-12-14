@@ -512,7 +512,7 @@ closure GetBounds::operator()(OperationArgs& Args) const
   if (has_upper)
     upper = *has_upper;
   
-  return Bounds<Double>(has_lower, lower, has_upper, upper);
+  return Bounds<double>(has_lower, lower, has_upper, upper);
 }
 
 Program Range_Functions()

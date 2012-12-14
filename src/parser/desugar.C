@@ -899,26 +899,9 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
   if (topdecls)
     BUGS += topdecls;
 
-  // 9. Add notes -- translating VarBounds
-  for(const auto& cmd_: bugs_notes->sub)
-  {
-    expression_ref cmd = desugar(BUGS,cmd_);
-    if (is_exactly(cmd, "VarBounds"))
-    {
-      bool lower = cmd->sub[1].is_a<Double>();
-      double lowerb = 0;
-      if (lower)
-	lowerb = *(cmd->sub[1].is_a<Double>());
-
-      bool upper = cmd->sub[2].is_a<Double>();
-      double upperb = 0;
-      if (upper)
-	upperb = *(cmd->sub[2].is_a<Double>());
-      cmd = expression_ref{cmd->head,{cmd->sub[0],Bounds<double>(lower,lowerb,upper,upperb)}};
-    }
-
-    N.add_note(cmd);
-  }
+  // 9. Add notes
+  for(const auto& cmd: bugs_notes->sub)
+    N.add_note(desugar(BUGS,cmd));
 
   // 10. Add Loggers for any locally declared parameters
   for(const auto& name: new_parameters)

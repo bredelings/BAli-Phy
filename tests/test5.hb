@@ -10,7 +10,7 @@ module Test where
   y ~ normal(x, 1.0);
 
   p ~ betaD(10.0, 1.0);
-  VarBounds p 0.0 1.0;
+  VarBounds p (getBounds (between 0.0 1.0));
 
   z ~ mixture([( p, normal(x,1.0) ),(1.0-p, normal(y,1.0)) ]);
 
@@ -21,7 +21,7 @@ module Test where
   x2 := 2.0;
 
   theta ~ exponential(1.0);
-  VarBounds theta 0.0 False;
+  VarBounds theta (getBounds (above 0.0));
   data getAFS filename1 ~ afsGroup (theta);
 
   theta1 ~ exponential(1.0);
@@ -30,8 +30,8 @@ module Test where
   i ~ bernoulli(0.5);
 
   p2 ~ betaD(2.0, 2.0);
-  VarBounds p2 0.0 1.0;
-  VarBounds theta1 0.0 False;
-  VarBounds theta2 0.0 False;
+  VarBounds p2 (getBounds (between 0.0 1.0));
+  VarBounds theta1 (getBounds (above 0.0));
+  VarBounds theta2 (getBounds (above 0.0));
   data getAFS filename2 ~ afsMixture ([theta1,theta2],[p2,1.0-p2])
 }
