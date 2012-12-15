@@ -33,9 +33,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 
 #include "mytypes.H"
 #include "bounds.H"
-#include "cow-ptr.H"
 #include "object.H"
-#include "owned-ptr.H"
 #include "computation/computation.H"
 #include "computation/operation.H"
 #include "computation/context.H"
