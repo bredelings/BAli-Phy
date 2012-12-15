@@ -41,9 +41,7 @@ const expression_ref UnwrapDD = var("UnwrapDD");
  * 3. Convert Defs to use the machine.
  * 4. SYNTAX: replace a ~ b ( c ) with a ~ b
  * 5. SYNTAX: external a ~ b [To not declare all parameters]
- * 6. Allows defs or something in BUGS files.
- *    - Allow multiline commands in BUGS files.
- *    - What then separates things?
+ * 6. [DONE] Allow defs in BUGS files.
  * 7. Rationalize Model_Notes, formula_expression_ref, and program?
  *    - Make Model_Notes into a Program with notes added?
  *    - Could we parse a BUGS file in to a Model_Notes?
@@ -62,6 +60,8 @@ Program make_Prelude()
   P.def_function("intToDouble", 1, lambda_expression( Conversion<int,double>() ) ); 
   P.def_constructor("True",0);
   P.def_constructor("False",0);
+  P.def_constructor("Just",1);
+  P.def_constructor("Nothing",0);
 
   // foldr f z []  = z
   // foldr f z x:xs = (f x (foldr f z xs))

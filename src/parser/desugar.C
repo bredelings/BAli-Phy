@@ -226,7 +226,7 @@ expression_ref desugar_infixpat(const Program& m, const vector<expression_ref>& 
 
 set<string> find_bound_vars(const expression_ref& E)
 {
-  if (object_ptr<const AST_node> n = E.is_a<AST_node>())
+  if (auto n = E.is_a<AST_node>())
   {
     if (n->type == "apat_var")
     {
@@ -238,6 +238,24 @@ set<string> find_bound_vars(const expression_ref& E)
   set<string> bound;
   for(const auto& e:E->sub)
     add(bound, find_bound_vars(e));
+
+  return bound;
+}
+
+set<string> find_all_ids(const expression_ref& E)
+{
+  if (auto n = E.is_a<AST_node>())
+  {
+    if (n->type == "id")
+    {
+      assert(not E->size());
+      return {n->value};
+    }
+  }
+
+  set<string> bound;
+  for(const auto& e:E->sub)
+    add(bound, find_all_ids(e));
 
   return bound;
 }
@@ -417,7 +435,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	e = desugar(m, e, bound);
       return get_list(v);
     }
-    else if (n->type == "Decls")
+    else if (n->type == "Decls" or n->type == "TopDecls")
     {
       set<string> bound2 = bound;
 
@@ -722,7 +740,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 
       return (default_value, v[0], v[1]);
     }
-    else if (n->type == "BugsDist")
+    else if (n->type == "BugsDist" or n->type == "BugsExternalDist" or n->type == "BugsDataDist")
     {
       for(auto& e: v)
 	e = desugar(m, e, bound);
@@ -757,20 +775,13 @@ expression_ref parse_haskell_line(const Program& P, const string& line)
 
 expression_ref parse_bugs_line(const Program& P, const string& line)
 {
-  expression_ref cmd;
-  try
-  {
-    cmd = parse_bugs_line(line);
+  expression_ref cmd = parse_bugs_line(line);
 
-    std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
-    cmd = desugar(P, cmd);
-    std::cerr<<"        processed: "<<cmd<<"\n";
-    std::cerr<<std::endl;
-  }
-  catch (const myexception& e)
-  {
-    std::cerr<<e.what()<<"\n";
-  }
+  std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
+  cmd = desugar(P, cmd);
+  std::cerr<<"        processed: "<<cmd<<"\n";
+  std::cerr<<std::endl;
+
   return cmd;
 }
 
@@ -781,76 +792,125 @@ bool is_all_space(const string& line)
   return true;
 }
 
-Model_Notes read_BUGS(const Parameters& P, const string& filename, const string& module_name)
+string read_file(const string& filename)
 {
-  // Um, so what is the current program?
+  checked_ifstream file(filename);
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  return buffer.str();
+}
 
-  // 1. Well, its got a collection of identifiers.
-  //   (a) Some of these are functions
-  //   (b) Some of these are parameters
-  // 2. We've got a collection of heads.
+string read_file(const string& filename, const string& description)
+{
+  checked_ifstream file(filename,description);
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  return buffer.str();
+}
 
-  checked_ifstream file(filename,"BUGS file");
-  vector<string> lines;
+bool is_AST(const expression_ref& E, const string& type)
+{
+  auto ast = E.is_a<AST_node>();
+  return ast->type == type;
+}
 
+bool is_AST(const expression_ref& E, const string& type, const string& value)
+{
+  auto ast = E.is_a<AST_node>();
+  return ast->type == type and ast->value == value;
+}
+
+Model_Notes read_BUGS(const Parameters& P, const string& filename, const string& module_name_)
+{
+  // 1. Read file into string.
+  string file_contents = read_file(filename, "BUGS File");
+
+  // 2. bugs_file = module + notes
+  expression_ref bugs_file = parse_bugs_file(file_contents);
+  assert(is_AST(bugs_file,"BugsFile"));
+
+  expression_ref module = bugs_file->sub[0];
+  assert(is_AST(module,"Module"));
+  expression_ref bugs_notes;
+  if (bugs_file->sub.size() == 2)
   {
-    string line;
-    while(getline(file,line))
-    {
-      // Allow comments
-      if (line.size() and line[0] == '#') continue;
-
-      // Skip blank lines
-      if (is_all_space(line)) continue;
-      
-      lines.push_back(line);
-    }
+    bugs_notes = bugs_file->sub[1];
+    assert(is_AST(bugs_notes,"BugsLines"));
   }
 
-  std::cerr<<"Read "<<lines.size()<<" lines from Hierarchical Model Description file '"<<filename<<"'\n";
+  // 3. module = [optional name] + body
+  string module_name = module_name_;
+  expression_ref body;
+  if (module->sub.size() == 1)
+    body = module->sub[0];
+  else
+  {
+    module_name = *module->sub[0].is_a<String>();
+    body = module->sub[1];
+  }
+  assert(is_AST(body,"Body"));
 
+  // 4. body = impdecls + [optional topdecls]
+  expression_ref impdecls;
+  expression_ref topdecls;
+  if (body->sub.size() == 1)
+  {
+    topdecls = body->sub[0];
+    assert(is_AST(topdecls,"TopDecls"));
+  }
+
+  // 5. Process imports
   Program BUGS(module_name);
   BUGS.import_module(P.get_Program(),"Prelude", false);
   BUGS.import_module(P.get_Program(),"Distributions", false);
+  BUGS.import_module(P.get_Program(),"Range", false);
   BUGS.import_module(P.get_Program(),"SModel", false);
   BUGS.import_module(P.get_Program(),"Main", false);
   BUGS.import_module(P.get_Program(),"PopGen", false);
-  for(const auto& line: lines)
-  {
-    expression_ref cmd = parse_bugs_line(BUGS, line);
-
-    if (is_exactly(cmd, "DeclareParameter"))
-    {
-      string name = *(cmd->sub[0].assert_is_a<String>());
-      BUGS.declare_parameter(name);
-    }
-  }
 
   Model_Notes N;
-  for(const auto& line: lines)
+
+  // 6a. Find explicitly and implicitly-declared parameters
+  set<string> new_parameters;
+  for(const auto& cmd: bugs_notes->sub)
   {
-    expression_ref cmd = parse_bugs_line(BUGS, line);
-    if (is_exactly(cmd, "DeclareParameter"))
+    // Separate into BugsDist and ForeignBugsDist?
+    // Then only declare params in BugsDist which would require previous (foreign) declarations for all params in ForeignBugsDist.
+    if (is_AST(cmd,"BugsDist"))
+      add(new_parameters, find_all_ids(cmd->sub[0]));
+    else if (is_AST(cmd,"Parameter"))
     {
       string name = *(cmd->sub[0].assert_is_a<String>());
-      cmd = new expression{cmd->head,{parameter(BUGS.lookup_symbol(name).name)}};
+      new_parameters.insert(name);
     }
-    else if (is_exactly(cmd, "VarBounds"))
-    {
-      bool lower = cmd->sub[1].is_a<Double>();
-      double lowerb = 0;
-      if (lower)
-	lowerb = *(cmd->sub[1].is_a<Double>());
-
-      bool upper = cmd->sub[2].is_a<Double>();
-      double upperb = 0;
-      if (upper)
-	upperb = *(cmd->sub[2].is_a<Double>());
-      cmd = expression_ref{cmd->head,{cmd->sub[0],Bounds<double>(lower,lowerb,upper,upperb)}};
-    }
-
-    N.add_note(cmd);
   }
+
+  // 7. Actually declare them.
+  for(const auto& id: new_parameters)
+  {
+    if (not BUGS.is_declared(id))
+    {
+      BUGS.declare_parameter(id);
+      def_parameter(N,module_name+"."+id);
+    }
+  }
+
+  // 8. Declare objects from the Haskell module
+  if (topdecls)
+    BUGS += topdecls;
+
+  // 9. Add notes
+  for(const auto& cmd: bugs_notes->sub)
+    N.add_note(desugar(BUGS,cmd));
+
+  // 10. Add Loggers for any locally declared parameters
+  for(const auto& name: new_parameters)
+  {
+    expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
+    N.add_note((make_logger,parameter(name)));
+  }
+
+  N.add_module(BUGS);
 
   return N;
 }

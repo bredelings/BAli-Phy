@@ -6,7 +6,7 @@
 #include "computation/operation.H"
 #include "computation/computation.H"
 #include "probability/probability.H"
-
+#include "bounds.H"
 #include "computation/prelude.H"
 
 using std::vector;
@@ -478,15 +478,63 @@ closure uniform_density::operator()(OperationArgs& Args) const
 // Fields: n_random, n_parameters, string, density op
 expression_ref prob_density = lambda_expression( constructor("Distributions.ProbDensity",5) );
 
+struct GetBounds: public Operation
+{
+  GetBounds* clone() const {return new GetBounds;}
+    
+  tribool compare(const Object& O) const
+  {
+    if (this == &O) 
+      return true;
+
+    if (typeid(*this) != typeid(O)) return false;
+
+    return true;
+  }
+
+  closure operator()(OperationArgs& Args) const;
+
+  std::string name() const {return "_GetBounds";}
+    
+  GetBounds():Operation(2) { }
+};
+
+closure GetBounds::operator()(OperationArgs& Args) const
+{
+  auto L = Args.evaluate(0);
+  auto U = Args.evaluate(1);
+  auto has_lower = boost::dynamic_pointer_cast<const Double>(L);
+  auto has_upper = boost::dynamic_pointer_cast<const Double>(U);
+  double lower = 0;
+  double upper = 0;
+  if (has_lower)
+    lower = *has_lower;
+  if (has_upper)
+    upper = *has_upper;
+  
+  return Bounds<double>(has_lower, lower, has_upper, upper);
+}
+
 Program Range_Functions()
 {
   Program P("Range");
+  P.import_module(get_Prelude(),"Prelude",false);
   P.def_constructor("OpenInterval",2);
   P.def_constructor("Real",1);
   P.def_constructor("Inf",0);
   P.def_constructor("NegInf",0);
+  P.def_function("builtinGetBounds", 2, lambda_expression( GetBounds() ) );
 
-  P += "{R1 = OpenInterval NegInf Inf}";
+  P += "{realLine = OpenInterval Nothing Nothing}";
+  P += "{above l = OpenInterval (Just l) Nothing}";
+  P += "{below u = OpenInterval Nothing (Just u)}";
+  P += "{between l u = OpenInterval (Just l) (Just u)}";
+  P += "{getBounds (OpenInterval Nothing Nothing)   = builtinGetBounds () ();\
+         getBounds (OpenInterval Nothing (Just u))  = builtinGetBounds () u;\
+         getBounds (OpenInterval (Just l) Nothing)  = builtinGetBounds l ();\
+         getBounds (OpenInterval (Just l) (Just u)) = builtinGetBounds l u;\
+         getBounds _                                = ()}";
+
   return P;
 }
 
@@ -494,6 +542,7 @@ Program Distribution_Functions()
 {
   Program P("Distributions");
   P.import_module(get_Prelude(),"Prelude",false);
+  P.import_module(Range_Functions(),"Range",false);
 
   // Note: we separate the "builtin" versions (which don't do case analysis on their arguments)
   //       from the from the real versions (which do).
@@ -544,7 +593,7 @@ Program Distribution_Functions()
   P += "{mixtureDensity ((p1,(ProbDensity _ density1 _ _ _,args1)):l) x = (doubleToLogDouble p1)*(density1 args1 x)+(mixtureDensity l x);\
          mixtureDensity [] _ = (doubleToLogDouble 0.0)}";
 
-  P += "{mixtureDefault ((p1,(ProbDensity _ _ _ d _,args1)):l) = d}";
+  P += "{mixtureDefault ((p1,(ProbDensity _ _ _ d _,args1)):l) = (d args1)}";
   P += "{dirichletDefault l = let {n = length l} in (take n (repeat 1.0/(intToDouble n)))}";
   P += "{iidDefault l = let {n = length l} in (take n (repeat 1.0/(intToDouble n)))}";
 
@@ -553,29 +602,30 @@ Program Distribution_Functions()
 
   P += "{bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p))}";
   P += "{bernoulli args = (ProbDensity \"Bernoulli\" bernoulliDensity (error \"Bernoulli has no quantile\") (\\_->True) (), args)}";
-  P += "{normal args = (ProbDensity \"Normal\" normalDensity () (\\_->0.0) (), args)}";
-  P += "{exponential args = (ProbDensity \"Exponential\" exponentialDensity exponentialQuantile (\\mu->mu) (), args)}";
-  P += "{gamma args = (ProbDensity \"Gamma\" gammaDensity gammaQuantile (\\(a,b)->a*b) (), args)}";
-  P += "{betaD args = (ProbDensity \"Beta\"        betaDensity        betaQuantile (\\(a,b)->a/(a+b)) (), args)}";
-  P += "{mixture args = (ProbDensity \"Mixture\" mixtureDensity () mixtureDefault (), args)}";
+  P += "{normal args = (ProbDensity \"Normal\" normalDensity () (\\_->0.0) (\\_->realLine), args)}";
+  P += "{exponential args = (ProbDensity \"Exponential\" exponentialDensity exponentialQuantile (\\mu->mu) (\\_->above 0.0), args)}";
+  P += "{gamma args = (ProbDensity \"Gamma\" gammaDensity gammaQuantile (\\(a,b)->a*b) (\\_->above 0.0), args)}";
+  P += "{betaD args = (ProbDensity \"Beta\"        betaDensity        betaQuantile (\\(a,b)->a/(a+b)) (\\_->between 0.0 1.0), args)}";
+  P += "{mixture args = (ProbDensity \"Mixture\" mixtureDensity () mixtureDefault (\\_->()), args)}";
   P += "{dirichlet args = (ProbDensity \"Dirichlet\" dirichletDensity (error \"Dirichlet has no quantiles\") () (), args)}";
-  P += "{laplace args = (ProbDensity \"Laplace\" laplaceDensity () (\\(m,s)->m) (), args)}";
-  P += "{logLaplace args = (ProbDensity \"LogLaplace\" logLaplaceDensity () (\\(m,s)->log m) (), args)}";
-  P += "{logExponential args = (ProbDensity \"LogExponential\" logExponentialDensity () (\\mu->log mu) (), args)}";
-  P += "{logNormal args = (ProbDensity \"LogNormal\" logNormalDensity logNormalQuantile () (), args)}";
-  P += "{logGamma args = (ProbDensity \"LogGamma\" logGammaDensity () () (), args)}";
-  P += "{uniform args = (ProbDensity \"Uniform\" uniformDensity () () (), args)}";
-  P += "{cauchy args = (ProbDensity \"Cauchy\" cauchyDensity () () (), args)}";
+  P += "{laplace args = (ProbDensity \"Laplace\" laplaceDensity () (\\(m,s)->m) (\\_->realLine), args)}";
+  P += "{logLaplace args = (ProbDensity \"LogLaplace\" logLaplaceDensity () (\\(m,s)->log m) (\\_->above 0.0), args)}";
+  P += "{logExponential args = (ProbDensity \"LogExponential\" logExponentialDensity () (\\mu->log mu) (\\_->above 0.0), args)}";
+  P += "{logNormal args = (ProbDensity \"LogNormal\" logNormalDensity logNormalQuantile () (\\_->above 0.0), args)}";
+  P += "{logGamma args = (ProbDensity \"LogGamma\" logGammaDensity () () (\\_->above 0.0), args)}";
+  P += "{uniform args = (ProbDensity \"Uniform\" uniformDensity () () (\\(l,u)->between l u), args)}";
+  P += "{cauchy args = (ProbDensity \"Cauchy\" cauchyDensity () () realLine, args)}";
+  P += "{distRange (ProbDensity _ _ _ _ r,args) = r args}";
 
   P += "{iidDensity (n,((ProbDensity _ density _ _ _),args)) xs = let {densities = (map (density args) xs) ; pr = foldl' (*) (doubleToLogDouble 1.0) densities} in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
-  P += "{iid args = (ProbDensity \"i.i.d.\" iidDensity () () (), args )}";
+  P += "{iid args = (ProbDensity \"i.i.d.\" iidDensity () () (\\_->()), args )}";
 
   P += "{\
 plateDensity (n,f) xs = let {xs' = zip [1..] xs;\
                              densities = map (\\(i,x) -> case (f i) of {(ProbDensity _ d _ _ _, a) -> d a x}) xs';\
                              pr = foldl' (*) (doubleToLogDouble 1.0) densities}\
                         in if (length xs == n) then pr else (doubleToLogDouble 0.0)}";
-  P += "{plate args = (ProbDensity \"Plate\" plateDensity () () (), args )}";
+  P += "{plate args = (ProbDensity \"Plate\" plateDensity () () (\\_->()), args )}";
 
   return P;
 }

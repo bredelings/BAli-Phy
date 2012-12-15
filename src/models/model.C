@@ -41,31 +41,6 @@ string parameter_name(const string& prefix, int i,int n)
   return prefix + convertToString(i);
 }
 
-Parameter::Parameter(const string& n)
-  :name(n)
-{
-}
-
-Parameter::Parameter(const string& n, object_ptr<const Object> v)
-  :name(n), value(v)
-{
-}
-
-Parameter::Parameter(const string& n, object_ptr<const Object> v, const Bounds<double>& b)
-  :name(n), value(v), bounds(b)
-{
-}
-
-Parameter::Parameter(const string& n, const Object& v)
-  :name(n), value(v)
-{
-}
-
-Parameter::Parameter(const string& n, const Object& v, const Bounds<double>& b)
-  :name(n), value(v), bounds(b)
-{
-}
-
 vector<expression_ref> model_parameter_expressions(const Model& M)
 {
   vector< expression_ref > sub;
@@ -122,21 +97,38 @@ void Model::recalc_all()
   update();
 }
 
-int Model::add_parameter(const Parameter& P)
+int Model::add_parameter(const string& name)
 {
   for(int i=0;i<n_parameters();i++)
-    if (parameter_name(i) == P.name)
-      throw myexception()<<"A parameter with name '"<<P.name<<"' already exists - cannot add another one.";
+    if (parameter_name(i) == name)
+      throw myexception()<<"A parameter with name '"<<name<<"' already exists - cannot add another one.";
 
   int index = n_parameters();
 
-  C.add_parameter(P.name);
+  C.add_parameter(name);
   changed.push_back(true);
-  bounds.push_back(P.bounds);
+  bounds.push_back(-1);
   prior_note_index.push_back(-1);
 
-  if (P.value)
-    C.set_parameter_value(index, *P.value);
+  return index;
+}
+
+int Model::add_parameter(const string& name, const object_ref& o)
+{
+  int index = add_parameter(name);
+
+  if (o)
+    C.set_parameter_value(index, o);
+
+  return index;
+}
+
+int Model::add_parameter(const string& name, const object_ref& o, const Bounds<double>& b)
+{
+  int index = add_parameter(name,o);
+
+  set_bounds(index, b);
+
   return index;
 }
 
@@ -152,6 +144,8 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
 
 vector<int> Model::add_submodel(const Model_Notes& R)
 {
+  C += R.get_modules();
+
   vector<int> new_parameters;
 
   // Find and add the declared names that don't exist yet.
@@ -220,11 +214,10 @@ int Model::add_note(const expression_ref& E)
   if (find_match(query, C.get_note(index), results))
   {
     object_ptr<const parameter> var = is_a<parameter>(results[0]);
-    object_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[1]->head);
     int param_index = find_parameter(var->parameter_name);
     if (param_index == -1)
       throw myexception()<<"Cannot add bound '"<<E<<"' on missing variable '"<<var->parameter_name<<"'";
-    set_bounds(param_index , *b);
+    set_bounds(param_index , results[1]);
   }
 
   // 2. Check to see if this expression adds a prior
@@ -268,6 +261,13 @@ int Model::add_note(const expression_ref& E)
       expression_ref Pr = C.get_expression(prior_index);
       C.set_compute_expression(prior_index, Pr_new * Pr);
     }
+
+    if (auto p = x.is_a<parameter>())
+    {
+      int p_index = find_parameter(p->parameter_name);
+      if (p_index != -1 and bounds[p_index] == -1)
+	set_bounds(p_index,(var("Distributions.distRange"),D));
+    }
   }
 
   return index;
@@ -278,14 +278,42 @@ bool Model::is_random_variable(int i) const
   return prior_note_index[i] != -1;
 }
 
+bool Model::has_bounds(int i) const 
+{
+  if (bounds[i] == -1) return false;
+
+  return dynamic_pointer_cast<const Bounds<double>>(C.evaluate(bounds[i]));
+}
+
 const Bounds<double>& Model::get_bounds(int i) const 
 {
-  return bounds[i];
+  if (bounds[i] == -1)
+    throw myexception()<<"parameter '"<<parameter_name(i)<<"' doesn't have bounds.";
+
+  return *C.evaluate_as<Bounds<double>>(bounds[i]);
+}
+
+void Model::set_bounds(int i,const expression_ref& b) 
+{
+  if (auto B = b.is_a<Bounds<double>>())
+  {
+    set_bounds(i,*B);
+    return;
+  }
+
+  expression_ref E = (var("Range.getBounds"),b);
+  if (bounds[i] == -1)
+    bounds[i] = C.add_compute_expression(E);
+  else
+    C.set_compute_expression(bounds[i],E);
 }
 
 void Model::set_bounds(int i,const Bounds<double>& b) 
 {
-  bounds[i] = b;
+  if (bounds[i] == -1)
+    bounds[i] = C.add_compute_expression(b);
+  else
+    C.set_compute_expression(bounds[i],b);
 }
 
 object_ptr<const Object> Model::get_parameter_value(int i) const
@@ -417,8 +445,7 @@ Model::Model(const vector<expression_ref>& notes)
     if (found != -1)
     {
       assert(results.size());
-      object_ptr<const Bounds<double> > b = C.evaluate_expression_as<Bounds<double> >(results[0]);
-      set_bounds(i,*b);
+      set_bounds(i,results[0]);
     }
   }
 

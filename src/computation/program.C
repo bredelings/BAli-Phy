@@ -493,10 +493,20 @@ Program& Program::operator+=(const Def& D)
   return *this;
 }
 
+Program& Program::operator+=(const char* s)
+{
+  return operator+=(string(s));
+}
+
 Program& Program::operator+=(const string& s)
 {
-  expression_ref D = desugar(*this, parse_haskell_decls(s));
-  assert(D.assert_is_a<AST_node>()->type=="Decls");
+  return operator+=(parse_haskell_decls(s));
+}
+
+Program& Program::operator+=(const expression_ref& H)
+{
+  expression_ref D = desugar(*this, H);
+  assert(D.assert_is_a<AST_node>()->type=="Decls" or D.assert_is_a<AST_node>()->type=="TopDecls");
   vector<expression_ref> decls = D->sub;
 
   // 1. Get names that are being declared.

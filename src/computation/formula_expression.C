@@ -78,19 +78,12 @@ int formula_expression_ref::add_expression(const formula_expression_ref& R)
 
 object_ptr<const Object> formula_expression_ref::result() const
 {
-  Program P("Empty");
-  return result(P);
+  return result({});
 }
 
-object_ptr<const Object> formula_expression_ref::result(const Program& P) const
+object_ptr<const Object> formula_expression_ref::result(const vector<Program>& P) const
 {
   context C(get_notes(),P);
-  return C.evaluate_expression(exp());
-}
-
-object_ptr<const Object> formula_expression_ref::result(const Program& P1, const Program& P2) const
-{
-  context C(get_notes(),P1,P2);
   return C.evaluate_expression(exp());
 }
 

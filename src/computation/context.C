@@ -519,50 +519,53 @@ closure context::translate_refs(closure&& C) const
   return C2;
 }
 
-context& context::operator+=(const Program& P2)
+context& context::operator+=(const std::vector<Program>& P2)
 {
   // FIXME - this is really creating a combined program, not just importing aliases!
   // At this level, aliases should be overwritten with local function bodies.
   // Aliases are really undefined functions!
 
   // Import the symbols in P2 into our symbol table, and add aliases.
-  P.modify()->import_module(P2, P2.module_name, false);
+  for(const auto p: P2)
+    P.modify()->import_module(p, p.module_name, false);
 
   // Give each identifier a pointer to an unused location
-  for(const auto& s: P2.get_symbols())
-  {
-    const symbol_info& S = s.second;
-
-    if (S.scope != local_scope) continue;
-
-    if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
-
-    if (identifiers().count(S.name))
-      throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined in module '"<<P->module_name<<"'";
-
-    add_identifier(S.name);
-  }
+  for(const auto p: P2)
+    for(const auto& s: p.get_symbols())
+    {
+      const symbol_info& S = s.second;
+      
+      if (S.scope != local_scope) continue;
+      
+      if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+      
+      if (identifiers().count(S.name))
+	throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined in module '"<<P->module_name<<"'";
+      
+      add_identifier(S.name);
+    }
 
   // Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-  for(const auto& s: P2.get_symbols())
-  {
-    const symbol_info& S = s.second;
-
-    if (S.scope != local_scope) continue;
-
-    if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
-
-    // get the root for each identifier
-    map<string, root_t>::iterator loc = identifiers().find(S.name);
-    assert(loc != identifiers().end());
-    root_t r = loc->second;
-    int R = *r;
-
-    expression_ref F = P2.get_function(S.name);
-
-    assert(R != -1);
-    set_C(R, preprocess(F) );
-  }
+  for(const auto p: P2)
+    for(const auto& s: p.get_symbols())
+    {
+      const symbol_info& S = s.second;
+      
+      if (S.scope != local_scope) continue;
+      
+      if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+      
+      // get the root for each identifier
+      map<string, root_t>::iterator loc = identifiers().find(S.name);
+      assert(loc != identifiers().end());
+      root_t r = loc->second;
+      int R = *r;
+      
+      expression_ref F = p.get_function(S.name);
+      
+      assert(R != -1);
+      set_C(R, preprocess(F) );
+    }
 
   return *this;
 }
@@ -584,7 +587,7 @@ context::context()
    P(new Program("Main")),
    token(memory->get_unused_token())
 { 
-  (*this) += get_Prelude();
+  (*this) += {get_Prelude()};
 }
 
 // FIXME - this should be shared with Model::add_submodel( ), but we need to call Model::add_notes( ).
@@ -622,34 +625,16 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
 }
 
 context::context(const vector<expression_ref>& N)
+  :context(N,{})
+{ }
+
+context::context(const vector<expression_ref>& N, const vector<Program>& Ps)
   :memory(new reg_heap()),
    P(new Program("Main")),
    token(memory->get_unused_token())
 {
-  (*this) += get_Prelude();
-
-  add_submodel(*this, N);
-}
-
-context::context(const vector<expression_ref>& N, const Program& P1)
-  :memory(new reg_heap()),
-   P(new Program("Main")),
-   token(memory->get_unused_token())
-{
-  (*this) += get_Prelude();
-  (*this) += P1;
-
-  add_submodel(*this, N);
-}
-
-context::context(const vector<expression_ref>& N, const Program& P1, const Program& P2)
-  :memory(new reg_heap()),
-   P(new Program("Main")),
-   token(memory->get_unused_token())
-{
-  (*this) += get_Prelude();
-  (*this) += P1;
-  (*this) += P2;
+  (*this) += {get_Prelude()};
+  (*this) += Ps;
 
   add_submodel(*this, N);
 }
@@ -666,6 +651,9 @@ context::~context()
   memory->release_token(token);
 }
 
+#include "probability/distribution-operations.H"
+#include "computation/operations.H"
+
 expression_ref context::default_parameter_value(int i) const
 {
   expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
@@ -681,8 +669,20 @@ expression_ref context::default_parameter_value(int i) const
     //    assert(find_match_notes(query, results, found+1) == -1);
     return value;
   }
-  else
-    return {};
+
+  results.clear();
+  expression_ref query2 = (distributed, parameter( parameter_name(i) ), match(0));
+  int found2 = find_match_notes(query2, results, 0);
+
+  if (found2 != -1)
+  {
+    expression_ref _ = dummy(-1);
+    expression_ref dist = results[0];
+    expression_ref value = case_expression(results[0],Tuple((prob_density,_,_,_,v1,_),v2),(v1,v2));
+    return value;
+  }
+
+  return {};
 }
 
 reg_heap::root_t context::push_temp_head() const
@@ -699,9 +699,6 @@ std::ostream& operator<<(std::ostream& o, const context& C)
   }
   return o;
 }
-
-#include "probability/distribution-operations.H"
-#include "computation/operations.H"
 
 // note = (~ x D)
 // Pr_i = case D of ((prob_density _ density_op quantile_op _ _), args) -> (density_op x args)

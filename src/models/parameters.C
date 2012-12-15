@@ -584,7 +584,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
 
   string prefix = "P"+convertToString(i+1)+".";
   for(int b=0;b<pairwise_alignment_for_branch.size();b++)
-    pairwise_alignment_for_branch[b] = p->add_parameter(Parameter(prefix+"a"+convertToString(b)));
+    pairwise_alignment_for_branch[b] = p->add_parameter(prefix+"a"+convertToString(b));
 
   if (variable_alignment())
     for(int b=0;b<T().n_branches();b++)
@@ -1034,21 +1034,19 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    features(0),
    branch_length_max(-1)
 {
-  C += SModel_Functions();
-  C += Distribution_Functions();
-  C += PopGen_Functions();
+  C += { SModel_Functions(), Distribution_Functions(), Range_Functions(), PopGen_Functions() };
   // FIXME: add C += IModel_Functions() instead of referencing the operations directly.  Then we could parse a text file.
   
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
   constants.push_back(-1);
 
-  add_parameter(Parameter("Heat.beta", Double(1.0), between(0,1)));
+  add_parameter("Heat.beta", Double(1.0), between(0,1));
 
   for(int i=0;i<n_scales;i++)
   {
     string mu_name = "Main.mu"+convertToString(i+1);
-    add_parameter(Parameter(mu_name, Double(0.25), lower_bound(0)));
+    add_parameter(mu_name, Double(0.25), lower_bound(0));
     // prior on mu[i], the mean branch length for scale i
     add_note( (distributed, parameter(mu_name), (var("gamma"), Tuple(0.5, 2.0) ) ) );
   }
@@ -1071,7 +1069,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     SModels.push_back( smodel_methods( smodel.exp(), C) );
   }
 
-  add_parameter(Parameter("IModels.training", constructor("False",0)));
+  add_parameter("IModels.training", constructor("False",0));
   // register the indel models as sub-models
   vector<formula_expression_ref> imodels_;
   for(int i=0;i<n_imodels();i++) 
@@ -1086,7 +1084,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
   Program imodels_program("IModels");
   imodels_program.def_function("models", 0, (listArray_, get_list(imodels_).exp()));
-  C += imodels_program;
+  C += { imodels_program };
   
   // check that we only map existing smodels to data partitions
   for(int i=0;i<smodel_for_partition.size();i++) {
@@ -1116,7 +1114,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       double delta_t = T->branch(b).length();
 
       string name = "d" + convertToString(b+1);
-      int index = add_parameter(Parameter(prefix+"."+name, Double(rate * delta_t)));
+      int index = add_parameter(prefix+"."+name, Double(rate * delta_t));
       branch_length_indices[s].push_back(index);
     }
   }
@@ -1126,7 +1124,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   for(int b=0;b<T->n_branches();b++)
   {
     string name = "branchCat" + convertToString(b+1);
-    add_parameter(Parameter(name, Int(0)));
+    add_parameter(name, Int(0));
     branch_categories.push_back(parameter(name));
   }
   expression_ref branch_cat_list = C.get_expression( C.add_compute_expression( (get_list(branch_categories) ) ) );
@@ -1154,7 +1152,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
 
   Program parameter_program("Parameters");
   parameter_program.def_function("substitutionBranchLengths", 0, (listArray_,(fmap,listArray_,substitutionBranchLengthsList)));
-  C += parameter_program;
+  C += {parameter_program};
 
   // register the cached transition_p indices
   branch_transition_p_indices.resize(n_branch_means(), n_smodels());
@@ -1186,7 +1184,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     imodel_methods& I = IModel_methods[i];
     string prefix = "I" + convertToString(i+1);
 
-    I.length_arg_param_index = add_parameter(Parameter(prefix+".lengthpArg", Int(1)));
+    I.length_arg_param_index = add_parameter(prefix+".lengthpArg", Int(1));
     expression_ref lengthp = (snd,(var("!"),var("IModels.models"),i));
     expression_ref lengthp_arg = parameter(prefix+".lengthpArg");
     I.length_p = C.add_compute_expression( (lengthp, lengthp_arg) );
@@ -1247,7 +1245,7 @@ neighbors t n = fmap (targetNode t) (edgesOutOfNode t n);\
 edgesBeforeEdge t b = case (nodesForEdge t b) of {(n1,n2) -> [edgeForNodes t (n,n1) | n <- neighbors t n1, n /= n2 ]}\
 }";
 
-  C += tree_program;
+  C += {tree_program};
 
   for(int n=0; n < T->n_nodes(); n++)
   {
