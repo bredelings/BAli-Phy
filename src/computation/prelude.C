@@ -1,3 +1,4 @@
+#include "computation/expression.H"
 #include "computation/prelude.H"
 #include "computation/program.H"
 #include "computation/operations.H"
@@ -32,7 +33,7 @@ const expression_ref unsafePerformIO_ = var("unsafePerformIO'");
 const expression_ref unsafePerformIO = var("unsafePerformIO");
 const expression_ref join_ = var("join");
 
-const expression_ref DiscreteDistribution = lambda_expression(constructor("DiscreteDistribution",1));
+const expression_ref DiscreteDistribution = lambda_expression(constructor("Prelude.DiscreteDistribution",1));
 const expression_ref UnwrapDD = var("UnwrapDD");
 
 /* TODO:
@@ -49,6 +50,8 @@ const expression_ref UnwrapDD = var("UnwrapDD");
  * 9. Add default values and Bounds to distributions.
  *    - Ah, but how to we add default values to distributions that return random structures?
  * 10. [DONE] Convert all of distribution-operations.H to the parser.
+ * 11. Remove arity argument to def_function.  Only combinators have a real arity.
+ *     Also constructors.  But lambda expressions can have unlimited arity.
  */
 
 
@@ -58,10 +61,13 @@ Program make_Prelude()
 
   P.def_function("error", 1, lambda_expression( Error() ) ); 
   P.def_function("intToDouble", 1, lambda_expression( Conversion<int,double>() ) ); 
+  P.def_function("mkArray", 2, lambda_expression( MkArray() ) ); 
+
   P.def_constructor("True",0);
   P.def_constructor("False",0);
   P.def_constructor("Just",1);
   P.def_constructor("Nothing",0);
+  P.def_constructor("DiscreteDistribution",1);
 
   // foldr f z []  = z
   // foldr f z x:xs = (f x (foldr f z xs))

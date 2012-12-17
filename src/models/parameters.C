@@ -631,7 +631,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       // D = Parameters.substitutionBranchLengths!scale_index
       expression_ref D = (var("!"),var("Parameters.substitutionBranchLengths"),scale_index);
       // (fst IModels.models!i_index) D b
-      int index = p->C.add_compute_expression( ((fst,(var("!"),var("IModels.models"),i_index)),D,b) );
+      int index = p->C.add_compute_expression( ((var("fst"),(var("!"),var("IModels.models"),i_index)),D,b) );
       branch_HMM_indices.push_back(  index );
       expression_ref hmm = P->C.get_expression(index);
 
@@ -650,17 +650,17 @@ smodel_methods::smodel_methods(const expression_ref& E, context& C)
   main = C.add_compute_expression( E );
   expression_ref S = C.get_expression(main);
 
-  n_base_models = C.add_compute_expression((::n_base_models, S));
-  n_states =  C.add_compute_expression((::n_states, S));
-  distribution =  C.add_compute_expression((V,(::distribution, S)));
-  get_alphabet = C.add_compute_expression((::get_alphabet, S));
-  state_letters = C.add_compute_expression((::state_letters, S));
-  n_states = C.add_compute_expression((::n_states, S));
-  rate = C.add_compute_expression((::rate, S));
+  n_base_models = C.add_compute_expression((var("nBaseModels"), S));
+  n_states =  C.add_compute_expression((var("nStates"), S));
+  distribution =  C.add_compute_expression((V,(var("distribution"), S)));
+  get_alphabet = C.add_compute_expression((var("getAlphabet"), S));
+  state_letters = C.add_compute_expression((var("stateLetters"), S));
+  n_states = C.add_compute_expression((var("nStates"), S));
+  rate = C.add_compute_expression((var("rate"), S));
 
-  base_model = C.add_compute_expression( v1^(v2^(::base_model, (get_nth_mixture,S,v2), v1) ) );
-  frequencies = C.add_compute_expression((::get_component_frequencies, S));
-  transition_p = C.add_compute_expression((::branch_transition_p, S));
+  base_model = C.add_compute_expression( v1^(v2^(var("baseModel"), (var("getNthMixture"),S,v2), v1) ) );
+  frequencies = C.add_compute_expression((var("componentFrequencies"), S));
+  transition_p = C.add_compute_expression((var("branchTransitionP"), S));
 }
 
 const data_partition& Parameters::get_data_partition(int i) const
@@ -1083,7 +1083,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     IModel_methods[i].parameters = add_submodel(imodel);
   }
   Program imodels_program("IModels");
-  imodels_program.def_function("models", 0, (listArray_, get_list(imodels_).exp()));
+  imodels_program.def_function("models", 0, (var("listArray'"), get_list(imodels_).exp()));
   C += { imodels_program };
   
   // check that we only map existing smodels to data partitions
@@ -1151,7 +1151,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
 
   Program parameter_program("Parameters");
-  parameter_program.def_function("substitutionBranchLengths", 0, (listArray_,(fmap,listArray_,substitutionBranchLengthsList)));
+  parameter_program.def_function("substitutionBranchLengths", 0, (var("listArray'"),(var("fmap"),var("listArray'"),substitutionBranchLengthsList)));
   C += {parameter_program};
 
   // register the cached transition_p indices
@@ -1168,8 +1168,8 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
       //expression_ref V = var("listToVectorMatrix");
       expression_ref V = Vector_From_List<Matrix,MatrixObject>();
       //expression_ref I = 0;
-      expression_ref I = (get_list_index,branch_cat_list,v1);
-      expression_ref E = (mkArray, T->n_branches(), v1^(V,(branch_transition_p, (get_nth_mixture,S,I), (var("!"), DL, v1) ) ) );
+      expression_ref I = (var("!!"),branch_cat_list,v1);
+      expression_ref E = (var("mkArray"), T->n_branches(), v1^(V,(var("branchTransitionP"), (var("getNthMixture"),S,I), (var("!"), DL, v1) ) ) );
       branch_transition_p_indices(s,m) = C.add_compute_expression(E);
     }
   }
@@ -1185,7 +1185,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     string prefix = "I" + convertToString(i+1);
 
     I.length_arg_param_index = add_parameter(prefix+".lengthpArg", Int(1));
-    expression_ref lengthp = (snd,(var("!"),var("IModels.models"),i));
+    expression_ref lengthp = (var("snd"),(var("!"),var("IModels.models"),i));
     expression_ref lengthp_arg = parameter(prefix+".lengthpArg");
     I.length_p = C.add_compute_expression( (lengthp, lengthp_arg) );
 
@@ -1201,14 +1201,14 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     expression_ref param = def_parameter(tree, "Tree.nodeBranches"+convertToString(n));
     node_branches.push_back( (var("listFromVectorInt"),param) );
   }
-  expression_ref node_branches_array = (listArray_,get_list(node_branches));
+  expression_ref node_branches_array = (var("listArray'"),get_list(node_branches));
 
   vector<expression_ref> branch_nodes;
   for(int b=0; b < 2*T->n_branches(); b++)
   {
     branch_nodes.push_back( def_parameter(tree, "Tree.branchNodes"+convertToString(b)) ); 
   }
-  expression_ref branch_nodes_array = (listArray_,get_list(branch_nodes));
+  expression_ref branch_nodes_array = (var("listArray'"),get_list(branch_nodes));
 
   expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 

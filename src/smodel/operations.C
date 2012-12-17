@@ -451,7 +451,7 @@ namespace substitution
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
     return let_expression(v1,(var("listToVectorDouble"),pi),
-			  (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), v1, (Plus_gwF, a, 1.0, v1))
+			  (var("ReversibleFrequency"), a, (Iota<unsigned>(), a.size()), v1, (var("plusGWF"), a, 1.0, v1))
 			  );
   }
 
@@ -510,7 +510,7 @@ namespace substitution
 
     return let(v2,(var("listToVectorDouble"),pi),
 	       v1,(F3x4_Frequencies,T,v2,v2,v2),
-	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v1, (Plus_gwF, T, 1.0, v1))
+	       (var("ReversibleFrequency"), T, (Iota<unsigned>(), T.size()), v1, (Plus_gwF, T, 1.0, v1))
 	       );
   }
 
@@ -523,7 +523,7 @@ namespace substitution
     return let(v2,(var("listToVectorDouble"),pi),
 	       v1,(F3x4_Frequencies,T,v2,v2,v2),
 	       v3,(Plus_gwF, N, 1.0, v2),
-	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
+	       (var("ReversibleFrequency"), T, (Iota<unsigned>(), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
 	       );
   }
 
@@ -541,7 +541,7 @@ namespace substitution
 	       v2, (var("listToVectorDouble"),pi2),
 	       v3, (var("listToVectorDouble"),pi3),
 	       v4, (F3x4_Frequencies,T,v1,v2,v3),
-	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), v4, (Plus_gwF, T, 1.0, v4))
+	       (var("ReversibleFrequency"), T, (Iota<unsigned>(), T.size()), v4, (Plus_gwF, T, 1.0, v4))
 	       );
   }
 
@@ -561,7 +561,7 @@ namespace substitution
 	       v4, (Plus_gwF, N, 1.0, v1),
 	       v5, (Plus_gwF, N, 1.0, v2),
 	       v6, (Plus_gwF, N, 1.0, v3),
-	       (ReversibleFrequency, T, (Iota<unsigned>(), T.size()), (F3x4_Frequencies,T,v1,v2,v3), (F3x4_Matrix, T, v4, v5, v6))
+	       (var("ReversibleFrequency"), T, (Iota<unsigned>(), T.size()), (F3x4_Frequencies,T,v1,v2,v3), (F3x4_Matrix, T, v4, v5, v6))
 	       );
   }
 
@@ -573,7 +573,7 @@ namespace substitution
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
     return let_expression(v1,(var("listToVectorDouble"),pi),
-			  (ReversibleFrequency, a, (Iota<unsigned>(), a.size()), v1, (Plus_gwF, a, f, v1))
+			  (var("ReversibleFrequency"), a, (Iota<unsigned>(), a.size()), v1, (Plus_gwF, a, f, v1))
 			  );
   }
 
@@ -619,14 +619,14 @@ namespace substitution
     formula_expression_ref S = prefix_formula("S",FS);
     formula_expression_ref R = prefix_formula("R",FR);
     
-    return (Q_from_S_and_R, S, R);
+    return (var("qFromSandR"), S, R);
   }
 
   formula_expression_ref Unit_Model(const formula_expression_ref& R)
   {
     formula_expression_ref R2 = R;
 
-    R2 = (MixtureModel, (DiscreteDistribution, List(Tuple(1.0,R))));
+    R2 = (var("MixtureModel"), (var("DiscreteDistribution"), List(Tuple(1.0,R))));
 
     return R2;
   }
@@ -785,7 +785,7 @@ namespace substitution
       M = m & M;
       P = p & P;
     }
-    formula_expression_ref R = (MixMixtureModels,P,M);
+    formula_expression_ref R = (var("mixMixtureModels"),P,M);
 
     R.add_expression((distributed, P, (var("dirichlet"), get_list(vector<Double>(N,1.0) ) ) )) ;
 

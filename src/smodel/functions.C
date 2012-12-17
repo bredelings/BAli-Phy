@@ -26,30 +26,38 @@ const expression_ref UnwrapMM = var("unwrapMM");
 const expression_ref MixMixtureModels = var("mixMixtureModels");
 
 // (ReversibleMarkov alpha state_letters q pi l t)
-const expression_ref ReversibleMarkov = lambda_expression( constructor("ReversibleMarkov", 7) );
+const expression_ref ReversibleMarkov = lambda_expression( constructor("SModel.ReversibleMarkov", 7) );
 
 // (ReversibleFrequency alpha state_letters pi R)
-const expression_ref ReversibleFrequency = lambda_expression( constructor("ReversibleFrequency", 4) );
+const expression_ref ReversibleFrequency = lambda_expression( constructor("SModel.ReversibleFrequency", 4) );
 
 // (F81 alpha state_letters a pi)
-const expression_ref F81M = lambda_expression( constructor("F81", 4) );
+const expression_ref F81M = lambda_expression( constructor("SModel.F81", 4) );
 
 // (MixtureModel (DiscreteDistribution [(Double,RMM|F81)]))
-const expression_ref MixtureModel = lambda_expression( constructor("MixtureModel", 1) );
+const expression_ref MixtureModel = lambda_expression( constructor("SModel.MixtureModel", 1) );
 
 // (MixtureModels [MixtureModel])
-const expression_ref MixtureModels = lambda_expression( constructor("MixtureModels", 1) );
+const expression_ref MixtureModels = lambda_expression( constructor("SModel.MixtureModels", 1) );
 
 // TODO: transition_p
 // After we get transition_p right, then it SHOULD be fast.  Benchmark!
 //
+const expression_ref DiscreteDistribution = lambda_expression(constructor("Prelude.DiscreteDistribution",1));
 
 Program SModel_Functions()
 {
   Program P("SModel");
 
+  P.def_function("plusGWF",3,substitution::Plus_gwF_Op());
+  P.def_constructor("ReversibleMarkov",7);
+  P.def_constructor("ReversibleFrequency",4);
+  P.def_constructor("F81",4);
+  P.def_constructor("MixtureModel",1);
+  P.def_constructor("MixtureModels",1);
+
   // MultiParameter f (DiscreteDistribution d) = MixtureModel(DiscreteDistribution (fmap2 f d))
-  P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(fmap2,v1,v2))));
+  P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(var("fmap2"),v1,v2))));
 
   // MultiRate m D = MultiParameter \x.(scale x m) D
   P += Def( (MultiRate,v1,v2), (MultiParameter,v3^(scale,v3,v1), v2) );
@@ -61,15 +69,15 @@ Program SModel_Functions()
 
   // rate (ReversibleMarkovModel a smap q vector<pi> l t) = t*(get_equilibrium_rate a smap q pi)
   // rate (MixtureModel (DiscreteDistribution l) ) = average (fmap2 rate l)
-  P += Def( (rate,(ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v7 )
-          ( (rate,(MixtureModel, v1) ), (average,(fmap2, rate, v1) ) );
+  P += Def( (var("rate"),(ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v7 )
+    ( (var("rate"),(MixtureModel, v1) ), (var("average"),(var("fmap2"), var("rate"), v1) ) );
      
   // QExp (ReversibleMarkov a smap q pi l t r) = (LExp l pi t)
   P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), (LExp,v5,v4,v6));
 
   // branch_transition_p m@(MixtureModel (DiscreteDistribution l) ) t = list_to_vector (fmap \p->(QExp (scale (t/(rate m)) (snd p) ) ) l)
   P += Def( (branch_transition_p, (MixtureModel, (DiscreteDistribution, v3) ), v1 ),
-	    (fmap,v2^(QExp, (scale, (v1/(rate, (MixtureModel, (DiscreteDistribution, v3) ) ) ), (snd, v2) ) ), v3 ) );
+	    (var("fmap"),v2^(QExp, (var("scale"), (v1/(rate, (MixtureModel, (DiscreteDistribution, v3) ) ) ), (var("snd"), v2) ) ), v3 ) );
 
   // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0 (Get_Equilibrium_Rate a smap Q pi)
   P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), 
@@ -82,8 +90,8 @@ Program SModel_Functions()
 
   // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
   // n_base_models (MixtureModels h:t) = n_base_models h
-  P += Def( (n_base_models, (MixtureModel,(DiscreteDistribution,v1))), (length,v1))
-          ( (n_base_models, (MixtureModels,v1&v2)), (n_base_models,v1) );
+  P += Def( (var("nBaseModels"), (MixtureModel,(DiscreteDistribution,v1))), (var("length"),v1))
+          ( (var("nBaseModels"), (MixtureModels,v1&v2)), (var("nBaseModels"),v1) );
 
   // state_letters (ReversibleMarkov alpha smap q pi l t r) = smap
   // state_letters (F81 alpha s a pi) = s
@@ -117,21 +125,21 @@ Program SModel_Functions()
           ( (get_component_frequencies, (MixtureModels,v1&v2), v4), (get_component_frequencies,v1,v4));
 
   // base_model (MixtureModel alpha s (DiscreteDistribution l)) i = get_list_index l i
-  P += Def( (base_model, (MixtureModel,(DiscreteDistribution,v1)),v2), (snd,(get_list_index,v1,v2)));
+  P += Def( (base_model, (MixtureModel,(DiscreteDistribution,v1)),v2), (var("snd"),(var("!!"),v1,v2)));
 
   // distribution (MixtureModel alpha s (DiscreteDistribution l)) = fmap fst l
   // distribution (MixtureModels h:t) = distribution h
-  P += Def( (distribution, (MixtureModel,(DiscreteDistribution,v1))), (fmap,fst,v1))
+  P += Def( (distribution, (MixtureModel,(DiscreteDistribution,v1))), (var("fmap"),var("fst"),v1))
           ( (distribution, (MixtureModels,v1&v2)), (distribution, v1) );
 
   // get_nth_mixture (MixtureModels l) b = l !! b
-  P += Def( (get_nth_mixture, (MixtureModels, v1), v2), (get_list_index,v1,v2) );
+  P += Def( (get_nth_mixture, (MixtureModels, v1), v2), (var("!!"),v1,v2) );
 
   // UnwrapMM (MixtureModel dd) = dd
   P += Def( (UnwrapMM, (MixtureModel, v0)), v0 );
 
   // MixMixtureModels l dd = MixtureModel (MixDiscreteDistributions l (fmap UnwrapMM dd))
-  P += Def( (MixMixtureModels, v0, v1), (MixtureModel, (MixDiscreteDistributions, v0, (fmap, UnwrapMM, v1) ) ) );
+  P += Def( (var("mixMixtureModels"), v0, v1), (var("MixtureModel"), (var("MixDiscreteDistributions"), v0, (var("fmap"), var("unwrapMM"), v1) ) ) );
 
   return P;
 }
