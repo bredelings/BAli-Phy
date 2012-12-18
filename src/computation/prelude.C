@@ -74,12 +74,6 @@ Program make_Prelude()
 
   expression_ref to_double = lambda_expression( Conversion<int,double>() );
 
-  // UniformDiscretize q n = map (\i->(1.0/n, q ((2*i+1)/n) )) (take n (iterate (+1) 0) )
-  // [ We could do this as two nested fmaps, instead. ]
-  // [ We could factor out to_double(v2), and 1.0/to_double(v2)
-  expression_ref plus = lambda_expression( Add() );
-  P += Def( (UniformDiscretize, v1, v2), (DiscreteDistribution, (fmap, lambda_quantify(v3,let_expression(v4,(to_double,v2), Tuple(1.0/v4, (v1,((2.0*v3+1.0)/(2.0*v4)))))), (take, v2, (iterate, (plus,1.0), 0.0) ) ) ) );
-
   // fst (x,y) = x
   P += Def( (fst,Tuple(v1,v2)), v1);
 
@@ -345,6 +339,10 @@ f $ x = f x
   P += "{sum  = foldl' (+) 0}";
 
   P += "{average (DiscreteDistribution l) = foldl' (\\x y->(x+(fst y)*(snd y))) 0.0 l}";
+
+  // [ We could do this as two nested fmaps, instead. ]
+  // [ We could factor out to_double(v2), and 1.0/to_double(v2)
+  P += "{uniformDiscretize q n = let {n' = (intToDouble n)} in DiscreteDistribution (map (\\i->(1.0/n',q (2.0*i+1.0)/n')) (take n [0..]))}";
 
   // FIXME - we have an problem with types here.  This will only work for Int, as-is.
   P += "{enumFrom x = x:(enumFrom (x+1))}";
