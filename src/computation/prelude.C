@@ -334,7 +334,7 @@ f $ x = f x
 
   P += "{concat xs = foldr (++) [] xs}";
 
-  P += {"{concatMap f = concat . map f}"};
+  P += "{concatMap f = concat . map f}";
 
   P += "{length l = foldl' (\\x y ->(x+1)) 0 l}";
 
