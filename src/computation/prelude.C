@@ -74,9 +74,6 @@ Program make_Prelude()
 
   expression_ref to_double = lambda_expression( Conversion<int,double>() );
 
-  // MixDiscreteDistributions l1 l2 = DiscreteDistribution (MixDiscreteDistributions l1 (fmap UnwrapDD l2))
-  P += Def( (MixDiscreteDistributions, v0, v1) , (DiscreteDistribution, (MixDiscreteDistributions_, v0, (fmap,UnwrapDD,v1))));
-
   // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
   P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(v1+(fst,v2)*(snd,v2))), 0.0, v3) );
 
@@ -345,6 +342,8 @@ f $ x = f x
 
   P += "{mixDiscreteDistributions' (h:t) (h2:t2) = DiscreteDistribution (fmap1 (\\q->q*h) h2)++(mixDiscreteDistributions' t t2);\
          mixDiscreteDistributions' [] [] = []}";
+
+  P += "{mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap UnwrapDD l2))}";
 
   P += "{sum  = foldl' (+) 0}";
 
