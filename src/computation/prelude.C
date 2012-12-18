@@ -71,19 +71,16 @@ Program make_Prelude()
 
   P += "{repeat x = x:(repeat x)}";
 
-  // iterate f x = x:iterate f (f x)
-  P += Def( (iterate, v1, v2), v2&(iterate, v1, (v1,v2)) );
+  P += "{iterate f x = x:iterate f (f x)}";
 
   P += "{map f []  = [];\
          map f (h:t) = (f h):(map f t)}";
   
   P += "{fmap = map}";
 
-  // fmap1 f []  = []
-  // fmap1 f (p,x):t = (f p,x):(fmap1 f t)
-  P += Def( (fmap1, v1, ListEnd)    , ListEnd)
-          ( (fmap1, v1, Tuple(v2,v3)&v4), Tuple((v1,v2),v3) & (fmap1, v1, v4) )
-          ( (fmap1, v1, (DiscreteDistribution,v2)), (DiscreteDistribution,(fmap1,v1,v2)));
+  P += "{fmap1 f [] = [];\
+         fmap1 f ((x,y):l) = (f x,y):(fmap1 f l);\
+         fmap1 f (DiscreteDistribution l) = DiscreteDistribution (fmap1 f l)}";
 
   // fmap2 f []  = []
   // fmap2 f (p,x):t = (p,f x):(fmap2 f t)
