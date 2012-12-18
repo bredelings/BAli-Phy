@@ -62,6 +62,13 @@ Program make_Prelude()
   P.def_function("error", 1, lambda_expression( Error() ) ); 
   P.def_function("intToDouble", 1, lambda_expression( Conversion<int,double>() ) ); 
   P.def_function("mkArray", 2, lambda_expression( MkArray() ) ); 
+  P.def_function("reapply", 2, lambda_expression( Reapply() ) );
+  P.def_function("join", 2, lambda_expression( Join() ) );
+  P.def_function("negate", 1, lambda_expression( Negate() ) );
+  P.def_function("exp", 1, lambda_expression( Exp_Op() ) );
+  P.def_function("log", 1, lambda_expression( Log_Op() ) );
+  P.def_function("!", 2, lambda_expression( GetIndex() ) );
+  P.def_function("getAddress", 1, lambda_expression( Get_Address() ) );
 
   P.def_constructor("True",0);
   P.def_constructor("False",0);
@@ -88,13 +95,13 @@ Program make_Prelude()
   P += Def( (plusplus, ListEnd, v0), v0)
           ( (plusplus, v0&v1, v2),v0&(plusplus,v1,v2));
 
-  const expression_ref IOAction1 = lambda_expression(constructor("IOAction1",2));
-  const expression_ref IOAction2 = lambda_expression(constructor("IOAction2",3));
-  const expression_ref IOAction3 = lambda_expression(constructor("IOAction3",4));
-  const expression_ref IOAction4 = lambda_expression(constructor("IOAction4",5));
-  const expression_ref IOReturn = lambda_expression(constructor("IOReturn",1));
-  const expression_ref IOAndPass = lambda_expression(constructor("IOAndPass",2));
-  const expression_ref IOAnd = lambda_expression(constructor("IOAnd",2));
+  const expression_ref IOAction1 = lambda_expression(constructor("Prelude.IOAction1",2));
+  const expression_ref IOAction2 = lambda_expression(constructor("Prelude.IOAction2",3));
+  const expression_ref IOAction3 = lambda_expression(constructor("Prelude.IOAction3",4));
+  const expression_ref IOAction4 = lambda_expression(constructor("Prelude.IOAction4",5));
+  const expression_ref IOReturn = lambda_expression(constructor("Prelude.IOReturn",1));
+  const expression_ref IOAndPass = lambda_expression(constructor("Prelude.IOAndPass",2));
+  const expression_ref IOAnd = lambda_expression(constructor("Prelude.IOAnd",2));
 
   P.def_constructor("IOAction1",2);
   P.def_constructor("IOAction2",3);
@@ -104,9 +111,6 @@ Program make_Prelude()
   P.def_constructor("IOReturn1",1);
   P.def_constructor("IOAndPass",2);
   P.def_constructor("IOAnd",2);
-
-  // unsafePerformIO x = reapply unsafePerformIO' x
-  P += Def( (unsafePerformIO, v1), (reapply, unsafePerformIO_, v1) );
 
   // FIXME? IOAction 0 doesn't work, because we don't get a separate cell for each application... to nothing.
   //        Current approach: supply dummy arguments to such a builtin that are not used.
@@ -126,6 +130,8 @@ Program make_Prelude()
     ( (unsafePerformIO_, (IOAndPass, v1, v2)), let_expression(v3,(unsafePerformIO_, v1), (join_, v3, (unsafePerformIO_, (v2, v3)))))
     ( (unsafePerformIO_, (IOAnd, v1, v2)), (join_, (unsafePerformIO_, v1), (unsafePerformIO_, v2)));
 
+  P += "{unsafePerformIO x = reapply unsafePerformIO' x}";
+
   //--------------------------------------- listToVectorInt ---------------------------------------//
 
   P.def_function("builtinNewVectorInt", 1, lambda_expression( BuiltinNewVectorOp<int>() ) ); 
@@ -134,9 +140,9 @@ Program make_Prelude()
   const expression_ref builtinNewVectorInt = var("builtinNewVectorInt");
   const expression_ref builtinSetVectorIndexInt = var("builtinSetVectorIndexInt");
 
-  P += Def( (var("newVectorInt"), v1), (IOAction1, builtinNewVectorInt, v1));
+  P += "{newVectorInt s = IOAction1 builtinNewVectorInt s}";
 
-  P += Def( (var("setVectorIndexInt"), v1, v2, v3), (IOAction3, builtinSetVectorIndexInt, v1, v2, v3));
+  P += "{setVectorIndexInt v i x = IOAction3 builtinSetVectorIndexInt v i x}";
 
   const expression_ref listToVectorInt = var("listToVectorInt");
   const expression_ref copyListToVectorInt = var("copyListToVectorInt");
@@ -207,13 +213,6 @@ Program make_Prelude()
 
   //------------------------------------------------------------------------------------------------//
 
-  P.def_function("reapply", 2, lambda_expression( Reapply() ) );
-  P.def_function("join", 2, lambda_expression( Join() ) );
-  P.def_function("negate", 1, lambda_expression( Negate() ) );
-  P.def_function("exp", 1, lambda_expression( Exp_Op() ) );
-  P.def_function("log", 1, lambda_expression( Log_Op() ) );
-  P.def_function("!", 2, lambda_expression( GetIndex() ) );
-  P.def_function("getAddress", 1, lambda_expression( Get_Address() ) );
 
   P.declare_fixity("!!", 9, left_fix);
   // Is this right?
