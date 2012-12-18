@@ -7,34 +7,8 @@
 
 using std::vector;
 
-const expression_ref foldr = var("foldr");
-const expression_ref foldl = var("foldl");
-const expression_ref foldl_ = var("foldl'");
-const expression_ref fmap = var("fmap");
-const expression_ref fmap1 = var("fmap1");
-const expression_ref fmap2 = var("fmap2");
-const expression_ref take = var("take");
-const expression_ref iterate = var("iterate");
-const expression_ref sum_ = var("sum");
-const expression_ref fst = var("fst");
-const expression_ref snd = var("snd");
 const expression_ref get_list_index = var("!!");
-const expression_ref listArray = var("listArray");
-const expression_ref listArray_ = var("listArray'");
-const expression_ref ExtendDiscreteDistribution = var("extendDiscreteDistribution");
-const expression_ref MixDiscreteDistributions = var("mixDiscreteDistributions");
-const expression_ref MixDiscreteDistributions_ = var("mixDiscreteDistributions'");
-const expression_ref UniformDiscretize = var("uniformDiscretize");
-const expression_ref length = var("length");
 const expression_ref plusplus = var("++");
-const expression_ref average = var("average");
-const expression_ref reapply = var("reapply");
-const expression_ref unsafePerformIO_ = var("unsafePerformIO'");
-const expression_ref unsafePerformIO = var("unsafePerformIO");
-const expression_ref join_ = var("join");
-
-const expression_ref DiscreteDistribution = lambda_expression(constructor("Prelude.DiscreteDistribution",1));
-const expression_ref UnwrapDD = var("unwrapDD");
 
 /* TODO:
  * 1. [DONE] Remove true/false in favor of True/False.
