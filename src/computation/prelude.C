@@ -308,16 +308,11 @@ f $ x = f x
 
   P += "{setVectorIndexInt v i x = IOAction3 builtinSetVectorIndexInt v i x}";
 
-  // copyListToVectorInt [] v i = return ()
   // copyListToVectorInt h:t v i = do { setVectorIndexInt v i h ; copyListToVectorInt t v (i+1) }
-  // copyListToVectorInt h:t v i = setVectorIndexInt v i h << copyListToVectorInt t v (i+1)
-  const expression_ref copyListToVectorInt = var("copyListToVectorInt");
-  P += Def( (copyListToVectorInt, ListEnd, v3, v4), (IOReturn, constructor("()",0)))
-    ( (copyListToVectorInt, v1&v2  , v3, v4), (IOAnd,(var("setVectorIndexInt"), v3, v4, v1),(copyListToVectorInt, v2,v3,(v4+1))));
+  P += "{copyListToVectorInt [] v i = IOReturn ();\
+         copyListToVectorInt (h:t) v i = IOAnd (setVectorIndexInt v i h) (copyListToVectorInt t v (i+1))}";
 
-  const expression_ref listToVectorInt = var("listToVectorInt");
-  // listToVectorInt l = do { v <- newVectorInt (length l); copyListToVector l v 0 ; return v;}
-  // listToVectorInt l = newVectorInt (length l) <<= (\v -> copyListToVector l v 0 << return v;)
+  // listToVectorInt l = do { v <- newVectorInt (length l); copyListToVector l v 0 ; return v }
   P += "{listToVectorInt l = unsafePerformIO (IOAndPass (newVectorInt (length l)) (\\v -> IOAnd (copyListToVectorInt l v 0) (IOReturn v)))}";
 
   //--------------------------------------- listToVectorDouble ---------------------------------------//
