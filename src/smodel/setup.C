@@ -683,7 +683,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (var("logLapace"), Tuple(-3.0, 1.0) ));
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
-    formula_expression_ref dist = (var("UniformDiscretize"), (var("gammaQuantile"), Tuple(a,b)) , n);
+    formula_expression_ref dist = (var("uniformDiscretize"), (var("gammaQuantile"), Tuple(a,b)) , n);
 
     return (var("MultiRate"), base,  dist);
   }
@@ -700,7 +700,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (var("logLaplace"),Tuple(-3.0, 1.0) ));
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
-    formula_expression_ref dist = (var("UniformDiscretize"), (var("gammaQuantile"), Tuple(a,b)) , n);
+    formula_expression_ref dist = (var("uniformDiscretize"), (var("gammaQuantile"), Tuple(a,b)) , n);
 
     formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), var("betaDist"), Tuple(1.0, 2.0) );
     dist = (var("ExtendDiscreteDistribution"), dist, p, 0.0);
@@ -719,7 +719,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref lVar = (var("log"), (plus, 1.0, Var ) );
     formula_expression_ref lmu = (times, -0.5, lVar);
     formula_expression_ref lsigma = (Sqrt, lVar);
-    formula_expression_ref dist = (var("UniformDiscretize"), (var("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
+    formula_expression_ref dist = (var("uniformDiscretize"), (var("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
 
     return (var("MultiRate"), base,  dist);
   }
@@ -735,7 +735,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref lVar = (Log, (plus, 1.0, Var ) );
     formula_expression_ref lmu = (times, -0.5, lVar);
     formula_expression_ref lsigma = (Sqrt, lVar);
-    formula_expression_ref dist = (var("UniformDiscretize"), (var("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
+    formula_expression_ref dist = (var("uniformDiscretize"), (var("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
 
     formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), var("betaDist"), Tuple(1.0, 2.0) );
     dist = (var("ExtendDiscreteDistribution"), dist, p, 0.0);
@@ -925,7 +925,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
     // Create the discrete distribution for omega
-    formula_expression_ref D = (var("UniformDiscretize"), (var("betaQuantile"), Tuple(alpha,beta)), n);
+    formula_expression_ref D = (var("uniformDiscretize"), (var("betaQuantile"), Tuple(alpha,beta)), n);
 
     // *Question*: How much does D simplify with "completely lazy" evaluation?
     formula_expression_ref p1 = def_parameter("M8b.fPurifying", Double(0.6), between(0,1));
@@ -963,7 +963,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
     // Create the discrete distribution for omega
-    formula_expression_ref D = (var("UniformDiscretize"), (var("betaQuantile"), Tuple(alpha,beta)), n);
+    formula_expression_ref D = (var("uniformDiscretize"), (var("betaQuantile"), Tuple(alpha,beta)), n);
 
     formula_expression_ref M0 = get_M0_omega_function(a,frequencies,model_args,3);
 
@@ -1043,8 +1043,8 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     // FIXME - allow specifying the prior on the command line?
 
     formula_expression_ref M0 = get_M0_omega_function(a, frequencies, model_args, 3);
-    formula_expression_ref mixture1 = (var("MultiParameter"), M0, (var("MixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D1,D1) ) );
-    formula_expression_ref mixture2 = (var("MultiParameter"), M0, (var("MixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
+    formula_expression_ref mixture1 = (var("MultiParameter"), M0, (var("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D1,D1) ) );
+    formula_expression_ref mixture2 = (var("MultiParameter"), M0, (var("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
 
     formula_expression_ref branch_site = (var("MixtureModels"), mixture1&(mixture2&ListEnd) );
     branch_site.add_expression( (distributed, F, (var("dirichlet"),get_list(vector<Double>(n,1.0) ) ) ) );

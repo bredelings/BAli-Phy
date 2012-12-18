@@ -139,7 +139,7 @@ Program SModel_Functions()
   P += Def( (UnwrapMM, (MixtureModel, v0)), v0 );
 
   // MixMixtureModels l dd = MixtureModel (MixDiscreteDistributions l (fmap UnwrapMM dd))
-  P += Def( (var("mixMixtureModels"), v0, v1), (var("MixtureModel"), (var("MixDiscreteDistributions"), v0, (var("fmap"), var("unwrapMM"), v1) ) ) );
+  P += Def( (var("mixMixtureModels"), v0, v1), (var("MixtureModel"), (var("mixDiscreteDistributions"), v0, (var("fmap"), var("unwrapMM"), v1) ) ) );
 
   return P;
 }

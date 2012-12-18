@@ -21,10 +21,10 @@ const expression_ref snd = var("snd");
 const expression_ref get_list_index = var("!!");
 const expression_ref listArray = var("listArray");
 const expression_ref listArray_ = var("listArray'");
-const expression_ref ExtendDiscreteDistribution = var("ExtendDiscreteDistribution");
-const expression_ref MixDiscreteDistributions = var("MixDiscreteDistributions");
-const expression_ref MixDiscreteDistributions_ = var("MixDiscreteDistributions'");
-const expression_ref UniformDiscretize = var("UniformDiscretize");
+const expression_ref ExtendDiscreteDistribution = var("extendDiscreteDistribution");
+const expression_ref MixDiscreteDistributions = var("mixDiscreteDistributions");
+const expression_ref MixDiscreteDistributions_ = var("mixDiscreteDistributions'");
+const expression_ref UniformDiscretize = var("uniformDiscretize");
 const expression_ref length = var("length");
 const expression_ref plusplus = var("++");
 const expression_ref average = var("average");
@@ -69,36 +69,8 @@ Program make_Prelude()
   P.def_constructor("Nothing",0);
   P.def_constructor("DiscreteDistribution",1);
 
-  P += "{repeat x = x:(repeat x)}";
-
-  P += "{iterate f x = x:iterate f (f x)}";
-
-  P += "{map f []  = [];\
-         map f (h:t) = (f h):(map f t)}";
-  
-  P += "{fmap = map}";
-
-  P += "{fmap1 f [] = [];\
-         fmap1 f ((x,y):l) = (f x,y):(fmap1 f l);\
-         fmap1 f (DiscreteDistribution l) = DiscreteDistribution (fmap1 f l)}";
-
-  // fmap2 f []  = []
-  // fmap2 f (p,x):t = (p,f x):(fmap2 f t)
-  // fmap2 f (DiscreteDistribution d) = (DiscreteDistribution (fmap2 f d))
-  P += Def( (fmap2, v1, ListEnd)    , ListEnd)
-          ( (fmap2, v1, Tuple(v2,v3)&v4), Tuple(v2,(v1,v3)) & (fmap2, v1, v4) )
-          ( (fmap2, v1, (DiscreteDistribution,v2)), (DiscreteDistribution,(fmap2,v1,v2)));
-
   // (f . g) x = f (g x)
   P += Def( (var("."), v1, v2, v3)    , (v1, (v2, v3)) );
-
-  
-
-  // sum [] = 0
-  // sum h:t = h+(sum t)
-  expression_ref plus = lambda_expression( Add() );
-  P += Def( (sum_, ListEnd), 0)
-          ( (sum_, v1&v2), v1 + (sum_, v2) );
 
   expression_ref to_double = lambda_expression( Conversion<int,double>() );
 
@@ -119,6 +91,7 @@ Program make_Prelude()
   // UniformDiscretize q n = map (\i->(1.0/n, q ((2*i+1)/n) )) (take n (iterate (+1) 0) )
   // [ We could do this as two nested fmaps, instead. ]
   // [ We could factor out to_double(v2), and 1.0/to_double(v2)
+  expression_ref plus = lambda_expression( Add() );
   P += Def( (UniformDiscretize, v1, v2), (DiscreteDistribution, (fmap, lambda_quantify(v3,let_expression(v4,(to_double,v2), Tuple(1.0/v4, (v1,((2.0*v3+1.0)/(2.0*v4)))))), (take, v2, (iterate, (plus,1.0), 0.0) ) ) ) );
 
   // fst (x,y) = x
@@ -358,6 +331,25 @@ f $ x = f x
   P += "{take 0 x     = [];\
          take n []    = [];\
          take n (h:t) = h:(take (n-1) t)}";
+
+  P += "{repeat x = x:(repeat x)}";
+
+  P += "{iterate f x = x:iterate f (f x)}";
+
+  P += "{map f []  = [];\
+         map f (h:t) = (f h):(map f t)}";
+  
+  P += "{fmap = map}";
+
+  P += "{fmap1 f [] = [];\
+         fmap1 f ((x,y):l) = (f x,y):(fmap1 f l);\
+         fmap1 f (DiscreteDistribution l) = DiscreteDistribution (fmap1 f l)}";
+
+  P += "{fmap2 f [] = [];\
+         fmap2 f ((x,y):l) = (x,f y):(fmap2 f l);\
+         fmap2 f (DiscreteDistribution l) = DiscreteDistribution (fmap2 f l)}";
+
+  P += "{sum  = foldl' (+) 0}";
 
   // FIXME - we have an problem with types here.  This will only work for Int, as-is.
   P += "{enumFrom x = x:(enumFrom (x+1))}";
