@@ -69,21 +69,6 @@ Program make_Prelude()
   P.def_constructor("Nothing",0);
   P.def_constructor("DiscreteDistribution",1);
 
-  // foldr f z []  = z
-  // foldr f z x:xs = (f x (foldr f z xs))
-  P += Def( (foldr, v1, v2, ListEnd)    , v2)
-          ( (foldr, v1, v2, v3&v4), (v1,v3,(foldr,v1,v2,v4) ) );
-
-  // foldl f z []  = z
-  // foldl f z x:xs = foldl f (f z x) xs
-  P += Def( (foldl, v1, v2, ListEnd)    , v2)
-          ( (foldl, v1, v2, v3&v4), (foldl, v1, (v1, v2, v3), v4) );
-
-  // foldl' f z []  = z
-  // foldl' f z x:xs = let z' = (f z x) in seq z' $ foldl' f z' xs
-  P += Def( (foldl_, v1, v2, ListEnd)    , v2)
-          ( (foldl_, v1, v2, v3&v4), let_expression(v5,(v1,v2,v3),(seq,v5,(foldl_, v1, v5, v4) ) ) );
-
   // take 0 x   = []
   // take n []  = []
   // take n h:t = h:(take (n-1) t)
@@ -369,6 +354,15 @@ f $ x = f x
   //  P.declare_fixity("$!", 0, right_fix);
   P.def_function("seq", 2, lambda_expression( Seq() ) );
   P.declare_fixity("seq", 0, right_fix);
+
+  P += "{foldr f z [] = z;\
+         foldr f z (x:xs) = (f x (foldr f z xs))}";
+
+  P += "{foldl f z [] = z;\
+         foldl f z (x:xs) = foldl f (f z x) xs}";
+
+  P += "{foldl' f z [] = z;\
+         foldl' f z (x:xs) = let {z' = (f z x)} in seq z' (foldl' f z' xs)}";
 
   P += "{head (h:t) = h}";
   P += "{tail (h:t) = t}";
