@@ -108,27 +108,20 @@ Program make_Prelude()
   P.def_constructor("IOAction3",4);
   P.def_constructor("IOAction4",5);
 
-  P.def_constructor("IOReturn1",1);
+  P.def_constructor("IOReturn",1);
   P.def_constructor("IOAndPass",2);
   P.def_constructor("IOAnd",2);
 
   // FIXME? IOAction 0 doesn't work, because we don't get a separate cell for each application... to nothing.
   //        Current approach: supply dummy arguments to such a builtin that are not used.
 
-  // unsafePerformIO' (IOAction1 x y) = x y
-  // unsafePerformIO' (IOAction2 x y z) = x y z
-  // unsafePerformIO' (IOAction3 x y z w ) = x y z w 
-  // unsafePerformIO' (IOAction4 x y z w u) = x y z w u
-  // unsafePerformIO' (IOReturn a) = a
-  // unsafePerformIO' (IOAndPass f g) = let x = (unsafePerformIO' f) in x `join` (unsafePerformIO' (g x))
-  // unsafePerformIO' (IOAnd f g) = (unsafePerformIO' f) `join` (unsafePerformIO' g)
-  P += Def( (unsafePerformIO_, (IOAction1, v1, v2)), (v1,v2))
-    ( (unsafePerformIO_, (IOAction2, v1, v2, v3)), (v1, v2, v3))
-    ( (unsafePerformIO_, (IOAction3, v1, v2, v3, v4)), (v1, v2, v3, v4))
-    ( (unsafePerformIO_, (IOAction4, v1, v2, v3, v4, v5)), (v1, v2, v3, v4, v5))
-    ( (unsafePerformIO_, (IOReturn, v1)), v1)
-    ( (unsafePerformIO_, (IOAndPass, v1, v2)), let_expression(v3,(unsafePerformIO_, v1), (join_, v3, (unsafePerformIO_, (v2, v3)))))
-    ( (unsafePerformIO_, (IOAnd, v1, v2)), (join_, (unsafePerformIO_, v1), (unsafePerformIO_, v2)));
+  P += "{unsafePerformIO' (IOAction1 x y ) = x y;\
+         unsafePerformIO' (IOAction2 x y z) = x y z;\
+         unsafePerformIO' (IOAction3 x y z w) = x y z w;\
+         unsafePerformIO' (IOAction4 x y z w u) = x y z w u;\
+         unsafePerformIO' (IOReturn x) = x;\
+         unsafePerformIO' (IOAndPass f g) = let {x = unsafePerformIO' f} in x `join` (unsafePerformIO' (g x));\
+         unsafePerformIO' (IOAnd f g) = (unsafePerformIO' f) `join` (unsafePerformIO' g)}";
 
   P += "{unsafePerformIO x = reapply unsafePerformIO' x}";
 
@@ -277,6 +270,7 @@ f $ x = f x
   //  P.declare_fixity("$!", 0, right_fix);
   P.def_function("seq", 2, lambda_expression( Seq() ) );
   P.declare_fixity("seq", 0, right_fix);
+  P.declare_fixity("join", 0, right_fix);
 
   P += "{foldr f z [] = z;\
          foldr f z (x:xs) = (f x (foldr f z xs))}";
