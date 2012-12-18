@@ -301,9 +301,6 @@ f $ x = f x
   P.def_function("builtinNewVectorInt", 1, lambda_expression( BuiltinNewVectorOp<int>() ) ); 
   P.def_function("builtinSetVectorIndexInt", 3, lambda_expression( BuiltinSetVectorIndexOp<int,Int>() ) ); 
 
-  const expression_ref builtinNewVectorInt = var("builtinNewVectorInt");
-  const expression_ref builtinSetVectorIndexInt = var("builtinSetVectorIndexInt");
-
   P += "{newVectorInt s = IOAction1 builtinNewVectorInt s}";
 
   P += "{setVectorIndexInt v i x = IOAction3 builtinSetVectorIndexInt v i x}";
@@ -320,27 +317,16 @@ f $ x = f x
   P.def_function("builtinNewVectorDouble", 1, lambda_expression( BuiltinNewVectorOp<double>() ) ); 
   P.def_function("builtinSetVectorIndexDouble", 3, lambda_expression( BuiltinSetVectorIndexOp<double,Double>() ) ); 
 
-  const expression_ref builtinNewVectorDouble = var("builtinNewVectorDouble");
-  const expression_ref builtinSetVectorIndexDouble = var("builtinSetVectorIndexDouble");
+  P += "{newVectorDouble s = IOAction1 builtinNewVectorDouble s}";
 
-  const expression_ref newVectorDouble = var("newVectorDouble");
-  P += Def( (newVectorDouble, v1), (IOAction1, builtinNewVectorDouble, v1));
+  P += "{setVectorIndexDouble v i x = IOAction3 builtinSetVectorIndexDouble v i x}";
 
-  const expression_ref setVectorIndexDouble = var("setVectorIndexDouble");
-  P += Def( (setVectorIndexDouble, v1, v2, v3), (IOAction3, builtinSetVectorIndexDouble, v1, v2, v3));
-
-  const expression_ref listToVectorDouble = var("listToVectorDouble");
-  const expression_ref copyListToVectorDouble = var("copyListToVectorDouble");
-  // listToVectorDouble l = do { v <- newVectorDouble (length l); copyListToVector l v 0 ; return v;}
-  // listToVectorDouble l = newVectorDouble (length l) <<= (\v -> copyListToVector l v 0 << return v;)
-  P += Def( (listToVectorDouble, v1), (unsafePerformIO, (IOAndPass, (newVectorDouble, (length, v1)),
-							 lambda_quantify(v2,(IOAnd,(copyListToVectorDouble, v1, v2, 0),(IOReturn, v2))) ) ) );
-
-  // copyListToVectorDouble [] v i = return ()
   // copyListToVectorDouble h:t v i = do { setVectorIndexDouble v i h ; copyListToVectorDouble t v (i+1) }
-  // copyListToVectorDouble h:t v i = setVectorIndexDouble v i h << copyListToVectorDouble t v (i+1)
-  P += Def( (copyListToVectorDouble, ListEnd, v3, v4), (IOReturn, constructor("()",0)))
-    ( (copyListToVectorDouble, v1&v2  , v3, v4), (IOAnd,(setVectorIndexDouble, v3, v4, v1),(copyListToVectorDouble, v2,v3,(v4+1))));
+  P += "{copyListToVectorDouble [] v i = IOReturn ();\
+         copyListToVectorDouble (h:t) v i = IOAnd (setVectorIndexDouble v i h) (copyListToVectorDouble t v (i+1))}";
+
+  // listToVectorDouble l = do { v <- newVectorDouble (length l); copyListToVector l v 0 ; return v }
+  P += "{listToVectorDouble l = unsafePerformIO (IOAndPass (newVectorDouble (length l)) (\\v -> IOAnd (copyListToVectorDouble l v 0) (IOReturn v)))}";
 
   //--------------------------------------- listToVectorMatrix ---------------------------------------//
 
