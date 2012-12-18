@@ -274,9 +274,7 @@ f $ x = f x
 
   P += "{listFromVectorInt' v s i = if (i<s) then (getVectorIntElement v i):listFromVectorInt' v s (i+1) else []}";
 
-  // listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0
-  P += Def( (var("listFromVectorInt"), v1), (var("listFromVectorInt'"),v1,(var("sizeOfVectorInt"),v1),0));
-
+  P += "{listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0}";
 
   //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
   P.def_function("getVectorVectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<Vector<int>,Vector<int>>() ) ); 
@@ -284,8 +282,7 @@ f $ x = f x
 
   P += "{listFromVectorVectorInt' v s i = if (i<s) then (getVectorVectorIntElement v i):listFromVectorVectorInt' v s (i+1) else []}";
 
-  // listFromVectorVectorInt v = listFromVectorVectorInt' v (sizeOfVectorVectorInt v) 0
-  P += Def( (var("listFromVectorVectorInt"), v1), (var("listFromVectorVectorInt'"),v1,(var("sizeOfVectorVectorInt"),v1),0));
+  P += "{listFromVectorVectorInt v = listFromVectorVectorInt' v (sizeOfVectorVectorInt v) 0}";
 
   //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
   P.def_function("getVectorvectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<vector<int>,Vector<int>>() ) ); 
@@ -293,8 +290,7 @@ f $ x = f x
 
   P += "{listFromVectorvectorInt' v s i = if (i<s) then (getVectorvectorIntElement v i):listFromVectorvectorInt' v s (i+1) else []}";
 
-  // listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v) 0
-  P += Def( (var("listFromVectorvectorInt"), v1), (var("listFromVectorvectorInt'"),v1,(var("sizeOfVectorvectorInt"),v1),0));
+  P += "{listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v) 0}";
 
   //--------------------------------------- listToVectorInt ---------------------------------------//
 
@@ -333,27 +329,16 @@ f $ x = f x
   P.def_function("builtinNewVectorMatrix", 1, lambda_expression( BuiltinNewVectorOp<Matrix>() ) ); 
   P.def_function("builtinSetVectorIndexMatrix", 3, lambda_expression( BuiltinSetVectorIndexOp<Matrix,MatrixObject>() ) ); 
 
-  const expression_ref builtinNewVectorMatrix = var("builtinNewVectorMatrix");
-  const expression_ref builtinSetVectorIndexMatrix = var("builtinSetVectorIndexMatrix");
+  P += "{newVectorMatrix s = IOAction1 builtinNewVectorMatrix s}";
 
-  const expression_ref newVectorMatrix = var("newVectorMatrix");
-  P += Def( (newVectorMatrix, v1), (IOAction1, builtinNewVectorMatrix, v1));
+  P += "{setVectorIndexMatrix v i x = IOAction3 builtinSetVectorIndexMatrix v i x}";
 
-  const expression_ref setVectorIndexMatrix = var("setVectorIndexMatrix");
-  P += Def( (setVectorIndexMatrix, v1, v2, v3), (IOAction3, builtinSetVectorIndexMatrix, v1, v2, v3));
-
-  const expression_ref listToVectorMatrix = var("listToVectorMatrix");
-  const expression_ref copyListToVectorMatrix = var("copyListToVectorMatrix");
-  // listToVectorMatrix l = do { v <- newVectorMatrix (length l); copyListToVector l v 0 ; return v;}
-  // listToVectorMatrix l = newVectorMatrix (length l) <<= (\v -> copyListToVector l v 0 << return v;)
-  P += Def( (listToVectorMatrix, v1), (unsafePerformIO, (IOAndPass, (newVectorMatrix, (length, v1)),
-							 lambda_quantify(v2,(IOAnd,(copyListToVectorMatrix, v1, v2, 0),(IOReturn, v2))) ) ) );
-
-  // copyListToVectorMatrix [] v i = return ()
   // copyListToVectorMatrix h:t v i = do { setVectorIndexMatrix v i h ; copyListToVectorMatrix t v (i+1) }
-  // copyListToVectorMatrix h:t v i = setVectorIndexMatrix v i h << copyListToVectorMatrix t v (i+1)
-  P += Def( (copyListToVectorMatrix, ListEnd, v3, v4), (IOReturn, constructor("()",0)))
-    ( (copyListToVectorMatrix, v1&v2  , v3, v4), (IOAnd,(setVectorIndexMatrix, v3, v4, v1),(copyListToVectorMatrix, v2,v3,(v4+1))));
+  P += "{copyListToVectorMatrix [] v i = IOReturn ();\
+         copyListToVectorMatrix (h:t) v i = IOAnd (setVectorIndexMatrix v i h) (copyListToVectorMatrix t v (i+1))}";
+
+  // listToVectorMatrix l = do { v <- newVectorMatrix (length l); copyListToVector l v 0 ; return v }
+  P += "{listToVectorMatrix l = unsafePerformIO (IOAndPass (newVectorMatrix (length l)) (\\v -> IOAnd (copyListToVectorMatrix l v 0) (IOReturn v)))}";
 
   return P;
 }
