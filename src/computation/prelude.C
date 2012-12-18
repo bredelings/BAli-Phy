@@ -34,7 +34,7 @@ const expression_ref unsafePerformIO = var("unsafePerformIO");
 const expression_ref join_ = var("join");
 
 const expression_ref DiscreteDistribution = lambda_expression(constructor("Prelude.DiscreteDistribution",1));
-const expression_ref UnwrapDD = var("UnwrapDD");
+const expression_ref UnwrapDD = var("unwrapDD");
 
 /* TODO:
  * 1. [DONE] Remove true/false in favor of True/False.
@@ -72,38 +72,21 @@ Program make_Prelude()
   // (f . g) x = f (g x)
   P += Def( (var("."), v1, v2, v3)    , (v1, (v2, v3)) );
 
-  expression_ref to_double = lambda_expression( Conversion<int,double>() );
+  P += "{fst (x,y) = x}";
 
-  // fst (x,y) = x
-  P += Def( (fst,Tuple(v1,v2)), v1);
+  P += "{snd (x,y) = y}";
 
-  // snd (x,y) = y
-  P += Def( (snd,Tuple(v1,v2)), v2);
-
-  // snd (x,y) = y
-  P += Def( (var("swap"),Tuple(v1,v2)), Tuple(v2,v1));
+  P += "{swap (x,y) = (y,x)}";
 
   // !! h:t 0 = h
   // !! h:t i = !! t (i-1)
   P += Def( (get_list_index,v1&v2,0), v1)
           ( (get_list_index,v1&v2,v3), (get_list_index,v2,(v3-1)) );
 
-  // listArray b l = mkArray b \i -> l!!i
-  P += Def( (listArray,v1,v2),(mkArray, v1, v3^(get_list_index,v2,v3)) );
-
-  // listArray' l = listArray (length l) l
-  P += Def( (listArray_,v1),(listArray,(length,v1),v1));
-
-  // length l = foldl' (\x y->(x+1)) 0 l
-  P += Def( (length, v1), (foldl_,v2^(v3^(v2+1)), 0, v1) );
-
   // plusplus [] y = y
   // plusplus h:t y = h:(plusplus t y)
   P += Def( (plusplus, ListEnd, v0), v0)
           ( (plusplus, v0&v1, v2),v0&(plusplus,v1,v2));
-
-  // UnwrapDD (DiscreteDistribution l) = l
-  P += Def( (UnwrapDD, (DiscreteDistribution, v1)), v1 );
 
   const expression_ref IOAction1 = lambda_expression(constructor("IOAction1",2));
   const expression_ref IOAction2 = lambda_expression(constructor("IOAction2",3));
@@ -331,11 +314,6 @@ f $ x = f x
 
   P += "{extendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 (\\q->q*(1.0-p)) d)}";
 
-  P += "{mixDiscreteDistributions' (h:t) (h2:t2) = DiscreteDistribution (fmap1 (\\q->q*h) h2)++(mixDiscreteDistributions' t t2);\
-         mixDiscreteDistributions' [] [] = []}";
-
-  P += "{mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap UnwrapDD l2))}";
-
   P += "{sum  = foldl' (+) 0}";
 
   P += "{average (DiscreteDistribution l) = foldl' (\\x y->(x+(fst y)*(snd y))) 0.0 l}";
@@ -358,9 +336,22 @@ f $ x = f x
 
   P += {"{concatMap f = concat . map f}"};
 
+  P += "{length l = foldl' (\\x y ->(x+1)) 0 l}";
+
+  P += "{listArray n l = mkArray n (\\i -> l !! i)}";
+
+  P += "{listArray' l = listArray (length l) l}";
+
   P.def_function("doubleToLogDouble", 1, lambda_expression( Conversion<double,log_double_t>() ) );
 
   P += "{uniformQuantiles q n = map (\\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..])}";
+
+  P += "{unwrapDD (DiscreteDistribution l) = l}";
+
+  P += "{mixDiscreteDistributions' (h:t) (h2:t2) = DiscreteDistribution (fmap1 (\\q->q*h) h2)++(mixDiscreteDistributions' t t2);\
+         mixDiscreteDistributions' [] [] = []}";
+
+  P += "{mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap unwrapDD l2))}";
 
   //--------------------------------------- listFromVectorInt ----------------------------------------//
   P.def_function("getVectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 

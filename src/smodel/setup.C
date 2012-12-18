@@ -942,7 +942,7 @@ formula_expression_ref process_stack_Multi(vector<string>& model_args,
     //
     // N = a + b = 1/gamma - 1
 
-    D = (var("DiscreteDistribution"),Tuple(p3,w3) & (Tuple(p2,1.0) & (var("fmap1"), (v4^(times,v4,p1)), (var("UnwrapDD"), D))));
+    D = (var("DiscreteDistribution"),Tuple(p3,w3) & (Tuple(p2,1.0) & (var("fmap1"), (v4^(times,v4,p1)), (var("unwrapDD"), D))));
     // (p1,p2,p3) ~ Dirichlet(10, 10, 1)
     D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   (var("dirichlet"), List(10.0, 10.0, 1.0)) ) );
 
