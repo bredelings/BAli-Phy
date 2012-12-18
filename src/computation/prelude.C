@@ -74,9 +74,6 @@ Program make_Prelude()
 
   expression_ref to_double = lambda_expression( Conversion<int,double>() );
 
-  // average (DiscreteDistribution l) = foldl_ (\xy.(x+(fst y)*(snd y))) 0 l
-  P += Def( (average, (DiscreteDistribution, v3) ), (foldl_, v1^(v2^(v1+(fst,v2)*(snd,v2))), 0.0, v3) );
-
   // UniformDiscretize q n = map (\i->(1.0/n, q ((2*i+1)/n) )) (take n (iterate (+1) 0) )
   // [ We could do this as two nested fmaps, instead. ]
   // [ We could factor out to_double(v2), and 1.0/to_double(v2)
@@ -346,6 +343,8 @@ f $ x = f x
   P += "{mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap UnwrapDD l2))}";
 
   P += "{sum  = foldl' (+) 0}";
+
+  P += "{average (DiscreteDistribution l) = foldl' (\\x y->(x+(fst y)*(snd y))) 0.0 l}";
 
   // FIXME - we have an problem with types here.  This will only work for Int, as-is.
   P += "{enumFrom x = x:(enumFrom (x+1))}";
