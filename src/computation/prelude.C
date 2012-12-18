@@ -69,15 +69,6 @@ Program make_Prelude()
   P.def_constructor("Nothing",0);
   P.def_constructor("DiscreteDistribution",1);
 
-  // take 0 x   = []
-  // take n []  = []
-  // take n h:t = h:(take (n-1) t)
-  {
-    P += Def( (take, 0, v1), ListEnd )
-            ( (take, v1, ListEnd), ListEnd)
-            ( (take, v1, v2&v3), v2&(take,(v1 - 1),v3) );
-  }
-
   P += "{repeat x = x:(repeat x)}";
 
   // iterate f x = x:iterate f (f x)
@@ -366,6 +357,10 @@ f $ x = f x
 
   P += "{head (h:t) = h}";
   P += "{tail (h:t) = t}";
+
+  P += "{take 0 x     = [];\
+         take n []    = [];\
+         take n (h:t) = h:(take (n-1) t)}";
 
   // FIXME - we have an problem with types here.  This will only work for Int, as-is.
   P += "{enumFrom x = x:(enumFrom (x+1))}";
