@@ -300,7 +300,7 @@ closure Case::operator()(OperationArgs& Args) const
   }
 
   if (not result)
-    throw myexception()<<"Case: no valid alternative in '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
+    throw myexception()<<"Case: '"<<obj.exp->print()<<"' doesn't match any alternative in '"<<make_case_expression(obj.exp, cases, bodies)<<"'";
 
   result = get_trimmed(result);
 
