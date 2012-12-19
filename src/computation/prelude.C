@@ -228,6 +228,7 @@ f $ x = f x
 
   P += "{mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap unwrapDD l2))}";
 
+  P.def_function("sizeOfVectorUnsigned", lambda_expression( VectorSizeOp<unsigned>() ) );
   //--------------------------------------- listFromVectorInt ----------------------------------------//
   P.def_function("getVectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 
   P.def_function("sizeOfVectorInt", lambda_expression( VectorSizeOp<int>() ) );
