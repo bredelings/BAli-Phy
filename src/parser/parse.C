@@ -249,7 +249,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // negative literal integer
 	  | eps [clear(_a)] >> lit('-') >> h_integer [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
 	  // here the number of apat's must match the constructor arity
-	  | eps [clear(_a)] >>  gcon[ push_back(_a,_1) ] > +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
+	  | eps [clear(_a)] >>  gcon[ push_back(_a,_1) ] >> +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
 	  // apat
 	  | apat [ _val = _1 ]
 	  ;                  
