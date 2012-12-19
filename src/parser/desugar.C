@@ -127,7 +127,11 @@ expression_ref infix_parse(const Program& m, const symbol_info& op1, const expre
   if (T.empty())
     return E1;
 
-  symbol_info op2 = m.get_operator( assert_is_a<const var>(T.front())->name );
+  symbol_info op2;
+  if (auto v = T.front().is_a<const var>())
+    op2 = m.get_operator( v->name );
+  else if (auto d = T.front().is_a<const dummy>())
+    op2 = m.get_operator( d->name );
 
   // illegal expressions
   if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
