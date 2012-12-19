@@ -72,6 +72,20 @@ using std::deque;
  * Two formula_expression_ref's should only be combined if they have the same module name, I would think...
  */
 
+bool is_AST(const expression_ref& E, const string& type)
+{
+  auto ast = E.is_a<AST_node>();
+  if (not ast) return false;
+  return ast->type == type;
+}
+
+bool is_AST(const expression_ref& E, const string& type, const string& value)
+{
+  auto ast = E.is_a<AST_node>();
+  if (not ast) return false;
+  return ast->type == type and ast->value == value;
+}
+
 bool is_irrefutable_pat(const expression_ref& E)
 {
   assert(E.assert_is_a<AST_node>()->type == "pat");
@@ -271,10 +285,12 @@ expression_ref make_apply(const vector<expression_ref>& v)
 
 bool is_function_binding(const expression_ref& decl)
 {
-  assert(decl.assert_is_a<AST_node>()->type == "Decl");
+  assert(is_AST(decl,"Decl"));
 
   expression_ref lhs = decl->sub[0];
-  return (lhs.assert_is_a<AST_node>()->type == "funlhs1");
+  assert(not is_AST(lhs,"funlhs2"));
+  assert(not is_AST(lhs,"funlhs3"));
+  return is_AST(lhs,"funlhs1");
 }
 
 bool is_pattern_binding(const expression_ref& decl)
@@ -327,6 +343,57 @@ expression_ref get_body(const expression_ref& decl)
 {
   expression_ref rhs = decl->sub[1];
   return rhs->sub[0];
+}
+
+expression_ref append(const expression_ref& E1, const expression_ref& E2)
+{
+  vector<expression_ref> sub = E1->sub;
+  sub.push_back(E2);
+  return {E1->head, sub};
+}
+
+expression_ref append(const expression_ref& E1, const vector<expression_ref>& E2s)
+{
+  vector<expression_ref> sub = E1->sub;
+  for(const auto& E2: E2s)
+    sub.push_back(E2);
+  return {E1->head, sub};
+}
+
+expression_ref translate_funlhs(const expression_ref& E)
+{
+  if (is_AST(E,"funlhs1"))
+    return E;
+  else if (is_AST(E,"funlhs2"))
+  {
+    // Let's just ignore pat elements here -- they can be fixed up by desugar, I think.
+
+    // TODO: We want to look at the infix patterns here to make sure that operator parses as the top-level element.
+    
+    return {AST_node("funlhs1"),{E->sub[1],E->sub[0],E->sub[2]}};
+  }
+  else if (is_AST(E,"funlhs3"))
+  {
+    expression_ref fun1 = translate_funlhs(E->sub[0]);
+    vector<expression_ref> args = fun1->sub;
+    for(int i=1;i<E->sub.size();i++)
+      fun1 = append(fun1,E->sub[i]);
+    return fun1;
+  }
+  else
+    return {};
+}
+
+expression_ref translate_funlhs_decl(const expression_ref& E)
+{
+  if (expression_ref funlhs = translate_funlhs(E->sub[0]))
+  {
+    vector<expression_ref> sub = E->sub;
+    sub[0] = funlhs;
+    return {E->head,sub};
+  }
+  else
+    return E;
 }
 
 vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
@@ -442,6 +509,10 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       // Find all the names bound here
       for(auto& e: v)
       {
+	// Translate funlhs2 and funlhs3 declaration forms to funlhs1 form.
+	e = translate_funlhs_decl(e);
+
+	// Bind the function id to avoid errors on the undeclared id later.
 	if (is_function_binding(e))
 	  bound2.insert(get_func_name(e));
 	else if (is_pattern_binding(e))
@@ -806,18 +877,6 @@ string read_file(const string& filename, const string& description)
   std::stringstream buffer;
   buffer << file.rdbuf();
   return buffer.str();
-}
-
-bool is_AST(const expression_ref& E, const string& type)
-{
-  auto ast = E.is_a<AST_node>();
-  return ast->type == type;
-}
-
-bool is_AST(const expression_ref& E, const string& type, const string& value)
-{
-  auto ast = E.is_a<AST_node>();
-  return ast->type == type and ast->value == value;
 }
 
 Model_Notes read_BUGS(const Parameters& P, const string& filename, const string& module_name_)

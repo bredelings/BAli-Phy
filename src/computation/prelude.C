@@ -51,7 +51,7 @@ Program make_Prelude()
   P.def_constructor("DiscreteDistribution",1);
 
   // (f . g) x = f (g x)
-  P += Def( (var("."), v1, v2, v3)    , (v1, (v2, v3)) );
+  P += "{(f . g) x = f (g x)}";
 
   P += "{fst (x,y) = x}";
 
