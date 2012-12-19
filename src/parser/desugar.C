@@ -131,7 +131,17 @@ expression_ref infix_parse(const Program& m, const symbol_info& op1, const expre
   if (auto v = T.front().is_a<const var>())
     op2 = m.get_operator( v->name );
   else if (auto d = T.front().is_a<const dummy>())
-    op2 = m.get_operator( d->name );
+  {
+    if (m.is_declared( d->name) )
+      op2 = m.get_operator( d->name );
+    else
+    {
+      op2.precedence = 9;
+      op2.fixity = left_fix;
+    }
+  }
+  else
+    throw myexception()<<"Can't use expression '"<<T.front()->print()<<"' as infix operator.";
 
   // illegal expressions
   if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
