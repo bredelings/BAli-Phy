@@ -49,7 +49,8 @@ Program SModel_Functions()
 {
   Program P("SModel");
   P.import_module(get_Prelude(),"Prelude",false);
-  P.def_function("plusGWF",substitution::Plus_gwF_Op());
+  P.def_function("plusGWF", lambda_expression(substitution::Plus_gwF_Op()));
+  P.def_function("lExp", lambda_expression(LExp_Op()));
   P.def_constructor("ReversibleMarkov",7);
   P.def_constructor("ReversibleFrequency",4);
   P.def_constructor("F81",4);
@@ -64,13 +65,10 @@ Program SModel_Functions()
 
   P += "{multiRate m d = multiParameter (\\x->(scale x m)) d}";
 
-  // rate (ReversibleMarkovModel a smap q vector<pi> l t) = t*(get_equilibrium_rate a smap q pi)
-  // rate (MixtureModel (DiscreteDistribution l) ) = average (fmap2 rate l)
-  P += Def( (var("rate"),(ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v7 )
-    ( (var("rate"),(MixtureModel, v1) ), (var("average"),(var("fmap2"), var("rate"), v1) ) );
+  P += "{rate (ReversibleMarkov a s q pi l t r) = r;\
+         rate (MixtureModel d) = average (fmap2 rate d)}";
      
-  // QExp (ReversibleMarkov a smap q pi l t r) = (LExp l pi t)
-  P += Def( (QExp, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), (LExp,v5,v4,v6));
+  P += "{qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t}";
 
   // branch_transition_p m@(MixtureModel (DiscreteDistribution l) ) t = list_to_vector (fmap \p->(QExp (scale (t/(rate m)) (snd p) ) ) l)
   P += Def( (branch_transition_p, (MixtureModel, (DiscreteDistribution, v3) ), v1 ),
