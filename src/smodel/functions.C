@@ -20,7 +20,7 @@ const expression_ref get_frequencies = var("frequencies");
 const expression_ref get_component_frequencies = var("componentFrequencies");
 const expression_ref base_model = var("baseModel");
 const expression_ref distribution = var("distribution");
-const expression_ref MultiRate = var("MultiRate");
+const expression_ref MultiRate = var("multiRate");
 const expression_ref get_nth_mixture = var("getNthMixture");
 const expression_ref UnwrapMM = var("unwrapMM");
 const expression_ref MixMixtureModels = var("mixMixtureModels");
@@ -48,7 +48,7 @@ const expression_ref DiscreteDistribution = lambda_expression(constructor("Prelu
 Program SModel_Functions()
 {
   Program P("SModel");
-
+  P.import_module(get_Prelude(),"Prelude",false);
   P.def_function("plusGWF",substitution::Plus_gwF_Op());
   P.def_constructor("ReversibleMarkov",7);
   P.def_constructor("ReversibleFrequency",4);
@@ -56,8 +56,7 @@ Program SModel_Functions()
   P.def_constructor("MixtureModel",1);
   P.def_constructor("MixtureModels",1);
 
-  // MultiParameter f (DiscreteDistribution d) = MixtureModel(DiscreteDistribution (fmap2 f d))
-  P += Def( (MultiParameter,v1,(DiscreteDistribution,v2)), (MixtureModel,(DiscreteDistribution,(var("fmap2"),v1,v2))));
+  P += "{multiParameter f (DiscreteDistribution d) = MixtureModel (DiscreteDistribution (fmap2 f d))}";
 
   // MultiRate m D = MultiParameter \x.(scale x m) D
   P += Def( (MultiRate,v1,v2), (MultiParameter,v3^(scale,v3,v1), v2) );
