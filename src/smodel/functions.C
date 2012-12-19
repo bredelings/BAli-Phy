@@ -56,15 +56,13 @@ Program SModel_Functions()
   P.def_constructor("MixtureModel",1);
   P.def_constructor("MixtureModels",1);
 
-  P += "{multiParameter f (DiscreteDistribution d) = MixtureModel (DiscreteDistribution (fmap2 f d))}";
-
-  // MultiRate m D = MultiParameter \x.(scale x m) D
-  P += Def( (MultiRate,v1,v2), (MultiParameter,v3^(scale,v3,v1), v2) );
-
-  // scale x (ReversibleMarkov a s q pi l t) = (ReversibleMarkov a s q p l (x * t))
   // scale x (F81 a s a' pi)= (F81 a s a'*x pi) ??
   // scale x (MixtureModel (DiscreteDistribution l)) s= (MixtureModel (DiscreteDistribution (fmap2,scale(s),l))) ??
-  P += Def( (scale,v0,(ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)),(ReversibleMarkov,v1,v2,v3,v4,v5, v0*v6,v0*v7) );
+  P += "{scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r)}";
+
+  P += "{multiParameter f (DiscreteDistribution d) = MixtureModel (DiscreteDistribution (fmap2 f d))}";
+
+  P += "{multiRate m d = multiParameter (\\x->(scale x m)) d}";
 
   // rate (ReversibleMarkovModel a smap q vector<pi> l t) = t*(get_equilibrium_rate a smap q pi)
   // rate (MixtureModel (DiscreteDistribution l) ) = average (fmap2 rate l)
