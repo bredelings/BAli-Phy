@@ -49,8 +49,13 @@ Program SModel_Functions()
 {
   Program P("SModel");
   P.import_module(get_Prelude(),"Prelude",false);
+
   P.def_function("plusGWF", lambda_expression(substitution::Plus_gwF_Op()));
   P.def_function("lExp", lambda_expression(LExp_Op()));
+  P.def_function("getQ", lambda_expression(substitution::Q_Op()));
+  P.def_function("getEigensystem", lambda_expression(substitution::Get_Eigensystem_Op()));
+  P.def_function("getEquilibriumRate", lambda_expression(substitution::Get_Equilibrium_Rate_Op()));
+
   P.def_constructor("ReversibleMarkov",7);
   P.def_constructor("ReversibleFrequency",4);
   P.def_constructor("F81",4);
@@ -72,14 +77,7 @@ Program SModel_Functions()
 
   P += "{branchTransitionP (MixtureModel (DiscreteDistribution l)) t = let {r = rate (MixtureModel (DiscreteDistribution l))} in map (\\x -> qExp (scale (t/r) (snd x))) l}";
 
-  // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0 (Get_Equilibrium_Rate a smap Q pi)
-  P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), 
-	      let_expression(v6,(substitution::Q,v1,v5),
-			   (ReversibleMarkov, v2, v3, v6, v4, (substitution::Get_Eigensystem,v6,v4), 1.0,
-			    (substitution::Get_Equilibrium_Rate, v2, v3, v6, v4)
-			   )
-	      )
-	  );
+  P += "{qFromSandR s (ReversibleFrequency a smap pi r) = let {q = getQ s r} in ReversibleMarkov a smap q pi (getEigensystem q pi) 1.0 (getEquilibriumRate a smap q pi)}";
 
   // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
   // n_base_models (MixtureModels h:t) = n_base_models h
