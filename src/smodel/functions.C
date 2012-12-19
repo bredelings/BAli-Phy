@@ -79,10 +79,8 @@ Program SModel_Functions()
 
   P += "{qFromSandR s (ReversibleFrequency a smap pi r) = let {q = getQ s r} in ReversibleMarkov a smap q pi (getEigensystem q pi) 1.0 (getEquilibriumRate a smap q pi)}";
 
-  // n_base_models (MixtureModel a state_letters (DiscreteDistribution l)) = length l
-  // n_base_models (MixtureModels h:t) = n_base_models h
-  P += Def( (var("nBaseModels"), (MixtureModel,(DiscreteDistribution,v1))), (var("length"),v1))
-          ( (var("nBaseModels"), (MixtureModels,v1&v2)), (var("nBaseModels"),v1) );
+  P += "{nBaseModels (MixtureModel (DiscreteDistribution l)) = length l;\
+         nBaseModels (MixtureModels (m:ms)) = nBaseModels m}";
 
   // state_letters (ReversibleMarkov alpha smap q pi l t r) = smap
   // state_letters (F81 alpha s a pi) = s
