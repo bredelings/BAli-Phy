@@ -142,7 +142,7 @@ void Program::declare_fixity(const std::string& s, int precedence, fixity_t fixi
   string s2 = module_name + "." + s;
 
   if (not is_declared_qualified(s2))
-    throw myexception()<<"Identifier '"<<s2<<"' not declared.  Cannot set fixity.";
+    declare_symbol({s, unknown_symbol, local_scope, -1, -1, unknown_fix, {}, {}});
 
   symbol_info& S = symbols.find(s2)->second;
   if (precedence < 0 or precedence > 9)
@@ -534,11 +534,27 @@ Program& Program::operator+=(const expression_ref& H)
 
 void Program::def_function(const std::string& name, const expression_ref& body, const expression_ref& type)
 {
-  auto loc = symbols.find(name);
-  if (loc != symbols.end())
-    throw myexception()<<"Can't add function with name '"<<name<<"': that name is already used!";
+  if (is_qualified_symbol(name))
+    throw myexception()<<"Locally defined symbol '"<<name<<"' should not be qualified in function declaration.";
 
-  declare_symbol({name, variable_symbol, local_scope, -1, -1, unknown_fix, body, type});
+  string qualified_name = module_name+"."+name;
+  auto loc = symbols.find(qualified_name);
+
+  if (loc != symbols.end())
+  {
+    symbol_info& S = loc->second;
+    // Only the fixity has been declared!
+    if (S.symbol_type == unknown_symbol and not S.body and not S.type)
+    {
+      S.symbol_type = variable_symbol;
+      S.body = body;
+      S.type = type;
+    }
+    else 
+      throw myexception()<<"Can't add function with name '"<<name<<"': that name is already used!";
+  }
+  else
+    declare_symbol({name, variable_symbol, local_scope, -1, -1, unknown_fix, body, type});
 }
 
 void Program::def_function(const std::string& name, const expression_ref& body)
@@ -569,10 +585,26 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
 
 void Program::def_constructor(const std::string& name, int arity)
 {
-  symbol_info S(name, constructor_symbol, local_scope, arity, -1, unknown_fix);
+  if (is_qualified_symbol(name))
+    throw myexception()<<"Locally defined symbol '"<<name<<"' should not be qualified.";
+
   string qualified_name = module_name+"."+name;
-  S.body = lambda_expression( constructor(qualified_name, arity) );
-  declare_symbol( S );
+  expression_ref body = lambda_expression( constructor(qualified_name, arity) );
+
+  auto loc = symbols.find(qualified_name);
+  if (loc != symbols.end())
+  {
+    symbol_info& S = loc->second;
+    // Only the fixity has been declared!
+    if (S.symbol_type == unknown_symbol and not S.body and not S.type)
+    {
+      S.symbol_type = constructor_symbol;
+      S.body = body;
+      return;
+    }
+  }
+
+  declare_symbol( {name, constructor_symbol, local_scope, arity, -1, unknown_fix, body, {}} );
 }
 
 expression_ref Program::get_function(const std::string& name) const

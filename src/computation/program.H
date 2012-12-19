@@ -9,7 +9,7 @@
 #include <iostream>
 
 enum fixity_t {unknown_fix=0, non_fix=1, left_fix=2, right_fix=3};
-enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, parameter_symbol = 2, type_symbol = 3};
+enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, parameter_symbol = 2, type_symbol = 3, unknown_symbol = 4};
 enum scope_t {local_scope, external_scope, global_scope, unknown_scope};
 
 struct symbol_info
