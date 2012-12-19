@@ -281,8 +281,6 @@ symbol_info Program::get_operator(const string& name) const
 {
   symbol_info S = lookup_symbol(name);
 
-  if (S.arity < 2) throw myexception()<<"Operator '"<<S.name<<"' does not have arity at least 2!";
-
   // An operator of undefined precedence is treated as if it has the highest precedence
   if (S.precedence == -1 or S.fixity == unknown_fix) 
   {
@@ -527,26 +525,25 @@ Program& Program::operator+=(const expression_ref& H)
   {
     string name = decl->sub[0].assert_is_a<var>()->name;
     // I think this is never used, for functions.  For constructors it does matter, though.
-    int arity = -1;
     expression_ref E = decl->sub[1];
-    def_function(name, arity, E);
+    def_function(name, E);
   }
 
   return *this;
 }
 
-void Program::def_function(const std::string& name, int arity, const expression_ref& body, const expression_ref& type)
+void Program::def_function(const std::string& name, const expression_ref& body, const expression_ref& type)
 {
   auto loc = symbols.find(name);
   if (loc != symbols.end())
     throw myexception()<<"Can't add function with name '"<<name<<"': that name is already used!";
 
-  declare_symbol({name, variable_symbol, local_scope, arity, -1, unknown_fix, body, type});
+  declare_symbol({name, variable_symbol, local_scope, -1, -1, unknown_fix, body, type});
 }
 
-void Program::def_function(const std::string& name, int arity, const expression_ref& body)
+void Program::def_function(const std::string& name, const expression_ref& body)
 {
-  def_function(name, arity, body, {});
+  def_function(name, body, {});
 }
 
 void Program::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
@@ -557,7 +554,6 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
   string name;
   vector< vector<expression_ref> > sub_patterns(patterns.size());
   parse_combinator_application(patterns[0], name, sub_patterns[0]);
-  int arity = sub_patterns[0].size();
 
   for(int i=1;i<patterns.size();i++)
   {
@@ -568,7 +564,7 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
   }
 
   expression_ref E = ::def_function(sub_patterns, bodies);
-  def_function(name, arity, E);
+  def_function(name, E);
 }
 
 void Program::def_constructor(const std::string& name, int arity)

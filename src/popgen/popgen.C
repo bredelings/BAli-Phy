@@ -313,12 +313,12 @@ Program PopGen_Functions()
   Program P("PopGen");
   P.import_module(get_Prelude(), "Prelude", false);
   P.import_module(Distribution_Functions(), "Distributions", false);
-  P.def_function("readPhaseFile", 1, lambda_expression(Read_PHASE_File()));
-  P.def_function("remove2ndAllele", 1, lambda_expression(Remove_2nd_Allele()));
-  P.def_function("alleleFrequencySpectrum", 1, lambda_expression(Allele_Frequency_Spectrum()));
-  P.def_function("ewensSamplingProbability", 2, lambda_expression(Ewens_Sampling_Probability()));
-  P.def_function("ewensSamplingGroupProbability", 2, lambda_expression(Ewens_Sampling_Group_Probability()));
-  P.def_function("builtinEwensSamplingMixtureProbability", 2, lambda_expression(Ewens_Sampling_Mixture_Probability()));
+  P.def_function("readPhaseFile", lambda_expression(Read_PHASE_File()));
+  P.def_function("remove2ndAllele", lambda_expression(Remove_2nd_Allele()));
+  P.def_function("alleleFrequencySpectrum", lambda_expression(Allele_Frequency_Spectrum()));
+  P.def_function("ewensSamplingProbability", lambda_expression(Ewens_Sampling_Probability()));
+  P.def_function("ewensSamplingGroupProbability", lambda_expression(Ewens_Sampling_Group_Probability()));
+  P.def_function("builtinEwensSamplingMixtureProbability", lambda_expression(Ewens_Sampling_Mixture_Probability()));
 
   P += "{ewensSamplingMixtureProbability (thetas,ps) x = builtinEwensSamplingMixtureProbability (listToVectorDouble thetas) (listToVectorDouble ps) x}";
 

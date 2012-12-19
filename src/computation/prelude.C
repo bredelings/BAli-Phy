@@ -33,16 +33,16 @@ Program make_Prelude()
 {
   Program P("Prelude");
 
-  P.def_function("error", 1, lambda_expression( Error() ) ); 
-  P.def_function("intToDouble", 1, lambda_expression( Conversion<int,double>() ) ); 
-  P.def_function("mkArray", 2, lambda_expression( MkArray() ) ); 
-  P.def_function("reapply", 2, lambda_expression( Reapply() ) );
-  P.def_function("join", 2, lambda_expression( Join() ) );
-  P.def_function("negate", 1, lambda_expression( Negate() ) );
-  P.def_function("exp", 1, lambda_expression( Exp_Op() ) );
-  P.def_function("log", 1, lambda_expression( Log_Op() ) );
-  P.def_function("!", 2, lambda_expression( GetIndex() ) );
-  P.def_function("getAddress", 1, lambda_expression( Get_Address() ) );
+  P.def_function("error", lambda_expression( Error() ) ); 
+  P.def_function("intToDouble", lambda_expression( Conversion<int,double>() ) ); 
+  P.def_function("mkArray", lambda_expression( MkArray() ) ); 
+  P.def_function("reapply", lambda_expression( Reapply() ) );
+  P.def_function("join", lambda_expression( Join() ) );
+  P.def_function("negate", lambda_expression( Negate() ) );
+  P.def_function("exp", lambda_expression( Exp_Op() ) );
+  P.def_function("log", lambda_expression( Log_Op() ) );
+  P.def_function("!", lambda_expression( GetIndex() ) );
+  P.def_function("getAddress", lambda_expression( Get_Address() ) );
 
   P.def_constructor("True",0);
   P.def_constructor("False",0);
@@ -68,14 +68,6 @@ Program make_Prelude()
   // plusplus h:t y = h:(plusplus t y)
   P += Def( (plusplus, ListEnd, v0), v0)
           ( (plusplus, v0&v1, v2),v0&(plusplus,v1,v2));
-
-  const expression_ref IOAction1 = lambda_expression(constructor("Prelude.IOAction1",2));
-  const expression_ref IOAction2 = lambda_expression(constructor("Prelude.IOAction2",3));
-  const expression_ref IOAction3 = lambda_expression(constructor("Prelude.IOAction3",4));
-  const expression_ref IOAction4 = lambda_expression(constructor("Prelude.IOAction4",5));
-  const expression_ref IOReturn = lambda_expression(constructor("Prelude.IOReturn",1));
-  const expression_ref IOAndPass = lambda_expression(constructor("Prelude.IOAndPass",2));
-  const expression_ref IOAnd = lambda_expression(constructor("Prelude.IOAnd",2));
 
   P.def_constructor("IOAction1",2);
   P.def_constructor("IOAction2",3);
@@ -117,9 +109,9 @@ infixr 9 .
   //  P.declare_fixity("^^", 8, right_fix);
   //  P.declare_fixity("**", 8, right_fix);
 
-  P.def_function("*", 2, lambda_expression( Multiply() ) );
+  P.def_function("*", lambda_expression( Multiply() ) );
   P.declare_fixity("*", 7, left_fix);
-  P.def_function("/", 2, lambda_expression( Divide() ) );
+  P.def_function("/", lambda_expression( Divide() ) );
   P.declare_fixity("/", 7, left_fix);
 
   //  P.declare_fixity("div", 7, left_fix);
@@ -127,23 +119,23 @@ infixr 9 .
   //  P.declare_fixity("rem", 7, left_fix);
   //  P.declare_fixity("quot", 7, left_fix);
 
-  P.def_function("+", 2, lambda_expression( Add() ) ); 
+  P.def_function("+", lambda_expression( Add() ) ); 
   P.declare_fixity("+", 6, left_fix);
-  P.def_function("-", 2, lambda_expression( Minus() ) );
+  P.def_function("-", lambda_expression( Minus() ) );
   P.declare_fixity("-", 6, left_fix);
 
   // this needs to be added as a constructor expression
   // ":" is builtin, but has precedence 5 and right fixity.
   P.declare_fixity("++", 5, right_fix);
 
-  P.def_function("==", 2, lambda_expression( Equals() ) );
+  P.def_function("==", lambda_expression( Equals() ) );
   P.declare_fixity("==", 5, non_fix);
-  P.def_function("/=", 2, lambda_expression( NotEquals() ) );
+  P.def_function("/=", lambda_expression( NotEquals() ) );
   P.declare_fixity("/=", 5, non_fix);
-  P.def_function("<", 2, lambda_expression( LessThan() ) );
+  P.def_function("<", lambda_expression( LessThan() ) );
   P.declare_fixity("<", 5, non_fix);
   //  P.declare_fixity("<=", 5, non_fix);
-  P.def_function(">", 2, lambda_expression( GreaterThan() ) );
+  P.def_function(">", lambda_expression( GreaterThan() ) );
   P.declare_fixity(">", 5, non_fix);
   //  P.declare_fixity(">=", 5, non_fix);
   
@@ -163,7 +155,7 @@ f $ x = f x
   */
   //  P.declare_fixity("$", 0, right_fix);
   //  P.declare_fixity("$!", 0, right_fix);
-  P.def_function("seq", 2, lambda_expression( Seq() ) );
+  P.def_function("seq", lambda_expression( Seq() ) );
   P.declare_fixity("seq", 0, right_fix);
   P.declare_fixity("join", 0, right_fix);
 
@@ -230,7 +222,7 @@ f $ x = f x
 
   P += "{listArray' l = listArray (length l) l}";
 
-  P.def_function("doubleToLogDouble", 1, lambda_expression( Conversion<double,log_double_t>() ) );
+  P.def_function("doubleToLogDouble", lambda_expression( Conversion<double,log_double_t>() ) );
 
   P += "{uniformQuantiles q n = map (\\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..])}";
 
@@ -242,8 +234,8 @@ f $ x = f x
   P += "{mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap unwrapDD l2))}";
 
   //--------------------------------------- listFromVectorInt ----------------------------------------//
-  P.def_function("getVectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 
-  P.def_function("sizeOfVectorInt", 1, lambda_expression( VectorSizeOp<int>() ) );
+  P.def_function("getVectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 
+  P.def_function("sizeOfVectorInt", lambda_expression( VectorSizeOp<int>() ) );
 
 
   P += "{listFromVectorInt' v s i = if (i<s) then (getVectorIntElement v i):listFromVectorInt' v s (i+1) else []}";
@@ -251,16 +243,16 @@ f $ x = f x
   P += "{listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0}";
 
   //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
-  P.def_function("getVectorVectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<Vector<int>,Vector<int>>() ) ); 
-  P.def_function("sizeOfVectorVectorInt", 1, lambda_expression( VectorSizeOp<Vector<int>>() ) );
+  P.def_function("getVectorVectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<Vector<int>,Vector<int>>() ) ); 
+  P.def_function("sizeOfVectorVectorInt", lambda_expression( VectorSizeOp<Vector<int>>() ) );
 
   P += "{listFromVectorVectorInt' v s i = if (i<s) then (getVectorVectorIntElement v i):listFromVectorVectorInt' v s (i+1) else []}";
 
   P += "{listFromVectorVectorInt v = listFromVectorVectorInt' v (sizeOfVectorVectorInt v) 0}";
 
   //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
-  P.def_function("getVectorvectorIntElement", 2, lambda_expression( BuiltinGetVectorIndexOp<vector<int>,Vector<int>>() ) ); 
-  P.def_function("sizeOfVectorvectorInt", 1, lambda_expression( VectorSizeOp<vector<int>>() ) );
+  P.def_function("getVectorvectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<vector<int>,Vector<int>>() ) ); 
+  P.def_function("sizeOfVectorvectorInt", lambda_expression( VectorSizeOp<vector<int>>() ) );
 
   P += "{listFromVectorvectorInt' v s i = if (i<s) then (getVectorvectorIntElement v i):listFromVectorvectorInt' v s (i+1) else []}";
 
@@ -268,8 +260,8 @@ f $ x = f x
 
   //--------------------------------------- listToVectorInt ---------------------------------------//
 
-  P.def_function("builtinNewVectorInt", 1, lambda_expression( BuiltinNewVectorOp<int>() ) ); 
-  P.def_function("builtinSetVectorIndexInt", 3, lambda_expression( BuiltinSetVectorIndexOp<int,Int>() ) ); 
+  P.def_function("builtinNewVectorInt", lambda_expression( BuiltinNewVectorOp<int>() ) ); 
+  P.def_function("builtinSetVectorIndexInt", lambda_expression( BuiltinSetVectorIndexOp<int,Int>() ) ); 
 
   P += "{newVectorInt s = IOAction1 builtinNewVectorInt s}";
 
@@ -284,8 +276,8 @@ f $ x = f x
 
   //--------------------------------------- listToVectorDouble ---------------------------------------//
 
-  P.def_function("builtinNewVectorDouble", 1, lambda_expression( BuiltinNewVectorOp<double>() ) ); 
-  P.def_function("builtinSetVectorIndexDouble", 3, lambda_expression( BuiltinSetVectorIndexOp<double,Double>() ) ); 
+  P.def_function("builtinNewVectorDouble", lambda_expression( BuiltinNewVectorOp<double>() ) ); 
+  P.def_function("builtinSetVectorIndexDouble", lambda_expression( BuiltinSetVectorIndexOp<double,Double>() ) ); 
 
   P += "{newVectorDouble s = IOAction1 builtinNewVectorDouble s}";
 
@@ -300,8 +292,8 @@ f $ x = f x
 
   //--------------------------------------- listToVectorMatrix ---------------------------------------//
 
-  P.def_function("builtinNewVectorMatrix", 1, lambda_expression( BuiltinNewVectorOp<Matrix>() ) ); 
-  P.def_function("builtinSetVectorIndexMatrix", 3, lambda_expression( BuiltinSetVectorIndexOp<Matrix,MatrixObject>() ) ); 
+  P.def_function("builtinNewVectorMatrix", lambda_expression( BuiltinNewVectorOp<Matrix>() ) ); 
+  P.def_function("builtinSetVectorIndexMatrix", lambda_expression( BuiltinSetVectorIndexOp<Matrix,MatrixObject>() ) ); 
 
   P += "{newVectorMatrix s = IOAction1 builtinNewVectorMatrix s}";
 

@@ -1083,7 +1083,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
     IModel_methods[i].parameters = add_submodel(imodel);
   }
   Program imodels_program("IModels");
-  imodels_program.def_function("models", 0, (var("listArray'"), get_list(imodels_).exp()));
+  imodels_program.def_function("models", (var("listArray'"), get_list(imodels_).exp()));
   C += { imodels_program };
   
   // check that we only map existing smodels to data partitions
@@ -1151,7 +1151,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   }
 
   Program parameter_program("Parameters");
-  parameter_program.def_function("substitutionBranchLengths", 0, (var("listArray'"),(var("fmap"),var("listArray'"),substitutionBranchLengthsList)));
+  parameter_program.def_function("substitutionBranchLengths", (var("listArray'"),(var("fmap"),var("listArray'"),substitutionBranchLengthsList)));
   C += {parameter_program};
 
   // register the cached transition_p indices
@@ -1221,7 +1221,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   Program tree_program("Tree");
   tree_program.import_module(get_Prelude(),"Prelude",false);
   tree_program.def_constructor("Tree",4);
-  tree_program.def_function("tree", 0, (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
+  tree_program.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
 
   // Things to add to parse:
   // - infix handling for patterns - disambiguation in left- and right-sections also.

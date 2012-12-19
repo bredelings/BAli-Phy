@@ -70,10 +70,10 @@ public:
   const std::map<std::string, symbol_info>& get_symbols() const {return symbols;}
 
   /// Add a function
-  void def_function(const std::string& name, int arity, const expression_ref& b, const expression_ref& type);
+  void def_function(const std::string& name, const expression_ref& b, const expression_ref& type);
 
   /// Add a function
-  void def_function(const std::string& name, int arity, const expression_ref& b);
+  void def_function(const std::string& name, const expression_ref& b);
 
   // Add a function
   void def_function(const std::vector<expression_ref>&, const std::vector<expression_ref>&);

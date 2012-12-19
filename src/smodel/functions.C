@@ -49,7 +49,7 @@ Program SModel_Functions()
 {
   Program P("SModel");
 
-  P.def_function("plusGWF",3,substitution::Plus_gwF_Op());
+  P.def_function("plusGWF",substitution::Plus_gwF_Op());
   P.def_constructor("ReversibleMarkov",7);
   P.def_constructor("ReversibleFrequency",4);
   P.def_constructor("F81",4);

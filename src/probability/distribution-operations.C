@@ -523,7 +523,7 @@ Program Range_Functions()
   P.def_constructor("Real",1);
   P.def_constructor("Inf",0);
   P.def_constructor("NegInf",0);
-  P.def_function("builtinGetBounds", 2, lambda_expression( GetBounds() ) );
+  P.def_function("builtinGetBounds", lambda_expression( GetBounds() ) );
 
   P += "{realLine = OpenInterval Nothing Nothing}";
   P += "{above l = OpenInterval (Just l) Nothing}";
@@ -549,43 +549,43 @@ Program Distribution_Functions()
 
   P.def_constructor("ProbDensity",5);
 
-  P.def_function("exponentialDensity", 2, lambda_expression( exponential_density() ) );
-  P.def_function("logExponentialDensity", 2, lambda_expression( log_exponential_density() ) );
+  P.def_function("exponentialDensity", lambda_expression( exponential_density() ) );
+  P.def_function("logExponentialDensity", lambda_expression( log_exponential_density() ) );
 
-  P.def_function("builtinGammaDensity", 3, lambda_expression( gamma_density() ) );
-  P.def_function("builtinGammaQuantile", 3, lambda_expression( gamma_quantile_op() ) );
+  P.def_function("builtinGammaDensity", lambda_expression( gamma_density() ) );
+  P.def_function("builtinGammaQuantile", lambda_expression( gamma_quantile_op() ) );
   P += "{gammaDensity (a,b) x = builtinGammaDensity a b x}";
   P += "{gammaQuantile (a,b) p = builtinGammaQuantile a b p}";
 
-  P.def_function("builtinLogGammaDensity", 3, lambda_expression( log_gamma_density() ) );
+  P.def_function("builtinLogGammaDensity", lambda_expression( log_gamma_density() ) );
   P += "{logGammaDensity (a,b) x = builtinLogGammaDensity (a,b) x}";
 
-  P.def_function("builtinBetaDensity", 3, lambda_expression( beta_density() ) );
-  P.def_function("builtinBetaQuantile", 3, lambda_expression( beta_quantile_op() ) );
+  P.def_function("builtinBetaDensity", lambda_expression( beta_density() ) );
+  P.def_function("builtinBetaQuantile", lambda_expression( beta_quantile_op() ) );
   P += "{betaDensity (a,b) x = builtinBetaDensity a b x}";
   P += "{betaQuantile (a,b) p = builtinBetaQuantile a b p}";
 
-  P.def_function("builtinNormalDensity", 3, lambda_expression( normal_density() ) );
+  P.def_function("builtinNormalDensity", lambda_expression( normal_density() ) );
   P += "{normalDensity (mu,sigma) x =  builtinNormalDensity mu sigma x}";
 
-  P.def_function("builtinLogNormalDensity", 3, lambda_expression( log_normal_density() ) );
-  P.def_function("builtinLogNormalQuantile", 3, lambda_expression( log_normal_quantile_op() ) );
+  P.def_function("builtinLogNormalDensity", lambda_expression( log_normal_density() ) );
+  P.def_function("builtinLogNormalQuantile", lambda_expression( log_normal_quantile_op() ) );
   P += "{logNormalDensity (mu,sigma) x = builtinLogNormalDensity mu sigma x}";
   P += "{logNormalQuantile (mu,sigma) x = builtinLogNormalQuantile mu sigma x}";
 
-  P.def_function("builtinCauchyDensity", 3, lambda_expression( cauchy_density() ) );
+  P.def_function("builtinCauchyDensity", lambda_expression( cauchy_density() ) );
   P += "{cauchyDensity (m,s) x = builtinCauchyDensity m s x}";
 
-  P.def_function("builtinLaplaceDensity", 3, lambda_expression( laplace_density() ) );
+  P.def_function("builtinLaplaceDensity", lambda_expression( laplace_density() ) );
   P += "{laplaceDensity (m,s) x = builtinLaplaceDensity m s x}";
 
-  P.def_function("builtinDirichletDensity", 3, lambda_expression( dirichlet_density() ) );
+  P.def_function("builtinDirichletDensity", lambda_expression( dirichlet_density() ) );
   P += "{dirichletDensity ps xs = builtinDirichletDensity (listToVectorDouble ps) (listToVectorDouble xs)}";
 
-  P.def_function("builtinLogLaplaceDensity", 3, lambda_expression( log_laplace_density() ) );
+  P.def_function("builtinLogLaplaceDensity", lambda_expression( log_laplace_density() ) );
   P += "{logLaplaceDensity (m,s) x = builtinLogLaplaceDensity m s x}";
 
-  P.def_function("builtinUniformDensity", 3, lambda_expression( uniform_density() ) );
+  P.def_function("builtinUniformDensity", lambda_expression( uniform_density() ) );
   P += "{uniformDensity (min,max) x = builtinUniformDensity min max x}";
 
   P += "{exponentialQuantile mu p = gammaQuantile (1.0,mu) p}";
