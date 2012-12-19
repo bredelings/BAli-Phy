@@ -89,27 +89,18 @@ Program SModel_Functions()
          stateLetters (MixtureModel l) = stateLetters (baseModel (MixtureModel l) 0);\
          stateLetters (MixtureModels (m:ms)) = stateLetters m}";
 
-  // n_states m = vector_size (state_letters m)
-  P += Def( (n_states,v1), (VectorSize<unsigned>(),(state_letters,v1)));
+  P += "{nStates m = sizeOfVectorUnsigned (stateLetters m)}";
   
-  // get_alphabet (ReversibleMarkov a smap q pi l t r) = alpha
-  // get_alphabet (F81 alpha s a pi) = alpha
-  // get_alphabet (MixtureModel alpha s d) = alpha
-  // get_alphabet (MixtureModels h:t) = get_alphabet h
-  P += Def( (get_alphabet, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v1)
-          ( (get_alphabet, (F81M,v1,v2,v3,v4)), v1)
-          ( (get_alphabet, (MixtureModel,v1)), (get_alphabet,(base_model,(MixtureModel,v1),0)))
-          ( (get_alphabet, (MixtureModels,v1&v2)), (get_alphabet,v1) );
+  P += "{getAlphabet (ReversibleMarkov a _ _ _ _ _ _) = a;\
+         getAlphabet (F81 a _ _ _) = a;\
+         getAlphabet (MixtureModel l) = getAlphabet (baseModel (MixtureModel l) 0);\
+         getAlphabet (MixtureModels (m:ms)) = getAlphabet m}";
 
-  // get_frequencies (ReversibleMarkov alpha s q) = get_frequencies q
-  // get_frequencies (F81 alpha s a pi) = pi
-  P += Def( (get_frequencies, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v4)
-          ( (get_frequencies, (F81M,v1,v2,v3,v4)), v4);
+  P += "{frequencies (ReversibleMarkov _ _ _ pi _ _ _) = pi;\
+         frequencies (F81 _ _ _ pi) = pi}";
 
-  // get_component_frequencies (MixtureModel alpha s d)  i = get_frequencies (base_model (MixtureModel alpha s d) i)
-  // get_component_frequencies (MixtureModels h:t)       i = get_component_frequencies h i
-  P += Def( (get_component_frequencies, (MixtureModel,v1), v4), (get_frequencies,(base_model,(MixtureModel,v1),v4)))
-          ( (get_component_frequencies, (MixtureModels,v1&v2), v4), (get_component_frequencies,v1,v4));
+  P += "{componentFrequencies (MixtureModel d)       i = frequencies (baseModel (MixtureModel d) i);\
+         componentFrequencies (MixtureModels (m:ms)) i = componentFrequencies m i}";
 
   // distribution (MixtureModel alpha s (DiscreteDistribution l)) = fmap fst l
   // distribution (MixtureModels h:t) = distribution h
