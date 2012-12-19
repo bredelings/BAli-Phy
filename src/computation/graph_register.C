@@ -1991,6 +1991,13 @@ vector<int> reg_heap::find_all_regs_in_context(int t) const
   return unique;
 }
 
+vector<int> reg_heap::find_all_used_regs_in_context(int t) const
+{
+  vector<int> unique;
+  find_all_used_regs_in_context(t, unique);
+  return unique;
+}
+
 void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& unique) const
 {
   vector<int>& scan = get_scratch_list();
@@ -2006,6 +2013,32 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& unique) con
   for(const auto& i: token_roots[t].identifiers)
     scan.push_back(*(i.second));
 
+  find_all_regs_in_context_no_check(t,scan,unique);
+}
+
+void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
+{
+  vector<int>& scan = get_scratch_list();
+
+  for(const auto& i: token_roots[t].heads)
+    scan.push_back(*i);
+
+  for(const auto& i: token_roots[t].parameters)
+    scan.push_back(*i);
+
+  find_all_regs_in_context_no_check(t,scan,unique);
+
+#ifndef NDEBUG
+  for(int R: unique)
+  {
+    assert(reg_is_owned_by(R,t));
+    check_used_reg(R);
+  }
+#endif
+}
+
+void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vector<int>& unique) const
+{
   for(int i=0;i<scan.size();i++)
   {
     const reg& R = access(scan[i]);
@@ -2766,7 +2799,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
   map<int,string> constants;
 
-  vector<int> regs = C.find_all_regs_in_context(t);
+  vector<int> regs = C.find_all_used_regs_in_context(t);
 
   // Record some regs as being constants worthy of substituting into regs that reference them.
   for(int R: regs)

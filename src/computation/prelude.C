@@ -26,6 +26,8 @@ const expression_ref plusplus = var("++");
  *    - Well, do we want to supply Bounds for structure ELEMENTS?  Uh-oh -- we might!
  * 10. [DONE] Convert all of distribution-operations.H to the parser.
  * 11. [DONE] Remove arity argument to def_function.
+ * 12. Rationalize Programs, Modules.
+ * 13. Allow loading stuff from files.
  */
 
 
@@ -127,12 +129,9 @@ infixr 9 .
   //  P.declare_fixity(">>", 1, left_fix);
   //  P.declare_fixity(">>=", 1, left_fix);
 
-  /*
-infixr 0 $
-($) :: (a -> b) -> a -> b
-f $ x = f x
-  */
-  //  P.declare_fixity("$", 0, right_fix);
+  P.declare_fixity("$", 0, right_fix);
+  P += "{f $ x = f x}";
+
   //  P.declare_fixity("$!", 0, right_fix);
   P.def_function("seq", lambda_expression( Seq() ) );
   P.declare_fixity("seq", 0, right_fix);
