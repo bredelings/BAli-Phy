@@ -102,19 +102,14 @@ Program SModel_Functions()
   P += "{componentFrequencies (MixtureModel d)       i = frequencies (baseModel (MixtureModel d) i);\
          componentFrequencies (MixtureModels (m:ms)) i = componentFrequencies m i}";
 
-  // distribution (MixtureModel alpha s (DiscreteDistribution l)) = fmap fst l
-  // distribution (MixtureModels h:t) = distribution h
-  P += Def( (distribution, (MixtureModel,(DiscreteDistribution,v1))), (var("fmap"),var("fst"),v1))
-          ( (distribution, (MixtureModels,v1&v2)), (distribution, v1) );
+  P += "{distribution (MixtureModel (DiscreteDistribution l)) = map fst l;\
+         distribution (MixtureModels (m:ms))                  = distribution m}";
 
-  // get_nth_mixture (MixtureModels l) b = l !! b
-  P += Def( (get_nth_mixture, (MixtureModels, v1), v2), (var("!!"),v1,v2) );
+  P += "{getNthMixture (MixtureModels l) i = l !! i}";
 
-  // UnwrapMM (MixtureModel dd) = dd
-  P += Def( (UnwrapMM, (MixtureModel, v0)), v0 );
+  P += "{unwrapMM (MixtureModel dd) = dd}";
 
-  // MixMixtureModels l dd = MixtureModel (MixDiscreteDistributions l (fmap UnwrapMM dd))
-  P += Def( (var("mixMixtureModels"), v0, v1), (var("MixtureModel"), (var("mixDiscreteDistributions"), v0, (var("fmap"), var("unwrapMM"), v1) ) ) );
+  P += "{mixMixtureModels l dd = MixtureModel (mixDiscreteDistributions l (map unwrapMM dd))}";
 
   return P;
 }
