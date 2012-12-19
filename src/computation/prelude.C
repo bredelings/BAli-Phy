@@ -50,20 +50,6 @@ Program make_Prelude()
   P.def_constructor("Nothing",0);
   P.def_constructor("DiscreteDistribution",1);
 
-  // (f . g) x = f (g x)
-  P += "{(f . g) x = f (g x)}";
-
-  P += "{fst (x,y) = x}";
-
-  P += "{snd (x,y) = y}";
-
-  P += "{swap (x,y) = (y,x)}";
-
-  // !! h:t 0 = h
-  // !! h:t i = !! t (i-1)
-  P += Def( (get_list_index,v1&v2,0), v1)
-          ( (get_list_index,v1&v2,v3), (get_list_index,v2,(v3-1)) );
-
   // plusplus [] y = y
   // plusplus h:t y = h:(plusplus t y)
   P += Def( (plusplus, ListEnd, v0), v0)
@@ -94,7 +80,6 @@ Program make_Prelude()
   //------------------------------------------------------------------------------------------------//
 
 
-  P.declare_fixity("!!", 9, left_fix);
   // Is this right?
   P.declare_fixity("!", 9, left_fix);
 
@@ -103,7 +88,6 @@ infixr 9 .
 (.) :: (b -> c) -> (a -> b) -> (a -> c)
 (f . g) x = f (g x)
   */
-  P.declare_fixity(".", 9, left_fix);
 
   //  P.declare_fixity("^", 8, right_fix);
   //  P.declare_fixity("^^", 8, right_fix);
@@ -183,6 +167,19 @@ f $ x = f x
          map f (h:t) = (f h):(map f t)}";
   
   P += "{fmap = map}";
+
+  P += "{(f . g) x = f (g x)}";
+  P.declare_fixity(".", 9, left_fix);
+
+  P += "{fst (x,y) = x}";
+
+  P += "{snd (x,y) = y}";
+
+  P += "{swap (x,y) = (y,x)}";
+
+  P.declare_fixity("!!", 9, left_fix);
+  P += "{h:t !! 0 = h;\
+         h:t !! i = t !! (i-1)}";
 
   P += "{fmap1 f [] = [];\
          fmap1 f ((x,y):l) = (f x,y):(fmap1 f l);\
