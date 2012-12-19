@@ -50,11 +50,6 @@ Program make_Prelude()
   P.def_constructor("Nothing",0);
   P.def_constructor("DiscreteDistribution",1);
 
-  // plusplus [] y = y
-  // plusplus h:t y = h:(plusplus t y)
-  P += Def( (plusplus, ListEnd, v0), v0)
-          ( (plusplus, v0&v1, v2),v0&(plusplus,v1,v2));
-
   P.def_constructor("IOAction1",2);
   P.def_constructor("IOAction2",3);
   P.def_constructor("IOAction3",4);
@@ -167,6 +162,9 @@ f $ x = f x
          map f (h:t) = (f h):(map f t)}";
   
   P += "{fmap = map}";
+
+  P += "{[] ++ y = y;\
+         h:t ++ y = h:(t ++ y)}";
 
   P += "{(f . g) x = f (g x)}";
   P.declare_fixity(".", 9, left_fix);
