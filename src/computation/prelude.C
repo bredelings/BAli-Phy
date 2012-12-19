@@ -13,7 +13,7 @@ const expression_ref plusplus = var("++");
 /* TODO:
  * 1. [DONE] Remove true/false in favor of True/False.
  * 2. Convert strings to [Char]
- * 3. Convert Defs to use the machine.
+ * 3. [DONE] Convert Defs to use the machine.
  * 4. SYNTAX: replace a ~ b ( c ) with a ~ b
  * 5. SYNTAX: external a ~ b [To not declare all parameters]
  * 6. [DONE] Allow defs in BUGS files.
@@ -23,9 +23,9 @@ const expression_ref plusplus = var("++");
  * 8. Try to rewrite e.g. M8b into a BUGS module.
  * 9. Add default values and Bounds to distributions.
  *    - Ah, but how to we add default values to distributions that return random structures?
+ *    - Well, do we want to supply Bounds for structure ELEMENTS?  Uh-oh -- we might!
  * 10. [DONE] Convert all of distribution-operations.H to the parser.
- * 11. Remove arity argument to def_function.  Only combinators have a real arity.
- *     Also constructors.  But lambda expressions can have unlimited arity.
+ * 11. [DONE] Remove arity argument to def_function.
  */
 
 

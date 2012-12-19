@@ -47,17 +47,6 @@ bool is_qualified_symbol(const std::string&);
 std::string get_module_name(const std::string&);
 std::string get_unqualified_name(const std::string&);
 
-struct Def
-{
-  std::vector<expression_ref> patterns;
-  std::vector<expression_ref> bodies;
-  Def& operator()(const expression_ref&, const expression_ref&);
-
-  Def(const expression_ref&, const expression_ref&);
-};
-
-std::ostream& operator<<(std::ostream&, const Def&);
-
 class Program
 {
   std::map<std::string, symbol_info> symbols;
@@ -80,8 +69,6 @@ public:
 
   /// Add a constructor
   void def_constructor(const std::string& name, int arity);
-
-  Program& operator+=(const Def&);
 
   Program& operator+=(const char*);
 

@@ -311,29 +311,6 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
   name = V->name;
 }
 
-Def& Def::operator()(const expression_ref& pattern, const expression_ref& body)
-{
-  patterns.push_back(pattern);
-  bodies.push_back(body);
-  return *this;
-}
-
-
-
-Def::Def(const expression_ref& pattern, const expression_ref& body)
-{
-  patterns.push_back(pattern);
-  bodies.push_back(body);
-}
-
-std::ostream& operator<<(std::ostream& o, const Def& D)
-{
-  for(int i=0;i<D.patterns.size();i++)
-    o<<D.patterns[i]<<" = "<<D.bodies[i]<<"\n";
-  o<<"\n";
-  return o;
-}
-
 vector<string> haskell_name_path(const std::string& s)
 {
   if (s == ".") return {s};
@@ -483,12 +460,6 @@ string get_module_name(const std::string& s)
 string get_unqualified_name(const std::string& s)
 {
   return get_haskell_identifier_path(s).back();
-}
-
-Program& Program::operator+=(const Def& D)
-{
-  def_function(D.patterns, D.bodies);
-  return *this;
 }
 
 Program& Program::operator+=(const char* s)
