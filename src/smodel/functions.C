@@ -70,9 +70,7 @@ Program SModel_Functions()
      
   P += "{qExp (ReversibleMarkov a s q pi l t r) = lExp l pi t}";
 
-  // branch_transition_p m@(MixtureModel (DiscreteDistribution l) ) t = list_to_vector (fmap \p->(QExp (scale (t/(rate m)) (snd p) ) ) l)
-  P += Def( (branch_transition_p, (MixtureModel, (DiscreteDistribution, v3) ), v1 ),
-	    (var("fmap"),v2^(QExp, (var("scale"), (v1/(rate, (MixtureModel, (DiscreteDistribution, v3) ) ) ), (var("snd"), v2) ) ), v3 ) );
+  P += "{branchTransitionP (MixtureModel (DiscreteDistribution l)) t = let {r = rate (MixtureModel (DiscreteDistribution l))} in map (\\x -> qExp (scale (t/r) (snd x))) l}";
 
   // Q_from_S_and_R s (ReversibleFrequency a smap pi R) = ReversibleMarkov a smap (Q S R) pi 0 1.0 (Get_Equilibrium_Rate a smap Q pi)
   P += Def( (Q_from_S_and_R, v1, (ReversibleFrequency, v2, v3, v4, v5) ), 
