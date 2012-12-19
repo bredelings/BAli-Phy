@@ -82,14 +82,12 @@ Program SModel_Functions()
   P += "{nBaseModels (MixtureModel (DiscreteDistribution l)) = length l;\
          nBaseModels (MixtureModels (m:ms)) = nBaseModels m}";
 
-  // state_letters (ReversibleMarkov alpha smap q pi l t r) = smap
-  // state_letters (F81 alpha s a pi) = s
-  // state_letters (MixtureModel alpha s d) = state_letters (base_model (MixtureModel alpha s d) 0)
-  // state_letters (MixtureModels h:t) = state_letters h
-  P += Def( (state_letters, (ReversibleMarkov,v1,v2,v3,v4,v5,v6,v7)), v2)
-          ( (state_letters, (F81M,v1,v2,v3,v4)), v2)
-          ( (state_letters, (MixtureModel,v1)), (state_letters,(base_model,(MixtureModel,v1),0)))
-          ( (state_letters, (MixtureModels,v1&v2)), (state_letters,v1) );
+  P += "{baseModel (MixtureModel (DiscreteDistribution l)) i = snd (l !! i)}";
+
+  P += "{stateLetters (ReversibleMarkov _ smap _ _ _ _ _) = smap;\
+         stateLetters (F81 _ smap _ _ ) = smap;\
+         stateLetters (MixtureModel l) = stateLetters (baseModel (MixtureModel l) 0);\
+         stateLetters (MixtureModels (m:ms)) = stateLetters m}";
 
   // n_states m = vector_size (state_letters m)
   P += Def( (n_states,v1), (VectorSize<unsigned>(),(state_letters,v1)));
@@ -112,9 +110,6 @@ Program SModel_Functions()
   // get_component_frequencies (MixtureModels h:t)       i = get_component_frequencies h i
   P += Def( (get_component_frequencies, (MixtureModel,v1), v4), (get_frequencies,(base_model,(MixtureModel,v1),v4)))
           ( (get_component_frequencies, (MixtureModels,v1&v2), v4), (get_component_frequencies,v1,v4));
-
-  // base_model (MixtureModel alpha s (DiscreteDistribution l)) i = get_list_index l i
-  P += Def( (base_model, (MixtureModel,(DiscreteDistribution,v1)),v2), (var("snd"),(var("!!"),v1,v2)));
 
   // distribution (MixtureModel alpha s (DiscreteDistribution l)) = fmap fst l
   // distribution (MixtureModels h:t) = distribution h
