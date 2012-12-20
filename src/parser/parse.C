@@ -137,15 +137,10 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  lit("\\\"") [_val = '"'] |
 	  lit("'") [_val = '\''];
 
-	double (*temp2)(const std::string&);
-	temp2 = convertTo<double>;
-	int (*temp3)(const std::string&);
-	temp3 = convertTo<int>;
-
-	literal = h_float [ _val = phoenix::bind(temp2, _1) ]
-	  | h_integer [ _val =  phoenix::bind(temp3, _1) ]
-	  | h_char [ _val = _1 ]
-	  | h_string [ _val = _1 ];
+	literal = h_float [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Float"), _a)  ]
+	  | h_integer [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Integer"), _a)  ]
+	  | h_char [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Char"), _a)  ]
+	  | h_string [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("String"), _a)  ];
 
 	/*----- Section 3 ------*/
 	exp = 
@@ -679,7 +674,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string()> h_string;
   qi::rule<Iterator, std::string()> charesc;
 
-  qi::rule<Iterator, expression_ref()> literal;  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal;  
 
   qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
   qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> infixexp;
