@@ -452,6 +452,11 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
   return decls;
 }
 
+expression_ref get_fresh_id(const string& s, const expression_ref& E)
+{
+  return AST_node("id",s);
+}
+
 /*
  * To handle funlhs1, funlhs2, and funlhs3, we want to
  * (a) Transform the ASTs to funlhs1 before we try to bind variables.  This is because the function names will be bound
@@ -652,17 +657,18 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	  else
 	  {
 	    // Problem: "ok" needs to be a fresh variable.
+	    expression_ref ok = get_fresh_id("ok",E);
 
-	    expression_ref lhs1 = {AST_node("funlhs1"),{AST_node("id","ok"),p}};
+	    expression_ref lhs1 = {AST_node("funlhs1"),{ok,p}};
 	    expression_ref rhs1 = {AST_node("rhs"),{E2}};
 	    expression_ref decl1 = {AST_node("Decl"),{lhs1,rhs1}};
 
-	    expression_ref lhs2 = {AST_node("funlhs1"),{AST_node("id","ok"),AST_node("WildcardPattern")}};
+	    expression_ref lhs2 = {AST_node("funlhs1"),{ok,AST_node("WildcardPattern")}};
 	    expression_ref rhs2 = {AST_node("rhs"),{AST_node("id","[]")}};
 	    expression_ref decl2 = {AST_node("Decl"),{lhs2,rhs2}};
 
 	    expression_ref decls = {AST_node("Decls"),{decl1, decl2}};
-	    expression_ref body = {AST_node("Apply"),{AST_node("id","Prelude.concatMap"),AST_node("id","ok"),l}};
+	    expression_ref body = {AST_node("Apply"),{AST_node("id","Prelude.concatMap"),ok,l}};
 
 	    E2 = {AST_node("Let"),{decls,body}};
 	  }
@@ -691,6 +697,71 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       body = desugar(m, body, bound2);
 
       return def_function({v},{body}); 
+    }
+    else if (n->type == "Do")
+    {
+      assert(is_AST(E->sub[0],"Stmts"));
+      vector<expression_ref> stmts = E->sub[0]->sub;
+
+      // do { e }  =>  e
+      if (stmts.size() == 1) 
+	return desugar(m,stmts[0],bound);
+
+      expression_ref first = stmts[0];
+      stmts.erase(stmts.begin());
+      expression_ref do_stmts = {AST_node("Do"),{{AST_node("Stmts"),stmts}}};
+      expression_ref result;
+      
+      // do {e ; stmts }  =>  e >> do { stmts }
+      if (is_AST(first,"SimpleStmt"))
+      {
+	expression_ref e = first->sub[0];
+	expression_ref qop = AST_node("id","Prelude.>>");
+	result = {AST_node("infixexp"),{e, qop, do_stmts}};
+      }
+
+      // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
+      // do { v <- e ; stmts} => e >>= (\v -> do {stmts})
+      else if (is_AST(first,"PatStmt"))
+      {
+	expression_ref p = first->sub[0];
+	expression_ref e = first->sub[1];
+	expression_ref qop = AST_node("id","Prelude.>>=");
+
+	if (is_irrefutable_pat(p))
+	{
+	  expression_ref lambda = {AST_node("Lambda"),{p,do_stmts}};
+	  result = {AST_node("infixexp"),{e,qop,lambda}};
+	}
+	else
+	{
+	  expression_ref fail = {AST_node("Apply"),{AST_node("id","Prelude.fail"),"Fail!"}};
+	  expression_ref ok = get_fresh_id("ok",E);
+	  
+	  expression_ref lhs1 = {AST_node("funlhs1"),{ok,p}};
+	  expression_ref rhs1 = {AST_node("rhs"),{do_stmts}};
+	  expression_ref decl1 = {AST_node("Decl"),{lhs1,rhs1}};
+	  
+	  expression_ref lhs2 = {AST_node("funlhs1"),{ok,AST_node("WildcardPattern")}};
+	  expression_ref rhs2 = {AST_node("rhs"),{fail}};
+	  expression_ref decl2 = {AST_node("Decl"),{lhs2,rhs2}};
+	  expression_ref decls = {AST_node("Decls"),{decl1, decl2}};
+
+	  expression_ref body = {AST_node("infixexp"),{e,qop,ok}};
+
+	  result = {AST_node("Let"),{decls,body}};
+	}
+      }
+      // do {let decls ; rest} = let decls in do {stmts}
+      else if (is_AST(first,"LetStmt"))
+      {
+	expression_ref decls = first->sub[0];
+	result = {AST_node("Let"),{decls,do_stmts}};
+      }
+      else if (is_AST(first,"EmptyStmt"))
+	result = do_stmts;
+
+      return desugar(m,result,bound);
     }
     else if (n->type == "constructor_pattern")
     {
