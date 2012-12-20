@@ -268,9 +268,8 @@ Program make_Prelude()
 
   P += "{setVectorIndexInt v i x = IOAction3 builtinSetVectorIndexInt v i x}";
 
-  // copyListToVectorInt h:t v i = do { setVectorIndexInt v i h ; copyListToVectorInt t v (i+1) }
   P += "{copyListToVectorInt [] v i = return ();\
-         copyListToVectorInt (h:t) v i = setVectorIndexInt v i h >> copyListToVectorInt t v (i+1)}";
+         copyListToVectorInt (h:t) v i = do {setVectorIndexInt v i h; copyListToVectorInt t v (i+1)}}";
 
   P += "{listToVectorInt l = unsafePerformIO (do {v <- newVectorInt (length l); copyListToVectorInt l v 0; return v})}";
 
@@ -283,12 +282,10 @@ Program make_Prelude()
 
   P += "{setStringIndexInt v i x = IOAction3 builtinSetStringIndexInt v i x}";
 
-  // copyListToString h:t v i = do { setStringIndexInt v i h ; copyListToString t v (i+1) }
   P += "{copyListToString [] v i = return ();\
-         copyListToString (h:t) v i = setStringIndexInt v i h >> copyListToString t v (i+1)}";
+         copyListToString (h:t) v i = do {setStringIndexInt v i h ; copyListToString t v (i+1)}}";
 
-  // listToString l = do { v <- newString (length l); copyListToString l v 0 ; return v }
-  P += "{listToString l = unsafePerformIO (newString (length l) >>= (\\v -> copyListToString l v 0 >> return v))}";
+  P += "{listToString l = unsafePerformIO (do {v <- newString (length l); copyListToString l v 0; return v})}";
 
   //--------------------------------------- listToVectorDouble ---------------------------------------//
 
