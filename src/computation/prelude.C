@@ -12,7 +12,7 @@ const expression_ref plusplus = var("++");
 
 /* TODO:
  * 1. [DONE] Remove true/false in favor of True/False.
- * 2. Convert strings to [Char]
+ * 2. [DONE] Convert strings to [Char]
  * 3. [DONE] Convert Defs to use the machine.
  * 4. SYNTAX: replace a ~ b ( c ) with a ~ b
  * 5. SYNTAX: external a ~ b [To not declare all parameters]
