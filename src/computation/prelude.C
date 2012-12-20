@@ -165,8 +165,8 @@ infixr 9 .
   P += "{[] ++ y = y;\
          h:t ++ y = h:(t ++ y)}";
 
-  P += "{(f . g) x = f (g x)}";
-  P.declare_fixity(".", 9, left_fix);
+  P += "{infixr 9 .;\
+         (f . g) x = f (g x)}";
 
   P += "{fst (x,y) = x}";
 
