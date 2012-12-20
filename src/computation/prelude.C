@@ -77,6 +77,7 @@ Program make_Prelude()
   P += "{f >> g = IOAnd f g}";
   P += "{f >>= g = IOAndPass f g}";
   P += "{return f = IOReturn f}";
+  P += "{fail e = error e}";
 
   //------------------------------------------------------------------------------------------------//
 
@@ -325,6 +326,7 @@ Program make_Prelude()
   P += "{listToVectorMatrix l = unsafePerformIO (newVectorMatrix (length l) >>=  (\\v -> copyListToVectorMatrix l v 0 >> return v))}";
 
   P += "{error m = builtinError (listToString m)};
+
   return P;
 }
 
