@@ -300,9 +300,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  ;
 
 	decls = lit('{') > (decl % ';')[_val = new_<expression>(AST_node("Decls"), _1)] > '}';
-	decl  %= 
-	  //	  gendecl |
-	  (funlhs | pat)[push_back(_a,_1)] >> rhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Decl"), _a)  ];
+	decl  = 
+	  (funlhs | pat)[push_back(_a,_1)] >> rhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Decl"), _a)  ]
+	| gendecl [_val = _1];
 
 	// class declarations
 	cdecls %= lit('{') >> cdecl % ';' > '}';
@@ -312,11 +312,11 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	idecls %= lit('{') >> idecl % ';' > '}';
 	//	idecl  %= (funlhs | var) >> rhs | eps;
 
-	//	gendecl %= vars >> "::" >>  -(context >> "=>") >> type 
-	//	  | fixity >> -h_integer >> ops 
-	//	  | eps;
+	gendecl = // vars >> "::" >>  -(context >> "=>") >> type 
+	  fixity[push_back(_a,_1)] >> -h_integer[push_back(_a,_1)] >> ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
+	  | eps [ _val = new_<expression>(AST_node("EmptyDecl"), _a)  ];
 
-	ops %= +op;
+	ops = +op[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Ops"), _a)  ];
 	vars %= +var;
 	fixity %= string("infixl") | string("infixr") | string("infix");
 
@@ -740,9 +740,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string(), ascii::space_type> idecls;
   qi::rule<Iterator, std::string(), ascii::space_type> idecl;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> gendecl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gendecl;
 
-  qi::rule<Iterator, std::string(), ascii::space_type> ops;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> ops;
   qi::rule<Iterator, std::string(), ascii::space_type> vars;
   qi::rule<Iterator, std::string(), ascii::space_type> fixity;
 
