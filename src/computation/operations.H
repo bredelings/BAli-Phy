@@ -250,6 +250,105 @@ expression_ref Vector_From_List()
 
 
 
+struct StringSizeOp: public Operation
+{
+  virtual StringSizeOp* clone() const {return new StringSizeOp(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const StringSizeOp* E = dynamic_cast<const StringSizeOp*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const
+  {
+    const std::string& s = *Args.evaluate_as<String>(0);
+
+    return Int(s.size());
+  }
+
+  std::string name() const {return "StringSize";}
+  
+  StringSizeOp():Operation(1) {}
+};
+
+struct BuiltinGetStringIndexOp: public Operation
+{
+  virtual BuiltinGetStringIndexOp* clone() const {return new BuiltinGetStringIndexOp(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const BuiltinGetStringIndexOp* E = dynamic_cast<const BuiltinGetStringIndexOp*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const
+  {
+    const std::string& s = *Args.evaluate_as<String>(0);
+    int i = *Args.evaluate_as<Int>(1);
+
+    return Char(s[i]);
+  }
+
+  std::string name() const {return "builtinGetStringIndex";}
+  
+  BuiltinGetStringIndexOp():Operation(2) {}
+};
+
+struct BuiltinNewStringOp: public Operation
+{
+  virtual BuiltinNewStringOp* clone() const {return new BuiltinNewStringOp(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const BuiltinNewStringOp* E = dynamic_cast<const BuiltinNewStringOp*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const
+  {
+    const int& length = *Args.evaluate_as<Int>(0);
+
+    object_ptr<String> v (new String);
+
+    v->t.resize(length);
+
+    return v;
+  }
+
+  std::string name() const {return "builtinNewString";}
+  
+  BuiltinNewStringOp():Operation(1) {}
+};
+
+struct BuiltinSetStringIndexOp: public Operation
+{
+  virtual BuiltinSetStringIndexOp* clone() const {return new BuiltinSetStringIndexOp(*this);}
+
+  tribool compare(const Object& o) const 
+  {
+    const BuiltinSetStringIndexOp* E = dynamic_cast<const BuiltinSetStringIndexOp*>(&o);
+    return E;
+  }
+
+  closure operator()(OperationArgs& Args) const
+  {
+    object_ptr<const String> v = Args.evaluate_as<String>(0);
+    int i = *Args.evaluate_as<Int>(1);
+    char x = *Args.evaluate_as<Char>(2);
+
+    const String* vv = &(*v);
+    String* vvv = const_cast<String*>(vv);
+    vvv->t[i] = x;
+
+    return constructor("()",0);
+  }
+
+  std::string name() const {return "builtinSetStringIndex";}
+  
+  BuiltinSetStringIndexOp():Operation(3) {}
+};
+
 template<typename T>
 struct VectorSizeOp: public Operation
 {

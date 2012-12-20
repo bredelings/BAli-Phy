@@ -237,6 +237,15 @@ infixr 9 .
 
   P += "{listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0}";
 
+  //--------------------------------------- listFromString ----------------------------------------//
+  P.def_function("getStringElement", lambda_expression( BuiltinGetStringIndexOp() ) ); 
+  P.def_function("sizeOfString", lambda_expression( StringSizeOp() ) );
+
+
+  P += "{listFromString' v s i = if (i<s) then (getStringElement v i):listFromString' v s (i+1) else []}";
+
+  P += "{listFromString v = listFromString' v (sizeOfString v) 0}";
+
   //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
   P.def_function("getVectorVectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<Vector<int>,Vector<int>>() ) ); 
   P.def_function("sizeOfVectorVectorInt", lambda_expression( VectorSizeOp<Vector<int>>() ) );
@@ -268,6 +277,22 @@ infixr 9 .
 
   // listToVectorInt l = do { v <- newVectorInt (length l); copyListToVector l v 0 ; return v }
   P += "{listToVectorInt l = unsafePerformIO (IOAndPass (newVectorInt (length l)) (\\v -> IOAnd (copyListToVectorInt l v 0) (IOReturn v)))}";
+
+  //--------------------------------------- listToString ---------------------------------------//
+
+  P.def_function("builtinNewString", lambda_expression( BuiltinNewStringOp() ) ); 
+  P.def_function("builtinSetStringIndexInt", lambda_expression( BuiltinSetStringIndexOp() ) ); 
+
+  P += "{newString s = IOAction1 builtinNewString s}";
+
+  P += "{setStringIndexInt v i x = IOAction3 builtinSetStringIndexInt v i x}";
+
+  // copyListToString h:t v i = do { setStringIndexInt v i h ; copyListToString t v (i+1) }
+  P += "{copyListToString [] v i = IOReturn ();\
+         copyListToString (h:t) v i = IOAnd (setStringIndexInt v i h) (copyListToString t v (i+1))}";
+
+  // listToString l = do { v <- newString (length l); copyListToString l v 0 ; return v }
+  P += "{listToString l = unsafePerformIO (IOAndPass (newString (length l)) (\\v -> IOAnd (copyListToString l v 0) (IOReturn v)))}";
 
   //--------------------------------------- listToVectorDouble ---------------------------------------//
 
