@@ -191,7 +191,7 @@ inline std::string POD<char>::print() const
 /***************** Make log_double_t count as an arithmetic type **************/
 
 //typedef POD<bool> Bool;
-typedef POD<std::string> String;
+typedef Box<std::string> String;
 
 template <typename T>
 class POD_math: public Object
