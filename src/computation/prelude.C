@@ -318,11 +318,11 @@ Program make_Prelude()
   P += "{setVectorIndexMatrix v i x = IOAction3 builtinSetVectorIndexMatrix v i x}";
 
   // copyListToVectorMatrix h:t v i = do { setVectorIndexMatrix v i h ; copyListToVectorMatrix t v (i+1) }
-  P += "{copyListToVectorMatrix [] v i = IOReturn ();\
-         copyListToVectorMatrix (h:t) v i = IOAnd (setVectorIndexMatrix v i h) (copyListToVectorMatrix t v (i+1))}";
+  P += "{copyListToVectorMatrix [] v i = return ();\
+         copyListToVectorMatrix (h:t) v i = setVectorIndexMatrix v i h >> copyListToVectorMatrix t v (i+1)}";
 
   // listToVectorMatrix l = do { v <- newVectorMatrix (length l); copyListToVector l v 0 ; return v }
-  P += "{listToVectorMatrix l = unsafePerformIO (IOAndPass (newVectorMatrix (length l)) (\\v -> IOAnd (copyListToVectorMatrix l v 0) (IOReturn v)))}";
+  P += "{listToVectorMatrix l = unsafePerformIO (newVectorMatrix (length l) >>=  (\\v -> copyListToVectorMatrix l v 0 >> return v))}";
 
   return P;
 }
