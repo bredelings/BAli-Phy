@@ -281,9 +281,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | eps[clear(_a)] >>  body[ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
 
 	body = 
-	  //	  lit('{') >> impdecls >> ';' >> topdecls >> '}'
-	  //	  | lit('{') >> impdecls >> '}'
-	  lit('{') >> topdecls [ push_back(_a,_1) ] > '}' >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
+	  lit('{') >> impdecls >> ';' >> topdecls >> '}'
+	  | lit('{')[clear(_a)] >> impdecls >> '}'
+	  | lit('{') >> topdecls [ push_back(_a,_1) ] > '}' >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
 
 	topdecls = topdecl [ push_back(_a,_1) ] % ';' >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
 	topdecl %= 
@@ -373,7 +373,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	//	gdrhs %= guards >> "=" >> exp >> -gdrhs;
 
 	/*------ Section 5.1 -------*/
-	impdecls = impdecl % ';';
+	impdecls = impdecl[push_back(_a,_1)] % ';' >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
 	
 	/*------ Section 5.2 -------*/
 	/*
@@ -388,11 +388,14 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	cname = var | con;
 	
 	/*------ Section 5.3 -------*/
-	impdecl = "import" >> -lit("qualified") >> modid >> -("as" >> modid) >> -impspec;
-	impspec = 
-	  lit("()")
-	  | '(' >> import%',' >> ')'
-	  | lit("hiding") >> '(' >> import%',' >> ')';
+	impdecl = "import" >> -string("qualified")[push_back(_a,construct<String>(_1))] >> modid[push_back(_a,construct<String>(_1))] 
+			   >> -(string("as")[push_back(_a,construct<String>(_1))] >> modid[push_back(_a,construct<String>(_1))]) 
+			   >> /*-impspec >>*/ eps [ _val = new_<expression>(AST_node("ImpDecl"), _a)  ];
+
+	//	impspec = 
+	//	  lit("()")
+	//	  | '(' >> import%',' >> ')'
+	//	  | lit("hiding") >> '(' >> import%',' >> ')';
 
 	// FIXME! Parsing problems //
 	/*
@@ -777,7 +780,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> gdrhs;
 
   /*----- Section 5.1 ------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> impdecls;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> impdecls;
 
   /*----- Section 5.2 ------*/
   qi::rule<Iterator, std::string(), ascii::space_type> exports;
@@ -785,10 +788,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string(), ascii::space_type> cname;
 
   /*----- Section 5.3 ------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> impdecl;
-  qi::rule<Iterator, std::string(), ascii::space_type> impspec;
-  qi::rule<Iterator, std::string(), ascii::space_type> import;
-  
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> impdecl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> impspec;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> import;
 };
 
 template <typename Iterator>
