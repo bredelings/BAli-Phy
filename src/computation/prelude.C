@@ -296,12 +296,10 @@ Program make_Prelude()
 
   P += "{setVectorIndexDouble v i x = IOAction3 builtinSetVectorIndexDouble v i x}";
 
-  // copyListToVectorDouble h:t v i = do { setVectorIndexDouble v i h ; copyListToVectorDouble t v (i+1) }
   P += "{copyListToVectorDouble [] v i = return ();\
-         copyListToVectorDouble (h:t) v i = setVectorIndexDouble v i h >> copyListToVectorDouble t v (i+1)}";
+         copyListToVectorDouble (h:t) v i = do { setVectorIndexDouble v i h ; copyListToVectorDouble t v (i+1)}}";
 
-  // listToVectorDouble l = do { v <- newVectorDouble (length l); copyListToVector l v 0 ; return v }
-  P += "{listToVectorDouble l = unsafePerformIO (newVectorDouble (length l) >>= (\\v -> copyListToVectorDouble l v 0 >> return v))}";
+  P += "{listToVectorDouble l = unsafePerformIO (do { v <- newVectorDouble (length l); copyListToVectorDouble l v 0; return v})}";
 
   //--------------------------------------- listToVectorMatrix ---------------------------------------//
 
@@ -312,12 +310,10 @@ Program make_Prelude()
 
   P += "{setVectorIndexMatrix v i x = IOAction3 builtinSetVectorIndexMatrix v i x}";
 
-  // copyListToVectorMatrix h:t v i = do { setVectorIndexMatrix v i h ; copyListToVectorMatrix t v (i+1) }
   P += "{copyListToVectorMatrix [] v i = return ();\
-         copyListToVectorMatrix (h:t) v i = setVectorIndexMatrix v i h >> copyListToVectorMatrix t v (i+1)}";
+         copyListToVectorMatrix (h:t) v i = do { setVectorIndexMatrix v i h; copyListToVectorMatrix t v (i+1)}}";
 
-  // listToVectorMatrix l = do { v <- newVectorMatrix (length l); copyListToVector l v 0 ; return v }
-  P += "{listToVectorMatrix l = unsafePerformIO (newVectorMatrix (length l) >>=  (\\v -> copyListToVectorMatrix l v 0 >> return v))}";
+  P += "{listToVectorMatrix l = unsafePerformIO (do { v <- newVectorMatrix (length l); copyListToVectorMatrix l v 0 ; return v})}";
 
   P += "{error m = builtinError (listToString m)}";
 
