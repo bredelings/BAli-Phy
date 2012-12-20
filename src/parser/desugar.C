@@ -4,6 +4,7 @@
 #include <set>
 #include "io.H"
 #include "models/parameters.H"
+#include "AST.H"
 
 using std::string;
 using std::vector;
@@ -71,20 +72,6 @@ using std::deque;
  * Perhaps a formula_expression_ref is just a tool for constructing a Model_Notes with a focussed expression.
  * Two formula_expression_ref's should only be combined if they have the same module name, I would think...
  */
-
-bool is_AST(const expression_ref& E, const string& type)
-{
-  auto ast = E.is_a<AST_node>();
-  if (not ast) return false;
-  return ast->type == type;
-}
-
-bool is_AST(const expression_ref& E, const string& type, const string& value)
-{
-  auto ast = E.is_a<AST_node>();
-  if (not ast) return false;
-  return ast->type == type and ast->value == value;
-}
 
 bool is_irrefutable_pat(const expression_ref& E)
 {
@@ -416,6 +403,14 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
   vector<expression_ref> decls;
   for(int i=0;i<v.size();i++)
   {
+    if (is_AST(v[i],"EmptyDecl")) continue;
+
+    if (is_AST(v[i],"FixityDecl"))
+    {
+      decls.push_back(v[i]);
+      continue;
+    }
+
     // If its not a function binding, accept it as is, and continue.
     if (object_ptr<const dummy> d = v[i]->sub[0].is_a<dummy>())
       decls.push_back(new expression(v[i]->head,
@@ -523,6 +518,8 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       // Find all the names bound here
       for(auto& e: v)
       {
+	if (is_AST(e,"EmptyDecl")) continue;
+	if (is_AST(e,"FixityDecl")) continue;
 	// Translate funlhs2 and funlhs3 declaration forms to funlhs1 form.
 	e = translate_funlhs_decl(e);
 
@@ -535,7 +532,11 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 
       // Replace ids with dummies
       for(auto& e: v)
+      {
+	if (is_AST(e,"EmptyDecl")) continue;
+	if (is_AST(e,"FixityDecl")) continue;
 	e = desugar(m, e, bound2);
+      }
 
       // Convert fundecls to normal decls
       vector<expression_ref> decls = parse_fundecls(v);

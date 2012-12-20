@@ -43,7 +43,7 @@ noinst_HEADERS = dp/2way.H dp/dp-engine.H myexception.H tree/sequencetree.H dp/3
 	   tools/consensus-tree.H tools/partition.H mcmc/slice-sampling.H \
 	   timer_stack.H mcmc/setup.H models/probability-model.H owned-ptr.H \
 	   bounds.H io.H smodel/objects.H smodel/operations.H parser/parse.H \
-           probability/distribution-operations.H
+           probability/distribution-operations.H parser/AST.H
 
 LDFLAGS = @ldflags@
 
@@ -107,7 +107,8 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  computation/formula_expression.C smodel/operations.C probability/distribution-operations.C \
 	  computation/operations.C computation/prelude.C computation/context.C \
 	  computation/model_notes.C substitution/matcache.C smodel/functions.C computation/closure.C \
-	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C object.C popgen/popgen.C
+	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C object.C popgen/popgen.C \
+	  parser/AST.C
 
 nodist_bali_phy_SOURCES = git_version.h
 
