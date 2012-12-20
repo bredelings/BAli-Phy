@@ -74,17 +74,15 @@ Program make_Prelude()
 
   P += "{unsafePerformIO x = reapply unsafePerformIO' x}";
 
+  P += "{f >> g = IOAnd f g}";
+  P += "{f >>= g = IOAndPass f g}";
+  P += "{return f = IOReturn f}";
+
   //------------------------------------------------------------------------------------------------//
 
 
   // Is this right?
   P.declare_fixity("!", 9, left_fix);
-
-  /*
-infixr 9 .
-(.) :: (b -> c) -> (a -> b) -> (a -> c)
-(f . g) x = f (g x)
-  */
 
   //  P.declare_fixity("^", 8, right_fix);
   //  P.declare_fixity("^^", 8, right_fix);
@@ -126,8 +124,8 @@ infixr 9 .
   //  P.declare_fixity("&&", 3, right_fix);
   //  P.declare_fixity("||", 2, right_fix);
 
-  //  P.declare_fixity(">>", 1, left_fix);
-  //  P.declare_fixity(">>=", 1, left_fix);
+  P.declare_fixity(">>", 1, left_fix);
+  P.declare_fixity(">>=", 1, left_fix);
 
   P.declare_fixity("$", 0, right_fix);
   P += "{f $ x = f x}";
@@ -272,27 +270,27 @@ infixr 9 .
   P += "{setVectorIndexInt v i x = IOAction3 builtinSetVectorIndexInt v i x}";
 
   // copyListToVectorInt h:t v i = do { setVectorIndexInt v i h ; copyListToVectorInt t v (i+1) }
-  P += "{copyListToVectorInt [] v i = IOReturn ();\
-         copyListToVectorInt (h:t) v i = IOAnd (setVectorIndexInt v i h) (copyListToVectorInt t v (i+1))}";
+  P += "{copyListToVectorInt [] v i = return ();\
+         copyListToVectorInt (h:t) v i = setVectorIndexInt v i h >> copyListToVectorInt t v (i+1)}";
 
   // listToVectorInt l = do { v <- newVectorInt (length l); copyListToVector l v 0 ; return v }
-  P += "{listToVectorInt l = unsafePerformIO (IOAndPass (newVectorInt (length l)) (\\v -> IOAnd (copyListToVectorInt l v 0) (IOReturn v)))}";
+  P += "{listToVectorInt l = unsafePerformIO (newVectorInt (length l) >>= (\\v -> copyListToVectorInt l v 0 >> return v))}";
 
   //--------------------------------------- listToString ---------------------------------------//
 
   P.def_function("builtinNewString", lambda_expression( BuiltinNewStringOp() ) ); 
-  P.def_function("builtinSetStringIndexInt", lambda_expression( BuiltinSetStringIndexOp() ) ); 
+  P.def_function("builtinSetStringIndexInt", lambda_expression( BuiltinSetStringIndexOp() ) );
 
   P += "{newString s = IOAction1 builtinNewString s}";
 
   P += "{setStringIndexInt v i x = IOAction3 builtinSetStringIndexInt v i x}";
 
   // copyListToString h:t v i = do { setStringIndexInt v i h ; copyListToString t v (i+1) }
-  P += "{copyListToString [] v i = IOReturn ();\
-         copyListToString (h:t) v i = IOAnd (setStringIndexInt v i h) (copyListToString t v (i+1))}";
+  P += "{copyListToString [] v i = return ();\
+         copyListToString (h:t) v i = setStringIndexInt v i h >> copyListToString t v (i+1)}";
 
   // listToString l = do { v <- newString (length l); copyListToString l v 0 ; return v }
-  P += "{listToString l = unsafePerformIO (IOAndPass (newString (length l)) (\\v -> IOAnd (copyListToString l v 0) (IOReturn v)))}";
+  P += "{listToString l = unsafePerformIO (newString (length l) >>= (\\v -> copyListToString l v 0 >> return v))}";
 
   //--------------------------------------- listToVectorDouble ---------------------------------------//
 
@@ -304,11 +302,11 @@ infixr 9 .
   P += "{setVectorIndexDouble v i x = IOAction3 builtinSetVectorIndexDouble v i x}";
 
   // copyListToVectorDouble h:t v i = do { setVectorIndexDouble v i h ; copyListToVectorDouble t v (i+1) }
-  P += "{copyListToVectorDouble [] v i = IOReturn ();\
-         copyListToVectorDouble (h:t) v i = IOAnd (setVectorIndexDouble v i h) (copyListToVectorDouble t v (i+1))}";
+  P += "{copyListToVectorDouble [] v i = return ();\
+         copyListToVectorDouble (h:t) v i = setVectorIndexDouble v i h >> copyListToVectorDouble t v (i+1)}";
 
   // listToVectorDouble l = do { v <- newVectorDouble (length l); copyListToVector l v 0 ; return v }
-  P += "{listToVectorDouble l = unsafePerformIO (IOAndPass (newVectorDouble (length l)) (\\v -> IOAnd (copyListToVectorDouble l v 0) (IOReturn v)))}";
+  P += "{listToVectorDouble l = unsafePerformIO (newVectorDouble (length l) >>= (\\v -> copyListToVectorDouble l v 0 >> return v))}";
 
   //--------------------------------------- listToVectorMatrix ---------------------------------------//
 
