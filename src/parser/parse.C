@@ -158,7 +158,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | lit("let")[clear(_a)] > decls[push_back(_a,_1)] > "in" > exp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Let"), _a)  ]
 	  | lit("if")[clear(_a)] > exp[push_back(_a,_1)] > -lit(';') >> "then" > exp[push_back(_a,_1)] > -lit(';') > "else" > exp[push_back(_a,_1) ]>> eps [ _val = new_<expression>(AST_node("If"), _a)  ]
 	  | lit("case")[clear(_a)] > exp[push_back(_a,_1)] > "of" > "{" >> alts[push_back(_a,_1)] >> "}" >> eps [ _val = new_<expression>(AST_node("Case"), _a)  ]
-	  //	  | lit("do") >> "{" >> stmts >> "}"
+	  | lit("do") >> "{" >> stmts[push_back(_a,_1)] >> lit("}") [ _val = new_<expression>(AST_node("Do"), _a)  ]
 	  | fexp [_val = _1]
 	  ;
 
@@ -227,8 +227,11 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	//	  | infixexp;      // boolean guard
 
 	/*----- Section 3.14 -----*/
-	//	stmts %= *stmt >> exp >> -lit(';');
-	//	stmt %= exp >> ";" | pat >> "<-" >> exp >> ";" | "let" >> decls >> ";" | ";";
+	stmts = *stmt[push_back(_a,_1)] >> exp[push_back(_a,_1)] >> -lit(';') [ _val = new_<expression>(AST_node("Stmts"), _a) ];
+	stmt =  exp[push_back(_a,_1)] >> lit(";") [ _val = new_<expression>(AST_node("SimpleStmt"), _a) ]
+	  | eps [clear(_a) ] >> pat[push_back(_a,_1)] >> "<-" >> exp[push_back(_a,_1)] >> lit(";") [ _val = new_<expression>(AST_node("PatStmt"), _a) ]
+	  | eps [clear(_a) ] >> "let" >> decls[push_back(_a,_1)] >> lit(";") [ _val = new_<expression>(AST_node("LetStmt"), _a) ]
+	  | eps [clear(_a) ] >> lit(";") [ _val = new_<expression>(AST_node("EmptyStmt"), _a) ];
 
 	/*----- Section 3.15 -----*/
 	//	fbind %= qvar >> "=" >> exp;
@@ -707,8 +710,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string(), ascii::space_type> guard;
 
   /*----- Section 3.14 -----*/
-  qi::rule<Iterator, std::string(), ascii::space_type> stmts;
-  qi::rule<Iterator, std::string(), ascii::space_type> stmt;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> stmts;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> stmt;
 
   /*----- Section 3.15 -----*/
   qi::rule<Iterator, std::string(), ascii::space_type> fbind;  
