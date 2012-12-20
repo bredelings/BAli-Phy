@@ -227,7 +227,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	//	  | infixexp;      // boolean guard
 
 	/*----- Section 3.14 -----*/
-	stmts = *stmt[push_back(_a,_1)] >> exp[push_back(_a,_1)] >> -lit(';') [ _val = new_<expression>(AST_node("Stmts"), _a) ];
+	stmts = *stmt[push_back(_a,_1)] >> exp[push_back(_a,_1)] >> -lit(';') >> eps [ _val = new_<expression>(AST_node("Stmts"), _a) ];
 	stmt =  exp[push_back(_a,_1)] >> lit(";") [ _val = new_<expression>(AST_node("SimpleStmt"), _a) ]
 	  | eps [clear(_a) ] >> pat[push_back(_a,_1)] >> "<-" >> exp[push_back(_a,_1)] >> lit(";") [ _val = new_<expression>(AST_node("PatStmt"), _a) ]
 	  | eps [clear(_a) ] >> "let" >> decls[push_back(_a,_1)] >> lit(";") [ _val = new_<expression>(AST_node("LetStmt"), _a) ]
