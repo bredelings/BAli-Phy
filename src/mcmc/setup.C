@@ -222,7 +222,7 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
       find_match(query, P.get_note(i), results);
       expression_ref rand_var = results[0];
 
-      string dist_name = *P.get_context().evaluate_expression_as<String>((case_query_func, P.get_note(i)));
+      string dist_name = *P.get_context().evaluate_expression_as<String>((var("listToString"),(case_query_func, P.get_note(i))));
       if (dist_name != Dist) continue;
 
       if (is_exactly(rand_var->head,":"))

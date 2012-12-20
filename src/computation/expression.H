@@ -406,7 +406,7 @@ struct expression_ref: public object_ptr<const expression>
   expression_ref(const double& d):expression_ref(new Double(d)) {}
   expression_ref(const bool& b);
   expression_ref(const std::string& s);
-  expression_ref(const char* s):expression_ref(new String(s)) {}
+  expression_ref(const char* s);
   expression_ref(const char& c):expression_ref(new Char(c)) {}
 };
 
@@ -658,6 +658,8 @@ void parse_alternatives(const expression_ref& E, std::vector<expression_ref>& ca
 bool is_WHNF(const expression_ref& E);
 
 int get_safe_binder_index(const expression_ref& E);
+
+expression_ref char_list(const std::string& s);
 
 extern const expression_ref v0;
 extern const expression_ref v1;

@@ -452,14 +452,6 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
   return decls;
 }
 
-expression_ref get_char_list_from_string(const string& s)
-{
-  vector<expression_ref> letters;
-  for(char c: s)
-    letters.push_back(c);
-  return get_list(letters);
-}
-
 /*
  * To handle funlhs1, funlhs2, and funlhs3, we want to
  * (a) Transform the ASTs to funlhs1 before we try to bind variables.  This is because the function names will be bound
@@ -829,9 +821,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "String")
     {
-      string s = *E->sub[0].assert_is_a<String>();
       return E->sub[0];
-      //      return get_char_list_from_string(s);
     }
     else if (n->type == "BugsNote")
     {

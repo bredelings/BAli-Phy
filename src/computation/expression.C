@@ -544,8 +544,12 @@ expression_ref::expression_ref(const bool& b)
   :expression_ref(b?new constructor("True",0):new constructor("False",0))
 {}
 
+expression_ref::expression_ref(const char* s)
+  :expression_ref(char_list(s))
+{}
+
 expression_ref::expression_ref(const std::string& s)
-  :expression_ref(new String(s)) 
+  :expression_ref(char_list(s))
 {}
 
 expression_ref lambda_quantify(const expression_ref& dummy, const expression_ref& R)
@@ -2571,4 +2575,10 @@ expression_ref operator^(const expression_ref& x, const expression_ref& T)
   return lambda_quantify(x,T);
 }
 
-
+expression_ref char_list(const string& s)
+{
+  vector<expression_ref> letters;
+  for(char c: s)
+    letters.push_back(c);
+  return get_list(letters);
+}

@@ -137,8 +137,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  lit("\\\"") [_val = '"'] |
 	  lit("'") [_val = '\''];
 
-	literal = h_float [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Float"), _a)  ]
-	  | h_integer [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Integer"), _a)  ]
+	literal = h_float [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Float"), _a)  ]
+	  | h_integer [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Integer"), _a)  ]
 	  | h_char [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Char"), _a)  ]
 	  | h_string [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("String"), _a)  ];
 
@@ -168,7 +168,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	aexp = 
 	  // variable
-	  qvar [_val = phoenix::construct<AST_node>("id", _1) ]
+	  qvar [_val = phoenix::construct<AST_node>("id", construct<String>(_1)) ]
 	  // general constructor
 	  | gcon [ _val = phoenix::construct<AST_node>("id", _1) ]
 	  // literal
@@ -206,7 +206,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	conop %= consym | "`" >> conid >> "`";    // constructor operator
 	qconop %= gconsym | "`" >> qconid >> "`"; // qualified constructor operator
 	op %= varop | conop;                      // operator
-	qop = qvarop [ _val = construct<AST_node>("id", _1) ] | qconop [ _val = construct<AST_node>("id",_1) ];  // qualified operator
+	qop = qvarop [ _val = construct<AST_node>("id", construct<String>(_1)) ] | qconop [ _val = construct<AST_node>("id",construct<String>(_1)) ];  // qualified operator
 	gconsym %= string(":") | qconsym;
 
 	/*----- Section 3.11 -----*/
@@ -235,16 +235,16 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	/*----- Section 3.17 -----*/
 	pat = 
-	  lpat [ push_back(_a,_1) ] >> qconop [ push_back(_a,construct<AST_node>("id",_1)) ] >> pat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ]
+	  lpat [ push_back(_a,_1) ] >> qconop [ push_back(_a,construct<AST_node>("id",construct<String>(_1))) ] >> pat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ]
 	  | eps [clear(_a)] >>  lpat [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("pat"), _a) ];
 
 	lpat = 
 	  // negative literal float
-	  eps [clear(_a)] >> lit('-') >> h_float [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
+	  eps [clear(_a)] >> lit('-') >> h_float [ push_back(_a,construct<String>(_1)) ] >> eps [  _val = new_<expression>(AST_node("neg_h_float"), _a) ]
 	  // negative literal integer
-	  | eps [clear(_a)] >> lit('-') >> h_integer [ push_back(_a,_1) ] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
+	  | eps [clear(_a)] >> lit('-') >> h_integer [ push_back(_a,construct<String>(_1)) ] >> eps [  _val = new_<expression>(AST_node("neg_h_integer"), _a) ]
 	  // here the number of apat's must match the constructor arity
-	  | eps [clear(_a)] >>  gcon[ push_back(_a,_1) ] >> +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
+	  | eps [clear(_a)] >>  gcon[ push_back(_a,construct<String>(_1)) ] >> +apat[ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
 	  // apat
 	  | apat [ _val = _1 ]
 	  ;                  
@@ -255,7 +255,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // irrefutable var pattern
 	  var [ qi::_val = phoenix::construct<AST_node>("apat_var", qi::_1) ]        
 	  // arity gcon = 0
-	  | gcon [ push_back(_a,_1) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
+	  | gcon [ push_back(_a,construct<String>(_1)) ] >> eps [_val = new_<expression>(AST_node("constructor_pattern"), _a) ]
 	  // labelled pattern
 	  //	  | qcon >> "{" >> *fpat >> "}"     
 	  | literal [  _val = _1 ]
@@ -274,7 +274,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	/*------ Section 4 -------*/
 	module = 
-	  lit("module") > modid[ push_back(_a,_1) ] > /*-exports >>*/ "where" > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ]
+	  lit("module") > modid[ push_back(_a,construct<String>(_1)) ] > /*-exports >>*/ "where" > body [ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ]
 	  | eps[clear(_a)] >>  body[ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
 
 	body = 
@@ -308,10 +308,10 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	//	idecl  %= (funlhs | var) >> rhs | eps;
 
 	gendecl = // vars >> "::" >>  -(context >> "=>") >> type 
-	  fixity[push_back(_a,_1)] >> -h_integer[push_back(_a,_1)] >> ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
+	  fixity[push_back(_a,construct<String>(_1))] >> -h_integer[push_back(_a,construct<String>(_1))] >> ops[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FixityDecl"), _a)  ]
 	  | eps [ _val = new_<expression>(AST_node("EmptyDecl"), _a)  ];
 
-	ops = +op[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Ops"), _a)  ];
+	ops = +op[push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Ops"), _a)  ];
 	vars %= +var;
 	fixity %= string("infixl") | string("infixr") | string("infix");
 
@@ -360,8 +360,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  ;
 
 	/*------ Section 4.4.3 -----*/
-	funlhs = var [push_back(_a,phoenix::construct<AST_node>("id", _1))] >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs1"), _a)  ]
-		  | eps[clear(_a)] >> pat [push_back(_a,_1)] >> varop[push_back(_a,phoenix::construct<AST_node>("id", _1))] >> pat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs2"), _a)  ]
+	funlhs = var [push_back(_a,phoenix::construct<AST_node>("id", construct<String>(_1)))] >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs1"), _a)  ]
+	  | eps[clear(_a)] >> pat [push_back(_a,_1)] >> varop[push_back(_a,phoenix::construct<AST_node>("id", construct<String>(_1)))] >> pat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs2"), _a)  ]
 		  | eps[clear(_a)] >> "(" >> funlhs[push_back(_a,_1)] >> ")" > +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs3"), _a)  ];
 
 	rhs = lit('=') > exp [push_back(_a,_1)] >> -(lit("where") >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
@@ -826,12 +826,12 @@ struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 	using phoenix::val;
 
 	text %= +(char_ - ' ' -'(');
-	bugs_dist = lit("data") >> h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,_1)] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsDataDist"), _a)  ] 
-	  | eps [clear(_a) ] >> lit("external") >> h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,_1)] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsExternalDist"), _a)  ]
-	  | eps [clear(_a) ] >> h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,_1)] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
-	bugs_default_value = h.qvar [push_back(_a, phoenix::construct<AST_node>("id", _1)) ] >> ":=" > h.exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
+	bugs_dist = lit("data") >> h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,construct<String>(_1))] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsDataDist"), _a)  ] 
+	  | eps [clear(_a) ] >> lit("external") >> h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,construct<String>(_1))] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsExternalDist"), _a)  ]
+	  | eps [clear(_a) ] >> h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,construct<String>(_1))] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
+	bugs_default_value = h.qvar [push_back(_a, phoenix::construct<AST_node>("id", construct<String>(_1))) ] >> ":=" > h.exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
 	bugs_note = h.exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
-	bugs_parameter = lit("parameter") >> h.varid [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
+	bugs_parameter = lit("parameter") >> h.varid [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
 
 	bugs_line %= bugs_parameter | bugs_default_value | bugs_dist | bugs_note;
 	bugs_lines = lit('{') >> bugs_line [push_back(_a,_1)] % ';' > lit('}') [ _val = new_<expression>(AST_node("BugsLines"), _a)  ] ;
