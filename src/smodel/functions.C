@@ -5,46 +5,6 @@
 #include "computation/graph_register.H"
 #include "smodel/operations.H"
 
-const expression_ref MultiParameter = var("multiParameter");
-const expression_ref rate = var("rate");
-const expression_ref scale = var("scale");
-const expression_ref QExp = var("qExp");
-const expression_ref Q_from_S_and_R = var("qFromSandR");
-const expression_ref branch_transition_p = var("branchTransitionP");
-
-const expression_ref n_base_models = var("nBaseModels");
-const expression_ref state_letters = var("stateLetters");
-const expression_ref n_states = var("nStates");
-const expression_ref get_alphabet = var("getAlphabet");
-const expression_ref get_frequencies = var("frequencies");
-const expression_ref get_component_frequencies = var("componentFrequencies");
-const expression_ref base_model = var("baseModel");
-const expression_ref distribution = var("distribution");
-const expression_ref MultiRate = var("multiRate");
-const expression_ref get_nth_mixture = var("getNthMixture");
-const expression_ref UnwrapMM = var("unwrapMM");
-const expression_ref MixMixtureModels = var("mixMixtureModels");
-
-// (ReversibleMarkov alpha state_letters q pi l t)
-const expression_ref ReversibleMarkov = lambda_expression( constructor("SModel.ReversibleMarkov", 7) );
-
-// (ReversibleFrequency alpha state_letters pi R)
-const expression_ref ReversibleFrequency = lambda_expression( constructor("SModel.ReversibleFrequency", 4) );
-
-// (F81 alpha state_letters a pi)
-const expression_ref F81M = lambda_expression( constructor("SModel.F81", 4) );
-
-// (MixtureModel (DiscreteDistribution [(Double,RMM|F81)]))
-const expression_ref MixtureModel = lambda_expression( constructor("SModel.MixtureModel", 1) );
-
-// (MixtureModels [MixtureModel])
-const expression_ref MixtureModels = lambda_expression( constructor("SModel.MixtureModels", 1) );
-
-// TODO: transition_p
-// After we get transition_p right, then it SHOULD be fast.  Benchmark!
-//
-const expression_ref DiscreteDistribution = lambda_expression(constructor("Prelude.DiscreteDistribution",1));
-
 Program SModel_Functions()
 {
   Program P("SModel");
