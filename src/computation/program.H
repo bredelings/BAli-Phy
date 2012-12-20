@@ -94,6 +94,8 @@ public:
 
   void import_module(const Program& P2, bool qualified);
 
+  void import_module(const std::vector<std::string>& path, const std::string&, bool qualified);
+
   bool is_declared_qualified(const std::string&) const;
 
   bool is_declared_unqualified(const std::string&) const;

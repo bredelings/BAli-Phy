@@ -253,6 +253,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
     ("lambda-scale-branch",value<string>(),"File with partition describing branch to scale")
+    ("modules",value<string>(),"Directories to search for modules")
     ;
   options_description all("All options");
   all.add(general).add(mcmc).add(parameters).add(model).add(advanced);
@@ -1394,8 +1395,12 @@ int main(int argc,char* argv[])
     //------------- Parse the Hierarchical Model description -----------//
     if (args.count("BUGS"))
     {
+      vector<string> modules_path;
+      if (args.count("modules"))
+	modules_path = split(args["modules"].as<string>(),':');
+
       const string filename = args["BUGS"].as<string>();
-      add_BUGS(P,filename,"BUGS");
+      add_BUGS(modules_path,P,filename,"BUGS");
     }
       
     //-------------------- Log model -------------------------//

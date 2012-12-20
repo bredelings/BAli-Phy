@@ -6,6 +6,7 @@
 #include "parser/parse.H"
 #include "parser/desugar.H"
 #include "parser/AST.H"
+#include "prelude.H"
 
 using std::pair;
 using std::map;
@@ -203,6 +204,12 @@ void Program::import_module(const Program& P2, bool qualified)
     if (S.scope == local_scope)
       import_symbol(S, qualified);
   }
+}
+
+void Program::import_module(const vector<string>& path, const string& modid, bool qualified)
+{
+  Program mod = load_module(path, modid);
+  import_module( mod, qualified);
 }
 
 bool Program::is_declared_qualified(const std::string& name) const

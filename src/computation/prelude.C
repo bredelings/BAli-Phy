@@ -5,10 +5,12 @@
 #include "computation/graph_register.H"
 #include "mytypes.H"
 
-using std::vector;
+#include "smodel/functions.H"
+#include "probability/distribution-operations.H"
+#include "popgen/popgen.H"
 
-const expression_ref get_list_index = var("!!");
-const expression_ref plusplus = var("++");
+using std::vector;
+using std::string;
 
 /* TODO:
  * 1. [DONE] Remove true/false in favor of True/False.
@@ -326,4 +328,23 @@ const Program& get_Prelude()
 {
   static const Program P = make_Prelude();
   return P;
+}
+
+
+// Can we delay desugaring (phase 2) until we (a) compile or (b) load into the context?
+Program load_module(const vector<string>& path, const string& modid)
+{
+  Program module(modid);
+  if (modid == "Prelude")
+    module = get_Prelude();
+  else if (modid == "Distributions")
+    module = Distribution_Functions();
+  else if (modid == "Range")
+    module = Range_Functions();
+  else if (modid == "SModel")
+    module = SModel_Functions();
+  else if (modid == "PopGen")
+    module = PopGen_Functions();
+
+  return module;
 }

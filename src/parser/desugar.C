@@ -983,12 +983,8 @@ string read_file(const string& filename, const string& description)
   buffer << file.rdbuf();
   return buffer.str();
 }
-#include "smodel/functions.H"
-#include "computation/prelude.H"
-#include "probability/distribution-operations.H"
-#include "popgen/popgen.H"
 
-Model_Notes read_BUGS(const Parameters& P, const string& filename, const string& module_name_)
+Model_Notes read_BUGS(const vector<string>& modules_path, const Parameters& P, const string& filename, const string& module_name_)
 {
   // 1. Read file into string.
   string file_contents = read_file(filename, "BUGS File");
@@ -1029,12 +1025,12 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
 
   // 5. Process imports
   Program BUGS(module_name);
-  BUGS.import_module(get_Prelude(), false);
-  BUGS.import_module(Distribution_Functions(), false);
-  BUGS.import_module(Range_Functions(), false);
-  BUGS.import_module(SModel_Functions(), false);
+  BUGS.import_module(modules_path,"Prelude", false);
+  BUGS.import_module(modules_path,"Distributions", false);
+  BUGS.import_module(modules_path,"Range", false);
+  BUGS.import_module(modules_path,"SModel", false);
+  BUGS.import_module(modules_path,"PopGen", false);
   BUGS.import_module(P.get_Program(), false);
-  BUGS.import_module(PopGen_Functions(), false);
 
   Model_Notes N;
 
@@ -1083,9 +1079,9 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
   return N;
 }
 
-void add_BUGS(Parameters& P, const std::string& filename, const std::string& module_name)
+void add_BUGS(const vector<string>& modules_path, Parameters& P, const std::string& filename, const std::string& module_name)
 {
-  Model_Notes N = read_BUGS(P, filename, module_name);
+  Model_Notes N = read_BUGS(modules_path, P, filename, module_name);
 
   P.add_submodel(N);
 
