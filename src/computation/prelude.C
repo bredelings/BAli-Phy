@@ -272,8 +272,7 @@ Program make_Prelude()
   P += "{copyListToVectorInt [] v i = return ();\
          copyListToVectorInt (h:t) v i = setVectorIndexInt v i h >> copyListToVectorInt t v (i+1)}";
 
-  // listToVectorInt l = do { v <- newVectorInt (length l); copyListToVector l v 0 ; return v }
-  P += "{listToVectorInt l = unsafePerformIO (newVectorInt (length l) >>= (\\v -> copyListToVectorInt l v 0 >> return v))}";
+  P += "{listToVectorInt l = unsafePerformIO (do {v <- newVectorInt (length l); copyListToVectorInt l v 0; return v})}";
 
   //--------------------------------------- listToString ---------------------------------------//
 
