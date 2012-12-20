@@ -92,7 +92,7 @@ public:
 
   void import_symbol(const symbol_info&, bool qualified);
 
-  void import_module(const Program& P2, const std::string& s, bool qualified);
+  void import_module(const Program& P2, bool qualified);
 
   bool is_declared_qualified(const std::string&) const;
 

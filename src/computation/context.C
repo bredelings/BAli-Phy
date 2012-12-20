@@ -356,7 +356,7 @@ int context::add_parameter(const string& name)
     // FIXME: Right now the main program has a name.  What if the parameter is in that specific module?
     Program M(get_module_name(name));
     M.declare_parameter(get_unqualified_name(name));
-    P.modify()->import_module(M, M.module_name, false);
+    P.modify()->import_module(M, false);
   }
 
   assert(full_name.size() != 0);
@@ -527,7 +527,7 @@ context& context::operator+=(const std::vector<Program>& P2)
 
   // Import the symbols in P2 into our symbol table, and add aliases.
   for(const auto p: P2)
-    P.modify()->import_module(p, p.module_name, false);
+    P.modify()->import_module(p, false);
 
   // Give each identifier a pointer to an unused location
   for(const auto p: P2)

@@ -194,13 +194,13 @@ void Program::import_symbol(const symbol_info& S, bool qualified)
     add_alias(S2.name);
 }
 
-void Program::import_module(const Program& P2, const string& module_name2, bool qualified)
+void Program::import_module(const Program& P2, bool qualified)
 {
   for(const auto& p: P2.symbols)
   {
     const symbol_info& S = p.second;
 
-    if (get_module_name(S.name) == module_name2)
+    if (S.scope == local_scope)
       import_symbol(S, qualified);
   }
 }

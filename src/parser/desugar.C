@@ -893,6 +893,10 @@ string read_file(const string& filename, const string& description)
   buffer << file.rdbuf();
   return buffer.str();
 }
+#include "smodel/functions.H"
+#include "computation/prelude.H"
+#include "probability/distribution-operations.H"
+#include "popgen/popgen.H"
 
 Model_Notes read_BUGS(const Parameters& P, const string& filename, const string& module_name_)
 {
@@ -935,12 +939,12 @@ Model_Notes read_BUGS(const Parameters& P, const string& filename, const string&
 
   // 5. Process imports
   Program BUGS(module_name);
-  BUGS.import_module(P.get_Program(),"Prelude", false);
-  BUGS.import_module(P.get_Program(),"Distributions", false);
-  BUGS.import_module(P.get_Program(),"Range", false);
-  BUGS.import_module(P.get_Program(),"SModel", false);
-  BUGS.import_module(P.get_Program(),"Main", false);
-  BUGS.import_module(P.get_Program(),"PopGen", false);
+  BUGS.import_module(get_Prelude(), false);
+  BUGS.import_module(Distribution_Functions(), false);
+  BUGS.import_module(Range_Functions(), false);
+  BUGS.import_module(SModel_Functions(), false);
+  BUGS.import_module(P.get_Program(), false);
+  BUGS.import_module(PopGen_Functions(), false);
 
   Model_Notes N;
 

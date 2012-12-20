@@ -8,7 +8,7 @@
 Program SModel_Functions()
 {
   Program P("SModel");
-  P.import_module(get_Prelude(),"Prelude",false);
+  P.import_module(get_Prelude(),false);
 
   P.def_function("plusGWF", lambda_expression(substitution::Plus_gwF_Op()));
   P.def_function("lExp", lambda_expression(LExp_Op()));

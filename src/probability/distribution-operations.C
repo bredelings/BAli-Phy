@@ -518,7 +518,7 @@ closure GetBounds::operator()(OperationArgs& Args) const
 Program Range_Functions()
 {
   Program P("Range");
-  P.import_module(get_Prelude(),"Prelude",false);
+  P.import_module(get_Prelude(),false);
   P.def_constructor("OpenInterval",2);
   P.def_constructor("Real",1);
   P.def_constructor("Inf",0);
@@ -541,8 +541,8 @@ Program Range_Functions()
 Program Distribution_Functions()
 {
   Program P("Distributions");
-  P.import_module(get_Prelude(),"Prelude",false);
-  P.import_module(Range_Functions(),"Range",false);
+  P.import_module(get_Prelude(),false);
+  P.import_module(Range_Functions(),false);
 
   // Note: we separate the "builtin" versions (which don't do case analysis on their arguments)
   //       from the from the real versions (which do).

@@ -1219,7 +1219,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   expression_ref _ = dummy(-1);
 
   Program tree_program("Tree");
-  tree_program.import_module(get_Prelude(),"Prelude",false);
+  tree_program.import_module(get_Prelude(),false);
   tree_program.def_constructor("Tree",4);
   tree_program.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
 
