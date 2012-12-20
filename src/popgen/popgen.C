@@ -313,12 +313,14 @@ Program PopGen_Functions()
   Program P("PopGen");
   P.import_module(get_Prelude(), false);
   P.import_module(Distribution_Functions(), false);
-  P.def_function("readPhaseFile", lambda_expression(Read_PHASE_File()));
+  P.def_function("builtinReadPhaseFile", lambda_expression(Read_PHASE_File()));
   P.def_function("remove2ndAllele", lambda_expression(Remove_2nd_Allele()));
   P.def_function("alleleFrequencySpectrum", lambda_expression(Allele_Frequency_Spectrum()));
   P.def_function("ewensSamplingProbability", lambda_expression(Ewens_Sampling_Probability()));
   P.def_function("ewensSamplingGroupProbability", lambda_expression(Ewens_Sampling_Group_Probability()));
   P.def_function("builtinEwensSamplingMixtureProbability", lambda_expression(Ewens_Sampling_Mixture_Probability()));
+
+  P += "{readPhaseFile = builtinReadPhaseFile . listToString}";
 
   P += "{ewensSamplingMixtureProbability (thetas,ps) x = builtinEwensSamplingMixtureProbability (listToVectorDouble thetas) (listToVectorDouble ps) x}";
 
