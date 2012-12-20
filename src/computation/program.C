@@ -5,6 +5,7 @@
 #include "let-float.H"
 #include "parser/parse.H"
 #include "parser/desugar.H"
+#include "parser/AST.H"
 
 using std::pair;
 using std::map;
@@ -478,27 +479,59 @@ Program& Program::operator+=(const expression_ref& H)
   assert(D.assert_is_a<AST_node>()->type=="Decls" or D.assert_is_a<AST_node>()->type=="TopDecls");
   vector<expression_ref> decls = D->sub;
 
+  // 0. Get names that are being declared.
+  for(const auto& decl: decls)
+    if (is_AST(decl,"FixityDecl"))
+    {
+      // Determine fixity.
+      string f = *decl->sub[0].assert_is_a<String>();
+      fixity_t fixity = unknown_fix;
+      if (f == "infixl")
+	fixity = left_fix;
+      else if (f == "infixr")
+	fixity = right_fix;
+      else if (f == "infix")
+	fixity = non_fix;
+      else
+	std::abort();
+
+      // Determine precedence.
+      int precedence = 9;
+      if (decl->sub.size() == 3)
+      {
+	string p = *decl->sub[1].assert_is_a<String>();
+	precedence = convertTo<int>(p);
+      }
+
+      // Find op names and declare fixity and precedence.
+      for(const auto& op: decl->sub.back()->sub)
+      {
+	string name = *op.assert_is_a<String>();
+	declare_fixity(name, precedence, fixity);
+      }
+    }
+
   // 1. Get names that are being declared.
   vector<string> names;
   for(const auto& decl: decls)
-  {
-    assert(decl.assert_is_a<AST_node>()->type=="Decl");
-    names.push_back( decl->sub[0].assert_is_a<dummy>()->name );
-  }
+    if (is_AST(decl,"Decl"))
+      names.push_back( decl->sub[0].assert_is_a<dummy>()->name );
 
   // 2. Convert top-level dummies into global vars.
   for(auto& decl: decls)
-    for(const auto& name: names)
-      decl = substitute(decl,dummy(name),var(name));
+    if (is_AST(decl,"Decl"))
+      for(const auto& name: names)
+	decl = substitute(decl,dummy(name),var(name));
 
   // 3. Define the symbols
   for(const auto& decl: decls)
-  {
-    string name = decl->sub[0].assert_is_a<var>()->name;
-    // I think this is never used, for functions.  For constructors it does matter, though.
-    expression_ref E = decl->sub[1];
-    def_function(name, E);
-  }
+    if (is_AST(decl,"Decl"))
+    {
+      string name = decl->sub[0].assert_is_a<var>()->name;
+      // I think this is never used, for functions.  For constructors it does matter, though.
+      expression_ref E = decl->sub[1];
+      def_function(name, E);
+    }
 
   return *this;
 }
