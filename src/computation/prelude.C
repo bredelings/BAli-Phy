@@ -35,7 +35,7 @@ Program make_Prelude()
 {
   Program P("Prelude");
 
-  P.def_function("error", lambda_expression( Error() ) ); 
+  P.def_function("builtinError", lambda_expression( Error() ) ); 
   P.def_function("intToDouble", lambda_expression( Conversion<int,double>() ) ); 
   P.def_function("mkArray", lambda_expression( MkArray() ) ); 
   P.def_function("reapply", lambda_expression( Reapply() ) );
@@ -324,6 +324,7 @@ Program make_Prelude()
   // listToVectorMatrix l = do { v <- newVectorMatrix (length l); copyListToVector l v 0 ; return v }
   P += "{listToVectorMatrix l = unsafePerformIO (newVectorMatrix (length l) >>=  (\\v -> copyListToVectorMatrix l v 0 >> return v))}";
 
+  P += "{error m = builtinError (listToString m)};
   return P;
 }
 
