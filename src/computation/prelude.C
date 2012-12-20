@@ -325,7 +325,7 @@ Program make_Prelude()
   // listToVectorMatrix l = do { v <- newVectorMatrix (length l); copyListToVector l v 0 ; return v }
   P += "{listToVectorMatrix l = unsafePerformIO (newVectorMatrix (length l) >>=  (\\v -> copyListToVectorMatrix l v 0 >> return v))}";
 
-  P += "{error m = builtinError (listToString m)};
+  P += "{error m = builtinError (listToString m)}";
 
   return P;
 }
