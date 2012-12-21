@@ -1,5 +1,45 @@
 module Prelude where
 {
+foldr f z [] = z;
+foldr f z (x:xs) = (f x (foldr f z xs));
+
+foldl f z [] = z;
+foldl f z (x:xs) = foldl f (f z x) xs;
+
+foldl' f z [] = z;
+foldl' f z (x:xs) = let {z' = (f z x)} in seq z' (foldl' f z' xs);
+
+head (h:t) = h;
+tail (h:t) = t;
+
+take 0 x     = [];
+take n []    = [];
+take n (h:t) = h:(take (n-1) t);
+
+repeat x = x:(repeat x);
+
+iterate f x = x:iterate f (f x);
+
+map f []  = [];
+map f (h:t) = (f h):(map f t);
+  
+fmap = map;
+
+[] ++ y = y;
+h:t ++ y = h:(t ++ y);
+
+infixr 9 .;
+(f . g) x = f (g x);
+
+f $ x = f x;
+
+fst (x,y) = x;
+
+snd (x,y) = y;
+
+swap (x,y) = (y,x);
+
+infixr 9 !!;
 h:t !! 0 = h;
 h:t !! i = t !! (i-1);
 
@@ -94,5 +134,18 @@ listToVectorMatrix l = unsafePerformIO (do { v <- newVectorMatrix (length l); co
 
 error m = builtinError (listToString m);
 
+unsafePerformIO' (IOAction1 x y ) = x y;
+unsafePerformIO' (IOAction2 x y z) = x y z;
+unsafePerformIO' (IOAction3 x y z w) = x y z w;
+unsafePerformIO' (IOAction4 x y z w u) = x y z w u;
+unsafePerformIO' (IOReturn x) = x;
+unsafePerformIO' (IOAndPass f g) = let {x = unsafePerformIO' f} in x `join` (unsafePerformIO' (g x));
+unsafePerformIO' (IOAnd f g) = (unsafePerformIO' f) `join` (unsafePerformIO' g);
+
+unsafePerformIO x = reapply unsafePerformIO' x;
+
+f >> g = IOAnd f g;
+f >>= g = IOAndPass f g;
+return f = IOReturn f;
 fail e = error e
 }

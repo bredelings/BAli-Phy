@@ -70,19 +70,6 @@ Program make_Prelude()
   // FIXME? IOAction 0 doesn't work, because we don't get a separate cell for each application... to nothing.
   //        Current approach: supply dummy arguments to such a builtin that are not used.
 
-  P += "{unsafePerformIO' (IOAction1 x y ) = x y;\
-         unsafePerformIO' (IOAction2 x y z) = x y z;\
-         unsafePerformIO' (IOAction3 x y z w) = x y z w;\
-         unsafePerformIO' (IOAction4 x y z w u) = x y z w u;\
-         unsafePerformIO' (IOReturn x) = x;\
-         unsafePerformIO' (IOAndPass f g) = let {x = unsafePerformIO' f} in x `join` (unsafePerformIO' (g x));\
-         unsafePerformIO' (IOAnd f g) = (unsafePerformIO' f) `join` (unsafePerformIO' g)}";
-
-  P += "{unsafePerformIO x = reapply unsafePerformIO' x}";
-
-  P += "{f >> g = IOAnd f g}";
-  P += "{f >>= g = IOAndPass f g}";
-  P += "{return f = IOReturn f}";
   //------------------------------------------------------------------------------------------------//
 
 
@@ -133,51 +120,11 @@ Program make_Prelude()
   P.declare_fixity(">>=", 1, left_fix);
 
   P.declare_fixity("$", 0, right_fix);
-  P += "{f $ x = f x}";
 
   //  P.declare_fixity("$!", 0, right_fix);
   P.def_function("seq", lambda_expression( Seq() ) );
   P.declare_fixity("seq", 0, right_fix);
   P.declare_fixity("join", 0, right_fix);
-
-  P += "{foldr f z [] = z;\
-         foldr f z (x:xs) = (f x (foldr f z xs))}";
-
-  P += "{foldl f z [] = z;\
-         foldl f z (x:xs) = foldl f (f z x) xs}";
-
-  P += "{foldl' f z [] = z;\
-         foldl' f z (x:xs) = let {z' = (f z x)} in seq z' (foldl' f z' xs)}";
-
-  P += "{head (h:t) = h}";
-  P += "{tail (h:t) = t}";
-
-  P += "{take 0 x     = [];\
-         take n []    = [];\
-         take n (h:t) = h:(take (n-1) t)}";
-
-  P += "{repeat x = x:(repeat x)}";
-
-  P += "{iterate f x = x:iterate f (f x)}";
-
-  P += "{map f []  = [];\
-         map f (h:t) = (f h):(map f t)}";
-  
-  P += "{fmap = map}";
-
-  P += "{[] ++ y = y;\
-         h:t ++ y = h:(t ++ y)}";
-
-  P += "{infixr 9 .;\
-         (f . g) x = f (g x)}";
-
-  P += "{fst (x,y) = x}";
-
-  P += "{snd (x,y) = y}";
-
-  P += "{swap (x,y) = (y,x)}";
-
-  P.declare_fixity("!!", 9, left_fix);
 
   // [ We could do this as two nested fmaps, instead. ]
   // [ We could factor out to_double(v2), and 1.0/to_double(v2)
