@@ -75,6 +75,9 @@ iterate f x = x:iterate f (f x);
 
 replicate n x = take n (repeat x);
 
+cycle []         =  error "Prelude.cycle: empty list";
+cycle xs         =  let {xs' = xs ++ xs'} in xs';
+
 map f []  = [];
 map f (h:t) = (f h):(map f t);
   
