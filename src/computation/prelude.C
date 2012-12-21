@@ -284,15 +284,6 @@ Program make_Prelude()
   P.def_function("builtinNewString", lambda_expression( BuiltinNewStringOp() ) ); 
   P.def_function("builtinSetStringIndexInt", lambda_expression( BuiltinSetStringIndexOp() ) );
 
-  P += "{newString s = IOAction1 builtinNewString s}";
-
-  P += "{setStringIndexInt v i x = IOAction3 builtinSetStringIndexInt v i x}";
-
-  P += "{copyListToString [] v i = return ();\
-         copyListToString (h:t) v i = do {setStringIndexInt v i h ; copyListToString t v (i+1)}}";
-
-  P += "{listToString l = unsafePerformIO (do {v <- newString (length l); copyListToString l v 0; return v})}";
-
   //--------------------------------------- listToVectorDouble ---------------------------------------//
 
   P.def_function("builtinNewVectorDouble", lambda_expression( BuiltinNewVectorOp<double>() ) ); 

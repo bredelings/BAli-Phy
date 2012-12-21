@@ -1,5 +1,14 @@
 module Prelude where
 {
+newString s = IOAction1 builtinNewString s;
+
+setStringIndexInt v i x = IOAction3 builtinSetStringIndexInt v i x;
+
+copyListToString [] v i = return ();
+copyListToString (h:t) v i = do {setStringIndexInt v i h ; copyListToString t v (i+1)};
+
+listToString l = unsafePerformIO (do {v <- newString (length l); copyListToString l v 0; return v});
+
 newVectorDouble s = IOAction1 builtinNewVectorDouble s;
 setVectorIndexDouble v i x = IOAction3 builtinSetVectorIndexDouble v i x;
 copyListToVectorDouble [] v i = return ();
