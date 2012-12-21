@@ -312,19 +312,6 @@ Program make_Prelude()
   P.def_function("builtinNewVectorMatrix", lambda_expression( BuiltinNewVectorOp<Matrix>() ) ); 
   P.def_function("builtinSetVectorIndexMatrix", lambda_expression( BuiltinSetVectorIndexOp<Matrix,MatrixObject>() ) ); 
 
-  P += "{newVectorMatrix s = IOAction1 builtinNewVectorMatrix s}";
-
-  P += "{setVectorIndexMatrix v i x = IOAction3 builtinSetVectorIndexMatrix v i x}";
-
-  P += "{copyListToVectorMatrix [] v i = return ();\
-         copyListToVectorMatrix (h:t) v i = do { setVectorIndexMatrix v i h; copyListToVectorMatrix t v (i+1)}}";
-
-  P += "{listToVectorMatrix l = unsafePerformIO (do { v <- newVectorMatrix (length l); copyListToVectorMatrix l v 0 ; return v})}";
-
-  P += "{error m = builtinError (listToString m)}";
-
-  P += "{fail e = error e}";
-
   return P;
 }
 
