@@ -281,8 +281,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | eps[clear(_a)] >>  body[ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Module"), _a) ];
 
 	body = 
-	  lit('{') >> impdecls >> ';' >> topdecls >> '}'
-	  | lit('{')[clear(_a)] >> impdecls >> '}'
+	  lit('{') >> impdecls[ push_back(_a,_1) ] >> ';' >> topdecls[ push_back(_a,_1) ] >> '}'>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
+	  | lit('{')[clear(_a)] >> impdecls[ push_back(_a,_1) ] >> '}'>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
 	  | lit('{') >> topdecls [ push_back(_a,_1) ] > '}' >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
 
 	topdecls = topdecl [ push_back(_a,_1) ] % ';' >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
@@ -373,7 +373,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	//	gdrhs %= guards >> "=" >> exp >> -gdrhs;
 
 	/*------ Section 5.1 -------*/
-	impdecls = impdecl[push_back(_a,_1)] % ';' >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
+	impdecls = impdecl[push_back(_a,_1)] % ';' >> eps [ _val = new_<expression>(AST_node("impdecls"), _a)  ];
 	
 	/*------ Section 5.2 -------*/
 	/*
