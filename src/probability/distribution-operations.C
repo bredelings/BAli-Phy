@@ -526,16 +526,6 @@ Program Range_Functions(const vector<string>& modules_path)
   P.def_constructor("NegInf",0);
   P.def_function("builtinGetBounds", lambda_expression( GetBounds() ) );
 
-  P += "{realLine = OpenInterval Nothing Nothing}";
-  P += "{above l = OpenInterval (Just l) Nothing}";
-  P += "{below u = OpenInterval Nothing (Just u)}";
-  P += "{between l u = OpenInterval (Just l) (Just u)}";
-  P += "{getBounds (OpenInterval Nothing Nothing)   = builtinGetBounds () ();\
-         getBounds (OpenInterval Nothing (Just u))  = builtinGetBounds () u;\
-         getBounds (OpenInterval (Just l) Nothing)  = builtinGetBounds l ();\
-         getBounds (OpenInterval (Just l) (Just u)) = builtinGetBounds l u;\
-         getBounds _                                = ()}";
-
   return P;
 }
 
