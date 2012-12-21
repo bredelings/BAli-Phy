@@ -168,24 +168,26 @@ void Program::declare_parameter(const std::string& pname, const expression_ref& 
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
 
-void Program::import_symbol(const symbol_info& S, bool qualified)
+void Program::import_symbol(const symbol_info& S, const string& modid, bool qualified)
 {
   if (not is_qualified_symbol(S.name))
     throw myexception()<<"Imported symbols must have qualified names.";
 
-  if (is_declared_qualified(S.name))
+  symbol_info S2 = S;
+  S2.name = modid+"."+get_unqualified_name(S2.name);
+
+  if (is_declared_qualified(S2.name))
   {
-    auto loc = symbols.find(S.name);
+    auto loc = symbols.find(S2.name);
     assert(loc != symbols.end());
 
     if (loc->second.scope != external_scope)
-      throw myexception()<<"Trying to imported symbol '"<<S.name<<"' when that name is already defined.";
+      throw myexception()<<"Trying to imported symbol '"<<S.name<<"' as '"<<S2.name<<"' when that name is already defined.";
     else
       return;
   }
 
   // Add the symbol
-  symbol_info S2 = S;
   if (S2.scope == local_scope)
     S2.scope = external_scope;
 
@@ -195,21 +197,32 @@ void Program::import_symbol(const symbol_info& S, bool qualified)
     add_alias(S2.name);
 }
 
-void Program::import_module(const Program& P2, bool qualified)
+void Program::import_module(const Program& P2, const string& modid, bool qualified)
 {
   for(const auto& p: P2.symbols)
   {
     const symbol_info& S = p.second;
 
     if (S.scope == local_scope)
-      import_symbol(S, qualified);
+      import_symbol(S, modid, qualified);
   }
+}
+
+void Program::import_module(const Program& P2, bool qualified)
+{
+  import_module(P2, P2.module_name, qualified);
 }
 
 void Program::import_module(const vector<string>& path, const string& modid, bool qualified)
 {
   Program mod = load_module(path, modid);
-  import_module( mod, qualified);
+  import_module(mod, qualified);
+}
+
+void Program::import_module(const vector<string>& path, const string& modid, const string& modid2, bool qualified)
+{
+  Program mod = load_module(path, modid);
+  import_module(mod, modid2, qualified);
 }
 
 bool Program::is_declared_qualified(const std::string& name) const

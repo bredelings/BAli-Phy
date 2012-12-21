@@ -92,11 +92,15 @@ public:
 
   void declare_parameter(const std::string& name, const expression_ref& type);
 
-  void import_symbol(const symbol_info&, bool qualified);
+  void import_symbol(const symbol_info&, const std::string&, bool qualified);
 
   void import_module(const Program& P2, bool qualified);
 
+  void import_module(const Program& P2, const std::string&, bool qualified);
+
   void import_module(const std::vector<std::string>& path, const std::string&, bool qualified);
+
+  void import_module(const std::vector<std::string>& path, const std::string&, const std::string&, bool qualified);
 
   bool is_declared_qualified(const std::string&) const;
 
