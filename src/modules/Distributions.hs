@@ -48,7 +48,9 @@ uniform args = (ProbDensity "Uniform" uniformDensity () () (\(l,u)->between l u)
 cauchy args = (ProbDensity "Cauchy" cauchyDensity () () realLine, args);
 distRange (ProbDensity _ _ _ _ r,args) = r args;
 
-iidDensity (n,((ProbDensity _ density _ _ _),args)) xs = let {densities = (map (density args) xs) ; pr = foldl' (*) (doubleToLogDouble 1.0) densities} in if (length xs == n) then pr else (doubleToLogDouble 0.0);
+iidDensity (n,((ProbDensity _ density _ _ _),args)) xs = let {densities = (map (density args) xs) ; 
+                                                              pr = foldl' (*) (doubleToLogDouble 1.0) densities} 
+                                                         in if (length xs == n) then pr else (doubleToLogDouble 0.0);
 iid args = (ProbDensity "i.i.d." iidDensity () () (\_->()), args );
 
 plateDensity (n,f) xs = let {xs' = zip [1..] xs;
