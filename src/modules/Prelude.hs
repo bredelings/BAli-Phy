@@ -4,7 +4,7 @@ infixl 9 .;
 infixl 7 *, /;
 infixl 6 +, -;
 infixr 5 ++;
-infix 5 /=, ==, <, >;
+infix 5 ==, /=, <, >;
 infixl 1 >>, >>=;
 infixr 0 $, `seq`, `join`;
 infixl 9 !;

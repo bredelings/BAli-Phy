@@ -39,6 +39,7 @@ using std::string;
 
 Program make_Prelude()
 {
+  // See http://www.haskell.org/onlinereport/standard-prelude.html
   Program P("Prelude");
 
   P.def_function("builtinError", lambda_expression( Error() ) ); 
