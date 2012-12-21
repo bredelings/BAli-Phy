@@ -235,49 +235,23 @@ Program make_Prelude()
   P.def_function("getVectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<int,Int>() ) ); 
   P.def_function("sizeOfVectorInt", lambda_expression( VectorSizeOp<int>() ) );
 
-
-  P += "{listFromVectorInt' v s i = if (i<s) then (getVectorIntElement v i):listFromVectorInt' v s (i+1) else []}";
-
-  P += "{listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0}";
-
   //--------------------------------------- listFromString ----------------------------------------//
   P.def_function("getStringElement", lambda_expression( BuiltinGetStringIndexOp() ) ); 
   P.def_function("sizeOfString", lambda_expression( StringSizeOp() ) );
 
 
-  P += "{listFromString' v s i = if (i<s) then (getStringElement v i):listFromString' v s (i+1) else []}";
-
-  P += "{listFromString v = listFromString' v (sizeOfString v) 0}";
-
   //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
   P.def_function("getVectorVectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<Vector<int>,Vector<int>>() ) ); 
   P.def_function("sizeOfVectorVectorInt", lambda_expression( VectorSizeOp<Vector<int>>() ) );
-
-  P += "{listFromVectorVectorInt' v s i = if (i<s) then (getVectorVectorIntElement v i):listFromVectorVectorInt' v s (i+1) else []}";
-
-  P += "{listFromVectorVectorInt v = listFromVectorVectorInt' v (sizeOfVectorVectorInt v) 0}";
 
   //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
   P.def_function("getVectorvectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<vector<int>,Vector<int>>() ) ); 
   P.def_function("sizeOfVectorvectorInt", lambda_expression( VectorSizeOp<vector<int>>() ) );
 
-  P += "{listFromVectorvectorInt' v s i = if (i<s) then (getVectorvectorIntElement v i):listFromVectorvectorInt' v s (i+1) else []}";
-
-  P += "{listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v) 0}";
-
   //--------------------------------------- listToVectorInt ---------------------------------------//
 
   P.def_function("builtinNewVectorInt", lambda_expression( BuiltinNewVectorOp<int>() ) ); 
   P.def_function("builtinSetVectorIndexInt", lambda_expression( BuiltinSetVectorIndexOp<int,Int>() ) ); 
-
-  P += "{newVectorInt s = IOAction1 builtinNewVectorInt s}";
-
-  P += "{setVectorIndexInt v i x = IOAction3 builtinSetVectorIndexInt v i x}";
-
-  P += "{copyListToVectorInt [] v i = return ();\
-         copyListToVectorInt (h:t) v i = do {setVectorIndexInt v i h; copyListToVectorInt t v (i+1)}}";
-
-  P += "{listToVectorInt l = unsafePerformIO (do {v <- newVectorInt (length l); copyListToVectorInt l v 0; return v})}";
 
   //--------------------------------------- listToString ---------------------------------------//
 
