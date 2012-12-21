@@ -178,57 +178,15 @@ Program make_Prelude()
   P += "{swap (x,y) = (y,x)}";
 
   P.declare_fixity("!!", 9, left_fix);
-  P += "{h:t !! 0 = h;\
-         h:t !! i = t !! (i-1)}";
-
-  P += "{fmap1 f [] = [];\
-         fmap1 f ((x,y):l) = (f x,y):(fmap1 f l);\
-         fmap1 f (DiscreteDistribution l) = DiscreteDistribution (fmap1 f l)}";
-
-  P += "{fmap2 f [] = [];\
-         fmap2 f ((x,y):l) = (x,f y):(fmap2 f l);\
-         fmap2 f (DiscreteDistribution l) = DiscreteDistribution (fmap2 f l)}";
-
-  P += "{extendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 (\\q->q*(1.0-p)) d)}";
-
-  P += "{sum  = foldl' (+) 0}";
-
-  P += "{average (DiscreteDistribution l) = foldl' (\\x y->(x+(fst y)*(snd y))) 0.0 l}";
 
   // [ We could do this as two nested fmaps, instead. ]
   // [ We could factor out to_double(v2), and 1.0/to_double(v2)
-  P += "{uniformDiscretize q n = let {n' = (intToDouble n)} in DiscreteDistribution (map (\\i->(1.0/n',q (2.0*i+1.0)/n')) (take n [0..]))}";
 
   // FIXME - we have an problem with types here.  This will only work for Int, as-is.
-  P += "{enumFrom x = x:(enumFrom (x+1))}";
-  P += "{enumFromTo x y = if (x==y) then [x] else x:(enumFromTo (x+1) y)}";
   //  P += "{enumFromThen x y = ... }";
   //  P += "{enumFromThenTo x y z = ... }";
 
-  P += "{zip (x:xs) (y:ys) = (x,y):(zip xs ys);\
-         zip []   _        = [];\
-         zip _   []        = []}";
-
-  P += "{concat xs = foldr (++) [] xs}";
-
-  P += "{concatMap f = concat . map f}";
-
-  P += "{length l = foldl' (\\x y ->(x+1)) 0 l}";
-
-  P += "{listArray n l = mkArray n (\\i -> l !! i)}";
-
-  P += "{listArray' l = listArray (length l) l}";
-
   P.def_function("doubleToLogDouble", lambda_expression( Conversion<double,log_double_t>() ) );
-
-  P += "{uniformQuantiles q n = map (\\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..])}";
-
-  P += "{unwrapDD (DiscreteDistribution l) = l}";
-
-  P += "{mixDiscreteDistributions' (h:t) (h2:t2) = DiscreteDistribution (fmap1 (\\q->q*h) h2)++(mixDiscreteDistributions' t t2);\
-         mixDiscreteDistributions' [] [] = []}";
-
-  P += "{mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap unwrapDD l2))}";
 
   P.def_function("sizeOfVectorUnsigned", lambda_expression( VectorSizeOp<unsigned>() ) );
   //--------------------------------------- listFromVectorInt ----------------------------------------//
