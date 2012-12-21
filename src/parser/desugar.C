@@ -286,7 +286,8 @@ expression_ref make_apply(const vector<expression_ref>& v)
 
 bool is_function_binding(const expression_ref& decl)
 {
-  assert(is_AST(decl,"Decl"));
+  if (not is_AST(decl,"Decl"))
+    return false;
 
   expression_ref lhs = decl->sub[0];
   assert(not is_AST(lhs,"funlhs2"));
@@ -296,12 +297,12 @@ bool is_function_binding(const expression_ref& decl)
 
 bool is_pattern_binding(const expression_ref& decl)
 {
-  return not is_function_binding(decl);
+  return is_AST(decl,"Decl") and not is_function_binding(decl);
 }
 
 set<string> get_pattern_bound_vars(const expression_ref& decl)
 {
-  assert(decl.assert_is_a<AST_node>()->type == "Decl");
+  assert(is_AST(decl,"Decl"));
 
   expression_ref lhs = decl->sub[0];
 
@@ -310,10 +311,10 @@ set<string> get_pattern_bound_vars(const expression_ref& decl)
 
 string get_func_name(const expression_ref& decl)
 {
-  assert(decl.assert_is_a<AST_node>()->type == "Decl");
+  assert(is_AST(decl,"Decl"));
 
   expression_ref lhs = decl->sub[0];
-  assert(lhs.assert_is_a<AST_node>()->type == "funlhs1");
+  assert(is_AST(lhs,"funlhs1"));
 
   expression_ref name = lhs->sub[0];
 
@@ -321,7 +322,7 @@ string get_func_name(const expression_ref& decl)
     return name.is_a<dummy>()->name;
   else if (name.is_a<AST_node>())
   {
-    assert(name.is_a<AST_node>()->type == "id");
+    assert(is_AST(name,"id"));
     return name.is_a<AST_node>()->value;
   }
   else
@@ -330,10 +331,10 @@ string get_func_name(const expression_ref& decl)
 
 vector<expression_ref> get_patterns(const expression_ref& decl)
 {
-  assert(decl.assert_is_a<AST_node>()->type == "Decl");
+  assert(is_AST(decl,"Decl"));
 
   expression_ref lhs = decl->sub[0];
-  assert(lhs.assert_is_a<AST_node>()->type == "funlhs1");
+  assert(is_AST(lhs,"funlhs1"));
 
   vector<expression_ref> patterns = lhs->sub;
   patterns.erase(patterns.begin());
@@ -430,7 +431,7 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 
       for(int j=i+1;j<v.size();j++)
       {
-	if (v[j]->sub[0].assert_is_a<AST_node>()->type != "funlhs1") break;
+	if (not is_function_binding(v[j])) break;
 	if (get_func_name(v[j]) != name) break;
 
 	patterns.push_back( get_patterns(v[j]) );
