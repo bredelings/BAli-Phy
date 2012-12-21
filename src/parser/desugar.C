@@ -968,22 +968,6 @@ bool is_all_space(const string& line)
   return true;
 }
 
-string read_file(const string& filename)
-{
-  checked_ifstream file(filename);
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  return buffer.str();
-}
-
-string read_file(const string& filename, const string& description)
-{
-  checked_ifstream file(filename,description);
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  return buffer.str();
-}
-
 Model_Notes read_BUGS(const vector<string>& modules_path, const Parameters& P, const string& filename, const string& module_name_)
 {
   // 1. Read file into string.

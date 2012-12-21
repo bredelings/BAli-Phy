@@ -273,3 +273,20 @@ ostream_or_ofstream::ostream_or_ofstream(std::ostream& os, const std::string& os
 null_ostream::null_ostream()
   :ostream(&buf)
 { }
+
+string read_file(const string& filename)
+{
+  checked_ifstream file(filename);
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  return buffer.str();
+}
+
+string read_file(const string& filename, const string& description)
+{
+  checked_ifstream file(filename,description);
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  return buffer.str();
+}
+

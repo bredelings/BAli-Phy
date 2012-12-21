@@ -104,4 +104,8 @@ class null_ostream: public std::ostream
 public:
   null_ostream();
 };
+
+std::string read_file(const std::string& filename);
+
+std::string read_file(const std::string& filename, const std::string& description);
 #endif
