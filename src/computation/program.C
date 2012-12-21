@@ -483,7 +483,7 @@ Program& Program::operator+=(const string& s)
 Program& Program::operator+=(const expression_ref& H)
 {
   expression_ref D = desugar(*this, H);
-  assert(D.assert_is_a<AST_node>()->type=="Decls" or D.assert_is_a<AST_node>()->type=="TopDecls");
+  assert(is_AST(D,"Decls") or is_AST(D,"TopDecls"));
   vector<expression_ref> decls = D->sub;
 
   // 0. Get names that are being declared.
