@@ -86,6 +86,11 @@ snd (x,y) = y;
 
 swap (x,y) = (y,x);
 
+curry f x y = f (x,y);
+uncurry f p = f (fst p) (snd p);
+
+undefined = error "Prelude.undefined";
+
 infixr 9 !!;
 h:t !! 0 = h;
 h:t !! i = t !! (i-1);
@@ -100,7 +105,8 @@ fmap2 f (DiscreteDistribution l) = DiscreteDistribution (fmap2 f l);
 
 extendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 (\q->q*(1.0-p)) d);
 
-sum  = foldl' (+) 0;
+sum     = foldl (+) 0;
+product = foldl (*) 1;
 
 average (DiscreteDistribution l) = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l;
 uniformDiscretize q n = let {n' = (intToDouble n)} in DiscreteDistribution (map (\i->(1.0/n',q (2.0*i+1.0)/n')) (take n [0..]));
