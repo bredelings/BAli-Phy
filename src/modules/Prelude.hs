@@ -69,7 +69,7 @@ take 0 x     = [];
 take n []    = [];
 take n (h:t) = h:(take (n-1) t);
 
-repeat x = x:(repeat x);
+repeat x = let {xs = x:xs} in xs;
 
 iterate f x = x:iterate f (f x);
 
