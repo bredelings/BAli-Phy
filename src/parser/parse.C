@@ -454,7 +454,19 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	on_error<fail>
 	  (
-	   funlhs
+	   gendecl
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   fixity
 	   , std::cout
 	   << val("Error! Expecting ")
 	   << _4
@@ -627,12 +639,15 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	aexp.name("aexp");
 	alts.name("alts");
 	alt.name("alt");
-	apat.name("funlhs");
+	funlhs.name("funlhs");
 	apat.name("apat");
 	lpat.name("lpat");
 	pat.name("pat");
+	rhs.name("rhs");
 	decls.name("decls");
 	decl.name("decl");
+	gendecl.name("gendecl");
+	fixity.name("fixity");
 	gcon.name("gcon");
 	literal.name("literal");
 	h_string.name("h_string");
