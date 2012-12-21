@@ -536,6 +536,7 @@ Program Distribution_Functions(const vector<string>& modules_path)
   //       from the from the real versions (which do).
 
   P.def_constructor("ProbDensity",5);
+  P.def_constructor("DiscreteDistribution",1);
 
   P.def_function("exponentialDensity", lambda_expression( exponential_density() ) );
   P.def_function("logExponentialDensity", lambda_expression( log_exponential_density() ) );

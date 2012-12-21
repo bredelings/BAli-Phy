@@ -60,7 +60,6 @@ Program make_Prelude()
   P.def_constructor("False",0);
   P.def_constructor("Just",1);
   P.def_constructor("Nothing",0);
-  P.def_constructor("DiscreteDistribution",1);
 
   P.def_constructor("IOAction1",2);
   P.def_constructor("IOAction2",3);

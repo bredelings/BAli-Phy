@@ -60,4 +60,26 @@ plateDensity (n,f) xs = let {xs' = zip [1..] xs;
                              pr = foldl' (*) (doubleToLogDouble 1.0) densities}
                         in if (length xs == n) then pr else (doubleToLogDouble 0.0);
 plate args = (ProbDensity "Plate" plateDensity () () (\_->()), args );
+
+fmap1 f [] = [];
+fmap1 f ((x,y):l) = (f x,y):(fmap1 f l);
+fmap1 f (DiscreteDistribution l) = DiscreteDistribution (fmap1 f l);
+
+fmap2 f [] = [];
+fmap2 f ((x,y):l) = (x,f y):(fmap2 f l);
+fmap2 f (DiscreteDistribution l) = DiscreteDistribution (fmap2 f l);
+
+extendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 (\q->q*(1.0-p)) d);
+
+uniformQuantiles q n = map (\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..]);
+
+unwrapDD (DiscreteDistribution l) = l;
+
+mixDiscreteDistributions' (h:t) (h2:t2) = DiscreteDistribution (fmap1 (\q->q*h) h2)++(mixDiscreteDistributions' t t2);
+mixDiscreteDistributions' [] [] = [];
+
+mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap unwrapDD l2));
+
+average (DiscreteDistribution l) = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l;
+uniformDiscretize q n = let {n' = (intToDouble n)} in DiscreteDistribution (map (\i->(1.0/n',q (2.0*i+1.0)/n')) (take n [0..]))
 }

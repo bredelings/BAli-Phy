@@ -1,5 +1,7 @@
 module SModel where 
 {  
+import Distributions;  
+  
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 
 multiParameter f (DiscreteDistribution d) = MixtureModel (DiscreteDistribution (fmap2 f d));

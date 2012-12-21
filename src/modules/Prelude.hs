@@ -117,21 +117,8 @@ undefined = error "Prelude.undefined";
 h:t !! 0 = h;
 h:t !! i = t !! (i-1);
 
-fmap1 f [] = [];
-fmap1 f ((x,y):l) = (f x,y):(fmap1 f l);
-fmap1 f (DiscreteDistribution l) = DiscreteDistribution (fmap1 f l);
-
-fmap2 f [] = [];
-fmap2 f ((x,y):l) = (x,f y):(fmap2 f l);
-fmap2 f (DiscreteDistribution l) = DiscreteDistribution (fmap2 f l);
-
-extendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 (\q->q*(1.0-p)) d);
-
 sum     = foldl (+) 0;
 product = foldl (*) 1;
-
-average (DiscreteDistribution l) = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l;
-uniformDiscretize q n = let {n' = (intToDouble n)} in DiscreteDistribution (map (\i->(1.0/n',q (2.0*i+1.0)/n')) (take n [0..]));
 
 enumFrom x = x:(enumFrom (x+1));
 enumFromTo x y = if (x==y) then [x] else x:(enumFromTo (x+1) y);
@@ -148,15 +135,6 @@ concatMap f = concat . map f;
 listArray n l = mkArray n (\i -> l !! i);
 
 listArray' l = listArray (length l) l;
-
-uniformQuantiles q n = map (\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..]);
-
-unwrapDD (DiscreteDistribution l) = l;
-
-mixDiscreteDistributions' (h:t) (h2:t2) = DiscreteDistribution (fmap1 (\q->q*h) h2)++(mixDiscreteDistributions' t t2);
-mixDiscreteDistributions' [] [] = [];
-
-mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap unwrapDD l2));
 
 listFromVectorInt' v s i = if (i<s) then (getVectorIntElement v i):listFromVectorInt' v s (i+1) else [];
 
