@@ -4,10 +4,31 @@ infixl 9 .;
 infixl 7 *, /;
 infixl 6 +, -;
 infixr 5 ++;
-infix 5 ==, /=, <, >;
+infix 4 ==, /=, <, <=, >, >=;
+infixr 3 &&;
+infixr 2 ||;
 infixl 1 >>, >>=;
-infixr 0 $, `seq`, `join`;
+infixr 0 $, $!, `seq`, `join`;
 infixl 9 !;
+
+(f . g) x = f (g x);
+
+id x = x;
+
+flip f x y = f y x;
+
+f $ x = f x;
+f $! x = x `seq` f x;
+
+True  && x = x;
+False && x = False;
+True  || x  = True;
+False || x = x;
+
+not True         =  False;
+not False        =  True;
+
+otherwise = True;
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
@@ -15,11 +36,31 @@ foldr f z (x:xs) = (f x (foldr f z xs));
 foldl f z [] = z;
 foldl f z (x:xs) = foldl f (f z x) xs;
 
+foldl1 f (x:xs)  =  foldl f x xs;
+foldl1 _ []      =  error "Prelude.foldl1: empty list";
+
 foldl' f z [] = z;
 foldl' f z (x:xs) = let {z' = (f z x)} in seq z' (foldl' f z' xs);
 
-head (h:t) = h;
-tail (h:t) = t;
+head (h:_) = h;
+head []    = error "Prelude.head: empty list";
+
+tail (_:t) = t;
+tail []    = error "Prelude.tail: empty list";
+
+last [x]         =  x;
+last (_:xs)      =  last xs;
+last []          =  error "Prelude.last: empty list";
+
+null []          =  True;
+null (_:_)       =  False;
+
+init [x] = x;
+init (x:xs) = x:(init xs);
+init []     = error "Prelude.init: empty list";
+
+length []        =  0;
+length (_:l)     =  1 + length l;
 
 take 0 x     = [];
 take n []    = [];
@@ -29,6 +70,8 @@ repeat x = x:(repeat x);
 
 iterate f x = x:iterate f (f x);
 
+replicate n x = take n (repeat x);
+
 map f []  = [];
 map f (h:t) = (f h):(map f t);
   
@@ -36,11 +79,6 @@ fmap = map;
 
 [] ++ y = y;
 h:t ++ y = h:(t ++ y);
-
-infixr 9 .;
-(f . g) x = f (g x);
-
-f $ x = f x;
 
 fst (x,y) = x;
 
@@ -77,8 +115,6 @@ zip _   []        = [];
 concat xs = foldr (++) [] xs;
 
 concatMap f = concat . map f;
-
-length l = foldl' (\x y ->(x+1)) 0 l;
 
 listArray n l = mkArray n (\i -> l !! i);
 
