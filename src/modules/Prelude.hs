@@ -65,10 +65,6 @@ init []     = error "Prelude.init: empty list";
 length []        =  0;
 length (_:l)     =  1 + length l;
 
-take 0 x     = [];
-take n []    = [];
-take n (h:t) = h:(take (n-1) t);
-
 repeat x = let {xs = x:xs} in xs;
 
 iterate f x = x:iterate f (f x);
@@ -77,6 +73,27 @@ replicate n x = take n (repeat x);
 
 cycle []         =  error "Prelude.cycle: empty list";
 cycle xs         =  let {xs' = xs ++ xs'} in xs';
+
+take 0 x     = [];
+take n []    = [];
+take n (h:t) = h:(take (n-1) t);
+
+drop 0 xs     =  xs;
+drop _ []     =  [];
+drop n (_:xs) =  drop (n-1) xs;
+
+splitAt n xs  =  (take n xs, drop n xs);
+
+reverse          =  foldl (flip (:)) [];
+
+and              =  foldr (&&) True;
+or               =  foldr (||) False;
+
+any p            =  or . map p;
+all p            =  and . map p;
+
+elem x           =  any (== x);
+notElem x        =  all (/= x);
 
 map f []  = [];
 map f (h:t) = (f h):(map f t);
@@ -119,9 +136,10 @@ uniformDiscretize q n = let {n' = (intToDouble n)} in DiscreteDistribution (map 
 enumFrom x = x:(enumFrom (x+1));
 enumFromTo x y = if (x==y) then [x] else x:(enumFromTo (x+1) y);
 
-zip (x:xs) (y:ys) = (x,y):(zip xs ys);
-zip []   _        = [];
-zip _   []        = [];
+zipWith z (a:as) (b:bs) =  z a b : zipWith z as bs;
+zipWith _ _ _           =  [];
+
+zip = zipWith (,);
 
 concat xs = foldr (++) [] xs;
 
