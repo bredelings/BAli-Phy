@@ -8,6 +8,7 @@
 
 #include "io.H"
 #include "parser/desugar.H"
+#include "parser/AST.H"
 
 namespace fs = boost::filesystem;
 
@@ -363,21 +364,51 @@ expression_ref load_module_from_file(const vector<string>& module_root_paths, co
 
 Program load_module(const vector<string>& modules_path, const string& modid)
 {
-  Program module(modid);
+  Program Module(modid);
   if (modid == "Prelude")
-    module = get_Prelude();
+    Module = get_Prelude();
   else if (modid == "Distributions")
-    module = Distribution_Functions(modules_path);
+    Module = Distribution_Functions(modules_path);
   else if (modid == "Range")
-    module = Range_Functions(modules_path);
+    Module = Range_Functions(modules_path);
   else if (modid == "SModel")
-    module = SModel_Functions(modules_path);
+    Module = SModel_Functions(modules_path);
   else if (modid == "PopGen")
-    module = PopGen_Functions(modules_path);
+    Module = PopGen_Functions(modules_path);
 
-  expression_ref mod = load_module_from_file(modules_path,modid);
+  expression_ref module = load_module_from_file(modules_path,modid);
 
-  return module;
+  // 3. module = [optional name] + body
+  string module_name = modid;
+  expression_ref body;
+  if (module->sub.size() == 1)
+    body = module->sub[0];
+  else
+  {
+    string module_name = *module->sub[0].is_a<String>();
+    if (module_name != modid)
+      throw myexception()<<"Module file '"<<modid<<".hs' contains different module '"<<module_name<<"'";
+    body = module->sub[1];
+  }
+  assert(is_AST(body,"Body"));
+
+  // 4. body = impdecls + [optional topdecls]
+  expression_ref impdecls;
+  expression_ref topdecls;
+  if (body->sub.size() == 1)
+  {
+    topdecls = body->sub[0];
+    assert(is_AST(topdecls,"TopDecls"));
+  }
+  else if (body->sub.size() == 2)
+  {
+    impdecls = body->sub[0];
+    topdecls = body->sub[1];
+  }
+
+  Module += topdecls;
+
+  return Module;
 }
 
 vector<Program> load_modules(const vector<string>& modules_path, const vector<string>& module_names)
