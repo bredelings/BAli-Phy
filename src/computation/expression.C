@@ -368,6 +368,12 @@ tribool dummy::compare(const Object& o) const
   return (*this) == *D;
 }
 
+var::var(const std::string& s)
+  :name(s)
+{
+  assert(not name.empty());
+}
+
 string Trim::print() const
 {
   return "Trim";

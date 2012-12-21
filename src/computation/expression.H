@@ -167,9 +167,7 @@ struct var: public Object
     return name == V->name;
   }
 
-  var(const std::string& s)
-    :name(s)
-  { }
+  var(const std::string& s);
 };
 
 struct Trim: public Object
