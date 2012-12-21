@@ -299,6 +299,9 @@ variables_map parse_cmd_line(int argc,char* argv[])
   if (not args.count("iterations"))
     throw myexception()<<"The number of iterations was not specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
 
+  if (not args.count("modules"))
+    throw myexception()<<"No module paths are specified!.  Use --modules=<path> to specify the directory containing Prelude.hs.";
+
   return args;
 }
 
