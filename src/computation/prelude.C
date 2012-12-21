@@ -298,15 +298,6 @@ Program make_Prelude()
   P.def_function("builtinNewVectorDouble", lambda_expression( BuiltinNewVectorOp<double>() ) ); 
   P.def_function("builtinSetVectorIndexDouble", lambda_expression( BuiltinSetVectorIndexOp<double,Double>() ) ); 
 
-  P += "{newVectorDouble s = IOAction1 builtinNewVectorDouble s}";
-
-  P += "{setVectorIndexDouble v i x = IOAction3 builtinSetVectorIndexDouble v i x}";
-
-  P += "{copyListToVectorDouble [] v i = return ();\
-         copyListToVectorDouble (h:t) v i = do { setVectorIndexDouble v i h ; copyListToVectorDouble t v (i+1)}}";
-
-  P += "{listToVectorDouble l = unsafePerformIO (do { v <- newVectorDouble (length l); copyListToVectorDouble l v 0; return v})}";
-
   //--------------------------------------- listToVectorMatrix ---------------------------------------//
 
   P.def_function("builtinNewVectorMatrix", lambda_expression( BuiltinNewVectorOp<Matrix>() ) ); 
