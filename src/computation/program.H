@@ -47,6 +47,8 @@ bool is_qualified_symbol(const std::string&);
 std::string get_module_name(const std::string&);
 std::string get_unqualified_name(const std::string&);
 
+std::vector<std::string> get_haskell_identifier_path(const std::string& s);
+
 class Program
 {
   std::map<std::string, symbol_info> symbols;
