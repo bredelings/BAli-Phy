@@ -482,12 +482,10 @@ Program& Program::operator+=(const string& s)
 
 Program& Program::operator+=(const expression_ref& H)
 {
-  expression_ref D = desugar(*this, H);
-  assert(is_AST(D,"Decls") or is_AST(D,"TopDecls"));
-  vector<expression_ref> decls = D->sub;
+  assert(is_AST(H,"Decls") or is_AST(H,"TopDecls"));
 
   // 0. Get names that are being declared.
-  for(const auto& decl: decls)
+  for(const auto& decl: H->sub)
     if (is_AST(decl,"FixityDecl"))
     {
       // Determine fixity.
@@ -517,6 +515,9 @@ Program& Program::operator+=(const expression_ref& H)
 	declare_fixity(name, precedence, fixity);
       }
     }
+
+  expression_ref D = desugar(*this, H);
+  vector<expression_ref> decls = D->sub;
 
   // 1. Get names that are being declared.
   vector<string> names;
