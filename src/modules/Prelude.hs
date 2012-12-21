@@ -10,7 +10,6 @@ infixr 3 &&;
 infixr 2 ||;
 infixl 1 >>, >>=;
 infixr 0 $, $!, `seq`, `join`;
-infixl 9 !;
 
 infixr 9 !!, !;
 
