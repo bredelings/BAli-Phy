@@ -320,15 +320,5 @@ Program PopGen_Functions(const vector<string>& modules_path)
   P.def_function("ewensSamplingGroupProbability", lambda_expression(Ewens_Sampling_Group_Probability()));
   P.def_function("builtinEwensSamplingMixtureProbability", lambda_expression(Ewens_Sampling_Mixture_Probability()));
 
-  P += "{readPhaseFile = builtinReadPhaseFile . listToString}";
-
-  P += "{ewensSamplingMixtureProbability (thetas,ps) x = builtinEwensSamplingMixtureProbability (listToVectorDouble thetas) (listToVectorDouble ps) x}";
-
-  P += "{afs args = (ProbDensity \"afs\" ewensSamplingProbability (error \"afs has no quantile\") () (),args)}";
-
-  P += "{afsGroup args = (ProbDensity \"afsGroup\" ewensSamplingGroupProbability (error \"afs has no quantile\") () (),args)}";
-
-  P += "{afsMixture args = (ProbDensity \"afsMixture\" ewensSamplingMixtureProbability (error \"afs has no quantile\") () (),args)}";
-
   return P;
 }
