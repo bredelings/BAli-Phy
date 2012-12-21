@@ -519,7 +519,6 @@ closure GetBounds::operator()(OperationArgs& Args) const
 Program Range_Functions(const vector<string>& modules_path)
 {
   Program P("Range");
-  P.import_module(load_module(modules_path,"Prelude"),false);
   P.def_constructor("OpenInterval",2);
   P.def_constructor("Real",1);
   P.def_constructor("Inf",0);
@@ -532,8 +531,6 @@ Program Range_Functions(const vector<string>& modules_path)
 Program Distribution_Functions(const vector<string>& modules_path)
 {
   Program P("Distributions");
-  P.import_module(modules_path,"Prelude",false);
-  P.import_module(modules_path,"Range",false);
 
   // Note: we separate the "builtin" versions (which don't do case analysis on their arguments)
   //       from the from the real versions (which do).

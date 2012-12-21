@@ -1,5 +1,7 @@
 module PopGen where
 {
+import Distributions;
+
 readPhaseFile = builtinReadPhaseFile . listToString;
 
 ewensSamplingMixtureProbability (thetas,ps) x = builtinEwensSamplingMixtureProbability (listToVectorDouble thetas) (listToVectorDouble ps) x;

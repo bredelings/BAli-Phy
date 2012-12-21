@@ -1,5 +1,7 @@
 module Distributions where
 {
+import Range;
+
 gammaDensity (a,b) x = builtinGammaDensity a b x;
 gammaQuantile (a,b) p = builtinGammaQuantile a b p;
 logGammaDensity (a,b) x = builtinLogGammaDensity (a,b) x;

@@ -227,18 +227,36 @@ Program load_module(const vector<string>& modules_path, const string& modid)
   // 4. body = impdecls + [optional topdecls]
   expression_ref impdecls;
   expression_ref topdecls;
-  if (body->sub.size() == 1)
+  for(const auto& E: body->sub)
+    if (is_AST(E,"TopDecls"))
+      topdecls = E;
+    else if (is_AST(E,"impdecls"))
+      impdecls = E;
+
+  // 5. Do imports.
+  if (module_name != "Prelude")
+    Module.import_module(modules_path, "Prelude", false);
+
+  if (impdecls)
   {
-    topdecls = body->sub[0];
-    assert(is_AST(topdecls,"TopDecls"));
-  }
-  else if (body->sub.size() == 2)
-  {
-    impdecls = body->sub[0];
-    topdecls = body->sub[1];
+    for(const auto& impdecl:impdecls->sub)
+    {
+      int i=0;
+      bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
+      if (qualified) i++;
+      string imp_module_name = *impdecl->sub[i++].is_a<String>();
+      string imp_module_name_as = imp_module_name;
+      if (i < impdecl->sub.size() and impdecl->sub[i++].is_a<String>()->t == "as")
+	imp_module_name_as = *impdecl->sub[i++].is_a<String>();
+      assert(i == impdecl->sub.size());
+      //      if (qualified) std::cerr<<"qualified ";
+      //      std::cerr<<imp_module_name<<" as "<<imp_module_name_as<<"\n";
+      Module.import_module(modules_path, imp_module_name,qualified);
+    }
   }
 
-  Module += topdecls;
+  if (topdecls)
+    Module += topdecls;
 
   return Module;
 }
