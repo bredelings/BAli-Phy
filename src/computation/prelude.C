@@ -78,18 +78,8 @@ Program make_Prelude()
 
   // Is this right?
 
-  //  P.declare_fixity("^", 8, right_fix);
-  //  P.declare_fixity("^^", 8, right_fix);
-  //  P.declare_fixity("**", 8, right_fix);
-
   P.def_function("*", lambda_expression( Multiply() ) );
   P.def_function("/", lambda_expression( Divide() ) );
-
-  //  P.declare_fixity("div", 7, left_fix);
-  //  P.declare_fixity("mod", 7, left_fix);
-  //  P.declare_fixity("rem", 7, left_fix);
-  //  P.declare_fixity("quot", 7, left_fix);
-
   P.def_function("+", lambda_expression( Add() ) ); 
   P.def_function("-", lambda_expression( Minus() ) );
 
@@ -101,9 +91,6 @@ Program make_Prelude()
   P.def_function("<", lambda_expression( LessThan() ) );
   P.def_function(">", lambda_expression( GreaterThan() ) );
   
-  //  P.declare_fixity("elem", 4, non_fix);
-  //  P.declare_fixity("notElem", 4, non_fix);
-
   P.def_function("seq", lambda_expression( Seq() ) );
 
   // [ We could do this as two nested fmaps, instead. ]

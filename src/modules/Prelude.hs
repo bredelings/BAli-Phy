@@ -1,15 +1,18 @@
 module Prelude where
 {
 infixl 9 .;  
-infixl 7 *, /;
+infixl 8 ^, ^^, **;
+infixl 7 *, /, `div`, `mod`, `rem`, `quot`;
 infixl 6 +, -;
 infixr 5 ++;
-infix 4 ==, /=, <, <=, >, >=;
+infix 4 ==, /=, <, <=, >, >=, `elem`, `notElem`;
 infixr 3 &&;
 infixr 2 ||;
 infixl 1 >>, >>=;
 infixr 0 $, $!, `seq`, `join`;
 infixl 9 !;
+
+infixr 9 !!, !;
 
 (f . g) x = f (g x);
 
@@ -91,7 +94,6 @@ uncurry f p = f (fst p) (snd p);
 
 undefined = error "Prelude.undefined";
 
-infixr 9 !!;
 h:t !! 0 = h;
 h:t !! i = t !! (i-1);
 
