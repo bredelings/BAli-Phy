@@ -32,8 +32,10 @@ using std::string;
  * 10. [DONE] Convert all of distribution-operations.H to the parser.
  * 11. [DONE] Remove arity argument to def_function.
  * 12. Rationalize Programs, Modules.
- * 13. Allow loading stuff from files.
+ * 13. [DONE] Allow loading stuff from files.
  * 14. Delay desugaring (and thus resolving symbols) until modules are (jointly) loaded into the machine.
+ * 15. [DONE] Process imports
+ *     + (14) Is required to process mutually dependent modules.
  */
 
 
@@ -97,17 +99,11 @@ Program make_Prelude()
   P.def_function("==", lambda_expression( Equals() ) );
   P.def_function("/=", lambda_expression( NotEquals() ) );
   P.def_function("<", lambda_expression( LessThan() ) );
-  //  P.declare_fixity("<=", 5, non_fix);
   P.def_function(">", lambda_expression( GreaterThan() ) );
-  //  P.declare_fixity(">=", 5, non_fix);
   
   //  P.declare_fixity("elem", 4, non_fix);
   //  P.declare_fixity("notElem", 4, non_fix);
 
-  //  P.declare_fixity("&&", 3, right_fix);
-  //  P.declare_fixity("||", 2, right_fix);
-
-  //  P.declare_fixity("$!", 0, right_fix);
   P.def_function("seq", lambda_expression( Seq() ) );
 
   // [ We could do this as two nested fmaps, instead. ]
