@@ -28,8 +28,8 @@ mixtureDensity ((p1,(ProbDensity _ density1 _ _ _,args1)):l) x = (doubleToLogDou
 mixtureDensity [] _ = (doubleToLogDouble 0.0);
 
 mixtureDefault ((p1,(ProbDensity _ _ _ d _,args1)):l) = (d args1);
-dirichletDefault l = let {n = length l} in (take n (repeat 1.0/(intToDouble n)));
-iidDefault l = let {n = length l} in (take n (repeat 1.0/(intToDouble n)));
+dirichletDefault l = let {n = length l} in replicate n 1.0/(intToDouble n);
+iidDefault l = let {n = length l} in replicate n 1.0/(intToDouble n);
 
 betaDist  =       (ProbDensity "Beta"        betaDensity        betaQuantile (\args->0.5) 0);
 
