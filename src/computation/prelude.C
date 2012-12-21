@@ -74,16 +74,13 @@ Program make_Prelude()
 
 
   // Is this right?
-  P.declare_fixity("!", 9, left_fix);
 
   //  P.declare_fixity("^", 8, right_fix);
   //  P.declare_fixity("^^", 8, right_fix);
   //  P.declare_fixity("**", 8, right_fix);
 
   P.def_function("*", lambda_expression( Multiply() ) );
-  P.declare_fixity("*", 7, left_fix);
   P.def_function("/", lambda_expression( Divide() ) );
-  P.declare_fixity("/", 7, left_fix);
 
   //  P.declare_fixity("div", 7, left_fix);
   //  P.declare_fixity("mod", 7, left_fix);
@@ -91,23 +88,16 @@ Program make_Prelude()
   //  P.declare_fixity("quot", 7, left_fix);
 
   P.def_function("+", lambda_expression( Add() ) ); 
-  P.declare_fixity("+", 6, left_fix);
   P.def_function("-", lambda_expression( Minus() ) );
-  P.declare_fixity("-", 6, left_fix);
 
   // this needs to be added as a constructor expression
   // ":" is builtin, but has precedence 5 and right fixity.
-  P.declare_fixity("++", 5, right_fix);
 
   P.def_function("==", lambda_expression( Equals() ) );
-  P.declare_fixity("==", 5, non_fix);
   P.def_function("/=", lambda_expression( NotEquals() ) );
-  P.declare_fixity("/=", 5, non_fix);
   P.def_function("<", lambda_expression( LessThan() ) );
-  P.declare_fixity("<", 5, non_fix);
   //  P.declare_fixity("<=", 5, non_fix);
   P.def_function(">", lambda_expression( GreaterThan() ) );
-  P.declare_fixity(">", 5, non_fix);
   //  P.declare_fixity(">=", 5, non_fix);
   
   //  P.declare_fixity("elem", 4, non_fix);
@@ -116,15 +106,8 @@ Program make_Prelude()
   //  P.declare_fixity("&&", 3, right_fix);
   //  P.declare_fixity("||", 2, right_fix);
 
-  P.declare_fixity(">>", 1, left_fix);
-  P.declare_fixity(">>=", 1, left_fix);
-
-  P.declare_fixity("$", 0, right_fix);
-
   //  P.declare_fixity("$!", 0, right_fix);
   P.def_function("seq", lambda_expression( Seq() ) );
-  P.declare_fixity("seq", 0, right_fix);
-  P.declare_fixity("join", 0, right_fix);
 
   // [ We could do this as two nested fmaps, instead. ]
   // [ We could factor out to_double(v2), and 1.0/to_double(v2)
