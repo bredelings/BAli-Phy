@@ -344,7 +344,15 @@ vector<expression_ref> get_patterns(const expression_ref& decl)
 expression_ref get_body(const expression_ref& decl)
 {
   expression_ref rhs = decl->sub[1];
-  return rhs->sub[0];
+  if (rhs->sub.size() == 1)
+    return rhs->sub[0];
+  else
+  {
+    assert(rhs->sub.size() == 2);
+    expression_ref decls = rhs->sub[1];
+    assert(is_AST(decls,"Decls"));
+    return {AST_node("Let"),{decls,rhs->sub[0]}};
+  }
 }
 
 expression_ref append(const expression_ref& E1, const expression_ref& E2)
