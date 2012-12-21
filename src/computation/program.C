@@ -395,7 +395,7 @@ bool is_haskell_conid(const std::string& s)
 
 bool is_haskell_varsym(const string& s)
 {
-  static const string symbols = "!#$%&*+./<=>?@\\%|-~:";
+  static const string symbols = "!#$%&*+./<=>?@\\^|-~:";
 
   if (not s.size()) return false;
 
