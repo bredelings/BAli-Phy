@@ -640,7 +640,7 @@ context::context(const vector<string>& module_path, const vector<expression_ref>
    token(memory->get_unused_token()),
    module_path_(module_path)
 {
-  (*this) += {load_module(get_module_path(),"Prelude")};
+  (*this) += {"Prelude"};
   (*this) += Ps;
 
   add_submodel(*this, N);
