@@ -4,10 +4,12 @@
 #include "computation/operations.H"
 #include "computation/graph_register.H"
 #include "mytypes.H"
+#include <boost/filesystem/operations.hpp>
 
-#include "smodel/functions.H"
-#include "probability/distribution-operations.H"
-#include "popgen/popgen.H"
+#include "io.H"
+#include "parser/desugar.H"
+
+namespace fs = boost::filesystem;
 
 using std::vector;
 using std::string;
@@ -30,6 +32,7 @@ using std::string;
  * 11. [DONE] Remove arity argument to def_function.
  * 12. Rationalize Programs, Modules.
  * 13. Allow loading stuff from files.
+ * 14. Delay desugaring (and thus resolving symbols) until modules are (jointly) loaded into the machine.
  */
 
 
@@ -330,21 +333,57 @@ const Program& get_Prelude()
   return P;
 }
 
+Program Distribution_Functions(const vector<string>&);
+Program Range_Functions(const vector<string>&);
+Program SModel_Functions(const vector<string>&);
+Program PopGen_Functions(const vector<string>&);
 
-// Can we delay desugaring (phase 2) until we (a) compile or (b) load into the context?
-Program load_module(const vector<string>& path, const string& modid)
+
+expression_ref load_module_from_file(const vector<string>& module_root_paths, const string& modid)
+{
+  vector<string> module_path1 = get_haskell_identifier_path(modid);
+  module_path1.back() += ".hs";
+  fs::path module_path = module_path1[0];
+  for(int i=1;i<module_path1.size();i++)
+    module_path /= module_path1[i];
+
+  for(const string& prefix: module_root_paths)
+  {
+    fs::path filename = prefix;
+    filename /= module_path;
+    if (not fs::exists(filename)) continue;
+
+    string file_contents = read_file(filename.string(),"module");
+    expression_ref bugs_file = parse_bugs_file(file_contents);
+    expression_ref module = bugs_file->sub[0];
+    return module;
+  }
+  throw myexception()<<"Couldn't file module '"<<modid<<"' in path '"<<join(module_root_paths,':')<<"'";
+}
+
+Program load_module(const vector<string>& modules_path, const string& modid)
 {
   Program module(modid);
   if (modid == "Prelude")
     module = get_Prelude();
   else if (modid == "Distributions")
-    module = Distribution_Functions();
+    module = Distribution_Functions(modules_path);
   else if (modid == "Range")
-    module = Range_Functions();
+    module = Range_Functions(modules_path);
   else if (modid == "SModel")
-    module = SModel_Functions();
+    module = SModel_Functions(modules_path);
   else if (modid == "PopGen")
-    module = PopGen_Functions();
+    module = PopGen_Functions(modules_path);
+
+  expression_ref mod = load_module_from_file(modules_path,modid);
 
   return module;
+}
+
+vector<Program> load_modules(const vector<string>& modules_path, const vector<string>& module_names)
+{
+  vector<Program> P;
+  for(const string& name: module_names)
+    P.push_back(load_module(modules_path,name));
+  return P;
 }

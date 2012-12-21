@@ -19,12 +19,14 @@ public:
 
   int add_expression(const formula_expression_ref&);
 
-  object_ptr<const Object> result() const;
+  object_ptr<const Object> result(const std::vector<std::string>& modules_path) const;
 
-  object_ptr<const Object> result(const std::vector<Program>&) const;
+  object_ptr<const Object> result(const std::vector<std::string>& modules_path, const std::vector<Program>&) const;
+
+  object_ptr<const Object> result(const std::vector<std::string>& modules_path, const std::vector<std::string>&) const;
 
   template <typename T>
-  object_ptr<const T> result_as() const {return boost::dynamic_pointer_cast<const T>(result());}
+  object_ptr<const T> result_as(const std::vector<std::string>& modules_path) const {return boost::dynamic_pointer_cast<const T>(result(modules_path));}
 
   formula_expression_ref();
   formula_expression_ref(const expression_ref&);

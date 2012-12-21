@@ -36,7 +36,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 // parameter slots for the distribution.
 
 /// A Model with member functions for probability
-class Probability_Model: virtual public Model
+class Probability_Model: public Model
 {
 public:
   /// An object for key-value pairs.
@@ -56,6 +56,10 @@ public:
   virtual efloat_t heated_prior() const {return prior();}
   virtual efloat_t heated_likelihood() const {return likelihood();}
   virtual efloat_t heated_probability() const {return heated_prior() * heated_likelihood();}
+
+  Probability_Model(const std::vector<std::string>& modules_path)
+    :Model(modules_path)
+  {}
 };
 
 

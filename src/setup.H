@@ -95,21 +95,25 @@ void load_bali_phy_rc(boost::program_options::variables_map&,
 class Model;
 
 /// Return a substitution::Model specified by args
-formula_expression_ref get_smodel(const boost::program_options::variables_map& args,
+formula_expression_ref get_smodel(const std::vector<std::string>& modules_path,
+				  const boost::program_options::variables_map& args,
 				  const object_ptr<const alphabet>& a,
 				  const boost::shared_ptr<const std::valarray<double> >& default_frequencies);
 
 /// Return a substitution::Model specified by name
-formula_expression_ref get_smodel(const boost::program_options::variables_map& args,
+formula_expression_ref get_smodel(const std::vector<std::string>& modules_path,
+				  const boost::program_options::variables_map& args,
 				  const std::string&,
 				  const alignment& A);
 
 /// Return a substitution::Model specified by args
-formula_expression_ref get_smodel(const boost::program_options::variables_map& args,
+formula_expression_ref get_smodel(const std::vector<std::string>& modules_path,
+				  const boost::program_options::variables_map& args,
 				  const alignment& A);
 
 /// Return a substitution::Model specified by name
-formula_expression_ref get_smodel(const boost::program_options::variables_map& args,
+formula_expression_ref get_smodel(const std::vector<std::string>& modules_path,
+				  const boost::program_options::variables_map& args,
 				  const std::string&,
 				  const std::vector<alignment>& A);
 

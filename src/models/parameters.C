@@ -40,9 +40,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/program.H"
 #include "computation/operations.H"
 #include "math/exponential.H"
-#include "smodel/functions.H"
-#include "probability/distribution-operations.H"
-#include "popgen/popgen.H"
 
 using std::vector;
 using std::string;
@@ -1015,13 +1012,15 @@ double Parameters::get_branch_subst_rate(int p, int /* b */) const
   return get_parameter_value_as<Double>(branch_mean_index(s));
 }
 
-Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
+Parameters::Parameters(const vector<string>& module_path,
+		       const vector<alignment>& A, const SequenceTree& t,
 		       const vector<formula_expression_ref>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<formula_expression_ref>& IMs,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
-  :smodel_for_partition(s_mapping),
+  :Probability_Model(module_path),
+   smodel_for_partition(s_mapping),
    IModel_methods(IMs.size()),
    imodel_for_partition(i_mapping),
    scale_for_partition(scale_mapping),
@@ -1034,7 +1033,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
    features(0),
    branch_length_max(-1)
 {
-  C += { SModel_Functions(), Distribution_Functions(), Range_Functions(), PopGen_Functions() };
+  C += { "SModel","Distributions","Range","PopGen" };
   // FIXME: add C += IModel_Functions() instead of referencing the operations directly.  Then we could parse a text file.
   
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
@@ -1219,7 +1218,7 @@ Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
   expression_ref _ = dummy(-1);
 
   Program tree_program("Tree");
-  tree_program.import_module(get_Prelude(),false);
+  tree_program.import_module(module_path,"Prelude",false);
   tree_program.def_constructor("Tree",4);
   tree_program.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
 
@@ -1290,11 +1289,12 @@ edgesBeforeEdge t b = case (nodesForEdge t b) of {(n1,n2) -> [edgeForNodes t (n,
   }
 }
 
-Parameters::Parameters(const vector<alignment>& A, const SequenceTree& t,
+Parameters::Parameters(const vector<string>& module_path,
+		       const vector<alignment>& A, const SequenceTree& t,
 		       const vector<formula_expression_ref>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<int>& scale_mapping)
-  :Parameters(A, t, SMs, s_mapping, {}, {}, scale_mapping)
+  :Parameters(module_path, A, t, SMs, s_mapping, {}, {}, scale_mapping)
 { }
 
 bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho)

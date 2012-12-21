@@ -379,12 +379,14 @@ public:
 
   std::string name() const {return "Full Model";}
 
-  Parameters(const std::vector<alignment>& A, const SequenceTree&, 
+  Parameters(const std::vector<std::string>& module_path,
+	     const std::vector<alignment>& A, const SequenceTree&, 
 	     const std::vector<formula_expression_ref>&,
 	     const std::vector<int>&,
 	     const std::vector<int>&);
 
-  Parameters(const std::vector<alignment>& A, const SequenceTree&, 
+  Parameters(const std::vector<std::string>& module_path,
+	     const std::vector<alignment>& A, const SequenceTree&, 
 	     const std::vector<formula_expression_ref>&,
 	     const std::vector<int>&,
 	     const std::vector<formula_expression_ref>&,

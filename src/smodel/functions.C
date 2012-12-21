@@ -5,10 +5,13 @@
 #include "computation/graph_register.H"
 #include "smodel/operations.H"
 
-Program SModel_Functions()
+using std::vector;
+using std::string;
+
+Program SModel_Functions(const vector<string>& module_root_paths)
 {
   Program P("SModel");
-  P.import_module(get_Prelude(),false);
+  P.import_module(module_root_paths,"Prelude",false);
 
   P.def_function("plusGWF", lambda_expression(substitution::Plus_gwF_Op()));
   P.def_function("lExp", lambda_expression(LExp_Op()));

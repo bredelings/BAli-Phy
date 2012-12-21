@@ -193,9 +193,9 @@ public:
   const context& get_context() const {return C;}
 
   /// Construct an empty model
-  Model();
+  Model(const std::vector<std::string>& module_path);
 
-  Model(const std::vector<expression_ref>&);
+  Model(const std::vector<std::string>& module_path, const std::vector<expression_ref>&);
 
   virtual ~Model() {};
 };

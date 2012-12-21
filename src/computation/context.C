@@ -519,6 +519,16 @@ closure context::translate_refs(closure&& C) const
   return C2;
 }
 
+const vector<string>& context::get_module_path() const
+{
+  return module_path_;
+}
+
+context& context::operator+=(const std::vector<string>& module_names)
+{
+  return operator+=(load_modules(get_module_path(), module_names));
+}
+
 context& context::operator+=(const std::vector<Program>& P2)
 {
   // FIXME - this is really creating a combined program, not just importing aliases!
@@ -582,13 +592,9 @@ context& context::operator=(const context& C)
   return *this;
 }
 
-context::context()
-  :memory(new reg_heap()),
-   P(new Program("Main")),
-   token(memory->get_unused_token())
-{ 
-  (*this) += {get_Prelude()};
-}
+context::context(const vector<string>& module_path)
+  :context(module_path,{},vector<Program>{})
+{  }
 
 // FIXME - this should be shared with Model::add_submodel( ), but we need to call Model::add_notes( ).
 // If a model were to HOOK (a) add_parameter, (b) add_note( ), and (c) set_parameter_value( )
@@ -624,26 +630,32 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
   return new_parameters;
 }
 
-context::context(const vector<expression_ref>& N)
-  :context(N,{})
+context::context(const vector<string>& module_path, const vector<expression_ref>& N)
+  :context(module_path, N,vector<Program>{})
 { }
 
-context::context(const vector<expression_ref>& N, const vector<Program>& Ps)
+context::context(const vector<string>& module_path, const vector<expression_ref>& N, const vector<Program>& Ps)
   :memory(new reg_heap()),
    P(new Program("Main")),
-   token(memory->get_unused_token())
+   token(memory->get_unused_token()),
+   module_path_(module_path)
 {
-  (*this) += {get_Prelude()};
+  (*this) += {load_module(get_module_path(),"Prelude")};
   (*this) += Ps;
 
   add_submodel(*this, N);
 }
 
+context::context(const vector<string>& module_path, const vector<expression_ref>& N, const vector<string>& module_names)
+  :context(module_path,N,load_modules(module_path,module_names))
+{ }
+
 context::context(const context& C)
   :Model_Notes(C),
    memory(C.memory),
    P(C.P),
-   token(memory->copy_token(C.token))
+   token(memory->copy_token(C.token)),
+   module_path_(C.module_path_)
 { }
 
 context::~context()

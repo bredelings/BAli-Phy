@@ -3,6 +3,4 @@
 
 #include "computation/program.H"
 
-Program SModel_Functions();
-
 #endif

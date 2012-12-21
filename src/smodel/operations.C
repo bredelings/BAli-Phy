@@ -4,7 +4,6 @@
 #include "computation/operations.H"
 #include "computation/expression.H"
 #include "computation/prelude.H"
-#include "smodel/functions.H"
 #include "io.H"
 
 using boost::shared_ptr;

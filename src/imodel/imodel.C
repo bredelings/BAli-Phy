@@ -209,8 +209,8 @@ void IndelModel::set_heat(double h)
   heat = h;
 }
 
-IndelModel::IndelModel()
-  :in_training(false), heat(1)
+IndelModel::IndelModel(const std::vector<std::string>& modules_path)
+  :Model(modules_path),in_training(false), heat(1)
 { }
 
 IndelModel::~IndelModel() {}
@@ -491,8 +491,8 @@ efloat_t SimpleIndelModel::prior() const
 
 string SimpleIndelModel::name() const {return "RS05";}
 
-SimpleIndelModel::SimpleIndelModel()
-  :QE(Q1.size1(),Q1.size2())
+SimpleIndelModel::SimpleIndelModel(const std::vector<std::string>& modules_path)
+  :IndelModel(modules_path),QE(Q1.size1(),Q1.size2())
 {
   add_parameter("delta",  Double(-5), upper_bound(-log(2)));
   add_parameter("epsilon",Double(-0.25)); // no upper bound on transformed scale
@@ -746,8 +746,8 @@ efloat_t TKF1::lengthp(int l) const
   return (1.0-sigma)*pow(efloat_t(sigma),l);
 }
 
-TKF1::TKF1(bool b)
-  :time_dependant(b)
+TKF1::TKF1(const std::vector<std::string>& modules_path, bool b)
+  :IndelModel(modules_path),time_dependant(b)
 {
   add_parameter("lambda",Double(-5));
   add_parameter("meanLength",Double(100));
@@ -813,8 +813,8 @@ efloat_t TKF2::lengthp(int l) const
   return (1.0-sigma)*pow(efloat_t(sigma),l);
 }
 
-TKF2::TKF2(bool b)
-  :time_dependant(b)
+TKF2::TKF2(const std::vector<std::string>& modules_path, bool b)
+  :IndelModel(modules_path), time_dependant(b)
 {
   add_parameter("lambda",Double(-5));
   add_parameter("epsilon",Double(-0.25), upper_bound(0));
@@ -824,6 +824,10 @@ TKF2::TKF2(bool b)
   add_parameter("epsilonPriorLength", Double(10));
   add_parameter("meanLengthPriorMean", Double(1.5));
 }
+
+TransducerIndelModel::TransducerIndelModel(const std::vector<std::string>& module_path)
+  :Model(module_path)
+{ }
 
 TransducerIndelModel::~TransducerIndelModel() {}
 
@@ -945,8 +949,8 @@ string TKF1_Transducer::name() const
   return "TKF1_Transducer";
 }
 
-TKF1_Transducer::TKF1_Transducer(bool b)
-  :time_dependent(b)
+TKF1_Transducer::TKF1_Transducer(const std::vector<std::string>& modules_path,bool b)
+  :TransducerIndelModel(modules_path),time_dependent(b)
 {
   add_parameter("lambda",Double(-5), upper_bound(0));
   add_parameter("meanLength",Double(100));
@@ -1258,8 +1262,8 @@ string FS_Transducer::name() const
   return "FS_Transducer";
 }
 
-FS_Transducer::FS_Transducer(bool b)
-  :time_dependent(b)
+FS_Transducer::FS_Transducer(const std::vector<std::string>& modules_path,bool b)
+  :TransducerIndelModel(modules_path),time_dependent(b)
 {
   add_parameter("lambdaS", Double(-5), upper_bound(0));                  // 0
   add_parameter("lambdaF", Double(-3), upper_bound(0));                  // 1

@@ -308,11 +308,11 @@ closure Ewens_Sampling_Mixture_Probability::operator()(OperationArgs& Args) cons
   return Log_Double(Pr);
 }
 
-Program PopGen_Functions()
+Program PopGen_Functions(const vector<string>& modules_path)
 {
   Program P("PopGen");
-  P.import_module(get_Prelude(), false);
-  P.import_module(Distribution_Functions(), false);
+  P.import_module(modules_path,"Prelude", false);
+  P.import_module(modules_path,"Distributions", false);
   P.def_function("builtinReadPhaseFile", lambda_expression(Read_PHASE_File()));
   P.def_function("remove2ndAllele", lambda_expression(Remove_2nd_Allele()));
   P.def_function("alleleFrequencySpectrum", lambda_expression(Allele_Frequency_Spectrum()));

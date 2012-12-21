@@ -116,7 +116,7 @@ public:
 
   symbol_info get_operator(const std::string& name) const;
 
-  Program(const std::string&);
+  explicit Program(const std::string&);
 };
 
 std::ostream& operator<<(std::ostream&, const Program&);

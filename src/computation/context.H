@@ -184,19 +184,27 @@ protected:
     return r;
   }
 
+  std::vector<std::string> module_path_;
+
   void collect_garbage() const;
 public:
+  const std::vector<std::string>& get_module_path() const;
+
   context& operator+=(const std::vector<Program>& D);
+
+  context& operator+=(const std::vector<std::string>& module_names);
 
   context& operator=(const context& c);
 
-  context();
+  context(const std::vector<std::string>& module_path);
 
   context(const context&);
 
-  context(const std::vector<expression_ref>&);
+  context(const std::vector<std::string>& module_path, const std::vector<expression_ref>&);
 
-  context(const std::vector<expression_ref>&, const std::vector<Program>& P);
+  context(const std::vector<std::string>& module_path, const std::vector<expression_ref>&, const std::vector<Program>& P);
+
+  context(const std::vector<std::string>& module_path, const std::vector<expression_ref>&, const std::vector<std::string>& module_names);
 
   ~context();
 };

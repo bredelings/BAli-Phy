@@ -105,6 +105,7 @@ struct transducer_state_info
   transducer_state_info(const indel::PairTransducer& P);
 };
 
+
 /// A generic insertion/deletion model
 class IndelModel: public Model 
 {
@@ -128,7 +129,7 @@ public:
 
   virtual double get_heat() const;
 
-  IndelModel();
+  IndelModel(const std::vector<std::string>& modules_path);
 
   virtual ~IndelModel();
 };
@@ -154,7 +155,7 @@ public:
 
   std::string name() const;
 
-  SimpleIndelModel();
+  SimpleIndelModel(const std::vector<std::string>& modules_path);
 };
 
 
@@ -281,7 +282,7 @@ public:
 
   std::string name() const;
 
-  explicit TKF1(bool);
+  explicit TKF1(const std::vector<std::string>&,bool);
 };
 
 class TKF2: public IndelModel 
@@ -298,7 +299,7 @@ public:
 
   std::string name() const;
 
-  explicit TKF2(bool);
+  explicit TKF2(const std::vector<std::string>&,bool);
 };
 
 /// A generic insertion/deletion model
@@ -315,6 +316,8 @@ public:
 
   virtual int n_letters() const =0;
 
+  TransducerIndelModel(const std::vector<std::string>&);
+
   virtual ~TransducerIndelModel();
 };
 
@@ -329,7 +332,7 @@ public:
   indel::PairTransducer get_branch_Transducer(double t) const;
   std::string name() const;
   int n_letters() const {return 1;}
-  TKF1_Transducer(bool);
+  TKF1_Transducer(const std::vector<std::string>&,bool);
 };
 
 class FS_Transducer: public TransducerIndelModel
@@ -343,7 +346,7 @@ public:
   indel::PairTransducer get_branch_Transducer(double t) const;
   std::string name() const;
   int n_letters() const {return 2;}
-  FS_Transducer(bool);
+  FS_Transducer(const std::vector<std::string>&,bool);
 };
 
 #endif

@@ -915,7 +915,7 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
 }
 
 vector<formula_expression_ref>
-get_smodels(const variables_map& args, const vector<alignment>& A,
+get_smodels(const vector<string>& modules_path,const variables_map& args, const vector<alignment>& A,
 	    const shared_items<string>& smodel_names_mapping)
 {
   vector<formula_expression_ref> smodels;
@@ -925,7 +925,8 @@ get_smodels(const variables_map& args, const vector<alignment>& A,
     for(int j=0;j<smodel_names_mapping.n_partitions_for_item(i);j++)
       alignments.push_back(A[smodel_names_mapping.partitions_for_item[i][j]]);
 
-    formula_expression_ref full_smodel = get_smodel(args,
+    formula_expression_ref full_smodel = get_smodel(modules_path,
+						    args,
 						    smodel_names_mapping.unique(i),
 						    alignments);
     smodels.push_back(full_smodel);
@@ -1353,6 +1354,10 @@ int main(int argc,char* argv[])
     //    if (T.n_leaves() < 3)
     //      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".";
 
+    vector<string> modules_path;
+    if (args.count("modules"))
+      modules_path = split(args["modules"].as<string>(),':');
+
     //--------- Set up the substitution model --------//
 
     // FIXME - change to return a (model, standardized name) pair.
@@ -1364,7 +1369,7 @@ int main(int argc,char* argv[])
     vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
 
     // FIXME - change to return a (model, standardized name) pair.
-    vector<formula_expression_ref> full_smodels = get_smodels(args,A,smodel_names_mapping);
+    vector<formula_expression_ref> full_smodels = get_smodels(modules_path,args,A,smodel_names_mapping);
 
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
@@ -1372,7 +1377,7 @@ int main(int argc,char* argv[])
     vector<int> scale_mapping = scale_names_mapping.item_for_partition;
 
     //-------------Create the Parameters object--------------//
-    Parameters P(A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
+    Parameters P(modules_path, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
 
     set_initial_parameter_values(P,args);
 
@@ -1395,10 +1400,6 @@ int main(int argc,char* argv[])
     //------------- Parse the Hierarchical Model description -----------//
     if (args.count("BUGS"))
     {
-      vector<string> modules_path;
-      if (args.count("modules"))
-	modules_path = split(args["modules"].as<string>(),':');
-
       const string filename = args["BUGS"].as<string>();
       add_BUGS(modules_path,P,filename,"BUGS");
     }
