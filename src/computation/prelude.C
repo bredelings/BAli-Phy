@@ -36,6 +36,7 @@ using std::string;
  * 14. Delay desugaring (and thus resolving symbols) until modules are (jointly) loaded into the machine.
  * 15. [DONE] Process imports
  *     + (14) Is required to process mutually dependent modules.
+ * 16. Handle where clauses.
  */
 
 
