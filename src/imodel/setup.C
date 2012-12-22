@@ -71,15 +71,20 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
     /*
      * DefineBuiltin RS07BranchHMM
      * DefineBuiltin lengthp
-     * 
+     */
+
+    /*
      * meanIndelLenthMinus1 ~ Exponential(10.0)
      * lambdaSigmaOverMu ~ LogLaplace(-3.0, 1.0)
-     * lambdaScale{$i} ~ Gamma(1.0/(LambdaSigmaOverMu*LambdaSigmaOverMu), LambdaSigmaOverMu*LambdaSigmaOverMu)
+     * b = lambdaSigmaOverMu * lambdaSigmaOverMu
+     * lambdasList ~ iid (nBranches, Gamma(1.0/b, b))
      * logLambdaMean ~ Laplace(-4.0, 1.0)
+     *
+     * lambdaMean = exp logLambdaMean
+     * lambdaScales = listArray' lambdasList
      * epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1)
-     * main = let {lambdaMean = exp logLambdaMean, lambdaScales = listArray' lambdasList} in 
-     *            (\a b -> RS07BranchMHH epsilon (lambdaMean*(lambdaScales!b))*(a!b) Heat.beta IModels.training, 
-                   \a -> lengthp epsilon a)
+     * main = (\a b -> RS07BranchMHH epsilon (lambdaMean * lambdaScales!b * a!b) Heat.beta IModels.training, 
+     *         \a -> lengthp epsilon a)
      */
 
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
@@ -130,32 +135,36 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
 
      */
 
-    /*
+    /* logLambdasList = logLambda1:logLambda2:logLambda3:logLambda4 .... logLambda{$B}
      * logLambdaMeans = [logLambdaMean1, logLambdaMean2, logLambdaMean3, logLambdaMean4]
-     *
+     */
+
+    /*
+     * sigmaBetweenGroup ~ ??
+     * sigmaWithinGroup ~ ??
      * logLambdaMean ~ Laplace(-4.0, 1.0)
      * logLambdaMeans ~ iid (4, normal (logLambdaMean, sigmaBetweenGroup))
      *
      * a = 10.0
-     * q1 ~ Beta(a, 1.0)
-     * q2 ~ Beta(a, 1.0)
-     * q3 ~ Beta(a, 1.0)
+     * q1 ~ betaD(a, 1.0)
+     * q2 ~ betaD(a, 1.0)
+     * q3 ~ betaD(a, 1.0)
      *
      * p1 = q1
      * p2 = (1.0-q1)*q2
      * p3 = (1.0-q1)*(1.0-q2)*q3
      * p4 = (1.0-q1)*(1.0-q2)*(1.0-q3)
      *
-     * dists = fmap (\x -> Normal(x, sigmaWithinGroup)) [logLambdaMean1, logLambdaMean2, logLambdaMean3, logLambdaMean4]
+     * dists = fmap (\x -> normal(x, sigmaWithinGroup)) logLambdaMeans
      * weights = [p1, p2, p3, p4]
      *
-     * logLambdasList = logLambda1:logLambda2:logLambda3:logLambda4 .... logLambda{$B}
+     * logLambdasList ~ iid (nBranches, Mixture( zip weights dists ))
      *
-     * logLambdasList ~ iid Mixture( zip weights dists )
+     * lambdaMean = exp logLambdaMean
+     * lambdaScales = listArray' logLambdasList
      *
-     * main = let {lambdaMean = exp logLambdaMean, logLambdaScales = listArray' logLambdasList} in 
-     *            (\a b -> RS07BranchMHH epsilon (exp logLambdaScales!b))*(a!b) Heat.beta IModels.training, 
-     *             \a -> lengthp epsilon a)
+     * main =  (\a b -> RS07BranchMHH epsilon (exp logLambdaScales!b)*(a!b) Heat.beta IModels.training, 
+     *          \a -> lengthp epsilon a)
      *
      */
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );

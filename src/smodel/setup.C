@@ -364,6 +364,10 @@ formula_expression_ref process_stack_Markov(const vector<string>& modules_path,
       throw myexception()<<"M0: '"<<a->name<<"' is not a 'Codons' alphabet";
     const Nucleotides& N = C->getNucleotides();
 
+    // import duplicate HKY
+    // S = HKY.main
+    // .. or ..
+    // S = submodel HKY
     formula_expression_ref S1 = HKY_Model( N );
     if (model_args[2] != "")
     {
@@ -371,8 +375,10 @@ formula_expression_ref process_stack_Markov(const vector<string>& modules_path,
       if (not S1.result_as<SymmetricMatrixObject>(modules_path))
 	throw myexception()<<"Submodel '"<<model_args[2]<<"' for M0 is not a (nucleotide) exchange model.";
     }
+    // omega ~ logLaplace(0.0, 0.1)
     formula_expression_ref w = def_parameter("M0.omega", Double(1), lower_bound(0), (var("logLaplace"), Tuple(0.0,0.1)));
 
+    // main = M0 a S omega
     return (M0E, a, S1, w);
   }
 
