@@ -11,56 +11,49 @@ using std::vector;
 using std::set;
 using std::deque;
 
+//  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
+
 // 1. Add ability to change the prior on variables.
 // 2. Add ability to add new variables.
-
-// 3. Add operators for: &&, ||, not, 
-//   - Then define /= as "not x == y"
-// 5. Change expression_refs to just define to a var("name").  (For example, seq)
-
-// 7. Add EnumFrom, EnumFromTo, EnumFromToBy to enable parsing [1..n]
-//  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
-// 8. Enable left sections.
-// 9. Enable right sections.
-// 10. Enable list comprehensions...
-// 11. Add constructors to programs!
-// 12. Add the ability to store newtype definitions.
-// 13. Define patterns for case expressions...
-// 14. Define patterns for let expressions..
-// 15. Allow declarations...
-// 16. Move to only desugaring entire programs!
+// 3. Add constructors to programs!
+// 4. Add the ability to store newtype definitions.
+// 5. Allow declarations...
+// 6. Move to desugaring entire modules!
 //     - A program is a collection of modules.
-//     - We can desugar entire modules, BUT we also have the names from other modules to import.
-//     (?) How do we handle modules with non-parsed code here, like the Prelude?
-// 17. Move to only compiling entire programs, where programs are entire module collections.
-// 18. Note that in add_BUGS( ) we use a program to parse the lines into a Model_Notes submodel.
-//     This submodel can then be prefixed and everything.
-//     HKY would be something like:
+//     - This will have to be done in phases.
+//       - (1) In the first phase, we determine what types, constructors, let-vars are declared.
+//       -     That means that we have to handle fundecls here.
+//       - (2) In the second phase, we actually import symbols, desugar function bodies,
+//             and handle identifiers.
+//       - (?) How do we handle modules with non-parsed code here, like the Prelude?
+// 7. Move to only loading entire programs, where programs are entire module collections.
+// 8. Now that a Model_Notes contains 0,1,2, or more modules, how do we want to handle
+//    prefixing?
+//       - If it has 0 modules, it shouldn't have defs?
+//       - All modules should be sub-modules of the main module?
+//       - Then we prefix all the modules?
+// 9. How do we prefix a module?
+//       - First parse it, then prefix ids and module names.
+//       - We could prefix only module names that are "owned" by the module_notes.
+// 10. At some level, the idea that we are creating a giant expression that drags along
+//     notes attached to its pieces should be ... simple!
+// 11. So, we use modules to
+//     (a) define notes
+//   
+// 12. How do we want to represent modules with notes?
 //
 //     Module HKY where {
-//       DeclareParameter kappa
 //       import SModel (HKY,dna)
 //       import Distributions
+//       -- parameter kappa
 //       kappa ~ LogLaplace(log(2), 0.25)
-//       main = HKY dna kappa [piA,piT,piG,piC]
+//       main = hky dna kappa [piA,piT,piG,piC]
 //     }
 //
 //     Module PlusF where
 //     {
 //       import Distributions
-//       DeclareParameter piA
-//       DeclareParameter piG
-//       DeclareParameter piT
-//       DeclareParameter piC
-//       piA = 0.25
-//       piG = 0.25
-//       piT = 0.25
-//       piC = 0.25
-//       [piA, piT, piG, piC] ~ Dirichlet([1.0, 1.0, 1.0, 1.0])
-//       bounds piA (0.0, 1.0)
-//       bounds piG (0.0, 1.0)
-//       bounds piT (0.0, 1.0)
-//       bounds piC (0.0, 1.0)
+//       [piA, piT, piG, piC] ~ dirichlet [1.0, 1.0, 1.0, 1.0]
 //
 //       main = [piA, piT, piG, piC]
 //     }
