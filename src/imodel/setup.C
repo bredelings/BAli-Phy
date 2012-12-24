@@ -76,15 +76,14 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
     /*
      * meanIndelLenthMinus1 ~ Exponential(10.0)
      * lambdaSigmaOverMu ~ LogLaplace(-3.0, 1.0)
-     * b = lambdaSigmaOverMu * lambdaSigmaOverMu
-     * lambdasList ~ iid (nBranches, Gamma(1.0/b, b))
+     * lambdasList ~ let {b = lambdaSigmaOverMu * lambdaSigmaOverMu} in iid (nBranches, Gamma(1.0/b, b))
      * logLambdaMean ~ Laplace(-4.0, 1.0)
      *
      * lambdaMean = exp logLambdaMean
      * lambdaScales = listArray' lambdasList
      * epsilon = meanIndelLengthMinus1/(1.0 + meanIndelLengthMinus1)
-     * main = (\a b -> RS07BranchMHH epsilon (lambdaMean * lambdaScales!b * a!b) Heat.beta IModels.training, 
-     *         \a -> lengthp epsilon a)
+     * main = (\t b -> RS07BranchMHH epsilon (lambdaMean * lambdaScales!b * t!b) Heat.beta IModels.training, 
+     *         \l -> lengthp epsilon l)
      */
 
     expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
@@ -157,7 +156,6 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
      *
      * dists = fmap (\x -> normal(x, sigmaWithinGroup)) logLambdaMeans
      * weights = [p1, p2, p3, p4]
-     *
      * logLambdasList ~ iid (nBranches, Mixture( zip weights dists ))
      *
      * lambdaMean = exp logLambdaMean
