@@ -337,15 +337,8 @@ vector<expression_ref> get_patterns(const expression_ref& decl)
 expression_ref get_body(const expression_ref& decl)
 {
   expression_ref rhs = decl->sub[1];
-  if (rhs->sub.size() == 1)
-    return rhs->sub[0];
-  else
-  {
-    assert(rhs->sub.size() == 2);
-    expression_ref decls = rhs->sub[1];
-    assert(is_AST(decls,"Decls"));
-    return {AST_node("Let"),{decls,rhs->sub[0]}};
-  }
+  assert(rhs->sub.size() == 1);
+  return rhs->sub[0];
 }
 
 expression_ref append(const expression_ref& E1, const expression_ref& E2)
@@ -572,6 +565,19 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
        * Wait.... so we want to do a recursive de-sugaring, but we can't do that because we 
        * don't know the set of bound variables yet.
        */
+    }
+    else if (n->type == "rhs")
+    {
+      if (E->sub.size() == 2)
+      {
+	expression_ref decls = E->sub[1];
+	assert(is_AST(decls,"Decls"));
+	expression_ref E2 = {AST_node("Let"),{decls,E->sub[0]}};
+	E2 = {AST_node("rhs"),{E2}};
+	return desugar(m,E2,bound);
+      }
+      else
+      { }      // Fall through and let the standard case handle this.
     }
     else if (n->type == "apat_var")
     {

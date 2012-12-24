@@ -64,7 +64,7 @@ init []     = error "Prelude.init: empty list";
 length []        =  0;
 length (_:l)     =  1 + length l;
 
-repeat x = let {xs = x:xs} in xs;
+repeat x = xs where {xs = x:xs};
 
 iterate f x = x:iterate f (f x);
 
