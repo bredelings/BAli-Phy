@@ -144,13 +144,13 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	/*----- Section 3 ------*/
 	exp = 
-	  infixexp [ _val = new_<expression>(AST_node("infixexp"),_1) ] >> "::" >> -(context >> "=>") >> type 
-	  | infixexp [_val = new_<expression>(AST_node("infixexp"),_1) ];
+	  infixexp [ _val = _1 ] >> "::" >> -(context >> "=>") >> type 
+	  | infixexp [_val = _1 ];
 
 	infixexp = 
-	  lexp [push_back(_val,_1)] >> qop [push_back(_val,_1)] > infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
-	  | lit("-") [push_back(_val, AST_node("neg"))] > infixexp [insert(_val,end(_val),begin(_1),end(_1))] 
-	  | lexp [ clear(_val), push_back(_val,_1) ]
+	  lexp [push_back(_a,_1)] >> qop [push_back(_a,_1)] > infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
+	  | eps[clear(_a)] >> lit("-") [push_back(_a, AST_node("neg"))] > infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
+	  | lexp [ _val = _1 ]
 	  ;
 
 	lexp = 
@@ -187,9 +187,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  // list comprehension
 	  | lit("[")[clear(_a)] >> exp[push_back(_a,_1)] >>"|" >> (qual[push_back(_a,_1)]%',') >> "]" >> eps [ _val = new_<expression>(AST_node("ListComprehension"), _a) ]
 	  // left section
-	  | lit("(")[clear(_a)] >> infixexp[insert(_a,end(_a),begin(_1),end(_1))]  >> qop[push_back(_a,_1)] >> ")" >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
+	  | lit("(")[clear(_a)] >> infixexp[push_back(_a,_1)]  >> qop[push_back(_a,_1)] >> ")" >> eps [ _val = new_<expression>(AST_node("LeftSection"), _a) ]
 	  // right section
-	  | lit("(")[clear(_a)] >> ((qop[push_back(_a,_1)] - "-") >> infixexp[insert(_a,end(_a),begin(_1),end(_1))]) >> ")" >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
+	  | lit("(")[clear(_a)] >> ((qop[push_back(_a,_1)] - "-") >> infixexp[push_back(_a,_1)]) >> ")" >> eps [ _val = new_<expression>(AST_node("RightSection"), _a) ]
 	  //	  | qcon >> "{" >> *fbind >> "}"  // labeled construction (?)
 	  //	  | (aexp - qcon) >> "{">> +fbind >> "}"; // labeled update
 	  ;
@@ -217,14 +217,14 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	/*----- Section 3.13 -----*/
 	alts = (alt % ';' )[_a = _1] >> eps [ _val = new_<expression>(AST_node("alts"), _a) ];
 	alt =  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> "->" > exp[push_back(_a,_1)] >> -("where" >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
-	//	  | pat >> gdpat >> -("where" >> decls) 
+	  |  eps [clear(_a) ] >> pat[push_back(_a,_1)] >> gdpat[push_back(_a,_1)] >> -("where" >> decls[push_back(_a,_1)])  >> eps [ _val = new_<expression>(AST_node("alt"), _a) ]
 	  | eps;
 
-	//	gdpat %= guards >> "->" >> exp >> -gdpat;
-	//	guards %= "|" >> +guard;
-	//	guard %= pat >> "<-" >> infixexp // pattern guard
-	//	  | "let" >> decls // local declaration
-	//	  | infixexp;      // boolean guard
+	gdpat = guards [push_back(_a,_1)]>> "->" >> exp[push_back(_a,_1)] >> -gdpat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("GdPat"), _a) ];
+	guards = "|" >> +guard[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("Guards"), _a) ];
+	guard = pat[push_back(_a,_1)] >> "<-" >> infixexp[push_back(_a,_1)]  >> eps [ _val = new_<expression>(AST_node("PatternGuard"), _a) ]
+	  | eps [clear(_a) ] >> "let" >> decls[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("LetGuard"), _a) ]
+	  |  eps [clear(_a) ] >> infixexp[push_back(_a,_1)] >>  eps [ _val = new_<expression>(AST_node("BoolGuard"), _a) ];
 
 	/*----- Section 3.14 -----*/
 	stmts = *stmt[push_back(_a,_1)] >> exp[push_back(_a,_1)] >> -lit(';') >> eps [ _val = new_<expression>(AST_node("Stmts"), _a) ];
@@ -367,10 +367,10 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | eps[clear(_a)] >> pat [push_back(_a,_1)] >> varop[push_back(_a,phoenix::construct<AST_node>("id", construct<String>(_1)))] >> pat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs2"), _a)  ]
 		  | eps[clear(_a)] >> "(" >> funlhs[push_back(_a,_1)] >> ")" > +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs3"), _a)  ];
 
-	rhs = lit('=') >> exp [push_back(_a,_1)] >> -(lit("where") >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
-	//	  | gdrhs >> -(lit("where") >> decls);
+	rhs = lit('=') >> exp [push_back(_a,_1)] >> -(lit("where") >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ]
+	  | gdrhs[push_back(_a,_1)] >> -(lit("where") >> decls[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("rhs"), _a)  ];
 
-	//	gdrhs %= guards >> "=" >> exp >> -gdrhs;
+	gdrhs = guards[push_back(_a,_1)] >> "=" >> exp [push_back(_a,_1)] >> -gdrhs[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("gdrhs"), _a)  ];
 
 	/*------ Section 5.1 -------*/
 	impdecls = impdecl[push_back(_a,_1)] % ';' >> eps [ _val = new_<expression>(AST_node("impdecls"), _a)  ];
@@ -698,7 +698,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>> literal;  
 
   qi::rule<Iterator, expression_ref(), ascii::space_type> exp;
-  qi::rule<Iterator, vector<expression_ref>(), ascii::space_type> infixexp;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> infixexp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> lexp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> fexp;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> aexp;
@@ -723,9 +723,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   /*----- Section 3.13 -----*/
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> alts;  
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> alt;
-  qi::rule<Iterator, std::string(), ascii::space_type> gdpat;
-  qi::rule<Iterator, std::string(), ascii::space_type> guards;
-  qi::rule<Iterator, std::string(), ascii::space_type> guard;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> gdpat;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> guards;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> guard;
 
   /*----- Section 3.14 -----*/
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> stmts;

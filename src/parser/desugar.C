@@ -478,9 +478,16 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
   {
     if (n->type == "infixexp")
     {
-      for(auto& e: v)
+      vector<expression_ref> args = E->sub;
+      while(is_AST(args.back(),"infixexp"))
+      {
+	expression_ref E2 = args.back();
+	args.pop_back();
+	args.insert(args.end(),E2->sub.begin(),E2->sub.end());
+      }
+      for(auto& e: args)
 	e = desugar(m, e, bound);
-      return desugar_infix(m, v);
+      return desugar_infix(m, args);
     }
     else if (n->type == "pat")
     {
@@ -802,8 +809,8 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "LeftSection")
     {
-      // FIXME... probably we need to do a disambiguation on the infix expression. (x op infixexp)
       // FIXME... the infixexp needs to parse the same as if it was parenthesized.
+      // FIXME... probably we need to do a disambiguation on the infix expression. (infixexp op x)
       std::set<dummy> free_vars;
       for(auto& e: v) {
 	e = desugar(m, e, bound);
@@ -813,7 +820,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     }
     else if (n->type == "RightSection")
     {
-      // FIXME... probably we need to do a disambiguation on the infix expression. (infixexp op x)
+      // FIXME... probably we need to do a disambiguation on the infix expression. (x op infixexp)
       // FIXME... the infixexp needs to parse the same as if it was parenthesized.
       std::set<dummy> free_vars;
       for(auto& e: v) {
@@ -856,12 +863,24 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       vector<expression_ref> alts = v[1]->sub;
       vector<expression_ref> patterns;
       vector<expression_ref> bodies;
-      for(int i=0;i<alts.size();i++)
+      for(const auto& alt: alts)
       {
 	set<string> bound2 = bound;
-	add(bound2, find_bound_vars(alts[i]->sub[0]));
-	patterns.push_back(desugar(m, alts[i]->sub[0], bound2) );
-	bodies.push_back(desugar(m, alts[i]->sub[1], bound2) );
+	add(bound2, find_bound_vars(alt->sub[0]));
+	patterns.push_back(desugar(m, alt->sub[0], bound2) );
+
+	expression_ref body;
+	if (is_AST(alt->sub[1],"GdPat"))
+	  throw myexception()<<"Guard patterns not yet implemented!";
+	else
+	{
+	  assert(alt->sub.size() == 2 or alt->sub.size() == 3);
+	  body = alt->sub[1];
+	  if (alt->sub.size() == 3 and is_AST(alt->sub[2],"Decls"))
+	    body = {AST_node("Let"),{alt->sub[2],body}};
+	}
+
+	bodies.push_back(desugar(m, body, bound2) );
       }
       return case_expression(case_obj, patterns, bodies);
     }
