@@ -33,10 +33,12 @@ using std::string;
  * 11. [DONE] Remove arity argument to def_function.
  * 12. Rationalize Programs, Modules.
  * 13. [DONE] Allow loading stuff from files.
- * 14. Delay desugaring (and thus resolving symbols) until modules are (jointly) loaded into the machine.
+ * 14. *Delay desugaring (and thus resolving symbols) until modules are (jointly) loaded into the machine.
  * 15. [DONE] Process imports
  *     + (14) Is required to process mutually dependent modules.
- * 16. Handle where clauses.
+ *     + Note that clashing declarations are allowed if the symbol is unreferenced!
+ * 16. Handle 'where' clauses (e.g. in "alt")
+ * 17. Handle guards clauses (e.g. in gdrhs, and gdpat)
  */
 
 
