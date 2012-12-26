@@ -195,7 +195,7 @@ closure Case::operator()(OperationArgs& Args) const
 
   int L = (Args.n_args() - 1)/2;
 
-  // FIXME - we really shouldn't be allocating memory here!
+  // FIXME:speed - we really shouldn't be allocating memory here!
   // But this IS easier not to break.
   vector<expression_ref> cases(L);
   vector<expression_ref> bodies(L);
