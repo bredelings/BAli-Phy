@@ -901,7 +901,7 @@ vector<int> get_free_index_vars(const expression_ref& E)
     // Variable
     if (object_ptr<const index_var> D = is_a<index_var>(E))
     {
-      assert(D->index != -1);
+      assert(not is_wildcard(*D));
       return {D->index};
     }
     // Constant
@@ -1037,7 +1037,7 @@ expression_ref remap_free_indices(const expression_ref& E, const vector<int>& ma
     // Variable
     if (object_ptr<const index_var> D = is_a<index_var>(E))
     {
-      assert(D->index != -1);
+      assert(not is_wildcard(*D));
       int delta = D->index - depth;
       if (delta >= 0)
       {

@@ -216,7 +216,7 @@ closure Case::operator()(OperationArgs& Args) const
     if (object_ptr<const dummy> D2 = is_a<dummy>(cases[i]))
     {
       // We standardize to avoid case x of v -> f(v) so that f cannot reference v.
-      assert(D2->index == -1);
+      assert(is_wildcard(*D2));
       assert(i == L-1);
       
       result.exp = bodies[i];
