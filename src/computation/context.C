@@ -140,7 +140,6 @@ expression_ref context::full_evaluate(int& R) const
     // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
     // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
     if (not is_a<constructor>(result.exp)) return result.exp;
-    // FIXME - change to is_a<lambda2>?
   }
 
   // If the result is a structure, then evaluate its fields and substitute them.
@@ -284,7 +283,6 @@ object_ref context::get_parameter_value(const std::string& name) const
   return get_parameter_value(index);
 }
 
-// FIXME - change argument to closure?
 void context::set_parameter_value(int index, const expression_ref& O)
 {
   object_ref v = O->head;
@@ -295,7 +293,6 @@ void context::set_parameter_value(int index, const expression_ref& O)
   set_parameter_value_(index, v);
 }
 
-// FIXME - change argument to closure?
 void context::set_parameter_value_expression(int index, const expression_ref& O)
 {
   if (O)
@@ -304,7 +301,6 @@ void context::set_parameter_value_expression(int index, const expression_ref& O)
     set_parameter_value_(index, {} );
 }
 
-// FIXME - change argument to closure?
 void context::set_parameter_value_(int index, closure&& C)
 {
   int P = *parameters()[index];
@@ -442,7 +438,6 @@ void context::collect_garbage() const
   memory->collect_garbage();
 }
 
-// FIXME! This will use multiple names for objects if they occur twice.
 expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env) const
 {
   int reg = -1;

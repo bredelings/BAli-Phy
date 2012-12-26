@@ -1829,8 +1829,6 @@ T,U,V -> x
  *  Perhaps switch to (lambda dummy E) instead of (lambda[index] E)
  */ 
 
-// FIXME: add operator expressions :-P
-
 bool is_irrefutable_pattern(const expression_ref& E)
 {
   return is_a<dummy>(E);
