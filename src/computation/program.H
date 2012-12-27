@@ -1,6 +1,7 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
+#include <set>
 #include <map>
 #include <string>
 #include <vector>
@@ -31,6 +32,9 @@ struct symbol_info
   symbol_info(const std::string&, symbol_type_t, scope_t, int, int, fixity_t, const expression_ref&, const expression_ref&);
 };
 
+bool operator==(const symbol_info&S1, const symbol_info& S2);
+bool operator!=(const symbol_info&S1, const symbol_info& S2);
+
 bool is_haskell_varid(const std::string& s);
 bool is_haskell_conid(const std::string& s);
 bool is_haskell_varsym(const std::string& s);
@@ -53,7 +57,11 @@ class Program
 {
   std::map<std::string, symbol_info> symbols;
 
-  std::map<std::string, std::string> aliases;
+  std::multimap<std::string, std::string> aliases;
+
+  std::set<std::string> dependendies;
+
+  std::set<std::string> imported;
 
 public:
   std::string module_name;
@@ -78,11 +86,13 @@ public:
 
   Program& operator+=(const expression_ref&);
 
-  void add_alias(const std::string&);
+  bool symbol_exists(const std::string&) const;
 
   void add_symbol(const symbol_info&, scope_t);
 
   void add_symbol(const symbol_info&);
+
+  void add_alias(const std::string&, const std::string&);
 
   void declare_fixity(const std::string&, int precedence, fixity_t f);
 
@@ -102,15 +112,7 @@ public:
 
   void import_module(const std::vector<std::string>& path, const std::string&, const std::string&, bool qualified);
 
-  bool is_declared_qualified(const std::string&) const;
-
-  bool is_declared_unqualified(const std::string&) const;
-
   bool is_declared(const std::string&) const;
-  
-  const symbol_info& lookup_qualified_symbol(const std::string&) const;
-
-  const symbol_info& lookup_unqualified_symbol(const std::string&) const;
 
   symbol_info lookup_builtin_symbol(const std::string&) const;
 

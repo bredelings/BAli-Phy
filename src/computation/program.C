@@ -70,31 +70,25 @@ symbol_info::symbol_info(const std::string& s, symbol_type_t st, scope_t sc, int
   :name(s), symbol_type(st), scope(sc), arity(i2), precedence(i3), fixity(f), body(b), type(t)
 { }
 
-// symbols in a module can be:
-// (a) this_module.local_identifier
-// (b) local_identifier
-// (c) other_modules.external_identifier
-// (d) external_identifier
-//
-// Cases (a) and (c) are stored in symbols[].
-// Cases (b) and (d) are stored as mapping from unqualified -> qualified names;
-
-
-void Program::add_alias(const string& s)
+bool operator==(const symbol_info&S1, const symbol_info& S2)
 {
-  if (not is_qualified_symbol(s))
-    throw myexception()<<"Can't add alias for unqualified identifier '"<<s<<"' to module '"<<module_name<<"'";
+  return (S1.name == S2.name) and (S1.symbol_type == S2.symbol_type) and (S1.scope == S2.scope) and
+    (S1.arity == S2.arity) and (S1.precedence == S2.precedence) and (S1.fixity == S2.fixity) and
+    (S1.body == S2.body) and (S1.type == S2.type);
+}
 
-  if (not is_declared_qualified(s))
-    throw myexception()<<"Can't add alias for undeclared identifier '"<<s<<"' to module '"<<module_name<<"'";
+bool operator!=(const symbol_info&S1, const symbol_info& S2)
+{
+  return not (S1 == S2);
+}
 
-  string s2 = get_unqualified_name(s);
-
-  if (is_declared_unqualified(s2))
-    throw myexception()<<"Trying to add duplicate alias '"<<s2<<"' for identifier '"<<s<<"' to module '"<<module_name<<"'";
-
-  // Mapping from name -> module.name
-  aliases[s2] = s;
+bool Program::symbol_exists(const std::string& name) const
+{
+  auto loc = symbols.find(name);
+  if (loc == symbols.end())
+    return false;
+  else
+    return true;
 }
 
 void Program::add_symbol(const symbol_info& S)
@@ -102,13 +96,17 @@ void Program::add_symbol(const symbol_info& S)
   if (is_haskell_builtin_con_name(S.name))
     throw myexception()<<"Can't add builtin symbol '"<<S.name<<"'";
 
-  if (is_declared_qualified(S.name))
-    throw myexception()<<"Trying to add identifier '"<<S.name<<"' twice to module '"<<module_name<<"'";
+  if (not is_qualified_symbol(S.name))
+    throw myexception()<<"Symbol '"<<S.name<<"' unqualified, can't be added to symbol table";
 
   if (S.scope == unknown_scope)
     throw myexception()<<"Can't add symbol with unknown scope!";
 
-  symbols[S.name] = S;
+  auto loc = symbols.find(S.name);
+  if (loc == symbols.end())
+    symbols[S.name] = S;
+  else if (loc != symbols.end() and loc->second != S)
+    throw myexception()<<"Trying to add symbol '"<<S.name<<"' twice to module '"<<module_name<<"' with different body";
 }
 
 void Program::add_symbol(const symbol_info& S, scope_t sc)
@@ -118,19 +116,37 @@ void Program::add_symbol(const symbol_info& S, scope_t sc)
   add_symbol(S2);
 }
 
+void Program::add_alias(const string& identifier_name, const string& resolved_name)
+{
+  if (not symbol_exists(resolved_name))
+    throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_name<<"' in module '"<<module_name<<"' because '"<<resolved_name<<"' is neither declared nor imported.";
+
+  std::pair<string,string> element(identifier_name,resolved_name);
+
+  int count = aliases.count(identifier_name);
+  assert(count == 0 or count == 1);
+
+  if (count == 0)
+    aliases.insert( std::pair<string,string>(identifier_name, resolved_name) );
+}
+
 void Program::declare_symbol(const symbol_info& S)
 {
-  // FIXME - perhaps I should not declare symbols at top level, but only import them?
-
   if (is_qualified_symbol(S.name))
-    throw myexception()<<"Locally defined symbol '"<<S.name<<"' should not be qualified.";
+    throw myexception()<<"Locally defined symbol '"<<S.name<<"' should not be qualified in declaration.";
 
   symbol_info S2 = S;
   S2.name = module_name + "." + S.name;
+
+  if (symbol_exists(S2.name))
+    throw myexception()<<"Trying to declare '"<<S.name<<"' twice in module '"<<module_name<<"'";
+
+  // Add the symbol first.
   add_symbol(S2, local_scope);
-  
-  // Add the alias for S.name -> S2.name;
-  add_alias(S2.name);
+  // Add the alias for qualified name: S.name -> S2.name;
+  add_alias(S2.name, S2.name);
+  // Add the alias for unqualified name: S.name -> S2.name;
+  add_alias(S.name, S2.name);
 }
 
 // "Also like a type signature, a fixity declaration can only occur in the same sequence of declarations as the declaration of the operator itself, and at most one fixity declaration may be given for any operator."
@@ -143,7 +159,7 @@ void Program::declare_fixity(const std::string& s, int precedence, fixity_t fixi
 
   string s2 = module_name + "." + s;
 
-  if (not is_declared_qualified(s2))
+  if (not symbol_exists(s2))
     declare_symbol({s, unknown_symbol, local_scope, -1, -1, unknown_fix, {}, {}});
 
   symbol_info& S = symbols.find(s2)->second;
@@ -167,38 +183,24 @@ void Program::declare_parameter(const std::string& pname, const expression_ref& 
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
-
 void Program::import_symbol(const symbol_info& S, const string& modid, bool qualified)
 {
   if (not is_qualified_symbol(S.name))
     throw myexception()<<"Imported symbols must have qualified names.";
 
-  symbol_info S2 = S;
-  S2.name = modid+"."+get_unqualified_name(S2.name);
-
-  if (is_declared_qualified(S2.name))
-  {
-    auto loc = symbols.find(S2.name);
-    assert(loc != symbols.end());
-
-    if (loc->second.scope != external_scope)
-      throw myexception()<<"Trying to imported symbol '"<<S.name<<"' as '"<<S2.name<<"' when that name is already defined.";
-    else
-      return;
-  }
-
-  // Add the symbol
-  if (S2.scope == local_scope)
-    S2.scope = external_scope;
-
-  add_symbol(S2);
-
+  // Add the symbol.
+  add_symbol(S, external_scope);
+  // Add the alias for qualified name.
+  add_alias(modid+"."+get_unqualified_name(S.name), S.name);
+  // Add the alias for unqualified name.
   if (not qualified)
-    add_alias(S2.name);
+    add_alias(get_unqualified_name(S.name), S.name);
 }
 
 void Program::import_module(const Program& P2, const string& modid, bool qualified)
 {
+  imported.insert(modid);
+
   for(const auto& p: P2.symbols)
   {
     const symbol_info& S = p.second;
@@ -215,60 +217,25 @@ void Program::import_module(const Program& P2, bool qualified)
 
 void Program::import_module(const vector<string>& path, const string& modid, bool qualified)
 {
-  Program mod = load_module(path, modid);
-  import_module(mod, qualified);
+  if (not imported.count(modid))
+  {
+    Program mod = load_module(path, modid);
+    import_module(mod, qualified);
+  }
 }
 
 void Program::import_module(const vector<string>& path, const string& modid, const string& modid2, bool qualified)
 {
-  Program mod = load_module(path, modid);
-  import_module(mod, modid2, qualified);
-}
-
-bool Program::is_declared_qualified(const std::string& name) const
-{
-  auto loc = symbols.find(name);
-  if (loc == symbols.end())
-    return false;
-  else
-    return true;
-}
-
-bool Program::is_declared_unqualified(const std::string& name) const
-{
-  auto loc = aliases.find(name);
-  if (loc == aliases.end())
-    return false;
-  else
-    return true;
+  if (not imported.count(modid))
+  {
+    Program mod = load_module(path, modid);
+    import_module(mod, modid2, qualified);
+  }
 }
 
 bool Program::is_declared(const std::string& name) const
 {
-  return is_declared_qualified(name) or is_declared_unqualified(name) or is_haskell_builtin_con_name(name);
-}
-
-const symbol_info& Program::lookup_qualified_symbol(const std::string& name) const
-{
-  if (is_declared_qualified(name))
-    return symbols.find(name)->second;
-  else
-    throw myexception()<<"Qualified name '"<<name<<"' not declared.";
-}
-
-const symbol_info& Program::lookup_unqualified_symbol(const std::string& name) const
-{
-  if (is_qualified_symbol(name))
-    throw myexception()<<"Lookup up qualified symbol '"<<name<<"' as unqualified!";
-
-  if (not is_declared_unqualified(name))
-    throw myexception()<<"Unqualified name '"<<name<<"' not declared.";
-  string name2 = aliases.find(name)->second;
-
-  if (not is_declared_qualified(name2))
-    throw myexception()<<"Alias for '"<<name2<<"', which is not declared!";
-
-  return lookup_qualified_symbol(name2);
+  return is_haskell_builtin_con_name(name) or (aliases.count(name) > 0);
 }
 
 symbol_info Program::lookup_builtin_symbol(const std::string& name) const
@@ -292,10 +259,26 @@ symbol_info Program::lookup_symbol(const std::string& name) const
 {
   if (is_haskell_builtin_con_name(name))
     return lookup_builtin_symbol(name);
-  if (is_qualified_symbol(name))
-    return lookup_qualified_symbol(name);
+
+  int count = aliases.count(name);
+  if (count == 0)
+    throw myexception()<<"Indentifier '"<<name<<"' not declared.";
+  else if (count == 1)
+  {
+    string symbol_name = aliases.find(name)->second;
+    if (not symbol_exists(symbol_name))
+      throw myexception()<<"Identifier '"<<name<<"' -> '"<<symbol_name<<"', which does not exist!";
+    return symbols.find(symbol_name)->second;
+  }
   else
-    return lookup_unqualified_symbol(name);
+  {
+    myexception e;
+    e<<"Identifier '"<<name<<" is ambiguous!";
+    auto range = aliases.equal_range(name);
+    for(auto i = range.first; i != range.second ;i++)
+      e<<"\n "<<i->first<<" -> "<<i->second;
+    throw e;
+  }
 }
 
 symbol_info Program::get_operator(const string& name) const
