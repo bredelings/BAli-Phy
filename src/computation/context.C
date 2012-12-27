@@ -582,7 +582,7 @@ context& context::operator=(const context& C)
   memory = C.memory;
   token = memory->copy_token(C.token);
   P = C.P;
-  notes     = C.notes;
+  notes = C.notes;
 
   return *this;
 }
