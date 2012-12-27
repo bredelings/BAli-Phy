@@ -648,7 +648,9 @@ expression_ref resolve_refs(const Program& P, const expression_ref& E)
   // Replace parameters with the appropriate reg_var: of value parameter( )
   if (object_ptr<const parameter> p = is_a<parameter>(E))
   {
-    string qualified_name = P.lookup_symbol(p->parameter_name).name;
+    symbol_info S = P.lookup_symbol(p->parameter_name);
+    assert(S.symbol_type = parameter_symbol);
+    string qualified_name = S.name;
 
     return parameter(qualified_name);
   }
@@ -656,7 +658,9 @@ expression_ref resolve_refs(const Program& P, const expression_ref& E)
   // Replace parameters with the appropriate reg_var: of value whatever
   if (object_ptr<const var> V = is_a<var>(E))
   {
-    string qualified_name = P.lookup_symbol(V->name).name;
+    symbol_info S = P.lookup_symbol(V->name);
+    assert(S.symbol_type == variable_symbol or S.symbol_type == constructor_symbol);
+    string qualified_name = S.name;
 
     return var(qualified_name);
   }
