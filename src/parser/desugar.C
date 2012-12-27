@@ -453,24 +453,11 @@ expression_ref get_fresh_id(const string& s, const expression_ref& E)
 }
 
 /*
- * To handle funlhs1, funlhs2, and funlhs3, we want to
- * (a) Transform the ASTs to funlhs1 before we try to bind variables.  This is because the function names will be bound
- *     in other decls in the same unit.
- * (b) Can we make a 1st pass over decls that doesn't bind ids?
- * (c) This first pass must
- *     (i) Translate funlhs2 to funlhs1.
- *        - Be able to complain about incorrect operator precedence at this stage.
- *     (ii) Translate funlhs3 to funlhs1. Children are translated first.
- * (d) A second stage translates funlhs1 to a standard let expression, I suppose.
- */
-
-
-/*
  * We probably want to move away from using dummies to represent patterns.
  * - Dummies can't represent e.g. irrefutable patterns.
  */
 
-expression_ref desugar(const Program& m, const expression_ref& E, const set<string>& bound)
+expression_ref desugar(const Program& m, const expression_ref& E, const set<string>& bound, bool resolve_ids)
 {
   vector<expression_ref> v = E->sub;
       
@@ -609,7 +596,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	else
 	  return var(qualified_name);
       }
-      else
+      else if (resolve_ids)
 	throw myexception()<<"Can't find id '"<<n->value<<"'";
     }
     else if (n->type == "Apply")
