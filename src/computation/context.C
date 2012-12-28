@@ -130,42 +130,6 @@ bool context::compute_expression_is_up_to_date(int index) const
   return reg_is_fully_up_to_date(H);
 }
 
-// Is there a way to generalize the updating of reg_var elements of structures,
-// when incremental evaluation walks a reg_var chain?
-
-expression_ref context::full_evaluate(int& R) const
-{
-  R = incremental_evaluate(R);
-  const closure& result = access_result(R);
-
-  {
-    // NOTE! result cannot be a index_var.
-    
-    // Therefore, if the result is atomic, then we are done.
-    if (not result.exp->size()) return result.exp;
-
-    // If the result is a lambda function, then we are done.
-    // (a) if we are going to USE this, we should just call lazy evaluate! (which return a heap variable)
-    // (b) if we are going to PRINT this, then we should probably normalize it more fully....?
-    if (not is_a<constructor>(result.exp)) return result.exp;
-  }
-
-  // If the result is a structure, then evaluate its fields and substitute them.
-  {
-    object_ptr<expression> E ( result.exp->clone() );
-    assert(is_a<constructor>(E));
-
-    for(int i=0;i<E->size();i++)
-    {
-      object_ptr<const index_var> V = assert_is_a<index_var>(E->sub[i]);
-      int R2 = result.lookup_in_env( V->index );
-
-      E->sub[i] = full_evaluate(R2);
-    }
-    return E;
-  }
-}
-
 /// Return the value of a particular index, computing it if necessary
 closure context::lazy_evaluate(int index) const
 {
@@ -184,15 +148,6 @@ object_ref context::evaluate(int index) const
   H = incremental_evaluate(H);
 
   return access_result(H).exp->head;
-}
-
-expression_ref context::evaluate_structure(int index) const
-{
-  int& H = *heads()[index];
-
-  H = incremental_evaluate(H);
-
-  return full_evaluate(H);
 }
 
 closure context::lazy_evaluate_expression_(closure&& C) const
@@ -219,23 +174,6 @@ object_ref context::evaluate_expression_(closure&& C) const
   return lazy_evaluate_expression_(std::move(C)).exp->head;
 }
 
-expression_ref context::evaluate_structure_expression_(closure&& C) const
-{
-  try {
-    int R = *push_temp_head();
-    set_C(R, std::move(C) );
-
-    expression_ref result = full_evaluate(R);
-    pop_temp_head();
-    return result;
-  }
-  catch (myexception& e)
-  {
-    pop_temp_head();
-    throw e;
-  }
-}
-
 closure context::lazy_evaluate_expression(const expression_ref& E) const
 {
   return lazy_evaluate_expression_( preprocess(E) );
@@ -244,11 +182,6 @@ closure context::lazy_evaluate_expression(const expression_ref& E) const
 object_ref context::evaluate_expression(const expression_ref& E) const
 {
   return evaluate_expression_( preprocess(E) );
-}
-
-expression_ref context::evaluate_structure_expression(const expression_ref& E) const
-{
-  return evaluate_structure_expression_( preprocess(E) );
 }
 
 bool context::parameter_is_set(int index) const

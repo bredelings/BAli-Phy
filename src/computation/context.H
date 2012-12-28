@@ -90,25 +90,16 @@ public:
   object_ref evaluate(int index) const;
 
   /// Return the value of a particular index, computing it if necessary
-  expression_ref evaluate_structure(int index) const;
-
-  /// Return the value of a particular index, computing it if necessary
   closure lazy_evaluate_expression_(closure&&) const;
 
   /// Return the value of a particular index, computing it if necessary
   object_ref evaluate_expression_(closure&&) const;
 
   /// Return the value of a particular index, computing it if necessary
-  expression_ref evaluate_structure_expression_(closure&&) const;
-
-  /// Return the value of a particular index, computing it if necessary
   closure lazy_evaluate_expression(const expression_ref&) const;
 
   /// Return the value of a particular index, computing it if necessary
   object_ref evaluate_expression(const expression_ref&) const;
-
-  /// Return the value of a particular index, computing it if necessary
-  expression_ref evaluate_structure_expression(const expression_ref&) const;
 
   template <typename T>
   object_ptr<const T> evaluate_as(int index) const
@@ -178,7 +169,6 @@ protected:
   void set_C(int R, closure&& c) const {memory->set_C(R,std::move(c));}
   void set_reduction_result(int R, closure&& result) const {memory->set_reduction_result(R, std::move(result) );}
   int incremental_evaluate(int R) const {return memory->incremental_evaluate(R,token);}
-  expression_ref full_evaluate(int& R) const;
 
   /// Allocate a reg which will be a root for garbage-collection
   root_t allocate_reg() const {
