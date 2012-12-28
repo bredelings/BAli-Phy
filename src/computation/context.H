@@ -2,6 +2,7 @@
 
 #include "computation/graph_register.H"
 #include "computation/model_notes.H"
+#include "computation/program.H"
 #include "cow-ptr.H"
 
 class Module;
@@ -21,7 +22,7 @@ private:
 
   // FIXME:speed - This is going to be really slow to copy around all the time!
   // FIXME:speed - Instead, wrap in cow_ptr< >.
-  std::vector<Module> P;
+  cow_ptr<Program> P;
 
   int token;
 
@@ -53,7 +54,7 @@ private:
 
 public:
 
-  const std::vector<Module>& get_Program() const {return P;}
+  const std::vector<Module>& get_Program() const {return *P;}
 
   int add_note(const expression_ref&);
 

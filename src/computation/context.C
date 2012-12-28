@@ -54,7 +54,7 @@ closure context::preprocess(const closure& C) const
 {
   assert(let_float(C.exp)->print() == let_float(let_float(C.exp))->print());
   //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
-  return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(P, closure(C) ) ) ) ) ) );
+  return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(*P, closure(C) ) ) ) ) ) );
 }
 
 string context::parameter_name(int i) const
@@ -352,7 +352,7 @@ int context::add_parameter(const string& name)
   if (module_name == "")
     module_name = "Main";
   bool found = false;
-  for(auto& module:P)
+  for(auto& module: *P.modify())
   {
     if (module.module_name == module_name)
     {
@@ -365,7 +365,7 @@ int context::add_parameter(const string& name)
   {
     Module module(module_name);
     module.declare_parameter(get_unqualified_name(name));
-    P.push_back(module);
+    P.modify()->push_back(module);
     // FIXME:maybe-works - Do all other modules now need to import this??
   }
 
@@ -542,21 +542,22 @@ context& context::operator+=(const vector<string>& module_names)
 
 context& context::operator+=(const vector<Module>& P2)
 {
-  P.insert(P.end(),P2.begin(),P2.end());
+  Program& PP = *P.modify();
+  PP.insert(PP.end(),P2.begin(),P2.end());
 
   // 1. Add any additional modules needed to complete the program.
   std::set<string> modules_to_add;
   do
   {
     for(const string& module_name: modules_to_add)
-      P.push_back(load_module(get_module_path(),module_name));
+      P.modify()->push_back(load_module(get_module_path(),module_name));
 
     modules_to_add.clear();
       
-    for(const auto& module: P)
+    for(const auto& module: PP)
     {
       for(const string& module_name: module.dependencies)
-	if (not contains_module(P,module_name))
+	if (not contains_module(PP,module_name))
 	  modules_to_add.insert(module_name);
     }
       
@@ -564,17 +565,17 @@ context& context::operator+=(const vector<Module>& P2)
 
   // 2a. Perform any needed imports.
   // 2b. Desugar the module here.
-  for(auto& module: P)
+  for(auto& module: PP)
     if (contains_module(P2,module.module_name))
     {
-      module.perform_imports(P);
+      module.perform_imports(PP);
       // resolve identifiers here?
       // set bodies here, only fixity and names before?
       // well, they are kind of useless before here, so maybe so.
     }
 
   // 3. Give each identifier a pointer to an unused location
-  for(auto& module: P)
+  for(auto& module: PP)
     if (contains_module(P2,module.module_name))
       for(const auto& s: module.get_symbols())
       {
@@ -591,7 +592,7 @@ context& context::operator+=(const vector<Module>& P2)
       }
       
   // 4. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-  for(auto& module: P)
+  for(auto& module: PP)
     if (contains_module(P2,module.module_name))
       for(const auto& s: module.get_symbols())
       {
@@ -672,6 +673,7 @@ context::context(const vector<string>& module_path, const vector<expression_ref>
 
 context::context(const vector<string>& module_path, const vector<expression_ref>& N, const vector<Module>& Ps)
   :memory(new reg_heap()),
+   P(new Program),
    token(memory->get_unused_token()),
    module_path_(module_path)
 {
