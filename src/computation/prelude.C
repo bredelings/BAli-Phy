@@ -15,32 +15,42 @@ namespace fs = boost::filesystem;
 using std::vector;
 using std::string;
 
-/* TODO:
+/* \todo: List of things to do to clean up programs.
  * 1. [DONE] Remove true/false in favor of True/False.
  * 2. [DONE] Convert strings to [Char]
- * 3. [DONE] Convert Defs to use the machine.
- * 4. SYNTAX: replace a ~ b ( c ) with a ~ b
- * 5. SYNTAX: external a ~ b [To not declare all parameters]
- * 6. [DONE] Allow defs in BUGS files.
- * 7. Rationalize Model_Notes, formula_expression_ref, and program?
- *    - Make Model_Notes into a Program with notes added?
- *    - Could we parse a BUGS file in to a Model_Notes?
- * 8. Try to rewrite e.g. M8b into a BUGS module.
- * 9. Add default values and Bounds to distributions.
+ *    3. Update probability functions to separate the family from the probability object.
+ *        3a. Construct the ExpOf transform to make logNormal, logGamma, etc.
+ * 4. [DONE] Convert Defs to use the machine.
+ * 5. SYNTAX: replace a ~ b ( c ) with a ~ b
+ *      5a. Choose kernels based on the range, not based on the distribution name.
+ * 6. SYNTAX: external a ~ b [To not declare all parameters]
+ * 7. [DONE] Allow defs in BUGS files.
+ * 8. Rationalize Model_Notes, formula_expression_ref, and program?
+ *    - [DONE] Make Model_Notes into a Program with notes added?
+ *    - [DONE] Could we parse a BUGS file in to a Model_Notes?
+ *    - Eliminate C++ operators on formula_expression_ref -> use parser instead.
+ *    - Eliminate C++ operators on expression_ref -> use parser instead.
+ * 9. Try to rewrite e.g. M8b into a BUGS module.
+ * 10. Add default values and Bounds to distributions.
+ *    - [DONE] Add Bounds to distributions.
  *    - Ah, but how to we add default values to distributions that return random structures?
  *    - Well, do we want to supply Bounds for structure ELEMENTS?  Uh-oh -- we might!
- * 10. [DONE] Convert all of distribution-operations.H to the parser.
- * 11. [DONE] Remove arity argument to def_function.
- * 12. Rationalize Programs, Modules.
- * 13. [DONE] Allow loading stuff from files.
- * 14. *Delay desugaring (and thus resolving symbols) until modules are (jointly) loaded into the machine.
- * 15. [DONE] Process imports
- *     + (14) Is required to process mutually dependent modules.
- *     + Note that clashing declarations are allowed if the symbol is unreferenced!
- * 16. Handle 'where' clauses (e.g. in "alt")
- * 17. Handle guards clauses (e.g. in gdrhs, and gdpat)
+ * 11. [DONE] Convert all of distribution-operations.H to the parser.
+ * 12. [DONE] Remove arity argument to def_function.
+ * 13. Rationalize Programs, Modules.
+ *     13a. [DONE] Allow loading stuff from files.
+ *     13b. [DONE] Allow importing, desugaring, and thus resolving symbols after modules are (jointly) loaded into the machine.
+ *     13c. Remove any earlier attempts at importing.
+ * 14. [DONE] Process imports
+ *     + [DONE] 14a. Process mutually dependent modules.
+ *     + [DONE] 15b. Note that clashing declarations are allowed if the symbol is unreferenced!
+ * 15. Handle 'where' clauses (e.g. in "alt")
+ * 16. Handle guards clauses (e.g. in gdrhs, and gdpat)
+ *     + I *think* that guards cannot fail in a way that makes the rule fail and move to the next rule.
+ *     + If so, the guards can be processed as a special RHS.
+ * 17. Compute the entire probability expression, instead of adding pieces incrementally.
  * 18. Make Context load an entire program, instead of adding pieces incrementally.
- * 19. Compute the entire probability expression, instead of adding pieces incrementally.
+ *     19. Move the Program from Context to reg_heap.
  */
 
 
