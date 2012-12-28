@@ -1222,14 +1222,6 @@ Parameters::Parameters(const vector<string>& module_path,
   tree_program.def_constructor("Tree",4);
   tree_program.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
 
-  // Things to add to parse:
-  // - infix handling for patterns - disambiguation in left- and right-sections also.
-  //   + however, maybe postpone the infix handling since this is only for error checking.
-  //   + allow (x op y) z = ...
-  // - list comprehensions
-  // Does case x of y -> y work?
-
-  // edgeForNodes t (n1, n2) = [b | b <- (edgesOutOfNode t n1), target t b == n2]
   tree_program += "{\
 numNodes (Tree _ _ n _) = n;\
 numBranches (Tree _ _ _ n) = n;\

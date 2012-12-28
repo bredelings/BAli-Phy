@@ -181,69 +181,26 @@ expression_ref load_module_from_file(const vector<string>& module_root_paths, co
 
 Program load_module(const vector<string>& modules_path, const string& modid)
 {
-  Program Module(modid);
+  Program M(modid);
   if (modid == "Prelude")
-    Module = get_Prelude();
+    M = get_Prelude();
   else if (modid == "Distributions")
-    Module = Distribution_Functions(modules_path);
+    M = Distribution_Functions(modules_path);
   else if (modid == "Range")
-    Module = Range_Functions(modules_path);
+    M = Range_Functions(modules_path);
   else if (modid == "SModel")
-    Module = SModel_Functions(modules_path);
+    M = SModel_Functions(modules_path);
   else if (modid == "PopGen")
-    Module = PopGen_Functions(modules_path);
+    M = PopGen_Functions(modules_path);
 
   expression_ref module = load_module_from_file(modules_path,modid);
 
-  // 3. module = [optional name] + body
-  string module_name = modid;
-  expression_ref body;
-  if (module->sub.size() == 1)
-    body = module->sub[0];
-  else
-  {
-    string module_name = *module->sub[0].is_a<String>();
-    if (module_name != modid)
-      throw myexception()<<"Module file '"<<modid<<".hs' contains different module '"<<module_name<<"'";
-    body = module->sub[1];
-  }
-  assert(is_AST(body,"Body"));
+  M += module;
 
-  // 4. body = impdecls + [optional topdecls]
-  expression_ref impdecls;
-  expression_ref topdecls;
-  for(const auto& E: body->sub)
-    if (is_AST(E,"TopDecls"))
-      topdecls = E;
-    else if (is_AST(E,"impdecls"))
-      impdecls = E;
+  if (M.module_name != modid)
+    throw myexception()<<"Module file '"<<modid<<".hs' contains different module '"<<M.module_name<<"'";
 
-  // 5. Do imports.
-  if (module_name != "Prelude")
-    Module.import_module(modules_path, "Prelude", false);
-
-  if (impdecls)
-  {
-    for(const auto& impdecl:impdecls->sub)
-    {
-      int i=0;
-      bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
-      if (qualified) i++;
-      string imp_module_name = *impdecl->sub[i++].is_a<String>();
-      string imp_module_name_as = imp_module_name;
-      if (i < impdecl->sub.size() and impdecl->sub[i++].is_a<String>()->t == "as")
-	imp_module_name_as = *impdecl->sub[i++].is_a<String>();
-      assert(i == impdecl->sub.size());
-      //      if (qualified) std::cerr<<"qualified ";
-      //      std::cerr<<imp_module_name<<" as "<<imp_module_name_as<<"\n";
-      Module.import_module(modules_path, imp_module_name,qualified);
-    }
-  }
-
-  if (topdecls)
-    Module += topdecls;
-
-  return Module;
+  return M;
 }
 
 vector<Program> load_modules(const vector<string>& modules_path, const vector<string>& module_names)

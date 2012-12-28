@@ -2,6 +2,7 @@
 #include "prelude.H"
 #include "program.H"
 #include "let-float.H"
+#include "parser/desugar.H"
 
 using std::string;
 using std::vector;
@@ -42,11 +43,17 @@ closure Fun_normalize(closure&& C)
   return C;
 }
 
+closure resolve_refs(const vector<Program>& P, closure&& C)
+{
+  C.exp = resolve_refs(P, C.exp);
+  return C;
+}
+
 closure context::preprocess(const closure& C) const
 {
   assert(let_float(C.exp)->print() == let_float(let_float(C.exp))->print());
   //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
-  return trim_normalize( indexify( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) );
+  return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(P, closure(C) ) ) ) ) ) );
 }
 
 string context::parameter_name(int i) const
@@ -69,7 +76,7 @@ reg_heap::root_t context::add_identifier(const string& name) const
 
 int context::add_note(const expression_ref& E)
 {
-  return Model_Notes::add_note(resolve_refs(*P,E));
+  return Model_Notes::add_note( E );
 }
 
 
@@ -341,18 +348,24 @@ int context::add_parameter(const string& name)
   string module_name = get_module_name(name);
   string var_name = get_unqualified_name(name);
   string full_name = name;
-  if (module_name == "" or module_name == P->module_name)
+  if (module_name == "")
+    module_name = "Main";
+  bool found = false;
+  for(auto& module:P)
   {
-    module_name = P->module_name;
-    full_name = module_name + "." + var_name;
-    P.modify()->declare_parameter(var_name);
+    if (module.module_name == module_name)
+    {
+      full_name = module_name + "." + var_name;
+      module.declare_parameter(var_name);
+      found = true;
+    }
   }
-  else
+  if (not found)
   {
-    // FIXME: Right now the main program has a name.  What if the parameter is in that specific module?
-    Program M(get_module_name(name));
-    M.declare_parameter(get_unqualified_name(name));
-    P.modify()->import_module(M, false);
+    Program module(module_name);
+    module.declare_parameter(get_unqualified_name(name));
+    P.push_back(module);
+    // FIXME:maybe-works - Do all other modules now need to import this??
   }
 
   assert(full_name.size() != 0);
@@ -445,7 +458,8 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
   // Replace parameters with the appropriate reg_var: of value parameter( )
   if (object_ptr<const parameter> p = is_a<parameter>(E))
   {
-    string qualified_name = P->lookup_symbol(p->parameter_name).name;
+    string qualified_name = p->parameter_name;
+    assert(is_qualified_symbol(qualified_name));
 
     int param_index = find_parameter(qualified_name);
     
@@ -458,13 +472,14 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
   // Replace parameters with the appropriate reg_var: of value whatever
   if (object_ptr<const var> V = is_a<var>(E))
   {
-    string qualified_name = P->lookup_symbol(V->name).name;
+    string qualified_name = V->name;
+    assert(is_qualified_symbol(qualified_name) or is_haskell_builtin_con_name(qualified_name));
     auto loc = identifiers().find( qualified_name );
     if (loc == identifiers().end())
     {
       if (is_haskell_builtin_con_name(V->name))
       {
-	symbol_info S = P->lookup_builtin_symbol(V->name);
+	symbol_info S = Program::lookup_builtin_symbol(V->name);
 	add_identifier(S.name);
       
 	// get the root for each identifier
@@ -519,58 +534,83 @@ const vector<string>& context::get_module_path() const
   return module_path_;
 }
 
-context& context::operator+=(const std::vector<string>& module_names)
+context& context::operator+=(const vector<string>& module_names)
 {
   return operator+=(load_modules(get_module_path(), module_names));
 }
 
-context& context::operator+=(const std::vector<Program>& P2)
+context& context::operator+=(const vector<Program>& P2)
 {
-  // FIXME - this is really creating a combined program, not just importing aliases!
-  // At this level, aliases should be overwritten with local function bodies.
-  // Aliases are really undefined functions!
+  P.insert(P.end(),P2.begin(),P2.end());
 
-  // Import the symbols in P2 into our symbol table, and add aliases.
-  for(const auto p: P2)
-    P.modify()->import_module(p, false);
+  // 1. Add any additional modules needed to complete the program.
+  std::set<string> modules_to_add;
+  do
+  {
+    for(const string& module_name: modules_to_add)
+      P.push_back(load_module(get_module_path(),module_name));
 
-  // Give each identifier a pointer to an unused location
-  for(const auto p: P2)
-    for(const auto& s: p.get_symbols())
+    modules_to_add.clear();
+      
+    for(const auto& module: P)
     {
-      const symbol_info& S = s.second;
+      for(const string& module_name: module.dependencies)
+	if (not contains_module(P,module_name))
+	  modules_to_add.insert(module_name);
+    }
       
-      if (S.scope != local_scope) continue;
-      
-      if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
-      
-      if (identifiers().count(S.name))
-	throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined in module '"<<P->module_name<<"'";
-      
-      add_identifier(S.name);
+  } while (not modules_to_add.empty());
+
+  // 2a. Perform any needed imports.
+  // 2b. Desugar the module here.
+  for(auto& module: P)
+    if (contains_module(P2,module.module_name))
+    {
+      module.perform_imports(P);
+      // resolve identifiers here?
+      // set bodies here, only fixity and names before?
+      // well, they are kind of useless before here, so maybe so.
     }
 
-  // Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-  for(const auto p: P2)
-    for(const auto& s: p.get_symbols())
-    {
-      const symbol_info& S = s.second;
+  // 3. Give each identifier a pointer to an unused location
+  for(auto& module: P)
+    if (contains_module(P2,module.module_name))
+      for(const auto& s: module.get_symbols())
+      {
+	const symbol_info& S = s.second;
+	
+	if (S.scope != local_scope) continue;
+	
+	if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+	
+	if (identifiers().count(S.name))
+	  throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined!";
+	
+	add_identifier(S.name);
+      }
       
-      if (S.scope != local_scope) continue;
-      
-      if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
-      
-      // get the root for each identifier
-      map<string, root_t>::iterator loc = identifiers().find(S.name);
-      assert(loc != identifiers().end());
-      root_t r = loc->second;
-      int R = *r;
-      
-      expression_ref F = p.get_function(S.name);
-      
-      assert(R != -1);
-      set_C(R, preprocess(F) );
-    }
+  // 4. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
+  for(auto& module: P)
+    if (contains_module(P2,module.module_name))
+      for(const auto& s: module.get_symbols())
+      {
+	const symbol_info& S = s.second;
+	  
+	if (S.scope != local_scope) continue;
+	  
+	if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+	  
+	// get the root for each identifier
+	map<string, root_t>::iterator loc = identifiers().find(S.name);
+	assert(loc != identifiers().end());
+	root_t r = loc->second;
+	int R = *r;
+	  
+	expression_ref F = module.get_function(S.name);
+	  
+	assert(R != -1);
+	set_C(R, preprocess(F) );
+      }
 
   return *this;
 }
@@ -631,7 +671,6 @@ context::context(const vector<string>& module_path, const vector<expression_ref>
 
 context::context(const vector<string>& module_path, const vector<expression_ref>& N, const vector<Program>& Ps)
   :memory(new reg_heap()),
-   P(new Program("Main")),
    token(memory->get_unused_token()),
    module_path_(module_path)
 {

@@ -1,3 +1,4 @@
+#include <set>
 #include "computation/program.H"
 #include "myexception.H"
 #include "computation/graph_register.H"
@@ -10,6 +11,7 @@
 
 using std::pair;
 using std::map;
+using std::set;
 using std::string;
 using std::vector;
 
@@ -199,7 +201,8 @@ void Program::import_symbol(const symbol_info& S, const string& modid, bool qual
 
 void Program::import_module(const Program& P2, const string& modid, bool qualified)
 {
-  imported.insert(modid);
+  assert(modid != module_name);
+  imported.insert(P2.module_name);
 
   for(const auto& p: P2.symbols)
   {
@@ -217,7 +220,7 @@ void Program::import_module(const Program& P2, bool qualified)
 
 void Program::import_module(const vector<string>& path, const string& modid, bool qualified)
 {
-  if (not imported.count(modid))
+  if (not imported.count(modid) and modid != module_name)
   {
     Program mod = load_module(path, modid);
     import_module(mod, qualified);
@@ -226,11 +229,82 @@ void Program::import_module(const vector<string>& path, const string& modid, boo
 
 void Program::import_module(const vector<string>& path, const string& modid, const string& modid2, bool qualified)
 {
-  if (not imported.count(modid))
+  if (not imported.count(modid) and modid != module_name)
   {
     Program mod = load_module(path, modid);
     import_module(mod, modid2, qualified);
   }
+}
+
+Program find_module(const string& module_name, const std::vector<Program>& P)
+{
+  for(const auto& module: P)
+    if (module.module_name == module_name)
+      return module;
+  std::abort();
+}
+
+void Program::perform_imports(const std::vector<Program>& P)
+{
+  bool saw_Prelude = false;
+  if (impdecls)
+    for(const auto& impdecl:impdecls->sub)
+    {
+      int i=0;
+      bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
+      if (qualified) i++;
+    
+      string imp_module_name = *impdecl->sub[i++].is_a<String>();
+      
+      string imp_module_name_as = imp_module_name;
+      if (i < impdecl->sub.size() and impdecl->sub[i++].is_a<String>()->t == "as")
+	imp_module_name_as = *impdecl->sub[i++].is_a<String>();
+      
+      assert(i == impdecl->sub.size());
+      
+      Program M = find_module(imp_module_name,P);
+
+      import_module(M, imp_module_name_as, qualified);
+      if (imp_module_name == "Prelude")
+	saw_Prelude = true;
+    }
+
+  // Import the Prelude if it wasn't explicitly mentioned in the import list.
+  if (not saw_Prelude and module_name != "Prelude" and not imported.count("Prelude"))
+  {
+    Program M = find_module("Prelude",P);
+    import_module(M,"Prelude",false);
+  }
+
+  if (not topdecls) return;
+
+  // 1. Desugar the module
+  expression_ref decls = desugar2(*this,topdecls);
+  
+  // 2. Convert top-level dummies into global vars.
+  vector<expression_ref> decls_sub = decls->sub;
+  for(auto& decl: decls_sub)
+    if (is_AST(decl,"Decl"))
+      for(auto& p: symbols)
+      {
+	const auto& S = p.second;
+	if (S.symbol_type != variable_symbol) continue;
+	if (S.scope != local_scope) continue;
+
+	string qname = S.name;
+	string name = get_unqualified_name(qname);
+	
+	decl = substitute(decl,dummy(qname),var(qname));
+	decl = substitute(decl,dummy( name),var(qname));
+      }
+  
+  // 3. Define the symbols
+  for(const auto& decl: decls_sub)
+    if (is_AST(decl,"Decl"))
+    {
+      string name = decl->sub[0].assert_is_a<var>()->name;
+      symbols[name].body = decl->sub[1];
+    }
 }
 
 bool Program::is_declared(const std::string& name) const
@@ -238,7 +312,7 @@ bool Program::is_declared(const std::string& name) const
   return is_haskell_builtin_con_name(name) or (aliases.count(name) > 0);
 }
 
-symbol_info Program::lookup_builtin_symbol(const std::string& name) const
+symbol_info Program::lookup_builtin_symbol(const std::string& name)
 {
   if (name == "()")
     return symbol_info("()", constructor_symbol, global_scope, 0, constructor("()",0));
@@ -342,7 +416,8 @@ vector<string> get_haskell_identifier_path(const std::string& s)
   if (not is_haskell_varid(path.back()) and
       not is_haskell_conid(path.back()) and
       not is_haskell_varsym(path.back()) and
-      not is_haskell_consym(path.back()))
+      not is_haskell_consym(path.back()) and
+      not is_haskell_builtin_con_name(path.back()))
     throw myexception()<<"Unqualified name '"<<path.back()<<"' in identifier '"<<s<<"' is not legal!";
 
   return path;
@@ -476,12 +551,97 @@ Program& Program::operator+=(const string& s)
   return operator+=(parse_haskell_decls(s));
 }
 
-Program& Program::operator+=(const expression_ref& H)
+// Here we do only phase 1 -- we only parse the decls enough to
+//   determine which is a variable, and which are e.g. constructors.
+// We can't determine function bodies at all, since we can't even handle op definitions
+//   before we know fixities!
+
+string get_function_name(const expression_ref& E)
 {
-  assert(is_AST(H,"Decls") or is_AST(H,"TopDecls"));
+  if (is_AST(E,"funlhs1"))
+  {
+    expression_ref f = E->sub[0];
+    assert(is_AST(f,"id"));
+
+    return f.assert_is_a<AST_node>()->value;
+  }
+  else if (is_AST(E,"funlhs2"))
+  {
+    expression_ref f = E->sub[1];
+    assert(is_AST(f,"id"));
+    return f.assert_is_a<AST_node>()->value;
+  }
+  else if (is_AST(E,"funlhs3"))
+    return get_function_name(E->sub[0]);
+  std::abort();
+}
+
+set<string> find_bound_vars(const expression_ref& E);
+
+Program& Program::operator+=(const expression_ref& E)
+{
+  expression_ref decls = E;
+
+  if (is_AST(E,"Module"))
+  {
+    if (module)
+      throw myexception()<<"Can't load new module over old module '"<<module_name<<"'";
+
+    module = E;
+
+    // 1. module = [optional name] + body
+    if (module->sub.size() == 1)
+      body = module->sub[0];
+    else
+    {
+      string module_name2 = *module->sub[0].is_a<String>();
+      if (not module_name.empty() and module_name != module_name2)
+	throw myexception()<<"Overwriting module name '"<<module_name<<"' with '"<<module_name2<<"'";
+      module_name = module_name2;
+
+      body = module->sub[1];
+    }
+    assert(is_AST(body,"Body"));
+
+    // 2. body = impdecls + [optional topdecls]
+    for(const auto& E: body->sub)
+      if (is_AST(E,"TopDecls"))
+	topdecls = E;
+      else if (is_AST(E,"impdecls"))
+	impdecls = E;
+    
+    // 3. Do imports.
+    if (impdecls)
+    {
+      for(const auto& impdecl:impdecls->sub)
+      {
+	int i=0;
+	bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
+	if (qualified) i++;
+
+	string imp_module_name = *impdecl->sub[i++].is_a<String>();
+
+	string imp_module_name_as = imp_module_name;
+	if (i < impdecl->sub.size() and impdecl->sub[i++].is_a<String>()->t == "as")
+	  imp_module_name_as = *impdecl->sub[i++].is_a<String>();
+
+	assert(i == impdecl->sub.size());
+
+	//	Module.import_module(modules_path, imp_module_name, qualified);
+	dependencies.insert(imp_module_name);
+      }
+    }
+
+    if (not topdecls)
+      return *this;
+    else
+      decls = topdecls;
+  }
+
+  assert(is_AST(decls,"Decls") or is_AST(decls,"TopDecls"));
 
   // 0. Get names that are being declared.
-  for(const auto& decl: H->sub)
+  for(const auto& decl: decls->sub)
     if (is_AST(decl,"FixityDecl"))
     {
       // Determine fixity.
@@ -511,30 +671,62 @@ Program& Program::operator+=(const expression_ref& H)
 	declare_fixity(name, precedence, fixity);
       }
     }
+    else if (is_AST(decl,"Decl"))
+    {
+      expression_ref lhs = decl->sub[0];
+      set<string> vars;
+      if (is_AST(lhs,"funlhs1") or is_AST(lhs,"funlhs2") or is_AST(lhs,"funlhs3"))
+	vars.insert( get_function_name(lhs) );
+      else
+	vars = find_bound_vars(lhs);
 
-  expression_ref D = desugar(*this, H);
-  vector<expression_ref> decls = D->sub;
+      for(const auto& var_name: vars)
+      {
+	// We don't know the type yet, probably, because we don't know the body.
+	string qualified_name = module_name+"."+var_name;
+	auto loc = symbols.find(qualified_name);
 
-  // 1. Get names that are being declared.
-  vector<string> names;
-  for(const auto& decl: decls)
-    if (is_AST(decl,"Decl"))
-      names.push_back( decl->sub[0].assert_is_a<dummy>()->name );
+	if (loc != symbols.end())
+	{
+	  symbol_info& S = loc->second;
+	  // Only the fixity has been declared!
+	  if (S.symbol_type == unknown_symbol and not S.body and not S.type)
+	    S.symbol_type = variable_symbol;
+	}
+	else
+	  def_function(var_name,{});
+      }
+    }
+      
+
+  if (module) return *this;
+
+  // 1. Desugar the decls
+  decls = desugar2(*this, decls);
 
   // 2. Convert top-level dummies into global vars.
-  for(auto& decl: decls)
+  vector<expression_ref> decls_sub = decls->sub;
+  for(auto& decl: decls_sub)
     if (is_AST(decl,"Decl"))
-      for(const auto& name: names)
-	decl = substitute(decl,dummy(name),var(name));
+      for(auto& p: symbols)
+      {
+	const auto& S = p.second;
+	if (S.symbol_type != variable_symbol) continue;
+	if (S.scope != local_scope) continue;
 
+	string qname = S.name;
+	string name = get_unqualified_name(qname);
+	
+	decl = substitute(decl,dummy(qname),var(qname));
+	decl = substitute(decl,dummy( name),var(qname));
+      }
+  
   // 3. Define the symbols
-  for(const auto& decl: decls)
+  for(const auto& decl: decls_sub)
     if (is_AST(decl,"Decl"))
     {
       string name = decl->sub[0].assert_is_a<var>()->name;
-      // I think this is never used, for functions.  For constructors it does matter, though.
-      expression_ref E = decl->sub[1];
-      def_function(name, E);
+      symbols[name].body = decl->sub[1];
     }
 
   return *this;
@@ -643,26 +835,36 @@ std::ostream& operator<<(std::ostream& o, const Program& D)
   return o;
 }
 
-expression_ref resolve_refs(const Program& P, const expression_ref& E)
+expression_ref resolve_refs(const vector<Program>& P, const expression_ref& E)
 {
   // Replace parameters with the appropriate reg_var: of value parameter( )
   if (object_ptr<const parameter> p = is_a<parameter>(E))
   {
-    symbol_info S = P.lookup_symbol(p->parameter_name);
-    assert(S.symbol_type = parameter_symbol);
-    string qualified_name = S.name;
-
-    return parameter(qualified_name);
+    string name = p->parameter_name;
+    if (not is_qualified_symbol(name))
+      for(const auto& module: P)
+	if (module.is_declared(name))
+	{
+	  symbol_info S = module.lookup_symbol(name);
+	  assert(S.symbol_type = parameter_symbol);
+	  string qualified_name = S.name;
+	  return parameter(qualified_name);
+	}
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
   if (object_ptr<const var> V = is_a<var>(E))
   {
-    symbol_info S = P.lookup_symbol(V->name);
-    assert(S.symbol_type == variable_symbol or S.symbol_type == constructor_symbol);
-    string qualified_name = S.name;
-
-    return var(qualified_name);
+    string name = V->name;
+    if (not is_qualified_symbol(name))
+      for(const auto& module: P)
+	if (module.is_declared(name))
+	{
+	  symbol_info S = module.lookup_symbol(name);
+	  assert(S.symbol_type = parameter_symbol);
+	  string qualified_name = S.name;
+	  return var(qualified_name);
+	}
   }
 
   // Other constants have no parts, and don't need to be resolved
@@ -674,4 +876,12 @@ expression_ref resolve_refs(const Program& P, const expression_ref& E)
     V->sub[i] = resolve_refs(P, V->sub[i]);
 
   return V;
+}
+
+bool contains_module(const vector<Program>& P, const string& module_name)
+{
+  for(const auto& module: P)
+    if (module.module_name == module_name)
+      return true;
+  return false;
 }

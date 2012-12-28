@@ -59,11 +59,16 @@ class Program
 
   std::multimap<std::string, std::string> aliases;
 
-  std::set<std::string> dependendies;
-
   std::set<std::string> imported;
 
 public:
+  std::set<std::string> dependencies;
+
+  expression_ref module;
+  expression_ref body;
+  expression_ref impdecls;
+  expression_ref topdecls;
+  
   std::string module_name;
 
   const std::map<std::string, symbol_info>& get_symbols() const {return symbols;}
@@ -112,9 +117,11 @@ public:
 
   void import_module(const std::vector<std::string>& path, const std::string&, const std::string&, bool qualified);
 
+  void perform_imports(const std::vector<Program>&);
+
   bool is_declared(const std::string&) const;
 
-  symbol_info lookup_builtin_symbol(const std::string&) const;
+  static symbol_info lookup_builtin_symbol(const std::string&);
 
   symbol_info lookup_symbol(const std::string&) const;
 
@@ -127,6 +134,7 @@ public:
 
 std::ostream& operator<<(std::ostream&, const Program&);
 
-expression_ref resolve_refs(const Program&, const expression_ref&);
+expression_ref resolve_refs(const std::vector<Program>&, const expression_ref&);
 
+bool contains_module(const std::vector<Program>& P, const std::string& module_name);
 #endif

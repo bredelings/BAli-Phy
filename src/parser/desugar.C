@@ -198,7 +198,29 @@ expression_ref infixpat_parse(const Program& m, const symbol_info& op1, const ex
   if (T.empty())
     return E1;
 
-  symbol_info op2 = m.get_operator( assert_is_a<const var>(T.front())->name );
+  symbol_info op2;
+  if (auto v = T.front().is_a<const var>())
+    op2 = m.get_operator( v->name );
+  else if (auto n = T.front().is_a<const AST_node>())
+  {
+    // FIXME:correctness - each decls frame should first add all defined variables to bounds, which should contain symbol_infos.
+    if (n->type == "id")
+    {
+      string name = n->value;
+      if (m.is_declared( name ) )
+	op2 = m.get_operator( name );
+      else
+      {
+	op2.precedence = 9;
+	op2.fixity = left_fix;
+      }
+    }
+    else
+      throw myexception()<<"Can't use expression '"<<T.front()->print()<<"' as infix operator.";
+  }
+  else
+    throw myexception()<<"Can't use expression '"<<T.front()->print()<<"' as infix operator.";
+
 
   // illegal expressions
   if (op1.precedence == op2.precedence and (op1.fixity != op2.fixity or op1.fixity == non_fix))
@@ -457,26 +479,13 @@ expression_ref get_fresh_id(const string& s, const expression_ref& E)
  * - Dummies can't represent e.g. irrefutable patterns.
  */
 
-expression_ref desugar(const Program& m, const expression_ref& E, const set<string>& bound, bool resolve_ids)
+expression_ref desugar1(const Program& m, const expression_ref& E, const set<string>& bound)
 {
   vector<expression_ref> v = E->sub;
       
   if (object_ptr<const AST_node> n = E.is_a<AST_node>())
   {
-    if (n->type == "infixexp")
-    {
-      vector<expression_ref> args = E->sub;
-      while(is_AST(args.back(),"infixexp"))
-      {
-	expression_ref E2 = args.back();
-	args.pop_back();
-	args.insert(args.end(),E2->sub.begin(),E2->sub.end());
-      }
-      for(auto& e: args)
-	e = desugar(m, e, bound);
-      return desugar_infix(m, args);
-    }
-    else if (n->type == "pat")
+    if (n->type == "pat")
     {
       // 1. Collect the entire pat expression in 'args'.
       vector<expression_ref> args = v;
@@ -489,20 +498,20 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 
       // 2. We could probably do this later.
       for(auto& arg: args)
-	arg = desugar(m, arg, bound);
+	arg = desugar1(m, arg, bound);
 
       return desugar_infixpat(m, args);
     }
     else if (n->type == "Tuple")
     {
       for(auto& e: v)
-	e = desugar(m, e, bound);
+	e = desugar1(m, e, bound);
       return get_tuple(v);
     }
     else if (n->type == "List")
     {
       for(auto& e: v)
-	e = desugar(m, e, bound);
+	e = desugar1(m, e, bound);
       return get_list(v);
     }
     else if (n->type == "Decls" or n->type == "TopDecls")
@@ -529,7 +538,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       {
 	if (is_AST(e,"EmptyDecl")) continue;
 	if (is_AST(e,"FixityDecl")) continue;
-	e = desugar(m, e, bound2);
+	e = desugar1(m, e, bound2);
       }
 
       // Convert fundecls to normal decls
@@ -548,7 +557,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 
 	// Replace bound vars in (a) the patterns and (b) the body
 	for(auto& e: v)
-	  e = desugar(m, e, bound2);
+	  e = desugar1(m, e, bound2);
 
 	return new expression(E->head,v);
       }
@@ -568,7 +577,467 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	assert(is_AST(decls,"Decls"));
 	expression_ref E2 = {AST_node("Let"),{decls,E->sub[0]}};
 	E2 = {AST_node("rhs"),{E2}};
-	return desugar(m,E2,bound);
+	return desugar1(m,E2,bound);
+      }
+      else
+      { }      // Fall through and let the standard case handle this.
+    }
+    else if (n->type == "apat_var")
+    {
+      return dummy(n->value);
+    }
+    else if (n->type == "WildcardPattern")
+    {
+      return dummy(-1);
+    }
+    // Don't do Apply here -- we need to know if this is a constructor or not.
+    else if (n->type == "ListComprehension")
+    {
+      expression_ref E2 = E;
+      // [ e | True   ]  =  [ e ]
+      // [ e | q      ]  =  [ e | q, True ]
+      // [ e | b, Q   ]  =  if b then [ e | Q ] else []
+      // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in Prelude.concatMap ok l
+      // [ e | let decls, Q] = let decls in [ e | Q ]
+
+      expression_ref True {AST_node("SimpleQual"),{constructor("True",0)}};
+
+      assert(v.size() >= 2);
+      if (v.size() == 2 and v[1]->compare(*True))
+	E2 = {AST_node("List"),{v[0]}};
+      else if (v.size() == 2)
+	E2 = {E->head,{v[0],v[1],True}};
+      else 
+      {
+	expression_ref B = v[1];
+	v.erase(v.begin()+1);
+	E2 = {E->head,v};
+
+	if (B->assert_is_a<AST_node>()->type == "SimpleQual")
+	  E2 = {AST_node("If"),{B->sub[0],E2,AST_node("id","[]")}};
+	else if (B->assert_is_a<AST_node>()->type == "PatQual")
+	{
+	  expression_ref p = B->sub[0];
+	  expression_ref l = B->sub[1];
+	  if (is_irrefutable_pat(p))
+	  {
+	    expression_ref f {AST_node("Lambda"),{p,E2}};
+	    E2 = {AST_node("Apply"),{AST_node("id","Prelude.concatMap"),f,l}};
+	  }
+	  else
+	  {
+	    // Problem: "ok" needs to be a fresh variable.
+	    expression_ref ok = get_fresh_id("ok",E);
+
+	    expression_ref lhs1 = {AST_node("funlhs1"),{ok,p}};
+	    expression_ref rhs1 = {AST_node("rhs"),{E2}};
+	    expression_ref decl1 = {AST_node("Decl"),{lhs1,rhs1}};
+
+	    expression_ref lhs2 = {AST_node("funlhs1"),{ok,AST_node("WildcardPattern")}};
+	    expression_ref rhs2 = {AST_node("rhs"),{AST_node("id","[]")}};
+	    expression_ref decl2 = {AST_node("Decl"),{lhs2,rhs2}};
+
+	    expression_ref decls = {AST_node("Decls"),{decl1, decl2}};
+	    expression_ref body = {AST_node("Apply"),{AST_node("id","Prelude.concatMap"),ok,l}};
+
+	    E2 = {AST_node("Let"),{decls,body}};
+	  }
+	}
+	else if (B->assert_is_a<AST_node>()->type == "LetQual")
+	  E2 = {AST_node("Let"),{B->sub[0],E2}};
+      }
+      return desugar1(m,E2,bound);
+    }
+    else if (n->type == "Lambda")
+    {
+      // FIXME: Try to preserve argument names (in block_case( ), probably) when they are irrefutable apat_var's.
+
+      // 1. Extract the lambda body
+      expression_ref body = v.back();
+      v.pop_back();
+
+      // 2. Find bound vars and convert vars to dummies.
+      set<string> bound2 = bound;
+      for(auto& e: v) {
+	add(bound2, find_bound_vars(e));
+	e = desugar1(m, e, bound);
+      }
+
+      // 3. Desugar the body, binding vars mentioned in the lambda patterns.
+      body = desugar1(m, body, bound2);
+
+      return def_function({v},{body}); 
+    }
+    else if (n->type == "Do")
+    {
+      assert(is_AST(E->sub[0],"Stmts"));
+      vector<expression_ref> stmts = E->sub[0]->sub;
+
+      // do { e }  =>  e
+      if (stmts.size() == 1) 
+	return desugar1(m,stmts[0],bound);
+
+      expression_ref first = stmts[0];
+      stmts.erase(stmts.begin());
+      expression_ref do_stmts = {AST_node("Do"),{{AST_node("Stmts"),stmts}}};
+      expression_ref result;
+      
+      // do {e ; stmts }  =>  e >> do { stmts }
+      if (is_AST(first,"SimpleStmt"))
+      {
+	expression_ref e = first->sub[0];
+	expression_ref qop = AST_node("id","Prelude.>>");
+	result = {AST_node("infixexp"),{e, qop, do_stmts}};
+      }
+
+      // do { p <- e ; stmts} => let {ok p = do {stmts}; ok _ = fail "..."} in e >>= ok
+      // do { v <- e ; stmts} => e >>= (\v -> do {stmts})
+      else if (is_AST(first,"PatStmt"))
+      {
+	expression_ref p = first->sub[0];
+	expression_ref e = first->sub[1];
+	expression_ref qop = AST_node("id","Prelude.>>=");
+
+	if (is_irrefutable_pat(p))
+	{
+	  expression_ref lambda = {AST_node("Lambda"),{p,do_stmts}};
+	  result = {AST_node("infixexp"),{e,qop,lambda}};
+	}
+	else
+	{
+	  expression_ref fail = {AST_node("Apply"),{AST_node("id","Prelude.fail"),"Fail!"}};
+	  expression_ref ok = get_fresh_id("ok",E);
+	  
+	  expression_ref lhs1 = {AST_node("funlhs1"),{ok,p}};
+	  expression_ref rhs1 = {AST_node("rhs"),{do_stmts}};
+	  expression_ref decl1 = {AST_node("Decl"),{lhs1,rhs1}};
+	  
+	  expression_ref lhs2 = {AST_node("funlhs1"),{ok,AST_node("WildcardPattern")}};
+	  expression_ref rhs2 = {AST_node("rhs"),{fail}};
+	  expression_ref decl2 = {AST_node("Decl"),{lhs2,rhs2}};
+	  expression_ref decls = {AST_node("Decls"),{decl1, decl2}};
+
+	  expression_ref body = {AST_node("infixexp"),{e,qop,ok}};
+
+	  result = {AST_node("Let"),{decls,body}};
+	}
+      }
+      // do {let decls ; rest} = let decls in do {stmts}
+      else if (is_AST(first,"LetStmt"))
+      {
+	expression_ref decls = first->sub[0];
+	result = {AST_node("Let"),{decls,do_stmts}};
+      }
+      else if (is_AST(first,"EmptyStmt"))
+	result = do_stmts;
+
+      return desugar1(m,result,bound);
+    }
+    else if (n->type == "constructor_pattern")
+    {
+      string gcon = *v[0].assert_is_a<String>();
+      v.erase(v.begin());
+
+      // If the variable is free, then try top-level names.
+      if (not m.is_declared(gcon))
+	throw myexception()<<"Constructor pattern '"<<E<<"' has unknown constructor '"<<gcon<<"'";
+
+      const symbol_info& S = m.lookup_symbol(gcon);
+      if (S.symbol_type != constructor_symbol)
+	throw myexception()<<"Constructor pattern '"<<E<<"' has head '"<<gcon<<"' which is not a constructor!";
+
+      if (S.arity != v.size())
+	throw myexception()<<"Constructor pattern '"<<E<<"' has arity "<<v.size()<<" which does not equal "<<S.arity<<".";
+
+      // Desugar the 
+      for(auto& e: v)
+	e = desugar1(m, e, bound);
+
+      return new expression{ constructor(S.name,S.arity),v };
+    }
+    else if (n->type == "If")
+    {
+      for(auto& e: v)
+	e = desugar1(m, e, bound);
+
+      return case_expression(v[0],true,v[1],v[2]);
+    }
+    else if (n->type == "LeftSection")
+    {
+      // FIXME... the infixexp needs to parse the same as if it was parenthesized.
+      // FIXME... probably we need to do a disambiguation on the infix expression. (infixexp op x)
+      std::set<dummy> free_vars;
+      for(auto& e: v) {
+	e = desugar1(m, e, bound);
+	add(free_vars, get_free_indices(e));
+      }
+      return apply_expression(v[1],v[0]);
+    }
+    else if (n->type == "RightSection")
+    {
+      // FIXME... probably we need to do a disambiguation on the infix expression. (x op infixexp)
+      // FIXME... the infixexp needs to parse the same as if it was parenthesized.
+      std::set<dummy> free_vars;
+      for(auto& e: v) {
+	e = desugar1(m, e, bound);
+	add(free_vars, get_free_indices(e));
+      }
+      int safe_dummy_index = 0;
+      if (not free_vars.empty())
+	safe_dummy_index = max_index(free_vars)+1;
+      dummy vsafe(safe_dummy_index);
+      return vsafe^apply_expression(apply_expression(v[0],vsafe),v[1]);
+    }
+    else if (n->type == "Let")
+    {
+      // parse the decls and bind declared names internally to the decls.
+      v[0] = desugar1(m, v[0], bound);
+
+      vector<expression_ref> decls = v[0]->sub;
+      expression_ref body = v[1];
+
+      // find the bound var names + construct arguments to let_obj()
+      vector<expression_ref> w = {body};
+      set<string> bound2 = bound;
+      for(const auto& decl: decls)
+      {
+	bound2.insert(decl->sub[0].assert_is_a<dummy>()->name);
+	w.push_back(decl->sub[0]);
+	w.push_back(decl->sub[1]);
+      }
+
+      // finally desugar let-body, now that we know the bound vars.
+      w[0] = desugar1(m, w[0], bound2);
+
+      // construct the new let expression.
+      return new expression{ let_obj(), w };
+    }
+    else if (n->type == "Case")
+    {
+      expression_ref case_obj = desugar1(m, v[0], bound);
+      vector<expression_ref> alts = v[1]->sub;
+      vector<expression_ref> patterns;
+      vector<expression_ref> bodies;
+      for(const auto& alt: alts)
+      {
+	set<string> bound2 = bound;
+	add(bound2, find_bound_vars(alt->sub[0]));
+	patterns.push_back(desugar1(m, alt->sub[0], bound2) );
+
+	expression_ref body;
+	if (is_AST(alt->sub[1],"GdPat"))
+	  throw myexception()<<"Guard patterns not yet implemented!";
+	else
+	{
+	  assert(alt->sub.size() == 2 or alt->sub.size() == 3);
+	  body = alt->sub[1];
+	  if (alt->sub.size() == 3 and is_AST(alt->sub[2],"Decls"))
+	    body = {AST_node("Let"),{alt->sub[2],body}};
+	}
+
+	bodies.push_back(desugar1(m, body, bound2) );
+      }
+      return case_expression(case_obj, patterns, bodies);
+    }
+    else if (n->type == "enumFrom")
+    {
+      expression_ref E2 = var("Prelude.enumFrom");
+      for(auto& e: v) {
+	e = desugar1(m, e, bound);
+	E2 = (E2,e);
+      }
+      return E2;
+    }
+    else if (n->type == "enumFromTo")
+    {
+      expression_ref E2 = var("Prelude.enumFromTo");
+      for(auto& e: v) {
+	e = desugar1(m, e, bound);
+	E2 = (E2,e);
+      }
+      return E2;
+    }
+    else if (n->type == "Integer")
+    {
+      string s = *E->sub[0].assert_is_a<String>();
+      return Int(convertTo<int>(s));
+    }
+    else if (n->type == "Float")
+    {
+      string s = *E->sub[0].assert_is_a<String>();
+      return Double(convertTo<double>(s));
+    }
+    else if (n->type == "Char")
+    {
+      E->sub[0].assert_is_a<Char>();
+      return E->sub[0];
+    }
+    else if (n->type == "String")
+    {
+      return E->sub[0];
+    }
+    else if (n->type == "BugsNote")
+    {
+      // This expression should have the form 'AST[BugsNote] (AST[infixexp] (AST[Apply] con_name arg1 arg2 ... arg_n) )'.
+      v = E->sub[0]->sub[0]->sub;
+
+      string con_name = v[0].assert_is_a<AST_node>()->value;
+      v.erase(v.begin());
+
+      for(auto& e: v)
+	e = desugar1(m, e, bound);
+
+      return new expression{ constructor(con_name,v.size()), v};
+    }
+    else if (n->type == "BugsDefaultValue")
+    {
+      for(auto& e: v)
+	e = desugar1(m, e, bound);
+
+      expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
+
+      return (default_value, v[0], v[1]);
+    }
+    else if (n->type == "BugsDist" or n->type == "BugsExternalDist" or n->type == "BugsDataDist")
+    {
+      for(auto& e: v)
+	e = desugar1(m, e, bound);
+      // Fields: (prob_density) (random vars) (parameter expressions)
+      expression_ref distributed = lambda_expression( constructor(":~",2) );
+
+      string dist_name = *(v[1]->is_a<const String>());
+
+      vector<expression_ref> args = v; args.erase(args.begin()); args.erase(args.begin());
+      expression_ref dist_args = get_tuple(args);
+      return (distributed, v[0], (var(dist_name), dist_args));
+    }
+  }
+
+  for(auto& e: v)
+    e = desugar1(m, e, bound);
+  if (E->size())
+    return new expression(E->head,v);
+  else
+    return E;
+}
+
+expression_ref desugar1(const Program& m, const expression_ref& E)
+{
+  return desugar1(m,E,{});
+}
+
+expression_ref desugar2(const Program& m, const expression_ref& E, const set<string>& bound)
+{
+  vector<expression_ref> v = E->sub;
+      
+  if (object_ptr<const AST_node> n = E.is_a<AST_node>())
+  {
+    if (n->type == "infixexp")
+    {
+      vector<expression_ref> args = E->sub;
+      while(is_AST(args.back(),"infixexp"))
+      {
+	expression_ref E2 = args.back();
+	args.pop_back();
+	args.insert(args.end(),E2->sub.begin(),E2->sub.end());
+      }
+      for(auto& e: args)
+	e = desugar2(m, e, bound);
+      return desugar_infix(m, args);
+    }
+    else if (n->type == "pat")
+    {
+      // 1. Collect the entire pat expression in 'args'.
+      vector<expression_ref> args = v;
+      while(args.back().is_a<AST_node>() and args.back().is_a<AST_node>()->type == "pat")
+      {
+	expression_ref rest = args.back();
+	args.pop_back();
+	args.insert(args.end(), rest->sub.begin(), rest->sub.end());
+      }
+
+      // 2. We could probably do this later.
+      for(auto& arg: args)
+	arg = desugar2(m, arg, bound);
+
+      return desugar_infixpat(m, args);
+    }
+    else if (n->type == "Tuple")
+    {
+      for(auto& e: v)
+	e = desugar2(m, e, bound);
+      return get_tuple(v);
+    }
+    else if (n->type == "List")
+    {
+      for(auto& e: v)
+	e = desugar2(m, e, bound);
+      return get_list(v);
+    }
+    else if (n->type == "Decls" or n->type == "TopDecls")
+    {
+      set<string> bound2 = bound;
+
+      // Find all the names bound here
+      for(auto& e: v)
+      {
+	if (is_AST(e,"EmptyDecl")) continue;
+	if (is_AST(e,"FixityDecl")) continue;
+	// Translate funlhs2 and funlhs3 declaration forms to funlhs1 form.
+	e = translate_funlhs_decl(e);
+
+	// Bind the function id to avoid errors on the undeclared id later.
+	if (is_function_binding(e))
+	  bound2.insert(get_func_name(e));
+	else if (is_pattern_binding(e))
+	  add(bound2, get_pattern_bound_vars(e));
+      }
+
+      // Replace ids with dummies
+      for(auto& e: v)
+      {
+	if (is_AST(e,"EmptyDecl")) continue;
+	if (is_AST(e,"FixityDecl")) continue;
+	e = desugar2(m, e, bound2);
+      }
+
+      // Convert fundecls to normal decls
+      vector<expression_ref> decls = parse_fundecls(v);
+
+      return new expression{E->head,decls};
+    }
+    else if (n->type == "Decl")
+    {
+      // Is this a set of function bindings?
+      if (v[0].assert_is_a<AST_node>()->type == "funlhs1")
+      {
+	set<string> bound2 = bound;
+	for(const auto& e: v[0]->sub)
+	  add(bound2, find_bound_vars(e));
+
+	// Replace bound vars in (a) the patterns and (b) the body
+	for(auto& e: v)
+	  e = desugar2(m, e, bound2);
+
+	return new expression(E->head,v);
+      }
+
+      // Is this a set of pattern bindings?
+
+      /*
+       * Wait.... so we want to do a recursive de-sugaring, but we can't do that because we 
+       * don't know the set of bound variables yet.
+       */
+    }
+    else if (n->type == "rhs")
+    {
+      if (E->sub.size() == 2)
+      {
+	expression_ref decls = E->sub[1];
+	assert(is_AST(decls,"Decls"));
+	expression_ref E2 = {AST_node("Let"),{decls,E->sub[0]}};
+	E2 = {AST_node("rhs"),{E2}};
+	return desugar2(m,E2,bound);
       }
       else
       { }      // Fall through and let the standard case handle this.
@@ -596,13 +1065,13 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	else
 	  return var(qualified_name);
       }
-      else if (resolve_ids)
+      else
 	throw myexception()<<"Can't find id '"<<n->value<<"'";
     }
     else if (n->type == "Apply")
     {
       for(auto& e: v)
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
       expression_ref E2 = v[0];
 
       // For constructors, actually substitute the body
@@ -678,7 +1147,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	else if (B->assert_is_a<AST_node>()->type == "LetQual")
 	  E2 = {AST_node("Let"),{B->sub[0],E2}};
       }
-      return desugar(m,E2,bound);
+      return desugar2(m,E2,bound);
     }
     else if (n->type == "Lambda")
     {
@@ -692,11 +1161,11 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       set<string> bound2 = bound;
       for(auto& e: v) {
 	add(bound2, find_bound_vars(e));
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
       }
 
       // 3. Desugar the body, binding vars mentioned in the lambda patterns.
-      body = desugar(m, body, bound2);
+      body = desugar2(m, body, bound2);
 
       return def_function({v},{body}); 
     }
@@ -707,7 +1176,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 
       // do { e }  =>  e
       if (stmts.size() == 1) 
-	return desugar(m,stmts[0],bound);
+	return desugar2(m,stmts[0],bound);
 
       expression_ref first = stmts[0];
       stmts.erase(stmts.begin());
@@ -763,7 +1232,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       else if (is_AST(first,"EmptyStmt"))
 	result = do_stmts;
 
-      return desugar(m,result,bound);
+      return desugar2(m,result,bound);
     }
     else if (n->type == "constructor_pattern")
     {
@@ -783,14 +1252,14 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 
       // Desugar the 
       for(auto& e: v)
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
 
       return new expression{ constructor(S.name,S.arity),v };
     }
     else if (n->type == "If")
     {
       for(auto& e: v)
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
 
       return case_expression(v[0],true,v[1],v[2]);
     }
@@ -800,7 +1269,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       // FIXME... probably we need to do a disambiguation on the infix expression. (infixexp op x)
       std::set<dummy> free_vars;
       for(auto& e: v) {
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
 	add(free_vars, get_free_indices(e));
       }
       return apply_expression(v[1],v[0]);
@@ -811,7 +1280,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       // FIXME... the infixexp needs to parse the same as if it was parenthesized.
       std::set<dummy> free_vars;
       for(auto& e: v) {
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
 	add(free_vars, get_free_indices(e));
       }
       int safe_dummy_index = 0;
@@ -823,7 +1292,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     else if (n->type == "Let")
     {
       // parse the decls and bind declared names internally to the decls.
-      v[0] = desugar(m, v[0], bound);
+      v[0] = desugar2(m, v[0], bound);
 
       vector<expression_ref> decls = v[0]->sub;
       expression_ref body = v[1];
@@ -839,14 +1308,14 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       }
 
       // finally desugar let-body, now that we know the bound vars.
-      w[0] = desugar(m, w[0], bound2);
+      w[0] = desugar2(m, w[0], bound2);
 
       // construct the new let expression.
       return new expression{ let_obj(), w };
     }
     else if (n->type == "Case")
     {
-      expression_ref case_obj = desugar(m, v[0], bound);
+      expression_ref case_obj = desugar2(m, v[0], bound);
       vector<expression_ref> alts = v[1]->sub;
       vector<expression_ref> patterns;
       vector<expression_ref> bodies;
@@ -854,7 +1323,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       {
 	set<string> bound2 = bound;
 	add(bound2, find_bound_vars(alt->sub[0]));
-	patterns.push_back(desugar(m, alt->sub[0], bound2) );
+	patterns.push_back(desugar2(m, alt->sub[0], bound2) );
 
 	expression_ref body;
 	if (is_AST(alt->sub[1],"GdPat"))
@@ -867,7 +1336,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
 	    body = {AST_node("Let"),{alt->sub[2],body}};
 	}
 
-	bodies.push_back(desugar(m, body, bound2) );
+	bodies.push_back(desugar2(m, body, bound2) );
       }
       return case_expression(case_obj, patterns, bodies);
     }
@@ -875,7 +1344,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     {
       expression_ref E2 = var("Prelude.enumFrom");
       for(auto& e: v) {
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
 	E2 = (E2,e);
       }
       return E2;
@@ -884,7 +1353,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     {
       expression_ref E2 = var("Prelude.enumFromTo");
       for(auto& e: v) {
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
 	E2 = (E2,e);
       }
       return E2;
@@ -917,14 +1386,14 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
       v.erase(v.begin());
 
       for(auto& e: v)
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
 
       return new expression{ constructor(con_name,v.size()), v};
     }
     else if (n->type == "BugsDefaultValue")
     {
       for(auto& e: v)
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
 
       expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
 
@@ -933,7 +1402,7 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
     else if (n->type == "BugsDist" or n->type == "BugsExternalDist" or n->type == "BugsDataDist")
     {
       for(auto& e: v)
-	e = desugar(m, e, bound);
+	e = desugar2(m, e, bound);
       // Fields: (prob_density) (random vars) (parameter expressions)
       expression_ref distributed = lambda_expression( constructor(":~",2) );
 
@@ -946,21 +1415,21 @@ expression_ref desugar(const Program& m, const expression_ref& E, const set<stri
   }
 
   for(auto& e: v)
-    e = desugar(m, e, bound);
+    e = desugar2(m, e, bound);
   if (E->size())
     return new expression(E->head,v);
   else
     return E;
 }
 
-expression_ref desugar(const Program& m, const expression_ref& E)
+expression_ref desugar2(const Program& m, const expression_ref& E)
 {
-  return desugar(m,E,{});
+  return desugar2(m,E,{});
 }
 
 expression_ref parse_haskell_line(const Program& P, const string& line)
 {
-  return desugar(P, parse_haskell_line(line));
+  return desugar2(P,desugar1(P, parse_haskell_line(line)));
 }
 
 expression_ref parse_bugs_line(const Program& P, const string& line)
@@ -968,7 +1437,7 @@ expression_ref parse_bugs_line(const Program& P, const string& line)
   expression_ref cmd = parse_bugs_line(line);
 
   std::cerr<<"BUGS phrase parse: "<<cmd<<"\n";
-  cmd = desugar(P, cmd);
+  cmd = desugar2(P, desugar1(P, cmd));
   std::cerr<<"        processed: "<<cmd<<"\n";
   std::cerr<<std::endl;
 
@@ -1028,7 +1497,8 @@ Model_Notes read_BUGS(const vector<string>& modules_path, const Parameters& P, c
   BUGS.import_module(modules_path,"Range", false);
   BUGS.import_module(modules_path,"SModel", false);
   BUGS.import_module(modules_path,"PopGen", false);
-  BUGS.import_module(P.get_Program(), false);
+  for(const auto module:P.get_Program())
+    BUGS.import_module(module, false);
 
   Model_Notes N;
 
@@ -1063,7 +1533,7 @@ Model_Notes read_BUGS(const vector<string>& modules_path, const Parameters& P, c
 
   // 9. Add notes
   for(const auto& cmd: bugs_notes->sub)
-    N.add_note(desugar(BUGS,cmd));
+    N.add_note(desugar2(BUGS,desugar1(BUGS,cmd)));
 
   // 10. Add Loggers for any locally declared parameters
   for(const auto& name: new_parameters)

@@ -19,7 +19,9 @@ private:
   /// The array of registers that make up our memory.
   mutable boost::shared_ptr<reg_heap> memory;
 
-  cow_ptr<Program> P;
+  // FIXME:speed - This is going to be really slow to copy around all the time!
+  // FIXME:speed - Instead, wrap in cow_ptr< >.
+  std::vector<Program> P;
 
   int token;
 
@@ -51,7 +53,7 @@ private:
 
 public:
 
-  const Program& get_Program() const {return *P;}
+  const std::vector<Program>& get_Program() const {return P;}
 
   int add_note(const expression_ref&);
 
