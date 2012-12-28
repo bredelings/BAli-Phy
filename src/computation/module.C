@@ -1,5 +1,5 @@
 #include <set>
-#include "computation/program.H"
+#include "computation/module.H"
 #include "myexception.H"
 #include "computation/graph_register.H"
 #include "computation/operations.H"

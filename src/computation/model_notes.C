@@ -1,5 +1,5 @@
 #include "model_notes.H"
-#include "computation/program.H"
+#include "computation/module.H"
 
 using std::vector;
 using std::set;

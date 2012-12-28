@@ -1,7 +1,7 @@
 #include "formula_expression.H"
 #include "bounds.H"
 #include "context.H"
-#include "computation/program.H"
+#include "computation/module.H"
 
 /* 1. So a formula_expression_ref is basically a model.
      It is a single evaluatable expression E with annotations (*notes*) N about its parameters.

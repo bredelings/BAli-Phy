@@ -1,6 +1,6 @@
 #include "computation/expression.H"
 #include "computation/prelude.H"
-#include "computation/program.H"
+#include "computation/module.H"
 #include "computation/operations.H"
 #include "computation/graph_register.H"
 #include "mytypes.H"

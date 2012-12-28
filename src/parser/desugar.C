@@ -1,5 +1,5 @@
 #include "parse.H"
-#include "computation/program.H"
+#include "computation/module.H"
 #include <deque>
 #include <set>
 #include "io.H"

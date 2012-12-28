@@ -32,7 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/operations.H"
 #include "probability/distribution-operations.H"
 #include "computation/prelude.H"
-#include "computation/program.H"
+#include "computation/module.H"
 
 using std::string;
 using std::vector;

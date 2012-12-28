@@ -103,7 +103,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  tools/parsimony.C version.C mcmc/slice-sampling.C timer_stack.C \
 	  mcmc/setup.C io.C mcmc/logger.C mcmc/AIS.C computation/operator.C computation/expression.C \
 	  imodel/setup.C smodel/objects.C computation/computation.C \
-	  computation/graph_register.C computation/program.C \
+	  computation/graph_register.C computation/module.C \
 	  computation/formula_expression.C smodel/operations.C probability/distribution-operations.C \
 	  computation/operations.C computation/prelude.C computation/context.C \
 	  computation/model_notes.C substitution/matcache.C smodel/functions.C computation/closure.C \
@@ -309,7 +309,7 @@ cut_range_SOURCES = tools/cut-range.C util.C
 #	tools/tree-dist.C tools/inverse.C distribution.C tools/partition.C \
 #	timer_stack.C io.C computation/operator.C computation/expression.C smodel/objects.C \
 #	computation/computation.C computation/formula_expression.C smodel/operations.C \
-#	distribution-operations.C 2way.C computation/operations.C computation/program.C \
+#	distribution-operations.C 2way.C computation/operations.C computation/module.C \
 #	computation/prelude.C computation/context.C
 
 #---------------------------------------------------------------

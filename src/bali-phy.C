@@ -161,7 +161,7 @@ namespace mpi = boost::mpi;
 #include "io.H"
 #include "tools/parsimony.H"
 #include "parser/desugar.H"
-#include "computation/program.H"
+#include "computation/module.H"
 
 namespace fs = boost::filesystem;
 namespace chrono = boost::chrono;

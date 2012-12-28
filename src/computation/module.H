@@ -1,5 +1,5 @@
-#ifndef PROGRAM_H
-#define PROGRAM_H
+#ifndef MODULE_H
+#define MODULE_H
 
 #include <set>
 #include <map>
