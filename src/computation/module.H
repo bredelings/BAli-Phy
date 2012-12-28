@@ -117,7 +117,7 @@ public:
 
   void import_module(const std::vector<std::string>& path, const std::string&, const std::string&, bool qualified);
 
-  void perform_imports(const std::vector<Module>&);
+  void resolve_symbols(const std::vector<Module>&);
 
   bool is_declared(const std::string&) const;
 

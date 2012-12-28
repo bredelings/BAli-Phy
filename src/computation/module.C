@@ -244,9 +244,8 @@ Module find_module(const string& module_name, const std::vector<Module>& P)
   std::abort();
 }
 
-void Module::perform_imports(const std::vector<Module>& P)
+void Module::resolve_symbols(const std::vector<Module>& P)
 {
-  // \todo FIXME:clarity - Rename this function to e.g. resolve_symbols(), since it does more than just perform imports().
   bool saw_Prelude = false;
   if (impdecls)
     for(const auto& impdecl:impdecls->sub)

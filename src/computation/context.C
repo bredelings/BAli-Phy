@@ -500,12 +500,7 @@ context& context::operator+=(const vector<Module>& P2)
   // 2b. Desugar the module here.
   for(auto& module: PP)
     if (contains_module(P2,module.module_name))
-    {
-      module.perform_imports(PP);
-      // resolve identifiers here?
-      // set bodies here, only fixity and names before?
-      // well, they are kind of useless before here, so maybe so.
-    }
+      module.resolve_symbols(PP);
 
   // 3. Give each identifier a pointer to an unused location
   for(auto& module: PP)
