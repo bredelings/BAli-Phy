@@ -48,7 +48,7 @@ using std::endl;
 using std::ostream;
 
 /*
- * Goal: Construct a complete tree-based imodel along the lines of
+ * \todo Goal: Construct a complete tree-based imodel along the lines of
  *       SingleRate[RS07] or BranchwiseRate[RS07]
  * 
  * 1. Move calculation of alignment prior dependencies to the machine!
@@ -65,8 +65,6 @@ using std::ostream;
  *
  * 4. Move unchangeable name mappings out of context and into reg_heap.
  *   - That is, separate name bindings into (a) dependent and (b) non-dependent vars?
- *
- * 5. Move the Program from Context to reg_heap.
  *
  * 6. Allow calculating the location of unnamed parameters hidden in structures & arrays.
  *    - Problem #1! Things move around.
