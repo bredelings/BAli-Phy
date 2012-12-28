@@ -5,7 +5,7 @@
 #include "expression.H"
 #include "bounds.H"
 
-// Issue: how to handle unnamed parameters?
+// \todo Issue: how to handle unnamed parameters?
 // (a) for example, if we have a list (or array?) of parameters that changes.
 // (b) how do can we express a computation to look up a parameter?  Such as,
 //     "the first parameter in the list"?

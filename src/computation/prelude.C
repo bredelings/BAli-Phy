@@ -39,6 +39,8 @@ using std::string;
  *     + Note that clashing declarations are allowed if the symbol is unreferenced!
  * 16. Handle 'where' clauses (e.g. in "alt")
  * 17. Handle guards clauses (e.g. in gdrhs, and gdpat)
+ * 18. Make Context load an entire program, instead of adding pieces incrementally.
+ * 19. Compute the entire probability expression, instead of adding pieces incrementally.
  */
 
 

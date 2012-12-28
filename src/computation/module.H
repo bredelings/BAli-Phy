@@ -136,5 +136,4 @@ std::ostream& operator<<(std::ostream&, const Module&);
 
 expression_ref resolve_refs(const std::vector<Module>&, const expression_ref&);
 
-bool contains_module(const std::vector<Module>& P, const std::string& module_name);
 #endif

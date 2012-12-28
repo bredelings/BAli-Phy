@@ -108,7 +108,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  computation/operations.C computation/prelude.C computation/context.C \
 	  computation/model_notes.C substitution/matcache.C smodel/functions.C computation/closure.C \
 	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C object.C popgen/popgen.C \
-	  parser/AST.C
+	  parser/AST.C computation/program.C
 
 nodist_bali_phy_SOURCES = git_version.h
 

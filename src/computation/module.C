@@ -877,11 +877,3 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 
   return V;
 }
-
-bool contains_module(const vector<Module>& P, const string& module_name)
-{
-  for(const auto& module: P)
-    if (module.module_name == module_name)
-      return true;
-  return false;
-}
