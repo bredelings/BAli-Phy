@@ -1,4 +1,5 @@
 #include "model_notes.H"
+#include "computation/program.H"
 
 using std::vector;
 using std::set;
@@ -46,22 +47,22 @@ int Model_Notes::n_modules() const
   return modules.size();
 }
 
-Program& Model_Notes::get_module(int i)
+Module& Model_Notes::get_module(int i)
 {
   return modules[i];
 }
 
-const Program& Model_Notes::get_module(int i) const
+const Module& Model_Notes::get_module(int i) const
 {
   return modules[i];
 }
 
-const vector<Program>& Model_Notes::get_modules() const
+const vector<Module>& Model_Notes::get_modules() const
 {
   return modules;
 }
 
-void Model_Notes::add_module(const Program& m)
+void Model_Notes::add_module(const Module& m)
 {
   return modules.push_back(m);
 }

@@ -4,7 +4,7 @@
 #include "computation/model_notes.H"
 #include "cow-ptr.H"
 
-class Program;
+class Module;
 
 /// This class contains only compute expressions, parameters, and names for the compute expressions
 class context: public Object, public Model_Notes
@@ -21,7 +21,7 @@ private:
 
   // FIXME:speed - This is going to be really slow to copy around all the time!
   // FIXME:speed - Instead, wrap in cow_ptr< >.
-  std::vector<Program> P;
+  std::vector<Module> P;
 
   int token;
 
@@ -53,7 +53,7 @@ private:
 
 public:
 
-  const std::vector<Program>& get_Program() const {return P;}
+  const std::vector<Module>& get_Program() const {return P;}
 
   int add_note(const expression_ref&);
 
@@ -192,7 +192,7 @@ protected:
 public:
   const std::vector<std::string>& get_module_path() const;
 
-  context& operator+=(const std::vector<Program>& D);
+  context& operator+=(const std::vector<Module>& D);
 
   context& operator+=(const std::vector<std::string>& module_names);
 
@@ -204,7 +204,7 @@ public:
 
   context(const std::vector<std::string>& module_path, const std::vector<expression_ref>&);
 
-  context(const std::vector<std::string>& module_path, const std::vector<expression_ref>&, const std::vector<Program>& P);
+  context(const std::vector<std::string>& module_path, const std::vector<expression_ref>&, const std::vector<Module>& P);
 
   context(const std::vector<std::string>& module_path, const std::vector<expression_ref>&, const std::vector<std::string>& module_names);
 

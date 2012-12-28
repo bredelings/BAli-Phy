@@ -308,9 +308,9 @@ closure Ewens_Sampling_Mixture_Probability::operator()(OperationArgs& Args) cons
   return Log_Double(Pr);
 }
 
-Program PopGen_Functions(const vector<string>& modules_path)
+Module PopGen_Functions(const vector<string>& modules_path)
 {
-  Program P("PopGen");
+  Module P("PopGen");
   P.def_function("builtinReadPhaseFile", lambda_expression(Read_PHASE_File()));
   P.def_function("remove2ndAllele", lambda_expression(Remove_2nd_Allele()));
   P.def_function("alleleFrequencySpectrum", lambda_expression(Allele_Frequency_Spectrum()));

@@ -43,7 +43,7 @@ closure Fun_normalize(closure&& C)
   return C;
 }
 
-closure resolve_refs(const vector<Program>& P, closure&& C)
+closure resolve_refs(const vector<Module>& P, closure&& C)
 {
   C.exp = resolve_refs(P, C.exp);
   return C;
@@ -362,7 +362,7 @@ int context::add_parameter(const string& name)
   }
   if (not found)
   {
-    Program module(module_name);
+    Module module(module_name);
     module.declare_parameter(get_unqualified_name(name));
     P.push_back(module);
     // FIXME:maybe-works - Do all other modules now need to import this??
@@ -479,7 +479,7 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
     {
       if (is_haskell_builtin_con_name(V->name))
       {
-	symbol_info S = Program::lookup_builtin_symbol(V->name);
+	symbol_info S = Module::lookup_builtin_symbol(V->name);
 	add_identifier(S.name);
       
 	// get the root for each identifier
@@ -539,7 +539,7 @@ context& context::operator+=(const vector<string>& module_names)
   return operator+=(load_modules(get_module_path(), module_names));
 }
 
-context& context::operator+=(const vector<Program>& P2)
+context& context::operator+=(const vector<Module>& P2)
 {
   P.insert(P.end(),P2.begin(),P2.end());
 
@@ -628,7 +628,7 @@ context& context::operator=(const context& C)
 }
 
 context::context(const vector<string>& module_path)
-  :context(module_path,{},vector<Program>{})
+  :context(module_path,{},vector<Module>{})
 {  }
 
 // FIXME - this should be shared with Model::add_submodel( ), but we need to call Model::add_notes( ).
@@ -666,10 +666,10 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
 }
 
 context::context(const vector<string>& module_path, const vector<expression_ref>& N)
-  :context(module_path, N,vector<Program>{})
+  :context(module_path, N,vector<Module>{})
 { }
 
-context::context(const vector<string>& module_path, const vector<expression_ref>& N, const vector<Program>& Ps)
+context::context(const vector<string>& module_path, const vector<expression_ref>& N, const vector<Module>& Ps)
   :memory(new reg_heap()),
    token(memory->get_unused_token()),
    module_path_(module_path)

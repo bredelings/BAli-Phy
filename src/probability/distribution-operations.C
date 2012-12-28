@@ -516,9 +516,9 @@ closure GetBounds::operator()(OperationArgs& Args) const
   return Bounds<double>(has_lower, lower, has_upper, upper);
 }
 
-Program Range_Functions(const vector<string>& modules_path)
+Module Range_Functions(const vector<string>& modules_path)
 {
-  Program P("Range");
+  Module P("Range");
   P.def_constructor("OpenInterval",2);
   P.def_constructor("Real",1);
   P.def_constructor("Inf",0);
@@ -528,9 +528,9 @@ Program Range_Functions(const vector<string>& modules_path)
   return P;
 }
 
-Program Distribution_Functions(const vector<string>& modules_path)
+Module Distribution_Functions(const vector<string>& modules_path)
 {
-  Program P("Distributions");
+  Module P("Distributions");
 
   // Note: we separate the "builtin" versions (which don't do case analysis on their arguments)
   //       from the from the real versions (which do).

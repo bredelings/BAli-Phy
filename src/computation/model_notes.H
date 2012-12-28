@@ -4,18 +4,19 @@
 #include <vector>
 #include "expression.H"
 #include "bounds.H"
-#include "program.H"
 
 // Issue: how to handle unnamed parameters?
 // (a) for example, if we have a list (or array?) of parameters that changes.
 // (b) how do can we express a computation to look up a parameter?  Such as,
 //     "the first parameter in the list"?
 
+class Module;
+
 class Model_Notes
 {
 protected:
   std::vector<expression_ref> notes;
-  std::vector<Program> modules;
+  std::vector<Module> modules;
 
 public:
   int n_notes() const {return notes.size();}
@@ -32,10 +33,10 @@ public:
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
 
   int n_modules() const;
-  Program& get_module(int i);
-  const Program& get_module(int i) const;
-  const std::vector<Program>& get_modules() const;
-  void add_module(const Program& m);
+  Module& get_module(int i);
+  const Module& get_module(int i) const;
+  const std::vector<Module>& get_modules() const;
+  void add_module(const Module& m);
 
   Model_Notes();
   Model_Notes(const std::vector<expression_ref>&);

@@ -78,10 +78,10 @@ int formula_expression_ref::add_expression(const formula_expression_ref& R)
 
 object_ptr<const Object> formula_expression_ref::result(const vector<string>& modules_path) const
 {
-  return result(modules_path,vector<Program>{});
+  return result(modules_path,vector<Module>{});
 }
 
-object_ptr<const Object> formula_expression_ref::result(const vector<string>& modules_path, const vector<Program>& Ps) const
+object_ptr<const Object> formula_expression_ref::result(const vector<string>& modules_path, const vector<Module>& Ps) const
 {
   context C(modules_path, get_notes(), Ps);
   return C.evaluate_expression(exp());

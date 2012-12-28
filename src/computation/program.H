@@ -53,7 +53,7 @@ std::string get_unqualified_name(const std::string&);
 
 std::vector<std::string> get_haskell_identifier_path(const std::string& s);
 
-class Program
+class Module
 {
   std::map<std::string, symbol_info> symbols;
 
@@ -85,11 +85,11 @@ public:
   /// Add a constructor
   void def_constructor(const std::string& name, int arity);
 
-  Program& operator+=(const char*);
+  Module& operator+=(const char*);
 
-  Program& operator+=(const std::string&);
+  Module& operator+=(const std::string&);
 
-  Program& operator+=(const expression_ref&);
+  Module& operator+=(const expression_ref&);
 
   bool symbol_exists(const std::string&) const;
 
@@ -109,15 +109,15 @@ public:
 
   void import_symbol(const symbol_info&, const std::string&, bool qualified);
 
-  void import_module(const Program& P2, bool qualified);
+  void import_module(const Module& P2, bool qualified);
 
-  void import_module(const Program& P2, const std::string&, bool qualified);
+  void import_module(const Module& P2, const std::string&, bool qualified);
 
   void import_module(const std::vector<std::string>& path, const std::string&, bool qualified);
 
   void import_module(const std::vector<std::string>& path, const std::string&, const std::string&, bool qualified);
 
-  void perform_imports(const std::vector<Program>&);
+  void perform_imports(const std::vector<Module>&);
 
   bool is_declared(const std::string&) const;
 
@@ -129,12 +129,12 @@ public:
 
   symbol_info get_operator(const std::string& name) const;
 
-  explicit Program(const std::string&);
+  explicit Module(const std::string&);
 };
 
-std::ostream& operator<<(std::ostream&, const Program&);
+std::ostream& operator<<(std::ostream&, const Module&);
 
-expression_ref resolve_refs(const std::vector<Program>&, const expression_ref&);
+expression_ref resolve_refs(const std::vector<Module>&, const expression_ref&);
 
-bool contains_module(const std::vector<Program>& P, const std::string& module_name);
+bool contains_module(const std::vector<Module>& P, const std::string& module_name);
 #endif

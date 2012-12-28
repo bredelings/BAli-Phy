@@ -5,7 +5,7 @@
 #include <iostream>
 #include "model_notes.H"
 
-class Program;
+class Module;
 
 class formula_expression_ref: public Model_Notes
 {
@@ -21,7 +21,7 @@ public:
 
   object_ptr<const Object> result(const std::vector<std::string>& modules_path) const;
 
-  object_ptr<const Object> result(const std::vector<std::string>& modules_path, const std::vector<Program>&) const;
+  object_ptr<const Object> result(const std::vector<std::string>& modules_path, const std::vector<Module>&) const;
 
   object_ptr<const Object> result(const std::vector<std::string>& modules_path, const std::vector<std::string>&) const;
 

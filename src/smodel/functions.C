@@ -8,9 +8,9 @@
 using std::vector;
 using std::string;
 
-Program SModel_Functions(const vector<string>& module_root_paths)
+Module SModel_Functions(const vector<string>& module_root_paths)
 {
-  Program P("SModel");
+  Module P("SModel");
 
   P.def_function("plusGWF", lambda_expression(substitution::Plus_gwF_Op()));
   P.def_function("lExp", lambda_expression(LExp_Op()));

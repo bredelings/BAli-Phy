@@ -77,10 +77,10 @@ bool is_irrefutable_pat(const expression_ref& E)
 }
 
 
-expression_ref infix_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
+expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
-expression_ref infix_parse_neg(const Program& m, const symbol_info& op1, deque<expression_ref>& T)
+expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<expression_ref>& T)
 {
   assert(not T.empty());
 
@@ -102,7 +102,7 @@ expression_ref infix_parse_neg(const Program& m, const symbol_info& op1, deque<e
 }
 
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
-expression_ref infix_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
+expression_ref infix_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
 {
   if (T.empty())
     return E1;
@@ -149,7 +149,7 @@ expression_ref infix_parse(const Program& m, const symbol_info& op1, const expre
   }
 }
 
-expression_ref desugar_infix(const Program& m, const vector<expression_ref>& T)
+expression_ref desugar_infix(const Module& m, const vector<expression_ref>& T)
 {
   deque<expression_ref> T2;
   T2.insert(T2.begin(), T.begin(), T.end());
@@ -157,10 +157,10 @@ expression_ref desugar_infix(const Program& m, const vector<expression_ref>& T)
   return infix_parse_neg(m, {"",variable_symbol,unknown_scope,2,-1,non_fix}, T2);
 }
 
-expression_ref infixpat_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
+expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T);
 
 /// Expression is of the form ... op1 [E1 ...]. Get right operand of op1.
-expression_ref infixpat_parse_neg(const Program& m, const symbol_info& op1, deque<expression_ref>& T)
+expression_ref infixpat_parse_neg(const Module& m, const symbol_info& op1, deque<expression_ref>& T)
 {
   assert(not T.empty());
 
@@ -193,7 +193,7 @@ expression_ref infixpat_parse_neg(const Program& m, const symbol_info& op1, dequ
 }
 
 /// Expression is of the form ... op1 E1 [op2 ...]. Get right operand of op1.
-expression_ref infixpat_parse(const Program& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
+expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const expression_ref& E1, deque<expression_ref>& T)
 {
   if (T.empty())
     return E1;
@@ -246,7 +246,7 @@ expression_ref infixpat_parse(const Program& m, const symbol_info& op1, const ex
   }
 }
 
-expression_ref desugar_infixpat(const Program& m, const vector<expression_ref>& T)
+expression_ref desugar_infixpat(const Module& m, const vector<expression_ref>& T)
 {
   deque<expression_ref> T2;
   T2.insert(T2.begin(), T.begin(), T.end());
@@ -479,7 +479,7 @@ expression_ref get_fresh_id(const string& s, const expression_ref& E)
  * - Dummies can't represent e.g. irrefutable patterns.
  */
 
-expression_ref desugar1(const Program& m, const expression_ref& E, const set<string>& bound)
+expression_ref desugar1(const Module& m, const expression_ref& E, const set<string>& bound)
 {
   vector<expression_ref> v = E->sub;
       
@@ -921,12 +921,12 @@ expression_ref desugar1(const Program& m, const expression_ref& E, const set<str
     return E;
 }
 
-expression_ref desugar1(const Program& m, const expression_ref& E)
+expression_ref desugar1(const Module& m, const expression_ref& E)
 {
   return desugar1(m,E,{});
 }
 
-expression_ref desugar2(const Program& m, const expression_ref& E, const set<string>& bound)
+expression_ref desugar2(const Module& m, const expression_ref& E, const set<string>& bound)
 {
   vector<expression_ref> v = E->sub;
       
@@ -1422,17 +1422,17 @@ expression_ref desugar2(const Program& m, const expression_ref& E, const set<str
     return E;
 }
 
-expression_ref desugar2(const Program& m, const expression_ref& E)
+expression_ref desugar2(const Module& m, const expression_ref& E)
 {
   return desugar2(m,E,{});
 }
 
-expression_ref parse_haskell_line(const Program& P, const string& line)
+expression_ref parse_haskell_line(const Module& P, const string& line)
 {
   return desugar2(P,desugar1(P, parse_haskell_line(line)));
 }
 
-expression_ref parse_bugs_line(const Program& P, const string& line)
+expression_ref parse_bugs_line(const Module& P, const string& line)
 {
   expression_ref cmd = parse_bugs_line(line);
 
@@ -1491,7 +1491,7 @@ Model_Notes read_BUGS(const vector<string>& modules_path, const Parameters& P, c
   }
 
   // 5. Process imports
-  Program BUGS(module_name);
+  Module BUGS(module_name);
   BUGS.import_module(modules_path,"Prelude", false);
   BUGS.import_module(modules_path,"Distributions", false);
   BUGS.import_module(modules_path,"Range", false);

@@ -1081,7 +1081,7 @@ Parameters::Parameters(const vector<string>& module_path,
 
     IModel_methods[i].parameters = add_submodel(imodel);
   }
-  Program imodels_program("IModels");
+  Module imodels_program("IModels");
   imodels_program.def_function("models", (var("listArray'"), get_list(imodels_).exp()));
   C += { imodels_program };
   
@@ -1149,7 +1149,7 @@ Parameters::Parameters(const vector<string>& module_path,
     substitutionBranchLengthsList = get_list(SBLL);
   }
 
-  Program parameter_program("Parameters");
+  Module parameter_program("Parameters");
   parameter_program.def_function("substitutionBranchLengths", (var("listArray'"),(var("fmap"),var("listArray'"),substitutionBranchLengthsList)));
   C += {parameter_program};
 
@@ -1217,7 +1217,7 @@ Parameters::Parameters(const vector<string>& module_path,
 
   expression_ref _ = dummy(-1);
 
-  Program tree_program("Tree");
+  Module tree_program("Tree");
   tree_program.import_module(module_path,"Prelude",false);
   tree_program.def_constructor("Tree",4);
   tree_program.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));

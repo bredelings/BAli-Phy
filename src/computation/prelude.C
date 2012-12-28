@@ -42,10 +42,10 @@ using std::string;
  */
 
 
-Program make_Prelude()
+Module make_Prelude()
 {
   // See http://www.haskell.org/onlinereport/standard-prelude.html
-  Program P("Prelude");
+  Module P("Prelude");
 
   P.def_function("builtinError", lambda_expression( Error() ) ); 
   P.def_function("intToDouble", lambda_expression( Conversion<int,double>() ) ); 
@@ -145,16 +145,16 @@ Program make_Prelude()
   return P;
 }
 
-const Program& get_Prelude()
+const Module& get_Prelude()
 {
-  static const Program P = make_Prelude();
+  static const Module P = make_Prelude();
   return P;
 }
 
-Program Distribution_Functions(const vector<string>&);
-Program Range_Functions(const vector<string>&);
-Program SModel_Functions(const vector<string>&);
-Program PopGen_Functions(const vector<string>&);
+Module Distribution_Functions(const vector<string>&);
+Module Range_Functions(const vector<string>&);
+Module SModel_Functions(const vector<string>&);
+Module PopGen_Functions(const vector<string>&);
 
 
 expression_ref load_module_from_file(const vector<string>& module_root_paths, const string& modid)
@@ -179,9 +179,9 @@ expression_ref load_module_from_file(const vector<string>& module_root_paths, co
   throw myexception()<<"Couldn't file module '"<<modid<<"' in path '"<<join(module_root_paths,':')<<"'";
 }
 
-Program load_module(const vector<string>& modules_path, const string& modid)
+Module load_module(const vector<string>& modules_path, const string& modid)
 {
-  Program M(modid);
+  Module M(modid);
   if (modid == "Prelude")
     M = get_Prelude();
   else if (modid == "Distributions")
@@ -203,9 +203,9 @@ Program load_module(const vector<string>& modules_path, const string& modid)
   return M;
 }
 
-vector<Program> load_modules(const vector<string>& modules_path, const vector<string>& module_names)
+vector<Module> load_modules(const vector<string>& modules_path, const vector<string>& module_names)
 {
-  vector<Program> P;
+  vector<Module> P;
   for(const string& name: module_names)
     P.push_back(load_module(modules_path,name));
   return P;

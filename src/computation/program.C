@@ -84,7 +84,7 @@ bool operator!=(const symbol_info&S1, const symbol_info& S2)
   return not (S1 == S2);
 }
 
-bool Program::symbol_exists(const std::string& name) const
+bool Module::symbol_exists(const std::string& name) const
 {
   auto loc = symbols.find(name);
   if (loc == symbols.end())
@@ -93,7 +93,7 @@ bool Program::symbol_exists(const std::string& name) const
     return true;
 }
 
-void Program::add_symbol(const symbol_info& S)
+void Module::add_symbol(const symbol_info& S)
 {
   if (is_haskell_builtin_con_name(S.name))
     throw myexception()<<"Can't add builtin symbol '"<<S.name<<"'";
@@ -111,14 +111,14 @@ void Program::add_symbol(const symbol_info& S)
     throw myexception()<<"Trying to add symbol '"<<S.name<<"' twice to module '"<<module_name<<"' with different body";
 }
 
-void Program::add_symbol(const symbol_info& S, scope_t sc)
+void Module::add_symbol(const symbol_info& S, scope_t sc)
 {
   symbol_info S2 = S;
   S2.scope = sc;
   add_symbol(S2);
 }
 
-void Program::add_alias(const string& identifier_name, const string& resolved_name)
+void Module::add_alias(const string& identifier_name, const string& resolved_name)
 {
   if (not symbol_exists(resolved_name))
     throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_name<<"' in module '"<<module_name<<"' because '"<<resolved_name<<"' is neither declared nor imported.";
@@ -132,7 +132,7 @@ void Program::add_alias(const string& identifier_name, const string& resolved_na
     aliases.insert( std::pair<string,string>(identifier_name, resolved_name) );
 }
 
-void Program::declare_symbol(const symbol_info& S)
+void Module::declare_symbol(const symbol_info& S)
 {
   if (is_qualified_symbol(S.name))
     throw myexception()<<"Locally defined symbol '"<<S.name<<"' should not be qualified in declaration.";
@@ -154,7 +154,7 @@ void Program::declare_symbol(const symbol_info& S)
 // "Also like a type signature, a fixity declaration can only occur in the same sequence of declarations as the declaration of the operator itself, and at most one fixity declaration may be given for any operator."
 
 // "Fixity is a property of a particular entity (constructor or variable), just like its type; fixity is not a property of that entity’s name."
-void Program::declare_fixity(const std::string& s, int precedence, fixity_t fixity)
+void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixity)
 {
   if (is_qualified_symbol(s))
     throw myexception()<<"Trying to declare fixity of qualified symbol '"<<s<<"'.  Use its unqualified name.";
@@ -174,18 +174,18 @@ void Program::declare_fixity(const std::string& s, int precedence, fixity_t fixi
   S.fixity = fixity;
 }
 
-void Program::declare_parameter(const std::string& pname)
+void Module::declare_parameter(const std::string& pname)
 {
   declare_parameter(pname, {});
 }
 
-void Program::declare_parameter(const std::string& pname, const expression_ref& type)
+void Module::declare_parameter(const std::string& pname, const expression_ref& type)
 {
   declare_symbol({pname, parameter_symbol, local_scope, -1, -1, unknown_fix, parameter(pname),type});
 }
 
 // Question: what if we import m1.s, which depends on an unimported m2.s?
-void Program::import_symbol(const symbol_info& S, const string& modid, bool qualified)
+void Module::import_symbol(const symbol_info& S, const string& modid, bool qualified)
 {
   if (not is_qualified_symbol(S.name))
     throw myexception()<<"Imported symbols must have qualified names.";
@@ -199,7 +199,7 @@ void Program::import_symbol(const symbol_info& S, const string& modid, bool qual
     add_alias(get_unqualified_name(S.name), S.name);
 }
 
-void Program::import_module(const Program& P2, const string& modid, bool qualified)
+void Module::import_module(const Module& P2, const string& modid, bool qualified)
 {
   assert(modid != module_name);
   imported.insert(P2.module_name);
@@ -213,30 +213,30 @@ void Program::import_module(const Program& P2, const string& modid, bool qualifi
   }
 }
 
-void Program::import_module(const Program& P2, bool qualified)
+void Module::import_module(const Module& P2, bool qualified)
 {
   import_module(P2, P2.module_name, qualified);
 }
 
-void Program::import_module(const vector<string>& path, const string& modid, bool qualified)
+void Module::import_module(const vector<string>& path, const string& modid, bool qualified)
 {
   if (not imported.count(modid) and modid != module_name)
   {
-    Program mod = load_module(path, modid);
+    Module mod = load_module(path, modid);
     import_module(mod, qualified);
   }
 }
 
-void Program::import_module(const vector<string>& path, const string& modid, const string& modid2, bool qualified)
+void Module::import_module(const vector<string>& path, const string& modid, const string& modid2, bool qualified)
 {
   if (not imported.count(modid) and modid != module_name)
   {
-    Program mod = load_module(path, modid);
+    Module mod = load_module(path, modid);
     import_module(mod, modid2, qualified);
   }
 }
 
-Program find_module(const string& module_name, const std::vector<Program>& P)
+Module find_module(const string& module_name, const std::vector<Module>& P)
 {
   for(const auto& module: P)
     if (module.module_name == module_name)
@@ -244,7 +244,7 @@ Program find_module(const string& module_name, const std::vector<Program>& P)
   std::abort();
 }
 
-void Program::perform_imports(const std::vector<Program>& P)
+void Module::perform_imports(const std::vector<Module>& P)
 {
   bool saw_Prelude = false;
   if (impdecls)
@@ -262,7 +262,7 @@ void Program::perform_imports(const std::vector<Program>& P)
       
       assert(i == impdecl->sub.size());
       
-      Program M = find_module(imp_module_name,P);
+      Module M = find_module(imp_module_name,P);
 
       import_module(M, imp_module_name_as, qualified);
       if (imp_module_name == "Prelude")
@@ -272,7 +272,7 @@ void Program::perform_imports(const std::vector<Program>& P)
   // Import the Prelude if it wasn't explicitly mentioned in the import list.
   if (not saw_Prelude and module_name != "Prelude" and not imported.count("Prelude"))
   {
-    Program M = find_module("Prelude",P);
+    Module M = find_module("Prelude",P);
     import_module(M,"Prelude",false);
   }
 
@@ -307,12 +307,12 @@ void Program::perform_imports(const std::vector<Program>& P)
     }
 }
 
-bool Program::is_declared(const std::string& name) const
+bool Module::is_declared(const std::string& name) const
 {
   return is_haskell_builtin_con_name(name) or (aliases.count(name) > 0);
 }
 
-symbol_info Program::lookup_builtin_symbol(const std::string& name)
+symbol_info Module::lookup_builtin_symbol(const std::string& name)
 {
   if (name == "()")
     return symbol_info("()", constructor_symbol, global_scope, 0, constructor("()",0));
@@ -329,7 +329,7 @@ symbol_info Program::lookup_builtin_symbol(const std::string& name)
   throw myexception()<<"Symbol 'name' is not a builtin (constructor) symbol.";
 }
 
-symbol_info Program::lookup_symbol(const std::string& name) const
+symbol_info Module::lookup_symbol(const std::string& name) const
 {
   if (is_haskell_builtin_con_name(name))
     return lookup_builtin_symbol(name);
@@ -355,7 +355,7 @@ symbol_info Program::lookup_symbol(const std::string& name) const
   }
 }
 
-symbol_info Program::get_operator(const string& name) const
+symbol_info Module::get_operator(const string& name) const
 {
   symbol_info S = lookup_symbol(name);
 
@@ -541,12 +541,12 @@ string get_unqualified_name(const std::string& s)
   return get_haskell_identifier_path(s).back();
 }
 
-Program& Program::operator+=(const char* s)
+Module& Module::operator+=(const char* s)
 {
   return operator+=(string(s));
 }
 
-Program& Program::operator+=(const string& s)
+Module& Module::operator+=(const string& s)
 {
   return operator+=(parse_haskell_decls(s));
 }
@@ -578,7 +578,7 @@ string get_function_name(const expression_ref& E)
 
 set<string> find_bound_vars(const expression_ref& E);
 
-Program& Program::operator+=(const expression_ref& E)
+Module& Module::operator+=(const expression_ref& E)
 {
   expression_ref decls = E;
 
@@ -732,7 +732,7 @@ Program& Program::operator+=(const expression_ref& E)
   return *this;
 }
 
-void Program::def_function(const std::string& name, const expression_ref& body, const expression_ref& type)
+void Module::def_function(const std::string& name, const expression_ref& body, const expression_ref& type)
 {
   if (is_qualified_symbol(name))
     throw myexception()<<"Locally defined symbol '"<<name<<"' should not be qualified in function declaration.";
@@ -757,12 +757,12 @@ void Program::def_function(const std::string& name, const expression_ref& body, 
     declare_symbol({name, variable_symbol, local_scope, -1, -1, unknown_fix, body, type});
 }
 
-void Program::def_function(const std::string& name, const expression_ref& body)
+void Module::def_function(const std::string& name, const expression_ref& body)
 {
   def_function(name, body, {});
 }
 
-void Program::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
+void Module::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
 {
   assert(patterns.size());
   assert(patterns.size() == bodies.size());
@@ -783,7 +783,7 @@ void Program::def_function(const vector<expression_ref>& patterns, const vector<
   def_function(name, E);
 }
 
-void Program::def_constructor(const std::string& name, int arity)
+void Module::def_constructor(const std::string& name, int arity)
 {
   if (is_qualified_symbol(name))
     throw myexception()<<"Locally defined symbol '"<<name<<"' should not be qualified.";
@@ -807,20 +807,20 @@ void Program::def_constructor(const std::string& name, int arity)
   declare_symbol( {name, constructor_symbol, local_scope, arity, -1, unknown_fix, body, {}} );
 }
 
-expression_ref Program::get_function(const std::string& name) const
+expression_ref Module::get_function(const std::string& name) const
 {
   return lookup_symbol(name).body;
 }
 
 // A name of "" means that we are defining a top-level program, or a piece of a top-level program.
-Program::Program(const std::string& n)
+Module::Module(const std::string& n)
   :module_name(n)
 { 
   if (not n.size())
-    throw myexception()<<"Program name may not be empty!";
+    throw myexception()<<"Module name may not be empty!";
 }
 
-std::ostream& operator<<(std::ostream& o, const Program& D)
+std::ostream& operator<<(std::ostream& o, const Module& D)
 {
   for(const auto& s: D.get_symbols())
   {
@@ -835,7 +835,7 @@ std::ostream& operator<<(std::ostream& o, const Program& D)
   return o;
 }
 
-expression_ref resolve_refs(const vector<Program>& P, const expression_ref& E)
+expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 {
   // Replace parameters with the appropriate reg_var: of value parameter( )
   if (object_ptr<const parameter> p = is_a<parameter>(E))
@@ -878,7 +878,7 @@ expression_ref resolve_refs(const vector<Program>& P, const expression_ref& E)
   return V;
 }
 
-bool contains_module(const vector<Program>& P, const string& module_name)
+bool contains_module(const vector<Module>& P, const string& module_name)
 {
   for(const auto& module: P)
     if (module.module_name == module_name)

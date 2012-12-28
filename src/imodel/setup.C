@@ -2,6 +2,7 @@
 #include "imodel/imodel.H"
 #include "probability/distribution-operations.H"
 #include "computation/operations.H"
+#include "computation/program.H"
 
 using std::string;
 using std::vector;
