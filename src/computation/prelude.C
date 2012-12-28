@@ -51,6 +51,9 @@ using std::string;
  * 17. Compute the entire probability expression, instead of adding pieces incrementally.
  * 18. Make Context load an entire program, instead of adding pieces incrementally.
  *     19. Move the Program from Context to reg_heap.
+ * 20. Load builtins from a file.
+ *     20a. Allow builtins to be constructed from a number n_args, and a function Op, where
+ *       + closure (*Op)(OperationArgs&)
  */
 
 
