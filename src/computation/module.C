@@ -246,6 +246,7 @@ Module find_module(const string& module_name, const std::vector<Module>& P)
 
 void Module::perform_imports(const std::vector<Module>& P)
 {
+  // \todo FIXME:clarity - Rename this function to e.g. resolve_symbols(), since it does more than just perform imports().
   bool saw_Prelude = false;
   if (impdecls)
     for(const auto& impdecl:impdecls->sub)
@@ -698,36 +699,14 @@ Module& Module::operator+=(const expression_ref& E)
       }
     }
       
-
   if (module) return *this;
 
-  // 1. Desugar the decls
-  decls = desugar2(*this, decls);
+  if (not topdecls)
+    topdecls = decls;
 
-  // 2. Convert top-level dummies into global vars.
-  vector<expression_ref> decls_sub = decls->sub;
-  for(auto& decl: decls_sub)
-    if (is_AST(decl,"Decl"))
-      for(auto& p: symbols)
-      {
-	const auto& S = p.second;
-	if (S.symbol_type != variable_symbol) continue;
-	if (S.scope != local_scope) continue;
-
-	string qname = S.name;
-	string name = get_unqualified_name(qname);
-	
-	decl = substitute(decl,dummy(qname),var(qname));
-	decl = substitute(decl,dummy( name),var(qname));
-      }
-  
-  // 3. Define the symbols
-  for(const auto& decl: decls_sub)
-    if (is_AST(decl,"Decl"))
-    {
-      string name = decl->sub[0].assert_is_a<var>()->name;
-      symbols[name].body = decl->sub[1];
-    }
+  // This means that operator::+=() can only be called once with a module, and once without.
+  // \todo FIXME:cleanup - Make this part of the function body then, and allow constructing the module from it.
+  assert(decls == topdecls);
 
   return *this;
 }

@@ -1215,12 +1215,12 @@ Parameters::Parameters(const vector<string>& module_path,
 
   expression_ref _ = dummy(-1);
 
-  Module tree_program("Tree");
-  tree_program.import_module(module_path,"Prelude",false);
-  tree_program.def_constructor("Tree",4);
-  tree_program.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
+  Module tree_module("Tree");
+  tree_module.def_constructor("Tree",4);
+  tree_module.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
 
-  tree_program += "{\
+  // \todo fixme:cleanup - Move this to a separate module, and import it!
+  tree_module += "{\
 numNodes (Tree _ _ n _) = n;\
 numBranches (Tree _ _ _ n) = n;\
 edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node;\
@@ -1234,7 +1234,7 @@ neighbors t n = fmap (targetNode t) (edgesOutOfNode t n);\
 edgesBeforeEdge t b = case (nodesForEdge t b) of {(n1,n2) -> [edgeForNodes t (n,n1) | n <- neighbors t n1, n /= n2 ]}\
 }";
 
-  C += {tree_program};
+  C += {tree_module};
 
   for(int n=0; n < T->n_nodes(); n++)
   {
