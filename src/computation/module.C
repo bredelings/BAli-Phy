@@ -279,7 +279,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
   if (not topdecls) return;
 
   // 1. Desugar the module
-  expression_ref decls = desugar2(*this,topdecls);
+  expression_ref decls = desugar(*this,topdecls);
   
   // 2. Convert top-level dummies into global vars.
   vector<expression_ref> decls_sub = decls->sub;
