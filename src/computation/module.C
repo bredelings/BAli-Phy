@@ -84,7 +84,7 @@ bool operator!=(const symbol_info&S1, const symbol_info& S2)
   return not (S1 == S2);
 }
 
-bool Module::symbol_exists(const std::string& name) const
+bool Module::symbol_exists(const string& name) const
 {
   auto loc = symbols.find(name);
   if (loc == symbols.end())
@@ -791,11 +791,20 @@ expression_ref Module::get_function(const std::string& name) const
 }
 
 // A name of "" means that we are defining a top-level program, or a piece of a top-level program.
-Module::Module(const std::string& n)
+Module::Module(const string& n)
   :module_name(n)
 { 
   if (not n.size())
     throw myexception()<<"Module name may not be empty!";
+}
+
+Module::Module(const char *n)
+  :Module(string(n))
+{ }
+
+Module::Module(const expression_ref& E)
+{ 
+  (*this) += E;
 }
 
 std::ostream& operator<<(std::ostream& o, const Module& D)

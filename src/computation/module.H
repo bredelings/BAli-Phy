@@ -130,6 +130,10 @@ public:
   symbol_info get_operator(const std::string& name) const;
 
   explicit Module(const std::string&);
+
+  explicit Module(const char*);
+
+  explicit Module(const expression_ref&);
 };
 
 std::ostream& operator<<(std::ostream&, const Module&);
