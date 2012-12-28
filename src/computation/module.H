@@ -109,9 +109,9 @@ public:
 
   void import_symbol(const symbol_info&, const std::string&, bool qualified);
 
-  void import_module(const Module& P2, bool qualified);
+  void import_module(const Module& M2, bool qualified);
 
-  void import_module(const Module& P2, const std::string&, bool qualified);
+  void import_module(const Module& M2, const std::string&, bool qualified);
 
   void import_module(const std::vector<std::string>& path, const std::string&, bool qualified);
 

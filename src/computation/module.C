@@ -199,12 +199,12 @@ void Module::import_symbol(const symbol_info& S, const string& modid, bool quali
     add_alias(get_unqualified_name(S.name), S.name);
 }
 
-void Module::import_module(const Module& P2, const string& modid, bool qualified)
+void Module::import_module(const Module& M2, const string& modid, bool qualified)
 {
   assert(modid != module_name);
-  imported.insert(P2.module_name);
+  imported.insert(M2.module_name);
 
-  for(const auto& p: P2.symbols)
+  for(const auto& p: M2.symbols)
   {
     const symbol_info& S = p.second;
 
@@ -213,9 +213,9 @@ void Module::import_module(const Module& P2, const string& modid, bool qualified
   }
 }
 
-void Module::import_module(const Module& P2, bool qualified)
+void Module::import_module(const Module& M2, bool qualified)
 {
-  import_module(P2, P2.module_name, qualified);
+  import_module(M2, M2.module_name, qualified);
 }
 
 void Module::import_module(const vector<string>& path, const string& modid, bool qualified)
