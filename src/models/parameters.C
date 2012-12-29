@@ -1120,7 +1120,7 @@ Parameters::Parameters(const vector<string>& module_path,
   vector<expression_ref> branch_categories;
   for(int b=0;b<T->n_branches();b++)
   {
-    string name = "branchCat" + convertToString(b+1);
+    string name = "Main.branchCat" + convertToString(b+1);
     add_parameter(name, Int(0));
     branch_categories.push_back(parameter(name));
   }
