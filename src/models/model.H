@@ -30,6 +30,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include <vector>
 #include <string>
 #include <iostream>
+#include <utility>
 
 #include "mytypes.H"
 #include "bounds.H"
@@ -187,6 +188,8 @@ public:
   int add_note(const expression_ref&);
 
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
+
+  std::vector<int> add_submodel(const std::pair<Module,Model_Notes>&);
 
   std::vector<int> add_submodel(const Model_Notes&);
 

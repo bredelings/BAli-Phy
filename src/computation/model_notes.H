@@ -16,7 +16,6 @@ class Model_Notes
 {
 protected:
   std::vector<expression_ref> notes;
-  std::vector<Module> modules;
 
 public:
   int n_notes() const {return notes.size();}
@@ -31,12 +30,6 @@ public:
   void add_notes(const std::vector<expression_ref>&);
 
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
-
-  int n_modules() const;
-  Module& get_module(int i);
-  const Module& get_module(int i) const;
-  const std::vector<Module>& get_modules() const;
-  void add_module(const Module& m);
 
   Model_Notes();
   Model_Notes(const std::vector<expression_ref>&);

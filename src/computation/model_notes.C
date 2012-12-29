@@ -1,5 +1,4 @@
 #include "model_notes.H"
-#include "computation/module.H"
 
 using std::vector;
 using std::set;
@@ -40,31 +39,6 @@ int Model_Notes::find_match_notes(const expression_ref& query, std::vector<expre
       return i;
   }
   return -1;
-}
-
-int Model_Notes::n_modules() const
-{
-  return modules.size();
-}
-
-Module& Model_Notes::get_module(int i)
-{
-  return modules[i];
-}
-
-const Module& Model_Notes::get_module(int i) const
-{
-  return modules[i];
-}
-
-const vector<Module>& Model_Notes::get_modules() const
-{
-  return modules;
-}
-
-void Model_Notes::add_module(const Module& m)
-{
-  return modules.push_back(m);
 }
 
 Model_Notes::Model_Notes()

@@ -28,6 +28,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/module.H"
 #include "computation/formula_expression.H"
 #include "probability/distribution-operations.H"
+#include "parser/desugar.H"
 
 using std::vector;
 using std::string;
@@ -142,14 +143,27 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
   return values;  
 }
 
-vector<int> Model::add_submodel(const Model_Notes& R)
+vector<int> Model::add_submodel(const std::pair<Module,Model_Notes>& R)
 {
-  C += R.get_modules();
+  // 1. Load the module, perform imports, and resolve its symbols.
+  C += {R.first};
+  const Module& M = get_module(C.get_Program(), R.first.module_name);
 
+  // 2. Resolve symbols for the notes.
+  Model_Notes N = R.second;
+  for(auto& n: N.get_notes())
+    n = desugar(M,n);
+
+  return add_submodel(N);
+}
+
+vector<int> Model::add_submodel(const Model_Notes& N)
+{
   vector<int> new_parameters;
 
-  // Find and add the declared names that don't exist yet.
-  std::set<string> declared_parameter_names = find_declared_parameters(R);
+  // \todo FIXME:cleanup - The need to call Model::add_parameter() instead of just C.add_parameter( ) means that we can only add parameters in notes.
+  // 3. Find and add the declared names that don't exist yet.
+  std::set<string> declared_parameter_names = find_declared_parameters(N);
   for(const auto& name: declared_parameter_names)
     if (find_parameter(name) == -1)
     {
@@ -159,11 +173,11 @@ vector<int> Model::add_submodel(const Model_Notes& R)
     else
       throw myexception()<<"Submodel declares existing parameter '"<<name<<"'!";
   
-  // Add the notes from this model to the current model.
-  for(const auto& n: R.get_notes())
+  // 4. Add the notes from this model to the current model.
+  for(const auto& n: N.get_notes())
     add_note(n);
   
-  // Set default values.
+  // 5. Set default values.
   //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
   for(int index: new_parameters)
     if (not C.parameter_is_set(index))

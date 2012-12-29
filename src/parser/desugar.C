@@ -2,6 +2,7 @@
 #include "computation/module.H"
 #include <deque>
 #include <set>
+#include <utility>
 #include "io.H"
 #include "models/parameters.H"
 #include "AST.H"
@@ -10,6 +11,7 @@ using std::string;
 using std::vector;
 using std::set;
 using std::deque;
+using std::pair;
 
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
@@ -1004,7 +1006,7 @@ bool is_all_space(const string& line)
   return true;
 }
 
-Model_Notes read_BUGS(const vector<string>& modules_path, const Parameters& P, const string& filename, const string& module_name_)
+pair<Module,Model_Notes> read_BUGS(const vector<string>& modules_path, const Parameters& P, const string& filename, const string& module_name_)
 {
   // 1. Read file into string.
   string file_contents = read_file(filename, "BUGS File");
@@ -1022,40 +1024,11 @@ Model_Notes read_BUGS(const vector<string>& modules_path, const Parameters& P, c
     assert(is_AST(bugs_notes,"BugsLines"));
   }
 
-  // 3. module = [optional name] + body
-  string module_name = module_name_;
-  expression_ref body;
-  if (module->sub.size() == 1)
-    body = module->sub[0];
-  else
-  {
-    module_name = *module->sub[0].is_a<String>();
-    body = module->sub[1];
-  }
-  assert(is_AST(body,"Body"));
-
-  // 4. body = impdecls + [optional topdecls]
-  expression_ref impdecls;
-  expression_ref topdecls;
-  if (body->sub.size() == 1)
-  {
-    topdecls = body->sub[0];
-    assert(is_AST(topdecls,"TopDecls"));
-  }
-
-  // 5. Process imports
-  Module BUGS(module_name);
-  BUGS.import_module(modules_path,"Prelude", false);
-  BUGS.import_module(modules_path,"Distributions", false);
-  BUGS.import_module(modules_path,"Range", false);
-  BUGS.import_module(modules_path,"SModel", false);
-  BUGS.import_module(modules_path,"PopGen", false);
-  for(const auto module:P.get_Program())
-    BUGS.import_module(module, false);
+  Module BUGS(module);
 
   Model_Notes N;
 
-  // 6a. Find explicitly and implicitly-declared parameters
+  // 3. Find explicitly and implicitly-declared parameters
   set<string> new_parameters;
   for(const auto& cmd: bugs_notes->sub)
   {
@@ -1070,41 +1043,35 @@ Model_Notes read_BUGS(const vector<string>& modules_path, const Parameters& P, c
     }
   }
 
-  // 7. Actually declare them.
+  // 4. Actually declare them.
   for(const auto& id: new_parameters)
   {
     if (not BUGS.is_declared(id))
     {
       BUGS.declare_parameter(id);
-      def_parameter(N,module_name+"."+id);
+      def_parameter(N,BUGS.module_name+"."+id);
     }
   }
 
-  // 8. Declare objects from the Haskell module
-  if (topdecls)
-    BUGS += topdecls;
+  // 5. Add notes
+  for(const auto& note: bugs_notes->sub)
+    N.add_note(note);
 
-  // 9. Add notes
-  for(const auto& cmd: bugs_notes->sub)
-    N.add_note(desugar(BUGS,cmd));
-
-  // 10. Add Loggers for any locally declared parameters
+  // 6. Add Loggers for any locally declared parameters
   for(const auto& name: new_parameters)
   {
     expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
     N.add_note((make_logger,parameter(name)));
   }
 
-  N.add_module(BUGS);
-
-  return N;
+  return {BUGS,N};
 }
 
 void add_BUGS(const vector<string>& modules_path, Parameters& P, const std::string& filename, const std::string& module_name)
 {
-  Model_Notes N = read_BUGS(modules_path, P, filename, module_name);
+  auto m = read_BUGS(modules_path, P, filename, module_name);
 
-  P.add_submodel(N);
+  P.add_submodel(m);
 
   for(int i=0;i<P.n_notes();i++)
     std::cerr<<"note "<<i<<" = "<<P.get_note(i)->print()<<"\n\n";

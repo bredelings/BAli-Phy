@@ -1,5 +1,7 @@
 module Test where
 {
+  import PopGen;
+  import Distributions;
   getAFS = (alleleFrequencySpectrum . remove2ndAllele . readPhaseFile);
   filename1 = "/home/bredelings/Reports/Kmar/input4bensprogram.txt";
   filename1a = "/home/bredelings/Reports/Kmar/input1.txt";
