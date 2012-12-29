@@ -27,11 +27,46 @@ const Module& get_module(const std::vector<Module>& P, const std::string& module
   return P[index];
 }
 
+vector<string> module_names(const vector<Module>& P)
+{
+  vector<string> names;
+  for(const auto& module: P)
+    names.push_back(module.module_name);
+  return names;
+}
+
+static int count_module(const vector<Module>& P,const string& module_name)
+{
+  int count = 0;
+  for(const auto& module: P)
+    if (module.module_name == module_name)
+      count++;
+  return count;
+}
+
 void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, const std::vector<Module>& modules)
 {
+  // 1. Check that the program doesn't already contain these module names.
+  for(const auto& module: modules)
+    if (contains_module(P,module.module_name))
+      throw myexception()<<"Trying to add duplicate module '"<<module.module_name<<"' to program ["<<join(module_names(P),",")<<"]";
+
+  // 2. Check that we aren't adding any module twice.
+  for(const auto& module: modules) 
+  {
+    int count = count_module(modules, module.module_name);
+    if (count > 1)
+      throw myexception()<<"Trying to add module '"<<module.module_name<<"' to program ["<<join(module_names(P),",")<<"] "<<count<<" times.";
+  }
+
+  // 3. Actually add the modules.
   P.insert(P.end(), modules.begin(), modules.end());
 
-  // 1. Add any additional modules needed to complete the program.
+  // 4. Assert that every module exists only once in the list.
+  for(const auto& module: P)
+    assert(count_module(P, module.module_name) == 1);
+
+  // 5. Add any additional modules needed to complete the program.
   std::set<string> modules_to_add;
   do
   {
@@ -49,9 +84,11 @@ void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, c
       
   } while (not modules_to_add.empty());
 
-  // 2a. Perform any needed imports.
-  // 2b. Desugar the module here.
+  // 6a. Perform any needed imports.
+  // 6b. Desugar the module here.
   for(auto& module: P)
     if (contains_module(modules, module.module_name))
+    {
       module.resolve_symbols(P);
+    }
 }
