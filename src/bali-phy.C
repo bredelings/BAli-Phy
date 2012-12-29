@@ -150,6 +150,8 @@ namespace mpi = boost::mpi;
 #include "likelihood.H"
 #include "util.H"
 #include "setup.H"
+#include "smodel/setup.H"
+#include "imodel/setup.H"
 #include "alignment/alignment-constraint.H"
 #include "alignment/alignment-util.H"
 #include "substitution/substitution-index.H"
