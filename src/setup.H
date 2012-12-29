@@ -34,15 +34,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "alignment/alignment.H"
 #include "tree/sequencetree.H"
 #include <boost/program_options.hpp>
-#include "computation/formula_expression.H"
-
-/// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
-std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,
-					    const alignment& A);
-
-/// Estimate the empirical frequencies of different letters from the alignment, with pseudocounts
-std::valarray<double> empirical_frequencies(const boost::program_options::variables_map& args,
-					    const std::vector<alignment>& A);
 
 //----------------- Load trees and alignments ---------------------//
 
@@ -91,34 +82,7 @@ int letter_count(const alignment& A,int l);
 void load_bali_phy_rc(boost::program_options::variables_map&,
 		      const boost::program_options::options_description&);
 
-//------------------------ Substitution stuff ----------------------//
-class Model;
-
-/// Return a substitution::Model specified by args
-formula_expression_ref get_smodel(const std::vector<std::string>& modules_path,
-				  const boost::program_options::variables_map& args,
-				  const object_ptr<const alphabet>& a,
-				  const boost::shared_ptr<const std::valarray<double> >& default_frequencies);
-
-/// Return a substitution::Model specified by name
-formula_expression_ref get_smodel(const std::vector<std::string>& modules_path,
-				  const boost::program_options::variables_map& args,
-				  const std::string&,
-				  const alignment& A);
-
-/// Return a substitution::Model specified by args
-formula_expression_ref get_smodel(const std::vector<std::string>& modules_path,
-				  const boost::program_options::variables_map& args,
-				  const alignment& A);
-
-/// Return a substitution::Model specified by name
-formula_expression_ref get_smodel(const std::vector<std::string>& modules_path,
-				  const boost::program_options::variables_map& args,
-				  const std::string&,
-				  const std::vector<alignment>& A);
-
 //--------------------------- Indel stuff --------------------------//
-formula_expression_ref get_imodel(std::string, const SequenceTree& T);
 
 template <typename T>
 class shared_items
