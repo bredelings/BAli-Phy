@@ -274,30 +274,31 @@ int context::find_parameter(const string& s) const
   return -1;
 }
 
-int context::add_parameter(const string& name)
+int context::add_parameter(const string& full_name)
 {
-  if (not is_haskell_var_name(name))
-    throw myexception()<<"Parameter name '"<<name<<"' is not a Haskell variable name";
+  if (not is_haskell_var_name(full_name))
+    throw myexception()<<"Parameter name '"<<full_name<<"' is not a Haskell variable name";
 
-  string module_name = get_module_name(name);
-  string var_name = get_unqualified_name(name);
-  string full_name = name;
-  if (module_name == "")
-    module_name = "Main";
+  // 1. Determine module name and extension of parameter name.
+  string module_name = get_module_name(full_name);
+  string var_name = get_unqualified_name(full_name);
+  if (module_name.empty())
+    throw myexception()<<"Trying to add parameter with unqualified name '"<<full_name<<"'!";
+  assert(module_name + "." + var_name == full_name);
+
+  // 2. Add it to some module.
   bool found = false;
   for(auto& module: *P.modify())
-  {
     if (module.module_name == module_name)
     {
-      full_name = module_name + "." + var_name;
       module.declare_parameter(var_name);
       found = true;
     }
-  }
+
   if (not found)
   {
     Module module(module_name);
-    module.declare_parameter(get_unqualified_name(name));
+    module.declare_parameter(var_name);
     P.modify()->push_back(module);
     // FIXME:maybe-works - Do all other modules now need to import this??
   }
