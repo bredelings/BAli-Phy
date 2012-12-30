@@ -26,11 +26,21 @@ using std::string;
  * 4. [DONE] Convert Defs to use the machine.
  * 5. SYNTAX: replace a ~ b ( c ) with a ~ b
  *      5a. Choose kernels based on the range, not based on the distribution name.
- * 6. SYNTAX: external a ~ b [To not declare all parameters]
+ *      5b. = (3) above.
+ * 6. [DONE] SYNTAX: external a ~ b [To not declare all parameters]
+ *      6a. [DONE] SYNTAX: data a ~ b [Don't treat a as a parameter at all!]
  * 7. [DONE] Allow defs in BUGS files.
  * 8. Rationalize Model_Notes, formula_expression_ref, and program?
  *    - [DONE] Make Model_Notes into a Program with notes added?
  *    - [DONE] Could we parse a BUGS file in to a Model_Notes?
+ *    - Stop allowing the creation of parameters that aren't in modules!
+ *    - Create formula_expression_ref's as a list of modules w/ notes.
+ *      + Perhaps turn imports into submodules (that are prefixed with the main module) if they have parameters.
+ *      + Perhaps when prefixing a module, we don't want to prefix its FUNCTIONS,
+ *        just its parameters and notes?
+ *      + Basically, a f.e.r. should be defined by a single module w/ imports, and a 'main' routine?
+ *        - How does this relate to simply bringing in the notes attached to parameters?
+ *        - How does this attempt to give parameters default names relate to the more general approach?
  *    - Eliminate C++ operators on formula_expression_ref -> use parser instead.
  *    - Eliminate C++ operators on expression_ref -> use parser instead.
  * 9. Try to rewrite e.g. M8b into a BUGS module.
