@@ -1026,8 +1026,6 @@ pair<Module,Model_Notes> read_BUGS(const vector<string>& modules_path, const Par
 
   Module BUGS(module);
 
-  Model_Notes N;
-
   // 3. Find explicitly and implicitly-declared parameters
   set<string> new_parameters;
   for(const auto& cmd: bugs_notes->sub)
@@ -1045,15 +1043,11 @@ pair<Module,Model_Notes> read_BUGS(const vector<string>& modules_path, const Par
 
   // 4. Actually declare them.
   for(const auto& id: new_parameters)
-  {
     if (not BUGS.is_declared(id))
-    {
       BUGS.declare_parameter(id);
-      def_parameter(N,BUGS.name+"."+id);
-    }
-  }
 
   // 5. Add notes
+  Model_Notes N;
   for(const auto& note: bugs_notes->sub)
     N.add_note(note);
 
