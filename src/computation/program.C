@@ -91,7 +91,16 @@ void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, c
   for(auto& module: P)
     if (contains_module(modules, module.module_name))
     {
-      module.resolve_symbols(P);
+      try {
+	module.resolve_symbols(P);
+      }
+      catch (myexception& e)
+      {
+	std::ostringstream o;
+	o<<"In module '"<<module.module_name<<"': ";
+	e.prepend(o.str());
+	throw e;
+      }
     }
 }
 
