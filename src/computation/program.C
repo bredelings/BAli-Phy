@@ -62,9 +62,11 @@ void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, c
   // 3. Actually add the modules.
   P.insert(P.end(), modules.begin(), modules.end());
 
+#ifndef NDEBUG
   // 4. Assert that every module exists only once in the list.
   for(const auto& module: P)
     assert(count_module(P, module.module_name) == 1);
+#endif
 
   // 5. Add any additional modules needed to complete the program.
   std::set<string> modules_to_add;
@@ -91,4 +93,18 @@ void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, c
     {
       module.resolve_symbols(P);
     }
+}
+
+bool is_declared(const std::vector<Module>& modules, const std::string& qvar)
+{
+  if (is_haskell_builtin_con_name(qvar)) return true;
+
+  if (not is_qualified_symbol(qvar))
+    throw myexception()<<"Can't search program for non-builtin, unqualified varid '"<<qvar<<"'";
+
+  for(const auto& module: modules)
+    if (module.is_declared_local(qvar))
+      return true;
+
+  return false;
 }
