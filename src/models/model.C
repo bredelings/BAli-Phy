@@ -143,10 +143,30 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
   return values;  
 }
 
+vector<int> Model::add_submodel(const Module& M)
+{
+  vector<int> new_parameters;
+
+  // 1. Load the module, perform imports, and resolve its symbols.
+  C += {M};
+
+  // 2. Account for any parameters that were added.
+  for(int i=changed.size();i<n_parameters();i++)
+  {
+    new_parameters.push_back( i );
+
+    changed.push_back(true);
+    bounds.push_back(-1);
+    prior_note_index.push_back(-1);
+  }
+
+  return new_parameters;
+}
+
 vector<int> Model::add_submodel(const std::pair<Module,Model_Notes>& R)
 {
   // 1. Load the module, perform imports, and resolve its symbols.
-  C += {R.first};
+  vector<int> new_parameters = add_submodel(R.first);
   const Module& M = get_module(C.get_Program(), R.first.module_name);
 
   // 2. Resolve symbols for the notes.
@@ -154,7 +174,11 @@ vector<int> Model::add_submodel(const std::pair<Module,Model_Notes>& R)
   for(auto& n: N.get_notes())
     n = desugar(M,n);
 
-  return add_submodel(N);
+  vector<int> new_parameters2 = add_submodel(N);
+
+  new_parameters.insert(new_parameters.end(), new_parameters2.begin(), new_parameters2.end());
+
+  return new_parameters;
 }
 
 vector<int> Model::add_submodel(const Model_Notes& N)
