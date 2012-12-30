@@ -1066,7 +1066,6 @@ Parameters::Parameters(const vector<string>& module_path,
     SModels.push_back( smodel_methods( smodel.exp(), C) );
   }
 
-  add_parameter("IModels.training", constructor("False",0));
   // register the indel models as sub-models
   vector<formula_expression_ref> imodels_;
   for(int i=0;i<n_imodels();i++) 
@@ -1081,7 +1080,9 @@ Parameters::Parameters(const vector<string>& module_path,
   }
   Module imodels_program("IModels");
   imodels_program.def_function("models", (var("listArray'"), get_list(imodels_).exp()));
-  C += { imodels_program };
+  imodels_program.declare_parameter("training");
+  add_submodel(imodels_program);
+  C.set_parameter_value(C.find_parameter("IModels.training"), false);
   
   // check that we only map existing smodels to data partitions
   for(int i=0;i<smodel_for_partition.size();i++) {
@@ -1149,7 +1150,7 @@ Parameters::Parameters(const vector<string>& module_path,
 
   Module parameter_program("Parameters");
   parameter_program.def_function("substitutionBranchLengths", (var("listArray'"),(var("fmap"),var("listArray'"),substitutionBranchLengthsList)));
-  C += {parameter_program};
+  add_submodel( parameter_program );
 
   // register the cached transition_p indices
   branch_transition_p_indices.resize(n_branch_means(), n_smodels());
@@ -1190,12 +1191,14 @@ Parameters::Parameters(const vector<string>& module_path,
   }
 
   /*------------------------- Create the tree structure -----------------------*/
-  Model_Notes tree;
+  Module tree_module("Tree");
 
   vector<expression_ref> node_branches;
   for(int n=0; n < T->n_nodes(); n++)
   {
-    expression_ref param = def_parameter(tree, "Tree.nodeBranches"+convertToString(n));
+    string name = "nodeBranches"+convertToString(n);
+    tree_module.declare_parameter("nodeBranches"+convertToString(n));
+    expression_ref param = parameter("Tree." + name);
     node_branches.push_back( (var("listFromVectorInt"),param) );
   }
   expression_ref node_branches_array = (var("listArray'"),get_list(node_branches));
@@ -1203,19 +1206,14 @@ Parameters::Parameters(const vector<string>& module_path,
   vector<expression_ref> branch_nodes;
   for(int b=0; b < 2*T->n_branches(); b++)
   {
-    branch_nodes.push_back( def_parameter(tree, "Tree.branchNodes"+convertToString(b)) ); 
+    string name = "branchNodes"+convertToString(b); 
+    tree_module.declare_parameter(name);
+    branch_nodes.push_back( parameter("Tree."+name) );
   }
   expression_ref branch_nodes_array = (var("listArray'"),get_list(branch_nodes));
 
   expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
-  // FIXME - there should be some way to define this all and then add the prefix "Tree"!
-
-  add_submodel( tree);
-
-  expression_ref _ = dummy(-1);
-
-  Module tree_module("Tree");
   tree_module.def_constructor("Tree",4);
   tree_module.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
 
@@ -1234,7 +1232,7 @@ neighbors t n = fmap (targetNode t) (edgesOutOfNode t n);\
 edgesBeforeEdge t b = case (nodesForEdge t b) of {(n1,n2) -> [edgeForNodes t (n,n1) | n <- neighbors t n1, n /= n2 ]}\
 }";
 
-  C += {tree_module};
+  add_submodel( tree_module );
 
   for(int n=0; n < T->n_nodes(); n++)
   {
