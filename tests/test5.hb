@@ -14,7 +14,7 @@ module Test where
   x ~ normal(0.0, 1.0);
   y ~ normal(x, 1.0);
 
-  p ~ betaD(10.0, 1.0);
+  p ~ beta(10.0, 1.0);
 
   z ~ mixture([( p, normal(x,1.0) ),(1.0-p, normal(y,1.0)) ]);
 
@@ -32,6 +32,6 @@ module Test where
 
   i ~ bernoulli(0.5);
 
-  p2 ~ betaD(2.0, 2.0);
+  p2 ~ beta(2.0, 2.0);
   data getAFS filename3 ~ afsMixture ([theta1,theta2],[p2,1.0-p2])
 }
