@@ -15,6 +15,8 @@ using std::pair;
 
 //  -----Prelude: http://www.haskell.org/onlinereport/standard-prelude.html
 
+// See list in computation/prelude.C
+//
 // 1. Add ability to change the prior on variables.
 // 2. Add ability to add new variables.
 // 3. Add constructors to programs!

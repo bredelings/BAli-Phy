@@ -16,6 +16,9 @@ using std::vector;
 using std::string;
 
 /* \todo: List of things to do to clean up programs.
+ *
+ * See list in parser/desugar.C
+ *
  * 1. [DONE] Remove true/false in favor of True/False.
  * 2. [DONE] Convert strings to [Char]
  *    3. Update probability functions to separate the family from the probability object.
