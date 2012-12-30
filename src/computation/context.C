@@ -481,7 +481,7 @@ context& context::operator+=(const vector<Module>& P2)
   // 1. Add the new modules to the program, perform imports, and resolve symbols.
   add(get_module_path(), PP, P2);
 
-  // 2. Give each identifier a pointer to an unused location
+  // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   for(auto& module: PP)
     if (contains_module(P2, module.module_name))
       for(const auto& s: module.get_symbols())
@@ -490,12 +490,23 @@ context& context::operator+=(const vector<Module>& P2)
 	
 	if (S.scope != local_scope) continue;
 	
-	if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+	if (S.symbol_type == variable_symbol or S.symbol_type == constructor_symbol)
+	{
+	  if (identifiers().count(S.name))
+	    throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined!";
 	
-	if (identifiers().count(S.name))
-	  throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined!";
-	
-	add_identifier(S.name);
+	  add_identifier(S.name);
+	}
+	else if (S.symbol_type == parameter_symbol)
+	{
+	  assert(find_parameter(S.name) == -1);
+
+	  root_t r = allocate_reg();
+	  parameters().push_back( r );
+
+	  access(*r).changeable = true;
+	  set_C(*r, parameter(S.name) );
+	}
       }
       
   // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
