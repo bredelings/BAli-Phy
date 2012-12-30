@@ -14,7 +14,7 @@ bool contains_module(const vector<Module>& P, const string& module_name)
 int find_module(const vector<Module>& P, const string& module_name)
 {
   for(int i=0;i<P.size();i++)
-    if (P[i].module_name == module_name)
+    if (P[i].name == module_name)
       return i;
   return -1;
 }
@@ -31,7 +31,7 @@ vector<string> module_names(const vector<Module>& P)
 {
   vector<string> names;
   for(const auto& module: P)
-    names.push_back(module.module_name);
+    names.push_back(module.name);
   return names;
 }
 
@@ -39,7 +39,7 @@ static int count_module(const vector<Module>& P,const string& module_name)
 {
   int count = 0;
   for(const auto& module: P)
-    if (module.module_name == module_name)
+    if (module.name == module_name)
       count++;
   return count;
 }
@@ -48,15 +48,15 @@ void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, c
 {
   // 1. Check that the program doesn't already contain these module names.
   for(const auto& module: modules)
-    if (contains_module(P,module.module_name))
-      throw myexception()<<"Trying to add duplicate module '"<<module.module_name<<"' to program ["<<join(module_names(P),",")<<"]";
+    if (contains_module(P,module.name))
+      throw myexception()<<"Trying to add duplicate module '"<<module.name<<"' to program ["<<join(module_names(P),",")<<"]";
 
   // 2. Check that we aren't adding any module twice.
   for(const auto& module: modules) 
   {
-    int count = count_module(modules, module.module_name);
+    int count = count_module(modules, module.name);
     if (count > 1)
-      throw myexception()<<"Trying to add module '"<<module.module_name<<"' to program ["<<join(module_names(P),",")<<"] "<<count<<" times.";
+      throw myexception()<<"Trying to add module '"<<module.name<<"' to program ["<<join(module_names(P),",")<<"] "<<count<<" times.";
   }
 
   // 3. Actually add the modules.
@@ -65,7 +65,7 @@ void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, c
 #ifndef NDEBUG
   // 4. Assert that every module exists only once in the list.
   for(const auto& module: P)
-    assert(count_module(P, module.module_name) == 1);
+    assert(count_module(P, module.name) == 1);
 #endif
 
   // 5. Add any additional modules needed to complete the program.
@@ -89,7 +89,7 @@ void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, c
   // 6a. Perform any needed imports.
   // 6b. Desugar the module here.
   for(auto& module: P)
-    if (contains_module(modules, module.module_name))
+    if (contains_module(modules, module.name))
     {
       try {
 	module.resolve_symbols(P);
@@ -97,7 +97,7 @@ void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, c
       catch (myexception& e)
       {
 	std::ostringstream o;
-	o<<"In module '"<<module.module_name<<"': ";
+	o<<"In module '"<<module.name<<"': ";
 	e.prepend(o.str());
 	throw e;
       }

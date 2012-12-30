@@ -167,7 +167,7 @@ vector<int> Model::add_submodel(const std::pair<Module,Model_Notes>& R)
 {
   // 1. Load the module, perform imports, and resolve its symbols.
   vector<int> new_parameters = add_submodel(R.first);
-  const Module& M = get_module(C.get_Program(), R.first.module_name);
+  const Module& M = get_module(C.get_Program(), R.first.name);
 
   // 2. Resolve symbols for the notes.
   Model_Notes N = R.second;

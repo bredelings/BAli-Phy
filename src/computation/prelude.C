@@ -212,8 +212,8 @@ Module load_module(const vector<string>& modules_path, const string& modid)
 
   M += module;
 
-  if (M.module_name != modid)
-    throw myexception()<<"Module file '"<<modid<<".hs' contains different module '"<<M.module_name<<"'";
+  if (M.name != modid)
+    throw myexception()<<"Module file '"<<modid<<".hs' contains different module '"<<M.name<<"'";
 
   return M;
 }

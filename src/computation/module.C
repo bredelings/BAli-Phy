@@ -108,7 +108,7 @@ void Module::add_symbol(const symbol_info& S)
   if (loc == symbols.end())
     symbols[S.name] = S;
   else if (loc != symbols.end() and loc->second != S)
-    throw myexception()<<"Trying to add symbol '"<<S.name<<"' twice to module '"<<module_name<<"' with different body";
+    throw myexception()<<"Trying to add symbol '"<<S.name<<"' twice to module '"<<name<<"' with different body";
 }
 
 void Module::add_symbol(const symbol_info& S, scope_t sc)
@@ -121,7 +121,7 @@ void Module::add_symbol(const symbol_info& S, scope_t sc)
 void Module::add_alias(const string& identifier_name, const string& resolved_name)
 {
   if (not symbol_exists(resolved_name))
-    throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_name<<"' in module '"<<module_name<<"' because '"<<resolved_name<<"' is neither declared nor imported.";
+    throw myexception()<<"Can't add alias '"<<identifier_name<<"' -> '"<<resolved_name<<"' in module '"<<name<<"' because '"<<resolved_name<<"' is neither declared nor imported.";
 
   std::pair<string,string> element(identifier_name,resolved_name);
 
@@ -138,10 +138,10 @@ void Module::declare_symbol(const symbol_info& S)
     throw myexception()<<"Locally defined symbol '"<<S.name<<"' should not be qualified in declaration.";
 
   symbol_info S2 = S;
-  S2.name = module_name + "." + S.name;
+  S2.name = name + "." + S.name;
 
   if (symbol_exists(S2.name))
-    throw myexception()<<"Trying to declare '"<<S.name<<"' twice in module '"<<module_name<<"'";
+    throw myexception()<<"Trying to declare '"<<S.name<<"' twice in module '"<<name<<"'";
 
   // Add the symbol first.
   add_symbol(S2, local_scope);
@@ -159,7 +159,7 @@ void Module::declare_fixity(const std::string& s, int precedence, fixity_t fixit
   if (is_qualified_symbol(s))
     throw myexception()<<"Trying to declare fixity of qualified symbol '"<<s<<"'.  Use its unqualified name.";
 
-  string s2 = module_name + "." + s;
+  string s2 = name + "." + s;
 
   if (not symbol_exists(s2))
     declare_symbol({s, unknown_symbol, local_scope, -1, -1, unknown_fix, {}, {}});
@@ -201,8 +201,8 @@ void Module::import_symbol(const symbol_info& S, const string& modid, bool quali
 
 void Module::import_module(const Module& M2, const string& modid, bool qualified)
 {
-  assert(modid != module_name);
-  imported.insert(M2.module_name);
+  assert(modid != name);
+  imported.insert(M2.name);
 
   for(const auto& p: M2.symbols)
   {
@@ -215,12 +215,12 @@ void Module::import_module(const Module& M2, const string& modid, bool qualified
 
 void Module::import_module(const Module& M2, bool qualified)
 {
-  import_module(M2, M2.module_name, qualified);
+  import_module(M2, M2.name, qualified);
 }
 
 void Module::import_module(const vector<string>& path, const string& modid, bool qualified)
 {
-  if (not imported.count(modid) and modid != module_name)
+  if (not imported.count(modid) and modid != name)
   {
     Module mod = load_module(path, modid);
     import_module(mod, qualified);
@@ -229,7 +229,7 @@ void Module::import_module(const vector<string>& path, const string& modid, bool
 
 void Module::import_module(const vector<string>& path, const string& modid, const string& modid2, bool qualified)
 {
-  if (not imported.count(modid) and modid != module_name)
+  if (not imported.count(modid) and modid != name)
   {
     Module mod = load_module(path, modid);
     import_module(mod, modid2, qualified);
@@ -239,7 +239,7 @@ void Module::import_module(const vector<string>& path, const string& modid, cons
 Module find_module(const string& module_name, const std::vector<Module>& P)
 {
   for(const auto& module: P)
-    if (module.module_name == module_name)
+    if (module.name == module_name)
       return module;
   std::abort();
 }
@@ -270,7 +270,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
     }
 
   // Import the Prelude if it wasn't explicitly mentioned in the import list.
-  if (not saw_Prelude and module_name != "Prelude" and not imported.count("Prelude"))
+  if (not saw_Prelude and name != "Prelude" and not imported.count("Prelude"))
   {
     Module M = find_module("Prelude",P);
     import_module(M,"Prelude",false);
@@ -590,7 +590,7 @@ Module& Module::operator+=(const expression_ref& E)
   if (is_AST(E,"Module"))
   {
     if (module)
-      throw myexception()<<"Can't load new module over old module '"<<module_name<<"'";
+      throw myexception()<<"Can't load new module over old module '"<<name<<"'";
 
     module = E;
 
@@ -600,9 +600,9 @@ Module& Module::operator+=(const expression_ref& E)
     else
     {
       string module_name2 = *module->sub[0].is_a<String>();
-      if (not module_name.empty() and module_name != module_name2)
-	throw myexception()<<"Overwriting module name '"<<module_name<<"' with '"<<module_name2<<"'";
-      module_name = module_name2;
+      if (not name.empty() and name != module_name2)
+	throw myexception()<<"Overwriting module name '"<<name<<"' with '"<<module_name2<<"'";
+      name = module_name2;
 
       body = module->sub[1];
     }
@@ -688,7 +688,7 @@ Module& Module::operator+=(const expression_ref& E)
       for(const auto& var_name: vars)
       {
 	// We don't know the type yet, probably, because we don't know the body.
-	string qualified_name = module_name+"."+var_name;
+	string qualified_name = name+"."+var_name;
 	auto loc = symbols.find(qualified_name);
 
 	if (loc != symbols.end())
@@ -715,12 +715,12 @@ Module& Module::operator+=(const expression_ref& E)
   return *this;
 }
 
-void Module::def_function(const std::string& name, const expression_ref& body, const expression_ref& type)
+void Module::def_function(const std::string& fname, const expression_ref& body, const expression_ref& type)
 {
-  if (is_qualified_symbol(name))
-    throw myexception()<<"Locally defined symbol '"<<name<<"' should not be qualified in function declaration.";
+  if (is_qualified_symbol(fname))
+    throw myexception()<<"Locally defined symbol '"<<fname<<"' should not be qualified in function declaration.";
 
-  string qualified_name = module_name+"."+name;
+  string qualified_name = name+"."+fname;
   auto loc = symbols.find(qualified_name);
 
   if (loc != symbols.end())
@@ -734,15 +734,15 @@ void Module::def_function(const std::string& name, const expression_ref& body, c
       S.type = type;
     }
     else 
-      throw myexception()<<"Can't add function with name '"<<name<<"': that name is already used!";
+      throw myexception()<<"Can't add function with name '"<<fname<<"': that name is already used!";
   }
   else
-    declare_symbol({name, variable_symbol, local_scope, -1, -1, unknown_fix, body, type});
+    declare_symbol({fname, variable_symbol, local_scope, -1, -1, unknown_fix, body, type});
 }
 
-void Module::def_function(const std::string& name, const expression_ref& body)
+void Module::def_function(const std::string& fname, const expression_ref& body)
 {
-  def_function(name, body, {});
+  def_function(fname, body, {});
 }
 
 void Module::def_function(const vector<expression_ref>& patterns, const vector<expression_ref>& bodies)
@@ -750,28 +750,28 @@ void Module::def_function(const vector<expression_ref>& patterns, const vector<e
   assert(patterns.size());
   assert(patterns.size() == bodies.size());
 
-  string name;
+  string fname;
   vector< vector<expression_ref> > sub_patterns(patterns.size());
-  parse_combinator_application(patterns[0], name, sub_patterns[0]);
+  parse_combinator_application(patterns[0], fname, sub_patterns[0]);
 
   for(int i=1;i<patterns.size();i++)
   {
-    string name2;
-    parse_combinator_application(patterns[i], name2, sub_patterns[i]);
+    string fname2;
+    parse_combinator_application(patterns[i], fname2, sub_patterns[i]);
 
-    if (name != name2) throw myexception()<<"In definition of function '"<<name<<"', incorrect function name '"<<name2<<"' found as well.";
+    if (fname != fname2) throw myexception()<<"In definition of function '"<<fname<<"', incorrect function name '"<<fname2<<"' found as well.";
   }
 
   expression_ref E = ::def_function(sub_patterns, bodies);
-  def_function(name, E);
+  def_function(fname, E);
 }
 
-void Module::def_constructor(const std::string& name, int arity)
+void Module::def_constructor(const std::string& cname, int arity)
 {
-  if (is_qualified_symbol(name))
-    throw myexception()<<"Locally defined symbol '"<<name<<"' should not be qualified.";
+  if (is_qualified_symbol(cname))
+    throw myexception()<<"Locally defined symbol '"<<cname<<"' should not be qualified.";
 
-  string qualified_name = module_name+"."+name;
+  string qualified_name = name+"."+cname;
   expression_ref body = lambda_expression( constructor(qualified_name, arity) );
 
   auto loc = symbols.find(qualified_name);
@@ -787,17 +787,17 @@ void Module::def_constructor(const std::string& name, int arity)
     }
   }
 
-  declare_symbol( {name, constructor_symbol, local_scope, arity, -1, unknown_fix, body, {}} );
+  declare_symbol( {cname, constructor_symbol, local_scope, arity, -1, unknown_fix, body, {}} );
 }
 
-expression_ref Module::get_function(const std::string& name) const
+expression_ref Module::get_function(const std::string& fname) const
 {
-  return lookup_symbol(name).body;
+  return lookup_symbol(fname).body;
 }
 
 // A name of "" means that we are defining a top-level program, or a piece of a top-level program.
 Module::Module(const string& n)
-  :module_name(n)
+  :name(n)
 { 
   if (not n.size())
     throw myexception()<<"Module name may not be empty!";

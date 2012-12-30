@@ -69,7 +69,7 @@ public:
   expression_ref impdecls;
   expression_ref topdecls;
   
-  std::string module_name;
+  std::string name;
 
   const std::map<std::string, symbol_info>& get_symbols() const {return symbols;}
 

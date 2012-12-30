@@ -289,7 +289,7 @@ int context::add_parameter(const string& full_name)
   // 2. Add it to some module.
   bool found = false;
   for(auto& module: *P.modify())
-    if (module.module_name == module_name)
+    if (module.name == module_name)
     {
       module.declare_parameter(var_name);
       found = true;
@@ -483,7 +483,7 @@ context& context::operator+=(const vector<Module>& P2)
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   for(auto& module: PP)
-    if (contains_module(P2, module.module_name))
+    if (contains_module(P2, module.name))
       for(const auto& s: module.get_symbols())
       {
 	const symbol_info& S = s.second;
@@ -511,7 +511,7 @@ context& context::operator+=(const vector<Module>& P2)
       
   // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
   for(auto& module: PP)
-    if (contains_module(P2, module.module_name))
+    if (contains_module(P2, module.name))
       for(const auto& s: module.get_symbols())
       {
 	const symbol_info& S = s.second;

@@ -1049,7 +1049,7 @@ pair<Module,Model_Notes> read_BUGS(const vector<string>& modules_path, const Par
     if (not BUGS.is_declared(id))
     {
       BUGS.declare_parameter(id);
-      def_parameter(N,BUGS.module_name+"."+id);
+      def_parameter(N,BUGS.name+"."+id);
     }
   }
 
