@@ -174,9 +174,17 @@ vector<int> Model::add_submodel(const std::pair<Module,Model_Notes>& R)
   for(auto& n: N.get_notes())
     n = desugar(M,n);
 
+  // 3. Add the notes, and any parameters they declare
   vector<int> new_parameters2 = add_submodel(N);
 
+  // 4. Update the list of declared parameters.
   new_parameters.insert(new_parameters.end(), new_parameters2.begin(), new_parameters2.end());
+
+  // 5. Set default values.
+  //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
+  for(int index: new_parameters)
+    if (not C.parameter_is_set(index))
+      C.set_parameter_value_expression(index, C.default_parameter_value(index));
 
   return new_parameters;
 }
