@@ -312,6 +312,11 @@ bool Module::is_declared(const std::string& name) const
   return is_haskell_builtin_con_name(name) or (aliases.count(name) > 0);
 }
 
+bool Module::is_declared_local(const std::string& name) const
+{
+  return lookup_symbol(name).scope == local_scope;
+}
+
 symbol_info Module::lookup_builtin_symbol(const std::string& name)
 {
   if (name == "()")
