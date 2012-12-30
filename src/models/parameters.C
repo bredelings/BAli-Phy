@@ -1031,8 +1031,8 @@ Parameters::Parameters(const vector<string>& module_path,
    features(0),
    branch_length_max(-1)
 {
+  // \todo FIXME:cleanup|fragile - Don't touch C here directly!
   C += { "SModel","Distributions","Range","PopGen" };
-  // FIXME: add C += IModel_Functions() instead of referencing the operations directly.  Then we could parse a text file.
   
   // Don't call set_parameter_value here, because recalc( ) depends on branch_length_indices, which is not ready.
 
