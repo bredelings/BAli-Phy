@@ -1032,8 +1032,7 @@ pair<Module,Model_Notes> read_BUGS(const vector<string>& modules_path, const Par
   set<string> new_parameters;
   for(const auto& cmd: bugs_notes->sub)
   {
-    // Separate into BugsDist and ForeignBugsDist?
-    // Then only declare params in BugsDist which would require previous (foreign) declarations for all params in ForeignBugsDist.
+    // This doesn't happen for BugsExternalDist or BugsDataDist
     if (is_AST(cmd,"BugsDist"))
       add(new_parameters, find_all_ids(cmd->sub[0]));
     else if (is_AST(cmd,"Parameter"))
