@@ -151,6 +151,8 @@ vector<int> Model::add_submodel(const Module& M)
   C += {M};
 
   // 2. Account for any parameters that were added.
+  // \todo FIXME:cleanup - The need to fix up after added parameters here means that we can't just use context::add_submodel(M)
+
   for(int i=changed.size();i<n_parameters();i++)
   {
     new_parameters.push_back( i );
@@ -193,7 +195,6 @@ vector<int> Model::add_submodel(const Model_Notes& N)
 {
   vector<int> new_parameters;
 
-  // \todo FIXME:cleanup - The need to call Model::add_parameter() instead of just C.add_parameter( ) means that we can only add parameters in notes.
   // 3. Find and add the declared names that don't exist yet.
   std::set<string> declared_parameter_names = find_declared_parameters(N);
   for(const auto& name: declared_parameter_names)
