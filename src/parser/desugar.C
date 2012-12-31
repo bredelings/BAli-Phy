@@ -963,11 +963,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       // Fields: (prob_density) (random vars) (parameter expressions)
       expression_ref distributed = lambda_expression( constructor(":~",2) );
 
-      string dist_name = *(v[1]->is_a<const String>());
-
-      vector<expression_ref> args = v; args.erase(args.begin()); args.erase(args.begin());
-      expression_ref dist_args = get_tuple(args);
-      return (distributed, v[0], (var(dist_name), dist_args));
+      return (distributed, v[0], v[1]);
     }
   }
 

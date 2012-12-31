@@ -846,9 +846,9 @@ struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
 	using phoenix::val;
 
 	text %= +(char_ - ' ' -'(');
-	bugs_dist = lit("data") >> h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,construct<String>(_1))] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsDataDist"), _a)  ] 
-	  | eps [clear(_a) ] >> lit("external") >> h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,construct<String>(_1))] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsExternalDist"), _a)  ]
-	  | eps [clear(_a) ] >> h.exp[push_back(_a,_1)] >> '~' > text[push_back(_a,construct<String>(_1))] > (lit('(')>>h.exp[push_back(_a,_1)]%','>>lit(')')|lit("()"))>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
+	bugs_dist = lit("data") >> h.exp[push_back(_a,_1)] >> '~' > h.exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDataDist"), _a)  ] 
+	  | eps [clear(_a) ] >> lit("external") >> h.exp[push_back(_a,_1)] >> '~' > h.exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsExternalDist"), _a)  ]
+	  | eps [clear(_a) ] >> h.exp[push_back(_a,_1)] >> '~' > h.exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
 	bugs_default_value = h.qvar [push_back(_a, phoenix::construct<AST_node>("id", construct<String>(_1))) ] >> ":=" > h.exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
 	bugs_note = h.exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
 	bugs_parameter = lit("parameter") >> h.varid [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];

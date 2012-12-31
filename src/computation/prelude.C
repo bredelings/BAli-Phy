@@ -24,7 +24,7 @@ using std::string;
  *    3. Update probability functions to separate the family from the probability object.
  *        3a. Construct the ExpOf transform to make logNormal, logGamma, etc.
  * 4. [DONE] Convert Defs to use the machine.
- * 5. SYNTAX: replace a ~ b ( c ) with a ~ b
+ * 5. [DONE] SYNTAX: replace a ~ b ( c ) with a ~ b
  *      5a. Choose kernels based on the range, not based on the distribution name.
  *      5b. = (3) above.
  * 6. [DONE] SYNTAX: external a ~ b [To not declare all parameters]

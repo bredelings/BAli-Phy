@@ -14,6 +14,7 @@ module Test where
   
   thetas = [theta1,theta2,theta3,theta4];
   d1 = getAFS filename;
+  thetaDist = mixture ([(p,gamma (a1,b1)), (1.0-p,gamma (a2,b2))])
 }  
 {
   mean1 ~ exponential(1.0);
@@ -24,10 +25,10 @@ module Test where
   
   p ~ beta(2.0, 2.0);
   
-  theta1 ~ mixture ([(p,gamma (a1,b1)), (1.0-p,gamma (a2,b2))]);
-  theta2 ~ mixture ([(p,gamma (a1,b1)), (1.0-p,gamma (a2,b2))]);
-  theta3 ~ mixture ([(p,gamma (a1,b1)), (1.0-p,gamma (a2,b2))]);
-  theta4 ~ mixture ([(p,gamma (a1,b1)), (1.0-p,gamma (a2,b2))]);
+  theta1 ~ thetaDist;
+  theta2 ~ thetaDist;
+  theta3 ~ thetaDist;
+  theta4 ~ thetaDist;
 
   data d1 ~ plate (length d1, \i -> afs (thetas!!i))
 }
