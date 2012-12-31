@@ -2332,9 +2332,10 @@ public:
   }
 };
 
-
 expression_ref compact_graph_expression(const reg_heap& C, int R, const map<string, reg_heap::root_t>&);
 expression_ref untranslate_vars(const expression_ref& E, const map<string, reg_heap::root_t>& ids);
+expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& ids);
+map<int,string> get_constants(const reg_heap& C, int t);
 
   /*
    * incremental_eval R1
@@ -2569,8 +2570,11 @@ int reg_heap::incremental_evaluate(int R, int t)
 	dot_graph_for_token(*this, t);
 
 	string SS  = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
-	string SSS = unlet(untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
-					    get_identifiers_for_context(t)))->print();
+	string SSS = unlet(untranslate_vars(
+					    untranslate_vars(deindexify(trim_unnormalize(access(R).C)), get_identifiers_for_context(t)),
+					    get_constants(*this,t)
+					    )
+			   )->print();
 	std::ostringstream o;
 	o<<"evaluating reg # "<<R<<": "<<SSS<<"\n";
 	e.prepend(o.str());
@@ -2782,24 +2786,7 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
   return launchbury_unnormalize(names[R]);
 }
 
-void dot_graph_for_token(const reg_heap& C, int t)
-{
-  std::ofstream f("token.dot");
-  dot_graph_for_token(C, t, f);
-  f.close();
-}
-
-/* TODO - to make graph more readable:
-
-   1. Handle indirection nodes, somehow.
-      (a) First, check WHY we are getting indirection nodes.
-      (b) Then Consider eliminating them somehow during garbage collection.
-
-   2. Allow reduction result (call result) on the same level as redex.
-
- */
-
-void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
+map<int,string> get_constants(const reg_heap& C, int t)
 {
   map<int,string> reg_names = get_register_names(C.get_identifiers_for_context(t));
 
@@ -2823,6 +2810,34 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	constants[R] = name;
     }
   }
+  return constants;
+}
+
+
+void dot_graph_for_token(const reg_heap& C, int t)
+{
+  std::ofstream f("token.dot");
+  dot_graph_for_token(C, t, f);
+  f.close();
+}
+
+/* TODO - to make graph more readable:
+
+   1. Handle indirection nodes, somehow.
+      (a) First, check WHY we are getting indirection nodes.
+      (b) Then Consider eliminating them somehow during garbage collection.
+
+   2. Allow reduction result (call result) on the same level as redex.
+
+ */
+
+void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
+{
+  map<int,string> reg_names = get_register_names(C.get_identifiers_for_context(t));
+
+  map<int,string> constants = get_constants(C, t);
+
+  vector<int> regs = C.find_all_used_regs_in_context(t);
 
   o<<"digraph \"token"<<t<<"\" {\n";
   o<<"graph [ranksep=0.25, fontname=Arial,  nodesep=0.25, ranksep=0.5];\n";
