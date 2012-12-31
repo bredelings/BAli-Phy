@@ -22,6 +22,9 @@ flip f x y = f y x;
 f $ x = f x;
 f $! x = x `seq` f x;
 
+x ^ 1 = x;
+x ^ n = x*(x^(n-1));
+
 True  && x = x;
 False && x = False;
 True  || x  = True;
