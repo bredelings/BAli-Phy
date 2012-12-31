@@ -1056,7 +1056,7 @@ pair<Module,Model_Notes> read_BUGS(const vector<string>& modules_path, const Par
   for(const auto& name: new_parameters)
   {
     expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
-    N.add_note((make_logger,parameter(name)));
+    N.add_note((make_logger,parameter(BUGS.name + "." + name)));
   }
 
   return {BUGS,N};
