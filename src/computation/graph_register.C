@@ -2564,10 +2564,16 @@ int reg_heap::incremental_evaluate(int R, int t)
 	else
 	  set_reduction_result(R, std::move(result) );
       }
-      catch (const myexception& e)
+      catch (myexception& e)
       {
-	std::cerr<<"evaluating reg # "<<R<<std::endl;
 	dot_graph_for_token(*this, t);
+
+	string SS  = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
+	string SSS = unlet(untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
+					    get_identifiers_for_context(t)))->print();
+	std::ostringstream o;
+	o<<"evaluating reg # "<<R<<": "<<SSS<<"\n";
+	e.prepend(o.str());
 	throw e;
       }
       catch (const std::exception& e)
