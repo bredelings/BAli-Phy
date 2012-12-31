@@ -244,9 +244,11 @@ string expression::print() const
   {
     string O_name = O->name();
     if (dynamic_pointer_cast<const Apply>(O))
-      O_name = " ";
-
-    if (O->name() == ":" and size() == 2)
+    {
+      pargs.erase(pargs.begin());
+      return O->print_expression( pargs );
+    }
+    else if (O->name() == ":" and size() == 2)
     {
       return print_list(this);
     }
