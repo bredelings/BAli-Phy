@@ -29,5 +29,5 @@ module Test where
   theta3 ~ mixture ([(p,gamma (a1,b1)), (1.0-p,gamma (a2,b2))]);
   theta4 ~ mixture ([(p,gamma (a1,b1)), (1.0-p,gamma (a2,b2))]);
 
-  data d1 ~ plate (length d1, \i -> afs thetas!!i)
+  data d1 ~ plate (length d1, \i -> afs (thetas!!i))
 }
