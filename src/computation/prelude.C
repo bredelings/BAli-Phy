@@ -245,3 +245,45 @@ vector<Module> load_modules(const vector<string>& modules_path, const vector<str
     P.push_back(load_module(modules_path,name));
   return P;
 }
+
+#include <dlfcn.h>
+
+typedef closure (*operation_fn)(OperationArgs&);
+
+struct OperationFn: public Operation
+{
+  operation_fn perform_operation;
+  string name_;
+
+  OperationFn* clone() const {return new OperationFn(*this);}
+  closure operator()(OperationArgs& Args) const {return perform_operation(Args);}
+
+  std::string name() const {return name_;}
+
+  OperationFn(void* fn, int n, const string& fname)
+    :Operation(n),perform_operation((operation_fn)fn),name_(fname) 
+  { }
+};
+
+expression_ref load_builtin(const string& filename, int n, const string& fname)
+{
+    // load the triangle library
+  void* library = dlopen(filename.c_str(), RTLD_LAZY);
+  if (not library)
+    throw myexception() << "Cannot load library: " << dlerror();
+
+  // reset errors
+  dlerror();
+    
+  // load the symbols
+  void* fn =  dlsym(library, "builtin_function");
+  const char* dlsym_error = dlerror();
+  if (dlsym_error)
+    throw myexception() << "Cannot load symbol create: " << dlsym_error;
+    
+  // Create the operation
+  OperationFn O(fn, n, fname);
+
+  // Create the function body from it.
+  return lambda_expression(O);
+}
