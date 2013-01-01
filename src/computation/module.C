@@ -334,7 +334,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
     if (is_AST(decl,"Decl"))
     {
       string name = decl->sub[0].assert_is_a<var>()->name;
-      symbols[name].body = decl->sub[1];
+      symbols.at(name).body = decl->sub[1];
     }
 }
 
@@ -349,7 +349,9 @@ void Module::load_builtins(const std::vector<string>& builtins_path)
       int n = convertTo<int>( *decl->sub[1].assert_is_a<String>() );
       string filename = *decl->sub[2].assert_is_a<String>();
 
-      symbols[bname].body = load_builtin(builtins_path, bname, n, filename);
+      bname = lookup_symbol(bname).name;
+
+      symbols.at(bname).body = load_builtin(builtins_path, filename, n, bname);
     }
 }
 
