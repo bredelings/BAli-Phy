@@ -184,6 +184,37 @@ void Module::declare_parameter(const std::string& pname, const expression_ref& t
   declare_symbol({pname, parameter_symbol, local_scope, -1, -1, unknown_fix, parameter(pname),type});
 }
 
+void Module::add_import(bool qualified, const string& modid)
+{
+  vector<expression_ref> sub;
+  if (qualified)
+    sub.push_back(String("qualified"));
+  sub.push_back(String(modid));
+  
+  add_impdecl({AST_node("impdecl"),sub});
+}
+
+void Module::add_import_as(bool qualified, const string& modid, const string& modid2)
+{
+  vector<expression_ref> sub;
+  if (qualified)
+    sub.push_back(String("qualified"));
+  sub.push_back(String(modid));
+  sub.push_back(String("as"));
+  sub.push_back(String(modid2));
+  
+  add_impdecl({AST_node("impdecl"),sub});
+}
+
+void Module::add_impdecl(const expression_ref& impdecl)
+{
+  vector<expression_ref> sub;
+  if (impdecls)
+    sub = impdecls->sub;
+  sub.push_back(impdecl);
+  impdecls = {AST_node("impdecls"),sub};
+}
+
 // Question: what if we import m1.s, which depends on an unimported m2.s?
 void Module::import_symbol(const symbol_info& S, const string& modid, bool qualified)
 {

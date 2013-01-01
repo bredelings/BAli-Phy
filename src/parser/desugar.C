@@ -1019,7 +1019,12 @@ pair<Module,Model_Notes> read_BUGS(const Parameters& P, const string& filename, 
   expression_ref module = parse_bugs_file(file_contents);
   assert(is_AST(module,"Module"));
 
+  // 3. Import all parameters symbols from other modules.
   Module BUGS(module);
+  for(const auto& M:P.get_Program())
+    for(const auto& S:M.get_symbols())
+      if (S.second.symbol_type == parameter_symbol)
+	BUGS.import_symbol(S.second, M.name,true);
 
   // 3. Find explicitly and implicitly-declared parameters
   set<string> new_parameters;

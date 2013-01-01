@@ -107,6 +107,12 @@ public:
 
   void declare_parameter(const std::string& name, const expression_ref& type);
 
+  void add_import(bool qualified, const std::string&);
+
+  void add_import_as(bool qualified, const std::string&, const std::string&);
+
+  void add_impdecl(const expression_ref& impdecl);
+
   void import_symbol(const symbol_info&, const std::string&, bool qualified);
 
   void import_module(const Module& M2, bool qualified);
