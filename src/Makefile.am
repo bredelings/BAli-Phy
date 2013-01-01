@@ -331,3 +331,6 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 	sequence/sequence-format.C alignment/alignment-util.C tree/tree.C io.C tree/sequencetree.C
 
 #---------------------------------------------------------------
+pkglib_LTLIBRARIES = mod.la
+mod_la_SOURCES = computation/mod.C
+mod_la_LDFLAGS = -module
