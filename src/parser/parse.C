@@ -490,6 +490,30 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	on_error<fail>
 	  (
+	   impdecls
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   impdecl
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
 	   decls
 	   , std::cout
 	   << val("Error! Expecting ")
@@ -637,16 +661,29 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	lexp.name("lexp");
 	fexp.name("fexp");
 	aexp.name("aexp");
+	qual.name("qual");
 	alts.name("alts");
 	alt.name("alt");
+	gdpat.name("gdpat");
+	guards.name("guards");
+	guard.name("guard");
+	stmts.name("stmts");
+	stmt.name("stmt");
 	funlhs.name("funlhs");
 	apat.name("apat");
 	lpat.name("lpat");
 	pat.name("pat");
+	module.name("module");
+	body.name("body");
 	rhs.name("rhs");
 	decls.name("decls");
 	decl.name("decl");
+	topdecls.name("topdecls");
+	topdecl.name("topdecl");
+	impdecls.name("impdecls");
+	impdecl.name("impdecl");
 	gendecl.name("gendecl");
+	ops.name("ops");
 	fixity.name("fixity");
 	gcon.name("gcon");
 	literal.name("literal");
