@@ -21,12 +21,11 @@ using std::string;
  *
  * 1. [DONE] Remove true/false in favor of True/False.
  * 2. [DONE] Convert strings to [Char]
- *    3. Update probability functions to separate the family from the probability object.
- *        3a. Construct the ExpOf transform to make logNormal, logGamma, etc.
+ * 3. Update probability functions to separate the family from the probability object.
+ *    3a. Construct the ExpOf transform to make logNormal, logGamma, etc.
+ *    3b. Choose kernels based on the range, not based on the distribution name.
  * 4. [DONE] Convert Defs to use the machine.
  * 5. [DONE] SYNTAX: replace a ~ b ( c ) with a ~ b
- *      5a. Choose kernels based on the range, not based on the distribution name.
- *      5b. = (3) above.
  * 6. [DONE] SYNTAX: external a ~ b [To not declare all parameters]
  *      6a. [DONE] SYNTAX: data a ~ b [Don't treat a as a parameter at all!]
  * 7. [DONE] Allow defs in BUGS files.
@@ -46,7 +45,14 @@ using std::string;
  * 9. Try to rewrite e.g. M8b into a BUGS module.
  * 10. Add default values and Bounds to distributions.
  *    - [DONE] Add Bounds to distributions.
- *    - Ah, but how to we add default values to distributions that return random structures?
+ *    - Ah, but how do we add default values to distributions that return random structures?
+ *      10a. Make performing an MCMC move into an IO operation that is performed in the machine.
+ *      10b. MCMC on a structure can then call MCMC on the child elements.
+ *      10c. By examining the distribution of the structure, the parent MCMC can determine the distribution
+ *            -- and thus the bounds -- for the MCMC on the parts.
+ *      10d. We need a way to refer to dynamically created parameters -- and it can't be the static parameter name.
+ *      10e. We *could* arrange for unique name for parameters inside a machine, so that we wouldn't need to
+ *           refer to parameters by their address.
  *    - Well, do we want to supply Bounds for structure ELEMENTS?  Uh-oh -- we might!
  * 11. [DONE] Convert all of distribution-operations.H to the parser.
  * 12. [DONE] Remove arity argument to def_function.
