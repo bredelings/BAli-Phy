@@ -1007,7 +1007,7 @@ bool is_all_space(const string& line)
   return true;
 }
 
-pair<Module,Model_Notes> read_BUGS(const vector<string>& modules_path, const Parameters& P, const string& filename, const string& module_name_)
+pair<Module,Model_Notes> read_BUGS(const Parameters& P, const string& filename, const string& module_name_)
 {
   // 1. Read file into string.
   string file_contents = read_file(filename, "BUGS File");
@@ -1052,9 +1052,9 @@ pair<Module,Model_Notes> read_BUGS(const vector<string>& modules_path, const Par
   return {BUGS,N};
 }
 
-void add_BUGS(const vector<string>& modules_path, Parameters& P, const std::string& filename, const std::string& module_name)
+void add_BUGS(Parameters& P, const std::string& filename, const std::string& module_name)
 {
-  auto m = read_BUGS(modules_path, P, filename, module_name);
+  auto m = read_BUGS(P, filename, module_name);
 
   P.add_submodel(m);
 

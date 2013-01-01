@@ -1407,7 +1407,7 @@ int main(int argc,char* argv[])
     if (args.count("BUGS"))
     {
       const string filename = args["BUGS"].as<string>();
-      add_BUGS(modules_path,P,filename,"BUGS");
+      add_BUGS(P,filename,"BUGS");
     }
       
     //-------------------- Log model -------------------------//

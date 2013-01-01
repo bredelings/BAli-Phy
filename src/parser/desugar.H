@@ -14,7 +14,7 @@ expression_ref parse_haskell_line(const Module& P, const std::string& line);
 expression_ref parse_bugs_line(const Module& P, const std::string& line);
 expression_ref desugar(const Module& p, const expression_ref&);
 expression_ref desugar(const Module& p, const expression_ref&,const std::set<std::string>&);
-Model_Notes read_BUGS(const std::vector<std::string>& path, const Parameters& P, const std::string& filename, const std::string& module_name);
-void add_BUGS(const std::vector<std::string>& path, Parameters& P, const std::string& filename, const std::string& module_name);
+Model_Notes read_BUGS(const Parameters& P, const std::string& filename, const std::string& module_name);
+void add_BUGS(Parameters& P, const std::string& filename, const std::string& module_name);
 
 #endif
