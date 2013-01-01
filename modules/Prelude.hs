@@ -35,6 +35,9 @@ not False        =  True;
 
 otherwise = True;
 
+builtin log 1 "log";
+builtin mod 2 "mod";
+
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
 

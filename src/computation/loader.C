@@ -95,7 +95,6 @@ Module make_Prelude()
   P.def_function("join", lambda_expression( Join() ) );
   P.def_function("negate", lambda_expression( Negate() ) );
   P.def_function("exp", lambda_expression( Exp_Op() ) );
-  P.def_function("log", lambda_expression( Log_Op() ) );
   P.def_function("!", lambda_expression( GetIndex() ) );
   P.def_function("getAddress", lambda_expression( Get_Address() ) );
 

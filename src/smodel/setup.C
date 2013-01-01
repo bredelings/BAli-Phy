@@ -749,7 +749,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
 
     formula_expression_ref W = def_parameter("LogNormal.sigmaOverMu", 0.1, lower_bound(0), (var("logLaplace"), Tuple(-3.0, 1.0) ));
     formula_expression_ref Var = (times, W, W);
-    formula_expression_ref lVar = (Log, (plus, 1.0, Var ) );
+    formula_expression_ref lVar = (var("log"), (plus, 1.0, Var ) );
     formula_expression_ref lmu = (times, -0.5, lVar);
     formula_expression_ref lsigma = (Sqrt, lVar);
     formula_expression_ref dist = (var("uniformDiscretize"), (var("logNormalQuantile"), Tuple(lmu,lsigma)) , n);

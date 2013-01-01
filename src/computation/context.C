@@ -472,7 +472,8 @@ const vector<string>& context::get_module_path() const
 
 const vector<string>& context::get_builtins_path() const
 {
-  return builtins_path_;
+  return module_path_;
+  //  return builtins_path_;
 }
 
 context& context::operator+=(const vector<string>& module_names)
