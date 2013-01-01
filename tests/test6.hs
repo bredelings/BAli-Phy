@@ -16,7 +16,7 @@ module Test where
   b1 = mean1/a1;
   
   a2 = 1.0/(sigmaOverMu2^2);
-  b2 = mean2/a1;
+  b2 = mean2/a2;
 
   note p ~ beta(2.0, 2.0);
   
