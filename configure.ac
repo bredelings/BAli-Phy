@@ -284,8 +284,15 @@ AC_CHECK_LIB(m,main)
 
 #---------------------- Check for GSL ------------------#
 echo "------------------------------------------"
-echo " * Looking for GSL headers..."
+echo " * Looking for libdl headers..."
+AC_CHECK_HEADERS([dlfcn.h],[],[echo "Error: I can't find <dlfcn.h> (CXXFLAGS='$CXXFLAGS').  If libdl is installed in a non-standard location you may need to specify --with-extra-includes=DIR to tell the configure script to look for it in directory DIR"])
 
+echo " * Looking for the libdl library..."
+AC_CHECK_LIB(dl, main, [], [echo "Error: I can't find the libdl lirary! (-ldl LIBS='$LIBS')  If libdl is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
+AC_CHECK_LIB(dl, dlopen, [], [echo "Error: I can't find the libdl lirary! (-ldl LIBS='$LIBS')  If libdl is installed in a non-standard location you may need to specify --with-extra-libs=DIR to tell the configure script to look for it in directory DIR" ; exit 1])
+
+echo "------------------------------------------"
+echo " * Looking for GSL headers..."
 
 # Checks for libraries
 AC_CHECK_HEADERS([gsl/gsl_rng.h],[],[echo "Error: I can't find the GSL library header <gsl/gsl_rng.h> (CXXFLAGS='$CXXFLAGS').  If GSL is installed in a non-standard location you may need to specify --with-extra-includes=DIR to tell the configure script to look for it in directory DIR"])
