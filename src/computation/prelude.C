@@ -73,6 +73,8 @@ using std::string;
  * 20. Load builtins from a file.
  *     20a. Allow builtins to be constructed from a number n_args, and a function Op, where
  *       + closure (*Op)(OperationArgs&)
+ * 21. Add computed loggers.
+ *     (This will allow us to e.g. select min/max functions for logging.)
  */
 
 
