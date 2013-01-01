@@ -7,10 +7,10 @@ module Test where
   filename = "/home/bredelings/Reports/Kmar/BP.phase1.infile";
 
   note mean1 ~ exponential(0.25);
-  note sigmaOverMu1 ~ exponential(0.1);
+  note sigmaOverMu1 ~ exponential(0.2);
   
   note mean2 ~ exponential(0.25);
-  note sigmaOverMu2 ~ exponential(0.1);
+  note sigmaOverMu2 ~ exponential(0.2);
   
   a1 = 1.0/(sigmaOverMu1^2);
   b1 = mean1/a1;
