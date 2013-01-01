@@ -7,7 +7,7 @@
 #include "parser/parse.H"
 #include "parser/desugar.H"
 #include "parser/AST.H"
-#include "prelude.H"
+#include "loader.H"
 
 using std::pair;
 using std::map;

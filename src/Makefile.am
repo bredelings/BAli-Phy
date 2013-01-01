@@ -105,7 +105,7 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 	  imodel/setup.C smodel/objects.C computation/computation.C \
 	  computation/graph_register.C computation/module.C \
 	  computation/formula_expression.C smodel/operations.C probability/distribution-operations.C \
-	  computation/operations.C computation/prelude.C computation/context.C \
+	  computation/operations.C computation/loader.C computation/context.C \
 	  computation/model_notes.C substitution/matcache.C smodel/functions.C computation/closure.C \
 	  computation/let-float.C parser/parse.C dp/dp_hmm.C parser/desugar.C object.C popgen/popgen.C \
 	  parser/AST.C computation/program.C
@@ -310,7 +310,7 @@ cut_range_SOURCES = tools/cut-range.C util.C
 #	timer_stack.C io.C computation/operator.C computation/expression.C smodel/objects.C \
 #	computation/computation.C computation/formula_expression.C smodel/operations.C \
 #	distribution-operations.C 2way.C computation/operations.C computation/module.C \
-#	computation/prelude.C computation/context.C
+#	computation/loader.C computation/context.C
 
 #---------------------------------------------------------------
 

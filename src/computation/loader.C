@@ -1,5 +1,5 @@
+#include "computation/loader.H"
 #include "computation/expression.H"
-#include "computation/prelude.H"
 #include "computation/module.H"
 #include "computation/operations.H"
 #include "computation/graph_register.H"

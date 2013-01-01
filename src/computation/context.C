@@ -1,6 +1,6 @@
 #include "computation/context.H"
 #include "computation/program.H"
-#include "prelude.H"
+#include "loader.H"
 #include "module.H"
 #include "let-float.H"
 #include "parser/desugar.H"

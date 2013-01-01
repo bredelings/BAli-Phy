@@ -1,7 +1,7 @@
 #include "computation/program.H"
 #include "computation/module.H"
 #include "myexception.H"
-#include "computation/prelude.H"
+#include "computation/loader.H"
 
 using std::vector;
 using std::string;

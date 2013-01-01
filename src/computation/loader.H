@@ -1,5 +1,5 @@
-#ifndef PRELUDE_H
-#define PRELUDE_H
+#ifndef LOADER_H
+#define LOADER_H
 
 #include <string>
 #include <vector>
