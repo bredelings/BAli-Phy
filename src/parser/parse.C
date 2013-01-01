@@ -283,7 +283,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	body = 
 	  lit('{') >> impdecls[ push_back(_a,_1) ] >> ';' >> topdecls[ push_back(_a,_1) ] >> '}'>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
 	  | lit('{')[clear(_a)] >> impdecls[ push_back(_a,_1) ] >> '}'>> eps[ _val = new_<expression>(AST_node("Body"), _a) ]
-	  | lit('{') >> topdecls [ push_back(_a,_1) ] > '}' >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
+	  | lit('{') >> topdecls [ push_back(_a,_1) ] >> '}' >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
 
 	topdecls = topdecl [ push_back(_a,_1) ] % ';' >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
 	topdecl %= 
@@ -294,7 +294,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  //	  | "instance" >> -(scontext >> "=>") >> qtycls >> inst >> -("where" >> idecls)
 	  //	  | "default" >> *type
 	  //	  | "foreign" >> fdecl
-	  decl 
+	  //	  lit("note") >> !(small|large|digit|'\'') > bugs_line
+	  lit("note") >> bugs_line
+	  | decl 
 	  ;
 
 	decls = lit('{') > (decl % ';')[_val = new_<expression>(AST_node("Decls"), _1)] > '}';
@@ -388,8 +390,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	cname = var | con;
 	
 	/*------ Section 5.3 -------*/
-	impdecl = "import" >> -string("qualified")[push_back(_a,construct<String>(_1))] >> modid[push_back(_a,construct<String>(_1))] 
-			   >> -(string("as")[push_back(_a,construct<String>(_1))] >> modid[push_back(_a,construct<String>(_1))]) 
+	impdecl = "import" > -string("qualified")[push_back(_a,construct<String>(_1))] > modid[push_back(_a,construct<String>(_1))] 
+			   >> -(string("as")[push_back(_a,construct<String>(_1))] > modid[push_back(_a,construct<String>(_1))]) 
 			   >> /*-impspec >>*/ eps [ _val = new_<expression>(AST_node("ImpDecl"), _a)  ];
 
 	//	impspec = 
@@ -404,6 +406,18 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | tycon >> -("(..)" | lit("()") | "(" >> cname %"," >> ")")
 	  | tycls >> -("(..)" | lit("()") | "(" >> var %"," >> ")");
 	*/
+
+	/*----------- Rules for notes and related processing - not Haskell --------------*/
+	bugs_dist = lit("data") >> exp[push_back(_a,_1)] >> '~' > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDataDist"), _a)  ] 
+	  | eps [clear(_a) ] >> lit("external") >> exp[push_back(_a,_1)] >> '~' > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsExternalDist"), _a)  ]
+	  | eps [clear(_a) ] >> exp[push_back(_a,_1)] >> '~' > exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
+	bugs_default_value = qvar [push_back(_a, phoenix::construct<AST_node>("id", construct<String>(_1))) ] >> ":=" > exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
+	bugs_note = exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
+	bugs_parameter = lit("parameter") >> varid [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
+
+	bugs_line %= bugs_parameter | bugs_default_value | bugs_dist | bugs_note;
+
+
 	on_error<fail>
 	  (
 	   exp
@@ -656,6 +670,42 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	   << std::endl
 	   );
 
+	on_error<fail>
+	  (
+	   bugs_line
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   bugs_dist
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
+	on_error<fail>
+	  (
+	   bugs_default_value
+	   , std::cout
+	   << val("Error! Expecting ")
+	   << _4
+	   << val(" here: \"")
+	   << construct<std::string>(_3, _2)
+	   << val("\"")
+	   << std::endl
+	   );
+
 	exp.name("exp");
 	infixexp.name("infixexp");
 	lexp.name("lexp");
@@ -689,6 +739,11 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	literal.name("literal");
 	h_string.name("h_string");
 	reservedid.name("reserved_id");
+
+	bugs_parameter.name("bugs_parameter");
+	bugs_default_value.name("bugs_default_value");
+	bugs_dist.name("bugs_dist");
+	bugs_note.name("bugs_note");
     }
 
   qi::rule<Iterator, char()> small;
@@ -843,131 +898,14 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> impdecl;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> impspec;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> import;
-};
 
-template <typename Iterator>
-struct bugs_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_type>
-{
-  qi::rule<Iterator, expression_ref(), ascii::space_type> bugs_line;
-  qi::rule<Iterator, std::string()> text;
+  /*----------- Rules for notes and related processing - not Haskell --------------*/
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_dist;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_default_value;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_note;
-
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_lines;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_file;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_parameter;
-  haskell_grammar<Iterator> h;
 
-    bugs_grammar() : bugs_grammar::base_type(bugs_line)
-    {
-        using qi::lit;
-        using qi::lexeme;
-	using qi::on_error;
-	using qi::fail;
-        using ascii::char_;
-        using qi::double_;
-	using qi::eps;
-	using qi::eoi;
-        using ascii::string;
-        using namespace qi::labels;
-
-        using phoenix::at_c;
-        using phoenix::push_back;
-	using phoenix::begin;
-	using phoenix::end;
-	using phoenix::insert;
-	using phoenix::clear;
-	using phoenix::construct;
-	using phoenix::new_;
-	using phoenix::val;
-
-	text %= +(char_ - ' ' -'(');
-	bugs_dist = lit("data") >> h.exp[push_back(_a,_1)] >> '~' > h.exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDataDist"), _a)  ] 
-	  | eps [clear(_a) ] >> lit("external") >> h.exp[push_back(_a,_1)] >> '~' > h.exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsExternalDist"), _a)  ]
-	  | eps [clear(_a) ] >> h.exp[push_back(_a,_1)] >> '~' > h.exp[push_back(_a,_1)] >>eps [ _val = new_<expression>(AST_node("BugsDist"), _a)  ];
-	bugs_default_value = h.qvar [push_back(_a, phoenix::construct<AST_node>("id", construct<String>(_1))) ] >> ":=" > h.exp[push_back(_a,_1)] > eps [ _val = new_<expression>(AST_node("BugsDefaultValue"), _a)  ];
-	bugs_note = h.exp[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("BugsNote"), _a)  ];
-	bugs_parameter = lit("parameter") >> h.varid [push_back(_a,construct<String>(_1))] >> eps [ _val = new_<expression>(AST_node("Parameter"), _a)  ];
-
-	bugs_line %= bugs_parameter | bugs_default_value | bugs_dist | bugs_note;
-	bugs_lines = lit('{') >> bugs_line [push_back(_a,_1)] % ';' > lit('}') [ _val = new_<expression>(AST_node("BugsLines"), _a)  ] ;
-	bugs_file = h.module[push_back(_a,_1)] >> bugs_lines[push_back(_a,_1)] >> eoi [ _val = new_<expression>(AST_node("BugsFile"), _a)  ];
-	bugs_file = h.module[push_back(_a,_1)] >> -(bugs_lines[push_back(_a,_1)]) >> eps [ _val = new_<expression>(AST_node("BugsFile"), _a)  ];
-	
-	on_error<fail>
-	  (
-	   bugs_file
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   bugs_lines
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   bugs_line
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   text
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   bugs_dist
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-	on_error<fail>
-	  (
-	   bugs_default_value
-	   , std::cout
-	   << val("Error! Expecting ")
-	   << _4
-	   << val(" here: \"")
-	   << construct<std::string>(_3, _2)
-	   << val("\"")
-	   << std::endl
-	   );
-
-    }
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> bugs_line;
 };
 
 //-----------------------------------------------------------------------//
@@ -1002,9 +940,9 @@ expression_ref parse_bugs_line(const string& line)
   using boost::spirit::ascii::space;
 
   string::const_iterator iter = line.begin();
-  bugs_grammar<string::const_iterator> bugs_parser;
+  haskell_grammar<string::const_iterator> haskell_parser;
   expression_ref cmd;
-  if (phrase_parse(iter, line.end(), bugs_parser, space, cmd) and iter == line.end())
+  if (phrase_parse(iter, line.end(), haskell_parser.bugs_line, space, cmd) and iter == line.end())
     return cmd;
 
   throw myexception()<<"BUGS pharse parse: only parsed "<<line.substr(0, iter-line.begin());
@@ -1015,9 +953,9 @@ expression_ref parse_bugs_file(const string& lines)
   using boost::spirit::ascii::space;
 
   string::const_iterator iter = lines.begin();
-  bugs_grammar<string::const_iterator> bugs_parser;
+  haskell_grammar<string::const_iterator> haskell_parser;
   expression_ref cmd;
-  if (phrase_parse(iter, lines.end(), bugs_parser.bugs_file, space, cmd) and iter == lines.end())
+  if (phrase_parse(iter, lines.end(), haskell_parser.module, space, cmd) and iter == lines.end())
     return cmd;
 
   throw myexception()<<"BUGS pharse parse: only parsed "<<lines.substr(0, iter-lines.begin());

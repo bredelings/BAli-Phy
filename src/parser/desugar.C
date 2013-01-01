@@ -432,6 +432,8 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
       continue;
     }
 
+    if (not is_AST(v[i],"Decl")) continue;
+
     // If its not a function binding, accept it as is, and continue.
     if (object_ptr<const dummy> d = v[i]->sub[0].is_a<dummy>())
       decls.push_back(new expression(v[i]->head,
@@ -540,6 +542,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       {
 	if (is_AST(e,"EmptyDecl")) continue;
 	if (is_AST(e,"FixityDecl")) continue;
+	if (not is_AST(e,"Decl")) continue;
 	// Translate funlhs2 and funlhs3 declaration forms to funlhs1 form.
 	e = translate_funlhs_decl(e);
 
@@ -1009,49 +1012,40 @@ pair<Module,Model_Notes> read_BUGS(const vector<string>& modules_path, const Par
   // 1. Read file into string.
   string file_contents = read_file(filename, "BUGS File");
 
-  // 2. bugs_file = module + notes
-  expression_ref bugs_file = parse_bugs_file(file_contents);
-  assert(is_AST(bugs_file,"BugsFile"));
-
-  expression_ref module = bugs_file->sub[0];
+  // 2. module = impdecls + topdecls (including notes/notes)
+  expression_ref module = parse_bugs_file(file_contents);
   assert(is_AST(module,"Module"));
-  expression_ref bugs_notes;
-  if (bugs_file->sub.size() == 2)
-  {
-    bugs_notes = bugs_file->sub[1];
-    assert(is_AST(bugs_notes,"BugsLines"));
-  }
 
   Module BUGS(module);
 
   // 3. Find explicitly and implicitly-declared parameters
   set<string> new_parameters;
-  for(const auto& cmd: bugs_notes->sub)
-  {
-    // This doesn't happen for BugsExternalDist or BugsDataDist
-    if (is_AST(cmd,"BugsDist"))
-      add(new_parameters, find_all_ids(cmd->sub[0]));
-    else if (is_AST(cmd,"Parameter"))
+  if (BUGS.topdecls)
+    for(const auto& cmd: BUGS.topdecls->sub)
     {
-      string name = *(cmd->sub[0].assert_is_a<String>());
-      new_parameters.insert(name);
+      // This doesn't happen for BugsExternalDist or BugsDataDist
+      if (is_AST(cmd,"BugsDist"))
+	add(new_parameters, find_all_ids(cmd->sub[0]));
+      else if (is_AST(cmd,"Parameter"))
+      {
+	string name = *(cmd->sub[0].assert_is_a<String>());
+	new_parameters.insert(name);
+      }
     }
-  }
 
-  // 4. Actually declare them.
-  for(const auto& id: new_parameters)
-    if (not BUGS.is_declared(id))
-      BUGS.declare_parameter(id);
-
-  // 5. Add notes
+  // 4. Add notes
   Model_Notes N;
-  for(const auto& note: bugs_notes->sub)
+  for(const auto& note: BUGS.topdecls->sub)
     N.add_note(note);
 
-  // 6. Add Loggers for any locally declared parameters
+  expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
   for(const auto& name: new_parameters)
   {
-    expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
+    // 5. Actually declare the parameters
+    if (not BUGS.is_declared(name))
+      BUGS.declare_parameter(name);
+
+    // 6. Add Loggers for any locally declared parameters
     N.add_note((make_logger,parameter(BUGS.name + "." + name)));
   }
 

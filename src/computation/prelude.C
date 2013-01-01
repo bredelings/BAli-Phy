@@ -206,8 +206,7 @@ expression_ref load_module_from_file(const vector<string>& module_root_paths, co
     if (not fs::exists(filename)) continue;
 
     string file_contents = read_file(filename.string(),"module");
-    expression_ref bugs_file = parse_bugs_file(file_contents);
-    expression_ref module = bugs_file->sub[0];
+    expression_ref module = parse_bugs_file(file_contents);
     return module;
   }
   throw myexception()<<"Couldn't file module '"<<modid<<"' in path '"<<join(module_root_paths,':')<<"'";
