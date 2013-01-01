@@ -134,6 +134,7 @@ namespace mpi = boost::mpi;
 #include <sstream>
 #include <new>
 #include <signal.h>
+#include <map>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -180,6 +181,7 @@ using std::ofstream;
 using std::ostream;
 using std::string;
 using std::vector;
+using std::map;
 
 using boost::dynamic_bitset;
 
@@ -541,7 +543,7 @@ vector< vector< vector<int> > > get_un_identifiable_indices(const Model& M, cons
 }
 
 
-owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameters& P, const vector<string>& Rao_Blackwellize)
+owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, const vector<string>& Rao_Blackwellize)
 {
   using namespace MCMC;
   owned_ptr<TableGroupFunction<string> > TL = claim(new TableGroupFunction<string>);
@@ -557,23 +559,40 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
   {
     vector<string> short_names = short_parameter_names(P);
     vector<string> long_names = parameter_names(P);
-    vector<int> logged_params;
+    map<string,string> long_to_short;
+    for(int i=0;i<short_names.size();i++)
+      long_to_short[long_names[i]] = short_names[i];
+
+    vector<int> logged_computations;
     vector<string> logged_names;
 
-    for(int i=0;i<long_names.size();i++)
+    expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
+    expression_ref query = (make_logger, match(0));
+    for(int i=0;i<P.n_notes();i++)
     {
-      expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
-      expression_ref query = (make_logger, parameter(long_names[i]));
       vector<expression_ref> results;
-      if (P.find_match_notes(query, results, 0) == -1) continue;
+      if (find_match(query, P.get_note(i), results))
+      {
+	expression_ref E = results[0];
+	string name = E->print();
 
-      logged_params.push_back(i);
-      logged_names.push_back(long_names[i]);
+	int index = P.add_compute_expression(E);
+	logged_computations.push_back(index);
+	
+	if (long_to_short.count(name))
+	  logged_names.push_back(long_to_short[name]);
+	else
+	  logged_names.push_back(name);
+      }
     }
 
     TableGroupFunction<double> T1;
-    for(int p: logged_params)
-      T1.add_field(short_names[p], GetParameterFunction(p) );
+    for(int i=0;i<logged_computations.size();i++)
+    {
+      int index = logged_computations[i];
+      string name = logged_names[i];
+      T1.add_field(name, GetComputationFunction(index) );
+    }
 
     SortedTableFunction T2(T1, get_un_identifiable_indices(P, logged_names));
 
@@ -619,7 +638,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(const Parameter
   return TL;
 }
 
-vector<owned_ptr<MCMC::Logger> > construct_loggers(const Parameters& P, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
+vector<owned_ptr<MCMC::Logger> > construct_loggers(Parameters& P, const vector<string>& Rao_Blackwellize, int proc_id, const string& dir_name)
 {
   using namespace MCMC;
   vector<owned_ptr<Logger> > loggers;

@@ -174,18 +174,19 @@ TableViewerFunction::TableViewerFunction(const owned_ptr<TableFunction<string> >
   :function(f)
 { }
 
-double GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P, long)
+double GetComputationFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {
-  if (P->parameter_has_type<Double>(p))
-    return P->get_parameter_value_as<Double>(p);
-  else if (P->parameter_has_type<Int>(p))
-    return P->get_parameter_value_as<Int>(p);
-  else if (P->parameter_has_type<constructor>(p))
+  object_ref result = P->evaluate(index);
+
+  if (auto D = dynamic_pointer_cast<const Double>(result))
+    return *D;
+  else if (auto I = dynamic_pointer_cast<const Double>(result))
+    return *I;
+  else if (auto c = dynamic_pointer_cast<const constructor>(result))
   {
-    constructor c = P->get_parameter_value_as<constructor>(p);
-    if (c.f_name == "True")
+    if (c->f_name == "True")
       return 1;
-    else if (c.f_name == "False")
+    else if (c->f_name == "False")
       return 0;
     else
       return -1;
@@ -193,6 +194,10 @@ double GetParameterFunction::operator()(const owned_ptr<Probability_Model>& P, l
   else
     return -1;
 }
+
+GetComputationFunction::GetComputationFunction(int i)
+  :index(i)
+{ }
 
 string GetPriorFunction::operator()(const owned_ptr<Probability_Model>& P, long)
 {

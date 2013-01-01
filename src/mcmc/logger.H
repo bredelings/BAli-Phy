@@ -90,13 +90,13 @@ namespace MCMC {
     long operator()(const owned_ptr<Probability_Model>&,long t) {return t;}
   };
 
-  class GetParameterFunction: public LoggerFunction<double>
+  class GetComputationFunction: public LoggerFunction<double>
   {
-    int p;
+    int index;
   public:
-    GetParameterFunction* clone() const {return new GetParameterFunction(*this);}
+    GetComputationFunction* clone() const {return new GetComputationFunction(*this);}
     double operator()(const owned_ptr<Probability_Model>& P,long t);
-    GetParameterFunction(int i):p(i) {}
+    GetComputationFunction(int i);
   };
 
   template <typename T>
