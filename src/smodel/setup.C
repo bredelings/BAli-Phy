@@ -31,7 +31,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "smodel/operations.H"
 #include "computation/operations.H"
 #include "probability/distribution-operations.H"
-#include "computation/prelude.H"
 #include "computation/module.H"
 
 using std::string;

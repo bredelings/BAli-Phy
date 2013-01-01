@@ -5,9 +5,9 @@
 #include <string>
 #include "computation/operation.H"
 #include "computation/computation.H"
+#include "computation/module.H"
 #include "probability/probability.H"
 #include "bounds.H"
-#include "computation/prelude.H"
 
 using std::vector;
 using std::string;

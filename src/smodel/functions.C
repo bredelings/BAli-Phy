@@ -1,4 +1,3 @@
-#include "computation/prelude.H"
 #include "computation/module.H"
 #include "computation/operations.H"
 #include "smodel/functions.H"

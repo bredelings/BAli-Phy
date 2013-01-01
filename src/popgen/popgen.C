@@ -4,7 +4,6 @@
 #include "popgen.H"
 #include "computation/operation.H"
 #include "computation/computation.H"
-#include "computation/prelude.H"
 #include "probability/distribution-operations.H"
 #include "io.H"
 
