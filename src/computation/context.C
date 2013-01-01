@@ -52,6 +52,7 @@ closure resolve_refs(const vector<Module>& P, closure&& C)
 
 closure context::preprocess(const closure& C) const
 {
+  assert(C.exp);
   assert(let_float(C.exp)->print() == let_float(let_float(C.exp))->print());
   //  return trim_normalize( indexify( Fun_normalize( graph_normalize( let_float( translate_refs( closure(C) ) ) ) ) ) );
   return trim_normalize( indexify( graph_normalize( let_float( translate_refs( resolve_refs(*P, closure(C) ) ) ) ) ) );
@@ -515,19 +516,20 @@ context& context::operator+=(const vector<Module>& P2)
       for(const auto& s: module.get_symbols())
       {
 	const symbol_info& S = s.second;
-	  
+
 	if (S.scope != local_scope) continue;
-	  
+
 	if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
-	  
+
 	// get the root for each identifier
 	map<string, root_t>::iterator loc = identifiers().find(S.name);
 	assert(loc != identifiers().end());
 	root_t r = loc->second;
 	int R = *r;
-	  
+
 	expression_ref F = module.get_function(S.name);
-	  
+	assert(F);
+
 	assert(R != -1);
 	set_C(R, preprocess(F) );
       }
