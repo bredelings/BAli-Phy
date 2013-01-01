@@ -207,7 +207,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	qconop %= gconsym | "`" >> qconid >> "`"; // qualified constructor operator
 	op %= varop | conop;                      // operator
 	qop = qvarop [ _val = construct<AST_node>("id", construct<String>(_1)) ] | qconop [ _val = construct<AST_node>("id",construct<String>(_1)) ];  // qualified operator
-	gconsym %= string(":") | qconsym;
+	gconsym %= qconsym | string(":");
 
 	/*----- Section 3.11 -----*/
 	qual = pat [push_back(_a,_1)] >> "<-" > exp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("PatQual"), _a) ]
