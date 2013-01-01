@@ -200,6 +200,10 @@ public:
 
   const context& get_context() const {return C;}
 
+  int add_compute_expression(const expression_ref& E);
+
+  object_ref evaluate(int index) const;
+
   /// Construct an empty model
   Model(const std::vector<std::string>& module_path);
 

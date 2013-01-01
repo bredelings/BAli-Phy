@@ -219,6 +219,16 @@ vector<int> Model::add_submodel(const Model_Notes& N)
   return new_parameters;
 }
 
+int Model::add_compute_expression(const expression_ref& E)
+{
+  return C.add_compute_expression(E);
+}
+
+object_ref Model::evaluate(int index) const
+{
+  return C.evaluate(index);
+}
+
 std::vector< object_ptr<const Object> > Model::get_parameter_values(const std::vector<int>& indices) const
 {
   std::vector< object_ptr<const Object> > values(indices.size());
