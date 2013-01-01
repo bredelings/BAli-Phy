@@ -940,7 +940,10 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     else if (n->type == "BugsNote")
     {
       // This expression should have the form 'AST[BugsNote] (AST[infixexp] (AST[Apply] con_name arg1 arg2 ... arg_n) )'.
-      v = E->sub[0]->sub[0]->sub;
+      expression_ref apply = E->sub[0];
+      if (not is_AST(apply,"Apply"))
+	throw myexception()<<"BUGS note '"<<apply->print()<<"' is not an Apply expression!";
+      v = apply->sub;
 
       string con_name = v[0].assert_is_a<AST_node>()->value;
       v.erase(v.begin());
