@@ -702,6 +702,11 @@ Module& Module::operator+=(const expression_ref& E)
 	  def_function(var_name,{});
       }
     }
+    else if (is_AST(decl,"Builtin"))
+    {
+      string bname = *decl->sub[0].assert_is_a<String>();
+      def_function(bname,{});
+    }
       
   if (module) return *this;
 

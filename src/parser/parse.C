@@ -286,7 +286,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | lit('{') >> topdecls [ push_back(_a,_1) ] >> '}' >> eps[ _val = new_<expression>(AST_node("Body"), _a) ];
 
 	topdecls = topdecl [ push_back(_a,_1) ] % ';' >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
-	topdecl %= 
+	topdecl = 
 	  //	  lit("type") >> simpletype >> '=' >> type
 	  //	  | "data" >> -(context >> "=>") >> simpletype >> -('=' >> constrs) >> -deriving
 	  //	  | "newtype" >> -(context >> "=>") >> simpletype >> '=' >> newconstr >> -deriving
@@ -294,9 +294,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  //	  | "instance" >> -(scontext >> "=>") >> qtycls >> inst >> -("where" >> idecls)
 	  //	  | "default" >> *type
 	  //	  | "foreign" >> fdecl
-	  //	  lit("note") >> !(small|large|digit|'\'') > bugs_line
-	  lit("note") >> bugs_line
-	  | decl 
+	    lit("builtin") >> var[ push_back(_a,_1) ] >> h_integer[ push_back(_a,_1) ] >> h_string[ push_back(_a,_1) ] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
+	  | lit("note") >> bugs_line [_val = _1]
+	  | decl [_val = _1]
 	  ;
 
 	decls = lit('{') > (decl % ';')[_val = new_<expression>(AST_node("Decls"), _1)] > '}';
@@ -837,7 +837,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> body;
 
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> topdecls;
-  qi::rule<Iterator, expression_ref(), ascii::space_type> topdecl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> topdecl;
 
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> decls;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> decl;
