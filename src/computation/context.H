@@ -179,9 +179,13 @@ protected:
 
   std::vector<std::string> module_path_;
 
+  std::vector<std::string> builtins_path_;
+
   void collect_garbage() const;
 public:
   const std::vector<std::string>& get_module_path() const;
+
+  const std::vector<std::string>& get_builtins_path() const;
 
   context& operator+=(const std::vector<Module>& D);
 

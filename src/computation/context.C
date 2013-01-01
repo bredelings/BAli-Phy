@@ -470,6 +470,11 @@ const vector<string>& context::get_module_path() const
   return module_path_;
 }
 
+const vector<string>& context::get_builtins_path() const
+{
+  return builtins_path_;
+}
+
 context& context::operator+=(const vector<string>& module_names)
 {
   return operator+=(load_modules(get_module_path(), module_names));
@@ -480,7 +485,7 @@ context& context::operator+=(const vector<Module>& P2)
   Program& PP = *P.modify();
 
   // 1. Add the new modules to the program, perform imports, and resolve symbols.
-  add(get_module_path(), PP, P2);
+  add(get_module_path(), get_builtins_path(), PP, P2);
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   for(auto& module: PP)

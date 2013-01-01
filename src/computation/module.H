@@ -125,6 +125,8 @@ public:
 
   void resolve_symbols(const std::vector<Module>&);
 
+  void load_builtins(const std::vector<std::string>&);
+
   bool is_declared(const std::string&) const;
 
   bool is_declared_local(const std::string&) const;

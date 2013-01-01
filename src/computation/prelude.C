@@ -198,25 +198,43 @@ Module SModel_Functions(const vector<string>&);
 Module PopGen_Functions(const vector<string>&);
 
 
-expression_ref load_module_from_file(const vector<string>& module_root_paths, const string& modid)
+fs::path find_file_in_path(const vector<string>& paths, const fs::path& file_path)
 {
-  vector<string> module_path1 = get_haskell_identifier_path(modid);
-  module_path1.back() += ".hs";
-  fs::path module_path = module_path1[0];
-  for(int i=1;i<module_path1.size();i++)
-    module_path /= module_path1[i];
-
-  for(const string& prefix: module_root_paths)
+  for(const string& prefix: paths)
   {
     fs::path filename = prefix;
-    filename /= module_path;
+    filename /= file_path;
     if (not fs::exists(filename)) continue;
+    return filename;
+  }
+  throw myexception()<<"Couldn't find file '"<<file_path.string()<<"' in path '"<<join(paths,':')<<"'";
+}
 
+fs::path get_relative_path(const vector<string>& v)
+{
+  fs::path file_path = v[0];
+  for(int i=1;i<v.size();i++)
+    file_path /= v[i];
+  return file_path;
+}
+
+expression_ref load_module_from_file(const vector<string>& module_root_paths, const string& modid)
+{
+  vector<string> file_path = get_haskell_identifier_path(modid);
+  file_path.back() += ".hs";
+
+  try
+  {
+    fs::path filename = find_file_in_path(module_root_paths, get_relative_path(file_path) );
     string file_contents = read_file(filename.string(),"module");
     expression_ref module = parse_bugs_file(file_contents);
     return module;
   }
-  throw myexception()<<"Couldn't file module '"<<modid<<"' in path '"<<join(module_root_paths,':')<<"'";
+  catch (myexception& e)
+  {
+    e.prepend("Loading modules: ");
+    throw e;
+  }
 }
 
 Module load_module(const vector<string>& modules_path, const string& modid)
@@ -269,6 +287,15 @@ struct OperationFn: public Operation
     :Operation(n),perform_operation((operation_fn)fn),name_(fname) 
   { }
 };
+
+expression_ref load_builtin(const vector<string>& builtins_path, const string& filename, int n, const string& fname)
+{
+  // \todo:windows Make this depend on the operating system
+  const string extension = ".so";
+
+  fs::path filepath = find_file_in_path(builtins_path, filename + extension);
+  return load_builtin(filepath.string(), n, fname);
+}
 
 expression_ref load_builtin(const string& filename, int n, const string& fname)
 {

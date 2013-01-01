@@ -338,6 +338,21 @@ void Module::resolve_symbols(const std::vector<Module>& P)
     }
 }
 
+void Module::load_builtins(const std::vector<string>& builtins_path)
+{
+  if (not topdecls) return;
+
+  for(const auto& decl: topdecls->sub)
+    if (is_AST(decl,"Builtin"))
+    {
+      string bname = *decl->sub[0].assert_is_a<String>();
+      int n = convertTo<int>( *decl->sub[1].assert_is_a<String>() );
+      string filename = *decl->sub[2].assert_is_a<String>();
+
+      symbols[bname].body = load_builtin(builtins_path, bname, n, filename);
+    }
+}
+
 bool Module::is_declared(const std::string& name) const
 {
   return is_haskell_builtin_con_name(name) or (aliases.count(name) > 0);

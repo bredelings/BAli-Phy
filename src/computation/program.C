@@ -44,7 +44,7 @@ static int count_module(const vector<Module>& P,const string& module_name)
   return count;
 }
 
-void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, const std::vector<Module>& modules)
+void add(const std::vector<std::string>& modules_path, const std::vector<std::string>& builtins_path, std::vector<Module>& P, const std::vector<Module>& modules)
 {
   // 1. Check that the program doesn't already contain these module names.
   for(const auto& module: modules)
@@ -92,6 +92,7 @@ void add(const std::vector<std::string>& modules_path, std::vector<Module>& P, c
     if (contains_module(modules, module.name))
     {
       try {
+	module.load_builtins(builtins_path);
 	module.resolve_symbols(P);
       }
       catch (myexception& e)
