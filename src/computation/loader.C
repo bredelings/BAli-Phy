@@ -86,8 +86,6 @@ Module make_Prelude()
 
   P.def_function("intToDouble", lambda_expression( Conversion<int,double>() ) ); 
   P.def_function("mkArray", lambda_expression( MkArray() ) ); 
-  P.def_function("reapply", lambda_expression( Reapply() ) );
-  P.def_function("join", lambda_expression( Join() ) );
   P.def_function("negate", lambda_expression( Negate() ) );
   P.def_function("exp", lambda_expression( Exp_Op() ) );
   P.def_function("!", lambda_expression( GetIndex() ) );
@@ -128,8 +126,6 @@ Module make_Prelude()
   P.def_function("<", lambda_expression( LessThan() ) );
   P.def_function(">", lambda_expression( GreaterThan() ) );
   
-  P.def_function("seq", lambda_expression( Seq() ) );
-
   // [ We could do this as two nested fmaps, instead. ]
   // [ We could factor out to_double(v2), and 1.0/to_double(v2)
 

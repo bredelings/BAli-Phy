@@ -38,6 +38,9 @@ otherwise = True;
 builtin log 1 "log";
 builtin mod 2 "mod";
 builtin builtinError 1 "builtinError";
+builtin seq 2 "seq";
+builtin join 2 "join";
+builtin reapply 2 "reapply";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
