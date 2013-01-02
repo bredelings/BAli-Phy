@@ -104,21 +104,6 @@ Module make_Prelude()
   //------------------------------------------------------------------------------------------------//
 
 
-  // Is this right?
-
-  P.def_function("*", lambda_expression( Multiply() ) );
-  P.def_function("/", lambda_expression( Divide() ) );
-  P.def_function("+", lambda_expression( Add() ) ); 
-  P.def_function("-", lambda_expression( Minus() ) );
-
-  // this needs to be added as a constructor expression
-  // ":" is builtin, but has precedence 5 and right fixity.
-
-  P.def_function("==", lambda_expression( Equals() ) );
-  P.def_function("/=", lambda_expression( NotEquals() ) );
-  P.def_function("<", lambda_expression( LessThan() ) );
-  P.def_function(">", lambda_expression( GreaterThan() ) );
-  
   // [ We could do this as two nested fmaps, instead. ]
   // [ We could factor out to_double(v2), and 1.0/to_double(v2)
 
@@ -232,12 +217,20 @@ Module load_module(const vector<string>& modules_path, const string& modid)
   else if (modid == "PopGen")
     M = PopGen_Functions(modules_path);
 
-  expression_ref module = load_module_from_file(modules_path,modid);
+  try
+  {
+    expression_ref module = load_module_from_file(modules_path,modid);
 
-  M += module;
+    M += module;
 
-  if (M.name != modid)
-    throw myexception()<<"Module file '"<<modid<<".hs' contains different module '"<<M.name<<"'";
+    if (M.name != modid)
+      throw myexception()<<"Module file '"<<modid<<".hs' contains different module '"<<M.name<<"'";
+  }
+  catch (myexception& e)
+  {
+    e.prepend("Loading module '"+modid+"':\n  ");
+    throw e;
+  }
 
   return M;
 }

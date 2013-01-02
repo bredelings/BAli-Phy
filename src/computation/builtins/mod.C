@@ -1,6 +1,4 @@
-#include "computation/operations.H"
-#include "computation/graph_register.H"
-#include "math/exponential.H"
+#include "computation/computation.H"
 #include "myexception.H"
 
 extern "C" closure builtin_function(OperationArgs& Args)

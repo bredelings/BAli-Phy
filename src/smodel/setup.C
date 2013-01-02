@@ -679,10 +679,10 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 					   const object_ptr<const alphabet>& a,
 					   const shared_ptr< const valarray<double> >& frequencies)
 {
-  expression_ref plus = lambda_expression(Add());
-  expression_ref minus = lambda_expression(Minus());
-  expression_ref times = lambda_expression(Multiply());
-  expression_ref divide = lambda_expression(Divide());
+  expression_ref plus = var("+");
+  expression_ref minus = var("-");
+  expression_ref times = var("*");
+  expression_ref divide = var("/");
 
   if (model_args[0] == "single") 
     return coerce_to_MM(L,coerce_to_RA(L,model_args[1],a,frequencies),a,frequencies);

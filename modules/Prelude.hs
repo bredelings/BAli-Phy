@@ -48,6 +48,16 @@ builtin intToDouble 1 "intToDouble";
 builtin negate 1 "negate";
 builtin exp 1 "exp";
 builtin doubleToLogDouble 1 "doubleToLogDouble";
+builtin + 2 "add";
+builtin - 2 "subtract";
+builtin / 2 "divide";
+builtin * 2 "multiply";
+builtin == 2 "equals";
+builtin /= 2 "notequals";
+builtin > 2 "greaterthan";
+builtin >= 2 "greaterthanorequal";
+builtin < 2 "lessthan";
+builtin <= 2 "lessthanorequal";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));

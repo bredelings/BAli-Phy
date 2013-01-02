@@ -391,226 +391,8 @@ struct LExp_Op: public Operation
   LExp_Op(): Operation(3) { }
 };
 
-extern expression_ref LExp;
-
-struct Multiply: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Multiply* clone() const {return new Multiply(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const Multiply* E = dynamic_cast<const Multiply*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return "*";}
-
-  Multiply():Operation(2) {}
-};
-
-struct GreaterThan: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual GreaterThan* clone() const {return new GreaterThan(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const GreaterThan* E = dynamic_cast<const GreaterThan*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return ">";}
-
-  GreaterThan():Operation(2) {}
-};
-
-struct LessThan: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual LessThan* clone() const {return new LessThan(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const LessThan* E = dynamic_cast<const LessThan*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return "<";}
-
-  LessThan():Operation(2) {}
-};
-
-struct Equals: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Equals* clone() const {return new Equals(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const Equals* E = dynamic_cast<const Equals*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return "==";}
-
-  Equals():Operation(2) {}
-};
-
-struct NotEquals: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual NotEquals* clone() const {return new NotEquals(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const NotEquals* E = dynamic_cast<const NotEquals*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return "/=";}
-
-  NotEquals():Operation(2) {}
-};
-
-struct Add: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Add* clone() const {return new Add(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const Add* E = dynamic_cast<const Add*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return "+";}
-
-  Add():Operation(2) {}
-};
-
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/utility/enable_if.hpp>
-
-struct Minus: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Minus* clone() const {return new Minus(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const Minus* E = dynamic_cast<const Minus*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return "-";}
-
-  Minus():Operation(2) {}
-};
-
-struct Divide: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Divide* clone() const {return new Divide(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const Divide* E = dynamic_cast<const Divide*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return "/";}
-
-  Divide():Operation(2) {}
-};
-
-struct Mod: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Mod* clone() const {return new Mod(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const Mod* E = dynamic_cast<const Mod*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return "mod";}
-
-  Mod():Operation(2) {}
-};
 
 #define check_arithmetic(T) typename boost::enable_if<boost::is_arithmetic<T>,T>::type
 #define check_arithmetic2(T1,T2) typename boost::enable_if<boost::is_arithmetic<T1>,T2>::type
@@ -619,13 +401,13 @@ struct Mod: public Operation
 template <typename T> \
 check_arithmetic2(T,expression_ref) operator Op(const expression_ref& E, const T& t) \
 { \
-  return (lambda_expression(M()),E,t); \
+  return (var(M),E,t);			\
 } \
  \
 template <typename T> \
 check_arithmetic2(T,expression_ref) operator Op(const T& t, const expression_ref& E) \
 { \
-  return (lambda_expression(M()),t,E); \
+  return (var(M),t,E);			\
 } \
 expression_ref operator Op(const expression_ref& E1, const expression_ref& E2);
 
@@ -633,15 +415,15 @@ expression_ref operator Op(const expression_ref& E1, const expression_ref& E2);
 #define def_binary_operator2(Op,M) \
 expression_ref operator Op(const expression_ref& E1, const expression_ref& E2) \
 { \
-  return (lambda_expression(M()),E1,E2); \
+  return (var(M),E1,E2);			\
 }
 
-def_binary_operator1(-,Minus)
-def_binary_operator1(+,Add)
-def_binary_operator1(*,Multiply)
-def_binary_operator1(/,Divide)
-def_binary_operator1(<,LessThan)
-def_binary_operator1(>,GreaterThan)
+def_binary_operator1(-,"Prelude.-")
+def_binary_operator1(+,"Prelude.+")
+def_binary_operator1(*,"Prelude.*")
+def_binary_operator1(/,"Prelude./")
+def_binary_operator1(<,"Prelude.<")
+def_binary_operator1(>,"Prelude.>")
 //def_binary_operator1(==,Equals)
 //def_binary_operator1(!=,NotEquals)
 #undef def_binary_operator1

@@ -333,7 +333,9 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 #---------------------------------------------------------------
 pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
 		arraySize.la getIndex.la mkArray.la intToDouble.la negate.la \
-		exp.la doubleToLogDouble.la
+		exp.la doubleToLogDouble.la add.la subtract.la divide.la multiply.la \
+		equals.la notequals.la greaterthan.la greaterthanorequal.la lessthan.la \
+		lessthanorequal.la
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module
@@ -373,4 +375,34 @@ exp_la_LDFLAGS = -module
 
 log_la_SOURCES = computation/builtins/log.C
 log_la_LDFLAGS = -module
+
+add_la_SOURCES = computation/builtins/add.C
+add_la_LDFLAGS = -module
+
+subtract_la_SOURCES = computation/builtins/subtract.C
+subtract_la_LDFLAGS = -module
+
+divide_la_SOURCES = computation/builtins/divide.C
+divide_la_LDFLAGS = -module
+
+multiply_la_SOURCES = computation/builtins/multiply.C
+multiply_la_LDFLAGS = -module
+
+equals_la_SOURCES = computation/builtins/equals.C
+equals_la_LDFLAGS = -module
+
+notequals_la_SOURCES = computation/builtins/notequals.C
+notequals_la_LDFLAGS = -module
+
+greaterthan_la_SOURCES = computation/builtins/greaterthan.C
+greaterthan_la_LDFLAGS = -module
+
+greaterthanorequal_la_SOURCES = computation/builtins/greaterthanorequal.C
+greaterthanorequal_la_LDFLAGS = -module
+
+lessthan_la_SOURCES = computation/builtins/lessthan.C
+lessthan_la_LDFLAGS = -module
+
+lessthanorequal_la_SOURCES = computation/builtins/lessthanorequal.C
+lessthanorequal_la_LDFLAGS = -module
 
