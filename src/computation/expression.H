@@ -484,17 +484,8 @@ extern expression_ref var_bounds;
 // 2 Fields: (random vars) (prob_density (parameter expressions))
 extern expression_ref distributed;
 
-// 1 Field: a value
-extern expression_ref sys_print;
-
 // 2 Fields: string1 string2
 extern expression_ref concat;
-
-// 1 Fields: the density expression
-extern expression_ref prob;
-
-// 3 Fields: definition, guard, body
-extern expression_ref defun;
 
 inline expression_ref List()
 {

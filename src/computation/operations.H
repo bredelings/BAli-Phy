@@ -51,23 +51,6 @@ struct Case: public Operation
   Case():Operation(2) {}
 };
 
-struct Print: public Operation
-{
-  virtual Print* clone() const {return new Print(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const Print* E = dynamic_cast<const Print*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "sys_print";}
-
-  Print():Operation(1) {}
-};
-
 struct Error: public Operation
 {
   virtual Error* clone() const {return new Error(*this);}

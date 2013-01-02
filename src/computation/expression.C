@@ -1753,12 +1753,6 @@ expression_ref var_bounds = lambda_expression(constructor("VarBounds",2));
 // Fields: (prob_density) (random vars) (parameter expressions)
 expression_ref distributed = lambda_expression( constructor(":~",2) );
 
-expression_ref sys_print = lambda_expression( Print() );
-
-expression_ref prob = lambda_expression( constructor("Probability",1) );
-
-expression_ref defun = lambda_expression( constructor("Defun",3) );
-
 vector<expression_ref> get_ref_vector_from_list(const expression_ref& E)
 {
   vector<expression_ref> V;

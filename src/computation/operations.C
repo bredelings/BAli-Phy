@@ -44,13 +44,6 @@ closure Seq::operator()(OperationArgs& Args) const
   return {index_var(0),{R}};
 }
 
-closure Print::operator()(OperationArgs& Args) const
-{
-  object_ptr<const Object> x = Args.evaluate(0);
-  
-  return closure(object_ref( new String(x->print() ) ));
-}
-
 closure Error::operator()(OperationArgs& Args) const
 {
   string message = *Args.evaluate_as<String>(0);
