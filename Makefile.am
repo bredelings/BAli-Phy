@@ -15,6 +15,9 @@ bin_SCRIPTS = scripts/bali-phy-sge scripts/bp-analyze.pl scripts/compare-runs.R
 # Used to build, but not distributed
 noinst_SCRIPTS = scripts/git_version.sh
 
+modulesdir = $(libdir)/@PACKAGE@/modules/
+modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude.hs modules/Range.hs modules/SModel.hs
+
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@
 doc_DATA = doc/README.html doc/README.xhtml doc/docbook.css doc/README.pdf \
@@ -95,7 +98,7 @@ EXTRA_HEADERS = @top_srcdir@/include/tnt/tnt_array1d.h \
                 @top_srcdir@/include/tnt/jama_eig.h
 
 EXTRA_DIST = $(doc_DATA) $(EXTRA_HEADERS) $(bin_SCRIPTS) $(noinst_SCRIPTS) \
-             $(nobase_doc_SCRIPTS) $(nobase_examples_DATA) doc/Doxyfile 
+             $(nobase_doc_SCRIPTS) $(nobase_examples_DATA) doc/Doxyfile $(modules_DATA)
 
 dist-hook:
 	rm -rf `find $(distdir) -name TODO`
