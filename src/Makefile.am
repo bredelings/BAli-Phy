@@ -331,10 +331,13 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 	sequence/sequence-format.C alignment/alignment-util.C tree/tree.C io.C tree/sequencetree.C
 
 #---------------------------------------------------------------
-pkglib_LTLIBRARIES = mod.la log.la
+pkglib_LTLIBRARIES = mod.la log.la builtinError.la
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module
 
 log_la_SOURCES = computation/builtins/log.C
 log_la_LDFLAGS = -module
+
+builtinError_la_SOURCES = computation/builtins/builtinError.C
+builtinError_la_LDFLAGS = -module

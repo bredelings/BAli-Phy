@@ -44,13 +44,6 @@ closure Seq::operator()(OperationArgs& Args) const
   return {index_var(0),{R}};
 }
 
-closure Error::operator()(OperationArgs& Args) const
-{
-  string message = *Args.evaluate_as<String>(0);
-  
-  throw myexception()<<message;
-}
-
 closure Join::operator()(OperationArgs& Args) const
 {
   Args.lazy_evaluate(0);

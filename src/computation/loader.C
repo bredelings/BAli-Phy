@@ -70,9 +70,8 @@ using std::string;
  * 17. Compute the entire probability expression, instead of adding pieces incrementally.
  * 18. Make Context load an entire program, instead of adding pieces incrementally.
  *     19. Move the Program from Context to reg_heap.
- * 20. Load builtins from a file.
- *     20a. Allow builtins to be constructed from a number n_args, and a function Op, where
- *       + closure (*Op)(OperationArgs&)
+ * 20. [DONE] Load builtins from a file.
+ *     20a. Convert builtins to new framework.
  * 21. [DONE] Add computed loggers.
  *     (This will allow us to e.g. select min/max functions for logging.)
  * 22. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
@@ -85,7 +84,6 @@ Module make_Prelude()
   // See http://www.haskell.org/onlinereport/standard-prelude.html
   Module P("Prelude");
 
-  P.def_function("builtinError", lambda_expression( Error() ) ); 
   P.def_function("intToDouble", lambda_expression( Conversion<int,double>() ) ); 
   P.def_function("mkArray", lambda_expression( MkArray() ) ); 
   P.def_function("reapply", lambda_expression( Reapply() ) );
