@@ -333,8 +333,8 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 #---------------------------------------------------------------
 pkglib_LTLIBRARIES = mod.la log.la
 
-mod_la_SOURCES = computation/mod.C
+mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module
 
-log_la_SOURCES = computation/log.C
+log_la_SOURCES = computation/builtins/log.C
 log_la_LDFLAGS = -module
