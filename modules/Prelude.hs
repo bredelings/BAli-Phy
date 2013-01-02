@@ -44,6 +44,10 @@ builtin reapply 2 "reapply";
 builtin arraySize 1 "arraySize";
 builtin ! 2 "getIndex";
 builtin mkArray 2 "mkArray";
+builtin intToDouble 1 "intToDouble";
+builtin negate 1 "negate";
+builtin exp 1 "exp";
+builtin doubleToLogDouble 1 "doubleToLogDouble";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));

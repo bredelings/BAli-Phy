@@ -84,10 +84,6 @@ Module make_Prelude()
   // See http://www.haskell.org/onlinereport/standard-prelude.html
   Module P("Prelude");
 
-  P.def_function("intToDouble", lambda_expression( Conversion<int,double>() ) ); 
-  P.def_function("negate", lambda_expression( Negate() ) );
-  P.def_function("exp", lambda_expression( Exp_Op() ) );
-
   P.def_constructor("True",0);
   P.def_constructor("False",0);
   P.def_constructor("Just",1);
@@ -129,8 +125,6 @@ Module make_Prelude()
   // FIXME - we have an problem with types here.  This will only work for Int, as-is.
   //  P += "{enumFromThen x y = ... }";
   //  P += "{enumFromThenTo x y z = ... }";
-
-  P.def_function("doubleToLogDouble", lambda_expression( Conversion<double,log_double_t>() ) );
 
   P.def_function("sizeOfVectorUnsigned", lambda_expression( VectorSizeOp<unsigned>() ) );
   //--------------------------------------- listFromVectorInt ----------------------------------------//

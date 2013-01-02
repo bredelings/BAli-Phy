@@ -513,50 +513,6 @@ struct NotEquals: public Operation
   NotEquals():Operation(2) {}
 };
 
-template<typename X, typename Y>
-struct Conversion: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Conversion* clone() const {return new Conversion(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const Conversion<X,Y>* E = dynamic_cast<const Conversion<X,Y>*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const
-  {
-    object_ptr<const POD_math<X> > x = Args.evaluate_as<POD_math<X> >(0);
-
-    return object_ptr<const POD_math<Y>>(new POD_math<Y>(*x));
-  }
-
-  std::string name() const {return "Conversion";}
-
-  Conversion():Operation(1) {}
-};
-
-struct Negate: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Negate* clone() const {return new Negate(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const Negate* E = dynamic_cast<const Negate*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "negate";}
-
-  Negate():Operation(1) {}
-};
-
 struct Add: public Operation
 {
   // The 'context' should include the knowledge of the input slots
@@ -706,20 +662,5 @@ struct Sqrt_Op: public Operation
 };
 
 extern const expression_ref Sqrt;
-
-struct Exp_Op: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Exp_Op* clone() const {return new Exp_Op(*this);}
-
-  tribool compare(const Object& o) const;
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "exp";}
-
-  Exp_Op():Operation(1) {}
-};
 
 #endif

@@ -332,13 +332,11 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 
 #---------------------------------------------------------------
 pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
-		arraySize.la getIndex.la mkArray.la
+		arraySize.la getIndex.la mkArray.la intToDouble.la negate.la \
+		exp.la doubleToLogDouble.la
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module
-
-log_la_SOURCES = computation/builtins/log.C
-log_la_LDFLAGS = -module
 
 builtinError_la_SOURCES = computation/builtins/builtinError.C
 builtinError_la_LDFLAGS = -module
@@ -360,4 +358,19 @@ getIndex_la_LDFLAGS = -module
 
 mkArray_la_SOURCES = computation/builtins/mkArray.C
 mkArray_la_LDFLAGS = -module
+
+intToDouble_la_SOURCES = computation/builtins/intToDouble.C
+intToDouble_la_LDFLAGS = -module
+
+doubleToLogDouble_la_SOURCES = computation/builtins/doubleToLogDouble.C
+doubleToLogDouble_la_LDFLAGS = -module
+
+negate_la_SOURCES = computation/builtins/negate.C
+negate_la_LDFLAGS = -module
+
+exp_la_SOURCES = computation/builtins/exp.C
+exp_la_LDFLAGS = -module
+
+log_la_SOURCES = computation/builtins/log.C
+log_la_LDFLAGS = -module
 

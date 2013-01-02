@@ -219,22 +219,6 @@ closure LExp_Op::operator()(OperationArgs& Args) const
 
 expression_ref LExp = lambda_expression( LExp_Op() );
 
-closure Negate::operator()(OperationArgs& Args) const
-{
-  object_ref x = Args.evaluate(0);
-  
-  if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
-    return -(*xd);
-  else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
-    return -(*xi);
-  else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
-    return -(*xld);
-  else if (object_ptr<const Char> xc = dynamic_pointer_cast<const Char>(x))
-    return -(*xc);
-  else
-    throw myexception()<<"Negate: object '"<<x->print()<<"' is not Double, Int, Log_Double, or Char'";
-}
-
 closure Add::operator()(OperationArgs& Args) const
 {
   object_ref x = Args.evaluate(0);
@@ -512,20 +496,6 @@ closure Sqrt_Op::operator()(OperationArgs& Args) const
 }
 
 const expression_ref Sqrt = lambda_expression( Sqrt_Op() );
-
-//---------------------------------------------------------------------------------------//
-
-tribool Exp_Op::compare(const Object& o) const 
-{
-  return dynamic_cast<const Exp_Op*>(&o);
-}
-
-closure Exp_Op::operator()(OperationArgs& Args) const
-{
-  double x = *Args.evaluate_as<Double>(0);
-
-  return new Double(exp(x));
-}
 
 //---------------------------------------------------------------------------------------//
 
