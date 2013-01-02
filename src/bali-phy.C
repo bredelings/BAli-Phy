@@ -557,32 +557,24 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
   TL->add_field("logp", GetProbabilityFunction() );
   
   {
-    vector<string> short_names = short_parameter_names(P);
-    vector<string> long_names = parameter_names(P);
-    map<string,string> long_to_short;
-    for(int i=0;i<short_names.size();i++)
-      long_to_short[long_names[i]] = short_names[i];
-
     vector<int> logged_computations;
     vector<string> logged_names;
 
+    map<string,string> simplify = get_simplified_names(P.get_Program());
     expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
     expression_ref query = (make_logger, match(0));
+
     for(int i=0;i<P.n_notes();i++)
     {
       vector<expression_ref> results;
       if (find_match(query, P.get_note(i), results))
       {
 	expression_ref E = results[0];
-	string name = E->print();
+	string name = map_symbol_names(E,simplify)->print();
 
 	int index = P.add_compute_expression(E);
 	logged_computations.push_back(index);
-	
-	if (long_to_short.count(name))
-	  logged_names.push_back(long_to_short[name]);
-	else
-	  logged_names.push_back(name);
+	logged_names.push_back(name);
       }
     }
 

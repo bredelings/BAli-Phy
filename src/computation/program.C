@@ -163,11 +163,40 @@ std::map<string,string> get_simplified_names(const vector<Module>& P)
 
     if (count == 1)
       simplified[current->second] = current->first;
-    else
-      simplified[current->second] = current->second;
 
     current = next;
   }
 
   return simplified;
 }
+
+expression_ref map_symbol_names(const expression_ref& E, const std::map<string,string>& simplify)
+{
+  if (not E->size())
+  {
+    if (auto V = is_a<var>(E))
+    {
+      auto loc = simplify.find(V->name);
+      if (loc != simplify.end())
+	return var(loc->second);
+      else
+	return E;
+    }
+    else if (auto P = is_a<parameter>(E))
+    {
+      auto loc = simplify.find(P->parameter_name);
+      if (loc != simplify.end())
+	return parameter(loc->second);
+      else
+	return E;
+    }
+    else
+      return E;
+  }
+
+  object_ptr<expression> V = E->clone();
+  for(int i=0;i<E->size();i++)
+    V->sub[i] = map_symbol_names(V->sub[i], simplify);
+  return V;
+}
+
