@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 class Module;
 
@@ -17,4 +18,6 @@ const Module& get_module(const std::vector<Module>& P, const std::string& module
 void add(const std::vector<std::string>& modules_path, const std::vector<std::string>& builtins_path, std::vector<Module>& P, const std::vector<Module>& modules);
 
 bool is_declared(const std::vector<Module>& modules, const std::string& qvar);
+
+std::map<std::string,std::string> get_simplified_names(const std::vector<Module>& P);
 #endif

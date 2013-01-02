@@ -2,6 +2,7 @@
 #include "computation/module.H"
 #include "myexception.H"
 #include "computation/loader.H"
+#include "models/model.H"
 
 using std::vector;
 using std::string;
@@ -19,7 +20,7 @@ int find_module(const vector<Module>& P, const string& module_name)
   return -1;
 }
 
-const Module& get_module(const std::vector<Module>& P, const std::string& module_name)
+const Module& get_module(const vector<Module>& P, const string& module_name)
 {
   int index = find_module(P,module_name);
   if (index == -1)
@@ -44,7 +45,7 @@ static int count_module(const vector<Module>& P,const string& module_name)
   return count;
 }
 
-void add(const std::vector<std::string>& modules_path, const std::vector<std::string>& builtins_path, std::vector<Module>& P, const std::vector<Module>& modules)
+void add(const vector<string>& modules_path, const vector<string>& builtins_path, vector<Module>& P, const vector<Module>& modules)
 {
   // 1. Check that the program doesn't already contain these module names.
   for(const auto& module: modules)
@@ -105,7 +106,7 @@ void add(const std::vector<std::string>& modules_path, const std::vector<std::st
     }
 }
 
-bool is_declared(const std::vector<Module>& modules, const std::string& qvar)
+bool is_declared(const vector<Module>& modules, const string& qvar)
 {
   if (is_haskell_builtin_con_name(qvar)) return true;
 
@@ -117,4 +118,56 @@ bool is_declared(const std::vector<Module>& modules, const std::string& qvar)
       return true;
 
   return false;
+}
+
+std::map<string,string> get_simplified_names(const vector<Module>& P)
+{
+  std::map<string,string> simplified;
+
+  vector<string> parameter_names;
+
+  // 1. Find all parameters and variables
+  std::multimap<string,string> aliases;
+  for(const auto& module: P)
+    for(const auto& S: module.get_symbols())
+      if (S.second.scope == local_scope)
+      {
+	string qname = S.first;
+	if (S.second.symbol_type == variable_symbol)
+	{
+	  string name = get_unqualified_name(qname);
+	  aliases.insert({name,qname});
+	}
+	else if (S.second.symbol_type == parameter_symbol)
+	  parameter_names.push_back(qname);
+      }
+
+  // 2. Make long names to their shortened equivalent
+  vector<string> short_names = short_parameter_names(parameter_names);
+  for(int i=0;i<parameter_names.size();i++)
+    simplified[parameter_names[i]] = short_names[i];
+
+  // 3. Map qualified names to their unqualified versions IF there is only one occurrence of the unqualified version.
+  for(auto current = aliases.begin();current != aliases.end();)
+  {
+    int count = 1;
+    auto next = current;
+    next++;
+    while(next != aliases.end() and next->first == current->first)
+    {
+      // The same qualified name should not occur twice.
+      assert(next->second != current->second);
+      count++;
+      next++;
+    }
+
+    if (count == 1)
+      simplified[current->second] = current->first;
+    else
+      simplified[current->second] = current->second;
+
+    current = next;
+  }
+
+  return simplified;
 }
