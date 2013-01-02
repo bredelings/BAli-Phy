@@ -205,80 +205,6 @@ std::string Case::name() const {
   return "case";
 }
 
-closure MkArray::operator()(OperationArgs& Args) const
-{
-  int n = *Args.evaluate_as<Int>(0);
-  expression_ref f = Args.reference(1);
-
-  const closure& C = Args.current_closure();
-
-  // We can't do negative-sized arrays
-  assert(n >= 0);
-  // The function should be represented as a heap variable...
-  object_ptr<const index_var> V = is_a<index_var>(f);
-  int f_reg = C.lookup_in_env(V->index);
-  
-  object_ptr<expression> exp = new expression(constructor("Array",n));
-  exp->sub.resize(n);
-
-  expression_ref apply_E;
-  {
-    expression_ref fE = index_var(1);
-    expression_ref argE = index_var(0);
-    apply_E = (fE, argE);
-  }
-
-  closure result;
-  result.Env.resize(n);
-  for(int i=0;i<n;i++)
-  {
-    // i
-    int i_reg = Args.allocate(expression_ref(i));
-
-    // %1 %0 {f,i}
-    int apply_reg = Args.allocate({apply_E,{f_reg, i_reg}});
-
-    // change to result.exp <<= index_var(i)
-    exp->sub[i] = index_var(n - 1 - i);
-
-    // Add the var to the environment
-    result.Env[i] = apply_reg;
-  }
-  result.exp = exp;
-  
-  return result;
-}
-
-expression_ref mkArray = lambda_expression( MkArray() );
-
-closure GetIndex::operator()(OperationArgs& Args) const
-{
-  const closure& C = Args.lazy_evaluate(0);
-  int n = *Args.evaluate_as<Int>(1);
-
-  int N = C.exp->size();
-
-  if (n < 0 or n >= N)
-    throw myexception()<<"Trying to access index "<<n<<" in array of size "<<N<<".";
-      
-  // Return a reference to the heap variable pointed to by the nth entry
-  return {index_var(0), {C.Env[n]} };
-}
-
-expression_ref getIndex = lambda_expression( GetIndex() );
-
-closure ArrayBounds::operator()(OperationArgs& Args) const
-{
-  object_ptr<const expression> A = convert<const expression>( Args.lazy_evaluate(0).exp );
-  int N = A->sub.size()-1;
-
-  //FIXME! We shouldn't be calling graph_normalize here.
-
-  return graph_normalize(Tuple(0,N-1));
-}
-
-expression_ref bounds = lambda_expression( ArrayBounds() );
-
 closure LExp_Op::operator()(OperationArgs& Args) const
 {
   const EigenValues& L = *Args.evaluate_as<EigenValues>(0);
@@ -599,35 +525,6 @@ closure Exp_Op::operator()(OperationArgs& Args) const
   double x = *Args.evaluate_as<Double>(0);
 
   return new Double(exp(x));
-}
-
-//---------------------------------------------------------------------------------------//
-
-/*
- * Note that does doesn't work if the structure being evaluated contains
- * expressions that *evaluate to* parameters.  This is true even if the
- * structures have reg_vars (or reg_var chains) pointing to parameters.
- * The expressions would have to *actually contain* parameters.
- *
- * The idea here is that the only expressions that we would consider would be
- * constructors with parameters as fields.
- *
- * This is somewhat problematic, since *arrays* would probably not actually
- * have parameters as fields.  For example, if a list contains parameters as
- * fields, the listArray' constructed from it would probably not!
- */
-
-tribool Get_Address::compare(const Object& o) const 
-{
-  return dynamic_cast<const Get_Address*>(&o);
-}
-
-closure Get_Address::operator()(OperationArgs& Args) const
-{
-  object_ptr<const index_var> V = assert_is_a<index_var>(Args.reference(1));
-  int arg = Args.current_closure().lookup_in_env( V->index );
-
-  return new Int(arg);
 }
 
 //---------------------------------------------------------------------------------------//

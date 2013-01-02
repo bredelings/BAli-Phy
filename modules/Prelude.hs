@@ -41,6 +41,9 @@ builtin builtinError 1 "builtinError";
 builtin seq 2 "seq";
 builtin join 2 "join";
 builtin reapply 2 "reapply";
+builtin arrayBounds 1 "arrayBounds";
+builtin ! 2 "getIndex";
+builtin mkArray 2 "mkArray";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));

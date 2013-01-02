@@ -51,68 +51,6 @@ struct Case: public Operation
   Case():Operation(2) {}
 };
 
-struct MkArray: public Operation
-{
-  virtual MkArray* clone() const {return new MkArray(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const MkArray* E = dynamic_cast<const MkArray*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "mkArray";}
-  
-  MkArray():Operation(2) {}
-};
-
-extern expression_ref mkArray;
-
-struct ArrayBounds: public Operation
-{
-  virtual ArrayBounds* clone() const {return new ArrayBounds(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const ArrayBounds* E = dynamic_cast<const ArrayBounds*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "bounds";}
-  
-  ArrayBounds():Operation(1) {}
-};
-
-extern expression_ref bounds;
-
-struct GetIndex: public Operation
-{
-  virtual GetIndex* clone() const {return new GetIndex(*this);}
-
-  tribool compare(const Object& o) const 
-  {
-    const GetIndex* E = dynamic_cast<const GetIndex*>(&o);
-    return E;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string print_expression(const std::vector<std::string>& inputs) const
-  {
-    return print_infix_expression(inputs);
-  }
-
-  std::string name() const {return "!";}
-  
-  GetIndex():Operation(2) {}
-};
-
-extern expression_ref getIndex;
-
 template<typename T, typename U>
 struct Vector_From_List_Op: public Operation
 {
@@ -782,21 +720,6 @@ struct Exp_Op: public Operation
   std::string name() const {return "exp";}
 
   Exp_Op():Operation(1) {}
-};
-
-struct Get_Address: public Operation
-{
-  // The 'context' should include the knowledge of the input slots
-  // so that the computation doesn't need to know what input slots it is connecting to what output slot.
-  virtual Get_Address* clone() const {return new Get_Address(*this);}
-
-  tribool compare(const Object& o) const;
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "getAddress";}
-
-  Get_Address():Operation(1) {}
 };
 
 #endif

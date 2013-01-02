@@ -597,7 +597,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     int m = P->smodel_for_partition[partition_index];
 
     expression_ref E = P->C.get_expression(P->branch_transition_p_indices(s,m));
-    E = (getIndex, E, b);
+    E = (var("!"), E, b);
 
     transition_p_method_indices[b] = p->C.add_compute_expression(E);
   }

@@ -85,11 +85,8 @@ Module make_Prelude()
   Module P("Prelude");
 
   P.def_function("intToDouble", lambda_expression( Conversion<int,double>() ) ); 
-  P.def_function("mkArray", lambda_expression( MkArray() ) ); 
   P.def_function("negate", lambda_expression( Negate() ) );
   P.def_function("exp", lambda_expression( Exp_Op() ) );
-  P.def_function("!", lambda_expression( GetIndex() ) );
-  P.def_function("getAddress", lambda_expression( Get_Address() ) );
 
   P.def_constructor("True",0);
   P.def_constructor("False",0);
