@@ -32,6 +32,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/operations.H"
 #include "probability/distribution-operations.H"
 #include "computation/module.H"
+#include "computation/loader.H"
 
 using std::string;
 using std::vector;
@@ -138,13 +139,13 @@ string default_markov_model(const alphabet& a)
 }
 
 formula_expression_ref
-get_smodel_(const vector<string>& modules_path,string smodel,const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >&);
+get_smodel_(const module_loader& L,string smodel,const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >&);
 
 formula_expression_ref
-get_smodel_(const vector<string>& modules_path,const string& smodel,const object_ptr<const alphabet>& a);
+get_smodel_(const module_loader& L,const string& smodel,const object_ptr<const alphabet>& a);
 
 formula_expression_ref
-get_smodel_(const vector<string>& modules_path,const string& smodel);
+get_smodel_(const module_loader& L,const string& smodel);
 
 void check_n_args(vector<string>& model_args, int m, int n = -1)
 {
@@ -172,7 +173,7 @@ void check_n_args(vector<string>& model_args, int m, int n = -1)
 }
 
 /// \brief Construct an AlphabetExchangeModel from string \a smodel.
-formula_expression_ref coerce_to_EM(const vector<string>& modules_path,
+formula_expression_ref coerce_to_EM(const module_loader& L,
 				    string smodel,
 				    const object_ptr<const alphabet>& a, 
 				    const shared_ptr< const valarray<double> >& frequencies)
@@ -185,9 +186,9 @@ formula_expression_ref coerce_to_EM(const vector<string>& modules_path,
       throw myexception()<<"You must specify a substitution model - there is no default substitution model for alphabet '"<<a->name<<"'";
   }
 
-  formula_expression_ref S = get_smodel_(modules_path,smodel, a, frequencies);
+  formula_expression_ref S = get_smodel_(L,smodel, a, frequencies);
 
-  if (S.exp() and dynamic_pointer_cast<const SymmetricMatrixObject>(S.result(modules_path,vector<string>{"Distributions","Range"})))
+  if (S.exp() and dynamic_pointer_cast<const SymmetricMatrixObject>(S.result(L,vector<string>{"Distributions","Range"})))
     return S;
 
   throw myexception()<<": '"<<smodel<<"' is not an exchange model.";
@@ -199,7 +200,7 @@ formula_expression_ref coerce_to_EM(const vector<string>& modules_path,
 /// \param a The alphabet on which the model lives.
 /// \param frequencies The initial frequencies for the model.
 ///
-formula_expression_ref process_stack_Markov(const vector<string>& modules_path,
+formula_expression_ref process_stack_Markov(const module_loader& L,
 					    vector<string>& model_args,
 					    const object_ptr<const alphabet>& a,
 					    const shared_ptr<const valarray<double> >& /* frequencies */)
@@ -370,8 +371,8 @@ formula_expression_ref process_stack_Markov(const vector<string>& modules_path,
     formula_expression_ref S1 = HKY_Model( N );
     if (model_args[2] != "")
     {
-      S1 = coerce_to_EM(modules_path,model_args[2], const_ptr(N), {});
-      if (not S1.result_as<SymmetricMatrixObject>(modules_path))
+      S1 = coerce_to_EM(L,model_args[2], const_ptr(N), {});
+      if (not S1.result_as<SymmetricMatrixObject>(L))
 	throw myexception()<<"Submodel '"<<model_args[2]<<"' for M0 is not a (nucleotide) exchange model.";
     }
     // omega ~ logLaplace(0.0, 0.1)
@@ -390,7 +391,7 @@ formula_expression_ref process_stack_Markov(const vector<string>& modules_path,
 /// \param a The alphabet on which the model lives.
 /// \param frequencies The initial frequencies for the model.
 ///
-formula_expression_ref process_stack_Frequencies(const vector<string>& modules_path,
+formula_expression_ref process_stack_Frequencies(const module_loader& L,
 						 vector<string>& model_args,
 						 const object_ptr<const alphabet>& a,
 						 const shared_ptr<const valarray<double> >& frequencies)
@@ -490,7 +491,7 @@ formula_expression_ref process_stack_Frequencies(const vector<string>& modules_p
 
   if (R.exp() and model_args[1] != "")
   {
-    formula_expression_ref EM = coerce_to_EM(modules_path,model_args[1], a, frequencies);
+    formula_expression_ref EM = coerce_to_EM(L,model_args[1], a, frequencies);
 
     R = Reversible_Markov_Model(EM,R);
   }
@@ -498,35 +499,35 @@ formula_expression_ref process_stack_Frequencies(const vector<string>& modules_p
   return R;
 }
 
-formula_expression_ref coerce_to_frequency_model(const vector<string>& modules_path,
+formula_expression_ref coerce_to_frequency_model(const module_loader& L,
 						 const formula_expression_ref& M,
 						 const object_ptr<const alphabet>& /* a */,
 						 const shared_ptr< const valarray<double> >& /* frequencies */)
 {
-  if (is_exactly(M.result(modules_path,{"SModel","Distributions","Range"}), "SModel.ReversibleFrequency"))
+  if (is_exactly(M.result(L,{"SModel","Distributions","Range"}), "SModel.ReversibleFrequency"))
     return M;
 
   throw myexception()<<": '"<<M.exp()<<"' is not an exchange model.";
 }
 
-formula_expression_ref coerce_to_frequency_model(const vector<string>& modules_path,
+formula_expression_ref coerce_to_frequency_model(const module_loader& L,
 						 string smodel,
 						 const object_ptr<const alphabet>& a,
 						 const shared_ptr< const valarray<double> >& frequencies)
 {
-  formula_expression_ref M = get_smodel_(modules_path, smodel, a, frequencies);
+  formula_expression_ref M = get_smodel_(L, smodel, a, frequencies);
 
-  return coerce_to_frequency_model(modules_path, M, a,  frequencies);
+  return coerce_to_frequency_model(L, M, a,  frequencies);
 }
 
 
 /// \brief Construct a ReversibleMarkovModel from model \a M
-formula_expression_ref coerce_to_RA(const vector<string>& modules_path,
+formula_expression_ref coerce_to_RA(const module_loader& L,
 				    const formula_expression_ref& M,
 				    const object_ptr<const alphabet>& a,
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
-  object_ref result = M.result(modules_path, {"SModel", "Distributions","Range"});
+  object_ref result = M.result(L, {"SModel", "Distributions","Range"});
 
   if (is_exactly(result, "SModel.F81"))
     return M;
@@ -538,7 +539,7 @@ formula_expression_ref coerce_to_RA(const vector<string>& modules_path,
   {
     if (is_exactly(result, "SModel.ReversibleFrequency"))
     {
-      formula_expression_ref S = coerce_to_EM(modules_path,"",a,frequencies);
+      formula_expression_ref S = coerce_to_EM(L,"",a,frequencies);
       
       return Reversible_Markov_Model(S,M);
     }
@@ -559,31 +560,31 @@ formula_expression_ref coerce_to_RA(const vector<string>& modules_path,
 }
 
 /// \brief Construct a ReversibleMarkovModel from model \a M
-formula_expression_ref coerce_to_RA(const vector<string>& modules_path,
+formula_expression_ref coerce_to_RA(const module_loader& L,
 				    string smodel,
 				    const object_ptr<const alphabet>& a,
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
   formula_expression_ref M;
   if (smodel == "")
-    M = coerce_to_EM(modules_path, "", a, frequencies);
+    M = coerce_to_EM(L, "", a, frequencies);
   else
-    M = get_smodel_(modules_path, smodel, a, frequencies);
+    M = get_smodel_(L, smodel, a, frequencies);
 
-  return coerce_to_RA(modules_path, M, a, frequencies);
+  return coerce_to_RA(L, M, a, frequencies);
 }
 
 /// \brief Construct a MultiModel from model \a M
-formula_expression_ref coerce_to_MM(const vector<string>& modules_path,
+formula_expression_ref coerce_to_MM(const module_loader& L,
 				    const formula_expression_ref& M,
 				    const object_ptr<const alphabet>& a, 
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (M.exp() and is_exactly(M.result(modules_path,{"SModel","Distributions","Range"}), "SModel.MixtureModel"))
+  if (M.exp() and is_exactly(M.result(L,{"SModel","Distributions","Range"}), "SModel.MixtureModel"))
     return M;
 
   try { 
-    return Unit_Model( coerce_to_RA(modules_path,M,a, frequencies) ) ; 
+    return Unit_Model( coerce_to_RA(L,M,a, frequencies) ) ; 
   }
   catch (std::exception& e) { 
     throw myexception()<<": Can't construct a MixtureModel from '"<<M.exp()<<"':\n"<<e.what();
@@ -591,31 +592,31 @@ formula_expression_ref coerce_to_MM(const vector<string>& modules_path,
 }
 
 /// \brief Construct a MultiModel from model \a M
-formula_expression_ref coerce_to_MM(const vector<string>& modules_path,
+formula_expression_ref coerce_to_MM(const module_loader& L,
 				    string smodel,
 				    const object_ptr<const alphabet>& a, 
 				    const shared_ptr< const valarray<double> >& frequencies)
 {
   formula_expression_ref M;
   if (smodel == "")
-    M = coerce_to_RA(modules_path, "", a, frequencies);
+    M = coerce_to_RA(L, "", a, frequencies);
   else
-    M = get_smodel_(modules_path, smodel, a, frequencies);
+    M = get_smodel_(L, smodel, a, frequencies);
 
-  return coerce_to_MM(modules_path, M,a,frequencies);
+  return coerce_to_MM(L, M,a,frequencies);
 }
 
 /// \brief Construct a MultiModel from model \a M
-formula_expression_ref coerce_to_MMM(const vector<string>& modules_path,
+formula_expression_ref coerce_to_MMM(const module_loader& L,
 				     const formula_expression_ref& M,
 				     const object_ptr<const alphabet>& a,
 				     const shared_ptr< const valarray<double> >& frequencies)
 {
-  if (is_exactly(M.result(modules_path,{"SModel","Distributions","Range"}), "SModel.MixtureModels"))
+  if (is_exactly(M.result(L,{"SModel","Distributions","Range"}), "SModel.MixtureModels"))
     return M;
 
   try { 
-    return (var("MixtureModels"), (coerce_to_MM(modules_path, M,a,frequencies)&ListEnd));
+    return (var("MixtureModels"), (coerce_to_MM(L, M,a,frequencies)&ListEnd));
   }
   catch (std::exception& e) { 
     throw myexception()<<": Can't construct a MixtureModels from '"<<M.exp()<<"':\n"<<e.what();
@@ -623,7 +624,7 @@ formula_expression_ref coerce_to_MMM(const vector<string>& modules_path,
 }
 
 /// \brief Construct a MultiModel from model \a M
-formula_expression_ref coerce_to_MMM(const vector<string>& modules_path,
+formula_expression_ref coerce_to_MMM(const module_loader& L,
 				     string smodel,
 				     const object_ptr<const alphabet>& a,
 				     const shared_ptr< const valarray<double> >& frequencies)
@@ -631,14 +632,14 @@ formula_expression_ref coerce_to_MMM(const vector<string>& modules_path,
   formula_expression_ref M;
 
   if (smodel == "")
-    M = coerce_to_MM(modules_path, "", a, frequencies);
+    M = coerce_to_MM(L, "", a, frequencies);
   else
-    M = get_smodel_(modules_path, smodel, a, frequencies);
+    M = get_smodel_(L, smodel, a, frequencies);
   
-  return coerce_to_MMM(modules_path, M, a, frequencies);
+  return coerce_to_MMM(L, M, a, frequencies);
 }
 
-formula_expression_ref get_M0_omega_function(const vector<string>& modules_path,
+formula_expression_ref get_M0_omega_function(const module_loader& L,
 					     const object_ptr<const alphabet>& a,
 					     const shared_ptr< const valarray<double> >& frequencies,
 					     vector<string> model_args,
@@ -655,15 +656,15 @@ formula_expression_ref get_M0_omega_function(const vector<string>& modules_path,
   formula_expression_ref S1 = HKY_Model( N );
   if (model_args[where] != "")
   {
-    S1 = coerce_to_EM(modules_path, model_args[where], const_ptr(N), {});
-    if (not S1.result_as<SymmetricMatrixObject>(modules_path))
+    S1 = coerce_to_EM(L, model_args[where], const_ptr(N), {});
+    if (not S1.result_as<SymmetricMatrixObject>(L))
       throw myexception()<<"Submodel '"<<model_args[where]<<"' for M0 is not a (nucleotide) exchange model.";
   }
   formula_expression_ref S2 = (M0E, a, S1, dummy(0));
 
   formula_expression_ref R = Plus_F_Model(*a);
   if (model_args[where+1] != "")
-    R = coerce_to_frequency_model(modules_path, model_args[where+1], a, frequencies);
+    R = coerce_to_frequency_model(L, model_args[where+1], a, frequencies);
   
   formula_expression_ref M0 = lambda_quantify(dummy(0), Reversible_Markov_Model(S2,R) );
 
@@ -673,7 +674,7 @@ formula_expression_ref get_M0_omega_function(const vector<string>& modules_path,
 
 #include "operations.H"
 
-formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
+formula_expression_ref process_stack_Multi(const module_loader& L,
 					   vector<string>& model_args,
 					   const object_ptr<const alphabet>& a,
 					   const shared_ptr< const valarray<double> >& frequencies)
@@ -684,7 +685,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
   expression_ref divide = lambda_expression(Divide());
 
   if (model_args[0] == "single") 
-    return coerce_to_MM(modules_path,coerce_to_RA(modules_path,model_args[1],a,frequencies),a,frequencies);
+    return coerce_to_MM(L,coerce_to_RA(L,model_args[1],a,frequencies),a,frequencies);
 
   // else if (model_args[0] == "gamma_plus_uniform") {
   else if (model_args[0] == "gamma") 
@@ -695,7 +696,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
-    formula_expression_ref base = coerce_to_RA(modules_path, model_args[1],a,frequencies);
+    formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
     formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (var("logLapace"), Tuple(-3.0, 1.0) ));
     formula_expression_ref b = (times, W, W);
@@ -712,7 +713,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
-    formula_expression_ref base = coerce_to_RA(modules_path, model_args[1],a,frequencies);
+    formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
     formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (var("logLaplace"),Tuple(-3.0, 1.0) ));
     formula_expression_ref b = (times, W, W);
@@ -729,7 +730,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
-    formula_expression_ref base = coerce_to_RA(modules_path, model_args[1],a,frequencies);
+    formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
     formula_expression_ref W = def_parameter("LogNormal.sigmaOverMu", 0.1, lower_bound(0), (var("logLaplace"), Tuple(-3.0, 1.0) ));
     formula_expression_ref Var = (times, W, W);
@@ -745,7 +746,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     if (model_args.size() > 2 and model_args[2] != "")
       n = convertTo<int>(model_args[2]);
 
-    formula_expression_ref base = coerce_to_RA(modules_path, model_args[1],a,frequencies);
+    formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
     formula_expression_ref W = def_parameter("LogNormal.sigmaOverMu", 0.1, lower_bound(0), (var("logLaplace"), Tuple(-3.0, 1.0) ));
     formula_expression_ref Var = (times, W, W);
@@ -794,12 +795,12 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     dist.add_expression( (distributed, get_list(fs), (var("dirichlet"), get_list(vector<Double>(n,1.0+n/2.0))) ) );
     dist.add_expression( (distributed, get_list(rates), (var("dirichlet"), get_list(vector<Double>(n,2.0))) ) );
 
-    formula_expression_ref base = coerce_to_RA(modules_path, model_args[1],a,frequencies);
+    formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
     return (var("MultiRate"), base,  dist);
   }
   else if (model_args[0] == "Modulated")
   {
-    formula_expression_ref MM = coerce_to_MM(modules_path, model_args[1],a,frequencies);
+    formula_expression_ref MM = coerce_to_MM(L, model_args[1],a,frequencies);
 
     //    int n = ... n_base_models();
     //    return Modulated_Markov_E(MM, SimpleExchangeModel(n));
@@ -813,7 +814,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
 
     vector <formula_expression_ref> models;
     for(int i=0;i<model_args.size()-2;i++)
-      models.push_back( coerce_to_MM(modules_path, model_args[i+2], a, frequencies) );
+      models.push_back( coerce_to_MM(L, model_args[i+2], a, frequencies) );
 
     return Mixture_Model(models);
   }
@@ -832,7 +833,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),  (var("dirichlet"), List(1.0, 98.0, 1.0)) ) );
     D.add_expression( (distributed, m2_omega, (var("logExponential"), 0.05) ) );
 
-    formula_expression_ref M0 = get_M0_omega_function(modules_path, a,frequencies,model_args,2);
+    formula_expression_ref M0 = get_M0_omega_function(L, a,frequencies,model_args,2);
 
     return (var("MultiParameter"),M0,D);
   }
@@ -857,7 +858,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     D = (var("DiscreteDistribution"), D);
     D.add_expression((distributed, F, (var("dirichlet"), get_list(vector<Double>(n,4.0))) ) );
 
-    formula_expression_ref M0 = get_M0_omega_function(modules_path,a,frequencies,model_args,3);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
     return (var("MultiParameter"), M0, D);
   }
@@ -886,7 +887,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     D = (var("DiscreteDistribution"), D);
     D.add_expression((distributed, get_list(fraction), (var("dirichlet"), get_list(vector<Double>(n,4.0))) ) );
 
-    formula_expression_ref M0 = get_M0_omega_function(modules_path,a,frequencies,model_args,3);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
     return (var("MultiParameter"), M0, D);
   }
@@ -903,7 +904,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     D.add_expression( (distributed, (divide, 1.0, w1), (var("logExponential"), 0.05) ) );
     D.add_expression( (distributed, w3, (var("logExponential"), 0.05) ) );
 
-    formula_expression_ref M0 = get_M0_omega_function(modules_path,a,frequencies,model_args,2);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
 
     return (var("MultiParameter"),M0,D);
   }
@@ -963,7 +964,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     // (p1,p2,p3) ~ Dirichlet(10, 10, 1)
     D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   (var("dirichlet"), List(10.0, 10.0, 1.0)) ) );
 
-    formula_expression_ref M0 = get_M0_omega_function(modules_path,a,frequencies,model_args,3);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
     return (var("MultiParameter"), M0, D);
   }
@@ -982,7 +983,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     // Create the discrete distribution for omega
     formula_expression_ref D = (var("uniformDiscretize"), (var("betaQuantile"), Tuple(alpha,beta)), n);
 
-    formula_expression_ref M0 = get_M0_omega_function(modules_path,a,frequencies,model_args,3);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
     return (var("MultiParameter"), M0, D);
   }
@@ -1007,7 +1008,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     // FIXME - look at the effect on power of using various different priors for w2 here!
     // FIXME - allow specifying the prior on the command line?
 
-    formula_expression_ref M0 = get_M0_omega_function(modules_path,a,frequencies,model_args,2);
+    formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
 
     formula_expression_ref mixture1 = (var("DiscreteDistribution"),Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w0)&(Tuple(p2b,1.0)&ListEnd))));
     formula_expression_ref mixture2 = (var("DiscreteDistribution"),Tuple(p0,w0)&(Tuple(p1,1.0)&(Tuple(p2a,w2)&(Tuple(p2b,w2)&ListEnd))));
@@ -1059,7 +1060,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
     // FIXME - look at the effect on power of using various different priors for w2 here!
     // FIXME - allow specifying the prior on the command line?
 
-    formula_expression_ref M0 = get_M0_omega_function(modules_path,a, frequencies, model_args, 3);
+    formula_expression_ref M0 = get_M0_omega_function(L,a, frequencies, model_args, 3);
     formula_expression_ref mixture1 = (var("MultiParameter"), M0, (var("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D1,D1) ) );
     formula_expression_ref mixture2 = (var("MultiParameter"), M0, (var("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
 
@@ -1073,7 +1074,7 @@ formula_expression_ref process_stack_Multi(const vector<string>& modules_path,
 }
 
 formula_expression_ref 
-get_smodel_(const vector<string>& modules_path, string smodel,const object_ptr<const alphabet>& a,const shared_ptr<const valarray<double> >& frequencies) 
+get_smodel_(const module_loader& L, string smodel,const object_ptr<const alphabet>& a,const shared_ptr<const valarray<double> >& frequencies) 
 {
   if (smodel == "")
     throw myexception()<<"You must specify a substitution model!";
@@ -1082,28 +1083,28 @@ get_smodel_(const vector<string>& modules_path, string smodel,const object_ptr<c
 
   formula_expression_ref m;
 
-  m = process_stack_Markov(modules_path, model_args, a, frequencies);
+  m = process_stack_Markov(L, model_args, a, frequencies);
   if (m.exp()) return m;
 
-  m = process_stack_Frequencies(modules_path, model_args, a, frequencies);
+  m = process_stack_Frequencies(L, model_args, a, frequencies);
   if (m.exp()) return m;
 
-  m = process_stack_Multi(modules_path, model_args, a, frequencies);
+  m = process_stack_Multi(L, model_args, a, frequencies);
   if (m.exp()) return m;
 
   throw myexception()<<"Couldn't process substitution model description \""<<smodel<<"\"";
 }
 
 formula_expression_ref
-get_smodel_(const vector<string>& modules_path,const string& smodel,const object_ptr<const alphabet>& a)
+get_smodel_(const module_loader& L,const string& smodel,const object_ptr<const alphabet>& a)
 {
-  return get_smodel_(modules_path, smodel, a, shared_ptr<const valarray<double> >());
+  return get_smodel_(L, smodel, a, shared_ptr<const valarray<double> >());
 }
 
 formula_expression_ref
-get_smodel_(const vector<string>& modules_path,const string& smodel)
+get_smodel_(const module_loader& L,const string& smodel)
 {
-  return get_smodel_(modules_path, smodel, object_ptr<const alphabet>(),shared_ptr<const valarray<double> >());
+  return get_smodel_(L, smodel, object_ptr<const alphabet>(),shared_ptr<const valarray<double> >());
 }
 
 
@@ -1117,12 +1118,12 @@ get_smodel_(const vector<string>& modules_path,const string& smodel)
 /// \param frequencies The initial letter frequencies in the model.
 ///
 formula_expression_ref
-get_smodel(const vector<string>& modules_path, const string& smodel, const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >& frequencies) 
+get_smodel(const module_loader& L, const string& smodel, const object_ptr<const alphabet>& a, const shared_ptr<const valarray<double> >& frequencies) 
 {
   assert(frequencies->size() == a->size());
 
   // --------- Convert smodel to MultiMixtureModel ------------//
-  formula_expression_ref full_smodel = coerce_to_MMM(modules_path, smodel,a,frequencies);
+  formula_expression_ref full_smodel = coerce_to_MMM(L, smodel,a,frequencies);
 
   std::cerr<<"smodel = "<<full_smodel.exp()<<"\n";
 
@@ -1136,7 +1137,7 @@ get_smodel(const vector<string>& modules_path, const string& smodel, const objec
 ///
 /// This routine constructs the initial frequencies based on all of the alignments.
 ///
-formula_expression_ref get_smodel(const vector<string>& modules_path, const variables_map& args, const string& smodel_name,const vector<alignment>& A) 
+formula_expression_ref get_smodel(const module_loader& L, const variables_map& args, const string& smodel_name,const vector<alignment>& A) 
 {
   for(int i=1;i<A.size();i++)
     if (A[i].get_alphabet() != A[0].get_alphabet())
@@ -1144,21 +1145,21 @@ formula_expression_ref get_smodel(const vector<string>& modules_path, const vari
 
   shared_ptr< const valarray<double> > frequencies (new valarray<double>(empirical_frequencies(args,A)));
 
-  return get_smodel(modules_path, smodel_name, const_ptr( A[0].get_alphabet() ), frequencies);
+  return get_smodel(L, smodel_name, const_ptr( A[0].get_alphabet() ), frequencies);
 }
 
-formula_expression_ref get_smodel(const vector<string>& modules_path, const variables_map& args, const string& smodel_name,const alignment& A) 
+formula_expression_ref get_smodel(const module_loader& L, const variables_map& args, const string& smodel_name,const alignment& A) 
 {
   shared_ptr< const valarray<double> > frequencies (new valarray<double>(empirical_frequencies(args,A)));
 
-  return get_smodel(modules_path, smodel_name, const_ptr( A.get_alphabet() ), frequencies);
+  return get_smodel(L, smodel_name, const_ptr( A.get_alphabet() ), frequencies);
 }
 
-formula_expression_ref get_smodel(const vector<string>& modules_path,const variables_map& args, const alignment& A) 
+formula_expression_ref get_smodel(const module_loader& L,const variables_map& args, const alignment& A) 
 {
   string smodel_name = args["smodel"].as<string>();
 
   shared_ptr< const valarray<double> > frequencies (new valarray<double>(empirical_frequencies(args,A)));
 
-  return get_smodel(modules_path, smodel_name, const_ptr( A.get_alphabet() ), frequencies);
+  return get_smodel(L, smodel_name, const_ptr( A.get_alphabet() ), frequencies);
 }

@@ -75,11 +75,8 @@ using std::string;
  *       + closure (*Op)(OperationArgs&)
  * 21. [DONE] Add computed loggers.
  *     (This will allow us to e.g. select min/max functions for logging.)
- * 22. Add function to clean up fully resolved symbols to make things look nicer.
- *     22a. For parameters, use short names.
- *     22b. For other symbols use full name only if the short name is ambiguous.
- *     22c. This is unnamespacing, or name cleaning, or... something.
- *     22d. Also, it would be nice if expressions in general could be printed with fixity.
+ * 22. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
+ * 23. Print expressions with fixity.
  */
 
 

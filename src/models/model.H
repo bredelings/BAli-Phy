@@ -205,9 +205,9 @@ public:
   object_ref evaluate(int index) const;
 
   /// Construct an empty model
-  Model(const std::vector<std::string>& module_path);
+  Model(const module_loader&);
 
-  Model(const std::vector<std::string>& module_path, const std::vector<expression_ref>&);
+  Model(const module_loader&, const std::vector<expression_ref>&);
 
   virtual ~Model() {};
 };

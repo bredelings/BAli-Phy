@@ -57,8 +57,8 @@ public:
   virtual efloat_t heated_likelihood() const {return likelihood();}
   virtual efloat_t heated_probability() const {return heated_prior() * heated_likelihood();}
 
-  Probability_Model(const std::vector<std::string>& modules_path)
-    :Model(modules_path)
+  Probability_Model(const module_loader& L)
+    :Model(L)
   {}
 };
 

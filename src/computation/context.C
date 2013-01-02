@@ -467,13 +467,12 @@ closure context::translate_refs(closure&& C) const
 
 const vector<string>& context::get_module_path() const
 {
-  return module_path_;
+  return loader.modules_path;
 }
 
 const vector<string>& context::get_builtins_path() const
 {
-  return module_path_;
-  //  return builtins_path_;
+  return loader.builtins_path;
 }
 
 context& context::operator+=(const vector<string>& module_names)
@@ -486,7 +485,7 @@ context& context::operator+=(const vector<Module>& P2)
   Program& PP = *P.modify();
 
   // 1. Add the new modules to the program, perform imports, and resolve symbols.
-  add(get_module_path(), get_builtins_path(), PP, P2);
+  add(loader, PP, P2);
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   for(auto& module: PP)
@@ -555,8 +554,8 @@ context& context::operator=(const context& C)
   return *this;
 }
 
-context::context(const vector<string>& module_path)
-  :context(module_path,{},vector<Module>{})
+context::context(const module_loader& L)
+  :context(L,{},vector<Module>{})
 {  }
 
 // FIXME - this should be shared with Model::add_submodel( ), but we need to call Model::add_notes( ).
@@ -593,15 +592,15 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
   return new_parameters;
 }
 
-context::context(const vector<string>& module_path, const vector<expression_ref>& N)
-  :context(module_path, N,vector<Module>{})
+context::context(const module_loader& L, const vector<expression_ref>& N)
+  :context(L, N,vector<Module>{})
 { }
 
-context::context(const vector<string>& module_path, const vector<expression_ref>& N, const vector<Module>& Ps)
+context::context(const module_loader& L, const vector<expression_ref>& N, const vector<Module>& Ps)
   :memory(new reg_heap()),
    P(new Program),
    token(memory->get_unused_token()),
-   module_path_(module_path)
+   loader(L)
 {
   (*this) += {"Prelude"};
   (*this) += Ps;
@@ -609,8 +608,8 @@ context::context(const vector<string>& module_path, const vector<expression_ref>
   add_submodel(*this, N);
 }
 
-context::context(const vector<string>& module_path, const vector<expression_ref>& N, const vector<string>& module_names)
-  :context(module_path,N,load_modules(module_path,module_names))
+context::context(const module_loader& L, const vector<expression_ref>& N, const vector<string>& module_names)
+  :context(L,N,load_modules(L.modules_path,module_names))
 { }
 
 context::context(const context& C)
@@ -618,7 +617,7 @@ context::context(const context& C)
    memory(C.memory),
    P(C.P),
    token(memory->copy_token(C.token)),
-   module_path_(C.module_path_)
+   loader(C.loader)
 { }
 
 context::~context()

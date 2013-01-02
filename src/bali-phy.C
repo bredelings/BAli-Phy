@@ -258,7 +258,8 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("same-scale",value<vector<string> >()->composing(),"Which partitions have the same scale?")
     ("align-constraint",value<string>(),"File with alignment constraints.")
     ("lambda-scale-branch",value<string>(),"File with partition describing branch to scale")
-    ("modules",value<string>(),"Directories to search for modules")
+    ("modules-path",value<string>(),"Directories to search for modules (: separated)")
+    ("builtins-path",value<string>(),"Directories to search for modules (: separated)")
     ;
   options_description all("All options");
   all.add(general).add(mcmc).add(parameters).add(model).add(advanced);
@@ -303,9 +304,6 @@ variables_map parse_cmd_line(int argc,char* argv[])
 
   if (not args.count("iterations"))
     throw myexception()<<"The number of iterations was not specified.\n\nTry `"<<argv[0]<<" --help' for more information.";
-
-  if (not args.count("modules"))
-    throw myexception()<<"No module paths are specified!.  Use --modules=<path> to specify the directory containing Prelude.hs.";
 
   return args;
 }
@@ -932,7 +930,7 @@ void setup_partition_weights(const variables_map& args, Parameters& P)
 }
 
 vector<formula_expression_ref>
-get_smodels(const vector<string>& modules_path,const variables_map& args, const vector<alignment>& A,
+get_smodels(const module_loader& L,const variables_map& args, const vector<alignment>& A,
 	    const shared_items<string>& smodel_names_mapping)
 {
   vector<formula_expression_ref> smodels;
@@ -942,7 +940,7 @@ get_smodels(const vector<string>& modules_path,const variables_map& args, const 
     for(int j=0;j<smodel_names_mapping.n_partitions_for_item(i);j++)
       alignments.push_back(A[smodel_names_mapping.partitions_for_item[i][j]]);
 
-    formula_expression_ref full_smodel = get_smodel(modules_path,
+    formula_expression_ref full_smodel = get_smodel(L,
 						    args,
 						    smodel_names_mapping.unique(i),
 						    alignments);
@@ -1243,6 +1241,47 @@ void set_foreground_branches(Parameters& P)
   }
 }
 
+fs::path find_exe_path(const fs::path& argv0)
+{
+  /*
+    Mac OS X: _NSGetExecutablePath() (man 3 dyld)
+    Linux: readlink /proc/self/exe
+    Solaris: getexecname()
+    FreeBSD: sysctl CTL_KERN KERN_PROC KERN_PROC_PATHNAME -1
+    BSD with procfs: readlink /proc/curproc/file
+    Windows: GetModuleFileName() with hModule = NULL
+  */
+
+  fs::path program_location;
+
+  // This only works on Linux.
+  if (fs::exists("/proc/self/exe"))
+    program_location = "/proc/self/exe";
+  // This only works on BSD with procfs.
+  else if (fs::exists("/proc/curproc/file"))
+    program_location = "/proc/curproc/file";
+  // Try argv[0]
+  else if (fs::exists(argv0))
+    program_location = argv0;
+  // Search $PATH for argv[0]
+  else if (not argv0.is_absolute() and getenv("PATH"))
+  {
+    string PATH = getenv("PATH");
+    vector<string> paths = split(PATH,':');
+    for(const string& prefix: paths)
+    {
+      fs::path p = prefix / argv0;
+      if (fs::exists(p))
+	program_location = p;
+    }
+  }
+  program_location = canonical(program_location);
+  program_location.remove_filename();
+
+  return program_location;
+}
+
+
 /* 
  * 1. Add a PRANK-like initial algorithm.
  * 2. Add some kind of constraint.
@@ -1371,9 +1410,38 @@ int main(int argc,char* argv[])
     //    if (T.n_leaves() < 3)
     //      throw myexception()<<"At least 3 sequences must be provided - you provided only "<<T.n_leaves()<<".";
 
-    vector<string> modules_path;
-    if (args.count("modules"))
-      modules_path = split(args["modules"].as<string>(),':');
+    module_loader L;
+    if (args.count("modules-path"))
+      L.modules_path = split(args["modules-path"].as<string>(),':');
+    else
+    {
+      fs::path modules = find_exe_path(argv[0]);
+      if (not modules.empty())
+      {
+	modules.remove_filename();
+	modules = modules / "lib" / "bali-phy" / "modules";
+      }
+      if (modules.empty() or not fs::exists(modules/"Prelude.hs"))
+	throw myexception()<<"No module paths are specified!.  Use --modules-path=<path> to specify the directory containing Prelude.hs.";
+
+      L.modules_path = {modules.string()};
+    }
+      
+    if (args.count("builtins-path"))
+      L.builtins_path = split(args["builtins-path"].as<string>(),':');
+    else
+    {
+      fs::path builtins = find_exe_path(argv[0]);
+      if (not builtins.empty())
+      {
+	builtins.remove_filename();
+	builtins = builtins / "lib" / "bali-phy";
+      }
+      if (builtins.empty() or not fs::exists(builtins/"mod.so"))
+	throw myexception()<<"No paths to find builtins are specified!.  Use --builtins-path=<path> to specify the directory containing 'mod.so'.";
+
+      L.builtins_path = {builtins.string()};
+    }
 
     //--------- Set up the substitution model --------//
 
@@ -1386,7 +1454,7 @@ int main(int argc,char* argv[])
     vector<int> smodel_mapping = smodel_names_mapping.item_for_partition;
 
     // FIXME - change to return a (model, standardized name) pair.
-    vector<formula_expression_ref> full_smodels = get_smodels(modules_path,args,A,smodel_names_mapping);
+    vector<formula_expression_ref> full_smodels = get_smodels(L,args,A,smodel_names_mapping);
 
     //-------------- Which partitions share a scale? -----------//
     shared_items<string> scale_names_mapping = get_mapping(args, "same-scale", A.size());
@@ -1394,7 +1462,7 @@ int main(int argc,char* argv[])
     vector<int> scale_mapping = scale_names_mapping.item_for_partition;
 
     //-------------Create the Parameters object--------------//
-    Parameters P(modules_path, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
+    Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
 
     set_initial_parameter_values(P,args);
 

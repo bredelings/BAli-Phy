@@ -463,14 +463,14 @@ int Model::find_match_notes(const expression_ref& e, std::vector<expression_ref>
   return C.find_match_notes(e, results, start);
 }
 
-Model::Model(const std::vector<std::string>& module_path)
-  :Model(module_path, {})
+Model::Model(const module_loader& L)
+  :Model(L, {})
 { }
 
 int add_probability_expression(context& C);
 
-Model::Model(const std::vector<std::string>& module_path, const vector<expression_ref>& notes)
-  :valid(false),C(module_path)
+Model::Model(const module_loader& L, const vector<expression_ref>& notes)
+  :valid(false),C(L)
 {
   // 1. Create the parameters
   std::set<string> names = find_declared_parameters(notes);

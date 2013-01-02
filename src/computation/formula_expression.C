@@ -76,20 +76,20 @@ int formula_expression_ref::add_expression(const formula_expression_ref& R)
   return add_note(R.exp());
 }
 
-object_ptr<const Object> formula_expression_ref::result(const vector<string>& modules_path) const
+object_ptr<const Object> formula_expression_ref::result(const module_loader& L) const
 {
-  return result(modules_path,vector<Module>{});
+  return result(L,vector<Module>{});
 }
 
-object_ptr<const Object> formula_expression_ref::result(const vector<string>& modules_path, const vector<Module>& Ps) const
+object_ptr<const Object> formula_expression_ref::result(const module_loader& L, const vector<Module>& Ps) const
 {
-  context C(modules_path, get_notes(), Ps);
+  context C(L, get_notes(), Ps);
   return C.evaluate_expression(exp());
 }
 
-object_ptr<const Object> formula_expression_ref::result(const vector<string>& modules_path, const vector<string>& module_names) const
+object_ptr<const Object> formula_expression_ref::result(const module_loader& L, const vector<string>& module_names) const
 {
-  context C(modules_path, get_notes(), module_names);
+  context C(L, get_notes(), module_names);
   return C.evaluate_expression(exp());
 }
 

@@ -1009,14 +1009,14 @@ double Parameters::get_branch_subst_rate(int p, int /* b */) const
   return get_parameter_value_as<Double>(branch_mean_index(s));
 }
 
-Parameters::Parameters(const vector<string>& module_path,
+Parameters::Parameters(const module_loader& L,
 		       const vector<alignment>& A, const SequenceTree& t,
 		       const vector<formula_expression_ref>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<formula_expression_ref>& IMs,
 		       const vector<int>& i_mapping,
 		       const vector<int>& scale_mapping)
-  :Probability_Model(module_path),
+  :Probability_Model(L),
    smodel_for_partition(s_mapping),
    IModel_methods(IMs.size()),
    imodel_for_partition(i_mapping),
@@ -1276,12 +1276,12 @@ edgesBeforeEdge t b = case (nodesForEdge t b) of {(n1,n2) -> [edgeForNodes t (n,
   }
 }
 
-Parameters::Parameters(const vector<string>& module_path,
+Parameters::Parameters(const module_loader& L,
 		       const vector<alignment>& A, const SequenceTree& t,
 		       const vector<formula_expression_ref>& SMs,
 		       const vector<int>& s_mapping,
 		       const vector<int>& scale_mapping)
-  :Parameters(module_path, A, t, SMs, s_mapping, {}, {}, scale_mapping)
+  :Parameters(L, A, t, SMs, s_mapping, {}, {}, scale_mapping)
 { }
 
 bool accept_MH(const Probability_Model& P1,const Probability_Model& P2,double rho)

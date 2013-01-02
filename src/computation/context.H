@@ -177,9 +177,7 @@ protected:
     return r;
   }
 
-  std::vector<std::string> module_path_;
-
-  std::vector<std::string> builtins_path_;
+  module_loader loader;
 
   void collect_garbage() const;
 public:
@@ -193,15 +191,15 @@ public:
 
   context& operator=(const context& c);
 
-  context(const std::vector<std::string>& module_path);
+  context(const module_loader&);
 
   context(const context&);
 
-  context(const std::vector<std::string>& module_path, const std::vector<expression_ref>&);
+  context(const module_loader&, const std::vector<expression_ref>&);
 
-  context(const std::vector<std::string>& module_path, const std::vector<expression_ref>&, const std::vector<Module>& P);
+  context(const module_loader&, const std::vector<expression_ref>&, const std::vector<Module>& P);
 
-  context(const std::vector<std::string>& module_path, const std::vector<expression_ref>&, const std::vector<std::string>& module_names);
+  context(const module_loader&, const std::vector<expression_ref>&, const std::vector<std::string>& module_names);
 
   ~context();
 };

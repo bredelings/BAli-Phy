@@ -5,6 +5,12 @@
 #include <vector>
 #include "computation/module.H"
 
+struct module_loader
+{
+  std::vector<std::string> modules_path;
+  std::vector<std::string> builtins_path;
+};
+
 Module load_module(const std::vector<std::string>&, const std::string&);
 std::vector<Module> load_modules(const std::vector<std::string>&, const std::vector<std::string>&);
 
