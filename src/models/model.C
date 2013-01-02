@@ -23,6 +23,7 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "myexception.H"
 #include "models/model.H"
+#include "computation/program.H"
 #include "computation/expression.H"
 #include "computation/operations.H"
 #include "computation/module.H"
@@ -303,8 +304,8 @@ int Model::add_note(const expression_ref& E)
 	throw myexception()<<"Trying to add prior to parameter '"<<name<<"' which doesn't exist!";
 
       if (prior_note_index[p_index] != -1)
-	throw myexception()<<"Variable '"<<name<<"': new prior '"<<show_probability_expression(C, C.get_note(index))
-			   <<"' on top of original prior '"<<show_probability_expression(C, C.get_note(prior_note_index[p_index]))<<"'?";
+	throw myexception()<<"Variable '"<<name<<"': new prior '"<<show_probability_expression(C.get_note(index))
+			   <<"' on top of original prior '"<<show_probability_expression(C.get_note(prior_note_index[p_index]))<<"'?";
       else
 	prior_note_index[p_index] = index;
     }
@@ -828,7 +829,7 @@ vector<int> parameters_with_extension(const Model& M, string name)
   return parameters_with_extension(parameter_names(M), name);
 }
 
-string show_probability_expression(const context& C, const expression_ref& E)
+string show_probability_expression(const expression_ref& E)
 {
   expression_ref prob_expression_query = (distributed, match(0), match(1));
 
@@ -841,37 +842,22 @@ string show_probability_expression(const context& C, const expression_ref& E)
   expression_ref dist = results[1];
   
   // 2. Then analyze into rand_var ~ dist_family(dist_args)
-  results.clear();
-  if (not find_match(Tuple(match(0), match(1)), dist ,results))
-    return rand_var->print() + " ~ " + dist->print();
-
-  expression_ref dist_family = results[0];
-  expression_ref dist_args   = results[1];
-
-  // 3. Then analyze into rand_var ~ dist_name(dist_args)
-  expression_ref _ = dummy(-1);
-  expression_ref case_query_func = v1^(case_expression(v1,(prob_density, v2 , _, _, _, _), v2));
-  string dist_name = *C.evaluate_expression_as<String>((var("listToString"),(case_query_func, dist_family)));
-
-  // 4. Finally construct rand_var ~ dist_name(dist_args)
-  string prob_exp = rand_var->print() + " ~ " + dist_name;
-
-  if (dist_args->size())
-    prob_exp += dist_args->print();
-  else
-    prob_exp += "(" + dist_args->print() + ")";
-  
-  return prob_exp;
+  return rand_var->print() + " ~ " + dist->print();
 }
 
 vector<string> show_probability_expressions(const context& C)
 {
+  std::map<string,string> simplify = get_simplified_names(C.get_Program());
+
   vector<string> expressions;
 
   // Check each expression in the Formula
   for(int i=0;i<C.n_notes();i++)
     if (is_exactly(C.get_note(i),":~"))
-      expressions.push_back( show_probability_expression(C, C.get_note(i)) );
+    {
+      expression_ref note = map_symbol_names(C.get_note(i), simplify);
+      expressions.push_back( show_probability_expression(note) );
+    }
 
   return expressions;
 }
