@@ -371,7 +371,6 @@ if test "$use_mpi" != no ; then
 fi
 
 #---------------------- Check for BOOST ------------------#
-#FIXME: add chrono
 
 echo "------------------------------------------"
 if test "$use_system_boost" = yes ; then
