@@ -1,5 +1,5 @@
-#include "operations.H"
-#include "graph_register.H"
+#include "computation/operations.H"
+#include "computation/graph_register.H"
 #include "math/exponential.H"
 #include "myexception.H"
 
