@@ -5,6 +5,7 @@
 #include "models/model.H"
 
 using std::vector;
+using std::set;
 using std::string;
 
 bool contains_module(const vector<Module>& P, const string& module_name)
@@ -36,6 +37,19 @@ vector<string> module_names(const vector<Module>& P)
   return names;
 }
 
+string module_names_path(const vector<Module>& P)
+{
+  return "["+join(module_names(P),",") +"]";
+}
+
+set<string> module_names_set(const vector<Module>& P)
+{
+  set<string> names;
+  for(const auto& module: P)
+    names.insert(module.name);
+  return names;
+}
+
 static int count_module(const vector<Module>& P,const string& module_name)
 {
   int count = 0;
@@ -47,17 +61,20 @@ static int count_module(const vector<Module>& P,const string& module_name)
 
 void add(const module_loader& L, vector<Module>& P, const vector<Module>& modules)
 {
+  // Get module_names, but in a set<string>
+  set<string> old_module_names = module_names_set(P);
+
   // 1. Check that the program doesn't already contain these module names.
   for(const auto& module: modules)
     if (contains_module(P,module.name))
-      throw myexception()<<"Trying to add duplicate module '"<<module.name<<"' to program ["<<join(module_names(P),",")<<"]";
+      throw myexception()<<"Trying to add duplicate module '"<<module.name<<"' to program "<<module_names_path(P);
 
   // 2. Check that we aren't adding any module twice.
   for(const auto& module: modules) 
   {
     int count = count_module(modules, module.name);
     if (count > 1)
-      throw myexception()<<"Trying to add module '"<<module.name<<"' to program ["<<join(module_names(P),",")<<"] "<<count<<" times.";
+      throw myexception()<<"Trying to add module '"<<module.name<<"' to program "<<module_names_path(P)<<" "<<count<<" times.";
   }
 
   // 3. Actually add the modules.
@@ -88,7 +105,7 @@ void add(const module_loader& L, vector<Module>& P, const vector<Module>& module
   // 6a. Perform any needed imports.
   // 6b. Desugar the module here.
   for(auto& module: P)
-    if (contains_module(modules, module.name))
+    if (not old_module_names.count(module.name))
     {
       try {
 	module.load_builtins(L.builtins_path);

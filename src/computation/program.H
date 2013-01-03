@@ -16,6 +16,8 @@ bool contains_module(const std::vector<Module>& P, const std::string& module_nam
 int find_module(const std::vector<Module>& P, const std::string& module_name);
 
 std::vector<std::string> module_names(const std::vector<Module>& P);
+std::string module_names_path(const std::vector<Module>& P);
+std::set<std::string> module_names_set(const std::vector<Module>& P);
 
 const Module& get_module(const std::vector<Module>& P, const std::string& module_name);
 

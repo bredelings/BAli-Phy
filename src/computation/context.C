@@ -480,16 +480,20 @@ context& context::operator+=(const vector<string>& module_names)
   return operator+=(load_modules(get_module_path(), module_names));
 }
 
+// \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
 context& context::operator+=(const vector<Module>& P2)
 {
   Program& PP = *P.modify();
+
+  // Get module_names, but in a set<string>
+  set<string> old_module_names = module_names_set(PP);
 
   // 1. Add the new modules to the program, perform imports, and resolve symbols.
   add(loader, PP, P2);
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   for(auto& module: PP)
-    if (contains_module(P2, module.name))
+    if (not old_module_names.count(module.name))
       for(const auto& s: module.get_symbols())
       {
 	const symbol_info& S = s.second;
@@ -517,7 +521,7 @@ context& context::operator+=(const vector<Module>& P2)
       
   // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
   for(auto& module: PP)
-    if (contains_module(P2, module.name))
+    if (not old_module_names.count(module.name))
       for(const auto& s: module.get_symbols())
       {
 	const symbol_info& S = s.second;
