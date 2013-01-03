@@ -885,15 +885,17 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	add(bound2, find_bound_vars(alt->sub[0]));
 	patterns.push_back(desugar(m, alt->sub[0], bound2) );
 
-	expression_ref body;
-	if (is_AST(alt->sub[1],"GdPat"))
+	// Handle where-clause.
+	assert(alt->sub.size() == 2 or alt->sub.size() == 3);
+	expression_ref body = alt->sub[1];
+
+	if (is_AST(body,"GdPat"))
 	  throw myexception()<<"Guard patterns not yet implemented!";
-	else
+
+	if (alt->sub.size() == 3)
 	{
-	  assert(alt->sub.size() == 2 or alt->sub.size() == 3);
-	  body = alt->sub[1];
-	  if (alt->sub.size() == 3 and is_AST(alt->sub[2],"Decls"))
-	    body = {AST_node("Let"),{alt->sub[2],body}};
+	  assert(is_AST(alt->sub[2],"Decls"));
+	  body = {AST_node("Let"),{alt->sub[2],body}};
 	}
 
 	bodies.push_back(desugar(m, body, bound2) );
