@@ -1190,14 +1190,14 @@ Parameters::Parameters(const module_loader& L,
   }
 
   /*------------------------- Create the tree structure -----------------------*/
-  Module tree_module("Tree");
+  Module tree_module("MyTree");
 
   vector<expression_ref> node_branches;
   for(int n=0; n < T->n_nodes(); n++)
   {
     string name = "nodeBranches"+convertToString(n);
     tree_module.declare_parameter("nodeBranches"+convertToString(n));
-    expression_ref param = parameter("Tree." + name);
+    expression_ref param = parameter("MyTree." + name);
     node_branches.push_back( (var("listFromVectorInt"),param) );
   }
   expression_ref node_branches_array = (var("listArray'"),get_list(node_branches));
@@ -1207,29 +1207,14 @@ Parameters::Parameters(const module_loader& L,
   {
     string name = "branchNodes"+convertToString(b); 
     tree_module.declare_parameter(name);
-    branch_nodes.push_back( parameter("Tree."+name) );
+    branch_nodes.push_back( parameter("MyTree."+name) );
   }
   expression_ref branch_nodes_array = (var("listArray'"),get_list(branch_nodes));
 
   expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
-  tree_module.def_constructor("Tree",4);
+  tree_module.add_import(false, "Tree");
   tree_module.def_function("tree", (tree_con, node_branches_array, branch_nodes_array, T->n_nodes(), T->n_branches()));
-
-  // \todo fixme:cleanup - Move this to a separate module, and import it!
-  tree_module += "{\
-numNodes (Tree _ _ n _) = n;\
-numBranches (Tree _ _ _ n) = n;\
-edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node;\
-nodesForEdge (Tree _ branchesArray _ _) edgeIndex = branchesArray ! edgeIndex;\
-sourceNode t edge = fst (nodesForEdge t edge);\
-targetNode t edge = snd (nodesForEdge t edge);\
-edgeForNodes t (n1,n2) = head [b | b <- (edgesOutOfNode t n1), (targetNode t b)==n2];\
-reverseEdge t b = edgeForNodes (swap (nodesForEdge t b));\
-nodeDegree t n = length (edgesOutOfNode t n);\
-neighbors t n = fmap (targetNode t) (edgesOutOfNode t n);\
-edgesBeforeEdge t b = case (nodesForEdge t b) of {(n1,n2) -> [edgeForNodes t (n,n1) | n <- neighbors t n1, n /= n2 ]}\
-}";
 
   add_submodel( tree_module );
 
@@ -1241,7 +1226,7 @@ edgesBeforeEdge t b = case (nodesForEdge t b) of {(n1,n2) -> [edgeForNodes t (n,
     for(auto b: branch_list)
       branch_list_.t.push_back(b);
     
-    string parameter_name = "Tree.nodeBranches"+convertToString(n);
+    string parameter_name = "MyTree.nodeBranches"+convertToString(n);
     C.set_parameter_value(parameter_name, branch_list_);
   }
 
@@ -1250,17 +1235,17 @@ edgesBeforeEdge t b = case (nodesForEdge t b) of {(n1,n2) -> [edgeForNodes t (n,
     int source = T->directed_branch(b).source();
     int target = T->directed_branch(b).target();
 
-    string parameter_name = "Tree.branchNodes"+convertToString(b);
+    string parameter_name = "MyTree.branchNodes"+convertToString(b);
 
     C.set_parameter_value_expression(C.find_parameter(parameter_name), Tuple(source, target) );
   }
 
-  C.evaluate_expression( (var("numNodes"), var("Tree.tree")));
-  C.evaluate_expression( (var("numBranches"), var("Tree.tree")));
-  C.evaluate_expression( (var("edgesOutOfNode"), var("Tree.tree"), 0));
-  C.evaluate_expression( (var("neighbors"), var("Tree.tree"), 0));
-  C.evaluate_expression( (var("nodesForEdge"),var("Tree.tree"), 0));
-  int nn = *convert<const Int>(C.evaluate_expression( (var("edgeForNodes"), var("Tree.tree"), (var("nodesForEdge"),var("Tree.tree"), 0))));
+  C.evaluate_expression( (var("numNodes"), var("MyTree.tree")));
+  C.evaluate_expression( (var("numBranches"), var("MyTree.tree")));
+  C.evaluate_expression( (var("edgesOutOfNode"), var("MyTree.tree"), 0));
+  C.evaluate_expression( (var("neighbors"), var("MyTree.tree"), 0));
+  C.evaluate_expression( (var("nodesForEdge"),var("MyTree.tree"), 0));
+  int nn = *convert<const Int>(C.evaluate_expression( (var("edgeForNodes"), var("MyTree.tree"), (var("nodesForEdge"),var("MyTree.tree"), 0))));
   for(int b=0; b < 2*T->n_branches(); b++)
   {
     vector<const_branchview> branch_list;
@@ -1269,7 +1254,7 @@ edgesBeforeEdge t b = case (nodesForEdge t b) of {(n1,n2) -> [edgeForNodes t (n,
     for(auto b: branch_list)
       branch_list_.push_back(b);
 
-    auto b2 = convert<const Vector<int>>(C.evaluate_expression( (var("listToVectorInt"),((var("edgesBeforeEdge"),var("Tree.tree"),b)))))->t;
+    auto b2 = convert<const Vector<int>>(C.evaluate_expression( (var("listToVectorInt"),((var("edgesBeforeEdge"),var("MyTree.tree"),b)))))->t;
     assert(b2.size() == branch_list_.size());
     for( int i: branch_list_)
       assert(includes(b2,i));

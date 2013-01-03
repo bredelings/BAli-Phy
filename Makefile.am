@@ -16,7 +16,8 @@ bin_SCRIPTS = scripts/bali-phy-sge scripts/bp-analyze.pl scripts/compare-runs.R
 noinst_SCRIPTS = scripts/git_version.sh
 
 modulesdir = $(libdir)/@PACKAGE@/modules/
-modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude.hs modules/Range.hs modules/SModel.hs
+modules_DATA = modules/Distributions.hs modules/PopGen.hs modules/Prelude.hs modules/Range.hs modules/SModel.hs \
+		modules/Tree.hs
 
 # Distributed in the doc/ directory
 docdir = $(datadir)/doc/@PACKAGE@
