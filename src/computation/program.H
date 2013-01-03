@@ -27,6 +27,8 @@ bool is_declared(const std::vector<Module>& modules, const std::string& qvar);
 
 std::map<std::string,std::string> get_simplified_names(const std::vector<Module>& P);
 
+std::map<std::string,std::string> get_simplified_names(const std::set<std::string>&);
+
 expression_ref map_symbol_names(const expression_ref& E, const std::map<std::string, std::string>&);
 
 expression_ref simplify_names(const expression_ref& E, const std::vector<Module>& P);

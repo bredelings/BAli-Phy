@@ -6,6 +6,7 @@
 
 using std::vector;
 using std::set;
+using std::map;
 using std::string;
 
 bool contains_module(const vector<Module>& P, const string& module_name)
@@ -135,29 +136,15 @@ bool is_declared(const vector<Module>& modules, const string& qvar)
   return false;
 }
 
-std::map<string,string> get_simplified_names(const vector<Module>& P)
+map<string,string> get_simplified_names(const set<string>& names)
 {
-  std::map<string,string> simplified;
-
-  vector<string> parameter_names;
-
-  // 1. Find all parameters and variables
+  // 1. Construct mapping from unqualified names to qualified names.
   std::multimap<string,string> aliases;
-  for(const auto& module: P)
-    for(const auto& S: module.get_symbols())
-      if (S.second.scope == local_scope)
-      {
-	string qname = S.first;
-	if (S.second.symbol_type == parameter_symbol)
-	  parameter_names.push_back(qname);
-	if (S.second.symbol_type == variable_symbol or S.second.symbol_type == parameter_symbol)
-	{
-	  string name = get_unqualified_name(qname);
-	  aliases.insert({name,qname});
-	}
-      }
+  for(const string& name: names)
+    aliases.insert({get_unqualified_name(name), name});
 
-  // 2. Map qualified names to their unqualified versions IF there is only one occurrence of the unqualified version.
+  // 2. Invert the mapping if the unqualified name maps to only 1 qualified name.
+  map<string,string> simplified;
   for(auto current = aliases.begin();current != aliases.end();)
   {
     int count = 1;
@@ -177,7 +164,31 @@ std::map<string,string> get_simplified_names(const vector<Module>& P)
     current = next;
   }
 
-  // 3. Make long names to their shortened equivalent
+  return simplified;
+}
+
+map<string,string> get_simplified_names(const vector<Module>& P)
+{
+  vector<string> parameter_names;
+
+  // 1. Find all parameters and variables
+  set<string> names;
+  for(const auto& module: P)
+    for(const auto& S: module.get_symbols())
+      if (S.second.scope == local_scope)
+      {
+	string name = S.first;
+	symbol_type_t T = S.second.symbol_type;
+	if (T == parameter_symbol)
+	  parameter_names.push_back(name);
+	if (T == variable_symbol or T == parameter_symbol or T == constructor_symbol)
+	  names.insert(name);
+      }
+
+  // 2. Map qualified names to their unqualified versions IF there is only one occurrence of the unqualified version.
+  map<string,string> simplified = get_simplified_names(names);
+
+  // 3. Map long parameter names to their shortened equivalent
   // \todo FIXME:extend This doesn't handle parameter names clashing with variable names
   vector<string> short_names = short_parameter_names(parameter_names);
   for(int i=0;i<parameter_names.size();i++)

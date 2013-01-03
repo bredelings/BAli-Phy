@@ -1,6 +1,7 @@
 #include <iostream>
 #include "graph_register.H"
 #include "operations.H"
+#include "program.H"
 #include <algorithm>
 #include <fstream>
 #include "util.H"
@@ -2037,7 +2038,7 @@ void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
 #endif
 }
 
-void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& scan, vector<int>& unique) const
+void reg_heap::find_all_regs_in_context_no_check(int /*t*/, vector<int>& scan, vector<int>& unique) const
 {
   for(int i=0;i<scan.size();i++)
   {
@@ -2576,7 +2577,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 					    )
 			   )->print();
 	std::ostringstream o;
-	o<<"evaluating reg # "<<R<<": "<<SSS<<"\n";
+	o<<"evaluating reg # "<<R<<": "<<SSS<<"\n\n";
 	e.prepend(o.str());
 	throw e;
       }
@@ -2765,6 +2766,14 @@ map<int,string> get_register_names(const map<string, reg_heap::root_t>& ids)
   return ids2;
 }
 
+set<string> get_names(const map<string, reg_heap::root_t>& ids)
+{
+  set<string> names;
+  for(const auto i:ids)
+    names.insert(i.first);
+  return names;
+}
+
 expression_ref untranslate_vars(const expression_ref& E, const map<string, reg_heap::root_t>& ids)
 {
   return untranslate_vars(E, get_register_names(ids));
@@ -2833,7 +2842,11 @@ void dot_graph_for_token(const reg_heap& C, int t)
 
 void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 {
-  map<int,string> reg_names = get_register_names(C.get_identifiers_for_context(t));
+  const auto& ids = C.get_identifiers_for_context(t);
+
+  map<int,string> reg_names = get_register_names(ids);
+
+  map<string,string> simplify = get_simplified_names(get_names(ids));
 
   map<int,string> constants = get_constants(C, t);
 
@@ -2850,10 +2863,12 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     o<<name<<" ";
     o<<"[";
 
+    expression_ref F = C.access(R).C.exp;
+
     bool print_record = false;
-    if (C.access(R).C.exp->head->type() == operation_type or C.access(R).C.exp->head->type() == constructor_type)
+    if (F->head->type() == operation_type or F->head->type() == constructor_type)
     {
-      if (not is_a<Case>(C.access(R).C.exp) and not is_a<Apply>(C.access(R).C.exp))
+      if (not is_a<Case>(F) and not is_a<Apply>(F))
       {
 	print_record = true;
 	o<<"shape = record, ";
@@ -2872,8 +2887,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       label = escape(label);
 
       label += " |";
-      label += escape(C.access(R).C.exp->head->print());
-      for(const expression_ref& E: C.access(R).C.exp->sub)
+      label += escape(F->head->print());
+      for(const expression_ref& E: F->sub)
       {
 	int index = assert_is_a<index_var>(E)->index;
 	int R2 = C.access(R).C.lookup_in_env( index );
@@ -2887,7 +2902,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	label += "| <" + convertToString(R2) + "> " + escape(reg_name) + " ";
       }
     }
-    else if (C.access(R).C.exp->head->type() == index_var_type)
+    else if (F->head->type() == index_var_type)
     {
       expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names));
 
@@ -2897,6 +2912,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     else
     {
       expression_ref E = unlet(untranslate_vars(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names),constants));
+
+      E = map_symbol_names(E, simplify);
 
       label += E->print();
       label = escape(wrap(label,40));
