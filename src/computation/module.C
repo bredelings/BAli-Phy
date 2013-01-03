@@ -7,7 +7,7 @@
 #include "parser/parse.H"
 #include "parser/desugar.H"
 #include "parser/AST.H"
-#include "loader.H"
+#include "computation/loader.H"
 
 using std::pair;
 using std::map;
@@ -233,7 +233,6 @@ void Module::import_symbol(const symbol_info& S, const string& modid, bool quali
 void Module::import_module(const Module& M2, const string& modid, bool qualified)
 {
   assert(modid != name);
-  imported.insert(M2.name);
 
   for(const auto& p: M2.symbols)
   {
@@ -249,30 +248,31 @@ void Module::import_module(const Module& M2, bool qualified)
   import_module(M2, M2.name, qualified);
 }
 
-void Module::import_module(const vector<string>& path, const string& modid, bool qualified)
-{
-  if (not imported.count(modid) and modid != name)
-  {
-    Module mod = load_module(path, modid);
-    import_module(mod, qualified);
-  }
-}
-
-void Module::import_module(const vector<string>& path, const string& modid, const string& modid2, bool qualified)
-{
-  if (not imported.count(modid) and modid != name)
-  {
-    Module mod = load_module(path, modid);
-    import_module(mod, modid2, qualified);
-  }
-}
-
 Module find_module(const string& module_name, const std::vector<Module>& P)
 {
   for(const auto& module: P)
     if (module.name == module_name)
       return module;
   std::abort();
+}
+
+std::set<std::string> Module::dependencies() const
+{
+  if (not impdecls) return {};
+  
+  set<string> module_names;
+
+  for(const auto& impdecl:impdecls->sub)
+  {
+    int i=0;
+    bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
+    if (qualified) i++;
+    
+    string imp_module_name = *impdecl->sub[i++].is_a<String>();
+    module_names.insert(imp_module_name);
+  }
+
+  return module_names;
 }
 
 void Module::resolve_symbols(const std::vector<Module>& P)
@@ -301,7 +301,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
     }
 
   // Import the Prelude if it wasn't explicitly mentioned in the import list.
-  if (not saw_Prelude and name != "Prelude" and not imported.count("Prelude"))
+  if (not saw_Prelude and name != "Prelude")
   {
     Module M = find_module("Prelude",P);
     import_module(M,"Prelude",false);
@@ -679,9 +679,6 @@ Module& Module::operator+=(const expression_ref& E)
 	  imp_module_name_as = *impdecl->sub[i++].is_a<String>();
 
 	assert(i == impdecl->sub.size());
-
-	//	Module.import_module(modules_path, imp_module_name, qualified);
-	dependencies.insert(imp_module_name);
       }
     }
 

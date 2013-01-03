@@ -59,10 +59,7 @@ class Module
 
   std::multimap<std::string, std::string> aliases;
 
-  std::set<std::string> imported;
-
 public:
-  std::set<std::string> dependencies;
 
   expression_ref module;
   expression_ref body;
@@ -70,6 +67,8 @@ public:
   expression_ref topdecls;
   
   std::string name;
+
+  std::set<std::string> dependencies() const;
 
   const std::map<std::string, symbol_info>& get_symbols() const {return symbols;}
 
@@ -118,10 +117,6 @@ public:
   void import_module(const Module& M2, bool qualified);
 
   void import_module(const Module& M2, const std::string&, bool qualified);
-
-  void import_module(const std::vector<std::string>& path, const std::string&, bool qualified);
-
-  void import_module(const std::vector<std::string>& path, const std::string&, const std::string&, bool qualified);
 
   void resolve_symbols(const std::vector<Module>&);
 

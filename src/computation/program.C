@@ -77,14 +77,12 @@ void add(const module_loader& L, vector<Module>& P, const vector<Module>& module
       P.push_back(load_module(L.modules_path, module_name));
 
     modules_to_add.clear();
-      
+
     for(const auto& module: P)
-    {
-      for(const string& module_name: module.dependencies)
+      for(const string& module_name: module.dependencies())
 	if (not contains_module(P, module_name))
 	  modules_to_add.insert(module_name);
-    }
-      
+
   } while (not modules_to_add.empty());
 
   // 6a. Perform any needed imports.
