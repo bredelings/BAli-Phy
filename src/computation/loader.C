@@ -53,6 +53,8 @@ using std::string;
  *      10d. We need a way to refer to dynamically created parameters -- and it can't be the static parameter name.
  *      10e. We *could* arrange for unique name for parameters inside a machine, so that we wouldn't need to
  *           refer to parameters by their address.
+ *      10f. Issue: if we have a structure of parameters, that's OK.  But what if we have a CHANGEABLE
+ *                  structure, of changeable parameters!  Is that OK?
  *    - Well, do we want to supply Bounds for structure ELEMENTS?  Uh-oh -- we might!
  * 11. [DONE] Convert all of distribution-operations.H to the parser.
  * 12. [DONE] Remove arity argument to def_function.
@@ -76,6 +78,7 @@ using std::string;
  *     (This will allow us to e.g. select min/max functions for logging.)
  * 22. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
  * 23. Print expressions with fixity.
+ * 24. Allow registers to be moved WHILE THE INTERPRETER IS RUNNING!
  */
 
 
@@ -225,6 +228,9 @@ Module load_module(const vector<string>& modules_path, const string& modid)
 
     if (M.name != modid)
       throw myexception()<<"Module file '"<<modid<<".hs' contains different module '"<<M.name<<"'";
+
+    if (M.name == "Tree")
+      M.def_constructor("Tree",4);
   }
   catch (myexception& e)
   {
