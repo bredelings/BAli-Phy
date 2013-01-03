@@ -148,21 +148,16 @@ std::map<string,string> get_simplified_names(const vector<Module>& P)
       if (S.second.scope == local_scope)
       {
 	string qname = S.first;
-	if (S.second.symbol_type == variable_symbol)
+	if (S.second.symbol_type == parameter_symbol)
+	  parameter_names.push_back(qname);
+	if (S.second.symbol_type == variable_symbol or S.second.symbol_type == parameter_symbol)
 	{
 	  string name = get_unqualified_name(qname);
 	  aliases.insert({name,qname});
 	}
-	else if (S.second.symbol_type == parameter_symbol)
-	  parameter_names.push_back(qname);
       }
 
-  // 2. Make long names to their shortened equivalent
-  vector<string> short_names = short_parameter_names(parameter_names);
-  for(int i=0;i<parameter_names.size();i++)
-    simplified[parameter_names[i]] = short_names[i];
-
-  // 3. Map qualified names to their unqualified versions IF there is only one occurrence of the unqualified version.
+  // 2. Map qualified names to their unqualified versions IF there is only one occurrence of the unqualified version.
   for(auto current = aliases.begin();current != aliases.end();)
   {
     int count = 1;
@@ -180,6 +175,30 @@ std::map<string,string> get_simplified_names(const vector<Module>& P)
       simplified[current->second] = current->first;
 
     current = next;
+  }
+
+  // 3. Make long names to their shortened equivalent
+  // \todo FIXME:extend This doesn't handle parameter names clashing with variable names
+  vector<string> short_names = short_parameter_names(parameter_names);
+  for(int i=0;i<parameter_names.size();i++)
+  {
+    // If the short name isn't shorter, then stop recording a simplification
+    if (short_names[i] == parameter_names[i])
+    {
+      auto loc = simplified.find(parameter_names[i]);
+      if (loc != simplified.end())
+	simplified.erase(parameter_names[i]);
+    }
+    // If we simplify down to a short name, then either 
+    //  (a) We are already using that short name, or 
+    //  (b) its ambiguous.
+    // In both cases, don't do anything different.
+    else if (not is_qualified_symbol(short_names[i]))
+      ;
+    // If we simplified, but left some prefix components, then check that there isn't any variable named this.
+    // FIXME:extend Actually, if this is a parameter, then its OK. So, look up the symbol, and check if its a var.
+    else if (not is_declared(P, short_names[i]))
+      simplified[parameter_names[i]] = short_names[i];
   }
 
   return simplified;
