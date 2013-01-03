@@ -234,3 +234,7 @@ expression_ref map_symbol_names(const expression_ref& E, const std::map<string,s
   return V;
 }
 
+expression_ref simplify_names(const expression_ref& E, const vector<Module>& P)
+{
+  return map_symbol_names(E, get_simplified_names(P) );
+}
