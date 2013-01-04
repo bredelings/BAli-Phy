@@ -16,6 +16,10 @@ Module SModel_Functions(const vector<string>& module_root_paths)
   P.def_function("getQ", lambda_expression(substitution::Q_Op()));
   P.def_function("getEigensystem", lambda_expression(substitution::Get_Eigensystem_Op()));
   P.def_function("getEquilibriumRate", lambda_expression(substitution::Get_Equilibrium_Rate_Op()));
+  P.def_function("hky", lambda_expression(substitution::HKY_Op()));
+  P.def_function("tn", lambda_expression(substitution::TN_Op()));
+  P.def_function("gtr", lambda_expression(substitution::GTR_Op()));
+  P.def_function("m0", lambda_expression(substitution::M0_Op()));
 
   P.def_constructor("ReversibleMarkov",7);
   P.def_constructor("ReversibleFrequency",4);
