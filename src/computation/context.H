@@ -181,6 +181,8 @@ protected:
 
   void collect_garbage() const;
 public:
+  const module_loader& get_module_loader() const;
+
   const std::vector<std::string>& get_module_path() const;
 
   const std::vector<std::string>& get_builtins_path() const;

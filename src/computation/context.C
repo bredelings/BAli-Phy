@@ -465,6 +465,11 @@ closure context::translate_refs(closure&& C) const
   return C2;
 }
 
+const module_loader& context::get_module_loader() const
+{
+  return loader;
+}
+
 const vector<string>& context::get_module_path() const
 {
   return loader.modules_path;
