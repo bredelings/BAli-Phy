@@ -1,6 +1,6 @@
 #include "computation/computation.H"
 
-extern "C" closure builtin_function(OperationArgs& Args)
+extern "C" closure builtin_function_exp(OperationArgs& Args)
 {
   double x = *Args.evaluate_as<Double>(0);
 

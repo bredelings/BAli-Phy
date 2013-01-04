@@ -1,6 +1,6 @@
 #include "computation/computation.H"
 
-extern "C" closure builtin_function(OperationArgs& Args)
+extern "C" closure builtin_function_reapply(OperationArgs& Args)
 {
   int index1 = assert_is_a<index_var>(Args.reference(0))->index;
   int R1 = Args.current_closure().lookup_in_env( index1 );

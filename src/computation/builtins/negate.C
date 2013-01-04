@@ -3,7 +3,7 @@
 
 using boost::dynamic_pointer_cast;
 
-extern "C" closure builtin_function(OperationArgs& Args)
+extern "C" closure builtin_function_negate(OperationArgs& Args)
 {
   object_ref x = Args.evaluate(0);
   

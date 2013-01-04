@@ -1,6 +1,6 @@
 #include "computation/computation.H"
 
-extern "C" closure builtin_function(OperationArgs& Args)
+extern "C" closure builtin_function_seq(OperationArgs& Args)
 {
   Args.evaluate_slot_no_record(0);
 

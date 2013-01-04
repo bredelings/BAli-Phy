@@ -311,18 +311,12 @@ expression_ref load_builtin(const string& filename, int n, const string& fname)
   // reset errors
   dlerror();
     
-  string symbol_name1 = "builtin_function_"+fname;
-  string symbol_name2 = "builtin_function";
+  const string prefix = "builtin_function_";
+  string symbol_name = prefix + fs::path(filename).stem().string();
 
   // load the symbols
-  void* fn =  dlsym(library, symbol_name1.c_str());
+  void* fn =  dlsym(library, symbol_name.c_str());
   const char* dlsym_error = dlerror();
-  if (dlsym_error)
-  {
-    fn =  dlsym(library, symbol_name2.c_str());
-    dlsym_error = dlerror();
-  }
-
   if (dlsym_error)
     throw myexception() << "Cannot load symbol for builtin '"<<fname<<"' from file '"<<filename<<": " << dlsym_error;
     

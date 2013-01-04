@@ -1,7 +1,7 @@
 #include "computation/computation.H"
 #include "myexception.H"
 
-extern "C" closure builtin_function(OperationArgs& Args)
+extern "C" closure builtin_function_mod(OperationArgs& Args)
 {
   using boost::dynamic_pointer_cast;
 

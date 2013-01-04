@@ -1,6 +1,6 @@
 #include "computation/computation.H"
 
-extern "C" closure builtin_function(OperationArgs& Args)
+extern "C" closure builtin_function_mkArray(OperationArgs& Args)
 {
   int n = *Args.evaluate_as<Int>(0);
   expression_ref f = Args.reference(1);

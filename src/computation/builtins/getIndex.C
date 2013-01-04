@@ -1,6 +1,6 @@
 #include "computation/computation.H"
 
-extern "C" closure builtin_function(OperationArgs& Args)
+extern "C" closure builtin_function_getIndex(OperationArgs& Args)
 {
   const closure& C = Args.lazy_evaluate(0);
   int n = *Args.evaluate_as<Int>(1);
