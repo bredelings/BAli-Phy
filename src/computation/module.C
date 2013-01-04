@@ -892,6 +892,20 @@ expression_ref Module::get_function(const std::string& fname) const
   return lookup_symbol(fname).body;
 }
 
+vector<string> Module::parameter_names() const
+{
+  vector<string> names;
+  for(const auto& x:get_symbols())
+    if (x.second.symbol_type == parameter_symbol and x.second.scope == local_scope)
+      names.push_back(x.first);
+  return names;
+}
+
+int Module::n_parameters() const
+{
+  return parameter_names().size();
+}
+
 // A name of "" means that we are defining a top-level program, or a piece of a top-level program.
 Module::Module(const string& n)
   :name(n)

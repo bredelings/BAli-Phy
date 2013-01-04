@@ -136,6 +136,9 @@ public:
 
   symbol_info get_operator(const std::string& name) const;
 
+  std::vector<std::string> parameter_names() const;
+
+  int n_parameters() const;
   explicit Module(const std::string&);
 
   explicit Module(const char*);
