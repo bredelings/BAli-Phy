@@ -390,7 +390,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	cname = var | con;
 	
 	/*------ Section 5.3 -------*/
-	impdecl = "import" > -string("qualified")[push_back(_a,construct<String>(_1))] > modid[push_back(_a,construct<String>(_1))] 
+	impdecl = "import" > -string("qualified")[push_back(_a,construct<String>(_1))] 
+	                   > -string("submodel")[push_back(_a,construct<String>(_1))] 
+	                   > modid[push_back(_a,construct<String>(_1))] 
 			   >> -(string("as")[push_back(_a,construct<String>(_1))] > modid[push_back(_a,construct<String>(_1))]) 
 			   >> /*-impspec >>*/ eps [ _val = new_<expression>(AST_node("ImpDecl"), _a)  ];
 

@@ -267,9 +267,47 @@ std::set<std::string> Module::dependencies() const
     int i=0;
     bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
     if (qualified) i++;
+
+    bool submodel = impdecl->sub[i].is_a<String>()->t == "submodel";
+    if (submodel) i++;
+
+    // bail out if this is a submodel declaration.
+    if (submodel) continue;
     
     string imp_module_name = *impdecl->sub[i++].is_a<String>();
     module_names.insert(imp_module_name);
+  }
+
+  return module_names;
+}
+
+// in module m0: import [qualified] submodel [m1] as [m2]
+map<string,string> Module::submodel_dependencies() const
+{
+  if (not impdecls) return {};
+  
+  map<string,string> module_names;
+
+  for(const auto& impdecl:impdecls->sub)
+  {
+    int i=0;
+    bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
+    if (qualified) i++;
+
+    bool submodel = impdecl->sub[i].is_a<String>()->t == "submodel";
+    if (submodel) i++;
+
+    // bail out if this is NOT a submodel declaration.
+    if (not submodel) continue;
+    
+    string imp_module_name = *impdecl->sub[i++].is_a<String>();
+
+    string imp_module_name_as = imp_module_name;
+    if (i < impdecl->sub.size() and impdecl->sub[i++].is_a<String>()->t == "as")
+      imp_module_name_as = *impdecl->sub[i++].is_a<String>();
+
+    // Store map from m1 -> m0.m2
+    module_names.insert({imp_module_name, name+"."+imp_module_name_as});
   }
 
   return module_names;
@@ -285,6 +323,9 @@ void Module::resolve_symbols(const std::vector<Module>& P)
       bool qualified = impdecl->sub[0].is_a<String>()->t == "qualified";
       if (qualified) i++;
     
+      bool submodel = impdecl->sub[i].is_a<String>()->t == "submodel";
+      if (submodel) i++;
+    
       string imp_module_name = *impdecl->sub[i++].is_a<String>();
       
       string imp_module_name_as = imp_module_name;
@@ -293,6 +334,12 @@ void Module::resolve_symbols(const std::vector<Module>& P)
       
       assert(i == impdecl->sub.size());
       
+      if (submodel){
+	// Note that the loaded module is imp_module_name, though.
+	imp_module_name = name+"."+imp_module_name_as;
+	imp_module_name_as = imp_module_name;
+      }
+
       Module M = find_module(imp_module_name,P);
 
       import_module(M, imp_module_name_as, qualified);
@@ -918,4 +965,68 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
     V->sub[i] = resolve_refs(P, V->sub[i]);
 
   return V;
+}
+
+string rename_module(const string& s, const string& modid1, const string& modid2)
+{
+  if (not is_qualified_symbol(s)) return s;
+
+  string modid = get_module_name(s);
+  string name = get_unqualified_name(s);
+
+  if (modid == modid1)
+    return modid2 + "." + name;
+  else
+    return s;
+}
+
+
+// Rename parts of the AST!
+expression_ref rename_module(const expression_ref& E, const std::string& modid1, const std::string& modid2)
+{
+  if (object_ptr<const AST_node> n = E.is_a<AST_node>())
+  {
+    if (n->type == "Module")
+    {
+      vector<expression_ref> sub = E->sub;
+      if (sub.size() == 1)
+	sub[0] = rename_module(sub[1], modid1, modid2);
+      else if (sub.size() == 2)
+      {
+	string modid = *sub[0].is_a<String>();
+	if (modid == modid1) modid = modid2;
+	sub[0] = String(modid);
+	sub[1] = rename_module(sub[1], modid1, modid2);
+      }
+      return {AST_node("Module"),sub};
+    }
+    // Rename ids
+    if (n->type == "id")
+      return AST_node("id",rename_module(n->value, modid1, modid2));
+  }
+
+  // Rename parameters
+  else if (auto p = is_a<parameter>(E))
+    throw myexception()<<"Found parameter while renaming module: this is illegal.";
+  //    return parameter( rename_module(p->parameter_name, modid1, modid2) );
+
+  // Rename vars
+  else if (auto V = is_a<var>(E))
+    throw myexception()<<"Found var while renaming module: this is illegal.";
+  //    return var( rename_module(V->name, modid1, modid2) );
+
+  // Rename dummies
+  else if (auto D = is_a<dummy>(E))
+    throw myexception()<<"Found dummy while renaming module: this is illegal.";
+
+  // Other constants have no parts, and don't need to be resolved
+  if (not E->size()) return E;
+
+  // Resolve the parts of the expression
+  object_ptr<expression> V ( new expression(*E) );
+  for(int i=0;i<V->size();i++)
+    V->sub[i] = rename_module(V->sub[i], modid1, modid2);
+
+  return V;
+
 }

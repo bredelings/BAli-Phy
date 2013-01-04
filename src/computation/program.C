@@ -60,6 +60,32 @@ static int count_module(const vector<Module>& P,const string& module_name)
   return count;
 }
 
+set<string> unresolved_imports(const vector<Module>& P)
+{
+  set<string> modules_to_add;
+
+  // Add dependencies on modules
+  for(const auto& module: P)
+    for(const string& module_name: module.dependencies())
+      if (not contains_module(P, module_name))
+	modules_to_add.insert(module_name);
+
+  return modules_to_add;
+}
+
+map<string,string> unresolved_submodel_imports(const vector<Module>& P)
+{
+  map<string,string> submodels_to_add;
+
+  // Add dependencies on modules
+  for(const auto& module: P)
+    for(const auto& x: module.submodel_dependencies())
+      if (not contains_module(P, x.second))
+	submodels_to_add.insert(x);
+
+  return submodels_to_add;
+}
+
 void add(const module_loader& L, vector<Module>& P, const vector<Module>& modules)
 {
   // Get module_names, but in a set<string>
@@ -89,19 +115,20 @@ void add(const module_loader& L, vector<Module>& P, const vector<Module>& module
 
   // 5. Add any additional modules needed to complete the program.
   std::set<string> modules_to_add;
+  std::map<string,string> submodels_to_add;
+
   do
   {
     for(const string& module_name: modules_to_add)
       P.push_back(load_module(L.modules_path, module_name));
 
-    modules_to_add.clear();
+    for(const auto& x: submodels_to_add)
+      P.push_back(load_and_rename_module(L.modules_path, x.first, x.second));
 
-    for(const auto& module: P)
-      for(const string& module_name: module.dependencies())
-	if (not contains_module(P, module_name))
-	  modules_to_add.insert(module_name);
-
-  } while (not modules_to_add.empty());
+    modules_to_add = unresolved_imports(P);
+    submodels_to_add = unresolved_submodel_imports(P);
+  } 
+  while (not modules_to_add.empty() or not submodels_to_add.empty());
 
   // 6a. Perform any needed imports.
   // 6b. Desugar the module here.

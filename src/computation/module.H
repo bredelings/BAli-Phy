@@ -70,6 +70,8 @@ public:
 
   std::set<std::string> dependencies() const;
 
+  std::map<std::string,std::string> submodel_dependencies() const;
+
   const std::map<std::string, symbol_info>& get_symbols() const {return symbols;}
 
   /// Add a function
@@ -145,4 +147,6 @@ std::ostream& operator<<(std::ostream&, const Module&);
 
 expression_ref resolve_refs(const std::vector<Module>&, const expression_ref&);
 
+// Rename parts of the AST!
+expression_ref rename_module(const expression_ref&, const std::string&, const std::string&);
 #endif
