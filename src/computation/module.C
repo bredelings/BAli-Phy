@@ -359,7 +359,16 @@ void Module::resolve_symbols(const std::vector<Module>& P)
   // 1. Desugar the module
   expression_ref decls = desugar(*this,topdecls);
   
-  // 2. Convert top-level dummies into global vars.
+  // 2. Add notes
+  for(const auto& note: decls->sub)
+    if (is_AST(note,"BugsDataDist") or
+	is_AST(note,"BugsExternalDist") or
+	is_AST(note,"BugsDist") or
+	is_AST(note,"BugsDefaultValue") or
+	is_AST(note,"BugsNote"))
+      add_note(note);
+
+  // 3. Convert top-level dummies into global vars.
   vector<expression_ref> decls_sub = decls->sub;
   for(auto& decl: decls_sub)
     if (is_AST(decl,"Decl"))
@@ -376,7 +385,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
 	decl = substitute(decl,dummy( name),var(qname));
       }
   
-  // 3. Define the symbols
+  // 4. Define the symbols
   for(const auto& decl: decls_sub)
     if (is_AST(decl,"Decl"))
     {
@@ -385,7 +394,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
     }
 }
 
-void Module::load_builtins(const std::vector<string>& builtins_path)
+void Module::load_builtins(const module_loader& L)
 {
   if (not topdecls) return;
 
@@ -394,11 +403,11 @@ void Module::load_builtins(const std::vector<string>& builtins_path)
     {
       string bname = *decl->sub[0].assert_is_a<String>();
       int n = convertTo<int>( *decl->sub[1].assert_is_a<String>() );
-      string filename = *decl->sub[2].assert_is_a<String>();
+      string plugin_name = *decl->sub[2].assert_is_a<String>();
 
       bname = lookup_symbol(bname).name;
 
-      symbols.at(bname).body = load_builtin(builtins_path, filename, n, bname);
+      symbols.at(bname).body = load_builtin(L, plugin_name, n, bname);
     }
 }
 
@@ -677,6 +686,7 @@ string get_function_name(const expression_ref& E)
 }
 
 set<string> find_bound_vars(const expression_ref& E);
+set<string> find_all_ids(const expression_ref& E);
 
 Module& Module::operator+=(const expression_ref& E)
 {
@@ -800,6 +810,25 @@ Module& Module::operator+=(const expression_ref& E)
       def_function(bname,{});
     }
       
+  // 3. Find explicitly and implicitly-declared parameters
+  set<string> parameters;
+  for(const auto& cmd: decls->sub)
+  {
+    // This doesn't happen for BugsExternalDist or BugsDataDist
+    if (is_AST(cmd,"BugsDist"))
+      add(parameters, find_all_ids(cmd->sub[0]));
+    else if (is_AST(cmd,"Parameter"))
+    {
+      string name = *(cmd->sub[0].assert_is_a<String>());
+      parameters.insert(name);
+    }
+  }
+  
+  // 4. Actually declare the parameters
+  for(const auto& name: parameters)
+    if (not is_declared(name))
+      declare_parameter(name);
+
   if (module) return *this;
 
   if (not topdecls)

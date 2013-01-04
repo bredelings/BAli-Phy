@@ -21,7 +21,7 @@ std::set<std::string> module_names_set(const std::vector<Module>& P);
 
 const Module& get_module(const std::vector<Module>& P, const std::string& module_name);
 
-void add(const module_loader& L, std::vector<Module>& P, const std::vector<Module>& modules);
+void add(const module_loader& L, std::vector<Module>& P, Model_Notes& N, const std::vector<Module>& modules);
 
 bool is_declared(const std::vector<Module>& modules, const std::string& qvar);
 

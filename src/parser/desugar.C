@@ -5,6 +5,7 @@
 #include <utility>
 #include "io.H"
 #include "models/parameters.H"
+#include "computation/loader.H"
 #include "AST.H"
 
 using std::string;
@@ -1012,54 +1013,23 @@ bool is_all_space(const string& line)
   return true;
 }
 
-pair<Module,Model_Notes> read_BUGS(const Parameters& P, const string& filename, const string& module_name_)
+Module read_BUGS(const Parameters& P, const string& filename, const string& module_name_)
 {
-  // 1. Read file into string.
-  string file_contents = read_file(filename, "BUGS File");
+  // 1. Read module
+  Module BUGS = load_module(filename);
 
-  // 2. module = impdecls + topdecls (including notes/notes)
-  expression_ref module = parse_bugs_file(file_contents);
-  assert(is_AST(module,"Module"));
-
-  // 3. Import all parameters symbols from other modules.
-  Module BUGS(module);
+  // 2. Import all parameter symbols from other modules.
   for(const auto& M:P.get_Program())
     for(const auto& S:M.get_symbols())
       if (S.second.symbol_type == parameter_symbol)
 	BUGS.import_symbol(S.second, M.name,true);
 
-  // 3. Find explicitly and implicitly-declared parameters
-  set<string> new_parameters;
-  if (BUGS.topdecls)
-    for(const auto& cmd: BUGS.topdecls->sub)
-    {
-      // This doesn't happen for BugsExternalDist or BugsDataDist
-      if (is_AST(cmd,"BugsDist"))
-	add(new_parameters, find_all_ids(cmd->sub[0]));
-      else if (is_AST(cmd,"Parameter"))
-      {
-	string name = *(cmd->sub[0].assert_is_a<String>());
-	new_parameters.insert(name);
-      }
-    }
-
-  // 4. Add notes
-  Model_Notes N;
-  for(const auto& note: BUGS.topdecls->sub)
-    N.add_note(note);
-
+  // 3. Add Loggers for any locally declared parameters
   expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
-  for(const auto& name: new_parameters)
-  {
-    // 5. Actually declare the parameters
-    if (not BUGS.is_declared(name))
-      BUGS.declare_parameter(name);
+  for(const auto& name: BUGS.parameter_names())
+    BUGS.add_note((make_logger,parameter(BUGS.name + "." + name)));
 
-    // 6. Add Loggers for any locally declared parameters
-    N.add_note((make_logger,parameter(BUGS.name + "." + name)));
-  }
-
-  return {BUGS,N};
+  return BUGS;
 }
 
 void add_BUGS(Parameters& P, const std::string& filename, const std::string& module_name)

@@ -86,7 +86,7 @@ map<string,string> unresolved_submodel_imports(const vector<Module>& P)
   return submodels_to_add;
 }
 
-void add(const module_loader& L, vector<Module>& P, const vector<Module>& modules)
+void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector<Module>& modules)
 {
   // Get module_names, but in a set<string>
   set<string> old_module_names = module_names_set(P);
@@ -120,10 +120,10 @@ void add(const module_loader& L, vector<Module>& P, const vector<Module>& module
   do
   {
     for(const string& module_name: modules_to_add)
-      P.push_back(load_module(L.modules_path, module_name));
+      P.push_back(load_module(L, module_name));
 
     for(const auto& x: submodels_to_add)
-      P.push_back(load_and_rename_module(L.modules_path, x.first, x.second));
+      P.push_back(load_and_rename_module(L, x.first, x.second));
 
     modules_to_add = unresolved_imports(P);
     submodels_to_add = unresolved_submodel_imports(P);
@@ -136,8 +136,9 @@ void add(const module_loader& L, vector<Module>& P, const vector<Module>& module
     if (not old_module_names.count(module.name))
     {
       try {
-	module.load_builtins(L.builtins_path);
+	module.load_builtins(L);
 	module.resolve_symbols(P);
+	N.add_notes( module.get_notes() );
       }
       catch (myexception& e)
       {

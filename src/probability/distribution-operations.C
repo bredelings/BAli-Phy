@@ -516,22 +516,17 @@ closure GetBounds::operator()(OperationArgs& Args) const
   return Bounds<double>(has_lower, lower, has_upper, upper);
 }
 
-Module Range_Functions(const vector<string>& modules_path)
+void Range_Functions(Module& P)
 {
-  Module P("Range");
   P.def_constructor("OpenInterval",2);
   P.def_constructor("Real",1);
   P.def_constructor("Inf",0);
   P.def_constructor("NegInf",0);
   P.def_function("builtinGetBounds", lambda_expression( GetBounds() ) );
-
-  return P;
 }
 
-Module Distribution_Functions(const vector<string>& modules_path)
+void Distribution_Functions(Module& P)
 {
-  Module P("Distributions");
-
   // Note: we separate the "builtin" versions (which don't do case analysis on their arguments)
   //       from the from the real versions (which do).
 
@@ -562,6 +557,4 @@ Module Distribution_Functions(const vector<string>& modules_path)
   P.def_function("builtinLogLaplaceDensity", lambda_expression( log_laplace_density() ) );
 
   P.def_function("builtinUniformDensity", lambda_expression( uniform_density() ) );
-
-  return P;
 }

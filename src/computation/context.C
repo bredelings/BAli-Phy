@@ -482,7 +482,7 @@ const vector<string>& context::get_builtins_path() const
 
 context& context::operator+=(const vector<string>& module_names)
 {
-  return operator+=(load_modules(get_module_path(), module_names));
+  return operator+=(load_modules(get_module_loader(), module_names));
 }
 
 // \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
@@ -494,7 +494,7 @@ context& context::operator+=(const vector<Module>& P2)
   set<string> old_module_names = module_names_set(PP);
 
   // 1. Add the new modules to the program, perform imports, and resolve symbols.
-  add(loader, PP, P2);
+  add(loader, PP, *this, P2);
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   for(auto& module: PP)
@@ -618,7 +618,7 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
 }
 
 context::context(const module_loader& L, const vector<expression_ref>& N, const vector<string>& module_names)
-  :context(L,N,load_modules(L.modules_path,module_names))
+  :context(L,N,load_modules(L, module_names))
 { }
 
 context::context(const context& C)

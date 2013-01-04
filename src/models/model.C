@@ -146,44 +146,25 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
 
 vector<int> Model::add_submodel(const Module& M)
 {
-  vector<int> new_parameters;
-
   // 1. Load the module, perform imports, and resolve its symbols.
   C += {M};
 
-  // 2. Account for any parameters that were added.
-  // \todo FIXME:cleanup - The need to fix up after added parameters here means that we can't just use context::add_submodel(M)
+  // 3. Check that no parameters are declared via notes, here.
+  assert( find_declared_parameters(M).empty() );
 
+  // \todo FIXME:cleanup - Try to merge with add_submodel(context&,N)
+  // 4. Account for any parameters that were added.
+  vector<int> new_parameters;
   for(int i=changed.size();i<n_parameters();i++)
   {
     new_parameters.push_back( i );
-
     changed.push_back(true);
     bounds.push_back(-1);
     prior_note_index.push_back(-1);
   }
 
-  return new_parameters;
-}
-
-vector<int> Model::add_submodel(const std::pair<Module,Model_Notes>& R)
-{
-  // 1. Load the module, perform imports, and resolve its symbols.
-  vector<int> new_parameters = add_submodel(R.first);
-  const Module& M = get_module(C.get_Program(), R.first.name);
-
-  // 2. Resolve symbols for the notes.
-  Model_Notes N = R.second;
-  for(auto& n: N.get_notes())
-    n = desugar(M,n);
-
-  // 3. Add the notes, and any parameters they declare
-  vector<int> new_parameters2 = add_submodel(N);
-
-  // 4. Update the list of declared parameters.
-  new_parameters.insert(new_parameters.end(), new_parameters2.begin(), new_parameters2.end());
-
-  // 5. Set default values.
+  // 2. Set default values.
+  // \\todo FIXME: cleanup: move this to C += {M}?
   //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
   for(int index: new_parameters)
     if (not C.parameter_is_set(index))

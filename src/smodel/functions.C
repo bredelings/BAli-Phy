@@ -7,10 +7,8 @@
 using std::vector;
 using std::string;
 
-Module SModel_Functions(const vector<string>& module_root_paths)
+void SModel_Functions(Module& P)
 {
-  Module P("SModel");
-
   P.def_function("plusGWF", lambda_expression(substitution::Plus_gwF_Op()));
   P.def_function("lExp", lambda_expression(LExp_Op()));
   P.def_function("getQ", lambda_expression(substitution::Q_Op()));
@@ -29,5 +27,4 @@ Module SModel_Functions(const vector<string>& module_root_paths)
 
   // scale x (F81 a s a' pi)= (F81 a s a'*x pi) ??
   // scale x (MixtureModel (DiscreteDistribution l)) s= (MixtureModel (DiscreteDistribution (fmap2,scale(s),l))) ??
-  return P;
 }

@@ -12,8 +12,10 @@
 
 namespace fs = boost::filesystem;
 
-using std::vector;
 using std::string;
+using std::vector;
+using std::set;
+using std::map;
 
 /* \todo: List of things to do to clean up programs.
  *
@@ -82,11 +84,9 @@ using std::string;
  */
 
 
-Module make_Prelude()
+void make_Prelude(Module& P)
 {
   // See http://www.haskell.org/onlinereport/standard-prelude.html
-  Module P("Prelude");
-
   P.def_constructor("True",0);
   P.def_constructor("False",0);
   P.def_constructor("Just",1);
@@ -151,21 +151,27 @@ Module make_Prelude()
 
   P.def_function("builtinNewVectorMatrix", lambda_expression( BuiltinNewVectorOp<Matrix>() ) ); 
   P.def_function("builtinSetVectorIndexMatrix", lambda_expression( BuiltinSetVectorIndexOp<Matrix,MatrixObject>() ) ); 
-
-  return P;
 }
 
-const Module& get_Prelude()
+void Distribution_Functions(Module&);
+void Range_Functions(Module&);
+void SModel_Functions(Module&);
+void PopGen_Functions(Module&);
+
+expression_ref read_module_from_file(const string& filename)
 {
-  static const Module P = make_Prelude();
-  return P;
+  try
+  {
+    string file_contents = read_file(filename,"module");
+    expression_ref module = parse_bugs_file(file_contents);
+    return module;
+  }
+  catch (myexception& e)
+  {
+    e.prepend("Loading module from file '"+filename+"':\n  ");
+    throw e;
+  }
 }
-
-Module Distribution_Functions(const vector<string>&);
-Module Range_Functions(const vector<string>&);
-Module SModel_Functions(const vector<string>&);
-Module PopGen_Functions(const vector<string>&);
-
 
 fs::path find_file_in_path(const vector<string>& paths, const fs::path& file_path)
 {
@@ -179,73 +185,72 @@ fs::path find_file_in_path(const vector<string>& paths, const fs::path& file_pat
   throw myexception()<<"Couldn't find file '"<<file_path.string()<<"' in path '"<<join(paths,':')<<"'";
 }
 
-fs::path get_relative_path(const vector<string>& v)
+fs::path get_relative_path_from_haskell_id(const string& modid)
 {
-  fs::path file_path = v[0];
-  for(int i=1;i<v.size();i++)
-    file_path /= v[i];
+  vector<string> path = get_haskell_identifier_path(modid);
+  fs::path file_path = path[0];
+  for(int i=1;i<path.size();i++)
+    file_path /= path[i];
   return file_path;
 }
 
-expression_ref load_module_from_file(const vector<string>& module_root_paths, const string& modid)
+string find_module(const module_loader& L, const string& modid)
 {
-  vector<string> file_path = get_haskell_identifier_path(modid);
-  file_path.back() += ".hs";
-
   try
   {
-    fs::path filename = find_file_in_path(module_root_paths, get_relative_path(file_path) );
-    string file_contents = read_file(filename.string(),"module");
-    expression_ref module = parse_bugs_file(file_contents);
-    return module;
+    fs::path path = get_relative_path_from_haskell_id(modid);
+    path.replace_extension(".hs");
+
+    fs::path filename = find_file_in_path(L.modules_path, path );
+    return filename.string();
   }
   catch (myexception& e)
   {
-    e.prepend("Loading modules: ");
+    e.prepend("Loading module '"+modid+"': ");
     throw e;
   }
 }
 
-Module load_module(const vector<string>& modules_path, const string& modid)
+Module load_module(const string& filename)
 {
-  Module M(modid);
-  if (modid == "Prelude")
-    M = get_Prelude();
-  else if (modid == "Distributions")
-    M = Distribution_Functions(modules_path);
-  else if (modid == "Range")
-    M = Range_Functions(modules_path);
-  else if (modid == "SModel")
-    M = SModel_Functions(modules_path);
-  else if (modid == "PopGen")
-    M = PopGen_Functions(modules_path);
-
   try
   {
-    expression_ref module = load_module_from_file(modules_path,modid);
+    expression_ref module = read_module_from_file(filename);
 
-    M += module;
-
-    if (M.name != modid)
-      throw myexception()<<"Module file '"<<modid<<".hs' contains different module '"<<M.name<<"'";
-
-    if (M.name == "Tree")
+    Module M(module);
+    
+    if (M.name == "Prelude")
+      make_Prelude(M);
+    else if (M.name == "Distributions")
+      Distribution_Functions(M);
+    else if (M.name == "Range")
+      Range_Functions(M);
+    else if (M.name == "SModel")
+      SModel_Functions(M);
+    else if (M.name == "PopGen")
+      PopGen_Functions(M);
+    else if (M.name == "Tree")
       M.def_constructor("Tree",4);
+
+    return M;
   }
   catch (myexception& e)
   {
-    e.prepend("Loading module '"+modid+"':\n  ");
+    e.prepend("Loading module from file '"+filename+"':\n  ");
     throw e;
   }
-
-  return M;
 }
 
-Module load_and_rename_module(const vector<string>& modules_path, const string& modid1, const string& modid2)
+Module load_module(const module_loader& L, const string& modid)
+{
+  return load_module(find_module(L, modid));
+}
+
+Module load_and_rename_module(const module_loader& L, const string& modid1, const string& modid2)
 {
   try
   {
-    expression_ref module = load_module_from_file(modules_path,modid1);
+    expression_ref module = read_module_from_file(find_module(L, modid1));
 
     Module M1(module);
 
@@ -265,11 +270,27 @@ Module load_and_rename_module(const vector<string>& modules_path, const string& 
   }
 }
 
-vector<Module> load_modules(const vector<string>& modules_path, const vector<string>& module_names)
+vector<Module> load_modules(const module_loader& L, const vector<string>& module_names)
 {
   vector<Module> P;
   for(const string& name: module_names)
-    P.push_back(load_module(modules_path,name));
+    P.push_back(load_module(L,name));
+  return P;
+}
+
+vector<Module> load_modules(const module_loader& L, const set<string>& module_names)
+{
+  vector<Module> P;
+  for(const string& name: module_names)
+    P.push_back(load_module(L,name));
+  return P;
+}
+
+vector<Module> load_and_rename_modules(const module_loader& L, const map<string,string>& module_names)
+{
+  vector<Module> P;
+  for(const auto& x: module_names)
+    P.push_back(load_and_rename_module(L, x.first, x.second));
   return P;
 }
 
@@ -292,12 +313,12 @@ struct OperationFn: public Operation
   { }
 };
 
-expression_ref load_builtin(const vector<string>& builtins_path, const string& filename, int n, const string& fname)
+expression_ref load_builtin(const module_loader& L, const string& filename, int n, const string& fname)
 {
   // \todo:windows Make this depend on the operating system
   const string extension = ".so";
 
-  fs::path filepath = find_file_in_path(builtins_path, filename + extension);
+  fs::path filepath = find_file_in_path(L.builtins_path, filename + extension);
   return load_builtin(filepath.string(), n, fname);
 }
 

@@ -8,6 +8,7 @@
 #include "computation/expression.H"
 #include <algorithm>
 #include <iostream>
+#include "computation/model_notes.H"
 
 enum fixity_t {unknown_fix=0, non_fix=1, left_fix=2, right_fix=3};
 enum symbol_type_t {variable_symbol = 0, constructor_symbol = 1, parameter_symbol = 2, type_symbol = 3, unknown_symbol = 4};
@@ -53,7 +54,9 @@ std::string get_unqualified_name(const std::string&);
 
 std::vector<std::string> get_haskell_identifier_path(const std::string& s);
 
-class Module
+class module_loader;
+
+class Module: public Model_Notes
 {
   std::map<std::string, symbol_info> symbols;
 
@@ -122,7 +125,7 @@ public:
 
   void resolve_symbols(const std::vector<Module>&);
 
-  void load_builtins(const std::vector<std::string>&);
+  void load_builtins(const module_loader&);
 
   bool is_declared(const std::string&) const;
 
@@ -139,6 +142,7 @@ public:
   std::vector<std::string> parameter_names() const;
 
   int n_parameters() const;
+
   explicit Module(const std::string&);
 
   explicit Module(const char*);
