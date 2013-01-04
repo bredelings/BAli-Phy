@@ -2896,7 +2896,12 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
 	string reg_name = "<" + convertToString(R2) + ">";
 	if (reg_names.count(R2))
+	{
 	  reg_name = reg_names[R2];
+	  auto loc = simplify.find(reg_name);
+	  if (loc != simplify.end())
+	    reg_name = loc->second;
+	}
 	else if (constants.count(R2))
 	  reg_name = constants[R2] + " " + reg_name;
 	label += "| <" + convertToString(R2) + "> " + escape(reg_name) + " ";
@@ -2905,6 +2910,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     else if (F->head->type() == index_var_type)
     {
       expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names));
+
+      E = map_symbol_names(E, simplify);
 
       label += E->print();
       label = escape(wrap(label,40));
