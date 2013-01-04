@@ -241,6 +241,30 @@ Module load_module(const vector<string>& modules_path, const string& modid)
   return M;
 }
 
+Module load_and_rename_module(const vector<string>& modules_path, const string& modid1, const string& modid2)
+{
+  try
+  {
+    expression_ref module = load_module_from_file(modules_path,modid1);
+
+    Module M1(module);
+
+    if (M1.name != modid1)
+      throw myexception()<<"Module file '"<<modid1<<".hs' contains different module '"<<M1.name<<"'";
+
+    module = rename_module(module, modid1, modid2);
+
+    Module M2(module);
+
+    return M2;
+  }
+  catch (myexception& e)
+  {
+    e.prepend("Loading module '"+modid1+"' as '"+modid2+":\n  ");
+    throw e;
+  }
+}
+
 vector<Module> load_modules(const vector<string>& modules_path, const vector<string>& module_names)
 {
   vector<Module> P;
@@ -287,11 +311,20 @@ expression_ref load_builtin(const string& filename, int n, const string& fname)
   // reset errors
   dlerror();
     
+  string symbol_name1 = "builtin_function_"+fname;
+  string symbol_name2 = "builtin_function";
+
   // load the symbols
-  void* fn =  dlsym(library, "builtin_function");
+  void* fn =  dlsym(library, symbol_name1.c_str());
   const char* dlsym_error = dlerror();
   if (dlsym_error)
-    throw myexception() << "Cannot load symbol create: " << dlsym_error;
+  {
+    fn =  dlsym(library, symbol_name2.c_str());
+    dlsym_error = dlerror();
+  }
+
+  if (dlsym_error)
+    throw myexception() << "Cannot load symbol for builtin '"<<fname<<"' from file '"<<filename<<": " << dlsym_error;
     
   // Create the operation
   OperationFn O(fn, n, fname);
