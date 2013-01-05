@@ -425,15 +425,11 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
   vector<expression_ref> decls;
   for(int i=0;i<v.size();i++)
   {
-    if (is_AST(v[i],"EmptyDecl")) continue;
-
-    if (is_AST(v[i],"FixityDecl"))
+    if (not is_AST(v[i],"Decl"))
     {
       decls.push_back(v[i]);
       continue;
     }
-
-    if (not is_AST(v[i],"Decl")) continue;
 
     // If its not a function binding, accept it as is, and continue.
     if (object_ptr<const dummy> d = v[i]->sub[0].is_a<dummy>())
@@ -541,9 +537,8 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       // Find all the names bound here
       for(auto& e: v)
       {
-	if (is_AST(e,"EmptyDecl")) continue;
-	if (is_AST(e,"FixityDecl")) continue;
 	if (not is_AST(e,"Decl")) continue;
+
 	// Translate funlhs2 and funlhs3 declaration forms to funlhs1 form.
 	e = translate_funlhs_decl(e);
 
@@ -557,7 +552,6 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       // Replace ids with dummies
       for(auto& e: v)
       {
-	if (is_AST(e,"EmptyDecl")) continue;
 	if (is_AST(e,"FixityDecl")) continue;
 	e = desugar(m, e, bound2);
       }
@@ -954,7 +948,8 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       for(auto& e: v)
 	e = desugar(m, e, bound);
 
-      return new expression{ constructor(con_name,v.size()), v};
+      expression_ref note = { constructor(con_name,v.size()), v};
+      return {E->head,{note}};
     }
     else if (n->type == "BugsDefaultValue")
     {
@@ -962,8 +957,9 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	e = desugar(m, e, bound);
 
       expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
+      expression_ref note = (default_value, v[0], v[1]);
 
-      return (default_value, v[0], v[1]);
+      return {E->head,{note}};
     }
     else if (n->type == "BugsDist" or n->type == "BugsExternalDist" or n->type == "BugsDataDist")
     {
@@ -972,7 +968,8 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       // Fields: (prob_density) (random vars) (parameter expressions)
       expression_ref distributed = lambda_expression( constructor(":~",2) );
 
-      return (distributed, v[0], v[1]);
+      expression_ref note = (distributed, v[0], v[1]);
+      return {E->head,{note}};
     }
   }
 

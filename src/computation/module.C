@@ -366,7 +366,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
 	is_AST(note,"BugsDist") or
 	is_AST(note,"BugsDefaultValue") or
 	is_AST(note,"BugsNote"))
-      add_note(note);
+      add_note(note->sub[0]);
 
   // 3. Convert top-level dummies into global vars.
   vector<expression_ref> decls_sub = decls->sub;
