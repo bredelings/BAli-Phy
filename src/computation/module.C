@@ -366,8 +366,24 @@ void Module::resolve_symbols(const std::vector<Module>& P)
   // 1. Desugar the module
   expression_ref decls = desugar(*this,topdecls);
   
-  // 2. Add notes
-  for(const auto& note: decls->sub)
+  // 2. Convert top-level dummies into global vars, in both decls AND notes.
+  vector<expression_ref> decls_sub = decls->sub;
+  for(auto& decl: decls_sub)
+    for(auto& p: symbols)
+    {
+      const auto& S = p.second;
+      if (S.symbol_type != variable_symbol) continue;
+      if (S.scope != local_scope) continue;
+      
+      string qname = S.name;
+      string name = get_unqualified_name(qname);
+      
+      decl = substitute(decl,dummy(qname),var(qname));
+      decl = substitute(decl,dummy( name),var(qname));
+    }
+  
+  // 3. Add notes
+  for(const auto& note: decls_sub)
     if (is_AST(note,"BugsDataDist") or
 	is_AST(note,"BugsExternalDist") or
 	is_AST(note,"BugsDist") or
@@ -375,23 +391,6 @@ void Module::resolve_symbols(const std::vector<Module>& P)
 	is_AST(note,"BugsNote"))
       add_note(note->sub[0]);
 
-  // 3. Convert top-level dummies into global vars.
-  vector<expression_ref> decls_sub = decls->sub;
-  for(auto& decl: decls_sub)
-    if (is_AST(decl,"Decl"))
-      for(auto& p: symbols)
-      {
-	const auto& S = p.second;
-	if (S.symbol_type != variable_symbol) continue;
-	if (S.scope != local_scope) continue;
-
-	string qname = S.name;
-	string name = get_unqualified_name(qname);
-	
-	decl = substitute(decl,dummy(qname),var(qname));
-	decl = substitute(decl,dummy( name),var(qname));
-      }
-  
   // 4. Define the symbols
   for(const auto& decl: decls_sub)
     if (is_AST(decl,"Decl"))
