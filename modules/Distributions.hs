@@ -31,6 +31,8 @@ mixtureDefault ((p1,(ProbDensity _ _ _ d _,args1)):l) = (d args1);
 dirichletDefault l = let {n = length l} in replicate n 1.0/(intToDouble n);
 iidDefault l = let {n = length l} in replicate n 1.0/(intToDouble n);
 
+mixtureRange ((_,(ProbDensity _ _ _ _ r,args1)):_) = (r args1);
+
 betaDist  =       (ProbDensity "Beta"        betaDensity        betaQuantile (\args->0.5) 0);
 
 bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p));
@@ -39,7 +41,7 @@ normal args = (ProbDensity "Normal" normalDensity () (\_->0.0) (\_->realLine), a
 exponential args = (ProbDensity "Exponential" exponentialDensity exponentialQuantile (\mu->mu) (\_->above 0.0), args);
 gamma args = (ProbDensity "Gamma" gammaDensity gammaQuantile (\(a,b)->a*b) (\_->above 0.0), args);
 beta args = (ProbDensity "Beta"        betaDensity        betaQuantile (\(a,b)->a/(a+b)) (\_->between 0.0 1.0), args);
-mixture args = (ProbDensity "Mixture" mixtureDensity () mixtureDefault (\_->()), args);
+mixture args = (ProbDensity "Mixture" mixtureDensity () mixtureDefault mixtureRange, args);
 dirichlet args = (ProbDensity "Dirichlet" dirichletDensity (error "Dirichlet has no quantiles") () (), args);
 laplace args = (ProbDensity "Laplace" laplaceDensity () (\(m,s)->m) (\_->realLine), args);
 logLaplace args = (ProbDensity "LogLaplace" logLaplaceDensity () (\(m,s)->exp m) (\_->above 0.0), args);
