@@ -275,7 +275,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     const Triplets* T = dynamic_cast<const Triplets*>(&*a);
     formula_expression_ref nuc_S = prefix_formula("nuc",HKY_Model(T->getNucleotides()));
     if (T) 
-      return (Singlet_to_Triplet_Exchange, *T,nuc_S);
+      return (submodel_expression("HKYx3"), *T);
     else
       throw myexception()<<"HKYx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
