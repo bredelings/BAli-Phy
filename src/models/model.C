@@ -101,6 +101,8 @@ void Model::recalc_all()
 
 int Model::add_parameter(const string& name)
 {
+  assert(changed.size() == n_parameters());
+
   for(int i=0;i<n_parameters();i++)
     if (parameter_name(i) == name)
       throw myexception()<<"A parameter with name '"<<name<<"' already exists - cannot add another one.";
@@ -186,14 +188,20 @@ vector<int> Model::add_submodel(const Model_Notes& N)
       throw myexception()<<"Submodel declares existing parameter '"<<name<<"'!";
   
   // 4. Add the notes from this model to the current model.
+  int old_n_parameters=n_parameters();
   for(const auto& n: N.get_notes())
     add_note(n);
+
+  for(int i=old_n_parameters;i<n_parameters();i++)
+    new_parameters.push_back( i );
   
   // 5. Set default values.
   //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
   for(int index: new_parameters)
     if (not C.parameter_is_set(index))
       C.set_parameter_value_expression(index, C.default_parameter_value(index));
+
+  assert(changed.size() == n_parameters());
 
   return new_parameters;
 }
@@ -239,6 +247,13 @@ int Model::find_parameter(const string& s) const
 int Model::add_note(const expression_ref& E)
 {
   int index = C.add_note(E);
+
+  for(int i=changed.size();i<n_parameters();i++)
+  {
+    changed.push_back(true);
+    bounds.push_back(-1);
+    prior_note_index.push_back(-1);
+  }
 
   // Only process the note if we haven't seen it already.
   if (index == C.n_notes()-1)
