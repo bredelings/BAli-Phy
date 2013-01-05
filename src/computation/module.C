@@ -425,7 +425,10 @@ bool Module::is_declared(const std::string& name) const
 
 bool Module::is_declared_local(const std::string& name) const
 {
-  return lookup_symbol(name).scope == local_scope;
+  auto loc = symbols.find(name);
+  if (loc == symbols.end()) return false;
+
+  return (loc->second.scope == local_scope);
 }
 
 symbol_info Module::lookup_builtin_symbol(const std::string& name)
