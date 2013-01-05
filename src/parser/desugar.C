@@ -1024,7 +1024,7 @@ Module read_BUGS(const Parameters& P, const string& filename, const string& modu
   // 3. Add Loggers for any locally declared parameters
   expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
   for(const auto& name: BUGS.parameter_names())
-    BUGS.add_note((make_logger,parameter(BUGS.name + "." + name)));
+    BUGS.add_note((make_logger,parameter(name)));
 
   return BUGS;
 }
