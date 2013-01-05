@@ -90,6 +90,8 @@ int context::add_note(const expression_ref& E)
     string modid2 = *E->sub[1].assert_is_a<String>();
     Program& PP = *P.modify();
 
+    int old_n_parameters = n_parameters();
+
     // Get module_names, but in a set<string>
     set<string> old_module_names = module_names_set(PP);
 
@@ -102,6 +104,10 @@ int context::add_note(const expression_ref& E)
 	new_module_names.push_back(module.name);
 
     allocate_identifiers_for_modules(new_module_names);
+
+    for(int index = old_n_parameters;index<n_parameters();index++)
+      if (not parameter_is_set(index))
+	set_parameter_value_expression(index, default_parameter_value(index));
   }
   
   return Model_Notes::add_note( E );
@@ -577,6 +583,8 @@ context& context::operator+=(const vector<Module>& P2)
 {
   Program& PP = *P.modify();
 
+  int old_n_parameters = n_parameters();
+
   // Get module_names, but in a set<string>
   set<string> old_module_names = module_names_set(PP);
 
@@ -590,6 +598,12 @@ context& context::operator+=(const vector<Module>& P2)
       new_module_names.push_back(module.name);
 
   allocate_identifiers_for_modules(new_module_names);
+
+  // 3. Set default values for any new parameters added.
+  //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
+  for(int index = old_n_parameters;index<n_parameters();index++)
+    if (not parameter_is_set(index))
+      set_parameter_value_expression(index, default_parameter_value(index));
 
   return *this;
 }

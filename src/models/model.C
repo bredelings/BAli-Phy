@@ -167,13 +167,6 @@ vector<int> Model::add_submodel(const Module& M)
   for(int i=old_n_notes;i<n_notes();i++)
     process_note(i);
 
-  // 2. Set default values.
-  // \\todo FIXME: cleanup: move this to C += {M}?
-  //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
-  for(int index: new_parameters)
-    if (not C.parameter_is_set(index))
-      C.set_parameter_value_expression(index, C.default_parameter_value(index));
-
   return new_parameters;
 }
 
