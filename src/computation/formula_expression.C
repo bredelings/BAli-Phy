@@ -2,6 +2,7 @@
 #include "bounds.H"
 #include "context.H"
 #include "computation/module.H"
+#include "parser/AST.H"
 
 /* 1. So a formula_expression_ref is basically a model.
      It is a single evaluatable expression E with annotations (*notes*) N about its parameters.
@@ -61,12 +62,37 @@ formula_expression_ref substitute(const formula_expression_ref& R, const express
   return {substitute(N,E1,E2), substitute(R.exp(), E1, E2)};
 }
 
+formula_expression_ref rename_module(const formula_expression_ref F, const string& modid1, const string& modid2)
+{
+  formula_expression_ref F2 = F;
+  for(auto& note: F2.get_notes())
+    note = rename_module(note, modid1, modid2);
+  F2.set_exp(rename_module(F2.exp(), modid1, modid2));
+  return F2;
+}
+
 formula_expression_ref prefix_formula(const std::string& prefix,const formula_expression_ref& R)
 {
   set<string> declared_parameter_names = find_declared_parameters(R.get_notes());
   formula_expression_ref R2 = R;
   for(const auto& name: declared_parameter_names)
     R2 = substitute(R2, parameter(name), parameter(prefix+"."+name));
+
+  // Add prefixes to the import_submodel notes.
+  vector<string> submodel_names;
+  for(auto& note: R2.get_notes())
+    if (is_AST(note,"import_submodel_note"))
+    {
+      string modid1 = *note->sub[0].assert_is_a<String>();
+      string modid2 = *note->sub[1].assert_is_a<String>();
+      submodel_names.push_back(modid2);
+      modid2 = prefix + "." + modid2;
+      note = {note->head,{String(modid1),String(modid2)}};
+    }
+
+  for(const auto& modid: submodel_names)
+    R2 = rename_module(R2, modid, prefix + "." + modid);
+
   return R2;
 }
 
@@ -237,3 +263,17 @@ formula_expression_ref get_list(const vector<formula_expression_ref>& v)
 
   return F;
 }
+
+formula_expression_ref submodel_expression(const string& modid1, const string& modid2)
+{
+  expression_ref note = {AST_node("import_submodel_note"),{String(modid1),String(modid2)}};
+  return {vector<expression_ref>{note}, var(modid2+".main")};
+}
+
+formula_expression_ref submodel_expression(const string& modid)
+{
+  return submodel_expression(modid,modid);
+}
+
+
+
