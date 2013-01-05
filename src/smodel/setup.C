@@ -233,7 +233,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     if (not N)
       throw myexception()<<"HKY: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-    return HKY_Model(*a);
+    return (submodel_expression("HKY"),*a);
   }
   else if (model_args[0] == "TN")
   {
@@ -243,7 +243,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     if (not N)
       throw myexception()<<"TN: '"<<a->name<<"' is not a nucleotide alphabet.";
 
-    return TN_Model(*a);
+    return (submodel_expression("TN"),*a);
   }
   else if (model_args[0] == "GTR")
   {
