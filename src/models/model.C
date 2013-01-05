@@ -246,6 +246,8 @@ int Model::find_parameter(const string& s) const
 
 int Model::add_note(const expression_ref& E)
 {
+  int old_n_notes = n_notes();
+
   int index = C.add_note(E);
 
   for(int i=changed.size();i<n_parameters();i++)
@@ -255,9 +257,9 @@ int Model::add_note(const expression_ref& E)
     prior_note_index.push_back(-1);
   }
 
-  // Only process the note if we haven't seen it already.
-  if (index == C.n_notes()-1)
-    process_note(index);
+  // Only process notes that we haven't seen already.
+  for(int i= old_n_notes;i < n_notes();i++)
+    process_note(i);
 
   return index;
 }
