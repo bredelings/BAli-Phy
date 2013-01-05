@@ -220,8 +220,7 @@ log_double_t log_normal_pdf(double x, double mu, double sigma)
 {
   assert(sigma >= 0);
 
-  log_double_t Pr = 1;
-  Pr.log() = normal_pdf(log(x),mu,sigma)-log(x);
+  log_double_t Pr = normal_pdf(log(x),mu,sigma)/x;
   return Pr;
 }
 
