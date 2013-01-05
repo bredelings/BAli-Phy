@@ -338,9 +338,13 @@ void Module::resolve_symbols(const std::vector<Module>& P)
       assert(i == impdecl->sub.size());
       
       if (submodel){
+	// module M where { import submodel A as B } => 
+	// 1. load A
+	// 2. Rename it to M.B
+	// 3. Import it (e.g M.B) as B;
+	
 	// Note that the loaded module is imp_module_name, though.
 	imp_module_name = name+"."+imp_module_name_as;
-	imp_module_name_as = imp_module_name;
       }
 
       Module M = find_module(imp_module_name,P);
