@@ -8,6 +8,6 @@ module GTR where
   note ac := 1.0/8.0;
   note gt := 1.0/8.0;
   note gc := 1.0/8.0;
-  note tc := 1.0/8.0;
-  main = \nuca -> gtr nuca ag at ac gt gc tc;
+  note tc := 2.0/8.0;
+  main nuca = gtr nuca ag at ac gt gc tc;
 }
