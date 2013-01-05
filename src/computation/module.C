@@ -1053,17 +1053,20 @@ expression_ref rename_module(const expression_ref& E, const std::string& modid1,
 
   // Rename parameters
   else if (auto p = is_a<parameter>(E))
-    throw myexception()<<"Found parameter while renaming module: this is illegal.";
-  //    return parameter( rename_module(p->parameter_name, modid1, modid2) );
+    return parameter( rename_module(p->parameter_name, modid1, modid2) );
 
   // Rename vars
   else if (auto V = is_a<var>(E))
-    throw myexception()<<"Found var while renaming module: this is illegal.";
-  //    return var( rename_module(V->name, modid1, modid2) );
+    return var( rename_module(V->name, modid1, modid2) );
 
   // Rename dummies
   else if (auto D = is_a<dummy>(E))
-    throw myexception()<<"Found dummy while renaming module: this is illegal.";
+  {
+    dummy d2 = *D;
+    if (d2.name.size() and is_qualified_symbol(d2.name))
+      d2.name = rename_module(d2.name, modid1, modid2);
+    return d2;
+  }
 
   // Other constants have no parts, and don't need to be resolved
   if (not E->size()) return E;

@@ -159,5 +159,6 @@ std::ostream& operator<<(std::ostream&, const Module&);
 expression_ref resolve_refs(const std::vector<Module>&, const expression_ref&);
 
 // Rename parts of the AST!
+std::string rename_module(const std::string& s, const std::string& modid1, const std::string& modid2);
 expression_ref rename_module(const expression_ref&, const std::string&, const std::string&);
 #endif
