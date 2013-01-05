@@ -255,7 +255,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
 
     // FIXME - allow/make a general GTR model!
 
-    return GTR_Model(*a);
+    return (submodel_expression("GTR"),*a);
   }
   /*
   else if (model_args[0] == "EQUx3")) {
