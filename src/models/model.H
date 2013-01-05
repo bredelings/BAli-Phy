@@ -187,6 +187,8 @@ public:
 
   int add_note(const expression_ref&);
 
+  void process_note(int);
+
   int find_match_notes(const expression_ref& e, std::vector<expression_ref>&,int) const;
 
   // Add a Module, including any notes and declared parameters.

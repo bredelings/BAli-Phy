@@ -147,6 +147,7 @@ std::vector< object_ptr<const Object> > Model::get_parameter_values() const
 vector<int> Model::add_submodel(const Module& M)
 {
   // 1. Load the module, perform imports, and resolve its symbols.
+  int old_n_notes = n_notes();
   C += {M};
 
   // 3. Check that no parameters are declared via notes, here.
@@ -162,6 +163,9 @@ vector<int> Model::add_submodel(const Module& M)
     bounds.push_back(-1);
     prior_note_index.push_back(-1);
   }
+
+  for(int i=old_n_notes;i<n_notes();i++)
+    process_note(i);
 
   // 2. Set default values.
   // \\todo FIXME: cleanup: move this to C += {M}?
@@ -243,9 +247,15 @@ int Model::add_note(const expression_ref& E)
 {
   int index = C.add_note(E);
 
-  // Quit if we've seen this already
-  if (index != C.n_notes()-1) return index;
+  // Only process the note if we haven't seen it already.
+  if (index == C.n_notes()-1)
+    process_note(index);
 
+  return index;
+}
+
+void Model::process_note(int index)
+{
   // 1. Check to see if this expression adds a bound.
   expression_ref query = (var_bounds, match(0), match(1));
 
@@ -255,7 +265,7 @@ int Model::add_note(const expression_ref& E)
     object_ptr<const parameter> var = is_a<parameter>(results[0]);
     int param_index = find_parameter(var->parameter_name);
     if (param_index == -1)
-      throw myexception()<<"Cannot add bound '"<<E<<"' on missing variable '"<<var->parameter_name<<"'";
+      throw myexception()<<"Cannot add bound '"<<C.get_note(index)<<"' on missing variable '"<<var->parameter_name<<"'";
     set_bounds(param_index , results[1]);
   }
 
@@ -308,8 +318,6 @@ int Model::add_note(const expression_ref& E)
 	set_bounds(p_index,(var("Distributions.distRange"),D));
     }
   }
-
-  return index;
 }
 
 bool Model::is_random_variable(int i) const
