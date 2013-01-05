@@ -281,25 +281,22 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
   {
     check_n_args(model_args, 0);
 
-    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
-    formula_expression_ref nuc_S = prefix_formula("nuc",TN_Model(T->getNucleotides()));
-    if (T) 
-      return (Singlet_to_Triplet_Exchange, *T, nuc_S);
+    if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
+      return (submodel_expression("TNx3"), *T);
     else
       throw myexception()<<"TNx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
-  else if (model_args[0] == "GTRx3") 
+  else if (model_args[0] == "GTRx3")
   {
     check_n_args(model_args, 0);
 
-    const Triplets* T = dynamic_cast<const Triplets*>(&*a);
-    formula_expression_ref nuc_S = prefix_formula("nuc",GTR_Model(T->getNucleotides()));
-    if (T) 
-      return (Singlet_to_Triplet_Exchange, *T, nuc_S);
+    if (const Triplets* T = dynamic_cast<const Triplets*>(&*a))
+      return (submodel_expression("GTRx3"), *T);
     else
       throw myexception()<<"GTRx3: '"<<a->name<<"' is not a triplet alphabet.";
   }
-  else if (model_args[0] == "PAM") {
+  else if (model_args[0] == "PAM")
+  {
     check_n_args(model_args, 0);
 
     if (*a != AminoAcids())
@@ -366,7 +363,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     // S = HKY.main
     // .. or ..
     // S = submodel HKY
-    formula_expression_ref S1 = HKY_Model( N );
+    formula_expression_ref S1 = (submodel_expression("HKY"), N);
     if (model_args[2] != "")
     {
       S1 = coerce_to_EM(L,model_args[2], const_ptr(N), {});
@@ -651,7 +648,7 @@ formula_expression_ref get_M0_omega_function(const module_loader& L,
   if (model_args.size() < where+2)
     model_args.resize(where+2);
 
-  formula_expression_ref S1 = HKY_Model( N );
+  formula_expression_ref S1 = (submodel_expression("HKY"),N);
   if (model_args[where] != "")
   {
     S1 = coerce_to_EM(L, model_args[where], const_ptr(N), {});

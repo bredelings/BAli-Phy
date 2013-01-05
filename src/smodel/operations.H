@@ -13,11 +13,6 @@
 #include "computation/operation.H"
 #include "computation/computation.H"
 
-extern const expression_ref TN;
-extern const expression_ref HKY;
-extern const expression_ref GTR;
-extern const expression_ref Singlet_to_Triplet_Exchange;
-
 namespace substitution {
 
   struct Plus_gwF_Op: public Operation
@@ -141,8 +136,6 @@ namespace substitution {
     HKY_Op():Operation(2) { }
   };
 
-  formula_expression_ref HKY_Model(const alphabet& a);
-  
   struct TN_Op: public Operation
   {
     TN_Op* clone() const {return new TN_Op;}
@@ -164,8 +157,6 @@ namespace substitution {
     TN_Op():Operation(3) { }
   };
 
-  formula_expression_ref TN_Model(const alphabet& a);
-  
   struct GTR_Op: public Operation
   {
     GTR_Op* clone() const {return new GTR_Op;}
@@ -187,8 +178,6 @@ namespace substitution {
     GTR_Op():Operation(7) { }
   };
 
-  formula_expression_ref GTR_Model(const alphabet& a);
-  
   struct Singlet_to_Triplet_Exchange_Op: public Operation
   {
     Singlet_to_Triplet_Exchange_Op* clone() const {return new Singlet_to_Triplet_Exchange_Op(*this);}

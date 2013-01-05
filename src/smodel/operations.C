@@ -14,11 +14,6 @@ using boost::dynamic_pointer_cast;
 using std::istringstream;
 using std::istream;
 
-const expression_ref HKY = lambda_expression( substitution::HKY_Op());
-const expression_ref TN = lambda_expression( substitution::TN_Op());
-const expression_ref GTR = lambda_expression( substitution::GTR_Op());
-const expression_ref Singlet_to_Triplet_Exchange = lambda_expression( substitution::Singlet_to_Triplet_Exchange_Op() );
-
 namespace substitution
 {
   object_ptr<const Object> Plus_gwF_Function(const alphabet& a, double f, const vector<double>& pi_)
@@ -218,13 +213,6 @@ namespace substitution
     return HKY_Function(*N,kappa);
   }
 
-  formula_expression_ref HKY_Model(const alphabet& a)
-  {
-    formula_expression_ref kappa = def_parameter("HKY.kappa", 2.0, lower_bound(0.0), (var("logLaplace"), Tuple(log(2), 0.25)));
-
-    return (HKY, a, kappa);
-  }
-  
   object_ptr<const Object> TN_Function(const Nucleotides& a, double kappa1, double kappa2)
   {
     assert(a.size()==4);
@@ -256,14 +244,6 @@ namespace substitution
     return TN_Function(*N,kappa1,kappa2);
   }
 
-  formula_expression_ref TN_Model(const alphabet& a)
-  {
-    formula_expression_ref kappa1 = def_parameter("TN.kappaPur", 2.0, lower_bound(0.0), (var("logLaplace"), Tuple(log(2), 0.25)));
-    formula_expression_ref kappa2 = def_parameter("TN.kappaPyr", 2.0, lower_bound(0.0), (var("logLaplace"), Tuple(log(2), 0.25)));
-
-    return (TN, a, kappa1, kappa2);
-  }
-  
   object_ptr<const Object> GTR_Function(const Nucleotides& a, 
 					double AG, double AT, double AC,
 					double GT, double GC, 
@@ -302,28 +282,6 @@ namespace substitution
     return GTR_Function(*N,AG,AT,AC,GT,GC,TC);
   }
 
-  formula_expression_ref GTR_Model(const alphabet& a)
-  {
-    formula_expression_ref AG = def_parameter("GTR.ag", 2.0/8, between(0.0,1.0));
-    formula_expression_ref AT = def_parameter("GTR.at", 1.0/8, between(0.0,1.0));
-    formula_expression_ref AC = def_parameter("GTR.ac", 1.0/8, between(0.0,1.0));
-    formula_expression_ref GT = def_parameter("GTR.gt", 1.0/8, between(0.0,1.0));
-    formula_expression_ref GC = def_parameter("GTR.gc", 1.0/8, between(0.0,1.0));
-    formula_expression_ref TC = def_parameter("GTR.tc", 2.0/8, between(0.0,1.0));
-
-    formula_expression_ref R = (GTR, a, AG, AT, AC, GT, GC, TC);
-
-    // I should generalize this...
-    // Should I make a tuple of tuples?
-    R.add_expression((distributed, 
-		      AG&(AT&(AC&(GT&(GC&(TC&ListEnd))))),
-		      (var("dirichlet"), List(8.0, 4.0, 4.0, 4.0, 4.0, 8.0) )
-		      )
-		     );
-
-    return R;
-  }
-  
   object_ptr<const Object> M0_Function(const Codons& C, const SymmetricMatrixObject& S2,double omega)
   {
     object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject );
