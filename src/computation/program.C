@@ -86,6 +86,45 @@ map<string,string> unresolved_submodel_imports(const vector<Module>& P)
   return submodels_to_add;
 }
 
+void add_missing_imports(const module_loader& L, vector<Module>& P, Model_Notes& N)
+{
+  // 1. Perform a closure over missing modules.
+  std::set<string> modules_to_add;
+  std::map<string,string> submodels_to_add;
+
+  do
+  {
+    for(const string& module_name: modules_to_add)
+      P.push_back(load_module(L, module_name));
+
+    for(const auto& x: submodels_to_add)
+      P.push_back(load_and_rename_module(L, x.first, x.second));
+
+    modules_to_add = unresolved_imports(P);
+    submodels_to_add = unresolved_submodel_imports(P);
+  } 
+  while (not modules_to_add.empty() or not submodels_to_add.empty());
+  
+  // 2. Process new modules and 
+  for(auto& module: P)
+    if (not module.is_resolved())
+    {
+      try {
+	module.load_builtins(L);
+	module.resolve_symbols(P);
+	N.add_notes( module.get_notes() );
+      }
+      catch (myexception& e)
+      {
+	std::ostringstream o;
+	o<<"In module '"<<module.name<<"': ";
+	e.prepend(o.str());
+	throw e;
+      }
+    }
+  
+}
+
 void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector<Module>& modules)
 {
   // Get module_names, but in a set<string>
@@ -113,41 +152,8 @@ void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector
     assert(count_module(P, module.name) == 1);
 #endif
 
-  // 5. Add any additional modules needed to complete the program.
-  std::set<string> modules_to_add;
-  std::map<string,string> submodels_to_add;
-
-  do
-  {
-    for(const string& module_name: modules_to_add)
-      P.push_back(load_module(L, module_name));
-
-    for(const auto& x: submodels_to_add)
-      P.push_back(load_and_rename_module(L, x.first, x.second));
-
-    modules_to_add = unresolved_imports(P);
-    submodels_to_add = unresolved_submodel_imports(P);
-  } 
-  while (not modules_to_add.empty() or not submodels_to_add.empty());
-
-  // 6a. Perform any needed imports.
-  // 6b. Desugar the module here.
-  for(auto& module: P)
-    if (not old_module_names.count(module.name))
-    {
-      try {
-	module.load_builtins(L);
-	module.resolve_symbols(P);
-	N.add_notes( module.get_notes() );
-      }
-      catch (myexception& e)
-      {
-	std::ostringstream o;
-	o<<"In module '"<<module.name<<"': ";
-	e.prepend(o.str());
-	throw e;
-      }
-    }
+  // 5. Import any modules that are (transitively) implied by the ones we just loaded.
+  add_missing_imports(L, P, N);
 }
 
 bool is_declared(const vector<Module>& modules, const string& qvar)

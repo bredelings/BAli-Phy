@@ -62,6 +62,8 @@ class Module: public Model_Notes
 
   std::multimap<std::string, std::string> aliases;
 
+  bool resolved = false;
+
 public:
 
   expression_ref module;
@@ -70,6 +72,8 @@ public:
   expression_ref topdecls;
   
   std::string name;
+
+  bool is_resolved() const {return resolved;}
 
   std::set<std::string> dependencies() const;
 

@@ -315,6 +315,9 @@ map<string,string> Module::submodel_dependencies() const
 
 void Module::resolve_symbols(const std::vector<Module>& P)
 {
+  if (resolved) return;
+  resolved = true;
+
   bool saw_Prelude = false;
   if (impdecls)
     for(const auto& impdecl:impdecls->sub)

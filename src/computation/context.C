@@ -4,6 +4,7 @@
 #include "module.H"
 #include "let-float.H"
 #include "parser/desugar.H"
+#include "parser/AST.H"
 
 using std::string;
 using std::vector;
@@ -78,6 +79,31 @@ reg_heap::root_t context::add_identifier(const string& name) const
 
 int context::add_note(const expression_ref& E)
 {
+  if (is_AST(E, "import_note"))
+  {
+    string modid = *E->sub[0].assert_is_a<String>();
+    (*this) += {modid};
+  }
+  else if (is_AST(E, "import_submodel_note"))
+  {
+    string modid1 = *E->sub[0].assert_is_a<String>();
+    string modid2 = *E->sub[1].assert_is_a<String>();
+    Program& PP = *P.modify();
+
+    // Get module_names, but in a set<string>
+    set<string> old_module_names = module_names_set(PP);
+
+    PP.push_back(load_and_rename_module(get_module_loader(), modid1, modid2));
+    add_missing_imports(get_module_loader(), PP, (*this));
+
+    vector<string> new_module_names;
+    for(auto& module: PP)
+      if (not old_module_names.count(module.name))
+	new_module_names.push_back(module.name);
+
+    allocate_identifiers_for_modules(new_module_names);
+  }
+  
   return Model_Notes::add_note( E );
 }
 
@@ -485,6 +511,67 @@ context& context::operator+=(const vector<string>& module_names)
   return operator+=(load_modules(get_module_loader(), module_names));
 }
 
+void context::allocate_identifiers_for_modules(const vector<string>& module_names)
+{
+  // 2. Give each identifier a pointer to an unused location; define parameter bodies.
+  for(const auto& name: module_names)
+  {
+    const Module& M = get_module(*P, name);
+
+    for(const auto& s: M.get_symbols())
+    {
+      const symbol_info& S = s.second;
+
+      if (S.scope != local_scope) continue;
+
+      if (S.symbol_type == variable_symbol or S.symbol_type == constructor_symbol)
+      {
+	if (identifiers().count(S.name))
+	  throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined!";
+
+	add_identifier(S.name);
+      }
+      else if (S.symbol_type == parameter_symbol)
+      {
+	  assert(find_parameter(S.name) == -1);
+
+	  root_t r = allocate_reg();
+	  parameters().push_back( r );
+
+	  access(*r).changeable = true;
+	  set_C(*r, parameter(S.name) );
+      }
+    }
+  }
+      
+  // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
+  for(const auto& name: module_names)
+  {
+    const Module& M = get_module(*P, name);
+
+    for(const auto& s: M.get_symbols())
+    {
+      const symbol_info& S = s.second;
+
+      if (S.scope != local_scope) continue;
+
+      if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
+
+      // get the root for each identifier
+      map<string, root_t>::iterator loc = identifiers().find(S.name);
+      assert(loc != identifiers().end());
+      root_t r = loc->second;
+      int R = *r;
+
+      expression_ref F = M.get_function(S.name);
+      assert(F);
+
+      assert(R != -1);
+      set_C(R, preprocess(F) );
+    }
+  }
+}
+
 // \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
 context& context::operator+=(const vector<Module>& P2)
 {
@@ -497,56 +584,12 @@ context& context::operator+=(const vector<Module>& P2)
   add(loader, PP, *this, P2);
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
+  vector<string> new_module_names;
   for(auto& module: PP)
     if (not old_module_names.count(module.name))
-      for(const auto& s: module.get_symbols())
-      {
-	const symbol_info& S = s.second;
-	
-	if (S.scope != local_scope) continue;
-	
-	if (S.symbol_type == variable_symbol or S.symbol_type == constructor_symbol)
-	{
-	  if (identifiers().count(S.name))
-	    throw myexception()<<"Trying to define symbol '"<<S.name<<"' that is already defined!";
-	
-	  add_identifier(S.name);
-	}
-	else if (S.symbol_type == parameter_symbol)
-	{
-	  assert(find_parameter(S.name) == -1);
+      new_module_names.push_back(module.name);
 
-	  root_t r = allocate_reg();
-	  parameters().push_back( r );
-
-	  access(*r).changeable = true;
-	  set_C(*r, parameter(S.name) );
-	}
-      }
-      
-  // 3. Use these locations to translate these identifiers, at the cost of up to 1 indirection per identifier.
-  for(auto& module: PP)
-    if (not old_module_names.count(module.name))
-      for(const auto& s: module.get_symbols())
-      {
-	const symbol_info& S = s.second;
-
-	if (S.scope != local_scope) continue;
-
-	if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
-
-	// get the root for each identifier
-	map<string, root_t>::iterator loc = identifiers().find(S.name);
-	assert(loc != identifiers().end());
-	root_t r = loc->second;
-	int R = *r;
-
-	expression_ref F = module.get_function(S.name);
-	assert(F);
-
-	assert(R != -1);
-	set_C(R, preprocess(F) );
-      }
+  allocate_identifiers_for_modules(new_module_names);
 
   return *this;
 }
@@ -574,6 +617,10 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
 {
   vector<int> new_parameters;
 
+  // 3. Add the notes from this model to the current model.
+  for(const auto& n: N)
+    C.add_note(n);
+  
   // 1. Find and the declared parameter names
   std::set<string> declared_parameter_names = find_declared_parameters(N);
   if (not includes(declared_parameter_names, find_named_parameters(N)))
@@ -588,10 +635,6 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
     }
     else
       throw myexception()<<"Submodel declares existing parameter '"<<name<<"'!";
-  
-  // 3. Add the notes from this model to the current model.
-  for(const auto& n: N)
-    C.add_note(n);
   
   // 4. Set default values for newly declared parameters
   for(int index: new_parameters)

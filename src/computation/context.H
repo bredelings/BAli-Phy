@@ -187,6 +187,8 @@ public:
 
   const std::vector<std::string>& get_builtins_path() const;
 
+  void allocate_identifiers_for_modules(const std::vector<std::string>& module_names);
+
   context& operator+=(const std::vector<Module>& D);
 
   context& operator+=(const std::vector<std::string>& module_names);
