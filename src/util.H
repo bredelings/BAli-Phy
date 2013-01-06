@@ -288,12 +288,8 @@ bool includes(const std::map<T,U>& s1, const T& t)
 template <typename T>
 void add(std::set<T>& S1, const std::set<T>& S2)
 {
-  std::set<T> result;
-  std::merge(S1.begin(), S1.end(),
-	     S2.begin(), S2.end(),
-	     std::inserter(result, result.begin())
-	);
-  S1.swap(result);
+  for(const auto& s:S2)
+    S1.insert(s);
 }
 
 template <typename T>
