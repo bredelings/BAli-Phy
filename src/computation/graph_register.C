@@ -1184,7 +1184,7 @@ void reg_heap::compute_ownership_categories()
 
 void reg_heap::collect_garbage()
 {
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   std::cerr<<"***********Garbage Collection******************"<<std::endl;
   check_used_regs();
 #endif
@@ -1192,7 +1192,7 @@ void reg_heap::collect_garbage()
 
   trace_and_reclaim_unreachable();
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   cerr<<"Regs: "<<n_used_regs()<<"/"<<n_regs()<<endl;
   cerr<<"#roots = "<<roots.size()<<endl;
   check_used_regs();
@@ -1939,7 +1939,7 @@ void reg_heap::remove_ownership_mark(int t)
     access(here).owners.set(t,false);
   */
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   for(const auto& i: canonical_ownership_categories)
     assert(i.first == *i.second);
   check_used_regs();
@@ -1971,7 +1971,7 @@ void reg_heap::duplicate_ownership_mark(int t1, int t2)
       access(here).owners.set(t2,true);
   */
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   for(const auto& i: canonical_ownership_categories)
     assert(i.first == *i.second);
   check_used_regs();
