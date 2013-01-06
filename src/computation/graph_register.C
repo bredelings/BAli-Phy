@@ -1569,6 +1569,15 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
 int reg_heap::uniquify_reg(int R, int t)
 {
+  assert(token_roots[t].temp.empty());
+
+  // If the reg is already unique, then we don't need to do anything.
+  if (not reg_is_shared(R))
+  {
+    assert(reg_is_owned_by(R,t));
+    return R;
+  }
+
 #ifndef NDEBUG
   check_results_in_context(t);
 
@@ -1585,15 +1594,6 @@ int reg_heap::uniquify_reg(int R, int t)
   }
   */
 #endif  
-
-  assert(token_roots[t].temp.empty());
-
-  // If the reg is already unique, then we don't need to do anything.
-  if (not reg_is_shared(R))
-  {
-    assert(reg_is_owned_by(R,t));
-    return R;
-  }
 
   // 1. Find all ancestors with name 't' that are *shared*
   // (Some of these could be unreachable!)
