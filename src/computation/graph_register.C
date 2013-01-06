@@ -1578,7 +1578,7 @@ int reg_heap::uniquify_reg(int R, int t)
     return R;
   }
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   check_results_in_context(t);
 
   // This checks that ownership and references are consistent
@@ -1638,7 +1638,7 @@ int reg_heap::uniquify_reg(int R, int t)
     for(int R1: split)
       access(R1).temp = -1;
     
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
     for(int R1: shared_ancestors)
       assert( access(R1).temp == -1);
     
@@ -1809,7 +1809,7 @@ int reg_heap::uniquify_reg(int R, int t)
     }
   }
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   // This checks that ownership and references are consistent
   find_all_regs_in_context(t);
 #endif
@@ -1847,7 +1847,7 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int R1: split)
     access(R1).temp = -1;
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   for(int R1: shared_ancestors)
     assert( access(R1).temp == -1);
 
