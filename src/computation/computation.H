@@ -1,11 +1,7 @@
 #ifndef COMPUTATION_H
 #define COMPUTATION_H
 
-#include <vector>
-
 #include "object.H"
-#include "myexception.H"
-#include "util.H"
 #include "closure.H"
 
 struct expression_ref;
