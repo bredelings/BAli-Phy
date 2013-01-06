@@ -2536,7 +2536,7 @@ int reg_heap::incremental_evaluate(int R, int t)
       // Although the reg itself is not a parameter, it will stay changeable if it ever computes a changeable result.
       // Therefore, we cannot do "assert(not access(R).changeable);" here.
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
       string SS = "";
       SS = compact_graph_expression(*this, R, get_identifiers_for_context(t))->print();
       string SSS = untranslate_vars(deindexify(trim_unnormalize(access(R).C)),  
@@ -2588,7 +2588,7 @@ int reg_heap::incremental_evaluate(int R, int t)
 	throw e;
       }
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
       //      std::cerr<<"   + recomputing "<<SS<<"\n\n";
       std::cerr<<"   + Executing statement {"<<O<<"}:  "<<SS<<"\n\n";
 #endif
