@@ -1919,7 +1919,7 @@ void reg_heap::check_used_regs() const
 
 void reg_heap::remove_ownership_mark(int t)
 {
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   for(const auto& i: canonical_ownership_categories)
     assert(i.first == *i.second);
   check_used_regs();
@@ -1948,7 +1948,7 @@ void reg_heap::remove_ownership_mark(int t)
 
 void reg_heap::duplicate_ownership_mark(int t1, int t2)
 {
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   for(const auto& i: canonical_ownership_categories)
     assert(i.first == *i.second);
   check_used_regs();
@@ -2097,7 +2097,7 @@ void reg_heap::find_all_regs_in_context(int t, vector<int>& unique) const
 {
   find_all_regs_in_context_no_check(t, unique);
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   for(int R: unique)
   {
     assert(reg_is_owned_by(R,t));
@@ -2136,7 +2136,7 @@ void reg_heap::release_token(int t)
   unused_tokens.push_back(t);
   token_roots[t].used = false;
 
-#ifndef NDEBUG
+#ifdef DEBUG_MACHINE
   check_used_regs();
 #endif
 }
