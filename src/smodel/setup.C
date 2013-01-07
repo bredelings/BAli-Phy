@@ -750,7 +750,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref lsigma = (Sqrt, lVar);
     formula_expression_ref dist = (var("uniformDiscretize"), (var("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
 
-    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), var("beta"), Tuple(1.0, 2.0) );
+    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (var("beta"), Tuple(1.0, 2.0)) );
     dist = (var("extendDiscreteDistribution"), dist, p, 0.0);
 
     return (var("multiRate"), base,  dist);
@@ -932,8 +932,8 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       n = convertTo<int>(model_args[2]);
 
     // Determine the a and b parameters of the beta distribution
-    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), var("beta"), Tuple(10.0, 1.0));
-    formula_expression_ref gamma = def_parameter("Beta.varOverMu", Double(0.1), between(0,1), var("exponential"), 0.1);
+    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (var("beta"), Tuple(10.0, 1.0)));
+    formula_expression_ref gamma = def_parameter("Beta.varOverMu", Double(0.1), between(0,1), (var("exponential"), 0.1));
     formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;
     formula_expression_ref beta = (times, N, (minus, 1.0, mu)); // b = N * (1.0 - mu)
@@ -970,7 +970,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       n = convertTo<int>(model_args[2]);
 
     // Determine the a and b parameters of the beta distribution
-    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), var("beta"), Tuple(10.0, 1.0));
+    formula_expression_ref mu = def_parameter("Beta.mu", Double(0.5), between(0,1), (var("beta"), Tuple(10.0, 1.0)));
     formula_expression_ref gamma = def_parameter("Beta.varOverMu", Double(0.1), between(0,1), (var("exponential"), 0.1));
     formula_expression_ref N = (minus, (divide, 1.0, gamma), 1.0); // N = 1.0/gamma - 1.0;
     formula_expression_ref alpha = (times, N, mu); // a = N * mu;

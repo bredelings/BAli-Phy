@@ -43,9 +43,7 @@ expression_ref def_parameter(Model_Notes&, const std::string& name);
 expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value);
 expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b);
 expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&);
-expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref&, const expression_ref&);
 expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref&);
-expression_ref def_parameter(Model_Notes&, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref&, const expression_ref&);
 
 Model_Notes substitute(const Model_Notes& N, const expression_ref& E1, const expression_ref& E2);
 std::set<std::string> find_declared_parameters(const std::vector<expression_ref>&);

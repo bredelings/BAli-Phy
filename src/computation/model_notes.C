@@ -97,23 +97,11 @@ expression_ref def_parameter(Model_Notes& N, const std::string& name, const expr
   return var;
 }
 
-expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref& F, const expression_ref& A)
-{
-  expression_ref D = Tuple(F,A);
-  return def_parameter(N, name, def_value, b, D);
-}
-
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref& D)
 {
   expression_ref var = def_parameter(N, name, def_value);
   N.add_note( (distributed, var, D));
   return var;
-}
-
-expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref& F, const expression_ref& A)
-{
-  expression_ref D = Tuple(F,A);
-  return def_parameter(N, name, def_value, nullptr, D);
 }
 
 Model_Notes substitute(const Model_Notes& N, const expression_ref& E1, const expression_ref& E2)
