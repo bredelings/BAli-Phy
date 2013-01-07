@@ -71,13 +71,13 @@ fmap2 f [] = [];
 fmap2 f ((x,y):l) = (x,f y):(fmap2 f l);
 fmap2 f (DiscreteDistribution l) = DiscreteDistribution (fmap2 f l);
 
-extendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution (p,x):(fmap1 (\q->q*(1.0-p)) d);
+extendDiscreteDistribution (DiscreteDistribution d) p x = DiscreteDistribution ((p,x):(fmap1 (\q->q*(1.0-p)) d));
 
 uniformQuantiles q n = map (\i -> q ((2.0*(intToDouble i)+1.0)/(intToDouble n)) ) (take n [1..]);
 
 unwrapDD (DiscreteDistribution l) = l;
 
-mixDiscreteDistributions' (h:t) (h2:t2) = DiscreteDistribution (fmap1 (\q->q*h) h2)++(mixDiscreteDistributions' t t2);
+mixDiscreteDistributions' (h:t) (h2:t2) = (fmap1 (\q->q*h) h2)++(mixDiscreteDistributions' t t2);
 mixDiscreteDistributions' [] [] = [];
 
 mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap unwrapDD l2));
