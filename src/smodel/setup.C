@@ -715,7 +715,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref a = (divide, 1.0, b);
     formula_expression_ref dist = (var("uniformDiscretize"), (var("gammaQuantile"), Tuple(a,b)) , n);
 
-    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), var("beta"), Tuple(1.0, 2.0) );
+    formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (var("beta"), Tuple(1.0, 2.0)) );
     dist = (var("extendDiscreteDistribution"), dist, p, 0.0);
 
     return (var("multiRate"), base,  dist);
@@ -1049,7 +1049,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     D1 = (var("DiscreteDistribution"), D1);
     D2 = (var("DiscreteDistribution"), D2);
 
-    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),var("beta"),Tuple(1.0,10.0));
+    formula_expression_ref p_pos = def_parameter("BranchSite.posP",Double(0.1),between(0,1),(var("beta"),Tuple(1.0,10.0)));
 
     // Mean of log(w2) should be 1.0, sigma/mu for log(w2) should be 0.7071
     // FIXME - look at the effect on power of using various different priors for w2 here!
