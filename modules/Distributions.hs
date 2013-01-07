@@ -4,7 +4,7 @@ import Range;
 
 gammaDensity (a,b) x = builtinGammaDensity a b x;
 gammaQuantile (a,b) p = builtinGammaQuantile a b p;
-logGammaDensity (a,b) x = builtinLogGammaDensity (a,b) x;
+logGammaDensity (a,b) x = builtinLogGammaDensity a b x;
 betaDensity (a,b) x = builtinBetaDensity a b x;
 betaQuantile (a,b) p = builtinBetaQuantile a b p;
 normalDensity (mu,sigma) x =  builtinNormalDensity mu sigma x;
