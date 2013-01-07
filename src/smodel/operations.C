@@ -16,76 +16,6 @@ using std::istream;
 
 namespace substitution
 {
-  object_ptr<const Object> Plus_gwF_Function(const alphabet& a, double f, const vector<double>& pi_)
-  {
-    object_ptr<MatrixObject> R( new MatrixObject );
-
-    const int n = a.size();
-
-    R->t.resize(n, n);
-
-    // compute frequencies
-    vector<double> pi = pi_;
-    normalize(pi);
-    assert(a.size() == pi.size());
-    
-    // compute transition rates
-    valarray<double> pi_f(n);
-    for(int i=0;i<n;i++)
-      pi_f[i] = pow(pi[i],f);
-
-    for(int i=0;i<n;i++)
-      for(int j=0;j<n;j++)
-	R->t(i,j) = pi_f[i]/pi[i] * pi_f[j];
-
-    // diagonal entries should have no effect
-    for(int i=0;i<n;i++)
-      R->t(i,i) = 0;
-
-    return R;
-  }
-
-  closure Plus_gwF_Op::operator()(OperationArgs& Args) const
-  {
-    const alphabet& a = *Args.evaluate_as<alphabet>(0);
-
-    double f = *Args.evaluate_as<Double>(1);
-
-    object_ptr< const Vector<double> > pi = Args.evaluate_as< Vector<double> >(2);
-
-    return Plus_gwF_Function(a,f,*pi);
-  }
-
-  const expression_ref Plus_gwF = lambda_expression( Plus_gwF_Op() );
-
-
-  closure F3x4_Frequencies_Op::operator()(OperationArgs& Args) const
-  {
-    const Triplets& T = *Args.evaluate_as<Triplets>(0);
-    // The way alphabet is currently implemented, triplets must be triplets of nucleotides.
-
-    const vector<double>& pi1 = Args.evaluate_as<Vector<double>>(1)->t;
-    const vector<double>& pi2 = Args.evaluate_as<Vector<double>>(2)->t;
-    const vector<double>& pi3 = Args.evaluate_as<Vector<double>>(3)->t;
-
-    Vector<double> pi;
-    pi.t.resize(T.size());
-    for(int i=0;i<T.size();i++)
-      pi.t[i] = pi1[T.sub_nuc(i,0)] * pi2[T.sub_nuc(i,1)] * pi3[T.sub_nuc(i,2)];
-
-    // Some triplets may be missing from the triplet alphabet (e.g. stop codons).  So renormalize.
-
-    double scale = 1.0/sum(pi.t);
-    for(double& d : pi.t)
-      d *= scale;
-
-    assert(std::abs(sum(pi.t) - 1.0) < 1.0e-9);
-
-    return pi;
-  }
-
-  const expression_ref F3x4_Frequencies = lambda_expression( F3x4_Frequencies_Op() );
-
   closure F3x4_Matrix_Op::operator()(OperationArgs& Args) const
   {
     const Triplets& T = *Args.evaluate_as<Triplets>(0);
@@ -407,7 +337,7 @@ namespace substitution
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
     return let_expression(v1,(var("listToVectorDouble"),pi),
-			  (var("ReversibleFrequency"), a, (Iota<unsigned>(), a.size()), v1, (var("plusGWF"), a, 1.0, v1))
+			  (var("ReversibleFrequency"), a, (var("iotaUnsigned"), a.size()), v1, (var("plusGWF"), a, 1.0, v1))
 			  );
   }
 
@@ -465,8 +395,8 @@ namespace substitution
     formula_expression_ref pi = Frequencies_Model(N);
 
     return let(v2,(var("listToVectorDouble"),pi),
-	       v1,(F3x4_Frequencies,T,v2,v2,v2),
-	       (var("ReversibleFrequency"), T, (Iota<unsigned>(), T.size()), v1, (Plus_gwF, T, 1.0, v1))
+	       v1,(var("SModel.f3x4_frequencies"),T,v2,v2,v2),
+	       (var("ReversibleFrequency"), T, (var("iotaUnsigned"), T.size()), v1, (var("SModel.plus_gwF"), T, 1.0, v1))
 	       );
   }
 
@@ -477,9 +407,9 @@ namespace substitution
     formula_expression_ref pi = Frequencies_Model(N);
 
     return let(v2,(var("listToVectorDouble"),pi),
-	       v1,(F3x4_Frequencies,T,v2,v2,v2),
-	       v3,(Plus_gwF, N, 1.0, v2),
-	       (var("ReversibleFrequency"), T, (Iota<unsigned>(), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
+	       v1,(var("SModel.f3x4_frequencies"),T,v2,v2,v2),
+	       v3,(var("SModel.plus_gwF"), N, 1.0, v2),
+	       (var("ReversibleFrequency"), T, (var("iotaUnsigned"), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
 	       );
   }
 
@@ -496,8 +426,8 @@ namespace substitution
     return let(v1, (var("listToVectorDouble"),pi1),
 	       v2, (var("listToVectorDouble"),pi2),
 	       v3, (var("listToVectorDouble"),pi3),
-	       v4, (F3x4_Frequencies,T,v1,v2,v3),
-	       (var("ReversibleFrequency"), T, (Iota<unsigned>(), T.size()), v4, (Plus_gwF, T, 1.0, v4))
+	       v4, (var("SModel.f3x4_frequencies"),T,v1,v2,v3),
+	       (var("ReversibleFrequency"), T, (var("iotaUnsigned"), T.size()), v4, (var("SModel.plus_gwF"), T, 1.0, v4))
 	       );
   }
 
@@ -514,10 +444,10 @@ namespace substitution
     return let(v1, (var("listToVectorDouble"),pi1),
 	       v2, (var("listToVectorDouble"),pi2),
 	       v3, (var("listToVectorDouble"),pi3),
-	       v4, (Plus_gwF, N, 1.0, v1),
-	       v5, (Plus_gwF, N, 1.0, v2),
-	       v6, (Plus_gwF, N, 1.0, v3),
-	       (var("ReversibleFrequency"), T, (Iota<unsigned>(), T.size()), (F3x4_Frequencies,T,v1,v2,v3), (F3x4_Matrix, T, v4, v5, v6))
+	       v4, (var("SModel.plus_gwF"), N, 1.0, v1),
+	       v5, (var("SModel.plus_gwF"), N, 1.0, v2),
+	       v6, (var("SModel.plus_gwF"), N, 1.0, v3),
+	       (var("ReversibleFrequency"), T, (var("iotaUnsigned"), T.size()), (var("SModel.f3x4_frequencies"),T,v1,v2,v3), (F3x4_Matrix, T, v4, v5, v6))
 	       );
   }
 
@@ -529,7 +459,7 @@ namespace substitution
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
     return let_expression(v1,(var("listToVectorDouble"),pi),
-			  (var("ReversibleFrequency"), a, (Iota<unsigned>(), a.size()), v1, (Plus_gwF, a, f, v1))
+			  (var("ReversibleFrequency"), a, (var("iotaUnsigned"), a.size()), v1, (var("SModel.plus_gwF"), a, f, v1))
 			  );
   }
 

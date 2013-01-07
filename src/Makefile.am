@@ -335,7 +335,8 @@ pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
 		arraySize.la getIndex.la mkArray.la intToDouble.la negate.la \
 		exp.la doubleToLogDouble.la add.la subtract.la divide.la multiply.la \
 		equals.la notequals.la greaterthan.la greaterthanorequal.la lessthan.la \
-		lessthanorequal.la getNucleotides.la
+		lessthanorequal.la getNucleotides.la plus_gwF.la alphabetSize.la \
+		iotaUnsigned.la f3x4_frequencies.la
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module
@@ -408,4 +409,16 @@ lessthanorequal_la_LDFLAGS = -module
 
 getNucleotides_la_SOURCES = computation/builtins/getNucleotides.C
 getNucleotides_la_LDFLAGS = -module
+
+plus_gwF_la_SOURCES = computation/builtins/plus_gwF.C
+plus_gwF_la_LDFLAGS = -module
+
+alphabetSize_la_SOURCES = computation/builtins/alphabetSize.C
+alphabetSize_la_LDFLAGS = -module
+
+iotaUnsigned_la_SOURCES = computation/builtins/iotaUnsigned.C
+iotaUnsigned_la_LDFLAGS = -module
+
+f3x4_frequencies_la_SOURCES = computation/builtins/f3x4_frequencies.C
+f3x4_frequencies_la_LDFLAGS = -module
 

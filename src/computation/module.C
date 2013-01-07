@@ -541,15 +541,20 @@ vector<string> get_haskell_identifier_path(const std::string& s)
   return path;
 }
 
+bool haskell_is_lower(char c)
+{
+  return (islower(c) or c=='_');
+}
+
 bool is_haskell_varid(const std::string& s)
 {
   if (s.empty()) return false;
 
-  if (not islower(s[0])) return false;
+  if (not haskell_is_lower(s[0])) return false;
   for(int i=1;i<s.size();i++)
   {
     char c = s[i];
-    if (not (isupper(c) or islower(c) or isdigit(c) or c=='\''))
+    if (not (isupper(c) or haskell_is_lower(c) or isdigit(c) or c=='\''))
       return false;
   }
   return true;
@@ -563,7 +568,7 @@ bool is_haskell_conid(const std::string& s)
   for(int i=1;i<s.size();i++)
   {
     char c = s[i];
-    if (not (isupper(c) or islower(c) or isdigit(c) or c=='\''))
+    if (not (isupper(c) or haskell_is_lower(c) or isdigit(c) or c=='\''))
       return false;
   }
   return true;

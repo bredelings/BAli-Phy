@@ -58,6 +58,7 @@ builtin > 2 "greaterthan";
 builtin >= 2 "greaterthanorequal";
 builtin < 2 "lessthan";
 builtin <= 2 "lessthanorequal";
+builtin iotaUnsigned 1 "iotaUnsigned";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));

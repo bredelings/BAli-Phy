@@ -15,52 +15,6 @@
 
 namespace substitution {
 
-  struct Plus_gwF_Op: public Operation
-  {
-    Plus_gwF_Op* clone() const {return new Plus_gwF_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "+gwF";}
-
-    Plus_gwF_Op():Operation(3) { }
-  };
-
-  extern const expression_ref Plus_gwF;
-
-  struct F3x4_Frequencies_Op: public Operation
-  {
-    F3x4_Frequencies_Op* clone() const {return new F3x4_Frequencies_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "F3x4_Frequencies";}
-
-    F3x4_Frequencies_Op():Operation(4) { }
-  };
-
-  extern const expression_ref F3x4_Frequencies;
-
   struct F3x4_Matrix_Op: public Operation
   {
     F3x4_Matrix_Op* clone() const {return new F3x4_Matrix_Op(*this);}

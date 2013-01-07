@@ -44,6 +44,9 @@ using std::map;
  *        - How does this attempt to give parameters default names relate to the more general approach?
  *    - Eliminate C++ operators on formula_expression_ref -> use parser instead.
  *    - Eliminate C++ operators on expression_ref -> use parser instead.
+ *    - Make (f,g) only create an apply expression, but NOT substitute.
+ *    - Make f+g simply append g to f->sub.
+ *    - Make f*g substitute into f.
  * 9. Try to rewrite e.g. M8b into a BUGS module.
  * 10. Add default values and Bounds to distributions.
  *    - [DONE] Add Bounds to distributions.

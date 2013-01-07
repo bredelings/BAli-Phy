@@ -396,9 +396,9 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
   if (model_args[0] == "F=constant") 
   {
     if (frequencies)
-      R = (Plus_gwF, *a, 1.0, get_tuple(*frequencies) );
+      R = (var("SModel.plus_gwF"), *a, 1.0, get_tuple(*frequencies) );
     else
-      R = (Plus_gwF, *a, 1.0, get_tuple(*frequencies) );
+      R = (var("SModel.plus_gwF"), *a, 1.0, get_tuple(*frequencies) );
   }
 
   else if (model_args[0] == "F") 
@@ -414,7 +414,7 @@ formula_expression_ref process_stack_Frequencies(const module_loader& L,
     expression_ref pi = get_list(piv);
 
     R = let_expression(v1,(var("listToVectorDouble"),pi),
-		       (var("ReversibleFrequency"), *a, (Iota<unsigned>(), a->size()), v1, (var("plusGWF"), *a, 1.0, v1))
+		       (var("ReversibleFrequency"), *a, (var("iotaUnsigned"), a->size()), v1, (var("plusGWF"), *a, 1.0, v1))
 		       );
   }
   else if (model_args[0] == "F1x4")

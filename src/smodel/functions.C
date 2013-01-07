@@ -9,7 +9,6 @@ using std::string;
 
 void SModel_Functions(Module& P)
 {
-  P.def_function("plusGWF", lambda_expression(substitution::Plus_gwF_Op()));
   P.def_function("lExp", lambda_expression(LExp_Op()));
   P.def_function("getQ", lambda_expression(substitution::Q_Op()));
   P.def_function("getEigensystem", lambda_expression(substitution::Get_Eigensystem_Op()));
