@@ -318,7 +318,7 @@ void Model::process_note(int index)
     else
     {
       expression_ref Pr = C.get_expression(prior_index);
-      C.set_compute_expression(prior_index, Pr_new * Pr);
+      C.set_compute_expression(prior_index, (var("*"),Pr_new,Pr));
     }
 
     if (auto p = x.is_a<parameter>())

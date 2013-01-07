@@ -233,16 +233,3 @@ closure Sqrt_Op::operator()(OperationArgs& Args) const
 }
 
 const expression_ref Sqrt = lambda_expression( Sqrt_Op() );
-
-//---------------------------------------------------------------------------------------//
-
-def_binary_operator2(-,"Prelude.-")
-def_binary_operator2(+,"Prelude.+")
-def_binary_operator2(*,"Prelude.*")
-def_binary_operator2(/,"Prelude./")
-def_binary_operator2(<,"Prelude.<")
-def_binary_operator2(>,"Prelude.>")
-// These operators should check equality of memory addresses, not construct a new expression_ref!
-//def_binary_operator2(==,Equals)
-//def_binary_operator2(!=,NotEquals)
-#undef def_binary_operator2

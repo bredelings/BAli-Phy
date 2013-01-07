@@ -781,7 +781,7 @@ int add_probability_expression(context& C)
     if (not Pr)
       Pr = Pr_i;
     else
-      Pr = Pr_i * Pr;
+      Pr = (var("*"),Pr_i, Pr);
   }
 
   // If this model has random variables... 

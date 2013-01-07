@@ -354,43 +354,6 @@ struct LExp_Op: public Operation
   LExp_Op(): Operation(3) { }
 };
 
-#include <boost/type_traits/is_arithmetic.hpp>
-#include <boost/utility/enable_if.hpp>
-
-#define check_arithmetic(T) typename boost::enable_if<boost::is_arithmetic<T>,T>::type
-#define check_arithmetic2(T1,T2) typename boost::enable_if<boost::is_arithmetic<T1>,T2>::type
-
-#define def_binary_operator1(Op,M) \
-template <typename T> \
-check_arithmetic2(T,expression_ref) operator Op(const expression_ref& E, const T& t) \
-{ \
-  return (var(M),E,t);			\
-} \
- \
-template <typename T> \
-check_arithmetic2(T,expression_ref) operator Op(const T& t, const expression_ref& E) \
-{ \
-  return (var(M),t,E);			\
-} \
-expression_ref operator Op(const expression_ref& E1, const expression_ref& E2);
-
-
-#define def_binary_operator2(Op,M) \
-expression_ref operator Op(const expression_ref& E1, const expression_ref& E2) \
-{ \
-  return (var(M),E1,E2);			\
-}
-
-def_binary_operator1(-,"Prelude.-")
-def_binary_operator1(+,"Prelude.+")
-def_binary_operator1(*,"Prelude.*")
-def_binary_operator1(/,"Prelude./")
-def_binary_operator1(<,"Prelude.<")
-def_binary_operator1(>,"Prelude.>")
-//def_binary_operator1(==,Equals)
-//def_binary_operator1(!=,NotEquals)
-#undef def_binary_operator1
-
 struct Sqrt_Op: public Operation
 {
   // The 'context' should include the knowledge of the input slots
