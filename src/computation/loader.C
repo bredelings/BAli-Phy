@@ -327,7 +327,7 @@ expression_ref load_builtin(const module_loader& L, const string& filename, int 
 
 expression_ref load_builtin(const string& filename, int n, const string& fname)
 {
-    // load the triangle library
+  // load the library
   void* library = dlopen(filename.c_str(), RTLD_LAZY);
   if (not library)
     throw myexception() << "Cannot load library: " << dlerror();
