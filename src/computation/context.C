@@ -696,10 +696,8 @@ context::~context()
 
 expression_ref context::default_parameter_value(int i) const
 {
-  expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
-
   vector<expression_ref> results;
-  expression_ref query = (default_value, parameter( parameter_name(i) ), match(0));
+  expression_ref query = constructor("DefaultValue",2) + parameter(parameter_name(i)) + match(0);
   int found = find_match_notes(query, results, 0);
 
   if (found != -1)
@@ -711,14 +709,14 @@ expression_ref context::default_parameter_value(int i) const
   }
 
   results.clear();
-  expression_ref query2 = (distributed, parameter( parameter_name(i) ), match(0));
+  expression_ref query2 = constructor(":~",2) + parameter( parameter_name(i) ) +  match(0);
   int found2 = find_match_notes(query2, results, 0);
 
   if (found2 != -1)
   {
     expression_ref _ = dummy(-1);
     expression_ref dist = results[0];
-    expression_ref value = case_expression(results[0],Tuple((prob_density,_,_,_,v1,_),v2),(v1,v2));
+    expression_ref value = case_expression(results[0],Tuple((prob_density*_*_*_*v1*_),v2),(v1,v2));
     return value;
   }
 
@@ -748,7 +746,7 @@ std::ostream& operator<<(std::ostream& o, const context& C)
 // TODO: Move to model.{H,C}?
 int add_probability_expression(context& C)
 {
-  expression_ref query = (distributed, match(0), match(1));
+  expression_ref query = constructor(":~",2) + match(0) + match(1);
 
   expression_ref Pr;
 
@@ -774,7 +772,7 @@ int add_probability_expression(context& C)
     prior_expressions[x->print()] = D->print();
     
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_i = case_expression(D, Tuple((prob_density,_,density,_,_,_),args), (density, args, x));
+    expression_ref Pr_i = case_expression(D, Tuple((prob_density*_*density*_*_*_),args), (density, args, x));
     
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)

@@ -956,8 +956,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       for(auto& e: v)
 	e = desugar(m, e, bound);
 
-      expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
-      expression_ref note = (default_value, v[0], v[1]);
+      expression_ref note = constructor("DefaultValue",2) + v[0] + v[1];
 
       return {E->head,{note}};
     }
@@ -965,10 +964,8 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     {
       for(auto& e: v)
 	e = desugar(m, e, bound);
-      // Fields: (prob_density) (random vars) (parameter expressions)
-      expression_ref distributed = lambda_expression( constructor(":~",2) );
 
-      expression_ref note = (distributed, v[0], v[1]);
+      expression_ref note = constructor(":~",2) + v[0] + v[1];
       return {E->head,{note}};
     }
   }
@@ -1024,7 +1021,7 @@ Module read_BUGS(const Parameters& P, const string& filename, const string& modu
   // 3. Add Loggers for any locally declared parameters
   expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
   for(const auto& name: BUGS.parameter_names())
-    BUGS.add_note((make_logger,parameter(name)));
+    BUGS.add_note((make_logger*parameter(name)));
 
   return BUGS;
 }

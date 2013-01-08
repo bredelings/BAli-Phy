@@ -227,17 +227,35 @@ formula_expression_ref operator,(const formula_expression_ref& F1, const formula
 
 formula_expression_ref operator&(const expression_ref& E1, const formula_expression_ref& F2)
 {
-  return (Cons,E1,F2);
+  return Cons*E1*F2;
 }
 
 formula_expression_ref operator&(const formula_expression_ref& F1, const expression_ref& E2)
 {
-  return (Cons,F1,E2);
+  return Cons*F1*E2;
 }
 
 formula_expression_ref operator&(const formula_expression_ref& F1, const formula_expression_ref& F2)
 {
-  return (Cons,F1,F2);
+  return Cons*F1*F2;
+}
+
+formula_expression_ref operator*(const formula_expression_ref& F1, const formula_expression_ref& F2)
+{
+  formula_expression_ref F3(F1);
+  F3.add_notes(F2.get_notes());
+  F3.set_exp(F1.exp() * F2.exp());
+  return F3;
+}
+
+formula_expression_ref operator*(const expression_ref& E1, const formula_expression_ref& F2)
+{
+  return formula_expression_ref{E1}*F2;
+}
+
+formula_expression_ref operator*(const formula_expression_ref& F1, const expression_ref& E2)
+{
+  return F1*formula_expression_ref{E2};
 }
 
 formula_expression_ref get_list(const vector<formula_expression_ref>& v)

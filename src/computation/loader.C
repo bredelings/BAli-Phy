@@ -84,6 +84,11 @@ using std::map;
  * 22. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
  * 23. Print expressions with fixity.
  * 24. Allow registers to be moved WHILE THE INTERPRETER IS RUNNING!
+ * 25. Allow model files to create models with a variable number of parameters.
+ *     25a = 24.
+ *     25b. This includes the branch-site model, etc.
+ * 26. Allow model files to create models where an argument is the name of another model file.
+ * 27. Allow fixing parameters. (e.g. to test the branch-site model under ML)
  */
 
 
@@ -125,7 +130,6 @@ void make_Prelude(Module& P)
   //--------------------------------------- listFromString ----------------------------------------//
   P.def_function("getStringElement", lambda_expression( BuiltinGetStringIndexOp() ) ); 
   P.def_function("sizeOfString", lambda_expression( StringSizeOp() ) );
-
 
   //--------------------------------------- listFromVectorVectorInt ----------------------------------------//
   P.def_function("getVectorVectorIntElement", lambda_expression( BuiltinGetVectorIndexOp<Vector<int>,Vector<int>>() ) ); 

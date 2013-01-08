@@ -787,8 +787,8 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       dist = Tuple(f, rate) & dist;
     }
     dist = (var("DiscreteDistribution"), dist);
-    dist.add_expression( (distributed, get_list(fs), (var("dirichlet"), get_list(vector<Double>(n,1.0+n/2.0))) ) );
-    dist.add_expression( (distributed, get_list(rates), (var("dirichlet"), get_list(vector<Double>(n,2.0))) ) );
+    dist.add_expression( constructor(":~",2) + get_list(fs) + (var("dirichlet"), get_list(vector<Double>(n,1.0+n/2.0))) );;
+    dist.add_expression( constructor(":~",2) + get_list(rates) +(var("dirichlet"), get_list(vector<Double>(n,2.0))) );
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
     return (var("multiRate"), base,  dist);
@@ -825,8 +825,8 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 						    ListEnd
 						    );
 
-    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),  (var("dirichlet"), List(1.0, 98.0, 1.0)) ) );
-    D.add_expression( (distributed, m2_omega, (var("logExponential"), 0.05) ) );
+    D.add_expression( constructor(":~",2) + (p1&(p2&(p3&ListEnd))).exp() + (var("dirichlet"), List(1.0, 98.0, 1.0)) );
+    D.add_expression( constructor(":~",2) + m2_omega.exp() + (var("logExponential"), 0.05) );
 
     formula_expression_ref M0 = get_M0_omega_function(L, a,frequencies,model_args,2);
 
@@ -851,7 +851,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       F = f&F;
     }
     D = (var("DiscreteDistribution"), D);
-    D.add_expression((distributed, F, (var("dirichlet"), get_list(vector<Double>(n,4.0))) ) );
+    D.add_expression( constructor(":~",2) + F.exp() + (var("dirichlet"), get_list(vector<Double>(n,4.0))) );
 
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
@@ -875,12 +875,12 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       fraction.insert(fraction.begin(), f.exp());
       formula_expression_ref w = def_parameter("M3.omega" + convertToString(i+1), Double(1.0), lower_bound(0));
       // P *= ((1-f)*exponential_pdf(-log(w),0.05)/w + f*exponential_pdf(log(w),0.05)/w);
-      w.add_expression( (distributed, w, (var("logExponential"), 0.05) ) );
+      w.add_expression( constructor(":~",2) + w.exp() + (var("logExponential"), 0.05) );
 
       D = Tuple(f,w)&D;
     }
     D = (var("DiscreteDistribution"), D);
-    D.add_expression((distributed, get_list(fraction), (var("dirichlet"), get_list(vector<Double>(n,4.0))) ) );
+    D.add_expression(constructor(":~",2) +  get_list(fraction) + (var("dirichlet"), get_list(vector<Double>(n,4.0))) );
 
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
@@ -895,9 +895,9 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref w3 = def_parameter("M2a.omega3", Double(1.0), lower_bound(1));
     formula_expression_ref D = (var("DiscreteDistribution"),Tuple(p1,w1)&Tuple(p2,1.0)&Tuple(p3,w3)&ListEnd);
 
-    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   (var("dirichlet"), List(1.0, 98.0, 1.0)) ) );
-    D.add_expression( (distributed, (divide, 1.0, w1), (var("logExponential"), 0.05) ) );
-    D.add_expression( (distributed, w3, (var("logExponential"), 0.05) ) );
+    D.add_expression( constructor(":~",2) + (p1&(p2&(p3&ListEnd))).exp() + (var("dirichlet"), List(1.0, 98.0, 1.0)) );
+    D.add_expression( constructor(":~",2) + (divide, 1.0, w1).exp() + (var("logExponential"), 0.05) );
+    D.add_expression( constructor(":~",2) +  w3.exp() + (var("logExponential"), 0.05) );
 
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,2);
 
@@ -957,7 +957,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     D = (var("DiscreteDistribution"),Tuple(p3,w3) & (Tuple(p2,1.0) & (var("fmap1"), (v4^(times,v4,p1)), (var("unwrapDD"), D))));
     // (p1,p2,p3) ~ Dirichlet(10, 10, 1)
-    D.add_expression( (distributed, p1&(p2&(p3&ListEnd)),   (var("dirichlet"), List(10.0, 10.0, 1.0)) ) );
+    D.add_expression( constructor(":~",2) +  (p1&(p2&(p3&ListEnd))).exp() + (var("dirichlet"), List(10.0, 10.0, 1.0)) );
 
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
@@ -1011,7 +1011,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     mixture2 = (var("multiParameter"), M0, mixture2);
     formula_expression_ref branch_site = (var("MixtureModels"),mixture1&(mixture2&ListEnd));
 
-    branch_site.add_expression( (distributed, f0&(f1&ListEnd), (var("dirichlet"), List(1.0, 1.0)) ) );
+    branch_site.add_expression( constructor(":~",2) + (f0&(f1&ListEnd)).exp() + (var("dirichlet"), List(1.0, 1.0)) );
 
     return branch_site;
   }
@@ -1060,7 +1060,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref mixture2 = (var("multiParameter"), M0, (var("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
 
     formula_expression_ref branch_site = (var("MixtureModels"), mixture1&(mixture2&ListEnd) );
-    branch_site.add_expression( (distributed, F, (var("dirichlet"),get_list(vector<Double>(n,1.0) ) ) ) );
+    branch_site.add_expression( constructor(":~",2) +  F.exp() + (var("dirichlet"),get_list(vector<Double>(n,1.0) ) ) );
 
     return branch_site;
   }

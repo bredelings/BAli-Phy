@@ -558,8 +558,7 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
     vector<string> logged_names;
 
     map<string,string> simplify = get_simplified_names(P.get_Program());
-    expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
-    expression_ref query = (make_logger, match(0));
+    expression_ref query = constructor("MakeLogger",1) + match(0);
 
     for(int i=0;i<P.n_notes();i++)
     {

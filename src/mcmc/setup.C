@@ -122,7 +122,7 @@ double default_sampling_rate(const Model& M, const string& parameter_name)
   expression_ref sampling_rate = lambda_expression(constructor("SamplingRate",2));
 
   vector<expression_ref> results;
-  expression_ref query = (sampling_rate, parameter( parameter_name ), match(0));
+  expression_ref query = (sampling_rate * parameter( parameter_name ) * match(0));
   int found = M.get_context().find_match_notes(query, results, 0);
 
   if (found != -1)
@@ -211,9 +211,9 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
 {
   vector<vector<string> > names;
 
-  expression_ref query = (distributed, match(0), match(-1));
+  expression_ref query = constructor(":~",2) + match(0) + match(-1);
   expression_ref _ = dummy(-1);
-  expression_ref case_query_func = v1^(case_expression(v1,(distributed, _, Tuple((prob_density, v2 , _, _, _, _), _) ), v2));
+  expression_ref case_query_func = v1^(case_expression(v1,constructor(":~",2)+ _ + Tuple((prob_density* v2 * _* _* _* _), _), v2));
 
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
@@ -246,7 +246,7 @@ vector<string> get_singly_distributed_parameters_by_type(const Probability_Model
 {
   vector<string> names;
 
-  expression_ref query = (distributed, match(0), match(-1));
+  expression_ref query = constructor(":~",2) + match(0) + match(-1);
 
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))

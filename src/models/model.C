@@ -267,7 +267,7 @@ int Model::add_note(const expression_ref& E)
 void Model::process_note(int index)
 {
   // 1. Check to see if this expression adds a bound.
-  expression_ref query = (var_bounds, match(0), match(1));
+  expression_ref query = constructor("VarBounds",2) + match(0) + match(1);
 
   vector<expression_ref> results;
   if (find_match(query, C.get_note(index), results))
@@ -281,7 +281,7 @@ void Model::process_note(int index)
 
   // 2. Check to see if this expression adds a prior
   results.clear();
-  query = (distributed, match(0), match(1));
+  query = constructor(":~",2) + match(0) + match(1);
   if (find_match(query, C.get_note(index), results))
   {
     // Extract the density operation
@@ -293,7 +293,7 @@ void Model::process_note(int index)
     expression_ref _ = dummy(-1);
 
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_new = case_expression(D, Tuple((prob_density,_,density,_,_,_),args), (density, args, x));
+    expression_ref Pr_new = case_expression(D, Tuple((prob_density*_*density*_*_*_),args), (density, args, x));
     
     // Record that this variable is random, and has this prior.
     // THIS would be the right place to determine what other random variables and parameters are being depended on.
@@ -497,7 +497,7 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
   {
     expression_ref var = parameter(parameter_name(i));
     vector<expression_ref> results;
-    expression_ref query = (var_bounds, var, match(0));
+    expression_ref query = constructor("VarBounds",2) + var + match(0);
     int found = C.find_match_notes(query, results, 0);
     if (found != -1)
     {
@@ -830,7 +830,7 @@ vector<int> parameters_with_extension(const Model& M, string name)
 
 string show_probability_expression(const expression_ref& E)
 {
-  expression_ref prob_expression_query = (distributed, match(0), match(1));
+  expression_ref prob_expression_query = constructor(":~",2) + match(0) + match(1);
 
   // 1. First analyze into rand_var ~ dist
   vector<expression_ref> results; 

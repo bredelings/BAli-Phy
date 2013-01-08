@@ -69,38 +69,36 @@ Model_Notes prefix_formula(const std::string& prefix,const Model_Notes& N)
 
 expression_ref def_parameter(Model_Notes& N, const std::string& name)
 {
-  expression_ref declare_parameter = lambda_expression( constructor("DeclareParameter",1) );
-
   expression_ref var = parameter(name);
-  N.add_note( (declare_parameter, var) );
+  N.add_note( constructor("DeclareParameter",1) + var );
   return var;
 }
 
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value)
 {
   expression_ref var = def_parameter(N,name);
-  N.add_note( (default_value, var, def_value) );
+  N.add_note( constructor("DefaultValue",2) + var + def_value );
   return var;
 }
 
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, const Bounds<double>& b)
 {
   expression_ref var = def_parameter(N, name, def_value);
-  N.add_note( (var_bounds, var, b) );
+  N.add_note( constructor("VarBounds",2) + var + b );
   return var;
 }
 
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, const Bounds<double>& b, const expression_ref& D)
 {
   expression_ref var = def_parameter(N, name, def_value, b);
-  N.add_note( (distributed, var, D));
+  N.add_note( constructor(":~",2) + var + D );
   return var;
 }
 
 expression_ref def_parameter(Model_Notes& N, const std::string& name, const expression_ref& def_value, std::nullptr_t, const expression_ref& D)
 {
   expression_ref var = def_parameter(N, name, def_value);
-  N.add_note( (distributed, var, D));
+  N.add_note( constructor(":~",2) + var + D );
   return var;
 }
 

@@ -205,7 +205,7 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
 
   std::set<string> declared_parameter_names = find_declared_parameters(imodel);
   for(const auto& parameter_name: declared_parameter_names)
-    imodel.add_note( (sampling_rate, parameter(parameter_name), 10.0) );
+    imodel.add_note( (sampling_rate * parameter(parameter_name) * 10.0) );
 
   return imodel;
 }

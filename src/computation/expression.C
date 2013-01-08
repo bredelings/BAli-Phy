@@ -1613,12 +1613,9 @@ expression_ref substitute(const expression_ref& R1, const expression_ref& D, con
 expression_ref apply_expression(const expression_ref& R,const expression_ref& arg)
 {
   if (R.is_a<Apply>())
-  {
-    expression* R2 = R->clone();
-    R2->sub.push_back(arg);
-    return R2;
-  }
-  return expression_ref(Apply(),{R,arg});
+    return R+arg;
+  else
+    return {Apply(),{R,arg}};
 }
 
 expression_ref apply_expression(const expression_ref& E,
@@ -1637,16 +1634,6 @@ expression_ref apply_expression(const expression_ref& E,
 // (ii) what free variables of M are 
 expression_ref apply(const expression_ref& E,const expression_ref& arg)
 {
-  assert(E);
-
-  if (E->size())
-  {
-    if (object_ptr<const lambda> L = is_a<lambda>(E))
-      return substitute(E->sub[1], E->sub[0], arg);
-  }
-
-  // Allow applying non-lambda expressions to arguments.
-  // We need this to apply variables that turn out to be functions.
   return apply_expression(E,arg);
 }
 
@@ -1666,7 +1653,7 @@ expression_ref operator,(const expression_ref& E1, const expression_ref& E2)
 
 expression_ref operator&(const expression_ref& E1, const expression_ref& E2)
 {
-  return (Cons,E1,E2);
+  return constructor(":",2)+E1+E2;
 }
 
 void find_named_parameters(const expression_ref& E, std::set<string>& names)
@@ -1745,10 +1732,6 @@ expression_ref Tuple(int n)
 expression_ref Cons = lambda_expression( right_assoc_constructor(":",2) );
 
 expression_ref ListEnd = lambda_expression( constructor("[]",0) );
-
-expression_ref default_value = lambda_expression(constructor("DefaultValue",2));
-
-expression_ref var_bounds = lambda_expression(constructor("VarBounds",2));
 
 // Fields: (prob_density) (random vars) (parameter expressions)
 expression_ref distributed = lambda_expression( constructor(":~",2) );
@@ -2581,4 +2564,26 @@ expression_ref char_list(const string& s)
   for(char c: s)
     letters.push_back(c);
   return get_list(letters);
+}
+
+expression_ref operator+(const expression_ref& E1, const expression_ref&E2)
+{
+  expression* E3 = E1->clone();
+  E3->sub.push_back(E2);
+  return E3;
+}
+
+expression_ref operator*(const expression_ref& E, const expression_ref&arg)
+{
+  assert(E);
+
+  if (object_ptr<const lambda> L = is_a<lambda>(E))
+  {
+    assert(E->size());
+    return substitute(E->sub[1], E->sub[0], arg);
+  }
+
+  // Allow applying non-lambda expressions to arguments.
+  // We need this to apply variables that turn out to be functions.
+  return apply_expression(E,arg);
 }

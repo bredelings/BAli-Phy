@@ -320,7 +320,7 @@ namespace substitution
     }
 
     expression_ref N = get_list(vector<double>(a.size(), 1.0) );
-    F.add_expression( (distributed, F, (var("dirichlet"),N) ) );
+    F.add_expression( constructor(":~",2)+ F.exp() + (var("dirichlet"),N) );
 
     return F;
   }
@@ -673,7 +673,7 @@ namespace substitution
     }
     formula_expression_ref R = (var("mixMixtureModels"),P,M);
 
-    R.add_expression((distributed, P, (var("dirichlet"), get_list(vector<Double>(N,1.0) ) ) )) ;
+    R.add_expression(constructor(":~",2) + P.exp() + (var("dirichlet"), get_list(vector<Double>(N,1.0) ) ) ) ;
 
     return R;
   }
@@ -745,7 +745,6 @@ namespace substitution
   expression_ref Get_Eigensystem = lambda_expression(Get_Eigensystem_Op());
   //---------------------------------------------------------------------------------------//
 
-  expression_ref RateMatrix = lambda_expression( constructor("RateMatrix", 4) );
   // Q_from_R_and_S(R,S) = let Q = S*R in (RateMatrix, Q, (frequencies, R), (get_eigensystem, Q, pi), 1.0)
 
   // 

@@ -1044,7 +1044,7 @@ Parameters::Parameters(const module_loader& L,
     string mu_name = "Main.mu"+convertToString(i+1);
     add_parameter(mu_name, Double(0.25), lower_bound(0));
     // prior on mu[i], the mean branch length for scale i
-    add_note( (distributed, parameter(mu_name), (var("gamma"), Tuple(0.5, 2.0) ) ) );
+    add_note( constructor(":~",2)+parameter(mu_name)+(var("gamma"), Tuple(0.5, 2.0)));
   }
 
   // check that smodel mapping has correct size.
@@ -1094,7 +1094,7 @@ Parameters::Parameters(const module_loader& L,
   /*------------------------- Add commands to log all parameters created before this point. ------------------------*/
   expression_ref make_logger = lambda_expression( constructor("MakeLogger",1) );
   for(int i=0;i<n_parameters();i++)
-    add_note( (make_logger,parameter(parameter_name(i))) );
+    add_note( (make_logger*parameter(parameter_name(i))) );
 
   // don't constrain any branch lengths
   for(int b=0;b<TC->n_branches();b++)

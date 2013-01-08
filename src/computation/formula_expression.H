@@ -65,6 +65,10 @@ formula_expression_ref operator&(const expression_ref&, const formula_expression
 formula_expression_ref operator&(const formula_expression_ref&, const expression_ref&);
 formula_expression_ref operator&(const formula_expression_ref&, const formula_expression_ref&);
 
+formula_expression_ref operator*(const expression_ref&, const formula_expression_ref&);
+formula_expression_ref operator*(const formula_expression_ref&, const expression_ref&);
+formula_expression_ref operator*(const formula_expression_ref&, const formula_expression_ref&);
+
 formula_expression_ref get_list(const std::vector<formula_expression_ref>&);
 
 formula_expression_ref submodel_expression(const std::string&);
