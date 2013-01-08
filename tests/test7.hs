@@ -94,5 +94,9 @@ note theta70 ~ thetaDist;
   thetas = [theta1,theta2,theta3,theta4,theta5,theta6,theta7,theta8,theta9,theta10,theta11,theta12,theta13,theta14,theta15,theta16,theta17,theta18,theta19,theta20,theta21,theta22,theta23,theta24,theta25,theta26,theta27,theta28,theta29,theta30,theta31,theta32,theta33,theta34,theta35,theta36,theta37,theta38,theta39,theta40,theta41,theta42,theta43,theta44,theta45,theta46,theta47,theta48,theta49,theta50,theta51,theta52,theta53,theta54,theta55,theta56,theta57,theta58,theta59,theta60,theta61,theta62,theta63,theta64,theta65,theta66,theta67,theta68,theta69,theta70];
 
   d1 = getAFS filename;
-  note data d1 ~ plate (length d1, \i -> afs (thetas!!i))
+  note data d1 ~ plate (length d1, \i -> afs (thetas!!i));
+  note MakeLogger (if mean1 < mean2 then mean1 else mean2);
+  note MakeLogger (if mean1 > mean2 then mean1 else mean2);
+  note MakeLogger (if mean1 < mean2 then sigmaOverMu1 else sigmaOverMu2);
+  note MakeLogger (if mean1 > mean2 then sigmaOverMu1 else sigmaOverMu2);
 }
