@@ -1037,7 +1037,7 @@ Parameters::Parameters(const module_loader& L,
 
   constants.push_back(-1);
 
-  add_parameter("Heat.beta", Double(1.0), between(0,1));
+  add_parameter("Heat.beta", Double(1.0), lower_bound(0));
 
   for(int i=0;i<n_scales;i++)
   {
