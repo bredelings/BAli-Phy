@@ -184,6 +184,7 @@ using std::vector;
 using std::map;
 
 using boost::dynamic_bitset;
+using boost::shared_ptr;
 
 #ifdef DEBUG_MEMORY
 void * operator new(size_t sz) throw(std::bad_alloc) {
@@ -360,12 +361,10 @@ void set_initial_parameter_values(Parameters& P, const variables_map& args)
 }
 
 /// Close the files.
-void close_files(vector<ofstream*>& files)
+void close_files(vector<shared_ptr<ofstream>>& files)
 {
-  for(int i=0;i<files.size();i++) {
+  for(int i=0;i<files.size();i++)
     files[i]->close();
-    delete files[i];
-  }
   files.clear();
 }
 
@@ -377,9 +376,9 @@ void delete_files(vector<string>& filenames)
   filenames.clear();
 }
 
-vector<ofstream*> open_files(int proc_id, const string& name, vector<string>& names)
+vector<shared_ptr<ofstream>> open_files(int proc_id, const string& name, vector<string>& names)
 {
-  vector<ofstream*> files;
+  vector<shared_ptr<ofstream>> files;
   vector<string> filenames;
 
   for(int j=0;j<names.size();j++) 
@@ -392,7 +391,7 @@ vector<ofstream*> open_files(int proc_id, const string& name, vector<string>& na
       throw myexception()<<"Trying to open '"<<filename<<"' but it already exists!";
     }
     else {
-      files.push_back(new ofstream(filename.c_str()));
+      files.push_back(shared_ptr<ofstream>(new ofstream(filename.c_str())));
       filenames.push_back(filename);
     }
   }
@@ -458,16 +457,16 @@ string init_dir(const variables_map& args)
 }
 
 /// Create output files for thread 'proc_id' in directory 'dirname'
-vector<ostream*> init_files(int proc_id, const string& dirname,
+vector<shared_ptr<ostream>> init_files(int proc_id, const string& dirname,
 			    int argc,char* argv[])
 {
-  vector<ostream*> files;
+  vector<shared_ptr<ostream>> files;
 
   vector<string> filenames;
   filenames.push_back("out");
   filenames.push_back("err");
 
-  vector<ofstream*> files2 = open_files(proc_id, dirname+"/",filenames);
+  vector<shared_ptr<ofstream>> files2 = open_files(proc_id, dirname+"/",filenames);
   files.clear();
   for(int i=0;i<files2.size();i++)
     files.push_back(files2[i]);
@@ -1560,7 +1559,7 @@ int main(int argc,char* argv[])
       long int max_iterations = args["iterations"].as<long int>();
 
       //---------- Open output files -----------//
-      vector<ostream*> files;
+      vector<shared_ptr<ostream>> files;
       vector<owned_ptr<MCMC::Logger> > loggers;
 
       string dir_name="";
@@ -1589,8 +1588,8 @@ int main(int argc,char* argv[])
 	write_initial_alignments(A,proc_id, dir_name);
       }
       else {
-	files.push_back(&cout);
-	files.push_back(&cerr);
+	files.push_back(shared_ptr<ostream>(new ostream(cout.rdbuf())));
+	files.push_back(shared_ptr<ostream>(new ostream(cerr.rdbuf())));
       }
 
       //------ Redirect output to files -------//
