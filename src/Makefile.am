@@ -112,6 +112,8 @@ bali_phy_SOURCES = sequence/sequence.C tree/tree.C alignment/alignment.C substit
 
 nodist_bali_phy_SOURCES = git_version.h
 
+bali_phy_LDFLAGS = -rdynamic
+
 if WITH_MPI
 bali_phy_LDADD = ${LDADD} @MPI_LDFLAGS@ 
 if NO_SYSTEM_BOOST
@@ -120,6 +122,7 @@ else
 bali_phy_LDADD += ${LIBS} -lboost_mpi${BOOST_SUFFIX} -lboost_serialization${BOOST_SUFFIX}
 endif
 endif
+
 
 # always "rebuild" these
 BUILT_SOURCES = version.C git_version.stamp
@@ -331,6 +334,9 @@ path_graph_SOURCES = tools/path-graph.C alignment/alignment.C sequence/alphabet.
 	sequence/sequence-format.C alignment/alignment-util.C tree/tree.C io.C tree/sequencetree.C
 
 #---------------------------------------------------------------
+# See libtool documentation on plugins:
+#    http://www.flameeyes.eu/autotools-mythbuster/libtool/plugins.html
+
 pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
 		arraySize.la getIndex.la mkArray.la intToDouble.la negate.la \
 		exp.la doubleToLogDouble.la add.la subtract.la divide.la multiply.la \
@@ -339,86 +345,86 @@ pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
 		iotaUnsigned.la f3x4_frequencies.la
 
 mod_la_SOURCES = computation/builtins/mod.C
-mod_la_LDFLAGS = -module
+mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 builtinError_la_SOURCES = computation/builtins/builtinError.C
-builtinError_la_LDFLAGS = -module
+builtinError_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 seq_la_SOURCES = computation/builtins/seq.C
-seq_la_LDFLAGS = -module
+seq_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 join_la_SOURCES = computation/builtins/join.C
-join_la_LDFLAGS = -module
+join_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 reapply_la_SOURCES = computation/builtins/reapply.C
-reapply_la_LDFLAGS = -module
+reapply_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 arraySize_la_SOURCES = computation/builtins/arraySize.C
-arraySize_la_LDFLAGS = -module
+arraySize_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 getIndex_la_SOURCES = computation/builtins/getIndex.C
-getIndex_la_LDFLAGS = -module
+getIndex_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 mkArray_la_SOURCES = computation/builtins/mkArray.C
-mkArray_la_LDFLAGS = -module
+mkArray_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 intToDouble_la_SOURCES = computation/builtins/intToDouble.C
-intToDouble_la_LDFLAGS = -module
+intToDouble_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 doubleToLogDouble_la_SOURCES = computation/builtins/doubleToLogDouble.C
-doubleToLogDouble_la_LDFLAGS = -module
+doubleToLogDouble_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 negate_la_SOURCES = computation/builtins/negate.C
-negate_la_LDFLAGS = -module
+negate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 exp_la_SOURCES = computation/builtins/exp.C
-exp_la_LDFLAGS = -module
+exp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 log_la_SOURCES = computation/builtins/log.C
-log_la_LDFLAGS = -module
+log_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 add_la_SOURCES = computation/builtins/add.C
-add_la_LDFLAGS = -module
+add_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 subtract_la_SOURCES = computation/builtins/subtract.C
-subtract_la_LDFLAGS = -module
+subtract_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 divide_la_SOURCES = computation/builtins/divide.C
-divide_la_LDFLAGS = -module
+divide_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 multiply_la_SOURCES = computation/builtins/multiply.C
-multiply_la_LDFLAGS = -module
+multiply_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 equals_la_SOURCES = computation/builtins/equals.C
-equals_la_LDFLAGS = -module
+equals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 notequals_la_SOURCES = computation/builtins/notequals.C
-notequals_la_LDFLAGS = -module
+notequals_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 greaterthan_la_SOURCES = computation/builtins/greaterthan.C
-greaterthan_la_LDFLAGS = -module
+greaterthan_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 greaterthanorequal_la_SOURCES = computation/builtins/greaterthanorequal.C
-greaterthanorequal_la_LDFLAGS = -module
+greaterthanorequal_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 lessthan_la_SOURCES = computation/builtins/lessthan.C
-lessthan_la_LDFLAGS = -module
+lessthan_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 lessthanorequal_la_SOURCES = computation/builtins/lessthanorequal.C
-lessthanorequal_la_LDFLAGS = -module
+lessthanorequal_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 getNucleotides_la_SOURCES = computation/builtins/getNucleotides.C
-getNucleotides_la_LDFLAGS = -module
+getNucleotides_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 plus_gwF_la_SOURCES = computation/builtins/plus_gwF.C
-plus_gwF_la_LDFLAGS = -module
+plus_gwF_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 alphabetSize_la_SOURCES = computation/builtins/alphabetSize.C
-alphabetSize_la_LDFLAGS = -module
+alphabetSize_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 iotaUnsigned_la_SOURCES = computation/builtins/iotaUnsigned.C
-iotaUnsigned_la_LDFLAGS = -module
+iotaUnsigned_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 f3x4_frequencies_la_SOURCES = computation/builtins/f3x4_frequencies.C
-f3x4_frequencies_la_LDFLAGS = -module
+f3x4_frequencies_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
