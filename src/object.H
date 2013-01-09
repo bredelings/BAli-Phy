@@ -14,7 +14,7 @@ using boost::logic::indeterminate;
 
 class Object 
 {
-  int _refs = 0; 
+  mutable int _refs = 0; 
 
   friend inline void intrusive_ptr_release(Object* pThis)
   {
@@ -80,7 +80,12 @@ public:
 
   virtual std::string print() const {return std::string("unprintable[")+demangle(typeid(*this).name())+"]";}
 
+  Object& operator=(const Object&) {return *this;}
+
+  Object() {}
+  Object(const Object&):_refs(0) {}
   virtual ~Object() {}
+  void swap(Object&) {}
 };
 
 // What type of smart pointer are we using to point to Objects?
