@@ -1632,24 +1632,38 @@ int main(int argc,char* argv[])
       // close_files(files);
     }
   }
-  catch (std::bad_alloc&) {
+  catch (std::bad_alloc&) 
+  {
+    // 1. If we haven't yet move screen output to a file, then write cached screen output.
     if (log_verbose)
-      out_both<<out_cache.str(); out_both.flush();
-    err_both<<err_cache.str(); err_both.flush();
+    { 
+      out_screen<<out_cache.str(); 
+      out_screen.flush();
+    }
+    err_screen<<err_cache.str(); err_screen.flush();
+
+    // 2. Now, write message to either (screen+cache) or (screen+file), and flush.
     err_both<<"Doh!  Some kind of memory problem?\n"<<endl;
+    // 3. Write memory report to either (screen) or (screen+cache) or (screen+file)
     report_mem();
     retval=2;
   }
-  catch (std::exception& e) {
-    // If we have some cached messages, they have been to the screen, but not to any file
-    // FIXME: we need access to a file-only stream here.
+  catch (std::exception& e) 
+  {
+    // 1. If we haven't yet move screen output to a file, then write cached screen output.
     if (log_verbose)
-      out_both<<out_cache.str(); out_both.flush();
-    err_both<<err_cache.str(); err_both.flush();
+    { 
+      out_screen<<out_cache.str(); 
+      out_screen.flush();
+    }
+    err_screen<<err_cache.str(); err_screen.flush();
+
+    // 2. Now, write message to either (screen+cache) or (screen+file), and flush.
     if (n_procs > 1)
       err_both<<"bali-phy: Error["<<proc_id<<"]! "<<e.what()<<endl;
     else
       err_both<<"bali-phy: Error! "<<e.what()<<endl;
+
     retval=1;
   }
 
