@@ -1322,6 +1322,8 @@ int main(int argc,char* argv[])
   ostream out_both(&tee_out);
   ostream err_both(&tee_err);
 
+  vector<shared_ptr<ostream>> files;
+
   int retval=0;
 
   try {
@@ -1559,7 +1561,6 @@ int main(int argc,char* argv[])
       long int max_iterations = args["iterations"].as<long int>();
 
       //---------- Open output files -----------//
-      vector<shared_ptr<ostream>> files;
       vector<owned_ptr<MCMC::Logger> > loggers;
 
       string dir_name="";
