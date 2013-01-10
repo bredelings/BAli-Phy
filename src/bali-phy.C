@@ -362,7 +362,7 @@ void set_initial_parameter_values(Parameters& P, const variables_map& args)
     if (p_index == -1)
       throw myexception()<<"Can't find parameter '"<<name<<"' to set value '"<<parse[1]<<"'";
 
-    P.set_parameter_value(name,value);
+    P.set_parameter_value(p_index,value);
   }
 
   P.recalc_all();
