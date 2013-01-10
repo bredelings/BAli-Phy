@@ -143,6 +143,7 @@ undefined = error "Prelude.undefined";
 
 h:t !! 0 = h;
 h:t !! i = t !! (i-1);
+_   !! _ = error "Out of bounds list index!";
 
 sum     = foldl (+) 0;
 product = foldl (*) 1;
