@@ -2225,7 +2225,7 @@ Tree::Tree()
     set_n_undirected_branch_attributes(branch_length_index+1);
 }
 
-Tree::Tree(const BranchNode* BN) 
+Tree::Tree(BranchNode* BN) 
   :caches_valid(false),
    node_label_index(0),
    branch_length_index(0)
@@ -2241,7 +2241,7 @@ Tree::Tree(const BranchNode* BN)
   if (branch_length_index != -1 and branch_length_index >= n_undirected_branch_attributes())
     set_n_undirected_branch_attributes(branch_length_index+1);
 
-  reanalyze(TreeView::copy_tree(BN));
+  reanalyze(BN);
 }
 
 Tree::Tree(const Tree& T) 

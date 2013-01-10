@@ -542,7 +542,7 @@ public:
   /// Create an empty tree
   Tree();
   /// Create a tree by taking over the tree structure containing BranchNode* n.
-  explicit Tree(const BranchNode* n);
+  explicit Tree(BranchNode* n);
   /// Create a new tree that is identical to T but does not share memory with it. 
   Tree(const Tree& T);
 
