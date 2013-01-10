@@ -1977,8 +1977,8 @@ expression_ref block_case(const vector<expression_ref>& x, const vector<vector<e
       
     if (x2.empty())
     {
-      if (b2.size() > 1)
-	throw myexception()<<"You may not have duplicate irrefutable rules!";
+      // If (b2.size() > 1) then we have duplicate irrefutable rules, but that's OK.
+      // This can even be generated in the process of simplifying block_case expressions.	
       otherwise = b2[0];
     }
     else
