@@ -43,6 +43,7 @@ variables_map parse_cmd_line(int argc,char* argv[])
     ("help", "produce help message")
     ("all","show only informative partitions")
     ("info","Print information about the tree")
+    ("scale",value<double>(),"Scale the branch lengths")
     ("tree",value<string>(),"tree file")
     ;
   
@@ -119,7 +120,15 @@ int main(int argc,char* argv[])
     if (args.count("info"))
     {
       describe_tree(T);
-      exit(1);
+      exit(0);
+    }
+    else if (args.count("scale"))
+    {
+      double scale = args["scale"].as<double>();
+      for(int b=0;b<T.n_branches();b++)
+	T.branch(b).set_length(scale*T.branch(b).length());
+      cout<<T.write()<<endl;
+      exit(0);
     }
 
     if (not args.count("all"))
