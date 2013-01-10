@@ -333,6 +333,8 @@ void set_initial_parameter_values(Parameters& P, const variables_map& args)
   if (args.count("initial-value"))
     doset = args["initial-value"].as<vector<string> >();
 
+  vector<string> short_names = short_parameter_names(P);
+
   // set parameters
   for(const auto& arg: doset)
   {
@@ -353,6 +355,12 @@ void set_initial_parameter_values(Parameters& P, const variables_map& args)
       e.prepend(o.str());
       throw e;
     }
+
+    int p_index = P.find_parameter(name);
+    if (p_index == -1)
+      p_index = find_index(short_names,name);
+    if (p_index == -1)
+      throw myexception()<<"Can't find parameter '"<<name<<"' to set value '"<<parse[1]<<"'";
 
     P.set_parameter_value(name,value);
   }
