@@ -58,6 +58,7 @@ note theta33 ~ thetaDist;
 
   d1 = getAFS filename;
   note data d1 ~ plate (length d1, \i -> afs (thetas!!i));
+  note MakeLogger (if mean1 < mean2 then p else 1.0-p);
   note MakeLogger (if mean1 < mean2 then mean1 else mean2);
   note MakeLogger (if mean1 > mean2 then mean1 else mean2);
   note MakeLogger (if mean1 < mean2 then sigmaOverMu1 else sigmaOverMu2);
