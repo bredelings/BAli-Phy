@@ -1597,8 +1597,8 @@ int main(int argc,char* argv[])
       ostream& s_out = *files[0];
       ostream& s_err = *files[1];
 
-      s_out<<out_cache.str(); out_cache.str().clear();
-      s_err<<err_cache.str(); err_cache.str().clear();
+      s_out<<out_cache.str(); out_cache.str("");
+      s_err<<err_cache.str(); err_cache.str("");
 
       tee_out.setbuf2(s_out.rdbuf());
       tee_err.setbuf2(s_err.rdbuf());
@@ -1635,11 +1635,7 @@ int main(int argc,char* argv[])
   catch (std::bad_alloc&) 
   {
     // 1. If we haven't yet move screen output to a file, then write cached screen output.
-    if (log_verbose)
-    { 
-      out_screen<<out_cache.str(); 
-      out_screen.flush();
-    }
+    out_screen<<out_cache.str(); out_screen.flush();
     err_screen<<err_cache.str(); err_screen.flush();
 
     // 2. Now, write message to either (screen+cache) or (screen+file), and flush.
@@ -1651,11 +1647,7 @@ int main(int argc,char* argv[])
   catch (std::exception& e) 
   {
     // 1. If we haven't yet move screen output to a file, then write cached screen output.
-    if (log_verbose)
-    { 
-      out_screen<<out_cache.str(); 
-      out_screen.flush();
-    }
+    out_screen<<out_cache.str(); out_screen.flush();
     err_screen<<err_cache.str(); err_screen.flush();
 
     // 2. Now, write message to either (screen+cache) or (screen+file), and flush.
