@@ -57,7 +57,7 @@ iidDensity (n,((ProbDensity _ density _ _ _),args)) xs = let {densities = (map (
                                                          in if (length xs == n) then pr else (doubleToLogDouble 0.0);
 iid args = (ProbDensity "i.i.d." iidDensity () () (\_->()), args );
 
-plateDensity (n,f) xs = let {xs' = zip [1..] xs;
+plateDensity (n,f) xs = let {xs' = zip [0..] xs;
                              densities = map (\(i,x) -> case (f i) of {(ProbDensity _ d _ _ _, a) -> d a x}) xs';
                              pr = foldl' (*) (doubleToLogDouble 1.0) densities}
                         in if (length xs == n) then pr else (doubleToLogDouble 0.0);
