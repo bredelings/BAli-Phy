@@ -1634,7 +1634,7 @@ int main(int argc,char* argv[])
   }
   catch (std::bad_alloc&) 
   {
-    // 1. If we haven't yet move screen output to a file, then write cached screen output.
+    // 1. If we haven't yet moved screen output to a file, then write cached screen output.
     out_screen<<out_cache.str(); out_screen.flush();
     err_screen<<err_cache.str(); err_screen.flush();
 
@@ -1646,7 +1646,7 @@ int main(int argc,char* argv[])
   }
   catch (std::exception& e) 
   {
-    // 1. If we haven't yet move screen output to a file, then write cached screen output.
+    // 1. If we haven't yet moved screen output to a file, then write cached screen output.
     out_screen<<out_cache.str(); out_screen.flush();
     err_screen<<err_cache.str(); err_screen.flush();
 
