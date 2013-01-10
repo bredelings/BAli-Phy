@@ -1316,13 +1316,13 @@ int main(int argc,char* argv[])
   std::ostringstream out_cache;
   std::ostringstream err_cache;
 
+  vector<shared_ptr<ostream>> files;
+
   teebuf tee_out(out_screen.rdbuf(), out_cache.rdbuf());
   teebuf tee_err(err_screen.rdbuf(), err_cache.rdbuf());
 
   ostream out_both(&tee_out);
   ostream err_both(&tee_err);
-
-  vector<shared_ptr<ostream>> files;
 
   int retval=0;
 
@@ -1594,25 +1594,22 @@ int main(int argc,char* argv[])
       }
 
       //------ Redirect output to files -------//
-      ostream& s_out = *files[0];
-      ostream& s_err = *files[1];
+      *files[0]<<out_cache.str(); out_cache.str("");
+      *files[1]<<err_cache.str(); err_cache.str("");
 
-      s_out<<out_cache.str(); out_cache.str("");
-      s_err<<err_cache.str(); err_cache.str("");
+      tee_out.setbuf2(files[0]->rdbuf());
+      tee_err.setbuf2(files[1]->rdbuf());
 
-      tee_out.setbuf2(s_out.rdbuf());
-      tee_err.setbuf2(s_err.rdbuf());
-
-      cout.flush() ; cout.rdbuf(s_out.rdbuf());
-      cerr.flush() ; cerr.rdbuf(s_err.rdbuf());
-      clog.flush() ; clog.rdbuf(s_err.rdbuf());
+      cout.flush() ; cout.rdbuf(files[0]->rdbuf());
+      cerr.flush() ; cerr.rdbuf(files[1]->rdbuf());
+      clog.flush() ; clog.rdbuf(files[1]->rdbuf());
 
       //------ Redirect output to files -------//
       owned_ptr<Probability_Model> Ptr(P);
 
-      avoid_zero_likelihood(Ptr, s_out, out_both);
+      avoid_zero_likelihood(Ptr, *files[0], out_both);
 
-      do_pre_burnin(args, Ptr, s_out, out_both);
+      do_pre_burnin(args, Ptr, *files[0], out_both);
 
       out_screen<<"\nBeginning "<<max_iterations<<" iterations of MCMC computations."<<endl;
       out_screen<<"   - Future screen output sent to '"<<dir_name<<"/C1.out'"<<endl;
@@ -1661,5 +1658,7 @@ int main(int argc,char* argv[])
 
   show_ending_messages();
 
+  out_both.flush();
+  err_both.flush();
   return retval;
 }
