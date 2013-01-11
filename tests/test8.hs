@@ -7,10 +7,13 @@ module Test where
   filename = "/home/bredelings/Reports/Kmar/BP.phase1.infile";
 
   note mean1 ~ gamma(0.5,0.5);
-  note sigmaOverMu1 ~ gamma(0.5,0.2);
+  note sigmaOverMu1 ~ gamma(1.01,0.1);
   
   note mean2 ~ gamma(0.5,0.5);
-  note sigmaOverMu2 ~ gamma(0.5,0.2);
+  note sigmaOverMu2 ~ gamma(1.01,0.1);
+  
+  note mean3 ~ gamma(0.5,0.5);
+  note sigmaOverMu3 ~ gamma(1.01,0.1);
   
   a1 = 1.0/(sigmaOverMu1^2);
   b1 = mean1/a1;
@@ -18,9 +21,15 @@ module Test where
   a2 = 1.0/(sigmaOverMu2^2);
   b2 = mean2/a2;
 
-  note p ~ beta(4.0, 4.0);
+  a3 = 1.0/(sigmaOverMu3^2);
+  b3 = mean3/a3;
+
+  note [p1,p2,p3] ~ dirichlet [6.0,6.0,6.0];
+  note p1 := 0.333;
+  note p2 := 0.333;
+  note p3 := 1.0-p1-p2;
   
-  thetaDist = mixture [(p,gamma (a1,b1)), (1.0-p,gamma (a2,b2))];
+  thetaDist = mixture [(p1,gamma (a1,b1)), (p2,gamma (a2,b2)),(p3,gamma (a3,b3))];
 note theta1 ~ thetaDist;
 note theta2 ~ thetaDist;
 note theta3 ~ thetaDist;
@@ -58,9 +67,4 @@ note theta33 ~ thetaDist;
 
   d1 = getAFS filename;
   note data d1 ~ plate (length d1, \i -> afs (thetas!!i));
-  note MakeLogger (if mean1 < mean2 then p else 1.0-p);
-  note MakeLogger (if mean1 < mean2 then mean1 else mean2);
-  note MakeLogger (if mean1 > mean2 then mean1 else mean2);
-  note MakeLogger (if mean1 < mean2 then sigmaOverMu1 else sigmaOverMu2);
-  note MakeLogger (if mean1 > mean2 then sigmaOverMu1 else sigmaOverMu2);
 }
