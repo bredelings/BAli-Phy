@@ -6,20 +6,20 @@ module Test where
 
   filename = "/home/bredelings/Reports/Kmar/BP.phase1.infile";
 
-  note mean1 ~ gamma(0.5,0.5);
-  note sigmaOverMu1 ~ gamma(1.01,0.1);
+note mean1 ~ gamma(0.5,0.5);
+note sigmaOverMu1 ~ gamma(1.01,0.1);
   
-  note mean2 ~ gamma(0.5,0.5);
-  note sigmaOverMu2 ~ gamma(1.01,0.1);
+note mean2 ~ gamma(0.5,0.5);
+note sigmaOverMu2 ~ gamma(1.01,0.1);
   
-  note mean3 ~ gamma(0.5,0.5);
-  note sigmaOverMu3 ~ gamma(1.01,0.1);
+note mean3 ~ gamma(0.5,0.5);
+note sigmaOverMu3 ~ gamma(1.01,0.1);
   
-  note mean4 ~ gamma(0.5,0.5);
-  note sigmaOverMu4 ~ gamma(1.01,0.1);
+note mean4 ~ gamma(0.5,0.5);
+note sigmaOverMu4 ~ gamma(1.01,0.1);
   
-  note mean5 ~ gamma(0.5,0.5);
-  note sigmaOverMu5 ~ gamma(1.01,0.1);
+note mean5 ~ gamma(0.5,0.5);
+note sigmaOverMu5 ~ gamma(1.01,0.1);
   
   a1 = 1.0/(sigmaOverMu1^2);
   b1 = mean1/a1;
@@ -38,11 +38,11 @@ module Test where
 
   alpha = 1.0;
   
-  note q1 ~ beta(1.0,alpha);
-  note q2 ~ beta(1.0,alpha);
-  note q3 ~ beta(1.0,alpha);
-  note q4 ~ beta(1.0,alpha);
-  note q5 ~ beta(1.0,alpha);
+note q1 ~ beta(1.0,alpha);
+note q2 ~ beta(1.0,alpha);
+note q3 ~ beta(1.0,alpha);
+note q4 ~ beta(1.0,alpha);
+note q5 ~ beta(1.0,alpha);
   p1' = q1;
   p2' = (1.0-q1)*q2;
   p3' = (1.0-q1)*(1.0-q2)*q3;
@@ -63,7 +63,7 @@ module Test where
                        (p5, gamma (a5,b5))
                       ];
 
-  note theta1 ~ thetaDist;
+note theta1 ~ thetaDist;
 note theta2 ~ thetaDist;
 note theta3 ~ thetaDist;
 note theta4 ~ thetaDist;
@@ -99,10 +99,10 @@ note theta33 ~ thetaDist;
   thetas = [theta1,theta2,theta3,theta4,theta5,theta6,theta7,theta8,theta9,theta10,theta11,theta12,theta13,theta14,theta15,theta16,theta17,theta18,theta19,theta20,theta21,theta22,theta23,theta24,theta25,theta26,theta27,theta28,theta29,theta30,theta31,theta32];
 
   d1 = getAFS filename;
-  note data d1 ~ plate (length d1, \i -> afs (thetas!!i));
-  note MakeLogger p1;
-  note MakeLogger p2;
-  note MakeLogger p3;
-  note MakeLogger p4;
-  note MakeLogger p5;
+note data d1 ~ plate (length d1, \i -> afs (thetas!!i));
+note MakeLogger p1;
+note MakeLogger p2;
+note MakeLogger p3;
+note MakeLogger p4;
+note MakeLogger p5;
 }
