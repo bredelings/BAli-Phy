@@ -7,19 +7,19 @@ module Test where
   filename = "/home/bredelings/Reports/Kmar/BP.phase1.infile";
 
 note mean1 ~ gamma(0.5,0.5);
-note sigmaOverMu1 ~ gamma(1.01,0.1);
+note sigmaOverMu1 ~ gamma(1.05,0.1);
   
 note mean2 ~ gamma(0.5,0.5);
-note sigmaOverMu2 ~ gamma(1.01,0.1);
+note sigmaOverMu2 ~ gamma(1.05,0.1);
   
 note mean3 ~ gamma(0.5,0.5);
-note sigmaOverMu3 ~ gamma(1.01,0.1);
+note sigmaOverMu3 ~ gamma(1.05,0.1);
   
 note mean4 ~ gamma(0.5,0.5);
-note sigmaOverMu4 ~ gamma(1.01,0.1);
+note sigmaOverMu4 ~ gamma(1.05,0.1);
   
 note mean5 ~ gamma(0.5,0.5);
-note sigmaOverMu5 ~ gamma(1.01,0.1);
+note sigmaOverMu5 ~ gamma(1.05,0.1);
   
   a1 = 1.0/(sigmaOverMu1^2);
   b1 = mean1/a1;
