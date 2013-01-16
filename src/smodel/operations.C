@@ -262,8 +262,6 @@ namespace substitution
     return M0_Function(*C, *S, *omega);
   }
 
-  expression_ref M0E = lambda_expression( M0_Op() );
-
   object_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& R2)
   {
     int N = T.size();

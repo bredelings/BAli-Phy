@@ -374,7 +374,7 @@ formula_expression_ref process_stack_Markov(const module_loader& L,
     formula_expression_ref w = def_parameter("M0.omega", Double(1), lower_bound(0), (var("logLaplace"), Tuple(0.0,0.1)));
 
     // main = M0 a S omega
-    return (M0E, a, S1, w);
+    return (var("m0"), a, S1, w);
   }
 
   return formula_expression_ref();
@@ -655,7 +655,7 @@ formula_expression_ref get_M0_omega_function(const module_loader& L,
     if (not S1.result_as<SymmetricMatrixObject>(L))
       throw myexception()<<"Submodel '"<<model_args[where]<<"' for M0 is not a (nucleotide) exchange model.";
   }
-  formula_expression_ref S2 = (M0E, a, S1, dummy(0));
+  formula_expression_ref S2 = (var("m0"), a, S1, dummy(0));
 
   formula_expression_ref R = Plus_F_Model(*a);
   if (model_args[where+1] != "")

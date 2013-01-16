@@ -207,8 +207,6 @@ namespace substitution {
     M0_Op():Operation(3) { }
   };
 
-  extern expression_ref M0E;
-
   formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& S, const formula_expression_ref& R);
 
   formula_expression_ref Unit_Model(const formula_expression_ref&);
