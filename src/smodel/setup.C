@@ -667,8 +667,6 @@ formula_expression_ref get_M0_omega_function(const module_loader& L,
 }
 
 
-#include "operations.H"
-
 formula_expression_ref process_stack_Multi(const module_loader& L,
 					   vector<string>& model_args,
 					   const object_ptr<const alphabet>& a,
