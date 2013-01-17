@@ -54,7 +54,7 @@ std::string get_unqualified_name(const std::string&);
 
 std::vector<std::string> get_haskell_identifier_path(const std::string& s);
 
-class module_loader;
+struct module_loader;
 
 class Module: public Model_Notes
 {
