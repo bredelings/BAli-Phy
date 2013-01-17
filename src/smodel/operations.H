@@ -69,48 +69,6 @@ namespace substitution {
 
   formula_expression_ref EQU_Model(const alphabet& a);
   
-  struct HKY_Op: public Operation
-  {
-    HKY_Op* clone() const {return new HKY_Op;}
-    
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "HKY";}
-    
-    HKY_Op():Operation(2) { }
-  };
-
-  struct TN_Op: public Operation
-  {
-    TN_Op* clone() const {return new TN_Op;}
-    
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "TN";}
-    
-    TN_Op():Operation(3) { }
-  };
-
   struct Singlet_to_Triplet_Exchange_Op: public Operation
   {
     Singlet_to_Triplet_Exchange_Op* clone() const {return new Singlet_to_Triplet_Exchange_Op(*this);}

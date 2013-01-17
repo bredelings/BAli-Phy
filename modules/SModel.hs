@@ -6,6 +6,8 @@ builtin f3x4_frequencies 4 "f3x4_frequencies";
 builtin plus_gwF 3 "plus_gwF";
 builtin gtr 7 "gtr";
 builtin m0 3 "m0";
+hky a k = gtr a k 1.0 1.0 1.0 1.0 k;
+tn a k1 k2 = gtr a k1 1.0 1.0 1.0 1.0 k2;
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 

@@ -115,65 +115,6 @@ namespace substitution
     return (EQU_Op(), a.size());
   }
   
-  object_ptr<const Object> HKY_Function(const Nucleotides& a, double kappa)
-  {
-    assert(a.size()==4);
-
-    object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
-
-    R->t.resize(a.size());
-
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++) {
-	if (i==j) continue;
-	if (a.transversion(i,j))
-	  R->t(i,j) = 1;
-	else
-	  R->t(i,j) = kappa;
-      }
-
-    return R;
-  }
-
-  closure HKY_Op::operator()(OperationArgs& Args) const
-  {
-    object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
-    double kappa = *Args.evaluate_as<Double>(1);
-    
-    return HKY_Function(*N,kappa);
-  }
-
-  object_ptr<const Object> TN_Function(const Nucleotides& a, double kappa1, double kappa2)
-  {
-    assert(a.size()==4);
-  
-    object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
-
-    R->t.resize(a.size());
-  
-    for(int i=0;i<a.size();i++)
-      for(int j=0;j<a.size();j++) {
-	if (i==j) continue;
-	if (a.transversion(i,j))
-	  R->t(i,j) = 1;
-	else if (a.purine(i))
-	  R->t(i,j) = kappa1;
-	else
-	  R->t(i,j) = kappa2;
-      }
-  
-    return R;
-  }
-
-  closure TN_Op::operator()(OperationArgs& Args) const
-  {
-    object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
-    double kappa1 = *Args.evaluate_as<Double>(1);
-    double kappa2 = *Args.evaluate_as<Double>(2);
-    
-    return TN_Function(*N,kappa1,kappa2);
-  }
-
   object_ptr<SymmetricMatrixObject> SingletToTripletExchangeFunction(const Triplets& T, const SymmetricMatrixObject& R2)
   {
     int N = T.size();
