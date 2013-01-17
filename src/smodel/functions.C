@@ -15,7 +15,6 @@ void SModel_Functions(Module& P)
   P.def_function("getEquilibriumRate", lambda_expression(substitution::Get_Equilibrium_Rate_Op()));
   P.def_function("hky", lambda_expression(substitution::HKY_Op()));
   P.def_function("tn", lambda_expression(substitution::TN_Op()));
-  P.def_function("gtr", lambda_expression(substitution::GTR_Op()));
   P.def_function("m0", lambda_expression(substitution::M0_Op()));
   P.def_function("singletToTripletExchange", lambda_expression( substitution::Singlet_to_Triplet_Exchange_Op()));
 

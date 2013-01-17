@@ -174,44 +174,6 @@ namespace substitution
     return TN_Function(*N,kappa1,kappa2);
   }
 
-  object_ptr<const Object> GTR_Function(const Nucleotides& a, 
-					double AG, double AT, double AC,
-					double GT, double GC, 
-					double TC)
-  {
-    assert(a.size()==4);
-
-    object_ptr<SymmetricMatrixObject> R(new SymmetricMatrixObject);
-
-    R->t.resize(a.size());
-  
-    double total = AG + AT + AC + GT + GC + TC;
-
-    R->t(0,1) = AG/total;
-    R->t(0,2) = AT/total;
-    R->t(0,3) = AC/total;
-
-    R->t(1,2) = GT/total;
-    R->t(1,3) = GC/total;
-
-    R->t(2,3) = TC/total;
-
-    return R;
-  }
-
-  closure GTR_Op::operator()(OperationArgs& Args) const
-  {
-    object_ptr<const Nucleotides> N = Args.evaluate_as<Nucleotides>(0);
-    double AG = *Args.evaluate_as<Double>(1);
-    double AT = *Args.evaluate_as<Double>(2);
-    double AC = *Args.evaluate_as<Double>(3);
-    double GT = *Args.evaluate_as<Double>(4);
-    double GC = *Args.evaluate_as<Double>(5);
-    double TC = *Args.evaluate_as<Double>(6);
-    
-    return GTR_Function(*N,AG,AT,AC,GT,GC,TC);
-  }
-
   object_ptr<const Object> M0_Function(const Codons& C, const SymmetricMatrixObject& S2,double omega)
   {
     object_ptr<SymmetricMatrixObject> R ( new SymmetricMatrixObject );

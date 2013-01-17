@@ -4,6 +4,7 @@ import Distributions;
 
 builtin f3x4_frequencies 4 "f3x4_frequencies";
 builtin plus_gwF 3 "plus_gwF";
+builtin gtr 7 "gtr";
 
 scale x (ReversibleMarkov a s q pi l t r) = ReversibleMarkov a s q pi l (x*t) (x*r);
 

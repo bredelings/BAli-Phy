@@ -111,27 +111,6 @@ namespace substitution {
     TN_Op():Operation(3) { }
   };
 
-  struct GTR_Op: public Operation
-  {
-    GTR_Op* clone() const {return new GTR_Op;}
-    
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "GTR";}
-    
-    GTR_Op():Operation(7) { }
-  };
-
   struct Singlet_to_Triplet_Exchange_Op: public Operation
   {
     Singlet_to_Triplet_Exchange_Op* clone() const {return new Singlet_to_Triplet_Exchange_Op(*this);}
