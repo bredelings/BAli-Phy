@@ -1295,6 +1295,20 @@ fs::path find_exe_path(const fs::path& argv0)
   return program_location;
 }
 
+struct restore 
+{
+  ostream* stream;
+  std::streambuf * old;
+
+  restore(ostream& s)
+    : stream(&s), old( stream->rdbuf() )
+  { }
+
+  ~restore( ) 
+  {
+    stream->rdbuf( old );
+  }
+};
 
 /* 
  * 1. Add a PRANK-like initial algorithm.
@@ -1315,6 +1329,10 @@ int main(int argc,char* argv[])
   proc_id = world.rank();
   n_procs = world.size();
 #endif
+
+  restore restore_cout(cout);
+  restore restore_cerr(cerr);
+  restore restore_clog(clog);
 
   std::ios::sync_with_stdio(false);
 
