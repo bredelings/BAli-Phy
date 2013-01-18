@@ -225,7 +225,7 @@ if test "$GXX" = yes ; then
 
   if test "$debug" = no ; then
       CXXFLAGS="$CXXFLAGS -O3"
-      CXXFLAGS="-funroll-loops -fweb $CXXFLAGS"
+      CXXFLAGS="-funroll-loops $CXXFLAGS"
       CXXFLAGS="-DNDEBUG -DNDEBUG_DP $CXXFLAGS"
       CXXFLAGS="-ffast-math $CXXFLAGS"
   elif test "$debug" = O ; then
