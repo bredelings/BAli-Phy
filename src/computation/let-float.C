@@ -280,7 +280,12 @@ expression_ref let_float(const expression_ref& E)
 
     // Move lets out of bodies and into vars
     for(int i=0;i<bodies.size();i++)
-      bodies[i] = move_lets(false, bodies[i], vars, bodies, set<dummy>(), free_in_E);
+    {
+      // Note that bodies[i] might refer to a different object, if bodies is resized during move_lets.
+      expression_ref E = move_lets(false, bodies[i], vars, bodies, set<dummy>(), free_in_E);
+      // Therefore ensure that bodies[i] refer to the ith element of bodies AFTER any possible resize.
+      bodies[i] = E;
+    }
 
     E2 = let_expression(vars,bodies,T);
   }
