@@ -2,7 +2,7 @@
 #include "mytypes.H"
 #include "sequence/alphabet.H"
 
-extern "C" closure builtin_function_gtr(OperationArgs& Args)
+extern "C" closure builtin_function_m0(OperationArgs& Args)
 {
   object_ptr<const Codons> C = Args.evaluate_as<Codons>(0);
   object_ptr<const SymmetricMatrixObject> S = Args.evaluate_as<SymmetricMatrixObject>(1);
