@@ -289,7 +289,7 @@ public:
   /// Update the value of a non-constant, non-computed index
   void set_reg_value(int index, closure&&, int t);
 
-  int incremental_evaluate(int R, int t);
+  int incremental_evaluate(int R, int t, bool = true);
 
   std::vector<int>& get_scratch_list() const;
   void release_scratch_list() const;

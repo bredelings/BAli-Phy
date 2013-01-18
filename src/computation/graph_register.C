@@ -2401,7 +2401,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
-int reg_heap::incremental_evaluate(int R, int t)
+int reg_heap::incremental_evaluate(int R, int t, bool evaluate_parameters)
 {
   assert(R > 0 and R < n_regs());
   assert(access(R).state == reg::used);
@@ -2415,7 +2415,7 @@ int reg_heap::incremental_evaluate(int R, int t)
   //  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
-  while (not access(R).result)
+  while (not access(R).result and (evaluate_parameters or access(R).C.exp->head->type() == parameter_type))
   {
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -2490,7 +2490,12 @@ int reg_heap::incremental_evaluate(int R, int t)
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
     else if (access(R).C.exp->head->type() == parameter_type)
-      throw myexception()<<"Parameter '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
+    {
+      if (evaluate_parameters)
+	throw myexception()<<"Parameter '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
+      else
+	return R;
+    }
 
     // Reduction: let expression
     else if (parse_indexed_let_expression(access(R).C.exp, bodies, T))
@@ -2515,7 +2520,7 @@ int reg_heap::incremental_evaluate(int R, int t)
       set_C(R, get_trimmed({T, local_env}));
 
       // Substitute the new heap vars for the dummy vars in expression T and in the bodies
-      for(int i=0;i<bodies.size();i++) 
+      for(int i=0;i<bodies.size();i++)
 	set_C(new_heap_vars[i], get_trimmed({bodies[i],local_env}));
 
       assert(not access(R).changeable);
@@ -2595,10 +2600,13 @@ int reg_heap::incremental_evaluate(int R, int t)
     }
   }
 
-  assert(access(R).result);
-  assert(is_WHNF(access_result(R).exp));
-  assert(not is_a<index_var>(access_result(R).exp));
-  assert(not is_a<expression>(access_result(R).exp));
+  if (evaluate_parameters or access(R).C.exp->head->type() != parameter_type)
+  {
+    assert(access(R).result);
+    assert(is_WHNF(access_result(R).exp));
+    assert(not is_a<index_var>(access_result(R).exp));
+    assert(not is_a<expression>(access_result(R).exp));
+  }
 
   return R;
 }
