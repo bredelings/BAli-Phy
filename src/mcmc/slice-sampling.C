@@ -132,7 +132,7 @@ slide_node_slice_function::slide_node_slice_function(Parameters& P_,int b0)
   // choose branches to alter
   append(b[0].branches_after(),b);
 
-  if (not b.size() == 3)
+  if (b.size() != 3)
     throw myexception()<<"pointing to leaf node!";
 
   b1 = b[1].undirected_name();
