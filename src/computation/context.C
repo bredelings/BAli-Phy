@@ -716,7 +716,7 @@ expression_ref context::default_parameter_value(int i) const
   {
     expression_ref _ = dummy(-1);
     expression_ref dist = results[0];
-    expression_ref value = case_expression(results[0],Tuple((prob_density*_*_*_*v1*_),v2),(v1,v2));
+    expression_ref value = (var("distDefaultValue"),dist);
     return value;
   }
 
