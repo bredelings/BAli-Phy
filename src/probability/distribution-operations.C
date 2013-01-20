@@ -527,7 +527,7 @@ void Distribution_Functions(Module& P)
   // Note: we separate the "builtin" versions (which don't do case analysis on their arguments)
   //       from the from the real versions (which do).
 
-  P.def_constructor("ProbDensity",5);
+  P.def_constructor("ProbDensity",4);
   P.def_constructor("DiscreteDistribution",1);
 
   P.def_function("exponentialDensity", lambda_expression( exponential_density() ) );
