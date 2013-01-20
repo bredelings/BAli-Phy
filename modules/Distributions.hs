@@ -2,23 +2,23 @@ module Distributions where
 {
 import Range;
 
+density (ProbDensity d _ _ _) = d;
+quantile (ProbDensity _ q _ _) = q;
+distDefaultValue (ProbDensity _ _ v _) = v;
+distRange (ProbDensity _ _ _ r) = r;
+
 gammaDensity (a,b) x = builtinGammaDensity a b x;
 gammaQuantile (a,b) p = builtinGammaQuantile a b p;
-logGammaDensity (a,b) x = builtinLogGammaDensity a b x;
 betaDensity (a,b) x = builtinBetaDensity a b x;
 betaQuantile (a,b) p = builtinBetaQuantile a b p;
 normalDensity (mu,sigma) x =  builtinNormalDensity mu sigma x;
-
-logNormalDensity (mu,sigma) x = builtinLogNormalDensity mu sigma x;
-logNormalQuantile (mu,sigma) x = builtinLogNormalQuantile mu sigma x;
+normalQuantile (mu,sigma) p =  builtinNormalQuantile mu sigma p;
 
 cauchyDensity (m,s) x = builtinCauchyDensity m s x;
 
 laplaceDensity (m,s) x = builtinLaplaceDensity m s x;
 
 dirichletDensity ps xs = builtinDirichletDensity (listToVectorDouble ps) (listToVectorDouble xs);
-
-logLaplaceDensity (m,s) x = builtinLogLaplaceDensity m s x;
 
 uniformDensity (min,max) x = builtinUniformDensity min max x;
 
@@ -34,26 +34,27 @@ iidDefault l = let {n = length l} in replicate n 1.0/(intToDouble n);
 mixtureRange ((_,dist1):_) = distRange dist1;
 
 bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p));
+
 bernoulli args = (ProbDensity (bernoulliDensity args) (error "Bernoulli has no quantile") True TrueFalseRange);
-normal args = (ProbDensity (normalDensity args) () 0.0 realLine);
+beta args = (ProbDensity (betaDensity args) (betaQuantile args) ((\(a,b)->a/(a+b)) args) (between 0.0 1.0));
+uniform (l,u) = (ProbDensity (uniformDensity (l,u)) () ((l+u)/2.0) (between l u));
+
+normal args = (ProbDensity (normalDensity args) (normalQuantile args) 0.0 realLine);
 exponential mu = (ProbDensity (exponentialDensity mu) (exponentialQuantile mu) mu (above 0.0));
 gamma args = (ProbDensity (gammaDensity args) (gammaQuantile args) ((\(a,b)->a*b) args) (above 0.0));
-beta args = (ProbDensity (betaDensity args) (betaQuantile args) ((\(a,b)->a/(a+b)) args) (between 0.0 1.0));
-mixture args = (ProbDensity (mixtureDensity args) () (mixtureDefault args) (mixtureRange args));
-dirichlet args = (ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") () (Simplex (length args) 1.0));
-dirichlet' (n,x) = dirichlet (replicate n x);
 laplace args = (ProbDensity (laplaceDensity args) () ((\(m,s)->m) args) realLine);
-logLaplace = expTransform' laplace;
-logExponential mu = (ProbDensity (logExponentialDensity mu) () (exp mu) (above 0.0));
-logNormal args = (ProbDensity (logNormalDensity args) (logNormalQuantile args) 1.0 (above 0.0));
-logGamma args = (ProbDensity (logGammaDensity args) () 1.0 (above 0.0));
-uniform (l,u) = (ProbDensity (uniformDensity (l,u)) () ((l+u)/2.0) (between l u));
 cauchy args = (ProbDensity (cauchyDensity args) () 0.0 realLine);
 
-density (ProbDensity d _ _ _) = d;
-quantile (ProbDensity _ q _ _) = q;
-distDefaultValue (ProbDensity _ _ v _) = v;
-distRange (ProbDensity _ _ _ r) = r;
+logNormal = expTransform' normal;
+logExponential = expTransform' exponential;
+logGamma = expTransform' gamma;
+logLaplace = expTransform' laplace;
+logCauchy = expTransform' cauchy;
+
+dirichlet args = (ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") () (Simplex (length args) 1.0));
+dirichlet' (n,x) = dirichlet (replicate n x);
+
+mixture args = (ProbDensity (mixtureDensity args) () (mixtureDefault args) (mixtureRange args));
 
 iidDensity (n,dist) xs = let {densities = (map (density dist) xs) ; 
                               pr = foldl' (*) (doubleToLogDouble 1.0) densities} 

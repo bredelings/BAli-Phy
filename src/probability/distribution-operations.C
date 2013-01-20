@@ -41,36 +41,6 @@ closure exponential_density::operator()(OperationArgs& Args) const
   return object_ptr<const Object>(result.clone());
 }
 
-struct log_exponential_density: public Operation
-{
-  log_exponential_density* clone() const {return new log_exponential_density;}
-  
-  tribool compare(const Object& O) const
-  {
-    if (this == &O) 
-      return true;
-
-    if (typeid(*this) != typeid(O)) return false;
-
-    return true;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "log_exponential_density";}
-
-  log_exponential_density():Operation(2) { }
-};
-
-closure log_exponential_density::operator()(OperationArgs& Args) const
-{
-  double mu = *Args.evaluate_as<Double>(0);
-  double x = *Args.evaluate_as<Double>(1);
-  
-  Log_Double result = exponential_pdf(log(x),mu)/x;
-  return object_ptr<const Object>(result.clone());
-}
-
 struct gamma_density: public Operation
 {
   gamma_density* clone() const {return new gamma_density;}
@@ -130,37 +100,6 @@ closure gamma_quantile_op::operator()(OperationArgs& Args) const
   double p  = *Args.evaluate_as<Double>(2);
 
   Double result = gamma_quantile(p, a1, a2);
-  return object_ptr<const Object>(result.clone());
-}
-
-struct log_gamma_density: public Operation
-{
-  log_gamma_density* clone() const {return new log_gamma_density;}
-  
-  tribool compare(const Object& O) const
-  {
-    if (this == &O) 
-      return true;
-
-    if (typeid(*this) != typeid(O)) return false;
-
-    return true;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "log_gamma_density";}
-
-  log_gamma_density():Operation(3) { }
-};
-
-closure log_gamma_density::operator()(OperationArgs& Args) const
-{
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double x  = *Args.evaluate_as<Double>(2);
-  
-  Log_Double result = gamma_pdf(log(x), a1, a2)/x;
   return object_ptr<const Object>(result.clone());
 }
 
@@ -256,10 +195,10 @@ closure normal_density::operator()(OperationArgs& Args) const
   Log_Double result = normal_pdf(x, a1, a2);
   return object_ptr<const Object>(result.clone());
 }
-
-struct log_normal_density: public Operation
+ 
+struct normal_quantile_op: public Operation
 {
-  log_normal_density* clone() const {return new log_normal_density;}
+  normal_quantile_op* clone() const {return new normal_quantile_op;}
   
   tribool compare(const Object& O) const
   {
@@ -273,49 +212,18 @@ struct log_normal_density: public Operation
 
   closure operator()(OperationArgs& Args) const;
  
-  std::string name() const {return "log_normal_density";}
+  std::string name() const {return "normal_quantile";}
 
-  log_normal_density():Operation(3) { }
+  normal_quantile_op():Operation(3) { }
 };
 
-closure log_normal_density::operator()(OperationArgs& Args) const
-{
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double x  = *Args.evaluate_as<Double>(2);
-
-  Log_Double result = log_normal_pdf(x, a1, a2);
-  return object_ptr<const Object>(result.clone());
-}
-
-struct log_normal_quantile_op: public Operation
-{
-  log_normal_quantile_op* clone() const {return new log_normal_quantile_op;}
-  
-  tribool compare(const Object& O) const
-  {
-    if (this == &O) 
-      return true;
-
-    if (typeid(*this) != typeid(O)) return false;
-
-    return true;
-  }
-
-  closure operator()(OperationArgs& Args) const;
- 
-  std::string name() const {return "log_normal_quantile";}
-
-  log_normal_quantile_op():Operation(3) { }
-};
-
-closure log_normal_quantile_op::operator()(OperationArgs& Args) const
+closure normal_quantile_op::operator()(OperationArgs& Args) const
 {
   double a1 = *Args.evaluate_as<Double>(0);
   double a2 = *Args.evaluate_as<Double>(1);
   double p  = *Args.evaluate_as<Double>(2);
 
-  Double result = log_normal_quantile(p, a1 ,a2);
+  Double result = normal_quantile(p, a1 ,a2);
   return object_ptr<const Object>(result.clone());
 }
 
@@ -414,36 +322,6 @@ closure laplace_density::operator()(OperationArgs& Args) const
   return object_ptr<Log_Double> (new Log_Double( ::laplace_pdf(x, a1, a2) ) );
 }
 
-struct log_laplace_density: public Operation
-{
-  log_laplace_density* clone() const {return new log_laplace_density;}
-    
-  tribool compare(const Object& O) const
-  {
-    if (this == &O) 
-      return true;
-
-    if (typeid(*this) != typeid(O)) return false;
-
-    return true;
-  }
-
-  closure operator()(OperationArgs& Args) const;
-
-  std::string name() const {return "log_laplace_density";}
-    
-  log_laplace_density():Operation(3) { }
-};
-
-closure log_laplace_density::operator()(OperationArgs& Args) const
-{
-  double a1 = *Args.evaluate_as<Double>(0);
-  double a2 = *Args.evaluate_as<Double>(1);
-  double x  = *Args.evaluate_as<Double>(2);
-
-  return object_ptr<Log_Double> (new Log_Double( ::laplace_pdf(log(x),a1,a2)/x ) );
-}
-
 struct uniform_density: public Operation
 {
   uniform_density* clone() const {return new uniform_density;}
@@ -531,27 +409,21 @@ void Distribution_Functions(Module& P)
   P.def_constructor("DiscreteDistribution",1);
 
   P.def_function("exponentialDensity", lambda_expression( exponential_density() ) );
-  P.def_function("logExponentialDensity", lambda_expression( log_exponential_density() ) );
 
   P.def_function("builtinGammaDensity", lambda_expression( gamma_density() ) );
   P.def_function("builtinGammaQuantile", lambda_expression( gamma_quantile_op() ) );
-
-  P.def_function("builtinLogGammaDensity", lambda_expression( log_gamma_density() ) );
 
   P.def_function("builtinBetaDensity", lambda_expression( beta_density() ) );
   P.def_function("builtinBetaQuantile", lambda_expression( beta_quantile_op() ) );
 
   P.def_function("builtinNormalDensity", lambda_expression( normal_density() ) );
-  P.def_function("builtinLogNormalDensity", lambda_expression( log_normal_density() ) );
-  P.def_function("builtinLogNormalQuantile", lambda_expression( log_normal_quantile_op() ) );
+  P.def_function("builtinNormalQuantile", lambda_expression( normal_quantile_op() ) );
 
   P.def_function("builtinCauchyDensity", lambda_expression( cauchy_density() ) );
 
   P.def_function("builtinLaplaceDensity", lambda_expression( laplace_density() ) );
 
   P.def_function("builtinDirichletDensity", lambda_expression( dirichlet_density() ) );
-
-  P.def_function("builtinLogLaplaceDensity", lambda_expression( log_laplace_density() ) );
 
   P.def_function("builtinUniformDensity", lambda_expression( uniform_density() ) );
 }
