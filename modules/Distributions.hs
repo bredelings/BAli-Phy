@@ -36,7 +36,7 @@ mixtureRange ((_,(ProbDensity _ _ _ _ r,args1)):_) = (r args1);
 betaDist  =       (ProbDensity "Beta"        betaDensity        betaQuantile (\args->0.5) 0);
 
 bernoulliDensity p b = if b then (doubleToLogDouble p) else (doubleToLogDouble (1.0-p));
-bernoulli args = (ProbDensity "Bernoulli" bernoulliDensity (error "Bernoulli has no quantile") (\_->True) (), args);
+bernoulli args = (ProbDensity "Bernoulli" bernoulliDensity (error "Bernoulli has no quantile") (\_->True) (\_ -> TrueFalseRange), args);
 normal args = (ProbDensity "Normal" normalDensity () (\_->0.0) (\_->realLine), args);
 exponential args = (ProbDensity "Exponential" exponentialDensity exponentialQuantile (\mu->mu) (\_->above 0.0), args);
 gamma args = (ProbDensity "Gamma" gammaDensity gammaQuantile (\(a,b)->a*b) (\_->above 0.0), args);

@@ -207,13 +207,14 @@ void add_slice_moves(Probability_Model& P, const string& name,
 #include "probability/distribution-operations.H" // for prob_density
 
 /// Find parameters with distribution name Dist
-vector<vector<string> > get_distributed_parameters(const Probability_Model& P, const string& Dist)
+vector<vector<string> > get_distributed_parameters(const Probability_Model& P, const string& RangeType)
 {
   vector<vector<string> > names;
 
   expression_ref query = constructor(":~",2) + match(0) + match(-1);
   expression_ref _ = dummy(-1);
-  expression_ref case_query_func = v1^(case_expression(v1,constructor(":~",2)+ _ + Tuple((prob_density* v2 * _* _* _* _), _), v2));
+  //  expression_ref case_query_func = v1^(case_expression(v1,constructor(":~",2)+ _ + Tuple((prob_density* v2 * _* _* _* _), _), v2));
+  expression_ref case_query_func = v1^(case_expression(v1,constructor(":~",2)+ _ + v2, (var("distRange"),v2)));
 
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
@@ -222,8 +223,8 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
       find_match(query, P.get_note(i), results);
       expression_ref rand_var = results[0];
 
-      string dist_name = *P.get_context().evaluate_expression_as<String>((var("listToString"),(case_query_func, P.get_note(i))));
-      if (dist_name != Dist) continue;
+      auto range = P.get_context().evaluate_expression_as<constructor>((case_query_func, P.get_note(i)));
+      if (range->f_name != RangeType) continue;
 
       if (is_exactly(rand_var->head,":"))
       {
@@ -399,7 +400,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, Between(-20,20,shift_cauchy), "logLambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
 
   // FIXME - this might not work very well until I make these auto-tuning
-  vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Dirichlet");
+  vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Range.Simplex");
   int i=1;
   for(const auto& p: dirichlet_parameters)
   {
@@ -529,7 +530,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
   add_slice_moves(P, "lambdaScale", slice_moves, 10);
   add_slice_moves(P, "*.M3.omega*", slice_moves);
 
-  vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Dirichlet");
+  vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Range.Simplex");
 
   int i=1;
   for(const auto& p: dirichlet_parameters)
@@ -730,7 +731,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   //  - Note that this should only be an issue when this does not affect the likelihood.
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
 
-  vector<vector<string>> bernoulli_parameters = get_distributed_parameters(P,"Bernoulli");
+  vector<vector<string>> bernoulli_parameters = get_distributed_parameters(P,"Range.TrueFalseRange");
   for(const auto& parameters: bernoulli_parameters)
   {
     assert(parameters.size() == 1);
