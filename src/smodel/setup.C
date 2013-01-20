@@ -29,7 +29,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "util.H"
 #include "myexception.H"
 #include "smodel/operations.H"
-#include "computation/operations.H"
 #include "computation/module.H"
 #include "computation/loader.H"
 
@@ -728,7 +727,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref Var = (times, W, W);
     formula_expression_ref lVar = (var("log"), (plus, 1.0, Var ) );
     formula_expression_ref lmu = (times, -0.5, lVar);
-    formula_expression_ref lsigma = (Sqrt, lVar);
+    formula_expression_ref lsigma = (var("sqrt"), lVar);
     formula_expression_ref dist = (var("uniformDiscretize"), (var("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
 
     return (var("multiRate"), base,  dist);
@@ -744,7 +743,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref Var = (times, W, W);
     formula_expression_ref lVar = (var("log"), (plus, 1.0, Var ) );
     formula_expression_ref lmu = (times, -0.5, lVar);
-    formula_expression_ref lsigma = (Sqrt, lVar);
+    formula_expression_ref lsigma = (var("sqrt"), lVar);
     formula_expression_ref dist = (var("uniformDiscretize"), (var("logNormalQuantile"), Tuple(lmu,lsigma)) , n);
 
     formula_expression_ref p = def_parameter("INV.p", 0.01, between(0,1), (var("beta"), Tuple(1.0, 2.0)) );
