@@ -43,7 +43,7 @@ mixture args = (ProbDensity (mixtureDensity args) () (mixtureDefault args) (mixt
 dirichlet args = (ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") () (Simplex (length args) 1.0));
 dirichlet' (n,x) = dirichlet (replicate n x);
 laplace args = (ProbDensity (laplaceDensity args) () ((\(m,s)->m) args) realLine);
-logLaplace args = (ProbDensity (logLaplaceDensity args) () ((\(m,s)->exp m) args) (above 0.0));
+logLaplace = expTransform' laplace;
 logExponential mu = (ProbDensity (logExponentialDensity mu) () (exp mu) (above 0.0));
 logNormal args = (ProbDensity (logNormalDensity args) (logNormalQuantile args) 1.0 (above 0.0));
 logGamma args = (ProbDensity (logGammaDensity args) () 1.0 (above 0.0));
@@ -88,5 +88,8 @@ mixDiscreteDistributions' [] [] = [];
 mixDiscreteDistributions l1 l2 = DiscreteDistribution (mixDiscreteDistributions' l1 (fmap unwrapDD l2));
 
 average (DiscreteDistribution l) = foldl' (\x y->(x+(fst y)*(snd y))) 0.0 l;
-uniformDiscretize q n = let {n' = (intToDouble n)} in DiscreteDistribution (map (\i->(1.0/n',q (2.0*i+1.0)/n')) (take n [0..]))
+uniformDiscretize q n = let {n' = (intToDouble n)} in DiscreteDistribution (map (\i->(1.0/n',q (2.0*i+1.0)/n')) (take n [0..]));
+
+expTransform (ProbDensity d q v r) = (ProbDensity (\x -> (d $ log x)/(doubleToLogDouble x)) (q.log) (exp v) (Range.expTransform r));
+expTransform' family args = Distributions.expTransform (family args);
 }
