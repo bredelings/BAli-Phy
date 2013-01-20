@@ -8,7 +8,7 @@
 class Module;
 
 /// This class contains only compute expressions, parameters, and names for the compute expressions
-class context: public Object, public Model_Notes
+class context: public Model_Notes
 {
 public:
   typedef reg_heap::root_t root_t;
