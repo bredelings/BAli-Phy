@@ -170,8 +170,7 @@ namespace substitution
       F = Var&F;
     }
 
-    expression_ref N = get_list(vector<double>(a.size(), 1.0) );
-    F.add_expression( constructor(":~",2)+ F.exp() + (var("dirichlet"),N) );
+    F.add_expression( constructor(":~",2)+ F.exp() + (var("dirichlet'"),Tuple((int)a.size(), 1.0) ));
 
     return F;
   }
@@ -524,7 +523,7 @@ namespace substitution
     }
     formula_expression_ref R = (var("mixMixtureModels"),P,M);
 
-    R.add_expression(constructor(":~",2) + P.exp() + (var("dirichlet"), get_list(vector<Double>(N,1.0) ) ) ) ;
+    R.add_expression(constructor(":~",2) + P.exp() + (var("dirichlet'"), Tuple(N, 1.0)));
 
     return R;
   }

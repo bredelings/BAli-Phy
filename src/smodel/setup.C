@@ -785,8 +785,8 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       dist = Tuple(f, rate) & dist;
     }
     dist = (var("DiscreteDistribution"), dist);
-    dist.add_expression( constructor(":~",2) + get_list(fs) + (var("dirichlet"), get_list(vector<Double>(n,1.0+n/2.0))) );;
-    dist.add_expression( constructor(":~",2) + get_list(rates) +(var("dirichlet"), get_list(vector<Double>(n,2.0))) );
+    dist.add_expression( constructor(":~",2) + get_list(fs) + (var("dirichlet'"), Tuple(n, 1.0+n/2.0)));
+    dist.add_expression( constructor(":~",2) + get_list(rates) +(var("dirichlet'"), Tuple(n, 2.0)));
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
     return (var("multiRate"), base,  dist);
@@ -849,7 +849,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       F = f&F;
     }
     D = (var("DiscreteDistribution"), D);
-    D.add_expression( constructor(":~",2) + F.exp() + (var("dirichlet"), get_list(vector<Double>(n,4.0))) );
+    D.add_expression( constructor(":~",2) + F.exp() + (var("dirichlet'"), Tuple(n, 4.0)));
 
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
@@ -878,7 +878,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
       D = Tuple(f,w)&D;
     }
     D = (var("DiscreteDistribution"), D);
-    D.add_expression(constructor(":~",2) +  get_list(fraction) + (var("dirichlet"), get_list(vector<Double>(n,4.0))) );
+    D.add_expression(constructor(":~",2) +  get_list(fraction) + (var("dirichlet'"), Tuple(n, 4.0)));
 
     formula_expression_ref M0 = get_M0_omega_function(L,a,frequencies,model_args,3);
 
@@ -1058,7 +1058,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
     formula_expression_ref mixture2 = (var("multiParameter"), M0, (var("mixDiscreteDistributions"), List(p_pos, (minus, 1.0, p_pos)), List(D2,D1) ) );
 
     formula_expression_ref branch_site = (var("MixtureModels"), mixture1&(mixture2&ListEnd) );
-    branch_site.add_expression( constructor(":~",2) +  F.exp() + (var("dirichlet"),get_list(vector<Double>(n,1.0) ) ) );
+    branch_site.add_expression( constructor(":~",2) +  F.exp() + (var("dirichlet'"),Tuple(n,1.0)));
 
     return branch_site;
   }
