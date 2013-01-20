@@ -51,8 +51,11 @@ logNormal args = (ProbDensity "LogNormal" logNormalDensity logNormalQuantile (\_
 logGamma args = (ProbDensity "LogGamma" logGammaDensity () () (\_->above 0.0), args);
 uniform args = (ProbDensity "Uniform" uniformDensity () () (\(l,u)->between l u), args);
 cauchy args = (ProbDensity "Cauchy" cauchyDensity () () realLine, args);
-distRange (ProbDensity _ _ _ _ r,args) = r args;
+
+density (ProbDensity _ d _ _ _, args) = d args;
+quantile (ProbDensity _ _ q _ _, args) = q args;
 distDefaultValue (ProbDensity _ _ _ v _, args) = v args;
+distRange (ProbDensity _ _ _ _ r,args) = r args;
 
 iidDensity (n,((ProbDensity _ density _ _ _),args)) xs = let {densities = (map (density args) xs) ; 
                                                               pr = foldl' (*) (doubleToLogDouble 1.0) densities} 
