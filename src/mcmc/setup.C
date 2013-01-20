@@ -204,8 +204,6 @@ void add_slice_moves(Probability_Model& P, const string& name,
   }
 }
 
-#include "probability/distribution-operations.H" // for prob_density
-
 /// Find parameters with distribution name Dist
 vector<vector<string> > get_distributed_parameters(const Probability_Model& P, const string& RangeType)
 {
@@ -213,7 +211,6 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
 
   expression_ref query = constructor(":~",2) + match(0) + match(-1);
   expression_ref _ = dummy(-1);
-  //  expression_ref case_query_func = v1^(case_expression(v1,constructor(":~",2)+ _ + Tuple((prob_density* v2 * _* _* _* _), _), v2));
   expression_ref case_query_func = v1^(case_expression(v1,constructor(":~",2)+ _ + v2, (var("distRange"),v2)));
 
   for(int i=0;i<P.n_notes();i++)
