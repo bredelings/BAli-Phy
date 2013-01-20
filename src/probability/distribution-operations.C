@@ -1,5 +1,3 @@
-#include "probability/distribution-operations.H"
-
 #include <vector>
 #include <valarray>
 #include <string>
@@ -475,9 +473,6 @@ closure uniform_density::operator()(OperationArgs& Args) const
   
   return object_ptr<Log_Double> (new Log_Double( ::uniform_pdf(x,a1,a2) ) );
 }
-
-// Fields: n_random, n_parameters, string, density op
-expression_ref prob_density = lambda_expression( constructor("Distributions.ProbDensity",5) );
 
 struct GetBounds: public Operation
 {

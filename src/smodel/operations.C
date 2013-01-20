@@ -1,6 +1,5 @@
 #include <sstream>
 #include "smodel/operations.H"
-#include "probability/distribution-operations.H"
 #include "computation/operations.H"
 #include "computation/expression.H"
 #include "io.H"

@@ -1,4 +1,0 @@
-#ifndef SMODEL_FUNCTIONS_H
-#define SMODEL_FUNCTIONS_H
-
-#endif

@@ -691,9 +691,6 @@ context::~context()
   memory->release_token(token);
 }
 
-#include "probability/distribution-operations.H"
-#include "computation/operations.H"
-
 expression_ref context::default_parameter_value(int i) const
 {
   vector<expression_ref> results;

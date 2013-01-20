@@ -30,7 +30,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "myexception.H"
 #include "smodel/operations.H"
 #include "computation/operations.H"
-#include "probability/distribution-operations.H"
 #include "computation/module.H"
 #include "computation/loader.H"
 
