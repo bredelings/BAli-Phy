@@ -28,7 +28,6 @@ along with BAli-Phy; see the file COPYING.  If not see
 #include "computation/operations.H"
 #include "computation/module.H"
 #include "computation/formula_expression.H"
-#include "probability/distribution-operations.H"
 #include "parser/desugar.H"
 
 using std::vector;
@@ -293,7 +292,7 @@ void Model::process_note(int index)
     expression_ref _ = dummy(-1);
 
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_new = case_expression(D, Tuple((prob_density*_*density*_*_*_),args), (density, args, x));
+    expression_ref Pr_new = (var("density"), D, x);
     
     // Record that this variable is random, and has this prior.
     // THIS would be the right place to determine what other random variables and parameters are being depended on.
