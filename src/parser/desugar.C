@@ -19,7 +19,7 @@ using std::pair;
 // See list in computation/loader.C
 //
 // 1. Add ability to change the prior on variables.
-// 2. Add ability to add new variables.
+// 2. [DONE] Add ability to add new variables.
 // 3. Add constructors to programs!
 // 4. Add the ability to store newtype definitions.
 // 5. Move to desugaring entire modules!

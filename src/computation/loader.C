@@ -21,27 +21,34 @@ using std::map;
  *
  * See list in parser/desugar.C
  *
- * 1. [DONE] Remove true/false in favor of True/False.
+ * 1. Allow defining constructors in files.
  * 2. [DONE] Convert strings to [Char]
- * 3. Update probability functions to separate the family from the probability object.
- *    3a. Construct the ExpOf transform to make logNormal, logGamma, etc.
- *    3b. Choose kernels based on the range, not based on the distribution name.
+ * 3. [DONE] Update probability functions to separate the family from the probability object.
+ *    3a. [DONE] Construct the ExpOf transform to make logNormal, logGamma, etc.
+ *    3b. [DONE] Choose kernels based on the range, not based on the distribution name.
  * 4. [DONE] Convert Defs to use the machine.
  * 5. [DONE] SYNTAX: replace a ~ b ( c ) with a ~ b
  * 6. [DONE] SYNTAX: external a ~ b [To not declare all parameters]
  *      6a. [DONE] SYNTAX: data a ~ b [Don't treat a as a parameter at all!]
  * 7. [DONE] Allow defs in BUGS files.
  * 8. Rationalize Model_Notes, formula_expression_ref, and program?
- *    - [DONE] Make Model_Notes into a Program with notes added?
- *    - [DONE] Could we parse a BUGS file in to a Model_Notes?
- *    - Stop allowing the creation of parameters that aren't in modules!
- *    - Create formula_expression_ref's as a list of modules w/ notes.
- *      + Perhaps turn imports into submodules (that are prefixed with the main module) if they have parameters.
+ *    - I note that a "model" compresses a complex expression into Model.main.
+ *    - [DONE] Add Model_Notes to Module.
+ *    - Stop allowing the creation of parameters that aren't in modules?
+ *    - Define some (all?) things in a Module instead of a formula_expression_ref.
+ *    - [DONE] Allow formula_expression_ref's to import things using import notes and import_submodel notes.
+ *    - [DONE] Allow creating formula_expression_ref's from modules => refer to Module.main, and import the Module.
  *      + Perhaps when prefixing a module, we don't want to prefix its FUNCTIONS,
  *        just its parameters and notes?
- *      + Basically, a f.e.r. should be defined by a single module w/ imports, and a 'main' routine?
+ *      + No, we do want to prefix its functions, because they might refer to parameters.
+ *      + Basically, a f.e.r. should be a set of definitions (w/ imports) and a 'main' routine?
  *        - How does this relate to simply bringing in the notes attached to parameters?
  *        - How does this attempt to give parameters default names relate to the more general approach?
+ *      + Problem: code generation can currently be done, by passing numbers of model names as arguments to models.
+ *                 These arguments are used to generate a different model.
+ *                 But models define in a module file can only take function arguments, not arguments that affect the code
+ *                   in the module.
+ *    - Eliminate parameter definition notes in formula_expression_ref?
  *    - [DONE] Eliminate C++ operators on formula_expression_ref -> use parser instead.
  *    - [DONE] Eliminate C++ operators on expression_ref -> use parser instead.
  *    - [DONE] Make (f,g) only create an apply expression, but NOT substitute.
@@ -69,26 +76,43 @@ using std::map;
  *     13c. Remove any earlier attempts at importing.
  * 14. [DONE] Process imports
  *     + [DONE] 14a. Process mutually dependent modules.
- *     + [DONE] 15b. Note that clashing declarations are allowed if the symbol is unreferenced!
+ *     + [DONE] 14b. Note that clashing declarations are allowed if the symbol is unreferenced!
  * 15. Handle 'where' clauses (e.g. in "alt")
  * 16. Handle guards clauses (e.g. in gdrhs, and gdpat)
  *     + I *think* that guards cannot fail in a way that makes the rule fail and move to the next rule.
- *     + If so, the guards can be processed as a special RHS.
- * 17. Compute the entire probability expression, instead of adding pieces incrementally.
+ *       (The 'otherwise' rule might be special, though??)
+ *     + If failure of all guards leads to failure, then can the guards can be processed as a special RHS?
+ *     16b. Handle as-patterns.
+ *        case v of x@pat -> body => case v of pat -> (\x->body) v
+ *     16c. Handle irrefutable patterns that use ~.
+ *        case v of ~h:t -> body
+ *     16d. What does it mean (if its true) that irrefutable bindings are only irrefutable at the top level?
+ * 17. Compute the entire probability expression at once, instead of adding pieces incrementally.
  * 18. Make Context load an entire program, instead of adding pieces incrementally.
  *     19. Move the Program from Context to reg_heap.
  * 20. [DONE] Load builtins from a file.
  *     20a. Convert builtins to new framework.
  * 21. [DONE] Add computed loggers.
  *     (This will allow us to e.g. select min/max functions for logging.)
+ *     21a. Find a haskell expression to log [p1,p2,p3] based on the order of [q1,q2,q3]
  * 22. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
- * 23. Print expressions with fixity.
- * 24. Allow registers to be moved WHILE THE INTERPRETER IS RUNNING!
- * 25. Allow model files to create models with a variable number of parameters.
- *     25a = 24.
- *     25b. This includes the branch-site model, etc.
- * 26. Allow model files to create models where an argument is the name of another model file.
+ * 23. (?) Print expressions with fixity.
+ * 24. Allow the creation, destruction, initialization, and proposals of unnamed parameters.
+ *     24a. Perhaps the letter frequencies would be a good first example of this.
+ *     24b. The different categories in the branch-site model would be a good second example.
+ *     24c. Allow each parameter to be uniquely identified by a number that is not its location.
+ *     24d. The parameter will encode this number in its expression, even if it doesn't have a name.
+ *     24e. We can then have an IO operation to change the parameter value.
+ *     24f. This will allow us to set default values for vector parameters.
+ *     24g. But how will be scan the variable parameter list and propose new values?
+ * 25. Allow model files to create models with a variable number of parameters => depends on 24.
+ * 26. (?) Allow model files to create models where an argument is the name of another model file.
  * 27. Allow fixing parameters. (e.g. to test the branch-site model under ML)
+ * 28. Optimizations
+ *     - Perform applications if expression is used only once?
+ *     - Remove let bindings for unused variables?
+ *     - Merge let bidings with identical bodies?
+ *     - Simplify some case expressions based on knowledge of let-bound variable?
  */
 
 
