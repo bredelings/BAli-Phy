@@ -2401,7 +2401,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
 
 /// Evaluate R and look through reg_var chains to return the first reg that is NOT a reg_var.
 /// The returned reg is guaranteed to be (a) in WHNF (a lambda or constructor) and (b) not a reg_var.
-int reg_heap::incremental_evaluate(int R, int t, bool evaluate_parameters)
+int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 {
   assert(R > 0 and R < n_regs());
   assert(access(R).state == reg::used);
@@ -2415,7 +2415,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_parameters)
   //  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
-  while (not access(R).result and (evaluate_parameters or access(R).C.exp->head->type() == parameter_type))
+  while (not access(R).result and (evaluate_changeable or access(R).changeable))
   {
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -2491,7 +2491,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_parameters)
     //       The result must be set.  Therefore, complain if the result is missing.
     else if (access(R).C.exp->head->type() == parameter_type)
     {
-      if (evaluate_parameters)
+      if (evaluate_changeable)
 	throw myexception()<<"Parameter '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
       else
 	return R;
@@ -2600,7 +2600,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_parameters)
     }
   }
 
-  if (evaluate_parameters or access(R).C.exp->head->type() != parameter_type)
+  if (evaluate_changeable or not access(R).changeable)
   {
     assert(access(R).result);
     assert(is_WHNF(access_result(R).exp));

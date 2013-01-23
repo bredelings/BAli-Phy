@@ -54,7 +54,15 @@ using std::map;
  *    - [DONE] Make (f,g) only create an apply expression, but NOT substitute.
  *    - [DONE] Make f+g simply append g to f->sub.
  *    - [DONE] Make f*g substitute into f.
- * 9. Try to rewrite e.g. M8b into a BUGS module.
+ * 9. Try to rewrite models into BUGS modules/models.
+ *    - M8b? [ Issue - how many sub-categories, though? ]
+ *    - branch-site [ Issue - how to specify F3x4, HKY?  Issue - how to specify number of conservation categories? ]
+ *    - branch-site [ Issue - how to make the weight on "neutral" not *depend* on the number of conservation categories? ]
+ *    - Problems: 
+ *      + [PROBLEM] Allowing the dimension of distributions to depend on arguments.
+ *      + Frequency defaults - how can we specify these?
+ *      + Submodel parameters - these need separate parsing to coerce them to the right type.
+ *        - But is that a problem?
  * 10. Add default values and Bounds to distributions.
  *    - [DONE] Add Bounds to distributions.
  *    - Ah, but how do we add default values to distributions that return random structures?
