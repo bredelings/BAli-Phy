@@ -34,6 +34,9 @@ private:
   const std::vector<root_t>& parameters() const {return memory->get_parameters_for_context(token);}
         std::vector<root_t>& parameters()       {return memory->get_parameters_for_context(token);}
 
+  const pool<int>& parameter_regs() const {return memory->get_parameter_regs_for_context(token);}
+        pool<int>& parameter_regs()       {return memory->get_parameter_regs_for_context(token);}
+
   const std::map<std::string, root_t>& identifiers() const {return memory->get_identifiers_for_context(token);}
         std::map<std::string, root_t>& identifiers()       {return memory->get_identifiers_for_context(token);}
 
