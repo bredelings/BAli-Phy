@@ -13,6 +13,7 @@
 #include "closure.H"
 #include "CacheList.H"
 #include <unordered_map>
+#include "pool.H"
 
 // Type for ownership sets
 typedef std::bitset<64> owner_set_t;
@@ -181,6 +182,9 @@ public:
 
     /// Probably this would be non-parameter identifiers
     std::map<std::string, root_t> identifiers;
+
+    /// The register indices of non-root parameters
+    pool<int> parameter_regs;
 
     bool used;
     graph_roots():used(false) {}
