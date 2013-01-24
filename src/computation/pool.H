@@ -117,8 +117,8 @@ class pool
     access(r).state = none;
   }
 
-  const T& access(int i) const {return memory[i];}
-        T& access(int i)       {return memory[i];}
+  const record& access(int i) const {return memory[i];}
+        record& access(int i)       {return memory[i];}
 
 public:
   void reclaim_used(int r)
@@ -159,8 +159,8 @@ public:
   //  void check_used(int) const;
   //  void check_all_used() const;
 
-  const T& operator[](int i) const {assert(is_used(i));return access(i);}
-        T& operator[](int i)       {assert(is_used(i));return access(i);}
+  const T& operator[](int i) const {assert(is_used(i));return access(i).value;}
+        T& operator[](int i)       {assert(is_used(i));return access(i).value;}
 
   pool()
   {
