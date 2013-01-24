@@ -61,7 +61,7 @@ closure context::preprocess(const closure& C) const
 
 string context::parameter_name(int i) const
 {
-  const closure& C = access(*parameters()[i]).C;
+  const closure& C = access(get_parameter_reg(i)).C;
   if (object_ptr<const parameter> P = is_a<parameter>(C.exp))
   {
     return P->parameter_name;
@@ -118,7 +118,7 @@ void context::rename_parameter(int i, const string& new_name)
 {
   string old_name = parameter_name(i);
 
-  int R = *parameters()[i];
+  int R = get_parameter_reg(i);
 
   assert( access(R).changeable == true );
   set_C(R, parameter(new_name) );
@@ -219,9 +219,9 @@ object_ref context::evaluate_expression(const expression_ref& E) const
 
 bool context::parameter_is_set(int index) const
 {
-  assert(index >= 0 and index < parameters().size());
+  assert(index >= 0 and index < n_parameters());
 
-  int P = *parameters()[index];
+  int P = get_parameter_reg(index);
 
   if (not access(P).result and not access(P).call) return false;
 
@@ -231,9 +231,9 @@ bool context::parameter_is_set(int index) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 object_ref context::get_parameter_value(int index) const
 {
-  assert(index >= 0 and index < parameters().size());
+  assert(index >= 0 and index < n_parameters());
 
-  int P = *parameters()[index];
+  int P = get_parameter_reg(index);
 
   if (not access(P).result)
   {
@@ -277,7 +277,7 @@ void context::set_parameter_value_expression(int index, const expression_ref& O)
 
 void context::set_parameter_value_(int index, closure&& C)
 {
-  int P = *parameters()[index];
+  int P = get_parameter_reg(index);
 
   set_reg_value(P, std::move(C) );
 }
@@ -343,6 +343,9 @@ int context::add_parameter(const string& full_name)
 
   root_t r = allocate_reg();
   parameters().push_back( r );
+  int index2 = parameter_regs().allocate();
+  assert(index == index2);
+  parameter_regs()[index2] = *r;
 
   access(*r).changeable = true;
   set_C(*r, parameter(full_name) );
@@ -411,7 +414,11 @@ void context::alphabetize_parameters()
 
   vector<int> mapping = compute_mapping(names, names2);
 
+  for(int i=0;i<mapping.size();i++)
+    assert( parameter_regs()[i] == *parameters()[i] );
   parameters() = apply_mapping(parameters(), mapping);
+  for(int i=0;i<mapping.size();i++)
+    parameter_regs()[i] = *parameters()[i];
 }
 
 void context::collect_garbage() const
@@ -434,7 +441,7 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
     if (param_index == -1)
       throw myexception()<<"Can't translate undefined parameter '"<<qualified_name<<"' ('"<<p->parameter_name<<"') in expression!";
 
-    reg = *parameters()[param_index];
+    reg = get_parameter_reg(param_index);
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
@@ -541,8 +548,13 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
       {
 	  assert(find_parameter(S.name) == -1);
 
+	  int index = n_parameters();
+
 	  root_t r = allocate_reg();
 	  parameters().push_back( r );
+	  int index2 = parameter_regs().allocate();
+	  assert(index == index2);
+	  parameter_regs()[index2] = *r;
 
 	  access(*r).changeable = true;
 	  set_C(*r, parameter(S.name) );
@@ -723,6 +735,14 @@ expression_ref context::default_parameter_value(int i) const
 reg_heap::root_t context::push_temp_head() const
 {
   return memory->push_temp_head( token );
+}
+
+int context::get_parameter_reg(int i) const
+{
+  int R1 = parameter_regs()[i];
+  int R2 = *parameters()[i];
+  assert(R1 == R2);
+  return R2;
 }
 
 std::ostream& operator<<(std::ostream& o, const context& C)

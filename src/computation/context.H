@@ -45,6 +45,8 @@ private:
 
   int get_token() const {return token;}
 
+  int get_parameter_reg(int i) const;
+
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
   expression_ref translate_refs(const expression_ref& R, std::vector<int>&) const;
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
