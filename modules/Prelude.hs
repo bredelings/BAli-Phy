@@ -145,8 +145,11 @@ h:t !! 0 = h;
 h:t !! i = t !! (i-1);
 _   !! _ = error "Out of bounds list index!";
 
-sum     = foldl (+) 0;
-product = foldl (*) 1;
+sum     = foldl (+) 0.0;
+product = foldl (*) 1.0;
+
+sumi     = foldl (+) 0;
+producti = foldl (*) 1;
 
 enumFrom x = x:(enumFrom (x+1));
 enumFromTo x y = if (x==y) then [x] else x:(enumFromTo (x+1) y);

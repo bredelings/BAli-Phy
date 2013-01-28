@@ -34,6 +34,9 @@ private:
   const std::vector<root_t>& parameters() const {return memory->get_parameters_for_context(token);}
         std::vector<root_t>& parameters()       {return memory->get_parameters_for_context(token);}
 
+  const pool<int>& parameter_regs() const {return memory->get_parameter_regs_for_context(token);}
+        pool<int>& parameter_regs()       {return memory->get_parameter_regs_for_context(token);}
+
   const std::map<std::string, root_t>& identifiers() const {return memory->get_identifiers_for_context(token);}
         std::map<std::string, root_t>& identifiers()       {return memory->get_identifiers_for_context(token);}
 
@@ -41,6 +44,8 @@ private:
   void pop_temp_head() const;
 
   int get_token() const {return token;}
+
+  int get_parameter_reg(int i) const;
 
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
   expression_ref translate_refs(const expression_ref& R, std::vector<int>&) const;

@@ -1,0 +1,174 @@
+#ifndef POOL_H
+#define POOL_H
+
+template <typename T>
+class pool
+{
+  enum States {none=0,free=1,used=2,checked=3};
+
+  struct record
+  {
+    States state = none;
+    int prev = -1;
+    int next = -1;
+    T value;
+  };
+
+  std::vector<record> memory;
+
+  int first_free = -1;
+  int first_used = -1;
+
+  bool is_free(int r) const {return memory[r].state == free;}
+  bool is_used(int r) const {return memory[r].state == used;}
+
+  int n_free() const
+  {
+    int here = first_free;
+    int count = 0;
+    for(;here != -1;here = access(here).next)
+      count++;
+    return count;
+  }
+
+  int n_used() const
+  {
+    int here = first_used;
+    int count = 0;
+    for(;here != -1;here = access(here).next)
+      count++;
+    return count;
+  }
+
+  int n_null() const
+  {
+    return 0;
+  }
+
+  void expand_memory(int s)
+  {
+    assert(memory.size() == n_used() + n_free() + n_null());
+    
+    int k = memory.size();
+    memory.resize(memory.size()+s);
+    for(int i=k;i<memory.size();i++)
+      add_to_free_list(i);
+    
+    assert(memory.size() == n_used() + n_free() + n_null());
+  }
+
+  int add_to_free_list(int r)
+  {
+    //    clear(r);
+    access(r).state = free;
+    access(r).prev = -1;
+    access(r).next = first_free;
+    if (first_free != -1)
+      access(first_free).prev = r;
+    first_free = r;
+    return r;
+  }
+
+  int get_free_element()
+  {
+    if (first_free == -1) return -1;
+
+    int r = first_free;
+
+#ifndef NDEBUG
+    // check really empty
+#endif
+
+    assert(access(r).state == free);
+    first_free = access(r).next;
+    access(r).prev = -1;
+    access(r).next = -1;
+    access(r).state = none;
+
+    return r;
+  }
+
+  int add_to_used_list(int r)
+  {
+    access(r).state = used;
+    access(r).prev = -1;
+    access(r).next = first_used;
+    if (first_used != -1)
+      access(first_used).prev = r;
+    first_used = r;
+    return r;
+  }
+
+  void remove_from_used_list(int r)
+  {
+    int P = access(r).prev;
+    int N = access(r).next;
+
+    if (P == -1)
+      first_used = N;
+    else
+      access(P).next = N;
+
+    if (N == -1)
+      ;
+    else
+      access(N).prev = P;
+
+    access(r).state = none;
+  }
+
+  const record& access(int i) const {return memory[i];}
+        record& access(int i)       {return memory[i];}
+
+public:
+  void reclaim_used(int r)
+  {
+    // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
+    remove_from_used_list(r);
+    
+    // access(r).value.clear()
+    
+    add_to_free_list(r);
+  }
+
+  int allocate()
+  {
+    // SLOW!
+    assert(memory.size() == n_used() + n_free() + n_null());
+
+    int r = get_free_element();
+
+    // allocation failed
+    if (r == -1)
+    {
+      if (memory.size() < n_used()*2+10)
+	expand_memory(memory.size()*2+10);
+      r = get_free_element();
+      assert(r != -1);
+    }
+
+    add_to_used_list(r);
+
+    // SLOW!
+    assert(memory.size() == n_used() + n_free() + n_null());
+
+    return r;
+  }
+
+  // These checks the VALUES.
+  //  void check_used(int) const;
+  //  void check_all_used() const;
+
+  const T& operator[](int i) const {assert(is_used(i));return access(i).value;}
+        T& operator[](int i)       {assert(is_used(i));return access(i).value;}
+
+  pool()
+  {
+    // This would be the null record.
+    // memory.resize(1);
+    // Check that 
+  }
+};
+
+
+#endif
