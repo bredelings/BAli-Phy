@@ -332,12 +332,9 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | lit('[') >> type >> ']'                      
 	  // parenthesized constructor
 	  | lit('(') >> type >> ')';                      
-	gtycon %= qtycon 
-	  | lit("()")
-	  | lit("[]")
-	  | lit("(") >> lit("->") >> lit(")")
-	  | lit("(,")>>+lit(',') >> lit(')');
 	*/
+	gtycon %= string("()") | string("[]") | lit("(") >> string("->") >> lit(")") | string("(,") >> *char_(',')>>string(")") | qtycon;
+	// [_val = construct<AST_node>("type_id",construct<String>(_1)) ];
 
 	/*----- Section 4.1.3 ------*/
 	//	context %= h_class | lit('(') >> *h_class >> lit(')');
@@ -869,7 +866,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> btype;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> atype;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gtype;
-  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gtycon;
+  //  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gtycon;
+  qi::rule<Iterator, std::string(), ascii::space_type> gtycon;
 
   /*----- Section 4.1.3 ------*/
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> context;
