@@ -321,24 +321,30 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	fixity %= string("infixl") | string("infixr") | string("infix");
 
 	/*----- Section 4.1.2 ------*/
+	/*
 	type %= btype >> -( lit("->") >> type );
 	btype %= -btype >> atype;
 	atype %= gtycon
 	  | tyvar
-	  | lit('(') >> type >> +(lit(',')>>type) >> ')' // tuple type, k >= 2
-	  | lit('[') >> type >> ']'                      // list type
-	  | lit('(') >> type >> ')';                      // parenthesized constructor
+	  // tuple type, k >= 2
+	  | lit('(') >> type >> +(lit(',')>>type) >> ')'
+	  // list type
+	  | lit('[') >> type >> ']'                      
+	  // parenthesized constructor
+	  | lit('(') >> type >> ')';                      
 	gtycon %= qtycon 
 	  | lit("()")
 	  | lit("[]")
 	  | lit("(") >> lit("->") >> lit(")")
 	  | lit("(,")>>+lit(',') >> lit(')');
+	*/
 
 	/*----- Section 4.1.3 ------*/
-	context %= h_class | lit('(') >> *h_class >> lit(')');
-	h_class %= qtycls >> tyvar | qtycls >> lit('(') >> tyvar >> +atype >> lit(')');
+	//	context %= h_class | lit('(') >> *h_class >> lit(')');
+	//	h_class %= qtycls >> tyvar | qtycls >> lit('(') >> tyvar >> +atype >> lit(')');
 
 	/*----- Section 4.2.1 ------*/
+	/*
 	newconstr = con >> atype | con >> '{' >> var >> "::" >> type > '}';
 	simpletype = tycon >> *tyvar;
 	constrs = +constr;
@@ -346,16 +352,17 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  con >> *(-lit('!') >> atype) 
 	  | (btype | '!' >> atype) >> conop >> (btype | '!' >> atype)
 	  | con >> '{' >> *fielddecl > '}';
-
+	*/
 	fielddecl = vars >> "::" >> (type | '!' >> atype);
 	//	deriving = lit("deriving") >> (dclass | lit("()") | '(' >> dclass%',' >> ')');
 	dclass = qtycls;
 
 	/*------ Section 4.3.1 -----*/
-	scontext %= simpleclass | "()" | '(' >> simpleclass%',' >> ')';
-	simpleclass %= qtycls >> tyvar;
+	//	scontext %= simpleclass | "()" | '(' >> simpleclass%',' >> ')';
+	//	simpleclass %= qtycls >> tyvar;
 	
 	/*------ Section 4.3.2 -----*/
+	/*
 	inst %= 
 	  gtycon 
 	  | '(' >> gtycon >> *tyvar >>')' 
@@ -363,6 +370,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | '[' >> tyvar >> ']'
 	  | tyvar >> "->" >> tyvar
 	  ;
+	*/
 
 	/*------ Section 4.4.3 -----*/
 	funlhs = var [push_back(_a,phoenix::construct<AST_node>("id", construct<String>(_1)))] >> +apat[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("funlhs1"), _a)  ]
@@ -857,31 +865,31 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, std::string(), ascii::space_type> fixity;
 
   /*----- Section 4.1.2 ------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> type;
-  qi::rule<Iterator, std::string(), ascii::space_type> btype;
-  qi::rule<Iterator, std::string(), ascii::space_type> atype;
-  qi::rule<Iterator, std::string(), ascii::space_type> gtype;
-  qi::rule<Iterator, std::string(), ascii::space_type> gtycon;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> type;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> btype;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> atype;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gtype;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gtycon;
 
   /*----- Section 4.1.3 ------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> context;
-  qi::rule<Iterator, std::string(), ascii::space_type> h_class;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> context;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> h_class;
 
   /*----- Section 4.2.1 ------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> newconstr;
-  qi::rule<Iterator, std::string(), ascii::space_type> simpletype;
-  qi::rule<Iterator, std::string(), ascii::space_type> constrs;
-  qi::rule<Iterator, std::string(), ascii::space_type> constr;
-  qi::rule<Iterator, std::string(), ascii::space_type> fielddecl;
-  qi::rule<Iterator, std::string(), ascii::space_type> deriving;
-  qi::rule<Iterator, std::string(), ascii::space_type> dclass;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> newconstr;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> simpletype;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> constrs;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> constr;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> fielddecl;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> deriving;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> dclass;
 
   /*----- Section 4.3.1 ------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> scontext;
-  qi::rule<Iterator, std::string(), ascii::space_type> simpleclass;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> scontext;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> simpleclass;
 
   /*----- Section 4.3.2 ------*/
-  qi::rule<Iterator, std::string(), ascii::space_type> inst;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> inst;
 
   /*----- Section 4.4.3 ------*/
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>,  ascii::space_type> funlhs;
