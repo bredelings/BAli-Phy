@@ -336,6 +336,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | eps[clear(_a)] >> lit('[') >> type [push_back(_a,_1)] >> ']'  >> eps [ _val = new_<expression>(AST_node("ListType"), _a) ]
 	  // parenthesized type
 	  | eps[clear(_a)] >> lit('(') >> type [_val = _1 ] >> ')';
+	atype2 = atype [_val = _1] | lit('!') >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("StrictAtype"), _a) ];
 
 	gtycon %= string("()") | string("[]") | lit("(") >> string("->") >> lit(")") | string("(,") >> *char_(',')>>string(")") | qtycon;
 
@@ -344,15 +345,15 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	//	h_class %= qtycls >> tyvar | qtycls >> lit('(') >> tyvar >> +atype >> lit(')');
 
 	/*----- Section 4.2.1 ------*/
-	/*
-	newconstr = con >> atype | con >> '{' >> var >> "::" >> type > '}';
-	simpletype = tycon >> *tyvar;
-	constrs = +constr;
-	constr = 
-	  con >> *(-lit('!') >> atype) 
-	  | (btype | '!' >> atype) >> conop >> (btype | '!' >> atype)
-	  | con >> '{' >> *fielddecl > '}';
-	*/
+	newconstr = con[push_back(_a,_1)] >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("newconstr"), _a) ];
+	  // | con >> '{' >> var >> "::" >> type > '}';
+	simpletype = tycon[_val = construct<AST_node>("type_id",construct<String>(_1)) ] >> *tyvar[_val = construct<AST_node>("type_id",construct<String>(_1)) ];
+	constrs = +constr[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constrs"), _a) ];
+
+	constr = con[push_back(_a,_1)] >> *atype2[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constr"), _a) ]
+       	  | (btype | atype2)[push_back(_a,_1)] >> conop[push_back(_a,_1)] >> (btype | atype2)[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constr_op"), _a) ];
+	  //	  | con >> '{' >> *fielddecl > '}';
+
 	fielddecl = vars >> "::" >> (type | '!' >> atype);
 	//	deriving = lit("deriving") >> (dclass | lit("()") | '(' >> dclass%',' >> ')');
 	dclass = qtycls;
@@ -868,6 +869,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> type;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> btype;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> atype;
+  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> atype2;
   qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gtype;
   //  qi::rule<Iterator, expression_ref(), qi::locals<vector<expression_ref>>, ascii::space_type> gtycon;
   qi::rule<Iterator, std::string(), ascii::space_type> gtycon;
