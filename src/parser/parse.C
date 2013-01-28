@@ -321,20 +321,23 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	fixity %= string("infixl") | string("infixr") | string("infix");
 
 	/*----- Section 4.1.2 ------*/
-	/*
-	type %= btype >> -( lit("->") >> type );
-	btype %= -btype >> atype;
-	atype %= gtycon
-	  | tyvar
+
+	type = btype[push_back(_a,_1)] >> lit("->") >> type[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("FunctionType"), _a) ]
+	  | btype [_val = _1];
+
+	btype = +atype[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("TypeApply"), _a) ];
+
+	atype = gtycon [_val = construct<AST_node>("type_id",construct<String>(_1)) ]
+	  // tuple variable
+	  | tyvar [_val = construct<AST_node>("type_id",construct<String>(_1)) ]
 	  // tuple type, k >= 2
-	  | lit('(') >> type >> +(lit(',')>>type) >> ')'
+	  | eps[clear(_a)] >> lit('(') >> type[push_back(_a,_1)] >> +(lit(',')>>type[push_back(_a,_1)]) >> ')' >> eps [ _val = new_<expression>(AST_node("TupleType"), _a) ]
 	  // list type
-	  | lit('[') >> type >> ']'                      
-	  // parenthesized constructor
-	  | lit('(') >> type >> ')';                      
-	*/
+	  | eps[clear(_a)] >> lit('[') >> type [push_back(_a,_1)] >> ']'  >> eps [ _val = new_<expression>(AST_node("ListType"), _a) ]
+	  // parenthesized type
+	  | eps[clear(_a)] >> lit('(') >> type [_val = _1 ] >> ')';
+
 	gtycon %= string("()") | string("[]") | lit("(") >> string("->") >> lit(")") | string("(,") >> *char_(',')>>string(")") | qtycon;
-	// [_val = construct<AST_node>("type_id",construct<String>(_1)) ];
 
 	/*----- Section 4.1.3 ------*/
 	//	context %= h_class | lit('(') >> *h_class >> lit(')');
