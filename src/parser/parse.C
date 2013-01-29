@@ -349,7 +349,7 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	newconstr = con[push_back(_a,_1)] >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("newconstr"), _a) ];
 	  // | con >> '{' >> var >> "::" >> type > '}';
 	simpletype = tycon[_val = construct<AST_node>("type_id",construct<String>(_1)) ] >> *tyvar[_val = construct<AST_node>("type_id",construct<String>(_1)) ];
-	constrs = +constr[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constrs"), _a) ];
+	constrs = constr[push_back(_a,_1)]%'|' >> eps [ _val = new_<expression>(AST_node("constrs"), _a) ];
 
 	constr = con[push_back(_a,_1)] >> *atype2[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constr"), _a) ]
        	  | (btype | atype2)[push_back(_a,_1)] >> conop[push_back(_a,_1)] >> (btype | atype2)[push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("constr_op"), _a) ];
