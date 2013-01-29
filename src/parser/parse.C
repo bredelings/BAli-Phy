@@ -343,7 +343,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	/*----- Section 4.1.3 ------*/
 	//	context %= h_class | lit('(') >> *h_class >> lit(')');
-	//	h_class %= qtycls >> tyvar | qtycls >> lit('(') >> tyvar >> +atype >> lit(')');
+	//	h_class %= qtycls >> tyvar 
+	//        | qtycls >> lit('(') >> tyvar >> +atype >> lit(')');
 
 	/*----- Section 4.2.1 ------*/
 	newconstr = con[push_back(_a,_1)] >> atype [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("newconstr"), _a) ];
