@@ -656,7 +656,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       // [ e | p<-l, Q]  =  let {ok p = [ e | Q ]; ok _ = []} in Prelude.concatMap ok l
       // [ e | let decls, Q] = let decls in [ e | Q ]
 
-      expression_ref True {AST_node("SimpleQual"),{constructor("True",0)}};
+      expression_ref True {AST_node("SimpleQual"),{constructor("Prelude.True",0)}};
 
       assert(v.size() >= 2);
       if (v.size() == 2 and v[1]->compare(*True))

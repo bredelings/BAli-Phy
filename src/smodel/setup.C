@@ -40,7 +40,7 @@ using boost::program_options::variables_map;
 using boost::shared_ptr;
 using boost::dynamic_pointer_cast;
 
-expression_ref If = dummy(0)^(dummy(1)^(dummy(2)^(case_expression(dummy(0),constructor("True",0),dummy(1),dummy(2)))));
+expression_ref If = dummy(0)^(dummy(1)^(dummy(2)^(case_expression(dummy(0),constructor("Prelude.True",0),dummy(1),dummy(2)))));
 
 // Turn an expression of the form head[arg1, arg2, ..., argn] -> {head, arg1, arg2, ..., argn}.
 vector<string> split_args(string s)

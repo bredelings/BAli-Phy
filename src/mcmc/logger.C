@@ -184,9 +184,9 @@ double GetComputationFunction::operator()(const owned_ptr<Probability_Model>& P,
     return *I;
   else if (auto c = dynamic_pointer_cast<const constructor>(result))
   {
-    if (c->f_name == "True")
+    if (c->f_name == "Prelude.True")
       return 1;
-    else if (c->f_name == "False")
+    else if (c->f_name == "Prelude.False")
       return 0;
     else
       return -1;
@@ -331,9 +331,9 @@ double mu_scale(const Parameters& P)
       double value = 0;
       if (object_ptr<const constructor> b = dynamic_pointer_cast<const constructor>(v))
       {
-	if (b->f_name == "True")
+	if (b->f_name == "Prelude.True")
 	  value = 1;
-	else if (b->f_name == "False")
+	else if (b->f_name == "Prelude.False")
 	  value = 0;
       }
       else if (object_ptr<const Int> i = dynamic_pointer_cast<const Int>(v))

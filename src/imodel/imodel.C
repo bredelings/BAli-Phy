@@ -634,7 +634,7 @@ closure RS07_branch_HMM::operator()(OperationArgs& Args) const
   double heat = *Args.evaluate_as<Double>(2);
   constructor in_training_c = *Args.evaluate_as<constructor>(3);
   bool in_training = true;
-  if (in_training_c.f_name == "False")
+  if (in_training_c.f_name == "Prelude.False")
     in_training = false;
 
   return RS07_branch_HMM_(e, D, heat, in_training);

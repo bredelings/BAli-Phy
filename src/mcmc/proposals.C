@@ -223,10 +223,10 @@ double bit_flip(vector< object_ref >& x, const vector<double>&)
 
   constructor B = *dynamic_pointer_cast<const constructor>(x[0]);
 
-  if (B.f_name == "True")
-    B.f_name = "False";
+  if (B.f_name == "Prelude.True")
+    B.f_name = "Prelude.False";
   else
-    B.f_name = "True";
+    B.f_name = "Prelude.True";
 
   x[0] = B;
 

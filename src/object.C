@@ -43,9 +43,9 @@ object_ref parse_object(const string& s)
   else if (can_be_converted_to<bool>(s, bool_value))
   {
     if (bool_value)
-      return constructor("True",0);
+      return constructor("Prelude.True",0);
     else
-      return constructor("False",0);
+      return constructor("Prelude.False",0);
   }
   else if (s.size() >= 2 and s[0] == '"' and s[s.size()-1] == '"')
     return String(s.substr(1,s.size()-2));

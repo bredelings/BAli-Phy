@@ -549,7 +549,7 @@ tribool lambda2::compare(const Object& o) const
 }
 
 expression_ref::expression_ref(const bool& b)
-  :expression_ref(b?new constructor("True",0):new constructor("False",0))
+  :expression_ref(b?new constructor("Prelude.True",0):new constructor("Prelude.False",0))
 {}
 
 expression_ref::expression_ref(const char* s)

@@ -948,7 +948,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     // turn training on
     {
       Parameters& PP = *P.as<Parameters>();
-      PP.set_parameter_value(PP.find_parameter("IModels.training"), new constructor("True",0));
+      PP.set_parameter_value(PP.find_parameter("IModels.training"), new constructor("Prelude.True",0));
     }
 
     MoveAll pre_burnin("pre-burnin+A");
@@ -979,7 +979,7 @@ void do_pre_burnin(const variables_map& args, owned_ptr<Probability_Model>& P,
     // turn training back off
     {
       Parameters& PP = *P.as<Parameters>();
-      PP.set_parameter_value(PP.find_parameter("IModels.training"), new constructor("False",0));
+      PP.set_parameter_value(PP.find_parameter("IModels.training"), new constructor("Prelude.False",0));
     }
   }
   out_both<<endl;
