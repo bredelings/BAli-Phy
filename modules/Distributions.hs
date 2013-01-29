@@ -2,6 +2,9 @@ module Distributions where
 {
 import Range;
 
+data ProbDensity = ProbDensity a b c d;
+data DiscreteDistribution a = DiscreteDistribution [(Double,a)];
+
 density (ProbDensity d _ _ _) = d;
 quantile (ProbDensity _ q _ _) = q;
 distDefaultValue (ProbDensity _ _ v _) = v;
