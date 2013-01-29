@@ -26,6 +26,7 @@ x ^ 1 = x;
 x ^ n = x*(x^(n-1));
 
 data Bool = True | False;
+data Maybe a = Just a | Nothing;
 
 True  && x = x;
 False && x = False;

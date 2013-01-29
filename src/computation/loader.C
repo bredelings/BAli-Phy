@@ -127,9 +127,6 @@ using std::map;
 void make_Prelude(Module& P)
 {
   // See http://www.haskell.org/onlinereport/standard-prelude.html
-  P.def_constructor("Just",1);
-  P.def_constructor("Nothing",0);
-
   P.def_constructor("IOAction1",2);
   P.def_constructor("IOAction2",3);
   P.def_constructor("IOAction3",4);
