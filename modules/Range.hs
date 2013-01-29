@@ -1,5 +1,7 @@
 module Range where
 {
+data Range = OpenInterval Double Double | TrueFalseRange | Simplex Int Double;  
+  
 realLine = OpenInterval Nothing Nothing;
 
 above l = OpenInterval (Just l) Nothing;

@@ -391,13 +391,7 @@ closure GetBounds::operator()(OperationArgs& Args) const
 
 void Range_Functions(Module& P)
 {
-  P.def_constructor("OpenInterval",2);
-  P.def_constructor("Real",1);
-  P.def_constructor("Inf",0);
-  P.def_constructor("TrueFalseRange",0);
-  P.def_constructor("NegInf",0);
   P.def_function("builtinGetBounds", lambda_expression( GetBounds() ) );
-  P.def_constructor("Simplex",2);
 }
 
 void Distribution_Functions(Module& P)
