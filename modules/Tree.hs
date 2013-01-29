@@ -1,5 +1,7 @@
 module Tree where
 {
+data Tree = Tree (Array [Int]) (Array [Int]) Int Int;  
+  
 numNodes (Tree _ _ n _) = n;
 numBranches (Tree _ _ _ n) = n;
 edgesOutOfNode (Tree nodesArray _ _ _) node = nodesArray ! node;

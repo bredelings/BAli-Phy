@@ -257,8 +257,6 @@ Module load_module(const string& filename)
       SModel_Functions(M);
     else if (M.name == "PopGen")
       PopGen_Functions(M);
-    else if (M.name == "Tree")
-      M.def_constructor("Tree",4);
 
     return M;
   }
