@@ -287,14 +287,15 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 
 	topdecls = topdecl [ push_back(_a,_1) ] % ';' >> eps[ _val = new_<expression>(AST_node("TopDecls"), _a) ];
 	topdecl = 
-	  //	  lit("type") >> simpletype >> '=' >> type
-	  //	  | "data" >> -(context >> "=>") >> simpletype >> -('=' >> constrs) >> -deriving
-	  //	  | "newtype" >> -(context >> "=>") >> simpletype >> '=' >> newconstr >> -deriving
+	  lit("type") >> simpletype[ push_back(_a,_1) ] >> '=' >> type[ push_back(_a,_1) ] >> eps [ _val = new_<expression>(AST_node("Decl:type"), _a) ]
+	  | "data" >> /*-(context >> "=>") >> */ simpletype[ push_back(_a,_1) ] >> '=' >> constrs[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
+	  | "data" >> /*-(context >> "=>") >> */ simpletype[ push_back(_a,_1) ] /* >> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:data"), _a) ]
+	  | "newtype" >> /*-(context >> "=>") >> */ simpletype [ push_back(_a,_1) ] >> '=' >> newconstr[ push_back(_a,_1) ] /*>> -deriving */ >> eps [ _val = new_<expression>(AST_node("Decl:newtype"), _a) ]
 	  //	  | "class" >> -(scontext >> "=>") >> tycls >> tyvar >> -("where" >> cdecls)
 	  //	  | "instance" >> -(scontext >> "=>") >> qtycls >> inst >> -("where" >> idecls)
 	  //	  | "default" >> *type
 	  //	  | "foreign" >> fdecl
-	  lit("builtin") >> (var|varop)[ push_back(_a,construct<String>(_1)) ] >> h_integer[ push_back(_a,construct<String>(_1)) ] >> h_string[ push_back(_a,construct<String>(_1)) ] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
+	  | lit("builtin") >> (var|varop)[ push_back(_a,construct<String>(_1)) ] >> h_integer[ push_back(_a,construct<String>(_1)) ] >> h_string[ push_back(_a,construct<String>(_1)) ] >> eps[ _val = new_<expression>(AST_node("Builtin"), _a) ]
 	  | lit("note") >> bugs_line [_val = _1]
 	  | decl [_val = _1]
 	  ;
