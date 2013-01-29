@@ -823,6 +823,31 @@ Module& Module::operator+=(const expression_ref& E)
       string bname = *decl->sub[0].assert_is_a<String>();
       def_function(bname,{});
     }
+    else if (is_AST(decl,"Decl:data"))
+    {
+      if (decl->sub.size() >= 2)
+      {
+	expression_ref constrs = decl->sub[1];
+	assert(is_AST(constrs,"constrs"));
+	for(const auto& constr: constrs->sub)
+	{
+	  if (is_AST(constr,"constr"))
+	  {
+	    string name = *constr->sub[0].is_a<String>();
+	    int arity = constr->sub.size() - 1;
+	    def_constructor(name,arity);
+	  }
+	  else if (is_AST(constr,"constr_op"))
+	  {
+	    string name = *constr->sub[1].is_a<String>();
+	    int arity = 2;
+	    def_constructor(name,arity);
+	  }
+	  else
+	    std::abort();
+	}
+      }
+    }
       
   // 3. Find explicitly and implicitly-declared parameters
   set<string> parameters;

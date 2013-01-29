@@ -25,6 +25,8 @@ f $! x = x `seq` f x;
 x ^ 1 = x;
 x ^ n = x*(x^(n-1));
 
+data Bool = True | False;
+
 True  && x = x;
 False && x = False;
 True  || x  = True;
