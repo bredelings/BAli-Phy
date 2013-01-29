@@ -1498,7 +1498,6 @@ int main(int argc,char* argv[])
     //-------------Create the Parameters object--------------//
     Parameters P(L, A, T, full_smodels, smodel_mapping, full_imodels, imodel_mapping, scale_mapping);
 
-    set_initial_parameter_values(P,args);
 
     set_lambda_scale_branch_parameters(P,args);
 
