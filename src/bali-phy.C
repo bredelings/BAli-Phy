@@ -1522,6 +1522,8 @@ int main(int argc,char* argv[])
       add_BUGS(P,filename,"BUGS");
     }
       
+    set_initial_parameter_values(P,args);
+
     //-------------------- Log model -------------------------//
     log_summary(out_cache,out_screen,out_both,imodel_names_mapping,smodel_names_mapping,P,args);
 
