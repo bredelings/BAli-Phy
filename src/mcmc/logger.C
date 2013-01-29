@@ -323,12 +323,12 @@ double mu_scale(const Parameters& P)
       Pr /= total;
 
     // Compute expectation
-    double result = 0;
+    efloat_t result = 0;
     for(int i=0;i<values.size();i++)
     {
       const auto& v = values[i];
       efloat_t Pr = Prs[i];
-      double value = 0;
+      efloat_t value = 0;
       if (object_ptr<const constructor> b = dynamic_pointer_cast<const constructor>(v))
       {
 	if (b->f_name == "Prelude.True")
