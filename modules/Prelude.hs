@@ -240,5 +240,15 @@ unsafePerformIO x = reapply unsafePerformIO' x;
 f >> g = IOAnd f g;
 f >>= g = IOAndPass f g;
 return f = IOReturn f;
-fail e = error e
+fail e = error e;
+
+quicksort [] = [];
+quicksort (x:xs) = quicksort small ++ (x : quicksort large)
+   where { small = [y | y <- xs, y <= x ] ;
+           large = [y | y <- xs, y  > x ] };
+
+quicksortWith f [] = [];
+quicksortWith f (x:xs) = quicksortWith f small ++ (x : quicksortWith f large)
+   where { small = [y | y <- xs, (f y) <= (f x)] ;
+           large = [y | y <- xs, (f y)  > (f x)] };
 }
