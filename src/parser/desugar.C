@@ -455,6 +455,9 @@ vector<expression_ref> parse_fundecls(const vector<expression_ref>& v)
 
 	patterns.push_back( get_patterns(v[j]) );
 	bodies.push_back( get_body(v[j]) );
+
+	if (patterns.back().size() != patterns.front().size())
+	  throw myexception()<<"Function '"<<name<<"' has different numbers of arguments!";
       }
       decls.push_back(new expression(AST_node("Decl"),
 				     {dummy(name),
