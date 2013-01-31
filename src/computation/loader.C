@@ -117,7 +117,7 @@ using std::map;
  * 25. Allow model files to create models with a variable number of parameters => depends on 24.
  * 26. (?) Allow model files to create models where an argument is the name of another model file.
  * 27. Allow fixing parameters. (e.g. to test the branch-site model under ML)
- * 28. Make model creation into an IO operation.
+ * 28. Make model creation into an IO operation?
  *     - Hmm.... but how would we specify default priors, then?
  * 29. Optimizations
  *     - Perform applications if expression is used only once?
