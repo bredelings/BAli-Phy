@@ -21,7 +21,7 @@ using std::map;
  *
  * See list in parser/desugar.C
  *
- * 1. Allow defining constructors in files.
+ * 1. [DONE] Allow defining constructors in files.
  * 2. [DONE] Convert strings to [Char]
  * 3. [DONE] Update probability functions to separate the family from the probability object.
  *    3a. [DONE] Construct the ExpOf transform to make logNormal, logGamma, etc.
@@ -102,17 +102,18 @@ using std::map;
  *     20a. Convert builtins to new framework.
  * 21. [DONE] Add computed loggers.
  *     (This will allow us to e.g. select min/max functions for logging.)
- *     21a. Find a haskell expression to log [p1,p2,p3] based on the order of [q1,q2,q3]
+ *     21a. [DONE] Find a haskell expression to log [p1,p2,p3] based on the order of [q1,q2,q3]
  * 22. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
  * 23. (?) Print expressions with fixity.
- * 24. Allow the creation, destruction, initialization, and proposals of unnamed parameters.
+ * 24. Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
  *     24a. Perhaps the letter frequencies would be a good first example of this.
  *     24b. The different categories in the branch-site model would be a good second example.
  *     24c. Allow each parameter to be uniquely identified by a number that is not its location.
  *     24d. The parameter will encode this number in its expression, even if it doesn't have a name.
  *     24e. We can then have an IO operation to change the parameter value.
  *     24f. This will allow us to set default values for vector parameters.
- *     24g. But how will be scan the variable parameter list and propose new values?
+ *     24g. But how will we scan the variable parameter list and propose new values?
+ *     24h. How will we determine the bounds of these parameters?
  * 25. Allow model files to create models with a variable number of parameters => depends on 24.
  * 26. (?) Allow model files to create models where an argument is the name of another model file.
  * 27. Allow fixing parameters. (e.g. to test the branch-site model under ML)
