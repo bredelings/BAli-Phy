@@ -124,8 +124,8 @@ using std::map;
  *     - Remove let bindings for unused variables?
  *     - Merge let bidings with identical bodies?
  *     - Simplify some case expressions based on knowledge of let-bound variable?
- * 30. Can we return a bounds/parameter-index pair?
- * 31. Can we start with a variable/distribution pair?
+ * 30. Can we also maintain parameter/distribution pairs?
+ *     - This will allow us to determine the bounds on a parameter, for example.
  */
 
 
