@@ -1726,7 +1726,7 @@ int reg_heap::uniquify_reg(int R, int t)
   }
 
   // 4d. Adjust identifiers to point to the new regs
-  for(auto& j:token_roots[t].parameter_regs)
+  for(auto& j:token_roots[t].modifiable_regs)
     j = remap_reg(j);
 
   // 5. Find the unsplit parents of split regs
@@ -2138,7 +2138,7 @@ void reg_heap::release_token(int t)
   token_roots[t].identifiers.clear();
 
   // remove the table of parameter locations for graph t
-  token_roots[t].parameter_regs.clear();
+  token_roots[t].modifiable_regs.clear();
 
   // mark token for this context unused
   unused_tokens.push_back(t);
@@ -2171,7 +2171,7 @@ int reg_heap::copy_token(int t)
   for(auto& i: token_roots[t2].identifiers)
     i.second = push_root(*i.second);
 
-  token_roots[t2].parameter_regs = token_roots[t].parameter_regs;
+  token_roots[t2].modifiable_regs = token_roots[t].modifiable_regs;
 
   // remove ownership mark from used regs in this context
   duplicate_ownership_mark(t, t2);

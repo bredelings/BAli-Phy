@@ -334,8 +334,8 @@ int context::add_parameter(const string& full_name)
   root_t r = allocate_reg();
   parameters().push_back( {full_name, r} );
 
-  int index2 = parameter_regs().allocate();
-  parameter_regs()[index2] = *r;
+  int index2 = modifiable_regs().allocate();
+  modifiable_regs()[index2] = *r;
   access(*r).changeable = true;
   set_C(*r, modifiable(index2) );
 
@@ -531,17 +531,17 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
       }
       else if (S.symbol_type == parameter_symbol)
       {
-	  assert(find_parameter(S.name) == -1);
+	assert(find_parameter(S.name) == -1);
 
-	  int index = n_parameters();
-
-	  root_t r = allocate_reg();
-	  parameters().push_back( {S.name, r} );
-
-	  int index2 = parameter_regs().allocate();
-	  parameter_regs()[index2] = *r;
-	  access(*r).changeable = true;
-	  set_C(*r, modifiable(index2) );
+	int index = n_parameters();
+	
+	root_t r = allocate_reg();
+	parameters().push_back( {S.name, r} );
+	
+	int index2 = modifiable_regs().allocate();
+	modifiable_regs()[index2] = *r;
+	access(*r).changeable = true;
+	set_C(*r, modifiable(index2) );
       }
     }
   }

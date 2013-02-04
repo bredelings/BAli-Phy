@@ -184,7 +184,7 @@ public:
     std::map<std::string, root_t> identifiers;
 
     /// The register indices of non-root parameters
-    pool<int> parameter_regs;
+    pool<int> modifiable_regs;
 
     bool used;
     graph_roots():used(false) {}
@@ -199,8 +199,8 @@ public:
   const std::vector<std::pair<std::string,root_t>>& get_parameters_for_context(int t) const {return token_roots[t].parameters;}
         std::vector<std::pair<std::string,root_t>>& get_parameters_for_context(int t)       {return token_roots[t].parameters;}
 
-  const pool<int>& get_parameter_regs_for_context(int t) const {return token_roots[t].parameter_regs;}
-        pool<int>& get_parameter_regs_for_context(int t)       {return token_roots[t].parameter_regs;}
+  const pool<int>& get_modifiable_regs_for_context(int t) const {return token_roots[t].modifiable_regs;}
+        pool<int>& get_modifiable_regs_for_context(int t)       {return token_roots[t].modifiable_regs;}
 
   const std::map<std::string,root_t>& get_identifiers_for_context(int t) const {return token_roots[t].identifiers;}
         std::map<std::string,root_t>& get_identifiers_for_context(int t)       {return token_roots[t].identifiers;}
