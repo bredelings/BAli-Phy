@@ -1,6 +1,6 @@
 noinst_LTLIBRARIES = libboost_chrono.la
 
-INCLUDES = -I$(top_srcdir)/boost/
+AM_CPPFLAGS = -I$(top_srcdir)/boost/
 
 libboost_chrono_la_SOURCES = src/chrono.cpp \
                             src/thread_clock.cpp \

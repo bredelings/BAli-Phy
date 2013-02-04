@@ -1,6 +1,6 @@
 noinst_LTLIBRARIES = libboost_program_options.la
 
-INCLUDES = -I$(top_srcdir)/boost/
+AM_CPPFLAGS = -I$(top_srcdir)/boost/
 
 libboost_program_options_la_SOURCES = src/cmdline.cpp \
 src/config_file.cpp \

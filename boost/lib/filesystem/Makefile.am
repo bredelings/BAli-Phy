@@ -1,6 +1,6 @@
 noinst_LTLIBRARIES = libboost_filesystem.la
 
-INCLUDES = -I$(top_srcdir)/boost/
+AM_CPPFLAGS = -I$(top_srcdir)/boost/
 
 libboost_filesystem_la_SOURCES = src/operations.cpp \
 				src/path.cpp \
