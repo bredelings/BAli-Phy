@@ -178,7 +178,7 @@ public:
     std::vector<root_t> heads;
     
     /// The register indices of the named parameters.
-    std::vector<root_t> parameters;
+    std::vector<std::pair<std::string,root_t>> parameters;
 
     /// Probably this would be non-parameter identifiers
     std::map<std::string, root_t> identifiers;
@@ -196,8 +196,8 @@ public:
   const std::vector<root_t>& get_heads_for_context(int t) const {return token_roots[t].heads;}
         std::vector<root_t>& get_heads_for_context(int t)       {return token_roots[t].heads;}
 
-  const std::vector<root_t>& get_parameters_for_context(int t) const {return token_roots[t].parameters;}
-        std::vector<root_t>& get_parameters_for_context(int t)       {return token_roots[t].parameters;}
+  const std::vector<std::pair<std::string,root_t>>& get_parameters_for_context(int t) const {return token_roots[t].parameters;}
+        std::vector<std::pair<std::string,root_t>>& get_parameters_for_context(int t)       {return token_roots[t].parameters;}
 
   const pool<int>& get_parameter_regs_for_context(int t) const {return token_roots[t].parameter_regs;}
         pool<int>& get_parameter_regs_for_context(int t)       {return token_roots[t].parameter_regs;}

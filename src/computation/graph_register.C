@@ -1713,8 +1713,8 @@ int reg_heap::uniquify_reg(int R, int t)
   // 4b. Adjust parameters to point to the new regs
   for(int j=0;j<token_roots[t].parameters.size();j++)
   {
-    int R1 = *token_roots[t].parameters[j];
-    *token_roots[t].parameters[j] = remap_reg(R1);
+    int R1 = *token_roots[t].parameters[j].second;
+    *token_roots[t].parameters[j].second = remap_reg(R1);
   }
 
   // 4c. Adjust identifiers to point to the new regs
@@ -2009,7 +2009,7 @@ void reg_heap::find_all_regs_in_context_no_check(int t, vector<int>& unique) con
     scan.push_back(*i);
 
   for(const auto& i: token_roots[t].parameters)
-    scan.push_back(*i);
+    scan.push_back(*i.second);
 
   for(const auto& i: token_roots[t].identifiers)
     scan.push_back(*(i.second));
@@ -2025,7 +2025,7 @@ void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
     scan.push_back(*i);
 
   for(const auto& i: token_roots[t].parameters)
-    scan.push_back(*i);
+    scan.push_back(*i.second);
 
   find_all_regs_in_context_no_check(t,scan,unique);
 
@@ -2125,7 +2125,7 @@ void reg_heap::release_token(int t)
 
   // remove the roots for the parameters of graph t
   for(const auto&i: token_roots[t].parameters)
-    pop_root(i);
+    pop_root(i.second);
   token_roots[t].parameters.clear();
 
   for(const auto& i: token_roots[t].identifiers)
@@ -2155,8 +2155,9 @@ int reg_heap::copy_token(int t)
   for(const auto& i: token_roots[t].heads)
     token_roots[t2].heads.insert( token_roots[t2].heads.end(), push_root(*i) );
 
-  for(const auto& i: token_roots[t].parameters)
-    token_roots[t2].parameters.insert( token_roots[t2].parameters.end(), push_root(*i) );
+  token_roots[t2].parameters = token_roots[t].parameters;
+  for(auto& i: token_roots[t2].parameters)
+    i.second = push_root(*i.second);
 
   token_roots[t2].identifiers = token_roots[t].identifiers;
   for(auto& i: token_roots[t2].identifiers)

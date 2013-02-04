@@ -61,12 +61,7 @@ closure context::preprocess(const closure& C) const
 
 string context::parameter_name(int i) const
 {
-  const closure& C = access(get_parameter_reg(i)).C;
-  if (object_ptr<const parameter> P = is_a<parameter>(C.exp))
-  {
-    return P->parameter_name;
-  }
-  throw myexception()<<"Parameter "<<i<<" is not a parameter: can't find name!";
+  return parameters()[i].first;
 }
 
 reg_heap::root_t context::add_identifier(const string& name) const
@@ -342,12 +337,13 @@ int context::add_parameter(const string& full_name)
   int index = n_parameters();
 
   root_t r = allocate_reg();
-  parameters().push_back( r );
+  parameters().push_back( {full_name, r} );
   int index2 = parameter_regs().allocate();
-  assert(index == index2);
   parameter_regs()[index2] = *r;
 
   access(*r).changeable = true;
+  assert(index == index2);
+  // FIXME - change this do a modifiable, and give it the number index2
   set_C(*r, parameter(full_name) );
 
   return index;
@@ -417,8 +413,6 @@ void context::alphabetize_parameters()
   for(int i=0;i<mapping.size();i++)
     assert( parameter_regs()[i] == *parameters()[i] );
   parameters() = apply_mapping(parameters(), mapping);
-  for(int i=0;i<mapping.size();i++)
-    parameter_regs()[i] = *parameters()[i];
 }
 
 void context::collect_garbage() const
@@ -551,7 +545,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 	  int index = n_parameters();
 
 	  root_t r = allocate_reg();
-	  parameters().push_back( r );
+	  parameters().push_back( {S.name, r} );
 	  int index2 = parameter_regs().allocate();
 	  assert(index == index2);
 	  parameter_regs()[index2] = *r;
@@ -740,8 +734,7 @@ reg_heap::root_t context::push_temp_head() const
 int context::get_parameter_reg(int i) const
 {
   int R1 = parameter_regs()[i];
-  int R2 = *parameters()[i];
-  assert(R1 == R2);
+  int R2 = *parameters()[i].second;
   return R2;
 }
 
