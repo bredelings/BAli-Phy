@@ -24,6 +24,7 @@ expression_ref operator&(const expression_ref&, const expression_ref&);
 enum type_number {none=0,
 		  operation_type=1,
 		  parameter_type, 
+		  modifiable_type,
 		  index_var_type,
 		  trim_type,
 		  let2_type,
@@ -84,6 +85,19 @@ struct parameter: public Object
   int type() const {return parameter_type;}
 
   parameter(const std::string& s);
+};
+
+struct modifiable: public Object
+{
+  int index;
+
+  modifiable* clone() const {return new modifiable(*this);}
+  std::string print() const;
+  tribool compare(const Object& o) const;
+  
+  int type() const {return modifiable_type;}
+
+  modifiable(int);
 };
 
 /// a de Bruijn indexed variable 
@@ -185,6 +199,8 @@ bool is_index_var(const expression_ref& E);
 bool is_dummy(const expression_ref&);
 
 bool is_parameter(const expression_ref&);
+
+bool is_modifiable(const expression_ref&);
 
 bool is_identifier(const expression_ref& R);
 

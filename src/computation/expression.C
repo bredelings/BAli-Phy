@@ -530,6 +530,24 @@ parameter::parameter(const std::string& s)
   assert(is_haskell_var_name(s));
 }
 
+string modifiable::print() const 
+{
+  return "["+convertToString(index)+"]";
+}
+
+tribool modifiable::compare(const Object& o) const 
+{
+  const modifiable* E = dynamic_cast<const modifiable*>(&o);
+  if (not E) 
+    return false;
+
+  return index == E->index;
+}
+
+modifiable::modifiable(int i)
+  :index(i)
+{ }
+
 string lambda::print() const {
   return "lambda";
 }
@@ -2279,6 +2297,11 @@ bool is_parameter(const expression_ref& E)
   return is_a<parameter>(E);
 }
 
+bool is_modifiable(const expression_ref& E)
+{
+  return is_a<modifiable>(E);
+}
+
 bool is_identifier(const expression_ref& E)
 {
   return is_a<identifier>(E);
@@ -2291,7 +2314,7 @@ bool is_reg_var(const expression_ref& E)
 
 bool is_reglike(const expression_ref& E)
 {
-  return is_dummy(E) or is_parameter(E) or is_reg_var(E) or is_index_var(E) or is_identifier(E);
+  return is_dummy(E) or is_parameter(E) or is_modifiable(E) or is_reg_var(E) or is_index_var(E) or is_identifier(E);
 }
 
 bool is_wildcard(const dummy& d)
