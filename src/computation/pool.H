@@ -176,6 +176,12 @@ public:
   constPoolIterator begin() const {return {this,first_used};}
   constPoolIterator end()   const {return {this,-1};}
 
+  void clear()
+  {
+    while (first_used != -1)
+      reclaim_used(first_used);
+  }
+
   void reclaim_used(int r)
   {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
