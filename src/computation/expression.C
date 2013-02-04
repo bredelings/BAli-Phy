@@ -2277,6 +2277,8 @@ bool is_WHNF(const expression_ref& E)
   {
     if (type == parameter_type) 
       return false;
+    else if (type == modifiable_type) 
+      return false;
     else
       return true;
   }
