@@ -263,7 +263,7 @@ void context::set_parameter_value(int index, const expression_ref& O)
   assert(not O->size());
   assert(not dynamic_pointer_cast<const index_var>(v));
   assert(not dynamic_pointer_cast<const reg_var>(v));
-  assert(not dynamic_pointer_cast<const var>(v));
+  assert(not dynamic_pointer_cast<const identifier>(v));
   set_parameter_value_(index, v);
 }
 
@@ -445,7 +445,7 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (object_ptr<const var> V = is_a<var>(E))
+  if (object_ptr<const identifier> V = is_a<identifier>(E))
   {
     string qualified_name = V->name;
     assert(is_qualified_symbol(qualified_name) or is_haskell_builtin_con_name(qualified_name));
@@ -725,7 +725,7 @@ expression_ref context::default_parameter_value(int i) const
   {
     expression_ref _ = dummy(-1);
     expression_ref dist = results[0];
-    expression_ref value = (var("distDefaultValue"),dist);
+    expression_ref value = (identifier("distDefaultValue"),dist);
     return value;
   }
 
@@ -786,14 +786,14 @@ int add_probability_expression(context& C)
     prior_expressions[x->print()] = D->print();
     
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_i = (var("density"),D,x);
+    expression_ref Pr_i = (identifier("density"),D,x);
     
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)
     if (not Pr)
       Pr = Pr_i;
     else
-      Pr = (var("*"),Pr_i, Pr);
+      Pr = (identifier("*"),Pr_i, Pr);
   }
 
   // If this model has random variables... 

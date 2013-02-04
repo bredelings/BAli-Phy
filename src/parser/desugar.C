@@ -99,7 +99,7 @@ expression_ref infix_parse_neg(const Module& m, const symbol_info& op1, deque<ex
 
     E1 = infix_parse_neg(m, symbol_info("-",variable_symbol,unknown_scope, 2,6,left_fix), T);
 
-    return infix_parse(m, op1, (var("Prelude.negate"),E1), T);
+    return infix_parse(m, op1, (identifier("Prelude.negate"),E1), T);
   }
   // If E1 is not a neg, E1 should be an expression, and the next thing should be an Op.
   else
@@ -113,7 +113,7 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
     return E1;
 
   symbol_info op2;
-  if (auto v = T.front().is_a<const var>())
+  if (auto v = T.front().is_a<const identifier>())
     op2 = m.get_operator( v->name );
   else if (auto d = T.front().is_a<const dummy>())
   {
@@ -142,7 +142,7 @@ expression_ref infix_parse(const Module& m, const symbol_info& op1, const expres
     T.pop_front();
     expression_ref E3 = infix_parse_neg(m, op2, T);
 
-    expression_ref E1_op2_E3 = (var(op2.name), E1, E3);
+    expression_ref E1_op2_E3 = (identifier(op2.name), E1, E3);
 
     if (op2.symbol_type == constructor_symbol)
     {
@@ -204,7 +204,7 @@ expression_ref infixpat_parse(const Module& m, const symbol_info& op1, const exp
     return E1;
 
   symbol_info op2;
-  if (auto v = T.front().is_a<const var>())
+  if (auto v = T.front().is_a<const identifier>())
     op2 = m.get_operator( v->name );
   else if (auto n = T.front().is_a<const AST_node>())
   {
@@ -621,7 +621,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 	if (S.symbol_type == parameter_symbol)
 	  return parameter(qualified_name);
 	else
-	  return var(qualified_name);
+	  return identifier(qualified_name);
       }
       else
 	throw myexception()<<"Can't find id '"<<n->value<<"'";
@@ -633,7 +633,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
       expression_ref E2 = v[0];
 
       // For constructors, actually substitute the body
-      if (object_ptr<const var> V = v[0]->is_a<var>())
+      if (object_ptr<const identifier> V = v[0]->is_a<identifier>())
       {
 	if (m.is_declared(V->name))
 	{
@@ -902,7 +902,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     }
     else if (n->type == "enumFrom")
     {
-      expression_ref E2 = var("Prelude.enumFrom");
+      expression_ref E2 = identifier("Prelude.enumFrom");
       for(auto& e: v) {
 	e = desugar(m, e, bound);
 	E2 = (E2,e);
@@ -911,7 +911,7 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
     }
     else if (n->type == "enumFromTo")
     {
-      expression_ref E2 = var("Prelude.enumFromTo");
+      expression_ref E2 = identifier("Prelude.enumFromTo");
       for(auto& e: v) {
 	e = desugar(m, e, bound);
 	E2 = (E2,e);

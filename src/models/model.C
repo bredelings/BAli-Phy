@@ -291,7 +291,7 @@ void Model::process_note(int index)
     expression_ref _ = dummy(-1);
 
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_new = (var("density"), D, x);
+    expression_ref Pr_new = (identifier("density"), D, x);
     
     // Record that this variable is random, and has this prior.
     // THIS would be the right place to determine what other random variables and parameters are being depended on.
@@ -316,14 +316,14 @@ void Model::process_note(int index)
     else
     {
       expression_ref Pr = C.get_expression(prior_index);
-      C.set_compute_expression(prior_index, (var("*"),Pr_new,Pr));
+      C.set_compute_expression(prior_index, (identifier("*"),Pr_new,Pr));
     }
 
     if (auto p = x.is_a<parameter>())
     {
       int p_index = find_parameter(p->parameter_name);
       if (p_index != -1 and bounds[p_index] == -1)
-	set_bounds(p_index,(var("Distributions.distRange"),D));
+	set_bounds(p_index,(identifier("Distributions.distRange"),D));
     }
   }
 }
@@ -356,7 +356,7 @@ void Model::set_bounds(int i,const expression_ref& b)
     return;
   }
 
-  expression_ref E = (var("Range.getBounds"),b);
+  expression_ref E = (identifier("Range.getBounds"),b);
   if (bounds[i] == -1)
     bounds[i] = C.add_compute_expression(E);
   else

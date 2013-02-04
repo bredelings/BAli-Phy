@@ -378,8 +378,8 @@ void Module::resolve_symbols(const std::vector<Module>& P)
       string qname = S.name;
       string name = get_unqualified_name(qname);
       
-      decl = substitute(decl,dummy(qname),var(qname));
-      decl = substitute(decl,dummy( name),var(qname));
+      decl = substitute(decl,dummy(qname),identifier(qname));
+      decl = substitute(decl,dummy( name),identifier(qname));
     }
   
   // 3. Add notes
@@ -395,7 +395,7 @@ void Module::resolve_symbols(const std::vector<Module>& P)
   for(const auto& decl: decls_sub)
     if (is_AST(decl,"Decl"))
     {
-      string name = decl->sub[0].assert_is_a<var>()->name;
+      string name = decl->sub[0].assert_is_a<identifier>()->name;
       symbols.at(name).body = decl->sub[1];
     }
 }
@@ -496,7 +496,7 @@ void parse_combinator_application(const expression_ref& E, string& name, vector<
   assert_is_a<Apply>(E);
   
   // 1. Find the head.  This should be a var, not an apply.
-  object_ptr<const var> V = assert_is_a<var>(E->sub[0]);
+  object_ptr<const identifier> V = assert_is_a<identifier>(E->sub[0]);
 
   // 2. Look through the arguments
   for(int i=1;i<E->size();i++)
@@ -1024,7 +1024,7 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
   }
 
   // Replace parameters with the appropriate reg_var: of value whatever
-  if (object_ptr<const var> V = is_a<var>(E))
+  if (object_ptr<const identifier> V = is_a<identifier>(E))
   {
     string name = V->name;
     if (not is_qualified_symbol(name))
@@ -1034,7 +1034,7 @@ expression_ref resolve_refs(const vector<Module>& P, const expression_ref& E)
 	  symbol_info S = module.lookup_symbol(name);
 	  assert(S.symbol_type = parameter_symbol);
 	  string qualified_name = S.name;
-	  return var(qualified_name);
+	  return identifier(qualified_name);
 	}
   }
 
@@ -1092,8 +1092,8 @@ expression_ref rename_module(const expression_ref& E, const std::string& modid1,
     return parameter( rename_module(p->parameter_name, modid1, modid2) );
 
   // Rename vars
-  else if (auto V = is_a<var>(E))
-    return var( rename_module(V->name, modid1, modid2) );
+  else if (auto V = is_a<identifier>(E))
+    return identifier( rename_module(V->name, modid1, modid2) );
 
   // Rename dummies
   else if (auto D = is_a<dummy>(E))

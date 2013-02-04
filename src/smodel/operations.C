@@ -169,7 +169,7 @@ namespace substitution
       F = Var&F;
     }
 
-    F.add_expression( constructor(":~",2)+ F.exp() + (var("dirichlet'"),Tuple((int)a.size(), 1.0) ));
+    F.add_expression( constructor(":~",2)+ F.exp() + (identifier("dirichlet'"),Tuple((int)a.size(), 1.0) ));
 
     return F;
   }
@@ -185,8 +185,8 @@ namespace substitution
   {
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return let_expression(v1,(var("listToVectorDouble"),pi),
-			  (var("ReversibleFrequency"), a, (var("iotaUnsigned"), a.size()), v1, (var("plusGWF"), a, 1.0, v1))
+    return let_expression(v1,(identifier("listToVectorDouble"),pi),
+			  (identifier("ReversibleFrequency"), a, (identifier("iotaUnsigned"), a.size()), v1, (identifier("plusGWF"), a, 1.0, v1))
 			  );
   }
 
@@ -243,9 +243,9 @@ namespace substitution
     const Nucleotides& N = T.getNucleotides();
     formula_expression_ref pi = Frequencies_Model(N);
 
-    return let(v2,(var("listToVectorDouble"),pi),
-	       v1,(var("SModel.f3x4_frequencies"),T,v2,v2,v2),
-	       (var("ReversibleFrequency"), T, (var("iotaUnsigned"), T.size()), v1, (var("SModel.plus_gwF"), T, 1.0, v1))
+    return let(v2,(identifier("listToVectorDouble"),pi),
+	       v1,(identifier("SModel.f3x4_frequencies"),T,v2,v2,v2),
+	       (identifier("ReversibleFrequency"), T, (identifier("iotaUnsigned"), T.size()), v1, (identifier("SModel.plus_gwF"), T, 1.0, v1))
 	       );
   }
 
@@ -255,10 +255,10 @@ namespace substitution
     const Nucleotides& N = T.getNucleotides();
     formula_expression_ref pi = Frequencies_Model(N);
 
-    return let(v2,(var("listToVectorDouble"),pi),
-	       v1,(var("SModel.f3x4_frequencies"),T,v2,v2,v2),
-	       v3,(var("SModel.plus_gwF"), N, 1.0, v2),
-	       (var("ReversibleFrequency"), T, (var("iotaUnsigned"), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
+    return let(v2,(identifier("listToVectorDouble"),pi),
+	       v1,(identifier("SModel.f3x4_frequencies"),T,v2,v2,v2),
+	       v3,(identifier("SModel.plus_gwF"), N, 1.0, v2),
+	       (identifier("ReversibleFrequency"), T, (identifier("iotaUnsigned"), T.size()), v1, (F3x4_Matrix, T, v3, v3, v3))
 	       );
   }
 
@@ -272,11 +272,11 @@ namespace substitution
     formula_expression_ref pi3 = Frequencies_Model(N);
     pi3 = prefix_formula("Site3",pi3);
 
-    return let(v1, (var("listToVectorDouble"),pi1),
-	       v2, (var("listToVectorDouble"),pi2),
-	       v3, (var("listToVectorDouble"),pi3),
-	       v4, (var("SModel.f3x4_frequencies"),T,v1,v2,v3),
-	       (var("ReversibleFrequency"), T, (var("iotaUnsigned"), T.size()), v4, (var("SModel.plus_gwF"), T, 1.0, v4))
+    return let(v1, (identifier("listToVectorDouble"),pi1),
+	       v2, (identifier("listToVectorDouble"),pi2),
+	       v3, (identifier("listToVectorDouble"),pi3),
+	       v4, (identifier("SModel.f3x4_frequencies"),T,v1,v2,v3),
+	       (identifier("ReversibleFrequency"), T, (identifier("iotaUnsigned"), T.size()), v4, (identifier("SModel.plus_gwF"), T, 1.0, v4))
 	       );
   }
 
@@ -290,25 +290,25 @@ namespace substitution
     formula_expression_ref pi3 = Frequencies_Model(N);
     pi3 = prefix_formula("3",pi3);
 
-    return let(v1, (var("listToVectorDouble"),pi1),
-	       v2, (var("listToVectorDouble"),pi2),
-	       v3, (var("listToVectorDouble"),pi3),
-	       v4, (var("SModel.plus_gwF"), N, 1.0, v1),
-	       v5, (var("SModel.plus_gwF"), N, 1.0, v2),
-	       v6, (var("SModel.plus_gwF"), N, 1.0, v3),
-	       (var("ReversibleFrequency"), T, (var("iotaUnsigned"), T.size()), (var("SModel.f3x4_frequencies"),T,v1,v2,v3), (F3x4_Matrix, T, v4, v5, v6))
+    return let(v1, (identifier("listToVectorDouble"),pi1),
+	       v2, (identifier("listToVectorDouble"),pi2),
+	       v3, (identifier("listToVectorDouble"),pi3),
+	       v4, (identifier("SModel.plus_gwF"), N, 1.0, v1),
+	       v5, (identifier("SModel.plus_gwF"), N, 1.0, v2),
+	       v6, (identifier("SModel.plus_gwF"), N, 1.0, v3),
+	       (identifier("ReversibleFrequency"), T, (identifier("iotaUnsigned"), T.size()), (identifier("SModel.f3x4_frequencies"),T,v1,v2,v3), (F3x4_Matrix, T, v4, v5, v6))
 	       );
   }
 
   // Improvement: make all the variables ALSO be a formula_expression_ref, containing their own bounds, etc.
   formula_expression_ref Plus_gwF_Model(const alphabet& a, const valarray<double>& pi0)
   {
-    formula_expression_ref f = def_parameter("f", 1.0, between(0,1), (var("uniform"), Tuple(0.0, 1.0)));
+    formula_expression_ref f = def_parameter("f", 1.0, between(0,1), (identifier("uniform"), Tuple(0.0, 1.0)));
 
     formula_expression_ref pi = Frequencies_Model(a,pi0);
 
-    return let_expression(v1,(var("listToVectorDouble"),pi),
-			  (var("ReversibleFrequency"), a, (var("iotaUnsigned"), a.size()), v1, (var("SModel.plus_gwF"), a, f, v1))
+    return let_expression(v1,(identifier("listToVectorDouble"),pi),
+			  (identifier("ReversibleFrequency"), a, (identifier("iotaUnsigned"), a.size()), v1, (identifier("SModel.plus_gwF"), a, f, v1))
 			  );
   }
 
@@ -354,14 +354,14 @@ namespace substitution
     formula_expression_ref S = prefix_formula("S",FS);
     formula_expression_ref R = prefix_formula("R",FR);
     
-    return (var("qFromSandR"), S, R);
+    return (identifier("qFromSandR"), S, R);
   }
 
   formula_expression_ref Unit_Model(const formula_expression_ref& R)
   {
     formula_expression_ref R2 = R;
 
-    R2 = (var("MixtureModel"), (var("DiscreteDistribution"), List(Tuple(1.0,R))));
+    R2 = (identifier("MixtureModel"), (identifier("DiscreteDistribution"), List(Tuple(1.0,R))));
 
     return R2;
   }
@@ -520,9 +520,9 @@ namespace substitution
       M = m & M;
       P = p & P;
     }
-    formula_expression_ref R = (var("mixMixtureModels"),P,M);
+    formula_expression_ref R = (identifier("mixMixtureModels"),P,M);
 
-    R.add_expression(constructor(":~",2) + P.exp() + (var("dirichlet'"), Tuple(N, 1.0)));
+    R.add_expression(constructor(":~",2) + P.exp() + (identifier("dirichlet'"), Tuple(N, 1.0)));
 
     return R;
   }

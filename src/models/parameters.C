@@ -596,7 +596,7 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     int m = P->smodel_for_partition[partition_index];
 
     expression_ref E = P->C.get_expression(P->branch_transition_p_indices(s,m));
-    E = (var("!"), E, b);
+    E = (identifier("!"), E, b);
 
     transition_p_method_indices[b] = p->C.add_compute_expression(E);
   }
@@ -622,9 +622,9 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     for(int b=0;b<B;b++)
     {
       // D = Parameters.substitutionBranchLengths!scale_index
-      expression_ref D = (var("!"),var("Parameters.substitutionBranchLengths"),scale_index);
+      expression_ref D = (identifier("!"),identifier("Parameters.substitutionBranchLengths"),scale_index);
       // (fst IModels.models!i_index) D b
-      int index = p->C.add_compute_expression( ((var("fst"),(var("!"),var("IModels.models"),i_index)),D,b) );
+      int index = p->C.add_compute_expression( ((identifier("fst"),(identifier("!"),identifier("IModels.models"),i_index)),D,b) );
       branch_HMM_indices.push_back(  index );
       expression_ref hmm = P->C.get_expression(index);
 
@@ -638,22 +638,22 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
 //-----------------------------------------------------------------------------//
 smodel_methods::smodel_methods(const expression_ref& E, context& C)
 {
-  expression_ref V = var("listToVectorDouble");
+  expression_ref V = identifier("listToVectorDouble");
 
   main = C.add_compute_expression( E );
   expression_ref S = C.get_expression(main);
 
-  n_base_models = C.add_compute_expression((var("nBaseModels"), S));
-  n_states =  C.add_compute_expression((var("nStates"), S));
-  distribution =  C.add_compute_expression((V,(var("distribution"), S)));
-  get_alphabet = C.add_compute_expression((var("getAlphabet"), S));
-  state_letters = C.add_compute_expression((var("stateLetters"), S));
-  n_states = C.add_compute_expression((var("nStates"), S));
-  rate = C.add_compute_expression((var("rate"), S));
+  n_base_models = C.add_compute_expression((identifier("nBaseModels"), S));
+  n_states =  C.add_compute_expression((identifier("nStates"), S));
+  distribution =  C.add_compute_expression((V,(identifier("distribution"), S)));
+  get_alphabet = C.add_compute_expression((identifier("getAlphabet"), S));
+  state_letters = C.add_compute_expression((identifier("stateLetters"), S));
+  n_states = C.add_compute_expression((identifier("nStates"), S));
+  rate = C.add_compute_expression((identifier("rate"), S));
 
-  base_model = C.add_compute_expression( v1^(v2^(var("baseModel"), (var("getNthMixture"),S,v2), v1) ) );
-  frequencies = C.add_compute_expression((var("componentFrequencies"), S));
-  transition_p = C.add_compute_expression((var("branchTransitionP"), S));
+  base_model = C.add_compute_expression( v1^(v2^(identifier("baseModel"), (identifier("getNthMixture"),S,v2), v1) ) );
+  frequencies = C.add_compute_expression((identifier("componentFrequencies"), S));
+  transition_p = C.add_compute_expression((identifier("branchTransitionP"), S));
 }
 
 const data_partition& Parameters::get_data_partition(int i) const
@@ -1043,7 +1043,7 @@ Parameters::Parameters(const module_loader& L,
     string mu_name = "Main.mu"+convertToString(i+1);
     add_parameter(mu_name, Double(0.25), lower_bound(0));
     // prior on mu[i], the mean branch length for scale i
-    add_note( constructor(":~",2)+parameter(mu_name)+(var("gamma"), Tuple(0.5, 2.0)));
+    add_note( constructor(":~",2)+parameter(mu_name)+(identifier("gamma"), Tuple(0.5, 2.0)));
   }
 
   // check that smodel mapping has correct size.
@@ -1077,7 +1077,7 @@ Parameters::Parameters(const module_loader& L,
     IModel_methods[i].parameters = add_submodel(imodel);
   }
   Module imodels_program("IModels");
-  imodels_program.def_function("models", (var("listArray'"), get_list(imodels_).exp()));
+  imodels_program.def_function("models", (identifier("listArray'"), get_list(imodels_).exp()));
   imodels_program.declare_parameter("training");
   add_submodel(imodels_program);
   C.set_parameter_value(C.find_parameter("IModels.training"), false);
@@ -1147,7 +1147,7 @@ Parameters::Parameters(const module_loader& L,
   }
 
   Module parameter_program("Parameters");
-  parameter_program.def_function("substitutionBranchLengths", (var("listArray'"),(var("fmap"),var("listArray'"),substitutionBranchLengthsList)));
+  parameter_program.def_function("substitutionBranchLengths", (identifier("listArray'"),(identifier("fmap"),identifier("listArray'"),substitutionBranchLengthsList)));
   add_submodel( parameter_program );
 
   // register the cached transition_p indices
@@ -1155,17 +1155,17 @@ Parameters::Parameters(const module_loader& L,
   for(int s=0;s < n_branch_means(); s++)
   {
     // Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
-    expression_ref DL = (var("!"),var("Parameters.substitutionBranchLengths"),s);
+    expression_ref DL = (identifier("!"),identifier("Parameters.substitutionBranchLengths"),s);
 
     // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
     for(int m=0;m < n_smodels(); m++)
     {
       expression_ref S = C.get_expression(SModels[m].main);
-      //expression_ref V = var("listToVectorMatrix");
+      //expression_ref V = identifier("listToVectorMatrix");
       expression_ref V = Vector_From_List<Matrix,MatrixObject>();
       //expression_ref I = 0;
-      expression_ref I = (var("!!"),branch_cat_list,v1);
-      expression_ref E = (var("mkArray"), T->n_branches(), v1^(V,(var("branchTransitionP"), (var("getNthMixture"),S,I), (var("!"), DL, v1) ) ) );
+      expression_ref I = (identifier("!!"),branch_cat_list,v1);
+      expression_ref E = (identifier("mkArray"), T->n_branches(), v1^(V,(identifier("branchTransitionP"), (identifier("getNthMixture"),S,I), (identifier("!"), DL, v1) ) ) );
       branch_transition_p_indices(s,m) = C.add_compute_expression(E);
     }
   }
@@ -1181,7 +1181,7 @@ Parameters::Parameters(const module_loader& L,
     string prefix = "I" + convertToString(i+1);
 
     I.length_arg_param_index = add_parameter(prefix+".lengthpArg", Int(1));
-    expression_ref lengthp = (var("snd"),(var("!"),var("IModels.models"),i));
+    expression_ref lengthp = (identifier("snd"),(identifier("!"),identifier("IModels.models"),i));
     expression_ref lengthp_arg = parameter(prefix+".lengthpArg");
     I.length_p = C.add_compute_expression( (lengthp, lengthp_arg) );
 
@@ -1197,9 +1197,9 @@ Parameters::Parameters(const module_loader& L,
     string name = "nodeBranches"+convertToString(n);
     tree_module.declare_parameter("nodeBranches"+convertToString(n));
     expression_ref param = parameter("MyTree." + name);
-    node_branches.push_back( (var("listFromVectorInt"),param) );
+    node_branches.push_back( (identifier("listFromVectorInt"),param) );
   }
-  expression_ref node_branches_array = (var("listArray'"),get_list(node_branches));
+  expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
 
   vector<expression_ref> branch_nodes;
   for(int b=0; b < 2*T->n_branches(); b++)
@@ -1208,7 +1208,7 @@ Parameters::Parameters(const module_loader& L,
     tree_module.declare_parameter(name);
     branch_nodes.push_back( parameter("MyTree."+name) );
   }
-  expression_ref branch_nodes_array = (var("listArray'"),get_list(branch_nodes));
+  expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));
 
   expression_ref tree_con = lambda_expression( constructor("Tree.Tree",4) );
 
@@ -1239,12 +1239,12 @@ Parameters::Parameters(const module_loader& L,
     C.set_parameter_value_expression(C.find_parameter(parameter_name), Tuple(source, target) );
   }
 
-  C.evaluate_expression( (var("numNodes"), var("MyTree.tree")));
-  C.evaluate_expression( (var("numBranches"), var("MyTree.tree")));
-  C.evaluate_expression( (var("edgesOutOfNode"), var("MyTree.tree"), 0));
-  C.evaluate_expression( (var("neighbors"), var("MyTree.tree"), 0));
-  C.evaluate_expression( (var("nodesForEdge"),var("MyTree.tree"), 0));
-  int nn = *convert<const Int>(C.evaluate_expression( (var("edgeForNodes"), var("MyTree.tree"), (var("nodesForEdge"),var("MyTree.tree"), 0))));
+  C.evaluate_expression( (identifier("numNodes"), identifier("MyTree.tree")));
+  C.evaluate_expression( (identifier("numBranches"), identifier("MyTree.tree")));
+  C.evaluate_expression( (identifier("edgesOutOfNode"), identifier("MyTree.tree"), 0));
+  C.evaluate_expression( (identifier("neighbors"), identifier("MyTree.tree"), 0));
+  C.evaluate_expression( (identifier("nodesForEdge"),identifier("MyTree.tree"), 0));
+  int nn = *convert<const Int>(C.evaluate_expression( (identifier("edgeForNodes"), identifier("MyTree.tree"), (identifier("nodesForEdge"),identifier("MyTree.tree"), 0))));
   for(int b=0; b < 2*T->n_branches(); b++)
   {
     vector<const_branchview> branch_list;
@@ -1253,7 +1253,7 @@ Parameters::Parameters(const module_loader& L,
     for(auto b: branch_list)
       branch_list_.push_back(b);
 
-    auto b2 = convert<const Vector<int>>(C.evaluate_expression( (var("listToVectorInt"),((var("edgesBeforeEdge"),var("MyTree.tree"),b)))))->t;
+    auto b2 = convert<const Vector<int>>(C.evaluate_expression( (identifier("listToVectorInt"),((identifier("edgesBeforeEdge"),identifier("MyTree.tree"),b)))))->t;
     assert(b2.size() == branch_list_.size());
     for( int i: branch_list_)
       assert(includes(b2,i));

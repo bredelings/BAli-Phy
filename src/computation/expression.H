@@ -147,11 +147,11 @@ struct reg_var: public Object
   { }
 };
 
-struct var: public Object
+struct identifier: public Object
 {
   std::string name;
 
-  var* clone() const {return new var(*this);}
+  identifier* clone() const {return new identifier(*this);}
 
   std::string print() const
   {
@@ -160,14 +160,14 @@ struct var: public Object
 
   tribool compare(const Object& o) const
   {
-    const var* V = dynamic_cast<const var*>(&o);
+    const identifier* V = dynamic_cast<const identifier*>(&o);
     if (not V)
       return false;
 
     return name == V->name;
   }
 
-  var(const std::string& s);
+  identifier(const std::string& s);
 };
 
 struct Trim: public Object
@@ -186,7 +186,7 @@ bool is_dummy(const expression_ref&);
 
 bool is_parameter(const expression_ref&);
 
-bool is_var(const expression_ref& R);
+bool is_identifier(const expression_ref& R);
 
 bool is_reglike(const expression_ref& R);
 

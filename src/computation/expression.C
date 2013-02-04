@@ -370,7 +370,7 @@ tribool dummy::compare(const Object& o) const
   return (*this) == *D;
 }
 
-var::var(const std::string& s)
+identifier::identifier(const std::string& s)
   :name(s)
 {
   assert(not name.empty());
@@ -2279,9 +2279,9 @@ bool is_parameter(const expression_ref& E)
   return is_a<parameter>(E);
 }
 
-bool is_var(const expression_ref& E)
+bool is_identifier(const expression_ref& E)
 {
-  return is_a<var>(E);
+  return is_a<identifier>(E);
 }
 
 bool is_reg_var(const expression_ref& E)
@@ -2291,7 +2291,7 @@ bool is_reg_var(const expression_ref& E)
 
 bool is_reglike(const expression_ref& E)
 {
-  return is_dummy(E) or is_parameter(E) or is_reg_var(E) or is_index_var(E) or is_var(E);
+  return is_dummy(E) or is_parameter(E) or is_reg_var(E) or is_index_var(E) or is_identifier(E);
 }
 
 bool is_wildcard(const dummy& d)

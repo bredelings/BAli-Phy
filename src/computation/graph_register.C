@@ -2752,7 +2752,7 @@ expression_ref untranslate_vars(const expression_ref& E, const map<int,string>& 
     {
       auto loc = ids.find(RV->target);
       if (loc != ids.end())
-	return var(loc->second);
+	return identifier(loc->second);
       else
 	return E;
     }
@@ -2796,7 +2796,7 @@ expression_ref compact_graph_expression(const reg_heap& C, int R, const map<stri
   {
     int R = *(id.second);
     string name = id.first;
-    names[R] = expression_ref(new var(name) );
+    names[R] = expression_ref(new identifier(name) );
   }
   discover_graph_vars(C, R, names, ids);
 
