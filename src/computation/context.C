@@ -111,12 +111,7 @@ int context::add_note(const expression_ref& E)
 
 void context::rename_parameter(int i, const string& new_name)
 {
-  string old_name = parameter_name(i);
-
-  int R = get_parameter_reg(i);
-
-  assert( access(R).changeable == true );
-  set_C(R, parameter(new_name) );
+  parameters()[i].first = new_name;
 }
 
 bool context::reg_is_fully_up_to_date(int R) const
@@ -338,13 +333,11 @@ int context::add_parameter(const string& full_name)
 
   root_t r = allocate_reg();
   parameters().push_back( {full_name, r} );
+
   int index2 = parameter_regs().allocate();
   parameter_regs()[index2] = *r;
-
   access(*r).changeable = true;
-  assert(index == index2);
-  // FIXME - change this do a modifiable, and give it the number index2
-  set_C(*r, parameter(full_name) );
+  set_C(*r, modifiable(index2) );
 
   return index;
 }
@@ -410,8 +403,6 @@ void context::alphabetize_parameters()
 
   vector<int> mapping = compute_mapping(names, names2);
 
-  for(int i=0;i<mapping.size();i++)
-    assert( parameter_regs()[i] == *parameters()[i] );
   parameters() = apply_mapping(parameters(), mapping);
 }
 
@@ -546,12 +537,11 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 
 	  root_t r = allocate_reg();
 	  parameters().push_back( {S.name, r} );
-	  int index2 = parameter_regs().allocate();
-	  assert(index == index2);
-	  parameter_regs()[index2] = *r;
 
+	  int index2 = parameter_regs().allocate();
+	  parameter_regs()[index2] = *r;
 	  access(*r).changeable = true;
-	  set_C(*r, parameter(S.name) );
+	  set_C(*r, modifiable(index2) );
       }
     }
   }
@@ -733,9 +723,7 @@ reg_heap::root_t context::push_temp_head() const
 
 int context::get_parameter_reg(int i) const
 {
-  int R1 = parameter_regs()[i];
-  int R2 = *parameters()[i].second;
-  return R2;
+  return *parameters()[i].second;
 }
 
 std::ostream& operator<<(std::ostream& o, const context& C)

@@ -743,7 +743,7 @@ void reg_heap::set_reg_value(int P, closure&& C, int token)
   P = uniquify_reg(P,token);
 
   // Check that this reg is indeed settable
-  assert(is_parameter(access(P).C.exp));
+  assert(is_modifiable(access(P).C.exp));
   assert(access(P).changeable);
 
   // Clear the call, clear the result, and set the value
@@ -1725,6 +1725,10 @@ int reg_heap::uniquify_reg(int R, int t)
     *j.second = remap_reg(R1);
   }
 
+  // 4d. Adjust identifiers to point to the new regs
+  for(auto& j:token_roots[t].parameter_regs)
+    j = remap_reg(j);
+
   // 5. Find the unsplit parents of split regs
   //    These will be the only parents of the old regs that have context t.
   vector<int>& unsplit_parents = get_scratch_list();
@@ -2128,9 +2132,13 @@ void reg_heap::release_token(int t)
     pop_root(i.second);
   token_roots[t].parameters.clear();
 
+  // remove the roots for the identifiers of graph t
   for(const auto& i: token_roots[t].identifiers)
     pop_root(i.second);
   token_roots[t].identifiers.clear();
+
+  // remove the table of parameter locations for graph t
+  token_roots[t].parameter_regs.clear();
 
   // mark token for this context unused
   unused_tokens.push_back(t);
@@ -2162,6 +2170,8 @@ int reg_heap::copy_token(int t)
   token_roots[t2].identifiers = token_roots[t].identifiers;
   for(auto& i: token_roots[t2].identifiers)
     i.second = push_root(*i.second);
+
+  token_roots[t2].parameter_regs = token_roots[t].parameter_regs;
 
   // remove ownership mark from used regs in this context
   duplicate_ownership_mark(t, t2);
@@ -2490,13 +2500,15 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
-    else if (access(R).C.exp->head->type() == parameter_type)
+    else if (access(R).C.exp->head->type() == modifiable_type)
     {
       if (evaluate_changeable)
-	throw myexception()<<"Parameter '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
+	throw myexception()<<"Modifiable '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
       else
 	return R;
     }
+    else if (access(R).C.exp->head->type() == parameter_type)
+      std::abort();
 
     // Reduction: let expression
     else if (parse_indexed_let_expression(access(R).C.exp, bodies, T))
@@ -2817,9 +2829,9 @@ map<int,string> get_constants(const reg_heap& C, int t)
   {
     if (reg_names.count(R)) continue;
 
-    if (is_a<index_var>(C.access(R).C.exp)) continue;
+    if (is_index_var(C.access(R).C.exp)) continue;
 
-    if (is_a<parameter>(C.access(R).C.exp)) continue;
+    if (is_modifiable(C.access(R).C.exp)) continue;
 
     if (C.access(R).C.exp->size() == 0)
     {
