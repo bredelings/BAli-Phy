@@ -121,6 +121,61 @@ class pool
         record& access(int i)       {return memory[i];}
 
 public:
+  
+  class PoolIterator
+  {
+    pool<T> *mypool;
+    int index;
+  public:
+    // etc
+    PoolIterator(pool * p, int i)
+      :mypool(p), index(i)
+    { }
+
+    PoolIterator operator ++() { index = mypool->access(index).next; return *this;}
+    PoolIterator operator --() { index = mypool->access(index).prev; return *this;}
+    PoolIterator operator ++(int) { PoolIterator i = *this; index = mypool->access(index).next; return i;}
+    PoolIterator operator --(int) { PoolIterator i = *this; index = mypool->access(index).prev; return i;}
+
+    T& operator *()
+    {
+      return (*mypool)[index];
+    }
+
+    bool operator ==(PoolIterator &i2) {return mypool == i2.mypool and index == i2.index;}
+    bool operator !=(PoolIterator &i2) {return not (*this == i2);}
+  };
+
+  class constPoolIterator
+  {
+    const pool<T> *mypool;
+    int index;
+  public:
+    // etc
+    constPoolIterator(const pool * p, int i)
+      :index(i), mypool(p)
+    { }
+
+    constPoolIterator operator ++() { index = mypool->access(index).next; return *this;}
+    constPoolIterator operator --() { index = mypool->access(index).prev; return *this;}
+    constPoolIterator operator ++(int) { constPoolIterator i = *this; index = mypool->access(index).next; return i;}
+    constPoolIterator operator --(int) { constPoolIterator i = *this; index = mypool->access(index).prev; return i;}
+
+    const T& operator *()
+    {
+      return (*mypool)[index];
+    }
+
+    bool operator ==(constPoolIterator &i2) {return mypool == i2.mypool and index == i2.index;}
+    bool operator !=(constPoolIterator &i2) {return not (*this == i2);}
+  };
+
+  PoolIterator begin() {return {this,first_used};}
+  PoolIterator end()   {return {this,-1};}
+
+  constPoolIterator begin() const {return {this,first_used};}
+  constPoolIterator end()   const {return {this,-1};}
+
   void reclaim_used(int r)
   {
     // Mark this reg as not used (but not free) so that we can stop worrying about upstream objects.
