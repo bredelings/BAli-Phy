@@ -2498,15 +2498,11 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       std::abort();
 #endif
 
+    // If we are not evaluating changeable regs, then we shouldn't even get here.
     // A parameter has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
     else if (access(R).C.exp->head->type() == modifiable_type)
-    {
-      if (evaluate_changeable)
-	throw myexception()<<"Modifiable '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
-      else
-	return R;
-    }
+      throw myexception()<<"Modifiable '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
     else if (access(R).C.exp->head->type() == parameter_type)
       std::abort();
 
