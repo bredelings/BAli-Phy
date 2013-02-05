@@ -170,41 +170,6 @@ using std::endl;
  *     when the parameters they reference change.  So, they must reference the right regs.
  */
 
-/*
- * It would indeed be faster, when setting a NUMBER of values to remember which parameters are dirty,
- * and to only invalidate downstream nodes when we know that we are going to access them.
- * This is essentially what Andrew and Alexei are doing by requiring the user to check the dirtiness
- *  instead of forcing it do be done as soon as a parameter value is changed.
- */
-
-/*
- * Question: how shall we share sub-expressions between different compute expressions?
- * Question: how shall we (or, should we) pre-execute non-recursive let expressions?
- *
- * 1. How do we share sub-computations between heads?
- *
- *   - First, float unbound let-expressions up as high as they can go. (let_float)
- *     + This allows us to share case results, as well as the results of e.g. \x->5 and \x->2*y).
- *     + To share computations between different branches of execution DYNAMICALLY, though, we need arrays.
- *
- *   - Second, introduce the shared expressions as their own compute_expression( ), and then
- *     reference them from other expressions.
- *
- *   - We, *could* scan expressions for common elements...
- *
- * 2. [POSTPONE indefinitely!] How can we benefit from partial evaluation, by e.g. changing
- *    \n.\x.case n of {...} to \n.case n of \x.{...}?
- *
- * 3. [POSTPONE indefiniately] How could we benefit from switching to the rho-calculus?
- *
- * 4. How can we print model expressions?
- *
- * 5. I also need to be able to NOT recompute things when the change
- *    in value is small!
- *
- * 6. Finally, implement the Hindley-Milner type system.
- */ 
-
 bool includes(const owner_set_t& S1, const owner_set_t& S2)
 {
   return (S2 & ~S1).none();
