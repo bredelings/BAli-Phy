@@ -2363,19 +2363,17 @@ map<int,string> get_constants(const reg_heap& C, int t);
    *      R1.call = incremental_evaluate(R1.call)
    *      R1.result = R1.call.result
    *      <break>
-   *   
+   *
    *   If R1.E = <R2>
-   *      assert(R1.changeable == false)
+   *      Note: index_var's never have a result!
+   *      assert(not R1.changeable)
+   *      assert(not R1.call)
    *      R3 = incremental_evaluate(R2)
-   *      (assert R2.changeable = R3.changeable)
-   *      R1.changeable = R3.call.changeable
    *      if (R3 != R2)
    *         R1.E = <R3>
-   *      R1.call = R3
-   *      R1.result = R1.call.result
-   *      R1 = R1.call                 // This returns R1.call
+   *      return R3
    *      <break>
-   *  
+   *
    *   If (R1.E is WHNF)
    *      R1.result = R1.E
    *      <break>
@@ -2402,6 +2400,7 @@ map<int,string> get_constants(const reg_heap& C, int t);
    *   assert(R1 has a result)
    *   assert(R1.result is WHNF)
    *   assert(R1.result is not a reg_var <*>)
+   *   assert(R1.result is not an index_var <*>)
    *   return R1
    */
 
@@ -2469,24 +2468,24 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     {
       assert( not access(R).call );
 
-      int index = convert<const index_var>(access(R).C.exp->head)->index;
+      assert( not access(R).changeable);
+
+      int index = assert_is_a<index_var>(access(R).C.exp)->index;
 
       int R2 = access(R).C.lookup_in_env( index );
 
-      int C = incremental_evaluate(R2, t);
+      int R3 = incremental_evaluate(R2, t);
 
-      assert(not access(R).changeable);
-
-      // If we point to C through an intermediate reg_var chain, then change us to point to the end
-      if (C != R2) {
+      // If we point to R3 through an intermediate index_var chain, then change us to point to the end
+      if (R3 != R2) {
 	// FIXME - eventually 
-	set_C(R, closure(index_var(0),{C}));
+	set_C(R, closure(index_var(0),{R3}));
       }
 
       // We don't return R, but instead return the first var after the reg-var chain.
-      assert(not is_a<index_var>(access(C).C.exp));
+      assert(not is_a<index_var>(access(R3).C.exp));
 
-      return C;
+      return R3;
     }
 
     // Check for WHNF *OR* heap variables
