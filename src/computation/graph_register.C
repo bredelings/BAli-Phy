@@ -2391,6 +2391,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   assert(not access(R).result or is_WHNF(access_result(R).exp));
   assert(not access(R).result or not is_a<expression>(access_result(R).exp));
   assert(not access(R).result or not is_a<index_var>(access_result(R).exp));
+  assert(not access(R).result or not is_a<index_var>(access(R).C.exp));
 
 #ifndef NDEBUG
   //  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
