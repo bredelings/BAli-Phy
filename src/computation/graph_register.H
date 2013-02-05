@@ -34,7 +34,7 @@ public:
   closure C;
   std::vector<back_edge_deleter> referenced_by_in_E_reverse;
 
-  /// Is C a parameter, or is the result dependent on a parameter value?
+  /// Is C a parameter, or is the reduction result dependent on a parameter value?
   bool changeable = false;
 
   /// What does C reduce to eventually? (WHNF, but not an index_var.)

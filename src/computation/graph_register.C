@@ -2355,6 +2355,9 @@ map<int,string> get_constants(const reg_heap& C, int t);
 
   /*
    * incremental_eval R1
+   *
+   *   Note: index_var's never have a result, or call, and are never changeable.
+   *   Note: only operations can have a call, and only if the operation uses values of changeable parameters.
    * 
    *   while(not R1.result) do:
    *
@@ -2365,7 +2368,6 @@ map<int,string> get_constants(const reg_heap& C, int t);
    *      <break>
    *
    *   If R1.E = <R2>
-   *      Note: index_var's never have a result!
    *      assert(not R1.changeable)
    *      assert(not R1.call)
    *      R3 = incremental_evaluate(R2)
