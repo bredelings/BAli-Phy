@@ -1694,7 +1694,7 @@ int reg_heap::uniquify_reg(int R, int t)
     *j.second = remap_reg(R1);
   }
 
-  // 4d. Adjust identifiers to point to the new regs
+  // 4d. Adjust modifiable_regs to point to the new regs
   for(auto& j:token_roots[t].modifiable_regs)
     j = remap_reg(j);
 
@@ -2345,8 +2345,8 @@ map<int,string> get_constants(const reg_heap& C, int t);
    *      R1.result = R1.E
    *      <break>
    *
-   *   If R1.E = parameter and no call
-   *      Complain: parameters should always have a call!
+   *   If R1.E = modifiable and no call
+   *      Complain: modifiable should always have a call!
    *  
    *   If R1.E = Op args (no call)
    *      **Execute reduction**
@@ -2412,8 +2412,11 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     // If we know what to call, then call it and use it to set the result
     if (access(R).call)
     {
-      // This should only be an Operation or a Parameter.
+      // This should only be an Operation or a modifiable.
       assert(access(R).changeable);
+
+      // Only changeable regs have calls, and changeable regs are in normal form unless evaluate_changeable==true.
+      assert(evaluate_changeable);
 
       // Evaluate S, looking through unchangeable redirections
       int call = incremental_evaluate(access(R).call, t);
@@ -2442,7 +2445,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
       int R2 = access(R).C.lookup_in_env( index );
 
-      int R3 = incremental_evaluate(R2, t);
+      int R3 = incremental_evaluate(R2, t, evaluate_changeable);
 
       // If we point to R3 through an intermediate index_var chain, then change us to point to the end
       if (R3 != R2) {
@@ -2463,15 +2466,15 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 #ifndef NDEBUG
     else if (is_a<Trim>(access(R).C.exp))
       std::abort();
+    else if (access(R).C.exp->head->type() == parameter_type)
+      std::abort();
 #endif
 
     // If we are not evaluating changeable regs, then we shouldn't even get here.
-    // A parameter has a result that is not computed by reducing an expression.
+    // A modifiable has a result that is not computed by reducing an expression.
     //       The result must be set.  Therefore, complain if the result is missing.
     else if (access(R).C.exp->head->type() == modifiable_type)
       throw myexception()<<"Modifiable '"<<access(R).C.exp<<"' with no result?! (Changeable = "<<access(R).changeable<<")";
-    else if (access(R).C.exp->head->type() == parameter_type)
-      std::abort();
 
     // Reduction: let expression
     else if (parse_indexed_let_expression(access(R).C.exp, bodies, T))
@@ -2514,7 +2517,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     {
       object_ptr<const Operation> O = assert_is_a<Operation>( access(R).C.exp );
 
-      // Although the reg itself is not a parameter, it will stay changeable if it ever computes a changeable result.
+      // Although the reg itself is not a modifiable, it will stay changeable if it ever computes a changeable result.
       // Therefore, we cannot do "assert(not access(R).changeable);" here.
 
 #ifdef DEBUG_MACHINE
@@ -2534,7 +2537,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 	// NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
 	//       How could we assert that?
 	
-	// If the reduction doesn't depend on parameters, then replace E with the result.
+	// If the reduction doesn't depend on modifiable, then replace E with the result.
 	if (not access(R).changeable)
 	{
 	  // The old used_input slots are not invalid, which is OK since none of them are changeable.
