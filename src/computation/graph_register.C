@@ -514,6 +514,10 @@ void reg_heap::set_used_input(int R1, int R2)
   assert(access(R1).C);
   assert(access(R2).C);
 
+  // An index_var's result only changes if the thing the index-var points to also changes.
+  // So, we may as well forbid using an index_var as an input.
+  assert(access(R2).C.exp->head->type() != index_var_type);
+
   // It IS possible to add an input that's already used.
   // This happens if we evaluate a new used input R2' to an already used input R2
   //   through regvar chains that are not changeable.
@@ -2259,7 +2263,7 @@ class RegOperationArgs: public OperationArgs
       M.set_used_input(R, R3);
     }
 
-    return R2;
+    return R3;
   }
 
   /// Evaluate the reg R2, record dependencies, and return the result.
@@ -2471,13 +2475,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
       int C = incremental_evaluate(R2, t);
 
-      set_call(R, C);
-
       assert(not access(R).changeable);
-
-      access(R).changeable = access(C).changeable;
-
-      access(R).result = access(C).result;
 
       // If we point to C through an intermediate reg_var chain, then change us to point to the end
       if (C != R2) {
@@ -2486,6 +2484,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       }
 
       // We don't return R, but instead return the first var after the reg-var chain.
+      assert(not is_a<index_var>(access(C).C.exp));
+
       return C;
     }
 
@@ -2608,6 +2608,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 #endif
     }
   }
+
+  assert(not is_a<index_var>(access(R).C.exp));
 
   if (evaluate_changeable or not access(R).changeable)
   {
