@@ -1,3 +1,4 @@
+#undef NDEBUG
 #include <iostream>
 #include "graph_register.H"
 #include "operations.H"
@@ -2192,9 +2193,20 @@ class RegOperationArgs: public OperationArgs
 
   int n_allocated;
 
+  int current_token() const {return t;}
+
+  reg_heap& memory() {return M;}
+
   const closure& current_closure() const {return M[R].C;}
 
   const expression& get_E() const {return *current_closure().exp;}
+
+  int reg_for_slot(int slot) const
+  {
+    int index = assert_is_a<index_var>(reference(slot))->index;
+
+    return M[R].C.lookup_in_env(index);
+  }
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_no_record(int R2)
@@ -2203,13 +2215,15 @@ class RegOperationArgs: public OperationArgs
   }
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
+  int evaluate_slot_(int slot)
+  {
+    return M.incremental_evaluate(reg_for_slot(slot), t, false);
+  }
+
+  /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_slot_no_record(int slot)
   {
-    int index = assert_is_a<index_var>(reference(slot))->index;
-
-    int R2 = M[R].C.lookup_in_env(index);
-
-    return evaluate_reg_no_record(R2);
+    return evaluate_reg_no_record(reg_for_slot(slot));
   }
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
@@ -2253,11 +2267,7 @@ public:
   // This computes everything
   const closure& lazy_evaluate(int slot)
   {
-    int index = assert_is_a<index_var>(reference(slot))->index;
-
-    int R2 = M[R].C.lookup_in_env(index);
-
-    R2 = lazy_evaluate_reg(R2);
+    int R2 = lazy_evaluate_reg(reg_for_slot(slot));
 
     /*
      * We could update 'index' in Env to R2' if R2' != R2.  However:

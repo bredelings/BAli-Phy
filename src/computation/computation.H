@@ -5,6 +5,7 @@
 #include "closure.H"
 
 struct expression_ref;
+class reg_heap;
 
 struct OperationArgs: public Object
 {
@@ -18,7 +19,13 @@ struct OperationArgs: public Object
 
   virtual object_ref evaluate(int slot) = 0;
 
+  virtual int evaluate_slot_(int) = 0;
+
   virtual int evaluate_slot_no_record(int) = 0;
+
+  virtual int current_token() const = 0;
+
+  virtual reg_heap& memory() = 0;
 
   virtual const closure& lazy_evaluate(int) = 0;
 
