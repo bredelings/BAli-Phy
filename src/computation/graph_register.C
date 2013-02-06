@@ -2835,6 +2835,10 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 
   map<int,string> reg_names = get_register_names(ids);
 
+  const auto& params = C.get_parameters_for_context(t);
+  for(const auto& p: params)
+    reg_names[*p.second] = p.first;
+
   map<string,string> simplify = get_simplified_names(get_names(ids));
 
   map<int,string> constants = get_constants(C, t);
