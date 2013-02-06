@@ -2912,11 +2912,25 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
     }
     else if (F->head->type() == index_var_type)
     {
-      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names));
+      int index = assert_is_a<index_var>(F)->index;
 
-      E = map_symbol_names(E, simplify);
+      int R2 = C.access(R).C.lookup_in_env( index );
 
-      label += E->print();
+      string reg_name = "<" + convertToString(R2) + ">";
+      if (reg_names.count(R2))
+      {
+	  reg_name = reg_names[R2];
+	  auto loc = simplify.find(reg_name);
+	  if (loc != simplify.end())
+	    reg_name = "<" + loc->second + ">";
+      }
+      else if (constants.count(R2))
+	reg_name = constants[R2] + " " + reg_name;
+      label += reg_name;
+	
+      //      expression_ref E = unlet(untranslate_vars(deindexify(trim_unnormalize(C.access(R).C)), reg_names));
+      //      E = map_symbol_names(E, simplify);
+      //      label += E->print();
       label = escape(wrap(label,40));
     }
     else
@@ -2937,6 +2951,8 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
       o<<",fillcolor=\"#007700\",fontcolor=white";
     else if (C.access(R).changeable)
       o<<",fillcolor=\"#770000\",fontcolor=white";
+    else if (C.access(R).C.exp->head->type() == index_var_type)
+      o<<",fillcolor=\"#77bbbb\"";
     o<<"];\n";
 
     // out-edges
@@ -2950,7 +2966,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	  if (i.first == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
-	if (reg_names.count(R2) and not used) continue;
+	if (reg_names.count(R2) and not C.access(R2).changeable and not used) continue;
 
 	// Don't draw ref edges to things like fmap.
 	if (constants.count(R2) and not used) continue;
@@ -2971,7 +2987,7 @@ void dot_graph_for_token(const reg_heap& C, int t, std::ostream& o)
 	  if (i.first == R2) used = true;
 
 	// Don't draw ref edges to things like fmap.
-	if (reg_names.count(R2) and not used) continue;
+	if (reg_names.count(R2) and not C.access(R2).changeable and not used) continue;
 	
 	// Don't draw ref edges to things like fmap.
 	if (constants.count(R2) and not used) continue;
