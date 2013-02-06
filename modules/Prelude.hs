@@ -69,6 +69,7 @@ builtin >= 2 "greaterthanorequal";
 builtin < 2 "lessthan";
 builtin <= 2 "lessthanorequal";
 builtin iotaUnsigned 1 "iotaUnsigned";
+builtin builtin_set_modifiable_value 3 "set_modifiable_value";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
@@ -251,4 +252,11 @@ quicksortWith f [] = [];
 quicksortWith f (x:xs) = quicksortWith f small ++ (x : quicksortWith f large)
    where { small = [y | y <- xs, (f y) <= (f x)] ;
            large = [y | y <- xs, (f y)  > (f x)] };
+  
+set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
+set_parameter_value token (p:ps) (v:vs) = do { set_parameter_value token p v; 
+                                               set_parameter_value token ps vs
+                                             };
+set_parameter_value token [] [] = return ();  
+set_parameter_value token p v = set_modifiable_value token p;
 }
