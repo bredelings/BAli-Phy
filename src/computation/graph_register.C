@@ -2458,13 +2458,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
       int R3 = incremental_evaluate(R2, t, evaluate_changeable);
 
       // If we point to R3 through an intermediate index_var chain, then change us to point to the end
-      if (R3 != R2) {
-	// FIXME - eventually 
+      if (R3 != R2)
 	set_C(R, closure(index_var(0),{R3}));
-      }
-
-      // We don't return R, but instead return the first var after the reg-var chain.
-      assert(not is_a<index_var>(access(R3).C.exp));
 
       return R3;
     }
