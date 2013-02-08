@@ -260,7 +260,12 @@ void context::set_parameter_value(int index, const expression_ref& O)
 void context::set_parameter_value_expression(int index, const expression_ref& O)
 {
   if (O)
-    set_parameter_value_(index, preprocess(O) );
+  {
+    expression_ref E = (identifier("set_modifiable_value"), token, parameter(parameter_name(index)), O);
+    E = (identifier("unsafePerformIO"),E);
+
+    evaluate_expression(E, false);
+  }
   else
     set_parameter_value_(index, {} );
 }
