@@ -1995,6 +1995,9 @@ void reg_heap::find_all_used_regs_in_context(int t, vector<int>& unique) const
 {
   vector<int>& scan = get_scratch_list();
 
+  for(const auto& i: token_roots[t].temp)
+    scan.push_back(*i);
+
   for(const auto& i: token_roots[t].heads)
     scan.push_back(*i);
 
