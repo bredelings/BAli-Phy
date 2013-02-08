@@ -1539,7 +1539,7 @@ void reg_heap::find_unsplit_parents(const vector<int>& split, int t, vector<int>
 
 int reg_heap::uniquify_reg(int R, int t)
 {
-  assert(token_roots[t].temp.empty());
+  int n_temp = token_roots[t].temp.size();
 
   // If the reg is already unique, then we don't need to do anything.
   if (not reg_is_shared(R))
@@ -1603,7 +1603,7 @@ int reg_heap::uniquify_reg(int R, int t)
     for(int i=0;i<n_new_regs;i++)
       pop_temp_head(t);
 
-    assert(token_roots[t].temp.empty());
+    assert(token_roots[t].temp.size() == n_temp);
     
     for(int R1: split)
       access(R1).temp = -1;
@@ -1814,7 +1814,7 @@ int reg_heap::uniquify_reg(int R, int t)
   for(int i=0;i<n_new_regs;i++)
     pop_temp_head(t);
 
-  assert(token_roots[t].temp.empty());
+  assert(token_roots[t].temp.size() == n_temp);
 
   int R2 = remap_reg(R);
 
