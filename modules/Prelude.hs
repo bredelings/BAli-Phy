@@ -258,5 +258,5 @@ set_parameter_value token (p:ps) (v:vs) = do { set_parameter_value token p v;
                                                set_parameter_value token ps vs
                                              };
 set_parameter_value token [] [] = return ();  
-set_parameter_value token p v = set_modifiable_value token p;
+set_parameter_value token p v = set_modifiable_value token p v;
 }
