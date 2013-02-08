@@ -2410,7 +2410,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
   //  if (not access(R).result) std::cerr<<"Statement: "<<R<<":   "<<access(R).E->print()<<std::endl;
 #endif
 
-  while (not access(R).result and (evaluate_changeable or access(R).changeable))
+  while (not access(R).result and (evaluate_changeable or not access(R).changeable))
   {
     vector<expression_ref> vars;
     vector<expression_ref> bodies;
@@ -2589,7 +2589,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
   assert(not is_a<index_var>(access(R).C.exp));
 
-  if (evaluate_changeable or not access(R).changeable)
+  if (evaluate_changeable or (not access(R).changeable and access(R).result))
   {
     assert(access(R).result);
     assert(is_WHNF(access_result(R).exp));
