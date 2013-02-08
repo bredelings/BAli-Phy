@@ -173,13 +173,13 @@ object_ref context::evaluate(int index) const
   return access_result(H).exp->head;
 }
 
-closure context::lazy_evaluate_expression_(closure&& C) const
+closure context::lazy_evaluate_expression_(closure&& C, bool ec) const
 {
   try {
     int R = *push_temp_head();
     set_C(R, std::move(C) );
 
-    R = incremental_evaluate(R);
+    R = incremental_evaluate(R,ec);
     const closure& result = access_result(R);
     
     pop_temp_head();
@@ -192,19 +192,19 @@ closure context::lazy_evaluate_expression_(closure&& C) const
   }
 }
 
-object_ref context::evaluate_expression_(closure&& C) const
+object_ref context::evaluate_expression_(closure&& C,bool ec) const
 {
-  return lazy_evaluate_expression_(std::move(C)).exp->head;
+  return lazy_evaluate_expression_(std::move(C),ec).exp->head;
 }
 
-closure context::lazy_evaluate_expression(const expression_ref& E) const
+closure context::lazy_evaluate_expression(const expression_ref& E, bool ec) const
 {
-  return lazy_evaluate_expression_( preprocess(E) );
+  return lazy_evaluate_expression_( preprocess(E), ec);
 }
 
-object_ref context::evaluate_expression(const expression_ref& E) const
+object_ref context::evaluate_expression(const expression_ref& E,bool ec) const
 {
-  return evaluate_expression_( preprocess(E) );
+  return evaluate_expression_( preprocess(E), ec);
 }
 
 bool context::parameter_is_set(int index) const
