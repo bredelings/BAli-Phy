@@ -101,17 +101,26 @@ While running the Cygwin installer
 
     <section><info><title>Installing BAli-Phy executables</title></info>
 
-    <para>Start by opening a Unix terminal window.  On Apple, this is the <application>Terminal</application>
+    <orderedlist>
+
+      <listitem><para>Start by opening a Unix terminal window.  (On Apple, this is the <application>Terminal</application>
     application; on Windows it will be the <application>Cygwin Terminal</application>, not the
-    Windows command prompt.</para>
+    Windows command prompt.)</para></listitem>
     
-    <para>Make a directory called <filename>local</filename> in your
+    <listitem><para>Make a directory called <filename>local</filename> in your
     home directory to contain the executable files:
 <screen><prompt>%</prompt> mkdir ~/local</screen>
-    </para>
+    <note>
+    Note that <userinput>~</userinput> is a synonym for
+    <userinput>&#36;HOME</userinput>, your home directory.  You can
+    find out what your home directory is called by typing
+<screen><prompt>%</prompt> echo &#36;HOME</screen>
+or
+<screen><prompt>%</prompt> echo ~</screen></note>
+</para></listitem>
 
-    <para>Start by <link xmlns:xlink="http://www.w3.org/1999/xlink"
-    xlink:href="http://www.biomath.ucla.edu/msuchard/bali-phy/download/">downloading</link> 
+    <listitem><para><link xmlns:xlink="http://www.w3.org/1999/xlink"
+    xlink:href="http://www.biomath.ucla.edu/msuchard/bali-phy/download/">Download</link> 
 BAli-Phy executables from the web site.  Select the executables for
 your operating system.  If you're not sure, choose the 32-bit
     executables.  Save them in to the <filename>local/</filename>
@@ -122,17 +131,18 @@ your operating system.  If you're not sure, choose the 32-bit
 bali-phy-<replaceable>version</replaceable>.tgz
 </screen>
 </para>
+</listitem>
 
-    <para>Extract the compressed archive on the Unix (or
+    <listitem><para>Extract the compressed archive on the Unix (or
     Cygwin) command line using the <command>tar</command> command:
 <screen><prompt>%</prompt> cd ~/local
 <prompt>%</prompt> tar -zxf bali-phy-<replaceable>version</replaceable>.tgz
 <prompt>%</prompt> ls
 bali-phy-<replaceable>version</replaceable>.tgz  bin  share
 </screen>
-    </para>
+    </para></listitem>
 
-    <para>Finally, test that the program can be run.
+    <listitem><para>Finally, test that the program can be run.
 <screen><prompt>%</prompt> ~/local/bin/bali-phy -v
 VERSION: 2.1.1  [master commit 8ea33010]  (Jan 28 2011 20:27:15)
 BUILD: Feb  1 2011 16:14:05
@@ -141,8 +151,8 @@ COMPILER: GCC 4.5.2
 FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 -DNDEBUG_DP -funroll-loops -fweb  -march=native  -pipe -O3
 </screen>
-</para>
-
+</para></listitem>
+    </orderedlist>
     </section>      
 
     <section><info><title>Adding BAli-Phy to your PATH</title></info>
@@ -197,14 +207,20 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 
       <section><title>Making the change stick</title>
 	<para>
-	  To make this change survives when you logout or reboot, you can copy the command into
-	  a configuration file using a text editor.  To find the right configuration
-	  file, look in your &#36;HOME directory
+	  To make this change survives when you logout or reboot, open
+	  your shell configuration file in a text editor, and add the
+	  command on a line by itself.  This will ensure that it is
+	  run every time you log in.
+	</para>
+
+	<para>To find the right configuration file, look in your &#36;HOME directory
 	  for <filename>.profile</filename> (for the Bourne shell <command>sh</command>), 
 	  <filename>.bash_profile</filename> (for BASH), or
 	  <filename>.login</filename> (for tcsh).  You may have to
-	  create the file if it is not present.
+	  create the file if it is not present.  On Cygwin, you should
+	  put the change in the file <filename>.bashrc</filename>.
 	</para>
+
 	<para>If you do not know which directory is your home
 	directory, you can find its full name by typing:
 	<screen><prompt>%</prompt> echo &#36;HOME</screen>
@@ -214,7 +230,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 
     <section xml:id="software_req"><info><title>Additional Required Software</title></info>
 
-    <para>The following software is important:
+    <para>The following software is important to install:
     <itemizedlist>
       
       <listitem><para>The graphical MCMC diagnostic program
@@ -225,7 +241,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
     </itemizedlist>
     </para>
 
-    <para>The following software is recommended:
+    <para>The following software is recommended to install:
 
     <itemizedlist>
 
@@ -238,6 +254,19 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
       <listitem><para>The alignment-viewer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">Seaview</link>.</para></listitem>
 
     </itemizedlist>
+    GNUplot can be installed using the Cygwin installer on Windows
+    systems.  It can also be installed using <link
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xlink:href="http://www.macports.org">macports</link> or
+    <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	  xlink:href="http://http://mxcl.github.com/homebrew/">homebrew</link>
+    on Macintosh systems, but installing these package managers
+    requires first installing Xcode Developer Tools, which requires an Apple Developer
+    ID, and is not trivial.
+    </para>
+
+    <para>
+      For those who wish to install macosports, a <application>bali-phy</application> package is available.
     </para>
       
     </section>
