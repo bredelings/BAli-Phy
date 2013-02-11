@@ -665,7 +665,7 @@ int main(int argc,char* argv[])
     else {
       ofstream outfile(out.c_str());
       if (not outfile)
-	throw myexception()<<"Can't open '"<<outfile<<"' to write result!";
+	throw myexception()<<"Can't open '"<<out<<"' to write result!";
 
       outfile<<amax<<endl;
       outfile.close();
