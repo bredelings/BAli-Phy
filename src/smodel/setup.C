@@ -689,7 +689,7 @@ formula_expression_ref process_stack_Multi(const module_loader& L,
 
     formula_expression_ref base = coerce_to_RA(L, model_args[1],a,frequencies);
 
-    formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLapace"), Tuple(-3.0, 1.0) ));
+    formula_expression_ref W = def_parameter("Gamma.sigmaOverMu", 0.1, lower_bound(0), (identifier("logLaplace"), Tuple(-3.0, 1.0) ));
     formula_expression_ref b = (times, W, W);
     formula_expression_ref a = (divide, 1.0, b);
     formula_expression_ref dist = (identifier("uniformDiscretize"), (identifier("gammaQuantile"), Tuple(a,b)) , n);
