@@ -17,7 +17,6 @@
              "/usr/share/xml/schema/w3c/mathml/dtd/mmlalias.ent" >
 %ent-mmlalias;
 ]>
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0" 
          xmlns:mml="http://www.w3.org/1998/Math/MathML"
 	 xml:lang="en">
@@ -26,68 +25,223 @@
     <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
   </info>
 
-  <section xml:id="pre-requisites"><info><title>Pre-requisites</title></info>
+  <section xml:id="installation"><info><title>Installation</title></info>
     
 
+  <section xml:id="intro"><info><title>Introduction</title></info>
     <para><application>BAli-Phy</application> is a Unix command
       line program that is developed primarily on
       Linux.  <application>BAli-Phy</application> also runs on
       Windows and Mac OS X, but it is not a GUI program and so you
-      must run it in a terminal.
+      must run it in a terminal.  Therefore, you might want to keep a
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	    xlink:href="http://www.ee.surrey.ac.uk/Teaching/Unix">Unix
+      tutorial</link> or <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	    xlink:href="http://www.rain.org/~mkummel/unix.html">Unix
+      cheat sheet</link> handy while you work.
     </para>
+  </section>
 
-    <para>You may need a 64-bit executable and a 64-bit
-      OS version of your OS to be able to analyze large data sets that
-    consume more that 2Gb of RAM.</para>
+  <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
+    
 
     <para>
       We typically run <application>BAli-Phy</application> on Core2
-      processors with 8Gb of RAM.
+      processors with 8Gb of RAM.  You may need a 64-bit executable and a 64-bit
+      OS version of your OS to be able to analyze large data sets that
+      consume more that 2Gb of RAM.
     </para>
 
     <para>
-      Access to a computing cluster is not necessary, but can speed up
-      the analysis.  This is because a cluster allows you to run
-      several <emphasis>independent</emphasis> MCMC chains in parallel and pool the
+      Access to a computing cluster can speed up the analysis.  This is because a cluster allows you to run
+      several identical MCMC chains at the same time and then pool the
       resulting samples.  This approach to parallel computation is
       sometimes more efficient than MCMCMC-based parallelism involving
       heated chains.   
     </para>
+  </section>
 
-    <section><info><title>Linux and UNIX</title></info>
-
-
-      <para>On Linux, you should be able to install and
-	run <application>BAli-Phy</application> without any
-	modification.  For other UNIX operating systems, you may need
-	to compile <application>BAli-Phy</application> before running
-	it.</para> 
-    </section>
-
-    <section><info><title>Windows</title></info>
-      
-
-      <para>On Windows, it is highly recommended that you first
-	install <link xmlns:xlink="http://www.w3.org/1999/xlink"
-	xlink:href="http://www.cygwin.com">Cygwin</link>.
-	Cygwin is a Unix/Linux command-line environment for Windows.  You can access the
-	Cygwin command line (not the normal windows command line)
-	through the Start menu.</para> 
-
-      <para>Installing Cygwin should not be strictly necessary to
-	run the <command>bali-phy</command> program, but it may be necessary
-	for running the scripts that analyze the output.  Furthermore,
-	we recommend installing the binary executables from the Cygwin
-	prompt, in order to make the files easily accessible from
-	inside Cygwin.
+    <section><info><title>MS Windows requirements</title></info>
+      <para>Before you can use <application>BAli-Phy</application> on
+      MS Windows, you must first install <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com/install.html">Cygwin</link>.
+      Cygwin is a Unix/Linux command-line environment for Windows.
+While running the Cygwin installer
+	<filename>setup.exe</filename>, you will be given an
+	opportunity to select additional packages.
+	<itemizedlist>
+	  <listitem><para>From <userinput>Interpreters</userinput>, select <userinput>perl</userinput>.</para></listitem>
+	  <listitem><para>From <userinput>Web</userinput>, select <userinput>wget</userinput>.</para></listitem>
+	  <listitem><para>From <userinput>Editors</userinput>, select <userinput>nano</userinput>.</para></listitem>
+	</itemizedlist>
       </para>
 
+      <para>You may then access the Unix command line environment by running the
+      <application>Cygwin Terminal</application> application (not the
+      normal windows command line).</para> 
+
+      <para>You might wish to save the installer on your
+      desktop in case you want to run it again, since you can use it
+      to install additional packages later.</para>
+
+      <para>In order to access your files from inside cygwin, note
+      that <filename>C:/</filename> is accessed as
+      <filename>/cygdrive/c/</filename>.  Thus, for example, you can
+      access downloaded files at <filename>/cygdrive/c/Documents\ and\
+      Settings/<replaceable>username</replaceable>/Downloads/</filename>.
+      </para>
     </section>
 
-    <section><info><title>Mac OS X</title></info>
-      
+    <section><info><title>Mac OS X requirements</title></info>
       <para>We recommend Mac OS X version 10.4 (or higher).</para>
     </section>
+
+    <section><info><title>Linux requirements</title></info>
+      <para>No extra requirements.</para>
+    </section>
+
+    <section><info><title>Installing BAli-Phy executables</title></info>
+
+    <para>Start by opening a Unix terminal window.  On Apple, this is the <application>Terminal</application>
+    application; on Windows it will be the <application>Cygwin Terminal</application>, not the
+    Windows command prompt.</para>
+    
+    <para>Make a directory called <filename>local</filename> in your
+    home directory to contain the executable files:
+<screen><prompt>%</prompt> mkdir ~/local</screen>
+    </para>
+
+    <para>Start by <link xmlns:xlink="http://www.w3.org/1999/xlink"
+    xlink:href="http://www.biomath.ucla.edu/msuchard/bali-phy/download/">downloading</link> 
+BAli-Phy executables from the web site.  Select the executables for
+your operating system.  If you're not sure, choose the 32-bit
+    executables.  Save them in to the <filename>local/</filename>
+    directory that you just created on the command line.  Then check
+    to see that the file are there:
+<screen><prompt>%</prompt> cd ~/local
+<prompt>%</prompt> ls
+bali-phy-<replaceable>version</replaceable>.tgz
+</screen>
+</para>
+
+    <para>Extract the compressed archive on the Unix (or
+    Cygwin) command line using the <command>tar</command> command:
+<screen><prompt>%</prompt> cd ~/local
+<prompt>%</prompt> tar -zxf bali-phy-<replaceable>version</replaceable>.tgz
+<prompt>%</prompt> ls
+bali-phy-<replaceable>version</replaceable>.tgz  bin  share
+</screen>
+    </para>
+
+    <para>Finally, test that the program can be run.
+<screen><prompt>%</prompt> ~/local/bin/bali-phy -v
+VERSION: 2.1.1  [master commit 8ea33010]  (Jan 28 2011 20:27:15)
+BUILD: Feb  1 2011 16:14:05
+ARCH: x86_64-unknown-linux-gnu
+COMPILER: GCC 4.5.2
+FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
+-DNDEBUG_DP -funroll-loops -fweb  -march=native  -pipe -O3
+</screen>
+</para>
+
+    </section>      
+
+    <section><info><title>Adding BAli-Phy to your PATH</title></info>
+
+      <section><title>I have a path?</title>
+      <para>
+	If you installed <application>BAli-Phy</application> to the directory
+	<filename>~/local</filename>, then you can run
+	bali-phy by typing <userinput>~/local/bin/bali-phy</userinput>.
+	However, it would be much nicer to simply type
+	<userinput>bali-phy</userinput> and let the computer find the
+	executable for you.  This can be achieved by putting the directory
+	that contains the <filename>bali-phy</filename> executables into
+	your "path".  	The "path" is a colon-separated list of directories that is
+	searched to find program names that you type.  It is stored in a
+	variable called PATH.  
+	</para>
+      <para>
+	Setting your PATH is also a pre-requisite for running
+	the <command>bp-analyze.pl</command> script to summarize your
+	MCMC runs.
+      </para>
+      </section>
+
+      <section><title>Examining your PATH</title>
+      <para>
+	You can examine the current value of
+	this variable by typing:
+	<screen><prompt>%</prompt> echo &#36;PATH</screen>
+	We will assume that you extracted the bali-phy archive in
+	<filename>~/local</filename> and so you want to add
+	<filename>&#36;HOME/local/bin</filename> to your PATH.  (If you
+	installed to another directory,
+	replace <filename>&#36;HOME/local/</filename> with that directory.)
+      </para>
+      </section>
+
+      <section><title>Adding BAli-Phy to your PATH</title>
+      <para>The commands
+	for doing this depend on what "shell" you are using.  Type
+	<userinput>echo &#36;SHELL</userinput> to find out. If your
+	shell is <command>sh</command> or 
+	<command>bash</command> then the command looks like this: 
+	<screen><prompt>%</prompt> PATH=&#36;HOME/local/bin:&#36;PATH</screen>
+	If your shell is <command>csh</command> or
+	<command>tcsh</command>, then the command looks like this:
+	<screen><prompt>%</prompt> setenv PATH &#36;HOME/local/bin:&#36;PATH</screen>
+	Note that these commands will only affect the window you are typing
+	in, and will vanish when you reboot.   
+      </para>
+      </section>
+
+      <section><title>Making the change stick</title>
+	<para>
+	  To make this change survives when you logout or reboot, you can copy the command into
+	  a configuration file using a text editor.  To find the right configuration
+	  file, look in your &#36;HOME directory
+	  for <filename>.profile</filename> (for the Bourne shell <command>sh</command>), 
+	  <filename>.bash_profile</filename> (for BASH), or
+	  <filename>.login</filename> (for tcsh).  You may have to
+	  create the file if it is not present.
+	</para>
+	<para>If you do not know which directory is your home
+	directory, you can find its full name by typing:
+	<screen><prompt>%</prompt> echo &#36;HOME</screen>
+	</para>
+      </section>
+    </section>
+
+    <section xml:id="software_req"><info><title>Additional Required Software</title></info>
+
+    <para>The following software is important:
+    <itemizedlist>
+      
+      <listitem><para>The graphical MCMC diagnostic program
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	    xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</link>.
+      </para></listitem> 
+
+    </itemizedlist>
+    </para>
+
+    <para>The following software is recommended:
+
+    <itemizedlist>
+
+      <listitem><para>The plotting program gnuplot.</para></listitem> 
+      
+      <listitem><para>The phylogeny-viewer <link
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link>.</para></listitem>
+      
+      <listitem><para>The alignment-viewer <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">Seaview</link>.</para></listitem>
+
+    </itemizedlist>
+    </para>
+      
+    </section>
+
   </section>
 
   <section xml:id="compilation"><info><title>Compiling <application>BAli-Phy</application></title></info>
@@ -167,7 +321,7 @@
 <prompt>%</prompt> make install</screen>
 
 	to build and install <command>bali-phy</command> and its
-	associated tools and install it in <filename>/usr/local/</filename>.
+	associated tools and install it in <filename>~/local/</filename>.
 	(This requires the GNU version of <command>make</command>.)
 	To customize the compilation and installation process, read the
 	following sections on supplying arguments to the
@@ -178,7 +332,7 @@
     <section><info><title>Options to <command>configure</command></title></info>
       
 
-      <section xml:id="install-prefix"><info><title>Installing to a location besides	<filename>/usr/local/</filename></title></info>
+      <section xml:id="install-prefix"><info><title>Installing to a location besides	<filename>~/local/</filename></title></info>
 	
 	<para>The configure script chooses to install
 	  <command>bali-phy</command> in the directory
@@ -188,7 +342,7 @@
 	  <userinput>--prefix=<replaceable>dir</replaceable></userinput>.
 	  For example, in order to install
 	  <application>BAli-Phy</application> under
-	  <filename>~/local</filename>, you can enter:
+	  <filename>/usr/local</filename>, you can enter:
 
 	  <screen><prompt>%</prompt> ../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</screen>
           This is recommended if you do not have permission to install
@@ -300,144 +454,6 @@
 	simply type <command>make install</command>.  This will copy the
 	compiled executables to the installation directory (See <xref linkend="install-prefix"/>).
       </para>
-    </section>
-
-  </section>
-
-  <section xml:id="installation"><info><title>Installation</title></info>
-    
-
-    <section xml:id="software_req"><info><title>Recommended Additional Software</title></info>
-      
-
-      <para>We recommend that you install some additional software in order
-	to graphically view the simple text files
-	that <application>BALi-Phy</application> outputs:
-
-	<itemizedlist>
-	  <listitem><para>Cygwin (on windows) - to give you a UNIX prompt 
-	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com">Tracer</link>) 
-	  </para></listitem>
-
-	  <listitem><para><application>Tracer</application> - to
-	      analyze MCMC diagnostics 
-	      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/tracer/">Tracer</link>) 
-	  </para></listitem>
-
-	  <listitem><para>PERL - to script an analysis
-	      of <application>BALi-Phy</application> output files</para></listitem>
-
-	  <listitem><para>The plotting program
-	      <application>gnuplot</application> (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.gnuplot.info/">gnuplot</link>) - to script an analysis
-	      of <application>BALi-Phy</application> output files</para></listitem> 
-
-	  <listitem><para>Mozilla or Mozilla/Firefox - to view the math in
-	      the XHTML documentation. (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.mozilla.org/products/firefox/">Firefox</link>)</para></listitem>
-	</itemizedlist>
-      </para>
-      
-      <para>On Mac OS X, PERL should already be installed, and you should be
-	able to install <application>gnuplot</application>
-	using <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.macports.org">MacPorts</link>.
-	On Windows, you can install PERL and gnuplot using
-	the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.cygwin.com">Cygwin</link>
-	installer. On Linux, simply use your distribution's package
-	manager. 
-      </para>
-
-      <para>We additionally recommend the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://pbil.univ-lyon1.fr/software/seaview.html">seaview</link> to graphically view sequence alignments, and the program <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</link> to graphically view phylogenies.</para>
-    </section>
-
-    <section><info><title>Installing precompiled executables</title></info>
-
-      <para>You can extract the compressed archive on the Unix (or
-	Cygwin) command line using the <command>tar</command> command:
-	<screen><prompt>%</prompt> tar -zxf bali-phy-<replaceable>version</replaceable>.tgz</screen>
-      </para>
-
-      <para>On Windows, we recommend that you first install Cygwin, and then extract
-      the compressed archive from the Cygwin
-      prompt (e.g. instead of simply installing to <filename>Program
-      Files/</filename>.)  While it is not strictly necessary to
-      run <command>bali-phy</command> from inside Cygwin, this will
-      make it easier to analyze the output files.  Also, the manual
-      assumes that you are using a Unix-type console, like Cygwin.
-      </para>
-      
-      <para>From the Unix (or Cygwin) prompt, you might choose to
-	extract the compressed archive in the
-	directory <filename>/usr/local</filename> if you have root access.
-	If you do not have root access, you could make a
-	directory <filename>~/local</filename> in your home directory
-	and then extract the files there.
-      </para>
-
-    </section>      
-
-    <section><info><title>Setting the PATH</title></info>
-
-      <section><title>I have a path?</title>
-      <para>
-	If you installed <application>BAli-Phy</application> to the directory
-	<filename>/usr/local/</filename>, then you can run
-	bali-phy by typing <userinput>/usr/local/bin/bali-phy</userinput>.
-	However, it would be much nicer to simply type
-	<userinput>bali-phy</userinput> and let the computer find the
-	executable for you.  This can be achieved by putting the directory
-	that contains the <filename>bali-phy</filename> executables into
-	your "path".  	The "path" is a colon-separated list of directories that is
-	searched to find program names that you type.  It is stored in a
-	variable called PATH.  
-	</para>
-      <para>
-	Setting your PATH is also a pre-requisite for running
-	the <command>bp-analyze.pl</command> script to summarize your runs.
-      </para>
-      </section>
-
-      <section><title>Examining your PATH</title>
-      <para>
-	You can examine the current value of
-	this variable by typing:
-	<screen><prompt>%</prompt> echo &#36;PATH</screen>
-	We will assume that you extracted the bali-phy archive in
-	<filename>/usr/local</filename> and so you want to add
-	<filename>/usr/local/bin</filename> to your PATH.  (If you
-	installed to another directory,
-	replace <filename>/usr/local/</filename> with that directory.)
-      </para>
-      </section>
-
-      <section><title>Adding BAli-Phy to your PATH</title>
-      <para>The commands
-	for doing this depend on what "shell" you are using.  Type
-	<userinput>echo &#36;SHELL</userinput> to find out. If your
-	shell is <command>sh</command> or 
-	<command>bash</command> then the command looks like this: 
-	<screen><prompt>%</prompt> PATH=/usr/local/bin:&#36;PATH</screen>
-	If your shell is <command>csh</command> or
-	<command>tcsh</command>, then the command looks like this:
-	<screen><prompt>%</prompt> setenv PATH /usr/local/bin:&#36;PATH</screen>
-	Note that these commands will only affect the window you are typing
-	in, and will vanish when you reboot.   
-      </para>
-      </section>
-
-      <section><title>Making the change stick</title>
-	<para>
-	  To make this change survive reboots, you can copy the command into
-	  a configuration file using a text editor.  To find the right configuration
-	  file, look in your &#36;HOME directory
-	  for <filename>.profile</filename> (for the Bourne shell <command>sh</command>), 
-	  <filename>.bash_profile</filename> (for BASH), or
-	  <filename>.login</filename> (for tcsh).  You may have to
-	  create the file if it is not present.
-	</para>
-	<para>If you do not know which directory is your home
-	directory, you can find its full name by typing:
-	<screen><prompt>%</prompt> echo &#36;HOME</screen>
-	</para>
-      </section>
     </section>
 
   </section>
