@@ -680,7 +680,7 @@ int main(int argc,char* argv[])
       ofstream outfile(outp.c_str());
 
       if (not outfile)
-	throw myexception()<<"Can't open '"<<outfile<<"' to write column probabilities!";
+	throw myexception()<<"Can't open '"<<out<<"' to write column probabilities!";
 
       for(int c=0; c < column_probabilities.size(); c++)
 	outfile<<column_probabilities[c]<<endl;
