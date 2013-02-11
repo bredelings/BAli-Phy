@@ -113,7 +113,7 @@ int main(int argc,char* argv[])
       for(int i=0;i<filestreams.size();i++)
 	getline((*filestreams[i]),sublines[i]);
 
-      ok = *filestreams[0];
+      ok = (bool)*filestreams[0];
       bool error = false;
       for(int i=1;i<filestreams.size();i++)
 	if (ok != bool(*filestreams[i]))
