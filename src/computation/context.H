@@ -106,6 +106,9 @@ public:
   /// Return the value of a particular index, computing it if necessary
   object_ref evaluate_expression(const expression_ref&,bool=true) const;
 
+  /// Return the value of a particular index, computing it if necessary
+  object_ref perform_expression(const expression_ref&,bool=true) const;
+
   template <typename T>
   object_ptr<const T> evaluate_as(int index) const
   {

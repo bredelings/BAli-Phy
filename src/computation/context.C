@@ -207,6 +207,12 @@ object_ref context::evaluate_expression(const expression_ref& E,bool ec) const
   return evaluate_expression_( preprocess(E), ec);
 }
 
+object_ref context::perform_expression(const expression_ref& E,bool ec) const
+{
+  expression_ref E2 = (identifier("unsafePerformIO"),E);
+  return evaluate_expression_( preprocess(E2), ec);
+}
+
 bool context::parameter_is_set(int index) const
 {
   assert(index >= 0 and index < n_parameters());
@@ -262,9 +268,8 @@ void context::set_parameter_value_expression(int index, const expression_ref& O)
   if (O)
   {
     expression_ref E = (identifier("set_modifiable_value"), token, parameter(parameter_name(index)), O);
-    E = (identifier("unsafePerformIO"),E);
 
-    evaluate_expression(E, false);
+    perform_expression(E, false);
   }
   else
     set_parameter_value_(index, {} );
