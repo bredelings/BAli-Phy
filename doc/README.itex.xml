@@ -43,13 +43,13 @@
 
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
-    <para>We recommend running BAli-Phy on a computing cluster instead
-    of a laptop or desktop. Computing clusters nearly always run
-    Linux. A computing cluster can speed up the analysis by allowing
+    <para>We recommend running BAli-Phy on a computing cluster for long runs.
+    A computing cluster can speed up the analysis by allowing
     you to run several identical MCMC chains simultaneously and then
     pool the resulting samples.  You also don't need to worry that
     logging out or turning off the computer will terminate the run
-    early :-P</para> 
+    early.  Result files can be copied back to a laptop or desktop for
+    viewing.</para> 
 
     <para>
       We typically run <application>BAli-Phy</application> on Core2
@@ -114,7 +114,7 @@ While running the Cygwin installer
     <note>
     Note that <userinput>~</userinput> is a synonym for
     <userinput>&#36;HOME</userinput>, your home directory.  You can
-    find out what your home directory is called by typing
+    find out what your home directory is by typing
 <screen><prompt>%</prompt> echo &#36;HOME</screen>
 or
 <screen><prompt>%</prompt> echo ~</screen></note>
@@ -131,7 +131,7 @@ your operating system.  If you're not sure, choose the 32-bit
 bali-phy-<replaceable>version</replaceable>.tgz
 </screen>
 Then check
-    to see that the file are there:
+    to see that the file is there:
 <screen><prompt>%</prompt> cd ~/local
 <prompt>%</prompt> ls
 bali-phy-<replaceable>version</replaceable>.tgz
@@ -234,7 +234,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
       </section>
     </section>
 
-    <section xml:id="software_req"><info><title>Additional Required Software</title></info>
+    <section xml:id="software_req"><info><title>Additional required software</title></info>
 
     <para>The following software is important to install:
     <itemizedlist>
@@ -272,7 +272,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
     </para>
 
     <para>
-      For those who wish to install macosports, a <application>bali-phy</application> package is available.
+      For those who wish to install macports, a <application>bali-phy</application> package is available.
     </para>
       
     </section>
