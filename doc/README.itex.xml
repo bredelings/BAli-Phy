@@ -70,9 +70,9 @@ While running the Cygwin installer
 	<filename>setup.exe</filename>, you will be given an
 	opportunity to select additional packages.
 	<itemizedlist>
-	  <listitem><para>From <userinput>Interpreters</userinput>, select <userinput>perl</userinput>.</para></listitem>
-	  <listitem><para>From <userinput>Web</userinput>, select <userinput>wget</userinput>.</para></listitem>
-	  <listitem><para>From <userinput>Editors</userinput>, select <userinput>nano</userinput>.</para></listitem>
+	  <listitem><para>From <guilabel>Interpreters</guilabel>, select <guilabel>perl</guilabel>.</para></listitem>
+	  <listitem><para>From <guilabel>Web</guilabel>, select <guilabel>wget</guilabel>.</para></listitem>
+	  <listitem><para>From <guilabel>Editors</guilabel>, select <guilabel>nano</guilabel>.</para></listitem>
 	</itemizedlist>
       </para>
 
@@ -110,27 +110,27 @@ While running the Cygwin installer
     
     <listitem><para>Make a directory called <filename>local</filename> in your
     home directory to contain the executable files:
-<screen><prompt>%</prompt> mkdir ~/local</screen>
+<screen><prompt>%</prompt> <userinput>mkdir ~/local</userinput></screen>
     <note>
     Note that <userinput>~</userinput> is a synonym for
     <userinput>&#36;HOME</userinput>, your home directory.  You can
     find out what your home directory is by typing
-<screen><prompt>%</prompt> echo &#36;HOME</screen>
+<screen><prompt>%</prompt> <userinput>echo &#36;HOME</userinput></screen>
 or
-<screen><prompt>%</prompt> echo ~</screen></note>
+<screen><prompt>%</prompt> <userinput>echo ~</userinput></screen></note>
 </para></listitem>
 
     <listitem><para><link xmlns:xlink="http://www.w3.org/1999/xlink"
     xlink:href="http://www.bali-phy.org/download.php">Download</link> 
 BAli-Phy executables for your operating system from the web site using your browser.  If you're not sure, choose the 32-bit executables.  Save them to the <filename>~/local/</filename> directory that you just created on the command line. Then check to see that the file is there:
-<screen><prompt>%</prompt> ls ~/local
+<screen><prompt>%</prompt> <userinput>ls ~/local</userinput>
 bali-phy-<replaceable>version</replaceable>.tgz
 </screen>
 </para>
 <para>Alternatively, you can download the file directly from the command line using <userinput>wget</userinput> if you know the URL:
-<screen><prompt>%</prompt> cd ~/local
-<prompt>%</prompt> wget <replaceable>URL</replaceable>
-<prompt>%</prompt> ls
+<screen><prompt>%</prompt> <userinput>cd ~/local</userinput>
+<prompt>%</prompt> <userinput>wget <replaceable>URL</replaceable></userinput>
+<prompt>%</prompt> <userinput>ls</userinput>
 bali-phy-<replaceable>version</replaceable>.tgz
 </screen>
 </para>
@@ -138,15 +138,15 @@ bali-phy-<replaceable>version</replaceable>.tgz
 
     <listitem><para>Extract the compressed archive on the Unix (or
     Cygwin) command line using the <command>tar</command> command:
-<screen><prompt>%</prompt> cd ~/local
-<prompt>%</prompt> tar -zxf bali-phy-<replaceable>version</replaceable>.tgz
-<prompt>%</prompt> ls
+<screen><prompt>%</prompt> <userinput>cd ~/local</userinput>
+<prompt>%</prompt> <userinput>tar -zxf bali-phy-<replaceable>version</replaceable>.tgz</userinput>
+<prompt>%</prompt> <userinput>ls</userinput>
 bali-phy-<replaceable>version</replaceable>.tgz  bin  share
 </screen>
     </para></listitem>
 
     <listitem><para>Finally, test that the program can be run.
-<screen><prompt>%</prompt> ~/local/bin/bali-phy -v
+<screen><prompt>%</prompt> <userinput>~/local/bin/bali-phy -v</userinput>
 VERSION: 2.1.1  [master commit 8ea33010]  (Jan 28 2011 20:27:15)
 BUILD: Feb  1 2011 16:14:05
 ARCH: x86_64-unknown-linux-gnu
@@ -158,7 +158,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
     </orderedlist>
     </section>      
 
-    <section><info><title>Adding BAli-Phy to your PATH</title></info>
+    <section><info><title>Adding BAli-Phy to your <envar>PATH</envar></title></info>
 
       <section><title>I have a path?</title>
       <para>
@@ -171,38 +171,38 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	that contains the <filename>bali-phy</filename> executables into
 	your "path".  	The "path" is a colon-separated list of directories that is
 	searched to find program names that you type.  It is stored in an
-	environment variable called PATH.  
+	environment variable called <envar>PATH</envar>.
 	</para>
       <para>
-	Setting your PATH is also a pre-requisite for running
+	Setting your <envar>PATH</envar> is also a pre-requisite for running
 	the <command>bp-analyze.pl</command> script to summarize your
 	MCMC runs.
       </para>
       </section>
 
-      <section><title>Examining your PATH</title>
+      <section><title>Examining your <envar>PATH</envar></title>
       <para>
 	You can examine the current value of
 	this environment variable by typing:
-	<screen><prompt>%</prompt> echo &#36;PATH</screen>
+	<screen><prompt>%</prompt> <userinput>echo &#36;PATH</userinput></screen>
 	We will assume that you extracted the bali-phy archive in
 	<filename>~/local</filename> and so you want to add
-	<filename>&#36;HOME/local/bin</filename> to your PATH.  (If you
+	<filename>&#36;HOME/local/bin</filename> to your <envar>PATH</envar>.  (If you
 	installed to another directory,
 	replace <filename>&#36;HOME/local/</filename> with that directory.)
       </para>
       </section>
 
-      <section><title>Adding BAli-Phy to your PATH</title>
+      <section><title>Adding BAli-Phy to your <envar>PATH</envar></title>
       <para>The commands
 	for doing this depend on what "shell" you are using.  Type
 	<userinput>echo &#36;SHELL</userinput> to find out. If your
 	shell is <command>sh</command> or 
 	<command>bash</command> then the command looks like this: 
-	<screen><prompt>%</prompt> PATH=&#36;HOME/local/bin:&#36;PATH</screen>
+	<screen><prompt>%</prompt> <userinput>PATH=&#36;HOME/local/bin:&#36;PATH</userinput></screen>
 	If your shell is <command>csh</command> or
 	<command>tcsh</command>, then the command looks like this:
-	<screen><prompt>%</prompt> setenv PATH &#36;HOME/local/bin:&#36;PATH</screen>
+	<screen><prompt>%</prompt> <userinput>setenv PATH &#36;HOME/local/bin:&#36;PATH</userinput></screen>
 	Note that these commands will only affect the window you are typing
 	in, and will vanish when you reboot.   
       </para>
@@ -226,7 +226,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 
 	<para>If you do not know which directory is your home
 	directory, you can find its full name by typing:
-	<screen><prompt>%</prompt> echo &#36;HOME</screen>
+	<screen><prompt>%</prompt> <userinput>echo &#36;HOME</userinput></screen>
 	</para>
       </section>
     </section>
@@ -275,9 +275,9 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
     </section>
 
     <section xml:id="tests"><info><title>Testing the installed software</title></info>
-    <para>In order to determine that the software has been correctly installed, and the PATH has been correctly set, run the following commands:
-<screen><prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=50
-<prompt>%</prompt> bp-analyze.pl 5d-1/</screen>
+    <para>In order to determine that the software has been correctly installed, and the <envar>PATH</envar> has been correctly set, run the following commands:
+<screen><prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=50</userinput>
+<prompt>%</prompt> <userinput>bp-analyze.pl 5d-1/</userinput></screen>
     </para>
     <para>Furthermore, the directory <filename>5d-1</filename> should contain a file called <filename>C1.p</filename>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</para>
     </section>
@@ -347,18 +347,18 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	extract the source code archive, using a graphical archive
 	manager, or the command-line tool <command>tar</command>:
 	
-	<screen><prompt>%</prompt> tar -zxf bali-phy-2.1.1.tgz</screen>
+	<screen><prompt>%</prompt> <userinput>tar -zxf bali-phy-2.1.1.tgz</userinput></screen>
 	Then create a <emphasis>separate</emphasis> build directory, enter it, and run the
 	configure command:
 
-	<screen><prompt>%</prompt> mkdir build
-<prompt>%</prompt> cd build
-<prompt>%</prompt> ../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</screen>
+	<screen><prompt>%</prompt> <userinput>mkdir build</userinput>
+<prompt>%</prompt> <userinput>cd build</userinput>
+<prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</userinput></screen>
 	
 	If this command succeeds, then you can simply type
 
-	<screen><prompt>%</prompt> make
-<prompt>%</prompt> make install</screen>
+	<screen><prompt>%</prompt> <userinput>make</userinput>
+<prompt>%</prompt> <command>make install</command></screen>
 
 	to build and install <command>bali-phy</command> and its
 	associated tools and install it in <filename>~/local/</filename>.
@@ -383,7 +383,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	  <application>BAli-Phy</application> under
 	  <filename>~/local</filename>, you can enter:
 
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</userinput></screen>
           This is recommended if you do not have permission to install
 	  to <filename>/usr/local/</filename>.
 	</para>
@@ -417,7 +417,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	  <command>g++-4.5</command> as the C++ compiler when compiling
 	  <application>BAli-Phy</application>, you would set the CXX
 	  environment variable as follows:
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.1/configure CXX=g++-4.5</screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure CXX=g++-4.5</userinput></screen>
 	</para>
       </section>
 
@@ -426,7 +426,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	<para>You can specify optimizing for a specific brand of CPU,
 	  by specifying the <userinput>CHIP</userinput> variable to
 	  <command>configure</command>, as follows:
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.1/configure CHIP=<replaceable>cpu</replaceable></screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure CHIP=<replaceable>cpu</replaceable></userinput></screen>
 	  You can set CHIP to any of <userinput>pentium3</userinput>,
 	  <userinput>pentium4</userinput>,
 	  <userinput>nocona</userinput>, <userinput>core2</userinput>,
@@ -455,7 +455,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	<para>
           All these options to <command>configure</command> can be
 	  combined, as follows:
-	  <screen><prompt>%</prompt> ../bali-phy-2.1.1/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.5 CHIP=pentium4</screen>
+	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure --prefix=&#36;HOME/local --enable-static CXX=g++-4.5 CHIP=pentium4</userinput></screen>
           This example uses <command>g++-4.5</command> to build a
 	  pentium4-optimized version of <command>bali-phy</command> with
 	  static linkage.
@@ -473,10 +473,10 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 
       <para>To generate these files, you need automake 1.8 (or higher)
 	and autoconf 2.59 (or higher).  Run these commands in the top level
-	directory of the repository that you checked out.<screen><prompt>%</prompt> autoheader
-<prompt>%</prompt> aclocal -I m4
-<prompt>%</prompt> automake -a
-<prompt>%</prompt> autoconf</screen>
+	directory of the repository that you checked out.<screen><prompt>%</prompt><userinput> autoheader</userinput>
+<prompt>%</prompt> <userinput>aclocal -I m4</userinput>
+<prompt>%</prompt> <userinput>automake -a</userinput>
+<prompt>%</prompt> <userinput>autoconf</userinput></screen>
         If your system has multiple versions of automake, then you may
 	have to type e.g. <userinput>automake-1.11 -a</userinput> and
 	<userinput>aclocal-1.11</userinput> instead in order to specify which
@@ -513,7 +513,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
       <para>The simplest way to run <command>BAli-Phy</command> is
 	to type all the arguments on the command line:
 
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable></screen>
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable></userinput></screen>
 
 	Here <replaceable>sequence-file</replaceable> is a FastA or PHYLIP
 	file containing the sequences you wish to analyze.  The filename should end
@@ -530,35 +530,35 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 
       <para>You can specify a more complex substitution model as follows (See <xref linkend="subst_basic"/>):
 
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel WAG+gamma+INV</screen> </para>
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel WAG+gamma+INV</userinput></screen> </para>
       <para>You may specify an indel model of <userinput>none</userinput>
 	to fix the alignment to its initial value, and ignore information in shared insertions or deletions.
-  	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --imodel none</screen></para>
+  	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --imodel none</userinput></screen></para>
       <para>If you desire to use a codon model, you must specify the alphabet:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</screen>
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file</replaceable> --smodel M0 --alphabet Codons</userinput></screen>
       </para>
     </section>
 
     <section><info><title>Multiple genes or data partitions</title></info>
       
       <para>You may analyze multiple genes by putting each one it its own data partition:
-	<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable></screen>
+	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable></userinput></screen>
 	You should put the data from the first gene in <replaceable>sequence-file1</replaceable> and the second gene
 	in <replaceable>sequence-file2</replaceable>.  In this scenario, both genes share the same tree, but their alignments vary independently.  Furthermore, the branch lengths for each gene are scaled by an independent factor.  By default, each partition will have its own default alphabet, substitution model, insertion/deletion model, and tree length.    
       </para>
 
       <para>By default, each partition will recieve an independent copy of the model, and will not share parameter values:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel TN --imodel RS07</screen>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel TN --imodel RS07</userinput></screen>
 However, you can select partition-specific values for 5 options: <userinput>--smodel</userinput>, <userinput>--imodel</userinput>, <userinput>--alphabet</userinput>, <userinput>--same-scale</userinput>, and <userinput>--align-constraint</userinput>.  For example, to specify different substitution models but the same alphabet:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --alphabet 1,2:DNA</screen>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --alphabet 1,2:DNA</userinput></screen>
 You can fix the alignment and ignore insertion/deletion information in one partition, while allowing the alignment to vary and using insertion/deletion information in another partition:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 1:RS07 --imodel 2:none</screen>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --imodel 1:RS07 --imodel 2:none</userinput></screen>
 You can also specify that two partitions share a single copy of a single substitution model or indel model.  This reduces the number of parameters and also pools information between the partitions:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1,2:TN --imodel 1,2:RS07</screen>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1,2:TN --imodel 1,2:RS07</userinput></screen>
 By default each partition has a separate scale, but you can force groups of partitions to share a scale. The name of the groups for the scale are not currently used, but may be used in later versions of the software:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --same-scale 1,2:groupname</screen>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR --same-scale 1,2:groupname</userinput></screen>
 Finally, you may specify the option <userinput>--traditional</userinput>, or its short form <userinput>-t</userinput>.  This is the same as <userinput>--imodel none</userinput> and affects all partitions:
-<screen><prompt>%</prompt> bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR -t</screen>
+<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable> --smodel 1:TN --smodel 2:GTR -t</userinput></screen>
       </para>
     </section>
 
@@ -614,7 +614,7 @@ traditional = traditional
 	  the option name as the value, because it does not take a
 	  value.  Thus, this configuration file corresponds to the
 	  command line
-	  <screen><prompt>%</prompt>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal+INV --traditional</screen>
+	  <screen><prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal+INV --traditional</userinput></screen>
 	</para>
       </section>
 
@@ -654,7 +654,7 @@ traditional = traditional
       
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
 	the software.</para>
-      <screen> <prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta</screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta</userinput></screen>
     </example>
 
     <example><info><title>Multiple-Rate Substitution Model</title></info>
@@ -664,7 +664,7 @@ traditional = traditional
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal+INV --randomize-alignment</screen></example>
+      <screen> <prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal+INV --randomize-alignment</userinput></screen></example>
 
     <example><info><title>Fixed alignment</title></info>
       
@@ -676,7 +676,7 @@ traditional = traditional
 	estimated from the input sequences.
       </para> 
 
-      <screen> <prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</screen>
+      <screen> <prompt>%</prompt> <userinput>bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</userinput></screen>
 
     </example>
   </section>
