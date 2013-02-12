@@ -54,7 +54,7 @@
     <para>
       We typically run <application>BAli-Phy</application> on Core2
       processors with 8Gb of RAM.  You may need a 64-bit executable and a 64-bit
-      OS version of your OS to be able to analyze large data sets that
+      version of your operating system to be able to analyze large data sets that
       consume more that 2Gb of RAM.
     </para>
 
@@ -170,8 +170,8 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	executable for you.  This can be achieved by putting the directory
 	that contains the <filename>bali-phy</filename> executables into
 	your "path".  	The "path" is a colon-separated list of directories that is
-	searched to find program names that you type.  It is stored in a
-	variable called PATH.  
+	searched to find program names that you type.  It is stored in an
+	environment variable called PATH.  
 	</para>
       <para>
 	Setting your PATH is also a pre-requisite for running
@@ -183,7 +183,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
       <section><title>Examining your PATH</title>
       <para>
 	You can examine the current value of
-	this variable by typing:
+	this environment variable by typing:
 	<screen><prompt>%</prompt> echo &#36;PATH</screen>
 	We will assume that you extracted the bali-phy archive in
 	<filename>~/local</filename> and so you want to add
@@ -279,6 +279,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 <screen><prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=50
 <prompt>%</prompt> bp-analyze.pl 5d-1/</screen>
     </para>
+    <para>Furthermore, the directory <filename>5d-1</filename> should contain a file called <filename>C1.p</filename>.  You should be able to load this file in Tracer, although the chain will not really have converged yet.</para>
     </section>
 
   </section>
@@ -352,7 +353,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 
 	<screen><prompt>%</prompt> mkdir build
 <prompt>%</prompt> cd build
-<prompt>%</prompt> ../bali-phy-2.1.1/configure</screen>
+<prompt>%</prompt> ../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</screen>
 	
 	If this command succeeds, then you can simply type
 
@@ -361,7 +362,6 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 
 	to build and install <command>bali-phy</command> and its
 	associated tools and install it in <filename>~/local/</filename>.
-	(This requires the GNU version of <command>make</command>.)
 	To customize the compilation and installation process, read the
 	following sections on supplying arguments to the
 	<command>configure</command> script.
@@ -381,7 +381,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	  <userinput>--prefix=<replaceable>dir</replaceable></userinput>.
 	  For example, in order to install
 	  <application>BAli-Phy</application> under
-	  <filename>/usr/local</filename>, you can enter:
+	  <filename>~/local</filename>, you can enter:
 
 	  <screen><prompt>%</prompt> ../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</screen>
           This is recommended if you do not have permission to install
