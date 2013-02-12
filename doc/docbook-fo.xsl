@@ -68,6 +68,48 @@ xmlns:mml="http://www.w3.org/1998/Math/MathML">
   </xsl:choose>
 </xsl:template>
 
+<xsl:param name="double.sided">1</xsl:param>
+<xsl:param name="page.margin.outer">0.75in</xsl:param>
+<xsl:param name="page.margin.inner">1in</xsl:param>
+<xsl:param name="insert.xref.page.number">1</xsl:param>
+<xsl:param name="draft.mode">no</xsl:param>
+<xsl:param name="region.before.extent">0.25in</xsl:param>
+<xsl:attribute-set name="normal.para.spacing">
+  <xsl:attribute name="space-before.minimum">0.50em</xsl:attribute>
+  <xsl:attribute name="space-before.optimum">0.60em</xsl:attribute>
+  <xsl:attribute name="space-before.maximum">0.70em</xsl:attribute>
+</xsl:attribute-set>
+<xsl:attribute-set name="list.block.spacing">
+  <xsl:attribute name="space-before.minimum">0.70em</xsl:attribute>
+  <xsl:attribute name="space-before.optimum">0.75em</xsl:attribute>
+  <xsl:attribute name="space-before.maximum">0.80em</xsl:attribute>
+  <xsl:attribute name="space-after.minimum">0.70em</xsl:attribute>
+  <xsl:attribute name="space-after.optimum">0.75em</xsl:attribute>
+  <xsl:attribute name="space-after.maximum">0.80em</xsl:attribute>
+</xsl:attribute-set>
+<xsl:attribute-set name="list.item.spacing">
+  <xsl:attribute name="space-before.minimum">0.50em</xsl:attribute>
+  <xsl:attribute name="space-before.optimum">0.60em</xsl:attribute>
+  <xsl:attribute name="space-before.maximum">0.70em</xsl:attribute>
+</xsl:attribute-set>
+<xsl:attribute-set name="verbatim.properties">
+  <xsl:attribute name="space-before.minimum">0.4em</xsl:attribute>
+  <xsl:attribute name="space-before.optimum">0.5em</xsl:attribute>
+  <xsl:attribute name="space-before.maximum">0.6em</xsl:attribute>
+  <xsl:attribute name="space-after.minimum">0.4em</xsl:attribute>
+  <xsl:attribute name="space-after.optimum">0.5em</xsl:attribute>
+  <xsl:attribute name="space-after.maximum">0.6em</xsl:attribute>
+  <xsl:attribute name="border-width">0.1mm</xsl:attribute>
+  <xsl:attribute name="border-style">solid</xsl:attribute>
+
+  <xsl:attribute name="padding">1mm</xsl:attribute>
+</xsl:attribute-set>
+<xsl:template
+    match="filename|sgmltag|userinput|varname|application"
+    mode="no.anchor.mode">
+  <xsl:apply-templates select="." />
+</xsl:template>
+
 <xsl:template name="inline.italicsansseq">
   <xsl:param name="content">
     <xsl:apply-templates/>
@@ -93,6 +135,32 @@ xmlns:mml="http://www.w3.org/1998/Math/MathML">
 
 <xsl:template match="firstterm">
   <xsl:call-template name="inline.italicseq"/>
+</xsl:template>
+
+<xsl:template name="nongraphical.admonition">
+  <xsl:variable name="id">
+    <xsl:call-template name="object.id"/>
+  </xsl:variable>
+
+  <fo:block space-before.minimum="0.8em"
+            space-before.optimum="1em"
+            space-before.maximum="1.2em"
+            start-indent="0.25in"
+            end-indent="0.25in"
+            border="4pt solid #d0d0d0"
+            padding="4pt"
+            id="{$id}">
+    <xsl:if test="$admon.textlabel != 0 or title">
+      <fo:block keep-with-next='always'
+                xsl:use-attribute-sets="admonition.title.properties">
+         <xsl:apply-templates select="." mode="object.title.markup"/>
+      </fo:block>
+    </xsl:if>
+
+    <fo:block xsl:use-attribute-sets="admonition.properties">
+      <xsl:apply-templates/>
+    </fo:block>
+  </fo:block>
 </xsl:template>
 
 <xsl:template match="keysym">
