@@ -147,7 +147,7 @@ xmlns:mml="http://www.w3.org/1998/Math/MathML">
             space-before.maximum="1.2em"
             start-indent="0.25in"
             end-indent="0.25in"
-            border="4pt solid #d0d0d0"
+            border="4pt solid #20d020"
             padding="4pt"
             id="{$id}">
     <xsl:if test="$admon.textlabel != 0 or title">

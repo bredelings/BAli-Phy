@@ -164,11 +164,11 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
       <para>
 	If you installed <application>BAli-Phy</application> to the directory
 	<filename>~/local</filename>, then you can run
-	bali-phy by typing <userinput>~/local/bin/bali-phy</userinput>.
+	bali-phy by typing <command>~/local/bin/bali-phy</command>.
 	However, it would be much nicer to simply type
-	<userinput>bali-phy</userinput> and let the computer find the
+	<command>bali-phy</command> and let the computer find the
 	executable for you.  This can be achieved by putting the directory
-	that contains the <filename>bali-phy</filename> executables into
+	that contains the <application>BAli-Phy</application> executables into
 	your "path".  	The "path" is a colon-separated list of directories that is
 	searched to find program names that you type.  It is stored in an
 	environment variable called <envar>PATH</envar>.
@@ -196,7 +196,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
       <section><title>Adding BAli-Phy to your <envar>PATH</envar></title>
       <para>The commands
 	for doing this depend on what "shell" you are using.  Type
-	<userinput>echo &#36;SHELL</userinput> to find out. If your
+	<command>echo &#36;SHELL</command> to find out. If your
 	shell is <command>sh</command> or 
 	<command>bash</command> then the command looks like this: 
 	<screen><prompt>%</prompt> <userinput>PATH=&#36;HOME/local/bin:&#36;PATH</userinput></screen>
@@ -371,7 +371,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
     <section><info><title>Options to <command>configure</command></title></info>
       
 
-      <section xml:id="install-prefix"><info><title>Installing to a location besides	<filename>~/local/</filename></title></info>
+      <section xml:id="install-prefix"><info><title>Installing to a location besides <filename>~/local/</filename></title></info>
 	
 	<para>The configure script chooses to install
 	  <command>bali-phy</command> in the directory
@@ -384,8 +384,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	  <filename>~/local</filename>, you can enter:
 
 	  <screen><prompt>%</prompt> <userinput>../bali-phy-2.1.1/configure --prefix=&#36;HOME/local</userinput></screen>
-          This is recommended if you do not have permission to install
-	  to <filename>/usr/local/</filename>.
+          This is recommended.
 	</para>
 
       </section>
@@ -394,14 +393,14 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	
 	<para>You can instruct the compiler to look for include files
 	  in directory <replaceable>dir</replaceable> by passing
-	  <userinput>--with-extra-includes=<replaceable>dir</replaceable></userinput> to the <command>configure</command> script.
+	  <parameter>--with-extra-includes=<replaceable>dir</replaceable></parameter> to the <command>configure</command> script.
 	</para>
 
 	<para>You can instruct the compiler to look for libraries
 	  files in directory
 	  <filename><replaceable>dir</replaceable></filename> by
 	  passing
-	  <userinput>--with-extra-libs=<replaceable>dir</replaceable></userinput> to the <command>configure</command> script.  
+	  <parameter>--with-extra-libs=<replaceable>dir</replaceable></parameter> to the <command>configure</command> script.  
 	</para> 
 
 	<para>For example, if your system has GSL installed in <filename>/usr/local/</filename>, then you might need to add "<userinput>--with-extra-includes=/usr/local/include --with-extra-libs=/usr/local/lib</userinput>" to the configure script arguments so that the compiler can find the GSL include files and libraries.</para>
@@ -462,7 +461,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 	</para>
       </section>
     </section>
-    <section xml:id="gitsource"><info><title>Generating the <filename>configure</filename> script
+    <section xml:id="gitsource"><info><title>Generating the <command>configure</command> script
 	and Makefiles (<application>git</application> only)</title></info>
        
       <para>Skip this step unless you are compiling a
