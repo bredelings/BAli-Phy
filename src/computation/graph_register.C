@@ -2262,11 +2262,6 @@ class RegOperationArgs: public OperationArgs
 
 public:
 
-  expression_ref reference(int slot) const
-  {
-    return get_E().sub[slot];
-  }
-
   // This computes everything
   const closure& lazy_evaluate(int slot)
   {
@@ -2307,8 +2302,6 @@ public:
     n_allocated++;
     return r;
   }
-
-  int n_args() const {return get_E().sub.size();}
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
