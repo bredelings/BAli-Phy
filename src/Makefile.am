@@ -342,7 +342,8 @@ pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
 		exp.la doubleToLogDouble.la add.la subtract.la divide.la multiply.la \
 		equals.la notequals.la greaterthan.la greaterthanorequal.la lessthan.la \
 		lessthanorequal.la getNucleotides.la plus_gwF.la alphabetSize.la \
-		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la set_modifiable_value.la
+		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la set_modifiable_value.la \
+		is_modifiable.la is_changeable.la
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
@@ -436,3 +437,9 @@ m0_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 set_modifiable_value_la_SOURCES = computation/builtins/set_modifiable_value.C
 set_modifiable_value_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+is_modifiable_la_SOURCES = computation/builtins/is_modifiable.C
+is_modifiable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+is_changeable_la_SOURCES = computation/builtins/is_changeable.C
+is_changeable_la_LDFLAGS = -module -shared -avoid-version -export-dynamic

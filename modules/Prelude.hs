@@ -70,6 +70,8 @@ builtin < 2 "lessthan";
 builtin <= 2 "lessthanorequal";
 builtin iotaUnsigned 1 "iotaUnsigned";
 builtin builtin_set_modifiable_value 3 "set_modifiable_value";
+builtin is_changeable 2 "is_changeable";
+builtin is_modifiable 2 "is_modifiable";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
