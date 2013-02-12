@@ -121,18 +121,15 @@ or
 </para></listitem>
 
     <listitem><para><link xmlns:xlink="http://www.w3.org/1999/xlink"
-    xlink:href="http://www.bali-phy.org/download/">Download</link> 
-BAli-Phy executables from the web site.  Select the executables for
-your operating system.  If you're not sure, choose the 32-bit
-    executables.  Save them in to the <filename>local/</filename>
-    directory that you just created on the command line.  
-<screen><prompt>%</prompt> wget http://www.bali-phy.org/bali-phy-2.1.1-linux64.tar.gz
-<prompt>%</prompt> ls
+    xlink:href="http://www.bali-phy.org/download.php">Download</link> 
+BAli-Phy executables for your operating system from the web site using your browser.  If you're not sure, choose the 32-bit executables.  Save them to the <filename>~/local/</filename> directory that you just created on the command line. Then check to see that the file is there:
+<screen><prompt>%</prompt> ls ~/local
 bali-phy-<replaceable>version</replaceable>.tgz
 </screen>
-Then check
-    to see that the file is there:
+</para>
+<para>Alternatively, you can download the file directly from the command line using <userinput>wget</userinput> if you know the URL:
 <screen><prompt>%</prompt> cd ~/local
+<prompt>%</prompt> wget <replaceable>URL</replaceable>
 <prompt>%</prompt> ls
 bali-phy-<replaceable>version</replaceable>.tgz
 </screen>
@@ -279,7 +276,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
 
     <section xml:id="tests"><info><title>Testing the installed software</title></info>
     <para>In order to determine that the software has been correctly installed, and the PATH has been correctly set, run the following commands:
-<screen><prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=10
+<screen><prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=50
 <prompt>%</prompt> bp-analyze.pl 5d-1/</screen>
     </para>
     </section>
