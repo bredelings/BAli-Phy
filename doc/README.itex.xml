@@ -25,9 +25,6 @@
     <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
   </info>
 
-  <section xml:id="installation"><info><title>Installation</title></info>
-    
-
   <section xml:id="intro"><info><title>Introduction</title></info>
     <para><application>BAli-Phy</application> is a Unix command
       line program that is developed primarily on
@@ -42,8 +39,17 @@
     </para>
   </section>
 
+  <section xml:id="installation"><info><title>Installation</title></info>
+
   <section xml:id="pre-requisites"><info><title>Hardware requirements</title></info>
     
+    <para>We recommend running BAli-Phy on a computing cluster instead
+    of a laptop or desktop. Computing clusters nearly always run
+    Linux. A computing cluster can speed up the analysis by allowing
+    you to run several identical MCMC chains simultaneously and then
+    pool the resulting samples.  You also don't need to worry that
+    logging out or turning off the computer will terminate the run
+    early :-P</para> 
 
     <para>
       We typically run <application>BAli-Phy</application> on Core2
@@ -53,11 +59,6 @@
     </para>
 
     <para>
-      Access to a computing cluster can speed up the analysis.  This is because a cluster allows you to run
-      several identical MCMC chains at the same time and then pool the
-      resulting samples.  This approach to parallel computation is
-      sometimes more efficient than MCMCMC-based parallelism involving
-      heated chains.   
     </para>
   </section>
 
@@ -120,11 +121,16 @@ or
 </para></listitem>
 
     <listitem><para><link xmlns:xlink="http://www.w3.org/1999/xlink"
-    xlink:href="http://www.biomath.ucla.edu/msuchard/bali-phy/download/">Download</link> 
+    xlink:href="http://www.bali-phy.org/download/">Download</link> 
 BAli-Phy executables from the web site.  Select the executables for
 your operating system.  If you're not sure, choose the 32-bit
     executables.  Save them in to the <filename>local/</filename>
-    directory that you just created on the command line.  Then check
+    directory that you just created on the command line.  
+<screen><prompt>%</prompt> wget http://www.bali-phy.org/bali-phy-2.1.1-linux64.tar.gz
+<prompt>%</prompt> ls
+bali-phy-<replaceable>version</replaceable>.tgz
+</screen>
+Then check
     to see that the file are there:
 <screen><prompt>%</prompt> cd ~/local
 <prompt>%</prompt> ls
@@ -604,7 +610,7 @@ traditional = traditional
 	  the option name as the value, because it does not take a
 	  value.  Thus, this configuration file corresponds to the
 	  command line
-	  <screen><prompt>%</prompt>bali-phy examples/EF-Tu/5d.fasta --smodel log-normal+INV --traditional</screen>
+	  <screen><prompt>%</prompt>bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal+INV --traditional</screen>
 	</para>
       </section>
 
@@ -644,7 +650,7 @@ traditional = traditional
       
       <para>Here we analyze the EF-Tu 5-taxon data set provided with
 	the software.</para>
-      <screen> <prompt>%</prompt> bali-phy <replaceable>somewhere</replaceable>/examples/EF-Tu/5d.fasta</screen>
+      <screen> <prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta</screen>
     </example>
 
     <example><info><title>Multiple-Rate Substitution Model</title></info>
@@ -654,7 +660,7 @@ traditional = traditional
 	invariant sites.  The amount of rate variation and the fraction of
 	invariant sites are estimated</para>
       
-      <screen> <prompt>%</prompt> bali-phy <replaceable>somewhere</replaceable>/examples/EF-Tu/5d.fasta --smodel log-normal+INV --randomize-alignment</screen></example>
+      <screen> <prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/EF-Tu/5d.fasta --smodel log-normal+INV --randomize-alignment</screen></example>
 
     <example><info><title>Fixed alignment</title></info>
       
@@ -666,7 +672,7 @@ traditional = traditional
 	estimated from the input sequences.
       </para> 
 
-      <screen> <prompt>%</prompt> bali-phy <replaceable>somewhere</replaceable>/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</screen>
+      <screen> <prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --smodel F=constant --traditional</screen>
 
     </example>
   </section>
