@@ -2196,6 +2196,8 @@ class RegOperationArgs: public OperationArgs
 
   int n_allocated;
 
+  bool evaluate_changeable;
+
   int current_token() const {return t;}
 
   reg_heap& memory() {return M;}
@@ -2290,8 +2292,8 @@ public:
 
   RegOperationArgs* clone() const {return new RegOperationArgs(*this);}
 
-  RegOperationArgs(int r, reg_heap& m, int T)
-    :R(r),M(m),t(T),owners(M.get_reg_owners(R)), n_allocated(0)
+  RegOperationArgs(int r, reg_heap& m, int T, bool ec)
+    :R(r),M(m),t(T),owners(M.get_reg_owners(R)), n_allocated(0), evaluate_changeable(ec)
   { 
     // I think these should already be cleared.
     assert(M.access(R).used_inputs.empty());
@@ -2517,7 +2519,7 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
 
       try
       {
-	RegOperationArgs Args(R, *this, t);
+	RegOperationArgs Args(R, *this, t, evaluate_changeable);
 	closure result = (*O)(Args);
 	
 	// NOTE: While not all used_inputs are E-children, they SHOULD all be E-descendents.
