@@ -2230,7 +2230,7 @@ class RegOperationArgs: public OperationArgs
   }
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-  int lazy_evaluate_reg(int R2)
+  int evaluate_reg_to_reg(int R2)
   {
     // Compute the result, and follow non-changeable call chains.
     int R3 = M.incremental_evaluate(R2, t);
@@ -2251,7 +2251,7 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record dependencies, and return the result.
   const closure& lazy_evaluate_reg_closure(int R2)
   {
-    return M.access_result( lazy_evaluate_reg(R2) );
+    return M.access_result( evaluate_reg_to_reg(R2) );
   }
 
   /// Evaluate the reg R2, record dependencies, and return the result.
