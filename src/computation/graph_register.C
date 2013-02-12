@@ -2257,29 +2257,14 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record dependencies, and return the result.
   const object_ref evaluate_reg(int R2)
   {
-    return M.access_result( lazy_evaluate_reg(R2) ).exp->head;
+    return lazy_evaluate_reg_closure(R2).exp->head;
   }
 
 public:
 
-  // This computes everything
   const closure& lazy_evaluate(int slot)
   {
-    int R2 = lazy_evaluate_reg(reg_for_slot(slot));
-
-    /*
-     * We could update 'index' in Env to R2' if R2' != R2.  However:
-     *
-     * - Updating WHNF regs is problematic because ... we never evaluate them :-)
-     *
-     * - Updating non-WHNF regs is problematic because we might need to update the used_inputs
-     *   to refer to the new reg.  This is because the old one might become unused
-     *   (and therefore be garbage-collected.)
-     *
-     * Therefore, we might consider updating index_var chains during garbage collection.
-     */
-    
-    return M.access_result(R2);
+    return lazy_evaluate_reg_closure(reg_for_slot(slot));
   }
 
   // This just returns the head of the structure.
