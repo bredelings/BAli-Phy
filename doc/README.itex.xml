@@ -271,6 +271,13 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
       
     </section>
 
+    <section xml:id="tests"><info><title>Testing the installed software</title></info>
+    <para>In order to determine that the software has been correctly installed, and the PATH has been correctly set, run the following commands:
+<screen><prompt>%</prompt> bali-phy ~/local/share/bali-phy/examples/5S-rRNA/5d.fasta --iter=10
+<prompt>%</prompt> bp-analyze.pl 5d-1/</screen>
+    </para>
+    </section>
+
   </section>
 
   <section xml:id="compilation"><info><title>Compiling <application>BAli-Phy</application></title></info>
