@@ -8,6 +8,8 @@
 
 <xsl:import href="/usr/share/xml/docbook/stylesheet/nwalsh/fo/docbook.xsl"/>
 
+<!-- See tcc_fo.xsl on web -->
+
 <!-- MathML support can be so easy ;-) ... -->
 <xsl:template match="mml:math">
   <xsl:copy-of select="."/>
@@ -66,4 +68,39 @@ xmlns:mml="http://www.w3.org/1998/Math/MathML">
   </xsl:choose>
 </xsl:template>
 
+<xsl:template name="inline.italicsansseq">
+  <xsl:param name="content">
+    <xsl:apply-templates/>
+  </xsl:param>
+  <fo:inline font-style="italic" font-family="sans-serif">
+    <xsl:copy-of select="$content"/>
+  </fo:inline>
+</xsl:template>
+
+<xsl:template name="inline.smallcaps">
+  <xsl:param name="content">
+    <xsl:apply-templates/>
+  </xsl:param>
+  <fo:inline font-variant="small-caps">
+    <xsl:copy-of select="$content"/>
+  </fo:inline>
+</xsl:template>
+
+<xsl:template
+    match="application|guibutton|guiicon|guilabel|guimenu">
+  <xsl:call-template name="inline.italicsansseq"/>
+</xsl:template>
+
+<xsl:template match="firstterm">
+  <xsl:call-template name="inline.italicseq"/>
+</xsl:template>
+
+<xsl:template match="keysym">
+  <xsl:call-template name="inline.italicsansseq"/>
+</xsl:template>
+<xsl:param name="shade.verbatim" select="1"></xsl:param>
+<xsl:param name="variablelist.as.blocks" select="1"></xsl:param>
+<xsl:template match="varlistentry/term">
+  <xsl:call-template name="inline.boldseq"/>
+</xsl:template>
 </xsl:stylesheet>
