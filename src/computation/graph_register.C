@@ -2251,7 +2251,7 @@ class RegOperationArgs: public OperationArgs
   }
 
   /// Evaluate the reg R2, record dependencies, and return the result.
-  const closure& lazy_evaluate_reg_closure(int R2)
+  const closure& evaluate_reg_to_closure(int R2)
   {
     return M.access_result( evaluate_reg_to_reg(R2) );
   }
@@ -2259,14 +2259,14 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record dependencies, and return the result.
   const object_ref evaluate_reg(int R2)
   {
-    return lazy_evaluate_reg_closure(R2).exp->head;
+    return evaluate_reg_to_closure(R2).exp->head;
   }
 
 public:
 
   const closure& lazy_evaluate(int slot)
   {
-    return lazy_evaluate_reg_closure(reg_for_slot(slot));
+    return evaluate_reg_to_closure(reg_for_slot(slot));
   }
 
   // This just returns the head of the structure.

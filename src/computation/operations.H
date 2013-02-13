@@ -81,7 +81,7 @@ struct Vector_From_List_Op: public Operation
       // Add the element to the list.
       v->t.push_back( *convert<const U>(Args.evaluate_reg(element_reg)) );
       // Move to the next element or end
-      top = &Args.lazy_evaluate_reg_closure(next_reg);
+      top = &Args.evaluate_reg_to_closure(next_reg);
     }
     assert(is_exactly(top->exp,"[]"));
 
