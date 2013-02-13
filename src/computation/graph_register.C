@@ -2206,13 +2206,6 @@ class RegOperationArgs: public OperationArgs
 
   const expression& get_E() const {return *current_closure().exp;}
 
-  int reg_for_slot(int slot) const
-  {
-    int index = assert_is_a<index_var>(reference(slot))->index;
-
-    return M[R].C.lookup_in_env(index);
-  }
-
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_no_record(int R2)
   {
@@ -2263,11 +2256,6 @@ class RegOperationArgs: public OperationArgs
   }
 
 public:
-
-  const closure& evaluate_slot_to_closure(int slot)
-  {
-    return evaluate_reg_to_closure(reg_for_slot(slot));
-  }
 
   // This just returns the head of the structure.
   object_ref evaluate(int slot)

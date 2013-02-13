@@ -17,17 +17,19 @@ struct OperationArgs: public Object
 
   virtual const closure& current_closure() const = 0;
 
-  virtual int n_args() const {return current_closure().exp->sub.size();}
+  int n_args() const;
 
-  virtual expression_ref reference(int slot) const {return current_closure().exp->sub[slot];}
+  expression_ref reference(int slot) const;
+
+  int reg_for_slot(int slot) const;
 
   virtual int evaluate_slot_(int) = 0;
 
   virtual int evaluate_slot_no_record(int) = 0;
 
-  virtual const closure& evaluate_slot_to_closure(int) = 0;
-
   virtual const closure& evaluate_reg_to_closure(int) = 0;
+
+  const closure& evaluate_slot_to_closure(int);
 
   virtual const object_ref evaluate_reg(int) = 0;
 
