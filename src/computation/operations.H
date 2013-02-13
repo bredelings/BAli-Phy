@@ -66,7 +66,7 @@ struct Vector_From_List_Op: public Operation
   {
     object_ptr<Box<std::vector<T> > > v (new Box<std::vector<T> >);
 
-    const closure* top = &Args.lazy_evaluate(0);
+    const closure* top = &Args.evaluate_slot_to_closure(0);
     while(top->exp->size())
     {
       assert(is_exactly(top->exp,":"));

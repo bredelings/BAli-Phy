@@ -2,6 +2,6 @@
 
 extern "C" closure builtin_function_join(OperationArgs& Args)
 {
-  Args.lazy_evaluate(0);
-  return Args.lazy_evaluate(1);
+  Args.evaluate_slot_to_closure(0);
+  return Args.evaluate_slot_to_closure(1);
 }

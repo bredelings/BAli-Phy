@@ -25,7 +25,7 @@ struct OperationArgs: public Object
 
   virtual int evaluate_slot_no_record(int) = 0;
 
-  virtual const closure& lazy_evaluate(int) = 0;
+  virtual const closure& evaluate_slot_to_closure(int) = 0;
 
   virtual const closure& evaluate_reg_to_closure(int) = 0;
 

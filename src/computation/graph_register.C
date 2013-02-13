@@ -2264,7 +2264,7 @@ class RegOperationArgs: public OperationArgs
 
 public:
 
-  const closure& lazy_evaluate(int slot)
+  const closure& evaluate_slot_to_closure(int slot)
   {
     return evaluate_reg_to_closure(reg_for_slot(slot));
   }
@@ -2272,7 +2272,7 @@ public:
   // This just returns the head of the structure.
   object_ref evaluate(int slot)
   {
-    expression_ref result = lazy_evaluate(slot).exp;
+    expression_ref result = evaluate_slot_to_closure(slot).exp;
     assert(not is_a<lambda2>(result));
     return result->head;
   }

@@ -79,7 +79,7 @@ expression_ref peel_n_lambdas(const expression_ref& E, int n)
 
 closure Apply::operator()(OperationArgs& Args) const
 {
-  closure C = Args.lazy_evaluate(0);
+  closure C = Args.evaluate_slot_to_closure(0);
   int n_args_given = Args.n_args()-1;
 
   assert_is_a<lambda2>(C.exp);
@@ -128,7 +128,7 @@ closure Case::operator()(OperationArgs& Args) const
 {
   // Resizing of the memory can occur here, invalidating previously computed pointers
   // to closures.  The *index* within the memory shouldn't change, though.
-  const closure& obj = Args.lazy_evaluate(0);
+  const closure& obj = Args.evaluate_slot_to_closure(0);
 
   // Therefore, we must compute this *after* we do the computation above, since
   // we're going to hold on to it.  Otherwise the held reference would become
