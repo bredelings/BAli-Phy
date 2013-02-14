@@ -615,7 +615,7 @@ context& context::operator+=(const vector<Module>& P2)
 {
   Program& PP = *P.modify();
 
-  int old_n_parameters = n_parameters();
+  int first_note = n_notes();
 
   // Get module_names, but in a set<string>
   set<string> old_module_names = module_names_set(PP);
@@ -631,12 +631,34 @@ context& context::operator+=(const vector<Module>& P2)
 
   allocate_identifiers_for_modules(new_module_names);
 
-  // 3. Set default values for any new parameters added.
-  //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
-  for(int index = old_n_parameters;index<n_parameters();index++)
-    if (not parameter_is_set(index))
-      set_parameter_value_expression(index, default_parameter_value(index));
-
+  // Set default values from distributions
+  for(int i=first_note;i<n_notes();i++)
+  {
+    vector<expression_ref> results;
+    expression_ref query = constructor(":~",2) + match(0) + match(1);
+    
+    if (find_match(query, get_note(i), results))
+    {
+      expression_ref parameter = results[0];
+      expression_ref value = (identifier("distDefaultValue"),results[1]);
+      perform_expression( (identifier("set_parameter_value"),get_token(),parameter,value) );
+    }
+  }
+  
+  // Set default values from DefaultValue notes
+  for(int i=first_note;i<n_notes();i++)
+  {
+    vector<expression_ref> results;
+    expression_ref query = constructor("DefaultValue",2) + match(0) + match(1);
+    
+    if (find_match(query, get_note(i), results))
+    {
+      expression_ref parameter = results[0];
+      expression_ref value = (identifier("distDefaultValue"),results[1]);
+      perform_expression( (identifier("set_parameter_value"),parameter,value) );
+    }
+  }
+  
   return *this;
 }
 
