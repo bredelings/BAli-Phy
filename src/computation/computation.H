@@ -25,7 +25,9 @@ struct OperationArgs: public Object
 
   virtual int evaluate_slot_(int) = 0;
 
-  virtual int evaluate_slot_no_record(int) = 0;
+  virtual int evaluate_reg_no_record(int) = 0;
+
+  int evaluate_slot_no_record(int);
 
   virtual const closure& evaluate_reg_to_closure(int) = 0;
 
@@ -45,8 +47,6 @@ struct OperationArgs: public Object
   { 
     std::abort();
   }
-
-  virtual object_ref evaluate_expression(const expression_ref&);
 
   virtual ~OperationArgs() {}
 };

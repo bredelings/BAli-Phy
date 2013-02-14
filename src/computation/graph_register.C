@@ -2219,12 +2219,6 @@ class RegOperationArgs: public OperationArgs
   }
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-  int evaluate_slot_no_record(int slot)
-  {
-    return evaluate_reg_no_record(reg_for_slot(slot));
-  }
-
-  /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2)
   {
     // Compute the result, and follow non-changeable call chains.
@@ -2263,11 +2257,6 @@ public:
     expression_ref result = evaluate_slot_to_closure(slot).exp;
     assert(not is_a<lambda2>(result));
     return result->head;
-  }
-
-  object_ref evaluate_expression(const expression_ref&)
-  {
-    std::abort();
   }
 
   int allocate(closure&& C)

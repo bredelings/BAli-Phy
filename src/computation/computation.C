@@ -4,7 +4,7 @@
 int OperationArgs::reg_for_slot(int slot) const
 {
   int index = assert_is_a<index_var>(reference(slot))->index;
-  
+
   return current_closure().lookup_in_env(index);
 }
 
@@ -17,8 +17,8 @@ const closure& OperationArgs::evaluate_slot_to_closure(int slot)
   return evaluate_reg_to_closure(reg_for_slot(slot));
 }
 
-object_ref OperationArgs::evaluate_expression(const expression_ref& E)
+int OperationArgs::evaluate_slot_no_record(int slot)
 {
-  return E;
+  return evaluate_reg_no_record(reg_for_slot(slot));
 }
 
