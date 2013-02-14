@@ -1,6 +1,6 @@
 module Range where
 {
-data Range = OpenInterval Double Double | TrueFalseRange | Simplex Int Double;  
+data Range = OpenInterval Double Double | TrueFalseRange | Simplex Int Double | ListRange [Range]; 
   
 realLine = OpenInterval Nothing Nothing;
 
