@@ -81,6 +81,8 @@ int context::add_note(const expression_ref& E)
   }
   else if (is_AST(E, "import_submodel_note"))
   {
+    int first_note = n_notes();
+
     string modid1 = *E->sub[0].assert_is_a<String>();
     string modid2 = *E->sub[1].assert_is_a<String>();
     Program& PP = *P.modify();
@@ -100,9 +102,33 @@ int context::add_note(const expression_ref& E)
 
     allocate_identifiers_for_modules(new_module_names);
 
-    for(int index = old_n_parameters;index<n_parameters();index++)
-      if (not parameter_is_set(index))
-	set_parameter_value_expression(index, default_parameter_value(index));
+    // Set default values from distributions
+    for(int i=first_note;i<n_notes();i++)
+    {
+      vector<expression_ref> results;
+      expression_ref query = constructor(":~",2) + match(0) + match(1);
+
+      if (find_match(query, get_note(i), results))
+      {
+	expression_ref parameter = results[0];
+	expression_ref value = (identifier("distDefaultValue"),results[1]);
+	perform_expression( (identifier("set_parameter_value"),get_token(),parameter,value) );
+      }
+    }
+
+    // Set default values from DefaultValue notes
+    for(int i=first_note;i<n_notes();i++)
+    {
+      vector<expression_ref> results;
+      expression_ref query = constructor("DefaultValue",2) + match(0) + match(1);
+
+      if (find_match(query, get_note(i), results))
+      {
+	expression_ref parameter = results[0];
+	expression_ref value = (identifier("distDefaultValue"),results[1]);
+	perform_expression( (identifier("set_parameter_value"),parameter,value) );
+      }
+    }
   }
   
   return Model_Notes::add_note( E );
