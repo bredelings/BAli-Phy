@@ -43,8 +43,6 @@ private:
   root_t push_temp_head() const;
   void pop_temp_head() const;
 
-  int get_token() const {return token;}
-
   int get_parameter_reg(int i) const;
 
   /// Translate named identifiers (struct var) and named parameters (struct parameter) into reg_var references
@@ -58,6 +56,8 @@ private:
   closure preprocess(const closure& C) const;
 
 public:
+
+  int get_token() const {return token;}
 
   const std::vector<Module>& get_Program() const {return *P;}
 
