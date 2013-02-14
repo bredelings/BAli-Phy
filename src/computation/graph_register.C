@@ -2221,7 +2221,7 @@ class RegOperationArgs: public OperationArgs
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_reg_to_reg(int R2)
   {
-    // Compute the result, and follow non-changeable call chains.
+    // Compute the result, and follow index_var chains (which are not changeable).
     int R3 = M.incremental_evaluate(R2, t);
 
     if (M[R3].changeable) 
