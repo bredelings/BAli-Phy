@@ -24,6 +24,18 @@ int OperationArgs::evaluate_slot_no_record(int slot)
 
 object_ref OperationArgs::evaluate_reg_to_object(int R2)
 {
-  return evaluate_reg_to_closure(R2).exp->head;
+  expression_ref result = evaluate_reg_to_closure(R2).exp->head;
+  assert(not is_a<lambda2>(result));
+  return result->head;
+}
+
+object_ref OperationArgs::evaluate_slot_to_object(int slot)
+{
+  return evaluate_reg_to_object(reg_for_slot(slot));
+}
+
+object_ref OperationArgs::evaluate(int slot)
+{
+  return evaluate_slot_to_object(slot);
 }
 

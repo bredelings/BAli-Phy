@@ -35,7 +35,9 @@ struct OperationArgs: public Object
 
   object_ref evaluate_reg_to_object(int);
 
-  virtual object_ref evaluate(int slot) = 0;
+  object_ref evaluate_slot_to_object(int);
+
+  object_ref evaluate(int);
 
   template <typename T>
   object_ptr<const T> evaluate_as(int slot)

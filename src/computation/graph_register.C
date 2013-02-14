@@ -2245,14 +2245,6 @@ class RegOperationArgs: public OperationArgs
 
 public:
 
-  // This just returns the head of the structure.
-  object_ref evaluate(int slot)
-  {
-    expression_ref result = evaluate_slot_to_closure(slot).exp;
-    assert(not is_a<lambda2>(result));
-    return result->head;
-  }
-
   int allocate(closure&& C)
   {
     int r = *M.push_temp_head( owners );
