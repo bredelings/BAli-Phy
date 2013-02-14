@@ -125,8 +125,8 @@ int context::add_note(const expression_ref& E)
       if (find_match(query, get_note(i), results))
       {
 	expression_ref parameter = results[0];
-	expression_ref value = (identifier("distDefaultValue"),results[1]);
-	perform_expression( (identifier("set_parameter_value"),parameter,value) );
+	expression_ref value = results[1];
+	perform_expression( (identifier("set_parameter_value"),get_token(),parameter,value) );
       }
     }
   }
