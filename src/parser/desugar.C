@@ -1010,7 +1010,7 @@ bool is_all_space(const string& line)
   return true;
 }
 
-Module read_BUGS(const Parameters& P, const string& filename, const string& module_name_)
+Module read_BUGS(const Parameters& P, const string& filename)
 {
   // 1. Read module
   Module BUGS = load_module(filename);
@@ -1029,9 +1029,9 @@ Module read_BUGS(const Parameters& P, const string& filename, const string& modu
   return BUGS;
 }
 
-void add_BUGS(Parameters& P, const std::string& filename, const std::string& module_name)
+void add_BUGS(Parameters& P, const std::string& filename)
 {
-  auto m = read_BUGS(P, filename, module_name);
+  auto m = read_BUGS(P, filename);
 
   P.add_submodel(m);
 

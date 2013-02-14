@@ -1519,7 +1519,7 @@ int main(int argc,char* argv[])
     if (args.count("BUGS"))
     {
       const string filename = args["BUGS"].as<string>();
-      add_BUGS(P,filename,"BUGS");
+      add_BUGS(P,filename);
     }
       
     set_initial_parameter_values(P,args);
