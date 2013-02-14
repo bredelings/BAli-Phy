@@ -485,9 +485,34 @@ Model::Model(const module_loader& L, const vector<expression_ref>& notes)
 
   // 3. Then set all default values.
   for(int i=0;i<n_parameters();i++)
-  {
-    C.set_parameter_value_expression(i, C.default_parameter_value(i));
     modify_parameter(i);
+
+  // Set default values from distributions
+  for(int i=0;i<n_notes();i++)
+  {
+    vector<expression_ref> results;
+    expression_ref query = constructor(":~",2) + match(0) + match(1);
+
+    if (find_match_notes(query, results, i))
+    {
+      expression_ref parameter = results[0];
+      expression_ref value = (identifier("distDefaultValue"),results[1]);
+      C.perform_expression( (identifier("set_paramater_value"),C.get_token(),parameter,value) );
+    }
+  }
+
+  // Set default values from DefaultValue notes
+  for(int i=0;i<n_notes();i++)
+  {
+    vector<expression_ref> results;
+    expression_ref query = constructor("DefaultValue",2) + match(0) + match(1);
+
+    if (find_match_notes(query, results, i))
+    {
+      expression_ref parameter = results[0];
+      expression_ref value = (identifier("distDefaultValue"),results[1]);
+      C.perform_expression( (identifier("set_paramater_value"),parameter,value) );
+    }
   }
 
   // 4. Set bounds.
