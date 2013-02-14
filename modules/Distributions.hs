@@ -57,21 +57,19 @@ logCauchy = expTransform' cauchy;
 dirichlet args = (ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") () (Simplex (length args) 1.0));
 dirichlet' (n,x) = dirichlet (replicate n x);
 
-mixture args = (ProbDensity (mixtureDensity args) () (mixtureDefault args) (mixtureRange args));
+mixture args = ProbDensity (mixtureDensity args) (error "Mixture has no quantiles") (mixtureDefault args) (mixtureRange args);
 
-iidDensity (n,dist) xs = let {densities = (map (density dist) xs) ; 
-                              pr = foldl' (*) (doubleToLogDouble 1.0) densities} 
-                         in if (length xs == n) then pr else (doubleToLogDouble 0.0);
+listDensity ds xs = if (length ds == length xs) then pr else (doubleToLogDouble 0.0)
+  where {densities = zipWith density ds xs;
+         pr = foldl' (*) (doubleToLogDouble 1.0) densities};
 
-iid args = (ProbDensity (iidDensity args) () () ());
+list dists = ProbDensity (listDensity dists) quantiles (map distDefaultValue dists) (ListRange (map distRange dists))
+  where { quantiles = (error "list distribution has no quantiles") };
 
-plateDensity (n,f) xs = let {xs' = zip [0..] xs;
-                             densities = map (\(i,x) -> density (f i)) xs';
-                             pr = foldl' (*) (doubleToLogDouble 1.0) densities}
-                        in if (length xs == n) then pr else (doubleToLogDouble 0.0);
+iid (n,d) = list (replicate n d);
 
-plate args = (ProbDensity (plateDensity args) () () () );
-
+plate (n,f) = list $ map f [0..n-1];
+  
 fmap1 f [] = [];
 fmap1 f ((x,y):l) = (f x,y):(fmap1 f l);
 fmap1 f (DiscreteDistribution l) = DiscreteDistribution (fmap1 f l);
