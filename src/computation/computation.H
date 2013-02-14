@@ -33,7 +33,7 @@ struct OperationArgs: public Object
 
   const closure& evaluate_slot_to_closure(int);
 
-  virtual const object_ref evaluate_reg(int) = 0;
+  object_ref evaluate_reg_to_object(int);
 
   virtual object_ref evaluate(int slot) = 0;
 

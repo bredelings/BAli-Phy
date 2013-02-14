@@ -79,7 +79,7 @@ struct Vector_From_List_Op: public Operation
       int next_reg = top->lookup_in_env( next_index );
 
       // Add the element to the list.
-      v->t.push_back( *convert<const U>(Args.evaluate_reg(element_reg)) );
+      v->t.push_back( *convert<const U>(Args.evaluate_reg_to_object(element_reg)) );
       // Move to the next element or end
       top = &Args.evaluate_reg_to_closure(next_reg);
     }

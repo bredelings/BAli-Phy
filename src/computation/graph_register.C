@@ -2243,12 +2243,6 @@ class RegOperationArgs: public OperationArgs
     return M.access_result( evaluate_reg_to_reg(R2) );
   }
 
-  /// Evaluate the reg R2, record dependencies, and return the result.
-  const object_ref evaluate_reg(int R2)
-  {
-    return evaluate_reg_to_closure(R2).exp->head;
-  }
-
 public:
 
   // This just returns the head of the structure.

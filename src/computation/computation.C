@@ -22,3 +22,8 @@ int OperationArgs::evaluate_slot_no_record(int slot)
   return evaluate_reg_no_record(reg_for_slot(slot));
 }
 
+object_ref OperationArgs::evaluate_reg_to_object(int R2)
+{
+  return evaluate_reg_to_closure(R2).exp->head;
+}
+

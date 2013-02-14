@@ -21,7 +21,7 @@ extern "C" closure builtin_function_reapply(OperationArgs& Args)
   // FIXME - aren't we trying to eliminate general evaluation of regs that aren't children?  See below:
 
   // Evaluate the newly create application reg - and depend upon it!
-  Args.evaluate_reg(apply_reg);
+  Args.evaluate_reg_to_object(apply_reg);
 
   return {index_var(0),{apply_reg}};
 }
