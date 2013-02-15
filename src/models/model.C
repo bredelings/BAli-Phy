@@ -464,8 +464,6 @@ Model::Model(const module_loader& L)
   :Model(L, {})
 { }
 
-int add_probability_expression(context& C);
-
 Model::Model(const module_loader& L, const vector<expression_ref>& notes)
   :valid(false),C(L)
 {
