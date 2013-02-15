@@ -84,7 +84,7 @@ While running the Cygwin installer
       desktop in case you want to run it again, since you can use it
       to install additional packages later.</para>
 
-      <para>In order to access your files from inside cygwin, note
+      <para>In order to access your Windows files from inside cygwin, note
       that <filename>C:/</filename> is accessed as
       <filename>/cygdrive/c/</filename>.  Thus, for example, you can
       access downloaded files at <filename>/cygdrive/c/Documents\ and\
