@@ -467,11 +467,7 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
 
   // Replace parameters with the appropriate reg_var: of value parameter( )
   if (object_ptr<const modifiable> m = is_a<modifiable>(E))
-  {
-    // throw if reg isn't used?
-    // reg = get_modifiable_reg(m->index)
-    reg = modifiable_regs()[m->index];
-  }
+    reg = get_modifiable_reg(m->index);
 
   // Replace parameters with the appropriate reg_var: of value whatever
   if (object_ptr<const identifier> V = is_a<identifier>(E))
@@ -790,6 +786,16 @@ reg_heap::root_t context::push_temp_head() const
 int context::get_parameter_reg(int i) const
 {
   return *parameters()[i].second;
+}
+
+int context::get_modifiable_reg(int i) const
+{
+  const pool<int>& p = modifiable_regs();
+
+  if (not p.is_used(i))
+    throw myexception()<<"Attempting to access non-existent modifiable #"<<i;
+
+  return p[i];
 }
 
 std::ostream& operator<<(std::ostream& o, const context& C)
