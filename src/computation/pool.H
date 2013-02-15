@@ -19,9 +19,6 @@ class pool
   int first_free = -1;
   int first_used = -1;
 
-  bool is_free(int r) const {return memory[r].state == free;}
-  bool is_used(int r) const {return memory[r].state == used;}
-
   int n_free() const
   {
     int here = first_free;
@@ -122,6 +119,9 @@ class pool
 
 public:
   
+  bool is_free(int r) const {return memory[r].state == free;}
+  bool is_used(int r) const {return memory[r].state == used;}
+
   class PoolIterator
   {
     pool<T> *mypool;
