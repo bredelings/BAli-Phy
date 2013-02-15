@@ -102,33 +102,7 @@ int context::add_note(const expression_ref& E)
 
     allocate_identifiers_for_modules(new_module_names);
 
-    // Set default values from distributions
-    for(int i=first_note;i<n_notes();i++)
-    {
-      vector<expression_ref> results;
-      expression_ref query = constructor(":~",2) + match(0) + match(1);
-
-      if (find_match(query, get_note(i), results))
-      {
-	expression_ref parameter = results[0];
-	expression_ref value = (identifier("distDefaultValue"),results[1]);
-	perform_expression( (identifier("set_parameter_value"),get_token(),parameter,value) );
-      }
-    }
-
-    // Set default values from DefaultValue notes
-    for(int i=first_note;i<n_notes();i++)
-    {
-      vector<expression_ref> results;
-      expression_ref query = constructor("DefaultValue",2) + match(0) + match(1);
-
-      if (find_match(query, get_note(i), results))
-      {
-	expression_ref parameter = results[0];
-	expression_ref value = results[1];
-	perform_expression( (identifier("set_parameter_value"),get_token(),parameter,value) );
-      }
-    }
+    set_default_values_from_notes(*this, first_note, n_notes());
   }
   
   return Model_Notes::add_note( E );
@@ -635,33 +609,7 @@ context& context::operator+=(const vector<Module>& P2)
 
   allocate_identifiers_for_modules(new_module_names);
 
-  // Set default values from distributions
-  for(int i=first_note;i<n_notes();i++)
-  {
-    vector<expression_ref> results;
-    expression_ref query = constructor(":~",2) + match(0) + match(1);
-    
-    if (find_match(query, get_note(i), results))
-    {
-      expression_ref parameter = results[0];
-      expression_ref value = (identifier("distDefaultValue"),results[1]);
-      perform_expression( (identifier("set_parameter_value"),get_token(),parameter,value) );
-    }
-  }
-  
-  // Set default values from DefaultValue notes
-  for(int i=first_note;i<n_notes();i++)
-  {
-    vector<expression_ref> results;
-    expression_ref query = constructor("DefaultValue",2) + match(0) + match(1);
-    
-    if (find_match(query, get_note(i), results))
-    {
-      expression_ref parameter = results[0];
-      expression_ref value = (identifier("distDefaultValue"),results[1]);
-      perform_expression( (identifier("set_parameter_value"),parameter,value) );
-    }
-  }
+  set_default_values_from_notes(*this,first_note,n_notes());
   
   return *this;
 }
@@ -858,3 +806,34 @@ int add_probability_expression(context& C)
     return -1;
 }
 
+void set_default_values_from_notes(context& C, int b, int e)
+{
+  // Set default values from distributions
+  for(int i=b;i<e;i++)
+  {
+    vector<expression_ref> results;
+    expression_ref query = constructor(":~",2) + match(0) + match(1);
+
+    if (find_match(query, C.get_note(i), results))
+    {
+      expression_ref parameter = results[0];
+      expression_ref value = (identifier("distDefaultValue"),results[1]);
+      C.perform_expression( (identifier("set_parameter_value"),C.get_token(),parameter,value) );
+    }
+  }
+
+  // Set default values from DefaultValue notes
+  for(int i=b;i<e;i++)
+  {
+    vector<expression_ref> results;
+    expression_ref query = constructor("DefaultValue",2) + match(0) + match(1);
+
+    if (find_match(query, C.get_note(i), results))
+    {
+      expression_ref parameter = results[0];
+      expression_ref value = results[1];
+      C.perform_expression( (identifier("set_parameter_value"),C.get_token(),parameter,value) );
+    }
+  }
+
+}

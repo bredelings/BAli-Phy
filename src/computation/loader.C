@@ -37,8 +37,9 @@ using std::map;
  * See list in parser/desugar.C
  *
  * 1. Set default values appropriately.
- *    1a. Collect all the default-value setting code into one place.
- *    1b. Initialize default values in DAG order.
+ *    1a. [DONE] Collect all the default-value setting code into one place.
+ *    1b. Don't initialize data distributions.
+ *    1c. Initialize default values in DAG order.
  *        1bi: Make the computation of default values delayed?
  * 2. Sample initial values from the distribution!
  * 3. Discover (groups) of modifiables so that we can perform MCMC on them.

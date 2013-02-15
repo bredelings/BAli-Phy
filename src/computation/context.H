@@ -222,4 +222,6 @@ std::ostream& operator<<(std::ostream&, const context& C);
 
 int add_probability_expression(context& C);
 
+void set_default_values_from_notes(context& C, int, int);
+
 #endif
