@@ -17,9 +17,8 @@ using std::vector;
 using std::set;
 using std::map;
 
-/* \todo: List of things to do to clean up programs.
- *
- * See list in parser/desugar.C
+/*
+ * DONE:
  *
  * 1. [DONE] Allow defining constructors in files.
  * 2. [DONE] Convert strings to [Char]
@@ -31,6 +30,20 @@ using std::map;
  * 6. [DONE] SYNTAX: external a ~ b [To not declare all parameters]
  *      6a. [DONE] SYNTAX: data a ~ b [Don't treat a as a parameter at all!]
  * 7. [DONE] Allow defs in BUGS files.
+ */
+
+/* \todo: List of things to do to clean up programs.
+ *
+ * See list in parser/desugar.C
+ *
+ * 1. Set default values appropriately.
+ *    1a. Collect all the default-value setting code into one place.
+ *    1b. Initialize default values in DAG order.
+ *        1bi: Make the computation of default values delayed?
+ * 2. Sample initial values from the distribution!
+ * 3. Discover (groups) of modifiables so that we can perform MCMC on them.
+ *    3a. We need to handle groups, because simplex parameters need to be jointly sampled.
+ * 4. 
  * 8. Rationalize Model_Notes, formula_expression_ref, and program?
  *    - I note that a "model" compresses a complex expression into Model.main.
  *    - [DONE] Add Model_Notes to Module.
