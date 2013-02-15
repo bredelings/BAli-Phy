@@ -963,12 +963,20 @@ expression_ref desugar(const Module& m, const expression_ref& E, const set<strin
 
       return {E->head,{note}};
     }
-    else if (n->type == "BugsDist" or n->type == "BugsExternalDist" or n->type == "BugsDataDist")
+    else if (n->type == "BugsDist" or n->type == "BugsExternalDist")
     {
       for(auto& e: v)
 	e = desugar(m, e, bound);
 
       expression_ref note = constructor(":~",2) + v[0] + v[1];
+      return {E->head,{note}};
+    }
+    else if (n->type == "BugsDataDist")
+    {
+      for(auto& e: v)
+	e = desugar(m, e, bound);
+
+      expression_ref note = constructor(":=~",2) + v[0] + v[1];
       return {E->head,{note}};
     }
   }

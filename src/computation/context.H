@@ -65,8 +65,6 @@ public:
 
   int add_note(const expression_ref&);
 
-  expression_ref default_parameter_value(int i) const;
-
   /// Remove a stack-allocated reg from the stack.
   root_t push_root(int R) const {return memory->push_root(R);}
   void pop_root(root_t r) const {memory->pop_root(r);}

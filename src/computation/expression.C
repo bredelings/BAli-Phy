@@ -483,6 +483,7 @@ AST_node::AST_node(const string& t, const string& v)
 // How would we handle lambda expressions, here?
 bool find_match(const expression_ref& pattern, const expression_ref& E, vector< expression_ref >& results)
 {
+  //  results.clear();
   // If this is a match expression, then succeed, and store E as the result of the match
   object_ptr<const match> M = is_a<match>(pattern);
   if (M) 

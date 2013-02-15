@@ -637,6 +637,8 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
 {
   vector<int> new_parameters;
 
+  int first_note = C.n_notes();
+
   // 3. Add the notes from this model to the current model.
   for(const auto& n: N)
     C.add_note(n);
@@ -656,10 +658,7 @@ vector<int> add_submodel(context& C, const vector<expression_ref>& N)
     else
       throw myexception()<<"Submodel declares existing parameter '"<<name<<"'!";
   
-  // 4. Set default values for newly declared parameters
-  for(int index: new_parameters)
-    if (not C.parameter_is_set(index))
-      C.set_parameter_value_expression(index, C.default_parameter_value(index));
+  set_default_values_from_notes(C, first_note, C.n_notes());
 
   return new_parameters;
 }
@@ -697,35 +696,6 @@ context::~context()
   memory->release_token(token);
 }
 
-expression_ref context::default_parameter_value(int i) const
-{
-  vector<expression_ref> results;
-  expression_ref query = constructor("DefaultValue",2) + parameter(parameter_name(i)) + match(0);
-  int found = find_match_notes(query, results, 0);
-
-  if (found != -1)
-  {
-    assert(results.size());
-    expression_ref value = results[0];
-    //    assert(find_match_notes(query, results, found+1) == -1);
-    return value;
-  }
-
-  results.clear();
-  expression_ref query2 = constructor(":~",2) + parameter( parameter_name(i) ) +  match(0);
-  int found2 = find_match_notes(query2, results, 0);
-
-  if (found2 != -1)
-  {
-    expression_ref _ = dummy(-1);
-    expression_ref dist = results[0];
-    expression_ref value = (identifier("distDefaultValue"),dist);
-    return value;
-  }
-
-  return {};
-}
-
 reg_heap::root_t context::push_temp_head() const
 {
   return memory->push_temp_head( token );
@@ -761,33 +731,25 @@ std::ostream& operator<<(std::ostream& o, const context& C)
 // TODO: Move to model.{H,C}?
 int add_probability_expression(context& C)
 {
-  expression_ref query = constructor(":~",2) + match(0) + match(1);
-
   expression_ref Pr;
 
   // Check each expression in the Formula
   map<string,string> prior_expressions;
   for(int i=0;i<C.n_notes();i++)
   {
-    vector<expression_ref> results; 
-
     // If its a probability expression, then...
-    if (not find_match(query, C.get_note(i), results)) continue;
+    if (not is_exactly(C.get_note(i), ":~") and not is_exactly(C.get_note(i), ":=~")) continue;
 
     // Extract the density operation
-    expression_ref x = results[0];
-    expression_ref D = results[1];
-
-    expression_ref density = dummy(0);
-    expression_ref args = dummy(1);
-    expression_ref _ = dummy(-1);
+    expression_ref x = C.get_note(i)->sub[0];
+    expression_ref D = C.get_note(i)->sub[1];
 
     if (prior_expressions.count(x->print()))
       throw myexception()<<"Duplicate prior expression for variable '"<<x->print()<<"'";
     prior_expressions[x->print()] = D->print();
     
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_i = (identifier("density"),D,x);
+    expression_ref Pr_i = (identifier("Distributions.density"),D,x);
     
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)

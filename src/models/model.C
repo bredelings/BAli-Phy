@@ -174,6 +174,8 @@ vector<int> Model::add_submodel(const Model_Notes& N)
 {
   vector<int> new_parameters;
 
+  int first_note = n_notes();
+
   // 3. Find and add the declared names that don't exist yet.
   std::set<string> declared_parameter_names = find_declared_parameters(N);
   for(const auto& name: declared_parameter_names)
@@ -195,10 +197,8 @@ vector<int> Model::add_submodel(const Model_Notes& N)
   
   // 5. Set default values.
   //   [Technically the parameters with default values is a DIFFERENT set than the declared parameters.]
-  for(int index: new_parameters)
-    if (not C.parameter_is_set(index))
-      C.set_parameter_value_expression(index, C.default_parameter_value(index));
-
+  set_default_values_from_notes(C, first_note, n_notes());
+  
   assert(changed.size() == n_parameters());
 
   return new_parameters;
@@ -264,50 +264,53 @@ int Model::add_note(const expression_ref& E)
 
 void Model::process_note(int index)
 {
+  const expression_ref& note = C.get_note(index);
+
   // 1. Check to see if this expression adds a bound.
   expression_ref query = constructor("VarBounds",2) + match(0) + match(1);
 
   vector<expression_ref> results;
-  if (find_match(query, C.get_note(index), results))
+  if (find_match(query, note, results))
   {
     object_ptr<const parameter> var = is_a<parameter>(results[0]);
     int param_index = find_parameter(var->parameter_name);
     if (param_index == -1)
-      throw myexception()<<"Cannot add bound '"<<C.get_note(index)<<"' on missing variable '"<<var->parameter_name<<"'";
+      throw myexception()<<"Cannot add bound '"<<note<<"' on missing variable '"<<var->parameter_name<<"'";
     set_bounds(param_index , results[1]);
   }
 
   // 2. Check to see if this expression adds a prior
-  results.clear();
-  query = constructor(":~",2) + match(0) + match(1);
-  if (find_match(query, C.get_note(index), results))
+  if (is_exactly(note,":~") or is_exactly(note,":=~"))
   {
     // Extract the density operation
-    expression_ref x = results[0];
-    expression_ref D = results[1];
-
-    expression_ref density = dummy(0);
-    expression_ref args = dummy(1);
-    expression_ref _ = dummy(-1);
+    expression_ref x = note->sub[0];
+    expression_ref D = note->sub[1];
 
     // Create an expression for calculating the density of these random variables given their inputs
-    expression_ref Pr_new = (identifier("density"), D, x);
+    expression_ref Pr_new = (identifier("Distributions.density"), D, x);
     
     // Record that this variable is random, and has this prior.
     // THIS would be the right place to determine what other random variables and parameters are being depended on.
     // THIS would be the right place to check that dependencies are not cyclic.
-    for(const auto& name : find_named_parameters(x) )
-    {
-      int p_index = find_parameter(name);
-      if (p_index == -1)
-	throw myexception()<<"Trying to add prior to parameter '"<<name<<"' which doesn't exist!";
+    const auto& params = find_named_parameters(x);
 
-      if (prior_note_index[p_index] != -1)
-	throw myexception()<<"Variable '"<<name<<"': new prior '"<<show_probability_expression(C.get_note(index))
-			   <<"' on top of original prior '"<<show_probability_expression(C.get_note(prior_note_index[p_index]))<<"'?";
-      else
-	prior_note_index[p_index] = index;
+    if (is_exactly(note,":~"))
+    {
+      for(const auto& name : params )
+      {
+	int p_index = find_parameter(name);
+	if (p_index == -1)
+	  throw myexception()<<"Trying to add prior to parameter '"<<name<<"' which doesn't exist!";
+	
+	if (prior_note_index[p_index] != -1)
+	  throw myexception()<<"Variable '"<<name<<"': new prior '"<<show_probability_expression(note)
+			     <<"' on top of original prior '"<<show_probability_expression(C.get_note(prior_note_index[p_index]))<<"'?";
+	else
+	  prior_note_index[p_index] = index;
+      }
     }
+    else if (not params.empty())
+      throw myexception()<<"Data note '"<<note<<"' contains parameters!";
 
     // Extend the probability expression to include this term also.
     // (FIXME: a balanced tree could save computation time)
@@ -825,18 +828,22 @@ vector<int> parameters_with_extension(const Model& M, string name)
 
 string show_probability_expression(const expression_ref& E)
 {
-  expression_ref prob_expression_query = constructor(":~",2) + match(0) + match(1);
+  if (is_exactly(E, ":~"))
+  {
+    expression_ref x = E->sub[0];
+    expression_ref d = E->sub[1];
 
-  // 1. First analyze into rand_var ~ dist
-  vector<expression_ref> results; 
-  if (not find_match(prob_expression_query, E, results))
+    return x->print() + " ~ " + d->print();
+  }
+  else if (is_exactly(E, ":=~"))
+  {
+    expression_ref x = E->sub[0];
+    expression_ref d = E->sub[1];
+
+    return x->print() + " =~ " + d->print();
+  }
+  else
     throw myexception()<<"Expression '"<<E<<"' is not a probability expression.";
-
-  expression_ref rand_var = results[0];
-  expression_ref dist = results[1];
-  
-  // 2. Then analyze into rand_var ~ dist_family(dist_args)
-  return rand_var->print() + " ~ " + dist->print();
 }
 
 vector<string> show_probability_expressions(const context& C)
@@ -847,7 +854,7 @@ vector<string> show_probability_expressions(const context& C)
 
   // Check each expression in the Formula
   for(int i=0;i<C.n_notes();i++)
-    if (is_exactly(C.get_note(i),":~"))
+    if (is_exactly(C.get_note(i),":~") or is_exactly(C.get_note(i),":=~"))
     {
       expression_ref note = map_symbol_names(C.get_note(i), simplify);
       expressions.push_back( show_probability_expression(note) );
