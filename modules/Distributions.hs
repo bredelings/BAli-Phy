@@ -31,7 +31,7 @@ mixtureDensity ((p1,dist1):l) x = (doubleToLogDouble p1)*(density dist1 x) + (mi
 mixtureDensity [] _ = (doubleToLogDouble 0.0);
 
 mixtureDefault ((p1,dist1):l) = distDefaultValue dist1;
-dirichletDefault l = let {n = length l} in replicate n 1.0/(intToDouble n);
+dirichletDefault l = let {n = length l} in replicate n $ 1.0/(intToDouble n);
 iidDefault l = let {n = length l} in replicate n 1.0/(intToDouble n);
 
 mixtureRange ((_,dist1):_) = distRange dist1;
@@ -54,7 +54,7 @@ logGamma = expTransform' gamma;
 logLaplace = expTransform' laplace;
 logCauchy = expTransform' cauchy;
 
-dirichlet args = (ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") () (Simplex (length args) 1.0));
+dirichlet args = (ProbDensity (dirichletDensity args) (error "Dirichlet has no quantiles") (dirichletDefault args) (Simplex (length args) 1.0));
 dirichlet' (n,x) = dirichlet (replicate n x);
 
 mixture args = ProbDensity (mixtureDensity args) (error "Mixture has no quantiles") (mixtureDefault args) (mixtureRange args);
