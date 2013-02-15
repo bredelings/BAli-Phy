@@ -465,6 +465,14 @@ expression_ref context::translate_refs(const expression_ref& E, vector<int>& Env
     reg = get_parameter_reg(param_index);
   }
 
+  // Replace parameters with the appropriate reg_var: of value parameter( )
+  if (object_ptr<const modifiable> m = is_a<modifiable>(E))
+  {
+    // throw if reg isn't used?
+    // reg = get_modifiable_reg(m->index)
+    reg = modifiable_regs()[m->index];
+  }
+
   // Replace parameters with the appropriate reg_var: of value whatever
   if (object_ptr<const identifier> V = is_a<identifier>(E))
   {
