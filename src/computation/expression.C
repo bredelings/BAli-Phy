@@ -1751,8 +1751,6 @@ expression_ref Cons = lambda_expression( right_assoc_constructor(":",2) );
 
 expression_ref ListEnd = lambda_expression( constructor("[]",0) );
 
-expression_ref distributed = lambda_expression( constructor(":~",2) );
-
 vector<expression_ref> get_ref_vector_from_list(const expression_ref& E)
 {
   vector<expression_ref> V;
