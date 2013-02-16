@@ -30,21 +30,47 @@ using std::map;
  * 6. [DONE] SYNTAX: external a ~ b [To not declare all parameters]
  *      6a. [DONE] SYNTAX: data a ~ b [Don't treat a as a parameter at all!]
  * 7. [DONE] Allow defs in BUGS files.
+ * 8. [DONE] Rationalize C++ operations on expression_ref and formula_expression_ref
+ *    - [DONE] Eliminate C++ operators on formula_expression_ref -> use parser instead.
+ *    - [DONE] Eliminate C++ operators on expression_ref -> use parser instead.
+ *    - [DONE] Make (f,g) only create an apply expression, but NOT substitute.
+ *    - [DONE] Make f+g simply append g to f->sub.
+ *    - [DONE] Make f*g substitute into f.
+ * 9. [DONE] Convert all of distribution-operations.H to the parser.
+ * 10. [DONE] Remove arity argument to def_function.
+ * 11. [DONE] Process imports
+ *     + [DONE] 11a. Process mutually dependent modules.
+ *     + [DONE] 11b. Note that clashing declarations are allowed if the symbol is unreferenced!
+ * 12. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
  */
 
 /* \todo: List of things to do to clean up programs.
  *
  * See list in parser/desugar.C
  *
- * 1. Set default values appropriately.
- *    1a. [DONE] Collect all the default-value setting code into one place.
- *    1b. Don't initialize data distributions.
- *    1c. Initialize default values in DAG order.
- *        1bi: Make the computation of default values delayed?
- * 2. Sample initial values from the distribution!
- * 3. Discover (groups) of modifiables so that we can perform MCMC on them.
- *    3a. We need to handle groups, because simplex parameters need to be jointly sampled.
- * 4. 
+ * 1. Efficiently recalculate the probability when only a few densities change.
+ *    - Will this require signals?
+ *    - This will allow us to avoid maintaining a Markov blanket.
+ * 2. 
+ * 3. 
+ * 4. Eliminate duplicate between Model::add_note( ) and add_probability_expression9 )
+ *    4a. If we would just compute the entire probability expression once, then
+ *        we wouldn't need to 
+ * 5. Allow distributions on structures with variable components
+ *    5a. Set default values for structures.
+ *         - [DONE] Collect all the default-value setting code into one place.
+ *         - [DONE] Don't initialize data distributions.
+ *         - Make the computation of default values delayed?
+ *         - Randomly sample initial values from the distribution!
+ *    5b. Perform MCMC on structures.
+ *        - For the moment, search and discover modifiable names and (when necessary) Bounds.
+ *        - How shall we name these moves?
+ *        - Create a separate move-discovery routine for each type of range.
+ *        - Simplex ranges will have to discover groups of modifiables.
+ *    5c. Create structures with variable components.
+ *    5d. Log structures with variable components.
+ *        - How shall we name the pieces?  We want piA instead of pi!0.
+
  * 8. Rationalize Model_Notes, formula_expression_ref, and program?
  *    - I note that a "model" compresses a complex expression into Model.main.
  *    - [DONE] Add Model_Notes to Module.
@@ -58,16 +84,16 @@ using std::map;
  *      + Basically, a f.e.r. should be a set of definitions (w/ imports) and a 'main' routine?
  *        - How does this relate to simply bringing in the notes attached to parameters?
  *        - How does this attempt to give parameters default names relate to the more general approach?
- *      + Problem: code generation can currently be done, by passing numbers of model names as arguments to models.
+ *      + Problem: Code generation can currently be done, by passing numbers of model names as arguments to models.
  *                 These arguments are used to generate a different model.
  *                 But models define in a module file can only take function arguments, not arguments that affect the code
  *                   in the module.
+ *                 If we can programmatically generate variable structures with a variable number of pieces, then
+ *                   we at least won't need to programmatically generate names for each piece.
+ *                 Instead, we can refer to parameters as e.g. pi!0.
  *    - Eliminate parameter definition notes in formula_expression_ref?
- *    - [DONE] Eliminate C++ operators on formula_expression_ref -> use parser instead.
- *    - [DONE] Eliminate C++ operators on expression_ref -> use parser instead.
- *    - [DONE] Make (f,g) only create an apply expression, but NOT substitute.
- *    - [DONE] Make f+g simply append g to f->sub.
- *    - [DONE] Make f*g substitute into f.
+ *      + Eliminate import and import_submodel notes.
+ *
  * 9. Try to rewrite models into BUGS modules/models.
  *    - M8b? [ Issue - how many sub-categories, though? ]
  *    - branch-site [ Issue - how to specify F3x4, HKY?  Issue - how to specify number of conservation categories? ]
@@ -75,30 +101,25 @@ using std::map;
  *    - Problems: 
  *      + [PROBLEM] Allowing the dimension of distributions to depend on arguments.
  *      + Frequency defaults - how can we specify these?
- *      + Submodel parameters - these need separate parsing to coerce them to the right type.
+ *      + Submodel parameters in the M+M+M formulation - these need separate parsing to coerce them to the right type.
  *        - But is that a problem?
  * 10. Add default values and Bounds to distributions.
  *    - [DONE] Add Bounds to distributions.
- *    - Ah, but how do we add default values to distributions that return random structures?
+ *    - [DONE] Allow setting of default values to components of vector structures, where the structure is fixed.
+ *    - But how do we add default values to distributions that return random structures?
  *      10a. Make performing an MCMC move into an IO operation that is performed in the machine.
  *      10b. MCMC on a structure can then call MCMC on the child elements.
  *      10c. By examining the distribution of the structure, the parent MCMC can determine the distribution
  *            -- and thus the bounds -- for the MCMC on the parts.
- *      10d. We need a way to refer to dynamically created parameters -- and it can't be the static parameter name.
- *      10e. We *could* arrange for unique name for parameters inside a machine, so that we wouldn't need to
+ *      10d. [DONE] We need a way to refer to dynamically created parameters -- and it can't be the static parameter name.
+ *      10e. [DONE] We *could* arrange for unique name for parameters inside a machine, so that we wouldn't need to
  *           refer to parameters by their address.
  *      10f. Issue: if we have a structure of parameters, that's OK.  But what if we have a CHANGEABLE
  *                  structure, of changeable parameters!  Is that OK?
- *    - Well, do we want to supply Bounds for structure ELEMENTS?  Uh-oh -- we might!
- * 11. [DONE] Convert all of distribution-operations.H to the parser.
- * 12. [DONE] Remove arity argument to def_function.
  * 13. Rationalize Programs, Modules.
  *     13a. [DONE] Allow loading stuff from files.
  *     13b. [DONE] Allow importing, desugaring, and thus resolving symbols after modules are (jointly) loaded into the machine.
  *     13c. Remove any earlier attempts at importing.
- * 14. [DONE] Process imports
- *     + [DONE] 14a. Process mutually dependent modules.
- *     + [DONE] 14b. Note that clashing declarations are allowed if the symbol is unreferenced!
  * 15. Handle 'where' clauses (e.g. in "alt")
  * 16. Handle guards clauses (e.g. in gdrhs, and gdpat)
  *     + I *think* that guards cannot fail in a way that makes the rule fail and move to the next rule.
@@ -117,17 +138,16 @@ using std::map;
  * 21. [DONE] Add computed loggers.
  *     (This will allow us to e.g. select min/max functions for logging.)
  *     21a. [DONE] Find a haskell expression to log [p1,p2,p3] based on the order of [q1,q2,q3]
- * 22. [DONE] Add function to clean up fully resolved symbols to make things look nicer.
  * 23. (?) Print expressions with fixity.
  * 24. Allow the creation, destruction, initialization, ranges, and MCMC of unnamed parameters.
  *     24a. Perhaps the letter frequencies would be a good first example of this.
  *     24b. The different categories in the branch-site model would be a good second example.
- *     24c. Allow each parameter to be uniquely identified by a number that is not its location.
- *     24d. The parameter will encode this number in its expression, even if it doesn't have a name.
- *     24e. We can then have an IO operation to change the parameter value.
- *     24f. This will allow us to set default values for vector parameters.
- *     24g. But how will we scan the variable parameter list and propose new values?
- *     24h. How will we determine the bounds of these parameters?
+ *     24c. [DONE] Allow each parameter to be uniquely identified by a number that is not its location.
+ *          The parameter will encode this number in its expression, even if it doesn't have a name.
+ *     24d. We can then have an IO operation to change the parameter value.
+ *     24e. This will allow us to set default values for vector parameters.
+ *     24f. But how will we scan the variable parameter list and propose new values?
+ *     24g. How will we determine the bounds of these parameters?
  * 25. Allow model files to create models with a variable number of parameters => depends on 24.
  * 26. (?) Allow model files to create models where an argument is the name of another model file.
  * 27. Allow fixing parameters. (e.g. to test the branch-site model under ML)
