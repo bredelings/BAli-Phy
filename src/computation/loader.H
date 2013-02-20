@@ -8,18 +8,21 @@
 #include "computation/module.H"
 #include "computation/model_notes.H"
 
-struct module_loader
+class module_loader
 {
+  mutable std::map<std::string, expression_ref> modules;
+public:
   std::vector<std::string> modules_path;
   std::vector<std::string> builtins_path;
+
+  std::string find_module(const std::string& modid) const;
+  /// Load the module file from disk.
+  expression_ref read_module_from_file(const std::string&) const;
+  /// Add the hard-coded elements to the module.
+  Module load_module_from_file(const std::string&) const;
+  Module load_module(const std::string&) const;
+  Module load_and_rename_module(const std::string&, const std::string&) const;
 };
-
-expression_ref read_module_from_file(const std::string& filename);
-std::string find_module(const module_loader&, const std::string& modid);
-
-Module load_module(const std::string& filename);
-Module load_module(const module_loader&, const std::string&);
-Module load_and_rename_module(const module_loader&, const std::string&, const std::string&);
 
 std::vector<Module> load_modules(const module_loader&, const std::vector<std::string>&);
 std::vector<Module> load_modules(const module_loader&, const std::set<std::string>&);

@@ -1021,7 +1021,7 @@ bool is_all_space(const string& line)
 Module read_BUGS(const Parameters& P, const string& filename)
 {
   // 1. Read module
-  Module BUGS = load_module(filename);
+  Module BUGS ( module_loader().read_module_from_file(filename) );
 
   // 2. Import all parameter symbols from other modules.
   for(const auto& M:P.get_Program())

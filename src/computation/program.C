@@ -96,10 +96,10 @@ void add_missing_imports(const module_loader& L, vector<Module>& P, Model_Notes&
   do
   {
     for(const string& module_name: modules_to_add)
-      P.push_back(load_module(L, module_name));
+      P.push_back( L.load_module(module_name) );
 
     for(const auto& x: submodels_to_add)
-      P.push_back(load_and_rename_module(L, x.first, x.second));
+      P.push_back( L.load_and_rename_module(x.first, x.second) );
 
     modules_to_add = unresolved_imports(P);
     submodels_to_add = unresolved_submodel_imports(P);
@@ -133,12 +133,12 @@ void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector
   // Load the regular modules
   for(const auto& name: module_names)
     if (not contains_module(P,name))
-      add(L,P,N, load_modules(L,std::vector<string>{name}));
+      add(L, P, N, {L.load_module(name)});
 
   // Load the modules to be renamed
   for(const auto& names: submodule_names)
     if (not contains_module(P,names.second))
-      add(L,P,N, load_and_rename_modules(L,{names}));
+      add(L, P, N, {L.load_and_rename_module(names.first, names.second)});
 }
 
 void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector<Module>& modules)

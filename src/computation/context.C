@@ -93,7 +93,7 @@ int context::add_note(const expression_ref& E)
     set<string> old_module_names = module_names_set(PP);
 
     if (not contains_module(PP,modid2))
-      PP.push_back(load_and_rename_module(get_module_loader(), modid1, modid2));
+      PP.push_back(get_module_loader().load_and_rename_module(modid1, modid2));
     add_missing_imports(get_module_loader(), PP, (*this));
 
     vector<string> new_module_names;
@@ -522,7 +522,7 @@ const vector<string>& context::get_builtins_path() const
 context& context::operator+=(const string& module_name)
 {
   if (not contains_module(*P, module_name))
-    operator+=(load_module(get_module_loader(), module_name));
+    operator+=(get_module_loader().load_module(module_name));
 
   return *this;
 }
@@ -537,7 +537,7 @@ context& context::operator+=(const vector<string>& module_names)
   vector<string> new_module_names;
   for(const auto& name: module_names)
     if (not contains_module(*P, name))
-      operator+=(load_modules(get_module_loader(), vector<string>{name}));
+      operator+=(get_module_loader().load_module(name));
 
   return *this;
 }
