@@ -23,4 +23,13 @@ findAtomic p r = [(p,r)];
 
 findBinary' p = [p2 | (p2,TrueFalseRange) <- findAtomic p];
 findBinary = listToVectorInt . (map get_modifiable_index) . findBinary';
+
+findReal' p = [p2 | (p2,OpenInterval _ _) <- findAtomic p];
+findReal = listToVectorInt . (map get_modifiable_index) . findReal;
+
+findInteger' p = [p2 | (p2,IntegerInterval _ _) <- findAtomic p];
+findInteger = listToVectorInt . (map get_modifiable_index) . findInteger';
+
+findSimplex' p = [p2 | (p2,Simplex _ _) <- findAtomic p];
+findSimplex = listToVectorInt . (map get_modifiable_index) . findSimplex';
 }
