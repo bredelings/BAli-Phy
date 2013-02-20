@@ -92,7 +92,8 @@ int context::add_note(const expression_ref& E)
     // Get module_names, but in a set<string>
     set<string> old_module_names = module_names_set(PP);
 
-    PP.push_back(load_and_rename_module(get_module_loader(), modid1, modid2));
+    if (not contains_module(PP,modid2))
+      PP.push_back(load_and_rename_module(get_module_loader(), modid1, modid2));
     add_missing_imports(get_module_loader(), PP, (*this));
 
     vector<string> new_module_names;
@@ -520,7 +521,17 @@ const vector<string>& context::get_builtins_path() const
 
 context& context::operator+=(const vector<string>& module_names)
 {
-  return operator+=(load_modules(get_module_loader(), module_names));
+  // FIXME: add( ) will complain if we try to load any module that's already loaded.
+  // In that case, it should not be called directly.
+  // Instead, it seems that there should be a wrapper that can compute the transitive list of new names.
+  // Currently we load all the modules before we figure out which ones are needed...
+
+  vector<string> new_module_names;
+  for(const auto& name: module_names)
+    if (not contains_module(*P, name))
+      operator+=(load_modules(get_module_loader(), vector<string>{name}));
+
+  return *this;
 }
 
 void context::allocate_identifiers_for_modules(const vector<string>& module_names)
@@ -674,14 +685,18 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
    loader(L)
 {
   (*this) += {"Prelude"};
+  (*this) += {"Parameters"};
   (*this) += Ps;
 
   add_submodel(*this, N);
 }
 
 context::context(const module_loader& L, const vector<expression_ref>& N, const vector<string>& module_names)
-  :context(L,N,load_modules(L, module_names))
-{ }
+  :context(L,N)
+{
+  for(const auto& name: module_names)
+    (*this) += {name};
+}
 
 context::context(const context& C)
   :Model_Notes(C),
