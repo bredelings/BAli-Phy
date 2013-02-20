@@ -254,14 +254,4 @@ quicksortWith f [] = [];
 quicksortWith f (x:xs) = quicksortWith f small ++ (x : quicksortWith f large)
    where { small = [y | y <- xs, (f y) <= (f x)] ;
            large = [y | y <- xs, (f y)  > (f x)] };
-  
-set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
-set_parameter_value' token (p:ps) (v:vs) = do { set_parameter_value token p v; 
-                                                set_parameter_value token ps vs
-                                              };
-set_parameter_value' token [] [] = return ();  
-
-set_parameter_value token p v = if (is_modifiable token p) 
-                                then set_modifiable_value token p v 
-                                else set_parameter_value' token p v;
 }
