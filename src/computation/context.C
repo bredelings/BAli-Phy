@@ -92,9 +92,8 @@ int context::add_note(const expression_ref& E)
     // Get module_names, but in a set<string>
     set<string> old_module_names = module_names_set(PP);
 
-    if (not contains_module(PP,modid2))
-      PP.push_back(get_module_loader().load_and_rename_module(modid1, modid2));
-    add_missing_imports(get_module_loader(), PP, (*this));
+    // Add renamed module, and its notes.
+    add_renamed(get_module_loader(), PP, *this, {modid1, modid2});
 
     vector<string> new_module_names;
     for(auto& module: PP)
@@ -522,22 +521,15 @@ const vector<string>& context::get_builtins_path() const
 context& context::operator+=(const string& module_name)
 {
   if (not contains_module(*P, module_name))
-    operator+=(get_module_loader().load_module(module_name));
+    (*this) += get_module_loader().load_module(module_name);
 
   return *this;
 }
 
 context& context::operator+=(const vector<string>& module_names)
 {
-  // FIXME: add( ) will complain if we try to load any module that's already loaded.
-  // In that case, it should not be called directly.
-  // Instead, it seems that there should be a wrapper that can compute the transitive list of new names.
-  // Currently we load all the modules before we figure out which ones are needed...
-
-  vector<string> new_module_names;
   for(const auto& name: module_names)
-    if (not contains_module(*P, name))
-      operator+=(get_module_loader().load_module(name));
+    (*this) += name;
 
   return *this;
 }
