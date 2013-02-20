@@ -77,7 +77,7 @@ int context::add_note(const expression_ref& E)
   if (is_AST(E, "import_note"))
   {
     string modid = *E->sub[0].assert_is_a<String>();
-    (*this) += {modid};
+    (*this) += modid;
   }
   else if (is_AST(E, "import_submodel_note"))
   {
@@ -519,6 +519,14 @@ const vector<string>& context::get_builtins_path() const
   return loader.builtins_path;
 }
 
+context& context::operator+=(const string& module_name)
+{
+  if (not contains_module(*P, module_name))
+    operator+=(load_module(get_module_loader(), module_name));
+
+  return *this;
+}
+
 context& context::operator+=(const vector<string>& module_names)
 {
   // FIXME: add( ) will complain if we try to load any module that's already loaded.
@@ -600,7 +608,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 }
 
 // \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
-context& context::operator+=(const vector<Module>& P2)
+context& context::operator+=(const Module& M)
 {
   Program& PP = *P.modify();
 
@@ -610,7 +618,7 @@ context& context::operator+=(const vector<Module>& P2)
   set<string> old_module_names = module_names_set(PP);
 
   // 1. Add the new modules to the program, perform imports, and resolve symbols.
-  add(loader, PP, *this, P2);
+  add(loader, PP, *this, {M});
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   vector<string> new_module_names;
@@ -622,6 +630,15 @@ context& context::operator+=(const vector<Module>& P2)
 
   set_default_values_from_notes(*this,first_note,n_notes());
   
+  return *this;
+}
+
+// \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
+context& context::operator+=(const vector<Module>& Ms)
+{
+  for(const auto& M: Ms)
+    (*this) += M;
+
   return *this;
 }
 
@@ -684,8 +701,8 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
    token(memory->get_unused_token()),
    loader(L)
 {
-  (*this) += {"Prelude"};
-  (*this) += {"Parameters"};
+  (*this) += "Prelude";
+  (*this) += "Parameters";
   (*this) += Ps;
 
   add_submodel(*this, N);
@@ -695,7 +712,7 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
   :context(L,N)
 {
   for(const auto& name: module_names)
-    (*this) += {name};
+    (*this) += name;
 }
 
 context::context(const context& C)
