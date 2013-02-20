@@ -85,24 +85,8 @@ int context::add_note(const expression_ref& E)
 
     string modid1 = *E->sub[0].assert_is_a<String>();
     string modid2 = *E->sub[1].assert_is_a<String>();
-    Program& PP = *P.modify();
 
-    int old_n_parameters = n_parameters();
-
-    // Get module_names, but in a set<string>
-    set<string> old_module_names = module_names_set(PP);
-
-    // Add renamed module, and its notes.
-    add_renamed(get_module_loader(), PP, *this, {modid1, modid2});
-
-    vector<string> new_module_names;
-    for(auto& module: PP)
-      if (not old_module_names.count(module.name))
-	new_module_names.push_back(module.name);
-
-    allocate_identifiers_for_modules(new_module_names);
-
-    set_default_values_from_notes(*this, first_note, n_notes());
+    (*this) += pair<string,string>{modid1, modid2};
   }
   
   return Model_Notes::add_note( E );
@@ -526,6 +510,14 @@ context& context::operator+=(const string& module_name)
   return *this;
 }
 
+context& context::operator+=(const pair<string,string>& module_names)
+{
+  if (not contains_module(*P, module_names.second))
+    (*this) += get_module_loader().load_and_rename_module(module_names.first, module_names.second);
+
+  return *this;
+}
+
 context& context::operator+=(const vector<string>& module_names)
 {
   for(const auto& name: module_names)
@@ -609,7 +601,7 @@ context& context::operator+=(const Module& M)
   // Get module_names, but in a set<string>
   set<string> old_module_names = module_names_set(PP);
 
-  // 1. Add the new modules to the program, perform imports, and resolve symbols.
+  // 1. Add the new modules to the program, add notes, perform imports, and resolve symbols.
   add(loader, PP, *this, M);
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
