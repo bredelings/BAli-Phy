@@ -6,6 +6,7 @@
 
 using std::vector;
 using std::set;
+using std::pair;
 using std::map;
 using std::string;
 
@@ -123,6 +124,21 @@ void add_missing_imports(const module_loader& L, vector<Module>& P, Model_Notes&
       }
     }
   
+}
+
+void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector<string>& module_names, const vector<pair<string,string>>& submodule_names)
+{
+  vector<Module> modules;
+
+  // Load the regular modules
+  for(const auto& name: module_names)
+    if (not contains_module(P,name))
+      add(L,P,N, load_modules(L,std::vector<string>{name}));
+
+  // Load the modules to be renamed
+  for(const auto& names: submodule_names)
+    if (not contains_module(P,names.second))
+      add(L,P,N, load_and_rename_modules(L,{names}));
 }
 
 void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector<Module>& modules)

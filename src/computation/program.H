@@ -22,6 +22,11 @@ std::set<std::string> module_names_set(const std::vector<Module>& P);
 const Module& get_module(const std::vector<Module>& P, const std::string& module_name);
 
 void add_missing_imports(const module_loader& L, std::vector<Module>& P, Model_Notes& N);
+
+void add(const module_loader& L, std::vector<Module>& P, Model_Notes& N, 
+	 const std::vector<std::string>& module_names,
+	 const std::vector<std::pair<std::string,std::string>>& submodule_names);
+
 void add(const module_loader& L, std::vector<Module>& P, Model_Notes& N, const std::vector<Module>& modules);
 
 bool is_declared(const std::vector<Module>& modules, const std::string& qvar);
