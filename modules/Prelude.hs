@@ -30,7 +30,7 @@ data Maybe a = Just a | Nothing;
 data IO a = IOAction1 (b->a) a | 
             IOAction2 (b->c->a) b c | 
             IOAction3 (b->c->d->a) b c d | 
-            IOAction4 (b->d->d->e->a) b c d e |
+            IOAction4 (b->c->d->e->a) b c d e |
             IOReturn a |
             IOAndPass (IO b) (b -> IO a) |
             IOAnd (IO b) (IO a);
