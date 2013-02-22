@@ -21,8 +21,8 @@ set_parameter_value token p v = if (is_modifiable token p)
 findAtomic ps (ListRange rs) = concat $ zipWith findAtomic ps rs;
 findAtomic p r = [(p,r)];
 
-findBinary' p = [p2 | (p2,TrueFalseRange) <- findAtomic p];
-findBinary = list_to_vector . (map get_modifiable_index) . findBinary';
+findBinary' p r = [p2 | (p2,TrueFalseRange) <- findAtomic p r];
+findBinary  p r = list_to_vector . (map get_modifiable_index) $ findBinary' p r;
 
 findReal' p = [p2 | (p2,OpenInterval _ _) <- findAtomic p];
 findReal = listToVectorInt . (map get_modifiable_index) . findReal;
