@@ -25,7 +25,10 @@ int OperationArgs::evaluate_slot_no_record(int slot)
 object_ref OperationArgs::evaluate_reg_to_object(int R2)
 {
   expression_ref result = evaluate_reg_to_closure(R2).exp->head;
-  assert(not is_a<lambda2>(result));
+#ifndef NDEBUG
+  if (is_a<lambda2>(result))
+    throw myexception()<<"Evaluating lambda as object: "<<result->print();
+#endif
   return result->head;
 }
 
