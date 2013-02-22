@@ -125,6 +125,10 @@ public:
 
   operator const T&() const {return t;}
 
+  const T& const_unbox() const {return t;}
+  const T& unbox() const {return t;}
+        T& unbox()       {return t;}
+
   //  template <typename U>
   //  operator Box<U>() const {return t;}
 
