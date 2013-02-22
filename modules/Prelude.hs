@@ -71,6 +71,9 @@ builtin <= 2 "lessthanorequal";
 builtin iotaUnsigned 1 "iotaUnsigned";
 builtin set_vector_index 3 "set_vector_index";
 builtin new_vector 1 "new_vector";
+builtin get_vector_index 2 "get_vector_index";
+builtin vector_size 1 "vector_size";
+
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
