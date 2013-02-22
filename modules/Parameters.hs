@@ -22,7 +22,7 @@ findAtomic ps (ListRange rs) = concat $ zipWith findAtomic ps rs;
 findAtomic p r = [(p,r)];
 
 findBinary' p = [p2 | (p2,TrueFalseRange) <- findAtomic p];
-findBinary = listToVectorInt . (map get_modifiable_index) . findBinary';
+findBinary = list_to_vector . (map get_modifiable_index) . findBinary';
 
 findReal' p = [p2 | (p2,OpenInterval _ _) <- findAtomic p];
 findReal = listToVectorInt . (map get_modifiable_index) . findReal;
