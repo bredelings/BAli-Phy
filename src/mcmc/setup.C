@@ -209,18 +209,12 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
 {
   vector<vector<string> > names;
 
-  expression_ref query = constructor(":~",2) + match(0) + match(-1);
-  expression_ref _ = dummy(-1);
-  expression_ref case_query_func = v1^(case_expression(v1,constructor(":~",2)+ _ + v2, (identifier("distRange"),v2)));
-
   for(int i=0;i<P.n_notes();i++)
     if (is_exactly(P.get_note(i),":~"))
     {
-      vector<expression_ref> results; 
-      find_match(query, P.get_note(i), results);
-      expression_ref rand_var = results[0];
+      expression_ref rand_var = P.get_note(i)->sub[0];
+      expression_ref dist = P.get_note(i)->sub[1];
 
-      auto range = P.get_context().evaluate_expression_as<constructor>((case_query_func, P.get_note(i)));
       if (range->f_name != RangeType) continue;
 
       if (is_exactly(rand_var->head,":"))
