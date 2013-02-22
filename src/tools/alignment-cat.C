@@ -133,8 +133,8 @@ vector<sequence> select(const vector<sequence>& s,const vector<int>& columns)
     S[i].string::operator=("");
 
   //------- Append columns to sequences -------//
-  for(int i=0;i<columns.size();i++)
-    for(int j=0;j<s.size();j++)
+  for(int j=0;j<s.size();j++)
+    for(int i=0;i<columns.size() and columns[i] < s[j].size();i++)
       S[j] += s[j][columns[i]];
 
   return S;
