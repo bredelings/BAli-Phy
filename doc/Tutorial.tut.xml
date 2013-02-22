@@ -173,7 +173,6 @@ Now lets use the analysis script to run all the summaries and make a report:
 
 <section><info><title>Multi-gene analyses</title></info>
 <para>This is described in more detail in section 4.3 of the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">manual</link>.</para>
-<para>Check this</para>.
 <para>
 Download HIV env and pol alignments with the same sequence names:
 % wget http://nucleus.biology.duke.edu/~bredelings/alignment_files/env-common.fasta
@@ -187,13 +186,13 @@ Now edit the fasta files so that the lengths are a multiple of three:
 % alignment-cat -c1-951 env-common.fasta > env-common2.fasta
 % alignment-cat -c1-1068 pol-common.fasta > pol-common2.fasta
 Try running bali-phy again:
-% bali-phy --show-only --alphabet Codons env-common.fasta pol-common.fasta --smodel M0
+% bali-phy --show-only --alphabet Codons env-common2.fasta pol-common2.fasta --smodel M0
 Now open the fasta files in an editor and replace all nucleotide ambiguity codes K and M with N.  This time the run should succeed:
-% bali-phy --show-only --alphabet Codons env-common.fasta pol-common.fasta --smodel M0
+% bali-phy --show-only --alphabet Codons env-common2.fasta pol-common2.fasta --smodel M0
 By default, the M0 substitution model will be selected for both genes.  However, each gene will have a separate instance of the model with its own gene-specific values for the model parameters.  Try specifying that both genes share one instance of the model parameters:
-% bali-phy --iterations=10 --alphabet Codons env-common.fasta pol-common.fasta --smodel=1,2:M0
+% bali-phy --iterations=10 --alphabet Codons env-common2.fasta pol-common2.fasta --smodel=1,2:M0
 Now try reading one gene as Codons, and the other as DNA:
-% bali-phy --iterations=10 --alphabet=1:Codons --alphabet=2:DNA env-common.fasta pol-common.fasta
+% bali-phy --iterations=10 --alphabet=1:Codons --alphabet=2:DNA env-common2.fasta pol-common2.fasta
 </para>
 </section>
 
