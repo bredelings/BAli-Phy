@@ -1,4 +1,3 @@
-#undef NDEBUG
 #include "computation/context.H"
 #include "computation/program.H"
 #include "loader.H"
