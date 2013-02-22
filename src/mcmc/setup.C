@@ -219,12 +219,11 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
       {
 	int token = P.get_context().get_token();
 	object_ref v = P.get_context().evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)) );
-	std::cout<<RangeType<<"  vector v = "<<v->print()<<"\n";
-	std::cout.flush();
+	//	std::cout<<RangeType<<"  vector v = "<<v->print()<<std::endl;
 	object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
 	for(const auto& x: V->t)
 	{
-	  std::cout<<RangeType<<"  "<<rand_var->print()<<": "<<x->print()<<"\n";
+	  std::cout<<RangeType<<"  "<<rand_var->print()<<": "<<x->print()<<std::endl;
 	}
       }
 
@@ -234,14 +233,13 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
 	typedef Box<Pair_> Pair;
 	int token = P.get_context().get_token();
 	object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)) );
-	std::cout<<RangeType<<"  vector v = "<<v->print()<<"\n";
-	std::cout.flush();
+	//	std::cout<<RangeType<<"  vector v = "<<v->print()<<std::endl;
 	object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
 	for(const auto& x: V->t)
 	{
-	  std::cout<<RangeType<<"  "<<rand_var->print()<<": "<<x->print()<<"\n";
+	  //	  std::cout<<RangeType<<"  "<<rand_var->print()<<": "<<x->print()<<std::endl;
 	  object_ptr<const Pair> p = convert<const Pair>(x);
-	  std::cout<<RangeType<<"  "<<rand_var->print()<<": ("<<p->t.first<<","<<p->t.second<<")\n";
+	  std::cout<<RangeType<<"  "<<rand_var->print()<<": ("<<p->t.first<<","<<p->t.second<<")"<<std::endl;
 	}
       }
 
