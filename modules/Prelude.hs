@@ -69,8 +69,8 @@ builtin >= 2 "greaterthanorequal";
 builtin < 2 "lessthan";
 builtin <= 2 "lessthanorequal";
 builtin iotaUnsigned 1 "iotaUnsigned";
-builtin set_vector_index 3 "set_vector_index";
-builtin new_vector 1 "new_vector";
+builtin builtin_set_vector_index 3 "set_vector_index";
+builtin builtin_new_vector 1 "new_vector";
 builtin get_vector_index 2 "get_vector_index";
 builtin vector_size 1 "vector_size";
 builtin c_fst 1 "c_fst";
@@ -203,6 +203,15 @@ listFromVectorVectorInt v = listFromVectorVectorInt' v (sizeOfVectorVectorInt v)
 listFromVectorvectorInt' v s i = if (i<s) then (getVectorvectorIntElement v i):listFromVectorvectorInt' v s (i+1) else [];
 
 listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v) 0;
+
+new_vector s = IOAction1 builtin_new_vector s;
+
+set_vector_index v i x = IOAction3 builtin_set_vector_index v i x;
+
+copy_list_to_vector [] v i = return ();
+copy_list_to_vector (h:t) v i = do {set_vector_index v i h; copy_list_to_vector t v (i+1)};
+
+list_to_vector l = unsafePerformIO $ do {v <- new_vector (length l); copy_list_to_vector l v 0; return v};
 
 newVectorInt s = IOAction1 builtinNewVectorInt s;
 
