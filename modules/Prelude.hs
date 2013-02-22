@@ -75,7 +75,7 @@ builtin get_vector_index 2 "get_vector_index";
 builtin vector_size 1 "vector_size";
 builtin c_fst 1 "c_fst";
 builtin c_snd 1 "c_snd";
-builtin c_pair 2 "c_pair";
+builtin c_pair' 2 "c_pair";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
@@ -203,6 +203,8 @@ listFromVectorVectorInt v = listFromVectorVectorInt' v (sizeOfVectorVectorInt v)
 listFromVectorvectorInt' v s i = if (i<s) then (getVectorvectorIntElement v i):listFromVectorvectorInt' v s (i+1) else [];
 
 listFromVectorvectorInt v = listFromVectorvectorInt' v (sizeOfVectorvectorInt v) 0;
+
+c_pair (x,y) = c_pair' x y;
 
 new_vector s = IOAction1 builtin_new_vector s;
 
