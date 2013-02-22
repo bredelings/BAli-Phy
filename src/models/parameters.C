@@ -630,8 +630,8 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
   if (i_index != -1)
     for(int b=0;b<B;b++)
     {
-      // D = Parameters.substitutionBranchLengths!scale_index
-      expression_ref D = (identifier("!"),identifier("Parameters.substitutionBranchLengths"),scale_index);
+      // D = Params.substitutionBranchLengths!scale_index
+      expression_ref D = (identifier("!"),identifier("Params.substitutionBranchLengths"),scale_index);
       // (fst IModels.models!i_index) D b
       int index = p->C.add_compute_expression( ((identifier("fst"),(identifier("!"),identifier("IModels.models"),i_index)),D,b) );
       branch_HMM_indices.push_back(  index );
@@ -1155,7 +1155,7 @@ Parameters::Parameters(const module_loader& L,
     substitutionBranchLengthsList = get_list(SBLL);
   }
 
-  Module parameter_program("Parameters");
+  Module parameter_program("Params");
   parameter_program.def_function("substitutionBranchLengths", (identifier("listArray'"),(identifier("fmap"),identifier("listArray'"),substitutionBranchLengthsList)));
   add_submodel( parameter_program );
 
@@ -1164,7 +1164,7 @@ Parameters::Parameters(const module_loader& L,
   for(int s=0;s < n_branch_means(); s++)
   {
     // Better yet, make a substitutionBranchLengths!scale!branch that can be referenced elsewhere.
-    expression_ref DL = (identifier("!"),identifier("Parameters.substitutionBranchLengths"),s);
+    expression_ref DL = (identifier("!"),identifier("Params.substitutionBranchLengths"),s);
 
     // Here, for each (scale,model) pair we're construction a function from branches -> Vector<transition matrix>
     for(int m=0;m < n_smodels(); m++)

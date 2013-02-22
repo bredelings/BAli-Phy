@@ -51,7 +51,7 @@ using std::map;
  * 1. Efficiently recalculate the probability when only a few densities change.
  *    - Will this require signals?
  *    - This will allow us to avoid maintaining a Markov blanket.
- * 2. 
+ * 2. Rewrite module loading routines to load modules 1-at-a-time.
  * 3. 
  * 4. Eliminate duplicate between Model::add_note( ) and add_probability_expression9 )
  *    4a. If we would just compute the entire probability expression once, then
@@ -225,13 +225,17 @@ void Range_Functions(Module&);
 void SModel_Functions(Module&);
 void PopGen_Functions(Module&);
 
-expression_ref read_module_from_file(const string& filename)
+expression_ref module_loader::read_module_from_file(const string& filename) const
 {
   try
   {
-    string file_contents = read_file(filename,"module");
-    expression_ref module = parse_bugs_file(file_contents);
-    return module;
+    if (not modules.count(filename))
+    {
+      string file_contents = read_file(filename,"module");
+      modules[filename] = parse_bugs_file(file_contents);
+    }
+
+    return modules[filename];
   }
   catch (myexception& e)
   {
@@ -261,14 +265,14 @@ fs::path get_relative_path_from_haskell_id(const string& modid)
   return file_path;
 }
 
-string find_module(const module_loader& L, const string& modid)
+string module_loader::find_module(const string& modid) const
 {
   try
   {
     fs::path path = get_relative_path_from_haskell_id(modid);
     path.replace_extension(".hs");
 
-    fs::path filename = find_file_in_path(L.modules_path, path );
+    fs::path filename = find_file_in_path(modules_path, path );
     return filename.string();
   }
   catch (myexception& e)
@@ -278,7 +282,7 @@ string find_module(const module_loader& L, const string& modid)
   }
 }
 
-Module load_module(const string& filename)
+Module module_loader::load_module_from_file(const string& filename) const
 {
   try
   {
@@ -306,16 +310,41 @@ Module load_module(const string& filename)
   }
 }
 
-Module load_module(const module_loader& L, const string& modid)
+vector<Module> load_modules(const module_loader& L, const vector<string>& module_names)
 {
-  return load_module(find_module(L, modid));
+  vector<Module> P;
+  for(const string& name: module_names)
+    P.push_back(L.load_module(name));
+  return P;
 }
 
-Module load_and_rename_module(const module_loader& L, const string& modid1, const string& modid2)
+vector<Module> load_modules(const module_loader& L, const set<string>& module_names)
+{
+  vector<Module> P;
+  for(const string& name: module_names)
+    P.push_back(L.load_module(name));
+  return P;
+}
+
+vector<Module> load_and_rename_modules(const module_loader& L, const map<string,string>& module_names)
+{
+  vector<Module> P;
+  for(const auto& x: module_names)
+    P.push_back(L.load_and_rename_module(x.first, x.second));
+  return P;
+}
+
+Module module_loader::load_module(const string& module_name) const
+{
+  return load_module_from_file(find_module(module_name));
+}
+
+Module module_loader::load_and_rename_module(const string& modid1, const string& modid2) const
 {
   try
   {
-    expression_ref module = read_module_from_file(find_module(L, modid1));
+    // FIXME! This is based on the assumption that renamed modules aren't fixed up after loading from disk.
+    expression_ref module = read_module_from_file(find_module(modid1));
 
     Module M1(module);
 
@@ -333,30 +362,6 @@ Module load_and_rename_module(const module_loader& L, const string& modid1, cons
     e.prepend("Loading module '"+modid1+"' as '"+modid2+":\n  ");
     throw e;
   }
-}
-
-vector<Module> load_modules(const module_loader& L, const vector<string>& module_names)
-{
-  vector<Module> P;
-  for(const string& name: module_names)
-    P.push_back(load_module(L,name));
-  return P;
-}
-
-vector<Module> load_modules(const module_loader& L, const set<string>& module_names)
-{
-  vector<Module> P;
-  for(const string& name: module_names)
-    P.push_back(load_module(L,name));
-  return P;
-}
-
-vector<Module> load_and_rename_modules(const module_loader& L, const map<string,string>& module_names)
-{
-  vector<Module> P;
-  for(const auto& x: module_names)
-    P.push_back(load_and_rename_module(L, x.first, x.second));
-  return P;
 }
 
 #include <dlfcn.h>

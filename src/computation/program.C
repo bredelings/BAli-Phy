@@ -6,6 +6,7 @@
 
 using std::vector;
 using std::set;
+using std::pair;
 using std::map;
 using std::string;
 
@@ -95,10 +96,10 @@ void add_missing_imports(const module_loader& L, vector<Module>& P, Model_Notes&
   do
   {
     for(const string& module_name: modules_to_add)
-      P.push_back(load_module(L, module_name));
+      P.push_back( L.load_module(module_name) );
 
     for(const auto& x: submodels_to_add)
-      P.push_back(load_and_rename_module(L, x.first, x.second));
+      P.push_back( L.load_and_rename_module(x.first, x.second) );
 
     modules_to_add = unresolved_imports(P);
     submodels_to_add = unresolved_submodel_imports(P);
@@ -125,35 +126,57 @@ void add_missing_imports(const module_loader& L, vector<Module>& P, Model_Notes&
   
 }
 
-void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector<Module>& modules)
+void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const Module& M)
 {
   // Get module_names, but in a set<string>
   set<string> old_module_names = module_names_set(P);
 
-  // 1. Check that the program doesn't already contain these module names.
-  for(const auto& module: modules)
-    if (contains_module(P,module.name))
-      throw myexception()<<"Trying to add duplicate module '"<<module.name<<"' to program "<<module_names_path(P);
+  // 1. Check that the program doesn't already contain this module name.
+  if (contains_module(P, M.name))
+    throw myexception()<<"Trying to add duplicate module '"<<M.name<<"' to program "<<module_names_path(P);
 
-  // 2. Check that we aren't adding any module twice.
-  for(const auto& module: modules) 
-  {
-    int count = count_module(modules, module.name);
-    if (count > 1)
-      throw myexception()<<"Trying to add module '"<<module.name<<"' to program "<<module_names_path(P)<<" "<<count<<" times.";
-  }
-
-  // 3. Actually add the modules.
-  P.insert(P.end(), modules.begin(), modules.end());
+  // 2. Actually add the module.
+  P.push_back( M );
 
 #ifndef NDEBUG
-  // 4. Assert that every module exists only once in the list.
+  // 3. Assert that every module exists only once in the list.
   for(const auto& module: P)
-    assert(count_module(P, module.name) == 1);
+    assert(count_module(P, M.name) == 1);
 #endif
 
-  // 5. Import any modules that are (transitively) implied by the ones we just loaded.
+  // 4. Import any modules that are (transitively) implied by the ones we just loaded.
   add_missing_imports(L, P, N);
+}
+
+void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector<Module>& modules)
+{
+  for(const auto& M: modules)
+    add(L, P, N, M);
+}
+
+void add(const module_loader& L, std::vector<Module>& P, Model_Notes& N, const std::string& name)
+{
+  if (not contains_module(P, name))
+    add(L, P, N, L.load_module(name));
+}
+
+void add_renamed(const module_loader& L, std::vector<Module>& P, Model_Notes& N, const std::pair<std::string, std::string>& names)
+{
+  if (not contains_module(P,names.second))
+    add(L, P, N, L.load_and_rename_module(names.first, names.second));
+}
+
+void add(const module_loader& L, vector<Module>& P, Model_Notes& N, const vector<string>& module_names, const vector<pair<string,string>>& submodule_names)
+{
+  vector<Module> modules;
+
+  // Load the regular modules
+  for(const auto& name: module_names)
+    add(L, P, N, name);
+
+  // Load the modules to be renamed
+  for(const auto& names: submodule_names)
+    add_renamed(L, P, N, names);
 }
 
 bool is_declared(const vector<Module>& modules, const string& qvar)

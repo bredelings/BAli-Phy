@@ -148,7 +148,7 @@ vector<int> Model::add_submodel(const Module& M)
 {
   // 1. Load the module, perform imports, and resolve its symbols.
   int old_n_notes = n_notes();
-  C += {M};
+  C += M;
 
   // 3. Check that no parameters are declared via notes, here.
   assert( find_declared_parameters(M).empty() );

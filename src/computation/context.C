@@ -77,7 +77,7 @@ int context::add_note(const expression_ref& E)
   if (is_AST(E, "import_note"))
   {
     string modid = *E->sub[0].assert_is_a<String>();
-    (*this) += {modid};
+    (*this) += modid;
   }
   else if (is_AST(E, "import_submodel_note"))
   {
@@ -85,24 +85,8 @@ int context::add_note(const expression_ref& E)
 
     string modid1 = *E->sub[0].assert_is_a<String>();
     string modid2 = *E->sub[1].assert_is_a<String>();
-    Program& PP = *P.modify();
 
-    int old_n_parameters = n_parameters();
-
-    // Get module_names, but in a set<string>
-    set<string> old_module_names = module_names_set(PP);
-
-    PP.push_back(load_and_rename_module(get_module_loader(), modid1, modid2));
-    add_missing_imports(get_module_loader(), PP, (*this));
-
-    vector<string> new_module_names;
-    for(auto& module: PP)
-      if (not old_module_names.count(module.name))
-	new_module_names.push_back(module.name);
-
-    allocate_identifiers_for_modules(new_module_names);
-
-    set_default_values_from_notes(*this, first_note, n_notes());
+    (*this) += pair<string,string>{modid1, modid2};
   }
   
   return Model_Notes::add_note( E );
@@ -518,9 +502,28 @@ const vector<string>& context::get_builtins_path() const
   return loader.builtins_path;
 }
 
+context& context::operator+=(const string& module_name)
+{
+  if (not contains_module(*P, module_name))
+    (*this) += get_module_loader().load_module(module_name);
+
+  return *this;
+}
+
+context& context::operator+=(const pair<string,string>& module_names)
+{
+  if (not contains_module(*P, module_names.second))
+    (*this) += get_module_loader().load_and_rename_module(module_names.first, module_names.second);
+
+  return *this;
+}
+
 context& context::operator+=(const vector<string>& module_names)
 {
-  return operator+=(load_modules(get_module_loader(), module_names));
+  for(const auto& name: module_names)
+    (*this) += name;
+
+  return *this;
 }
 
 void context::allocate_identifiers_for_modules(const vector<string>& module_names)
@@ -589,7 +592,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 }
 
 // \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
-context& context::operator+=(const vector<Module>& P2)
+context& context::operator+=(const Module& M)
 {
   Program& PP = *P.modify();
 
@@ -598,8 +601,8 @@ context& context::operator+=(const vector<Module>& P2)
   // Get module_names, but in a set<string>
   set<string> old_module_names = module_names_set(PP);
 
-  // 1. Add the new modules to the program, perform imports, and resolve symbols.
-  add(loader, PP, *this, P2);
+  // 1. Add the new modules to the program, add notes, perform imports, and resolve symbols.
+  add(loader, PP, *this, M);
 
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
   vector<string> new_module_names;
@@ -611,6 +614,15 @@ context& context::operator+=(const vector<Module>& P2)
 
   set_default_values_from_notes(*this,first_note,n_notes());
   
+  return *this;
+}
+
+// \todo FIXME:cleanup If we can make this only happen once, we can assume old_module_names is empty.
+context& context::operator+=(const vector<Module>& Ms)
+{
+  for(const auto& M: Ms)
+    (*this) += M;
+
   return *this;
 }
 
@@ -673,15 +685,19 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
    token(memory->get_unused_token()),
    loader(L)
 {
-  (*this) += {"Prelude"};
+  (*this) += "Prelude";
+  (*this) += "Parameters";
   (*this) += Ps;
 
   add_submodel(*this, N);
 }
 
 context::context(const module_loader& L, const vector<expression_ref>& N, const vector<string>& module_names)
-  :context(L,N,load_modules(L, module_names))
-{ }
+  :context(L,N)
+{
+  for(const auto& name: module_names)
+    (*this) += name;
+}
 
 context::context(const context& C)
   :Model_Notes(C),
