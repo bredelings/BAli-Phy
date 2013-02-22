@@ -73,7 +73,9 @@ builtin set_vector_index 3 "set_vector_index";
 builtin new_vector 1 "new_vector";
 builtin get_vector_index 2 "get_vector_index";
 builtin vector_size 1 "vector_size";
-
+builtin c_fst 1 "c_fst";
+builtin c_snd 1 "c_snd";
+builtin c_pair 2 "c_pair";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
