@@ -215,6 +215,8 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
+
+      auto range = P.get_context().evaluate_expression_as<constructor>( (identifier("distRange"),dist) );
       if (range->f_name != RangeType) continue;
 
       if (is_exactly(rand_var->head,":"))
