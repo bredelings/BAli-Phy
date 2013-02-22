@@ -184,6 +184,10 @@ listArray n l = mkArray n (\i -> l !! i);
 
 listArray' l = listArray (length l) l;
 
+list_from_vector' v s i = if (i<s) then (get_vector_index v i):list_from_vector' v s (i+1) else [];
+
+list_from_vector v = list_from_vector' v (vector_size v) 0;
+
 listFromVectorInt' v s i = if (i<s) then (getVectorIntElement v i):listFromVectorInt' v s (i+1) else [];
 
 listFromVectorInt v = listFromVectorInt' v (sizeOfVectorInt v) 0;
