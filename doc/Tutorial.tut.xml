@@ -24,17 +24,21 @@
     <author><personname><firstname>Benjamin</firstname><surname>Redelings</surname></personname></author>
   </info>
     
-  <section xml:id="intro"><info><title>Setting up the Work directory</title></info>
+  <section xml:id="intro"><info><title>Introduction</title></info>
+<para>
+This tutorial contains step-by-step commands, assuming that you have already installed bali-phy in <filename>~/local/</filename>.  The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">manual</link> contains more detailed explanations for many things, so you might want to refer to it during the tutorial.</para>
+  </section>
+  <section xml:id="work_directory"><info><title>Setting up the <filename>~/Work</filename> directory</title></info>
 
 <para>Go to your home directory:
 % cd ~
 Make a directory called Work inside it:
 % mkdir Work
-Go into the Work directory:
+Go into the <filename>Work</filename> directory:
 % cd Work
 Make a shortcut (a symbolic link) to the examples directory:
-% ln -s ~/local/share/bali-phy/examples
-Take a look inside the examples directory:
+% ln -s ~/local/share/bali-phy/examples examples
+Take a look inside the <filename>examples</filename> directory:
 % ls examples
 Take a look at an input file:
 % less examples/5S-rRNA/5d.fasta
@@ -97,7 +101,7 @@ The M0 model requires a codon alphabet:
 
 <section ><info><title>Output</title></info>
 <para>
-See manual <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html#output">Section 6: Output</link>) for more information about this section.
+See <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html#output">Section 6: Output</link> of the manual for more information about this section.
 </para>
 <para>
 Try running an analysis with a few more iterations.  The &#38; makes the command run in the background, so that you can run other commands before it finishes.
@@ -142,14 +146,21 @@ Examine the file containing the successive best alignment/tree pairs visited:
 <section ><info><title>Summarizing the output</title></info>
 <para>
 Try summarizing the sampled numerical parameters (e.g. not trees and alignments):
+% statreport --help
 % statreport 25-muscle-1/C1.p 25-muscle-2/C1.p > Report
+% statreport 25-muscle-1/C1.p 25-muscle-2/C1.p --mean > Report
+% statreport 25-muscle-1/C1.p 25-muscle-2/C1.p --mean --median > Report
 % less Report
 Now lets examine the summaries using a graphical program.  If you are using Windows or Mac, run Tracer, and press the <guilabel>+</guilabel> button to add these files.  What kind of ESS do you get?  If you are using Linux, do 
 % tracer 25-muscle-1/C1.p 25-muscle-2/C1.p &#38;
 Now lets compute the consensus tree for these two runs:
+% trees-consensus --help
 % trees-consensus 25-muscle-1/C1.trees 25-muscle-2/C1.trees > c50.PP.tree
+% trees-consensus 25-muscle-1/C1.trees 25-muscle-2/C1.trees --report=consensus > c50.PP.tree
+% less consensus
 % figtree c50.PP.tree &#38;
 Now lets see if there is evidence that the two runs have not converged yet:
+% trees-bootstrap --help
 % trees-bootstrap 25-muscle-1/C1.trees 25-muscle-2/C1.trees > partitions.bs
 % less partitions.bs
 
@@ -160,5 +171,30 @@ Now lets use the analysis script to run all the summaries and make a report:
 </section>
 </section>
 
+<section><info><title>Multi-gene analyses</title></info>
+<para>This is described in more detail in section 4.3 of the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bali-phy.org/README.html">manual</link>.</para>
+<para>Check this</para>.
+<para>
+Download HIV env and pol alignments with the same sequence names:
+% wget http://nucleus.biology.duke.edu/~bredelings/alignment_files/env-common.fasta
+% wget http://nucleus.biology.duke.edu/~bredelings/alignment_files/pol-common.fasta
+Try to analyze these genes jointly under a codon model:
+% bali-phy --show-only --alphabet Codons env-common.fasta pol-common.fasta --smodel M0
+Take a look at the lengths of these files, to see whether the sequencealignment lengths are multiples of 3:
+% alignment-info pol-common.fasta
+% alignment-info env-common.fasta
+Now edit the fasta files so that the lengths are a multiple of three:
+% alignment-cat -c1-951 env-common.fasta > env-common2.fasta
+% alignment-cat -c1-1068 pol-common.fasta > pol-common2.fasta
+Try running bali-phy again:
+% bali-phy --show-only --alphabet Codons env-common.fasta pol-common.fasta --smodel M0
+Now open the fasta files in an editor and replace all nucleotide ambiguity codes K and M with N.  This time the run should succeed:
+% bali-phy --show-only --alphabet Codons env-common.fasta pol-common.fasta --smodel M0
+By default, the M0 substitution model will be selected for both genes.  However, each gene will have a separate instance of the model with its own gene-specific values for the model parameters.  Try specifying that both genes share one instance of the model parameters:
+% bali-phy --iterations=10 --alphabet Codons env-common.fasta pol-common.fasta --smodel=1,2:M0
+Now try reading one gene as Codons, and the other as DNA:
+% bali-phy --iterations=10 --alphabet=1:Codons --alphabet=2:DNA env-common.fasta pol-common.fasta
+</para>
+</section>
 
 </article>

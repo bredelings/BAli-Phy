@@ -543,7 +543,7 @@ FLAGS: -isystem &#36;(top_srcdir)/boost/include -ffast-math -DNDEBUG
       <para>You may analyze multiple genes by putting each one it its own data partition:
 	<screen><prompt>%</prompt> <userinput>bali-phy <replaceable>sequence-file1</replaceable> <replaceable>sequence-file2</replaceable></userinput></screen>
 	You should put the data from the first gene in <replaceable>sequence-file1</replaceable> and the second gene
-	in <replaceable>sequence-file2</replaceable>.  In this scenario, both genes share the same tree, but their alignments vary independently.  Furthermore, the branch lengths for each gene are scaled by an independent factor.  By default, each partition will have its own default alphabet, substitution model, insertion/deletion model, and tree length.    
+	in <replaceable>sequence-file2</replaceable>.  The sequence names in both files should be the same.  In this scenario, both genes share the same tree, but their alignments vary independently.  Furthermore, the branch lengths for each gene are scaled by an independent factor.  By default, each partition will have its own default alphabet, substitution model, insertion/deletion model, and tree length.    
       </para>
 
       <para>By default, each partition will recieve an independent copy of the model, and will not share parameter values:
