@@ -215,6 +215,31 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
+      if (RangeType == "Range.TrueFalseRange")
+      {
+	int token = P.get_context().get_token();
+	object_ref v = P.get_context().evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)) );
+	std::cout<<RangeType<<"  vector v = "<<v->print()<<"\n";
+	std::cout.flush();
+	object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+	for(const auto& x: V->t)
+	{
+	  std::cout<<RangeType<<"  "<<rand_var->print()<<": "<<x->print()<<"\n";
+	}
+      }
+
+      if (RangeType == "Range.OpenInterval")
+      {
+	int token = P.get_context().get_token();
+	object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)) );
+	std::cout<<RangeType<<"  vector v = "<<v->print()<<"\n";
+	std::cout.flush();
+	object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+	for(const auto& x: V->t)
+	{
+	  std::cout<<RangeType<<"  "<<rand_var->print()<<": "<<x->print()<<"\n";
+	}
+      }
 
       auto range = P.get_context().evaluate_expression_as<constructor>( (identifier("distRange"),dist) );
       if (range->f_name != RangeType) continue;
@@ -725,6 +750,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
 
   vector<vector<string>> bernoulli_parameters = get_distributed_parameters(P,"Range.TrueFalseRange");
+  get_distributed_parameters(P,"Range.OpenInterval");
   for(const auto& parameters: bernoulli_parameters)
   {
     assert(parameters.size() == 1);
