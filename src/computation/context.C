@@ -1,3 +1,4 @@
+#undef NDEBUG
 #include "computation/context.H"
 #include "computation/program.H"
 #include "loader.H"
@@ -178,7 +179,12 @@ closure context::lazy_evaluate_expression_(closure&& C, bool ec) const
 
 object_ref context::evaluate_expression_(closure&& C,bool ec) const
 {
-  return lazy_evaluate_expression_(std::move(C),ec).exp->head;
+  expression_ref result = lazy_evaluate_expression_(std::move(C),ec).exp;
+#ifndef NDEBUG
+  if (is_a<lambda2>(result))
+    throw myexception()<<"Evaluating lambda as object: "<<result->print();
+#endif
+  return result->head;
 }
 
 closure context::lazy_evaluate_expression(const expression_ref& E, bool ec) const
