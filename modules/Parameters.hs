@@ -21,15 +21,14 @@ set_parameter_value token p v = if (is_modifiable token p)
 findAtomic ps (ListRange rs) = concat $ zipWith findAtomic ps rs;
 findAtomic p r = [(p,r)];
 
-findBinary' p r = [p2 | (p2,TrueFalseRange) <- findAtomic p r];
-findBinary  p r = list_to_vector . (map get_modifiable_index) $ findBinary' p r;
+findBinary p r = list_to_vector [get_modifiable_index p2 | (p2,TrueFalseRange) <- findAtomic p r];
 
-findReal' p = [p2 | (p2,OpenInterval _ _) <- findAtomic p];
+findReal' p r = [p2 | (p2,OpenInterval _ _) <- findAtomic p r];
 findReal = listToVectorInt . (map get_modifiable_index) . findReal;
 
-findInteger' p = [p2 | (p2,IntegerInterval _ _) <- findAtomic p];
+findInteger' p r = [p2 | (p2,IntegerInterval _ _) <- findAtomic p r];
 findInteger = listToVectorInt . (map get_modifiable_index) . findInteger';
 
-findSimplex' p = [p2 | (p2,Simplex _ _) <- findAtomic p];
+findSimplex' p r = [p2 | (p2,Simplex _ _) <- findAtomic p r];
 findSimplex = listToVectorInt . (map get_modifiable_index) . findSimplex';
 }
