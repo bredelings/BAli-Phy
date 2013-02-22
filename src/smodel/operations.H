@@ -123,27 +123,6 @@ namespace substitution {
 
   extern const expression_ref Q;
 
-  struct M0_Op: public Operation
-  {
-    M0_Op* clone() const {return new M0_Op(*this);}
-
-    tribool compare(const Object& O) const
-    {
-      if (this == &O) 
-	return true;
-      
-      if (typeid(*this) != typeid(O)) return false;
-      
-      return true;
-    }
-
-    closure operator()(OperationArgs& Args) const;
-
-    std::string name() const {return "M0";}
-
-    M0_Op():Operation(3) { }
-  };
-
   formula_expression_ref Reversible_Markov_Model(const formula_expression_ref& S, const formula_expression_ref& R);
 
   formula_expression_ref Unit_Model(const formula_expression_ref&);
