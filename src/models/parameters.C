@@ -101,7 +101,16 @@ using std::ostream;
  *
  * 10. Compare the monadic interface with Acar's interface.
  *
- * 11. Remove class Parameter that is solely used in the old way of defining parameters.
+ * 11. [DONE] Remove class Parameter that is solely used in the old way of defining parameters.
+ *
+ * 12. Make loading of data easier
+ *     - Handle sequences with lengths not divisible by 3.
+ *     - Handle loading alignments with codons not together.
+ *     - Handle guessing of alphabets based on frequencies.
+ *     - Handle loading of letters like K for DNA -- change to N.
+ *     - Could we actually handle all SEEN codon triplets?
+ *
+ * 13. 
  */
 
 bool use_internal_index = true;
