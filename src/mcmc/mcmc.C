@@ -646,6 +646,33 @@ namespace MCMC {
     :Slice_Move(s,0.2/indices_.size()),indices(indices_),n(n_)
   { }
 
+  void Dirichlet_Modifiable_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
+  {
+    double v1 = P->get_modifiable_value_as<Double>(indices[n]);
+    constant_sum_modifiable_slice_function slice_levels_function(*P,indices,n);
+
+    double v2 = sample(*P,slice_levels_function,v1);
+
+    //---------- Record Statistics - -------------//
+    Result result(2);
+    vector<Double> x = P->get_modifiable_values_as<Double>(indices);
+    double total = sum(x);
+    double factor = (total - v2)/(total-v1);
+    result.totals[0] = std::abs(log(v2/v1)) + (indices.size()-1)*(std::abs(log(factor)));
+    result.totals[1] = slice_levels_function.count;
+
+    Stats.inc(name,result);
+  }
+
+  std::set<int> Dirichlet_Modifiable_Slice_Move::get_affected_parameters(const owned_ptr<Probability_Model>&) const
+  {
+    return {};
+  }
+
+  Dirichlet_Modifiable_Slice_Move::Dirichlet_Modifiable_Slice_Move(const string& s, const vector<int>& indices_, int n_)
+    :Slice_Move(s,0.2/indices_.size()),indices(indices_),n(n_)
+  { }
+
   std::set<int> Scale_Means_Only_Slice_Move::get_affected_parameters(const owned_ptr<Probability_Model>& P) const
   {
     const Parameters& PP = *P.as<const Parameters>();

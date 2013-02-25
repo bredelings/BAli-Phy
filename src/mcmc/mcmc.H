@@ -402,6 +402,24 @@ namespace MCMC {
     Dirichlet_Slice_Move(const std::string&, const std::vector<int>&, int);
   };
 
+  class Dirichlet_Modifiable_Slice_Move: public Slice_Move
+  {
+    std::vector<int> indices;
+
+    int n;
+
+  public:
+    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const;
+
+    Dirichlet_Modifiable_Slice_Move* clone() const {return new Dirichlet_Modifiable_Slice_Move(*this);}
+
+    void iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
+
+    void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
+
+    Dirichlet_Modifiable_Slice_Move(const std::string&, const std::vector<int>&, int);
+  };
+
   class Scale_Means_Only_Slice_Move: public Slice_Move
   {
   public:
