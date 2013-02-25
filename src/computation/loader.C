@@ -78,6 +78,9 @@ using std::map;
  *      + This move would walk the parameter, and apply sub-moves to its pieces.
  *      + This method would allow situations where parameters change size.
  *      + The method would also allow determine the bounds for slice moves dynamically.
+ *        - Currently, I think we determine the bounds dynamically!
+ *        - Currently, the bounds are set to an expression!
+ *        - Losing this is a step backwards!
  *        - Hmm... If proposals depend on the bounds, that would make the proposals dynamic too!
 
  * 8. Rationalize Model_Notes, formula_expression_ref, and program?
