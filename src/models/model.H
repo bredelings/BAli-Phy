@@ -128,6 +128,17 @@ public:
   const T& get_modifiable_value_as(int i) const {
     return *convert<const T>(get_modifiable_value(i));
   }
+  /// Get SOME model parameter values
+  template <typename T>
+  std::vector<T> get_modifable_values_as(const std::vector<int>& indices) const
+  {
+    std::vector<T> values(indices.size());
+    
+    for(int i=0;i<values.size();i++)
+      values[i] = get_modifiable_value_as<const T>(indices[i]);
+    
+    return values;  
+  }
 
   /// Get A model parameter value
   object_ptr<const Object> get_parameter_value(int i) const;
