@@ -576,7 +576,7 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
 
   // Add slice moves for continuous 1D distributions
   add_1D_slice_moves_for_type<Double>(P, slice_moves);
-  add_1D_slice_moves_for_type<Double>(P, slice_moves);
+  add_real_slice_moves(P, slice_moves);
 
   /*    
   add_slice_moves(P, "*.HKY.kappa", slice_moves);
