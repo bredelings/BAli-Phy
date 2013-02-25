@@ -553,7 +553,7 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
       {
 	assert(find_parameter(S.name) == -1);
 
-	int index = n_parameters();
+	//	int index = n_parameters();
 	
 	root_t r = allocate_reg();
 	parameters().push_back( {S.name, r} );
