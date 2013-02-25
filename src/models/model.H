@@ -130,7 +130,7 @@ public:
   }
   /// Get SOME model parameter values
   template <typename T>
-  std::vector<T> get_modifable_values_as(const std::vector<int>& indices) const
+  std::vector<T> get_modifiable_values_as(const std::vector<int>& indices) const
   {
     std::vector<T> values(indices.size());
     
