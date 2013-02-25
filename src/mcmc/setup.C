@@ -243,6 +243,32 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
 	}
       }
 
+      if (RangeType == "Range.Simplex")
+      {
+	typedef std::pair<object_ref,object_ref> Pair_;
+	typedef Box<Pair_> Pair;
+	int token = P.get_context().get_token();
+	object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)) );
+	//	std::cout<<RangeType<<"  vector v = "<<v<<std::endl;
+	object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+	for(const auto& x: V->t)
+	{
+	  //	  std::cout<<RangeType<<"  "<<rand_var<<": "<<x<<std::endl;
+	  object_ptr<const Pair> p = convert<const Pair>(x);
+	  //	  std::cout<<RangeType<<"  "<<rand_var<<": ("<<p->t.first<<","<<p->t.second<<")"<<std::endl;
+	  object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->t.first);
+	  object_ptr<const Pair> r = convert<const Pair>(p->t.second);
+	  std::cout<<RangeType<<"  "<<rand_var<<": (";
+	  for(const auto& y: ms->t)
+	  {
+	    std::cout<<y<<" ";
+	  }
+	  std::cout<<", ";
+	  std::cout<<"("<<r->t.first<<", "<<r->t.second<<")";
+	  std::cout<<")"<<std::endl;
+	}	
+      }
+
       auto range = P.get_context().evaluate_expression_as<constructor>( (identifier("distRange"),dist) );
       if (range->f_name != RangeType) continue;
 
