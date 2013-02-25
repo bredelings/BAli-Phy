@@ -577,6 +577,46 @@ namespace MCMC {
     :Slice_Move(s,v,W_,f1,f2),index(i)
   {}
 
+  void Modifiable_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
+  {
+    double v1 = P->get_modifiable_value_as<Double>(index);
+
+    modifiable_slice_function logp(*P,index,bounds,transform,inverse);
+
+    double v2 = sample(*P,logp,v1);
+
+    //---------- Record Statistics --------------//
+    Result result(2);
+    result.totals[0] = std::abs(v2-v1);
+    result.totals[1] = logp.count;
+    
+    Stats.inc(name,result);
+  }
+
+  Modifiable_Slice_Move::Modifiable_Slice_Move(const string& s,int i,
+					       const Bounds<double>& b, double W_)
+    :Slice_Move(s,W_),index(i),bounds(b)
+  {}
+
+  Modifiable_Slice_Move::Modifiable_Slice_Move(const string& s, const string& v,int i,
+					       const Bounds<double>& b, double W_)
+    :Slice_Move(s,v,W_),index(i),bounds(b)
+  {}
+
+  Modifiable_Slice_Move::Modifiable_Slice_Move(const string& s,int i,
+					       const Bounds<double>& b, double W_,
+					       double(*f1)(double),
+					       double(*f2)(double))
+    :Slice_Move(s,"",W_,f1,f2),index(i),bounds(b)
+  {}
+
+  Modifiable_Slice_Move::Modifiable_Slice_Move(const string& s, const string& v,int i,
+					       const Bounds<double>& b, double W_,
+					       double(*f1)(double),
+					       double(*f2)(double))
+    :Slice_Move(s,v,W_,f1,f2),index(i),bounds(b)
+  {}
+
   void Dirichlet_Slice_Move::iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats,int)
   {
     double v1 = P->get_parameter_value_as<Double>(indices[n]);

@@ -347,6 +347,42 @@ namespace MCMC {
 			 double(*f2)(double));
   };
 
+  class Modifiable_Slice_Move: public Slice_Move
+  {
+    int index;
+    Bounds<double> bounds;
+
+  public:
+    std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const {return {};}
+    
+    Modifiable_Slice_Move* clone() const {return new Modifiable_Slice_Move(*this);}
+    
+    void iterate(owned_ptr<Probability_Model>& P,MoveStats& Stats) { iterate(P,Stats,0); }
+    
+    void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
+    
+    Modifiable_Slice_Move(const std::string& s,int i, const Bounds<double>& b, double W_);
+    
+    Modifiable_Slice_Move(const std::string& s, const std::string& v,int i,
+			  const Bounds<double>& b, double W_);
+    
+    Modifiable_Slice_Move(const std::string& s,int i,
+			  const Bounds<double>& b, double (*W_)(const Probability_Model&));
+    
+    Modifiable_Slice_Move(const std::string& s, const std::string& v,int i,
+			  const Bounds<double>& b, double (*W_)(const Probability_Model&));
+    
+    Modifiable_Slice_Move(const std::string& s,int i,
+			  const Bounds<double>& b, double W_,
+			  double(*f1)(double),
+			  double(*f2)(double));
+    
+    Modifiable_Slice_Move(const std::string& s, const std::string& v,int i,
+			  const Bounds<double>& b, double W_,
+			  double(*f1)(double),
+			  double(*f2)(double));
+  };
+
   class Dirichlet_Slice_Move: public Slice_Move
   {
     std::vector<int> indices;
