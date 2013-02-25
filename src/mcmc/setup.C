@@ -239,7 +239,7 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
 	{
 	  //	  std::cout<<RangeType<<"  "<<rand_var<<": "<<x<<std::endl;
 	  object_ptr<const Pair> p = convert<const Pair>(x);
-	  std::cout<<RangeType<<"  "<<rand_var<<": ("<<p->t.first<<","<<p->t.second<<")"<<std::endl;
+	  std::cout<<RangeType<<"  "<<rand_var<<": ("<<p->t.first<<", "<<p->t.second<<")"<<std::endl;
 	}
       }
 
