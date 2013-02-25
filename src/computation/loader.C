@@ -71,6 +71,15 @@ using std::map;
  *    5d. Log structures with variable components.
  *        - How shall we name the pieces?  We want piA instead of pi!0.
 
+ * 6. Keep better track of which variables have transition kernels.
+ *    - Right now, we create a separate move for each modifiable.
+ *    - It is unclear how these modifiables map to parameters.
+ *    - One idea would be to create a single move for each parameter.
+ *      + This move would walk the parameter, and apply sub-moves to its pieces.
+ *      + This method would allow situations where parameters change size.
+ *      + The method would also allow determine the bounds for slice moves dynamically.
+ *        - Hmm... If proposals depend on the bounds, that would make the proposals dynamic too!
+
  * 8. Rationalize Model_Notes, formula_expression_ref, and program?
  *    - I note that a "model" compresses a complex expression into Model.main.
  *    - [DONE] Add Model_Notes to Module.
