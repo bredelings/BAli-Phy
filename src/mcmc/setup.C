@@ -288,6 +288,33 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
 }
 
 /// Find parameters with distribution name Dist
+void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
+{
+  typedef std::pair<object_ref,object_ref> Pair_;
+  typedef Box<Pair_> Pair;
+  int token = P.get_context().get_token();
+  
+  for(int i=0;i<P.n_notes();i++)
+    if (is_exactly(P.get_note(i),":~"))
+    {
+      expression_ref rand_var = P.get_note(i)->sub[0];
+      expression_ref dist = P.get_note(i)->sub[1];
+
+      object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)) );
+
+      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      for(const auto& x: V->t)
+      {
+	object_ptr<const Pair> p = convert<const Pair>(x);
+	int m = *convert<const Int>(p->t.first);
+	Bounds<double> bounds = *convert<const Bounds<Double>>(p->t.second);
+	string name = rand_var->print()+convertToString<int>(m);
+	M.add( 1.0, MCMC::Modifiable_Slice_Move(name, m, bounds, 1.0) );
+      }
+    }
+}
+
+/// Find parameters with distribution name Dist
 template <typename T>
 vector<string> get_singly_distributed_parameters_by_type(const Probability_Model& P)
 {
