@@ -1135,30 +1135,6 @@ void mcmc_log(long iterations, long max_iter, int subsample, Parameters& P, ostr
     }
 }
 
-vector< std::pair<int, Bounds<double> > > change_bound(owned_ptr<Probability_Model>& P, 
-						  const string& name, const Bounds<double>& new_bounds)
-{
-  vector<int> indices = parameters_with_extension(*P,name);
-
-  vector< std::pair<int, Bounds<double> > > changed_bounds;
-
-  for(int i=0;i<indices.size();i++)
-  {
-    int index = indices[i];
-
-    Bounds<double> orig_bounds = P->get_bounds(index);
-    P->set_bounds(index, orig_bounds and new_bounds);
-    Bounds<double> total_bounds = P->get_bounds(index);
-    P->set_parameter_value(index, wrap(double(P->get_parameter_value_as<Double>(index)), total_bounds));
-#ifndef NDEBUG
-    clog<<"bounds: "<<name<<" = "<<P->get_parameter_value_as<Double>(index)<<"  in  "<<P->get_bounds(index)<<endl;
-#endif
-    changed_bounds.push_back( std::pair<int,Bounds<double> >(index,orig_bounds) );
-  }
-
-  return changed_bounds;
-}
-
 template <typename T>
 void add_at_end(vector<T>& v1, const vector<T>& v2)
 {
@@ -1214,17 +1190,6 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     }
   }
 
-  /// Find parameters to fix for the first 5 iterations
-  vector<std::pair<int, Bounds<double> > > restore_bounds;
-
-  if (alignment_burnin_iterations > 0)
-  {
-    add_at_end(restore_bounds, change_bound(P, "I*.logLambda",  ::upper_bound(-4.0)  ) );
-    add_at_end(restore_bounds, change_bound(P, "I*.delta",  ::upper_bound(-5.0)  ) );
-    add_at_end(restore_bounds, change_bound(P, "I*.meanIndelLengthMinus1",  ::between(0.0, 1.0)  ) );
-    add_at_end(restore_bounds, change_bound(P, "^mu*",  ::upper_bound(0.5)  ) );
-  }
-
   //---------------- Run the MCMC chain -------------------//
   for(int iterations=0; iterations < max_iter; iterations++) 
   {
@@ -1233,11 +1198,6 @@ void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_ite
     // Free temporarily fixed parameters at iteration 5
     if (iterations == alignment_burnin_iterations)
     {
-      for(int i=0;i<restore_bounds.size();i++)
-	if (restore_bounds[i].first != -1)
-	  P->set_bounds(restore_bounds[i].first, restore_bounds[i].second);
-      restore_bounds.clear();
-      
       PP.set_parameter_value(PP.find_parameter("IModels.training"), new constructor("Prelude.False",0));
 
       PP.branch_length_max = -1;
