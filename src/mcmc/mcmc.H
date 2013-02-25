@@ -349,7 +349,8 @@ namespace MCMC {
 
   class Modifiable_Slice_Move: public Slice_Move
   {
-    int index;
+    int m_index;
+    int p_index;
     Bounds<double> bounds;
 
   public:
@@ -361,23 +362,23 @@ namespace MCMC {
     
     void iterate(owned_ptr<Probability_Model>& P,MoveStats&,int);
     
-    Modifiable_Slice_Move(const std::string& s,int i, const Bounds<double>& b, double W_);
+    Modifiable_Slice_Move(const std::string& s,int m, int p, const Bounds<double>& b, double W_);
     
-    Modifiable_Slice_Move(const std::string& s, const std::string& v,int i,
+    Modifiable_Slice_Move(const std::string& s, const std::string& v,int m, int p,
 			  const Bounds<double>& b, double W_);
     
-    Modifiable_Slice_Move(const std::string& s,int i,
+    Modifiable_Slice_Move(const std::string& s,int m, int p,
 			  const Bounds<double>& b, double (*W_)(const Probability_Model&));
     
-    Modifiable_Slice_Move(const std::string& s, const std::string& v,int i,
+    Modifiable_Slice_Move(const std::string& s, const std::string& v,int m, int p,
 			  const Bounds<double>& b, double (*W_)(const Probability_Model&));
     
-    Modifiable_Slice_Move(const std::string& s,int i,
+    Modifiable_Slice_Move(const std::string& s,int m, int p,
 			  const Bounds<double>& b, double W_,
 			  double(*f1)(double),
 			  double(*f2)(double));
     
-    Modifiable_Slice_Move(const std::string& s, const std::string& v,int i,
+    Modifiable_Slice_Move(const std::string& s, const std::string& v,int m, int p,
 			  const Bounds<double>& b, double W_,
 			  double(*f1)(double),
 			  double(*f2)(double));

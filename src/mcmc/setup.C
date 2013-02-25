@@ -303,13 +303,17 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
       object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)) );
 
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      int p_index = -1;
+      if (object_ptr<const parameter> p = rand_var.is_a<parameter>())
+	p_index = P.find_parameter(p->parameter_name);
+
       for(const auto& x: V->t)
       {
 	object_ptr<const Pair> p = convert<const Pair>(x);
-	int m = *convert<const Int>(p->t.first);
-	Bounds<double> bounds = *convert<const Bounds<Double>>(p->t.second);
-	string name = rand_var->print()+convertToString<int>(m);
-	M.add( 1.0, MCMC::Modifiable_Slice_Move(name, m, bounds, 1.0) );
+	int m_index = *convert<const Int>(p->t.first);
+	Bounds<double> bounds = *convert<const Bounds<double>>(p->t.second);
+	string name = rand_var->print()+"_"+convertToString<int>(m_index);
+	M.add( 1.0, MCMC::Modifiable_Slice_Move(name, m_index, p_index, bounds, 1.0) );
       }
     }
 }
