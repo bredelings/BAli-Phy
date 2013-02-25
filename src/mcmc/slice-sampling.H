@@ -213,6 +213,39 @@ struct constant_sum_slice_function:public slice_function
   constant_sum_slice_function(Probability_Model&,const std::vector<int>&,int);
 };
 
+/// \brief A slice_function for resampling \f$x_n\f$ when \f$\sum_i x_i=C\f$
+///
+/// This function is parameterized in terms of t, where
+///  x'[i] = x[i] * (C-t)/(C-x[n])   if (i!=n)
+///  x'[n] = t
+///
+/// The slices are levels of \f$Pr(x)\times(C-x[n])^{N-1}$ where
+///  N = the dimension of x.
+///
+struct constant_sum_modifiable_slice_function:public slice_function
+{
+  /// The number of times the function is called.
+  int count;
+
+  /// Which indices form the dirichlet parameter that we are resampling?
+  std::vector<int> indices;
+
+  /// Which of the above indices is the one that we are resampling?
+  int n;
+
+  /// The object whose parameters we are sampling
+  Probability_Model& P;
+
+  /// return the probability * mu^(B-1)
+  double operator()(double);
+
+  double operator()();
+
+  double current_value() const;
+
+  constant_sum_modifiable_slice_function(Probability_Model&,const std::vector<int>&,int);
+};
+
 double transform_epsilon(double);
 double inverse_epsilon(double);
 

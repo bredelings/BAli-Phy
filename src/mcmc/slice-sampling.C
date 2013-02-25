@@ -339,6 +339,68 @@ constant_sum_slice_function::constant_sum_slice_function(Probability_Model& P_, 
   set_upper_bound(total);
 }
 
+double constant_sum_modifiable_slice_function::operator()(double t)
+{
+  const int N = indices.size();
+
+  vector<double> x(N);
+  for(int i=0;i<N;i++)
+    x[i] = P.get_modifiable_value_as<Double>(indices[i]);
+
+  double total = sum(x);
+
+  double factor = (total - t)/(total - x[n]);
+
+  for(int i=0;i<indices.size();i++)
+    if (i == n)
+      x[i] = t;
+    else
+      x[i] *= factor;
+
+  assert(std::abs(sum(x) - total) < 1.0e-9);
+
+  for(int i=0;i<N;i++)
+    P.set_modifiable_value(indices[i], -1, Double(x[i]) );
+
+  return operator()();
+}
+
+
+double constant_sum_modifiable_slice_function::operator()()
+{
+  count++;
+
+  const int N = indices.size();
+
+  double total = 0;
+  for(int i=0;i<N;i++)
+    total += P.get_modifiable_value_as<Double>(indices[i]);
+
+  double t = current_value();
+
+  // return pi * (1-x)^(N-1)
+  return log(P.heated_probability()) + (N-1)*log(total-t);
+}
+
+double constant_sum_modifiable_slice_function::current_value() const
+{
+  return P.get_modifiable_value_as<Double>(indices[n]);
+}
+
+
+constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(Probability_Model& P_, const vector<int>& indices_,int n_)
+  :count(0),
+   indices(indices_),
+   n(n_),
+   P(P_)
+{ 
+  vector<Double> x = P.get_parameter_values_as<Double>(indices);
+  double total = sum(x);
+
+  set_lower_bound(0);
+  set_upper_bound(total);
+}
+
 // Note: In debugging slice sampling, remember that results will be different if anywhere
 //       else has sampled an extra random number.  This can occur if a parameter does not
 //       change the likelihood, but roundoff errors in the last decimal place affect whether
