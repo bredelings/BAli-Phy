@@ -117,6 +117,18 @@ public:
   void set_bounds(int i,const expression_ref&);
   void set_bounds(int i,const Bounds<double>&);
 
+  /// Get the value of a modifiable
+  object_ref get_modifiable_value(int i) const;
+
+  template <typename T>
+  bool modifiable_has_type(int index) const {return boost::dynamic_pointer_cast<const T>(get_modifiable_value(index));}
+
+  /// Get the value of a modifiable
+  template <typename T>
+  const T& get_modifiable_value_as(int i) const {
+    return *convert<const T>(get_modifiable_value(i));
+  }
+
   /// Get A model parameter value
   object_ptr<const Object> get_parameter_value(int i) const;
   object_ptr<const Object> get_parameter_value(const std::string& p_name) const;
@@ -160,6 +172,9 @@ public:
 
   /// Store ONE parameter value down into submodels
   virtual void write_value(int i, const object_ptr<const Object>& p);
+
+  /// Set the value of a modifiable
+  void set_modifiable_value(int p, const object_ref& value);
 
   /// Set A model parameter value
           void set_parameter_value(int p,Double value);

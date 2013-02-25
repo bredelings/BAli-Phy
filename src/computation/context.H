@@ -127,14 +127,26 @@ public:
   /// Change the name of the i-th named parameter
   void rename_parameter(int i, const std::string& s);
 
-  /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
+  /// Get the value of a modifiable - by its location in memory
+  object_ref get_reg_value(int R) const;
+
+  /// Get the value of a modifiable
+  object_ref get_modifiable_value(int index) const;
+
+  /// Get the value of a parameter
   object_ref get_parameter_value(int index) const;
 
-  /// Get the value of a non-constant, non-computed index
+  /// Get the value of a parameter
   object_ref get_parameter_value(const std::string&) const;
 
-  /// Update the value of a non-constant, non-computed index
-  void set_reg_value(int index, closure&&);
+  /// Update the value of a modifiable - by its location in memory
+  void set_reg_value(int R, closure&&);
+
+  /// Set the value of a modifiable
+  void set_modifiable_value_(int index, closure&&);
+
+  /// Set the value of a modifiable
+  void set_modifiable_value(int index, const expression_ref&);
 
   /// Update the value of a non-constant, non-computed index
   void set_parameter_value(int index, const expression_ref&);

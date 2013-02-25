@@ -57,16 +57,49 @@ double parameter_slice_function::current_value() const
 }
 
 parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_)
-  :slice_function(P_.get_bounds(n_)),
-   count(0),P(P_),n(n_),
-   transform(slice_sampling::identity),
-   inverse(slice_sampling::identity)
+  :parameter_slice_function(P_, n_, slice_sampling::identity, slice_sampling::identity)
 { }
 
 parameter_slice_function::parameter_slice_function(Probability_Model& P_,int n_,
 						   double(*f1)(double),
 						   double(*f2)(double))
   :slice_function(P_.get_bounds(n_)),
+   count(0),P(P_),n(n_),transform(f1),inverse(f2)
+{
+  if (has_lower_bound)
+    lower_bound = transform(lower_bound);
+  if (has_upper_bound)
+    upper_bound = transform(upper_bound);
+}
+
+
+
+double modifiable_slice_function::operator()(double x)
+{
+  count++;
+  P.set_modifiable_value(n,Double(inverse(x)));
+  return log(P.heated_probability());
+}
+
+double modifiable_slice_function::operator()()
+{
+  count++;
+  return log(P.heated_probability());
+}
+
+double modifiable_slice_function::current_value() const
+{
+  return P.get_modifiable_value_as<Double>(n);
+}
+
+modifiable_slice_function::modifiable_slice_function(Probability_Model& P_,int n_,const Bounds<double>& b)
+  :modifiable_slice_function(P_, n_, b, slice_sampling::identity, slice_sampling::identity)
+{ }
+
+modifiable_slice_function::modifiable_slice_function(Probability_Model& P_,int n_,const Bounds<double>& b,
+						     double(*f1)(double),
+						     double(*f2)(double))
+  :slice_function(b),
    count(0),P(P_),n(n_),transform(f1),inverse(f2)
 {
   if (has_lower_bound)

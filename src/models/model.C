@@ -374,6 +374,11 @@ void Model::set_bounds(int i,const Bounds<double>& b)
     C.set_compute_expression(bounds[i],b);
 }
 
+object_ref Model::get_modifiable_value(int i) const
+{
+  return C.get_modifiable_value(i);
+}
+
 object_ptr<const Object> Model::get_parameter_value(int i) const
 {
   return C.get_parameter_value(i);
@@ -388,6 +393,11 @@ void Model::write_value(int i,const object_ptr<const Object>& value)
 {
   C.set_parameter_value(i,value);
   modify_parameter(i);
+}
+
+void Model::set_modifiable_value(int i,const object_ref& value) 
+{
+  C.set_modifiable_value(i, value);
 }
 
 void Model::set_parameter_value(int i,Double value) 

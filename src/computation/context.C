@@ -212,22 +212,34 @@ bool context::parameter_is_set(int index) const
 }
 
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
-object_ref context::get_parameter_value(int index) const
+object_ref context::get_reg_value(int R) const
 {
-  assert(index >= 0 and index < n_parameters());
-
-  int P = get_parameter_reg(index);
-
-  if (not access(P).result)
+  if (not access(R).result)
   {
     // If there's no result AND there's no call, then the result simply hasn't be set, so return NULL.
-    if (not access(P).call) return object_ref();
+    if (not access(R).call) return object_ref();
 
     // If the value needs to be computed (e.g. its a call expression) then compute it.
-    incremental_evaluate(P);
+    incremental_evaluate(R);
   }
 
-  return access_result(P).exp->head;
+  return access_result(R).exp->head;
+}
+
+/// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
+object_ref context::get_modifiable_value(int index) const
+{
+  int R = get_modifiable_reg(index);
+
+  return get_reg_value(R);
+}
+
+/// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
+object_ref context::get_parameter_value(int index) const
+{
+  int R = get_parameter_reg(index);
+
+  return get_reg_value(R);
 }
 
 /// Get the value of a non-constant, non-computed index
@@ -238,6 +250,23 @@ object_ref context::get_parameter_value(const std::string& name) const
     throw myexception()<<"Cannot find parameter called '"<<name<<"'";
 
   return get_parameter_value(index);
+}
+
+void context::set_modifiable_value_(int index, closure&& C)
+{
+  int R = get_modifiable_reg(index);
+
+  set_reg_value(R, std::move(C) );
+}
+
+void context::set_modifiable_value(int index, const expression_ref& O)
+{
+  object_ref v = O->head;
+  assert(not O->size());
+  assert(not dynamic_pointer_cast<const index_var>(v));
+  assert(not dynamic_pointer_cast<const reg_var>(v));
+  assert(not dynamic_pointer_cast<const identifier>(v));
+  set_modifiable_value_(index, v);
 }
 
 void context::set_parameter_value(int index, const expression_ref& O)
@@ -720,19 +749,21 @@ reg_heap::root_t context::push_temp_head() const
   return memory->push_temp_head( token );
 }
 
-int context::get_parameter_reg(int i) const
+int context::get_parameter_reg(int index) const
 {
-  return *parameters()[i].second;
+  assert(index >= 0 and index < n_parameters());
+
+  return *parameters()[index].second;
 }
 
-int context::get_modifiable_reg(int i) const
+int context::get_modifiable_reg(int index) const
 {
   const pool<int>& p = modifiable_regs();
 
-  if (not p.is_used(i))
-    throw myexception()<<"Attempting to access non-existent modifiable #"<<i;
+  if (not p.is_used(index))
+    throw myexception()<<"Attempting to access non-existent modifiable #"<<index;
 
-  return p[i];
+  return p[index];
 }
 
 std::ostream& operator<<(std::ostream& o, const context& C)
