@@ -83,6 +83,8 @@ using std::map;
  *        - Losing this is a step backwards!
  *        - Hmm... If proposals depend on the bounds, that would make the proposals dynamic too!
 
+ * 7. Fix the parser to give meaningful error messages, instead of just saying that the entire body doesn't parse.
+
  * 8. Rationalize Model_Notes, formula_expression_ref, and program?
  *    - I note that a "model" compresses a complex expression into Model.main.
  *    - [DONE] Add Model_Notes to Module.
