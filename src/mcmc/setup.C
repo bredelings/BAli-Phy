@@ -319,6 +319,49 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 }
 
 /// Find parameters with distribution name Dist
+void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
+{
+  typedef std::pair<object_ref,object_ref> Pair_;
+  typedef Box<Pair_> Pair;
+  int token = P.get_context().get_token();
+  
+  for(int i=0;i<P.n_notes();i++)
+    if (is_exactly(P.get_note(i),":~"))
+    {
+      expression_ref rand_var = P.get_note(i)->sub[0];
+      expression_ref dist = P.get_note(i)->sub[1];
+
+      object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)) );
+
+      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+
+      for(const auto& x: V->t)
+      {
+	object_ptr<const Pair> p = convert<const Pair>(x);
+	string name = rand_var->print();
+
+	object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->t.first);
+	object_ptr<const Pair> r = convert<const Pair>(p->t.second);
+
+	vector<int> indices;
+	for(const auto& y: ms->t)
+	{
+	  int index = *convert<const Int>(y);
+	  indices.push_back(index);
+	  name += "_" + convertToString(index);
+	}
+
+	MCMC::MoveOne M2(name);
+
+	for(int i=0;i<indices.size();i++)
+	  M2.add( 1.0, MCMC::Dirichlet_Modifiable_Slice_Move(convertToString(i), indices, i) );
+
+	M.add(1.0, M2);
+      }
+    }
+}
+
+/// Find parameters with distribution name Dist
 template <typename T>
 vector<string> get_singly_distributed_parameters_by_type(const Probability_Model& P)
 {
@@ -352,70 +395,6 @@ vector<string> get_singly_distributed_parameters_by_type(const Probability_Model
   return names;
 }
 
-
-/// \brief Add a 1-D slice-sampling sub-move for a collection of parameters that sum to 1.
-///
-/// \param P             The model that contains the parameters
-/// \param name          The name of the parameter to create a move for
-/// \param pname         The name of the slice window width for this move
-/// \param W             The default window size, if not specified in P.keys
-/// \param M             The group of moves to which to add the newly-created sub-move
-/// \param weight        How often to run this move.
-///
-void add_dirichlet_slice_moves(Probability_Model& P, const string& move_name, 
-			       const vector<int>& indices,
-			       MCMC::MoveAll& M,
-			       double weight = 1
-			       )
-{
-  if (indices.empty()) return;
-
-  if (indices.size() == 1) throw myexception()<<"Dirichlet move with only 1 parameter?";
-
-  /// Create a parent move that will choose one child each time it is called
-  MCMC::MoveOne M2(move_name);
-
-  /// Add the moves for individual components of the vector as child moves of M2
-  for(int i=0;i<indices.size();i++)
-  {
-    M2.add(1,
-	  MCMC::Dirichlet_Slice_Move(string("slice_sample_")+P.parameter_name(indices[i]),
-				     indices,
-				     i
-				     )
-	  );
-  }
-
-  /// Add the move to resample one of the components at random to M
-  M.add(weight,M2);
-}
-
-
-/// \brief Add a 1-D slice-sampling sub-move for a collection of parameters that sum to 1.
-///
-/// \param P             The model that contains the parameters
-/// \param name          The name of the parameter to create a move for
-/// \param pname         The name of the slice window width for this move
-/// \param W             The default window size, if not specified in P.keys
-/// \param M             The group of moves to which to add the newly-created sub-move
-/// \param weight        How often to run this move.
-///
-void add_dirichlet_slice_moves(Probability_Model& P, const string& name,
-			       const vector<string>& parameter_names,
-			       MCMC::MoveAll& M,
-			       double weight = 1
-			       )
-{
-  vector<int> indices;
-  for(const string& p: parameter_names)
-  {
-    int index = P.find_parameter(p);
-    if (index == -1) return;
-    indices.push_back(index);
-  }
-
-  add_dirichlet_slice_moves(P,string("slice_sample_")+name, indices, M, weight);
-}
 
 MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
 {
@@ -553,15 +532,6 @@ MCMC::MoveAll get_scale_slice_moves(Parameters& P)
   return slice_moves;
 }
 
-template <typename T>
-void add_1D_slice_moves_for_type(Parameters& P, MCMC::MoveAll& M)
-{
-  vector<string> parameter_names = get_singly_distributed_parameters_by_type<T>(P);
-
-  for(const auto& name: parameter_names)
-    add_slice_move(P, name, M);
-}
-
 /// \brief Construct 1-D slice-sampling moves for (some) scalar numeric parameters
 ///
 /// \param P   The model and state.
@@ -575,47 +545,14 @@ MCMC::MoveAll get_parameter_slice_moves(Parameters& P)
     add_slice_moves(P, "*.mu"+convertToString(i+1), slice_moves);
 
   // Add slice moves for continuous 1D distributions
-  add_1D_slice_moves_for_type<Double>(P, slice_moves);
   add_real_slice_moves(P, slice_moves);
-
-  /*    
-  add_slice_moves(P, "*.HKY.kappa", slice_moves);
-  add_slice_moves(P, "*.rho", slice_moves);
-  add_slice_moves(P, "*.TN.kappa(pur)", slice_moves);
-  add_slice_moves(P, "*.TN.kappa(pyr)", slice_moves);
-  add_slice_moves(P, "*.M0.omega", slice_moves);
-  add_slice_moves(P, "*.M2.omega", slice_moves);
-  add_slice_moves(P, "*.M2a.omega1", slice_moves);
-  add_slice_moves(P, "*.M2a.omega3", slice_moves);
-  add_slice_moves(P, "*.M8b.omega3", slice_moves);
-  add_slice_moves(P, "*.branch-site.w*", slice_moves);
-  add_slice_moves(P, "*.branch-site.pos-w", slice_moves);
-  add_slice_moves(P, "*.branch-site.pos-p", slice_moves);
-  add_slice_moves(P, "*.INV.p", slice_moves);
-  add_slice_moves(P, "*.f", slice_moves);
-  add_slice_moves(P, "*.g", slice_moves);
-  add_slice_moves(P, "*.h", slice_moves);
-  add_slice_moves(P, "*.Beta.varOverMu", slice_moves);
-  add_slice_moves(P, "*.Gamma.sigmaOverMu", slice_moves);
-  add_slice_moves(P, "*.Beta.sigmaOverMu", slice_moves);
-  add_slice_moves(P, "*.LogNormal.sigmaOverMu", slice_moves);
-  */
+  add_dirichlet_slice_moves(P, slice_moves);
 
   // imodel parameters
   add_slice_moves(P, "*.delta", slice_moves, 10);
 
   add_slice_moves(P, "lambdaScale", slice_moves, 10);
   add_slice_moves(P, "*.M3.omega*", slice_moves);
-
-  vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Range.Simplex");
-
-  int i=1;
-  for(const auto& p: dirichlet_parameters)
-  {
-    string name = "dirichlet"+convertToString(i++);
-    add_dirichlet_slice_moves(P, name, p, slice_moves);
-  }
-
 
   slice_moves.add(2,MCMC::Scale_Means_Only_Slice_Move("scale_means_only_slice",0.6));
 
