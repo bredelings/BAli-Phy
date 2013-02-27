@@ -9,8 +9,14 @@ builtin get_modifiable_index 2 "get_modifiable_index";
 builtin get_modifiable_for_index 2 "get_modifiable_for_index";
 builtin builtin_new_modifiable 1 "new_modifiable";
 
-set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
 new_modifiable token = IOAction3 builtin_new_modifiable token;
+
+new_modifiable_list n = do { m <- new_modifiable;
+                             ms <- new_modifiable_list (n-1);
+                             return (m:ms)
+                             };
+
+set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
 
 set_parameter_value' token (p:ps) (v:vs) = do { set_parameter_value token p v; 
                                                 set_parameter_value token ps vs
