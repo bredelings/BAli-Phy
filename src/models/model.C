@@ -380,6 +380,16 @@ object_ref Model::get_modifiable_value(int i) const
   return C.get_modifiable_value(i);
 }
 
+std::vector< object_ref > Model::get_modifiable_values(const std::vector<int>& indices) const
+{
+  std::vector< object_ref > values(indices.size());
+    
+  for(int i=0;i<values.size();i++)
+    values[i] = get_modifiable_value(indices[i]);
+  
+  return values;  
+}
+
 object_ptr<const Object> Model::get_parameter_value(int i) const
 {
   return C.get_parameter_value(i);
