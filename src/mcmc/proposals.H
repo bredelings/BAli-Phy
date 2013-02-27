@@ -152,15 +152,15 @@ class Proposal2M: public Proposal
 {
   owned_ptr<Proposal_Fn> proposal;
   std::vector<int> indices;
-  std::vector<std::string> pnames;
+  std::vector<double> parameters;
 
 public:
   const std::vector<int>& get_indices() const {return indices;}
   std::set<int> get_affected_parameters(const owned_ptr<Probability_Model>&) const;
   Proposal2M* clone() const {return new Proposal2M(*this);}
   double operator()(Probability_Model& P) const;
-  Proposal2M(const Proposal_Fn& p,int, const std::vector<std::string>& v);
-  Proposal2M(const Proposal_Fn& p,const std::vector<int>&, const std::vector<std::string>& v);
+  Proposal2M(const Proposal_Fn& p,int, const std::vector<double>& v);
+  Proposal2M(const Proposal_Fn& p,const std::vector<int>&, const std::vector<double>& v);
 };
 
 

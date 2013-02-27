@@ -45,30 +45,6 @@ using std::string;
 using std::ostream;
 
 
-/// \brief Add a Metropolis-Hastings sub-move for parameter name to M
-///
-/// \param P       The model that contains the parameters
-/// \param p       The proposal function
-/// \param name    The name of the parameter to create a move for
-/// \param pname   The name of the proposal width for this move
-/// \param sigma   A default proposal width, in case the user didn't specify one
-/// \param M       The group of moves to which to add the newly-created sub-move
-/// \param weight  How often to run this move.
-///
-void add_multi_param_MH_move(Probability_Model& P,const Proposal_Fn& p, const vector<string>& names, const string& mname, const string& pname,double sigma, 
-			     MCMC::MoveAll& M,double weight=1)
-{
-  if (not names.size()) std::abort();
-
-  set_if_undef(P.keys, pname, sigma);
-  Proposal2 move_mu(p, names, vector<string>(1,pname), P);
-
-  if (not move_mu.get_indices().size()) std::abort();
-
-  string move_name = string("MH_sample_")+mname;
-  M.add(weight, MCMC::MH_Move(move_mu, move_name));
-}
-
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
 void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector<string>& names, 
 		 const vector<string>& pnames, const vector<double>& pvalues,
@@ -96,10 +72,10 @@ void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector
 }
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_modifiable_MH_move(const string& name, const Proposal_Fn& proposal, int m_index, const vector<string>& pnames,
+void add_modifiable_MH_move(const string& name, const Proposal_Fn& proposal, int m_index, const vector<double>& parameters,
 			    MCMC::MoveAll& M, double weight=1)
 {
-  M.add(weight, MCMC::MH_Move( Proposal2M(proposal, m_index, pnames), name) );
+  M.add(weight, MCMC::MH_Move( Proposal2M(proposal, m_index, parameters), name) );
 }
 
 /// \brief Add a Metropolis-Hastings sub-move for parameter name to M
@@ -391,6 +367,44 @@ void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 }
 
 /// Find parameters with distribution name Dist
+void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
+{
+  typedef std::pair<object_ref,object_ref> Pair_;
+  typedef Box<Pair_> Pair;
+  int token = P.get_context().get_token();
+  
+  for(int i=0;i<P.n_notes();i++)
+    if (is_exactly(P.get_note(i),":~"))
+    {
+      expression_ref rand_var = P.get_note(i)->sub[0];
+      expression_ref dist = P.get_note(i)->sub[1];
+
+      object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)) );
+
+      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+
+      for(const auto& x: V->t)
+      {
+	object_ptr<const Pair> p = convert<const Pair>(x);
+	string name = rand_var->print();
+
+	object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->t.first);
+	object_ptr<const Pair> r = convert<const Pair>(p->t.second);
+
+	vector<int> indices;
+	for(const auto& y: ms->t)
+	{
+	  int index = *convert<const Int>(y);
+	  indices.push_back(index);
+	  name += "_" + convertToString(index);
+	}
+
+	M.add( 1.0, MCMC::MH_Move( Proposal2M(dirichlet_proposal, indices, {100.0}), name) );
+      }
+    }
+}
+
+/// Find parameters with distribution name Dist
 template <typename T>
 vector<string> get_singly_distributed_parameters_by_type(const Probability_Model& P)
 {
@@ -484,15 +498,7 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 
   add_MH_move(P, Between(-20,20,shift_cauchy), "logLambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
 
-  // FIXME - this might not work very well until I make these auto-tuning
-  vector<vector<string>> dirichlet_parameters = get_distributed_parameters(P,"Range.Simplex");
-  int i=1;
-  for(const auto& p: dirichlet_parameters)
-  {
-    string mname = "dirichlet"+convertToString(i);
-    string pname = "sigma"+convertToString(i++);
-    add_multi_param_MH_move(P, dirichlet_proposal, p, mname, pname, 1.0, MH_moves,0.1);
-  }
+  add_dirichlet_MH_moves(P, MH_moves);
 
   /*
     Here are my hacky estimates of the jump size that is appropriate.

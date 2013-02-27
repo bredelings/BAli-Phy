@@ -540,18 +540,13 @@ double Proposal2M::operator()(Probability_Model& P) const
   if (not indices.size())
     throw myexception()<<"Proposal2M::operator() - No modifiables to alter!";
 
-  // Load parameter values from names
-  vector<double> p(pnames.size());
-  for(int i=0;i<p.size();i++)
-    p[i] = loadvalue(P.keys, pnames[i]);
-
   // read, alter, and write parameter values
   vector< object_ref > y = P.get_modifiable_values(indices);
   vector< object_ref > x(y.size());
   for(int i=0;i<x.size();i++)
     x[i] = y[i];
 
-  double ratio = (*proposal)(x,p);
+  double ratio = (*proposal)(x,parameters);
 
   for(int i=0;i<y.size();i++)
     P.set_modifiable_value(indices[i],-1,x[i]);
@@ -564,15 +559,15 @@ std::set<int> Proposal2M::get_affected_parameters(const owned_ptr<Probability_Mo
   return {};
 }
 
-Proposal2M::Proposal2M(const Proposal_Fn& p,int  s, const std::vector<string>& v)
+Proposal2M::Proposal2M(const Proposal_Fn& p,int  s, const vector<double>& v)
 :Proposal2M(p,vector<int>{s},v)
 { }
 
 
-Proposal2M::Proposal2M(const Proposal_Fn& p,const vector<int>& s, const std::vector<string>& v)
-  :proposal(p),
-   indices(s),
-   pnames(v)
+Proposal2M::Proposal2M(const Proposal_Fn& p,const vector<int>& s, const vector<double>& v)
+:proposal(p),
+  indices(s),
+  parameters(v)
 { }
 
 
