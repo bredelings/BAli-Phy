@@ -565,7 +565,7 @@ std::set<int> Proposal2M::get_affected_parameters(const owned_ptr<Probability_Mo
 }
 
 Proposal2M::Proposal2M(const Proposal_Fn& p,int  s, const std::vector<string>& v)
-  :Proposal2M(p,{s},v)
+:Proposal2M(p,vector<int>{s},v)
 { }
 
 
