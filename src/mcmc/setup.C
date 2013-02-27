@@ -95,6 +95,31 @@ void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector
   }
 }
 
+/// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
+void add_modifiable_MH_move(const Proposal_Fn& proposal, int m_index, const vector<string>& pnames,
+			    MCMC::MoveAll& M, double weight=1)
+{
+  Proposal2M proposal2(proposal, m_index, pnames);
+
+  M.add(weight, MCMC::MH_Move(proposal2, "MH_sample_modifiable_"+convertToString<int>(m_index)) );
+}
+
+/// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
+void add_modifiable_MH_moves(Probability_Model& P, const Proposal_Fn& proposal, const vector<int>& m_indices, 
+			     const vector<string>& pnames, const vector<double>& pvalues,
+			     MCMC::MoveAll& M, double weight=1)
+{
+  // 1. Set the parameter values to their defaults, if they are not set yet.
+  if (pnames.size() != pvalues.size()) std::abort();
+
+  for(int i=0;i<pnames.size();i++)
+    set_if_undef(P.keys, pnames[i], pvalues[i]);
+
+  // 2. For each MCMC parameter, create a move for it.
+  for(int m_index: m_indices)
+    add_modifiable_MH_move(proposal, m_index, pnames, M, weight);
+}
+
 /// \brief Add a Metropolis-Hastings sub-move for parameter name to M
 ///
 /// \param P       The model that contains the parameters
