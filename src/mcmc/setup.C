@@ -96,28 +96,10 @@ void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector
 }
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_modifiable_MH_move(const Proposal_Fn& proposal, int m_index, const vector<string>& pnames,
+void add_modifiable_MH_move(const string& name, const Proposal_Fn& proposal, int m_index, const vector<string>& pnames,
 			    MCMC::MoveAll& M, double weight=1)
 {
-  Proposal2M proposal2(proposal, m_index, pnames);
-
-  M.add(weight, MCMC::MH_Move(proposal2, "MH_sample_modifiable_"+convertToString<int>(m_index)) );
-}
-
-/// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_modifiable_MH_moves(Probability_Model& P, const Proposal_Fn& proposal, const vector<int>& m_indices, 
-			     const vector<string>& pnames, const vector<double>& pvalues,
-			     MCMC::MoveAll& M, double weight=1)
-{
-  // 1. Set the parameter values to their defaults, if they are not set yet.
-  if (pnames.size() != pvalues.size()) std::abort();
-
-  for(int i=0;i<pnames.size();i++)
-    set_if_undef(P.keys, pnames[i], pvalues[i]);
-
-  // 2. For each MCMC parameter, create a move for it.
-  for(int m_index: m_indices)
-    add_modifiable_MH_move(proposal, m_index, pnames, M, weight);
+  M.add(weight, MCMC::MH_Move( Proposal2M(proposal, m_index, pnames), name) );
 }
 
 /// \brief Add a Metropolis-Hastings sub-move for parameter name to M
@@ -310,6 +292,28 @@ vector<vector<string> > get_distributed_parameters(const Probability_Model& P, c
     }
 
   return names;
+}
+
+void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
+{
+  int token = P.get_context().get_token();
+  
+  for(int i=0;i<P.n_notes();i++)
+    if (is_exactly(P.get_note(i),":~"))
+    {
+      expression_ref rand_var = P.get_note(i)->sub[0];
+      expression_ref dist = P.get_note(i)->sub[1];
+
+      object_ref v = P.get_context().evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)) );
+      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+
+      for(const auto& x: V->t)
+      {
+	int m_index = *convert<const Int>(x);
+	string name = rand_var->print()+"_"+convertToString<int>(m_index);
+	add_modifiable_MH_move(name, bit_flip, m_index, {}, M, weight);
+      }
+    }
 }
 
 /// Find parameters with distribution name Dist
@@ -770,13 +774,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   //  - Note that this should only be an issue when this does not affect the likelihood.
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
 
-  vector<vector<string>> bernoulli_parameters = get_distributed_parameters(P,"Range.TrueFalseRange");
-
-  for(const auto& parameters: bernoulli_parameters)
-  {
-    assert(parameters.size() == 1);
-    add_MH_move(P, bit_flip, parameters, {}, {}, parameter_moves, 1.5);
-  }
+  add_boolean_MH_moves(P, parameter_moves, 1.5);
 
   // FIXME - we need a proposal that sorts after changing
   //         then we can un-hack the recalc function in smodel.C
