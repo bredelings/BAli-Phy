@@ -46,6 +46,13 @@ using std::ostream;
 
 
 /// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
+void add_modifiable_MH_move(const string& name, const Proposal_Fn& proposal, int m_index, const vector<double>& parameters,
+			    MCMC::MoveAll& M, double weight=1)
+{
+  M.add(weight, MCMC::MH_Move( Proposal2M(proposal, m_index, parameters), name) );
+}
+
+/// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
 void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector<string>& names, 
 		 const vector<string>& pnames, const vector<double>& pvalues,
 		 MCMC::MoveAll& M, double weight=1)
@@ -69,13 +76,6 @@ void add_MH_move(Probability_Model& P, const Proposal_Fn& proposal, const vector
 
     M.add(weight, MCMC::MH_Move(proposal2, "MH_sample_"+parameter_name));
   }
-}
-
-/// \brief Add a Metropolis-Hastings sub-move for each parameter in \a names to \a M
-void add_modifiable_MH_move(const string& name, const Proposal_Fn& proposal, int m_index, const vector<double>& parameters,
-			    MCMC::MoveAll& M, double weight=1)
-{
-  M.add(weight, MCMC::MH_Move( Proposal2M(proposal, m_index, parameters), name) );
 }
 
 /// \brief Add a Metropolis-Hastings sub-move for parameter name to M
@@ -185,89 +185,6 @@ void add_slice_moves(Probability_Model& P, const string& name,
 
     add_slice_move(P, parameter_name, M);
   }
-}
-
-/// Find parameters with distribution name Dist
-vector<vector<string> > get_distributed_parameters(const Probability_Model& P, const string& RangeType)
-{
-  vector<vector<string> > names;
-
-  for(int i=0;i<P.n_notes();i++)
-    if (is_exactly(P.get_note(i),":~"))
-    {
-      expression_ref rand_var = P.get_note(i)->sub[0];
-      expression_ref dist = P.get_note(i)->sub[1];
-
-      if (RangeType == "Range.TrueFalseRange")
-      {
-	int token = P.get_context().get_token();
-	object_ref v = P.get_context().evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)) );
-	//	std::cout<<RangeType<<"  vector v = "<<v<<std::endl;
-	object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
-	for(const auto& x: V->t)
-	{
-	  std::cout<<RangeType<<"  "<<rand_var<<": "<<x<<std::endl;
-	}
-      }
-
-      if (RangeType == "Range.OpenInterval")
-      {
-	typedef std::pair<object_ref,object_ref> Pair_;
-	typedef Box<Pair_> Pair;
-	int token = P.get_context().get_token();
-	object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)) );
-	//	std::cout<<RangeType<<"  vector v = "<<v<<std::endl;
-	object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
-	for(const auto& x: V->t)
-	{
-	  //	  std::cout<<RangeType<<"  "<<rand_var<<": "<<x<<std::endl;
-	  object_ptr<const Pair> p = convert<const Pair>(x);
-	  std::cout<<RangeType<<"  "<<rand_var<<": ("<<p->t.first<<", "<<p->t.second<<")"<<std::endl;
-	}
-      }
-
-      if (RangeType == "Range.Simplex")
-      {
-	typedef std::pair<object_ref,object_ref> Pair_;
-	typedef Box<Pair_> Pair;
-	int token = P.get_context().get_token();
-	object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)) );
-	//	std::cout<<RangeType<<"  vector v = "<<v<<std::endl;
-	object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
-	for(const auto& x: V->t)
-	{
-	  //	  std::cout<<RangeType<<"  "<<rand_var<<": "<<x<<std::endl;
-	  object_ptr<const Pair> p = convert<const Pair>(x);
-	  //	  std::cout<<RangeType<<"  "<<rand_var<<": ("<<p->t.first<<","<<p->t.second<<")"<<std::endl;
-	  object_ptr<const Vector<object_ref>> ms = convert<const Vector<object_ref>>(p->t.first);
-	  object_ptr<const Pair> r = convert<const Pair>(p->t.second);
-	  std::cout<<RangeType<<"  "<<rand_var<<": (";
-	  for(const auto& y: ms->t)
-	  {
-	    std::cout<<y<<" ";
-	  }
-	  std::cout<<", ";
-	  std::cout<<"("<<r->t.first<<", "<<r->t.second<<")";
-	  std::cout<<")"<<std::endl;
-	}	
-      }
-
-      auto range = P.get_context().evaluate_expression_as<constructor>( (identifier("distRange"),dist) );
-      if (range->f_name != RangeType) continue;
-
-      if (is_exactly(rand_var->head,":"))
-      {
-	vector<expression_ref> rand_vars = get_ref_vector_from_list(rand_var);
-	vector<string> var_names;
-	for(const auto& v: rand_vars)
-	  var_names.push_back(v->print());
-	names.push_back(var_names);
-      }
-      else
-	names.push_back({rand_var->print()});
-    }
-
-  return names;
 }
 
 void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double weight)
@@ -404,41 +321,6 @@ void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
     }
 }
 
-/// Find parameters with distribution name Dist
-template <typename T>
-vector<string> get_singly_distributed_parameters_by_type(const Probability_Model& P)
-{
-  vector<string> names;
-
-  expression_ref query = constructor(":~",2) + match(0) + match(-1);
-
-  for(int i=0;i<P.n_notes();i++)
-    if (is_exactly(P.get_note(i),":~"))
-    {
-      vector<expression_ref> results; 
-      find_match(query, P.get_note(i), results);
-      expression_ref rand_var = results[0];
-
-      object_ptr<const parameter> p = rand_var.is_a<parameter>();
-
-      if (not p) continue;
-
-      string parameter_name = p->parameter_name;
-      object_ref value = P.get_parameter_value(parameter_name);
-
-      if (not value)
-      {
-	std::cerr<<"Warning: parameter '"<<parameter_name<<"' has not initial value! Cannot determine type.";
-	continue;
-      }
-
-      if (dynamic_pointer_cast<const T>(value)) names.push_back(parameter_name);
-    }
-
-  return names;
-}
-
-
 MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
 {
   MCMC::MoveAll MH_moves("parameters:scale:MH");
@@ -460,6 +342,8 @@ MCMC::MoveAll get_scale_MH_moves(owned_ptr<Probability_Model>& P)
 MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
 {
   MCMC::MoveAll MH_moves("parameters:MH");
+
+  add_dirichlet_MH_moves(P, MH_moves);
 
   for(int i=0;i<P.n_branch_means();i++)
     add_MH_move(P, log_scaled(Between(-20,20,shift_cauchy)),    "Main.mu"+convertToString(i+1),             "mu_scale_sigma",     0.6,  MH_moves);
@@ -497,8 +381,6 @@ MCMC::MoveAll get_parameter_MH_moves(Parameters& P)
   add_MH_move(P, more_than(0.0, shift_cauchy), "*.meanIndelLengthMinus1",     "epsilon_shift_sigma",   0.1, MH_moves, 10);
 
   add_MH_move(P, Between(-20,20,shift_cauchy), "logLambdaScale",      "lambda_shift_sigma",    0.35, MH_moves, 10);
-
-  add_dirichlet_MH_moves(P, MH_moves);
 
   /*
     Here are my hacky estimates of the jump size that is appropriate.
@@ -787,7 +669,6 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   //         BUT, this assumes that we have the DP::rate* names in *numerical* order
   //          whereas we probably find them in *lexical* order....
   //          ... or creation order?  That might be OK for now! 
-
 
   for(int i=0;;i++) {
     string name = "M3.omega" + convertToString(i+1);
