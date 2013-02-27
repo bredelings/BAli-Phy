@@ -746,7 +746,7 @@ MCMC::MoveAll get_parameter_MH_but_no_slice_moves(Parameters& P)
   // Also, how hard would it be to make a Gibbs flipper?  We could (perhaps) run that once per iteration to avoid periodicity.
 
   vector<vector<string>> bernoulli_parameters = get_distributed_parameters(P,"Range.TrueFalseRange");
-  get_distributed_parameters(P,"Range.OpenInterval");
+
   for(const auto& parameters: bernoulli_parameters)
   {
     assert(parameters.size() == 1);
