@@ -48,6 +48,8 @@ using std::map;
  *
  * See list in parser/desugar.C
  *
+ * 0. Make Parameters::recalc( ) check when things change, so that we don't need to worry about
+ *    which parameter parameters should indicate recalculation!
  * 1. Efficiently recalculate the probability when only a few densities change.
  *    - Will this require signals?
  *    - This will allow us to avoid maintaining a Markov blanket.
