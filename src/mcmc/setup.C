@@ -241,6 +241,40 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 }
 
 /// Find parameters with distribution name Dist
+void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
+{
+  typedef std::pair<object_ref,object_ref> Pair_;
+  typedef Box<Pair_> Pair;
+  int token = P.get_context().get_token();
+  
+  for(int i=0;i<P.n_notes();i++)
+    if (is_exactly(P.get_note(i),":~"))
+    {
+      expression_ref rand_var = P.get_note(i)->sub[0];
+      expression_ref dist = P.get_note(i)->sub[1];
+
+      object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)) );
+
+      object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
+      int p_index = -1;
+      if (object_ptr<const parameter> p = rand_var.is_a<parameter>())
+	p_index = P.find_parameter(p->parameter_name);
+
+      for(const auto& x: V->t)
+      {
+	object_ptr<const Pair> p = convert<const Pair>(x);
+	int m_index = *convert<const Int>(p->t.first);
+	Bounds<double> bounds = *convert<const Bounds<double>>(p->t.second);
+	string name = rand_var->print()+"_"+convertToString<int>(m_index);
+	if (bounds.has_lower_bound and bounds.lower_bound >= 0.0)
+	  add_modifiable_MH_move(name, Reflect(bounds, log_scaled(Between(-20,20,shift_cauchy))), m_index, {1.0}, M, 0.01);
+	else
+	  add_modifiable_MH_move(name, Reflect(bounds, shift_cauchy), m_index, {1.0}, M, 0.1);
+      }
+    }
+}
+
+/// Find parameters with distribution name Dist
 void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
 {
   typedef std::pair<object_ref,object_ref> Pair_;
