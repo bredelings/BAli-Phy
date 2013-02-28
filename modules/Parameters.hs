@@ -11,8 +11,8 @@ builtin builtin_new_modifiable 1 "new_modifiable";
 
 new_modifiable token = IOAction3 builtin_new_modifiable token;
 
-new_modifiable_list token []  = return [];
-new_modifiable_list token (h:t) = do { m <- h token; 
+new_modifiable_list [] token = return [];
+new_modifiable_list (h:t) token = do { m <- h token; 
                                        ms <- t token; 
                                        return (m:ms) 
                                      };
