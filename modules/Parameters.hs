@@ -17,6 +17,12 @@ new_modifiable_list token (h:t) = do { m <- h token;
                                        return (m:ms) 
                                      };
 
+structure_for_range (OpenInterval _ _) = new_modifiable;
+structure_for_range (IntegerInterval _ _) = new_modifiable;
+structure_for_range TrueFalseRange = new_modifiable;
+structure_for_range (Simplex n _) = new_modifiable_list (replicate n new_modifiable);
+structure_for_range (ListRange l) = new_modifiable_list (map structure_for_range l);
+
 set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
 
 set_parameter_value' token (p:ps) (v:vs) = do { set_parameter_value token p v; 
