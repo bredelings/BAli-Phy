@@ -11,10 +11,11 @@ builtin builtin_new_modifiable 1 "new_modifiable";
 
 new_modifiable token = IOAction3 builtin_new_modifiable token;
 
-new_modifiable_list n = do { m <- new_modifiable;
-                             ms <- new_modifiable_list (n-1);
-                             return (m:ms)
-                             };
+new_modifiable_list token []  = return [];
+new_modifiable_list token (h:t) = do { m <- h token; 
+                                       ms <- t token; 
+                                       return (m:ms) 
+                                     };
 
 set_modifiable_value token m v = IOAction3 builtin_set_modifiable_value token m v;
 
