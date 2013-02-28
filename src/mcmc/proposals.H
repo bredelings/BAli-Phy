@@ -103,6 +103,16 @@ public:
   Between(double m1,double m2,const Proposal_Fn& P);
 };
 
+class Reflect: public Proposal_Fn
+{
+  Bounds<double> bounds;
+  owned_ptr<Proposal_Fn> proposal;
+public:
+  Reflect* clone() const {return new Reflect(*this);}
+  double operator()(std::vector< object_ref >& x,const std::vector<double>& p) const;
+  Reflect(const Bounds<double>& b,const Proposal_Fn& P);
+};
+
 class log_scaled: public Proposal_Fn
 {
   owned_ptr<Proposal_Fn> proposal;

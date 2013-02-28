@@ -384,6 +384,35 @@ Between::Between(double m1, double m2, const Proposal_Fn& P)
 { }
 
 
+double reflect(const Bounds<double>& b, double x)
+{
+  if (b.has_lower_bound and b.has_upper_bound)
+    return wrap<double>(x, b.lower_bound, b.upper_bound);
+  else if (b.has_lower_bound)
+    return reflect_more_than(x, b.lower_bound);
+  else if (b.has_upper_bound)
+    return reflect_less_than(x, b.upper_bound);
+  else
+    return x;
+}
+
+double Reflect::operator()(std::vector< object_ref >& x,const std::vector<double>& p) const
+{
+  double ratio = (*proposal)(x,p);
+  for(int i=0;i<x.size();i++)
+  {
+    double X = *dynamic_pointer_cast<const Double>(x[i]);
+    x[i] = Double ( reflect(bounds, X ) );
+  }
+  return ratio;
+}
+
+Reflect::Reflect(const Bounds<double>& b, const Proposal_Fn& P)
+  :bounds(b),
+   proposal(P)
+{ }
+
+
 double log_scaled::operator()(std::vector< object_ref >& x,const std::vector<double>& p) const
 {
   if (x.size() != 1) 
