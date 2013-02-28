@@ -903,8 +903,6 @@ void write_greedy_consensus(const tree_sample& tree_dist,
 
   unsigned L = tree_dist.names().size();
   
-  typedef const map<dynamic_bitset<>,count_and_length> container_t;
-
   multiset< pair<dynamic_bitset<>,count_and_length>, count_more2 > sorted_splits;
   for(const auto& i: full_partitions)
     sorted_splits.insert(i);
