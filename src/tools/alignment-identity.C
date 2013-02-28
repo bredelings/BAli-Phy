@@ -319,7 +319,6 @@ int main(int argc,char* argv[])
 
       cout<<join(h,'\t')<<endl;
 
-      typedef list<alignment>::iterator iterator_t;
       for(int i=0; i<alignments.size(); i++)
       {
 	const alignment& AA = alignments[i];
