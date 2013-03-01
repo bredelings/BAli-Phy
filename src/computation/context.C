@@ -559,9 +559,11 @@ expression_ref parameter_constructor(const std::string& name, const vector<expre
 {
   for(const auto& note: notes)
   {
-    if (not is_exactly(note, ":~") and not is_exactly(note,":=~")) continue;
+    if (not is_exactly(note, ":~")) continue;
 
-    if (not note->sub[0]->equals(parameter(name))) continue;
+    expression_ref p = parameter(name);
+
+    if (not note->sub[0]->equals(*p)) continue;
 
     expression_ref dist = note->sub[1];
 
@@ -728,6 +730,7 @@ context::context(const module_loader& L, const vector<expression_ref>& N, const 
 {
   (*this) += "Prelude";
   (*this) += "Parameters";
+  (*this) += "Distributions";
   (*this) += Ps;
 
   add_submodel(*this, N);
