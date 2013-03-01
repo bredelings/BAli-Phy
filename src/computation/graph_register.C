@@ -2430,6 +2430,8 @@ int reg_heap::incremental_evaluate(int R, int t, bool evaluate_changeable)
     // Reduction: let expression
     else if (parse_indexed_let_expression(access(R).C.exp, bodies, T))
     {
+      assert(not access(R).changeable);
+
       owner_set_t owners = get_reg_owners(R);
 
       vector<int> local_env = access(R).C.Env;
