@@ -204,7 +204,7 @@ bool context::parameter_is_set(int index) const
 {
   assert(index >= 0 and index < n_parameters());
 
-  int P = get_parameter_reg(index);
+  int P = find_parameter_modifiable_reg(index);
 
   if (not access(P).result and not access(P).call) return false;
 
@@ -237,7 +237,7 @@ object_ref context::get_modifiable_value(int index) const
 /// Get the value of a non-constant, non-computed index -- or should this be the nth parameter?
 object_ref context::get_parameter_value(int index) const
 {
-  int R = get_parameter_reg(index);
+  int R = find_parameter_modifiable_reg(index);
 
   return get_reg_value(R);
 }
@@ -293,7 +293,7 @@ void context::set_parameter_value_expression(int index, const expression_ref& O)
 
 void context::set_parameter_value_(int index, closure&& C)
 {
-  int P = get_parameter_reg(index);
+  int P = find_parameter_modifiable_reg(index);
 
   set_reg_value(P, std::move(C) );
 }
