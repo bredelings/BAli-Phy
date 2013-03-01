@@ -391,6 +391,8 @@ namespace MCMC {
     bool in_range = true;
     for(int i=0;i<P->n_parameters();i++)
     {
+      if (not P->get_context().parameter_is_modifiable(i)) continue;
+
       if (not P->parameter_has_type<Double>(i)) continue;
 
       if (not P->has_bounds(i)) continue;
