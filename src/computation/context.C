@@ -756,6 +756,18 @@ int context::get_parameter_reg(int index) const
   return *parameters()[index].second;
 }
 
+int context::find_parameter_modifiable_reg(int index) const
+{
+  int R = get_parameter_reg(index);
+
+  int R2 = incremental_evaluate(R, false);
+
+  if (not is_modifiable(access(R2).C.exp))
+    throw myexception()<<"Parameter is not a modifiable!  Instead its value is '"<<access(R2).C.exp<<"'";
+
+ return R2;
+}
+
 int context::get_modifiable_reg(int index) const
 {
   const pool<int>& p = modifiable_regs();
