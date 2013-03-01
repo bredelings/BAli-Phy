@@ -197,7 +197,7 @@ void add_boolean_MH_moves(const Probability_Model& P, MCMC::MoveAll& M, double w
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)) );
+      object_ref v = P.get_context().evaluate_expression( (identifier("findBinary"),token,rand_var,(identifier("distRange"),dist)), false);
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
 
       for(const auto& x: V->t)
@@ -222,7 +222,7 @@ void add_real_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)) );
+      object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
       int p_index = -1;
@@ -253,7 +253,7 @@ void add_real_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)) );
+      object_ref v = P.get_context().evaluate_expression( (identifier("findReal"),token,rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
       int p_index = -1;
@@ -287,7 +287,7 @@ void add_dirichlet_slice_moves(const Probability_Model& P, MCMC::MoveAll& M)
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)) );
+      object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
 
@@ -330,7 +330,7 @@ void add_dirichlet_MH_moves(const Probability_Model& P, MCMC::MoveAll& M)
       expression_ref rand_var = P.get_note(i)->sub[0];
       expression_ref dist = P.get_note(i)->sub[1];
 
-      object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)) );
+      object_ref v = P.get_context().evaluate_expression( (identifier("findSimplex"),token,rand_var,(identifier("distRange"),dist)), false);
 
       object_ptr<const Vector<object_ref>> V = convert<const Vector<object_ref>>(v);
 
