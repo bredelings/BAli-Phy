@@ -556,6 +556,22 @@ context& context::operator+=(const vector<string>& module_names)
   return *this;
 }
 
+expression_ref parameter_constructor(const std::string& name, const vector<expression_ref>& notes)
+{
+  for(const auto& note: notes)
+  {
+    if (not is_exactly(note, ":~") and not is_exactly(note,":=~")) continue;
+
+    if (not note->sub[0]->equals(parameter(name))) continue;
+
+    expression_ref dist = note->sub[1];
+
+
+    return (identifier("structure_for_range"),(identifier("distRange"),dist));
+  }
+  return identifier("new_modifiable");
+}
+
 void context::allocate_identifiers_for_modules(const vector<string>& module_names)
 {
   // 2. Give each identifier a pointer to an unused location; define parameter bodies.
