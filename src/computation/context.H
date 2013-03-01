@@ -85,6 +85,8 @@ public:
 
   context* clone() const {return new context(*this);}
 
+  bool parameter_is_modifiable(int p) const;
+
   /// Check if a parameter has a value.
   bool parameter_is_set(int i) const;
 

@@ -200,6 +200,16 @@ object_ref context::perform_expression(const expression_ref& E,bool ec) const
   return evaluate_expression_( preprocess(E2), ec);
 }
 
+bool context::parameter_is_modifiable(int index) const
+{
+  int R = get_parameter_reg(index);
+
+  int R2 = incremental_evaluate(R, false);
+
+  return is_modifiable(access(R2).C.exp);
+}
+
+
 bool context::parameter_is_set(int index) const
 {
   assert(index >= 0 and index < n_parameters());
