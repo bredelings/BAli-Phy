@@ -1,5 +1,6 @@
 #include "computation.H"
 #include "expression.H"
+#include "graph_register.H"
 
 int OperationArgs::reg_for_slot(int slot) const
 {
@@ -22,9 +23,39 @@ int OperationArgs::evaluate_reg_no_record(int R)
   return evaluate_reg_no_record(R, evaluate_changeables());
 }
 
+int OperationArgs::evaluate_slot_no_record(int slot, bool ec)
+{
+  return evaluate_reg_no_record(reg_for_slot(slot), ec);
+}
+
 int OperationArgs::evaluate_slot_no_record(int slot)
 {
-  return evaluate_reg_no_record(reg_for_slot(slot));
+  return evaluate_slot_no_record(slot, evaluate_changeables());
+}
+
+int OperationArgs::evaluate_reg_to_reg(int R)
+{
+  return evaluate_reg_to_reg(R, evaluate_changeables());
+}
+
+int OperationArgs::evaluate_slot_to_reg(int slot, bool ec)
+{
+  return evaluate_reg_to_reg(reg_for_slot(slot), ec);
+}
+
+int OperationArgs::evaluate_slot_to_reg(int slot)
+{
+  return evaluate_slot_to_reg(slot, evaluate_changeables());
+}
+
+/// Evaluate the reg R2, record dependencies, and return the result.
+const closure& OperationArgs::evaluate_reg_to_closure(int R2, bool ec)
+{
+  int R3 = evaluate_reg_to_reg(R2, ec);
+  if (ec)
+    return memory().access_result(R3);
+  else
+    return memory().access(R3).C;
 }
 
 const closure& OperationArgs::evaluate_reg_to_closure(int R)

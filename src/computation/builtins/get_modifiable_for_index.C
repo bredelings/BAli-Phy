@@ -6,6 +6,8 @@ using boost::dynamic_pointer_cast;
 
 extern "C" closure builtin_function_get_modifiable_for_index(OperationArgs& Args)
 {
+  assert(not Args.evaluate_changeables());
+
   int token = *Args.evaluate_as<Int>(0);
   int index = *Args.evaluate_as<Int>(1);
 

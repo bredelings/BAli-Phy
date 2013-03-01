@@ -25,15 +25,23 @@ struct OperationArgs: public Object
 
   int reg_for_slot(int slot) const;
 
-  virtual int evaluate_slot_(int) = 0;
-
   virtual int evaluate_reg_no_record(int, bool) = 0;
 
   int evaluate_reg_no_record(int);
 
+  int evaluate_slot_no_record(int, bool);
+
   int evaluate_slot_no_record(int);
 
-  virtual const closure& evaluate_reg_to_closure(int, bool) = 0;
+  virtual int evaluate_reg_to_reg(int, bool) = 0;
+
+  int evaluate_reg_to_reg(int);
+  
+  int evaluate_slot_to_reg(int, bool);
+  
+  int evaluate_slot_to_reg(int);
+
+  const closure& evaluate_reg_to_closure(int, bool);
 
   const closure& evaluate_reg_to_closure(int);
 

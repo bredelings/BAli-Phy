@@ -360,8 +360,7 @@ int context::add_parameter(const string& full_name)
   root_t r = allocate_reg();
   parameters().push_back( {full_name, r} );
 
-  access(*r).changeable = true;
-  set_C(*r, preprocess( (identifier("new_modifiable"),get_token()) ) );
+  set_C(*r, preprocess( (identifier("unsafePerformIO"),(identifier("new_modifiable"),get_token()) ) ) );
 
   return index;
 }
@@ -599,8 +598,8 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 	root_t r = allocate_reg();
 	parameters().push_back( {S.name, r} );
 
-	access(*r).changeable = true;
-	set_C(*r, preprocess( (identifier("new_modifiable"),get_token()) ) );
+	expression_ref E = (identifier("unsafePerformIO"),(parameter_constructor(S.name,get_notes()), get_token()) );
+	set_C(*r, preprocess( E ) );
       }
     }
   }

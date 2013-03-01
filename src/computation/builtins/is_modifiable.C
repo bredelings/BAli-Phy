@@ -6,8 +6,10 @@ using boost::dynamic_pointer_cast;
 
 extern "C" closure builtin_function_is_modifiable(OperationArgs& Args)
 {
+  assert(not Args.evaluate_changeables());
+
   int token = *Args.evaluate_as<Int>(0);
-  int R1 = Args.evaluate_slot_(1);
+  int R1 = Args.evaluate_slot_to_reg(1);
 
   const reg_heap& M = Args.memory();
   if (M.access(R1).C.exp->head->type() == modifiable_type)
