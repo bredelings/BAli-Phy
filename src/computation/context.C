@@ -285,7 +285,7 @@ void context::set_parameter_value_expression(int index, const expression_ref& O)
   {
     expression_ref E = (identifier("set_parameter_value"), token, parameter(parameter_name(index)), O);
 
-    perform_expression(E, false);
+    perform_expression(E);
   }
   else
     set_parameter_value_(index, {} );
