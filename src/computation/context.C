@@ -360,8 +360,6 @@ int context::add_parameter(const string& full_name)
   root_t r = allocate_reg();
   parameters().push_back( {full_name, r} );
 
-  //  int index2 = modifiable_regs().allocate();
-  //  modifiable_regs()[index2] = *r;
   access(*r).changeable = true;
   set_C(*r, preprocess( (identifier("new_modifiable"),get_token()) ) );
 
@@ -582,13 +580,9 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
       {
 	assert(find_parameter(S.name) == -1);
 
-	//	int index = n_parameters();
-
 	root_t r = allocate_reg();
 	parameters().push_back( {S.name, r} );
 
-	//	int index2 = modifiable_regs().allocate();
-	//	modifiable_regs()[index2] = *r;
 	access(*r).changeable = true;
 	set_C(*r, preprocess( (identifier("new_modifiable"),get_token()) ) );
       }
