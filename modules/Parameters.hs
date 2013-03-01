@@ -13,7 +13,7 @@ new_modifiable token = IOAction1 builtin_new_modifiable token;
 
 new_modifiable_list [] token = return [];
 new_modifiable_list (h:t) token = do { m <- h token; 
-                                       ms <- t token; 
+                                       ms <- new_modifiable_list t token; 
                                        return (m:ms) 
                                      };
 
