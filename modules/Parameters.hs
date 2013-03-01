@@ -9,7 +9,7 @@ builtin get_modifiable_index 2 "get_modifiable_index";
 builtin get_modifiable_for_index 2 "get_modifiable_for_index";
 builtin builtin_new_modifiable 1 "new_modifiable";
 
-new_modifiable token = IOAction3 builtin_new_modifiable token;
+new_modifiable token = IOAction1 builtin_new_modifiable token;
 
 new_modifiable_list [] token = return [];
 new_modifiable_list (h:t) token = do { m <- h token; 
