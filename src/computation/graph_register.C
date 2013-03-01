@@ -2206,23 +2206,25 @@ class RegOperationArgs: public OperationArgs
 
   const expression& get_E() const {return *current_closure().exp;}
 
+  bool evaluate_changeables() const {return evaluate_changeable;}
+
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-  int evaluate_reg_no_record(int R2)
+  int evaluate_reg_no_record(int R2, bool ec)
   {
-    return M.incremental_evaluate(R2, t);
+    return M.incremental_evaluate(R2, t, ec);
   }
 
   /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
   int evaluate_slot_(int slot)
   {
-    return M.incremental_evaluate(reg_for_slot(slot), t, false);
+    return evaluate_reg_no_record(reg_for_slot(slot), false);
   }
 
-  /// Evaluate the reg R2, record dependencies, and return the reg following call chains.
-  int evaluate_reg_to_reg(int R2)
+  /// Evaluate the reg R2, record a dependency on R2, and return the reg following call chains.
+  int evaluate_reg_to_reg(int R2, bool ec)
   {
     // Compute the result, and follow index_var chains (which are not changeable).
-    int R3 = M.incremental_evaluate(R2, t);
+    int R3 = M.incremental_evaluate(R2, t, ec);
 
     if (M[R3].changeable) 
     {
@@ -2238,9 +2240,13 @@ class RegOperationArgs: public OperationArgs
   }
 
   /// Evaluate the reg R2, record dependencies, and return the result.
-  const closure& evaluate_reg_to_closure(int R2)
+  const closure& evaluate_reg_to_closure(int R2, bool ec)
   {
-    return M.access_result( evaluate_reg_to_reg(R2) );
+    int R3 = evaluate_reg_to_reg(R2, ec);
+    if (ec)
+      return M.access_result(R3);
+    else
+      return M.access(R3).C;
   }
 
 public:

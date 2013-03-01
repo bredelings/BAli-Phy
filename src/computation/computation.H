@@ -17,6 +17,8 @@ struct OperationArgs: public Object
 
   virtual const closure& current_closure() const = 0;
 
+  virtual bool evaluate_changeables() const = 0;
+
   int n_args() const;
 
   expression_ref reference(int slot) const;
@@ -25,11 +27,15 @@ struct OperationArgs: public Object
 
   virtual int evaluate_slot_(int) = 0;
 
-  virtual int evaluate_reg_no_record(int) = 0;
+  virtual int evaluate_reg_no_record(int, bool) = 0;
+
+  int evaluate_reg_no_record(int);
 
   int evaluate_slot_no_record(int);
 
-  virtual const closure& evaluate_reg_to_closure(int) = 0;
+  virtual const closure& evaluate_reg_to_closure(int, bool) = 0;
+
+  const closure& evaluate_reg_to_closure(int);
 
   const closure& evaluate_slot_to_closure(int);
 
