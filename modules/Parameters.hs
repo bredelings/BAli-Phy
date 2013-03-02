@@ -48,6 +48,8 @@ find_loggables' token (p:ps,names) = concat $ map (find_loggables token) (zip (p
 find_loggables token (p,name) = if (is_modifiable token p)
                                 then [(p,name)]
                                 else find_loggables' token (p,name);
+  
+find_loggables_c token p name = list_to_vector [c_pair (get_modifiable_index token m, listToString name) | (m,name) <-find_loggables token (p,name)  ];
 
 findAtomic ps (ListRange rs) = concat $ zipWith findAtomic ps rs;
 findAtomic p r = [(p,r)];
