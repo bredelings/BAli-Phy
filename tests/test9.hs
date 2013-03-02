@@ -60,13 +60,12 @@ note [q1,q2,q3,q4,q5] ~ iid (5, beta(1.0,alpha) );
                        (p5, gamma (a5,b5))
                       ];
 
-note theta33 ~ thetaDist;
-  thetas = [theta1,theta2,theta3,theta4,theta5,theta6,theta7,theta8,theta9,theta10,theta11,theta12,theta13,theta14,theta15,theta16,theta17,theta18,theta19,theta20,theta21,theta22,theta23,theta24,theta25,theta26,theta27,theta28,theta29,theta30,theta31,theta32];
+note theta_example ~ thetaDist;
   
-note [theta1,theta2,theta3,theta4,theta5,theta6,theta7,theta8,theta9,theta10,theta11,theta12,theta13,theta14,theta15,theta16,theta17,theta18,theta19,theta20,theta21,theta22,theta23,theta24,theta25,theta26,theta27,theta28,theta29,theta30,theta31,theta32] ~ iid (32, thetaDist);
+note theta ~ iid (32, thetaDist);
 
   d1 = getAFS filename;
-note data d1 ~ plate (length d1, \i -> afs (thetas!!i));
+note data d1 ~ plate (length d1, \i -> afs (theta!!i));
 note MakeLogger p1;
 note MakeLogger p2;
 note MakeLogger p3;
