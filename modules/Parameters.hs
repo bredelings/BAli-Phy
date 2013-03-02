@@ -38,6 +38,17 @@ set_parameter_value token p v = if (is_modifiable token p)
 
 get_modifiable_result token m = evaluate token (get_modifiable_value token m);
 
+subscript name n = name++['!']++show n;
+
+subscripts name xs = map (subscript name) xs;
+
+find_loggables' token ([],name) = [];
+find_loggables' token (p:ps,names) = concat $ map (find_loggables token) (zip (p:ps) (subscripts names [0..]));
+
+find_loggables token (p,name) = if (is_modifiable token p)
+                                then [(p,name)]
+                                else find_loggables' token (p,name);
+
 findAtomic ps (ListRange rs) = concat $ zipWith findAtomic ps rs;
 findAtomic p r = [(p,r)];
 
