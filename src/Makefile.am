@@ -345,7 +345,8 @@ pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
 		iotaUnsigned.la f3x4_frequencies.la gtr.la m0.la set_modifiable_value.la \
 		is_modifiable.la is_changeable.la get_modifiable_index.la get_modifiable_for_index.la \
 		set_vector_index.la new_vector.la get_vector_index.la vector_size.la \
-		c_fst.la c_snd.la c_pair.la new_modifiable.la evaluate.la get_modifiable_value.la
+		c_fst.la c_snd.la c_pair.la new_modifiable.la evaluate.la get_modifiable_value.la \
+		show.la
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
@@ -481,3 +482,6 @@ evaluate_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 get_modifiable_value_la_SOURCES = computation/builtins/get_modifiable_value.C
 get_modifiable_value_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+show_la_SOURCES = computation/builtins/show.C
+show_la_LDFLAGS = -module -shared -avoid-version -export-dynamic

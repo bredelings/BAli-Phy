@@ -76,6 +76,7 @@ builtin vector_size 1 "vector_size";
 builtin c_fst 1 "c_fst";
 builtin c_snd 1 "c_snd";
 builtin c_pair' 2 "c_pair";
+builtin builtin_show 1 "show";
 
 foldr f z [] = z;
 foldr f z (x:xs) = (f x (foldr f z xs));
@@ -273,4 +274,9 @@ quicksortWith f [] = [];
 quicksortWith f (x:xs) = quicksortWith f small ++ (x : quicksortWith f large)
    where { small = [y | y <- xs, (f y) <= (f x)] ;
            large = [y | y <- xs, (f y)  > (f x)] };
+  
+show (x,y) = "(" ++ show x ++ "," ++ show y ++ ")";
+show (x,y,z) = "(" ++ show x ++ "," ++ show y ++ "," ++ show z ++ ")";
+show (x:y) = x:y;
+show x     = listFromString $ builtin_show x;
 }
