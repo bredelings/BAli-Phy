@@ -619,9 +619,6 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 
 	root_t r = allocate_reg();
 	parameters().push_back( {S.name, r} );
-
-	expression_ref E = (identifier("unsafePerformIO"),(parameter_constructor(S.name,get_notes()), get_token()) );
-	set_C(*r, preprocess( E ) );
       }
     }
   }
