@@ -8,6 +8,7 @@ builtin is_modifiable 2 "is_modifiable";
 builtin get_modifiable_index 2 "get_modifiable_index";
 builtin get_modifiable_for_index 2 "get_modifiable_for_index";
 builtin builtin_new_modifiable 1 "new_modifiable";
+builtin evaluate 2 "evaluate";
 
 new_modifiable token = IOAction1 builtin_new_modifiable token;
 
