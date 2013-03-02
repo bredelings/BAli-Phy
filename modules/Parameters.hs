@@ -9,6 +9,7 @@ builtin get_modifiable_index 2 "get_modifiable_index";
 builtin get_modifiable_for_index 2 "get_modifiable_for_index";
 builtin builtin_new_modifiable 1 "new_modifiable";
 builtin evaluate 2 "evaluate";
+builtin get_modifiable_value 2 "get_modifiable_value";
 
 new_modifiable token = IOAction1 builtin_new_modifiable token;
 
@@ -34,6 +35,8 @@ set_parameter_value' token [] [] = return ();
 set_parameter_value token p v = if (is_modifiable token p) 
                                 then set_modifiable_value token p v 
                                 else set_parameter_value' token p v;
+
+get_modifiable_result token m = evaluate token (get_modifiable_value token m);
 
 findAtomic ps (ListRange rs) = concat $ zipWith findAtomic ps rs;
 findAtomic p r = [(p,r)];
