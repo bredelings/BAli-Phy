@@ -134,6 +134,14 @@ using std::map;
  *           refer to parameters by their address.
  *      10f. Issue: if we have a structure of parameters, that's OK.  But what if we have a CHANGEABLE
  *                  structure, of changeable parameters!  Is that OK?
+ * 11. [SPEED] For bali-phy 5d.fasta --seed=0 --iter=1000
+ *      - (We are spending 20% of the time in operator new.)
+ *      - We are spending 9% of the time in reg_heap::copy_token( ).
+ *        - 6% of this is in _Rb_tree::_M_copy, and half of that is in string::string(const string&)
+ *      - We are spending 6% of the time in __ieee754_log_avx.
+ *        - There should be a better way to multiply lots of doubles together while avoiding underflow.
+ *      - 1% of CPU time spend on memory allocation from vector::vector in three_way_topology_sample?
+ *        
  * 13. Rationalize Programs, Modules.
  *     13a. [DONE] Allow loading stuff from files.
  *     13b. [DONE] Allow importing, desugaring, and thus resolving symbols after modules are (jointly) loaded into the machine.

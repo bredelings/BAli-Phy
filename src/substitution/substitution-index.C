@@ -637,6 +637,7 @@ void subA_index_t::update_branch(const alignment& A,const Tree& T,int b)
 #endif
 
   // get ordered list of branches to process before this one
+  // \todo: FIXME: allocating the memory here takes 1.33% of CPU time.
   vector<const_branchview> branches; branches.reserve(T.n_branches());
   branches.push_back(T.directed_branch(b));
   
