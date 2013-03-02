@@ -9,43 +9,31 @@ module Test where
 note mean ~ iid(5, gamma(0.5,0.5) );
 note sigmaOverMu ~ iid(5, gamma(1.05,0.1) );
   
-  a1 = 1.0/(sigmaOverMu!!0^2);
-  b1 = mean!!0/a1;
-  
-  a2 = 1.0/(sigmaOverMu!!1^2);
-  b2 = mean!!1/a2;
-
-  a3 = 1.0/(sigmaOverMu!!2^2);
-  b3 = mean!!2/a3;
-
-  a4 = 1.0/(sigmaOverMu!!3^2);
-  b4 = mean!!3/a4;
-
-  a5 = 1.0/(sigmaOverMu!!4^2);
-  b5 = mean!!4/a5;
+  a = map (\x->1.0/(x^2)) sigmaOverMu;
+  b = map (\(a,m)->m/a) (zip a mean);
 
   alpha = 1.0;
   
+  prefixes (x:xs) = [x]:map (\l->x:l) (prefixes xs);
+
 note q ~ iid (5, beta(1.0,alpha) );
 
-  p1' = q!!0;
-  p2' = (1.0-q!!0)*q!!1;
-  p3' = (1.0-q!!0)*(1.0-q!!1)*q!!1;
-  p4' = (1.0-q!!0)*(1.0-q!!1)*(1.0-q!!2)*q!!3;
-  p5' = (1.0-q!!0)*(1.0-q!!1)*(1.0-q!!2)*(1.0-q!!3)*q!!4;
-  sum = p1' + p2' + p3' + p4' + p5';
-  p1 = p1'/sum;
-  p2 = p2'/sum;
-  p3 = p3'/sum;
-  p4 = p4'/sum;
-  p5 = p5'/sum;
+  normalize l = let {total = sum l} in map (\x-> x/total) l;
+
+  p' = [q!!0,
+   (1.0-q!!0)*q!!1,
+   (1.0-q!!0)*(1.0-q!!1)*q!!1,
+   (1.0-q!!0)*(1.0-q!!1)*(1.0-q!!2)*q!!3,
+   (1.0-q!!0)*(1.0-q!!1)*(1.0-q!!2)*(1.0-q!!3)*q!!4];
+  
+  p = normalize p';
   
   
-  thetaDist = mixture [(p1, gamma (a1,b1)), 
-                       (p2, gamma (a2,b2)),
-                       (p3, gamma (a3,b3)),
-                       (p4, gamma (a4,b4)),
-                       (p5, gamma (a5,b5))
+  thetaDist = mixture [(p!!0, gamma (a!!0,b!!0)), 
+                       (p!!1, gamma (a!!1,b!!1)),
+                       (p!!2, gamma (a!!2,b!!2)),
+                       (p!!3, gamma (a!!3,b!!3)),
+                       (p!!4, gamma (a!!4,b!!4))
                       ];
 
 note theta_example ~ thetaDist;
@@ -54,9 +42,9 @@ note theta ~ iid (32, thetaDist);
 
   d1 = getAFS filename;
 note data d1 ~ plate (length d1, \i -> afs (theta!!i));
-note MakeLogger p1;
-note MakeLogger p2;
-note MakeLogger p3;
-note MakeLogger p4;
-note MakeLogger p5;
+note MakeLogger (p!!0);
+note MakeLogger (p!!1);
+note MakeLogger (p!!2);
+note MakeLogger (p!!3);
+note MakeLogger (p!!4);
 }
