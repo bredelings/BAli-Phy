@@ -1195,6 +1195,10 @@ void Sampler::check_moves(const owned_ptr<Probability_Model>& P) const
 
 void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter, ostream& s_out)
 {
+#ifndef NDEBUG
+  P->compile();
+#endif
+
   int alignment_burnin_iterations = (int)loadvalue(P->keys,"alignment-burnin",10.0);
 
   {
