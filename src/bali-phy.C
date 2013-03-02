@@ -588,14 +588,13 @@ owned_ptr<MCMC::TableFunction<string> > construct_table_function(Parameters& P, 
 	    object_ptr<const Pair> p = convert<const Pair>(x);
 	    int m_index = *convert<const Int>(p->t.first);
 	    string m_name = *convert<const String>(p->t.second);
-	    std::cout<<"("<<m_index<<","<<m_name<<")\n";
+	    //	    std::cout<<"("<<m_index<<","<<m_name<<")\n";
+
+	    int index = P.add_compute_expression(modifiable(m_index));
+	    logged_computations.push_back(index);
+	    logged_names.push_back(m_name);
 	  }
 	}
-
-
-	int index = P.add_compute_expression(E);
-	logged_computations.push_back(index);
-	logged_names.push_back(name);
       }
     }
 
