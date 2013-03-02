@@ -10,7 +10,7 @@ extern "C" closure builtin_function_set_modifiable_value(OperationArgs& Args)
 
   int token = *Args.evaluate_as<Int>(0);
   int R1 = Args.evaluate_slot_to_reg(1);
-  int R2 = Args.evaluate_slot_no_record(2,true);
+  int R2 = Args.evaluate_slot_to_reg(2);
 
   Args.memory().set_reg_value(R1, {index_var(0),{R2}}, token);
 
