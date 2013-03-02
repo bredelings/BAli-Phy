@@ -1195,7 +1195,7 @@ void Sampler::check_moves(const owned_ptr<Probability_Model>& P) const
 
 void Sampler::go(owned_ptr<Probability_Model>& P,int subsample,const int max_iter, ostream& s_out)
 {
-#ifndef NDEBUG
+#ifdef NDEBUG
   P->compile();
 #endif
 
