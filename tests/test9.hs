@@ -6,45 +6,33 @@ module Test where
 
   filename = "/home/bredelings/Reports/Kmar/BP.phase1.infile";
 
-note mean1 ~ gamma(0.5,0.5);
-note sigmaOverMu1 ~ gamma(1.05,0.1);
+note mean ~ iid(5, gamma(0.5,0.5) );
+note sigmaOverMu ~ iid(5, gamma(1.05,0.1) );
   
-note mean2 ~ gamma(0.5,0.5);
-note sigmaOverMu2 ~ gamma(1.05,0.1);
+  a1 = 1.0/(sigmaOverMu!!0^2);
+  b1 = mean!!0/a1;
   
-note mean3 ~ gamma(0.5,0.5);
-note sigmaOverMu3 ~ gamma(1.05,0.1);
-  
-note mean4 ~ gamma(0.5,0.5);
-note sigmaOverMu4 ~ gamma(1.05,0.1);
-  
-note mean5 ~ gamma(0.5,0.5);
-note sigmaOverMu5 ~ gamma(1.05,0.1);
-  
-  a1 = 1.0/(sigmaOverMu1^2);
-  b1 = mean1/a1;
-  
-  a2 = 1.0/(sigmaOverMu2^2);
-  b2 = mean2/a2;
+  a2 = 1.0/(sigmaOverMu!!1^2);
+  b2 = mean!!1/a2;
 
-  a3 = 1.0/(sigmaOverMu3^2);
-  b3 = mean3/a3;
+  a3 = 1.0/(sigmaOverMu!!2^2);
+  b3 = mean!!2/a3;
 
-  a4 = 1.0/(sigmaOverMu4^2);
-  b4 = mean4/a4;
+  a4 = 1.0/(sigmaOverMu!!3^2);
+  b4 = mean!!3/a4;
 
-  a5 = 1.0/(sigmaOverMu5^2);
-  b5 = mean5/a5;
+  a5 = 1.0/(sigmaOverMu!!4^2);
+  b5 = mean!!4/a5;
 
   alpha = 1.0;
   
-note [q1,q2,q3,q4,q5] ~ iid (5, beta(1.0,alpha) );
+note q ~ iid (5, beta(1.0,alpha) );
 
-  p1' = q1;
-  p2' = (1.0-q1)*q2;
-  p3' = (1.0-q1)*(1.0-q2)*q3;
-  p4' = (1.0-q1)*(1.0-q2)*(1.0-q3)*q4;
-  p5' = (1.0-q1)*(1.0-q2)*(1.0-q3)*(1.0-q4)*q5;
+  p1' = q!!0;
+  p2' = (1.0-q!!0)*q!!1;
+  p3' = (1.0-q!!0)*(1.0-q!!1)*q!!1;
+  p4' = (1.0-q!!0)*(1.0-q!!1)*(1.0-q!!2)*q!!3;
+  p5' = (1.0-q!!0)*(1.0-q!!1)*(1.0-q!!2)*(1.0-q!!3)*q!!4;
   sum = p1' + p2' + p3' + p4' + p5';
   p1 = p1'/sum;
   p2 = p2'/sum;
