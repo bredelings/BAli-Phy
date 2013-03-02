@@ -410,7 +410,7 @@ expression_ref load_builtin(const module_loader& L, const string& filename, int 
   return load_builtin(filepath.string(), n, fname);
 }
 
-expression_ref load_builtin(const string& filename, int n, const string& fname)
+expression_ref load_builtin(const string& filename, const string& symbol_name, int n, const string& fname)
 {
   // load the library
   void* library = dlopen(filename.c_str(), RTLD_LAZY);
@@ -420,9 +420,6 @@ expression_ref load_builtin(const string& filename, int n, const string& fname)
   // reset errors
   dlerror();
     
-  const string prefix = "builtin_function_";
-  string symbol_name = prefix + fs::path(filename).stem().string();
-
   // load the symbols
   void* fn =  dlsym(library, symbol_name.c_str());
   const char* dlsym_error = dlerror();
@@ -435,3 +432,11 @@ expression_ref load_builtin(const string& filename, int n, const string& fname)
   // Create the function body from it.
   return lambda_expression(O);
 }
+
+expression_ref load_builtin(const string& filename, int n, const string& fname)
+{
+  const string prefix = "builtin_function_";
+  string symbol_name = prefix + fs::path(filename).stem().string();
+  return load_builtin(filename, symbol_name, n, fname);
+}
+
