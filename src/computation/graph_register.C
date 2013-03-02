@@ -2220,7 +2220,7 @@ class RegOperationArgs: public OperationArgs
     // Compute the result, and follow index_var chains (which are not changeable).
     int R3 = M.incremental_evaluate(R2, t, ec);
 
-    if (M[R3].changeable and ec) 
+    if (M[R3].changeable and evaluate_changeables())
     {
       // If R2 -> result was changeable, then R -> result will be changeable as well.
       M[R].changeable = true;
