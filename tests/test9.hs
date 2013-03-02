@@ -22,11 +22,11 @@ note q ~ iid (5, beta(1.0,alpha) );
 
   q' = map (\x->1.0-x) q;
   left = map (\i->product (take i q')) [0..4];
-p' = [q!!0,
-      q'!!0*q!!1,
-      q'!!0*q'!!1*q!!1,
-      q'!!0*q'!!1*q'!!2*q!!3,
-      q'!!0*q'!!1*q'!!2*q'!!3*q!!4];
+p' = [left!!0*q!!0,
+      left!!1*q!!1,
+      left!!2*q!!2,
+      left!!3*q!!3,
+      left!!4*q!!4];
   
   p = normalize p';
   
