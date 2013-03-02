@@ -883,7 +883,8 @@ void set_default_values_from_notes(context& C, int b, int e)
     if (find_match(query, C.get_note(i), results))
     {
       expression_ref parameter = results[0];
-      expression_ref value = (identifier("distDefaultValue"),results[1]);
+      int token = C.get_token();
+      expression_ref value = (identifier("evaluate"),token,(identifier("distDefaultValue"),results[1]));
       C.perform_expression( (identifier("set_parameter_value"),C.get_token(),parameter,value) );
     }
   }
