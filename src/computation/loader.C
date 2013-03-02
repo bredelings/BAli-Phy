@@ -136,9 +136,8 @@ using std::map;
  *                  structure, of changeable parameters!  Is that OK?
  * 11. [SPEED] For bali-phy 5d.fasta --seed=0 --iter=1000
  *      - (We are spending 20% of the time in operator new.)
- *      - We are spending 9% of the time in reg_heap::copy_token( ).
- *        - 6% of this is in _Rb_tree::_M_copy, and half of that is in string::string(const string&)
- *      - We are spending 6% of the time in __ieee754_log_avx.
+ *      - [DONE] Clear identifiers after loading programs -- Model::compile();
+ *      - We are spending 7% of the time in __ieee754_log_avx.
  *        - There should be a better way to multiply lots of doubles together while avoiding underflow.
  *      - 1% of CPU time spend on memory allocation from vector::vector in three_way_topology_sample?
  *        
