@@ -40,6 +40,8 @@ private:
   const std::map<std::string, root_t>& identifiers() const {return memory->get_identifiers_for_context(token);}
         std::map<std::string, root_t>& identifiers()       {return memory->get_identifiers_for_context(token);}
 
+  void release_identifiers();
+
   root_t push_temp_head() const;
   void pop_temp_head() const;
 
@@ -189,6 +191,8 @@ public:
   expression_ref get_expression(int i) const;
 
   void alphabetize_parameters();
+
+  void compile();
 
 protected:  
   void set_C(int R, closure&& c) const {memory->set_C(R,std::move(c));}

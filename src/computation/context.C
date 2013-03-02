@@ -439,6 +439,16 @@ void context::alphabetize_parameters()
   parameters() = apply_mapping(parameters(), mapping);
 }
 
+void context::release_identifiers()
+{
+  memory->release_identifiers(token);
+}
+
+void context::compile()
+{
+  release_identifiers();
+}
+
 void context::collect_garbage() const
 {
   memory->collect_garbage();

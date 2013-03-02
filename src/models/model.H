@@ -231,6 +231,9 @@ public:
 
   object_ref evaluate(int index) const;
 
+  /// No more code changes allowed after this!
+  void compile();
+
   /// Construct an empty model
   Model(const module_loader&);
 

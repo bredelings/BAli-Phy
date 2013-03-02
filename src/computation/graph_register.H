@@ -235,6 +235,9 @@ public:
   /// Release a used token
   void release_token(int);
 
+  /// Release just the identifiers for a token
+  void release_identifiers(int);
+
   /// Acquire a copy of a token
   int copy_token(int);
 

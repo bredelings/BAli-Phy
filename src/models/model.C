@@ -488,6 +488,11 @@ int Model::find_match_notes(const expression_ref& e, std::vector<expression_ref>
   return C.find_match_notes(e, results, start);
 }
 
+void Model::compile()
+{
+  C.compile();
+}
+
 Model::Model(const module_loader& L)
   :Model(L, {})
 { }
