@@ -23,7 +23,7 @@ closure get_trimmed(const closure& C)
 {
   closure C2 = C;
 
-  if (is_a<Trim>(C.exp))
+  if (C.exp->head->type() == trim_type)
   {
     C2.exp = C.exp->sub[1];
     
