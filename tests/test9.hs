@@ -18,9 +18,9 @@ note sigmaOverMu ~ iid(n, gamma(1.05,0.1) );
   
 note q ~ iid (n, beta(1.0,alpha) );
 
-  normalize l = let {total = sum l} in map (\x-> x/total) l;
+  normalize l = let {total = sum l} in map (/total) l;
 
-  q' = map (\x->1.0-x) q;
+  q' = map (\x -> 1.0-x) q;
   left = [ product (take i q') | i <- take n [0..]];
   p' = zipWith (*) q left;
   
