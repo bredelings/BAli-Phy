@@ -27,12 +27,7 @@ note q ~ iid (5, beta(1.0,alpha) );
   p = normalize p';
   
   
-  thetaDist = mixture [(p!!0, gamma (a!!0,b!!0)), 
-                       (p!!1, gamma (a!!1,b!!1)),
-                       (p!!2, gamma (a!!2,b!!2)),
-                       (p!!3, gamma (a!!3,b!!3)),
-                       (p!!4, gamma (a!!4,b!!4))
-                      ];
+  thetaDist = mixture $ map (\i -> (p!!i, gamma (a!!i,b!!i))) [0..4];
 
 note theta_example ~ thetaDist;
   
