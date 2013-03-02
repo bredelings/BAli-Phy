@@ -6,28 +6,28 @@ module Test where
 
   filename = "/home/bredelings/Reports/Kmar/BP.phase1.infile";
 
-note mean ~ iid(5, gamma(0.5,0.5) );
-note sigmaOverMu ~ iid(5, gamma(1.05,0.1) );
+  n = 5;
+  
+note mean ~ iid(n, gamma(0.5,0.5) );
+note sigmaOverMu ~ iid(n, gamma(1.05,0.1) );
   
   a = map (\x->1.0/(x^2)) sigmaOverMu;
   b = map (\(a,m)->m/a) (zip a mean);
 
   alpha = 1.0;
   
-  prefixes (x:xs) = [x]:map (\l->x:l) (prefixes xs);
-
-note q ~ iid (5, beta(1.0,alpha) );
+note q ~ iid (n, beta(1.0,alpha) );
 
   normalize l = let {total = sum l} in map (\x-> x/total) l;
 
   q' = map (\x->1.0-x) q;
-  left = map (\i->product (take i q')) [0..4];
+  left = map (\i->product (take i q')) [0..n-1];
   p' = zipWith (*) q left;
   
   p = normalize p';
   
   
-  thetaDist = mixture $ map (\i -> (p!!i, gamma (a!!i,b!!i))) [0..4];
+  thetaDist = mixture $ map (\i -> (p!!i, gamma (a!!i,b!!i))) [0..n-1];
 
 note theta_example ~ thetaDist;
   
