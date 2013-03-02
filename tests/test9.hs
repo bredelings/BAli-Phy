@@ -21,13 +21,13 @@ note q ~ iid (n, beta(1.0,alpha) );
   normalize l = let {total = sum l} in map (\x-> x/total) l;
 
   q' = map (\x->1.0-x) q;
-  left = map (\i->product (take i q')) [0..n-1];
+  left = [ product (take i q') | i <- take n [0..]];
   p' = zipWith (*) q left;
   
   p = normalize p';
   
   
-  thetaDist = mixture $ map (\i -> (p!!i, gamma (a!!i,b!!i))) [0..n-1];
+  thetaDist = mixture [ (p!!i, gamma (a!!i,b!!i)) | i <- take n [0..]];
 
 note theta_example ~ thetaDist;
   
