@@ -637,6 +637,14 @@ void context::allocate_identifiers_for_modules(const vector<string>& module_name
 
       if (S.scope != local_scope) continue;
 
+      if (S.symbol_type == parameter_symbol)
+      {
+	int R = get_parameter_reg( find_parameter(S.name) );
+	expression_ref E = (identifier("unsafePerformIO"),(parameter_constructor(S.name,get_notes()), get_token()) );
+	set_C(R, preprocess( E ) );
+	continue;
+      }
+
       if (S.symbol_type != variable_symbol and S.symbol_type != constructor_symbol) continue;
 
       // get the root for each identifier
