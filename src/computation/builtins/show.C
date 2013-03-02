@@ -12,7 +12,7 @@ extern "C" closure builtin_function_show(OperationArgs& Args)
   if (object_ptr<const Double> xd = dynamic_pointer_cast<const Double>(x))
     v->t = convertToString<double>(*xd);
   else if (object_ptr<const Int> xi = dynamic_pointer_cast<const Int>(x))
-    v->t = convertToString<double>(*xi);
+    v->t = convertToString<int>(*xi);
   else if (object_ptr<const Log_Double> xld = dynamic_pointer_cast<const Log_Double>(x))
   {
     log_double_t ld = *xld;
