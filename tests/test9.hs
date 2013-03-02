@@ -38,7 +38,7 @@ note q ~ iid (5, beta(1.0,alpha) );
 
 note theta_example ~ thetaDist;
   
-note theta ~ iid (32, thetaDist);
+note theta ~ iid (length d1, thetaDist);
 
   d1 = getAFS filename;
 note data d1 ~ plate (length d1, \i -> afs (theta!!i));
