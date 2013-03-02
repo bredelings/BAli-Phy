@@ -9,6 +9,8 @@ extern "C" closure builtin_function_get_modifiable_for_index(OperationArgs& Args
   assert(not Args.evaluate_changeables());
 
   int token = *Args.evaluate_as<Int>(0);
+  assert( Args.current_token() == token );
+
   int index = *Args.evaluate_as<Int>(1);
 
   const reg_heap& M = Args.memory();
