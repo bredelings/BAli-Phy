@@ -53,11 +53,11 @@ using std::map;
  *    - This will allow us to use add_real_MH_proposals( )
  *    - It will also simplify Model::set_modifiable_value( ) and remove its second argument.
  * 1. Efficiently recalculate the probability when only a few densities change.
- *    - Will this require signals?
+ *    - Will this require signals? (Signals might also help us to recalculate mu*t to see if anything changed.)
  *    - This will allow us to avoid maintaining a Markov blanket.
  * 2. Rewrite module loading routines to load modules 1-at-a-time.
  * 3. Make sure we don't read alignments with ^@ characters in the sequences!
- * 4. Eliminate duplicate between Model::add_note( ) and add_probability_expression( )
+ * 4. Eliminate duplication between Model::add_note( ) and add_probability_expression( )
  *    4a. If we would just compute the entire probability expression once, then
  *        we wouldn't need to 
  * 5. Allow distributions on structures with variable components
@@ -65,6 +65,11 @@ using std::map;
  *         - [DONE] Collect all the default-value setting code into one place.
  *         - [DONE] Don't initialize data distributions.
  *         - Make the computation of default values delayed?
+ *           + Can we do this by setting the value to (evaluate token expr)?
+ *           + We want evaluation to be delayed until the value is used, but
+ *             then we want to value to not recompute when its dependencies change.
+ *           + This would mean that the value that is computed will depend on the value
+ *             of other parameters when the value is FIRST evaluated!
  *         - Randomly sample initial values from the distribution!
  *    5b. Perform MCMC on structures.
  *        - For the moment, search and discover modifiable names and (when necessary) Bounds.
@@ -103,12 +108,29 @@ using std::map;
  *        - How does this relate to simply bringing in the notes attached to parameters?
  *        - How does this attempt to give parameters default names relate to the more general approach?
  *      + Problem: Code generation can currently be done, by passing numbers of model names as arguments to models.
- *                 These arguments are used to generate a different model.
- *                 But models define in a module file can only take function arguments, not arguments that affect the code
- *                   in the module.
+ *                 These arguments are used to generate a different model (in C++).
+ *
+ *                 But models defined in a module file can only take function arguments, not arguments that affect the code
+ *                   in the module.  In order to have any significate effect, we'd need to be able to substituted
+ *                   in for code anywhere in the module.  And substituting integers still can't affect e.g. which parameters
+ *                   are declared and what their names are.
+ *
  *                 If we can programmatically generate variable structures with a variable number of pieces, then
- *                   we at least won't need to programmatically generate names for each piece.
- *                 Instead, we can refer to parameters as e.g. pi!0.
+ *                   we at least won't need to programmatically generate names for each piece. Or will we?  
+ *
+ *                 Instead, we can refer to parameters as e.g. pi!0.  (Although that ignores the problems with naming
+ *                   these pieces for logging.  What we have right now is a giant hack.)
+ *
+ *                 I think that arguments to the Model.main expression won't affect e.g. the 
+ *                   dimension of any parameters declared in the model.
+ *
+ *                 We want to be able to pass arguments to models to specify things about the model.  For example,
+ *                   we might want to specify the dimension of the model.
+ *
+ *                 Models might be implemented as functions of some internal random state.  We might want to log
+ *                   functions of the random state, and not the random state itself.  For example, w/ DPP, or a
+ *                   random tree of with the truncated DPP, etc.
+ *
  *    - Eliminate parameter definition notes in formula_expression_ref?
  *      + Eliminate import and import_submodel notes.
  *
