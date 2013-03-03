@@ -12,7 +12,7 @@ note mean ~ iid(n, gamma(0.5,0.5) );
 note sigmaOverMu ~ iid(n, gamma(1.05,0.1) );
   
   a = map (\x->1.0/(x^2)) sigmaOverMu;
-  b = map (\(a,m)->m/a) (zip a mean);
+  b = zipWith (/) mean a;
 
   alpha = 1.0;
   
@@ -25,7 +25,6 @@ note q ~ iid (n, beta(1.0,alpha) );
   p' = zipWith (*) q left;
   
   p = normalize p';
-  
   
   thetaDist = mixture [ (p!!i, gamma (a!!i,b!!i)) | i <- take n [0..]];
 
