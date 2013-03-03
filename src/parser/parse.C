@@ -148,8 +148,8 @@ struct haskell_grammar : qi::grammar<Iterator, expression_ref(), ascii::space_ty
 	  | infixexp [_val = _1 ];
 
 	infixexp = 
-	  lexp [push_back(_a,_1)] >> qop [push_back(_a,_1)] > infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
-	  | eps[clear(_a)] >> lit("-") [push_back(_a, AST_node("neg"))] > infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
+	  lexp [push_back(_a,_1)] >> qop [push_back(_a,_1)] >> infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
+	  | eps[clear(_a)] >> lit("-") [push_back(_a, AST_node("neg"))] >> infixexp [push_back(_a,_1)] >> eps [ _val = new_<expression>(AST_node("infixexp"), _a)  ]
 	  | lexp [ _val = _1 ]
 	  ;
 
