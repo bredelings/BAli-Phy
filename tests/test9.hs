@@ -20,7 +20,7 @@ note q ~ iid (n, beta(1.0,alpha) );
 
   normalize l = let {total = sum l} in map (/total) l;
 
-  q' = map (\x -> 1.0-x) q;
+  q' = map (1.0-) q;
   left = [ product (take i q') | i <- take n [0..]];
   p' = zipWith (*) q left;
   
