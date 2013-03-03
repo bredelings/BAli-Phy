@@ -57,7 +57,7 @@ using std::map;
  *    - This will allow us to avoid maintaining a Markov blanket.
  * 2. Rewrite module loading routines to load modules 1-at-a-time.
  * 3. Make sure we don't read alignments with ^@ characters in the sequences!
- * 4. Eliminate duplicate between Model::add_note( ) and add_probability_expression9 )
+ * 4. Eliminate duplicate between Model::add_note( ) and add_probability_expression( )
  *    4a. If we would just compute the entire probability expression once, then
  *        we wouldn't need to 
  * 5. Allow distributions on structures with variable components
