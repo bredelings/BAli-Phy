@@ -349,4 +349,6 @@ public:
   FS_Transducer(const module_loader&,bool);
 };
 
+void remove_one_state(Matrix& Q,int S);
+void fragmentize(Matrix& Q,double e);
 #endif
