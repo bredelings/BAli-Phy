@@ -9,8 +9,11 @@ int Model_Notes::add_note(const expression_ref& E)
   for(int i=0;i<notes.size();i++)
     if (notes[i] == E)
       return i;
-    else
-      assert(notes[i]->print() != E->print());
+    else if (notes[i]->compare(*E))
+      return i;
+  // This causes trouble if we have unprintable elements in the note:
+  //    else
+  //      assert(notes[i]->print() != E->print());
 
   notes.push_back(E);
   return notes.size()-1;
