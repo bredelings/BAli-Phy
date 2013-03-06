@@ -620,7 +620,6 @@ closure get_transition_counts::operator()(OperationArgs& Args) const
 
   using namespace A2;
 
-  int state1 = states::S;
   for(int column=1;column<A.size();column++) 
     counts(A[column-1],A[column])++;
 
