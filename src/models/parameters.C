@@ -633,7 +633,9 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
       // D = Params.substitutionBranchLengths!scale_index
       expression_ref D = (identifier("!"),identifier("Params.substitutionBranchLengths"),scale_index);
       // (fst IModels.models!i_index) D b
-      int index = p->C.add_compute_expression( ((identifier("fst"),(identifier("!"),identifier("IModels.models"),i_index)),D,b) );
+      expression_ref heat = parameter("Heat.beta");
+      expression_ref training = parameter("IModels.training");
+      int index = p->C.add_compute_expression( ((identifier("fst"),(identifier("!"),identifier("IModels.models"),i_index)),D,b,heat,training) );
       branch_HMM_indices.push_back(  index );
       expression_ref hmm = P->C.get_expression(index);
 

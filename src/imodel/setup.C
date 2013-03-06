@@ -28,19 +28,7 @@ formula_expression_ref get_imodel(string name, const SequenceTree& T)
     ;
   else if (name == "RS07")
   {
-    expression_ref RS07BranchHMM = lambda_expression( RS07_branch_HMM() );
-    expression_ref lengthp = lambda_expression( RS07_lengthp() );
-
-    expression_ref log_lambda = def_parameter(imodel, "logLambda", -4.0, nullptr, (identifier("laplace"), Tuple(-4.0, 1.0)));
-    expression_ref meanIndelLengthMinus1 = def_parameter(imodel, "meanIndelLengthMinus1", 1.0, lower_bound(0), (identifier("exponential"), 10.0));
-
-    expression_ref epsilon = (identifier("/"),meanIndelLengthMinus1,((identifier("+"),1.0,meanIndelLengthMinus1)));
-    expression_ref lambda = (identifier("exp"), log_lambda);
-    expression_ref heat = parameter("Heat.beta");
-    expression_ref training = parameter("IModels.training");
-
-    imodel.set_exp( Tuple(v1^(v2^(RS07BranchHMM, epsilon, (identifier("*"),lambda,(identifier("!"),v1,v2)), heat, training)), 
-			  v1^(lengthp,epsilon,v1)) );
+    return submodel_expression("RS07");
   }
   else if (name == "fg_branch_scale[RS07]")
   {
