@@ -346,7 +346,7 @@ pkglib_LTLIBRARIES = mod.la log.la builtinError.la seq.la join.la reapply.la \
 		is_modifiable.la is_changeable.la get_modifiable_index.la get_modifiable_for_index.la \
 		set_vector_index.la new_vector.la get_vector_index.la vector_size.la \
 		c_fst.la c_snd.la c_pair.la new_modifiable.la evaluate.la get_modifiable_value.la \
-		show.la
+		show.la rs07_branch_HMM.la rs07_lengthp.la
 
 mod_la_SOURCES = computation/builtins/mod.C
 mod_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
@@ -485,3 +485,9 @@ get_modifiable_value_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
 
 show_la_SOURCES = computation/builtins/show.C
 show_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+rs07_branch_HMM_la_SOURCES = computation/builtins/rs07_branch_HMM.C
+rs07_branch_HMM_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
+
+rs07_lengthp_la_SOURCES = computation/builtins/rs07_lengthp.C
+rs07_lengthp_la_LDFLAGS = -module -shared -avoid-version -export-dynamic
