@@ -394,7 +394,7 @@ constant_sum_modifiable_slice_function::constant_sum_modifiable_slice_function(P
    n(n_),
    P(P_)
 { 
-  vector<Double> x = P.get_parameter_values_as<Double>(indices);
+  vector<Double> x = P.get_modifiable_values_as<Double>(indices);
   double total = sum(x);
 
   set_lower_bound(0);
