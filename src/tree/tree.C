@@ -1100,6 +1100,7 @@ void Tree::compute_partitions() const
 
 
 // This could create loops it we don't check that the subtrees are disjoint.
+// br{1,2} point into the subtrees.  b{1,2} point out of the subtrees, towards the other subtree.
 void exchange_subtrees(Tree& T, int br1, int br2) 
 {
   branchview b1 = T.directed_branch(br1).reverse();
