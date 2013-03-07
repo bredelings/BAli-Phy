@@ -256,6 +256,9 @@ class Parameters: public Probability_Model
   /// The Tree - mean branch lengths = 1
   cow_ptr<SequenceTree> T_;
 
+  std::vector<int> parameter_for_tree_node;
+  std::vector<int> parameter_for_tree_branch;
+
 public:
 
   /// Do we have an Exponential (0) or Gamma-0.5 (1) prior on branch lengths?

@@ -681,8 +681,7 @@ void Parameters::set_tree(const SequenceTree& T2)
     for(auto b: branch_list)
       branch_list_.t.push_back(Int(int(b)));
     
-    string parameter_name = "MyTree.nodeBranches"+convertToString(n);
-    C.set_parameter_value(parameter_name, branch_list_);
+    C.set_parameter_value(parameter_for_tree_node[n], branch_list_);
   }
 
   for(int b=0; b < 2*T().n_branches(); b++)
@@ -690,9 +689,7 @@ void Parameters::set_tree(const SequenceTree& T2)
     int source = T().directed_branch(b).source();
     int target = T().directed_branch(b).target();
 
-    string parameter_name = "MyTree.branchNodes"+convertToString(b);
-
-    C.set_parameter_value(C.find_parameter(parameter_name), OPair({Int(source), Int(target)}) );
+    C.set_parameter_value(parameter_for_tree_branch[b], OPair({Int(source), Int(target)}) );
   }
 }
 
@@ -1283,6 +1280,21 @@ Parameters::Parameters(const module_loader& L,
 
   add_submodel( tree_module );
 
+  // Determine the parameter index for branches adjoining a tree node
+  for(int n=0; n < T().n_nodes(); n++)
+  {
+    string parameter_name = "MyTree.nodeBranches"+convertToString(n);
+    parameter_for_tree_node.push_back ( find_parameter(parameter_name) );
+    assert( parameter_for_tree_node.back() != -1);
+  }
+  // Determine the parameter index for nodes at the endpoint of a branch
+  for(int b=0; b < 2*T().n_branches(); b++)
+  {
+    string parameter_name = "MyTree.branchNodes"+convertToString(b);
+    parameter_for_tree_branch.push_back( find_parameter(parameter_name) );
+    assert( parameter_for_tree_branch.back() != -1);
+  }
+
   for(int n=0; n < T().n_nodes(); n++)
   {
     vector<const_branchview> branch_list;
@@ -1291,8 +1303,7 @@ Parameters::Parameters(const module_loader& L,
     for(auto b: branch_list)
       branch_list_.t.push_back(Int(int(b)));
     
-    string parameter_name = "MyTree.nodeBranches"+convertToString(n);
-    C.set_parameter_value(parameter_name, branch_list_);
+    C.set_parameter_value(parameter_for_tree_node[n], branch_list_);
   }
 
   for(int b=0; b < 2*T().n_branches(); b++)
@@ -1300,9 +1311,7 @@ Parameters::Parameters(const module_loader& L,
     int source = T().directed_branch(b).source();
     int target = T().directed_branch(b).target();
 
-    string parameter_name = "MyTree.branchNodes"+convertToString(b);
-
-    C.set_parameter_value(C.find_parameter(parameter_name), OPair({Int(source),Int(target)}));
+    C.set_parameter_value(parameter_for_tree_branch[b], OPair({Int(source),Int(target)}));
   }
 
   C.evaluate_expression( (identifier("numNodes"), identifier("MyTree.tree")));
