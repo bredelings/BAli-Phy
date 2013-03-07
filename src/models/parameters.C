@@ -292,6 +292,7 @@ void data_partition::setlength_no_invalidate_LC(int b)
 {
   b = T().directed_branch(b).undirected_name();
 
+  // This now just invalidates cached_alignment_prior
   recalc_imodel_for_branch(b);
 }
 
@@ -624,9 +625,9 @@ data_partition::data_partition(Parameters* p, int i, const alignment& a)
     {
       // D = Params.substitutionBranchLengths!scale_index
       expression_ref D = (identifier("!"),identifier("Params.substitutionBranchLengths"),scale_index);
-      // (fst IModels.models!i_index) D b
       expression_ref heat = parameter("Heat.beta");
       expression_ref training = parameter("IModels.training");
+      // (fst IModels.models!i_index) D b heat training
       int index = p->C.add_compute_expression( ((identifier("fst"),(identifier("!"),identifier("IModels.models"),i_index)),D,b,heat,training) );
       branch_HMM_indices.push_back(  index );
       expression_ref hmm = P->C.get_expression(index);
@@ -951,6 +952,8 @@ void Parameters::setlength_no_invalidate_LC(int b,double l)
     C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
   }
 
+  // Recalc the imodel, but don't change likelihoods
+  // Actually, this just invalidates cached_alignment_prior.
   for(int i=0;i<n_data_partitions();i++) 
     get_data_partition(i).setlength_no_invalidate_LC(b);
 }
@@ -969,6 +972,7 @@ void Parameters::setlength(int b,double l)
     C.set_parameter_value(branch_length_indices[s][b], rate * delta_t);
   }
 
+  // Invalidates cached_alignment_prior and conditional likelihoods
   for(int p=0;p<n_data_partitions();p++) 
     get_data_partition(p).setlength(b);
 }
