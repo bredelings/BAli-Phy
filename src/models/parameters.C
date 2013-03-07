@@ -1211,7 +1211,7 @@ Parameters::Parameters(const module_loader& L,
     string name = "nodeBranches"+convertToString(n);
     tree_module.declare_parameter("nodeBranches"+convertToString(n));
     expression_ref param = parameter("MyTree." + name);
-    node_branches.push_back( (identifier("listFromVectorInt"),param) );
+    node_branches.push_back( (identifier("list_from_vector"),param) );
   }
   expression_ref node_branches_array = (identifier("listArray'"),get_list(node_branches));
 
@@ -1235,9 +1235,9 @@ Parameters::Parameters(const module_loader& L,
   {
     vector<const_branchview> branch_list;
     append(T().node(n).branches_out(),branch_list);
-    Vector<int> branch_list_;
+    Vector<object_ref> branch_list_;
     for(auto b: branch_list)
-      branch_list_.t.push_back(b);
+      branch_list_.t.push_back(Int(int(b)));
     
     string parameter_name = "MyTree.nodeBranches"+convertToString(n);
     C.set_parameter_value(parameter_name, branch_list_);
