@@ -671,6 +671,29 @@ const SequenceTree& Parameters::T() const
 void Parameters::set_tree(const SequenceTree& T2)
 {
   *T_.modify() = T2;
+
+  for(int n=0; n < T().n_nodes(); n++)
+  {
+    vector<const_branchview> branch_list;
+    append(T().node(n).branches_out(),branch_list);
+
+    Vector<object_ref> branch_list_;
+    for(auto b: branch_list)
+      branch_list_.t.push_back(Int(int(b)));
+    
+    string parameter_name = "MyTree.nodeBranches"+convertToString(n);
+    C.set_parameter_value(parameter_name, branch_list_);
+  }
+
+  for(int b=0; b < 2*T().n_branches(); b++)
+  {
+    int source = T().directed_branch(b).source();
+    int target = T().directed_branch(b).target();
+
+    string parameter_name = "MyTree.branchNodes"+convertToString(b);
+
+    C.set_parameter_value(C.find_parameter(parameter_name), OPair({Int(source), Int(target)}) );
+  }
 }
 
 void Parameters::exchange_subtrees(int b1, int b2)
@@ -1220,7 +1243,7 @@ Parameters::Parameters(const module_loader& L,
   {
     string name = "branchNodes"+convertToString(b); 
     tree_module.declare_parameter(name);
-    branch_nodes.push_back( parameter("MyTree."+name) );
+    branch_nodes.push_back( (identifier("pair_from_c"), parameter("MyTree."+name)) );
   }
   expression_ref branch_nodes_array = (identifier("listArray'"),get_list(branch_nodes));
 
@@ -1250,7 +1273,7 @@ Parameters::Parameters(const module_loader& L,
 
     string parameter_name = "MyTree.branchNodes"+convertToString(b);
 
-    C.set_parameter_value_expression(C.find_parameter(parameter_name), Tuple(source, target) );
+    C.set_parameter_value(C.find_parameter(parameter_name), OPair({Int(source),Int(target)}));
   }
 
   C.evaluate_expression( (identifier("numNodes"), identifier("MyTree.tree")));
