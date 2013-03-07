@@ -149,9 +149,9 @@ public:
 template<typename T>
 class POD: public Object 
 {
-protected:
-  T t;
 public:
+  T t;
+
   typedef T subtype;
 
   POD<T>* clone() const {return new POD<T>(*this);}
@@ -204,7 +204,7 @@ inline std::string POD<char>::print() const
 /***************** Make log_double_t count as an arithmetic type **************/
 
 //typedef POD<bool> Bool;
-typedef Box<std::string> String;
+typedef POD<std::string> String;
 
 template <typename T>
 class POD_math: public Object
