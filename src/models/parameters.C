@@ -668,21 +668,24 @@ const SequenceTree& Parameters::T() const
   return *T_;
 }
 
+OVector edges_connecting_to_node(const Tree& T, int n)
+{
+  vector<const_branchview> branch_list;
+  append(T.node(n).branches_out(),branch_list);
+  
+  OVector branch_list_;
+  for(auto b: branch_list)
+    branch_list_.t.push_back(Int(int(b)));
+
+  return branch_list_;
+}
+
 void Parameters::set_tree(const SequenceTree& T2)
 {
   *T_.modify() = T2;
 
   for(int n=0; n < T().n_nodes(); n++)
-  {
-    vector<const_branchview> branch_list;
-    append(T().node(n).branches_out(),branch_list);
-
-    Vector<object_ref> branch_list_;
-    for(auto b: branch_list)
-      branch_list_.t.push_back(Int(int(b)));
-    
-    C.set_parameter_value(parameter_for_tree_node[n], branch_list_);
-  }
+    C.set_parameter_value(parameter_for_tree_node[n], edges_connecting_to_node(T(),n));
 
   for(int b=0; b < 2*T().n_branches(); b++)
   {
