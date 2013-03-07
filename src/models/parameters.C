@@ -812,6 +812,7 @@ int Parameters::SPR(int br1, int br2, int branch_to_move)
 
 void Parameters::check_h_tree() const
 {
+#ifndef NDEBUG
   for(int b=0; b < 2*T().n_branches(); b++)
   {
     object_ref p = C.get_parameter_value(parameter_for_tree_branch[b]);
@@ -839,6 +840,7 @@ void Parameters::check_h_tree() const
     for(int elem: VV)
       assert(includes(vv,elem));
   }
+#endif
 }
 
 efloat_t Parameters::prior_no_alignment() const 
