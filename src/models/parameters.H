@@ -282,6 +282,7 @@ public:
 
   const SequenceTree& T() const;
 
+  void reconnect_branch(int s1, int t1, int t2);
   void set_tree(const SequenceTree& T);
   void exchange_subtrees(int b1, int b2);
   int SPR(int b1, int b2, int bm=-1);

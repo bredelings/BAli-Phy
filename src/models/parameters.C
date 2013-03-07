@@ -696,14 +696,43 @@ void Parameters::set_tree(const SequenceTree& T2)
   }
 }
 
-void Parameters::exchange_subtrees(int b1, int b2)
+void Parameters::reconnect_branch(int s1, int t1, int t2)
 {
-  ::exchange_subtrees(*T_.modify(),b1,b2);
+  int b = T().directed_branch(s1,t1);
+
+  // The only things that change are:
+  // - the branch b (its endpoint is now t2);
+  // - the node t1
+  // - the node t2
+
+  T_.modify()->reconnect_branch(s1,t1,t2);
+}
+
+// This could create loops it we don't check that the subtrees are disjoint.
+// br{1,2} point into the subtrees.  b{1,2} point out of the subtrees, towards the other subtree.
+void Parameters::exchange_subtrees(int br1, int br2)
+{
+  const_branchview b1 = T().directed_branch(br1).reverse();
+  const_branchview b2 = T().directed_branch(br2).reverse();
+
+  int s1 = b1.source();
+  int t1 = b1.target();
+
+  int s2 = b2.source();
+  int t2 = b2.target();
+
+  assert(not T().subtree_contains(br1,s2));
+  assert(not T().subtree_contains(br2,s1));
+
+  reconnect_branch(s1,t1,t2);
+  reconnect_branch(s2,t2,t1);
 }
 
 int Parameters::SPR(int b1, int b2, int bm)
 {
-  return ::SPR(*T_.modify(), b1, b2, bm);
+  bm = ::SPR(*T_.modify(), b1, b2, bm);
+
+  return bm;
 }
 
 efloat_t Parameters::prior_no_alignment() const 
